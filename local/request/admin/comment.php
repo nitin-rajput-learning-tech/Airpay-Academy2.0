@@ -41,7 +41,7 @@ echo $OUTPUT->header();
 $context =(new \local_request\lib\accesslib())::get_module_context();
 if (has_capability('block/request:addcomment',$context)) {
 } else {
-  print_error(get_string('cannotcomment', 'block_request'));
+  throw new moodle_exception(get_string('cannotcomment', 'block_request'));
 }
 
 

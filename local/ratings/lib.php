@@ -216,7 +216,7 @@ function can_participate($itemid, $area){
     $result = '';
     switch($area){
         case 'local_courses':
-            $context = get_context_instance(CONTEXT_COURSE, $itemid);
+            $context = context_course::instance($itemid);
             if(!is_enrolled($context, $USER->id)) {
                 $enroll = false;
             }

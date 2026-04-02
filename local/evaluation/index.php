@@ -60,7 +60,7 @@ require_login();
 
 $context =(new \local_evaluation\lib\accesslib())::get_module_context();
 if (!has_capability('local/evaluation:addinstance', $context) ) {
-    print_error("You dont have permission to view this page.");
+    throw new moodle_exception("You dont have permission to view this page.");
 }
 $PAGE->set_url('/local/evaluation/index.php');
 $PAGE->set_context($context);

@@ -42,7 +42,7 @@ $PAGE->requires->js_call_amd('theme_epsilon/quickactions', 'quickactionsCall');
 require_login();
 
 if(!has_capability('local/costcenter:view', $categorycontext)) {
-    print_error('nopermissiontoviewpage');
+    throw new moodle_exception('nopermissiontoviewpage');
 }
 if(!is_siteadmin()){
     $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path',$costcenterpath=null,$datatype='lowerandsamepath');
@@ -54,7 +54,7 @@ if(!is_siteadmin()){
 
     if (!$depart) {
 
-        print_error('invalidcostcenterid');
+        throw new moodle_exception('invalidcostcenterid');
     }
 }
 

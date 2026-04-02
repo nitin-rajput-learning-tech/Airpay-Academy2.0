@@ -158,7 +158,7 @@ class local_program_external extends external_api {
             }
             $return = true;
         } catch (dml_exception $ex) {
-            print_error('deleteerror', 'local_program');
+            throw new moodle_exception('deleteerror', 'local_program');
             $return = false;
         }
         return $return;
@@ -520,7 +520,7 @@ class local_program_external extends external_api {
                 $return = false;
             }
         } catch (dml_exception $ex) {
-            print_error('deleteerror', 'local_program');
+            throw new moodle_exception('deleteerror', 'local_program');
             $return = false;
         }
         return $return;
@@ -720,7 +720,7 @@ class local_program_external extends external_api {
             $DB->delete_records('local_program_levels', array('id' => $id));
             $return = true;
         } catch (dml_exception $ex) {
-            print_error('deleteerror', 'local_program');
+            throw new moodle_exception('deleteerror', 'local_program');
             $return = false;
         }
         return $return;
@@ -752,7 +752,7 @@ class local_program_external extends external_api {
             }
        
         } catch (dml_exception $ex) {
-            print_error('deleteerror', 'local_program');
+            throw new moodle_exception('deleteerror', 'local_program');
             $return = false;
         }
         return $return;
@@ -797,7 +797,7 @@ class local_program_external extends external_api {
             $event->trigger();
             $return = true;
         } catch (dml_exception $ex) {
-            print_error('inactiveerror', 'local_program');
+            throw new moodle_exception('inactiveerror', 'local_program');
             $return = false;
         }
         return $return;
@@ -841,7 +841,7 @@ class local_program_external extends external_api {
             $event->trigger();
             $return = true;
         } catch (dml_exception $ex) {
-            print_error('inactiveerror', 'local_program');
+            throw new moodle_exception('inactiveerror', 'local_program');
             $return = false;
         }
         return $return;

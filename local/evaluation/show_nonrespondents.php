@@ -43,13 +43,13 @@ $PAGE->set_pagelayout('standard');
 ////////////////////////////////////////////////////////
 
 if (! $evaluation = $DB->get_record("local_evaluations", array("id"=>$id))) {
-    print_error('invalidcourselocalule');
+    throw new moodle_exception('invalidcourselocalule');
 }
 
 //this page only can be shown on nonanonymous evaluations in courses
 //we should never reach this page
 if ($evaluation->anonymous != EVALUATION_ANONYMOUS_NO ) {
-    print_error('error');
+    throw new moodle_exception('error');
 }
 
 $url = new moodle_url('/local/evaluation/show_nonrespondents.php', array('id'=>$evaluation->id));
@@ -63,7 +63,7 @@ $context = (new \local_evaluation\lib\accesslib())::get_module_context($evaluati
 require_login();
 
 if (($formdata = data_submitted()) AND !confirm_sesskey()) {
-    print_error('invalidsesskey');
+    throw new moodle_exception('invalidsesskey');
 }
 
 require_capability('local/evaluation:viewreports', $context);

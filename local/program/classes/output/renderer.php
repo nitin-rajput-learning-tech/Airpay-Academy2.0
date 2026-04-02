@@ -583,7 +583,7 @@ class renderer extends plugin_renderer_base {
         }
 
         if (empty($program)) {
-            print_error("program Not Found!");
+            throw new moodle_exception("program Not Found!");
         }
         $includesfile = false;
         if (file_exists($CFG->dirroot . '/local/includes.php')) {
@@ -977,13 +977,13 @@ class renderer extends plugin_renderer_base {
         $program_status = $DB->get_field('local_program', 'status', array('id' => $programid));
 
         if (!has_capability('local/program:manageprogram', $categorycontext) && $program_status== 0) {
-            print_error("You don't have permissions to view this page.");
+            throw new moodle_exception("You don't have permissions to view this page.");
         } else if (!has_capability('local/program:manageprogram', $categorycontext) &&
             $program_status == 2) {
-            print_error("You don't have permissions to view this page.");
+            throw new moodle_exception("You don't have permissions to view this page.");
         }
         if (empty($program)) {
-            print_error("program Not Found!");
+            throw new moodle_exception("program Not Found!");
         }
         $includesfile = false;
         if (file_exists($CFG->dirroot . '/local/includes.php')) {

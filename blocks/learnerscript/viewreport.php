@@ -58,7 +58,7 @@ foreach ($_REQUEST as $key => $val) {
 	}
 }
 if (!$report = $DB->get_record('block_learnerscript', array('id' => $id))) {
-	print_error('reportdoesnotexists', 'block_learnerscript');
+	throw new moodle_exception('reportdoesnotexists', 'block_learnerscript');
 }
 
 if ($courseid and $report->global) {
@@ -70,7 +70,7 @@ if ($userid > 0) {
 	$report->userid = $userid;
 }
 if (!$course = $DB->get_record('course', array('id' => $courseid))) {
-	print_error(get_string('nocourseid', 'block_learnerscript'));
+	throw new moodle_exception(get_string('nocourseid', 'block_learnerscript'));
 }
 
 // Force user login in course (SITE or Course)
@@ -134,7 +134,7 @@ $reportclass->cmid = $cmid;
 $reportclass->userid = $userid;
 $context = context_system::instance();
 if (!is_siteadmin() && !$reportclass->check_permissions($USER->id, $context)) {
-	print_error("badpermissions", 'block_learnerscript');
+	throw new moodle_exception("badpermissions", 'block_learnerscript');
 }
 $basicparamdata = new stdclass;
 $request = array_merge($_POST, $_GET);

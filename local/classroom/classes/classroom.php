@@ -172,7 +172,7 @@ class classroom {
                 }
             }
         } catch (dml_exception $ex) {
-            print_error($ex);
+            throw new moodle_exception($ex);
         }
         return $classroom->id;
     }
@@ -326,7 +326,7 @@ class classroom {
                 }
             }
         } catch (dml_exception $ex) {
-            print_error($ex);
+            throw new moodle_exception($ex);
         }
         return $session->id;
     }
@@ -464,7 +464,7 @@ class classroom {
                 $event->trigger();
             }
         } catch (dml_exception $ex) {
-            print_error($ex);
+            throw new moodle_exception($ex);
         }
         return $completions->id;
     }
@@ -543,7 +543,7 @@ class classroom {
             $location->usermodified = $USER->id;
             $DB->update_record('local_classroom', $location);
         } catch (dml_exception $ex) {
-            print_error($ex);
+            throw new moodle_exception($ex);
         }
         return $data->id;
     }
@@ -1010,7 +1010,7 @@ class classroom {
                 'id' => $classroomid
             ));
             if (empty($classroom)) {
-                print_error('classroom data missing');
+                throw new moodle_exception('classroom data missing');
             }
         }
         $concatsql = '';
@@ -1095,13 +1095,13 @@ class classroom {
             'id' => $classroomid
         ));
         if (!$classroom) {
-            print_error("Classroom Not Found!");
+            throw new moodle_exception("Classroom Not Found!");
         }
         $user = $DB->record_exists('user', array(
             'id' => $userid
         ));
         if (!$user) {
-            print_error("User Not Found!");
+            throw new moodle_exception("User Not Found!");
         }
         if ($sessionid > 0) {
             $session = $DB->record_exists('local_classroom_sessions', array(
@@ -1109,7 +1109,7 @@ class classroom {
                 'classroomid' => $classroomid
             ));
             if (!$session) {
-                print_error("Session Not Found!");
+                throw new moodle_exception("Session Not Found!");
             }
         }
         $sessions = $DB->get_records('local_classroom_sessions', array(
@@ -1307,7 +1307,7 @@ class classroom {
                                     usermodified = ' . $USER->id . ' WHERE classroomid = ' .$classroomid. ' AND id='.$key.'');
                             }
                         } catch (dml_exception $ex) {
-                            print_error($ex);
+                            throw new moodle_exception($ex);
                         }
                     } else {
                         $progress--;
@@ -1356,7 +1356,7 @@ class classroom {
                                     usermodified = ' . $USER->id . ' WHERE classroomid = ' .$classroomid. ' AND id='.$key.'');
                             }
                         } catch (dml_exception $ex) {
-                            print_error($ex);
+                            throw new moodle_exception($ex);
                         }
                     } else {
                         $progress--;
@@ -1419,7 +1419,7 @@ class classroom {
                         $return=$existcheck;
                     }
                 } catch (dml_exception $ex) {
-                    print_error($ex);
+                    throw new moodle_exception($ex);
                 }
             }
 
@@ -1548,7 +1548,7 @@ class classroom {
             $result->changecount = $progress;
             $result->classroom   = $localclassroom->name;
         } catch (dml_exception $ex) {
-            print_error($ex);
+            throw new moodle_exception($ex);
         }
         return $result;
     }
@@ -2154,7 +2154,7 @@ class classroom {
         try {
             $DB->update_record('local_classroom', $classroom);
         } catch (dml_exception $ex) {
-            print_error($ex);
+            throw new moodle_exception($ex);
         }
         return true;
     }

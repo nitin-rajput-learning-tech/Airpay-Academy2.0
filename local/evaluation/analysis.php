@@ -43,7 +43,7 @@ $evaluationstructure = new local_evaluation_structure($evaluation);
 $context = (new \local_evaluation\lib\accesslib())::get_module_context($id);
 $PAGE->set_context($context);
 if (!$evaluationstructure->can_view_analysis()) {
-    print_error(get_string('cannotaccess', 'local_evaluation'));
+    throw new moodle_exception(get_string('cannotaccess', 'local_evaluation'));
 }
 
 /// Print the page header
@@ -55,7 +55,7 @@ $PAGE->navbar->add($evaluation->name);
 echo $OUTPUT->header();
 if(!(is_siteadmin())){
     if(explode('/',$evaluation->open_path)[1] !=explode('/',$USER->open_path)[1]){
-        print_error(get_string('cannotaccess', 'local_evaluation'));
+        throw new moodle_exception(get_string('cannotaccess', 'local_evaluation'));
     }
 }
 

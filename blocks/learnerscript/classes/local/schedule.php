@@ -512,7 +512,7 @@ class schedule {
 		$tempfilename = md5(time());
 
 		if (!$report = $DB->get_record('block_learnerscript', array('id' => $reportid))) {
-			print_error('reportdoesnotexists', 'block_learnerscript');
+			throw new moodle_exception('reportdoesnotexists', 'block_learnerscript');
 		}
 		$role = $DB->get_field('role', 'shortname', array('id' => $schedule->roleid));
 		list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/", $user->open_path);
@@ -584,7 +584,7 @@ class schedule {
 	function reportdata($reportid, $user, $role, $organizationid, $departmentid=0) {
 		global $CFG, $DB;
 		if (!$report = $DB->get_record('block_learnerscript', array('id' => $reportid))) {
-			print_error('reportdoesnotexists', 'block_learnerscript');
+			throw new moodle_exception('reportdoesnotexists', 'block_learnerscript');
 		}
 
 		require_once($CFG->dirroot . '/blocks/learnerscript/reports/' . $report->type . '/report.class.php');

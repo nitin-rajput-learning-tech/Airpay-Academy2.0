@@ -27,7 +27,7 @@ use block_learnerscript\local\ls as ls;
 $courseid = optional_param('courseid', SITEID, PARAM_INT);
 $importurl = optional_param('importurl', '', PARAM_RAW);
 if (!$course = $DB->get_record("course", array("id" => $courseid))) {
-    print_error(get_string('nocourseid','block_learnerscript'));
+    throw new moodle_exception(get_string('nocourseid','block_learnerscript'));
 }
 
 // Force user login in course (SITE or Course)
@@ -40,7 +40,7 @@ if ($course->id == SITEID) {
 }
 
 if (!has_capability('block/learnerscript:managereports', $context) && !has_capability('block/learnerscript:manageownreports', $context))
-    print_error(get_string('badpermissions','block_learnerscript'));
+    throw new moodle_exception(get_string('badpermissions','block_learnerscript'));
 
 $PAGE->set_url('/blocks/learnerscript/managereport.php');
 $PAGE->set_context($context);
@@ -55,12 +55,12 @@ if ($importurl) {
          $data = json_decode($data);
          $xml = base64_decode($data->content);
      } else {
-         print_error(get_string('errorimporting',  'block_learnerscript'));
+         throw new moodle_exception(get_string('errorimporting',  'block_learnerscript'));
      }
      if ((new ls)->cr_import_xml($xml, $course)) {
          redirect("$CFG->wwwroot/blocks/learnerscript/managereport.php", get_string('reportcreated', 'block_learnerscript'));
      } else {
-         print_error(get_string('errorimporting',  'block_learnerscript'));
+         throw new moodle_exception(get_string('errorimporting',  'block_learnerscript'));
      }
  }
 
@@ -71,7 +71,7 @@ $mform = new import_form(null, $course->id);
          if ((new ls)->cr_import_xml($xml, $course)) {
              redirect("$CFG->wwwroot/blocks/learnerscript/managereport.php", get_string('reportcreated', 'block_learnerscript'));
          } else {
-             print_error(get_string('errorimporting',  'block_learnerscript'));
+             throw new moodle_exception(get_string('errorimporting',  'block_learnerscript'));
          }
      }
  }

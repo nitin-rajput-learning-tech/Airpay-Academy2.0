@@ -45,7 +45,7 @@ global $USER, $DB , $OUTPUT;
 
 $returnurl = new moodle_url('/local/users/index.php');
 if (!has_capability('local/users:manage', $categorycontext) || !has_capability('local/users:create', $categorycontext) ) {
-    print_error('You dont have permission');
+    throw new moodle_exception('You dont have permission');
 }
 
 $PAGE->set_url('/local/users/sync/hrms_async.php');

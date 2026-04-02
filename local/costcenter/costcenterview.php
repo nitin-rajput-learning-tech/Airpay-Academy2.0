@@ -41,7 +41,7 @@ $costcentersql = "SELECT lc.id, lc.fullname,lc.parentid,lc.depth
                     FROM {local_costcenter} AS lc WHERE lc.id = $id $costcenterpathconcatsql ";
 
 if (!$depart = $DB->get_record_sql($costcentersql)) {
-    print_error('invalidcostcenterid');
+    throw new moodle_exception('invalidcostcenterid');
 
 }
 
@@ -53,7 +53,7 @@ if(!empty($depart) && isset($depart->path)){
 }
 
 if(!has_capability('local/costcenter:view', $categorycontext)) {
-    print_error('nopermissiontoviewpage');
+    throw new moodle_exception('nopermissiontoviewpage');
 }
 $PAGE->requires->jquery();
 $PAGE->requires->jquery('ui');

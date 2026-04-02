@@ -78,7 +78,7 @@ if($depth == 1){
 }elseif($depth == 2){
     $costcenters="SELECT id,fullname from {local_costcenter} where depth=2";  
 } else {
-    print_error('invalid depth');
+    throw new moodle_exception('invalid depth');
 }
 
 $costcenters_list=$DB->get_records_sql($costcenters);

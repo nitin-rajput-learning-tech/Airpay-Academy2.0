@@ -30,7 +30,7 @@ $systemcontext = \local_costcenter\lib\accesslib::get_module_context();
 $PAGE->set_context($systemcontext);
 require_login();
 if(!has_capability('local/search:viewcatalog', $systemcontext)){
-    print_error('No permissions');
+    throw new moodle_exception('No permissions');
 }
 
 $PAGE->set_url('/local/search/allcourses.php');

@@ -52,7 +52,7 @@ class report_sql extends reportbase {
             if (!empty($this->search) && preg_match("/%%SEARCH:([^%]+)%%/i", $sql, $output)) {
                 list($field, $operator) = preg_split('/:/', $output[1]);
                 if ($operator != '' && !in_array($operator, $operators)) {
-                    print_error('nosuchoperator');
+                    throw new moodle_exception('nosuchoperator');
                 }
                 if ($operator== '' || $operator == '~') {
                     $replace = " AND " . $field . " LIKE '%" . $this->search . "%'";

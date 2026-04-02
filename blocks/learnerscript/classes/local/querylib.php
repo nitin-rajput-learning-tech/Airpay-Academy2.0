@@ -50,7 +50,7 @@ class querylib {
 		try {
 			$coursescore = $DB->get_record_sql($coursescoresql, $params);
 		} catch (dml_exception $ex) {
-			print_error("Sql Query Wrong!");
+			throw new moodle_exception("Sql Query Wrong!");
 		}
 		return $coursescore;
 	}
@@ -78,7 +78,7 @@ class querylib {
 		try {
 			$totalscore = $DB->get_record_sql($totalscoresql, $params);
 		} catch (dml_exception $ex) {
-			print_error("Sql Query Wrong!");
+			throw new moodle_exception("Sql Query Wrong!");
 		}
 		return $totalscore;
 	}
@@ -105,7 +105,7 @@ class querylib {
 		try {
 			$highestscore = $DB->get_fieldset_sql($highestscoresql, $params);
 		} catch (dml_exception $ex) {
-			print_error("Sql Query Wrong!");
+			throw new moodle_exception("Sql Query Wrong!");
 		}
 		return $highestscore;
 	}
@@ -128,7 +128,7 @@ class querylib {
 		try {
 			$aggregate = $DB->get_fieldset_sql($aggregatesql, $params);
 		} catch (dml_exception $ex) {
-			print_error("Sql Query Wrong!");
+			throw new moodle_exception("Sql Query Wrong!");
 		}
 		return $aggregate;
 	}
@@ -188,7 +188,7 @@ class querylib {
 				}
 			}
 		} catch (dml_exception $ex) {
-			print_error("Sql Query Wrong!");
+			throw new moodle_exception("Sql Query Wrong!");
 		}
 		if ($check) {
 			return !empty($courses) ? true : false;
@@ -218,7 +218,7 @@ class querylib {
 		try {
 			$activecourseusers = $DB->get_records_sql($activecourseuserssql, $params);
 		} catch (dml_exception $ex) {
-			print_error("Sql Query Wrong!");
+			throw new moodle_exception("Sql Query Wrong!");
 		}
 		return $activecourseusers;
 	}

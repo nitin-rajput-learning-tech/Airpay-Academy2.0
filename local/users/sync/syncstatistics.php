@@ -41,7 +41,7 @@ $PAGE->set_heading(get_string('syncstatistics', 'local_users'));
 echo $OUTPUT->header();
 
 if (!(has_capability('local/users:create', $categorycontext) || is_siteadmin())) {
-    echo print_error('nopermission');
+    echo throw new moodle_exception('nopermission');
 }
 echo html_writer::link(new moodle_url('/local/users/index.php'),  get_string('back', 'local_users'), array('id' => 'sync_data'));
 

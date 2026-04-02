@@ -35,7 +35,7 @@ $PAGE->set_url($url);
 echo $OUTPUT->header();
 $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
 if(!has_capability('local/courses:view', $categorycontext) && !has_capability('local/courses:manage', $categorycontext) ){
-    print_error("You don't have permissions to view this page.");
+    throw new moodle_exception("You don't have permissions to view this page.");
 }
 
 $formattype = 'list';

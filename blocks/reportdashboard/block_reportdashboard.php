@@ -103,7 +103,7 @@ class block_reportdashboard extends block_base {
 
             $instanceid = $this->instance->id;
             if (!$report = $DB->get_record('block_learnerscript', array('id' => $reportid))) {
-                print_error('reportdoesnotexists', 'block_learnerscript');
+                throw new moodle_exception('reportdoesnotexists', 'block_learnerscript');
             }
             $reportdashboard = new reportdashboard;
             if (($buihideid == $this->instance->id) && confirm_sesskey()) {

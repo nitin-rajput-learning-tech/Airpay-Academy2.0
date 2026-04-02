@@ -89,14 +89,14 @@ class costcenter {
 
         if (empty($fromcostcenter)) {
             if (empty($activecostcenterlist))
-                print_error('notassignedcostcenter', 'local_costcenter');
+                throw new moodle_exception('notassignedcostcenter', 'local_costcenter');
         }
         
         $assigned_costcenters = costcenter_items();
         
         if (empty($fromcostcenter)) {
             if (empty($assigned_costcenters)) {
-                print_error('notassignedcostcenter', 'local_costcenter');
+                throw new moodle_exception('notassignedcostcenter', 'local_costcenter');
             } else
                 return $assigned_costcenters;
         } else

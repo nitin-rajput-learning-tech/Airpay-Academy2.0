@@ -834,12 +834,12 @@ class renderer extends plugin_renderer_base
         $is_classroom_accessble = $this->classroom_accessble_check($classroom);
         
         if (!has_capability('local/classroom:view_newclassroomtab', $categorycontext) && $classroom_status == 0 && !$is_classroom_accessble) {
-            print_error("You don't have permissions to view this page.");
+            throw new moodle_exception("You don't have permissions to view this page.");
         } elseif (!has_capability('local/classroom:view_holdclassroomtab', $categorycontext) && $classroom_status == 2) {
-            print_error("You don't have permissions to view this page.");
+            throw new moodle_exception("You don't have permissions to view this page.");
         }
         if (empty($classroom)) {
-            print_error("Classroom Not Found!");
+            throw new moodle_exception("Classroom Not Found!");
         }
         if (!has_capability('local/classroom:manageclassroom', $categorycontext) && !is_siteadmin()) {
 
@@ -851,7 +851,7 @@ class renderer extends plugin_renderer_base
 
             $exists = $DB->get_field('local_classroom_users', 'usercreated', array('classroomid' => $classroomid, 'userid' => $USER->id));
             if(!$exists && !$is_classroom_accessble){
-                print_error("You don't have permissions to view this page.");
+                throw new moodle_exception("You don't have permissions to view this page.");
             }else{
                 if($exists == $USER->id)
                     $unenroll=true;
@@ -1562,12 +1562,12 @@ class renderer extends plugin_renderer_base
         $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
         $classroom_status = $DB->get_field('local_classroom', 'status', array('id' => $classroomid));
         if (!has_capability('local/classroom:view_newclassroomtab', $categorycontext) && $classroom_status == 0) {
-            print_error("You don't have permissions to view this page.");
+            throw new moodle_exception("You don't have permissions to view this page.");
         } elseif (!has_capability('local/classroom:view_holdclassroomtab', $categorycontext) && $classroom_status == 2) {
-            print_error("You don't have permissions to view this page.");
+            throw new moodle_exception("You don't have permissions to view this page.");
         }
         if (empty($classroom)) {
-            print_error("Classroom Not Found!");
+            throw new moodle_exception("Classroom Not Found!");
         }
         if (file_exists($CFG->dirroot . '/local/includes.php')) {
             require_once($CFG->dirroot . '/local/includes.php');
@@ -1845,7 +1845,7 @@ class renderer extends plugin_renderer_base
         $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
         $classroom_status = $DB->get_field('local_classroom', 'status', array('id' => $classroomid));
         if (empty($classroom)) {
-            print_error("classroom Not Found!");
+            throw new moodle_exception("classroom Not Found!");
         }
 
         return $classroom;

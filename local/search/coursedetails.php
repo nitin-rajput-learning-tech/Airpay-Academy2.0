@@ -26,7 +26,7 @@ if($USER->open_costcenterid != $course->open_costcenterid){
 	redirect($CFG->wwwroot.'/local/courses/courses.php');
 }
 if(!$course){
-	print_error('invalidcourseid');
+	throw new moodle_exception('invalidcourseid');
 }
 
 $PAGE->set_title($course->fullname);

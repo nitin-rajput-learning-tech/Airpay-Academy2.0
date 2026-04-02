@@ -660,7 +660,7 @@ class local_evaluation_completion extends local_evaluation_structure {
             // Form was submitted (skip validation for "Previous page" button).
             $data = $this->form->get_submitted_data();
             if (!isset($SESSION->evaluation->is_started) OR !$SESSION->evaluation->is_started == true) {
-                print_error('error', '', $CFG->wwwroot.'/local/evaluation/eval_view.php?id='.$this->evaluation->id);
+                throw new moodle_exception('error', '', $CFG->wwwroot.'/local/evaluation/eval_view.php?id='.$this->evaluation->id);
             }
 
             $this->save_response_tmp($data);

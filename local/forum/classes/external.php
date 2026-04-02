@@ -482,7 +482,7 @@ class local_forum_external extends external_api
                 $return = false;
             }
         } catch (dml_exception $ex) {
-            print_error('deleteerror', 'local_classroom');
+            throw new moodle_exception('deleteerror', 'local_classroom');
             $return = false;
         }
         return $return;
@@ -827,7 +827,7 @@ class local_forum_external extends external_api
                 $return = false;
             }
         } catch (dml_exception $ex) {
-            print_error('subscribeerror', 'local_forum');
+            throw new moodle_exception('subscribeerror', 'local_forum');
             $return = false;
         }
         return $return;
@@ -895,7 +895,7 @@ class local_forum_external extends external_api
                 $return = false;
             }
         } catch (dml_exception $ex) {
-            print_error('unsubscribeerror', 'local_forum');
+            throw new moodle_exception('unsubscribeerror', 'local_forum');
             $return = false;
         }
         return $return;

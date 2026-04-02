@@ -50,31 +50,31 @@ require_login();
 $evaluation = $DB->get_record('local_evaluations', array('id'=>$id));
 $costcenter=explode('/',$evaluation->open_path)[1];
 if (empty($evaluation)) {
-  print_error(get_string('feedback_not_found', 'local_evaluation'));
+  throw new moodle_exception(get_string('feedback_not_found', 'local_evaluation'));
 }
 
 if (!has_capability('local/evaluation:viewanalysepage', $context) ) {
-    print_error(get_string('no_permission_to_view_this_page', 'local_evaluation'));
+    throw new moodle_exception(get_string('no_permission_to_view_this_page', 'local_evaluation'));
 }
 if ($evaluation->plugin === "classroom"){
     $classroom = $DB->get_record('local_classroom', array('id' => $evaluation->instance));
     if (empty($classroom)) {
-        print_error(get_string('classroom_not_found', 'local_evaluation'));
+        throw new moodle_exception(get_string('classroom_not_found', 'local_evaluation'));
     }
     if ((has_capability('local/classroom:manageclassroom', $context))) {
             if(explode('/',$classroom->open_path)[1] != $costcenter){
-             print_error(get_string('no_permissions', 'local_evaluation'));
+             throw new moodle_exception(get_string('no_permissions', 'local_evaluation'));
             }
     }
 }elseif ($evaluation->plugin === "program"){
     $program = $DB->get_record('local_program', array('id' => $evaluation->instance));
     if (empty($program)) {
-        print_error(get_string('program_not_found', 'local_evaluation'));
+        throw new moodle_exception(get_string('program_not_found', 'local_evaluation'));
     }
     if ((has_capability('local/program:manageprogram', $context)) && (!is_siteadmin()
     )) {
             if(explode('/',$program->open_path)[1]!=$costcenter){
-             print_error(get_string('no_permissions', 'local_evaluation'));
+             throw new moodle_exception(get_string('no_permissions', 'local_evaluation'));
             }
     }
 }else{

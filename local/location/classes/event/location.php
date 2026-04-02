@@ -83,7 +83,7 @@ class location{
           try{
         $institutes = $DB->insert_record('local_location_institutes', $record);
             }catch(dml_exception $ex) {
-        print_error($ex);
+        throw new moodle_exception($ex);
         }
         return $institutes;
     }
@@ -106,7 +106,7 @@ class location{
         try {
             $rooms = $DB->insert_record('local_location_room', $record);
         } catch(dml_exception $ex) {
-        print_error($ex);
+        throw new moodle_exception($ex);
         }
 
         return $rooms;

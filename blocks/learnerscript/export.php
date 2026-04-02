@@ -25,11 +25,11 @@ require_once("../../config.php");
 $id = required_param('id', PARAM_INT);
 
 if (!$report = $DB->get_record('block_learnerscript', array('id' => $id)))
-    print_error('reportdoesnotexists', 'block_learnerscript');
+    throw new moodle_exception('reportdoesnotexists', 'block_learnerscript');
 
 
 if (!$course = $DB->get_record("course", array("id" => $report->courseid))) {
-    print_error("nosuchcourseid", 'block_learnerscript');
+    throw new moodle_exception("nosuchcourseid", 'block_learnerscript');
 }
 
 // Force user login in course (SITE or Course)
@@ -44,16 +44,16 @@ if ($course->id == SITEID) {
 $PAGE->set_context($context);
 
 if (!has_capability('block/learnerscript:managereports', $context) && !(has_capability('block/learnerscript:manageownreports', $context) && $report->ownerid == $USER->id))
-    print_error('badpermissions', 'block_learnerscript');
+    throw new moodle_exception('badpermissions', 'block_learnerscript');
 
 if (!confirm_sesskey())
-    print_error('badpermissions', 'block_learnerscript');
+    throw new moodle_exception('badpermissions', 'block_learnerscript');
 
 $downloadfilename = clean_filename(format_string($report->name)) . '.xml';
 $version = $DB->get_field('config_plugins', 'value', array('plugin' => 'block_learnerscript', 'name' => 'version'));
 if (!$version) {
     if (!$version = $DB->get_field('block', 'version', array('name' => 'learnerscript'))) {
-        print_error(get_string('Pluginnotfound','block_learnerscript'));
+        throw new moodle_exception(get_string('Pluginnotfound','block_learnerscript'));
     }
 }
 

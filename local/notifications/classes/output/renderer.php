@@ -69,8 +69,8 @@ class renderer extends mainbase  {
                 JOIN {local_costcenter} lc ON concat('/',ni.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.depth = 1
                  where $cond_query ORDER BY ni.id DESC";
         } else {
-//          print_error('You dont have permissions to view this page.');
-             print_error(get_string('dont_have_permission_view_page', 'local_notifications'));
+//          throw new moodle_exception('You dont have permissions to view this page.');
+             throw new moodle_exception(get_string('dont_have_permission_view_page', 'local_notifications'));
               die();  
         }
         $notifications_info = $DB->get_records_sql($sql);

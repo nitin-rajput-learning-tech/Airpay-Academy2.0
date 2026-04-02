@@ -26,6 +26,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->version = 2022101800.03; // The current plugin version (Date: YYYYMMDDXX)
+$plugin->requires = 2022041900;  // Requires Moodle 4.0
 $plugin->component = 'local_notifications'; // Full name of the plugin (used for diagnostics).
 $plugin->maturity = MATURITY_STABLE;
 $plugin->release = '3.3.330';

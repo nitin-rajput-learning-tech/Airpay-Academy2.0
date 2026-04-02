@@ -35,7 +35,7 @@ $duplicate 	= optional_param('duplicate', 0, PARAM_BOOL);
 $report = null;
 
 if (!$course = $DB->get_record("course", array("id" => $courseid))) {
-	print_error("nosuchcourseid", 'block_learnerscript');
+	throw new moodle_exception("nosuchcourseid", 'block_learnerscript');
 }
 
 // Force user login in course (SITE or Course)
@@ -48,7 +48,7 @@ if ($course->id == SITEID) {
 }
 
 if (!has_capability('block/learnerscript:managereports', $context) && !has_capability('block/learnerscript:manageownreports', $context)) {
-	print_error('badpermissions', 'block_learnerscript');
+	throw new moodle_exception('badpermissions', 'block_learnerscript');
 }
 
 $PAGE->set_context($context);
@@ -59,18 +59,18 @@ $PAGE->requires->jquery_plugin('ui-css');
 
 if ($id) {
 	if (!$report = $DB->get_record('block_learnerscript', array('id' => $id))) {
-		print_error('reportdoesnotexists', 'block_learnerscript');
+		throw new moodle_exception('reportdoesnotexists', 'block_learnerscript');
 	}
 
 	if (!has_capability('block/learnerscript:managereports', $context) && $report->ownerid != $USER->id) {
-		print_error('badpermissions', 'block_learnerscript');
+		throw new moodle_exception('badpermissions', 'block_learnerscript');
 	}
 
 	$title = format_string($report->name);
 
 	$courseid = $report->courseid;
 	if (!$course = $DB->get_record("course", array("id" => $courseid))) {
-		print_error("nosuchcourseid", 'block_learnerscript');
+		throw new moodle_exception("nosuchcourseid", 'block_learnerscript');
 	}
 	require_once $CFG->dirroot . '/blocks/learnerscript/reports/' . $report->type . '/report.class.php';
 
@@ -115,7 +115,7 @@ $PAGE->navbar->add($title);
 if (($show || $hide) && confirm_sesskey()) {
 	$visible = ($show) ? 1 : 0;
 	if (!$DB->set_field('block_learnerscript', 'visible', $visible, array('id' => $report->id))) {
-		print_error('cannotupdatereport', 'block_learnerscript');
+		throw new moodle_exception('cannotupdatereport', 'block_learnerscript');
 	}
 	header("Location: $CFG->wwwroot/blocks/learnerscript/managereport.php");
 	die;
@@ -128,7 +128,7 @@ if ($duplicate && confirm_sesskey()) {
 	$newreport->name = get_string('copyasnoun') . ' ' . $newreport->name;
 	$newreport->summary = $newreport->summary;
 	if (!$newreportid = $DB->insert_record('block_learnerscript', $newreport)) {
-		print_error('cannotduplicate', 'block_learnerscript');
+		throw new moodle_exception('cannotduplicate', 'block_learnerscript');
 	}
 	header("Location: $CFG->wwwroot/blocks/learnerscript/managereport.php");
 	die;
@@ -188,7 +188,7 @@ if ($editform->is_cancelled()) {
 		$data->summary = !empty($data->summary) ? implode(',', array_filter($data->summary)) : '';
 		
 		if ($data->type == 'sql' && !has_capability('block/learnerscript:managesqlreports', $context)) {
-			print_error('nosqlpermissions');
+			throw new moodle_exception('nosqlpermissions');
 		}
 
 		$data->id = (new ls)->add_report($data,$context);

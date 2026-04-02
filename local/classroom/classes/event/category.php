@@ -42,7 +42,7 @@ class category {
         try {
             $categories = $DB->insert_record('local_classroom_categories', $record);
         } catch (dml_exception $ex) {
-            print_error($ex);
+            throw new moodle_exception($ex);
         }
         return $categories;
     }

@@ -696,7 +696,7 @@ class local_classroom_potential_users extends user_selector_base
         $params = array();
         $classroom = $DB->get_record('local_classroom', array('id' => $this->classroomid));
         if (empty($classroom)) {
-            print_error('classroom not found!');
+            throw new moodle_exception('classroom not found!');
         }
 
         // Now we have to go to the database.

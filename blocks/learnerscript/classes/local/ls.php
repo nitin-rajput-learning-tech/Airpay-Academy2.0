@@ -56,7 +56,7 @@ class ls {
 	public function add_report($data, $context){
 		global $CFG,$DB;
 		if (!$lastid = $DB->insert_record('block_learnerscript', $data)) {
-			print_error('errorsavingreport', 'block_learnerscript');
+			throw new moodle_exception('errorsavingreport', 'block_learnerscript');
 		} else {
 			$event = \block_learnerscript\event\create_report::create(array(
 			    'objectid' => $lastid,
@@ -82,7 +82,7 @@ class ls {
 		$data->disabletable = isset($data->disabletable) ? $data->disabletable : 0;
 		$data->summary = isset($data->summary->text) ? $data->summary->text : '';
 		if (!$DB->update_record('block_learnerscript', $data)) {
-			print_error('errorsavingreport', 'block_learnerscript');
+			throw new moodle_exception('errorsavingreport', 'block_learnerscript');
 		} else {
 	        $event = \block_learnerscript\event\update_report::create(array(
 				    'objectid' => $data->id,
@@ -180,7 +180,7 @@ class ls {
 			global $CFG, $DB;
 
 			if (!$report = $DB->get_record('block_learnerscript', array('id' => $reportid))) {
-				print_error(get_string('noreportexists', 'block_learnerscript'));
+				throw new moodle_exception(get_string('noreportexists', 'block_learnerscript'));
 			}
 			$elements = (new ls)->cr_unserialize($report->components);
 			$elements = isset($elements[$component]['elements']) ? $elements[$component]['elements'] : array();
@@ -516,44 +516,20 @@ class ls {
 	public function cr_get_context($context, $id = null, $flags = null) {
 
 		if ($context == CONTEXT_SYSTEM) {
-			if (class_exists('context_system')) {
-				return context_system::instance();
-			} else {
-				return get_context_instance(CONTEXT_SYSTEM);
-			}
+			return context_system::instance();
 		} else if ($context == CONTEXT_COURSE) {
-			if (class_exists('context_course')) {
-				return context_course::instance($id, $flags);
-			} else {
-				return get_context_instance($context, $id, $flags);
-			}
+			return context_course::instance($id, $flags);
 		} else if ($context == CONTEXT_COURSECAT) {
-			if (class_exists('context_coursecat')) {
-				return context_coursecat::instance($id, $flags);
-			} else {
-				return get_context_instance($context, $id, $flags);
-			}
+			return context_coursecat::instance($id, $flags);
 		} else if ($context == CONTEXT_BLOCK) {
-			if (class_exists('context_block')) {
-				return context_block::instance($id, $flags);
-			} else {
-				return get_context_instance($context, $id, $flags);
-			}
+			return context_block::instance($id, $flags);
 		} else if ($context == CONTEXT_MODULE) {
-			if (class_exists('context_module')) {
-				return get_context_instance::instance($id, $flags);
-			} else {
-				return get_context_instance($context, $id, $flags);
-			}
+			return context_module::instance($id, $flags);
 		} else if ($context == CONTEXT_USER) {
-			if (class_exists('context_user')) {
-				return context_user::instance($id, $flags);
-			} else {
-				return get_context_instance($context, $id, $flags);
-			}
+			return context_user::instance($id, $flags);
 		}
 
-		return get_context_instance($context, $id, $flags);
+		return context_system::instance();
 	}
 	/**
 	 * [cr_make_categories_list description]
@@ -715,7 +691,7 @@ class ls {
 	public function cr_get_reportinstance($reportid) {
 		global $DB;
 		if (!$report = $DB->get_record('block_learnerscript', array('id' => $reportid))) {
-			print_error('reportdoesnotexists', 'block_learnerscript');
+			throw new moodle_exception('reportdoesnotexists', 'block_learnerscript');
 		}
 		return $report;
 	}
@@ -790,7 +766,7 @@ class ls {
 				//return true;
 				//redirect("$CFG->wwwroot/blocks/learnerscript/managereport.php?courseid={$course->id}", get_string('reportcreated', 'block_learnerscript'));
 			} else {
-				print_error(get_string('errorimporting', 'block_learnerscript'));
+				throw new moodle_exception(get_string('errorimporting', 'block_learnerscript'));
 			}
 		}
 	}
@@ -1058,7 +1034,7 @@ class ls {
 		$properties = new stdClass();
 		$reportclass = new $reportclassname($report->id, $properties);
 		// if(!in_array($comp,$reportclass->components))
-		// 	print_error('badcomponent');
+		// 	throw new moodle_exception('badcomponent');
 
 		$elements = (new self)->cr_unserialize($report->components);
 		$elements = isset($elements[$comp]['elements'])? $elements[$comp]['elements'] : array();

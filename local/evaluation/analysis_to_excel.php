@@ -48,7 +48,7 @@ ob_end_clean();
 // Get the questions (item-names).
 $evaluationstructure = new local_evaluation_structure($evaluation);
 if (!$items = $evaluationstructure->get_items(true)) {
-    print_error('no_items_available_yet', 'local_evaluation', $url);
+    throw new moodle_exception('no_items_available_yet', 'local_evaluation', $url);
 }
 
 $mygroupid =0;

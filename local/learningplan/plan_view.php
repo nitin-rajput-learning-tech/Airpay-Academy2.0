@@ -79,7 +79,7 @@ $return_url = new moodle_url('/local/learningplan/plan_view.php',array('id'=>$id
 echo $OUTPUT->header();
 echo $learningplan_renderer->get_editand_publish_icons($id);
 if($id <= 0){
-    print_error('invalid_learningplan_id', 'local_learningplan');
+    throw new moodle_exception('invalid_learningplan_id', 'local_learningplan');
 }
 
 /**The query Check Whether user enrolled to LEP or NOT**/

@@ -28,7 +28,7 @@ $format = optional_param('format', 'csv', PARAM_ALPHA);
 
 $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
 if (!(has_capability('local/users:manage', $categorycontext) && has_capability('local/users:create', $categorycontext))) {
-    echo print_error('no permission');
+    echo throw new moodle_exception('no permission');
 }
 if ($format) {
     $fields = array(

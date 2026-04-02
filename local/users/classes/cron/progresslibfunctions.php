@@ -43,7 +43,7 @@ class progresslibfunctions {
         if (empty($columns)) {
             $cir->close();
             $cir->cleanup();
-            print_error('cannotreadtmpfile', 'error', $returnurl);
+            throw new moodle_exception('cannotreadtmpfile', 'error', $returnurl);
         }
         if (count($columns) < 2) {
             $cir->close();

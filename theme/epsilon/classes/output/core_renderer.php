@@ -1729,7 +1729,7 @@ class core_renderer extends \core_renderer {
 
         $role = $DB->get_record('role', array('id' => $roleid));
         if(!$role){
-            print_error('nopermission');
+            throw new moodle_exception('nopermission');
         }
         $context = \context::instance_by_id($contextid);
         $roles = get_user_roles($context, $USER->id);

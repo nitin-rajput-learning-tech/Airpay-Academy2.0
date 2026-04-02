@@ -45,7 +45,7 @@ if (!is_siteadmin() && has_capability('local/skillrepository:create_skill',$syst
     }
 }
 if (!has_capability('local/skillrepository:create_skill',$systemcontext) && !is_siteadmin()) {
-    print_error('Sorry, You are not accessable to this page');
+    throw new moodle_exception('Sorry, You are not accessable to this page');
 }
 
 

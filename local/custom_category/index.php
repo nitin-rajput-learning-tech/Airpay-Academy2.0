@@ -35,7 +35,7 @@ $submitbutton = optional_param('submitbutton', '', PARAM_RAW);
 
 require_login();
 if(!has_capability('local/custom_category:view_custom_category',$categorycontext)) {
-    print_error('nopermissiontoviewpage');
+    throw new moodle_exception('nopermissiontoviewpage');
 }
 $PAGE->set_url('/local/custom_category/index.php');
 $PAGE->set_context($categorycontext);

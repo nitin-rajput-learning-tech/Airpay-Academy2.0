@@ -126,7 +126,7 @@ class local_learningplan_external extends external_api {
                 $return = false;
             }
         } catch (dml_exception $ex) {
-            print_error('deleteerror', 'local_learningplan');
+            throw new moodle_exception('deleteerror', 'local_learningplan');
             $return = false;
         }
         return $return;
@@ -157,7 +157,7 @@ class local_learningplan_external extends external_api {
             }
         } catch (dml_exception $ex) {
             echo 'Message: ' .$ex->getMessage();
-            print_error('toggleerror', 'local_learningplan');
+            throw new moodle_exception('toggleerror', 'local_learningplan');
             $return = false;
         }
         return $return;

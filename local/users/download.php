@@ -107,7 +107,7 @@ if (!$users) {
     $table->id = "usertable";
     $table->head[] = $fullnamedisplay;
     foreach ($extracolumns as $field) {
-        $table->head[] = ${$field};
+        $table->head[] = $$field;
     }
     $table->head[] = get_string('login', 'local_users');
     $table->head[] = get_string('idnumber');

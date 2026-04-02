@@ -53,7 +53,7 @@ $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context
 $id = 1; 
 
 if (!has_capability('local/skillrepository:create_skill', (new \local_skillrepository\lib\accesslib())::get_module_context()) && !is_siteadmin()) {
-    print_error('Sorry, You are not accessable to this page');
+    throw new moodle_exception('Sorry, You are not accessable to this page');
 }
 $renderer = $PAGE->get_renderer('local_skillrepository');
 $filterparams = $renderer->manageskills_content(true);

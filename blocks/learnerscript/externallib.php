@@ -388,7 +388,7 @@ class block_learnerscript_external extends external_api {
         $learnerscript = $PAGE->get_renderer('block_learnerscript');
 
         if (!$report = $DB->get_record('block_learnerscript', array('id' => $reportid))) {
-            print_error('reportdoesnotexists', 'block_learnerscript');
+            throw new moodle_exception('reportdoesnotexists', 'block_learnerscript');
         }
         $properties = new stdClass();
         $properties->ls_startdate = !empty($filters['ls_fstartdate']) ? $filters['ls_fstartdate'] : 0;
@@ -635,7 +635,7 @@ class block_learnerscript_external extends external_api {
         $learnerscript = $PAGE->get_renderer('block_learnerscript');
 
         if (!$report = $DB->get_record('block_learnerscript', array('id' => $reportid))) {
-            print_error('reportdoesnotexists', 'block_learnerscript');
+            throw new moodle_exception('reportdoesnotexists', 'block_learnerscript');
         }
         $properties = new stdClass();
         $properties->ls_startdate = !empty($filters['ls_fstartdate']) ? $filters['ls_fstartdate'] : 0;
@@ -897,7 +897,7 @@ class block_learnerscript_external extends external_api {
     public static function reportobject($reportid) {
         global $DB, $CFG;
         if (!$report = $DB->get_record('block_learnerscript', array('id' => $reportid))) {
-            print_error('reportdoesnotexists', 'block_learnerscript');
+            throw new moodle_exception('reportdoesnotexists', 'block_learnerscript');
         }
         require_once($CFG->dirroot . '/blocks/learnerscript/reports/' . $report->type . '/report.class.php');
         $reportclassname = 'report_' . $report->type;
@@ -999,7 +999,7 @@ class block_learnerscript_external extends external_api {
     public static function updatereport_conditions($reportid, $conditionsdata) {
         global $CFG, $DB, $USER, $OUTPUT, $PAGE;
         if (!$report = $DB->get_record('block_learnerscript', array('id' => $reportid))) {
-            print_error('reportdoesnotexists', 'block_learnerscript');
+            throw new moodle_exception('reportdoesnotexists', 'block_learnerscript');
         }
         $conditionsdata = json_decode($conditionsdata);
         $conditions = array();
@@ -1083,7 +1083,7 @@ class block_learnerscript_external extends external_api {
         global $DB, $CFG;
         $return = array();
         if (!$report = $DB->get_record('block_learnerscript', array('id' => $reportid))) {
-            print_error('reportdoesnotexists', 'block_learnerscript');
+            throw new moodle_exception('reportdoesnotexists', 'block_learnerscript');
         }
         require_once $CFG->dirroot . '/blocks/learnerscript/reports/' . $report->type . '/report.class.php';
         $reportclassname = 'report_' . $report->type;
@@ -1391,7 +1391,7 @@ class block_learnerscript_external extends external_api {
     public static function deletecomponenet($reportid, $action, $comp, $pname, $cid, $delete) {
         global $CFG, $DB, $USER, $OUTPUT, $PAGE;
         if (!$report = $DB->get_record('block_learnerscript', array('id' => $reportid))){
-            print_error('reportdoesnotexists', 'block_learnerscript');
+            throw new moodle_exception('reportdoesnotexists', 'block_learnerscript');
         }
         $components = (new ls)->cr_unserialize($report->components);
         $elements = isset($components[$comp]['elements']) ? $components[$comp]['elements'] : array();

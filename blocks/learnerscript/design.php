@@ -31,7 +31,7 @@ $PAGE->set_context($systemcontext);
 $PAGE->set_title(get_string('design', 'block_learnerscript'));
 
 if (!$report = $DB->get_record('block_learnerscript', array('id' => $id))) {
-    print_error('reportdoesnotexists', 'block_learnerscript');
+    throw new moodle_exception('reportdoesnotexists', 'block_learnerscript');
 }
 $PAGE->requires->jquery_plugin('ui-css');
 $PAGE->requires->js('/blocks/learnerscript/js/angular.js');
@@ -63,10 +63,10 @@ if (!is_siteadmin($USER->id)) {
     require_capability('block/learnerscript:designreport', $systemcontext);
 }
 if (!$report = $DB->get_record('block_learnerscript', array('id' => $id)))
-    print_error('reportdoesnotexists', 'block_learnerscript');
+    throw new moodle_exception('reportdoesnotexists', 'block_learnerscript');
     $courseid = SITEID;
 if (!$course = $DB->get_record("course", array("id" => $courseid))) {
-    print_error(get_string('nocourseid', 'block_learnerscript'));
+    throw new moodle_exception(get_string('nocourseid', 'block_learnerscript'));
 }
 if (has_capability('block/learnerscript:managereports', $systemcontext) ||
     (has_capability('block/learnerscript:manageownreports', $systemcontext))

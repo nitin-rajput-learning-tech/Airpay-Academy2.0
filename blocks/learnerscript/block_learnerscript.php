@@ -96,7 +96,7 @@ class block_learnerscript extends block_list {
         $course = $DB->get_record('course', array('id' => $COURSE->id));
 
         if (!$course) {
-            print_error(get_string('nocourseexist', 'block_learnerscript'));
+            throw new moodle_exception(get_string('nocourseexist', 'block_learnerscript'));
         }
 
         if ($course->id == SITEID) {

@@ -22,12 +22,12 @@ $PAGE->set_url('/local/evaluation/item/captcha/print_captcha.php', array('id'=>$
 
 if ($id) {
     if (! $evaluation = $DB->get_record("local_evaluations", array("id"=>$id))) {
-        print_error('invalidcoursemodule');
+        throw new moodle_exception('invalidcoursemodule');
     }
 }
 
 if (!isset($SESSION->evaluation->item->captcha)) {
-    print_error('captchanotset', 'local_evaluation');
+    throw new moodle_exception('captchanotset', 'local_evaluation');
 }
 
 $height = 40;

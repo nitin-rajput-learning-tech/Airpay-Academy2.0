@@ -28,7 +28,7 @@ global $CFG, $PAGE, $OUTPUT,$DB, $USER;
 
 require_login();
 if (isguestuser()) {
-    print_error('noguest');
+    throw new moodle_exception('noguest');
 }
 
 $context = (new \local_costcenter\lib\accesslib())::get_module_context();

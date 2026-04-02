@@ -55,7 +55,7 @@ $strheading = get_string('pluginname', 'block_learnerscript') . ' : ' . get_stri
 $PAGE->set_title($strheading);
 
 if (!$report = $DB->get_record('block_learnerscript', array('id' => $reportid))) {
-	print_error('reportdoesnotexists', 'block_learnerscript');
+	throw new moodle_exception('reportdoesnotexists', 'block_learnerscript');
 }
 
 $PAGE->navbar->add($report->name, new moodle_url('/blocks/learnerscript/viewreport.php',
@@ -88,9 +88,9 @@ if ($mform1->is_cancelled()) {
 	$readcount = $cir->load_csv_content($content, $formdata->encoding, $formdata->delimiter_name);
 	unset($content);
 	if ($readcount === false) {
-		print_error('csvloaderror', '', $returnurl);
+		throw new moodle_exception('csvloaderror', '', $returnurl);
 	} else if ($readcount == 0) {
-		print_error('csvemptyfile', 'error', $returnurl);
+		throw new moodle_exception('csvemptyfile', 'error', $returnurl);
 	}
 	// Test if columns ok(to validate the csv file content).
 	// $filecolumns = uu_validate_user_upload_columns($cir, $stdfields, $prffields, $returnurl);

@@ -57,7 +57,7 @@ class insertrepository{
                 $process = $DB->record_exists($table, array($column=>$value));
             break;
             case 'error-operation':
-                $process = print_error(get_string('error_operation', 'local_skillrepository'));
+                $process = throw new moodle_exception(get_string('error_operation', 'local_skillrepository'));
             break;
         }
         return $process;

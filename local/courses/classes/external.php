@@ -404,7 +404,7 @@ class local_courses_external extends external_api {
         if ($validateddata) {
             if ($validateddata->id > 0) {
                 if ((int)$validateddata->parent !== (int)$coursecat->parent && !$coursecat->can_change_parent($validateddata->parent)) {
-                    print_error('cannotmovecategory');
+                    throw new moodle_exception('cannotmovecategory');
                 }
                 $category = $coursecat->update($validateddata, $mform->get_description_editor_options());
             } else {
@@ -677,7 +677,7 @@ class local_courses_external extends external_api {
             $return = false;
         }
     } catch (dml_exception $ex) {
-        print_error('deleteerror', 'local_classroom');
+        throw new moodle_exception('deleteerror', 'local_classroom');
         $return = false;
     }
     return $return;
@@ -1683,7 +1683,7 @@ class local_courses_external extends external_api {
                 $return = false;
             }
         } catch (dml_exception $ex) {
-            print_error('deleteerror', 'local_courses');
+            throw new moodle_exception('deleteerror', 'local_courses');
             $return = false;
         }
         return $return;

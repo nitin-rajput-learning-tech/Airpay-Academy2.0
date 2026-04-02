@@ -38,11 +38,11 @@ if (!$pname) {
 }
 
 if (!$report = $DB->get_record('block_learnerscript', array('id' => $id))) {
-    print_error(get_string('noreportexists','block_learnerscript'));
+    throw new moodle_exception(get_string('noreportexists','block_learnerscript'));
 }
 
 if (!$course = $DB->get_record("course", array("id" => $report->courseid))) {
-    print_error(get_string('nocourseid','block_learnerscript'));
+    throw new moodle_exception(get_string('nocourseid','block_learnerscript'));
 }
 
 // Force user login in course (SITE or Course)
@@ -55,11 +55,11 @@ if ($course->id == SITEID) {
 }
 
 if (!has_capability('block/learnerscript:managereports', $context) && !has_capability('block/learnerscript:manageownreports', $context)) {
-    print_error(get_string('badpermissions','block_learnerscript'));
+    throw new moodle_exception(get_string('badpermissions','block_learnerscript'));
 }
 
 if (!has_capability('block/learnerscript:managereports', $context) && $report->ownerid != $USER->id) {
-    print_error(get_string('badpermissions','block_learnerscript'));
+    throw new moodle_exception(get_string('badpermissions','block_learnerscript'));
 }
 
 require_once($CFG->dirroot . '/blocks/learnerscript/reports/' . $report->type . '/report.class.php');
@@ -76,7 +76,7 @@ $properties->filters = array();
 $reportclass = new $reportclassname($report->id, $properties);
 
 if (!in_array($comp, $reportclass->components))
-    print_error(get_string('badcomponent', 'block_learnerscript'));
+    throw new moodle_exception(get_string('badcomponent', 'block_learnerscript'));
 
 $PAGE->set_context($context);
 $PAGE->set_pagelayout('incourse');
@@ -128,7 +128,7 @@ if (!$cid) {
 }
 
 if (!$plugin || $plugin != $pname)
-    print_error(get_string('noplugin','block_learnerscript'));
+    throw new moodle_exception(get_string('noplugin','block_learnerscript'));
 
 require_once($CFG->dirroot . '/blocks/learnerscript/components/' . $comp . '/' . $pname . '/plugin.class.php');
 $pluginclassname = 'plugin_' . $pname;
@@ -183,7 +183,7 @@ if (isset($pluginclass->form) && $pluginclass->form) {
 
             $report->components = (new ls)->cr_serialize($allelements);
             if (!$DB->update_record('block_learnerscript', $report)) {
-                print_error(get_string('errorsaving','block_learnerscript'));
+                throw new moodle_exception(get_string('errorsaving','block_learnerscript'));
             } else {
                 redirect(new moodle_url('/blocks/learnerscript/editcomp.php', array('id' => $id, 'comp' => $comp)));
                 exit;
@@ -208,7 +208,7 @@ if (isset($pluginclass->form) && $pluginclass->form) {
             $allelements[$comp]['elements'][] = $cdata;
             $report->components = (new ls)->cr_serialize($allelements, false);
             if (!$DB->update_record('block_learnerscript', $report)) {
-                print_error(get_string('errorsaving','block_learnerscript'));
+                throw new moodle_exception(get_string('errorsaving','block_learnerscript'));
             } else {
                 redirect(new moodle_url('/blocks/learnerscript/editcomp.php', array('id' => $id, 'comp' => $comp)));
                 exit;
@@ -228,7 +228,7 @@ if (isset($pluginclass->form) && $pluginclass->form) {
     $allelements[$comp]['elements'][] = $cdata;
     $report->components = (new ls)->cr_serialize($allelements);
     if (!$DB->update_record('block_learnerscript', $report)) {
-        print_error(get_string('errorsaving','block_learnerscript'));
+        throw new moodle_exception(get_string('errorsaving','block_learnerscript'));
     } else {
         redirect(new moodle_url('/blocks/learnerscript/editcomp.php', array('id' => $id, 'comp' => $comp)));
         exit;

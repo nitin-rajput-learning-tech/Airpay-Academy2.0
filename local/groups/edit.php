@@ -51,7 +51,7 @@ if ($id) {
 } else {
     $context = context::instance_by_id($contextid, MUST_EXIST);
     if ($context->contextlevel != CONTEXT_COURSECAT and $context->contextlevel != CONTEXT_SYSTEM) {
-        print_error('invalidcontext');
+        throw new moodle_exception('invalidcontext');
     }
     $groups = new stdClass();
     $groups->id          = 0;

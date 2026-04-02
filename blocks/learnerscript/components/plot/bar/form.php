@@ -39,7 +39,7 @@ class bar_form extends moodleform {
         $components = (new block_learnerscript\local\ls)->cr_unserialize($this->_customdata['report']->components);
 
         if (!is_array($components) || empty($components['columns']['elements']))
-            print_error('nocolumns');
+            throw new moodle_exception('nocolumns');
 
         $columns = $components['columns']['elements']; 
         foreach ($columns as $c) {

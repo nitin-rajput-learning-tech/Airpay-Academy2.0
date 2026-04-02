@@ -35,7 +35,7 @@ $id = required_param('id', PARAM_INT);
 
 $groups = $DB->get_record('cohort', array('id'=>$id), '*', MUST_EXIST);
 if (empty($groups)) {
-   print_error("Groups not found");
+   throw new moodle_exception("Groups not found");
 }
 
 /// Security and access check
@@ -82,9 +82,9 @@ if ($data = $mform->get_data(false)) { // no magic quotes
     unset($content);
 
     if ($readcount === false) {
-        print_error('csvloaderror', '', $returnurl);
+        throw new moodle_exception('csvloaderror', '', $returnurl);
     } else if ($readcount == 0) {
-        print_error('csvemptyfile', 'error', $returnurl);
+        throw new moodle_exception('csvemptyfile', 'error', $returnurl);
     }
    
     $result = groups_mass_enroll($cir, $groups, $context, $data);

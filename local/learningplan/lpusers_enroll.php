@@ -50,7 +50,7 @@ if(!(is_siteadmin() || has_capability('local/learningplan:manage', $systemcontex
     $costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lp.open_path');
     $learningplans=$DB->get_records_sql($sql .$costcenterpathconcatsql,array('id'=>$planid));
     if(empty($learningplans)){
-            print_error("You don't have permissions to view this page.");
+            throw new moodle_exception("You don't have permissions to view this page.");
     }
 }
 

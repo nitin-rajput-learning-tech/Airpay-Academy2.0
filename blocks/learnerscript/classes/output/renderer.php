@@ -310,7 +310,7 @@ class renderer extends plugin_renderer_base {
 		GLOBAL $CFG, $DB, $PAGE;
 
 		if (!$report = $DB->get_record('block_learnerscript', array('id' => $reportid))) {
-			print_error(get_string('noreportexists', 'block_learnerscript'));
+			throw new moodle_exception(get_string('noreportexists', 'block_learnerscript'));
 		}
 		require_once $CFG->dirroot . '/blocks/learnerscript/components/' . $component . '/' . $pname . '/plugin.class.php';
 		$pluginclassname = 'plugin_' . $pname;

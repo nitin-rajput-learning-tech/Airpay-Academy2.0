@@ -41,7 +41,7 @@ $PAGE->navbar->add(get_string('pluginname', 'local_courses'), new moodle_url('/l
 $PAGE->navbar->add(get_string('uploadcourses', 'local_courses'));
 //$PAGE->navbar->add(get_string('manual', 'local_courses'));
 if((!has_capability('local/costcenter:create', $context)||!has_capability('local/courses:bulkupload', $context)||!has_capability('local/courses:manage', $context)||!has_capability('moodle/course:create', $context)||!has_capability('moodle/course:update', $context)) && !is_siteadmin()){
-    print_error('no access to upload courses');
+    throw new moodle_exception('no access to upload courses');
     exit;
 }
 $importid = optional_param('importid', 0, PARAM_INT);
@@ -60,9 +60,9 @@ if (empty($importid)) {
         
              
         if ($readcount === false) {
-            print_error('csvfileerror', 'tool_uploadcourse', $returnurl, $cir->get_error());
+            throw new moodle_exception('csvfileerror', 'tool_uploadcourse', $returnurl, $cir->get_error());
         } else if ($readcount == 0) {
-            print_error('csvemptyfile', 'error', $returnurl, $cir->get_error());
+            throw new moodle_exception('csvemptyfile', 'error', $returnurl, $cir->get_error());
         }
     } else {
         echo $OUTPUT->header();

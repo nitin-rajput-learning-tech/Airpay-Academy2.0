@@ -518,7 +518,7 @@ class local_onlineexams_external extends external_api
                 $return = false;
             }
         } catch (dml_exception $ex) {
-            print_error('deleteerror', 'local_classroom');
+            throw new moodle_exception('deleteerror', 'local_classroom');
             $return = false;
         }
         return $return;

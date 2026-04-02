@@ -33,7 +33,7 @@ require_once('../lib/displayLists.php');
 $context =(new \local_request\lib\accesslib())::get_module_context();
 if (has_capability('block/request:viewrecord',$context)) {
 } else {
-  print_error(get_string('cannotviewrecord', 'block_request'));
+  throw new moodle_exception(get_string('cannotviewrecord', 'block_request'));
 }
 
 $mid = required_param('id', PARAM_INT);

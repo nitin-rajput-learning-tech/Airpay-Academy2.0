@@ -60,7 +60,7 @@ if ($contextid) {
     $context =  (new \local_groups\lib\accesslib())::get_module_context();
 }
 if ($context->contextlevel != CONTEXT_COURSECAT and $context->contextlevel != CONTEXT_SYSTEM) {
-    print_error('invalidcontext');
+    throw new moodle_exception('invalidcontext');
 }
 
 $category = null;

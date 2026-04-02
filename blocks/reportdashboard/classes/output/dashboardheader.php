@@ -286,7 +286,7 @@ class dashboardheader implements renderable, templatable {
             if($admin || $depth < $filterclass->enabledepth()){
                 // var_dump();
                 // var_dump($filter);
-                ${$filter.'_options'} = $filterclass->filter_data();
+                ${$filter . '_options'} = $filterclass->filter_data();
                 $data['enable_'.$filter] = true;
             }else{
                 $data['enable_'.$filter] = false;

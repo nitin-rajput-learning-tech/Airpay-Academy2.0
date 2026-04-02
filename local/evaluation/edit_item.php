@@ -59,7 +59,7 @@ if (!$item->id && $typ === 'pagebreak') {
 
 //get the existing item or create it
 if (!$typ || !file_exists($CFG->dirroot.'/local/evaluation/item/'.$typ.'/lib.php')) {
-    print_error('typemissing', 'evaluation', $editurl->out(false));
+    throw new moodle_exception('typemissing', 'evaluation', $editurl->out(false));
 }
 
 require_once($CFG->dirroot.'/local/evaluation/item/'.$typ.'/lib.php');

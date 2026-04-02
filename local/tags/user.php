@@ -8,15 +8,15 @@ $action = optional_param('action', '', PARAM_ALPHA);
 require_login();
 
 if (empty($CFG->usetags)) {
-    print_error('tagdisabled');
+    throw new moodle_exception('tagdisabled');
 }
 
 if (isguestuser()) {
-    print_error('noguest');
+    throw new moodle_exception('noguest');
 }
 
 if (!confirm_sesskey()) {
-    print_error('sesskey');
+    throw new moodle_exception('sesskey');
 }
 
 $usercontext = context_user::instance($USER->id);
@@ -24,7 +24,7 @@ $usercontext = context_user::instance($USER->id);
 switch ($action) {
     case 'addinterest':
         if (!local_tags_tag::is_enabled('core', 'user')) {
-            print_error('tagdisabled');
+            throw new moodle_exception('tagdisabled');
         }
         $tag = required_param('tag', PARAM_TAG);
         local_tags_tag::add_item_tag('core', 'user', $USER->id, $usercontext, $tag);
@@ -34,7 +34,7 @@ switch ($action) {
 
     case 'removeinterest':
         if (!local_tags_tag::is_enabled('core', 'user')) {
-            print_error('tagdisabled');
+            throw new moodle_exception('tagdisabled');
         }
         $tag = required_param('tag', PARAM_TAG);
         local_tags_tag::remove_item_tag('core', 'user', $USER->id, $tag);
@@ -54,6 +54,6 @@ switch ($action) {
         break;
 
     default:
-        print_error('unknowaction');
+        throw new moodle_exception('unknowaction');
         break;
 }

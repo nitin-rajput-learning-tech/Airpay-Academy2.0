@@ -731,7 +731,7 @@ function program_mass_enroll($cir, $program, $categorycontext, $data) {
                             $result .= '<div class="alert alert-success">'.get_string('im:enrolled_ok', 'local_courses', fullname($user)).'</div>';
                             $enrollablecount ++;
                         } catch (dml_exception $ex) {
-                            print_error($ex);
+                            throw new moodle_exception($ex);
                         }
                     } else {
                         break;

@@ -44,7 +44,7 @@ $PAGE->set_url('/local/skillrepository/skill_category.php');
 require_login();
 
 if (!has_capability('local/skillrepository:create_skill', (new \local_skillrepository\lib\accesslib())::get_module_context()) && !is_siteadmin()) {
-    print_error('Sorry, You are not accessable to this page');
+    throw new moodle_exception('Sorry, You are not accessable to this page');
 }
 if ($id > 0){
     $string = get_string('skill_category', 'local_skillrepository') . ':' . get_string('edit_skill_category', 'local_skillrepository');

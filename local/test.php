@@ -16,7 +16,7 @@ require('../config.php');
 
 //     $role = $DB->get_record('role', array('id' => $roleid));
 //     if(!$role){
-//         print_error('nopermission');
+//         throw new moodle_exception('nopermission');
 //     }
 //     // $systemcontext = context_system::instance();
 //     $roles = get_user_roles($context, $USER->id);

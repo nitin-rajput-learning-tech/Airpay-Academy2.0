@@ -89,9 +89,9 @@ if ($data = $mform->get_data(false)) { // no magic quotes
     unset($content);
 
     if ($readcount === false) {
-        print_error('csvloaderror', '', $returnurl);
+        throw new moodle_exception('csvloaderror', '', $returnurl);
     } else if ($readcount == 0) {
-        print_error('csvemptyfile', 'error', $returnurl);
+        throw new moodle_exception('csvemptyfile', 'error', $returnurl);
     }
    
     $result = mass_enroll($cir, $course, $context, $data);

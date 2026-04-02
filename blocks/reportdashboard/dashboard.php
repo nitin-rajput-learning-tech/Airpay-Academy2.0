@@ -44,7 +44,7 @@ $contextlevel = optional_param('contextlevel', 40, PARAM_INT);
 
 require_login();
 if (isguestuser()) {
-    print_error('noguest');
+    throw new moodle_exception('noguest');
 }
 $context = (new \local_costcenter\lib\accesslib())::get_module_context(); //context_system::instance();
 $PAGE->set_context($context);
@@ -534,7 +534,7 @@ if($configuredinstances > 0){
         echo '<div class="loader"></div>';
     }
 } else {
-    print_error("notasssignedrole", 'block_learnerscript');
+    throw new moodle_exception("notasssignedrole", 'block_learnerscript');
 }
 echo html_writer::end_tag('div');
 echo $OUTPUT->footer();

@@ -38,7 +38,7 @@ if ($action !== false) {
 $PAGE->set_url($url);
 
 if (! $evaluation = $DB->get_record("local_evaluations", array("id"=>$id))) {
-    print_error('invalidcourselocalule');
+    throw new moodle_exception('invalidcourselocalule');
 }
 
 $context = (new \local_evaluation\lib\accesslib())::get_module_context();

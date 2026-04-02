@@ -38,7 +38,7 @@ class plugin_min extends pluginbase {
         if ($this->report->type != 'sql') {
             $components = cr_unserialize($this->report->components);
             if (!is_array($components) || empty($components['columns']['elements']))
-                print_error('nocolumns');
+                throw new moodle_exception('nocolumns');
 
             $columns = $components['columns']['elements'];
             $i = 0;

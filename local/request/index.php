@@ -119,7 +119,7 @@ echo $output->header();
     }
     else{
 
-        print_error('permission denied');
+        throw new moodle_exception('permission denied');
     }
 
 

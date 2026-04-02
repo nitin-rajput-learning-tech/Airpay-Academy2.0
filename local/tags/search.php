@@ -28,7 +28,7 @@ require_login();
 
 $context =(new \local_tags\lib\accesslib())::get_module_context();
 if (empty($CFG->usetags)) {
-    print_error('tagsaredisabled', 'tag');
+    throw new moodle_exception('tagsaredisabled', 'tag');
 }
 
 $query     = optional_param('query', '', PARAM_RAW);

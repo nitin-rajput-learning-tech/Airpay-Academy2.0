@@ -453,7 +453,7 @@ case 'scheduledtimings':
 	break;
 case 'generate_plotgraph':
 	if (!$report = $DB->get_record('block_learnerscript', array('id' => $reportid))) {
-		print_error('reportdoesnotexists', 'block_learnerscript');
+		throw new moodle_exception('reportdoesnotexists', 'block_learnerscript');
 	}
 	require_once($CFG->dirroot . '/blocks/learnerscript/reports/' . $report->type . '/report.class.php');
 	$reportclassname = 'report_' . $report->type;
@@ -533,7 +533,7 @@ case 'frequency_schedule':
 	break;
 case 'reportobject':
 	if (!$report = $DB->get_record('block_learnerscript', array('id' => $reportid))) {
-		print_error('reportdoesnotexists', 'block_learnerscript');
+		throw new moodle_exception('reportdoesnotexists', 'block_learnerscript');
 	}
 	require_once($CFG->dirroot . '/blocks/learnerscript/reports/' . $report->type . '/report.class.php');
 	$reportclassname = 'report_' . $report->type;
@@ -544,7 +544,7 @@ case 'reportobject':
 	break;
 case 'updatereport':
 	if (!$report = $DB->get_record('block_learnerscript', array('id' => $reportid))) {
-		print_error('reportdoesnotexists', 'block_learnerscript');
+		throw new moodle_exception('reportdoesnotexists', 'block_learnerscript');
 	}
 	require_once($CFG->dirroot . '/blocks/learnerscript/reports/' . $report->type . '/report.class.php');
 	$reportclassname = 'report_' . $report->type;
@@ -627,7 +627,7 @@ case 'plotforms':
 	break;
 case 'updatereport_conditions':
 	if (!$report = $DB->get_record('block_learnerscript', array('id' => $reportid))) {
-		print_error('reportdoesnotexists', 'block_learnerscript');
+		throw new moodle_exception('reportdoesnotexists', 'block_learnerscript');
 	}
 	$conditionsdata = json_decode($conditionsdata);
 	$conditions = array();
@@ -1157,7 +1157,7 @@ case 'departmentusers':
 case 'designdata':
 	$return = array();
 	if (!$report = $DB->get_record('block_learnerscript', array('id' => $reportid))) {
-		print_error('reportdoesnotexists', 'block_learnerscript');
+		throw new moodle_exception('reportdoesnotexists', 'block_learnerscript');
 	}
 	require_once($CFG->dirroot . '/blocks/learnerscript/reports/' . $report->type . '/report.class.php');
 	$reportclassname = 'report_' . $report->type;
@@ -1506,7 +1506,7 @@ case 'contextroles':
 case 'configureplot':
 	$return = array();
 	if (!$report = $DB->get_record('block_learnerscript', array('id' => $reportid))) {
-		print_error('reportdoesnotexists', 'block_learnerscript');
+		throw new moodle_exception('reportdoesnotexists', 'block_learnerscript');
 	}
 	require_once($CFG->dirroot . '/blocks/learnerscript/reports/' . $report->type . '/report.class.php');
 	$reportclassname = 'report_' . $report->type;

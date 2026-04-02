@@ -85,7 +85,7 @@ echo $OUTPUT->header();
 // user has capibilaty for manage users
 if (!is_siteadmin() && (!has_capability('local/users:manage', $categorycontext)&&!
     has_capability('local/users:view', $categorycontext))) {
-    echo print_error('nopermissions');
+    echo throw new moodle_exception('nopermissions');
 }
 
 $userrenderer = $PAGE->get_renderer('local_users');

@@ -41,7 +41,7 @@ $classid = optional_param('classid', 0, PARAM_INT); // ILT id
 $teamuserid = optional_param('teamuserid', 0, PARAM_INT); // ILT id
 $evaluation = $DB->get_record("local_evaluations", array("id" => $id), '*', MUST_EXIST);
 if (empty($evaluation)) {
-  print_error(get_string('feedback_not_found', 'local_evaluation'));
+  throw new moodle_exception(get_string('feedback_not_found', 'local_evaluation'));
 }
 $urlparams = array('id' => $evaluation->id, 'gopage' => $gopage,'teamuserid'=>$teamuserid);
 $PAGE->set_url('/local/evaluation/complete.php', $urlparams);
@@ -61,7 +61,7 @@ if (!has_capability('local/evaluation:view', $context)) {
 }
 
 if (!$evaluationcompletion->can_complete()) {
-  print_error('error');
+  throw new moodle_exception('error');
 }
 $superusersql = "SELECT le.id FROM {local_evaluations} AS le
   JOIN {local_evaluation_users} as leu ON leu.evaluationid=le.id
@@ -74,9 +74,9 @@ $paramsuser = array('userid' => $USER->id, 'evaluationid' => $id, 'evaluationmod
 $paramssuperuser = array('evaluationmode' => 'SP','userid' => $USER->id, 'evaluationid' => $id);
 
 if(!($DB->record_exists_sql($usersql, $paramsuser) || $DB->record_exists_sql($superusersql, $paramssuperuser))){
-  print_error(get_string('dont_have_permission', 'local_evaluation'));
+  throw new moodle_exception(get_string('dont_have_permission', 'local_evaluation'));
 }else if(!$evaluation->visible){
-  print_error(get_string('dont_have_permission', 'local_evaluation'));// hidden feedback
+  throw new moodle_exception(get_string('dont_have_permission', 'local_evaluation'));// hidden feedback
 }
 
 if ($evaluation->instance == 0) {

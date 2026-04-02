@@ -775,7 +775,7 @@ function notification_details($tablelimits, $filtervalues)
         // $costcenter = $DB->get_field_sql("SELECT u.open_costcenterid from {user} u where u.id = $USER->id");
         $concatsql .= (new \local_notifications\lib\accesslib())::get_costcenter_path_field_concatsql($columnname = 'ni.open_path');
     } else {
-        print_error('You dont have permissions to view this page.');
+        throw new moodle_exception('You dont have permissions to view this page.');
         die();
     }
 

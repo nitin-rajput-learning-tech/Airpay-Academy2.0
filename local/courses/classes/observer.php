@@ -43,7 +43,7 @@ class local_courses_observer extends \core\event\course_viewed {
         $canaccesscourse = \local_courses\courses::can_access_course($COURSE->id, $USER->id);
         if(!$canaccesscourse['status']){
             //redirect($CFG->wwwroot.'/my/dashboard.php', $message, null, NOTIFY_ERROR);
-            print_error('nopermissiontoviewpage');
+            throw new moodle_exception('nopermissiontoviewpage');
             die;
         }
     }

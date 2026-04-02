@@ -55,7 +55,7 @@ function local_request_display_admin_list($pendinglist, $includerightpanel, $inc
 				if (! $course = $DB->get_record("course", array("id"=> $req_values))) {
 					   // If the course doesn't exist anymore, just let the process continue..
 					} else { // Otherwise, start the process
-						    $context = get_context_instance(CONTEXT_COURSE, $course->id);
+						    $context = context_course::instance($course->id);
 						    if ($managerroles = get_config('', 'coursemanager')) {
 									$coursemanagerroles = explode(',', $managerroles);
 									foreach ($coursemanagerroles as $roleid) {

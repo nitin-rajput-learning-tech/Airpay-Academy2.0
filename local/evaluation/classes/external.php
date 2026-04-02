@@ -297,7 +297,7 @@ class local_evaluation_external extends external_api {
         );
         } else {
             if (!$typ || !file_exists($CFG->dirroot.'/local/evaluation/item/'.$typ.'/lib.php')) {
-            print_error('typemissing', 'evaluation', $editurl->out(false));
+            throw new moodle_exception('typemissing', 'evaluation', $editurl->out(false));
         }
         require_once($CFG->dirroot.'/local/evaluation/item/'.$typ.'/lib.php');
         $itemobj = evaluation_get_item_class($typ);

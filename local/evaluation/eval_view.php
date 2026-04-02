@@ -40,7 +40,7 @@ $PAGE->requires->js_call_amd('local_costcenter/fragment', 'init', array());
 $PAGE->requires->js_call_amd('local_evaluation/evaluation', 'load', array());
 $PAGE->requires->js_call_amd('local_evaluation/newevaluation', 'load', array());
 if (($formdata = data_submitted()) AND !confirm_sesskey()) {
-    print_error('invalidsesskey');
+    throw new moodle_exception('invalidsesskey');
 }
 $do_show = optional_param('do_show', 'edit', PARAM_ALPHA);
 $switchitemrequired = optional_param('switchitemrequired', false, PARAM_INT);
@@ -53,36 +53,36 @@ $context = (new \local_evaluation\lib\accesslib())::get_module_context($id);
 require_login();
 $PAGE->set_context($context);
 if (!has_capability('local/evaluation:edititems', $context) OR !has_capability('local/evaluation:createpublictemplate', $context) ) {
-    print_error(get_string('no_permission_to_view_this_page', 'local_evaluation')); 
+    throw new moodle_exception(get_string('no_permission_to_view_this_page', 'local_evaluation')); 
 }
 
 $evaluation = $DB->get_record('local_evaluations', array('id'=>$id));
 $costcenter=explode('/',$evaluation->open_path)[1];
 if (empty($evaluation)) {
-  print_error(get_string('feedback_not_found', 'local_evaluation'));
+  throw new moodle_exception(get_string('feedback_not_found', 'local_evaluation'));
 }
 
 if ($evaluation->plugin === "classroom"){
     $classroom = $DB->get_record('local_classroom', array('id' => $evaluation->instance));
     if (empty($classroom)) {
-        print_error(get_string('classroom_not_found', 'local_evaluation'));
+        throw new moodle_exception(get_string('classroom_not_found', 'local_evaluation'));
     }
     if ((has_capability('local/classroom:manageclassroom', (new \local_evaluation\lib\accesslib())::get_module_context())) && (!is_siteadmin()
     )) {
             if(explode('/',$classroom->open_path)[1] != $costcenter){
-             print_error(get_string('no_permissions', 'local_evaluation'));
+             throw new moodle_exception(get_string('no_permissions', 'local_evaluation'));
             }
 
     }
 }elseif ($evaluation->plugin === "program"){
     $program = $DB->get_record('local_program', array('id' => $evaluation->instance));
     if (empty($program)) {
-        print_error(get_string('program_not_found', 'local_evaluation'));
+        throw new moodle_exception(get_string('program_not_found', 'local_evaluation'));
     }
     if ((has_capability('local/program:manageprogram', (new \local_evaluation\lib\accesslib())::get_module_context())) && (!is_siteadmin()
         )) {
             if(explode('/',$classroom->open_path)[1] != $costcenter){
-             print_error(get_string('no_permissions', 'local_evaluation'));
+             throw new moodle_exception(get_string('no_permissions', 'local_evaluation'));
             }
 
     }
@@ -126,7 +126,7 @@ $create_template_form = new evaluation_edit_create_template_form(null, array('id
 if ($data = $create_template_form->get_data()) {
     // Check the capabilities to create templates.
     if (!$cancreatetemplates) {
-        print_error('cannotsavetempl', 'local_evaluation', $url);
+        throw new moodle_exception('cannotsavetempl', 'local_evaluation', $url);
     }
     $ispublic = !empty($data->ispublic) ? 1 : 0;
     if (!evaluation_save_as_template($evaluation, $data->templatename, $ispublic, $data)) {

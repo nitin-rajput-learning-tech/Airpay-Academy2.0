@@ -106,7 +106,7 @@ function block_learnerscript_plotforms_ajaxform($args) {
     $o = '';
 
     if (!$report = $DB->get_record('block_learnerscript', array('id' => $args->reportid))) {
-        print_error(get_string('noreportexists', 'block_learnerscript'));
+        throw new moodle_exception(get_string('noreportexists', 'block_learnerscript'));
     }
     require_once($CFG->dirroot . '/blocks/learnerscript/reports/' . $report->type . '/report.class.php');
     $reportclassname = 'report_' . $report->type;
@@ -275,7 +275,7 @@ function block_learnerscript_plotforms_ajaxform($args) {
                 }
                 return array('error' => false, 'data' => $validateddata);
             } catch (dml_exception $ex) {
-                print_error($ex);
+                throw new moodle_exception($ex);
             }
         }
     } else {
@@ -385,7 +385,7 @@ function block_learnerscript_schreportform_ajaxform($args) {
                     $event->trigger();
                     return array('error' => false, 'data' => $validateddata);
                 } catch (dml_exception $ex) {
-                    print_error($ex);
+                    throw new moodle_exception($ex);
                 }
             }
         } else {
@@ -471,7 +471,7 @@ function block_learnerscript_sendreportemail_ajaxform($args) {
                     $insert = $DB->insert_record('block_ls_schedule', $data);
                     return array('error' => false, 'data' => $validateddata);
                 } catch (dml_exception $ex) {
-                    print_error($ex);
+                    throw new moodle_exception($ex);
                 }
             }
         } else {

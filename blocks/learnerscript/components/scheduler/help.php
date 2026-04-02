@@ -27,7 +27,7 @@ require_once(dirname(__FILE__) . '/../../../../config.php');
 global $CFG, $DB;
 $reportid = required_param('id', PARAM_INT);
 $courseid = optional_param('courseid', SITEID, PARAM_INT);
-$systemcontext = get_context_instance(CONTEXT_SYSTEM);
+$systemcontext = context_system::instance();
 $PAGE->set_context($systemcontext);
 $PAGE->set_url('/blocks/learnerscript/components/scheduler/help.php');
 $PAGE->set_pagelayout('admin');
@@ -35,7 +35,7 @@ $strheading = get_string('pluginname', 'block_learnerscript') .' : '. get_string
 $PAGE->set_title($strheading);
 require_login();
 if (!$report = $DB->get_record('block_learnerscript', array('id' => $reportid))) {
-    print_error('reportdoesnotexists', 'block_learnerscript');
+    throw new moodle_exception('reportdoesnotexists', 'block_learnerscript');
 }
 $PAGE->set_heading($SITE->fullname);
 $PAGE->navbar->add($report->name, new moodle_url('/blocks/learnerscript/viewreport.php',

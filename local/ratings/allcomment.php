@@ -8,8 +8,8 @@ $activityid = $_REQUEST['activityid'];
 $itemid = $_REQUEST['itemid'];
 $commentarea = $_REQUEST['commentarea'];
 if (! $course = $DB->get_record("course", array("id"=>$courseid))) {
-//   print_error("Course ID not found");
-     print_error(get_string('course_id_not_found', 'local_ratings'));
+//   throw new moodle_exception("Course ID not found");
+     throw new moodle_exception(get_string('course_id_not_found', 'local_ratings'));
 }
 if($courseid==SITEID)
     $context = context_system::instance();	

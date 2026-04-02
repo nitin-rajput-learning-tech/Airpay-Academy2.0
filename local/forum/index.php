@@ -52,7 +52,7 @@ require_login();
 
 $categorycontext = (new \local_forum\lib\accesslib())::get_module_context();
 if(!has_capability('local/forum:view', $categorycontext) && !has_capability('local/forum:manage', $categorycontext) ){
-    print_error("You don't have permissions to view this page.");
+    throw new moodle_exception("You don't have permissions to view this page.");
 }
 $PAGE->set_pagelayout('standard');
 

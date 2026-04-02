@@ -47,10 +47,10 @@ $url = new moodle_url('/local/evaluation/users_assign.php', array('id' => $evalu
 $evaluation = $DB->get_record('local_evaluations', array('id'=>$evaluationid));
 $context = (new \local_evaluation\lib\accesslib())::get_module_context();
 if (empty($evaluation)) {
-  print_error(get_string('feedback_not_found', 'local_evaluation'));
+  throw new moodle_exception(get_string('feedback_not_found', 'local_evaluation'));
 }
 if (!has_capability('local/evaluation:enroll_users', $context) ) {
-    print_error(get_string('dont_have_permission', 'local_evaluation'));
+    throw new moodle_exception(get_string('dont_have_permission', 'local_evaluation'));
 }
 $PAGE->set_context($context);
 $PAGE->set_url($url);

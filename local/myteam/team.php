@@ -34,7 +34,7 @@ global $DB, $OUTPUT, $USER, $PAGE;
 // $supervisor = $DB->get_field('user', 'id', array('open_supervisorid' => $USER->id));
 $supervisor = $DB->record_exists('user', array('open_supervisorid' => $USER->id));
 if(empty($supervisor)){
-  print_error('nopermissiontoviewpage');
+  throw new moodle_exception('nopermissiontoviewpage');
 }
 
 $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();

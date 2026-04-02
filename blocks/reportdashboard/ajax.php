@@ -50,7 +50,7 @@ switch ($action) {
         $html = '';
         $report = $DB->get_record('block_learnerscript', array('id' => $reportid));
         if (!$report) {
-            print_error('reportdoesnotexists', 'block_learnerscript');
+            throw new moodle_exception('reportdoesnotexists', 'block_learnerscript');
         }
 
         if (!$report->global) {

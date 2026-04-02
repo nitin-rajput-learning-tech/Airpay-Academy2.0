@@ -27,7 +27,7 @@ use block_learnerscript\local\ls as ls;
 $courseid = optional_param('courseid', SITEID, PARAM_INT);
 $importurl = optional_param('importurl', '', PARAM_RAW);
 if (!$course = $DB->get_record("course", array("id" => $courseid))) {
-    print_error(get_string('nocourseid','block_learnerscript'));
+    throw new moodle_exception(get_string('nocourseid','block_learnerscript'));
 }
 
 // Force user login in course (SITE or Course)

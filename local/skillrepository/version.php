@@ -23,6 +23,7 @@
  */
 defined('MOODLE_INTERNAL') || die;
 $plugin->version =  2022101802;        // The current plugin version (Date: YYYYMMDDXX)
+$plugin->requires = 2022041900;        // Requires Moodle 4.0
 $plugin->component = 'local_skillrepository'; // Full name of the plugin (used for diagnostics)
 
 

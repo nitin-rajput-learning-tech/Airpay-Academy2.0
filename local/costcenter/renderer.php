@@ -53,7 +53,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
         }
 
         if (!is_siteadmin() && empty($costcenters)) {
-            print_error('notassignedcostcenter', 'local_costcenter');
+            throw new moodle_exception('notassignedcostcenter', 'local_costcenter');
         }
         $data = array();
         if(!empty($costcenters)){
@@ -314,7 +314,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
     public function costcenterview($id, $categorycontext) {
         global $DB, $USER, $OUTPUT, $CFG;
         if (!$depart = $DB->get_record('local_costcenter', array('id' => $id))) {
-            print_error('invalidschoolid');
+            throw new moodle_exception('invalidschoolid');
         }
         $edit = false;
         $delete = false;
@@ -484,7 +484,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
     public function department_view($id, $categorycontext){
         global $DB, $USER, $OUTPUT, $CFG;
         if (!$depart = $DB->get_record('local_costcenter', array('id' => $id))) {
-            print_error('invalidschoolid');
+            throw new moodle_exception('invalidschoolid');
         }
         $edit = false;
         $delete = false;

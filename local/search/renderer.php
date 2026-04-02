@@ -215,7 +215,7 @@ class local_search_renderer extends plugin_renderer_base {
 		// $completed_count = $DB->get_record_sql($ccsql);
 		// $inprogess_count = $enrolled_count - $completed_count->ccount;
 		if(!$course){
-			print_error('invalidcourseid');
+			throw new moodle_exception('invalidcourseid');
 		}
 		if(file_exists($CFG->dirroot .'/local/includes.php')){
 			require_once($CFG->dirroot .'/local/includes.php');
@@ -343,13 +343,13 @@ class local_search_renderer extends plugin_renderer_base {
         $context = \local_costcenter\lib\accesslib::get_module_context();
         $classroom_status = $DB->get_field('local_classroom','status',array('id' => $crid));
         if(!has_capability('local/classroom:view_newclassroomtab', \local_costcenter\lib\accesslib::get_module_context()) && $classroom_status==0){
-            print_error("You don't have permissions to view this page.");
+            throw new moodle_exception("You don't have permissions to view this page.");
         }
         elseif(!has_capability('local/classroom:view_holdclassroomtab', \local_costcenter\lib\accesslib::get_module_context())&& $classroom_status==2){
-            print_error("You don't have permissions to view this page.");
+            throw new moodle_exception("You don't have permissions to view this page.");
         }
         if(empty($classroom)) {
-            print_error("Classroom Not Found!");
+            throw new moodle_exception("Classroom Not Found!");
         }
         if(file_exists($CFG->dirroot.'/local/includes.php')){
         	require_once($CFG->dirroot.'/local/includes.php');
@@ -619,7 +619,7 @@ class local_search_renderer extends plugin_renderer_base {
         $program_status = $DB->get_field('local_program','status',array('id' => $programid));
 
         if(empty($program)) {
-            print_error("Program Not Found!");
+            throw new moodle_exception("Program Not Found!");
         }
         if(file_exists($CFG->dirroot.'/local/includes.php')){
         	require_once($CFG->dirroot.'/local/includes.php');

@@ -31,7 +31,7 @@ $PAGE->set_pagelayout('standard');
 $strheading = get_string('pluginname', 'local_users') . ' : ' . get_string('manual', 'local_users');
 $PAGE->set_title($strheading);
 if (!(has_capability('local/users:manage', $categorycontext) && has_capability('local/users:create', $categorycontext))) {
-    echo print_error('nopermissions');
+    echo throw new moodle_exception('nopermissions');
 }
 if ($CFG->forcelogin) {
     require_login();

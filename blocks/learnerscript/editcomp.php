@@ -26,10 +26,10 @@ $id = required_param('id', PARAM_INT);
 $comp = required_param('comp', PARAM_ALPHA);
 $courseid = optional_param('courseid', null, PARAM_INT);
 if ($comp != 'permissions') {
-    print_error(get_string('nocomponent', 'block_learnerscript'));
+    throw new moodle_exception(get_string('nocomponent', 'block_learnerscript'));
 }
 if (!$report = $DB->get_record('block_learnerscript', array('id' => $id))) {
-    print_error(get_string('noreportexists', 'block_learnerscript'));
+    throw new moodle_exception(get_string('noreportexists', 'block_learnerscript'));
 }
 
 // Ignore report's courseid, If we are running this report on a specific courseid
@@ -39,7 +39,7 @@ if (empty($courseid)) {
 }
 
 if (!$course = $DB->get_record("course", array("id" => $courseid))) {
-    print_error(get_string('nocourseid', 'block_learnerscript'));
+    throw new moodle_exception(get_string('nocourseid', 'block_learnerscript'));
 }
 
 // Force user login in course (SITE or Course).
@@ -60,10 +60,10 @@ $PAGE->requires->jquery_plugin('ui-css');
 $PAGE->requires->js('/blocks/learnerscript/js/learnerscript.js');
 
 if (!has_capability('block/learnerscript:managereports', $context) && !has_capability('block/learnerscript:manageownreports', $context))
-    print_error(get_string('badpermissions', 'block_learnerscript'));
+    throw new moodle_exception(get_string('badpermissions', 'block_learnerscript'));
 
 if (!has_capability('block/learnerscript:managereports', $context) && $report->ownerid != $USER->id)
-    print_error(get_string('badpermissions', 'block_learnerscript'));
+    throw new moodle_exception(get_string('badpermissions', 'block_learnerscript'));
 
 require_once($CFG->dirroot . '/blocks/learnerscript/reports/' . $report->type . '/report.class.php');
 
@@ -79,7 +79,7 @@ $properties->filters = array();
 $reportclass = new $reportclassname($report->id, $properties);
 
 if (!in_array($comp, $reportclass->components)){
-    print_error(get_string('badcomponent','block_learnerscript'));
+    throw new moodle_exception(get_string('badcomponent','block_learnerscript'));
 }
 
 $elements = (new block_learnerscript\local\ls)->cr_unserialize($report->components);

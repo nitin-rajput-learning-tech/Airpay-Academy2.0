@@ -145,7 +145,7 @@ class program {
             $program->totallevels = $DB->count_records('local_program_levels', array('programid' => $program->id));
             $DB->update_record('local_program', $program);
         } catch (dml_exception $ex) {
-            print_error($ex);
+            throw new moodle_exception($ex);
         }
         return $program->id;
     }
@@ -308,7 +308,7 @@ class program {
                 $event->trigger();
             }
         } catch (dml_exception $ex) {
-            print_error($ex);
+            throw new moodle_exception($ex);
         }
         return $completions->id;
     }
@@ -349,7 +349,7 @@ class program {
                 $event->trigger();
             }
         } catch (dml_exception $ex) {
-            print_error($ex);
+            throw new moodle_exception($ex);
         }
         return true;
     }
@@ -648,7 +648,7 @@ class program {
                             $email_logs = $emaillogs->program_notification($type, $touser, $USER, $local_program);
                         }
                     } catch (dml_exception $ex) {
-                        print_error($ex);
+                        throw new moodle_exception($ex);
                     }
 
             }
@@ -731,7 +731,7 @@ class program {
             $result->changecount = $progress;
             $result->program   = $local_program->name;
         } catch (dml_exception $ex) {
-            print_error($ex);
+            throw new moodle_exception($ex);
         }
         return $result;
     }
@@ -970,7 +970,7 @@ class program {
            // $event->add_record_snapshot('local_program', $program->id);
            // $event->trigger();
         } catch (dml_exception $ex) {
-            print_error($ex);
+            throw new moodle_exception($ex);
         }
         return true;
     }
@@ -1437,7 +1437,7 @@ class program {
                 }
             }
         } catch (dml_exception $ex) {
-            print_error($ex);
+            throw new moodle_exception($ex);
         }
         return $level->id;
     }

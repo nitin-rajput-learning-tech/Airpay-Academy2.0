@@ -1139,7 +1139,7 @@ class local_classroom_external extends external_api {
             }
             $return = true;
         } catch (dml_exception $ex) {
-            print_error('deleteerror', 'local_classroom');
+            throw new moodle_exception('deleteerror', 'local_classroom');
             $return = false;
         }
         return $return;
@@ -1201,7 +1201,7 @@ class local_classroom_external extends external_api {
             }
 
         } catch (dml_exception $ex) {
-            print_error($ex);
+            throw new moodle_exception($ex);
             $return = false;
         }
         $return = array(
@@ -1406,7 +1406,7 @@ class local_classroom_external extends external_api {
                 $return = false;
             }
         } catch (dml_exception $ex) {
-            print_error('deleteerror', 'local_classroom');
+            throw new moodle_exception('deleteerror', 'local_classroom');
             $return = false;
         }
         return $return;
@@ -1439,7 +1439,7 @@ class local_classroom_external extends external_api {
                 $return = false;
             }
         } catch (dml_exception $ex) {
-            print_error('deleteerror', 'local_classroom');
+            throw new moodle_exception('deleteerror', 'local_classroom');
             $return = false;
         }
         return $return;
@@ -1789,7 +1789,7 @@ class local_classroom_external extends external_api {
                 $return = false;
             }
         } catch (dml_exception $ex) {
-            print_error('deleteerror', 'local_classroom');
+            throw new moodle_exception('deleteerror', 'local_classroom');
             $return = false;
         }
         return $return;
@@ -1937,7 +1937,7 @@ public static function submit_instituteform_form_parameters() {
                 $return = false;
             }
         } catch (dml_exception $ex) {
-            print_error('unenrollerror', 'local_classroom');
+            throw new moodle_exception('unenrollerror', 'local_classroom');
             $return = false;
         }
         return $return;

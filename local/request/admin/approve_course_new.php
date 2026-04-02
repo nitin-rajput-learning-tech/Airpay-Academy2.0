@@ -38,7 +38,7 @@ $PAGE->set_title(get_string('pluginname', 'block_request'));
 $context =(new \local_request\lib\accesslib())::get_module_context();
 if (has_capability('block/request:approverecord',$context)) {
 } else {
-  print_error(get_string('cannotapproverecord', 'block_request'));
+  throw new moodle_exception(get_string('cannotapproverecord', 'block_request'));
 }
 
 

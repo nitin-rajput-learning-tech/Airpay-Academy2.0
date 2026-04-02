@@ -58,12 +58,12 @@ $PAGE->requires->js_call_amd('block_learnerscript/schedule', 'ScheduledTimings',
 
 if ($scheduledreportid > 0) {
 	if (!($scheduledreport = $DB->get_record('block_ls_schedule', array('id' => $scheduledreportid)))) {
-		print_error('invalidscheduledreportid', 'block_learnerscript');
+		throw new moodle_exception('invalidscheduledreportid', 'block_learnerscript');
 	}
 }
 
 if (!$report = $DB->get_record('block_learnerscript', array('id' => $reportid))) {
-	print_error('reportdoesnotexists', 'block_learnerscript');
+	throw new moodle_exception('reportdoesnotexists', 'block_learnerscript');
 }
 
 $PAGE->navbar->add(get_string('managereports', 'block_learnerscript'), new moodle_url('/blocks/learnerscript/managereport.php', array('courseid' => $courseid)));
@@ -73,14 +73,14 @@ $PAGE->navbar->add(get_string('schedulereport', 'block_learnerscript'));
 $PAGE->set_heading($report->name);
 
 if (!has_capability('block/learnerscript:managereports', $context) && !has_capability('block/learnerscript:manageownreports', $context)) {
-	print_error('permissiondenied');
+	throw new moodle_exception('permissiondenied');
 }
 
 $renderer = $PAGE->get_renderer('block_learnerscript');
 if ($report->type) {
 	require_once($CFG->dirroot . '/blocks/learnerscript/reports/' . $report->type . '/report.class.php');
 } else {
-	print_error('reporttypeerror', 'block_learnerscript');
+	throw new moodle_exception('reporttypeerror', 'block_learnerscript');
 }
 
 $reportclassname = 'report_' . $report->type;
@@ -88,7 +88,7 @@ $properties = new stdClass();
 $reportclass = new $reportclassname($report, $properties);
 
 if (!$reportclass->check_permissions($USER->id, $context)) {
-	print_error("badpermissions", 'block_learnerscript');
+	throw new moodle_exception("badpermissions", 'block_learnerscript');
 }
 $returnurl = new moodle_url('/blocks/learnerscript/components/scheduler/schedule.php', array('id' => $reportid, 'courseid' => $courseid));
 

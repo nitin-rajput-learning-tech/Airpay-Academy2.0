@@ -42,7 +42,7 @@ $program = $DB->get_record_sql($programsql);
 
 if (!((is_siteadmin()) || $program)) {
 
-    print_error(get_string('program_not_found', 'local_program'));
+    throw new moodle_exception(get_string('program_not_found', 'local_program'));
 }
 
 /// Security and access check
@@ -86,9 +86,9 @@ if ($data = $mform->get_data(false)) { // no magic quotes
     unset($content);
 
     if ($readcount === false) {
-        print_error('csvloaderror', '', $returnurl);
+        throw new moodle_exception('csvloaderror', '', $returnurl);
     } else if ($readcount == 0) {
-        print_error('csvemptyfile', 'error', $returnurl);
+        throw new moodle_exception('csvemptyfile', 'error', $returnurl);
     }
    
     $result = program_mass_enroll($cir, $program, $categorycontext, $data);

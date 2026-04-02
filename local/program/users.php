@@ -40,7 +40,7 @@ $programsql = "SELECT lp.*
 $program = $DB->get_record_sql($programsql);
 
 if (empty($program)) {
-    print_error('program not found!');
+    throw new moodle_exception('program not found!');
 }
 
 $PAGE->set_context($categorycontext);

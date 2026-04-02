@@ -37,7 +37,7 @@ $PAGE->navbar->add($strheading);
 $PAGE->set_heading($strheading);
 echo $OUTPUT->header();
 if (!(has_capability('local/users:create', $categorycontext) || is_siteadmin())) {
-    echo print_error('no permission');
+    echo throw new moodle_exception('no permission');
 }
 
 echo html_writer::link(new moodle_url('/local/users/'), get_string('back', 'local_users'), array('id' => 'download_users'));
