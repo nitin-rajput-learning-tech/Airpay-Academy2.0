@@ -96,7 +96,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
         $contextid =  $categorycontext->id;
 
 
-        $rolescount = $DB->count_records_sql("SELECT count(ra.roleid) FROM {context} AS ct JOIN {role_assignments} ra ON ra.contextid = ct.id  AND ct.id = '$contextid'");
+        $rolescount = $DB->count_records_sql("SELECT count(ra.roleid) FROM {context} AS ct JOIN {role_assignments} ra ON ra.contextid = ct.id AND ct.id = :ctxid", ['ctxid' => $contextid]);
 
 
 
@@ -428,7 +428,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
            $contextid =  $context->id;
 
 
-            $rolescount = $DB->count_records_sql("SELECT count(ra.roleid) FROM {context} AS ct JOIN {role_assignments} ra ON ra.contextid = ct.id  AND ct.id = '$contextid'");
+            $rolescount = $DB->count_records_sql("SELECT count(ra.roleid) FROM {context} AS ct JOIN {role_assignments} ra ON ra.contextid = ct.id AND ct.id = :ctxid", ['ctxid' => $contextid]);
 
 
             $departments_array['subdept'] = $subdept;
@@ -619,7 +619,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
 
             $contextid =  $context->id;
 
-            $rolescount = $DB->count_records_sql("SELECT count(ra.roleid) FROM {context} AS ct JOIN {role_assignments} ra ON ra.contextid = ct.id  AND ct.id = '$contextid'");
+            $rolescount = $DB->count_records_sql("SELECT count(ra.roleid) FROM {context} AS ct JOIN {role_assignments} ra ON ra.contextid = ct.id AND ct.id = :ctxid", ['ctxid' => $contextid]);
 
             $departments_array['subdept'] = $subdept;
             $departments_array['headstring'] = 'update_subdept';
