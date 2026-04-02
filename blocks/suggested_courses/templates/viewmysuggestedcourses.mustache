@@ -1,0 +1,75 @@
+{{!
+    This file is part of eAbyas
+    Copyright eAbyas Info Solutons Pvt Ltd, India
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 3 of the License, or
+    (at your option) any later version.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+    @author eabyas  <info@eabyas.in>
+}}
+
+{{#response}}
+    {{^records}}
+    {{#nodata}}
+        <div class = 'w-100 pull-left alert alert-info' style="color: #000000;">{{{nodata}}}</div>
+        {{#js}}
+            $( document ).ready(function() {
+                $('.global_filter_structure_myselectedcourses').css('display','visible');
+            });
+        {{/js}}
+    {{/nodata}}
+    {{/records}}
+    {{#viewtypeCard}}
+        <ul class='card-wrap row {{#records}}{{#action}}actions{{/action}}{{/records}}' data-region='paginate-list'>
+            {{#records}}
+                    <div class='{{cardClass}} readymainContainer d-flex'>
+                        <div id="course-{{courseid}}" class="readyCContainer w-100 catcourses_list active  crse-{{coursenums}}">
+                            <div class="course_container readycourse_container">
+                                
+                                <div class="courseimg_container">
+                                    <div style="background-image: url('{{{imageurl}}}');" alt="elearning" class="courseimg courseimg_bg h-100 p-2">
+                                        <span class="courseimg_strip text-truncate">{{coursetype}}</span>
+                                    </div>
+                                </div>
+                                <div class="readyCCnt coursecontent px-4 d-flex flex-column h-100">
+                                    <div class="d-block w-full mt-2">
+                                        <p class="course_name d-flex">
+                                            <a class="d-block"  href="{{ url }}" title="{{ title }}">{{ title }}</a>                                        
+                                        </p>
+                                    </div>
+                                    <div class="w-full mb-1 ">
+                                        <div class="coursedesc w-full">
+                                            {{# description }}
+                                                <div class="desc" title = "Course Descripton" >{{{ description }}}</div>
+                                            {{/ description }}
+                                            {{^ description }}
+                                                <p class="alert alert-info text-center mt-1">{{#str}}sss, local_courses{{/str}}</p>
+                                            {{/ description }}
+                                        </div>
+                                    </div>
+                                    <div class="w-full text-center mt-auto">
+                            
+                                    <a href="{{ url }}" class=" cat_btn viewmore_btn btn my-2">Show Course</a>
+                                       
+
+                                    </div>
+
+                                    <!--<div class="w-full pull-left mt-1">
+                                        <a href="#" class="courselist_enrollbtn btn pull-right">Enrol</a>
+                                    </div>-->
+                                </div>
+                                
+                            </div>
+                        </div>
+                    </div>
+            {{/records}}
+        </ul>
+    {{/viewtypeCard}}
+{{/response}}

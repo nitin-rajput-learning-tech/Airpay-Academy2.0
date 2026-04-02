@@ -1,0 +1,207 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template block_userdashboard/inner_tab
+
+    Select an action to execute.
+
+    Classes required for JS:
+    * none
+
+    Data attibutes required for JS:
+    * none
+
+    Context variables required for this template:
+    * message - The message to explain why we ask user to select an action
+    * choices - List of possible actions
+    * confirm - Text for button confirms
+    * cancel -  Text for button cancel
+
+    Example context (json):
+    {
+        "message": "Message",
+        "choices": [
+            { "value": "1", "text": "One" },
+            { "value": "2", "text": "Two" }
+        ],
+        "confirm": "Confirm",
+        "cancel": "Cancel"
+    }
+}}
+
+
+
+{{# plan_view_count}}
+{{# card_view}}
+<div id="{{{subtab}}}" class="tab-pane divslider active active_subtab">
+    <div class="userdashboard_content row d-flex flex-row flex-{{#enableflow}}no{{/enableflow}}wrap {{{plan_view_count}}}">
+
+        {{# moduledetails}}
+        <div class="col-sm-4 col-12 tabs_cmn_class courses_inprogress_slide elearning_inprogress  ctype_elearning d-flex" data-index="1">
+            <div class="course_container d-flex w-100">
+                <div class="courseimg_container ">
+                    <div alt="Test courses1" class="courseimg courseimg_bg" style="background-image:url('{{plan_image_url}}')">
+                            <div class="course_progress_container d-flex align-items-center">
+                                <div class="progress_circular" style="background-image: conic-gradient(white 0%, transparent 0%);"> </div>
+                                <div class="progress_status">{{lpstatus}}</div>
+                                <div class="progress_percentage">{{completedpathpercent}}%</div>
+                            </div>
+                     </div>
+
+                </div>
+                <div class="coursecontent d-flex flex-column p-2 justify-content-between">
+                    <div>
+                        <div class="d-flex mt-2">
+                            <div class="course_name  flex-grow-1">
+                                <a href="{{planUrl}}" title="{{planFullname}}">{{planFullname}}</a>
+                            </div>
+                            <div class="rating_container">
+                                <i class="fa fa-star"></i>{{ratingavg}}
+                            </div>
+                        </div>
+                        <div class="desc coursedesc"><span class="w-full pull-left">{{{planSummary}}}</span></div>
+                    </div>
+                    <div>
+                        <div class="node_container">
+                            {{# pathcourses}}
+                              <span class="node"><span title="{{coursename}}">{{coursename_string}}</span></span>
+                            {{/ pathcourses}}
+                        </div>
+                        <a href="{{planUrl}}" class="">
+                            <!-- <button class="btn btn-primary my-2 launch_btn">{{label_name}}</button> -->
+                            <button class="btn btn-primary launch_btn">{{#str}}launch, block_userdashboard{{/str}}</button>
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+            <!-- <div class="col-sm-4 col-12 tabs_cmn_class courses_inprogress_slide {{{subtab}}} ctype_learningplan" data-index="{{index}}">
+                <div class="w-full lp_container">
+                    <div class="w-full learning_plan_view">
+                        <i class="fa fa-map lpicon" aria-hidden="true" aria-label=""></i>
+                        <a class="lp_name" href="{{planUrl}}" title="{{{planFullname}}}"> {{{displayPlanFullname}}}</a>
+                        <div class="desc coursedesc mt-1 mb-1">{{{planSummary}}}</div>
+                        <div class="w-full coursespath_container">
+                            <ul class="pathcourses_list">
+                                {{# pathcourses}}
+                                    <li class="text-left">
+                                        <div class="w-full pull-left pathcourse_container" title="{{ coursename }}">
+                                            <div class="test"><div class="path_coursename"><b>{{ coursename_string }}</b></div>
+                                             <span class="path_coursround"></span>
+                                            </div>
+                                            <span class="path_coursline"></span>
+                                        </div>
+                                    </li>
+                                {{/ pathcourses}}
+                            </ul>
+                            {{^ pathcourses }}
+                            <span class="w-full pull-left text-center alert alert-info p-1 m-0">Assign 2 or more courses to see path</span>
+                            {{/ pathcourses }}
+
+                        </div>
+                        <div class="pull-right mt-10 {{#rating_element}}w-full d-flex align-items-center justify-content-between flex-row flex-wrap{{/rating_element}}">
+                            <div class="pull-left">{{{rating_element}}}</div>
+
+                              {{#course_completedon}}
+                              <a href="{{{planUrl}}}">
+                                  <button class="btn btn-sm launch_btn">{{#str}}completed_plan, local_learningplan{{/str}}</button>
+                              </a>
+                              {{/course_completedon}}
+
+                              {{^course_completedon}}
+                                 <a href="{{{planUrl}}}">
+                                     <button class="btn btn-sm launch_btn">{{label_name}}</button>
+                                </a>
+                              {{/course_completedon}}
+                        </div>
+                    </div>
+                </div>
+            </div> -->
+
+        {{/ moduledetails}}
+        {{# viewMoreCard}}
+            <!-- <div class="col-sm-6 col-12 pull-left view_more_data_card ctype_learningplan d-flex justify-content-center align-items-center">
+                <a class="center_elemet" href="{{{view_more_url}}}">{{#str}} viewmore {{/str}}</a>
+            </div> -->
+        {{/ viewMoreCard}}
+    </div>
+</div>
+{{/ card_view}}
+{{# list_view}}
+<table id ="userdashboard_table_content" class="generaltable">
+      <thead>
+          <tr>
+              <th>{{#str}}learningplanname, local_learningplan {{/str}}</th>
+              <th></th>
+              <th>{{#str}}description, local_learningplan {{/str}} </th>
+              <th>{{#str}}pathcourses, local_learningplan {{/str}}</th>
+             </tr>
+    </thead>
+    <tbody>
+          {{# moduledetails}}
+         <tr>
+            <td>
+              <a class="lp_name" href="{{{planUrl}}}" title="{{{planFullname}}}"> {{{displayPlanFullname}}}</a>
+            </td>
+            <td>
+            <!--   <a href="{{{planUrl}}}">
+                  <button class="btn btn-sm launch_btn">{{#str}}launch, block_userdashboard{{/str}}</button>
+              </a>
+                {{{ copyaction }}} -->
+
+              {{#course_completedon}}
+                <a href="{{{planUrl}}}">
+                    <button class="btn btn-sm launch_btn">{{#str}}completed_plan, local_learningplan{{/str}}</button>
+                </a>
+               {{/course_completedon}}
+
+               {{^course_completedon}}
+                  <a href="{{{planUrl}}}">
+                        <button class="btn btn-sm launch_btn">{{label_name}}</button>
+                  </a>
+                {{/course_completedon}}
+                {{{ copyaction }}}
+
+            </td>
+
+
+            <td> {{{planSummary}}} </td>
+            <td>
+              {{# pathcourses}}
+                  <div class="test"><div class="path_coursename">{{ coursename }}</div>
+                  </div>
+             {{/ pathcourses}}
+
+              {{^ pathcourses }}
+                   <span>Assign 2 or more courses to see path</span>
+              {{/ pathcourses }}
+           </td>
+        </tr>
+        {{/ moduledetails}}
+    </tbody>
+</table>
+{{/ list_view}}
+{{/ plan_view_count}}
+
+{{^ plan_view_count}}
+    {{> block_userdashboard/userdashboard_nodata_text}}
+{{/ plan_view_count}}
+
+{{#enableslider}}
+    {{> block_userdashboard/userdashboard_enable_slider}}
+{{/enableslider}}

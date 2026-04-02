@@ -1,0 +1,23 @@
+<div class="rooms">
+    <span class="roomsiconimage">{{ iconimage }}</span>
+    <h2 class='tmhead2'>{{# str }}session_details, local_classroom {{/ str }}</h2>
+</div>
+<table style="width: 100%;">
+    <tr style="border-top:1px solid #ccc;border-bottom:1px solid #ccc;height: 50px;">
+        <td class="crm_details">{{# str }}name, local_classroom {{/ str }} :</td>
+        <td>{{ sessiondata.name }}</td>
+    </tr>
+    <tr style="border-top:1px solid #ccc;border-bottom:1px solid #ccc;height: 50px;">
+        <td class="crm_details">{{# str }}session_timings, local_classroom {{/ str }}:</td>
+        <td>{{#userdate}} {{sessiondata.timestart}}, {{#str}} strftimedatetime {{/str}} {{/userdate}} to {{#userdate}} {{sessiondata.timefinish}}, {{#str}} strftimedatetime {{/str}} {{/userdate}} </td>
+    </tr>
+
+    <tr style="border-top:1px solid #ccc;border-bottom:1px solid #ccc;height: 50px;">
+        <td class="crm_details">{{# str }}duration, local_classroom {{/ str }}:</td>
+        <td>{{ sessiondata.duration }} {{#str}} hours {{/str}}</td>
+    </tr>
+    <tr style="border-top:1px solid #ccc;border-bottom:1px solid #ccc;height: 50px;">
+        <td class="crm_details">{{#str}} trainer, local_classroom {{/str}}:</td>
+        <td>{{ sessiondata.trainername }}</td>
+    </tr>
+</table>

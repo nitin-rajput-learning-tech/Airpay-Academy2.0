@@ -1,0 +1,56 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template catalog/select box
+
+    Displays select box
+}}
+
+<div class="col-12 pull-left mt-10" id="avaliable_courses">
+    <div id="filterviewdiv" class="border-bottom pb-2">
+       <div class="row">
+            <div class="col-6">
+                <h4 class="my-2">Search</h4>
+            </div>
+            <div class="col-6" >
+                <div id="page-navbar" class="py-1" >
+                    <nav aria-label="Navigation bar">
+                        <ol class="breadcrumb justify-content-end mr-2" style="justify-content: end;margin-right: 10px;">
+                            <li class="breadcrumb-item">
+                                <a href="{{config.wwwroot}}/my/dashboard.php">{{#str}}myhome{{/str}}</a>
+                            </li>
+                            <li class="breadcrumb-item">{{#str}}availablecourses{{/str}}</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+
+            <div class="col-md-12 d-flex align-items-center ">
+                <div class="d-flex align-items-center my-3 w-100">
+                    <div class="form-group flex-grow-1" id="searchinputformgroup">
+                        <span id="searchicon"><img src="pix/search.png" alt="img"></span>
+                        <input id="search" ng-keyup="filterbyname(tab)" type="text" class="form-control" aria-labelledby="search" aria-describedby="search" placeholder="{{#str}}search_for_courses,local_search{{/str}}" />
+                    </div>
+                    <div class="d-block d-md-none">
+                        <button class="btn btn-primary" id="show_filters_btn"><img src="pix/filters.png" alt="img"></button> 
+                    </div>
+                </div>
+                
+            </div>
+       </div>
+    </div>
+</div>

@@ -1,0 +1,339 @@
+#page-local-program-view .actionicons.quick_actions_list1 .options_container:after{left:-72px}#page-local-program-view .actionicons.quick_actions_list1 .options_container{background-color:transparent !important}#page-local-program-view .actionicons.quick_actions_list1 .options_container li{background-color:#1177d1;border-radius:5px}#page-local-program-view .actionicons.quick_actions_list1 .options_container, #page-local-program-view .quick_actions_list1.options_container:hover{left:87px;right:-18px;transform:rotate(90deg);top:71px;background-color:transparent}#page-local-program-view .custom_header{color:#fff;background:repeating-linear-gradient(45deg, #606dbc, #606dbc 10px, #465298 10px, #465298 20px);padding:10px;margin-bottom:15px}#page-local-program-view .custom_header_tittle{width:50%}#page-local-program-view .custom_btn_dv{float:right;margin-top:-35px}#page-local-program-view .ui-dialog{left:36% !important;top:35% !important;margin-left:-175px !important;margin-top:-175px !important}.path-local-program .actionicons.quick_actions_list4.opened .options_container{top:-32px;right:-40px}.actionicons .options_container:after{left:45px}#page-local-program-index .crstatus_tabs_list{background-color:#dcecf9;border-radius:8px 8px 0 0}#page-local-program-index #status_tabs .program_tabs{width:75%;margin:auto;float:none;line-height:2.2rem;border-bottom:none}#viewprogramusers_wrapper{overflow:auto;width:100%}#page-local-program-index #status_tabs .program_tabs .nav-item{width:16%;float:left;margin:0}#page-local-program-index #status_tabs .program_tabs .nav-item .nav-link{border:none;text-align:center;font-size:15px;color:#55595c;border-bottom:3px solid transparent}#viewprograms_paginate{float:right}#page-local-program-index #status_tabs .program_tabs .nav-item .active.nav-link{background:0 0}#page-local-program-index #status_tabs .program_tabs .nav-item .active.nav-link[aria-controls=allclasses]{border-bottom:3px solid #3f51b5}#page-local-program-index #status_tabs .program_tabs .nav-item .active.nav-link[aria-controls=newclasses]{border-bottom:3px solid #2f757d}#page-local-program-index #status_tabs .program_tabs .nav-item .active.nav-link[aria-controls=activeclasses]{border-bottom:3px solid #1177d1}#page-local-program-index #status_tabs .program_tabs .nav-item .active.nav-link[aria-controls=holdclasses]{border-bottom:3px solid #f7941d}#page-local-program-index #status_tabs .program_tabs .nav-item .active.nav-link[aria-controls=completedclasses]{border-bottom:3px solid #0b9444}#page-local-program-index #status_tabs .program_tabs .nav-item .active.nav-link[aria-controls=cancelledclasses]{border-bottom:3px solid #ec1b23}#page-local-program-index #status_tabs .program_tabs .nav-item .nav-link span.status_icon{width:22px;float:left;color:#fff;background-size:100% 100%;background-repeat:no-repeat;background-position:center center;height:30px}#page-local-program-index #status_tabs .program_tabs .nav-item .nav-link span.status_icon i.fa{float:left;width:21px;color:#fff;margin-top:6px;font-size:12px}#page-local-program-index #viewprograms_wrapper .row:first-child{padding:0 15px}#page-local-program-index #viewprograms .classesimg{width:100%;height:160px;position:relative;background-size:cover;background-repeat:no-repeat;background-position:center center;background-color:#fff}#viewprograms, #viewprograms tbody td, #viewprograms thead th{border:none}#page-local-program-index #viewprograms tbody tr{background:0 0}.dataContainer p{font-size:14px}.dataContainer .dataContainer_left .bc_value{display:flex}.program_actions a{padding:0 12px}#page-local-program-index .bg_banner{position:absolute;padding:0 5px 0;top:9px;right:10%;color:#fff}.cr_statusicon{margin-top:7px;margin-right:10px;font-size:17px !important}#page-local-program-index .classname_strip{width:85%;float:left;position:absolute;top:20px;left:0;background-color:#00adef;padding:2px 8px;-webkit-clip-path:polygon(0 0, 85% 0, 100% 100%, 0 99%);clip-path:polygon(0 0, 90% 0, 100% 100%, 0 99%);text-transform:capitalize;color:#fff;opacity: .9}.nocourses{font-size:12px}.datacontent a:hover{text-decoration:none}.programcontainer_btm{border-top:1px solid #ddd;font-weight:200;border-radius:0 0 16px 16px;min-height:85px}.programcontainer_btm .alert.alert-info{color:#fff}.programcontainer_btm .alert.alert-info.no_trainers{color:#31708f !important}#page-local-program-index #viewprograms .trainer_header{border-bottom:1px solid #eee;font-weight:700;width:100px}#page-local-program-index #viewprograms{width:100% !important}#page-local-program-index #viewprograms>thead{display:none}#page-local-program-index #viewprograms_wrapper .row .col-sm-6:first-child{display:none}#viewprograms_filter{float:left}#viewprograms .trainer_img{border-radius:50%}#viewprograms .trainer_details{width:50%;float:left}#viewprograms .trainerdetails{float:left;display:inline-grid}#viewprograms .dataContainer .moretrainers{margin-top:-25px;width:55%;float:right}#viewprograms .program_container .bccolon{margin-right:5px}#viewprograms .viewmorelink{padding:8px 25px;color:#fff;webkit-clip-path:polygon(10% 0, 100% 0, 100% 100%, 0 100%);clip-path:polygon(10% 0, 100% 0, 100% 100%, 0 100%);background-color:#f26722}#viewprograms .crcourseslist{list-style:none}#viewprograms .crcourseslist li:before{content:"f105";font-family:fontAwesome;float:left;padding-right:15px;font-size:16px}#viewprograms .viewmorestrip{padding:0 0 25px}#viewprograms .dataContainer .trainer_details .trainername{width:100%;float:left;font-size:15px}#viewprograms .dataContainer .trainer_details .trainerdesignation{font-size:11px;width:75%;float:left;margin-top:-3px}#viewprograms .dataContainer .viewmorebtn{padding:2px 7px;background-color:#00adef;border:1px solid #00adef}#page-local-program-index #programcontent .alert.alert-info.noclasses{margin-top:20px}#page-local-program-index #viewprograms thead th{display:none}#page-local-program-index .course_extended_menu_list{top:-20px}#viewprograms .coursesContainer{min-height:85px;max-height:85px}#page-local-program-view .classviewimg{width:100%;height:150px;border-radius:12px;position:relative;background-repeat:no-repeat;background-position:center center;background-size:100% 100%}#page-local-program-view .classview_topcontent_right{padding-left:30px}#page-local-program-view .classname_strip{width:75%;float:left;position:absolute;top:25px;background-color:#00adef;padding:2px 8px;-webkit-clip-path:polygon(0 0, 100% 0, 90% 100%, 0 100%);clip-path:polygon(0 0, 100% 0, 90% 100%, 0 100%);text-transform:capitalize;color:#fff;opacity: .9}#viewprograms .crcourseslist a{font-size:12px;color:initial}#page-local-program-view .trainers_scroll span{width:100%;float:left}#page-local-program-view .classname_strip .coursename{font-size:18px}#page-local-program-view .enrol_strip a{color:#fff}#page-local-program-view .enrol_strip button{background:0 0;border:none;padding:0}#page-local-program-view .enrol_strip button:before{content:"f044";font-family:fontAwesome;font-size:25px;vertical-align:middle}#page-local-program-view .enrol_strip{width:55%;float:right;position:absolute;bottom:25px;right:0;background-color:#00adef;-webkit-clip-path:polygon(10% 0, 100% 0, 100% 100%, 0 100%);clip-path:polygon(10% 0, 100% 0, 100% 100%, 0 100%);text-align:center;color:#fff;padding:10px 20px;font-size:20px;opacity: .8}#page-local-program-view .enrol_strip .enroll i.fa{font-size:31px;vertical-align:middle}#page-local-program-view .lable_name{min-width:180px;float:left}#page-local-program-view .contentlist{margin-bottom:3px}#page-local-program-view .topcontent_right_middle{font-size:14px}#page-local-program-view .classdetails_left{padding-left:0;min-height:80px}#page-local-program-view .classdetails_right{border-left:1px solid #ddd}#page-local-program-view .trainerimg{border-radius:50%}#page-local-program-view .trainer-prev{position:absolute;left:0;margin-top:30px;cursor:pointer;font-weight:900;font-size:35px !important;padding:0 10px;margin-left:-11px;z-index:1;color:#ddd}#page-local-program-view .trainer-next{position:absolute;right:0;margin-top:30px;cursor:pointer;font-weight:900;font-size:35px !important;padding:0 10px;margin-right:-10px;z-index:1;color:#ddd}#page-local-program-view .createicon{cursor:pointer}#page-local-program-view .createpopicon{float:right;position:absolute;top:-20px;right:45px;width:40px;height:40px;padding:0;border-radius:4px;font-size:25px;padding:8px 10px;background-color:#e7e8ea;cursor:pointer;color:#f26723}#page-local-program-view .createpopicon.cr_usericon{padding:8px}#page-local-program-view .tab-content{padding:0 15px;position:relative}#page-local-program-view .nav-tabs .nav-item{color:#55595c;text-align:center;position:relative}#viewprogramsessions_wrapper .row .col-sm-6:first-child{display:none}#page-local-program-view table thead{background-color:#2b2f3b;color:#fff}#page-local-program-view table{border:1px solid #ddd;min-width:400px}#page-local-program-view table tbody td i.fa{font-size:17px;padding-right:15px;vertical-align:middle}#page-local-program-view table thead tr th{text-align:center}#page-local-program-view table tbody tr td{border-bottom:1px solid #ddd;padding:15px 8px;text-align:center}#page-local-program-view table.dataTable thead tr th:first-child{text-align:left !important}#page-local-program-view table.dataTable tbody tr td:first-child{text-align:left !important}#page-local-program-view table tbody tr td:focus{outline:0}#page-local-program-view .course_extended_menu_list li button{background:#e7e8ea;color:#f26723;border:none;padding:9px 13px}#page-local-program-view #vieweprogramcourses thead{background-color:#2b2f3b;color:#fff}#page-local-program-view .viewprogramusers{display:inline-block;float:right;margin-bottom:10px}#page-local-program-enrollusers .dual_select option{padding:5px}body#page-local-program-attendance form#formattendance input[type=submit]{margin-right:5px}body#page-local-program-index .course_extended_menu_list .sec_program_icon{position:absolute;left:19px;top:3px;font-size:18px;color:#007b78}.custom_program_icon{background-image:url([[pix:theme_epsilon|scheme_icons/bcscheme1]]);width:25px;height:22px;margin-right:10px;background-repeat:no-repeat;float:left;-webkit-background-size:50% 50%;background-size:50% 50%;background-position:center}.organization_scheme1 .custom_program_icon, .theme_scheme1 .custom_program_icon{background-image:url([[pix:theme_epsilon|scheme_icons/bcscheme1]])}.organization_scheme2 .custom_program_icon, .theme_scheme2 .custom_program_icon{background-image:url([[pix:theme_epsilon|scheme_icons/bcscheme2]])}.organization_scheme3 .custom_program_icon, .theme_scheme3 .custom_program_icon{background-image:url([[pix:theme_epsilon|scheme_icons/bcscheme3]])}.organization_scheme4 .custom_program_icon, .theme_scheme4 .custom_program_icon{background-image:url([[pix:theme_epsilon|scheme_icons/bcscheme4]])}.organization_scheme5 .custom_program_icon, .theme_scheme5 .custom_program_icon{background-image:url([[pix:theme_epsilon|scheme_icons/bcscheme5]])}.openLMStransition.local_program .modal-title .bootcamp_icon_wrap{float:left;width:25px;height:25px;margin-top:3px;margin-right:7px;background-image:url([[pix:theme_epsilon|scheme_icons/bcscheme1]]);background-repeat:no-repeat;background-size:100% 100%}body#page-local-program-index .course_extended_menu_list .createiconchild{right:4px;top:22px}@media screen and (min-width:0){body#page-local-program-index .course_extended_menu_list .createiconchild{right:4px;top:22px}body#page-local-program-index .course_extended_menu_list .createicon{display:inline-block}}@-moz-document url-prefix(){body#page-local-program-index .course_extended_menu_list .createiconchild{right:2px;top:24px}}#page-local-program-index #status_tabs .program_tabs .nav-item .nav-link[aria-controls=allclasses] i.fa{color:#3f51b5}#page-local-program-index #status_tabs .program_tabs .nav-item .nav-link[aria-controls=newclasses] i.fa{color:#2f757d}#page-local-program-index #status_tabs .program_tabs .nav-item .nav-link[aria-controls=activeclasses] i.fa{color:#1177d1}#page-local-program-index #status_tabs .program_tabs .nav-item .nav-link[aria-controls=holdclasses] i.fa{color:#f7941d}#page-local-program-index #status_tabs .program_tabs .nav-item .nav-link[aria-controls=cancelledclasses] i.fa{color:#ec1b23}#page-local-program-index #status_tabs .program_tabs .nav-item .nav-link[aria-controls=completedclasses] i.fa{color:#0b9444}#page-local-program-index .program_container:hover .actionicons{visibility:visible}#page-local-program-index .actionicons{visibility:hidden}body#page-local-program-index .program_container.inactive_program{opacity: .5}body#page-local-program-index .actionicons.quick_actions_list3.opened .options_container{top:-30px;right:-25px}body#page-local-program-index .quick_actions_list3.options_container:hover{top:-30px;right:-25px}body#page-local-program-index #status_tabs .program_container .programname_status .options_container input[type=submit]{background:0 0;border:none}body#page-local-program-enrollusers #filters_form.collapsibleregion{overflow:visible}#page-local-program-index #id_enddate_calendar, #page-local-program-index #id_nomination_enddate_calendar, #page-local-program-index #id_nomination_startdate_calendar, #page-local-program-index #id_startdate_calendar, #page-local-program-view #id_enddate_calendar, #page-local-program-view #id_nomination_enddate_calendar, #page-local-program-view #id_nomination_startdate_calendar, #page-local-program-view #id_startdate_calendar, #page-local-program-view #id_timeclose_calendar, #page-local-program-view #id_timefinish_calendar, #page-local-program-view #id_timeopen_calendar, #page-local-program-view #id_timestart_calendar{display:none !important}#page-local-program-view .cr_status_icon.cr_status_band{position:absolute;right:-4px;text-align:center;color:#fff;min-height:22px;bottom:25px}#page-local-program-view .cr_status_icon.cr_status_band .cr_status_strip{background-color:#5b83bd;color:#fff;padding:7px 25px;border-radius:8px 0}#page-local-program-view .cr_status_icon.cr_status_band .cr_status_strip:before{font-family:FontAwesome;margin-right:15px;font-size:19px;vertical-align:middle}#page-local-program-view .seats_icon{line-height:27px}#page-local-program-view .seat_img{width:16px;height:16px;color:#444;font-size:16px}#page-local-program-view .seats_count{font-size:17px;font-weight:300;line-height:30px}.crseats_progress{margin-top:8px}#page-local-program-view .crseats_progress .progress{height:14px !important;border-radius:8px !important;background-color:#1177d1 !important}#page-local-program-view .crseats_progress .progress .progress-bar-success{background-color:#75c03d !important}#page-local-program-view .crseats_progress .progress .progress-bar{line-height:14px !important}#page-local-program-view .crseats_progress .progress .progress-bar-percent-value{color:#fff;padding-left:10px;text-align:center}body#page-local-program-index .anch{width:10%;float:right}#page-local-program-attendance .attendance_continue{position:relative;left:0;bottom:36px}@media (max-width:1368px) and (min-width:1200px){.sideways.tabs-left{left:-58px !important}}@media (max-width :1250px){#page-local-program-index #status_tabs .program_tabs{width:100%}}@media (max-width:1259px){.dataContainer p{margin-bottom:5px}}@media (min-width:768px) and (max-width:1259px){.dataContainer .dataContainer_left{width:100%;float:left;max-width:100%}}@media (max-width:1195px){#page-local-program-index .programicon_container{display:none}#page-local-program-index #status_tabs .program_container .programname_status{height:45px !important}}@media (min-width:1024px) and (max-width:1199px){.sideways.tabs-left{left:-63px !important}}@media (max-width :1024px){#page-local-program-view .classname_strip{width:90%;-webkit-clip-path:none;clip-path:none}#page-local-program-view .enrol_strip{width:90%}#page-local-program-view .topcontent_right_middle{font-size:14px}#page-local-program-view .lable_name{min-width:130px;float:left}body#page-local-program-view #programmodulescontent{overflow-x:auto}}@media (min-width:1025px) and (max-width:1199px){#page-local-program-view .nav-tabs .nav-link.active, #page-local-program-view .nav-tabs .nav-link.active:focus, #page-local-program-view .nav-tabs .nav-link.active:hover{margin-top:-12px}#page-local-program-view .programview_tabscontainer .nav-tabs .nav-link{margin-top:0}#page-local-program-view .showoptions{margin-top:10px}}@media (max-width :991px){#page-local-program-view .classviewimg{-webkit-background-size:cover;background-size:cover}}@media(min-width:620px) and (max-width:1195px){#page-local-program-index .program_container{min-height:250px}}@media (min-width:860px) and (max-width:1023px){.sideways.tabs-left{left:-68px !important}}@media (min-width:700px) and (max-width:859px){.sideways.tabs-left{left:-68px !important}}@media(min-width:620px) and (max-width:892px){#page-local-program-index #viewprograms tbody tr{display:block}#page-local-program-index #viewprograms tbody tr td{width:50% !important;float:left;box-sizing:border-box}}@media (min-width:620px) and (max-width:770px){.dataContainer p{font-size:13px}}@media (max-width :768px){#page-local-program-index #status_tabs .program_tabs{width:100%}#page-local-program-index #viewprograms thead{display:none}}@media (max-width :767px){#page-local-program-view .description{min-height:inherit;max-height:inherit}#page-local-program-view .classdetails_left{border-right:none;border-bottom:1px solid #ddd}#page-local-program-view .levelcourse_middle{width:80%}
+/*	#page-local-program-view .levelcourse_right{width:20%}*/
+	#page-local-program-view .lpcourse_content{padding-left:0;padding-right:0}#page-local-program-view .classdetails_left{margin:15px 0;border-bottom:1px solid #ddd}#page-local-program-view .classdetails_right{padding-left:0}#page-local-program-view .trainers_scroll_right{padding-left:10px}#page-local-program-view .classviewimg{-webkit-background-size:100%;background-size:cover}#viewprograms .dataContainer .description{margin-top:10px}#page-local-program-view .createpopicon{position:static}#page-local-program-view .classdetails_right{border-left:0}body.path-local-program .nav-tabs.inner_tabs .nav-link{border-bottom:5px solid transparent}#page-local-program-view .addcourse{margin-right:5px}body#page-local-program-view .levetabscontent_container .levelcourse_list .course_actions a .icon, body#page-local-program-view .programview_tabscontainer .levetabscontent_container .levelcourse_list .addsession_link{line-height:normal}}@media (max-width:689px){#page-local-program-index #status_tabs .program_container .programname_status .class_name{font-size:14px !important}}@media (min-width:543px) and (max-width:699px){.sideways.tabs-left{left:-71px !important}}@media (max-width:619px){#page-local-program-index #viewprograms tbody tr td{width:100% !important;float:left;box-sizing:border-box}}@media (min-width:422px) and (max-width:542px){.sideways.tabs-left{left:-73px !important}}@media (max-width :425px){#page-local-program-index .program_container.programnew{width:100%;float:left}}@media (max-width:421px){.sideways.tabs-left{left:-75px !important}}@media (max-width :375px){#page-local-program-view .classname_strip{width:100%}#page-local-program-view .classname_strip .coursename{font-size:14px}#page-local-program-view .classname_strip .start_end{font-size:11px}#page-local-program-view .enrol_strip{font-size:15px}#page-local-program-view .enrol_strip .enroll i.fa{font-size:26px}#page-local-program-view .classview_topcontent_right h3{font-size:14px}#page-local-program-view .topcontent_right_middle{font-size:12px}#page-local-program-view .lable_name{min-width:115px}#page-local-program-attendance #sessionDetails tbody tr td p{display:inline-flex}}@media (max-width:335px){body#page-local-program-attendance form#formattendance input[type=submit]{display:block}#page-local-program-attendance .attendance_continue{position:static;float:left !important}}#page-local-program-index .department_select, #page-local-program-view .department_select{display:none}.path-local-program #region-main .card.card-block{overflow-x:visible}body.path-local-program .nav-tabs.inner_tabs .nav-link{border-bottom:5px solid transparent}body.path-local-program .ui-dialog.ui-widget{z-index:1053 !important}body.path-local-program .ui-widget-overlay{z-index:1052 !important}body.path-local-program .ui-dialog .ui-dialog-content, body.path-local-program .ui-draggable .ui-dialog-titlebar{float:left;width:100%}body.path-local-program .dataTables_wrapper .dataTable{width:100% !important;float:left}#page-local-program-index .card.card-block{background-color:#fff;padding:0;border:1px solid #ddd}#page-local-program-index #status_tabs{width:100%;float:left;background-color:#fff;border-radius:12px}#page-local-program-index #viewprograms tbody tr td{width:33.33%;padding:15px 10px}#page-local-program-index .program_container{background-color:#fff;box-sizing:border-box;border-radius:12px 12px 0 0;position:relative;box-shadow:0 0 5px 3px #ddd;border-bottom:3px solid #297b77}#page-local-program-index #status_tabs .program_container .programname_status{padding:10px 15px;height:60px}#page-local-program-index #status_tabs .program_container .programname_status .class_name{font-weight:700;font-size:18px}#viewprograms .dataContainer .lable_name{min-width:86px;float:left}#viewprograms .dataContainer .bcleftlable_name{min-width:86px;float:left}.program_name{line-height:30px}.programicon_container{background-color:#297b77;border:none;float:left;padding:5px;margin-right:15px;border-radius:5px}.programicon{width:25px;height:25px}#viewprograms .dataContainer .description{width:100%;float:left;min-height:89px;word-break:break-all}#page-local-program-view .programview_container{width:100%;float:left;padding:15px;background-color:#fff}#page-local-program-view .description p{font-size:15px}
+{padding-left:20px}#page-local-program-view .programview_tabscontainer .nav-tabs{border-bottom:none;display:inherit}#page-local-program-view .programview_tabscontainer .nav-tabs .nav-link{border:none;background:#ccc;color:#fff;float:left;border-top-right-radius:8px;border-top-left-radius:8px;font-size:18px;font-weight:700;line-height:17px;margin-top:-25px;word-break:break-all;padding-left:4px;padding-right:4px;min-width:132px}#page-local-program-view .programview_tabscontainer .nav-tabs .nav-item+.nav-item{margin-left:0}#page-local-program-view .nav-tabs .nav-link.active, #page-local-program-view .nav-tabs .nav-link.active:focus, #page-local-program-view .nav-tabs .nav-link.active:hover{background:#1177d1;border:none;line-height:30px !important;margin-top:-37px}#page-local-program-view .programview_tabscontainer{background-color:#fff;padding:0 15px;width:100%;float:left;border-radius:0 0 8px 8px}#page-local-program-view .programview_tabscontainer .leveltabs_list{width:2%;float:left}#page-local-program-view .programview_tabscontainer .levetabscontent_container{border:1px solid #c8c1c1;border-radius:16px;width:98%;float:left;position:relative;z-index:1}
+#page-local-program-view .programview_tabscontainer .levetabscontent_container .levelcourse_list
+{
+	position:relative;
+	line-height:30px;
+}
+#page-local-program-view .levetop_icons{position:relative;right:60px}#page-local-program-view .addcourse{font-size:17px;color:#297b77;font-weight:700;margin-top:13px;text-decoration:underline}#page-local-program-view .programview_tabscontainer .levetabscontent_container .levelcourse_list .levelcourse_left .coursename{line-height:30px}#page-local-program-view .programview_tabscontainer .levetabscontent_container .levelcourse_list .levelcourse_left .coursename a, #page-local-program-view .programview_tabscontainer .levetabscontent_container .levelcourse_list .levelcourse_left .coursename i.fa{color:#46ade3;font-size:19px}#page-local-program-view .programview_tabscontainer .levetabscontent_container .levelcourse_list .addsession_link{color:#46ade3;font-size:16px;line-height:66px}#page-local-program-view .options{font-size:14px !important}#page-local-program-view .levelcourse_list .levelcourse_right a .icon{color:inherit}#page-local-program-view .levelcourse_list .reschedule_btn{padding:2px 10px;font-size:12px}#page-local-program-view .levelcourse_list .session_details{margin-top:10px;line-height:25px}#page-local-program-view .levelcourse_list .session_details .sessiontime, #page-local-program-view .session_location .sessionroom{font-size:12px}#page-local-program-view .levelcourse_list .sessioncompleted{color:#39b34a;font-size:22px}#page-local-program-view .levelcourse_list .sessionnotcompleted{color:#cd2428;font-size:22px}#page-local-program-view .course_status{color:#fff;border-radius:0 4px 0 8px;padding:4px 8px}#page-local-program-view .course_status.completed{background-color:#39b34a;font-size:13px}#page-local-program-view .course_status.inprogress{background-color:#326fb8;font-size:13px}#page-local-program-view .course_status.pending{background-color:#ec5a25}#page-local-program-view .levelcourse_right .course_status_tag{position:absolute;top:-3px;right:0}#page-local-program-view .levelcourse_right .reschedule{margin-top:35px;float:right}#page-local-program-view .session_location{margin-top:5px}.session_icon i.fa{font-size:22px}#page-local-program-view .session_location .sessionlocation i.fa{font-size:22px;margin-left:5px}#page-local-program-view .showoptions{background:0 0;transform:rotate(-90deg);margin-top:17px;margin-right:5px;width:20px;height:20px}#page-local-program-view .programview_tabscontainer .nav-tabs .nav-link .levelrestrict{font-size:14px}#page-local-program-view .programview_tabscontainer .levetabscontent_container .levelcomplition{padding:4px 10px;color:#fff;border-radius:10px}#page-local-program-view .programview_tabscontainer .levetabscontent_container .levelcomplition.inprogress{background-color:#1177d1}#page-local-program-view .programview_tabscontainer .levetabscontent_container .levelcomplition.completed{background-color:#39b34a}#page-local-program-view .nav-tabs .nav-link.Completed{background-color:#39b34a !important}#page-local-program-view .programview_tabscontainer .levetabscontent_container .levelcourse_list.Completed{border-left-color:#39b34a;border-color:#39b34a}.path-local-program .quick_actions_list4.options_container:hover{top:-32px;right:-40px}#page-local-program-attendance #sessionDetails{width:100%;float:left;margin:10px auto;border-collapse:unset;border:none}#page-local-program-attendance #sessionDetails tbody tr{border:1px solid #ddd}#page-local-program-attendance #sessionDetails tbody tr td{padding:10px 5px}#page-local-program-attendance #sessionDetails .label_name{float:left;min-width:80px;font-weight:700;font-size:14px}#viewprogramusers tbody tr td:last-child{text-align:center}table#viewprogramusers td:nth-child(5){text-align:center}.sideways{margin-top:50px;border:none;position:relative}.sideways>li{height:61px;width:132px;margin-bottom:75px !important}.sideways>li>a{border-bottom:1px solid #ddd;border-right-color:transparent;text-align:center}.sideways>li.active>a,.sideways>li.active>a:focus,.sideways>li.active>a:hover{border-bottom-color:transparent;border-right-color:#ddd;border-left-color:#ddd}.sideways.tabs-left{left:-54px;top:25px}.tabs-left{border-bottom:none;padding-top:2px}.tabs-left>li{float:none}.tabs-left>li{margin-right:-1px}.tabs-left>li.active>a,.tabs-left>li.active>a:focus,.tabs-left>li.active>a:hover{border-bottom-color:#ddd;border-right-color:transparent}.tabs-left>li>a{margin-right:0;display:block}#page-local-program-view .actionicons .options_container:after{content:"";display:inline-block;border-left:10px solid transparent;border-right:10px solid transparent;border-top:10px solid #1177d1;position:absolute;bottom:0;left:-72px;top:2px;width:0;height:0;margin:auto;transform:rotate(90deg)}#page-local-program-view .actionicons.opened .options_container{background-color:#1177d1;display:inline-flex;top:71px;right:-18px;-webkit-transform:rotate(90deg);-moz-transform:rotate(90deg);-ms-transform:rotate(90deg);-o-transform:rotate(90deg);transform:rotate(90deg);z-index:1321}#page-local-program-view .quick_actions_list2.options_container:hover{display:inline-flex;top:71px;right:-18px;-webkit-transform:rotate(90deg);-moz-transform:rotate(90deg);-ms-transform:rotate(90deg);-o-transform:rotate(90deg);transform:rotate(90deg)}#page-local-program-sessions .nav-tabs .nav-item{color:#55595c;text-align:center}#page-local-program-sessions .nav-tabs .nav-link.active{background-color:initial;border-bottom:5px solid #f7941d}#page-local-program-sessions .nav-tabs .nav-link.active{border-color:#007b78}#page-local-program-sessions table#viewprogramsessions tr td, #page-local-program-sessions table#viewprogramsessions tr th{text-align:center}body#page-local-program-sessions #viewprogramsessions_wrapper{overflow:auto;width:100%;display:block}body#page-local-program-sessions #viewprogramsessions_wrapper table#viewprogramsessions{min-width:1000px}#page-local-program-enrollusers button.custom_btn.btn.move.btn-default, #page-local-program-enrollusers button.custom_btn.btn.remove.btn-default{margin:2% 2%;width:100%}.organization_scheme1 .openLMStransition.local_program .modal-title .bootcamp_icon_wrap, .theme_scheme1 .openLMStransition.local_program .modal-title .bootcamp_icon_wrap{background-image:url([[pix:theme_epsilon|scheme_icons/bcscheme1]])}.organization_scheme2 .openLMStransition.local_program .modal-title .bootcamp_icon_wrap, .theme_scheme2 .openLMStransition.local_program .modal-title .bootcamp_icon_wrap{background-image:url([[pix:theme_epsilon|scheme_icons/bcscheme2]])}.organization_scheme3 .openLMStransition.local_program .modal-title .bootcamp_icon_wrap, .theme_scheme3 .openLMStransition.local_program .modal-title .bootcamp_icon_wrap{background-image:url([[pix:theme_epsilon|scheme_icons/bcscheme3]])}.organization_scheme4 .openLMStransition.local_program .modal-title .bootcamp_icon_wrap, .theme_scheme4 .openLMStransition.local_program .modal-title .bootcamp_icon_wrap{background-image:url([[pix:theme_epsilon|scheme_icons/bcscheme4]])}.organization_scheme5 .openLMStransition.local_program .modal-title .bootcamp_icon_wrap, .theme_scheme5 .openLMStransition.local_program .modal-title .bootcamp_icon_wrap{background-image:url([[pix:theme_epsilon|scheme_icons/bcscheme5]])}.organization_scheme6 .openLMStransition.local_program .modal-title .bootcamp_icon_wrap, .theme_scheme6 .openLMStransition.local_program .modal-title .bootcamp_icon_wrap{background-image:url([[pix:theme_epsilon|scheme_icons/bcscheme6]])}@supports (-ms-ime-align:auto){body#page-local-program-index .course_extended_menu_list .createiconchild{right:109px;top:24px}}@media(max-width:991px){@-moz-document url-prefix(){body#page-local-program-index .course_extended_menu_list .createiconchild{right:1px;top:32px;font-size:14px}}}@media(min-width:768px){#page-local-program-enrollusers .box3.col-md-2.actions{margin-top:243px}}@media (max-width :767px){#page-local-program-enrollusers .box3.col-md-2.actions{margin-bottom:3px}}@media (max-width :425px){#page-local-program-view .nav-tabs .nav-link.active{line-height:17px !important;margin-top:-26px}.path-local-program .session_icon i.fa{font-size:13px}#page-local-program-view .levelcourse_right .course_status_tag{position:static}#page-local-program-view .levelcourse_right .reschedule{margin-top:-3px;float:right}#page-local-program-view .levelcourse_middle,
+/* #page-local-program-view .levelcourse_right{width:100%}*/
+ #page-local-program-view .sideways.tabs-left{left:-70px !important}#page-local-program-view .sideways>li{height:0;margin-bottom:0 !important}
+/*	#page-local-program-view .programview_container .program_view_content{padding-left:0}*/
+	#page-local-program-view .programview_container{padding:15px 0}}@media(max-width:320px){.path-local-program .session_icon i.fa{font-size:10px;margin-right:2px}#page-local-program-view .session_location .sessionlocation i.fa{font-size:20px;margin-right:5px}}
+body#page-local-program-userdashboard .card_list_view {
+    display: none;
+}
+#page-local-program-view .department_column{
+	white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ctype_program .coursedesc span{
+    text-align:center;
+    background-color: inherit;
+    border: 1px solid #d1edf6;
+    position: relative;
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 1rem;
+} 
+#page-local-program-index .program_container .programicon_container .fa{
+	font-size: 20px!important;
+	color: #fff;
+}
+.local_program .modal-header .fa{
+	font-size: 26px;
+}
+/*#page-local-program-view .program_classroom_icon {
+    background-image:  url([[pix:theme_epsilon|scheme_icons/scheme1]]) !important;
+    background-repeat:  no-repeat;
+    position:  absolute;
+    right:  10px;
+    bottom:  35px;
+    width:  30px;
+    height:  25px;
+}
+#page-local-program-view .program_classroom_icon {
+    position: initial;
+    margin-top: 20px;
+    cursor:  pointer;
+}*/
+#page-local-program-view .prgmimg_container .classviewimg{
+	height: 180px !important;
+}
+
+#page-local-program-view .classviewimg:before{
+	background-image: linear-gradient(to right,#22436a,#061e3a);
+    content: "";
+    top: 0;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    right: 0;
+    opacity: .9;
+}
+#page-local-program-view .classviewimg .program_data{
+	width: 100%;
+    height: 100%;
+    position: absolute;
+    z-index: 1;
+    color: #fff;
+}
+#page-local-program-view .classviewimg .program_data .target_audience{
+	text-decoration: underline;
+}
+#page-local-program-view .classviewimg .program_data .program_skills{
+	font-size: 12px;
+	font-weight: 500;
+}
+#page-local-program-view .classviewimg .program_data .overall_users .rating_star:before{
+	margin-right: 5px;
+}
+#page-local-program-view .classviewimg .program_data .radiostars i.fa.fa-star,
+#page-local-program-view .classviewimg .program_data .overall_users .rating_star{
+	color: #fff !important;
+	font-size: 13px !important;
+}
+#page-local-program-view .classviewimg .program_data .radiostars,
+#page-local-program-view .classviewimg .program_data .overall_users{
+	width: auto;
+}
+#page-local-program-view .classviewimg .program_data .like_unlike{
+    margin-left: 1.5rem;
+}
+#page-local-program-view .programview_container .program_view_content .alert-info{
+	border: none;
+	padding:0.75rem 0;
+	color: #000000b3;
+}
+#page-local-program-view .programview_container .program_view_content .alert-info b{
+	color: #000;
+}
+#page-local-program-view .programview_container .sideways.tabs-left>li{
+	height: 100%;
+	margin-bottom: 0 !important;
+	width: 100%;
+	border-color: #ddd !important;
+	border-bottom:1px solid #ddd;
+}
+#page-local-program-view .program_view_content .description{
+	padding-left: 3rem;
+}
+#page-local-program-view .programview_tabscontainer .nav-tabs .nav-link{
+	width: 100%;
+	border-radius: 0;
+	margin-top: 0;
+	float: none;
+	line-height: 30px;
+	background-color: transparent;
+	color: #000;
+	font-weight: 500;
+	font-size: 15px;
+	text-align: left;
+}
+#page-local-program-view .programview_tabscontainer .sideways.tabs-left{
+	left: 0 !important;
+	top: 0;
+	margin: 0;
+	padding: 0;
+}
+#page-local-program-view .programview_tabscontainer{
+	box-shadow: 0 0 9px 1px #ddd;
+    border-radius: 0;
+}
+#page-local-program-view .nav-tabs .nav-link.active .options{
+	color: #ff5722 !important;
+}
+
+
+#page-local-program-view .nav-tabs .nav-link.active, 
+#page-local-program-view .nav-tabs .nav-link.active:focus, 
+#page-local-program-view .nav-tabs .nav-link.active:hover{
+	margin-top: 0;
+	background-color: #ffeee0;
+	color: #ff5722;
+}
+#page-local-program-view .programview_tabscontainer .action_menu_dropdown{
+    position: absolute;
+    right: 10px;
+}
+#page-local-program-view .programview_tabscontainer .levetabscontent_container{
+	border-radius: 0;
+	border: 0;
+	padding-right: 2rem;
+}
+#page-local-program-view .programview_tabscontainer .leveltabs_list{
+	width: 100%;
+}
+#page-local-program-view .levetabscontent_container .tab-content{
+	padding: 15px 0;
+}
+#page-local-program-view .assign_course_btn .addcourse {
+    font-size: 13px;
+    color: #fff;
+    font-weight: 500;
+    background-color: #ff5722;
+    padding: 5px 10px;
+    border-radius: 17px;
+    text-decoration: none;
+    float: none;
+}
+#page-local-program-view .levetabscontent_container .lpcourse_container{
+	box-shadow: 4px 1px 11px 8px #ddd;
+	height: 100%;
+}
+#page-local-program-view .levetabscontent_container .levelcourse_img{
+	background-image: url('[[pix:local_program|lvcimg]]');
+	background-position: center;
+	background-size: cover;
+	background-repeat: no-repeat;
+	width: 100%;
+	height: 100%;
+	display: inline-block;
+
+}
+#page-local-program-view .levetabscontent_container .lvcdata_container{
+	flex-grow: 1;
+}
+#page-local-program-view .levetabscontent_container .lvc_desc{
+	font-size: 13px;
+    line-height: 19px;
+    text-overflow: ellipsis;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    white-space: normal;
+    width: 100%;
+    min-height: 60px;
+    display: -webkit-box;
+}
+#page-local-program-view .levetabscontent_container .training_btns a{
+	font-size: 12px;
+	border: 1px solid;
+    padding: 0 9px;
+    border-radius: 17px;
+}
+#page-local-program-view .levetabscontent_container .training_btns a:hover{
+	text-decoration: none;
+}
+#page-local-program-view .levetabscontent_container .training_btns .view_btn{
+	background-color: #414242;
+	color: #fff;
+	border-color: #414242;
+}
+#page-local-program-view .levetabscontent_container .training_btns .start_btn{
+	background-color: #ff721c;
+	color: #fff;
+}
+#page-local-program-view .lvcdata_container .coursename a{
+    color: #000;
+    font-size: 16px;
+    font-weight: 600;
+}
+#page-local-program-view .programview_tabscontainer .options{
+	font-size: 18px !important;
+}
+#page-local-program-view .program_view_content .description p{
+	font-size: 14px;
+	color: #000000b3 !important;
+}
+#page-local-program-view .programview_tabscontainer .col-md-3{
+	border-right: 1px solid #ddd;
+}
+#page-local-program-view .levetabscontent_container .course_actions a .icon{
+	line-height: 0 !important;
+}
+#page-local-program-view .programview_tabscontainer .levelcourse_list .course_delete{
+	color: #ec2224;
+}
+#page-local-program-view .programview_container,
+#page-local-program-view #page #page-content #region-main{
+	padding:0;
+}
+#page-local-program-view .course_extended_menu_itemlink i{
+	color: #fff;
+}
+#page-local-program-view .course_extended_menu_list li{
+	margin:0 10px;
+}
+#page-local-program-view  .course_extended_menu_list{
+	top:14px;
+	right: 42px;
+}
+#page-local-program-view .program_data .program_name{
+	font-size: 21px;
+	font-weight: 600;
+	padding: 10px;
+}
+#page-local-program-view .page-context-header .page-header-headings h1{
+	display: none;
+}
+#page-local-program-view .program_data .programdata_container{
+	border-top:1px solid #324b6b;
+}
+#page-local-program-view .leveltabs_list .nav-tabs .dropdown-menu{
+	border-top-left-radius: 8px !important;
+	border-top-right-radius: 8px !important;
+}
+@media(max-width:1023px){
+	#page-local-program-view .programview_tabscontainer .levelcourse_list{
+		flex-direction: column;
+	}
+	#page-local-program-view .classviewimg .program_data .program_skills .border-right{
+		display: none;
+	}
+	#page-local-program-view .programview_container .program_view_content .prgmimg_container{
+		padding-left: 15px !important;
+	}
+	#page-local-program-view .classviewimg .program_data .radiostars, 
+	#page-local-program-view .classviewimg .program_data .overall_users,
+	#page-local-program-view .classviewimg .program_data .like_unlike{
+		margin-top: 0;
+		margin-left: 10px;
+	}
+}
+
+
+/*manage programs page css*/
+#page-local-program-index .program_container{
+	border-radius: 0;
+	border-bottom: 0;
+}
+#page-local-program-index .program_container .prgimg_container{
+	width: 100%;
+	min-width: 150px;
+	height: 100%;
+	min-height: 200px;
+}
+#page-local-program-index .program_container .prgimg_container .prgimg_bg{
+	background-image: url('[[pix:local_program|prgimg]]');
+	background-position: center;
+	background-size: cover;
+	width: 100%;
+	position: relative;
+	height: 200px;
+}
+#page-local-program-index .generaltable td:not(:first-child,:last-child){
+	text-align: left !important;
+}
+#page-local-program-index .generaltable{
+	box-shadow: none;
+}
+#page-local-program-index .program_container .prgimg_container .prgimg_bg:after{
+	background-image: linear-gradient(to top,rgba(255,255,255,0),#00000063);
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    content: "";
+}
+#page-local-program-view .sideways>li a>span{
+	padding-right: 30px;
+    display: -webkit-box;
+    max-width: 100%;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    white-space: normal;
+    width: 100%;
+}
+
+
+/*newcss*/
+#page-local-program-view .levetabscontent_container .lvcimg_container{
+	width:100%;
+	min-height:200px;
+}

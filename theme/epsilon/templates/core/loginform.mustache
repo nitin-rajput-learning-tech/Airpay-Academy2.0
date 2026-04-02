@@ -1,0 +1,278 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template core/loginform
+
+    Moodle template for the login page.
+
+    Context variables required for this template:
+    * autofocusform: Auto focus on form ?,
+    * canloginasguest - Is guest login allowed?,
+    * canloginbyemail - Is login by email allowed?,
+    * cansignup - Signup allowed?,
+    * cookieshelpicon - cookies help icon details
+    * error - Any errors in the form?,
+    * forgotpasswordurl - Forgot password url,
+    * hasidentityproviders - Flag, set to true to hide identity providers,
+    * hasinstructions - Flag, set to true to show instructions,
+    * identityproviders - List of identiy providers,
+    * instructions - Instructions,
+    * instructionsformat - Format of instructions,
+    * loginurl - Login url,
+    * rememberusername - Remeber username?,
+    * signupurl - Signup url,
+    * cookieshelpiconformatted - Formatted html of cookies help icon,
+    * errorformatted - Formatted error,
+    * logourl - Flag, logo url,
+    * sitename - Name of site.,
+    * logintoken - Random token to protect login request.,
+    * maintenance - Maintenance message
+
+    Example context (json):
+    {
+        "autofocusform": false,
+        "canloginasguest": "1",
+        "canloginbyemail": false,
+        "cansignup": true,
+        "cookieshelpicon": {
+            "heading": "Cookies must be enabled in your browser",
+            "text": "<div class=\"no-overflow\">Two cookies are used on this site. Both died..</div>",
+            "icon": {
+                "attributes": [
+                    {
+                        "name": "class",
+                        "value": "iconhelp"
+                    },
+                    {
+                        "name": "alt",
+                        "value": "Help with Cookies must be enabled in your browser"
+                    },
+                    {
+                        "name": "title",
+                        "value": "Help with Cookies must be enabled in your browser"
+                    },
+                    {
+                        "name": "src",
+                        "value": "http://localhost/stable_master/theme/image.php?theme=boost&component=core&image=help"
+                    }
+                ]
+            },
+            "linktext": null,
+            "title": "Help with Cookies must be enabled in your browser",
+            "url": "http://localhost/stable_master/help.php?component=core&identifier=cookiesenabled&lang=en",
+            "ltr": true
+        },
+        "error": "",
+        "forgotpasswordurl": "http://localhost/stable_master/login/forgot_password.php",
+        "hasidentityproviders": false,
+        "hasinstructions": true,
+        "identityproviders": [],
+        "instructions": "For full access to this site, you first need to create an account.",
+        "instructionsformat": "1",
+        "loginurl": "http://localhost/stable_master/login/index.php",
+        "rememberusername": true,
+        "signupurl": "http://localhost/stable_master/login/signup.php",
+        "cookieshelpiconformatted": "",
+        "errorformatted": "",
+        "logourl": false,
+        "sitename": "Beer & Chips",
+        "logintoken": "randomstring",
+        "maintenance": "For full access to this site, you need to login in as an admin.",
+        "languagemenu": "Choose language"
+    }
+}}
+
+<div class="row completeform">
+    <div class="col-md-12 p-0 loginindex-container {{# output.loginordering}}rowreverse-ordering{{/ output.loginordering}}">
+        <div class="col-md-6 col-sm-12 p-0 pull-left login_form {{# output.loginordering}}ordering-right-form{{/ output.loginordering}}{{^ output.loginordering}}ordering-left-form{{/ output.loginordering}}">
+            <div class="col-md-12">
+                <div class="card login_bg">
+                    <div class="card-body text-center">
+                        <div class="card-title mb-0 text-center txt-container">
+                            <h6 class="text-muted">WELCOME TO</h6>
+                        {{#logourl}}
+                            <h2 class="card-header">
+                                <img src="{{logourl}}" title="{{sitename}}" alt="{{sitename}}"/>
+                            </h2>
+                        {{/logourl}}
+                        {{^logourl}}
+                            <h4 class="col-md-12 pb-0 heading_tag">{{{output.welcometext}}}</h4>
+                            <img class = "login_logo" src="{{output.loginlogo}}" title="Login Logo" alt="Login Logo"/>
+                            <div class="col-md-12 pb-0">
+                            <p class=" col-md-12 loginstart_tag text-center mb-0">{{{output.captiontext}}}</p>
+                            </div>
+                            {{/logourl}}
+                            {{#error}}
+                                <div class="col-md-12 loginerrors mt-3">
+                                    <a href="#" id="loginerrormessage" class="accesshide">{{error}}</a>
+                                    <div class="alert alert-danger" role="alert" data-aria-autofocus="true">{{error}}</div>
+                                </div>
+                            {{/error}}
+                            <form class="mt-4" action="{{loginurl}}" method="post" id="login">
+                                <input id="anchor" type="hidden" name="anchor" value="">
+                                <script>document.getElementById('anchor').value = location.hash;</script>
+                                <input type="hidden" name="logintoken" value="{{logintoken}}">
+                                <div class="col-md-12 form-group text-center mb-4">
+                                    <label for="username" class="sr-only">
+                                        {{^canloginbyemail}}
+                                            {{#str}} username {{/str}}
+                                        {{/canloginbyemail}}
+                                        {{#canloginbyemail}}
+                                            {{#str}} usernameemail {{/str}}
+                                        {{/canloginbyemail}}
+                                    </label>
+                                    <input type="text" name="username" id="username"
+                                        class="form-control"
+                                        value="{{username}}"
+                                        placeholder={{#quote}}{{^canloginbyemail}}{{#str}}username{{/str}}{{/canloginbyemail}}{{#canloginbyemail}}{{#str}}usernameemail{{/str}}{{/canloginbyemail}}{{/quote}}
+                                        >
+                                        <input type="hidden" name="hashusername" id="hashusername" size="100" value="">
+                                </div>
+                                <div class="col-md-12 form-group mb-4">
+                                    <label for="password" class="sr-only">{{#str}} password {{/str}}</label>
+                                    <input type="password" name="password" id="password" value=""
+                                        class="form-control"
+                                        placeholder={{#quote}}{{#str}}password{{/str}}{{/quote}}
+                                        >
+                                        <span class="show_pwd fa fa-eye text-muted" id="password-showhide"></span>
+                                        <input type="hidden" name="hashpassword" id="hashpassword" size="150" value="">
+                                </div>
+                                <div class="form-group col-12 d-inline-block mb-0">
+                                    <button type="submit" class=" biz_login btn btn-primary btn-block mb-2" id="loginbtn">{{#str}}login{{/str}}</button>
+                                     <p class='mb-1 '><a href="{{forgotpasswordurl}}">Forgot Password?</a></p>
+                                     {{#signupurl_custom}}
+                                      <p class='mb-1 '><a href="{{signupurl_custom}}">Register</a></p>
+                                      {{/signupurl_custom}}
+
+                                      <div class="social_icons col-md-12 mt-4 p-0 col-12 pull-left">
+                                        <!-- <p class="social-media mb-3">Follow us on Social Media.</p> -->
+
+                                         {{{ output.footer_social_icons }}}
+
+                                    </div>
+                                </div>
+                            </form>
+                            {{#canloginasguest}}
+                                <div class="form-group">
+                                    <form action="{{loginurl}}" method="post" id="guestlogin">
+                                        <input type="hidden" name="logintoken" value="{{logintoken}}">
+                                        <input type="hidden" name="username" value="guest" />
+                                        <input type="hidden" name="password" value="guest" />
+                                        <button class=" guest_btn btn btn-secondary btn-block" type="submit">{{#str}}loginguest{{/str}}</button>
+                                    </form>
+
+                        </div>
+
+                    {{#cansignup}}
+                        <div class="sr-only">
+                            <a href="{{signupurl}}">{{#str}} tocreatenewaccount {{/str}}</a>
+                        </div>
+                    {{/cansignup}}
+
+
+                            {{/canloginasguest}}
+
+                            {{#hasidentityproviders}}
+                                <h6 class="potentialiddesc mt-2">{{#str}} potentialidps, auth {{/str}}</h6>
+                                <div class="potentialidplist" class="mt-3">
+                                    {{#identityproviders}}
+                                        <div class="potentialidp">
+                                            <a href="{{url}}" title={{#quote}}{{name}}{{/quote}} class="btn btn-secondary btn-block">
+                                                {{#iconurl}}
+                                                    <img src="{{iconurl}}" alt="" width="24" height="24"/>
+                                                {{/iconurl}}
+                                                {{name}}
+                                            </a>
+                                        </div>
+                                    {{/identityproviders}}
+                                </div>
+                                {{/hasidentityproviders}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 pull-right p-0 slide-container {{# output.loginordering}}ordering-right-slide{{/ output.loginordering}} {{^ output.loginordering}}ordering-left-slide{{/ output.loginordering}}">
+            <div class="w-100 p-0 ">
+                {{{ output.loginslider }}}
+                <!--<div class="col-11 p-0 div_login_logo mx-auto">
+                        <img class = "slideshow_icon" src="{{output.carousellogo}}" title="Carousel Logo" alt="Carousel Logo"/>
+                        <h4 class="loginsite-name"> {{sitename}}</h4>
+                    <div class="col-12 mb-2 slider_desc justify-content-center">
+                        {{{output.logintext}}}
+                    </div>
+                </div>-->
+            </div>
+        </div>
+    </div>
+    <div class="login_nav_btns float-right">
+        {{#helptext}}
+            <button onclick="loginpopup('help');" class="btn_help login_pop">Help</button>
+        {{/helptext}}
+        {{#aboutustext}}
+            <button onclick="loginpopup('aboutus');" class="btn_abt login_pop">Support</button>
+        {{/aboutustext}}
+        {{#contactustext}}
+            <button onclick="loginpopup('contactus');" class="btn_ctu login_pop">Contact us</button>
+        {{/contactustext}}
+    </div>
+
+    <div id="div_loginpopup_help" class="login_popup_container float-right">
+        <div onclick="closeonclick('help');" class="div_close">X</div>
+        <div class="login_popup_content">
+            {{{ output.helpbtn }}}
+        </div>
+    </div>
+    <div id="div_loginpopup_aboutus" class="login_popup_container float-right">
+        <div onclick="closeonclick('aboutus');" class="div_close">X</div>
+            <div class="login_popup_content">
+                {{{ output.aboutbtn }}}
+            </div>
+    </div>
+    <div id="div_loginpopup_contactus" class="login_popup_container float-right">
+        <div onclick="closeonclick('contactus');" class="div_close">X</div>
+            <div class="login_popup_content">
+                {{{ output.contactbtn }}}
+            </div>
+    </div>
+</div>
+
+{{#js}}
+    {{^error}}
+        {{#autofocusform}}
+            var userNameField = document.getElementById('username');
+            if (userNameField.value.length == 0) {
+                userNameField.focus();
+            } else {
+                document.getElementById('password').focus();
+            }
+        {{/autofocusform}}
+    {{/error}}
+    {{#error}}
+        document.getElementById('loginerrormessage').focus();
+    {{/error}}
+    document.getElementById('password-showhide').onclick = function () {
+
+           $(this).toggleClass("fa-eye fa-eye-slash");
+          var input = $('#password');
+          if (input.attr("type") == "password") {
+            input.attr("type", "text");
+          } else {
+            input.attr("type", "password");
+          }
+    }
+{{/js}}

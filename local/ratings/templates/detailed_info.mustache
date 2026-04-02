@@ -1,0 +1,29 @@
+<div class="d-flex align-items-center flex-column justify-content-between ratings_container">
+    <div class="w-100 d-flex  align-items-center justify-content-center ">    
+        <div class="overall_rating text-dark mr-4 d-flex align-items-center"><h2>{{avg_rating}}</h2><span class="text-dark">/5</span></div>
+        <div>
+            <div class="ratingstars">
+               {{{rating}}}
+                 
+            </div>
+            <!-- <div class="total_ratings text-dark mb-2">2,111 ratings</div> -->
+            <div class="total_ratings text-dark mb-2">{{{total_users}}} ratings</div>
+        </div>
+    </div>
+    
+    {{# rows}}
+    <div class="d-flex w-100 align-items-center my-1">
+        <div class="side">
+            <div>{{rateheader}}<span><i class="fa fa-star text-dark ml-2"></i></span></div>
+        </div>
+        <div class="middle">
+            <div class="bar-container">
+                <div class="{{{bar_class}}}" style="width:{{{rating_perc}}}%"></div>
+            </div>
+        </div>
+        <div class="side_right">
+            <div>{{ratedusers_count}}</div>
+        </div>
+    </div>
+    {{/ rows}}
+</div>

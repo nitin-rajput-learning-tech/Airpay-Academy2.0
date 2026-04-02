@@ -1,0 +1,132 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template block_userdashboard/inner_tab
+
+    Select an action to execute.
+
+    Classes required for JS:
+    * none
+
+    Data attibutes required for JS:
+    * none
+
+    Context variables required for this template:
+    * message - The message to explain why we ask user to select an action
+    * choices - List of possible actions
+    * confirm - Text for button confirms
+    * cancel -  Text for button cancel
+
+    Example context (json):
+    {
+        "message": "Message",
+        "choices": [
+            { "value": "1", "text": "One" },
+            { "value": "2", "text": "Two" }
+        ],
+        "confirm": "Confirm",
+        "cancel": "Cancel"
+    }
+}}
+
+
+
+{{#inprogress_elearning_available}} 
+    <div class="userdashboard_content {{{course_count_view}}}">
+
+        <!--<table class = "generaltable userdashboard_table_content{{table_class}}">
+        <thead>
+        <tr>
+            <th>{{#str}} name, block_userdashboard{{/str}}</th>
+            <th>{{#str}} type, block_userdashboard{{/str}}</th>
+            <th class = "center">{{#str}} dates, block_userdashboard{{/str}}</th>
+            <th class = "center">{{#str}} enrolledon, block_userdashboard{{/str}}</th>
+            {{# sub_tab}}
+                <th class = "center">{{#str}} completedon, block_userdashboard{{/str}}</th>
+            {{/ sub_tab}}
+            <th class = "center">{{#str}} actions, block_userdashboard{{/str}}</th>
+        </tr>
+        </thead>
+        <tbody>
+        {{# inprogress_elearning}}
+            <tr>
+                <td>{{name}}</td>
+                <td>{{type}}</td>
+                <td class = "center">{{dates}}</td>
+                <td class = "center">{{enrolledon}}</td>
+                {{# sub_tab}}
+                    <td class = "center">{{completedon}}</td>
+                {{/ sub_tab}}
+                <td class = "center">{{{actions}}}</td>
+            </tr>
+
+        {{/ inprogress_elearning}}
+        </tbody>
+        </table>-->
+        {{# inprogress_elearning}}
+            <div class="col-sm-4 col-12 courses_inprogress_slide {{{subtab}}} ctype_evaluation">
+                <div class="w-full pull-left eval_container">
+                    <div class="w-full pull-left text-center evalname_container">
+                         <span class="evalicon"><i class="fa fa-clipboard" aria-hidden="true"></i></span>
+                        <span class="m-0 evalname" title="{{ eval_name }}">{{name}}</span>
+                    </div>
+                    <div class="w-full pull-left pl-15 pr-15 text-center evalinfo_container">
+                        <p class="mb-1 fdb">
+                            <strong><span class="lable_align text-left"> {{# str}}type, local_evaluation{{/ str}}<span class="colon_align">:</span> 
+                            </span><span>{{ type }}</span></strong>
+                        </p>
+                        <p class="mb-1 fdb">
+                            <strong><span class="lable_align text-left"> {{# str}}enrolledon, local_evaluation{{/ str}}<span class="colon_align">:</span> 
+                            </span><span>{{ enrolledon }}</span></strong>
+                        </p>
+                        <p class="mb-1 fdb">
+                            <strong><span class="lable_align text-left"> {{# str}}completedon, local_evaluation{{/ str}}<span class="colon_align">:</span> 
+                            </span><span>{{ completedon }}</span></strong>
+                        </p>
+                        <p class="mb-1 fdb">
+                            <strong><span class="lable_align text-left" > {{# str}}schedule, local_evaluation{{/ str}}<span class="colon_align">:</span>
+                            </span><span>{{ dates }}</span></strong>
+                        </p>
+                    </div>
+                    <div class="w-fulltext-center">
+                        <div class="w-full evalactions">
+                            {{# actions }}{{{actions}}} {{/ actions }}
+                            {{^ actions }}
+                                {{# Yettostart }}
+                                    {{# str}}yettostart, block_userdashboard{{/ str}}
+                                {{/ Yettostart }}
+                                {{^ Yettostart }}
+                                    {{# str}}closed, block_userdashboard{{/ str}}
+                                {{/Yettostart}}
+                            {{/ actions}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {{/ inprogress_elearning}}
+        {{#enableslider}}
+            {{> block_userdashboard/userdashboard_enable_slider}}  
+         {{/enableslider}}
+    </div> 
+
+{{/inprogress_elearning_available}}
+
+{{^inprogress_elearning_available}}
+    {{> block_userdashboard/userdashboard_nodata_text}}  
+{{/inprogress_elearning_available}}
+
+

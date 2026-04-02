@@ -1,0 +1,51 @@
+{{!
+    This file is part of eAbyas
+    Copyright eAbyas Info Solutons Pvt Ltd, India
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 3 of the License, or
+    (at your option) any later version.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    
+    @author eabyas  <info@eabyas.in>
+}}
+
+    <div class="learningpath_details  mb-2">
+        <div class="block_heading "><b>{{#str}}details{{/str}}</b></div>
+        <div class="block_content">
+            <div class="d-flex ">            
+                <span class="content_name" >{{#str}}learningplan,local_learningplan{{/str}}</span>
+                <span class="conent_code">
+                    <span class="coln-align text-muted">: {{ plan_learningplan_code }}</span>
+                </span>
+            </div>
+            <!-- <div class="d-flex ">
+                <span class="content_name" >{{#str}}learningplan_index_credits, local_learningplan {{/str}} </span>
+                <span class="conent_code">
+                    <span class="coln-align text-muted">: {{ lplancredits }}</span>
+                </span>
+            </div> -->
+        </div>
+    </div>
+    <div class="learningpath_courses ">
+       <div class="block_heading "><b>{{#str}} assigned_courses, local_learningplan {{/str}} </b></div>
+       <div class="block_content">
+            <div class="d-flex ">
+                <span class="content_name" >{{#str}}mandatory, local_learningplan {{/str}}</span>
+                <span class="conent_code">   
+                    <span class="coln-align text-muted">: {{ mandatarycourses_count }}</span>
+                </span> 
+            </div>
+            <div class="d-flex ">
+                <span class="content_name" >{{#str}}optional,local_learningplan{{/str}}</span>
+                <span class="conent_code">
+                    <span class="coln-align text-muted">: {{ optionalcourses_count }}</span>
+                </span>
+            </div>
+        </div>
+    </div>

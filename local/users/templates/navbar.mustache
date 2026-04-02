@@ -1,0 +1,44 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+<div class="navbar link">
+    <ul class='nav nav-tabs m-b-1'>
+
+        {{# viewstates}}
+        <li class="nav-item">
+            <a class="nav-link {{# statesactive}}active{{/ statesactive}}" href={{^ statesactive}}"{{{ config.wwwroot }}}/local/users/profilefields/states/index.php"{{/ statesactive}}{{# statesactive}}"javascript:void(0)"{{/ statesactive}}>{{# str}}state, local_users{{/ str}}</a>
+        </li>
+        {{/ viewstates}}
+
+        {{# viewdistrict}}
+        <li class="nav-item">
+            <a class="nav-link {{# districtactive}}active{{/ districtactive}}" href={{^ districtactive}}"{{{ config.wwwroot }}}/local/users/profilefields/district/index.php"{{/ districtactive}}{{# districtactive}}"javascript:void(0)"{{/ districtactive}}>{{# str}}district, local_users{{/ str}}</a>
+        </li>
+        {{/ viewdistrict}}
+
+        {{# viewsubdistrict}}
+        <li class="nav-item">
+            <a class="nav-link {{# subdistrictactive}}active{{/ subdistrictactive}}" href={{^ subdistrictactive}}"{{{ config.wwwroot }}}/local/users/profilefields/subdistrict/index.php"{{/ subdistrictactive}}{{# subdistrictactive}}"javascript:void(0)"{{/ subdistrictactive}}>{{# str}}subdistrict, local_users{{/ str}}</a>
+        </li>
+        {{/ viewsubdistrict}}
+
+        {{# viewvillage}}
+        <li class="nav-item">
+            <a class="nav-link {{# villageactive}}active{{/ villageactive}}" href={{^ villageactive}}"{{{ config.wwwroot }}}/local/users/profilefields/village/index.php"{{/ villageactive}}{{# villageactive}}"javascript:void(0)"{{/ villageactive}}>{{# str}}village, local_users{{/ str}}</a>
+        </li>
+        {{/ viewvillage}}
+    </ul>
+</div>

@@ -1,0 +1,88 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+
+{{#response}}
+    {{#viewtypeCard}}
+    <div class="" id="feedbacks_tab_content">
+        <table class="w-full pull-left generaltable" id = sessionsdata>
+            <thead>
+                <tr>
+                    <th>{{#str}}name{{/str}}</th>
+                    <th>{{#str}}type,local_classroom{{/str}}</th>
+                    <th>{{#str}}trainer,local_classroom{{/str}}</th>
+                    <th>{{#str}}submitted,local_classroom{{/str}}</th>
+                    <th>{{#str}}status,local_classroom{{/str}}</th>
+                    {{# lineaction}}
+                    <th>{{#str}}actions{{/str}}</th>  
+                    {{/lineaction}}                 
+                </tr>
+            </thead>
+            {{#records}}
+        <tr>
+            <td> 
+                {{#feedbackview}}
+                    <a href="{{cfgwwwroot}}/local/evaluation/eval_view.php?id={{id}}">{{name}}</a>
+                {{/feedbackview}}
+
+                {{^feedbackview}}
+                    {{name}}
+                {{/feedbackview}}
+                
+            </td>
+
+            <td>{{feedbacktype}}</td>
+            <td>{{trainer}}</td>
+            <td>{{submittedcount}}</td>
+            <td>
+                {{#string}}
+                    <a href="{{cfgwwwroot}}/local/evaluation/{{url}}.php?id={{id}}">{{#str}}submit,local_classroom{{/str}}</a>
+                {{/string}}
+
+                {{^string}}
+                    <a href="{{cfgwwwroot}}/local/evaluation/{{url}}.php?id={{id}}">{{#str}}showentries,local_classroom{{/str}}</a>
+                {{/string}}
+                
+            </td>
+             {{#lineaction}}
+            <td>
+               
+                
+                    {{#editicon}}
+                    <a href="javascript:void(0);" data-action="createevaluationmodal" data-value="{{id}}" alt = "{{#str}}edit{{/str}}"
+                    title = "{{#str}}edit{{/str}}" onclick="(function(e){ require('local_evaluation/newevaluation').init('createevaluationmodal',1,{{id}},{{classroomid}},'classroom') })(event)">
+                        <i class="fa fa-pencil fa-fw" alt="{{#str}}edit{{/str}}" ></i>
+                    </a>
+                    {{/editicon}}
+                    {{#preview}}
+                    <a href="{{cfgwwwroot}}/local/evaluation/show_entries.php?id={{id}}" title="{{#str}}showentries,local_classroom{{/str}}" >
+                        <i class="fa fa-search fa-fw" ></i>
+                    </a>
+                    {{/preview}}
+                    {{#deleteicon}}
+                    <a href="javascript:void(0);" alt = "{{#str}}delete{{/str}}" title = "{{#str}}delete{{/str}}" onclick="(function(e){ require('local_classroom/classroom').deleteConfirm({action:'deleteclassroomevaluation', classroomid: {{classroomid}}, id: {{id}}, feedbackname: '{{{name}}}' }) })(event)" >
+                        <i class="fa fa-trash fa-fw" ></i>
+                    </a>
+                    {{/deleteicon}}
+                
+            </td>
+            {{/lineaction}}
+        </tr>
+        {{/records}}
+        </table>
+    </div>
+    {{/viewtypeCard}}
+{{/response}}

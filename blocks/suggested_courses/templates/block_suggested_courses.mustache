@@ -1,0 +1,85 @@
+{{!
+     This file is part of eAbyas
+    Copyright eAbyas Info Solutons Pvt Ltd, India
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 3 of the License, or
+    (at your option) any later version.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+    @author eabyas  <info@eabyas.in>
+}}
+{{# is_siteadmin}}
+<button style="float:right; cursor: pointer;" onclick="(function(e){
+        require('local_skillrepository/skillsInterested').init({
+            contextid:1, id:{{skillsinterestedid}}, componplugintypeent:'local', pluginname:'skillrepository'
+        })
+    })(event)" title="{{#str}}modify_recommended,block_suggested_courses{{/str}}" id="yui_3_17_2_1_1672045150980_304">
+    {{#str}}modify_recommended,block_suggested_courses{{/str}}
+</button>
+{{/ is_siteadmin}}
+<div id="status_tabs" class="pull-left w-100" >
+    <div class="crstatus_tabs_list pl_15 pr_15 pb_15">
+        {{#tabs.0}}
+            <ul class="nav nav-tabs courselister_tabs" role="tablist">
+                {{#tabs}}
+                    <li class="nav-item courselisterstatus {{type}}" data-type="{{type}}" data-target="courselister_{{ type }}" data-selected-class="active" aria-controls="{{ type }}" aria-selected="false" tabindex="-1" role="tab" data-status ="active" style="display:none;">
+                        <a class=" {{active}} nav-link " data-toggle="tab" href="javascript:void(0)" aria-controls="{{type}}" role="tab"  title="{{name}}" >
+                         {{name}}
+                        </a>
+                    </li>
+                {{/tabs}}
+            </ul>
+        {{/tabs.0}}
+    </div>
+    <div class="tab-content">
+        {{#tabs.0}}
+            {{#tabs}}
+                <span class="pull-right" id ="note-msg">* {{#str}}notemsg,block_suggested_courses{{/str}} </span> 
+
+                <div id="{{ type }}" data-region="{{ type }}-preview-container" class="viewcourselisters">
+                    <div class="global_filter_structure_myselectedcourses global_filter_structure">
+                        <input id="global_filter_{{ type }}" class="global filter" placeholder = "Search..." type="text" aria-label="search_query" name="search_query">
+                    </div>
+                    <div data-region="{{ type }}-count-container"></div>
+                    <div data-region="{{ type }}-list-container" class ="methoddata">
+                    </div>
+                    <span class="overlay-icon-container cardpaginate-loader {{$hiddenclass}}{{^visible}}hidden{{/visible}}{{/hiddenclass}}" data-region="overlay-icon-container">
+                        <span class="loading-icon icon-no-margin">{{#pix}} ajax-loader, local_costcenter, {{#str}} loading {{/str}} {{/pix}}</span>
+                    </span>
+                </div>
+            {{/tabs}}
+        {{/tabs.0}}
+    </div>
+</div>
+{{#js}}
+require(['block_suggested_courses/cardPaginate'], function(cardPaginate) {
+   
+        cardPaginate.reload({{{options}}}, {{{dataoptions}}},{{{filterdata}}});
+});
+var search_interval = 100;
+var timer;
+var filtertype={{{filtertype}}};
+
+$(document).on('keyup', '#global_filter_'+filtertype.id+'', function(){
+    var searchval = $(this).val();
+
+    var dataoptions={{{dataoptions}}};
+
+    dataoptions["search_query"]=searchval;
+
+    require(['block_suggested_courses/cardPaginate'], function(cardPaginate) {
+        timer = setTimeout(function(){
+            cardPaginate.reload({{{options}}}, dataoptions,{{{filterdata}}});
+        },search_interval);
+    });
+});
+$(document).on('keydown', '#global_filter_'+filtertype.id+'', function(){
+    clearTimeout(timer);
+});
+{{/js}}

@@ -1,0 +1,40 @@
+{{!
+    This file is part of eAbyas
+    Copyright eAbyas Info Solutons Pvt Ltd, India
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 3 of the License, or
+    (at your option) any later version.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    
+    @author eabyas  <info@eabyas.in>
+}}
+
+<span class='block_trending_modules_navigator left_navigator{{^ left_arrow_enable}} hidden {{/ left_arrow_enable}}' data-totalcount='{{total_modules}}' data-offset='0' data-limit='3' data-action='left'>
+    <i class='fa fa-angle-left'></i>
+</span>
+
+<div id="trending_modules_content" class="module_container row">
+    {{> block_trending_modules/trending_module }}
+</div>
+<span class='block_trending_modules_navigator right_navigator {{^ right_arrow_enable}}hidden{{/ right_arrow_enable}}' data-totalcount='{{total_modules}}' data-offset='0' data-limit='3' data-action='right'>
+    <i class='fa fa-angle-right'></i>
+</span>
+
+{{# checkbox}}
+    <div class="col-6 mn-w pull-left">
+        {{{ checkbox }}}
+    </div>
+{{/ checkbox}}
+{{# enableviewmore}}
+    <div class="{{# checkbox}}col-6{{/ checkbox}}{{^ checkbox}}col-12{{/ checkbox}} mx-w text-right pull-left">
+        <a href="{{viewmore_link}}" class="view_more pull-right" title="{{#str}}viewmore, block_trending_modules{{/str}}">
+           {{#str}}viewmore, block_trending_modules{{/str}}
+        </a>
+    </div>
+{{/ enableviewmore}}

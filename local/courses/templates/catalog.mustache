@@ -1,0 +1,170 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_courses/catalog
+
+    This template renders the courses content for the courses plugin.
+
+    Example context (json):
+    {}
+}}
+{{#response}}
+    {{! card view }}
+    {{#viewtypeCard}}
+        <div class="row clearfix my-3">
+            {{#records}}
+                {{# hascourses}}
+                    <div class="{{cardClass}} catcourses_list {{course_class}} ">
+                        <div class="d-flex course_container flex-column rounded">
+                            <div class="courseimg_container ">
+                                <div class="courseimg courseimg_bg d-flex flex-column justify-content-between h-100" style="background-image: url('{{{ courseimage }}}');" alt="{{ coursename }}"  >
+                                    <!-- <div class="course_progress_container d-flex align-items-center">
+                                        <div class="progress_circular" style="background-image:conic-gradient(white 0%,transparent 0%);">
+                                        </div>
+                                        <div class="progress_status">Completed</div>
+                                        <div class="progress_percentage">0%</div>
+                                    </div> -->
+                                    <div class="d-flex justify-content-end mt-0">
+                                        <div class="course_type mr-2">{{{coursetype}}}</div>
+                                        {{#actions}}
+                                        
+                                       
+                                        <div class="cog_icon dropdown action_menu_dropdown " >
+                                            <span data-toggle="dropdown" aria-expanded="false"><i class="fa fa-gear"></i></span>
+                                            <div class="dropdown-menu dropdown-menu-right shadow-sm">
+                                                {{#update}}
+                                                    {{# editcourse}}
+                                                        {{{ editcourse }}}
+                                                    {{/ editcourse}}
+                                                    
+                                                {{/update}}
+                                                {{#enrol}}
+                                                    <a href="{{ enrollusers }}" class="dropdown-item" title= "{{#str}}userenrolments, local_courses{{/str}}" >
+                                                        <i class="fa fa-user" aria-hidden="true"></i>User Enrollments
+                                                    </a>
+                                                {{/enrol}}
+                                                {{#update}}
+                                                    {{#auto_enrol}}
+                                                        <a href="{{ auto_enrol }}" class="dropdown-item" title= "{{#str}}auto_enrol, local_courses{{/str}}">
+                                                            <i class="fa fa-user-circle-o" aria-hidden="true"></i>
+                                                        </a>
+                                                    {{/auto_enrol}}
+                                                {{/update}}
+                                                {{# update_status}}
+                                                        {{{update_status}}}
+                                                    {{/ update_status}}
+                                                {{#grade_view}}
+                                                    <a class="dropdown-item" href="{{ grader }}" title= "{{#str}}grader, local_courses{{/str}}">
+                                                        <i class="fa fa-pie-chart" aria-hidden="true"></i>Grader
+                                                    </a>
+                                                {{/grade_view}}
+                                                {{#request_view}}
+                                                    <a class="dropdown-item" href="{{ requestlink }}" title= "{{#str}}request, local_request{{/str}}">
+                                                        <i class="fa fa-share-square" aria-hidden="true"></i>Request
+                                                    </a>
+                                                {{/request_view}}
+                                                {{#deleteaction}}
+                                                    {{{ deleteaction }}}
+                                                {{/deleteaction}}
+                                                {{#viewpaymentlog}}
+                                                   <a class="dropdown-item" href="{{ viewpaymentlog }}" title= "{{#str}}viewpaymentlog, local_courses{{/str}}">
+                                                        <i class="fa fa-history" aria-hidden="true"></i>{{#str}}viewpaymentlog, local_courses{{/str}}
+                                                    </a>
+                                                {{/viewpaymentlog}}
+                                                </div>
+                                        </div>
+                                        {{/actions}}
+                                    </div>
+                                    <div class="d-flex mb-0">
+                                        <div class="info_container enrolment_info mr-2">
+                                             <!-- <div class="icon"></div> -->
+                                            <span class="info_title">Enrollments :</span>
+                                            <span class="info_value">{{enrolled_count}}</span>
+                                        </div>
+                                        <div class="info_container completed_info">
+                                            <!-- <div class="icon"></div> -->
+                                            <span class="info_title">Completed :</span>
+                                            <span class="info_value">{{completed_count}}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="coursecontent d-flex flex-column justify-content-between">
+                                <div>
+                                    <div class="d-flex mt-1">
+                                        <h5 class="flex-grow-1 course_name">
+                                            {{^ coursenameCut}}
+                                                <a href="{{ courseurl }}" title="{{ coursename }}">{{ coursename }}</a>
+                                                {{/ coursenameCut}}
+                                                {{# coursenameCut}}
+                                                <a href="{{ courseurl }}" title="{{ coursename }}">{{ coursenameCut }}</a>
+                                            {{/ coursenameCut}}
+                                        </h5>
+                                        
+                                    </div>
+                                    <div class="d-flex category mb-2">
+                                        <span>{{#str}}category, local_courses{{/str}} : </span> <span class="ml-1 ">{{#catnamestring}}{{catnamestring}}{{/catnamestring}}{{^catnamestring}}N/A{{/catnamestring}}</span>
+                                    </div>
+                                </div>
+                                <div class="coursedesc mb-2">
+                                    {{# coursesummary }}
+                                        <p class="desc" title = "Course Descripton" >{{ coursesummary }}</p>
+                                    {{/ coursesummary }}
+                                    {{^ coursesummary }}
+                                        <p class="alert alert-info text-center mt-1">{{#str}}nocoursedesc, local_courses{{/str}}</p>
+                                    {{/ coursesummary }}
+                                </div>
+                                <div class="courseinfo_container">
+                                    <!-- <div class="info_container enrolment_info">
+                                        <div class="icon"></div>
+                                        <span class="info_value">{{enrolled_count}}</span>
+                                        <span class="info_title">Enrollments</span>
+                                    </div> -->
+                                    <!-- <div class="info_container points_info">
+                                        <div class="icon"></div>
+                                        <span class="info_value">{{points}}</span>
+                                        <span class="info_title">{{#str}}points, local_courses{{/str}}</span>
+                                    </div> -->
+                                    <div class="info_container rating_info mb-3">
+                                        <div class="ratingicon mr-2"><i class="fa fa-star-o"></i></div>
+                                        <span class="info_value">{{ratings_value}}</span>
+                                        <span class="info_title">{{#str}}pluginname, local_ratings{{/str}}</span>
+                                    </div>
+                                    <!-- <div class="info_container completed_info">
+                                        <div class="icon"></div>
+                                        <span class="info_value">{{completed_count}}</span>
+                                        <span class="info_title">Completed</span>
+                                    </div> -->
+                                </div>
+                               <!--  <div class="d-flex coursetype coursetypes_container">
+                                    <span class="text-muted mr-1">Type :</span>
+                                    {{{coursetype}}}
+                                </div> -->
+                            </div>
+                        </div>
+                    </div>
+                {{/ hascourses}}
+                <div class="col-md-12">{{{ pagination }}}</div>
+                {{# nocourses}}
+                  <div class='w-full pull-left text-center alert alert-info'>No courses available.</div>
+                {{/ nocourses}}
+            {{/records}}
+        </div>
+    {{/viewtypeCard}}
+{{/response}}
+
+

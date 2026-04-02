@@ -1,0 +1,46 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+   
+}}
+{{#response}}
+    {{#viewtypeCard}}
+        <table class="achievementsclass dataTable no-footer" id="achievementstable1" width="100%" role="grid" style="width: 100%;">
+            <thead>
+                {{# str}}points_scored,block_achievements{{/ str}}
+            </thead>
+            <tbody>
+                {{#records}}
+                    <tr>
+                        <td>
+                            <span class="task-bell">
+                                <i class="fa fa-star gold"></i>
+                            </span>
+                            <span>{{points_title}}</span>
+                        </td>
+                        <td>
+                            <span class="points credits bold ">{{points_credit}}
+                            &nbsp;{{# str}}points,block_achievements{{/ str}}</span>
+                        </td>
+                    </tr>
+                {{/records}}
+            </tbody>
+        </table>
+    {{/viewtypeCard}}
+{{/response}}
+
+
+

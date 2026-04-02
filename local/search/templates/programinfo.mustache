@@ -1,0 +1,126 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_search/programinfo
+
+    Displays programinfo 
+
+    Classes required for JS:
+    * none
+
+    Data attributes required for JS:
+    * none
+
+    Context variables required for this template:
+    * none
+
+    Example context (json):
+    {
+        "completedcount" : 15,
+        "itemscount" : 5,
+        "timeopen" : "May 15, 2016"
+    }
+
+}}
+<div class="w-full pull-left info_container">
+    <div class="custom_course_top_section col-12 pull-left">
+        <div class="custom_course_image col-md-5 col-12 pull-left">
+           <div style="background-image: url('{{ programlogoimg }}');" class="courseimg_bg"></div>
+        </div>
+        <div class="custom_course_detail col-md-7 col-12 pull-left">
+            <h3 class="custom_course_name w-full pull-left">{{ programname }}</h3>
+            {{# isdescription}}
+                {{^ descriptionstring}}
+                    <p class="text-muted">{{{ description }}}</p>
+                {{/ descriptionstring }}
+                {{# descriptionstring}}
+                    <p class="text-muted">{{ descriptionstring }} ...</p>
+                {{/ descriptionstring }}
+            {{/ isdescription}}
+            {{^ isdescription }}
+                <p class="w-full pull-left alert alert-info text-center">{{#str}}nocoursedesc, local_courses{{/str}}</p>
+            {{/ isdescription }}
+        </div>
+    </div>
+    {{# is_admin}}
+        <div class="col-12 pull-left enrol invisible">
+            <button class="cat_btn courseenrolbtn pull-right btn btn-primary"><i class="fa fa-pencil-square-o" aria-hidden="true"></i>{{#str}}enroll, local_search{{/str}}</button>
+        </div>
+    {{/ is_admin}}
+    {{# selfenrolmentcap }}
+        {{^ requestbtn}}
+            {{^ pending}}
+                <div class="enrol_strip">
+                    <span class="enroll">{{{.}}}</span>
+                </div>
+            {{/ pending}}
+        {{/ requestbtn}}
+        {{# requestbtn}}
+            <div class="enrol_strip">
+                <span class="enroll">
+                    <a class="viewmore_btn fakebtn btn-primary pull-right mr-15" href='javascript:void(0)' onclick="(function(e){ require('local_request/requestconfirm').init({componentid:{{programid}}, component:'{{component}}', action:'{{action}}', componentname:'{{programname}}' }) })(event)" ><i class="fa fa-pencil-square-o" aria-hidden="true"></i>
+                    {{# str}} requestforenroll , local_classroom{{/ str}}
+                    </a>
+                </span>
+            </div>
+        {{/ requestbtn}}
+        {{# pending}}
+            <div class="enrol_strip">
+                <button class="cat_btn btn-primary viewmore_btn">Processing</button>
+            </div>
+        {{/ pending}}
+    {{/ selfenrolmentcap }}
+    {{^ selfenrolmentcap }}
+        <div class="col-12 pull-left enrol">
+            <a href={{ linkpath }}>
+                <button  class="cat_btn courseenrolbtn pull-right btn btn-primary">{{#str}}start_now, local_search{{/str}}</button>
+            </a>
+        </div>
+    {{/ selfenrolmentcap }}
+</div>
+<!-- <ul class="col-12 pull-left py-2 px-0  spotlight-group mt-15"> -->
+    <!--<li>
+        <div class="spotlight">
+            <span class="icon-student font-weight-bold">&nbsp;{{startdate}}&nbsp;-&nbsp; {{enddate}}</span>
+            <span class="text-dark"><i class="fa fa-calendar pr-1" aria-hidden="true"></i> Scheduled</span>
+        </div>
+    </li>
+    <li>
+        <div class="spotlight">
+            <span class="icon-student font-weight-bold">{{# programlocation }} {{ programlocation }} {{/ programlocation }} {{^ programlocation }} N/A {{/ programlocation }}</span>
+            <span class="text-dark">Program Location</span>
+        </div>
+    </li>
+    <li>
+        <div class="spotlight">
+            <span class="icon-student font-weight-bold">&nbsp;{{# totalseats }} {{ totalseats }} {{/ totalseats }}{{^ totalseats }} N/A {{/ totalseats }}</span>
+            <span class="text-dark">Total Seats</span>
+        </div>
+    </li>
+    <li>
+        <div class="spotlight">
+            <span class="icon-student font-weight-bold">&nbsp;{{# allocatedseats }} {{ allocatedseats }} {{/ allocatedseats }}{{^ allocatedseats }} N/A {{/ allocatedseats }}</span>
+            <span class="text-dark">Allocated Seats</span>
+        </div>
+    </li>-->
+    <!--<li>
+        <div class="spotlight">
+            <span class="icon-student">&nbsp;{{# classroomdepartment }} {{ classroomdepartment }} {{/ classroomdepartment }}{{^ classroomdepartment }} N/A {{/ classroomdepartment }}</span>
+            <span>Department</span>
+        </div>
+    </li>-->
+<!-- </ul> -->

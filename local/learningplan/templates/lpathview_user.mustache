@@ -1,0 +1,137 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+
+<div class="w-full   planview_container">
+    <ul class="course_extended_menu_list">
+        {{{challenge_element}}}
+    </ul>
+    <div class="planview_topcontainer p-4">
+        <div class="border-top mx-4"></div>
+        <div class="d-flex planview_topcontent  px-4 mt-3  w-full">
+            <div class="lpathimg_block">
+                <div style="background-image: url('{{ lpimgurl }}');height:207px;" alt="{{ lpname }}" title="{{ lpname }}" class="lpimg_bg lpathimg_bg" ></div>
+            <!-- {{{display_ratings}}}
+            {{{display_like}}} -->
+            </div>
+        
+        <div class="lpathdesc_block d-block-1023 p-4">
+            <!--<h4 class='pull-left mb-5 lp_name'>{{ lpname }}</h4>--> 
+            <div class="w-full  pb-10">
+                <div class="desc_header row  align-items-center justify-content-between">
+                    <div class="col-md-6">
+                        <div class="desc_title mb-1">
+                            <h5 class='lp_name'>{{ lpname }}</h5>
+                        </div>
+                    </div>
+                    <div class="rating_stars col-md-6 d-flex justify-content-end">
+                        {{{display_like}}}
+                    </div>
+                </div>
+                <span class="w-full pull-left mb-1"><b>Description :</b></span>
+                <div class="w-full  mt-2 description">
+                    {{# description_string }}
+                        <p class="m-0">{{{ description_string }}}</p>
+                    {{/ description_string }}
+                    {{^ description_string }}
+                        <p class="alert alert-info text-xs-center m-0">{{#str}}nocoursedesc, local_courses{{/str}}</p>
+                    {{/ description_string }}
+                </div>
+                
+                <div class="topprogress_bar mt-4 ">
+                    <!-- <h6 class="mb-0 mr-2">Progress</h6>
+                    <div class="max_progress d-flex align-items-baseline flexgrow-1">
+                        <div class="progress flexgrow-1">
+                            <div class="progress-bar text-center" role="progressbar" style="width: {{planpercent}}%;" aria-valuenow="{{planpercent}}%" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        <span class="progress_percentage ml-2">{{planpercent}}%</span>
+                    </div> -->
+                    <div class="enroll_button mt-3">
+                    {{# needenroluser}}
+                        <!-- <a class='btn btn-primary pull-right mr-15' href='javascript:void(0)' onclick='(function(e){
+                        require("local_learningplan/courseenrol").enrolUser({planid:{{{planid}}}, userid:{{{userid}}}, planname:"{{{lpname}}}" }) })(event)'><i class="fa fa-pencil-square-o" aria-hidden="true"></i>{{# str}} enrol , local_learningplan{{/ str}}</a> -->
+                        <!-- {{^ requestbtn}}
+                            {{^ pending}}
+                            <span class="enrol">
+                                <a class='btn btn-primary  mr-15' href='javascript:void(0)' onclick='(function(e){
+                                require("local_learningplan/courseenrol").enrolUser({planid:{{{planid}}}, userid:{{{userid}}}, planname:"{{{lpname}}}" }) })(event)'>
+                                    {{# str}} enroll , local_search{{/ str}}
+                                </a>
+                            </span>
+                            {{/ pending}}
+                        {{/ requestbtn}}
+                        {{# requestbtn}}
+                            <span class="enrol">
+                                <a class=" btn-primary  mr-15" href='javascript:void(0)' onclick="(function(e){ require('local_request/requestconfirm').init({componentid:{{planid}}, component:'{{component}}', action:'{{action}}', componentname: '{{lpname}}' }) })(event)" >
+                                {{# str}} requestforenroll , local_classroom{{/ str}}
+                                </a>
+                            </span>
+                        {{/ requestbtn}}
+                        {{# pending}}
+                            <div class="enrol_strip">
+                                <button class="cat_btn btn btn-primary pull-right mr-15">Processing</button>
+                            </div>
+                        {{/ pending}} -->
+                        {{{enrollbtn}}}
+                    {{/ needenroluser}}
+                    </div>
+                </div>
+                <div class="rating_stars  d-flex align-items-center justify-content-end">
+                    {{{display_ratings}}}
+                </div>
+            </div>
+            <!--<div class="w-full pull-left mt-5 mb-5"><img src="{{ lpcoursespath }}" class="w-full" height="40"/></div>-->
+            <!-- <div class="w-full pull-left coursepath">{{# lpcoursespath }} {{{lpcoursespath}}} {{/ lpcoursespath }} {{^ lpcoursespath }} <span class="w-full pull-left text-xs-center alert alert-info mt-1 m-0">Assign 2 or more courses to see the journey</span> {{/ lpcoursespath }}</div> -->
+            <!-- <div class="col-lg-12 col-md-12 pull-left p-0">
+                <div class="col-lg-6 col-md-6 pull-left pl-0">
+                    <div class="w-full pull-left mb-1">
+                        <span class="w-full pull-left"><b>Details :</b></span>
+                    </div>
+                    <div class="w-full pull-left">
+                        <span class="text-muted" style="min-width: 100px;float: left;">{{#str}}learningplan, local_learningplan{{/str}}
+                        <span style="margin-right: 10px;float: right;">:</span>  
+                        </span><span style="color:#333;"><b>{{ plan_learningplan_code }}</b></span>
+                    </div>
+                    <div class="w-full pull-left">
+                        <span class="text-muted" style="min-width: 100px;float: left;">Credits 
+                        <span style="margin-right: 10px;float: right;">:</span> 
+                        </span><span style="color:#333;"><b>{{ lplancredits }}</b></span>
+                    </div>
+                </div>
+                <div class="col-lg-6 col-md-6 pull-left pl-0">
+                    <div class="w-full pull-left mb-1">
+                        <span class="w-full pull-left"><b>Courses :</b></span>
+                    </div>
+                    <div class="w-full pull-left">
+                        <span class="text-muted" style="min-width: 100px;float: left;">Mandatory  
+                        <span style="margin-right: 10px;float: right;">:</span> 
+                        </span><span style="color:#333;"><b>{{ mandatarycourses_count }}</b></span>
+                    </div>
+                    <div class="w-full pull-left">
+                        <span class="text-muted" style="min-width: 100px;float: left;">Optional
+                        <span style="margin-right: 10px;float: right;">:</span> 
+                        </span><span style="color:#333;"><b>{{ optionalcourses_count }}</b></span>
+                    </div>
+                </div>
+            </div> -->
+        </div>
+    </div>
+</div>
+<!-- <div class="w-full pull-left m-15"><h4 class="lp_name">{{lpname}}</h4></div> -->
+</div>
+
+
+

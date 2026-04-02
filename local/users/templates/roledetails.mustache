@@ -1,0 +1,38 @@
+{{!
+    This file is part of eAbyas
+    Copyright eAbyas Info Solutons Pvt Ltd, India
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 3 of the License, or
+    (at your option) any later version.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+    @author Narendra  <narendra.patel@moodle.in>
+}}
+{{# enabletable}}
+    <div class="row" style=" margin: auto; width: 99%;">
+        {{# rowdata}}
+
+            <div class="col-md-3" style=" margin: 10px 30px 15px 30px; box-shadow: 0px 0px 0px 2px #f2f2f2;">
+                <div style="height: 10px;"><a onclick='(function(e){ require("local_assignroles/popup").unassignConfirm({selector:"unassignpopup", contextid:{{ctxid}}, rolename:"{{role}}", roleid:{{roleid}}, userid:{{userid}}, username:"{{fullname}}"}) })(event)'><i style= "" class="fa fa-trash fa-fw" title="{{# str }} unassign, local_assignroles {{/ str }}"></i></a></div>
+                <p>Assigned as <b>{{ role }}</b> at <b>{{costcenter}}</b> on <b>{{timeassign}}</b></p>
+            </div>
+
+        {{/ rowdata}}
+    </div>
+    <style>
+        .col-md-3 i{
+            visibility:hidden;
+        }
+        .col-md-3:hover i{
+            position: absolute;
+            right: 0px;
+            visibility:visible;
+        }
+    </style>
+{{/ enabletable}}

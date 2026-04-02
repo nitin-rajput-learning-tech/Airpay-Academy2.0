@@ -1,0 +1,128 @@
+{{!
+    This file is part of eAbyas
+    Copyright eAbyas Info Solutons Pvt Ltd, India
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 3 of the License, or
+    (at your option) any later version.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    
+    @author eabyas  <info@eabyas.in>
+}}
+<span class="custom_module_type_filter pull-right">
+    <!-- <label>{{#str}}sortby, block_trending_modules{{/str}} : </label> -->
+    <!-- <select class="module_order_setting" name="duration">
+        <option value="weekly">{{#str}}weekly, block_trending_modules{{/str}}</option>
+        <option value="monthly">{{#str}}monthly, block_trending_modules{{/str}}</option>
+        <option value="total">{{#str}}overall, block_trending_modules{{/str}}</option>
+    </select> -->
+    <!-- <select class="module_order_setting" name="type">
+        <option value="enrolments">{{#str}}enrolments, block_trending_modules{{/str}}</option>
+        <option value="completions">{{#str}}completions, block_trending_modules{{/str}}</option>
+        <option value="ratings">{{#str}}ratings, block_trending_modules{{/str}}</option>
+    </select> -->
+    <!-- <select class="module_order_setting" name="order">
+        <option value="asc">{{#str}}ascending, block_trending_modules{{/str}}</option>
+        <option value="desc">{{#str}}descinding, block_trending_modules{{/str}}</option>
+    </select> -->
+</span>
+{{#options}}
+    <div class="global_filter_structure">
+        <label for="global_filter">{{#str}}search, block_trending_modules{{/str}} : </label>
+        <input id="global_filter" class="global filter" type="text" name="search_query" data-options="{{options}}" data-dataoptions="{{dataoptions}}">
+    </div>
+    <div class="d-inline-blocks card-paginate_wrap" id="{{targetID}}" data-region="{{targetID}}-preview-container">
+        <div data-region="{{targetID}}-count-container"></div>
+        <div data-region="{{targetID}}-list-container" id ="{{targetID}}id"></div>
+
+        <span class="overlay-icon-container cardpaginate-loader {{$hiddenclass}}{{^visible}}hidden{{/visible}}{{/hiddenclass}}" data-region="overlay-icon-container">
+            <span class="loading-icon icon-no-margin">{{#pix}} ajax-loader, local_costcenter, {{#str}} loading {{/str}} {{/pix}}</span>
+        </span>
+    </div>
+{{/options}}
+
+
+
+{{#js}}
+    require(['local_costcenter/cardPaginate', 'jquery'], function(cardPaginate, $) {
+        $(document).ready(function(){
+            var filterdata = $('.module_order_setting');
+            filterdatavalue = [];
+            $.each(filterdata, function(index, value){
+                var fieldname = $(value).attr('name');
+                filterdatavalue[fieldname] = $(value).val();
+            });
+            filterdataparsondata = $.extend({}, filterdatavalue, {{{filterdata}}});
+            cardPaginate.reload({{{options}}}, {{{dataoptions}}}, filterdataparsondata);
+            var timer;
+            $(document).on('keyup', '#global_filter', function(){
+                var search_interval = 100;
+                clearTimeout(timer);
+                var options = $(this).data('options');
+                var dataoptions = $(this).data('dataoptions');
+                var searchval = $(this).val();
+                var fieldname = $('#global_filter').attr('name');
+                timer = setTimeout(function(){
+                    {{! var filterdata = $(this).data('filterdata'); }}
+                    var formdata =  $('{{submitid}}').serializeArray();
+                    values = [];
+                    filterdatavalue = [];
+                    $.each(formdata, function (i, field) {
+                        valuedata = [];
+                        if(field.name != '_qf__filters_form' && field.name != 'sesskey'){
+                            if(!(field.name == 'options' || field.name == 'dataoptions')){
+                                {{! values[field.name] = field.value; }}
+                            {{! }else{ }}
+                                var str = field.name;
+                                if(str.indexOf('[]') != -1){
+                                    field.name = str.substring(0, str.length - 2);
+                                }
+                                if(field.name in filterdatavalue){
+                                    filterdatavalue[field.name] = filterdatavalue[field.name]+','+field.value;
+                                }else{  
+                                    filterdatavalue[field.name] = field.value;
+                                }
+                            }
+
+                        }
+                    });
+                    {{! var filtervalue = {search_query: $(this).val()}; }}
+                    if(searchval){
+                        filterdatavalue[fieldname] = searchval;
+                    }
+                    var filterdata = $('.module_order_setting');
+                    $.each(filterdata, function(index, value){
+                        var fieldname = $(value).attr('name');
+                        filterdatavalue[fieldname] = $(value).val();
+                    });
+                    filterdataparsondata = $.extend({}, filterdatavalue);
+                    {{! console.log(JSON.stringify(filterdata)); }}
+                    {{! if(JSON.stringify(filterdata) != '[]')
+                        var filterdataoptions = $.extend(filterdata, filtervalue);
+                    else
+                        var filterdataoptions = filtervalue; }}
+                    cardPaginate.reload(options, dataoptions, filterdataparsondata);
+                }, search_interval);
+                    
+            });
+            $(document).on('keydown', '#global_filter', function(){
+                clearTimeout(timer);
+            });
+            $(document).on('change', '.module_order_setting', function(){
+                var filterdata = $('.module_order_setting');
+                filterdatavalue = [];
+                $.each(filterdata, function(index, value){
+                    var fieldname = $(value).attr('name');
+                    filterdatavalue[fieldname] = $(value).val();
+                });
+                filterdataparsondata = $.extend({}, filterdatavalue);
+                cardPaginate.reload({{{options}}}, {{{dataoptions}}}, filterdataparsondata);
+            });
+        });
+    });
+{{/js}}

@@ -1,0 +1,61 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template block_userdashboard/inner_tab
+
+    Select an action to execute.
+
+    Classes required for JS:
+    * none
+
+    Data attibutes required for JS:
+    * none
+
+    Context variables required for this template:
+    * message - The message to explain why we ask user to select an action
+    * choices - List of possible actions
+    * confirm - Text for button confirms
+    * cancel -  Text for button cancel
+
+    Example context (json):
+    {
+        "message": "Message",
+        "choices": [
+            { "value": "1", "text": "One" },
+            { "value": "2", "text": "Two" }
+        ],
+        "confirm": "Confirm",
+        "cancel": "Cancel"
+    }
+}}
+
+
+{{# card_view}}
+<i class="fa fa-angle-left fa-2x course-prev userdashbard_slider_navs icon hidden" onclick='(function(e){ require("block_userdashboard/userdashboardnav").usernavrev_slider("{{{subtab}}}",{{{index}}}) })(event)'></i>
+<i class="fa fa-angle-right fa-2x course-next userdashbard_slider_navs icon" onclick='(function(e){ require("block_userdashboard/userdashboardnav").usernav_slider("{{{subtab}}}", {{{index}}}, {{{viewMoreCard}}}) })(event)'></i>
+
+<!-- <span class="view_more_container">
+    <span class="view_more_content">
+        <a id ="userdashboard_viewbtn" class="viewbtn" href ="{{{view_more_url}}}" >{{# str}} more,block_userdashboard{{/ str}}</a>
+    </span>
+</span> -->
+{{/ card_view}}
+
+
+{{#js}} 
+require(["block_userdashboard/userdashboardnav"]);
+{{/js}}

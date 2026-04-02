@@ -1,0 +1,117 @@
+{{< core/popover_region }}
+    {{$classes}}popover-region-quickaccess-popover{{/classes}}
+    {{$attributes}}id="quickaccess-popover-container" data-userid="0"{{/attributes}}
+
+    {{$togglelabel}}{{#str}} quickaccess, theme_epsilon {{/str}}{{/togglelabel}}
+    {{$togglecontent}}
+        {{! <div class="nav-link totara_core__QuickAccess_icon popover-region-toggle" role="button" aria-controls="quickaccess-popover-content" aria-haspopup="true" aria-label="Hide admin menu window" tabindex="0"> }}
+          {{!   <span aria-hidden="true" data-flex-icon="settings" class="flex-icon ft-fw ft fa-cog"></span>
+            <span aria-hidden="true" data-flex-icon="nav-down" class="flex-icon ft-fw ft fa-chevron-down totara_core__QuickAccess_chevron"></span> }}
+            <div class="d-flex quickaccess-toggle">
+                <span aria-hidden="true"  class="icon navbarmenu_icon"></span>
+                {{! <span aria-hidden="true"  class="icon navbarmenu_icon"></span> }}
+            </div>
+        {{! </div> }}
+        <!--<i class="fa fa-paint-brush" title = "{{#str}} colorschemes, theme_epsilon {{/str}}" aria-hidden="true"></i>-->
+        <!--<i class="fa fa-paint-brush" aria-hidden="true"></i>-->
+        <!--<div class="count-container {{^unreadcount}}hidden{{/unreadcount}}" data-region="count-container"
+        aria-label="{{#str}} unreadnotifications, core_message, {{unreadcount}} {{/str}}">{{unreadcount}}</div>-->
+    {{/togglecontent}}
+
+
+        
+    {{$containerlabel}}{{#str}} quickaccess, theme_epsilon {{/str}}{{/containerlabel}}
+    {{$headertext}}{{#str}} quickaccess, theme_epsilon {{/str}}{{/headertext}}
+    {{$content}}
+    {{{ output.quickaccess_links }}}
+        {{! <aside id="quickaccess-popover-content" class="totara_core__QuickAccess_menu popover-region-content totara_core__QuickAccess_menu--large">
+        <div class="totara_core__QuickAccess_menu-header">
+            <h2 class="totara_core__QuickAccess_menu-header_title">Administration Menu</h2>
+
+            <a href="#" class="totara_core__QuickAccess_menu-header_control" aria-label="Hide admin menu window" data-quickaccessmenu-close-menu="">
+                <span aria-hidden="true" data-flex-icon="close" class="flex-icon ft-fw ft fa-times"></span>
+            </a>
+        </div>
+
+            <form class="totara_core__QuickAccess_menu_search" method="get" action="https://test.leap.readynez.com/admin/search.php">
+                <div class="input-group">
+                    <label class="sr-only" for="totara_core__QuickAccess_search">Search</label>
+                    <input id="totara_core__QuickAccess_search" type="search" name="query" placeholder="Search" class="totara_core__QuickAccess_menu_search-input form-control">
+                    <span class="input-group-btn">
+                    <button type="submit" class="btn btn-default totara_core__QuickAccess_menu_search-button">
+                        <span aria-hidden="true" data-flex-icon="search" class="flex-icon ft-fw ft fa-search" title="Search administration"></span><span class="sr-only">Search administration</span>
+                    </button>
+                </span>
+                </div>
+            </form> }}
+
+            {{! <hr class="totara_core__QuickAccess_hr" aria-hidden="true">
+        <div class="totara_core__QuickAccess_flex-container ">
+
+                <div class="totara_core__QuickAccess_group">
+                    <h3 class="totara_core__QuickAccess_group-title">Core platform</h3>
+
+                    <ul class="totara_core__QuickAccess_group-list">
+                            <li><a href="https://test.leap.readynez.com/admin/user.php">Users</a></li>
+                            <li><a href="https://test.leap.readynez.com/cohort/index.php">Audiences</a></li>
+                            <li><a href="https://test.leap.readynez.com/admin/settings.php?section=userpolicies">Permissions</a></li>
+                            <li><a href="https://test.leap.readynez.com/totara/hierarchy/framework/index.php?prefix=position">Positions</a></li>
+                            <li><a href="https://test.leap.readynez.com/totara/hierarchy/framework/index.php?prefix=organisation">Organisations</a></li>
+                            <li><a href="https://test.leap.readynez.com/badges/index.php?type=1">Badges</a></li>
+                            <li><a href="https://test.leap.readynez.com/totara/hierarchy/framework/index.php?prefix=competency">Competencies</a></li>
+                            <li><a href="https://test.leap.readynez.com/totara/reportbuilder/index.php">Reports</a></li>
+                    </ul>
+                </div>
+                <div class="totara_core__QuickAccess_group">
+                    <h3 class="totara_core__QuickAccess_group-title">Learning</h3>
+
+                    <ul class="totara_core__QuickAccess_group-list">
+                            <li><a href="https://test.leap.readynez.com/course/management.php">Courses and categories</a></li>
+                            <li><a href="https://test.leap.readynez.com/totara/program/manage.php">Programs</a></li>
+                            <li><a href="https://test.leap.readynez.com/totara/program/manage.php?viewtype=certification">Certifications</a></li>
+                            <li><a href="https://test.leap.readynez.com/admin/settings.php?section=modsettingfacetoface">Seminars</a></li>
+                            <li><a href="https://test.leap.readynez.com/admin/settings.php?section=gradessettings">Grades</a></li>
+                            <li><a href="https://test.leap.readynez.com/totara/plan/template/index.php">Learning Plans</a></li>
+                    </ul>
+                </div>
+                <div class="totara_core__QuickAccess_group">
+                    <h3 class="totara_core__QuickAccess_group-title">Performance</h3>
+
+                    <ul class="totara_core__QuickAccess_group-list">
+                            <li><a href="https://test.leap.readynez.com/totara/appraisal/manage.php">Appraisals</a></li>
+                            <li><a href="https://test.leap.readynez.com/totara/hierarchy/framework/index.php?prefix=goal">Goals</a></li>
+                    </ul>
+                </div>
+                <div class="totara_core__QuickAccess_group">
+                    <h3 class="totara_core__QuickAccess_group-title">Configuration</h3>
+
+                    <ul class="totara_core__QuickAccess_group-list">
+                            <li><a href="https://test.leap.readynez.com/admin/settings.php?section=themesettings">Appearance</a></li>
+                            <li><a href="https://test.leap.readynez.com/admin/settings.php?section=navigation">Navigation</a></li>
+                            <li><a href="https://test.leap.readynez.com/admin/plugins.php">Plugins</a></li>
+                            <li><a href="https://test.leap.readynez.com/admin/settings.php?section=sitepolicies">Security</a></li>
+                            <li><a href="https://test.leap.readynez.com/admin/tool/totara_sync/admin/settings.php">HR Import</a></li>
+                            <li><a href="https://test.leap.readynez.com/admin/settings.php?section=langsettings">Localisation</a></li>
+                            <li><a href="https://test.leap.readynez.com/admin/environment.php">Server</a></li>
+                            <li><a href="https://test.leap.readynez.com/admin/settings.php?section=debugging">Development</a></li>
+                            <li><a href="https://test.leap.readynez.com/admin/settings.php?section=optionalsubsystems">Advanced features</a></li>
+                            <li><a href="https://test.leap.readynez.com/admin/index.php">System information</a></li>
+                    </ul>
+                </div>
+        </div> }}
+
+        {{! <footer class="totara_core__QuickAccess_footer">
+                <a href="https://test.leap.readynez.com/user/quickaccessmenu.php">Menu settings</a>
+        </footer>
+    </aside> }}
+    {{/content}}
+{{/ core/popover_region }}
+{{#js}}
+require(['jquery', 'message_popup/notification_popover_controller'], function($, controller) {
+    var container = $('#quickaccess-popover-container');
+    var controller = new controller(container);
+    controller.registerEventListeners();
+    controller.registerListNavigationEventListeners();
+});
+
+{{/js}}

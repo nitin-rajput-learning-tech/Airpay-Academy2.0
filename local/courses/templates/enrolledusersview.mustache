@@ -1,0 +1,56 @@
+<div>
+    {{# usersexists}}
+    <table class='generaltable' id='course_users'>
+        <thead>
+            <tr>
+                <th>{{# str}} employeename, local_courses{{/ str}}</th>
+                <th>{{# str}} empnumber, local_courses{{/ str}}</th>
+                <th>{{# str}} email, local_courses{{/ str}}</th>
+                <th>{{# str}} completionstatus, local_courses{{/ str}}</th>
+                <th>{{# str}} completiondate, local_courses{{/ str}}</th>
+                {{# certid}}
+                    <th>{{# str}} certificate, local_courses{{/ str}}</th>
+                {{/ certid}}
+            </tr>
+        </thead>
+        <tbody>
+            {{# userdata}}
+                <tr>
+                    <td>{{employeename}}</td>
+                    <td>{{employeeid}}</td>
+                    <td>{{email}}</td>
+                    {{# completiondate}}
+                        <td>{{# str}} completed, local_courses{{/ str}}</td>
+                        <td>{{completiondate}}</td>
+                        {{# certid}}
+                            <td>
+                                <a href="{{configpath}}/admin/tool/certificate/view.php?code={{certid}}"
+                                 title="{{# str}} download_certificate, local_courses{{/ str}}">
+                                    <i class="icon fa fa-download" aria-hidden="true"></i>
+                                </a>
+                            </td>
+                        {{/ certid}}
+                    {{/ completiondate}}
+
+                    {{^ completiondate}}
+                        <td>{{# str}} notcompleted, local_courses{{/ str}}</td>
+                        <td>N/A</td>
+                        {{# certid}}
+                            <td>
+                                <a href="javascript:void(0);"
+                                 title="{{# str}} unableto_download_msg, local_courses{{/ str}}">
+                                   <i class="icon fa fa-download" aria-hidden="true"></i>
+                                </a>
+                            </td>
+                        {{/ certid}}
+                    {{/ completiondate}}
+                </tr>
+            {{/ userdata}}
+        </tbody>
+    </table>
+    {{/ usersexists}}
+
+    {{^ usersexists}}
+        {{# str}} nousersmsg, local_courses{{/ str}}
+    {{/ usersexists}}
+</div>

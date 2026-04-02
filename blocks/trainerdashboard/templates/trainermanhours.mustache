@@ -1,0 +1,101 @@
+{{!
+    This file is part of eAbyas
+    Copyright eAbyas Info Solutons Pvt Ltd, India
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 3 of the License, or
+    (at your option) any later version.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+    @author eabyas  <info@eabyas.in>
+}}
+{{#response}}
+    {{^records}}
+    {{#nodata}}
+        <div class = 'w-100 pull-left alert alert-info'>{{nodata}}</div>
+    {{/nodata}}
+    {{/records}}
+    {{#viewtypeCard}}
+                <table class="generaltable">
+                    <thead>
+                        <tr>
+                            <th>{{#str}}username,block_trainerdashboard{{/str}}</th>
+                            <th>{{#str}}classroomname,local_classroom{{/str}}</th>
+                            <th>{{#str}}date{{/str}}</th>
+                            <th>{{#str}}time{{/str}}</th>
+                             <th>{{#str}}hours,local_classroom{{/str}}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#records}}
+                        <tr>
+                            <td>{{username}}</td>
+                            {{#classroomname}}<td>{{classroomname}}</td>{{/classroomname}}                
+                            <td><i class="fa fa-calendar" aria-hidden="true"></i>{{date}}</td>
+                            <td><i class="fa fa-clock-o"></i>{{starttime}} <b>-</b>{{endtime}}</td>
+                            <td>{{traininghrs}}</td>
+                        </tr>
+                        {{/records}}
+                    </tbody>
+                </table>
+    {{/viewtypeCard}}
+{{/response}}
+{{#js}}
+    var search_interval = 100;
+    var timer;
+    var searchval 
+    $(document).on('keyup', '#global_filter_trainermanhoursdashboards', function(){
+
+        if (searchval===$(this).val()){
+            return true;
+        }
+        searchval = $(this).val();
+
+        var thiselement = $('.trainerdashboardstatus a.active').parent();
+
+        var trainerdashboardstatus = thiselement.data('status');
+
+        var options = {targetID: 'trainermanhoursdashboards',
+                    templateName: 'block_trainerdashboard/trainermanhours',
+                    methodName: 'block_trainerdashboard_get_trainermanhours',
+                    perPage: 10,
+                    cardClass: 'col-xl-4 col-md-6 col-12',
+                    viewType: 'card'};
+
+        var dataoptions = {trainerdashboardstatus: trainerdashboardstatus, search_query: searchval};
+        timer = setTimeout(function(){
+            require(['local_costcenter/cardPaginate'], function(cardPaginate) {
+                cardPaginate.reload(options, dataoptions,'');
+            });
+        },search_interval);
+    });
+    $(document).on('keydown', '.global_filter_trainermanhoursdashboards', function(){
+        if (searchval===$(this).val()){
+            return true;
+        }
+        searchval = $(this).val();
+
+        var thiselement = $('.trainerdashboardstatus a.active').parent();
+
+        var trainerdashboardstatus = thiselement.data('status');
+
+        var options = {targetID: 'trainermanhoursdashboards',
+                    templateName: 'block_trainerdashboard/trainermanhours',
+                    methodName: 'block_trainerdashboard_get_trainermanhours',
+                    perPage: 10,
+                    cardClass: 'col-xl-4 col-md-6 col-12',
+                    viewType: 'card'};
+
+        var dataoptions = {trainerdashboardstatus: trainerdashboardstatus, search_query: searchval};
+        timer = setTimeout(function(){
+            require(['local_costcenter/cardPaginate'], function(cardPaginate) {
+                cardPaginate.reload(options, dataoptions,'');
+            });
+        },search_interval);
+    });
+{{/js}}

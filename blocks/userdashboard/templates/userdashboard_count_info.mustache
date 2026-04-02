@@ -1,0 +1,63 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template block_userdashboard/count_info
+
+    Select an action to execute.
+
+    Classes required for JS:
+    * none
+
+    Data attibutes required for JS:
+    * none
+
+    Context variables required for this template:
+    * message - The message to explain why we ask user to select an action
+    * choices - List of possible actions
+    * confirm - Text for button confirms
+    * cancel -  Text for button cancel
+
+    Example context (json):
+    {
+        "message": "Message",
+        "choices": [
+            { "value": "1", "text": "One" },
+            { "value": "2", "text": "Two" }
+        ],
+        "confirm": "Confirm",
+        "cancel": "Cancel"
+    }
+}}
+<div class="titleinfo">
+    <!-- <div class="title_name col-6 pull-left">{{{menu_heading}}} </div> -->               
+    <div class="count_info_container pull-right">
+         <ul class="count_info_list">
+            <li class="enrolled_counts">
+                <span class="count_value"> <a href="{{enrolled_url}}" class='viewlink' title= "{{#str}} enrolled, block_userdashboard {{/str}}">{{{total}}}</a></span>
+                <span class="count_string">{{#str}}enrolled,block_userdashboard{{/str}}</span>
+            </li>
+            <li class="inprogress_counts">
+                <span class="count_value"><a href="{{inprogress_url}}" class='viewlink' title= "{{#str}} inprogress,block_userdashboard {{/str}}">{{{inprogresscount}}}</a></span>
+                <span class="count_string">{{#str}}inprogress,block_userdashboard{{/str}}</span>
+            </li>
+            <li class="completed_counts">
+                <span class="count_value"><a href="{{completed_url}}" class='viewlink' title= "{{#str}} completed, block_userdashboard {{/str}}">{{{completedcount}}}</a></span>
+                <span class="count_string">{{#str}}completed,block_userdashboard{{/str}}</span>
+            </li>
+        </ul>    
+    </div>
+</div>

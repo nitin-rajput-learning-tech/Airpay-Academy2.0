@@ -1,0 +1,121 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+
+<div id="achievements" class="ui-tabs ui-widget ui-widget-content ui-corner-all">
+    <ul class="nav nav-tabs ui-tabs-nav ui-helper-reset ui-helper-clearfix ui-widget-header ui-corner-all" role="tablist">
+
+    {{#certifications_tab }}
+        <li class="achievements_tabs " role="tab" tabindex="0" aria-controls="ui-id-2" aria-selected="true" aria-expanded="true" data-module="certifications" data-status = 3>
+            <a class="ui-tabs-anchor active" data-toggle="tabajax"  href="javascript:void(0);"  role="presentation">
+            {{# str}}certifications,block_achievements{{/ str}}               
+            </a>
+        </li>
+    {{/certifications_tab }}   
+
+    {{#badges_tab}}
+        <li class="achievements_tabs" role="tab" tabindex="0" aria-controls="ui-id-2" aria-selected="true" aria-expanded="true" data-module="badges" data-status = 1>
+            <a class="ui-tabs-anchor" data-toggle="tabajax"  href="javascript:void(0);"  role="presentation">
+            {{# str}}badges,block_achievements{{/ str}}            
+            </a>
+        </li>
+    {{/badges_tab }} 
+
+
+    {{#points_tab }}
+       <li class="achievements_tabs" role="tab" tabindex="0" aria-controls="ui-id-2" aria-labelledby="ui-id-1" aria-selected="true" aria-expanded="true" data-module="points" data-status = 2>
+            <a class="ui-tabs-anchor" data-toggle="tabajax"  href="javascript:void(0);"  role="presentation">
+            {{# str}}points,block_achievements{{/ str}}                        
+            </a>
+        </li>
+    {{/points_tab }}  
+
+    
+</ul>
+    <div class="py-3" id="classroommodulescontent">
+        <div class="tab-content pl-3 pr-3 pull-left w-100">
+            <div class="tab-pane active" id="certifications_tab" role="tabpanel">
+                <div class="m-t-2" id="certifications_tabdata" data-region="users_tabdata-preview-container">
+                    <div data-region="certifications_tabdata-count-container"></div>
+                    <div data-region="certifications_tabdata-list-container" id ="certifiid"></div>
+                </div>
+            </div>
+            <div class="tab-pane" id="badges_tab" role="tabpanel">
+                <div class="m-t-2" id="badges_tabdata" data-region="badges_tabdata-preview-container">
+                    <div data-region="badges_tabdata-count-container"></div>
+                    <div data-region="badges_tabdata-list-container" id ="badgesid"></div>
+                </div>
+            </div>
+            {{#points_tab }}
+            <div class="tab-pane" id="points_tab" role="tabpanel">
+                <div class="m-t-2" id="points_tabdata" data-region="points_tabdata-preview-container">
+                    <div data-region="points_tabdata-count-container"></div>
+                    <div data-region="points_tabdata-list-container" id ="pointsid"></div>
+                </div>
+            </div>
+            {{/points_tab }}
+        </div>
+    </div>
+</div>
+
+
+{{#js}}
+    $('.achievements_tabs').click(function(){
+        var achievementmodule = $(this).data('module');
+        //alert(achievementmodule);
+        
+        //$('#achievements .tab-pane').removeClass('active');
+        //$('#achievements #'+achievementmodule+'_tab').addClass('active');
+        $('.ui-tabs-anchor').removeClass('active');
+        $(this).find('.ui-tabs-anchor').addClass('active');
+
+        $("#achievements .tab-pane").removeClass('active');
+        $("#"+achievementmodule+'_tab').addClass('active');
+
+
+        var status = $(this).data('status');
+        var targetid = achievementmodule+'_tabdata';
+
+        //alert(targetid);
+        var options = {targetID: targetid,
+            templateName: 'block_achievements/achievementsview_'+achievementmodule,
+            methodName: 'block_achievements_manageachievementblockview'+achievementmodule,
+            perPage: 5,
+            cardClass: 'col-md-6 col-12',
+            viewType: 'card'};
+        //alert(options);
+        var dataoptions = {tabname: achievementmodule,contextid: 1 };
+        var filterdata = {};
+        for(i = 1; i<=3; i++){
+            if(status != i){
+                switch(i){
+                    case 1:
+                        $("#badgesid").empty();
+                    break;
+                    case 2:
+                        $("#pointsid").empty();
+                    break;
+                    case 3:
+                        $("#certifiid").empty();
+                    break;
+                }
+            }
+        }
+        require(['local_costcenter/cardPaginate'], function(cardPaginate) {
+            cardPaginate.reload(options, dataoptions,filterdata);
+        });
+    });
+{{/js}}

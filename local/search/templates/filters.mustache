@@ -1,0 +1,77 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template catalog/select box
+
+    Displays select box
+}}
+<div class='col-md-3 col-lg-3 col-xl-2 col-sm-3 pt-3 pl-0 d-none d-md-block bg-white border-right filter_section'>
+    <div class="d-flex align-items-center justify-content-between">
+        <div class="icon-header">
+            <span class="icon_img"> <img src="pix/filters.png" alt="img"> </span> {{#str}}filters,local_search{{/str}}
+        </div>
+        <button class="btn btn-danger d-block d-md-none close_btn"  aria-label="My button" id="closefilters">
+             <i class="icon fa fa-times fa-fw"></i>
+        </button>
+    </div>
+    <hr>
+    <div ng-repeat = 'cat1 in filteritemslist'>
+        <section ng-repeat = 'cat in cat1.categoriesall' class="module_filter_params" data-filtertype="<% cat.type %>">
+            <div class="collapsed_settings_div" >
+                <div class="icon-header d-flex align-items-center" data-toggle="collapse" href="#list<% cat.type %>" role="button" aria-expanded="false" aria-controls="collapse">
+                    <span class="icon_img"> <img src="pix/select.png" alt="img"> </span> <% cat.name %>
+                    <span class="float-right collapseiconspan"><i class="collapseicon fa" aria-hidden="true"></i></span>
+                </div>
+                <div class="collapse show collapse_content px-1 py-2 mr-2 mt-3" id="list<% cat.name %>" >
+                    <div ng-repeat='item in cat.options' class='checkbox-item' >
+                        <div ng-if = 'tagcheckeddatas[item.code]' >
+                            <input type='checkbox' name='tagitem'  value='<% item.code %>' ng-click='tabfunction(6,0,null)' id='<% item.tagitemshortname %>' checked>
+                        </div>
+                        <div ng-if = '!tagcheckeddatas[item.code]' >
+                            <input type='checkbox' name='tagitem'  value='<% item.code %>' ng-click='tabfunction(6,0,null)' id='<% item.tagitemshortname %>' >
+                        </div>
+                        <label  class="col-sm p-0" for='<% item.tagitemshortname %>'><% item.name %><span class="pull-right"><% item.count %></span></label>
+                    </div>
+                    <div ng-if = 'cat.showviewmore'>
+                        <div ng-repeat='item in moreitemslist[cat.type]' class='checkbox-item checkbox_vm_item moreitemslist_<% cat.type %>' >
+                        <div ng-if = 'tagcheckeddatas[item.code]' >
+                            <input type='checkbox' name='tagitem'  value='<% item.code %>' ng-click='tabfunction(6,0,null)' id='<% item.tagitemshortname %>' checked>
+                        </div>
+                        <div ng-if = '!tagcheckeddatas[item.tagitemid]' >
+                            <input type='checkbox' name='tagitem' value='<% item.code %>' ng-click='tabfunction(6,0,null)' id='<% item.tagitemshortname %>' >
+                        </div> 
+                        <label class="col-sm p-0" for='<% item.tagitemshortname %>'><% item.name %><span class="pull-right"><% item.count %></span></label>
+                        </div>
+                        <a href='javaScript:void(0)' ng-click='getitemslist(cat.type)' id='viewmoreless_<% cat.type %>' class='viewmore' >{{#str}}view_more,local_search{{/str}}</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+{{#js}}
+
+    $(document).ready(function(){
+       $('#show_filters_btn').click(function(){
+            $('.filter_section').addClass('showfilters');
+       })
+       $('#closefilters').click(function(){
+        $('.filter_section').removeClass('showfilters');
+       });
+    });
+
+{{/js}}

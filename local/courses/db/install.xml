@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/courses/db" VERSION="20161125" COMMENT="XMLDB file for Moodle local/courses"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="local_logs" COMMENT="List of logs" >
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" />
+        <FIELD NAME="event" TYPE="char" LENGTH="225" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" />
+        <FIELD NAME="module" TYPE="char" LENGTH="225" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" />		
+		<FIELD NAME="description" TYPE="text" NOTNULL="true" SEQUENCE="false" />
+        <FIELD NAME="type" TYPE="char" LENGTH="225" NOTNULL="false" UNSIGNED="true" SEQUENCE="false" />
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+		<FIELD NAME="usercreated" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+       </KEYS>	
+      <INDEXES>
+        <INDEX NAME="module" UNIQUE="false" FIELDS="module"/>
+      </INDEXES>  
+    </TABLE>  
+    <TABLE NAME="local_courseerrors" COMMENT="List of errors in bulk upload courses" > 
+      <FIELDS> 
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" /> 
+        <FIELD NAME="reason" TYPE="char" LENGTH="225" NOTNULL="false" SEQUENCE="false" /> 
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" /> 
+        <FIELD NAME="time" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" />
+      </FIELDS> 
+      <KEYS> 
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/> 
+      </KEYS> 
+       <INDEXES>
+        <INDEX NAME="userid" UNIQUE="false" FIELDS="userid"/>
+      </INDEXES>
+    </TABLE>  
+    <TABLE NAME="local_course_types" COMMENT="local course type" > 
+      <FIELDS> 
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" /> 
+        <FIELD NAME="name" TYPE="char" LENGTH="225" NOTNULL="true" SEQUENCE="false" /> 
+        <FIELD NAME="shortname" TYPE="char" LENGTH="225" NOTNULL="true" SEQUENCE="false" /> 
+        <FIELD NAME="orgid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" /> 
+        <FIELD NAME="active" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" /> 
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="usercreated" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" />
+      </FIELDS> 
+      <KEYS> 
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/> 
+      </KEYS> 
+       <INDEXES>
+        <INDEX NAME="orgid" UNIQUE="false" FIELDS="orgid"/>
+      </INDEXES>
+    </TABLE>  
+    <TABLE NAME="local_dashboardcourses" COMMENT="dashboard_courses for user" > 
+            <FIELDS> 
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" /> 
+                <FIELD NAME="courseids" TYPE="char" LENGTH="225" NOTNULL="false" SEQUENCE="false" /> 
+            </FIELDS> 
+            <KEYS> 
+                <KEY NAME="primary" TYPE="primary" FIELDS="id"/> 
+            </KEYS> 
+        </TABLE> 
+  </TABLES>
+</XMLDB>

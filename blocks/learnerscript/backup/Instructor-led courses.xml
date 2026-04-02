@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<report version="2019052007"><category><![CDATA[local_classroom]]></category>
+<visible><![CDATA[1]]></visible>
+<name><![CDATA[Instructor-led courses]]></name>
+<summary><![CDATA[]]></summary>
+<type><![CDATA[classroom]]></type>
+<components><![CDATA[YTo2OntpOjA7YjowO3M6NzoiY29sdW1ucyI7YToxOntzOjg6ImVsZW1lbnRzIjthOjQ6e2k6MDthOjY6e3M6MjoiaWQiO3M6MTU6IndNcGh3SWVBSTIyQUdXRiI7czoxMDoicGx1Z2lubmFtZSI7czoxNjoiY2xhc3Nyb29tY29sdW1ucyI7czoxNDoicGx1Z2luZnVsbG5hbWUiO3M6NTM6Ikluc3RydWN0b3ItbGVkJTI1MjUyNTI1MjUyQmNvdXJzZXMlMjUyNTI1MjUyNTJCY29sdW1uIjtzOjc6InN1bW1hcnkiO3M6MDoiIjtzOjQ6InR5cGUiO3M6MTU6InNlbGVjdGVkY29sdW1ucyI7czo4OiJmb3JtZGF0YSI7Tzo4OiJzdGRDbGFzcyI6Njp7czo1OiJ2YWx1ZSI7YjoxO3M6OToiY29sdW1uYW1lIjtzOjc6IkxlYXJuZXIiO3M6NjoiY29sdW1uIjtzOjc6ImxlYXJuZXIiO3M6NzoiaGVhZGluZyI7czoxNjoiY2xhc3Nyb29tY29sdW1ucyI7czo0OiJzaXplIjtpOjE1O3M6NToiYWxpZ24iO3M6NDoibGVmdCI7fX1pOjE7YTo2OntzOjI6ImlkIjtzOjE1OiJ1TEl3SnJRRDVVeTdhTTMiO3M6MTA6InBsdWdpbm5hbWUiO3M6MTY6ImNsYXNzcm9vbWNvbHVtbnMiO3M6MTQ6InBsdWdpbmZ1bGxuYW1lIjtzOjUzOiJJbnN0cnVjdG9yLWxlZCUyNTI1MjUyNTI1MkJjb3Vyc2VzJTI1MjUyNTI1MjUyQmNvbHVtbiI7czo3OiJzdW1tYXJ5IjtzOjA6IiI7czo0OiJ0eXBlIjtzOjE1OiJzZWxlY3RlZGNvbHVtbnMiO3M6ODoiZm9ybWRhdGEiO086ODoic3RkQ2xhc3MiOjU6e3M6NToidmFsdWUiO2I6MTtzOjk6ImNvbHVtbmFtZSI7czoyMToiSW5zdHJ1Y3Rvci1sZWQrY291cnNlIjtzOjY6ImNvbHVtbiI7czoxOToiaW5zdHJ1Y3RvcmxlZGNvdXJzZSI7czo3OiJoZWFkaW5nIjtzOjE2OiJjbGFzc3Jvb21jb2x1bW5zIjtzOjU6ImFsaWduIjtzOjQ6ImxlZnQiO319aToyO2E6Njp7czoyOiJpZCI7czoxNToiU25WOEhPcTQ2ODY3MzRZIjtzOjEwOiJwbHVnaW5uYW1lIjtzOjE2OiJjbGFzc3Jvb21jb2x1bW5zIjtzOjE0OiJwbHVnaW5mdWxsbmFtZSI7czo1MzoiSW5zdHJ1Y3Rvci1sZWQlMjUyNTI1MjUyNTJCY291cnNlcyUyNTI1MjUyNTI1MkJjb2x1bW4iO3M6Nzoic3VtbWFyeSI7czowOiIiO3M6NDoidHlwZSI7czoxNToic2VsZWN0ZWRjb2x1bW5zIjtzOjg6ImZvcm1kYXRhIjtPOjg6InN0ZENsYXNzIjo1OntzOjU6InZhbHVlIjtiOjE7czo5OiJjb2x1bW5hbWUiO3M6MTQ6IkVucm9sbWVudCtkYXRlIjtzOjY6ImNvbHVtbiI7czoxMzoiZW5yb2xtZW50ZGF0ZSI7czo3OiJoZWFkaW5nIjtzOjE2OiJjbGFzc3Jvb21jb2x1bW5zIjtzOjU6ImFsaWduIjtzOjY6ImNlbnRlciI7fX1pOjM7YTo2OntzOjI6ImlkIjtzOjE1OiJBTkp1UHJZOWtnclBjS0ciO3M6MTA6InBsdWdpbm5hbWUiO3M6MTY6ImNsYXNzcm9vbWNvbHVtbnMiO3M6MTQ6InBsdWdpbmZ1bGxuYW1lIjtzOjUzOiJJbnN0cnVjdG9yLWxlZCUyNTI1MjUyNTI1MkJjb3Vyc2VzJTI1MjUyNTI1MjUyQmNvbHVtbiI7czo3OiJzdW1tYXJ5IjtzOjA6IiI7czo0OiJ0eXBlIjtzOjE1OiJzZWxlY3RlZGNvbHVtbnMiO3M6ODoiZm9ybWRhdGEiO086ODoic3RkQ2xhc3MiOjU6e3M6NToidmFsdWUiO2I6MTtzOjk6ImNvbHVtbmFtZSI7czoxMToiQ291cnNlK2RhdGUiO3M6NjoiY29sdW1uIjtzOjEwOiJjb3Vyc2VkYXRlIjtzOjc6ImhlYWRpbmciO3M6MTY6ImNsYXNzcm9vbWNvbHVtbnMiO3M6NToiYWxpZ24iO3M6NjoiY2VudGVyIjt9fX19czo3OiJmaWx0ZXJzIjthOjE6e3M6ODoiZWxlbWVudHMiO2E6MTp7aTowO2E6NTp7czoyOiJpZCI7czoxNToiQWV0YTRTanZZRE9VYXZaIjtzOjEwOiJwbHVnaW5uYW1lIjtzOjEwOiJjbGFzc3Jvb21zIjtzOjE0OiJwbHVnaW5mdWxsbmFtZSI7czo5OiJDbGFzc3Jvb20iO3M6Nzoic3VtbWFyeSI7czowOiIiO3M6ODoiZm9ybWRhdGEiO086ODoic3RkQ2xhc3MiOjM6e3M6NDoibmFtZSI7czo5OiJDbGFzc3Jvb20iO3M6NDoidHlwZSI7czo3OiJmaWx0ZXJzIjtzOjU6InZhbHVlIjtiOjE7fX19fXM6MTI6ImNhbGN1bGF0aW9ucyI7YToxOntzOjg6ImVsZW1lbnRzIjtOO31zOjg6Im9yZGVyaW5nIjthOjE6e3M6ODoiZWxlbWVudHMiO047fXM6MTE6InBlcm1pc3Npb25zIjthOjI6e3M6NjoiY29uZmlnIjtPOjg6InN0ZENsYXNzIjozOntzOjEzOiJjb25kaXRpb25leHByIjtzOjk6ImMxK2FuZCtjMiI7czoxNDoiY29uZGl0aW9uZXhwcjEiO3M6OToiYzErYW5kK2MyIjtzOjE0OiJjb25kaXRpb25leHByMiI7czowOiIiO31zOjg6ImVsZW1lbnRzIjthOjI6e2k6MDthOjU6e3M6MjoiaWQiO3M6MTU6IjZyVDg0R0prUU1JcFNHMiI7czo4OiJmb3JtZGF0YSI7Tzo4OiJzdGRDbGFzcyI6Mjp7czo2OiJyb2xlaWQiO3M6MjoiMTEiO3M6MTI6InN1Ym1pdGJ1dHRvbiI7czozOiJBZGQiO31zOjEwOiJwbHVnaW5uYW1lIjtzOjE0OiJzaXRlbGV2ZWxyb2xlcyI7czoxNDoicGx1Z2luZnVsbG5hbWUiO3M6MTQ6InNpdGVsZXZlbHJvbGVzIjtzOjc6InN1bW1hcnkiO3M6MjoiZGgiO31pOjE7YTo1OntzOjI6ImlkIjtzOjE1OiI3enAwU25FY21pWmVKR1EiO3M6ODoiZm9ybWRhdGEiO086ODoic3RkQ2xhc3MiOjI6e3M6Njoicm9sZWlkIjtzOjI6IjE2IjtzOjEyOiJzdWJtaXRidXR0b24iO3M6MzoiQWRkIjt9czoxMDoicGx1Z2lubmFtZSI7czoxNDoic2l0ZWxldmVscm9sZXMiO3M6MTQ6InBsdWdpbmZ1bGxuYW1lIjtzOjE0OiJzaXRlbGV2ZWxyb2xlcyI7czo3OiJzdW1tYXJ5IjtzOjY6InN1Yl9kaCI7fX19fQ==]]></components>
+<export><![CDATA[pdf,csv,xls]]></export>
+<global><![CDATA[1]]></global>
+<lastexecutiontime><![CDATA[0]]></lastexecutiontime>
+<disabletable><![CDATA[0]]></disabletable>
+<instance version="2019052007"><blockname><![CDATA[reportdashboard]]></blockname>
+<parentcontextid><![CDATA[1]]></parentcontextid>
+<showinsubcontexts><![CDATA[0]]></showinsubcontexts>
+<requiredbytheme><![CDATA[0]]></requiredbytheme>
+<pagetypepattern><![CDATA[blocks-reportdashboard-dashboard]]></pagetypepattern>
+<subpagepattern><![CDATA[Learnerdashboard]]></subpagepattern>
+<defaultregion><![CDATA[classroom-main]]></defaultregion>
+<defaultweight><![CDATA[0]]></defaultweight>
+<timecreated><![CDATA[1664778866]]></timecreated>
+<timemodified><![CDATA[1664778866]]></timemodified>
+<title><![CDATA[Classrooms]]></title>
+<reportcontenttype><![CDATA[table]]></reportcontenttype>
+<reporttype><![CDATA[]]></reporttype>
+<logo><![CDATA[]]></logo>
+<tilescolourpicker><![CDATA[]]></tilescolourpicker>
+<disableheader><![CDATA[]]></disableheader>
+<tilescolour><![CDATA[]]></tilescolour>
+<url><![CDATA[]]></url>
+</instance><position version="2019052007"></position><instance version="2019052007"><blockname><![CDATA[reportdashboard]]></blockname>
+<parentcontextid><![CDATA[1]]></parentcontextid>
+<showinsubcontexts><![CDATA[0]]></showinsubcontexts>
+<requiredbytheme><![CDATA[0]]></requiredbytheme>
+<pagetypepattern><![CDATA[blocks-reportdashboard-dashboard-oh]]></pagetypepattern>
+<subpagepattern><![CDATA[Learnerdashboard]]></subpagepattern>
+<defaultregion><![CDATA[classroom-main]]></defaultregion>
+<defaultweight><![CDATA[0]]></defaultweight>
+<timecreated><![CDATA[1664778866]]></timecreated>
+<timemodified><![CDATA[1664778866]]></timemodified>
+<title><![CDATA[Classrooms]]></title>
+<reportcontenttype><![CDATA[table]]></reportcontenttype>
+<reporttype><![CDATA[]]></reporttype>
+<logo><![CDATA[]]></logo>
+<tilescolourpicker><![CDATA[]]></tilescolourpicker>
+<disableheader><![CDATA[]]></disableheader>
+<tilescolour><![CDATA[]]></tilescolour>
+<url><![CDATA[]]></url>
+</instance><position version="2019052007"></position><instance version="2019052007"><blockname><![CDATA[reportdashboard]]></blockname>
+<parentcontextid><![CDATA[1]]></parentcontextid>
+<showinsubcontexts><![CDATA[0]]></showinsubcontexts>
+<requiredbytheme><![CDATA[0]]></requiredbytheme>
+<pagetypepattern><![CDATA[blocks-reportdashboard-dashboard-dh]]></pagetypepattern>
+<subpagepattern><![CDATA[Learnerdashboard]]></subpagepattern>
+<defaultregion><![CDATA[classroom-main]]></defaultregion>
+<defaultweight><![CDATA[0]]></defaultweight>
+<timecreated><![CDATA[1664778866]]></timecreated>
+<timemodified><![CDATA[1664778866]]></timemodified>
+<title><![CDATA[Classrooms]]></title>
+<reportcontenttype><![CDATA[table]]></reportcontenttype>
+<reporttype><![CDATA[]]></reporttype>
+<logo><![CDATA[]]></logo>
+<tilescolourpicker><![CDATA[]]></tilescolourpicker>
+<disableheader><![CDATA[]]></disableheader>
+<tilescolour><![CDATA[]]></tilescolour>
+<url><![CDATA[]]></url>
+</instance><position version="2019052007"></position><instance version="2019052007"><blockname><![CDATA[reportdashboard]]></blockname>
+<parentcontextid><![CDATA[1]]></parentcontextid>
+<showinsubcontexts><![CDATA[0]]></showinsubcontexts>
+<requiredbytheme><![CDATA[0]]></requiredbytheme>
+<pagetypepattern><![CDATA[blocks-reportdashboard-dashboard-sub_dh]]></pagetypepattern>
+<subpagepattern><![CDATA[Learnerdashboard]]></subpagepattern>
+<defaultregion><![CDATA[classroom-main]]></defaultregion>
+<defaultweight><![CDATA[0]]></defaultweight>
+<timecreated><![CDATA[1664778866]]></timecreated>
+<timemodified><![CDATA[1664778866]]></timemodified>
+<title><![CDATA[Instructor-led courses]]></title>
+<reportcontenttype><![CDATA[table]]></reportcontenttype>
+<reporttype><![CDATA[]]></reporttype>
+<logo><![CDATA[]]></logo>
+<tilescolourpicker><![CDATA[]]></tilescolourpicker>
+<disableheader><![CDATA[]]></disableheader>
+<tilescolour><![CDATA[]]></tilescolour>
+<url><![CDATA[]]></url>
+</instance><position version="2019052007"></position></report>

@@ -1,0 +1,57 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+
+{{# classroom_view_count}}
+<table id ="dashboard_classrooms" class="generaltable">
+      <thead>
+          <tr>
+              <th>{{#str}}classroomname, local_classroom {{/str}}</th>
+              <th></th>
+              <th>{{#str}}description,local_classroom {{/str}}</th>
+              <th>{{#str}}startdate, local_classroom {{/str}}</th>
+              <th>{{#str}}enddate,local_classroom {{/str}}</th>
+           </tr>
+    </thead>
+    <tbody>
+          {{# moduledetails}}
+         <tr>
+            <td> 
+               <a href='{{classroom_url}}' alt="{{classroomFullname}}">{{displayClassroomFullname}}</a> 
+            </td>
+            <td>
+                <a href="{{classroom_url}}">
+                   <button class="btn btn-sm launch_btn">{{#str}}launch,block_userdashboard{{/str}}</button>
+                 </a>
+                 {{{ copyaction }}}
+            </td>
+            <td> {{{classroomSummary}}} </td>
+            <td> {{{startdate}}} </td>
+            <td> {{{enddate}}} </td>
+         </tr>
+        {{/ moduledetails}}
+    </tbody>
+</table>
+{{/ classroom_view_count}}
+
+{{^ classroom_view_count}}
+    {{> block_userdashboard/userdashboard_nodata_text}}  
+{{/ classroom_view_count}}
+{{#enableslider}}
+     {{> block_userdashboard/userdashboard_enable_slider}}  
+{{/enableslider}}
+
+

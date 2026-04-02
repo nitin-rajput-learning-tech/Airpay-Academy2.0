@@ -1,0 +1,124 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template block_userdashboard/inner_tab
+
+    Select an action to execute.
+
+    Classes required for JS:
+    * none
+
+    Data attibutes required for JS:
+    * none
+
+    Context variables required for this template:
+    * message - The message to explain why we ask user to select an action
+    * choices - List of possible actions
+    * confirm - Text for button confirms
+    * cancel -  Text for button cancel
+
+    Example context (json):
+    {
+        "message": "Message",
+        "choices": [
+            { "value": "1", "text": "One" },
+            { "value": "2", "text": "Two" }
+        ],
+        "confirm": "Confirm",
+        "cancel": "Cancel"
+    }
+}}
+
+
+
+<div class="w-full pull-left {{{functionname}}} {{{course_count_view}}}">
+
+    <div class="portlet light shadow">
+        <div class="portlet-title">
+            {{> block_userdashboard/userdashboard_count_info}}
+            {{> block_userdashboard/userdashboard_inner_tab}}
+        </div>
+
+        <div class="portlet-body w-100">
+            <div  class="divslide" >
+
+            {{# enableslider}}
+                <div class="userdashboard_filter_container">
+                    <label>{{#str}}search,block_userdashboard{{/str}} :
+                    <input id="userdashboard_filter" class="ml-10 dashboard_filter" type="text" data-filter="{{{filter}}}" data-component="{{{functionname}}}" name="dashboard_filter" placeholder="" value="{{{filter_text}}}"></label>
+                </div>
+            {{/ enableslider}}
+
+            {{#inprogress_elearning_available}}
+                <div id="elearning_inprogress" class="tab-pane divslider active active_subtab">
+                    {{#elearningtemplate}}
+                        {{> block_userdashboard/elearning_courses_innercontent }}
+                    {{/elearningtemplate}}
+
+                    {{# classroomtemplate}}
+                        {{> block_userdashboard/classroom_courses_innercontent}}
+                    {{/ classroomtemplate}}
+
+                    {{# programtemplate}}
+                        {{> block_userdashboard/program_courses_innercontent }}
+                    {{/ programtemplate}}
+
+                    {{# certificationtemplate}}
+                        {{> block_userdashboard/certification_courses_innercontent }}
+                    {{/ certificationtemplate}}
+
+                    {{# learningplantemplate}}
+                        {{> block_userdashboard/learningplan_courses_innercontent }}
+                    {{/ learningplantemplate}}
+
+                    {{# evaluationtemplate}}
+                        {{> block_userdashboard/evaluation_courses_innercontent }}
+                    {{/ evaluationtemplate}}
+
+                    {{# onlineteststemplate}}
+                        {{> block_userdashboard/onlinetests_courses_innercontent }}
+                    {{/ onlineteststemplate}}
+
+                    {{# xseedtemplate}}
+                        {{> block_userdashboard/xseed_innercontent }}
+                    {{/ xseedtemplate}}
+                </div>
+            {{/inprogress_elearning_available}}
+
+            {{^inprogress_elearning_available}}
+                {{> block_userdashboard/userdashboard_nodata_text}}
+            {{/inprogress_elearning_available}}
+
+                <div id="elearning_completed" class="tab-pane divslider"></div>
+
+                {{# classroomtemplate}}
+                    <div id="elearning_cancelled" class="tab-pane divslider"></div>
+                {{/ classroomtemplate}}
+
+                {{# programtemplate}}
+                    <div id="elearning_cancelled" class="tab-pane divslider"></div>
+                {{/ programtemplate}}
+
+            </div>
+        </div>
+    </div>
+</div>
+{{#js}}
+    require(["block_userdashboard/userdashboardinit"], function(){
+
+    });
+{{/js}}

@@ -1,0 +1,57 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+
+<div class="custom_header" >
+   {{#tittle_variable}}
+        <div class="custom_header_tittle">
+            <h3>{{tittle_variable}}</h3>
+        </div>
+         {{#btn_tittle_variable}}
+            <div class="custom_btn_dv" >
+             <button class="{{custom_btn_class}}">{{btn_tittle_variable}}</button>
+            </div>
+        {{/btn_tittle_variable}}
+        {{#btn_tittle_variable1}}
+        <div class="{{custom_header_btn_dv_class1}}" >
+            <button class="{{custom_header_btn_class1}}" data-action={{data_action_variable1}}>{{btn_tittle_variable1}}</button>
+        </div>
+        {{/btn_tittle_variable1}}
+    {{/tittle_variable}}
+</div>
+
+ {{#custom_btn_class}}
+       <div class=ajax_form_dialog>
+            <div class=dialog_content ></div>
+        </div>
+ {{/custom_btn_class}}
+
+{{#js}}
+    // New code to create groups in a modal.
+
+
+    {{#custom_btn_class}}
+
+        $(document).on("click", ".{{custom_btn_dv_class}}", function(){
+            require(['local_classroom/ajaxform'], function(NewClassroom) {
+                NewClassroom.ajaxform({contextid:'{{contextid}}',plugintype:'{{plugintype}}',plugin_name:'{{plugin_name}}',formclass:'{{formclass}}',dialog_title:'{{dialog_title}}',ajaxform:'{{ajaxform}}','ajax_form_dialog':'ajax_form_dialog',dialog_content:'dialog_content'});
+            });
+        });
+
+    {{/custom_btn_class}}
+
+
+{{/js}}

@@ -1,0 +1,51 @@
+{{!
+    @deprecated since 4.0
+    @template theme_epsilon/nav-drawer
+
+
+    Example context (json): {}
+}}
+<div id="nav-drawer" data-region="drawer" class="d-print-none moodle-has-zindex {{^navdraweropen}}closed{{/navdraweropen}}" aria-hidden="{{#navdraweropen}}false{{/navdraweropen}}{{^navdraweropen}}true{{/navdraweropen}}" tabindex="-1">
+    {{> theme_epsilon/flat_navigation }}
+
+	{{#isloggedin}}
+        <div data-region="drawer-toggle" class="left_sidebar">
+            <button aria-expanded="{{#navdraweropen}}true{{/navdraweropen}}{{^navdraweropen}}false{{/navdraweropen}}" aria-controls="nav-drawer" type="button" class="btn pull-xs-left m-r-1 btn-secondary" data-action="toggle-drawer" data-side="left" data-preference="drawer-open-nav">{{#pix}}i/menubars{{/pix}}<span class="sr-only">{{#str}}sidepanel, core{{/str}}</span></button>
+        </div>
+        {{{output.left_navigation_quick_links}}}
+        <span class="leftmenu_navigator hidden" id = 'firstdata' title="{{#str}}show_more_less, theme_epsilon {{/str}} "><i class="fa leftmenu_navigator_icon"></i></span>
+    {{/isloggedin}}
+</div>
+<div class="nav-drawer-overlay" class="hidden-print {{^navdraweropen}}open{{/navdraweropen}}" tabindex="-1"></div>
+
+{{#js}}
+	$( document ).ready(function() {
+		var leftmenu = $('.user_navigation_ul')[0];
+	    var totalheight = $('.user_navigation_ul').height();
+		if(leftmenu){
+			var list_count = leftmenu.children.length;
+			var listheight = $('.user_navigation_ul li').height();
+
+			var firstmove = listheight*12;
+			var secondmove = listheight*10;
+			if(leftmenu != null){
+				var navdrawer = leftmenu.parentElement;
+
+				var navdrawer_closed = leftmenu.parentElement.classList.contains('closed');
+				if(navdrawer.length != 0 && list_count >= 12 ){
+					var leftmenu_navigator = $('.leftmenu_navigator')[0];
+					$(leftmenu_navigator).removeClass("hidden");
+					$(leftmenu_navigator).click(function(){
+						$(leftmenu_navigator).toggleClass('show_more');
+						// $(leftmenu).toggle('show_more');
+						if($(leftmenu_navigator).hasClass('show_more')){
+							$(leftmenu).css('margin-top', -firstmove+'px');
+						}else{
+							$(leftmenu).css('margin-top', '0px');
+						}
+					});
+				}
+			}
+		}
+	});
+{{/js}}

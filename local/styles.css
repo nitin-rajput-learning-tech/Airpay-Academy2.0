@@ -1,0 +1,376 @@
+
+.like_unlike.ml-10.mt-1.disable_pointer {
+    pointer-events: none;
+}
+
+#page-local-classroom-view .custom_header {
+  color: white;
+  background: repeating-linear-gradient( 45deg, #606dbc, #606dbc 10px, #465298 10px, #465298 20px );
+  padding: 10px;
+  margin-bottom: 15px;
+}
+#page-local-classroom-view .custom_header_tittle{
+  width: 50%;
+}
+#page-local-classroom-view .custom_btn_dv{
+  float: right;
+  margin-top: -35px;
+}
+#page-local-classroom-view .ui-dialog {
+    left: 36%!important;
+    top: 35%!important;
+    margin-left: -175px!important;
+    margin-top: -175px!important;
+}
+/*#page-local-classroom-view .select2-search__field{
+  width: 200px !important;
+}*/
+/*added by rizwana for classroom view page starts*/
+/*tabs css starts*/
+#page-local-classroom-index #status_tabs .classroom_tabs {
+  width: 65%;
+  margin: auto;
+  float: none;
+  line-height: 2.2rem;
+  border-bottom: none
+}
+#page-local-classroom-index #status_tabs .classroom_tabs .nav-item {
+    width: 20%;
+    float: left;
+    border: 1px solid #ddd;
+    margin: 0px;
+}
+#page-local-classroom-index #status_tabs .classroom_tabs .nav-item .nav-link {
+    border: none;
+    text-align: center;
+    font-size: 15px;
+    color: #55595c;
+    border-bottom: 5px solid transparent;
+    background-color: #f3f3f5;
+}
+#page-local-classroom-index #status_tabs .classroom_tabs .nav-item .active.nav-link {
+    /*background-color: #fff;*/
+}
+#page-local-classroom-index #status_tabs .classroom_tabs .nav-item .active.nav-link[aria-controls="allclasses"]{
+    /*border-bottom: 5px solid #1177d1;*/
+}
+#page-local-classroom-index #status_tabs .classroom_tabs .nav-item .active.nav-link[aria-controls="activeclasses"]{
+    /*border-bottom: 5px solid #0b9444;*/
+}
+#page-local-classroom-index #status_tabs .classroom_tabs .nav-item .active.nav-link[aria-controls="holdclasses"]{
+    /*border-bottom: 5px solid #f7941d;*/
+}
+#page-local-classroom-index #status_tabs .classroom_tabs .nav-item .active.nav-link[aria-controls="completedclasses"]{
+    /*border-bottom: 5px solid #ed008c;*/
+}
+#page-local-classroom-index #status_tabs .classroom_tabs .nav-item .active.nav-link[aria-controls="cancelledclasses"]{
+    /*border-bottom: 5px solid #ec1b23;*/
+}
+#page-local-classroom-index #status_tabs .classroom_tabs .nav-item .nav-link span.status_icon {
+   width: 30px;
+    height: 30px;
+    float: left;
+    border-radius: 50%;
+    color: #fff;
+}
+#page-local-classroom-index #status_tabs .classroom_tabs .nav-item .nav-link span.status_icon i.fa {
+    width: 30px;
+    height: 30px;
+    float: left;
+    margin-top: 7px;
+}
+#page-local-classroom-index #status_tabs .classroom_tabs .nav-item .nav-link[aria-controls="allclasses"] span.status_icon {
+    background-color: #1177d1;
+}
+#page-local-classroom-index #status_tabs .classroom_tabs .nav-item .nav-link[aria-controls="activeclasses"] span.status_icon {
+    background-color: #0b9444;
+}
+#page-local-classroom-index #status_tabs .classroom_tabs .nav-item .nav-link[aria-controls="holdclasses"] span.status_icon {
+    background-color: #f7941d;
+}
+#page-local-classroom-index #status_tabs .classroom_tabs .nav-item .nav-link[aria-controls="completedclasses"] span.status_icon {
+    background-color: #ed008c;
+}
+#page-local-classroom-index #status_tabs .classroom_tabs .nav-item .nav-link[aria-controls="cancelledclasses"] span.status_icon {
+    background-color: #ec1b23;
+}
+#page-local-classroom-index #viewclassrooms_wrapper .row:first-child {
+    padding: 0px 15px;
+}
+/*tabs css ends*/
+#page-local-classroom-index #viewclassrooms_wrapper{
+    margin-top: 15px;
+}
+#page-local-classroom-index #viewclassrooms .classesimg{
+  width: 100%;
+  height: 150px;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+#viewclassrooms, #viewclassrooms thead th, #viewclassrooms tbody td{
+  border: none;
+}
+#page-local-classroom-index #viewclassrooms tbody tr{
+  background-color: #fff
+}
+#page-local-classroom-index #viewclassrooms tbody tr td { 
+    width: 50%; 
+}
+.dataContainer p{
+  font-size: 14px;
+}
+.dataContainer{
+  float: left;
+  padding: 2%;
+  margin-top: -3rem;
+}
+.dataContainer_left{
+  width: 50%;
+  float: left;
+}
+.dataContainer_right{
+  width: 50%;
+  float: left;
+}
+.classroom_actions a{
+    padding: 0px 12px;
+}
+.classroom_container {
+    width: 100%;
+    float: left;
+    background-color: #f5f4f0;
+}
+#allclassescontent .classroom_container {
+    border-bottom: 4px solid #1177d1;
+}
+#activeclassescontent .classroom_container {
+    border-bottom: 4px solid #0b9444;
+}
+#holdclassescontent .classroom_container {
+    border-bottom: 4px solid #f7941d;
+}
+#completedclassescontent .classroom_container {
+    border-bottom: 4px solid #ed008c;
+}
+#cancelledclassescontent .classroom_container {
+    border-bottom: 4px solid #ec1b23;
+}
+
+#page-local-classroom-index .classname_strip{
+    width: 40%;
+    float: left;
+    position: relative;
+    bottom: 135px;
+    background-color: #00adef;
+    padding: 2px 8px;
+    -webkit-clip-path: polygon(0 0, 100% 0%, 90% 100%, 0 100%);
+    clip-path: polygon(0 0, 100% 0%, 90% 100%, 0 100%);
+    text-transform: capitalize;
+    color: #fff;
+    opacity: 0.9;
+}
+.classname_strip span{
+    width: 100%;
+    float: left;
+}
+.classname_strip .classname {
+    font-size: 18px;
+}
+.classname_strip .classcreated{
+    text-align: center;
+    font-size: 10px;
+}
+.classdate_strip {
+    width: 30%;
+    float: right;
+    position: relative;
+    top: -50px;
+    background-color: #00adef;
+    -webkit-clip-path: polygon(10% 0, 100% 0%, 100% 100%, 0 100%);
+    clip-path: polygon(10% 0, 100% 0%, 100% 100%, 0 100%);
+    text-align: center;
+    color: #fff;
+    padding: 10px 20px;
+    font-size: 13px;
+    opacity: 0.9;
+}
+.classdate_strip i.fa {
+    padding-right: 6px;
+}
+#viewclassrooms .classroom_container .contentlist{
+    margin-bottom: 3px;
+}
+#viewclassrooms .dataContainer .lable_name {
+    min-width: 110px;
+    float: left;
+}
+#viewclassrooms .dataContainer .trainer_header{
+    border-bottom: 1px solid #ddd;
+    width: 70%;
+}
+#viewclassrooms .dataContainer .trainer_img {
+    width: 35px;
+    height: 35px;
+}
+#viewclassrooms .dataContainer .trainer_details {
+    margin-bottom: 7px;
+    width: 90%;
+    float: left;
+}
+#viewclassrooms .dataContainer .trainerimg{
+    width: 20%;
+    float: left;
+}
+#viewclassrooms .dataContainer .trainer_details .trainername{
+    width: 75%;
+    float: left;
+    font-size: 15px;
+}
+#viewclassrooms .dataContainer .trainer_details .trainerdesignation{
+    font-size: 11px;
+    width: 75%;
+    float: left;
+    margin-top: -3px;
+}
+#viewclassrooms .dataContainer .viewmorebtn{
+    padding: 2px 7px;
+}
+/* added by rizwana for classroom view page ends*/
+/*class view page starts*/
+#page-local-classroom-view #region-main .card.card-block {
+    border: none;
+    background-color: transparent;
+    padding: 0px;
+}
+#page-local-classroom-view .classview_topcontainer{
+    width: 100%;
+    float: left;
+    height: auto;
+    padding: 25px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 0px 0px 8px 8px;
+}
+#page-local-classroom-view .classviewimg{
+    width: 95%;
+    height: 400px;
+    border-radius: 12px;
+}
+#page-local-classroom-view .classname_strip{
+    width: 75%;
+    float: left;
+    position: relative;
+    bottom: 375px;
+    background-color: #00adef;
+    padding: 2px 8px;
+    -webkit-clip-path: polygon(0 0,100% 0%,90% 100%,0 100%);
+    clip-path: polygon(0 0,100% 0%,90% 100%,0 100%);
+    text-transform: capitalize;
+    color: #fff;
+    opacity: .9;
+
+}
+#page-local-classroom-view .classname_strip .coursename{
+  font-size: 18px;
+}
+
+#page-local-classroom-view .enrol_strip {
+    width: 43%;
+    float: right;
+    position: relative;
+    top: -150px;
+    right: 17px;
+    background-color: #00adef;
+    -webkit-clip-path: polygon(10% 0,100% 0%,100% 100%,0 100%);
+    clip-path: polygon(10% 0,100% 0%,100% 100%,0 100%);
+    text-align: center;
+    color: #fff;
+    padding: 10px 20px;
+    font-size: 20px;
+    opacity: 0.8;
+}
+#page-local-classroom-view .enrol_strip .enroll i.fa{
+    width: 45px;
+    float: left;
+    font-size: 31px;
+    vertical-align: middle;
+}
+#page-local-classroom-view .lable_name {
+    min-width: 135px;
+    float: left;
+}
+#page-local-classroom-view .contentlist{
+    margin-bottom: 3px;
+}
+#page-local-classroom-view .topcontent_right_middle{
+    margin-bottom: 15px;
+}
+#page-local-classroom-view .classdetails_left{
+    padding-left: 0px;
+    border-right: 1px solid #ddd;
+}
+.p-0{
+    padding: 0px !important;
+}
+#page-local-classroom-view .trainerimg{
+    width: 100%;
+    height: 65px;
+    border-radius: 12px;
+}
+#page-local-classroom-view .trainer-prev {
+    position: absolute;
+    left: 0;
+    margin-top: 13px;
+    cursor: pointer;
+    font-weight: 900;
+    font-size: 35px !important;
+    padding: 0 10px;
+    margin-left: -18px;
+    z-index: 1;
+    color: #ddd;
+}
+#page-local-classroom-view .trainer-next {
+    position: absolute;
+    right: 0;
+    margin-top: 17px;
+    cursor: pointer;
+    font-weight: 900;
+    font-size: 35px !important;
+    padding: 0 10px;
+    margin-right: -26px;
+    z-index: 1;
+    color: #ddd;
+}
+#page-local-classroom-view .classview_topcontent_left {
+    height: 400px;
+}
+#page-local-classroom-view .classview_tabscontainer {
+    background-color: #fff;
+    padding: 15px;
+    margin-top: 15px;
+    width: 100%;
+    float: left;
+    border: 1px solid #ddd;
+    border-radius: 0px 0px 8px 8px;
+}
+#page-local-classroom-view .tab-content{
+    padding: 15px;
+}
+#page-local-classroom-view .nav-tabs .nav-item {
+    color: #55595c;
+    width: 12%;
+    text-align: center;
+}
+#page-local-classroom-view .nav-tabs .nav-link.active{
+    border: none;
+    background-color: initial;
+    border-bottom: 5px solid #f7941d;
+}
+#page-local-classroom-view .nav-tabs .nav-link{
+    border-bottom: 5px solid transparent;
+}
+
+#page-local-classroom-view .nav-tabs .nav-link{
+    color: #55595c;  
+}
+/*class view page ends*/

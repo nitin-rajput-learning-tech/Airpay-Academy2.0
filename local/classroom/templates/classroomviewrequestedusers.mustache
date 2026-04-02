@@ -1,0 +1,145 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_request/requestview
+
+    Select an action to execute.
+
+    Classes required for JS:
+    * none
+
+    Data attibutes required for JS:
+    * none
+
+    Context variables required for this template:
+    * message - The message to explain why we ask user to select an action
+    * choices - List of possible actions
+    * confirm - Text for button confirms
+    * cancel -  Text for button cancel
+
+    Example context (json):
+    {
+        "message": "Message",
+        "requests": [
+            { "status": "1",
+             "compname": "One",
+             "requestedby":  
+             "requesteddate"
+              }        
+
+        ],
+        
+    }
+}}
+{{#response}}
+<table class="w-full pull-left cls-req-user">
+<thead>
+    <tr>
+        <th></th>
+    </tr>
+</thead>
+<tbody>
+    {{#records}}
+        <tr>
+            <td width=100%>   
+                <div class="{{cardClass}} pull-left">
+                     <div class="requests_container  mt-2">
+                    <div class='col-md-12 col-sm-12 col-12 p-0 mb-10 pull-left '> 
+                        <!--<div class='col-md-6 col-sm-12 col-12 pull-left '><span class="{{request.compname}} req_component_icon"></span><span class="req_component_name">{{componentname}}</span></div>  -->   
+                        <div class='col-md-6 col-sm-12 col-12 pull-right'>
+                            <div class='status_btns_container text-right'>
+                                {{#capability}}
+                                     <div class="pull-right text-center">
+
+                                            {{#approve_capability}}
+                                                {{^rejectstatus}}  
+                                                    {{#approvestatus}}  
+                                                      <span class="pull-left status_approved req_status" title="Approved"><i class="fa fa-check-circle" aria-hidden="true"></i></span>
+                                                    {{/approvestatus}}
+    
+                                                    {{^approvestatus}}      
+                                                    <span class="pull-left req_status">
+                                                    <a href="#" class="btn btn-sm req_status_link" onclick='(function(e){ require("local_request/requestconfirm").init({ componentid:{{componentid}}, component:"{{compname}}", id:{{id}}, action:"approve",  requesteduser: "{{requesteduser}}" })})(event)'> {{#str}}approve,local_request{{/str}} </a></span>
+                                                    {{/approvestatus}}
+                                                 {{/rejectstatus}}
+                                            {{/approve_capability}}
+
+                                            {{#deny_capability}}
+                                                {{^approvestatus}} 
+                                                {{#rejectstatus}}
+                                                   <span class="pull-left status_rejected req_status" title="Rejected"><i class="fa fa-times-circle" aria-hidden="true"></i></span>
+                                                {{/rejectstatus}}
+
+                                                {{^rejectstatus}}  
+                                                <span class="pull-left req_status">
+                                                <a href="#" class="btn btn-sm req_status_link" onclick='(function(e){ require("local_request/requestconfirm").init({ componentid:{{componentid}}, component:"{{compname}}", id:{{id}}, action: "deny", requesteduser:"{{requesteduser}}"  })})(event)'> {{#str}}deny,local_request{{/str}} </a>
+                                                </span>
+                                                {{/rejectstatus}}
+                                                {{/approvestatus}}
+
+                                            {{/deny_capability}}
+                                </div>
+                                {{/capability}}
+                            </div> 
+                        </div>
+                    </div>
+                    <div class='col-md-12 col-sm-12 col-12 p-0 pull-left requests_content'>
+                        <div class='col-md-4 col-sm-6 col-12 pull-left'>  
+                            <div class='w-full pull-left'>
+                                <span class='pull-left'><span class='lable_align'>{{#str}}requestedby,local_request{{/str}}</span><span class='colon_align'> :</span></span>
+                                <span class="value_align"><b>{{requesteduser}}</b></span> 
+                            </div>
+                            <div class='w-full pull-left'> 
+                                <span class='pull-left'><span class='lable_align'>{{#str}}requesteddate,local_request{{/str}}</span> <span class='colon_align'> :</span></span> <span class="value_align">{{requesteddate}}</span>  
+                            </div>
+                        </div>
+
+
+                        <div class='col-md-4 col-sm-6 col-12 pull-left '>
+                            <div class='w-full pull-left'> 
+                                <span class='pull-left'><span class='lable_align'>{{#str}}responder,local_request{{/str}}</span> <span class='colon_align'> :</span></span>
+                                <span class="value_align"><b>{{responder}}</b></span>     
+                            </div>
+                            <div class='w-full pull-left'> 
+                                <span class='pull-left'><span class='lable_align'>{{#str}}respondeddate,local_request{{/str}}</span> <span class='colon_align'> :</span></span>
+                                <span class="value_align"><b>{{respondeddate}}</b></span>                  
+                            </div>
+                        </div> 
+
+                        <div class='col-md-4 col-sm-6 col-12 pull-left'>
+                            <div class='w-full pull-left'> 
+                                <span class='pull-left'><span class='lable_align'>{{#str}}status,local_request{{/str}}</span> <span class='colon_align'> :</span></span><span class="status_display value_align"> {{status}}</span>
+                            </div>
+                        </div>
+
+                    </div>  
+                </div>
+            </td> 
+        </tr>          
+    {{/records}}
+</tbody>
+</table> {{! end of table tag}}
+{{/response}}
+
+{{#js}} 
+require(["local_request/requestconfirm"], function(requestconfirm){    
+    requestconfirm.requestDatatable();
+});
+{{/js}}
+
+
+

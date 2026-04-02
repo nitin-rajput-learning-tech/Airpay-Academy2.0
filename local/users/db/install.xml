@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/users/db" VERSION="20120122" COMMENT="XMLDB file for Moodle local/users"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd">
+  <TABLES>
+		<TABLE NAME="local_syncerrors" COMMENT="table holds errors caused during hrms sync">
+	      <FIELDS>
+					<FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+					<FIELD NAME="error" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+					<FIELD NAME="date_created" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+					<FIELD NAME="modified_by" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+					<FIELD NAME="mandatory_fields" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+					<FIELD NAME="email" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+					<FIELD NAME="idnumber" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+				</FIELDS>
+	      <KEYS>
+	        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+	      </KEYS>
+    	</TABLE>
+	
+		<TABLE NAME="local_userssyncdata" COMMENT="Used to store uploaded user info">
+		  <FIELDS>
+				<FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+				<FIELD NAME="newuserscount" TYPE="int" LENGTH="20" NOTNULL="false"  SEQUENCE="false"/>
+				<FIELD NAME="updateduserscount" TYPE="int" LENGTH="20" NOTNULL="false"  SEQUENCE="false"/>
+				<FIELD NAME="errorscount" TYPE="int" LENGTH="20" NOTNULL="false"   SEQUENCE="false" />
+				<FIELD NAME="warningscount" TYPE="int" LENGTH="20" NOTNULL="false"  SEQUENCE="false"/>
+				<FIELD NAME="supervisorwarningscount" TYPE="int" LENGTH="20" NOTNULL="false" SEQUENCE="false"/>
+	      <FIELD NAME="usercreated" TYPE="int" LENGTH="10" NOTNULL="false"  SEQUENCE="false"/>
+	      <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+	      <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="false"  SEQUENCE="false"/>
+	      <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+		  <FIELD NAME="costcenterid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+		  </FIELDS>
+		  <KEYS>
+				<KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+		  </KEYS>
+	    </TABLE>
+	    <TABLE NAME="local_transcript_history" COMMENT="local_transcript_history table">
+	      <FIELDS>
+				<FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+				<FIELD NAME="employee_id" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+				<FIELD NAME="fullname" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+				<FIELD NAME="training_title" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+				<FIELD NAME="completion_date" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+				<FIELD NAME="status" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+				<FIELD NAME="training_type" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+				<FIELD NAME="transcript_score" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+				<FIELD NAME="training_hours" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+				<FIELD NAME="training_object_id" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+				<FIELD NAME="training_location" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+				<FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+				<FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+				<FIELD NAME="usercreated" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+				<FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+				<FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+				<FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+	      </FIELDS>
+	      <KEYS>
+	        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+	      </KEYS>
+	      <INDEXES>
+             <INDEX NAME="employee_id" UNIQUE="false" FIELDS="employee_id"/>
+             <INDEX NAME="training_object_id" UNIQUE="false" FIELDS="training_object_id"/>
+             <INDEX NAME="courseid" UNIQUE="false" FIELDS="courseid"/>
+             <INDEX NAME="userid" UNIQUE="false" FIELDS="userid"/>
+          </INDEXES> 
+	    </TABLE>
+	    <TABLE NAME="local_userdata" COMMENT="Used to store uploaded user info">
+		  <FIELDS>
+			<FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+			<FIELD NAME="userid" TYPE="int" LENGTH="20" NOTNULL="false"  SEQUENCE="false"/>
+			<FIELD NAME="costcenterpath" TYPE="char" LENGTH="512" NOTNULL="false"  SEQUENCE="false"/>
+			<FIELD NAME="categorypath" TYPE="char" LENGTH="512" NOTNULL="false"   SEQUENCE="false" />
+	      	<FIELD NAME="usercreated" TYPE="int" LENGTH="10" NOTNULL="false"  SEQUENCE="false"/>
+	      	<FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+	      	<FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="false"  SEQUENCE="false"/>
+	      	<FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+		  </FIELDS>
+		  <KEYS>
+				<KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+		  </KEYS>
+	    </TABLE>
+			
+  </TABLES>
+</XMLDB>

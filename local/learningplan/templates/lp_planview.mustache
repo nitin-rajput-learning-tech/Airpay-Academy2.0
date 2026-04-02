@@ -1,0 +1,135 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+
+<div class="w-full p-3 planview_container">
+	<div class="  planview_topcontent px-5">
+		
+		<div class="d-flex mx-0 my-4 planview_topcontainer">
+			<div class="courseimg_container  d-none-1023  ">
+				<div style="background-image: url('{{ lpnameimg }}');" alt="{{ lpname }}" title="{{ lpname }}" class="lpimg_bg" ></div>
+				<!-- {{#ratings_exist}}
+					{{{display_ratings}}}
+				{{/ratings_exist}} -->
+			</div>
+			<div class="desc_container d-block-1023 px-4 pt-2 pb-4">
+				<!--<h4 class='pull-left mb-5 lp_name'>{{ lpname }}</h4>-->	
+				<div class="row  align-items-center justify-content-between">
+					<div class="col-md-6 ">
+						<h4 class="lp_name">{{ lpname }}</h4>
+					</div>
+					
+				</div>
+				<span class="w-full d-block mt-3 "><b>{{#str}}description, local_learningplan{{/str}} :</b></span>
+				<div class="w-full  mt-2 description">
+					{{# description }}
+						<p class="m-0">{{{ description }}}</p>
+					{{/ description }}
+					{{^ description }}
+						<p class="alert alert-info text-center m-0">{{#str}}nocoursedesc, local_courses{{/str}}</p>
+					{{/ description }}
+				</div>
+				
+				
+				<!-- <div class="w-full  mt-5 mb-5"><img src="{{ lpcoursespath }}" class="w-full" height="40"/></div> -->
+		
+					<div class="w-full  mt-2 coursepath"> {{{lpcoursespath}}} </div>
+					{{{display_like}}}
+					<div class="ratings d-flex align-items-center justify-content-end">
+						{{{display_ratings}}}
+					</div>
+		       	
+				<!-- <div class="col-lg-12 col-md-12 pull-left p-0">
+					<div class="col-lg-6 col-md-6 pull-left p-0">
+						<div class="w-full pull-left mb-1">
+							<span class="w-full pull-left"><b>{{#str}} details {{/str}} :</b></span>
+						</div>
+						<div class="w-full pull-left">
+							<span class="text-muted" style="min-width: 100px;float: left;">{{#str}}learningplan, local_learningplan{{/str}}
+							<span style="margin-right: 10px;float: right;">:</span> 
+							</span><span style="color:#333;"><strong>{{ plan_learningplancode }}</strong></span>
+						</div>
+						<div class="w-full pull-left">
+							<span class="text-muted"  style="min-width: 100px;float: left;">{{# str }} department, local_users {{/ str }} 
+							<span style="margin-right: 10px;float: right;">:</span> 
+							</span><span style="color:#333;" title="{{ plandpt }}"><strong>{{ plandpt }}</strong></span> 
+						</div>
+						<div class="w-full pull-left">
+							<span class="text-muted"  style="min-width: 100px;float: left;">{{# str }} subdepartment, local_users {{/ str }}
+							<span style="margin-right: 10px;float: right;">:</span> 
+							</span><span style="color:#333;"><strong>{{ plansubdpt }}</strong></span>
+						</div>
+						<div class="w-full pull-left">
+							<span class="text-muted"  style="min-width: 100px;float: left;">{{# str }} commercialunit, local_users {{/ str }}
+							<span style="margin-right: 10px;float: right;">:</span> 
+							</span><span style="color:#333;"><strong>{{ plancu }}</strong></span>
+						</div>
+						<div class="w-full pull-left">
+							<span class="text-muted"  style="min-width: 100px;float: left;">{{# str }} territory, local_users {{/ str }}
+							<span style="margin-right: 10px;float: right;">:</span> 
+							</span><span style="color:#333;"><strong>{{ planterritory }}</strong></span>
+						</div>
+						<!--<div class="w-full pull-left">
+							<span class="text-muted" style="min-width: 100px;float: left;">{{#str}} learningplan_index_credits, local_learningplan{{/str}} 
+							<span style="margin-right: 10px;float: right;">:</span> 
+							</span><span style="color:#333;"><strong>{{ plan_credits }}</strong></span>
+						</div>-->
+					<!-- </div>
+					<div class="col-lg-3 col-md-3 pull-left pl-0">
+						<div class="w-full pull-left mb-1">
+							<span class="w-full pull-left"><b>{{#str}}assigned_courses, local_learningplan{{/str}} :</b></span>
+						</div>
+						<div class="w-full pull-left">
+							<span class="text-muted" style="min-width: 100px;float: left;">{{#str}}assigned, local_learningplan{{/str}} 
+							<span style="margin-right: 10px;float: right;">:</span> 
+							</span><span style="color:#333;"><strong>{{ total_assigned_course }}</strong></span>
+						</div>
+						<div class="w-full pull-left">
+							<span class="text-muted" style="min-width: 100px;float: left;">{{#str}}mandatory, local_learningplan{{/str}}
+							<span style="margin-right: 10px;float: right;">:</span> 
+							</span><span style="color:#333;"><strong>{{ mandatory }}</strong></span>
+						</div>
+						<div class="w-full pull-left">
+							<span class="text-muted" style="min-width: 100px;float: left;">{{#str}}optional,local_learningplan{{/str}}
+							<span style="margin-right: 10px;float: right;">:</span> 
+							</span><span style="color:#333;"><strong>{{ optional }}</strong></span>
+						</div>
+					</div>
+					<div class="col-lg-3 col-md-3 pull-left pl-0">
+						<div class="w-full pull-left mb-1">
+							<span class="w-full pull-left "><b>{{#str}}users{{/str}} :</b></span>
+						</div>
+						<div class="w-full pull-left">
+							<span class="text-muted" style="min-width: 100px;float: left;">{{#str}}planview_enrolled, local_learningplan{{/str}}  
+							<span style="margin-right: 10px;float: right;">:</span> 
+							</span><span style="color:#333;"><strong>{{ total_enroled_users }}</strong></span>
+						</div>
+						<div class="w-full pull-left">
+							<span class="text-muted" style="min-width: 100px;float: left;">{{#str}}learningplancompleted, local_learningplan{{/str}} 
+							<span style="margin-right: 10px;float: right;">:</span> 
+							</span><span style="color:#333;"><strong>{{ cmpltd }}</strong></span>
+						</div>
+					</div>
+				</div> -->
+			</div>
+		</div>
+	</div>
+</div>
+
+
+
+
+

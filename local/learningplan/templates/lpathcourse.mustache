@@ -1,0 +1,69 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+<div class="d-flex lpcoursesuser_view_container lp_course_sortorder">
+    <div class="courseprogress_container d-flex align-items-center flex-column mt-3">
+        <div class="check_circle_icon"></div>
+        <span class="text-muted date"><strong>{{completiondate}}</strong></span>
+        <span class="text-muted time">{{ctime}}</span>
+        <div class="course_line flexgrow-1"></div>
+    </div>
+    <div class = "w-full m-0 lpcourses flexgrow-1">
+        <div class="lpcourses_container {{ disable_class1 }} {{ cmpltd_class }} {{ enroldisable_class1 }} " id = "course_info_{{ courseid }}">
+            <!-- <div class="vertical_brdr"></div> -->
+            <!-- <div class="col-lg-2 col-md-3 pull-left p-0 course_progress_container">
+                <div class="w-full pull-left middlline_div"></div>
+                <div class="w-full pull-left middlline"></div>
+            </div> -->
+            <div class="w-full lpcourse_content mt-15 mb-15">
+                <div class="col-md-12 p-0{{ disable_class1 }} lpcourseslist">
+                    <div class="d-flex lpathcourse_container">
+                        <div class="lpathcourse_img p-3">
+                            <div style="background-image: url('{{ courseimgurl }}');height:179px;" alt="" title="" class="pvcourse_img lpimg_bg" > {{{ optional_or_mandtry }}}</div>
+                        </div>
+                        <div class="lpathsummary_container w-full d-flex flex-column p-3">
+                            <div class="w-full desc_block">
+                                <h5 class="d-flex justify-content-between">{{{ courselink }}}<span class="course_rating d-flex"><i class="fa fa-star mr-1"></i>{{avgrating}}</span></h5>
+                                <div class="text-muted lp_course_desc">{{ course_summary_string }}</div>
+                            </div>
+                            {{# classroomcourse}}
+                                <span data-courseid={{courseid}} class ="pull-right learningplan_classroom_icon" ,title="{{# str}} listofclassrooms, local_learningplan{{/ str}}"></span>
+                            {{/ classroomcourse}}
+                            <div class="bottom_content my-2">
+                                <div class="d-flex align-items-baseline  max_progress">
+                                    <h6 class="mr-2">Progress</h6>
+                                    <div class="progress mr-2">
+                                        <div class="progress-bar text-center" role="progressbar" style="width:{{ progressbar}}%;" aria-valuenow="{{ progressbar}}%" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <span class="progress_percentage ml-2">{{ progressbar }}%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- {{^ needenrol}}
+                <div class="col-lg-5 col-md-4 pull-left">
+                    {{#cmpltd_class}}
+                        <div class='completed'><span class='cmplt_icon {{cmpltd_class}}' title='Completed'><i class='fa fa-check' aria-hidden='true'></i></span><span cmplt_date>{{ completiondate }}</span></div>
+                    {{/cmpltd_class}}
+                </div>
+                {{/ needenrol}} -->
+            </div>
+                <!-- <span class="lp_dot"></span> -->
+        </div>
+    </div>
+</div>
+

@@ -1,0 +1,178 @@
+#table th{color:red;}
+table#table tr:nth-child(odd) td{color:#3366CC !important;}
+table#table tr:nth-child(even) td{color:#66CCCC;}
+#page-my-index.ui-state-default{background: transparent !important;}
+#page-my-index .ui-widget-overlay {background: transparent !important;}
+#page-my-index .ui-dialog{border: 2px solid #58819c !important;margin-left: 16px;float: left;-webkit-box-shadow: 0px 0px 10px rgba(205, 230, 247, 0.5);-moz-box-shadow: 0px 0px 10px rgba(205, 230, 247, 0.5);}
+#page-my-index.ui-widget-content .ui-icon{background-image: none !important;}
+#page-my-index .ui-dialog .ui-dialog-titlebar-close span{margin: -7px !important;}
+#page-my-index table.popuptable{border: 1px solid black !important;border-collapse: collapse !important;}
+#page-my-index table tr.headbor{border: 1px solid black !important;border-collapse: collapse !important;}
+#page-my-index table tr td.colum{border-right-style: solid;border-width: 1px;}
+.fc-bg{background-color:#fff;}
+.fc td .fc-day-number{border: none !important;}
+.block.block_my_event_calendar .fc-content-skeleton table{border-top:0px solid #eaeaea;border-bottom: 0px solid #eaeaea;}
+.block.block_my_event_calendar .fc-content-skeleton table tbody tr{display: none;padding: 10px !important;}
+.session_main {padding: 10px;color: #362b36;border-bottom: 1px solid #ccc;}
+.session_main:nth-child(even){background-color: #efefef;}
+.session_main:nth-child(odd){background-color: #fff;}
+b.session_details_h {width: 35%;float: left;color: #000;}
+.block.block_my_event_calendar .session_title {font-size: 14px;color: #fff;overflow: hidden;border: 1px solid #ddd;display: inline-block;padding: 8px 6px;vertical-align: middle;width: 100%;float: left;cursor: pointer;text-shadow: unset;}
+.block.block_my_event_calendar .session_title.no_events{background-color: #fafafa;color: #555658;}
+.block.block_my_event_calendar .session_title.local_evaluation{background-color: #3f51b5;}
+.block.block_my_event_calendar .session_title.local_certification{background-color: #28aae2;}
+.block.block_my_event_calendar .session_title.local_program{background-color: #3ab54a;}
+.block.block_my_event_calendar .session_title.local_onlinetests{background-color: #f7941d;}
+.block.block_my_event_calendar .session_title.local_classroom{background-color: #0071bc;}
+.block.block_my_event_calendar .session_title.local_learningplan{background-color: #ec1b23;}
+.block.block_my_event_calendar .session_title.mod{background-color: #f26723;}
+.block.block_my_event_calendar .session_title .fa-2x{font-size: 1em !important;}
+.block.block_my_event_calendar .session_title.ilt i.fa.fa-circle.fa-2x.label-blue {color: #61c0ff;}
+.block.block_my_event_calendar .session_title.elearning i.fa.fa-circle.fa-2x.label-red {color: #ff7474;}
+.block.block_my_event_calendar .session_title.onlinetest i.fa.fa-circle.fa-2x.label-orange {color: #ffc268;}
+.block.block_my_event_calendar .session_title i.fa.fa-angle-right.pull-right {text-align: center;width: 1.25em !important;font-size: 14px;}
+.block.block_my_event_calendar .session_title+.session_main {clear: both;}
+.ui-dialog-titlebar {width: 0%;float: right;}
+.ui-button .ui-button-text{background-color: transparent !important;border:none !important;color: #fff !important;outline: none;}
+.ui-button .ui-button-text:focus{outline: none;}
+div#eventContent {padding: 10px 0px 0px 10px;}
+.fc-ltr .fc-basic-view .fc-day-number {text-align: left;font-weight: bolder;padding-left: 1%;padding-top: 0.5%;font-size: 16px;font-family: "Open Sans",sans-serif !important;}
+.calender_border {border: 2px solid rgb(0, 114, 198) !important ;}
+.f2f_enrol_two{list-style-type: none;display: inline-flex;}
+.f2f_enrol_two_li,.f2f_enrol_al{text-align: center;color: red;outline:none !important;}
+.f2f_enrol{color: #fff;text-shadow: none;background-color: #f75b5e;background-image: none;font-weight: bold;text-transform: uppercase;font-size: 11px;border: 1px solid #f75b5e;cursor: pointer;padding: 3px;width: 96%;margin: auto;text-align: center;float: left;position: absolute;bottom: 0px;padding-left: 2%;left: 0px;padding-right: 1.5%;text-shadow: none;}
+.f2f_enrol:hover{border: 1px solid #f75b5e;background-color: #fff;}
+.f2f_enrol:hover a{color: #f75b5e !important;}
+.f2f_enrol1{text-shadow: none;background-color: #ddd;background-image: none;font-weight: bold;text-transform: uppercase;font-size: 11px;border: 1px solid #ddd;cursor: pointer;width: 30%;padding: 3px;margin: auto;text-align: center;float: right;border-radius: 4px;}
+.f2f_enrol_nm{color: #fff;text-shadow: none;background-color: #D20428;background-image: none;font-weight: bold;text-transform: uppercase;font-size: 11px;border: 1px solid #f75b5e;cursor: pointer;padding: 3px;width: 100%;margin-left: 5px;text-align: center;border-radius: 4px;}
+.f2f_enrol_nm a,.f2f_enrol a{color: #fff !important;border: none !important;}
+.f2f_enrol a:focus, .f2f_enrol_nm a:focus{outline: none;}
+ul.training_list {width: 100%;margin: 0;margin-top: 5px;list-style-type: none;display: inline-flex;padding: 0px 0%;}
+ul.training_list .f2f_en1 {margin: 0px auto;}
+ul.training_list .f2f_enrol_al1{float: left;text-align: left;color: red;outline:none !important;}
+#calendar .fc-toolbar .fc-button-group > button{color: #fff;background-color: #0072bc !important;border: 1px solid #72a7cf !important;font-weight: 100;}
+#calendar .fc-toolbar .fc-button-group > button.ui-state-active{color: #0072bc;background-color: #fff !important;border: 1px solid #0072bc !important;}
+#calendar .fc-toolbar .fc-button-group > button:hover{color: #0072bc;background-color: #fff !important;border: 1px solid #0072bc !important;}
+.block.block_my_event_calendar .ui-dialog.ui-widget .ui-dialog-titlebar.ui-widget-header{position: absolute;right: 13px;top: 18px;z-index: 1;}
+.block.block_my_event_calendar .ui-dialog.ui-widget div#eventContent{width: 96% !important;float: left;padding: 10px 2%;}
+.block.block_my_event_calendar .ui-dialog.ui-widget .ui-widget-header button.ui-button{background-color: #fff !important;outline: none;}
+body.path-blocks-training_calendar .ui-dialog.ui-widget{box-shadow: 0px 0px 20px #333;-webkit-box-shadow: 0px 0px 20px #333;-moz-box-shadow: 0px 0px 20px #333;}
+.block.block_my_event_calendar div#calendar{float: left;margin-top: 0px;/*margin-top: 40px;*/}
+.block.block_my_event_calendar .events_content{margin-top: 45px;}
+.block.block_my_event_calendar p#eventInfo{width: 100%;float: right;}
+.session_title.ilt span:before{margin-right: 5px;font-size: 15px;vertical-align: middle;}
+.session_title.ilt.local_certification > span:before {content: "\f19d";font-family: fontAwesome;}
+.session_title.ilt.local_program > span:before {content: "\f0ae";font-family: fontAwesome;}
+.session_title.ilt.local_onlinetests > span:before {content: "\f108";font-family: fontAwesome;}
+.session_title.ilt.local_evaluation > span:before {content: "\f0ea";font-family: fontAwesome;}
+.session_title.ilt.local_learningplan > span:before {content: "\f279";font-family: fontAwesome;}
+.block.block_my_event_calendar table.event_table td.dataTables_empty{font-size: 20px;text-align: center;border-radius: 4px;}
+
+/*calender events fix ---starts*/
+.block.block_my_event_calendar #calendar .fc-view-container thead.fc-head th.fc-day-header{text-align: center;width: 100%;margin: 0px 0px;font-weight: 300;padding: 10px 0px;}
+.block.block_my_event_calendar #calendar .fc-basic-view .fc-content-skeleton .fc-day-number{float: left;width:100% !important;padding: 0px !important;font-size: 13px;font-weight: 300;min-height: 40px;text-align: center;line-height: 40px;}
+.block.block_my_event_calendar  .table-bordered thead td, .block.block_my_event_calendar  .table-bordered thead th{border-bottom: 0px;color: inherit;}
+.block.block_my_event_calendar .fc-row table{border-bottom: initial;}
+.block.block_my_event_calendar .table-bordered td.fc-today.alert.alert-info {background-color: initial;border-bottom: 5px solid #398aca;}
+.block.block_my_event_calendar #calendar td.fc-day-number.fc-today{border-radius: 50% !important;}
+/*calender events fix ---ends*/
+
+.block.block_my_event_calendar #calendar .fc-toolbar .fc-center{width: 100%;text-align: center;}
+.block.block_my_event_calendar #calendar .fc-toolbar .fc-center > button.fc-prev-button{float: left;}
+.block.block_my_event_calendar #calendar .fc-toolbar .fc-center > button.fc-next-button{float: right;}
+.fc-event-container{cursor: pointer;}
+.block_my_event_calendar.block .fc-toolbar .fc-center button{background: transparent;border: none;box-shadow: none;}
+.block_my_event_calendar.block .fc-toolbar .fc-center button span.ui-icon{background-image: none;}
+.block_my_event_calendar.block .fc-toolbar .fc-center button.fc-prev-button{background-image: url([[pix:block_my_event_calendar|previous]]) !important;background-repeat: no-repeat;background-position: center center;background-size: 20px;}
+.block_my_event_calendar.block .fc-toolbar .fc-center button.fc-next-button{background-image: url([[pix:block_my_event_calendar|next]]) !important;background-repeat: no-repeat;background-position: center center;background-size: 20px;}
+.block_my_event_calendar .fc-center {width: 100%;}
+.block_my_event_calendar .fc-center h2{width: 65%;font-size: 22px !important;color: #555658 !important;font-weight: 200 !important;}
+button.fc-next-button.ui-button.ui-state-default.ui-corner-left.ui-corner-right{float: right;}
+.block_my_event_calendar .content{margin-top: 18px;}
+td.fc-other-month {visibility: hidden;}
+body#page-my-index .block.block_my_event_calendar .fc-scroller.fc-day-grid-container {min-height: 202px !important;/*min-height: 235px !important;*/overflow: hidden !important;max-height: 202px !important;/*max-height: 235px !important;*/}
+body#page-my-index .block.block_my_event_calendar .fc-basic-view .fc-body .fc-row{min-height: 3em;}
+.fc-toolbar button:hover{background-color: transparent !important;}
+.block.block_my_event_calendar .caleventlist span.cal_span {background-color: #2e7483;color: #fff !important;padding: 0px 6px 0px 6px;border-radius: 20px;width: 70%;text-align: center;margin: 0 15% !important;height: 17px;vertical-align: middle;float: left;cursor: pointer;}
+body#page-my-index .block.block_my_event_calendar td.fc-day-number.fc-today span.cal_span{background-color: #f15d39 !important;color: #fff !important;padding: 0px 6px 0px 6px;border-radius: 20px;width: 70%;text-align: center;margin: 0 15% !important;height: 17px;vertical-align: middle;float: left;cursor: pointer;}
+
+/*code added start for jira 2881 starts here added by Raghuvaran */
+body#page-my-index .block.block_my_event_calendar .fc-basic-view .fc-body .fc-row {
+    min-height: 40px;
+    max-height: 40px;
+}
+/*code added start for jira 2881 ends here*/
+
+@media(max-width: 1367px){
+    .block.block_my_event_calendar #calendar .fc-view-container thead.fc-head th.fc-day-header{padding-left: 0px; padding-right: 0px;width: inherit;}
+    .block.block_my_event_calendar div#calendar{padding-right: 0px;padding-left: 0px;}
+}
+
+@media (min-width: 1000px) and (max-width: 1199px){
+	body#page-my-index .block.block_my_event_calendar .fc-scroller.fc-day-grid-container{min-height: 202px !important;/*min-height: 248px!important;*/}
+}
+@media (min-width: 768px) and (max-width: 999px){
+	body#page-my-index .block.block_my_event_calendar .fc-scroller.fc-day-grid-container{min-height: 202px !important;/*min-height: 235px !important;*/}
+}
+@media(width: 768px){
+    .block.block_my_event_calendar div#calendar,.block.block_my_event_calendar div#calendar + div.col-md-6{width: 100%;}
+}
+@media(max-width: 767px){
+    .block.block_my_event_calendar .fc-basic-view .fc-body .fc-row {min-height: 3rem;height: 40px !important;}
+}
+@media (min-width: 580px) and (max-width: 767px){
+	body#page-my-index .block.block_my_event_calendar .fc-scroller.fc-day-grid-container{min-height: 202px !important;/*min-height: 305px !important;*/}
+}
+@media (max-width: 520px){
+	.block.block_my_event_calendar div#calendar{padding-left: 0px;padding-right: 0px;}
+}
+@media (min-width: 480px) and (max-width: 579px){
+	body#page-my-index .block.block_my_event_calendar .fc-scroller.fc-day-grid-container{min-height: 202px !important;/*min-height: 267px !important;*/}
+}
+@media (max-width: 479px){
+	body#page-my-index .block.block_my_event_calendar .fc-scroller.fc-day-grid-container{min-height: 202px !important;/*min-height: 240px !important;*/}
+}
+@media(max-width: 425px){
+	.block.block_my_event_calendar .caleventlist span.cal_span {padding: 0px 0px 0px 0px;}
+	body#page-my-index .block.block_my_event_calendar td.fc-day-number.fc-today span.cal_span{padding: 0px 0px 0px 0px;}
+} 
+.block.block_my_event_calendar .fa.fa-chevron-right {float: right;padding: 3px;}
+.block_my_event_calendar .trainingsession_title {text-align: center;font-weight: 200;font-size: 25px;color: #555658;margin-bottom: 10px;margin-top: 5px;line-height: 30px;}
+.block_my_event_calendar .fc-today .fc-day-number {background-color: #2c2f3b;color: #fff;}
+.block_my_event_calendar .fc-day-number.active_day {background-color: #f26724;color: #fff;}
+.block_my_event_calendar table thead{background: none;background-color: #fff;}
+body#page-my-index .block.block_my_event_calendar .fc-basic-view .fc-body .fc-row:nth-last-child(2) {border-bottom: 1px solid #eee;}
+body#page-my-index .block.block_my_event_calendar .fc-basic-view .fc-body .fc-row:last-child {border-bottom: 1px solid #eee;}
+.block_my_event_calendar .fc-row.fc-rigid .fc-content-skeleton td {border-color: #eee;}
+.block_my_event_calendar .event_table{border: none;}
+.block_my_event_calendar .event_table thead{display: none;}
+.block_my_event_calendar .event_table tr{background: none;}
+.block_my_event_calendar .event_table tbody td{padding: 0px; box-sizing: border-box; }
+.block_my_event_calendar .event_table.dataTable.no-footer {border-bottom: none;}
+.block_my_event_calendar #eventInfo .dataTables_wrapper.no-footer{padding: 0px;}
+.block.block_my_event_calendar #eventInfo .dataTables_paginate {margin: 7px 0px 0px 0px;}
+.block.block_my_event_calendar .dataTables_wrapper .dataTable {margin: 0px;}
+.block_my_event_calendar .fc-row .fc-past.local_program {background-color: #3ab54a !important; color: #fff;}
+.block_my_event_calendar .fc-row .fc-past.local_onlinetests {background-color: #f7941d !important; color: #fff;}
+.block_my_event_calendar .fc-row .fc-past.local_classroom {background-color: #0071bc !important; color: #fff;}
+.block_my_event_calendar .fc-row .fc-past.local_certification {background-color: #28aae2 !important; color: #fff;}
+.block_my_event_calendar .fc-row .fc-past.local_evaluation {background-color: #3f51b5 !important; color: #fff;}
+.block_my_event_calendar .fc-row .fc-past.local_learningplan {background-color: #ec1b23 !important; color: #fff;}
+.block_my_event_calendar .fc-row .fc-past.mod {background-color: #f26723 !important; color: #fff;}
+.block.block_my_event_calendar .session_title.nodate {background-color: #fafafa !important; color: #555658;}
+.block_my_event_calendar .fc-row .fc-future.local_program {background-color: #3ab54a !important; color: #fff;}
+.block_my_event_calendar .fc-row .fc-future.local_onlinetests {background-color: #f7941d !important; color: #fff;}
+.block_my_event_calendar .fc-row .fc-future.local_classroom {background-color: #0071bc !important; color: #fff;}
+.block_my_event_calendar .fc-row .fc-future.local_certification {background-color: #28aae2 !important; color: #fff;}
+.block_my_event_calendar .fc-row .fc-future.local_evaluation {background-color: #3f51b5 !important; color: #fff;}
+.block_my_event_calendar .fc-row .fc-future.local_learningplan {background-color: #ec1b23 !important; color: #fff;}
+.block_my_event_calendar .fc-row .fc-future.mod {background-color: #f26723 !important; color: #fff;}
+
+
+.block_my_event_calendar div.fc-day-grid-container {
+    overflow: hidden !important;
+    height: 300px !important;
+}
+#page-blocks-stream-index #uploaded_videos_data tr:nth-child(odd) td, tr:nth-child(odd) td {
+    background: transparent !important;
+}

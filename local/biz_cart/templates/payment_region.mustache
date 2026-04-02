@@ -1,0 +1,84 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template enrol_fee/payment_region
+
+    This template will render information about course fee along with a button for payment.
+
+    Classes required for JS:
+    * none
+
+    Data attributes required for JS:
+    * data-component
+    * data-paymentarea
+    * data-itemid
+    * data-cost
+    * data-description
+    * data-successurl
+
+    Context variables required for this template:
+    * price - Human readable price string including amount and currency
+    * instanceid - Id of the enrolment instance
+    * description - The description for this purchase
+    * successurl - The URL of the course
+
+    Example context (json):
+    {
+        "price": "108.50",
+        "currency": "EUR",
+        "identifier": 11,
+        "description": "Enrolment in course Introduction to algorithms",
+        "successurl": "https://moodlesite/course/view.php?id=2",
+        "isguestuser": false
+    }
+
+}}
+<div class="biz_cart_payment_region text-center col-12 p-0 mt-3">
+    {{#isguestuser}}
+        <div class="mdl-align">
+            <p>{{#str}} paymentrequired {{/str}}</p>
+            <p><b>{{price}} {{currency}}</b></p>
+            <p><a href="{{wwwroot}}/login/">{{# str }} loginsite {{/str}}</a></p>
+        </div>
+    {{/isguestuser}}
+    {{^isguestuser}}
+        <button
+            class="btn-primary pull-right p-3 w-100"
+            type="button"
+            id="gateways-modal-trigger-33"
+            data-action="core_payment/triggerPayment"
+            data-component="local_biz_cart"
+            data-paymentarea="cart"
+            data-identifier="{{identifier}}"
+            data-itemid="{{identifier}}"
+            data-userid="{{userid}}"
+            data-cost="{{price}} {{currency}}"
+            data-price="{{price}}"
+            data-currency="{{currency}}"
+            data-successurl="{{successurl}}"
+            data-description="my shopping cart checkout"
+            {{#termsandconditions}} disabled {{/termsandconditions}}
+        >
+            {{#str}} sendpaymentbutton, local_biz_cart {{/str}}
+        </button>
+    {{/isguestuser}}
+</div>
+{{#js}}
+    require(['core_payment/gateways_modal'], function(fn) {
+        fn.init();
+    });
+{{/js}}

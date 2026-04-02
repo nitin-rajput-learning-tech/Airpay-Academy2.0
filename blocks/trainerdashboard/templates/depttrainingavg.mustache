@@ -1,0 +1,95 @@
+{{!
+    This file is part of eAbyas
+    Copyright eAbyas Info Solutons Pvt Ltd, India
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 3 of the License, or
+    (at your option) any later version.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+    @author eabyas  <info@eabyas.in>
+}}
+{{#response}}
+    {{^records}}
+    {{#nodata}}
+        <div class = 'w-100 pull-left alert alert-info'>{{nodata}}</div>
+    {{/nodata}}
+    {{/records}}
+    {{#viewtypeCard}}
+                <table class="generaltable">
+                    <thead>
+                        <tr>
+                            <th>{{#str}}username,block_trainerdashboard{{/str}}</th>
+
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#records}}
+                        <tr>
+                            <td>{{username}}</td>
+
+                        </tr>
+                        {{/records}}
+                    </tbody>
+                </table>
+    {{/viewtypeCard}}
+{{/response}}
+{{#js}}
+    var search_interval = 100;
+    var timer;
+    var searchval 
+    $(document).on('keyup', '#global_filter_depttrainingavgdashboards', function(){
+
+        if (searchval===$(this).val()){
+            return true;
+        }
+        searchval = $(this).val();
+
+        var thiselement = $('.trainerdashboardstatus a.active').parent();
+
+        var trainerdashboardstatus = thiselement.data('status');
+
+        var options = {targetID: 'depttrainingavgdashboards',
+                    templateName: 'block_trainerdashboard/depttrainingavg',
+                    methodName: 'block_trainerdashboard_get_depttrainingavg',
+                    perPage: 10,
+                    cardClass: 'col-xl-4 col-md-6 col-12',
+                    viewType: 'card'};
+
+        var dataoptions = {trainerdashboardstatus: trainerdashboardstatus, search_query: searchval};
+        timer = setTimeout(function(){
+            require(['local_costcenter/cardPaginate'], function(cardPaginate) {
+                cardPaginate.reload(options, dataoptions,'');
+            });
+        },search_interval);
+    });
+    $(document).on('keydown', '.global_filter_depttrainingavgdashboards', function(){
+        if (searchval===$(this).val()){
+            return true;
+        }
+        searchval = $(this).val();
+
+        var thiselement = $('.trainerdashboardstatus a.active').parent();
+
+        var trainerdashboardstatus = thiselement.data('status');
+
+        var options = {targetID: 'depttrainingavgdashboards',
+                    templateName: 'block_trainerdashboard/depttrainingavg',
+                    methodName: 'block_trainerdashboard_get_depttrainingavg',
+                    perPage: 10,
+                    cardClass: 'col-xl-4 col-md-6 col-12',
+                    viewType: 'card'};
+
+        var dataoptions = {trainerdashboardstatus: trainerdashboardstatus, search_query: searchval};
+        timer = setTimeout(function(){
+            require(['local_costcenter/cardPaginate'], function(cardPaginate) {
+                cardPaginate.reload(options, dataoptions,'');
+            });
+        },search_interval);
+    });
+{{/js}}

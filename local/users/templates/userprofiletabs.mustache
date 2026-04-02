@@ -1,0 +1,152 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+
+<div class="userprfltabs_container w-full pull-left">
+    <ul class="nav nav-tabs" role="tablist">
+        {{#pluginslist}}
+            {{#users}}
+                <li class="nav-item profiledisplay" role="presentation" data-class = "users" data-action = "display_userprofile" data-status = "users" id={{userid}}>
+                    <a class="active nav-link" data-toggle="tab" href="javascript:void(0);" aria-controls="Profile" role="tab"  title="{{#str}}profile, local_users{{/str}}"} >{{#str}}profile, local_users{{/str}}</a>
+                </li>
+            {{/users}}
+
+            {{#courses}}
+                <li class="nav-item profiledatadisplay" role="presentation" data-class = "courses" data-action = "display_courses" data-status = "courses" id={{userid}}>
+                    <a class="nav-link" data-toggle="tab" href="javascript:void(0);" aria-controls="courses" role="tab"  title="{{#str}}courses, local_users{{/str}}" >{{#str}}courses, local_users{{/str}}</a>
+                </li>
+            {{/courses}}
+
+            {{#classroom}}
+                <li class="nav-item profiledatadisplay" role="presentation" data-class = "classroom" data-action = "display_classroom" data-status = "classroom" id={{userid}}>
+                    <a class="nav-link" data-toggle="tab" href="javascript:void(0);" aria-controls="classroom" role="tab"  title="{{#str}}classrooms, local_users{{/str}}"} >{{#str}}classroom, local_users{{/str}}</a>
+                </li>
+            {{/classroom}}
+
+            {{#learningplan}}
+                <li class="nav-item profiledatadisplay" role="presentation" data-class = "learningplan" data-action = "display_learningplan" data-status = "learningplan" id={{userid}}>
+                    <a class="nav-link" data-toggle="tab" href="javascript:void(0);" aria-controls="learningplan" role="tab"  title="{{#str}}learningplans, local_users{{/str}}" >{{#str}}learningplans, local_users{{/str}}</a>
+                </li>
+            {{/learningplan}}
+
+            {{#onlineexams}}
+                <li class="nav-item profiledatadisplay" role="presentation" data-class = "onlineexams" data-action = "display_onlineexams" data-status = "onlineexams" id={{userid}}>
+                    <a class="nav-link" data-toggle="tab" href="javascript:void(0);" aria-controls="onlineexams" role="tab"  title="{{#str}}onlineexams, local_users{{/str}}" >{{#str}}onlineexams, local_users{{/str}}</a>
+                </li>
+            {{/onlineexams}}
+
+            {{#program}}
+                <li class="nav-item profiledatadisplay" role="presentation" data-class = "program" data-action = "display_program" data-status = "program" id={{userid}}>
+                    <a class="nav-link" data-toggle="tab" href="javascript:void(0);" aria-controls="program" role="tab"  title="{{#str}}programs, local_users{{/str}}" >{{#str}}programs, local_users{{/str}}</a>
+                </li>
+            {{/program}}
+
+            {{#certification}}
+                <li class="nav-item profiledatadisplay" role="presentation" data-class = "certification" data-action = "display_certification" data-status = "certification" id={{userid}}>
+                    <a class="nav-link" data-toggle="tab" href="javascript:void(0);" aria-controls="certification" role="tab"  title="{{#str}}certifications, local_users{{/str}}" >{{#str}}certifications, local_users{{/str}}</a>
+                </li>
+            {{/certification}}
+            {{#skills}}    
+                <li class="nav-item profileskilldatadisplay" role="presentation" data-class = "skillrepository" data-action = "display_skillrepository" data-status = "skillrepository" id={{userid}}>  
+                    <a class="nav-link" data-toggle="tab" href="javascript:void(0);" aria-controls="skillrepository" role="tab"  title="{{#str}}competencyprogress, local_users{{/str}}" >{{#str}}competencyprogress, local_users{{/str}}</a>    
+                </li>   
+            {{/skills}}
+        {{/pluginslist}}
+    </ul>
+</div>
+
+{{#options}}
+    <div class="w-100 pull-left" id="{{targetID}}" data-region="{{targetID}}-preview-container">
+        <div data-region="{{targetID}}-count-container"></div>
+        <div data-region="{{targetID}}-list-container"></div>
+    </div>
+{{/options}}
+
+<div class="skillprfltabs_container w-full pull-left"></div>
+
+<div class="tab-content w-100 pull-left">
+    <div class="tab-pane active" id="profile_tab" role="tabpanel">
+        {{> local_users/userprofile }}
+    </div>
+</div>
+
+{{#js}}
+require(['core/ajax', 'core/templates', 'jquery'], function(Ajax, Templates, $){
+    $(".profiledatadisplay").click(function(){
+        if ($(this).find('a').hasClass('active')){
+            return true;
+        }
+        $(".tab-content").css('display','none');
+        $("#display_modulesdata").css('display','block');
+        $(".skillprfltabs_container").css('display','none');
+        var moduletype = $(this).data('status');
+        
+        var servicename = 'local_users_profile_moduledata';
+          
+        var targetid = $(this).data('action');
+        var userid = $(this).attr('id');
+        var options = {targetID: 'display_modulesdata',
+                    templateName: "local_"+moduletype+"/userprofile",
+                    methodName: servicename,
+                    perPage: 4,
+                    cardClass: 'col-md-6 col-12',
+                    viewType: 'card'};
+        var dataoptions = {moduletype: moduletype,userid:userid,contextid: 1};
+        var filterdata = {};
+        require(['local_costcenter/cardPaginate'], function(cardPaginate) {
+            cardPaginate.reload(options, dataoptions,filterdata);
+        });
+    });
+
+    $(".profiledisplay").click(function(){
+        $(".tab-content").css('display','block');
+        $("#display_modulesdata").css('display','none');
+        $(".skillprfltabs_container").css('display','none');
+    });
+    $(".profileskilldatadisplay").click(function(){
+        if ($(this).find('a').hasClass('active')){
+            return true;
+        }
+        $(".tab-content").css('display','none');
+        $("#display_modulesdata").css('display','none');
+        $(".skillprfltabs_container").css('display','block');
+        var moduletype = $(this).data('status');
+        var targetid = $(this).data('action');
+        var userid = $(this).attr('id');
+        var options = {targetID: 'display_modulesdata',
+                    templateName: "local_users/userprofile",
+                    methodName: "local_users_skillprofile"
+                    };
+        var dataoptions = {moduletype: moduletype,userid:userid,contextid: 1};
+        var filterdata = {};
+        var params = {};
+        params.userid = userid;
+
+        var promise = Ajax.call([{
+            methodname: "local_users_skillprofile",
+            args: params
+        }]); 
+        promise[0].done(function(resp){
+            Templates.render('local_users/skillprofiletabs', resp).then(function(html,js) {
+                var container = $('.skillprfltabs_container');
+                var container_html = $('.skillprfltabs_container').html();
+                Templates.replaceNodeContents(container, html, js);
+            });
+        });
+
+    });        
+});
+{{/js}}

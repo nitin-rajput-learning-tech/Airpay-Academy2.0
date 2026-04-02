@@ -1,0 +1,119 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+<div class="program_container w-full mb-3 {{programstatusclass}} {{# hide_show}}
+                        {{# show}} inactive_program {{/ show}} {{/ hide_show}}">
+    <div class="prgimg_container" >
+        <div class="prgimg_bg p-3" style="background-image: url('{{ bannerimage }}');" alt="{{programname}}">
+            <div class="d-flex justify-content-end">
+                <div class="cog_icon dropdown action_menu_dropdown">
+                {{# action}}
+                {{# mouse_overicon}}
+                    <span  data-toggle="dropdown" class="px-2" aria-expanded="false">
+                        <i class="fa fa-gear" aria-hidden="true" title="" aria-label=""></i>
+                    </span>
+                {{/ mouse_overicon}}
+                    <div class="dropdown-menu dropdown-menu-right shadow-sm">
+                       {{# edit}}
+                        <a class="dropdown-item" title="{{# str}} user_enrollments, local_program {{/ str}}" href="javascript:void(0)" title = "{{# str}} edit {{/str}}" onclick="(function(e){ require('local_program/ajaxforms').init({contextid:1, component:'local_program', callback:'program_form', form_status:0, plugintype: 'local', pluginname: 'program', id: {{ programid }} }) })(event)">
+                            <i class="fa fa-pencil fa-fw" aria-hidden="true" aria-label="" title = "{{# str}} edit {{/str}}"></i>{{# str}} edit {{/str}}
+                            </a>
+                        {{/ edit}}
+                        {{# assignusers}}
+                        <a class="dropdown-item" href="{{ assignusersurl }}">
+                            <i class="icon fa fa-user-plus fa-fw" aria-hidden="true" title ="{{# str}} assignusers, local_program {{/str}}"></i>{{# str}} assignusers, local_program {{/str}}
+                        </a>
+                        {{/ assignusers}}
+
+                        {{# hide_show}}
+                            {{# hide}}
+                                <a  class="dropdown-item" href="javascript:void(0)" alt = "{{# str}} inactive {{/ str}}"
+                                    title = "{{# str}} inactive {{/ str}}" onclick="(function(e){ require('local_program/program').deleteConfirm({action:'inactiveprogram', id: {{ programid }}, programid: {{ programid }}, programname: '{{ program }}'}) })(event)">
+                                    <i class="fa fa-eye fa-fw" aria-hidden="true" aria-label="" title = "{{# str}} makeinactive,local_program {{/ str}}"></i>{{# str}} makeinactive,local_program {{/ str}}
+                                </a>
+                            {{/ hide}}
+                            {{# show}}
+                                <a  class="dropdown-item" href="javascript:void(0)" alt = "{{# str}} active {{/ str}}"
+                                     title = "{{# str}} active {{/ str}}" onclick="(function(e){ require('local_program/program').deleteConfirm({action:'activeprogram', id: {{ programid }}, programid: {{ programid }}, programname: '{{ program }}'}) })(event)">
+                                    <i class="fa fa-eye-slash" aria-hidden="true" aria-label="" title = "{{# str}} makeactive,local_program {{/ str}}"></i>{{# str}} makeactive,local_program {{/ str}}
+                                 </a>
+                            {{/ show}}
+                        {{/ hide_show}}
+                        {{# programcompletionstatus}}
+                            <a class="dropdown-item" href="#">
+                                <i class="fa fa-check-circle-o" aria-hidden="true" aria-label="" title ="{{# str}} completed, local_program {{/ str}}"></i>{{# str}} completed, local_program {{/ str}}
+                            </a>
+                        {{/ programcompletionstatus}}
+                        {{# cannotdelete}}
+                        <a class="dropdown-item" title="{{# str}} coursebackup {{/ str}}" href="javascript:void(0)" alt = "{{# str}} delete {{/ str}}"
+                                title = "{{# str}} delete {{/ str}}" onclick="(function(e){ require('local_program/program').deleteConfirm({action:'cannotdeleteprogram', id: {{ programid }}, programid: {{ programid }}, programname: '{{ program }}'}) })(event)">
+                            <i class="fa fa-trash fa-fw" aria-hidden="true" aria-label="" title = "{{# str}} delete {{/ str}}"></i>{{# str}} delete {{/ str}}
+                        </a>
+                        {{/ cannotdelete}}
+                        {{# delete}}
+                        <a class="dropdown-item" title="{{# str}} coursebackup {{/ str}}" href="javascript:void(0)" alt = "{{# str}} delete {{/ str}}"
+                               title = "{{# str}} delete {{/ str}}" onclick="(function(e){ require('local_program/program').deleteConfirm({action:'deleteprogram', id: {{ programid }}, programid: {{ programid }}, programname: '{{ program }}'}) })(event)">
+                            <i class="fa fa-trash fa-fw" aria-hidden="true" aria-label="" title = "{{# str}} delete {{/ str}}"></i>{{# str}} delete {{/ str}}
+                        </a>
+                        {{/ delete}}
+                    </div>
+                {{/ action}}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="d-flex align-items-center justify-content-between  programname_status">
+        <div class="program_name">
+            <a href="view.php?bcid={{programid}}" class="class_name" title = "{{ program }}">{{ programname }}</a>
+        </div>
+    </div>
+    <div class="col-12  px-3 dataContainer">
+        <div class="datacontent pb-2">
+            <div class="description {{^ isdescription }} nodescription {{/ isdescription }}">
+                {{# isdescription}}
+                    {{^ descriptionstring}}
+                        <p class="text-muted" title="{{{ description }}}">{{{ description }}}</p>
+                    {{/ descriptionstring }}
+                    {{# descriptionstring}}
+                        <p class="text-muted" title="{{{ description }}}">{{ descriptionstring }}...</p>
+                    {{/ descriptionstring }}
+                {{/ isdescription}}
+                {{^ isdescription }}
+                    <p class="alert alert-info text-center">{{#str}}nocoursedesc, local_courses{{/str}}</p>
+                {{/ isdescription }}
+            </div>
+            <div class="bottom_container">
+                <p class="w-full d-flex contentlist mb-2">
+                    <span class="bcleftlable_name text-muted">{{# str}} levels, local_program {{/str}}
+                        <span class="text-muted bccolon">:</span>
+                    </span>
+                    <span class="bc_value font-weight-bold" title="{{ shortname }}">{{ totallevels }}</span>
+                </p>
+                <p class="w-full contentlist mb-2">
+                    <span class="lable_name text-muted">{{# str}} enrolled, local_program {{/str}} 
+                        <span class="text-muted bccolon">:</span>
+                    </span>
+                    <span class="bc_value font-weight-bold">{{ enrolled_users }}</span>
+                </p>
+                <p class="w-full contentlist mb-2">
+                    <span class="lable_name text-muted">{{# str}} completed, local_program {{/str}} 
+                        <span class="text-muted bccolon">:</span>
+                    </span>
+                    <span class="bc_value font-weight-bold" title="{{# str}} completed, local_program {{/str}}">{{ completed_users }}</span>
+                </p>
+        </div>
+    </div>
+</div>

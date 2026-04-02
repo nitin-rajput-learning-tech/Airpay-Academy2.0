@@ -1,0 +1,105 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+
+<div class=" d-flex lp_course_sortorder  " id="data{{ courseid }}">
+	<div class="courseprogress_container d-flex align-items-center flex-column">
+		<div class="check_circle_icon"></div>
+		<span class="text-muted date"><strong>{{date}}</strong></span>
+		<span class="text-muted time">{{ctime}}</span>
+		<div class="course_line flexgrow-1"></div>
+	</div>
+	<div class = "w-full lpcourses flexgrow-1">
+		<div class=" mb-4 prg{{ progress }} lpcourses_container {{ disable_class1 }}" id = "course_info_{{ courseid }}">
+			
+			<div class="lpcourse_content ">
+				<!-- <div class="col-lg-2 col-md-3 col-sm-12 col-xs-12  p-0 course_progress_container">
+						<div class="vertical_brdr"></div>
+						<div class="w-full  middlline_div"></div>
+						<div class="w-full  middlline"></div>
+						<div class="course_progress"> -->
+							<!-- <div class="col-md-1"><div class="lpnumber_container"><div class="lpnmbr_border"><button class="lp_nmbr">{{ numbercount }}</button></div></div></div>
+							<div class="lpcourse_progress progress-chart-container m-b-1">
+							   <div class="progress-doughnut">
+							        <div class="progress-text has-percent">{{ progress }}%</div>
+							        <div class="progress-indicator">
+							            <svg xmlns="http://www.w3.org/2000/svg">
+							                <g>
+							                    <title aria-hidden="true">{{ progress }}</title>
+							                    <circle class="circle percent-{{ progress }}"
+							                        r="27.5"
+						                            cx="35"
+						                            cy="35"/>
+							                </g>
+							            </svg>
+							        </div>
+							    </div> -->
+						<!-- 	</div>
+						</div> -->
+				
+					<div class="col-md-12  lpcourseslist p-0">
+						
+						<div class="d-flex course_container">
+							<div class="course_img p-3 ">
+								<div style="background-image: url('{{ course_summary_image_url }}');" alt="" title="" class="pvcourse_img lpimg_bg" > {{{ optional_or_mandtry }}}</div>
+								
+							</div>
+							<div class="summary_container w-full d-flex flex-column p-3">
+								<div class="w-full  actions">{{{ actions }}} {{{ buttons }}}</div>
+								<div class="w-full desc_block my-2">
+									<h5 class="d-flex justify-content-between">{{{ course_view_link }}}<span class="course_rating d-flex"><i class="fa fa-star mr-1"></i>{{avgrating}}</span></h5>
+									<div class="text-muted lp_course_desc">{{ course_summary_string }}</div>
+								</div>
+								<!-- <div class="bottom_content my-2">
+									<div class="progressbar_container d-flex align-items-baseline ">
+										<h6 class="mr-2">{{#str}}progress, local_learningplan{{/str}}</h6>
+										<div class="progress flexgrow-1">
+		            						<div class="progress-bar text-center" role="progressbar" style="width: {{ progress }}%;" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+										</div>
+		        						<span class="progress_percentage ml-2">{{ progress }}%</span>
+		        					</div>
+									{{! <div class="language_option col-md-4">
+		        						<i class="fa fa-tags"></i>
+		        						<span class="text-muted"><strong>English, Basics</strong></span>
+		        					</div> }}
+								</div> -->
+								{{# completeflag}}
+							<div class="couse_status text-muted">{{#str}}completed, local_learningplan{{/str}}</div>
+							{{/ completeflag}}
+							</div>
+						</div>
+					
+					{{#cmpltd_class}}
+					<!-- <div class="col-lg-4 col-md-4 col-sm-12 col-xs-12 ">
+						<div class='completed'><span class='cmplt_icon {{cmpltd_class}}'><i class='fa fa-check' aria-hidden='true'></i></span><span cmplt_date>{{{ date }}}</span></div>
+					</div> -->
+					{{/cmpltd_class}}
+				</div>
+				
+			<!-- <span class="lp_dot"></span> -->
+			</div>
+			<!--<div style="background-image: url('{{ course_summary_image_url }}');" alt="{{  }}" title="{{  }}" class="lpimg_bg" ></div>-->
+	</div>
+</div>
+
+			
+		</div>
+					
+				
+
+
+
+
