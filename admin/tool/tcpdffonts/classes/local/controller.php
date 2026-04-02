@@ -22,8 +22,8 @@
  *
  * @package     tool_tcpdffonts
  *
- * @copyright   2021 Ing. R.J. van Dongen
- * @author      Ing. R.J. van Dongen <rogier@sebsoft.nl>
+ * @copyright   2021 RvD
+ * @author      RvD <helpdesk@sebsoft.nl>
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -40,12 +40,11 @@ use context_system;
  *
  * @package     tool_tcpdffonts
  *
- * @copyright   2021 Ing. R.J. van Dongen
- * @author      Ing. R.J. van Dongen <rogier@sebsoft.nl>
+ * @copyright   2021 RvD
+ * @author      RvD <helpdesk@sebsoft.nl>
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class controller {
-
     /**
      * @var \moodle_page
      */
@@ -158,8 +157,8 @@ class controller {
         // Register font mime types.
         helper::add_mimetypes_for_upload();
         $uploadform = new \tool_tcpdffonts\local\upload($this->get_url([
-            'action' => 'addfont'
-        ], ['types' => ['.ttf', '.otf']]));
+            'action' => 'addfont',
+        ]), ['types' => ['.ttf', '.otf']]);
 
         if ($uploadform->is_cancelled()) {
             redirect($this->get_url());
@@ -192,9 +191,15 @@ class controller {
                 }
 
                 // Process font.
-                $fontname = helper::process_font_file($fullpath, $data->fonttype,
-                        $data->enc, (int)$data->flags, (int)$data->platid, (int)$data->encid,
-                        (bool)$data->addcbbox);
+                $fontname = helper::process_font_file(
+                    $fullpath,
+                    $data->fonttype,
+                    $data->enc,
+                    (int)$data->flags,
+                    (int)$data->platid,
+                    (int)$data->encid,
+                    (bool)$data->addcbbox
+                );
                 $success = $success && !empty($fontname);
                 // Notify user.
                 if ($success) {
@@ -223,7 +228,7 @@ class controller {
         require_capability('tool/tcpdffonts:managefonts', $context);
 
         $uploadform = new \tool_tcpdffonts\local\uploadzip($this->get_url([
-            'action' => 'addzippedfont'
+            'action' => 'addzippedfont',
         ], ['types' => ['.zip']]));
 
         if ($uploadform->is_cancelled()) {
@@ -250,10 +255,9 @@ class controller {
                         \core\notification::warning(get_string('font:addfont:fail', 'tool_tcpdffonts', $xfontid));
                     } else if (!empty($result->errors)) {
                         \core\notification::error(get_string('font:addfont:fail', 'tool_tcpdffonts', $xfontid) . '<br/>'
-                                .implode('<br/>', $result->errors));
+                                . implode('<br/>', $result->errors));
                     } else {
                         \core\notification::success(get_string('font:addfont:success', 'tool_tcpdffonts', $xfontid));
-
                     }
                 }
             }
@@ -309,7 +313,7 @@ class controller {
         helper::load_font_info($finfo, $fontfile, $fontid);
 
         // Write and output.
-        $text = '<h1>'.get_string('previewfor', 'tool_tcpdffonts', $finfo[$fontid]['name']).'</h1>';
+        $text = '<h1>' . get_string('previewfor', 'tool_tcpdffonts', $finfo[$fontid]['name']) . '</h1>';
         $text .= $previewtext;
         $pdf->writeHTML($text, true);
 
@@ -338,7 +342,7 @@ class controller {
             'previewtext' => get_string('defaultpreviewtext', 'tool_tcpdffonts'),
             'labelsubmit' => get_string('updatepreview', 'tool_tcpdffonts'),
             'fontid' => $fontid,
-            'frameurl' => $url->out(false) . '#toolbar=0&navpanes=0&scrollbar=0"'
+            'frameurl' => $url->out(false) . '#toolbar=0&navpanes=0&scrollbar=0"',
         ];
         echo $this->renderer->render_from_template('tool_tcpdffonts/fontpreview', $previewcontext);
         echo $this->renderer->footer();
@@ -369,11 +373,10 @@ class controller {
                     get_string('font:family:delete:header', 'tool_tcpdffonts', $fontid),
                     get_string('font:family:delete:body', 'tool_tcpdffonts', implode(', ', $fontidlist)),
                     get_string('font:family:delete:confirmation', 'tool_tcpdffonts', $fontid),
-                ]
+                ],
             ];
             $successmessage = get_string('font:family:delete:success', 'tool_tcpdffonts', implode(', ', $fontidlist));
             $failmessage = get_string('font:family:delete:fail', 'tool_tcpdffonts', implode(', ', $fontidlist));
-
         } else {
             $fontidlist = [$fontid];
             $customdata = [
@@ -381,14 +384,14 @@ class controller {
                     get_string('font:delete:header', 'tool_tcpdffonts', $fontid),
                     get_string('font:delete:body', 'tool_tcpdffonts', $fontid),
                     get_string('font:delete:confirmation', 'tool_tcpdffonts', $fontid),
-                ]
+                ],
             ];
             $successmessage = get_string('font:delete:success', 'tool_tcpdffonts', $fontid);
             $failmessage = get_string('font:delete:fail', 'tool_tcpdffonts', $fontid);
         }
 
         $confirmationform = new \tool_tcpdffonts\local\confirmation($this->get_url([
-            'action' => 'deletefont', 'id' => $fontid, 'isfamily' => $fontisfamily ? 1 : 0
+            'action' => 'deletefont', 'id' => $fontid, 'isfamily' => $fontisfamily ? 1 : 0,
         ]), $customdata);
 
         if ($confirmationform->is_cancelled()) {
@@ -426,7 +429,7 @@ class controller {
                 get_string('font:resetcore:header', 'tool_tcpdffonts'),
                 get_string('font:resetcore:body', 'tool_tcpdffonts'),
                 get_string('font:resetcore:confirmation', 'tool_tcpdffonts'),
-            ]
+            ],
         ];
         $confirmationform = new \tool_tcpdffonts\local\confirmation($this->get_url([
             'action' => 'resetcorefonts']), $customdata);
@@ -464,7 +467,7 @@ class controller {
                 get_string('font:initcustom:header', 'tool_tcpdffonts'),
                 get_string('font:initcustom:body', 'tool_tcpdffonts'),
                 get_string('font:initcustom:confirmation', 'tool_tcpdffonts'),
-            ]
+            ],
         ];
         $confirmationform = new \tool_tcpdffonts\local\confirmation($this->get_url([
             'action' => 'initcustomfonts']), $customdata);
@@ -489,5 +492,4 @@ class controller {
         echo $confirmationform->render();
         echo $this->renderer->footer();
     }
-
 }

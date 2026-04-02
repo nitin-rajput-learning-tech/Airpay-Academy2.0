@@ -28,6 +28,7 @@
 require_once(__DIR__ . '/../../../../../lib/behat/behat_base.php');
 
 use Behat\Gherkin\Node\TableNode as TableNode;
+use tool_certificate\my_certificates_table;
 
 /**
  * The class responsible for step definitions related to tool_certificate.
@@ -56,21 +57,19 @@ class behat_tool_certificate extends behat_base {
 
         // Click on "Add field" button.
         $this->execute('behat_general::i_click_on_in_the',
-            array(get_string('addelement', 'tool_certificate'), "button",
-                "//*[@data-region='page'][{$pagenum}]", "xpath_element"));
+            [get_string('addelement', 'tool_certificate'), "button",
+                "//*[@data-region='page'][{$pagenum}]", "xpath_element", ]);
 
         // Wait until the respective element type selector has class .show .
-        $this->execute('behat_general::wait_until_the_page_is_ready');
-        $this->wait_for_pending_js();
         $xpath = "//*[@data-region='page'][{$pagenum}]".
             "//*[@data-region='elementtypeslist' and contains(concat(' ', normalize-space(@class), ' '), ' show ')]";
-        $this->execute("behat_general::wait_until_exists", array($this->escape($xpath), "xpath_element"));
-        $this->execute('behat_general::wait_until_the_page_is_ready');
-        $this->wait_for_pending_js();
+        $this->execute("behat_general::wait_until_exists", [$this->escape($xpath), "xpath_element"]);
+        // Wait for CSS transition to finish.
+        $this->getSession()->wait(200);
 
         // Click on the link in the element type selector.
         $this->execute('behat_general::i_click_on_in_the',
-            array($elementname, "link", $xpath, "xpath_element"));
+            [$elementname, "link", $xpath, "xpath_element"]);
     }
 
     /**
@@ -83,12 +82,12 @@ class behat_tool_certificate extends behat_base {
     public function i_verify_the_site_certificate_for_user($templatename, $username) {
         global $DB;
 
-        $template = $DB->get_record('tool_certificate_templates', array('name' => $templatename), '*', MUST_EXIST);
-        $user = $DB->get_record('user', array('username' => $username), '*', MUST_EXIST);
-        $issue = $DB->get_record('tool_certificate_issues', array('userid' => $user->id, 'templateid' => $template->id),
+        $template = $DB->get_record('tool_certificate_templates', ['name' => $templatename], '*', MUST_EXIST);
+        $user = $DB->get_record('user', ['username' => $username], '*', MUST_EXIST);
+        $issue = $DB->get_record('tool_certificate_issues', ['userid' => $user->id, 'templateid' => $template->id],
             '*', MUST_EXIST);
 
-        $this->execute('behat_forms::i_set_the_field_to', array(get_string('code', 'tool_certificate'), $issue->code));
+        $this->execute('behat_forms::i_set_the_field_to', [get_string('code', 'tool_certificate'), $issue->code]);
         $this->execute('behat_forms::press_button', get_string('verify', 'tool_certificate'));
         $this->execute('behat_general::assert_page_contains_text', get_string('valid', 'tool_certificate'));
         $this->execute('behat_general::assert_page_not_contains_text', get_string('expired', 'tool_certificate'));
@@ -123,12 +122,12 @@ class behat_tool_certificate extends behat_base {
     public function i_can_not_verify_the_site_certificate_for_user($templatename, $username) {
         global $DB;
 
-        $template = $DB->get_record('tool_certificate_templates', array('name' => $templatename), '*', MUST_EXIST);
-        $user = $DB->get_record('user', array('username' => $username), '*', MUST_EXIST);
-        $issue = $DB->get_record('tool_certificate_issues', array('userid' => $user->id, 'templateid' => $template->id),
+        $template = $DB->get_record('tool_certificate_templates', ['name' => $templatename], '*', MUST_EXIST);
+        $user = $DB->get_record('user', ['username' => $username], '*', MUST_EXIST);
+        $issue = $DB->get_record('tool_certificate_issues', ['userid' => $user->id, 'templateid' => $template->id],
             '*', MUST_EXIST);
 
-        $this->execute('behat_forms::i_set_the_field_to', array(get_string('code', 'tool_certificate'), $issue->code));
+        $this->execute('behat_forms::i_set_the_field_to', [get_string('code', 'tool_certificate'), $issue->code]);
         $this->execute('behat_forms::press_button', get_string('verify', 'tool_certificate'));
         $this->execute('behat_general::assert_page_contains_text', get_string('notverified', 'tool_certificate'));
         $this->execute('behat_general::assert_page_not_contains_text', get_string('verified', 'tool_certificate'));
@@ -176,6 +175,7 @@ class behat_tool_certificate extends behat_base {
     public function the_following_certificate_templates_exist(TableNode $data) {
         foreach ($data->getHash() as $elementdata) {
             $this->lookup_category($elementdata);
+            $elementdata['contextid'] = $elementdata['contextid'] ?? \context_system::instance()->id;
             $template = \tool_certificate\template::create((object)$elementdata);
             if (isset($elementdata['numberofpages']) && $elementdata['numberofpages'] > 0) {
                 for ($p = 0; $p < $elementdata['numberofpages']; $p++) {
@@ -210,11 +210,96 @@ class behat_tool_certificate extends behat_base {
                     } else {
                         $issueid = $template->issue_certificate($userid);
                     }
-                    if (isset($elementdata['code'])) {
-                        $DB->update_record('tool_certificate_issues', (object) ['id' => $issueid, 'code' => $elementdata['code']]);
+                    // Update all the fields that can only be specified in a generator.
+                    $update = [];
+                    $update += !empty($elementdata['code']) ? ['code' => $elementdata['code']] : [];
+                    $update += !empty($elementdata['timecreated']) ? ['timecreated' => $elementdata['timecreated']] : [];
+                    $update += !empty($elementdata['archived']) ? ['archived' => 1] : [];
+                    if ($update) {
+                        $DB->update_record('tool_certificate_issues', ['id' => $issueid] + $update);
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Checks that a share on LinkedIn link exists on the page
+     *
+     * @Then /^I should see a share on LinkedIn link for "([^"]*)"$/
+     *
+     * @param string $certificatename
+     */
+    public function i_should_see_a_share_on_linkedin_link_for(string $certificatename) {
+        $certificatename = str_replace(' ', '%20', $certificatename);
+        $year = (new DateTime())->format('Y');
+        $month = (new DateTime())->format('m');
+
+        $url = my_certificates_table::LINKEDIN_ADD_TO_PROFILE_URL . "?name=$certificatename&issueYear=$year&issueMonth=$month";
+
+        $this->find(
+            'xpath',
+            "//a[contains(@href, '$url')]"
+        );
+    }
+
+    /**
+     * Checks that a share on LinkedIn link does not exist on the page
+     *
+     * @Then /^I should not see a share on LinkedIn link for "([^"]*)"$/
+     *
+     * @param string $certificatename
+     */
+    public function i_should_not_see_a_share_on_linkedin_link_for(string $certificatename) {
+        $certificatename = str_replace(' ', '%20', $certificatename);
+        $year = (new DateTime())->format('Y');
+        $month = (new DateTime())->format('m');
+
+        $url = my_certificates_table::LINKEDIN_ADD_TO_PROFILE_URL . "?name=$certificatename&issueYear=$year&issueMonth=$month";
+
+        $exception = null;
+        try {
+            $this->find(
+                'xpath',
+                "//a[contains(@href, '$url')]"
+            );
+        } catch (\Behat\Mink\Exception\ElementNotFoundException $e) {
+            $exception = $e;
+        }
+
+        if ($exception === null) {
+            throw new \Behat\Mink\Exception\ExpectationException('Share on LinkedIn link was found', $this->getSession());
+        }
+    }
+
+    /**
+     * Checks that there is another window with a PDF certificate
+     *
+     * See also MDL-84679
+     * We can not use the existing steps because of the selenium bug https://github.com/SeleniumHQ/selenium/issues/15330
+     *
+     * @Then /^I can see a certificate in a new window$/
+     */
+    public function i_can_see_a_certificate_in_a_new_window() {
+        $names = $this->getSession()->getWindowNames();
+        if (count($names) === 1) {
+            throw new \Behat\Mink\Exception\ExpectationException('No new window was opened', $this->getSession());
+        }
+
+        $activewindowname = $this->getSession()->getWindowName();
+
+        $found = false;
+        foreach ($names as $windowname) {
+            $this->getSession()->switchToWindow($windowname);
+            $windowurl = $this->getSession()->getCurrentUrl();
+            $found = $found || preg_match('/\\.pdf$/', $windowurl);
+        }
+
+        $this->getSession()->switchToWindow($activewindowname);
+
+        if (!$found) {
+            throw new \Behat\Mink\Exception\ExpectationException('No PDF certificate was found in the new window',
+                $this->getSession());
         }
     }
 }

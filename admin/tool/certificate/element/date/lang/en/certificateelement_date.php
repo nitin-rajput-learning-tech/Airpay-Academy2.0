@@ -30,4 +30,3 @@ $string['expirydate'] = 'Expiry date';
 $string['issueddate'] = 'Issued date';
 $string['pluginname'] = 'Date';
 $string['privacy:metadata'] = 'The Date plugin does not store any personal data.';
-$string['completiondate'] = 'Completion date';

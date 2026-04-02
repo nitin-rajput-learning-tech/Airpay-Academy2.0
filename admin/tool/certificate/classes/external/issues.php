@@ -44,9 +44,9 @@ class issues extends \external_api {
      */
     public static function revoke_issue_parameters() {
         return new \external_function_parameters(
-            array(
+            [
                 'id' => new \external_value(PARAM_INT, 'The issue id'),
-            )
+            ]
         );
     }
 
@@ -78,7 +78,7 @@ class issues extends \external_api {
     /**
      * Returns the revoke_issue result value.
      *
-     * @return \external_value
+     * @return null
      */
     public static function revoke_issue_returns() {
         return null;
@@ -91,9 +91,9 @@ class issues extends \external_api {
      */
     public static function regenerate_issue_file_parameters() {
         return new \external_function_parameters(
-            array(
+            [
                 'id' => new \external_value(PARAM_INT, 'The issue id'),
-            )
+            ]
         );
     }
 
@@ -126,12 +126,15 @@ class issues extends \external_api {
             $issue->data = json_encode($issuedata);
             $DB->update_record('tool_certificate_issues', $issue);
         }
+
+        // Trigger event.
+        \tool_certificate\event\certificate_regenerated::create_from_issue($issue)->trigger();
     }
 
     /**
      * Returns the regenerate_issue_file result value.
      *
-     * @return \external_value
+     * @return null
      */
     public static function regenerate_issue_file_returns() {
         return null;
@@ -173,7 +176,7 @@ class issues extends \external_api {
             $where = \tool_certificate\certificate::get_users_subquery();
             $where .= ' AND (ci.id IS NULL OR (ci.expires > 0 AND ci.expires < :now))';
         } else {
-            throw new required_capability_exception(context_system::instance(), 'tool/certificate:issue', 'nopermissions', 'error');
+            throw new \required_capability_exception($context, 'tool/certificate:issue', 'nopermissions', 'error');
         }
 
         $join = ' LEFT JOIN {tool_certificate_issues} ci ON u.id = ci.userid AND ci.templateid = :templateid';
@@ -182,12 +185,20 @@ class issues extends \external_api {
         $params['templateid'] = $itemid;
         $params['now'] = time();
 
-        $fields = get_all_user_name_fields(true, 'u');
-
-        $extrasearchfields = array();
-        if (!empty($CFG->showuseridentity) && has_capability('moodle/site:viewuseridentity', $context)) {
-            $extrasearchfields = explode(',', $CFG->showuseridentity);
+        if ($CFG->version < 2021050700) {
+            // Moodle 3.9-3.10.
+            $fields = get_all_user_name_fields(true, 'u');
+            $extrasearchfields = [];
+            if (!empty($CFG->showuseridentity) && has_capability('moodle/site:viewuseridentity', $context)) {
+                $extrasearchfields = explode(',', $CFG->showuseridentity);
+            }
+        } else {
+            // Moodle 3.11 and above.
+            $fields = \core_user\fields::for_name()->get_sql('u', false, '', '', false)->selects;
+            // TODO Does not support custom user profile fields (MDL-70456).
+            $extrasearchfields = \core_user\fields::get_identity_fields($context, false);
         }
+
         if (in_array('email', $extrasearchfields)) {
             $fields .= ', u.email';
         } else {

@@ -54,7 +54,7 @@ class mod_scorm {
 
         $mform->addGroup($cba, 'scorm', get_string('scormattempts', 'local_recompletion'), array(' '), false);
         $mform->addHelpButton('scorm', 'scormattempts', 'local_recompletion');
-        $mform->setDefault('scorm', $config->scormattempts);
+        $mform->setDefault('scorm', $config->scorm);
 
         $mform->addElement('checkbox', 'archivescorm',
             get_string('archive', 'local_recompletion'));
@@ -74,7 +74,7 @@ class mod_scorm {
     public static function settings($settings) {
         $choices = array(LOCAL_RECOMPLETION_NOTHING => get_string('donothing', 'local_recompletion'),
             LOCAL_RECOMPLETION_DELETE => get_string('delete', 'local_recompletion'));
-        $settings->add(new \admin_setting_configselect('local_recompletion/scormattempts',
+        $settings->add(new \admin_setting_configselect('local_recompletion/scorm',
             new lang_string('scormattempts', 'local_recompletion'),
             new lang_string('scormattempts_help', 'local_recompletion'), LOCAL_RECOMPLETION_NOTHING, $choices));
 
@@ -96,15 +96,26 @@ class mod_scorm {
         } else if ($config->scorm == LOCAL_RECOMPLETION_DELETE) {
             $params = array('userid' => $userid, 'course' => $course->id);
             $selectsql = 'userid = ? AND scormid IN (SELECT id FROM {scorm} WHERE course = ?)';
-            if ($config->archivescorm) {
-                $scormscoestrack = $DB->get_records_select('scorm_scoes_track', $selectsql, $params);
-                foreach ($scormscoestrack as $sid => $unused) {
-                    // Add courseid to records to help with restore process.
-                    $scormscoestrack[$sid]->course = $course->id;
+
+            $scormattempt = $DB->get_records_select('scorm_attempt', $selectsql, $params);
+            // Strictly not part of #78 but eliminates unused local variable violation.
+            foreach (array_keys($scormattempt) as $sid) {
+                // Add courseid to records to help with restore process.
+                $scormattempt[$sid]->courseid = $course->id;
+                $scormscoesvalue = $DB->get_records('scorm_scoes_value', ['attemptid' => $sid]);
+                if ($config->archivescorm) {
+                    foreach (array_keys($scormscoesvalue) as $ssvid) {
+                        $scormscoesvalue[$ssvid]->courseid = $course->id;
+
+                    }
+                    $DB->insert_records('local_recompletion_ssv', $scormscoesvalue);
                 }
-                $DB->insert_records('local_recompletion_sst', $scormscoestrack);
+                $DB->delete_records('scorm_scoes_value', ['attemptid' => $sid]);
             }
-            $DB->delete_records_select('scorm_scoes_track', $selectsql, $params);
+            if ($config->archivescorm) {
+                $DB->insert_records('local_recompletion_sa', $scormattempt);
+            }
+            $DB->delete_records_select('scorm_attempt', $selectsql, $params);
             $DB->delete_records_select('scorm_aicc_session', $selectsql, $params);
         }
     }

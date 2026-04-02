@@ -37,6 +37,9 @@ require_once($CFG->dirroot.'/lib/adminlib.php');
  */
 class plugin_manager {
 
+    /** @var \moodle_url */
+    protected $pageurl;
+
     /**
      * Constructor
      */
@@ -49,7 +52,7 @@ class plugin_manager {
      *
      * @param string $action - The action to perform
      * @param string $plugin - Optional name of a plugin type to perform the action on
-     * @return None
+     * @return void
      */
     public function execute($action, $plugin) {
         global $OUTPUT;
@@ -82,7 +85,7 @@ class plugin_manager {
     /**
      * Write the HTML for the submission plugins table.
      *
-     * @return None
+     * @return void
      */
     private function view_plugins_table() {
         global $OUTPUT, $CFG;
@@ -91,10 +94,10 @@ class plugin_manager {
         // Set up the table.
         $table = new \flexible_table('pluginsadminttable');
         $table->define_baseurl($this->pageurl);
-        $table->define_columns(array('pluginname', 'version', 'hideshow', 'order', 'settings', 'uninstall'));
-        $table->define_headers(array(get_string('name'),
+        $table->define_columns(['pluginname', 'version', 'hideshow', 'order', 'settings', 'uninstall']);
+        $table->define_headers([get_string('name'),
                 get_string('version'), get_string('hideshow', 'tool_certificate'),
-                get_string('order'), get_string('settings'), get_string('uninstallplugin', 'core_admin')));
+                get_string('order'), get_string('settings'), get_string('uninstallplugin', 'core_admin'), ]);
         $table->set_attribute('id', 'plugins');
         $table->set_attribute('class', 'admintable generaltable');
         $table->setup();
@@ -102,7 +105,7 @@ class plugin_manager {
         $plugins = $this->get_sorted_plugins_list();
 
         foreach ($plugins as $idx => $plugin) {
-            $row = array();
+            $row = [];
             $class = '';
 
             $row[] = get_string('pluginname', 'certificateelement_' . $plugin);
@@ -121,7 +124,7 @@ class plugin_manager {
             if (!$idx == 0) {
                 $movelinks .= $this->format_icon_link('moveup', $plugin, 't/up', get_string('up'));
             } else {
-                $movelinks .= $OUTPUT->spacer(array('width' => 16));
+                $movelinks .= $OUTPUT->spacer(['width' => 16]);
             }
             if ($idx != count($plugins) - 1) {
                 $movelinks .= $this->format_icon_link('movedown', $plugin, 't/down', get_string('down'));
@@ -130,8 +133,8 @@ class plugin_manager {
 
             $exists = file_exists($CFG->dirroot . '/'. $CFG->admin . '/tool/certificate/element/' . $plugin . '/settings.php');
             if ($row[1] != '' && $exists) {
-                $row[] = html_writer::link(new \moodle_url('/admin/settings.php',
-                        array('section' => 'certificateelement_' . $plugin)), get_string('settings'));
+                $row[] = \html_writer::link(new \moodle_url('/admin/settings.php',
+                        ['section' => 'certificateelement_' . $plugin]), get_string('settings'));
             } else {
                 $row[] = '&nbsp;';
             }
@@ -147,7 +150,7 @@ class plugin_manager {
     /**
      * Check this user has permission to edit the list of installed plugins
      *
-     * @return None
+     * @return void
      */
     private function check_permissions() {
         // Check permissions.
@@ -186,7 +189,7 @@ class plugin_manager {
     public function get_sorted_plugins_list() {
         $names = \core_component::get_plugin_list('certificateelement');
 
-        $result = array();
+        $result = [];
 
         foreach ($names as $name => $path) {
             $idx = get_config('certificateelement_' . $name, 'sortorder');
@@ -226,9 +229,9 @@ class plugin_manager {
         }
 
         return $OUTPUT->action_icon(new \moodle_url($url,
-                array('action' => $action, 'plugin' => $plugin, 'sesskey' => \sesskey())),
-                new \pix_icon($icon, $alt, 'moodle', array('title' => $alt)),
-                null, array('title' => $alt)) . ' ';
+                ['action' => $action, 'plugin' => $plugin, 'sesskey' => \sesskey()]),
+                new \pix_icon($icon, $alt, 'moodle', ['title' => $alt]),
+                null, ['title' => $alt]) . ' ';
     }
 
     /**

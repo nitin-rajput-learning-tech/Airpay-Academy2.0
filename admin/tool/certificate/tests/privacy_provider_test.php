@@ -22,22 +22,24 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+namespace tool_certificate;
+
+use tool_certificate_generator;
 use tool_certificate\privacy\provider;
 use core_privacy\local\metadata\collection;
 use core_privacy\local\request\approved_userlist;
 use core_privacy\local\request\writer;
-
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Privacy provider tests class.
  *
  * @package    tool_certificate
  * @group      tool_certificate
+ * @covers     \tool_certificate\privacy\provider
  * @copyright  2018 Mark Nelson <markn@moodle.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class tool_certificate_privacy_provider_testcase extends \core_privacy\tests\provider_testcase {
+final class privacy_provider_test extends \core_privacy\tests\provider_testcase {
 
     /** @var tool_certificate_generator */
     protected $certgenerator;
@@ -46,6 +48,7 @@ class tool_certificate_privacy_provider_testcase extends \core_privacy\tests\pro
      * Test set up.
      */
     public function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest();
         \tool_certificate\customfield\issue_handler::reset_caches();
         $this->certgenerator = self::getDataGenerator()->get_plugin_generator('tool_certificate');
@@ -54,7 +57,7 @@ class tool_certificate_privacy_provider_testcase extends \core_privacy\tests\pro
     /**
      * Test provider::get_metadata
      */
-    public function test_get_metadata() {
+    public function test_get_metadata(): void {
         $collection = new collection('tool_certificate');
         $newcollection = provider::get_metadata($collection);
         $itemcollection = $newcollection->get_collection();
@@ -75,7 +78,7 @@ class tool_certificate_privacy_provider_testcase extends \core_privacy\tests\pro
     /**
      * Test for provider::get_contexts_for_userid().
      */
-    public function test_get_contexts_for_userid() {
+    public function test_get_contexts_for_userid(): void {
 
         // Add a template to the site.
         $template1 = $this->certgenerator->create_template((object)['name' => 'Site template']);
@@ -95,16 +98,13 @@ class tool_certificate_privacy_provider_testcase extends \core_privacy\tests\pro
 
         // Check the context supplied is correct.
         $contextlist = provider::get_contexts_for_userid($user->id);
-        $this->assertCount(1, $contextlist);
-
-        $contextids = $contextlist->get_contextids();
-        $this->assertContains(\context_system::instance()->id, $contextids);
+        $this->assertEquals([\context_system::instance()->id], $contextlist->get_contextids());
     }
 
     /**
      * Test that only users within a context are fetched.
      */
-    public function test_get_users_in_context() {
+    public function test_get_users_in_context(): void {
         $component = 'tool_certificate';
 
         $this->setAdminUser();
@@ -133,7 +133,7 @@ class tool_certificate_privacy_provider_testcase extends \core_privacy\tests\pro
     /**
      * Test for provider::export_user_data().
      */
-    public function test_export_user_data() {
+    public function test_export_user_data(): void {
         /** @var \tool_certificate\template[] $templates */
         $templates = [
             $this->certgenerator->create_template((object) ['name' => 'Site template']),
@@ -141,7 +141,7 @@ class tool_certificate_privacy_provider_testcase extends \core_privacy\tests\pro
         ];
 
         // Define courseid issue customfield.
-        $handler = tool_certificate\customfield\issue_handler::create();
+        $handler = \tool_certificate\customfield\issue_handler::create();
         $handler->ensure_field_exists('courseid', 'numeric',
             'Course id', false, 1);
 
@@ -168,8 +168,12 @@ class tool_certificate_privacy_provider_testcase extends \core_privacy\tests\pro
         $data = $writer->get_data($contextpath);
 
         $this->assertEquals($data->name, $templates[0]->get_name());
-        $this->assertObjectHasAttribute('code', $data);
-        $this->assertObjectHasAttribute('timecreated', $data);
+
+        // Added this new property validation instead of assertObjectHasProperty for
+        // now because of the PHPUnit upgrade.
+        // Once we have the upgrade in place, we are good to use assertObjectHasProperty.
+        $this->assertTrue(property_exists($data, 'code'));
+        $this->assertTrue(property_exists($data, 'timecreated'));
         $this->assertEquals(['courseid' => SITEID], $data->data);
         $this->assertNull($data->expires);
 
@@ -178,8 +182,12 @@ class tool_certificate_privacy_provider_testcase extends \core_privacy\tests\pro
         $data = $writer->get_data($contextpath);
 
         $this->assertEquals($data->name, $templates[1]->get_name());
-        $this->assertObjectHasAttribute('code', $data);
-        $this->assertObjectHasAttribute('timecreated', $data);
+
+        // Added this new property validation instead of assertObjectHasProperty for
+        // now because of the PHPUnit upgrade.
+        // Once we have the upgrade in place, we are good to use assertObjectHasProperty.
+        $this->assertTrue(property_exists($data, 'code'));
+        $this->assertTrue(property_exists($data, 'timecreated'));
         $this->assertEmpty($data->data);
         $this->assertNull($data->expires);
     }
@@ -189,7 +197,7 @@ class tool_certificate_privacy_provider_testcase extends \core_privacy\tests\pro
     /**
      * Test for provider::delete_data_for_all_users_in_context().
      */
-    public function test_delete_data_for_all_users_in_context() {
+    public function test_delete_data_for_all_users_in_context(): void {
         global $DB;
 
         // Add a template to the site.
@@ -229,7 +237,7 @@ class tool_certificate_privacy_provider_testcase extends \core_privacy\tests\pro
     /**
      * Test for provider::delete_data_for_user().
      */
-    public function test_delete_data_for_user() {
+    public function test_delete_data_for_user(): void {
         global $DB;
 
         $template = $this->certgenerator->create_template((object)['name' => 'Site template']);
@@ -278,7 +286,7 @@ class tool_certificate_privacy_provider_testcase extends \core_privacy\tests\pro
     /**
      * Test for provider::delete_data_for_user().
      */
-    public function test_delete_data_for_users() {
+    public function test_delete_data_for_users(): void {
 
         $component = 'tool_certificate';
 

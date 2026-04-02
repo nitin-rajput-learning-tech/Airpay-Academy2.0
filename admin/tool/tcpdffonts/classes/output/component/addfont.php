@@ -22,14 +22,12 @@
  *
  * @package     tool_tcpdffonts
  *
- * @copyright   2021 Ing. R.J. van Dongen
- * @author      Ing. R.J. van Dongen <rogier@sebsoft.nl>
+ * @copyright   2021 RvD
+ * @author      RvD <helpdesk@sebsoft.nl>
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 namespace tool_tcpdffonts\output\component;
-
-defined('MOODLE_INTERNAL') or die('NO_ACCESS');
 
 use renderable;
 use templatable;
@@ -41,12 +39,11 @@ use pix_icon;
  *
  * @package     tool_tcpdffonts
  *
- * @copyright   2021 Ing. R.J. van Dongen
- * @author      Ing. R.J. van Dongen <rogier@sebsoft.nl>
+ * @copyright   2021 RvD
+ * @author      RvD <helpdesk@sebsoft.nl>
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class addfont implements renderable, templatable {
-
     /**
      * Base url
      *
@@ -101,29 +98,28 @@ class addfont implements renderable, templatable {
         $dataactionattributes = [
             'data-action' => 'addfont',
             'data-contextid' => $context->id,
-            'class' => 'action-icon action-icon-hide'
+            'class' => 'action-icon action-icon-hide',
         ];
         if ($this->renderasicon) {
             return (object) [
                 'action' => $output->action_icon(
-                        new moodle_url($this->baseurl, array('action' => 'addfont')),
-                        new pix_icon('t/add', $this->actionstring, 'moodle', ['class' => 'icon']),
-                        null,
-                        ['alt' => $this->actionstring] + $dataactionattributes,
-                        $this->linktext
-                    )
+                    new moodle_url($this->baseurl, ['action' => 'addfont']),
+                    new pix_icon('t/add', $this->actionstring, 'moodle', ['class' => 'icon']),
+                    null,
+                    ['alt' => $this->actionstring] + $dataactionattributes,
+                    $this->linktext
+                ),
             ];
         } else {
             return (object) [
                 'action' => $output->action_link(
-                        new moodle_url($this->baseurl, array('action' => 'addfont')),
-                        $this->actionstring,
-                        null,
-                        ['alt' => $this->actionstring] + $dataactionattributes,
-                        new pix_icon('t/add', $this->actionstring, 'moodle', ['class' => 'icon'])
-                    )
+                    new moodle_url($this->baseurl, ['action' => 'addfont']),
+                    $this->actionstring,
+                    null,
+                    ['alt' => $this->actionstring] + $dataactionattributes,
+                    new pix_icon('t/add', $this->actionstring, 'moodle', ['class' => 'icon'])
+                ),
             ];
         }
     }
-
 }

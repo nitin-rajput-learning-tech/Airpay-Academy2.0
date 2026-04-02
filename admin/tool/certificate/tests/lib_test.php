@@ -23,9 +23,14 @@
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-use \tool_certificate\persistent\element;
-use \tool_certificate\persistent\page;
-use \tool_certificate\persistent\template;
+namespace tool_certificate;
+
+use advanced_testcase;
+use tool_certificate_generator;
+use context_coursecat;
+use tool_certificate\persistent\element;
+use tool_certificate\persistent\page;
+use tool_certificate\persistent\template;
 
 /**
  * Tests for functions in lib.php
@@ -34,11 +39,12 @@ use \tool_certificate\persistent\template;
  * @copyright  2019 Marina Glancy
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class tool_certificate_lib_testcase extends advanced_testcase {
+final class lib_test extends advanced_testcase {
     /**
      * Test set up.
      */
     public function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest();
     }
 
@@ -46,14 +52,16 @@ class tool_certificate_lib_testcase extends advanced_testcase {
      * Get certificate generator
      * @return tool_certificate_generator
      */
-    protected function get_certificate_generator() : tool_certificate_generator {
+    protected function get_certificate_generator(): tool_certificate_generator {
         return $this->getDataGenerator()->get_plugin_generator('tool_certificate');
     }
 
     /**
      * Test tool_certificate_can_course_category_delete.
+     *
+     * @covers ::tool_certificate_can_course_category_delete
      */
-    public function test_can_course_category_delete() {
+    public function test_can_course_category_delete(): void {
         $user = $this->getDataGenerator()->create_user();
         $roleid = create_role('Dummy role', 'dummyrole', 'dummy role description');
         $this->setUser($user);
@@ -64,9 +72,9 @@ class tool_certificate_lib_testcase extends advanced_testcase {
         $cat4 = $this->getDataGenerator()->create_category(['name' => 'Cat4', 'parent' => $cat1->id]);
 
         $template1 = $this->get_certificate_generator()->create_template((object)['name' => 'Certificate 1',
-            'contextid' => $cat1->get_context()->id]);
+            'contextid' => $cat1->get_context()->id, ]);
         $template2 = $this->get_certificate_generator()->create_template((object)['name' => 'Certificate 2',
-            'contextid' => $cat3->get_context()->id]);
+            'contextid' => $cat3->get_context()->id, ]);
 
         /*
          * Now we have
@@ -91,8 +99,10 @@ class tool_certificate_lib_testcase extends advanced_testcase {
 
     /**
      * Test tool_certificate_can_course_category_delete_move.
+     *
+     * @covers ::tool_certificate_can_course_category_delete_move
      */
-    public function test_can_course_category_delete_move() {
+    public function test_can_course_category_delete_move(): void {
         $user = $this->getDataGenerator()->create_user();
         $roleid = create_role('Dummy role', 'dummyrole', 'dummy role description');
         $this->setUser($user);
@@ -103,9 +113,9 @@ class tool_certificate_lib_testcase extends advanced_testcase {
         $cat4 = $this->getDataGenerator()->create_category(['name' => 'Cat4', 'parent' => $cat1->id]);
 
         $template1 = $this->get_certificate_generator()->create_template((object)['name' => 'Certificate 1',
-            'contextid' => $cat1->get_context()->id]);
+            'contextid' => $cat1->get_context()->id, ]);
         $template2 = $this->get_certificate_generator()->create_template((object)['name' => 'Certificate 2',
-            'contextid' => $cat3->get_context()->id]);
+            'contextid' => $cat3->get_context()->id, ]);
 
         /*
          * Now we have
@@ -134,8 +144,11 @@ class tool_certificate_lib_testcase extends advanced_testcase {
 
     /**
      * Test move/remove template on category deletion.
+     *
+     * @covers ::tool_certificate_can_course_category_delete
+     * @covers ::tool_certificate_can_course_category_delete_move
      */
-    public function test_delete_category_with_certificates() {
+    public function test_delete_category_with_certificates(): void {
         $roleid = create_role('Dummy role', 'dummyrole', 'dummy role description');
 
         $user = $this->getDataGenerator()->create_user();
@@ -171,7 +184,7 @@ class tool_certificate_lib_testcase extends advanced_testcase {
             'filearea' => 'element',
             'itemid' => $certificateelement2->get_id(),
             'filepath' => '/',
-            'filename' => 'image.png'
+            'filename' => 'image.png',
         ];
         $fs->create_file_from_string($filerecord, 'Cat');
 
@@ -212,8 +225,11 @@ class tool_certificate_lib_testcase extends advanced_testcase {
 
     /**
      * Test category deletion for the purpose of callback behaviour with no certificates.
+     *
+     * @covers ::tool_certificate_can_course_category_delete
+     * @covers ::tool_certificate_can_course_category_delete_move
      */
-    public function test_delete_category_with_no_certificates() {
+    public function test_delete_category_with_no_certificates(): void {
         $user = $this->getDataGenerator()->create_user();
         $roleid = create_role('Dummy role', 'dummyrole', 'dummy role description');
         $this->setUser($user);

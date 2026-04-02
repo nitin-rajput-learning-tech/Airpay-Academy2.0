@@ -24,8 +24,6 @@
 
 namespace tool_certificate\output\email;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Email certificate as html renderer.
  *
@@ -33,7 +31,7 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright  2017 Mark Nelson <markn@moodle.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class renderer extends \tool_certificate\output\renderer {
+class renderer extends \plugin_renderer_base {
 
     /**
      * The template name for this renderer.

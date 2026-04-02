@@ -17,12 +17,11 @@
  * AMD module used when viewing the list of templates
  *
  * @module     tool_certificate/templates-list
- * @package    tool_certificate
  * @copyright  2019 Marina Glancy
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-define(['jquery', 'tool_certificate/modal_form', 'core/notification', 'core/str', 'core/ajax', 'core/toast'],
-function($, ModalForm, Notification, Str, Ajax, Toast) {
+define(['jquery', 'core_form/modalform', 'core/notification', 'core/str', 'core/ajax', 'core/toast'],
+function($, ModalForm, Notification, Str, Ajax, {add: addToast}) {
 
     /**
      * Display modal form
@@ -33,13 +32,14 @@ function($, ModalForm, Notification, Str, Ajax, Toast) {
      * @return {ModalForm}
      */
     var displayModal = function(triggerElement, title, args) {
-        var modal = new ModalForm({
+        const modal = new ModalForm({
             formClass: 'tool_certificate\\form\\details',
             args: args,
             modalConfig: {title: title},
             saveButtonText: Str.get_string('save'),
-            triggerElement: triggerElement,
+            returnFocus: triggerElement[0],
         });
+        modal.show();
         return modal;
     };
 
@@ -52,24 +52,10 @@ function($, ModalForm, Notification, Str, Ajax, Toast) {
         e.preventDefault();
         var modal = displayModal($(e.currentTarget), Str.get_string('createtemplate', 'tool_certificate'),
             {id: 0, contextid: contextid});
-        modal.onSubmitSuccess = function(url) {
-            window.location.href = url;
-        };
-    };
-
-    /**
-     * Edit template dialogue
-     * @param {Event} e
-     */
-    var displayEditTemplate = function(e) {
-        e.preventDefault();
-        var el = $(e.currentTarget),
-            id = el.attr('data-id'),
-            name = el.attr('data-name');
-        var modal = displayModal(el, Str.get_string('editcertificate', 'tool_certificate', name), {id: id});
-        modal.onSubmitSuccess = function() {
-            window.location.reload();
-        };
+        modal.addEventListener(modal.events.FORM_SUBMITTED, (e) => {
+            e.preventDefault();
+            window.location.href = e.detail.url;
+        });
     };
 
     /**
@@ -84,25 +70,27 @@ function($, ModalForm, Notification, Str, Ajax, Toast) {
             args: {tid: target.attr('data-tid')},
             modalConfig: {title: Str.get_string('issuecertificates', 'tool_certificate'), scrollable: false},
             saveButtonText: Str.get_string('save'),
-            triggerElement: target,
+            returnFocus: target,
         });
-        modal.onSubmitSuccess = function(data) {
-            data = parseInt(data, 10);
+        modal.addEventListener(modal.events.FORM_SUBMITTED, event => {
+            const data = parseInt(event.detail, 10);
             if (data) {
                 Str.get_strings([
                     {key: 'oneissuewascreated', component: 'tool_certificate'},
                     {key: 'aissueswerecreated', component: 'tool_certificate', param: data}
                 ]).done(function(s) {
                     var str = data > 1 ? s[1] : s[0];
-                    Toast.add(str);
-                });
+                    addToast(str);
+                    return null;
+                }).catch(Notification.exception);
             } else {
-                Str.get_string('noissueswerecreated', 'tool_certificate')
-                    .done(function(s) {
-                        Toast.add(s);
-                    });
+                Str.get_string('noissueswerecreated', 'tool_certificate').done(function(s) {
+                    addToast(s);
+                    return null;
+                }).catch(Notification.exception);
             }
-        };
+        });
+        modal.show();
     };
 
     var duplicateMulticategory = function(e) {
@@ -114,21 +102,22 @@ function($, ModalForm, Notification, Str, Ajax, Toast) {
             args: {id: templateId},
             modalConfig: {title: Str.get_string('confirm')},
             saveButtonText: Str.get_string('duplicate', 'tool_certificate'),
-            triggerElement: target,
+            returnFocus: target,
         });
-        modal.onSubmitSuccess = function() {
+        modal.addEventListener(modal.events.FORM_SUBMITTED, function() {
             window.location.reload();
-        };
+        });
+        modal.show();
     };
 
     var duplicateSinglecategory = function(e) {
         e.preventDefault();
         const templateId = $(e.currentTarget).attr('data-id');
         Str.get_strings([
-            {key: 'confirm'},
+            {key: 'confirm', component: 'moodle'},
             {key: 'duplicatetemplateconfirm', component: 'tool_certificate', param: $(e.currentTarget).attr('data-name')},
             {key: 'duplicate', component: 'tool_certificate'},
-            {key: 'cancel'}
+            {key: 'cancel', component: 'moodle'}
         ]).done(function(s) {
             Notification.confirm(s[0], s[1], s[2], s[3], function() {
                 var promises = Ajax.call([
@@ -146,10 +135,10 @@ function($, ModalForm, Notification, Str, Ajax, Toast) {
         e.preventDefault();
         const templateId = $(e.currentTarget).attr('data-id');
         Str.get_strings([
-            {key: 'confirm'},
+            {key: 'confirm', component: 'moodle'},
             {key: 'deletetemplateconfirm', component: 'tool_certificate', param: $(e.currentTarget).attr('data-name')},
-            {key: 'delete'},
-            {key: 'cancel'}
+            {key: 'delete', component: 'moodle'},
+            {key: 'cancel', component: 'moodle'}
         ]).done(function(s) {
             Notification.confirm(s[0], s[1], s[2], s[3], function() {
                 var promises = Ajax.call([
@@ -171,7 +160,6 @@ function($, ModalForm, Notification, Str, Ajax, Toast) {
             // Add button is not inside a tab, so we can't use Tab.addButtonOnClick .
             $('body')
                 .on('click', '[data-element="addbutton"]', displayAddTemplate)
-                .on('click', '[data-action="editdetails"]', displayEditTemplate)
                 .on('click', '[data-action="issue"]', displayIssue)
                 .on('click', '[data-action="duplicate"][data-selectcategory="1"]', duplicateMulticategory)
                 .on('click', '[data-action="duplicate"][data-selectcategory="0"]', duplicateSinglecategory)

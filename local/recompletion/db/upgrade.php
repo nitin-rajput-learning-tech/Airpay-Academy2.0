@@ -29,7 +29,7 @@
  * @return bool
  */
 function xmldb_local_recompletion_upgrade($oldversion) {
-    global $DB;
+    global $DB, $OUTPUT;
 
     $dbman = $DB->get_manager();
 
@@ -565,5 +565,556 @@ function xmldb_local_recompletion_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2021112400, 'local', 'recompletion');
     }
 
+    if ($oldversion < 2023022100) {
+
+        // Define field id to be added to local_recompletion_cha.
+        $table = new xmldb_table('local_recompletion_cha');
+
+        // Adding fields to table local_recompletion_cha.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null, null);
+        $table->add_field('choiceid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'id');
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'choiceid');
+        $table->add_field('optionid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'userid');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'optionid');
+        $table->add_field('course', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'timemodified');
+
+        // Adding keys to table local_recompletion_cha.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('choiceid', XMLDB_KEY_FOREIGN, ['choiceid'], 'choice', ['id']);
+
+        // Adding indexes to table local_recompletion_cha.
+        $table->add_index('course', XMLDB_INDEX_NOTUNIQUE, ['course']);
+
+        // Conditionally launch create table for local_recompletion_cha.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Recompletion savepoint reached.
+        upgrade_plugin_savepoint(true, 2023022100, 'local', 'recompletion');
+    }
+
+    if ($oldversion < 2023040300) {
+
+        // Update the format of older recompletionemailbody field data to html.
+        $recompletionconfig = $DB->get_recordset('local_recompletion_config', array('name' => 'recompletionemailbody'));
+        foreach ($recompletionconfig as $record) {
+            $message = $record->value;
+            if (strpos($message, '<') === false) {
+                // Plain text only.
+                $messagehtml = text_to_html($message, null, false, true);
+            } else {
+                // This is most probably the tag/newline soup known as FORMAT_MOODLE.
+                $messagehtml = format_text($message, FORMAT_MOODLE, array('para' => false,
+                    'newlines' => true, 'filter' => true));
+            }
+            // Update record with html formatted text.
+            $record->value = $messagehtml;
+            $DB->update_record('local_recompletion_config', $record);
+            // Add format record for editor element.
+            $record->name = 'recompletionemailbody_format';
+            $record->value = '1';
+            $DB->insert_record('local_recompletion_config', $record);
+        }
+
+        // Recompletion savepoint reached.
+        upgrade_plugin_savepoint(true, 2023040300, 'local', 'recompletion');
+    }
+
+    if ($oldversion < 2023040301) {
+
+        // Define table local_recompletion_ccert_is to be created.
+        $table = new xmldb_table('local_recompletion_ccert_is');
+
+        // Adding fields to table local_recompletion_ccert_is.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null, null);
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'id');
+        $table->add_field('customcertid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'userid');
+        $table->add_field('code', XMLDB_TYPE_CHAR, '40', null, null, null, null, 'customcertid');
+        $table->add_field('emailed', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'code');
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'emailed');
+        $table->add_field('course', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'timecreated');
+
+        // Adding keys to table local_recompletion_ccert_is.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('customcert', XMLDB_KEY_FOREIGN, ['customcertid'], 'customcert', ['id']);
+
+        // Adding indexes to table local_recompletion_ccert_is.
+        $table->add_index('course', XMLDB_INDEX_NOTUNIQUE, ['course']);
+
+        // Conditionally launch create table for local_recompletion_ccert_is.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Recompletion savepoint reached.
+        upgrade_plugin_savepoint(true, 2023040301, 'local', 'recompletion');
+    }
+
+    if ($oldversion < 2023092022) {
+
+        // Define table local_recompletion_cmv to be created.
+        $table = new xmldb_table('local_recompletion_cmv');
+
+        // Adding fields to table local_recompletion_cmv.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('coursemoduleid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('course', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+        // Adding keys to table local_recompletion_cmv.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+
+        // Adding indexes to table local_recompletion_cmv.
+        $table->add_index('coursemoduleid', XMLDB_INDEX_NOTUNIQUE, ['coursemoduleid']);
+        $table->add_index('userid-coursemoduleid', XMLDB_INDEX_UNIQUE, ['userid', 'coursemoduleid']);
+
+        // Conditionally launch create table for local_recompletion_cmv.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Recompletion savepoint reached.
+        upgrade_plugin_savepoint(true, 2023092022, 'local', 'recompletion');
+    }
+
+    if ($oldversion < 2023092801) {
+        // Enable setting moved to a select option.
+        // Multiple sql calls for best cross db compatible option.
+        $sql = "UPDATE {local_recompletion_config} SET name = 'recompletiontype' WHERE name = 'enable' and value = '1'";
+        $DB->execute($sql);
+        $sql = "UPDATE {local_recompletion_config} SET value = 'period' WHERE name = 'recompletiontype' and value = '1'";
+        $DB->execute($sql);
+        // Clean up old empty enabled/disabled config settings.
+        $DB->delete_records('local_recompletion_config', ['name' => 'enable']);
+
+        // Recompletion savepoint reached.
+        upgrade_plugin_savepoint(true, 2023092801, 'local', 'recompletion');
+
+    }
+
+    if ($oldversion < 2023101800) {
+        // Define table local_recompletion_hvp to be created.
+        $table = new xmldb_table('local_recompletion_hvp');
+
+        // Adding fields to table local_recompletion_hvp.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('user_id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('hvp_id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('sub_content_id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('data_id', XMLDB_TYPE_CHAR, '127', null, null, null, null);
+        $table->add_field('data', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('preloaded', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('delete_on_content_change', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('course', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+        // Adding keys to table local_recompletion_hvp.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+
+        // Conditionally launch create table for local_recompletion_hvp.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Recompletion savepoint reached.
+        upgrade_plugin_savepoint(true, 2023101800, 'local', 'recompletion');
+    }
+
+    if ($oldversion < 2023101900) {
+
+        // Define table local_recompletion_h5p to be created.
+        $table = new xmldb_table('local_recompletion_h5p');
+
+        // Adding fields to table local_recompletion_h5p.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('originalattemptid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('h5pactivityid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '20', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('attempt', XMLDB_TYPE_INTEGER, '6', null, XMLDB_NOTNULL, null, '1');
+        $table->add_field('rawscore', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+        $table->add_field('maxscore', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+        $table->add_field('scaled', XMLDB_TYPE_NUMBER, '10, 5', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('duration', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+        $table->add_field('completion', XMLDB_TYPE_INTEGER, '1', null, null, null, null);
+        $table->add_field('success', XMLDB_TYPE_INTEGER, '1', null, null, null, null);
+        $table->add_field('course', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+        // Adding keys to table local_recompletion_h5p.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+
+        // Conditionally launch create table for local_recompletion_h5p.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Define table local_recompletion_h5pr to be created.
+        $table = new xmldb_table('local_recompletion_h5pr');
+
+        // Adding fields to table local_recompletion_h5pr.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('attemptid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('subcontent', XMLDB_TYPE_CHAR, '128', null, null, null, null);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('interactiontype', XMLDB_TYPE_CHAR, '128', null, null, null, null);
+        $table->add_field('description', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('correctpattern', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('response', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null);
+        $table->add_field('additionals', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('rawscore', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('maxscore', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('duration', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+        $table->add_field('completion', XMLDB_TYPE_INTEGER, '1', null, null, null, null);
+        $table->add_field('success', XMLDB_TYPE_INTEGER, '1', null, null, null, null);
+        $table->add_field('course', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+        // Adding keys to table local_recompletion_h5pr.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+
+        // Conditionally launch create table for local_recompletion_h5pr.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Recompletion savepoint reached.
+        upgrade_plugin_savepoint(true, 2023101900, 'local', 'recompletion');
+    }
+
+    if ($oldversion < 2023110301) {
+
+        // Define table local_recompletion_la to be created.
+        $table = new xmldb_table('local_recompletion_la');
+
+        // Adding fields to table local_recompletion_la.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('lessonid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('pageid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('answerid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('retry', XMLDB_TYPE_INTEGER, '3', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('correct', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('useranswer', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('timeseen', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('course', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+        // Adding keys to table local_recompletion_la.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+
+        // Conditionally launch create table for local_recompletion_la.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Define table local_recompletion_lg to be created.
+        $table = new xmldb_table('local_recompletion_lg');
+
+        // Adding fields to table local_recompletion_lg.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('lessonid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('grade', XMLDB_TYPE_FLOAT, null, null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('late', XMLDB_TYPE_INTEGER, '3', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('completed', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+        $table->add_field('course', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+        // Adding keys to table local_recompletion_lg.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+
+        // Conditionally launch create table for local_recompletion_lg.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Define table local_recompletion_lt to be created.
+        $table = new xmldb_table('local_recompletion_lt');
+
+        // Adding fields to table local_recompletion_lt.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('lessonid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('starttime', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('lessontime', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+        $table->add_field('completed', XMLDB_TYPE_INTEGER, '1', null, null, null, '0');
+        $table->add_field('timemodifiedoffline', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+        $table->add_field('course', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+        // Adding keys to table local_recompletion_lt.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+
+        // Conditionally launch create table for local_recompletion_lt.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Define table local_recompletion_lb to be created.
+        $table = new xmldb_table('local_recompletion_lb');
+
+        // Adding fields to table local_recompletion_lb.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('lessonid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('pageid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('retry', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('flag', XMLDB_TYPE_INTEGER, '3', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timeseen', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('nextpageid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('course', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+        // Adding keys to table local_recompletion_lb.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+
+        // Conditionally launch create table for local_recompletion_lb.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Define table local_recompletion_lo to be created.
+        $table = new xmldb_table('local_recompletion_lo');
+
+        // Adding fields to table local_recompletion_lo.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('lessonid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('groupid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('available', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('deadline', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('timelimit', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('review', XMLDB_TYPE_INTEGER, '3', null, null, null, null);
+        $table->add_field('maxattempts', XMLDB_TYPE_INTEGER, '3', null, null, null, null);
+        $table->add_field('retake', XMLDB_TYPE_INTEGER, '3', null, null, null, null);
+        $table->add_field('password', XMLDB_TYPE_CHAR, '32', null, null, null, null);
+        $table->add_field('course', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+        // Adding keys to table local_recompletion_lo.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+
+        // Conditionally launch create table for local_recompletion_lo.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Recompletion savepoint reached.
+        upgrade_plugin_savepoint(true, 2023110301, 'local', 'recompletion');
+    }
+
+    if ($oldversion < 2023110302) {
+
+        // Define table local_recompletion_cmv to be created.
+        $table = new xmldb_table('local_recompletion_cmv');
+        $index = new xmldb_index('userid-coursemoduleid', XMLDB_INDEX_UNIQUE, ['userid', 'coursemoduleid']);
+
+        // Conditionally launch drop index.
+        if ($dbman->index_exists($table, $index)) {
+            $dbman->drop_index($table, $index);
+        }
+
+        // Recompletion savepoint reached.
+        upgrade_plugin_savepoint(true, 2023110302, 'local', 'recompletion');
+    }
+
+    if ($oldversion < 2023110500) {
+
+        // Define table local_recompletion_hpa to be created.
+        $table = new xmldb_table('local_recompletion_hpa');
+
+        // Adding fields to table local_recompletion_hpa.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('hotpotid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('starttime', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('endtime', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('score', XMLDB_TYPE_INTEGER, '6', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('penalties', XMLDB_TYPE_INTEGER, '6', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('attempt', XMLDB_TYPE_INTEGER, '6', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timestart', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timefinish', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('status', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, '1');
+        $table->add_field('clickreportid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('course', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+        // Adding keys to table local_recompletion_hpa.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+
+        // Conditionally launch create table for local_recompletion_hpa.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Recompletion savepoint reached.
+        upgrade_plugin_savepoint(true, 2023110500, 'local', 'recompletion');
+    }
+
+    if ($oldversion < 2023112100) {
+
+        // Define table local_recompletion_cert to be created.
+        $table = new xmldb_table('local_recompletion_cert');
+
+        // Adding fields to table local_recompletion_cert.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('certificateid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('code', XMLDB_TYPE_CHAR, '40', null, null, null, null);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('printdate', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('course', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+        // Adding keys to table local_recompletion_cert.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+
+        // Conditionally launch create table for local_recompletion_cert.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Recompletion savepoint reached.
+        upgrade_plugin_savepoint(true, 2023112100, 'local', 'recompletion');
+    }
+
+    if ($oldversion < 2023112600) {
+        // Define table local_recompletion_cmv to be created.
+        $table = new xmldb_table('local_recompletion_cmv');
+        $index = new xmldb_index('userid-coursemoduleid', XMLDB_INDEX_UNIQUE, ['userid', 'coursemoduleid']);
+
+        // Conditionally launch drop index.
+        if ($dbman->index_exists($table, $index)) {
+            $dbman->drop_index($table, $index);
+        }
+
+        // Recompletion savepoint reached.
+        upgrade_plugin_savepoint(true, 2023112600, 'local', 'recompletion');
+    }
+
+    if ($oldversion < 2024011601) {
+
+        // Define table local_recompletion_sa to be created.
+        $table = new xmldb_table('local_recompletion_sa');
+
+        // Adding fields to table local_recompletion_ssv.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('scormid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('attempt', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('courseid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+        // Adding keys to table local_recompletion_ssv.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('userid', XMLDB_KEY_FOREIGN, array('userid'), 'user', array('id'));
+        $table->add_key('scormid', XMLDB_KEY_FOREIGN, array('scormid'), 'scorm', array('id'));
+        $table->add_key('courseid', XMLDB_KEY_FOREIGN, array('courseid'), 'course', array('id'));
+
+        // Conditionally launch create table for local_recompletion_ssv.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Define table local_recompletion_ssv to be created.
+        $table = new xmldb_table('local_recompletion_ssv');
+
+        // Adding fields to table local_recompletion_ssv.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('scoid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('attemptid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('elementid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('value', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null);
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('courseid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+        // Adding keys to table local_recompletion_ssv.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('scoid', XMLDB_KEY_FOREIGN, array('scoid'), 'scorm_scoes', array('id'));
+        $table->add_key('attemptid', XMLDB_KEY_FOREIGN, array('attemptid'), 'scorm_attempt', array('id'));
+        $table->add_key('elementid', XMLDB_KEY_FOREIGN, array('elementid'), 'scorm_element', array('id'));
+        $table->add_key('courseid', XMLDB_KEY_FOREIGN, array('courseid'), 'course', array('id'));
+        // Conditionally launch create table for local_recompletion_ssv.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+        // Migrate Data to new format.
+        $total = $DB->count_records('local_recompletion_sst');
+        if ($total > 500000) {
+            // This site has a large number of user track records, lets warn that this next part may take some time.
+            $notification = new \core\output\notification(
+                get_string('largetrackupgrade', 'scorm', format_float($total, 0)),
+                \core\output\notification::NOTIFY_WARNING
+            );
+            $notification->set_show_closebutton(false);
+            echo $OUTPUT->render($notification);
+        }
+        // Fill backup attempt table.
+        $sql = "INSERT INTO {local_recompletion_sa} (userid, scormid, attempt, courseid)
+        SELECT userid, scormid, attempt, course FROM {local_recompletion_sst} sst GROUP BY userid,scormid,attempt,course";
+        $DB->execute($sql);
+        // Fill backup value table.
+        $sql = "INSERT INTO {local_recompletion_ssv} (attemptid, scoid, elementid, value, courseid, timemodified)
+        SELECT a.id as attemptid, t.scoid as scoid, e.id as elementid, t.value as value, s.course as courseid, t.timemodified
+            FROM {local_recompletion_sst} t
+            JOIN {scorm_element} e ON e.element = t.element
+            LEFT JOIN {scorm} s ON s.id = t.scormid
+            JOIN {local_recompletion_sa} a ON (t.userid = a.userid AND t.scormid = a.scormid AND a.attempt = t.attempt)
+           WHERE s.course is not null";
+        $DB->execute($sql);
+        // Remove old table.
+        $table = new xmldb_table('local_recompletion_sst');
+        if ($dbman->table_exists($table)) {
+            $dbman->drop_table($table);
+        }
+        // Recompletion savepoint reached.
+        upgrade_plugin_savepoint(true, 2024011601, 'local', 'recompletion');
+    }
+    if ($oldversion < 2024071100) {
+        // We renamed some site admin settings.
+        $update = [
+            'assignattempts' => 'assign',
+            'choiceattempts' => 'choice',
+            'customcertcertificates' => 'customcert',
+            'h5pattempts' => 'h5pactivity',
+            'archiveh5p' => 'archiveh5pactivity',
+            'hotpotattempts' => 'hotpot',
+            'hvpattempts' => 'hvp',
+            'lessonattempts' => 'lesson',
+            'pulsenotifications' => 'pulse',
+            'questionnaireattempts' => 'questionnaire',
+            'quizattempts' => 'quiz',
+            'scormattempts' => 'scorm',
+            'schedule' => 'recompletionschedule',
+            'duration' => 'recompletionduration',
+            'emailenable' => 'recompletionemailenable',
+            'emailsubject' => 'recompletionemailsubject',
+            'emailbody' => 'recompletionemailbody',
+            'unenrolenable' => 'recompletionunenrolenable'
+        ];
+
+        foreach ($update as $old => $new) {
+            if ($DB->get_record('config_plugins', ['name' => $old, 'plugin' => 'local_recompletion']) != false) {
+                set_config($new, get_config('local_recompletion', $old), 'local_recompletion');
+                unset_config($old, 'local_recompletion');
+            }
+        }
+
+        // Recompletion savepoint reached.
+        upgrade_plugin_savepoint(true, 2024071100, 'local', 'recompletion');
+    }
+
+    if ($oldversion < 2024090300) {
+        // Convert old recompletionemailenable setting to recompletionnotify.
+        $emailsettings = $DB->get_records('local_recompletion_config', ['name' => 'recompletionemailenable']);
+        foreach ($emailsettings as $esetting) {
+            if (empty($esetting->value)) {
+                // Old value set to 0 now an empty string.
+                $esetting->value = '';
+            } else {
+                $esetting->value = 'completed';
+            }
+            $esetting->name = 'recompletionnotify';
+            $DB->update_record('local_recompletion_config', $esetting);
+        }
+
+        // Recompletion savepoint reached.
+        upgrade_plugin_savepoint(true, 2024090300, 'local', 'recompletion');
+
+    }
     return true;
 }

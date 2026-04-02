@@ -14,16 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * File containing tests for functions in lib.php
- *
- * @package     tool_certificate
- * @category    test
- * @copyright   2020 Mikel Martín <mikel@moodle.com>
- * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
+namespace tool_certificate;
 
-defined('MOODLE_INTERNAL') || die();
+use advanced_testcase;
+use tool_certificate_generator;
+use context_system;
+use context_course;
 
 /**
  * Tests for functions in lib.php
@@ -32,7 +28,7 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright   2020 Mikel Martín <mikel@moodle.com>
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class tool_certificate_permission_testcase extends advanced_testcase {
+final class permission_test extends advanced_testcase {
     /**
      * @var \stdClass
      */
@@ -44,7 +40,15 @@ class tool_certificate_permission_testcase extends advanced_testcase {
     /**
      * @var \tool_certificate\template
      */
+    private $template2;
+    /**
+     * @var \tool_certificate\template
+     */
     private $template3;
+    /**
+     * @var \tool_certificate\template
+     */
+    private $template4;
     /**
      * @var \tool_certificate\template
      */
@@ -54,7 +58,7 @@ class tool_certificate_permission_testcase extends advanced_testcase {
      * Get certificate generator
      * @return tool_certificate_generator
      */
-    protected function get_generator() : tool_certificate_generator {
+    protected function get_generator(): tool_certificate_generator {
         return $this->getDataGenerator()->get_plugin_generator('tool_certificate');
     }
 
@@ -62,6 +66,7 @@ class tool_certificate_permission_testcase extends advanced_testcase {
      * Set up
      */
     public function setUp(): void {
+        parent::setUp();
         // Create category tree.
         $cat1 = $this->getDataGenerator()->create_category();
         $cat2 = $this->getDataGenerator()->create_category(['parent' => $cat1->id]);
@@ -99,7 +104,7 @@ class tool_certificate_permission_testcase extends advanced_testcase {
      * Test for get_visible_templates as admin user.
      * @covers \tool_certificate\permission::get_visible_categories_contexts
      */
-    public function test_get_visible_templates_as_admin() {
+    public function test_get_visible_templates_as_admin(): void {
         $this->setAdminUser();
 
         // Check admin user can see all the templates.
@@ -111,7 +116,7 @@ class tool_certificate_permission_testcase extends advanced_testcase {
      * Test for get_visible_templates as teacher user.
      * @covers \tool_certificate\permission::get_visible_categories_contexts
      */
-    public function test_get_visible_templates_as_teacher() {
+    public function test_get_visible_templates_as_teacher(): void {
         // Creater user with role 'editingteacher'.
         $user1 = $this->getDataGenerator()->create_and_enrol($this->course1, 'editingteacher');
         $this->setUser($user1);

@@ -22,7 +22,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die('Direct access to this script is forbidden.');
+use tool_certificate\permission;
 
 /**
  * Serves certificate issues and other files.
@@ -43,7 +43,7 @@ function tool_certificate_pluginfile($course, $cm, $context, $filearea, $args, $
 
     // We are positioning the elements.
     if ($filearea === 'image') {
-        if (!\tool_certificate\permission::can_manage_anywhere()) {
+        if (!permission::can_manage_anywhere()) {
             // Shared images are only displayed to the users during editing of a template.
             return false;
         }
@@ -52,7 +52,7 @@ function tool_certificate_pluginfile($course, $cm, $context, $filearea, $args, $
         $fullpath = '/' . $context->id . '/tool_certificate/image/' . $relativepath;
 
         $fs = get_file_storage();
-        if (!$file = $fs->get_file_by_hash(sha1($fullpath)) or $file->is_directory()) {
+        if (!($file = $fs->get_file_by_hash(sha1($fullpath))) || $file->is_directory()) {
             return false;
         }
 
@@ -86,7 +86,7 @@ function tool_certificate_pluginfile($course, $cm, $context, $filearea, $args, $
 
         $issue = $DB->get_record('tool_certificate_issues', ['code' => $code], '*', MUST_EXIST);
         $template = \tool_certificate\template::instance($issue->templateid);
-        if (!\tool_certificate\permission::can_view_issue($template, $issue) && !\tool_certificate\permission::can_verify()) {
+        if (!permission::can_view_issue($template, $issue) && !permission::can_verify()) {
             return false;
         }
 
@@ -108,11 +108,11 @@ function tool_certificate_pluginfile($course, $cm, $context, $filearea, $args, $
  * @param stdClass $user user object
  * @param bool $iscurrentuser
  * @param stdClass $course Course object
- * @return bool
+ * @return void
  */
 function tool_certificate_myprofile_navigation(core_user\output\myprofile\tree $tree, $user, $iscurrentuser, $course) {
     global $USER;
-    if (\tool_certificate\permission::can_view_list($user->id)) {
+    if (permission::can_view_list($user->id)) {
         if ($USER->id == $user->id) {
             $link = get_string('mycertificates', 'tool_certificate');
         } else {
@@ -133,21 +133,23 @@ function tool_certificate_myprofile_navigation(core_user\output\myprofile\tree $
  * @return \core\output\inplace_editable
  */
 function tool_certificate_inplace_editable($itemtype, $itemid, $newvalue) {
+    global $CFG;
+    require_once($CFG->libdir . '/externallib.php');
+
+    $newvalue = clean_param($newvalue, PARAM_TEXT);
+    external_api::validate_context(context_system::instance());
 
     if ($itemtype === 'elementname') {
         // Validate access.
-        external_api::validate_context(context_system::instance());
         $element = \tool_certificate\element::instance($itemid);
         $element->get_template()->require_can_manage();
-
         $element->save((object)['name' => $newvalue]);
         return $element->get_inplace_editable();
     }
 
     if ($itemtype === 'templatename') {
+        // Validate access.
         $template = \tool_certificate\template::instance($itemid);
-        $template->require_can_manage();
-        external_api::validate_context(context_system::instance());
         $template->require_can_manage();
         $template->save((object)['name' => $newvalue]);
         return $template->get_editable_name();
@@ -159,7 +161,8 @@ function tool_certificate_inplace_editable($itemtype, $itemid, $newvalue) {
  */
 function tool_certificate_get_fontawesome_icon_map() {
     return [
-        'tool_certificate:download' => 'fa-download'
+        'tool_certificate:download' => 'fa-download',
+        'tool_certificate:linkedin' => 'fa-linkedin-square',
     ];
 }
 
@@ -171,7 +174,7 @@ function tool_certificate_get_fontawesome_icon_map() {
  * @param context $context Course context
  */
 function tool_certificate_extend_navigation_course($navigation, $course, $context) {
-    if (\tool_certificate\permission::can_view_templates_in_context($context)) {
+    if (permission::can_view_templates_in_context($context)) {
         $certificatenode = $navigation->add(get_string('certificates', 'tool_certificate'),
             null, navigation_node::TYPE_CONTAINER, null, 'tool_certificate');
         $url = new moodle_url('/admin/tool/certificate/manage_templates.php', ['courseid' => $course->id]);
@@ -189,7 +192,7 @@ function tool_certificate_extend_navigation_course($navigation, $course, $contex
 function tool_certificate_can_course_category_delete(\core_course_category $category): bool {
     // Deletion requires certificates to be present and permission to manage them.
     $certificatescount = \tool_certificate\certificate::count_templates_in_category($category);
-    return !$certificatescount || \tool_certificate\permission::can_manage($category->get_context());
+    return !$certificatescount || permission::can_manage($category->get_context());
 }
 
 /**
@@ -204,8 +207,8 @@ function tool_certificate_can_course_category_delete_move(\core_course_category 
     // Deletion with move requires certificates to move to be present and
     // permission to manage them at destination category.
     $certificatescount = \tool_certificate\certificate::count_templates_in_category($category);
-    return !$certificatescount || (\tool_certificate\permission::can_manage($category->get_context())
-        && \tool_certificate\permission::can_manage($newcategory->get_context()));
+    return !$certificatescount || (permission::can_manage($category->get_context())
+        && permission::can_manage($newcategory->get_context()));
 }
 
 /**
@@ -256,49 +259,26 @@ function tool_certificate_pre_course_category_delete_move(\core_course_category 
     }
 }
 
+/**
+ * Callback for theme_workplace, return list of workplace menu items to be added to the launcher.
+ *
+ * @return array[] The array containing the workplace menu items where each item is an array with keys:
+ *                 url => moodle_url where item will redirect
+ *                 name => string name shown in the launcher
+ *                 imageurl => string url for the icon shown in the launcher
+ *                 isglobal (optional) => bool to indicate if item is displayed in the global section.
+ */
+function tool_certificate_theme_workplace_menu_items(): array {
+    global $OUTPUT;
 
-/*
-* Displays a node in left side menu
-* @return  [type] string  link for the leftmenu
-*/
-function tool_certificate_leftmenunode(){
-
-    $systemcontext = \local_costcenter\lib\accesslib::get_module_context();
-    $certificatenode = '';
-    if(has_capability('tool/certificate:manage', $systemcontext) || is_siteadmin() ) {
-        $certificatenode .= html_writer::start_tag('li', array('class' => 'pull-left user_nav_div browsecertifications'));
-            $certification_url = new moodle_url('/admin/tool/certificate/manage_templates.php');
-            $certification = html_writer::link($certification_url, '<i class="fa fa-certificate"></i><span class="user_navigation_link_text">'.get_string('manage_certificates','tool_certificate').'</span>',array('class'=>'user_navigation_link'));
-            $certificatenode .= $certification;
-        $certificatenode .= html_writer::end_tag('li');
+    $menuitems = [];
+    if (permission::can_view_admin_tree()) {
+        $menuitems[] = [
+            'url' => new moodle_url("/admin/tool/certificate/manage_templates.php"),
+            'name' => get_string('certificates', 'tool_certificate'),
+            'imageurl' => $OUTPUT->image_url('icon', 'tool_certificate')->out(false),
+            'isglobal' => component_class_callback('\tool_tenant\permission', 'can_switch_tenant', [], false),
+        ];
     }
-    return array('15' => $certificatenode);
-}
-
-function tool_certificate_masterinfo(){
-    global $CFG, $PAGE, $OUTPUT, $DB, $USER;
-    $costcenterid = explode('/',$USER->open_path)[1];
-    $systemcontext = \local_costcenter\lib\accesslib::get_module_context();
-    $content = '';
-    if(has_capability('tool/certificate:manage', $systemcontext) || is_siteadmin() ) {
-
-        // certificates
-        $certificates = "SELECT count(id) FROM {tool_certificate_templates}";
-        if(!is_siteadmin()){
-            $certificates .=" WHERE open_path = '/$costcenterid'";
-        }
-        $totalcertificate = $DB->count_records_sql($certificates);
-
-        if($totalcertificate > 0) {
-            $certificate = '('.$totalcertificate.')';
-        }
-        $templatedata = array();
-        $templatedata['show'] = true;
-        $templatedata['count'] = $certificate;
-        $templatedata['link'] = $CFG->wwwroot.'/admin/tool/certificate/manage_templates.php';
-        $templatedata['stringname'] = get_string('certificate','block_masterinfo');
-
-        $content = $OUTPUT->render_from_template('block_masterinfo/masterinfo', $templatedata);
-    }
-    return array('7' => $content);
+    return $menuitems;
 }

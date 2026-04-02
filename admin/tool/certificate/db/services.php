@@ -32,7 +32,7 @@ $functions = [
         'description' => 'Revoke an issue for a certificate',
         'type'        => 'write',
         'ajax'        => true,
-        'services'    => array(MOODLE_OFFICIAL_MOBILE_SERVICE)
+        'services'    => [MOODLE_OFFICIAL_MOBILE_SERVICE],
     ],
     'tool_certificate_regenerate_issue_file' => [
         'classname'   => \tool_certificate\external\issues::class,
@@ -68,13 +68,6 @@ $functions = [
         'description' => 'Updates an element',
         'type'        => 'write',
         'ajax'        => true,
-    ],
-    'tool_certificate_modal_form' => [
-        'classname' => \tool_certificate\external\modal_form::class,
-        'methodname' => 'execute',
-        'description' => 'process submission of a modal form',
-        'type' => 'write',
-        'ajax' => true,
     ],
     'tool_certificate_potential_users_selector' => [
         'classname' => \tool_certificate\external\issues::class,

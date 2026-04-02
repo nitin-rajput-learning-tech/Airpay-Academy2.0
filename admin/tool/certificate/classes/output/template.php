@@ -29,8 +29,6 @@ use core\external\persistent_exporter;
 use core\output\inplace_editable;
 use tool_certificate\element_helper;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Class template
  *
@@ -64,7 +62,7 @@ class template extends persistent_exporter {
      *
      * @return \tool_certificate\template
      */
-    protected function get_template() : \tool_certificate\template {
+    protected function get_template(): \tool_certificate\template {
         return $this->related['template'];
     }
 
@@ -126,7 +124,7 @@ class template extends persistent_exporter {
     protected function get_format_parameters_for_name() {
         return [
             'context' => $this->get_template()->get_context(),
-            'escape' => false
+            'escape' => false,
         ];
     }
 }

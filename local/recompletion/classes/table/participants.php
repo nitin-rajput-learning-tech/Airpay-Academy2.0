@@ -44,6 +44,12 @@ require_once($CFG->dirroot . '/user/lib.php');
 class participants extends \core_user\table\participants {
 
     /**
+     * A list of roles that current user can view in a context.
+     * @var array
+     */
+    protected $viewableroles;
+
+    /**
      * @var bool|mixed Is recompletion enabled in this course.
      */
     protected $recompletionenabled;
@@ -61,7 +67,7 @@ class participants extends \core_user\table\participants {
         $headers = [];
         $columns = [];
 
-        $bulkoperations = has_capability('moodle/course:bulkmessaging', $this->context);
+        $bulkoperations = has_capability('local/recompletion:bulkoperations', $this->context);
         if ($bulkoperations) {
             $mastercheckbox = new \core\output\checkbox_toggleall('participants-table', true, [
                 'id' => 'select-all-participants',
@@ -149,7 +155,7 @@ class participants extends \core_user\table\participants {
         $this->profileroles = get_profile_roles($this->context);
         $this->viewableroles = get_viewable_roles($this->context);
         $this->recompletionenabled = $DB->get_field('local_recompletion_config',
-            'value', array('course' => $this->course->id, 'name' => 'enable'));
+            'value', array('course' => $this->course->id, 'name' => 'recompletiontype'));
 
         if (!$this->columns) {
             $onerow = $DB->get_record_sql("SELECT {$this->sql->fields} FROM {$this->sql->from} WHERE {$this->sql->where}",

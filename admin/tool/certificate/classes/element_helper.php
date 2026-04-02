@@ -24,8 +24,6 @@
 
 namespace tool_certificate;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Class helper.
  *
@@ -117,7 +115,7 @@ class element_helper {
         } else if ($element->get_refpoint() == self::CUSTOMCERT_REF_POINT_TOPCENTER) {
             $style .= ' text-align: center;';
         }
-        return \html_writer::div($content, '', array('style' => $style));
+        return \html_writer::div($content, '', ['style' => $style]);
     }
 
     /**
@@ -293,7 +291,7 @@ class element_helper {
      * @param \MoodleQuickForm $mform the edit_form instance.
      */
     public static function render_form_element_refpoint($mform) {
-        $refpointoptions = array();
+        $refpointoptions = [];
         $refpointoptions[self::CUSTOMCERT_REF_POINT_TOPLEFT] = get_string('alignleft', 'tool_certificate');
         $refpointoptions[self::CUSTOMCERT_REF_POINT_TOPCENTER] = get_string('aligncentre', 'tool_certificate');
         $refpointoptions[self::CUSTOMCERT_REF_POINT_TOPRIGHT] = get_string('alignright', 'tool_certificate');
@@ -310,7 +308,7 @@ class element_helper {
      * @return array the validation errors
      */
     public static function validate_form_element_colour($data) {
-        $errors = array();
+        $errors = [];
         // Validate the colour.
         if (!self::validate_colour($data['colour'])) {
             $errors['colour'] = get_string('invalidcolour', 'tool_certificate');
@@ -325,7 +323,7 @@ class element_helper {
      * @return array the validation errors
      */
     public static function validate_form_element_position($data) {
-        $errors = array();
+        $errors = [];
 
         // Check if posx is not set, or not numeric or less than 0.
         if (!empty($data['posx']) && !is_numeric($data['posx'])) {
@@ -370,7 +368,7 @@ class element_helper {
             $font = substr($font, 0, -1);
             $attr .= 'B';
         }
-        return array($font, $attr);
+        return [$font, $attr];
     }
 
     /**
@@ -381,7 +379,7 @@ class element_helper {
      */
     public static function validate_colour($colour) {
         // List of valid HTML colour names.
-        $colournames = array(
+        $colournames = [
             'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure',
             'beige', 'bisque', 'black', 'blanchedalmond', 'blue',
             'blueviolet', 'brown', 'burlywood', 'cadetblue', 'chartreuse',
@@ -412,8 +410,8 @@ class element_helper {
             'seagreen', 'seashell', 'sienna', 'silver', 'skyblue', 'slateblue',
             'slategray', 'slategrey', 'snow', 'springgreen', 'steelblue', 'tan',
             'teal', 'thistle', 'tomato', 'turquoise', 'violet', 'wheat', 'white',
-            'whitesmoke', 'yellow', 'yellowgreen'
-        );
+            'whitesmoke', 'yellow', 'yellowgreen',
+        ];
 
         if (preg_match('/^#?([[:xdigit:]]{3}){1,2}$/', $colour)) {
             return true;
@@ -441,7 +439,7 @@ class element_helper {
                   FROM {tool_certificate_elements}
                  WHERE pageid = :id";
         // Get the current max sequence on this page and add 1 to get the new sequence.
-        if ($maxseq = $DB->get_record_sql($sql, array('id' => $pageid))) {
+        if ($maxseq = $DB->get_record_sql($sql, ['id' => $pageid])) {
             $sequence = $maxseq->maxsequence + 1;
         }
 
@@ -457,7 +455,7 @@ class element_helper {
         global $CFG;
 
         // Array to store the element types.
-        $options = array();
+        $options = [];
 
         $plugins = self::get_enabled_plugins();
 
@@ -488,11 +486,11 @@ class element_helper {
         $manager = new plugin_manager();
         $plugins = $manager->get_sorted_plugins_list();
         if (!$plugins) {
-            return array();
+            return [];
         }
 
         // Check they are enabled using get_config (which is cached and hopefully fast).
-        $enabled = array();
+        $enabled = [];
         foreach ($plugins as $plugin) {
             $disabled = get_config('certificateelement_' . $plugin, 'disabled');
             if (empty($disabled)) {
@@ -555,7 +553,7 @@ class element_helper {
      */
     private static function get_font_sizes() {
         // Array to store the sizes.
-        $sizes = array();
+        $sizes = [];
 
         for ($i = 1; $i <= 200; $i++) {
             $sizes[$i] = $i;
@@ -636,19 +634,18 @@ class element_helper {
         list($width, $height) = array_values(self::calculate_image_size($file, $fileinfo, $width, $height));
 
         if ($file instanceof \stored_file) {
-            $location = make_request_directory() . '/target';
-            $file->copy_content_to($location);
-
+            // To pass an image as a data string, the PDF library requires the string to be prefixed with '@'.
+            $img = '@' . $file->get_content();
             $mimetype = $file->get_mimetype();
         } else {
-            $location = $file;
+            $img = $file;
             $mimetype = 'image/jpg';
         }
 
         if ($mimetype == 'image/svg+xml') {
-            $pdf->ImageSVG($location, $element->get_posx(), $element->get_posy(), $width, $height);
+            $pdf->ImageSVG($img, $element->get_posx(), $element->get_posy(), $width, $height);
         } else {
-            $pdf->Image($location, $element->get_posx(), $element->get_posy(), $width, $height);
+            $pdf->Image($img, $element->get_posx(), $element->get_posy(), $width, $height);
         }
     }
 
@@ -662,7 +659,7 @@ class element_helper {
         $fs = get_file_storage();
 
         // The array used to store the images.
-        $arrfiles = array();
+        $arrfiles = [];
         if ($files = get_file_storage()->get_area_files(\context_system::instance()->id, 'tool_certificate',
             'image', false, 'filename', false)) {
             foreach ($files as $hash => $file) {
@@ -672,7 +669,7 @@ class element_helper {
 
         if (count($arrfiles)) {
             \core_collator::asort($arrfiles);
-            $arrfiles = array('0' => get_string('noimage', 'tool_certificate')) + $arrfiles;
+            $arrfiles = ['0' => get_string('noimage', 'tool_certificate')] + $arrfiles;
         }
 
         return $arrfiles;
@@ -685,7 +682,7 @@ class element_helper {
      * @return bool whether the element was added (it would not be added if there are no shared images)
      */
     public static function render_shared_image_picker_element($mform) {
-        $arrfiles = array();
+        $arrfiles = [];
         if ($files = get_file_storage()->get_area_files(\context_system::instance()->id, 'tool_certificate',
             'image', false, 'filename', false)) {
             foreach ($files as $hash => $file) {
@@ -698,47 +695,54 @@ class element_helper {
         }
 
         \core_collator::asort($arrfiles);
-        $arrfiles = array('0' => get_string('noimage', 'tool_certificate')) + $arrfiles;
+        $arrfiles = ['0' => get_string('noimage', 'tool_certificate')] + $arrfiles;
         $mform->addElement('select', 'fileid', get_string('selectsharedimage', 'certificateelement_image'), $arrfiles);
         return true;
     }
-//    Mallikarjun added to certificate modulename
-    /**
-     * Handles rendering the element on the pdf.
-     *
-     * @param \pdf $pdf the pdf object
-     * @param bool $preview true if it is a preview, false otherwise
-     * @param \stdClass $user the user we are rendering this for
-     * @param obj $moduleinfo having information with moduletype and module
-    **/
-    public static function get_modulename($elementid,$user=2, $moduleinfo = false) {
-        global $DB;
 
-        if($moduleinfo){
-            switch ($moduleinfo->moduletype) {
-                case 'course':
-                    $mname = $DB->get_field('course', 'fullname', array('id'=>$moduleinfo->moduleid));
-                    break;
-                case 'classroom':
-                    $mname = $DB->get_field('local_classroom', 'name', array('id'=>$moduleinfo->moduleid));
-                    break;
-                case 'learningplan':
-                    $mname = $DB->get_field('local_learningplan', 'name', array('id'=>$moduleinfo->moduleid));
-                    break;
-                case 'program':
-                    $mname = $DB->get_field('local_program', 'name', array('id'=>$moduleinfo->moduleid));
-                    break;
-                case 'onlinetest':
-                    $mname = $DB->get_field('local_onlinetests', 'name', array('id'=>$moduleinfo->moduleid));
-                    break;
-                default:
-                    $mname = 'Module name';
-                    break;
-            }
-        }else{
-            $mname = 'Module name';
+    /**
+     * Filters that are allowed to apply when generating PDFs
+     *
+     * @return array
+     */
+    public static function get_allowed_filters(): array {
+        $value = get_config('tool_certificate', 'allowfilters') ?? '';
+        return array_filter(preg_split('/\s*,\s*/', trim($value)));
+    }
+
+    /**
+     * Context of certificate issue
+     *
+     * @param int $courseid
+     * @return \context
+     */
+    protected static function get_issue_context(int $courseid): \context {
+        $context = \context_system::instance();
+        // If the issue was generated in a course, use course context instead.
+        if ($courseid) {
+            $context = \context_course::instance($courseid, IGNORE_MISSING) ?: $context;
         }
-        
-        return $mname;
+        return $context;
+    }
+
+    /**
+     * Similar to {@see format_text()} but applies only allowed filters (if enabled)
+     *
+     * @param string $text
+     * @param int $courseid
+     * @return string
+     */
+    public static function format_text(string $text, int $courseid = 0) {
+        global $PAGE;
+        $context = self::get_issue_context($courseid);
+        $text = format_text($text, FORMAT_HTML, ['context' => $context, 'filter' => false]);
+        if ($allowedfilters = self::get_allowed_filters()) {
+            $skippedfilters = array_diff(array_values(filter_get_globally_enabled()), $allowedfilters);
+            $filtermanager = \filter_manager::instance();
+            $filtermanager->setup_page_for_filters($PAGE, $context); // Setup global stuff filters may have.
+            $filteroptions = ['originalformat' => FORMAT_HTML, 'noclean' => false];
+            return $filtermanager->filter_text($text, $context, $filteroptions, $skippedfilters);
+        }
+        return $text;
     }
 }

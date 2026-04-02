@@ -34,15 +34,16 @@ if ($pageid && $action) {
     $templateid = required_param('id', PARAM_INT);
     $template = \tool_certificate\template::instance($templateid);
 }
-$pageurl = new moodle_url('/admin/tool/certificate/template.php', array('id' => $template->get_id()));
+
+$pageurl = new moodle_url('/admin/tool/certificate/template.php', ['id' => $template->get_id()]);
 if ($template->get_context()->contextlevel == CONTEXT_COURSE) {
     $courseid = $template->get_context()->instanceid;
     require_login($courseid);
-    $manageurl = new moodle_url('/admin/tool/certificate/manage_templates.php', array('courseid' => $courseid));
+    $manageurl = new moodle_url('/admin/tool/certificate/manage_templates.php', ['courseid' => $courseid]);
     $PAGE->navbar->add(get_string('managetemplates', 'tool_certificate'), $manageurl);
     $PAGE->set_url($pageurl);
-}  else {
-   // admin_externalpage_setup('tool_certificate/managetemplates', '', null, $pageurl);
+} else {
+    admin_externalpage_setup('tool_certificate/managetemplates', '', null, $pageurl, ['nosearch' => true]);
 }
 
 $template->require_can_manage();
@@ -60,24 +61,23 @@ if ($action && $pageid) {
 }
 
 $heading = $title = $template->get_formatted_name();
-// If 'formatstringstriptags' config is enabled, we can't show a styled badge, so we avoid showing 'shared' string.
-// When MDL-69464 lands formatstringstriptags check won't be needed.
-if ($template->get_shared() && empty($CFG->formatstringstriptags)) {
+if ($template->get_shared()) {
     $heading .= html_writer::tag('div', get_string('shared', 'tool_certificate'),
-        ['class' => 'badge badge-secondary ml-2', 'style' => 'font-size: 40%; vertical-align: middle;']);
+        ['class' => 'badge badge-pill badge-secondary font-small ml-2 align-middle']);
 }
 $PAGE->navbar->add($title, $pageurl);
 
 $PAGE->set_title($title);
-$PAGE->set_heading($heading);
+$PAGE->set_heading($heading, false);
 
-$output = $PAGE->get_renderer('tool_certificate');
-$edit = new \tool_certificate\output\page_header_button(get_string('editdetails', 'tool_certificate'),
-    ['data-action' => 'editdetails', 'data-id' => $template->get_id(), 'data-name' => $template->get_formatted_name()]);
-$PAGE->set_button($edit->render($output) . $PAGE->button);
+// Secondary navigation.
+$secondarynav = new \tool_certificate\local\views\template_secondary($PAGE, $template);
+$secondarynav->initialise();
+$PAGE->set_secondarynav($secondarynav);
+
+$data = $template->get_exporter()->export($PAGE->get_renderer('core'));
+$data->heading = get_string('template', 'tool_certificate');
 
 echo $OUTPUT->header();
-
-$data = $template->get_exporter()->export($OUTPUT);
 echo $OUTPUT->render_from_template('tool_certificate/edit_layout', $data);
 echo $OUTPUT->footer();

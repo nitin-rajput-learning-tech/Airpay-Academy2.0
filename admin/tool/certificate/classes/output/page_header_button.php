@@ -24,8 +24,6 @@
 
 namespace tool_certificate\output;
 
-defined('MOODLE_INTERNAL') || die();
-
 use renderer_base;
 
 /**
@@ -35,7 +33,7 @@ use renderer_base;
  * @copyright   2019 Marina Glancy
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class page_header_button implements \templatable {
+class page_header_button implements \templatable, \renderable {
 
     /** @var string */
     protected $title;
@@ -77,7 +75,7 @@ class page_header_button implements \templatable {
      * @param renderer_base $output
      * @return string
      */
-    public function render(renderer_base $output) : string {
+    public function render(renderer_base $output): string {
         return $output->render_from_template('tool_certificate/page_header_button', $this->export_for_template($output));
     }
 }

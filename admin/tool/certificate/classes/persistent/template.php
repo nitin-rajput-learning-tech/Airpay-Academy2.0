@@ -25,8 +25,7 @@
 namespace tool_certificate\persistent;
 
 use core\persistent;
-
-defined('MOODLE_INTERNAL') || die();
+use tool_certificate\permission;
 
 /**
  * Class template
@@ -46,23 +45,79 @@ class template extends persistent {
      * @return array
      */
     protected static function define_properties() {
-        return array(
-            'name' => array(
-                'type' => PARAM_TEXT
-            ),
-            'contextid' => array(
-                'type' => PARAM_INT
-            ),
-            'shared' => array(
-                'type' => PARAM_BOOL
-            ),
-//	    mallikarjun added for costcenter in certificate
-            'costcenter' => array(
-                'type' => PARAM_INT
-            ),
-            'open_path' => array(
-                'type' => PARAM_RAW
-            ),
-        );
+        return [
+            'name' => [
+                'type' => PARAM_TEXT,
+            ],
+            'contextid' => [
+                'type' => PARAM_INT,
+            ],
+            'shared' => [
+                'type' => PARAM_BOOL,
+            ],
+        ];
+    }
+
+    /**
+     * Returns the formatted name of the template.
+     *
+     * @return string the name of the template
+     */
+    public function get_formatted_name() {
+        return format_string($this->get('name'), true, ['escape' => false, 'context' => $this->get_context()]);
+    }
+
+    /**
+     * The URL to edit certificate template
+     *
+     * @return \moodle_url
+     */
+    public function edit_url(): \moodle_url {
+        return new \moodle_url('/admin/tool/certificate/template.php', ['id' => $this->get('id')]);
+    }
+
+    /**
+     * The URL to view certificate issues
+     *
+     * @return \moodle_url
+     */
+    public function view_issues_url(): \moodle_url {
+        return new \moodle_url('/admin/tool/certificate/certificates.php', ['templateid' => $this->get('id')]);
+    }
+
+    /**
+     * Returns the context id.
+     *
+     * @return \context the context
+     */
+    public function get_context(): \context {
+        return \context::instance_by_id($this->get('contextid'));
+    }
+
+    /**
+     * If a user can manage this template.
+     *
+     * @return bool
+     */
+    public function can_manage(): bool {
+        return permission::can_manage($this->get_context());
+    }
+
+    /**
+     * Can view issues for this template
+     * @return bool
+     */
+    public function can_view_issues() {
+        return permission::can_view_templates_in_context($this->get_context());
+    }
+
+    /**
+     * If a user can issue certificates from this template (to anybody)
+     *
+     * @param \context|null $context
+     * @return bool
+     */
+    public function can_issue_to_anybody(?\context $context = null): bool {
+        return $this->get('id') && permission::can_issue_to_anybody($context ?? $this->get_context());
     }
 }

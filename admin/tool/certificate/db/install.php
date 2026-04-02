@@ -23,68 +23,14 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Create a default certificate template.
  *
  * @return bool
  */
 function xmldb_tool_certificate_install() {
-        global $CFG, $OUTPUT, $DB;
-
-  /*  if (!defined('BEHAT_SITE_RUNNING') && !(defined('PHPUNIT_TEST') && PHPUNIT_TEST)) {
+    if (!defined('BEHAT_SITE_RUNNING') && !(defined('PHPUNIT_TEST') && PHPUNIT_TEST)) {
         \tool_certificate\certificate::create_demo_template();
-    }
-    */
-    $dbman = $DB->get_manager(); // loads ddl manager and xmldb classes
-    
-    $table = new xmldb_table('course');
-	if ($dbman->table_exists($table)) {
-        $field = new xmldb_field('open_certificateid', XMLDB_TYPE_INTEGER, 10, null, null, null);
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
-	}
-
-    $table = new xmldb_table('local_classroom');
-    if ($dbman->table_exists($table)) {
-        $field = new xmldb_field('certificateid', XMLDB_TYPE_INTEGER, 10, null, null, null);
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
-    }
-
-    $table = new xmldb_table('local_learningplan');
-    if ($dbman->table_exists($table)) {
-        $field = new xmldb_field('certificateid', XMLDB_TYPE_INTEGER, 10, null, null, null);
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
-    }   
-
-    $table = new xmldb_table('local_program');
-    if ($dbman->table_exists($table)) {
-        $field = new xmldb_field('certificateid', XMLDB_TYPE_INTEGER, 10, null, null, null);
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
-    }
-
-    $table = new xmldb_table('local_onlinetests');
-    if ($dbman->table_exists($table)) {
-        $field = new xmldb_field('certificateid', XMLDB_TYPE_INTEGER, 10, null, null, null);
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
-    }
-
-    $table = new xmldb_table('local_certification');
-    if ($dbman->table_exists($table)) {
-        $field = new xmldb_field('certificateid', XMLDB_TYPE_INTEGER, 10, null, null, null);
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
     }
 
     return true;

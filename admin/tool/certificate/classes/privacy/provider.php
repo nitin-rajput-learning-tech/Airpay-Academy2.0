@@ -33,8 +33,6 @@ use core_privacy\local\request\transform;
 use core_privacy\local\request\writer;
 use tool_certificate\customfield\issue_handler;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Privacy Subsystem implementation for tool_certificate.
  *
@@ -52,7 +50,7 @@ class provider implements \core_privacy\local\metadata\provider,
      * @param collection $items a reference to the collection to use to store the metadata.
      * @return collection the updated collection of metadata items.
      */
-    public static function get_metadata(collection $items) : collection {
+    public static function get_metadata(collection $items): collection {
         $items->add_database_table(
             'tool_certificate_issues',
             [
@@ -74,7 +72,7 @@ class provider implements \core_privacy\local\metadata\provider,
      * @param int $userid the userid.
      * @return contextlist the list of contexts containing user info for the user.
      */
-    public static function get_contexts_for_userid(int $userid) : contextlist {
+    public static function get_contexts_for_userid(int $userid): contextlist {
         global $DB;
         $contextlist = new contextlist();
         if ($DB->record_exists('tool_certificate_issues', ['userid' => $userid])) {
@@ -128,7 +126,7 @@ class provider implements \core_privacy\local\metadata\provider,
             ];
 
             writer::with_context($context)->export_data(array_merge($contextpath, [
-                clean_param($record->certificatename, PARAM_FILE)
+                clean_param($record->certificatename, PARAM_FILE),
             ]), $data);
         }
 

@@ -24,10 +24,6 @@
 
 namespace certificateelement_text;
 
-use tool_certificate\element_helper;
-
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * The certificate element text's core interaction API.
  *
@@ -70,7 +66,7 @@ class element extends \tool_certificate\element {
      * @param \stdClass $issue the issue we are rendering
      */
     public function render($pdf, $preview, $user, $issue) {
-        $text = format_text($this->get_data(), FORMAT_HTML, ['context' => \context_system::instance()]);
+        $text = \tool_certificate\element_helper::format_text($this->get_data(), $issue->courseid ?? 0);
         \tool_certificate\element_helper::render_content($pdf, $this, $text);
     }
 
@@ -83,7 +79,7 @@ class element extends \tool_certificate\element {
      * @return string the html
      */
     public function render_html() {
-        $text = format_text($this->get_data(), FORMAT_HTML, ['context' => \context_system::instance()]);
+        $text = \tool_certificate\element_helper::format_text($this->get_data());
         return \tool_certificate\element_helper::render_html_content($this, $text);
     }
 

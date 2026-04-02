@@ -14,16 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * File containing tests for functions in db/upgradelib.php
- *
- * @package     tool_certificate
- * @category    test
- * @copyright   2019 Marina Glancy
- * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
+namespace tool_certificate;
 
-defined('MOODLE_INTERNAL') || die();
+use advanced_testcase;
+use tool_certificate_generator;
+use tool_tenant_generator;
+use context_coursecat;
+use context_system;
+use xmldb_table;
 
 /**
  * Tests for functions in db/upgradelib.php
@@ -32,7 +30,7 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright  2019 Marina Glancy
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class tool_certificate_upgradelib_testcase extends advanced_testcase {
+final class upgradelib_test extends advanced_testcase {
 
     /** @var string */
     protected $temptable = null;
@@ -41,6 +39,7 @@ class tool_certificate_upgradelib_testcase extends advanced_testcase {
         global $CFG;
 
         require_once($CFG->dirroot . '/' . $CFG->admin . '/tool/certificate/db/upgradelib.php');
+        parent::setUpBeforeClass();
     }
 
     /**
@@ -67,14 +66,16 @@ class tool_certificate_upgradelib_testcase extends advanced_testcase {
      * Get certificate generator
      * @return tool_certificate_generator
      */
-    protected function get_generator() : tool_certificate_generator {
+    protected function get_generator(): tool_certificate_generator {
         return $this->getDataGenerator()->get_plugin_generator('tool_certificate');
     }
 
     /**
      * Test for function tool_certificate_upgrade_remove_tenant_field()
+     *
+     * @covers ::tool_certificate_upgrade_remove_tenant_field
      */
-    public function test_tool_certificate_upgrade_remove_tenant_field() {
+    public function test_tool_certificate_upgrade_remove_tenant_field(): void {
         global $DB;
 
         // Skip tests if tool_tenant is not present.
@@ -112,8 +113,10 @@ class tool_certificate_upgradelib_testcase extends advanced_testcase {
 
     /**
      * Tests for tool_certificate_upgrade_move_data_to_customfields()
+     *
+     * @covers ::tool_certificate_upgrade_move_data_to_customfields
      */
-    public function test_tool_certificate_upgrade_move_data_to_customfields() {
+    public function test_tool_certificate_upgrade_move_data_to_customfields(): void {
         global $DB;
 
         $this->resetAfterTest();
@@ -130,19 +133,19 @@ class tool_certificate_upgradelib_testcase extends advanced_testcase {
 
         $context = context_system::instance();
         $templateid = $DB->insert_record('tool_certificate_templates', (object)['name' => 'Template 01',
-            'contextid' => $context->id]);
+            'contextid' => $context->id, ]);
 
         $id1 = $DB->insert_record($tablename, (object)['component' => 'tool_dynamicrule', 'templateid' => $templateid,
-            'data' => '{"certificationname":"","programname":"","completiondate":"","completedcourses":[]}']);
+            'data' => '{"certificationname":"","programname":"","completiondate":"","completedcourses":[]}', ]);
         $id2 = $DB->insert_record($tablename, (object)['component' => 'tool_dynamicrule', 'templateid' => $templateid,
             'data' => '{"certificationname":"My cert","programname":"My prog","completiondate":"1546344000",' .
-                '"completedcourses":["a","b"]}']);
+                '"completedcourses":["a","b"]}', ]);
         $id3 = $DB->insert_record($tablename, (object)['component' => 'tool_dynamicrule', 'templateid' => $templateid,
-            'data' => json_encode(['coursename' => 'X'])]);
+            'data' => json_encode(['coursename' => 'X']), ]);
 
         // Create tool_program issue customfields manually if tool_program is not available.
         if (!class_exists('\\tool_program\\program')) {
-            $handler = tool_certificate\customfield\issue_handler::create();
+            $handler = \tool_certificate\customfield\issue_handler::create();
             $handler->ensure_field_exists('programname', 'text', 'Program name', true, 'Program name preview');
             $handler->ensure_field_exists('programcompletiondate', 'date', 'Program completion date', true,
                 userdate(strtotime(date('Y-01-01')), get_string('strftimedatefullshort')), ['includetime' => false]);
@@ -152,7 +155,7 @@ class tool_certificate_upgradelib_testcase extends advanced_testcase {
         }
         // Create tool_certification issue customfields manually if tool_certification is not available.
         if (!class_exists('\\tool_certification\\certification')) {
-            $handler = tool_certificate\customfield\issue_handler::create();
+            $handler = \tool_certificate\customfield\issue_handler::create();
             $handler->ensure_field_exists('certificationname', 'text', 'Certification name', true, 'Certification name preview');
         }
 
@@ -176,8 +179,10 @@ class tool_certificate_upgradelib_testcase extends advanced_testcase {
 
     /**
      * Tests for tool_certificate_upgrade_store_fullname_in_data()
+     *
+     * @covers ::tool_certificate_upgrade_store_fullname_in_data
      */
-    public function test_tool_certificate_upgrade_store_fullname_in_data() {
+    public function test_tool_certificate_upgrade_store_fullname_in_data(): void {
         global $DB;
 
         $this->resetAfterTest();
@@ -212,8 +217,10 @@ class tool_certificate_upgradelib_testcase extends advanced_testcase {
 
     /**
      * Test for tool_certificate_delete_certificates_with_missing_context()
+     *
+     * @covers ::tool_certificate_delete_certificates_with_missing_context
      */
-    public function test_tool_certificate_delete_certificates_with_missing_context() {
+    public function test_tool_certificate_delete_certificates_with_missing_context(): void {
         global $DB;
         $this->resetAfterTest();
 
@@ -252,8 +259,10 @@ class tool_certificate_upgradelib_testcase extends advanced_testcase {
 
     /**
      * Test for test_tool_certificate_delete_orphaned_issue_files()
+     *
+     * @covers ::tool_certificate_delete_orphaned_issue_files
      */
-    public function test_tool_certificate_delete_orphaned_issue_files() {
+    public function test_tool_certificate_delete_orphaned_issue_files(): void {
         global $DB;
         $this->resetAfterTest();
         $systemcontext = \context_system::instance();
@@ -288,8 +297,10 @@ class tool_certificate_upgradelib_testcase extends advanced_testcase {
 
     /**
      * Test for tool_certificate_fix_orphaned_template_element_files()
+     *
+     * @covers ::tool_certificate_fix_orphaned_template_element_files
      */
-    public function test_tool_certificate_fix_orphaned_template_element_files() {
+    public function test_tool_certificate_fix_orphaned_template_element_files(): void {
         $this->resetAfterTest();
 
         $fs = get_file_storage();
@@ -299,14 +310,14 @@ class tool_certificate_upgradelib_testcase extends advanced_testcase {
         $cat2context = context_coursecat::instance($cat2->id);
         // Create a template in category2.
         $template1 = $this->get_generator()->create_template((object)['name' => 'Template 1',
-            'contextid' => context_coursecat::instance($cat2->id)->id]);
+            'contextid' => context_coursecat::instance($cat2->id)->id, ]);
         $page1 = $this->get_generator()->create_page($template1);
 
         $imageelement1 = $this->get_generator()->create_element($page1->get_id(), 'image');
 
         // Create a dummy orphaned image file for element1 in a wrong template context (category1).
         $file1record = ['contextid' => $cat1context->id, 'component' => 'tool_certificate', 'filearea' => 'element',
-            'itemid' => $imageelement1->get_id(), 'filepath' => '/', 'filename' => 'image1.png'];
+            'itemid' => $imageelement1->get_id(), 'filepath' => '/', 'filename' => 'image1.png', ];
         $file1 = $fs->create_file_from_string($file1record, 'Awesome photography');
         $file1content = $file1->get_content();
 
@@ -319,14 +330,14 @@ class tool_certificate_upgradelib_testcase extends advanced_testcase {
 
         // Create a dummy orphaned image file for element2 in a wrong template context (category1).
         $file2record = ['contextid' => $cat1context->id, 'component' => 'tool_certificate', 'filearea' => 'element',
-            'itemid' => $imageelement2->get_id(), 'filepath' => '/', 'filename' => 'image2.png'];
+            'itemid' => $imageelement2->get_id(), 'filepath' => '/', 'filename' => 'image2.png', ];
         $file2 = $fs->create_file_from_string($file2record, 'Even more awesome photography');
         $file2content = $file2->get_content();
 
         // Create a dummy image file for element2 in the correct template context (category1), so we can check that upgrade script
         // is just removing the old file, and not trying to move it.
         $file3record = ['contextid' => $cat2context->id, 'component' => 'tool_certificate', 'filearea' => 'element',
-            'itemid' => $imageelement2->get_id(), 'filepath' => '/', 'filename' => 'image2.png'];
+            'itemid' => $imageelement2->get_id(), 'filepath' => '/', 'filename' => 'image2.png', ];
         $file3 = $fs->create_file_from_string($file3record, 'Even more awesome photography');
         $file3content = $file3->get_content();
 

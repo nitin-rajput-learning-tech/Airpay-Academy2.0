@@ -14,31 +14,28 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * File contains the unit tests for the certificate class.
- *
- * @package    tool_certificate
- * @category   test
- * @copyright  2018 Daniel Neis Araujo <daniel@moodle.com>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
+namespace tool_certificate;
 
-defined('MOODLE_INTERNAL') || die();
+use advanced_testcase;
+use tool_certificate_generator;
+use tool_tenant_generator;
 
 /**
  * Unit tests for the certificate class.
  *
+ * @covers     \tool_certificate\certificate
  * @package    tool_certificate
  * @group      tool_certificate
  * @copyright  2018 Daniel Neis Araujo <daniel@moodle.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class tool_certificate_cerficate_testcase extends advanced_testcase {
+final class certificate_test extends advanced_testcase {
 
     /**
      * Test set up.
      */
     public function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest();
     }
 
@@ -46,14 +43,14 @@ class tool_certificate_cerficate_testcase extends advanced_testcase {
      * Get certificate generator
      * @return tool_certificate_generator
      */
-    protected function get_generator() : tool_certificate_generator {
+    protected function get_generator(): tool_certificate_generator {
         return $this->getDataGenerator()->get_plugin_generator('tool_certificate');
     }
 
     /**
      * Test count_issues_for_template
      */
-    public function test_count_issues_for_template() {
+    public function test_count_issues_for_template(): void {
         global $DB;
 
         $this->setAdminUser();
@@ -97,7 +94,7 @@ class tool_certificate_cerficate_testcase extends advanced_testcase {
 
             $this->assertEquals(2, \tool_certificate\certificate::count_issues_for_template($certificate3->get_id()));
 
-            $managerrole = $DB->get_record('role', array('shortname' => 'manager'));
+            $managerrole = $DB->get_record('role', ['shortname' => 'manager']);
             $manager = $this->getDataGenerator()->create_user();
             $this->getDataGenerator()->role_assign($managerrole->id, $manager->id);
 
@@ -112,7 +109,7 @@ class tool_certificate_cerficate_testcase extends advanced_testcase {
     /**
      * Test get_issues_for_template
      */
-    public function test_get_issues_for_template() {
+    public function test_get_issues_for_template(): void {
         global $DB;
 
         $this->setAdminUser();
@@ -132,7 +129,7 @@ class tool_certificate_cerficate_testcase extends advanced_testcase {
         $this->assertEquals('Certificate 1', $issue->name);
 
         // Now test with manager with no permission on all tenants.
-        $managerrole = $DB->get_record('role', array('shortname' => 'manager'));
+        $managerrole = $DB->get_record('role', ['shortname' => 'manager']);
         $manager = $this->getDataGenerator()->create_user();
         $this->getDataGenerator()->role_assign($managerrole->id, $manager->id);
 
@@ -156,7 +153,7 @@ class tool_certificate_cerficate_testcase extends advanced_testcase {
     /**
      * Test count issues for user.
      */
-    public function test_count_issues_for_user() {
+    public function test_count_issues_for_user(): void {
         $certificate1 = $this->get_generator()->create_template((object)['name' => 'Certificate 1']);
         $certificate2 = $this->get_generator()->create_template((object)['name' => 'Certificate 1']);
         $certificate3 = $this->get_generator()->create_template((object)['name' => 'Certificate 1']);
@@ -187,7 +184,7 @@ class tool_certificate_cerficate_testcase extends advanced_testcase {
     /**
      * Test get issues for user.
      */
-    public function test_get_issues_for_user() {
+    public function test_get_issues_for_user(): void {
         $certificate1 = $this->get_generator()->create_template((object)['name' => 'Certificate 1']);
         $user1 = $this->getDataGenerator()->create_user();
         $this->assertEquals(0, count(\tool_certificate\certificate::get_issues_for_user($user1->id, 0, 100)));
@@ -216,7 +213,7 @@ class tool_certificate_cerficate_testcase extends advanced_testcase {
     /**
      * Test count issues for course
      */
-    public function test_count_issues_for_course() {
+    public function test_count_issues_for_course(): void {
         $course1 = $this->getDataGenerator()->create_course();
         $course2 = $this->getDataGenerator()->create_course();
 
@@ -234,8 +231,8 @@ class tool_certificate_cerficate_testcase extends advanced_testcase {
 
         $template1 = $this->get_generator()->create_template((object)['name' => 'Certificate 1']);
         // Create a dummy assignment to test groupmode.
-        $module = $this->getDataGenerator()->create_module('assignment', ['course' => $course1->id]);
-        $cm = get_coursemodule_from_instance('assignment', $module->id);
+        $module = $this->getDataGenerator()->create_module('assign', ['course' => $course1->id]);
+        $cm = get_coursemodule_from_instance('assign', $module->id);
         // Using dummy component name.
         $component = 'mod_myawesomecert';
 
@@ -261,7 +258,7 @@ class tool_certificate_cerficate_testcase extends advanced_testcase {
     /**
      * Test get issues for course
      */
-    public function test_get_issues_for_course() {
+    public function test_get_issues_for_course(): void {
         $course1 = $this->getDataGenerator()->create_course();
 
         $user1 = $this->getDataGenerator()->create_and_enrol($course1, 'student');
@@ -272,8 +269,8 @@ class tool_certificate_cerficate_testcase extends advanced_testcase {
 
         $template1 = $this->get_generator()->create_template((object)['name' => 'Certificate 1']);
         // Create a dummy assignment to test groupmode.
-        $module = $this->getDataGenerator()->create_module('assignment', ['course' => $course1->id]);
-        $cm = get_coursemodule_from_instance('assignment', $module->id);
+        $module = $this->getDataGenerator()->create_module('assign', ['course' => $course1->id]);
+        $cm = get_coursemodule_from_instance('assign', $module->id);
         // Using dummy component name.
         $component = 'mod_myawesomecert';
 
@@ -306,7 +303,7 @@ class tool_certificate_cerficate_testcase extends advanced_testcase {
     /**
      * Test verify
      */
-    public function test_verify() {
+    public function test_verify(): void {
         global $DB;
 
         $this->setAdminUser();
@@ -348,7 +345,7 @@ class tool_certificate_cerficate_testcase extends advanced_testcase {
         $this->assertEquals($result->issue->id, $issueid1);
 
         // Now test with manager with no permission on all tenants.
-        $managerrole = $DB->get_record('role', array('shortname' => 'manager'));
+        $managerrole = $DB->get_record('role', ['shortname' => 'manager']);
         $manager = $this->getDataGenerator()->create_user();
         $this->getDataGenerator()->role_assign($managerrole->id, $manager->id);
 
@@ -363,7 +360,7 @@ class tool_certificate_cerficate_testcase extends advanced_testcase {
     /**
      * Test generate code.
      */
-    public function test_generate_code() {
+    public function test_generate_code(): void {
         // Generate codes without user initials.
         $code1 = \tool_certificate\certificate::generate_code();
         $this->assertEquals(12, strlen($code1));
@@ -396,20 +393,20 @@ class tool_certificate_cerficate_testcase extends advanced_testcase {
     /**
      * Test count_templates_in_category.
      */
-    public function test_count_templates_in_category() {
+    public function test_count_templates_in_category(): void {
         $category1 = $this->getDataGenerator()->create_category(['name' => 'Cat1']);
         $category2 = $this->getDataGenerator()->create_category(['name' => 'Cat2', 'parent' => $category1->id]);
         $category3 = $this->getDataGenerator()->create_category(['name' => 'Cat3', 'parent' => $category1->id]);
         $category4 = $this->getDataGenerator()->create_category(['name' => 'Cat4', 'parent' => $category2->id]);
 
         $template1 = $this->get_generator()->create_template((object)['name' => 'Certificate 1',
-            'contextid' => $category1->get_context()->id]);
+            'contextid' => $category1->get_context()->id, ]);
         $template2 = $this->get_generator()->create_template((object)['name' => 'Certificate 2',
-            'contextid' => $category2->get_context()->id]);
+            'contextid' => $category2->get_context()->id, ]);
         $template3 = $this->get_generator()->create_template((object)['name' => 'Certificate 3',
-            'contextid' => $category4->get_context()->id]);
+            'contextid' => $category4->get_context()->id, ]);
         $template4 = $this->get_generator()->create_template((object)['name' => 'Certificate 4',
-            'contextid' => $category4->get_context()->id]);
+            'contextid' => $category4->get_context()->id, ]);
 
         /*
          * Now we have
@@ -430,7 +427,7 @@ class tool_certificate_cerficate_testcase extends advanced_testcase {
         $this->assertEquals(2, \tool_certificate\certificate::count_templates_in_category($category4));
     }
 
-    public function test_create_demo_template() {
+    public function test_create_demo_template(): void {
         global $DB;
 
         // Sanity check.
@@ -455,5 +452,86 @@ class tool_certificate_cerficate_testcase extends advanced_testcase {
         $fs = get_file_storage();
         $files = $fs->get_area_files(\context_system::instance()->id, 'tool_certificate', 'element', false, '', false);
         $this->assertCount(3, $files);
+    }
+
+    /**
+     * Test get_extra_user_fields for sql to get the values of the extra columns in certificate issues table.
+     */
+    public function test_get_extra_user_fields(): void {
+        global $CFG;
+        $this->setAdminUser();
+        $context = \context_system::instance();
+
+        // Check method without extra fields.
+        $allfields = 'u.id,u.picture,u.firstname,u.lastname,u.firstnamephonetic,u.lastnamephonetic,u.middlename,'
+                . 'u.alternatename,u.imagealt,u.email';
+        $extrauserfields = certificate::get_extra_user_fields($context);
+        $this->assertEquals($allfields, $extrauserfields);
+
+        // Add extra fields.
+        $CFG->showuseridentity = 'email,country,city';
+        // Check method with extra fields (email is already included in the default ones).
+        $allfields .= ',u.country,u.city';
+        $extrauserfields = certificate::get_extra_user_fields($context);
+        $this->assertEquals($allfields, $extrauserfields);
+    }
+
+    /**
+     * Test get_user_extra_field_names for extra columns in certificate issues table.
+     */
+    public function test_get_user_extra_field_names(): void {
+        global $CFG;
+        $this->setAdminUser();
+        $context = \context_system::instance();
+
+        // Check method without extra fields.
+        $CFG->showuseridentity = '';
+        $userextrafieldnames = certificate::get_user_extra_field_names($context);
+        $this->assertEmpty($userextrafieldnames);
+
+        // Check method with extra fields.
+        $fields = ['email', 'phone1', 'department', 'city', 'country'];
+        $CFG->showuseridentity = implode(',', $fields);
+        $userextrafieldnames = certificate::get_user_extra_field_names($context);
+        $this->assertEqualsCanonicalizing($fields, array_keys($userextrafieldnames));
+    }
+
+    /**
+     * Data provider for {@see test_calculate_expirydate}
+     *
+     * @return array
+     */
+    public static function calculate_expirydate_provider(): array {
+        return [
+            'Expires never' => [
+                certificate::DATE_EXPIRATION_NEVER, null, null, null,
+            ],
+            'Expires on 10 September 2022' => [
+                certificate::DATE_EXPIRATION_ABSOLUTE, '10 September 2022', null, '10 September 2022',
+            ],
+            'Expires after 2 weeks from now' => [
+                certificate::DATE_EXPIRATION_AFTER, null, 2 * WEEKSECS, '+2 week',
+            ],
+            'Expires after 5 days from now' => [
+                certificate::DATE_EXPIRATION_AFTER, null, 5 * DAYSECS, '+5 day',
+            ],
+        ];
+    }
+
+    /**
+     * Test for test_calculate_expirydate
+     *
+     * @param int $datetype
+     * @param string|null $absolutedatestr
+     * @param int|null $duration
+     * @param string|null $expirydatestr
+     * @dataProvider calculate_expirydate_provider
+     */
+    public function test_calculate_expirydate(int $datetype, ?string $absolutedatestr, ?int $duration,
+            ?string $expirydatestr): void {
+        $absolutedate = isset($absolutedatestr) ? strtotime($absolutedatestr) : null;
+        $expirydate = isset($expirydatestr) ? strtotime($expirydatestr) : 0;
+        $date = certificate::calculate_expirydate($datetype, $absolutedate, $duration);
+        $this->assertEquals($expirydate, $date);
     }
 }

@@ -24,8 +24,6 @@
 
 namespace certificateelement_userfield;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * The certificate element userfield's core interaction API.
  *
@@ -41,30 +39,36 @@ class element extends \tool_certificate\element {
      * @param \MoodleQuickForm $mform the edit_form instance
      */
     public function render_form_elements($mform) {
+        $displayname = function($field) {
+            global $CFG;
+            if ($CFG->version < 2021050700) {
+                // Moodle 3.9-3.10.
+                return get_user_field_name($field);
+            } else {
+                // Moodle 3.11 and above.
+                return \core_user\fields::get_display_name($field);
+            }
+        };
+
         // Get the user profile fields.
-        $userfields = array(
-            'fullname' => get_user_field_name('fullname'),
-            'firstname' => get_user_field_name('firstname'),
-            //'lastname' => get_user_field_name('lastname'),
-            'email' => get_user_field_name('email'),
-            // 'city' => get_user_field_name('city'),
-            // 'country' => get_user_field_name('country'),
-//            'url' => get_user_field_name('url'),
-//            'icq' => get_user_field_name('icq'),
-//            'skype' => get_user_field_name('skype'),
-//            'aim' => get_user_field_name('aim'),
-//            'yahoo' => get_user_field_name('yahoo'),
-//            'msn' => get_user_field_name('msn'),
-//            'idnumber' => get_user_field_name('idnumber'),
-//            'institution' => get_user_field_name('institution'),
-            // 'department' => get_user_field_name('department'),
-            'phone1' => get_user_field_name('phone1'),
-            'phone2' => get_user_field_name('phone2'),
-            // 'address' => get_user_field_name('address')
-        );
+        $userfields = [
+            'fullname' => $displayname('fullname'),
+            'firstname' => $displayname('firstname'),
+            'lastname' => $displayname('lastname'),
+            'email' => $displayname('email'),
+            'city' => $displayname('city'),
+            'country' => $displayname('country'),
+            'url' => $displayname('url'),
+            'idnumber' => $displayname('idnumber'),
+            'institution' => $displayname('institution'),
+            'department' => $displayname('department'),
+            'phone1' => $displayname('phone1'),
+            'phone2' => $displayname('phone2'),
+            'address' => $displayname('address'),
+        ];
         // Get the user custom fields.
         $arrcustomfields = \availability_profile\condition::get_custom_profile_fields();
-        $customfields = array();
+        $customfields = [];
         foreach ($arrcustomfields as $key => $customfield) {
             $customfields[$customfield->id] = $key;
         }
@@ -104,7 +108,7 @@ class element extends \tool_certificate\element {
         if ($field === 'fullname') {
             return fullname($user);
         } else if (is_number($field)) { // Must be a custom user profile field.
-            if ($record = $DB->get_record('user_info_field', array('id' => $field))) {
+            if ($record = $DB->get_record('user_info_field', ['id' => $field])) {
                 $file = $CFG->dirroot . '/user/profile/field/' . $record->datatype . '/field.class.php';
                 if (file_exists($file)) {
                     require_once($CFG->dirroot . '/user/profile/lib.php');

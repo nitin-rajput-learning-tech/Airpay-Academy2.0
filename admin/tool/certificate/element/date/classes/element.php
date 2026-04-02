@@ -46,10 +46,6 @@ class element extends \tool_certificate\element {
      * @var int Show expiry date.
      */
     const CUSTOMCERT_DATE_EXPIRY = -2;
-    /**
-     * @var int Show Module compleiton date.
-     */
-    const CUSTOMCERT_DATE_COMPLETION = -3;
 
     /**
      * This function renders the form elements when adding a certificate element.
@@ -62,7 +58,6 @@ class element extends \tool_certificate\element {
         $dateoptions = [];
         $dateoptions[self::CUSTOMCERT_DATE_ISSUE] = get_string('issueddate', 'certificateelement_date');
         $dateoptions[self::CUSTOMCERT_DATE_EXPIRY] = get_string('expirydate', 'certificateelement_date');
-        $dateoptions[self::CUSTOMCERT_DATE_COMPLETION] = get_string('completiondate', 'certificateelement_date');
 
         $mform->addElement('select', 'dateitem', get_string('dateitem', 'certificateelement_date'), $dateoptions);
         $mform->addHelpButton('dateitem', 'dateitem', 'certificateelement_date');
@@ -101,9 +96,7 @@ class element extends \tool_certificate\element {
             $date = time();
         } else if ($dateinfo['dateitem'] == self::CUSTOMCERT_DATE_EXPIRY) {
             $date = $issue->expires;
-        } else if ($dateinfo['dateitem'] == self::CUSTOMCERT_DATE_COMPLETION) {
-            $date = $this->get_completiondate($issue);
-        }else {
+        } else {
             $date = $issue->timecreated;
         }
 
@@ -189,31 +182,5 @@ class element extends \tool_certificate\element {
             $certificatedate = userdate($date, get_string('strftimedate', 'langconfig'));
         }
         return $certificatedate;
-    }
-
-    public function get_completiondate($issue){
-        global $DB;
-
-        switch ($issue->moduletype) {
-            case 'course':
-                $date = $DB->get_field('course_completions','timecompleted', array('course'=>$issue->moduleid,'userid'=>$issue->userid));
-                break;
-            case 'classroom':
-                $date = $DB->get_field('local_classroom_users','completiondate', array('classroomid'=>$issue->moduleid,'userid'=>$issue->userid));
-                break;
-            case 'learningplan':
-                $date = $DB->get_field('local_learningplan_user','completiondate', array('planid'=>$issue->moduleid,'userid'=>$issue->userid));
-                break;
-            case 'program':
-                $date = $DB->get_field('local_program_users','completiondate', array('programid'=>$issue->moduleid,'userid'=>$issue->userid));
-                break;
-            case 'certification':
-                $date = $DB->get_field('local_certification_users','completiondate', array('certificationid'=>$issue->moduleid,'userid'=>$issue->userid));
-                break;
-            default:
-                $date = time();
-                break;
-        }
-        return $date;
     }
 }

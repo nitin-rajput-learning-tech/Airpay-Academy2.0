@@ -24,10 +24,10 @@
 
 namespace tool_certificate\form;
 
+use context;
+use core_form\dynamic_form;
+use moodle_url;
 use tool_certificate\template;
-use tool_certificate\modal_form;
-
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Class page
@@ -36,7 +36,7 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright   2019 Marina Glancy
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class page extends modal_form {
+class page extends dynamic_form {
 
     /** @var \tool_certificate\page */
     protected $page;
@@ -45,7 +45,7 @@ class page extends modal_form {
      * Template getter
      * @return template
      */
-    protected function get_template() : template {
+    protected function get_template(): template {
         return $this->get_page()->get_template();
     }
 
@@ -54,7 +54,7 @@ class page extends modal_form {
      *
      * @return \tool_certificate\page
      */
-    protected function get_page() : \tool_certificate\page {
+    protected function get_page(): \tool_certificate\page {
         if ($this->page === null) {
             if (!empty($this->_ajaxformdata['id'])) {
                 $this->page = \tool_certificate\page::instance((int)$this->_ajaxformdata['id']);
@@ -70,8 +70,10 @@ class page extends modal_form {
      * Form definition
      */
     public function definition() {
-
-        $mform =& $this->_form;
+        $mform = $this->_form;
+        $mform->setDisableShortforms();
+        // Add empty header for consistency.
+        $mform->addElement('header', 'hdr', '');
 
         $mform->addElement('hidden', 'id');
         $mform->setType('id', PARAM_INT);
@@ -93,7 +95,6 @@ class page extends modal_form {
         $group[] =& $mform->createElement('text', 'width', get_string('pagewidth', 'tool_certificate'));
         $group[] =& $mform->createElement('static', 'widthmetric', '', get_string('milimeter', 'tool_certificate'));
         $mform->addElement('group', 'widthgroup', get_string('pagewidth', 'tool_certificate'), $group, ' ', false);
-        $mform->addRule('widthgroup', get_string('required'), 'required', null, 'client');
         $mform->setType('width', PARAM_INT);
         $mform->addHelpButton('widthgroup', 'pagewidth', 'tool_certificate');
 
@@ -101,7 +102,6 @@ class page extends modal_form {
         $group[] =& $mform->createElement('text', 'height', get_string('pageheight', 'tool_certificate'));
         $group[] =& $mform->createElement('static', 'heightmetric', '', get_string('milimeter', 'tool_certificate'));
         $mform->addElement('group', 'heightgroup', get_string('pageheight', 'tool_certificate'), $group, ' ', false);
-        $mform->addRule('heightgroup', get_string('required'), 'required', null, 'client');
         $mform->setType('height', PARAM_INT);
         $mform->addHelpButton('heightgroup', 'pageheight', 'tool_certificate');
 
@@ -109,16 +109,14 @@ class page extends modal_form {
         $group[] =& $mform->createElement('text', 'leftmargin', get_string('leftmargin', 'tool_certificate'));
         $group[] =& $mform->createElement('static', 'leftmarginmetric', '', get_string('milimeter', 'tool_certificate'));
         $mform->addElement('group', 'leftmargingroup', get_string('leftmargin', 'tool_certificate'), $group, ' ', false);
-        $mform->addRule('leftmargingroup', get_string('required'), 'required', null, 'client');
-        $mform->setType('leftmargingroup', PARAM_INT);
+        $mform->setType('leftmargin', PARAM_INT);
         $mform->addHelpButton('leftmargingroup', 'leftmargin', 'tool_certificate');
 
         $group = [];
         $group[] =& $mform->createElement('text', 'rightmargin', get_string('rightmargin', 'tool_certificate'));
         $group[] =& $mform->createElement('static', 'rightmarginmetric', '', get_string('milimeter', 'tool_certificate'));
         $mform->addElement('group', 'rightmargingroup', get_string('rightmargin', 'tool_certificate'), $group, ' ', false);
-        $mform->addRule('rightmargingroup', get_string('required'), 'required', null, 'client');
-        $mform->setType('rightmargingroup', PARAM_INT);
+        $mform->setType('rightmargin', PARAM_INT);
         $mform->addHelpButton('rightmargingroup', 'rightmargin', 'tool_certificate');
 
         $mform->addFormRule(function($data, $files) {
@@ -140,24 +138,33 @@ class page extends modal_form {
     }
 
     /**
-     * Check if current user has access to this form, otherwise throw exception
+     * Returns context where this form is used
+     * @return context
+     */
+    protected function get_context_for_dynamic_submission(): context {
+        return $this->get_template()->get_context();
+    }
+
+    /**
+     * Checks if current user has access to this form, otherwise throws exception
      *
      * Sometimes permission check may depend on the action and/or id of the entity.
-     * If necessary, form data is available in $this->_ajaxformdata
+     * If necessary, form data is available in $this->_ajaxformdata or
+     * by calling $this->optional_param()
      */
-    public function require_access() {
+    protected function check_access_for_dynamic_submission(): void {
         $this->get_template()->require_can_manage();
     }
 
     /**
-     * Process the form submission
+     * Process the form submission, used if form was submitted via AJAX
      *
      * This method can return scalar values or arrays that can be json-encoded, they will be passed to the caller JS.
      *
-     * @param \stdClass $data
+     * @return void
      */
-    public function process(\stdClass $data) {
-        $this->get_page()->save($data);
+    public function process_dynamic_submission(): void {
+        $this->get_page()->save($this->get_data());
     }
 
     /**
@@ -166,7 +173,20 @@ class page extends modal_form {
      * Can be overridden to retrieve existing values from db by entity id and also
      * to preprocess editor and filemanager elements
      */
-    public function set_data_for_modal() {
+    public function set_data_for_dynamic_submission(): void {
         $this->set_data($this->get_page()->to_record());
+    }
+
+    /**
+     * Returns url to set in $PAGE->set_url() when form is being rendered or submitted via AJAX
+     *
+     * This is used in the form elements sensitive to the page url, such as Atto autosave in 'editor'
+     *
+     * @return moodle_url
+     */
+    protected function get_page_url_for_dynamic_submission(): moodle_url {
+        return new moodle_url('/admin/tool/certificate/template.php', [
+            'id' => $this->get_page()->get_id(),
+        ]);
     }
 }

@@ -83,7 +83,7 @@ if ($isfrontpage) {
 // Trigger events.
 user_list_view($course, $context);
 
-$bulkoperations = has_capability('moodle/course:bulkmessaging', $context);
+$bulkoperations = has_capability('local/recompletion:bulkoperations', $context);
 
 $PAGE->set_title("$course->shortname: ".get_string('participants'));
 $PAGE->set_heading($course->fullname);
@@ -199,12 +199,12 @@ echo $participanttablehtml;
 if ($bulkoperations) {
     echo '<br /><div class="buttons"><div class="form-inline">';
     echo '<input type="submit" name="submit" value="'.get_string('bulkchangedate', 'local_recompletion').'"/>';
+    echo '<input type="submit" name="reset_completion" value="'.get_string('bulkresetallcompletion', 'local_recompletion').'"/>';
     echo '<input type="hidden" name="id" value="' . $course->id . '" />';
     echo '</div></div>';
 }
 
 echo '</form>';
-
 echo '</div>';  // Userlist.
 
 $enrolrenderer = $PAGE->get_renderer('core_enrol');

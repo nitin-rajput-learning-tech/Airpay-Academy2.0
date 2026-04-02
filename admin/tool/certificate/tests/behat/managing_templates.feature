@@ -44,7 +44,7 @@ Feature: Being able to manage site templates
       | Width  | 5       |
       | Colour | #045ECD |
     And I click on "Save" "button" in the ".modal.show .modal-footer" "css_element"
-    And I follow "Manage certificate templates"
+    And I navigate to "Certificates > Manage certificate templates" in site administration
     Then I should see "Certificate 1"
 
   Scenario: Adding a template when user can manage templates anywhere
@@ -63,13 +63,16 @@ Feature: Being able to manage site templates
       | Course category | Category2     |
       | shared          | 1             |
     And I click on "Save" "button" in the ".modal.show .modal-footer" "css_element"
-    And I follow "Manage certificate templates"
+    And I navigate to "Certificates > Manage certificate templates" in site administration
     Then I should see "Certificate 1"
     And I should see "Shared" in the "Certificate 1" "table_row"
-    And I click on "Edit details" "link" in the "Certificate 1" "table_row"
+    And I follow "Certificate 1"
+    And I navigate to "Details" in current page administration
     And I set the following fields to these values:
       | shared          | 0         |
-    And I click on "Save" "button" in the ".modal.show .modal-footer" "css_element"
+    And I click on "Save changes" "button"
+    And I wait until ".toast-message" "css_element" does not exist
+    And I navigate to "Certificates > Manage certificate templates" in site administration
     And I should not see "Shared" in the "Certificate 1" "table_row"
 
   Scenario: Adding a template when user can manage templates in one category
@@ -83,7 +86,7 @@ Feature: Being able to manage site templates
     And I set the following fields to these values:
       | Name | Certificate 1 |
     And I click on "Save" "button" in the ".modal.show .modal-footer" "css_element"
-    And I follow "Manage certificate templates"
+    And I navigate to "Certificates > Manage certificate templates" in site administration
     Then I should see "Certificate 1"
     And I log out
     And I log in as "categorymanager1"
@@ -117,10 +120,11 @@ Feature: Being able to manage site templates
     And I log in as "categorymanager1"
     And I navigate to "Certificates > Manage certificate templates" in site administration
     And I follow "Certificate 1"
-    And I wait "1" seconds
-    And I press "Edit details"
+    And I navigate to "Details" in current page administration
     And I set the field "Name" to "Certificate 2"
-    And I click on "Save" "button" in the ".modal.show .modal-footer" "css_element"
+    And I press "Save"
+    And I wait until ".toast-message" "css_element" does not exist
+    And I navigate to "Certificates > Manage certificate templates" in site administration
     And I should not see "Certificate 1"
     And I should see "Certificate 2"
     And I log out
@@ -132,14 +136,17 @@ Feature: Being able to manage site templates
       | Certificate 1 | 1             | Category1 |
     And I log in as "categorymanager1"
     And I navigate to "Certificates > Manage certificate templates" in site administration
-    And I click on "Edit content" "link" in the "Certificate 1" "table_row"
+    And I follow "Certificate 1"
     And I add the element "User field" to page "1" of the "Certificate 1" site certificate template
-    And I click on "Save" "button" in the ".modal.show .modal-footer" "css_element"
+    And I press "Save"
+    And I wait until ".toast-message" "css_element" does not exist
     When I navigate to "Certificates > Manage certificate templates" in site administration
-    And I click on "Delete" "link" in the "Certificate 1" "table_row"
+    And I click on ".dropdown-toggle" "css_element" in the "Certificate 1" "table_row"
+    And I choose "Delete" in the open action menu
     And I click on "Cancel" "button" in the "Confirm" "dialogue"
     And I should see "Certificate 1"
-    And I click on "Delete" "link" in the "Certificate 1" "table_row"
+    And I click on ".dropdown-toggle" "css_element" in the "Certificate 1" "table_row"
+    And I choose "Delete" in the open action menu
     And I click on "Delete" "button" in the "Confirm" "dialogue"
     Then I should not see "Certificate 1"
 
@@ -149,16 +156,17 @@ Feature: Being able to manage site templates
       | Certificate 1 | 1             | Category1 |
     And I log in as "categorymanager1"
     When I navigate to "Certificates > Manage certificate templates" in site administration
-    And I click on "Edit content" "link" in the "Certificate 1" "table_row"
-    And I wait "2" seconds
+    And I follow "Certificate 1"
     And I add the element "User field" to page "1" of the "Certificate 1" site certificate template
     And I click on "Save" "button" in the ".modal.show .modal-footer" "css_element"
     When I navigate to "Certificates > Manage certificate templates" in site administration
-    And I click on "Duplicate" "link" in the "Certificate 1" "table_row"
+    And I click on ".dropdown-toggle" "css_element" in the "Certificate 1" "table_row"
+    And I choose "Duplicate" in the open action menu
     And I click on "Cancel" "button" in the "Confirm" "dialogue"
     And I should see "Certificate 1"
     And I should not see "Certificate 1 (copy)"
-    And I click on "Duplicate" "link" in the "Certificate 1" "table_row"
+    And I click on ".dropdown-toggle" "css_element" in the "Certificate 1" "table_row"
+    And I choose "Duplicate" in the open action menu
     And I click on "Duplicate" "button" in the "Confirm" "dialogue"
     Then I should see "Certificate 1"
     And I should see "Certificate 1 (copy)"
@@ -176,15 +184,17 @@ Feature: Being able to manage site templates
       | Certificate 1 |           |
     And I log in as "manager"
     When I navigate to "Certificates > Manage certificate templates" in site administration
-    And I click on "Duplicate" "link" in the "Certificate 1" "table_row"
+    And I click on ".dropdown-toggle" "css_element" in the "Certificate 1" "table_row"
+    And I choose "Duplicate" in the open action menu
     And I click on "Cancel" "button" in the ".modal.show .modal-footer" "css_element"
     And I should see "Certificate 1"
     And I should not see "Certificate 1 (copy)"
-    And I click on "Duplicate" "link" in the "Certificate 1" "table_row"
+    And I click on ".dropdown-toggle" "css_element" in the "Certificate 1" "table_row"
+    And I choose "Duplicate" in the open action menu
     And I set the following fields to these values:
       | Course category | Category2 |
     And I click on "Duplicate" "button" in the ".modal.show .modal-footer" "css_element"
-    Then the following should exist in the "tool-certificate-templates" table:
+    Then the following should exist in the "reportbuilder-table" table:
       | Name                 | Course category |
       | Certificate 1        | None            |
       | Certificate 1 (copy) | Category2       |

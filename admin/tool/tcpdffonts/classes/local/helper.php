@@ -22,8 +22,8 @@
  *
  * @package     tool_tcpdffonts
  *
- * @copyright   2021 Ing. R.J. van Dongen
- * @author      Ing. R.J. van Dongen <rogier@sebsoft.nl>
+ * @copyright   2021 RvD
+ * @author      RvD <helpdesk@sebsoft.nl>
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -42,12 +42,11 @@ use moodle_exception;
  *
  * @package     tool_tcpdffonts
  *
- * @copyright   2021 Ing. R.J. van Dongen
- * @author      Ing. R.J. van Dongen <rogier@sebsoft.nl>
+ * @copyright   2021 RvD
+ * @author      RvD <helpdesk@sebsoft.nl>
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class helper {
-
     /**
      * Assert or throw
      *
@@ -188,7 +187,7 @@ class helper {
     public static function is_core_restricted_font($font) {
         // The standard files are a mandate from Moodle core!
         // See <libdir>/pdflib.php - function tcpdf_init_k_font_path.
-        $somestandardfiles = array('courier', 'helvetica', 'times', 'symbol', 'zapfdingbats', 'freeserif', 'freesans');
+        $somestandardfiles = ['courier', 'helvetica', 'times', 'symbol', 'zapfdingbats', 'freeserif', 'freesans'];
         if (in_array($font, $somestandardfiles)) {
             // Core REQUIRES these files when it determines it's own internal magic on the custom folder.
             // Actions on these fonts is therefore forbidden (aka: no delete).
@@ -415,8 +414,15 @@ class helper {
      *
      * @return string|null null on error, added font name on success
      */
-    public static function process_font_file($fontfile, $fonttype = '', $enc = '',
-            $flags = 32, $platid = 3, $encid = 1, $addcbbox = false) {
+    public static function process_font_file(
+        $fontfile,
+        $fonttype = '',
+        $enc = '',
+        $flags = 32,
+        $platid = 3,
+        $encid = 1,
+        $addcbbox = false
+    ) {
         global $CFG;
         require_once($CFG->libdir . '/tcpdf/include/tcpdf_fonts.php');
 
@@ -609,8 +615,8 @@ class helper {
         }
         $fontname = strtolower($pathparts['filename']);
         $fontname = preg_replace('/[^a-z0-9_]/', '', $fontname);
-        $search = array('bold', 'oblique', 'italic', 'regular');
-        $replace = array('b', 'i', 'i', '');
+        $search = ['bold', 'oblique', 'italic', 'regular'];
+        $replace = ['b', 'i', 'i', ''];
         $fontname = str_replace($search, $replace, $fontname);
         if (empty($fontname)) {
             // Set generic name.
@@ -659,12 +665,12 @@ class helper {
 
         // Create filter callback.
         $cbkey = $isfamily ? 'family' : 'fontname';
-        $callable = function($font) use ($cbkey, $fontid) {
+        $callable = function ($font) use ($cbkey, $fontid) {
             return $font[$cbkey] == $fontid;
         };
 
         // Create archive, loop using filter and add files.
-        list($archive, $zipname) = static::open_zip_for_export($fontid);
+        [$archive, $zipname] = static::open_zip_for_export($fontid);
         $iterator = new \CallbackFilterIterator(new \ArrayIterator($finfo), $callable);
         foreach ($iterator as $font) {
             // Add main file.
@@ -693,5 +699,4 @@ class helper {
         readfile($zipname);
         @unlink($zipname);
     }
-
 }

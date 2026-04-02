@@ -22,8 +22,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die;
-
 /**
  * Customcert module upgrade code.
  *
@@ -32,7 +30,7 @@ defined('MOODLE_INTERNAL') || die;
  */
 function xmldb_tool_certificate_upgrade($oldversion) {
     global $DB, $CFG;
-    require_once($CFG->dirroot.'/admin/tool/certificate/db/upgradelib.php');
+    require_once($CFG->dirroot.'/'.$CFG->admin.'/tool/certificate/db/upgradelib.php');
 
     $dbman = $DB->get_manager();
 
@@ -197,113 +195,57 @@ function xmldb_tool_certificate_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2020120300, 'tool', 'certificate');
     }
 
-//mallikarjun added costcenter field
-    if($oldversion < 2021020800.1){
-        $table = new xmldb_table('tool_certificate_templates');
-        $field = new xmldb_field('costcenter', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
+    if ($oldversion < 2021050600) {
+        // Make sure we don't have any pre-existing duplicates. If there are we need to append characters to make
+        // them unique. Note that this will effectively invalidate those codes, but they wouldn't have been working
+        // correctly in the first place (same code re-used for multiple issued certificates).
+        $sql = "SELECT MIN(id) AS minid, code FROM {tool_certificate_issues} GROUP BY code HAVING COUNT(code) > 1";
+        $duplicatecodes = $DB->get_records_sql($sql);
+        foreach ($duplicatecodes as $duplicatecode) {
+            $duplicatecounter = 1;
+
+            // For each duplicate code, retrieve all subsequent duplicates after the initial one and append counter.
+            $records = $DB->get_records_select('tool_certificate_issues', 'id <> :id AND code = :code',
+                ['id' => $duplicatecode->minid, 'code' => $duplicatecode->code], 'id', 'id');
+
+            foreach ($records as $record) {
+                $DB->set_field('tool_certificate_issues', 'code', $duplicatecode->code . $duplicatecounter++,
+                    ['id' => $record->id]);
+            }
         }
 
-        upgrade_plugin_savepoint(true, 2021020800.1, 'tool', 'certificate');   
-    }
-
-    if($oldversion < 2021020800.1){
+        // Define index code (unique) to be added to tool_certificate_issues.
         $table = new xmldb_table('tool_certificate_issues');
-        $field = new xmldb_field('moduletype', XMLDB_TYPE_CHAR, '50', null, null, null, null);
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
-        $field = new xmldb_field('moduleid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
+        $index = new xmldb_index('code', XMLDB_INDEX_UNIQUE, ['code']);
+
+        // Conditionally launch add index code.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
         }
 
-        upgrade_plugin_savepoint(true, 2021020800.1, 'tool', 'certificate');   
-    }
-    
-//    mallikarjun added from local_certificates
-    
-    if($oldversion < 2021020800.1){
-        $table = new xmldb_table('course');
-        $field = new xmldb_field('open_certificateid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
-        upgrade_plugin_savepoint(true, 2021020800.1, 'tool', 'certificate');   
+        // Certificate savepoint reached.
+        upgrade_plugin_savepoint(true, 2021050600, 'tool', 'certificate');
     }
 
-    if($oldversion < 2021020800.1){
-        $table = new xmldb_table('local_classroom');
-        if ($dbman->table_exists($table)) {
-            $field = new xmldb_field('certificateid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
-            if (!$dbman->field_exists($table, $field)) {
-                $dbman->add_field($table, $field);
-            }
-        }
+    if ($oldversion < 2022051800) {
 
-        $table = new xmldb_table('local_learningplan');
-        if ($dbman->table_exists($table)) {
-            $field = new xmldb_field('certificateid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
-            if (!$dbman->field_exists($table, $field)) {
-                $dbman->add_field($table, $field);
-            }
-        }
-
-        $table = new xmldb_table('local_program');
-        if ($dbman->table_exists($table)) {
-            $field = new xmldb_field('certificateid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
-            if (!$dbman->field_exists($table, $field)) {
-                $dbman->add_field($table, $field);
-            }
-        }
-
-        $table = new xmldb_table('local_onlinetests');
-        if ($dbman->table_exists($table)) {
-            $field = new xmldb_field('certificateid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
-            if (!$dbman->field_exists($table, $field)) {
-                $dbman->add_field($table, $field);
-            }
-        }
-
-        upgrade_plugin_savepoint(true, 2021020800.1, 'tool', 'certificate');   
-    }
-
-    if($oldversion < 2021020800.2){
-        $table = new xmldb_table('tool_certificate_templates');
-        $field = new xmldb_field('costcenter', XMLDB_TYPE_INTEGER, '10');
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
-
-        upgrade_plugin_savepoint(true, 2021020800.2, 'tool', 'certificate');   
-    }
-
-
-    if($oldversion < 2021020800.3){
+        // Define field archived to be added to tool_certificate_issues.
         $table = new xmldb_table('tool_certificate_issues');
-        $field = new xmldb_field('moduleid', XMLDB_TYPE_INTEGER, '10');
+        $field = new xmldb_field('archived', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'courseid');
+
+        // Conditionally launch add field archived.
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
-        $field = new xmldb_field('moduletype', XMLDB_TYPE_CHAR, '100');
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
-
-        upgrade_plugin_savepoint(true, 2021020800.3, 'tool', 'certificate');   
+        // Certificate savepoint reached.
+        upgrade_plugin_savepoint(true, 2022051800, 'tool', 'certificate');
     }
-    if($oldversion < 2021020800.4){
-        $table = new xmldb_table('tool_certificate_templates');
-        $field = new xmldb_field('open_path', XMLDB_TYPE_CHAR, '255');
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
 
-        upgrade_plugin_savepoint(true, 2021020800.4, 'tool', 'certificate');   
+    if ($oldversion < 2023071300) {
+        tool_certificate_upgrade_add_permission_condition_to_reports();
+        upgrade_plugin_savepoint(true, 2023071300, 'tool', 'certificate');
     }
-    
 
     return true;
 }

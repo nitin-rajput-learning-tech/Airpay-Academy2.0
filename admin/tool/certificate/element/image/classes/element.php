@@ -26,8 +26,6 @@ namespace certificateelement_image;
 
 use tool_certificate\element_helper;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * The certificate element image's core interaction API.
  *
@@ -40,7 +38,7 @@ class element extends \tool_certificate\element {
     /**
      * @var array The file manager options.
      */
-    protected $filemanageroptions = array();
+    protected $filemanageroptions = [];
 
     /**
      * Constructor.
@@ -48,12 +46,12 @@ class element extends \tool_certificate\element {
     protected function __construct() {
         global $COURSE;
 
-        $this->filemanageroptions = array(
+        $this->filemanageroptions = [
             'maxbytes' => $COURSE->maxbytes,
             'subdirs' => 0,
             'accepted_types' => 'web_image',
-            'maxfiles' => 1
-        );
+            'maxfiles' => 1,
+        ];
 
         parent::__construct();
     }
@@ -131,7 +129,7 @@ class element extends \tool_certificate\element {
     private function calculate_additional_data($data) {
         $arrtostore = [
             'width' => !empty($data->width) ? (int) $data->width : 0,
-            'height' => !empty($data->height) ? (int) $data->height : 0
+            'height' => !empty($data->height) ? (int) $data->height : 0,
         ];
         if ($this->can_be_used_as_a_background()) {
             $arrtostore['isbackground'] = !empty($data->isbackground);
@@ -248,7 +246,7 @@ class element extends \tool_certificate\element {
      *
      * @return \stored_file|bool stored_file instance if exists, false if not
      */
-    public function get_file() : ?\stored_file {
+    public function get_file(): ?\stored_file {
 
         $files = get_file_storage()->get_area_files($this->get_template()->get_context()->id,
             'tool_certificate', 'element', $this->get_id(), '', false);
@@ -264,8 +262,8 @@ class element extends \tool_certificate\element {
      *
      * @return null|\stored_file
      */
-    public function get_shared_file() : ?\stored_file {
-        $imageinfo = json_decode($this->get_data());
+    public function get_shared_file(): ?\stored_file {
+        $imageinfo = json_decode($this->get_data() ?? '');
         if (!empty($imageinfo->filename) &&
                 $file = get_file_storage()->get_file($imageinfo->contextid, 'tool_certificate', $imageinfo->filearea,
                     $imageinfo->itemid, $imageinfo->filepath, $imageinfo->filename)) {

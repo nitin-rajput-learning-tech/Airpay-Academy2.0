@@ -24,8 +24,6 @@
 
 namespace tool_certificate\output;
 
-defined('MOODLE_INTERNAL') || die();
-
 use renderable;
 use templatable;
 
@@ -52,6 +50,9 @@ class verify_certificate_results implements templatable, renderable {
      * @var array The certificates issued with the matching code.
      */
     public $issues;
+
+    /** @var stdClass */
+    protected $issue;
 
     /**
      * Constructor.

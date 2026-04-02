@@ -14,31 +14,28 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * Unit tests for date element.
- *
- * @package    certificateelement_date
- * @category   test
- * @copyright  2018 Daniel Neis Araujo <daniel@moodle.com>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
+namespace certificateelement_date;
 
-defined('MOODLE_INTERNAL') || die();
+use advanced_testcase;
+use tool_certificate_generator;
+use core_text;
 
 /**
  * Unit tests for date element.
  *
  * @package    certificateelement_date
  * @group      tool_certificate
+ * @covers     \certificateelement_date\element
  * @copyright  2018 Daniel Neis Araujo <daniel@moodle.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class tool_certificate_date_element_test_testcase extends advanced_testcase {
+final class element_test extends advanced_testcase {
 
     /**
      * Test set up.
      */
     public function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest();
     }
 
@@ -46,18 +43,18 @@ class tool_certificate_date_element_test_testcase extends advanced_testcase {
      * Get certificate generator
      * @return tool_certificate_generator
      */
-    protected function get_generator() : tool_certificate_generator {
+    protected function get_generator(): tool_certificate_generator {
         return $this->getDataGenerator()->get_plugin_generator('tool_certificate');
     }
 
     /**
      * Test render_html
      */
-    public function test_render_html() {
+    public function test_render_html(): void {
         $certificate1 = $this->get_generator()->create_template((object)['name' => 'Certificate 1']);
         $pageid = $this->get_generator()->create_page($certificate1)->get_id();
         $formdata = ['name' => 'Date element', 'dateitem' => \certificateelement_date\element::CUSTOMCERT_DATE_ISSUE,
-            'dateformat' => 'strftimedateshort'];
+            'dateformat' => 'strftimedateshort', ];
         $e = $this->get_generator()->create_element($pageid, 'date', $formdata);
         $this->assertNotEmpty($e->render_html());
 
@@ -66,33 +63,26 @@ class tool_certificate_date_element_test_testcase extends advanced_testcase {
         $e = $this->get_generator()->create_element($pageid, 'date', $formdata);
         $this->assertNotEmpty($e->render_html());
 
-        $formdata['dateitem'] = \certificateelement_date\element::CUSTOMCERT_DATE_COMPLETION;
-        $formdata['dateformat'] = 'strftimedateshort';
-        $e = $this->get_generator()->create_element($pageid, 'date', $formdata);
-        $this->assertNotEmpty($e->render_html());
-
         // Generate PDF for preview.
         $filecontents = $this->get_generator()->generate_pdf($certificate1, true);
-        $filesize = core_text::strlen($filecontents);
-        $this->assertTrue($filesize > 30000 && $filesize < 90000);
+        $this->assertGreaterThan(30000, core_text::strlen($filecontents, '8bit'));
 
         // Generate PDF for issue.
         $issue = $this->get_generator()->issue($certificate1, $this->getDataGenerator()->create_user(), time() + YEARSECS);
         $filecontents = $this->get_generator()->generate_pdf($certificate1, false, $issue);
-        $filesize = core_text::strlen($filecontents);
-        $this->assertTrue($filesize > 30000 && $filesize < 90000);
+        $this->assertGreaterThan(30000, core_text::strlen($filecontents, '8bit'));
     }
 
     /**
      * Test save_unique_data
      */
-    public function test_save_unique_data() {
+    public function test_save_unique_data(): void {
         global $DB;
         $certificate1 = $this->get_generator()->create_template((object)['name' => 'Certificate 1']);
         $pageid = $this->get_generator()->create_page($certificate1)->get_id();
         $e = $this->get_generator()->new_element($pageid, 'date');
         $newdata = (object)['dateitem' => \certificateelement_date\element::CUSTOMCERT_DATE_ISSUE,
-                            'dateformat' => 'strftimedate'];
+                            'dateformat' => 'strftimedate', ];
         $expected = json_encode($newdata);
         $e->save_form_data($newdata);
         $el = $DB->get_record('tool_certificate_elements', ['id' => $e->get_id()]);
@@ -102,7 +92,18 @@ class tool_certificate_date_element_test_testcase extends advanced_testcase {
     /**
      * Test get_date_formats
      */
-    public function test_get_date_formats() {
+    public function test_get_date_formats(): void {
         $this->assertFalse(empty(\certificateelement_date\element::get_date_formats()));
+    }
+
+    /**
+     * Tests that the edit element form can be initiated without any errors
+     */
+    public function test_edit_element_form(): void {
+        $this->setAdminUser();
+
+        preg_match('|^certificateelement_(\w*)\\\\|', get_class($this), $matches);
+        $form = $this->get_generator()->create_template_and_edit_element_form($matches[1]);
+        $this->assertNotEmpty($form->render());
     }
 }

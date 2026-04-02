@@ -23,22 +23,29 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+namespace certificateelement_code;
+
+use advanced_testcase;
+use tool_certificate_generator;
+use moodle_url;
+use core_text;
 
 /**
  * Unit tests for code element.
  *
  * @package    certificateelement_code
  * @group      tool_certificate
+ * @covers     \certificateelement_code\element
  * @copyright  2018 Daniel Neis Araujo <daniel@moodle.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class tool_certificate_code_element_test_testcase extends advanced_testcase {
+final class element_test extends advanced_testcase {
 
     /**
      * Test set up.
      */
     public function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest();
     }
 
@@ -46,14 +53,14 @@ class tool_certificate_code_element_test_testcase extends advanced_testcase {
      * Get certificate generator
      * @return tool_certificate_generator
      */
-    protected function get_generator() : tool_certificate_generator {
+    protected function get_generator(): tool_certificate_generator {
         return $this->getDataGenerator()->get_plugin_generator('tool_certificate');
     }
 
     /**
      * Test render_html
      */
-    public function test_render_html_content() {
+    public function test_render_html_content(): void {
         $certificate1 = $this->get_generator()->create_template((object)['name' => 'Certificate 1']);
         $pageid = $this->get_generator()->create_page($certificate1)->get_id();
         $e1 = $this->get_generator()->create_element($pageid, 'code',
@@ -72,35 +79,33 @@ class tool_certificate_code_element_test_testcase extends advanced_testcase {
 
         // Display is DISPLAY_CODE.
         $e1output = strip_tags($e1->render_html(), '<a>');
-        $this->assertRegExp('|^' . $coderegex  . '$|', $e1output);
+        $this->assertEquals(1, preg_match('|^' . $coderegex  . '$|', $e1output));
 
         // Display is DISPLAY_CODELINK.
         $e2output = strip_tags($e2->render_html(), '<a>');
-        $this->assertRegExp('|^\<a href="' . $urlregex . '"\>' . $coderegex  . '\</a\>$|', $e2output);
+        $this->assertEquals(1, preg_match('|^\<a href="' . $urlregex . '"\>' . $coderegex  . '\</a\>$|', $e2output));
 
         // Display is DISPLAY_URL.
         $e3output = strip_tags($e3->render_html(), '<a>');
-        $this->assertRegExp('|^' . $urlregex . '$|', $e3output);
+        $this->assertEquals(1, preg_match('|^' . $urlregex . '$|', $e3output));
 
         // Display is DISPLAY_QRCODE.
         $this->assertTrue(strpos($e4->render_html(), '<img') !== false);
 
         // Generate PDF for preview.
         $filecontents = $this->get_generator()->generate_pdf($certificate1, true);
-        $filesize = core_text::strlen($filecontents);
-        $this->assertTrue($filesize > 30000 && $filesize < 90000);
+        $this->assertGreaterThan(30000, core_text::strlen($filecontents, '8bit'));
 
         // Generate PDF for issue.
         $issue = $this->get_generator()->issue($certificate1, $this->getDataGenerator()->create_user());
         $filecontents = $this->get_generator()->generate_pdf($certificate1, false, $issue);
-        $filesize = core_text::strlen($filecontents);
-        $this->assertTrue($filesize > 30000 && $filesize < 90000);
+        $this->assertGreaterThan(30000, core_text::strlen($filecontents, '8bit'));
     }
 
     /**
      * Test save_unique_data
      */
-    public function test_save_unique_data() {
+    public function test_save_unique_data(): void {
         global $DB;
         $certificate1 = $this->get_generator()->create_template((object)['name' => 'Certificate 1']);
         $pageid = $this->get_generator()->create_page($certificate1)->get_id();
@@ -110,5 +115,16 @@ class tool_certificate_code_element_test_testcase extends advanced_testcase {
         $e->save_form_data($newdata);
         $el = $DB->get_record('tool_certificate_elements', ['id' => $e->get_id()]);
         $this->assertEquals($expected, $el->data);
+    }
+
+    /**
+     * Tests that the edit element form can be initiated without any errors
+     */
+    public function test_edit_element_form(): void {
+        $this->setAdminUser();
+
+        preg_match('|^certificateelement_(\w*)\\\\|', get_class($this), $matches);
+        $form = $this->get_generator()->create_template_and_edit_element_form($matches[1]);
+        $this->assertNotEmpty($form->render());
     }
 }

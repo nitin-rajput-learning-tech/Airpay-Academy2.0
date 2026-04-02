@@ -36,11 +36,32 @@ require_once($CFG->libdir . '/tablelib.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class my_certificates_table extends \table_sql {
+    /**
+     * The value of the show share on linkedin setting, when the share on linkedin column should not be shown
+     */
+    public const DO_NOT_SHOW = 0;
+
+    /**
+     * The value of the show share on linkedin setting, when the share on linkedin column should be shown
+     * and the link should go to the certificate verification page
+     */
+    public const SHOW_LINK_TO_VERIFICATION_PAGE = 1;
+
+    /**
+     * The value of the show share on linkedin setting, when the share on linkedin column should be shown
+     * and the link should go to the certificate page
+     */
+    public const SHOW_LINK_TO_CERTIFICATE_PAGE = 2;
 
     /**
      * @var int $userid The user id
      */
     protected $userid;
+
+    /**
+     * The add to profile LinkedIn URL
+     */
+    public const LINKEDIN_ADD_TO_PROFILE_URL = 'https://www.linkedin.com/profile/add';
 
     /**
      * Sets up the table.
@@ -50,17 +71,18 @@ class my_certificates_table extends \table_sql {
      */
     public function __construct($userid, $download = null) {
         parent::__construct('tool_certificate_my_certificates_table');
+        $this->userid = $userid;
 
-        $columns = array(
+        $columns = [
             'name',
             'timecreated',
             'expires',
-        );
-        $headers = array(
+        ];
+        $headers = [
             get_string('name'),
-            get_string('receiveddate', 'tool_certificate'),
-            get_string('expires', 'tool_certificate'),
-        );
+            get_string('issueddate', 'tool_certificate'),
+            get_string('expirydate', 'tool_certificate'),
+        ];
 
         if (permission::can_verify()) {
             $columns[] = 'code';
@@ -77,6 +99,12 @@ class my_certificates_table extends \table_sql {
             $headers[] = get_string('file');
         }
 
+        if ($this->show_share_on_linkedin()) {
+            $columns[] = 'linkedin';
+            $headers[] = get_string('shareonlinkedin', 'tool_certificate');
+            $this->no_sorting('linkedin');
+        }
+
         $this->define_columns($columns);
         $this->define_headers($headers);
         $this->collapsible(false);
@@ -84,8 +112,6 @@ class my_certificates_table extends \table_sql {
         $this->no_sorting('code');
         $this->no_sorting('download');
         $this->is_downloadable(true);
-
-        $this->userid = $userid;
     }
 
     /**
@@ -95,11 +121,19 @@ class my_certificates_table extends \table_sql {
      * @return string
      */
     public function col_name($certificate) {
+        global $DB;
+
         $context = \context::instance_by_id($certificate->contextid);
+        $name = format_string($certificate->name, true, ['context' => $context]);
 
-        $column = format_string($certificate->name, true, ['context' => $context]);
-
-        return $column;
+        if ($certificate->courseid) {
+            // Obtain course directly from DB to allow missing courses.
+            if ($course = $DB->get_record('course', ['id' => $certificate->courseid])) {
+                $context = \context_course::instance($course->id);
+                $name .= " - " . format_string($course->fullname, true, ['context' => $context]);
+            }
+        }
+        return $name;
     }
 
     /**
@@ -152,7 +186,7 @@ class my_certificates_table extends \table_sql {
         $icon = new \pix_icon('download', get_string('view'), 'tool_certificate');
         $link = template::view_url($issue->code);
 
-        return $OUTPUT->action_link($link, '', null, null, $icon);
+        return $OUTPUT->action_link($link, '', null, ['target' => '_blank'], $icon);
     }
 
     /**
@@ -183,5 +217,69 @@ class my_certificates_table extends \table_sql {
         $total = certificate::count_issues_for_user($this->userid);
         $this->out($total, false);
         exit;
+    }
+
+    /**
+     * Get the certificate url to show
+     *
+     * @param string $issuecode
+     * @return string
+     */
+    private function get_shareonlinkedincerturl($issuecode) {
+        $showshareonlinkedin = (int)get_config('tool_certificate', 'show_shareonlinkedin');
+        switch ($showshareonlinkedin) {
+            case self::SHOW_LINK_TO_VERIFICATION_PAGE:
+                return template::verification_url($issuecode);
+            case self::SHOW_LINK_TO_CERTIFICATE_PAGE:
+                return template::view_url($issuecode);
+            default:
+                return '';
+        }
+    }
+
+    /**
+     * Generate the LinkedIn column
+     *
+     * @param \stdClass $issue
+     * @return string
+     */
+    public function col_linkedin($issue) {
+        global $OUTPUT;
+
+        $params = [
+            'name' => $issue->name,
+            'issueYear' => date('Y', $issue->timecreated),
+            'issueMonth' => date('m', $issue->timecreated),
+            'certId' => $issue->code,
+            'certUrl' => $this->get_shareonlinkedincerturl($issue->code),
+        ];
+
+        if ($issue->expires !== '0') {
+            $params['expirationYear'] = date('Y', $issue->expires);
+            $params['expirationMonth'] = date('m', $issue->expires);
+        }
+
+        $organizationid = get_config('tool_certificate', 'linkedinorganizationid');
+        if ($organizationid !== '') {
+            $params['organizationId'] = $organizationid;
+        }
+
+        $icon = new \pix_icon('linkedin', get_string('shareonlinkedin', 'tool_certificate'), 'tool_certificate');
+        $link = new \moodle_url(self::LINKEDIN_ADD_TO_PROFILE_URL, $params);
+
+        return $OUTPUT->action_link($link, '', null, [
+            'target' => '_blank',
+            'class' => 'd-flex',
+        ], $icon);
+    }
+
+    /**
+     * Whether the LinkedIn column be shown
+     *
+     * @return bool
+     */
+    private function show_share_on_linkedin() {
+        global $USER;
+        return $USER->id == $this->userid && get_config('tool_certificate', 'show_shareonlinkedin');
     }
 }

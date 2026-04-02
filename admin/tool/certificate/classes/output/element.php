@@ -27,8 +27,6 @@ namespace tool_certificate\output;
 use core\external\persistent_exporter;
 use core\output\inplace_editable;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Class element
  *
@@ -61,7 +59,7 @@ class element extends persistent_exporter {
      * Get related element
      * @return \tool_certificate\element
      */
-    protected function get_element() : \tool_certificate\element {
+    protected function get_element(): \tool_certificate\element {
         return $this->related['element'];
     }
 
@@ -100,7 +98,7 @@ class element extends persistent_exporter {
             'icon' => $output->render($this->get_element()->get_element_type_image(true)),
             'html' => $this->get_element()->render_html(),
             'draggable' => $this->get_element()->is_draggable(),
-            'showrefpoint' => $this->persistent->get('refpoint') !== null
+            'showrefpoint' => $this->persistent->get('refpoint') !== null,
         ];
     }
 
@@ -112,7 +110,7 @@ class element extends persistent_exporter {
     protected function get_format_parameters_for_name() {
         return [
             'context' => $this->get_element()->get_template()->get_context(),
-            'escape' => false
+            'escape' => false,
         ];
     }
 }

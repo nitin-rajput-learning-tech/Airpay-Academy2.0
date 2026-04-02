@@ -22,8 +22,8 @@
  *
  * @package     tool_tcpdffonts
  *
- * @copyright   2021 Ing. R.J. van Dongen
- * @author      Ing. R.J. van Dongen <rogier@sebsoft.nl>
+ * @copyright   2021 RvD
+ * @author      RvD <helpdesk@sebsoft.nl>
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * */
 
@@ -38,24 +38,23 @@ require_once($CFG->libdir . '/formslib.php');
  *
  * @package     tool_tcpdffonts
  *
- * @copyright   2021 Ing. R.J. van Dongen
- * @author      Ing. R.J. van Dongen <rogier@sebsoft.nl>
+ * @copyright   2021 RvD
+ * @author      RvD <helpdesk@sebsoft.nl>
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * */
 class confirmation extends \moodleform {
-
     /**
      * Form definition
      */
     protected function definition() {
         $mform = & $this->_form;
 
-        list($headertext, $description, $confirmmessage) = $this->_customdata['confirmation'];
+        [$headertext, $description, $confirmmessage] = $this->_customdata['confirmation'];
 
         $mform->addElement('static', '_head', '', '<h4>' . $headertext . '</h4>');
         $mform->addElement('static', '_desc', '', $description);
 
-        $mform->addElement('advcheckbox', 'confirm', '', $confirmmessage, null, array(0, 1));
+        $mform->addElement('advcheckbox', 'confirm', '', $confirmmessage, null, [0, 1]);
         $mform->setType('confirm', PARAM_BOOL);
 
         if (empty($this->_customdata['nobuttons'])) {
@@ -76,5 +75,4 @@ class confirmation extends \moodleform {
         $data = $this->get_data();
         return (bool)$data->confirm;
     }
-
 }

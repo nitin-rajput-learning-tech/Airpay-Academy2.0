@@ -24,11 +24,6 @@
 
 namespace tool_certificate;
 
-use core\output\inplace_editable;
-use tool_certificate\customfield\issue_handler;
-
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Certificates-related permissions
  *
@@ -133,9 +128,8 @@ class permission {
      */
     public static function require_can_create() {
         if (!self::can_create()) {
-            $context=\local_costcenter\lib\accesslib::get_module_context();
-            // throw new \required_capability_exception($context,
-            //     'tool/certificate:manage', 'nopermission', 'error');
+            throw new \required_capability_exception(\context_system::instance(),
+                'tool/certificate:manage', 'nopermission', 'error');
         }
     }
 
@@ -203,9 +197,7 @@ class permission {
     }
 
     /**
-     * If current user can view the section on admin tree
-     *
-     * Note, for course context this function does not check access to the course (enrolled/can view)!
+     * If current user can view the templates in the given context
      *
      * @param \context $context
      * @return bool
@@ -221,7 +213,7 @@ class permission {
         }
         return has_any_capability(['tool/certificate:issue',
             'tool/certificate:manage',
-            'tool/certificate:viewallcertificates'], $context);
+            'tool/certificate:viewallcertificates', ], $context);
     }
 
     /**
@@ -311,7 +303,7 @@ class permission {
         }
 
         return has_any_capability(['tool/certificate:issue', 'tool/certificate:viewallcertificates',
-                'tool/certificate:manage'] , $context) &&
+                'tool/certificate:manage', ] , $context) &&
             !self::is_user_hidden_by_tenancy($issue->userid);
     }
 

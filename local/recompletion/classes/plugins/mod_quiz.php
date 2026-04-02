@@ -56,15 +56,21 @@ class mod_quiz {
 
         $mform->addGroup($cba, 'quiz', get_string('quizattempts', 'local_recompletion'), array(' '), false);
         $mform->addHelpButton('quiz', 'quizattempts', 'local_recompletion');
-        $mform->setDefault('quiz', $config->quizattempts);
+        $mform->setDefault('quiz', $config->quiz);
 
         $mform->addElement('checkbox', 'archivequiz',
             get_string('archive', 'local_recompletion'));
         $mform->setDefault('archivequiz', $config->archivequiz);
 
+        $mform->addElement('checkbox', 'resetquizoverride',
+            get_string('resetquizoverride', 'local_recompletion'));
+        $mform->setDefault('resetquizoverride', $config->resetquizoverride);
+
         $mform->disabledIf('quiz', 'enable', 'notchecked');
         $mform->disabledIf('archivequiz', 'enable', 'notchecked');
+        $mform->disabledIf('resetquizoverride', 'enable', 'notchecked');
         $mform->hideIf('archivequiz', 'quiz', 'noteq', LOCAL_RECOMPLETION_DELETE);
+        $mform->hideIf('resetquizoverride', 'quiz', 'noteq', LOCAL_RECOMPLETION_DELETE);
     }
 
     /**
@@ -77,12 +83,15 @@ class mod_quiz {
                          LOCAL_RECOMPLETION_DELETE => new lang_string('delete', 'local_recompletion'),
                          LOCAL_RECOMPLETION_EXTRAATTEMPT => new lang_string('extraattempt', 'local_recompletion'));
 
-        $settings->add(new \admin_setting_configselect('local_recompletion/quizattempts',
+        $settings->add(new \admin_setting_configselect('local_recompletion/quiz',
             new lang_string('quizattempts', 'local_recompletion'),
             new lang_string('quizattempts_help', 'local_recompletion'), LOCAL_RECOMPLETION_NOTHING, $choices));
 
         $settings->add(new \admin_setting_configcheckbox('local_recompletion/archivequiz',
             new lang_string('archivequiz', 'local_recompletion'), '', 1));
+
+        $settings->add(new \admin_setting_configcheckbox('local_recompletion/resetquizoverride',
+            new lang_string('resetquizoverride', 'local_recompletion'), '', 0));
     }
 
     /**
@@ -112,6 +121,9 @@ class mod_quiz {
                     $quizgrades[$qid]->course = $course->id;
                 }
                 $DB->insert_records('local_recompletion_qg', $quizgrades);
+            }
+            if (!empty($config->resetquizoverride)) {
+                $DB->delete_records_select('quiz_overrides', $selectsql, $params);
             }
             $DB->delete_records_select('quiz_attempts', $selectsql, $params);
             $DB->delete_records_select('quiz_grades', $selectsql, $params);

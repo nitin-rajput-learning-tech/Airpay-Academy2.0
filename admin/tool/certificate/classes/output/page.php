@@ -26,8 +26,6 @@ namespace tool_certificate\output;
 
 use core\external\persistent_exporter;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Class page
  *
@@ -61,7 +59,7 @@ class page extends persistent_exporter {
      *
      * @return \tool_certificate\page
      */
-    protected function get_page() : \tool_certificate\page {
+    protected function get_page(): \tool_certificate\page {
         return $this->related['page'];
     }
 

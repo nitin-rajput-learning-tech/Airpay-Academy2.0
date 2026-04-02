@@ -22,26 +22,23 @@
  *
  * @package     tool_tcpdffonts
  *
- * @copyright   2021 Ing. R.J. van Dongen
- * @author      Ing. R.J. van Dongen <rogier@sebsoft.nl>
+ * @copyright   2021 RvD
+ * @author      RvD <helpdesk@sebsoft.nl>
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 namespace tool_tcpdffonts\event;
-
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * The tool_tcpdffonts course module viewed event class.
  *
  * @package     tool_tcpdffonts
  *
- * @copyright   2021 Ing. R.J. van Dongen
- * @author      Ing. R.J. van Dongen <rogier@sebsoft.nl>
+ * @copyright   2021 RvD
+ * @author      RvD <helpdesk@sebsoft.nl>
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 abstract class base extends \core\event\base {
-
     /**
      * Generic event name (used when generating locale-aware name)
      */
@@ -76,7 +73,8 @@ abstract class base extends \core\event\base {
      * @return string
      */
     public function get_description() {
-        return "The font with name '{$this->other['fontname']}' was ".static::EVT_ACTION." by the user with id '$this->userid'.";
+        return "The font with name '{$this->other['fontname']}' was " .
+                static::EVT_ACTION . " by the user with id '{$this->userid}'.";
     }
 
     /**
@@ -107,11 +105,7 @@ abstract class base extends \core\event\base {
      * @return static
      */
     public static function create_from_font($fontname) {
-        $self = static::create([
-            'other' => [
-                'fontname' => $fontname
-            ]
-        ]);
+        $self = static::create(['other' => ['fontname' => $fontname]]);
         return $self;
     }
 
@@ -124,5 +118,4 @@ abstract class base extends \core\event\base {
         $self = static::create_from_font($fontname);
         $self->trigger();
     }
-
 }

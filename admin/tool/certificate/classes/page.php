@@ -24,8 +24,6 @@
 
 namespace tool_certificate;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Class page
  *
@@ -47,7 +45,7 @@ class page {
     /**
      * page constructor.
      */
-    protected final function __construct() {
+    final protected function __construct() {
     }
 
     /**
@@ -66,7 +64,7 @@ class page {
      * New instance of the page
      *
      * @param int $id
-     * @param \stdClass $obj
+     * @param \stdClass|null $obj
      * @return page
      */
     public static function instance(int $id = 0, ?\stdClass $obj = null) {
@@ -97,7 +95,7 @@ class page {
      * To record
      * @return \stdClass
      */
-    public function to_record() : \stdClass {
+    public function to_record(): \stdClass {
         return $this->persistent->to_record();
     }
 
@@ -125,7 +123,7 @@ class page {
      * Get template
      * @return template
      */
-    public function get_template() : template {
+    public function get_template(): template {
         if ($this->template === null) {
             $this->template = template::instance($this->persistent->get('templateid'));
         }
@@ -168,7 +166,7 @@ class page {
      * @param template $template target template
      * @return page
      */
-    public function duplicate(template $template) : page {
+    public function duplicate(template $template): page {
         $record = $this->persistent->to_record();
         unset($record->id, $record->timemodified, $record->timecreated);
         $record->templateid = $template->get_id();
@@ -188,7 +186,7 @@ class page {
      *
      * @return output\page
      */
-    public function get_exporter() : \tool_certificate\output\page {
+    public function get_exporter(): \tool_certificate\output\page {
         return new \tool_certificate\output\page($this->persistent, ['page' => $this]);
     }
 }

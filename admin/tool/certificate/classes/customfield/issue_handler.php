@@ -28,8 +28,6 @@ use core_customfield\field_controller;
 use core_customfield\handler;
 use tool_certification\certification;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Class issue_handler
  *
@@ -50,7 +48,7 @@ class issue_handler extends handler {
      * @param int $itemid
      * @return issue_handler
      */
-    public static function create(int $itemid = 0) : \core_customfield\handler {
+    public static function create(int $itemid = 0): \core_customfield\handler {
         if (static::$singleton === null) {
             self::$singleton = new static(0);
         }
@@ -62,7 +60,7 @@ class issue_handler extends handler {
      *
      * @return \context
      */
-    public function get_configuration_context() : \context {
+    public function get_configuration_context(): \context {
         return \context_system::instance();
     }
 
@@ -71,7 +69,7 @@ class issue_handler extends handler {
      *
      * @return \moodle_url
      */
-    public function get_configuration_url() : \moodle_url {
+    public function get_configuration_url(): \moodle_url {
         return new \moodle_url('/admin/tool/certificate/customfield.php');
     }
 
@@ -81,7 +79,7 @@ class issue_handler extends handler {
      * @param int $instanceid id of the instance or 0 if the instance is being created
      * @return \context
      */
-    public function get_instance_context(int $instanceid = 0) : \context {
+    public function get_instance_context(int $instanceid = 0): \context {
         global $DB;
         if ($instanceid > 0) {
             // If issue has courseid then return course context.
@@ -106,7 +104,7 @@ class issue_handler extends handler {
      *
      * @return bool
      */
-    public function can_configure() : bool {
+    public function can_configure(): bool {
         return has_capability('moodle/site:config', \context_system::instance());
     }
 
@@ -121,7 +119,7 @@ class issue_handler extends handler {
      * @param int $instanceid id of the instance or 0 if the instance is being created
      * @return bool
      */
-    public function can_edit(field_controller $field, int $instanceid = 0) : bool {
+    public function can_edit(field_controller $field, int $instanceid = 0): bool {
         // Always return true, to make sure we can call instance_form_save() from any user.
         return true;
     }
@@ -138,7 +136,7 @@ class issue_handler extends handler {
      * @param int $instanceid
      * @return bool
      */
-    public function can_view(field_controller $field, int $instanceid) : bool {
+    public function can_view(field_controller $field, int $instanceid): bool {
         return (bool)$field->get_configdata_property('visible');
     }
 
@@ -163,28 +161,12 @@ class issue_handler extends handler {
     }
 
     /**
-     * Set up page customfield/edit.php
-     *
-     * @param field_controller $field
-     * @return string page heading
-     */
-    public function setup_edit_page(field_controller $field) : string {
-        global $CFG, $PAGE;
-        require_once($CFG->libdir.'/adminlib.php');
-
-        $title = parent::setup_edit_page($field);
-        admin_externalpage_setup('tool_certificate_customfield');
-        $PAGE->navbar->add($title);
-        return $title;
-    }
-
-    /**
      * Finds a field by its shortname
      *
      * @param string $shortname
      * @return field_controller|null
      */
-    public function find_field_by_shortname(string $shortname) : ?field_controller {
+    public function find_field_by_shortname(string $shortname): ?field_controller {
         $categories = self::create()->get_categories_with_fields();
         foreach ($categories as $category) {
             foreach ($category->get_fields() as $field) {
@@ -208,7 +190,7 @@ class issue_handler extends handler {
      * @return field_controller|null
      */
     public function ensure_field_exists(string $shortname, string $type = 'text', string $displayname = '',
-            bool $visible = false, ?string $previewvalue = null, array $config = []) : ?field_controller {
+            bool $visible = false, ?string $previewvalue = null, array $config = []): ?field_controller {
         if ($field = $this->find_field_by_shortname($shortname)) {
             return $field;
         }
@@ -228,7 +210,7 @@ class issue_handler extends handler {
         try {
             $config = ['visible' => $visible, 'previewvalue' => $previewvalue] + $config;
             $record = (object)['type' => $type, 'shortname' => $shortname, 'name' => $displayname ?: $shortname,
-                'descriptionformat' => FORMAT_HTML, 'configdata' => json_encode($config)];
+                'descriptionformat' => FORMAT_HTML, 'configdata' => json_encode($config), ];
             $field = \core_customfield\field_controller::create(0, $record, $category);
         } catch (\moodle_exception $e) {
             return null;
