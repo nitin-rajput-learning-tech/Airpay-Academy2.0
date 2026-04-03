@@ -1,0 +1,70 @@
+{{!
+    @template theme_airpayux/footer
+
+    Airpay Academy UX footer — overrides theme_epsilon/footer.
+    Changes from epsilon: Added "Powered by airpay academy UX" marker
+    for applicability testing. This will be replaced with the real
+    footer design in Phase 6B.
+}}
+
+<footer id="page-footer" class="bg-dark text-light">
+    <div class="footer_datacourse">
+        <a id="back2Top" title="Back to top" href="#">&#10148;</a>
+        <div id="course-footer">{{{ output.course_footer }}}</div>
+        <div class="tool_usertours-resettourcontainer"></div>
+
+        <nav class="nav navbar-nav d-md-none">
+            {{# output.custom_menu_flat }}
+                <ul class="list-unstyled pt-3">
+                    {{> theme_epsilon/custom_menu_footer}}
+                </ul>
+            {{/ output.custom_menu_flat }}
+        </nav>
+        {{{ output.standard_footer_html }}}
+        {{{ output.standard_end_of_body_html }}}
+
+        <div class="row">
+             <div class="col-md-7 col-12 float-left text-right">{{{ output.get_copyright_text }}}</div>
+             <div class="col-md-5 col-12 float-left text-right">{{{ output.footer_social_icons }}}</div>
+        </div>
+    </div>
+    <div class="footer-content-debugging footer-dark bg-dark text-light">
+        <div class="container-fluid footer-dark-inner">
+            {{{ output.debug_footer_html }}}
+        </div>
+    </div>
+    <div class="footer">
+            <div class="container foot-copyright d-flex justify-content-center">
+                <p>Copyright &copy; airpay payment services. All rights reserved.</p>
+            </div>
+            <div class="container d-flex justify-content-center">
+                <p style="font-size: 0.75rem; opacity: 0.6; margin-top: -8px;">Powered by airpay academy UX v0.1</p>
+            </div>
+    </div>
+</footer>
+<script>
+/*Scroll to top when arrow up clicked BEGIN*/
+require(['jquery'], function($) {
+    var winwidth = "";
+    winwidth = $(window).width();
+    docwidth = $(document).width();
+    if((winwidth < 768) || (docwidth < 768)){
+        $(window).scroll(function() {
+            var height = $(window).scrollTop();
+            if (height > 100) {
+                $('#back2Top').fadeIn();
+            } else {
+                $('#back2Top').fadeOut();
+            }
+        });
+        $(document).ready(function() {
+            $("#back2Top").click(function(event) {
+                event.preventDefault();
+                $("html, body").animate({ scrollTop: 0 }, "slow");
+                return false;
+            });
+
+        });
+    }
+});
+</script>

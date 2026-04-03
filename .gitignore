@@ -1,4 +1,4 @@
-config.php
-config.php.production-backup
+/config.php
+/config.php.production-backup
 .env
 *.log
