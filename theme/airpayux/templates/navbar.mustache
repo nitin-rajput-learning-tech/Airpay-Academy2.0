@@ -73,11 +73,7 @@
                 <span class="airpay-nav__brand">{{{ sitename }}}</span>
             {{/ output.should_display_navbar_logo }}
         </a>
-        {{#isloggedin}}
-        <div class="airpay-nav__greeting d-none d-lg-flex align-items-center">
-            <span class="airpay-nav__hello">Hello, {{{output.loggedin_username}}}</span>
-        </div>
-        {{/isloggedin}}
+        {{! Greeting removed — welcome banner on dashboard handles it }}
     </div>
 
     {{! Middle: spacer }}

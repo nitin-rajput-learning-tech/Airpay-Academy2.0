@@ -71,6 +71,81 @@ $header = $PAGE->activityheader;
 $headercontent = $header->export_for_template($renderer);
 $OUTPUT->seteditswtich_display(true);
 
+// ═══════════════════════════════════════════════════════════
+// Airpay Academy UX — Dashboard data injection (Sprint 3)
+// ═══════════════════════════════════════════════════════════
+
+$airpay_dashboard = [];
+if (isloggedin() && !isguestuser()) {
+    global $DB, $USER;
+
+    // Get user's first name for greeting
+    $airpay_dashboard['firstname'] = $USER->firstname ?? 'Learner';
+
+    // Get enrolled courses with progress
+    try {
+        $enrolledcourses = enrol_get_all_users_courses($USER->id, true);
+        $completed = 0;
+        $inprogress = 0;
+        $notstarted = 0;
+        $continuecourses = [];
+
+        foreach ($enrolledcourses as $course) {
+            $completion = new completion_info($course);
+            $progress = \core_completion\progress::get_course_progress_percentage($course, $USER->id);
+
+            if ($progress !== null && $progress >= 100) {
+                $completed++;
+            } else if ($progress !== null && $progress > 0) {
+                $inprogress++;
+                // Add to "Continue Learning" list
+                $continuecourses[] = [
+                    'id' => $course->id,
+                    'fullname' => format_string($course->fullname),
+                    'shortname' => format_string($course->shortname),
+                    'progress' => round($progress),
+                    'viewurl' => (new moodle_url('/course/view.php', ['id' => $course->id]))->out(false),
+                ];
+            } else {
+                $notstarted++;
+                // Also show recently enrolled not-started courses
+                if (count($continuecourses) < 6) {
+                    $continuecourses[] = [
+                        'id' => $course->id,
+                        'fullname' => format_string($course->fullname),
+                        'shortname' => format_string($course->shortname),
+                        'progress' => 0,
+                        'viewurl' => (new moodle_url('/course/view.php', ['id' => $course->id]))->out(false),
+                    ];
+                }
+            }
+        }
+
+        // Limit to 6 courses for the dashboard
+        $airpay_dashboard['continuecourses'] = array_slice($continuecourses, 0, 6);
+        $airpay_dashboard['hascontinuecourses'] = count($continuecourses) > 0;
+        $airpay_dashboard['stats'] = [
+            'enrolled' => count($enrolledcourses),
+            'inprogress' => $inprogress,
+            'completed' => $completed,
+            'notstarted' => $notstarted,
+        ];
+        $airpay_dashboard['hasstats'] = true;
+    } catch (Exception $e) {
+        // Silently fail — dashboard still renders without our additions
+        $airpay_dashboard['hasstats'] = false;
+        $airpay_dashboard['hascontinuecourses'] = false;
+    }
+
+    // Get certificate count (if available)
+    try {
+        $certcount = $DB->count_records('tool_certificate_issues', ['userid' => $USER->id]);
+        $airpay_dashboard['stats']['certificates'] = $certcount;
+    } catch (Exception $e) {
+        $airpay_dashboard['stats']['certificates'] = 0;
+    }
+}
+
 $templatecontext = [
     'sitename' => format_string($SITE->shortname, true, ['context' => context_course::instance(SITEID), "escape" => false]),
     'output' => $OUTPUT,
@@ -97,6 +172,8 @@ $templatecontext = [
     'overflow' => $overflow,
     'isloggedin' => isloggedin(),
     'addblockbutton' => $addblockbutton,
+    // Airpay UX dashboard data
+    'airpay' => $airpay_dashboard ?? [],
 ];
 
 echo $OUTPUT->render_from_template('theme_airpayux/dashboard', $templatecontext);

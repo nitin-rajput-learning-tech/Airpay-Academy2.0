@@ -66,6 +66,93 @@
                     {{> core/moremenu}}
                 </div>
             {{/secondarymoremenu}}
+
+        {{! ═══ AIRPAY DASHBOARD — Full-width top section ═══ }}
+        {{#airpay}}
+        <div class="airpay-dash">
+
+            {{! Welcome Banner — replaces epsilon "Hi, Name!" greeting }}
+            <div class="airpay-dash__welcome">
+                <div class="airpay-dash__welcome-content">
+                    <h2 class="airpay-dash__welcome-title">Welcome back, {{firstname}}! <span>👋</span></h2>
+                    <p class="airpay-dash__welcome-sub">Continue where you left off and keep building your skills</p>
+                </div>
+                <div class="airpay-dash__welcome-actions">
+                    <a href="{{{config.wwwroot}}}/local/search/allcourses.php" class="airpay-dash__welcome-btn airpay-dash__welcome-btn--primary">
+                        <i class="fa fa-compass"></i> Browse Courses
+                    </a>
+                    <a href="{{{config.wwwroot}}}/local/users/profile.php" class="airpay-dash__welcome-btn airpay-dash__welcome-btn--outline">
+                        <i class="fa fa-user"></i> My Profile
+                    </a>
+                </div>
+            </div>
+
+            {{! Stat Cards }}
+            {{#hasstats}}
+            <div class="airpay-dash__stats">
+                <div class="airpay-dash__stat airpay-dash__stat--primary">
+                    <div class="airpay-dash__stat-icon"><i class="fa fa-book"></i></div>
+                    <div class="airpay-dash__stat-data">
+                        <span class="airpay-dash__stat-num">{{stats.enrolled}}</span>
+                        <span class="airpay-dash__stat-label">Enrolled</span>
+                    </div>
+                </div>
+                <div class="airpay-dash__stat airpay-dash__stat--accent">
+                    <div class="airpay-dash__stat-icon"><i class="fa fa-spinner"></i></div>
+                    <div class="airpay-dash__stat-data">
+                        <span class="airpay-dash__stat-num">{{stats.inprogress}}</span>
+                        <span class="airpay-dash__stat-label">In Progress</span>
+                    </div>
+                </div>
+                <div class="airpay-dash__stat airpay-dash__stat--success">
+                    <div class="airpay-dash__stat-icon"><i class="fa fa-check-circle"></i></div>
+                    <div class="airpay-dash__stat-data">
+                        <span class="airpay-dash__stat-num">{{stats.completed}}</span>
+                        <span class="airpay-dash__stat-label">Completed</span>
+                    </div>
+                </div>
+                <div class="airpay-dash__stat airpay-dash__stat--gold">
+                    <div class="airpay-dash__stat-icon"><i class="fa fa-certificate"></i></div>
+                    <div class="airpay-dash__stat-data">
+                        <span class="airpay-dash__stat-num">{{stats.certificates}}</span>
+                        <span class="airpay-dash__stat-label">Certificates</span>
+                    </div>
+                </div>
+            </div>
+            {{/hasstats}}
+
+            {{! Continue Learning }}
+            {{#hascontinuecourses}}
+            <div class="airpay-dash__section">
+                <div class="airpay-dash__section-header">
+                    <h3 class="airpay-dash__section-title">Continue Learning</h3>
+                    <a href="{{{config.wwwroot}}}/my/courses.php" class="airpay-dash__section-link">View all <i class="fa fa-arrow-right"></i></a>
+                </div>
+                <div class="airpay-dash__courses">
+                    {{#continuecourses}}
+                    <a href="{{viewurl}}" class="airpay-dash__course-card">
+                        <div class="airpay-dash__course-thumb">
+                            <span class="airpay-dash__course-initial">{{shortname}}</span>
+                        </div>
+                        <div class="airpay-dash__course-body">
+                            <h4 class="airpay-dash__course-name">{{fullname}}</h4>
+                            <div class="airpay-dash__course-progress">
+                                <div class="airpay-dash__progress-bar">
+                                    <div class="airpay-dash__progress-fill" style="width: {{progress}}%"></div>
+                                </div>
+                                <span class="airpay-dash__progress-text">{{progress}}%</span>
+                            </div>
+                        </div>
+                    </a>
+                    {{/continuecourses}}
+                </div>
+            </div>
+            {{/hascontinuecourses}}
+
+        </div>
+        {{/airpay}}
+        {{! ═══ END AIRPAY DASHBOARD ═══ }}
+
         <div id="page-content" class="row pb-3 d-print-block">
             <div id="region-main-box" class="col-12">
                 {{#hasregionmainsettingsmenu}}
@@ -85,6 +172,7 @@
                     {{#overflow}}
                         {{> core/url_select}}
                     {{/overflow}}
+
                     {{{ output.main_content }}}
                     {{{ output.activity_navigation }}}
                     {{{ output.course_content_footer }}}
