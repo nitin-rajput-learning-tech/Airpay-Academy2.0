@@ -1,69 +1,81 @@
 {{!
-    @template theme_airpayux/footer
+    @template theme_airpayux/theme_epsilon/footer
 
-    Airpay Academy UX footer — overrides theme_epsilon/footer.
-    Changes from epsilon: Added "Powered by airpay academy UX" marker
-    for applicability testing. This will be replaced with the real
-    footer design in Phase 6B.
+    Airpay Academy UX footer — Phase 6B redesign.
+    Overrides theme_epsilon/footer.mustache with the Airpay design system.
+
+    Design: Clean, minimal footer with quick links, social icons, and copyright.
+    Matches production pattern (simple) while being visually upgraded.
+    Uses CSS custom properties from the design system for dark mode support.
 }}
 
-<footer id="page-footer" class="bg-dark text-light">
-    <div class="footer_datacourse">
-        <a id="back2Top" title="Back to top" href="#">&#10148;</a>
+<footer id="page-footer" class="airpay-footer">
+    {{! Required Moodle hooks — must be present for JS/tour functionality }}
+    <div style="display:none;">
         <div id="course-footer">{{{ output.course_footer }}}</div>
         <div class="tool_usertours-resettourcontainer"></div>
-
         <nav class="nav navbar-nav d-md-none">
             {{# output.custom_menu_flat }}
-                <ul class="list-unstyled pt-3">
+                <ul class="list-unstyled">
                     {{> theme_epsilon/custom_menu_footer}}
                 </ul>
             {{/ output.custom_menu_flat }}
         </nav>
-        {{{ output.standard_footer_html }}}
-        {{{ output.standard_end_of_body_html }}}
+    </div>
 
-        <div class="row">
-             <div class="col-md-7 col-12 float-left text-right">{{{ output.get_copyright_text }}}</div>
-             <div class="col-md-5 col-12 float-left text-right">{{{ output.footer_social_icons }}}</div>
+    {{! Main footer content }}
+    <div class="airpay-footer__main">
+        <div class="container-fluid airpay-footer__inner">
+            {{! Row 1: Quick links + Social }}
+            <div class="airpay-footer__top">
+                <div class="airpay-footer__links">
+                    <a href="{{{ config.wwwroot }}}/local/users/privacypolicy.php">Privacy Policy</a>
+                    <span class="airpay-footer__sep"></span>
+                    <a href="{{{ config.wwwroot }}}/local/users/termscondition.php">Terms of Use</a>
+                    <span class="airpay-footer__sep"></span>
+                    <a href="{{{ config.wwwroot }}}/admin/tool/dataprivacy/summary.php">Data Retention</a>
+                </div>
+                <div class="airpay-footer__social">
+                    {{{ output.footer_social_icons }}}
+                </div>
+            </div>
+
+            {{! Row 2: Copyright }}
+            <div class="airpay-footer__bottom">
+                <p class="airpay-footer__copy">
+                    &copy; airpay payment services. All rights reserved.
+                </p>
+            </div>
         </div>
     </div>
-    <div class="footer-content-debugging footer-dark bg-dark text-light">
-        <div class="container-fluid footer-dark-inner">
-            {{{ output.debug_footer_html }}}
-        </div>
+
+    {{! Moodle required: debug footer and end-of-body hooks }}
+    <div class="airpay-footer__debug">
+        {{{ output.standard_footer_html }}}
+        {{{ output.debug_footer_html }}}
     </div>
-    <div class="footer">
-            <div class="container foot-copyright d-flex justify-content-center">
-                <p>Copyright &copy; airpay payment services. All rights reserved.</p>
-            </div>
-            <div class="container d-flex justify-content-center">
-                <p style="font-size: 0.75rem; opacity: 0.6; margin-top: -8px;">Powered by airpay academy UX v0.1</p>
-            </div>
-    </div>
+
+    {{! Back to top button (mobile only) }}
+    <a id="back2Top" class="airpay-footer__back2top" title="Back to top" href="#">
+        <i class="fa fa-chevron-up"></i>
+    </a>
+
+    {{{ output.standard_end_of_body_html }}}
 </footer>
+
 <script>
-/*Scroll to top when arrow up clicked BEGIN*/
 require(['jquery'], function($) {
-    var winwidth = "";
-    winwidth = $(window).width();
-    docwidth = $(document).width();
-    if((winwidth < 768) || (docwidth < 768)){
+    if ($(window).width() < 768) {
         $(window).scroll(function() {
-            var height = $(window).scrollTop();
-            if (height > 100) {
-                $('#back2Top').fadeIn();
+            if ($(window).scrollTop() > 200) {
+                $('#back2Top').fadeIn(200);
             } else {
-                $('#back2Top').fadeOut();
+                $('#back2Top').fadeOut(200);
             }
         });
-        $(document).ready(function() {
-            $("#back2Top").click(function(event) {
-                event.preventDefault();
-                $("html, body").animate({ scrollTop: 0 }, "slow");
-                return false;
-            });
-
+        $('#back2Top').click(function(e) {
+            e.preventDefault();
+            $('html, body').animate({ scrollTop: 0 }, 400);
         });
     }
 });

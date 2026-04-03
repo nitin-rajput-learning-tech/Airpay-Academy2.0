@@ -1,0 +1,82 @@
+{{!
+    @template theme_airpayux/theme_epsilon/navbar
+
+    Airpay Academy UX navbar — Phase 6B redesign.
+    Overrides theme_epsilon/navbar.mustache with the Airpay design system.
+
+    Changes from epsilon:
+    - Cleaner layout with consistent spacing
+    - Greeting simplified (no motivational quote on desktop, shown on mobile)
+    - Notification icons get circular backgrounds
+    - Better mobile responsiveness
+    - All BizLMS Mustache variables preserved (Quick Access, plugins, user menu, edit switch)
+}}
+<nav class="navbar fixed-top navbar-light navbar-expand airpay-navbar" aria-label="{{#str}}sitemenubar, admin{{/str}}">
+
+    {{! Mobile hamburger toggle }}
+    <button class="navbar-toggler aabtn d-block d-md-none px-1 my-1 border-0" data-toggler="drawers" data-action="toggle" data-target="theme_epsilon-drawers-primary">
+        <span class="navbar-toggler-icon"></span>
+        <span class="sr-only">{{#str}}sidepanel, core{{/str}}</span>
+    </button>
+
+    {{! Left: Logo + Greeting }}
+    <div class="d-flex align-items-center airpay-navbar__left">
+        <a href="{{{ config.homeurl }}}" class="navbar-brand d-none d-md-flex align-items-center m-0 mr-3 p-0 aabtn">
+            {{# output.should_display_navbar_logo }}
+                <img src="{{output.get_custom_logo}}" class="logo mr-1" alt="{{sitename}}">
+            {{/ output.should_display_navbar_logo }}
+            {{^ output.should_display_navbar_logo }}
+                <span class="airpay-navbar__brand">{{{ sitename }}}</span>
+            {{/ output.should_display_navbar_logo }}
+        </a>
+        {{#isloggedin}}
+        <div class="airpay-navbar__greeting d-none d-lg-block">
+            <span class="airpay-navbar__hello">Hello, {{{output.loggedin_username}}} <span class="hand_icon"></span></span>
+        </div>
+        {{/isloggedin}}
+    </div>
+
+    {{! Middle: Page heading menu (kept for BizLMS compatibility) }}
+    <ul class="navbar-nav d-none d-md-flex">
+        {{{ output.page_heading_menu }}}
+    </ul>
+
+    {{! Right: Actions }}
+    <div id="usernavigation" class="navbar-nav ml-auto airpay-navbar__right">
+        {{! Search }}
+        {{# output.search_box }}
+            {{{ output.search_box }}}
+            <div class="divider border-left h-75 align-self-center mx-1"></div>
+        {{/output.search_box}}
+
+        {{! Quick Access — BizLMS hamburger menu }}
+        {{#isloggedin}}
+        <ul class="nav navbar-nav">
+            <li class="nav-item">
+                {{> theme_epsilon/quickaccess-popover}}
+            </li>
+        </ul>
+        {{/isloggedin}}
+
+        {{! Language menu }}
+        {{#langmenu}}
+            {{> theme_epsilon/language_menu }}
+            <div class="divider border-left h-75 align-self-center mx-1"></div>
+        {{/langmenu}}
+
+        {{! BizLMS plugin outputs: notifications, messaging, cart }}
+        {{{ output.custom_language_menu}}}
+        {{{ output.navbar_plugin_output }}}
+
+        {{! User menu (avatar + dropdown with role switching) }}
+        <div class="d-flex align-items-stretch usermenu-container" data-region="usermenu">
+            {{{ output.user_menu }}}
+        </div>
+
+        {{! Edit mode switch }}
+        {{{ output.edit_switch }}}
+    </div>
+</nav>
+
+{{! Mobile primary drawer (kept from epsilon) }}
+{{> theme_epsilon/primary-drawer-mobile }}
