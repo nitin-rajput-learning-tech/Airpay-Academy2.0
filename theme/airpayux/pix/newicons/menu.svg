@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="30" height="30" viewBox="0 0 30 30">
+  <defs>
+    <clipPath id="clip-menu">
+      <rect width="30" height="30"/>
+    </clipPath>
+  </defs>
+  <g id="menu" clip-path="url(#clip-menu)">
+    <g id="Group_21453" data-name="Group 21453" transform="translate(-1402 -32)">
+      <g id="Layer_2" data-name="Layer 2" transform="translate(1405.11 35.11)">
+        <g id="invisible_box" data-name="invisible box" transform="translate(0.246 0.246)">
+          <rect id="Rectangle_375" data-name="Rectangle 375" width="24" height="24" transform="translate(-0.355 -0.355)" fill="none"/>
+        </g>
+        <g id="icons_Q2" data-name="icons Q2" transform="translate(1.177 3.524)">
+          <g id="Group_203" data-name="Group 203">
+            <path id="Path_507" data-name="Path 507" d="M27.124,11.174a1.174,1.174,0,0,1-1.174,1.174H7.174A1.174,1.174,0,0,1,6,11.174H6A1.174,1.174,0,0,1,7.174,10H25.95A1.174,1.174,0,0,1,27.124,11.174Z" transform="translate(-6 -10)"/>
+            <path id="Path_508" data-name="Path 508" d="M27.124,23.174a1.174,1.174,0,0,1-1.174,1.174H7.174A1.174,1.174,0,0,1,6,23.174H6A1.174,1.174,0,0,1,7.174,22H25.95A1.174,1.174,0,0,1,27.124,23.174Z" transform="translate(-6 -14.959)"/>
+            <path id="Path_509" data-name="Path 509" d="M27.124,35.174a1.174,1.174,0,0,1-1.174,1.174H7.174A1.174,1.174,0,0,1,6,35.174H6A1.174,1.174,0,0,1,7.174,34H25.95A1.174,1.174,0,0,1,27.124,35.174Z" transform="translate(-6 -19.918)"/>
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

@@ -15,20 +15,17 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Airpay Academy UX theme — child of epsilon (BizLMS).
+ * Airpay Academy UX theme — forked from epsilon (BizLMS).
  *
  * @package    theme_airpayux
- * @copyright  2026 Airpay Payment Services
+ * @copyright  2026 Airpay Payment Services (forked from eAbyas epsilon)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
+$plugin->version   = 2026040301;
+$plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
-$plugin->version   = 2026040300;
-$plugin->requires  = 2022041900;       // Moodle 4.0+
 $plugin->maturity  = MATURITY_ALPHA;
-$plugin->release   = '0.1.0';
-$plugin->dependencies = [
-    'theme_epsilon' => 2022041900,      // Requires epsilon (BizLMS theme)
-];
+$plugin->release   = '1.0.0-alpha';
