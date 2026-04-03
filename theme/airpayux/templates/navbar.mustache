@@ -76,10 +76,16 @@
         {{! Greeting removed — welcome banner on dashboard handles it }}
     </div>
 
-    {{! Middle: spacer }}
-    <ul class="navbar-nav d-none d-md-flex">
-        {{{ output.page_heading_menu }}}
-    </ul>
+    {{! Middle: Search + Page menu }}
+    <div class="d-none d-md-flex align-items-center flex-grow-1 mx-3">
+        <form action="{{{config.wwwroot}}}/search/index.php" method="get" class="airpay-nav__search">
+            <i class="fa fa-search airpay-nav__search-icon"></i>
+            <input type="text" name="q" class="airpay-nav__search-input" placeholder="Search courses, people, content..." autocomplete="off">
+        </form>
+        <ul class="navbar-nav ml-auto">
+            {{{ output.page_heading_menu }}}
+        </ul>
+    </div>
 
     {{! Right: Actions }}
     <div id="usernavigation" class="navbar-nav ml-auto airpay-nav__actions">
