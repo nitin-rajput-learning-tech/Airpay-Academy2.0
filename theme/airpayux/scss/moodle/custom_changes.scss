@@ -3638,3 +3638,394 @@ table {
     text-decoration: none;
     transform: translateY(-2px);
 }
+
+/* ═══════════════════════════════════════════════════════════
+   LOGIN PAGE — Sprint 2 (full prototype implementation)
+   Split-screen: gradient hero left, clean form right
+   ═══════════════════════════════════════════════════════════ */
+
+/* Page-level resets */
+.airpay-login-wrapper { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
+.airpay-login-page { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
+.airpay-login-region { padding: 0 !important; margin: 0 !important; }
+body#page-login-index { background: #F2F4FB !important; }
+
+/* ── Split layout container ── */
+.airpay-login {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+}
+
+/* ── LEFT: Gradient Hero ── */
+.airpay-login__hero {
+    flex: 0 0 45%;
+    background: linear-gradient(160deg, #003d66 0%, #0066A7 40%, #0f7a73 100%);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px;
+    color: #fff;
+}
+
+.airpay-login__hero-bg {
+    position: absolute; inset: 0;
+    background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,0.08) 0%, transparent 50%),
+        radial-gradient(circle at 70% 80%, rgba(15,122,115,0.3) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.airpay-login__hero-pattern {
+    position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+}
+
+.airpay-login__hero-circle {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    background: rgba(255,255,255,0.04);
+}
+.airpay-login__hero-circle--1 { width: 300px; height: 300px; top: -80px; left: -100px; }
+.airpay-login__hero-circle--2 { width: 200px; height: 200px; bottom: -60px; right: -40px; }
+.airpay-login__hero-circle--3 {
+    width: 120px; height: 120px; top: 40%; right: 10%;
+    border: 2px solid rgba(255,255,255,0.06); background: transparent;
+}
+
+.airpay-login__hero-content {
+    position: relative; z-index: 2;
+    max-width: 380px; text-align: center;
+}
+
+.airpay-login__hero-logo img {
+    max-height: 64px;
+    margin-bottom: 16px;
+    filter: brightness(0) invert(1);
+}
+
+.airpay-login__hero-title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+}
+
+.airpay-login__hero-subtitle {
+    font-size: 0.9rem;
+    opacity: 0.8;
+    margin-bottom: 40px;
+}
+
+.airpay-login__hero-features {
+    text-align: left;
+    margin-bottom: 40px;
+}
+
+.airpay-login__hero-feature {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+.airpay-login__hero-feature strong {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+.airpay-login__hero-feature span {
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+.airpay-login__hero-feature-icon {
+    width: 36px; height: 36px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.airpay-login__hero-social {
+    margin-top: 24px;
+    a { color: rgba(255,255,255,0.6); margin: 0 6px; font-size: 1.1rem; transition: color 0.2s; }
+    a:hover { color: #fff; text-decoration: none; }
+}
+
+/* ── RIGHT: Form Panel ── */
+.airpay-login__form-panel {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 40px;
+    background: #fff;
+}
+
+.airpay-login__form-container {
+    width: 100%;
+    max-width: 400px;
+}
+
+.airpay-login__mobile-logo {
+    text-align: center;
+    margin-bottom: 24px;
+    img { max-height: 48px; }
+}
+
+.airpay-login__form-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #1a1a2e;
+    margin-bottom: 4px;
+}
+
+.airpay-login__form-subtitle {
+    font-size: 0.875rem;
+    color: #607286;
+    margin-bottom: 32px;
+}
+
+/* Error */
+.airpay-login__error .alert-danger {
+    border-radius: 10px;
+    font-size: 0.8125rem;
+    border: none;
+    background: #fef2f2;
+    color: #991b1b;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    i { margin-right: 6px; }
+}
+
+/* Form fields */
+.airpay-login__field {
+    margin-bottom: 20px;
+}
+
+.airpay-login__label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin-bottom: 6px;
+}
+
+.airpay-login__input-group {
+    position: relative;
+}
+
+.airpay-login__input-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #8896a6;
+    font-size: 0.875rem;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.airpay-login__input {
+    display: block;
+    width: 100%;
+    height: 48px;
+    padding: 10px 44px 10px 42px;
+    border: 1.5px solid #e3eaf3;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-family: inherit;
+    color: #1a1a2e;
+    background: #fff;
+    transition: all 0.2s;
+    outline: none;
+}
+.airpay-login__input:focus {
+    border-color: #0066A7;
+    box-shadow: 0 0 0 4px rgba(0,102,167,0.1);
+}
+.airpay-login__input::placeholder {
+    color: #8896a6;
+}
+
+.airpay-login__eye {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #8896a6;
+    cursor: pointer;
+    font-size: 0.9rem;
+    z-index: 1;
+    transition: color 0.2s;
+}
+.airpay-login__eye:hover { color: #1a1a2e; }
+
+/* Submit button — gradient CTA */
+.airpay-login__submit {
+    display: block;
+    width: 100%;
+    height: 50px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #0066A7 0%, #0f7a73 100%);
+    color: #fff;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.25s;
+    margin-top: 8px;
+}
+.airpay-login__submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,102,167,0.35);
+}
+.airpay-login__submit:active {
+    transform: translateY(0);
+}
+
+/* Links */
+.airpay-login__links {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.8125rem;
+    a { color: #0066A7; font-weight: 500; }
+    a:hover { text-decoration: underline; }
+}
+.airpay-login__links-sep {
+    color: #8896a6;
+    margin: 0 8px;
+}
+
+/* Divider */
+.airpay-login__divider {
+    position: relative;
+    text-align: center;
+    margin: 24px 0;
+}
+.airpay-login__divider::before {
+    content: "";
+    position: absolute;
+    top: 50%; left: 0; right: 0;
+    height: 1px;
+    background: #e3eaf3;
+}
+.airpay-login__divider span {
+    position: relative;
+    background: #fff;
+    padding: 0 16px;
+    font-size: 0.75rem;
+    color: #8896a6;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Guest button */
+.airpay-login__guest-btn {
+    display: block;
+    width: 100%;
+    height: 44px;
+    border: 1.5px solid #e3eaf3;
+    border-radius: 10px;
+    background: #fff;
+    color: #607286;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.airpay-login__guest-btn:hover {
+    border-color: #0066A7;
+    color: #0066A7;
+    background: rgba(0,102,167,0.04);
+}
+
+/* SSO buttons */
+.airpay-login__sso-btn {
+    display: block;
+    width: 100%;
+    padding: 10px 16px;
+    border: 1.5px solid #e3eaf3;
+    border-radius: 10px;
+    background: #fff;
+    text-align: center;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    img { margin-right: 8px; vertical-align: middle; }
+}
+.airpay-login__sso-btn:hover {
+    border-color: #0066A7;
+    background: rgba(0,102,167,0.04);
+    text-decoration: none;
+    color: #1a1a2e;
+}
+
+/* Help/About/Contact popup buttons */
+.login_nav_btns {
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
+    z-index: 50;
+    display: flex;
+    gap: 8px;
+}
+.airpay-login__popup-btn {
+    padding: 6px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(0,0,0,0.4);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    transition: all 0.2s;
+}
+.airpay-login__popup-btn:hover {
+    background: rgba(0,0,0,0.6);
+}
+
+/* ── Mobile: Stack panels vertically ── */
+@media (max-width: 991px) {
+    .airpay-login {
+        flex-direction: column;
+    }
+    .airpay-login__hero {
+        flex: none;
+        padding: 40px 24px;
+        min-height: auto;
+    }
+    .airpay-login__hero-features { display: none; }
+    .airpay-login__hero-title { font-size: 1.25rem; }
+    .airpay-login__hero-subtitle { margin-bottom: 16px; font-size: 0.8rem; }
+    .airpay-login__hero-social { display: none; }
+    .airpay-login__hero-circle { display: none; }
+    .airpay-login__form-panel {
+        padding: 32px 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .airpay-login__hero {
+        padding: 32px 16px;
+    }
+    .airpay-login__form-panel {
+        padding: 24px 16px;
+    }
+    .airpay-login__form-title { font-size: 1.25rem; }
+    .airpay-login__submit { height: 46px; }
+}

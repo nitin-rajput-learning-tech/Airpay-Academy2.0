@@ -1,56 +1,27 @@
 {{!
-    This file is part of Moodle - http://moodle.org/
-
-    Moodle is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    Moodle is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-}}
-{{!
     @template theme_airpayux/login
 
-    Login page template
+    Login page layout — stripped of Bootstrap grid wrapper to allow
+    full-viewport flex layout in loginform.mustache.
 
-    Example context (json):
-    {
-        "output": {
-            "doctype": "<!DOCTYPE html>",
-            "page_title": "Login page",
-            "favicon": "favicon.ico",
-            "main_content": "<h1>Headers keep HTML validators happy</h1>"
-        }
-    }
+    IMPORTANT: The container-fluid > row > col-12 wrapper from epsilon
+    was removed because it constrained the login form to a single column,
+    preventing our split-screen layout from working.
 }}
 {{> theme_airpayux/head }}
 
 <body {{{ bodyattributes }}}>
 {{> core/local/toast/wrapper}}
 
-<div id="page-wrapper">
-
+<div id="page-wrapper" class="airpay-login-wrapper">
     {{{ output.standard_top_of_body_html }}}
-
-    <div id="page" class="container-fluid p-0 mt-0">
-        <div id="page-content" class="row">
-            <div id="region-main-box" class="col-12 pull-left">
-                <section id="region-main">
-                    {{{ output.course_content_header }}}
-                    {{{ output.main_content }}}
-                    {{{ output.course_content_footer }}}
-                </section>
-            </div>
-        </div>
+    <div id="page" class="airpay-login-page">
+        <section id="region-main" class="airpay-login-region">
+            {{{ output.main_content }}}
+        </section>
     </div>
 </div>
-    {{{ output.standard_end_of_body_html }}}
+{{{ output.standard_end_of_body_html }}}
 </body>
 </html>
 {{#js}}
@@ -59,4 +30,3 @@ require(['theme_airpayux/loader'], function() {
   M.util.js_complete('theme_airpayux/loader');
 });
 {{/js}}
-
