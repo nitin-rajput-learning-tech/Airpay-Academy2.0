@@ -22,7 +22,7 @@ $green:   #357a32 !default;
 $teal:    #20c997 !default;
 $cyan:    #008196 !default;
 
-$primary:       $blue !default;
+$primary:       #0066A7 !default;  // Airpay blue (was $blue)
 $success:       $green !default;
 $info:          $cyan !default;
 $warning:       $orange !default;
@@ -120,11 +120,10 @@ $spacers: (
 
 // Preset CSS
 
-$primarycolor: #25467a !default;
-
-$secondarycolor: #006699 !default;
-
-$hovercolor: #006699 !default;
+// Airpay Academy Design System — SCSS tokens
+$primarycolor: #0066A7 !default;   // Was #25467a
+$secondarycolor: #0f7a73 !default; // Teal accent (was #006699)
+$hovercolor: #004d7a !default;     // Darker blue (was #006699)
 
 body {
     -webkit-font-smoothing: antialiased;
@@ -157,3 +156,61 @@ body {
 }
 
 @include bg-variant(".bg-gray", $gray-200, true);
+
+// ═══════════════════════════════════════════════════════════
+// Airpay Academy UX — Global component overrides
+// ═══════════════════════════════════════════════════════════
+
+// Cards — softer, rounder
+.card {
+    border-radius: 12px;
+    border: 1px solid #e3eaf3;
+    box-shadow: 0 4px 20px rgba(0,51,102,0.06);
+}
+
+// Buttons — rounded, weighted
+.btn {
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background: #0066A7;
+    border-color: #0066A7;
+    &:hover, &:focus {
+        background: #004d7a;
+        border-color: #004d7a;
+        box-shadow: 0 4px 12px rgba(0,102,167,0.3);
+    }
+}
+
+// Form inputs — taller, rounder
+.form-control {
+    border-radius: 8px;
+    border: 1px solid #e3eaf3;
+    height: calc(1.5em + 1rem + 2px);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    &:focus {
+        border-color: #0066A7;
+        box-shadow: 0 0 0 3px rgba(0,102,167,0.1);
+    }
+}
+
+// Dropdown menus — rounder
+.dropdown-menu {
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,51,102,0.08);
+    border: 1px solid #e3eaf3;
+}
+
+// Block headers — clean blue
+.block .card-body .card-title,
+.block_timeline h5,
+.block_calendar_month h5,
+.block_recentlyaccesseditems h5 {
+    background: #0066A7;
+    color: #fff;
+    border-radius: 8px 8px 0 0;
+}

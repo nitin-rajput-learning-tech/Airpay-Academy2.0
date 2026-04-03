@@ -26,38 +26,60 @@
 
     <style media="screen">
         :root {
-            --primarycolor:{{{ output.get_primarycolor}}};
-            --secondarycolor:{{{ output.get_secondarycolor}}};
-            --hovercolor:{{{ output.get_hovercolor}}};
+            /* Airpay Academy Design System — Phase 6B */
+            --primarycolor: #0066A7;
+            --secondarycolor: #0f7a73;
+            --hovercolor: #004d7a;
+
+            /* Derived from primary */
             --sitehighlight: var(--primarycolor);
-            --buttonbgcolor: var(--secondarycolor);
+            --buttonbgcolor: var(--primarycolor);
             --btntextcolor: #ffffff;
-            --btnhoverbgcolor: var(--secondarycolor);
+            --btnhoverbgcolor: var(--hovercolor);
             --btnhovertextcolor: #ffffff;
-            --btnbordercolor: var(--secondarycolor);
+            --btnbordercolor: var(--primarycolor);
             --linkcolor: var(--primarycolor);
             --linkhovercolor: var(--hovercolor);
 
+            /* Sidebar & blocks */
             --sidebarbgstartcolor: var(--primarycolor);
-            --sidebarbgendcolor:  var(--primarycolor);
+            --sidebarbgendcolor: var(--primarycolor);
             --blockheaderstartbg: var(--primarycolor);
-            --blockheaderendbg:  var(--primarycolor);
-            --blocktextcolor: #333333;
+            --blockheaderendbg: var(--primarycolor);
+            --blocktextcolor: #1a1a2e;
+
+            /* Page backgrounds */
             --headerbgcolor: #F2F4FB;
             --bodybgcolor: #F2F4FB;
+
+            /* Tables */
             --tblhdstartbg: var(--primarycolor);
             --tblhdendbg: var(--primarycolor);
             --tbltextcolor: #fff;
-            --gradientcolor: #fff;
-            --coursecontainerbg: #d6e5ec;
-            --usernavhvrbg: #ffffff;
-            --usernavhvrlink: var(--secondarycolor);
 
+            /* Other surfaces */
+            --gradientcolor: #fff;
+            --coursecontainerbg: #e6f0f7;
+            --usernavhvrbg: #ffffff;
+            --usernavhvrlink: var(--primarycolor);
             --iconbgcolor: var(--sitehighlight);
 
-            --lightbuttonbgcolor : lighten(var(--buttonbgcolor), 30%);
-            --lightblockhdrstart : lighten(var(--blockheaderstartbg), 30%);
-            --lightblockheaderend : lighten(var(--blockheaderendbg), 15%);
+            /* Airpay extended tokens */
+            --airpay-primary: #0066A7;
+            --airpay-primary-dk: #004d7a;
+            --airpay-accent: #0f7a73;
+            --airpay-accent-lt: #e6f5f3;
+            --airpay-text: #1a1a2e;
+            --airpay-text-sec: #607286;
+            --airpay-text-muted: #8896a6;
+            --airpay-border: #e3eaf3;
+            --airpay-bg-body: #F2F4FB;
+            --airpay-bg-surface: #FFFFFF;
+            --airpay-shadow-sm: 0 4px 20px rgba(0,51,102,0.06);
+            --airpay-shadow-md: 0 8px 32px rgba(0,51,102,0.08);
+            --airpay-radius-sm: 8px;
+            --airpay-radius-md: 12px;
+            --airpay-radius-lg: 16px;
         }
     </style>
     <link rel="stylesheet" href="{{output.getsitecolors_link}}" >
