@@ -109,15 +109,6 @@
                 </div>
             </div>
 
-            {{! Hide Moodle blocks (Timeline, Calendar, Recently accessed) for admin view }}
-            {{#isadmin}}
-            <style>
-                .block_recentlyaccesseditems,
-                .block_timeline,
-                .block_calendar_month { display: none !important; }
-            </style>
-            {{/isadmin}}
-
             {{! ═══ ADMIN DASHBOARD (siteadmin / L&D admin) ═══ }}
             {{#isadmin}}
 
@@ -137,21 +128,7 @@
             </div>
             {{/hasadminkpis}}
 
-            {{! Admin Charts (Chart.js) }}
-            {{#hascharts}}
-            <div class="airpay-dash__two-col">
-                <div class="airpay-dash__section">
-                    <h3 class="airpay-dash__section-title"><i class="fa fa-line-chart"></i> Enrolment Trend</h3>
-                    <canvas id="airpay-chart-enrolments" height="220"></canvas>
-                </div>
-                <div class="airpay-dash__section">
-                    <h3 class="airpay-dash__section-title"><i class="fa fa-pie-chart"></i> Course Distribution</h3>
-                    <canvas id="airpay-chart-distribution" height="220"></canvas>
-                </div>
-            </div>
-            {{/hascharts}}
-
-            {{! Admin Quick Navigation }}
+            {{! Admin Quick Navigation (above charts) }}
             {{#hasquicknav}}
             <div class="airpay-dash__section">
                 <h3 class="airpay-dash__section-title"><i class="fa fa-th-large"></i> Quick Navigation</h3>
@@ -165,6 +142,20 @@
                 </div>
             </div>
             {{/hasquicknav}}
+
+            {{! Admin Charts (Chart.js) }}
+            {{#hascharts}}
+            <div class="airpay-dash__two-col">
+                <div class="airpay-dash__section">
+                    <h3 class="airpay-dash__section-title"><i class="fa fa-line-chart"></i> Enrolment Trend</h3>
+                    <canvas id="airpay-chart-enrolments" height="220"></canvas>
+                </div>
+                <div class="airpay-dash__section">
+                    <h3 class="airpay-dash__section-title"><i class="fa fa-pie-chart"></i> Course Distribution</h3>
+                    <canvas id="airpay-chart-distribution" height="220"></canvas>
+                </div>
+            </div>
+            {{/hascharts}}
 
             {{! Admin Activity Feed }}
             {{#hasactivityfeed}}
