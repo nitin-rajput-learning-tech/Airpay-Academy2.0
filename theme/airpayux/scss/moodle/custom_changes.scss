@@ -6773,3 +6773,16 @@ body.dark-mode .airpay-nav__theme-toggle {
 .airpay-nav__search {
     max-width: 220px;
 }
+
+/* Logo fix — remove white background from JPG logos on dark surfaces */
+.airpay-login__hero-logo img {
+    max-height: 80px;
+    mix-blend-mode: screen; /* makes white bg transparent on dark surfaces */
+    border-radius: 8px;
+}
+.airpay-footer__grid img,
+.airpay-footer img[alt*="academy"],
+.airpay-footer img[alt*="airpay"] {
+    mix-blend-mode: screen;
+    max-height: 40px;
+}
