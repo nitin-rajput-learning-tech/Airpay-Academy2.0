@@ -24,8 +24,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026040301;
+$plugin->version   = 2026040500;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
-$plugin->maturity  = MATURITY_ALPHA;
-$plugin->release   = '1.0.0-alpha';
+$plugin->maturity  = MATURITY_BETA;
+$plugin->release   = '1.0.0-beta';
