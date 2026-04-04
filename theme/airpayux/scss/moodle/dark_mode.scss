@@ -4,6 +4,8 @@
    Persisted via localStorage('airpay-theme')
    ═══════════════════════════════════════════════════════════ */
 
+/* Applied to html early (head.mustache) to prevent flash, then body on DOMContentLoaded */
+html.dark-mode,
 body.dark-mode {
     /* Token overrides */
     --airpay-bg-body: #0f1117;

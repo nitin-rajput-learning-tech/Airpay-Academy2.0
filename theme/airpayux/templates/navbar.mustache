@@ -103,8 +103,8 @@
         {{! Notifications, messaging, cart (BizLMS plugins) }}
         {{{ output.navbar_plugin_output }}}
 
-        {{! Dark mode toggle }}
-        <button class="airpay-nav__theme-toggle" onclick="document.body.classList.toggle('dark-mode'); localStorage.setItem('airpay-theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');" title="Toggle dark mode" aria-label="Toggle dark mode">
+        {{! Dark mode toggle — persists via localStorage, icon swaps }}
+        <button class="airpay-nav__theme-toggle" onclick="var d=document.body.classList.toggle('dark-mode');document.documentElement.classList.toggle('dark-mode');localStorage.setItem('airpay-theme',d?'dark':'light');this.querySelector('i').className=d?'fa fa-sun-o':'fa fa-moon-o';" title="Toggle dark mode" aria-label="Toggle dark mode">
             <i class="fa fa-moon-o" aria-hidden="true"></i>
         </button>
 

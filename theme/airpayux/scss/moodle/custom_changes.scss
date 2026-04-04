@@ -6409,3 +6409,55 @@ body.dark-mode .airpay-nav__theme-toggle {
 @media (max-width: 590px) {
     .airpay-login__hero-stats { display: none; }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   STATIC PAGES (local/airpay_pages)
+   ═══════════════════════════════════════════════════════════ */
+.airpay-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 24px 0;
+}
+.airpay-page__title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 3px solid #0066A7;
+    display: inline-block;
+}
+.airpay-page__content {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: #374151;
+}
+.airpay-page__content h3 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: #1a1a2e;
+    margin-top: 28px;
+    margin-bottom: 12px;
+}
+.airpay-page__content h5 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+    color: #1a1a2e;
+}
+.airpay-page__content ul {
+    padding-left: 20px;
+}
+.airpay-page__content li {
+    margin-bottom: 8px;
+}
+.airpay-page__content .card {
+    border-radius: 12px;
+    border: 1px solid #e2e6ef;
+}
+.airpay-page__content .card i {
+    color: #0066A7;
+    margin-right: 6px;
+}

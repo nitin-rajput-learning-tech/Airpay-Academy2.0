@@ -92,4 +92,25 @@
             font-family:"Montserrat", sans-serif;
         }
     </style>
+    <script>
+    // Dark mode persistence — runs before body renders to prevent flash
+    (function() {
+        var theme = localStorage.getItem('airpay-theme');
+        if (theme === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+        // Also apply to body once it exists
+        document.addEventListener('DOMContentLoaded', function() {
+            var t = localStorage.getItem('airpay-theme');
+            if (t === 'dark') {
+                document.body.classList.add('dark-mode');
+            }
+            // Update toggle icon state
+            var toggle = document.querySelector('.airpay-nav__theme-toggle i');
+            if (toggle && t === 'dark') {
+                toggle.className = 'fa fa-sun-o';
+            }
+        });
+    })();
+    </script>
 </head>
