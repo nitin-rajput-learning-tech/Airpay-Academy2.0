@@ -71,19 +71,35 @@
         {{#airpay}}
         <div class="airpay-dash">
 
-            {{! Welcome Banner — replaces epsilon "Hi, Name!" greeting }}
+            {{! Welcome Banner — role-specific text and actions }}
             <div class="airpay-dash__welcome">
                 <div class="airpay-dash__welcome-content">
+                    {{#isadmin}}
+                    <h2 class="airpay-dash__welcome-title">Welcome, {{firstname}} <span>👋</span></h2>
+                    <p class="airpay-dash__welcome-sub">Platform overview and administration</p>
+                    {{/isadmin}}
+                    {{#islearner}}
                     <h2 class="airpay-dash__welcome-title">Welcome back, {{firstname}}! <span>👋</span></h2>
                     <p class="airpay-dash__welcome-sub">Continue where you left off and keep building your skills</p>
+                    {{/islearner}}
                 </div>
                 <div class="airpay-dash__welcome-actions">
+                    {{#isadmin}}
+                    <a href="{{{config.wwwroot}}}/local/users/index.php" class="airpay-dash__welcome-btn airpay-dash__welcome-btn--primary">
+                        <i class="fa fa-users"></i> Manage Users
+                    </a>
+                    <a href="{{{config.wwwroot}}}/local/courses/courses.php" class="airpay-dash__welcome-btn airpay-dash__welcome-btn--outline">
+                        <i class="fa fa-book"></i> Manage Courses
+                    </a>
+                    {{/isadmin}}
+                    {{#islearner}}
                     <a href="{{{config.wwwroot}}}/local/search/allcourses.php" class="airpay-dash__welcome-btn airpay-dash__welcome-btn--primary">
                         <i class="fa fa-compass"></i> Browse Courses
                     </a>
                     <a href="{{{config.wwwroot}}}/local/users/profile.php" class="airpay-dash__welcome-btn airpay-dash__welcome-btn--outline">
                         <i class="fa fa-user"></i> My Profile
                     </a>
+                    {{/islearner}}
                 </div>
             </div>
 

@@ -307,7 +307,7 @@ if (isloggedin() && !isguestuser()) {
             foreach ($deadlinerecords as $dl) {
                 $deadlines[] = [
                     'coursename' => format_string($dl->fullname),
-                    'duedate' => userdate($dl->enddate, get_string('strftimedatefull')),
+                    'duedate' => userdate($dl->enddate, '%d %B %Y'),
                     'duetimestamp' => $dl->enddate,
                     'urgent' => ($dl->enddate - $now) < (7 * 86400),
                     'viewurl' => (new moodle_url('/course/view.php', ['id' => $dl->id]))->out(false),
@@ -337,7 +337,7 @@ if (isloggedin() && !isguestuser()) {
             $achievements[] = [
                 'title' => format_string($cert->coursename ?? $cert->templatename ?? 'Certificate'),
                 'description' => 'Certificate earned — Code: ' . s($cert->code),
-                'date' => userdate($cert->timecreated, get_string('strftimedatefull')),
+                'date' => userdate($cert->timecreated, '%d %B %Y'),
                 'timestamp' => $cert->timecreated,
                 'type' => 'certificate',
                 'icon' => 'certificate',
@@ -392,7 +392,7 @@ if (isloggedin() && !isguestuser()) {
             $timeline[] = [
                 'label' => $label,
                 'date' => userdate($log->timecreated, '%b %d'),
-                'fulldate' => userdate($log->timecreated, get_string('strftimedatefull')),
+                'fulldate' => userdate($log->timecreated, '%d %B %Y'),
                 'istoday' => (date('Ymd', $log->timecreated) === date('Ymd')),
             ];
         }

@@ -256,6 +256,36 @@ body.dark-mode {
         color: #bfdbfe !important;
     }
 
+    /* === Moodle block list items + loading skeletons === */
+    .list-group-item {
+        background: #1a1d27 !important;
+        border-color: #2d3140 !important;
+        color: #c4cad8 !important;
+    }
+    .bg-pulse-grey {
+        background: #2d3140 !important;
+    }
+    .block .form-control,
+    .block input[type="text"] {
+        background: #232733 !important;
+        border-color: #3d4254 !important;
+        color: #e8eaed !important;
+    }
+
+    /* === Quicknav cards in dark mode === */
+    .airpay-dash__quicknav-card {
+        background: #1a1d27 !important;
+        border-color: #2d3140 !important;
+    }
+    .airpay-dash__quicknav-card span { color: #c4cad8 !important; }
+    .airpay-dash__quicknav-card:hover {
+        background: #232733 !important;
+    }
+
+    /* === Activity feed in dark mode === */
+    .airpay-dash__activity-feed::before { background: #2d3140 !important; }
+    .airpay-dash__activity-label { color: #c4cad8 !important; }
+
     /* === BizLMS admin toolbar === */
     .course_extended_menu_itemlink {
         background: #232733 !important;
