@@ -65,6 +65,18 @@ function theme_airpayux_get_extra_scss($theme) {
         $content .= ' }';
     }
 
+    // Include component library SCSS.
+    $componentspath = $theme->dir . '/scss/moodle/components.scss';
+    if (file_exists($componentspath)) {
+        $content .= file_get_contents($componentspath);
+    }
+
+    // Include dark mode + high contrast CSS layers.
+    $darkmodepath = $theme->dir . '/scss/moodle/dark_mode.scss';
+    if (file_exists($darkmodepath)) {
+        $content .= file_get_contents($darkmodepath);
+    }
+
     // Always return the background image with the scss when we have it.
     return !empty($theme->settings->scss) ? $theme->settings->scss . ' ' . $content : $content;
 }
@@ -124,8 +136,8 @@ function theme_airpayux_pluginfile($course, $cm, $context, $filearea, $args, $fo
 //     $scheme_scss = '';
 //     $theme_scheme = $theme->settings->theme_scheme;
 //     if($theme_scheme){
-//         if(file_exists($CFG->dirroot . '/theme/epsilon/scss/schemes/'.$theme_scheme.'.scss')){
-//             $scheme_scss = file_get_contents($CFG->dirroot . '/theme/epsilon/scss/schemes/'.$theme_scheme.'.scss');
+//         if(file_exists($CFG->dirroot . '/theme/airpayux/scss/schemes/'.$theme_scheme.'.scss')){
+//             $scheme_scss = file_get_contents($CFG->dirroot . '/theme/airpayux/scss/schemes/'.$theme_scheme.'.scss');
 //         }
 //     }
 
@@ -162,7 +174,7 @@ function theme_airpayux_get_main_scss_content($theme) {
  */
 function theme_airpayux_get_precompiled_css() {
     global $CFG;
-    return file_get_contents($CFG->dirroot . '/theme/epsilon/style/moodle.css');
+    return file_get_contents($CFG->dirroot . '/theme/airpayux/style/moodle.css');
 }
 
 /**
@@ -221,9 +233,9 @@ function theme_airpayux_get_css_for_costcenter_scss($costcenter_scheme = false){
     }
 
     if($costcenter_scheme){
-        if(file_exists($CFG->dirroot . '/theme/epsilon/scss/schemes/'.$costcenter_scheme.'.scss')){
-            $www_file = $CFG->wwwroot.'/theme/epsilon/style/'.$costcenter_scheme.'.css';
-            $dir_file = $CFG->dirroot.'/theme/epsilon/style/'.$costcenter_scheme.'.css';
+        if(file_exists($CFG->dirroot . '/theme/airpayux/scss/schemes/'.$costcenter_scheme.'.scss')){
+            $www_file = $CFG->wwwroot.'/theme/airpayux/style/'.$costcenter_scheme.'.css';
+            $dir_file = $CFG->dirroot.'/theme/airpayux/style/'.$costcenter_scheme.'.css';
 
             $current_css = file_get_contents($dir_file);
             $current_css_count = strlen($current_css);
@@ -243,7 +255,7 @@ function theme_airpayux_get_css_for_costcenter_scss($costcenter_scheme = false){
                 return $www_file;
             }
 
-            $scheme_scss = file_get_contents($CFG->dirroot . '/theme/epsilon/scss/schemes/'.$costcenter_scheme.'.scss');
+            $scheme_scss = file_get_contents($CFG->dirroot . '/theme/airpayux/scss/schemes/'.$costcenter_scheme.'.scss');
             $scss = $scheme_scss;
 
             $compiler = new core_scss();

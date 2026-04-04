@@ -1,0 +1,259 @@
+/* ═══════════════════════════════════════════════════════════
+   DARK MODE — Airpay Academy
+   Applied via body.dark-mode class (toggled by user preference)
+   ═══════════════════════════════════════════════════════════ */
+
+body.dark-mode {
+    --airpay-bg-body: #0f1117;
+    --airpay-surface: #1a1d27;
+    --airpay-surface-2: #232733;
+    --airpay-border: #2d3140;
+    --airpay-text-primary: #e8eaed;
+    --airpay-text-secondary: #9ca3b4;
+    --airpay-text-disabled: #5a6070;
+    --airpay-shadow-sm: 0 1px 4px rgba(0,0,0,0.3);
+    --airpay-shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+
+    background-color: var(--airpay-bg-body);
+    color: var(--airpay-text-primary);
+
+    /* Page background */
+    #page, #page-wrapper, .pagelayout-standard, .pagelayout-mydashboard {
+        background-color: #0f1117;
+    }
+
+    /* Cards */
+    .card, .block, .airpay-dash__stat, .coursecard_container,
+    .profile_data_content, .tab-content, #filters_form {
+        background: #1a1d27 !important;
+        border-color: #2d3140 !important;
+        color: #e8eaed;
+    }
+
+    /* Navbar */
+    nav.navbar, .airpay-nav, header#page-header {
+        background: #161820 !important;
+        border-bottom-color: #2d3140 !important;
+    }
+    .navbar a, .navbar .nav-link, .airpay-nav__greeting {
+        color: #c4cad8 !important;
+    }
+
+    /* Inputs */
+    input, textarea, select, .form-control, .custom-select {
+        background: #232733 !important;
+        border-color: #3d4254 !important;
+        color: #e8eaed !important;
+    }
+    input:focus, textarea:focus, select:focus, .form-control:focus {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59,130,246,0.2) !important;
+    }
+
+    /* Tables */
+    .generaltable {
+        background: #1a1d27;
+        border-color: #2d3140;
+    }
+    .generaltable thead th {
+        background: #1e3a5f !important;
+    }
+    .generaltable tbody td {
+        border-bottom-color: #2d3140;
+        color: #c4cad8;
+    }
+    .generaltable tbody tr:hover {
+        background: #232733;
+    }
+    .generaltable tbody tr:nth-child(even) {
+        background: #1e2130;
+    }
+
+    /* Links */
+    a { color: #60a5fa; }
+    a:hover { color: #93c5fd; }
+
+    /* Welcome banner — keep gradient, just adjust overlay */
+    .airpay-dash__welcome, .user_gen_info {
+        background: linear-gradient(135deg, #1a3a5c 0%, #0f4a44 100%) !important;
+    }
+
+    /* Stat card icons */
+    .airpay-dash__stat-icon {
+        background: rgba(96,165,250,0.1) !important;
+    }
+
+    /* Footer */
+    footer, .footer-content, [id*="footer"] {
+        background: #0c0e14 !important;
+        border-top-color: #2d3140 !important;
+    }
+
+    /* Text overrides */
+    h1, h2, h3, h4, h5, h6, .card-title, .course_name,
+    .airpay-dash__stat-num, .totalcounts {
+        color: #e8eaed !important;
+    }
+    p, .card-text, .airpay-dash__stat-label, .counts_data,
+    .userinfo-lable, .course-desc {
+        color: #9ca3b4 !important;
+    }
+
+    /* Dropdowns */
+    .dropdown-menu {
+        background: #1a1d27;
+        border-color: #2d3140;
+    }
+    .dropdown-item { color: #c4cad8; }
+    .dropdown-item:hover {
+        background: #232733;
+        color: #60a5fa;
+    }
+
+    /* Modals */
+    .modal-content {
+        background: #1a1d27;
+        border-color: #2d3140;
+    }
+    .modal-header, .modal-footer {
+        border-color: #2d3140;
+    }
+
+    /* Alerts */
+    .alert-info { background: #172554; color: #93c5fd; border-left-color: #3b82f6; }
+    .alert-success { background: #052e16; color: #86efac; border-left-color: #22c55e; }
+    .alert-warning { background: #451a03; color: #fcd34d; border-left-color: #f59e0b; }
+    .alert-danger { background: #450a0a; color: #fca5a5; border-left-color: #ef4444; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar-track { background: #1a1d27; }
+    ::-webkit-scrollbar-thumb { background: #3d4254; }
+    ::-webkit-scrollbar-thumb:hover { background: #5a6070; }
+
+    /* Filter sidebar */
+    .filter_section {
+        background: #1a1d27 !important;
+        border-right-color: #2d3140 !important;
+    }
+
+    /* Pagination */
+    .pagination .page-link {
+        background: #1a1d27;
+        border-color: #2d3140;
+        color: #c4cad8;
+    }
+    .pagination .page-item.active .page-link {
+        background: #1e3a5f;
+        border-color: #3b82f6;
+    }
+
+    /* Badges */
+    .badge { opacity: 0.9; }
+
+    /* Selection */
+    ::selection {
+        background: rgba(59,130,246,0.3);
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   HIGH CONTRAST MODE — Airpay Academy
+   For field employees in bright outdoor conditions
+   ═══════════════════════════════════════════════════════════ */
+
+body.high-contrast {
+    --airpay-bg-body: #ffffff;
+    --airpay-text-primary: #000000;
+    --airpay-text-secondary: #1a1a1a;
+    --airpay-border: #000000;
+
+    /* Increase base font size */
+    font-size: 18px !important;
+
+    /* Maximum contrast text */
+    color: #000000;
+    background: #ffffff;
+
+    #page, #page-wrapper {
+        background: #ffffff;
+    }
+
+    /* Bold all body text */
+    p, span, td, li, label, .card-text, .course-desc {
+        font-weight: 500 !important;
+        color: #000000 !important;
+    }
+
+    /* Headings extra bold */
+    h1, h2, h3, h4, h5, h6 {
+        font-weight: 800 !important;
+        color: #000000 !important;
+    }
+
+    /* High contrast cards */
+    .card, .block, .airpay-dash__stat, .coursecard_container {
+        border: 2px solid #000000 !important;
+        background: #ffffff !important;
+        box-shadow: none !important;
+    }
+
+    /* High contrast buttons */
+    .btn-primary, .btn {
+        border: 2px solid #000000 !important;
+        font-weight: 700 !important;
+        font-size: 1rem !important;
+    }
+
+    /* High contrast links */
+    a {
+        color: #0000cc !important;
+        text-decoration: underline !important;
+        font-weight: 600 !important;
+    }
+    a:hover {
+        color: #000066 !important;
+    }
+
+    /* High contrast inputs */
+    input, textarea, select, .form-control {
+        border: 2px solid #000000 !important;
+        font-size: 1rem !important;
+        padding: 12px !important;
+    }
+
+    /* High contrast tables */
+    .generaltable {
+        border: 2px solid #000000;
+    }
+    .generaltable thead th {
+        background: #000000 !important;
+        color: #ffffff !important;
+        font-size: 0.95rem;
+        border: 1px solid #ffffff !important;
+    }
+    .generaltable tbody td {
+        border: 1px solid #000000 !important;
+        font-size: 0.95rem;
+    }
+
+    /* High contrast focus */
+    :focus, :focus-visible {
+        outline: 3px solid #ff6600 !important;
+        outline-offset: 2px;
+    }
+
+    /* Remove decorative gradients and shadows */
+    .airpay-dash__welcome, .user_gen_info {
+        background: #003366 !important;
+    }
+    .airpay-dash__welcome *, .user_gen_info * {
+        color: #ffffff !important;
+    }
+
+    /* No hover transforms — reduces motion */
+    *, *::before, *::after {
+        transition: none !important;
+        animation: none !important;
+        transform: none !important;
+    }
+}

@@ -1,0 +1,19 @@
+{{!
+    Airpay Stat Card Component
+    Context: { value, label, icon, color (primary|accent|success|gold), trend, trenddir (up|down) }
+    Usage: {{> theme_airpayux/components/stat_card }}
+}}
+<div class="airpay-dash__stat airpay-dash__stat--{{#color}}{{color}}{{/color}}{{^color}}primary{{/color}}">
+    <div class="airpay-dash__stat-icon">
+        <i class="fa fa-{{icon}}" aria-hidden="true"></i>
+    </div>
+    <div>
+        <span class="airpay-dash__stat-num">{{value}}</span>
+        <span class="airpay-dash__stat-label">{{label}}</span>
+        {{#trend}}
+        <span class="airpay-dash__stat-trend airpay-dash__stat-trend--{{trenddir}}">
+            <i class="fa fa-arrow-{{trenddir}}" aria-hidden="true"></i> {{trend}}
+        </span>
+        {{/trend}}
+    </div>
+</div>

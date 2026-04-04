@@ -377,28 +377,23 @@ if ($ADMIN->fulltree) {
 
     $settings->add($page);
     
-    // $page = new admin_settingpage('theme_airpayux_color', get_string('colorsettings', 'theme_airpayux'));
+    // Costcenter Scheme Settings (per-tenant branding).
+    $page = new admin_settingpage('theme_airpayux_color', get_string('colorsettings', 'theme_airpayux'));
 
-    // $name = 'theme_airpayux/theme_scheme';
-    // $title = get_string('theme_scheme', 'theme_airpayux');
-    // $description = get_string('theme_scheme_desc', 'theme_airpayux');
-    // $default = 'scheme1';
-    // $choices = array('scheme1' => get_string('scheme_1', 'theme_airpayux'),
-    //                  'scheme2' => get_string('scheme_2', 'theme_airpayux'),
-    //                  'scheme3' => get_string('scheme_3', 'theme_airpayux'),
-    //                  'scheme4' => get_string('scheme_4', 'theme_airpayux'),
-    //                  'scheme5' => get_string('scheme_5', 'theme_airpayux'),
-    //                  'scheme6' => get_string('scheme_6', 'theme_airpayux')
-  
-    //              );
-    
-    // $setting = new admin_setting_configselect($name, $title, $description, $default, $choices);
-    // $setting->set_updatedcallback('theme_reset_all_caches');
-    // $page->add($setting);
+    $name = 'theme_airpayux/theme_scheme';
+    $title = get_string('theme_scheme', 'theme_airpayux');
+    $description = get_string('theme_scheme_desc', 'theme_airpayux');
+    $default = 'airpay_internal';
+    $choices = array(
+        'airpay_internal' => 'Airpay Internal',
+        'marketplace'     => 'Public Marketplace',
+        'zeea_whitelabel' => 'ZEEA Whitelabel',
+    );
+    $setting = new admin_setting_configselect($name, $title, $description, $default, $choices);
+    $setting->set_updatedcallback('theme_reset_all_caches');
+    $page->add($setting);
 
-    //Custom SCSS to change the Body bg color
-    
-    // $settings->add($page);
+    $settings->add($page);
 
     // color settings.
     $page = new admin_settingpage('theme_airpayux_color', get_string('colorsettings', 'theme_airpayux'));
