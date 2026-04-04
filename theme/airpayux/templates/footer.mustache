@@ -37,57 +37,47 @@
     <div id="course-footer" class="d-none">{{{ output.course_footer }}}</div>
     <div class="tool_usertours-resettourcontainer"></div>
 
-    {{! Admin footer: minimal — just copyright }}
+    {{! Footer content — admin gets minimal, learner gets full }}
     {{#output.is_admin_or_manager}}
-    <div class="airpay-footer__bottom" style="padding-top: 20px;">
-        <span>&copy; {{#js}}document.write(new Date().getFullYear()){{/js}} Airpay Payment Services. All rights reserved.</span>
-        <span>Contact: academy@airpay.co.in</span>
-    </div>
+        <div class="airpay-footer__bottom" style="padding-top: 20px;">
+            <span>&copy; 2026 Airpay Payment Services. All rights reserved.</span>
+            <span>Contact: academy@airpay.co.in</span>
+        </div>
     {{/output.is_admin_or_manager}}
-
-    {{! Learner/public footer: full 4-column grid }}
     {{^output.is_admin_or_manager}}
-    <div class="airpay-footer__grid">
-        {{! Col 1: Brand }}
-        <div class="airpay-footer__col">
-            {{# output.should_display_navbar_logo }}
-                <img src="{{output.get_custom_logo}}" alt="{{sitename}}" style="height: 36px; margin-bottom: 8px; filter: brightness(10);">
-            {{/ output.should_display_navbar_logo }}
-            {{^ output.should_display_navbar_logo }}
-                <strong style="color: #fff; font-size: 1.1rem;">{{{ sitename }}}</strong>
-            {{/ output.should_display_navbar_logo }}
-            <p class="airpay-footer__brand-desc">Airpay Academy is a comprehensive learning platform built for employability, business training, and financial education. Empowering individuals and organizations with industry-relevant skills.</p>
+        <div class="airpay-footer__grid">
+            <div class="airpay-footer__col">
+                {{# output.should_display_navbar_logo }}
+                    <img src="{{output.get_custom_logo}}" alt="{{sitename}}" style="height: 36px; margin-bottom: 8px; filter: brightness(10);">
+                {{/ output.should_display_navbar_logo }}
+                {{^ output.should_display_navbar_logo }}
+                    <strong style="color: #fff; font-size: 1.1rem;">{{{ sitename }}}</strong>
+                {{/ output.should_display_navbar_logo }}
+                <p class="airpay-footer__brand-desc">Airpay Academy is a comprehensive learning platform built for employability, business training, and financial education.</p>
+            </div>
+            <div class="airpay-footer__col">
+                <h4 class="airpay-footer__heading">Learn</h4>
+                <ul class="airpay-footer__links">
+                    <li><a href="{{{config.wwwroot}}}/local/search/allcourses.php">All Courses</a></li>
+                    <li><a href="{{{config.wwwroot}}}/local/search/allcourses.php">E-Learning</a></li>
+                    <li><a href="{{{config.wwwroot}}}/local/classroom/index.php">Classroom</a></li>
+                    <li><a href="{{{config.wwwroot}}}/local/certificates/index.php">Certifications</a></li>
+                </ul>
+            </div>
+            <div class="airpay-footer__col">
+                <h4 class="airpay-footer__heading">Support</h4>
+                <ul class="airpay-footer__links">
+                    <li><a href="{{{config.wwwroot}}}/local/airpay_pages/index.php?page=help">Help Center</a></li>
+                    <li><a href="{{{config.wwwroot}}}/local/airpay_pages/index.php?page=contact">Contact Us</a></li>
+                    <li><a href="{{{config.wwwroot}}}/local/airpay_pages/index.php?page=privacy">Privacy Policy</a></li>
+                    <li><a href="{{{config.wwwroot}}}/local/airpay_pages/index.php?page=terms">Terms of Service</a></li>
+                </ul>
+            </div>
         </div>
-
-        {{! Col 2: Learn }}
-        <div class="airpay-footer__col">
-            <h4 class="airpay-footer__heading">Learn</h4>
-            <ul class="airpay-footer__links">
-                <li><a href="{{{config.wwwroot}}}/local/search/allcourses.php">All Courses</a></li>
-                <li><a href="{{{config.wwwroot}}}/local/search/allcourses.php">E-Learning</a></li>
-                <li><a href="{{{config.wwwroot}}}/local/classroom/index.php">Classroom</a></li>
-                <li><a href="{{{config.wwwroot}}}/local/certificates/index.php">Certifications</a></li>
-            </ul>
+        <div class="airpay-footer__bottom">
+            <span>{{{ output.get_copyright_text }}}</span>
+            <span>Contact: academy@airpay.co.in</span>
         </div>
-        {{/output.is_admin_or_manager}}
-
-        {{! Col 4: Support }}
-        <div class="airpay-footer__col">
-            <h4 class="airpay-footer__heading">Support</h4>
-            <ul class="airpay-footer__links">
-                <li><a href="{{{config.wwwroot}}}/local/airpay_pages/index.php?page=help">Help Center</a></li>
-                <li><a href="{{{config.wwwroot}}}/local/airpay_pages/index.php?page=contact">Contact Us</a></li>
-                <li><a href="{{{config.wwwroot}}}/local/airpay_pages/index.php?page=privacy">Privacy Policy</a></li>
-                <li><a href="{{{config.wwwroot}}}/local/airpay_pages/index.php?page=terms">Terms of Service</a></li>
-            </ul>
-        </div>
-    </div>
-
-    {{! Bottom bar (learner/public only) }}
-    <div class="airpay-footer__bottom">
-        <span>{{{ output.get_copyright_text }}}</span>
-        <span>Contact: academy@airpay.co.in</span>
-    </div>
     {{/output.is_admin_or_manager}}
 
     {{! Moodle required — MUST be before </body> }}
