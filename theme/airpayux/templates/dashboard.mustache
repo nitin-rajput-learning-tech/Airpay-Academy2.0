@@ -149,6 +149,90 @@
             </div>
             {{/hascontinuecourses}}
 
+            {{! ═══ TWO-COLUMN: Deadlines + Timeline ═══ }}
+            <div class="airpay-dash__two-col">
+                {{! --- Upcoming Deadlines --- }}
+                {{#hasdeadlines}}
+                <div class="airpay-dash__section airpay-dash__deadlines">
+                    <h3 class="airpay-dash__section-title"><i class="fa fa-calendar" aria-hidden="true"></i> {{# str }}upcomingevents, calendar{{/ str }}</h3>
+                    <div class="airpay-dash__deadline-list">
+                        {{#deadlines}}
+                        <div class="airpay-dash__deadline-item {{#urgent}}airpay-dash__deadline-item--urgent{{/urgent}}">
+                            <div class="airpay-dash__deadline-icon">
+                                <i class="fa {{#urgent}}fa-exclamation-circle{{/urgent}}{{^urgent}}fa-clock-o{{/urgent}}" aria-hidden="true"></i>
+                            </div>
+                            <div class="airpay-dash__deadline-info">
+                                <span class="airpay-dash__deadline-name">{{coursename}}</span>
+                                <span class="airpay-dash__deadline-date">Due: {{duedate}}</span>
+                            </div>
+                            <a href="{{viewurl}}" class="airpay-btn airpay-btn--outline airpay-btn--sm">{{# str }}view, core{{/ str }}</a>
+                        </div>
+                        {{/deadlines}}
+                    </div>
+                </div>
+                {{/hasdeadlines}}
+
+                {{! --- Activity Timeline --- }}
+                {{#hastimeline}}
+                <div class="airpay-dash__section airpay-dash__timeline-section">
+                    <h3 class="airpay-dash__section-title"><i class="fa fa-history" aria-hidden="true"></i> Activity Timeline</h3>
+                    <div class="airpay-dash__timeline">
+                        {{#timeline}}
+                        <div class="airpay-dash__timeline-item">
+                            <div class="airpay-dash__timeline-dot {{#istoday}}airpay-dash__timeline-dot--today{{/istoday}}"></div>
+                            <div class="airpay-dash__timeline-content">
+                                <span class="airpay-dash__timeline-date">{{date}}</span>
+                                <span class="airpay-dash__timeline-label">{{label}}</span>
+                            </div>
+                        </div>
+                        {{/timeline}}
+                    </div>
+                </div>
+                {{/hastimeline}}
+            </div>
+
+            {{! ═══ Recent Achievements ═══ }}
+            {{#hasachievements}}
+            <div class="airpay-dash__section">
+                <h3 class="airpay-dash__section-title"><i class="fa fa-trophy" aria-hidden="true"></i> Recent Achievements</h3>
+                <div class="airpay-dash__achievements">
+                    {{#achievements}}
+                    <div class="airpay-dash__achievement">
+                        <div class="airpay-dash__achievement-icon airpay-dash__achievement-icon--{{type}}">
+                            <i class="fa fa-{{icon}}" aria-hidden="true"></i>
+                        </div>
+                        <div class="airpay-dash__achievement-info">
+                            <span class="airpay-dash__achievement-title">{{title}}</span>
+                            <span class="airpay-dash__achievement-desc">{{description}}</span>
+                        </div>
+                        <span class="airpay-dash__achievement-date">{{date}}</span>
+                    </div>
+                    {{/achievements}}
+                </div>
+            </div>
+            {{/hasachievements}}
+
+            {{! ═══ Recommended for You ═══ }}
+            {{#hasrecommendations}}
+            <div class="airpay-dash__section">
+                <h3 class="airpay-dash__section-title"><i class="fa fa-star" aria-hidden="true"></i> Recommended for You</h3>
+                <div class="airpay-dash__recommendations">
+                    {{#recommendations}}
+                    <a href="{{viewurl}}" class="airpay-dash__rec-card">
+                        <div class="airpay-dash__rec-header">
+                            <span class="airpay-dash__rec-category">{{category}}</span>
+                        </div>
+                        <div class="airpay-dash__rec-body">
+                            <h4 class="airpay-dash__rec-title">{{fullname}}</h4>
+                            <p class="airpay-dash__rec-summary">{{summary}}</p>
+                            <span class="airpay-dash__rec-action">Explore <i class="fa fa-arrow-right" aria-hidden="true"></i></span>
+                        </div>
+                    </a>
+                    {{/recommendations}}
+                </div>
+            </div>
+            {{/hasrecommendations}}
+
         </div>
         {{/airpay}}
         {{! ═══ END AIRPAY DASHBOARD ═══ }}

@@ -5985,3 +5985,427 @@ a:hover {
         line-height: 1.6;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   PROTOTYPE MATCH — Dashboard New Sections
+   ═══════════════════════════════════════════════════════════ */
+
+/* Section headers */
+.airpay-dash__section {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px 24px;
+    border: 1px solid #e2e6ef;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.airpay-dash__section-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0 0 16px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    i { color: #0066A7; font-size: 1rem; }
+}
+
+/* Two-column layout (Deadlines + Timeline) */
+.airpay-dash__two-col {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 20px;
+}
+@media (max-width: 992px) {
+    .airpay-dash__two-col { grid-template-columns: 1fr; }
+}
+
+/* --- Deadlines --- */
+.airpay-dash__deadline-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.airpay-dash__deadline-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: #f8f9fc;
+    border: 1px solid #e2e6ef;
+    transition: background 0.2s ease;
+}
+.airpay-dash__deadline-item:hover { background: #f0f4f9; }
+.airpay-dash__deadline-item--urgent {
+    background: #fef2f2;
+    border-color: #fecaca;
+}
+.airpay-dash__deadline-item--urgent:hover { background: #fee2e2; }
+.airpay-dash__deadline-icon {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: #e8f2f9;
+    display: flex; align-items: center; justify-content: center;
+    color: #0066A7; font-size: 0.9rem;
+    flex-shrink: 0;
+}
+.airpay-dash__deadline-item--urgent .airpay-dash__deadline-icon {
+    background: #fee2e2; color: #dc2626;
+}
+.airpay-dash__deadline-info {
+    flex: 1; display: flex; flex-direction: column; gap: 2px;
+}
+.airpay-dash__deadline-name {
+    font-size: 0.9rem; font-weight: 600; color: #1a1a2e;
+}
+.airpay-dash__deadline-date {
+    font-size: 0.8rem; color: #5a6070;
+}
+
+/* --- Activity Timeline --- */
+.airpay-dash__timeline {
+    display: flex; flex-direction: column; gap: 0;
+    position: relative;
+    padding-left: 20px;
+}
+.airpay-dash__timeline::before {
+    content: '';
+    position: absolute;
+    left: 5px; top: 8px; bottom: 8px;
+    width: 2px;
+    background: #e2e6ef;
+}
+.airpay-dash__timeline-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 8px 0;
+    position: relative;
+}
+.airpay-dash__timeline-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: #d1d5db;
+    border: 2px solid #fff;
+    position: absolute;
+    left: -20px; top: 12px;
+    z-index: 1;
+}
+.airpay-dash__timeline-dot--today {
+    background: #0066A7;
+    box-shadow: 0 0 0 3px rgba(0,102,167,0.2);
+}
+.airpay-dash__timeline-content {
+    display: flex; flex-direction: column; gap: 2px;
+}
+.airpay-dash__timeline-date {
+    font-size: 0.7rem; font-weight: 700;
+    color: #0066A7; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.airpay-dash__timeline-label {
+    font-size: 0.85rem; color: #374151; line-height: 1.4;
+}
+
+/* --- Achievements --- */
+.airpay-dash__achievements {
+    display: flex; flex-direction: column; gap: 10px;
+}
+.airpay-dash__achievement {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: #f8f9fc;
+    border: 1px solid #e2e6ef;
+}
+.airpay-dash__achievement-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; flex-shrink: 0;
+}
+.airpay-dash__achievement-icon--badge {
+    background: #fef3c7; color: #d97706;
+}
+.airpay-dash__achievement-icon--certificate {
+    background: #d1fae5; color: #16a34a;
+}
+.airpay-dash__achievement-info {
+    flex: 1; display: flex; flex-direction: column; gap: 2px;
+}
+.airpay-dash__achievement-title {
+    font-size: 0.9rem; font-weight: 600; color: #1a1a2e;
+}
+.airpay-dash__achievement-desc {
+    font-size: 0.8rem; color: #5a6070;
+}
+.airpay-dash__achievement-date {
+    font-size: 0.75rem; color: #9ca3af; white-space: nowrap;
+}
+
+/* --- Recommendations --- */
+.airpay-dash__recommendations {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+@media (max-width: 768px) {
+    .airpay-dash__recommendations { grid-template-columns: 1fr; }
+}
+.airpay-dash__rec-card {
+    display: flex; flex-direction: column;
+    border-radius: 12px; overflow: hidden;
+    border: 1px solid #e2e6ef;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.airpay-dash__rec-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,51,102,0.12);
+    text-decoration: none;
+}
+.airpay-dash__rec-header {
+    height: 90px;
+    background: linear-gradient(135deg, #0066A7 0%, #0f7a73 100%);
+    display: flex; align-items: flex-end; padding: 12px 16px;
+}
+.airpay-dash__rec-card:nth-child(2) .airpay-dash__rec-header {
+    background: linear-gradient(135deg, #0f7a73 0%, #059669 100%);
+}
+.airpay-dash__rec-card:nth-child(3) .airpay-dash__rec-header {
+    background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+}
+.airpay-dash__rec-category {
+    font-size: 0.7rem; font-weight: 600;
+    color: #fff; text-transform: uppercase; letter-spacing: 0.5px;
+    background: rgba(255,255,255,0.2);
+    padding: 3px 10px; border-radius: 12px;
+}
+.airpay-dash__rec-body {
+    padding: 14px 16px; background: #fff; flex: 1;
+    display: flex; flex-direction: column; gap: 6px;
+}
+.airpay-dash__rec-title {
+    font-size: 0.95rem; font-weight: 600; color: #1a1a2e;
+    margin: 0;
+}
+.airpay-dash__rec-summary {
+    font-size: 0.8rem; color: #5a6070; margin: 0; line-height: 1.4;
+}
+.airpay-dash__rec-action {
+    font-size: 0.8rem; font-weight: 600; color: #0066A7;
+    margin-top: auto; padding-top: 4px;
+    i { margin-left: 4px; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PROTOTYPE MATCH — Navbar Pill Navigation
+   ═══════════════════════════════════════════════════════════ */
+
+.airpay-nav__pills {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 16px;
+}
+.airpay-nav__pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 7px 18px;
+    border-radius: 20px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #5a6070;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+.airpay-nav__pill:hover {
+    background: #e8f2f9;
+    color: #0066A7;
+    text-decoration: none;
+}
+/* Active state detection via body path classes */
+.pagelayout-mydashboard .airpay-nav__pill--dashboard,
+.path-my:not(.path-my-courses) .airpay-nav__pill--dashboard,
+.path-my-courses .airpay-nav__pill--courses,
+.path-local-search .airpay-nav__pill--catalog,
+.path-local-users .airpay-nav__pill--profile {
+    background: #0066A7;
+    color: #fff;
+}
+.pagelayout-mydashboard .airpay-nav__pill--dashboard:hover,
+.path-my-courses .airpay-nav__pill--courses:hover,
+.path-local-search .airpay-nav__pill--catalog:hover,
+.path-local-users .airpay-nav__pill--profile:hover {
+    background: #004d80;
+    color: #fff;
+}
+
+/* Dark mode toggle button */
+.airpay-nav__theme-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid #e2e6ef;
+    background: #fff;
+    color: #5a6070;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin: 0 4px;
+}
+.airpay-nav__theme-toggle:hover {
+    background: #e8f2f9;
+    color: #0066A7;
+    border-color: #0066A7;
+}
+body.dark-mode .airpay-nav__theme-toggle {
+    background: #232733;
+    border-color: #3d4254;
+    color: #fcd34d;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PROTOTYPE MATCH — Footer 4-Column Layout
+   ═══════════════════════════════════════════════════════════ */
+
+.airpay-footer {
+    background: #1a1d27;
+    color: #c4cad8;
+    padding: 48px 32px 0;
+}
+.airpay-footer__grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 32px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-bottom: 32px;
+    border-bottom: 1px solid #2d3140;
+}
+@media (max-width: 768px) {
+    .airpay-footer__grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+    }
+}
+@media (max-width: 480px) {
+    .airpay-footer__grid { grid-template-columns: 1fr; }
+}
+.airpay-footer__brand-desc {
+    font-size: 0.85rem;
+    color: #9ca3b4;
+    line-height: 1.6;
+    margin-top: 12px;
+}
+.airpay-footer__heading {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #fff;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.airpay-footer__links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.airpay-footer__links li {
+    margin-bottom: 8px;
+}
+.airpay-footer__links a {
+    color: #9ca3b4;
+    font-size: 0.85rem;
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+.airpay-footer__links a:hover {
+    color: #fff;
+}
+.airpay-footer__bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 32px;
+    max-width: 1200px;
+    margin: 0 auto;
+    font-size: 0.8rem;
+    color: #6b7280;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.airpay-footer__bottom a {
+    color: #9ca3b4;
+    text-decoration: none;
+}
+.airpay-footer__bottom a:hover { color: #fff; }
+.airpay-footer__social {
+    display: flex;
+    gap: 12px;
+}
+.airpay-footer__social a {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: #2d3140;
+    display: flex; align-items: center; justify-content: center;
+    color: #9ca3b4;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+.airpay-footer__social a:hover {
+    background: #0066A7;
+    color: #fff;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PROTOTYPE MATCH — Login Stats Bar + Legal Links
+   ═══════════════════════════════════════════════════════════ */
+
+.airpay-login__hero-stats {
+    display: flex;
+    gap: 0;
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.15);
+    padding: 16px;
+    margin-top: 20px;
+    backdrop-filter: blur(4px);
+}
+.airpay-login__hero-stat {
+    flex: 1;
+    text-align: center;
+    padding: 0 12px;
+    border-right: 1px solid rgba(255,255,255,0.15);
+    &:last-child { border-right: none; }
+    strong {
+        display: block;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #fff;
+        line-height: 1.2;
+    }
+    span {
+        font-size: 0.7rem;
+        color: rgba(255,255,255,0.7);
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+}
+.airpay-login__legal {
+    text-align: center;
+    padding-top: 16px;
+    margin-top: 16px;
+    border-top: 1px solid #e2e6ef;
+    font-size: 0.8rem;
+    color: #9ca3af;
+    a { color: #5a6070; text-decoration: none; }
+    a:hover { color: #0066A7; }
+    span { margin: 0 8px; }
+}
+@media (max-width: 590px) {
+    .airpay-login__hero-stats { display: none; }
+}

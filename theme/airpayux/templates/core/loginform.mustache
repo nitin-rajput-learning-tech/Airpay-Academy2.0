@@ -75,6 +75,22 @@
                 </div>
             </div>
 
+            {{! Stats bar }}
+            <div class="airpay-login__hero-stats">
+                <div class="airpay-login__hero-stat">
+                    <strong>500+</strong>
+                    <span>Active Learners</span>
+                </div>
+                <div class="airpay-login__hero-stat">
+                    <strong>50+</strong>
+                    <span>Courses</span>
+                </div>
+                <div class="airpay-login__hero-stat">
+                    <strong>98%</strong>
+                    <span>Completion Rate</span>
+                </div>
+            </div>
+
             {{! Social icons }}
             <div class="airpay-login__hero-social">
                 {{{ output.footer_social_icons }}}
@@ -192,6 +208,13 @@
                     <a href="{{signupurl}}">{{#str}}tocreatenewaccount{{/str}}</a>
                 </div>
             {{/cansignup}}
+
+            {{! Privacy + Terms links }}
+            <div class="airpay-login__legal">
+                <a href="#">Privacy Policy</a>
+                <span>&middot;</span>
+                <a href="#">Terms of Use</a>
+            </div>
         </div>
     </div>
 </div>

@@ -144,6 +144,180 @@ if (isloggedin() && !isguestuser()) {
     } catch (Exception $e) {
         $airpay_dashboard['stats']['certificates'] = 0;
     }
+
+    // --- Section: Upcoming Deadlines ---
+    try {
+        $deadlines = [];
+        $now = time();
+        $enrolledids = array_keys($enrolledcourses ?? []);
+        if (!empty($enrolledids)) {
+            [$insql, $params] = $DB->get_in_or_equal($enrolledids, SQL_PARAMS_NAMED, 'cid');
+            $params['uid'] = $USER->id;
+            $params['now'] = $now;
+            $deadlinerecords = $DB->get_records_sql(
+                "SELECT c.id, c.fullname, c.shortname, c.enddate
+                   FROM {course} c
+                  WHERE c.id $insql
+                    AND c.enddate > :now
+                    AND c.id NOT IN (
+                        SELECT cc.course FROM {course_completions} cc
+                         WHERE cc.userid = :uid AND cc.timecompleted IS NOT NULL
+                    )
+               ORDER BY c.enddate ASC",
+                $params, 0, 5
+            );
+            foreach ($deadlinerecords as $dl) {
+                $deadlines[] = [
+                    'coursename' => format_string($dl->fullname),
+                    'duedate' => userdate($dl->enddate, get_string('strftimedatefull')),
+                    'duetimestamp' => $dl->enddate,
+                    'urgent' => ($dl->enddate - $now) < (7 * 86400),
+                    'viewurl' => (new moodle_url('/course/view.php', ['id' => $dl->id]))->out(false),
+                ];
+            }
+        }
+        $airpay_dashboard['deadlines'] = $deadlines;
+        $airpay_dashboard['hasdeadlines'] = count($deadlines) > 0;
+    } catch (Exception $e) {
+        $airpay_dashboard['hasdeadlines'] = false;
+    }
+
+    // --- Section: Recent Achievements (badges + certificates) ---
+    try {
+        $achievements = [];
+        // Badges
+        if (function_exists('badges_get_user_badges')) {
+            $badges = badges_get_user_badges($USER->id, 0, 0, 5);
+            foreach ($badges as $badge) {
+                $achievements[] = [
+                    'title' => format_string($badge->name),
+                    'description' => format_string($badge->description),
+                    'date' => userdate($badge->dateissued, get_string('strftimedatefull')),
+                    'timestamp' => $badge->dateissued,
+                    'type' => 'badge',
+                    'icon' => 'star',
+                ];
+            }
+        }
+        // Certificates
+        $certs = $DB->get_records_sql(
+            "SELECT ci.id, ci.timecreated, ci.code, ct.name as templatename, c.fullname as coursename
+               FROM {tool_certificate_issues} ci
+          LEFT JOIN {tool_certificate_templates} ct ON ct.id = ci.templateid
+          LEFT JOIN {course} c ON c.id = ci.courseid
+              WHERE ci.userid = :uid AND ci.archived = 0
+           ORDER BY ci.timecreated DESC",
+            ['uid' => $USER->id], 0, 5
+        );
+        foreach ($certs as $cert) {
+            $achievements[] = [
+                'title' => format_string($cert->coursename ?? $cert->templatename ?? 'Certificate'),
+                'description' => 'Certificate earned — Code: ' . s($cert->code),
+                'date' => userdate($cert->timecreated, get_string('strftimedatefull')),
+                'timestamp' => $cert->timecreated,
+                'type' => 'certificate',
+                'icon' => 'certificate',
+            ];
+        }
+        // Sort by timestamp descending
+        usort($achievements, function($a, $b) { return $b['timestamp'] - $a['timestamp']; });
+        $airpay_dashboard['achievements'] = array_slice($achievements, 0, 5);
+        $airpay_dashboard['hasachievements'] = count($achievements) > 0;
+    } catch (Exception $e) {
+        $airpay_dashboard['hasachievements'] = false;
+    }
+
+    // --- Section: Activity Timeline ---
+    try {
+        $timeline = [];
+        $logs = $DB->get_records_sql(
+            "SELECT id, eventname, timecreated, other, courseid
+               FROM {logstore_standard_log}
+              WHERE userid = :uid
+                AND eventname IN (
+                    '\\\\core\\\\event\\\\course_completed',
+                    '\\\\core\\\\event\\\\user_enrolment_created',
+                    '\\\\core\\\\event\\\\badge_awarded',
+                    '\\\\mod_quiz\\\\event\\\\attempt_submitted'
+                )
+           ORDER BY timecreated DESC",
+            ['uid' => $USER->id], 0, 15
+        );
+        foreach ($logs as $log) {
+            $coursename = '';
+            if ($log->courseid > 1) {
+                $coursename = $DB->get_field('course', 'fullname', ['id' => $log->courseid]);
+            }
+            $label = '';
+            switch ($log->eventname) {
+                case '\\core\\event\\course_completed':
+                    $label = 'Completed ' . format_string($coursename);
+                    break;
+                case '\\core\\event\\user_enrolment_created':
+                    $label = 'Enrolled in ' . format_string($coursename);
+                    break;
+                case '\\core\\event\\badge_awarded':
+                    $label = 'Earned a badge';
+                    break;
+                case '\\mod_quiz\\event\\attempt_submitted':
+                    $label = 'Submitted quiz in ' . format_string($coursename);
+                    break;
+                default:
+                    $label = 'Activity recorded';
+            }
+            $timeline[] = [
+                'label' => $label,
+                'date' => userdate($log->timecreated, '%b %d'),
+                'fulldate' => userdate($log->timecreated, get_string('strftimedatefull')),
+                'istoday' => (date('Ymd', $log->timecreated) === date('Ymd')),
+            ];
+        }
+        $airpay_dashboard['timeline'] = $timeline;
+        $airpay_dashboard['hastimeline'] = count($timeline) > 0;
+    } catch (Exception $e) {
+        $airpay_dashboard['hastimeline'] = false;
+    }
+
+    // --- Section: Recommended for You ---
+    try {
+        $recommendations = [];
+        $enrolledids = array_keys($enrolledcourses ?? []);
+        if (!empty($enrolledids)) {
+            // Get categories of enrolled courses
+            $categories = $DB->get_fieldset_sql(
+                "SELECT DISTINCT category FROM {course} WHERE id IN (" .
+                implode(',', array_map('intval', $enrolledids)) . ")"
+            );
+            if (!empty($categories)) {
+                [$catsql, $catparams] = $DB->get_in_or_equal($categories, SQL_PARAMS_NAMED, 'cat');
+                [$exsql, $exparams] = $DB->get_in_or_equal($enrolledids, SQL_PARAMS_NAMED, 'ex', false);
+                $params = array_merge($catparams, $exparams);
+                $recs = $DB->get_records_sql(
+                    "SELECT c.id, c.fullname, c.summary, c.category
+                       FROM {course} c
+                      WHERE c.category $catsql
+                        AND c.id $exsql
+                        AND c.visible = 1 AND c.id > 1
+                   ORDER BY c.timecreated DESC",
+                    $params, 0, 3
+                );
+                foreach ($recs as $rec) {
+                    $catname = $DB->get_field('course_categories', 'name', ['id' => $rec->category]);
+                    $recommendations[] = [
+                        'id' => $rec->id,
+                        'fullname' => format_string($rec->fullname),
+                        'summary' => shorten_text(strip_tags(format_string($rec->summary)), 80),
+                        'category' => format_string($catname),
+                        'viewurl' => (new moodle_url('/course/view.php', ['id' => $rec->id]))->out(false),
+                    ];
+                }
+            }
+        }
+        $airpay_dashboard['recommendations'] = $recommendations;
+        $airpay_dashboard['hasrecommendations'] = count($recommendations) > 0;
+    } catch (Exception $e) {
+        $airpay_dashboard['hasrecommendations'] = false;
+    }
 }
 
 $templatecontext = [
