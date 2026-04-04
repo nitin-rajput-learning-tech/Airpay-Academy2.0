@@ -83,9 +83,15 @@ if (isloggedin() && !isguestuser()) {
     $airpay_dashboard['firstname'] = $USER->firstname ?? 'Learner';
 
     // --- Role detection ---
+    // Siteadmin: only true site administrators (not managers with admin capabilities)
+    // Manager: has system-level manager role but is NOT siteadmin
+    // Learner: everyone else
     $systemcontext = context_system::instance();
-    $isadmin = is_siteadmin() || has_capability('local/courses:manage', $systemcontext);
-    $ismanager = !$isadmin && has_capability('moodle/site:viewreports', $systemcontext);
+    $isadmin = is_siteadmin();
+    $ismanager = !$isadmin && (
+        has_capability('moodle/site:viewreports', $systemcontext) ||
+        has_capability('local/courses:manage', $systemcontext)
+    );
     $islearner = !$isadmin && !$ismanager;
     $airpay_dashboard['isadmin'] = $isadmin;
     $airpay_dashboard['islearner'] = !$isadmin; // Managers ALSO see learner sections.
