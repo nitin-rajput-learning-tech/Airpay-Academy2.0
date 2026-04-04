@@ -85,9 +85,10 @@ if (isloggedin() && !isguestuser()) {
     // --- Role detection ---
     $systemcontext = context_system::instance();
     $isadmin = is_siteadmin() || has_capability('local/courses:manage', $systemcontext);
-    $ismanager = has_capability('moodle/site:viewreports', $systemcontext) && !$isadmin;
+    $ismanager = !$isadmin && has_capability('moodle/site:viewreports', $systemcontext);
+    $islearner = !$isadmin && !$ismanager;
     $airpay_dashboard['isadmin'] = $isadmin;
-    $airpay_dashboard['islearner'] = !$isadmin;
+    $airpay_dashboard['islearner'] = !$isadmin; // Managers ALSO see learner sections.
     $airpay_dashboard['ismanager'] = $ismanager;
 
     if ($isadmin) {
@@ -281,6 +282,59 @@ if (isloggedin() && !isguestuser()) {
         $airpay_dashboard['stats']['certificates'] = $certcount;
     } catch (Exception $e) {
         $airpay_dashboard['stats']['certificates'] = 0;
+    }
+
+    // --- Section: Manager Team Overview (only for managers) ---
+    if ($ismanager) {
+        try {
+            $teammembers = $DB->get_records_sql(
+                "SELECT u.id, u.firstname, u.lastname, u.lastaccess
+                   FROM {user} u
+                  WHERE u.open_supervisorid = :mgrid
+                    AND u.deleted = 0 AND u.suspended = 0
+               ORDER BY u.lastname ASC",
+                ['mgrid' => $USER->id]
+            );
+
+            $teamcompliancelist = [];
+            $teamenrolled = 0;
+            $teamcompleted = 0;
+
+            foreach ($teammembers as $member) {
+                $mcourses = enrol_get_all_users_courses($member->id, true);
+                $mtotal = count($mcourses);
+                $mdone = 0;
+                foreach ($mcourses as $mc) {
+                    $p = \core_completion\progress::get_course_progress_percentage($mc, $member->id);
+                    if ($p !== null && $p >= 100) { $mdone++; }
+                }
+                $teamenrolled += $mtotal;
+                $teamcompleted += $mdone;
+                $teamcompliancelist[] = [
+                    'name' => format_string($member->firstname . ' ' . $member->lastname),
+                    'enrolled' => $mtotal,
+                    'completed' => $mdone,
+                    'pending' => $mtotal - $mdone,
+                    'haspending' => ($mtotal - $mdone) > 0,
+                    'lastaccess' => $member->lastaccess > 0
+                        ? userdate($member->lastaccess, '%d %b %Y') : 'Never',
+                ];
+            }
+
+            $teamrate = ($teamenrolled > 0) ? round(($teamcompleted / $teamenrolled) * 100, 1) : 0;
+            $airpay_dashboard['manager_kpis'] = [
+                ['label' => 'Team Members', 'value' => count($teammembers), 'icon' => 'users', 'color' => 'primary'],
+                ['label' => 'Team Enrolments', 'value' => $teamenrolled, 'icon' => 'book', 'color' => 'accent'],
+                ['label' => 'Completions', 'value' => $teamcompleted, 'icon' => 'check-circle', 'color' => 'success'],
+                ['label' => 'Completion Rate', 'value' => $teamrate . '%', 'icon' => 'line-chart', 'color' => 'gold'],
+            ];
+            $airpay_dashboard['hasmanagerkpis'] = count($teammembers) > 0;
+            $airpay_dashboard['teamcompliance'] = $teamcompliancelist;
+            $airpay_dashboard['hasteamcompliance'] = count($teamcompliancelist) > 0;
+        } catch (Exception $e) {
+            $airpay_dashboard['hasmanagerkpis'] = false;
+            $airpay_dashboard['hasteamcompliance'] = false;
+        }
     }
 
     // --- Section: Upcoming Deadlines ---

@@ -78,10 +78,16 @@
                     <h2 class="airpay-dash__welcome-title">Welcome, {{firstname}} <span>👋</span></h2>
                     <p class="airpay-dash__welcome-sub">Platform overview and administration</p>
                     {{/isadmin}}
+                    {{#ismanager}}
+                    <h2 class="airpay-dash__welcome-title">Welcome, {{firstname}} <span>👋</span></h2>
+                    <p class="airpay-dash__welcome-sub">Team overview and your learning progress</p>
+                    {{/ismanager}}
+                    {{^ismanager}}
                     {{#islearner}}
                     <h2 class="airpay-dash__welcome-title">Welcome back, {{firstname}}! <span>👋</span></h2>
                     <p class="airpay-dash__welcome-sub">Continue where you left off and keep building your skills</p>
                     {{/islearner}}
+                    {{/ismanager}}
                 </div>
                 <div class="airpay-dash__welcome-actions">
                     {{#isadmin}}
@@ -223,7 +229,59 @@
 
             {{/isadmin}}
 
-            {{! ═══ LEARNER DASHBOARD (employees, external learners) ═══ }}
+            {{! ═══ MANAGER TEAM SECTION (managers only — shown above learner content) ═══ }}
+            {{#ismanager}}
+
+            {{! Manager KPI tiles }}
+            {{#hasmanagerkpis}}
+            <div class="airpay-dash__section" style="margin-bottom: 20px;">
+                <h3 class="airpay-dash__section-title"><i class="fa fa-users"></i> My Team</h3>
+                <div class="airpay-dash__stats">
+                    {{#manager_kpis}}
+                    <div class="airpay-dash__stat airpay-dash__stat--{{color}}">
+                        <div class="airpay-dash__stat-icon"><i class="fa fa-{{icon}}"></i></div>
+                        <div class="airpay-dash__stat-data">
+                            <span class="airpay-dash__stat-num">{{value}}</span>
+                            <span class="airpay-dash__stat-label">{{label}}</span>
+                        </div>
+                    </div>
+                    {{/manager_kpis}}
+                </div>
+            </div>
+            {{/hasmanagerkpis}}
+
+            {{! Team Compliance Table }}
+            {{#hasteamcompliance}}
+            <div class="airpay-dash__section" style="margin-bottom: 20px;">
+                <h3 class="airpay-dash__section-title"><i class="fa fa-shield"></i> Team Compliance</h3>
+                <table class="generaltable airpay-dash__team-table">
+                    <thead>
+                        <tr>
+                            <th>Team Member</th>
+                            <th>Enrolled</th>
+                            <th>Completed</th>
+                            <th>Pending</th>
+                            <th>Last Active</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#teamcompliance}}
+                        <tr>
+                            <td><strong>{{name}}</strong></td>
+                            <td>{{enrolled}}</td>
+                            <td>{{completed}}</td>
+                            <td>{{#haspending}}<span style="color: #dc2626; font-weight: 600;">{{pending}}</span>{{/haspending}}{{^haspending}}<span style="color: #16a34a;">0</span>{{/haspending}}</td>
+                            <td>{{lastaccess}}</td>
+                        </tr>
+                        {{/teamcompliance}}
+                    </tbody>
+                </table>
+            </div>
+            {{/hasteamcompliance}}
+
+            {{/ismanager}}
+
+            {{! ═══ LEARNER DASHBOARD (employees, managers own learning, external learners) ═══ }}
             {{#islearner}}
 
             {{! Stat Cards }}
