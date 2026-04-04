@@ -73,12 +73,14 @@
         {{/ output.should_display_navbar_logo }}
     </a>
 
-    {{! Pill Navigation }}
+    {{! Pill Navigation — admin sees Dashboard only, learners see all 4 }}
     <div class="airpay-nav__pills d-none d-md-flex">
         <a href="{{{config.wwwroot}}}/my/" class="airpay-nav__pill airpay-nav__pill--dashboard">Dashboard</a>
+        {{^output.is_admin_or_manager}}
         <a href="{{{config.wwwroot}}}/my/courses.php" class="airpay-nav__pill airpay-nav__pill--courses">My Courses</a>
         <a href="{{{config.wwwroot}}}/local/search/allcourses.php" class="airpay-nav__pill airpay-nav__pill--catalog">Catalog</a>
         <a href="{{{config.wwwroot}}}/local/users/profile.php" class="airpay-nav__pill airpay-nav__pill--profile">Profile</a>
+        {{/output.is_admin_or_manager}}
     </div>
 
     {{! Right: Search + Quick Access + Plugins + User menu }}

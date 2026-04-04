@@ -6667,3 +6667,109 @@ body.dark-mode .airpay-nav__theme-toggle {
     text-transform: uppercase;
     letter-spacing: 0.3px;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   NAVBAR ICON NORMALIZATION
+   All action icons → consistent 40x40 circles
+   ═══════════════════════════════════════════════════════════ */
+
+#usernavigation {
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+/* Normalize ALL nav action icon containers */
+#usernavigation .popover-region-toggle,
+#usernavigation .nav-link.icon-no-margin,
+#usernavigation .nav-link {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    background: #f3f4f6;
+    border: 1px solid #e2e6ef;
+    transition: all 0.2s ease;
+    position: relative;
+}
+#usernavigation .popover-region-toggle:hover,
+#usernavigation .nav-link:hover {
+    background: #e8f2f9;
+    border-color: #0066A7;
+}
+/* Icon inside */
+#usernavigation .popover-region-toggle .icon,
+#usernavigation .nav-link .icon {
+    margin: 0 !important;
+    font-size: 1rem;
+    color: #374151;
+}
+
+/* Cart button (different structure) */
+#usernavigation .btn.btn-link {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    background: #f3f4f6;
+    border: 1px solid #e2e6ef !important;
+}
+
+/* User menu — fix the dropdown trigger */
+#usernavigation .usermenu-container {
+    height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+#usernavigation .usermenu-container .usermenu {
+    display: flex;
+    align-items: center;
+}
+#usernavigation .usermenu-container .menubar {
+    display: flex !important;
+    align-items: center !important;
+}
+/* User avatar circle */
+#usernavigation .userinitials {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 0.85rem !important;
+    font-weight: 700;
+    background: #0066A7 !important;
+    color: #fff !important;
+    cursor: pointer;
+}
+/* Dropdown chevron */
+#usernavigation .usermenu .dropdown-toggle::after,
+#usernavigation .usermenu-container .action-menu .toggle-display {
+    display: inline-flex !important;
+    align-items: center;
+    margin-left: 4px;
+    color: #5a6070;
+}
+/* Make the entire user area clickable */
+#usernavigation .usermenu-container .action-menu {
+    display: flex !important;
+    align-items: center !important;
+    cursor: pointer;
+}
+
+/* Dark mode toggle — already styled, just ensure consistent size */
+.airpay-nav__theme-toggle {
+    width: 40px !important;
+    height: 40px !important;
+}
+
+/* Search bar — don't let it eat the nav space */
+.airpay-nav__search {
+    max-width: 220px;
+}
