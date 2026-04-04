@@ -109,6 +109,15 @@
                 </div>
             </div>
 
+            {{! Hide Moodle blocks (Timeline, Calendar, Recently accessed) for admin view }}
+            {{#isadmin}}
+            <style>
+                .block_recentlyaccesseditems,
+                .block_timeline,
+                .block_calendar_month { display: none !important; }
+            </style>
+            {{/isadmin}}
+
             {{! ═══ ADMIN DASHBOARD (siteadmin / L&D admin) ═══ }}
             {{#isadmin}}
 
