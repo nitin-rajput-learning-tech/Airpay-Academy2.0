@@ -82,20 +82,23 @@ if (isloggedin() && !isguestuser()) {
     // Get user's first name for greeting.
     $airpay_dashboard['firstname'] = $USER->firstname ?? 'Learner';
 
-    // --- Role detection ---
-    // Siteadmin: only true site administrators (not managers with admin capabilities)
-    // Manager: has system-level manager role but is NOT siteadmin
-    // Learner: everyone else
+    // --- Role detection (4 tiers) ---
+    // Siteadmin: is_siteadmin() — sees everything including System Health
+    // L&D Admin: has local/courses:manage but is NOT siteadmin — sees admin dashboard without System Health
+    // Manager: has moodle/site:viewreports but NOT local/courses:manage — sees team + learner
+    // Learner: everyone else — sees learner dashboard only
     $systemcontext = context_system::instance();
-    $isadmin = is_siteadmin();
-    $ismanager = !$isadmin && (
-        has_capability('moodle/site:viewreports', $systemcontext) ||
-        has_capability('local/courses:manage', $systemcontext)
-    );
+    $issiteadmin = is_siteadmin();
+    $isldadmin = !$issiteadmin && has_capability('local/courses:manage', $systemcontext);
+    $isadmin = $issiteadmin || $isldadmin; // Both get admin dashboard
+    $ismanager = !$isadmin && has_capability('moodle/site:viewreports', $systemcontext);
     $islearner = !$isadmin && !$ismanager;
-    $airpay_dashboard['isadmin'] = $isadmin;
-    $airpay_dashboard['islearner'] = !$isadmin; // Managers ALSO see learner sections.
-    $airpay_dashboard['ismanager'] = $ismanager;
+
+    $airpay_dashboard['issiteadmin'] = $issiteadmin; // System Health only
+    $airpay_dashboard['isadmin'] = $isadmin;          // Admin dashboard (KPIs, charts, quick nav)
+    $airpay_dashboard['isldadmin'] = $isldadmin;      // L&D admin (admin dash without system health)
+    $airpay_dashboard['ismanager'] = $ismanager;       // Team + learner
+    $airpay_dashboard['islearner'] = !$isadmin;        // Managers + learners see learner sections
 
     if ($isadmin) {
         // ═══════════════════════════════════════════════════════════

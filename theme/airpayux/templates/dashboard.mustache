@@ -155,7 +155,8 @@
 
             {{! System Health + User Analytics (two-column) }}
             <div class="airpay-dash__two-col">
-                {{! System Health }}
+                {{! System Health — siteadmin ONLY, not L&D admin }}
+                {{#issiteadmin}}
                 {{#hassystemhealth}}
                 <div class="airpay-dash__section">
                     <h3 class="airpay-dash__section-title"><i class="fa fa-heartbeat"></i> System Health</h3>
@@ -172,6 +173,7 @@
                     </div>
                 </div>
                 {{/hassystemhealth}}
+                {{/issiteadmin}}
 
                 {{! User Analytics }}
                 {{#hasuseranalytics}}

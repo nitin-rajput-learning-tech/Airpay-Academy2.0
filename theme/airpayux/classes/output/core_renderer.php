@@ -690,10 +690,15 @@ class core_renderer extends \core_renderer {
         }
     }
 
-    /** Check if current user has admin/manager capabilities (for footer Admin column). */
+    /** Check if current user has admin/manager capabilities (for footer, nav filtering). */
     public function is_admin_or_manager() {
         $context = \context_system::instance();
         return has_capability('local/courses:manage', $context) || is_siteadmin();
+    }
+
+    /** Check if current user is siteadmin only (not manager with admin caps). */
+    public function is_siteadmin_only() {
+        return is_siteadmin();
     }
 
     /** Live completion rate for login hero. */

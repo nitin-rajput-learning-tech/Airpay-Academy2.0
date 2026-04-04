@@ -73,14 +73,20 @@
         {{/ output.should_display_navbar_logo }}
     </a>
 
-    {{! Pill Navigation — admin sees Dashboard only, learners see all 4 }}
+    {{! Pill Navigation — siteadmin: Dashboard only. Everyone else: all 4. Guest: no Dashboard. }}
     <div class="airpay-nav__pills d-none d-md-flex">
+        {{#isloggedin}}
         <a href="{{{config.wwwroot}}}/my/" class="airpay-nav__pill airpay-nav__pill--dashboard">Dashboard</a>
-        {{^output.is_admin_or_manager}}
+        {{/isloggedin}}
+        {{^output.is_siteadmin_only}}
+        {{#isloggedin}}
         <a href="{{{config.wwwroot}}}/my/courses.php" class="airpay-nav__pill airpay-nav__pill--courses">My Courses</a>
+        {{/isloggedin}}
         <a href="{{{config.wwwroot}}}/local/search/allcourses.php" class="airpay-nav__pill airpay-nav__pill--catalog">Catalog</a>
+        {{#isloggedin}}
         <a href="{{{config.wwwroot}}}/local/users/profile.php" class="airpay-nav__pill airpay-nav__pill--profile">Profile</a>
-        {{/output.is_admin_or_manager}}
+        {{/isloggedin}}
+        {{/output.is_siteadmin_only}}
     </div>
 
     {{! Right: Search + Quick Access + Plugins + User menu }}
