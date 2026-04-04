@@ -155,13 +155,32 @@ if (isloggedin() && !isguestuser()) {
             $airpay_dashboard['chart_pie_data'] = json_encode($pieData);
             $airpay_dashboard['hascharts'] = true;
 
-            // Quick navigation links.
+            // Quick navigation links with live stats.
+            $activeusers = $DB->count_records_select('user', 'deleted = 0 AND suspended = 0 AND lastaccess > :t', ['t' => time() - (30 * 86400)]);
+            $inactiveusers = $totalusers - $activeusers;
+            $classroomcount = $DB->count_records_select('local_classroom', '1=1');
+            $examcount = 0;
+            try { $examcount = $DB->count_records('local_onlineexams'); } catch (Exception $e) {}
+
             $airpay_dashboard['admin_quicknav'] = [
-                ['label' => 'Manage Users', 'icon' => 'users', 'url' => (new moodle_url('/local/users/index.php'))->out(false), 'color' => '#0066A7'],
-                ['label' => 'Manage Courses', 'icon' => 'book', 'url' => (new moodle_url('/local/courses/courses.php'))->out(false), 'color' => '#0f7a73'],
+                ['label' => 'Manage Users', 'icon' => 'users', 'url' => (new moodle_url('/local/users/index.php'))->out(false), 'color' => '#0066A7',
+                 'hasstats' => true, 'stats' => [
+                    ['statval' => $totalusers, 'statlabel' => 'Total'],
+                    ['statval' => $activeusers, 'statlabel' => 'Active'],
+                    ['statval' => $inactiveusers, 'statlabel' => 'Inactive'],
+                ]],
+                ['label' => 'Manage Courses', 'icon' => 'book', 'url' => (new moodle_url('/local/courses/courses.php'))->out(false), 'color' => '#0f7a73',
+                 'hasstats' => true, 'stats' => [
+                    ['statval' => $totalcourses, 'statlabel' => 'Total'],
+                    ['statval' => number_format($totalenrolments), 'statlabel' => 'Enrolments'],
+                    ['statval' => number_format($totalcompleted), 'statlabel' => 'Completions'],
+                ]],
                 ['label' => 'Reports', 'icon' => 'bar-chart', 'url' => (new moodle_url('/blocks/learnerscript/viewreport.php'))->out(false), 'color' => '#7c3aed'],
                 ['label' => 'Online Exams', 'icon' => 'pencil-square-o', 'url' => (new moodle_url('/local/onlineexams/index.php'))->out(false), 'color' => '#d97706'],
-                ['label' => 'Classrooms', 'icon' => 'calendar', 'url' => (new moodle_url('/local/classroom/index.php'))->out(false), 'color' => '#dc2626'],
+                ['label' => 'Classrooms', 'icon' => 'calendar', 'url' => (new moodle_url('/local/classroom/index.php'))->out(false), 'color' => '#dc2626',
+                 'hasstats' => ($classroomcount > 0), 'stats' => [
+                    ['statval' => $classroomcount, 'statlabel' => 'Total'],
+                ]],
                 ['label' => 'Site Settings', 'icon' => 'cog', 'url' => (new moodle_url('/admin/index.php'))->out(false), 'color' => '#6b7280'],
             ];
             $airpay_dashboard['hasquicknav'] = true;

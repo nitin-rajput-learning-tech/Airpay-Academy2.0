@@ -6567,3 +6567,26 @@ body.dark-mode .airpay-nav__theme-toggle {
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
+/* Hide 0-count notification badges — BizLMS overrides .hidden display */
+.count-container.hidden {
+    display: none !important;
+}
+
+/* Quick nav cards with stats */
+.airpay-dash__quicknav-stats {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+    font-size: 0.75rem;
+    color: #5a6070;
+}
+.airpay-dash__quicknav-stat {
+    text-align: center;
+}
+.airpay-dash__quicknav-stat strong {
+    display: block;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1a1a2e;
+}

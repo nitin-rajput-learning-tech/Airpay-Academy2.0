@@ -71,43 +71,29 @@
         {{#airpay}}
         <div class="airpay-dash">
 
-            {{! Welcome Banner — role-specific text and actions }}
+            {{! Welcome Banner — NOT shown for admin (they have KPIs + Quick Nav) }}
+            {{^isadmin}}
             <div class="airpay-dash__welcome">
                 <div class="airpay-dash__welcome-content">
-                    {{#isadmin}}
-                    <h2 class="airpay-dash__welcome-title">Welcome, {{firstname}} <span>👋</span></h2>
-                    <p class="airpay-dash__welcome-sub">Platform overview and administration</p>
-                    {{/isadmin}}
                     {{#ismanager}}
                     <h2 class="airpay-dash__welcome-title">Welcome, {{firstname}} <span>👋</span></h2>
                     <p class="airpay-dash__welcome-sub">Team overview and your learning progress</p>
                     {{/ismanager}}
                     {{^ismanager}}
-                    {{#islearner}}
                     <h2 class="airpay-dash__welcome-title">Welcome back, {{firstname}}! <span>👋</span></h2>
                     <p class="airpay-dash__welcome-sub">Continue where you left off and keep building your skills</p>
-                    {{/islearner}}
                     {{/ismanager}}
                 </div>
                 <div class="airpay-dash__welcome-actions">
-                    {{#isadmin}}
-                    <a href="{{{config.wwwroot}}}/local/users/index.php" class="airpay-dash__welcome-btn airpay-dash__welcome-btn--primary">
-                        <i class="fa fa-users"></i> Manage Users
-                    </a>
-                    <a href="{{{config.wwwroot}}}/local/courses/courses.php" class="airpay-dash__welcome-btn airpay-dash__welcome-btn--outline">
-                        <i class="fa fa-book"></i> Manage Courses
-                    </a>
-                    {{/isadmin}}
-                    {{#islearner}}
                     <a href="{{{config.wwwroot}}}/local/search/allcourses.php" class="airpay-dash__welcome-btn airpay-dash__welcome-btn--primary">
                         <i class="fa fa-compass"></i> Browse Courses
                     </a>
                     <a href="{{{config.wwwroot}}}/local/users/profile.php" class="airpay-dash__welcome-btn airpay-dash__welcome-btn--outline">
                         <i class="fa fa-user"></i> My Profile
                     </a>
-                    {{/islearner}}
                 </div>
             </div>
+            {{/isadmin}}
 
             {{! ═══ ADMIN DASHBOARD (siteadmin / L&D admin) ═══ }}
             {{#isadmin}}
@@ -137,6 +123,16 @@
                     <a href="{{url}}" class="airpay-dash__quicknav-card" style="border-top: 3px solid {{color}}">
                         <i class="fa fa-{{icon}}" style="color: {{color}}"></i>
                         <span>{{label}}</span>
+                        {{#hasstats}}
+                        <div class="airpay-dash__quicknav-stats">
+                            {{#stats}}
+                            <div class="airpay-dash__quicknav-stat">
+                                <strong>{{statval}}</strong>
+                                {{statlabel}}
+                            </div>
+                            {{/stats}}
+                        </div>
+                        {{/hasstats}}
                     </a>
                     {{/admin_quicknav}}
                 </div>
