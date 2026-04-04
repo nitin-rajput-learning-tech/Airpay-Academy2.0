@@ -61,8 +61,8 @@
             </ul>
         </div>
 
-        {{! Col 3: Admin (logged-in only) }}
-        {{#isloggedin}}
+        {{! Col 3: Admin (capability-gated — only admin/manager roles) }}
+        {{#output.is_admin_or_manager}}
         <div class="airpay-footer__col">
             <h4 class="airpay-footer__heading">Admin</h4>
             <ul class="airpay-footer__links">
@@ -72,7 +72,7 @@
                 <li><a href="{{{config.wwwroot}}}/admin/index.php">Settings</a></li>
             </ul>
         </div>
-        {{/isloggedin}}
+        {{/output.is_admin_or_manager}}
 
         {{! Col 4: Support }}
         <div class="airpay-footer__col">

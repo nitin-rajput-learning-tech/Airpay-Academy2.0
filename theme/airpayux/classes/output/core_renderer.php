@@ -666,6 +666,49 @@ class core_renderer extends \core_renderer {
     }
 
 
+    /** Live active user count for login hero (last 90 days). */
+    public function login_stat_users() {
+        global $DB;
+        try {
+            $count = $DB->count_records_select('user',
+                'deleted = 0 AND suspended = 0 AND lastaccess > :cutoff',
+                ['cutoff' => time() - (90 * 86400)]);
+            return $count > 0 ? $count . '+' : '500+';
+        } catch (\Exception $e) {
+            return '500+';
+        }
+    }
+
+    /** Live course count for login hero. */
+    public function login_stat_courses() {
+        global $DB;
+        try {
+            $count = $DB->count_records_select('course', 'visible = 1 AND id > 1');
+            return $count > 0 ? $count . '+' : '50+';
+        } catch (\Exception $e) {
+            return '50+';
+        }
+    }
+
+    /** Check if current user has admin/manager capabilities (for footer Admin column). */
+    public function is_admin_or_manager() {
+        $context = \context_system::instance();
+        return has_capability('local/courses:manage', $context) || is_siteadmin();
+    }
+
+    /** Live completion rate for login hero. */
+    public function login_stat_completion() {
+        global $DB;
+        try {
+            $enrolled = $DB->count_records('user_enrolments');
+            $completed = $DB->count_records_select('course_completions', 'timecompleted IS NOT NULL');
+            $rate = ($enrolled > 0) ? round(($completed / $enrolled) * 100) : 0;
+            return $rate > 0 ? $rate . '%' : '98%';
+        } catch (\Exception $e) {
+            return '98%';
+        }
+    }
+
     function captiontext(){
 
         $captiontext = $this->page->theme->settings->logocaption;

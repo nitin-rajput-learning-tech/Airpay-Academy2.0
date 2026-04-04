@@ -182,23 +182,9 @@ if (isloggedin() && !isguestuser()) {
         $airpay_dashboard['hasdeadlines'] = false;
     }
 
-    // --- Section: Recent Achievements (badges + certificates) ---
+    // --- Section: Recent Achievements (certificates only — badges not configured) ---
     try {
         $achievements = [];
-        // Badges
-        if (function_exists('badges_get_user_badges')) {
-            $badges = badges_get_user_badges($USER->id, 0, 0, 5);
-            foreach ($badges as $badge) {
-                $achievements[] = [
-                    'title' => format_string($badge->name),
-                    'description' => format_string($badge->description),
-                    'date' => userdate($badge->dateissued, get_string('strftimedatefull')),
-                    'timestamp' => $badge->dateissued,
-                    'type' => 'badge',
-                    'icon' => 'star',
-                ];
-            }
-        }
         // Certificates
         $certs = $DB->get_records_sql(
             "SELECT ci.id, ci.timecreated, ci.code, ct.name as templatename, c.fullname as coursename

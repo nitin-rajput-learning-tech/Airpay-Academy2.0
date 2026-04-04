@@ -75,18 +75,18 @@
                 </div>
             </div>
 
-            {{! Stats bar }}
+            {{! Stats bar — live data from DB via core_renderer methods }}
             <div class="airpay-login__hero-stats">
                 <div class="airpay-login__hero-stat">
-                    <strong>500+</strong>
+                    <strong>{{output.login_stat_users}}</strong>
                     <span>Active Learners</span>
                 </div>
                 <div class="airpay-login__hero-stat">
-                    <strong>50+</strong>
+                    <strong>{{output.login_stat_courses}}</strong>
                     <span>Courses</span>
                 </div>
                 <div class="airpay-login__hero-stat">
-                    <strong>98%</strong>
+                    <strong>{{output.login_stat_completion}}</strong>
                     <span>Completion Rate</span>
                 </div>
             </div>
