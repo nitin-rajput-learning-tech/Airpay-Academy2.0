@@ -79,8 +79,146 @@ $airpay_dashboard = [];
 if (isloggedin() && !isguestuser()) {
     global $DB, $USER;
 
-    // Get user's first name for greeting
+    // Get user's first name for greeting.
     $airpay_dashboard['firstname'] = $USER->firstname ?? 'Learner';
+
+    // --- Role detection ---
+    $systemcontext = context_system::instance();
+    $isadmin = is_siteadmin() || has_capability('local/courses:manage', $systemcontext);
+    $ismanager = has_capability('moodle/site:viewreports', $systemcontext) && !$isadmin;
+    $airpay_dashboard['isadmin'] = $isadmin;
+    $airpay_dashboard['islearner'] = !$isadmin;
+    $airpay_dashboard['ismanager'] = $ismanager;
+
+    if ($isadmin) {
+        // ═══════════════════════════════════════════════════════════
+        // ADMIN DASHBOARD — KPIs, charts, quick nav, activity feed
+        // ═══════════════════════════════════════════════════════════
+        try {
+            $totalusers = $DB->count_records_select('user', 'deleted = 0 AND suspended = 0 AND id > 1');
+            $activeusers = $DB->count_records_select('user',
+                'deleted = 0 AND suspended = 0 AND lastaccess > :cutoff',
+                ['cutoff' => time() - (30 * 86400)]);
+            $totalcourses = $DB->count_records_select('course', 'visible = 1 AND id > 1');
+            $totalenrolments = $DB->count_records('user_enrolments');
+            $totalcompleted = $DB->count_records_select('course_completions', 'timecompleted IS NOT NULL');
+            $completionrate = ($totalenrolments > 0) ? round(($totalcompleted / $totalenrolments) * 100, 1) : 0;
+
+            // Month-over-month trends.
+            $lastmonth = time() - (30 * 86400);
+            $prevmonth = time() - (60 * 86400);
+            $newusersthismonth = $DB->count_records_select('user',
+                'timecreated > :since AND deleted = 0', ['since' => $lastmonth]);
+            $newenrolmentsthisweek = $DB->count_records_select('user_enrolments',
+                'timestart > :since', ['since' => time() - (7 * 86400)]);
+
+            $airpay_dashboard['admin_kpis'] = [
+                ['label' => 'Total Users', 'value' => $totalusers, 'trend' => '+' . $newusersthismonth . ' this month', 'icon' => 'users', 'color' => 'primary'],
+                ['label' => 'Active Courses', 'value' => $totalcourses, 'trend' => '', 'icon' => 'book', 'color' => 'accent'],
+                ['label' => 'Enrolments', 'value' => number_format($totalenrolments), 'trend' => '+' . $newenrolmentsthisweek . ' this week', 'icon' => 'line-chart', 'color' => 'success'],
+                ['label' => 'Completion Rate', 'value' => $completionrate . '%', 'trend' => '', 'icon' => 'check-circle', 'color' => 'gold'],
+            ];
+            $airpay_dashboard['hasadminkpis'] = true;
+
+            // Enrollment data by month (last 6 months) for Chart.js.
+            $chartdata = [];
+            $chartlabels = [];
+            for ($i = 5; $i >= 0; $i--) {
+                $monthstart = strtotime("-$i months", strtotime('first day of this month'));
+                $monthend = strtotime("+1 month", $monthstart);
+                $monthname = date('M', $monthstart);
+                $count = $DB->count_records_select('user_enrolments',
+                    'timestart >= :start AND timestart < :end',
+                    ['start' => $monthstart, 'end' => $monthend]);
+                $chartlabels[] = $monthname;
+                $chartdata[] = $count;
+            }
+            $airpay_dashboard['chart_labels'] = json_encode($chartlabels);
+            $airpay_dashboard['chart_enrolments'] = json_encode($chartdata);
+
+            // Course distribution by category for pie chart.
+            $catdist = $DB->get_records_sql(
+                "SELECT cc.name, COUNT(c.id) as cnt
+                   FROM {course} c
+                   JOIN {course_categories} cc ON cc.id = c.category
+                  WHERE c.visible = 1 AND c.id > 1
+               GROUP BY cc.name
+               ORDER BY cnt DESC", [], 0, 5);
+            $pieLabels = [];
+            $pieData = [];
+            foreach ($catdist as $cd) {
+                $pieLabels[] = format_string($cd->name);
+                $pieData[] = (int)$cd->cnt;
+            }
+            $airpay_dashboard['chart_pie_labels'] = json_encode($pieLabels);
+            $airpay_dashboard['chart_pie_data'] = json_encode($pieData);
+            $airpay_dashboard['hascharts'] = true;
+
+            // Quick navigation links.
+            $airpay_dashboard['admin_quicknav'] = [
+                ['label' => 'Manage Users', 'icon' => 'users', 'url' => (new moodle_url('/local/users/index.php'))->out(false), 'color' => '#0066A7'],
+                ['label' => 'Manage Courses', 'icon' => 'book', 'url' => (new moodle_url('/local/courses/courses.php'))->out(false), 'color' => '#0f7a73'],
+                ['label' => 'Reports', 'icon' => 'bar-chart', 'url' => (new moodle_url('/blocks/learnerscript/viewreport.php'))->out(false), 'color' => '#7c3aed'],
+                ['label' => 'Online Exams', 'icon' => 'pencil-square-o', 'url' => (new moodle_url('/local/onlineexams/index.php'))->out(false), 'color' => '#d97706'],
+                ['label' => 'Classrooms', 'icon' => 'calendar', 'url' => (new moodle_url('/local/classroom/index.php'))->out(false), 'color' => '#dc2626'],
+                ['label' => 'Site Settings', 'icon' => 'cog', 'url' => (new moodle_url('/admin/index.php'))->out(false), 'color' => '#6b7280'],
+            ];
+            $airpay_dashboard['hasquicknav'] = true;
+
+            // Recent platform activity (last 10 events).
+            $recentlogs = $DB->get_records_sql(
+                "SELECT l.id, l.eventname, l.timecreated, l.userid, l.courseid,
+                        u.firstname, u.lastname
+                   FROM {logstore_standard_log} l
+                   JOIN {user} u ON u.id = l.userid
+                  WHERE l.eventname IN (
+                    '\\\\core\\\\event\\\\course_completed',
+                    '\\\\core\\\\event\\\\user_enrolment_created',
+                    '\\\\core\\\\event\\\\user_created',
+                    '\\\\core\\\\event\\\\course_created'
+                  ) AND l.userid > 1
+               ORDER BY l.timecreated DESC", [], 0, 10);
+            $activityfeed = [];
+            foreach ($recentlogs as $log) {
+                $coursename = '';
+                if ($log->courseid > 1) {
+                    $coursename = $DB->get_field('course', 'shortname', ['id' => $log->courseid]);
+                }
+                $label = '';
+                switch ($log->eventname) {
+                    case '\\core\\event\\course_completed':
+                        $label = s($log->firstname) . ' completed ' . format_string($coursename);
+                        break;
+                    case '\\core\\event\\user_enrolment_created':
+                        $label = s($log->firstname) . ' enrolled in ' . format_string($coursename);
+                        break;
+                    case '\\core\\event\\user_created':
+                        $label = 'New user: ' . s($log->firstname) . ' ' . s($log->lastname);
+                        break;
+                    case '\\core\\event\\course_created':
+                        $label = 'Course created: ' . format_string($coursename);
+                        break;
+                    default:
+                        $label = 'Activity recorded';
+                }
+                $activityfeed[] = [
+                    'label' => $label,
+                    'time' => userdate($log->timecreated, '%b %d, %I:%M %p'),
+                ];
+            }
+            $airpay_dashboard['activityfeed'] = $activityfeed;
+            $airpay_dashboard['hasactivityfeed'] = count($activityfeed) > 0;
+
+        } catch (Exception $e) {
+            $airpay_dashboard['hasadminkpis'] = false;
+            $airpay_dashboard['hascharts'] = false;
+            $airpay_dashboard['hasquicknav'] = false;
+            $airpay_dashboard['hasactivityfeed'] = false;
+        }
+    } else {
+    // ═══════════════════════════════════════════════════════════
+    // LEARNER DASHBOARD — courses, progress, deadlines, achievements
+    // ═══════════════════════════════════════════════════════════
 
     // Get enrolled courses with progress
     try {
@@ -304,6 +442,7 @@ if (isloggedin() && !isguestuser()) {
     } catch (Exception $e) {
         $airpay_dashboard['hasrecommendations'] = false;
     }
+    } // end else (learner branch)
 }
 
 $templatecontext = [

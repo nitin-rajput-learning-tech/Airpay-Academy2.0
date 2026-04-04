@@ -87,6 +87,129 @@
                 </div>
             </div>
 
+            {{! ═══ ADMIN DASHBOARD (siteadmin / L&D admin) ═══ }}
+            {{#isadmin}}
+
+            {{! Admin KPI Tiles }}
+            {{#hasadminkpis}}
+            <div class="airpay-dash__stats">
+                {{#admin_kpis}}
+                <div class="airpay-dash__stat airpay-dash__stat--{{color}}">
+                    <div class="airpay-dash__stat-icon"><i class="fa fa-{{icon}}"></i></div>
+                    <div class="airpay-dash__stat-data">
+                        <span class="airpay-dash__stat-num">{{value}}</span>
+                        <span class="airpay-dash__stat-label">{{label}}</span>
+                        {{#trend}}<span class="airpay-dash__stat-trend airpay-dash__stat-trend--up">{{trend}}</span>{{/trend}}
+                    </div>
+                </div>
+                {{/admin_kpis}}
+            </div>
+            {{/hasadminkpis}}
+
+            {{! Admin Charts (Chart.js) }}
+            {{#hascharts}}
+            <div class="airpay-dash__two-col">
+                <div class="airpay-dash__section">
+                    <h3 class="airpay-dash__section-title"><i class="fa fa-line-chart"></i> Enrolment Trend</h3>
+                    <canvas id="airpay-chart-enrolments" height="220"></canvas>
+                </div>
+                <div class="airpay-dash__section">
+                    <h3 class="airpay-dash__section-title"><i class="fa fa-pie-chart"></i> Course Distribution</h3>
+                    <canvas id="airpay-chart-distribution" height="220"></canvas>
+                </div>
+            </div>
+            {{/hascharts}}
+
+            {{! Admin Quick Navigation }}
+            {{#hasquicknav}}
+            <div class="airpay-dash__section">
+                <h3 class="airpay-dash__section-title"><i class="fa fa-th-large"></i> Quick Navigation</h3>
+                <div class="airpay-dash__quicknav">
+                    {{#admin_quicknav}}
+                    <a href="{{url}}" class="airpay-dash__quicknav-card" style="border-top: 3px solid {{color}}">
+                        <i class="fa fa-{{icon}}" style="color: {{color}}"></i>
+                        <span>{{label}}</span>
+                    </a>
+                    {{/admin_quicknav}}
+                </div>
+            </div>
+            {{/hasquicknav}}
+
+            {{! Admin Activity Feed }}
+            {{#hasactivityfeed}}
+            <div class="airpay-dash__section">
+                <h3 class="airpay-dash__section-title"><i class="fa fa-history"></i> Recent Activity</h3>
+                <div class="airpay-dash__activity-feed">
+                    {{#activityfeed}}
+                    <div class="airpay-dash__activity-item">
+                        <div class="airpay-dash__activity-dot"></div>
+                        <div class="airpay-dash__activity-content">
+                            <span class="airpay-dash__activity-label">{{label}}</span>
+                            <span class="airpay-dash__activity-time">{{time}}</span>
+                        </div>
+                    </div>
+                    {{/activityfeed}}
+                </div>
+            </div>
+            {{/hasactivityfeed}}
+
+            {{! Chart.js initialization }}
+            {{#hascharts}}
+            <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Enrolment Trend Bar Chart
+                var ctx1 = document.getElementById('airpay-chart-enrolments');
+                if (ctx1) {
+                    new Chart(ctx1, {
+                        type: 'bar',
+                        data: {
+                            labels: {{{chart_labels}}},
+                            datasets: [{
+                                label: 'Enrolments',
+                                data: {{{chart_enrolments}}},
+                                backgroundColor: 'rgba(0, 102, 167, 0.7)',
+                                borderColor: '#0066A7',
+                                borderWidth: 1,
+                                borderRadius: 6
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: { legend: { display: false } },
+                            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                        }
+                    });
+                }
+                // Course Distribution Doughnut
+                var ctx2 = document.getElementById('airpay-chart-distribution');
+                if (ctx2) {
+                    new Chart(ctx2, {
+                        type: 'doughnut',
+                        data: {
+                            labels: {{{chart_pie_labels}}},
+                            datasets: [{
+                                data: {{{chart_pie_data}}},
+                                backgroundColor: ['#0066A7', '#0f7a73', '#7c3aed', '#d97706', '#dc2626'],
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            cutout: '60%',
+                            plugins: { legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true } } }
+                        }
+                    });
+                }
+            });
+            </script>
+            {{/hascharts}}
+
+            {{/isadmin}}
+
+            {{! ═══ LEARNER DASHBOARD (employees, external learners) ═══ }}
+            {{#islearner}}
+
             {{! Stat Cards }}
             {{#hasstats}}
             <div class="airpay-dash__stats">
@@ -232,6 +355,8 @@
                 </div>
             </div>
             {{/hasrecommendations}}
+
+            {{/islearner}}
 
         </div>
         {{/airpay}}

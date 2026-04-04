@@ -6461,3 +6461,109 @@ body.dark-mode .airpay-nav__theme-toggle {
     color: #0066A7;
     margin-right: 6px;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   ADMIN DASHBOARD — Quick Nav + Activity Feed
+   ═══════════════════════════════════════════════════════════ */
+
+/* Quick Navigation Grid */
+.airpay-dash__quicknav {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+}
+.airpay-dash__quicknav-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 20px 16px;
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e2e6ef;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    text-align: center;
+}
+.airpay-dash__quicknav-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,51,102,0.12);
+    text-decoration: none;
+}
+.airpay-dash__quicknav-card i {
+    font-size: 1.5rem;
+}
+.airpay-dash__quicknav-card span {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+/* Activity Feed */
+.airpay-dash__activity-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+    padding-left: 20px;
+}
+.airpay-dash__activity-feed::before {
+    content: '';
+    position: absolute;
+    left: 5px; top: 8px; bottom: 8px;
+    width: 2px;
+    background: #e2e6ef;
+}
+.airpay-dash__activity-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    position: relative;
+}
+.airpay-dash__activity-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #0066A7;
+    position: absolute;
+    left: -20px; top: 14px;
+    z-index: 1;
+    border: 2px solid #fff;
+}
+.airpay-dash__activity-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    width: 100%;
+    gap: 12px;
+}
+.airpay-dash__activity-label {
+    font-size: 0.875rem;
+    color: #374151;
+}
+.airpay-dash__activity-time {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    white-space: nowrap;
+}
+
+/* Chart canvases */
+#airpay-chart-enrolments,
+#airpay-chart-distribution {
+    max-height: 220px;
+}
+
+/* Admin stat trend badge */
+.airpay-dash__stat-trend {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #16a34a;
+    display: block;
+    margin-top: 2px;
+}
+
+@media (max-width: 768px) {
+    .airpay-dash__quicknav {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
