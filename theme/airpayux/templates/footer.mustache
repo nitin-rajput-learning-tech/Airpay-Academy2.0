@@ -47,12 +47,7 @@
     {{^output.is_admin_or_manager}}
         <div class="airpay-footer__grid">
             <div class="airpay-footer__col">
-                {{# output.should_display_navbar_logo }}
-                    <img src="{{output.get_custom_logo}}" alt="{{sitename}}" style="height: 36px; margin-bottom: 8px; filter: brightness(10);">
-                {{/ output.should_display_navbar_logo }}
-                {{^ output.should_display_navbar_logo }}
-                    <strong style="color: #fff; font-size: 1.1rem;">{{{ sitename }}}</strong>
-                {{/ output.should_display_navbar_logo }}
+                <img src="{{{config.wwwroot}}}/theme/airpayux/pix/brand/academy-logo-350.png" alt="{{sitename}}" style="height: 40px; margin-bottom: 8px;">
                 <p class="airpay-footer__brand-desc">Airpay Academy is a comprehensive learning platform built for employability, business training, and financial education.</p>
             </div>
             <div class="airpay-footer__col">
