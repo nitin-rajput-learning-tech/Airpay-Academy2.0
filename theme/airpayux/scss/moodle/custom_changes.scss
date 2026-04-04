@@ -4387,3 +4387,550 @@ body#page-login-index { background: #F2F4FB !important; }
         font-size: 1.25rem;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   SPRINT 5 — COURSE CATALOG (local/search/allcourses.php)
+   CSS-only overrides for BizLMS AngularJS catalog
+   ═══════════════════════════════════════════════════════════ */
+
+/* === Catalog Page Layout === */
+.path-local-search #allcourses_section {
+    padding: 0;
+}
+.path-local-search #allcourses_section > .row {
+    margin: 0;
+    gap: 0;
+}
+
+/* === Filter Sidebar === */
+.path-local-search .filter_section {
+    background: #fff !important;
+    border-right: 1px solid #e2e6ef !important;
+    border-radius: 12px 0 0 12px;
+    padding: 20px 16px !important;
+    box-shadow: none;
+    min-height: calc(100vh - 120px);
+}
+.path-local-search .filter_section .icon-header {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #1a1a2e;
+    padding: 8px 0;
+    border-bottom: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+.path-local-search .filter_section .icon-header .icon_img {
+    display: none; /* hide BizLMS filter/select icons — use FA */
+}
+.path-local-search .filter_section .icon-header::before {
+    font-family: 'FontAwesome';
+    font-size: 0.85rem;
+    color: #0066A7;
+    width: 20px;
+    text-align: center;
+}
+.path-local-search .module_filter_params[data-filtertype="moduletype"] .icon-header::before {
+    content: '\f02d'; /* fa-book */
+}
+.path-local-search .module_filter_params[data-filtertype="status"] .icon-header::before {
+    content: '\f0ae'; /* fa-tasks */
+}
+.path-local-search .module_filter_params[data-filtertype="learningtype"] .icon-header::before {
+    content: '\f19d'; /* fa-graduation-cap */
+}
+.path-local-search .filter_section .collapse_content {
+    padding: 4px 0 12px 28px !important;
+    margin: 0 !important;
+}
+.path-local-search .filter_section .checkbox-item {
+    display: flex;
+    align-items: center;
+    padding: 6px 0;
+    gap: 8px;
+}
+.path-local-search .filter_section .checkbox-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 2px solid #d1d5db;
+    accent-color: #0066A7;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.path-local-search .filter_section .checkbox-item label {
+    font-size: 0.875rem;
+    color: #374151;
+    font-weight: 500;
+    margin-bottom: 0;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+.path-local-search .filter_section .checkbox-item label .pull-right {
+    color: #9ca3af;
+    font-size: 0.8rem;
+    font-weight: 400;
+}
+.path-local-search .filter_section hr {
+    border-color: #e2e6ef;
+    margin: 8px 0;
+}
+.path-local-search .filter_section .collapseicon::before {
+    content: '\f107'; /* fa-angle-down */
+    font-family: 'FontAwesome';
+}
+.path-local-search .filter_section [aria-expanded="true"] .collapseicon::before {
+    content: '\f106'; /* fa-angle-up */
+}
+
+/* === Catalog Header + Search === */
+.path-local-search .content_section {
+    padding: 20px 24px !important;
+}
+.path-local-search .content_section h4 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: #1a1a2e;
+}
+.path-local-search .content_section .breadcrumb,
+.path-local-search .content_section nav[aria-label="Navigation bar"] {
+    font-size: 0.85rem;
+}
+.path-local-search .content_section nav a {
+    color: #0066A7;
+    text-decoration: none;
+}
+.path-local-search .content_section nav a:hover {
+    text-decoration: underline;
+}
+
+/* Search bar */
+.path-local-search input#search,
+.path-local-search input[type="text"][placeholder*="Search for courses"] {
+    width: 100%;
+    padding: 12px 16px 12px 44px;
+    border: 2px solid #e2e6ef;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-family: 'Montserrat', sans-serif;
+    background: #fff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.path-local-search input#search:focus,
+.path-local-search input[type="text"][placeholder*="Search for courses"]:focus {
+    border-color: #0066A7;
+    box-shadow: 0 0 0 3px rgba(0,102,167,0.1);
+    outline: none;
+}
+
+/* === Course Cards Grid === */
+.path-local-search .course_view_list_container .row {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    padding: 0;
+}
+.path-local-search .catcourses_list {
+    max-width: 100% !important;
+    flex: none !important;
+    padding: 0 !important;
+}
+
+/* === Individual Course Card === */
+.path-local-search .coursecard_container {
+    border: 1px solid #e2e6ef !important;
+    border-radius: 12px !important;
+    overflow: hidden;
+    background: #fff;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    height: 100%;
+    margin: 0 !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.path-local-search .coursecard_container:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,51,102,0.12);
+}
+
+/* Course card image */
+.path-local-search .courseimg_container {
+    height: 180px;
+    overflow: hidden;
+    position: relative;
+}
+.path-local-search .courseimg_bg {
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-color: #e8f2f9;
+    transition: transform 0.3s ease;
+}
+.path-local-search .coursecard_container:hover .courseimg_bg {
+    transform: scale(1.05);
+}
+
+/* Type badge strip */
+.path-local-search .courseimg_strip {
+    display: none; /* hide the default "Strip" text */
+}
+.path-local-search .CstripCnt,
+.path-local-search .CstripCntLt {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 2;
+}
+.path-local-search .CstripCnt .elearning,
+.path-local-search .CstripCntLt .elearning {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: rgba(0,102,167,0.9);
+    color: #fff;
+    backdrop-filter: blur(4px);
+}
+
+/* Card body */
+.path-local-search .coursecontent.readyCCnt {
+    padding: 16px !important;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 8px;
+}
+
+/* Course title */
+.path-local-search .course_name.course-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    color: #1a1a2e;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin: 0 !important;
+}
+.path-local-search .course_name_container a {
+    text-decoration: none !important;
+}
+.path-local-search .course_name_container a:hover .course_name {
+    color: #0066A7;
+}
+
+/* Course description */
+.path-local-search .course-desc,
+.path-local-search .coursedesc {
+    font-size: 0.85rem;
+    color: #5a6070;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Skill category */
+.path-local-search .course_skill_category {
+    font-size: 0.75rem;
+    color: #0f7a73;
+    font-weight: 600;
+    background: rgba(15,122,115,0.08);
+    padding: 2px 10px;
+    border-radius: 12px;
+    display: inline-block;
+}
+
+/* Progress bar */
+.path-local-search .progress-status {
+    margin-top: auto;
+    padding-top: 8px;
+}
+.path-local-search .progress-status .progress {
+    height: 6px !important;
+    border-radius: 3px;
+    background: #e5e7eb;
+    overflow: hidden;
+}
+.path-local-search .progress-status .progress-bar {
+    background: linear-gradient(90deg, #0066A7, #0f7a73) !important;
+    border-radius: 3px;
+}
+.path-local-search .progress-status big strong {
+    font-size: 0.85rem;
+    color: #0066A7;
+    font-weight: 700;
+}
+
+/* Action buttons (Enroll / View) */
+.path-local-search .action_div {
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid #f3f4f6;
+    display: flex;
+    gap: 8px;
+}
+.path-local-search .action_div .btn,
+.path-local-search .action_div .appear_as_button,
+.path-local-search .action_div .viewmore_btn,
+.path-local-search .action_div .cat_btn {
+    padding: 8px 20px !important;
+    border-radius: 8px !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    font-family: 'Montserrat', sans-serif;
+    text-transform: none;
+    transition: all 0.2s ease;
+}
+.path-local-search .action_div .btn-primary,
+.path-local-search .action_div .appear_as_button.btn-primary {
+    background: #0066A7 !important;
+    border-color: #0066A7 !important;
+    color: #fff !important;
+}
+.path-local-search .action_div .btn-primary:hover {
+    background: #004d80 !important;
+    transform: translateY(-1px);
+}
+.path-local-search .all-seats-filled.txt-red {
+    color: #dc2626 !important;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* No records found */
+.path-local-search .course_view_list_container {
+    min-height: 300px;
+}
+
+/* Loading spinner */
+.path-local-search .loader_container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+}
+.path-local-search .loader_container img {
+    width: 40px;
+    height: 40px;
+    opacity: 0.5;
+}
+
+/* Pagination */
+.path-local-search dir-pagination-controls {
+    display: flex;
+    justify-content: center;
+    padding: 24px 0;
+}
+.path-local-search .pagination .page-link {
+    border-radius: 8px;
+    border: 1px solid #e2e6ef;
+    color: #374151;
+    font-weight: 500;
+    padding: 8px 14px;
+    margin: 0 3px;
+    transition: all 0.2s ease;
+}
+.path-local-search .pagination .page-item.active .page-link {
+    background: #0066A7;
+    border-color: #0066A7;
+    color: #fff;
+}
+.path-local-search .pagination .page-link:hover {
+    background: #e8f2f9;
+    border-color: #0066A7;
+    color: #0066A7;
+}
+
+/* === Catalog Responsive === */
+@media (max-width: 992px) {
+    .path-local-search .filter_section {
+        border-radius: 0;
+        min-height: auto;
+    }
+    .path-local-search .course_view_list_container .row {
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 16px;
+    }
+}
+@media (max-width: 768px) {
+    .path-local-search .content_section {
+        padding: 16px !important;
+    }
+    .path-local-search .course_view_list_container .row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SPRINT 5 — COURSE DETAIL (local/search/coursedetails.php)
+   CSS-only overrides for BizLMS course detail page
+   ═══════════════════════════════════════════════════════════ */
+
+/* === Hero Banner === */
+.path-local-search .content_era_left {
+    margin: -20px -15px 0;
+}
+.path-local-search .coursedet_left {
+    background: #fff;
+    border-radius: 0 0 16px 16px;
+    overflow: hidden;
+}
+.path-local-search .cousedet_topcontent {
+    position: relative;
+}
+.path-local-search .img_summary {
+    min-height: 320px;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    border-radius: 0;
+    margin: 0 !important;
+}
+.path-local-search .img_summary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0,30,60,0.15) 0%, rgba(0,30,60,0.85) 100%);
+    z-index: 1;
+}
+.path-local-search .CourseDetails_content {
+    position: relative;
+    z-index: 2;
+    padding: 32px 40px !important;
+    color: #fff;
+}
+.path-local-search .CourseDetails_content .course_title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.75rem !important;
+    font-weight: 700;
+    color: #fff !important;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    margin-bottom: 8px;
+}
+
+/* === Course Stats Bar === */
+.path-local-search .CourseDetails_content .row {
+    gap: 0;
+}
+.path-local-search .user_completion,
+.path-local-search .user_enrollment,
+.path-local-search .skill_level_details {
+    background: rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 10px 16px !important;
+    margin-right: 12px;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.15);
+}
+.path-local-search .details_content,
+.path-local-search .CourseDetails_content .text-nowrap {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.8);
+    font-weight: 500;
+}
+.path-local-search .enroll_number,
+.path-local-search .skill_level {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #fff;
+    margin-left: 6px;
+}
+
+/* User/enroll icons */
+.path-local-search .user_icon::before,
+.path-local-search .enroll_icon::before,
+.path-local-search .skill_icon::before {
+    font-family: 'FontAwesome';
+    font-size: 1rem;
+    color: rgba(255,255,255,0.7);
+}
+.path-local-search .user_icon::before { content: '\f00c'; } /* fa-check */
+.path-local-search .enroll_icon::before { content: '\f0c0'; } /* fa-users */
+.path-local-search .skill_icon::before { content: '\f0e4'; } /* fa-tachometer */
+
+/* === Course Content Sections === */
+.path-local-search .coursedet_left > div:not(.cousedet_topcontent) {
+    padding: 0 24px;
+}
+
+/* Tabs / sections below hero */
+.path-local-search .nav-tabs {
+    border-bottom: 2px solid #e2e6ef;
+    padding: 0 24px;
+    background: #fff;
+}
+.path-local-search .nav-tabs .nav-link {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #5a6070;
+    padding: 14px 20px;
+    border: none;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s ease;
+}
+.path-local-search .nav-tabs .nav-link.active,
+.path-local-search .nav-tabs .nav-link:hover {
+    color: #0066A7;
+    border-bottom-color: #0066A7;
+    background: transparent;
+}
+
+/* Enroll button on detail page */
+.path-local-search .coursedet_left .btn-primary,
+.path-local-search .coursedet_left .enrol-btn,
+.path-local-search .coursedet_left [class*="enrol"] .btn {
+    background: #0066A7 !important;
+    border-color: #0066A7 !important;
+    border-radius: 8px !important;
+    padding: 10px 28px !important;
+    font-weight: 600;
+    font-family: 'Montserrat', sans-serif;
+    transition: all 0.2s ease;
+}
+.path-local-search .coursedet_left .btn-primary:hover {
+    background: #004d80 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,102,167,0.3);
+}
+
+/* Course summary / description area */
+.path-local-search .coursedet_left .course_description,
+.path-local-search .coursedet_left #summary {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: #374151;
+    padding: 24px 0;
+}
+
+/* === Course Detail Responsive === */
+@media (max-width: 768px) {
+    .path-local-search .img_summary {
+        min-height: 220px;
+    }
+    .path-local-search .CourseDetails_content {
+        padding: 20px !important;
+    }
+    .path-local-search .CourseDetails_content .course_title {
+        font-size: 1.25rem !important;
+    }
+    .path-local-search .user_completion,
+    .path-local-search .user_enrollment,
+    .path-local-search .skill_level_details {
+        margin-bottom: 8px;
+        flex: 1 1 100%;
+    }
+}
