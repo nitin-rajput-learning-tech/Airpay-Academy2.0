@@ -153,23 +153,46 @@
             </div>
             {{/hascharts}}
 
-            {{! Admin Activity Feed }}
-            {{#hasactivityfeed}}
-            <div class="airpay-dash__section">
-                <h3 class="airpay-dash__section-title"><i class="fa fa-history"></i> Recent Activity</h3>
-                <div class="airpay-dash__activity-feed">
-                    {{#activityfeed}}
-                    <div class="airpay-dash__activity-item">
-                        <div class="airpay-dash__activity-dot"></div>
-                        <div class="airpay-dash__activity-content">
-                            <span class="airpay-dash__activity-label">{{label}}</span>
-                            <span class="airpay-dash__activity-time">{{time}}</span>
+            {{! System Health + User Analytics (two-column) }}
+            <div class="airpay-dash__two-col">
+                {{! System Health }}
+                {{#hassystemhealth}}
+                <div class="airpay-dash__section">
+                    <h3 class="airpay-dash__section-title"><i class="fa fa-heartbeat"></i> System Health</h3>
+                    <div class="airpay-dash__health-list">
+                        {{#systemhealth}}
+                        <div class="airpay-dash__health-item">
+                            <i class="fa fa-{{icon}} airpay-dash__health-icon airpay-dash__health-icon--{{status}}"></i>
+                            <div class="airpay-dash__health-info">
+                                <span class="airpay-dash__health-label">{{label}}</span>
+                                <span class="airpay-dash__health-value">{{value}}</span>
+                            </div>
                         </div>
+                        {{/systemhealth}}
                     </div>
-                    {{/activityfeed}}
                 </div>
+                {{/hassystemhealth}}
+
+                {{! User Analytics }}
+                {{#hasuseranalytics}}
+                <div class="airpay-dash__section">
+                    <h3 class="airpay-dash__section-title"><i class="fa fa-users"></i> User Analytics</h3>
+                    <div class="airpay-dash__analytics-grid">
+                        {{#useranalytics}}
+                        <div class="airpay-dash__analytics-item">
+                            <div class="airpay-dash__analytics-icon" style="color: {{color}}">
+                                <i class="fa fa-{{icon}}"></i>
+                            </div>
+                            <div class="airpay-dash__analytics-data">
+                                <span class="airpay-dash__analytics-value" style="color: {{color}}">{{value}}</span>
+                                <span class="airpay-dash__analytics-label">{{label}}</span>
+                            </div>
+                        </div>
+                        {{/useranalytics}}
+                    </div>
+                </div>
+                {{/hasuseranalytics}}
             </div>
-            {{/hasactivityfeed}}
 
             {{! Chart.js initialization }}
             {{#hascharts}}

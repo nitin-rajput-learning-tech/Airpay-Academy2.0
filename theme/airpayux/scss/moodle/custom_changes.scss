@@ -6590,3 +6590,80 @@ body.dark-mode .airpay-nav__theme-toggle {
     font-weight: 700;
     color: #1a1a2e;
 }
+
+/* System Health */
+.airpay-dash__health-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.airpay-dash__health-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    background: #f8f9fc;
+    border-radius: 10px;
+    border: 1px solid #e2e6ef;
+}
+.airpay-dash__health-icon {
+    font-size: 1.1rem;
+    width: 36px;
+    text-align: center;
+    flex-shrink: 0;
+}
+.airpay-dash__health-icon--ok { color: #16a34a; }
+.airpay-dash__health-icon--warning { color: #d97706; }
+.airpay-dash__health-icon--error { color: #dc2626; }
+.airpay-dash__health-info {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    align-items: center;
+}
+.airpay-dash__health-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+}
+.airpay-dash__health-value {
+    font-size: 0.85rem;
+    color: #5a6070;
+    font-family: 'Courier New', monospace;
+}
+
+/* User Analytics Grid */
+.airpay-dash__analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+}
+.airpay-dash__analytics-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px;
+    background: #f8f9fc;
+    border-radius: 10px;
+    border: 1px solid #e2e6ef;
+}
+.airpay-dash__analytics-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+.airpay-dash__analytics-data {
+    display: flex;
+    flex-direction: column;
+}
+.airpay-dash__analytics-value {
+    font-size: 1.25rem;
+    font-weight: 800;
+    line-height: 1.2;
+}
+.airpay-dash__analytics-label {
+    font-size: 0.7rem;
+    color: #5a6070;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}

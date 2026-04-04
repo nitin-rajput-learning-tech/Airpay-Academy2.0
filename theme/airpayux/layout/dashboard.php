@@ -185,49 +185,49 @@ if (isloggedin() && !isguestuser()) {
             ];
             $airpay_dashboard['hasquicknav'] = true;
 
-            // Recent platform activity (last 10 events).
-            $recentlogs = $DB->get_records_sql(
-                "SELECT l.id, l.eventname, l.timecreated, l.userid, l.courseid,
-                        u.firstname, u.lastname
-                   FROM {logstore_standard_log} l
-                   JOIN {user} u ON u.id = l.userid
-                  WHERE l.eventname IN (
-                    '\\\\core\\\\event\\\\course_completed',
-                    '\\\\core\\\\event\\\\user_enrolment_created',
-                    '\\\\core\\\\event\\\\user_created',
-                    '\\\\core\\\\event\\\\course_created'
-                  ) AND l.userid > 1
-               ORDER BY l.timecreated DESC", [], 0, 10);
-            $activityfeed = [];
-            foreach ($recentlogs as $log) {
-                $coursename = '';
-                if ($log->courseid > 1) {
-                    $coursename = $DB->get_field('course', 'shortname', ['id' => $log->courseid]);
-                }
-                $label = '';
-                switch ($log->eventname) {
-                    case '\\core\\event\\course_completed':
-                        $label = s($log->firstname) . ' completed ' . format_string($coursename);
-                        break;
-                    case '\\core\\event\\user_enrolment_created':
-                        $label = s($log->firstname) . ' enrolled in ' . format_string($coursename);
-                        break;
-                    case '\\core\\event\\user_created':
-                        $label = 'New user: ' . s($log->firstname) . ' ' . s($log->lastname);
-                        break;
-                    case '\\core\\event\\course_created':
-                        $label = 'Course created: ' . format_string($coursename);
-                        break;
-                    default:
-                        $label = 'Activity recorded';
-                }
-                $activityfeed[] = [
-                    'label' => $label,
-                    'time' => userdate($log->timecreated, '%b %d, %I:%M %p'),
-                ];
-            }
-            $airpay_dashboard['activityfeed'] = $activityfeed;
-            $airpay_dashboard['hasactivityfeed'] = count($activityfeed) > 0;
+            // --- System Health ---
+            $cronlast = $DB->get_field_sql("SELECT MAX(lastruntime) FROM {task_scheduled} WHERE lastruntime > 0");
+            $pendingupgrades = $DB->count_records_select('config_plugins', "name = 'version'") > 0;
+            $moodledatapath = $CFG->dataroot;
+            $diskfree = @disk_free_space($moodledatapath);
+            $disktotal = @disk_total_space($moodledatapath);
+            $diskpercent = ($disktotal > 0) ? round((1 - $diskfree / $disktotal) * 100) : 0;
+
+            $airpay_dashboard['systemhealth'] = [
+                ['label' => 'Cron Last Run', 'value' => $cronlast ? userdate($cronlast, '%d %b, %I:%M %p') : 'Never',
+                 'icon' => 'clock-o', 'status' => ($cronlast && (time() - $cronlast) < 3600) ? 'ok' : 'warning'],
+                ['label' => 'Moodle Version', 'value' => $CFG->release ?? 'Unknown',
+                 'icon' => 'info-circle', 'status' => 'ok'],
+                ['label' => 'Disk Usage', 'value' => $diskpercent . '% used',
+                 'icon' => 'database', 'status' => ($diskpercent < 80) ? 'ok' : 'warning'],
+                ['label' => 'PHP Version', 'value' => phpversion(),
+                 'icon' => 'code', 'status' => 'ok'],
+            ];
+            $airpay_dashboard['hassystemhealth'] = true;
+
+            // --- User Analytics ---
+            $loginstoday = $DB->count_records_select('logstore_standard_log',
+                "eventname = '\\\\core\\\\event\\\\user_loggedin' AND timecreated > :today",
+                ['today' => strtotime('today')]);
+            $loginsweek = $DB->count_records_select('logstore_standard_log',
+                "eventname = '\\\\core\\\\event\\\\user_loggedin' AND timecreated > :week",
+                ['week' => time() - (7 * 86400)]);
+            $newusersweek = $DB->count_records_select('user',
+                'timecreated > :week AND deleted = 0', ['week' => time() - (7 * 86400)]);
+            $neverloggedin = $DB->count_records_select('user',
+                'lastlogin = 0 AND deleted = 0 AND suspended = 0 AND id > 1');
+            $inactive30 = $DB->count_records_select('user',
+                'lastaccess > 0 AND lastaccess < :cutoff AND deleted = 0 AND suspended = 0',
+                ['cutoff' => time() - (30 * 86400)]);
+
+            $airpay_dashboard['useranalytics'] = [
+                ['label' => 'Logins Today', 'value' => $loginstoday, 'icon' => 'sign-in', 'color' => '#0066A7'],
+                ['label' => 'Logins This Week', 'value' => $loginsweek, 'icon' => 'calendar-check-o', 'color' => '#0f7a73'],
+                ['label' => 'New Users (7d)', 'value' => $newusersweek, 'icon' => 'user-plus', 'color' => '#16a34a'],
+                ['label' => 'Never Logged In', 'value' => $neverloggedin, 'icon' => 'user-times', 'color' => ($neverloggedin > 0) ? '#d97706' : '#6b7280'],
+                ['label' => 'Inactive (30d+)', 'value' => $inactive30, 'icon' => 'hourglass-end', 'color' => ($inactive30 > 0) ? '#dc2626' : '#6b7280'],
+            ];
+            $airpay_dashboard['hasuseranalytics'] = true;
 
         } catch (Exception $e) {
             $airpay_dashboard['hasadminkpis'] = false;
