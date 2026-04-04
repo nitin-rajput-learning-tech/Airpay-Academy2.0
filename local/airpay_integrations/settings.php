@@ -127,5 +127,27 @@ if ($hassiteconfig) {
         4,
         [1 => '1 hour', 2 => '2 hours', 4 => '4 hours', 8 => '8 hours', 24 => '24 hours']));
 
+    // ═══ GAMIFICATION (Phase 11) ═══
+    $settings->add(new admin_setting_heading('gamification_heading',
+        get_string('gamification_heading', 'local_airpay_integrations'), ''));
+
+    $settings->add(new admin_setting_configcheckbox(
+        'local_airpay_integrations/gamification_enable',
+        get_string('gamification_enable', 'local_airpay_integrations'),
+        get_string('gamification_desc', 'local_airpay_integrations'),
+        0));
+
+    $settings->add(new admin_setting_configtext(
+        'local_airpay_integrations/gamification_xp_per_completion',
+        get_string('gamification_xp_per_completion', 'local_airpay_integrations'),
+        get_string('gamification_xp_per_completion_desc', 'local_airpay_integrations'),
+        100, PARAM_INT));
+
+    $settings->add(new admin_setting_configcheckbox(
+        'local_airpay_integrations/gamification_leaderboard_enable',
+        get_string('gamification_leaderboard_enable', 'local_airpay_integrations'),
+        get_string('gamification_leaderboard_desc', 'local_airpay_integrations'),
+        0));
+
     $ADMIN->add('localplugins', $settings);
 }

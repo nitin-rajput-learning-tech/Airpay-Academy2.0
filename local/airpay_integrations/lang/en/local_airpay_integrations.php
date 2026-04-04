@@ -55,3 +55,12 @@ $string['hrms_api_key'] = 'HRMS API Key';
 $string['hrms_api_key_desc'] = 'Authentication key for the HRMS API.';
 $string['hrms_sync_interval'] = 'Sync Interval (hours)';
 $string['hrms_sync_interval_desc'] = 'How often to pull employee updates. Default: 4 hours.';
+
+// Gamification
+$string['gamification_heading'] = 'Gamification (Phase 11)';
+$string['gamification_enable'] = 'Enable Gamification';
+$string['gamification_desc'] = 'XP points, leaderboards, and learning streaks. Requires block_xp plugin installed.';
+$string['gamification_xp_per_completion'] = 'XP per Course Completion';
+$string['gamification_xp_per_completion_desc'] = 'XP awarded when a learner completes a course.';
+$string['gamification_leaderboard_enable'] = 'Enable Department Leaderboards';
+$string['gamification_leaderboard_desc'] = 'Show leaderboards filtered by costcenter/department.';

@@ -6786,3 +6786,198 @@ body.dark-mode .airpay-nav__theme-toggle {
     mix-blend-mode: screen;
     max-height: 40px;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   PUBLIC HOMEPAGE (local/airpay_pages/homepage.php)
+   ═══════════════════════════════════════════════════════════ */
+
+.airpay-homepage {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* Hero */
+.airpay-homepage__hero {
+    background: linear-gradient(135deg, #0066A7 0%, #0f7a73 100%);
+    padding: 80px 32px 60px;
+    text-align: center;
+    color: #fff;
+    position: relative;
+}
+.airpay-homepage__hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.03);
+    pointer-events: none;
+}
+.airpay-homepage__hero-content {
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+}
+.airpay-homepage__hero-badge {
+    display: inline-block;
+    padding: 6px 16px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    backdrop-filter: blur(4px);
+}
+.airpay-homepage__hero-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 16px;
+}
+.airpay-homepage__hero-subtitle {
+    font-size: 1.05rem;
+    opacity: 0.9;
+    line-height: 1.6;
+    margin-bottom: 28px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.airpay-homepage__hero-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+}
+.airpay-homepage__hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+}
+.airpay-homepage__hero-stat {
+    text-align: center;
+    strong { display: block; font-size: 1.5rem; font-weight: 800; }
+    span { font-size: 0.8rem; opacity: 0.8; }
+}
+
+/* Trust Bar */
+.airpay-homepage__trust {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    padding: 20px 32px;
+    background: #fff;
+    border-bottom: 1px solid #e2e6ef;
+    flex-wrap: wrap;
+}
+.airpay-homepage__trust-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #374151;
+    i { color: #0066A7; }
+}
+
+/* Learning Pillars */
+.airpay-homepage__pillars {
+    padding: 60px 32px;
+    text-align: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    h2 { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1.75rem; margin-bottom: 32px; color: #1a1a2e; }
+}
+.airpay-homepage__pillars-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+}
+.airpay-homepage__pillar {
+    background: #fff;
+    border-radius: 12px;
+    padding: 32px 24px;
+    text-align: left;
+    border: 1px solid #e2e6ef;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    h3 { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1.1rem; margin: 12px 0 8px; color: #1a1a2e; }
+    p { font-size: 0.9rem; color: #5a6070; line-height: 1.5; }
+}
+.airpay-homepage__pillar:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,51,102,0.1);
+}
+.airpay-homepage__pillar-icon {
+    font-size: 1.8rem;
+}
+
+/* Featured Courses */
+.airpay-homepage__courses {
+    padding: 60px 32px;
+    background: #f8f9fc;
+    h2 { text-align: center; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1.75rem; margin-bottom: 32px; color: #1a1a2e; }
+}
+.airpay-homepage__courses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+.airpay-homepage__course-card {
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #e2e6ef;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.airpay-homepage__course-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,51,102,0.12);
+}
+.airpay-homepage__course-header {
+    height: 120px;
+    background: linear-gradient(135deg, #0066A7 0%, #0f7a73 100%);
+}
+.airpay-homepage__course-card:nth-child(2) .airpay-homepage__course-header { background: linear-gradient(135deg, #0f7a73 0%, #059669 100%); }
+.airpay-homepage__course-card:nth-child(3) .airpay-homepage__course-header { background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%); }
+.airpay-homepage__course-card:nth-child(4) .airpay-homepage__course-header { background: linear-gradient(135deg, #d97706 0%, #dc2626 100%); }
+.airpay-homepage__course-card:nth-child(5) .airpay-homepage__course-header { background: linear-gradient(135deg, #059669 0%, #0066A7 100%); }
+.airpay-homepage__course-card:nth-child(6) .airpay-homepage__course-header { background: linear-gradient(135deg, #7c3aed 0%, #dc2626 100%); }
+.airpay-homepage__course-body {
+    padding: 16px;
+    h4 { font-family: 'Montserrat', sans-serif; font-weight: 600; font-size: 1rem; color: #1a1a2e; margin: 0 0 8px; }
+    p { font-size: 0.85rem; color: #5a6070; margin: 0 0 12px; line-height: 1.4; }
+}
+.airpay-homepage__course-meta {
+    font-size: 0.8rem;
+    color: #9ca3af;
+    margin-bottom: 12px;
+    i { margin-right: 4px; }
+}
+
+/* CTA Section */
+.airpay-homepage__cta {
+    padding: 60px 32px;
+    text-align: center;
+    background: linear-gradient(135deg, #0066A7 0%, #0f7a73 100%);
+    color: #fff;
+    h2 { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1.75rem; margin-bottom: 12px; }
+    p { font-size: 1rem; opacity: 0.9; margin-bottom: 24px; }
+}
+
+/* Homepage Responsive */
+@media (max-width: 768px) {
+    .airpay-homepage__hero { padding: 48px 20px 40px; }
+    .airpay-homepage__hero-title { font-size: 1.75rem; }
+    .airpay-homepage__hero-stats { gap: 20px; }
+    .airpay-homepage__trust { gap: 16px; }
+    .airpay-homepage__pillars { padding: 40px 20px; }
+    .airpay-homepage__courses { padding: 40px 20px; }
+    .airpay-homepage__cta { padding: 40px 20px; }
+}
