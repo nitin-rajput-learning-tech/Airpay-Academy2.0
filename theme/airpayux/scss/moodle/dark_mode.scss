@@ -101,9 +101,18 @@ body.dark-mode {
         background: #1a1d27 !important;
         color: #c4cad8 !important;
     }
-    .calendartable td { border-color: #2d3140 !important; color: #9ca3b4; }
+    .calendartable td { border-color: #2d3140 !important; color: #c4cad8 !important; }
     .calendartable th { color: #93c5fd !important; }
-    .day .day-number-circle { background: #1e3a5f !important; color: #93c5fd !important; }
+    .day .day-number-circle { background: #1e3a5f !important; color: #ffffff !important; }
+    /* A4: BizLMS buttons in dark mode — catch remaining bright ones */
+    .btn-outline-secondary,
+    .btn-info,
+    .course_extended_menu_itemlink .btn,
+    .block .btn-clear {
+        background: #232733 !important;
+        border-color: #3d4254 !important;
+        color: #93c5fd !important;
+    }
 
     /* === Cards (generic) === */
     .card, .coursecard_container, .airpay-dash__section,

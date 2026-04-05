@@ -6981,3 +6981,100 @@ body.dark-mode .airpay-nav__theme-toggle {
     .airpay-homepage__courses { padding: 40px 20px; }
     .airpay-homepage__cta { padding: 40px 20px; }
 }
+
+/* A10: Hide Moodle debug/admin links from footer for non-admin */
+.airpay-footer .tool_usertours-resettourcontainer,
+.airpay-footer a[href*="dataprivacy"],
+.airpay-footer a[href*="purgecaches"],
+.airpay-footer [class*="reactive-instances"],
+.airpay-footer .footer-content-debugging {
+    display: none !important;
+}
+
+/* A5: User menu click area expansion */
+#usernavigation .usermenu-container .action-menu .menubar {
+    min-width: 60px;
+    min-height: 40px;
+    cursor: pointer;
+    display: flex !important;
+    align-items: center !important;
+}
+#usernavigation .usermenu-container .action-menu .menubar > * {
+    cursor: pointer;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CERTIFICATE GALLERY (local/airpay_pages/certificates.php)
+   ═══════════════════════════════════════════════════════════ */
+
+.airpay-cert-gallery__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+.airpay-cert-gallery__title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    i { color: #0066A7; margin-right: 8px; }
+}
+.airpay-cert-gallery__count {
+    font-size: 0.9rem;
+    color: #5a6070;
+    background: #e8f2f9;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-weight: 600;
+}
+.airpay-cert-gallery__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+.airpay-cert-gallery__card {
+    border: 1px solid #e2e6ef;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.airpay-cert-gallery__card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,51,102,0.12);
+}
+.airpay-cert-gallery__card-header {
+    height: 80px;
+    background: linear-gradient(135deg, #0066A7 0%, #0f7a73 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    i { font-size: 2rem; color: rgba(255,255,255,0.3); }
+}
+.airpay-cert-gallery__card:nth-child(2) .airpay-cert-gallery__card-header { background: linear-gradient(135deg, #0f7a73 0%, #059669 100%); }
+.airpay-cert-gallery__card:nth-child(3) .airpay-cert-gallery__card-header { background: linear-gradient(135deg, #7c3aed 0%, #1e40af 100%); }
+.airpay-cert-gallery__card-body {
+    padding: 16px;
+}
+.airpay-cert-gallery__card-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin: 0 0 8px;
+}
+.airpay-cert-gallery__card-date,
+.airpay-cert-gallery__card-code {
+    font-size: 0.8rem;
+    color: #5a6070;
+    margin: 0 0 4px;
+    i { margin-right: 6px; color: #9ca3af; }
+}
+.airpay-cert-gallery__card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #f3f4f6;
+}

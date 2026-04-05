@@ -149,5 +149,27 @@ if ($hassiteconfig) {
         get_string('gamification_leaderboard_desc', 'local_airpay_integrations'),
         0));
 
+    // ═══ WEB PUSH NOTIFICATIONS (Phase 12) ═══
+    $settings->add(new admin_setting_heading('webpush_heading',
+        'Web Push Notifications', ''));
+
+    $settings->add(new admin_setting_configcheckbox(
+        'local_airpay_integrations/webpush_enable',
+        'Enable Web Push',
+        'Browser push notifications via Firebase Cloud Messaging. Requires FCM server key.',
+        0));
+
+    $settings->add(new admin_setting_configpasswordunmask(
+        'local_airpay_integrations/fcm_server_key',
+        'FCM Server Key',
+        'Firebase Cloud Messaging server key from Firebase Console → Project Settings → Cloud Messaging.',
+        ''));
+
+    $settings->add(new admin_setting_configtext(
+        'local_airpay_integrations/fcm_sender_id',
+        'FCM Sender ID',
+        'Firebase sender ID for the service worker.',
+        ''));
+
     $ADMIN->add('localplugins', $settings);
 }

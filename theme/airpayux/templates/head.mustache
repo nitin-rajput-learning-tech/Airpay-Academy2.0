@@ -115,6 +115,10 @@
             if (toggle && t === 'dark') {
                 toggle.className = 'fa fa-sun-o';
             }
+            // A1 Fix: jQuery $ shim for BizLMS inline scripts that use bare $
+            if (typeof $ === 'undefined' && typeof jQuery !== 'undefined') {
+                window.$ = jQuery;
+            }
         });
     })();
     </script>
