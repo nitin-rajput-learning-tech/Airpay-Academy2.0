@@ -24,6 +24,15 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+// Redirect non-logged-in users from front page to Airpay homepage.
+if ($PAGE->pagelayout === 'frontpage' && (!isloggedin() || isguestuser())) {
+    redirect(new moodle_url('/local/airpay_pages/homepage.php'));
+}
+// Redirect logged-in users from front page to dashboard.
+if ($PAGE->pagelayout === 'frontpage' && isloggedin() && !isguestuser()) {
+    redirect(new moodle_url('/my/'));
+}
+
 user_preference_allow_ajax_update('drawer-open-nav', PARAM_ALPHA);
 require_once($CFG->libdir . '/behat/lib.php');
 
