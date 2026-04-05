@@ -52,18 +52,22 @@ echo $OUTPUT->htmlattributes();
 <body <?php echo $OUTPUT->body_attributes(); ?>>
 <?php echo $OUTPUT->standard_top_of_body_html(); ?>
 
-<nav class="navbar fixed-top navbar-light navbar-expand airpay-nav">
+<nav class="navbar fixed-top navbar-light navbar-expand airpay-nav" style="background: rgba(255,255,255,0.97); box-shadow: 0 1px 4px rgba(0,0,0,0.08);">
     <a href="<?php echo $CFG->wwwroot; ?>/" class="navbar-brand d-flex align-items-center m-0 mr-3 p-0">
         <img src="<?php echo $CFG->wwwroot; ?>/theme/airpayux/pix/brand/academy-logo-350.png" class="logo mr-1" alt="Airpay Academy" style="height: 40px;">
     </a>
     <div class="airpay-nav__pills d-none d-md-flex">
+        <a href="<?php echo $CFG->wwwroot; ?>/" class="airpay-nav__pill airpay-nav__pill--active" style="background:#0066A7;color:#fff;">Home</a>
         <a href="<?php echo $CFG->wwwroot; ?>/local/search/allcourses.php" class="airpay-nav__pill">Courses</a>
+        <a href="#pillars" class="airpay-nav__pill">About</a>
+        <a href="<?php echo $CFG->wwwroot; ?>/local/airpay_pages/index.php?page=contact" class="airpay-nav__pill">Contact</a>
     </div>
-    <div class="navbar-nav ml-auto airpay-nav__actions">
+    <div class="navbar-nav ml-auto airpay-nav__actions" style="gap: 8px;">
         <button class="airpay-nav__theme-toggle" onclick="var d=document.body.classList.toggle('dark-mode');document.documentElement.classList.toggle('dark-mode');localStorage.setItem('airpay-theme',d?'dark':'light');this.querySelector('i').className=d?'fa fa-sun-o':'fa fa-moon-o';" title="Toggle dark mode">
             <i class="fa fa-moon-o"></i>
         </button>
-        <a href="<?php echo $CFG->wwwroot; ?>/login/index.php" class="airpay-btn airpay-btn--outline airpay-btn--sm" style="margin-left: 8px;">Log In</a>
+        <a href="<?php echo $CFG->wwwroot; ?>/login/index.php" class="airpay-btn airpay-btn--outline airpay-btn--sm">Login</a>
+        <a href="<?php echo $CFG->wwwroot; ?>/local/users/signup.php" class="airpay-btn airpay-btn--primary airpay-btn--sm">Register</a>
     </div>
 </nav>
 
@@ -71,14 +75,15 @@ echo $OUTPUT->htmlattributes();
 <div class="airpay-homepage" style="padding-top: 64px;">
 
     <!-- HERO -->
-    <section class="airpay-homepage__hero" style="background-image: url('<?php echo $CFG->wwwroot; ?>/theme/airpayux/pix/brand/bannerimg.png'); background-size: cover; background-position: center;">
-        <div class="airpay-homepage__hero-content">
+    <section class="airpay-homepage__hero" style="background-image: url('<?php echo $CFG->wwwroot; ?>/theme/airpayux/pix/brand/bannerimg.png'); background-size: cover; background-position: center; position: relative;">
+        <div style="position: absolute; inset: 0; background: linear-gradient(135deg, rgba(0,40,80,0.85) 0%, rgba(10,60,50,0.75) 100%); z-index: 1;"></div>
+        <div class="airpay-homepage__hero-content" style="position: relative; z-index: 2;">
             <span class="airpay-homepage__hero-badge">Airpay Academy</span>
-            <h1 class="airpay-homepage__hero-title">Build Skills That<br>Drive Your Career Forward</h1>
-            <p class="airpay-homepage__hero-subtitle">A comprehensive learning platform for employability, business training, and financial education.</p>
+            <h1 class="airpay-homepage__hero-title">A Comprehensive & Hybrid<br>Learning Platform</h1>
+            <p class="airpay-homepage__hero-subtitle">Enhance your abilities in financial services, business skills, and employability through industry-relevant courses.</p>
             <div class="airpay-homepage__hero-actions">
                 <a href="<?php echo $CFG->wwwroot; ?>/local/search/allcourses.php" class="airpay-btn airpay-btn--primary airpay-btn--lg">Explore Courses</a>
-                <a href="<?php echo $CFG->wwwroot; ?>/login/index.php" class="airpay-btn airpay-btn--outline airpay-btn--lg" style="border-color: #fff; color: #fff;">Sign In</a>
+                <a href="#pillars" class="airpay-btn airpay-btn--outline airpay-btn--lg" style="border-color: rgba(255,255,255,0.6); color: #fff;">Learn More</a>
             </div>
             <div class="airpay-homepage__hero-stats">
                 <div class="airpay-homepage__hero-stat"><strong><?php echo $coursecount; ?>+</strong><span>Courses</span></div>
@@ -97,7 +102,7 @@ echo $OUTPUT->htmlattributes();
     </section>
 
     <!-- LEARNING PILLARS -->
-    <section class="airpay-homepage__pillars">
+    <section id="pillars" class="airpay-homepage__pillars">
         <h2>Three Pillars of Learning</h2>
         <div class="airpay-homepage__pillars-grid">
             <div class="airpay-homepage__pillar" style="border-top: 3px solid #0066A7">
@@ -145,9 +150,12 @@ echo $OUTPUT->htmlattributes();
 
     <!-- CTA -->
     <section class="airpay-homepage__cta">
-        <h2>Ready to Start Learning?</h2>
-        <p>Join thousands of learners building skills for the digital economy.</p>
-        <a href="<?php echo $CFG->wwwroot; ?>/login/index.php" class="airpay-btn airpay-btn--primary airpay-btn--lg">Get Started Free</a>
+        <h2>Unlock Success by Boosting Your Skills</h2>
+        <p>Join Airpay Academy and access industry-relevant courses in financial services, business, and technology.</p>
+        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+            <a href="<?php echo $CFG->wwwroot; ?>/local/users/signup.php" class="airpay-btn airpay-btn--primary airpay-btn--lg" style="background: #fff; color: #0066A7;">Get Started Free</a>
+            <a href="<?php echo $CFG->wwwroot; ?>/local/search/allcourses.php" class="airpay-btn airpay-btn--outline airpay-btn--lg" style="border-color: rgba(255,255,255,0.6); color: #fff;">Browse Courses</a>
+        </div>
     </section>
 
 </div>
