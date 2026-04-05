@@ -67,6 +67,7 @@ echo $OUTPUT->htmlattributes();
     </div>
 </nav>
 
+<div style="display:none;"><?php echo $OUTPUT->main_content(); ?></div>
 <div class="airpay-homepage" style="padding-top: 64px;">
 
     <!-- HERO -->
