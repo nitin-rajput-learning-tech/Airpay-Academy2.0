@@ -24,11 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-// Redirect non-logged-in users from front page to Airpay homepage.
-if ($PAGE->pagelayout === 'frontpage' && (!isloggedin() || isguestuser())) {
-    redirect(new moodle_url('/local/airpay_pages/homepage.php'));
-}
-// Redirect logged-in users from front page to dashboard.
+// Front page: logged-in users go to dashboard.
 if ($PAGE->pagelayout === 'frontpage' && isloggedin() && !isguestuser()) {
     redirect(new moodle_url('/my/'));
 }

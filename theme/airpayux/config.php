@@ -74,10 +74,10 @@ $THEME->layouts = [
     ),
     // The site home page.
     'frontpage' => array(
-        'file' => 'columns2.php',
-        'regions' => array('side-pre'),
-        'defaultregion' => 'side-pre',
-        'options' => array('nonavbar' => true),
+        'file' => 'frontpage.php',
+        'regions' => array(),
+        'defaultregion' => '',
+        'options' => array('nonavbar' => true, 'nofooter' => false),
     ),
     // Server administration scripts.
     'admin' => array(
