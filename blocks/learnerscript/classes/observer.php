@@ -32,6 +32,13 @@ class block_learnerscript_observer {
      */
     public static function store(\core\event\base $event) {
         global $CFG, $DB, $USER;
+        // Airpay fix: skip device analytics on localhost (browscap + ipinfo.io timeout).
+        // This observer parses browscap.ini (~120s) and calls ipinfo.io on every login.
+        // Safe to disable — device analytics is non-critical.
+        if (!empty($CFG->debugdeveloper) || php_sapi_name() === 'cli'
+            || (isset($_SERVER['SERVER_NAME']) && in_array($_SERVER['SERVER_NAME'], ['localhost', '127.0.0.1']))) {
+            return;
+        }
         if (!is_siteadmin()) {
             $browscap = new block_learnerscript_browscap($CFG->dataroot . '/cache/');
             $browscap->doAutoUpdate = false;
