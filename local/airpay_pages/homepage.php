@@ -1,6 +1,6 @@
 <?php
 /**
- * Airpay Academy Public Homepage.
+ * airpay academy Public Homepage.
  * Marketing landing page for non-logged-in visitors.
  * Shows hero banner, learning pillars, featured courses, and CTA.
  *
@@ -12,8 +12,8 @@ global $DB, $CFG, $OUTPUT, $PAGE;
 
 $PAGE->set_context(context_system::instance());
 $PAGE->set_url('/local/airpay_pages/homepage.php');
-$PAGE->set_title('Airpay Academy — L&D Operating System');
-$PAGE->set_heading('Airpay Academy');
+$PAGE->set_title('airpay academy — L&D Operating System');
+$PAGE->set_heading('airpay academy');
 $PAGE->set_pagelayout('standard');
 
 // If already logged in, redirect to dashboard.
@@ -43,7 +43,7 @@ echo '<div class="airpay-homepage">';
 // ═══ HERO SECTION ═══
 echo '<section class="airpay-homepage__hero" style="background-image: url(' . $CFG->wwwroot . '/theme/airpayux/pix/brand/bannerimg.png); background-size: cover; background-position: center;"
     <div class="airpay-homepage__hero-content">
-        <span class="airpay-homepage__hero-badge">Airpay Academy</span>
+        <span class="airpay-homepage__hero-badge">airpay academy</span>
         <h1 class="airpay-homepage__hero-title">Build Skills That<br>Drive Your Career Forward</h1>
         <p class="airpay-homepage__hero-subtitle">A comprehensive learning platform for employability, business training, and financial education. Empowering individuals and organisations with industry-relevant skills.</p>
         <div class="airpay-homepage__hero-actions">

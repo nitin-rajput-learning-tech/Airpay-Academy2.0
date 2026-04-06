@@ -33,8 +33,8 @@ global $OUTPUT, $DB, $CFG, $PAGE;
 $PAGE->set_url('/local/users/signup.php');
 $PAGE->set_context(context_system::instance());
 $PAGE->set_title(get_string('registrationtitle', 'local_users'));
-$PAGE->set_pagelayout('frontpage');
-$PAGE->set_pagetype('site-index');
+$PAGE->set_pagelayout('login');
+$PAGE->set_pagetype('signup');
 $PAGE->requires->jquery();
 $success = optional_param('success', 0, PARAM_INT);
 // If wantsurl is empty or /login/signup.php, override wanted URL.
@@ -52,6 +52,9 @@ if ($mform->is_cancelled()) {
     redirect(get_login_url());
 
 } else if ($user = $mform->get_data()) {
+
+// Auto-set username from email (simplified registration — no manual username field).
+$user->username = strtolower(trim($user->email));
 
 $organization_shortname = get_config('local_users','organization_shortname');
 
@@ -71,7 +74,7 @@ $company = $DB->get_field('local_costcenter', 'id', array('parentid' => '0','sho
     {
         $a = new \stdClass();
         $a->username = $user->firstname.' '.$user->lastname;        
-        $a->sitename = 'Airpay Academy';        
+        $a->sitename = 'airpay academy';        
         $a->supportemail = 'academy@airpay.co.in';        
         $messagetext  = get_string('regisemailbody', 'local_users', $a);
         // $messagetext .= '<br><br><img src="'.$CFG->wwwroot.'/theme/epsilon/pix/academylogo.jpg" width="332" height="192" alt="airpay"/>';

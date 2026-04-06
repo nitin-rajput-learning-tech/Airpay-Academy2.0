@@ -25,6 +25,11 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+// Guests should not see the dashboard — send them to the login page.
+if (!isloggedin() || isguestuser()) {
+    redirect(new moodle_url('/login/index.php'));
+}
+
 user_preference_allow_ajax_update('drawer-open-nav', PARAM_ALPHA);
 require_once($CFG->libdir . '/behat/lib.php');
 

@@ -43,7 +43,7 @@ $string['hovercolor_desc'] = 'Pick your site hover colour';
 
 $string['bootswatch'] = 'Bootswatch';
 $string['bootswatch_desc'] = 'A bootswatch is a set of Bootstrap variables and css to style Bootstrap';
-$string['choosereadme'] = 'Airpay Academy UX — forked from BizLMS epsilon. Full design system with Airpay branding, multi-tenant support, and responsive mobile experience.';
+$string['choosereadme'] = 'airpay academy UX — forked from BizLMS epsilon. Full design system with airpay branding, multi-tenant support, and responsive mobile experience.';
 $string['currentinparentheses'] = '(current)';
 $string['configtitle'] = 'Epsilon';
 $string['fontsize'] = 'Theme base fontsize';

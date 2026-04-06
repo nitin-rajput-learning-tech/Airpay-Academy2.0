@@ -45,7 +45,7 @@ if (!empty($existing)) {
     $version1->name = 'Privacy Policy';
     $version1->policyid = $policyid1;
     $version1->revision = 'v1.0';
-    $version1->summary = 'Airpay Academy Privacy Policy — describes how we collect, use, and protect your personal information under DPDP 2023.';
+    $version1->summary = 'airpay academy Privacy Policy — describes how we collect, use, and protect your personal information under DPDP 2023.';
     $version1->summaryformat = FORMAT_HTML;
     $version1->content = file_get_contents($CFG->dirroot . '/local/airpay_pages/pages/privacy.html');
     $version1->contentformat = FORMAT_HTML;
@@ -70,7 +70,7 @@ if (!empty($existing)) {
     $version2->name = 'Terms of Use';
     $version2->policyid = $policyid2;
     $version2->revision = 'v1.0';
-    $version2->summary = 'Airpay Academy Terms of Use — governs your use of the learning platform, intellectual property, and user responsibilities.';
+    $version2->summary = 'airpay academy Terms of Use — governs your use of the learning platform, intellectual property, and user responsibilities.';
     $version2->summaryformat = FORMAT_HTML;
     $version2->content = file_get_contents($CFG->dirroot . '/local/airpay_pages/pages/terms.html');
     $version2->contentformat = FORMAT_HTML;

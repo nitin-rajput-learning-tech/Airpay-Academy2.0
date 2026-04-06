@@ -115,11 +115,17 @@
             if (toggle && t === 'dark') {
                 toggle.className = 'fa fa-sun-o';
             }
-            // A1 Fix: jQuery $ shim for BizLMS inline scripts that use bare $
-            if (typeof $ === 'undefined' && typeof jQuery !== 'undefined') {
-                window.$ = jQuery;
-            }
         });
     })();
+    </script>
+    <script>
+    // A1 Fix: jQuery $ shim for BizLMS. Uses jQuery.noConflict pattern.
+    // This runs early but jQuery may not be loaded yet.
+    // The real fix is applied after DOMContentLoaded when jQuery is available.
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof window.jQuery !== 'undefined' && typeof window.$ === 'undefined') {
+            window.$ = window.jQuery;
+        }
+    });
     </script>
 </head>

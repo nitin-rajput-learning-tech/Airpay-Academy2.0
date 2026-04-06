@@ -4092,6 +4092,251 @@ body#page-login-index { background: #F2F4FB !important; }
 }
 
 /* ═══════════════════════════════════════════════════════════
+   FORGOT PASSWORD + SIGNUP — Flat selectors for Moodle SCSS
+   ═══════════════════════════════════════════════════════════ */
+/* Shared gradient wrapper for forgot-password and signup */
+#page-login-forgot_password .airpay-login-wrapper,
+#page-signup .airpay-login-wrapper {
+    min-height: 100vh !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: linear-gradient(135deg, #003052 0%, #0a4a42 100%) !important;
+    position: relative;
+    overflow: hidden;
+}
+#page-login-forgot_password .airpay-login-wrapper::before,
+#page-signup .airpay-login-wrapper::before {
+    content: '';
+    position: absolute;
+    top: -30%; right: -15%;
+    width: 500px; height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%);
+    pointer-events: none;
+}
+/* Constrained card container — responsive widths */
+#page-login-forgot_password .airpay-login-page,
+#page-signup .airpay-login-page {
+    position: relative !important;
+    z-index: 1 !important;
+    width: 100% !important;
+    max-width: 640px !important;
+    margin: 0 auto !important;
+    padding: 32px !important;
+}
+@media (max-width: 700px) {
+    #page-login-forgot_password .airpay-login-page,
+    #page-signup .airpay-login-page {
+        max-width: 100% !important;
+        padding: 16px !important;
+    }
+}
+/* ── Simplified signup: single-column stacked layout ── */
+#page-signup .signup_form--simple {
+    display: flex;
+    flex-direction: column;
+}
+#page-signup .signup_form--simple .fitem {
+    flex-direction: column !important;
+    align-items: stretch !important;
+}
+#page-signup .signup_form--simple .col-form-label {
+    flex: none !important;
+    max-width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+#page-signup .signup_form--simple .felement {
+    flex: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+#page-signup .signup_form--simple .row {
+    display: block !important;
+    margin: 0 !important;
+}
+#page-signup .signup_form--simple [class*="col-"] {
+    max-width: 100% !important;
+    flex: none !important;
+    padding: 0 !important;
+}
+/* White card */
+#page-login-forgot_password .airpay-login-region,
+#page-signup .airpay-login-region {
+    background: #fff !important;
+    border-radius: 16px !important;
+    padding: 48px 56px !important;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3) !important;
+}
+@media (max-width: 700px) {
+    #page-login-forgot_password .airpay-login-region,
+    #page-signup .airpay-login-region {
+        padding: 32px 20px !important;
+        border-radius: 12px !important;
+    }
+}
+/* Hide Moodle chrome */
+#page-login-forgot_password #page-header,
+#page-login-forgot_password #page-navbar,
+#page-login-forgot_password .page-context-header,
+#page-login-forgot_password .secondary-navigation,
+#page-login-forgot_password .breadcrumb,
+#page-signup #page-header,
+#page-signup #page-navbar,
+#page-signup .page-context-header,
+#page-signup .secondary-navigation {
+    display: none !important;
+}
+/* Headings */
+#page-login-forgot_password .forgotpasswordheader,
+#page-login-forgot_password #region-main h2,
+#page-signup h2,
+#page-signup .signupheading {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 8px;
+    text-align: center;
+}
+#page-login-forgot_password #region-main > p {
+    font-size: 0.875rem;
+    color: #475569;
+    line-height: 1.6;
+    text-align: center;
+    margin-bottom: 24px;
+}
+/* Fieldsets */
+#page-login-forgot_password fieldset {
+    border: none; padding: 0; margin: 0 0 20px;
+}
+#page-login-forgot_password .ftoggler,
+#page-login-forgot_password fieldset legend h3 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.95rem; font-weight: 600; color: #0f172a;
+    margin: 0 0 12px; padding: 0; border: none;
+}
+/* Inputs */
+#page-login-forgot_password .form-control,
+#page-login-forgot_password input[type="text"],
+#page-login-forgot_password input[type="email"],
+#page-signup .form-control,
+#page-signup input[type="text"],
+#page-signup input[type="email"],
+#page-signup input[type="password"],
+#page-signup select {
+    width: 100%; height: 48px; padding: 0 16px;
+    border: 2px solid #e2e8f0; border-radius: 10px;
+    font-size: 0.9rem; font-family: 'Montserrat', sans-serif;
+    transition: border-color 0.2s; background: #f8fafc;
+}
+#page-login-forgot_password .form-control:focus,
+#page-login-forgot_password input[type="text"]:focus,
+#page-signup .form-control:focus,
+#page-signup input:focus,
+#page-signup select:focus {
+    border-color: #0066A7; outline: none; background: #fff;
+}
+/* Submit buttons */
+#page-login-forgot_password .btn-primary,
+#page-login-forgot_password input[type="submit"],
+#page-signup .btn-primary,
+#page-signup input[type="submit"],
+#page-signup #id_submitbutton {
+    display: block; width: 100%; height: 48px;
+    background: linear-gradient(135deg, #0066A7, #0a5c50) !important;
+    color: #fff !important; border: none !important; border-radius: 10px;
+    font-family: 'Montserrat', sans-serif; font-size: 0.95rem; font-weight: 700;
+    cursor: pointer; transition: opacity 0.2s; margin-top: 8px;
+}
+#page-login-forgot_password .btn-primary:hover,
+#page-signup .btn-primary:hover {
+    opacity: 0.9; color: #fff !important;
+}
+/* Cancel / back */
+#page-login-forgot_password .btn-secondary,
+#page-login-forgot_password .back_btn {
+    display: block; text-align: center; margin-top: 12px;
+    color: #0066A7; font-size: 0.85rem; font-weight: 600;
+    background: transparent; border: none;
+}
+#page-signup .btn-secondary,
+#page-signup #id_cancel {
+    display: block; width: 100%; text-align: center; margin-top: 8px;
+    color: #0066A7; font-size: 0.85rem; font-weight: 600;
+    background: transparent; border: 2px solid #e2e8f0; border-radius: 10px;
+    height: 44px; line-height: 40px;
+}
+/* Labels */
+#page-login-forgot_password .col-form-label,
+#page-login-forgot_password label,
+#page-signup .col-form-label,
+#page-signup label {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.85rem; font-weight: 600; color: #0f172a;
+    margin-bottom: 6px; display: block;
+}
+#page-login-forgot_password .fitem,
+#page-signup .fitem { margin-bottom: 16px; }
+#page-signup .fdescription.required,
+#page-signup .fdescription {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #94a3b8 !important;
+    margin-top: 8px;
+}
+#page-signup .fdescription.required .ods-icon,
+#page-signup .fdescription abbr,
+#page-login-forgot_password .fdescription.required,
+#page-login-forgot_password .fdescription {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #94a3b8 !important;
+}
+#page-login-forgot_password .felement { width: 100%; }
+
+/* ── Dark mode for forgot-password + signup ── */
+html.dark-mode #page-login-forgot_password .airpay-login-region,
+body.dark-mode #page-login-forgot_password .airpay-login-region,
+html.dark-mode #page-signup .airpay-login-region,
+body.dark-mode#page-signup .airpay-login-region {
+    background: #1e293b !important;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important;
+}
+html.dark-mode #page-login-forgot_password .forgotpasswordheader,
+html.dark-mode #page-login-forgot_password h2,
+html.dark-mode #page-login-forgot_password label,
+html.dark-mode #page-login-forgot_password .col-form-label,
+html.dark-mode #page-login-forgot_password .ftoggler,
+body.dark-mode #page-login-forgot_password label,
+html.dark-mode #page-signup h2,
+html.dark-mode #page-signup label,
+body.dark-mode#page-signup label {
+    color: #f1f5f9 !important;
+}
+html.dark-mode #page-login-forgot_password #region-main > p,
+body.dark-mode #page-login-forgot_password #region-main > p {
+    color: #94a3b8;
+}
+html.dark-mode #page-login-forgot_password .form-control,
+html.dark-mode #page-login-forgot_password input[type="text"],
+body.dark-mode #page-login-forgot_password .form-control,
+html.dark-mode #page-signup .form-control,
+html.dark-mode #page-signup input[type="text"],
+html.dark-mode #page-signup input[type="password"],
+html.dark-mode #page-signup select,
+body.dark-mode#page-signup .form-control {
+    background: #0f172a !important; border-color: #334155 !important; color: #f1f5f9 !important;
+}
+html.dark-mode #page-signup #id_cancel,
+body.dark-mode#page-signup #id_cancel {
+    border-color: #334155; color: #93c5fd;
+}
+
+/* ═══════════════════════════════════════════════════════════
    EMPLOYEE DASHBOARD — Sprint 3
    Welcome banner + stat cards + continue learning grid
    ═══════════════════════════════════════════════════════════ */
@@ -5069,6 +5314,11 @@ body#page-login-index { background: #F2F4FB !important; }
 /* === 6D: BizLMS Card-Paginate Content Area === */
 .card-paginate_wrap {
     margin-top: 8px;
+}
+/* BizLMS cardPaginate clearfix — floated cards collapse parent containers */
+.card-paginate_wrap [data-region$="-list-container"],
+.card-paginate_wrap [id^="paged-content-container"] {
+    overflow: hidden;
 }
 
 /* Loading animation */
@@ -6271,94 +6521,69 @@ body.dark-mode .airpay-nav__theme-toggle {
    PROTOTYPE MATCH — Footer 4-Column Layout
    ═══════════════════════════════════════════════════════════ */
 
+/* ── COMPACT FOOTER (site-wide, all roles) ── */
 .airpay-footer {
-    background: #1a1d27;
-    color: #c4cad8;
-    padding: 48px 32px 0;
+    background: #0f172a;
+    color: #94a3b8;
+    padding: 0;
 }
-.airpay-footer__grid {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr;
-    gap: 32px;
+.airpay-footer__compact {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 20px 40px;
     max-width: 1200px;
     margin: 0 auto;
-    padding-bottom: 32px;
-    border-bottom: 1px solid #2d3140;
+    flex-wrap: wrap;
 }
-@media (max-width: 768px) {
-    .airpay-footer__grid {
-        grid-template-columns: 1fr 1fr;
-        gap: 24px;
-    }
-}
-@media (max-width: 480px) {
-    .airpay-footer__grid { grid-template-columns: 1fr; }
-}
-.airpay-footer__brand-desc {
-    font-size: 0.85rem;
-    color: #9ca3b4;
-    line-height: 1.6;
-    margin-top: 12px;
-}
-.airpay-footer__heading {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700;
-    font-size: 0.9rem;
-    color: #fff;
-    margin-bottom: 16px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+.airpay-footer__logo img {
+    height: 32px;
+    filter: brightness(10);
 }
 .airpay-footer__links {
+    display: flex;
+    gap: 20px;
+    margin-left: auto;
     list-style: none;
     padding: 0;
-    margin: 0;
-}
-.airpay-footer__links li {
-    margin-bottom: 8px;
+    margin-right: 0;
 }
 .airpay-footer__links a {
-    color: #9ca3b4;
-    font-size: 0.85rem;
+    color: #94a3b8;
+    font-size: 0.8rem;
+    font-weight: 500;
     text-decoration: none;
-    transition: color 0.15s ease;
+    transition: color 0.2s;
 }
 .airpay-footer__links a:hover {
     color: #fff;
 }
-.airpay-footer__bottom {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px 32px;
-    max-width: 1200px;
-    margin: 0 auto;
-    font-size: 0.8rem;
-    color: #6b7280;
-    flex-wrap: wrap;
-    gap: 8px;
+.airpay-footer__copy {
+    font-size: 0.75rem;
+    color: #475569;
+    white-space: nowrap;
 }
-.airpay-footer__bottom a {
-    color: #9ca3b4;
-    text-decoration: none;
+.airpay-footer__india-badge {
+    height: 24px;
+    opacity: 0.5;
 }
-.airpay-footer__bottom a:hover { color: #fff; }
-.airpay-footer__social {
-    display: flex;
-    gap: 12px;
+@media (max-width: 768px) {
+    .airpay-footer__compact {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 20px;
+    }
+    .airpay-footer__links {
+        margin-left: 0;
+        flex-wrap: wrap;
+        gap: 14px;
+    }
 }
-.airpay-footer__social a {
-    width: 32px; height: 32px;
-    border-radius: 50%;
-    background: #2d3140;
-    display: flex; align-items: center; justify-content: center;
-    color: #9ca3b4;
-    text-decoration: none;
-    transition: all 0.2s ease;
-}
-.airpay-footer__social a:hover {
-    background: #0066A7;
-    color: #fff;
+/* Dark mode footer */
+html.dark-mode .airpay-footer,
+body.dark-mode .airpay-footer {
+    background: #0f172a;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -6774,17 +6999,189 @@ body.dark-mode .airpay-nav__theme-toggle {
     max-width: 220px;
 }
 
-/* Logo fix — remove white background from JPG logos on dark surfaces */
-.airpay-login__hero-logo img {
-    max-height: 80px;
-    mix-blend-mode: screen; /* makes white bg transparent on dark surfaces */
-    border-radius: 8px;
+/* Logo fix handled at line 3766 with filter: brightness(0) invert(1) */
+/* Footer logo brightness handled by filter: brightness(10) in template */
+
+/* ═══════════════════════════════════════════════════════════
+   STATIC PAGES (Help, Contact, Privacy, Terms)
+   Dark-mode-aware via CSS variables
+   ═══════════════════════════════════════════════════════════ */
+.ap-static-page {
+    font-family: 'Montserrat', -apple-system, sans-serif;
 }
-.airpay-footer__grid img,
-.airpay-footer img[alt*="academy"],
-.airpay-footer img[alt*="airpay"] {
-    mix-blend-mode: screen;
-    max-height: 40px;
+.ap-static-page__subtitle {
+    color: var(--ap-text-secondary, #475569);
+    font-size: 0.95rem;
+    margin-bottom: 32px;
+}
+.ap-static-page__badge {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 24px;
+}
+.ap-static-page__badge--blue {
+    background: var(--ap-primary-light, #e8f4fd);
+    color: var(--ap-primary, #0066A7);
+}
+.ap-static-page__badge--teal {
+    background: var(--ap-accent-light, #e5f4f3);
+    color: var(--ap-accent, #0f7a73);
+}
+/* Card grid */
+.ap-sp-grid { display: grid; gap: 20px; }
+.ap-sp-grid--2 { grid-template-columns: repeat(2, 1fr); }
+.ap-sp-grid--stack { grid-template-columns: 1fr; }
+@media (max-width: 768px) {
+    .ap-sp-grid--2 { grid-template-columns: 1fr; }
+}
+/* Cards */
+.ap-sp-card {
+    background: var(--ap-surface-alt, #f8fafc);
+    border: 1px solid var(--ap-border, #e2e8f0);
+    border-radius: 12px;
+    padding: 24px;
+}
+.ap-sp-card--highlight-blue {
+    background: var(--ap-primary-light, #e8f4fd);
+    border-color: #bfdbfe;
+    text-align: center;
+}
+.ap-sp-card--highlight-teal {
+    background: var(--ap-accent-light, #e5f4f3);
+    border-color: #99d5cf;
+    text-align: center;
+}
+.ap-sp-card__icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    margin-bottom: 14px;
+}
+.ap-sp-card__icon--blue { background: var(--ap-primary-light, #e8f4fd); color: #0066A7; }
+.ap-sp-card__icon--teal { background: var(--ap-accent-light, #e5f4f3); color: #0f7a73; }
+.ap-sp-card__icon--amber { background: #fef3c7; color: #d97706; }
+.ap-sp-card__icon--purple { background: #ede9fe; color: #7c3aed; }
+.ap-sp-card__icon--red { background: #fee2e2; color: #dc2626; }
+.ap-sp-card h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--ap-text, #0f172a);
+    margin: 0 0 8px;
+}
+.ap-sp-card p, .ap-sp-card ul {
+    font-size: 0.875rem;
+    color: var(--ap-text-secondary, #475569);
+    line-height: 1.65;
+    margin: 0;
+}
+.ap-sp-card ul { padding-left: 20px; line-height: 1.8; }
+.ap-sp-card a { color: var(--ap-primary, #0066A7); font-weight: 600; }
+/* Section heading */
+.ap-sp-heading {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--ap-text, #0f172a);
+    margin: 0 0 20px;
+}
+/* FAQ item */
+.ap-sp-faq {
+    background: var(--ap-surface-alt, #f8fafc);
+    border: 1px solid var(--ap-border, #e2e8f0);
+    border-radius: 10px;
+    padding: 18px 20px;
+}
+.ap-sp-faq strong {
+    color: var(--ap-text, #0f172a);
+    font-size: 0.9rem;
+}
+.ap-sp-faq p {
+    color: var(--ap-text-secondary, #475569);
+    font-size: 0.85rem;
+    line-height: 1.6;
+    margin: 8px 0 0;
+}
+/* Quick link row */
+.ap-sp-qlink {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 18px;
+    background: var(--ap-surface-alt, #f8fafc);
+    border: 1px solid var(--ap-border, #e2e8f0);
+    border-radius: 10px;
+    color: var(--ap-text, #0f172a);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: border-color 0.2s;
+}
+.ap-sp-qlink:hover {
+    border-color: var(--ap-primary, #0066A7);
+    color: var(--ap-primary, #0066A7);
+    text-decoration: none;
+}
+.ap-sp-qlink__icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+/* Highlight note */
+.ap-sp-note {
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    font-size: 0.85rem;
+    margin: 0;
+}
+.ap-sp-note--blue {
+    background: var(--ap-primary-light, #e8f4fd);
+    border: 1px solid #bfdbfe;
+    color: var(--ap-primary, #0066A7);
+}
+.ap-sp-note--teal {
+    background: var(--ap-accent-light, #e5f4f3);
+    border: 1px solid #99d5cf;
+    color: var(--ap-accent, #0f7a73);
+}
+/* Dark mode overrides for static pages */
+html.dark-mode .ap-sp-card,
+body.dark-mode .ap-sp-card {
+    background: var(--ap-surface, #1e293b);
+    border-color: var(--ap-border, #334155);
+}
+html.dark-mode .ap-sp-faq,
+body.dark-mode .ap-sp-faq {
+    background: var(--ap-surface, #1e293b);
+    border-color: var(--ap-border, #334155);
+}
+html.dark-mode .ap-sp-qlink,
+body.dark-mode .ap-sp-qlink {
+    background: var(--ap-surface, #1e293b);
+    border-color: var(--ap-border, #334155);
+    color: var(--ap-text, #f1f5f9);
+}
+html.dark-mode .ap-sp-note--blue,
+body.dark-mode .ap-sp-note--blue {
+    background: #172554;
+    border-color: #1e3a5f;
+    color: #93c5fd;
+}
+html.dark-mode .ap-sp-note--teal,
+body.dark-mode .ap-sp-note--teal {
+    background: #134e4a;
+    border-color: #1a6b64;
+    color: #5eead4;
 }
 
 /* ═══════════════════════════════════════════════════════════

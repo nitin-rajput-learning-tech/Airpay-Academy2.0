@@ -34,17 +34,7 @@
         <div class="airpay-login__hero-content">
             {{! Logo — use theme pix if no admin-uploaded logo }}
             <div class="airpay-login__hero-logo">
-                {{#logourl}}
-                    <img src="{{logourl}}" alt="{{sitename}}">
-                {{/logourl}}
-                {{^logourl}}
-                    {{#output.loginlogo}}
-                        <img src="{{output.loginlogo}}" alt="airpay academy">
-                    {{/output.loginlogo}}
-                    {{^output.loginlogo}}
-                        <img src="{{{config.wwwroot}}}/theme/airpayux/pix/brand/academy-logo-350.png" alt="airpay academy">
-                    {{/output.loginlogo}}
-                {{/logourl}}
+                <img src="{{{config.wwwroot}}}/theme/airpayux/pix/brand/academy-logo-350.png" alt="airpay academy">
             </div>
 
             <h1 class="airpay-login__hero-title">airpay academy</h1>
