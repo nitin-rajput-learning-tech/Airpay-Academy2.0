@@ -2,3 +2,16 @@
 /config.php.production-backup
 .env
 *.log
+
+# Airpay L&D OS — added Phase 16
+node_modules/
+backups/*.sql
+backups/airpayprod-mariadb-ready.sql
+backups/Production Database backup 6th April/
+bizlms_prod_export.sql
+temp/
+*.bak
+course_extract.txt
+.claude/settings.local.json
+__pycache__/
+*.pyc

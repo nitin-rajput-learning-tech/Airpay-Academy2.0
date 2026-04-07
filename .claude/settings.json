@@ -1,0 +1,143 @@
+{
+  "model": "claude-sonnet-4-6",
+
+  "permissions": {
+    "allow": [
+      "php -l *",
+      "php -r *",
+      "php admin/cli/purge_caches.php",
+      "php admin/cli/upgrade.php --non-interactive",
+      "php vendor/bin/phpunit *",
+      "Select-String -Path * -Pattern *",
+      "Get-ChildItem *",
+      "Get-Content * -Tail *",
+      "Get-Content *",
+      "Set-Location *",
+      "Test-Path *",
+      "Copy-Item * C:\\xampp\\htdocs\\moodle\\theme\\airpayux*",
+      "Copy-Item * C:\\xampp\\htdocs\\moodle\\local\\*",
+      "Copy-Item * C:\\xampp\\htdocs\\moodle\\blocks\\*",
+      "Compress-Archive -Path * -DestinationPath *scorm-output*",
+      "python *.py",
+      "python -c *",
+      "pip install *",
+      "npm install *",
+      "npm run *",
+      "git status",
+      "git diff *",
+      "git log *",
+      "git add *",
+      "git branch *",
+      "git stash",
+      "git stash pop",
+      "git show *",
+      "git tag *",
+      "bash .claude/hooks/lint-on-save.sh *",
+      "bash .claude/hooks/pre-commit.sh",
+      "wc -l *",
+      "find * -name *.php",
+      "find * -name *.scss",
+      "cat *"
+    ],
+    "deny": [
+      "Remove-Item *",
+      "rm -rf *",
+      "rm -r *",
+      "del /f *",
+      "git push --force*",
+      "git push -f *",
+      "git reset --hard*",
+      "git clean -f*",
+      "DROP TABLE*",
+      "DROP DATABASE*",
+      "ALTER TABLE * DROP*",
+      "DELETE FROM {mdl_*",
+      "curl * elevenlabs*",
+      "curl * api.gamma*",
+      "Invoke-WebRequest * airpay.academy*",
+      "Invoke-RestMethod * airpay.academy*",
+      "Copy-Item * C:\\xampp\\htdocs\\moodle\\lib\\*",
+      "Copy-Item * C:\\xampp\\htdocs\\moodle\\admin\\*",
+      "Copy-Item * C:\\xampp\\htdocs\\moodle\\course\\",
+      "Copy-Item * C:\\xampp\\htdocs\\moodle\\mod\\assign*",
+      "Copy-Item * C:\\xampp\\htdocs\\moodle\\mod\\quiz*"
+    ]
+  },
+
+  "env": {
+    "AIRPAY_MOODLE_LOCAL":  "http://localhost:8080/moodle",
+    "AIRPAY_MOODLE_PROD":   "https://www.airpay.academy",
+    "AIRPAY_THEME_SRC":     "D:\\Claude Local\\airpay-ld-os\\moodle-enhancement\\theme\\airpayux",
+    "AIRPAY_THEME_DST":     "C:\\xampp\\htdocs\\moodle\\theme\\airpayux",
+    "AIRPAY_PLUGINS_SRC":   "D:\\Claude Local\\airpay-ld-os\\moodle-enhancement\\plugins",
+    "AIRPAY_PLUGINS_DST":   "C:\\xampp\\htdocs\\moodle",
+    "AIRPAY_SCORM_OUTPUT":  "D:\\Claude Local\\airpay-ld-os\\content\\scorm-output",
+    "AIRPAY_PROTOTYPES":    "D:\\Claude Local\\Moodle Backup\\03-prototypes\\preview",
+    "AIRPAY_STATE_CARDS":   "D:\\Claude Local\\airpay-ld-os\\moodle-enhancement\\state-cards",
+    "AIRPAY_PROJECT_STATE": "D:\\Claude Local\\airpay-ld-os\\moodle-enhancement\\PROJECT-STATE.md",
+    "MOODLE_ROOT":          "C:\\xampp\\htdocs\\moodle",
+    "MOODLE_VERSION":       "4.5.10",
+    "MOODLE_PHP":           "8.2.12",
+    "AIRPAY_TENANT_ID":     "1",
+    "PUBLIC_TENANT_ID":     "77"
+  },
+
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"D:/Claude Local/airpay-ld-os/.claude/hooks/lint-on-save.sh\" \"${CLAUDE_TOOL_INPUT_FILE_PATH}\"",
+            "timeout": 15000,
+            "blockOnFailure": false
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const c=process.env.CLAUDE_TOOL_INPUT_COMMAND||''; const blocked=['Remove-Item','rm -rf','DROP TABLE','git push --force','ALTER TABLE']; const hit=blocked.find(p=>c.includes(p)); if(hit){console.error('BLOCKED: '+hit+' requires [CONFIRM] from Nitin'); process.exit(1);}\"",
+            "timeout": 5000,
+            "blockOnFailure": true
+          }
+        ]
+      }
+    ]
+  },
+
+  "includeCoAuthoredBy": true,
+  "cleanupPeriodDays": 30,
+  "autoUpdaterStatus": "disabled",
+
+  "context": {
+    "projectPhase": "6B — Sprint 1 (Navbar, Footer, Login)",
+    "activeWorkstream": "A — Moodle Enhancement",
+    "nextSurfaces": ["Navbar (navbar.mustache)", "Footer (footer.mustache)", "Login (loginform.mustache + login.php)"],
+    "sessionRule": "One session = one deliverable. Update PROJECT-STATE.md at end.",
+    "atomicRule": "NEVER generate partial plugins. ALL required files or NOTHING.",
+    "confirmRequired": [
+      "Remove-Item / rm / del (any deletion)",
+      "Writes outside D:\\Claude Local\\",
+      "POST to production Moodle REST API (write functions)",
+      "ElevenLabs API calls (costs money)",
+      "Gamma API calls (costs money)",
+      "DB ALTER/DROP on production",
+      "Touching any Moodle core file",
+      "git push to production branch"
+    ]
+  },
+
+  "_meta": {
+    "owner": "Nitin Rajput, Head of L&D, Airpay Payment Services",
+    "platform": "Moodle 4.5.10 | PHP 8.2.12 | MariaDB 10.11.16 | Apache 2.4.58",
+    "github": "nitin-rajput-learning-tech/Airpay-Academy2.0",
+    "users": "3500+ across 3 tenants (BizLMS costcenter)",
+    "escalate": "Same error 3x | core file touch | PII external | SCORM fail 2x | >50 file ops"
+  }
+}

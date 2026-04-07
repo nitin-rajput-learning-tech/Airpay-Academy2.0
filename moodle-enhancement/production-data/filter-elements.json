@@ -1,0 +1,1 @@
+{"exception":"ArgumentCountError","message":"Too few arguments to function local_search_external::get_filter_elements(), 0 passed in \/var\/www\/html\/webservice\/lib.php on line 1517 and exactly 1 expected"}

@@ -1,0 +1,1 @@
+{"exception":"moodle_exception","errorcode":"errorcoursecontextnotvalid","message":"You cannot execute functions in the course context (course id:25). The context error message was: Course or activity not accessible."}
