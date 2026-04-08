@@ -43,6 +43,36 @@
 - Theme set to airpayux, config.php wwwroot/dataroot unchanged (already localhost)
 - 3 tenants live: Airpay (id=1, 205 sub-orgs), Public (id=77), ZEEA (id=177)
 - Login verified as production siteadmin (academy@airpay.co.in)
+
+### UI/UX Audit — Round 1+2 Complete (2026-04-08)
+**Fixes applied:**
+- jQuery AMD wrapping: 13 mustache templates (nav-drawer + 12 BizLMS templates) — `$ is not a function` errors resolved
+- "Bussiness" → "Business" typo: 9 BizLMS lang files fixed
+- Created missing `local/courses/fulldescriptionpopover.js` — unblocked Online Exams + Classrooms pages
+- Reports dashboard link: `viewreport.php` → `managereport.php` (was requiring missing `?id=` param)
+- Learning Paths: removed invalid `use core_component;` (PHP 8.2 warning)
+- `perfdebug` set to 0 (was 7 from production — caused "Reactive instances" debug text)
+- CSS: hidden reactive debug panel, hidden stray Policies link, brightened dark mode Quick Nav stats
+
+**Round 1 — Siteadmin (academy@airpay.co.in):**
+- Dashboard: ✅ KPIs (1,407 users, 407 courses, 39K enrolments, 20.6% completion), charts, quick nav, system health
+- Manage Users: ✅ 2,869 users, card view, zero JS errors
+- Manage Courses: ✅ 411 courses with production images
+- Manage Company: ✅ All 3 tenants (Airpay 2,187 users, Public 676, ZEEA 6)
+- Reports: ✅ LearnerScript report list rendering
+- Online Exams: ✅ (was BROKEN → fixed with fulldescriptionpopover.js)
+- Classrooms: ✅ (was BROKEN → fixed with same JS)
+- Learning Paths: ✅ Production plans rendering (PG Products, ERP, BC Training, Customer Success, HR Onboarding)
+
+**Round 2 — Employee (mithu.bala@airpay.co.in, Vyaapaar Fintech):**
+- Dashboard: ✅ Welcome banner, 48 enrolled, 3 in progress, 21 completed, 15 certificates
+- Continue Learning: ✅ 6 course cards with progress bars
+- Activity Timeline: ✅ Real learning history (completions, quiz submissions, enrollments)
+- Recent Achievements: ✅ 5 certificates with codes and dates
+- My Courses: ✅ Moodle course overview with progress percentages
+- Profile: ✅ BizLMS profile with personal info, stats, avatar
+
+**Remaining:** Round 3 (Manager), Round 4 (External /77), Round 5 (ZEEA /177), Round 6 (Guest)
 - Failsafe backups at: `D:\Claude Local\Moodle Backup\moodle_local_pre_import_20260407.sql` + theme + plugin copies
 
 ### Production DB Analysis Deliverables (2026-04-07)

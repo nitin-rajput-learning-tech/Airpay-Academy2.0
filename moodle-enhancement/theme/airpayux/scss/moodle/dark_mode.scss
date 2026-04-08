@@ -287,6 +287,15 @@ body.dark-mode {
         border-color: #2d3140 !important;
     }
     .airpay-dash__quicknav-card span { color: #c4cad8 !important; }
+    .airpay-dash__quicknav-card .airpay-dash__quicknav-stat-value,
+    .airpay-dash__quicknav-card strong,
+    .airpay-dash__quicknav-card b {
+        color: #e8eaed !important;  /* Brighter for stat numbers */
+        font-weight: 700;
+    }
+    .airpay-dash__quicknav-card .airpay-dash__quicknav-stat-label {
+        color: #9ca3b4 !important;  /* Labels stay muted */
+    }
     .airpay-dash__quicknav-card:hover {
         background: #232733 !important;
     }
