@@ -94,7 +94,19 @@ if (isloggedin() && !isguestuser()) {
     // Learner: everyone else — sees learner dashboard only
     $systemcontext = context_system::instance();
     $issiteadmin = is_siteadmin();
+    // L&D Admin detection: check system context first, then fall back to BizLMS pattern.
+    // BizLMS assigns 'administrator' role at category context (level 40), not system (level 10).
     $isldadmin = !$issiteadmin && has_capability('local/courses:manage', $systemcontext);
+    if (!$isldadmin && !$issiteadmin) {
+        // BizLMS fallback: check if user has administrator role (id=9) at any category context
+        $hasbizlmsadmin = $DB->record_exists_sql(
+            "SELECT 1 FROM {role_assignments} ra
+             JOIN {context} ctx ON ctx.id = ra.contextid
+             WHERE ra.userid = :uid AND ra.roleid = 9 AND ctx.contextlevel = 40",
+            ['uid' => $USER->id]
+        );
+        $isldadmin = $hasbizlmsadmin;
+    }
     $isadmin = $issiteadmin || $isldadmin; // Both get admin dashboard
     // Manager detection: capability OR has direct reports via open_supervisorid (BizLMS pattern)
     $ismanager = !$isadmin && has_capability('moodle/site:viewreports', $systemcontext);
