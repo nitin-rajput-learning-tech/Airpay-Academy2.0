@@ -72,7 +72,32 @@
 - My Courses: ✅ Moodle course overview with progress percentages
 - Profile: ✅ BizLMS profile with personal info, stats, avatar
 
-**Remaining:** Round 3 (Manager), Round 4 (External /77), Round 5 (ZEEA /177), Round 6 (Guest)
+**Round 3 — Manager (binay.upadhyay@airpay.co.in, Vyaapaar, 9 direct reports):**
+- Dashboard: ✅ CRITICAL FIX — added `open_supervisorid` fallback for manager detection (production managers have no capability roles)
+- My Team: ✅ 9 team members, 115 enrolments, 29 completions, 25.2% rate
+- Team Compliance: ✅ All 9 reports with enrolled/completed/pending/last active
+- Navbar: ✅ Correct 4 pills (Dashboard, My Courses, Catalog, Profile)
+
+**Round 4 — External (demoairpayacademy@gmail.com, Public /77):**
+- Dashboard: ✅ 42 enrolled, 4 in progress, 11 completed, 6 certificates
+- Continue Learning: ✅ Mixed hiring assessments + BC training courses
+- Tenant isolation: ✅ Only sees Public tenant courses
+- Logo: ✅ Default academy logo (Public has no costcenter_logo set)
+
+**Round 5 — ZEEA (user.4156200@gmail.com, /177/178):**
+- Dashboard: ✅ 20 enrolled, 0 in progress, 0 completed, 5 certificates
+- Logo: ✅ ZEEA mafunzo logo loaded dynamically from costcenter_logo — tenant branding works!
+- Courses: ✅ Swahili course names (Jinsi ya kuweka bidhaa, Uwezeshaji wa Ufanisi)
+- Recently accessed: ✅ SCORM packages, quizzes, admin guide — all ZEEA content
+
+**Round 6 — Guest (not logged in):**
+- Homepage: ✅ Enterprise hero, stats, navigation
+- Login: ✅ Split-screen with production stats
+- Registration: ⚠️ Password field cosmetic issue (G3 — "Click to enter text")
+- Help Center: ✅ 4 help cards
+- Footer: ✅ Clean
+
+**UI/UX Audit Complete — 6/6 rounds pass. All critical fixes applied.**
 - Failsafe backups at: `D:\Claude Local\Moodle Backup\moodle_local_pre_import_20260407.sql` + theme + plugin copies
 
 ### Production DB Analysis Deliverables (2026-04-07)
