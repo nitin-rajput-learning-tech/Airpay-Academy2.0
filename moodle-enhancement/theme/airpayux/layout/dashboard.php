@@ -117,14 +117,32 @@ if (isloggedin() && !isguestuser()) {
     if ($isadmin) {
         // ═══════════════════════════════════════════════════════════
         // ADMIN DASHBOARD — KPIs, charts, quick nav, activity feed
+        // Siteadmin: global data. L&D admin: scoped to their tenant.
         // ═══════════════════════════════════════════════════════════
         try {
-            $totalusers = $DB->count_records_select('user', 'deleted = 0 AND suspended = 0 AND id > 1');
+            // Tenant scoping: L&D admins see only their org's data
+            $tenantfilter_user = '';
+            $tenantfilter_course = '';
+            $tenantparams = [];
+            if ($isldadmin && !empty($USER->open_path)) {
+                $parts = explode('/', $USER->open_path);
+                $toporg = '/' . ($parts[1] ?? '');
+                $tenantfilter_user = " AND open_path LIKE :upath";
+                $tenantfilter_course = " AND open_path LIKE :cpath";
+                $tenantparams['upath'] = $toporg . '%';
+                $tenantparams['cpath'] = $toporg . '%';
+            }
+
+            $totalusers = $DB->count_records_select('user',
+                'deleted = 0 AND suspended = 0 AND id > 1' . $tenantfilter_user,
+                array_intersect_key($tenantparams, ['upath' => 1]));
             $activeusers = $DB->count_records_select('user',
-                'deleted = 0 AND suspended = 0 AND lastaccess > :cutoff',
-                ['cutoff' => time() - (30 * 86400)]);
-            $totalcourses = $DB->count_records_select('course', 'visible = 1 AND id > 1');
-            $totalenrolments = $DB->count_records('user_enrolments');
+                'deleted = 0 AND suspended = 0 AND lastaccess > :cutoff' . $tenantfilter_user,
+                array_merge(['cutoff' => time() - (30 * 86400)], array_intersect_key($tenantparams, ['upath' => 1])));
+            $totalcourses = $DB->count_records_select('course',
+                'visible = 1 AND id > 1' . $tenantfilter_course,
+                array_intersect_key($tenantparams, ['cpath' => 1]));
+            $totalenrolments = $DB->count_records_select('user_enrolments', '1=1');
             $totalcompleted = $DB->count_records_select('course_completions', 'timecompleted IS NOT NULL');
             $completionrate = ($totalenrolments > 0) ? round(($totalcompleted / $totalenrolments) * 100, 1) : 0;
 
@@ -132,9 +150,16 @@ if (isloggedin() && !isguestuser()) {
             $lastmonth = time() - (30 * 86400);
             $prevmonth = time() - (60 * 86400);
             $newusersthismonth = $DB->count_records_select('user',
-                'timecreated > :since AND deleted = 0', ['since' => $lastmonth]);
+                'timecreated > :since AND deleted = 0' . $tenantfilter_user,
+                array_merge(['since' => $lastmonth], array_intersect_key($tenantparams, ['upath' => 1])));
             $newenrolmentsthisweek = $DB->count_records_select('user_enrolments',
                 'timestart > :since', ['since' => time() - (7 * 86400)]);
+
+            // Show tenant scope label for L&D admins
+            if ($isldadmin && !empty($toporg)) {
+                $tenantname = $DB->get_field('local_costcenter', 'fullname', ['path' => $toporg]);
+                $airpay_dashboard['tenant_scope'] = $tenantname ?? 'Your Organization';
+            }
 
             $airpay_dashboard['admin_kpis'] = [
                 ['label' => 'Total Users', 'value' => $totalusers, 'trend' => '+' . $newusersthismonth . ' this month', 'icon' => 'users', 'color' => 'primary'],

@@ -444,9 +444,62 @@ body.high-contrast {
     }
     .airpay-dash__welcome, .user_gen_info { background: #003366 !important; }
     .airpay-dash__welcome *, .user_gen_info * { color: #ffffff !important; }
-    *, *::before, *::after {
-        transition: none !important;
-        animation: none !important;
-        transform: none !important;
+
+    /* === Production data polish (Phase 16) === */
+
+    /* BizLMS Online Exams + Classrooms cards */
+    .online_exam_card, .classroom_card,
+    .onlineexam_module_detail, .classroom_module_detail {
+        background: #1a1d27 !important;
+        border-color: #2d3140 !important;
+        color: #c4cad8 !important;
+    }
+
+    /* BizLMS Learning Path cards */
+    .learningplan_card, .lp_course_block {
+        background: #1a1d27 !important;
+        border-color: #2d3140 !important;
+    }
+    .learningplan_card a, .lp_course_block a {
+        color: #60a5fa !important;
+    }
+
+    /* BizLMS Report tables */
+    .block_learnerscript table,
+    .block_reportdashboard table {
+        background: #1a1d27 !important;
+        color: #c4cad8 !important;
+    }
+    .block_learnerscript th,
+    .block_reportdashboard th {
+        background: #232733 !important;
+        color: #e8eaed !important;
+        border-color: #2d3140 !important;
+    }
+    .block_learnerscript td,
+    .block_reportdashboard td {
+        border-color: #2d3140 !important;
+    }
+
+    /* BizLMS Profile page header */
+    .user_gen_info .profile_userinfo_box {
+        background: #003366 !important;
+    }
+    .profiledatadisplay .nav-link {
+        color: #9ca3b4 !important;
+    }
+    .profiledatadisplay .nav-link.active {
+        color: #60a5fa !important;
+        border-bottom-color: #60a5fa !important;
+    }
+
+    /* Catalog course cards */
+    .local_search_course_card, .catalog_card {
+        background: #1a1d27 !important;
+        border-color: #2d3140 !important;
+    }
+    .local_search_course_card h4,
+    .catalog_card .course_title {
+        color: #e8eaed !important;
     }
 }
