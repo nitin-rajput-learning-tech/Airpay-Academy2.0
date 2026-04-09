@@ -1,0 +1,127 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+
+    @template theme_airpayux/navbar
+
+    This template renders the top navbar.
+
+    Example context (json):
+    {
+        "output": {
+            "should_display_navbar_logo": true,
+            "get_compact_logo_url": "http://placekitten.com/50/50",
+            "custom_menu": "<li>..</li>",
+            "page_heading_menu": "<li>..</li>",
+            "search_box": "<div><input type='text'></div>",
+            "navbar_plugin_output": "<div class='dropdown'>Messaging</div>",
+            "user_menu": "<div class='dropdown'>John Doe</div>"
+        },
+        "config": {
+            "wwwroot": "#",
+            "homeurl": "/my/"
+        },
+        "sitename": "Moodle Site",
+        "mobileprimarynav": [
+            {
+                "text": "Dashboard",
+                "url": "/my",
+                "isactive": true
+            },
+            {
+                "text": "Site home",
+                "url": "/",
+                "isactive": false
+            },
+            {
+                "text": "My courses",
+                "url": "/course",
+                "isactive": false
+            }
+        ]
+    }
+}}
+<nav class="navbar fixed-top navbar-light navbar-expand airpay-nav" aria-label="{{#str}}sitemenubar, admin{{/str}}">
+
+    {{! Mobile hamburger }}
+    <button class="navbar-toggler aabtn d-block d-md-none px-1 my-1 border-0" data-toggler="drawers" data-action="toggle" data-target="theme_airpayux-drawers-primary">
+        <span class="navbar-toggler-icon"></span>
+        <span class="sr-only">{{#str}}sidepanel, core{{/str}}</span>
+    </button>
+
+    {{! Left: Logo }}
+    <a href="{{{ config.homeurl }}}" class="navbar-brand d-none d-md-flex align-items-center m-0 mr-3 p-0 aabtn">
+        {{# output.should_display_navbar_logo }}
+            <img src="{{output.get_custom_logo}}" class="logo mr-1" alt="{{sitename}}">
+        {{/ output.should_display_navbar_logo }}
+        {{^ output.should_display_navbar_logo }}
+            <span class="airpay-nav__brand">{{{ sitename }}}</span>
+        {{/ output.should_display_navbar_logo }}
+    </a>
+
+    {{! Pill Navigation — siteadmin: Dashboard only. Everyone else: all 4. Guest: no Dashboard. }}
+    <div class="airpay-nav__pills d-none d-md-flex">
+        {{#isloggedin}}
+        <a href="{{{config.wwwroot}}}/my/" class="airpay-nav__pill airpay-nav__pill--dashboard">Dashboard</a>
+        {{/isloggedin}}
+        {{^output.is_siteadmin_only}}
+        {{#isloggedin}}
+        <a href="{{{config.wwwroot}}}/my/courses.php" class="airpay-nav__pill airpay-nav__pill--courses">My Courses</a>
+        {{/isloggedin}}
+        <a href="{{{config.wwwroot}}}/local/airpay_catalog/index.php" class="airpay-nav__pill airpay-nav__pill--catalog">Catalog</a>
+        {{#isloggedin}}
+        <a href="{{{config.wwwroot}}}/local/users/profile.php" class="airpay-nav__pill airpay-nav__pill--profile">Profile</a>
+        {{/isloggedin}}
+        {{/output.is_siteadmin_only}}
+    </div>
+
+    {{! Right: Search + Quick Access + Plugins + User menu }}
+    <div id="usernavigation" class="navbar-nav ml-auto airpay-nav__actions">
+        {{! Search }}
+        <div class="d-none d-md-flex align-items-center">
+            <form action="{{{config.wwwroot}}}/search/index.php" method="get" class="airpay-nav__search">
+                <i class="fa fa-search airpay-nav__search-icon"></i>
+                <input type="text" name="q" class="airpay-nav__search-input" placeholder="Search courses, people, content..." autocomplete="off">
+            </form>
+        </div>
+
+        {{! Quick Access (BizLMS) }}
+        {{#isloggedin}}
+        <ul class="nav navbar-nav">
+            <li class="nav-item">
+                {{> theme_airpayux/quickaccess-popover}}
+            </li>
+        </ul>
+        {{/isloggedin}}
+
+        {{! Notifications, messaging, cart (BizLMS plugins) }}
+        {{{ output.navbar_plugin_output }}}
+
+        {{! Dark mode toggle — persists via localStorage, icon swaps }}
+        <button class="airpay-nav__theme-toggle" onclick="var d=document.body.classList.toggle('dark-mode');document.documentElement.classList.toggle('dark-mode');localStorage.setItem('airpay-theme',d?'dark':'light');this.querySelector('i').className=d?'fa fa-sun-o':'fa fa-moon-o';" title="Toggle dark mode" aria-label="Toggle dark mode">
+            <i class="fa fa-moon-o" aria-hidden="true"></i>
+        </button>
+
+        {{! User menu (BizLMS role switching) }}
+        <div class="d-flex align-items-stretch usermenu-container" data-region="usermenu">
+            {{{ output.user_menu }}}
+        </div>
+        {{{ output.edit_switch }}}
+    </div>
+</nav>
+
+{{> theme_airpayux/primary-drawer-mobile }}

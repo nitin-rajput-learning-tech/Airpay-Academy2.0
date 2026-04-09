@@ -1,0 +1,133 @@
+{{!
+    @template local_airpay_catalog/catalog
+
+    LXP-style course catalog with carousels, filters, and search.
+}}
+<div class="airpay-catalog">
+
+    {{! Search Bar }}
+    <div class="airpay-catalog__search-section">
+        <form action="{{searchurl}}" method="get" class="airpay-catalog__search-form">
+            <i class="fa fa-search airpay-catalog__search-icon"></i>
+            <input type="text" name="q" value="{{search_query}}" placeholder="Search courses, topics, skills..."
+                   class="airpay-catalog__search-input" autocomplete="off">
+            {{#has_search}}
+            <a href="{{baseurl}}" class="airpay-catalog__search-clear"><i class="fa fa-times"></i></a>
+            {{/has_search}}
+        </form>
+    </div>
+
+    {{^has_search}}
+    {{! Continue Learning Carousel }}
+    {{#has_in_progress}}
+    <section class="airpay-catalog__section">
+        <h3 class="airpay-catalog__section-title"><i class="fa fa-play-circle"></i> Continue Learning</h3>
+        <div class="airpay-catalog__carousel">
+            {{#in_progress}}
+            <div class="airpay-catalog__card airpay-catalog__card--progress">
+                <a href="{{viewurl}}" class="airpay-catalog__card-link">
+                    <div class="airpay-catalog__card-thumb">
+                        <span class="airpay-catalog__card-code">{{shortname}}</span>
+                    </div>
+                    <div class="airpay-catalog__card-body">
+                        <h4>{{fullname}}</h4>
+                        {{#has_progress}}
+                        <div class="airpay-catalog__progress">
+                            <div class="airpay-catalog__progress-bar" style="width: {{progress}}%;"></div>
+                        </div>
+                        <small>{{progress}}% complete</small>
+                        {{/has_progress}}
+                    </div>
+                </a>
+            </div>
+            {{/in_progress}}
+        </div>
+    </section>
+    {{/has_in_progress}}
+
+    {{! Trending in Your Department }}
+    {{#has_trending}}
+    <section class="airpay-catalog__section">
+        <h3 class="airpay-catalog__section-title"><i class="fa fa-fire"></i> Trending in Your Department</h3>
+        <div class="airpay-catalog__carousel">
+            {{#trending}}
+            {{> local_airpay_catalog/course_card }}
+            {{/trending}}
+        </div>
+    </section>
+    {{/has_trending}}
+
+    {{! New This Month }}
+    {{#has_new_courses}}
+    <section class="airpay-catalog__section">
+        <h3 class="airpay-catalog__section-title"><i class="fa fa-star"></i> New This Month</h3>
+        <div class="airpay-catalog__carousel">
+            {{#new_courses}}
+            {{> local_airpay_catalog/course_card }}
+            {{/new_courses}}
+        </div>
+    </section>
+    {{/has_new_courses}}
+
+    {{! Browse by Category }}
+    {{#has_categories}}
+    <section class="airpay-catalog__section">
+        <h3 class="airpay-catalog__section-title"><i class="fa fa-th-large"></i> Browse by Category</h3>
+        <div class="airpay-catalog__categories">
+            {{#categories}}
+            <a href="{{baseurl}}?category={{id}}" class="airpay-catalog__category-card">
+                <strong>{{name}}</strong>
+                <span>{{course_count}} courses</span>
+            </a>
+            {{/categories}}
+        </div>
+    </section>
+    {{/has_categories}}
+    {{/has_search}}
+
+    {{! All Courses (search results or full list) }}
+    <section class="airpay-catalog__section">
+        <div class="airpay-catalog__section-header">
+            <h3 class="airpay-catalog__section-title">
+                {{#has_search}}
+                Results for "{{search_query}}" ({{total}})
+                {{/has_search}}
+                {{^has_search}}
+                All Courses ({{total}})
+                {{/has_search}}
+            </h3>
+            <div class="airpay-catalog__sort">
+                <a href="{{baseurl}}?sort=newest{{#has_search}}&q={{search_query}}{{/has_search}}"
+                   class="{{#sort_newest}}active{{/sort_newest}}">Newest</a>
+                <a href="{{baseurl}}?sort=popular{{#has_search}}&q={{search_query}}{{/has_search}}"
+                   class="{{#sort_popular}}active{{/sort_popular}}">Popular</a>
+                <a href="{{baseurl}}?sort=name{{#has_search}}&q={{search_query}}{{/has_search}}"
+                   class="{{#sort_name}}active{{/sort_name}}">A-Z</a>
+            </div>
+        </div>
+
+        {{#has_courses}}
+        <div class="airpay-catalog__grid">
+            {{#courses}}
+            {{> local_airpay_catalog/course_card }}
+            {{/courses}}
+        </div>
+
+        {{! Pagination }}
+        {{#has_more}}
+        <div class="airpay-catalog__pagination">
+            <span>Showing {{showing_from}}-{{showing_to}} of {{total}}</span>
+            <a href="{{baseurl}}?page={{current_page}}&sort={{sort}}{{#has_search}}&q={{search_query}}{{/has_search}}"
+               class="airpay-catalog__btn">Load more</a>
+        </div>
+        {{/has_more}}
+        {{/has_courses}}
+
+        {{^has_courses}}
+        <div class="airpay-catalog__empty">
+            <i class="fa fa-search"></i>
+            <p>No courses found. Try a different search or browse by category.</p>
+        </div>
+        {{/has_courses}}
+    </section>
+</div>
