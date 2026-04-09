@@ -1,0 +1,46 @@
+{{!
+    @template local_airpay_gamification/leaderboard
+
+    Mini leaderboard widget for the dashboard.
+    Shows top 5 in department with user's rank.
+
+    Context variables:
+    - entries: array of {rank, firstname, lastname, initials, points, streak, level_name, level_color, is_current_user, is_top3}
+    - has_entries, user_rank, scope
+}}
+<div class="airpay-gamification__leaderboard">
+    <div class="airpay-gamification__leaderboard-header">
+        <h4><i class="fa fa-trophy" style="color: #d97706;"></i> {{# str }}leaderboard, local_airpay_gamification{{/ str }}</h4>
+        <small>{{# str }}departmentleaderboard, local_airpay_gamification{{/ str }}</small>
+    </div>
+
+    {{#has_entries}}
+    <div class="airpay-gamification__leaderboard-list">
+        {{#entries}}
+        <div class="airpay-gamification__leaderboard-row {{#is_current_user}}airpay-gamification__leaderboard-row--you{{/is_current_user}}">
+            <span class="airpay-gamification__leaderboard-rank {{#is_top3}}airpay-gamification__leaderboard-rank--top{{/is_top3}}">
+                {{rank}}
+            </span>
+            <span class="airpay-gamification__leaderboard-avatar" style="background: {{level_color}};">
+                {{initials}}
+            </span>
+            <span class="airpay-gamification__leaderboard-name">
+                {{firstname}} {{lastname}}
+                {{#is_current_user}}<small>(You)</small>{{/is_current_user}}
+            </span>
+            <span class="airpay-gamification__leaderboard-points">{{points}} pts</span>
+        </div>
+        {{/entries}}
+    </div>
+
+    {{#user_rank}}
+    <div class="airpay-gamification__leaderboard-your-rank">
+        {{# str }}yourrank, local_airpay_gamification, {{user_rank}}{{/ str }}
+    </div>
+    {{/user_rank}}
+    {{/has_entries}}
+
+    {{^has_entries}}
+    <p class="text-muted">{{# str }}noentries, local_airpay_gamification{{/ str }}</p>
+    {{/has_entries}}
+</div>

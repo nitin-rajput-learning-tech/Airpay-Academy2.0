@@ -1,0 +1,558 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template theme_airpayux/columns2
+
+    Admin time setting template.
+
+    epsilon 2 column layout template.
+
+    Context variables required for this template:
+    * sitename - The name of the site
+    * output - The core renderer for the page
+    * bodyattributes - attributes for the body tag as a string of html attributes
+    * sidepreblocks - HTML for the blocks
+    * hasblocks - true if there are blocks on this page
+    * navdraweropen - true if the nav drawer should be open on page load
+    * regionmainsettingsmenu - HTML for the region main settings menu
+    * hasregionmainsettingsmenu - There is a region main settings menu on this page.
+
+    Example context (json):
+    {
+        "sitename": "Moodle",
+        "output": {
+            "doctype": "<!DOCTYPE html>",
+            "page_title": "Test page",
+            "favicon": "favicon.ico",
+            "main_content": "<h1>Headings make html validators happier</h1>"
+         },
+        "bodyattributes":"",
+        "sidepreblocks": "<h2>Blocks html goes here</h2>",
+        "hasblocks":true,
+        "navdraweropen":true,
+        "regionmainsettingsmenu": "",
+        "hasregionmainsettingsmenu": false
+    }
+}}
+{{> theme_airpayux/head }}
+
+<body {{{ bodyattributes }}}>
+{{> core/local/toast/wrapper}}
+
+<div id="page-wrapper" class="d-print-block">
+
+    {{{ output.standard_top_of_body_html }}}
+
+    {{> theme_airpayux/navbar }}
+
+    <div id="page" class="container-fluid d-print-block">
+        {{{ output.full_header }}}
+            {{#secondarymoremenu}}
+                <div class="secondary-navigation">
+                    {{> core/moremenu}}
+                </div>
+            {{/secondarymoremenu}}
+
+        {{! ═══ AIRPAY DASHBOARD — Full-width top section ═══ }}
+        {{#airpay}}
+        <div class="airpay-dash">
+
+            {{! Welcome Banner — NOT shown for admin (they have KPIs + Quick Nav) }}
+            {{^isadmin}}
+            <div class="airpay-dash__welcome">
+                <div class="airpay-dash__welcome-content">
+                    {{#ismanager}}
+                    <h2 class="airpay-dash__welcome-title">Welcome, {{firstname}} <span>👋</span></h2>
+                    <p class="airpay-dash__welcome-sub">Team overview and your learning progress</p>
+                    {{/ismanager}}
+                    {{^ismanager}}
+                    <h2 class="airpay-dash__welcome-title">Welcome back, {{firstname}}! <span>👋</span></h2>
+                    <p class="airpay-dash__welcome-sub">Continue where you left off and keep building your skills</p>
+                    {{/ismanager}}
+                </div>
+                <div class="airpay-dash__welcome-actions">
+                    <a href="{{{config.wwwroot}}}/local/search/allcourses.php" class="airpay-dash__welcome-btn airpay-dash__welcome-btn--primary">
+                        <i class="fa fa-compass"></i> Browse Courses
+                    </a>
+                    <a href="{{{config.wwwroot}}}/local/users/profile.php" class="airpay-dash__welcome-btn airpay-dash__welcome-btn--outline">
+                        <i class="fa fa-user"></i> My Profile
+                    </a>
+                </div>
+            </div>
+            {{/isadmin}}
+
+            {{! ═══ ADMIN DASHBOARD (siteadmin / L&D admin) ═══ }}
+            {{#isadmin}}
+
+            {{! Admin KPI Tiles }}
+            {{#hasadminkpis}}
+            <div class="airpay-dash__stats">
+                {{#admin_kpis}}
+                <div class="airpay-dash__stat airpay-dash__stat--{{color}}">
+                    <div class="airpay-dash__stat-icon"><i class="fa fa-{{icon}}"></i></div>
+                    <div class="airpay-dash__stat-data">
+                        <span class="airpay-dash__stat-num">{{value}}</span>
+                        <span class="airpay-dash__stat-label">{{label}}</span>
+                        {{#trend}}<span class="airpay-dash__stat-trend airpay-dash__stat-trend--up">{{trend}}</span>{{/trend}}
+                    </div>
+                </div>
+                {{/admin_kpis}}
+            </div>
+            {{/hasadminkpis}}
+
+            {{! Admin Quick Navigation (above charts) }}
+            {{#hasquicknav}}
+            <div class="airpay-dash__section">
+                <h3 class="airpay-dash__section-title"><i class="fa fa-th-large"></i> Quick Navigation</h3>
+                <div class="airpay-dash__quicknav">
+                    {{#admin_quicknav}}
+                    <a href="{{url}}" class="airpay-dash__quicknav-card" style="border-top: 3px solid {{color}}">
+                        <i class="fa fa-{{icon}}" style="color: {{color}}"></i>
+                        <span>{{label}}</span>
+                        {{#hasstats}}
+                        <div class="airpay-dash__quicknav-stats">
+                            {{#stats}}
+                            <div class="airpay-dash__quicknav-stat">
+                                <strong>{{statval}}</strong>
+                                {{statlabel}}
+                            </div>
+                            {{/stats}}
+                        </div>
+                        {{/hasstats}}
+                    </a>
+                    {{/admin_quicknav}}
+                </div>
+            </div>
+            {{/hasquicknav}}
+
+            {{! Admin Charts (Chart.js) }}
+            {{#hascharts}}
+            <div class="airpay-dash__two-col">
+                <div class="airpay-dash__section">
+                    <h3 class="airpay-dash__section-title"><i class="fa fa-line-chart"></i> Enrolment Trend</h3>
+                    <canvas id="airpay-chart-enrolments" height="220"></canvas>
+                </div>
+                <div class="airpay-dash__section">
+                    <h3 class="airpay-dash__section-title"><i class="fa fa-pie-chart"></i> Course Distribution</h3>
+                    <canvas id="airpay-chart-distribution" height="220"></canvas>
+                </div>
+            </div>
+            {{/hascharts}}
+
+            {{! System Health + User Analytics (two-column) }}
+            <div class="airpay-dash__two-col">
+                {{! System Health — siteadmin ONLY, not L&D admin }}
+                {{#issiteadmin}}
+                {{#hassystemhealth}}
+                <div class="airpay-dash__section">
+                    <h3 class="airpay-dash__section-title"><i class="fa fa-heartbeat"></i> System Health</h3>
+                    <div class="airpay-dash__health-list">
+                        {{#systemhealth}}
+                        <div class="airpay-dash__health-item">
+                            <i class="fa fa-{{icon}} airpay-dash__health-icon airpay-dash__health-icon--{{status}}"></i>
+                            <div class="airpay-dash__health-info">
+                                <span class="airpay-dash__health-label">{{label}}</span>
+                                <span class="airpay-dash__health-value">{{value}}</span>
+                            </div>
+                        </div>
+                        {{/systemhealth}}
+                    </div>
+                </div>
+                {{/hassystemhealth}}
+                {{/issiteadmin}}
+
+                {{! User Analytics }}
+                {{#hasuseranalytics}}
+                <div class="airpay-dash__section">
+                    <h3 class="airpay-dash__section-title"><i class="fa fa-users"></i> User Analytics</h3>
+                    <div class="airpay-dash__analytics-grid">
+                        {{#useranalytics}}
+                        <div class="airpay-dash__analytics-item">
+                            <div class="airpay-dash__analytics-icon" style="color: {{color}}">
+                                <i class="fa fa-{{icon}}"></i>
+                            </div>
+                            <div class="airpay-dash__analytics-data">
+                                <span class="airpay-dash__analytics-value" style="color: {{color}}">{{value}}</span>
+                                <span class="airpay-dash__analytics-label">{{label}}</span>
+                            </div>
+                        </div>
+                        {{/useranalytics}}
+                    </div>
+                </div>
+                {{/hasuseranalytics}}
+            </div>
+
+            {{! Chart.js initialization }}
+            {{#hascharts}}
+            <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Enrolment Trend Bar Chart
+                var ctx1 = document.getElementById('airpay-chart-enrolments');
+                if (ctx1) {
+                    new Chart(ctx1, {
+                        type: 'bar',
+                        data: {
+                            labels: {{{chart_labels}}},
+                            datasets: [{
+                                label: 'Enrolments',
+                                data: {{{chart_enrolments}}},
+                                backgroundColor: 'rgba(0, 102, 167, 0.7)',
+                                borderColor: '#0066A7',
+                                borderWidth: 1,
+                                borderRadius: 6
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: { legend: { display: false } },
+                            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                        }
+                    });
+                }
+                // Course Distribution Doughnut
+                var ctx2 = document.getElementById('airpay-chart-distribution');
+                if (ctx2) {
+                    new Chart(ctx2, {
+                        type: 'doughnut',
+                        data: {
+                            labels: {{{chart_pie_labels}}},
+                            datasets: [{
+                                data: {{{chart_pie_data}}},
+                                backgroundColor: ['#0066A7', '#0f7a73', '#7c3aed', '#d97706', '#dc2626'],
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            cutout: '60%',
+                            plugins: { legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true } } }
+                        }
+                    });
+                }
+            });
+            </script>
+            {{/hascharts}}
+
+            {{/isadmin}}
+
+            {{! ═══ MANAGER TEAM SECTION (managers only — shown above learner content) ═══ }}
+            {{#ismanager}}
+
+            {{! Manager KPI tiles }}
+            {{#hasmanagerkpis}}
+            <div class="airpay-dash__section" style="margin-bottom: 20px;">
+                <h3 class="airpay-dash__section-title"><i class="fa fa-users"></i> My Team</h3>
+                <div class="airpay-dash__stats">
+                    {{#manager_kpis}}
+                    <div class="airpay-dash__stat airpay-dash__stat--{{color}}">
+                        <div class="airpay-dash__stat-icon"><i class="fa fa-{{icon}}"></i></div>
+                        <div class="airpay-dash__stat-data">
+                            <span class="airpay-dash__stat-num">{{value}}</span>
+                            <span class="airpay-dash__stat-label">{{label}}</span>
+                        </div>
+                    </div>
+                    {{/manager_kpis}}
+                </div>
+            </div>
+            {{/hasmanagerkpis}}
+
+            {{! Team Compliance Table }}
+            {{#hasteamcompliance}}
+            <div class="airpay-dash__section" style="margin-bottom: 20px;">
+                <h3 class="airpay-dash__section-title"><i class="fa fa-shield"></i> Team Compliance</h3>
+                <table class="generaltable airpay-dash__team-table">
+                    <thead>
+                        <tr>
+                            <th>Team Member</th>
+                            <th>Enrolled</th>
+                            <th>Completed</th>
+                            <th>Pending</th>
+                            <th>Last Active</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#teamcompliance}}
+                        <tr>
+                            <td><strong>{{name}}</strong></td>
+                            <td>{{enrolled}}</td>
+                            <td>{{completed}}</td>
+                            <td>{{#haspending}}<span style="color: #dc2626; font-weight: 600;">{{pending}}</span>{{/haspending}}{{^haspending}}<span style="color: #16a34a;">0</span>{{/haspending}}</td>
+                            <td>{{lastaccess}}</td>
+                        </tr>
+                        {{/teamcompliance}}
+                    </tbody>
+                </table>
+            </div>
+            {{/hasteamcompliance}}
+
+            {{/ismanager}}
+
+            {{! ═══ LEARNER DASHBOARD (employees, managers own learning, external learners) ═══ }}
+            {{#islearner}}
+
+            {{! Stat Cards }}
+            {{#hasstats}}
+            <div class="airpay-dash__stats">
+                <div class="airpay-dash__stat airpay-dash__stat--primary">
+                    <div class="airpay-dash__stat-icon"><i class="fa fa-book"></i></div>
+                    <div class="airpay-dash__stat-data">
+                        <span class="airpay-dash__stat-num">{{stats.enrolled}}</span>
+                        <span class="airpay-dash__stat-label">Enrolled</span>
+                    </div>
+                </div>
+                <div class="airpay-dash__stat airpay-dash__stat--accent">
+                    <div class="airpay-dash__stat-icon"><i class="fa fa-spinner"></i></div>
+                    <div class="airpay-dash__stat-data">
+                        <span class="airpay-dash__stat-num">{{stats.inprogress}}</span>
+                        <span class="airpay-dash__stat-label">In Progress</span>
+                    </div>
+                </div>
+                <div class="airpay-dash__stat airpay-dash__stat--success">
+                    <div class="airpay-dash__stat-icon"><i class="fa fa-check-circle"></i></div>
+                    <div class="airpay-dash__stat-data">
+                        <span class="airpay-dash__stat-num">{{stats.completed}}</span>
+                        <span class="airpay-dash__stat-label">Completed</span>
+                    </div>
+                </div>
+                <div class="airpay-dash__stat airpay-dash__stat--gold">
+                    <div class="airpay-dash__stat-icon"><i class="fa fa-certificate"></i></div>
+                    <div class="airpay-dash__stat-data">
+                        <span class="airpay-dash__stat-num">{{stats.certificates}}</span>
+                        <span class="airpay-dash__stat-label">Certificates</span>
+                    </div>
+                </div>
+            </div>
+            {{/hasstats}}
+
+            {{! Gamification Widgets — Points, Streaks, Leaderboard }}
+            {{#hasgamification}}
+            <div class="airpay-dash__section">
+                <div class="airpay-dash__gamification-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    {{! Points + Badges Summary }}
+                    {{> local_airpay_gamification/points_summary gamification}}
+
+                    {{! Streak Calendar }}
+                    {{#hasstreakcalendar}}
+                    <div>
+                        {{> local_airpay_gamification/streak_calendar streak_calendar}}
+
+                        {{! Mini Leaderboard }}
+                        {{#hasleaderboard}}
+                        <div style="margin-top: 12px;">
+                            {{> local_airpay_gamification/leaderboard leaderboard}}
+                        </div>
+                        {{/hasleaderboard}}
+                    </div>
+                    {{/hasstreakcalendar}}
+                </div>
+            </div>
+            {{/hasgamification}}
+
+            {{! Continue Learning }}
+            {{#hascontinuecourses}}
+            <div class="airpay-dash__section">
+                <div class="airpay-dash__section-header">
+                    <h3 class="airpay-dash__section-title">Continue Learning</h3>
+                    <a href="{{{config.wwwroot}}}/my/courses.php" class="airpay-dash__section-link">View all <i class="fa fa-arrow-right"></i></a>
+                </div>
+                <div class="airpay-dash__courses">
+                    {{#continuecourses}}
+                    <a href="{{viewurl}}" class="airpay-dash__course-card">
+                        <div class="airpay-dash__course-thumb">
+                            <span class="airpay-dash__course-initial">{{shortname}}</span>
+                        </div>
+                        <div class="airpay-dash__course-body">
+                            <h4 class="airpay-dash__course-name">{{fullname}}</h4>
+                            <div class="airpay-dash__course-progress">
+                                <div class="airpay-dash__progress-bar">
+                                    <div class="airpay-dash__progress-fill" style="width: {{progress}}%"></div>
+                                </div>
+                                <span class="airpay-dash__progress-text">{{progress}}%</span>
+                            </div>
+                        </div>
+                    </a>
+                    {{/continuecourses}}
+                </div>
+            </div>
+            {{/hascontinuecourses}}
+
+            {{! ═══ TWO-COLUMN: Deadlines + Timeline ═══ }}
+            <div class="airpay-dash__two-col">
+                {{! --- Upcoming Deadlines --- }}
+                {{#hasdeadlines}}
+                <div class="airpay-dash__section airpay-dash__deadlines">
+                    <h3 class="airpay-dash__section-title"><i class="fa fa-calendar" aria-hidden="true"></i> {{# str }}upcomingevents, calendar{{/ str }}</h3>
+                    <div class="airpay-dash__deadline-list">
+                        {{#deadlines}}
+                        <div class="airpay-dash__deadline-item {{#urgent}}airpay-dash__deadline-item--urgent{{/urgent}}">
+                            <div class="airpay-dash__deadline-icon">
+                                <i class="fa {{#urgent}}fa-exclamation-circle{{/urgent}}{{^urgent}}fa-clock-o{{/urgent}}" aria-hidden="true"></i>
+                            </div>
+                            <div class="airpay-dash__deadline-info">
+                                <span class="airpay-dash__deadline-name">{{coursename}}</span>
+                                <span class="airpay-dash__deadline-date">Due: {{duedate}}</span>
+                            </div>
+                            <a href="{{viewurl}}" class="airpay-btn airpay-btn--outline airpay-btn--sm">{{# str }}view, core{{/ str }}</a>
+                        </div>
+                        {{/deadlines}}
+                    </div>
+                </div>
+                {{/hasdeadlines}}
+
+                {{! --- Activity Timeline --- }}
+                {{#hastimeline}}
+                <div class="airpay-dash__section airpay-dash__timeline-section">
+                    <h3 class="airpay-dash__section-title"><i class="fa fa-history" aria-hidden="true"></i> Activity Timeline</h3>
+                    <div class="airpay-dash__timeline">
+                        {{#timeline}}
+                        <div class="airpay-dash__timeline-item">
+                            <div class="airpay-dash__timeline-dot {{#istoday}}airpay-dash__timeline-dot--today{{/istoday}}"></div>
+                            <div class="airpay-dash__timeline-content">
+                                <span class="airpay-dash__timeline-date">{{date}}</span>
+                                <span class="airpay-dash__timeline-label">{{label}}</span>
+                            </div>
+                        </div>
+                        {{/timeline}}
+                    </div>
+                </div>
+                {{/hastimeline}}
+            </div>
+
+            {{! ═══ Recent Achievements ═══ }}
+            {{#hasachievements}}
+            <div class="airpay-dash__section">
+                <h3 class="airpay-dash__section-title"><i class="fa fa-trophy" aria-hidden="true"></i> Recent Achievements</h3>
+                <div class="airpay-dash__achievements">
+                    {{#achievements}}
+                    <div class="airpay-dash__achievement">
+                        <div class="airpay-dash__achievement-icon airpay-dash__achievement-icon--{{type}}">
+                            <i class="fa fa-{{icon}}" aria-hidden="true"></i>
+                        </div>
+                        <div class="airpay-dash__achievement-info">
+                            <span class="airpay-dash__achievement-title">{{title}}</span>
+                            <span class="airpay-dash__achievement-desc">{{description}}</span>
+                        </div>
+                        <span class="airpay-dash__achievement-date">{{date}}</span>
+                    </div>
+                    {{/achievements}}
+                </div>
+            </div>
+            {{/hasachievements}}
+
+            {{! ═══ Recommended for You ═══ }}
+            {{#hasrecommendations}}
+            <div class="airpay-dash__section">
+                <h3 class="airpay-dash__section-title"><i class="fa fa-star" aria-hidden="true"></i> Recommended for You</h3>
+                <div class="airpay-dash__recommendations">
+                    {{#recommendations}}
+                    <a href="{{viewurl}}" class="airpay-dash__rec-card">
+                        <div class="airpay-dash__rec-header">
+                            <span class="airpay-dash__rec-category">{{category}}</span>
+                        </div>
+                        <div class="airpay-dash__rec-body">
+                            <h4 class="airpay-dash__rec-title">{{fullname}}</h4>
+                            <p class="airpay-dash__rec-summary">{{summary}}</p>
+                            <span class="airpay-dash__rec-action">Explore <i class="fa fa-arrow-right" aria-hidden="true"></i></span>
+                        </div>
+                    </a>
+                    {{/recommendations}}
+                </div>
+            </div>
+            {{/hasrecommendations}}
+
+            {{/islearner}}
+
+        </div>
+        {{/airpay}}
+        {{! ═══ END AIRPAY DASHBOARD ═══ }}
+
+        <div id="page-content" class="row pb-3 d-print-block">
+            <div id="region-main-box" class="col-12">
+                {{#hasregionmainsettingsmenu}}
+                <div id="region-main-settings-menu" class="d-print-none {{#hasblocks}}has-blocks{{/hasblocks}}">
+                    <div> {{{ regionmainsettingsmenu }}} </div>
+                </div>
+                {{/hasregionmainsettingsmenu}}
+                <section id="region-main" {{#hasblocks}}class="has-blocks mb-3"{{/hasblocks}} aria-label="{{#str}}content{{/str}}">
+
+                    {{#hasregionmainsettingsmenu}}
+                        <div class="region_main_settings_menu_proxy"></div>
+                    {{/hasregionmainsettingsmenu}}
+                    {{{ output.course_content_header }}}
+                    {{#headercontent}}
+                        {{> core/activity_header }}
+                    {{/headercontent}}
+                    {{#overflow}}
+                        {{> core/url_select}}
+                    {{/overflow}}
+
+                    {{{ output.main_content }}}
+                    {{{ output.activity_navigation }}}
+                    {{{ output.course_content_footer }}}
+                </section>
+
+                <section class="layerone mb-15 row">
+                    {{{layerone_detail_full}}}
+                </section>
+                <section class="layerone middle-blocks-row row">
+                    {{{ layerone_detail_one }}}
+                    {{{ layerone_detail_two }}}
+                </section>
+                <div class="row">
+                    <section class="layertwo part_one bottom-blocks-row col-md-6 p-0">
+                        {{{ layertwo_detail_one }}}
+                    </section>
+                    <section class="layertwo part_two bottom-blocks-row col-md-6 p-0">
+                        {{{ layertwo_detail_two }}}
+                    </section>
+                </div>
+                <div class="row">
+                    <section class="layertwo part_one bottom-blocks-row col-md-6 p-0">
+                        {{{ layerone_bottom_one }}}
+                    </section>
+                    <section class="layertwo part_two bottom-blocks-row col-md-6 p-0">
+                        {{{ layertwo_detail_three }}}
+                        {{{ layertwo_detail_four }}}
+                    </section>
+                </div>
+
+                {{#hasblocks}}
+                <section data-region="blocks-column" class="d-print-none" aria-label="{{#str}}blocks{{/str}}">
+                    {{{ addblockbutton }}}
+                    {{{ sidepreblocks }}}
+                </section>
+                {{/hasblocks}}
+            </div>
+        </div>
+    </div>
+    {{{ output.standard_after_main_region_html }}}
+    {{# isloggedin }}
+        <!-- {{> theme_airpayux/nav-drawer }} -->
+    {{/ isloggedin }}
+    {{> theme_airpayux/footer }}
+</div>
+
+</body>
+</html>
+{{#js}}
+M.util.js_pending('theme_airpayux/loader');
+require(['theme_airpayux/loader', 'theme_airpayux/drawer'], function(Loader, Drawer) {
+    Drawer.init();
+    M.util.js_complete('theme_airpayux/loader');
+});
+{{/js}}

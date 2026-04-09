@@ -126,6 +126,51 @@ if (isloggedin() && !isguestuser()) {
     $airpay_dashboard['ismanager'] = $ismanager;       // Team + learner
     $airpay_dashboard['islearner'] = !$isadmin;        // Managers + learners see learner sections
 
+    // ═══════════════════════════════════════════════════════════
+    // Gamification data — all non-admin users see points, badges, streaks
+    // ═══════════════════════════════════════════════════════════
+    if (!$isadmin && file_exists($CFG->dirroot . '/local/airpay_gamification/lib.php')) {
+        require_once($CFG->dirroot . '/local/airpay_gamification/lib.php');
+        try {
+            $gamification = local_airpay_gamification_get_summary($USER->id);
+            $airpay_dashboard['gamification'] = $gamification;
+            $airpay_dashboard['hasgamification'] = true;
+
+            // Leaderboard data.
+            $leaderboard = \local_airpay_gamification\leaderboard::get_template_data($USER->id, 'department', 5);
+            $airpay_dashboard['leaderboard'] = $leaderboard;
+            $airpay_dashboard['hasleaderboard'] = $leaderboard['has_entries'] ?? false;
+
+            // Streak calendar (last 7 days).
+            $streakdays = [];
+            for ($i = 6; $i >= 0; $i--) {
+                $date = date('Y-m-d', strtotime("-$i days"));
+                $label = ($i === 0) ? 'Today' : date('D', strtotime("-$i days"));
+                // Check if user logged in on this date.
+                $daystart = strtotime($date);
+                $dayend = $daystart + 86400;
+                $active = $DB->record_exists_select('local_airpay_points_log',
+                    "userid = :uid AND action = 'daily_login' AND timecreated >= :start AND timecreated < :end",
+                    ['uid' => $USER->id, 'start' => $daystart, 'end' => $dayend]);
+                $streakdays[] = [
+                    'date'     => $date,
+                    'label'    => $label,
+                    'active'   => $active,
+                    'is_today' => ($i === 0),
+                ];
+            }
+            $streak = $DB->get_record('local_airpay_streaks', ['userid' => $USER->id]);
+            $airpay_dashboard['streak_calendar'] = [
+                'days'           => $streakdays,
+                'current_streak' => $streak->current_streak ?? 0,
+                'longest_streak' => $streak->longest_streak ?? 0,
+            ];
+            $airpay_dashboard['hasstreakcalendar'] = true;
+        } catch (\Exception $e) {
+            $airpay_dashboard['hasgamification'] = false;
+        }
+    }
+
     if ($isadmin) {
         // ═══════════════════════════════════════════════════════════
         // ADMIN DASHBOARD — KPIs, charts, quick nav, activity feed
