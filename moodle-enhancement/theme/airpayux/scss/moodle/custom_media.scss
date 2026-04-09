@@ -680,3 +680,128 @@
         display: none !important; /* Hide search bar on very small screens */
     }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Phase 16 — BizLMS admin + catalog + profile mobile rules
+   ═══════════════════════════════════════════════════════════ */
+
+/* Tablet (768px) — BizLMS card grids to 2 columns */
+@media (max-width: 768px) {
+    /* Manage Users/Courses card grid */
+    .cardPaginate .row,
+    .userslist_container .row,
+    .courseslist_container .row {
+        display: flex !important;
+        flex-wrap: wrap !important;
+    }
+    .cardPaginate .row > div,
+    .userslist_container .row > div,
+    .courseslist_container .row > div {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+    }
+    /* Manage Company — stack org cards */
+    .costcenter_data {
+        flex-direction: column !important;
+    }
+    .content_right {
+        flex-direction: column !important;
+    }
+    .details_content {
+        min-width: unset !important;
+        width: 100% !important;
+    }
+    /* Catalog — 2 columns */
+    .catcourses_list {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+    }
+    /* Team compliance table — horizontal scroll */
+    .airpay-dash__team-table-wrapper {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+    .airpay-dash__team-table {
+        min-width: 600px !important;
+    }
+    /* Profile hero — compact */
+    .profile_header_info {
+        flex-direction: column !important;
+        text-align: center !important;
+    }
+}
+
+/* Mobile (590px) — BizLMS admin pages single column */
+@media (max-width: 590px) {
+    /* User/Course cards — single column */
+    .cardPaginate .row > div,
+    .userslist_container .row > div,
+    .courseslist_container .row > div,
+    .catcourses_list {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    /* User card layout — stack fields */
+    .card_view_content {
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    /* Manage Company — stat cards stack vertically */
+    .details_content.org_users,
+    .details_content.org_courses,
+    .details_content.org_learningplans,
+    .details_content.org_classrooms,
+    .details_content.org_programs,
+    .details_content.org_onlineexams {
+        padding: 12px !important;
+    }
+    .counts_data, .total_count_val {
+        font-size: 1.25rem !important;
+    }
+    /* Toolbar icons — wrap */
+    .usericonactions,
+    .course_extended_menu {
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+    }
+    /* BizLMS filter bar */
+    .global_filter_structure {
+        flex-direction: column !important;
+    }
+    .global_filter_structure label {
+        margin-bottom: 4px !important;
+    }
+    .global_filter_structure input {
+        width: 100% !important;
+    }
+    /* Catalog filter sidebar — collapse */
+    .catalog_filters,
+    .module_filter_params {
+        margin-bottom: 8px !important;
+    }
+    /* Learning path cards */
+    .learningplan_view .card {
+        margin-bottom: 12px !important;
+    }
+}
+
+/* Small mobile (480px) — extreme compact */
+@media (max-width: 480px) {
+    /* BizLMS page titles */
+    .page-header-headings h1 {
+        font-size: 1.25rem !important;
+    }
+    /* Manage Company — hide less important stat cards */
+    .details_content.org_classrooms,
+    .details_content.org_programs {
+        display: none !important;  /* Hide classrooms/programs on very small screens */
+    }
+    /* Login page stats */
+    .login-stat-box {
+        font-size: 0.9rem !important;
+    }
+    /* Navbar brand */
+    .airpay-nav__brand img {
+        height: 28px !important;
+    }
+}

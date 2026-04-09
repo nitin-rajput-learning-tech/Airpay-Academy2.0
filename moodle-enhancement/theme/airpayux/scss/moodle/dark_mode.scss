@@ -493,13 +493,167 @@ body.high-contrast {
         border-bottom-color: #60a5fa !important;
     }
 
-    /* Catalog course cards */
-    .local_search_course_card, .catalog_card {
+    /* === Catalog (AngularJS) === */
+    .local_search_course_card, .catalog_card,
+    .cr_courses, .coursecard {
         background: #1a1d27 !important;
         border-color: #2d3140 !important;
     }
     .local_search_course_card h4,
-    .catalog_card .course_title {
+    .catalog_card .course_title,
+    .cr_courses h4, .coursecard h4,
+    .course_fullname, .course_shortname {
         color: #e8eaed !important;
+    }
+    .cr_courses .course_desc,
+    .coursecard .course_summary,
+    .catcategory_text {
+        color: #9ca3b4 !important;
+    }
+    /* Catalog filters sidebar */
+    .module_filter_params {
+        background: #1a1d27 !important;
+        border-color: #2d3140 !important;
+    }
+    .module_filter_params .icon-header,
+    .module_filter_params label {
+        color: #c4cad8 !important;
+    }
+    .collapsed_settings_div {
+        border-color: #2d3140 !important;
+    }
+    .checkbox-item label {
+        color: #9ca3b4 !important;
+    }
+
+    /* === Online Exams + Classrooms cards === */
+    .onlineexam_card, .classroom_card,
+    .local_onlineexams .coursecard,
+    .local_classroom .coursecard {
+        background: #1a1d27 !important;
+        border-color: #2d3140 !important;
+    }
+    .onlineexam_card h4, .classroom_card h4 {
+        color: #e8eaed !important;
+    }
+    .classroom_tabs .nav-link {
+        color: #9ca3b4 !important;
+    }
+    .classroom_tabs .nav-link.active {
+        background: #0066A7 !important;
+        color: #fff !important;
+    }
+
+    /* === Learning Paths === */
+    .learningplan_view .card,
+    .learning_plan_card {
+        background: #1a1d27 !important;
+        border-color: #2d3140 !important;
+    }
+    .learningplan_view .card h4,
+    .learning_plan_card h4,
+    .plan_title {
+        color: #e8eaed !important;
+    }
+    .plan_details, .plan_code {
+        color: #9ca3b4 !important;
+    }
+    /* Learning path course sequence arrows */
+    .lp_course_sequence span {
+        color: #c4cad8 !important;
+    }
+
+    /* === Profile page === */
+    .profile_header {
+        background: linear-gradient(135deg, #0a3d6b 0%, #0f7a73 100%) !important;
+    }
+    .profile_content,
+    .profile_info_section {
+        background: #1a1d27 !important;
+        border-color: #2d3140 !important;
+    }
+    .profile_info_section label,
+    .profile_info_section .info_label {
+        color: #9ca3b4 !important;
+    }
+    .profile_info_section .info_value {
+        color: #e8eaed !important;
+    }
+    .profile_tab .nav-link {
+        color: #9ca3b4 !important;
+    }
+    .profile_tab .nav-link.active {
+        color: #e8eaed !important;
+        border-bottom-color: #0066A7 !important;
+    }
+
+    /* === Reports (LearnerScript) === */
+    .learnerscript_report table,
+    .learnerscript_report th,
+    .learnerscript_report td {
+        background: #1a1d27 !important;
+        color: #c4cad8 !important;
+        border-color: #2d3140 !important;
+    }
+    .learnerscript_report th {
+        background: #161820 !important;
+        color: #e8eaed !important;
+    }
+    .learnerscript_report tr:hover td {
+        background: #232733 !important;
+    }
+
+    /* === Moodle core pages in dark === */
+    /* Global search */
+    .search-results .result-content {
+        background: #1a1d27 !important;
+        border-color: #2d3140 !important;
+    }
+    /* Course overview (My Courses) */
+    .block_myoverview .course-summaryitem {
+        background: #1a1d27 !important;
+        border-color: #2d3140 !important;
+    }
+    .block_myoverview .course-summaryitem .text-muted {
+        color: #9ca3b4 !important;
+    }
+
+    /* === BizLMS Modals (Create User / Course) === */
+    .modal.local_users,
+    .modal.local_courses,
+    .modal .modal-content {
+        background: #1a1d27 !important;
+        border-color: #2d3140 !important;
+    }
+    .modal .modal-header {
+        background: #161820 !important;
+        border-color: #2d3140 !important;
+        color: #e8eaed !important;
+    }
+    .modal .modal-body {
+        background: #1a1d27 !important;
+        color: #c4cad8 !important;
+    }
+    .modal .modal-body label {
+        color: #c4cad8 !important;
+    }
+    .modal .modal-body input,
+    .modal .modal-body select,
+    .modal .modal-body textarea {
+        background: #232733 !important;
+        border-color: #2d3140 !important;
+        color: #e8eaed !important;
+    }
+    .modal .modal-footer {
+        background: #161820 !important;
+        border-color: #2d3140 !important;
+    }
+    /* Modal step wizard tabs */
+    .modal .custom_modal_tabs .nav-link {
+        color: #9ca3b4 !important;
+    }
+    .modal .custom_modal_tabs .nav-link.active {
+        background: #0066A7 !important;
+        color: #fff !important;
     }
 }
