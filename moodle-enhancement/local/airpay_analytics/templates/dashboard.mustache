@@ -1,0 +1,98 @@
+{{!
+    @template local_airpay_analytics/dashboard
+
+    Advanced analytics dashboard with KPIs, funnel, heatmap, course effectiveness.
+}}
+<div class="airpay-analytics">
+    <div class="airpay-analytics__header">
+        <h2><i class="fa fa-line-chart"></i> Analytics Dashboard</h2>
+        <div class="airpay-analytics__range">
+            <a href="{{baseurl}}?range=7d" class="{{#range_7d}}active{{/range_7d}}">7 days</a>
+            <a href="{{baseurl}}?range=30d" class="{{#range_30d}}active{{/range_30d}}">30 days</a>
+            <a href="{{baseurl}}?range=90d" class="{{#range_90d}}active{{/range_90d}}">90 days</a>
+            <a href="{{baseurl}}?range=ytd" class="{{#range_ytd}}active{{/range_ytd}}">YTD</a>
+        </div>
+    </div>
+
+    {{! KPI Cards with Trends }}
+    {{#has_kpis}}
+    <div class="airpay-analytics__kpis">
+        {{#kpis}}
+        <div class="airpay-analytics__kpi">
+            <div class="airpay-analytics__kpi-icon" style="color: {{color}};"><i class="fa {{icon}}"></i></div>
+            <div class="airpay-analytics__kpi-data">
+                <span class="airpay-analytics__kpi-value">{{value}}</span>
+                <span class="airpay-analytics__kpi-label">{{label}}</span>
+            </div>
+            <div class="airpay-analytics__kpi-trend {{#trend.is_up}}trend-up{{/trend.is_up}} {{#trend.is_down}}trend-down{{/trend.is_down}}">
+                {{#trend.is_up}}<i class="fa fa-arrow-up"></i>{{/trend.is_up}}
+                {{#trend.is_down}}<i class="fa fa-arrow-down"></i>{{/trend.is_down}}
+                {{trend.label}}
+                <small>vs previous</small>
+            </div>
+        </div>
+        {{/kpis}}
+    </div>
+    {{/has_kpis}}
+
+    <div class="airpay-analytics__grid">
+        {{! Engagement Funnel }}
+        {{#has_funnel}}
+        <div class="airpay-analytics__card">
+            <h3><i class="fa fa-filter"></i> Engagement Funnel</h3>
+            <div class="airpay-analytics__funnel">
+                {{#funnel}}
+                <div class="airpay-analytics__funnel-stage">
+                    <span class="airpay-analytics__funnel-label">{{stage}}</span>
+                    <div class="airpay-analytics__funnel-bar-wrap">
+                        <div class="airpay-analytics__funnel-bar" style="width: {{width}}%;"></div>
+                    </div>
+                    <span class="airpay-analytics__funnel-count">{{count}} ({{pct}}%)</span>
+                </div>
+                {{/funnel}}
+            </div>
+        </div>
+        {{/has_funnel}}
+
+        {{! Compliance Heat Map }}
+        {{#has_heatmap}}
+        <div class="airpay-analytics__card">
+            <h3><i class="fa fa-th"></i> Compliance by Department</h3>
+            <div class="airpay-analytics__heatmap">
+                {{#heatmap}}
+                <div class="airpay-analytics__heat-row">
+                    <span class="airpay-analytics__heat-dept">{{department}}</span>
+                    <span class="airpay-analytics__heat-users">{{users}} users</span>
+                    <div class="airpay-analytics__heat-bar-wrap">
+                        <div class="airpay-analytics__heat-bar airpay-analytics__heat-bar--{{rag}}" style="width: {{rate}}%;"></div>
+                    </div>
+                    <span class="airpay-analytics__heat-pct {{#is_red}}text-danger{{/is_red}} {{#is_amber}}text-warning{{/is_amber}} {{#is_green}}text-success{{/is_green}}">{{rate}}%</span>
+                </div>
+                {{/heatmap}}
+            </div>
+        </div>
+        {{/has_heatmap}}
+    </div>
+
+    {{! Course Effectiveness }}
+    {{#has_courses}}
+    <div class="airpay-analytics__card">
+        <h3><i class="fa fa-bar-chart"></i> Course Effectiveness (Top 10)</h3>
+        <table class="airpay-analytics__table">
+            <thead>
+                <tr><th>Course</th><th>Enrolled</th><th>Completed</th><th>Rate</th></tr>
+            </thead>
+            <tbody>
+                {{#top_courses}}
+                <tr>
+                    <td title="{{fullname}}">{{shortname}}</td>
+                    <td>{{enrolled}}</td>
+                    <td>{{completed}}</td>
+                    <td><strong>{{completion_rate}}%</strong></td>
+                </tr>
+                {{/top_courses}}
+            </tbody>
+        </table>
+    </div>
+    {{/has_courses}}
+</div>
