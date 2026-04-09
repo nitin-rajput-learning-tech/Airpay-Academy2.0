@@ -1,0 +1,42 @@
+<?php
+defined('MOODLE_INTERNAL') || die();
+
+$string['pluginname'] = 'एयरपे गेमिफिकेशन';
+$string['points'] = 'अंक';
+$string['totalpoints'] = 'कुल अंक';
+$string['pointstoday'] = 'आज के अंक';
+$string['pointshistory'] = 'अंक इतिहास';
+$string['level'] = 'स्तर';
+$string['badges'] = 'बैज';
+$string['badgeearned'] = 'बैज अर्जित!';
+$string['streak'] = 'स्ट्रीक';
+$string['currentstreak'] = 'वर्तमान स्ट्रीक';
+$string['longeststreak'] = 'सबसे लंबी स्ट्रीक';
+$string['streakdays'] = '{$a} दिन';
+$string['keepgoing'] = 'जारी रखें!';
+$string['leaderboard'] = 'लीडरबोर्ड';
+$string['globalleaderboard'] = 'वैश्विक लीडरबोर्ड';
+$string['departmentleaderboard'] = 'आपका विभाग';
+$string['yourrank'] = 'आपकी रैंक: #{$a}';
+$string['noentries'] = 'अभी तक कोई प्रविष्टि नहीं। अंक कमाने के लिए सीखना शुरू करें!';
+$string['level_beginner'] = 'शुरुआती';
+$string['level_learner'] = 'शिक्षार्थी';
+$string['level_achiever'] = 'उपलब्धिकर्ता';
+$string['level_expert'] = 'विशेषज्ञ';
+$string['level_master'] = 'मास्टर';
+$string['pointstonext'] = 'अगले स्तर तक {$a} अंक';
+
+$string['badge_first_step'] = 'पहला कदम';
+$string['badge_first_step_desc'] = 'अपना पहला कोर्स पूरा करें';
+$string['badge_quick_learner'] = 'तेज़ शिक्षार्थी';
+$string['badge_quick_learner_desc'] = '5 कोर्स पूरे करें';
+$string['badge_knowledge_seeker'] = 'ज्ञान साधक';
+$string['badge_knowledge_seeker_desc'] = '10 कोर्स पूरे करें';
+$string['badge_compliance_champion'] = 'अनुपालन चैंपियन';
+$string['badge_compliance_champion_desc'] = 'सभी अनिवार्य अनुपालन कोर्स पूरे करें';
+$string['badge_streak_master'] = 'स्ट्रीक मास्टर';
+$string['badge_streak_master_desc'] = '30-दिन की लॉगिन स्ट्रीक बनाए रखें';
+$string['badge_quiz_ace'] = 'क्विज़ एस';
+$string['badge_quiz_ace_desc'] = '5 क्विज़ में 100% स्कोर करें';
+$string['badge_team_player'] = 'टीम प्लेयर';
+$string['badge_team_player_desc'] = 'टॉप 10 लीडरबोर्ड में पहुँचें';
