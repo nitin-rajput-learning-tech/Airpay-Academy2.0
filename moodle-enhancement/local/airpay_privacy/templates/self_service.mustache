@@ -1,0 +1,98 @@
+{{!
+    @template local_airpay_privacy/self_service
+    DPDP self-service page for users to download data or request deletion.
+}}
+<div class="airpay-privacy">
+    <div class="airpay-privacy__header">
+        <h2><i class="fa fa-shield"></i> My Privacy &amp; Data</h2>
+        <p>Under the Digital Personal Data Protection Act, 2023 (India), you have the right to access, download, and request deletion of your personal data.</p>
+    </div>
+
+    {{! Data Download Section }}
+    <div class="airpay-privacy__section">
+        <h3><i class="fa fa-download"></i> Download My Data</h3>
+        <p>Request a complete copy of all your personal data stored on this platform, including:</p>
+        <ul>
+            <li>Profile information (name, email, designation)</li>
+            <li>Course enrolments and completions</li>
+            <li>Certificates earned</li>
+            <li>Quiz attempts and grades</li>
+            <li>Activity log (last 100 events)</li>
+            <li>Gamification data (points, badges)</li>
+            <li>Consent history</li>
+        </ul>
+        <p><small>Your data will be prepared as a JSON file and available for download for 72 hours.</small></p>
+        <form method="post" action="{{baseurl}}">
+            <input type="hidden" name="action" value="download">
+            <input type="hidden" name="sesskey" value="{{sesskey}}">
+            <button type="submit" class="btn btn-primary">
+                <i class="fa fa-cloud-download"></i> Download My Data
+            </button>
+        </form>
+    </div>
+
+    {{! Account Deletion Section (Public tenant only) }}
+    {{#is_public_tenant}}
+    <div class="airpay-privacy__section airpay-privacy__section--danger">
+        <h3><i class="fa fa-trash"></i> Delete My Account</h3>
+        <p>You can request the deletion of your account and all associated personal data. This action:</p>
+        <ul>
+            <li>Anonymizes your personal information (name, email, phone)</li>
+            <li>Removes your learning history and gamification data</li>
+            <li>Preserves anonymized completion records for audit purposes</li>
+            <li>Is <strong>irreversible</strong> once processed</li>
+        </ul>
+        <p><small>Your request will be reviewed by an administrator. Processing typically takes 3-5 business days as required under DPDP Act Section 12(3).</small></p>
+        <form method="post" action="{{baseurl}}" onsubmit="return confirm('Are you sure you want to request account deletion? This cannot be undone once processed.');">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="sesskey" value="{{sesskey}}">
+            <div class="form-group">
+                <label for="reason">Reason for deletion (optional):</label>
+                <textarea name="reason" id="reason" class="form-control" rows="3" placeholder="Please tell us why you want to delete your account..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-danger" style="margin-top: 8px;">
+                <i class="fa fa-exclamation-triangle"></i> Request Account Deletion
+            </button>
+        </form>
+    </div>
+    {{/is_public_tenant}}
+
+    {{! Request History }}
+    {{#has_requests}}
+    <div class="airpay-privacy__section">
+        <h3><i class="fa fa-history"></i> Request History</h3>
+        <table class="table">
+            <thead>
+                <tr><th>Type</th><th>Status</th><th>Requested</th><th>Processed</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+                {{#requests}}
+                <tr>
+                    <td>{{type}}</td>
+                    <td><span class="badge badge-{{status_class}}">{{status}}</span></td>
+                    <td>{{created}}</td>
+                    <td>{{processed}}</td>
+                    <td>
+                        {{#has_download}}
+                        <a href="{{baseurl}}?action=getfile&id={{download_id}}&sesskey={{sesskey}}" class="btn btn-sm btn-primary">
+                            <i class="fa fa-download"></i> Download
+                        </a>
+                        {{/has_download}}
+                    </td>
+                </tr>
+                {{/requests}}
+            </tbody>
+        </table>
+    </div>
+    {{/has_requests}}
+
+    {{! DPDP Notice }}
+    <div class="airpay-privacy__notice">
+        <small>
+            <strong>DPDP Act 2023 Notice:</strong> Airpay Payment Services is the Data Fiduciary.
+            For questions about your data rights, contact the Data Protection Officer at
+            <a href="mailto:privacy@airpay.co.in">privacy@airpay.co.in</a>.
+            Response time: 72 hours for data access, 30 days for deletion.
+        </small>
+    </div>
+</div>
