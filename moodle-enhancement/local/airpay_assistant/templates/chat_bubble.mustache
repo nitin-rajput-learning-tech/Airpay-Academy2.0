@@ -1,0 +1,50 @@
+{{!
+    @template local_airpay_assistant/chat_bubble
+
+    Floating chat bubble for the AI learning assistant.
+    Appears on all pages for logged-in users.
+}}
+<div id="airpay-assistant" class="airpay-assistant">
+    {{! Toggle Button }}
+    <button class="airpay-assistant__toggle" id="airpay-assistant-toggle" title="Ask the AI Assistant">
+        <i class="fa fa-graduation-cap airpay-assistant__icon-open"></i>
+        <i class="fa fa-times airpay-assistant__icon-close" style="display:none;"></i>
+    </button>
+
+    {{! Chat Panel }}
+    <div class="airpay-assistant__panel" id="airpay-assistant-panel" style="display:none;">
+        <div class="airpay-assistant__header">
+            <div class="airpay-assistant__header-info">
+                <strong>Airpay Learning Assistant</strong>
+                <small>Powered by AI</small>
+            </div>
+            <button class="airpay-assistant__minimize" id="airpay-assistant-minimize">
+                <i class="fa fa-chevron-down"></i>
+            </button>
+        </div>
+
+        <div class="airpay-assistant__messages" id="airpay-assistant-messages">
+            <div class="airpay-assistant__msg airpay-assistant__msg--bot">
+                <p>Hi {{firstname}}! I'm your learning assistant. Ask me anything about your courses, deadlines, skills, or career path.</p>
+                <div class="airpay-assistant__quick-actions">
+                    <button data-query="What should I learn next?">What to learn next?</button>
+                    <button data-query="What are my deadlines?">My deadlines</button>
+                    <button data-query="Quiz me on compliance">Quiz me</button>
+                    <button data-query="How is my team doing?">Team status</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="airpay-assistant__input-area">
+            <input type="text" id="airpay-assistant-input" placeholder="Ask me anything..."
+                   autocomplete="off" maxlength="500">
+            <button id="airpay-assistant-send" disabled>
+                <i class="fa fa-paper-plane"></i>
+            </button>
+        </div>
+
+        <div class="airpay-assistant__footer">
+            <small>{{queries_remaining}} questions remaining today</small>
+        </div>
+    </div>
+</div>

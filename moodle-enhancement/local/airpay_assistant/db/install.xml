@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/airpay_assistant/db" VERSION="20260411"
+       COMMENT="Airpay AI Learning Assistant - conversation log and rate limits">
+  <TABLES>
+
+    <TABLE NAME="local_airpay_chat_log"
+           COMMENT="Chat conversation log for AI assistant">
+      <FIELDS>
+        <FIELD NAME="id"          TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"      TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="role"        TYPE="char" LENGTH="20"  NOTNULL="true" DEFAULT="user"
+               COMMENT="user or assistant"/>
+        <FIELD NAME="message"     TYPE="text" NOTNULL="true"/>
+        <FIELD NAME="model"       TYPE="char" LENGTH="50"  NOTNULL="true" DEFAULT="haiku"/>
+        <FIELD NAME="tokens_in"   TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="tokens_out"  TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timecreated" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS><KEY NAME="primary" TYPE="primary" FIELDS="id"/></KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_userid"   UNIQUE="false" FIELDS="userid"/>
+        <INDEX NAME="idx_userid_time" UNIQUE="false" FIELDS="userid, timecreated"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_airpay_chat_cache"
+           COMMENT="Cached responses for common queries">
+      <FIELDS>
+        <FIELD NAME="id"          TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="cache_key"   TYPE="char" LENGTH="64"  NOTNULL="true"
+               COMMENT="SHA256 hash of normalized query"/>
+        <FIELD NAME="query"       TYPE="text" NOTNULL="true"/>
+        <FIELD NAME="response"    TYPE="text" NOTNULL="true"/>
+        <FIELD NAME="hit_count"   TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timecreated" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timeexpires" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS><KEY NAME="primary" TYPE="primary" FIELDS="id"/></KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_cache_key" UNIQUE="true" FIELDS="cache_key"/>
+        <INDEX NAME="idx_expires"   UNIQUE="false" FIELDS="timeexpires"/>
+      </INDEXES>
+    </TABLE>
+
+  </TABLES>
+</XMLDB>
