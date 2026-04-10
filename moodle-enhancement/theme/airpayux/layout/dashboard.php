@@ -286,6 +286,24 @@ if (isloggedin() && !isguestuser()) {
                  'hasstats' => ($classroomcount > 0), 'stats' => [
                     ['statval' => $classroomcount, 'statlabel' => 'Total'],
                 ]],
+                ['label' => 'Compliance', 'icon' => 'shield', 'url' => (new moodle_url('/local/airpay_compliance_report/index.php'))->out(false), 'color' => '#16a34a',
+                 'hasstats' => true, 'stats' => (function() use ($DB) {
+                    try {
+                        $mandatory = $DB->count_records('local_airpay_compl_courses');
+                        $overdue = $DB->count_records_select('local_airpay_compl_snapshot', "status IN ('overdue','critical','escalated')");
+                        return [
+                            ['statval' => $mandatory, 'statlabel' => 'Mandatory'],
+                            ['statval' => $overdue, 'statlabel' => 'Overdue'],
+                        ];
+                    } catch (Exception $e) { return []; }
+                 })()],
+                ['label' => 'Privacy (DPDP)', 'icon' => 'lock', 'url' => (new moodle_url('/local/airpay_privacy/index.php'))->out(false), 'color' => '#7c3aed',
+                 'hasstats' => true, 'stats' => (function() use ($DB) {
+                    try {
+                        $pending = $DB->count_records('local_airpay_privacy_req', ['status' => 'pending']);
+                        return [['statval' => $pending, 'statlabel' => 'Pending']];
+                    } catch (Exception $e) { return []; }
+                 })()],
                 ['label' => 'Site Settings', 'icon' => 'cog', 'url' => (new moodle_url('/admin/index.php'))->out(false), 'color' => '#6b7280'],
             ];
             $airpay_dashboard['hasquicknav'] = true;

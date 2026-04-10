@@ -1,6 +1,7 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-04-09 | **Phase:** 16 Complete — Ready for IT Deployment
-**Theme:** airpayux v1.0.0 | **Tag:** phase16-code-complete
+**Updated:** 2026-04-10 | **Phase:** Academy 2.1 — Enterprise Platform
+**Theme:** airpayux v1.0.0 | **Tag:** v2.1.0
+**Version:** 2.1.0 (Gamification + Notifications + Catalog + Skills + Analytics + Hindi + AI Assistant + KeKa + Compliance + DPDP Privacy)
 
 ---
 
@@ -106,12 +107,37 @@
 - `Production-Data-Verification.xlsx` — 154 orphaned users, 116 never-logged-in, 1,407 active user roster, 213 costcenter map
 - `Production-Import-Upgrade-Log.xlsx` — 105 plugin upgrade/install/delete log
 
-### Plugins Built
-- `local_airpay_pages` — Privacy Policy, Terms, Help Center, Contact Us (editable HTML)
+### Plugins Built (16 plugins)
+
+**Tier 1 (v1.1.0):**
+- `local_airpay_gamification` — Points engine, 10 badges, streak calendar, leaderboard, event observers
+- `local_airpay_notifications` — Rule engine, 7 notification rules, hourly cron, Moodle messaging
+- `local_airpay_catalog` — LXP-style catalog: carousels, search, filters, trending, recommendations
+
+**Tier 2 (v1.2.0):**
+- `local_airpay_skills` — 48 fintech skills, 8 categories, role mapping, gap analysis, radar chart
+- `local_airpay_analytics` — KPI trends, engagement funnel, compliance heatmap, course effectiveness
+
+**Tier 3 (v2.0.0):**
+- `local_airpay_assistant` — AI learning assistant (Claude API), floating chat bubble, 20 queries/day
+- `local_airpay_integrations` — KeKa HRMS OAuth client, JML webhooks, employee sync
+- `local_airpay_lifecycle` — Employee lifecycle automation (MESSAGE_DEFAULT_ENABLED fix applied)
+
+**v2.1.0:**
+- `local_airpay_compliance_report` — 6-state compliance engine, auto-enrol, progressive email escalation, 5 reports, Excel export
+- `local_airpay_privacy` — DPDP Act 2023 self-service: data download (JSON), account deletion, consent log
+
+**Foundation:**
+- `local_airpay_pages` — Privacy Policy, Terms, Help Center, Contact Us (editable HTML, DPDP section updated)
 - `block_airpay_compliance` — Compliance Dashboard block
-- `local_airpay_integrations` — Integrations Hub
-- `local_airpay_lifecycle` — Employee Lifecycle (MESSAGE_DEFAULT_ENABLED fix applied)
 - CLI scripts: seed_testdata.php, seed_users.php, fix_manager_role.php
+
+### Wiring (v2.1.0)
+- Compliance Report card in admin Quick Nav (with live stats: mandatory count + overdue count)
+- Privacy (DPDP) card in admin Quick Nav (with pending request count)
+- "My Privacy & Data" link in user dropdown menu (all logged-in users)
+- Privacy static page updated with DPDP Act 2023 sections and self-service portal link
+- `$CFG->noemailever = true` in config.php — zero emails sent from local environment
 
 ### Test Users
 | Username | Name | Role | Password | Tenant |
@@ -170,6 +196,11 @@
 | phase7a-stabilised | 4-tier roles, nav fixes |
 | phase7b-tested | All user types tested |
 | phase15-production-ready | BizLMS stabilised, dark mode, deployment runbook |
+| v1.0.0-rc1 | Base platform (theme + 4-tier dashboards + BizLMS) |
+| v1.1.0 | Tier 1: Gamification + Notifications + Catalog |
+| v1.2.0 | Tier 2: Skills Matrix + Analytics + Hindi |
+| v2.0.0 | Tier 3: AI Assistant + KeKa HRMS + PWA + Marketplace stubs |
+| v2.1.0 | Compliance Report + DPDP Privacy + Admin wiring |
 
 ---
 
@@ -185,5 +216,8 @@
 
 ---
 
-## Next: Phase 8 (Compliance & Lifecycle)
-See master plan: `.claude/plans/joyful-crafting-newt.md`
+## What's Next
+- Visual demo inspection (7 scenes, ~15 minutes, all roles)
+- Verify compliance snapshot with real data (2,871 users × 4 mandatory courses)
+- Test privacy self-service as Public tenant user
+- Production deployment (IT team — see DEPLOYMENT-RUNBOOK.md)
