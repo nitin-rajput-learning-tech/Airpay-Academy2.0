@@ -129,10 +129,10 @@
     max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block;
 }
 .airpay-catalog__card-footer {
-    display: flex; justify-content: space-between; align-items: center;
+    display: flex; justify-content: space-between; align-items: center; overflow: hidden;
 }
 .airpay-catalog__card-enrolled {
-    font-size: 0.8rem; color: #9ca3af;
+    font-size: 0.8rem; color: #9ca3af; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
 }
 .airpay-catalog__card-enrolled i { margin-right: 4px; }
 
@@ -165,8 +165,8 @@
     transition: all 0.2s; display: flex; flex-direction: column;
 }
 .airpay-catalog__category-card:hover { border-color: #0066A7; background: #e8f2f9; }
-.airpay-catalog__category-card strong { color: #1a1a2e; font-size: 0.9rem; }
-.airpay-catalog__category-card span { color: #5a6070; font-size: 0.8rem; margin-top: 2px; }
+.airpay-catalog__category-card strong { color: #1a1a2e; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+.airpay-catalog__category-card span { color: #5a6070; font-size: 0.8rem; margin-top: 2px; white-space: nowrap; }
 
 /* Pagination */
 .airpay-catalog__pagination {

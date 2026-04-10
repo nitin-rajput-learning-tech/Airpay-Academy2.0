@@ -37,10 +37,17 @@
     display: block;
     font-size: 0.95rem;
     color: #1a1a2e;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 .airpay-gamification__level-info small {
     color: #5a6070;
     font-size: 0.8rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
 }
 .airpay-gamification__streak {
     display: flex;
@@ -202,11 +209,14 @@
 .airpay-gamification__leaderboard-name small {
     color: #0066A7;
     font-weight: 600;
+    white-space: nowrap;
 }
 .airpay-gamification__leaderboard-points {
     font-size: 0.8rem;
     font-weight: 600;
     color: #5a6070;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 .airpay-gamification__leaderboard-your-rank {
     margin-top: 8px;
