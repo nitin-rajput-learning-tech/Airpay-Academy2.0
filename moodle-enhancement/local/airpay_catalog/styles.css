@@ -121,10 +121,12 @@
 .airpay-catalog__card-category {
     font-size: 0.72rem; color: #0066A7; background: #e8f2f9;
     padding: 2px 8px; border-radius: 10px; font-weight: 500;
+    max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block;
 }
 .airpay-catalog__card-level {
     font-size: 0.72rem; color: #0f7a73; background: #e5f4f3;
     padding: 2px 8px; border-radius: 10px; font-weight: 500;
+    max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block;
 }
 .airpay-catalog__card-footer {
     display: flex; justify-content: space-between; align-items: center;

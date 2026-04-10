@@ -194,6 +194,10 @@
     flex: 1;
     font-size: 0.85rem;
     color: #1a1a2e;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
 }
 .airpay-gamification__leaderboard-name small {
     color: #0066A7;

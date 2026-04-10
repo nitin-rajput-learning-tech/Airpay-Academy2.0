@@ -8,9 +8,9 @@
 
 /* KPI row */
 .airpay-analytics__kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
-.airpay-analytics__kpi { background: #fff; border-radius: 12px; padding: 16px; border: 1px solid #e2e6ef; display: flex; align-items: center; gap: 12px; }
-.airpay-analytics__kpi-icon { font-size: 1.5rem; }
-.airpay-analytics__kpi-value { display: block; font-size: 1.5rem; font-weight: 700; color: #1a1a2e; }
+.airpay-analytics__kpi { background: #fff; border-radius: 12px; padding: 16px; border: 1px solid #e2e6ef; display: flex; align-items: center; gap: 12px; overflow: hidden; min-width: 0; }
+.airpay-analytics__kpi-icon { font-size: 1.5rem; flex-shrink: 0; }
+.airpay-analytics__kpi-value { display: block; font-size: 1.5rem; font-weight: 700; color: #1a1a2e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .airpay-analytics__kpi-label { font-size: 0.8rem; color: #5a6070; }
 .airpay-analytics__kpi-trend { font-size: 0.8rem; font-weight: 600; margin-left: auto; text-align: right; }
 .airpay-analytics__kpi-trend small { display: block; font-weight: 400; color: #9ca3af; }
@@ -25,7 +25,7 @@
 
 /* Funnel */
 .airpay-analytics__funnel-stage { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-.airpay-analytics__funnel-label { width: 80px; font-size: 0.85rem; color: #5a6070; flex-shrink: 0; }
+.airpay-analytics__funnel-label { max-width: 80px; font-size: 0.85rem; color: #5a6070; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .airpay-analytics__funnel-bar-wrap { flex: 1; height: 24px; background: #e5e7eb; border-radius: 4px; overflow: hidden; }
 .airpay-analytics__funnel-bar { height: 100%; background: linear-gradient(90deg, #0066A7, #0f7a73); border-radius: 4px; transition: width 0.5s; }
 .airpay-analytics__funnel-count { width: 100px; font-size: 0.8rem; color: #374151; font-weight: 600; text-align: right; flex-shrink: 0; }
@@ -44,7 +44,8 @@
 /* Table */
 .airpay-analytics__table { width: 100%; border-collapse: collapse; }
 .airpay-analytics__table th { background: #f8f9fc; padding: 8px 12px; font-size: 0.8rem; font-weight: 600; color: #5a6070; text-align: left; border-bottom: 2px solid #e2e6ef; }
-.airpay-analytics__table td { padding: 8px 12px; font-size: 0.85rem; color: #1a1a2e; border-bottom: 1px solid #f3f4f6; }
+.airpay-analytics__table td { padding: 8px 12px; font-size: 0.85rem; color: #1a1a2e; border-bottom: 1px solid #f3f4f6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 250px; }
+.airpay-analytics__table { table-layout: fixed; }
 .airpay-analytics__table tr:hover td { background: #f8f9fc; }
 
 /* Dark mode */
