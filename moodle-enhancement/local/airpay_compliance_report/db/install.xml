@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/airpay_compliance_report/db" VERSION="20260412"
+       COMMENT="Airpay Compliance Reporting - mandatory course tracking">
+  <TABLES>
+
+    <TABLE NAME="local_compliance_courses"
+           COMMENT="Admin-configured mandatory compliance courses">
+      <FIELDS>
+        <FIELD NAME="id"              TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="courseid"        TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="coursename"      TYPE="char" LENGTH="255" NOTNULL="true"/>
+        <FIELD NAME="deadline_days"   TYPE="int"  LENGTH="4"  NOTNULL="true" DEFAULT="30"
+               COMMENT="Days from enrolment to complete"/>
+        <FIELD NAME="costcenterid"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="0=all tenants, else specific costcenter ID"/>
+        <FIELD NAME="is_active"       TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="sort_order"      TYPE="int"  LENGTH="4"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="createdby"       TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"   TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_course" TYPE="foreign" FIELDS="courseid" REFTABLE="course" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_courseid"    UNIQUE="true" FIELDS="courseid, costcenterid"/>
+        <INDEX NAME="idx_active"      UNIQUE="false" FIELDS="is_active"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_compliance_snapshot"
+           COMMENT="Denormalized compliance status per employee per course - cron refreshed">
+      <FIELDS>
+        <FIELD NAME="id"                TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"            TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="courseid"          TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="costcenterid"      TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="department_path"   TYPE="char" LENGTH="255" NOTNULL="false"/>
+        <FIELD NAME="status"            TYPE="char" LENGTH="20"  NOTNULL="true" DEFAULT="not_enrolled"
+               COMMENT="completed|in_progress|not_started|not_enrolled|overdue|exempted"/>
+        <FIELD NAME="completion_date"   TYPE="int"  LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="progress_percent"  TYPE="int"  LENGTH="3"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="enrol_date"        TYPE="int"  LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="deadline_date"     TYPE="int"  LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="days_overdue"      TYPE="int"  LENGTH="5"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="matched_by"        TYPE="char" LENGTH="20"  NOTNULL="true" DEFAULT="userid"/>
+        <FIELD NAME="snapshot_date"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_user_course"  UNIQUE="true" FIELDS="userid, courseid"/>
+        <INDEX NAME="idx_status"       UNIQUE="false" FIELDS="status"/>
+        <INDEX NAME="idx_costcenter"   UNIQUE="false" FIELDS="costcenterid"/>
+        <INDEX NAME="idx_dept_path"    UNIQUE="false" FIELDS="department_path"/>
+        <INDEX NAME="idx_overdue"      UNIQUE="false" FIELDS="days_overdue"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_compliance_exemptions"
+           COMMENT="Admin-managed exemptions for specific users from specific courses">
+      <FIELDS>
+        <FIELD NAME="id"          TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"      TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="courseid"    TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="reason"      TYPE="text" NOTNULL="true"/>
+        <FIELD NAME="approved_by" TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="expiry_date" TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="NULL=permanent, else auto-un-exempt after this date"/>
+        <FIELD NAME="is_active"   TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="timecreated" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_user_course" UNIQUE="false" FIELDS="userid, courseid, is_active"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_compliance_email_log"
+           COMMENT="Log of compliance emails sent - prevents duplicates">
+      <FIELDS>
+        <FIELD NAME="id"          TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"      TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="courseid"    TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="email_type"  TYPE="char" LENGTH="50"  NOTNULL="true"
+               COMMENT="welcome|reminder1|reminder2|deadline_warning|overdue_alert|weekly_escalation"/>
+        <FIELD NAME="sent_to"     TYPE="char" LENGTH="255" NOTNULL="true"
+               COMMENT="employee|manager|ldadmin"/>
+        <FIELD NAME="timecreated" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_dedup"   UNIQUE="false" FIELDS="userid, courseid, email_type"/>
+      </INDEXES>
+    </TABLE>
+
+  </TABLES>
+</XMLDB>

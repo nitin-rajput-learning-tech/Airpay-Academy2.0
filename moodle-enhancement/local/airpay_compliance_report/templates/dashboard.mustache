@@ -1,0 +1,138 @@
+{{!
+    @template local_airpay_compliance_report/dashboard
+    Compliance reporting dashboard — matrix, defaulters, scorecard, manager report.
+}}
+<div class="airpay-compliance-rpt">
+
+    {{! KPI Summary Bar }}
+    <div class="airpay-compliance-rpt__kpis">
+        <div class="airpay-compliance-rpt__kpi {{#kpis.is_healthy}}airpay-compliance-rpt__kpi--ok{{/kpis.is_healthy}}{{^kpis.is_healthy}}airpay-compliance-rpt__kpi--warn{{/kpis.is_healthy}}">
+            <strong>{{kpis.compliance_rate}}%</strong>
+            <small>Compliance Rate</small>
+        </div>
+        <div class="airpay-compliance-rpt__kpi">
+            <strong>{{kpis.completed}}</strong>
+            <small>Completed</small>
+        </div>
+        <div class="airpay-compliance-rpt__kpi airpay-compliance-rpt__kpi--danger">
+            <strong>{{kpis.overdue}}</strong>
+            <small>Overdue</small>
+        </div>
+        <div class="airpay-compliance-rpt__kpi">
+            <strong>{{kpis.not_enrolled}}</strong>
+            <small>Not Enrolled</small>
+        </div>
+        <div class="airpay-compliance-rpt__kpi">
+            <strong>{{kpis.exempted}}</strong>
+            <small>Exempted</small>
+        </div>
+    </div>
+
+    {{! Tab Navigation }}
+    <div class="airpay-compliance-rpt__tabs">
+        <a href="{{baseurl}}?tab=matrix" class="{{#tab_matrix}}active{{/tab_matrix}}">Compliance Matrix</a>
+        <a href="{{baseurl}}?tab=defaulters" class="{{#tab_defaulters}}active{{/tab_defaulters}}">Defaulters</a>
+        <a href="{{baseurl}}?tab=scorecard" class="{{#tab_scorecard}}active{{/tab_scorecard}}">Dept Scorecard</a>
+        <a href="{{baseurl}}?tab=manager" class="{{#tab_manager}}active{{/tab_manager}}">Manager Report</a>
+        <a href="{{exporturl}}" class="airpay-compliance-rpt__export"><i class="fa fa-download"></i> Export Excel</a>
+    </div>
+
+    {{! Tab Content: Compliance Matrix }}
+    {{#tab_matrix}}
+    {{#has_matrix}}
+    <div class="airpay-compliance-rpt__table-wrap">
+        <table class="airpay-compliance-rpt__table">
+            <thead>
+                <tr>
+                    <th>Employee</th>
+                    <th>Email</th>
+                    <th>Department</th>
+                    {{#matrix.courses}}
+                    <th title="{{coursename}}">{{coursename}}</th>
+                    {{/matrix.courses}}
+                </tr>
+            </thead>
+            <tbody>
+                {{#matrix.rows}}
+                <tr class="{{#all_completed}}row-ok{{/all_completed}}">
+                    <td title="{{fullname}}"><strong>{{fullname}}</strong><br><small>{{employee_id}}</small></td>
+                    <td>{{email}}</td>
+                    <td>{{designation}}</td>
+                    {{#courses}}
+                    <td><span class="badge badge-{{status_class}}">{{status_label}}</span>
+                        {{#days_overdue}}<small class="text-danger">{{days_overdue}}d</small>{{/days_overdue}}</td>
+                    {{/courses}}
+                </tr>
+                {{/matrix.rows}}
+            </tbody>
+        </table>
+    </div>
+    {{/has_matrix}}
+    {{^has_matrix}}
+    <p class="text-muted">{{# str }}nodata, local_airpay_compliance_report{{/ str }}</p>
+    {{/has_matrix}}
+    {{/tab_matrix}}
+
+    {{! Tab Content: Defaulters }}
+    {{#tab_defaulters}}
+    {{#has_defaulters}}
+    <table class="airpay-compliance-rpt__table">
+        <thead><tr><th>Employee</th><th>Email</th><th>Course</th><th>Days Overdue</th><th>Progress</th></tr></thead>
+        <tbody>
+            {{#defaulters}}
+            <tr>
+                <td><strong>{{firstname}} {{lastname}}</strong></td>
+                <td>{{email}}</td>
+                <td>{{coursename}}</td>
+                <td class="text-danger"><strong>{{days_overdue}} days</strong></td>
+                <td>{{progress_percent}}%</td>
+            </tr>
+            {{/defaulters}}
+        </tbody>
+    </table>
+    {{/has_defaulters}}
+    {{/tab_defaulters}}
+
+    {{! Tab Content: Department Scorecard }}
+    {{#tab_scorecard}}
+    {{#has_scorecard}}
+    <table class="airpay-compliance-rpt__table">
+        <thead><tr><th>Department</th><th>Total</th><th>Completed</th><th>Overdue</th><th>Rate</th><th>Status</th></tr></thead>
+        <tbody>
+            {{#scorecard}}
+            <tr>
+                <td>{{department}}</td>
+                <td>{{total}}</td>
+                <td>{{completed}}</td>
+                <td class="{{#is_red}}text-danger font-weight-bold{{/is_red}}">{{overdue}}</td>
+                <td>{{rate}}%</td>
+                <td><span class="badge badge-{{#is_green}}success{{/is_green}}{{#is_amber}}warning{{/is_amber}}{{#is_red}}danger{{/is_red}}">
+                    {{#is_green}}On Track{{/is_green}}{{#is_amber}}At Risk{{/is_amber}}{{#is_red}}Critical{{/is_red}}
+                </span></td>
+            </tr>
+            {{/scorecard}}
+        </tbody>
+    </table>
+    {{/has_scorecard}}
+    {{/tab_scorecard}}
+
+    {{! Tab Content: Manager Report }}
+    {{#tab_manager}}
+    {{#has_manager_report}}
+    <table class="airpay-compliance-rpt__table">
+        <thead><tr><th>Manager</th><th>Team Items</th><th>Completed</th><th>Overdue</th><th>Rate</th></tr></thead>
+        <tbody>
+            {{#manager_report}}
+            <tr>
+                <td><strong>{{mgr_firstname}} {{mgr_lastname}}</strong></td>
+                <td>{{team_items}}</td>
+                <td>{{team_completed}}</td>
+                <td class="{{#team_overdue}}text-danger font-weight-bold{{/team_overdue}}">{{team_overdue}}</td>
+                <td>{{team_rate}}%</td>
+            </tr>
+            {{/manager_report}}
+        </tbody>
+    </table>
+    {{/has_manager_report}}
+    {{/tab_manager}}
+</div>
