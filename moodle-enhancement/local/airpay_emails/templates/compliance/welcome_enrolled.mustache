@@ -1,0 +1,51 @@
+{{!
+    Compliance: Welcome Enrolled — user auto-enrolled in mandatory course.
+    Context: firstname, course_name, course_url, deadline_date, deadline_days,
+             enrolled_date, course_description, dashboard_url
+    Urgency: INFO (blue #0066A7)
+}}
+<!-- Greeting -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+<tr><td style="font-family:'Montserrat',Arial,sans-serif; font-size:15px; line-height:24px; color:#1a1a2e;">
+
+    <p style="margin:0 0 16px;">Hi <strong>{{firstname}}</strong>,</p>
+
+    <p style="margin:0 0 16px;">
+        You have been enrolled in a <strong>mandatory compliance course</strong>.
+        Please complete this course before the deadline to stay compliant.
+    </p>
+
+</td></tr>
+</table>
+
+<!-- Course info box -->
+{{> local_airpay_emails/partials/course_info_box}}
+
+{{#course_description}}
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+<tr>
+    <td style="font-family:'Montserrat',Arial,sans-serif; font-size:14px; line-height:22px; color:#5a6070; padding:8px 0 16px;">
+        {{course_description}}
+    </td>
+</tr>
+</table>
+{{/course_description}}
+
+<!-- CTA -->
+{{< local_airpay_emails/partials/cta_button}}
+    {{$cta_url}}{{course_url}}{{/cta_url}}
+    {{$cta_text}}Start Course{{/cta_text}}
+{{/ local_airpay_emails/partials/cta_button}}
+
+<!-- Timeline -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:8px 0 16px;">
+<tr>
+    <td style="font-family:'Montserrat',Arial,sans-serif; font-size:13px; color:#5a6070; line-height:20px;">
+        <span style="color:#16a34a;">&#9679;</span>&nbsp; Enrolled: {{enrolled_date}}<br/>
+        <span style="color:#d97706;">&#9679;</span>&nbsp; Deadline: {{deadline_date}} ({{deadline_days}} days)
+    </td>
+</tr>
+</table>
+
+<!-- Footer note -->
+{{> local_airpay_emails/partials/footer_note}}

@@ -1,0 +1,34 @@
+<?php
+defined('MOODLE_INTERNAL') || die();
+
+$string['pluginname'] = 'Airpay Email Templates';
+$string['emailpreview'] = 'Email Template Preview';
+$string['emailpreview_desc'] = 'Preview all branded email templates before deployment.';
+$string['selecttemplate'] = 'Select a template';
+$string['selecttenant'] = 'Select tenant';
+$string['viewsource'] = 'HTML Source';
+$string['viewplaintext'] = 'Plain Text';
+$string['viewvisual'] = 'Visual Preview';
+$string['category_compliance'] = 'Compliance';
+$string['category_notifications'] = 'Notifications';
+$string['category_enrollment'] = 'Enrollment';
+$string['category_account'] = 'Account';
+$string['category_privacy'] = 'Privacy';
+$string['tenant_airpay'] = 'Airpay';
+$string['tenant_public'] = 'Public';
+$string['tenant_zeea'] = 'ZEEA';
+$string['no_template_selected'] = 'Select a template from the sidebar to preview.';
+$string['manage'] = 'Notification Management';
+$string['manage_desc'] = 'Manage email templates, notification rules, and delivery logs.';
+$string['tab_dashboard'] = 'Dashboard';
+$string['tab_templates'] = 'Templates';
+$string['tab_rules'] = 'Rules';
+$string['tab_logs'] = 'Logs';
+$string['tab_settings'] = 'Settings';
+$string['save_success'] = 'Template saved successfully.';
+$string['revert_success'] = 'Reverted to default template.';
+$string['rule_enabled'] = 'Rule enabled.';
+$string['rule_disabled'] = 'Rule disabled.';
+$string['noemailever_warning'] = 'Email sending is disabled on this server ($CFG->noemailever = true). All deliveries will be logged as suppressed.';
+$string['task_process_rules'] = 'Process notification rules';
+$string['notification_alert'] = 'Notification alert';

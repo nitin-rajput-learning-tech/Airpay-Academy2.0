@@ -1,0 +1,106 @@
+{{!
+    Settings tab — global notification settings.
+    Context: tabdata {noemailever, noreplyaddress, smtphosts, is_siteadmin}
+}}
+<div class="ap-manage-card">
+    <h3 style="font-size:15px; font-weight:600; color:#1a1a2e; margin:0 0 16px;">
+        <i class="fa fa-shield" aria-hidden="true"></i> Email Delivery Status
+    </h3>
+
+    <table class="ap-manage-table">
+        <tr>
+            <td style="width:30%;">Email sending</td>
+            <td>
+                {{#tabdata.noemailever}}
+                <span class="ap-manage-badge ap-manage-badge--suppressed">DISABLED</span>
+                <span style="font-size:12px; color:#5a6070; margin-left:8px;">
+                    <code>$CFG->noemailever = true</code> in config.php
+                </span>
+                {{/tabdata.noemailever}}
+                {{^tabdata.noemailever}}
+                <span class="ap-manage-badge ap-manage-badge--sent">ENABLED</span>
+                <span style="font-size:12px; color:#5a6070; margin-left:8px;">
+                    Emails will be delivered to real recipients
+                </span>
+                {{/tabdata.noemailever}}
+            </td>
+        </tr>
+        <tr>
+            <td>SMTP Server</td>
+            <td>
+                {{#tabdata.smtphosts}}
+                <code style="font-size:13px;">{{tabdata.smtphosts}}</code>
+                {{/tabdata.smtphosts}}
+                {{^tabdata.smtphosts}}
+                <span style="color:#8890a0;">Not configured</span>
+                {{/tabdata.smtphosts}}
+            </td>
+        </tr>
+        <tr>
+            <td>No-reply address</td>
+            <td><code style="font-size:13px;">{{tabdata.noreplyaddress}}</code></td>
+        </tr>
+    </table>
+</div>
+
+<div class="ap-manage-card">
+    <h3 style="font-size:15px; font-weight:600; color:#1a1a2e; margin:0 0 16px;">
+        <i class="fa fa-bell-o" aria-hidden="true"></i> Default Channel Configuration
+    </h3>
+    <p style="font-size:13px; color:#5a6070; margin:0 0 12px;">
+        Default notification delivery channels for new users. Individual users can override in their preferences.
+    </p>
+    <table class="ap-manage-table">
+        <thead>
+            <tr>
+                <th>Channel</th>
+                <th>Default Status</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><i class="fa fa-bell"></i> In-App (Popup)</td>
+                <td><span class="ap-manage-badge ap-manage-badge--enabled">Enabled by default</span></td>
+                <td style="font-size:12px; color:#5a6070;">Moodle notification bell — always available</td>
+            </tr>
+            <tr>
+                <td><i class="fa fa-envelope"></i> Email</td>
+                <td><span class="ap-manage-badge ap-manage-badge--disabled">Opt-in only</span></td>
+                <td style="font-size:12px; color:#5a6070;">Users must enable email in their notification preferences</td>
+            </tr>
+            <tr>
+                <td><i class="fa fa-windows"></i> Microsoft Teams</td>
+                <td><span class="ap-manage-badge ap-manage-badge--disabled">Not configured</span></td>
+                <td style="font-size:12px; color:#5a6070;">Requires Teams webhook integration</td>
+            </tr>
+            <tr>
+                <td><i class="fa fa-mobile"></i> Push Notification</td>
+                <td><span class="ap-manage-badge ap-manage-badge--disabled">Not configured</span></td>
+                <td style="font-size:12px; color:#5a6070;">Requires service worker + web push setup</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+{{#tabdata.is_siteadmin}}
+<div class="ap-manage-card">
+    <h3 style="font-size:15px; font-weight:600; color:#1a1a2e; margin:0 0 16px;">
+        <i class="fa fa-wrench" aria-hidden="true"></i> Quick Actions
+    </h3>
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <a href="/moodle/admin/settings.php?section=outgoingmailconfig" class="ap-manage-btn ap-manage-btn--outline">
+            <i class="fa fa-cog"></i> SMTP Settings
+        </a>
+        <a href="/moodle/admin/message.php" class="ap-manage-btn ap-manage-btn--outline">
+            <i class="fa fa-envelope"></i> Moodle Message Settings
+        </a>
+        <a href="/moodle/message/notificationpreferences.php" class="ap-manage-btn ap-manage-btn--outline">
+            <i class="fa fa-user"></i> Notification Preferences
+        </a>
+        <a href="/moodle/local/notifications/index.php" class="ap-manage-btn ap-manage-btn--outline">
+            <i class="fa fa-database"></i> BizLMS Notifications
+        </a>
+    </div>
+</div>
+{{/tabdata.is_siteadmin}}

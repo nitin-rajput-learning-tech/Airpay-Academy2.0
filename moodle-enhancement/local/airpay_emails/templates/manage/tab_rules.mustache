@@ -1,0 +1,89 @@
+{{!
+    Rules tab — notification rules DataTable with toggle switches.
+    Context: tabdata {rules [{id, rule_name, rule_type, channel, audience, trigger_days,
+             template_key, enabled, priority, is_global, timemodified}], rule_count}
+}}
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+    <span style="font-size:14px; color:#5a6070;">{{tabdata.rule_count}} notification rules configured</span>
+</div>
+
+{{#tabdata.rules}}
+{{! Render as a list if rules exist }}
+{{/tabdata.rules}}
+
+<div class="ap-manage-card">
+    <table class="ap-manage-table">
+        <thead>
+            <tr>
+                <th style="width:5%;">On/Off</th>
+                <th style="width:25%;">Rule Name</th>
+                <th style="width:12%;">Type</th>
+                <th style="width:10%;">Channel</th>
+                <th style="width:10%;">Audience</th>
+                <th style="width:8%;">Trigger</th>
+                <th style="width:8%;">Priority</th>
+                <th style="width:10%;">Scope</th>
+                <th style="width:12%;">Modified</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#tabdata.rules}}
+            <tr style="{{^enabled}}opacity:0.6;{{/enabled}}">
+                <td>
+                    <label class="ap-toggle">
+                        <input type="checkbox" {{#enabled}}checked{{/enabled}}
+                               data-rule-id="{{id}}" onchange="toggleRule({{id}}, this.checked)">
+                        <span class="ap-toggle-slider"></span>
+                    </label>
+                </td>
+                <td>
+                    <strong>{{rule_name}}</strong>
+                    {{#template_key}}
+                    <br/><code style="font-size:10px; color:#8890a0;">{{template_key}}</code>
+                    {{/template_key}}
+                </td>
+                <td><span style="font-size:12px;">{{rule_type}}</span></td>
+                <td><span style="font-size:12px;">{{channel}}</span></td>
+                <td><span style="font-size:12px;">{{audience}}</span></td>
+                <td>
+                    {{#trigger_days}}
+                    <span style="font-size:13px; font-weight:600;">{{trigger_days}}d</span>
+                    {{/trigger_days}}
+                    {{^trigger_days}}
+                    <span style="font-size:12px; color:#8890a0;">event</span>
+                    {{/trigger_days}}
+                </td>
+                <td>
+                    <span style="font-size:13px; font-weight:600; color:{{#priority}}{{#is_global}}#0066A7{{/is_global}}{{/priority}};">
+                        {{priority}}
+                    </span>
+                </td>
+                <td>
+                    {{#is_global}}
+                    <span class="ap-manage-badge ap-manage-badge--bizlms">Global</span>
+                    {{/is_global}}
+                    {{^is_global}}
+                    <span class="ap-manage-badge ap-manage-badge--override">Tenant {{tenant_id}}</span>
+                    {{/is_global}}
+                </td>
+                <td style="font-size:12px; color:#8890a0;">{{timemodified}}</td>
+            </tr>
+            {{/tabdata.rules}}
+        </tbody>
+    </table>
+</div>
+
+{{^tabdata.rules}}
+<div class="ap-manage-empty">
+    <i class="fa fa-bolt"></i>
+    No notification rules configured. Run Admin → Notifications to seed defaults.
+</div>
+{{/tabdata.rules}}
+
+<script>
+function toggleRule(ruleId, enabled) {
+    // Simple form submission for now (AJAX in Session 5).
+    var url = '{{manage_url}}?tab=rules&tenant={{tenant_id}}&action=toggle&ruleid=' + ruleId + '&enabled=' + (enabled ? 1 : 0) + '&sesskey={{sesskey}}';
+    window.location = url;
+}
+</script>

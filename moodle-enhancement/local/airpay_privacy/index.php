@@ -15,8 +15,88 @@ $PAGE->set_title(get_string('myprivacy', 'local_airpay_privacy'));
 $PAGE->set_pagelayout('standard');
 
 $action = optional_param('action', '', PARAM_ALPHA);
+$tab    = optional_param('tab', '', PARAM_ALPHA);
 $userid = $USER->id;
 $manager = \local_airpay_privacy\privacy_manager::class;
+
+// ════════════════════════════════════════════════════════════════
+// ADMIN VIEW — siteadmins see request management panel
+// ════════════════════════════════════════════════════════════════
+if (is_siteadmin() || has_capability('local/airpay_privacy:manage', context_system::instance())) {
+    $PAGE->set_heading(get_string('pluginname', 'local_airpay_privacy') . ' — Administration');
+
+    // Handle admin actions.
+    if ($action === 'approve' && confirm_sesskey()) {
+        $reqid = required_param('reqid', PARAM_INT);
+        $manager::process_deletion($reqid);
+        redirect(new moodle_url('/local/airpay_privacy/index.php'),
+            'Request processed successfully.', null, \core\output\notification::NOTIFY_SUCCESS);
+    }
+    if ($action === 'reject' && confirm_sesskey()) {
+        $reqid = required_param('reqid', PARAM_INT);
+        global $DB;
+        $DB->set_field('local_airpay_privacy_req', 'status', 'rejected', ['id' => $reqid]);
+        $DB->set_field('local_airpay_privacy_req', 'timeprocessed', time(), ['id' => $reqid]);
+        redirect(new moodle_url('/local/airpay_privacy/index.php'),
+            'Request rejected.', null, \core\output\notification::NOTIFY_WARNING);
+    }
+
+    // Get all requests across all users.
+    global $DB;
+    $allrequests = $DB->get_records_sql(
+        "SELECT pr.*, u.firstname, u.lastname, u.email, u.open_path
+           FROM {local_airpay_privacy_req} pr
+           JOIN {user} u ON u.id = pr.userid
+       ORDER BY pr.timecreated DESC"
+    );
+
+    $pending = 0;
+    $completed = 0;
+    $total = count($allrequests);
+    $rows = [];
+    foreach ($allrequests as $r) {
+        if ($r->status === 'pending') { $pending++; }
+        if ($r->status === 'completed') { $completed++; }
+        $parts = explode('/', trim($r->open_path ?? '', '/'));
+        $tenantid = (int)($parts[0] ?? 0);
+        $rows[] = [
+            'id'          => $r->id,
+            'user_name'   => format_string($r->firstname . ' ' . $r->lastname),
+            'user_email'  => s($r->email),
+            'tenant_id'   => $tenantid,
+            'type'        => ucfirst(str_replace('_', ' ', $r->request_type)),
+            'type_delete'  => ($r->request_type === 'account_deletion'),
+            'type_download' => ($r->request_type === 'data_download'),
+            'reason'      => s($r->reason ?? ''),
+            'status'      => ucfirst($r->status),
+            'is_pending'  => ($r->status === 'pending'),
+            'is_completed' => ($r->status === 'completed'),
+            'is_rejected' => ($r->status === 'rejected'),
+            'created'     => userdate($r->timecreated, '%d %b %Y %I:%M %p'),
+            'processed'   => $r->timeprocessed ? userdate($r->timeprocessed, '%d %b %Y %I:%M %p') : '-',
+        ];
+    }
+
+    $admindata = [
+        'sesskey'    => sesskey(),
+        'baseurl'    => (new moodle_url('/local/airpay_privacy/index.php'))->out(false),
+        'total'      => $total,
+        'pending'    => $pending,
+        'completed'  => $completed,
+        'rejected'   => $total - $pending - $completed,
+        'requests'   => $rows,
+        'has_requests' => !empty($rows),
+    ];
+
+    echo $OUTPUT->header();
+    echo $OUTPUT->render_from_template('local_airpay_privacy/admin_panel', $admindata);
+    echo $OUTPUT->footer();
+    die();
+}
+
+// ════════════════════════════════════════════════════════════════
+// USER SELF-SERVICE VIEW — regular users
+// ════════════════════════════════════════════════════════════════
 
 // Handle form submissions.
 if ($action === 'download' && confirm_sesskey()) {

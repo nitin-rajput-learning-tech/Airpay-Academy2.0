@@ -19,6 +19,11 @@ function local_airpay_assistant_before_footer() {
         return '';
     }
 
+    // Check if admin has disabled the chatbot site-wide.
+    if (!get_config('local_airpay_assistant', 'enabled')) {
+        return '';
+    }
+
     // Don't show on login/admin upgrade pages.
     $pagetype = $PAGE->pagetype ?? '';
     if (strpos($pagetype, 'login') !== false || strpos($pagetype, 'admin-index') !== false) {

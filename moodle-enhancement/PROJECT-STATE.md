@@ -1,7 +1,7 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-04-10 | **Phase:** Academy 2.1 — Enterprise Platform
-**Theme:** airpayux v1.0.0 | **Tag:** v2.1.0
-**Version:** 2.1.0 (Gamification + Notifications + Catalog + Skills + Analytics + Hindi + AI Assistant + KeKa + Compliance + DPDP Privacy)
+**Updated:** 2026-04-13 | **Phase:** Academy 2.2 — Notification Management Platform
+**Theme:** airpayux v1.0.0 | **Tag:** v2.2.0
+**Version:** 2.2.0 (All v2.1.0 + Email Templates + Notification Management Panel + Bug Fixes)
 
 ---
 
@@ -139,6 +139,33 @@
 - Privacy static page updated with DPDP Act 2023 sections and self-service portal link
 - `$CFG->noemailever = true` in config.php — zero emails sent from local environment
 
+### Email Templates + Notification Management (v2.2.0)
+**Branded Email System (local_airpay_emails — 56 files):**
+- 19 Mustache email templates (6 compliance, 5 notifications, 4 enrollment, 2 account, 2 privacy)
+- Theme email wrapper override (`core/email_html.mustache`) — branded header, Airpay signature footer, Indian tricolor bar
+- 3 reusable partials (CTA button, course info box, footer note)
+- Email renderer with DB override resolution chain (tenant → global → file fallback)
+- Per-tenant template customization (DB table: local_airpay_email_overrides)
+- 10 seeded notification rules (DB table: local_airpay_email_rules)
+- Unified delivery log (DB table: local_airpay_email_log) with CSV export
+- User notification preferences (DB table: local_airpay_email_prefs)
+- Visual preview page (`/local/airpay_emails/preview.php`) with 19 templates, tenant selector, mobile/desktop toggle
+- Management panel (`/local/airpay_emails/manage.php`) with 5 tabs: Dashboard, Templates, Rules, Logs, Settings
+- BizLMS legacy integration (read-only view of 20+ BizLMS notification types)
+- 5 AJAX web services (get/save/revert/preview template, toggle rule)
+- 3 AMD JS modules (template_editor, rule_manager, delivery_log)
+- Scheduled task: hourly rule processing with dedup
+- 6 capabilities for granular permission control
+- Email default: popup=enabled, email=opt-in only (lesson from 151-email incident)
+
+**Bug Fixes (v2.2.0):**
+- Privacy admin panel: siteadmins now see request management (approve/reject) instead of user self-service
+- AI Assistant: enable/disable toggle in admin settings (Site Admin → Plugins → Airpay AI Learning Assistant)
+- Quick Access icon: fixed broken JS controller (was using notification_popover_controller, now proper toggle)
+- Cookie consent popup: disabled `sitepolicyhandler` for local development
+- SMTP credentials wiped from DB, noreplyaddress set to localhost.invalid
+- Email sending triple-locked: noemailever + no SMTP + localhost noreply
+
 ### Test Users
 | Username | Name | Role | Password | Tenant |
 |----------|------|------|----------|--------|
@@ -201,6 +228,7 @@
 | v1.2.0 | Tier 2: Skills Matrix + Analytics + Hindi |
 | v2.0.0 | Tier 3: AI Assistant + KeKa HRMS + PWA + Marketplace stubs |
 | v2.1.0 | Compliance Report + DPDP Privacy + Admin wiring |
+| v2.2.0 | Email Templates + Notification Management Panel + Bug Fixes |
 
 ---
 

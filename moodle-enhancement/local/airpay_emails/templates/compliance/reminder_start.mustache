@@ -1,0 +1,37 @@
+{{!
+    Compliance: Reminder Start — user hasn't started after X days.
+    Context: firstname, course_name, course_url, days_since_enrolled,
+             deadline_date, deadline_days, dashboard_url
+    Urgency: REMINDER (teal #0f7a73)
+}}
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+<tr><td style="font-family:'Montserrat',Arial,sans-serif; font-size:15px; line-height:24px; color:#1a1a2e;">
+
+    <p style="margin:0 0 16px;">Hi <strong>{{firstname}}</strong>,</p>
+
+    <!-- Urgency indicator -->
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 16px;">
+    <tr>
+        <td bgcolor="#e5f4f3" style="background-color:#e5f4f3; padding:12px 16px; border-radius:8px; border-left:4px solid #0f7a73;">
+            <span style="font-family:'Montserrat',Arial,sans-serif; font-size:14px; color:#0f7a73; font-weight:600;">
+                Friendly Reminder
+            </span><br/>
+            <span style="font-family:'Montserrat',Arial,sans-serif; font-size:13px; color:#5a6070;">
+                You enrolled {{days_since_enrolled}} days ago but haven't started this course yet.
+            </span>
+        </td>
+    </tr>
+    </table>
+
+</td></tr>
+</table>
+
+{{> local_airpay_emails/partials/course_info_box}}
+
+{{< local_airpay_emails/partials/cta_button}}
+    {{$cta_url}}{{course_url}}{{/cta_url}}
+    {{$cta_text}}Start Now{{/cta_text}}
+    {{$cta_color}}#0f7a73{{/cta_color}}
+{{/ local_airpay_emails/partials/cta_button}}
+
+{{> local_airpay_emails/partials/footer_note}}

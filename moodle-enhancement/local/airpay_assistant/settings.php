@@ -5,6 +5,13 @@ if ($hassiteconfig) {
     $settings = new admin_settingpage('local_airpay_assistant',
         get_string('pluginname', 'local_airpay_assistant'));
 
+    $settings->add(new admin_setting_configcheckbox(
+        'local_airpay_assistant/enabled',
+        get_string('enabled', 'local_airpay_assistant'),
+        get_string('enabled_desc', 'local_airpay_assistant'),
+        '1'
+    ));
+
     $settings->add(new admin_setting_configpasswordunmask(
         'local_airpay_assistant/api_key',
         get_string('apikey', 'local_airpay_assistant'),

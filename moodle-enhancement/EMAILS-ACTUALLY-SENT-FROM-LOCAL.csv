@@ -1,0 +1,152 @@
+id,component,eventtype,subject,to_name,to_email,sent_at
+1665597,moodle,newlogin,New sign in to your airpay academy account,Anand,anand.ram@airpay.co.in,2026-04-06 09:45:07
+1665598,moodle,newlogin,New sign in to your airpay academy account,Airpay,academy@airpay.co.in,2026-04-06 10:16:06
+1665599,moodle,newlogin,New sign in to your airpay academy account,Rasika,rasika.thakare@airpay.co.in,2026-04-06 12:09:05
+1665600,local_users,users_welcome_email,🎉 Welcome to Airpay Academy - New Employee Onboarding Videos: Please Watch On Your First Day !,Aryan,aryan.pati@airpay.co.in,2026-04-06 12:33:06
+1665601,local_users,users_welcome_email,🎉 Welcome to Airpay Academy - New Employee Onboarding Videos: Please Watch On Your First Day !,Sujeet,sujeet.shikare@airpay.co.in,2026-04-06 12:33:10
+1665602,local_users,users_welcome_email,🎉 Welcome to Airpay Academy - New Employee Onboarding Videos: Please Watch On Your First Day !,Suryansh,suryansh.singh@airpay.co.in,2026-04-06 12:33:13
+1665603,local_learningplan,learningplan_enrol,Welcome to Airpay Academy – Your Learning Journey Begins! 🎓 Complete the courses in the Learning Path,Aryan,aryan.pati@airpay.co.in,2026-04-06 12:40:07
+1665604,local_learningplan,learningplan_enrol,Welcome to Airpay Academy – Your Learning Journey Begins! 🎓 Complete the courses in the Learning Path,Sujeet,sujeet.shikare@airpay.co.in,2026-04-06 12:40:10
+1665605,local_learningplan,learningplan_enrol,Welcome to Airpay Academy – Your Learning Journey Begins! 🎓 Complete the courses in the Learning Path,Suryansh,suryansh.singh@airpay.co.in,2026-04-06 12:40:14
+1665606,moodle,newlogin,New sign in to your airpay academy account,Isha,isha.sangral@airpay.technology,2026-04-06 12:40:18
+1665607,local_courses,course_enrol,🚨 Mandatory POSH Training 2025 – Now Live!,Aryan,aryan.pati@airpay.co.in,2026-04-06 12:41:06
+1665608,local_courses,course_enrol,🚨 Mandatory POSH Training 2025 – Now Live!,Sujeet,sujeet.shikare@airpay.co.in,2026-04-06 12:41:09
+1665609,local_courses,course_enrol,🚨 Mandatory POSH Training 2025 – Now Live!,Suryansh,suryansh.singh@airpay.co.in,2026-04-06 12:41:13
+1665610,moodle,newlogin,New sign in to your airpay academy account,Suryansh,suryansh.singh@airpay.co.in,2026-04-06 12:57:06
+1665611,moodle,newlogin,New sign in to your airpay academy account,Anoop,anoop.upadhyaya@airpay.co.in,2026-04-06 12:59:06
+1665612,local_users,users_welcome_email,🎉 Welcome to Airpay Academy - New Employee Onboarding Videos: Please Watch On Your First Day !,Rithik,rithik.shukla@airpay.co.in,2026-04-06 13:10:07
+1665613,moodle,newlogin,New sign in to your airpay academy account,Rithik,rithik.shukla@airpay.co.in,2026-04-06 13:15:06
+1665614,local_users,users_welcome_email,🎉 Welcome to Airpay Academy - New Employee Onboarding Videos: Please Watch On Your First Day !,Sidharth,sidharth.p@airpay.co.in,2026-04-06 13:21:05
+1665615,local_users,users_welcome_email,🎉 Welcome to Airpay Academy - New Employee Onboarding Videos: Please Watch On Your First Day !,Shweta,shweta.yadav@airpay.money,2026-04-06 13:21:09
+1665616,local_users,users_welcome_email,🎉 Welcome to Airpay Academy - New Employee Onboarding Videos: Please Watch On Your First Day !,Mrunal,mrunal.salve@airpay.money,2026-04-06 13:21:12
+1665617,local_users,users_welcome_email,🎉 Welcome to Airpay Academy - New Employee Onboarding Videos: Please Watch On Your First Day !,Hetal,hetal.sancheti@airpay.money,2026-04-06 13:21:16
+1665618,local_users,users_welcome_email,🎉 Welcome to Airpay Academy - New Employee Onboarding Videos: Please Watch On Your First Day !,Ridhi,ridhi@airpay.technology,2026-04-06 13:21:20
+1665619,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Airpay,academy@airpay.co.in,2026-04-10 14:33:06
+1665620,local_airpay_compliance_report,compliance_alert,Enrolled: IT and Information Security Awareness Training,Airpay,academy@airpay.co.in,2026-04-10 14:33:13
+1665621,local_airpay_compliance_report,compliance_alert,Enrolled: Anti Money Laundering,Airpay,academy@airpay.co.in,2026-04-10 14:33:17
+1665622,local_airpay_compliance_report,compliance_alert,Enrolled: Phishing Awareness Training,Airpay,academy@airpay.co.in,2026-04-10 14:33:21
+1665623,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,MIN,shashank.gudimela@moodle.com,2026-04-10 14:33:25
+1665624,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,External,academyexadmin@airpay.co.in,2026-04-10 14:33:29
+1665625,local_airpay_compliance_report,compliance_alert,Enrolled: IT and Information Security Awareness Training,External,academyexadmin@airpay.co.in,2026-04-10 14:33:33
+1665626,local_airpay_compliance_report,compliance_alert,Enrolled: Anti Money Laundering,External,academyexadmin@airpay.co.in,2026-04-10 14:33:36
+1665627,local_airpay_compliance_report,compliance_alert,Enrolled: Phishing Awareness Training,External,academyexadmin@airpay.co.in,2026-04-10 14:33:40
+1665628,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Shivam,sharma.shivam281@gmail.com,2026-04-10 14:33:43
+1665629,local_airpay_compliance_report,compliance_alert,Enrolled: IT and Information Security Awareness Training,Shivam,sharma.shivam281@gmail.com,2026-04-10 14:33:47
+1665630,local_airpay_compliance_report,compliance_alert,Enrolled: Anti Money Laundering,Shivam,sharma.shivam281@gmail.com,2026-04-10 14:33:51
+1665631,local_airpay_compliance_report,compliance_alert,Enrolled: Phishing Awareness Training,Shivam,sharma.shivam281@gmail.com,2026-04-10 14:33:56
+1665632,local_airpay_compliance_report,compliance_alert,Enrolled: Phishing Awareness Training,Neelesh,neelesh.shukla1@airpay.co.in,2026-04-10 14:34:19
+1665633,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,External,externaltest@mailinator.com,2026-04-10 14:34:25
+1665634,local_airpay_compliance_report,compliance_alert,Enrolled: IT and Information Security Awareness Training,External,externaltest@mailinator.com,2026-04-10 14:34:28
+1665635,local_airpay_compliance_report,compliance_alert,Enrolled: Anti Money Laundering,External,externaltest@mailinator.com,2026-04-10 14:34:32
+1665636,local_airpay_compliance_report,compliance_alert,Enrolled: Phishing Awareness Training,External,externaltest@mailinator.com,2026-04-10 14:34:35
+1665637,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Gagan,gagskaln21@gmail.com,2026-04-10 14:34:40
+1665638,local_airpay_compliance_report,compliance_alert,Enrolled: IT and Information Security Awareness Training,Gagan,gagskaln21@gmail.com,2026-04-10 14:34:43
+1665639,local_airpay_compliance_report,compliance_alert,Enrolled: Anti Money Laundering,Gagan,gagskaln21@gmail.com,2026-04-10 14:34:48
+1665640,local_airpay_compliance_report,compliance_alert,Enrolled: Phishing Awareness Training,Gagan,gagskaln21@gmail.com,2026-04-10 14:34:51
+1665641,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Sameer,bhave.sameer654@gmail.com,2026-04-10 14:34:54
+1665642,local_airpay_compliance_report,compliance_alert,Enrolled: IT and Information Security Awareness Training,Sameer,bhave.sameer654@gmail.com,2026-04-10 14:34:58
+1665643,local_airpay_compliance_report,compliance_alert,Enrolled: Anti Money Laundering,Sameer,bhave.sameer654@gmail.com,2026-04-10 14:35:01
+1665644,local_airpay_compliance_report,compliance_alert,Enrolled: Phishing Awareness Training,Sameer,bhave.sameer654@gmail.com,2026-04-10 14:35:05
+1665645,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,vimal,vimal.koothattu@rediffmail.com,2026-04-10 14:35:09
+1665646,local_airpay_compliance_report,compliance_alert,Enrolled: IT and Information Security Awareness Training,vimal,vimal.koothattu@rediffmail.com,2026-04-10 14:35:12
+1665647,local_airpay_compliance_report,compliance_alert,Enrolled: Anti Money Laundering,vimal,vimal.koothattu@rediffmail.com,2026-04-10 14:35:16
+1665648,local_airpay_compliance_report,compliance_alert,Enrolled: Phishing Awareness Training,vimal,vimal.koothattu@rediffmail.com,2026-04-10 14:35:19
+1665649,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Barnabas,barnabas.mbunda@airpay.tz,2026-04-10 14:35:23
+1665650,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Yasmin,yasmin@airpay.tz,2026-04-10 14:35:26
+1665651,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Mihayo,mihayo@airpay.tz,2026-04-10 14:35:30
+1665652,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Jesse,jesse.shuma@airpay.tz,2026-04-10 14:35:33
+1665653,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Douglas,douglas.mutembei@airpay.tz,2026-04-10 14:35:37
+1665654,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Ayne,ayne@airpay.tz,2026-04-10 14:35:41
+1665655,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Samuel,samuel.muladi@airpay.tz,2026-04-10 14:35:44
+1665656,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Janeth,janeth.jovin@airpay.tz,2026-04-10 14:35:48
+1665657,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Fatma,fatmah.khamis@airpay.tz,2026-04-10 14:35:51
+1665658,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Faith,faith.kameta@airpay.tz,2026-04-10 14:35:55
+1665659,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Elias,elias.lugobi@airpay.tz,2026-04-10 14:36:00
+1665660,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Wema,wema.kilongola@airpay.tz,2026-04-10 14:36:04
+1665661,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Mwatatu,mwatatu.husssein@airpay.tz,2026-04-10 14:36:09
+1665662,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Eric,eric.maro@airpay.tz,2026-04-10 14:36:13
+1665663,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,AMAL,amalps515@gmail.com,2026-04-10 14:36:17
+1665664,local_airpay_compliance_report,compliance_alert,Enrolled: IT and Information Security Awareness Training,AMAL,amalps515@gmail.com,2026-04-10 14:36:21
+1665665,local_airpay_compliance_report,compliance_alert,Enrolled: Anti Money Laundering,AMAL,amalps515@gmail.com,2026-04-10 14:36:26
+1665666,local_airpay_compliance_report,compliance_alert,Enrolled: Phishing Awareness Training,AMAL,amalps515@gmail.com,2026-04-10 14:36:29
+1665667,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,gihasi,gihasi8567@bitofee.com,2026-04-10 14:36:33
+1665668,local_airpay_compliance_report,compliance_alert,Enrolled: IT and Information Security Awareness Training,gihasi,gihasi8567@bitofee.com,2026-04-10 14:36:37
+1665669,local_airpay_compliance_report,compliance_alert,Enrolled: Anti Money Laundering,gihasi,gihasi8567@bitofee.com,2026-04-10 14:36:40
+1665670,local_airpay_compliance_report,compliance_alert,Enrolled: Phishing Awareness Training,gihasi,gihasi8567@bitofee.com,2026-04-10 14:36:44
+1665671,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,daya,dayomo7432@namewok.com,2026-04-10 14:36:48
+1665672,local_airpay_compliance_report,compliance_alert,Enrolled: IT and Information Security Awareness Training,daya,dayomo7432@namewok.com,2026-04-10 14:36:51
+1665673,local_airpay_compliance_report,compliance_alert,Enrolled: Anti Money Laundering,daya,dayomo7432@namewok.com,2026-04-10 14:36:55
+1665674,local_airpay_compliance_report,compliance_alert,Enrolled: Phishing Awareness Training,daya,dayomo7432@namewok.com,2026-04-10 14:36:58
+1665675,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Meleda,meleda8468@alibrs.com,2026-04-10 14:37:01
+1665676,local_airpay_compliance_report,compliance_alert,Enrolled: IT and Information Security Awareness Training,Meleda,meleda8468@alibrs.com,2026-04-10 14:37:05
+1665677,local_airpay_compliance_report,compliance_alert,Enrolled: Anti Money Laundering,Meleda,meleda8468@alibrs.com,2026-04-10 14:37:09
+1665678,local_airpay_compliance_report,compliance_alert,Enrolled: Phishing Awareness Training,Meleda,meleda8468@alibrs.com,2026-04-10 14:37:12
+1665679,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,LOKESH,lokesuji9489@gmail.com,2026-04-10 14:37:15
+1665680,local_airpay_compliance_report,compliance_alert,Enrolled: IT and Information Security Awareness Training,LOKESH,lokesuji9489@gmail.com,2026-04-10 14:37:19
+1665681,local_airpay_compliance_report,compliance_alert,Enrolled: Anti Money Laundering,LOKESH,lokesuji9489@gmail.com,2026-04-10 14:37:23
+1665682,local_airpay_compliance_report,compliance_alert,Enrolled: Phishing Awareness Training,LOKESH,lokesuji9489@gmail.com,2026-04-10 14:37:26
+1665683,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,MAYUR,atulsonawanemayu@gmail.com,2026-04-10 14:37:30
+1665684,local_airpay_compliance_report,compliance_alert,Enrolled: IT and Information Security Awareness Training,MAYUR,atulsonawanemayu@gmail.com,2026-04-10 14:37:34
+1665685,local_airpay_compliance_report,compliance_alert,Enrolled: Anti Money Laundering,MAYUR,atulsonawanemayu@gmail.com,2026-04-10 14:37:38
+1665686,local_airpay_compliance_report,compliance_alert,Enrolled: Phishing Awareness Training,MAYUR,atulsonawanemayu@gmail.com,2026-04-10 14:37:42
+1665687,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Deogratias,geminideogratias8@gmail.com,2026-04-10 14:37:45
+1665688,local_airpay_compliance_report,compliance_alert,Enrolled: IT and Information Security Awareness Training,Deogratias,geminideogratias8@gmail.com,2026-04-10 14:37:49
+1665689,local_airpay_compliance_report,compliance_alert,Enrolled: Anti Money Laundering,Deogratias,geminideogratias8@gmail.com,2026-04-10 14:37:52
+1665690,local_airpay_compliance_report,compliance_alert,Enrolled: Phishing Awareness Training,Deogratias,geminideogratias8@gmail.com,2026-04-10 14:37:56
+1665691,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Test,sairam.lakum@moodle.com,2026-04-10 14:37:59
+1665692,local_airpay_compliance_report,compliance_alert,Enrolled: IT and Information Security Awareness Training,Test,sairam.lakum@moodle.com,2026-04-10 14:38:04
+1665693,local_airpay_compliance_report,compliance_alert,Enrolled: Anti Money Laundering,Test,sairam.lakum@moodle.com,2026-04-10 14:38:07
+1665694,local_airpay_compliance_report,compliance_alert,Enrolled: Phishing Awareness Training,Test,sairam.lakum@moodle.com,2026-04-10 14:38:10
+1665695,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Dax,daxato9739@fkcod.com,2026-04-10 14:38:14
+1665696,local_airpay_compliance_report,compliance_alert,Enrolled: IT and Information Security Awareness Training,Dax,daxato9739@fkcod.com,2026-04-10 14:38:17
+1665697,local_airpay_compliance_report,compliance_alert,Enrolled: Anti Money Laundering,Dax,daxato9739@fkcod.com,2026-04-10 14:38:20
+1665698,local_airpay_compliance_report,compliance_alert,Enrolled: Phishing Awareness Training,Dax,daxato9739@fkcod.com,2026-04-10 14:38:24
+1665699,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Santosh,renukapaymentservices@gmail.com,2026-04-10 14:38:27
+1665700,local_airpay_compliance_report,compliance_alert,Enrolled: IT and Information Security Awareness Training,Santosh,renukapaymentservices@gmail.com,2026-04-10 14:38:31
+1665701,local_airpay_compliance_report,compliance_alert,Enrolled: Anti Money Laundering,Santosh,renukapaymentservices@gmail.com,2026-04-10 14:38:34
+1665702,local_airpay_compliance_report,compliance_alert,Enrolled: Phishing Awareness Training,Santosh,renukapaymentservices@gmail.com,2026-04-10 14:38:37
+1665703,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,hehep,hehep51085@huizk.com,2026-04-10 14:38:40
+1665704,local_airpay_compliance_report,compliance_alert,Enrolled: IT and Information Security Awareness Training,hehep,hehep51085@huizk.com,2026-04-10 14:38:43
+1665705,local_airpay_compliance_report,compliance_alert,Enrolled: Anti Money Laundering,hehep,hehep51085@huizk.com,2026-04-10 14:38:46
+1665706,local_airpay_compliance_report,compliance_alert,Enrolled: Phishing Awareness Training,hehep,hehep51085@huizk.com,2026-04-10 14:38:50
+1665707,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Mohammed Azeem,mohammed.khan028@nmims.edu.in,2026-04-10 14:38:53
+1665708,local_airpay_compliance_report,compliance_alert,Enrolled: IT and Information Security Awareness Training,Mohammed Azeem,mohammed.khan028@nmims.edu.in,2026-04-10 14:38:57
+1665709,local_airpay_compliance_report,compliance_alert,Enrolled: Anti Money Laundering,Mohammed Azeem,mohammed.khan028@nmims.edu.in,2026-04-10 14:39:01
+1665710,local_airpay_compliance_report,compliance_alert,Enrolled: Phishing Awareness Training,Mohammed Azeem,mohammed.khan028@nmims.edu.in,2026-04-10 14:39:05
+1665711,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Nishant,nishantd0405@gmail.com,2026-04-10 14:39:09
+1665712,local_airpay_compliance_report,compliance_alert,Enrolled: IT and Information Security Awareness Training,Nishant,nishantd0405@gmail.com,2026-04-10 14:39:13
+1665713,local_airpay_compliance_report,compliance_alert,Enrolled: Anti Money Laundering,Nishant,nishantd0405@gmail.com,2026-04-10 14:39:16
+1665714,local_airpay_compliance_report,compliance_alert,Enrolled: Phishing Awareness Training,Nishant,nishantd0405@gmail.com,2026-04-10 14:39:19
+1665715,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Ishika,ishikaapjain3@gmail.com,2026-04-10 14:39:23
+1665716,local_airpay_compliance_report,compliance_alert,Enrolled: IT and Information Security Awareness Training,Ishika,ishikaapjain3@gmail.com,2026-04-10 14:39:27
+1665717,local_airpay_compliance_report,compliance_alert,Enrolled: Anti Money Laundering,Ishika,ishikaapjain3@gmail.com,2026-04-10 14:39:29
+1665718,local_airpay_compliance_report,compliance_alert,Enrolled: Phishing Awareness Training,Ishika,ishikaapjain3@gmail.com,2026-04-10 14:39:33
+1665719,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Mukund,mukund.pitliya140@nmims.edu.in,2026-04-10 14:39:36
+1665720,local_airpay_compliance_report,compliance_alert,Enrolled: IT and Information Security Awareness Training,Mukund,mukund.pitliya140@nmims.edu.in,2026-04-10 14:39:40
+1665721,local_airpay_compliance_report,compliance_alert,Enrolled: Anti Money Laundering,Mukund,mukund.pitliya140@nmims.edu.in,2026-04-10 14:39:43
+1665722,local_airpay_compliance_report,compliance_alert,Enrolled: Phishing Awareness Training,Mukund,mukund.pitliya140@nmims.edu.in,2026-04-10 14:39:47
+1665723,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Krishna,kn.workai@gmail.com,2026-04-10 14:39:51
+1665724,local_airpay_compliance_report,compliance_alert,Enrolled: IT and Information Security Awareness Training,Krishna,kn.workai@gmail.com,2026-04-10 14:39:54
+1665725,local_airpay_compliance_report,compliance_alert,Enrolled: Anti Money Laundering,Krishna,kn.workai@gmail.com,2026-04-10 14:39:57
+1665726,local_airpay_compliance_report,compliance_alert,Enrolled: Phishing Awareness Training,Krishna,kn.workai@gmail.com,2026-04-10 14:40:01
+1665727,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Jinay,jinayahah@gmail.com,2026-04-10 14:40:04
+1665728,local_airpay_compliance_report,compliance_alert,Enrolled: IT and Information Security Awareness Training,Jinay,jinayahah@gmail.com,2026-04-10 14:40:07
+1665729,local_airpay_compliance_report,compliance_alert,Enrolled: Anti Money Laundering,Jinay,jinayahah@gmail.com,2026-04-10 14:40:10
+1665730,local_airpay_compliance_report,compliance_alert,Enrolled: Phishing Awareness Training,Jinay,jinayahah@gmail.com,2026-04-10 14:40:14
+1665731,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Saif,saifmansoori087@gmail.com,2026-04-10 14:40:18
+1665732,local_airpay_compliance_report,compliance_alert,Enrolled: IT and Information Security Awareness Training,Saif,saifmansoori087@gmail.com,2026-04-10 14:40:22
+1665733,local_airpay_compliance_report,compliance_alert,Enrolled: Anti Money Laundering,Saif,saifmansoori087@gmail.com,2026-04-10 14:40:25
+1665734,local_airpay_compliance_report,compliance_alert,Enrolled: Phishing Awareness Training,Saif,saifmansoori087@gmail.com,2026-04-10 14:40:28
+1665735,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Mohammed,mohammedhkaradia@gmail.com,2026-04-10 14:40:31
+1665736,local_airpay_compliance_report,compliance_alert,Enrolled: IT and Information Security Awareness Training,Mohammed,mohammedhkaradia@gmail.com,2026-04-10 14:40:35
+1665737,local_airpay_compliance_report,compliance_alert,Enrolled: Anti Money Laundering,Mohammed,mohammedhkaradia@gmail.com,2026-04-10 14:40:38
+1665738,local_airpay_compliance_report,compliance_alert,Enrolled: Phishing Awareness Training,Mohammed,mohammedhkaradia@gmail.com,2026-04-10 14:40:42
+1665739,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Bhagyashree,bhagyashreebirje.work@gmail.com,2026-04-10 14:40:45
+1665740,local_airpay_compliance_report,compliance_alert,Enrolled: IT and Information Security Awareness Training,Bhagyashree,bhagyashreebirje.work@gmail.com,2026-04-10 14:40:48
+1665741,local_airpay_compliance_report,compliance_alert,Enrolled: Anti Money Laundering,Bhagyashree,bhagyashreebirje.work@gmail.com,2026-04-10 14:40:52
+1665742,local_airpay_compliance_report,compliance_alert,Enrolled: Phishing Awareness Training,Bhagyashree,bhagyashreebirje.work@gmail.com,2026-04-10 14:40:55
+1665743,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Arina,arina.singhai064@nmims.edu.in,2026-04-10 14:40:59
+1665744,local_airpay_compliance_report,compliance_alert,Enrolled: IT and Information Security Awareness Training,Arina,arina.singhai064@nmims.edu.in,2026-04-10 14:41:03
+1665745,local_airpay_compliance_report,compliance_alert,Enrolled: Anti Money Laundering,Arina,arina.singhai064@nmims.edu.in,2026-04-10 14:41:07
+1665746,local_airpay_compliance_report,compliance_alert,Enrolled: Phishing Awareness Training,Arina,arina.singhai064@nmims.edu.in,2026-04-10 14:41:10
+1665747,local_airpay_compliance_report,compliance_alert,Enrolled: POSH Training 2025,Ali,ali.patel384@nmims.in,2026-04-10 14:41:14

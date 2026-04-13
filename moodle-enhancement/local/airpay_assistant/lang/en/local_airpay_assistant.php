@@ -2,6 +2,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['pluginname'] = 'Airpay AI Learning Assistant';
+$string['enabled'] = 'Enable AI Assistant';
+$string['enabled_desc'] = 'Show the AI chatbot bubble on all pages. Uncheck to hide the chatbot site-wide.';
 $string['privacy:metadata'] = 'The AI assistant stores chat logs linked to user IDs.';
 $string['apikey'] = 'Anthropic API Key';
 $string['apikey_desc'] = 'Your Claude API key from console.anthropic.com. Required for the AI assistant to function. Costs apply per query.';

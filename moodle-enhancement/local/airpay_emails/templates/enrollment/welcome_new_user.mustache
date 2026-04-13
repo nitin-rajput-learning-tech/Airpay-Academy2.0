@@ -1,0 +1,85 @@
+{{!
+    Enrollment: Welcome New User — first-time user account creation.
+    Context: firstname, lastname, fullname, username, email, designation,
+             department, login_url, dashboard_url, help_url
+}}
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+<tr><td style="font-family:'Montserrat',Arial,sans-serif; font-size:15px; line-height:24px; color:#1a1a2e;">
+
+    <p style="margin:0 0 8px; font-size:24px; font-weight:700; color:#0066A7;">
+        Welcome to {{tenant_name}}! &#127891;
+    </p>
+    <p style="margin:0 0 20px;">Hi <strong>{{firstname}}</strong>,</p>
+
+    <p style="margin:0 0 16px;">
+        Your learning account has been created. You can now access courses,
+        track your progress, earn certificates, and grow your skills.
+    </p>
+
+    <!-- Account details card -->
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:16px 0;">
+    <tr>
+        <td style="border-left:4px solid #0066A7; background-color:#e8f2f9; padding:16px 20px; border-radius:0 8px 8px 0;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr><td style="font-family:'Montserrat',Arial,sans-serif; font-size:12px; color:#5a6070; padding:2px 0;">Name</td>
+                <td style="font-family:'Montserrat',Arial,sans-serif; font-size:14px; color:#1a1a2e; font-weight:600; padding:2px 0;">{{fullname}}</td></tr>
+            <tr><td style="font-family:'Montserrat',Arial,sans-serif; font-size:12px; color:#5a6070; padding:2px 0; width:100px;">Username</td>
+                <td style="font-family:'Montserrat',Arial,sans-serif; font-size:14px; color:#1a1a2e; font-weight:600; padding:2px 0;">{{username}}</td></tr>
+            <tr><td style="font-family:'Montserrat',Arial,sans-serif; font-size:12px; color:#5a6070; padding:2px 0;">Email</td>
+                <td style="font-family:'Montserrat',Arial,sans-serif; font-size:14px; color:#1a1a2e; font-weight:600; padding:2px 0;">{{email}}</td></tr>
+            {{#designation}}
+            <tr><td style="font-family:'Montserrat',Arial,sans-serif; font-size:12px; color:#5a6070; padding:2px 0;">Designation</td>
+                <td style="font-family:'Montserrat',Arial,sans-serif; font-size:14px; color:#1a1a2e; font-weight:600; padding:2px 0;">{{designation}}</td></tr>
+            {{/designation}}
+            </table>
+        </td>
+    </tr>
+    </table>
+
+    <!-- Getting started steps -->
+    <p style="margin:16px 0 8px; font-size:16px; font-weight:600; color:#1a1a2e;">Getting Started:</p>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+    <tr>
+        <td style="padding:6px 0; font-family:'Montserrat',Arial,sans-serif; font-size:14px; color:#5a6070; line-height:22px;">
+            <span style="display:inline-block; width:24px; height:24px; background:#0066A7; color:#fff; text-align:center; line-height:24px; border-radius:50%; font-size:12px; font-weight:700; margin-right:8px;">1</span>
+            <strong>Login</strong> — Use your Airpay Academy credentials
+        </td>
+    </tr>
+    <tr>
+        <td style="padding:6px 0; font-family:'Montserrat',Arial,sans-serif; font-size:14px; color:#5a6070; line-height:22px;">
+            <span style="display:inline-block; width:24px; height:24px; background:#0066A7; color:#fff; text-align:center; line-height:24px; border-radius:50%; font-size:12px; font-weight:700; margin-right:8px;">2</span>
+            <strong>Dashboard</strong> — View your enrolled courses and progress
+        </td>
+    </tr>
+    <tr>
+        <td style="padding:6px 0; font-family:'Montserrat',Arial,sans-serif; font-size:14px; color:#5a6070; line-height:22px;">
+            <span style="display:inline-block; width:24px; height:24px; background:#0066A7; color:#fff; text-align:center; line-height:24px; border-radius:50%; font-size:12px; font-weight:700; margin-right:8px;">3</span>
+            <strong>Learn</strong> — Complete courses to earn certificates and badges
+        </td>
+    </tr>
+    </table>
+
+</td></tr>
+</table>
+
+{{< local_airpay_emails/partials/cta_button}}
+    {{$cta_url}}{{login_url}}{{/cta_url}}
+    {{$cta_text}}Login to Academy{{/cta_text}}
+{{/ local_airpay_emails/partials/cta_button}}
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+<tr>
+    <td style="font-family:'Montserrat',Arial,sans-serif; font-size:13px; color:#5a6070; line-height:20px;">
+        Need help? Visit our <a href="{{help_url}}" style="color:#0066A7; text-decoration:none; font-weight:500;">Help Center</a>
+        or email <a href="mailto:{{support_email}}" style="color:#0066A7; text-decoration:none; font-weight:500;">{{support_email}}</a>.
+    </td>
+</tr>
+</table>
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:16px;">
+<tr>
+    <td style="font-family:'Montserrat',Arial,sans-serif; font-size:15px; color:#1a1a2e; line-height:22px;">
+        Happy Learning! &#127775;
+    </td>
+</tr>
+</table>

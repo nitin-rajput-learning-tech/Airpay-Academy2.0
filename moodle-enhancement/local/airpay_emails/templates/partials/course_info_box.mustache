@@ -1,0 +1,50 @@
+{{!
+    Course Info Box — left-bordered card for course details.
+    Context: {{course_name}}, {{course_url}}, {{deadline_date}} (optional),
+             {{progress}} (optional, 0-100), {{deadline_days}} (optional)
+}}
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:16px 0;">
+<tr>
+    <td style="border-left:4px solid {{#accent_color}}{{accent_color}}{{/accent_color}}{{^accent_color}}#0f7a73{{/accent_color}}; background-color:#f8f9fc; padding:16px 20px; border-radius:0 8px 8px 0;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr>
+            <td style="font-family:'Montserrat',Arial,sans-serif; font-size:16px; font-weight:600; color:#1a1a2e; padding-bottom:8px;">
+                <a href="{{course_url}}" style="color:#0066A7; text-decoration:none;">{{course_name}}</a>
+            </td>
+        </tr>
+        {{#deadline_date}}
+        <tr>
+            <td style="font-family:'Montserrat',Arial,sans-serif; font-size:13px; color:#5a6070; padding-bottom:4px;">
+                <span style="color:#d97706; font-weight:600;">&#128197;</span>&nbsp;
+                Deadline: <strong>{{deadline_date}}</strong>
+                {{#deadline_days}}<span style="color:#5a6070;">({{deadline_days}} days remaining)</span>{{/deadline_days}}
+            </td>
+        </tr>
+        {{/deadline_date}}
+        {{#progress}}
+        <tr>
+            <td style="padding-top:8px;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                    <td style="font-family:'Montserrat',Arial,sans-serif; font-size:12px; color:#5a6070; padding-bottom:4px;">
+                        Progress: <strong>{{progress}}%</strong>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#e2e6ef; border-radius:4px; height:8px;">
+                        <tr>
+                            <td width="{{progress}}%" bgcolor="#0f7a73" style="background-color:#0f7a73; border-radius:4px; height:8px; font-size:1px; line-height:1px;">&nbsp;</td>
+                            <td style="font-size:1px; line-height:1px;">&nbsp;</td>
+                        </tr>
+                        </table>
+                    </td>
+                </tr>
+                </table>
+            </td>
+        </tr>
+        {{/progress}}
+        </table>
+    </td>
+</tr>
+</table>

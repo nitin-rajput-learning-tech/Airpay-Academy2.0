@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/airpay_emails/db" VERSION="20260411"
+       COMMENT="Airpay Academy - Email template management tables">
+  <TABLES>
+
+    <TABLE NAME="local_airpay_email_overrides"
+           COMMENT="Per-tenant email template overrides. DB rows take precedence over Mustache files.">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="tenant_id"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Costcenter ID: 0=global, 1=Airpay, 77=Public, 177=ZEEA"/>
+        <FIELD NAME="template_key" TYPE="char" LENGTH="100" NOTNULL="true"
+               COMMENT="Template path e.g. compliance/deadline_warning"/>
+        <FIELD NAME="subject"      TYPE="char" LENGTH="255" NOTNULL="false"
+               COMMENT="Override subject line. NULL = use default from Mustache."/>
+        <FIELD NAME="body_html"    TYPE="text" NOTNULL="false"
+               COMMENT="Override HTML body with Mustache placeholders. NULL = use file."/>
+        <FIELD NAME="body_text"    TYPE="text" NOTNULL="false"
+               COMMENT="Override plain text body. NULL = auto-generate from HTML."/>
+        <FIELD NAME="is_active"    TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="1"
+               COMMENT="1=active, 0=disabled (falls through to next in chain)"/>
+        <FIELD NAME="usermodified" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="uix_tenant_template" UNIQUE="true" FIELDS="tenant_id, template_key"
+               COMMENT="One override per tenant per template"/>
+        <INDEX NAME="idx_template_key" UNIQUE="false" FIELDS="template_key"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_airpay_email_rules"
+           COMMENT="Smart notification rules with trigger conditions and channel config.">
+      <FIELDS>
+        <FIELD NAME="id"              TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="rule_name"       TYPE="char" LENGTH="255" NOTNULL="true"
+               COMMENT="Human-readable rule name"/>
+        <FIELD NAME="rule_type"       TYPE="char" LENGTH="50" NOTNULL="true"
+               COMMENT="deadline_approaching, course_not_started, streak_broken, manager_nudge, new_course, compliance_enrolled, compliance_overdue, weekly_escalation, custom"/>
+        <FIELD NAME="trigger_event"   TYPE="char" LENGTH="100" NOTNULL="false"
+               COMMENT="Moodle event class or cron for scheduled evaluation"/>
+        <FIELD NAME="trigger_days"    TYPE="int"  LENGTH="5"  NOTNULL="false"
+               COMMENT="Days before/after event to fire. Negative = before, positive = after."/>
+        <FIELD NAME="channel"         TYPE="char" LENGTH="50" NOTNULL="true" DEFAULT="email"
+               COMMENT="email, popup, teams, push, all"/>
+        <FIELD NAME="audience"        TYPE="char" LENGTH="50" NOTNULL="true" DEFAULT="learner"
+               COMMENT="learner, manager, admin, all"/>
+        <FIELD NAME="template_key"    TYPE="char" LENGTH="100" NOTNULL="false"
+               COMMENT="Points to email template e.g. compliance/overdue_alert"/>
+        <FIELD NAME="tenant_id"       TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="0=all tenants, or specific costcenter ID"/>
+        <FIELD NAME="enabled"         TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="priority"        TYPE="int"  LENGTH="3"  NOTNULL="true" DEFAULT="50"
+               COMMENT="1-100, higher = more important"/>
+        <FIELD NAME="conditions_json" TYPE="text" NOTNULL="false"
+               COMMENT="JSON for advanced filters: course IDs, min/max progress, etc."/>
+        <FIELD NAME="usermodified"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_rule_type"   UNIQUE="false" FIELDS="rule_type"/>
+        <INDEX NAME="idx_tenant"      UNIQUE="false" FIELDS="tenant_id"/>
+        <INDEX NAME="idx_enabled"     UNIQUE="false" FIELDS="enabled"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_airpay_email_log"
+           COMMENT="Unified delivery log for all Airpay-originated notifications.">
+      <FIELDS>
+        <FIELD NAME="id"            TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="rule_id"       TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="FK to email_rules. NULL for ad-hoc sends."/>
+        <FIELD NAME="legacy_type"   TYPE="char" LENGTH="100" NOTNULL="false"
+               COMMENT="BizLMS notification type shortname for cross-reference"/>
+        <FIELD NAME="userid"        TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="courseid"      TYPE="int"  LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="tenant_id"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="channel"       TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="email"/>
+        <FIELD NAME="subject"       TYPE="char" LENGTH="255" NOTNULL="true"/>
+        <FIELD NAME="template_key"  TYPE="char" LENGTH="100" NOTNULL="false"/>
+        <FIELD NAME="status"        TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="sent"
+               COMMENT="sent, failed, bounced, suppressed"/>
+        <FIELD NAME="error_message" TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="timecreated"   TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"  TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_user"  TYPE="foreign" FIELDS="userid"  REFTABLE="user"  REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_rule_id"     UNIQUE="false" FIELDS="rule_id"/>
+        <INDEX NAME="idx_status"      UNIQUE="false" FIELDS="status"/>
+        <INDEX NAME="idx_timecreated" UNIQUE="false" FIELDS="timecreated"/>
+        <INDEX NAME="idx_tenant"      UNIQUE="false" FIELDS="tenant_id"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_airpay_email_prefs"
+           COMMENT="Per-user notification channel preferences.">
+      <FIELDS>
+        <FIELD NAME="id"            TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"        TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="rule_type"     TYPE="char" LENGTH="50" NOTNULL="true"
+               COMMENT="Matches email_rules.rule_type or all for global pref"/>
+        <FIELD NAME="channel_email" TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="channel_popup" TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="channel_teams" TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="channel_push"  TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"  TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_user" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="uix_user_ruletype" UNIQUE="true" FIELDS="userid, rule_type"
+               COMMENT="One preference per user per rule type"/>
+      </INDEXES>
+    </TABLE>
+
+  </TABLES>
+</XMLDB>
