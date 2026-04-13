@@ -30,7 +30,7 @@ if ($tenantid === 0 && !is_siteadmin()) {
     $tenantid = (int)($parts[0] ?? 1);
 }
 
-// Handle actions (toggle rule, export CSV).
+// Handle actions (toggle rule, export CSV, CRUD rules).
 if ($action && confirm_sesskey()) {
     switch ($action) {
         case 'toggle':
@@ -40,6 +40,35 @@ if ($action && confirm_sesskey()) {
             redirect(new moodle_url('/local/airpay_emails/manage.php', ['tab' => 'rules', 'tenant' => $tenantid]),
                 'Rule ' . ($enabled ? 'enabled' : 'disabled'), null, \core\output\notification::NOTIFY_SUCCESS);
             break;
+        case 'saverule':
+            $ruledata = (object)[
+                'rule_name'     => required_param('rule_name', PARAM_TEXT),
+                'rule_type'     => required_param('rule_type', PARAM_ALPHANUMEXT),
+                'trigger_event' => optional_param('trigger_event', 'cron', PARAM_RAW),
+                'trigger_days'  => optional_param('trigger_days', 0, PARAM_INT),
+                'channel'       => required_param('channel', PARAM_RAW),
+                'audience'      => required_param('audience', PARAM_ALPHA),
+                'template_key'  => optional_param('template_key', '', PARAM_RAW),
+                'tenant_id'     => optional_param('rule_tenant', 0, PARAM_INT),
+                'enabled'       => optional_param('rule_enabled', 1, PARAM_INT),
+                'priority'      => optional_param('priority', 50, PARAM_INT),
+                'conditions_json' => optional_param('conditions_json', '', PARAM_RAW),
+            ];
+            $editid = optional_param('ruleid', 0, PARAM_INT);
+            if ($editid > 0) {
+                $ruledata->id = $editid;
+            }
+            \local_airpay_emails\rule_manager::save_rule($ruledata);
+            $msg = $editid ? 'Rule updated.' : 'Rule created.';
+            redirect(new moodle_url('/local/airpay_emails/manage.php', ['tab' => 'rules', 'tenant' => $tenantid]),
+                $msg, null, \core\output\notification::NOTIFY_SUCCESS);
+            break;
+        case 'deleterule':
+            $ruleid = required_param('ruleid', PARAM_INT);
+            \local_airpay_emails\rule_manager::delete_rule($ruleid);
+            redirect(new moodle_url('/local/airpay_emails/manage.php', ['tab' => 'rules', 'tenant' => $tenantid]),
+                'Rule deleted.', null, \core\output\notification::NOTIFY_WARNING);
+            break;
         case 'export':
             $filters = $tenantid > 0 ? ['tenant_id' => $tenantid] : [];
             $csv = \local_airpay_emails\delivery_log::export_csv($filters);
@@ -48,6 +77,13 @@ if ($action && confirm_sesskey()) {
             echo $csv;
             die();
     }
+}
+
+// Check if we're editing a specific rule.
+$editruleid = optional_param('edit', 0, PARAM_INT);
+$editrule = null;
+if ($editruleid > 0 && $tab === 'rules') {
+    $editrule = \local_airpay_emails\rule_manager::get_rule($editruleid);
 }
 
 $PAGE->set_url(new moodle_url('/local/airpay_emails/manage.php', ['tab' => $tab, 'tenant' => $tenantid]));
@@ -123,6 +159,27 @@ $pagecontext = [
     'is_rules'     => ($tab === 'rules'),
     'is_logs'      => ($tab === 'logs'),
     'is_settings'  => ($tab === 'settings'),
+    // Rule editor data.
+    'editrule'     => $editrule ? [
+        'id'              => $editrule->id,
+        'rule_name'       => format_string($editrule->rule_name),
+        'rule_type'       => $editrule->rule_type,
+        'trigger_event'   => $editrule->trigger_event ?? 'cron',
+        'trigger_days'    => $editrule->trigger_days ?? 0,
+        'channel'         => $editrule->channel,
+        'audience'        => $editrule->audience,
+        'template_key'    => $editrule->template_key ?? '',
+        'tenant_id'       => $editrule->tenant_id,
+        'enabled'         => (bool)$editrule->enabled,
+        'priority'        => $editrule->priority,
+        'conditions_json' => $editrule->conditions_json ?? '',
+    ] : null,
+    'has_editrule' => !empty($editrule),
+    'show_form'    => ($tab === 'rules' && (optional_param('new', 0, PARAM_INT) || $editruleid > 0)),
+    // Available templates for the rule form dropdown.
+    'template_options' => array_map(function($cat) {
+        return ['category' => $cat['category'], 'templates' => $cat['templates']];
+    }, \local_airpay_emails\email_renderer::get_template_list()),
 ];
 
 echo $OUTPUT->header();

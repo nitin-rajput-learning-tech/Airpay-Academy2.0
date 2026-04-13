@@ -32,10 +32,15 @@
 {{/course_description}}
 
 <!-- CTA -->
-{{< local_airpay_emails/partials/cta_button}}
-    {{$cta_url}}{{course_url}}{{/cta_url}}
-    {{$cta_text}}Start Course{{/cta_text}}
-{{/ local_airpay_emails/partials/cta_button}}
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0;">
+<tr>
+    <td align="center" bgcolor="#0066A7" style="background-color:#0066A7; border-radius:8px;">
+        <a href="{{course_url}}" target="_blank" style="display:inline-block; padding:14px 32px; font-family:'Montserrat',Arial,sans-serif; font-size:15px; font-weight:600; color:#ffffff; text-decoration:none; line-height:20px;">
+            Start Course
+        </a>
+    </td>
+</tr>
+</table>
 
 <!-- Timeline -->
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:8px 0 16px;">

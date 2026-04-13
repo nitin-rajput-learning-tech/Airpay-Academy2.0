@@ -1,72 +1,188 @@
 {{!
-    Rules tab — notification rules DataTable with toggle switches.
-    Context: tabdata {rules [{id, rule_name, rule_type, channel, audience, trigger_days,
-             template_key, enabled, priority, is_global, timemodified}], rule_count}
+    Rules tab — CRUD for notification rules.
+    Context: tabdata {rules, rule_count}, sesskey, manage_url, tenant_id,
+             show_form, has_editrule, editrule, template_options
 }}
-<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-    <span style="font-size:14px; color:#5a6070;">{{tabdata.rule_count}} notification rules configured</span>
-</div>
 
-{{#tabdata.rules}}
-{{! Render as a list if rules exist }}
-{{/tabdata.rules}}
+{{! ═══ RULE FORM (Add New / Edit) ═══ }}
+{{#show_form}}
+<div class="ap-manage-card" style="border-left:4px solid #0066A7; margin-bottom:24px;">
+    <h3 style="font-size:16px; font-weight:700; color:#1a1a2e; margin:0 0 16px;">
+        <i class="fa {{#has_editrule}}fa-pencil{{/has_editrule}}{{^has_editrule}}fa-plus{{/has_editrule}}" style="color:#0066A7;"></i>
+        {{#has_editrule}}Edit Rule{{/has_editrule}}{{^has_editrule}}Create New Rule{{/has_editrule}}
+    </h3>
+    <form method="post" action="{{manage_url}}?tab=rules&tenant={{tenant_id}}">
+        <input type="hidden" name="sesskey" value="{{sesskey}}">
+        <input type="hidden" name="action" value="saverule">
+        {{#has_editrule}}<input type="hidden" name="ruleid" value="{{editrule.id}}">{{/has_editrule}}
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+            <div>
+                <label style="font-size:12px; font-weight:600; color:#5a6070; display:block; margin-bottom:4px;">Rule Name *</label>
+                <input type="text" name="rule_name" required
+                       value="{{#has_editrule}}{{editrule.rule_name}}{{/has_editrule}}"
+                       placeholder="e.g. Compliance: 7-day deadline warning"
+                       style="width:100%; padding:8px 12px; border:1px solid #e2e6ef; border-radius:8px; font-size:13px; font-family:inherit;">
+            </div>
+            <div>
+                <label style="font-size:12px; font-weight:600; color:#5a6070; display:block; margin-bottom:4px;">Rule Type *</label>
+                <select name="rule_type" required style="width:100%; padding:8px 12px; border:1px solid #e2e6ef; border-radius:8px; font-size:13px; font-family:inherit;">
+                    <option value="">Select type...</option>
+                    <option value="compliance_enrolled" {{#has_editrule}}{{#editrule.rule_type}}{{/editrule.rule_type}}{{/has_editrule}}>Compliance: Auto-Enrol</option>
+                    <option value="compliance_reminder">Compliance: Reminder</option>
+                    <option value="compliance_overdue">Compliance: Overdue</option>
+                    <option value="deadline_approaching">Deadline Approaching</option>
+                    <option value="course_not_started">Course Not Started</option>
+                    <option value="streak_broken">Streak Broken</option>
+                    <option value="manager_nudge">Manager Nudge</option>
+                    <option value="weekly_escalation">Weekly Escalation</option>
+                    <option value="new_course">New Course Available</option>
+                    <option value="custom">Custom</option>
+                </select>
+            </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:12px; margin-bottom:16px;">
+            <div>
+                <label style="font-size:12px; font-weight:600; color:#5a6070; display:block; margin-bottom:4px;">Trigger Days</label>
+                <input type="number" name="trigger_days" min="-365" max="365"
+                       value="{{#has_editrule}}{{editrule.trigger_days}}{{/has_editrule}}{{^has_editrule}}7{{/has_editrule}}"
+                       style="width:100%; padding:8px 12px; border:1px solid #e2e6ef; border-radius:8px; font-size:13px;"
+                       title="Negative = before deadline, Positive = after enrolment/event">
+                <small style="font-size:10px; color:#8890a0;">-7 = 7 days before deadline</small>
+            </div>
+            <div>
+                <label style="font-size:12px; font-weight:600; color:#5a6070; display:block; margin-bottom:4px;">Channel *</label>
+                <select name="channel" required style="width:100%; padding:8px 12px; border:1px solid #e2e6ef; border-radius:8px; font-size:13px; font-family:inherit;">
+                    <option value="email,popup" {{#has_editrule}}{{/has_editrule}}>Email + Popup</option>
+                    <option value="popup">Popup Only</option>
+                    <option value="email">Email Only</option>
+                </select>
+            </div>
+            <div>
+                <label style="font-size:12px; font-weight:600; color:#5a6070; display:block; margin-bottom:4px;">Audience *</label>
+                <select name="audience" required style="width:100%; padding:8px 12px; border:1px solid #e2e6ef; border-radius:8px; font-size:13px; font-family:inherit;">
+                    <option value="learner">Learner</option>
+                    <option value="manager">Manager</option>
+                    <option value="admin">Admin</option>
+                    <option value="all">All</option>
+                </select>
+            </div>
+            <div>
+                <label style="font-size:12px; font-weight:600; color:#5a6070; display:block; margin-bottom:4px;">Priority</label>
+                <input type="number" name="priority" min="1" max="100"
+                       value="{{#has_editrule}}{{editrule.priority}}{{/has_editrule}}{{^has_editrule}}50{{/has_editrule}}"
+                       style="width:100%; padding:8px 12px; border:1px solid #e2e6ef; border-radius:8px; font-size:13px;"
+                       title="1-100, higher = more important">
+            </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+            <div>
+                <label style="font-size:12px; font-weight:600; color:#5a6070; display:block; margin-bottom:4px;">Email Template</label>
+                <select name="template_key" style="width:100%; padding:8px 12px; border:1px solid #e2e6ef; border-radius:8px; font-size:13px; font-family:inherit;">
+                    <option value="">None (plain text)</option>
+                    {{#template_options}}
+                    <optgroup label="{{category}}">
+                        {{#templates}}
+                        <option value="{{key}}">{{label}}</option>
+                        {{/templates}}
+                    </optgroup>
+                    {{/template_options}}
+                </select>
+            </div>
+            <div>
+                <label style="font-size:12px; font-weight:600; color:#5a6070; display:block; margin-bottom:4px;">Tenant Scope</label>
+                <select name="rule_tenant" style="width:100%; padding:8px 12px; border:1px solid #e2e6ef; border-radius:8px; font-size:13px; font-family:inherit;">
+                    <option value="0">All Tenants (Global)</option>
+                    <option value="1">Airpay Only</option>
+                    <option value="77">Public Only</option>
+                    <option value="177">ZEEA Only</option>
+                </select>
+            </div>
+        </div>
+
+        <div style="display:flex; gap:8px; align-items:center;">
+            <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:#5a6070; cursor:pointer;">
+                <input type="checkbox" name="rule_enabled" value="1"
+                       {{#has_editrule}}{{#editrule.enabled}}checked{{/editrule.enabled}}{{/has_editrule}}{{^has_editrule}}checked{{/has_editrule}}
+                       style="width:16px; height:16px;">
+                Enabled
+            </label>
+            <div style="flex:1;"></div>
+            <a href="{{manage_url}}?tab=rules&tenant={{tenant_id}}" class="ap-manage-btn ap-manage-btn--outline ap-manage-btn--sm">Cancel</a>
+            <button type="submit" class="ap-manage-btn ap-manage-btn--primary ap-manage-btn--sm">
+                <i class="fa fa-save"></i> {{#has_editrule}}Update Rule{{/has_editrule}}{{^has_editrule}}Create Rule{{/has_editrule}}
+            </button>
+        </div>
+    </form>
+</div>
+{{/show_form}}
+
+{{! ═══ RULES TABLE ═══ }}
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+    <span style="font-size:14px; color:#5a6070;">{{tabdata.rule_count}} notification rules</span>
+    {{^show_form}}
+    <a href="{{manage_url}}?tab=rules&tenant={{tenant_id}}&new=1" class="ap-manage-btn ap-manage-btn--primary ap-manage-btn--sm">
+        <i class="fa fa-plus"></i> New Rule
+    </a>
+    {{/show_form}}
+</div>
 
 <div class="ap-manage-card">
     <table class="ap-manage-table">
         <thead>
             <tr>
                 <th style="width:5%;">On/Off</th>
-                <th style="width:25%;">Rule Name</th>
-                <th style="width:12%;">Type</th>
+                <th style="width:22%;">Rule Name</th>
+                <th style="width:10%;">Type</th>
                 <th style="width:10%;">Channel</th>
-                <th style="width:10%;">Audience</th>
-                <th style="width:8%;">Trigger</th>
-                <th style="width:8%;">Priority</th>
-                <th style="width:10%;">Scope</th>
-                <th style="width:12%;">Modified</th>
+                <th style="width:8%;">Audience</th>
+                <th style="width:7%;">Trigger</th>
+                <th style="width:7%;">Priority</th>
+                <th style="width:10%;">Template</th>
+                <th style="width:8%;">Scope</th>
+                <th style="width:13%; text-align:right;">Actions</th>
             </tr>
         </thead>
         <tbody>
             {{#tabdata.rules}}
-            <tr style="{{^enabled}}opacity:0.6;{{/enabled}}">
+            <tr style="{{^enabled}}opacity:0.5;{{/enabled}}">
                 <td>
                     <label class="ap-toggle">
                         <input type="checkbox" {{#enabled}}checked{{/enabled}}
-                               data-rule-id="{{id}}" onchange="toggleRule({{id}}, this.checked)">
+                               onchange="window.location='{{manage_url}}?tab=rules&tenant={{tenant_id}}&action=toggle&ruleid={{id}}&enabled='+(this.checked?1:0)+'&sesskey={{sesskey}}'">
                         <span class="ap-toggle-slider"></span>
                     </label>
                 </td>
-                <td>
-                    <strong>{{rule_name}}</strong>
-                    {{#template_key}}
-                    <br/><code style="font-size:10px; color:#8890a0;">{{template_key}}</code>
-                    {{/template_key}}
-                </td>
+                <td><strong>{{rule_name}}</strong></td>
                 <td><span style="font-size:12px;">{{rule_type}}</span></td>
                 <td><span style="font-size:12px;">{{channel}}</span></td>
                 <td><span style="font-size:12px;">{{audience}}</span></td>
                 <td>
-                    {{#trigger_days}}
-                    <span style="font-size:13px; font-weight:600;">{{trigger_days}}d</span>
-                    {{/trigger_days}}
-                    {{^trigger_days}}
-                    <span style="font-size:12px; color:#8890a0;">event</span>
-                    {{/trigger_days}}
+                    {{#trigger_days}}<span style="font-size:13px; font-weight:600;">{{trigger_days}}d</span>{{/trigger_days}}
+                    {{^trigger_days}}<span style="font-size:12px; color:#8890a0;">event</span>{{/trigger_days}}
+                </td>
+                <td><span style="font-size:13px; font-weight:600;">{{priority}}</span></td>
+                <td>
+                    {{#template_key}}<code style="font-size:10px; background:#f0f2f7; padding:2px 4px; border-radius:3px;">{{template_key}}</code>{{/template_key}}
+                    {{^template_key}}<span style="color:#8890a0; font-size:11px;">—</span>{{/template_key}}
                 </td>
                 <td>
-                    <span style="font-size:13px; font-weight:600; color:{{#priority}}{{#is_global}}#0066A7{{/is_global}}{{/priority}};">
-                        {{priority}}
-                    </span>
+                    {{#is_global}}<span class="ap-manage-badge ap-manage-badge--bizlms">Global</span>{{/is_global}}
+                    {{^is_global}}<span class="ap-manage-badge ap-manage-badge--override">Tenant {{tenant_id}}</span>{{/is_global}}
                 </td>
-                <td>
-                    {{#is_global}}
-                    <span class="ap-manage-badge ap-manage-badge--bizlms">Global</span>
-                    {{/is_global}}
-                    {{^is_global}}
-                    <span class="ap-manage-badge ap-manage-badge--override">Tenant {{tenant_id}}</span>
-                    {{/is_global}}
+                <td style="text-align:right;">
+                    <a href="{{manage_url}}?tab=rules&tenant={{tenant_id}}&edit={{id}}"
+                       class="ap-manage-btn ap-manage-btn--outline ap-manage-btn--sm" title="Edit">
+                        <i class="fa fa-pencil"></i>
+                    </a>
+                    <a href="{{manage_url}}?tab=rules&tenant={{tenant_id}}&action=deleterule&ruleid={{id}}&sesskey={{sesskey}}"
+                       class="ap-manage-btn ap-manage-btn--sm" style="color:#dc2626;" title="Delete"
+                       onclick="return confirm('Delete this rule permanently?');">
+                        <i class="fa fa-trash"></i>
+                    </a>
                 </td>
-                <td style="font-size:12px; color:#8890a0;">{{timemodified}}</td>
             </tr>
             {{/tabdata.rules}}
         </tbody>
@@ -76,14 +192,6 @@
 {{^tabdata.rules}}
 <div class="ap-manage-empty">
     <i class="fa fa-bolt"></i>
-    No notification rules configured. Run Admin → Notifications to seed defaults.
+    No notification rules configured. Click "New Rule" to create one, or run Admin → Notifications to seed defaults.
 </div>
 {{/tabdata.rules}}
-
-<script>
-function toggleRule(ruleId, enabled) {
-    // Simple form submission for now (AJAX in Session 5).
-    var url = '{{manage_url}}?tab=rules&tenant={{tenant_id}}&action=toggle&ruleid=' + ruleId + '&enabled=' + (enabled ? 1 : 0) + '&sesskey={{sesskey}}';
-    window.location = url;
-}
-</script>
