@@ -383,6 +383,32 @@ class privacy_manager {
 
         $user = $DB->get_record('user', ['id' => $userid]);
         $admins = get_admins();
+        $subject = 'DPDP Request: ' . ucfirst(str_replace('_', ' ', $type)) .
+                   ' from ' . $user->firstname . ' ' . $user->lastname;
+
+        // Render branded template.
+        $html = '';
+        if (class_exists('\\local_airpay_emails\\email_renderer')) {
+            try {
+                $html = \local_airpay_emails\email_renderer::render(
+                    'local_airpay_emails/privacy/deletion_request_admin', [
+                        'firstname'        => format_string($user->firstname),
+                        'lastname'         => format_string($user->lastname),
+                        'fullname'         => format_string($user->firstname . ' ' . $user->lastname),
+                        'email'            => $user->email,
+                        'request_type'     => ucfirst(str_replace('_', ' ', $type)),
+                        'request_date'     => userdate(time(), '%d %B %Y, %I:%M %p'),
+                        'admin_url'        => (new \moodle_url('/local/airpay_privacy/index.php'))->out(false),
+                        'response_deadline' => userdate(time() + (30 * 86400), '%d %B %Y'),
+                        'subject'          => $subject,
+                    ]);
+            } catch (\Exception $e) {
+                debugging('Privacy admin template fallback: ' . $e->getMessage());
+            }
+        }
+        if (empty($html)) {
+            $html = '<p>A user has submitted a ' . s($type) . ' request under DPDP Act 2023.</p>';
+        }
 
         foreach ($admins as $admin) {
             $message = new \core\message\message();
@@ -390,14 +416,13 @@ class privacy_manager {
             $message->name              = 'privacy_request';
             $message->userfrom          = \core_user::get_noreply_user();
             $message->userto            = $admin->id;
-            $message->subject           = 'DPDP Request: ' . ucfirst(str_replace('_', ' ', $type)) .
-                                          ' from ' . $user->firstname . ' ' . $user->lastname;
-            $message->fullmessage       = 'A user has submitted a ' . $type . ' request under DPDP Act 2023.';
-            $message->fullmessageformat = FORMAT_PLAIN;
-            $message->fullmessagehtml   = '<p>' . s($message->fullmessage) . '</p>';
-            $message->smallmessage      = $message->subject;
+            $message->subject           = $subject;
+            $message->fullmessage       = html_to_text($html);
+            $message->fullmessageformat = FORMAT_HTML;
+            $message->fullmessagehtml   = $html;
+            $message->smallmessage      = $subject;
             $message->notification      = 1;
-            $message->contexturl        = new \moodle_url('/local/airpay_privacy/admin.php');
+            $message->contexturl        = new \moodle_url('/local/airpay_privacy/index.php');
             $message->contexturlname    = 'Review requests';
 
             try {
@@ -409,18 +434,48 @@ class privacy_manager {
     }
 
     /**
-     * Notify user.
+     * Notify user that their request has been processed.
      */
     private static function notify_user(int $userid, string $text): void {
+        global $DB;
+
+        // Render branded template for data export ready.
+        $html = '';
+        $user = $DB->get_record('user', ['id' => $userid], 'id, firstname');
+        if ($user && class_exists('\\local_airpay_emails\\email_renderer')) {
+            try {
+                $html = \local_airpay_emails\email_renderer::render(
+                    'local_airpay_emails/privacy/data_export_ready', [
+                        'firstname'        => format_string($user->firstname),
+                        'download_url'     => (new \moodle_url('/local/airpay_privacy/index.php'))->out(false),
+                        'download_expiry'  => '72 hours',
+                        'file_size'        => 'varies',
+                        'subject'          => 'Your data request has been processed',
+                        'data_categories'  => [
+                            ['category' => 'Profile Information'],
+                            ['category' => 'Course Enrollments & Progress'],
+                            ['category' => 'Assessment Scores'],
+                            ['category' => 'Certificates'],
+                            ['category' => 'Login History'],
+                        ],
+                    ], $userid);
+            } catch (\Exception $e) {
+                debugging('Privacy user template fallback: ' . $e->getMessage());
+            }
+        }
+        if (empty($html)) {
+            $html = '<p>' . s($text) . '</p>';
+        }
+
         $message = new \core\message\message();
         $message->component         = 'local_airpay_privacy';
         $message->name              = 'privacy_request';
         $message->userfrom          = \core_user::get_noreply_user();
         $message->userto            = $userid;
         $message->subject           = 'Your data request has been processed';
-        $message->fullmessage       = $text;
-        $message->fullmessageformat = FORMAT_PLAIN;
-        $message->fullmessagehtml   = '<p>' . s($text) . '</p>';
+        $message->fullmessage       = html_to_text($html);
+        $message->fullmessageformat = FORMAT_HTML;
+        $message->fullmessagehtml   = $html;
         $message->smallmessage      = $message->subject;
         $message->notification      = 1;
 

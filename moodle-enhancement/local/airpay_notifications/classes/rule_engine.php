@@ -310,7 +310,35 @@ class rule_engine {
             'timecreated' => time(),
         ]);
 
-        // Send via Moodle messaging (in-app).
+        // Render branded HTML using email template system (if available).
+        $html = '';
+        $templatekey = $rule->template ?? '';
+        if (!empty($templatekey) && class_exists('\\local_airpay_emails\\email_renderer')) {
+            $user = $DB->get_record('user', ['id' => $userid], 'id, firstname, lastname, email, open_path');
+            if ($user) {
+                $tplcontext = [
+                    'firstname'   => format_string($user->firstname),
+                    'lastname'    => format_string($user->lastname),
+                    'fullname'    => format_string($user->firstname . ' ' . $user->lastname),
+                    'course_name' => $courseid ? ($DB->get_field('course', 'fullname', ['id' => $courseid]) ?? '') : '',
+                    'course_url'  => $courseid ? (new \moodle_url('/course/view.php', ['id' => $courseid]))->out(false) : '',
+                    'dashboard_url' => (new \moodle_url('/my/dashboard.php'))->out(false),
+                    'subject'     => $subject,
+                ];
+                try {
+                    $html = \local_airpay_emails\email_renderer::render(
+                        'local_airpay_emails/' . $templatekey, $tplcontext, $userid
+                    );
+                } catch (\Exception $e) {
+                    debugging('Notification template render fallback: ' . $e->getMessage());
+                }
+            }
+        }
+        if (empty($html)) {
+            $html = '<p>' . s($message) . '</p>';
+        }
+
+        // Send via Moodle messaging (in-app + email if template rendered).
         if ($channel === 'inapp' || $channel === 'email') {
             $eventdata = new \core\message\message();
             $eventdata->component         = 'local_airpay_notifications';
@@ -318,9 +346,9 @@ class rule_engine {
             $eventdata->userfrom          = \core_user::get_noreply_user();
             $eventdata->userto            = $userid;
             $eventdata->subject           = $subject;
-            $eventdata->fullmessage       = $message;
-            $eventdata->fullmessageformat = FORMAT_PLAIN;
-            $eventdata->fullmessagehtml   = '<p>' . s($message) . '</p>';
+            $eventdata->fullmessage       = html_to_text($html);
+            $eventdata->fullmessageformat = FORMAT_HTML;
+            $eventdata->fullmessagehtml   = $html;
             $eventdata->smallmessage      = $subject;
             $eventdata->notification      = 1;
 
@@ -332,7 +360,6 @@ class rule_engine {
             try {
                 message_send($eventdata);
             } catch (\Exception $e) {
-                // Update status to failed.
                 debugging('Notification send failed: ' . $e->getMessage());
             }
         }

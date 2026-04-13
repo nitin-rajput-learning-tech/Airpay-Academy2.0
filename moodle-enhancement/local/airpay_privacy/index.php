@@ -35,8 +35,8 @@ if (is_siteadmin() || has_capability('local/airpay_privacy:manage', context_syst
     if ($action === 'reject' && confirm_sesskey()) {
         $reqid = required_param('reqid', PARAM_INT);
         global $DB;
-        $DB->set_field('local_airpay_privacy_req', 'status', 'rejected', ['id' => $reqid]);
-        $DB->set_field('local_airpay_privacy_req', 'timeprocessed', time(), ['id' => $reqid]);
+        $DB->set_field('local_privacy_requests', 'status', 'rejected', ['id' => $reqid]);
+        $DB->set_field('local_privacy_requests', 'timeprocessed', time(), ['id' => $reqid]);
         redirect(new moodle_url('/local/airpay_privacy/index.php'),
             'Request rejected.', null, \core\output\notification::NOTIFY_WARNING);
     }
@@ -45,7 +45,7 @@ if (is_siteadmin() || has_capability('local/airpay_privacy:manage', context_syst
     global $DB;
     $allrequests = $DB->get_records_sql(
         "SELECT pr.*, u.firstname, u.lastname, u.email, u.open_path
-           FROM {local_airpay_privacy_req} pr
+           FROM {local_privacy_requests} pr
            JOIN {user} u ON u.id = pr.userid
        ORDER BY pr.timecreated DESC"
     );

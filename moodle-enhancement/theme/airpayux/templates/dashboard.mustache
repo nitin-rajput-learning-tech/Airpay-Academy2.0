@@ -337,6 +337,28 @@
                     </div>
                 </div>
             </div>
+
+            {{! Progress Ring — overall completion percentage }}
+            {{#has_progress_ring}}
+            <div class="airpay-dash__section" style="display:flex; align-items:center; gap:24px; padding:20px; margin-top:16px;">
+                <div class="ap-progress-ring">
+                    <svg width="88" height="88" viewBox="0 0 80 80">
+                        <circle class="ap-progress-ring__track" cx="40" cy="40" r="36"/>
+                        <circle class="ap-progress-ring__fill ap-progress-ring__fill--{{progress_ring.color_class}}"
+                                cx="40" cy="40" r="36"
+                                stroke-dasharray="{{progress_ring.circumference}}"
+                                stroke-dashoffset="{{progress_ring.offset}}"/>
+                    </svg>
+                    <span class="ap-progress-ring__label" style="font-size:1.1rem;">{{progress_ring.percent}}%</span>
+                </div>
+                <div>
+                    <strong style="font-size:1rem; color:#1a1a2e;">Overall Completion</strong><br>
+                    <span style="font-size:0.85rem; color:#5a6070;">
+                        {{stats.completed}} of {{stats.enrolled}} courses completed
+                    </span>
+                </div>
+            </div>
+            {{/has_progress_ring}}
             {{/hasstats}}
 
             {{! Gamification Widgets — Points, Streaks, Leaderboard }}

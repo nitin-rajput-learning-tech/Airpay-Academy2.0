@@ -35,8 +35,46 @@ $PAGE->set_context($systemcontext);
 $PAGE->set_title(get_string('compliancereport', 'local_airpay_compliance_report'));
 $PAGE->set_pagelayout('standard');
 
-$tab = optional_param('tab', 'matrix', PARAM_ALPHA);
-$page = optional_param('page', 0, PARAM_INT);
+$tab    = optional_param('tab', 'matrix', PARAM_ALPHA);
+$page   = optional_param('page', 0, PARAM_INT);
+$bu     = optional_param('bu', 0, PARAM_INT);
+$dept   = optional_param('dept', 0, PARAM_INT);
+$subdept = optional_param('subdept', 0, PARAM_INT);
+
+// Handle admin actions: manage courses, exclude users.
+$action = optional_param('action', '', PARAM_ALPHA);
+if ($action && confirm_sesskey()) {
+    $engine_cls = \local_airpay_compliance_report\compliance_engine::class;
+    switch ($action) {
+        case 'addcourse':
+            $courseid = required_param('courseid', PARAM_INT);
+            $entityid = optional_param('entityid', 0, PARAM_INT);
+            $days = optional_param('days', 30, PARAM_INT);
+            $engine_cls::add_compliance_course($courseid, $entityid, $days);
+            redirect(new moodle_url('/local/airpay_compliance_report/index.php', ['tab' => 'config']),
+                'Course added to compliance tracking.', null, \core\output\notification::NOTIFY_SUCCESS);
+            break;
+        case 'removecourse':
+            $id = required_param('id', PARAM_INT);
+            $engine_cls::remove_compliance_course($id);
+            redirect(new moodle_url('/local/airpay_compliance_report/index.php', ['tab' => 'config']),
+                'Course removed from tracking.', null, \core\output\notification::NOTIFY_WARNING);
+            break;
+        case 'exclude':
+            $excludeid = required_param('userid', PARAM_INT);
+            $reason = optional_param('reason', 'Operations exclusion', PARAM_TEXT);
+            $engine_cls::exclude_user($excludeid, $reason);
+            redirect(new moodle_url('/local/airpay_compliance_report/index.php', ['tab' => 'config']),
+                'User excluded from tracking.', null, \core\output\notification::NOTIFY_SUCCESS);
+            break;
+        case 'include':
+            $includeid = required_param('userid', PARAM_INT);
+            $engine_cls::include_user($includeid);
+            redirect(new moodle_url('/local/airpay_compliance_report/index.php', ['tab' => 'config']),
+                'User re-included in tracking.', null, \core\output\notification::NOTIFY_SUCCESS);
+            break;
+    }
+}
 
 // Tenant scoping.
 $orgpath = '';
@@ -45,14 +83,57 @@ if (!is_siteadmin()) {
     $orgpath = '/' . ($parts[1] ?? '1');
 }
 
+// Build filter path from BU/Dept/SubDept dropdowns.
+$filterpath = $orgpath;
+if ($bu > 0) {
+    $filterpath = '/' . $bu;
+    if ($dept > 0) {
+        $filterpath .= '/' . $dept;
+        if ($subdept > 0) {
+            $filterpath .= '/' . $subdept;
+        }
+    }
+}
+
 $engine = \local_airpay_compliance_report\compliance_engine::class;
 
+// Build filter dropdown data.
+$filter_bus = $engine::get_org_hierarchy_level(1, $orgpath); // Business Units.
+$filter_depts = ($bu > 0) ? $engine::get_org_hierarchy_children($bu) : [];
+$filter_subdepts = ($dept > 0) ? $engine::get_org_hierarchy_children($dept) : [];
+
+// Mark selected values.
+foreach ($filter_bus as &$item) { $item['selected'] = ($item['id'] == $bu); }
+foreach ($filter_depts as &$item) { $item['selected'] = ($item['id'] == $dept); }
+foreach ($filter_subdepts as &$item) { $item['selected'] = ($item['id'] == $subdept); }
+unset($item);
+
 // Get data based on active tab.
-$kpis = $engine::get_summary_kpis($orgpath);
-$matrix = ($tab === 'matrix') ? $engine::get_compliance_matrix($orgpath, $page, 50) : null;
-$defaulters = ($tab === 'defaulters') ? $engine::get_defaulters($orgpath) : null;
-$scorecard = ($tab === 'scorecard') ? $engine::get_department_scorecard($orgpath) : null;
-$manager_report = ($tab === 'manager') ? $engine::get_manager_report($orgpath) : null;
+$kpis = $engine::get_summary_kpis($filterpath);
+$matrix = ($tab === 'matrix') ? $engine::get_compliance_matrix($filterpath, $page, 50) : null;
+$defaulters = ($tab === 'defaulters') ? $engine::get_defaulters($filterpath) : null;
+$scorecard = ($tab === 'scorecard') ? $engine::get_department_scorecard($filterpath) : null;
+$manager_report = ($tab === 'manager') ? $engine::get_manager_report($filterpath) : null;
+
+// Config tab: compliance courses + excluded users.
+$config_courses = [];
+$config_excluded = [];
+if ($tab === 'config') {
+    $config_courses = $engine::get_managed_courses();
+    $config_excluded = $engine::get_excluded_users();
+}
+
+// Get all courses for the add-course dropdown.
+$allcourses = [];
+if ($tab === 'config') {
+    $allcourses = $DB->get_records_select('course', 'id > 1 AND visible = 1', null, 'fullname', 'id, fullname');
+    $allcourses = array_values(array_map(fn($c) => ['id' => $c->id, 'name' => format_string($c->fullname)], $allcourses));
+}
+
+$baseurl_params = ['tab' => $tab];
+if ($bu) { $baseurl_params['bu'] = $bu; }
+if ($dept) { $baseurl_params['dept'] = $dept; }
+if ($subdept) { $baseurl_params['subdept'] = $subdept; }
 
 $data = [
     'kpis'              => $kpis,
@@ -60,6 +141,7 @@ $data = [
     'tab_defaulters'    => ($tab === 'defaulters'),
     'tab_scorecard'     => ($tab === 'scorecard'),
     'tab_manager'       => ($tab === 'manager'),
+    'tab_config'        => ($tab === 'config'),
     'matrix'            => $matrix,
     'has_matrix'        => !empty($matrix['rows']),
     'defaulters'        => $defaulters,
@@ -69,8 +151,26 @@ $data = [
     'manager_report'    => $manager_report,
     'has_manager_report' => !empty($manager_report),
     'is_scoped'         => !empty($orgpath),
+    'is_siteadmin'      => is_siteadmin(),
     'baseurl'           => (new moodle_url('/local/airpay_compliance_report/index.php'))->out(false),
-    'exporturl'         => (new moodle_url('/local/airpay_compliance_report/export.php'))->out(false),
+    'exporturl'         => (new moodle_url('/local/airpay_compliance_report/export.php', $baseurl_params))->out(false),
+    'sesskey'           => sesskey(),
+    // Filters.
+    'filter_bus'        => $filter_bus,
+    'has_bus'           => !empty($filter_bus),
+    'filter_depts'      => $filter_depts,
+    'has_depts'         => !empty($filter_depts),
+    'filter_subdepts'   => $filter_subdepts,
+    'has_subdepts'      => !empty($filter_subdepts),
+    'selected_bu'       => $bu,
+    'selected_dept'     => $dept,
+    'selected_subdept'  => $subdept,
+    // Config tab data.
+    'config_courses'    => $config_courses,
+    'has_config_courses' => !empty($config_courses),
+    'config_excluded'   => $config_excluded,
+    'has_config_excluded' => !empty($config_excluded),
+    'allcourses'        => $allcourses,
 ];
 
 echo $OUTPUT->header();

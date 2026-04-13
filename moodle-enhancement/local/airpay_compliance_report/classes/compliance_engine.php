@@ -290,13 +290,21 @@ class compliance_engine {
             'timecreated' => time(),
         ]);
 
-        // Send via Moodle messaging.
+        // Map compliance types to branded email templates.
+        $templatemap = [
+            'welcome'           => 'compliance/welcome_enrolled',
+            'reminder1'         => 'compliance/reminder_start',
+            'reminder2'         => 'compliance/reminder_halfway',
+            'deadline_warning'  => 'compliance/deadline_warning',
+            'overdue_alert'     => 'compliance/overdue_alert',
+            'weekly_escalation' => 'compliance/weekly_escalation',
+        ];
         $subjects = [
             'welcome'           => 'Enrolled: ' . $mc->coursename,
             'reminder1'         => 'Reminder: Start ' . $mc->coursename,
             'reminder2'         => 'Halfway to deadline: ' . $mc->coursename,
-            'deadline_warning'  => '⚠️ Due in 7 days: ' . $mc->coursename,
-            'overdue_alert'     => '🔴 OVERDUE: ' . $mc->coursename,
+            'deadline_warning'  => 'Due in 7 days: ' . $mc->coursename,
+            'overdue_alert'     => 'OVERDUE: ' . $mc->coursename,
             'weekly_escalation' => 'Weekly overdue: ' . $mc->coursename,
         ];
 
@@ -310,16 +318,44 @@ class compliance_engine {
             }
         }
 
+        // Build context for the branded template.
+        $context = [
+            'firstname'     => format_string($user->firstname),
+            'lastname'      => format_string($user->lastname),
+            'fullname'      => format_string($user->firstname . ' ' . $user->lastname),
+            'course_name'   => format_string($mc->coursename),
+            'course_url'    => (new \moodle_url('/course/view.php', ['id' => $mc->courseid]))->out(false),
+            'deadline_date' => $mc->deadline_date ? userdate($mc->deadline_date, '%d %B %Y') : '',
+            'deadline_days' => $mc->deadline_days ?? 30,
+            'subject'       => $subjects[$type] ?? 'Compliance: ' . $mc->coursename,
+        ];
+
+        // Render branded HTML using email template system (if available).
+        $html = '';
+        $templatekey = $templatemap[$type] ?? '';
+        if ($templatekey && class_exists('\\local_airpay_emails\\email_renderer')) {
+            try {
+                $html = \local_airpay_emails\email_renderer::render(
+                    'local_airpay_emails/' . $templatekey, $context, $target_userid
+                );
+            } catch (\Exception $e) {
+                debugging('Template render fallback: ' . $e->getMessage());
+            }
+        }
+        // Fallback to plain text if template rendering fails.
+        if (empty($html)) {
+            $html = '<p>' . s($context['fullname']) . ' — ' . s($mc->coursename) . ' (' . s($type) . ')</p>';
+        }
+
         $message = new \core\message\message();
         $message->component         = 'local_airpay_compliance_report';
         $message->name              = 'compliance_alert';
         $message->userfrom          = \core_user::get_noreply_user();
         $message->userto            = $target_userid;
         $message->subject           = $subjects[$type] ?? 'Compliance: ' . $mc->coursename;
-        $message->fullmessage       = format_string($user->firstname) . ' ' . format_string($user->lastname) .
-            ' — ' . $mc->coursename . ' (' . $type . ')';
-        $message->fullmessageformat = FORMAT_PLAIN;
-        $message->fullmessagehtml   = '<p>' . s($message->fullmessage) . '</p>';
+        $message->fullmessage       = html_to_text($html);
+        $message->fullmessageformat = FORMAT_HTML;
+        $message->fullmessagehtml   = $html;
         $message->smallmessage      = $message->subject;
         $message->notification      = 1;
         $message->contexturl        = new \moodle_url('/course/view.php', ['id' => $mc->courseid]);
@@ -590,5 +626,217 @@ class compliance_engine {
             'exempted'     => 'secondary',
         ];
         return $classes[$status] ?? 'secondary';
+    }
+
+    // ════════════════════════════════════════════════════
+    // ORG HIERARCHY FILTERS
+    // ════════════════════════════════════════════════════
+
+    /**
+     * Get org units at a given hierarchy level.
+     *
+     * BizLMS open_path: /BU/Dept/SubDept/...
+     * Level 1 = Business Unit, Level 2 = Department, Level 3 = Sub-Department.
+     *
+     * @param int $level 1, 2, or 3
+     * @param string $parentpath filter to children of this path
+     * @return array [{id, name, user_count}]
+     */
+    public static function get_org_hierarchy_level(int $level, string $parentpath = ''): array {
+        global $DB;
+
+        // Level 1: top-level costcenters (BU).
+        if ($level === 1) {
+            $sql = "SELECT DISTINCT
+                        CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(u.open_path, '/', 2), '/', -1) AS UNSIGNED) AS id,
+                        COUNT(DISTINCT u.id) AS user_count
+                      FROM {user} u
+                     WHERE u.deleted = 0 AND u.suspended = 0
+                       AND u.open_path IS NOT NULL AND u.open_path != ''";
+            $params = [];
+
+            if (!empty($parentpath)) {
+                $sql .= " AND u.open_path LIKE :ppath";
+                $params['ppath'] = $parentpath . '%';
+            }
+
+            $sql .= " GROUP BY id HAVING id > 0 ORDER BY user_count DESC";
+            $records = $DB->get_records_sql($sql, $params);
+        } else {
+            return []; // Use get_org_hierarchy_children for deeper levels.
+        }
+
+        // Resolve names from local_costcenter.
+        $result = [];
+        foreach ($records as $r) {
+            $name = $DB->get_field('local_costcenter', 'fullname', ['id' => $r->id]);
+            if ($name) {
+                $result[] = [
+                    'id'         => (int)$r->id,
+                    'name'       => format_string($name),
+                    'user_count' => (int)$r->user_count,
+                    'selected'   => false,
+                ];
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * Get child costcenters of a given parent.
+     *
+     * @param int $parentid costcenter ID
+     * @return array [{id, name, user_count}]
+     */
+    public static function get_org_hierarchy_children(int $parentid): array {
+        global $DB;
+
+        $children = $DB->get_records('local_costcenter', ['parentid' => $parentid], 'fullname');
+        $result = [];
+        foreach ($children as $c) {
+            $usercount = $DB->count_records_select('user',
+                "deleted = 0 AND suspended = 0 AND open_path LIKE :path",
+                ['path' => '%/' . $c->id . '/%']);
+            $result[] = [
+                'id'         => (int)$c->id,
+                'name'       => format_string($c->fullname),
+                'user_count' => $usercount,
+                'selected'   => false,
+            ];
+        }
+        return $result;
+    }
+
+    // ════════════════════════════════════════════════════
+    // COURSE CONFIGURATION (per-entity)
+    // ════════════════════════════════════════════════════
+
+    /**
+     * Add a course to compliance tracking.
+     *
+     * @param int $courseid
+     * @param int $entityid costcenter ID (0 = all entities)
+     * @param int $deadlinedays
+     */
+    public static function add_compliance_course(int $courseid, int $entityid = 0, int $deadlinedays = 30): void {
+        global $DB, $USER;
+
+        // Check for duplicate.
+        if ($DB->record_exists('local_compliance_courses', ['courseid' => $courseid, 'costcenterid' => $entityid])) {
+            return;
+        }
+
+        $course = $DB->get_record('course', ['id' => $courseid], 'id, fullname', MUST_EXIST);
+        $maxsort = $DB->get_field_sql("SELECT MAX(sort_order) FROM {local_compliance_courses}") ?? 0;
+
+        $DB->insert_record('local_compliance_courses', (object)[
+            'courseid'      => $courseid,
+            'coursename'    => $course->fullname,
+            'deadline_days' => $deadlinedays,
+            'costcenterid'  => $entityid,
+            'is_active'     => 1,
+            'sort_order'    => $maxsort + 1,
+            'createdby'     => $USER->id,
+            'timecreated'   => time(),
+            'timemodified'  => time(),
+        ]);
+    }
+
+    /**
+     * Remove (deactivate) a course from compliance tracking.
+     */
+    public static function remove_compliance_course(int $id): void {
+        global $DB;
+        $DB->set_field('local_compliance_courses', 'is_active', 0, ['id' => $id]);
+        $DB->set_field('local_compliance_courses', 'timemodified', time(), ['id' => $id]);
+    }
+
+    /**
+     * Get all managed compliance courses (active + inactive).
+     *
+     * @return array [{id, courseid, coursename, deadline_days, costcenterid, entity_name, is_active}]
+     */
+    public static function get_managed_courses(): array {
+        global $DB;
+        $courses = $DB->get_records('local_compliance_courses', null, 'is_active DESC, sort_order');
+        $result = [];
+        foreach ($courses as $c) {
+            $entityname = 'All Entities';
+            if ($c->costcenterid > 0) {
+                $entityname = $DB->get_field('local_costcenter', 'fullname', ['id' => $c->costcenterid]) ?? 'Unknown';
+            }
+            $result[] = [
+                'id'            => $c->id,
+                'courseid'      => $c->courseid,
+                'coursename'    => format_string($c->coursename),
+                'deadline_days' => $c->deadline_days,
+                'costcenterid'  => $c->costcenterid,
+                'entity_name'   => format_string($entityname),
+                'is_active'     => (bool)$c->is_active,
+            ];
+        }
+        return $result;
+    }
+
+    // ════════════════════════════════════════════════════
+    // USER EXCLUSION
+    // ════════════════════════════════════════════════════
+
+    /**
+     * Exclude a user from compliance tracking.
+     * Uses the exemption table with courseid=0 to mark global exclusion.
+     */
+    public static function exclude_user(int $userid, string $reason = ''): void {
+        global $DB, $USER;
+
+        if ($DB->record_exists('local_compliance_exemptions', ['userid' => $userid, 'courseid' => 0, 'is_active' => 1])) {
+            return;
+        }
+
+        $DB->insert_record('local_compliance_exemptions', (object)[
+            'userid'      => $userid,
+            'courseid'    => 0, // 0 = excluded from ALL compliance tracking.
+            'reason'      => $reason,
+            'approved_by' => $USER->id,
+            'is_active'   => 1,
+            'timecreated' => time(),
+        ]);
+    }
+
+    /**
+     * Re-include a user in compliance tracking.
+     */
+    public static function include_user(int $userid): void {
+        global $DB;
+        $DB->set_field('local_compliance_exemptions', 'is_active', 0,
+            ['userid' => $userid, 'courseid' => 0]);
+    }
+
+    /**
+     * Get all globally excluded users.
+     *
+     * @return array [{userid, fullname, email, reason, excluded_date}]
+     */
+    public static function get_excluded_users(): array {
+        global $DB;
+        $records = $DB->get_records_sql(
+            "SELECT e.id, e.userid, u.firstname, u.lastname, u.email, e.reason, e.timecreated
+               FROM {local_compliance_exemptions} e
+               JOIN {user} u ON u.id = e.userid
+              WHERE e.courseid = 0 AND e.is_active = 1
+           ORDER BY e.timecreated DESC"
+        );
+        $result = [];
+        foreach ($records as $r) {
+            $result[] = [
+                'id'            => $r->id,
+                'userid'        => $r->userid,
+                'fullname'      => format_string($r->firstname . ' ' . $r->lastname),
+                'email'         => s($r->email),
+                'reason'        => s($r->reason),
+                'excluded_date' => userdate($r->timecreated, '%d %b %Y'),
+            ];
+        }
+        return $result;
     }
 }

@@ -300,7 +300,7 @@ if (isloggedin() && !isguestuser()) {
                 ['label' => 'Privacy (DPDP)', 'icon' => 'lock', 'url' => (new moodle_url('/local/airpay_privacy/index.php'))->out(false), 'color' => '#7c3aed',
                  'hasstats' => true, 'stats' => (function() use ($DB) {
                     try {
-                        $pending = $DB->count_records('local_airpay_privacy_req', ['status' => 'pending']);
+                        $pending = $DB->count_records('local_privacy_requests', ['status' => 'pending']);
                         return [['statval' => $pending, 'statlabel' => 'Pending']];
                     } catch (Exception $e) { return []; }
                  })()],
@@ -412,6 +412,22 @@ if (isloggedin() && !isguestuser()) {
             'notstarted' => $notstarted,
         ];
         $airpay_dashboard['hasstats'] = true;
+
+        // Progress ring data for completion percentage.
+        $totalenrolled = count($enrolledcourses);
+        $completionpct = ($totalenrolled > 0) ? round(($completed / $totalenrolled) * 100) : 0;
+        // SVG circle: radius=36, circumference=2*pi*36=226.19
+        $circumference = 226.19;
+        $offset = $circumference - ($circumference * $completionpct / 100);
+        $ringcolor = ($completionpct >= 80) ? 'success' : (($completionpct >= 40) ? 'accent' : 'warning');
+        $airpay_dashboard['progress_ring'] = [
+            'percent'       => $completionpct,
+            'circumference' => $circumference,
+            'offset'        => round($offset, 2),
+            'color_class'   => $ringcolor,
+        ];
+        $airpay_dashboard['has_progress_ring'] = true;
+
     } catch (Exception $e) {
         // Silently fail — dashboard still renders without our additions
         $airpay_dashboard['hasstats'] = false;
