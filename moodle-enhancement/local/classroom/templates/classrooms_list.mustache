@@ -1,0 +1,287 @@
+{{#response}}
+{{#viewtypeCard}}
+<div class="ap-classroom-grid">
+    {{#records}}
+    <div class="{{cardClass}}">
+        <div class="ap-classroom-card {{classroomstatusclass}}">
+
+            {{! ═══ CARD HEADER: Status + Name + Actions ═══ }}
+            <div class="ap-classroom-card__header">
+                <div class="ap-classroom-card__status" title="{{crstatustitle}}"></div>
+                <div class="ap-classroom-card__title-row">
+                    <a href="{{classroomurl}}" class="ap-classroom-card__name" title="{{classname}}">
+                        <i class="fa fa-desktop"></i> {{classname_string}}
+                    </a>
+                    {{#action}}
+                    {{#mouse_overicon}}
+                    <div class="dropdown">
+                        <button class="ap-classroom-card__menu-btn" data-toggle="dropdown" aria-expanded="false">
+                            <i class="fa fa-ellipsis-v"></i>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-right">
+                            {{#edit}}
+                            <a class="dropdown-item" href="javascript:void(0)"
+                               onclick="(function(e){ require('local_classroom/ajaxforms').init({contextid:1, component:'local_classroom', callback:'classroom_form', form_status:0, plugintype: 'local', pluginname: 'classroom', id: {{classroomid}} }) })(event)">
+                                <i class="fa fa-pencil fa-fw"></i> {{#str}}edit{{/str}}
+                            </a>
+                            {{/edit}}
+                            {{#assignusers}}
+                            <a class="dropdown-item" href="{{assignusersurl}}">
+                                <i class="fa fa-user-plus fa-fw"></i> {{#str}}assignusers, local_classroom{{/str}}
+                            </a>
+                            {{/assignusers}}
+                            {{#delete}}
+                            <a class="dropdown-item text-danger" href="javascript:void(0)"
+                               onclick="(function(e){ require('local_classroom/classroom').deleteConfirm({action:'deleteclassroom', id: {{classroomid}}, classroomid: {{classroomid}}, classroomname: '{{classname}}'}) })(event)">
+                                <i class="fa fa-trash fa-fw"></i> {{#str}}delete{{/str}}
+                            </a>
+                            {{/delete}}
+                        </div>
+                    </div>
+                    {{/mouse_overicon}}
+                    {{/action}}
+                </div>
+            </div>
+
+            {{! ═══ CARD BODY: Image + Info ═══ }}
+            <div class="ap-classroom-card__body">
+                {{! Left: Info }}
+                <div class="ap-classroom-card__info">
+                    {{! Description }}
+                    {{#isdescription}}
+                    <div class="ap-classroom-card__desc">
+                        {{^descriptionstring}}{{{description}}}{{/descriptionstring}}
+                        {{#descriptionstring}}
+                        {{descriptionstring}}...
+                        {{#fullonlineexamsummary}}
+                        <a href="#" data-toggle="popover" title="{{classname}}" data-content="{{fullonlineexamsummary}}">{{#str}}more{{/str}}</a>
+                        {{/fullonlineexamsummary}}
+                        {{/descriptionstring}}
+                    </div>
+                    {{/isdescription}}
+                    {{^isdescription}}
+                    <div class="ap-classroom-card__desc ap-classroom-card__desc--empty">
+                        {{#str}}nocoursedesc, local_courses{{/str}}
+                    </div>
+                    {{/isdescription}}
+
+                    {{! Meta grid }}
+                    <div class="ap-classroom-card__meta">
+                        <div class="ap-classroom-card__meta-item">
+                            <i class="fa fa-users"></i>
+                            <span>{{enrolled_users}} {{#str}}enrolledusers, local_classroom{{/str}}</span>
+                        </div>
+                        <div class="ap-classroom-card__meta-item" title="{{departmenttitle}}">
+                            <i class="fa fa-building-o"></i>
+                            <span>{{departmentname}}</span>
+                        </div>
+                        <div class="ap-classroom-card__meta-item">
+                            <i class="fa fa-chair"></i>
+                            <span>{{seatallocation}} seats</span>
+                        </div>
+                    </div>
+                </div>
+
+                {{! Right: Image + Date }}
+                <a href="{{classroomurl}}" class="ap-classroom-card__image-wrap">
+                    <div class="ap-classroom-card__image" style="background-image: url('{{{classesimg}}}');" title="{{classname}}"></div>
+                    <div class="ap-classroom-card__date">
+                        <i class="fa fa-calendar"></i> {{startdate}} to {{enddate}}
+                    </div>
+                </a>
+            </div>
+
+            {{! ═══ CARD FOOTER: Trainers + Courses ═══ }}
+            <div class="ap-classroom-card__footer">
+                {{! Trainers }}
+                <div class="ap-classroom-card__trainers">
+                    <h6 class="ap-classroom-card__footer-title">{{#str}}trainers, local_classroom{{/str}}</h6>
+                    {{#trainerslimit}}
+                    {{#trainers}}
+                    <div class="ap-classroom-card__trainer">
+                        <img src="{{trainerpic}}" alt="{{trainername}}" class="ap-classroom-card__trainer-pic" width="28" height="28">
+                        <div>
+                            <span class="ap-classroom-card__trainer-name">{{trainername}}</span>
+                            <span class="ap-classroom-card__trainer-role">{{trainerdesignation}}</span>
+                        </div>
+                    </div>
+                    {{/trainers}}
+                    {{/trainerslimit}}
+                    {{^trainerslimit}}
+                    {{#moretrainers}}
+                    <div class="ap-classroom-card__trainer">
+                        {{{classroomtrainerpic}}}
+                        <div>
+                            <span class="ap-classroom-card__trainer-name">{{trainername}}</span>
+                            <span class="ap-classroom-card__trainer-role">{{trainerdesignation}}</span>
+                        </div>
+                    </div>
+                    {{/moretrainers}}
+                    {{/trainerslimit}}
+                    {{^trainers}}
+                    <p class="ap-classroom-card__empty-msg">{{#str}}no_trainer_assigned, local_classroom{{/str}}</p>
+                    {{/trainers}}
+                </div>
+
+                {{! Courses }}
+                <div class="ap-classroom-card__courses">
+                    <h6 class="ap-classroom-card__footer-title">{{#str}}courses{{/str}}</h6>
+                    {{#courses}}
+                    <a href="{{courseurl}}" title="{{coursetitle}}" class="ap-classroom-card__course-link">
+                        <i class="fa fa-book"></i> {{coursename}}
+                    </a>
+                    {{/courses}}
+                    {{^courses}}
+                    <p class="ap-classroom-card__empty-msg">{{#str}}noclassroomcourses, local_classroom{{/str}}</p>
+                    {{/courses}}
+                </div>
+            </div>
+
+            {{! View Details CTA }}
+            <a href="{{classroomurl}}" class="ap-classroom-card__cta">
+                View Details <i class="fa fa-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+    {{/records}}
+</div>
+{{/viewtypeCard}}
+{{/response}}
+
+<style>
+/* ═══ Modern Classroom Cards ═══ */
+.ap-classroom-grid { display: flex; flex-wrap: wrap; gap: 0; }
+.ap-classroom-card {
+    background: var(--ap-surface, #fff);
+    border: 1px solid var(--ap-border, #e3eaf3);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex; flex-direction: column;
+    margin-bottom: 16px;
+}
+.ap-classroom-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(0,51,102,0.1);
+}
+
+/* Status left border */
+.ap-classroom-card.classroomstatusnew_cr { border-left: 4px solid #0f7a73; }
+.ap-classroom-card.classroomstatusactive_cr { border-left: 4px solid #0066A7; }
+.ap-classroom-card.classroomstatushold_cr { border-left: 4px solid #d97706; }
+.ap-classroom-card.classroomstatuscancelled_cr { border-left: 4px solid #dc2626; }
+.ap-classroom-card.classroomstatuscompleted_cr { border-left: 4px solid #16a34a; }
+
+/* Header */
+.ap-classroom-card__header { padding: 14px 16px 0; }
+.ap-classroom-card__title-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.ap-classroom-card__name {
+    font-size: 15px; font-weight: 700; color: #1a1a2e;
+    text-decoration: none; line-height: 1.3;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.ap-classroom-card__name i { color: #0066A7; margin-right: 4px; font-size: 13px; }
+.ap-classroom-card__name:hover { color: #0066A7; }
+.ap-classroom-card__menu-btn {
+    background: none; border: none; padding: 4px 8px; cursor: pointer;
+    color: #8896a6; border-radius: 6px; transition: background 0.15s;
+}
+.ap-classroom-card__menu-btn:hover { background: #f0f2f7; color: #1a1a2e; }
+.ap-classroom-card__status { display: none; } /* Hidden — status shown via border */
+
+/* Body (2-column) */
+.ap-classroom-card__body { display: flex; gap: 0; flex: 1; }
+.ap-classroom-card__info { flex: 1; padding: 12px 16px; min-width: 0; }
+.ap-classroom-card__desc {
+    font-size: 13px; color: #607286; line-height: 1.5; margin-bottom: 12px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.ap-classroom-card__desc--empty { color: #8896a6; font-style: italic; }
+
+/* Meta items */
+.ap-classroom-card__meta { display: flex; flex-direction: column; gap: 4px; }
+.ap-classroom-card__meta-item {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: #607286;
+}
+.ap-classroom-card__meta-item i { width: 14px; text-align: center; color: #0066A7; font-size: 11px; }
+.ap-classroom-card__meta-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Image */
+.ap-classroom-card__image-wrap {
+    width: 200px; flex-shrink: 0; position: relative;
+    display: flex; flex-direction: column; text-decoration: none;
+}
+.ap-classroom-card__image {
+    flex: 1; background-size: cover; background-position: center;
+    background-color: #e8f2f9; min-height: 120px;
+}
+.ap-classroom-card__date {
+    padding: 6px 10px; background: rgba(0,0,0,0.7); color: #fff;
+    font-size: 11px; font-weight: 500;
+}
+.ap-classroom-card__date i { margin-right: 4px; }
+
+/* Footer */
+.ap-classroom-card__footer {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 0;
+    border-top: 1px solid #f0f2f7; padding: 12px 16px;
+}
+.ap-classroom-card__footer-title {
+    font-size: 11px; font-weight: 700; color: #8896a6;
+    text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 8px;
+}
+.ap-classroom-card__trainer {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
+}
+.ap-classroom-card__trainer-pic { border-radius: 50%; }
+.ap-classroom-card__trainer-name { font-size: 13px; font-weight: 600; color: #1a1a2e; display: block; }
+.ap-classroom-card__trainer-role { font-size: 11px; color: #8896a6; display: block; }
+.ap-classroom-card__course-link {
+    display: block; font-size: 13px; color: #0066A7; text-decoration: none;
+    padding: 3px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ap-classroom-card__course-link:hover { text-decoration: underline; }
+.ap-classroom-card__course-link i { margin-right: 4px; font-size: 11px; }
+.ap-classroom-card__empty-msg { font-size: 12px; color: #8896a6; font-style: italic; margin: 0; }
+
+/* View Details CTA */
+.ap-classroom-card__cta {
+    display: flex; justify-content: center; align-items: center; gap: 6px;
+    padding: 10px; border-top: 1px solid #f0f2f7;
+    font-size: 13px; font-weight: 600; color: #0066A7; text-decoration: none;
+    transition: background 0.15s;
+}
+.ap-classroom-card__cta:hover { background: #e8f2f9; text-decoration: none; }
+
+/* Dropdown (override BizLMS) */
+.ap-classroom-card .dropdown-menu {
+    border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    border: 1px solid #e3eaf3; padding: 6px; min-width: 160px;
+}
+.ap-classroom-card .dropdown-item {
+    border-radius: 6px; padding: 8px 12px; font-size: 13px; transition: background 0.1s;
+}
+.ap-classroom-card .dropdown-item:hover { background: #e8f2f9; }
+
+/* Mobile */
+@media (max-width: 768px) {
+    .ap-classroom-card__body { flex-direction: column-reverse; }
+    .ap-classroom-card__image-wrap { width: 100%; }
+    .ap-classroom-card__image { min-height: 140px; }
+    .ap-classroom-card__footer { grid-template-columns: 1fr; }
+}
+
+/* Dark mode */
+body.dark-mode .ap-classroom-card { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .ap-classroom-card:hover { box-shadow: 0 12px 32px rgba(0,0,0,0.3); }
+body.dark-mode .ap-classroom-card__name { color: #e8eaed; }
+body.dark-mode .ap-classroom-card__desc { color: #9ca3b4; }
+body.dark-mode .ap-classroom-card__meta-item { color: #9ca3b4; }
+body.dark-mode .ap-classroom-card__trainer-name { color: #e8eaed; }
+body.dark-mode .ap-classroom-card__footer { border-color: #2d3140; }
+body.dark-mode .ap-classroom-card__cta { border-color: #2d3140; color: #60a5fa; }
+body.dark-mode .ap-classroom-card__cta:hover { background: #22252f; }
+body.dark-mode .ap-classroom-card .dropdown-menu { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .ap-classroom-card .dropdown-item:hover { background: #22252f; }
+</style>
