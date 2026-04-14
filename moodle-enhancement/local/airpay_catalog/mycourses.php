@@ -22,6 +22,8 @@ $PAGE->set_pagelayout('standard');
 $PAGE->set_heading(get_string('mycourses'));
 
 $filter = optional_param('filter', 'all', PARAM_ALPHA); // all, inprogress, completed, notstarted
+$perpage = 16; // Show 16 courses per page (4x4 grid)
+$page = optional_param('page', 0, PARAM_INT);
 
 // Get all enrolled courses for the current user.
 $enrolledcourses = enrol_get_my_courses('*', 'fullname ASC');
@@ -101,6 +103,21 @@ foreach ($enrolledcourses as $course) {
     ];
 }
 
+// Paginate courses.
+$totalfiltered = count($courses);
+$courses = array_slice($courses, $page * $perpage, $perpage);
+$totalpages = ceil($totalfiltered / $perpage);
+$pages = [];
+for ($i = 0; $i < $totalpages; $i++) {
+    $pages[] = [
+        'page' => $i,
+        'label' => $i + 1,
+        'active' => ($i === $page),
+        'url' => (new moodle_url('/local/airpay_catalog/mycourses.php',
+            ['filter' => $filter, 'page' => $i]))->out(false),
+    ];
+}
+
 $data = [
     'courses'       => $courses,
     'has_courses'   => !empty($courses),
@@ -113,6 +130,11 @@ $data = [
     'filter_completed' => ($filter === 'completed'),
     'filter_notstarted' => ($filter === 'notstarted'),
     'baseurl'       => (new moodle_url('/local/airpay_catalog/mycourses.php'))->out(false),
+    'showing_from'  => ($page * $perpage) + 1,
+    'showing_to'    => min(($page + 1) * $perpage, $totalfiltered),
+    'total_filtered' => $totalfiltered,
+    'has_pagination' => ($totalpages > 1),
+    'pages'         => $pages,
 ];
 
 echo $OUTPUT->header();
