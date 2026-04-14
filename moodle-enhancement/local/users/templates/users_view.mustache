@@ -1,0 +1,186 @@
+{{#response}}
+{{#viewtypeCard}}
+
+{{! Stats bar }}
+<div class="ap-users-stats">
+    <div class="ap-users-stats__item">
+        <span class="ap-users-stats__label">{{#str}}total, local_users{{/str}}</span>
+        <span class="ap-users-stats__value">{{{totalcount}}}</span>
+    </div>
+    <div class="ap-users-stats__item ap-users-stats__item--success">
+        <span class="ap-users-stats__label">{{#str}}active, local_users{{/str}}</span>
+        <span class="ap-users-stats__value">{{{activeusercount}}}</span>
+    </div>
+    <div class="ap-users-stats__item ap-users-stats__item--muted">
+        <span class="ap-users-stats__label">{{#str}}inactive, local_users{{/str}}</span>
+        <span class="ap-users-stats__value">{{{inactiveusercount}}}</span>
+    </div>
+</div>
+
+{{! User card grid }}
+<div class="ap-users-grid">
+    {{#records}}
+    <div class="{{cardClass}}">
+        <div class="ap-user-card {{#visible}}ap-user-card--inactive{{/visible}}">
+            {{! Header: avatar + name + actions }}
+            <div class="ap-user-card__header">
+                <img src="{{userpic}}" class="ap-user-card__avatar" width="48" height="48" alt="{{fullname}}" title="{{#str}}pictureof, local_users{{/str}} {{fullname}}">
+                <div class="ap-user-card__name-section">
+                    <a href="{{wwwroot}}/local/users/profile.php?id={{userid}}" class="ap-user-card__name">{{fullname}}</a>
+                    <span class="ap-user-card__email">{{email}}</span>
+                </div>
+                {{! Status badge }}
+                {{#visible}}
+                <span class="ap-badge ap-badge--muted">{{#str}}inactive, local_users{{/str}}</span>
+                {{/visible}}
+                {{^visible}}
+                <span class="ap-badge ap-badge--success">{{#str}}active, local_users{{/str}}</span>
+                {{/visible}}
+                {{! Action dropdown }}
+                <div class="dropdown">
+                    {{#actionsicons}}
+                    <button data-toggle="dropdown" aria-expanded="false" class="ap-user-card__menu-btn">
+                        <i class="fa fa-ellipsis-v"></i>
+                    </button>
+                    {{/actionsicons}}
+                    <div class="dropdown-menu dropdown-menu-right">
+                        {{#editcap}}
+                        <a href="javascript:void(0)" class="dropdown-item"
+                           onclick="(function(e){ require('local_users/newuser').init({selector:'createusermodal', context:1, id:{{userid}}, form_status:0, callback:'user_form'}) })(event)">
+                            <i class="fa fa-pencil fa-fw"></i> Edit
+                        </a>
+                        {{#visible}}
+                        <a href="javascript:void(0)" class="dropdown-item"
+                           onclick="(function(e){ require('local_users/newuser').userSuspend({id:{{userid}},context:1, fullname:'{{fullname}}', status:'disable'}) })(event)">
+                            <i class="fa fa-eye fa-fw"></i> Activate
+                        </a>
+                        {{/visible}}
+                        {{^visible}}
+                        <a href="javascript:void(0)" class="dropdown-item"
+                           onclick="(function(e){ require('local_users/newuser').userSuspend({id:{{userid}},context:1, fullname:'{{fullname}}', status:'enable'}) })(event)">
+                            <i class="fa fa-eye-slash fa-fw"></i> Deactivate
+                        </a>
+                        {{/visible}}
+                        {{/editcap}}
+                        {{#delcap}}
+                        <a href="javascript:void(0)" class="dropdown-item text-danger"
+                           onclick="(function(e){ require('local_users/newuser').deleteConfirm({action:'delete_user', id:{{userid}}, context:1, fullname:'{{fullname}}'}) })(event)">
+                            <i class="fa fa-trash fa-fw"></i> Delete
+                        </a>
+                        {{/delcap}}
+                    </div>
+                </div>
+            </div>
+
+            {{! Details grid }}
+            <div class="ap-user-card__details">
+                <div class="ap-user-card__field">
+                    <span class="ap-user-card__field-label">{{#str}}employeeid, local_users{{/str}}</span>
+                    <span class="ap-user-card__field-value">{{empid}}</span>
+                </div>
+                <div class="ap-user-card__field">
+                    <span class="ap-user-card__field-label">{{#str}}organization, local_users{{/str}}</span>
+                    <span class="ap-user-card__field-value" title="{{org}}">{{orgstring}}</span>
+                </div>
+                <div class="ap-user-card__field">
+                    <span class="ap-user-card__field-label">{{#str}}department, local_users{{/str}}</span>
+                    <span class="ap-user-card__field-value" title="{{dept}}">{{deptstring}}</span>
+                </div>
+                <div class="ap-user-card__field">
+                    <span class="ap-user-card__field-label">{{#str}}commercialunit, local_users{{/str}}</span>
+                    <span class="ap-user-card__field-value">{{commercialunit}}</span>
+                </div>
+                <div class="ap-user-card__field">
+                    <span class="ap-user-card__field-label">{{#str}}commercialarea, local_users{{/str}}</span>
+                    <span class="ap-user-card__field-value">{{commercialarea}}</span>
+                </div>
+                <div class="ap-user-card__field">
+                    <span class="ap-user-card__field-label">{{#str}}role, local_users{{/str}}</span>
+                    <span class="ap-user-card__field-value">
+                        {{^rolecount}}<span style="color:var(--ap-text-muted);">{{#str}}na,local_users{{/str}}</span>{{/rolecount}}
+                        {{#rolecount}}<a class="userpopup" href="javascript:void(0)" data-id="{{userid}}" data-action="popupmodal{{userid}}" data-username="{{fullname}}"><strong>{{rolecount}}</strong></a>{{/rolecount}}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{/records}}
+
+    {{^records}}
+    {{#nousers}}
+    <div class="ap-users-grid__empty">
+        <i class="fa fa-users"></i>
+        <p>{{#str}}nousers, local_users{{/str}}</p>
+    </div>
+    {{/nousers}}
+    {{/records}}
+</div>
+{{/viewtypeCard}}
+{{/response}}
+
+<style>
+/* User stats bar */
+.ap-users-stats {
+    display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; justify-content: flex-end;
+}
+.ap-users-stats__item {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 14px; background: var(--ap-surface); border: 1px solid var(--ap-border);
+    border-radius: 8px; font-size: 13px;
+}
+.ap-users-stats__label { color: var(--ap-text-secondary); font-weight: 500; }
+.ap-users-stats__value { font-weight: 700; color: var(--ap-text); }
+.ap-users-stats__item--success .ap-users-stats__value { color: var(--ap-success); }
+.ap-users-stats__item--muted .ap-users-stats__value { color: var(--ap-text-muted); }
+
+/* User card grid */
+.ap-users-grid { display: flex; flex-wrap: wrap; gap: 0; }
+.ap-user-card {
+    background: var(--ap-surface); border: 1px solid var(--ap-border);
+    border-radius: 12px; overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    margin-bottom: 16px;
+}
+.ap-user-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,51,102,0.08); }
+.ap-user-card--inactive { opacity: 0.6; border-left: 3px solid var(--ap-text-muted); }
+
+/* Header */
+.ap-user-card__header { display: flex; align-items: center; gap: 10px; padding: 14px 16px; flex-wrap: wrap; }
+.ap-user-card__avatar { border-radius: 50%; flex-shrink: 0; }
+.ap-user-card__name-section { flex: 1; min-width: 0; }
+.ap-user-card__name { display: block; font-size: 14px; font-weight: 700; color: var(--ap-text); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ap-user-card__name:hover { color: var(--ap-primary); }
+.ap-user-card__email { display: block; font-size: 12px; color: var(--ap-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ap-user-card__menu-btn {
+    width: 28px; height: 28px; border-radius: 6px; border: none;
+    background: transparent; cursor: pointer; color: var(--ap-text-secondary);
+    display: flex; align-items: center; justify-content: center; transition: background 0.15s;
+}
+.ap-user-card__menu-btn:hover { background: var(--ap-bg); }
+
+/* Details grid */
+.ap-user-card__details {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 0;
+    padding: 0 16px 14px; border-top: 1px solid #f3f5f9;
+}
+.ap-user-card__field { padding: 6px 0; border-bottom: 1px solid #f8f9fc; }
+.ap-user-card__field-label { display: block; font-size: 10px; color: var(--ap-text-muted); text-transform: uppercase; letter-spacing: 0.3px; }
+.ap-user-card__field-value { display: block; font-size: 13px; font-weight: 600; color: var(--ap-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Dropdown */
+.ap-user-card .dropdown-menu { border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); border: 1px solid var(--ap-border); padding: 6px; }
+.ap-user-card .dropdown-item { border-radius: 6px; padding: 8px 12px; font-size: 13px; }
+.ap-user-card .dropdown-item:hover { background: var(--ap-primary-light, #e8f2f9); }
+
+/* Empty */
+.ap-users-grid__empty { width: 100%; text-align: center; padding: 48px 24px; color: var(--ap-text-muted); }
+.ap-users-grid__empty i { font-size: 48px; display: block; margin-bottom: 12px; opacity: 0.4; }
+
+/* Dark mode */
+body.dark-mode .ap-users-stats__item { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .ap-user-card { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .ap-user-card__name { color: #e8eaed; }
+body.dark-mode .ap-user-card__details { border-color: #2d3140; }
+body.dark-mode .ap-user-card__field-value { color: #e8eaed; }
+body.dark-mode .ap-user-card .dropdown-menu { background: #1a1d27; border-color: #2d3140; }
+</style>

@@ -1,0 +1,99 @@
+{{#classroom_view_count}}
+<div id="{{{subtab}}}" class="tab-pane divslider active active_subtab">
+<div class="ap-dash-courses userdashboard_content userdashboard_ctype_classroom">
+{{#enableslider}}
+    {{> block_userdashboard/userdashboard_enable_slider}}
+{{/enableslider}}
+    {{#moduledetails}}
+    <div class="col-sm-6 col-12 tabs_cmn_class courses_inprogress_slide {{{subtab}}} ctype_classroom" data-index="{{index}}">
+        <div class="ap-dash-classroom-card">
+            <div class="ap-dash-classroom-card__header">
+                <div class="ap-dash-classroom-card__icon">
+                    <i class="fa fa-desktop"></i>
+                </div>
+                <h4 class="ap-dash-classroom-card__title">
+                    <a href="{{classroom_url}}" title="{{classroomFullname}}">{{displayClassroomFullname}}</a>
+                </h4>
+            </div>
+            <div class="ap-dash-classroom-card__body">
+                {{#classroomSummary}}
+                <p class="ap-dash-classroom-card__desc">{{{classroomSummary}}}</p>
+                {{/classroomSummary}}
+                <div class="ap-dash-classroom-card__schedule">
+                    <div class="ap-dash-classroom-card__date">
+                        <i class="fa fa-play-circle" style="color:var(--ap-success);"></i> {{{startdate}}}
+                    </div>
+                    <div class="ap-dash-classroom-card__date">
+                        <i class="fa fa-stop-circle" style="color:var(--ap-danger);"></i> {{{enddate}}}
+                    </div>
+                </div>
+            </div>
+            <div class="ap-dash-classroom-card__footer">
+                {{{rating_element}}}
+                <a href="{{classroom_url}}" class="ap-dash-course-card__cta">
+                    {{#str}}launch,block_userdashboard{{/str}} <i class="fa fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    {{/moduledetails}}
+    {{#viewMoreCard}}
+    <div class="col-sm-6 col-12 view_more_data_card ctype_classroom d-flex justify-content-center align-items-center">
+        <a class="ap-dash-course-card__cta" href="{{{view_more_url}}}">{{#str}}viewmore{{/str}} <i class="fa fa-arrow-right"></i></a>
+    </div>
+    {{/viewMoreCard}}
+</div>
+</div>
+{{/classroom_view_count}}
+
+{{^classroom_view_count}}
+    {{> block_userdashboard/userdashboard_nodata_text}}
+{{/classroom_view_count}}
+
+<style>
+.ap-dash-classroom-card {
+    background: var(--ap-surface, #fff);
+    border: 1px solid var(--ap-border, #e3eaf3);
+    border-radius: 12px; overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex; flex-direction: column; height: 100%;
+    margin-bottom: 12px;
+}
+.ap-dash-classroom-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,51,102,0.08);
+}
+.ap-dash-classroom-card__header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 16px 0;
+}
+.ap-dash-classroom-card__icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--ap-primary-light, #e8f2f9);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ap-primary, #0066A7); font-size: 16px; flex-shrink: 0;
+}
+.ap-dash-classroom-card__title { margin: 0; font-size: 14px; font-weight: 700; line-height: 1.3; flex: 1; min-width: 0; }
+.ap-dash-classroom-card__title a {
+    color: var(--ap-text, #1a1a2e); text-decoration: none;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.ap-dash-classroom-card__title a:hover { color: var(--ap-primary); }
+.ap-dash-classroom-card__body { padding: 10px 16px; flex: 1; }
+.ap-dash-classroom-card__desc {
+    font-size: 12px; color: var(--ap-text-secondary, #607286); margin: 0 0 10px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.ap-dash-classroom-card__schedule { display: flex; justify-content: space-between; gap: 8px; }
+.ap-dash-classroom-card__date {
+    font-size: 12px; color: var(--ap-text-secondary);
+    display: flex; align-items: center; gap: 4px;
+}
+.ap-dash-classroom-card__footer {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 16px; border-top: 1px solid var(--ap-border, #e3eaf3);
+}
+body.dark-mode .ap-dash-classroom-card { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .ap-dash-classroom-card__title a { color: #e8eaed; }
+body.dark-mode .ap-dash-classroom-card__footer { border-color: #2d3140; }
+</style>
