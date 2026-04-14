@@ -117,6 +117,89 @@ body.dark-mode .airpay-assistant__quick-actions button { background: #232733; bo
 body.dark-mode .airpay-assistant__quick-actions button:hover { background: #0066A7; color: #fff; }
 body.dark-mode .airpay-assistant__msg--typing { background: #232733; }
 
+/* ═══ Panel Slide Animation ═══ */
+.airpay-assistant__panel {
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.airpay-assistant__panel--hidden {
+    opacity: 0;
+    transform: translateY(16px) scale(0.95);
+    pointer-events: none;
+}
+.airpay-assistant__panel--visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+/* ═══ Feedback Buttons ═══ */
+.airpay-assistant__feedback {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+}
+.airpay-assistant__feedback-btn {
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 12px;
+    color: var(--ap-text-muted, #8896a6);
+    cursor: pointer;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-family: inherit;
+}
+.airpay-assistant__feedback-btn:hover {
+    background: var(--ap-bg, #F2F4FB);
+    border-color: var(--ap-border, #e3eaf3);
+    color: var(--ap-text-secondary, #607286);
+}
+.airpay-assistant__feedback-btn--up.active {
+    background: #ecfdf5;
+    border-color: #16a34a;
+    color: #16a34a;
+}
+.airpay-assistant__feedback-btn--down.active {
+    background: #fef2f2;
+    border-color: #dc2626;
+    color: #dc2626;
+}
+
+/* ═══ Message Loading Skeleton ═══ */
+.airpay-assistant__skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 14px;
+    background: #f3f4f6;
+    border-radius: 16px 16px 16px 4px;
+    max-width: 80%;
+}
+.airpay-assistant__skeleton-line {
+    height: 10px;
+    background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+    background-size: 200% 100%;
+    animation: ap-shimmer 1.5s ease-in-out infinite;
+    border-radius: 4px;
+}
+.airpay-assistant__skeleton-line:nth-child(1) { width: 90%; }
+.airpay-assistant__skeleton-line:nth-child(2) { width: 70%; }
+.airpay-assistant__skeleton-line:nth-child(3) { width: 50%; }
+
+@keyframes ap-shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* Dark mode for feedback + skeleton */
+body.dark-mode .airpay-assistant__feedback-btn { color: #6b7280; }
+body.dark-mode .airpay-assistant__feedback-btn:hover { background: #22252f; border-color: #2d3140; color: #9ca3b4; }
+body.dark-mode .airpay-assistant__skeleton { background: #232733; }
+body.dark-mode .airpay-assistant__skeleton-line { background: linear-gradient(90deg, #2d3140 25%, #232733 50%, #2d3140 75%); background-size: 200% 100%; }
+
 /* Mobile */
 @media (max-width: 590px) {
     .airpay-assistant__panel { width: calc(100vw - 32px); right: -8px; bottom: 64px; max-height: 70vh; }
