@@ -8313,3 +8313,203 @@ body.dark-mode .ap-sp-note--teal {
     color: #fff;
     text-decoration: none;
 }
+
+/* ═══ Sprint 4 — Course Player Progress Bar ═══ */
+.ap-course-progress-bar {
+    background: var(--ap-surface);
+    border: 1px solid var(--ap-border);
+    border-radius: var(--ap-radius-sm);
+    padding: 10px 16px;
+    margin-bottom: 16px;
+}
+.ap-course-progress-bar__info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+.ap-course-progress-bar__back {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    background: var(--ap-bg);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ap-text-secondary);
+    text-decoration: none;
+    transition: background 0.15s;
+    flex-shrink: 0;
+}
+.ap-course-progress-bar__back:hover {
+    background: var(--ap-primary-light);
+    color: var(--ap-primary);
+}
+.ap-course-progress-bar__name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ap-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+}
+.ap-course-progress-bar__stats {
+    font-size: 12px;
+    color: var(--ap-text-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.ap-course-progress-bar__track {
+    height: 6px;
+    background: var(--ap-border);
+    border-radius: 3px;
+    overflow: hidden;
+}
+.ap-course-progress-bar__fill {
+    height: 100%;
+    background: var(--ap-gradient);
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+/* Next Activity CTA */
+.ap-course-next {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--ap-border);
+}
+
+/* Dark mode */
+body.dark-mode .ap-course-progress-bar { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .ap-course-progress-bar__name { color: #e8eaed; }
+body.dark-mode .ap-course-progress-bar__back { background: #22252f; }
+body.dark-mode .ap-course-progress-bar__track { background: #2d3140; }
+
+/* ═══ Sprint 5 — Classrooms + Exams Modernization (CSS Override) ═══ */
+/* Modernize BizLMS classrooms without changing Mustache templates. */
+
+/* Classroom cards */
+.classroom_container {
+    background: var(--ap-surface) !important;
+    border: 1px solid var(--ap-border) !important;
+    border-radius: var(--ap-radius-sm) !important;
+    transition: transform 0.2s, box-shadow 0.2s !important;
+    overflow: hidden;
+    border-left: 4px solid var(--ap-primary) !important;
+}
+.classroom_container:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--ap-shadow-md) !important;
+}
+/* Status-based left border colors */
+.classroom_container.classroomstatusactive_cr { border-left-color: var(--ap-primary) !important; }
+.classroom_container.classroomstatuscompleted_cr { border-left-color: var(--ap-success) !important; }
+.classroom_container.classroomstatuscancelled_cr { border-left-color: var(--ap-danger) !important; }
+.classroom_container.classroomstatusnew_cr { border-left-color: var(--ap-accent) !important; }
+.classroom_container.classroomstatushold_cr { border-left-color: var(--ap-warning) !important; }
+
+/* Classroom name */
+.classroom_name_info .class_name {
+    font-weight: 600 !important;
+    color: var(--ap-text) !important;
+    font-size: 15px !important;
+    text-decoration: none !important;
+}
+.classroom_name_info .class_name:hover { color: var(--ap-primary) !important; }
+
+/* Status badge in classroom */
+.classroom_name_info .bg_banner {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: var(--ap-radius-pill);
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+/* Classroom header gradient */
+.custom_header {
+    background: var(--ap-gradient) !important;
+    border-radius: 0 0 var(--ap-radius-lg) var(--ap-radius-lg) !important;
+}
+
+/* Classroom tabs modernization */
+.classroom_tabs .nav-link {
+    border-radius: 0 !important;
+    font-weight: 500 !important;
+    font-size: 14px !important;
+    padding: 10px 18px !important;
+    border-bottom: 2px solid transparent !important;
+    color: var(--ap-text-secondary) !important;
+    transition: all 0.15s !important;
+}
+.classroom_tabs .nav-link.active,
+.classroom_tabs .nav-link:hover {
+    color: var(--ap-primary) !important;
+    border-bottom-color: var(--ap-primary) !important;
+    background: transparent !important;
+}
+
+/* ═══ Online Exams Modernization ═══ */
+.exam_container,
+.onlineexam_container {
+    background: var(--ap-surface) !important;
+    border: 1px solid var(--ap-border) !important;
+    border-radius: var(--ap-radius-sm) !important;
+    transition: transform 0.2s, box-shadow 0.2s !important;
+    overflow: hidden;
+}
+.exam_container:hover,
+.onlineexam_container:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--ap-shadow-md) !important;
+}
+/* Exam name styling */
+.examname_status a {
+    font-weight: 600 !important;
+    color: var(--ap-text) !important;
+    font-size: 15px !important;
+}
+.examname_status a:hover { color: var(--ap-primary) !important; }
+
+/* Shared BizLMS modernization: action dropdown */
+.action_menu_dropdown .dropdown-menu {
+    border-radius: var(--ap-radius-sm) !important;
+    box-shadow: var(--ap-shadow-md) !important;
+    border: 1px solid var(--ap-border) !important;
+    padding: 6px !important;
+}
+.action_menu_dropdown .dropdown-item {
+    border-radius: 6px !important;
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+    transition: background 0.15s !important;
+}
+.action_menu_dropdown .dropdown-item:hover {
+    background: var(--ap-primary-light) !important;
+    color: var(--ap-primary) !important;
+}
+
+/* BizLMS card view grid spacing */
+.card-wrap.row { gap: 0 !important; }
+.card-wrap .col-lg-3,
+.card-wrap .col-lg-4,
+.card-wrap .col-md-4 {
+    padding: 8px !important;
+}
+
+/* Dark mode for BizLMS cards */
+body.dark-mode .classroom_container,
+body.dark-mode .exam_container,
+body.dark-mode .onlineexam_container {
+    background: #1a1d27 !important;
+    border-color: #2d3140 !important;
+}
+body.dark-mode .classroom_name_info .class_name,
+body.dark-mode .examname_status a {
+    color: #e8eaed !important;
+}
+body.dark-mode .custom_header {
+    background: linear-gradient(135deg, #004d7a, #065a54) !important;
+}
