@@ -1,0 +1,261 @@
+<div class="ap-coursedet">
+
+    <!-- Hero Banner -->
+    <div class="ap-coursedet__hero" style="background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url('{{imageurl}}');">
+        <div class="ap-coursedet__hero-content">
+            <nav class="ap-coursedet__breadcrumb">
+                <a href="{{catalogurl}}">Catalog</a>
+                <span>/</span>
+                <a href="{{catalogurl}}?category={{categoryid}}">{{categoryname}}</a>
+                <span>/</span>
+                <span>{{coursename}}</span>
+            </nav>
+            <h1 class="ap-coursedet__title">{{coursename}}</h1>
+            <div class="ap-coursedet__meta-tags">
+                <span class="ap-badge ap-badge--info">{{categoryname}}</span>
+                {{#has_level}}<span class="ap-badge ap-badge--accent">{{level}}</span>{{/has_level}}
+                {{#has_skill}}<span class="ap-badge ap-badge--success">{{skill}}</span>{{/has_skill}}
+                <span class="ap-badge ap-badge--muted">{{type}}</span>
+            </div>
+            <div class="ap-coursedet__hero-stats">
+                <span><i class="fa fa-users"></i> {{enrolled_count}} enrolled</span>
+                <span><i class="fa fa-check-circle"></i> {{completed_count}} completed</span>
+                {{#has_rating}}<span><i class="fa fa-star" style="color:#fbbf24;"></i> {{rating}}</span>{{/has_rating}}
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content (2-column) -->
+    <div class="ap-coursedet__body">
+        <div class="ap-coursedet__main">
+
+            <!-- Description -->
+            <div class="ap-coursedet__section">
+                <h3 class="ap-coursedet__section-title">About This Course</h3>
+                <div class="ap-coursedet__description">{{{description}}}</div>
+            </div>
+
+            <!-- Course Modules -->
+            {{#has_modules}}
+            <div class="ap-coursedet__section">
+                <h3 class="ap-coursedet__section-title">Course Content</h3>
+                <div class="ap-coursedet__modules">
+                    {{#modules}}
+                    <div class="ap-coursedet__module">
+                        <div class="ap-coursedet__module-header" onclick="this.parentElement.classList.toggle('ap-coursedet__module--open')">
+                            <div class="ap-coursedet__module-left">
+                                <i class="fa fa-chevron-right ap-coursedet__module-arrow"></i>
+                                <span class="ap-coursedet__module-name">{{name}}</span>
+                            </div>
+                            <span class="ap-coursedet__module-count">{{activity_count}} activities</span>
+                        </div>
+                        <div class="ap-coursedet__module-body">
+                            {{#activities}}
+                            <div class="ap-coursedet__activity">
+                                <i class="fa {{icon}} ap-coursedet__activity-icon"></i>
+                                <span>{{name}}</span>
+                                {{#duration}}<small class="ap-coursedet__activity-duration">{{duration}}</small>{{/duration}}
+                            </div>
+                            {{/activities}}
+                        </div>
+                    </div>
+                    {{/modules}}
+                </div>
+            </div>
+            {{/has_modules}}
+
+            <!-- Share -->
+            <div class="ap-coursedet__section">
+                <h3 class="ap-coursedet__section-title">Share This Course</h3>
+                <div class="ap-coursedet__share">
+                    <a href="https://wa.me/?text={{sharetext}}" target="_blank" class="ap-coursedet__share-btn" style="background:#25D366;">
+                        <i class="fa fa-whatsapp"></i> WhatsApp
+                    </a>
+                    <a href="https://www.linkedin.com/sharing/share-offsite/?url={{shareurl}}" target="_blank" class="ap-coursedet__share-btn" style="background:#0077B5;">
+                        <i class="fa fa-linkedin"></i> LinkedIn
+                    </a>
+                    <button onclick="navigator.clipboard.writeText('{{shareurl}}');this.textContent='Copied!';" class="ap-coursedet__share-btn" style="background:#6b7280;">
+                        <i class="fa fa-link"></i> Copy Link
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="ap-coursedet__sidebar">
+            <div class="ap-coursedet__sidebar-card">
+                {{! Enroll / Continue button }}
+                {{#is_enrolled}}
+                <a href="{{viewurl}}" class="ap-btn-gradient" style="width:100%; justify-content:center; margin-bottom:16px;">
+                    <i class="fa fa-play-circle"></i> Continue Learning
+                </a>
+                {{#has_progress}}
+                <div style="margin-bottom:16px;">
+                    <div style="display:flex; justify-content:space-between; font-size:12px; color:#5a6070; margin-bottom:4px;">
+                        <span>Progress</span><span>{{progress}}%</span>
+                    </div>
+                    <div style="height:6px; background:#e2e6ef; border-radius:3px;">
+                        <div style="height:100%; width:{{progress}}%; background:linear-gradient(90deg,#0066A7,#0f7a73); border-radius:3px;"></div>
+                    </div>
+                </div>
+                {{/has_progress}}
+                {{/is_enrolled}}
+                {{^is_enrolled}}
+                {{#can_selfenrol}}
+                <a href="{{enrolurl}}" class="ap-btn-gradient" style="width:100%; justify-content:center; margin-bottom:16px;">
+                    <i class="fa fa-sign-in"></i> Enroll Now
+                </a>
+                {{/can_selfenrol}}
+                {{^can_selfenrol}}
+                <div style="padding:12px; background:#fef3c7; border-radius:8px; font-size:13px; color:#92400e; margin-bottom:16px;">
+                    <i class="fa fa-info-circle"></i> Contact your L&D team for enrollment.
+                </div>
+                {{/can_selfenrol}}
+                {{/is_enrolled}}
+
+                <!-- Course Meta -->
+                <div class="ap-coursedet__meta-list">
+                    {{#has_duration}}<div class="ap-coursedet__meta-item">
+                        <i class="fa fa-clock-o"></i><span>Duration</span><strong>{{duration}}</strong>
+                    </div>{{/has_duration}}
+                    <div class="ap-coursedet__meta-item">
+                        <i class="fa fa-folder-o"></i><span>Category</span><strong>{{categoryname}}</strong>
+                    </div>
+                    {{#has_level}}<div class="ap-coursedet__meta-item">
+                        <i class="fa fa-signal"></i><span>Level</span><strong>{{level}}</strong>
+                    </div>{{/has_level}}
+                    {{#has_skill}}<div class="ap-coursedet__meta-item">
+                        <i class="fa fa-cogs"></i><span>Skill</span><strong>{{skill}}</strong>
+                    </div>{{/has_skill}}
+                    <div class="ap-coursedet__meta-item">
+                        <i class="fa fa-users"></i><span>Enrolled</span><strong>{{enrolled_count}}</strong>
+                    </div>
+                    <div class="ap-coursedet__meta-item">
+                        <i class="fa fa-check"></i><span>Completed</span><strong>{{completed_count}}</strong>
+                    </div>
+                    {{#has_certificate}}<div class="ap-coursedet__meta-item">
+                        <i class="fa fa-certificate"></i><span>Certificate</span><strong>Yes</strong>
+                    </div>{{/has_certificate}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Course Detail — Modern LXP Design */
+.ap-coursedet { max-width: 1200px; margin: 0 auto; font-family: var(--ap-font, 'Montserrat', sans-serif); }
+
+/* Hero */
+.ap-coursedet__hero {
+    background-size: cover; background-position: center;
+    border-radius: 0 0 var(--ap-radius-lg, 20px) var(--ap-radius-lg, 20px);
+    padding: 60px 40px 40px; color: #fff; margin-bottom: 24px;
+    min-height: 240px; display: flex; align-items: flex-end;
+}
+.ap-coursedet__breadcrumb { font-size: 13px; margin-bottom: 12px; opacity: 0.8; }
+.ap-coursedet__breadcrumb a { color: rgba(255,255,255,0.8); text-decoration: none; }
+.ap-coursedet__breadcrumb a:hover { color: #fff; text-decoration: underline; }
+.ap-coursedet__breadcrumb span { margin: 0 6px; }
+.ap-coursedet__title { font-size: 28px; font-weight: 800; margin: 0 0 12px; line-height: 1.2; }
+.ap-coursedet__meta-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.ap-coursedet__hero-stats { display: flex; gap: 20px; font-size: 14px; opacity: 0.9; }
+.ap-coursedet__hero-stats i { margin-right: 4px; }
+
+/* Body 2-column */
+.ap-coursedet__body { display: grid; grid-template-columns: 1fr 340px; gap: 24px; }
+.ap-coursedet__main { min-width: 0; }
+
+/* Sections */
+.ap-coursedet__section {
+    background: var(--ap-surface, #fff); border: 1px solid var(--ap-border, #e3eaf3);
+    border-radius: var(--ap-radius-sm, 12px); padding: 24px; margin-bottom: 20px;
+}
+.ap-coursedet__section-title {
+    font-size: 17px; font-weight: 700; color: var(--ap-text, #1a1a2e);
+    margin: 0 0 16px; position: relative; padding-bottom: 10px;
+}
+.ap-coursedet__section-title::after {
+    content: ''; position: absolute; bottom: 0; left: 0;
+    width: 40px; height: 3px; border-radius: 2px;
+    background: var(--ap-gradient, linear-gradient(135deg, #0066A7, #0f7a73));
+}
+.ap-coursedet__description { font-size: 14px; line-height: 1.7; color: var(--ap-text-secondary, #607286); }
+
+/* Modules accordion */
+.ap-coursedet__module {
+    border: 1px solid var(--ap-border, #e3eaf3); border-radius: 10px;
+    margin-bottom: 8px; overflow: hidden;
+}
+.ap-coursedet__module-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 16px; cursor: pointer; transition: background 0.15s;
+    font-size: 14px; font-weight: 600; color: var(--ap-text, #1a1a2e);
+}
+.ap-coursedet__module-header:hover { background: var(--ap-surface-alt, #f8f9fc); }
+.ap-coursedet__module-left { display: flex; align-items: center; gap: 10px; }
+.ap-coursedet__module-arrow { font-size: 11px; color: var(--ap-text-muted); transition: transform 0.2s; }
+.ap-coursedet__module--open .ap-coursedet__module-arrow { transform: rotate(90deg); }
+.ap-coursedet__module-count { font-size: 12px; color: var(--ap-text-muted); font-weight: 400; }
+.ap-coursedet__module-body {
+    display: none; padding: 0 16px 12px; border-top: 1px solid var(--ap-border);
+}
+.ap-coursedet__module--open .ap-coursedet__module-body { display: block; }
+.ap-coursedet__activity {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0; font-size: 13px; color: var(--ap-text-secondary);
+    border-bottom: 1px solid #f3f5f9;
+}
+.ap-coursedet__activity:last-child { border-bottom: none; }
+.ap-coursedet__activity-icon { width: 20px; text-align: center; color: var(--ap-primary, #0066A7); }
+.ap-coursedet__activity-duration { margin-left: auto; color: var(--ap-text-muted); font-size: 12px; }
+
+/* Share buttons */
+.ap-coursedet__share { display: flex; gap: 8px; flex-wrap: wrap; }
+.ap-coursedet__share-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px; border-radius: 8px; color: #fff;
+    font-size: 13px; font-weight: 500; text-decoration: none; border: none;
+    cursor: pointer; transition: opacity 0.15s; font-family: inherit;
+}
+.ap-coursedet__share-btn:hover { opacity: 0.85; color: #fff; }
+
+/* Sidebar */
+.ap-coursedet__sidebar-card {
+    background: var(--ap-surface); border: 1px solid var(--ap-border);
+    border-radius: var(--ap-radius-sm); padding: 24px;
+    position: sticky; top: 80px;
+}
+.ap-coursedet__meta-list { display: flex; flex-direction: column; gap: 0; }
+.ap-coursedet__meta-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid #f3f5f9;
+    font-size: 13px; color: var(--ap-text-secondary);
+}
+.ap-coursedet__meta-item:last-child { border-bottom: none; }
+.ap-coursedet__meta-item i { width: 20px; text-align: center; color: var(--ap-primary); }
+.ap-coursedet__meta-item strong { margin-left: auto; color: var(--ap-text); font-weight: 600; }
+
+/* Responsive */
+@media (max-width: 992px) {
+    .ap-coursedet__body { grid-template-columns: 1fr; }
+    .ap-coursedet__sidebar-card { position: static; }
+}
+@media (max-width: 590px) {
+    .ap-coursedet__hero { padding: 30px 20px 24px; min-height: 180px; }
+    .ap-coursedet__title { font-size: 22px; }
+    .ap-coursedet__hero-stats { flex-direction: column; gap: 6px; }
+}
+
+/* Dark mode */
+body.dark-mode .ap-coursedet__section { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .ap-coursedet__section-title { color: #e8eaed; }
+body.dark-mode .ap-coursedet__description { color: #9ca3b4; }
+body.dark-mode .ap-coursedet__module { border-color: #2d3140; }
+body.dark-mode .ap-coursedet__module-header { color: #e8eaed; }
+body.dark-mode .ap-coursedet__module-header:hover { background: #22252f; }
+body.dark-mode .ap-coursedet__sidebar-card { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .ap-coursedet__meta-item { border-color: #2d3140; color: #9ca3b4; }
+body.dark-mode .ap-coursedet__meta-item strong { color: #e8eaed; }
+body.dark-mode .ap-coursedet__activity { border-color: #2d3140; color: #9ca3b4; }
+</style>
