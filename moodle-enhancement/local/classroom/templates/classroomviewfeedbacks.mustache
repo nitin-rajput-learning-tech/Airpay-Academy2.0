@@ -1,0 +1,56 @@
+{{#response}}
+{{#viewtypeCard}}
+<div id="feedbacks_tab_content">
+    <table class="ap-sessions-table" id="sessionsdata">
+        <thead>
+            <tr>
+                <th>{{#str}}name{{/str}}</th>
+                <th>{{#str}}type,local_classroom{{/str}}</th>
+                <th>{{#str}}trainer,local_classroom{{/str}}</th>
+                <th>{{#str}}submitted,local_classroom{{/str}}</th>
+                <th>{{#str}}status,local_classroom{{/str}}</th>
+                {{#lineaction}}<th>{{#str}}actions{{/str}}</th>{{/lineaction}}
+            </tr>
+        </thead>
+        <tbody>
+        {{#records}}
+        <tr>
+            <td>
+                {{#feedbackview}}<a href="{{cfgwwwroot}}/local/evaluation/eval_view.php?id={{id}}" style="font-weight:600; color:var(--ap-primary); text-decoration:none;">{{name}}</a>{{/feedbackview}}
+                {{^feedbackview}}<strong>{{name}}</strong>{{/feedbackview}}
+            </td>
+            <td>{{feedbacktype}}</td>
+            <td>{{trainer}}</td>
+            <td><strong>{{submittedcount}}</strong></td>
+            <td>
+                {{#string}}<a href="{{cfgwwwroot}}/local/evaluation/{{url}}.php?id={{id}}" class="ap-badge ap-badge--warning">{{#str}}submit,local_classroom{{/str}}</a>{{/string}}
+                {{^string}}<a href="{{cfgwwwroot}}/local/evaluation/{{url}}.php?id={{id}}" class="ap-badge ap-badge--info">{{#str}}showentries,local_classroom{{/str}}</a>{{/string}}
+            </td>
+            {{#lineaction}}
+            <td class="ap-sessions-table__actions">
+                {{#editicon}}
+                <a href="javascript:void(0);" title="{{#str}}edit{{/str}}" class="ap-sessions-table__action-btn"
+                   onclick="(function(e){ require('local_evaluation/newevaluation').init('createevaluationmodal',1,{{id}},{{classroomid}},'classroom') })(event)">
+                    <i class="fa fa-pencil"></i>
+                </a>
+                {{/editicon}}
+                {{#preview}}
+                <a href="{{cfgwwwroot}}/local/evaluation/show_entries.php?id={{id}}" title="{{#str}}showentries,local_classroom{{/str}}" class="ap-sessions-table__action-btn">
+                    <i class="fa fa-search"></i>
+                </a>
+                {{/preview}}
+                {{#deleteicon}}
+                <a href="javascript:void(0);" title="{{#str}}delete{{/str}}" class="ap-sessions-table__action-btn ap-sessions-table__action-btn--danger"
+                   onclick="(function(e){ require('local_classroom/classroom').deleteConfirm({action:'deleteclassroomevaluation', classroomid: {{classroomid}}, id: {{id}}, feedbackname: '{{{name}}}'}) })(event)">
+                    <i class="fa fa-trash"></i>
+                </a>
+                {{/deleteicon}}
+            </td>
+            {{/lineaction}}
+        </tr>
+        {{/records}}
+        </tbody>
+    </table>
+</div>
+{{/viewtypeCard}}
+{{/response}}

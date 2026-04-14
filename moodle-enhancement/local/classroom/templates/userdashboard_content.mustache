@@ -1,0 +1,21 @@
+<div class="w-full pull-left udb_tab_content classroom_courses" id="classroom_courses">
+    <div class="ap-dash-module-wrap">
+        <div class="ap-dash-module-wrap__header">
+            {{> block_userdashboard/userdashboard_count_info}}
+            {{> local_classroom/userdashboard_inner_tab}}
+        </div>
+        <div class="ap-dash-module-wrap__body">
+            <div class="ap-dash-module-wrap__search">
+                <i class="fa fa-search ap-dash-module-wrap__search-icon"></i>
+                <input id="userdashboard_filter" class="dashboard_filter ap-dash-module-wrap__search-input" type="text" name="dashboard_filter"
+                       placeholder="Search classrooms..."
+                       data-pluginname="local_classroom" data-tabname="{{tabname}}"
+                       data-templatename="local_classroom/dashboard_innercontent"
+                       data-status="{{status}}" value="{{{filter_text}}}">
+            </div>
+            <div class="divslide">
+                {{> local_classroom/dashboard_innercontent}}
+            </div>
+        </div>
+    </div>
+</div>
