@@ -124,4 +124,48 @@
     </div>
 </nav>
 
+{{! ═══ MOBILE BOTTOM NAVIGATION BAR ═══ }}
+{{#isloggedin}}
+<nav class="ap-mobile-nav d-md-none" aria-label="Mobile navigation">
+    <a href="{{{config.wwwroot}}}/my/" class="ap-mobile-nav__item" data-page="dashboard">
+        <i class="fa fa-th-large"></i>
+        <span>Home</span>
+    </a>
+    {{^output.is_siteadmin_only}}
+    <a href="{{{config.wwwroot}}}/local/airpay_catalog/index.php" class="ap-mobile-nav__item" data-page="catalog">
+        <i class="fa fa-search"></i>
+        <span>Explore</span>
+    </a>
+    <a href="{{{config.wwwroot}}}/local/airpay_catalog/mycourses.php" class="ap-mobile-nav__item" data-page="courses">
+        <i class="fa fa-book"></i>
+        <span>Learning</span>
+    </a>
+    {{/output.is_siteadmin_only}}
+    <a href="#" class="ap-mobile-nav__item" data-page="notifications" id="ap-mobile-notif-btn">
+        <i class="fa fa-bell-o"></i>
+        <span>Alerts</span>
+    </a>
+    <a href="{{{config.wwwroot}}}/local/users/profile.php" class="ap-mobile-nav__item" data-page="profile">
+        <i class="fa fa-user-circle-o"></i>
+        <span>Profile</span>
+    </a>
+</nav>
+<script>
+// Highlight active mobile nav item based on current URL.
+(function() {
+    var path = window.location.pathname;
+    var items = document.querySelectorAll('.ap-mobile-nav__item');
+    items.forEach(function(item) {
+        var page = item.getAttribute('data-page');
+        if ((page === 'dashboard' && (path.indexOf('/my/') !== -1 || path.indexOf('/my/dashboard') !== -1)) ||
+            (page === 'catalog' && path.indexOf('airpay_catalog/index') !== -1) ||
+            (page === 'courses' && path.indexOf('mycourses') !== -1) ||
+            (page === 'profile' && path.indexOf('profile') !== -1)) {
+            item.classList.add('ap-mobile-nav__item--active');
+        }
+    });
+})();
+</script>
+{{/isloggedin}}
+
 {{> theme_airpayux/primary-drawer-mobile }}

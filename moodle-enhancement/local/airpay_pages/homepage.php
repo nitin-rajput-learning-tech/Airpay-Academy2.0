@@ -66,7 +66,7 @@ if (empty($featured)) {
 echo '<div class="airpay-homepage">';
 
 // ═══ HERO SECTION ═══
-echo '<section class="airpay-homepage__hero" style="background-image: url(' . $CFG->wwwroot . '/theme/airpayux/pix/brand/bannerimg.png); background-size: cover; background-position: center;"
+echo '<section class="airpay-homepage__hero" style="background-image: url(' . $CFG->wwwroot . '/theme/airpayux/pix/brand/bannerimg.png); background-size: cover; background-position: center;">
     <div class="airpay-homepage__hero-content">
         <span class="airpay-homepage__hero-badge">airpay academy</span>
         <h1 class="airpay-homepage__hero-title">Build Skills That<br>Drive Your Career Forward</h1>
@@ -84,7 +84,7 @@ echo '<section class="airpay-homepage__hero" style="background-image: url(' . $C
 </section>';
 
 // ═══ TRUST BAR ═══
-echo '<section class="airpay-homepage__trust">
+echo '<section class="airpay-homepage__trust ap-scroll-animate">
     <div class="airpay-homepage__trust-item"><i class="fa fa-shield"></i> RBI Compliant</div>
     <div class="airpay-homepage__trust-item"><i class="fa fa-lock"></i> DPDP 2023</div>
     <div class="airpay-homepage__trust-item"><i class="fa fa-certificate"></i> ISO Certified</div>
@@ -92,7 +92,7 @@ echo '<section class="airpay-homepage__trust">
 </section>';
 
 // ═══ LEARNING PILLARS ═══
-echo '<section class="airpay-homepage__pillars">
+echo '<section class="airpay-homepage__pillars ap-scroll-animate">
     <h2>Three Pillars of Learning</h2>
     <div class="airpay-homepage__pillars-grid">';
 
@@ -115,7 +115,7 @@ echo '  </div>
 
 // ═══ FEATURED COURSES ═══
 if (!empty($featured)) {
-    echo '<section class="airpay-homepage__courses">
+    echo '<section class="airpay-homepage__courses ap-scroll-animate">
         <h2>Featured Courses</h2>
         <div class="airpay-homepage__courses-grid">';
 
@@ -140,12 +140,57 @@ if (!empty($featured)) {
 }
 
 // ═══ CTA SECTION ═══
-echo '<section class="airpay-homepage__cta">
+echo '<section class="airpay-homepage__cta ap-scroll-animate">
     <h2>Ready to Start Learning?</h2>
     <p>Join thousands of learners building skills for the digital economy.</p>
     <a href="' . $CFG->wwwroot . '/login/signup.php" class="airpay-btn airpay-btn--primary airpay-btn--lg">Get Started Free</a>
 </section>';
 
 echo '</div>'; // end .airpay-homepage
+
+// ═══ Scroll Animation + Stats Counter ═══
+echo '<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Scroll-triggered fade-in for sections with .ap-scroll-animate
+    if ("IntersectionObserver" in window) {
+        var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add("ap-scroll-animate--visible");
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.15 });
+        document.querySelectorAll(".ap-scroll-animate").forEach(function(el) {
+            observer.observe(el);
+        });
+    } else {
+        // Fallback: show all immediately.
+        document.querySelectorAll(".ap-scroll-animate").forEach(function(el) {
+            el.classList.add("ap-scroll-animate--visible");
+        });
+    }
+
+    // Animated stat counters in hero.
+    document.querySelectorAll(".airpay-homepage__hero-stat strong").forEach(function(el) {
+        var text = el.textContent.trim();
+        var match = text.match(/^(\d+)/);
+        if (!match) return;
+        var target = parseInt(match[1], 10);
+        var suffix = text.replace(/^\d+/, "");
+        var duration = 1500;
+        var start = 0;
+        var startTime = null;
+        function animate(ts) {
+            if (!startTime) startTime = ts;
+            var progress = Math.min((ts - startTime) / duration, 1);
+            var eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+            el.textContent = Math.round(eased * target) + suffix;
+            if (progress < 1) requestAnimationFrame(animate);
+        }
+        requestAnimationFrame(animate);
+    });
+});
+</script>';
 
 echo $OUTPUT->footer();
