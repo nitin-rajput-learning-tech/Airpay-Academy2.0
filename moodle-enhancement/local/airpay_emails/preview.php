@@ -19,14 +19,27 @@ if (!is_siteadmin()) {
 }
 
 // Template key: primary from ?template=, fallback from ?tpl= (underscore→slash).
-$templatekey = optional_param('template', '', PARAM_RAW);
+// Sanitize BOTH parameters BEFORE use to prevent path traversal.
+$templatekey = preg_replace('/[^a-zA-Z0-9_\/]/', '', optional_param('template', '', PARAM_ALPHANUMEXT));
 if (empty($templatekey)) {
-    $templatekey = str_replace('_', '/', optional_param('tpl', '', PARAM_RAW));
+    $tplraw = preg_replace('/[^a-zA-Z0-9_]/', '', optional_param('tpl', '', PARAM_ALPHANUMEXT));
+    $templatekey = str_replace('_', '/', $tplraw);
 }
-// Sanitize: only allow alphanumeric, underscores, slashes.
-$templatekey = preg_replace('/[^a-zA-Z0-9_\/]/', '', $templatekey);
+// Double-check: strip any remaining traversal patterns.
+$templatekey = str_replace(['..', '//'], '', $templatekey);
 
+// Tenant ID with access validation.
 $tenantid = optional_param('tenant', 1, PARAM_INT);
+$valid_tenants = [1, 77, 177];
+if (!in_array($tenantid, $valid_tenants, true)) {
+    $tenantid = 1;
+}
+if (!is_siteadmin()) {
+    // Non-siteadmins can only preview their own tenant.
+    $parts = explode('/', $USER->open_path ?? '');
+    $userorg = (int)($parts[1] ?? 1);
+    $tenantid = $userorg;
+}
 $viewmode = optional_param('view', 'visual', PARAM_ALPHA);
 
 $PAGE->set_url(new moodle_url('/local/airpay_emails/preview.php'));

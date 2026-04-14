@@ -65,7 +65,7 @@ if (is_siteadmin() || has_capability('local/airpay_privacy:manage', context_syst
             'user_email'  => s($r->email),
             'tenant_id'   => $tenantid,
             'type'        => ucfirst(str_replace('_', ' ', $r->request_type)),
-            'type_delete'  => ($r->request_type === 'account_deletion'),
+            'type_delete'  => ($r->request_type === 'account_delete'),
             'type_download' => ($r->request_type === 'data_download'),
             'reason'      => s($r->reason ?? ''),
             'status'      => ucfirst($r->status),

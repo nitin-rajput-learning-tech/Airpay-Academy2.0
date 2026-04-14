@@ -7194,6 +7194,70 @@ body.dark-mode {
    STATIC PAGES (Help, Contact, Privacy, Terms)
    Dark-mode-aware via CSS variables
    ═══════════════════════════════════════════════════════════ */
+/* Page navigation bar */
+.ap-static-page-nav {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 20px;
+    padding: 4px;
+    background: var(--ap-surface, #fff);
+    border: 1px solid var(--ap-border, #e3eaf3);
+    border-radius: 12px;
+    flex-wrap: wrap;
+}
+.ap-static-page-nav__link {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ap-text-secondary, #607286);
+    text-decoration: none;
+    transition: all 0.15s;
+}
+.ap-static-page-nav__link:hover {
+    background: var(--ap-bg, #F2F4FB);
+    color: var(--ap-text, #1a1a2e);
+}
+.ap-static-page-nav__link--active {
+    background: var(--ap-primary-light, #e8f2f9) !important;
+    color: var(--ap-primary, #0066A7) !important;
+    font-weight: 600;
+}
+
+/* Page footer */
+.ap-static-page__footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 32px;
+    padding-top: 16px;
+    border-top: 1px solid var(--ap-border, #e3eaf3);
+}
+.ap-static-page__updated {
+    font-size: 12px;
+    color: var(--ap-text-muted, #8896a6);
+}
+.ap-static-page__updated i { margin-right: 4px; }
+.ap-static-page__back-top {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ap-primary, #0066A7);
+    text-decoration: none;
+}
+.ap-static-page__back-top:hover { text-decoration: underline; }
+
+/* Dark mode */
+body.dark-mode .ap-static-page-nav { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .ap-static-page-nav__link { color: #9ca3b4; }
+body.dark-mode .ap-static-page-nav__link:hover { background: #22252f; color: #e8eaed; }
+body.dark-mode .ap-static-page-nav__link--active { background: #0d2540 !important; color: #60a5fa !important; }
+body.dark-mode .ap-static-page__footer { border-color: #2d3140; }
+
+@media (max-width: 590px) {
+    .ap-static-page-nav { flex-direction: column; }
+    .ap-static-page__footer { flex-direction: column; gap: 8px; text-align: center; }
+}
+
 .ap-static-page {
     font-family: 'Montserrat', -apple-system, sans-serif;
 }
