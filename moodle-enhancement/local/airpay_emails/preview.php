@@ -18,13 +18,11 @@ if (!is_siteadmin()) {
     require_capability('local/airpay_emails:preview', $context);
 }
 
-$templatekey = optional_param('template', '', PARAM_ALPHANUMEXT);
-// Allow slashes in template key (e.g. compliance/deadline_warning).
-$templatekey = str_replace('_', '/', optional_param('tpl', '', PARAM_RAW));
+// Template key: primary from ?template=, fallback from ?tpl= (underscore→slash).
+$templatekey = optional_param('template', '', PARAM_RAW);
 if (empty($templatekey)) {
-    $templatekey = optional_param('template', '', PARAM_RAW);
+    $templatekey = str_replace('_', '/', optional_param('tpl', '', PARAM_RAW));
 }
-$templatekey = clean_param($templatekey, PARAM_PATH);
 // Sanitize: only allow alphanumeric, underscores, slashes.
 $templatekey = preg_replace('/[^a-zA-Z0-9_\/]/', '', $templatekey);
 

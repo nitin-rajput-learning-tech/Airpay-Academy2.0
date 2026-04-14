@@ -463,6 +463,19 @@
                 </div>
             </div>
             {{/hascontinuecourses}}
+            {{^hascontinuecourses}}
+            <div class="airpay-dash__section">
+                <h3 class="airpay-dash__section-title"><i class="fa fa-play-circle" aria-hidden="true"></i> Continue Learning</h3>
+                <div class="ap-empty-state">
+                    <i class="fa fa-graduation-cap ap-empty-state__icon"></i>
+                    <h4 class="ap-empty-state__title">No courses in progress</h4>
+                    <p class="ap-empty-state__message">Browse the catalog to find courses that match your interests and career goals.</p>
+                    <a href="{{{config.wwwroot}}}/local/airpay_catalog/index.php" class="ap-empty-state__cta">
+                        <i class="fa fa-search"></i> Browse Catalog
+                    </a>
+                </div>
+            </div>
+            {{/hascontinuecourses}}
 
             {{! ═══ TWO-COLUMN: Deadlines + Timeline ═══ }}
             <div class="airpay-dash__two-col">
@@ -473,7 +486,7 @@
                     <div class="airpay-dash__deadline-list">
                         {{#deadlines}}
                         <div class="airpay-dash__deadline-item {{#urgent}}airpay-dash__deadline-item--urgent{{/urgent}}">
-                            <div class="airpay-dash__deadline-icon">
+                            <div class="airpay-dash__deadline-icon {{#urgent}}airpay-dash__deadline-icon--urgent{{/urgent}}{{^urgent}}airpay-dash__deadline-icon--normal{{/urgent}}">
                                 <i class="fa {{#urgent}}fa-exclamation-circle{{/urgent}}{{^urgent}}fa-clock-o{{/urgent}}" aria-hidden="true"></i>
                             </div>
                             <div class="airpay-dash__deadline-info">

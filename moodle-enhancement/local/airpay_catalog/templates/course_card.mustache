@@ -1,25 +1,26 @@
-{{!
-    @template local_airpay_catalog/course_card
-
-    Rich course card for the LXP catalog.
-
-    Context variables:
-    - id, fullname, shortname, summary, categoryname
-    - enrolled_count, level, has_level, type
-    - is_enrolled, is_completed, is_new
-    - viewurl, detailurl, imageurl
-}}
 <div class="airpay-catalog__card">
     <a href="{{detailurl}}" class="airpay-catalog__card-link">
         <div class="airpay-catalog__card-thumb">
             <span class="airpay-catalog__card-code">{{shortname}}</span>
-            {{#is_new}}<span class="airpay-catalog__badge airpay-catalog__badge--new">New</span>{{/is_new}}
+            {{#is_new}}<span class="airpay-catalog__badge airpay-catalog__badge--new">NEW</span>{{/is_new}}
             {{#is_completed}}<span class="airpay-catalog__badge airpay-catalog__badge--done"><i class="fa fa-check"></i></span>{{/is_completed}}
             <span class="airpay-catalog__card-type">{{type}}</span>
+            {{#has_level}}
+            <span class="airpay-catalog__card-difficulty airpay-catalog__card-difficulty--{{level_class}}">{{level}}</span>
+            {{/has_level}}
+            <!-- Hover overlay -->
+            <div class="airpay-catalog__card-overlay">
+                <p>{{summary}}</p>
+                {{^is_enrolled}}
+                <span class="airpay-catalog__btn airpay-catalog__btn--enroll">View Details</span>
+                {{/is_enrolled}}
+                {{#is_enrolled}}
+                <span class="airpay-catalog__btn airpay-catalog__btn--continue">Continue</span>
+                {{/is_enrolled}}
+            </div>
         </div>
         <div class="airpay-catalog__card-body">
             <h4 class="airpay-catalog__card-title">{{fullname}}</h4>
-            <p class="airpay-catalog__card-summary">{{summary}}</p>
             <div class="airpay-catalog__card-meta">
                 <span class="airpay-catalog__card-category">{{categoryname}}</span>
                 {{#has_level}}
@@ -34,7 +35,7 @@
                 <span class="airpay-catalog__btn airpay-catalog__btn--continue">Continue</span>
                 {{/is_enrolled}}
                 {{^is_enrolled}}
-                <span class="airpay-catalog__btn airpay-catalog__btn--enroll">View Details</span>
+                <span class="airpay-catalog__btn airpay-catalog__btn--enroll">Enroll</span>
                 {{/is_enrolled}}
             </div>
         </div>
