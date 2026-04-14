@@ -132,59 +132,107 @@
                     {{> core/moremenu}}
                 </div>
             {{/secondarymoremenu}}
+            {{! ═══ AIRPAY COURSE PROGRESS BAR (sticky top) ═══ }}
+            {{#ap_has_progress}}
+            <div class="ap-course-progress-bar">
+                <div class="ap-course-progress-bar__info">
+                    <a href="{{ap_course_url}}" class="ap-course-progress-bar__back" title="Back to course">
+                        <i class="fa fa-arrow-left"></i>
+                    </a>
+                    {{#ap_has_sidebar}}
+                    <button class="ap-course-progress-bar__toggle" id="ap-sidebar-toggle" title="Toggle sidebar">
+                        <i class="fa fa-bars"></i>
+                    </button>
+                    {{/ap_has_sidebar}}
+                    <span class="ap-course-progress-bar__name">{{ap_course_name}}</span>
+                    <span class="ap-course-progress-bar__stats">{{ap_course_completed}}/{{ap_course_total}} &middot; {{ap_course_progress}}%</span>
+                </div>
+                <div class="ap-course-progress-bar__track">
+                    <div class="ap-course-progress-bar__fill" style="width:{{ap_course_progress}}%;"></div>
+                </div>
+            </div>
+            {{/ap_has_progress}}
+
             <div id="page-content" class="pb-3 d-print-block">
-                <div id="region-main-box">
-                    {{#hasregionmainsettingsmenu}}
-                    <div id="region-main-settings-menu" class="d-print-none">
-                        <div> {{{ regionmainsettingsmenu }}} </div>
-                    </div>
-                    {{/hasregionmainsettingsmenu}}
-                    <section id="region-main" aria-label="{{#str}}content{{/str}}" >
+                <div class="ap-course-player {{#ap_has_sidebar}}ap-course-player--has-sidebar{{/ap_has_sidebar}}">
 
-                        {{! ═══ AIRPAY COURSE PROGRESS BAR ═══ }}
-                        {{#ap_has_progress}}
-                        <div class="ap-course-progress-bar">
-                            <div class="ap-course-progress-bar__info">
-                                <a href="{{ap_course_url}}" class="ap-course-progress-bar__back" title="Back to course">
-                                    <i class="fa fa-arrow-left"></i>
-                                </a>
-                                <span class="ap-course-progress-bar__name">{{ap_course_name}}</span>
-                                <span class="ap-course-progress-bar__stats">{{ap_course_completed}}/{{ap_course_total}} activities &middot; {{ap_course_progress}}%</span>
-                            </div>
-                            <div class="ap-course-progress-bar__track">
-                                <div class="ap-course-progress-bar__fill" style="width:{{ap_course_progress}}%;"></div>
-                            </div>
+                    {{! ═══ COURSE SIDEBAR — Module List ═══ }}
+                    {{#ap_has_sidebar}}
+                    <aside class="ap-course-sidebar" id="ap-course-sidebar">
+                        <div class="ap-course-sidebar__header">
+                            <h4 class="ap-course-sidebar__title">Course Content</h4>
+                            <span class="ap-course-sidebar__progress-label">{{ap_course_progress}}% complete</span>
                         </div>
-                        {{/ap_has_progress}}
-
-                        {{#hasregionmainsettingsmenu}}
-                            <div class="region_main_settings_menu_proxy"></div>
-                        {{/hasregionmainsettingsmenu}}
-                        {{{ output.course_content_header }}}
-                        {{#headercontent}}
-                            {{> core/activity_header }}
-                        {{/headercontent}}
-                        {{#overflow}}
-                            <div class="container-fluid tertiary-navigation">
-                                <div class="navitem">
-                                    {{> core/url_select}}
+                        <div class="ap-course-sidebar__progress-track">
+                            <div class="ap-course-sidebar__progress-fill" style="width:{{ap_course_progress}}%;"></div>
+                        </div>
+                        <nav class="ap-course-sidebar__nav">
+                            {{#ap_sidebar_sections}}
+                            <div class="ap-course-sidebar__section">
+                                <div class="ap-course-sidebar__section-header">
+                                    <span class="ap-course-sidebar__section-name">{{name}}</span>
+                                    <span class="ap-course-sidebar__section-count">{{count}}</span>
                                 </div>
+                                <ul class="ap-course-sidebar__list">
+                                    {{#activities}}
+                                    <li class="ap-course-sidebar__item {{#is_current}}ap-course-sidebar__item--current{{/is_current}} {{#is_done}}ap-course-sidebar__item--done{{/is_done}}">
+                                        <a href="{{url}}" class="ap-course-sidebar__link">
+                                            {{#is_done}}
+                                            <i class="fa fa-check-circle ap-course-sidebar__icon ap-course-sidebar__icon--done"></i>
+                                            {{/is_done}}
+                                            {{#is_current}}
+                                            <i class="fa fa-play-circle ap-course-sidebar__icon ap-course-sidebar__icon--current"></i>
+                                            {{/is_current}}
+                                            {{#is_todo}}
+                                            <i class="fa {{icon}} ap-course-sidebar__icon"></i>
+                                            {{/is_todo}}
+                                            <span class="ap-course-sidebar__item-name">{{name}}</span>
+                                        </a>
+                                    </li>
+                                    {{/activities}}
+                                </ul>
                             </div>
-                        {{/overflow}}
-                        {{{ output.main_content }}}
-                        {{{ output.activity_navigation }}}
-                        {{{ output.course_content_footer }}}
+                            {{/ap_sidebar_sections}}
+                        </nav>
+                    </aside>
+                    {{/ap_has_sidebar}}
 
-                        {{! ═══ AIRPAY NEXT ACTIVITY CTA ═══ }}
-                        {{#ap_has_next}}
-                        <div class="ap-course-next">
-                            <a href="{{ap_next_url}}" class="ap-btn-gradient">
-                                Next: {{ap_next_name}} <i class="fa fa-arrow-right"></i>
-                            </a>
+                    {{! ═══ MAIN CONTENT AREA ═══ }}
+                    <div id="region-main-box" class="ap-course-player__main">
+                        {{#hasregionmainsettingsmenu}}
+                        <div id="region-main-settings-menu" class="d-print-none">
+                            <div> {{{ regionmainsettingsmenu }}} </div>
                         </div>
-                        {{/ap_has_next}}
+                        {{/hasregionmainsettingsmenu}}
+                        <section id="region-main" aria-label="{{#str}}content{{/str}}" >
+                            {{#hasregionmainsettingsmenu}}
+                                <div class="region_main_settings_menu_proxy"></div>
+                            {{/hasregionmainsettingsmenu}}
+                            {{{ output.course_content_header }}}
+                            {{#headercontent}}
+                                {{> core/activity_header }}
+                            {{/headercontent}}
+                            {{#overflow}}
+                                <div class="container-fluid tertiary-navigation">
+                                    <div class="navitem">
+                                        {{> core/url_select}}
+                                    </div>
+                                </div>
+                            {{/overflow}}
+                            {{{ output.main_content }}}
+                            {{{ output.activity_navigation }}}
+                            {{{ output.course_content_footer }}}
 
-                    </section>
+                            {{! ═══ AIRPAY NEXT ACTIVITY CTA ═══ }}
+                            {{#ap_has_next}}
+                            <div class="ap-course-next">
+                                <a href="{{ap_next_url}}" class="ap-btn-gradient ap-course-next__btn">
+                                    Next: {{ap_next_name}} <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </div>
+                            {{/ap_has_next}}
+                        </section>
+                    </div>
                 </div>
             </div>
         </div>
@@ -202,3 +250,49 @@ require(['theme_airpayux/loader', 'theme_airpayux/drawer'], function(Loader, Dra
     M.util.js_complete('theme_airpayux/loader');
 });
 {{/js}}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var sidebar = document.getElementById('ap-course-sidebar');
+    var toggleBtn = document.getElementById('ap-sidebar-toggle');
+    if (!sidebar || !toggleBtn) return;
+
+    // Restore saved state.
+    var savedState = localStorage.getItem('ap_sidebar_open');
+    if (savedState === 'false') {
+        sidebar.classList.add('ap-course-sidebar--collapsed');
+    }
+
+    // Toggle sidebar.
+    toggleBtn.addEventListener('click', function() {
+        sidebar.classList.toggle('ap-course-sidebar--collapsed');
+        localStorage.setItem('ap_sidebar_open',
+            !sidebar.classList.contains('ap-course-sidebar--collapsed'));
+    });
+
+    // Scroll current activity into view.
+    var currentItem = sidebar.querySelector('.ap-course-sidebar__item--current');
+    if (currentItem) {
+        setTimeout(function() {
+            currentItem.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }, 300);
+    }
+
+    // Keyboard shortcuts.
+    document.addEventListener('keydown', function(e) {
+        // Don't trigger in input fields.
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+        // [B] Toggle sidebar.
+        if (e.key === 'b' && !e.ctrlKey && !e.metaKey) {
+            sidebar.classList.toggle('ap-course-sidebar--collapsed');
+            localStorage.setItem('ap_sidebar_open',
+                !sidebar.classList.contains('ap-course-sidebar--collapsed'));
+        }
+        // [N] Next activity.
+        if (e.key === 'n' && !e.ctrlKey && !e.metaKey) {
+            var nextBtn = document.querySelector('.ap-course-next__btn');
+            if (nextBtn) window.location.href = nextBtn.href;
+        }
+    });
+});
+</script>

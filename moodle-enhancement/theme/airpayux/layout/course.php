@@ -168,6 +168,58 @@ if ($courseid > 1 && isloggedin() && !is_siteadmin()) {
         $templatecontext['ap_next_name'] = $nextactivity['name'] ?? '';
         $templatecontext['ap_next_url'] = $nextactivity['url'] ?? '';
         $templatecontext['ap_has_progress'] = ($totalactivities > 0);
+
+        // ─── Build sidebar module tree for course player ───
+        $ap_sidebar_sections = [];
+        foreach ($modinfo->get_section_info_all() as $section) {
+            if ($section->section == 0) continue;
+            $sectionactivities = [];
+            if (!empty($modinfo->sections[$section->section])) {
+                foreach ($modinfo->sections[$section->section] as $modnumber) {
+                    $cm = $modinfo->cms[$modnumber];
+                    if (!$cm->visible || !$cm->uservisible) continue;
+                    if (!$cm->url) continue; // Skip labels.
+                    $iconmap = ['scorm' => 'fa-play-circle', 'quiz' => 'fa-question-circle',
+                        'assign' => 'fa-pencil-square-o', 'forum' => 'fa-comments',
+                        'page' => 'fa-file-text', 'url' => 'fa-external-link',
+                        'resource' => 'fa-file-o', 'feedback' => 'fa-star-half-o',
+                        'choice' => 'fa-check-square-o', 'data' => 'fa-database',
+                        'glossary' => 'fa-book', 'wiki' => 'fa-wikipedia-w',
+                        'lesson' => 'fa-graduation-cap', 'workshop' => 'fa-wrench',
+                        'h5pactivity' => 'fa-puzzle-piece', 'lti' => 'fa-external-link-square'];
+                    $status = 'not_started';
+                    if ($completion->is_enabled()) {
+                        $cdata = $completion->get_data($cm, true, $USER->id);
+                        if ($cdata->completionstate == COMPLETION_COMPLETE ||
+                            $cdata->completionstate == COMPLETION_COMPLETE_PASS) {
+                            $status = 'completed';
+                        } elseif ($cm->id == $currentcmid) {
+                            $status = 'current';
+                        }
+                    } elseif ($cm->id == $currentcmid) {
+                        $status = 'current';
+                    }
+                    $sectionactivities[] = [
+                        'name'       => format_string($cm->name),
+                        'url'        => $cm->url->out(false),
+                        'icon'       => $iconmap[$cm->modname] ?? 'fa-circle-o',
+                        'is_current' => ($cm->id == $currentcmid),
+                        'is_done'    => ($status === 'completed'),
+                        'is_todo'    => ($status === 'not_started' && $cm->id != $currentcmid),
+                    ];
+                }
+            }
+            if (!empty($sectionactivities)) {
+                $sname = get_section_name($courseobj, $section);
+                $ap_sidebar_sections[] = [
+                    'name'       => $sname ?: 'Section ' . $section->section,
+                    'activities' => $sectionactivities,
+                    'count'      => count($sectionactivities),
+                ];
+            }
+        }
+        $templatecontext['ap_sidebar_sections'] = $ap_sidebar_sections;
+        $templatecontext['ap_has_sidebar'] = !empty($ap_sidebar_sections);
     } catch (Exception $e) {
         // Non-fatal — layout renders without enhancements.
     }
