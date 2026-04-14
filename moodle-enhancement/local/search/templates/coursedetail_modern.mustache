@@ -1,7 +1,7 @@
 <div class="ap-coursedet">
 
-    <!-- Hero Banner -->
-    <div class="ap-coursedet__hero" style="background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url('{{imageurl}}');">
+    {{! ═══ Hero Banner ═══ }}
+    <div class="ap-coursedet__hero" style="background-image: linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.75)), url('{{imageurl}}');">
         <div class="ap-coursedet__hero-content">
             <nav class="ap-coursedet__breadcrumb">
                 <a href="{{catalogurl}}">Catalog</a>
@@ -20,25 +20,43 @@
             <div class="ap-coursedet__hero-stats">
                 <span><i class="fa fa-users"></i> {{enrolled_count}} enrolled</span>
                 <span><i class="fa fa-check-circle"></i> {{completed_count}} completed</span>
-                {{#has_rating}}<span><i class="fa fa-star" style="color:#fbbf24;"></i> {{rating}}</span>{{/has_rating}}
+                {{#completion_rate}}<span><i class="fa fa-trophy" style="color:#fbbf24;"></i> {{completion_rate}}% completion rate</span>{{/completion_rate}}
             </div>
         </div>
     </div>
 
-    <!-- Main Content (2-column) -->
+    {{! ═══ Main Content (2-column) ═══ }}
     <div class="ap-coursedet__body">
         <div class="ap-coursedet__main">
 
-            <!-- Description -->
+            {{! About / Description }}
             <div class="ap-coursedet__section">
                 <h3 class="ap-coursedet__section-title">About This Course</h3>
                 <div class="ap-coursedet__description">{{{description}}}</div>
             </div>
 
-            <!-- Course Modules -->
+            {{! What You'll Learn — auto-generated from section names }}
             {{#has_modules}}
             <div class="ap-coursedet__section">
-                <h3 class="ap-coursedet__section-title">Course Content</h3>
+                <h3 class="ap-coursedet__section-title">What You'll Learn</h3>
+                <div class="ap-coursedet__highlights">
+                    {{#modules}}
+                    <div class="ap-coursedet__highlight">
+                        <i class="fa fa-check-circle"></i>
+                        <span>{{name}} <small>({{activity_count}} activities)</small></span>
+                    </div>
+                    {{/modules}}
+                </div>
+            </div>
+            {{/has_modules}}
+
+            {{! Course Modules / Content Accordion }}
+            {{#has_modules}}
+            <div class="ap-coursedet__section">
+                <h3 class="ap-coursedet__section-title">
+                    Course Content
+                    <span class="ap-coursedet__section-badge">{{total_sections}} sections · {{total_activities}} activities</span>
+                </h3>
                 <div class="ap-coursedet__modules">
                     {{#modules}}
                     <div class="ap-coursedet__module">
@@ -51,10 +69,22 @@
                         </div>
                         <div class="ap-coursedet__module-body">
                             {{#activities}}
-                            <div class="ap-coursedet__activity">
+                            <div class="ap-coursedet__activity {{#is_complete}}ap-coursedet__activity--done{{/is_complete}}">
+                                {{#is_complete}}
+                                <i class="fa fa-check-circle ap-coursedet__activity-icon ap-coursedet__activity-icon--done"></i>
+                                {{/is_complete}}
+                                {{#is_progress}}
+                                <i class="fa fa-play-circle ap-coursedet__activity-icon ap-coursedet__activity-icon--progress"></i>
+                                {{/is_progress}}
+                                {{^is_complete}}{{^is_progress}}
+                                {{#is_locked}}
+                                <i class="fa fa-lock ap-coursedet__activity-icon ap-coursedet__activity-icon--locked"></i>
+                                {{/is_locked}}
+                                {{^is_locked}}
                                 <i class="fa {{icon}} ap-coursedet__activity-icon"></i>
-                                <span>{{name}}</span>
-                                {{#duration}}<small class="ap-coursedet__activity-duration">{{duration}}</small>{{/duration}}
+                                {{/is_locked}}
+                                {{/is_progress}}{{/is_complete}}
+                                <span {{#is_complete}}style="text-decoration: line-through; opacity: 0.6;"{{/is_complete}}>{{name}}</span>
                             </div>
                             {{/activities}}
                         </div>
@@ -64,60 +94,100 @@
             </div>
             {{/has_modules}}
 
-            <!-- Share -->
+            {{! Share }}
             <div class="ap-coursedet__section">
                 <h3 class="ap-coursedet__section-title">Share This Course</h3>
                 <div class="ap-coursedet__share">
-                    <a href="https://wa.me/?text={{sharetext}}" target="_blank" class="ap-coursedet__share-btn" style="background:#25D366;">
+                    <a href="https://wa.me/?text={{sharetext}}" target="_blank" class="ap-coursedet__share-btn ap-coursedet__share-btn--whatsapp">
                         <i class="fa fa-whatsapp"></i> WhatsApp
                     </a>
-                    <a href="https://www.linkedin.com/sharing/share-offsite/?url={{shareurl}}" target="_blank" class="ap-coursedet__share-btn" style="background:#0077B5;">
+                    <a href="https://www.linkedin.com/sharing/share-offsite/?url={{shareurl}}" target="_blank" class="ap-coursedet__share-btn ap-coursedet__share-btn--linkedin">
                         <i class="fa fa-linkedin"></i> LinkedIn
                     </a>
-                    <button onclick="navigator.clipboard.writeText('{{shareurl}}');this.textContent='Copied!';" class="ap-coursedet__share-btn" style="background:#6b7280;">
+                    <a href="https://twitter.com/intent/tweet?text={{sharetext}}" target="_blank" class="ap-coursedet__share-btn ap-coursedet__share-btn--twitter">
+                        <i class="fa fa-twitter"></i> Twitter
+                    </a>
+                    <button onclick="navigator.clipboard.writeText('{{shareurl}}');this.innerHTML='<i class=\'fa fa-check\'></i> Copied!';setTimeout(()=>this.innerHTML='<i class=\'fa fa-link\'></i> Copy Link',2000);" class="ap-coursedet__share-btn ap-coursedet__share-btn--copy">
                         <i class="fa fa-link"></i> Copy Link
                     </button>
                 </div>
             </div>
+
+            {{! Related Courses }}
+            {{#has_related}}
+            <div class="ap-coursedet__section">
+                <h3 class="ap-coursedet__section-title">Related Courses</h3>
+                <div class="ap-coursedet__related">
+                    {{#related_courses}}
+                    <a href="{{detailurl}}" class="ap-coursedet__related-card">
+                        <div class="ap-coursedet__related-thumb">
+                            <span>{{shortname}}</span>
+                        </div>
+                        <div class="ap-coursedet__related-info">
+                            <h5>{{fullname}}</h5>
+                            <span class="ap-coursedet__related-cta">View Details <i class="fa fa-arrow-right"></i></span>
+                        </div>
+                    </a>
+                    {{/related_courses}}
+                </div>
+            </div>
+            {{/has_related}}
         </div>
 
-        <!-- Sidebar -->
+        {{! ═══ Sidebar (Sticky) ═══ }}
         <div class="ap-coursedet__sidebar">
             <div class="ap-coursedet__sidebar-card">
-                {{! Enroll / Continue button }}
+                {{! Enroll / Continue CTA }}
                 {{#is_enrolled}}
-                <a href="{{viewurl}}" class="ap-btn-gradient" style="width:100%; justify-content:center; margin-bottom:16px;">
+                <a href="{{viewurl}}" class="ap-btn-gradient ap-coursedet__cta">
                     <i class="fa fa-play-circle"></i> Continue Learning
                 </a>
                 {{#has_progress}}
-                <div style="margin-bottom:16px;">
-                    <div style="display:flex; justify-content:space-between; font-size:12px; color:#5a6070; margin-bottom:4px;">
+                <div class="ap-coursedet__sidebar-progress">
+                    <div class="ap-coursedet__sidebar-progress-header">
                         <span>Progress</span><span>{{progress}}%</span>
                     </div>
-                    <div style="height:6px; background:#e2e6ef; border-radius:3px;">
-                        <div style="height:100%; width:{{progress}}%; background:linear-gradient(90deg,#0066A7,#0f7a73); border-radius:3px;"></div>
+                    <div class="ap-coursedet__sidebar-progress-bar">
+                        <div class="ap-coursedet__sidebar-progress-fill" style="width:{{progress}}%;"></div>
                     </div>
                 </div>
                 {{/has_progress}}
                 {{/is_enrolled}}
                 {{^is_enrolled}}
                 {{#can_selfenrol}}
-                <a href="{{enrolurl}}" class="ap-btn-gradient" style="width:100%; justify-content:center; margin-bottom:16px;">
-                    <i class="fa fa-sign-in"></i> Enroll Now
+                <a href="{{enrolurl}}" class="ap-btn-gradient ap-coursedet__cta">
+                    <i class="fa fa-sign-in"></i> Enroll Now — Free
                 </a>
                 {{/can_selfenrol}}
                 {{^can_selfenrol}}
-                <div style="padding:12px; background:#fef3c7; border-radius:8px; font-size:13px; color:#92400e; margin-bottom:16px;">
+                <div class="ap-coursedet__sidebar-notice">
                     <i class="fa fa-info-circle"></i> Contact your L&D team for enrollment.
                 </div>
                 {{/can_selfenrol}}
                 {{/is_enrolled}}
 
-                <!-- Course Meta -->
+                {{! Social Proof }}
+                <div class="ap-coursedet__social-proof">
+                    <div class="ap-coursedet__social-proof-item">
+                        <i class="fa fa-users"></i>
+                        <strong>{{enrolled_count}}</strong> learners enrolled
+                    </div>
+                    {{#completion_rate}}
+                    <div class="ap-coursedet__social-proof-item">
+                        <i class="fa fa-trophy"></i>
+                        <strong>{{completion_rate}}%</strong> completion rate
+                    </div>
+                    {{/completion_rate}}
+                    {{#has_certificate}}
+                    <div class="ap-coursedet__social-proof-item">
+                        <i class="fa fa-certificate"></i>
+                        <strong>Certificate</strong> on completion
+                    </div>
+                    {{/has_certificate}}
+                </div>
+
+                {{! Course Meta }}
                 <div class="ap-coursedet__meta-list">
-                    {{#has_duration}}<div class="ap-coursedet__meta-item">
-                        <i class="fa fa-clock-o"></i><span>Duration</span><strong>{{duration}}</strong>
-                    </div>{{/has_duration}}
                     <div class="ap-coursedet__meta-item">
                         <i class="fa fa-folder-o"></i><span>Category</span><strong>{{categoryname}}</strong>
                     </div>
@@ -128,14 +198,11 @@
                         <i class="fa fa-cogs"></i><span>Skill</span><strong>{{skill}}</strong>
                     </div>{{/has_skill}}
                     <div class="ap-coursedet__meta-item">
-                        <i class="fa fa-users"></i><span>Enrolled</span><strong>{{enrolled_count}}</strong>
+                        <i class="fa fa-list-ul"></i><span>Content</span><strong>{{total_sections}} sections</strong>
                     </div>
                     <div class="ap-coursedet__meta-item">
-                        <i class="fa fa-check"></i><span>Completed</span><strong>{{completed_count}}</strong>
+                        <i class="fa fa-puzzle-piece"></i><span>Activities</span><strong>{{total_activities}}</strong>
                     </div>
-                    {{#has_certificate}}<div class="ap-coursedet__meta-item">
-                        <i class="fa fa-certificate"></i><span>Certificate</span><strong>Yes</strong>
-                    </div>{{/has_certificate}}
                 </div>
             </div>
         </div>
@@ -143,7 +210,7 @@
 </div>
 
 <style>
-/* Course Detail — Modern LXP Design */
+/* ═══ Course Detail — Modern LXP Design ═══ */
 .ap-coursedet { max-width: 1200px; margin: 0 auto; font-family: var(--ap-font, 'Montserrat', sans-serif); }
 
 /* Hero */
@@ -174,13 +241,27 @@
 .ap-coursedet__section-title {
     font-size: 17px; font-weight: 700; color: var(--ap-text, #1a1a2e);
     margin: 0 0 16px; position: relative; padding-bottom: 10px;
+    display: flex; align-items: center; gap: 10px;
 }
 .ap-coursedet__section-title::after {
     content: ''; position: absolute; bottom: 0; left: 0;
     width: 40px; height: 3px; border-radius: 2px;
     background: var(--ap-gradient, linear-gradient(135deg, #0066A7, #0f7a73));
 }
+.ap-coursedet__section-badge {
+    font-size: 12px; font-weight: 400; color: var(--ap-text-muted, #8896a6);
+    margin-left: auto;
+}
 .ap-coursedet__description { font-size: 14px; line-height: 1.7; color: var(--ap-text-secondary, #607286); }
+
+/* What You'll Learn */
+.ap-coursedet__highlights { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ap-coursedet__highlight {
+    display: flex; align-items: flex-start; gap: 10px;
+    font-size: 13px; color: var(--ap-text, #1a1a2e);
+}
+.ap-coursedet__highlight i { color: #16a34a; margin-top: 2px; flex-shrink: 0; }
+.ap-coursedet__highlight small { color: var(--ap-text-muted); }
 
 /* Modules accordion */
 .ap-coursedet__module {
@@ -207,8 +288,11 @@
     border-bottom: 1px solid #f3f5f9;
 }
 .ap-coursedet__activity:last-child { border-bottom: none; }
-.ap-coursedet__activity-icon { width: 20px; text-align: center; color: var(--ap-primary, #0066A7); }
-.ap-coursedet__activity-duration { margin-left: auto; color: var(--ap-text-muted); font-size: 12px; }
+.ap-coursedet__activity-icon { width: 20px; text-align: center; color: var(--ap-primary, #0066A7); flex-shrink: 0; }
+.ap-coursedet__activity-icon--done { color: #16a34a !important; }
+.ap-coursedet__activity-icon--progress { color: #0066A7 !important; }
+.ap-coursedet__activity-icon--locked { color: #d1d5db !important; }
+.ap-coursedet__activity--done { opacity: 0.65; }
 
 /* Share buttons */
 .ap-coursedet__share { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -216,9 +300,34 @@
     display: inline-flex; align-items: center; gap: 6px;
     padding: 8px 14px; border-radius: 8px; color: #fff;
     font-size: 13px; font-weight: 500; text-decoration: none; border: none;
-    cursor: pointer; transition: opacity 0.15s; font-family: inherit;
+    cursor: pointer; transition: opacity 0.15s, transform 0.1s; font-family: inherit;
 }
-.ap-coursedet__share-btn:hover { opacity: 0.85; color: #fff; }
+.ap-coursedet__share-btn:hover { opacity: 0.85; color: #fff; transform: translateY(-1px); }
+.ap-coursedet__share-btn--whatsapp { background: #25D366; }
+.ap-coursedet__share-btn--linkedin { background: #0077B5; }
+.ap-coursedet__share-btn--twitter { background: #1DA1F2; }
+.ap-coursedet__share-btn--copy { background: #6b7280; }
+
+/* Related Courses */
+.ap-coursedet__related { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ap-coursedet__related-card {
+    display: flex; gap: 12px; padding: 12px; border-radius: 10px;
+    border: 1px solid var(--ap-border); text-decoration: none;
+    transition: all 0.2s;
+}
+.ap-coursedet__related-card:hover { border-color: var(--ap-primary); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+.ap-coursedet__related-thumb {
+    width: 56px; height: 56px; border-radius: 10px; flex-shrink: 0;
+    background: linear-gradient(135deg, #0066A7, #0f7a73);
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(255,255,255,0.6); font-size: 0.7rem; font-weight: 700;
+}
+.ap-coursedet__related-info { min-width: 0; }
+.ap-coursedet__related-info h5 {
+    margin: 0; font-size: 13px; font-weight: 600; color: var(--ap-text);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.ap-coursedet__related-cta { font-size: 12px; color: var(--ap-primary); font-weight: 500; }
 
 /* Sidebar */
 .ap-coursedet__sidebar-card {
@@ -226,6 +335,45 @@
     border-radius: var(--ap-radius-sm); padding: 24px;
     position: sticky; top: 80px;
 }
+.ap-coursedet__cta {
+    width: 100%; justify-content: center; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px 20px; border-radius: 10px; font-size: 15px; font-weight: 700;
+    background: var(--ap-gradient, linear-gradient(135deg, #0066A7, #0f7a73));
+    color: #fff; text-decoration: none; transition: opacity 0.15s;
+}
+.ap-coursedet__cta:hover { opacity: 0.9; color: #fff; }
+
+/* Sidebar progress */
+.ap-coursedet__sidebar-progress { margin-bottom: 16px; }
+.ap-coursedet__sidebar-progress-header {
+    display: flex; justify-content: space-between; font-size: 12px; color: #5a6070; margin-bottom: 4px;
+}
+.ap-coursedet__sidebar-progress-bar { height: 6px; background: #e2e6ef; border-radius: 3px; }
+.ap-coursedet__sidebar-progress-fill {
+    height: 100%; background: linear-gradient(90deg, #0066A7, #0f7a73);
+    border-radius: 3px; transition: width 0.5s;
+}
+
+/* Sidebar notice */
+.ap-coursedet__sidebar-notice {
+    padding: 12px; background: #fef3c7; border-radius: 8px;
+    font-size: 13px; color: #92400e; margin-bottom: 16px;
+}
+
+/* Social proof */
+.ap-coursedet__social-proof {
+    display: flex; flex-direction: column; gap: 8px;
+    margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--ap-border, #e3eaf3);
+}
+.ap-coursedet__social-proof-item {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--ap-text-secondary);
+}
+.ap-coursedet__social-proof-item i { width: 18px; text-align: center; color: var(--ap-primary); }
+.ap-coursedet__social-proof-item strong { color: var(--ap-text); }
+
+/* Meta list */
 .ap-coursedet__meta-list { display: flex; flex-direction: column; gap: 0; }
 .ap-coursedet__meta-item {
     display: flex; align-items: center; gap: 10px;
@@ -240,11 +388,15 @@
 @media (max-width: 992px) {
     .ap-coursedet__body { grid-template-columns: 1fr; }
     .ap-coursedet__sidebar-card { position: static; }
+    .ap-coursedet__related { grid-template-columns: 1fr; }
 }
 @media (max-width: 590px) {
     .ap-coursedet__hero { padding: 30px 20px 24px; min-height: 180px; }
     .ap-coursedet__title { font-size: 22px; }
     .ap-coursedet__hero-stats { flex-direction: column; gap: 6px; }
+    .ap-coursedet__highlights { grid-template-columns: 1fr; }
+    .ap-coursedet__share { flex-direction: column; }
+    .ap-coursedet__share-btn { justify-content: center; }
 }
 
 /* Dark mode */
@@ -258,4 +410,11 @@ body.dark-mode .ap-coursedet__sidebar-card { background: #1a1d27; border-color: 
 body.dark-mode .ap-coursedet__meta-item { border-color: #2d3140; color: #9ca3b4; }
 body.dark-mode .ap-coursedet__meta-item strong { color: #e8eaed; }
 body.dark-mode .ap-coursedet__activity { border-color: #2d3140; color: #9ca3b4; }
+body.dark-mode .ap-coursedet__highlight { color: #e8eaed; }
+body.dark-mode .ap-coursedet__related-card { border-color: #2d3140; }
+body.dark-mode .ap-coursedet__related-card:hover { border-color: #0066A7; }
+body.dark-mode .ap-coursedet__related-info h5 { color: #e8eaed; }
+body.dark-mode .ap-coursedet__social-proof { border-color: #2d3140; }
+body.dark-mode .ap-coursedet__social-proof-item { color: #9ca3b4; }
+body.dark-mode .ap-coursedet__social-proof-item strong { color: #e8eaed; }
 </style>

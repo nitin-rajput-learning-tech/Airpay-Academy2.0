@@ -106,9 +106,11 @@ if ($PAGE->theme->name === 'airpayux') {
         if ($instance->enrol === 'self') { $mod_can_selfenrol = true; break; }
     }
 
-    // Build module list from course sections.
+    // Build module list from course sections with completion status.
     $mod_modules = [];
+    $mod_total_activities = 0;
     $modinfo = get_fast_modinfo($course);
+    $completioninfo = $mod_enrolled ? new \completion_info($course) : null;
     foreach ($modinfo->get_section_info_all() as $section) {
         if ($section->section == 0) continue;
         $activities = [];
@@ -120,10 +122,25 @@ if ($PAGE->theme->name === 'airpayux') {
                     'assign' => 'fa-pencil-square-o', 'forum' => 'fa-comments',
                     'page' => 'fa-file-text', 'url' => 'fa-external-link',
                     'resource' => 'fa-file-o', 'label' => 'fa-tag'];
+                // Get completion state for enrolled users.
+                $status = 'not_started';
+                if ($mod_enrolled && $completioninfo) {
+                    $cmdata = $completioninfo->get_data($mod, false, $USER->id);
+                    if ($cmdata->completionstate == COMPLETION_COMPLETE ||
+                        $cmdata->completionstate == COMPLETION_COMPLETE_PASS) {
+                        $status = 'completed';
+                    } elseif ($cmdata->completionstate == COMPLETION_INCOMPLETE) {
+                        $status = 'in_progress';
+                    }
+                }
                 $activities[] = [
-                    'name' => format_string($mod->name),
-                    'icon' => $iconmap[$mod->modname] ?? 'fa-circle-o',
+                    'name'         => format_string($mod->name),
+                    'icon'         => $iconmap[$mod->modname] ?? 'fa-circle-o',
+                    'is_complete'  => ($status === 'completed'),
+                    'is_progress'  => ($status === 'in_progress'),
+                    'is_locked'    => (!$mod_enrolled),
                 ];
+                $mod_total_activities++;
             }
         }
         if (!empty($activities)) {
@@ -132,6 +149,29 @@ if ($PAGE->theme->name === 'airpayux') {
                 'name' => $sectionname ?: 'Section ' . $section->section,
                 'activity_count' => count($activities),
                 'activities' => $activities,
+            ];
+        }
+    }
+
+    // Completion rate as social proof.
+    $mod_completion_rate = ($enrolled_count > 0)
+        ? round(($completed_count / $enrolled_count) * 100) : 0;
+
+    // Related courses (same category, limit 4, exclude current).
+    $mod_related = [];
+    if (!empty($course->open_categoryid)) {
+        $related_sql = "SELECT c.id, c.fullname, c.shortname
+                          FROM {course} c
+                         WHERE c.open_categoryid = :catid AND c.id != :thisid
+                           AND c.visible = 1 AND c.id > 1
+                      ORDER BY c.timecreated DESC";
+        $related_recs = $DB->get_records_sql($related_sql,
+            ['catid' => $course->open_categoryid, 'thisid' => $course->id], 0, 4);
+        foreach ($related_recs as $rc) {
+            $mod_related[] = [
+                'fullname'  => format_string($rc->fullname),
+                'shortname' => format_string($rc->shortname),
+                'detailurl' => (new moodle_url('/local/search/coursedetails.php', ['id' => $rc->id]))->out(false),
             ];
         }
     }
@@ -160,11 +200,16 @@ if ($PAGE->theme->name === 'airpayux') {
         'can_selfenrol'   => $mod_can_selfenrol,
         'viewurl'         => (new moodle_url('/course/view.php', ['id' => $course->id]))->out(false),
         'enrolurl'        => (new moodle_url('/enrol/index.php', ['id' => $course->id]))->out(false),
-        'modules'         => $mod_modules,
-        'has_modules'     => !empty($mod_modules),
+        'modules'          => $mod_modules,
+        'has_modules'      => !empty($mod_modules),
+        'total_activities' => $mod_total_activities,
+        'total_sections'   => count($mod_modules),
+        'completion_rate'  => $mod_completion_rate,
         'has_certificate'  => $DB->get_manager()->table_exists('customcert') && $DB->record_exists('customcert', ['course' => $course->id]),
-        'shareurl'        => $mod_shareurl,
-        'sharetext'       => $mod_sharetext,
+        'related_courses'  => $mod_related,
+        'has_related'      => !empty($mod_related),
+        'shareurl'         => $mod_shareurl,
+        'sharetext'        => $mod_sharetext,
     ];
 
     echo $OUTPUT->header();
