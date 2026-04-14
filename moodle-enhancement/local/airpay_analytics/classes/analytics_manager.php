@@ -165,8 +165,11 @@ class analytics_manager {
 
             if ($total_users == 0) continue;
 
-            // Count mandatory course completions for this department.
-            $mandatory_courses = $DB->count_records_select('course', 'enddate > 0 AND visible = 1 AND id > 1');
+            // Count mandatory courses scoped to the same top-level org.
+            $mandatory_courses = $DB->count_records_sql(
+                "SELECT COUNT(*) FROM {course}
+                 WHERE enddate > 0 AND visible = 1 AND id > 1 AND open_path LIKE :mpath",
+                ['mpath' => $toporg . '%']);
             if ($mandatory_courses == 0) continue;
 
             $completed_mandatory = $DB->count_records_sql(
@@ -198,8 +201,23 @@ class analytics_manager {
     /**
      * Get top/bottom performing courses.
      */
-    public static function get_course_effectiveness(int $limit = 10): array {
-        global $DB;
+    public static function get_course_effectiveness(int $limit = 10, string $orgpath = ''): array {
+        global $DB, $USER;
+
+        // Scope to user's tenant.
+        $orgfilter = '';
+        $params = [];
+        if (empty($orgpath) && !empty($USER->open_path)) {
+            $parts = explode('/', $USER->open_path);
+            $org = $parts[1] ?? '';
+            if (!empty($org)) {
+                $orgpath = '/' . $org;
+            }
+        }
+        if (!empty($orgpath)) {
+            $orgfilter = "AND c.open_path LIKE :orgpath";
+            $params['orgpath'] = $orgpath . '%';
+        }
 
         return array_values($DB->get_records_sql(
             "SELECT c.id, c.fullname, c.shortname,
@@ -213,11 +231,11 @@ class analytics_manager {
                JOIN {user_enrolments} ue ON ue.enrolid = e.id
           LEFT JOIN {course_completions} cc ON cc.course = c.id AND cc.userid = ue.userid
                     AND cc.timecompleted IS NOT NULL
-              WHERE c.visible = 1 AND c.id > 1
+              WHERE c.visible = 1 AND c.id > 1 $orgfilter
            GROUP BY c.id, c.fullname, c.shortname
-             HAVING enrolled >= 5
+             HAVING COUNT(DISTINCT ue.userid) >= 5
            ORDER BY completion_rate DESC",
-            [], 0, $limit));
+            $params, 0, $limit));
     }
 
     /**

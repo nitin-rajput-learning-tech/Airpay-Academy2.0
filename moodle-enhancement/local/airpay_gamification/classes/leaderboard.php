@@ -16,16 +16,33 @@ class leaderboard {
     /**
      * Get global leaderboard (top N users by total points).
      */
-    public static function get_global(int $limit = 10): array {
-        global $DB;
+    public static function get_global(int $limit = 10, string $orgpath = ''): array {
+        global $DB, $USER;
+
+        // Scope to user's tenant unless explicit orgpath given.
+        $orgfilter = '';
+        $params = [];
+        if (empty($orgpath) && !empty($USER->open_path)) {
+            $parts = explode('/', $USER->open_path);
+            $org = $parts[1] ?? '';
+            if (!empty($org)) {
+                $orgpath = '/' . $org;
+            }
+        }
+        if (!empty($orgpath)) {
+            $orgfilter = "AND u.open_path LIKE :orgpath";
+            $params['orgpath'] = $orgpath . '%';
+        }
+
         return array_values($DB->get_records_sql(
             "SELECT s.userid, s.total_points, s.current_streak, s.longest_streak,
                     u.firstname, u.lastname, u.open_path
                FROM {local_airpay_streaks} s
                JOIN {user} u ON u.id = s.userid
               WHERE u.deleted = 0 AND u.suspended = 0 AND s.total_points > 0
+                    $orgfilter
            ORDER BY s.total_points DESC",
-            [], 0, $limit
+            $params, 0, $limit
         ));
     }
 
@@ -62,13 +79,29 @@ class leaderboard {
      */
     public static function get_rank(int $userid): int {
         global $DB;
+
+        $user = $DB->get_record('user', ['id' => $userid], 'open_path');
         $userpoints = $DB->get_field('local_airpay_streaks', 'total_points', ['userid' => $userid]);
         if (!$userpoints) {
             return 0;
         }
+
+        // Scope rank to user's own tenant so they're ranked within their org.
+        $orgfilter = '';
+        $params = ['pts' => $userpoints];
+        if ($user && !empty($user->open_path)) {
+            $parts = explode('/', $user->open_path);
+            $org = $parts[1] ?? '';
+            if (!empty($org)) {
+                $orgfilter = "AND s.userid IN (SELECT id FROM {user} WHERE open_path LIKE :orgpath AND deleted = 0)";
+                $params['orgpath'] = '/' . $org . '%';
+            }
+        }
+
         $rank = $DB->count_records_sql(
-            "SELECT COUNT(*) FROM {local_airpay_streaks} WHERE total_points > :pts",
-            ['pts' => $userpoints]
+            "SELECT COUNT(*) FROM {local_airpay_streaks} s
+             WHERE s.total_points > :pts $orgfilter",
+            $params
         );
         return $rank + 1;
     }

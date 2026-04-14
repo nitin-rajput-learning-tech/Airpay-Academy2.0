@@ -498,25 +498,36 @@ class core_renderer extends \core_renderer {
      * @return bool
      */
     public function should_display_navbar_logo() {
-        global $USER, $DB;
-        $logopath ="";
-        if(!empty($USER->open_path)){
-        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$USER->open_path??"");
-        
-            if(!empty($org)){
-                $costcenterid = $DB->get_field('local_costcenter', 'costcenter_logo', array('id'=>$org));
+        global $USER, $DB, $CFG;
+        $logopath = "";
+        if (!empty($USER->open_path)) {
+            $parts = explode("/", $USER->open_path ?? "");
+            $org = $parts[1] ?? '';
+            if (!empty($org)) {
+                $logoid = $DB->get_field('local_costcenter', 'costcenter_logo', ['id' => $org]);
             }
-            if(!empty($costcenterid)){
-                $logopath = costcenter_logo($costcenterid);
+            if (!empty($logoid)) {
+                // Verify the physical file exists before returning costcenter logo.
+                $filerec = $DB->get_record_sql(
+                    "SELECT contenthash FROM {files}
+                     WHERE itemid = :iid AND filename != '.' AND component = 'local_costcenter'
+                       AND filearea = 'costcenter_logo' AND filesize > 0",
+                    ['iid' => $logoid]
+                );
+                if ($filerec) {
+                    $h = $filerec->contenthash;
+                    $physpath = $CFG->dataroot . '/filedir/' . substr($h, 0, 2) . '/' . substr($h, 2, 2) . '/' . $h;
+                    if (file_exists($physpath)) {
+                        $logopath = costcenter_logo($logoid);
+                    }
+                }
             }
         }
-        //print_r($logopath); exit;
-        if(empty($logopath)) {
+        if (empty($logopath)) {
             $logopath = $this->get_compact_logo_url();
-           //  if(empty($logopath)){
-           //      $default_logo = $this->image_url('default_logo', 'theme_airpayux');
-           //      $logopath = $default_logo;
-           //  }
+            if (empty($logopath)) {
+                $logopath = $this->image_url('default_logo', 'theme_airpayux');
+            }
         }
         return !empty($logopath);
     }
@@ -527,26 +538,39 @@ class core_renderer extends \core_renderer {
      * @return logo url
     */
     public function get_custom_logo() {
-        global $USER, $DB;
-        $logopath ="";
-        if(!empty($USER->open_path)){
-            list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$USER->open_path??"");
-            if(!empty($org)){
-                $costcenterid = $DB->get_field('local_costcenter', 'costcenter_logo', array('id'=>$org));
+        global $USER, $DB, $CFG;
+        $logopath = "";
+        if (!empty($USER->open_path)) {
+            $parts = explode("/", $USER->open_path ?? "");
+            $org = $parts[1] ?? '';
+            if (!empty($org)) {
+                $logoid = $DB->get_field('local_costcenter', 'costcenter_logo', ['id' => $org]);
             }
-            if(!empty($costcenterid)){
-                $logopath = costcenter_logo($costcenterid);
+            if (!empty($logoid)) {
+                // Verify the physical file exists before returning costcenter logo.
+                $filerec = $DB->get_record_sql(
+                    "SELECT contenthash FROM {files}
+                     WHERE itemid = :iid AND filename != '.' AND component = 'local_costcenter'
+                       AND filearea = 'costcenter_logo' AND filesize > 0",
+                    ['iid' => $logoid]
+                );
+                if ($filerec) {
+                    $h = $filerec->contenthash;
+                    $physpath = $CFG->dataroot . '/filedir/' . substr($h, 0, 2) . '/' . substr($h, 2, 2) . '/' . $h;
+                    if (file_exists($physpath)) {
+                        $logopath = costcenter_logo($logoid);
+                    }
+                }
             }
         }
-         if(empty($logopath)) {
-             $logopath = $this->get_compact_logo_url();
-            //  if(empty($logopath)){
-            //      $default_logo = $this->image_url('default_logo', 'theme_airpayux');
-            //      $logopath = $default_logo;
-            //  }
-         }
-         return $logopath;
-     }
+        if (empty($logopath)) {
+            $logopath = $this->get_compact_logo_url();
+            if (empty($logopath)) {
+                $logopath = $this->image_url('default_logo', 'theme_airpayux');
+            }
+        }
+        return $logopath;
+    }
     /**
      * returns the login logo url if uploaded in theme settings else returns false
      *

@@ -40,16 +40,28 @@ if ($usercount == 0) {
     $usercount = $DB->count_records_select('user', 'deleted = 0 AND suspended = 0 AND id > 1');
 }
 
-// Get featured courses (most enrolled, visible, Public tenant preferred).
+// Get featured courses (most enrolled, visible, scoped to Public tenant).
 $featured = $DB->get_records_sql(
     "SELECT c.id, c.fullname, c.summary, c.summaryformat, COUNT(ue.id) as enrolcount
        FROM {course} c
        JOIN {enrol} e ON e.courseid = c.id
        JOIN {user_enrolments} ue ON ue.enrolid = e.id
-      WHERE c.visible = 1 AND c.id > 1
+      WHERE c.visible = 1 AND c.id > 1 AND c.open_path LIKE :pubpath
    GROUP BY c.id, c.fullname, c.summary, c.summaryformat
    ORDER BY enrolcount DESC",
-    [], 0, 6);
+    ['pubpath' => $publicpath], 0, 6);
+// Fallback: if no Public-scoped results, show any visible courses.
+if (empty($featured)) {
+    $featured = $DB->get_records_sql(
+        "SELECT c.id, c.fullname, c.summary, c.summaryformat, COUNT(ue.id) as enrolcount
+           FROM {course} c
+           JOIN {enrol} e ON e.courseid = c.id
+           JOIN {user_enrolments} ue ON ue.enrolid = e.id
+          WHERE c.visible = 1 AND c.id > 1
+       GROUP BY c.id, c.fullname, c.summary, c.summaryformat
+       ORDER BY enrolcount DESC",
+        [], 0, 6);
+}
 
 echo '<div class="airpay-homepage">';
 

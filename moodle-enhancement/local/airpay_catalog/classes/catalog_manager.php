@@ -222,15 +222,29 @@ class catalog_manager {
      * Get category list with course counts.
      */
     public static function get_categories(): array {
-        global $DB;
+        global $DB, $USER;
+
+        // Scope categories to the user's tenant org if logged in.
+        $orgfilter = '';
+        $params = [];
+        if (!empty($USER->open_path)) {
+            $parts = explode('/', $USER->open_path);
+            $org = $parts[1] ?? '';
+            if (!empty($org)) {
+                $orgfilter = " AND c.open_path LIKE :orgpath";
+                $params['orgpath'] = '/' . $org . '%';
+            }
+        }
+
         return array_values($DB->get_records_sql(
             "SELECT cc.id, cc.name,
                     COUNT(c.id) as course_count
                FROM {course_categories} cc
                JOIN {course} c ON c.category = cc.id AND c.visible = 1 AND c.id > 1
+                    $orgfilter
            GROUP BY cc.id, cc.name
-             HAVING course_count > 0
-           ORDER BY course_count DESC"));
+             HAVING COUNT(c.id) > 0
+           ORDER BY COUNT(c.id) DESC", $params));
     }
 
     /**

@@ -76,9 +76,22 @@ class badge_manager {
                     ['uid' => $userid]);
 
             case 'compliance_complete':
-                // All courses with enddate (mandatory) are completed.
-                $mandatory = $DB->count_records_select('course',
-                    'enddate > 0 AND visible = 1 AND id > 1');
+                // All mandatory courses for user's tenant are completed.
+                $userobj = $DB->get_record('user', ['id' => $userid], 'open_path');
+                $orgfilter = '';
+                $orgparams = [];
+                if ($userobj && !empty($userobj->open_path)) {
+                    $parts = explode('/', $userobj->open_path);
+                    $org = $parts[1] ?? '';
+                    if (!empty($org)) {
+                        $orgfilter = ' AND open_path LIKE :orgpath';
+                        $orgparams['orgpath'] = '/' . $org . '%';
+                    }
+                }
+                $mandatory = $DB->count_records_sql(
+                    "SELECT COUNT(*) FROM {course}
+                     WHERE enddate > 0 AND visible = 1 AND id > 1" . $orgfilter,
+                    $orgparams);
                 if ($mandatory == 0) {
                     return false;
                 }
@@ -87,16 +100,28 @@ class badge_manager {
                        FROM {course_completions} cc
                        JOIN {course} c ON c.id = cc.course
                       WHERE cc.userid = :uid AND cc.timecompleted IS NOT NULL
-                        AND c.enddate > 0",
-                    ['uid' => $userid]);
+                        AND c.enddate > 0" . $orgfilter,
+                    array_merge(['uid' => $userid], $orgparams));
                 return $completed >= $mandatory;
 
             case 'leaderboard_top10':
-                // Check if user is in top 10 by total points.
+                // Check if user is in top 10 by total points (within own tenant).
+                $userobj2 = $DB->get_record('user', ['id' => $userid], 'open_path');
+                $tenantfilter = '';
+                $tenantparams = ['uid' => $userid];
+                if ($userobj2 && !empty($userobj2->open_path)) {
+                    $parts = explode('/', $userobj2->open_path);
+                    $org = $parts[1] ?? '';
+                    if (!empty($org)) {
+                        $tenantfilter = "AND s2.userid IN (SELECT id FROM {user} WHERE open_path LIKE :orgp AND deleted = 0)";
+                        $tenantparams['orgp'] = '/' . $org . '%';
+                    }
+                }
                 $rank = $DB->count_records_sql(
-                    "SELECT COUNT(*) FROM {local_airpay_streaks}
-                     WHERE total_points > (SELECT total_points FROM {local_airpay_streaks} WHERE userid = :uid)",
-                    ['uid' => $userid]);
+                    "SELECT COUNT(*) FROM {local_airpay_streaks} s2
+                     WHERE s2.total_points > (SELECT total_points FROM {local_airpay_streaks} WHERE userid = :uid)
+                     $tenantfilter",
+                    $tenantparams);
                 return $rank < 10;
 
             default:
