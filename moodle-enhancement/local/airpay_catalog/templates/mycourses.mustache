@@ -1,0 +1,197 @@
+<div class="ap-mycourses">
+
+    <div class="ap-mycourses__stats">
+        <a href="{{baseurl}}?filter=all" class="ap-mycourses__stat {{#filter_all}}ap-mycourses__stat--active{{/filter_all}}">
+            <span class="ap-mycourses__stat-num">{{total}}</span>
+            <span class="ap-mycourses__stat-label">All Courses</span>
+        </a>
+        <a href="{{baseurl}}?filter=inprogress" class="ap-mycourses__stat {{#filter_inprogress}}ap-mycourses__stat--active{{/filter_inprogress}}">
+            <span class="ap-mycourses__stat-num" style="color:#0f7a73;">{{inprogress}}</span>
+            <span class="ap-mycourses__stat-label">In Progress</span>
+        </a>
+        <a href="{{baseurl}}?filter=completed" class="ap-mycourses__stat {{#filter_completed}}ap-mycourses__stat--active{{/filter_completed}}">
+            <span class="ap-mycourses__stat-num" style="color:#16a34a;">{{completed}}</span>
+            <span class="ap-mycourses__stat-label">Completed</span>
+        </a>
+        <a href="{{baseurl}}?filter=notstarted" class="ap-mycourses__stat {{#filter_notstarted}}ap-mycourses__stat--active{{/filter_notstarted}}">
+            <span class="ap-mycourses__stat-num" style="color:#8896a6;">{{notstarted}}</span>
+            <span class="ap-mycourses__stat-label">Not Started</span>
+        </a>
+    </div>
+
+    {{#has_courses}}
+    <div class="ap-mycourses__grid">
+        {{#courses}}
+        <div class="ap-mycourses__card">
+            <a href="{{viewurl}}" class="ap-mycourses__card-image-link">
+                {{#has_image}}
+                <div class="ap-mycourses__card-image" style="background-image:url('{{imageurl}}');"></div>
+                {{/has_image}}
+                {{^has_image}}
+                <div class="ap-mycourses__card-image ap-mycourses__card-image--fallback">
+                    <span>{{shortname}}</span>
+                </div>
+                {{/has_image}}
+                {{#is_completed}}
+                <div class="ap-mycourses__card-badge ap-mycourses__card-badge--done"><i class="fa fa-check"></i> Done</div>
+                {{/is_completed}}
+                {{#is_inprogress}}
+                <div class="ap-mycourses__card-progress-ring">
+                    <svg width="36" height="36" viewBox="0 0 36 36">
+                        <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="3"/>
+                        <circle cx="18" cy="18" r="15" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round"
+                                stroke-dasharray="94.25" stroke-dashoffset="{{progress_offset}}"
+                                style="transform:rotate(-90deg); transform-origin:center;"/>
+                    </svg>
+                    <span>{{progress}}%</span>
+                </div>
+                {{/is_inprogress}}
+            </a>
+            <div class="ap-mycourses__card-body">
+                <span class="ap-mycourses__card-category">{{categoryname}}</span>
+                <h4 class="ap-mycourses__card-title">
+                    <a href="{{viewurl}}">{{fullname}}</a>
+                </h4>
+                {{#has_progress}}
+                <div class="ap-mycourses__card-progressbar">
+                    <div class="ap-mycourses__card-progressbar-fill" style="width:{{progress}}%;"></div>
+                </div>
+                <span class="ap-mycourses__card-progresstext">{{progress}}% complete</span>
+                {{/has_progress}}
+                <div class="ap-mycourses__card-footer">
+                    <span class="ap-mycourses__card-access"><i class="fa fa-clock-o"></i> {{lastaccess}}</span>
+                    <a href="{{viewurl}}" class="ap-mycourses__card-cta">
+                        {{#is_completed}}Review{{/is_completed}}
+                        {{#is_inprogress}}Continue{{/is_inprogress}}
+                        {{#is_notstarted}}Start{{/is_notstarted}}
+                        <i class="fa fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {{/courses}}
+    </div>
+    {{/has_courses}}
+
+    {{^has_courses}}
+    <div class="ap-empty-state">
+        <i class="fa fa-graduation-cap ap-empty-state__icon"></i>
+        <h4 class="ap-empty-state__title">No courses found</h4>
+        <p class="ap-empty-state__message">Browse the catalog to discover courses.</p>
+        <a href="/moodle/local/airpay_catalog/index.php" class="ap-empty-state__cta">
+            <i class="fa fa-search"></i> Browse Catalog
+        </a>
+    </div>
+    {{/has_courses}}
+</div>
+
+<style>
+.ap-mycourses { max-width: 1200px; margin: 0 auto; }
+
+/* Filter stats */
+.ap-mycourses__stats {
+    display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;
+}
+.ap-mycourses__stat {
+    flex: 1; min-width: 120px; text-align: center;
+    padding: 16px 12px; background: var(--ap-surface, #fff);
+    border: 2px solid var(--ap-border, #e3eaf3);
+    border-radius: var(--ap-radius-sm, 12px);
+    text-decoration: none; transition: all 0.2s; cursor: pointer;
+}
+.ap-mycourses__stat:hover { border-color: var(--ap-primary, #0066A7); transform: translateY(-2px); }
+.ap-mycourses__stat--active { border-color: var(--ap-primary, #0066A7); background: var(--ap-primary-light, #e8f2f9); }
+.ap-mycourses__stat-num { display: block; font-size: 28px; font-weight: 800; color: var(--ap-text, #1a1a2e); }
+.ap-mycourses__stat-label { display: block; font-size: 12px; color: var(--ap-text-muted, #8896a6); text-transform: uppercase; letter-spacing: 0.3px; font-weight: 500; margin-top: 2px; }
+
+/* Grid */
+.ap-mycourses__grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+/* Card */
+.ap-mycourses__card {
+    background: var(--ap-surface, #fff); border: 1px solid var(--ap-border, #e3eaf3);
+    border-radius: var(--ap-radius-sm, 12px); overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s; display: flex; flex-direction: column;
+}
+.ap-mycourses__card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,51,102,0.1); }
+
+/* Image */
+.ap-mycourses__card-image-link { display: block; position: relative; text-decoration: none; }
+.ap-mycourses__card-image {
+    height: 140px; background-size: cover; background-position: center; background-color: #e8f2f9;
+}
+.ap-mycourses__card-image--fallback {
+    background: linear-gradient(135deg, #0066A7, #0f7a73);
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(255,255,255,0.6); font-size: 1.2rem; font-weight: 700; letter-spacing: 1px;
+}
+.ap-mycourses__card-badge {
+    position: absolute; top: 8px; right: 8px;
+    padding: 3px 10px; border-radius: 10px; font-size: 11px; font-weight: 700;
+}
+.ap-mycourses__card-badge--done { background: #16a34a; color: #fff; }
+.ap-mycourses__card-progress-ring {
+    position: absolute; bottom: 8px; right: 8px;
+}
+.ap-mycourses__card-progress-ring svg { display: block; }
+.ap-mycourses__card-progress-ring span {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    font-size: 9px; font-weight: 700; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+
+/* Body */
+.ap-mycourses__card-body { padding: 14px 16px; flex: 1; display: flex; flex-direction: column; }
+.ap-mycourses__card-category {
+    font-size: 11px; color: var(--ap-primary, #0066A7); font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 4px;
+}
+.ap-mycourses__card-title { margin: 0 0 8px; font-size: 15px; font-weight: 700; line-height: 1.3; }
+.ap-mycourses__card-title a {
+    color: var(--ap-text, #1a1a2e); text-decoration: none;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.ap-mycourses__card-title a:hover { color: var(--ap-primary); }
+
+/* Progress bar */
+.ap-mycourses__card-progressbar {
+    height: 6px; background: var(--ap-border, #e3eaf3); border-radius: 3px; margin-bottom: 4px;
+}
+.ap-mycourses__card-progressbar-fill {
+    height: 100%; background: linear-gradient(90deg, #0066A7, #0f7a73); border-radius: 3px;
+    transition: width 0.5s ease;
+}
+.ap-mycourses__card-progresstext { font-size: 12px; color: var(--ap-text-muted); margin-bottom: 8px; }
+
+/* Footer */
+.ap-mycourses__card-footer {
+    display: flex; justify-content: space-between; align-items: center; margin-top: auto;
+}
+.ap-mycourses__card-access { font-size: 11px; color: var(--ap-text-muted); }
+.ap-mycourses__card-access i { margin-right: 3px; }
+.ap-mycourses__card-cta {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;
+    background: var(--ap-gradient, linear-gradient(135deg, #0066A7, #0f7a73));
+    color: #fff; text-decoration: none; transition: opacity 0.15s;
+}
+.ap-mycourses__card-cta:hover { opacity: 0.9; color: #fff; }
+
+/* Mobile */
+@media (max-width: 590px) {
+    .ap-mycourses__grid { grid-template-columns: 1fr; }
+    .ap-mycourses__stats { flex-direction: row; }
+    .ap-mycourses__stat { min-width: 0; padding: 10px 8px; }
+    .ap-mycourses__stat-num { font-size: 20px; }
+}
+
+/* Dark mode */
+body.dark-mode .ap-mycourses__stat { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .ap-mycourses__stat--active { background: #0d2540; border-color: #0066A7; }
+body.dark-mode .ap-mycourses__stat-num { color: #e8eaed; }
+body.dark-mode .ap-mycourses__card { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .ap-mycourses__card-title a { color: #e8eaed; }
+body.dark-mode .ap-mycourses__card-progressbar { background: #2d3140; }
+</style>

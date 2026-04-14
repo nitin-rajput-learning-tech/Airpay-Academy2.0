@@ -162,7 +162,7 @@ if ($PAGE->theme->name === 'airpayux') {
         'enrolurl'        => (new moodle_url('/enrol/index.php', ['id' => $course->id]))->out(false),
         'modules'         => $mod_modules,
         'has_modules'     => !empty($mod_modules),
-        'has_certificate'  => $DB->record_exists('customcert', ['course' => $course->id]),
+        'has_certificate'  => $DB->get_manager()->table_exists('customcert') && $DB->record_exists('customcert', ['course' => $course->id]),
         'shareurl'        => $mod_shareurl,
         'sharetext'       => $mod_sharetext,
     ];
