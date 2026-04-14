@@ -9305,6 +9305,75 @@ body.dark-mode .ap-profile__stat { background: #22252f; }
     .ap-profile__stats { justify-content: center; }
 }
 
+/* ═══ Profile Tabs (Modern) ═══ */
+.ap-profile-tabs {
+    max-width: 900px;
+    margin: 0 auto 20px;
+    background: var(--ap-surface, #fff);
+    border: 1px solid var(--ap-border, #e3eaf3);
+    border-radius: 12px;
+    overflow: hidden;
+}
+.ap-profile-tabs__scroll {
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding: 4px;
+    gap: 2px;
+}
+.ap-profile-tabs__scroll::-webkit-scrollbar { display: none; }
+
+.ap-profile-tabs__tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ap-text-secondary, #607286);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+}
+.ap-profile-tabs__tab i {
+    font-size: 14px;
+    width: 16px;
+    text-align: center;
+}
+.ap-profile-tabs__tab:hover {
+    background: var(--ap-bg, #F2F4FB);
+    color: var(--ap-text, #1a1a2e);
+}
+.ap-profile-tabs__tab--active {
+    background: var(--ap-primary-light, #e8f2f9) !important;
+    color: var(--ap-primary, #0066A7) !important;
+    font-weight: 600;
+}
+.ap-profile-tabs__tab--active i {
+    color: var(--ap-primary, #0066A7);
+}
+
+/* Dark mode */
+body.dark-mode .ap-profile-tabs { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .ap-profile-tabs__tab { color: #9ca3b4; }
+body.dark-mode .ap-profile-tabs__tab:hover { background: #22252f; color: #e8eaed; }
+body.dark-mode .ap-profile-tabs__tab--active { background: #0d2540 !important; color: #60a5fa !important; }
+
+/* Mobile: tabs scroll horizontally */
+@media (max-width: 590px) {
+    .ap-profile-tabs__tab { padding: 8px 12px; font-size: 12px; }
+    .ap-profile-tabs__tab span { display: none; }
+    .ap-profile-tabs__tab i { font-size: 16px; }
+}
+
+/* Legacy compatibility — hide old nav-tabs inside profile */
+.userprfltabs_container .nav-tabs { display: none !important; }
+
 /* ═══ My Courses (/my/courses.php) — Moodle core block_myoverview ═══ */
 /* Learners see this when clicking "My Courses" in navbar. Core Moodle block. */
 
