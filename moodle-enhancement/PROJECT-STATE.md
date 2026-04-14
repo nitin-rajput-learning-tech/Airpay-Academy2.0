@@ -1,7 +1,50 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-04-13 | **Phase:** Academy 2.2 — Notification Management Platform
-**Theme:** airpayux v1.0.0 | **Tag:** v2.2.0
-**Version:** 2.2.0 (All v2.1.0 + Email Templates + Notification Management Panel + Bug Fixes)
+**Updated:** 2026-04-14 | **Phase:** Academy 2.5 — LXP Overhaul + Multilingual
+**Theme:** airpayux v1.0.0 | **Tag:** v2.5.0-multilingual
+**Version:** 2.5.0 (All v2.2.0 + 9 UI Sprints + Tenant Isolation + 4-Language i18n)
+
+---
+
+## v2.5.0 Session (2026-04-14) — MEGA SESSION
+
+### Tenant Isolation (10 cross-tenant data leaks sealed)
+- Dashboard KPIs (enrolments, completions, active users, classrooms) scoped to tenant via open_path
+- Homepage stats + featured courses scoped to Public tenant (/77%)
+- Login page stats scoped to Public tenant
+- Catalog category counts scoped to user's org
+- Gamification leaderboard + rank scoped to user's tenant
+- Badge criteria (compliance_complete, leaderboard_top10) scoped per-tenant
+- Analytics heatmap mandatory course count + course effectiveness scoped
+- Logo fallback: validates physical file exists, falls back to default_logo.png
+
+### LXP UI/UX Overhaul (Sprints 3-11)
+| Sprint | Deliverable | Files |
+|--------|-------------|-------|
+| 3 | Netflix catalog: carousels, bookmarks, autocomplete, lazy load | 5 |
+| 4 | Course detail: completion states, related courses, social proof | 2 |
+| 5 | Course player: collapsible sidebar, keyboard shortcuts, module tree | 3 |
+| 6 | Exam dashboard template rewrite + CSS consolidation | 2 |
+| 7 | Profile tabs modernization + certificate gallery | 3 |
+| 8 | Skills dashboard (NEW from scratch) + compliance CSS | 4 |
+| 9 | Notifications CSS (NEW) + gamification dark mode + AI polish | 3 |
+| 10 | Email security fix + privacy bug + static pages nav | 4 |
+| 11 | Homepage animations + mobile bottom nav + local QR | 3 |
+
+### Multilingual Support (v2.5.0)
+- 4 languages: Hindi (hi), Marathi (mr), Swahili (sw), Kannada (kn)
+- 9 plugins × 4 languages = 29 lang files (28 new + 1 completed)
+- ~1,056 total translations
+- Activation: Admin installs official Moodle lang packs, selector auto-shows in navbar
+
+### Security Fixes
+- Email preview.php: path traversal injection fixed (sanitize before fallback)
+- Email preview.php: tenant access validation (non-siteadmin locked to own tenant)
+- Privacy index.php: account_delete enum mismatch fixed
+
+### Tags
+- v2.3.0-tenant-isolation — 10 cross-tenant leaks sealed
+- v2.4.0-lxp-overhaul — Sprints 3-11 complete
+- v2.5.0-multilingual — 4-language i18n across 9 plugins
 
 ---
 
