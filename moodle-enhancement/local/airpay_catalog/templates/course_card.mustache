@@ -8,36 +8,46 @@
             {{#has_level}}
             <span class="airpay-catalog__card-difficulty airpay-catalog__card-difficulty--{{level_class}}">{{level}}</span>
             {{/has_level}}
-            <!-- Hover overlay -->
+            {{! Hover overlay with summary + CTA }}
             <div class="airpay-catalog__card-overlay">
                 <p>{{summary}}</p>
                 {{^is_enrolled}}
-                <span class="airpay-catalog__btn airpay-catalog__btn--enroll">View Details</span>
+                <span class="airpay-catalog__btn airpay-catalog__btn--enroll">{{#str}}viewdetails, local_airpay_catalog{{/str}}</span>
                 {{/is_enrolled}}
                 {{#is_enrolled}}
-                <span class="airpay-catalog__btn airpay-catalog__btn--continue">Continue</span>
-                {{/is_enrolled}}
-            </div>
-        </div>
-        <div class="airpay-catalog__card-body">
-            <h4 class="airpay-catalog__card-title">{{fullname}}</h4>
-            <div class="airpay-catalog__card-meta">
-                <span class="airpay-catalog__card-category">{{categoryname}}</span>
-                {{#has_level}}
-                <span class="airpay-catalog__card-level">{{level}}</span>
-                {{/has_level}}
-            </div>
-            <div class="airpay-catalog__card-footer">
-                <span class="airpay-catalog__card-enrolled">
-                    <i class="fa fa-users"></i> {{enrolled_count}}
-                </span>
-                {{#is_enrolled}}
-                <span class="airpay-catalog__btn airpay-catalog__btn--continue">Continue</span>
-                {{/is_enrolled}}
-                {{^is_enrolled}}
-                <span class="airpay-catalog__btn airpay-catalog__btn--enroll">Enroll</span>
+                <span class="airpay-catalog__btn airpay-catalog__btn--continue">{{#str}}continue, local_airpay_catalog{{/str}}</span>
                 {{/is_enrolled}}
             </div>
         </div>
     </a>
+    {{! Bookmark heart (outside link to prevent navigation) }}
+    <button class="airpay-catalog__bookmark" data-courseid="{{id}}" title="Save for later">
+        <i class="fa fa-heart"></i>
+    </button>
+    <div class="airpay-catalog__card-body">
+        <h4 class="airpay-catalog__card-title">
+            <a href="{{detailurl}}">{{fullname}}</a>
+        </h4>
+        <div class="airpay-catalog__card-meta">
+            <span class="airpay-catalog__card-category">{{categoryname}}</span>
+            {{#has_level}}
+            <span class="airpay-catalog__card-level">{{level}}</span>
+            {{/has_level}}
+        </div>
+        <div class="airpay-catalog__card-footer">
+            <span class="airpay-catalog__card-enrolled">
+                <i class="fa fa-users"></i> {{enrolled_count}}
+            </span>
+            {{#is_enrolled}}
+            <a href="{{viewurl}}" class="airpay-catalog__btn airpay-catalog__btn--continue">
+                {{#str}}continue, local_airpay_catalog{{/str}}
+            </a>
+            {{/is_enrolled}}
+            {{^is_enrolled}}
+            <a href="{{detailurl}}" class="airpay-catalog__btn airpay-catalog__btn--enroll">
+                {{#str}}enroll, local_airpay_catalog{{/str}}
+            </a>
+            {{/is_enrolled}}
+        </div>
+    </div>
 </div>

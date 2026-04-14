@@ -353,11 +353,128 @@ body.dark-mode .airpay-catalog__progress { background: #2d3140; }
     color: #fff;
 }
 
+/* ═══ Autocomplete Suggestions ═══ */
+.airpay-catalog__search-suggest {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #e2e6ef;
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    z-index: 100;
+    max-height: 280px;
+    overflow-y: auto;
+}
+.airpay-catalog__search-form { position: relative; }
+.airpay-catalog__suggest-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    color: #1a1a2e;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: background 0.15s;
+}
+.airpay-catalog__suggest-item:hover { background: #f3f4f6; color: #0066A7; }
+.airpay-catalog__suggest-item i { color: #9ca3af; font-size: 0.8rem; }
+
+/* ═══ Filter Chips ═══ */
+.airpay-catalog__filters {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.airpay-catalog__filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-decoration: none;
+    background: #e8f2f9;
+    color: #0066A7;
+    transition: all 0.15s;
+}
+.airpay-catalog__filter-chip:hover { background: #0066A7; color: #fff; }
+.airpay-catalog__filter-chip .fa-times { font-size: 0.7rem; opacity: 0.7; }
+
+/* ═══ Category Icon ═══ */
+.airpay-catalog__category-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #0066A7, #0f7a73);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+/* ═══ Lazy Load Fade-in ═══ */
+.airpay-catalog__grid .airpay-catalog__card {
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.airpay-catalog__grid .airpay-catalog__card--visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ═══ Load More Button Enhanced ═══ */
+.airpay-catalog__btn--load-more {
+    background: #f3f4f6;
+    color: #5a6070;
+    padding: 10px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+}
+.airpay-catalog__btn--load-more:hover {
+    background: #0066A7;
+    color: #fff;
+}
+.airpay-catalog__btn--load-more i { margin-left: 6px; }
+
+/* ═══ Empty State Enhanced ═══ */
+.airpay-catalog__empty {
+    text-align: center;
+    padding: 64px 24px;
+    color: #9ca3af;
+}
+.airpay-catalog__empty i { font-size: 3rem; margin-bottom: 16px; display: block; color: #d1d5db; }
+.airpay-catalog__empty h4 { color: #5a6070; font-size: 1.1rem; margin: 0 0 8px; }
+.airpay-catalog__empty p { font-size: 0.9rem; margin: 0 0 16px; }
+
+/* ═══ Progress text in carousel cards ═══ */
+.airpay-catalog__card-progresstext {
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+/* ═══ Dark Mode — new additions ═══ */
+body.dark-mode .airpay-catalog__search-suggest { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .airpay-catalog__suggest-item { color: #e8eaed; }
+body.dark-mode .airpay-catalog__suggest-item:hover { background: #232733; }
+body.dark-mode .airpay-catalog__filter-chip { background: #0d2540; color: #60a5fa; }
+body.dark-mode .airpay-catalog__category-icon { background: linear-gradient(135deg, #0d4880, #0a5c56); }
+body.dark-mode .airpay-catalog__btn--load-more { background: #232733; color: #9ca3b4; }
+body.dark-mode .airpay-catalog__empty i { color: #4b5563; }
+
 /* ═══ Mobile ═══ */
 @media (max-width: 768px) {
     .airpay-catalog__grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
     .airpay-catalog__carousel > * { flex: 0 0 240px; min-width: 240px; }
     .airpay-catalog__categories { grid-template-columns: repeat(2, 1fr); }
+    .airpay-catalog__carousel-nav { display: none; }
 }
 @media (max-width: 590px) {
     .airpay-catalog { padding: 0 12px; }
@@ -366,4 +483,5 @@ body.dark-mode .airpay-catalog__progress { background: #2d3140; }
     .airpay-catalog__categories { grid-template-columns: 1fr; }
     .airpay-catalog__section-header { flex-direction: column; gap: 8px; align-items: flex-start; }
     .airpay-catalog__card-thumb { height: 100px; }
+    .airpay-catalog__filters { flex-direction: column; align-items: flex-start; }
 }

@@ -37,6 +37,20 @@ if ($category) {
 }
 $results = $manager::get_courses($userid, $search, $filters, $sort, $page, 12);
 
+// Add progress_offset for SVG ring in continue-learning cards.
+foreach ($in_progress as &$ip) {
+    $pct = $ip['progress'] ?? 0;
+    $ip['progress_offset'] = round(94.25 * (1 - $pct / 100), 2);
+}
+unset($ip);
+
+// Resolve active category name for filter chip display.
+$active_category_name = '';
+if ($category) {
+    $catobj = $DB->get_record('course_categories', ['id' => $category], 'name');
+    $active_category_name = $catobj ? format_string($catobj->name) : '';
+}
+
 // Build template data.
 $data = [
     'search_query'  => s($search),
@@ -54,6 +68,11 @@ $data = [
     'categories'        => $categories,
     'has_categories'    => !empty($categories),
 
+    // Active category filter.
+    'has_active_category'   => !empty($category) && !empty($active_category_name),
+    'active_category_id'    => $category,
+    'active_category_name'  => $active_category_name,
+
     // All courses (filtered/paginated).
     'courses'           => $results['courses'],
     'has_courses'       => !empty($results['courses']),
@@ -65,6 +84,7 @@ $data = [
     'showing_to'        => min(($results['page'] + 1) * 12, $results['total']),
 
     // Sort options.
+    'sort'              => $sort,
     'sort_newest'       => ($sort === 'newest'),
     'sort_popular'      => ($sort === 'popular'),
     'sort_name'         => ($sort === 'name'),
