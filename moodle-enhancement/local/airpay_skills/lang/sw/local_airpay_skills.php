@@ -1,0 +1,22 @@
+<?php
+defined('MOODLE_INTERNAL') || die();
+$string['pluginname'] = 'Jedwali la Ujuzi la Airpay';
+$string['privacy:metadata'] = 'Programu-jalizi ya ujuzi huhifadhi data ya kiwango cha ujuzi iliyounganishwa na vitambulisho vya mtumiaji.';
+$string['skills'] = 'Ujuzi';
+$string['skillmatrix'] = 'Jedwali la Ujuzi';
+$string['gapanalysis'] = 'Uchambuzi wa Pengo';
+$string['yourskills'] = 'Ujuzi Wako';
+$string['requiredskills'] = 'Inahitajika kwa nafasi yako';
+$string['currentlevel'] = 'Kiwango cha Sasa';
+$string['requiredlevel'] = 'Kiwango Kinachohitajika';
+$string['gap'] = 'Pengo';
+$string['met'] = 'Imefikiwa';
+$string['partial'] = 'Inaendelea';
+$string['missing'] = 'Haijaanza';
+$string['skillsgap'] = 'Mapengo {$a->gaps} kati ya {$a->total} ya ujuzi';
+$string['skillsmet'] = 'Ujuzi {$a->met}/{$a->total} katika kiwango kinachohitajika ({$a->percentage}%)';
+$string['recommendedcourses'] = 'Zinazopendekezwa kujaza mapengo';
+$string['nodesignation'] = 'Hakuna nafasi/jina la kazi lililowekwa. Wasiliana na meneja wako kusasisha wasifu wako.';
+$string['noskillsmapped'] = 'Bado hakuna ujuzi uliowekwa kwa nafasi yako. Angalia hivi karibuni.';
+$string['teamheatmap'] = 'Ramani ya Joto ya Ujuzi wa Timu';
+$string['careerpath'] = 'Njia ya Kazi';

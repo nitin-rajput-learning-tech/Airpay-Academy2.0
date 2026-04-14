@@ -1,0 +1,22 @@
+<?php
+defined('MOODLE_INTERNAL') || die();
+$string['pluginname'] = 'ಏರ್‌ಪೇ ಕೌಶಲ್ಯ ಮ್ಯಾಟ್ರಿಕ್ಸ್';
+$string['privacy:metadata'] = 'ಕೌಶಲ್ಯ ಪ್ಲಗಿನ್ ಬಳಕೆದಾರರ ಐಡಿಗಳಿಗೆ ಲಿಂಕ್ ಮಾಡಿದ ಕೌಶಲ್ಯ ಮಟ್ಟದ ಡೇಟಾವನ್ನು ಸಂಗ್ರಹಿಸುತ್ತದೆ.';
+$string['skills'] = 'ಕೌಶಲ್ಯಗಳು';
+$string['skillmatrix'] = 'ಕೌಶಲ್ಯ ಮ್ಯಾಟ್ರಿಕ್ಸ್';
+$string['gapanalysis'] = 'ಅಂತರ ವಿಶ್ಲೇಷಣೆ';
+$string['yourskills'] = 'ನಿಮ್ಮ ಕೌಶಲ್ಯಗಳು';
+$string['requiredskills'] = 'ನಿಮ್ಮ ಪಾತ್ರಕ್ಕೆ ಅಗತ್ಯ';
+$string['currentlevel'] = 'ಪ್ರಸ್ತುತ ಮಟ್ಟ';
+$string['requiredlevel'] = 'ಅಗತ್ಯ ಮಟ್ಟ';
+$string['gap'] = 'ಅಂತರ';
+$string['met'] = 'ಪೂರ್ಣ';
+$string['partial'] = 'ಪ್ರಗತಿಯಲ್ಲಿ';
+$string['missing'] = 'ಪ್ರಾರಂಭವಾಗಿಲ್ಲ';
+$string['skillsgap'] = '{$a->total} ರಲ್ಲಿ {$a->gaps} ಕೌಶಲ್ಯ ಅಂತರಗಳು';
+$string['skillsmet'] = '{$a->met}/{$a->total} ಕೌಶಲ್ಯಗಳು ಅಗತ್ಯ ಮಟ್ಟದಲ್ಲಿ ({$a->percentage}%)';
+$string['recommendedcourses'] = 'ಅಂತರ ತುಂಬಲು ಶಿಫಾರಸು ಮಾಡಿದವು';
+$string['nodesignation'] = 'ಯಾವುದೇ ಪಾತ್ರ/ಹುದ್ದೆ ಹೊಂದಿಸಿಲ್ಲ. ನಿಮ್ಮ ಪ್ರೊಫೈಲ್ ನವೀಕರಿಸಲು ನಿಮ್ಮ ವ್ಯವಸ್ಥಾಪಕರನ್ನು ಸಂಪರ್ಕಿಸಿ.';
+$string['noskillsmapped'] = 'ನಿಮ್ಮ ಪಾತ್ರಕ್ಕೆ ಇನ್ನೂ ಕೌಶಲ್ಯಗಳನ್ನು ಮ್ಯಾಪ್ ಮಾಡಿಲ್ಲ. ಶೀಘ್ರದಲ್ಲೇ ಪರಿಶೀಲಿಸಿ.';
+$string['teamheatmap'] = 'ತಂಡದ ಕೌಶಲ್ಯ ಹೀಟ್ ಮ್ಯಾಪ್';
+$string['careerpath'] = 'ವೃತ್ತಿ ಮಾರ್ಗ';
