@@ -8513,3 +8513,84 @@ body.dark-mode .examname_status a {
 body.dark-mode .custom_header {
     background: linear-gradient(135deg, #004d7a, #065a54) !important;
 }
+
+/* ═══ Sprint 6 — User Profile Modernization ═══ */
+/* Modernize BizLMS profile without changing templates. */
+
+.edu_info {
+    max-width: 900px;
+    margin: 0 auto;
+}
+.edu_info .profile_data_content {
+    background: var(--ap-surface) !important;
+    border: 1px solid var(--ap-border) !important;
+    border-radius: var(--ap-radius-sm) !important;
+    padding: 24px !important;
+    margin-bottom: 16px !important;
+}
+.edu_info .userinfo-lable {
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    color: var(--ap-text) !important;
+    padding-bottom: 10px !important;
+    margin-bottom: 16px !important;
+    border-bottom: 2px solid var(--ap-border) !important;
+    position: relative;
+}
+.edu_info .userinfo-lable::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 40px;
+    height: 2px;
+    background: var(--ap-gradient);
+}
+.edu_info .cnt-left {
+    margin-bottom: 12px !important;
+}
+.edu_info .u_info {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: var(--ap-text) !important;
+}
+.edu_info label,
+.edu_info .cnt-left > span:first-child {
+    font-size: 12px !important;
+    color: var(--ap-text-muted) !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Profile avatar enhancement */
+.profile_data_content .userpicture,
+.userprofile .userpicture {
+    border: 3px solid transparent !important;
+    background-image: linear-gradient(#fff, #fff), var(--ap-gradient) !important;
+    background-origin: border-box !important;
+    background-clip: content-box, border-box !important;
+    border-radius: 50% !important;
+    padding: 2px !important;
+}
+
+/* Profile tabs (if exists) */
+.userprofile .nav-tabs .nav-link {
+    border: none !important;
+    border-bottom: 2px solid transparent !important;
+    font-weight: 500 !important;
+    color: var(--ap-text-secondary) !important;
+    transition: all 0.15s !important;
+}
+.userprofile .nav-tabs .nav-link.active {
+    color: var(--ap-primary) !important;
+    border-bottom-color: var(--ap-primary) !important;
+    background: transparent !important;
+}
+
+/* Dark mode */
+body.dark-mode .edu_info .profile_data_content {
+    background: #1a1d27 !important;
+    border-color: #2d3140 !important;
+}
+body.dark-mode .edu_info .userinfo-lable { color: #e8eaed !important; border-color: #2d3140 !important; }
+body.dark-mode .edu_info .u_info { color: #e8eaed !important; }
