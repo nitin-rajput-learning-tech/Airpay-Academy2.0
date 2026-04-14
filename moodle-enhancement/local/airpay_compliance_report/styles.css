@@ -45,6 +45,125 @@ body.dark-mode .airpay-compliance-rpt__table td { color: #c4cad8; border-color: 
 body.dark-mode .airpay-compliance-rpt__table tr:hover td { background: #232733; }
 body.dark-mode .airpay-compliance-rpt__tabs a { background: #232733; color: #9ca3b4; }
 
+/* Filter Bar */
+.airpay-compliance-rpt__filter-bar {
+    display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+    margin-bottom: 16px; padding: 12px 16px;
+    background: var(--ap-surface, #fff);
+    border: 1px solid var(--ap-border, #e2e6ef);
+    border-radius: 10px;
+}
+.airpay-compliance-rpt__filter-label {
+    font-size: 13px; font-weight: 600; color: var(--ap-text-secondary, #5a6070);
+}
+.airpay-compliance-rpt__filter-label i { margin-right: 4px; }
+.airpay-compliance-rpt__filter-select {
+    padding: 6px 12px; border: 1px solid var(--ap-border, #e2e6ef);
+    border-radius: 8px; font-size: 13px; font-family: inherit;
+    background: var(--ap-surface, #fff); color: var(--ap-text, #1a1a2e);
+    cursor: pointer; transition: border-color 0.15s;
+}
+.airpay-compliance-rpt__filter-select:focus {
+    outline: none; border-color: var(--ap-primary, #0066A7);
+}
+.airpay-compliance-rpt__filter-clear {
+    font-size: 12px; color: #dc2626; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 4px;
+}
+.airpay-compliance-rpt__filter-clear:hover { text-decoration: underline; }
+
+/* Config Section */
+.airpay-compliance-rpt__config-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+}
+.airpay-compliance-rpt__config-card {
+    background: var(--ap-surface, #fff);
+    border: 1px solid var(--ap-border, #e2e6ef);
+    border-radius: 12px; padding: 20px;
+}
+.airpay-compliance-rpt__config-title {
+    font-size: 15px; font-weight: 700; color: var(--ap-text, #1a1a2e);
+    margin: 0 0 16px; padding-bottom: 10px;
+    border-bottom: 1px solid var(--ap-border, #e2e6ef);
+}
+.airpay-compliance-rpt__config-form {
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+.airpay-compliance-rpt__config-form select,
+.airpay-compliance-rpt__config-form input {
+    padding: 8px 12px; border: 1px solid var(--ap-border, #e2e6ef);
+    border-radius: 8px; font-size: 13px; font-family: inherit;
+    flex: 1; min-width: 120px;
+}
+.airpay-compliance-rpt__config-form button {
+    padding: 8px 16px; border: none; border-radius: 8px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    font-family: inherit;
+}
+
+/* Scorecard RAG cards */
+.airpay-compliance-rpt__scorecard-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px;
+}
+.airpay-compliance-rpt__scorecard-card {
+    padding: 16px; border-radius: 10px;
+    border: 1px solid var(--ap-border, #e2e6ef);
+    background: var(--ap-surface, #fff);
+    display: flex; justify-content: space-between; align-items: center;
+}
+.airpay-compliance-rpt__scorecard-name {
+    font-size: 14px; font-weight: 600; color: var(--ap-text, #1a1a2e);
+}
+.airpay-compliance-rpt__scorecard-users {
+    font-size: 12px; color: var(--ap-text-muted, #8896a6);
+}
+.airpay-compliance-rpt__scorecard-rate {
+    font-size: 18px; font-weight: 800;
+    padding: 4px 12px; border-radius: 8px;
+}
+.airpay-compliance-rpt__scorecard-rate--green { background: #dcfce7; color: #16a34a; }
+.airpay-compliance-rpt__scorecard-rate--amber { background: #fef3c7; color: #d97706; }
+.airpay-compliance-rpt__scorecard-rate--red { background: #fef2f2; color: #dc2626; }
+
+/* Days overdue highlight */
+.airpay-compliance-rpt__overdue {
+    font-weight: 700; color: #dc2626;
+}
+
+/* Pagination */
+.airpay-compliance-rpt__pagination {
+    display: flex; justify-content: center; align-items: center; gap: 12px;
+    margin-top: 16px; padding-top: 12px;
+    border-top: 1px solid var(--ap-border, #e2e6ef);
+}
+.airpay-compliance-rpt__pagination a {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 32px; height: 32px; border-radius: 8px;
+    font-size: 13px; font-weight: 600; text-decoration: none;
+    border: 1px solid var(--ap-border, #e2e6ef);
+    color: var(--ap-text-secondary, #5a6070);
+    transition: all 0.15s;
+}
+.airpay-compliance-rpt__pagination a:hover { border-color: var(--ap-primary); color: var(--ap-primary); }
+.airpay-compliance-rpt__pagination a.active { background: var(--ap-primary, #0066A7); color: #fff; border-color: var(--ap-primary); }
+
+/* Dark mode additions */
+body.dark-mode .airpay-compliance-rpt__filter-bar { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .airpay-compliance-rpt__filter-select { background: #22252f; border-color: #2d3140; color: #e8eaed; }
+body.dark-mode .airpay-compliance-rpt__config-card { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .airpay-compliance-rpt__config-title { color: #e8eaed; border-color: #2d3140; }
+body.dark-mode .airpay-compliance-rpt__scorecard-card { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .airpay-compliance-rpt__scorecard-name { color: #e8eaed; }
+
 /* Mobile */
-@media (max-width: 768px) { .airpay-compliance-rpt__kpis { flex-direction: column; } }
-@media (max-width: 590px) { .airpay-compliance-rpt__tabs { flex-direction: column; } .airpay-compliance-rpt__table { font-size: 0.75rem; } }
+@media (max-width: 768px) {
+    .airpay-compliance-rpt__kpis { flex-direction: column; }
+    .airpay-compliance-rpt__config-grid { grid-template-columns: 1fr; }
+    .airpay-compliance-rpt__scorecard-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 590px) {
+    .airpay-compliance-rpt__tabs { flex-direction: column; }
+    .airpay-compliance-rpt__table { font-size: 0.75rem; }
+    .airpay-compliance-rpt__filter-bar { flex-direction: column; align-items: stretch; }
+}
