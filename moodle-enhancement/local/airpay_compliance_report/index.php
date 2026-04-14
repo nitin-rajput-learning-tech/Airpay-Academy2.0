@@ -26,7 +26,15 @@ if (!$isadmin) {
     $isadmin = $hasbizlmsadmin;
 }
 
+// Managers can view compliance for their team (read-only).
+$ismanager = false;
 if (!$isadmin) {
+    $directreports = $DB->count_records_select('user',
+        "open_supervisorid = :uid AND deleted = 0 AND suspended = 0",
+        ['uid' => $USER->id]);
+    $ismanager = ($directreports > 0);
+}
+if (!$isadmin && !$ismanager) {
     throw new moodle_exception('nopermission');
 }
 
