@@ -1,0 +1,91 @@
+{{!
+    Airpay Academy — Online Exams Learner Dashboard (Modern)
+    Replaces legacy BizLMS layout with modern card design.
+    PRESERVES: All variable names, subtab IDs, data-index, enableslider partial.
+}}
+{{# onlineexams_view_count}}
+<div class="userdashboard_content">
+    <div id="{{{subtab}}}" class="tab-pane divslider active active_subtab">
+        <div class="userdashboard_content userdashboard_ctype_elearning ap-exam-dash-grid">
+            {{# moduledetails}}
+            <div class="col-sm-6 col-12 tabs_cmn_class onlineexams_inprogress_slide {{{subtab}}} {{indexClass}} ctype_elearning d-flex"
+                 data-index="{{index}}">
+                <div class="ap-dash-exam-card">
+                    {{! Card Image / Header }}
+                    <a href="{{course_url}}" class="ap-dash-exam-card__header">
+                        {{#course_image_url}}
+                        <div class="ap-dash-exam-card__image" style="background-image:url('{{course_image_url}}');"></div>
+                        {{/course_image_url}}
+                        {{^course_image_url}}
+                        <div class="ap-dash-exam-card__image ap-dash-exam-card__image--fallback">
+                            <i class="fa fa-file-text-o"></i>
+                        </div>
+                        {{/course_image_url}}
+                        {{#course_completedon}}
+                        <span class="ap-dash-exam-card__badge ap-dash-exam-card__badge--done">
+                            <i class="fa fa-check"></i> Completed
+                        </span>
+                        {{/course_completedon}}
+                        {{^course_completedon}}
+                        {{#progress}}
+                        <span class="ap-dash-exam-card__badge ap-dash-exam-card__badge--progress">
+                            {{progress}}%
+                        </span>
+                        {{/progress}}
+                        {{/course_completedon}}
+                    </a>
+
+                    {{! Card Body }}
+                    <div class="ap-dash-exam-card__body">
+                        <h4 class="ap-dash-exam-card__title">
+                            <a href="{{course_url}}" title="{{{course_fullname}}}">{{course_fullname}}</a>
+                        </h4>
+                        {{#onlineexamsummary}}
+                        <p class="ap-dash-exam-card__desc">{{{onlineexamsummary}}}</p>
+                        {{/onlineexamsummary}}
+
+                        {{! Progress Bar }}
+                        {{^course_completedon}}
+                        <div class="ap-dash-exam-card__progress">
+                            <div class="ap-dash-exam-card__progress-bar" style="width:{{progress}}%;"></div>
+                        </div>
+                        <span class="ap-dash-exam-card__progress-text">{{progress}}% complete</span>
+                        {{/course_completedon}}
+
+                        {{! Footer }}
+                        <div class="ap-dash-exam-card__footer">
+                            <div class="ap-dash-exam-card__meta">
+                                {{#rating_element}}
+                                <span class="ap-dash-exam-card__rating">{{{rating_element}}}</span>
+                                {{/rating_element}}
+                                {{#lastaccessdate}}
+                                <span class="ap-dash-exam-card__access">
+                                    <i class="fa fa-clock-o"></i> {{{lastaccessdate}}}
+                                </span>
+                                {{/lastaccessdate}}
+                            </div>
+                            <a href="{{{course_url}}}" class="ap-dash-exam-card__cta">
+                                {{#course_completedon}}
+                                <i class="fa fa-eye"></i> Review
+                                {{/course_completedon}}
+                                {{^course_completedon}}
+                                <i class="fa fa-play"></i> {{label_name}}
+                                {{/course_completedon}}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {{/ moduledetails}}
+            {{# viewMoreCard}}
+            {{/ viewMoreCard}}
+        </div>
+    </div>
+</div>
+{{/ onlineexams_view_count}}
+{{^ onlineexams_view_count}}
+    {{> block_userdashboard/userdashboard_nodata_text}}
+{{/ onlineexams_view_count}}
+{{#enableslider}}
+    {{> block_userdashboard/userdashboard_enable_slider}}
+{{/enableslider}}
