@@ -1,0 +1,33 @@
+<div class="ap-profile">
+    <div class="ap-profile__header">
+        <div class="ap-profile__avatar-section">
+            <div class="ap-profile__avatar">{{{userimage}}}</div>
+            <div class="ap-profile__actions">
+                {{#capabilityedit}}
+                <button class="ap-profile__edit-btn" title="{{#str}}edit_profile, local_users{{/str}}"
+                    onclick='(function(e){ require("local_users/newuser").init({selector:"createusermodal", context:1, id:{{{userid}}}, form_status:0}) })(event)'>
+                    <i class="fa fa-pencil"></i>
+                </button>
+                {{/capabilityedit}}
+                {{#loginasurl}}
+                <a href="{{{loginasurl}}}" class="ap-profile__edit-btn" title="{{#str}}loginas{{/str}}">
+                    <i class="fa fa-sign-in"></i>
+                </a>
+                {{/loginasurl}}
+            </div>
+        </div>
+        <div class="ap-profile__info">
+            <h1 class="ap-profile__name">{{prefix}}{{username}}</h1>
+            <p class="ap-profile__email"><i class="fa fa-envelope-o"></i> {{user_email}}</p>
+        </div>
+        <div class="ap-profile__stats">
+            {{#existingplugin}}
+            <div class="ap-profile__stat">
+                <span class="ap-profile__stat-num">{{userenrolledcount}}</span>
+                <span class="ap-profile__stat-label">{{string}}</span>
+            </div>
+            {{/existingplugin}}
+        </div>
+    </div>
+</div>
+{{> local_users/userprofiletabs}}

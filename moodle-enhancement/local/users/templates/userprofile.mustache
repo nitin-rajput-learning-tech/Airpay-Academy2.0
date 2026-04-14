@@ -1,0 +1,141 @@
+<div class="ap-profile-details">
+
+    <!-- Personal Information -->
+    <div class="ap-profile-details__section">
+        <h3 class="ap-profile-details__section-title">
+            <i class="fa fa-user-circle-o"></i>
+            {{#str}}personalinfo, local_users{{/str}}
+        </h3>
+        <div class="ap-profile-details__grid">
+            <div class="ap-profile-details__field">
+                <span class="ap-profile-details__label">{{#str}}gender, local_users{{/str}}</span>
+                <span class="ap-profile-details__value">{{gender}}</span>
+            </div>
+            <div class="ap-profile-details__field">
+                <span class="ap-profile-details__label">{{#str}}dateofbirth, local_users{{/str}}</span>
+                <span class="ap-profile-details__value">{{dateofbirth}}</span>
+            </div>
+            <div class="ap-profile-details__field">
+                <span class="ap-profile-details__label">{{#str}}contactno, local_users{{/str}}</span>
+                <span class="ap-profile-details__value">{{phnumber}}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Professional Information -->
+    <div class="ap-profile-details__section">
+        <h3 class="ap-profile-details__section-title">
+            <i class="fa fa-briefcase"></i>
+            {{#str}}professionalinfo, local_users{{/str}}
+        </h3>
+        <div class="ap-profile-details__grid">
+            <div class="ap-profile-details__field">
+                <span class="ap-profile-details__label">{{#str}}costcenter, local_users{{/str}}</span>
+                <span class="ap-profile-details__value">{{organisation}}</span>
+            </div>
+            <div class="ap-profile-details__field">
+                <span class="ap-profile-details__label">{{#str}}department, local_users{{/str}}</span>
+                <span class="ap-profile-details__value">{{department}}</span>
+            </div>
+            <div class="ap-profile-details__field">
+                <span class="ap-profile-details__label">{{#str}}commercialunit, local_users{{/str}}</span>
+                <span class="ap-profile-details__value">{{subdepartment}}</span>
+            </div>
+            <div class="ap-profile-details__field">
+                <span class="ap-profile-details__label">{{#str}}commercialarea, local_users{{/str}}</span>
+                <span class="ap-profile-details__value">{{usercu}}</span>
+            </div>
+            <div class="ap-profile-details__field">
+                <span class="ap-profile-details__label">{{#str}}serviceid, local_users{{/str}}</span>
+                <span class="ap-profile-details__value">{{empid}}</span>
+            </div>
+            <div class="ap-profile-details__field">
+                <span class="ap-profile-details__label">{{#str}}employmenttype, local_users{{/str}}</span>
+                <span class="ap-profile-details__value">{{employment_type}}</span>
+            </div>
+            <div class="ap-profile-details__field">
+                <span class="ap-profile-details__label">{{#str}}designation, local_users{{/str}}</span>
+                <span class="ap-profile-details__value">{{designation}}</span>
+            </div>
+            <div class="ap-profile-details__field">
+                <span class="ap-profile-details__label">{{#str}}region, local_users{{/str}}</span>
+                <span class="ap-profile-details__value">{{region}}</span>
+            </div>
+            <div class="ap-profile-details__field">
+                <span class="ap-profile-details__label">{{#str}}grade, local_users{{/str}}</span>
+                <span class="ap-profile-details__value">{{grade}}</span>
+            </div>
+            <div class="ap-profile-details__field">
+                <span class="ap-profile-details__label">{{#str}}joiningdate, local_users{{/str}}</span>
+                <span class="ap-profile-details__value">{{joindate}}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Other Information -->
+    <div class="ap-profile-details__section">
+        <h3 class="ap-profile-details__section-title">
+            <i class="fa fa-sitemap"></i>
+            {{#str}}otherinfo, local_users{{/str}}
+        </h3>
+        <div class="ap-profile-details__grid">
+            <div class="ap-profile-details__field">
+                <span class="ap-profile-details__label">{{#str}}supervisor, local_users{{/str}}</span>
+                <span class="ap-profile-details__value">{{supervisorname}}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* ═══ Modern Profile Details ═══ */
+.ap-profile-details { max-width: 900px; margin: 0 auto; }
+.ap-profile-details__section {
+    background: var(--ap-surface, #fff);
+    border: 1px solid var(--ap-border, #e3eaf3);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 16px;
+}
+.ap-profile-details__section-title {
+    font-size: 16px; font-weight: 700; color: var(--ap-text, #1a1a2e);
+    margin: 0 0 20px; padding-bottom: 12px;
+    border-bottom: 1px solid var(--ap-border, #e3eaf3);
+    display: flex; align-items: center; gap: 8px;
+    position: relative;
+}
+.ap-profile-details__section-title::after {
+    content: ''; position: absolute; bottom: -1px; left: 0;
+    width: 40px; height: 2px; border-radius: 1px;
+    background: var(--ap-gradient, linear-gradient(135deg, #0066A7, #0f7a73));
+}
+.ap-profile-details__section-title i { color: var(--ap-primary, #0066A7); font-size: 14px; }
+.ap-profile-details__grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+}
+.ap-profile-details__field { }
+.ap-profile-details__label {
+    display: block; font-size: 11px; font-weight: 600;
+    color: var(--ap-text-muted, #8896a6);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+.ap-profile-details__value {
+    display: block; font-size: 14px; font-weight: 600;
+    color: var(--ap-text, #1a1a2e);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .ap-profile-details__grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 590px) {
+    .ap-profile-details__grid { grid-template-columns: 1fr; }
+    .ap-profile-details__section { padding: 16px; }
+}
+
+/* Dark mode */
+body.dark-mode .ap-profile-details__section { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .ap-profile-details__section-title { color: #e8eaed; border-color: #2d3140; }
+body.dark-mode .ap-profile-details__value { color: #e8eaed; }
+</style>
