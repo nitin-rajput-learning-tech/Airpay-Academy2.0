@@ -670,20 +670,32 @@ class core_renderer extends \core_renderer {
     public function login_stat_users() {
         global $DB;
         try {
-            $count = $DB->count_records_select('user',
-                'deleted = 0 AND suspended = 0 AND lastaccess > :cutoff',
+            // Public tenant learners only (external-facing stat).
+            $count = $DB->count_records_sql(
+                "SELECT COUNT(*) FROM {user}
+                 WHERE deleted = 0 AND suspended = 0 AND lastaccess > :cutoff AND open_path LIKE '/77%'",
                 ['cutoff' => time() - (90 * 86400)]);
+            if ($count == 0) {
+                // Fallback to all if no Public tenant users.
+                $count = $DB->count_records_select('user',
+                    'deleted = 0 AND suspended = 0 AND lastaccess > :cutoff',
+                    ['cutoff' => time() - (90 * 86400)]);
+            }
             return $count > 0 ? $count . '+' : '500+';
         } catch (\Exception $e) {
             return '500+';
         }
     }
 
-    /** Live course count for login hero. */
+    /** Live course count for login hero — Public tenant only. */
     public function login_stat_courses() {
         global $DB;
         try {
-            $count = $DB->count_records_select('course', 'visible = 1 AND id > 1');
+            $count = $DB->count_records_sql(
+                "SELECT COUNT(*) FROM {course} WHERE visible = 1 AND id > 1 AND open_path LIKE '/77%'");
+            if ($count == 0) {
+                $count = $DB->count_records_select('course', 'visible = 1 AND id > 1');
+            }
             return $count > 0 ? $count . '+' : '50+';
         } catch (\Exception $e) {
             return '50+';
@@ -701,12 +713,21 @@ class core_renderer extends \core_renderer {
         return is_siteadmin();
     }
 
-    /** Live completion rate for login hero. */
+    /** Live completion rate for login hero — Public tenant only. */
     public function login_stat_completion() {
         global $DB;
         try {
-            $enrolled = $DB->count_records('user_enrolments');
-            $completed = $DB->count_records_select('course_completions', 'timecompleted IS NOT NULL');
+            $enrolled = $DB->count_records_sql(
+                "SELECT COUNT(ue.id) FROM {user_enrolments} ue
+                 JOIN {user} u ON u.id = ue.userid WHERE u.open_path LIKE '/77%'");
+            $completed = $DB->count_records_sql(
+                "SELECT COUNT(cc.id) FROM {course_completions} cc
+                 JOIN {user} u ON u.id = cc.userid WHERE cc.timecompleted IS NOT NULL AND u.open_path LIKE '/77%'");
+            if ($enrolled == 0) {
+                // Fallback to global.
+                $enrolled = $DB->count_records('user_enrolments');
+                $completed = $DB->count_records_select('course_completions', 'timecompleted IS NOT NULL');
+            }
             $rate = ($enrolled > 0) ? round(($completed / $enrolled) * 100) : 0;
             return $rate > 0 ? $rate . '%' : '98%';
         } catch (\Exception $e) {

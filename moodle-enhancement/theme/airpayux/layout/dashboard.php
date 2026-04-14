@@ -199,8 +199,22 @@ if (isloggedin() && !isguestuser()) {
             $totalcourses = $DB->count_records_select('course',
                 'visible = 1 AND id > 1' . $tenantfilter_course,
                 array_intersect_key($tenantparams, ['cpath' => 1]));
-            $totalenrolments = $DB->count_records_select('user_enrolments', '1=1');
-            $totalcompleted = $DB->count_records_select('course_completions', 'timecompleted IS NOT NULL');
+            // Tenant-scoped enrolments and completions.
+            if (!empty($tenantfilter_user)) {
+                $totalenrolments = $DB->count_records_sql(
+                    "SELECT COUNT(ue.id) FROM {user_enrolments} ue
+                     JOIN {user} u ON u.id = ue.userid
+                     WHERE u.deleted = 0 AND u.open_path LIKE :upath",
+                    ['upath' => ($tenantparams['upath'] ?? '%')]);
+                $totalcompleted = $DB->count_records_sql(
+                    "SELECT COUNT(cc.id) FROM {course_completions} cc
+                     JOIN {user} u ON u.id = cc.userid
+                     WHERE cc.timecompleted IS NOT NULL AND u.deleted = 0 AND u.open_path LIKE :upath",
+                    ['upath' => ($tenantparams['upath'] ?? '%')]);
+            } else {
+                $totalenrolments = $DB->count_records_select('user_enrolments', '1=1');
+                $totalcompleted = $DB->count_records_select('course_completions', 'timecompleted IS NOT NULL');
+            }
             $completionrate = ($totalenrolments > 0) ? round(($totalcompleted / $totalenrolments) * 100, 1) : 0;
 
             // Month-over-month trends.
@@ -209,8 +223,16 @@ if (isloggedin() && !isguestuser()) {
             $newusersthismonth = $DB->count_records_select('user',
                 'timecreated > :since AND deleted = 0' . $tenantfilter_user,
                 array_merge(['since' => $lastmonth], array_intersect_key($tenantparams, ['upath' => 1])));
-            $newenrolmentsthisweek = $DB->count_records_select('user_enrolments',
-                'timestart > :since', ['since' => time() - (7 * 86400)]);
+            if (!empty($tenantfilter_user)) {
+                $newenrolmentsthisweek = $DB->count_records_sql(
+                    "SELECT COUNT(ue.id) FROM {user_enrolments} ue
+                     JOIN {user} u ON u.id = ue.userid
+                     WHERE ue.timestart > :since AND u.open_path LIKE :upath",
+                    ['since' => time() - (7 * 86400), 'upath' => ($tenantparams['upath'] ?? '%')]);
+            } else {
+                $newenrolmentsthisweek = $DB->count_records_select('user_enrolments',
+                    'timestart > :since', ['since' => time() - (7 * 86400)]);
+            }
 
             // Show tenant scope label for L&D admins
             if ($isldadmin && !empty($toporg)) {
@@ -260,11 +282,20 @@ if (isloggedin() && !isguestuser()) {
             $airpay_dashboard['chart_pie_data'] = json_encode($pieData);
             $airpay_dashboard['hascharts'] = true;
 
-            // Quick navigation links with live stats.
-            $activeusers = $DB->count_records_select('user', 'deleted = 0 AND suspended = 0 AND lastaccess > :t', ['t' => time() - (30 * 86400)]);
-            $inactiveusers = $totalusers - $activeusers;
-            $classroomcount = $DB->count_records_select('local_classroom', '1=1');
+            // Quick navigation links with tenant-scoped live stats.
+            // $activeusers already computed above with tenant filter — don't overwrite.
+            $inactiveusers = max(0, $totalusers - $activeusers);
+            $classroomcount = 0;
             $examcount = 0;
+            try {
+                if (!empty($tenantfilter_course)) {
+                    $classroomcount = $DB->count_records_sql(
+                        "SELECT COUNT(*) FROM {local_classroom} WHERE open_path LIKE :p",
+                        ['p' => ($tenantparams['cpath'] ?? '%')]);
+                } else {
+                    $classroomcount = $DB->count_records_select('local_classroom', '1=1');
+                }
+            } catch (Exception $e) {}
             try { $examcount = $DB->count_records('local_onlineexams'); } catch (Exception $e) {}
 
             $airpay_dashboard['admin_quicknav'] = [
