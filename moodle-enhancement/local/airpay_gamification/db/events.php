@@ -14,4 +14,8 @@ $observers = [
         'eventname' => '\core\event\user_loggedin',
         'callback'  => '\local_airpay_gamification\observer::user_loggedin',
     ],
+    [
+        'eventname' => '\core\event\course_module_viewed',
+        'callback'  => '\local_airpay_gamification\observer::course_module_viewed',
+    ],
 ];

@@ -11,4 +11,13 @@ $tasks = [
         'month'     => '*',
         'dayofweek' => '*',
     ],
+    [
+        'classname' => '\local_airpay_notifications\task\daily_digest',
+        'blocking'  => 0,
+        'minute'    => '30',
+        'hour'      => '8',   // 8:30 AM daily.
+        'day'       => '*',
+        'month'     => '*',
+        'dayofweek' => '1-5', // Weekdays only.
+    ],
 ];

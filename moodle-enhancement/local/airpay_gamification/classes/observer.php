@@ -140,4 +140,49 @@ class observer {
             points_manager::award($userid, 'streak_30', null, '30-day learning streak!');
         }
     }
+
+    /**
+     * Course module viewed — tracks LEARNING activity (not just login).
+     * This counts actual content engagement: viewing a SCORM, page, resource, quiz, etc.
+     * Updates a separate 'last_learning_date' field so streaks reflect real learning.
+     */
+    public static function course_module_viewed(\core\event\course_module_viewed $event) {
+        global $DB;
+
+        $userid = $event->userid;
+        if (is_siteadmin($userid) || isguestuser($userid)) {
+            return;
+        }
+
+        $today = date('Y-m-d');
+
+        $streak = $DB->get_record('local_airpay_streaks', ['userid' => $userid]);
+        if (!$streak) {
+            return; // Will be created on login.
+        }
+
+        // Already tracked learning today? Skip.
+        $lastlearning = $streak->last_learning_date ?? '';
+        if ($lastlearning === $today) {
+            return;
+        }
+
+        // Update learning date + award bonus points for active learning day.
+        $streak->last_learning_date = $today;
+
+        // Calculate learning streak (consecutive days with actual course activity).
+        $yesterday = date('Y-m-d', strtotime('-1 day'));
+        if ($lastlearning === $yesterday) {
+            $streak->learning_streak = ($streak->learning_streak ?? 0) + 1;
+        } else if ($lastlearning !== $today) {
+            $streak->learning_streak = 1;
+        }
+
+        $streak->timemodified = time();
+        $DB->update_record('local_airpay_streaks', $streak);
+
+        // Award learning activity points (separate from login points).
+        points_manager::award($userid, 'daily_login', $event->courseid,
+            'Active learning day ' . ($streak->learning_streak ?? 1));
+    }
 }
