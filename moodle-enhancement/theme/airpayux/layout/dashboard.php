@@ -32,6 +32,7 @@ if (!isloggedin() || isguestuser()) {
 
 // First-login onboarding — redirect new learners to onboarding wizard.
 // Skip for: siteadmins, L&D admins, admins who switched to employee view.
+global $DB;
 $has_any_admin_role = is_siteadmin() || has_capability('local/courses:manage', context_system::instance())
     || $DB->record_exists_sql(
         "SELECT 1 FROM {role_assignments} ra JOIN {context} ctx ON ctx.id = ra.contextid
