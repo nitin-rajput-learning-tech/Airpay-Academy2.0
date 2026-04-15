@@ -21,9 +21,59 @@ if (!is_siteadmin()) {
     $orgpath = '/' . ($parts[1] ?? '1');
 }
 
+$format = optional_param('format', 'xlsx', PARAM_ALPHA);
+
 $engine = \local_airpay_compliance_report\compliance_engine::class;
 $matrix = $engine::get_compliance_matrix($orgpath, 0, 10000); // All employees.
 $kpis = $engine::get_summary_kpis($orgpath);
+
+// CSV export option.
+if ($format === 'csv') {
+    $filename = 'Compliance_Report_' . date('Y-m-d') . '.csv';
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    $output = fopen('php://output', 'w');
+    fwrite($output, "\xEF\xBB\xBF"); // UTF-8 BOM.
+
+    // Header row.
+    $headers = ['Employee ID', 'Name', 'Email', 'Department'];
+    if (!empty($matrix['courses'])) {
+        foreach ($matrix['courses'] as $course) {
+            $headers[] = $course['shortname'] ?? $course['fullname'] ?? 'Course';
+        }
+    }
+    fputcsv($output, $headers);
+
+    // Data rows.
+    if (!empty($matrix['rows'])) {
+        foreach ($matrix['rows'] as $row) {
+            $csvrow = [
+                $row['empid'] ?? '',
+                ($row['firstname'] ?? '') . ' ' . ($row['lastname'] ?? ''),
+                $row['email'] ?? '',
+                $row['department'] ?? '',
+            ];
+            if (!empty($row['statuses'])) {
+                foreach ($row['statuses'] as $status) {
+                    $csvrow[] = $status['label'] ?? $status['status'] ?? '';
+                }
+            }
+            fputcsv($output, $csvrow);
+        }
+    }
+
+    // Summary.
+    fputcsv($output, []);
+    fputcsv($output, ['=== SUMMARY ===']);
+    fputcsv($output, ['Compliance Rate', ($kpis['compliance_rate'] ?? 0) . '%']);
+    fputcsv($output, ['Completed', $kpis['completed'] ?? 0]);
+    fputcsv($output, ['Overdue', $kpis['overdue'] ?? 0]);
+    fputcsv($output, ['Not Enrolled', $kpis['not_enrolled'] ?? 0]);
+    fputcsv($output, ['Generated', date('d M Y H:i')]);
+
+    fclose($output);
+    die();
+}
 
 $filename = 'Compliance_Report_' . date('Y-m-d') . '.xlsx';
 

@@ -46,7 +46,21 @@ $manager = \local_airpay_analytics\analytics_manager::class;
 $kpis       = $manager::get_kpis($range, $orgpath);
 $funnel     = $manager::get_funnel($orgpath);
 $heatmap    = $manager::get_compliance_heatmap($orgpath);
-$top_courses = $manager::get_course_effectiveness(10);
+$top_courses = $manager::get_course_effectiveness(10, $orgpath);
+
+// Add drill-down URLs to heatmap departments.
+$drillbase = new moodle_url('/local/airpay_analytics/drilldown.php');
+foreach ($heatmap as &$dept) {
+    $dept['drilldown_url'] = $drillbase->out(false) . '?type=department&path=' . urlencode($dept['path'] ?? $orgpath);
+}
+unset($dept);
+
+// Add drill-down URLs to course effectiveness.
+foreach ($top_courses as &$course) {
+    $cid = $course['id'] ?? $course->id ?? 0;
+    $course['course_drilldown_url'] = $drillbase->out(false) . '?type=course&courseid=' . (int)$cid;
+}
+unset($course);
 
 $data = [
     'kpis'          => $kpis,
@@ -64,6 +78,7 @@ $data = [
     'range_ytd'     => ($range === 'ytd'),
     'is_scoped'     => !empty($orgpath),
     'baseurl'       => (new moodle_url('/local/airpay_analytics/index.php'))->out(false),
+    'exporturl'     => (new moodle_url('/local/airpay_analytics/export.php', ['range' => $range, 'format' => 'csv']))->out(false),
 ];
 
 echo $OUTPUT->header();

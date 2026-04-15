@@ -252,6 +252,72 @@ class analytics_manager {
     }
 
     /**
+     * DRILL-DOWN: Get users within a department with their learning stats.
+     */
+    public static function get_department_users(string $deptpath, int $limit = 50): array {
+        global $DB;
+
+        return array_values($DB->get_records_sql(
+            "SELECT u.id, u.firstname, u.lastname, u.email, u.open_path, u.lastlogin,
+                    COUNT(DISTINCT ue.enrolid) as enrolled_courses,
+                    COUNT(DISTINCT cc.id) as completed_courses,
+                    CASE WHEN COUNT(DISTINCT ue.enrolid) > 0
+                         THEN ROUND(COUNT(DISTINCT cc.id) * 100.0 / COUNT(DISTINCT ue.enrolid))
+                         ELSE 0 END as completion_rate
+               FROM {user} u
+          LEFT JOIN {user_enrolments} ue ON ue.userid = u.id
+          LEFT JOIN {enrol} e ON e.id = ue.enrolid
+          LEFT JOIN {course_completions} cc ON cc.userid = u.id AND cc.course = e.courseid
+                    AND cc.timecompleted IS NOT NULL
+              WHERE u.deleted = 0 AND u.suspended = 0 AND u.open_path LIKE :dpath
+           GROUP BY u.id, u.firstname, u.lastname, u.email, u.open_path, u.lastlogin
+           ORDER BY completion_rate ASC",
+            ['dpath' => $deptpath . '%'], 0, $limit));
+    }
+
+    /**
+     * DRILL-DOWN: Get learners enrolled in a specific course with their status.
+     */
+    public static function get_course_learners(int $courseid, int $limit = 50): array {
+        global $DB;
+
+        return array_values($DB->get_records_sql(
+            "SELECT u.id, u.firstname, u.lastname, u.email, u.open_path,
+                    ue.timecreated as enrolled_date,
+                    cc.timecompleted as completed_date,
+                    CASE WHEN cc.timecompleted IS NOT NULL THEN 'completed'
+                         WHEN ue.id IS NOT NULL THEN 'enrolled'
+                         ELSE 'not_enrolled' END as status
+               FROM {user} u
+               JOIN {user_enrolments} ue ON ue.userid = u.id
+               JOIN {enrol} e ON e.id = ue.enrolid AND e.courseid = :cid
+          LEFT JOIN {course_completions} cc ON cc.course = :cid2 AND cc.userid = u.id
+                    AND cc.timecompleted IS NOT NULL
+              WHERE u.deleted = 0 AND u.suspended = 0
+           ORDER BY cc.timecompleted DESC NULLS LAST, ue.timecreated DESC",
+            ['cid' => $courseid, 'cid2' => $courseid], 0, $limit));
+    }
+
+    /**
+     * EXPORT: Get all analytics data as structured array for CSV/PDF export.
+     */
+    public static function get_export_data(string $range = '30d', string $orgpath = ''): array {
+        $kpis = self::get_kpis($range, $orgpath);
+        $funnel = self::get_funnel($orgpath);
+        $heatmap = self::get_compliance_heatmap($orgpath);
+        $courses = self::get_course_effectiveness(20, $orgpath);
+
+        return [
+            'generated'  => userdate(time(), '%d %b %Y %I:%M %p'),
+            'range'      => $range,
+            'kpis'       => $kpis,
+            'funnel'     => $funnel,
+            'heatmap'    => $heatmap,
+            'courses'    => $courses,
+        ];
+    }
+
+    /**
      * Get date ranges for period comparison.
      */
     private static function get_range_dates(string $range): array {
