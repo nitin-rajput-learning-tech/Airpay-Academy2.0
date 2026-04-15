@@ -1,7 +1,55 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-04-15 | **Phase:** Academy 2.6 — Product Audit + Bug Fixes + Onboarding
-**Theme:** airpayux v1.0.0 | **Tag:** v2.6.0
-**Version:** 2.6.0 (All v2.5.1 + 16 Bug Fixes + Learner Onboarding + Quick Access Fix + Moodle Lang Packs)
+**Updated:** 2026-04-15 | **Phase:** Academy 2.7 — Full Audit Execution (Buckets 1-6)
+**Theme:** airpayux v1.0.0 | **Tag:** v2.7.0
+**Version:** 2.7.0 (All v2.6.0 + 6 Audit Buckets + Manager Dashboard + DPDP Rewrite + Switch Role Fix)
+
+---
+
+## v2.7.0 Session (2026-04-15) — Full Audit Execution
+
+### Audit Buckets Completed (6 of 8)
+| Bucket | Status | Key Deliverables |
+|--------|--------|-----------------|
+| 1: Bug Fixes | ✅ 16/16 | Permission bypass, race conditions, dark mode, empty states, caching |
+| 2: Commercial Wins | ✅ | Learner onboarding wizard (4-step, first-login) |
+| 3: UX Fixes | ✅ | ~90 dark mode rules, profile with skills/badges/stats, leaderboard confirmed |
+| 4: Engagement | ✅ | Learning streak observer, manager nudge UI, daily digest task |
+| 5: Admin Productivity | ✅ | Analytics drill-down (dept→users, course→learners), CSV export, compliance CSV |
+| 6: Enterprise | ✅ | Manager dashboard plugin (local_airpay_manager), SSO setup guide |
+
+### New Plugin: local_airpay_manager
+- Team learning dashboard for supervisors
+- Per-member: enrolled, completed, rate, overdue, streak, last login
+- KPI cards: team size, avg completion, overdue, at-risk
+- Action buttons: nudge, view skills, view profile
+- Dark mode + mobile responsive
+
+### DPDP Module Rewrite
+- 4-tier access control: siteadmin → tenant admin → internal employee → external user
+- Internal employees (Airpay tenant 1): policy notice only, no download/deletion
+- External users (DPDP-enabled tenants): full self-service
+- Configurable: siteadmin sets which tenants have DPDP via get_config('dpdp_tenants')
+
+### BizLMS Switch Role Fix
+- /my/switchrole.php created (was 404)
+- Dashboard respects $SESSION->airpay_switchrole and $USER->useraccess
+- Admin→Employee switch now shows learner dashboard (not admin)
+
+### Profile Dark Mode Fix
+- .userprfltabs_container white wrapper eliminated
+- 11 dark mode rules for BizLMS profile classes
+- Added to both SCSS and precompiled moodle.css
+
+### Other Fixes
+- DPO email: dpo@airpay.co.in → academy@airpay.co.in
+- Privacy policy text softened for employees
+- Progress bar sticky positioning fixed
+- Compliance report table_exists() guard
+- Quick Access hamburger CSS :has() fix
+
+### Remaining Audit Roadmap (Buckets 7-8)
+- Bucket 7: SENTIENTIA AI content creator, AI-powered recommendations
+- Bucket 8: PWA mobile app, content marketplace connector
 
 ---
 
