@@ -19,6 +19,7 @@
         <div class="ap-profile__info">
             <h1 class="ap-profile__name">{{prefix}}{{username}}</h1>
             <p class="ap-profile__email"><i class="fa fa-envelope-o"></i> {{user_email}}</p>
+            {{#designation}}<p class="ap-profile__role"><i class="fa fa-briefcase"></i> {{designation}}</p>{{/designation}}
         </div>
         <div class="ap-profile__stats">
             {{#existingplugin}}
@@ -29,5 +30,102 @@
             {{/existingplugin}}
         </div>
     </div>
+
+    {{! Gamification + Skills Summary Row }}
+    <div class="ap-profile__enrichment">
+        {{#ap_gamification}}
+        <div class="ap-profile__enrich-card">
+            <div class="ap-profile__enrich-icon" style="background: {{level_color}}20; color: {{level_color}};">
+                <i class="fa fa-trophy"></i>
+            </div>
+            <div class="ap-profile__enrich-data">
+                <strong>{{total_points}} pts</strong>
+                <small>{{level_name}} · Rank #{{rank}}</small>
+            </div>
+        </div>
+        <div class="ap-profile__enrich-card">
+            <div class="ap-profile__enrich-icon" style="background: #fef3c720; color: #d97706;">
+                <i class="fa fa-certificate"></i>
+            </div>
+            <div class="ap-profile__enrich-data">
+                <strong>{{badge_count}} badges</strong>
+                <small>{{#has_streak}}🔥 {{current_streak}} day streak{{/has_streak}}{{^has_streak}}Start a streak!{{/has_streak}}</small>
+            </div>
+        </div>
+        {{/ap_gamification}}
+        {{#ap_skills_summary}}
+        <div class="ap-profile__enrich-card">
+            <div class="ap-profile__enrich-icon" style="background: #e8f2f920; color: #0066A7;">
+                <i class="fa fa-line-chart"></i>
+            </div>
+            <div class="ap-profile__enrich-data">
+                <strong>{{percentage}}% skill readiness</strong>
+                <small>{{met}}/{{total}} skills met</small>
+            </div>
+        </div>
+        {{/ap_skills_summary}}
+    </div>
+
+    {{! Earned Badges Row }}
+    {{#ap_gamification}}{{#has_badges}}
+    <div class="ap-profile__badges">
+        {{#badges}}
+        <div class="ap-profile__badge" title="{{name}}: {{description}}">
+            <i class="fa {{icon}}"></i>
+        </div>
+        {{/badges}}
+    </div>
+    {{/has_badges}}{{/ap_gamification}}
 </div>
 {{> local_users/userprofiletabs}}
+
+<style>
+/* Profile Enrichment Row */
+.ap-profile__enrichment {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    max-width: 900px; margin: -8px auto 16px; padding: 0 0 0;
+}
+.ap-profile__enrich-card {
+    flex: 1; min-width: 180px;
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px;
+    background: var(--ap-surface, #fff);
+    border: 1px solid var(--ap-border, #e3eaf3);
+    border-radius: 12px;
+}
+.ap-profile__enrich-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+}
+.ap-profile__enrich-data strong { display: block; font-size: 15px; font-weight: 700; color: var(--ap-text, #1a1a2e); }
+.ap-profile__enrich-data small { font-size: 12px; color: var(--ap-text-muted, #8896a6); }
+.ap-profile__role { font-size: 13px; color: var(--ap-text-secondary, #607286); margin: 2px 0 0; }
+.ap-profile__role i { margin-right: 4px; }
+
+/* Earned Badges Row */
+.ap-profile__badges {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    max-width: 900px; margin: 0 auto 16px; padding: 0;
+}
+.ap-profile__badge {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, #0066A7, #0f7a73);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 14px;
+    cursor: help;
+    transition: transform 0.15s;
+}
+.ap-profile__badge:hover { transform: scale(1.15); }
+
+/* Dark mode */
+body.dark-mode .ap-profile__enrich-card { background: #1a1d27 !important; border-color: #2d3140 !important; }
+body.dark-mode .ap-profile__enrich-data strong { color: #e8eaed !important; }
+body.dark-mode .ap-profile__badge { background: linear-gradient(135deg, #0d4880, #0a5c56); }
+
+/* Mobile */
+@media (max-width: 590px) {
+    .ap-profile__enrichment { flex-direction: column; }
+    .ap-profile__badges { justify-content: center; }
+}
+</style>
