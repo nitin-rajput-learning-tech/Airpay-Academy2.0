@@ -1,7 +1,54 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-04-14 | **Phase:** Academy 2.5 — LXP Overhaul + Multilingual
-**Theme:** airpayux v1.0.0 | **Tag:** v2.5.0-multilingual
-**Version:** 2.5.0 (All v2.2.0 + 9 UI Sprints + Tenant Isolation + 4-Language i18n)
+**Updated:** 2026-04-15 | **Phase:** Academy 2.6 — Product Audit + Bug Fixes + Onboarding
+**Theme:** airpayux v1.0.0 | **Tag:** v2.6.0
+**Version:** 2.6.0 (All v2.5.1 + 16 Bug Fixes + Learner Onboarding + Quick Access Fix + Moodle Lang Packs)
+
+---
+
+## v2.6.0 Session (2026-04-15) — Product Audit + Fixes
+
+### Deep Product Audit (14-section report on Desktop)
+- Full forensic audit: 15 learner modules + 10 admin modules rated
+- Competitive benchmark vs Docebo, Absorb, TalentLMS, 360Learning, LearnUpon, Sana Learn
+- 16 bugs found and ALL 16 resolved (1 critical, 1 high, 10 medium, 4 low)
+- Top 25 prioritized actions identified
+- Ticket-ready backlog for next 6 months
+
+### Bug Fixes (16/16 complete)
+- B1 CRITICAL: Compliance manager permission bypass — column guard + capability fallback
+- B3: Dynamic tenant IDs (no more hardcoded [1,77,177])
+- B4: Skills permission now throws error instead of silent fallback
+- B5: Notification duplicate race condition — transaction-based dedup
+- B6: Escalation to deleted manager — active user check
+- B7: Compliance "last refreshed" timestamp + stale data warning
+- B8: Notification batch LIMIT now configurable (default 500)
+- B9: mycourses.php user_lastaccess try/catch guard
+- B10: Email management plugin dark mode CSS (16 rules)
+- B11: Email preview iframe mobile overflow fix
+- B12: Compliance KPI caching via Moodle cache API
+- B13: Analytics funnel empty state message
+- B16: Mobile landscape orientation CSS
+
+### New Features
+- Learner Onboarding Wizard (4-step: Welcome → Interests → Goal → Courses)
+  - Auto-triggers on first login for non-admin learners
+  - Saves preferences to user_preferences table
+  - Gradient branded UI, mobile responsive
+- Quick Access hamburger menu fix (CSS :has() + JS MutationObserver)
+
+### Multilingual Completion
+- Theme lang files: 120+ strings × 4 languages (hi, mr, sw, kn)
+- Email lang files: 35 strings × 4 languages
+- Official Moodle lang packs installed: hi (709 files), mr (382), sw (301), kn (350)
+- Translation CSV exported for Cowork review (386 strings)
+
+### Remaining Audit Roadmap (not yet built)
+- Bucket 3: Dark mode completion, profile enhancement, leaderboard on dashboard
+- Bucket 4: Learning streak, manager nudges, daily digest
+- Bucket 5: Custom report builder, analytics drill-down
+- Bucket 6: SSO/SAML, ROI reporting, demo tenant
+- Bucket 7: SENTIENTIA AI content creator, AI recommendations
+- Bucket 8: PWA mobile app, content marketplace
 
 ---
 
