@@ -312,7 +312,15 @@ class compliance_engine {
         if ($recipient === 'manager') {
             $mgr_id = $DB->get_field('user', 'open_supervisorid', ['id' => $user->id]);
             if ($mgr_id) {
-                $target_userid = $mgr_id;
+                // Verify manager is active (not deleted/suspended).
+                $mgr_active = $DB->record_exists_select('user',
+                    'id = :mid AND deleted = 0 AND suspended = 0',
+                    ['mid' => $mgr_id]);
+                if ($mgr_active) {
+                    $target_userid = $mgr_id;
+                } else {
+                    return; // Manager is deleted/suspended — skip escalation.
+                }
             } else {
                 return; // No manager to escalate to.
             }

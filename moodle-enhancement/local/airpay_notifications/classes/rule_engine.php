@@ -274,16 +274,33 @@ class rule_engine {
         global $DB;
 
         // Prevent duplicate: same rule + user + course within 24 hours.
-        $exists = $DB->record_exists_select('local_airpay_notif_log',
-            'ruleid = :rid AND userid = :uid AND courseid = :cid AND timecreated > :since',
-            [
-                'rid'   => $rule->id,
-                'uid'   => $userid,
-                'cid'   => $courseid ?? 0,
-                'since' => time() - 86400,
-            ]);
-        if ($exists) {
-            return false;
+        // Use transaction to prevent race condition with parallel cron.
+        $cid = $courseid ?? 0;
+        $since = time() - 86400;
+        $transaction = $DB->start_delegated_transaction();
+        try {
+            $exists = $DB->record_exists_select('local_airpay_notif_log',
+                'ruleid = :rid AND userid = :uid AND courseid = :cid AND timecreated > :since',
+                ['rid' => $rule->id, 'uid' => $userid, 'cid' => $cid, 'since' => $since]);
+            if ($exists) {
+                $transaction->allow_commit();
+                return false;
+            }
+            // Insert the log record immediately to claim the slot before sending.
+            $logrecord = (object)[
+                'ruleid'      => $rule->id,
+                'userid'      => $userid,
+                'courseid'    => $cid,
+                'channel'     => $rule->channel,
+                'status'      => 'sending',
+                'subject'     => $subject,
+                'timecreated' => time(),
+            ];
+            $logid = $DB->insert_record('local_airpay_notif_log', $logrecord);
+            $transaction->allow_commit();
+        } catch (\Throwable $e) {
+            try { $transaction->rollback($e); } catch (\Throwable $ignored) {}
+            return false; // Another process already claimed this notification.
         }
 
         // Check user preferences.

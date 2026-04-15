@@ -27,12 +27,29 @@ if (!$isadmin) {
 }
 
 // Managers can view compliance for their team (read-only).
+// Check capability first, then fall back to supervisor relationship.
 $ismanager = false;
 if (!$isadmin) {
-    $directreports = $DB->count_records_select('user',
-        "open_supervisorid = :uid AND deleted = 0 AND suspended = 0",
-        ['uid' => $USER->id]);
-    $ismanager = ($directreports > 0);
+    // Capability-based check (covers HRBP, trainer roles).
+    if (has_capability('moodle/site:viewreports', $systemcontext)) {
+        $ismanager = true;
+    } else {
+        // Supervisor relationship check — guard against missing column.
+        try {
+            $dbman = $DB->get_manager();
+            $usertable = new xmldb_table('user');
+            $superfield = new xmldb_field('open_supervisorid');
+            if ($dbman->field_exists($usertable, $superfield)) {
+                $directreports = $DB->count_records_select('user',
+                    "open_supervisorid = :uid AND deleted = 0 AND suspended = 0",
+                    ['uid' => $USER->id]);
+                $ismanager = ($directreports > 0);
+            }
+        } catch (\Throwable $e) {
+            // Column doesn't exist — not a manager in this context.
+            $ismanager = false;
+        }
+    }
 }
 if (!$isadmin && !$ismanager) {
     throw new moodle_exception('nopermission');
@@ -138,12 +155,20 @@ if ($tab === 'config') {
     $allcourses = array_values(array_map(fn($c) => ['id' => $c->id, 'name' => format_string($c->fullname)], $allcourses));
 }
 
+// Data freshness: when was the snapshot last rebuilt?
+$last_snapshot_time = $DB->get_field_sql(
+    "SELECT MAX(timemodified) FROM {local_airpay_compliance_snapshot}");
+$last_refreshed = $last_snapshot_time ? userdate($last_snapshot_time, '%d %b %Y, %I:%M %p') : null;
+$is_stale = $last_snapshot_time && (time() - $last_snapshot_time > 7200); // >2 hours = stale.
+
 $baseurl_params = ['tab' => $tab];
 if ($bu) { $baseurl_params['bu'] = $bu; }
 if ($dept) { $baseurl_params['dept'] = $dept; }
 if ($subdept) { $baseurl_params['subdept'] = $subdept; }
 
 $data = [
+    'last_refreshed'    => $last_refreshed,
+    'is_stale'          => $is_stale,
     'kpis'              => $kpis,
     'tab_matrix'        => ($tab === 'matrix'),
     'tab_defaulters'    => ($tab === 'defaulters'),

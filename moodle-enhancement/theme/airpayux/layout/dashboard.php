@@ -30,6 +30,14 @@ if (!isloggedin() || isguestuser()) {
     redirect(new moodle_url('/login/index.php'));
 }
 
+// First-login onboarding — redirect new learners (non-admin) to onboarding wizard.
+if (!is_siteadmin() && !has_capability('local/courses:manage', context_system::instance())) {
+    $onboarded = get_user_preferences('airpay_onboarding_complete', 0, $USER->id);
+    if (!$onboarded) {
+        redirect(new moodle_url('/local/airpay_pages/onboarding.php'));
+    }
+}
+
 user_preference_allow_ajax_update('drawer-open-nav', PARAM_ALPHA);
 require_once($CFG->libdir . '/behat/lib.php');
 

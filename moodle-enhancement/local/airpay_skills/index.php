@@ -22,11 +22,20 @@ $userid = optional_param('userid', $USER->id, PARAM_INT);
 
 // Only admins/managers can view other users' skills.
 if ($userid !== $USER->id && !is_siteadmin()) {
-    $isdirectreport = $DB->record_exists_select('user',
-        'id = :uid AND open_supervisorid = :mgr AND deleted = 0',
-        ['uid' => $userid, 'mgr' => $USER->id]);
-    if (!$isdirectreport) {
-        $userid = $USER->id;
+    $hasmanagecap = has_capability('local/courses:manage', context_system::instance());
+    $isdirectreport = false;
+    if (!$hasmanagecap) {
+        try {
+            $isdirectreport = $DB->record_exists_select('user',
+                'id = :uid AND open_supervisorid = :mgr AND deleted = 0',
+                ['uid' => $userid, 'mgr' => $USER->id]);
+        } catch (\Throwable $e) {
+            $isdirectreport = false;
+        }
+    }
+    if (!$hasmanagecap && !$isdirectreport) {
+        throw new moodle_exception('nopermission', 'error', '',
+            null, 'You do not have permission to view this user\'s skills.');
     }
 }
 

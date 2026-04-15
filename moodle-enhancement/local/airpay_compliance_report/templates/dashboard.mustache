@@ -4,6 +4,15 @@
 }}
 <div class="airpay-compliance-rpt">
 
+    {{! Data Freshness Indicator }}
+    {{#last_refreshed}}
+    <div style="display:flex; justify-content:flex-end; align-items:center; gap:8px; margin-bottom:8px; font-size:12px; color:var(--ap-text-muted, #8896a6);">
+        <i class="fa fa-clock-o"></i>
+        <span>Data updated: {{last_refreshed}}</span>
+        {{#is_stale}}<span style="color:#d97706; font-weight:600;"><i class="fa fa-exclamation-triangle"></i> Stale — refresh recommended</span>{{/is_stale}}
+    </div>
+    {{/last_refreshed}}
+
     {{! KPI Summary Bar }}
     <div class="airpay-compliance-rpt__kpis">
         <div class="airpay-compliance-rpt__kpi {{#kpis.is_healthy}}airpay-compliance-rpt__kpi--ok{{/kpis.is_healthy}}{{^kpis.is_healthy}}airpay-compliance-rpt__kpi--warn{{/kpis.is_healthy}}">
