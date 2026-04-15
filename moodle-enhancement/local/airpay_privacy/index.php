@@ -1,7 +1,13 @@
 <?php
 /**
- * DPDP Self-Service — Users can download data or request account deletion.
- * Available to ALL users, but deletion self-service is for Public tenant only.
+ * DPDP Privacy Self-Service & Administration.
+ *
+ * ACCESS RULES:
+ * - Siteadmin: Full admin panel — all requests, tenant DPDP configuration
+ * - External tenant admin (DPDP-enabled tenant): Admin panel scoped to own tenant
+ * - External/Public tenant user: Self-service data download + account deletion
+ * - Internal employee (Airpay tenant 1): Policy notice ONLY — no download/deletion
+ *   (governed by employment data retention laws, not consumer DPDP rights)
  *
  * @package    local_airpay_privacy
  */
@@ -95,13 +101,88 @@ if (is_siteadmin() || has_capability('local/airpay_privacy:manage', context_syst
 }
 
 // ════════════════════════════════════════════════════════════════
-// USER SELF-SERVICE VIEW — regular users
+// TENANT-BASED ACCESS CONTROL
 // ════════════════════════════════════════════════════════════════
+
+// Determine user's tenant from open_path.
+$parts = explode('/', trim($USER->open_path ?? '', '/'));
+$user_tenant_id = (int)($parts[0] ?? 0);
+
+// Get DPDP-enabled tenants (siteadmin configurable).
+// Default: only external/Public tenant (77) has full DPDP self-service.
+$dpdp_enabled_tenants = explode(',', get_config('local_airpay_privacy', 'dpdp_tenants') ?: '77');
+$dpdp_enabled_tenants = array_map('intval', array_filter($dpdp_enabled_tenants));
+
+$is_dpdp_enabled = in_array($user_tenant_id, $dpdp_enabled_tenants, true);
+$is_internal_employee = ($user_tenant_id == 1); // Airpay internal = tenant 1.
+
+// ════════════════════════════════════════════════════════════════
+// INTERNAL EMPLOYEE VIEW — DPDP policy notice only (no self-service)
+// Employees are covered by employment data retention laws, not consumer DPDP rights.
+// ════════════════════════════════════════════════════════════════
+if ($is_internal_employee && !is_siteadmin() && !has_capability('local/courses:manage', context_system::instance())) {
+    $PAGE->set_heading(get_string('myprivacy', 'local_airpay_privacy'));
+    echo $OUTPUT->header();
+    echo '<div class="airpay-privacy" style="max-width:800px; margin:0 auto;">';
+    echo '<div class="airpay-privacy__header">';
+    echo '<h2><i class="fa fa-shield"></i> ' . get_string('myprivacy', 'local_airpay_privacy') . '</h2>';
+    echo '</div>';
+
+    echo '<div class="airpay-privacy__section">';
+    echo '<h3><i class="fa fa-info-circle"></i> Your Data Privacy</h3>';
+    echo '<p>As an Airpay employee, your personal data is processed and retained in accordance with applicable employment and data retention laws.</p>';
+    echo '<ul>';
+    echo '<li>Your employment data (name, email, department, designation) is maintained as per your employment contract.</li>';
+    echo '<li>Your learning records (courses, completions, certificates) are retained for compliance and professional development purposes.</li>';
+    echo '<li>You can view your profile data at any time via your <a href="' . (new moodle_url('/local/users/profile.php'))->out() . '">Profile page</a>.</li>';
+    echo '<li>For data correction requests, contact your HR team or the Data Protection Officer.</li>';
+    echo '</ul>';
+    echo '<div class="airpay-privacy__notice">';
+    echo '<small><strong>Data Protection Officer:</strong> ' . s(get_config('local_airpay_privacy', 'dpo_email') ?: 'dpo@airpay.co.in') . '</small>';
+    echo '</div>';
+    echo '</div>';
+
+    echo '<div class="airpay-privacy__section">';
+    echo '<h3><i class="fa fa-file-text"></i> DPDP Act 2023 Notice</h3>';
+    echo '<p>Airpay Payment Services processes your personal data as a Data Fiduciary under the Digital Personal Data Protection Act, 2023. ';
+    echo 'As an employee, data processing is based on your employment contract (lawful purpose under Section 4). ';
+    echo 'For the full privacy policy, see <a href="' . (new moodle_url('/local/airpay_pages/index.php', ['page' => 'privacy']))->out() . '">Privacy Policy</a>.</p>';
+    echo '</div>';
+
+    echo '</div>';
+    echo $OUTPUT->footer();
+    die();
+}
+
+// ════════════════════════════════════════════════════════════════
+// NON-DPDP TENANT VIEW — policy notice only
+// ════════════════════════════════════════════════════════════════
+if (!$is_dpdp_enabled && !is_siteadmin() && !has_capability('local/courses:manage', context_system::instance())) {
+    $PAGE->set_heading(get_string('myprivacy', 'local_airpay_privacy'));
+    echo $OUTPUT->header();
+    echo '<div class="airpay-privacy" style="max-width:800px; margin:0 auto;">';
+    echo '<div class="airpay-privacy__header">';
+    echo '<h2><i class="fa fa-shield"></i> ' . get_string('myprivacy', 'local_airpay_privacy') . '</h2>';
+    echo '</div>';
+    echo '<div class="airpay-privacy__section">';
+    echo '<h3><i class="fa fa-info-circle"></i> Data Privacy</h3>';
+    echo '<p>Your data is managed in accordance with applicable data protection laws. ';
+    echo 'For data access or correction requests, contact your administrator.</p>';
+    echo '<p>For the full privacy policy, see <a href="' . (new moodle_url('/local/airpay_pages/index.php', ['page' => 'privacy']))->out() . '">Privacy Policy</a>.</p>';
+    echo '</div>';
+    echo '</div>';
+    echo $OUTPUT->footer();
+    die();
+}
+
+// ════════════════════════════════════════════════════════════════
+// DPDP-ENABLED TENANT USER — full self-service
+// ════════════════════════════════════════════════════════════════
+$PAGE->set_heading(get_string('myprivacy', 'local_airpay_privacy'));
 
 // Handle form submissions.
 if ($action === 'download' && confirm_sesskey()) {
     $requestid = $manager::request_data_download($userid);
-    // Process immediately for download requests.
     $manager::process_download($requestid);
     redirect(new moodle_url('/local/airpay_privacy/index.php'),
         get_string('downloadrequested', 'local_airpay_privacy'), null, \core\output\notification::NOTIFY_SUCCESS);
@@ -116,7 +197,6 @@ if ($action === 'delete' && confirm_sesskey()) {
 
 // Get existing requests.
 $requests = $manager::get_user_requests($userid);
-$is_public = $manager::is_public_tenant($userid);
 
 $formatted_requests = [];
 foreach ($requests as $r) {
@@ -138,7 +218,7 @@ foreach ($requests as $r) {
 
 $data = [
     'sesskey'          => sesskey(),
-    'is_public_tenant' => $is_public,
+    'is_public_tenant' => true, // DPDP-enabled tenant — show full self-service including deletion.
     'requests'         => $formatted_requests,
     'has_requests'     => !empty($formatted_requests),
     'firstname'        => format_string($USER->firstname),
