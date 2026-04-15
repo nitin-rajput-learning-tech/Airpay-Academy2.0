@@ -30,8 +30,14 @@ if (!isloggedin() || isguestuser()) {
     redirect(new moodle_url('/login/index.php'));
 }
 
-// First-login onboarding — redirect new learners (non-admin) to onboarding wizard.
-if (!is_siteadmin() && !has_capability('local/courses:manage', context_system::instance())) {
+// First-login onboarding — redirect new learners to onboarding wizard.
+// Skip for: siteadmins, L&D admins, admins who switched to employee view.
+$has_any_admin_role = is_siteadmin() || has_capability('local/courses:manage', context_system::instance())
+    || $DB->record_exists_sql(
+        "SELECT 1 FROM {role_assignments} ra JOIN {context} ctx ON ctx.id = ra.contextid
+         WHERE ra.userid = :uid AND ra.roleid = 9 AND ctx.contextlevel = 40",
+        ['uid' => $USER->id]);
+if (!$has_any_admin_role) {
     $onboarded = get_user_preferences('airpay_onboarding_complete', 0, $USER->id);
     if (!$onboarded) {
         redirect(new moodle_url('/local/airpay_pages/onboarding.php'));
@@ -102,18 +108,45 @@ if (isloggedin() && !isguestuser()) {
     // Learner: everyone else — sees learner dashboard only
     $systemcontext = context_system::instance();
     $issiteadmin = is_siteadmin();
-    // L&D Admin detection: check system context first, then fall back to BizLMS pattern.
+
+    // ═══ BizLMS Role Switch Detection ═══
+    // If user has switched to a lower role (e.g., admin → employee), respect it.
+    // BizLMS stores active role in $USER->useraccess['currentroleinfo'] or $SESSION.
+    $switched_to_employee = false;
+    $employee_role_id = (int)$DB->get_field('role', 'id', ['shortname' => 'employee']);
+
+    // Check our session-based switch (from /my/switchrole.php).
+    if (!empty($SESSION->airpay_switchrole->roleid)) {
+        $switched_roleid = (int)$SESSION->airpay_switchrole->roleid;
+        if ($switched_roleid === $employee_role_id) {
+            $switched_to_employee = true;
+        }
+    }
+
+    // Check BizLMS $USER->useraccess role switch (set during BizLMS login/switch flow).
+    if (!$switched_to_employee && !empty($USER->useraccess['currentroleinfo']['contextinfo'])) {
+        $firstrole = current($USER->useraccess['currentroleinfo']['contextinfo']);
+        $active_roleid = (int)($firstrole['roleid'] ?? 0);
+        if ($active_roleid === $employee_role_id) {
+            $switched_to_employee = true;
+        }
+    }
+
+    // L&D Admin detection — SKIP if user has switched to employee role.
     // BizLMS assigns 'administrator' role at category context (level 40), not system (level 10).
-    $isldadmin = !$issiteadmin && has_capability('local/courses:manage', $systemcontext);
-    if (!$isldadmin && !$issiteadmin) {
-        // BizLMS fallback: check if user has administrator role (id=9) at any category context
-        $hasbizlmsadmin = $DB->record_exists_sql(
-            "SELECT 1 FROM {role_assignments} ra
-             JOIN {context} ctx ON ctx.id = ra.contextid
-             WHERE ra.userid = :uid AND ra.roleid = 9 AND ctx.contextlevel = 40",
-            ['uid' => $USER->id]
-        );
-        $isldadmin = $hasbizlmsadmin;
+    $isldadmin = false;
+    if (!$issiteadmin && !$switched_to_employee) {
+        $isldadmin = has_capability('local/courses:manage', $systemcontext);
+        if (!$isldadmin) {
+            // BizLMS fallback: check if user has administrator role (id=9) at any category context.
+            $hasbizlmsadmin = $DB->record_exists_sql(
+                "SELECT 1 FROM {role_assignments} ra
+                 JOIN {context} ctx ON ctx.id = ra.contextid
+                 WHERE ra.userid = :uid AND ra.roleid = 9 AND ctx.contextlevel = 40",
+                ['uid' => $USER->id]
+            );
+            $isldadmin = $hasbizlmsadmin;
+        }
     }
     $isadmin = $issiteadmin || $isldadmin; // Both get admin dashboard
     // Manager detection: capability OR has direct reports via open_supervisorid (BizLMS pattern)
