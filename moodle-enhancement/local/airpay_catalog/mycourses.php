@@ -80,9 +80,14 @@ foreach ($enrolledcourses as $course) {
         $categoryname = '';
     }
 
-    // Last accessed.
-    $lastaccess = $DB->get_field('user_lastaccess', 'timeaccess',
-        ['userid' => $USER->id, 'courseid' => $course->id]);
+    // Last accessed — guard against missing table on fresh installs.
+    $lastaccess = false;
+    try {
+        $lastaccess = $DB->get_field('user_lastaccess', 'timeaccess',
+            ['userid' => $USER->id, 'courseid' => $course->id]);
+    } catch (\Throwable $e) {
+        $lastaccess = false;
+    }
 
     $courses[] = [
         'id'           => $course->id,

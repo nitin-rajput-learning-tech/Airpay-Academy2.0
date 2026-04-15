@@ -133,8 +133,14 @@ foreach ($filter_depts as &$item) { $item['selected'] = ($item['id'] == $dept); 
 foreach ($filter_subdepts as &$item) { $item['selected'] = ($item['id'] == $subdept); }
 unset($item);
 
-// Get data based on active tab.
-$kpis = $engine::get_summary_kpis($filterpath);
+// Get data based on active tab — use cache for expensive queries.
+$cache = \cache::make_from_params(\cache_store::MODE_APPLICATION, 'local_airpay_compliance_report', 'dashboard');
+$cachekey = 'kpis_' . md5($filterpath);
+$kpis = $cache->get($cachekey);
+if ($kpis === false) {
+    $kpis = $engine::get_summary_kpis($filterpath);
+    $cache->set($cachekey, $kpis);  // TTL managed by Moodle cache definition.
+}
 $matrix = ($tab === 'matrix') ? $engine::get_compliance_matrix($filterpath, $page, 50) : null;
 $defaulters = ($tab === 'defaulters') ? $engine::get_defaulters($filterpath) : null;
 $scorecard = ($tab === 'scorecard') ? $engine::get_department_scorecard($filterpath) : null;

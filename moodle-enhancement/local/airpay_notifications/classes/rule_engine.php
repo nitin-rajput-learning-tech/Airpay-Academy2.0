@@ -124,7 +124,7 @@ class rule_engine {
                 AND u.deleted = 0 AND u.suspended = 0
                 AND c.visible = 1
                 AND (cc.id IS NULL OR cc.timecompleted IS NULL)
-              LIMIT 100",
+              LIMIT " . (int)get_config('local_airpay_notifications', 'batch_limit') ?: 500 . "",
             ['cutoff' => $cutoff]);
 
         foreach ($users as $row) {
@@ -167,7 +167,7 @@ class rule_engine {
               WHERE s.last_login_date <= :cutoff
                 AND s.current_streak >= 3
                 AND u.deleted = 0 AND u.suspended = 0
-              LIMIT 50",
+              LIMIT " . (int)get_config('local_airpay_notifications', 'batch_limit') ?: 500 . "",
             ['cutoff' => $twodaysago]);
 
         foreach ($users as $row) {
@@ -208,7 +208,7 @@ class rule_engine {
                 AND mgr.deleted = 0
            GROUP BY u.open_supervisorid, mgr.firstname, mgr.email
              HAVING overdue_count >= 3
-              LIMIT 50",
+              LIMIT " . (int)get_config('local_airpay_notifications', 'batch_limit') ?: 500 . "",
             ['now' => $now]);
 
         foreach ($managers as $mgr) {
@@ -249,7 +249,7 @@ class rule_engine {
                 "SELECT id, firstname FROM {user}
                   WHERE deleted = 0 AND suspended = 0
                     AND open_path LIKE :pathprefix
-                  LIMIT 100",
+                  LIMIT " . (int)get_config('local_airpay_notifications', 'batch_limit') ?: 500 . "",
                 ['pathprefix' => $orgpath . '%']);
 
             foreach ($users as $user) {

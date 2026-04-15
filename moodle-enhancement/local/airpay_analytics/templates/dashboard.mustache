@@ -53,6 +53,15 @@
             </div>
         </div>
         {{/has_funnel}}
+        {{^has_funnel}}
+        <div class="airpay-analytics__card">
+            <h3><i class="fa fa-filter"></i> Engagement Funnel</h3>
+            <div class="ap-empty-state" style="padding:24px;">
+                <i class="fa fa-bar-chart" style="font-size:2rem; color:#d1d5db; display:block; margin-bottom:8px;"></i>
+                <p style="color:#9ca3af; font-size:13px; margin:0;">No enrollment data available for this period.</p>
+            </div>
+        </div>
+        {{/has_funnel}}
 
         {{! Compliance Heat Map }}
         {{#has_heatmap}}
