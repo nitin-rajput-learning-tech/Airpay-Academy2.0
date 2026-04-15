@@ -8403,6 +8403,10 @@ body.dark-mode .ap-sp-note--teal {
     border-radius: var(--ap-radius-sm);
     padding: 10px 16px;
     margin-bottom: 16px;
+    /* Sticky positioning — stays below navbar on scroll */
+    position: sticky;
+    top: 56px;
+    z-index: 100;
 }
 .ap-course-progress-bar__info {
     display: flex;
@@ -8469,10 +8473,10 @@ body.dark-mode .ap-course-progress-bar__back { background: #22252f; }
 body.dark-mode .ap-course-progress-bar__track { background: #2d3140; }
 
 /* ─── Progress Bar Enhancements (Sprint 5) ─── */
-.ap-course-progress-bar {
-    position: sticky;
-    top: 56px; /* below navbar */
-    z-index: 100;
+/* Ensure parents don't break sticky with overflow */
+.pagelayout-course #page-content,
+.pagelayout-incourse #page-content {
+    overflow: visible !important;
 }
 .ap-course-progress-bar__toggle {
     width: 28px; height: 28px;

@@ -138,7 +138,7 @@ if ($is_internal_employee && !is_siteadmin() && !has_capability('local/courses:m
     echo '<li>For data correction requests, contact your HR team or the Data Protection Officer.</li>';
     echo '</ul>';
     echo '<div class="airpay-privacy__notice">';
-    echo '<small><strong>Data Protection Officer:</strong> ' . s(get_config('local_airpay_privacy', 'dpo_email') ?: 'dpo@airpay.co.in') . '</small>';
+    echo '<small><strong>Data Protection Officer:</strong> ' . s(get_config('local_airpay_privacy', 'dpo_email') ?: 'academy@airpay.co.in') . '</small>';
     echo '</div>';
     echo '</div>';
 

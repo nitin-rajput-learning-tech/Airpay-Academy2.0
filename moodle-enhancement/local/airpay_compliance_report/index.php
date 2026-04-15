@@ -162,8 +162,12 @@ if ($tab === 'config') {
 }
 
 // Data freshness: when was the snapshot last rebuilt?
-$last_snapshot_time = $DB->get_field_sql(
-    "SELECT MAX(timemodified) FROM {local_airpay_compliance_snapshot}");
+$last_snapshot_time = null;
+$dbman = $DB->get_manager();
+if ($dbman->table_exists('local_airpay_compliance_snapshot')) {
+    $last_snapshot_time = $DB->get_field_sql(
+        "SELECT MAX(timemodified) FROM {local_airpay_compliance_snapshot}");
+}
 $last_refreshed = $last_snapshot_time ? userdate($last_snapshot_time, '%d %b %Y, %I:%M %p') : null;
 $is_stale = $last_snapshot_time && (time() - $last_snapshot_time > 7200); // >2 hours = stale.
 
