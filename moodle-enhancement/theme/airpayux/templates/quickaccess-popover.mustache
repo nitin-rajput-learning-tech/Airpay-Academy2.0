@@ -108,22 +108,48 @@
 {{/ core/popover_region }}
 {{#js}}
 require(['jquery'], function($) {
-    var container = $('#quickaccess-popover-container');
-    // Toggle popover visibility on click.
-    container.find('.popover-region-toggle').on('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        container.toggleClass('popover-region-collapsed');
-        var expanded = !container.hasClass('popover-region-collapsed');
-        $(this).attr('aria-expanded', expanded);
+    var container = document.getElementById('quickaccess-popover-container');
+    if (!container) return;
+    var toggle = container.querySelector('[data-region="popover-region-toggle"]');
+    if (!toggle) return;
+
+    // Watch for aria-expanded changes (set by Moodle core popover_region_controller).
+    // Sync the ap-popover-open class for CSS fallback (browsers without :has()).
+    var observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(m) {
+            if (m.attributeName === 'aria-expanded') {
+                var isOpen = toggle.getAttribute('aria-expanded') === 'true';
+                container.classList.toggle('ap-popover-open', isOpen);
+            }
+        });
     });
-    // Close on outside click.
-    $(document).on('click', function(e) {
-        if (!container.is(e.target) && container.has(e.target).length === 0) {
-            container.addClass('popover-region-collapsed');
+    observer.observe(toggle, { attributes: true, attributeFilter: ['aria-expanded'] });
+
+    // Also handle click directly as backup (in case core module not loaded).
+    $(toggle).on('click', function(e) {
+        var isOpen = toggle.getAttribute('aria-expanded') === 'true';
+        if (!isOpen) {
+            toggle.setAttribute('aria-expanded', 'true');
+            container.classList.add('ap-popover-open');
+        } else {
+            toggle.setAttribute('aria-expanded', 'false');
+            container.classList.remove('ap-popover-open');
         }
     });
-    // Start collapsed.
-    container.addClass('popover-region-collapsed');
+
+    // Close on outside click.
+    $(document).on('click', function(e) {
+        if (!container.contains(e.target) && container.classList.contains('ap-popover-open')) {
+            toggle.setAttribute('aria-expanded', 'false');
+            container.classList.remove('ap-popover-open');
+        }
+    });
+    // Close on Escape key.
+    $(document).on('keydown', function(e) {
+        if (e.key === 'Escape' && container.classList.contains('ap-popover-open')) {
+            toggle.setAttribute('aria-expanded', 'false');
+            container.classList.remove('ap-popover-open');
+        }
+    });
 });
 {{/js}}

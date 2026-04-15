@@ -2676,6 +2676,24 @@ body .que .info>div {
 #quickaccess-popover-container{
     margin-top: -5px;
 }
+/* Fix: Quick Access popover toggle — override Moodle core collapsed behavior.
+   The core popover_region_controller toggles aria-expanded on the toggle div,
+   but does NOT remove the 'collapsed' class from the parent container.
+   Use :has() to detect expanded state and force-show the popover content. */
+#quickaccess-popover-container:has([aria-expanded="true"]) .popover-region-container {
+    opacity: 1 !important;
+    visibility: visible !important;
+    height: auto !important;
+    overflow: visible !important;
+    transition: opacity 0.15s ease, visibility 0s !important;
+}
+/* Fallback for browsers without :has() — JS will add this class */
+#quickaccess-popover-container.ap-popover-open .popover-region-container {
+    opacity: 1 !important;
+    visibility: visible !important;
+    height: auto !important;
+    overflow: visible !important;
+}
 #page-local-courses-index .secondary-navigation{
     display: none;
 }
