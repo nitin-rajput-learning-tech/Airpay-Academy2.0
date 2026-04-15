@@ -133,6 +133,7 @@ if (isloggedin() && !isguestuser()) {
     $airpay_dashboard['isldadmin'] = $isldadmin;      // L&D admin (admin dash without system health)
     $airpay_dashboard['ismanager'] = $ismanager;       // Team + learner
     $airpay_dashboard['islearner'] = !$isadmin;        // Managers + learners see learner sections
+    $airpay_dashboard['team_url'] = (new moodle_url('/local/airpay_manager/index.php'))->out(false);
 
     // ═══════════════════════════════════════════════════════════
     // Gamification data — all non-admin users see points, badges, streaks

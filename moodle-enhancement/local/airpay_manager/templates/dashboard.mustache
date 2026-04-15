@@ -1,0 +1,188 @@
+{{!
+    @template local_airpay_manager/dashboard
+    Manager team learning dashboard — shows direct reports' learning progress.
+}}
+<div class="ap-manager">
+
+    {{! KPI Summary }}
+    <div class="ap-manager__kpis">
+        <div class="ap-manager__kpi">
+            <i class="fa fa-users" style="color:#0066A7;"></i>
+            <strong>{{team_size}}</strong>
+            <small>Team Members</small>
+        </div>
+        <div class="ap-manager__kpi">
+            <i class="fa fa-check-circle" style="color:#16a34a;"></i>
+            <strong>{{avg_rate}}%</strong>
+            <small>Avg Completion</small>
+        </div>
+        <div class="ap-manager__kpi">
+            <i class="fa fa-exclamation-triangle" style="color:#dc2626;"></i>
+            <strong>{{total_overdue}}</strong>
+            <small>Overdue Items</small>
+        </div>
+        <div class="ap-manager__kpi">
+            <i class="fa fa-warning" style="color:#d97706;"></i>
+            <strong>{{at_risk}}</strong>
+            <small>At Risk (&lt;50%)</small>
+        </div>
+    </div>
+
+    {{! Team Table }}
+    {{#has_team}}
+    <div class="ap-manager__section">
+        <div class="ap-manager__section-header">
+            <h3><i class="fa fa-th-list"></i> Team Members</h3>
+        </div>
+        <div class="ap-manager__table-wrap">
+            <table class="ap-manager__table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Role</th>
+                        <th>Enrolled</th>
+                        <th>Completed</th>
+                        <th>Rate</th>
+                        <th>Overdue</th>
+                        <th>Streak</th>
+                        <th>Last Active</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#team}}
+                    <tr class="{{#is_inactive}}ap-manager__row--inactive{{/is_inactive}}">
+                        <td>
+                            <a href="{{profile_url}}" class="ap-manager__name">
+                                {{fullname}}
+                            </a>
+                        </td>
+                        <td class="ap-manager__role">{{designation}}</td>
+                        <td>{{enrolled}}</td>
+                        <td>{{completed}}</td>
+                        <td>
+                            <span class="ap-badge ap-badge--{{rate_class}}">{{rate}}%</span>
+                        </td>
+                        <td>
+                            {{#has_overdue}}
+                            <span class="ap-badge ap-badge--danger">{{overdue}}</span>
+                            {{/has_overdue}}
+                            {{^has_overdue}}
+                            <span style="color:#16a34a;">✓</span>
+                            {{/has_overdue}}
+                        </td>
+                        <td>
+                            {{#streak}}<span title="{{streak}}-day streak">🔥 {{streak}}</span>{{/streak}}
+                            {{^streak}}<span style="color:#9ca3af;">—</span>{{/streak}}
+                        </td>
+                        <td>
+                            {{#is_inactive}}
+                            <span style="color:#dc2626; font-weight:600;">{{inactive_days}}d ago</span>
+                            {{/is_inactive}}
+                            {{^is_inactive}}
+                            {{lastlogin}}
+                            {{/is_inactive}}
+                        </td>
+                        <td class="ap-manager__actions">
+                            <a href="{{nudge_url}}" class="ap-manager__action" title="Send nudge">
+                                <i class="fa fa-bell"></i>
+                            </a>
+                            <a href="{{skills_url}}" class="ap-manager__action" title="View skills">
+                                <i class="fa fa-line-chart"></i>
+                            </a>
+                            <a href="{{profile_url}}" class="ap-manager__action" title="View profile">
+                                <i class="fa fa-user"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {{/team}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {{/has_team}}
+
+    {{^has_team}}
+    <div class="ap-empty-state">
+        <i class="fa fa-users ap-empty-state__icon"></i>
+        <h4 class="ap-empty-state__title">No team members found</h4>
+        <p class="ap-empty-state__message">Direct reports are assigned via the supervisor field in BizLMS.</p>
+    </div>
+    {{/has_team}}
+</div>
+
+<style>
+.ap-manager { max-width: 1200px; margin: 0 auto; }
+
+/* KPIs */
+.ap-manager__kpis {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+    margin-bottom: 24px;
+}
+.ap-manager__kpi {
+    background: var(--ap-surface, #fff); border: 1px solid var(--ap-border, #e3eaf3);
+    border-radius: 12px; padding: 20px; text-align: center;
+}
+.ap-manager__kpi i { font-size: 20px; display: block; margin-bottom: 8px; }
+.ap-manager__kpi strong { display: block; font-size: 28px; font-weight: 800; color: var(--ap-text, #1a1a2e); }
+.ap-manager__kpi small { font-size: 12px; color: var(--ap-text-muted, #8896a6); text-transform: uppercase; letter-spacing: 0.3px; }
+
+/* Section */
+.ap-manager__section {
+    background: var(--ap-surface, #fff); border: 1px solid var(--ap-border, #e3eaf3);
+    border-radius: 12px; overflow: hidden;
+}
+.ap-manager__section-header {
+    padding: 16px 20px; border-bottom: 1px solid var(--ap-border, #e3eaf3);
+}
+.ap-manager__section-header h3 { margin: 0; font-size: 16px; font-weight: 700; color: var(--ap-text); }
+.ap-manager__section-header h3 i { color: var(--ap-primary, #0066A7); margin-right: 6px; }
+
+/* Table */
+.ap-manager__table-wrap { overflow-x: auto; }
+.ap-manager__table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ap-manager__table th {
+    padding: 10px 14px; text-align: left; font-weight: 600;
+    color: var(--ap-text-secondary, #607286); font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.3px;
+    border-bottom: 2px solid var(--ap-border, #e3eaf3);
+    white-space: nowrap;
+}
+.ap-manager__table td { padding: 12px 14px; border-bottom: 1px solid #f3f5f9; }
+.ap-manager__table tr:hover td { background: var(--ap-bg, #F2F4FB); }
+.ap-manager__row--inactive td { opacity: 0.7; }
+.ap-manager__name { color: var(--ap-text, #1a1a2e); font-weight: 600; text-decoration: none; }
+.ap-manager__name:hover { color: var(--ap-primary); }
+.ap-manager__role { color: var(--ap-text-muted, #8896a6); font-size: 12px; }
+
+/* Actions */
+.ap-manager__actions { display: flex; gap: 6px; }
+.ap-manager__action {
+    width: 28px; height: 28px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ap-text-muted, #8896a6); text-decoration: none;
+    transition: all 0.15s;
+}
+.ap-manager__action:hover { background: var(--ap-primary-light, #e8f2f9); color: var(--ap-primary, #0066A7); }
+
+/* Mobile */
+@media (max-width: 768px) {
+    .ap-manager__kpis { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 590px) {
+    .ap-manager__kpis { grid-template-columns: 1fr; }
+    .ap-manager__table { font-size: 12px; }
+    .ap-manager__table th, .ap-manager__table td { padding: 8px 10px; }
+}
+
+/* Dark mode */
+body.dark-mode .ap-manager__kpi { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .ap-manager__kpi strong { color: #e8eaed; }
+body.dark-mode .ap-manager__section { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .ap-manager__section-header { border-color: #2d3140; }
+body.dark-mode .ap-manager__section-header h3 { color: #e8eaed; }
+body.dark-mode .ap-manager__table th { color: #9ca3b4; border-color: #2d3140; }
+body.dark-mode .ap-manager__table td { border-color: #232733; color: #c4cad8; }
+body.dark-mode .ap-manager__table tr:hover td { background: #22252f; }
+body.dark-mode .ap-manager__name { color: #e8eaed; }
+</style>
