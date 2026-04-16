@@ -21833,3 +21833,43 @@ body.dark-mode #region-main { background: transparent !important; }
 body.dark-mode #region-main-box { background: transparent !important; }
 body.dark-mode .pagelayout-standard #page { background: var(--ap-bg, #0f1117) !important; }
 
+
+/* Navbar cart icon + badge */
+.airpay-nav__cart {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    color: var(--ap-text-secondary, #607286);
+    text-decoration: none;
+    font-size: 18px;
+    transition: background 0.15s, color 0.15s;
+}
+.airpay-nav__cart:hover { background: var(--ap-bg, #F2F4FB); color: var(--ap-primary, #0066A7); }
+.airpay-nav__cart-badge {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    background: #0066A7;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    line-height: 1;
+}
+body.dark-mode .airpay-nav__cart { color: #9ca3b4; }
+body.dark-mode .airpay-nav__cart:hover { background: #22252f; color: #60a5fa; }
+
+
+/* Hide BizLMS built-in cart popup — we use custom cart page */
+#nav-biz_cart-popover-container { display: none !important; }
+
