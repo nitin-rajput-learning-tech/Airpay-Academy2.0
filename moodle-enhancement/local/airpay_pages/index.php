@@ -18,6 +18,7 @@ $validpages = [
     'terms'   => 'Terms of Service',
     'help'    => 'Help Center',
     'contact' => 'Contact Us',
+    'dpdp'    => 'DPDP Act 2023',
 ];
 
 if (!isset($validpages[$page])) {
@@ -50,8 +51,10 @@ $contentfile = __DIR__ . '/pages/' . $page . '.html';
 if (file_exists($contentfile)) {
     $content = file_get_contents($contentfile);
     // Replace hardcoded /moodle/ paths with dynamic wwwroot.
-    $content = str_replace('/moodle/', $CFG->wwwroot . '/', $content);
-    $content = str_replace('href="/', 'href="' . $CFG->wwwroot . '/', $content);
+    // Only replace internal Moodle paths, not external URLs.
+    $wwwroot = rtrim($CFG->wwwroot, '/');
+    $content = str_replace('href="/moodle/', 'href="' . $wwwroot . '/', $content);
+    $content = str_replace('action="/moodle/', 'action="' . $wwwroot . '/', $content);
 
     echo '<div class="ap-static-page">';
     echo '<div class="ap-static-page__content">';

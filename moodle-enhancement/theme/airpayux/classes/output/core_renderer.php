@@ -691,13 +691,20 @@ class core_renderer extends \core_renderer {
 
 
     /** Live active user count for login hero (last 90 days). */
+    /** Get the Public tenant path prefix for login/homepage stats. */
+    private function get_public_tenant_path(): string {
+        $tid = (int)get_config('local_airpay_pages', 'public_tenant_id');
+        if (!$tid) { $tid = 77; }
+        return '/' . $tid . '%';
+    }
+
     public function login_stat_users() {
         global $DB;
         try {
-            // Public tenant learners ONLY — NO fallback to all tenants.
             $count = $DB->count_records_sql(
                 "SELECT COUNT(*) FROM {user}
-                 WHERE deleted = 0 AND suspended = 0 AND id > 1 AND open_path LIKE '/77%'");
+                 WHERE deleted = 0 AND suspended = 0 AND id > 1 AND open_path LIKE :p",
+                ['p' => $this->get_public_tenant_path()]);
             return $count > 0 ? $count . '+' : '';
         } catch (\Exception $e) {
             return '';
@@ -708,9 +715,9 @@ class core_renderer extends \core_renderer {
     public function login_stat_courses() {
         global $DB;
         try {
-            // Public tenant courses ONLY — NO fallback.
             $count = $DB->count_records_sql(
-                "SELECT COUNT(*) FROM {course} WHERE visible = 1 AND id > 1 AND open_path LIKE '/77%'");
+                "SELECT COUNT(*) FROM {course} WHERE visible = 1 AND id > 1 AND open_path LIKE :p",
+                ['p' => $this->get_public_tenant_path()]);
             return $count > 0 ? $count . '+' : '';
         } catch (\Exception $e) {
             return '';
@@ -737,7 +744,8 @@ class core_renderer extends \core_renderer {
                 $count = $DB->count_records_sql(
                     "SELECT COUNT(ci.id) FROM {tool_certificate_issues} ci
                      JOIN {user} u ON u.id = ci.userid
-                    WHERE u.open_path LIKE '/77%' AND ci.archived = 0");
+                    WHERE u.open_path LIKE :p AND ci.archived = 0",
+                    ['p' => $this->get_public_tenant_path()]);
                 return $count > 0 ? $count . '+' : '';
             }
             return '';

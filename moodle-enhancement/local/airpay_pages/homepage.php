@@ -24,12 +24,17 @@ if (isloggedin() && !isguestuser()) {
 echo $OUTPUT->header();
 
 // Get live stats for the hero — PUBLIC TENANT ONLY (external-facing).
-// Public tenant costcenter ID = 77 (open_path starts with /77).
-// NO FALLBACK to all-tenant data — if Public has 0 courses, show 0.
-$publicpath = '/77%';
-
-// Also try matching via costcenter category for courses without open_path.
-$public_costcenter_id = 77;
+// Public tenant ID is configurable (default: 77). NO FALLBACK to all-tenant data.
+$public_costcenter_id = (int)get_config('local_airpay_pages', 'public_tenant_id');
+if (!$public_costcenter_id) {
+    // Auto-detect: find costcenter with shortname 'external' or 'public'.
+    $public_costcenter_id = (int)$DB->get_field_select('local_costcenter', 'id',
+        "parentid = 0 AND (shortname LIKE '%external%' OR shortname LIKE '%public%')", [], IGNORE_MULTIPLE);
+    if (!$public_costcenter_id) {
+        $public_costcenter_id = 77; // Last resort fallback.
+    }
+}
+$publicpath = '/' . $public_costcenter_id . '%';
 $public_category_ids = $DB->get_fieldset_sql(
     "SELECT id FROM {local_costcenter} WHERE (id = :pid OR path LIKE :ppath) AND visible = 1",
     ['pid' => $public_costcenter_id, 'ppath' => "/$public_costcenter_id/%"]);
