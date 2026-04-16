@@ -694,35 +694,26 @@ class core_renderer extends \core_renderer {
     public function login_stat_users() {
         global $DB;
         try {
-            // Public tenant learners only (external-facing stat).
+            // Public tenant learners ONLY — NO fallback to all tenants.
             $count = $DB->count_records_sql(
                 "SELECT COUNT(*) FROM {user}
-                 WHERE deleted = 0 AND suspended = 0 AND lastaccess > :cutoff AND open_path LIKE '/77%'",
-                ['cutoff' => time() - (90 * 86400)]);
-            if ($count == 0) {
-                // Fallback to all if no Public tenant users.
-                $count = $DB->count_records_select('user',
-                    'deleted = 0 AND suspended = 0 AND lastaccess > :cutoff',
-                    ['cutoff' => time() - (90 * 86400)]);
-            }
-            return $count > 0 ? $count . '+' : '500+';
+                 WHERE deleted = 0 AND suspended = 0 AND id > 1 AND open_path LIKE '/77%'");
+            return $count > 0 ? $count . '+' : '';
         } catch (\Exception $e) {
-            return '500+';
+            return '';
         }
     }
 
-    /** Live course count for login hero — Public tenant only. */
+    /** Live course count for login hero — Public tenant ONLY. */
     public function login_stat_courses() {
         global $DB;
         try {
+            // Public tenant courses ONLY — NO fallback.
             $count = $DB->count_records_sql(
                 "SELECT COUNT(*) FROM {course} WHERE visible = 1 AND id > 1 AND open_path LIKE '/77%'");
-            if ($count == 0) {
-                $count = $DB->count_records_select('course', 'visible = 1 AND id > 1');
-            }
-            return $count > 0 ? $count . '+' : '50+';
+            return $count > 0 ? $count . '+' : '';
         } catch (\Exception $e) {
-            return '50+';
+            return '';
         }
     }
 
@@ -737,25 +728,21 @@ class core_renderer extends \core_renderer {
         return is_siteadmin();
     }
 
-    /** Live completion rate for login hero — Public tenant only. */
+    /** Certificate count for login hero — Public tenant only. */
     public function login_stat_completion() {
         global $DB;
         try {
-            $enrolled = $DB->count_records_sql(
-                "SELECT COUNT(ue.id) FROM {user_enrolments} ue
-                 JOIN {user} u ON u.id = ue.userid WHERE u.open_path LIKE '/77%'");
-            $completed = $DB->count_records_sql(
-                "SELECT COUNT(cc.id) FROM {course_completions} cc
-                 JOIN {user} u ON u.id = cc.userid WHERE cc.timecompleted IS NOT NULL AND u.open_path LIKE '/77%'");
-            if ($enrolled == 0) {
-                // Fallback to global.
-                $enrolled = $DB->count_records('user_enrolments');
-                $completed = $DB->count_records_select('course_completions', 'timecompleted IS NOT NULL');
+            // Count certificates issued to Public tenant users.
+            if ($DB->get_manager()->table_exists('tool_certificate_issues')) {
+                $count = $DB->count_records_sql(
+                    "SELECT COUNT(ci.id) FROM {tool_certificate_issues} ci
+                     JOIN {user} u ON u.id = ci.userid
+                    WHERE u.open_path LIKE '/77%' AND ci.archived = 0");
+                return $count > 0 ? $count . '+' : '';
             }
-            $rate = ($enrolled > 0) ? round(($completed / $enrolled) * 100) : 0;
-            return $rate > 0 ? $rate . '%' : '98%';
+            return '';
         } catch (\Exception $e) {
-            return '98%';
+            return '';
         }
     }
 

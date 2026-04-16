@@ -23,24 +23,35 @@ if (isloggedin() && !isguestuser()) {
 
 echo $OUTPUT->header();
 
-// Get live stats for the hero — Public tenant only (external-facing).
+// Get live stats for the hero — PUBLIC TENANT ONLY (external-facing).
 // Public tenant costcenter ID = 77 (open_path starts with /77).
+// NO FALLBACK to all-tenant data — if Public has 0 courses, show 0.
 $publicpath = '/77%';
+
+// Also try matching via costcenter category for courses without open_path.
+$public_costcenter_id = 77;
+$public_category_ids = $DB->get_fieldset_sql(
+    "SELECT id FROM {local_costcenter} WHERE (id = :pid OR path LIKE :ppath) AND visible = 1",
+    ['pid' => $public_costcenter_id, 'ppath' => "/$public_costcenter_id/%"]);
+
+// Count Public tenant courses (via open_path OR costcenter category).
 $coursecount = $DB->count_records_sql(
     "SELECT COUNT(*) FROM {course} WHERE visible = 1 AND id > 1 AND open_path LIKE :p",
     ['p' => $publicpath]);
-// If no public courses, fall back to total (production may not have open_path on courses).
-if ($coursecount == 0) {
-    $coursecount = $DB->count_records_select('course', 'visible = 1 AND id > 1');
+if ($coursecount == 0 && !empty($public_category_ids)) {
+    // Fallback: count courses in Public tenant's costcenter categories.
+    [$insql, $params] = $DB->get_in_or_equal($public_category_ids, SQL_PARAMS_NAMED, 'cat');
+    $coursecount = $DB->count_records_sql(
+        "SELECT COUNT(*) FROM {course} WHERE visible = 1 AND id > 1 AND open_categoryid $insql",
+        $params);
 }
+
+// Count Public tenant learners only.
 $usercount = $DB->count_records_sql(
     "SELECT COUNT(*) FROM {user} WHERE deleted = 0 AND suspended = 0 AND id > 1 AND open_path LIKE :p",
     ['p' => $publicpath]);
-if ($usercount == 0) {
-    $usercount = $DB->count_records_select('user', 'deleted = 0 AND suspended = 0 AND id > 1');
-}
 
-// Get featured courses (most enrolled, visible, scoped to Public tenant).
+// Get featured courses — STRICTLY Public tenant only. No fallback.
 $featured = $DB->get_records_sql(
     "SELECT c.id, c.fullname, c.summary, c.summaryformat, COUNT(ue.id) as enrolcount
        FROM {course} c
@@ -50,17 +61,19 @@ $featured = $DB->get_records_sql(
    GROUP BY c.id, c.fullname, c.summary, c.summaryformat
    ORDER BY enrolcount DESC",
     ['pubpath' => $publicpath], 0, 6);
-// Fallback: if no Public-scoped results, show any visible courses.
-if (empty($featured)) {
+
+// If open_path not populated, try costcenter category match.
+if (empty($featured) && !empty($public_category_ids)) {
+    [$insql, $params] = $DB->get_in_or_equal($public_category_ids, SQL_PARAMS_NAMED, 'cat');
     $featured = $DB->get_records_sql(
         "SELECT c.id, c.fullname, c.summary, c.summaryformat, COUNT(ue.id) as enrolcount
            FROM {course} c
            JOIN {enrol} e ON e.courseid = c.id
            JOIN {user_enrolments} ue ON ue.enrolid = e.id
-          WHERE c.visible = 1 AND c.id > 1
+          WHERE c.visible = 1 AND c.id > 1 AND c.open_categoryid $insql
        GROUP BY c.id, c.fullname, c.summary, c.summaryformat
        ORDER BY enrolcount DESC",
-        [], 0, 6);
+        $params, 0, 6);
 }
 
 echo '<div class="airpay-homepage">';

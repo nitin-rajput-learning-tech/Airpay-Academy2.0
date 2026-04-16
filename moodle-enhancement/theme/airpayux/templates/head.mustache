@@ -1,0 +1,156 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    Page header.
+}}
+{{{ output.doctype }}}
+<html {{{ output.htmlattributes }}}>
+<head>
+    <title>{{{ output.page_title }}}</title>
+    <link rel="shortcut icon" href="{{{ output.favicon }}}" />
+    {{{ output.standard_head_html }}}
+
+    {{! Dark mode init — runs BEFORE CSS to prevent flash of light mode.
+        Priority: 1) localStorage preference, 2) OS system preference, 3) default light }}
+    <script>
+    (function() {
+        var saved = localStorage.getItem('airpay-theme');
+        var isDark = saved === 'dark' || (!saved && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        if (isDark) {
+            document.documentElement.classList.add('dark-mode');
+        }
+        // Sync to body on DOMContentLoaded (body not available yet in <head>).
+        document.addEventListener('DOMContentLoaded', function() {
+            if (isDark) { document.body.classList.add('dark-mode'); }
+            // Listen for OS theme changes (real-time sync).
+            if (window.matchMedia) {
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+                    if (!localStorage.getItem('airpay-theme')) {
+                        document.documentElement.classList.toggle('dark-mode', e.matches);
+                        document.body.classList.toggle('dark-mode', e.matches);
+                    }
+                });
+            }
+        });
+    })();
+    </script>
+
+    <style media="screen">
+        :root {
+            /* Airpay Academy Design System — Phase 6B */
+            --primarycolor: #0066A7;
+            --secondarycolor: #0f7a73;
+            --hovercolor: #004d7a;
+
+            /* Derived from primary */
+            --sitehighlight: var(--primarycolor);
+            --buttonbgcolor: var(--primarycolor);
+            --btntextcolor: #ffffff;
+            --btnhoverbgcolor: var(--hovercolor);
+            --btnhovertextcolor: #ffffff;
+            --btnbordercolor: var(--primarycolor);
+            --linkcolor: var(--primarycolor);
+            --linkhovercolor: var(--hovercolor);
+
+            /* Sidebar & blocks */
+            --sidebarbgstartcolor: var(--primarycolor);
+            --sidebarbgendcolor: var(--primarycolor);
+            --blockheaderstartbg: var(--primarycolor);
+            --blockheaderendbg: var(--primarycolor);
+            --blocktextcolor: #1a1a2e;
+
+            /* Page backgrounds */
+            --headerbgcolor: #F2F4FB;
+            --bodybgcolor: #F2F4FB;
+
+            /* Tables */
+            --tblhdstartbg: var(--primarycolor);
+            --tblhdendbg: var(--primarycolor);
+            --tbltextcolor: #fff;
+
+            /* Other surfaces */
+            --gradientcolor: #fff;
+            --coursecontainerbg: #e6f0f7;
+            --usernavhvrbg: #ffffff;
+            --usernavhvrlink: var(--primarycolor);
+            --iconbgcolor: var(--sitehighlight);
+
+            /* Airpay extended tokens */
+            --airpay-primary: #0066A7;
+            --airpay-primary-dk: #004d7a;
+            --airpay-accent: #0f7a73;
+            --airpay-accent-lt: #e6f5f3;
+            --airpay-text: #1a1a2e;
+            --airpay-text-sec: #607286;
+            --airpay-text-muted: #8896a6;
+            --airpay-border: #e3eaf3;
+            --airpay-bg-body: #F2F4FB;
+            --airpay-bg-surface: #FFFFFF;
+            --airpay-shadow-sm: 0 4px 20px rgba(0,51,102,0.06);
+            --airpay-shadow-md: 0 8px 32px rgba(0,51,102,0.08);
+            --airpay-radius-sm: 8px;
+            --airpay-radius-md: 12px;
+            --airpay-radius-lg: 16px;
+        }
+    </style>
+    <link rel="stylesheet" href="{{output.getsitecolors_link}}" >
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0066A7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="{{{config.wwwroot}}}/theme/airpayux/pix/brand/manifest.json">
+    <link rel="apple-touch-icon" href="{{{config.wwwroot}}}/theme/airpayux/pix/brand/favicon_io/apple-touch-icon.png">
+    <style>
+        html,body{
+            font-family:"Montserrat", sans-serif;
+        }
+    </style>
+    <script>
+    // Dark mode persistence — runs before body renders to prevent flash
+    (function() {
+        var theme = localStorage.getItem('airpay-theme');
+        if (theme === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+        // Also apply to body once it exists
+        document.addEventListener('DOMContentLoaded', function() {
+            var t = localStorage.getItem('airpay-theme');
+            if (t === 'dark') {
+                document.body.classList.add('dark-mode');
+            }
+            // Update toggle icon state
+            var toggle = document.querySelector('.airpay-nav__theme-toggle i');
+            if (toggle && t === 'dark') {
+                toggle.className = 'fa fa-sun-o';
+            }
+        });
+    })();
+    </script>
+    <script>
+    // A1 Fix: jQuery $ shim for BizLMS. Uses jQuery.noConflict pattern.
+    // This runs early but jQuery may not be loaded yet.
+    // The real fix is applied after DOMContentLoaded when jQuery is available.
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof window.jQuery !== 'undefined' && typeof window.$ === 'undefined') {
+            window.$ = window.jQuery;
+        }
+    });
+    </script>
+</head>
