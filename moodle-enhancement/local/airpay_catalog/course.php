@@ -11,7 +11,10 @@ require_once(__DIR__ . '/../../config.php');
 
 global $DB, $CFG, $OUTPUT, $PAGE, $USER, $SESSION;
 
-$id = required_param('id', PARAM_INT);
+$id = optional_param('id', 0, PARAM_INT);
+if (!$id) {
+    redirect(new moodle_url('/local/airpay_catalog/public.php'));
+}
 
 $PAGE->set_context(context_system::instance());
 $PAGE->set_url('/local/airpay_catalog/course.php', ['id' => $id]);

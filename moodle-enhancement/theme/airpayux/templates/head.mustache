@@ -30,18 +30,33 @@
     (function() {
         var saved = localStorage.getItem('airpay-theme');
         var isDark = saved === 'dark' || (!saved && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        // Apply IMMEDIATELY to <html> to prevent flash.
         if (isDark) {
             document.documentElement.classList.add('dark-mode');
+        } else {
+            document.documentElement.classList.remove('dark-mode');
         }
-        // Sync to body on DOMContentLoaded (body not available yet in <head>).
+        // Sync to <body> once available + set up listeners.
         document.addEventListener('DOMContentLoaded', function() {
-            if (isDark) { document.body.classList.add('dark-mode'); }
-            // Listen for OS theme changes (real-time sync).
+            // Force-sync body to match html (handles any leftover state).
+            if (isDark) {
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+            // Update toggle icon to match current state.
+            var toggleBtn = document.querySelector('.airpay-nav__theme-toggle i');
+            if (toggleBtn) {
+                toggleBtn.className = isDark ? 'fa fa-sun-o' : 'fa fa-moon-o';
+            }
+            // Listen for OS theme changes (only if user hasn't set manual preference).
             if (window.matchMedia) {
                 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
                     if (!localStorage.getItem('airpay-theme')) {
                         document.documentElement.classList.toggle('dark-mode', e.matches);
                         document.body.classList.toggle('dark-mode', e.matches);
+                        var btn = document.querySelector('.airpay-nav__theme-toggle i');
+                        if (btn) { btn.className = e.matches ? 'fa fa-sun-o' : 'fa fa-moon-o'; }
                     }
                 });
             }

@@ -21815,3 +21815,21 @@ body.dark-mode .ap-profile__enrich-card { background: #1a1d27 !important; border
 body.dark-mode .ap-profile__enrich-data strong { color: #e8eaed !important; }
 body.dark-mode .ap-profile__enrich-data small { color: #8896a6 !important; }
 
+
+/* Commerce pages dark mode */
+body.dark-mode .ap-cart, body.dark-mode .ap-public-catalog, body.dark-mode .ap-public-course { color: #e8eaed; }
+body.dark-mode .ap-cart [style*="background:var(--ap-surface"],
+body.dark-mode .ap-cart [style*="background: var(--ap-surface"],
+body.dark-mode .ap-public-course [style*="background:var(--ap-surface"],
+body.dark-mode .ap-public-course [style*="background: var(--ap-surface"] { background: #1a1d27 !important; border-color: #2d3140 !important; }
+body.dark-mode .ap-cart [style*="background:var(--ap-bg"],
+body.dark-mode .ap-public-course [style*="background:var(--ap-bg"] { background: #14161e !important; }
+body.dark-mode .ap-public-card { background: #1a1d27 !important; border-color: #2d3140 !important; }
+body.dark-mode .ap-public-card h3 a { color: #e8eaed !important; }
+body.dark-mode .ap-public-card p { color: #9ca3b4 !important; }
+/* Cart page heading area */
+body.dark-mode .pagelayout-standard #page-content { background: transparent !important; }
+body.dark-mode #region-main { background: transparent !important; }
+body.dark-mode #region-main-box { background: transparent !important; }
+body.dark-mode .pagelayout-standard #page { background: var(--ap-bg, #0f1117) !important; }
+
