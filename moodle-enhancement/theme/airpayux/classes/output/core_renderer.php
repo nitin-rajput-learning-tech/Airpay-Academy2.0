@@ -954,13 +954,17 @@ class core_renderer extends \core_renderer {
 
             $progress_pct = \local_airpay_courses\course_manager::get_progress_percentage($courseid, $USER->id);
             $usercourseprogress = ['progress' => $progress_pct];
-            // Ratings: check if BizLMS ratings plugin exists, else skip.
+            // Ratings: prefer Airpay plugin, fall back to BizLMS.
             $display_ratings = null;
-            $ratings_lib = $CFG->dirroot . '/local/ratings/lib.php';
-            if (file_exists($ratings_lib)) {
-                require_once($ratings_lib);
-                if (function_exists('display_rating')) {
-                    $display_ratings = display_rating($courseid, 'local_airpay_courses');
+            if (class_exists('\local_airpay_ratings\rating_manager')) {
+                $display_ratings = \local_airpay_ratings\rating_manager::render($courseid, 'local_airpay_courses');
+            } else {
+                $ratings_lib = $CFG->dirroot . '/local/ratings/lib.php';
+                if (file_exists($ratings_lib)) {
+                    require_once($ratings_lib);
+                    if (function_exists('display_rating')) {
+                        $display_ratings = display_rating($courseid, 'local_airpay_courses');
+                    }
                 }
             }
             $header=(object)array_merge((array)$header,$usercourseprogress);
@@ -1086,16 +1090,15 @@ class core_renderer extends \core_renderer {
         // }else{
         //     $gamificationpage = false;
         // }
-        $challenge_plugin_exist = \core_component::get_plugin_directory('local', 'challenge');
         $challenge_element = false;
-        $enabled =  (int)get_config('', 'local_challenge_enable_challenge');
-        if($enabled){
-            if(!empty($challenge_plugin_exist)){
-                $render_class = $PAGE->get_renderer('local_challenge');
-                if(method_exists($render_class, 'render_challenge_object')){
-                    $element = $render_class->render_challenge_object('local_airpay_courses', $courseid);
-                    $challenge_element = $element;
-                }
+        $challenge_dir = \core_component::get_plugin_directory('local', 'airpay_challenge')
+                      ?: \core_component::get_plugin_directory('local', 'challenge');
+        if (!empty($challenge_dir) && (int)get_config('', 'local_challenge_enable_challenge')) {
+            try {
+                $render_class = $PAGE->get_renderer('local_airpay_challenge');
+                $challenge_element = $render_class->render_challenge_object('local_airpay_courses', $courseid);
+            } catch (\Throwable $e) {
+                $challenge_element = false;
             }
         }
         $gamification_plugin_exist = \core_component::get_plugin_directory('block', 'gamification');
@@ -1690,10 +1693,11 @@ class core_renderer extends \core_renderer {
             && !\local_airpay_org\accesslib::can_view($systemcontext)
             && !\local_airpay_org\accesslib::can_manage($systemcontext)
             && !\local_airpay_org\accesslib::can_manage_classroom($systemcontext)
-            && has_capability('block/trainerdashboard:viewtrainerslist', $systemcontext)
+            && (has_capability('block/airpay_trainer:viewtrainerslist', $systemcontext)
+                || has_capability('block/trainerdashboard:viewtrainerslist', $systemcontext))
             && $newpageurl == $CFG->wwwroot . '/my/dashboard.php'
         ) {
-            redirect($CFG->wwwroot . '/blocks/trainerdashboard/dashboard.php');
+            redirect($CFG->wwwroot . '/blocks/airpay_trainer/dashboard.php');
         }
         if(!(\local_airpay_org\accesslib::can_manage_multi($systemcontext))){
             $is_oh = \local_airpay_org\accesslib::is_org_head($systemcontext);
@@ -2028,11 +2032,15 @@ class core_renderer extends \core_renderer {
                 $percentage = progress::get_course_progress_percentage($course, $USER->id);
             }
         $display_ratings = null;
-        $ratings_lib = $CFG->dirroot . '/local/ratings/lib.php';
-        if (file_exists($ratings_lib)) {
-            require_once($ratings_lib);
-            if (function_exists('display_rating')) {
-                $display_ratings = display_rating($COURSE->id, 'local_airpay_courses');
+        if (class_exists('\local_airpay_ratings\rating_manager')) {
+            $display_ratings = \local_airpay_ratings\rating_manager::render($COURSE->id, 'local_airpay_courses');
+        } else {
+            $ratings_lib = $CFG->dirroot . '/local/ratings/lib.php';
+            if (file_exists($ratings_lib)) {
+                require_once($ratings_lib);
+                if (function_exists('display_rating')) {
+                    $display_ratings = display_rating($COURSE->id, 'local_airpay_courses');
+                }
             }
         }
         if(empty($percentage)){

@@ -1,0 +1,12 @@
+<?php
+defined('MOODLE_INTERNAL') || die();
+$capabilities = [
+    'local/airpay_programs:manage' => [
+        'riskbitmask' => RISK_CONFIG, 'captype' => 'write',
+        'contextlevel' => CONTEXT_SYSTEM, 'archetypes' => ['manager' => CAP_ALLOW],
+    ],
+    'local/airpay_programs:enrol' => [
+        'captype' => 'write', 'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => ['manager' => CAP_ALLOW],
+    ],
+];
