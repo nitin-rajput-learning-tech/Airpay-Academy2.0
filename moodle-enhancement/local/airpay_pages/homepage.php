@@ -90,7 +90,7 @@ echo '<section class="airpay-homepage__hero" style="background-image: url(' . $C
         <h1 class="airpay-homepage__hero-title">Build Skills That<br>Drive Your Career Forward</h1>
         <p class="airpay-homepage__hero-subtitle">A comprehensive learning platform for employability, business training, and financial education. Empowering individuals and organisations with industry-relevant skills.</p>
         <div class="airpay-homepage__hero-actions">
-            <a href="' . $CFG->wwwroot . '/local/search/allcourses.php" class="airpay-btn airpay-btn--primary airpay-btn--lg">Explore Courses</a>
+            <a href="' . $CFG->wwwroot . '/local/airpay_catalog/public.php" class="airpay-btn airpay-btn--primary airpay-btn--lg">Explore Courses</a>
             <a href="' . $CFG->wwwroot . '/login/index.php" class="airpay-btn airpay-btn--outline airpay-btn--lg">Sign In</a>
         </div>
         <div class="airpay-homepage__hero-stats">
@@ -139,7 +139,8 @@ if (!empty($featured)) {
 
     foreach ($featured as $course) {
         $summary = shorten_text(strip_tags(format_string($course->summary)), 100);
-        $url = new moodle_url('/local/search/coursedetails.php', ['id' => $course->id]);
+        $detailurl = new moodle_url('/local/airpay_catalog/course.php', ['id' => $course->id]);
+        $pricing = \local_airpay_catalog\commerce::get_course_price($course->id);
         echo '<div class="airpay-homepage__course-card">
             <div class="airpay-homepage__course-header"></div>
             <div class="airpay-homepage__course-body">
@@ -147,14 +148,30 @@ if (!empty($featured)) {
                 <p>' . $summary . '</p>
                 <div class="airpay-homepage__course-meta">
                     <span><i class="fa fa-users"></i> ' . (int)$course->enrolcount . ' enrolled</span>
+                    <span><i class="fa fa-clock-o"></i> Self-paced</span>
                 </div>
-                <a href="' . $url->out() . '" class="airpay-btn airpay-btn--outline airpay-btn--sm">View Details</a>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding-top:10px; border-top:1px solid var(--ap-border,#e3eaf3);">
+                    <span style="font-size:16px; font-weight:700; color:' . ($pricing['is_free'] ? '#16a34a' : '#0066A7') . ';">' . $pricing['display'] . '</span>
+                    <div style="display:flex; gap:6px;">
+                        <a href="' . $detailurl->out() . '" class="airpay-btn airpay-btn--outline airpay-btn--sm">Details</a>
+                        <a href="' . $detailurl->out() . '?action=addtocart&sesskey=' . sesskey() . '" class="airpay-btn airpay-btn--primary airpay-btn--sm">' . ($pricing['is_free'] ? 'Enroll' : 'Add to Cart') . '</a>
+                    </div>
+                </div>
             </div>
         </div>';
     }
 
-    echo '  </div>
-    </section>';
+    echo '  </div>';
+
+    // "View All Courses" button if more than 6 exist.
+    echo '<div style="text-align:center; margin-top:20px;">
+        <a href="' . (new moodle_url('/local/airpay_catalog/public.php'))->out() . '"
+           class="airpay-btn airpay-btn--outline airpay-btn--lg">
+            View All Courses <i class="fa fa-arrow-right"></i>
+        </a>
+    </div>';
+
+    echo '</section>';
 }
 
 // ═══ CTA SECTION ═══
