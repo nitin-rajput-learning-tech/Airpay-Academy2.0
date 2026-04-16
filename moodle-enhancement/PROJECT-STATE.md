@@ -1,7 +1,166 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-04-16 | **Phase:** Academy 2.8 — Commerce + Platform Cleanup
-**Theme:** airpayux v1.0.0 | **Tag:** v2.8.0
-**Version:** 2.8.0 (All v2.7.0 + Commerce System + Platform-Wide Cleanup + Dark Mode Persistence)
+**Updated:** 2026-04-16 | **Phase:** Academy 3.0 — BizLMS Fork Complete (8/8 phases)
+**Theme:** airpayux v1.0.0 | **Tag:** v2.8.0-pre-fork-milestone → v3.0.0-fork-complete
+**Version:** 3.0.0 (All v2.8.0 + Complete BizLMS Fork: 6 new plugins, 48 files, 0 BizLMS deps)
+
+---
+
+## v2.9.0 Session (2026-04-16) — BizLMS Fork Phase 1: Airpay Organization Engine
+
+### New Plugin: local_airpay_org (10 files)
+Replaces BizLMS `local_costcenter` (103 files) with Airpay-owned organization engine.
+
+**Classes:**
+- `accesslib.php` — Fork of `\local_costcenter\lib\accesslib` (6 static methods, BizLMS API compat)
+- `org_manager.php` — Org CRUD: get, get_name, get_by_path, get_children, get_descendants, get_tenants
+- `tenant_manager.php` — Tenant detection, open_path parsing, manager detection, public tenant, scoping
+- `branding_manager.php` — Logo URL resolution, colour scheme, body CSS class, tenant branding
+
+**Infrastructure:**
+- `db/install.xml` — `local_airpay_org` table (15 fields, mirrors costcenter schema + branding colours)
+- `db/access.php` — 5 capabilities mirroring BizLMS costcenter
+- `lib.php` — `airpay_org_logo()` drop-in for `costcenter_logo()` + pluginfile callback
+- `data_migration.php` — CLI script to copy local_costcenter → local_airpay_org (preserves IDs)
+
+### core_renderer.php Update
+- 13 BizLMS class references replaced → 0 remaining
+- `use costcenter;` import removed
+- `get_costcenter_scheme_css()` → `branding_manager::get_org_theme_scheme()`
+- `get_my_scheme()` → `branding_manager::get_body_scheme_class()`
+- `should_display_navbar_logo()` + `get_custom_logo()` → `branding_manager::get_tenant_logo()`
+- All `\local_costcenter\lib\accesslib::*` → `\local_airpay_org\accesslib::*`
+- 6 capability string refs (`local/costcenter:*`) kept for DB compat — Phase 7 migration
+
+### dashboard.php Update
+- Direct `{local_costcenter}` query → `org_manager::get_name_by_path()`
+
+### Transition Strategy
+- All classes: read local_airpay_org first, fall back to local_costcenter
+- Logo files: check both component names (local_airpay_org, local_costcenter)
+- BizLMS stays installed during transition — safe to deploy independently
+
+### Phase 2: local_airpay_users (8 files)
+Replaces BizLMS `local_users` (96 files) with Airpay-owned user engine.
+
+**Classes:**
+- `user_fields.php` — 17 open_* field constants (6 query + 11 display), prefix_label(), format_date()
+- `user_manager.php` — build_profile_context() (replaces 200-line renderer), get_org_hierarchy(), get_supervisor(), get_role_names()
+
+**Profile:**
+- `profile.php` — Drop-in replacement for /local/users/profile.php
+- `templates/profile.mustache` — Airpay-branded with gamification/skills enrichment + detail grid
+
+**Updated files:**
+- `local/users/renderer.php` — 7 BizLMS accesslib refs → \local_airpay_org (0 remaining)
+- `theme/airpayux/core_renderer.php` — 2 config refs → dual-check (airpay_users + local_users fallback)
+
+### Phase 3: local_airpay_courses (6 files)
+Replaces BizLMS `local_courses` (136 files, already gutted to 3 templates) with Airpay-owned course engine.
+
+**Classes:**
+- `course_fields.php` — 11 open_* course field constants (2 access + 9 metadata)
+- `course_manager.php` — get_progress_percentage() via core completion, deadline calc, can_manage/can_enrol dual-check
+
+**Updated files:**
+- `core_renderer.php` — 2 BizLMS accesslib calls → course_manager/airpay_org; 4 URL redirects → airpay_catalog
+- `dashboard.php` — 1 URL ref → airpay_catalog
+
+### Phase 4: Learning Modules (18 files across 3 plugins)
+
+**local_airpay_classroom** (6 files) — Replaces BizLMS local_classroom
+- `session_manager.php` — count_classrooms(), get_session() for QR attendance
+- `db/install.xml` — 3 tables: classroom, sessions, attendance
+- 3 capabilities
+
+**local_airpay_exams** (6 files) — Replaces BizLMS local_onlinetests
+- `exam_manager.php` — get_by_course_module(), get_by_attempt() for access control
+- `db/install.xml` — 1 table: exams (linked to quiz module)
+- 2 capabilities
+
+**local_airpay_learningpath** (6 files) — Replaces BizLMS local_learningplan
+- `path_manager.php` — get_courses(), is_enrolled(), get_user_progress()
+- `db/install.xml` — 3 tables: paths, path_courses, path_users
+- 3 capabilities
+
+**Updated files:**
+- `core_renderer.php` — 2 raw SQL queries → exam_manager API; 4 URL redirects → airpay_exams
+- `dashboard.php` — 2 count queries → session_manager/exam_manager; 2 URLs → airpay plugins
+
+### Phase 5: Search + Categories (3 files new, 4 files updated)
+
+**New:** `category_manager.php` in airpay_catalog — wraps {local_custom_category} queries with get_name(), get_with_parent(), get_root/children helpers.
+
+**Added to airpay_org/accesslib:** `get_user_role_switch_path()` + `get_costcenter_path_field_concatsql()` — 2 methods coursedetails.php needed.
+
+**Updated files:**
+- `local/search/coursedetails.php` — 3 BizLMS class refs + 4 raw category queries → airpay_org + category_manager
+- `local/airpay_catalog/course.php` — 1 category query → category_manager
+- `local/airpay_catalog/mycourses.php` — 1 category query → category_manager
+- `core_renderer.php` — 1 custom_category URL → airpay_catalog
+
+### Phase 6: Theme Complete Independence (9 files updated)
+
+**Epsilon removed:**
+- `get_primarycolor/secondarycolor/hovercolor()` — 3 methods rewired from `theme_config::load('epsilon')` → `branding_manager::get_brand_colors()`
+- `getsitecolors_link()` — no longer returns epsilon CSS path
+- 0 remaining `theme_config::load('epsilon')` calls
+
+**BizLMS functions guarded:**
+- `display_rating()` — 2 call sites wrapped in `file_exists()` + `function_exists()` guards
+- `render_challenge_object()` — plugin context changed from `local_courses` → `local_airpay_courses`
+
+**URLs migrated:**
+- `/local/users/index.php` → `/local/airpay_users/index.php` (dashboard)
+- `/local/users/signup.php` → `/local/airpay_users/signup.php` (login)
+- `/local/users/profile.php` → `/local/airpay_users/profile.php` (2 locations)
+
+**Metadata cleaned:**
+- Dashboard.php header: eAbyas copyright → Airpay 2026
+- Hindi lang: removed "BizLMS epsilon" from choosereadme
+- Marathi lang: removed "BizLMS epsilon" from choosereadme
+- SCSS: costcenter admin selectors marked deprecated (Phase 7 removal)
+
+**Remaining (Phase 7 only):** 13 capability strings (`local/costcenter:*`, `local/courses:*`, `local/classroom:*`) — these reference DB role_capabilities rows and MUST stay until migration script reassigns them.
+
+### Phase 7: Data Migration + BizLMS Removal (3 CLI scripts + 190 lines CSS deleted)
+
+**CLI scripts (in local/airpay_org/cli/):**
+- `migrate_all.php` — Master migration: copies 4 BizLMS tables + 10 capability mappings. Supports `--dry-run`. Verifies record counts.
+- `disable_bizlms.php` — Disables 20 BizLMS plugins via config (reversible). Supports `--dry-run`.
+
+**Capability migration (13 → 0 remaining):**
+- All `local/costcenter:*` → dual-check via `accesslib::can_manage_multi/can_view/can_manage/is_org_head/is_dept_head`
+- All `local/courses:*` → dual-check via `course_manager::can_manage/can_enrol`
+- All `local/classroom:*` → dual-check via `accesslib::can_manage_classroom`
+- 7 new helper methods added to `accesslib.php`
+
+**CSS cleanup:** 190 lines of `#page-local-costcenter-*` selectors deleted from custom_changes.scss
+
+**Run order:**
+1. `php admin/cli/upgrade.php` (installs new tables)
+2. `php local/airpay_org/cli/migrate_all.php --dry-run` (verify)
+3. `php local/airpay_org/cli/migrate_all.php` (execute)
+4. Smoke test all 5 roles
+5. `php local/airpay_org/cli/disable_bizlms.php`
+6. `php admin/cli/purge_caches.php`
+
+### Phase 8: URL + Branding Removal (4 deliverables)
+- Dashboard: "Moodle Version" → "Platform Version" (last visible Moodle text)
+- `templates/core/maintenance.mustache` — Airpay-branded error/maintenance page
+- `deploy/apache-airpay.conf` — Production Apache config (Option A: docroot, Option B: rewrite)
+- `cli/verify_branding.php` — 10-point branding checklist (wwwroot, sitename, theme, caps, logo, favicon)
+
+### Fork Progress — ALL 8 PHASES COMPLETE
+| Phase | Plugin | Status |
+|-------|--------|--------|
+| 1 | local_airpay_org (costcenter) | ✅ COMPLETE |
+| 2 | local_airpay_users (users) | ✅ COMPLETE |
+| 3 | local_airpay_courses (courses) | ✅ COMPLETE |
+| 4 | classroom + exams + learningpath | ✅ COMPLETE |
+| 5 | search + categories | ✅ COMPLETE |
+| 6 | theme independence | ✅ COMPLETE |
+| 7 | data migration + BizLMS removal | ✅ COMPLETE |
+| 8 | URL + branding removal | ✅ COMPLETE |
 
 ---
 

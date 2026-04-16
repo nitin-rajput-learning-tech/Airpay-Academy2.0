@@ -45,7 +45,6 @@ use action_menu_filler;
 use action_menu_link_secondary;
 use core_text;
 use user_picture;
-use costcenter;
 use theme_config;
 defined('MOODLE_INTERNAL') || die;
 
@@ -454,17 +453,7 @@ class core_renderer extends \core_renderer {
      * @return URL
      */
     function get_costcenter_scheme_css(){
-        global $CFG;
-        require_once($CFG->dirroot.'/theme/epsilon/lib.php');
-
-        $return = false;
-        if(file_exists($CFG->dirroot . '/local/costcenter/lib.php')){
-            require_once($CFG->dirroot . '/local/costcenter/lib.php');
-            $costcenter = new costcenter();
-            $costcenter_scheme = $costcenter->get_costcenter_theme();
-            return $costcenter_scheme;
-        }
-        return $return;
+        return \local_airpay_org\branding_manager::get_org_theme_scheme();
     }
      /**
          * returns the scheme names for theme and costcenter
@@ -472,20 +461,16 @@ class core_renderer extends \core_renderer {
          * @return string
          */
         function get_my_scheme(){
-        global $PAGE, $CFG;
+        global $PAGE;
 
         $return = '';
-        $theme_schemename = $PAGE->theme->settings->theme_scheme;
+        $theme_schemename = $PAGE->theme->settings->theme_scheme ?? '';
         if(!empty($theme_schemename)){
             $return .= ' theme_'.$theme_schemename;
         }
-        if(file_exists($CFG->dirroot . '/local/costcenter/lib.php')){
-            require_once($CFG->dirroot . '/local/costcenter/lib.php');
-            $costcenter = new costcenter();
-            $costcenter_schemename = $costcenter->get_costcenter_theme();
-            if(!empty($costcenter_schemename)){
-                $return .= ' organization_'.$costcenter_schemename;
-            }
+        $orgclass = \local_airpay_org\branding_manager::get_body_scheme_class();
+        if (!empty($orgclass)) {
+            $return .= ' ' . $orgclass;
         }
 
         return $return;
@@ -498,31 +483,7 @@ class core_renderer extends \core_renderer {
      * @return bool
      */
     public function should_display_navbar_logo() {
-        global $USER, $DB, $CFG;
-        $logopath = "";
-        if (!empty($USER->open_path)) {
-            $parts = explode("/", $USER->open_path ?? "");
-            $org = $parts[1] ?? '';
-            if (!empty($org)) {
-                $logoid = $DB->get_field('local_costcenter', 'costcenter_logo', ['id' => $org]);
-            }
-            if (!empty($logoid)) {
-                // Verify the physical file exists before returning costcenter logo.
-                $filerec = $DB->get_record_sql(
-                    "SELECT contenthash FROM {files}
-                     WHERE itemid = :iid AND filename != '.' AND component = 'local_costcenter'
-                       AND filearea = 'costcenter_logo' AND filesize > 0",
-                    ['iid' => $logoid]
-                );
-                if ($filerec) {
-                    $h = $filerec->contenthash;
-                    $physpath = $CFG->dataroot . '/filedir/' . substr($h, 0, 2) . '/' . substr($h, 2, 2) . '/' . $h;
-                    if (file_exists($physpath)) {
-                        $logopath = costcenter_logo($logoid);
-                    }
-                }
-            }
-        }
+        $logopath = \local_airpay_org\branding_manager::get_tenant_logo();
         if (empty($logopath)) {
             $logopath = $this->get_compact_logo_url();
             if (empty($logopath)) {
@@ -538,30 +499,8 @@ class core_renderer extends \core_renderer {
      * @return logo url
     */
     public function get_custom_logo() {
-        global $USER, $DB, $CFG;
-        $logopath = "";
-        if (!empty($USER->open_path)) {
-            $parts = explode("/", $USER->open_path ?? "");
-            $org = $parts[1] ?? '';
-            if (!empty($org)) {
-                $logoid = $DB->get_field('local_costcenter', 'costcenter_logo', ['id' => $org]);
-            }
-            if (!empty($logoid)) {
-                // Verify the physical file exists before returning costcenter logo.
-                $filerec = $DB->get_record_sql(
-                    "SELECT contenthash FROM {files}
-                     WHERE itemid = :iid AND filename != '.' AND component = 'local_costcenter'
-                       AND filearea = 'costcenter_logo' AND filesize > 0",
-                    ['iid' => $logoid]
-                );
-                if ($filerec) {
-                    $h = $filerec->contenthash;
-                    $physpath = $CFG->dataroot . '/filedir/' . substr($h, 0, 2) . '/' . substr($h, 2, 2) . '/' . $h;
-                    if (file_exists($physpath)) {
-                        $logopath = costcenter_logo($logoid);
-                    }
-                }
-            }
+        $logopath = \local_airpay_org\branding_manager::get_tenant_logo();
+        if (true) { // Preserve fallback block structure.
         }
         if (empty($logopath)) {
             $logopath = $this->get_compact_logo_url();
@@ -727,7 +666,7 @@ class core_renderer extends \core_renderer {
     /** Check if current user has admin/manager capabilities (for footer, nav filtering). */
     public function is_admin_or_manager() {
         $context = \context_system::instance();
-        return has_capability('local/courses:manage', $context) || is_siteadmin();
+        return \local_airpay_courses\course_manager::can_manage($context);
     }
 
     /** Check if current user is siteadmin only (not manager with admin caps). */
@@ -898,12 +837,15 @@ class core_renderer extends \core_renderer {
      */
     public function render_login(\core_auth\output\login $form) {
         global $CFG, $SITE, $OUTPUT;
-    $organization_shortname = get_config('local_users','organization_shortname');
-    $activeregistration = get_config('local_users','activeregistration');
+    // Check both new (airpay_users) and legacy (local_users) config.
+    $organization_shortname = get_config('local_airpay_users', 'organization_shortname')
+                           ?: get_config('local_users', 'organization_shortname');
+    $activeregistration = get_config('local_airpay_users', 'activeregistration')
+                       ?: get_config('local_users', 'activeregistration');
     $context = $form->export_for_template($this);
         if(trim($organization_shortname != "") && $activeregistration == 1)
         {
-            $context->signupurl_custom =new moodle_url('/local/users/signup.php');
+            $context->signupurl_custom =new moodle_url('/local/airpay_users/signup.php');
         }
 
         // Override because rendering is not supported in template yet.
@@ -1010,13 +952,16 @@ class core_renderer extends \core_renderer {
 
             $show_course_header = true;
 
-            $usercourseprogress =  (new \local_courses\lib\accesslib())::get_user_course_progress_percentage($courseid,$USER->id);
-            require_once($CFG->dirroot.'/local/ratings/lib.php');
-            $ratings_exist = \core_component::get_plugin_directory('local', 'ratings');
-            if ($ratings_exist) {
-                $display_ratings = display_rating($courseid, 'local_courses');
-            } else {
-                $display_ratings = null;
+            $progress_pct = \local_airpay_courses\course_manager::get_progress_percentage($courseid, $USER->id);
+            $usercourseprogress = ['progress' => $progress_pct];
+            // Ratings: check if BizLMS ratings plugin exists, else skip.
+            $display_ratings = null;
+            $ratings_lib = $CFG->dirroot . '/local/ratings/lib.php';
+            if (file_exists($ratings_lib)) {
+                require_once($ratings_lib);
+                if (function_exists('display_rating')) {
+                    $display_ratings = display_rating($courseid, 'local_airpay_courses');
+                }
             }
             $header=(object)array_merge((array)$header,$usercourseprogress);
             $header->display_ratings=$display_ratings;
@@ -1119,8 +1064,8 @@ class core_renderer extends \core_renderer {
                 $allow_editing = true;
                 $editing_url = new moodle_url('/course/view.php', array('id' => $courseid, 'sesskey'=> $sesskey, 'edit'=>$useredit));
             }
-            if((has_capability('moodle/course:create',$systemcontext) || is_siteadmin() ||
-                                            has_capability('local/courses:enrol', $systemcontext)) && $manage) {
+            if((has_capability('moodle/course:create',$systemcontext) ||
+                \local_airpay_courses\course_manager::can_enrol($systemcontext)) && $manage) {
                 $is_courseedit_icon = true;
                 $course_reports =  true;
                 $course_complition = true;
@@ -1129,9 +1074,9 @@ class core_renderer extends \core_renderer {
             if((has_capability('moodle/backup:backupcourse',$systemcontext) || is_siteadmin()) && $manage) {
                 $coursebackup = true;
             }
-            $maincheckcontext = (new \local_courses\lib\accesslib())::get_module_context();
-            if(is_siteadmin() || ((has_capability('local/courses:enrol',
-                                $maincheckcontext)  || is_siteadmin())&&has_capability('local/courses:manage', $maincheckcontext))) {
+            $maincheckcontext = \local_airpay_org\accesslib::get_module_context();
+            if(\local_airpay_courses\course_manager::can_manage($maincheckcontext)
+                && \local_airpay_courses\course_manager::can_enrol($maincheckcontext)) {
                 $enrolid = $DB->get_field('enrol', 'id', array('courseid' => $courseid ,'enrol' => 'manual'));
                 $userenrollment = true;
             }
@@ -1148,7 +1093,7 @@ class core_renderer extends \core_renderer {
             if(!empty($challenge_plugin_exist)){
                 $render_class = $PAGE->get_renderer('local_challenge');
                 if(method_exists($render_class, 'render_challenge_object')){
-                    $element = $render_class->render_challenge_object('local_courses', $courseid);
+                    $element = $render_class->render_challenge_object('local_airpay_courses', $courseid);
                     $challenge_element = $element;
                 }
             }
@@ -1286,7 +1231,7 @@ class core_renderer extends \core_renderer {
         // Links: My Profile.
         $myprofile = new stdClass();
         $myprofile->itemtype = 'link';
-        $myprofile->url = new moodle_url('/local/users/profile.php', array('id' => $user->id));
+        $myprofile->url = new moodle_url('/local/airpay_users/profile.php', array('id' => $user->id));
         $myprofile->title = get_string('profile');
         $myprofile->titleidentifier = 'profile,moodle';
         // $myprofile->pix = "i/user";
@@ -1426,7 +1371,7 @@ class core_renderer extends \core_renderer {
 
         /*Start of the role Switch */
         $systemcontext = context_system::instance();
-        $roles = \local_costcenter\lib\accesslib::get_user_roles_in_catgeorycontexts($USER->id);
+        $roles = \local_airpay_org\accesslib::get_user_roles_in_catgeorycontexts($USER->id);
 
         if (is_array($roles) && (count($roles) > 0)) {
 
@@ -1446,7 +1391,7 @@ class core_renderer extends \core_renderer {
             // var_dump($roles);exit;
             // array_values(array_filter(array_walk($roles, function(&$role, $rolekey)use(&$depths, &$roles){
             //     $categoryids = array_values(array_filter((explode('/', $role->path))));
-            //     $category = \local_costcenter\lib\accesslib::get_category_info(end($categoryids), 'name');
+            //     $category = \local_airpay_org\accesslib::get_category_info(end($categoryids), 'name');
 
             //     if(!in_array($role->depth.'_'.$categoryids[0].'_'.$role->roleid, $depths['depth'])){
             //         $depths['depth'][$rolekey] = $role->depth.'_'.$categoryids[0].'_'.$role->roleid;
@@ -1469,7 +1414,7 @@ class core_renderer extends \core_renderer {
 
                             $categoryids = array_values(array_filter((explode('/', $role->path))));
                             $pathname=end($categoryids);
-                            $category = \local_costcenter\lib\accesslib::get_category_info($pathname, 'name');
+                            $category = \local_airpay_org\accesslib::get_category_info($pathname, 'name');
                                 if(!in_array($role->depth.'_'.$categoryids[0], $depths['depth'])){
                                     $depths['depth'][] = $role->depth.'_'.$categoryids[0];
                                     $role->categoryname = $category;
@@ -1729,7 +1674,7 @@ class core_renderer extends \core_renderer {
             redirect($CFG->wwwroot.'/my');
         }
         if($newpageurl == $CFG->wwwroot.'/course/management.php'){
-            redirect($CFG->wwwroot.'/local/custom_category/index.php');//Category page redirection
+            redirect($CFG->wwwroot.'/local/airpay_catalog/index.php');//Category page redirection
         }
         if($newpageurl == $CFG->wwwroot.'/user/view.php' || $newpageurl == $CFG->wwwroot.'/user/profile.php'){
             if($_GET['id']){
@@ -1737,33 +1682,33 @@ class core_renderer extends \core_renderer {
             }else{
                 $id = $USER->id;
             }
-            redirect($CFG->wwwroot."/local/users/profile.php?id=$id");
+            redirect($CFG->wwwroot."/local/airpay_users/profile.php?id=$id");
         }
         if($newpageurl == $CFG->wwwroot.'/course/index.php' || $newpageurl == $CFG->wwwroot.'/course'){
-            redirect($CFG->wwwroot."/local/courses/courses.php");
+            redirect($CFG->wwwroot."/local/airpay_catalog/index.php");
         }
-        $systemcontext = \local_costcenter\lib\accesslib::get_module_context();
+        $systemcontext = \context_system::instance();
         if (
-            !is_siteadmin() && !has_capability('local/costcenter:manage_multiorganizations', $systemcontext)
-            && !has_capability('local/costcenter:view', $systemcontext)
-            && !has_capability('local/costcenter:manage', $systemcontext)
-            && !has_capability('local/classroom:manageclassroom', $systemcontext) 
+            !is_siteadmin()
+            && !\local_airpay_org\accesslib::can_manage_multi($systemcontext)
+            && !\local_airpay_org\accesslib::can_view($systemcontext)
+            && !\local_airpay_org\accesslib::can_manage($systemcontext)
+            && !\local_airpay_org\accesslib::can_manage_classroom($systemcontext)
             && has_capability('block/trainerdashboard:viewtrainerslist', $systemcontext)
             && $newpageurl == $CFG->wwwroot . '/my/dashboard.php'
         ) {
             redirect($CFG->wwwroot . '/blocks/trainerdashboard/dashboard.php');
         }
-        $systemcontext = \context_system::instance();
-        if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext))){
-            $is_oh = has_capability('local/costcenter:manage_ownorganization', $systemcontext);
-            $is_dh = has_capability('local/costcenter:manage_owndepartments', $systemcontext);
+        if(!(\local_airpay_org\accesslib::can_manage_multi($systemcontext))){
+            $is_oh = \local_airpay_org\accesslib::is_org_head($systemcontext);
+            $is_dh = \local_airpay_org\accesslib::is_dept_head($systemcontext);
             if($newpageurl == $CFG->wwwroot.'/course/completion.php' || $newpageurl == $CFG->wwwroot.'/backup/backup.php'){/*for course completion settings and backup page*/
                 $courseid = required_param('id',  PARAM_INT);
                 $course = get_course($courseid);
                 if($is_oh && $USER->open_costcenterid != $course->open_costcenterid){
-                    redirect($CFG->wwwroot.'/local/courses/courses.php');
+                    redirect($CFG->wwwroot.'/local/airpay_catalog/index.php');
                 }else if($is_dh && $USER->open_departmentid != $course->open_departmentid){
-                    redirect($CFG->wwwroot.'/local/courses/courses.php');
+                    redirect($CFG->wwwroot.'/local/airpay_catalog/index.php');
                 }
             }else if($newpageurl == $CFG->wwwroot.'/mod/quiz/edit.php' || $newpageurl == $CFG->wwwroot.'/mod/quiz/report.php'){/*for edit quiz page and quiz default report page*/
                 if($COURSE->id == 1){
@@ -1772,18 +1717,13 @@ class core_renderer extends \core_renderer {
                     else
                         $cmid = $_GET['id'];
 
-                    $quizmoduleid = $DB->get_field('modules', 'id', array('name' => 'quiz'));
-                    $onlinetest_sql = "SELECT lo.* FROM {local_onlinetests} AS lo
-                        JOIN {course_modules} AS cm ON cm.instance=lo.quizid AND cm.module = {$quizmoduleid}
-                        WHERE cm.id = :cmid";
-                        // JOIN {quiz} AS q ON q.id=lo.quizid
-                    $onlinetest = $DB->get_record_sql($onlinetest_sql, array('cmid' => $cmid));
+                    $onlinetest = \local_airpay_exams\exam_manager::get_by_course_module($cmid);
                     if($onlinetest){
                         $return->hideheader = TRUE;
                         if($is_oh && $USER->open_costcenterid != $onlinetest->costcenterid){
-                            redirect($CFG->wwwroot.'/local/onlinetests/index.php');
+                            redirect($CFG->wwwroot.'/local/airpay_exams/index.php');
                         }else if($is_dh && $USER->open_departmentid != $onlinetest->departmentid){
-                            redirect($CFG->wwwroot.'/local/onlinetests/index.php');
+                            redirect($CFG->wwwroot.'/local/airpay_exams/index.php');
                         }
                     }else{
                         $return->hideheader = FALSE;
@@ -1792,16 +1732,13 @@ class core_renderer extends \core_renderer {
             }else if($newpageurl == $CFG->wwwroot.'/mod/quiz/review.php' /*|| $newpageurl == $CFG->wwwroot.'/mod/quiz/attempt.php'*/){/*for quiz reviewpage and quiz attempt page*/
                 if($COURSE->id == 1){
                     $attempt = $_GET['attempt'];
-                    $onlinetest_sql = "SELECT lo.id, lo.costcenterid, lo.departmentid FROM {local_onlinetests} AS lo
-                        JOIN {quiz_attempts} AS qa ON qa.quiz = lo.quizid
-                        WHERE qa.id=:attemptid ";
-                    $onlinetest = $DB->get_record_sql($onlinetest_sql, array('attemptid' => $attempt));
+                    $onlinetest = \local_airpay_exams\exam_manager::get_by_attempt($attempt);
                     if($onlinetest){
                         $return->hideheader = TRUE;
                         if($is_oh && $USER->open_costcenterid != $onlinetest->costcenterid){
-                            redirect($CFG->wwwroot.'/local/onlinetests/index.php');
+                            redirect($CFG->wwwroot.'/local/airpay_exams/index.php');
                         }else if($is_dh && $USER->open_departmentid != $onlinetest->departmentid){
-                            redirect($CFG->wwwroot.'/local/onlinetests/index.php');
+                            redirect($CFG->wwwroot.'/local/airpay_exams/index.php');
                         }
                     }else{
                         $return->hideheader = FALSE;
@@ -1861,10 +1798,10 @@ class core_renderer extends \core_renderer {
         // }
 
 
-        $costcenterpath = \local_costcenter\lib\accesslib::get_costcenterpath_context($context);
+        $costcenterpath = \local_airpay_org\accesslib::get_costcenterpath_context($context);
 
         $USER->useraccess['currentroleinfo']['roleid'] = $roleid;
-        $categorypath = \local_costcenter\lib\accesslib::get_category_info($context->instanceid, 'path');
+        $categorypath = \local_airpay_org\accesslib::get_category_info($context->instanceid, 'path');
         $categoryids = array_values(array_filter((explode('/', $categorypath))));
         $USER->useraccess['currentroleinfo']['orgcatid'] = $categoryids[0];
         $USER->useraccess['currentroleinfo']['depth'] = $context->depth;
@@ -1888,14 +1825,14 @@ class core_renderer extends \core_renderer {
         // $assignedcontexts = array_map(function($cxtpath){
         //     return end(explode('/', $cxtpath));
         // }, array_unique(array_keys($USER->access['ra'])));
-        $assignedroles = \local_costcenter\lib\accesslib::get_user_roles_in_catgeorycontexts($USER->id);
+        $assignedroles = \local_airpay_org\accesslib::get_user_roles_in_catgeorycontexts($USER->id);
         $contextdepth = $context->__get('depth');
         foreach($assignedroles AS $assignedrole){
             if($assignedrole->contextid != $context->id && $assignedrole->contextid != 1){
                 $othercontext = \context::instance_by_id($assignedrole->contextid);
                 // considering only category level role switches.
                 if($othercontext->__get('contextlevel') == CONTEXT_COURSECAT){
-                    $othercategorypath = \local_costcenter\lib\accesslib::get_category_info($othercontext->instanceid, 'path');
+                    $othercategorypath = \local_airpay_org\accesslib::get_category_info($othercontext->instanceid, 'path');
                     $othercategoryids = array_values(array_filter((explode('/', $othercategorypath))));
 
                     if($contextdepth == $othercontext->__get('depth') && $othercategoryids[0] == $USER->useraccess['currentroleinfo']['orgcatid'] && $roleid == $assignedrole->roleid){//in_array($roleid, $USER->access['ra'][$othercontext->path])
@@ -1904,7 +1841,7 @@ class core_renderer extends \core_renderer {
                         // strpos(haystack, needle)
                         if($this->role_capability_assignments($roleid, $othercontext, $accessdata)){
                             $USER->access['rsw'][$othercontext->path] = $roleid;
-                            $othercostcenterpath = \local_costcenter\lib\accesslib::get_costcenterpath_context($othercontext);
+                            $othercostcenterpath = \local_airpay_org\accesslib::get_costcenterpath_context($othercontext);
                             $USER->useraccess['currentroleinfo']['contextinfo'][] = ['context' => $othercontext,'costcenterpath' => $othercostcenterpath];
                         }
                     }else {//if($context->path != '/1')if user is assigned at system context we unset the rsw variable.
@@ -2069,41 +2006,20 @@ class core_renderer extends \core_renderer {
 // theme related setting
 
     public function get_primarycolor() {
-        $primarycolor = '#25467a';
-        $theme = theme_config::load('epsilon');
-        $primarycolor= $theme->settings->primarycolor;
-        $costcentercolor = $this->get_costcenter_scheme_css();
-        if($costcentercolor && !empty($costcentercolor->brand_color)){
-            $primarycolor = $costcentercolor->brand_color;
-        }
-        
-        return $primarycolor;
+        $colors = \local_airpay_org\branding_manager::get_brand_colors();
+        return $colors->brand_color;
     }
     public function get_secondarycolor() {
-        $secondarycolor = '#006699';
-        $theme = theme_config::load('epsilon');
-        $secondarycolor= $theme->settings->secondarycolor;
-        $costcentercolor = $this->get_costcenter_scheme_css();
-        // var_dump($costcentercolors); exit;
-        if($costcentercolor && !empty($costcentercolor->button_color)){
-            $secondarycolor = $costcentercolor->button_color;
-        }
-        return $secondarycolor;
+        $colors = \local_airpay_org\branding_manager::get_brand_colors();
+        return $colors->button_color;
     }
     public function get_hovercolor() {
-        $hovercolor = '#006699';
-        $theme = theme_config::load('epsilon');
-        $hovercolor= $theme->settings->hovercolor;
-        $costcentercolor = $this->get_costcenter_scheme_css();
-        //var_dump($costcentercolors); exit;
-        if($costcentercolor && !empty($costcentercolor->hover_color)){
-            $hovercolor = $costcentercolor->hover_color;
-        }
-        return $hovercolor;
+        $colors = \local_airpay_org\branding_manager::get_brand_colors();
+        return $colors->hover_color;
     }
     public function getsitecolors_link(){
-        global $CFG;
-        return $CFG->wwwroot."/theme/epsilon/style/site_color.css?v=".date('Ymdhis');
+        // No longer depends on epsilon theme — colours come from branding_manager.
+        return '';
     }
     public function courseformat_drawer_content(){
 
@@ -2120,12 +2036,13 @@ class core_renderer extends \core_renderer {
                 
                 $percentage = progress::get_course_progress_percentage($course, $USER->id);
             }
-        $ratings_exist = \core_component::get_plugin_directory('local', 'ratings');
-        if ($ratings_exist) {
-            require_once($CFG->dirroot . '/local/ratings/lib.php');
-            $display_ratings = display_rating($COURSE->id, 'local_courses');
-        } else {
-            $display_ratings =  null;
+        $display_ratings = null;
+        $ratings_lib = $CFG->dirroot . '/local/ratings/lib.php';
+        if (file_exists($ratings_lib)) {
+            require_once($ratings_lib);
+            if (function_exists('display_rating')) {
+                $display_ratings = display_rating($COURSE->id, 'local_airpay_courses');
+            }
         }
         if(empty($percentage)){
             $percentage=0;}

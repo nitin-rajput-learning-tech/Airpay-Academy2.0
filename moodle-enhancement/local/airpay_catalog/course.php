@@ -54,11 +54,8 @@ $enrolled_count = $DB->count_records_sql(
 $summary = format_text($course->summary, $course->summaryformat);
 
 // Category name.
-$categoryname = '';
-if (!empty($course->open_categoryid)) {
-    $catname = $DB->get_field('local_custom_category', 'fullname', ['id' => $course->open_categoryid]);
-    if ($catname) { $categoryname = format_string($catname); }
-}
+$categoryname = \local_airpay_catalog\category_manager::get_name((int)($course->open_categoryid ?? 0));
+if (!empty($categoryname)) { $categoryname = format_string($categoryname); }
 
 echo $OUTPUT->header();
 ?>

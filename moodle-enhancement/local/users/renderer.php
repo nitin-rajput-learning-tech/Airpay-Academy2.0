@@ -35,7 +35,7 @@ class local_users_renderer extends plugin_renderer_base {
 
         $corecomponent = new core_component();
 
-        $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+        $categorycontext = \local_airpay_org\accesslib::get_module_context();
         $userrecord = $DB->get_record('user', array('id' => $id));
         /*user image*/
         $user_image = $OUTPUT->user_picture($userrecord, array('size' => 35, 'link' => false));
@@ -60,7 +60,7 @@ class local_users_renderer extends plugin_renderer_base {
         $userOrg = $DB->get_record_sql($sql3, array('id' => $id));
         $organisationdata = array_filter(explode('/', $userOrg->open_path ?? ''));
         $organisationnames = array_map(function($orgid){
-            return \local_costcenter\lib\accesslib::get_costcenter_info($orgid, 'fullname');
+            return \local_airpay_org\org_manager::get_name($orgid, 'fullname');
         }, $organisationdata);
         
         $usercostcenter = $organisationnames[1] ?? null;
@@ -234,7 +234,7 @@ class local_users_renderer extends plugin_renderer_base {
      */
     public function user_page_top_action_buttons() {
         global $CFG;
-        $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+        $categorycontext = \local_airpay_org\accesslib::get_module_context();
         if (has_capability('local/users:bulkstatuschange', $categorycontext)) {
             $bulkstatusupdate = true;
         } else {
@@ -267,7 +267,7 @@ class local_users_renderer extends plugin_renderer_base {
         $subdepartmentid = optional_param('subdepartmentid', '', PARAM_INT);
         $l4department = optional_param('l4department', '', PARAM_INT);
         $l5department = optional_param('l5department', '', PARAM_INT);
-        $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+        $categorycontext = \local_airpay_org\accesslib::get_module_context();
 
         $templateName = 'local_users/users_view';
         $cardClass = 'col-md-6 col-12';
@@ -311,7 +311,7 @@ class local_users_renderer extends plugin_renderer_base {
     public function display_sync_errors($filter = false) {
         global $USER;
 
-        $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+        $categorycontext = \local_airpay_org\accesslib::get_module_context();
 
 
         $options = array('targetID' => 'display_sync', 'perPage' => 10, 'cardClass' => 'tableformat', 'viewType' => 'table');
@@ -344,7 +344,7 @@ class local_users_renderer extends plugin_renderer_base {
     public function display_sync_statics($filter = false) {
         global $USER;
 
-        $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+        $categorycontext = \local_airpay_org\accesslib::get_module_context();
 
         $options = array('targetID' => 'display_syncstatics', 'perPage' => 10, 'cardClass' => 'tableformat', 'viewType' => 'table');
         $options['methodName'] = 'local_users_syncstatics_view';
@@ -370,7 +370,7 @@ class local_users_renderer extends plugin_renderer_base {
      public function employees_skill_profile_view($id) {
         global $CFG, $OUTPUT, $DB, $PAGE, $USER;
 
-        $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+        $categorycontext = \local_airpay_org\accesslib::get_module_context();
         $userrecord = $DB->get_record('user', array('id' => $id));
         $corecomponent = new \core_component();
         $positionpluginexists = $corecomponent::get_plugin_directory('local', 'positions');

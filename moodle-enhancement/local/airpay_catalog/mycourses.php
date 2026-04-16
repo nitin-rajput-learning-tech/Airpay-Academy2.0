@@ -71,7 +71,7 @@ foreach ($enrolledcourses as $course) {
     $categoryname = '';
     try {
         if (!empty($course->open_categoryid)) {
-            $categoryname = $DB->get_field('local_custom_category', 'fullname', ['id' => $course->open_categoryid]);
+            $categoryname = \local_airpay_catalog\category_manager::get_name((int)$course->open_categoryid);
         }
         if (empty($categoryname) && $course->category > 0) {
             $categoryname = $DB->get_field('course_categories', 'name', ['id' => $course->category]);

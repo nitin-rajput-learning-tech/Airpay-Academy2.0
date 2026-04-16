@@ -23,16 +23,16 @@ $PAGE->requires->event_handler('#usernotcompleted_sessionprereq', 'click', 'M.ut
 local_search_include_search_js();
 $course = get_course($id);
 if($USER->open_costcenterid != $course->open_costcenterid){
-	redirect($CFG->wwwroot.'/local/courses/courses.php');
+	redirect($CFG->wwwroot.'/local/airpay_catalog/index.php');
 }
 if(!$course){
 	throw new moodle_exception('invalidcourseid');
 }
 
 $PAGE->set_title($course->fullname);
-$userrolecontext = local_costcenter\lib\accesslib::get_module_context();
+$userrolecontext = \local_airpay_org\accesslib::get_module_context();
 $catalogurl = new moodle_url('/local/search/allcourses.php', array());
-if(!is_siteadmin() && (empty(local_costcenter\lib\accesslib::get_user_role_switch_path()) || in_array(0, local_costcenter\lib\accesslib::get_user_role_switch_path(), true))){
+if(!is_siteadmin() && (empty(\local_airpay_org\accesslib::get_user_role_switch_path()) || in_array(0, \local_airpay_org\accesslib::get_user_role_switch_path(), true))){
 	$switchedrole = false;
 	$PAGE->navbar->add(get_string('pluginname','local_search'), $catalogurl);
 }else{
@@ -55,7 +55,7 @@ $enrolledusersssql = " SELECT COUNT(u.id) as ccount
                                                 AND u.deleted = 0 AND u.suspended = 0
                                 WHERE c.id = :courseid AND ra.roleid = :employeerole";
 $enrolled_count =  $DB->count_records_sql($enrolledusersssql, $params);
-$costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path',$costcenterpath=null,$datatype='lowerandsamepath');
+$costcenterpathconcatsql = \local_airpay_org\accesslib::get_costcenter_path_field_concatsql($columnname='path',$costcenterpath=null,$datatype='lowerandsamepath');
 
 $completedusersssql = " SELECT COUNT(u.id) as ccount
                                 FROM {course} c
@@ -74,13 +74,8 @@ $PAGE->navbar->add($course->fullname);
 // Falls through to legacy BizLMS rendering below if not.
 if ($PAGE->theme->name === 'airpayux') {
     // Build context for the modern template.
-    $cat_sql = "SELECT id, fullname, parentid FROM {local_custom_category} WHERE id=:id";
-    $mod_category = $DB->get_record_sql($cat_sql, array('id' => $course->open_categoryid));
-    $mod_categoryname = $mod_category ? format_string($mod_category->fullname) : 'Uncategorized';
-    if (!empty($mod_category->parentid)) {
-        $parentname = $DB->get_field('local_custom_category', 'fullname', ['id' => $mod_category->parentid]);
-        if ($parentname) { $mod_categoryname = format_string($parentname) . ' / ' . $mod_categoryname; }
-    }
+    $catinfo = \local_airpay_catalog\category_manager::get_with_parent((int)($course->open_categoryid ?? 0));
+    $mod_categoryname = !empty($catinfo->full_path) ? format_string($catinfo->full_path) : 'Uncategorized';
 
     $mod_level = $DB->get_field('local_course_levels', 'name', ['id' => $course->open_level]);
     $mod_skill = $DB->get_field('local_skill', 'name', ['id' => $course->open_skill]);
@@ -222,15 +217,8 @@ if ($PAGE->theme->name === 'airpayux') {
 echo $OUTPUT->header();
 echo '<div class="content_era_left">';
 
-	$sql = "SELECT id, fullname, parentid FROM {local_custom_category} WHERE id=:id";
-	$course_category = $DB->get_record_sql($sql, array('id'=>$course->open_categoryid));
-	$categoryname = $course_category->fullname;
-            if($course_category->parentid > 0){
-                $parentname = $DB->get_field('local_custom_category', 'fullname', ['id' => $course_category->parentid]);
-                $categoryname = $parentname . ' / '. $categoryname;
-            }
-
-	$categoryname = $categoryname ? $categoryname : 'N/A';
+	$legacy_catinfo = \local_airpay_catalog\category_manager::get_with_parent((int)($course->open_categoryid ?? 0));
+	$categoryname = !empty($legacy_catinfo->full_path) ? $legacy_catinfo->full_path : 'N/A';
 	$open_level = $DB->get_field('local_course_levels', 'name', array('id' => $course->open_level));
 	$level = $open_level ? $open_level : 'NA';
 	$open_skill = $DB->get_field('local_skill', 'name', array('id' => $course->open_skill));

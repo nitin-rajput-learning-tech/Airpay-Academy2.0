@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/airpay_classroom/db" VERSION="20260416"
+       COMMENT="Airpay Classroom Training — replaces BizLMS local_classroom">
+  <TABLES>
+    <TABLE NAME="local_airpay_classroom" COMMENT="Classroom/ILT sessions (fork of local_classroom)">
+      <FIELDS>
+        <FIELD NAME="id"              TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="name"            TYPE="char" LENGTH="254" NOTNULL="true"/>
+        <FIELD NAME="description"     TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="costcenterid"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Tenant org ID"/>
+        <FIELD NAME="departmentid"    TYPE="int"  LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="open_path"       TYPE="char" LENGTH="254" NOTNULL="false"/>
+        <FIELD NAME="trainerid"       TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="FK to mdl_user.id — primary trainer"/>
+        <FIELD NAME="location"        TYPE="char" LENGTH="254" NOTNULL="false"/>
+        <FIELD NAME="capacity"        TYPE="int"  LENGTH="6"  NOTNULL="true" DEFAULT="30"/>
+        <FIELD NAME="status"          TYPE="int"  LENGTH="2"  NOTNULL="true" DEFAULT="1"
+               COMMENT="1=active, 0=cancelled, 2=completed"/>
+        <FIELD NAME="visible"         TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_costcenter" UNIQUE="false" FIELDS="costcenterid"/>
+        <INDEX NAME="idx_status"     UNIQUE="false" FIELDS="status"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_airpay_classroom_sessions" COMMENT="Session instances (dates/times)">
+      <FIELDS>
+        <FIELD NAME="id"              TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="classroomid"     TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="sessiondate"     TYPE="int"  LENGTH="10" NOTNULL="true" COMMENT="Unix timestamp"/>
+        <FIELD NAME="starttime"       TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="endtime"         TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="location"        TYPE="char" LENGTH="254" NOTNULL="false"/>
+        <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"      TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_classroom" TYPE="foreign" FIELDS="classroomid" REFTABLE="local_airpay_classroom" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+
+    <TABLE NAME="local_airpay_classroom_attendance" COMMENT="Attendance records per session">
+      <FIELDS>
+        <FIELD NAME="id"              TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="sessionid"       TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="userid"          TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="status"          TYPE="int"  LENGTH="2"  NOTNULL="true" DEFAULT="0"
+               COMMENT="0=absent, 1=present, 2=late"/>
+        <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"    TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_session" TYPE="foreign" FIELDS="sessionid" REFTABLE="local_airpay_classroom_sessions" REFFIELDS="id"/>
+        <KEY NAME="fk_user"    TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_session_user" UNIQUE="true" FIELDS="sessionid, userid"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>
