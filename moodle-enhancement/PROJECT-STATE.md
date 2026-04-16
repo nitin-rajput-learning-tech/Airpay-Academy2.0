@@ -1,7 +1,52 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-04-15 | **Phase:** Academy 2.7 — Full Audit Execution (Buckets 1-6)
-**Theme:** airpayux v1.0.0 | **Tag:** v2.7.0
-**Version:** 2.7.0 (All v2.6.0 + 6 Audit Buckets + Manager Dashboard + DPDP Rewrite + Switch Role Fix)
+**Updated:** 2026-04-16 | **Phase:** Academy 2.8 — Commerce + Platform Cleanup
+**Theme:** airpayux v1.0.0 | **Tag:** v2.8.0
+**Version:** 2.8.0 (All v2.7.0 + Commerce System + Platform-Wide Cleanup + Dark Mode Persistence)
+
+---
+
+## v2.8.0 Session (2026-04-16) — Commerce + Platform Cleanup
+
+### Commerce System (NEW)
+- commerce.php: Course pricing engine (config-based per-course, INR)
+- public.php: Guest-accessible public catalog (no login required)
+  - Search, sort (Popular/Newest/A-Z), pagination, pricing display
+- course.php: Public course detail with Add to Cart / Enroll CTAs
+- cart.php: Session-based shopping cart (works for guests)
+  - Login redirect preserves cart via session
+  - "Enroll in All (Free)" auto-enrolls via self-enrol plugin
+  - "Payment Coming Soon" placeholder for paid courses
+- lib.php: before_footer hook injects cart count for navbar badge
+- Navbar: Custom cart icon with live count badge, BizLMS cart popup hidden
+
+### Platform-Wide Dependency Cleanup
+- Hardcoded tenant ID 77 → configurable via get_config + auto-detect
+- Login stats: all fallbacks to all-tenant data removed
+- Completion rate stat replaced with certificate count
+- core_renderer: get_public_tenant_path() helper (no more inline /77%)
+- Static page URL replacement: only targets href="/moodle/" (was breaking external links)
+- 8 templates: "Moodle" sitename → "airpay academy"
+- homepage.php: "Explore Courses" → public catalog, course cards show pricing
+
+### Dark Mode Fixes
+- head.mustache: Runs on EVERY page, detects OS prefers-color-scheme
+- Explicitly removes dark-mode when preference is light (was only adding)
+- Toggle icon synced on DOMContentLoaded
+- Commerce pages: dark mode CSS in moodle.css
+- Profile: .userprfltabs_container white wrapper fixed
+
+### Signup Form
+- Merged 2 checkboxes into 1 ("Privacy Policy & Terms of Use")
+- Links to /local/airpay_pages/index.php?page=privacy
+
+### New Pages
+- DPDP Act 2023 page (/local/airpay_pages/index.php?page=dpdp)
+- Moodle URL Removal Guide (MOODLE-URL-REMOVAL.md)
+
+### Bug Fixes
+- course.php: missing ID redirects to catalog (was 500 error)
+- Switch role: $DB null crash fixed (global $DB added)
+- BizLMS cart popup: hidden via CSS (conflicted with custom cart)
 
 ---
 
