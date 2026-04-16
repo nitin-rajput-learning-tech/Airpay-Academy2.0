@@ -22,12 +22,8 @@ class leaderboard {
         // Scope to user's tenant unless explicit orgpath given.
         $orgfilter = '';
         $params = [];
-        if (empty($orgpath) && !empty($USER->open_path)) {
-            $parts = explode('/', $USER->open_path);
-            $org = $parts[1] ?? '';
-            if (!empty($org)) {
-                $orgpath = '/' . $org;
-            }
+        if (empty($orgpath)) {
+            $orgpath = \local_airpay_org\tenant_manager::get_tenant_path();
         }
         if (!empty($orgpath)) {
             $orgfilter = "AND u.open_path LIKE :orgpath";

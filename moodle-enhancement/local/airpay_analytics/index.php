@@ -37,8 +37,7 @@ $range = optional_param('range', '30d', PARAM_ALPHA);
 // Determine org scope.
 $orgpath = '';
 if (!is_siteadmin()) {
-    $parts = explode('/', $USER->open_path ?? '');
-    $orgpath = '/' . ($parts[1] ?? '1');
+    $orgpath = \local_airpay_org\tenant_manager::get_tenant_path();
 }
 
 $manager = \local_airpay_analytics\analytics_manager::class;

@@ -238,24 +238,50 @@ class accesslib {
         ?string $costcenterpath = null,
         string $datatype = 'lowerandsamepath'
     ): string {
-        global $USER;
+        // DEPRECATED: returns raw SQL string for backward compat.
+        // New code should use get_costcenter_path_sql() which returns params.
+        [$sql, ] = self::get_costcenter_path_sql($columnname, $costcenterpath, $datatype);
+        return $sql;
+    }
 
+    /**
+     * Build parameterised SQL for costcenter path filtering.
+     *
+     * Returns [$sql_fragment, $params] for safe use in queries.
+     * Replaces the unsafe string-concat version.
+     *
+     * @param string      $columnname
+     * @param string|null $costcenterpath
+     * @param string      $datatype
+     * @return array  [string $sql, array $params]
+     */
+    public static function get_costcenter_path_sql(
+        string $columnname = 'path',
+        ?string $costcenterpath = null,
+        string $datatype = 'lowerandsamepath'
+    ): array {
         if ($costcenterpath === null) {
             $paths = self::get_user_role_switch_path();
             $costcenterpath = $paths[0] ?? '';
         }
 
         if (empty($costcenterpath)) {
-            return '';
+            return ['', []];
         }
 
-        // Build LIKE clause matching current path and descendant paths.
-        $escaped = addslashes($costcenterpath);
+        $uid = uniqid('ccp_');
         if ($datatype === 'lowerandsamepath') {
-            return " AND ({$columnname} = '{$escaped}' OR {$columnname} LIKE '{$escaped}/%')";
+            $sql = " AND ({$columnname} = :{$uid}_exact OR {$columnname} LIKE :{$uid}_like)";
+            $params = [
+                "{$uid}_exact" => $costcenterpath,
+                "{$uid}_like"  => $costcenterpath . '/%',
+            ];
+        } else {
+            $sql = " AND {$columnname} LIKE :{$uid}_like";
+            $params = ["{$uid}_like" => $costcenterpath . '%'];
         }
 
-        return " AND {$columnname} LIKE '{$escaped}%'";
+        return [$sql, $params];
     }
 
     /**

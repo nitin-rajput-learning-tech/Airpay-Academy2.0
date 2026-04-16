@@ -227,13 +227,10 @@ class catalog_manager {
         // Scope categories to the user's tenant org if logged in.
         $orgfilter = '';
         $params = [];
-        if (!empty($USER->open_path)) {
-            $parts = explode('/', $USER->open_path);
-            $org = $parts[1] ?? '';
-            if (!empty($org)) {
-                $orgfilter = " AND c.open_path LIKE :orgpath";
-                $params['orgpath'] = '/' . $org . '%';
-            }
+        $tenantpath = \local_airpay_org\tenant_manager::get_tenant_path();
+        if (!empty($tenantpath)) {
+            $orgfilter = " AND c.open_path LIKE :orgpath";
+            $params['orgpath'] = $tenantpath . '%';
         }
 
         return array_values($DB->get_records_sql(

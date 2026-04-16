@@ -40,9 +40,7 @@ if (!in_array($tenantid, $valid_tenants, true)) {
 }
 if (!is_siteadmin()) {
     // Non-siteadmins can only preview their own tenant.
-    $parts = explode('/', $USER->open_path ?? '');
-    $userorg = (int)($parts[1] ?? 1);
-    $tenantid = $userorg;
+    $tenantid = \local_airpay_org\tenant_manager::get_tenant_id();
 }
 $viewmode = optional_param('view', 'visual', PARAM_ALPHA);
 

@@ -22,11 +22,7 @@ $format = optional_param('format', 'csv', PARAM_ALPHA);
 // Tenant scoping.
 $orgpath = '';
 if (!is_siteadmin()) {
-    $parts = explode('/', $USER->open_path ?? '');
-    $org = $parts[1] ?? '';
-    if (!empty($org)) {
-        $orgpath = '/' . $org;
-    }
+    $orgpath = \local_airpay_org\tenant_manager::get_tenant_path();
 }
 
 $data = \local_airpay_analytics\analytics_manager::get_export_data($range, $orgpath);

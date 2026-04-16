@@ -1388,7 +1388,7 @@ class core_renderer extends \core_renderer {
 
 
             // $depths = [];
-            // var_dump($roles);exit;
+
             // array_values(array_filter(array_walk($roles, function(&$role, $rolekey)use(&$depths, &$roles){
             //     $categoryids = array_values(array_filter((explode('/', $role->path))));
             //     $category = \local_airpay_org\accesslib::get_category_info(end($categoryids), 'name');
@@ -1677,11 +1677,7 @@ class core_renderer extends \core_renderer {
             redirect($CFG->wwwroot.'/local/airpay_catalog/index.php');//Category page redirection
         }
         if($newpageurl == $CFG->wwwroot.'/user/view.php' || $newpageurl == $CFG->wwwroot.'/user/profile.php'){
-            if($_GET['id']){
-                $id = $_GET['id'];
-            }else{
-                $id = $USER->id;
-            }
+            $id = optional_param('id', $USER->id, PARAM_INT);
             redirect($CFG->wwwroot."/local/airpay_users/profile.php?id=$id");
         }
         if($newpageurl == $CFG->wwwroot.'/course/index.php' || $newpageurl == $CFG->wwwroot.'/course'){
@@ -1712,12 +1708,11 @@ class core_renderer extends \core_renderer {
                 }
             }else if($newpageurl == $CFG->wwwroot.'/mod/quiz/edit.php' || $newpageurl == $CFG->wwwroot.'/mod/quiz/report.php'){/*for edit quiz page and quiz default report page*/
                 if($COURSE->id == 1){
-                    if($newpageurl == $CFG->wwwroot.'/mod/quiz/edit.php')
-                        $cmid = $_GET['cmid'];
-                    else
-                        $cmid = $_GET['id'];
+                    $cmid = ($newpageurl == $CFG->wwwroot.'/mod/quiz/edit.php')
+                        ? optional_param('cmid', 0, PARAM_INT)
+                        : optional_param('id', 0, PARAM_INT);
 
-                    $onlinetest = \local_airpay_exams\exam_manager::get_by_course_module($cmid);
+                    $onlinetest = $cmid ? \local_airpay_exams\exam_manager::get_by_course_module($cmid) : false;
                     if($onlinetest){
                         $return->hideheader = TRUE;
                         if($is_oh && $USER->open_costcenterid != $onlinetest->costcenterid){
@@ -1731,8 +1726,8 @@ class core_renderer extends \core_renderer {
                 }
             }else if($newpageurl == $CFG->wwwroot.'/mod/quiz/review.php' /*|| $newpageurl == $CFG->wwwroot.'/mod/quiz/attempt.php'*/){/*for quiz reviewpage and quiz attempt page*/
                 if($COURSE->id == 1){
-                    $attempt = $_GET['attempt'];
-                    $onlinetest = \local_airpay_exams\exam_manager::get_by_attempt($attempt);
+                    $attempt = optional_param('attempt', 0, PARAM_INT);
+                    $onlinetest = $attempt ? \local_airpay_exams\exam_manager::get_by_attempt($attempt) : false;
                     if($onlinetest){
                         $return->hideheader = TRUE;
                         if($is_oh && $USER->open_costcenterid != $onlinetest->costcenterid){
@@ -1845,10 +1840,7 @@ class core_renderer extends \core_renderer {
                             $USER->useraccess['currentroleinfo']['contextinfo'][] = ['context' => $othercontext,'costcenterpath' => $othercostcenterpath];
                         }
                     }else {//if($context->path != '/1')if user is assigned at system context we unset the rsw variable.
-                // var_dump(strpos($othercontext->path.'/', $context->path.'/'));
-                //         var_dump(strpos($othercontext->path.'/', $context->path.'/'));
-                //     var_dump($othercontext->path);
-                // var_dump($context->path);
+
                         if(strpos($othercontext->path.'/', $context->path.'/') === 0 && $context->path != '/1'){
                             unset($USER->access['rsw'][$othercontext->path]);
                         }else{
@@ -1861,8 +1853,7 @@ class core_renderer extends \core_renderer {
         }
         //Fetching the category contexts where the role is assigned ans switching as user to those for achieving system level role switch ends.
         $this->role_capability_assignments($roleid, $context, $accessdata);
-        // var_dump($USER->access['rsw']);
-        // exit;
+
         return true;
     }
     private function role_capability_assignments($roleid, $context, &$accessdata){
@@ -2082,20 +2073,18 @@ class core_renderer extends \core_renderer {
         return $courseviewmenu;
     }
     public function course_bannerimage(){
-
-        global $COURSE,$CFG;
-             //course image
-        if(file_exists($CFG->dirroot.'/local/includes.php')){
-            require_once($CFG->dirroot.'/local/includes.php');
-            $includes = new \user_course_details();
-            $courseimage = $includes->course_summary_files($COURSE);
-            if(is_object($courseimage)){
-                $courseimage = $courseimage->out();
-            }else{
-                $courseimage = $courseimage;
+        global $COURSE;
+        // Use Moodle core API to get course image — no BizLMS dependency.
+        $course = new \core_course_list_element($COURSE);
+        foreach ($course->get_course_overviewfiles() as $file) {
+            if ($file->is_valid_image()) {
+                return \moodle_url::make_pluginfile_url(
+                    $file->get_contextid(), $file->get_component(), $file->get_filearea(),
+                    null, $file->get_filepath(), $file->get_filename()
+                )->out();
             }
         }
-        return $courseimage;
+        return $this->image_url('course_default', 'theme_airpayux')->out();
     }
     public function course_summary_data(){
 

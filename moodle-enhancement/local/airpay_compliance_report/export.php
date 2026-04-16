@@ -17,8 +17,7 @@ if (!is_siteadmin() && !has_capability('local/courses:manage', $systemcontext)) 
 
 $orgpath = '';
 if (!is_siteadmin()) {
-    $parts = explode('/', $USER->open_path ?? '');
-    $orgpath = '/' . ($parts[1] ?? '1');
+    $orgpath = \local_airpay_org\tenant_manager::get_tenant_path();
 }
 
 $format = optional_param('format', 'xlsx', PARAM_ALPHA);
