@@ -75,13 +75,13 @@ $buildregionmainsettings = !$PAGE->include_region_main_settings_in_header_action
 $regionmainsettingsmenu = $buildregionmainsettings ? $OUTPUT->region_main_settings_menu() : false;
 
 $layerone_detail_full = $OUTPUT->blocks('layerone_full', 'col-md-12');
-$layerone_detail_one = $OUTPUT->blocks('layerone_one', 'col-md-7 float-left');
-$layerone_detail_two = $OUTPUT->blocks('layerone_two', 'col-md-5 float-left');
+$layerone_detail_one = $OUTPUT->blocks('layerone_one', 'col-md-7 float-start');
+$layerone_detail_two = $OUTPUT->blocks('layerone_two', 'col-md-5 float-start');
 
 $layertwo_detail_one = $OUTPUT->blocks('layertwo_one', 'col-md-12');
 $layertwo_detail_two = $OUTPUT->blocks('layertwo_two', 'col-md-12');
-$layertwo_detail_three = $OUTPUT->blocks('layertwo_three', 'col-md-6 float-left');
-$layertwo_detail_four = $OUTPUT->blocks('layertwo_four', 'col-md-6 float-left');
+$layertwo_detail_three = $OUTPUT->blocks('layertwo_three', 'col-md-6 float-start');
+$layertwo_detail_four = $OUTPUT->blocks('layertwo_four', 'col-md-6 float-start');
 
 $layertwo_three_one = $OUTPUT->blocks('layerthree_one', 'col-md-12');
 $layertwo_three_two = $OUTPUT->blocks('layerthree_two', 'col-md-12');

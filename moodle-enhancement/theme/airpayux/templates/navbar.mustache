@@ -64,9 +64,9 @@
     </button>
 
     {{! Left: Logo }}
-    <a href="{{{ config.homeurl }}}" class="navbar-brand d-none d-md-flex align-items-center m-0 mr-3 p-0 aabtn">
+    <a href="{{{ config.homeurl }}}" class="navbar-brand d-none d-md-flex align-items-center m-0 me-3 p-0 aabtn">
         {{# output.should_display_navbar_logo }}
-            <img src="{{output.get_custom_logo}}" class="logo mr-1" alt="{{sitename}}">
+            <img src="{{output.get_custom_logo}}" class="logo me-1" alt="{{sitename}}">
         {{/ output.should_display_navbar_logo }}
         {{^ output.should_display_navbar_logo }}
             <span class="airpay-nav__brand">{{{ sitename }}}</span>
@@ -90,7 +90,7 @@
     </div>
 
     {{! Right: Search + Quick Access + Plugins + User menu }}
-    <div id="usernavigation" class="navbar-nav ml-auto airpay-nav__actions">
+    <div id="usernavigation" class="navbar-nav ms-auto airpay-nav__actions">
         {{! Search }}
         <div class="d-none d-md-flex align-items-center">
             <form action="{{{config.wwwroot}}}/search/index.php" method="get" class="airpay-nav__search">
