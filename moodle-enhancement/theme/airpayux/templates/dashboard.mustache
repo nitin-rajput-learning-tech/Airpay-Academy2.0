@@ -53,19 +53,85 @@
 <body {{{ bodyattributes }}}>
 {{> core/local/toast/wrapper}}
 
+{{! ═══ SIDEBAR SHELL WRAPPER ═══ }}
+{{#use_shell}}
 <div id="page-wrapper" class="d-print-block">
-
     {{{ output.standard_top_of_body_html }}}
+    <div class="ap-shell" id="ap-shell">
+        {{! Sidebar }}
+        {{#sidebar}}
+        <aside class="ap-sidebar" id="ap-sidebar" data-collapsed="{{#collapsed}}true{{/collapsed}}{{^collapsed}}false{{/collapsed}}">
+            <div class="ap-sidebar__logo">
+                <a href="{{{wwwroot}}}/my/" class="ap-sidebar__logo-link">
+                    <img src="{{{logourl}}}" alt="{{sitename}}" class="ap-sidebar__logo-img">
+                    <span class="ap-sidebar__logo-text">{{sitename}}</span>
+                </a>
+            </div>
+            <nav class="ap-sidebar__nav" aria-label="Main navigation">
+                <ul class="ap-sidebar__list">
+                    {{#navitems}}
+                    <li class="ap-sidebar__item {{#active}}ap-sidebar__item--active{{/active}}">
+                        <a href="{{{url}}}" class="ap-sidebar__link" {{#active}}aria-current="page"{{/active}}>
+                            <i class="fa {{icon}} ap-sidebar__icon"></i>
+                            <span class="ap-sidebar__label">{{label}}</span>
+                        </a>
+                    </li>
+                    {{/navitems}}
+                </ul>
+            </nav>
+            <div class="ap-sidebar__bottom">
+                <button class="ap-sidebar__toggle" id="ap-sidebar-toggle" title="Toggle sidebar">
+                    <i class="fa fa-chevron-left ap-sidebar__toggle-icon"></i>
+                </button>
+                <a href="{{{profileurl}}}" class="ap-sidebar__user">
+                    <div class="ap-sidebar__avatar">{{{useravatar}}}</div>
+                    <div class="ap-sidebar__userinfo">
+                        <span class="ap-sidebar__username">{{userfullname}}</span>
+                    </div>
+                </a>
+            </div>
+        </aside>
+        {{/sidebar}}
 
-    {{> theme_airpayux/navbar }}
+        {{! Mobile overlay }}
+        <div class="ap-shell__overlay" id="ap-shell-overlay"></div>
 
-    <div id="page" class="container-fluid d-print-block">
-        {{{ output.full_header }}}
-            {{#secondarymoremenu}}
-                <div class="secondary-navigation">
-                    {{> core/moremenu}}
+        {{! Main content area }}
+        <div class="ap-shell__main">
+            {{! Topbar }}
+            <header class="ap-topbar" id="ap-topbar">
+                <div class="ap-topbar__left">
+                    <button class="ap-topbar__hamburger d-lg-none" id="ap-sidebar-mobile-toggle" aria-label="Open menu">
+                        <i class="fa fa-bars"></i>
+                    </button>
+                    <nav class="ap-topbar__breadcrumb d-none d-md-flex" aria-label="Breadcrumb">
+                        {{{ output.navbar }}}
+                    </nav>
                 </div>
-            {{/secondarymoremenu}}
+                <div class="ap-topbar__center">
+                    <form action="{{{config.wwwroot}}}/search/index.php" method="get" class="ap-topbar__search">
+                        <i class="fa fa-search ap-topbar__search-icon"></i>
+                        <input type="text" name="q" class="ap-topbar__search-input" placeholder="Search courses, people, content..." autocomplete="off">
+                    </form>
+                </div>
+                <div class="ap-topbar__right">
+                    <button class="ap-topbar__icon-btn" id="ap-dark-toggle" title="Toggle dark mode">
+                        <i class="fa fa-moon"></i>
+                    </button>
+                    <div class="ap-topbar__usermenu">
+                        {{{ output.user_menu }}}
+                    </div>
+                </div>
+            </header>
+
+            {{! Page content }}
+            <main class="ap-shell__content" id="ap-shell-content">
+                <div id="page" class="d-print-block">
+                    {{#secondarymoremenu}}
+                        <div class="secondary-navigation">
+                            {{> core/moremenu}}
+                        </div>
+                    {{/secondarymoremenu}}
 
         {{! ═══ AIRPAY DASHBOARD — Full-width top section ═══ }}
         {{#airpay}}
@@ -627,13 +693,84 @@
         </div>
     </div>
     {{{ output.standard_after_main_region_html }}}
-    {{# isloggedin }}
-        <!-- {{> theme_airpayux/nav-drawer }} -->
-    {{/ isloggedin }}
-    {{> theme_airpayux/footer }}
-</div>
+                </div>{{! end #page }}
+            </main>{{! end .ap-shell__content }}
+        </div>{{! end .ap-shell__main }}
+    </div>{{! end .ap-shell }}
+</div>{{! end #page-wrapper }}
+
+{{! Sidebar + dark mode JS }}
+<script>
+(function() {
+    var sidebar = document.getElementById('ap-sidebar');
+    var toggle = document.getElementById('ap-sidebar-toggle');
+    var mobileToggle = document.getElementById('ap-sidebar-mobile-toggle');
+    var overlay = document.getElementById('ap-shell-overlay');
+    var darkToggle = document.getElementById('ap-dark-toggle');
+
+    // Sidebar collapse/expand
+    if (toggle && sidebar) {
+        toggle.addEventListener('click', function() {
+            var collapsed = sidebar.getAttribute('data-collapsed') === 'true';
+            sidebar.setAttribute('data-collapsed', collapsed ? 'false' : 'true');
+            toggle.querySelector('.ap-sidebar__toggle-icon').style.transform = collapsed ? '' : 'rotate(180deg)';
+            if (typeof M !== 'undefined' && M.cfg) {
+                fetch(M.cfg.wwwroot + '/lib/ajax/setuserpref.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'sesskey=' + M.cfg.sesskey + '&pref=theme_airpayux_sidebar_collapsed&value=' + (collapsed ? '0' : '1')
+                });
+            }
+        });
+    }
+
+    // Mobile sidebar
+    if (mobileToggle && sidebar) {
+        mobileToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('ap-sidebar--mobile-open');
+            if (overlay) overlay.classList.toggle('ap-shell__overlay--visible');
+        });
+    }
+    if (overlay) {
+        overlay.addEventListener('click', function() {
+            if (sidebar) sidebar.classList.remove('ap-sidebar--mobile-open');
+            overlay.classList.remove('ap-shell__overlay--visible');
+        });
+    }
+
+    // Dark mode toggle
+    if (darkToggle) {
+        var html = document.documentElement;
+        var isDark = html.getAttribute('data-theme') === 'dark' || html.classList.contains('dark-mode');
+        darkToggle.querySelector('i').className = isDark ? 'fa fa-sun' : 'fa fa-moon';
+        darkToggle.addEventListener('click', function() {
+            var nowDark = html.getAttribute('data-theme') === 'dark' || html.classList.contains('dark-mode');
+            html.setAttribute('data-theme', nowDark ? 'light' : 'dark');
+            html.classList.toggle('dark-mode', !nowDark);
+            document.body.classList.toggle('dark-mode', !nowDark);
+            localStorage.setItem('airpay-theme', nowDark ? 'light' : 'dark');
+            darkToggle.querySelector('i').className = nowDark ? 'fa fa-moon' : 'fa fa-sun';
+        });
+    }
+})();
+</script>
 
 </body>
+{{/use_shell}}
+
+{{! ═══ FALLBACK: Old layout (when use_shell is false) ═══ }}
+{{^use_shell}}
+<div id="page-wrapper" class="d-print-block">
+    {{{ output.standard_top_of_body_html }}}
+    {{> theme_airpayux/navbar }}
+    <div id="page" class="container-fluid d-print-block">
+        {{{ output.full_header }}}
+    {{! Old dashboard content would go here — not used when shell is active }}
+    </div>
+    {{> theme_airpayux/footer }}
+</div>
+</body>
+{{/use_shell}}
 </html>
 {{#js}}
 M.util.js_pending('theme_airpayux/loader');
