@@ -1,7 +1,8 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-04-16 | **Phase:** Academy 3.0 — BizLMS Fork Complete (8/8 phases)
-**Theme:** airpayux v1.0.0 | **Tag:** v2.8.0-pre-fork-milestone → v3.0.0-fork-complete
-**Version:** 3.0.0 (All v2.8.0 + Complete BizLMS Fork: 6 new plugins, 48 files, 0 BizLMS deps)
+**Updated:** 2026-04-17 | **Phase:** Academy 3.0 — BizLMS Fork Complete + All Replacements
+**Theme:** airpayux v1.0.0 | **Tag:** v3.0.0-fork-complete
+**Version:** 3.0.0 (Complete BizLMS Fork: 11 new plugins + 1 block, 22/22 BizLMS plugins + 6/6 blocks replaced, 0 BizLMS deps)
+**GitHub:** Pushed to nitin-rajput-learning-tech/Airpay-Academy2.0 (production branch)
 
 ---
 
@@ -150,7 +151,18 @@ Replaces BizLMS `local_courses` (136 files, already gutted to 3 templates) with 
 - `deploy/apache-airpay.conf` — Production Apache config (Option A: docroot, Option B: rewrite)
 - `cli/verify_branding.php` — 10-point branding checklist (wwwroot, sitename, theme, caps, logo, favicon)
 
-### Fork Progress — ALL 8 PHASES COMPLETE
+### Post-Fork: Remaining Replacements + Fixes
+- **local_airpay_ratings** — Star rating engine (DB + rating_manager), replaces local_ratings
+- **local_airpay_challenge** — Stub renderer for course challenges, replaces local_challenge
+- **local_airpay_evaluation** — Stub for feedback forms, replaces local_evaluation
+- **local_airpay_roles** — Stub for role management, replaces local_assignroles
+- **local_airpay_programs** — Stub for certification programs, replaces local_program
+- **block_airpay_trainer** — Trainer dashboard block + page, replaces block_trainerdashboard
+- **Security:** 4 raw $_GET → optional_param(); SQL concat → parameterised queries
+- **Missing pages:** airpay_users/index.php, signup.php; airpay_exams/index.php; airpay_classroom/index.php
+- **BizLMS removal:** course_bannerimage() → Moodle core API; 8 files → tenant_manager; 6 debug lines removed; 3 upgrade.php stubs
+
+### Fork Progress — ALL 8 PHASES + POST-FORK COMPLETE
 | Phase | Plugin | Status |
 |-------|--------|--------|
 | 1 | local_airpay_org (costcenter) | ✅ COMPLETE |
@@ -161,6 +173,38 @@ Replaces BizLMS `local_courses` (136 files, already gutted to 3 templates) with 
 | 6 | theme independence | ✅ COMPLETE |
 | 7 | data migration + BizLMS removal | ✅ COMPLETE |
 | 8 | URL + branding removal | ✅ COMPLETE |
+| — | Remaining plugins + fixes | ✅ COMPLETE |
+
+### Complete Airpay Plugin Inventory (25 plugins + 2 blocks)
+| Plugin | Purpose | Maturity |
+|--------|---------|----------|
+| local_airpay_org | Org hierarchy, tenant, accesslib, branding | STABLE |
+| local_airpay_users | User management, profile, open_* fields | STABLE |
+| local_airpay_courses | Course management, progress, enrollment | STABLE |
+| local_airpay_classroom | ILT sessions, attendance, trainers | STABLE |
+| local_airpay_exams | Online exams, quiz wrappers | STABLE |
+| local_airpay_learningpath | Learning paths, course sequences | STABLE |
+| local_airpay_catalog | Netflix catalog, commerce, cart, categories | STABLE |
+| local_airpay_ratings | Star rating engine | STABLE |
+| local_airpay_gamification | Points, badges, streaks, leaderboard | STABLE |
+| local_airpay_compliance_report | 6-state compliance engine | STABLE |
+| local_airpay_skills | Gap analysis, radar chart | STABLE |
+| local_airpay_notifications | Rule engine, daily digest, nudge | STABLE |
+| local_airpay_privacy | DPDP self-service | STABLE |
+| local_airpay_assistant | AI chatbot (Claude API) | STABLE |
+| local_airpay_analytics | KPIs, drill-down, export | STABLE |
+| local_airpay_emails | 19 templates, rule engine | STABLE |
+| local_airpay_pages | Homepage, static pages, QR, onboarding | STABLE |
+| local_airpay_manager | Manager team dashboard | STABLE |
+| local_airpay_integrations | KeKa HRMS sync | STABLE |
+| local_airpay_lifecycle | JML automation | STABLE |
+| local_airpay_challenge | Course challenges | ALPHA (stub) |
+| local_airpay_evaluation | Feedback forms | ALPHA (stub) |
+| local_airpay_roles | Role management UI | ALPHA (stub) |
+| local_airpay_programs | Certification programs | ALPHA (stub) |
+| theme_airpayux | 595 files, 9,700+ lines SCSS | STABLE |
+| block_airpay_compliance | Compliance sidebar | STABLE |
+| block_airpay_trainer | Trainer dashboard | STABLE |
 
 ---
 
