@@ -82,7 +82,7 @@ class sidebar_navigation {
         $currenturl = $this->page->url->out(false);
 
         // ── Learner items (everyone sees these) ──────────
-        $items[] = $this->item('Dashboard', 'fa-home', '/my/dashboard.php', $currenturl);
+        $items[] = $this->item('Dashboard', 'fa-home', '/my/', $currenturl, null, ['/my/index.php']);
         $items[] = $this->item('My Courses', 'fa-book', '/local/airpay_catalog/mycourses.php', $currenturl);
         $items[] = $this->item('Catalog', 'fa-compass', '/local/airpay_catalog/public.php', $currenturl,
             null, ['airpay_catalog']);
