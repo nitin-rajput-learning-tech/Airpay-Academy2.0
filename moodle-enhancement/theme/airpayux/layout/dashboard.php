@@ -15,10 +15,11 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Dashboard layout — Airpay Academy 4-tier RBAC dashboard.
+ * A two dashboard layout for the epsilon theme.
  *
  * @package   theme_airpayux
- * @copyright 2026 Airpay Payment Services
+ * @copyright 2018 eAbyas Info Solutons Pvt Ltd, India
+ * @author    eAbyas  <info@eAbyas.in>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -32,7 +33,7 @@ if (!isloggedin() || isguestuser()) {
 // First-login onboarding — redirect new learners to onboarding wizard.
 // Skip for: siteadmins, L&D admins, admins who switched to employee view.
 global $DB;
-$has_any_admin_role = \local_airpay_courses\course_manager::can_manage()
+$has_any_admin_role = is_siteadmin() || has_capability('local/courses:manage', context_system::instance())
     || $DB->record_exists_sql(
         "SELECT 1 FROM {role_assignments} ra JOIN {context} ctx ON ctx.id = ra.contextid
          WHERE ra.userid = :uid AND ra.roleid = 9 AND ctx.contextlevel = 40",
@@ -44,7 +45,7 @@ if (!$has_any_admin_role) {
     }
 }
 
-user_preference_allow_ajax_update('drawer-open-nav', PARAM_ALPHA);
+// Removed: user_preference_allow_ajax_update() — deprecated in Moodle 5.1
 require_once($CFG->libdir . '/behat/lib.php');
 
 // Add block button in editing mode.
@@ -75,13 +76,13 @@ $buildregionmainsettings = !$PAGE->include_region_main_settings_in_header_action
 $regionmainsettingsmenu = $buildregionmainsettings ? $OUTPUT->region_main_settings_menu() : false;
 
 $layerone_detail_full = $OUTPUT->blocks('layerone_full', 'col-md-12');
-$layerone_detail_one = $OUTPUT->blocks('layerone_one', 'col-md-7 float-start');
-$layerone_detail_two = $OUTPUT->blocks('layerone_two', 'col-md-5 float-start');
+$layerone_detail_one = $OUTPUT->blocks('layerone_one', 'col-md-7 float-left');
+$layerone_detail_two = $OUTPUT->blocks('layerone_two', 'col-md-5 float-left');
 
 $layertwo_detail_one = $OUTPUT->blocks('layertwo_one', 'col-md-12');
 $layertwo_detail_two = $OUTPUT->blocks('layertwo_two', 'col-md-12');
-$layertwo_detail_three = $OUTPUT->blocks('layertwo_three', 'col-md-6 float-start');
-$layertwo_detail_four = $OUTPUT->blocks('layertwo_four', 'col-md-6 float-start');
+$layertwo_detail_three = $OUTPUT->blocks('layertwo_three', 'col-md-6 float-left');
+$layertwo_detail_four = $OUTPUT->blocks('layertwo_four', 'col-md-6 float-left');
 
 $layertwo_three_one = $OUTPUT->blocks('layerthree_one', 'col-md-12');
 $layertwo_three_two = $OUTPUT->blocks('layerthree_two', 'col-md-12');
@@ -103,8 +104,8 @@ if (isloggedin() && !isguestuser()) {
 
     // --- Role detection (4 tiers) ---
     // Siteadmin: is_siteadmin() — sees everything including System Health
-    // L&D Admin: has local/airpay_courses:manage — sees admin dashboard without System Health
-    // Manager: has moodle/site:viewreports but NOT course manage cap — sees team + learner
+    // L&D Admin: has local/courses:manage but is NOT siteadmin — sees admin dashboard without System Health
+    // Manager: has moodle/site:viewreports but NOT local/courses:manage — sees team + learner
     // Learner: everyone else — sees learner dashboard only
     $systemcontext = context_system::instance();
     $issiteadmin = is_siteadmin();
@@ -136,7 +137,7 @@ if (isloggedin() && !isguestuser()) {
     // BizLMS assigns 'administrator' role at category context (level 40), not system (level 10).
     $isldadmin = false;
     if (!$issiteadmin && !$switched_to_employee) {
-        $isldadmin = \local_airpay_courses\course_manager::can_manage($systemcontext);
+        $isldadmin = has_capability('local/courses:manage', $systemcontext);
         if (!$isldadmin) {
             // BizLMS fallback: check if user has administrator role (id=9) at any category context.
             $hasbizlmsadmin = $DB->record_exists_sql(
@@ -278,8 +279,8 @@ if (isloggedin() && !isguestuser()) {
 
             // Show tenant scope label for L&D admins
             if ($isldadmin && !empty($toporg)) {
-                $tenantname = \local_airpay_org\org_manager::get_name_by_path($toporg);
-                $airpay_dashboard['tenant_scope'] = $tenantname ?: 'Your Organization';
+                $tenantname = $DB->get_field('local_costcenter', 'fullname', ['path' => $toporg]);
+                $airpay_dashboard['tenant_scope'] = $tenantname ?? 'Your Organization';
             }
 
             $airpay_dashboard['admin_kpis'] = [
@@ -330,27 +331,32 @@ if (isloggedin() && !isguestuser()) {
             $classroomcount = 0;
             $examcount = 0;
             try {
-                $classroomcount = \local_airpay_classroom\session_manager::count_classrooms(
-                    !empty($tenantfilter_course) ? ($tenantparams['cpath'] ?? '%') : '');
+                if (!empty($tenantfilter_course)) {
+                    $classroomcount = $DB->count_records_sql(
+                        "SELECT COUNT(*) FROM {local_classroom} WHERE open_path LIKE :p",
+                        ['p' => ($tenantparams['cpath'] ?? '%')]);
+                } else {
+                    $classroomcount = $DB->count_records_select('local_classroom', '1=1');
+                }
             } catch (Exception $e) {}
-            try { $examcount = \local_airpay_exams\exam_manager::count_exams(); } catch (Exception $e) {}
+            try { $examcount = $DB->count_records('local_onlineexams'); } catch (Exception $e) {}
 
             $airpay_dashboard['admin_quicknav'] = [
-                ['label' => 'Manage Users', 'icon' => 'users', 'url' => (new moodle_url('/local/airpay_users/index.php'))->out(false), 'color' => '#0066A7',
+                ['label' => 'Manage Users', 'icon' => 'users', 'url' => (new moodle_url('/local/users/index.php'))->out(false), 'color' => '#0066A7',
                  'hasstats' => true, 'stats' => [
                     ['statval' => $totalusers, 'statlabel' => 'Total'],
                     ['statval' => $activeusers, 'statlabel' => 'Active'],
                     ['statval' => $inactiveusers, 'statlabel' => 'Inactive'],
                 ]],
-                ['label' => 'Manage Courses', 'icon' => 'book', 'url' => (new moodle_url('/local/airpay_catalog/index.php'))->out(false), 'color' => '#0f7a73',
+                ['label' => 'Manage Courses', 'icon' => 'book', 'url' => (new moodle_url('/local/courses/courses.php'))->out(false), 'color' => '#0f7a73',
                  'hasstats' => true, 'stats' => [
                     ['statval' => $totalcourses, 'statlabel' => 'Total'],
                     ['statval' => number_format($totalenrolments), 'statlabel' => 'Enrolments'],
                     ['statval' => number_format($totalcompleted), 'statlabel' => 'Completions'],
                 ]],
                 ['label' => 'Reports', 'icon' => 'bar-chart', 'url' => (new moodle_url('/blocks/learnerscript/managereport.php'))->out(false), 'color' => '#7c3aed'],
-                ['label' => 'Online Exams', 'icon' => 'pencil-square-o', 'url' => (new moodle_url('/local/airpay_exams/index.php'))->out(false), 'color' => '#d97706'],
-                ['label' => 'Classrooms', 'icon' => 'calendar', 'url' => (new moodle_url('/local/airpay_classroom/index.php'))->out(false), 'color' => '#dc2626',
+                ['label' => 'Online Exams', 'icon' => 'pencil-square-o', 'url' => (new moodle_url('/local/onlineexams/index.php'))->out(false), 'color' => '#d97706'],
+                ['label' => 'Classrooms', 'icon' => 'calendar', 'url' => (new moodle_url('/local/classroom/index.php'))->out(false), 'color' => '#dc2626',
                  'hasstats' => ($classroomcount > 0), 'stats' => [
                     ['statval' => $classroomcount, 'statlabel' => 'Total'],
                 ]],
@@ -387,7 +393,7 @@ if (isloggedin() && !isguestuser()) {
             $airpay_dashboard['systemhealth'] = [
                 ['label' => 'Cron Last Run', 'value' => $cronlast ? userdate($cronlast, '%d %b, %I:%M %p') : 'Never',
                  'icon' => 'clock-o', 'status' => ($cronlast && (time() - $cronlast) < 3600) ? 'ok' : 'warning'],
-                ['label' => 'Platform Version', 'value' => $CFG->release ?? 'Unknown',
+                ['label' => 'Moodle Version', 'value' => $CFG->release ?? 'Unknown',
                  'icon' => 'info-circle', 'status' => 'ok'],
                 ['label' => 'Disk Usage', 'value' => $diskpercent . '% used',
                  'icon' => 'database', 'status' => ($diskpercent < 80) ? 'ok' : 'warning'],
@@ -753,6 +759,19 @@ $templatecontext = [
     'addblockbutton' => $addblockbutton,
     // Airpay UX dashboard data
     'airpay' => $airpay_dashboard ?? [],
+];
+
+// Inject sidebar navigation context.
+$sidebarnav = new \theme_airpayux\sidebar_navigation($PAGE);
+$templatecontext['sidebar'] = $sidebarnav->get_context();
+$templatecontext['use_shell'] = true;
+
+// Topbar context.
+$templatecontext['topbar'] = [
+    'wwwroot' => $CFG->wwwroot,
+    'breadcrumbs' => $OUTPUT->navbar(),
+    'notificationhtml' => '',
+    'usermenu' => $OUTPUT->user_menu($USER, ''),
 ];
 
 echo $OUTPUT->render_from_template('theme_airpayux/dashboard', $templatecontext);

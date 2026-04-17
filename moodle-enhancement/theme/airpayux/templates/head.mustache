@@ -31,6 +31,8 @@
         var saved = localStorage.getItem('airpay-theme');
         var isDark = saved === 'dark' || (!saved && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
         // Apply IMMEDIATELY to <html> to prevent flash.
+        // Set BOTH class (legacy) and data-attribute (token system).
+        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
         if (isDark) {
             document.documentElement.classList.add('dark-mode');
         } else {

@@ -11,7 +11,10 @@
 // 2. Core Moodle element overrides (forms, tables, modals, etc.)
 @import "partials/moodle-overrides";
 
-// 3. Navigation surfaces
+// 3. Layout shell (sidebar + topbar + content grid)
+@import "partials/layout-shell";
+
+// 4. Navigation surfaces
 @import "partials/surface-navbar";
 @import "partials/surface-footer";
 
