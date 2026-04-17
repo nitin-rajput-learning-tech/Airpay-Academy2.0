@@ -1,0 +1,651 @@
+/* ═══════════════════════════════════════════════════════════
+   SPRINT 5 — COURSE DETAIL (local/search/coursedetails.php)
+   CSS-only overrides for BizLMS course detail page
+   ═══════════════════════════════════════════════════════════ */
+
+/* === Hero Banner === */
+.path-local-search .content_era_left {
+    margin: -20px -15px 0;
+}
+.path-local-search .coursedet_left {
+    background: #fff;
+    border-radius: 0 0 16px 16px;
+    overflow: hidden;
+}
+.path-local-search .cousedet_topcontent {
+    position: relative;
+}
+.path-local-search .img_summary {
+    min-height: 320px;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    border-radius: 0;
+    margin: 0 !important;
+}
+.path-local-search .img_summary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0,30,60,0.15) 0%, rgba(0,30,60,0.85) 100%);
+    z-index: 1;
+}
+.path-local-search .CourseDetails_content {
+    position: relative;
+    z-index: 2;
+    padding: 32px 40px !important;
+    color: #fff;
+}
+.path-local-search .CourseDetails_content .course_title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.75rem !important;
+    font-weight: 700;
+    color: #fff !important;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    margin-bottom: 8px;
+}
+
+/* === Course Stats Bar === */
+.path-local-search .CourseDetails_content .row {
+    gap: 0;
+}
+.path-local-search .user_completion,
+.path-local-search .user_enrollment,
+.path-local-search .skill_level_details {
+    background: rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 10px 16px !important;
+    margin-right: 12px;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.15);
+}
+.path-local-search .details_content,
+.path-local-search .CourseDetails_content .text-nowrap {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.8);
+    font-weight: 500;
+}
+.path-local-search .enroll_number,
+.path-local-search .skill_level {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #fff;
+    margin-left: 6px;
+}
+
+/* User/enroll icons */
+.path-local-search .user_icon::before,
+.path-local-search .enroll_icon::before,
+.path-local-search .skill_icon::before {
+    font-family: 'FontAwesome';
+    font-size: 1rem;
+    color: rgba(255,255,255,0.7);
+}
+.path-local-search .user_icon::before { content: '\f00c'; } /* fa-check */
+.path-local-search .enroll_icon::before { content: '\f0c0'; } /* fa-users */
+.path-local-search .skill_icon::before { content: '\f0e4'; } /* fa-tachometer */
+
+/* === Course Content Sections === */
+.path-local-search .coursedet_left > div:not(.cousedet_topcontent) {
+    padding: 0 24px;
+}
+
+/* Tabs / sections below hero */
+.path-local-search .nav-tabs {
+    border-bottom: 2px solid #e2e6ef;
+    padding: 0 24px;
+    background: #fff;
+}
+.path-local-search .nav-tabs .nav-link {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #5a6070;
+    padding: 14px 20px;
+    border: none;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s ease;
+}
+.path-local-search .nav-tabs .nav-link.active,
+.path-local-search .nav-tabs .nav-link:hover {
+    color: #0066A7;
+    border-bottom-color: #0066A7;
+    background: transparent;
+}
+
+/* Enroll button on detail page */
+.path-local-search .coursedet_left .btn-primary,
+.path-local-search .coursedet_left .enrol-btn,
+.path-local-search .coursedet_left [class*="enrol"] .btn {
+    background: #0066A7 !important;
+    border-color: #0066A7 !important;
+    border-radius: 8px !important;
+    padding: 10px 28px !important;
+    font-weight: 600;
+    font-family: 'Montserrat', sans-serif;
+    transition: all 0.2s ease;
+}
+.path-local-search .coursedet_left .btn-primary:hover {
+    background: #004d80 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,102,167,0.3);
+}
+
+/* Course summary / description area */
+.path-local-search .coursedet_left .course_description,
+.path-local-search .coursedet_left #summary {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: #374151;
+    padding: 24px 0;
+}
+
+/* === Course Detail Responsive === */
+@media (max-width: 768px) {
+    .path-local-search .img_summary {
+        min-height: 220px;
+    }
+    .path-local-search .CourseDetails_content {
+        padding: 20px !important;
+    }
+    .path-local-search .CourseDetails_content .course_title {
+        font-size: 1.25rem !important;
+    }
+    .path-local-search .user_completion,
+    .path-local-search .user_enrollment,
+    .path-local-search .skill_level_details {
+        margin-bottom: 8px;
+        flex: 1 1 100%;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SPRINT 6 — ADMIN PAGES (BizLMS + Moodle Core)
+   Manage Users, Manage Courses, Admin Tables, Admin Nav
+   ═══════════════════════════════════════════════════════════ */
+
+/* === 6A: BizLMS Admin Page Headers === */
+.path-local-users,
+.path-local-courses {
+    /* Page heading */
+    #page-header .page-header-headings h2,
+    .page-context-header .page-header-headings h1 {
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 700;
+        font-size: 1.75rem;
+        color: #1a1a2e;
+        border-bottom: 3px solid #0066A7;
+        padding-bottom: 8px;
+        display: inline-block;
+    }
+}
+
+/* === 6B: BizLMS Toolbar Icons === */
+.course_extended_menu_list {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    flex-wrap: wrap;
+}
+.course_extended_menu_itemcontainer {
+    margin: 0;
+}
+.course_extended_menu_itemlink {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: 1px solid #e2e6ef;
+    background: #fff;
+    color: #374151;
+    transition: all 0.2s ease;
+    text-decoration: none !important;
+}
+.course_extended_menu_itemlink:hover {
+    background: #e8f2f9;
+    border-color: #0066A7;
+    color: #0066A7;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,102,167,0.15);
+}
+.course_extended_menu_itemlink .icon {
+    font-size: 1rem;
+    margin: 0;
+}
+
+/* === 6C: BizLMS Admin Search + Filter Bar === */
+.path-local-users,
+.path-local-courses {
+    /* Filter panel container */
+    #filters_form {
+        border: 1px solid #e2e6ef;
+        border-radius: 12px;
+        padding: 16px !important;
+        background: #fff;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        margin-bottom: 16px;
+    }
+
+    /* Filter toggle icon */
+    .filter {
+        cursor: pointer;
+        color: #0066A7;
+        transition: color 0.2s ease;
+        &:hover { color: #004d80; }
+    }
+
+    /* Search input */
+    input[type="text"][name*="search"],
+    .global_filter_structure input[type="text"] {
+        padding: 10px 16px;
+        border: 2px solid #e2e6ef;
+        border-radius: 10px;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.9rem;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        &:focus {
+            border-color: #0066A7;
+            box-shadow: 0 0 0 3px rgba(0,102,167,0.1);
+            outline: none;
+        }
+    }
+
+    /* Department filter selects */
+    .global_filter_structure select,
+    .filteropen_costcenterid_select,
+    .filteropen_department_select,
+    .filteropen_subdepartment_select {
+        padding: 8px 12px;
+        border: 2px solid #e2e6ef;
+        border-radius: 8px;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.85rem;
+        background: #fff;
+        cursor: pointer;
+        transition: border-color 0.2s ease;
+        &:focus {
+            border-color: #0066A7;
+            outline: none;
+        }
+    }
+
+    /* Card/List view toggle */
+    .viewtype_btn,
+    .view_type_btn,
+    [class*="view_toggle"],
+    .btn-outline-secondary:has(.fa-list),
+    a[title="List"],
+    a[title="Card"] {
+        border-radius: 8px;
+        border: 1px solid #e2e6ef;
+        padding: 8px 16px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+}
+
+/* === 6D: BizLMS Card-Paginate Content Area === */
+.card-paginate_wrap {
+    margin-top: 8px;
+}
+/* BizLMS cardPaginate clearfix — floated cards collapse parent containers */
+.card-paginate_wrap [data-region$="-list-container"],
+.card-paginate_wrap [id^="paged-content-container"] {
+    overflow: hidden;
+}
+
+/* Loading animation */
+.cardpaginate-loader {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    padding: 40px 0;
+}
+
+/* User/course cards in card view */
+.card-paginate_wrap .card {
+    border: 1px solid #e2e6ef;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    margin-bottom: 16px;
+}
+.card-paginate_wrap .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,51,102,0.1);
+}
+.card-paginate_wrap .card .card-body {
+    padding: 16px;
+}
+
+/* User card avatar area */
+.card-paginate_wrap .user-picture,
+.card-paginate_wrap .userpicture,
+.card-paginate_wrap img[class*="userpicture"] {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #e8f2f9;
+}
+
+/* Card action buttons */
+.card-paginate_wrap .btn-sm {
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 4px 12px;
+}
+
+/* Course context menu (3-dot / gear) */
+.course_contextmenu_extended {
+    .dropdown-menu {
+        border-radius: 10px;
+        border: 1px solid #e2e6ef;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        padding: 8px 0;
+    }
+    .dropdown-menu .dropdown-item {
+        padding: 8px 16px;
+        font-size: 0.85rem;
+        color: #374151;
+        transition: background 0.15s ease;
+        &:hover {
+            background: #e8f2f9;
+            color: #0066A7;
+        }
+    }
+}
+
+/* === 6E: Moodle Core Admin Navigation Tabs === */
+.pagelayout-admin {
+    /* Admin tab bar */
+    .nav-tabs,
+    .secondary-navigation .moremenu .nav {
+        border-bottom: 2px solid #e2e6ef;
+        gap: 0;
+    }
+    .nav-tabs .nav-link,
+    .secondary-navigation .moremenu .nav-link {
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: #5a6070;
+        padding: 12px 20px;
+        border: none;
+        border-bottom: 3px solid transparent;
+        border-radius: 0;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+    }
+    .nav-tabs .nav-link.active,
+    .nav-tabs .nav-link:hover,
+    .secondary-navigation .moremenu .nav-link.active,
+    .secondary-navigation .moremenu .nav-link:hover {
+        color: #0066A7;
+        border-bottom-color: #0066A7;
+        background: transparent;
+    }
+}
+
+/* === 6F: Moodle Core Data Tables (.generaltable) === */
+.generaltable {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 1px solid #e2e6ef;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.generaltable thead th {
+    background: #0066A7 !important;
+    color: #fff !important;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 14px 16px;
+    border: none;
+    white-space: nowrap;
+    text-align: left;
+}
+.generaltable thead th a {
+    color: #fff !important;
+    text-decoration: none;
+    &:hover { text-decoration: underline; }
+}
+.generaltable thead th .icon {
+    color: #fff !important;
+}
+.generaltable tbody td {
+    padding: 12px 16px;
+    font-size: 0.875rem;
+    color: #374151;
+    border-bottom: 1px solid #f3f4f6;
+    vertical-align: middle;
+}
+.generaltable tbody tr:last-child td {
+    border-bottom: none;
+}
+.generaltable tbody tr:hover {
+    background: #f8fafd;
+}
+/* Zebra stripes (subtle) */
+.generaltable tbody tr:nth-child(even) {
+    background: #fafbfe;
+}
+.generaltable tbody tr:nth-child(even):hover {
+    background: #f0f4f9;
+}
+/* Checkbox column */
+.generaltable td:first-child input[type="checkbox"],
+.generaltable th:first-child input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #0066A7;
+    cursor: pointer;
+}
+/* Action column dropdown */
+.generaltable .action-icon,
+.generaltable .icon {
+    color: #5a6070;
+    transition: color 0.15s ease;
+    &:hover { color: #0066A7; }
+}
+
+/* === 6G: Admin Action Buttons === */
+.pagelayout-admin .btn-primary,
+.pagelayout-standard .btn-primary {
+    background: #0066A7;
+    border-color: #0066A7;
+    border-radius: 8px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    font-size: 0.875rem;
+    padding: 10px 24px;
+    transition: all 0.2s ease;
+    &:hover {
+        background: #004d80;
+        border-color: #004d80;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,102,167,0.3);
+    }
+}
+.pagelayout-admin .btn-secondary,
+.pagelayout-standard .btn-secondary {
+    background: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    color: #374151;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    font-size: 0.875rem;
+    padding: 10px 24px;
+    transition: all 0.2s ease;
+    &:hover {
+        background: #f8fafd;
+        border-color: #0066A7;
+        color: #0066A7;
+    }
+}
+
+/* Filters button (admin/user.php style) */
+.btn-outline-secondary:has(.fa-filter),
+.btn:has(.fa-filter) {
+    border-radius: 8px;
+    border-color: #e2e6ef;
+    color: #0066A7;
+    font-weight: 600;
+    &:hover {
+        background: #e8f2f9;
+        border-color: #0066A7;
+    }
+}
+
+/* === 6H: Admin Forms & Selects === */
+.pagelayout-admin,
+.pagelayout-standard {
+    /* Form controls */
+    .form-control,
+    select.form-control,
+    .custom-select {
+        border: 2px solid #e2e6ef;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.875rem;
+        transition: border-color 0.2s ease;
+        &:focus {
+            border-color: #0066A7;
+            box-shadow: 0 0 0 3px rgba(0,102,167,0.1);
+        }
+    }
+}
+
+/* Download table data row */
+form:has(select[name="download"]) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 0;
+    flex-wrap: wrap;
+}
+
+/* "With selected users..." bulk action */
+form:has(select[name*="selected"]),
+#formactionid {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: #f8f9fc;
+    border-radius: 10px;
+    border: 1px solid #e2e6ef;
+}
+
+/* === 6I: Admin Pagination (shared) === */
+.pagination {
+    gap: 4px;
+}
+.pagination .page-item .page-link {
+    border-radius: 8px;
+    border: 1px solid #e2e6ef;
+    color: #374151;
+    font-weight: 500;
+    font-size: 0.85rem;
+    padding: 8px 14px;
+    transition: all 0.2s ease;
+}
+.pagination .page-item.active .page-link {
+    background: #0066A7;
+    border-color: #0066A7;
+    color: #fff;
+}
+.pagination .page-item .page-link:hover {
+    background: #e8f2f9;
+    border-color: #0066A7;
+    color: #0066A7;
+}
+.pagination .page-item.disabled .page-link {
+    background: #f9fafb;
+    color: #d1d5db;
+    border-color: #f3f4f6;
+}
+
+/* === 6J: Admin Page Breadcrumbs === */
+.pagelayout-admin .breadcrumb,
+.pagelayout-standard .breadcrumb {
+    background: transparent;
+    padding: 8px 0;
+    font-size: 0.85rem;
+}
+.pagelayout-admin .breadcrumb-item a,
+.pagelayout-standard .breadcrumb-item a {
+    color: #0066A7;
+    text-decoration: none;
+    &:hover { text-decoration: underline; }
+}
+.pagelayout-admin .breadcrumb-item.active,
+.pagelayout-standard .breadcrumb-item.active {
+    color: #5a6070;
+}
+
+/* === 6K: Admin Alert/Notification Styling === */
+.alert {
+    border-radius: 10px;
+    border: none;
+    font-size: 0.875rem;
+    padding: 12px 16px;
+}
+.alert-success {
+    background: #ecfdf5;
+    color: #065f46;
+    border-left: 4px solid #16a34a;
+}
+.alert-warning {
+    background: #fffbeb;
+    color: #92400e;
+    border-left: 4px solid #d97706;
+}
+.alert-danger {
+    background: #fef2f2;
+    color: #991b1b;
+    border-left: 4px solid #dc2626;
+}
+.alert-info {
+    background: #e8f2f9;
+    color: #0066A7;
+    border-left: 4px solid #0066A7;
+}
+
+/* === 6L: Admin Responsive === */
+@media (max-width: 992px) {
+    .course_extended_menu_list {
+        gap: 4px;
+    }
+    .course_extended_menu_itemlink {
+        width: 36px;
+        height: 36px;
+    }
+}
+@media (max-width: 768px) {
+    .generaltable {
+        border-radius: 8px;
+        font-size: 0.8rem;
+    }
+    .generaltable thead th,
+    .generaltable tbody td {
+        padding: 8px 10px;
+    }
+    .course_extended_menu_list {
+        justify-content: flex-start;
+        overflow-x: auto;
+    }
+}
+

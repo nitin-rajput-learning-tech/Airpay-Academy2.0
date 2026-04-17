@@ -1,0 +1,297 @@
+/* ═══ Sprint 5 — Classrooms + Exams Modernization (CSS Override) ═══ */
+/* Modernize BizLMS classrooms without changing Mustache templates. */
+
+/* Classroom cards */
+.classroom_container {
+    background: var(--ap-surface) !important;
+    border: 1px solid var(--ap-border) !important;
+    border-radius: var(--ap-radius-sm) !important;
+    transition: transform 0.2s, box-shadow 0.2s !important;
+    overflow: hidden;
+    border-left: 4px solid var(--ap-primary) !important;
+}
+.classroom_container:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--ap-shadow-md) !important;
+}
+/* Status-based left border colors */
+.classroom_container.classroomstatusactive_cr { border-left-color: var(--ap-primary) !important; }
+.classroom_container.classroomstatuscompleted_cr { border-left-color: var(--ap-success) !important; }
+.classroom_container.classroomstatuscancelled_cr { border-left-color: var(--ap-danger) !important; }
+.classroom_container.classroomstatusnew_cr { border-left-color: var(--ap-accent) !important; }
+.classroom_container.classroomstatushold_cr { border-left-color: var(--ap-warning) !important; }
+
+/* Classroom name */
+.classroom_name_info .class_name {
+    font-weight: 600 !important;
+    color: var(--ap-text) !important;
+    font-size: 15px !important;
+    text-decoration: none !important;
+}
+.classroom_name_info .class_name:hover { color: var(--ap-primary) !important; }
+
+/* Status badge in classroom */
+.classroom_name_info .bg_banner {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: var(--ap-radius-pill);
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+/* Classroom header gradient */
+.custom_header {
+    background: var(--ap-gradient) !important;
+    border-radius: 0 0 var(--ap-radius-lg) var(--ap-radius-lg) !important;
+}
+
+/* Classroom tabs modernization */
+.classroom_tabs .nav-link {
+    border-radius: 0 !important;
+    font-weight: 500 !important;
+    font-size: 14px !important;
+    padding: 10px 18px !important;
+    border-bottom: 2px solid transparent !important;
+    color: var(--ap-text-secondary) !important;
+    transition: all 0.15s !important;
+}
+.classroom_tabs .nav-link.active,
+.classroom_tabs .nav-link:hover {
+    color: var(--ap-primary) !important;
+    border-bottom-color: var(--ap-primary) !important;
+    background: transparent !important;
+}
+
+/* ═══ Online Exams Modernization ═══ */
+.exam_container,
+.onlineexam_container {
+    background: var(--ap-surface) !important;
+    border: 1px solid var(--ap-border) !important;
+    border-radius: var(--ap-radius-sm) !important;
+    transition: transform 0.2s, box-shadow 0.2s !important;
+    overflow: hidden;
+}
+.exam_container:hover,
+.onlineexam_container:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--ap-shadow-md) !important;
+}
+/* Exam name styling */
+.examname_status a {
+    font-weight: 600 !important;
+    color: var(--ap-text) !important;
+    font-size: 15px !important;
+}
+.examname_status a:hover { color: var(--ap-primary) !important; }
+
+/* Shared BizLMS modernization: action dropdown */
+.action_menu_dropdown .dropdown-menu {
+    border-radius: var(--ap-radius-sm) !important;
+    box-shadow: var(--ap-shadow-md) !important;
+    border: 1px solid var(--ap-border) !important;
+    padding: 6px !important;
+}
+.action_menu_dropdown .dropdown-item {
+    border-radius: 6px !important;
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+    transition: background 0.15s !important;
+}
+.action_menu_dropdown .dropdown-item:hover {
+    background: var(--ap-primary-light) !important;
+    color: var(--ap-primary) !important;
+}
+
+/* BizLMS card view grid spacing */
+.card-wrap.row { gap: 0 !important; }
+.card-wrap .col-lg-3,
+.card-wrap .col-lg-4,
+.card-wrap .col-md-4 {
+    padding: 8px !important;
+}
+
+/* Dark mode for BizLMS cards */
+body.dark-mode .classroom_container,
+body.dark-mode .exam_container,
+body.dark-mode .onlineexam_container {
+    background: #1a1d27 !important;
+    border-color: #2d3140 !important;
+}
+body.dark-mode .classroom_name_info .class_name,
+body.dark-mode .examname_status a {
+    color: #e8eaed !important;
+}
+body.dark-mode .custom_header {
+    background: linear-gradient(135deg, #004d7a, #065a54) !important;
+}
+
+/* ═══ Exam Dashboard Cards (Sprint 6 template rewrite) ═══ */
+
+.ap-exam-dash-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+}
+.ap-dash-exam-card {
+    background: var(--ap-surface, #fff);
+    border: 1px solid var(--ap-border, #e3eaf3);
+    border-radius: var(--ap-radius-sm, 12px);
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+.ap-dash-exam-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(0,51,102,0.1);
+}
+
+/* Card header / image */
+.ap-dash-exam-card__header {
+    display: block;
+    position: relative;
+    text-decoration: none;
+}
+.ap-dash-exam-card__image {
+    height: 120px;
+    background-size: cover;
+    background-position: center;
+    background-color: #e8f2f9;
+}
+.ap-dash-exam-card__image--fallback {
+    background: linear-gradient(135deg, #0066A7, #0f7a73);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,0.4);
+    font-size: 2rem;
+}
+
+/* Badges */
+.ap-dash-exam-card__badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+}
+.ap-dash-exam-card__badge--done {
+    background: #16a34a;
+    color: #fff;
+}
+.ap-dash-exam-card__badge--progress {
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* Card body */
+.ap-dash-exam-card__body {
+    padding: 14px 16px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+.ap-dash-exam-card__title {
+    margin: 0 0 6px;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.3;
+}
+.ap-dash-exam-card__title a {
+    color: var(--ap-text, #1a1a2e);
+    text-decoration: none;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.ap-dash-exam-card__title a:hover { color: var(--ap-primary); }
+.ap-dash-exam-card__desc {
+    font-size: 12px;
+    color: var(--ap-text-secondary, #607286);
+    line-height: 1.4;
+    margin: 0 0 8px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Progress bar */
+.ap-dash-exam-card__progress {
+    height: 5px;
+    background: var(--ap-border, #e3eaf3);
+    border-radius: 3px;
+    margin-bottom: 3px;
+}
+.ap-dash-exam-card__progress-bar {
+    height: 100%;
+    background: var(--ap-gradient, linear-gradient(135deg, #0066A7, #0f7a73));
+    border-radius: 3px;
+    transition: width 0.5s;
+}
+.ap-dash-exam-card__progress-text {
+    font-size: 11px;
+    color: var(--ap-text-muted, #8896a6);
+    margin-bottom: 8px;
+    display: block;
+}
+
+/* Footer */
+.ap-dash-exam-card__footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+}
+.ap-dash-exam-card__meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    overflow: hidden;
+}
+.ap-dash-exam-card__rating .star-rating {
+    font-size: 12px;
+}
+.ap-dash-exam-card__access {
+    font-size: 11px;
+    color: var(--ap-text-muted, #8896a6);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ap-dash-exam-card__access i { margin-right: 3px; }
+
+/* CTA Button */
+.ap-dash-exam-card__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    background: var(--ap-gradient, linear-gradient(135deg, #0066A7, #0f7a73));
+    color: #fff;
+    text-decoration: none;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
+}
+.ap-dash-exam-card__cta:hover { opacity: 0.9; color: #fff; }
+
+/* Dark mode */
+body.dark-mode .ap-dash-exam-card { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .ap-dash-exam-card:hover { box-shadow: 0 12px 32px rgba(0,0,0,0.3); }
+body.dark-mode .ap-dash-exam-card__title a { color: #e8eaed; }
+body.dark-mode .ap-dash-exam-card__desc { color: #9ca3b4; }
+body.dark-mode .ap-dash-exam-card__progress { background: #2d3140; }
+body.dark-mode .ap-dash-exam-card__access { color: #6b7280; }
+

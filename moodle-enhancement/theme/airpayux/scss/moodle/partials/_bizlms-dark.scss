@@ -1,0 +1,178 @@
+/* ═══════════════════════════════════════════════════════════
+   DARK MODE — BizLMS Admin Pages (Manage Users, Courses, Company)
+   Targets: card-paginate, userscontainer, costcenter cards, modals
+   ═══════════════════════════════════════════════════════════ */
+html.dark-mode,
+body.dark-mode {
+    /* BizLMS user/course cards */
+    .card-paginate_wrap .card,
+    .userscontainer,
+    .coursecontainer,
+    .card-paginate_wrap {
+        background: #1e293b !important;
+        border-color: #334155 !important;
+        color: #e2e8f0 !important;
+    }
+    .userscontainer .userprofile_details td,
+    .userscontainer .courseprofile_details td,
+    .coursecontainer td {
+        color: #cbd5e1 !important;
+        border-color: #334155 !important;
+    }
+    .userscontainer a,
+    .coursecontainer a {
+        color: #60a5fa !important;
+    }
+    .userscontainer .badge-success,
+    .coursecontainer .badge-success {
+        background: #059669 !important;
+    }
+    .userscontainer .badge-danger,
+    .coursecontainer .badge-danger {
+        background: #dc2626 !important;
+    }
+    /* BizLMS costcenter company cards (blue gradient cards) */
+    .organisation-card,
+    .department_item,
+    .costcenterview_panel,
+    [class*="costcenter_card"],
+    .local_costcenter .card {
+        color: #e2e8f0 !important;
+    }
+    /* Costcenter dashboard stat tiles */
+    .local_costcenter .card-body,
+    .pluginnav_card {
+        background: #1e293b !important;
+        color: #e2e8f0 !important;
+        border-color: #334155 !important;
+    }
+    .pluginnav_card .card_count,
+    .pluginnav_card .count-value {
+        color: #f1f5f9 !important;
+    }
+    .pluginnav_card .count-label {
+        color: #94a3b8 !important;
+    }
+    /* BizLMS search/filter bars */
+    .card-paginate_wrap input[type="text"],
+    .card-paginate_wrap input[type="search"],
+    .card-paginate_wrap select,
+    #page-local-users-index input,
+    #page-local-courses-courses input,
+    #page-local-search-allcourses input {
+        background: #0f172a !important;
+        border-color: #334155 !important;
+        color: #e2e8f0 !important;
+    }
+    /* BizLMS course card images overlay */
+    .coursecontainer .course_image_wrap,
+    .card-paginate_wrap .course_image_wrap {
+        opacity: 0.85;
+    }
+    /* BizLMS heading + breadcrumb */
+    #page-header h1,
+    .page-header-headings h1,
+    .breadcrumb-item a {
+        color: #f1f5f9 !important;
+    }
+    /* Pagination */
+    .pagination .page-item .page-link {
+        background: #1e293b !important;
+        border-color: #334155 !important;
+        color: #e2e8f0 !important;
+    }
+    .pagination .page-item.active .page-link {
+        background: #0066A7 !important;
+        border-color: #0066A7 !important;
+        color: #fff !important;
+    }
+    /* BizLMS custom count/stats bar */
+    .customcount,
+    .dashboard_count_list {
+        color: #94a3b8 !important;
+    }
+    .dashboard_count_value {
+        color: #f1f5f9 !important;
+    }
+    /* BizLMS DataTables */
+    table.dataTable,
+    .dataTables_wrapper {
+        color: #e2e8f0 !important;
+    }
+    table.dataTable thead th,
+    table.dataTable thead td {
+        background: #1e293b !important;
+        color: #e2e8f0 !important;
+        border-color: #334155 !important;
+    }
+    table.dataTable tbody tr {
+        background: #0f172a !important;
+        color: #cbd5e1 !important;
+    }
+    table.dataTable tbody tr:nth-child(even) {
+        background: #1e293b !important;
+    }
+    table.dataTable tbody td {
+        border-color: #334155 !important;
+    }
+    /* BizLMS modal dialogs */
+    .modal-content {
+        background: #1e293b !important;
+        border-color: #334155 !important;
+        color: #e2e8f0 !important;
+    }
+    .modal-header {
+        border-color: #334155 !important;
+    }
+    .modal-header .modal-title {
+        color: #f1f5f9 !important;
+    }
+    .modal-footer {
+        border-color: #334155 !important;
+    }
+    /* BizLMS filter panel */
+    .filter-panel,
+    .filters-panel,
+    .sidebar-filter {
+        background: #1e293b !important;
+        border-color: #334155 !important;
+        color: #e2e8f0 !important;
+    }
+    /* Catalog search page */
+    .elearning_card .card {
+        background: #1e293b !important;
+        border-color: #334155 !important;
+        color: #e2e8f0 !important;
+    }
+    .elearning_card .card a {
+        color: #60a5fa !important;
+    }
+    .elearning_card .card h4,
+    .elearning_card .card h5 {
+        color: #f1f5f9 !important;
+    }
+    .elearning_card .card .text-muted {
+        color: #94a3b8 !important;
+    }
+    /* Catalog sidebar filters */
+    .local_search .card,
+    #page-local-search-allcourses .card {
+        background: #1e293b !important;
+        border-color: #334155 !important;
+        color: #e2e8f0 !important;
+    }
+    #page-local-search-allcourses .card label {
+        color: #cbd5e1 !important;
+    }
+    /* BizLMS list view buttons */
+    .btn-outline-primary {
+        border-color: #334155 !important;
+        color: #60a5fa !important;
+    }
+    .btn-outline-primary:hover {
+        background: #0066A7 !important;
+        color: #fff !important;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════

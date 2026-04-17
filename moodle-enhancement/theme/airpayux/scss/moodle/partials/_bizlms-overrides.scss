@@ -1,0 +1,847 @@
+/* ═══════════════════════════════════════════════════════════
+   SPRINT 7A — USER PROFILE (local/users/profile.php)
+   ═══════════════════════════════════════════════════════════ */
+
+/* === Profile Hero Banner === */
+.path-local-users .user_gen_info {
+    background: linear-gradient(135deg, #0066A7 0%, #0f7a73 100%);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 0;
+    position: relative;
+    overflow: hidden;
+}
+.path-local-users .user_gen_info::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+    pointer-events: none;
+}
+.path-local-users .general_info {
+    text-align: left !important;
+}
+.path-local-users .general_info_container {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+.path-local-users .general_info_container > h5 {
+    width: 100%;
+    color: #fff;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+.path-local-users .general_info_container > h5 span:first-child {
+    font-weight: 400;
+    font-size: 1rem;
+    opacity: 0.85;
+}
+.path-local-users .welcome_text {
+    color: #fff;
+    font-weight: 700;
+}
+
+/* Avatar */
+.path-local-users .userimage-container {
+    text-align: center;
+    padding: 0 !important;
+    flex: 0 0 auto;
+    width: auto !important;
+}
+.path-local-users .userinitials.size-35 {
+    width: 72px !important;
+    height: 72px !important;
+    line-height: 72px !important;
+    font-size: 1.5rem !important;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2) !important;
+    color: #fff !important;
+    border: 3px solid rgba(255,255,255,0.4);
+    display: inline-block;
+}
+.path-local-users .userimage-container .edit_icon {
+    color: rgba(255,255,255,0.7);
+    transition: color 0.2s ease;
+    &:hover { color: #fff; }
+}
+.path-local-users .userimage-container span:last-child {
+    color: rgba(255,255,255,0.85);
+    font-size: 0.85rem;
+}
+
+/* Profile Stats Row */
+.path-local-users .user_info_left .top_counts_container {
+    flex: 1;
+}
+.path-local-users .allcounts_list {
+    display: flex !important;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.path-local-users .allcounts_list li {
+    flex: 0 0 auto;
+    width: auto !important;
+    max-width: none !important;
+    padding: 0 !important;
+}
+.path-local-users .allcounts_list li > div {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px;
+    padding: 12px 20px;
+    backdrop-filter: blur(4px);
+    text-align: center;
+    min-width: 100px;
+}
+.path-local-users .totalcounts {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.2;
+}
+.path-local-users .counts_data {
+    display: block;
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.8);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+}
+
+/* === Profile Tabs === */
+.path-local-users .nav-tabs {
+    border-bottom: 2px solid #e2e6ef;
+    background: #fff;
+    border-radius: 0 0 12px 12px;
+    padding: 0 16px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.path-local-users .nav-tabs .nav-link {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #5a6070;
+    padding: 14px 20px;
+    border: none;
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+.path-local-users .nav-tabs .nav-link.active {
+    color: #0066A7;
+    border-bottom-color: #0066A7;
+    background: transparent;
+}
+.path-local-users .nav-tabs .nav-link:hover {
+    color: #0066A7;
+    background: #f8fafd;
+}
+
+/* === Profile Content Sections === */
+.path-local-users .profile_data_content,
+.path-local-users .tab-content {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    border: 1px solid #e2e6ef;
+}
+
+/* Section headers */
+.path-local-users .u_info h5,
+.path-local-users .edu_info h5 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    color: #1a1a2e;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+    border-bottom: 2px solid #e8f2f9;
+}
+
+/* Info labels */
+.path-local-users .userinfo-lable {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #5a6070;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 2px;
+}
+
+/* Info values */
+.path-local-users .userinfo-content {
+    font-size: 0.95rem;
+    color: #1a1a2e;
+    font-weight: 500;
+    margin-bottom: 16px;
+}
+
+/* === Profile Responsive === */
+@media (max-width: 768px) {
+    .path-local-users .user_gen_info {
+        padding: 20px;
+        border-radius: 12px;
+    }
+    .path-local-users .general_info_container {
+        flex-direction: column;
+        text-align: center;
+    }
+    .path-local-users .general_info_container > h5 {
+        text-align: center;
+    }
+    .path-local-users .allcounts_list {
+        justify-content: center;
+    }
+    .path-local-users .allcounts_list li > div {
+        min-width: 80px;
+        padding: 8px 14px;
+    }
+    .path-local-users .totalcounts {
+        font-size: 1.1rem;
+    }
+    .path-local-users .nav-tabs {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        padding: 0 8px;
+    }
+    .path-local-users .nav-tabs .nav-link {
+        padding: 12px 14px;
+        font-size: 0.8rem;
+    }
+    .path-local-users .profile_data_content,
+    .path-local-users .tab-content {
+        padding: 16px;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SPRINT 7B — MOBILE RESPONSIVE FIXES (Global)
+   ═══════════════════════════════════════════════════════════ */
+
+/* === Navbar Mobile (< 590px) === */
+@media (max-width: 590px) {
+    /* Compact navbar actions */
+    .airpay-nav__actions,
+    #usernavigation {
+        gap: 2px !important;
+    }
+    .airpay-nav__actions .nav-link,
+    #usernavigation .nav-link {
+        padding: 4px 6px !important;
+    }
+    /* Hide messaging + cart on very small screens */
+    .airpay-nav__actions .popover-region-container-toggle_messaging,
+    #usernavigation [data-region="popover-region-toggle"][aria-label*="messaging"] {
+        display: none;
+    }
+    /* Smaller search bar */
+    .navbar input[type="text"],
+    .navbar .form-control {
+        max-width: 140px;
+        font-size: 0.8rem;
+        padding: 6px 10px;
+    }
+    /* Site name smaller */
+    .navbar-brand, .navbar a[href*="/my/"] {
+        font-size: 0.85rem !important;
+    }
+}
+
+/* === Dashboard Mobile (< 590px) === */
+@media (max-width: 590px) {
+    .airpay-dash__welcome {
+        padding: 16px !important;
+        border-radius: 10px;
+    }
+    .airpay-dash__welcome-title {
+        font-size: 1.1rem !important;
+    }
+    .airpay-dash__welcome-title span {
+        font-size: 1rem !important;
+    }
+    .airpay-dash__welcome-subtitle {
+        font-size: 0.8rem;
+    }
+    .airpay-dash__welcome-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+    .airpay-dash__welcome-btn {
+        width: 100%;
+        text-align: center;
+        padding: 10px 16px !important;
+        font-size: 0.85rem;
+    }
+    /* Stat cards — full width single column */
+    .airpay-dash__stats {
+        grid-template-columns: 1fr !important;
+        gap: 8px;
+    }
+    .airpay-dash__stat {
+        padding: 12px 16px;
+    }
+    /* Course cards */
+    .airpay-dash__courses {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* === Login Mobile (< 590px) === */
+@media (max-width: 590px) {
+    .airpay-login {
+        flex-direction: column !important;
+    }
+    .airpay-login__hero {
+        display: none !important; /* hide hero on mobile — form only */
+    }
+    .airpay-login__form-panel {
+        width: 100% !important;
+        min-height: 100vh;
+        padding: 24px 20px !important;
+    }
+    .airpay-login__form-panel h2 {
+        font-size: 1.5rem;
+    }
+    .airpay-login__form-panel .airpay-login__cta {
+        font-size: 0.95rem;
+        padding: 14px;
+    }
+}
+
+/* === General Mobile Fixes (< 590px) === */
+@media (max-width: 590px) {
+    /* Full-width cards everywhere */
+    .card {
+        border-radius: 8px !important;
+    }
+    /* Block headers (Timeline, Calendar) */
+    .block .card-body {
+        padding: 12px;
+    }
+    .block .card-title {
+        font-size: 0.9rem;
+    }
+    /* Breadcrumbs wrap */
+    .breadcrumb {
+        font-size: 0.75rem;
+        flex-wrap: wrap;
+    }
+    /* Tables scroll horizontally */
+    .generaltable {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 8px;
+    }
+    /* Footer compact */
+    footer, .footer-content {
+        padding: 16px !important;
+        font-size: 0.8rem;
+    }
+    /* Modals full-width */
+    .modal-dialog {
+        margin: 8px;
+        max-width: calc(100% - 16px);
+    }
+    .modal-content {
+        border-radius: 12px;
+    }
+}
+
+/* === Tablet Fixes (590px – 992px) === */
+@media (min-width: 591px) and (max-width: 992px) {
+    .airpay-dash__stats {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+    .airpay-dash__courses {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SPRINT 7C — GLOBAL POLISH
+   ═══════════════════════════════════════════════════════════ */
+
+/* === Smooth Scrolling === */
+html {
+    scroll-behavior: smooth;
+}
+
+/* === Focus Visible (Accessibility) === */
+:focus-visible {
+    outline: 2px solid #0066A7;
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* === Link Styling Consistency === */
+a {
+    color: #0066A7;
+    transition: color 0.15s ease;
+}
+a:hover {
+    color: #004d80;
+}
+
+/* === Selection Highlight === */
+::selection {
+    background: rgba(0,102,167,0.15);
+    color: inherit;
+}
+
+/* === Tooltip Styling === */
+.tooltip-inner {
+    background: #1a1a2e;
+    border-radius: 8px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.8rem;
+    padding: 6px 12px;
+    max-width: 240px;
+}
+.tooltip .arrow::before,
+.bs-tooltip-top .arrow::before {
+    border-top-color: #1a1a2e;
+}
+.bs-tooltip-bottom .arrow::before {
+    border-bottom-color: #1a1a2e;
+}
+
+/* === Modal Polish === */
+.modal-content {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.2);
+}
+.modal-header {
+    border-bottom: 1px solid #e2e6ef;
+    padding: 20px 24px;
+}
+.modal-header .modal-title {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+.modal-body {
+    padding: 24px;
+}
+.modal-footer {
+    border-top: 1px solid #e2e6ef;
+    padding: 16px 24px;
+    gap: 8px;
+}
+
+/* === Dropdown Polish === */
+.dropdown-menu {
+    border: 1px solid #e2e6ef;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    padding: 6px 0;
+    animation: fadeInDropdown 0.15s ease;
+}
+@keyframes fadeInDropdown {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.dropdown-menu .dropdown-item {
+    padding: 8px 16px;
+    font-size: 0.875rem;
+    color: #374151;
+    transition: background 0.15s ease;
+}
+.dropdown-menu .dropdown-item:hover,
+.dropdown-menu .dropdown-item:focus {
+    background: #e8f2f9;
+    color: #0066A7;
+}
+.dropdown-menu .dropdown-divider {
+    border-color: #f3f4f6;
+}
+
+/* === Badge Polish === */
+.badge {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 0.7rem;
+    letter-spacing: 0.3px;
+}
+.badge-primary, .bg-primary {
+    background: #0066A7 !important;
+}
+.badge-success, .bg-success {
+    background: #16a34a !important;
+}
+.badge-warning, .bg-warning {
+    background: #d97706 !important;
+}
+.badge-danger, .bg-danger {
+    background: #dc2626 !important;
+}
+
+/* === Popover Polish === */
+.popover {
+    border: 1px solid #e2e6ef;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+.popover-header {
+    background: #f8f9fc;
+    border-bottom: 1px solid #e2e6ef;
+    border-radius: 12px 12px 0 0;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    font-size: 0.875rem;
+    padding: 12px 16px;
+}
+.popover-body {
+    padding: 12px 16px;
+    font-size: 0.85rem;
+}
+
+/* === Scrollbar Styling (Webkit) === */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #f3f4f6;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb {
+    background: #c4cad4;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+/* === Loading/Skeleton States === */
+.cardpaginate-loader,
+.content-loading {
+    position: relative;
+    overflow: hidden;
+}
+.cardpaginate-loader::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent 25%, rgba(0,102,167,0.03) 50%, transparent 75%);
+    animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* === Confirm Dialog Polish === */
+.confirmation-dialogue,
+.modal-dialog:has(.confirmation-message) {
+    .modal-content {
+        border-radius: 16px;
+    }
+    .confirmation-message {
+        font-size: 0.95rem;
+        color: #374151;
+        line-height: 1.6;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PROTOTYPE MATCH — Dashboard New Sections
+   ═══════════════════════════════════════════════════════════ */
+
+/* Section headers */
+.airpay-dash__section {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px 24px;
+    border: 1px solid #e2e6ef;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.airpay-dash__section-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0 0 16px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    i { color: #0066A7; font-size: 1rem; }
+}
+
+/* Two-column layout (Deadlines + Timeline) */
+.airpay-dash__two-col {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 20px;
+}
+@media (max-width: 992px) {
+    .airpay-dash__two-col { grid-template-columns: 1fr; }
+}
+
+/* --- Deadlines --- */
+.airpay-dash__deadline-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.airpay-dash__deadline-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: #f8f9fc;
+    border: 1px solid #e2e6ef;
+    transition: background 0.2s ease;
+}
+.airpay-dash__deadline-item:hover { background: #f0f4f9; }
+.airpay-dash__deadline-item--urgent {
+    background: #fef2f2;
+    border-color: #fecaca;
+}
+.airpay-dash__deadline-item--urgent:hover { background: #fee2e2; }
+.airpay-dash__deadline-icon {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: #e8f2f9;
+    display: flex; align-items: center; justify-content: center;
+    color: #0066A7; font-size: 0.9rem;
+    flex-shrink: 0;
+}
+.airpay-dash__deadline-item--urgent .airpay-dash__deadline-icon {
+    background: #fee2e2; color: #dc2626;
+}
+.airpay-dash__deadline-info {
+    flex: 1; display: flex; flex-direction: column; gap: 2px;
+}
+.airpay-dash__deadline-name {
+    font-size: 0.9rem; font-weight: 600; color: #1a1a2e;
+}
+.airpay-dash__deadline-date {
+    font-size: 0.8rem; color: #5a6070;
+}
+
+/* --- Activity Timeline --- */
+.airpay-dash__timeline {
+    display: flex; flex-direction: column; gap: 0;
+    position: relative;
+    padding-left: 20px;
+}
+.airpay-dash__timeline::before {
+    content: '';
+    position: absolute;
+    left: 5px; top: 8px; bottom: 8px;
+    width: 2px;
+    background: #e2e6ef;
+}
+.airpay-dash__timeline-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 8px 0;
+    position: relative;
+}
+.airpay-dash__timeline-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: #d1d5db;
+    border: 2px solid #fff;
+    position: absolute;
+    left: -20px; top: 12px;
+    z-index: 1;
+}
+.airpay-dash__timeline-dot--today {
+    background: #0066A7;
+    box-shadow: 0 0 0 3px rgba(0,102,167,0.2);
+}
+.airpay-dash__timeline-content {
+    display: flex; flex-direction: column; gap: 2px;
+}
+.airpay-dash__timeline-date {
+    font-size: 0.7rem; font-weight: 700;
+    color: #0066A7; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.airpay-dash__timeline-label {
+    font-size: 0.85rem; color: #374151; line-height: 1.4;
+}
+
+/* --- Achievements --- */
+.airpay-dash__achievements {
+    display: flex; flex-direction: column; gap: 10px;
+}
+.airpay-dash__achievement {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: #f8f9fc;
+    border: 1px solid #e2e6ef;
+}
+.airpay-dash__achievement-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; flex-shrink: 0;
+}
+.airpay-dash__achievement-icon--badge {
+    background: #fef3c7; color: #d97706;
+}
+.airpay-dash__achievement-icon--certificate {
+    background: #d1fae5; color: #16a34a;
+}
+.airpay-dash__achievement-info {
+    flex: 1; display: flex; flex-direction: column; gap: 2px;
+}
+.airpay-dash__achievement-title {
+    font-size: 0.9rem; font-weight: 600; color: #1a1a2e;
+}
+.airpay-dash__achievement-desc {
+    font-size: 0.8rem; color: #5a6070;
+}
+.airpay-dash__achievement-date {
+    font-size: 0.75rem; color: #9ca3af; white-space: nowrap;
+}
+
+/* --- Recommendations --- */
+.airpay-dash__recommendations {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+@media (max-width: 768px) {
+    .airpay-dash__recommendations { grid-template-columns: 1fr; }
+}
+.airpay-dash__rec-card {
+    display: flex; flex-direction: column;
+    border-radius: 12px; overflow: hidden;
+    border: 1px solid #e2e6ef;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.airpay-dash__rec-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,51,102,0.12);
+    text-decoration: none;
+}
+.airpay-dash__rec-header {
+    height: 90px;
+    background: linear-gradient(135deg, #0066A7 0%, #0f7a73 100%);
+    display: flex; align-items: flex-end; padding: 12px 16px;
+}
+.airpay-dash__rec-card:nth-child(2) .airpay-dash__rec-header {
+    background: linear-gradient(135deg, #0f7a73 0%, #059669 100%);
+}
+.airpay-dash__rec-card:nth-child(3) .airpay-dash__rec-header {
+    background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+}
+.airpay-dash__rec-category {
+    font-size: 0.7rem; font-weight: 600;
+    color: #fff; text-transform: uppercase; letter-spacing: 0.5px;
+    background: rgba(255,255,255,0.2);
+    padding: 3px 10px; border-radius: 12px;
+}
+.airpay-dash__rec-body {
+    padding: 14px 16px; background: #fff; flex: 1;
+    display: flex; flex-direction: column; gap: 6px;
+}
+.airpay-dash__rec-title {
+    font-size: 0.95rem; font-weight: 600; color: #1a1a2e;
+    margin: 0;
+}
+.airpay-dash__rec-summary {
+    font-size: 0.8rem; color: #5a6070; margin: 0; line-height: 1.4;
+}
+.airpay-dash__rec-action {
+    font-size: 0.8rem; font-weight: 600; color: #0066A7;
+    margin-top: auto; padding-top: 4px;
+    i { margin-left: 4px; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PROTOTYPE MATCH — Navbar Pill Navigation
+   ═══════════════════════════════════════════════════════════ */
+
+.airpay-nav__pills {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 16px;
+}
+.airpay-nav__pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 7px 18px;
+    border-radius: 20px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #5a6070;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+.airpay-nav__pill:hover {
+    background: #e8f2f9;
+    color: #0066A7;
+    text-decoration: none;
+}
+/* Active state detection via body path classes */
+.pagelayout-mydashboard .airpay-nav__pill--dashboard,
+.path-my:not(.path-my-courses) .airpay-nav__pill--dashboard,
+.path-my-courses .airpay-nav__pill--courses,
+.path-local-search .airpay-nav__pill--catalog,
+.path-local-users .airpay-nav__pill--profile {
+    background: #0066A7;
+    color: #fff;
+}
+.pagelayout-mydashboard .airpay-nav__pill--dashboard:hover,
+.path-my-courses .airpay-nav__pill--courses:hover,
+.path-local-search .airpay-nav__pill--catalog:hover,
+.path-local-users .airpay-nav__pill--profile:hover {
+    background: #004d80;
+    color: #fff;
+}
+
+/* Dark mode toggle button */
+.airpay-nav__theme-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid #e2e6ef;
+    background: #fff;
+    color: #5a6070;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin: 0 4px;
+}
+.airpay-nav__theme-toggle:hover {
+    background: #e8f2f9;
+    color: #0066A7;
+    border-color: #0066A7;
+}
+body.dark-mode .airpay-nav__theme-toggle {
+    background: #232733;
+    border-color: #3d4254;
+    color: #fcd34d;
+}
+

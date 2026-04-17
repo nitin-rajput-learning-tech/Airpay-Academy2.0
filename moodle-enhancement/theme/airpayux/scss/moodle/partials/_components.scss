@@ -1,0 +1,372 @@
+/* ═══════════════════════════════════════════════════════════
+   Sprint 1 — Design System Variables + Skeleton Loaders +
+   Empty States + Dashboard Polish
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Design System CSS Custom Properties ── */
+:root {
+    --ap-primary: #0066A7;
+    --ap-primary-dark: #004d7a;
+    --ap-primary-light: #e8f2f9;
+    --ap-accent: #0f7a73;
+    --ap-accent-light: #e6f5f3;
+    --ap-bg: #F2F4FB;
+    --ap-surface: #ffffff;
+    --ap-surface-alt: #f8f9fc;
+    --ap-text: #1a1a2e;
+    --ap-text-secondary: #607286;
+    --ap-text-muted: #8896a6;
+    --ap-border: #e3eaf3;
+    --ap-success: #16a34a;
+    --ap-warning: #d97706;
+    --ap-danger: #dc2626;
+    --ap-shadow-sm: 0 4px 20px rgba(0,51,102,0.06);
+    --ap-shadow-md: 0 8px 32px rgba(0,51,102,0.08);
+    --ap-shadow-hover: 0 16px 48px rgba(0,51,102,0.12);
+    --ap-radius-sm: 12px;
+    --ap-radius-md: 16px;
+    --ap-radius-lg: 20px;
+    --ap-radius-pill: 999px;
+    --ap-gradient: linear-gradient(135deg, #0066A7, #0f7a73);
+    --ap-font: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ── Skeleton Loader (shimmer animation) ── */
+@keyframes ap-shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+.ap-skeleton {
+    background: linear-gradient(90deg, #e8ecf3 25%, #f0f3f8 50%, #e8ecf3 75%);
+    background-size: 200% 100%;
+    animation: ap-shimmer 1.5s ease-in-out infinite;
+    border-radius: var(--ap-radius-sm);
+    display: block;
+}
+.ap-skeleton--text {
+    height: 14px;
+    margin-bottom: 8px;
+    width: 80%;
+}
+.ap-skeleton--text-short {
+    height: 14px;
+    margin-bottom: 8px;
+    width: 50%;
+}
+.ap-skeleton--heading {
+    height: 24px;
+    margin-bottom: 12px;
+    width: 60%;
+}
+.ap-skeleton--card {
+    height: 120px;
+    margin-bottom: 16px;
+}
+.ap-skeleton--stat {
+    height: 80px;
+    border-radius: var(--ap-radius-sm);
+}
+.ap-skeleton--circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+}
+.ap-skeleton--avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+/* Skeleton grid for stat cards */
+.ap-skeleton-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+@media (max-width: 768px) {
+    .ap-skeleton-stats { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ── Empty State Component ── */
+.ap-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    text-align: center;
+    color: var(--ap-text-secondary);
+}
+.ap-empty-state__icon {
+    font-size: 56px;
+    color: var(--ap-border);
+    margin-bottom: 16px;
+    opacity: 0.6;
+}
+.ap-empty-state__title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ap-text);
+    margin: 0 0 8px;
+}
+.ap-empty-state__message {
+    font-size: 14px;
+    color: var(--ap-text-secondary);
+    margin: 0 0 20px;
+    max-width: 360px;
+}
+.ap-empty-state__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    background: var(--ap-gradient);
+    color: #fff;
+    border-radius: var(--ap-radius-sm);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    transition: opacity 0.2s;
+}
+.ap-empty-state__cta:hover {
+    opacity: 0.9;
+    color: #fff;
+    text-decoration: none;
+}
+
+/* ── Dashboard Course Cards Polish ── */
+.airpay-dash__course-card {
+    position: relative;
+    overflow: hidden;
+}
+/* Gradient fallback thumbnail when no image */
+.airpay-dash__course-thumb-fallback {
+    width: 100%;
+    height: 100px;
+    border-radius: var(--ap-radius-sm) var(--ap-radius-sm) 0 0;
+    background: var(--ap-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,0.8);
+    font-size: 2rem;
+}
+/* Duration badge on course card */
+.airpay-dash__course-duration {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: var(--ap-radius-pill);
+    backdrop-filter: blur(4px);
+}
+/* Module count badge */
+.airpay-dash__course-modules {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--ap-text-muted);
+    margin-top: 4px;
+}
+
+/* ── Deadline Items Polish ── */
+.airpay-dash__deadline-item {
+    transition: transform 0.15s ease, background 0.15s ease;
+}
+.airpay-dash__deadline-item:hover {
+    transform: translateX(4px);
+    background: var(--ap-primary-light);
+    border-radius: var(--ap-radius-sm);
+}
+.airpay-dash__deadline-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+.airpay-dash__deadline-icon--urgent {
+    background: rgba(220,38,38,0.1);
+    color: var(--ap-danger);
+}
+.airpay-dash__deadline-icon--soon {
+    background: rgba(217,119,6,0.1);
+    color: var(--ap-warning);
+}
+.airpay-dash__deadline-icon--normal {
+    background: rgba(0,102,167,0.1);
+    color: var(--ap-primary);
+}
+
+/* ── Toast Notification (global reusable) ── */
+@keyframes ap-toast-slide-in {
+    from { transform: translateX(120%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+@keyframes ap-toast-slide-out {
+    from { opacity: 1; }
+    to { transform: translateX(120%); opacity: 0; }
+}
+.ap-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    border-radius: var(--ap-radius-sm);
+    font-family: var(--ap-font);
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: var(--ap-shadow-hover);
+    animation: ap-toast-slide-in 0.3s ease-out, ap-toast-slide-out 0.3s ease-in 3.5s forwards;
+    pointer-events: auto;
+}
+.ap-toast--success { background: var(--ap-success); color: #fff; }
+.ap-toast--warning { background: var(--ap-warning); color: #fff; }
+.ap-toast--danger { background: var(--ap-danger); color: #fff; }
+.ap-toast--info { background: var(--ap-primary); color: #fff; }
+
+/* ── Filter Bar Component (reusable) ── */
+.ap-filter-bar {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 12px 16px;
+    background: var(--ap-surface);
+    border: 1px solid var(--ap-border);
+    border-radius: var(--ap-radius-sm);
+    margin-bottom: 16px;
+}
+.ap-filter-bar__label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ap-text-secondary);
+}
+.ap-filter-bar__select,
+.ap-filter-bar__input {
+    padding: 6px 12px;
+    border: 1px solid var(--ap-border);
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: var(--ap-font);
+    background: var(--ap-surface);
+    color: var(--ap-text);
+    transition: border-color 0.15s;
+}
+.ap-filter-bar__select:focus,
+.ap-filter-bar__input:focus {
+    border-color: var(--ap-primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0,102,167,0.1);
+}
+.ap-filter-bar__clear {
+    font-size: 12px;
+    color: var(--ap-danger);
+    text-decoration: none;
+}
+
+/* ── Status Badge Component (reusable) ── */
+.ap-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: var(--ap-radius-pill);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 16px;
+}
+.ap-badge--success { background: #dcfce7; color: #16a34a; }
+.ap-badge--warning { background: #fef3c7; color: #d97706; }
+.ap-badge--danger { background: #fef2f2; color: #dc2626; }
+.ap-badge--info { background: #e8f2f9; color: #0066A7; }
+.ap-badge--accent { background: #e6f5f3; color: #0f7a73; }
+.ap-badge--muted { background: #f0f2f7; color: #8896a6; }
+.ap-badge--new {
+    background: var(--ap-gradient);
+    color: #fff;
+    animation: ap-counter-fadein 0.5s ease-out;
+}
+
+/* ── Tab Bar Component (reusable) ── */
+.ap-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--ap-border);
+    margin-bottom: 20px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.ap-tabs::-webkit-scrollbar { display: none; }
+.ap-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ap-text-secondary);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    white-space: nowrap;
+    transition: color 0.15s, border-color 0.15s;
+}
+.ap-tab:hover { color: var(--ap-primary); text-decoration: none; }
+.ap-tab--active {
+    color: var(--ap-primary);
+    border-bottom-color: var(--ap-primary);
+    font-weight: 600;
+}
+.ap-tab__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 10px;
+    background: var(--ap-primary);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+/* ── CTA Button (gradient) ── */
+.ap-btn-gradient {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 22px;
+    background: var(--ap-gradient);
+    color: #fff;
+    border: none;
+    border-radius: var(--ap-radius-sm);
+    font-family: var(--ap-font);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: opacity 0.15s, transform 0.15s;
+}
+.ap-btn-gradient:hover {
+    opacity: 0.92;
+    transform: translateY(-1px);
+    color: #fff;
+    text-decoration: none;
+}
+
+/* ═══ Sprint 4 — Course Player Progress Bar ═══ */
