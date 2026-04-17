@@ -1,0 +1,50 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   DARK MODE — Token overrides only
+   ═══════════════════════════════════════════════════════════════════════
+
+   Applied via [data-theme="dark"] attribute on <html>.
+   Set early in <head> to prevent flash (before CSS loads).
+   Persisted in localStorage('airpay-theme').
+
+   RULE: Only override semantic tokens here. Never add selectors.
+   If a component needs dark-mode-specific styling, it belongs in
+   that component's SCSS file using: [data-theme="dark"] .my-component { }
+   ═══════════════════════════════════════════════════════════════════════ */
+
+[data-theme="dark"] {
+    /* ── Backgrounds ─────────────────────────────────────────── */
+    --ap-color-bg-body:        var(--ap-neutral-950);
+    --ap-color-bg-surface:     var(--ap-neutral-800);
+    --ap-color-bg-surface-alt: #232733;
+    --ap-color-bg-elevated:    var(--ap-neutral-700);
+
+    /* ── Text ────────────────────────────────────────────────── */
+    --ap-color-text-primary:   #e8eaed;
+    --ap-color-text-secondary: #9ca3b4;
+    --ap-color-text-muted:     #6b7280;
+
+    /* ── Borders ─────────────────────────────────────────────── */
+    --ap-color-border:         #2d3140;
+    --ap-color-border-strong:  #3d4250;
+    --ap-color-divider:        #2d3140;
+
+    /* ── Primary (slightly brighter for dark bg contrast) ───── */
+    --ap-color-primary-light:  #172554;
+    --ap-color-accent-light:   #134e4a;
+
+    /* ── Status (desaturated for dark bg) ────────────────────── */
+    --ap-color-success-light:  #052e16;
+    --ap-color-warning-light:  #451a03;
+    --ap-color-danger-light:   #450a0a;
+    --ap-color-info-light:     #172554;
+
+    /* ── Elevation (stronger shadows on dark) ────────────────── */
+    --ap-shadow-xs:    0 1px 2px rgba(0, 0, 0, 0.2);
+    --ap-shadow-sm:    0 4px 12px rgba(0, 0, 0, 0.3);
+    --ap-shadow-md:    0 8px 24px rgba(0, 0, 0, 0.35);
+    --ap-shadow-lg:    0 16px 48px rgba(0, 0, 0, 0.4);
+    --ap-shadow-hover: 0 20px 40px rgba(0, 0, 0, 0.35);
+
+    /* ── Gradients ───────────────────────────────────────────── */
+    --ap-gradient-sidebar: linear-gradient(180deg, #0a0c12, #111827);
+}

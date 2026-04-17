@@ -1,0 +1,166 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   AIRPAY DESIGN TOKENS — Single Source of Truth
+   ═══════════════════════════════════════════════════════════════════════
+
+   Every colour, spacing, radius, shadow, and typography value in the
+   platform MUST reference a token from this file. No hex values elsewhere.
+
+   Tenant branding overrides are injected at runtime via core_renderer
+   (reading from local_airpay_org.brand_color etc.) — NOT from static files.
+
+   Dark mode overrides live in _tokens-dark.scss using [data-theme="dark"].
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+    /* ── Colour Primitives (brand palette) ───────────────────────── */
+    --ap-blue-50:  #e8f4fd;
+    --ap-blue-100: #c5e3f7;
+    --ap-blue-200: #8ec8ef;
+    --ap-blue-300: #4da8e4;
+    --ap-blue-400: #1a8cd8;
+    --ap-blue-500: #0077bf;
+    --ap-blue-600: #0066A7;  /* Primary — Airpay brand */
+    --ap-blue-700: #005590;
+    --ap-blue-800: #004570;
+    --ap-blue-900: #003050;
+
+    --ap-teal-50:  #e5f4f3;
+    --ap-teal-100: #b8e3df;
+    --ap-teal-200: #80cec7;
+    --ap-teal-300: #48b8af;
+    --ap-teal-400: #1fa69c;
+    --ap-teal-500: #0f7a73;  /* Accent — Airpay teal */
+    --ap-teal-600: #0d6b65;
+    --ap-teal-700: #0a5c56;
+    --ap-teal-800: #074d48;
+    --ap-teal-900: #043e3a;
+
+    --ap-neutral-0:   #ffffff;
+    --ap-neutral-25:  #fafbfc;
+    --ap-neutral-50:  #f2f4fb;
+    --ap-neutral-100: #e8ebf0;
+    --ap-neutral-200: #d1d5de;
+    --ap-neutral-300: #b0b7c3;
+    --ap-neutral-400: #8896a6;
+    --ap-neutral-500: #607286;
+    --ap-neutral-600: #475569;
+    --ap-neutral-700: #334155;
+    --ap-neutral-800: #1e293b;
+    --ap-neutral-900: #0f172a;
+    --ap-neutral-950: #0f1117;
+
+    /* ── Semantic Colour Tokens ──────────────────────────────────── */
+    /* These reference primitives. Tenant branding overrides ONLY these. */
+
+    --ap-color-primary:        var(--ap-blue-600);
+    --ap-color-primary-hover:  var(--ap-blue-700);
+    --ap-color-primary-light:  var(--ap-blue-50);
+    --ap-color-primary-dark:   var(--ap-blue-800);
+
+    --ap-color-accent:         var(--ap-teal-500);
+    --ap-color-accent-hover:   var(--ap-teal-600);
+    --ap-color-accent-light:   var(--ap-teal-50);
+
+    --ap-color-bg-body:        var(--ap-neutral-50);
+    --ap-color-bg-surface:     var(--ap-neutral-0);
+    --ap-color-bg-surface-alt: var(--ap-neutral-25);
+    --ap-color-bg-elevated:    var(--ap-neutral-0);
+
+    --ap-color-text-primary:   var(--ap-neutral-900);
+    --ap-color-text-secondary: var(--ap-neutral-500);
+    --ap-color-text-muted:     var(--ap-neutral-400);
+    --ap-color-text-inverse:   var(--ap-neutral-0);
+
+    --ap-color-border:         var(--ap-neutral-100);
+    --ap-color-border-strong:  var(--ap-neutral-200);
+    --ap-color-divider:        var(--ap-neutral-100);
+
+    /* Status colours */
+    --ap-color-success:        #16a34a;
+    --ap-color-success-light:  #dcfce7;
+    --ap-color-warning:        #d97706;
+    --ap-color-warning-light:  #fef3c7;
+    --ap-color-danger:         #dc2626;
+    --ap-color-danger-light:   #fee2e2;
+    --ap-color-info:           var(--ap-color-primary);
+    --ap-color-info-light:     var(--ap-color-primary-light);
+
+    /* Gradients */
+    --ap-gradient-hero:        linear-gradient(160deg, var(--ap-blue-900), var(--ap-blue-600), var(--ap-teal-500));
+    --ap-gradient-cta:         linear-gradient(135deg, var(--ap-color-primary), var(--ap-color-accent));
+    --ap-gradient-sidebar:     linear-gradient(180deg, var(--ap-neutral-900), var(--ap-neutral-800));
+
+    /* ── Elevation (Shadows) ─────────────────────────────────────── */
+    --ap-shadow-xs:    0 1px 2px rgba(0, 0, 0, 0.04);
+    --ap-shadow-sm:    0 4px 12px rgba(0, 51, 102, 0.06);
+    --ap-shadow-md:    0 8px 24px rgba(0, 51, 102, 0.08);
+    --ap-shadow-lg:    0 16px 48px rgba(0, 51, 102, 0.12);
+    --ap-shadow-hover: 0 20px 40px rgba(0, 51, 102, 0.10);
+    --ap-shadow-focus: 0 0 0 3px rgba(0, 102, 167, 0.25);
+
+    /* ── Spacing (8px base grid) ─────────────────────────────────── */
+    --ap-space-0:  0;
+    --ap-space-1:  4px;
+    --ap-space-2:  8px;
+    --ap-space-3:  12px;
+    --ap-space-4:  16px;
+    --ap-space-5:  20px;
+    --ap-space-6:  24px;
+    --ap-space-8:  32px;
+    --ap-space-10: 40px;
+    --ap-space-12: 48px;
+    --ap-space-16: 64px;
+    --ap-space-20: 80px;
+
+    /* ── Border Radius ───────────────────────────────────────────── */
+    --ap-radius-xs:   4px;
+    --ap-radius-sm:   8px;
+    --ap-radius-md:   12px;
+    --ap-radius-lg:   16px;
+    --ap-radius-xl:   20px;
+    --ap-radius-pill:  999px;
+    --ap-radius-full:  50%;
+
+    /* ── Typography ──────────────────────────────────────────────── */
+    --ap-font-family:      'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --ap-font-family-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+
+    --ap-text-xs:   0.75rem;    /* 12px */
+    --ap-text-sm:   0.875rem;   /* 14px */
+    --ap-text-base: 1rem;       /* 16px */
+    --ap-text-lg:   1.125rem;   /* 18px */
+    --ap-text-xl:   1.25rem;    /* 20px */
+    --ap-text-2xl:  1.5rem;     /* 24px */
+    --ap-text-3xl:  1.875rem;   /* 30px */
+    --ap-text-4xl:  2.25rem;    /* 36px */
+
+    --ap-weight-normal:   400;
+    --ap-weight-medium:   500;
+    --ap-weight-semibold: 600;
+    --ap-weight-bold:     700;
+    --ap-weight-extrabold: 800;
+
+    --ap-leading-tight:   1.25;
+    --ap-leading-normal:  1.5;
+    --ap-leading-relaxed: 1.75;
+
+    /* ── Layout ──────────────────────────────────────────────────── */
+    --ap-sidebar-width:           260px;
+    --ap-sidebar-collapsed-width: 72px;
+    --ap-topbar-height:           64px;
+    --ap-content-max-width:       1400px;
+    --ap-mobile-bottom-bar:       64px;
+
+    /* ── Transitions ─────────────────────────────────────────────── */
+    --ap-transition-fast:   150ms ease;
+    --ap-transition-normal: 200ms ease;
+    --ap-transition-slow:   350ms ease;
+
+    /* ── Z-index scale ───────────────────────────────────────────── */
+    --ap-z-dropdown:    1000;
+    --ap-z-sticky:      1020;
+    --ap-z-fixed:       1030;
+    --ap-z-offcanvas:   1045;
+    --ap-z-modal:       1055;
+    --ap-z-toast:       1090;
+}
