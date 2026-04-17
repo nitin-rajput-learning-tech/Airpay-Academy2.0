@@ -473,12 +473,10 @@ class compliance_engine {
         $parts = explode('/', trim($orgpath ?: '/1', '/'));
         $toporg = '/' . ($parts[0] ?? '1');
 
-        $departments = $DB->get_records_sql(
-            "SELECT DISTINCT cc.id, cc.fullname, cc.path
-               FROM {local_costcenter} cc
-              WHERE cc.path LIKE :pathprefix AND cc.depth IN (2, 3)
-           ORDER BY cc.fullname",
-            ['pathprefix' => $toporg . '/%']);
+        $all_descendants = \local_airpay_org\org_manager::get_descendants($toporg);
+        $departments = array_filter($all_descendants, function($cc) {
+            return in_array(($cc->depth ?? 0), [2, 3]);
+        });
 
         $results = [];
         foreach ($departments as $dept) {
@@ -674,10 +672,10 @@ class compliance_engine {
             return []; // Use get_org_hierarchy_children for deeper levels.
         }
 
-        // Resolve names from local_costcenter.
+        // Resolve names from org hierarchy.
         $result = [];
         foreach ($records as $r) {
-            $name = $DB->get_field('local_costcenter', 'fullname', ['id' => $r->id]);
+            $name = \local_airpay_org\org_manager::get_name((int)$r->id);
             if ($name) {
                 $result[] = [
                     'id'         => (int)$r->id,
@@ -699,7 +697,7 @@ class compliance_engine {
     public static function get_org_hierarchy_children(int $parentid): array {
         global $DB;
 
-        $children = $DB->get_records('local_costcenter', ['parentid' => $parentid], 'fullname');
+        $children = \local_airpay_org\org_manager::get_children((int)$parentid);
         $result = [];
         foreach ($children as $c) {
             $usercount = $DB->count_records_select('user',
@@ -771,7 +769,7 @@ class compliance_engine {
         foreach ($courses as $c) {
             $entityname = 'All Entities';
             if ($c->costcenterid > 0) {
-                $entityname = $DB->get_field('local_costcenter', 'fullname', ['id' => $c->costcenterid]) ?? 'Unknown';
+                $entityname = \local_airpay_org\org_manager::get_name((int)$c->costcenterid) ?: 'Unknown';
             }
             $result[] = [
                 'id'            => $c->id,

@@ -9,10 +9,14 @@ $PAGE->requires->js_call_amd('local_classroom/classroom', 'load');
 $PAGE->requires->js_call_amd('local_search/courseinfo', 'load');
 $PAGE->requires->js_call_amd('core_payment/gateways_modal', 'init');
 require_once $CFG->libdir.'/gradelib.php';
-require_once $CFG->dirroot.'/local/search/lib.php';
+// local/search/lib.php — only load if BizLMS search plugin exists.
+$searchlib = $CFG->dirroot . '/local/search/lib.php';
+if (file_exists($searchlib)) { require_once($searchlib); }
 require_once $CFG->dirroot.'/grade/lib.php';
 require_once $CFG->dirroot.'/grade/report/user/lib.php';
-require_once($CFG->dirroot.'/local/includes.php');
+// local/includes.php — BizLMS bootstrap, load only if present.
+$includeslib = $CFG->dirroot . '/local/includes.php';
+if (file_exists($includeslib)) { require_once($includeslib); }
 
 $id  = required_param('id', PARAM_INT); // Course id
 

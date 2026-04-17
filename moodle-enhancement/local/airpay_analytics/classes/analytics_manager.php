@@ -149,12 +149,11 @@ class analytics_manager {
         $parts = explode('/', trim($orgpath ?: '/1', '/'));
         $toporg = '/' . ($parts[0] ?? '1');
 
-        $departments = $DB->get_records_sql(
-            "SELECT cc.id, cc.fullname, cc.path
-               FROM {local_costcenter} cc
-              WHERE cc.path LIKE :pathprefix AND cc.depth = 3
-           ORDER BY cc.fullname",
-            ['pathprefix' => $toporg . '/%']);
+        $departments = \local_airpay_org\org_manager::get_descendants($toporg);
+        // Filter to depth 3 (departments).
+        $departments = array_filter($departments, function($cc) {
+            return ($cc->depth ?? 0) == 3;
+        });
 
         $heatmap = [];
         foreach ($departments as $dept) {

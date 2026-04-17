@@ -65,7 +65,7 @@ if ($type === 'department') {
             $rateclass = $rate >= 80 ? 'color:#16a34a;' : ($rate >= 50 ? 'color:#d97706;' : 'color:#dc2626;');
             $lastlogin = $u->lastlogin ? userdate($u->lastlogin, '%d %b %Y') : 'Never';
             echo '<tr>';
-            echo '<td><a href="' . (new moodle_url('/local/users/profile.php', ['id' => $u->id]))->out() . '">' . format_string($u->firstname . ' ' . $u->lastname) . '</a></td>';
+            echo '<td><a href="' . (new moodle_url('/local/airpay_users/profile.php', ['id' => $u->id]))->out() . '">' . format_string($u->firstname . ' ' . $u->lastname) . '</a></td>';
             echo '<td>' . s($u->email) . '</td>';
             echo '<td>' . (int)$u->enrolled_courses . '</td>';
             echo '<td>' . (int)$u->completed_courses . '</td>';

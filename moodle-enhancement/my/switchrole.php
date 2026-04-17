@@ -45,21 +45,11 @@ $SESSION->airpay_switchrole->roleid = $switchrole;
 $SESSION->airpay_switchrole->contextid = $contextid;
 $SESSION->airpay_switchrole->timeswitched = time();
 
-// BizLMS uses local_costcenter accesslib for role switching.
-// Delegate to it if available.
-if (file_exists($CFG->dirroot . '/local/costcenter/lib.php')) {
-    require_once($CFG->dirroot . '/local/costcenter/lib.php');
-    if (class_exists('\local_costcenter\lib\accesslib')) {
-        try {
-            $accesslib = new \local_costcenter\lib\accesslib();
-            // BizLMS stores active role switch path in user session.
-            if (method_exists($accesslib, 'set_user_role_switch')) {
-                $accesslib::set_user_role_switch($switchrole, $contextid);
-            }
-        } catch (\Throwable $e) {
-            // Fallback — just redirect with session data set.
-        }
-    }
+// Use Airpay org accesslib for role switching. Falls back to BizLMS if present.
+try {
+    \local_airpay_org\accesslib::set_user_role_switch($switchrole, $contextid);
+} catch (\Throwable $e) {
+    // Fallback — session data already set above.
 }
 
 // Redirect back to dashboard.

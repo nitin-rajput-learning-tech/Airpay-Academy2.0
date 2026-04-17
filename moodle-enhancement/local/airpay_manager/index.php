@@ -122,7 +122,7 @@ foreach ($team as $member) {
         'inactive_days' => $inactive_days,
         'streak'      => $streak,
         'points'      => number_format($points),
-        'profile_url' => (new moodle_url('/local/users/profile.php', ['id' => $member->id]))->out(false),
+        'profile_url' => (new moodle_url('/local/airpay_users/profile.php', ['id' => $member->id]))->out(false),
         'nudge_url'   => (new moodle_url('/local/airpay_notifications/nudge.php', ['userid' => $member->id, 'type' => 'general']))->out(false),
         'skills_url'  => (new moodle_url('/local/airpay_skills/index.php', ['userid' => $member->id]))->out(false),
     ];
