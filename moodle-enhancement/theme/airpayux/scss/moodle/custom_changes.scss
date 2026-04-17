@@ -4225,6 +4225,69 @@ body#page-login-index { background: #F2F4FB !important; }
 }
 #page-login-forgot_password .felement { width: 100%; }
 
+/* ── Dark mode for LOGIN page (right panel) ── */
+html.dark-mode .airpay-login__form-panel,
+body.dark-mode .airpay-login__form-panel {
+    background: #1a1d27 !important;
+}
+html.dark-mode .airpay-login__form-title,
+body.dark-mode .airpay-login__form-title {
+    color: #f1f5f9 !important;
+}
+html.dark-mode .airpay-login__form-subtitle,
+html.dark-mode .airpay-login__label,
+body.dark-mode .airpay-login__form-subtitle,
+body.dark-mode .airpay-login__label {
+    color: #94a3b8 !important;
+}
+html.dark-mode .airpay-login__input,
+body.dark-mode .airpay-login__input {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+html.dark-mode .airpay-login__input::placeholder,
+body.dark-mode .airpay-login__input::placeholder {
+    color: #64748b !important;
+}
+html.dark-mode .airpay-login__input-icon,
+body.dark-mode .airpay-login__input-icon {
+    color: #64748b !important;
+}
+html.dark-mode .airpay-login__eye,
+body.dark-mode .airpay-login__eye {
+    color: #64748b !important;
+}
+html.dark-mode .airpay-login__links a,
+html.dark-mode .airpay-login__legal a,
+body.dark-mode .airpay-login__links a,
+body.dark-mode .airpay-login__legal a {
+    color: #60a5fa !important;
+}
+html.dark-mode .airpay-login__links-sep,
+html.dark-mode .airpay-login__legal span,
+body.dark-mode .airpay-login__links-sep,
+body.dark-mode .airpay-login__legal span {
+    color: #475569 !important;
+}
+html.dark-mode .airpay-login__divider span,
+body.dark-mode .airpay-login__divider span {
+    background: #1a1d27 !important;
+    color: #64748b !important;
+}
+html.dark-mode .airpay-login__divider::before,
+html.dark-mode .airpay-login__divider::after,
+body.dark-mode .airpay-login__divider::before,
+body.dark-mode .airpay-login__divider::after {
+    background: #334155 !important;
+}
+html.dark-mode .airpay-login__guest-btn,
+body.dark-mode .airpay-login__guest-btn {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
 /* ── Dark mode for forgot-password + signup ── */
 html.dark-mode #page-login-forgot_password .airpay-login-region,
 body.dark-mode #page-login-forgot_password .airpay-login-region,
