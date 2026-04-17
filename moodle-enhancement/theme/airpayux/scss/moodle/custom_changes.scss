@@ -90,6 +90,12 @@
     border: 0 !important;
 }
 
+/* Hide BizLMS cart popup — replaced by Airpay cart in navbar */
+.popover-region-biz_carts,
+#nav-biz_cart-popover-container {
+    display: none !important;
+}
+
 /* ══════════════════════════════════════════════════════ */
 
 /*generic styles over site starts*/
