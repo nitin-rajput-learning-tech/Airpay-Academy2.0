@@ -379,11 +379,11 @@ echo $OUTPUT->doctype();
 <section class="ap-hero">
     <div class="ap-hero__inner">
         <div class="ap-hero__badge"><i class="fa fa-graduation-cap"></i> ENTERPRISE LEARNING PLATFORM</div>
-        <h1 class="ap-hero__title">Empowering India's<br>fintech workforce</h1>
-        <p class="ap-hero__subtitle">A comprehensive and hybrid learning platform designed to build compliance-ready, skilled professionals across financial services.</p>
+        <h1 class="ap-hero__title">Build a skilled, compliant<br>workforce at scale</h1>
+        <p class="ap-hero__subtitle">airpay academy is an enterprise learning and development platform for the financial services industry. From regulatory compliance to business skills and financial literacy &mdash; train, track, and certify your teams across every location.</p>
         <div class="ap-hero__actions">
             <a href="#ap-courses" class="ap-hero__btn-primary">Explore Courses <i class="fa fa-arrow-right"></i></a>
-            <a href="#ap-why" class="ap-hero__btn-outline"><i class="fa fa-play-circle"></i> Learn More</a>
+            <a href="<?php echo $CFG->wwwroot; ?>/login/index.php" class="ap-hero__btn-outline"><i class="fa fa-lock"></i> Sign In</a>
         </div>
         <div class="ap-hero__stats">
             <div class="ap-hero__stat">
@@ -401,14 +401,6 @@ echo $OUTPUT->doctype();
                     <span>Learners</span>
                 </div>
             </div>
-            <div class="ap-hero__stat-divider"></div>
-            <div class="ap-hero__stat">
-                <div class="ap-hero__stat-icon"><i class="fa fa-trophy"></i></div>
-                <div class="ap-hero__stat-text">
-                    <strong><?php echo $completionrate; ?>%</strong>
-                    <span>Completion Rate</span>
-                </div>
-            </div>
         </div>
     </div>
 </section>
@@ -420,8 +412,8 @@ echo $OUTPUT->doctype();
     <div class="ap-trust__inner">
         <div class="ap-trust__item"><i class="fa fa-shield"></i> RBI Compliant</div>
         <div class="ap-trust__item"><i class="fa fa-lock"></i> DPDP 2023 Ready</div>
-        <div class="ap-trust__item"><i class="fa fa-certificate"></i> ISO 27001 Certified</div>
-        <div class="ap-trust__item"><i class="fa fa-building"></i> 3 Enterprise Tenants</div>
+        <div class="ap-trust__item"><i class="fa fa-certificate"></i> SCORM &amp; xAPI</div>
+        <div class="ap-trust__item"><i class="fa fa-sitemap"></i> Multi-Tenant</div>
         <div class="ap-trust__item"><i class="fa fa-headphones"></i> 24/7 Support</div>
     </div>
 </section>
@@ -610,11 +602,11 @@ echo $OUTPUT->doctype();
         <div class="ap-faq__list">
             <div class="ap-faq__item">
                 <div class="ap-faq__q" onclick="this.parentElement.classList.toggle('open')">What is airpay academy? <i class="fa fa-chevron-down"></i></div>
-                <div class="ap-faq__a">airpay academy is an enterprise learning management system built by Airpay Payment Services. It serves <?php echo number_format($usercount); ?>+ learners across internal employees, field staff, and external partners with <?php echo $coursecount; ?>+ courses spanning compliance, business skills, and financial education.</div>
+                <div class="ap-faq__a">airpay academy is an enterprise learning and development platform built for the financial services industry. It offers <?php echo $coursecount; ?>+ courses across regulatory compliance, business skills, and financial literacy &mdash; with multi-tenant deployment, AI-powered learning, and SCORM/xAPI content support.</div>
             </div>
             <div class="ap-faq__item">
                 <div class="ap-faq__q" onclick="this.parentElement.classList.toggle('open')">How do I enroll in a course? <i class="fa fa-chevron-down"></i></div>
-                <div class="ap-faq__a">Click "Register" to create your account, then browse the course catalog. Select any course and click "Enroll" to begin. Most courses for Airpay employees are complimentary. External learners can access select courses through the marketplace.</div>
+                <div class="ap-faq__a">Click "Register" to create your account, then browse the course catalog. Select any course and click "Enroll" to begin. Enterprise customers can also bulk-enrol their teams via CSV upload or HRMS integration.</div>
             </div>
             <div class="ap-faq__item">
                 <div class="ap-faq__q" onclick="this.parentElement.classList.toggle('open')">Are certificates provided upon completion? <i class="fa fa-chevron-down"></i></div>
@@ -637,11 +629,11 @@ echo $OUTPUT->doctype();
      ═══════════════════════════════════════════════════════════════ -->
 <section class="ap-cta ap-reveal">
     <div class="ap-section-wrap">
-        <h2>Start Your Learning Journey Today</h2>
-        <p>Join <?php echo number_format($usercount); ?>+ professionals building their skills on airpay academy.</p>
+        <h2>Ready to transform your workforce training?</h2>
+        <p>Join <?php echo number_format($usercount); ?>+ professionals across financial services who are already learning on airpay academy.</p>
         <div class="ap-cta__actions">
-            <a href="<?php echo $CFG->wwwroot; ?>/local/users/signup.php" class="ap-hero__btn-primary">Get Started Free <i class="fa fa-arrow-right"></i></a>
-            <a href="<?php echo $CFG->wwwroot; ?>/login/index.php" class="ap-hero__btn-outline">Browse All Courses</a>
+            <a href="<?php echo $CFG->wwwroot; ?>/local/airpay_users/signup.php" class="ap-hero__btn-primary">Get Started Free <i class="fa fa-arrow-right"></i></a>
+            <a href="mailto:academy@airpay.co.in" class="ap-hero__btn-outline"><i class="fa fa-briefcase"></i> Request Enterprise Demo</a>
         </div>
     </div>
 </section>
