@@ -4,10 +4,8 @@
 
 /* ── Shell grid ────────────────────────────────── */
 .ap-shell {
-    display: grid;
-    grid-template-columns: var(--ap-sidebar-width) 1fr;
     min-height: 100vh;
-    transition: grid-template-columns var(--ap-transition-normal);
+    /* No grid — sidebar is position:fixed, main uses margin-left */
 }
 
 /* ── Sidebar ───────────────────────────────────── */
@@ -17,13 +15,14 @@
     left: 0;
     bottom: 0;
     width: var(--ap-sidebar-width);
-    background: var(--ap-gradient-sidebar);
+    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
     color: var(--ap-neutral-300);
     display: flex;
     flex-direction: column;
     z-index: var(--ap-z-fixed);
     transition: width var(--ap-transition-normal);
     overflow: hidden;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .ap-sidebar__logo {
@@ -66,8 +65,7 @@
     scrollbar-width: thin;
     scrollbar-color: rgba(255,255,255,0.1) transparent;
 }
-/* Remove duplicate nav — template has two, only second renders items */
-.ap-sidebar__nav:first-of-type { display: none; }
+/* Nav is now single instance — no hide rule needed */
 
 .ap-sidebar__list {
     list-style: none;
@@ -223,16 +221,18 @@
 
 .ap-sidebar[data-collapsed="true"] ~ .ap-shell__main {
     margin-left: var(--ap-sidebar-collapsed-width);
+    width: calc(100% - var(--ap-sidebar-collapsed-width));
 }
 
 /* ── Main content area ─────────────────────────── */
 .ap-shell__main {
     margin-left: var(--ap-sidebar-width);
+    width: calc(100% - var(--ap-sidebar-width));
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     background: var(--ap-color-bg-body);
-    transition: margin-left var(--ap-transition-normal);
+    transition: margin-left var(--ap-transition-normal), width var(--ap-transition-normal);
 }
 
 /* ── Topbar ────────────────────────────────────── */
