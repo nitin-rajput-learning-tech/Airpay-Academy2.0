@@ -7,12 +7,10 @@
 /* BS4 .form-group → BS5 uses .mb-3. Keep for existing selectors. */
 .form-group { margin-bottom: 1rem; }
 
-/* BS4 custom form controls → BS5 form-check/form-select */
-.custom-select { @extend .form-select !optional; }
-.custom-control { @extend .form-check !optional; }
-.custom-control-input { @extend .form-check-input !optional; }
-.custom-control-label { @extend .form-check-label !optional; }
-.custom-switch { @extend .form-switch !optional; }
+/* BS4 custom form controls — direct CSS (no @extend to avoid compile errors) */
+.custom-select { display: block; width: 100%; padding: .375rem 2.25rem .375rem .75rem; font-size: 1rem; border: 1px solid #ced4da; border-radius: .375rem; appearance: none; }
+.custom-control { position: relative; display: block; min-height: 1.5rem; padding-left: 1.5em; }
+.custom-switch { padding-left: 2.5em; }
 
 /* BS4 float utilities → BS5 (directional) */
 .float-left { float: left !important; }
@@ -45,17 +43,38 @@
 .badge-info    { background-color: var(--bs-info, #0066A7) !important; color: #fff !important; }
 .badge-pill    { border-radius: 50rem !important; }
 
-/* BS4 .close → BS5 .btn-close */
-.close { @extend .btn-close !optional; }
-
-/* BS4 .sr-only → BS5 .visually-hidden */
-.sr-only { @extend .visually-hidden !optional; }
+/* BS4 .close → direct CSS */
+.close { box-sizing: content-box; width: 1em; height: 1em; padding: .25em; background: transparent url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414z'/%3e%3c/svg%3e") center/1em auto no-repeat; border: 0; border-radius: .375rem; opacity: .5; }
 
 /* BS4 font-weight utilities → BS5 fw-* */
 .font-weight-bold { font-weight: 700 !important; }
 .font-weight-normal { font-weight: 400 !important; }
 .font-weight-light { font-weight: 300 !important; }
 .font-italic { font-style: italic !important; }
+
+/* FA4 → FA6 icon name mapping (icons with -o suffix are now regular weight) */
+.fa-moon-o::before { content: "\f186"; } /* fa-moon */
+.fa-sun-o::before { content: "\f185"; } /* fa-sun */
+.fa-clock-o::before { content: "\f017"; } /* fa-clock */
+.fa-star-half-o::before { content: "\f5c0"; } /* fa-star-half-stroke */
+.fa-bar-chart::before { content: "\f080"; } /* fa-chart-bar (alias) */
+.fa-moon-o, .fa-sun-o, .fa-clock-o, .fa-star-half-o {
+    font-family: 'Font Awesome 6 Free' !important;
+    font-weight: 400 !important; /* regular weight for -o variants */
+}
+
+/* Skip to main content — must be visually hidden */
+.sr-only, a.sr-only-focusable:not(:focus):not(:focus-within) {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
 
 /* ══════════════════════════════════════════════════════ */
 

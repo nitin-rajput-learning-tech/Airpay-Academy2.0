@@ -24,9 +24,14 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-// Front page: logged-in users go to dashboard.
-if ($PAGE->pagelayout === 'frontpage' && isloggedin() && !isguestuser()) {
-    redirect(new moodle_url('/my/'));
+// Front page: redirect ALL users to the Airpay homepage (tenant-scoped) or dashboard.
+if ($PAGE->pagelayout === 'frontpage') {
+    if (isloggedin() && !isguestuser()) {
+        redirect(new moodle_url('/my/'));
+    } else {
+        // Guests see the Airpay-branded, tenant-scoped homepage — not Moodle frontpage.
+        redirect(new moodle_url('/local/airpay_pages/homepage.php'));
+    }
 }
 
 require_once($CFG->libdir . '/behat/lib.php');
