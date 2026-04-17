@@ -602,23 +602,35 @@ echo $OUTPUT->doctype();
         <div class="ap-faq__list">
             <div class="ap-faq__item">
                 <div class="ap-faq__q" onclick="this.parentElement.classList.toggle('open')">What is airpay academy? <i class="fa fa-chevron-down"></i></div>
-                <div class="ap-faq__a">airpay academy is an enterprise learning and development platform built for the financial services industry. It offers <?php echo $coursecount; ?>+ courses across regulatory compliance, business skills, and financial literacy &mdash; with multi-tenant deployment, AI-powered learning, and SCORM/xAPI content support.</div>
+                <div class="ap-faq__a">airpay academy is an enterprise learning and development platform purpose-built for financial services. It combines regulatory compliance training, business skill development, and financial literacy across <?php echo $coursecount; ?>+ courses &mdash; with multi-tenant isolation, AI-powered learning, role-based dashboards, and full SCORM/xAPI support. The platform is built and operated by Airpay Payment Services.</div>
             </div>
             <div class="ap-faq__item">
-                <div class="ap-faq__q" onclick="this.parentElement.classList.toggle('open')">How do I enroll in a course? <i class="fa fa-chevron-down"></i></div>
-                <div class="ap-faq__a">Click "Register" to create your account, then browse the course catalog. Select any course and click "Enroll" to begin. Enterprise customers can also bulk-enrol their teams via CSV upload or HRMS integration.</div>
+                <div class="ap-faq__q" onclick="this.parentElement.classList.toggle('open')">Who is the platform designed for? <i class="fa fa-chevron-down"></i></div>
+                <div class="ap-faq__a">airpay academy serves three audiences: <strong>enterprise organisations</strong> that need to train and certify distributed teams at scale; <strong>individual professionals</strong> looking to upskill in compliance, fintech, and business skills; and <strong>external partners</strong> such as business correspondents, field agents, and channel partners who require product and regulatory training.</div>
+            </div>
+            <div class="ap-faq__item">
+                <div class="ap-faq__q" onclick="this.parentElement.classList.toggle('open')">What compliance training is covered? <i class="fa fa-chevron-down"></i></div>
+                <div class="ap-faq__a">The platform includes RBI-mandated courses on Anti-Money Laundering (AML), Know Your Customer (KYC), Prevention of Sexual Harassment (POSH), IT &amp; Information Security Awareness, DPDP Act 2023, and financial fraud prevention. Compliance training features automated enrolment, deadline tracking, escalation emails to managers, and audit-ready CSV/Excel exports.</div>
+            </div>
+            <div class="ap-faq__item">
+                <div class="ap-faq__q" onclick="this.parentElement.classList.toggle('open')">What content formats does the platform support? <i class="fa fa-chevron-down"></i></div>
+                <div class="ap-faq__a">SCORM 1.2 and xAPI (Tin Can) e-learning packages, H5P interactive modules, video-based training, instructor-led virtual classrooms, online assessments with proctoring, and blended learning programs that combine self-paced and classroom components. Courses can be uploaded, authored in-platform, or sourced from third-party content providers.</div>
+            </div>
+            <div class="ap-faq__item">
+                <div class="ap-faq__q" onclick="this.parentElement.classList.toggle('open')">Can we get our own branded instance? <i class="fa fa-chevron-down"></i></div>
+                <div class="ap-faq__a">Yes. Each enterprise customer gets a dedicated tenant with their own logo, brand colours, custom domain, user pool, course catalog, and analytics &mdash; fully isolated from other tenants. Administrators manage their own users, assign courses, track compliance, and export reports independently. Contact <a href="mailto:academy@airpay.co.in">academy@airpay.co.in</a> for enterprise plans.</div>
+            </div>
+            <div class="ap-faq__item">
+                <div class="ap-faq__q" onclick="this.parentElement.classList.toggle('open')">Does the platform integrate with our existing systems? <i class="fa fa-chevron-down"></i></div>
+                <div class="ap-faq__a">airpay academy integrates with HRMS platforms (KeKa, Darwinbox) for automated user provisioning, supports SSO via SAML/OAuth2 for single sign-on, provides REST APIs for custom integrations, and offers webhook notifications for events like course completions and compliance deadlines. CSV bulk import/export is available for all data.</div>
             </div>
             <div class="ap-faq__item">
                 <div class="ap-faq__q" onclick="this.parentElement.classList.toggle('open')">Are certificates provided upon completion? <i class="fa fa-chevron-down"></i></div>
-                <div class="ap-faq__a">Yes. Digital certificates are automatically issued upon course completion. Each certificate includes a unique verification code and can be downloaded as PDF or shared directly to your LinkedIn profile.</div>
+                <div class="ap-faq__a">Yes. Digital certificates with unique verification codes are automatically issued upon course completion. Certificates can be downloaded as PDF, shared to LinkedIn, and verified by third parties via a public verification URL. For enterprise customers, certificate templates can be customised with your organisation&rsquo;s branding.</div>
             </div>
             <div class="ap-faq__item">
-                <div class="ap-faq__q" onclick="this.parentElement.classList.toggle('open')">What types of training content are available? <i class="fa fa-chevron-down"></i></div>
-                <div class="ap-faq__a">The platform offers SCORM-compliant e-learning modules, interactive H5P content, video-based training, instructor-led virtual classrooms, and blended learning programs. Content covers compliance (AML, KYC, POSH), business skills, and financial education.</div>
-            </div>
-            <div class="ap-faq__item">
-                <div class="ap-faq__q" onclick="this.parentElement.classList.toggle('open')">Can my organization get a dedicated tenant? <i class="fa fa-chevron-down"></i></div>
-                <div class="ap-faq__a">Yes. airpay academy supports multi-tenant deployment with white-label branding, dedicated user management, custom course catalogs, and isolated analytics. Contact academy@airpay.co.in for enterprise plans.</div>
+                <div class="ap-faq__q" onclick="this.parentElement.classList.toggle('open')">How is pricing structured? <i class="fa fa-chevron-down"></i></div>
+                <div class="ap-faq__a">Individual courses are available for free or at per-course pricing. Enterprise plans are based on active user count with annual billing, and include dedicated tenant setup, priority support, custom branding, and HRMS integration. Contact <a href="mailto:academy@airpay.co.in">academy@airpay.co.in</a> for a tailored quote.</div>
             </div>
         </div>
     </div>
