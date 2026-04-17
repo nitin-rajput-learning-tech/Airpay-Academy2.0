@@ -26,6 +26,7 @@
 
 define('CLI_SCRIPT', true);
 require_once(__DIR__ . '/../../../config.php');
+require_once($CFG->libdir . '/clilib.php');
 
 cli_heading('Airpay Branding Verification');
 cli_writeln('');
