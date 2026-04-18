@@ -185,7 +185,8 @@ class sidebar_navigation {
      * Build a divider.
      */
     private function divider(): array {
-        return ['type' => 'divider'];
+        // Sentinel — template checks 'isdivider' to add visual separator
+        return ['isdivider' => true, 'label' => '', 'icon' => '', 'url' => '', 'active' => false];
     }
 
     /**
