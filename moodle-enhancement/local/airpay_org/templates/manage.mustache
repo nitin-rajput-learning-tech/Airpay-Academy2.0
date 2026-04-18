@@ -1,0 +1,91 @@
+{{!
+    Airpay Organisation Management — hierarchical org tree with tenants and departments.
+    @template local_airpay_org/manage
+}}
+
+<div class="ap-page-header d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h2 class="mb-1" style="font-weight: 700;">Organisation Structure</h2>
+        <p class="text-muted mb-0">Manage tenants, departments, and organisational hierarchy.</p>
+    </div>
+    <a href="#" class="btn btn-primary btn-sm"><i class="fa fa-plus fa-fw"></i> Add Organisation</a>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4 mb-2">
+        <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
+            <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-primary, #0066A7);">{{total_tenants}}</div>
+            <div class="text-muted small text-uppercase">Tenants</div>
+        </div></div>
+    </div>
+    <div class="col-md-4 mb-2">
+        <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
+            <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-accent, #0f7a73);">{{total_orgs}}</div>
+            <div class="text-muted small text-uppercase">Total Org Units</div>
+        </div></div>
+    </div>
+    <div class="col-md-4 mb-2">
+        <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
+            <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-success, #16a34a);">{{total_users}}</div>
+            <div class="text-muted small text-uppercase">Active Users</div>
+        </div></div>
+    </div>
+</div>
+
+{{! ── Tenant Cards with Expandable Departments ─── }}
+{{#has_tenants}}
+{{#tenants}}
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: var(--ap-color-primary, #0066A7); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem;">
+                    <i class="fa fa-building"></i>
+                </div>
+                <div>
+                    <h5 class="mb-0 fw-bold">{{name}}</h5>
+                    <span class="text-muted small">{{shortname}} &middot; Path: {{path}}</span>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <span class="text-muted small"><i class="fa fa-sitemap fa-fw"></i> {{child_count}} departments</span>
+                <span class="text-muted small"><i class="fa fa-users fa-fw"></i> {{user_count}} users</span>
+                <span class="badge {{visiblecss}}">{{visiblelabel}}</span>
+                {{#has_departments}}
+                <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#org-{{id}}-depts">
+                    <i class="fa fa-chevron-down"></i>
+                </button>
+                {{/has_departments}}
+            </div>
+        </div>
+
+        {{! Expandable department list }}
+        {{#has_departments}}
+        <div class="collapse mt-3" id="org-{{id}}-depts">
+            <table class="table table-sm table-hover mb-0">
+                <thead><tr class="text-muted small">
+                    <th class="ps-4">Department</th>
+                    <th>Shortname</th>
+                    <th>Path</th>
+                    <th class="text-center">Users</th>
+                </tr></thead>
+                <tbody>
+                    {{#departments}}
+                    <tr>
+                        <td class="ps-4">
+                            <i class="fa fa-sitemap fa-fw text-muted"></i>
+                            {{name}}
+                        </td>
+                        <td class="small text-muted">{{shortname}}</td>
+                        <td class="small text-muted">{{path}}</td>
+                        <td class="text-center">{{user_count}}</td>
+                    </tr>
+                    {{/departments}}
+                </tbody>
+            </table>
+        </div>
+        {{/has_departments}}
+    </div>
+</div>
+{{/tenants}}
+{{/has_tenants}}

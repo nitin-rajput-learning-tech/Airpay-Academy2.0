@@ -1,0 +1,71 @@
+{{!
+    Airpay Classroom Training — ILT session management.
+    @template local_airpay_classroom/manage
+}}
+
+<div class="ap-page-header d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h2 class="mb-1" style="font-weight: 700;">Classroom Training</h2>
+        <p class="text-muted mb-0">Manage instructor-led sessions, attendance, and trainer assignments.</p>
+    </div>
+    {{#can_manage}}
+    <a href="#" class="btn btn-primary btn-sm"><i class="fa fa-plus fa-fw"></i> Create Session</a>
+    {{/can_manage}}
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4 mb-2">
+        <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
+            <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-primary, #0066A7);">{{total}}</div>
+            <div class="text-muted small text-uppercase">Total Sessions</div>
+        </div></div>
+    </div>
+    <div class="col-md-4 mb-2">
+        <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
+            <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-success, #16a34a);">{{active}}</div>
+            <div class="text-muted small text-uppercase">Active</div>
+        </div></div>
+    </div>
+    <div class="col-md-4 mb-2">
+        <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
+            <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-accent, #0f7a73);">{{completed}}</div>
+            <div class="text-muted small text-uppercase">Completed</div>
+        </div></div>
+    </div>
+</div>
+
+{{#has_data}}
+<div class="card border-0 shadow-sm"><div class="table-responsive">
+    <table class="table table-hover mb-0 align-middle">
+        <thead><tr style="background: var(--ap-color-primary, #0066A7); color: #fff;">
+            <th class="ps-3">Session Name</th>
+            <th class="text-center">Enrolled</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Status</th>
+        </tr></thead>
+        <tbody>
+            {{#classrooms}}
+            <tr>
+                <td class="ps-3 fw-semibold">{{name}}</td>
+                <td class="text-center">{{enrolled}}</td>
+                <td class="small">{{startdate}}</td>
+                <td class="small">{{enddate}}</td>
+                <td><span class="badge {{statuscss}}">{{statuslabel}}</span></td>
+            </tr>
+            {{/classrooms}}
+        </tbody>
+    </table>
+</div></div>
+{{/has_data}}
+
+{{^has_data}}
+<div class="card border-0 shadow-sm"><div class="card-body text-center py-5">
+    <i class="fa fa-calendar fa-3x text-muted mb-3 d-block"></i>
+    <h5 class="text-muted">No classroom sessions yet</h5>
+    <p class="text-muted mb-3">Schedule instructor-led training sessions for your teams.</p>
+    {{#can_manage}}
+    <a href="#" class="btn btn-primary btn-sm"><i class="fa fa-plus fa-fw"></i> Create First Session</a>
+    {{/can_manage}}
+</div></div>
+{{/has_data}}

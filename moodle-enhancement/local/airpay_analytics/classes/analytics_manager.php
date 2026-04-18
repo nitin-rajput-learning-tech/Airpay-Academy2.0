@@ -82,6 +82,12 @@ class analytics_manager {
               WHERE ci.timecreated >= :start AND ci.timecreated < :end $orgfilter",
             array_merge($params, ['start' => $current_start, 'end' => $current_end]));
 
+        $cert_previous = $DB->count_records_sql(
+            "SELECT COUNT(ci.id) FROM {tool_certificate_issues} ci
+               JOIN {user} u ON u.id = ci.userid
+              WHERE ci.timecreated >= :start AND ci.timecreated < :end $orgfilter",
+            array_merge($params, ['start' => $previous_start, 'end' => $previous_end]));
+
         return [
             ['label' => 'Active Users',    'value' => $active_current, 'previous' => $active_previous, 'trend' => self::trend($active_current, $active_previous), 'icon' => 'fa-users',      'color' => '#0066A7'],
             ['label' => 'New Enrolments',   'value' => $enrol_current,  'previous' => $enrol_previous,  'trend' => self::trend($enrol_current, $enrol_previous),   'icon' => 'fa-user-plus',  'color' => '#0f7a73'],
@@ -149,11 +155,12 @@ class analytics_manager {
         $parts = explode('/', trim($orgpath ?: '/1', '/'));
         $toporg = '/' . ($parts[0] ?? '1');
 
-        $departments = \local_airpay_org\org_manager::get_descendants($toporg);
-        // Filter to depth 3 (departments).
-        $departments = array_filter($departments, function($cc) {
-            return ($cc->depth ?? 0) == 3;
-        });
+        $departments = $DB->get_records_sql(
+            "SELECT cc.id, cc.fullname, cc.path
+               FROM {local_airpay_org} cc
+              WHERE cc.path LIKE :pathprefix AND cc.depth = 3
+           ORDER BY cc.fullname",
+            ['pathprefix' => $toporg . '/%']);
 
         $heatmap = [];
         foreach ($departments as $dept) {
@@ -206,8 +213,12 @@ class analytics_manager {
         // Scope to user's tenant.
         $orgfilter = '';
         $params = [];
-        if (empty($orgpath)) {
-            $orgpath = \local_airpay_org\tenant_manager::get_tenant_path();
+        if (empty($orgpath) && !empty($USER->open_path)) {
+            $parts = explode('/', $USER->open_path);
+            $org = $parts[1] ?? '';
+            if (!empty($org)) {
+                $orgpath = '/' . $org;
+            }
         }
         if (!empty($orgpath)) {
             $orgfilter = "AND c.open_path LIKE :orgpath";
@@ -236,8 +247,9 @@ class analytics_manager {
     /**
      * Calculate trend percentage and direction.
      */
-    private static function trend(int $current, ?int $previous = 0): array {
-        $previous = $previous ?? 0;
+    private static function trend(?int $current = 0, ?int $previous = 0): array {
+        $current = (int) $current;
+        $previous = (int) $previous;
         if ($previous == 0) {
             return ['pct' => $current > 0 ? 100 : 0, 'direction' => 'up', 'label' => $current > 0 ? '+100%' : '0%'];
         }

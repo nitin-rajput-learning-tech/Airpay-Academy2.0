@@ -26,15 +26,6 @@ defined('MOODLE_INTERNAL') || die();
 
 $capabilities = [
 
-    'local/airpay_users:edit' => [
-        'riskbitmask'  => RISK_PERSONAL,
-        'captype'      => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes'   => [
-            'manager' => CAP_ALLOW,
-        ],
-    ],
-
     'local/airpay_users:view' => [
         'captype'      => 'read',
         'contextlevel' => CONTEXT_SYSTEM,
@@ -44,10 +35,55 @@ $capabilities = [
         ],
     ],
 
+    'local/airpay_users:create' => [
+        'riskbitmask'  => RISK_SPAM | RISK_PERSONAL,
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => [
+            'manager' => CAP_ALLOW,
+        ],
+    ],
+
+    'local/airpay_users:edit' => [
+        'riskbitmask'  => RISK_PERSONAL,
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => [
+            'manager' => CAP_ALLOW,
+        ],
+    ],
+
+    'local/airpay_users:delete' => [
+        'riskbitmask'  => RISK_PERSONAL | RISK_DATALOSS,
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => [],  // Siteadmin only by default.
+    ],
+
+    'local/airpay_users:manage' => [
+        'riskbitmask'  => RISK_PERSONAL,
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => [
+            'manager' => CAP_ALLOW,
+        ],
+    ],
+
     'local/airpay_users:bulkstatuschange' => [
         'riskbitmask'  => RISK_PERSONAL,
         'captype'      => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes'   => [],
+        'archetypes'   => [
+            'manager' => CAP_ALLOW,
+        ],
+    ],
+
+    'local/airpay_users:export' => [
+        'riskbitmask'  => RISK_PERSONAL,
+        'captype'      => 'read',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => [
+            'manager' => CAP_ALLOW,
+        ],
     ],
 ];

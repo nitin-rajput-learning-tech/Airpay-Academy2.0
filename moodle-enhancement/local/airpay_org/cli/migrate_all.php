@@ -32,8 +32,6 @@
 define('CLI_SCRIPT', true);
 require_once(__DIR__ . '/../../../config.php');
 
-require_once($CFG->libdir . '/clilib.php');
-
 $dryrun = in_array('--dry-run', $argv ?? []);
 $dbman = $DB->get_manager();
 
@@ -287,22 +285,7 @@ function migrate_table(string $source, string $target, array $fieldmap, bool $dr
         foreach ($sources as $src) {
             $record = new stdClass();
             foreach ($valid_map as $src_field => $tgt_field) {
-                $value = $src->$src_field ?? null;
-                // Coerce types to match target schema.
-                $col = $target_columns[$tgt_field] ?? null;
-                if ($col) {
-                    if ($col->meta_type === 'I' || $col->meta_type === 'N') {
-                        // Integer/number column — coerce nulls to default, strip non-numeric.
-                        if ($value === null && !$col->not_null) {
-                            // nullable — keep null
-                        } else if ($value === null) {
-                            $value = (int) ($col->default_value ?? 0);
-                        } else {
-                            $value = (int) preg_replace('/[^0-9]/', '', (string) $value);
-                        }
-                    }
-                }
-                $record->$tgt_field = $value;
+                $record->$tgt_field = $src->$src_field ?? null;
             }
             // Ensure timemodified is set.
             if (isset($target_columns['timemodified']) && empty($record->timemodified)) {
