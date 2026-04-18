@@ -604,63 +604,9 @@
         {{/airpay}}
         {{! ═══ END AIRPAY DASHBOARD ═══ }}
 
-        <div id="page-content" class="row pb-3 d-print-block">
-            <div id="region-main-box" class="col-12">
-                {{#hasregionmainsettingsmenu}}
-                <div id="region-main-settings-menu" class="d-print-none {{#hasblocks}}has-blocks{{/hasblocks}}">
-                    <div> {{{ regionmainsettingsmenu }}} </div>
-                </div>
-                {{/hasregionmainsettingsmenu}}
-                <section id="region-main" {{#hasblocks}}class="has-blocks mb-3"{{/hasblocks}} aria-label="{{#str}}content{{/str}}">
-
-                    {{#hasregionmainsettingsmenu}}
-                        <div class="region_main_settings_menu_proxy"></div>
-                    {{/hasregionmainsettingsmenu}}
-                    {{{ output.course_content_header }}}
-                    {{#headercontent}}
-                        {{> core/activity_header }}
-                    {{/headercontent}}
-                    {{#overflow}}
-                        {{> core/url_select}}
-                    {{/overflow}}
-
-                    {{{ output.main_content }}}
-                    {{{ output.activity_navigation }}}
-                    {{{ output.course_content_footer }}}
-                </section>
-
-                <section class="layerone mb-15 row">
-                    {{{layerone_detail_full}}}
-                </section>
-                <section class="layerone middle-blocks-row row">
-                    {{{ layerone_detail_one }}}
-                    {{{ layerone_detail_two }}}
-                </section>
-                <div class="row">
-                    <section class="layertwo part_one bottom-blocks-row col-md-6 p-0">
-                        {{{ layertwo_detail_one }}}
-                    </section>
-                    <section class="layertwo part_two bottom-blocks-row col-md-6 p-0">
-                        {{{ layertwo_detail_two }}}
-                    </section>
-                </div>
-                <div class="row">
-                    <section class="layertwo part_one bottom-blocks-row col-md-6 p-0">
-                        {{{ layerone_bottom_one }}}
-                    </section>
-                    <section class="layertwo part_two bottom-blocks-row col-md-6 p-0">
-                        {{{ layertwo_detail_three }}}
-                        {{{ layertwo_detail_four }}}
-                    </section>
-                </div>
-
-                {{#hasblocks}}
-                <section data-region="blocks-column" class="d-print-none" aria-label="{{#str}}blocks{{/str}}">
-                    {{{ addblockbutton }}}
-                    {{{ sidepreblocks }}}
-                </section>
-                {{/hasblocks}}
-            </div>
+        {{! Moodle block regions — hidden when sidebar shell is active (blocks not used) }}
+        <div id="page-content" class="d-print-block" style="display: none;">
+            {{{ output.main_content }}}
         </div>
     </div>
     {{{ output.standard_after_main_region_html }}}
