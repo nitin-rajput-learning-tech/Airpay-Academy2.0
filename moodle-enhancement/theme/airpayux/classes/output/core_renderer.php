@@ -57,6 +57,113 @@ defined('MOODLE_INTERNAL') || die;
  */
 class core_renderer extends \core_renderer {
 
+    /**
+     * Render the sidebar shell opening: sidebar + topbar + content area open tag.
+     *
+     * Call this from ANY layout template via {{{output.airpay_shell_start}}}.
+     * Pair with airpay_shell_end(). The sidebar HTML is defined ONCE here —
+     * no duplication across templates.
+     *
+     * @return string HTML
+     */
+    public function airpay_shell_start(): string {
+        global $USER, $CFG;
+
+        // Only show sidebar for logged-in non-guest users.
+        if (!isloggedin() || isguestuser()) {
+            return '';
+        }
+
+        $sidebarnav = new \theme_airpayux\sidebar_navigation($this->page);
+        $context = $sidebarnav->get_context();
+
+        // Render the sidebar partial.
+        $sidebarhtml = $this->render_from_template('theme_airpayux/sidebar', $context);
+
+        // Build the topbar.
+        $searchurl = $CFG->wwwroot . '/search/index.php';
+        $topbar = '<header class="ap-topbar" id="ap-topbar">'
+                . '<div class="ap-topbar__left">'
+                . '<button class="ap-topbar__hamburger d-lg-none" id="ap-sidebar-mobile-toggle" aria-label="Open menu"><i class="fa fa-bars"></i></button>'
+                . '</div>'
+                . '<div class="ap-topbar__center">'
+                . '<form action="' . s($searchurl) . '" method="get" class="ap-topbar__search">'
+                . '<i class="fa fa-search ap-topbar__search-icon"></i>'
+                . '<input type="text" name="q" class="ap-topbar__search-input" placeholder="Search courses, people, content..." autocomplete="off">'
+                . '</form>'
+                . '</div>'
+                . '<div class="ap-topbar__right"></div>'
+                . '</header>';
+
+        return '<div class="ap-shell" id="ap-shell">'
+             . $sidebarhtml
+             . '<div class="ap-shell__overlay" id="ap-shell-overlay"></div>'
+             . '<div class="ap-shell__main">'
+             . $topbar
+             . '<main class="ap-shell__content" id="ap-shell-content">';
+    }
+
+    /**
+     * Render the sidebar shell closing: close content + close shell + JS.
+     *
+     * @return string HTML
+     */
+    public function airpay_shell_end(): string {
+        if (!isloggedin() || isguestuser()) {
+            return '';
+        }
+
+        $js = <<<'JS'
+<script>
+(function() {
+    var sidebar = document.getElementById('ap-sidebar');
+    var toggle = document.getElementById('ap-sidebar-toggle');
+    var mobileToggle = document.getElementById('ap-sidebar-mobile-toggle');
+    var overlay = document.getElementById('ap-shell-overlay');
+    var darkToggle = document.getElementById('ap-dark-toggle');
+    if (toggle && sidebar) {
+        toggle.addEventListener('click', function() {
+            var collapsed = sidebar.getAttribute('data-collapsed') === 'true';
+            sidebar.setAttribute('data-collapsed', collapsed ? 'false' : 'true');
+            toggle.querySelector('.ap-sidebar__toggle-icon').style.transform = collapsed ? '' : 'rotate(180deg)';
+            if (typeof M !== 'undefined' && M.cfg) {
+                fetch(M.cfg.wwwroot + '/lib/ajax/setuserpref.php', {
+                    method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'sesskey=' + M.cfg.sesskey + '&pref=theme_airpayux_sidebar_collapsed&value=' + (collapsed ? '0' : '1')
+                });
+            }
+        });
+    }
+    if (mobileToggle && sidebar) {
+        mobileToggle.addEventListener('click', function() { sidebar.classList.toggle('ap-sidebar--mobile-open'); if (overlay) overlay.classList.toggle('ap-shell__overlay--visible'); });
+    }
+    if (overlay) { overlay.addEventListener('click', function() { if (sidebar) sidebar.classList.remove('ap-sidebar--mobile-open'); overlay.classList.remove('ap-shell__overlay--visible'); }); }
+    if (darkToggle) {
+        var html = document.documentElement;
+        var isDark = html.getAttribute('data-theme') === 'dark' || html.classList.contains('dark-mode');
+        darkToggle.querySelector('i').className = isDark ? 'fa fa-sun' : 'fa fa-moon';
+        var label = darkToggle.querySelector('.ap-sidebar__theme-label');
+        if (label) label.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+        darkToggle.addEventListener('click', function() {
+            var nowDark = html.getAttribute('data-theme') === 'dark' || html.classList.contains('dark-mode');
+            html.setAttribute('data-theme', nowDark ? 'light' : 'dark');
+            html.classList.toggle('dark-mode', !nowDark);
+            document.body.classList.toggle('dark-mode', !nowDark);
+            localStorage.setItem('airpay-theme', nowDark ? 'light' : 'dark');
+            darkToggle.querySelector('i').className = nowDark ? 'fa fa-moon' : 'fa fa-sun';
+            if (label) label.textContent = nowDark ? 'Dark Mode' : 'Light Mode';
+        });
+    }
+})();
+</script>
+JS;
+
+        return '</main>'  // close .ap-shell__content
+             . '</div>'   // close .ap-shell__main
+             . '</div>'   // close .ap-shell
+             . $js;
+    }
+
     private $enable_edit_switch = true;
     /**
      * Returns HTML to display a "Turn editing on/off" button in a form.

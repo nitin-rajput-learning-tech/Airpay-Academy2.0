@@ -85,4 +85,6 @@ $templatecontext = [
     'addblockbutton' => $addblockbutton,
 ];
 
+// Sidebar handled by core_renderer::airpay_shell_start() — no template injection needed.
+
 echo $OUTPUT->render_from_template('theme_airpayux/columns2', $templatecontext);

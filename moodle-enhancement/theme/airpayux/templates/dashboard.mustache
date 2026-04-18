@@ -88,7 +88,13 @@
                 {{/navitems}}
             </nav>
 
-            {{! ── User ────────────────────────────────────── }}
+            {{! ── Footer: theme + user ─────────────────── }}
+            <div class="ap-sidebar__footer-actions">
+                <button class="ap-sidebar__theme-btn" id="ap-dark-toggle" title="Toggle theme">
+                    <i class="fa fa-moon"></i>
+                    <span class="ap-sidebar__theme-label">Dark Mode</span>
+                </button>
+            </div>
             <div class="ap-sidebar__user">
                 <a href="{{{profileurl}}}" class="ap-sidebar__user-link">
                     <div class="ap-sidebar__user-avatar">{{{useravatar}}}</div>
@@ -124,12 +130,7 @@
                     </form>
                 </div>
                 <div class="ap-topbar__right">
-                    <button class="ap-topbar__icon-btn" id="ap-dark-toggle" title="Toggle dark mode">
-                        <i class="fa fa-moon"></i>
-                    </button>
-                    <div class="ap-topbar__usermenu">
-                        {{{ output.user_menu }}}
-                    </div>
+                    {{! User avatar + dark mode moved to sidebar. Topbar is clean. }}
                 </div>
             </header>
 

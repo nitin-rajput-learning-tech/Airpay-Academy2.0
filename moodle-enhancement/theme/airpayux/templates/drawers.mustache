@@ -53,121 +53,40 @@
 
 <body {{{ bodyattributes }}}>
 {{> core/local/toast/wrapper}}
+{{! ═══ SIDEBAR SHELL — uses renderer, ZERO inline sidebar HTML ═══ }}
 <div id="page-wrapper" class="d-print-block">
-
     {{{ output.standard_top_of_body_html }}}
 
-    {{> theme_airpayux/navbar }}
-    {{#courseindex}}
-        {{< theme_airpayux/drawer }}
-            {{$id}}theme_airpayux-drawers-courseindex{{/id}}
-            {{$drawerclasses}}drawer drawer-left {{#courseindexopen}}show{{/courseindexopen}}{{/drawerclasses}}
-            {{$drawercontent}}
-                {{{courseindex}}}
-            {{/drawercontent}}
-            {{$drawerpreferencename}}drawer-open-index{{/drawerpreferencename}}
-            {{$drawerstate}}show-drawer-left{{/drawerstate}}
-            {{$tooltipplacement}}right{{/tooltipplacement}}
-            {{$closebuttontext}}{{#str}}closecourseindex, core{{/str}}{{/closebuttontext}}
-        {{/ theme_airpayux/drawer}}
-    {{/courseindex}}
-    {{#hasblocks}}
-        {{< theme_airpayux/drawer }}
-            {{$id}}theme_airpayux-drawers-blocks{{/id}}
-            {{$drawerclasses}}drawer drawer-right{{#blockdraweropen}} show{{/blockdraweropen}}{{/drawerclasses}}
-            {{$drawercontent}}
-                <section class="d-print-none" aria-label="{{#str}}blocks{{/str}}">
+    {{{ output.airpay_shell_start }}}
+
+    <div id="page" class="d-print-block">
+        {{{ output.full_header }}}
+        {{#secondarymoremenu}}
+            <div class="secondary-navigation d-print-none">{{> core/moremenu}}</div>
+        {{/secondarymoremenu}}
+        <div id="page-content" class="pb-3 d-print-block">
+            <div id="region-main-box">
+                <section id="region-main" aria-label="{{#str}}content{{/str}}">
+                    {{{ output.course_content_header }}}
+                    {{#headercontent}}{{> core/activity_header }}{{/headercontent}}
+                    {{{ output.main_content }}}
+                    {{{ output.activity_navigation }}}
+                    {{{ output.course_content_footer }}}
+                </section>
+                {{#hasblocks}}
+                <section data-region="blocks-column" class="d-print-none">
                     {{{ addblockbutton }}}
                     {{{ sidepreblocks }}}
                 </section>
-            {{/drawercontent}}
-            {{$drawerpreferencename}}drawer-open-block{{/drawerpreferencename}}
-            {{$forceopen}}{{#forceblockdraweropen}}1{{/forceblockdraweropen}}{{/forceopen}}
-            {{$drawerstate}}show-drawer-right{{/drawerstate}}
-            {{$tooltipplacement}}left{{/tooltipplacement}}
-            {{$drawercloseonresize}}1{{/drawercloseonresize}}
-            {{$closebuttontext}}{{#str}}closeblockdrawer, core{{/str}}{{/closebuttontext}}
-        {{/ theme_airpayux/drawer}}
-    {{/hasblocks}}
-    <div id="page" data-region="mainpage" data-usertour="scroller" class="drawers {{#courseindexopen}}show-drawer-left{{/courseindexopen}} {{#blockdraweropen}}show-drawer-right{{/blockdraweropen}} drag-container">
-        <div id="topofscroll" class="main-inner">
-            <div class="drawer-toggles d-flex">
-                {{#courseindex}}
-                    <div class="drawer-toggler drawer-left-toggle open-nav d-print-none">
-                        <button
-                            class="btn icon-no-margin"
-                            data-toggler="drawers"
-                            data-action="toggle"
-                            data-target="theme_airpayux-drawers-courseindex"
-                            data-bs-toggle="tooltip"
-                            data-bs-placement="right"
-                            title="{{#str}}opendrawerindex, core{{/str}}"
-                        >
-                            <span class="sr-only">{{#str}}opendrawerindex, core{{/str}}</span>
-                            {{#pix}} t/index_drawer, moodle {{/pix}}
-                        </button>
-                    </div>
-                {{/courseindex}}
-                {{#hasblocks}}
-                    <div class="drawer-toggler drawer-right-toggle ms-auto d-print-none">
-                        <button
-                            class="btn icon-no-margin"
-                            data-toggler="drawers"
-                            data-action="toggle"
-                            data-target="theme_airpayux-drawers-blocks"
-                            data-bs-toggle="tooltip"
-                            data-bs-placement="right"
-                            title="{{#str}}opendrawerblocks, core{{/str}}"
-                        >
-                            <span class="sr-only">{{#str}}opendrawerblocks, core{{/str}}</span>
-                            <span class="dir-rtl-hide">{{#pix}}t/blocks_drawer, core{{/pix}}</span>
-                            <span class="dir-ltr-hide">{{#pix}}t/blocks_drawer_rtl, core{{/pix}}</span>
-                        </button>
-                    </div>
                 {{/hasblocks}}
             </div>
-            {{{ output.full_header }}}
-            {{#secondarymoremenu}}
-                <div class="secondary-navigation d-print-none">
-                    {{> core/moremenu}}
-                </div>
-            {{/secondarymoremenu}}
-            <div id="page-content" class="pb-3 d-print-block">
-                <div id="region-main-box">
-                    {{#hasregionmainsettingsmenu}}
-                    <div id="region-main-settings-menu" class="d-print-none">
-                        <div> {{{ regionmainsettingsmenu }}} </div>
-                    </div>
-                    {{/hasregionmainsettingsmenu}}
-                    <section id="region-main" aria-label="{{#str}}content{{/str}}">
-
-                        {{#hasregionmainsettingsmenu}}
-                            <div class="region_main_settings_menu_proxy"></div>
-                        {{/hasregionmainsettingsmenu}}
-                        {{{ output.course_content_header }}}
-                        {{#headercontent}}
-                            {{> core/activity_header }}
-                        {{/headercontent}}
-                        {{#overflow}}
-                            <div class="container-fluid tertiary-navigation">
-                                <div class="navitem">
-                                    {{> core/url_select}}
-                                </div>
-                            </div>
-                        {{/overflow}}
-                        {{{ output.main_content }}}
-                        {{{ output.activity_navigation }}}
-                        {{{ output.course_content_footer }}}
-
-                    </section>
-                </div>
-            </div>
         </div>
-        {{> theme_airpayux/footer }}
     </div>
-    {{{ output.standard_after_main_region_html }}}
-</div>
 
+    {{{ output.airpay_shell_end }}}
+
+</div>
+{{{ output.standard_end_of_body_html }}}
 </body>
 </html>
 {{#js}}

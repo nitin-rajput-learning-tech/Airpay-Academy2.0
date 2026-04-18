@@ -93,15 +93,15 @@ class sidebar_navigation {
             $items[] = $this->divider();
             $items[] = $this->item('Manage Users', 'fa-users', '/local/airpay_users/index.php', $currenturl);
             $items[] = $this->item('Manage Courses', 'fa-book', '/local/airpay_catalog/index.php', $currenturl);
-            $items[] = $this->item('Online Exams', 'fa-pencil-square-o', '/local/airpay_exams/index.php', $currenturl);
+            $items[] = $this->item('Online Exams', 'fa-edit', '/local/airpay_exams/index.php', $currenturl);
             $items[] = $this->item('Classrooms', 'fa-calendar', '/local/airpay_classroom/index.php', $currenturl);
-            $items[] = $this->item('Learning Paths', 'fa-road', '/local/airpay_learningpath/index.php', $currenturl);
-            $items[] = $this->item('Programs', 'fa-graduation-cap', '/local/airpay_programs/index.php', $currenturl);
+            $items[] = $this->item('Learning Paths', 'fa-map-signs', '/local/airpay_learningpath/index.php', $currenturl);
+            $items[] = $this->item('Programs', 'fa-trophy', '/local/airpay_programs/index.php', $currenturl);
 
             // ── Insights ──
             $items[] = $this->divider();
-            $items[] = $this->item('Reports', 'fa-bar-chart', '/blocks/learnerscript/managereport.php', $currenturl);
-            $items[] = $this->item('Analytics', 'fa-line-chart', '/local/airpay_analytics/index.php', $currenturl);
+            $items[] = $this->item('Reports', 'fa-chart-bar', '/blocks/learnerscript/managereport.php', $currenturl);
+            $items[] = $this->item('Analytics', 'fa-chart-line', '/local/airpay_analytics/index.php', $currenturl);
             $items[] = $this->item('Compliance', 'fa-shield', '/local/airpay_compliance_report/index.php', $currenturl);
 
             // ── Platform ──
