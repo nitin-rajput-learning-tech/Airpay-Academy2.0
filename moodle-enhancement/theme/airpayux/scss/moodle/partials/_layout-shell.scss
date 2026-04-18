@@ -292,17 +292,38 @@
     width: var(--ap-sidebar-collapsed-width);
 }
 
-.ap-sidebar[data-collapsed="true"] .ap-sidebar__logo-text,
-.ap-sidebar[data-collapsed="true"] .ap-sidebar__label,
-.ap-sidebar[data-collapsed="true"] .ap-sidebar__badge,
-.ap-sidebar[data-collapsed="true"] .ap-sidebar__username,
-.ap-sidebar[data-collapsed="true"] .ap-sidebar__userinfo {
+/* Hide ALL text elements when collapsed — show only icons */
+.ap-sidebar[data-collapsed="true"] .ap-sidebar__brand-text,
+.ap-sidebar[data-collapsed="true"] .ap-sidebar__link-text,
+.ap-sidebar[data-collapsed="true"] .ap-sidebar__theme-label,
+.ap-sidebar[data-collapsed="true"] .ap-sidebar__user-info,
+.ap-sidebar[data-collapsed="true"] .ap-sidebar__user-name,
+.ap-sidebar[data-collapsed="true"] .ap-sidebar__user-action,
+.ap-sidebar[data-collapsed="true"] .ap-sidebar__signout {
     display: none;
 }
 
+/* Center icons in collapsed nav links */
 .ap-sidebar[data-collapsed="true"] .ap-sidebar__link {
     justify-content: center;
-    padding: var(--ap-space-3);
+    padding: 10px;
+}
+
+/* Center theme button icon */
+.ap-sidebar[data-collapsed="true"] .ap-sidebar__theme-btn {
+    justify-content: center;
+    padding: 8px;
+}
+
+/* Center user avatar */
+.ap-sidebar[data-collapsed="true"] .ap-sidebar__user-link {
+    justify-content: center;
+    padding: 6px;
+}
+
+/* Hide collapse chevron text, keep icon */
+.ap-sidebar[data-collapsed="true"] .ap-sidebar__collapse {
+    transform: rotate(180deg);
 }
 
 .ap-sidebar[data-collapsed="true"] ~ .ap-shell__main {
