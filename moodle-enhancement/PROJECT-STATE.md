@@ -1,8 +1,66 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-04-17 | **Phase:** Academy 3.0 — BizLMS Fork Complete + All Replacements
-**Theme:** airpayux v1.0.0 | **Tag:** v3.0.0-fork-complete
-**Version:** 3.0.0 (Complete BizLMS Fork: 11 new plugins + 1 block, 22/22 BizLMS plugins + 6/6 blocks replaced, 0 BizLMS deps)
+**Updated:** 2026-04-18 | **Phase:** Academy 3.1 — Enterprise Admin Pages Complete
+**Theme:** airpayux v1.0.0 | **Moodle:** 5.1.3+ on XAMPP
+**Version:** 3.1.0 (BizLMS feature port: 11 admin pages rebuilt with enterprise UI)
 **GitHub:** Pushed to nitin-rajput-learning-tech/Airpay-Academy2.0 (production branch)
+**Commit:** dc61e1019 — BizLMS feature port: rebuild all admin pages with enterprise UI
+
+---
+
+## v3.1.0 Session (2026-04-18) — BizLMS Feature Port: Enterprise Admin Pages
+
+### Visual Audit (18 sidebar pages)
+Screenshotted and assessed every sidebar destination. Categorized into:
+- **Tier 1 Enterprise-grade (6):** Dashboard, Reports, Analytics, Compliance, Emails, Privacy
+- **Tier 2 Functional (6):** Users, Courses, Organisation, Skills, Notifications, Site Admin
+- **Tier 3 Stub (6):** Exams, Classrooms, Learning Paths, Programs, Evaluations, Certificates
+
+### Bug Fixes (3 critical)
+1. **Analytics crash** — missing `$cert_previous` query, nullable `trend()`, BizLMS `local_costcenter`→`local_airpay_org`, stdClass→array
+2. **Admin tabs leak** — 8 plugin pages had `set_pagelayout('admin')` leaking Moodle Site Admin tabs into sidebar. Fixed with `set_pagelayout('standard')` + `set_secondary_navigation(false)`
+3. **Certificates URL** — sidebar pointed to public verify form, now points to `manage_templates.php`
+
+### Pages Rebuilt (11 pages, 36 files changed, +2,203 lines)
+
+| Page | Key Feature |
+|------|------------|
+| **Manage Users** | 9-column sortable table, search+org+status filters, pagination (2,869 users), 7 capabilities, CRUD actions |
+| **Manage Courses** | Admin table with enrolled/completed/rate%, org+category+status filters (411 courses) |
+| **Online Exams** | 233 Moodle quiz activities with attempts/scores/time limits |
+| **Classrooms** | ILT session management with status workflow, KPIs |
+| **Learning Paths** | 17 real paths from legacy data |
+| **Programs** | Enterprise empty state with Create CTA |
+| **Analytics** | Business Unit dropdown filter (auto-submit on change) |
+| **Notifications** | Type column populated (Deadline Reminder/Custom), KPIs, action dropdowns |
+| **Organisation** | Tenant cards with expand/collapse departments, user counts (3/213/1,406) |
+| **Evaluations** | Proper admin page with Moodle Feedback count |
+| **Sidebar** | Manage Courses → airpay_courses admin (not catalog) |
+
+### Enterprise UI Pattern (consistent across all pages)
+1. Header with title + subtitle + primary action button
+2. KPI cards (3-4 metrics with color coding)
+3. Filter bar (Search + Organisation + Status + Category)
+4. Data table (sortable, status badges, action dropdowns)
+5. Pagination (25/page)
+6. Empty state (icon + heading + description + CTA)
+
+### Files Created
+- `local/airpay_courses/index.php` + `templates/manage.mustache` — course admin
+- `local/airpay_exams/templates/manage.mustache` — exam template
+- `local/airpay_classroom/templates/manage.mustache` — classroom template
+- `local/airpay_learningpath/index.php` + `templates/manage.mustache` — paths
+- `local/airpay_programs/index.php` + `templates/manage.mustache` — programs
+- `local/airpay_notifications/index.php` + `templates/manage.mustache` — notifications
+- `local/airpay_org/admin.php` + `templates/manage.mustache` — org tree
+- `local/airpay_evaluation/index.php` + `templates/manage.mustache` — evaluations
+- `local/airpay_users/templates/manage.mustache` — users template
+
+### What Remains
+- CRUD modal forms (create/edit user, create course, create session) — wired to CTAs but not yet functional
+- AJAX pagination (currently server-side, working but could be faster with AJAX)
+- User profile page rebuild
+- Reports page branding/org scoping
+- Skills admin management view (currently shows learner readiness)
 
 ---
 
