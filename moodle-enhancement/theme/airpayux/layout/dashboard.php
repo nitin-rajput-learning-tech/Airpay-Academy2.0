@@ -279,17 +279,116 @@ if (isloggedin() && !isguestuser()) {
 
             // Show tenant scope label for L&D admins
             if ($isldadmin && !empty($toporg)) {
-                $tenantname = $DB->get_field('local_costcenter', 'fullname', ['path' => $toporg]);
-                $airpay_dashboard['tenant_scope'] = $tenantname ?? 'Your Organization';
+                $tenantname = \local_airpay_org\org_manager::get_name_by_path($toporg);
+                $airpay_dashboard['tenant_scope'] = $tenantname ?: 'Your Organization';
             }
 
+            // Better KPIs — active users instead of total, overdue instead of completion %
             $airpay_dashboard['admin_kpis'] = [
-                ['label' => 'Total Users', 'value' => $totalusers, 'trend' => '+' . $newusersthismonth . ' this month', 'icon' => 'users', 'color' => 'primary'],
-                ['label' => 'Active Courses', 'value' => $totalcourses, 'trend' => '', 'icon' => 'book', 'color' => 'accent'],
-                ['label' => 'Enrolments', 'value' => number_format($totalenrolments), 'trend' => '+' . $newenrolmentsthisweek . ' this week', 'icon' => 'line-chart', 'color' => 'success'],
-                ['label' => 'Completion Rate', 'value' => $completionrate . '%', 'trend' => '', 'icon' => 'check-circle', 'color' => 'gold'],
+                ['label' => 'Active Users', 'value' => number_format($activeusers), 'trend' => number_format($totalusers) . ' total', 'icon' => 'users', 'color' => 'primary'],
+                ['label' => 'Courses', 'value' => number_format($totalcourses), 'trend' => '+' . $newenrolmentsthisweek . ' enrolments this week', 'icon' => 'book', 'color' => 'accent'],
+                ['label' => 'Completions', 'value' => number_format($totalcompleted), 'trend' => $completionrate . '% completion rate', 'icon' => 'check-circle', 'color' => 'success'],
+                ['label' => 'Enrolments', 'value' => number_format($totalenrolments), 'trend' => '+' . $newusersthismonth . ' new users this month', 'icon' => 'line-chart', 'color' => 'gold'],
             ];
             $airpay_dashboard['hasadminkpis'] = true;
+
+            // ── Compliance Summary ──
+            try {
+                $dbman = $DB->get_manager();
+                if ($dbman->table_exists('local_airpay_compl_courses')) {
+                    $mandatorycount = $DB->count_records('local_airpay_compl_courses');
+                    $overduecount = $DB->count_records_select('local_airpay_compl_snapshot',
+                        "status IN ('overdue','critical','escalated')");
+                    $compliantcount = $DB->count_records_select('local_airpay_compl_snapshot',
+                        "status = 'completed'");
+                    $totalassigned = $DB->count_records('local_airpay_compl_snapshot');
+                    $compliancepct = $totalassigned > 0 ? round(($compliantcount / $totalassigned) * 100) : 0;
+                    $airpay_dashboard['compliance'] = [
+                        'mandatory'   => $mandatorycount,
+                        'overdue'     => $overduecount,
+                        'compliant'   => $compliancepct . '%',
+                        'assigned'    => $totalassigned,
+                    ];
+                    $airpay_dashboard['hascompliance'] = true;
+                }
+            } catch (\Throwable $e) {
+                // Compliance tables may not exist.
+            }
+
+            // ── Recent Activity (last 10 events) ──
+            try {
+                $recentactivity = [];
+
+                // Recent completions.
+                $completions = $DB->get_records_sql(
+                    "SELECT cc.id, u.firstname, u.lastname, c.fullname AS coursename, cc.timecompleted
+                       FROM {course_completions} cc
+                       JOIN {user} u ON u.id = cc.userid
+                       JOIN {course} c ON c.id = cc.course
+                      WHERE cc.timecompleted IS NOT NULL AND cc.timecompleted > 0
+                   ORDER BY cc.timecompleted DESC", [], 0, 5);
+                foreach ($completions as $comp) {
+                    $recentactivity[] = [
+                        'icon'  => 'check-circle',
+                        'color' => '#16a34a',
+                        'text'  => fullname($comp) . ' completed ' . format_string($comp->coursename),
+                        'time'  => userdate($comp->timecompleted, '%d %b, %I:%M %p'),
+                        'ts'    => $comp->timecompleted,
+                    ];
+                }
+
+                // Recent enrolments.
+                $enrolments = $DB->get_records_sql(
+                    "SELECT ue.id, u.firstname, u.lastname, c.fullname AS coursename, ue.timecreated
+                       FROM {user_enrolments} ue
+                       JOIN {enrol} e ON e.id = ue.enrolid
+                       JOIN {user} u ON u.id = ue.userid
+                       JOIN {course} c ON c.id = e.courseid
+                      WHERE ue.timecreated > 0
+                   ORDER BY ue.timecreated DESC", [], 0, 5);
+                foreach ($enrolments as $enr) {
+                    $recentactivity[] = [
+                        'icon'  => 'plus-circle',
+                        'color' => '#0066A7',
+                        'text'  => fullname($enr) . ' enrolled in ' . format_string($enr->coursename),
+                        'time'  => userdate($enr->timecreated, '%d %b, %I:%M %p'),
+                        'ts'    => $enr->timecreated,
+                    ];
+                }
+
+                // Sort by timestamp descending, take top 8.
+                usort($recentactivity, function($a, $b) { return $b['ts'] - $a['ts']; });
+                $airpay_dashboard['recentactivity'] = array_slice($recentactivity, 0, 8);
+                $airpay_dashboard['hasrecentactivity'] = !empty($airpay_dashboard['recentactivity']);
+            } catch (\Throwable $e) {
+                // Silently skip if queries fail.
+            }
+
+            // ── Top Courses (most active this month) ──
+            try {
+                $topcourses = $DB->get_records_sql(
+                    "SELECT c.id, c.fullname, COUNT(ue.id) AS enrolcount,
+                            (SELECT COUNT(cc2.id) FROM {course_completions} cc2
+                             WHERE cc2.course = c.id AND cc2.timecompleted IS NOT NULL) AS completions
+                       FROM {course} c
+                       JOIN {enrol} e ON e.courseid = c.id
+                       JOIN {user_enrolments} ue ON ue.enrolid = e.id
+                      WHERE c.visible = 1 AND c.id > 1
+                   GROUP BY c.id, c.fullname
+                   ORDER BY enrolcount DESC", [], 0, 5);
+                $airpay_dashboard['topcourses'] = [];
+                foreach ($topcourses as $tc) {
+                    $airpay_dashboard['topcourses'][] = [
+                        'name'        => format_string($tc->fullname),
+                        'enrolled'    => number_format($tc->enrolcount),
+                        'completions' => number_format($tc->completions),
+                        'url'         => (new moodle_url('/course/view.php', ['id' => $tc->id]))->out(false),
+                    ];
+                }
+                $airpay_dashboard['hastopcourses'] = !empty($airpay_dashboard['topcourses']);
+            } catch (\Throwable $e) {
+                // Silently skip.
+            }
 
             // Enrollment data by month (last 6 months) for Chart.js.
             $chartdata = [];

@@ -295,6 +295,68 @@
             </script>
             {{/hascharts}}
 
+            {{! ── Compliance Summary + Top Courses (two-column) ── }}
+            <div class="airpay-dash__two-col" style="margin-top: 20px;">
+                {{#hascompliance}}
+                <div class="airpay-dash__section">
+                    <h3 class="airpay-dash__section-title"><i class="fa fa-shield"></i> Compliance Overview</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px;">
+                        <div style="background: var(--ap-color-bg-surface); border: 1px solid var(--ap-color-border); border-radius: 10px; padding: 16px; text-align: center;">
+                            <div style="font-size: 28px; font-weight: 700; color: var(--ap-color-primary);">{{compliance.mandatory}}</div>
+                            <div style="font-size: 12px; color: var(--ap-color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Mandatory Courses</div>
+                        </div>
+                        <div style="background: var(--ap-color-bg-surface); border: 1px solid var(--ap-color-border); border-radius: 10px; padding: 16px; text-align: center;">
+                            <div style="font-size: 28px; font-weight: 700; color: #16a34a;">{{compliance.compliant}}</div>
+                            <div style="font-size: 12px; color: var(--ap-color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Compliance Rate</div>
+                        </div>
+                        <div style="background: var(--ap-color-bg-surface); border: 1px solid var(--ap-color-border); border-radius: 10px; padding: 16px; text-align: center;">
+                            <div style="font-size: 28px; font-weight: 700; color: #dc2626;">{{compliance.overdue}}</div>
+                            <div style="font-size: 12px; color: var(--ap-color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Overdue</div>
+                        </div>
+                        <div style="background: var(--ap-color-bg-surface); border: 1px solid var(--ap-color-border); border-radius: 10px; padding: 16px; text-align: center;">
+                            <div style="font-size: 28px; font-weight: 700; color: var(--ap-color-text-primary);">{{compliance.assigned}}</div>
+                            <div style="font-size: 12px; color: var(--ap-color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Total Assigned</div>
+                        </div>
+                    </div>
+                </div>
+                {{/hascompliance}}
+
+                {{#hastopcourses}}
+                <div class="airpay-dash__section">
+                    <h3 class="airpay-dash__section-title"><i class="fa fa-trophy"></i> Top Courses</h3>
+                    <div style="padding: 8px 16px;">
+                        {{#topcourses}}
+                        <a href="{{{url}}}" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--ap-color-border); text-decoration: none; color: inherit;">
+                            <span style="font-size: 13px; font-weight: 500; color: var(--ap-color-text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60%;">{{name}}</span>
+                            <span style="display: flex; gap: 16px; font-size: 12px; color: var(--ap-color-text-secondary);">
+                                <span>{{enrolled}} enrolled</span>
+                                <span>{{completions}} completed</span>
+                            </span>
+                        </a>
+                        {{/topcourses}}
+                    </div>
+                </div>
+                {{/hastopcourses}}
+            </div>
+
+            {{! ── Recent Activity ── }}
+            {{#hasrecentactivity}}
+            <div class="airpay-dash__section" style="margin-top: 20px;">
+                <h3 class="airpay-dash__section-title"><i class="fa fa-clock-o"></i> Recent Activity</h3>
+                <div style="padding: 8px 16px;">
+                    {{#recentactivity}}
+                    <div style="display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--ap-color-border);">
+                        <i class="fa fa-{{icon}}" style="color: {{color}}; margin-top: 3px; width: 16px; text-align: center;"></i>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-size: 13px; color: var(--ap-color-text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{text}}</div>
+                            <div style="font-size: 11px; color: var(--ap-color-text-muted); margin-top: 2px;">{{time}}</div>
+                        </div>
+                    </div>
+                    {{/recentactivity}}
+                </div>
+            </div>
+            {{/hasrecentactivity}}
+
             {{/isadmin}}
 
             {{! ═══ MANAGER TEAM SECTION (managers only — shown above learner content) ═══ }}
