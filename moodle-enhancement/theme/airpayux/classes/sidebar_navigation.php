@@ -81,37 +81,63 @@ class sidebar_navigation {
         $items = [];
         $currenturl = $this->page->url->out(false);
 
-        // ── Learner items (everyone sees these) ──────────
-        $items[] = $this->item('Dashboard', 'fa-home', '/my/', $currenturl, null, ['/my/index.php']);
-        $items[] = $this->item('My Courses', 'fa-book', '/local/airpay_catalog/mycourses.php', $currenturl);
-        $items[] = $this->item('Catalog', 'fa-compass', '/local/airpay_catalog/public.php', $currenturl,
-            null, ['airpay_catalog']);
-        $items[] = $this->item('Certificates', 'fa-certificate', '/local/airpay_pages/certificates.php', $currenturl);
-        $items[] = $this->item('Profile', 'fa-user', '/local/airpay_users/profile.php', $currenturl);
-
-        // ── Manager items ────────────────────────────────
-        if ($this->ismanager) {
+        // ═══════════════════════════════════════════════════
+        // SITEADMIN — platform operator, NOT a learner
+        // Order: high-frequency admin tasks first
+        // ═══════════════════════════════════════════════════
+        if ($this->issiteadmin) {
+            $items[] = $this->item('Dashboard', 'fa-home', '/my/', $currenturl, null, ['/my/index.php']);
+            $items[] = $this->item('Manage Users', 'fa-user-cog', '/local/airpay_users/index.php', $currenturl);
+            $items[] = $this->item('Manage Courses', 'fa-folder-open', '/local/airpay_catalog/index.php', $currenturl);
+            $items[] = $this->item('Reports', 'fa-chart-bar', '/blocks/learnerscript/managereport.php', $currenturl);
+            $items[] = $this->item('Analytics', 'fa-chart-line', '/local/airpay_analytics/index.php', $currenturl);
+            $items[] = $this->item('Compliance', 'fa-shield-alt', '/local/airpay_compliance_report/index.php', $currenturl);
             $items[] = $this->divider();
-            $items[] = $this->item('My Team', 'fa-users', '/local/airpay_manager/index.php', $currenturl);
+            $items[] = $this->item('Emails', 'fa-envelope', '/local/airpay_emails/manage.php', $currenturl);
+            $items[] = $this->item('Privacy', 'fa-lock', '/local/airpay_privacy/index.php', $currenturl);
+            $items[] = $this->item('Site Admin', 'fa-cog', '/admin/search.php', $currenturl);
+            return $items;
         }
 
-        // ── L&D Admin items ──────────────────────────────
-        if ($this->isldadmin || $this->issiteadmin) {
-            $items[] = $this->divider();
+        // ═══════════════════════════════════════════════════
+        // L&D ADMIN — manages courses and users, NOT a learner
+        // Order: course/user management, then reporting
+        // ═══════════════════════════════════════════════════
+        if ($this->isldadmin) {
+            $items[] = $this->item('Dashboard', 'fa-home', '/my/', $currenturl, null, ['/my/index.php']);
             $items[] = $this->item('Manage Users', 'fa-user-cog', '/local/airpay_users/index.php', $currenturl);
             $items[] = $this->item('Manage Courses', 'fa-folder-open', '/local/airpay_catalog/index.php', $currenturl);
             $items[] = $this->item('Reports', 'fa-chart-bar', '/blocks/learnerscript/managereport.php', $currenturl);
             $items[] = $this->item('Compliance', 'fa-shield-alt', '/local/airpay_compliance_report/index.php', $currenturl);
             $items[] = $this->item('Analytics', 'fa-chart-line', '/local/airpay_analytics/index.php', $currenturl);
+            return $items;
         }
 
-        // ── Siteadmin items ──────────────────────────────
-        if ($this->issiteadmin) {
+        // ═══════════════════════════════════════════════════
+        // MANAGER — team lead, also a learner
+        // Order: team management first, then own learning
+        // ═══════════════════════════════════════════════════
+        if ($this->ismanager) {
+            $items[] = $this->item('Dashboard', 'fa-home', '/my/', $currenturl, null, ['/my/index.php']);
+            $items[] = $this->item('My Team', 'fa-users', '/local/airpay_manager/index.php', $currenturl);
+            $items[] = $this->item('Compliance', 'fa-shield-alt', '/local/airpay_compliance_report/index.php', $currenturl);
             $items[] = $this->divider();
-            $items[] = $this->item('Emails', 'fa-envelope', '/local/airpay_emails/manage.php', $currenturl);
-            $items[] = $this->item('Privacy', 'fa-lock', '/local/airpay_privacy/index.php', $currenturl);
-            $items[] = $this->item('Site Admin', 'fa-cog', '/admin/search.php', $currenturl);
+            $items[] = $this->item('My Courses', 'fa-book', '/local/airpay_catalog/mycourses.php', $currenturl);
+            $items[] = $this->item('Catalog', 'fa-compass', '/local/airpay_catalog/public.php', $currenturl);
+            $items[] = $this->item('Certificates', 'fa-certificate', '/local/airpay_pages/certificates.php', $currenturl);
+            $items[] = $this->item('Profile', 'fa-user', '/local/airpay_users/profile.php', $currenturl);
+            return $items;
         }
+
+        // ═══════════════════════════════════════════════════
+        // LEARNER (employee / external) — default
+        // Order: learning activities first
+        // ═══════════════════════════════════════════════════
+        $items[] = $this->item('Dashboard', 'fa-home', '/my/', $currenturl, null, ['/my/index.php']);
+        $items[] = $this->item('My Courses', 'fa-book', '/local/airpay_catalog/mycourses.php', $currenturl);
+        $items[] = $this->item('Catalog', 'fa-compass', '/local/airpay_catalog/public.php', $currenturl);
+        $items[] = $this->item('Certificates', 'fa-certificate', '/local/airpay_pages/certificates.php', $currenturl);
+        $items[] = $this->item('Profile', 'fa-user', '/local/airpay_users/profile.php', $currenturl);
 
         return $items;
     }
