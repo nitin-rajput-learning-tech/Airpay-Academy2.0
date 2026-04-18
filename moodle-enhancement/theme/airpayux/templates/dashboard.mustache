@@ -133,33 +133,27 @@
                         </div>
                     {{/secondarymoremenu}}
 
-        {{! ═══ AIRPAY DASHBOARD — Full-width top section ═══ }}
+        {{! ═══ AIRPAY DASHBOARD ═══ }}
         {{#airpay}}
         <div class="airpay-dash">
 
-            {{! Welcome Banner — NOT shown for admin (they have KPIs + Quick Nav) }}
-            {{^isadmin}}
-            <div class="airpay-dash__welcome">
-                <div class="airpay-dash__welcome-content">
-                    {{#ismanager}}
-                    <h2 class="airpay-dash__welcome-title">Welcome, {{firstname}} <span>👋</span></h2>
-                    <p class="airpay-dash__welcome-sub">Team overview and your learning progress</p>
-                    {{/ismanager}}
-                    {{^ismanager}}
-                    <h2 class="airpay-dash__welcome-title">Welcome back, {{firstname}}! <span>👋</span></h2>
-                    <p class="airpay-dash__welcome-sub">Continue where you left off and keep building your skills</p>
-                    {{/ismanager}}
-                </div>
-                <div class="airpay-dash__welcome-actions">
-                    <a href="{{{config.wwwroot}}}/local/search/allcourses.php" class="airpay-dash__welcome-btn airpay-dash__welcome-btn--primary">
-                        <i class="fa fa-compass"></i> Browse Courses
-                    </a>
-                    <a href="{{{config.wwwroot}}}/local/users/profile.php" class="airpay-dash__welcome-btn airpay-dash__welcome-btn--outline">
-                        <i class="fa fa-user"></i> My Profile
-                    </a>
-                </div>
+            {{! Welcome header — all roles }}
+            <div class="airpay-dash__welcome-header" style="margin-bottom: 20px;">
+                {{#isadmin}}
+                <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--ap-color-text-primary); margin: 0;">Welcome back, {{firstname}}</h2>
+                <p style="font-size: 0.875rem; color: var(--ap-color-text-secondary); margin: 4px 0 0;">
+                    {{#tenant_scope}}{{tenant_scope}} &mdash; {{/tenant_scope}}Platform overview and system health
+                </p>
+                {{/isadmin}}
+                {{#ismanager}}{{^isadmin}}
+                <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--ap-color-text-primary); margin: 0;">Welcome, {{firstname}}</h2>
+                <p style="font-size: 0.875rem; color: var(--ap-color-text-secondary); margin: 4px 0 0;">Team overview and compliance status</p>
+                {{/isadmin}}{{/ismanager}}
+                {{^isadmin}}{{^ismanager}}
+                <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--ap-color-text-primary); margin: 0;">Welcome back, {{firstname}}!</h2>
+                <p style="font-size: 0.875rem; color: var(--ap-color-text-secondary); margin: 4px 0 0;">Continue where you left off and keep building your skills</p>
+                {{/ismanager}}{{/isadmin}}
             </div>
-            {{/isadmin}}
 
             {{! ═══ ADMIN DASHBOARD (siteadmin / L&D admin) ═══ }}
             {{#isadmin}}
@@ -180,30 +174,7 @@
             </div>
             {{/hasadminkpis}}
 
-            {{! Admin Quick Navigation (above charts) }}
-            {{#hasquicknav}}
-            <div class="airpay-dash__section">
-                <h3 class="airpay-dash__section-title"><i class="fa fa-th-large"></i> Quick Navigation</h3>
-                <div class="airpay-dash__quicknav">
-                    {{#admin_quicknav}}
-                    <a href="{{url}}" class="airpay-dash__quicknav-card" style="border-top: 3px solid {{color}}">
-                        <i class="fa fa-{{icon}}" style="color: {{color}}"></i>
-                        <span>{{label}}</span>
-                        {{#hasstats}}
-                        <div class="airpay-dash__quicknav-stats">
-                            {{#stats}}
-                            <div class="airpay-dash__quicknav-stat">
-                                <strong>{{statval}}</strong>
-                                {{statlabel}}
-                            </div>
-                            {{/stats}}
-                        </div>
-                        {{/hasstats}}
-                    </a>
-                    {{/admin_quicknav}}
-                </div>
-            </div>
-            {{/hasquicknav}}
+            {{! Quick Navigation REMOVED — sidebar handles navigation now }}
 
             {{! Admin Charts (Chart.js) }}
             {{#hascharts}}
