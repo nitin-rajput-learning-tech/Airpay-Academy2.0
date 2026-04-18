@@ -236,7 +236,8 @@ class analytics_manager {
     /**
      * Calculate trend percentage and direction.
      */
-    private static function trend(int $current, int $previous): array {
+    private static function trend(int $current, ?int $previous = 0): array {
+        $previous = $previous ?? 0;
         if ($previous == 0) {
             return ['pct' => $current > 0 ? 100 : 0, 'direction' => 'up', 'label' => $current > 0 ? '+100%' : '0%'];
         }

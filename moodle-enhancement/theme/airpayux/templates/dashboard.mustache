@@ -61,12 +61,17 @@
         {{! Sidebar }}
         {{#sidebar}}
         <aside class="ap-sidebar" id="ap-sidebar" data-collapsed="{{#collapsed}}true{{/collapsed}}{{^collapsed}}false{{/collapsed}}">
+            {{! Logo — prominent, no redundant text }}
             <div class="ap-sidebar__logo">
                 <a href="{{{wwwroot}}}/my/" class="ap-sidebar__logo-link">
                     <img src="{{{logourl}}}" alt="{{sitename}}" class="ap-sidebar__logo-img">
-                    <span class="ap-sidebar__logo-text">{{sitename}}</span>
                 </a>
+                <button class="ap-sidebar__collapse-btn" id="ap-sidebar-toggle" title="Collapse sidebar">
+                    <i class="fa fa-chevron-left ap-sidebar__toggle-icon"></i>
+                </button>
             </div>
+
+            {{! Navigation }}
             <nav class="ap-sidebar__nav" aria-label="Main navigation">
                 <ul class="ap-sidebar__list">
                     {{#navitems}}
@@ -79,14 +84,14 @@
                     {{/navitems}}
                 </ul>
             </nav>
+
+            {{! User profile — clearly labeled }}
             <div class="ap-sidebar__bottom">
-                <button class="ap-sidebar__toggle" id="ap-sidebar-toggle" title="Toggle sidebar">
-                    <i class="fa fa-chevron-left ap-sidebar__toggle-icon"></i>
-                </button>
-                <a href="{{{profileurl}}}" class="ap-sidebar__user">
+                <a href="{{{profileurl}}}" class="ap-sidebar__user" title="View profile">
                     <div class="ap-sidebar__avatar">{{{useravatar}}}</div>
                     <div class="ap-sidebar__userinfo">
                         <span class="ap-sidebar__username">{{userfullname}}</span>
+                        <span class="ap-sidebar__userrole">View Profile</span>
                     </div>
                 </a>
             </div>
