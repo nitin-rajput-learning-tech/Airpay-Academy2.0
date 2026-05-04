@@ -182,4 +182,158 @@ class evaluation_manager {
         }
         return true;
     }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Question CRUD (sub-entity of evaluation form)
+    // ═══════════════════════════════════════════════════════════════════
+
+    /** Question types and their display labels. */
+    public const QUESTION_TYPES = [
+        'rating'      => '5-point rating (1=Strongly Disagree → 5=Strongly Agree)',
+        'nps'         => 'NPS (0-10 likelihood)',
+        'yesno'       => 'Yes / No',
+        'multichoice' => 'Multiple choice (one answer)',
+        'text'        => 'Free text response',
+    ];
+
+    public static function get_questions(int $evaluationid): array {
+        global $DB;
+        return $DB->get_records(self::QUESTIONS_TABLE,
+            ['evaluationid' => $evaluationid], 'sortorder ASC, id ASC');
+    }
+
+    public static function get_question(int $questionid) {
+        global $DB;
+        return $DB->get_record(self::QUESTIONS_TABLE, ['id' => $questionid]);
+    }
+
+    /**
+     * Create a question. Auto-assigns sortorder = max + 1 within evaluation.
+     */
+    public static function create_question(object $data): int {
+        global $DB;
+
+        if (empty($data->evaluationid) || empty($data->questiontext) || empty($data->questiontype)) {
+            throw new \moodle_exception('missingrequiredfields', 'local_airpay_evaluation');
+        }
+
+        if (!array_key_exists($data->questiontype, self::QUESTION_TYPES)) {
+            throw new \moodle_exception('invalidquestiontype', 'local_airpay_evaluation');
+        }
+
+        if (!$DB->record_exists(self::TABLE, ['id' => $data->evaluationid])) {
+            throw new \moodle_exception('invalidevaluation', 'local_airpay_evaluation');
+        }
+
+        // Multichoice requires options.
+        $options_json = null;
+        if ($data->questiontype === 'multichoice') {
+            $opts = self::parse_options($data->options ?? '');
+            if (count($opts) < 2) {
+                throw new \moodle_exception('multichoice_needs_options', 'local_airpay_evaluation');
+            }
+            $options_json = json_encode($opts);
+        }
+
+        // Auto-increment sortorder.
+        $maxsort = $DB->get_field_sql(
+            "SELECT MAX(sortorder) FROM {" . self::QUESTIONS_TABLE . "} WHERE evaluationid = :eid",
+            ['eid' => $data->evaluationid]);
+
+        $record = (object) [
+            'evaluationid' => (int) $data->evaluationid,
+            'questiontype' => $data->questiontype,
+            'questiontext' => trim($data->questiontext),
+            'options'      => $options_json,
+            'required'     => isset($data->required) ? (int) $data->required : 1,
+            'sortorder'    => isset($data->sortorder) ? (int) $data->sortorder : ((int) $maxsort + 1),
+            'timecreated'  => time(),
+        ];
+
+        return $DB->insert_record(self::QUESTIONS_TABLE, $record);
+    }
+
+    public static function update_question(int $id, object $data): bool {
+        global $DB;
+        $existing = $DB->get_record(self::QUESTIONS_TABLE, ['id' => $id], '*', MUST_EXIST);
+
+        $record = (object) ['id' => $id];
+
+        if (isset($data->questiontype)) {
+            if (!array_key_exists($data->questiontype, self::QUESTION_TYPES)) {
+                throw new \moodle_exception('invalidquestiontype', 'local_airpay_evaluation');
+            }
+            $record->questiontype = $data->questiontype;
+        }
+        if (isset($data->questiontext)) $record->questiontext = trim($data->questiontext);
+        if (isset($data->required))     $record->required = (int) $data->required;
+        if (isset($data->sortorder))    $record->sortorder = (int) $data->sortorder;
+
+        $finaltype = $record->questiontype ?? $existing->questiontype;
+        if ($finaltype === 'multichoice' && isset($data->options)) {
+            $opts = self::parse_options($data->options);
+            if (count($opts) < 2) {
+                throw new \moodle_exception('multichoice_needs_options', 'local_airpay_evaluation');
+            }
+            $record->options = json_encode($opts);
+        } else if (isset($record->questiontype) && $record->questiontype !== 'multichoice') {
+            $record->options = null;
+        }
+
+        $DB->update_record(self::QUESTIONS_TABLE, $record);
+        return true;
+    }
+
+    public static function delete_question(int $id): bool {
+        global $DB;
+        $DB->get_record(self::QUESTIONS_TABLE, ['id' => $id], '*', MUST_EXIST);
+        $DB->delete_records(self::QUESTIONS_TABLE, ['id' => $id]);
+        return true;
+    }
+
+    /**
+     * Reorder questions — accepts an ordered array of question IDs.
+     * Each ID's sortorder is set to its index in the array.
+     */
+    public static function reorder_questions(int $evaluationid, array $ordered_ids): bool {
+        global $DB;
+
+        $transaction = $DB->start_delegated_transaction();
+        try {
+            $sortorder = 0;
+            foreach ($ordered_ids as $qid) {
+                $qid = (int) $qid;
+                if (!$DB->record_exists(self::QUESTIONS_TABLE,
+                    ['id' => $qid, 'evaluationid' => $evaluationid])) {
+                    continue;
+                }
+                $DB->set_field(self::QUESTIONS_TABLE, 'sortorder', $sortorder, ['id' => $qid]);
+                $sortorder++;
+            }
+            $transaction->allow_commit();
+        } catch (\Throwable $e) {
+            $transaction->rollback($e);
+        }
+        return true;
+    }
+
+    /** Parse options text (one per line) into clean array. */
+    public static function parse_options(string $raw): array {
+        $lines = preg_split('/\r\n|\r|\n/', trim($raw));
+        $opts = [];
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if ($line !== '') {
+                $opts[] = $line;
+            }
+        }
+        return $opts;
+    }
+
+    /** Decode stored options JSON back to array. */
+    public static function decode_options(?string $json): array {
+        if (empty($json)) return [];
+        $decoded = json_decode($json, true);
+        return is_array($decoded) ? $decoded : [];
+    }
 }

@@ -53,3 +53,28 @@ $string['evaluationcreated'] = 'Evaluation form created.';
 $string['evaluationupdated'] = 'Evaluation form updated.';
 $string['evaluationdeleted'] = 'Evaluation deleted.';
 $string['evaluationstatuschanged'] = 'Evaluation status updated.';
+
+// Question builder.
+$string['managequestions'] = 'Manage Questions';
+$string['addquestion'] = 'Add Question';
+$string['editquestion'] = 'Edit Question';
+$string['deletequestion'] = 'Delete Question';
+$string['question_type'] = 'Question type';
+$string['question_type_help'] = 'Choose how learners will respond. Rating is best for L1/L2 evaluations; NPS for advocacy; multichoice for forced-choice scenarios; text for qualitative feedback.';
+$string['question_text'] = 'Question text';
+$string['question_options'] = 'Answer options (one per line)';
+$string['question_options_help'] = 'For multiple choice questions only. Enter each option on a new line. Minimum 2 options required.';
+$string['question_required'] = 'Required (learner must answer)';
+
+// Question errors.
+$string['invalidquestiontype'] = 'Invalid question type.';
+$string['invalidevaluation'] = 'Evaluation form not found.';
+$string['invalidquestion'] = 'Question not found.';
+$string['multichoice_needs_options'] = 'Multiple choice questions need at least 2 options.';
+$string['confirmdeletequestion'] = 'Delete this question? Any responses to it will also be removed from past submissions.';
+
+// Question success.
+$string['questioncreated'] = 'Question added.';
+$string['questionupdated'] = 'Question updated.';
+$string['questiondeleted'] = 'Question deleted.';
+$string['orderupdated'] = 'Question order saved.';

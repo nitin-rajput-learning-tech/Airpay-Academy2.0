@@ -16,4 +16,18 @@ $functions = [
         'ajax'         => true,
         'capabilities' => 'local/airpay_evaluation:manage',
     ],
+    'local_airpay_evaluation_delete_question' => [
+        'classname'    => 'local_airpay_evaluation\external\delete_question',
+        'description'  => 'Delete a question from an evaluation form',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_evaluation:manage',
+    ],
+    'local_airpay_evaluation_reorder_questions' => [
+        'classname'    => 'local_airpay_evaluation\external\reorder_questions',
+        'description'  => 'Reorder questions within an evaluation form',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_evaluation:manage',
+    ],
 ];
