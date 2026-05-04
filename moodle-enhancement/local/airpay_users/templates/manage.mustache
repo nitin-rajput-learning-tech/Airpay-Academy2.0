@@ -6,6 +6,7 @@
 }}
 
 {{! ── Header ────────────────────────────────────────── }}
+<div data-region="airpay-users">
 <div class="ap-page-header d-flex justify-content-between align-items-start mb-4">
     <div>
         <h2 class="mb-1" style="font-weight: 700;">User Management</h2>
@@ -16,7 +17,7 @@
             <i class="fa fa-download fa-fw"></i> Export CSV
         </a>
         {{#can_create}}
-        <a href="#" class="btn btn-primary btn-sm" id="airpay-create-user-btn">
+        <a href="#" class="btn btn-primary btn-sm" data-action="create-user">
             <i class="fa fa-plus fa-fw"></i> Add User
         </a>
         {{/can_create}}
@@ -180,20 +181,24 @@
                                     </a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="{{{profileurl}}}&action=edit">
+                                    <a class="dropdown-item" href="#"
+                                       data-action="edit-user" data-userid="{{id}}" data-username="{{fullname}}">
                                         <i class="fa fa-pencil fa-fw"></i> Edit
                                     </a>
                                 </li>
                                 <li>
+                                    {{#issuspended}}
                                     <a class="dropdown-item" href="#"
-                                       data-action="toggle-suspend" data-userid="{{id}}" data-sesskey="{{sesskey}}">
-                                        {{#issuspended}}
+                                       data-action="activate-user" data-userid="{{id}}" data-username="{{fullname}}">
                                         <i class="fa fa-check-circle fa-fw text-success"></i> Activate
-                                        {{/issuspended}}
-                                        {{^issuspended}}
-                                        <i class="fa fa-ban fa-fw text-warning"></i> Suspend
-                                        {{/issuspended}}
                                     </a>
+                                    {{/issuspended}}
+                                    {{^issuspended}}
+                                    <a class="dropdown-item" href="#"
+                                       data-action="suspend-user" data-userid="{{id}}" data-username="{{fullname}}">
+                                        <i class="fa fa-ban fa-fw text-warning"></i> Suspend
+                                    </a>
+                                    {{/issuspended}}
                                 </li>
                                 {{#can_delete}}
                                 <li><hr class="dropdown-divider"></li>
@@ -249,3 +254,10 @@
     </ul>
 </nav>
 {{/has_pagination}}
+
+</div>
+{{#js}}
+require(['local_airpay_users/user_actions'], function(UserActions) {
+    UserActions.init();
+});
+{{/js}}

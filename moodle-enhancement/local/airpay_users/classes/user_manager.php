@@ -254,4 +254,238 @@ class user_manager {
 
         return (int) $DB->count_records_sql($sql, $params);
     }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // CRUD operations
+    // ═══════════════════════════════════════════════════════════════════
+
+    /**
+     * Custom open_* fields that we own.
+     * Used when copying form data to user record before insert/update.
+     */
+    private const CUSTOM_FIELDS = [
+        'open_employeeid', 'open_designation', 'open_supervisorid',
+        'open_path', 'open_costcenterid', 'open_departmentid',
+        'open_location', 'open_team', 'open_grade', 'open_zone',
+        'open_region', 'open_employmenttype', 'open_joindate',
+        'open_dateofbirth', 'open_prefix', 'open_client',
+        'open_hrmsrole',
+    ];
+
+    /**
+     * Create a new user.
+     *
+     * Wraps Moodle's user_create_user() to ensure all events fire and
+     * filearea is set up correctly. After creation, applies custom open_*
+     * fields directly to the user record (since user_create_user() doesn't
+     * know about them).
+     *
+     * @param object $data  Form data with: username, email, firstname, lastname,
+     *                      auth, password, plus optional open_* fields
+     * @return int  New user ID
+     * @throws \moodle_exception  On validation failure
+     */
+    public static function create(object $data): int {
+        global $DB, $CFG;
+        require_once($CFG->dirroot . '/user/lib.php');
+        require_once($CFG->libdir . '/moodlelib.php');
+
+        // Validate required fields.
+        if (empty($data->username) || empty($data->email) ||
+            empty($data->firstname) || empty($data->lastname)) {
+            throw new \moodle_exception('missingrequiredfields', 'local_airpay_users');
+        }
+
+        // Check uniqueness.
+        if ($DB->record_exists('user', ['username' => strtolower($data->username),
+                                         'mnethostid' => $CFG->mnet_localhost_id])) {
+            throw new \moodle_exception('usernametaken', 'local_airpay_users');
+        }
+        if ($DB->record_exists('user', ['email' => $data->email, 'deleted' => 0])) {
+            throw new \moodle_exception('emailtaken', 'local_airpay_users');
+        }
+
+        // Build user record for core API.
+        $user = new \stdClass();
+        $user->username   = strtolower(trim($data->username));
+        $user->email      = trim($data->email);
+        $user->firstname  = trim($data->firstname);
+        $user->lastname   = trim($data->lastname);
+        $user->auth       = $data->auth ?? 'manual';
+        $user->confirmed  = 1;
+        $user->mnethostid = $CFG->mnet_localhost_id;
+        $user->lang       = $data->lang ?? $CFG->lang;
+        $user->timezone   = $data->timezone ?? '99';
+        $user->city       = $data->city ?? '';
+        $user->country    = $data->country ?? '';
+        $user->phone1     = $data->phone1 ?? '';
+        $user->department = $data->department ?? '';
+
+        // Password (only for manual auth).
+        $password = '';
+        if ($user->auth === 'manual' && !empty($data->password)) {
+            $password = $data->password;
+        }
+
+        // Create via core API (fires events, sets up filearea).
+        $userid = user_create_user($user, false, true);
+
+        // Set password separately so it gets hashed properly.
+        if ($password) {
+            $user->id = $userid;
+            update_internal_user_password($user, $password);
+        }
+
+        // Apply custom open_* fields.
+        self::apply_custom_fields($userid, $data);
+
+        // Email welcome (if requested and password set).
+        if (!empty($data->emailwelcome) && $password) {
+            $user->id = $userid;
+            setnew_password_and_mail($user);
+            unset_user_preference('create_password', $user);
+            set_user_preference('auth_forcepasswordchange', 1, $user);
+        }
+
+        return $userid;
+    }
+
+    /**
+     * Update an existing user.
+     *
+     * @param int $userid
+     * @param object $data  Form data
+     * @return bool  Success
+     * @throws \moodle_exception
+     */
+    public static function update(int $userid, object $data): bool {
+        global $DB, $CFG;
+        require_once($CFG->dirroot . '/user/lib.php');
+
+        $existing = $DB->get_record('user', ['id' => $userid, 'deleted' => 0], '*', MUST_EXIST);
+
+        // Build update record. Only include fields that changed/were sent.
+        $user = new \stdClass();
+        $user->id = $userid;
+
+        // Standard fields.
+        $stdfields = ['email', 'firstname', 'lastname', 'city', 'country',
+                      'phone1', 'department', 'timezone', 'lang'];
+        foreach ($stdfields as $field) {
+            if (isset($data->$field)) {
+                $user->$field = trim((string) $data->$field);
+            }
+        }
+
+        // Email uniqueness (if changed).
+        if (isset($user->email) && $user->email !== $existing->email) {
+            if ($DB->record_exists_select('user',
+                'email = :email AND deleted = 0 AND id != :uid',
+                ['email' => $user->email, 'uid' => $userid])) {
+                throw new \moodle_exception('emailtaken', 'local_airpay_users');
+            }
+        }
+
+        // Update via core API (fires events).
+        user_update_user($user, false, true);
+
+        // Apply custom open_* fields.
+        self::apply_custom_fields($userid, $data);
+
+        // Password change (if provided).
+        if (!empty($data->newpassword)) {
+            $userobj = $DB->get_record('user', ['id' => $userid]);
+            update_internal_user_password($userobj, $data->newpassword);
+        }
+
+        return true;
+    }
+
+    /**
+     * Apply custom open_* fields directly to user record.
+     *
+     * @param int $userid
+     * @param object $data  Form data
+     */
+    private static function apply_custom_fields(int $userid, object $data): void {
+        global $DB;
+
+        $update = ['id' => $userid];
+        foreach (self::CUSTOM_FIELDS as $field) {
+            if (property_exists($data, $field) && $data->$field !== null) {
+                $value = $data->$field;
+                // Date fields → unix timestamp.
+                if (in_array($field, ['open_joindate', 'open_dateofbirth'], true)) {
+                    if (is_array($value) && !empty($value)) {
+                        $value = mktime(0, 0, 0, $value['mon'] ?? 1, $value['day'] ?? 1, $value['year'] ?? 2000);
+                    } else if (is_string($value) && !empty($value)) {
+                        $value = strtotime($value);
+                    }
+                }
+                $update[$field] = $value;
+            }
+        }
+
+        // Auto-derive open_path from open_costcenterid if path not set.
+        if (!isset($update['open_path']) && !empty($update['open_costcenterid'])) {
+            $org = $DB->get_record('local_airpay_org', ['id' => $update['open_costcenterid']]);
+            if ($org) {
+                $update['open_path'] = $org->path;
+            }
+        }
+
+        if (count($update) > 1) {
+            $DB->update_record('user', (object) $update);
+        }
+    }
+
+    /**
+     * Toggle suspended status of a user.
+     *
+     * @param int $userid
+     * @param bool|null $suspended  null = toggle current state
+     * @return bool  New suspended state
+     * @throws \moodle_exception
+     */
+    public static function suspend(int $userid, ?bool $suspended = null): bool {
+        global $DB, $CFG;
+        require_once($CFG->dirroot . '/user/lib.php');
+
+        $user = $DB->get_record('user', ['id' => $userid, 'deleted' => 0], 'id, suspended', MUST_EXIST);
+
+        $newstate = $suspended ?? !((bool) $user->suspended);
+        $update = (object) ['id' => $userid, 'suspended' => $newstate ? 1 : 0];
+        user_update_user($update, false, true);
+
+        // Kill active sessions if suspending.
+        if ($newstate) {
+            \core\session\manager::kill_user_sessions($userid);
+        }
+
+        return $newstate;
+    }
+
+    /**
+     * Delete a user (soft delete).
+     *
+     * @param int $userid
+     * @return bool
+     * @throws \moodle_exception
+     */
+    public static function delete(int $userid): bool {
+        global $DB, $CFG;
+        require_once($CFG->dirroot . '/lib/moodlelib.php');
+
+        // Block deleting yourself or admin.
+        global $USER;
+        if ($userid == $USER->id) {
+            throw new \moodle_exception('cannotdeleteself', 'local_airpay_users');
+        }
+        if ($userid <= 2) {
+            throw new \moodle_exception('cannotdeletesystemuser', 'local_airpay_users');
+        }
+
+        $user = $DB->get_record('user', ['id' => $userid, 'deleted' => 0], '*', MUST_EXIST);
+        return delete_user($user);
+    }
 }

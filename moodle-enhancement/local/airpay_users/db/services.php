@@ -15,10 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Plugin version — Airpay User Engine.
- *
- * Replaces BizLMS local_users with Airpay-owned user management,
- * profile rendering, and open_* field ownership.
+ * Web service definitions for local_airpay_users.
  *
  * @package    local_airpay_users
  * @copyright  2026 Airpay Payment Services
@@ -27,11 +24,19 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'local_airpay_users';
-$plugin->version   = 2026041901;
-$plugin->requires  = 2024100700;
-$plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.1.0';
-$plugin->dependencies = [
-    'local_airpay_org' => 2026041600,
+$functions = [
+    'local_airpay_users_suspend_user' => [
+        'classname'   => 'local_airpay_users\external\suspend_user',
+        'description' => 'Suspend or activate a user',
+        'type'        => 'write',
+        'ajax'        => true,
+        'capabilities' => 'local/airpay_users:edit',
+    ],
+    'local_airpay_users_delete_user' => [
+        'classname'   => 'local_airpay_users\external\delete_user',
+        'description' => 'Delete a user (soft delete)',
+        'type'        => 'write',
+        'ajax'        => true,
+        'capabilities' => 'local/airpay_users:delete',
+    ],
 ];
