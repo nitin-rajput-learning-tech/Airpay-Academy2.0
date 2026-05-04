@@ -23,7 +23,14 @@
  */
 
 defined('MOODLE_INTERNAL') || die();
-define('FLICKR_DEV_KEY', '4fddbdd7ff2376beec54d7f6afad425e');
+
+// Flickr API key — admin must configure in Site Admin > Plugins > Blocks > Flickr tag.
+// Hardcoded demo key removed (was Moodle's public demo key — see Moodle MDL-79237).
+// To enable this block, get a key from https://www.flickr.com/services/apps/create/
+// and set $CFG->block_tag_flickr_apikey in config.php OR via plugin settings.
+if (!defined('FLICKR_DEV_KEY')) {
+    define('FLICKR_DEV_KEY', isset($CFG->block_tag_flickr_apikey) ? $CFG->block_tag_flickr_apikey : '');
+}
 define('DEFAULT_NUMBER_OF_PHOTOS', 6);
 
 require_once("{$CFG->libdir}/flickrclient.php");
