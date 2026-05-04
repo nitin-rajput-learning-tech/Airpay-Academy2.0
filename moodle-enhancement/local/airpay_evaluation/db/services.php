@@ -30,4 +30,11 @@ $functions = [
         'ajax'         => true,
         'capabilities' => 'local/airpay_evaluation:manage',
     ],
+    'local_airpay_evaluation_submit_response' => [
+        'classname'    => 'local_airpay_evaluation\external\submit_response',
+        'description'  => 'Submit a response to an evaluation form (learner)',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_evaluation:respond',
+    ],
 ];

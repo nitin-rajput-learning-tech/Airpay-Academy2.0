@@ -336,4 +336,242 @@ class evaluation_manager {
         $decoded = json_decode($json, true);
         return is_array($decoded) ? $decoded : [];
     }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Response submission + retrieval (learner + admin views)
+    // ═══════════════════════════════════════════════════════════════════
+
+    /**
+     * Has the user already submitted this evaluation?
+     * Anonymous evaluations always allow re-submission.
+     */
+    public static function has_user_responded(int $evaluationid, int $userid): bool {
+        global $DB;
+        $eval = self::get($evaluationid);
+        if (!$eval || (int) $eval->anonymous === 1) {
+            return false;
+        }
+        return $DB->record_exists(self::RESPONSES_TABLE,
+            ['evaluationid' => $evaluationid, 'userid' => $userid]);
+    }
+
+    /**
+     * Submit a response. Validates each answer against its question type.
+     */
+    public static function submit_response(int $evaluationid, int $userid,
+                                            array $answers, array $context = []): int {
+        global $DB;
+
+        $eval = self::get($evaluationid);
+        if (!$eval) {
+            throw new \moodle_exception('invalidevaluation', 'local_airpay_evaluation');
+        }
+        if ((int) $eval->status !== self::STATUS_ACTIVE) {
+            throw new \moodle_exception('evaluationnotactive', 'local_airpay_evaluation');
+        }
+
+        if ((int) $eval->anonymous !== 1 && $userid > 0) {
+            if (self::has_user_responded($evaluationid, $userid)) {
+                throw new \moodle_exception('alreadyresponded', 'local_airpay_evaluation');
+            }
+        }
+
+        $questions = self::get_questions($evaluationid);
+        if (empty($questions)) {
+            throw new \moodle_exception('evaluationhasnoquestions', 'local_airpay_evaluation');
+        }
+
+        $cleaned = [];
+        foreach ($questions as $q) {
+            $raw = $answers[$q->id] ?? null;
+            $clean = self::validate_answer($q, $raw);
+            $cleaned[$q->id] = $clean;
+        }
+
+        $stored_userid = ((int) $eval->anonymous === 1) ? 0 : $userid;
+
+        $record = (object) [
+            'evaluationid'  => $evaluationid,
+            'userid'        => $stored_userid,
+            'courseid'      => isset($context['courseid'])    ? (int) $context['courseid']    : null,
+            'programid'     => isset($context['programid'])   ? (int) $context['programid']   : null,
+            'classroomid'   => isset($context['classroomid']) ? (int) $context['classroomid'] : null,
+            'response_data' => json_encode($cleaned),
+            'timesubmitted' => time(),
+        ];
+
+        return $DB->insert_record(self::RESPONSES_TABLE, $record);
+    }
+
+    /**
+     * Validate a single answer against its question type.
+     * @throws \moodle_exception  On invalid answer for a required question
+     */
+    private static function validate_answer(object $question, $raw) {
+        $required = (int) ($question->required ?? 1) === 1;
+
+        if ($raw === null || $raw === '') {
+            if ($required) {
+                throw new \moodle_exception('answer_required', 'local_airpay_evaluation',
+                    '', $question->questiontext);
+            }
+            return null;
+        }
+
+        switch ($question->questiontype) {
+            case 'rating':
+                $v = (int) $raw;
+                if ($v < 1 || $v > 5) {
+                    throw new \moodle_exception('invalid_rating', 'local_airpay_evaluation',
+                        '', $question->questiontext);
+                }
+                return $v;
+            case 'nps':
+                $v = (int) $raw;
+                if ($v < 0 || $v > 10) {
+                    throw new \moodle_exception('invalid_nps', 'local_airpay_evaluation',
+                        '', $question->questiontext);
+                }
+                return $v;
+            case 'yesno':
+                $v = strtolower(trim((string) $raw));
+                if (!in_array($v, ['yes', 'no', '1', '0', 'true', 'false'], true)) {
+                    throw new \moodle_exception('invalid_yesno', 'local_airpay_evaluation',
+                        '', $question->questiontext);
+                }
+                return ($v === 'yes' || $v === '1' || $v === 'true') ? 'yes' : 'no';
+            case 'multichoice':
+                $opts = self::decode_options($question->options);
+                $raw = trim((string) $raw);
+                if (!in_array($raw, $opts, true)) {
+                    throw new \moodle_exception('invalid_multichoice', 'local_airpay_evaluation',
+                        '', $question->questiontext);
+                }
+                return $raw;
+            case 'text':
+                return trim((string) $raw);
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Get aggregate stats for each question (for admin response viewer).
+     */
+    public static function get_response_stats(int $evaluationid): array {
+        global $DB;
+
+        $questions = self::get_questions($evaluationid);
+        $responses = $DB->get_records(self::RESPONSES_TABLE,
+            ['evaluationid' => $evaluationid], 'timesubmitted DESC');
+
+        $stats = [];
+        foreach ($questions as $q) {
+            $stats[$q->id] = self::init_stats_bucket($q);
+        }
+
+        foreach ($responses as $r) {
+            $data = json_decode($r->response_data, true);
+            if (!is_array($data)) continue;
+            foreach ($data as $qid => $answer) {
+                $qid = (int) $qid;
+                if (!isset($stats[$qid])) continue;
+                if ($answer === null || $answer === '') continue;
+                self::accumulate_stat($stats[$qid], $questions[$qid] ?? null, $answer);
+            }
+        }
+
+        foreach ($stats as $qid => &$bucket) {
+            $q = $questions[$qid] ?? null;
+            if (!$q) continue;
+            self::finalise_stats($bucket, $q);
+        }
+        unset($bucket);
+
+        return $stats;
+    }
+
+    private static function init_stats_bucket(object $q): array {
+        switch ($q->questiontype) {
+            case 'rating':
+                return ['type' => 'rating', 'count' => 0, 'sum' => 0,
+                        'distribution' => [1 => 0, 2 => 0, 3 => 0, 4 => 0, 5 => 0]];
+            case 'nps':
+                return ['type' => 'nps', 'count' => 0, 'detractors' => 0,
+                        'passives' => 0, 'promoters' => 0, 'sum' => 0];
+            case 'yesno':
+                return ['type' => 'yesno', 'count' => 0, 'yes' => 0, 'no' => 0];
+            case 'multichoice':
+                $opts = self::decode_options($q->options);
+                $dist = [];
+                foreach ($opts as $o) $dist[$o] = 0;
+                return ['type' => 'multichoice', 'count' => 0, 'distribution' => $dist];
+            case 'text':
+                return ['type' => 'text', 'count' => 0, 'samples' => []];
+            default:
+                return ['type' => 'unknown', 'count' => 0];
+        }
+    }
+
+    private static function accumulate_stat(array &$bucket, ?object $q, $answer): void {
+        if (!$q) return;
+        $bucket['count']++;
+        switch ($q->questiontype) {
+            case 'rating':
+                $v = (int) $answer;
+                if ($v >= 1 && $v <= 5) {
+                    $bucket['sum'] += $v;
+                    $bucket['distribution'][$v]++;
+                }
+                break;
+            case 'nps':
+                $v = (int) $answer;
+                if ($v >= 0 && $v <= 10) {
+                    $bucket['sum'] += $v;
+                    if ($v <= 6) $bucket['detractors']++;
+                    else if ($v <= 8) $bucket['passives']++;
+                    else $bucket['promoters']++;
+                }
+                break;
+            case 'yesno':
+                if ($answer === 'yes') $bucket['yes']++;
+                else if ($answer === 'no') $bucket['no']++;
+                break;
+            case 'multichoice':
+                $a = (string) $answer;
+                if (isset($bucket['distribution'][$a])) {
+                    $bucket['distribution'][$a]++;
+                }
+                break;
+            case 'text':
+                if (count($bucket['samples']) < 5) {
+                    $bucket['samples'][] = (string) $answer;
+                }
+                break;
+        }
+    }
+
+    private static function finalise_stats(array &$bucket, object $q): void {
+        switch ($q->questiontype) {
+            case 'rating':
+                $bucket['avg'] = $bucket['count'] > 0
+                    ? round($bucket['sum'] / $bucket['count'], 2) : 0;
+                break;
+            case 'nps':
+                if ($bucket['count'] > 0) {
+                    $promoter_pct  = ($bucket['promoters']  / $bucket['count']) * 100;
+                    $detractor_pct = ($bucket['detractors'] / $bucket['count']) * 100;
+                    $bucket['nps_score'] = round($promoter_pct - $detractor_pct);
+                    $bucket['avg'] = round($bucket['sum'] / $bucket['count'], 1);
+                } else {
+                    $bucket['nps_score'] = 0;
+                    $bucket['avg'] = 0;
+                }
+                break;
+            case 'yesno':
+                $bucket['yes_pct'] = $bucket['count'] > 0
+                    ? round(($bucket['yes'] / $bucket['count']) * 100) : 0;
+                break;
+        }
+    }
 }

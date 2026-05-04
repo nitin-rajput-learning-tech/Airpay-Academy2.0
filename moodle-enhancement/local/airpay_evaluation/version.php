@@ -1,7 +1,7 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
 $plugin->component = 'local_airpay_evaluation';
-$plugin->version   = 2026041911;
+$plugin->version   = 2026041912;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.1.0';
+$plugin->release   = '1.2.0';

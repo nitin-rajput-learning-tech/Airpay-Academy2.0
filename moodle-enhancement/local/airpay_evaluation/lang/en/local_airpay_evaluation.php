@@ -78,3 +78,16 @@ $string['questioncreated'] = 'Question added.';
 $string['questionupdated'] = 'Question updated.';
 $string['questiondeleted'] = 'Question deleted.';
 $string['orderupdated'] = 'Question order saved.';
+
+// Response submission (learner-facing) and admin viewer.
+$string['viewresponses'] = 'View Responses';
+$string['evaluationnotactive'] = 'This evaluation is not currently accepting responses.';
+$string['alreadyresponded'] = 'You have already submitted this evaluation.';
+$string['evaluationhasnoquestions'] = 'This evaluation has no questions yet.';
+$string['answer_required'] = 'Required answer missing: {$a}';
+$string['invalid_rating'] = 'Rating must be 1-5: {$a}';
+$string['invalid_nps'] = 'NPS score must be 0-10: {$a}';
+$string['invalid_yesno'] = 'Answer must be Yes or No: {$a}';
+$string['invalid_multichoice'] = 'Selected option is not valid for: {$a}';
+$string['please_answer_required'] = 'Please answer all required questions before submitting.';
+$string['response_submitted'] = 'Thank you — your response has been recorded.';
