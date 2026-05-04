@@ -1,60 +1,161 @@
 {{!
-    Airpay Training Evaluations — feedback form management.
+    Airpay Training Evaluations — admin management.
     @template local_airpay_evaluation/manage
 }}
+<style>
+    [data-region="airpay-evaluation"] .dropdown-toggle.no-arrow::after { display: none !important; }
+    [data-region="airpay-evaluation"] .dropdown-toggle.no-arrow { box-shadow: none; background: none; border: none; }
+    [data-region="airpay-evaluation"] .dropdown-toggle.no-arrow:hover { color: var(--ap-color-primary, #0066A7) !important; }
+</style>
+
+<div data-region="airpay-evaluation">
 
 <div class="ap-page-header d-flex justify-content-between align-items-start mb-4">
     <div>
         <h2 class="mb-1" style="font-weight: 700;">Training Evaluations</h2>
-        <p class="text-muted mb-0">Manage post-training feedback forms and Kirkpatrick evaluation surveys.</p>
+        <p class="text-muted mb-0">Build Kirkpatrick-level feedback forms — measure reaction, learning, behaviour, and business results.</p>
     </div>
-    <a href="#" class="btn btn-primary btn-sm"><i class="fa fa-plus fa-fw"></i> Create Evaluation</a>
+    {{#can_manage}}
+    <a href="#" class="btn btn-primary btn-sm" data-action="create-evaluation">
+        <i class="fa fa-plus fa-fw"></i> Create Evaluation
+    </a>
+    {{/can_manage}}
 </div>
 
 <div class="row mb-4">
-    <div class="col-md-6 mb-2">
+    <div class="col-md-3 mb-2">
         <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
             <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-primary, #0066A7);">{{total}}</div>
-            <div class="text-muted small text-uppercase">Custom Evaluations</div>
+            <div class="text-muted small text-uppercase">Total Forms</div>
         </div></div>
     </div>
-    <div class="col-md-6 mb-2">
+    <div class="col-md-3 mb-2">
         <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
-            <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-accent, #0f7a73);">{{feedback_count}}</div>
-            <div class="text-muted small text-uppercase">Moodle Feedback Activities</div>
+            <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-success, #16a34a);">{{active}}</div>
+            <div class="text-muted small text-uppercase">Active</div>
+        </div></div>
+    </div>
+    <div class="col-md-3 mb-2">
+        <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
+            <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-text-secondary, #5a6070);">{{draft}}</div>
+            <div class="text-muted small text-uppercase">Drafts</div>
+        </div></div>
+    </div>
+    <div class="col-md-3 mb-2">
+        <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
+            <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-accent, #0f7a73);">{{total_responses}}</div>
+            <div class="text-muted small text-uppercase">Responses</div>
         </div></div>
     </div>
 </div>
 
-{{#has_evals}}
+{{#has_evaluations}}
 <div class="card border-0 shadow-sm"><div class="table-responsive">
     <table class="table table-hover mb-0 align-middle">
         <thead><tr style="background: var(--ap-color-primary, #0066A7); color: #fff;">
             <th class="ps-3">Evaluation Name</th>
-            <th class="text-end pe-3">Actions</th>
+            <th>Level</th>
+            <th>Trigger</th>
+            <th class="text-center">Questions</th>
+            <th class="text-center">Responses</th>
+            <th>Privacy</th>
+            <th>Status</th>
+            {{#can_manage}}<th class="text-end pe-3">Actions</th>{{/can_manage}}
         </tr></thead>
         <tbody>
-            {{#evals}}
+            {{#evaluations}}
             <tr>
-                <td class="ps-3 fw-semibold">{{name}}</td>
-                <td class="text-end pe-3">
-                    <a href="#" class="btn btn-sm btn-outline-secondary"><i class="fa fa-eye fa-fw"></i> View</a>
+                <td class="ps-3">
+                    <div class="fw-semibold">{{name}}</div>
+                    {{#description}}<div class="small text-muted" style="max-width: 350px;">{{.}}</div>{{/description}}
                 </td>
+                <td><span class="badge bg-light text-dark">{{kirkpatrick}}</span></td>
+                <td class="small">{{trigger}}</td>
+                <td class="text-center">{{qcount}}</td>
+                <td class="text-center">{{rcount}}</td>
+                <td class="small">
+                    {{#anonymous}}<span class="text-muted"><i class="fa fa-user-secret fa-fw"></i> Anonymous</span>{{/anonymous}}
+                    {{^anonymous}}<span class="text-muted">Identified</span>{{/anonymous}}
+                </td>
+                <td><span class="badge {{statuscss}}">{{statuslabel}}</span></td>
+                {{#can_manage}}
+                <td class="text-end pe-3">
+                    <div class="dropdown">
+                        <button type="button" class="btn btn-sm btn-link text-muted p-0 dropdown-toggle no-arrow"
+                                data-toggle="dropdown" aria-expanded="false" aria-haspopup="true">
+                            <i class="fa fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-right">
+                            <li>
+                                <a class="dropdown-item" href="#"
+                                   data-action="edit-evaluation" data-evaluationid="{{id}}" data-name="{{name}}">
+                                    <i class="fa fa-pencil fa-fw"></i> Edit
+                                </a>
+                            </li>
+                            {{#is_draft}}
+                            <li>
+                                <a class="dropdown-item" href="#"
+                                   data-action="publish-evaluation" data-evaluationid="{{id}}" data-name="{{name}}">
+                                    <i class="fa fa-check-circle fa-fw text-success"></i> Publish
+                                </a>
+                            </li>
+                            {{/is_draft}}
+                            {{#is_active}}
+                            <li>
+                                <a class="dropdown-item" href="#"
+                                   data-action="archive-evaluation" data-evaluationid="{{id}}" data-name="{{name}}">
+                                    <i class="fa fa-archive fa-fw text-warning"></i> Archive
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#"
+                                   data-action="draft-evaluation" data-evaluationid="{{id}}" data-name="{{name}}">
+                                    <i class="fa fa-undo fa-fw text-secondary"></i> Move to Draft
+                                </a>
+                            </li>
+                            {{/is_active}}
+                            {{#is_archived}}
+                            <li>
+                                <a class="dropdown-item" href="#"
+                                   data-action="publish-evaluation" data-evaluationid="{{id}}" data-name="{{name}}">
+                                    <i class="fa fa-undo fa-fw text-success"></i> Reactivate
+                                </a>
+                            </li>
+                            {{/is_archived}}
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-danger" href="#"
+                                   data-action="delete-evaluation" data-evaluationid="{{id}}" data-name="{{name}}">
+                                    <i class="fa fa-trash fa-fw"></i> Delete
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </td>
+                {{/can_manage}}
             </tr>
-            {{/evals}}
+            {{/evaluations}}
         </tbody>
     </table>
 </div></div>
-{{/has_evals}}
+{{/has_evaluations}}
 
-{{^has_evals}}
+{{^has_evaluations}}
 <div class="card border-0 shadow-sm"><div class="card-body text-center py-5">
     <i class="fa fa-clipboard fa-3x text-muted mb-3 d-block"></i>
-    <h5 class="text-muted">No custom evaluations yet</h5>
-    <p class="text-muted mb-3">Create post-training feedback forms to measure learner satisfaction and training effectiveness.</p>
-    {{#has_feedback}}
-    <p class="text-muted small">You have {{feedback_count}} Moodle Feedback activities that can be used for course-level evaluations.</p>
-    {{/has_feedback}}
-    <a href="#" class="btn btn-primary btn-sm"><i class="fa fa-plus fa-fw"></i> Create First Evaluation</a>
+    <h5 class="text-muted">No evaluation forms yet</h5>
+    <p class="text-muted mb-3">Create post-training feedback forms based on Kirkpatrick's 4-level evaluation framework.</p>
+    {{#can_manage}}
+    <a href="#" class="btn btn-primary btn-sm" data-action="create-evaluation">
+        <i class="fa fa-plus fa-fw"></i> Create First Evaluation
+    </a>
+    {{/can_manage}}
 </div></div>
-{{/has_evals}}
+{{/has_evaluations}}
+
+</div>
+{{#js}}
+require(['local_airpay_evaluation/evaluation_actions'], function(EvalActions) {
+    EvalActions.init();
+});
+{{/js}}

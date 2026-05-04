@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/airpay_evaluation/db" VERSION="20260504"
+       COMMENT="Airpay Training Evaluations — Kirkpatrick post-training feedback">
+  <TABLES>
+
+    <TABLE NAME="local_airpay_evaluation" COMMENT="Evaluation forms (containers)">
+      <FIELDS>
+        <FIELD NAME="id"               TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="name"             TYPE="char" LENGTH="254" NOTNULL="true"/>
+        <FIELD NAME="description"      TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="kirkpatrick_level" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1"
+               COMMENT="1=Reaction, 2=Learning, 3=Behaviour, 4=Results"/>
+        <FIELD NAME="trigger_event"    TYPE="char" LENGTH="50" NOTNULL="true" DEFAULT="manual"
+               COMMENT="manual|course_completion|program_completion|classroom_end"/>
+        <FIELD NAME="days_after"       TYPE="int"  LENGTH="4" NOTNULL="true" DEFAULT="0"
+               COMMENT="Days after trigger event before sending"/>
+        <FIELD NAME="costcenterid"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="open_path"        TYPE="char" LENGTH="254" NOTNULL="false"/>
+        <FIELD NAME="status"           TYPE="int"  LENGTH="2" NOTNULL="true" DEFAULT="0"
+               COMMENT="0=draft, 1=active, 2=archived"/>
+        <FIELD NAME="anonymous"        TYPE="int"  LENGTH="1" NOTNULL="true" DEFAULT="0"
+               COMMENT="1 = responses anonymised"/>
+        <FIELD NAME="timecreated"      TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS><KEY NAME="primary" TYPE="primary" FIELDS="id"/></KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_costcenter" UNIQUE="false" FIELDS="costcenterid"/>
+        <INDEX NAME="idx_status"     UNIQUE="false" FIELDS="status"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_airpay_evaluation_questions" COMMENT="Questions within an evaluation form">
+      <FIELDS>
+        <FIELD NAME="id"             TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="evaluationid"   TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="questiontype"   TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="rating"
+               COMMENT="rating|text|multichoice|yesno|nps"/>
+        <FIELD NAME="questiontext"   TYPE="text" NOTNULL="true"/>
+        <FIELD NAME="options"        TYPE="text" NOTNULL="false"
+               COMMENT="JSON array for multichoice options"/>
+        <FIELD NAME="required"       TYPE="int"  LENGTH="1" NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="sortorder"      TYPE="int"  LENGTH="6" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timecreated"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"        TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_evaluation"  TYPE="foreign" FIELDS="evaluationid"
+                                   REFTABLE="local_airpay_evaluation" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_eval_sort" UNIQUE="false" FIELDS="evaluationid, sortorder"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_airpay_evaluation_responses" COMMENT="Submitted evaluation responses">
+      <FIELDS>
+        <FIELD NAME="id"             TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="evaluationid"   TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="userid"         TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="0 if anonymous"/>
+        <FIELD NAME="courseid"       TYPE="int"  LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="programid"      TYPE="int"  LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="classroomid"    TYPE="int"  LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="response_data"  TYPE="text" NOTNULL="true"
+               COMMENT="JSON map of questionid => answer"/>
+        <FIELD NAME="timesubmitted"  TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"        TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_evaluation"  TYPE="foreign" FIELDS="evaluationid"
+                                   REFTABLE="local_airpay_evaluation" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_evaluation_user" UNIQUE="false" FIELDS="evaluationid, userid"/>
+        <INDEX NAME="idx_courseid"        UNIQUE="false" FIELDS="courseid"/>
+      </INDEXES>
+    </TABLE>
+
+  </TABLES>
+</XMLDB>
