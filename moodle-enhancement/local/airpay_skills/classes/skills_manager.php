@@ -297,4 +297,166 @@ class skills_manager {
     private static function empty_summary(): array {
         return ['total' => 0, 'met' => 0, 'gaps' => 0, 'percentage' => 0];
     }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Admin CRUD operations — categories
+    // ═══════════════════════════════════════════════════════════════════
+
+    private const CAT_TABLE = 'local_airpay_skill_cats';
+    private const SKILL_TABLE = 'local_airpay_skills';
+    private const ROLE_SKILL_TABLE = 'local_airpay_role_skills';
+    private const COURSE_SKILL_TABLE = 'local_airpay_course_skills';
+    private const USER_SKILL_TABLE = 'local_airpay_user_skills';
+
+    /** Get all categories for dropdowns. */
+    public static function get_categories_options(): array {
+        global $DB;
+        $cats = $DB->get_records(self::CAT_TABLE, null, 'sort_order ASC, name ASC',
+            'id, name');
+        $options = [];
+        foreach ($cats as $c) {
+            $options[$c->id] = format_string($c->name);
+        }
+        return $options;
+    }
+
+    /** Count totals for KPI cards. */
+    public static function count_categories(): int {
+        global $DB;
+        $dbman = $DB->get_manager();
+        return $dbman->table_exists(self::CAT_TABLE) ? $DB->count_records(self::CAT_TABLE) : 0;
+    }
+
+    public static function count_skills(): int {
+        global $DB;
+        $dbman = $DB->get_manager();
+        return $dbman->table_exists(self::SKILL_TABLE) ? $DB->count_records(self::SKILL_TABLE) : 0;
+    }
+
+    public static function count_role_mappings(): int {
+        global $DB;
+        $dbman = $DB->get_manager();
+        return $dbman->table_exists(self::ROLE_SKILL_TABLE) ? $DB->count_records(self::ROLE_SKILL_TABLE) : 0;
+    }
+
+    /** Create a skill category. */
+    public static function create_category(object $data): int {
+        global $DB;
+
+        if (empty($data->name)) {
+            throw new \moodle_exception('missingrequiredfields', 'local_airpay_skills');
+        }
+
+        $record = (object) [
+            'name'        => trim($data->name),
+            'description' => $data->description ?? '',
+            'icon'        => $data->icon ?? 'fa-cogs',
+            'color'       => $data->color ?? '#0066A7',
+            'sort_order'  => (int) ($data->sort_order ?? 0),
+            'timecreated' => time(),
+        ];
+
+        return $DB->insert_record(self::CAT_TABLE, $record);
+    }
+
+    public static function update_category(int $id, object $data): bool {
+        global $DB;
+        $existing = $DB->get_record(self::CAT_TABLE, ['id' => $id], '*', MUST_EXIST);
+
+        $record = (object) ['id' => $id];
+        foreach (['name', 'description', 'icon', 'color', 'sort_order'] as $field) {
+            if (isset($data->$field)) {
+                $record->$field = $data->$field;
+            }
+        }
+        $DB->update_record(self::CAT_TABLE, $record);
+        return true;
+    }
+
+    /**
+     * Delete a category — only if no skills reference it.
+     */
+    public static function delete_category(int $id): bool {
+        global $DB;
+        $existing = $DB->get_record(self::CAT_TABLE, ['id' => $id], '*', MUST_EXIST);
+
+        // Block delete if skills exist in this category.
+        if ($DB->record_exists(self::SKILL_TABLE, ['categoryid' => $id])) {
+            throw new \moodle_exception('categoryinuse', 'local_airpay_skills');
+        }
+
+        $DB->delete_records(self::CAT_TABLE, ['id' => $id]);
+        return true;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Admin CRUD operations — skills
+    // ═══════════════════════════════════════════════════════════════════
+
+    /** Create a skill. */
+    public static function create_skill(object $data): int {
+        global $DB;
+
+        if (empty($data->name) || empty($data->categoryid)) {
+            throw new \moodle_exception('missingrequiredfields', 'local_airpay_skills');
+        }
+
+        // Validate category exists.
+        if (!$DB->record_exists(self::CAT_TABLE, ['id' => $data->categoryid])) {
+            throw new \moodle_exception('invalidcategory', 'local_airpay_skills');
+        }
+
+        $record = (object) [
+            'categoryid'  => (int) $data->categoryid,
+            'name'        => trim($data->name),
+            'description' => $data->description ?? '',
+            'max_level'   => max(1, min(5, (int) ($data->max_level ?? 5))),
+            'sort_order'  => (int) ($data->sort_order ?? 0),
+            'timecreated' => time(),
+        ];
+
+        return $DB->insert_record(self::SKILL_TABLE, $record);
+    }
+
+    public static function update_skill(int $id, object $data): bool {
+        global $DB;
+        $existing = $DB->get_record(self::SKILL_TABLE, ['id' => $id], '*', MUST_EXIST);
+
+        $record = (object) ['id' => $id];
+
+        if (isset($data->name))         $record->name = trim($data->name);
+        if (isset($data->description))  $record->description = $data->description;
+        if (isset($data->categoryid)) {
+            if (!$DB->record_exists(self::CAT_TABLE, ['id' => $data->categoryid])) {
+                throw new \moodle_exception('invalidcategory', 'local_airpay_skills');
+            }
+            $record->categoryid = (int) $data->categoryid;
+        }
+        if (isset($data->max_level))    $record->max_level = max(1, min(5, (int) $data->max_level));
+        if (isset($data->sort_order))   $record->sort_order = (int) $data->sort_order;
+
+        $DB->update_record(self::SKILL_TABLE, $record);
+        return true;
+    }
+
+    /**
+     * Delete a skill and all its role/course/user mappings.
+     */
+    public static function delete_skill(int $id): bool {
+        global $DB;
+        $existing = $DB->get_record(self::SKILL_TABLE, ['id' => $id], '*', MUST_EXIST);
+
+        $transaction = $DB->start_delegated_transaction();
+        try {
+            $DB->delete_records(self::ROLE_SKILL_TABLE, ['skillid' => $id]);
+            $DB->delete_records(self::COURSE_SKILL_TABLE, ['skillid' => $id]);
+            $DB->delete_records(self::USER_SKILL_TABLE, ['skillid' => $id]);
+            $DB->delete_records(self::SKILL_TABLE, ['id' => $id]);
+            $transaction->allow_commit();
+        } catch (\Throwable $e) {
+            $transaction->rollback($e);
+        }
+
+        return true;
+    }
 }

@@ -107,7 +107,7 @@ class sidebar_navigation {
             // ── Platform ──
             $items[] = $this->divider();
             $items[] = $this->item('Organisation', 'fa-sitemap', '/local/airpay_org/admin.php', $currenturl);
-            $items[] = $this->item('Skills', 'fa-bullseye', '/local/airpay_skills/index.php', $currenturl);
+            $items[] = $this->item('Skills', 'fa-bullseye', '/local/airpay_skills/admin.php', $currenturl);
             $items[] = $this->item('Notifications', 'fa-bell', '/local/airpay_notifications/index.php', $currenturl);
             $items[] = $this->item('Evaluations', 'fa-clipboard', '/local/airpay_evaluation/index.php', $currenturl);
             $items[] = $this->item('Certificates', 'fa-certificate', '/admin/tool/certificate/manage_templates.php', $currenturl);
