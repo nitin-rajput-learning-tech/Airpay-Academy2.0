@@ -1,5 +1,5 @@
 <?php
-// Airpay Classroom Training (ILT) — session management.
+// Airpay Classroom Training (ILT) — admin classroom management.
 //
 // @package    local_airpay_classroom
 // @copyright  2026 Airpay Payment Services
@@ -18,17 +18,20 @@ $PAGE->set_heading('Classroom Training');
 $PAGE->set_pagelayout('standard');
 $PAGE->set_secondary_navigation(false);
 
-$can_manage = has_capability('local/airpay_classroom:manage', $context);
+$can_manage = has_capability('local/airpay_classroom:manage', $context)
+              || has_capability('local/airpay_classroom:update', $context);
+$can_delete = is_siteadmin() || has_capability('local/airpay_classroom:delete', $context);
 
-// Check for session data — try legacy table, then Airpay table.
+// ── Resolve table and load data ───────────────────────────────────────
 $dbman = $DB->get_manager();
 $classrooms = [];
 $total = 0;
 $active = 0;
 $completed = 0;
 
+// Prefer Airpay table; fall back to BizLMS legacy.
 $table = null;
-if ($dbman->table_exists('local_airpay_classroom') && $DB->count_records('local_airpay_classroom') > 0) {
+if ($dbman->table_exists('local_airpay_classroom')) {
     $table = 'local_airpay_classroom';
 } else if ($dbman->table_exists('local_classroom')) {
     $table = 'local_classroom';
@@ -36,17 +39,17 @@ if ($dbman->table_exists('local_airpay_classroom') && $DB->count_records('local_
 
 if ($table) {
     $total = $DB->count_records($table);
-    // Status fields may not exist on all table schemas — use try/catch.
+    // Status: 1=active, 0=cancelled, 2=completed (per install.xml).
     try {
-        $active = $DB->count_records_select($table, "status IN (1, 2)");
+        $active = $DB->count_records_select($table, "status = 1");
     } catch (\Throwable $e) { $active = 0; }
     try {
-        $completed = $DB->count_records_select($table, "status = 4");
+        $completed = $DB->count_records_select($table, "status = 2");
     } catch (\Throwable $e) { $completed = 0; }
 
-    // Enrolled count — only include sub-query if users table exists.
-    $users_table = $dbman->table_exists('local_classroom_users') ? 'local_classroom_users'
-        : ($dbman->table_exists('local_airpay_classroom_users') ? 'local_airpay_classroom_users' : '');
+    // Enrolled count — sub-query if users table exists.
+    $users_table = $dbman->table_exists('local_airpay_classroom_users') ? 'local_airpay_classroom_users'
+        : ($dbman->table_exists('local_classroom_users') ? 'local_classroom_users' : '');
 
     if ($users_table) {
         $classrooms = $DB->get_records_sql(
@@ -57,17 +60,34 @@ if ($table) {
     }
 }
 
+// ── Build display rows ────────────────────────────────────────────────
 $rows = [];
 foreach ($classrooms as $cl) {
+    $status = (int) ($cl->status ?? 1);
+    $statuslabel = match ($status) {
+        0 => 'Cancelled',
+        1 => 'Active',
+        2 => 'Completed',
+        default => 'Unknown',
+    };
+    $statuscss = match ($status) {
+        0 => 'badge-danger',
+        1 => 'badge-success',
+        2 => 'badge-primary',
+        default => 'badge-secondary',
+    };
+
     $rows[] = [
-        'id'         => $cl->id,
-        'name'       => format_string($cl->name ?? $cl->fullname ?? 'Classroom #' . $cl->id),
-        'status'     => $cl->status ?? 0,
-        'statuslabel' => match((int)($cl->status ?? 0)) { 0 => 'Draft', 1 => 'New', 2 => 'Active', 3 => 'Hold', 4 => 'Completed', 5 => 'Cancelled', default => 'Unknown' },
-        'statuscss'  => match((int)($cl->status ?? 0)) { 2 => 'badge-success', 4 => 'badge-primary', 3 => 'badge-warning', 5 => 'badge-danger', default => 'badge-secondary' },
-        'enrolled'   => (int)($cl->enrolled ?? 0),
-        'startdate'  => !empty($cl->startdate) ? userdate($cl->startdate, '%d %b %Y') : '—',
-        'enddate'    => !empty($cl->enddate) ? userdate($cl->enddate, '%d %b %Y') : '—',
+        'id'          => $cl->id,
+        'name'        => format_string($cl->name ?? 'Classroom #' . $cl->id),
+        'location'    => format_string($cl->location ?? '—'),
+        'capacity'    => (int) ($cl->capacity ?? 0),
+        'enrolled'    => (int) ($cl->enrolled ?? 0),
+        'status'      => $status,
+        'statuslabel' => $statuslabel,
+        'statuscss'   => $statuscss,
+        'is_active'   => ($status === 1),
+        'can_delete'  => $can_delete,
     ];
 }
 
@@ -78,6 +98,7 @@ $data = [
     'classrooms' => $rows,
     'has_data'   => !empty($rows),
     'can_manage' => $can_manage,
+    'can_delete' => $can_delete,
 ];
 
 echo $OUTPUT->header();
