@@ -100,7 +100,7 @@ class sidebar_navigation {
 
             // ── Insights ──
             $items[] = $this->divider();
-            $items[] = $this->item('Reports', 'fa-chart-bar', '/blocks/learnerscript/managereport.php', $currenturl);
+            $items[] = $this->item('Reports', 'fa-chart-bar', '/local/airpay_reports/index.php', $currenturl);
             $items[] = $this->item('Analytics', 'fa-chart-line', '/local/airpay_analytics/index.php', $currenturl);
             $items[] = $this->item('Compliance', 'fa-shield', '/local/airpay_compliance_report/index.php', $currenturl);
 
@@ -134,7 +134,7 @@ class sidebar_navigation {
 
             // ── Insights ──
             $items[] = $this->divider();
-            $items[] = $this->item('Reports', 'fa-bar-chart', '/blocks/learnerscript/managereport.php', $currenturl);
+            $items[] = $this->item('Reports', 'fa-bar-chart', '/local/airpay_reports/index.php', $currenturl);
             $items[] = $this->item('Analytics', 'fa-line-chart', '/local/airpay_analytics/index.php', $currenturl);
             $items[] = $this->item('Compliance', 'fa-shield', '/local/airpay_compliance_report/index.php', $currenturl);
             return $items;
