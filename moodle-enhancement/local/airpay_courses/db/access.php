@@ -61,4 +61,28 @@ $capabilities = [
             'manager' => CAP_ALLOW,
         ],
     ],
+
+    'local/airpay_courses:update' => [
+        'riskbitmask'  => RISK_SPAM,
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => [
+            'manager' => CAP_ALLOW,
+        ],
+    ],
+
+    'local/airpay_courses:delete' => [
+        'riskbitmask'  => RISK_DATALOSS,
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => [],  // Siteadmin only by default.
+    ],
+
+    'local/airpay_courses:visibility' => [
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => [
+            'manager' => CAP_ALLOW,
+        ],
+    ],
 ];

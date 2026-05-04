@@ -38,6 +38,7 @@ $sortdir = strtoupper($sortdir) === 'DESC' ? 'DESC' : 'ASC';
 // ── Permissions ───────────────────────────────────────────────────────
 $can_manage = has_capability('local/airpay_courses:manage', $context);
 $can_create = has_capability('local/airpay_courses:create', $context);
+$can_delete = is_siteadmin() || has_capability('local/airpay_courses:delete', $context);
 
 // ── Build query ───────────────────────────────────────────────────────
 $whereclauses = ["c.id > 1"]; // Exclude site course.
@@ -164,6 +165,7 @@ foreach ($courses as $c) {
         'editurl'         => (new moodle_url('/course/edit.php', ['id' => $c->id]))->out(false),
         'enrollurl'       => (new moodle_url('/enrol/instances.php', ['id' => $c->id]))->out(false),
         'can_manage'      => $can_manage,
+        'can_delete'      => $can_delete,
     ];
 }
 

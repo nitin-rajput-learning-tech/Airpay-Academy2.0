@@ -4,6 +4,12 @@
     @template local_airpay_users/manage
     @package  local_airpay_users
 }}
+<style>
+    /* Hide native dropdown caret on row action menus — we use a custom ellipsis icon */
+    [data-region="airpay-users"] .dropdown-toggle.no-arrow::after { display: none !important; }
+    [data-region="airpay-users"] .dropdown-toggle.no-arrow { box-shadow: none; }
+    [data-region="airpay-users"] .dropdown-toggle.no-arrow:hover { color: var(--ap-color-primary, #0066A7) !important; }
+</style>
 
 {{! ── Header ────────────────────────────────────────── }}
 <div data-region="airpay-users">
@@ -171,10 +177,10 @@
                     {{#can_edit}}
                     <td class="text-end pe-3">
                         <div class="dropdown">
-                            <button class="btn btn-sm btn-link text-muted p-0" data-bs-toggle="dropdown" aria-expanded="false">
+                            <button type="button" class="btn btn-sm btn-link text-muted p-0 dropdown-toggle no-arrow" data-toggle="dropdown" aria-expanded="false" aria-haspopup="true" style="background:none;border:none;">
                                 <i class="fa fa-ellipsis-v"></i>
                             </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
+                            <ul class="dropdown-menu dropdown-menu-right">
                                 <li>
                                     <a class="dropdown-item" href="{{{profileurl}}}">
                                         <i class="fa fa-user fa-fw"></i> View Profile

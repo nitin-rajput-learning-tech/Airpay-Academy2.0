@@ -149,4 +149,159 @@ class course_manager {
             || has_capability('local/airpay_courses:enrol', $context)
             || has_capability('local/courses:enrol', $context);
     }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // CRUD operations
+    // ═══════════════════════════════════════════════════════════════════
+
+    /**
+     * Create a new course.
+     *
+     * Uses Moodle's create_course() so all events fire (course_created event,
+     * gradebook setup, blocks added per format defaults, etc.).
+     *
+     * @param object $data  Form data with: fullname, shortname, category, format,
+     *                      summary, summaryformat, plus optional open_* fields
+     * @return int  New course ID
+     * @throws \moodle_exception
+     */
+    public static function create(object $data): int {
+        global $DB, $CFG;
+        require_once($CFG->dirroot . '/course/lib.php');
+
+        // Validate required fields.
+        if (empty($data->fullname) || empty($data->shortname) || empty($data->category)) {
+            throw new \moodle_exception('missingrequiredfields', 'local_airpay_courses');
+        }
+
+        // Check shortname uniqueness.
+        if ($DB->record_exists('course', ['shortname' => $data->shortname])) {
+            throw new \moodle_exception('shortnametaken', 'local_airpay_courses');
+        }
+
+        // Build course record. create_course() wants stdClass with specific fields.
+        $course = new \stdClass();
+        $course->category    = (int) $data->category;
+        $course->fullname    = trim($data->fullname);
+        $course->shortname   = trim($data->shortname);
+        $course->idnumber    = $data->idnumber ?? '';
+        $course->summary     = $data->summary ?? '';
+        $course->summaryformat = $data->summaryformat ?? FORMAT_HTML;
+        $course->format      = $data->format ?? 'topics';
+        $course->numsections = (int) ($data->numsections ?? 5);
+        $course->visible     = isset($data->visible) ? (int) $data->visible : 1;
+        $course->startdate   = $data->startdate ?? time();
+        $course->enddate     = $data->enddate ?? 0;
+        $course->lang        = $data->lang ?? '';
+
+        // Tenant scoping — derive open_path from organisation if set.
+        if (!empty($data->open_costcenterid)) {
+            $org = $DB->get_record('local_airpay_org', ['id' => $data->open_costcenterid]);
+            if ($org) {
+                $course->open_path = $org->path;
+                $course->open_costcenterid = $org->id;
+            }
+        }
+
+        // Create via core API.
+        $newcourse = create_course($course);
+
+        return $newcourse->id;
+    }
+
+    /**
+     * Update an existing course.
+     *
+     * @param int $courseid
+     * @param object $data
+     * @return bool
+     * @throws \moodle_exception
+     */
+    public static function update(int $courseid, object $data): bool {
+        global $DB, $CFG;
+        require_once($CFG->dirroot . '/course/lib.php');
+
+        $existing = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
+
+        // Build update record.
+        $course = new \stdClass();
+        $course->id = $courseid;
+
+        // Standard fields.
+        $stdfields = ['fullname', 'shortname', 'idnumber', 'summary', 'summaryformat',
+                      'format', 'visible', 'startdate', 'enddate', 'lang', 'category'];
+        foreach ($stdfields as $field) {
+            if (isset($data->$field)) {
+                $course->$field = $data->$field;
+            }
+        }
+
+        // Shortname uniqueness check.
+        if (isset($course->shortname) && $course->shortname !== $existing->shortname) {
+            if ($DB->record_exists_select('course',
+                'shortname = :sn AND id != :id',
+                ['sn' => $course->shortname, 'id' => $courseid])) {
+                throw new \moodle_exception('shortnametaken', 'local_airpay_courses');
+            }
+        }
+
+        // Tenant scoping update.
+        if (isset($data->open_costcenterid)) {
+            $org = $DB->get_record('local_airpay_org', ['id' => $data->open_costcenterid]);
+            if ($org) {
+                $course->open_path = $org->path;
+                $course->open_costcenterid = $org->id;
+            }
+        }
+
+        update_course($course);
+        return true;
+    }
+
+    /**
+     * Toggle course visibility (show/hide).
+     *
+     * @param int $courseid
+     * @param bool|null $visible  null = toggle current state
+     * @return bool  New visibility
+     * @throws \moodle_exception
+     */
+    public static function toggle_visibility(int $courseid, ?bool $visible = null): bool {
+        global $DB, $CFG;
+        require_once($CFG->dirroot . '/course/lib.php');
+
+        $course = $DB->get_record('course', ['id' => $courseid], 'id, visible', MUST_EXIST);
+
+        $newstate = $visible ?? !((bool) $course->visible);
+
+        // Use update_course so events fire and visibility cache is invalidated.
+        $update = (object) [
+            'id'      => $courseid,
+            'visible' => $newstate ? 1 : 0,
+            'visibleold' => $newstate ? 1 : 0,
+        ];
+        update_course($update);
+
+        return $newstate;
+    }
+
+    /**
+     * Delete a course.
+     *
+     * @param int $courseid
+     * @return bool
+     * @throws \moodle_exception
+     */
+    public static function delete(int $courseid): bool {
+        global $DB, $CFG;
+        require_once($CFG->dirroot . '/course/lib.php');
+
+        // Block deleting site course (id=1).
+        if ($courseid <= 1) {
+            throw new \moodle_exception('cannotdeletesitecourse', 'local_airpay_courses');
+        }
+
+        $course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
+        return delete_course($course, false);
+    }
 }

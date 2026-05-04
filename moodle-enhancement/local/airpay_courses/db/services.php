@@ -15,10 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Plugin version — Airpay Course Engine.
- *
- * Replaces BizLMS local_courses with Airpay-owned course management,
- * progress tracking, and open_* course field ownership.
+ * Web service definitions for local_airpay_courses.
  *
  * @package    local_airpay_courses
  * @copyright  2026 Airpay Payment Services
@@ -27,11 +24,19 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'local_airpay_courses';
-$plugin->version   = 2026041902;
-$plugin->requires  = 2024100700;
-$plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.1.0';
-$plugin->dependencies = [
-    'local_airpay_org' => 2026041600,
+$functions = [
+    'local_airpay_courses_toggle_visibility' => [
+        'classname'    => 'local_airpay_courses\external\toggle_visibility',
+        'description'  => 'Show or hide a course',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_courses:visibility',
+    ],
+    'local_airpay_courses_delete_course' => [
+        'classname'    => 'local_airpay_courses\external\delete_course',
+        'description'  => 'Delete a course',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_courses:delete',
+    ],
 ];

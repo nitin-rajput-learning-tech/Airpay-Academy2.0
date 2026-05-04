@@ -16,7 +16,7 @@
 /**
  * User CRUD actions — wires the Add User button, edit/suspend/delete row actions.
  *
- * Uses Moodle 5's core_form/modal_form for create+edit, and core/notification
+ * Uses Moodle 5's core_form/modalform for create+edit, and core/notification
  * for delete/suspend confirmations.
  *
  * @module     local_airpay_users/user_actions
@@ -24,7 +24,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-import ModalForm from 'core_form/modal_form';
+import ModalForm from 'core_form/modalform';
 import {get_string as getString} from 'core/str';
 import Notification from 'core/notification';
 import Ajax from 'core/ajax';
