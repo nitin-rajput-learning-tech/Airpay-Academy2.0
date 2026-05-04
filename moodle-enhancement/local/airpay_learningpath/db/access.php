@@ -18,4 +18,20 @@ $capabilities = [
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes'   => ['manager' => CAP_ALLOW],
     ],
+    'local/airpay_learningpath:create' => [
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => ['manager' => CAP_ALLOW],
+    ],
+    'local/airpay_learningpath:update' => [
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => ['manager' => CAP_ALLOW],
+    ],
+    'local/airpay_learningpath:delete' => [
+        'riskbitmask'  => RISK_DATALOSS,
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => [],
+    ],
 ];

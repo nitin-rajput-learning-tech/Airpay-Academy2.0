@@ -129,4 +129,112 @@ class path_manager {
 
         return 0;
     }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // CRUD operations
+    // ═══════════════════════════════════════════════════════════════════
+
+    /** Status values matching install.xml. */
+    public const STATUS_ARCHIVED = 0;
+    public const STATUS_ACTIVE   = 1;
+
+    /**
+     * Create a new learning path.
+     *
+     * @param object $data  name, description, costcenterid
+     * @return int  New path ID
+     * @throws \moodle_exception
+     */
+    public static function create(object $data): int {
+        global $DB;
+
+        if (empty($data->name)) {
+            throw new \moodle_exception('missingrequiredfields', 'local_airpay_learningpath');
+        }
+
+        $record = new \stdClass();
+        $record->name         = trim($data->name);
+        $record->description  = $data->description ?? '';
+        $record->costcenterid = (int) ($data->costcenterid ?? 0);
+        $record->departmentid = (int) ($data->departmentid ?? 0);
+        $record->status       = (int) ($data->status ?? self::STATUS_ACTIVE);
+        $record->visible      = isset($data->visible) ? (int) $data->visible : 1;
+        $record->timecreated  = time();
+        $record->timemodified = time();
+
+        if ($record->costcenterid > 0) {
+            $org = $DB->get_record('local_airpay_org', ['id' => $record->costcenterid]);
+            if ($org) {
+                $record->open_path = $org->path;
+            }
+        }
+
+        return $DB->insert_record(self::TABLE, $record);
+    }
+
+    /**
+     * Update an existing learning path.
+     */
+    public static function update(int $id, object $data): bool {
+        global $DB;
+
+        $existing = $DB->get_record(self::TABLE, ['id' => $id], '*', MUST_EXIST);
+
+        $record = (object) ['id' => $id, 'timemodified' => time()];
+
+        $fields = ['name', 'description', 'costcenterid', 'departmentid', 'status', 'visible'];
+        foreach ($fields as $field) {
+            if (isset($data->$field)) {
+                $record->$field = $data->$field;
+            }
+        }
+
+        if (isset($record->costcenterid) && $record->costcenterid != $existing->costcenterid) {
+            $org = $DB->get_record('local_airpay_org', ['id' => $record->costcenterid]);
+            $record->open_path = $org ? $org->path : '';
+        }
+
+        $DB->update_record(self::TABLE, $record);
+        return true;
+    }
+
+    /**
+     * Toggle path status (active/archived).
+     */
+    public static function toggle_status(int $id, ?bool $active = null): bool {
+        global $DB;
+
+        $existing = $DB->get_record(self::TABLE, ['id' => $id], 'id, status', MUST_EXIST);
+        $newstatus = $active ?? ($existing->status != self::STATUS_ACTIVE);
+        $newval = $newstatus ? self::STATUS_ACTIVE : self::STATUS_ARCHIVED;
+
+        $DB->update_record(self::TABLE, (object) [
+            'id'           => $id,
+            'status'       => $newval,
+            'timemodified' => time(),
+        ]);
+
+        return $newstatus;
+    }
+
+    /**
+     * Delete a learning path and all its course assignments + enrollments.
+     */
+    public static function delete(int $id): bool {
+        global $DB;
+
+        $DB->get_record(self::TABLE, ['id' => $id], '*', MUST_EXIST);
+
+        $transaction = $DB->start_delegated_transaction();
+        try {
+            $DB->delete_records(self::COURSES_TABLE, ['pathid' => $id]);
+            $DB->delete_records(self::USERS_TABLE, ['pathid' => $id]);
+            $DB->delete_records(self::TABLE, ['id' => $id]);
+            $transaction->allow_commit();
+        } catch (\Throwable $e) {
+            $transaction->rollback($e);
+        }
+
+        return true;
+    }
 }
