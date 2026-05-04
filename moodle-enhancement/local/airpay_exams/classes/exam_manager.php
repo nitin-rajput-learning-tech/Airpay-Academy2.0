@@ -96,4 +96,144 @@ class exam_manager {
         }
         return self::TABLE;
     }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Admin CRUD operations
+    // ═══════════════════════════════════════════════════════════════════
+
+    public const STATUS_INACTIVE = 0;
+    public const STATUS_ACTIVE   = 1;
+
+    /**
+     * Get all quizzes available for picker, formatted as 'Quiz Name (Course Name)'.
+     */
+    public static function get_quiz_options(array $exclude_quizids = []): array {
+        global $DB;
+
+        $where = "c.id > 1 AND c.visible = 1";
+        $params = [];
+        if (!empty($exclude_quizids)) {
+            [$insql, $inparams] = $DB->get_in_or_equal($exclude_quizids, SQL_PARAMS_NAMED, 'qid', false);
+            $where .= " AND q.id $insql";
+            $params = $inparams;
+        }
+
+        $rows = $DB->get_records_sql(
+            "SELECT q.id AS quizid, q.name AS quizname, c.fullname AS coursename
+               FROM {quiz} q
+               JOIN {course} c ON c.id = q.course
+              WHERE $where
+           ORDER BY c.fullname ASC, q.name ASC",
+            $params, 0, 500);
+
+        $options = [0 => '— Select a quiz to register as exam —'];
+        foreach ($rows as $r) {
+            $options[$r->quizid] = format_string($r->quizname) . ' (' . format_string($r->coursename) . ')';
+        }
+        return $options;
+    }
+
+    /** Get quizzes already registered as exams. */
+    public static function get_registered_quiz_ids(): array {
+        global $DB;
+        return $DB->get_fieldset_select(self::TABLE, 'quizid', '1=1');
+    }
+
+    /**
+     * Create an exam wrapper record around an existing Moodle quiz.
+     */
+    public static function create(object $data): int {
+        global $DB;
+
+        if (empty($data->name) || empty($data->quizid)) {
+            throw new \moodle_exception('missingrequiredfields', 'local_airpay_exams');
+        }
+
+        if (!$DB->record_exists('quiz', ['id' => $data->quizid])) {
+            throw new \moodle_exception('invalidquiz', 'local_airpay_exams');
+        }
+
+        if ($DB->record_exists(self::TABLE, ['quizid' => $data->quizid])) {
+            throw new \moodle_exception('quizalreadyregistered', 'local_airpay_exams');
+        }
+
+        $record = (object) [
+            'name'         => trim($data->name),
+            'quizid'       => (int) $data->quizid,
+            'costcenterid' => (int) ($data->costcenterid ?? 0),
+            'departmentid' => (int) ($data->departmentid ?? 0),
+            'duration'     => isset($data->duration) && $data->duration > 0 ? (int) $data->duration : null,
+            'passinggrade' => isset($data->passinggrade) ? max(0, min(100, (float) $data->passinggrade)) : null,
+            'status'       => (int) ($data->status ?? self::STATUS_ACTIVE),
+            'visible'      => isset($data->visible) ? (int) $data->visible : 1,
+            'timecreated'  => time(),
+            'timemodified' => time(),
+        ];
+
+        if ($record->costcenterid > 0) {
+            $org = $DB->get_record('local_airpay_org', ['id' => $record->costcenterid]);
+            if ($org) {
+                $record->open_path = $org->path;
+            }
+        }
+
+        return $DB->insert_record(self::TABLE, $record);
+    }
+
+    /**
+     * Update an existing exam wrapper record.
+     */
+    public static function update(int $id, object $data): bool {
+        global $DB;
+
+        $existing = $DB->get_record(self::TABLE, ['id' => $id], '*', MUST_EXIST);
+
+        $record = (object) ['id' => $id, 'timemodified' => time()];
+
+        if (isset($data->name))         $record->name = trim($data->name);
+        if (isset($data->quizid) && $data->quizid != $existing->quizid) {
+            if (!$DB->record_exists('quiz', ['id' => $data->quizid])) {
+                throw new \moodle_exception('invalidquiz', 'local_airpay_exams');
+            }
+            if ($DB->record_exists_select(self::TABLE,
+                'quizid = :qid AND id != :id', ['qid' => $data->quizid, 'id' => $id])) {
+                throw new \moodle_exception('quizalreadyregistered', 'local_airpay_exams');
+            }
+            $record->quizid = (int) $data->quizid;
+        }
+        if (isset($data->costcenterid)) $record->costcenterid = (int) $data->costcenterid;
+        if (isset($data->duration))     $record->duration = $data->duration > 0 ? (int) $data->duration : null;
+        if (isset($data->passinggrade)) $record->passinggrade = max(0, min(100, (float) $data->passinggrade));
+        if (isset($data->status))       $record->status = (int) $data->status;
+        if (isset($data->visible))      $record->visible = (int) $data->visible;
+
+        if (isset($record->costcenterid) && $record->costcenterid != $existing->costcenterid) {
+            $org = $DB->get_record('local_airpay_org', ['id' => $record->costcenterid]);
+            $record->open_path = $org ? $org->path : '';
+        }
+
+        $DB->update_record(self::TABLE, $record);
+        return true;
+    }
+
+    /** Toggle exam active/inactive. */
+    public static function toggle_status(int $id, ?bool $active = null): bool {
+        global $DB;
+        $existing = $DB->get_record(self::TABLE, ['id' => $id], 'id, status', MUST_EXIST);
+        $newstate = $active ?? !((bool) $existing->status);
+        $DB->update_record(self::TABLE, (object) [
+            'id' => $id,
+            'status' => $newstate ? self::STATUS_ACTIVE : self::STATUS_INACTIVE,
+            'timemodified' => time(),
+        ]);
+        return $newstate;
+    }
+
+    /** Delete wrapper record (does NOT touch the underlying Moodle quiz). */
+    public static function delete(int $id): bool {
+        global $DB;
+        $DB->get_record(self::TABLE, ['id' => $id], '*', MUST_EXIST);
+        $DB->delete_records(self::TABLE, ['id' => $id]);
+        return true;
+    }
 }
