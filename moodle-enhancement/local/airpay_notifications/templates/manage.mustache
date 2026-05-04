@@ -2,13 +2,24 @@
     Airpay Notification Rules — admin management.
     @template local_airpay_notifications/manage
 }}
+<style>
+    [data-region="airpay-notifications"] .dropdown-toggle.no-arrow::after { display: none !important; }
+    [data-region="airpay-notifications"] .dropdown-toggle.no-arrow { box-shadow: none; background: none; border: none; }
+    [data-region="airpay-notifications"] .dropdown-toggle.no-arrow:hover { color: var(--ap-color-primary, #0066A7) !important; }
+</style>
+
+<div data-region="airpay-notifications">
 
 <div class="ap-page-header d-flex justify-content-between align-items-start mb-4">
     <div>
         <h2 class="mb-1" style="font-weight: 700;">Notification Rules</h2>
         <p class="text-muted mb-0">Configure automated email and in-app notifications triggered by learner events.</p>
     </div>
-    <a href="#" class="btn btn-primary btn-sm"><i class="fa fa-plus fa-fw"></i> Create Rule</a>
+    {{#can_manage}}
+    <a href="#" class="btn btn-primary btn-sm" data-action="create-rule">
+        <i class="fa fa-plus fa-fw"></i> Create Rule
+    </a>
+    {{/can_manage}}
 </div>
 
 <div class="row mb-4">
@@ -38,32 +49,60 @@
         <thead><tr style="background: var(--ap-color-primary, #0066A7); color: #fff;">
             <th class="ps-3">Rule Name</th>
             <th>Type</th>
+            <th>Channel</th>
+            <th>Audience</th>
+            <th class="text-center">Trigger</th>
             <th>Status</th>
-            <th class="text-end pe-3">Actions</th>
+            {{#can_manage}}<th class="text-end pe-3">Actions</th>{{/can_manage}}
         </tr></thead>
         <tbody>
             {{#rules}}
             <tr>
                 <td class="ps-3 fw-semibold">{{name}}</td>
                 <td><span class="badge bg-light text-dark">{{type}}</span></td>
+                <td class="small">{{channellabel}}</td>
+                <td class="small">{{audiencelabel}}</td>
+                <td class="text-center small text-muted">{{triggerlabel}}</td>
                 <td><span class="badge {{statuscss}}">{{statuslabel}}</span></td>
+                {{#can_manage}}
                 <td class="text-end pe-3">
                     <div class="dropdown">
-                        <button class="btn btn-sm btn-link text-muted p-0" data-bs-toggle="dropdown"><i class="fa fa-ellipsis-v"></i></button>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="#"><i class="fa fa-pencil fa-fw"></i> Edit</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fa fa-paper-plane fa-fw"></i> Test Send</a></li>
+                        <button type="button" class="btn btn-sm btn-link text-muted p-0 dropdown-toggle no-arrow"
+                                data-toggle="dropdown" aria-expanded="false" aria-haspopup="true">
+                            <i class="fa fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-right">
+                            <li>
+                                <a class="dropdown-item" href="#"
+                                   data-action="edit-rule" data-ruleid="{{id}}" data-name="{{name}}">
+                                    <i class="fa fa-pencil fa-fw"></i> Edit
+                                </a>
+                            </li>
                             <li>
                                 {{#enabled}}
-                                <a class="dropdown-item text-warning" href="#"><i class="fa fa-pause fa-fw"></i> Disable</a>
+                                <a class="dropdown-item" href="#"
+                                   data-action="disable-rule" data-ruleid="{{id}}" data-name="{{name}}">
+                                    <i class="fa fa-pause-circle fa-fw text-warning"></i> Disable
+                                </a>
                                 {{/enabled}}
                                 {{^enabled}}
-                                <a class="dropdown-item text-success" href="#"><i class="fa fa-play fa-fw"></i> Enable</a>
+                                <a class="dropdown-item" href="#"
+                                   data-action="enable-rule" data-ruleid="{{id}}" data-name="{{name}}">
+                                    <i class="fa fa-play-circle fa-fw text-success"></i> Enable
+                                </a>
                                 {{/enabled}}
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-danger" href="#"
+                                   data-action="delete-rule" data-ruleid="{{id}}" data-name="{{name}}">
+                                    <i class="fa fa-trash fa-fw"></i> Delete
+                                </a>
                             </li>
                         </ul>
                     </div>
                 </td>
+                {{/can_manage}}
             </tr>
             {{/rules}}
         </tbody>
@@ -76,6 +115,17 @@
     <i class="fa fa-bell fa-3x text-muted mb-3 d-block"></i>
     <h5 class="text-muted">No notification rules yet</h5>
     <p class="text-muted mb-3">Set up automated reminders for deadlines, completions, and engagement milestones.</p>
-    <a href="#" class="btn btn-primary btn-sm"><i class="fa fa-plus fa-fw"></i> Create First Rule</a>
+    {{#can_manage}}
+    <a href="#" class="btn btn-primary btn-sm" data-action="create-rule">
+        <i class="fa fa-plus fa-fw"></i> Create First Rule
+    </a>
+    {{/can_manage}}
 </div></div>
 {{/has_rules}}
+
+</div>
+{{#js}}
+require(['local_airpay_notifications/rule_actions'], function(RuleActions) {
+    RuleActions.init();
+});
+{{/js}}
