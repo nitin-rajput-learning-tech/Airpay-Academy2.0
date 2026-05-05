@@ -1814,12 +1814,29 @@ JS;
         if(!(\local_airpay_org\accesslib::can_manage_multi($systemcontext))){
             $is_oh = \local_airpay_org\accesslib::is_org_head($systemcontext);
             $is_dh = \local_airpay_org\accesslib::is_dept_head($systemcontext);
+
+            // Derive the user's costcenter and department from open_path
+            // (open_costcenterid / open_departmentid columns do not exist
+            // on production — open_path '/<cc>/<dept>/...' is canonical).
+            $user_path_parts = explode('/', trim($USER->open_path ?? '', '/'));
+            $user_cc   = (int)($user_path_parts[0] ?? 0);
+            $user_dept = (int)($user_path_parts[1] ?? 0);
+
+            $derive_cc_dept = function ($obj) {
+                if (!$obj) return [0, 0];
+                $path = $obj->open_path ?? null;
+                if (empty($path)) return [0, 0];
+                $parts = explode('/', trim($path, '/'));
+                return [(int)($parts[0] ?? 0), (int)($parts[1] ?? 0)];
+            };
+
             if($newpageurl == $CFG->wwwroot.'/course/completion.php' || $newpageurl == $CFG->wwwroot.'/backup/backup.php'){/*for course completion settings and backup page*/
                 $courseid = required_param('id',  PARAM_INT);
                 $course = get_course($courseid);
-                if($is_oh && $USER->open_costcenterid != $course->open_costcenterid){
+                [$course_cc, $course_dept] = $derive_cc_dept($course);
+                if($is_oh && $user_cc != $course_cc){
                     redirect($CFG->wwwroot.'/local/airpay_catalog/index.php');
-                }else if($is_dh && $USER->open_departmentid != $course->open_departmentid){
+                }else if($is_dh && $user_dept != $course_dept){
                     redirect($CFG->wwwroot.'/local/airpay_catalog/index.php');
                 }
             }else if($newpageurl == $CFG->wwwroot.'/mod/quiz/edit.php' || $newpageurl == $CFG->wwwroot.'/mod/quiz/report.php'){/*for edit quiz page and quiz default report page*/
@@ -1831,9 +1848,10 @@ JS;
                     $onlinetest = $cmid ? \local_airpay_exams\exam_manager::get_by_course_module($cmid) : false;
                     if($onlinetest){
                         $return->hideheader = TRUE;
-                        if($is_oh && $USER->open_costcenterid != $onlinetest->costcenterid){
+                        [$ot_cc, $ot_dept] = $derive_cc_dept($onlinetest);
+                        if($is_oh && $user_cc != $ot_cc){
                             redirect($CFG->wwwroot.'/local/airpay_exams/index.php');
-                        }else if($is_dh && $USER->open_departmentid != $onlinetest->departmentid){
+                        }else if($is_dh && $user_dept != $ot_dept){
                             redirect($CFG->wwwroot.'/local/airpay_exams/index.php');
                         }
                     }else{
@@ -1846,9 +1864,10 @@ JS;
                     $onlinetest = $attempt ? \local_airpay_exams\exam_manager::get_by_attempt($attempt) : false;
                     if($onlinetest){
                         $return->hideheader = TRUE;
-                        if($is_oh && $USER->open_costcenterid != $onlinetest->costcenterid){
+                        [$ot_cc, $ot_dept] = $derive_cc_dept($onlinetest);
+                        if($is_oh && $user_cc != $ot_cc){
                             redirect($CFG->wwwroot.'/local/airpay_exams/index.php');
-                        }else if($is_dh && $USER->open_departmentid != $onlinetest->departmentid){
+                        }else if($is_dh && $user_dept != $ot_dept){
                             redirect($CFG->wwwroot.'/local/airpay_exams/index.php');
                         }
                     }else{

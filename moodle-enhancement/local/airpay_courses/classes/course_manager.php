@@ -194,12 +194,12 @@ class course_manager {
         $course->enddate     = $data->enddate ?? 0;
         $course->lang        = $data->lang ?? '';
 
-        // Tenant scoping — derive open_path from organisation if set.
+        // Tenant scoping — derive open_path from organisation.
+        // (open_costcenterid column does not exist on production — only open_path.)
         if (!empty($data->open_costcenterid)) {
             $org = $DB->get_record('local_airpay_org', ['id' => $data->open_costcenterid]);
             if ($org) {
                 $course->open_path = $org->path;
-                $course->open_costcenterid = $org->id;
             }
         }
 
@@ -245,12 +245,11 @@ class course_manager {
             }
         }
 
-        // Tenant scoping update.
+        // Tenant scoping update — open_path is the canonical store.
         if (isset($data->open_costcenterid)) {
             $org = $DB->get_record('local_airpay_org', ['id' => $data->open_costcenterid]);
             if ($org) {
                 $course->open_path = $org->path;
-                $course->open_costcenterid = $org->id;
             }
         }
 

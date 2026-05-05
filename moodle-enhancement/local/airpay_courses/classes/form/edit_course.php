@@ -176,13 +176,23 @@ class edit_course extends \core_form\dynamic_form {
 
         $course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
 
+        // Resolve the org id from open_path (open_costcenterid column does
+        // not exist on production — open_path is canonical).
+        $orgid = 0;
+        if (!empty($course->open_path)) {
+            $org = $DB->get_record('local_airpay_org', ['path' => $course->open_path], 'id');
+            if ($org) {
+                $orgid = (int) $org->id;
+            }
+        }
+
         $data = (object) [
             'courseid'  => $course->id,
             'fullname'  => $course->fullname,
             'shortname' => $course->shortname,
             'idnumber'  => $course->idnumber,
             'category'  => $course->category,
-            'open_costcenterid' => $course->open_costcenterid ?? 0,
+            'open_costcenterid' => $orgid,
             'format'    => $course->format,
             'visible'   => $course->visible,
             'startdate' => $course->startdate,

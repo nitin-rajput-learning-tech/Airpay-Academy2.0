@@ -238,6 +238,16 @@ class edit_user extends \core_form\dynamic_form {
 
         $user = $DB->get_record('user', ['id' => $userid, 'deleted' => 0], '*', MUST_EXIST);
 
+        // Resolve org id from open_path (open_costcenterid column does not
+        // exist on production — open_path is canonical).
+        $orgid = 0;
+        if (!empty($user->open_path)) {
+            $org = $DB->get_record('local_airpay_org', ['path' => $user->open_path], 'id');
+            if ($org) {
+                $orgid = (int) $org->id;
+            }
+        }
+
         $data = (object) [
             'userid' => $user->id,
             'email' => $user->email,
@@ -248,7 +258,7 @@ class edit_user extends \core_form\dynamic_form {
             'phone1' => $user->phone1 ?? '',
             'open_location' => $user->open_location ?? '',
             'department' => $user->department ?? '',
-            'open_costcenterid' => $user->open_costcenterid ?? 0,
+            'open_costcenterid' => $orgid,
             'open_supervisorid' => $user->open_supervisorid ?? 0,
         ];
 
