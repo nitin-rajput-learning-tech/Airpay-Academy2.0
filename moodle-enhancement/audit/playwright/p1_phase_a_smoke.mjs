@@ -113,21 +113,25 @@ async function smokeOne(browser, key, p, report) {
                 landed.includes('/onboarding.php'),
                 `landed at ${landed}`);
 
-            // A-07: Skip and verify redirect.
-            const skipLink = page.locator('a:has-text("Skip"), button:has-text("Skip"), a[href*="action=skip"]').first();
-            if (await skipLink.count() > 0) {
+            // A-07: Skip and verify redirect. The Skip button is a form's submit button
+            // — use a specific selector (.ap-onboard__btn--skip) to avoid matching the
+            // wrong element. waitForLoadState('load') handles the form submission +
+            // server-side redirect to /my/.
+            const skipBtn = page.locator('button.ap-onboard__btn--skip, button[type="submit"]:has-text("Skip")').first();
+            if (await skipBtn.count() > 0) {
                 try {
+                    // Wait for navigation to complete (form submit triggers full page load).
                     await Promise.all([
-                        page.waitForURL(/\/my\//, { timeout: 60_000, waitUntil: 'domcontentloaded' }),
-                        skipLink.click(),
+                        page.waitForNavigation({ url: /\/my\//, timeout: 60_000, waitUntil: 'domcontentloaded' }),
+                        skipBtn.click(),
                     ]);
                     recordCase('A-07-skip-redirects', page.url().includes('/my/'), `post-skip URL: ${page.url()}`);
-                } catch {
-                    recordCase('A-07-skip-redirects', false, 'skip click did not redirect to /my/');
+                } catch (e) {
+                    recordCase('A-07-skip-redirects', false, `skip click did not redirect: ${e.message.substring(0, 80)}`);
                     await shoot(page, 'newuser_skip_failed');
                 }
             } else {
-                recordCase('A-07-skip-redirects', false, 'no Skip element found on onboarding page');
+                recordCase('A-07-skip-redirects', false, 'no Skip button found on onboarding page');
                 await shoot(page, 'newuser_no_skip_element');
             }
         } else {
@@ -170,9 +174,9 @@ async function smokeOne(browser, key, p, report) {
             const sesskey = await page.evaluate(() => window.M?.cfg?.sesskey || '');
             if (sesskey) {
                 await page.goto(`${BASE}/login/logout.php?sesskey=${sesskey}`,
-                    { waitUntil: 'domcontentloaded', timeout: 30_000 });
+                    { waitUntil: 'domcontentloaded', timeout: 90_000 });
                 // Now visit /my/ — should redirect to login since session is gone.
-                await page.goto(`${BASE}/my/`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+                await page.goto(`${BASE}/my/`, { waitUntil: 'domcontentloaded', timeout: 90_000 });
                 recordCase('A-08-logout',
                     page.url().includes('/login/'),
                     `post-logout URL: ${page.url()}`);

@@ -65,6 +65,7 @@ async function testPlugin(page, plugin, errs) {
     };
 
     console.log(`\n  ── ${plugin.display} (${plugin.key}) ──`);
+    if (typeof global.setCurrentPlugin === 'function') global.setCurrentPlugin(plugin.key);
     const pluginErrsBefore = errs.length;
 
     // B-01: page loads
@@ -222,8 +223,22 @@ async function main() {
 
     const page = await ctx.newPage();
     const errs = [];
-    page.on('pageerror', e => errs.push({ plugin: 'global', msg: e.message }));
-    page.on('console', m => { if (m.type() === 'error') errs.push({ plugin: 'global', msg: m.text() }); });
+    let currentPlugin = 'global';
+    page.on('pageerror', e => errs.push({ plugin: currentPlugin, msg: e.message, stack: e.stack?.substring(0, 800) }));
+    page.on('console', m => {
+        if (m.type() === 'error') {
+            const loc = m.location();
+            errs.push({
+                plugin: currentPlugin,
+                msg: m.text(),
+                url: loc.url,
+                lineNumber: loc.lineNumber,
+                columnNumber: loc.columnNumber,
+            });
+        }
+    });
+    // expose for testPlugin to update
+    global.setCurrentPlugin = (k) => { currentPlugin = k; };
 
     console.log('Logging in as siteadmin...');
     await login(page);

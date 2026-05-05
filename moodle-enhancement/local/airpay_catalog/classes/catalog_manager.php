@@ -130,6 +130,11 @@ class catalog_manager {
     public static function get_trending(int $userid, int $limit = 6): array {
         global $DB, $USER;
 
+        $cache = \cache::make('local_airpay_catalog', 'trending');
+        $cachekey = "tr_{$userid}_{$limit}";
+        $cached = $cache->get($cachekey);
+        if ($cached !== false) { return $cached; }
+
         $orgfilter = '';
         $params = ['since' => time() - (30 * 86400)];
 
@@ -157,7 +162,9 @@ class catalog_manager {
            ORDER BY recent_enrolments DESC",
             $params, 0, $limit);
 
-        return array_map(fn($c) => self::format_course($c, $userid), array_values($courses));
+        $result = array_map(fn($c) => self::format_course($c, $userid), array_values($courses));
+        $cache->set($cachekey, $result);
+        return $result;
     }
 
     /**
@@ -165,6 +172,11 @@ class catalog_manager {
      */
     public static function get_new(int $userid, int $limit = 6): array {
         global $DB, $USER;
+
+        $cache = \cache::make('local_airpay_catalog', 'new_courses');
+        $cachekey = "new_{$userid}_{$limit}";
+        $cached = $cache->get($cachekey);
+        if ($cached !== false) { return $cached; }
 
         $orgfilter = '';
         $params = ['since' => time() - (30 * 86400)];
@@ -189,7 +201,9 @@ class catalog_manager {
            ORDER BY c.timecreated DESC",
             $params, 0, $limit);
 
-        return array_map(fn($c) => self::format_course($c, $userid), array_values($courses));
+        $result = array_map(fn($c) => self::format_course($c, $userid), array_values($courses));
+        $cache->set($cachekey, $result);
+        return $result;
     }
 
     /**
@@ -197,6 +211,14 @@ class catalog_manager {
      */
     public static function get_in_progress(int $userid, int $limit = 6): array {
         global $DB;
+
+        // Cache: heaviest catalog method (4.2s cold). Per-user key, 5 min TTL.
+        $cache = \cache::make('local_airpay_catalog', 'in_progress');
+        $cachekey = "ip_{$userid}_{$limit}";
+        $cached = $cache->get($cachekey);
+        if ($cached !== false) {
+            return $cached;
+        }
 
         $courses = $DB->get_records_sql(
             "SELECT c.id, c.fullname, c.shortname, c.summary, c.category, c.timecreated,
@@ -221,6 +243,7 @@ class catalog_manager {
             $f['has_progress'] = ($f['progress'] > 0);
             $formatted[] = $f;
         }
+        $cache->set($cachekey, $formatted);
         return $formatted;
     }
 
@@ -230,17 +253,22 @@ class catalog_manager {
     public static function get_categories(): array {
         global $DB, $USER;
 
-        // Scope categories to the user's tenant org if logged in.
+        // Tenant-scoped cache key.
+        $tenantpath = \local_airpay_org\tenant_manager::get_tenant_path();
+        $cache = \cache::make('local_airpay_catalog', 'categories');
+        $cachekey = 'cat_' . md5($tenantpath ?: 'none');
+        $cached = $cache->get($cachekey);
+        if ($cached !== false) { return $cached; }
+
         $orgfilter = '';
         $params = [];
-        $tenantpath = \local_airpay_org\tenant_manager::get_tenant_path();
         if (!empty($tenantpath)) {
             $orgfilter = " AND (c.open_path = :orgexact OR c.open_path LIKE :orgprefix)";
             $params['orgexact']  = $tenantpath;
             $params['orgprefix'] = $DB->sql_like_escape($tenantpath) . '/%';
         }
 
-        return array_values($DB->get_records_sql(
+        $result = array_values($DB->get_records_sql(
             "SELECT cc.id, cc.name,
                     COUNT(c.id) as course_count
                FROM {course_categories} cc
@@ -249,6 +277,8 @@ class catalog_manager {
            GROUP BY cc.id, cc.name
              HAVING COUNT(c.id) > 0
            ORDER BY COUNT(c.id) DESC", $params));
+        $cache->set($cachekey, $result);
+        return $result;
     }
 
     /**
