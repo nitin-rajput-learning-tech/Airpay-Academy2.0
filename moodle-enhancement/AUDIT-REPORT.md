@@ -181,15 +181,31 @@ permission-error handler.
 
 | Page | Response time (cold) | Bytes | Verdict |
 |------|---------------------|-------|---------|
-| `airpay_org/admin.php` | 4.76 s | 533 KB | **Slow.** Recursive tree of 250+ orgs with per-node user count subquery. Replace with single JOIN + GROUP BY, or lazy-load children on expand. |
-| `airpay_analytics/index.php` | 8.56 s | 79 KB | **Very slow.** Multiple aggregate queries across full user + completion + cert tables on every load. KPI computation should move to a cached table refreshed via cron. |
-| `/my/dashboard.php` (learner cold) | ~2 min | varies | **Hung once during audit.** Suspect: gamification block + 'Recently accessed courses' do unbounded queries. May be one-time XAMPP cold-cache. Worth re-timing on production. |
+| `airpay_org/admin.php` | 4.76 s → **0.01 s** | 533 KB | **FIXED 2026-05-05.** N+1 over 213 org nodes (`count_records_select` per node) replaced with 1 query + PHP path-rollup. **86× speedup.** Side benefit: the old `LIKE '/1%'` over-counted across tenants (matched `/100`, `/177`); new code is exact-prefix-match correct. |
+| `airpay_analytics/index.php` | 8.56 s → **5.76 s cold / ~0 s warm** | 79 KB | **FIXED 2026-05-05.** `get_compliance_heatmap` had N+1 over departments (1 + 30×3 = ~91 queries) plus a redundant `mandatory_courses` count inside the loop. Refactored to 3 queries (1 for departments, 2 batched GROUP BY). All 4 aggregate methods now wrap a Moodle application cache (`MODE_APPLICATION`, 300s TTL). Subsequent dashboard hits are instant. |
+| `/my/dashboard.php` (learner cold) | ~2 min | varies | **Hung once during audit.** Suspect: gamification block + 'Recently accessed courses' do unbounded queries. May be one-time XAMPP cold-cache. Worth re-timing on production. Not investigated this round — filed for next perf pass. |
 | Other admin pages | < 2 s | varies | OK |
 
-**These are pre-existing — not introduced this session.** Filed as
-follow-up perf work, not deploy blockers. Production has Apache opcache
-+ MySQL InnoDB buffer warmed by traffic, so real-world latency is
-likely 2-3× faster than this XAMPP cold start.
+**Production has Apache opcache + MySQL InnoDB buffer warmed by traffic,
+so real-world latency is likely 2-3× faster than this XAMPP cold start.**
+
+### Follow-up: cross-tenant `LIKE` over-count pattern
+
+The org admin fix exposed a class of bug: `'/' . $tenantid . '%'` matches
+`/1`, `/10`, `/100`, `/177`, etc. Same root cause as v3.3.0 security audit
+BUG-C2 (8 sites fixed). Audit found additional sites in:
+
+- `local/airpay_analytics/classes/analytics_manager.php` — 8 `LIKE :orgpath`
+  with `$orgpath . '%'` (display-only counts, not access control)
+- `local/airpay_compliance_report/classes/compliance_engine.php` — 2 sites
+
+Risk: medium. These are display values on dashboards seen by tenant admins,
+so a tenant 1 admin sees user counts inflated by tenant 10/100/177. Real
+list/CRUD endpoints already have proper tenant scoping (verified P0 audit).
+
+Recommended fix pattern: replace `LIKE :p` with `(open_path = :exact OR
+open_path LIKE :prefix)` where `:prefix = $orgpath . '/%'` — same fix
+shipped in v3.3.0 BUG-C2.
 
 ---
 
@@ -219,13 +235,14 @@ production rollout for visual changes.
 
 ## Recommendations
 
-| Priority | Item | Effort |
-|----------|------|--------|
-| **P0** | Browser-based CRUD walk for the 11 admin tables (modal create/edit/delete on each) | M |
-| **P1** | Investigate `airpay_analytics` 8.5s render — likely the `get_compliance_heatmap` and `get_course_effectiveness` aggregates need caching | M |
-| **P1** | Investigate `airpay_org/admin.php` 4.8s — replace recursive per-node user count with one JOIN + GROUP BY | S |
-| **P2** | Wire `full_audit*.sh` into a GitHub Action so every PR runs against a fresh test DB | S |
-| **P2** | Build a Playwright-based companion suite for the visual + CRUD coverage gaps above | L |
+| Priority | Item | Effort | Status |
+|----------|------|--------|--------|
+| **P0** | Browser-based CRUD walk for the 11 admin tables (modal create/edit/delete on each) | M | **DONE 2026-05-05** — caught BUG-1 (data-columns double-escape) and BUG-2 (jQuery deferred .finally). See [P0-AUDIT-RESULTS.md](P0-AUDIT-RESULTS.md). |
+| **P1** | Investigate `airpay_analytics` 8.5s render — likely the `get_compliance_heatmap` and `get_course_effectiveness` aggregates need caching | M | **DONE 2026-05-05** — heatmap N+1 → 3 batched queries, all 4 methods cached (5min TTL). 8.5s → 5.76s cold / ~0 s warm. |
+| **P1** | Investigate `airpay_org/admin.php` 4.8s — replace recursive per-node user count with one JOIN + GROUP BY | S | **DONE 2026-05-05** — 213-node N+1 → 1 query + PHP rollup. 86× speedup verified. |
+| **P2** | Wire `full_audit*.sh` into a GitHub Action so every PR runs against a fresh test DB | S | Pending |
+| **P2** | Build a Playwright-based companion suite for the visual + CRUD coverage gaps above | L | **DONE 2026-05-05** — 5 harness files in `audit/playwright/`. |
+| **P2** | Fix cross-tenant `LIKE :path%` over-count in airpay_analytics (8 sites) + airpay_compliance_report (2 sites) — display-only counts, not access | M | Pending — see "Follow-up" above |
 
 ---
 

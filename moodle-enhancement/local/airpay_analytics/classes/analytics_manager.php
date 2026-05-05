@@ -23,6 +23,14 @@ class analytics_manager {
     public static function get_kpis(string $range = '30d', string $orgpath = ''): array {
         global $DB;
 
+        // Cache the 8-count KPI block; same range+org returns same result for 5 min.
+        $cache = \cache::make('local_airpay_analytics', 'kpis');
+        $cachekey = 'kpis_' . md5($range . '|' . ($orgpath ?: 'all'));
+        $cached = $cache->get($cachekey);
+        if ($cached !== false) {
+            return $cached;
+        }
+
         [$current_start, $current_end, $previous_start, $previous_end] = self::get_range_dates($range);
 
         $orgfilter = '';
@@ -88,12 +96,14 @@ class analytics_manager {
               WHERE ci.timecreated >= :start AND ci.timecreated < :end $orgfilter",
             array_merge($params, ['start' => $previous_start, 'end' => $previous_end]));
 
-        return [
+        $result = [
             ['label' => 'Active Users',    'value' => $active_current, 'previous' => $active_previous, 'trend' => self::trend($active_current, $active_previous), 'icon' => 'fa-users',      'color' => '#0066A7'],
             ['label' => 'New Enrolments',   'value' => $enrol_current,  'previous' => $enrol_previous,  'trend' => self::trend($enrol_current, $enrol_previous),   'icon' => 'fa-user-plus',  'color' => '#0f7a73'],
             ['label' => 'Completions',      'value' => $comp_current,   'previous' => $comp_previous,   'trend' => self::trend($comp_current, $comp_previous),     'icon' => 'fa-check-circle','color' => '#16a34a'],
             ['label' => 'Certificates',     'value' => $cert_current,   'previous' => $cert_previous,   'trend' => self::trend($cert_current, $cert_previous),     'icon' => 'fa-certificate','color' => '#d97706'],
         ];
+        $cache->set($cachekey, $result);
+        return $result;
     }
 
     /**
@@ -101,6 +111,13 @@ class analytics_manager {
      */
     public static function get_funnel(string $orgpath = ''): array {
         global $DB;
+
+        $cache = \cache::make('local_airpay_analytics', 'funnel');
+        $cachekey = 'funnel_' . md5($orgpath ?: 'all');
+        $cached = $cache->get($cachekey);
+        if ($cached !== false) {
+            return $cached;
+        }
 
         $orgfilter = '';
         $params = [];
@@ -129,12 +146,14 @@ class analytics_manager {
 
         $max = max($enrolled, 1);
 
-        return [
+        $result = [
             ['stage' => 'Enrolled',  'count' => $enrolled,  'pct' => 100,                             'width' => 100],
             ['stage' => 'Started',   'count' => $started,   'pct' => round($started / $max * 100),    'width' => round($started / $max * 100)],
             ['stage' => 'Completed', 'count' => $completed, 'pct' => round($completed / $max * 100),  'width' => round($completed / $max * 100)],
             ['stage' => 'Certified', 'count' => $certified, 'pct' => round($certified / $max * 100),  'width' => round($certified / $max * 100)],
         ];
+        $cache->set($cachekey, $result);
+        return $result;
     }
 
     /**
@@ -143,15 +162,16 @@ class analytics_manager {
     public static function get_compliance_heatmap(string $orgpath = ''): array {
         global $DB;
 
-        $now = time();
-        $orgfilter = '';
-        $params = ['now' => $now];
-        if (!empty($orgpath)) {
-            $orgfilter = "AND u.open_path LIKE :orgpath";
-            $params['orgpath'] = $orgpath . '%';
+        // Cache: compliance_heatmap is heavy (was N+1 over departments) and changes
+        // slowly enough that a 5-minute TTL is fine for executive dashboards.
+        $cache = \cache::make('local_airpay_analytics', 'compliance_heatmap');
+        $cachekey = 'heatmap_' . md5($orgpath ?: 'all');
+        $cached = $cache->get($cachekey);
+        if ($cached !== false) {
+            return $cached;
         }
 
-        // Get departments (level 3 costcenters under the org).
+        // Get departments (depth 3) under the requested top org.
         $parts = explode('/', trim($orgpath ?: '/1', '/'));
         $toporg = '/' . ($parts[0] ?? '1');
 
@@ -162,36 +182,81 @@ class analytics_manager {
            ORDER BY cc.fullname",
             ['pathprefix' => $toporg . '/%']);
 
+        if (empty($departments)) {
+            $cache->set($cachekey, []);
+            return [];
+        }
+
+        // ── ONE QUERY: count users grouped by exact open_path (no per-dept N+1) ──
+        // We then roll up in PHP into per-department totals using path prefixes.
+        $user_path_counts = $DB->get_records_sql(
+            "SELECT open_path AS p, COUNT(*) AS cnt
+               FROM {user}
+              WHERE deleted = 0 AND suspended = 0
+                AND open_path IS NOT NULL AND open_path <> ''
+                AND open_path LIKE :prefix
+           GROUP BY open_path",
+            ['prefix' => $toporg . '/%']);
+
+        // ── ONE QUERY: completion counts grouped by exact user open_path ──
+        $completion_path_counts = $DB->get_records_sql(
+            "SELECT u.open_path AS p, COUNT(DISTINCT cc.id) AS cnt
+               FROM {course_completions} cc
+               JOIN {user} u ON u.id = cc.userid
+               JOIN {course} c ON c.id = cc.course
+              WHERE u.deleted = 0 AND u.open_path LIKE :prefix
+                AND c.enddate > 0 AND cc.timecompleted IS NOT NULL
+           GROUP BY u.open_path",
+            ['prefix' => $toporg . '/%']);
+
+        // ── ONE QUERY: hoisted out of the loop. Same value for every dept. ──
+        $mandatory_courses = $DB->count_records_sql(
+            "SELECT COUNT(*) FROM {course}
+              WHERE enddate > 0 AND visible = 1 AND id > 1 AND open_path LIKE :mpath",
+            ['mpath' => $toporg . '/%']);
+
+        if ($mandatory_courses == 0) {
+            $cache->set($cachekey, []);
+            return [];
+        }
+
+        // Per-department rollup: a user at /1/2/3/4 contributes to dept /1/2/3.
+        // Match each user_path to the dept whose path is a prefix of the user_path.
+        $dept_paths = [];
+        foreach ($departments as $dept) {
+            $dept_paths[$dept->path] = ['users' => 0, 'completed' => 0];
+        }
+        foreach ($user_path_counts as $row) {
+            foreach ($dept_paths as $dpath => &$tot) {
+                if ($row->p === $dpath || str_starts_with($row->p, $dpath . '/')) {
+                    $tot['users'] += (int) $row->cnt;
+                }
+            }
+            unset($tot);
+        }
+        foreach ($completion_path_counts as $row) {
+            foreach ($dept_paths as $dpath => &$tot) {
+                if ($row->p === $dpath || str_starts_with($row->p, $dpath . '/')) {
+                    $tot['completed'] += (int) $row->cnt;
+                }
+            }
+            unset($tot);
+        }
+
         $heatmap = [];
         foreach ($departments as $dept) {
-            // Count users in this department.
-            $total_users = $DB->count_records_sql(
-                "SELECT COUNT(*) FROM {user} WHERE open_path LIKE :path AND deleted = 0 AND suspended = 0",
-                ['path' => $dept->path . '%']);
-
-            if ($total_users == 0) continue;
-
-            // Count mandatory courses scoped to the same top-level org.
-            $mandatory_courses = $DB->count_records_sql(
-                "SELECT COUNT(*) FROM {course}
-                 WHERE enddate > 0 AND visible = 1 AND id > 1 AND open_path LIKE :mpath",
-                ['mpath' => $toporg . '%']);
-            if ($mandatory_courses == 0) continue;
-
-            $completed_mandatory = $DB->count_records_sql(
-                "SELECT COUNT(DISTINCT cc.id) FROM {course_completions} cc
-                   JOIN {user} u ON u.id = cc.userid
-                   JOIN {course} c ON c.id = cc.course
-                  WHERE u.open_path LIKE :path AND u.deleted = 0
-                    AND c.enddate > 0 AND cc.timecompleted IS NOT NULL",
-                ['path' => $dept->path . '%']);
-
+            $total_users = $dept_paths[$dept->path]['users'] ?? 0;
+            if ($total_users == 0) {
+                continue;
+            }
+            $completed_mandatory = $dept_paths[$dept->path]['completed'] ?? 0;
             $expected = $total_users * $mandatory_courses;
-            $rate = $expected > 0 ? round(($completed_mandatory / $expected) * 100) : 0;
+            $rate = $expected > 0 ? (int) round(($completed_mandatory / $expected) * 100) : 0;
             $rag = ($rate >= 80) ? 'green' : (($rate >= 50) ? 'amber' : 'red');
 
             $heatmap[] = [
                 'department' => format_string($dept->fullname),
+                'path'       => $dept->path,
                 'users'      => $total_users,
                 'rate'       => $rate,
                 'rag'        => $rag,
@@ -201,6 +266,7 @@ class analytics_manager {
             ];
         }
 
+        $cache->set($cachekey, $heatmap);
         return $heatmap;
     }
 
@@ -211,8 +277,6 @@ class analytics_manager {
         global $DB, $USER;
 
         // Scope to user's tenant.
-        $orgfilter = '';
-        $params = [];
         if (empty($orgpath) && !empty($USER->open_path)) {
             $parts = explode('/', $USER->open_path);
             $org = $parts[1] ?? '';
@@ -220,12 +284,24 @@ class analytics_manager {
                 $orgpath = '/' . $org;
             }
         }
+
+        // Cache: complex JOIN+GROUP BY across {course}+{enrol}+{user_enrolments}+
+        // {course_completions} for 411 courses + 3K users. Expensive on every render.
+        $cache = \cache::make('local_airpay_analytics', 'course_effectiveness');
+        $cachekey = 'eff_' . md5($limit . '|' . ($orgpath ?: 'all'));
+        $cached = $cache->get($cachekey);
+        if ($cached !== false) {
+            return $cached;
+        }
+
+        $orgfilter = '';
+        $params = [];
         if (!empty($orgpath)) {
             $orgfilter = "AND c.open_path LIKE :orgpath";
             $params['orgpath'] = $orgpath . '%';
         }
 
-        return array_values($DB->get_records_sql(
+        $result = array_values($DB->get_records_sql(
             "SELECT c.id, c.fullname, c.shortname,
                     COUNT(DISTINCT ue.userid) as enrolled,
                     COUNT(DISTINCT cc.userid) as completed,
@@ -242,6 +318,8 @@ class analytics_manager {
              HAVING COUNT(DISTINCT ue.userid) >= 5
            ORDER BY completion_rate DESC",
             $params, 0, $limit));
+        $cache->set($cachekey, $result);
+        return $result;
     }
 
     /**

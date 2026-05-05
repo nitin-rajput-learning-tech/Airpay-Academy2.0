@@ -29,23 +29,39 @@ foreach ($all_orgs as $o) {
     $by_parent[(int) $o->parentid][] = $o;
 }
 
+// Pre-compute user counts for every org path in a single query + PHP roll-up.
+// Was N+1: count_records_select per node × 216 nodes = 4.8s. Now: 1 query + O(M×D)
+// in PHP where M = distinct user paths, D = max depth (~3-5).
+$path_user_totals = [];
+$path_count_rows = $DB->get_records_sql(
+    "SELECT open_path AS p, COUNT(*) AS cnt
+       FROM {user}
+      WHERE deleted = 0 AND open_path IS NOT NULL AND open_path <> ''
+   GROUP BY open_path"
+);
+foreach ($path_count_rows as $row) {
+    // A user at '/1/2/3' counts toward '/1/2/3', '/1/2', and '/1'.
+    $segments = explode('/', trim($row->p, '/'));
+    $accumulator = '';
+    foreach ($segments as $seg) {
+        if ($seg === '') { continue; }
+        $accumulator .= '/' . $seg;
+        $path_user_totals[$accumulator] = ($path_user_totals[$accumulator] ?? 0) + (int) $row->cnt;
+    }
+}
+
 /**
  * Recursively build a render-friendly tree node.
  */
-$build_node = function (object $org) use (&$build_node, $by_parent, $DB, $can_manage): array {
+$build_node = function (object $org) use (&$build_node, $by_parent, $path_user_totals, $can_manage): array {
     $kid_records = $by_parent[(int) $org->id] ?? [];
     $children = [];
     foreach ($kid_records as $k) {
         $children[] = $build_node($k);
     }
 
-    // Count users at this org's path level (descendants included).
-    $user_count = 0;
-    if (!empty($org->path)) {
-        $user_count = $DB->count_records_select('user',
-            'deleted = 0 AND open_path LIKE :p',
-            ['p' => $org->path . '%']);
-    }
+    // Look up pre-computed user count (no per-node DB hit).
+    $user_count = empty($org->path) ? 0 : (int) ($path_user_totals[$org->path] ?? 0);
 
     return [
         'id'           => (int) $org->id,
