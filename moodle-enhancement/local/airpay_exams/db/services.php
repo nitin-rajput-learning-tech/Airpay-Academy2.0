@@ -2,6 +2,13 @@
 defined('MOODLE_INTERNAL') || die();
 
 $functions = [
+    'local_airpay_exams_list_exams' => [
+        'classname'    => 'local_airpay_exams\external\list_exams',
+        'description'  => 'List exams for shared datatable',
+        'type'         => 'read',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_exams:view',
+    ],
     'local_airpay_exams_toggle_status' => [
         'classname'    => 'local_airpay_exams\external\toggle_status',
         'description'  => 'Activate or deactivate an exam',

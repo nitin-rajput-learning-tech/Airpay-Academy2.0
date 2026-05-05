@@ -1,9 +1,101 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-04-18 | **Phase:** Academy 3.1 — Enterprise Admin Pages Complete
+**Updated:** 2026-05-05 | **Phase:** Academy 3.3 — CRUD on every admin surface, shared datatable, security-cleared
 **Theme:** airpayux v1.0.0 | **Moodle:** 5.1.3+ on XAMPP
-**Version:** 3.1.0 (BizLMS feature port: 11 admin pages rebuilt with enterprise UI)
+**Version:** 3.3.0 (CRUD across 11 admin plugins + shared datatable + manager drill-down + bulk ops + security audit clean)
 **GitHub:** Pushed to nitin-rajput-learning-tech/Airpay-Academy2.0 (production branch)
-**Commit:** dc61e1019 — BizLMS feature port: rebuild all admin pages with enterprise UI
+**Latest commit:** a6c315d65 — Mobile + dark-mode polish + 6 security fixes (2 critical, 4 high)
+
+---
+
+## v3.3.0 Session (2026-05-05) — CRUD pattern + datatable + security pass
+
+### What landed (10 commits across this session)
+
+**11 plugins now have full CRUD on the established `core_form\dynamic_form` modal pattern:**
+- airpay_users, airpay_courses, airpay_classroom, airpay_exams,
+  airpay_learningpath, airpay_programs, airpay_skills, airpay_notifications,
+  airpay_evaluation, airpay_reports, airpay_org
+
+Each plugin: `classes/form/edit_*.php` dynamic form, `classes/external/{delete,toggle}_*.php`
+externals via ajax-callable web services, `amd/{src,build}/*_actions.js` pure-AMD wrapper
+(no Babel helpers — Moodle's RequireJS doesn't ship `_interopRequireDefault`),
+templates/manage.mustache + index.php, `db/services.php` registration, lang strings.
+
+### New shared infrastructure (commit `6362762bc`)
+- **`theme_airpayux/datatable`** AMD module — server-side search (debounced 250ms),
+  column sort with display-key vs sort-key decoupling, pagination, per-row HTML
+  actions, public refresh()/setFilter()/getSelected() API, custom event for CRUD
+  module integration, row selection.
+- Web service contract: `args: {search, sort, sortdir, page, perpage, filters: JSON}` →
+  `returns: {total, rows: [{id, ...cellvalues, actions: HTML}], page, perpage}`
+- Retrofitted: airpay_users (2,869 rows), airpay_courses (411).
+
+### Manager drill-down (commit `b7154851d`)
+- `local_airpay_manager\team_manager` class with batched aggregates: get_team(),
+  summarize_team() — 4 queries replace N×3 per-row, get_member_detail() — full
+  course list + certs, can_view_member() — supervisor chain walks up to 5 levels.
+- New `member.php` drill-down page with progress bars per course + certificates earned.
+- Theme dashboard manager section refactored: was 1 + 34 + (34×5) = ~205 query
+  operations per load for managers with 34 reports. Now 4 batched queries.
+
+### Bulk operations (commit `b7154851d`)
+- Datatable extended with row selection (`data-selectable="1"`).
+- New `local_airpay_users_bulk_action` WS — suspend/activate by ID array.
+- Hard-protects $USER->id, guest (1), admin (2) before UPDATE.
+
+### Production-readiness pass (commit `ba0a44856`)
+- Audited codebase for `$USER->open_costcenterid` references — found 3 real
+  bugs in our owned code. Production has no such column; on production the
+  comparison was 0==0 → access scoping was broken. Fixed in
+  theme/airpayux/classes/output/core_renderer.php + 2 form classes.
+- Authenticated curl smoke test through 10 admin pages + 2 web services: 10/10 PASS,
+  list_users search 'nitin' → 12, list_courses search 'POSH' → 3.
+
+### Mobile + dark mode polish (commit `a6c315d65`)
+- Discovered: 8 templates used CSS variables that don't exist
+  (`--ap-color-surface` vs the real `--ap-color-bg-surface`,
+  `--ap-color-error` vs `--ap-color-danger`). Fallbacks always rendered,
+  bypassing the design system. Fixed across all templates.
+- Discovered: dark_mode.scss only overrode legacy `--airpay-*` tokens, not
+  the current `--ap-color-*` semantic tokens. Components using
+  `var(--ap-color-bg-surface, ...)` stayed light in dark mode. Added 10
+  token remaps.
+- New SCSS partial `_datatable.scss` with mobile breakpoint (590px) +
+  explicit dark-mode rules for the shared component.
+
+### Security audit (commit `a6c315d65`) — 6 real bugs fixed
+Run by Airpay Security Auditor agent. Verdict pre-fix: **BLOCK production deploy.**
+
+| Sev | ID | Category | Fix summary |
+|-----|----|----------|-------------|
+| Critical | C1 | Tenant isolation | Bulk_action could suspend any user by ID; added open_path scope filter on the UPDATE target set |
+| Critical | C2 | OWASP A03 SQL | `'/1' . '%'` LIKE pattern matched /10, /100, /177 → cross-tenant data leak. Fixed with sql_like_escape + slash boundary in 8 sites (list_users, list_courses, bulk_action, count_users, count_descendants, all 4 report runners). Confirmed 6-row leak removed from `count_users(1)` and 83-row leak removed from enrolment_trend report. |
+| High | H1 | A01 Authz | list_users honored caller-supplied orgid without checking it was inside caller's tenant tree. Now rejects with 'outoftenant'. |
+| High | H2 | TOCTOU | org_manager::delete had race window between count_descendants check and DELETE. Wrapped in transaction with SELECT...FOR UPDATE on target row. |
+| High | H3 | A01 Authz | delete_org / toggle_visibility / delete_report / toggle_status accepted any id with only the management cap checked. All 4 now reject targets outside caller's tenant. |
+| Medium | M1 | A04 Insecure design | bulk_action returned actually-flipped count → user-enumeration oracle. Now returns post-tenant-filter request-set size, not change-set size. |
+| Medium | M2 | A03 / DoS | JSON `filters` was PARAM_RAW with no size or depth limit. Added 4KB cap + 5-level depth limit on list_users + list_courses. |
+| Medium | M3 | Tenant isolation | list_courses had no tenant scope at all. Added `(open_path = :exact OR LIKE :prefix)` filter mirroring list_users. |
+
+Re-verified all 3 smoke tests pass post-fix. Verdict post-fix: clear for production
+pending I3 follow-up (mass-assignment on update path), which is not on the WS
+surface today.
+
+### Files (counts)
+- 11 plugins x ~12 files each = 132 plugin files
+- 1 shared theme component (datatable.js + .min.js + .scss)
+- 1 manager class for team aggregates (team_manager.php, 220 lines)
+- 4 new web services for the shared datatable contract
+- 1 SCSS partial + dark mode token remap
+
+### Verification status
+- **PHP lint:** all touched files clean
+- **Authenticated browser test:** 10/10 admin pages render (curl-based, Chrome MCP unavailable)
+- **Web services:** list_users (7/7 cases), list_courses (3/3), bulk_action (4/4),
+  org CRUD (7/7), 4 report runners (4/4 PASS)
+- **Security audit:** 6 findings → fixed → re-verified
+- **Mobile + dark mode:** SCSS compiles correctly, selectors verified in compiled CSS
+- **Tests:** ZERO PHPUnit tests written (gap — recommended for next session)
 
 ---
 

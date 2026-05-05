@@ -17,6 +17,13 @@
 defined('MOODLE_INTERNAL') || die();
 
 $functions = [
+    'local_airpay_classroom_list_classrooms' => [
+        'classname'    => 'local_airpay_classroom\external\list_classrooms',
+        'description'  => 'List classrooms for the shared datatable',
+        'type'         => 'read',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_classroom:view',
+    ],
     'local_airpay_classroom_change_status' => [
         'classname'    => 'local_airpay_classroom\external\change_status',
         'description'  => 'Change classroom status (active/cancelled/completed)',

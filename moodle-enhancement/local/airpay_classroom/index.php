@@ -1,5 +1,5 @@
 <?php
-// Airpay Classroom Training (ILT) — admin classroom management.
+// Airpay Classroom Training (ILT) — admin (datatable-driven).
 //
 // @package    local_airpay_classroom
 // @copyright  2026 Airpay Payment Services
@@ -18,87 +18,33 @@ $PAGE->set_heading('Classroom Training');
 $PAGE->set_pagelayout('standard');
 $PAGE->set_secondary_navigation(false);
 
-$can_manage = has_capability('local/airpay_classroom:manage', $context)
-              || has_capability('local/airpay_classroom:update', $context);
-$can_delete = is_siteadmin() || has_capability('local/airpay_classroom:delete', $context);
+$can_create = is_siteadmin() || has_capability('local/airpay_classroom:create', $context)
+    || has_capability('local/airpay_classroom:manage', $context);
 
-// ── Resolve table and load data ───────────────────────────────────────
 $dbman = $DB->get_manager();
-$classrooms = [];
 $total = 0;
 $active = 0;
 $completed = 0;
-
-// Prefer Airpay table; fall back to BizLMS legacy.
-$table = null;
 if ($dbman->table_exists('local_airpay_classroom')) {
-    $table = 'local_airpay_classroom';
-} else if ($dbman->table_exists('local_classroom')) {
-    $table = 'local_classroom';
+    $total     = (int) $DB->count_records('local_airpay_classroom');
+    $active    = (int) $DB->count_records('local_airpay_classroom', ['status' => 1]);
+    $completed = (int) $DB->count_records('local_airpay_classroom', ['status' => 2]);
 }
 
-if ($table) {
-    $total = $DB->count_records($table);
-    // Status: 1=active, 0=cancelled, 2=completed (per install.xml).
-    try {
-        $active = $DB->count_records_select($table, "status = 1");
-    } catch (\Throwable $e) { $active = 0; }
-    try {
-        $completed = $DB->count_records_select($table, "status = 2");
-    } catch (\Throwable $e) { $completed = 0; }
-
-    // Enrolled count — sub-query if users table exists.
-    $users_table = $dbman->table_exists('local_airpay_classroom_users') ? 'local_airpay_classroom_users'
-        : ($dbman->table_exists('local_classroom_users') ? 'local_classroom_users' : '');
-
-    if ($users_table) {
-        $classrooms = $DB->get_records_sql(
-            "SELECT cl.*, (SELECT COUNT(*) FROM {{$users_table}} clu WHERE clu.classroomid = cl.id) AS enrolled
-               FROM {{$table}} cl ORDER BY cl.id DESC", [], 0, 25);
-    } else {
-        $classrooms = $DB->get_records($table, null, 'id DESC', '*', 0, 25);
-    }
-}
-
-// ── Build display rows ────────────────────────────────────────────────
-$rows = [];
-foreach ($classrooms as $cl) {
-    $status = (int) ($cl->status ?? 1);
-    $statuslabel = match ($status) {
-        0 => 'Cancelled',
-        1 => 'Active',
-        2 => 'Completed',
-        default => 'Unknown',
-    };
-    $statuscss = match ($status) {
-        0 => 'badge-danger',
-        1 => 'badge-success',
-        2 => 'badge-primary',
-        default => 'badge-secondary',
-    };
-
-    $rows[] = [
-        'id'          => $cl->id,
-        'name'        => format_string($cl->name ?? 'Classroom #' . $cl->id),
-        'location'    => format_string($cl->location ?? '—'),
-        'capacity'    => (int) ($cl->capacity ?? 0),
-        'enrolled'    => (int) ($cl->enrolled ?? 0),
-        'status'      => $status,
-        'statuslabel' => $statuslabel,
-        'statuscss'   => $statuscss,
-        'is_active'   => ($status === 1),
-        'can_delete'  => $can_delete,
-    ];
-}
+$columns = [
+    ['key' => 'name',        'label' => 'Classroom',   'sortable' => true,  'sortkey' => 'name', 'format' => 'html'],
+    ['key' => 'location',    'label' => 'Location',    'sortable' => true,  'sortkey' => 'location'],
+    ['key' => 'capacity',    'label' => 'Capacity',    'sortable' => true,  'sortkey' => 'capacity'],
+    ['key' => 'created',     'label' => 'Created',     'sortable' => true,  'sortkey' => 'timecreated'],
+    ['key' => 'statuslabel', 'label' => 'Status',      'sortable' => true,  'sortkey' => 'status', 'format' => 'badge'],
+];
 
 $data = [
-    'total'      => $total,
-    'active'     => $active,
-    'completed'  => $completed,
-    'classrooms' => $rows,
-    'has_data'   => !empty($rows),
-    'can_manage' => $can_manage,
-    'can_delete' => $can_delete,
+    'total_count'     => number_format($total),
+    'active_count'    => number_format($active),
+    'completed_count' => number_format($completed),
+    'can_create'      => $can_create,
+    'columns_json'    => s(json_encode($columns)),
 ];
 
 echo $OUTPUT->header();

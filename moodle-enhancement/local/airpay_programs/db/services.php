@@ -2,6 +2,13 @@
 defined('MOODLE_INTERNAL') || die();
 
 $functions = [
+    'local_airpay_programs_list_programs' => [
+        'classname'    => 'local_airpay_programs\external\list_programs',
+        'description'  => 'List programs for shared datatable',
+        'type'         => 'read',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_programs:view',
+    ],
     'local_airpay_programs_change_status' => [
         'classname'    => 'local_airpay_programs\external\change_status',
         'description'  => 'Change program status (draft/active/archived)',

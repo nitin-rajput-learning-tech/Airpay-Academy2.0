@@ -1,11 +1,10 @@
 {{!
-    Airpay Online Exams — admin management.
+    Airpay Online Exams — datatable-driven admin listing.
     @template local_airpay_exams/manage
 }}
 <style>
-    [data-region="airpay-exams"] .dropdown-toggle.no-arrow::after { display: none !important; }
-    [data-region="airpay-exams"] .dropdown-toggle.no-arrow { box-shadow: none; background: none; border: none; }
-    [data-region="airpay-exams"] .dropdown-toggle.no-arrow:hover { color: var(--ap-color-primary, #0066A7) !important; }
+    [data-region="airpay-exams"] .ap-filter-bar { background: var(--ap-color-bg-surface, #fff); border: 1px solid var(--ap-color-border, #e2e6ef); border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; }
+    [data-region="airpay-exams"] .btn-group .btn.active { background: var(--ap-color-primary, #0066A7); color: #fff; border-color: var(--ap-color-primary, #0066A7); }
 </style>
 
 <div data-region="airpay-exams">
@@ -13,182 +12,72 @@
 <div class="ap-page-header d-flex justify-content-between align-items-start mb-4">
     <div>
         <h2 class="mb-1" style="font-weight: 700;">Online Exams</h2>
-        <p class="text-muted mb-0">Register Moodle quizzes as enterprise exams. Adds tenant scoping, custom passing grades, and dashboard reporting.</p>
+        <p class="text-muted mb-0">Wrap Moodle quizzes with tenant-scoped passing grades and reporting.</p>
     </div>
-    {{#can_manage}}
+    {{#can_create}}
     <a href="#" class="btn btn-primary btn-sm" data-action="create-exam">
-        <i class="fa fa-plus fa-fw"></i> Register Exam
+        <i class="fa fa-plus fa-fw"></i> New Exam
     </a>
-    {{/can_manage}}
+    {{/can_create}}
 </div>
 
 <div class="row mb-4">
-    <div class="col-md-3 mb-2">
-        <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
-            <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-primary, #0066A7);">{{total}}</div>
-            <div class="text-muted small text-uppercase">Registered Exams</div>
-        </div></div>
-    </div>
-    <div class="col-md-3 mb-2">
-        <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
-            <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-success, #16a34a);">{{active}}</div>
-            <div class="text-muted small text-uppercase">Active</div>
-        </div></div>
-    </div>
-    <div class="col-md-3 mb-2">
-        <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
-            <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-text-secondary, #5a6070);">{{inactive}}</div>
-            <div class="text-muted small text-uppercase">Inactive</div>
-        </div></div>
-    </div>
-    <div class="col-md-3 mb-2">
-        <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
-            <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-accent, #0f7a73);">{{unregistered}}</div>
-            <div class="text-muted small text-uppercase">Unregistered Quizzes</div>
-        </div></div>
-    </div>
+    <div class="col-md-4 mb-2"><div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
+        <div style="font-size: 1.75rem; font-weight: 800; color: var(--ap-color-primary, #0066A7);">{{total_count}}</div>
+        <div class="text-muted small text-uppercase">Total Exams</div>
+    </div></div></div>
+    <div class="col-md-4 mb-2"><div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
+        <div style="font-size: 1.75rem; font-weight: 800; color: var(--ap-color-success, #16a34a);">{{active_count}}</div>
+        <div class="text-muted small text-uppercase">Active</div>
+    </div></div></div>
+    <div class="col-md-4 mb-2"><div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
+        <div style="font-size: 1.75rem; font-weight: 800; color: var(--ap-color-text-secondary, #5a6070);">{{inactive_count}}</div>
+        <div class="text-muted small text-uppercase">Inactive</div>
+    </div></div></div>
 </div>
 
-{{! ── Filter bar ─────────────────────────────────── }}
-<div class="card border-0 shadow-sm mb-4"><div class="card-body py-3">
-    <form method="get" action="{{{filter_url}}}" class="d-flex flex-wrap align-items-end gap-3">
-        <div class="flex-grow-1" style="min-width: 200px;">
-            <label class="small text-muted mb-1 d-block">Search</label>
-            <div class="input-group input-group-sm">
-                <span class="input-group-text"><i class="fa fa-search"></i></span>
-                <input type="text" name="search" class="form-control" placeholder="Exam, quiz or course name..." value="{{search}}">
+<div class="ap-filter-bar">
+    <div class="d-flex flex-wrap align-items-end gap-3">
+        <div>
+            <label class="small text-muted mb-1 d-block">Status</label>
+            <div class="btn-group btn-group-sm" role="group" data-airpay-exams-status>
+                <button type="button" class="btn btn-light active" data-status="all">All</button>
+                <button type="button" class="btn btn-light"        data-status="1">Active</button>
+                <button type="button" class="btn btn-light"        data-status="0">Inactive</button>
             </div>
         </div>
-        {{#has_org_options}}
-        <div style="min-width: 180px;">
-            <label class="small text-muted mb-1 d-block">Organisation</label>
-            <select name="orgid" class="form-select form-select-sm">
-                <option value="0">All Organisations</option>
-                {{#org_options}}
-                <option value="{{id}}" {{#selected}}selected{{/selected}}>{{name}}</option>
-                {{/org_options}}
-            </select>
-        </div>
-        {{/has_org_options}}
-        <div style="min-width: 140px;">
-            <label class="small text-muted mb-1 d-block">Status</label>
-            <select name="status" class="form-select form-select-sm">
-                <option value="all" {{#status_all}}selected{{/status_all}}>All</option>
-                <option value="active" {{#status_active}}selected{{/status_active}}>Active</option>
-                <option value="inactive" {{#status_inactive}}selected{{/status_inactive}}>Inactive</option>
-            </select>
-        </div>
-        <div>
-            <button type="submit" class="btn btn-primary btn-sm">
-                <i class="fa fa-filter fa-fw"></i> Filter
-            </button>
-        </div>
-    </form>
-</div></div>
+    </div>
+</div>
 
-{{#has_exams}}
-<div class="card border-0 shadow-sm"><div class="table-responsive">
-    <table class="table table-hover mb-0 align-middle">
-        <thead><tr style="background: var(--ap-color-primary, #0066A7); color: #fff;">
-            <th class="ps-3">Exam Name</th>
-            <th>Quiz / Course</th>
-            <th>Organisation</th>
-            <th class="text-center">Attempts</th>
-            <th class="text-center">Avg Score</th>
-            <th>Duration</th>
-            <th>Pass Grade</th>
-            <th>Status</th>
-            {{#can_manage}}<th class="text-end pe-3">Actions</th>{{/can_manage}}
-        </tr></thead>
-        <tbody>
-            {{#exams}}
-            <tr>
-                <td class="ps-3 fw-semibold">{{name}}</td>
-                <td class="small">
-                    <div>{{quizname}}</div>
-                    <div class="text-muted">{{coursename}}</div>
-                </td>
-                <td class="small">{{orgname}}</td>
-                <td class="text-center">{{attempts}}</td>
-                <td class="text-center fw-semibold">{{avg_score}}</td>
-                <td class="small">{{duration}}</td>
-                <td class="small">{{passinggrade}}</td>
-                <td><span class="badge {{statuscss}}">{{statuslabel}}</span></td>
-                {{#can_manage}}
-                <td class="text-end pe-3">
-                    <div class="dropdown">
-                        <button type="button" class="btn btn-sm btn-link text-muted p-0 dropdown-toggle no-arrow"
-                                data-toggle="dropdown" aria-expanded="false" aria-haspopup="true">
-                            <i class="fa fa-ellipsis-v"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-right">
-                            <li>
-                                <a class="dropdown-item" href="#"
-                                   data-action="edit-exam" data-examid="{{id}}" data-name="{{name}}">
-                                    <i class="fa fa-pencil fa-fw"></i> Edit
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{{viewurl}}}">
-                                    <i class="fa fa-eye fa-fw"></i> View Quiz
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{{reporturl}}}">
-                                    <i class="fa fa-chart-bar fa-fw"></i> Results
-                                </a>
-                            </li>
-                            <li>
-                                {{#is_active}}
-                                <a class="dropdown-item" href="#"
-                                   data-action="deactivate-exam" data-examid="{{id}}" data-name="{{name}}">
-                                    <i class="fa fa-pause-circle fa-fw text-warning"></i> Deactivate
-                                </a>
-                                {{/is_active}}
-                                {{^is_active}}
-                                <a class="dropdown-item" href="#"
-                                   data-action="activate-exam" data-examid="{{id}}" data-name="{{name}}">
-                                    <i class="fa fa-play-circle fa-fw text-success"></i> Activate
-                                </a>
-                                {{/is_active}}
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item text-danger" href="#"
-                                   data-action="delete-exam" data-examid="{{id}}" data-name="{{name}}">
-                                    <i class="fa fa-trash fa-fw"></i> Unregister
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </td>
-                {{/can_manage}}
-            </tr>
-            {{/exams}}
-        </tbody>
-    </table>
-</div></div>
-{{/has_exams}}
-
-{{^has_exams}}
-<div class="card border-0 shadow-sm"><div class="card-body text-center py-5">
-    <i class="fa fa-edit fa-3x text-muted mb-3 d-block"></i>
-    <h5 class="text-muted">No exams registered yet</h5>
-    <p class="text-muted mb-3">{{#str}}noexams_subtitle, local_airpay_exams{{/str}}</p>
-    {{#total_quizzes}}
-    <p class="small text-muted mb-3">You have <strong>{{total_quizzes}}</strong> quiz{{#total_quizzes}}{{^single_quiz}}zes{{/single_quiz}}{{/total_quizzes}} available across courses, ready to register.</p>
-    {{/total_quizzes}}
-    {{#can_manage}}
-    <a href="#" class="btn btn-primary btn-sm" data-action="create-exam">
-        <i class="fa fa-plus fa-fw"></i> Register First Exam
-    </a>
-    {{/can_manage}}
-</div></div>
-{{/has_exams}}
+<div data-airpay-table
+     data-endpoint="local_airpay_exams_list_exams"
+     data-columns="{{columns_json}}"
+     data-search-placeholder="Search exam name…"
+     data-perpage="25">
+</div>
 
 </div>
+
 {{#js}}
-require(['local_airpay_exams/exam_actions'], function(ExamActions) {
-    ExamActions.init();
+require([
+    'theme_airpayux/datatable',
+    'local_airpay_exams/exam_actions'
+], function(Datatable, ExamActions) {
+    Datatable.init();
+    if (ExamActions && ExamActions.init) ExamActions.init();
+
+    var root = document.querySelector('[data-airpay-table]');
+    var dt = Datatable.getInstance(root);
+    if (!dt) return;
+
+    document.querySelectorAll('[data-airpay-exams-status] [data-status]').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            var s = e.target.dataset.status;
+            document.querySelectorAll('[data-airpay-exams-status] [data-status]').forEach(function(b) {
+                b.classList.toggle('active', b === e.target);
+            });
+            dt.setFilter('status', s);
+        });
+    });
 });
 {{/js}}

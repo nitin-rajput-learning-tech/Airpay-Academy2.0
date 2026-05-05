@@ -3,6 +3,13 @@
 defined('MOODLE_INTERNAL') || die();
 
 $functions = [
+    'local_airpay_learningpath_list_paths' => [
+        'classname'    => 'local_airpay_learningpath\external\list_paths',
+        'description'  => 'List learning paths for shared datatable',
+        'type'         => 'read',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_learningpath:view',
+    ],
     'local_airpay_learningpath_toggle_status' => [
         'classname'    => 'local_airpay_learningpath\external\toggle_status',
         'description'  => 'Activate or archive a learning path',
