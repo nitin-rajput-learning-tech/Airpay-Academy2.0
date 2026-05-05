@@ -1,9 +1,18 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-05 | **Phase:** Academy 3.3 — CRUD on every admin surface, shared datatable, security-cleared
+**Updated:** 2026-05-05 (late) | **Phase:** Academy 3.3 — Audit + Perf cleared, ready for production deploy rehearsal
 **Theme:** airpayux v1.0.0 | **Moodle:** 5.1.3+ on XAMPP
-**Version:** 3.3.0 (CRUD across 11 admin plugins + shared datatable + manager drill-down + bulk ops + security audit clean)
+**Version:** 3.3.0+ (v3.3 stable + post-audit hardening: P0 datatable bugs fixed, P1 perf wins, cross-tenant LIKE leaks closed, comprehensive Playwright test harness)
 **GitHub:** Pushed to nitin-rajput-learning-tech/Airpay-Academy2.0 (production branch)
-**Latest commit:** a6c315d65 — Mobile + dark-mode polish + 6 security fixes (2 critical, 4 high)
+**Latest commit:** dadfe1245 — F1+F2+F3 fixes (catalog cache 40×, harness improvements, F1 documented)
+**Next session:** see `state-cards/2026-05-05-session-state.md` — recommended next is production deploy rehearsal.
+
+## Last 6 commits (this audit/perf session)
+- `dadfe1245` F1+F2+F3 fixes from Phase A/B audit findings
+- `8fe7bf7dc` Phase A + B test execution: 9 personas + 11 admin tables, real findings
+- `6cc3d5695` Comprehensive test plan: 8 phases × 9 personas × 21 surfaces
+- `ac22501e8` Cross-tenant LIKE over-count fix: 13 sites across 4 plugins
+- `9e3512499` P1 perf: airpay_org admin 86× faster + airpay_analytics N+1 + cache layer
+- `33c6bce27` P0 audit: 2 datatable hotfixes + Playwright harness for ongoing verification
 
 ---
 
