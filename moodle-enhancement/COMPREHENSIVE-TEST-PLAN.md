@@ -11,19 +11,20 @@
 
 ### 0.1 Test user accounts (verify exist + password set)
 
-| Persona ID | Email | Role | Tenant | Notes |
-|------------|-------|------|--------|-------|
-| `TEST_SITEADMIN` | `academy@airpay.co.in` | Site administrator (id=2) | `/1` | Full access, bypasses capability checks |
-| `TEST_SITEADMIN_2` | `shashank.gudimela@moodle.com` | Site administrator (id=233) | `/1` | Backup admin — second-pair-of-eyes test |
-| `TEST_LDADMIN` | TBD (one of 10 `administrator` role-id=9 users) | L&D admin / category-level | `/1` | Should see 11 admin tables but not Site administration |
-| `TEST_TRAINER` | TBD (the 1 `trainer` role-id=10 user) | Trainer | `/1` | Course-level admin only |
-| `TEST_MANAGER` | `kunal@airpay.co.in` (id=237) | Employee + has reports | `/1` | Manager status via `open_supervisorid` not roleid |
-| `TEST_LEARNER_AIRPAY` | `rasika.thakare@airpay.co.in` (id=3113) | Employee | `/1` (Airpay) | 4 active enrolments confirmed |
-| `TEST_LEARNER_PUBLIC` | TBD — any `/77` employee | Employee | `/77` (Public) | Should NOT see Airpay courses |
-| `TEST_LEARNER_ZEEA` | TBD — any `/177` employee | Employee | `/177` (ZEEA) | Should NOT see Airpay courses |
-| `TEST_NEW_USER` | TBD — create one specifically | Employee, fresh | `/1` | Onboarding redirect must trigger; once skipped/completed never again |
+| Persona ID | Email | UID | Role | Tenant | Notes |
+|------------|-------|-----|------|--------|-------|
+| `TEST_SITEADMIN` | `academy@airpay.co.in` | 2 | Site administrator | `/1` | Full access, bypasses capability checks |
+| `TEST_SITEADMIN_2` | `shashank.gudimela@moodle.com` | 233 | Site administrator | `/1` | Backup admin — second-pair-of-eyes test |
+| `TEST_LDADMIN` | `joseph.mandapati@airpay.co.in` | 627 | administrator (role-id=9) | `/1/183/184/231` | All admin tables but not Site administration |
+| `TEST_TRAINER` | `asif.ansari@airpay.co.in` | 2304 | trainer (role-id=10) | `/1/79/197/200` | Course-level admin only |
+| `TEST_MANAGER` | `kunal@airpay.co.in` | 237 | employee + has reports | `/1/2/235/236` | Manager status via `open_supervisorid` |
+| `TEST_LEARNER_AIRPAY` | `rasika.thakare@airpay.co.in` | 3113 | employee | `/1/183/184/185` | 4 enrolments + course id=6 (SCORM) |
+| `TEST_LEARNER_PUBLIC` | `demoairpayacademy@gmail.com` | 1830 | employee | `/77` | Public tenant; no Airpay/ZEEA data |
+| `TEST_LEARNER_ZEEA` | `raya.ahmada@zeeasmz.go.tz` | 1730 | employee | `/177` | ZEEA tenant; no Airpay/Public data |
+| `TEST_NEW_USER` | `audit.newuser@airpay.co.in` | 3376 | employee, fresh | `/1` | Onboarding flag = 0 — redirect must fire on first login |
 
-**Password convention:** All test accounts use `Airpay@Test2026!`. Passwords reset via `audit/audit_bootstrap.php` (idempotent).
+**Password (all 9 personas):** `Airpay@Test2026!` — set via `discover_v2.php` / `finalize_personas.php` (idempotent CLI).
+**SCORM test course:** course id=6 'HR Onboarding' — rasika enrolled. WF-07 testable.
 
 **Onboarding pre-seed:** For automated runs only, set `airpay_onboarding_complete=1` for `TEST_MANAGER`, `TEST_LEARNER_*`. Leave `TEST_NEW_USER` un-seeded.
 
