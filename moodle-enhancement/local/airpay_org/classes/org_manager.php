@@ -214,6 +214,189 @@ class org_manager {
         }, $descendants);
     }
 
+    // ═══════════════════════════════════════════════════════════════════
+    // Write operations — CRUD (added April 2026)
+    // ═══════════════════════════════════════════════════════════════════
+
+    /**
+     * Create a new org node.
+     *
+     * Computes path/depth from parentid automatically. parentid=0 creates a
+     * top-level tenant. Non-zero parentid inherits its parent's path and
+     * depth+1.
+     *
+     * @param object $data  Must have ->fullname. May have shortname, description,
+     *                      parentid, visible, sortorder, brand_color, button_color,
+     *                      hover_color, theme_scheme.
+     * @return int  New org ID.
+     * @throws \moodle_exception
+     */
+    public static function create(object $data): int {
+        global $DB;
+
+        if (empty($data->fullname)) {
+            throw new \moodle_exception('missingrequiredfields', 'local_airpay_org');
+        }
+
+        $parentid = (int) ($data->parentid ?? 0);
+        $depth = 1;
+        $parent_path = '';
+
+        if ($parentid > 0) {
+            $parent = $DB->get_record(self::TABLE, ['id' => $parentid], 'id, path, depth');
+            if (!$parent) {
+                throw new \moodle_exception('invalidparent', 'local_airpay_org');
+            }
+            $depth = ((int) $parent->depth) + 1;
+            $parent_path = $parent->path;
+        }
+
+        $record = (object) [
+            'fullname'     => trim($data->fullname),
+            'shortname'    => !empty($data->shortname) ? trim($data->shortname) : '',
+            'description'  => $data->description ?? '',
+            'parentid'     => $parentid,
+            'depth'        => $depth,
+            'visible'      => (int) ($data->visible ?? 1),
+            'sortorder'    => (int) ($data->sortorder ?? 0),
+            'brand_color'  => $data->brand_color ?? null,
+            'button_color' => $data->button_color ?? null,
+            'hover_color'  => $data->hover_color ?? null,
+            'theme_scheme' => $data->theme_scheme ?? null,
+            'timecreated'  => time(),
+            'timemodified' => time(),
+        ];
+
+        // Insert without path first (we need the new ID to compute it).
+        $newid = $DB->insert_record(self::TABLE, $record);
+
+        // Now patch path = parent_path + / + newid (or /newid for tenant).
+        $path = $parentid > 0 ? $parent_path . '/' . $newid : '/' . $newid;
+        $DB->set_field(self::TABLE, 'path', $path, ['id' => $newid]);
+
+        return $newid;
+    }
+
+    /**
+     * Update an existing org. Cannot change parentid or path through this
+     * method — use move_branch() for that to recompute descendants.
+     *
+     * @param int    $orgid
+     * @param object $data
+     * @return bool
+     */
+    public static function update(int $orgid, object $data): bool {
+        global $DB;
+
+        $existing = $DB->get_record(self::TABLE, ['id' => $orgid], '*', MUST_EXIST);
+
+        $record = (object) [
+            'id' => $orgid,
+            'timemodified' => time(),
+        ];
+
+        if (isset($data->fullname))     $record->fullname    = trim($data->fullname);
+        if (isset($data->shortname))    $record->shortname   = trim($data->shortname);
+        if (isset($data->description))  $record->description = $data->description;
+        if (isset($data->visible))      $record->visible     = (int) $data->visible;
+        if (isset($data->sortorder))    $record->sortorder   = (int) $data->sortorder;
+        if (isset($data->brand_color))  $record->brand_color = $data->brand_color;
+        if (isset($data->button_color)) $record->button_color = $data->button_color;
+        if (isset($data->hover_color))  $record->hover_color  = $data->hover_color;
+        if (isset($data->theme_scheme)) $record->theme_scheme = $data->theme_scheme;
+
+        $DB->update_record(self::TABLE, $record);
+        return true;
+    }
+
+    /**
+     * Toggle org visibility (active <-> hidden).
+     *
+     * @param int       $orgid
+     * @param bool|null $visible  null = toggle, true = show, false = hide
+     * @return bool  New visibility state.
+     */
+    public static function toggle_visibility(int $orgid, ?bool $visible = null): bool {
+        global $DB;
+        $existing = $DB->get_record(self::TABLE, ['id' => $orgid], 'id, visible', MUST_EXIST);
+        $newstate = $visible ?? !((bool) $existing->visible);
+        $DB->update_record(self::TABLE, (object) [
+            'id' => $orgid,
+            'visible' => $newstate ? 1 : 0,
+            'timemodified' => time(),
+        ]);
+        return $newstate;
+    }
+
+    /**
+     * Count users assigned to this org (open_path matches the org's path
+     * prefix, including descendants).
+     *
+     * @param int $orgid
+     * @return int
+     */
+    public static function count_users(int $orgid): int {
+        global $DB;
+        $org = $DB->get_record(self::TABLE, ['id' => $orgid], 'id, path');
+        if (!$org || empty($org->path)) {
+            return 0;
+        }
+        return $DB->count_records_select('user',
+            'deleted = 0 AND open_path LIKE :p',
+            ['p' => $org->path . '%']);
+    }
+
+    /**
+     * Count direct + indirect child orgs.
+     *
+     * @param int $orgid
+     * @return int
+     */
+    public static function count_descendants(int $orgid): int {
+        global $DB;
+        $org = $DB->get_record(self::TABLE, ['id' => $orgid], 'id, path');
+        if (!$org || empty($org->path)) {
+            return 0;
+        }
+        return $DB->count_records_select(self::TABLE,
+            "path LIKE :p", ['p' => $org->path . '/%']);
+    }
+
+    /**
+     * Delete an org node. Refuses if it has descendants or users assigned.
+     *
+     * Tenants (depth=1) are not deletable through this method — use
+     * toggle_visibility() to hide them instead. Removing a tenant would
+     * orphan all its sub-orgs and users.
+     *
+     * @param int $orgid
+     * @return bool
+     * @throws \moodle_exception when blocked.
+     */
+    public static function delete(int $orgid): bool {
+        global $DB;
+        $org = $DB->get_record(self::TABLE, ['id' => $orgid], '*', MUST_EXIST);
+
+        if ((int) $org->depth === 1) {
+            throw new \moodle_exception('cannotdeletetenant', 'local_airpay_org');
+        }
+
+        if (self::count_descendants($orgid) > 0) {
+            throw new \moodle_exception('orghaschildren', 'local_airpay_org');
+        }
+
+        if (self::count_users($orgid) > 0) {
+            throw new \moodle_exception('orghasusers', 'local_airpay_org');
+        }
+
+        $DB->delete_records(self::TABLE, ['id' => $orgid]);
+        return true;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Legacy helpers
+    // ═══════════════════════════════════════════════════════════════════
+
     /**
      * Fallback read from legacy BizLMS table.
      *

@@ -1,5 +1,5 @@
 <?php
-// Airpay Organisation Management — hierarchical org tree.
+// Airpay Organisation Management — hierarchical org tree with CRUD.
 //
 // @package    local_airpay_org
 // @copyright  2026 Airpay Payment Services
@@ -7,80 +7,85 @@
 
 require_once(__DIR__ . '/../../config.php');
 require_login();
-require_capability('local/airpay_org:manage', context_system::instance());
 
-$PAGE->set_context(context_system::instance());
+$context = context_system::instance();
+require_capability('local/airpay_org:view', $context);
+
+$can_manage = is_siteadmin() || has_capability('local/airpay_org:manage', $context);
+
+$PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/local/airpay_org/admin.php'));
 $PAGE->set_title('Organisation Management');
 $PAGE->set_heading('Organisation Management');
 $PAGE->set_pagelayout('standard');
 $PAGE->set_secondary_navigation(false);
 
-// Get all org nodes.
-$all_orgs = $DB->get_records('local_airpay_org', null, 'depth ASC, fullname ASC');
+// Get all org nodes once.
+$all_orgs = $DB->get_records('local_airpay_org', null, 'depth ASC, sortorder ASC, fullname ASC');
 
-// Build tree structure.
-$tenants = [];
-$children_map = []; // parentid => [children]
+// Group by parentid for fast tree assembly.
+$by_parent = [];
+foreach ($all_orgs as $o) {
+    $by_parent[(int) $o->parentid][] = $o;
+}
 
-foreach ($all_orgs as $org) {
-    if ($org->depth == 1) {
-        // Top-level tenant.
-        $child_count = $DB->count_records_select('local_airpay_org', "path LIKE :p AND depth > 1", ['p' => $org->path . '/%']);
-        $user_count = $DB->count_records_sql(
-            "SELECT COUNT(*) FROM {user} WHERE deleted = 0 AND suspended = 0 AND open_path LIKE :p",
+/**
+ * Recursively build a render-friendly tree node.
+ */
+$build_node = function (object $org) use (&$build_node, $by_parent, $DB, $can_manage): array {
+    $kid_records = $by_parent[(int) $org->id] ?? [];
+    $children = [];
+    foreach ($kid_records as $k) {
+        $children[] = $build_node($k);
+    }
+
+    // Count users at this org's path level (descendants included).
+    $user_count = 0;
+    if (!empty($org->path)) {
+        $user_count = $DB->count_records_select('user',
+            'deleted = 0 AND open_path LIKE :p',
             ['p' => $org->path . '%']);
-
-        $tenants[] = [
-            'id'         => $org->id,
-            'name'       => format_string($org->fullname),
-            'shortname'  => s($org->shortname ?? ''),
-            'path'       => s($org->path ?? ''),
-            'child_count' => $child_count,
-            'user_count' => $user_count,
-            'visible'    => (bool) $org->visible,
-            'visiblelabel' => $org->visible ? 'Active' : 'Hidden',
-            'visiblecss' => $org->visible ? 'badge-success' : 'badge-secondary',
-        ];
     }
-}
 
-// Get children per tenant for expandable tree.
-$tenant_children = [];
-foreach ($tenants as &$t) {
-    $kids = $DB->get_records_sql(
-        "SELECT o.id, o.fullname, o.shortname, o.path, o.depth, o.visible,
-                (SELECT COUNT(*) FROM {user} WHERE deleted = 0 AND open_path LIKE " . $DB->sql_concat("o.path", "'%'") . ") AS user_count
-           FROM {local_airpay_org} o
-          WHERE o.path LIKE :p AND o.depth = 2
-       ORDER BY o.fullname ASC",
-        ['p' => $t['path'] . '/%']);
+    return [
+        'id'           => (int) $org->id,
+        'fullname'     => format_string($org->fullname),
+        'shortname'    => s($org->shortname ?? ''),
+        'description'  => format_string($org->description ?? ''),
+        'path'         => s($org->path ?? ''),
+        'depth'        => (int) $org->depth,
+        'is_tenant'    => ((int) $org->depth === 1),
+        'visible'      => (bool) $org->visible,
+        'visible_int'  => (int) $org->visible,
+        'visiblelabel' => $org->visible ? 'Active' : 'Hidden',
+        'visiblecss'   => $org->visible ? 'badge-success' : 'badge-secondary',
+        'brand_color'  => s($org->brand_color ?? ''),
+        'has_brand'    => !empty($org->brand_color),
+        'children'     => $children,
+        'has_children' => !empty($children),
+        'child_count'  => count($children),
+        'user_count'   => (int) $user_count,
+        'can_manage'   => $can_manage,
+    ];
+};
 
-    $dept_rows = [];
-    foreach ($kids as $k) {
-        $dept_rows[] = [
-            'id'        => $k->id,
-            'name'      => format_string($k->fullname),
-            'shortname' => s($k->shortname ?? ''),
-            'path'      => s($k->path ?? ''),
-            'user_count' => (int) $k->user_count,
-            'visible'   => (bool) $k->visible,
-        ];
-    }
-    $t['departments'] = $dept_rows;
-    $t['has_departments'] = !empty($dept_rows);
+// Tenants are nodes with parentid=0.
+$tenant_records = $by_parent[0] ?? [];
+$tenants = [];
+foreach ($tenant_records as $t) {
+    $tenants[] = $build_node($t);
 }
-unset($t);
 
 $total_orgs = count($all_orgs);
 $total_users = $DB->count_records_select('user', 'deleted = 0 AND suspended = 0 AND id > 2');
 
 $data = [
-    'total_orgs'   => $total_orgs,
+    'total_orgs'    => $total_orgs,
     'total_tenants' => count($tenants),
-    'total_users'  => number_format($total_users),
-    'tenants'      => $tenants,
-    'has_tenants'  => !empty($tenants),
+    'total_users'   => number_format($total_users),
+    'tenants'       => $tenants,
+    'has_tenants'   => !empty($tenants),
+    'can_manage'    => $can_manage,
 ];
 
 echo $OUTPUT->header();
