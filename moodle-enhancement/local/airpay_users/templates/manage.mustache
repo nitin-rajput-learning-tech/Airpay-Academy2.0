@@ -5,7 +5,7 @@
     @package  local_airpay_users
 }}
 <style>
-    [data-region="airpay-users"] .ap-filter-bar { background: var(--ap-color-surface, #fff); border: 1px solid var(--ap-color-border, #e2e6ef); border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; }
+    [data-region="airpay-users"] .ap-filter-bar { background: var(--ap-color-bg-surface, #fff); border: 1px solid var(--ap-color-border, #e2e6ef); border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; }
     [data-region="airpay-users"] .ap-filter-bar .form-select-sm,
     [data-region="airpay-users"] .ap-filter-bar .btn-group-sm > .btn { font-size: 0.85rem; }
     [data-region="airpay-users"] .ap-filter-bar .btn-group .btn { border-color: var(--ap-color-border, #e2e6ef); }
@@ -46,7 +46,7 @@
     </div>
     <div class="col-md-4 mb-2">
         <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
-            <div style="font-size: 1.75rem; font-weight: 800; color: var(--ap-color-error, #dc2626);">{{suspended_count}}</div>
+            <div style="font-size: 1.75rem; font-weight: 800; color: var(--ap-color-danger, #dc2626);">{{suspended_count}}</div>
             <div class="text-muted small text-uppercase">Suspended</div>
         </div></div>
     </div>

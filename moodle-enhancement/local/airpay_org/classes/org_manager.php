@@ -341,9 +341,12 @@ class org_manager {
         if (!$org || empty($org->path)) {
             return 0;
         }
+        // C2 fix: match the org itself OR its descendants (slash-bounded
+        // + sql_like_escape) — '/1' must NOT match '/10' or '/177'.
+        $like = $DB->sql_like_escape(rtrim($org->path, '/') . '/') . '%';
         return $DB->count_records_select('user',
-            'deleted = 0 AND open_path LIKE :p',
-            ['p' => $org->path . '%']);
+            'deleted = 0 AND (open_path = :exact OR open_path LIKE :p)',
+            ['exact' => $org->path, 'p' => $like]);
     }
 
     /**
@@ -358,8 +361,11 @@ class org_manager {
         if (!$org || empty($org->path)) {
             return 0;
         }
+        // C2 fix: sql_like_escape the prefix; the / boundary was already
+        // present and correct.
         return $DB->count_records_select(self::TABLE,
-            "path LIKE :p", ['p' => $org->path . '/%']);
+            "path LIKE :p",
+            ['p' => $DB->sql_like_escape($org->path . '/') . '%']);
     }
 
     /**
@@ -375,22 +381,37 @@ class org_manager {
      */
     public static function delete(int $orgid): bool {
         global $DB;
-        $org = $DB->get_record(self::TABLE, ['id' => $orgid], '*', MUST_EXIST);
 
-        if ((int) $org->depth === 1) {
-            throw new \moodle_exception('cannotdeletetenant', 'local_airpay_org');
+        // H2 fix: wrap in a transaction with SELECT ... FOR UPDATE so a
+        // concurrent create() under this parent can't insert a child
+        // between the count_descendants check and the delete.
+        $tx = $DB->start_delegated_transaction();
+        try {
+            $table = self::TABLE;
+            $org = $DB->get_record_sql(
+                "SELECT * FROM {{$table}} WHERE id = :id FOR UPDATE",
+                ['id' => $orgid]);
+            if (!$org) {
+                throw new \moodle_exception('orgnotfound', 'local_airpay_org');
+            }
+
+            if ((int) $org->depth === 1) {
+                throw new \moodle_exception('cannotdeletetenant', 'local_airpay_org');
+            }
+            if (self::count_descendants($orgid) > 0) {
+                throw new \moodle_exception('orghaschildren', 'local_airpay_org');
+            }
+            if (self::count_users($orgid) > 0) {
+                throw new \moodle_exception('orghasusers', 'local_airpay_org');
+            }
+
+            $DB->delete_records(self::TABLE, ['id' => $orgid]);
+            $tx->allow_commit();
+            return true;
+        } catch (\Throwable $e) {
+            $tx->rollback($e);
         }
-
-        if (self::count_descendants($orgid) > 0) {
-            throw new \moodle_exception('orghaschildren', 'local_airpay_org');
-        }
-
-        if (self::count_users($orgid) > 0) {
-            throw new \moodle_exception('orghasusers', 'local_airpay_org');
-        }
-
-        $DB->delete_records(self::TABLE, ['id' => $orgid]);
-        return true;
+        return false;
     }
 
     // ═══════════════════════════════════════════════════════════════════

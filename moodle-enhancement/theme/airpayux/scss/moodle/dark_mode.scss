@@ -7,13 +7,28 @@
 /* Applied to html early (head.mustache) to prevent flash, then body on DOMContentLoaded */
 html.dark-mode,
 body.dark-mode {
-    /* Token overrides */
+    /* Token overrides — legacy --airpay-* names. */
     --airpay-bg-body: #0f1117;
     --airpay-surface: #1a1d27;
     --airpay-surface-2: #232733;
     --airpay-border: #2d3140;
     --airpay-text-primary: #e8eaed;
     --airpay-text-secondary: #9ca3b4;
+
+    /* Token overrides — current --ap-color-* semantic tokens.
+       Components built with var(--ap-color-*) auto-flip in dark mode
+       only because of these remaps. Without them, --ap-color-* values
+       defined in _tokens.scss :root keep their light values. */
+    --ap-color-bg-body:        #0f1117;
+    --ap-color-bg-surface:     #1a1d27;
+    --ap-color-bg-surface-alt: #232733;
+    --ap-color-bg-elevated:    #1f2230;
+    --ap-color-border:         #2d3140;
+    --ap-color-border-strong:  #3d4254;
+    --ap-color-divider:        #232733;
+    --ap-color-text-primary:   #e8eaed;
+    --ap-color-text-secondary: #9ca3b4;
+    --ap-color-text-muted:     #6b7280;
 
     background-color: #0f1117;
     color: #e8eaed;

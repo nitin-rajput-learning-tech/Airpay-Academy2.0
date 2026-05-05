@@ -203,8 +203,9 @@ class report_manager {
         $params = [];
 
         if (!empty($org_path)) {
-            $where[] = "u.open_path LIKE :orgpath";
-            $params['orgpath'] = $org_path . '%';
+            $where[] = "(u.open_path = :orgexact OR u.open_path LIKE :orgpath)";
+            $params["orgexact"] = rtrim($org_path, "/");
+            $params['orgpath'] = $DB->sql_like_escape(rtrim($org_path, '/') . '/') . '%';
         }
 
         $sql = "SELECT cc.id, u.firstname, u.lastname, u.email, u.open_employeeid,
@@ -268,8 +269,9 @@ class report_manager {
         $params = [];
 
         if (!empty($org_path)) {
-            $where[] = "c.open_path LIKE :orgpath";
-            $params['orgpath'] = $org_path . '%';
+            $where[] = "(c.open_path = :orgexact OR c.open_path LIKE :orgpath)";
+            $params["orgexact"] = rtrim($org_path, "/");
+            $params['orgpath'] = $DB->sql_like_escape(rtrim($org_path, '/') . '/') . '%';
         }
 
         $sql = "SELECT c.id, c.fullname, c.shortname,
@@ -336,8 +338,9 @@ class report_manager {
         $params = [];
 
         if (!empty($org_path)) {
-            $where[] = "u.open_path LIKE :orgpath";
-            $params['orgpath'] = $org_path . '%';
+            $where[] = "(u.open_path = :orgexact OR u.open_path LIKE :orgpath)";
+            $params["orgexact"] = rtrim($org_path, "/");
+            $params['orgpath'] = $DB->sql_like_escape(rtrim($org_path, '/') . '/') . '%';
         }
 
         $sql = "SELECT u.id, u.firstname, u.lastname, u.email, u.open_employeeid,
@@ -396,8 +399,9 @@ class report_manager {
         $params = [];
 
         if (!empty($org_path)) {
-            $where[] = "u.open_path LIKE :orgpath";
-            $params['orgpath'] = $org_path . '%';
+            $where[] = "(u.open_path = :orgexact OR u.open_path LIKE :orgpath)";
+            $params["orgexact"] = rtrim($org_path, "/");
+            $params['orgpath'] = $DB->sql_like_escape(rtrim($org_path, '/') . '/') . '%';
         }
 
         // Last 12 months.

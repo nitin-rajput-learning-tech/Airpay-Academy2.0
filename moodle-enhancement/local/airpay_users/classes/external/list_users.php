@@ -56,26 +56,56 @@ class list_users extends external_api {
         $orderby = "u.{$sort} {$sortdir}, u.id ASC";
 
         // ── Filters from client (whitelisted) ──
-        $client_filters = json_decode($params['filters'], true) ?: [];
-        $orgid  = (int)  ($client_filters['orgid']  ?? 0);
+        // M2 fix: bound size + decode depth so a malicious nested JSON
+        // can't spike memory.
+        if (strlen($params['filters']) > 4096) {
+            throw new \moodle_exception('filterstoolong', 'local_airpay_users');
+        }
+        $client_filters = json_decode($params['filters'], true, 5);
+        if (!is_array($client_filters) || json_last_error() !== JSON_ERROR_NONE) {
+            $client_filters = [];
+        }
+        $orgid  = (int)    ($client_filters['orgid']  ?? 0);
         $status = (string) ($client_filters['status'] ?? 'active');
 
         // ── WHERE assembly ──
         $where = ['u.deleted = 0', 'u.id > 2'];
         $sqlparams = [];
 
+        // Tenant scoping. Two forks:
+        //  - client passed orgid → must verify it belongs to caller's tree (H1)
+        //  - else fall back to caller's own top-level tenant
+        // In both cases the LIKE pattern is /<id>/%  (slash-bounded + escaped)
+        // so '/1' never matches '/10' or '/177' (C2).
         if ($orgid > 0) {
             $org = $DB->get_record('local_airpay_org', ['id' => $orgid], 'path');
             if ($org && !empty($org->path)) {
-                $where[] = 'u.open_path LIKE :orgpath';
-                $sqlparams['orgpath'] = $org->path . '%';
+                if (!is_siteadmin()) {
+                    $caller_parts = explode('/', trim($USER->open_path ?? '', '/'));
+                    $caller_top = isset($caller_parts[0]) && ctype_digit($caller_parts[0])
+                        ? '/' . (int) $caller_parts[0] : '';
+                    $is_inside = ($org->path === $caller_top)
+                        || (strpos($org->path, $caller_top . '/') === 0);
+                    if (empty($caller_top) || !$is_inside) {
+                        throw new \moodle_exception('outoftenant', 'local_airpay_users');
+                    }
+                }
+                // Match the org's path itself OR any descendant. The OR is
+                // necessary because users assigned at the tenant-root (e.g.
+                // open_path = '/1' exactly) would otherwise be excluded.
+                $where[] = '(u.open_path = :orgexact OR u.open_path LIKE :orgprefix)';
+                $sqlparams['orgexact']  = rtrim($org->path, '/');
+                $sqlparams['orgprefix'] =
+                    $DB->sql_like_escape(rtrim($org->path, '/') . '/') . '%';
             }
         } else if (!is_siteadmin()) {
             $parts = explode('/', trim($USER->open_path ?? '', '/'));
-            $top = $parts[0] ?? '';
-            if (!empty($top)) {
-                $where[] = 'u.open_path LIKE :userorg';
-                $sqlparams['userorg'] = '/' . $top . '%';
+            $top = isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
+            if ($top > 0) {
+                $where[] = '(u.open_path = :userorgexact OR u.open_path LIKE :userorgprefix)';
+                $sqlparams['userorgexact']  = '/' . $top;
+                $sqlparams['userorgprefix'] =
+                    $DB->sql_like_escape('/' . $top . '/') . '%';
             }
         }
 

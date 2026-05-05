@@ -23,10 +23,33 @@ class delete_report extends external_api {
     }
 
     public static function execute(int $reportid): array {
+        global $USER;
         $params = self::validate_parameters(self::execute_parameters(), ['reportid' => $reportid]);
         $context = \context_system::instance();
         self::validate_context($context);
         require_capability('local/airpay_reports:manage', $context);
+
+        // H3 fix: tenant scope check on the target report. A non-siteadmin
+        // manager can only delete reports inside their own top-level tree.
+        if (!is_siteadmin()) {
+            $existing = \local_airpay_reports\report_manager::get($params['reportid']);
+            if (!$existing) {
+                throw new \moodle_exception('invalidreport', 'local_airpay_reports');
+            }
+            $caller_parts = explode('/', trim($USER->open_path ?? '', '/'));
+            $caller_top = isset($caller_parts[0]) && ctype_digit($caller_parts[0])
+                ? '/' . (int) $caller_parts[0] : '';
+            // Reports without an open_path (= "all organisations") are
+            // siteadmin-only; managers cannot delete them.
+            if (empty($existing->open_path)) {
+                throw new \moodle_exception('outoftenant', 'local_airpay_reports');
+            }
+            $is_inside = ($existing->open_path === $caller_top)
+                || (strpos((string) $existing->open_path, $caller_top . '/') === 0);
+            if (empty($caller_top) || !$is_inside) {
+                throw new \moodle_exception('outoftenant', 'local_airpay_reports');
+            }
+        }
 
         $success = \local_airpay_reports\report_manager::delete($params['reportid']);
         return ['reportid' => $params['reportid'], 'success' => $success];

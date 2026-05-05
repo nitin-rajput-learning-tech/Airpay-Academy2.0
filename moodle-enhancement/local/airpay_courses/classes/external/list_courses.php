@@ -52,12 +52,36 @@ class list_courses extends external_api {
         $orderby = "c.{$sort} {$sortdir}, c.id ASC";
 
         // Filters from client.
-        $client_filters = json_decode($params['filters'], true) ?: [];
+        // M2 fix: bound the JSON filter blob and limit decode depth.
+        if (strlen($params['filters']) > 4096) {
+            throw new \moodle_exception('filterstoolong', 'local_airpay_courses');
+        }
+        $client_filters = json_decode($params['filters'], true, 5);
+        if (!is_array($client_filters) || json_last_error() !== JSON_ERROR_NONE) {
+            $client_filters = [];
+        }
         $categoryid = (int) ($client_filters['categoryid'] ?? 0);
         $visibility = (string) ($client_filters['visibility'] ?? 'all');
 
         $where = ['c.id > 1']; // Exclude site course.
         $sqlparams = [];
+
+        // M3 fix: scope to caller's tenant (was missing entirely — any user
+        // with :view could see every course on the platform).
+        global $USER;
+        if (!is_siteadmin()) {
+            $parts = explode('/', trim($USER->open_path ?? '', '/'));
+            $top = isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
+            if ($top > 0) {
+                // Match: course at tenant root, in any descendant of it, OR
+                // courses with no open_path set (legacy/unscoped — visible
+                // to everyone today; tighten later once data is migrated).
+                $where[] = '(c.open_path = :corgexact OR c.open_path LIKE :corgprefix OR c.open_path IS NULL)';
+                $sqlparams['corgexact']  = '/' . $top;
+                $sqlparams['corgprefix'] =
+                    $DB->sql_like_escape('/' . $top . '/') . '%';
+            }
+        }
 
         if ($categoryid > 0) {
             $where[] = 'c.category = :catid';

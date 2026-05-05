@@ -23,10 +23,27 @@ class toggle_visibility extends external_api {
     }
 
     public static function execute(int $orgid): array {
+        global $USER;
         $params = self::validate_parameters(self::execute_parameters(), ['orgid' => $orgid]);
         $context = \context_system::instance();
         self::validate_context($context);
         require_capability('local/airpay_org:manage', $context);
+
+        // H3 fix: tenant scope check on the target org.
+        if (!is_siteadmin()) {
+            $existing = \local_airpay_org\org_manager::get($params['orgid']);
+            if (!$existing) {
+                throw new \moodle_exception('orgnotfound', 'local_airpay_org');
+            }
+            $caller_parts = explode('/', trim($USER->open_path ?? '', '/'));
+            $caller_top = isset($caller_parts[0]) && ctype_digit($caller_parts[0])
+                ? '/' . (int) $caller_parts[0] : '';
+            $is_inside = ($existing->path === $caller_top)
+                || (strpos((string) $existing->path, $caller_top . '/') === 0);
+            if (empty($caller_top) || !$is_inside) {
+                throw new \moodle_exception('outoftenant', 'local_airpay_org');
+            }
+        }
 
         $newstate = \local_airpay_org\org_manager::toggle_visibility($params['orgid']);
         return [

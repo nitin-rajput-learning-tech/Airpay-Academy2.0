@@ -63,6 +63,41 @@ class bulk_action extends external_api {
             ];
         }
 
+        // C1 fix: tenant scope. A non-siteadmin can only act on users that
+        // sit beneath their own top-level tenant in open_path. Without this,
+        // an Airpay manager could bulk-suspend Public users by ID-guessing.
+        if (!is_siteadmin()) {
+            $parts = explode('/', trim($USER->open_path ?? '', '/'));
+            $top = isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
+            if ($top === 0) {
+                throw new \moodle_exception('invalidtenant', 'local_airpay_users');
+            }
+            // SQL LIKE pattern '/1/%' (slash-bounded + escape) so '/1' never
+            // matches '/10' or '/177'. Also include exact tenant-root match.
+            [$inscope_sql, $inscope_params] = $DB->get_in_or_equal(
+                $clean_ids, SQL_PARAMS_NAMED, 'cuid');
+            $scope_exact  = '/' . $top;
+            $scope_prefix = $DB->sql_like_escape('/' . $top . '/') . '%';
+            $in_scope = $DB->get_fieldset_sql(
+                "SELECT id FROM {user}
+                  WHERE id $inscope_sql AND deleted = 0
+                    AND (open_path = :sexact OR open_path LIKE :sprefix)",
+                array_merge($inscope_params, [
+                    'sexact'  => $scope_exact,
+                    'sprefix' => $scope_prefix,
+                ]));
+            $clean_ids = array_values(array_intersect(
+                array_map('intval', $clean_ids),
+                array_map('intval', $in_scope)));
+            if (empty($clean_ids)) {
+                return [
+                    'action'  => $params['action'],
+                    'count'   => 0,
+                    'skipped' => count($params['userids']),
+                ];
+            }
+        }
+
         [$insql, $inparams] = $DB->get_in_or_equal($clean_ids, SQL_PARAMS_NAMED, 'uid');
 
         $transaction = $DB->start_delegated_transaction();
@@ -85,15 +120,18 @@ class bulk_action extends external_api {
             $transaction->rollback($e);
         }
 
-        // Recount actually changed rows.
-        $now_state = $DB->count_records_select('user',
-            "id $insql AND suspended = :s",
-            array_merge($inparams, ['s' => $suspended]));
+        // M1 fix: do not echo back per-id success counts (would be a
+        // user-enumeration oracle). Return only the size of the
+        // request-set vs. how many were filtered out by tenant/protection
+        // rules. The audit log is the source of truth for who actually
+        // changed.
+        $count_attempted = count($clean_ids);
+        $skipped = count($params['userids']) - $count_attempted;
 
         return [
             'action'  => $params['action'],
-            'count'   => (int) $now_state,
-            'skipped' => count($params['userids']) - count($clean_ids),
+            'count'   => $count_attempted,
+            'skipped' => $skipped,
         ];
     }
 
