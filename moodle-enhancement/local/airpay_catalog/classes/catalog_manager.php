@@ -37,8 +37,10 @@ class catalog_manager {
         if (!empty($userpath)) {
             $parts = explode('/', trim($userpath, '/'));
             $orgpath = '/' . ($parts[0] ?? '');
-            $conditions[] = "c.open_path LIKE :orgpath";
-            $params['orgpath'] = $orgpath . '%';
+            // /-boundary so /1 doesn't match /10, /100, /177.
+            $conditions[] = "(c.open_path = :orgexact OR c.open_path LIKE :orgprefix)";
+            $params['orgexact']  = $orgpath;
+            $params['orgprefix'] = $DB->sql_like_escape($orgpath) . '/%';
         }
 
         // Search filter.
@@ -134,8 +136,10 @@ class catalog_manager {
         $userpath = $USER->open_path ?? '';
         if (!empty($userpath)) {
             $parts = explode('/', trim($userpath, '/'));
-            $orgfilter = "AND c.open_path LIKE :orgpath";
-            $params['orgpath'] = '/' . ($parts[0] ?? '') . '%';
+            $orgpath = '/' . ($parts[0] ?? '');
+            $orgfilter = "AND (c.open_path = :orgexact OR c.open_path LIKE :orgprefix)";
+            $params['orgexact']  = $orgpath;
+            $params['orgprefix'] = $DB->sql_like_escape($orgpath) . '/%';
         }
 
         $courses = $DB->get_records_sql(
@@ -168,8 +172,10 @@ class catalog_manager {
         $userpath = $USER->open_path ?? '';
         if (!empty($userpath)) {
             $parts = explode('/', trim($userpath, '/'));
-            $orgfilter = "AND c.open_path LIKE :orgpath";
-            $params['orgpath'] = '/' . ($parts[0] ?? '') . '%';
+            $orgpath = '/' . ($parts[0] ?? '');
+            $orgfilter = "AND (c.open_path = :orgexact OR c.open_path LIKE :orgprefix)";
+            $params['orgexact']  = $orgpath;
+            $params['orgprefix'] = $DB->sql_like_escape($orgpath) . '/%';
         }
 
         $courses = $DB->get_records_sql(
@@ -229,8 +235,9 @@ class catalog_manager {
         $params = [];
         $tenantpath = \local_airpay_org\tenant_manager::get_tenant_path();
         if (!empty($tenantpath)) {
-            $orgfilter = " AND c.open_path LIKE :orgpath";
-            $params['orgpath'] = $tenantpath . '%';
+            $orgfilter = " AND (c.open_path = :orgexact OR c.open_path LIKE :orgprefix)";
+            $params['orgexact']  = $tenantpath;
+            $params['orgprefix'] = $DB->sql_like_escape($tenantpath) . '/%';
         }
 
         return array_values($DB->get_records_sql(

@@ -392,8 +392,10 @@ class compliance_engine {
         $params = [];
 
         if (!empty($orgpath)) {
-            $conditions[] = "s.department_path LIKE :orgpath";
-            $params['orgpath'] = $orgpath . '%';
+            // Match exact tenant root OR descendant (`'/1' . '%'` would leak /10, /177).
+            $conditions[] = "(s.department_path = :orgexact OR s.department_path LIKE :orgprefix)";
+            $params['orgexact']  = $orgpath;
+            $params['orgprefix'] = $DB->sql_like_escape($orgpath) . '/%';
         }
 
         $where = implode(' AND ', $conditions);
@@ -465,8 +467,10 @@ class compliance_engine {
         $orgfilter = '';
         $params = [];
         if (!empty($orgpath)) {
-            $orgfilter = "AND s.department_path LIKE :orgpath";
-            $params['orgpath'] = $orgpath . '%';
+            // Match exact tenant root OR descendant (`'/1' . '%'` would leak /10, /177).
+            $orgfilter = "AND (s.department_path = :orgexact OR s.department_path LIKE :orgprefix)";
+            $params['orgexact']  = $orgpath;
+            $params['orgprefix'] = $DB->sql_like_escape($orgpath) . '/%';
         }
 
         // Get departments at depth 3 (or top-level if no specific org).
@@ -523,8 +527,10 @@ class compliance_engine {
         $orgfilter = '';
         $params = [];
         if (!empty($orgpath)) {
-            $orgfilter = "AND s.department_path LIKE :orgpath";
-            $params['orgpath'] = $orgpath . '%';
+            // Match exact tenant root OR descendant (`'/1' . '%'` would leak /10, /177).
+            $orgfilter = "AND (s.department_path = :orgexact OR s.department_path LIKE :orgprefix)";
+            $params['orgexact']  = $orgpath;
+            $params['orgprefix'] = $DB->sql_like_escape($orgpath) . '/%';
         }
 
         return array_values($DB->get_records_sql(
@@ -548,8 +554,9 @@ class compliance_engine {
         $orgfilter = '';
         $params = [];
         if (!empty($orgpath)) {
-            $orgfilter = "AND department_path LIKE :orgpath";
-            $params['orgpath'] = $orgpath . '%';
+            $orgfilter = "AND (department_path = :orgexact OR department_path LIKE :orgprefix)";
+            $params['orgexact']  = $orgpath;
+            $params['orgprefix'] = $DB->sql_like_escape($orgpath) . '/%';
         }
 
         $total = $DB->count_records_sql(
@@ -586,8 +593,9 @@ class compliance_engine {
         $orgfilter = '';
         $params = [];
         if (!empty($orgpath)) {
-            $orgfilter = "AND u.open_path LIKE :orgpath";
-            $params['orgpath'] = $orgpath . '%';
+            $orgfilter = "AND (u.open_path = :orgexact OR u.open_path LIKE :orgprefix)";
+            $params['orgexact']  = $orgpath;
+            $params['orgprefix'] = $DB->sql_like_escape($orgpath) . '/%';
         }
 
         return array_values($DB->get_records_sql(

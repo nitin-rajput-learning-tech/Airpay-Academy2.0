@@ -189,23 +189,46 @@ permission-error handler.
 **Production has Apache opcache + MySQL InnoDB buffer warmed by traffic,
 so real-world latency is likely 2-3× faster than this XAMPP cold start.**
 
-### Follow-up: cross-tenant `LIKE` over-count pattern
+### Cross-tenant `LIKE` over-count pattern — FIXED 2026-05-05
 
-The org admin fix exposed a class of bug: `'/' . $tenantid . '%'` matches
-`/1`, `/10`, `/100`, `/177`, etc. Same root cause as v3.3.0 security audit
-BUG-C2 (8 sites fixed). Audit found additional sites in:
+Same root cause as v3.3.0 security audit BUG-C2 (8 sites already fixed).
+Audit found and now-fixed **13 additional sites** across 4 files:
 
-- `local/airpay_analytics/classes/analytics_manager.php` — 8 `LIKE :orgpath`
-  with `$orgpath . '%'` (display-only counts, not access control)
-- `local/airpay_compliance_report/classes/compliance_engine.php` — 2 sites
+| File | Sites | Methods affected |
+|------|-------|------------------|
+| `local/airpay_analytics/classes/analytics_manager.php` | 4 | `get_kpis`, `get_funnel`, `get_course_effectiveness`, `get_department_users` |
+| `local/airpay_compliance_report/classes/compliance_engine.php` | 5 | `get_open_compliance_kpis`, `get_overdue_breakdown`, `get_overdue_users`, `get_compliance_kpis`, `get_team_compliance` |
+| `local/airpay_catalog/classes/catalog_manager.php` | 4 | `get_catalog`, `get_recent_courses`, `get_recommended`, `get_categories` |
+| `local/airpay_catalog/classes/commerce.php` | 1 (with 2 SQL refs) | `get_public_catalog` |
 
-Risk: medium. These are display values on dashboards seen by tenant admins,
-so a tenant 1 admin sees user counts inflated by tenant 10/100/177. Real
-list/CRUD endpoints already have proper tenant scoping (verified P0 audit).
+**Verified leak amounts on production-mirror data:**
 
-Recommended fix pattern: replace `LIKE :p` with `(open_path = :exact OR
-open_path LIKE :prefix)` where `:prefix = $orgpath . '/%'` — same fix
-shipped in v3.3.0 BUG-C2.
+| Tenant | Users displayed (old → new) | Courses displayed (old → new) |
+|--------|------------------------------|--------------------------------|
+| `/1` Airpay | 2193 → 2187 (**+6 leak**) | 221 → 204 (**+17 leak**) |
+| `/77` Public | 676 → 676 (no leak) | 183 → 183 (no leak) |
+| `/177` ZEEA | 6 → 6 (no leak) | 17 → 17 (no leak) |
+
+The leak is asymmetric: only tenants whose ID is a numeric prefix of another
+tenant's ID are affected (e.g. `/1` is a prefix of `/177`, so `/1%` matched
+ZEEA's 6 users and 17 courses). `/77` and `/177` aren't prefixes of any other
+tenant ID, so they didn't leak.
+
+Risk: medium. These are display values on dashboards seen by tenant admins.
+Real list/CRUD endpoints were already properly tenant-scoped (verified by
+the v3.3.0 security audit and the P0 audit), so no actual data access leak.
+
+**Fix pattern applied (proven in v3.3.0 BUG-C2):**
+```php
+// Was (broken — '/1%' matches /10, /100, /177):
+$orgfilter = "AND u.open_path LIKE :orgpath";
+$params['orgpath'] = $orgpath . '%';
+
+// Now (correct — exact match OR /-bounded prefix):
+$orgfilter = "AND (u.open_path = :orgexact OR u.open_path LIKE :orgprefix)";
+$params['orgexact']  = $orgpath;
+$params['orgprefix'] = $DB->sql_like_escape($orgpath) . '/%';
+```
 
 ---
 
@@ -242,7 +265,7 @@ production rollout for visual changes.
 | **P1** | Investigate `airpay_org/admin.php` 4.8s — replace recursive per-node user count with one JOIN + GROUP BY | S | **DONE 2026-05-05** — 213-node N+1 → 1 query + PHP rollup. 86× speedup verified. |
 | **P2** | Wire `full_audit*.sh` into a GitHub Action so every PR runs against a fresh test DB | S | Pending |
 | **P2** | Build a Playwright-based companion suite for the visual + CRUD coverage gaps above | L | **DONE 2026-05-05** — 5 harness files in `audit/playwright/`. |
-| **P2** | Fix cross-tenant `LIKE :path%` over-count in airpay_analytics (8 sites) + airpay_compliance_report (2 sites) — display-only counts, not access | M | Pending — see "Follow-up" above |
+| **P2** | Fix cross-tenant `LIKE :path%` over-count in airpay_analytics + airpay_compliance_report + airpay_catalog | M | **DONE 2026-05-05** — 13 sites across 4 files. Leak verified: Airpay was over-counting +6 users and +17 courses from ZEEA tenant. See "Cross-tenant LIKE" section above. |
 
 ---
 

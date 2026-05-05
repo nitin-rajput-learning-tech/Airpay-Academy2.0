@@ -36,8 +36,11 @@ class analytics_manager {
         $orgfilter = '';
         $params = [];
         if (!empty($orgpath)) {
-            $orgfilter = "AND u.open_path LIKE :orgpath";
-            $params['orgpath'] = $orgpath . '%';
+            // Match exact tenant root OR any descendant with /-boundary
+            // (`'/1' . '%'` would match /10, /100, /177 — cross-tenant leak).
+            $orgfilter = "AND (u.open_path = :orgexact OR u.open_path LIKE :orgprefix)";
+            $params['orgexact']  = $orgpath;
+            $params['orgprefix'] = $DB->sql_like_escape($orgpath) . '/%';
         }
 
         // Active users (logged in during period).
@@ -122,8 +125,9 @@ class analytics_manager {
         $orgfilter = '';
         $params = [];
         if (!empty($orgpath)) {
-            $orgfilter = "AND u.open_path LIKE :orgpath";
-            $params['orgpath'] = $orgpath . '%';
+            $orgfilter = "AND (u.open_path = :orgexact OR u.open_path LIKE :orgprefix)";
+            $params['orgexact']  = $orgpath;
+            $params['orgprefix'] = $DB->sql_like_escape($orgpath) . '/%';
         }
 
         $enrolled = $DB->count_records_sql(
@@ -297,8 +301,9 @@ class analytics_manager {
         $orgfilter = '';
         $params = [];
         if (!empty($orgpath)) {
-            $orgfilter = "AND c.open_path LIKE :orgpath";
-            $params['orgpath'] = $orgpath . '%';
+            $orgfilter = "AND (c.open_path = :orgexact OR c.open_path LIKE :orgprefix)";
+            $params['orgexact']  = $orgpath;
+            $params['orgprefix'] = $DB->sql_like_escape($orgpath) . '/%';
         }
 
         $result = array_values($DB->get_records_sql(
@@ -355,10 +360,14 @@ class analytics_manager {
           LEFT JOIN {enrol} e ON e.id = ue.enrolid
           LEFT JOIN {course_completions} cc ON cc.userid = u.id AND cc.course = e.courseid
                     AND cc.timecompleted IS NOT NULL
-              WHERE u.deleted = 0 AND u.suspended = 0 AND u.open_path LIKE :dpath
+              WHERE u.deleted = 0 AND u.suspended = 0
+                AND (u.open_path = :dpathexact OR u.open_path LIKE :dpathprefix)
            GROUP BY u.id, u.firstname, u.lastname, u.email, u.open_path, u.lastlogin
            ORDER BY completion_rate ASC",
-            ['dpath' => $deptpath . '%'], 0, $limit));
+            [
+                'dpathexact'  => $deptpath,
+                'dpathprefix' => $DB->sql_like_escape($deptpath) . '/%',
+            ], 0, $limit));
     }
 
     /**

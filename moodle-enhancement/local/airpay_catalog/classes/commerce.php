@@ -202,10 +202,14 @@ class commerce {
         global $DB;
 
         $public_tid = (int)get_config('local_airpay_pages', 'public_tenant_id') ?: 77;
-        $publicpath = '/' . $public_tid . '%';
+        $publicroot = '/' . $public_tid;
 
         $searchfilter = '';
-        $params = ['pubpath' => $publicpath];
+        // /-boundary so /77 doesn't match /770, /777, etc.
+        $params = [
+            'pubexact'  => $publicroot,
+            'pubprefix' => $DB->sql_like_escape($publicroot) . '/%',
+        ];
         if (!empty($search)) {
             $searchfilter = "AND (c.fullname LIKE :s1 OR c.shortname LIKE :s2 OR c.summary LIKE :s3)";
             $searchterm = '%' . $DB->sql_like_escape($search) . '%';
@@ -222,7 +226,7 @@ class commerce {
 
         $total = $DB->count_records_sql(
             "SELECT COUNT(*) FROM {course} c
-             WHERE c.visible = 1 AND c.id > 1 AND c.open_path LIKE :pubpath $searchfilter",
+             WHERE c.visible = 1 AND c.id > 1 AND (c.open_path = :pubexact OR c.open_path LIKE :pubprefix) $searchfilter",
             $params);
 
         $courses = $DB->get_records_sql(
@@ -231,7 +235,7 @@ class commerce {
                FROM {course} c
           LEFT JOIN {enrol} e ON e.courseid = c.id
           LEFT JOIN {user_enrolments} ue ON ue.enrolid = e.id
-              WHERE c.visible = 1 AND c.id > 1 AND c.open_path LIKE :pubpath $searchfilter
+              WHERE c.visible = 1 AND c.id > 1 AND (c.open_path = :pubexact OR c.open_path LIKE :pubprefix) $searchfilter
            GROUP BY c.id, c.fullname, c.shortname, c.summary, c.summaryformat, c.timecreated
            ORDER BY $orderby",
             $params, $page * $perpage, $perpage);
