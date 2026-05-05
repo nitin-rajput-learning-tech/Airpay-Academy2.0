@@ -25,6 +25,13 @@
 defined('MOODLE_INTERNAL') || die();
 
 $functions = [
+    'local_airpay_courses_list_courses' => [
+        'classname'    => 'local_airpay_courses\external\list_courses',
+        'description'  => 'List courses for the shared datatable',
+        'type'         => 'read',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_courses:view',
+    ],
     'local_airpay_courses_toggle_visibility' => [
         'classname'    => 'local_airpay_courses\external\toggle_visibility',
         'description'  => 'Show or hide a course',

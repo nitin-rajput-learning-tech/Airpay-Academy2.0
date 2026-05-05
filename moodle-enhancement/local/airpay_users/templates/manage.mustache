@@ -1,18 +1,19 @@
 {{!
-    Airpay User Engine — admin user management.
+    Airpay User Engine — admin user management (datatable-driven).
 
     @template local_airpay_users/manage
     @package  local_airpay_users
 }}
 <style>
-    /* Hide native dropdown caret on row action menus — we use a custom ellipsis icon */
-    [data-region="airpay-users"] .dropdown-toggle.no-arrow::after { display: none !important; }
-    [data-region="airpay-users"] .dropdown-toggle.no-arrow { box-shadow: none; }
-    [data-region="airpay-users"] .dropdown-toggle.no-arrow:hover { color: var(--ap-color-primary, #0066A7) !important; }
+    [data-region="airpay-users"] .ap-filter-bar { background: var(--ap-color-surface, #fff); border: 1px solid var(--ap-color-border, #e2e6ef); border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; }
+    [data-region="airpay-users"] .ap-filter-bar .form-select-sm,
+    [data-region="airpay-users"] .ap-filter-bar .btn-group-sm > .btn { font-size: 0.85rem; }
+    [data-region="airpay-users"] .ap-filter-bar .btn-group .btn { border-color: var(--ap-color-border, #e2e6ef); }
+    [data-region="airpay-users"] .ap-filter-bar .btn-group .btn.active { background: var(--ap-color-primary, #0066A7); color: #fff; border-color: var(--ap-color-primary, #0066A7); }
 </style>
 
-{{! ── Header ────────────────────────────────────────── }}
 <div data-region="airpay-users">
+
 <div class="ap-page-header d-flex justify-content-between align-items-start mb-4">
     <div>
         <h2 class="mb-1" style="font-weight: 700;">User Management</h2>
@@ -30,240 +31,95 @@
     </div>
 </div>
 
-{{! ── KPI Cards ─────────────────────────────────────── }}
 <div class="row mb-4">
-    <div class="col-md-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body text-center py-3">
-                <div style="font-size: 1.75rem; font-weight: 800; color: var(--ap-color-primary, #0066A7);">{{total_count}}</div>
-                <div class="text-muted small text-uppercase">Total Users</div>
+    <div class="col-md-4 mb-2">
+        <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
+            <div style="font-size: 1.75rem; font-weight: 800; color: var(--ap-color-primary, #0066A7);">{{total_count}}</div>
+            <div class="text-muted small text-uppercase">Total Users</div>
+        </div></div>
+    </div>
+    <div class="col-md-4 mb-2">
+        <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
+            <div style="font-size: 1.75rem; font-weight: 800; color: var(--ap-color-success, #16a34a);">{{active_count}}</div>
+            <div class="text-muted small text-uppercase">Active</div>
+        </div></div>
+    </div>
+    <div class="col-md-4 mb-2">
+        <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
+            <div style="font-size: 1.75rem; font-weight: 800; color: var(--ap-color-error, #dc2626);">{{suspended_count}}</div>
+            <div class="text-muted small text-uppercase">Suspended</div>
+        </div></div>
+    </div>
+</div>
+
+<div class="ap-filter-bar">
+    <div class="d-flex flex-wrap align-items-end gap-3">
+        {{#has_org_options}}
+        <div>
+            <label class="small text-muted mb-1 d-block">Organisation</label>
+            <select class="form-select form-select-sm" data-airpay-users-filter="orgid" style="min-width: 200px;">
+                <option value="0">All Organisations</option>
+                {{#org_options}}
+                <option value="{{id}}">{{name}}</option>
+                {{/org_options}}
+            </select>
+        </div>
+        {{/has_org_options}}
+
+        <div>
+            <label class="small text-muted mb-1 d-block">Status</label>
+            <div class="btn-group btn-group-sm" role="group" data-airpay-users-status>
+                <button type="button" class="btn btn-light active"      data-status="active">Active</button>
+                <button type="button" class="btn btn-light"             data-status="suspended">Suspended</button>
+                <button type="button" class="btn btn-light"             data-status="all">All</button>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body text-center py-3">
-                <div style="font-size: 1.75rem; font-weight: 800; color: var(--ap-color-success, #16a34a);">{{active_count}}</div>
-                <div class="text-muted small text-uppercase">Active</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body text-center py-3">
-                <div style="font-size: 1.75rem; font-weight: 800; color: var(--ap-color-error, #dc2626);">{{suspended_count}}</div>
-                <div class="text-muted small text-uppercase">Suspended</div>
-            </div>
-        </div>
-    </div>
 </div>
 
-{{! ── Filter Bar ────────────────────────────────────── }}
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-body py-3">
-        <form method="get" action="{{{filter_url}}}" class="d-flex flex-wrap align-items-end gap-3">
-
-            {{! Search }}
-            <div class="flex-grow-1" style="min-width: 200px;">
-                <label class="small text-muted mb-1 d-block">Search</label>
-                <div class="input-group input-group-sm">
-                    <span class="input-group-text"><i class="fa fa-search"></i></span>
-                    <input type="text" name="search" class="form-control" placeholder="Name, email, or employee ID..." value="{{search}}">
-                </div>
-            </div>
-
-            {{! Organisation }}
-            {{#has_org_options}}
-            <div style="min-width: 180px;">
-                <label class="small text-muted mb-1 d-block">Organisation</label>
-                <select name="orgid" class="form-select form-select-sm">
-                    <option value="0">All Organisations</option>
-                    {{#org_options}}
-                    <option value="{{id}}" {{#selected}}selected{{/selected}}>{{name}}</option>
-                    {{/org_options}}
-                </select>
-            </div>
-            {{/has_org_options}}
-
-            {{! Status }}
-            <div style="min-width: 140px;">
-                <label class="small text-muted mb-1 d-block">Status</label>
-                <select name="status" class="form-select form-select-sm">
-                    <option value="active" {{#status_active}}selected{{/status_active}}>Active</option>
-                    <option value="suspended" {{#status_suspended}}selected{{/status_suspended}}>Suspended</option>
-                    <option value="all" {{#status_all}}selected{{/status_all}}>All</option>
-                </select>
-            </div>
-
-            {{! Apply }}
-            <div>
-                <button type="submit" class="btn btn-primary btn-sm">
-                    <i class="fa fa-filter fa-fw"></i> Filter
-                </button>
-            </div>
-        </form>
-    </div>
+<div data-airpay-table
+     data-endpoint="local_airpay_users_list_users"
+     data-columns="{{columns_json}}"
+     data-search-placeholder="Search by name, email, or employee ID…"
+     data-perpage="25">
 </div>
 
-{{! ── Results Count ─────────────────────────────────── }}
-<div class="d-flex justify-content-between align-items-center mb-2">
-    <span class="text-muted small">
-        {{#has_users}}
-            Showing {{showing_from}}&ndash;{{showing_to}} of {{filtered_count}} users
-        {{/has_users}}
-        {{^has_users}}
-            No users match your filters
-        {{/has_users}}
-    </span>
 </div>
 
-{{! ── Data Table ────────────────────────────────────── }}
-{{#has_users}}
-<div class="card border-0 shadow-sm">
-    <div class="table-responsive">
-        <table class="table table-hover mb-0 align-middle">
-            <thead>
-                <tr style="background: var(--ap-color-primary, #0066A7); color: #fff;">
-                    <th class="ps-3">
-                        <a href="{{{sort_name.url}}}" class="text-white text-decoration-none">
-                            Name <i class="fa {{sort_name.icon}} ms-1"></i>
-                        </a>
-                    </th>
-                    <th>
-                        <a href="{{{sort_empid.url}}}" class="text-white text-decoration-none">
-                            Emp ID <i class="fa {{sort_empid.icon}} ms-1"></i>
-                        </a>
-                    </th>
-                    <th>
-                        <a href="{{{sort_email.url}}}" class="text-white text-decoration-none">
-                            Email <i class="fa {{sort_email.icon}} ms-1"></i>
-                        </a>
-                    </th>
-                    <th>Organisation</th>
-                    <th>Department</th>
-                    <th>
-                        <a href="{{{sort_designation.url}}}" class="text-white text-decoration-none">
-                            Designation <i class="fa {{sort_designation.icon}} ms-1"></i>
-                        </a>
-                    </th>
-                    <th>Status</th>
-                    <th>
-                        <a href="{{{sort_lastaccess.url}}}" class="text-white text-decoration-none">
-                            Last Access <i class="fa {{sort_lastaccess.icon}} ms-1"></i>
-                        </a>
-                    </th>
-                    {{#can_edit}}
-                    <th class="text-end pe-3">Actions</th>
-                    {{/can_edit}}
-                </tr>
-            </thead>
-            <tbody>
-                {{#users}}
-                <tr>
-                    <td class="ps-3">
-                        <a href="{{{profileurl}}}" class="fw-semibold text-decoration-none">
-                            {{fullname}}
-                        </a>
-                    </td>
-                    <td class="text-muted small">{{employeeid}}</td>
-                    <td class="small">{{email}}</td>
-                    <td class="small">{{orgname}}</td>
-                    <td class="small">{{department}}</td>
-                    <td class="small">{{designation}}</td>
-                    <td>
-                        <span class="badge {{statuscss}}">{{statuslabel}}</span>
-                    </td>
-                    <td class="text-muted small">{{lastaccess}}</td>
-                    {{#can_edit}}
-                    <td class="text-end pe-3">
-                        <div class="dropdown">
-                            <button type="button" class="btn btn-sm btn-link text-muted p-0 dropdown-toggle no-arrow" data-toggle="dropdown" aria-expanded="false" aria-haspopup="true" style="background:none;border:none;">
-                                <i class="fa fa-ellipsis-v"></i>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-right">
-                                <li>
-                                    <a class="dropdown-item" href="{{{profileurl}}}">
-                                        <i class="fa fa-user fa-fw"></i> View Profile
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="#"
-                                       data-action="edit-user" data-userid="{{id}}" data-username="{{fullname}}">
-                                        <i class="fa fa-pencil fa-fw"></i> Edit
-                                    </a>
-                                </li>
-                                <li>
-                                    {{#issuspended}}
-                                    <a class="dropdown-item" href="#"
-                                       data-action="activate-user" data-userid="{{id}}" data-username="{{fullname}}">
-                                        <i class="fa fa-check-circle fa-fw text-success"></i> Activate
-                                    </a>
-                                    {{/issuspended}}
-                                    {{^issuspended}}
-                                    <a class="dropdown-item" href="#"
-                                       data-action="suspend-user" data-userid="{{id}}" data-username="{{fullname}}">
-                                        <i class="fa fa-ban fa-fw text-warning"></i> Suspend
-                                    </a>
-                                    {{/issuspended}}
-                                </li>
-                                {{#can_delete}}
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <a class="dropdown-item text-danger" href="#"
-                                       data-action="delete-user" data-userid="{{id}}" data-username="{{fullname}}">
-                                        <i class="fa fa-trash fa-fw"></i> Delete
-                                    </a>
-                                </li>
-                                {{/can_delete}}
-                            </ul>
-                        </div>
-                    </td>
-                    {{/can_edit}}
-                </tr>
-                {{/users}}
-            </tbody>
-        </table>
-    </div>
-</div>
-{{/has_users}}
-
-{{! ── Empty State ───────────────────────────────────── }}
-{{^has_users}}
-<div class="card border-0 shadow-sm">
-    <div class="card-body text-center py-5">
-        <i class="fa fa-users fa-3x text-muted mb-3 d-block"></i>
-        <h5 class="text-muted">No users found</h5>
-        <p class="text-muted mb-0">Try adjusting your filters or search criteria.</p>
-    </div>
-</div>
-{{/has_users}}
-
-{{! ── Pagination ────────────────────────────────────── }}
-{{#has_pagination}}
-<nav class="mt-3 d-flex justify-content-center">
-    <ul class="pagination pagination-sm">
-        {{#has_prev}}
-        <li class="page-item">
-            <a class="page-link" href="{{{prev_url}}}">&laquo; Prev</a>
-        </li>
-        {{/has_prev}}
-        {{#pagination_pages}}
-        <li class="page-item {{#isactive}}active{{/isactive}}">
-            <a class="page-link" href="{{{url}}}">{{pagenum}}</a>
-        </li>
-        {{/pagination_pages}}
-        {{#has_next}}
-        <li class="page-item">
-            <a class="page-link" href="{{{next_url}}}">Next &raquo;</a>
-        </li>
-        {{/has_next}}
-    </ul>
-</nav>
-{{/has_pagination}}
-
-</div>
 {{#js}}
-require(['local_airpay_users/user_actions'], function(UserActions) {
+require([
+    'theme_airpayux/datatable',
+    'local_airpay_users/user_actions'
+], function(Datatable, UserActions) {
+    Datatable.init();
     UserActions.init();
+
+    // Wire local filter bar to the datatable instance.
+    var root = document.querySelector('[data-airpay-table]');
+    var dt = Datatable.getInstance(root);
+    if (!dt) return;
+
+    // Default status = active
+    dt.setFilter('status', 'active');
+
+    // Org filter dropdown.
+    document.querySelectorAll('[data-airpay-users-filter]').forEach(function(el) {
+        el.addEventListener('change', function(e) {
+            var key = e.target.dataset.airpayUsersFilter;
+            var val = e.target.value;
+            dt.setFilter(key, parseInt(val, 10) || 0);
+        });
+    });
+
+    // Status segmented buttons.
+    document.querySelectorAll('[data-airpay-users-status] [data-status]').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            var status = e.target.dataset.status;
+            document.querySelectorAll('[data-airpay-users-status] [data-status]').forEach(function(b) {
+                b.classList.toggle('active', b === e.target);
+            });
+            dt.setFilter('status', status);
+        });
+    });
 });
 {{/js}}

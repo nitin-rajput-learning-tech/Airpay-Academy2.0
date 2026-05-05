@@ -25,6 +25,13 @@
 defined('MOODLE_INTERNAL') || die();
 
 $functions = [
+    'local_airpay_users_list_users' => [
+        'classname'   => 'local_airpay_users\external\list_users',
+        'description' => 'List users with server-side search, sort, and pagination',
+        'type'        => 'read',
+        'ajax'        => true,
+        'capabilities' => 'local/airpay_users:view',
+    ],
     'local_airpay_users_suspend_user' => [
         'classname'   => 'local_airpay_users\external\suspend_user',
         'description' => 'Suspend or activate a user',
