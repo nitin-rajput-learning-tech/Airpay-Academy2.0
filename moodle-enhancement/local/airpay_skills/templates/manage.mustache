@@ -1,19 +1,15 @@
 {{!
-    Airpay Skills Management — admin view.
+    Airpay Skills Management — admin view (datatable for skills).
     @template local_airpay_skills/manage
 }}
 <style>
-    [data-region="airpay-skills"] .dropdown-toggle.no-arrow::after { display: none !important; }
-    [data-region="airpay-skills"] .dropdown-toggle.no-arrow { box-shadow: none; background: none; border: none; }
-    [data-region="airpay-skills"] .dropdown-toggle.no-arrow:hover { color: var(--ap-color-primary, #0066A7) !important; }
-    [data-region="airpay-skills"] .skill-cat-icon {
-        width: 36px; height: 36px; border-radius: 8px;
+    [data-region="airpay-skills"] .ap-filter-bar { background: var(--ap-color-bg-surface, #fff); border: 1px solid var(--ap-color-border, #e2e6ef); border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; }
+    [data-region="airpay-skills"] .cat-card { background: var(--ap-color-bg-surface, #fff); border: 1px solid var(--ap-color-border, #e2e6ef); border-radius: 10px; padding: 14px 16px; }
+    [data-region="airpay-skills"] .cat-icon {
+        width: 36px; height: 36px;
+        border-radius: 8px;
         display: inline-flex; align-items: center; justify-content: center;
-        color: #fff; font-size: 1rem;
-    }
-    [data-region="airpay-skills"] .skill-cat-dot {
-        width: 10px; height: 10px; border-radius: 50%;
-        display: inline-block; margin-right: 6px; vertical-align: middle;
+        color: #fff;
     }
 </style>
 
@@ -22,182 +18,100 @@
 <div class="ap-page-header d-flex justify-content-between align-items-start mb-4">
     <div>
         <h2 class="mb-1" style="font-weight: 700;">Skills Management</h2>
-        <p class="text-muted mb-0">Define competency framework — categories, skills, and proficiency levels.</p>
+        <p class="text-muted mb-0">Define skills, group them into categories, and map to roles.</p>
     </div>
     <div class="d-flex gap-2">
         <a href="#" class="btn btn-outline-primary btn-sm" data-action="create-category">
-            <i class="fa fa-folder fa-fw"></i> Add Category
+            <i class="fa fa-folder-open fa-fw"></i> New Category
         </a>
         <a href="#" class="btn btn-primary btn-sm" data-action="create-skill">
-            <i class="fa fa-plus fa-fw"></i> Add Skill
+            <i class="fa fa-plus fa-fw"></i> New Skill
         </a>
     </div>
 </div>
 
 <div class="row mb-4">
-    <div class="col-md-4 mb-2">
-        <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
-            <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-primary, #0066A7);">{{total_categories}}</div>
-            <div class="text-muted small text-uppercase">Categories</div>
-        </div></div>
+    <div class="col-md-4 mb-2"><div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
+        <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-accent, #0f7a73);">{{total_categories}}</div>
+        <div class="text-muted small text-uppercase">Categories</div>
+    </div></div></div>
+    <div class="col-md-4 mb-2"><div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
+        <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-primary, #0066A7);">{{total_skills}}</div>
+        <div class="text-muted small text-uppercase">Skills</div>
+    </div></div></div>
+    <div class="col-md-4 mb-2"><div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
+        <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-success, #16a34a);">{{total_role_maps}}</div>
+        <div class="text-muted small text-uppercase">Role Mappings</div>
+    </div></div></div>
+</div>
+
+{{! ─── Categories: small dataset, render server-side ─── }}
+{{#has_categories}}
+<h5 class="mb-3" style="font-weight: 700;">Categories</h5>
+<div class="row mb-4">
+    {{#categories}}
+    <div class="col-md-4 mb-3">
+        <div class="cat-card d-flex align-items-center gap-3">
+            <div class="cat-icon" style="background: {{color}};"><i class="fa {{icon}}"></i></div>
+            <div style="flex: 1;">
+                <div class="fw-semibold">{{name}}</div>
+                <div class="small text-muted">{{skillcount}} skills</div>
+            </div>
+            <div>
+                <a href="#" class="btn btn-sm btn-link text-muted p-1" data-action="edit-category" data-categoryid="{{id}}" data-name="{{name}}" title="Edit"><i class="fa fa-pencil"></i></a>
+                <a href="#" class="btn btn-sm btn-link text-muted p-1" data-action="delete-category" data-categoryid="{{id}}" data-name="{{name}}" title="Delete"><i class="fa fa-trash text-danger"></i></a>
+            </div>
+        </div>
     </div>
-    <div class="col-md-4 mb-2">
-        <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
-            <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-accent, #0f7a73);">{{total_skills}}</div>
-            <div class="text-muted small text-uppercase">Skills</div>
-        </div></div>
-    </div>
-    <div class="col-md-4 mb-2">
-        <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
-            <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-success, #16a34a);">{{total_role_maps}}</div>
-            <div class="text-muted small text-uppercase">Role Mappings</div>
-        </div></div>
+    {{/categories}}
+</div>
+{{/has_categories}}
+
+{{! ─── Skills: datatable ─── }}
+<h5 class="mb-3" style="font-weight: 700;">Skills</h5>
+
+<div class="ap-filter-bar">
+    <div class="d-flex flex-wrap align-items-end gap-3">
+        {{#has_cat_options}}
+        <div>
+            <label class="small text-muted mb-1 d-block">Category</label>
+            <select class="form-select form-select-sm" data-airpay-skills-filter="categoryid" style="min-width: 220px;">
+                <option value="0">All categories</option>
+                {{#cat_options}}
+                <option value="{{id}}">{{name}}</option>
+                {{/cat_options}}
+            </select>
+        </div>
+        {{/has_cat_options}}
     </div>
 </div>
 
-{{! ── Categories table ─────────────────────────────────── }}
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
-        <h5 class="mb-0 fw-bold"><i class="fa fa-folder-open fa-fw"></i> Categories</h5>
-        <a href="#" class="btn btn-sm btn-outline-primary" data-action="create-category">
-            <i class="fa fa-plus fa-fw"></i> Add Category
-        </a>
-    </div>
-
-    {{#has_categories}}
-    <div class="table-responsive">
-        <table class="table table-hover mb-0 align-middle">
-            <thead><tr style="background: var(--ap-color-primary, #0066A7); color: #fff;">
-                <th class="ps-3">Category</th>
-                <th>Description</th>
-                <th class="text-center">Skills</th>
-                <th class="text-center">Order</th>
-                <th class="text-end pe-3">Actions</th>
-            </tr></thead>
-            <tbody>
-                {{#categories}}
-                <tr>
-                    <td class="ps-3">
-                        <span class="skill-cat-icon" style="background: {{color}};">
-                            <i class="fa {{icon}}"></i>
-                        </span>
-                        <span class="fw-semibold ms-2">{{name}}</span>
-                    </td>
-                    <td class="small text-muted">{{#description}}{{.}}{{/description}}{{^description}}—{{/description}}</td>
-                    <td class="text-center">{{skillcount}}</td>
-                    <td class="text-center text-muted small">{{sort_order}}</td>
-                    <td class="text-end pe-3">
-                        <div class="dropdown">
-                            <button type="button" class="btn btn-sm btn-link text-muted p-0 dropdown-toggle no-arrow"
-                                    data-toggle="dropdown" aria-expanded="false" aria-haspopup="true">
-                                <i class="fa fa-ellipsis-v"></i>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-right">
-                                <li>
-                                    <a class="dropdown-item" href="#"
-                                       data-action="edit-category" data-id="{{id}}" data-name="{{name}}">
-                                        <i class="fa fa-pencil fa-fw"></i> Edit
-                                    </a>
-                                </li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <a class="dropdown-item text-danger" href="#"
-                                       data-action="delete-category" data-id="{{id}}" data-name="{{name}}">
-                                        <i class="fa fa-trash fa-fw"></i> Delete
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </td>
-                </tr>
-                {{/categories}}
-            </tbody>
-        </table>
-    </div>
-    {{/has_categories}}
-
-    {{^has_categories}}
-    <div class="card-body text-center py-4">
-        <p class="text-muted mb-3">No skill categories defined yet.</p>
-        <a href="#" class="btn btn-primary btn-sm" data-action="create-category">
-            <i class="fa fa-plus fa-fw"></i> Create First Category
-        </a>
-    </div>
-    {{/has_categories}}
-</div>
-
-{{! ── Skills table ────────────────────────────────────── }}
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
-        <h5 class="mb-0 fw-bold"><i class="fa fa-bullseye fa-fw"></i> Skills</h5>
-        <a href="#" class="btn btn-sm btn-outline-primary" data-action="create-skill">
-            <i class="fa fa-plus fa-fw"></i> Add Skill
-        </a>
-    </div>
-
-    {{#has_skills}}
-    <div class="table-responsive">
-        <table class="table table-hover mb-0 align-middle">
-            <thead><tr style="background: var(--ap-color-primary, #0066A7); color: #fff;">
-                <th class="ps-3">Skill</th>
-                <th>Category</th>
-                <th>Description</th>
-                <th class="text-center">Max Level</th>
-                <th class="text-end pe-3">Actions</th>
-            </tr></thead>
-            <tbody>
-                {{#skills}}
-                <tr>
-                    <td class="ps-3 fw-semibold">{{name}}</td>
-                    <td>
-                        <span class="skill-cat-dot" style="background: {{category_color}};"></span>
-                        <span class="small">{{category}}</span>
-                    </td>
-                    <td class="small text-muted" style="max-width: 350px;">{{#description}}{{.}}{{/description}}{{^description}}—{{/description}}</td>
-                    <td class="text-center small">{{max_level_label}} ({{max_level}})</td>
-                    <td class="text-end pe-3">
-                        <div class="dropdown">
-                            <button type="button" class="btn btn-sm btn-link text-muted p-0 dropdown-toggle no-arrow"
-                                    data-toggle="dropdown" aria-expanded="false" aria-haspopup="true">
-                                <i class="fa fa-ellipsis-v"></i>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-right">
-                                <li>
-                                    <a class="dropdown-item" href="#"
-                                       data-action="edit-skill" data-id="{{id}}" data-name="{{name}}">
-                                        <i class="fa fa-pencil fa-fw"></i> Edit
-                                    </a>
-                                </li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <a class="dropdown-item text-danger" href="#"
-                                       data-action="delete-skill" data-id="{{id}}" data-name="{{name}}">
-                                        <i class="fa fa-trash fa-fw"></i> Delete
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </td>
-                </tr>
-                {{/skills}}
-            </tbody>
-        </table>
-    </div>
-    {{/has_skills}}
-
-    {{^has_skills}}
-    <div class="card-body text-center py-4">
-        <p class="text-muted mb-3">No skills defined yet. Add categories first, then create skills within them.</p>
-        <a href="#" class="btn btn-primary btn-sm" data-action="create-skill">
-            <i class="fa fa-plus fa-fw"></i> Create First Skill
-        </a>
-    </div>
-    {{/has_skills}}
+<div data-airpay-table
+     data-endpoint="local_airpay_skills_list_skills"
+     data-columns="{{columns_json}}"
+     data-search-placeholder="Search skill name or description…"
+     data-perpage="25">
 </div>
 
 </div>
+
 {{#js}}
-require(['local_airpay_skills/skill_actions'], function(SkillActions) {
-    SkillActions.init();
+require([
+    'theme_airpayux/datatable',
+    'local_airpay_skills/skill_actions'
+], function(Datatable, SkillActions) {
+    Datatable.init();
+    if (SkillActions && SkillActions.init) SkillActions.init();
+
+    var root = document.querySelector('[data-airpay-table]');
+    var dt = Datatable.getInstance(root);
+    if (!dt) return;
+
+    document.querySelectorAll('[data-airpay-skills-filter]').forEach(function(el) {
+        el.addEventListener('change', function(e) {
+            var key = e.target.dataset.airpaySkillsFilter;
+            dt.setFilter(key, parseInt(e.target.value, 10) || 0);
+        });
+    });
 });
 {{/js}}

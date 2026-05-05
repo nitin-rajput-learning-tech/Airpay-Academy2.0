@@ -1,129 +1,84 @@
 {{!
-    Airpay Learning Paths — admin management.
+    Airpay Learning Paths — datatable-driven admin listing.
     @template local_airpay_learningpath/manage
 }}
 <style>
-    [data-region="airpay-learningpath"] .dropdown-toggle.no-arrow::after { display: none !important; }
-    [data-region="airpay-learningpath"] .dropdown-toggle.no-arrow { box-shadow: none; background: none; border: none; }
-    [data-region="airpay-learningpath"] .dropdown-toggle.no-arrow:hover { color: var(--ap-color-primary, #0066A7) !important; }
+    [data-region="airpay-paths"] .ap-filter-bar { background: var(--ap-color-bg-surface, #fff); border: 1px solid var(--ap-color-border, #e2e6ef); border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; }
+    [data-region="airpay-paths"] .btn-group .btn.active { background: var(--ap-color-primary, #0066A7); color: #fff; border-color: var(--ap-color-primary, #0066A7); }
 </style>
 
-<div data-region="airpay-learningpath">
+<div data-region="airpay-paths">
 
 <div class="ap-page-header d-flex justify-content-between align-items-start mb-4">
     <div>
         <h2 class="mb-1" style="font-weight: 700;">Learning Paths</h2>
-        <p class="text-muted mb-0">Create ordered course sequences to guide employees through structured learning journeys.</p>
+        <p class="text-muted mb-0">Ordered course sequences with progress tracking.</p>
     </div>
-    {{#can_manage}}
+    {{#can_create}}
     <a href="#" class="btn btn-primary btn-sm" data-action="create-path">
-        <i class="fa fa-plus fa-fw"></i> Create Path
+        <i class="fa fa-plus fa-fw"></i> New Path
     </a>
-    {{/can_manage}}
+    {{/can_create}}
 </div>
 
 <div class="row mb-4">
-    <div class="col-md-4 mb-2">
-        <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
-            <div style="font-size: 1.75rem; font-weight: 800; color: var(--ap-color-primary, #0066A7);">{{total}}</div>
-            <div class="text-muted small text-uppercase">Total Paths</div>
-        </div></div>
-    </div>
-    <div class="col-md-4 mb-2">
-        <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
-            <div style="font-size: 1.75rem; font-weight: 800; color: var(--ap-color-success, #16a34a);">{{active}}</div>
-            <div class="text-muted small text-uppercase">Active</div>
-        </div></div>
-    </div>
-    <div class="col-md-4 mb-2">
-        <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
-            <div style="font-size: 1.75rem; font-weight: 800; color: var(--ap-color-text-secondary, #5a6070);">{{archived}}</div>
-            <div class="text-muted small text-uppercase">Archived</div>
-        </div></div>
+    <div class="col-md-4 mb-2"><div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
+        <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-primary, #0066A7);">{{total_count}}</div>
+        <div class="text-muted small text-uppercase">Total Paths</div>
+    </div></div></div>
+    <div class="col-md-4 mb-2"><div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
+        <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-success, #16a34a);">{{active_count}}</div>
+        <div class="text-muted small text-uppercase">Active</div>
+    </div></div></div>
+    <div class="col-md-4 mb-2"><div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
+        <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-text-secondary, #5a6070);">{{completed_count}}</div>
+        <div class="text-muted small text-uppercase">Completed</div>
+    </div></div></div>
+</div>
+
+<div class="ap-filter-bar">
+    <div class="d-flex flex-wrap align-items-end gap-3">
+        <div>
+            <label class="small text-muted mb-1 d-block">Status</label>
+            <div class="btn-group btn-group-sm" role="group" data-airpay-paths-status>
+                <button type="button" class="btn btn-light active" data-status="all">All</button>
+                <button type="button" class="btn btn-light"        data-status="1">Active</button>
+                <button type="button" class="btn btn-light"        data-status="2">Completed</button>
+                <button type="button" class="btn btn-light"        data-status="0">Cancelled</button>
+            </div>
+        </div>
     </div>
 </div>
 
-{{#has_data}}
-<div class="card border-0 shadow-sm"><div class="table-responsive">
-    <table class="table table-hover mb-0 align-middle">
-        <thead><tr style="background: var(--ap-color-primary, #0066A7); color: #fff;">
-            <th class="ps-3">Path Name</th>
-            <th>Description</th>
-            <th class="text-center">Courses</th>
-            <th>Status</th>
-            {{#can_manage}}<th class="text-end pe-3">Actions</th>{{/can_manage}}
-        </tr></thead>
-        <tbody>
-            {{#paths}}
-            <tr>
-                <td class="ps-3 fw-semibold">{{name}}</td>
-                <td class="small text-muted" style="max-width: 400px;">{{#description}}{{.}}{{/description}}{{^description}}—{{/description}}</td>
-                <td class="text-center">{{coursecount}}</td>
-                <td><span class="badge {{statuscss}}">{{statuslabel}}</span></td>
-                {{#can_manage}}
-                <td class="text-end pe-3">
-                    <div class="dropdown">
-                        <button type="button" class="btn btn-sm btn-link text-muted p-0 dropdown-toggle no-arrow"
-                                data-toggle="dropdown" aria-expanded="false" aria-haspopup="true">
-                            <i class="fa fa-ellipsis-v"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-right">
-                            <li>
-                                <a class="dropdown-item" href="#"
-                                   data-action="edit-path" data-pathid="{{id}}" data-name="{{name}}">
-                                    <i class="fa fa-pencil fa-fw"></i> Edit
-                                </a>
-                            </li>
-                            <li>
-                                {{#is_active}}
-                                <a class="dropdown-item" href="#"
-                                   data-action="archive-path" data-pathid="{{id}}" data-name="{{name}}">
-                                    <i class="fa fa-archive fa-fw text-warning"></i> Archive
-                                </a>
-                                {{/is_active}}
-                                {{^is_active}}
-                                <a class="dropdown-item" href="#"
-                                   data-action="activate-path" data-pathid="{{id}}" data-name="{{name}}">
-                                    <i class="fa fa-undo fa-fw text-success"></i> Activate
-                                </a>
-                                {{/is_active}}
-                            </li>
-                            {{#can_delete}}
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item text-danger" href="#"
-                                   data-action="delete-path" data-pathid="{{id}}" data-name="{{name}}">
-                                    <i class="fa fa-trash fa-fw"></i> Delete
-                                </a>
-                            </li>
-                            {{/can_delete}}
-                        </ul>
-                    </div>
-                </td>
-                {{/can_manage}}
-            </tr>
-            {{/paths}}
-        </tbody>
-    </table>
-</div></div>
-{{/has_data}}
-
-{{^has_data}}
-<div class="card border-0 shadow-sm"><div class="card-body text-center py-5">
-    <i class="fa fa-map-signs fa-3x text-muted mb-3 d-block"></i>
-    <h5 class="text-muted">No learning paths yet</h5>
-    <p class="text-muted mb-3">Design structured learning journeys by ordering courses into sequential paths.</p>
-    {{#can_manage}}
-    <a href="#" class="btn btn-primary btn-sm" data-action="create-path">
-        <i class="fa fa-plus fa-fw"></i> Create First Path
-    </a>
-    {{/can_manage}}
-</div></div>
-{{/has_data}}
+<div data-airpay-table
+     data-endpoint="local_airpay_learningpath_list_paths"
+     data-columns="{{columns_json}}"
+     data-search-placeholder="Search learning path name…"
+     data-perpage="25">
+</div>
 
 </div>
+
 {{#js}}
-require(['local_airpay_learningpath/path_actions'], function(PathActions) {
-    PathActions.init();
+require([
+    'theme_airpayux/datatable',
+    'local_airpay_learningpath/path_actions'
+], function(Datatable, PathActions) {
+    Datatable.init();
+    if (PathActions && PathActions.init) PathActions.init();
+
+    var root = document.querySelector('[data-airpay-table]');
+    var dt = Datatable.getInstance(root);
+    if (!dt) return;
+
+    document.querySelectorAll('[data-airpay-paths-status] [data-status]').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            var s = e.target.dataset.status;
+            document.querySelectorAll('[data-airpay-paths-status] [data-status]').forEach(function(b) {
+                b.classList.toggle('active', b === e.target);
+            });
+            dt.setFilter('status', s);
+        });
+    });
 });
 {{/js}}

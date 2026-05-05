@@ -1,21 +1,10 @@
 {{!
-    Airpay Reports — saved report definitions admin view.
+    Airpay Reports — datatable-driven admin listing.
     @template local_airpay_reports/manage
 }}
 <style>
-    [data-region="airpay-reports"] .dropdown-toggle.no-arrow::after { display: none !important; }
-    [data-region="airpay-reports"] .dropdown-toggle.no-arrow { box-shadow: none; background: none; border: none; }
-    [data-region="airpay-reports"] .dropdown-toggle.no-arrow:hover { color: var(--ap-color-primary, #0066A7) !important; }
-    [data-region="airpay-reports"] .report-type-badge {
-        font-size: 0.75rem;
-        padding: 4px 10px;
-        border-radius: 12px;
-        font-weight: 600;
-    }
-    [data-region="airpay-reports"] .badge-type-completion { background: rgba(0,102,167,0.10); color: var(--ap-color-primary, #0066A7); }
-    [data-region="airpay-reports"] .badge-type-compliance { background: rgba(220,38,38,0.10); color: #dc2626; }
-    [data-region="airpay-reports"] .badge-type-activity   { background: rgba(15,122,115,0.10); color: var(--ap-color-accent, #0f7a73); }
-    [data-region="airpay-reports"] .badge-type-trend      { background: rgba(217,119,6,0.10); color: #d97706; }
+    [data-region="airpay-reports"] .ap-filter-bar { background: var(--ap-color-bg-surface, #fff); border: 1px solid var(--ap-color-border, #e2e6ef); border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; }
+    [data-region="airpay-reports"] .btn-group .btn.active { background: var(--ap-color-primary, #0066A7); color: #fff; border-color: var(--ap-color-primary, #0066A7); }
 </style>
 
 <div data-region="airpay-reports">
@@ -33,133 +22,83 @@
 </div>
 
 <div class="row mb-4">
-    <div class="col-md-3 mb-2">
-        <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
-            <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-primary, #0066A7);">{{total}}</div>
-            <div class="text-muted small text-uppercase">Total Reports</div>
-        </div></div>
-    </div>
-    <div class="col-md-3 mb-2">
-        <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
-            <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-success, #16a34a);">{{active}}</div>
-            <div class="text-muted small text-uppercase">Active</div>
-        </div></div>
-    </div>
-    <div class="col-md-3 mb-2">
-        <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
-            <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-text-secondary, #5a6070);">{{archived}}</div>
-            <div class="text-muted small text-uppercase">Archived</div>
-        </div></div>
-    </div>
-    <div class="col-md-3 mb-2">
-        <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
-            <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-accent, #0f7a73);">{{total_runs}}</div>
-            <div class="text-muted small text-uppercase">Total Runs</div>
-        </div></div>
+    <div class="col-md-3 mb-2"><div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
+        <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-primary, #0066A7);">{{total_count}}</div>
+        <div class="text-muted small text-uppercase">Total Reports</div>
+    </div></div></div>
+    <div class="col-md-3 mb-2"><div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
+        <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-success, #16a34a);">{{active_count}}</div>
+        <div class="text-muted small text-uppercase">Active</div>
+    </div></div></div>
+    <div class="col-md-3 mb-2"><div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
+        <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-text-secondary, #5a6070);">{{archived_count}}</div>
+        <div class="text-muted small text-uppercase">Archived</div>
+    </div></div></div>
+    <div class="col-md-3 mb-2"><div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
+        <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-accent, #0f7a73);">{{total_runs}}</div>
+        <div class="text-muted small text-uppercase">Total Runs</div>
+    </div></div></div>
+</div>
+
+<div class="ap-filter-bar">
+    <div class="d-flex flex-wrap align-items-end gap-3">
+        <div>
+            <label class="small text-muted mb-1 d-block">Status</label>
+            <div class="btn-group btn-group-sm" role="group" data-airpay-reports-status>
+                <button type="button" class="btn btn-light active" data-status="all">All</button>
+                <button type="button" class="btn btn-light"        data-status="1">Active</button>
+                <button type="button" class="btn btn-light"        data-status="0">Archived</button>
+            </div>
+        </div>
+        <div>
+            <label class="small text-muted mb-1 d-block">Type</label>
+            <select class="form-select form-select-sm" data-airpay-reports-type style="min-width: 200px;">
+                <option value="">All types</option>
+                <option value="course_completion">Course Completion</option>
+                <option value="compliance_overview">Compliance Overview</option>
+                <option value="user_activity">User Activity</option>
+                <option value="enrolment_trend">Enrolment Trend</option>
+            </select>
+        </div>
     </div>
 </div>
 
-{{#has_reports}}
-<div class="card border-0 shadow-sm"><div class="table-responsive">
-    <table class="table table-hover mb-0 align-middle">
-        <thead><tr style="background: var(--ap-color-primary, #0066A7); color: #fff;">
-            <th class="ps-3">Report Name</th>
-            <th>Type</th>
-            <th>Scope</th>
-            <th>Last Run</th>
-            <th class="text-center">Runs</th>
-            <th>Status</th>
-            <th class="text-end pe-3">Actions</th>
-        </tr></thead>
-        <tbody>
-            {{#reports}}
-            <tr>
-                <td class="ps-3">
-                    <div class="fw-semibold">{{name}}</div>
-                    {{#description}}<div class="small text-muted" style="max-width: 350px;">{{.}}</div>{{/description}}
-                </td>
-                <td><span class="report-type-badge {{typecss}}">{{typelabel}}</span></td>
-                <td class="small">
-                    {{#orgname}}<i class="fa fa-sitemap fa-fw text-muted"></i> {{orgname}}{{/orgname}}
-                    {{^orgname}}<span class="text-muted">All organisations</span>{{/orgname}}
-                </td>
-                <td class="small text-muted">
-                    {{#lastrun_label}}{{lastrun_label}}{{/lastrun_label}}
-                    {{^lastrun_label}}—{{/lastrun_label}}
-                </td>
-                <td class="text-center">{{runcount}}</td>
-                <td><span class="badge {{statuscss}}">{{statuslabel}}</span></td>
-                <td class="text-end pe-3">
-                    <a href="run.php?id={{id}}" class="btn btn-sm btn-outline-primary me-1">
-                        <i class="fa fa-play fa-fw"></i> Run
-                    </a>
-                    {{#can_manage}}
-                    <div class="dropdown d-inline-block">
-                        <button type="button" class="btn btn-sm btn-link text-muted p-0 dropdown-toggle no-arrow"
-                                data-toggle="dropdown" aria-expanded="false" aria-haspopup="true">
-                            <i class="fa fa-ellipsis-v"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-right">
-                            <li>
-                                <a class="dropdown-item" href="#"
-                                   data-action="edit-report" data-reportid="{{id}}" data-name="{{name}}">
-                                    <i class="fa fa-pencil fa-fw"></i> Edit Settings
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="run.php?id={{id}}">
-                                    <i class="fa fa-play fa-fw"></i> Run Report
-                                </a>
-                            </li>
-                            {{#can_export}}
-                            <li>
-                                <a class="dropdown-item" href="export.php?id={{id}}">
-                                    <i class="fa fa-download fa-fw"></i> Export CSV
-                                </a>
-                            </li>
-                            {{/can_export}}
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item" href="#"
-                                   data-action="toggle-report" data-reportid="{{id}}" data-name="{{name}}" data-active="{{active_int}}">
-                                    {{#is_active}}<i class="fa fa-archive fa-fw text-warning"></i> Archive{{/is_active}}
-                                    {{^is_active}}<i class="fa fa-undo fa-fw text-success"></i> Reactivate{{/is_active}}
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item text-danger" href="#"
-                                   data-action="delete-report" data-reportid="{{id}}" data-name="{{name}}">
-                                    <i class="fa fa-trash fa-fw"></i> Delete
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                    {{/can_manage}}
-                </td>
-            </tr>
-            {{/reports}}
-        </tbody>
-    </table>
-</div></div>
-{{/has_reports}}
-
-{{^has_reports}}
-<div class="card border-0 shadow-sm"><div class="card-body text-center py-5">
-    <i class="fa fa-bar-chart fa-3x text-muted mb-3 d-block"></i>
-    <h5 class="text-muted">No saved reports yet</h5>
-    <p class="text-muted mb-3">Create reusable report definitions for completion tracking, compliance, user activity, and enrolment trends.</p>
-    {{#can_manage}}
-    <a href="#" class="btn btn-primary btn-sm" data-action="create-report">
-        <i class="fa fa-plus fa-fw"></i> Create First Report
-    </a>
-    {{/can_manage}}
-</div></div>
-{{/has_reports}}
+<div data-airpay-table
+     data-endpoint="local_airpay_reports_list_reports"
+     data-columns="{{columns_json}}"
+     data-search-placeholder="Search report name or description…"
+     data-perpage="25">
+</div>
 
 </div>
+
 {{#js}}
-require(['local_airpay_reports/report_actions'], function(ReportActions) {
-    ReportActions.init();
+require([
+    'theme_airpayux/datatable',
+    'local_airpay_reports/report_actions'
+], function(Datatable, ReportActions) {
+    Datatable.init();
+    if (ReportActions && ReportActions.init) ReportActions.init();
+
+    var root = document.querySelector('[data-airpay-table]');
+    var dt = Datatable.getInstance(root);
+    if (!dt) return;
+
+    document.querySelectorAll('[data-airpay-reports-status] [data-status]').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            var s = e.target.dataset.status;
+            document.querySelectorAll('[data-airpay-reports-status] [data-status]').forEach(function(b) {
+                b.classList.toggle('active', b === e.target);
+            });
+            dt.setFilter('status', s);
+        });
+    });
+
+    var typeSel = document.querySelector('[data-airpay-reports-type]');
+    if (typeSel) {
+        typeSel.addEventListener('change', function(e) {
+            dt.setFilter('report_type', e.target.value);
+        });
+    }
 });
 {{/js}}
