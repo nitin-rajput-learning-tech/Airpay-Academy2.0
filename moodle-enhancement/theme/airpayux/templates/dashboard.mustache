@@ -390,18 +390,24 @@
                             <th>Team Member</th>
                             <th>Enrolled</th>
                             <th>Completed</th>
+                            <th>Rate</th>
                             <th>Pending</th>
+                            <th>Overdue</th>
                             <th>Last Active</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
                         {{#teamcompliance}}
-                        <tr>
+                        <tr {{#is_inactive}}style="opacity: 0.65;"{{/is_inactive}}>
                             <td><strong>{{name}}</strong></td>
                             <td>{{enrolled}}</td>
                             <td>{{completed}}</td>
+                            <td><span class="badge badge-{{rate_class}}">{{rate}}%</span></td>
                             <td>{{#haspending}}<span style="color: #dc2626; font-weight: 600;">{{pending}}</span>{{/haspending}}{{^haspending}}<span style="color: #16a34a;">0</span>{{/haspending}}</td>
+                            <td>{{#has_overdue}}<span class="badge badge-danger">{{overdue}}</span>{{/has_overdue}}{{^has_overdue}}<span style="color: #16a34a;">✓</span>{{/has_overdue}}</td>
                             <td>{{lastaccess}}</td>
+                            <td><a href="{{drilldown_url}}" class="btn btn-sm btn-link p-0" title="Drill down"><i class="fa fa-search-plus"></i></a></td>
                         </tr>
                         {{/teamcompliance}}
                     </tbody>

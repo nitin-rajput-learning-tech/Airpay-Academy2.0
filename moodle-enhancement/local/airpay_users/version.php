@@ -28,10 +28,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_airpay_users';
-$plugin->version   = 2026041902;
+$plugin->version   = 2026041903;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.2.0'; // Adds list_users WS for shared datatable.
+$plugin->release   = '1.3.0'; // Adds bulk_action WS (suspend/activate).
 $plugin->dependencies = [
     'local_airpay_org' => 2026041600,
 ];

@@ -45,6 +45,7 @@ class Datatable {
         this.perpage = parseInt(root.dataset.perpage || '25', 10);
         this.searchPlaceholder = root.dataset.searchPlaceholder || 'Search…';
         this.actionsHtml = root.dataset.rowActions || '';
+        this.selectable = root.dataset.selectable === '1';
 
         const firstSortable = this.columns.find(c => c.sortable);
         this.state = {
@@ -57,11 +58,26 @@ class Datatable {
             total: 0,
             rows: [],
             loading: false,
+            selected: new Set(),
         };
 
         this.render();
         this.attachHandlers();
         this.fetch();
+    }
+
+    /** External callers can ask for the selected row IDs. */
+    getSelected() { return Array.from(this.state.selected); }
+    clearSelection() {
+        this.state.selected.clear();
+        this.renderBody();
+        this.fireSelectionChanged();
+    }
+    fireSelectionChanged() {
+        this.root.dispatchEvent(new CustomEvent('airpay:datatable:selection', {
+            bubbles: true,
+            detail: {selected: Array.from(this.state.selected)},
+        }));
     }
 
     render() {
@@ -102,7 +118,10 @@ class Datatable {
 
     renderHead() {
         const head = this.root.querySelector('[data-airpay-table-head]');
-        head.innerHTML = this.columns.map((c) => {
+        const selectCol = this.selectable
+            ? '<th style="width: 36px; padding-left: 12px;"><input type="checkbox" data-airpay-table-select-all></th>'
+            : '';
+        head.innerHTML = selectCol + this.columns.map((c) => {
             const sortable = c.sortable ? 'cursor: pointer;' : '';
             const arrow = (c.key === this.state.sortcol)
                 ? (this.state.sortdir === 'asc' ? ' <i class="fa fa-caret-up"></i>' : ' <i class="fa fa-caret-down"></i>')
@@ -149,6 +168,32 @@ class Datatable {
                 this.fetch();
             }
         });
+
+        // Row selection: per-row checkbox.
+        this.root.addEventListener('change', (e) => {
+            const sel = e.target.closest('[data-airpay-table-select]');
+            if (sel) {
+                const id = parseInt(sel.dataset.airpayTableSelect, 10);
+                if (sel.checked) {
+                    this.state.selected.add(id);
+                } else {
+                    this.state.selected.delete(id);
+                }
+                this.fireSelectionChanged();
+                return;
+            }
+            // Select-all toggle (current page only).
+            const all = e.target.closest('[data-airpay-table-select-all]');
+            if (all) {
+                if (all.checked) {
+                    this.state.rows.forEach((r) => this.state.selected.add(r.id));
+                } else {
+                    this.state.rows.forEach((r) => this.state.selected.delete(r.id));
+                }
+                this.renderBody();
+                this.fireSelectionChanged();
+            }
+        });
     }
 
     async fetch() {
@@ -184,8 +229,9 @@ class Datatable {
 
     renderBody() {
         const body = this.root.querySelector('[data-airpay-table-body]');
+        const totalCols = this.columns.length + (this.actionsHtml ? 1 : 0) + (this.selectable ? 1 : 0);
         if (this.state.rows.length === 0) {
-            body.innerHTML = `<tr><td colspan="${this.columns.length + (this.actionsHtml ? 1 : 0)}" class="text-center py-5 text-muted">
+            body.innerHTML = `<tr><td colspan="${totalCols}" class="text-center py-5 text-muted">
                 <i class="fa fa-inbox fa-2x d-block mb-2"></i>
                 ${this.state.search ? `No results for "${escapeHtml(this.state.search)}"` : 'No records found'}
             </td></tr>`;
@@ -193,13 +239,17 @@ class Datatable {
         }
 
         body.innerHTML = this.state.rows.map((row) => {
+            const id = row.id;
+            const isChecked = this.state.selected.has(id);
+            const checkboxCell = this.selectable
+                ? `<td style="padding-left: 12px;"><input type="checkbox" data-airpay-table-select="${escapeHtml(id)}" ${isChecked ? 'checked' : ''}></td>`
+                : '';
             const cells = this.columns.map((c) => {
                 let val = row[c.key];
                 if (c.format === 'badge') {
                     const cls = row[c.key + '_class'] || 'badge-secondary';
                     val = `<span class="badge ${escapeHtml(cls)}">${escapeHtml(val)}</span>`;
                 } else if (c.format === 'html') {
-                    // Trusted HTML — server-rendered. Caller is responsible for sanitisation.
                     val = val || '';
                 } else {
                     val = escapeHtml(val);
@@ -207,14 +257,13 @@ class Datatable {
                 return `<td class="ps-3">${val}</td>`;
             }).join('');
 
-            // Action cell — server provides per-row HTML in row.actions or fallback to actionsHtml template.
             let actionCell = '';
             if (this.actionsHtml || row.actions) {
                 const html = row.actions || this.actionsHtml.replace(/\{\{(\w+)\}\}/g,
                     (m, key) => escapeHtml(row[key] ?? ''));
                 actionCell = `<td class="text-end pe-3">${html}</td>`;
             }
-            return `<tr data-row-id="${escapeHtml(row.id ?? '')}">${cells}${actionCell}</tr>`;
+            return `<tr data-row-id="${escapeHtml(id ?? '')}" ${isChecked ? 'class="table-active"' : ''}>${checkboxCell}${cells}${actionCell}</tr>`;
         }).join('');
     }
 

@@ -77,11 +77,30 @@
     </div>
 </div>
 
+<div data-airpay-bulk-bar style="display: none;" class="alert alert-info py-2 px-3 mb-3 d-flex justify-content-between align-items-center">
+    <div>
+        <i class="fa fa-check-square fa-fw"></i>
+        <strong data-airpay-bulk-count>0</strong> selected
+    </div>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-sm btn-outline-warning" data-bulk-action="suspend">
+            <i class="fa fa-ban fa-fw"></i> Suspend
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-success" data-bulk-action="activate">
+            <i class="fa fa-undo fa-fw"></i> Activate
+        </button>
+        <button type="button" class="btn btn-sm btn-link text-muted" data-bulk-action="clear">
+            Cancel
+        </button>
+    </div>
+</div>
+
 <div data-airpay-table
      data-endpoint="local_airpay_users_list_users"
      data-columns="{{columns_json}}"
      data-search-placeholder="Search by name, email, or employee ID…"
-     data-perpage="25">
+     data-perpage="25"
+     data-selectable="1">
 </div>
 
 </div>
@@ -89,20 +108,20 @@
 {{#js}}
 require([
     'theme_airpayux/datatable',
-    'local_airpay_users/user_actions'
-], function(Datatable, UserActions) {
+    'local_airpay_users/user_actions',
+    'core/ajax',
+    'core/notification',
+    'core/str'
+], function(Datatable, UserActions, Ajax, Notification, Str) {
     Datatable.init();
     UserActions.init();
 
-    // Wire local filter bar to the datatable instance.
     var root = document.querySelector('[data-airpay-table]');
     var dt = Datatable.getInstance(root);
     if (!dt) return;
 
-    // Default status = active
     dt.setFilter('status', 'active');
 
-    // Org filter dropdown.
     document.querySelectorAll('[data-airpay-users-filter]').forEach(function(el) {
         el.addEventListener('change', function(e) {
             var key = e.target.dataset.airpayUsersFilter;
@@ -111,7 +130,6 @@ require([
         });
     });
 
-    // Status segmented buttons.
     document.querySelectorAll('[data-airpay-users-status] [data-status]').forEach(function(btn) {
         btn.addEventListener('click', function(e) {
             var status = e.target.dataset.status;
@@ -119,6 +137,54 @@ require([
                 b.classList.toggle('active', b === e.target);
             });
             dt.setFilter('status', status);
+        });
+    });
+
+    // ── Bulk action bar ──────────────────────────────────────────────
+    var bar = document.querySelector('[data-airpay-bulk-bar]');
+    var countEl = document.querySelector('[data-airpay-bulk-count]');
+    document.addEventListener('airpay:datatable:selection', function(e) {
+        var n = e.detail.selected.length;
+        countEl.textContent = n;
+        bar.style.display = n > 0 ? '' : 'none';
+    });
+
+    var runBulk = function(action) {
+        var ids = dt.getSelected();
+        if (!ids.length) return;
+        Str.get_string('confirm', 'core').then(function(confirmLabel) {
+            Notification.confirm(
+                'Bulk ' + action,
+                'Are you sure you want to ' + action + ' ' + ids.length + ' user(s)?',
+                confirmLabel, null,
+                function() {
+                    Ajax.call([{
+                        methodname: 'local_airpay_users_bulk_action',
+                        args: {action: action, userids: ids}
+                    }])[0].then(function(res) {
+                        Notification.addNotification({
+                            message: 'Bulk ' + action + ': ' + res.count + ' user(s) updated'
+                                + (res.skipped ? ' (' + res.skipped + ' skipped)' : ''),
+                            type: 'success'
+                        });
+                        dt.clearSelection();
+                        dt.refresh();
+                        return null;
+                    }).catch(Notification.exception);
+                }
+            );
+            return null;
+        }).catch(Notification.exception);
+    };
+
+    document.querySelectorAll('[data-bulk-action]').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            var action = e.currentTarget.dataset.bulkAction;
+            if (action === 'clear') {
+                dt.clearSelection();
+                return;
+            }
+            runBulk(action);
         });
     });
 });

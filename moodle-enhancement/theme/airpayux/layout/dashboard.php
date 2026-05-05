@@ -616,54 +616,51 @@ if (isloggedin() && !isguestuser()) {
     }
 
     // --- Section: Manager Team Overview (only for managers) ---
+    // Uses local_airpay_manager\team_manager — batches 4 aggregate queries
+    // instead of running N+1 progress calculations per team member.
     if ($ismanager) {
         try {
-            $teammembers = $DB->get_records_sql(
-                "SELECT u.id, u.firstname, u.lastname, u.lastaccess
-                   FROM {user} u
-                  WHERE u.open_supervisorid = :mgrid
-                    AND u.deleted = 0 AND u.suspended = 0
-               ORDER BY u.lastname ASC",
-                ['mgrid' => $USER->id]
-            );
+            $teammembers = \local_airpay_manager\team_manager::get_team((int) $USER->id);
+            $teamsummary = \local_airpay_manager\team_manager::summarize_team($teammembers);
 
             $teamcompliancelist = [];
             $teamenrolled = 0;
             $teamcompleted = 0;
+            $teamoverdue = 0;
 
-            foreach ($teammembers as $member) {
-                $mcourses = enrol_get_all_users_courses($member->id, true);
-                $mtotal = count($mcourses);
-                $mdone = 0;
-                foreach ($mcourses as $mc) {
-                    $p = \core_completion\progress::get_course_progress_percentage($mc, $member->id);
-                    if ($p !== null && $p >= 100) { $mdone++; }
-                }
-                $teamenrolled += $mtotal;
-                $teamcompleted += $mdone;
+            foreach ($teamsummary as $row) {
+                $teamenrolled  += $row['enrolled'];
+                $teamcompleted += $row['completed'];
+                $teamoverdue   += $row['overdue'];
                 $teamcompliancelist[] = [
-                    'name' => format_string($member->firstname . ' ' . $member->lastname),
-                    'enrolled' => $mtotal,
-                    'completed' => $mdone,
-                    'pending' => $mtotal - $mdone,
-                    'haspending' => ($mtotal - $mdone) > 0,
-                    'lastaccess' => $member->lastaccess > 0
-                        ? userdate($member->lastaccess, '%d %b %Y') : 'Never',
+                    'name'         => $row['fullname'],
+                    'enrolled'     => $row['enrolled'],
+                    'completed'    => $row['completed'],
+                    'pending'      => max(0, $row['enrolled'] - $row['completed']),
+                    'haspending'   => max(0, $row['enrolled'] - $row['completed']) > 0,
+                    'overdue'      => $row['overdue'],
+                    'has_overdue'  => $row['has_overdue'],
+                    'rate'         => $row['rate'],
+                    'rate_class'   => $row['rate_class'],
+                    'lastaccess'   => $row['lastlogin'],
+                    'is_inactive'  => $row['is_inactive'],
+                    'drilldown_url' => (new moodle_url('/local/airpay_manager/member.php', ['id' => $row['id']]))->out(false),
                 ];
             }
 
-            $teamrate = ($teamenrolled > 0) ? round(($teamcompleted / $teamenrolled) * 100, 1) : 0;
+            $teamrate = ($teamenrolled > 0) ? min(100, round(($teamcompleted / $teamenrolled) * 100, 1)) : 0;
             $airpay_dashboard['manager_kpis'] = [
-                ['label' => 'Team Members', 'value' => count($teammembers), 'icon' => 'users', 'color' => 'primary'],
-                ['label' => 'Team Enrolments', 'value' => $teamenrolled, 'icon' => 'book', 'color' => 'accent'],
-                ['label' => 'Completions', 'value' => $teamcompleted, 'icon' => 'check-circle', 'color' => 'success'],
-                ['label' => 'Completion Rate', 'value' => $teamrate . '%', 'icon' => 'line-chart', 'color' => 'gold'],
+                ['label' => 'Team Members',    'value' => count($teammembers), 'icon' => 'users', 'color' => 'primary'],
+                ['label' => 'Team Enrolments', 'value' => $teamenrolled,        'icon' => 'book', 'color' => 'accent'],
+                ['label' => 'Completions',     'value' => $teamcompleted,       'icon' => 'check-circle', 'color' => 'success'],
+                ['label' => 'Completion Rate', 'value' => $teamrate . '%',      'icon' => 'line-chart', 'color' => 'gold'],
             ];
-            $airpay_dashboard['hasmanagerkpis'] = count($teammembers) > 0;
-            $airpay_dashboard['teamcompliance'] = $teamcompliancelist;
+            $airpay_dashboard['team_overdue']  = $teamoverdue;
+            $airpay_dashboard['hasmanagerkpis']  = count($teammembers) > 0;
+            $airpay_dashboard['teamcompliance']  = $teamcompliancelist;
             $airpay_dashboard['hasteamcompliance'] = count($teamcompliancelist) > 0;
         } catch (Exception $e) {
-            $airpay_dashboard['hasmanagerkpis'] = false;
+            $airpay_dashboard['hasmanagerkpis']    = false;
             $airpay_dashboard['hasteamcompliance'] = false;
         }
     }

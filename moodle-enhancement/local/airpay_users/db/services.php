@@ -46,4 +46,11 @@ $functions = [
         'ajax'        => true,
         'capabilities' => 'local/airpay_users:delete',
     ],
+    'local_airpay_users_bulk_action' => [
+        'classname'   => 'local_airpay_users\external\bulk_action',
+        'description' => 'Bulk suspend or activate multiple users by ID',
+        'type'        => 'write',
+        'ajax'        => true,
+        'capabilities' => 'local/airpay_users:edit',
+    ],
 ];
