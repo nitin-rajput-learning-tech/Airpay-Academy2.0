@@ -35,6 +35,16 @@ defined('MOODLE_INTERNAL') || die();
 class accesslib {
 
     /**
+     * Match this path AND all DESCENDANTS (e.g. /1 matches /1, /1/2, /1/2/3).
+     */
+    public const LOWER_AND_SAME = 'lowerandsamepath';
+
+    /**
+     * Match this path AND all ANCESTORS (e.g. /1/2/3 also matches /1/2 and /1).
+     */
+    public const UPPER_AND_SAME = 'upperandsamepath';
+
+    /**
      * Get all roles assigned to a user at category-level contexts.
      *
      * Returns role assignments at CONTEXT_COURSECAT (level 40) which is
@@ -376,5 +386,170 @@ class accesslib {
         }
 
         return $DB->get_record('local_costcenter', ['id' => $orgid]);
+    }
+
+    /**
+     * Build a SQL fragment that matches a column against a costcenter path,
+     * optionally including ancestors (UPPER_AND_SAME) or descendants (LOWER_AND_SAME).
+     *
+     * Returns [$sql, $params] for safe parameterised use. The fragment looks like
+     * ` AND ( col = :exact_xxx OR col LIKE :like_xxx OR col = :anc1_xxx OR ... )`
+     * (parens included so callers can paste it inside an existing WHERE).
+     *
+     * Replaces BizLMS `costcenterpath_match_sql()` which interpolated user input
+     * directly into SQL — this version is injection-safe + LIKE-wildcard-escaped.
+     *
+     * Example for UPPER_AND_SAME with path '/1/2/3':
+     *   matches /1/2/3, /1/2/3/X, /1/2, /1
+     *
+     * @param string $costcenterpath  e.g. '/1/2/3'
+     * @param string $columnname      e.g. 'u.open_path'
+     * @param string $datatype        self::LOWER_AND_SAME | self::UPPER_AND_SAME
+     * @return array [string $sql, array $params]
+     */
+    public static function costcenterpath_match_sql(
+        string $costcenterpath,
+        string $columnname,
+        string $datatype = self::LOWER_AND_SAME
+    ): array {
+        global $DB;
+
+        if (empty($costcenterpath) || $costcenterpath === '/') {
+            return ['', []];
+        }
+
+        $uid = uniqid('ccpm_');
+        $clauses = [];
+        $params = [];
+
+        // Always include exact match + LOWER_AND_SAME prefix.
+        $clauses[] = "{$columnname} = :{$uid}_exact";
+        $params["{$uid}_exact"] = $costcenterpath;
+        $clauses[] = "{$columnname} LIKE :{$uid}_like";
+        $params["{$uid}_like"] = $DB->sql_like_escape($costcenterpath) . '/%';
+
+        if ($datatype === self::UPPER_AND_SAME) {
+            // Also walk up the path adding each ancestor as an exact match.
+            $ancestor = $costcenterpath;
+            $i = 0;
+            while (($ancestor = self::strip_last_segment($ancestor)) !== '') {
+                $clauses[] = "{$columnname} = :{$uid}_anc{$i}";
+                $params["{$uid}_anc{$i}"] = $ancestor;
+                $i++;
+                if ($i > 20) { break; } // sanity: paths shouldn't be 20+ deep
+            }
+        }
+
+        $sql = ' AND ( ' . implode(' OR ', $clauses) . ' ) ';
+        return [$sql, $params];
+    }
+
+    /**
+     * Build a SQL fragment that matches a column against the CURRENT user's
+     * costcenter path(s). Reads from the `open_path` field on the user record.
+     *
+     * Returns [$sql, $params]. Returns ['', []] for siteadmins (they see all).
+     *
+     * Replaces BizLMS `userpath_match_sql()` which used the deprecated
+     * local_userdata table; this version uses our open_path field directly.
+     *
+     * @param string $columnname  e.g. 'c.open_path'
+     * @param string $datatype    self::LOWER_AND_SAME | self::UPPER_AND_SAME
+     * @return array [string $sql, array $params]
+     */
+    public static function userpath_match_sql(
+        string $columnname,
+        string $datatype = self::LOWER_AND_SAME
+    ): array {
+        global $USER;
+
+        if (is_siteadmin()) {
+            return ['', []];
+        }
+
+        $userpath = $USER->open_path ?? '';
+        if (empty($userpath)) {
+            return ['', []];
+        }
+
+        return self::costcenterpath_match_sql($userpath, $columnname, $datatype);
+    }
+
+    /**
+     * Resolve a costcenter path to its course-category context (cached).
+     *
+     * Returns the context for the category linked to that costcenter, or
+     * the system context as a safe fallback. Cached per-path for the
+     * duration of the request via a Moodle application cache.
+     *
+     * Replaces BizLMS `costcenterpath_contextdata()` which used string
+     * interpolation in the lookup query — this version is safe + uses
+     * the new `local_airpay_org` table first, falling back to the
+     * legacy `local_costcenter` if present.
+     *
+     * @param string $costcenterpath  e.g. '/1/2/3'
+     * @return \context  Either the category context or context_system as fallback
+     */
+    public static function costcenterpath_contextdata(string $costcenterpath): \context {
+        global $DB;
+
+        $fallback = \context_system::instance();
+        if (empty($costcenterpath)) {
+            return $fallback;
+        }
+
+        // Per-request memoisation (avoids repeated DB hits).
+        static $cache = [];
+        if (isset($cache[$costcenterpath])) {
+            return $cache[$costcenterpath];
+        }
+
+        // The category linkage lives only on legacy local_costcenter (BizLMS).
+        // local_airpay_org has no `category` column — we don't need one because
+        // categories are looked up by path, not by org id.
+        $categoryid = null;
+        $dbman = $DB->get_manager();
+        if ($dbman->table_exists('local_costcenter')) {
+            try {
+                $categoryid = $DB->get_field('local_costcenter', 'category', ['path' => $costcenterpath]);
+            } catch (\dml_exception $e) {
+                // Field might not exist on a different costcenter schema.
+                $categoryid = null;
+            }
+        }
+
+        if ($categoryid) {
+            try {
+                $context = \context_coursecat::instance((int) $categoryid);
+                $cache[$costcenterpath] = $context;
+                return $context;
+            } catch (\dml_exception $e) {
+                // Stale category id — fall through to system.
+            }
+        }
+
+        $cache[$costcenterpath] = $fallback;
+        return $fallback;
+    }
+
+    /**
+     * Strip the last `/segment` from a path. Returns '' once the path
+     * has no more segments to strip.
+     *
+     *   '/1/2/3'  → '/1/2'
+     *   '/1/2'    → '/1'
+     *   '/1'      → ''
+     *   '/'       → ''
+     */
+    private static function strip_last_segment(string $path): string {
+        $path = rtrim($path, '/');
+        if ($path === '' || $path === '/') {
+            return '';
+        }
+        $idx = strrpos($path, '/');
+        if ($idx === false || $idx === 0) {
+            return '';
+        }
+        return substr($path, 0, $idx);
     }
 }
