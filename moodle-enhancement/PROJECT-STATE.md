@@ -1,18 +1,37 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-05 (late) | **Phase:** Academy 3.3 — Audit + Perf cleared, ready for production deploy rehearsal
+**Updated:** 2026-05-06 | **Phase:** Academy 3.3 — Audit cleared, deploy rehearsed, PHPUnit live, CI on PRs
 **Theme:** airpayux v1.0.0 | **Moodle:** 5.1.3+ on XAMPP
-**Version:** 3.3.0+ (v3.3 stable + post-audit hardening: P0 datatable bugs fixed, P1 perf wins, cross-tenant LIKE leaks closed, comprehensive Playwright test harness)
+**Version:** 3.3.0+ (v3.3 stable + 2-day audit/perf/test harden)
 **GitHub:** Pushed to nitin-rajput-learning-tech/Airpay-Academy2.0 (production branch)
-**Latest commit:** dadfe1245 — F1+F2+F3 fixes (catalog cache 40×, harness improvements, F1 documented)
-**Next session:** see `state-cards/2026-05-05-session-state.md` — recommended next is production deploy rehearsal.
+**Latest commit:** 002ce78b9 — A: GitHub Actions CI on every PR
+**Next session:** see `state-cards/2026-05-06-session-state.md` — production cutover blocked only on IT coordination.
 
-## Last 6 commits (this audit/perf session)
+## Last 12 commits (the May 5-6 audit/perf/test stretch)
+- `002ce78b9` A: GitHub Actions CI — PHP lint + JSON + Mustache + version-bump
+- `07393e4ac` PHPUnit: 44/44 tests PASS — fixed 2 test bugs surfaced during first run
+- `7afde68c6` PHPUnit gap fill (analytics + compliance) + Phase D workflows + manager onboarding UX
+- `bdfd01d7e` F4 + F6 cleanup: 6 orphan dirs removed, 2 plugins migrated to Moodle 5.x hooks
+- `3f0142320` Production deploy rehearsal — runbook verified end-to-end + F5 P1 fix
+- `fa366a022` Session state card 2026-05-05 + PROJECT-STATE.md update
 - `dadfe1245` F1+F2+F3 fixes from Phase A/B audit findings
 - `8fe7bf7dc` Phase A + B test execution: 9 personas + 11 admin tables, real findings
 - `6cc3d5695` Comprehensive test plan: 8 phases × 9 personas × 21 surfaces
 - `ac22501e8` Cross-tenant LIKE over-count fix: 13 sites across 4 plugins
 - `9e3512499` P1 perf: airpay_org admin 86× faster + airpay_analytics N+1 + cache layer
 - `33c6bce27` P0 audit: 2 datatable hotfixes + Playwright harness for ongoing verification
+
+## State summary (post May 5-6 stretch)
+- ✅ Deploy mechanism: 8/8 runbook steps + rollback drill
+- ✅ PHPUnit: 44/44 tests passing on security-critical paths
+- ✅ Browser tests: 113/116 + 73/73 + 16/16 + 12/15 = 214/220 (97%)
+- ✅ All cross-tenant LIKE leaks closed (13 sites)
+- ✅ All P0/P1 perf wins shipped (org 86×, analytics ∞×, catalog 40×)
+- ✅ Manager onboarding UX bug fixed
+- ✅ Moodle 5.x deprecations cleaned up
+- ✅ -4604 LOC of orphan code removed
+- ✅ CI workflow on every PR
+
+**Production-cutover-blocked-on:** IT staging access, DB backup verification, SMTP setup. Engineering done.
 
 ---
 
