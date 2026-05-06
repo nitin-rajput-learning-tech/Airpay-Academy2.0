@@ -435,16 +435,23 @@ class compliance_engine {
                 $snap = $DB->get_record('local_compliance_snapshot', [
                     'userid' => $user->id, 'courseid' => $mc->courseid]);
 
-                $status = $snap ? $snap->status : 'not_enrolled';
+                // $snap is false when no compliance_snapshot row for this user+course;
+                // accessing its properties produces PHP warnings (F5 from deploy rehearsal).
+                $status   = $snap ? $snap->status : 'not_enrolled';
+                $progress = $snap ? ($snap->progress_percent ?? 0) : 0;
+                $overdue  = $snap ? ($snap->days_overdue ?? 0) : 0;
+                $deadline = ($snap && !empty($snap->deadline_date))
+                    ? userdate($snap->deadline_date, '%d %b %Y')
+                    : '';
                 $row['courses'][] = [
                     'coursename' => $mc->coursename,
                     'courseid'   => $mc->courseid,
                     'status'     => $status,
                     'status_label' => self::status_label($status),
                     'status_class' => self::status_class($status),
-                    'progress'   => $snap->progress_percent ?? 0,
-                    'days_overdue' => $snap->days_overdue ?? 0,
-                    'deadline'   => $snap->deadline_date ? userdate($snap->deadline_date, '%d %b %Y') : '',
+                    'progress'   => $progress,
+                    'days_overdue' => $overdue,
+                    'deadline'   => $deadline,
                 ];
 
                 if ($status !== self::STATUS_COMPLETED && $status !== self::STATUS_EXEMPTED) {
