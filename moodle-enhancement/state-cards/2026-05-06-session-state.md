@@ -158,17 +158,48 @@ cd C:/xampp/htdocs/moodle5
 
 | ID | Status | Output |
 |----|--------|--------|
-| **1** A11Y-1 — datatable `aria-sort` + keyboard | ✅ shipped | One change in `theme_airpayux/datatable` covers all 10 admin-table plugins. Includes role="button", Enter/Space keyboard activation, focus restoration, `aria-busy`, `role="status"` on loading/empty, high-contrast `:focus-visible` outline (light + dark mode). |
+| **1** A11Y-1 — datatable `aria-sort` + keyboard | ✅ shipped | One change in `theme_airpayux/datatable` covers all 10 admin-table plugins. Includes Enter/Space keyboard activation, focus restoration, `aria-busy`, `role="status"` on loading/empty, high-contrast `:focus-visible` outline (light + dark mode). |
 | **2** PHPUnit for programs/skills/notifications/evaluation | ✅ shipped | 4 new test files, 20/20 PASS, 49 assertions. Covers tenant-scope leak boundaries, sort whitelist, JSON bounds, LIKE escape, capability gate. |
 | **3** BizLMS Phase 0B — shared datatable component | ✅ shipped | Generic Export CSV button (opt-in via `data-export-url`, propagates current `search`/`sort`/`filter_*` to URL). `datatable.README.md` documents the public API + Phase 0B feature parity matrix. 10 plugins now use the shared component. |
 
+### Final round ("do remaining items")
+
+| ID | Status | Output |
+|----|--------|--------|
+| **A11Y-4** outline:0 audit | ✅ shipped | Audited 15 hits in airpayux SCSS; fixed 3 real violations (filter selects, signup form, DataTables pagination). Remaining 12 hits are scrollbar/non-focus contexts/already paired with box-shadow. |
+| **A11Y-5** keyboard nav harness + fixes | ✅ shipped | New `audit/playwright/p1_phase_h_keyboard_nav.mjs` walks Tab through dashboard + manage-users + catalog, asserting every focused element has outline OR box-shadow. Fixed 2 surfaces' worth of missing focus indicators (skip-link → high-contrast pill on focus; nav-area links/buttons → `:focus-visible` fallback in `_bs5-compat.scss` covers airpay-nav, airpay-topbar, ap-shell, .aabtn, .navbar-brand). 3/3 surfaces now pass. |
+| **A11Y-6** Pa11y/axe a11y harness | ✅ shipped | New `audit/playwright/p1_phase_h_a11y_axe.mjs` using `@axe-core/playwright`. WCAG 2.1 AA + best-practice scan across dashboard + manage-users + catalog × siteadmin + learner. Caught 2 critical regressions from A11Y-1 (`role="button"` on `<th>` invalidates `aria-sort`; `<select>` with no accessible name) — fixed both same session. 0 critical / 0 of-our-fault serious remaining; 5 colour-contrast violations filed as A11Y-7 for design review. See PHASE-H-A11Y-AXE-RESULTS.md. |
+| **F1** static analysis | ✅ closed | Read `lib/form/amd/{src,build}/changechecker.js` end-to-end. Confirmed 0 calls to `watchFormById` in our airpay code or theme. Bug is in Moodle core: `watchForm(formNode)` does `formNode.closest('form')` without null-guarding. Documented in F1-INVESTIGATION-NOTES.md. |
+| **learnerscript P3** parse_url(null) | ✅ documented | Third-party plugin — won't carry private patch. Documented 1-line guard fix to apply if/when needed. See LEARNERSCRIPT-P3-DEFERRAL.md. |
+| **A11Y-2** NVDA pass | partial | ~80% covered automatically by A11Y-6 axe scan (form labels, ARIA, contrast, landmarks). Manual NVDA pass still needed for reading-order quality + alt-text appropriateness; deferred. |
+| **A11Y-3** Lighthouse ≥ 90 | blocked | Needs production-mirror env. |
+
+## What's left (engineering)
+
+| Item | Status | Effort |
+|---|---|---|
+| **A11Y-2 manual NVDA pass** | manual, blocked on screen-reader access | 1-2h |
+| **A11Y-3 Lighthouse ≥90** | blocked on production-mirror env | 30min |
+| **A11Y-7 colour contrast tokens** | needs design review of muted-text palette | 1-2h |
+| **A11Y-8 `<h1>` placement** | theme-level, low priority | 30min |
+| **A11Y-9 duplicate `<main>` landmarks** | theme-level layout edit | 30min |
+| **F1 fix** | upstream Moodle bug; private patch optional | 30min if patching |
+| **BizLMS Phase 1+** | multi-session work, manage-users full port | 10h+ |
+
 ## Recommendation for next session
 
-**If IT staging is ready** — coordinate the production cutover. Engineering is done.
+**If IT staging is ready** — coordinate the production cutover. All blocking engineering is done.
 
-**If IT isn't ready** — the remaining engineering items in priority order:
-1. **A11Y-2** — NVDA pass on /my/dashboard.php, /local/airpay_users/, /local/airpay_catalog/ (~1-2h, manual screen-reader test)
-2. **F1 root cause** (~2h with grunt watch + Chrome DevTools) — closes the last audit P2
-3. **BizLMS Phase 1+** — manage-users full port from BizLMS feature plan (`~/.claude/plans/declarative-jumping-meadow.md`)
+**If IT isn't ready** — the highest-leverage remaining item is **BizLMS Phase 1** (manage-users full port from BizLMS source). Plan exists at `~/.claude/plans/declarative-jumping-meadow.md`.
 
-This session's leverage move: **the shared datatable now meets WCAG 2.1 AA for sort interaction across all 10 admin-table plugins via a single change**. Combined with 64 passing PHPUnit tests + green CI + 5 Playwright harnesses, the codebase has a multi-layer safety net.
+### Session's leverage move
+
+**The codebase now has a multi-layer automated quality net:**
+- CI (PHP lint + JSON + Mustache balance) on every PR — green
+- 64/64 PHPUnit tests across 11 files
+- 7 Playwright harnesses (incl. 2 new a11y ones)
+- A11Y items 1, 4, 5, 6 closed; 2/3/7/8/9 filed with effort estimates
+- Cross-tenant LIKE leak fix locked in by tests
+- All P0+P1 perf wins shipped
+
+The shared datatable component is now used by 10 plugins and meets WCAG 2.1 AA for sort interaction + keyboard nav + focus visibility — a single change covers them all. Future regressions get caught by axe before they ship.
