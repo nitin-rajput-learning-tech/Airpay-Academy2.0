@@ -324,10 +324,15 @@ class catalog_manager {
             'is_enrolled'   => $enrolled,
             'is_completed'  => $completed,
             'is_new'        => $is_new,
+            // detailurl was pointing at /local/search/coursedetails.php (BizLMS-era
+            // page; defunct since the BizLMS plugin removal). Use Moodle's
+            // standard course view, same as viewurl.
             'viewurl'       => (new \moodle_url('/course/view.php', ['id' => $course->id]))->out(false),
-            'detailurl'     => (new \moodle_url('/local/search/coursedetails.php', ['id' => $course->id]))->out(false),
-            'imageurl'      => (new \moodle_url('/theme/image.php/airpayux/local_courses/' .
-                               $CFG->themerev . '/courseimg'))->out(false),
+            'detailurl'     => (new \moodle_url('/course/view.php', ['id' => $course->id]))->out(false),
+            // imageurl was pointing at theme/airpayux/pix_plugins/local_courses/courseimg
+            // which never existed (404). Use Moodle core's default course icon as fallback.
+            'imageurl'      => (new \moodle_url('/theme/image.php/airpayux/core/' .
+                               $CFG->themerev . '/i/course'))->out(false),
         ];
     }
 }

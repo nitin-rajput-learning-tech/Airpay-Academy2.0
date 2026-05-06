@@ -8,13 +8,5 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-/**
- * Inject cart count data into every page (for navbar badge).
- * Called by Moodle's before_footer hook.
- */
-function local_airpay_catalog_before_footer() {
-    global $SESSION;
-    $count = count($SESSION->airpay_cart ?? []);
-    // Inject a hidden element that the navbar JS reads.
-    echo '<span id="ap-cart-count-data" style="display:none;">' . (int)$count . '</span>';
-}
+// The cart-count injection is now registered via db/hooks.php as a Moodle
+// 5.x hook callback. See classes/hook_callbacks.php for the body.
