@@ -30,15 +30,31 @@ if (!isloggedin() || isguestuser()) {
     redirect(new moodle_url('/login/index.php'));
 }
 
-// First-login onboarding — redirect new learners to onboarding wizard.
-// Skip for: siteadmins, L&D admins, admins who switched to employee view.
+// First-login onboarding — redirect new learners to the onboarding wizard.
+// Skip for users who shouldn't see the learner-style "what do you want to learn?"
+// flow:
+//   - Site admins
+//   - L&D admins (administrator role at category context)
+//   - Users with course-management capability
+//   - Managers (anyone who has at least one direct report) — they'll see a
+//     manager-specific dashboard; learner onboarding doesn't fit their role.
+//
+// UX rationale: managers/supervisors aren't enrolling for learning paths
+// themselves — they're tracking their team's progress. Forcing them through
+// "Pick interests / Set weekly goal" is wrong-shaped for their workflow.
+// Filed as the "manager onboarding UX" finding from P0 audit; resolved here.
 global $DB;
-$has_any_admin_role = is_siteadmin() || has_capability('local/courses:manage', context_system::instance())
+$is_supervisor = $DB->record_exists_select(
+    'user',
+    'open_supervisorid = :uid AND deleted = 0',
+    ['uid' => $USER->id]);
+$has_any_admin_role = is_siteadmin()
+    || has_capability('local/courses:manage', context_system::instance())
     || $DB->record_exists_sql(
         "SELECT 1 FROM {role_assignments} ra JOIN {context} ctx ON ctx.id = ra.contextid
          WHERE ra.userid = :uid AND ra.roleid = 9 AND ctx.contextlevel = 40",
         ['uid' => $USER->id]);
-if (!$has_any_admin_role) {
+if (!$has_any_admin_role && !$is_supervisor) {
     $onboarded = get_user_preferences('airpay_onboarding_complete', 0, $USER->id);
     if (!$onboarded) {
         redirect(new moodle_url('/local/airpay_pages/onboarding.php'));
