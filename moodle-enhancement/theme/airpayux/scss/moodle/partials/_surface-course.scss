@@ -272,6 +272,12 @@
             border-color: #0066A7;
             outline: none;
         }
+        /* a11y: keyboard-only focus ring — mouse clicks don't show it.
+           Border-only change isn't enough contrast for WCAG 2.4.7. */
+        &:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0,102,167,0.25);
+        }
     }
 
     /* Card/List view toggle */

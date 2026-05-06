@@ -672,15 +672,23 @@ body#page-my-index aside#block-region-layertwo_one .block .content {
     font-size: 12px;
     box-shadow: none;
 }
-.dataTables_wrapper .dataTables_paginate .paginate_button.active, 
-.dataTables_wrapper .dataTables_paginate .paginate_button:active, 
-.dataTables_wrapper .dataTables_paginate .paginate_button:hover, 
+.dataTables_wrapper .dataTables_paginate .paginate_button.active,
+.dataTables_wrapper .dataTables_paginate .paginate_button:active,
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover,
 .dataTables_wrapper .dataTables_paginate .paginate_button:focus {
     /*background: #1177d1 !important;*/
     color:#fff;
     /*border: 1px solid #1177d1;*/
     outline: none !important;
     box-shadow: none !important;
+}
+/* a11y: keyboard-only focus ring on DataTables pagination — restores the
+   visual indicator that the rule above strips, but only when reached via
+   keyboard. Mouse clicks still don't show the ring. */
+.dataTables_wrapper .dataTables_paginate .paginate_button:focus-visible {
+    outline: 2px solid #ffd400 !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 0 3px rgba(255, 212, 0, 0.3) !important;
 }
 .pagination .page-link {
     margin: 0px 1px;

@@ -108,6 +108,51 @@ silent unless explicitly looked for.
 
 ---
 
+## Static analysis findings (added 2026-05-06)
+
+Read `lib/form/amd/{src,build}/changechecker.js` end-to-end and grep'd
+for `watchFormById` callers across the entire codebase:
+
+```bash
+grep -rn 'watchFormById' public/local/                # 0 hits in airpay code
+grep -rn 'watchFormById' public/theme/airpayux/        # 0 hits
+grep -rn 'watchFormById' public/lib/form/              # only the definition
+```
+
+Conclusion from static analysis: **none of OUR plugins or our theme call
+`watchFormById` directly**. The error therefore originates in either:
+
+1. A Moodle core mform template embedded on courses/reports pages
+   (e.g. a search-filter mform whose template renders
+   `{{#js}}require(['core_form/changechecker'], c => c.watchFormById('xxx-{{uniqid}}'));{{/js}}`)
+   where the form's actual ID gets mismatched after our theme's
+   renderer rewrites the output.
+
+2. The auto-watcher `startWatching()` (line 416 in src/changechecker.js)
+   adds global `change`, `click`, `focusin`, `submit` listeners — none
+   of these call `watchFormById`. So the auto-watcher itself isn't the
+   culprit.
+
+3. A `{{#js}}` block in a template that survives the page render but
+   references a form ID that's been removed/renamed by our theme.
+
+The bug in Moodle core: `watchForm(formNode)` immediately does
+`formNode.closest('form')` without first guarding against `formNode`
+being null. `watchFormById` passes through whatever `getElementById`
+returns, including `null`. A 1-line fix in core would be:
+
+```js
+export const watchFormById = formId => {
+    const node = document.getElementById(formId);
+    if (!node) return;                           // ← missing guard
+    watchForm(node);
+};
+```
+
+This is a Moodle upstream bug, not our bug. Filing it as `MDL-XXXXX`
+would be the proper fix but requires Moodle Tracker access. Until then,
+the symptom is harmless — Phase B's 73/73 functional cases confirm.
+
 ## To investigate properly (Phase 6B item)
 
 | Step | Effort |

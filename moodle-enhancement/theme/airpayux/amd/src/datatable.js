@@ -148,9 +148,13 @@ class Datatable {
                     ariaSort = ' aria-sort="none"';
                 }
             }
-            // Keyboard a11y: sortable headers must be tabbable + announce role.
+            // Keyboard a11y: sortable headers must be tabbable + activatable.
+            // We DON'T override role to "button" — that would invalidate the
+            // implicit role="columnheader" which is what aria-sort is allowed
+            // on per WAI-ARIA. Instead the th keeps columnheader semantics and
+            // tabindex=0 + click/keydown handlers carry the button-like behaviour.
             const sortableAttrs = c.sortable
-                ? ` data-airpay-table-sort="${escapeHtml(c.key)}" role="button" tabindex="0"`
+                ? ` data-airpay-table-sort="${escapeHtml(c.key)}" tabindex="0"`
                 : '';
             const sortableStyle = c.sortable ? 'cursor: pointer;' : '';
             // Decorative caret — hidden from screen readers (aria-sort already conveys state).

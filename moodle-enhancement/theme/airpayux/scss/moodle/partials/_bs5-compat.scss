@@ -90,6 +90,66 @@
     border: 0 !important;
 }
 
+/* a11y: A11Y-5 — skip-link must be visually distinct when focused, not
+   just "no longer hidden". Default browser outlines on <a> are often
+   suppressed by Bootstrap, so we add an explicit, high-contrast pill
+   that pops into view at the top-left when keyboard focused. */
+.visually-hidden-focusable:focus,
+.visually-hidden-focusable:focus-within {
+    position: fixed !important;
+    top: 12px !important;
+    left: 12px !important;
+    z-index: 10000 !important;
+    padding: 10px 18px !important;
+    background: #0066A7 !important;
+    color: #fff !important;
+    text-decoration: none !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25), 0 0 0 3px #ffd400 !important;
+    outline: none !important;
+}
+
+/* a11y: A11Y-5 — global :focus-visible fallback for elements stripped of
+   their default focus ring elsewhere (.aabtn:focus { box-shadow: none } in
+   _moodle-overrides.scss removes it from a long list of selectors). This
+   rule re-adds a high-contrast outline ONLY for keyboard focus, so mouse
+   clicks still don't show the ring.
+
+   Scope: links and buttons in the nav/topbar/sidebar areas where the
+   global override applies. Other components (datatable headers, form
+   inputs, signup/login forms) have their own :focus-visible rules already.
+
+   The 2px solid + 2px offset gives 4px total visible border around the
+   focused element, comfortably exceeding WCAG 2.4.7 contrast for focus. */
+.airpay-nav a:focus-visible,
+.airpay-nav button:focus-visible,
+.airpay-topbar a:focus-visible,
+.airpay-topbar button:focus-visible,
+.ap-shell a:focus-visible,
+.ap-shell button:focus-visible,
+a.aabtn:focus-visible,
+a.navbar-brand:focus-visible {
+    outline: 2px solid #ffd400 !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 0 2px rgba(255, 212, 0, 0.30) !important;
+    border-radius: 4px;
+}
+body.dark-mode .airpay-nav a:focus-visible,
+body.dark-mode .airpay-nav button:focus-visible,
+body.dark-mode .airpay-topbar a:focus-visible,
+body.dark-mode .airpay-topbar button:focus-visible,
+body.dark-mode .ap-shell a:focus-visible,
+body.dark-mode .ap-shell button:focus-visible,
+html.dark-mode .airpay-nav a:focus-visible,
+html.dark-mode .airpay-nav button:focus-visible,
+html.dark-mode .airpay-topbar a:focus-visible,
+html.dark-mode .airpay-topbar button:focus-visible,
+html.dark-mode .ap-shell a:focus-visible,
+html.dark-mode .ap-shell button:focus-visible {
+    outline-color: #ffe44d !important;
+}
+
 /* Hide BizLMS cart popup — replaced by Airpay cart in navbar */
 .popover-region-biz_carts,
 #nav-biz_cart-popover-container {

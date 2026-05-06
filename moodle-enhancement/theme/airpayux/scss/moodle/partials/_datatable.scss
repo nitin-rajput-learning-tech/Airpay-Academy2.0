@@ -6,18 +6,20 @@
    polish only — never restyles the light-mode appearance. */
 
 /* ── A11Y-1: Keyboard focus indication on sortable headers ────────
-   The sortable <th> uses role="button" + tabindex="0" so keyboard
-   users can Tab to it and Enter/Space to sort. Default browser
-   focus rings are hidden by Bootstrap on <th> in many themes, so we
-   add an explicit, high-contrast outline for :focus-visible only
-   (mouse clicks don't show the ring). */
-.airpay-datatable th[role="button"]:focus-visible {
+   The sortable <th> has tabindex="0" + click/keydown handlers so
+   keyboard users can Tab to it and press Enter/Space to sort.
+   We keep the implicit role="columnheader" (don't override to button)
+   because aria-sort is only valid on columnheader per WAI-ARIA.
+   Default browser focus rings are hidden by Bootstrap on <th> in
+   many themes, so we add an explicit, high-contrast outline for
+   :focus-visible only (mouse clicks don't show the ring). */
+.airpay-datatable th[data-airpay-table-sort]:focus-visible {
     outline: 2px solid #ffd400;       /* high-contrast against blue header */
     outline-offset: -2px;             /* sits inside the cell border */
     box-shadow: inset 0 0 0 2px rgba(255, 212, 0, 0.4);
 }
-body.dark-mode .airpay-datatable th[role="button"]:focus-visible,
-html.dark-mode .airpay-datatable th[role="button"]:focus-visible {
+body.dark-mode .airpay-datatable th[data-airpay-table-sort]:focus-visible,
+html.dark-mode .airpay-datatable th[data-airpay-table-sort]:focus-visible {
     outline-color: #ffe44d;
 }
 
