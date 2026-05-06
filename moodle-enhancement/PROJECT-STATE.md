@@ -1,26 +1,48 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-06 | **Phase:** Academy 3.3 — Audit cleared, deploy rehearsed, PHPUnit on all 14 plugin paths, CI green, A11Y-1 closed, Phase 0B complete
+**Updated:** 2026-05-06 EOD | **Phase:** Academy 3.4 — Feature-parity audit complete; backlog scoped; **NOT production-ready by Nitin's quality bar**
 **Theme:** airpayux v1.0.0 | **Moodle:** 5.1.3+ on XAMPP
-**Version:** 3.3.0+ (v3.3 stable + 2-day audit/perf/test harden)
+**Version:** 3.3.0+ → working toward 4.0 enterprise-grade
 **GitHub:** Pushed to nitin-rajput-learning-tech/Airpay-Academy2.0 (production branch)
-**Latest CI:** 8a5c4fced — green (PHP lint + JSON + Mustache balance — 4-form fix)
-**Latest commit:** 682143ea0 — A11Y-1: aria-sort + keyboard nav on shared datatable (covers all admin tables)
-**PHPUnit:** 64/64 tests PASS across 11 test files (~204 assertions on security-critical paths)
-**Next session:** see `state-cards/2026-05-06-session-state.md` — production cutover blocked only on IT coordination.
+**Latest CI:** acd0a0d41 — green (PHP lint + JSON + Mustache balance)
+**Latest commit:** acd0a0d41 — FEATURE-PARITY-AUDIT.md + G-01 fix + 8 CRUD PHPUnit + Phase D-extended Playwright
+**PHPUnit:** 118 tests PASS across 19 test files (~290 assertions)
+**Playwright:** 8 harnesses (smoke + admin tables + workflows + SCORM + axe a11y + keyboard nav + deep workflows + visual walk)
 
-## Last 12 commits (the May 5-6 audit/perf/test stretch)
+> **Production posture (Nitin EOD 2026-05-06):** *"We will not go to production
+> till we have fixed everything. Not going to make a fool of myself going with
+> half-baked product. The features shouldn't just exist — they should work
+> like a true enterprise product."*
+>
+> Production cutover is gated on closing **all** items in `FEATURE-PARITY-AUDIT.md`
+> (G-01..G-06 + Tier 2 stubs + Tier 3 partials + Tier 4 a11y polish), not just the
+> most-impactful ones.
+>
+> See `state-cards/2026-05-06-EOD-state.md` for the full backlog (~140-180h
+> estimated; sequenced over 9-10 dedicated days starting with G-04 tomorrow).
+
+## Last 13 commits (May 5-6 audit/perf/test/quality stretch)
+- `acd0a0d41` Feature-parity audit + G-01 fix + 8 CRUD PHPUnit (54/54 PASS) + Phase D-extended Playwright
+- `f11bdacd0` State card update: A11Y-4/5/6 + F1 + learnerscript-P3 closure
+- `2799c0926` A11Y-4 + A11Y-5 + A11Y-6 + F1 follow-up + learnerscript-P3 documented
+- `b200eed6c` PHPUnit for programs/skills/notifications/evaluation (20/20) + Phase 0B export button + README
+- `682143ea0` A11Y-1: aria-sort + keyboard nav on shared datatable (covers all 10 admin tables)
+- `8a5c4fced` CI: also trigger on workflow changes pushed to production
+- `295cfcb9e` CI: count Moodle Mustache template-inheritance forms in balance check
+- `f35ce3e9b` H: SCORM e2e — 7/7 PASS, attempt persisted, integration boundary verified
+- `7bd2bd9f4` K (Phase 0A): port 3 BizLMS accesslib methods + 7/7 PHPUnit PASS
+- `175e220e8` E (complete): airpay_exams + airpay_learningpath PHPUnit tests
+- `43deec238` State card update: A,C,D,E,F,G shipped; H + K deferred with reason
+- `ae77416b8` D + E (partial): F1 investigation notes + airpay_classroom PHPUnit tests
 - `002ce78b9` A: GitHub Actions CI — PHP lint + JSON + Mustache + version-bump
-- `07393e4ac` PHPUnit: 44/44 tests PASS — fixed 2 test bugs surfaced during first run
-- `7afde68c6` PHPUnit gap fill (analytics + compliance) + Phase D workflows + manager onboarding UX
-- `bdfd01d7e` F4 + F6 cleanup: 6 orphan dirs removed, 2 plugins migrated to Moodle 5.x hooks
-- `3f0142320` Production deploy rehearsal — runbook verified end-to-end + F5 P1 fix
-- `fa366a022` Session state card 2026-05-05 + PROJECT-STATE.md update
-- `dadfe1245` F1+F2+F3 fixes from Phase A/B audit findings
-- `8fe7bf7dc` Phase A + B test execution: 9 personas + 11 admin tables, real findings
-- `6cc3d5695` Comprehensive test plan: 8 phases × 9 personas × 21 surfaces
-- `ac22501e8` Cross-tenant LIKE over-count fix: 13 sites across 4 plugins
-- `9e3512499` P1 perf: airpay_org admin 86× faster + airpay_analytics N+1 + cache layer
-- `33c6bce27` P0 audit: 2 datatable hotfixes + Playwright harness for ongoing verification
+
+## What this represents
+
+After two intensive days of audit-driven hardening, we've done the **measurement
+work**: every gap is catalogued in FEATURE-PARITY-AUDIT.md, every security-critical
+path is locked in by tests, every regression has a guard.
+
+What we haven't done yet is the **build work** to close the gaps. That's the
+3-4.5 weeks of Tier 1+2+3 work documented in `state-cards/2026-05-06-EOD-state.md`.
 
 ## State summary (post May 5-6 stretch)
 - ✅ Deploy mechanism: 8/8 runbook steps + rollback drill

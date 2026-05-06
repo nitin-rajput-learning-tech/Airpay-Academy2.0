@@ -1,8 +1,13 @@
 # BizLMS → Airpay Feature Parity Audit
 
-**Date:** 2026-05-06
+**Date:** 2026-05-06 | **Updated posture 2026-05-06 EOD**
 **Scope:** Every BizLMS plugin in `C:\xampp\htdocs\moodle5\bizlms_disabled\` mapped to its Airpay-owned replacement.
-**Purpose:** Concrete checklist of what's matched / partial / missing / dropped, so production cutover can proceed with eyes open about gaps.
+**Purpose:** Concrete checklist of what's matched / partial / missing / dropped.
+
+> **PRODUCTION POSTURE (Nitin, 2026-05-06):** Production cutover is gated on
+> closing **all** partial / missing items, not just the most-impactful ones.
+> Features must work like a true enterprise product — not just exist as
+> shells. The list below is the production gate, not "nice to haves".
 
 ---
 
@@ -310,23 +315,24 @@ The 6 highest-impact gaps that should be closed before going to a wider producti
 
 ---
 
-## Plugins that are **production-safe today**
+## Plugins that are **functionally complete today** (per audit)
 
-Despite the gaps above, these plugins are fully functional for their stated purpose:
+Despite the gaps above, these plugins are fully functional for their stated purpose at the basic-CRUD + read level:
 
 - ✅ `airpay_org` — multi-tenant scoping engine + admin UI
 - ✅ `airpay_catalog` — learner course browsing
-- ✅ `airpay_users` — admin user management (modulo G-01 export fix)
+- ✅ `airpay_users` — admin user management (G-01 exportcsv shipped 2026-05-06)
 - ✅ `airpay_emails` — newsletter / template email delivery
 - ✅ `airpay_compliance_report` — compliance dashboard
 - ✅ `airpay_privacy` — GDPR consent + privacy admin
-- ✅ `airpay_skills` (catalog only) — skill repository management
-- ✅ `airpay_notifications` (basic rules only) — generic rule engine
-- ✅ `airpay_courses` — basic CRUD (modulo G-06 enrol UI)
-- ✅ `airpay_evaluation` — questionnaire CRUD + respond cycle
+- ✅ `airpay_skills` (catalog only — no level UI, no designation mapping)
+- ✅ `airpay_notifications` (generic rule engine — 17 specific BizLMS rule types not 1:1 verified)
+- ✅ `airpay_courses` — basic CRUD (G-06 enrol UI still pending)
+- ✅ `airpay_evaluation` — questionnaire CRUD + respond cycle (no analysis page yet)
 - ✅ Shared datatable + a11y + auth + theme + SCORM playback
 
-For the **9 personas tested in Phase A**, the daily-use flows (login, view dashboard, browse catalog, complete a course, view compliance status) all work.
+> **But "functional at basic-CRUD level" ≠ "enterprise-grade"**. The gap list
+> below is what stands between the current state and production.
 
 ---
 
