@@ -1,0 +1,157 @@
+name: CI — Airpay Academy
+
+# Runs on every PR + every push to production branch.
+#
+# Stage 1 (always): PHP lint on every airpay plugin file we own.
+# Stage 2 (on production push): tag + summary commit message.
+#
+# PHPUnit + Playwright in CI are NOT included here yet — they require
+# spinning up a Moodle install with our 25 plugins on a fresh runner,
+# which is ~15 min of init time per PR. Local invocation works:
+#   php public/admin/tool/phpunit/cli/init.php --drop
+#   vendor/phpunit/phpunit/phpunit public/local/airpay_*/tests/
+# See moodle-enhancement/PHPUNIT-RUNBOOK.md for the full runbook.
+
+on:
+  pull_request:
+    paths:
+      - 'moodle-enhancement/**'
+      - 'local/airpay_**'
+      - 'theme/airpayux/**'
+      - '.github/workflows/**'
+  push:
+    branches:
+      - production
+    paths:
+      - 'moodle-enhancement/**'
+      - 'local/airpay_**'
+      - 'theme/airpayux/**'
+
+jobs:
+  php-lint:
+    name: PHP syntax check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+          tools: none
+
+      - name: Lint all airpay PHP files
+        run: |
+          set -e
+          # Find every PHP file under moodle-enhancement/, local/airpay_*/, theme/airpayux/.
+          # `php -l` checks syntax without running.
+          find moodle-enhancement -name '*.php' \
+               -not -path '*/node_modules/*' \
+               -not -path '*/vendor/*' \
+            -print0 \
+            | xargs -0 -n 1 php -l > /tmp/lint.log 2>&1 || true
+
+          # Also lint root-level airpay plugins if any
+          if [ -d local ]; then
+            find local -maxdepth 2 -name 'airpay_*' -type d -exec \
+              find {} -name '*.php' \; \
+              | xargs -n 1 php -l >> /tmp/lint.log 2>&1 || true
+          fi
+
+          # Theme files
+          if [ -d theme/airpayux ]; then
+            find theme/airpayux -name '*.php' \
+              | xargs -n 1 php -l >> /tmp/lint.log 2>&1 || true
+          fi
+
+          # Surface failures
+          if grep -E "Parse error|Errors parsing" /tmp/lint.log; then
+            echo
+            echo "::error::PHP lint failures detected"
+            exit 1
+          fi
+          PASS=$(grep -c "No syntax errors detected" /tmp/lint.log || true)
+          echo "::notice::PHP lint passed: $PASS files"
+
+  static-checks:
+    name: Mustache + JSON syntax
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate JSON files
+        run: |
+          set -e
+          FAILS=0
+          while IFS= read -r f; do
+            if ! python3 -m json.tool "$f" > /dev/null 2>&1; then
+              echo "::error file=$f::Invalid JSON"
+              FAILS=$((FAILS + 1))
+            fi
+          done < <(find moodle-enhancement local/airpay_* theme/airpayux \
+                     -name '*.json' \
+                     -not -path '*/node_modules/*' \
+                     -not -name '*.min.json.map' \
+                     2>/dev/null || true)
+          if [ $FAILS -gt 0 ]; then
+            echo "::error::$FAILS invalid JSON files"
+            exit 1
+          fi
+
+      - name: Mustache balance check (no unclosed {{# }} or {{/ }})
+        run: |
+          set -e
+          # Quick sanity: every {{# foo }} must have a matching {{/ foo }}.
+          # Misses some edge cases (partials, inverted) but catches the common ones.
+          FAILS=0
+          while IFS= read -r f; do
+            # Count opening and closing tags.
+            OPENS=$(grep -oE '\{\{#[^}]+\}\}' "$f" | wc -l)
+            CLOSES=$(grep -oE '\{\{/[^}]+\}\}' "$f" | wc -l)
+            if [ "$OPENS" != "$CLOSES" ]; then
+              echo "::error file=$f::Unbalanced Mustache tags ($OPENS opens vs $CLOSES closes)"
+              FAILS=$((FAILS + 1))
+            fi
+          done < <(find moodle-enhancement local/airpay_* theme/airpayux \
+                     -name '*.mustache' 2>/dev/null || true)
+          if [ $FAILS -gt 0 ]; then exit 1; fi
+
+  version-bump-check:
+    name: version.php bump on plugin changes
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify version.php bumped when plugin code changed
+        run: |
+          set -e
+          BASE=${{ github.event.pull_request.base.sha }}
+          HEAD=${{ github.event.pull_request.head.sha }}
+
+          # For every airpay plugin that has any change, version.php must also have changed.
+          CHANGED_DIRS=$(git diff --name-only "$BASE" "$HEAD" \
+            | grep -oE '(moodle-enhancement/local/airpay_[a-z_]+|local/airpay_[a-z_]+)' \
+            | sort -u || true)
+
+          MISSING=0
+          for dir in $CHANGED_DIRS; do
+            if ! git diff --name-only "$BASE" "$HEAD" | grep -q "^$dir/version.php"; then
+              # Only complain if files OTHER than tests/ changed
+              if git diff --name-only "$BASE" "$HEAD" | grep "^$dir/" | grep -v '/tests/' | grep -q .; then
+                echo "::warning file=$dir/version.php::Plugin code changed but version.php was not bumped"
+                MISSING=$((MISSING + 1))
+              fi
+            fi
+          done
+
+          if [ $MISSING -gt 0 ]; then
+            echo "$MISSING plugin(s) need version.php bump."
+            # Don't fail the PR — this is a warning, not an error.
+          fi
