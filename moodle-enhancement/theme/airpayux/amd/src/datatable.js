@@ -46,6 +46,11 @@ class Datatable {
         this.searchPlaceholder = root.dataset.searchPlaceholder || 'Search…';
         this.actionsHtml = root.dataset.rowActions || '';
         this.selectable = root.dataset.selectable === '1';
+        // Opt-in Export CSV button: plugins set data-export-url="..." to enable.
+        // The URL is plugin-specific (e.g. /local/airpay_users/exportcsv.php) and
+        // the page on the other end is responsible for tenant scoping the CSV.
+        this.exportUrl = root.dataset.exportUrl || '';
+        this.exportLabel = root.dataset.exportLabel || 'Export CSV';
 
         const firstSortable = this.columns.find(c => c.sortable);
         this.state = {
@@ -85,13 +90,20 @@ class Datatable {
             <div class="airpay-datatable">
                 <div class="airpay-datatable__toolbar d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
                     <div class="airpay-datatable__search position-relative" style="flex: 1; max-width: 380px;">
-                        <i class="fa fa-search position-absolute" style="top: 50%; left: 12px; transform: translateY(-50%); color: #888;"></i>
+                        <i class="fa fa-search position-absolute" style="top: 50%; left: 12px; transform: translateY(-50%); color: #888;" aria-hidden="true"></i>
                         <input type="search" class="form-control"
                                placeholder="${escapeHtml(this.searchPlaceholder)}"
                                style="padding-left: 36px;"
-                               data-airpay-table-search>
+                               data-airpay-table-search
+                               aria-label="${escapeHtml(this.searchPlaceholder)}">
                     </div>
-                    <div class="airpay-datatable__meta small text-muted" data-airpay-table-meta></div>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="airpay-datatable__meta small text-muted" data-airpay-table-meta aria-live="polite"></div>
+                        ${this.exportUrl ? `
+                        <a href="${escapeHtml(this.exportUrl)}" class="btn btn-outline-secondary btn-sm" data-airpay-table-export>
+                            <i class="fa fa-download fa-fw" aria-hidden="true"></i> ${escapeHtml(this.exportLabel)}
+                        </a>` : ''}
+                    </div>
                 </div>
                 <div class="card border-0 shadow-sm">
                     <div class="table-responsive">
@@ -204,6 +216,25 @@ class Datatable {
                 handleSortActivation(sortHead);
             }
         });
+
+        // Export CSV: rebuild the URL with current search + filters + sort
+        // just before navigation, so what the user gets matches what they see.
+        const exportLink = this.root.querySelector('[data-airpay-table-export]');
+        if (exportLink) {
+            exportLink.addEventListener('click', (e) => {
+                const base = this.exportUrl;
+                const sep = base.includes('?') ? '&' : '?';
+                const qs = new URLSearchParams();
+                if (this.state.search) qs.set('search', this.state.search);
+                if (this.state.sort) qs.set('sort', this.state.sort);
+                if (this.state.sortdir) qs.set('sortdir', this.state.sortdir);
+                Object.keys(this.state.filters).forEach((k) => {
+                    qs.set('filter_' + k, String(this.state.filters[k]));
+                });
+                exportLink.href = base + (qs.toString() ? sep + qs.toString() : '');
+                // Don't prevent default — let the browser navigate to the export URL.
+            });
+        }
 
         // Row selection: per-row checkbox.
         this.root.addEventListener('change', (e) => {

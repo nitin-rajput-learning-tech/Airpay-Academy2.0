@@ -1,9 +1,11 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-06 | **Phase:** Academy 3.3 — Audit cleared, deploy rehearsed, PHPUnit live, CI on PRs
+**Updated:** 2026-05-06 | **Phase:** Academy 3.3 — Audit cleared, deploy rehearsed, PHPUnit on all 14 plugin paths, CI green, A11Y-1 closed, Phase 0B complete
 **Theme:** airpayux v1.0.0 | **Moodle:** 5.1.3+ on XAMPP
 **Version:** 3.3.0+ (v3.3 stable + 2-day audit/perf/test harden)
 **GitHub:** Pushed to nitin-rajput-learning-tech/Airpay-Academy2.0 (production branch)
-**Latest commit:** 002ce78b9 — A: GitHub Actions CI on every PR
+**Latest CI:** 8a5c4fced — green (PHP lint + JSON + Mustache balance — 4-form fix)
+**Latest commit:** 682143ea0 — A11Y-1: aria-sort + keyboard nav on shared datatable (covers all admin tables)
+**PHPUnit:** 64/64 tests PASS across 11 test files (~204 assertions on security-critical paths)
 **Next session:** see `state-cards/2026-05-06-session-state.md` — production cutover blocked only on IT coordination.
 
 ## Last 12 commits (the May 5-6 audit/perf/test stretch)

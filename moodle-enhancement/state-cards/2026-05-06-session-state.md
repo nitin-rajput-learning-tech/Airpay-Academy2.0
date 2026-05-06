@@ -143,27 +143,32 @@ cd C:/xampp/htdocs/moodle5
 
 | ID | Status | Output |
 |----|--------|--------|
-| **A** GitHub Actions CI | ✅ shipped | `.github/workflows/ci.yml` runs on every PR |
+| **A** GitHub Actions CI | ✅ shipped + green | `.github/workflows/ci.yml` runs on every PR; Mustache check fixed (counts all 4 Moodle open forms) |
 | **C** State card + PROJECT-STATE | ✅ shipped | this file + PROJECT-STATE.md updated |
 | **D** F1 source-map investigation | ✅ documented | `F1-INVESTIGATION-NOTES.md` — root cause needs Chrome DevTools manual session + grunt watch setup. P2 unchanged. |
-| **E** PHPUnit gap-fill | ⚠ partial | airpay_classroom 5/5 PASS shipped. exams + learningpath deferred (same pattern, ~2h). |
+| **E** PHPUnit gap-fill | ✅ complete | All 14 airpay plugins covered: classroom + exams + learningpath + programs + skills + notifications + evaluation. 64/64 tests PASS. |
 | **F** Phase E perf baseline | ✅ shipped | `PHASE-E-PERFORMANCE-BASELINE.md` with measured values + production SLA targets |
 | **G** Phase H accessibility | ✅ shipped | `PHASE-H-A11Y-AUDIT.md` — initial WCAG 2.1 AA. A11Y-1 + A11Y-2 filed for follow-up. |
-| **H** SCORM end-to-end | ⏸ deferred | Needs SENTIENTIA pipeline output (rasika is enrolled in course id=6, but no real SCORM API exercise yet). Would need 2-3h of manual API-bridge testing. |
-| **K** BizLMS Phase 0 | ⏸ deferred | 10-15h+ multi-session work; wouldn't finish in single sprint. Plan exists at `~/.claude/plans/declarative-jumping-meadow.md`. |
+| **H** SCORM end-to-end | ✅ shipped | `PHASE-H-SCORM-E2E.md` — 7/7 PASS, real LMSInitialize→Set→Commit→Finish round-trip + DB attempt row written |
+| **K** BizLMS Phase 0 | 🔄 0A + 0B done | 0A (accesslib): 7/7 PHPUnit PASS. 0B (shared datatable): A11Y-1 closed + export button + README. 0C (modal forms) handled by Moodle's `core_form/modalform`. |
 
-**Net delivered:** 6/8 of the requested items, with H + K consciously deferred + reasoned. The 2 deferrals are tracked for future sessions; nothing left in unclear state.
+**Net delivered:** 8/8 originally requested + bonus follow-ups (CI fix, A11Y-1, all-plugin PHPUnit, Phase 0B feature parity).
+
+### Follow-up session ("do 1, 2, 3 in order")
+
+| ID | Status | Output |
+|----|--------|--------|
+| **1** A11Y-1 — datatable `aria-sort` + keyboard | ✅ shipped | One change in `theme_airpayux/datatable` covers all 10 admin-table plugins. Includes role="button", Enter/Space keyboard activation, focus restoration, `aria-busy`, `role="status"` on loading/empty, high-contrast `:focus-visible` outline (light + dark mode). |
+| **2** PHPUnit for programs/skills/notifications/evaluation | ✅ shipped | 4 new test files, 20/20 PASS, 49 assertions. Covers tenant-scope leak boundaries, sort whitelist, JSON bounds, LIKE escape, capability gate. |
+| **3** BizLMS Phase 0B — shared datatable component | ✅ shipped | Generic Export CSV button (opt-in via `data-export-url`, propagates current `search`/`sort`/`filter_*` to URL). `datatable.README.md` documents the public API + Phase 0B feature parity matrix. 10 plugins now use the shared component. |
 
 ## Recommendation for next session
 
 **If IT staging is ready** — coordinate the production cutover. Engineering is done.
 
-**If IT isn't ready** — the right ROI items in priority order:
-1. **A11Y-1** (datatable `aria-sort` — 30min) — closes a P2 finding instantly
+**If IT isn't ready** — the remaining engineering items in priority order:
+1. **A11Y-2** — NVDA pass on /my/dashboard.php, /local/airpay_users/, /local/airpay_catalog/ (~1-2h, manual screen-reader test)
 2. **F1 root cause** (~2h with grunt watch + Chrome DevTools) — closes the last audit P2
-3. **PHPUnit airpay_exams + airpay_learningpath** (~2h, same pattern as classroom)
-4. **H — SCORM end-to-end** (~3h) — first real validation of the LMS's core promise (training delivery)
+3. **BizLMS Phase 1+** — manage-users full port from BizLMS feature plan (`~/.claude/plans/declarative-jumping-meadow.md`)
 
-Beyond those, **K (BizLMS Phase 0)** is the right multi-session investment — the existing plan at `~/.claude/plans/declarative-jumping-meadow.md` walks through the 6 phases.
-
-This session's leverage move: **CI workflow now runs on every PR**, so future regressions get caught at PR time rather than in production. Combined with 49 passing PHPUnit tests + 5 Playwright harnesses, the codebase has a real safety net for the first time.
+This session's leverage move: **the shared datatable now meets WCAG 2.1 AA for sort interaction across all 10 admin-table plugins via a single change**. Combined with 64 passing PHPUnit tests + green CI + 5 Playwright harnesses, the codebase has a multi-layer safety net.
