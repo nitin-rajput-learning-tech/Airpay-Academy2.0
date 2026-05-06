@@ -100,8 +100,9 @@ class Datatable {
                                 <tr data-airpay-table-head></tr>
                             </thead>
                             <tbody data-airpay-table-body>
-                                <tr><td colspan="99" class="text-center py-5 text-muted">
-                                    <i class="fa fa-spinner fa-spin fa-2x d-block mb-2"></i> Loading…
+                                <tr><td colspan="99" class="text-center py-5 text-muted" role="status">
+                                    <i class="fa fa-spinner fa-spin fa-2x d-block mb-2" aria-hidden="true"></i>
+                                    <span>Loading…</span>
                                 </td></tr>
                             </tbody>
                         </table>
@@ -119,18 +120,35 @@ class Datatable {
     renderHead() {
         const head = this.root.querySelector('[data-airpay-table-head]');
         const selectCol = this.selectable
-            ? '<th style="width: 36px; padding-left: 12px;"><input type="checkbox" data-airpay-table-select-all></th>'
+            ? '<th scope="col" style="width: 36px; padding-left: 12px;">'
+              + '<input type="checkbox" data-airpay-table-select-all aria-label="Select all rows on this page">'
+              + '</th>'
             : '';
         head.innerHTML = selectCol + this.columns.map((c) => {
-            const sortable = c.sortable ? 'cursor: pointer;' : '';
-            const arrow = (c.key === this.state.sortcol)
-                ? (this.state.sortdir === 'asc' ? ' <i class="fa fa-caret-up"></i>' : ' <i class="fa fa-caret-down"></i>')
+            // a11y: WAI-ARIA aria-sort takes "none" | "ascending" | "descending" | "other".
+            // Non-sortable columns get no aria-sort attribute (semantically: not a sort target).
+            const isCurrentSort = (c.key === this.state.sortcol);
+            let ariaSort = '';
+            if (c.sortable) {
+                if (isCurrentSort) {
+                    ariaSort = ` aria-sort="${this.state.sortdir === 'asc' ? 'ascending' : 'descending'}"`;
+                } else {
+                    ariaSort = ' aria-sort="none"';
+                }
+            }
+            // Keyboard a11y: sortable headers must be tabbable + announce role.
+            const sortableAttrs = c.sortable
+                ? ` data-airpay-table-sort="${escapeHtml(c.key)}" role="button" tabindex="0"`
                 : '';
-            return `<th class="ps-3" style="${sortable} font-weight: 600; font-size: 0.85rem;"
-                        ${c.sortable ? `data-airpay-table-sort="${escapeHtml(c.key)}"` : ''}>
-                        ${escapeHtml(c.label)}${arrow}
-                    </th>`;
-        }).join('') + (this.actionsHtml ? '<th class="text-end pe-3" style="font-weight: 600; font-size: 0.85rem;">Actions</th>' : '');
+            const sortableStyle = c.sortable ? 'cursor: pointer;' : '';
+            // Decorative caret — hidden from screen readers (aria-sort already conveys state).
+            const arrow = isCurrentSort
+                ? (this.state.sortdir === 'asc'
+                    ? ' <i class="fa fa-caret-up" aria-hidden="true"></i>'
+                    : ' <i class="fa fa-caret-down" aria-hidden="true"></i>')
+                : '';
+            return `<th scope="col" class="ps-3" style="${sortableStyle} font-weight: 600; font-size: 0.85rem;"${ariaSort}${sortableAttrs}>${escapeHtml(c.label)}${arrow}</th>`;
+        }).join('') + (this.actionsHtml ? '<th scope="col" class="text-end pe-3" style="font-weight: 600; font-size: 0.85rem;">Actions</th>' : '');
     }
 
     attachHandlers() {
@@ -141,23 +159,31 @@ class Datatable {
             this.fetch();
         }, 250));
 
-        // Sort headers — delegated.
+        // Sort headers — click + keyboard (delegated).
+        const handleSortActivation = (sortHead) => {
+            const colKey = sortHead.dataset.airpayTableSort;
+            const col = this.columns.find(c => c.key === colKey);
+            const sortBy = col?.sortkey || colKey;
+            if (this.state.sortcol === colKey) {
+                this.state.sortdir = (this.state.sortdir === 'asc') ? 'desc' : 'asc';
+            } else {
+                this.state.sortcol = colKey;
+                this.state.sort = sortBy;
+                this.state.sortdir = 'asc';
+            }
+            this.state.page = 0;
+            this.renderHead();
+            // a11y: re-render destroys the focused element; restore focus by colKey
+            // so keyboard users keep their place after a sort.
+            const refocus = this.root.querySelector(`[data-airpay-table-sort="${CSS.escape(colKey)}"]`);
+            if (refocus) refocus.focus();
+            this.fetch();
+        };
+
         this.root.addEventListener('click', (e) => {
             const sortHead = e.target.closest('[data-airpay-table-sort]');
             if (sortHead) {
-                const colKey = sortHead.dataset.airpayTableSort;
-                const col = this.columns.find(c => c.key === colKey);
-                const sortBy = col?.sortkey || colKey;
-                if (this.state.sortcol === colKey) {
-                    this.state.sortdir = (this.state.sortdir === 'asc') ? 'desc' : 'asc';
-                } else {
-                    this.state.sortcol = colKey;
-                    this.state.sort = sortBy;
-                    this.state.sortdir = 'asc';
-                }
-                this.state.page = 0;
-                this.renderHead();
-                this.fetch();
+                handleSortActivation(sortHead);
                 return;
             }
 
@@ -166,6 +192,16 @@ class Datatable {
                 e.preventDefault();
                 this.state.page = parseInt(pageBtn.dataset.airpayTablePage, 10);
                 this.fetch();
+            }
+        });
+
+        // Keyboard: Enter / Space activates a sortable column header just like a click.
+        // role="button" + tabindex="0" on the <th> makes it focus-reachable.
+        this.root.addEventListener('keydown', (e) => {
+            const sortHead = e.target.closest('[data-airpay-table-sort]');
+            if (sortHead && (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar')) {
+                e.preventDefault();
+                handleSortActivation(sortHead);
             }
         });
 
@@ -199,6 +235,8 @@ class Datatable {
     async fetch() {
         if (this.state.loading) return;
         this.state.loading = true;
+        // a11y: announce that content is updating (screen readers will defer until aria-busy="false").
+        this.root.setAttribute('aria-busy', 'true');
 
         const args = {
             search: this.state.search,
@@ -221,9 +259,10 @@ class Datatable {
         } catch (e) {
             Notification.exception(e);
             this.root.querySelector('[data-airpay-table-body]').innerHTML =
-                `<tr><td colspan="99" class="text-center py-4 text-danger">Failed to load data. ${escapeHtml(e.message || '')}</td></tr>`;
+                `<tr><td colspan="99" class="text-center py-4 text-danger" role="alert">Failed to load data. ${escapeHtml(e.message || '')}</td></tr>`;
         } finally {
             this.state.loading = false;
+            this.root.setAttribute('aria-busy', 'false');
         }
     }
 
@@ -231,8 +270,8 @@ class Datatable {
         const body = this.root.querySelector('[data-airpay-table-body]');
         const totalCols = this.columns.length + (this.actionsHtml ? 1 : 0) + (this.selectable ? 1 : 0);
         if (this.state.rows.length === 0) {
-            body.innerHTML = `<tr><td colspan="${totalCols}" class="text-center py-5 text-muted">
-                <i class="fa fa-inbox fa-2x d-block mb-2"></i>
+            body.innerHTML = `<tr><td colspan="${totalCols}" class="text-center py-5 text-muted" role="status">
+                <i class="fa fa-inbox fa-2x d-block mb-2" aria-hidden="true"></i>
                 ${this.state.search ? `No results for "${escapeHtml(this.state.search)}"` : 'No records found'}
             </td></tr>`;
             return;
@@ -242,7 +281,7 @@ class Datatable {
             const id = row.id;
             const isChecked = this.state.selected.has(id);
             const checkboxCell = this.selectable
-                ? `<td style="padding-left: 12px;"><input type="checkbox" data-airpay-table-select="${escapeHtml(id)}" ${isChecked ? 'checked' : ''}></td>`
+                ? `<td style="padding-left: 12px;"><input type="checkbox" data-airpay-table-select="${escapeHtml(id)}" ${isChecked ? 'checked' : ''} aria-label="Select row ${escapeHtml(id)}"></td>`
                 : '';
             const cells = this.columns.map((c) => {
                 let val = row[c.key];

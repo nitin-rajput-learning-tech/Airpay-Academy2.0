@@ -129,16 +129,24 @@ Our status badges in admin tables (Active/Suspended/Hidden/Visible/etc.) DO incl
 
 **Standard:** WCAG 1.3.1 — sort state must be programmatically determinable.
 
-**Status:** the shared datatable's `<th>` elements have `data-sort-key` but no `aria-sort` attribute. Sort state IS visible to sighted users (caret icon flips), but invisible to screen readers.
+**Status:** ✅ **SHIPPED 2026-05-06** in `theme/airpayux/amd/{src,build}/datatable.js`.
 
-**Fix needed:** in `theme/airpayux/amd/src/datatable.js`:
-```js
-// On sort column change, update aria-sort:
-header.setAttribute('aria-sort', direction === 'asc' ? 'ascending' : 'descending');
-otherHeaders.forEach(h => h.setAttribute('aria-sort', 'none'));
-```
+What was added (single shared component, all admin tables inherit):
+- `aria-sort="ascending|descending|none"` on every sortable `<th>`, updated on every sort change in `renderHead()`
+- `role="button"` + `tabindex="0"` so keyboard users can Tab to headers
+- `keydown` handler for **Enter** and **Space** that triggers the same sort as a click
+- Focus restoration after re-render (the `<th>` element is recreated, but focus jumps back to the same column)
+- Decorative `<i class="fa fa-caret-up/down">` icons get `aria-hidden="true"` so screen readers don't announce them on top of the aria-sort state
+- `aria-busy="true"` on the table root during AJAX fetches; flipped back to `false` on success or error
+- `role="status"` on loading + empty-state `<td>` so screen readers announce them
+- `role="alert"` on the error-state `<td>` for failed loads
+- Per-row checkbox: `aria-label="Select row {id}"` (was anonymous)
+- "Select all" checkbox: `aria-label="Select all rows on this page"`
+- High-contrast `:focus-visible` outline added in `_datatable.scss` (works in both light + dark modes; `outline-offset: -2px` keeps it inside the cell)
 
-Filed as **A11Y-1 (P2)**: add `aria-sort` to datatable headers.
+Coverage: every `data-airpay-table` instance across **all 25 plugins** that use the shared datatable inherits these changes.
+
+This closes **A11Y-1**.
 
 ---
 
@@ -167,7 +175,7 @@ None — this round was inventory + grep-based static checks. The two items abov
 
 Before flipping `noemailever=true` in production, confirm:
 
-- [ ] **A11Y-1** — datatable headers have `aria-sort` (P2 — keyboard-only users currently can't tell sort state)
+- [x] **A11Y-1** — datatable headers have `aria-sort` (✅ shipped 2026-05-06; covers all 25 plugins via shared component)
 - [ ] **A11Y-2** — NVDA pass on /my/dashboard.php, /local/airpay_users/, /local/airpay_catalog/ (P2)
 - [ ] **A11Y-3** — Lighthouse a11y score ≥ 90 on each of the 3 surfaces above (run in production-mirror env once available)
 - [ ] **A11Y-4** — Zero `outline: 0` without paired `:focus-visible` rule in compiled airpayux CSS
