@@ -101,23 +101,37 @@ jobs:
             exit 1
           fi
 
-      - name: Mustache balance check (no unclosed {{# }} or {{/ }})
+      - name: Mustache balance check
         run: |
           set -e
-          # Quick sanity: every {{# foo }} must have a matching {{/ foo }}.
-          # Misses some edge cases (partials, inverted) but catches the common ones.
+          # Quick sanity: every Mustache open tag must have a matching close.
+          # Moodle's Mustache supports four open forms, all closed by {{/name}}:
+          #   {{#section}}   — regular section (truthy)
+          #   {{^section}}   — inverted section (falsy)
+          #   {{$param}}     — block parameter (Moodle template inheritance)
+          #   {{<partial}}   — parent template inheritance (Moodle extension)
+          # Skips {{!comment}} and {{>partial}} (one-off, no close).
+          #
+          # Limits:
+          # - Count-only check; doesn't verify nesting order or that close-tag
+          #   NAMES match open-tag names (Mustache itself catches that at compile time).
+          # - Doesn't handle multi-line Mustache delimiters (rare; we don't use them).
           FAILS=0
           while IFS= read -r f; do
-            # Count opening and closing tags.
-            OPENS=$(grep -oE '\{\{#[^}]+\}\}' "$f" | wc -l)
-            CLOSES=$(grep -oE '\{\{/[^}]+\}\}' "$f" | wc -l)
+            REGULAR=$(grep -oE '\{\{#[^}]+\}\}' "$f" 2>/dev/null | wc -l)
+            INVERTED=$(grep -oE '\{\{\^[^}]+\}\}' "$f" 2>/dev/null | wc -l)
+            BLOCK=$(grep -oE '\{\{\$[^}]+\}\}' "$f" 2>/dev/null | wc -l)
+            PARENT=$(grep -oE '\{\{<[^}]+\}\}' "$f" 2>/dev/null | wc -l)
+            CLOSES=$(grep -oE '\{\{/[^}]+\}\}' "$f" 2>/dev/null | wc -l)
+            OPENS=$((REGULAR + INVERTED + BLOCK + PARENT))
             if [ "$OPENS" != "$CLOSES" ]; then
-              echo "::error file=$f::Unbalanced Mustache tags ($OPENS opens vs $CLOSES closes)"
+              echo "::error file=$f::Unbalanced Mustache tags ($OPENS opens vs $CLOSES closes; #=$REGULAR ^=$INVERTED \$=$BLOCK <=$PARENT)"
               FAILS=$((FAILS + 1))
             fi
           done < <(find moodle-enhancement local/airpay_* theme/airpayux \
                      -name '*.mustache' 2>/dev/null || true)
           if [ $FAILS -gt 0 ]; then exit 1; fi
+          echo "::notice::Mustache balance check passed"
 
   version-bump-check:
     name: version.php bump on plugin changes
