@@ -52,11 +52,12 @@ final class analytics_manager_test extends \advanced_testcase {
         $u177b = $this->user_at_path('/177/178');
         $u100  = $this->user_at_path('/100');
 
-        // Mark all as recently active to populate KPIs.
+        // Mark all as recently active to populate KPIs. Use time()-3600 so the
+        // value is strictly LESS than $current_end (also time()) when get_kpis runs.
         global $DB;
-        $now = time();
+        $hourago = time() - 3600;
         foreach ([$u1a->id, $u1b->id, $u1c->id, $u177a->id, $u177b->id, $u100->id] as $uid) {
-            $DB->set_field('user', 'lastaccess', $now, ['id' => $uid]);
+            $DB->set_field('user', 'lastaccess', $hourago, ['id' => $uid]);
         }
 
         // Pre-purge cache so KPIs run fresh.
@@ -82,7 +83,7 @@ final class analytics_manager_test extends \advanced_testcase {
 
         $u1 = $this->user_at_path('/1');
         global $DB;
-        $DB->set_field('user', 'lastaccess', time(), ['id' => $u1->id]);
+        $DB->set_field('user', 'lastaccess', time() - 3600, ['id' => $u1->id]);
 
         \cache_helper::purge_by_definition('local_airpay_analytics', 'kpis');
 
@@ -92,7 +93,7 @@ final class analytics_manager_test extends \advanced_testcase {
 
         // Insert a new active user — should NOT show up if cache hits.
         $u2 = $this->user_at_path('/1');
-        $DB->set_field('user', 'lastaccess', time(), ['id' => $u2->id]);
+        $DB->set_field('user', 'lastaccess', time() - 3600, ['id' => $u2->id]);
 
         // Second call — should hit cache.
         $second = analytics_manager::get_kpis('30d', '/1');
@@ -114,10 +115,10 @@ final class analytics_manager_test extends \advanced_testcase {
         $this->user_at_path('/1');
         $this->user_at_path('/77');
         global $DB;
-        $now = time();
+        $hourago = time() - 3600;
         // Mark all 3 as recently active.
         foreach ($DB->get_records_sql("SELECT id FROM {user} WHERE open_path IN ('/1','/77')") as $u) {
-            $DB->set_field('user', 'lastaccess', $now, ['id' => $u->id]);
+            $DB->set_field('user', 'lastaccess', $hourago, ['id' => $u->id]);
         }
 
         \cache_helper::purge_by_definition('local_airpay_analytics', 'kpis');

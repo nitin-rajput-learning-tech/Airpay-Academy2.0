@@ -75,7 +75,8 @@ final class compliance_engine_test extends \advanced_testcase {
             'progress_percent' => 0,
             'days_overdue' => 0,
             'deadline_date' => $deadline,
-            'timesnapshot' => time(),
+            'matched_by' => 'userid',
+            'snapshot_date' => time(),
         ], false, false, false);
     }
 
