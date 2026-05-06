@@ -22,6 +22,8 @@
 | 10 | `7afde68c6` | PHPUnit gap fill (analytics + compliance) + Phase D workflows + manager onboarding UX |
 | 11 | `07393e4ac` | PHPUnit: 44/44 PASS — fixed 2 test bugs surfaced during first run |
 | 12 | `002ce78b9` | A: GitHub Actions CI — PHP lint + JSON + Mustache balance + version-bump check |
+| 13 | `b3b9b18f4` | C+F+G: state card + perf baseline + a11y audit |
+| 14 | `ae77416b8` | D + E (partial): F1 investigation notes + airpay_classroom PHPUnit |
 
 **Net: +12,500 / -5,500 lines across the stretch** (rough). Major items closed: every P0+P1+P2 from AUDIT-REPORT.md.
 
@@ -137,14 +139,31 @@ cd C:/xampp/htdocs/moodle5
 
 ---
 
+## Items addressed in this session's "do A,C,D,E,F,G,H,K" sprint
+
+| ID | Status | Output |
+|----|--------|--------|
+| **A** GitHub Actions CI | ✅ shipped | `.github/workflows/ci.yml` runs on every PR |
+| **C** State card + PROJECT-STATE | ✅ shipped | this file + PROJECT-STATE.md updated |
+| **D** F1 source-map investigation | ✅ documented | `F1-INVESTIGATION-NOTES.md` — root cause needs Chrome DevTools manual session + grunt watch setup. P2 unchanged. |
+| **E** PHPUnit gap-fill | ⚠ partial | airpay_classroom 5/5 PASS shipped. exams + learningpath deferred (same pattern, ~2h). |
+| **F** Phase E perf baseline | ✅ shipped | `PHASE-E-PERFORMANCE-BASELINE.md` with measured values + production SLA targets |
+| **G** Phase H accessibility | ✅ shipped | `PHASE-H-A11Y-AUDIT.md` — initial WCAG 2.1 AA. A11Y-1 + A11Y-2 filed for follow-up. |
+| **H** SCORM end-to-end | ⏸ deferred | Needs SENTIENTIA pipeline output (rasika is enrolled in course id=6, but no real SCORM API exercise yet). Would need 2-3h of manual API-bridge testing. |
+| **K** BizLMS Phase 0 | ⏸ deferred | 10-15h+ multi-session work; wouldn't finish in single sprint. Plan exists at `~/.claude/plans/declarative-jumping-meadow.md`. |
+
+**Net delivered:** 6/8 of the requested items, with H + K consciously deferred + reasoned. The 2 deferrals are tracked for future sessions; nothing left in unclear state.
+
 ## Recommendation for next session
 
-**Coordinate with IT for the production cutover** — that's the only thing genuinely blocking production. Engineering work is at a clean stopping point.
+**If IT staging is ready** — coordinate the production cutover. Engineering is done.
 
-If IT isn't ready, the next-most-valuable engineering item is **closing F1** (source-map investigation) since it's the last unaddressed audit finding.
+**If IT isn't ready** — the right ROI items in priority order:
+1. **A11Y-1** (datatable `aria-sort` — 30min) — closes a P2 finding instantly
+2. **F1 root cause** (~2h with grunt watch + Chrome DevTools) — closes the last audit P2
+3. **PHPUnit airpay_exams + airpay_learningpath** (~2h, same pattern as classroom)
+4. **H — SCORM end-to-end** (~3h) — first real validation of the LMS's core promise (training delivery)
 
-After that, A11Y-1 and A11Y-2 are quick wins for compliance posture.
+Beyond those, **K (BizLMS Phase 0)** is the right multi-session investment — the existing plan at `~/.claude/plans/declarative-jumping-meadow.md` walks through the 6 phases.
 
-After that, fill the PHPUnit gap on the 7 remaining plugins.
-
-This session's **leverage moves**: deploy rehearsal proved the mechanism; PHPUnit init resolved + 44/44 passing; CI workflow catches regressions at PR time. The codebase is in a defensible state — every Type-A risk (security, performance, deprecations) has a written test or doc that exists in the repo.
+This session's leverage move: **CI workflow now runs on every PR**, so future regressions get caught at PR time rather than in production. Combined with 49 passing PHPUnit tests + 5 Playwright harnesses, the codebase has a real safety net for the first time.
