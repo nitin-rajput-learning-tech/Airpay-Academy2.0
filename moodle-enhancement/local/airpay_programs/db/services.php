@@ -2,6 +2,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $functions = [
+    // ── Program listing + status changes (existing) ──────────────────────
     'local_airpay_programs_list_programs' => [
         'classname'    => 'local_airpay_programs\external\list_programs',
         'description'  => 'List programs for shared datatable',
@@ -22,5 +23,60 @@ $functions = [
         'type'         => 'write',
         'ajax'         => true,
         'capabilities' => 'local/airpay_programs:delete',
+    ],
+
+    // ── Levels tab (G-03) ────────────────────────────────────────────────
+    'local_airpay_programs_list_levels' => [
+        'classname'    => 'local_airpay_programs\external\list_program_levels',
+        'description'  => 'List levels for a program (Levels tab datatable)',
+        'type'         => 'read',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_programs:view',
+    ],
+    'local_airpay_programs_delete_level' => [
+        'classname'    => 'local_airpay_programs\external\delete_level',
+        'description'  => 'Delete a level (cascades to course assignments)',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_programs:update',
+    ],
+    'local_airpay_programs_reorder_levels' => [
+        'classname'    => 'local_airpay_programs\external\reorder_levels',
+        'description'  => 'Reorder levels in a program',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_programs:update',
+    ],
+
+    // ── Courses-per-level (G-03) ─────────────────────────────────────────
+    'local_airpay_programs_list_level_courses' => [
+        'classname'    => 'local_airpay_programs\external\list_level_courses',
+        'description'  => 'List courses assigned to a level',
+        'type'         => 'read',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_programs:view',
+    ],
+    'local_airpay_programs_unassign_level_course' => [
+        'classname'    => 'local_airpay_programs\external\unassign_level_course',
+        'description'  => 'Remove a course from a level',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_programs:update',
+    ],
+
+    // ── Program enrolment / Users tab (G-03) ─────────────────────────────
+    'local_airpay_programs_list_users' => [
+        'classname'    => 'local_airpay_programs\external\list_program_users',
+        'description'  => 'List enrolled users for a program (Users tab datatable)',
+        'type'         => 'read',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_programs:view',
+    ],
+    'local_airpay_programs_unenrol_user' => [
+        'classname'    => 'local_airpay_programs\external\unenrol_program_user',
+        'description'  => 'Unenrol a user from a program',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_programs:enrol',
     ],
 ];

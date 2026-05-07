@@ -30,7 +30,7 @@ if ($dbman->table_exists('local_airpay_programs')) {
 }
 
 $columns = [
-    ['key' => 'name',        'label' => 'Program',    'sortable' => true,  'sortkey' => 'name'],
+    ['key' => 'name',        'label' => 'Program',    'sortable' => true,  'sortkey' => 'name', 'format' => 'html'],
     ['key' => 'levels',      'label' => 'Levels',     'sortable' => false],
     ['key' => 'enrolled',    'label' => 'Enrolled',   'sortable' => false],
     ['key' => 'created',     'label' => 'Created',    'sortable' => true,  'sortkey' => 'timecreated'],

@@ -10,6 +10,8 @@ import Ajax from 'core/ajax';
 
 const STATUS = {DRAFT: 0, ACTIVE: 1, ARCHIVED: 2};
 
+// ─── Program-level actions (existing — index.php) ─────────────────────────
+
 const openProgramForm = async (programid, returnFocus) => {
     const titleKey = (programid === 0) ? 'addprogram' : 'editprogram';
     const title = await getString(titleKey, 'local_airpay_programs');
@@ -83,9 +85,188 @@ const handleClick = (event) => {
     }
 };
 
+// ─── View-page actions (G-03 — view.php levels/users tabs) ────────────────
+
+const openLevelForm = async (programid, levelid, returnFocus) => {
+    const titleKey = (levelid === 0) ? 'add_level' : 'edit_level';
+    const title = await getString(titleKey, 'local_airpay_programs');
+    const modalForm = new ModalForm({
+        formClass: 'local_airpay_programs\\form\\edit_level',
+        args: {programid: programid, levelid: levelid},
+        modalConfig: {title: title, large: true},
+        returnFocus: returnFocus,
+    });
+    modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, (event) => {
+        const message = (event.detail && event.detail.message) || 'Saved.';
+        Notification.addNotification({message: message, type: 'success'});
+        window.location.reload();
+    });
+    modalForm.show();
+};
+
+const openEnrolUsersForm = async (programid, returnFocus) => {
+    const title = await getString('enrol_users', 'local_airpay_programs');
+    const modalForm = new ModalForm({
+        formClass: 'local_airpay_programs\\form\\enrol_program_users',
+        args: {programid: programid},
+        modalConfig: {title: title, large: true},
+        returnFocus: returnFocus,
+    });
+    modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, (event) => {
+        const message = (event.detail && event.detail.message) || 'Saved.';
+        Notification.addNotification({message: message, type: 'success'});
+        window.location.reload();
+    });
+    modalForm.show();
+};
+
+const confirmDeleteLevel = async (levelid, name, returnFocus) => {
+    const [title, message, label, success] = await Promise.all([
+        getString('delete_level', 'local_airpay_programs'),
+        getString('confirm_delete_level', 'local_airpay_programs', name),
+        getString('delete', 'core'),
+        getString('leveldeleted', 'local_airpay_programs'),
+    ]);
+    Notification.deleteCancelPromise(title, message, label, returnFocus).then(() => {
+        Ajax.call([{methodname: 'local_airpay_programs_delete_level',
+                    args: {levelid: levelid}}])[0]
+            .then(() => {
+                Notification.addNotification({message: success, type: 'success'});
+                window.location.reload();
+                return null;
+            }).catch(Notification.exception);
+        return true;
+    }, () => null);
+};
+
+const confirmUnenrolUser = async (programid, userid, name, returnFocus) => {
+    const [title, message, label, success] = await Promise.all([
+        getString('unenrol_user', 'local_airpay_programs'),
+        getString('confirm_unenrol_user', 'local_airpay_programs', name),
+        getString('remove', 'core'),
+        getString('userunenrolled', 'local_airpay_programs'),
+    ]);
+    Notification.deleteCancelPromise(title, message, label, returnFocus).then(() => {
+        Ajax.call([{methodname: 'local_airpay_programs_unenrol_user',
+                    args: {programid: programid, userid: userid}}])[0]
+            .then(() => {
+                Notification.addNotification({message: success, type: 'success'});
+                window.location.reload();
+                return null;
+            }).catch(Notification.exception);
+        return true;
+    }, () => null);
+};
+
+const handleViewClick = (programid) => (event) => {
+    const trigger = event.target.closest('[data-action]');
+    if (!trigger) return;
+    const action = trigger.dataset.action;
+    switch (action) {
+        case 'add-level':
+            event.preventDefault();
+            openLevelForm(programid, 0, trigger);
+            break;
+        case 'edit-level': {
+            event.preventDefault();
+            const lid = parseInt(trigger.dataset.levelid || '0', 10);
+            openLevelForm(programid, lid, trigger);
+            break;
+        }
+        case 'delete-level': {
+            event.preventDefault();
+            const lid = parseInt(trigger.dataset.levelid || '0', 10);
+            const name = trigger.dataset.name || 'this level';
+            confirmDeleteLevel(lid, name, trigger);
+            break;
+        }
+        case 'enrol-program-users':
+            event.preventDefault();
+            openEnrolUsersForm(programid, trigger);
+            break;
+        case 'unenrol-program-user': {
+            event.preventDefault();
+            const uid = parseInt(trigger.dataset.userid || '0', 10);
+            const name = trigger.dataset.name || 'this user';
+            confirmUnenrolUser(programid, uid, name, trigger);
+            break;
+        }
+    }
+};
+
+// ─── Level-courses sub-page actions (G-03 — levelcourses.php) ─────────────
+
+const openAssignCoursesForm = async (levelid, returnFocus) => {
+    const title = await getString('add_courses', 'local_airpay_programs');
+    const modalForm = new ModalForm({
+        formClass: 'local_airpay_programs\\form\\assign_level_courses',
+        args: {levelid: levelid},
+        modalConfig: {title: title, large: true},
+        returnFocus: returnFocus,
+    });
+    modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, (event) => {
+        const message = (event.detail && event.detail.message) || 'Saved.';
+        Notification.addNotification({message: message, type: 'success'});
+        window.location.reload();
+    });
+    modalForm.show();
+};
+
+const confirmUnassignCourse = async (levelid, courseid, name, returnFocus) => {
+    const [title, message, label, success] = await Promise.all([
+        getString('add_courses', 'local_airpay_programs'),  // header reuses
+        getString('confirm_unassign_course', 'local_airpay_programs', name),
+        getString('remove', 'core'),
+        getString('courseunassigned', 'local_airpay_programs'),
+    ]);
+    Notification.deleteCancelPromise(title, message, label, returnFocus).then(() => {
+        Ajax.call([{methodname: 'local_airpay_programs_unassign_level_course',
+                    args: {levelid: levelid, courseid: courseid}}])[0]
+            .then(() => {
+                Notification.addNotification({message: success, type: 'success'});
+                window.location.reload();
+                return null;
+            }).catch(Notification.exception);
+        return true;
+    }, () => null);
+};
+
+const handleLevelCoursesClick = (levelid) => (event) => {
+    const trigger = event.target.closest('[data-action]');
+    if (!trigger) return;
+    const action = trigger.dataset.action;
+    switch (action) {
+        case 'add-level-courses':
+            event.preventDefault();
+            openAssignCoursesForm(levelid, trigger);
+            break;
+        case 'unassign-level-course': {
+            event.preventDefault();
+            const cid = parseInt(trigger.dataset.courseid || '0', 10);
+            const name = trigger.dataset.name || 'this course';
+            confirmUnassignCourse(levelid, cid, name, trigger);
+            break;
+        }
+    }
+};
+
 export const init = () => {
     const root = document.querySelector('[data-region="airpay-programs"]') || document.body;
     if (root.dataset.airpayProgramsInit === '1') return;
     root.dataset.airpayProgramsInit = '1';
     root.addEventListener('click', handleClick);
+};
+
+export const initView = (programid) => {
+    const root = document.querySelector('[data-region="airpay-programs-view"]') || document.body;
+    if (root.dataset.airpayProgramsViewInit === '1') return;
+    root.dataset.airpayProgramsViewInit = '1';
+    root.addEventListener('click', handleViewClick(programid));
+};
+
+export const initLevelCourses = (levelid) => {
+    const root = document.querySelector('[data-region="airpay-level-courses"]') || document.body;
+    if (root.dataset.airpayLevelCoursesInit === '1') return;
+    root.dataset.airpayLevelCoursesInit = '1';
+    root.addEventListener('click', handleLevelCoursesClick(levelid));
 };

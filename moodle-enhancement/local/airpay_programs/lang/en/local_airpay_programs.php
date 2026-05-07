@@ -50,3 +50,54 @@ $string['programcreated'] = 'Certification program created.';
 $string['programupdated'] = 'Program updated.';
 $string['programdeleted'] = 'Program deleted.';
 $string['programstatuschanged'] = 'Program status updated.';
+
+// G-03: View detail page + tabs.
+$string['view_program_title']    = 'Program: {$a}';
+$string['back_to_programs']      = 'Back to programs';
+$string['tab_overview']          = 'Overview';
+$string['tab_levels']            = 'Levels';
+$string['tab_users']             = 'Users';
+$string['no_description']        = 'No description set.';
+$string['updated']               = 'Updated';
+$string['levels_count_label']    = '{$a} levels';
+$string['enrolled_count_label']  = '{$a} enrolled';
+
+// Levels tab.
+$string['add_level']             = 'Add Level';
+$string['edit_level']            = 'Edit Level';
+$string['delete_level']          = 'Delete Level';
+$string['level_name']            = 'Level name';
+$string['level_description']     = 'Description';
+$string['level_completion']      = 'Completion';
+$string['level_required']        = 'Required to complete the program';
+$string['level_optional']        = 'Optional level (skippable)';
+$string['level_position']        = 'Position';
+$string['level_courses']         = 'Courses';
+$string['no_levels']             = 'This program has no levels yet. Add at least one level to begin.';
+$string['levelcreated']          = 'Level added.';
+$string['levelupdated']          = 'Level updated.';
+$string['leveldeleted']          = 'Level deleted.';
+$string['confirm_delete_level']  = 'Delete the level "{$a}"? This will also remove its course assignments. This cannot be undone.';
+$string['toomanylevels']         = 'Too many levels in one request (limit 200).';
+
+// Courses-per-level sub-page.
+$string['manage_level_courses']  = 'Manage courses for: {$a}';
+$string['back_to_program']       = 'Back to program';
+$string['add_courses']           = 'Add Courses';
+$string['no_courses_assigned']   = 'No courses assigned to this level yet.';
+$string['confirm_unassign_course'] = 'Remove "{$a}" from this level?';
+$string['courseassigned']        = 'Courses assigned to level.';
+$string['courseunassigned']      = 'Course removed from level.';
+$string['courses_assigned_count'] = '{$a} course(s) assigned.';
+$string['toomanycourses']        = 'Too many courses in one request (limit 100).';
+
+// Users / enrolment tab.
+$string['enrol_users']           = 'Enrol Users';
+$string['unenrol_user']          = 'Remove from program';
+$string['no_users_enrolled']     = 'No learners enrolled in this program yet.';
+$string['confirm_unenrol_user']  = 'Remove {$a} from this program? Their level progress will also be cleared.';
+$string['userunenrolled']        = 'User unenrolled from program.';
+$string['users_enrolled_success'] = '{$a} user(s) enrolled.';
+
+// Bounds.
+$string['toomanyusers']          = 'Too many users in one request (limit 500).';

@@ -83,14 +83,20 @@ class list_programs extends external_api {
                 $sqlparams, $params['page'] * $params['perpage'], $params['perpage']);
         }
 
-        $statusmap = [0 => 'Cancelled', 1 => 'Active', 2 => 'Completed'];
+        // Status: 0=draft, 1=active, 2=archived (matches install.xml).
+        $statusmap = [0 => 'Draft', 1 => 'Active', 2 => 'Archived'];
         $cssmap = [0 => 'badge-secondary', 1 => 'badge-success', 2 => 'badge-info'];
 
         $rows = [];
         foreach ($records as $p) {
+            $viewurl = (new \moodle_url('/local/airpay_programs/view.php',
+                ['id' => (int) $p->id]))->out(false);
+            $name_html = '<a href="' . s($viewurl) . '" class="text-reset fw-semibold text-decoration-none">'
+                . format_string($p->name) . '</a>';
+
             $rows[] = [
                 'id'          => (int) $p->id,
-                'name'        => format_string($p->name),
+                'name'        => $name_html,
                 'levels'      => (int) ($p->level_count ?? 0),
                 'enrolled'    => (int) ($p->user_count ?? 0),
                 'created'     => $p->timecreated ? userdate($p->timecreated, '%d %b %Y') : '—',
@@ -110,7 +116,7 @@ class list_programs extends external_api {
             'rows'    => new \core_external\external_multiple_structure(
                 new external_single_structure([
                     'id'          => new external_value(PARAM_INT, ''),
-                    'name'        => new external_value(PARAM_TEXT, ''),
+                    'name'        => new external_value(PARAM_RAW, ''),
                     'levels'      => new external_value(PARAM_INT, ''),
                     'enrolled'    => new external_value(PARAM_INT, ''),
                     'created'     => new external_value(PARAM_TEXT, ''),

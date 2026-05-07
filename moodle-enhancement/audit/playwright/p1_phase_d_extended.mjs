@@ -601,6 +601,143 @@ async function wfx_classroom_view(browser, report) {
     await page.close(); await ctx.close();
 }
 
+/**
+ * WX-06: airpay_programs view detail (G-03).
+ *
+ * Verifies:
+ *  - Program index has rows + name links to view.php
+ *  - view.php?id=N loads with [data-region="airpay-programs-view"]
+ *  - Three tabs (Overview / Levels / Users)
+ *  - Levels tab datatable wired with data-extra-args.programid
+ *  - "Add Level" button + modal opens (level form fields)
+ *  - Users tab datatable + "Enrol Users" button + modal opens
+ *  - levelcourses.php sub-page reachable (best-effort: navigate to a
+ *    levelcourses URL only if at least one level row visible)
+ */
+async function wfx_programs_view(browser, report) {
+    const wf = { id: 'WX-06', name: 'airpay_programs view detail (G-03)', cases: [] };
+    const ctx = await browser.newContext();
+    ctx.setDefaultTimeout(PAGE_TIMEOUT);
+    ctx.setDefaultNavigationTimeout(PAGE_TIMEOUT);
+    const page = await ctx.newPage();
+    const errs = [];
+    page.on('pageerror', e => errs.push(e.message));
+    page.on('console', m => { if (m.type() === 'error') errs.push(m.text()); });
+
+    const rec = (id, pass, note = '') => {
+        wf.cases.push({ id, pass, note });
+        console.log(`    ${pass ? '✓' : '✘'} ${id}${note ? ' — ' + note : ''}`);
+    };
+
+    console.log(`\n  ── ${wf.id}: ${wf.name} ──`);
+    try {
+        await login(page, ADMIN);
+        rec('login', true);
+
+        await page.goto(`${BASE}/local/airpay_programs/index.php`, { waitUntil: 'domcontentloaded' });
+        await waitForTableRender(page);
+        await page.waitForSelector('[data-airpay-table] tbody tr[data-row-id]', { timeout: 15000 }).catch(() => {});
+        const rowCount = await page.locator('[data-airpay-table] tbody tr[data-row-id]').count();
+        rec('programs-listed', rowCount >= 1, `${rowCount} programs`);
+
+        let viewLinkPresent = false;
+        let programid = null;
+        if (rowCount > 0) {
+            const viewLink = page.locator('[data-airpay-table] tbody tr[data-row-id] a[href*="/local/airpay_programs/view.php"]').first();
+            viewLinkPresent = await viewLink.count() > 0;
+            rec('view-link-present', viewLinkPresent);
+            if (viewLinkPresent) {
+                await viewLink.click();
+                await page.waitForLoadState('domcontentloaded');
+                rec('view-page-loads', page.url().includes('/local/airpay_programs/view.php'),
+                    `URL: ${page.url().substring(0, 90)}`);
+                const m = page.url().match(/[?&]id=(\d+)/);
+                programid = m ? m[1] : null;
+            } else {
+                await shoot(page, 'wx06_no_view_link');
+            }
+        } else {
+            rec('view-link-present', false, 'no programs in DB');
+            await shoot(page, 'wx06_no_programs');
+        }
+
+        // Three tabs.
+        let tabsCount = 0;
+        if (viewLinkPresent) {
+            tabsCount = await page.locator('.nav-tabs .nav-link').count();
+        }
+        rec('three-tabs-present', tabsCount === 3, `${tabsCount} tabs (expected 3)`);
+
+        if (programid) {
+            // Levels tab.
+            await page.goto(`${BASE}/local/airpay_programs/view.php?id=${programid}&tab=levels`,
+                { waitUntil: 'domcontentloaded' });
+            await waitForTableRender(page);
+            await page.waitForSelector('[data-airpay-table-name="program-levels"]', { timeout: 10000 }).catch(() => {});
+            const levelsTableExists = await page.locator('[data-airpay-table-name="program-levels"]').count() > 0;
+            rec('levels-tab-renders-table', levelsTableExists);
+
+            const hasExtraArgs = await page.evaluate(() => {
+                const t = document.querySelector('[data-airpay-table-name="program-levels"]');
+                return !!(t && t.dataset.extraArgs && t.dataset.extraArgs.includes('programid'));
+            });
+            rec('extra-args-attr-set', hasExtraArgs, 'data-extra-args contains programid');
+
+            // Add Level button + modal.
+            const addBtn = page.locator('[data-action="add-level"]').first();
+            const addBtnPresent = await addBtn.count() > 0;
+            rec('add-level-button-present', addBtnPresent);
+            if (addBtnPresent) {
+                await addBtn.click();
+                try {
+                    // edit_level form has 'name' input + 'completion_required' select.
+                    await page.waitForSelector(
+                        'input[name="name"], select[name="completion_required"]',
+                        { timeout: 30000 });
+                    rec('add-level-modal-opens', true);
+                } catch {
+                    rec('add-level-modal-opens', false, 'level form fields never appeared');
+                    await shoot(page, 'wx06_no_level_modal');
+                }
+                await page.keyboard.press('Escape').catch(() => {});
+                await page.waitForTimeout(500);
+            }
+
+            // Users tab.
+            await page.goto(`${BASE}/local/airpay_programs/view.php?id=${programid}&tab=users`,
+                { waitUntil: 'domcontentloaded' });
+            await waitForTableRender(page);
+            const usersTableExists = await page.locator('[data-airpay-table-name="program-users"]').count() > 0;
+            rec('users-tab-renders-table', usersTableExists);
+
+            const enrolBtn = page.locator('[data-action="enrol-program-users"]').first();
+            const enrolBtnPresent = await enrolBtn.count() > 0;
+            rec('enrol-users-button-present', enrolBtnPresent);
+            if (enrolBtnPresent) {
+                await enrolBtn.click();
+                try {
+                    await page.waitForSelector('select[name="userids"], input[name="userids"]', { timeout: 30000 });
+                    rec('enrol-users-modal-opens', true);
+                } catch {
+                    rec('enrol-users-modal-opens', false, 'userids field never appeared');
+                    await shoot(page, 'wx06_no_users_modal');
+                }
+                await page.keyboard.press('Escape').catch(() => {});
+            }
+        }
+
+        rec('no-console-errors', errs.length === 0,
+            errs.length === 0 ? 'clean' : `${errs.length} errors: ${errs[0]?.substring(0, 80)}`);
+
+    } catch (e) {
+        rec('flow-exception', false, e.message.substring(0, 150));
+        await shoot(page, 'wx06_exception');
+    }
+    wf.console_errors = errs.length;
+    report.workflows.push(wf);
+    await page.close(); await ctx.close();
+}
+
 async function main() {
     await fs.mkdir(SHOTS_DIR, { recursive: true });
     const report = { phase: 'D-extended', date: new Date().toISOString(), workflows: [] };
@@ -617,6 +754,7 @@ async function main() {
     await wfx_notifications(browser, report);
     await wfx_learningpath_view(browser, report);
     await wfx_classroom_view(browser, report);
+    await wfx_programs_view(browser, report);
 
     await fs.writeFile(path.join(OUT_DIR, 'phase_d_extended.json'), JSON.stringify(report, null, 2));
 

@@ -186,4 +186,422 @@ class program_manager {
 
         return true;
     }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // LEVEL CRUD (G-03)
+    // ═══════════════════════════════════════════════════════════════════
+
+    /**
+     * Get levels for a program in sortorder.
+     */
+    public static function get_levels(int $programid): array {
+        global $DB;
+        return $DB->get_records(self::LEVELS_TABLE, ['programid' => $programid],
+            'sortorder ASC, id ASC');
+    }
+
+    /**
+     * Get a single level by ID.
+     */
+    public static function get_level(int $levelid) {
+        global $DB;
+        return $DB->get_record(self::LEVELS_TABLE, ['id' => $levelid]);
+    }
+
+    /**
+     * Create a level for a program. Auto-assigns next sortorder slot.
+     *
+     * @param int $programid
+     * @param object $data  name, description, completion_required
+     * @return int New level ID
+     * @throws \moodle_exception
+     */
+    public static function create_level(int $programid, object $data): int {
+        global $DB;
+
+        $DB->get_record(self::TABLE, ['id' => $programid], 'id', MUST_EXIST);
+
+        if (empty($data->name)) {
+            throw new \moodle_exception('missingrequiredfields', 'local_airpay_programs');
+        }
+
+        // Determine next sortorder.
+        $next = (int) $DB->get_field_sql(
+            "SELECT COALESCE(MAX(sortorder), -1) + 1
+               FROM {" . self::LEVELS_TABLE . "}
+              WHERE programid = :pid", ['pid' => $programid]);
+
+        $record = new \stdClass();
+        $record->programid           = $programid;
+        $record->name                = trim((string) $data->name);
+        $record->description         = (string) ($data->description ?? '');
+        $record->sortorder           = $next;
+        $record->completion_required = isset($data->completion_required) ? (int) $data->completion_required : 1;
+        $record->timecreated         = time();
+
+        return $DB->insert_record(self::LEVELS_TABLE, $record);
+    }
+
+    /**
+     * Update an existing level.
+     */
+    public static function update_level(int $levelid, object $data): bool {
+        global $DB;
+
+        $existing = $DB->get_record(self::LEVELS_TABLE, ['id' => $levelid], '*', MUST_EXIST);
+
+        $record = (object) ['id' => $levelid];
+        $fields = ['name', 'description', 'completion_required'];
+        foreach ($fields as $f) {
+            if (isset($data->$f)) {
+                $record->$f = $data->$f;
+            }
+        }
+        // Don't allow changing programid via update — preserved from $existing implicitly.
+        $DB->update_record(self::LEVELS_TABLE, $record);
+        return true;
+    }
+
+    /**
+     * Delete a level. Cascades to its course assignments.
+     * Reflows sortorder of remaining sibling levels to remove gaps.
+     */
+    public static function delete_level(int $levelid): bool {
+        global $DB;
+
+        $level = $DB->get_record(self::LEVELS_TABLE, ['id' => $levelid], '*', MUST_EXIST);
+        $programid = (int) $level->programid;
+
+        $tx = $DB->start_delegated_transaction();
+        try {
+            // Cascade course assignments.
+            $DB->delete_records(self::COURSES_TABLE, ['levelid' => $levelid]);
+            // Delete the level itself.
+            $DB->delete_records(self::LEVELS_TABLE, ['id' => $levelid]);
+            // Reflow sortorder for remaining siblings.
+            self::reflow_levels($programid);
+            $tx->allow_commit();
+        } catch (\Throwable $e) {
+            $tx->rollback($e);
+        }
+        return true;
+    }
+
+    /**
+     * Reorder levels within a program. Caller passes ordered IDs;
+     * unknown/outsider IDs are silently dropped, missing IDs left at end.
+     *
+     * @return int Count of levels reordered.
+     */
+    public static function reorder_levels(int $programid, array $levelids): int {
+        global $DB;
+
+        $DB->get_record(self::TABLE, ['id' => $programid], 'id', MUST_EXIST);
+
+        // Get the canonical set of levels for this program.
+        $existing = $DB->get_fieldset_select(self::LEVELS_TABLE, 'id',
+            'programid = :pid', ['pid' => $programid]);
+        $existing_set = array_flip(array_map('intval', $existing));
+
+        $next = 0;
+        $count = 0;
+        $tx = $DB->start_delegated_transaction();
+        try {
+            foreach ($levelids as $lid) {
+                $lid = (int) $lid;
+                if (!isset($existing_set[$lid])) {
+                    continue;   // skip outsider — sortorder counter NOT incremented
+                }
+                $DB->set_field(self::LEVELS_TABLE, 'sortorder', $next, ['id' => $lid]);
+                unset($existing_set[$lid]);   // mark as placed
+                $next++;
+                $count++;
+            }
+            // Anything remaining in $existing_set wasn't mentioned by caller — append in id order.
+            foreach (array_keys($existing_set) as $lid) {
+                $DB->set_field(self::LEVELS_TABLE, 'sortorder', $next, ['id' => $lid]);
+                $next++;
+                $count++;
+            }
+            $tx->allow_commit();
+        } catch (\Throwable $e) {
+            $tx->rollback($e);
+        }
+        return $count;
+    }
+
+    /**
+     * Reflow sortorder for a program's levels — eliminates gaps after a
+     * delete. Internal helper; called from delete_level().
+     */
+    private static function reflow_levels(int $programid): void {
+        global $DB;
+        $levels = $DB->get_records(self::LEVELS_TABLE, ['programid' => $programid],
+            'sortorder ASC, id ASC', 'id');
+        $i = 0;
+        foreach ($levels as $level) {
+            $DB->set_field(self::LEVELS_TABLE, 'sortorder', $i, ['id' => $level->id]);
+            $i++;
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // COURSE-PER-LEVEL CRUD (G-03)
+    // ═══════════════════════════════════════════════════════════════════
+
+    /**
+     * Count courses assigned to a level.
+     */
+    public static function count_level_courses(int $levelid): int {
+        global $DB;
+        return (int) $DB->count_records(self::COURSES_TABLE, ['levelid' => $levelid]);
+    }
+
+    /**
+     * Get courses assigned to a level (joined with course table).
+     */
+    public static function get_level_courses(int $levelid): array {
+        global $DB;
+        return $DB->get_records_sql(
+            "SELECT lc.id, lc.courseid, lc.sortorder, lc.mandatory,
+                    c.fullname, c.shortname, c.visible AS course_visible
+               FROM {" . self::COURSES_TABLE . "} lc
+               JOIN {course} c ON c.id = lc.courseid
+              WHERE lc.levelid = :lid
+           ORDER BY lc.sortorder ASC, c.fullname ASC",
+            ['lid' => $levelid]);
+    }
+
+    /**
+     * Bulk-assign courses to a level. Idempotent — already-assigned skipped.
+     * Appends to sortorder.
+     *
+     * @return int Count of courses newly added.
+     */
+    public static function assign_courses_to_level(int $levelid, array $courseids): int {
+        global $DB;
+
+        $DB->get_record(self::LEVELS_TABLE, ['id' => $levelid], 'id', MUST_EXIST);
+
+        $courseids = array_unique(array_filter(array_map('intval', $courseids), fn($id) => $id > 1));
+        if (empty($courseids)) {
+            return 0;
+        }
+
+        // Validate course existence + skip already-assigned.
+        [$insql, $inparams] = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED, 'cid');
+        $valid_ids = $DB->get_fieldset_select('course', 'id',
+            "id $insql AND id > 1", $inparams);
+        if (empty($valid_ids)) {
+            return 0;
+        }
+
+        [$insql2, $inparams2] = $DB->get_in_or_equal($valid_ids, SQL_PARAMS_NAMED, 'cid2');
+        $existing = $DB->get_fieldset_select(self::COURSES_TABLE, 'courseid',
+            "levelid = :lid AND courseid $insql2",
+            array_merge($inparams2, ['lid' => $levelid]));
+        $to_add = array_values(array_diff($valid_ids, $existing));
+        if (empty($to_add)) {
+            return 0;
+        }
+
+        // Determine starting sortorder.
+        $next = (int) $DB->get_field_sql(
+            "SELECT COALESCE(MAX(sortorder), -1) + 1
+               FROM {" . self::COURSES_TABLE . "}
+              WHERE levelid = :lid", ['lid' => $levelid]);
+
+        $now = time();
+        $tx = $DB->start_delegated_transaction();
+        try {
+            foreach ($to_add as $cid) {
+                $DB->insert_record(self::COURSES_TABLE, (object) [
+                    'levelid'     => $levelid,
+                    'courseid'    => (int) $cid,
+                    'sortorder'   => $next++,
+                    'mandatory'   => 1,
+                    'timecreated' => $now,
+                ]);
+            }
+            $tx->allow_commit();
+        } catch (\Throwable $e) {
+            $tx->rollback($e);
+        }
+        return count($to_add);
+    }
+
+    /**
+     * Unassign a single course from a level. No-op if not assigned.
+     */
+    public static function unassign_course_from_level(int $levelid, int $courseid): bool {
+        global $DB;
+        $DB->delete_records(self::COURSES_TABLE,
+            ['levelid' => $levelid, 'courseid' => $courseid]);
+        return true;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // PROGRAM ENROLMENT (G-03)
+    // ═══════════════════════════════════════════════════════════════════
+
+    /** Enrolment status values. */
+    public const ENROL_NEW         = 0;
+    public const ENROL_INPROGRESS  = 1;
+    public const ENROL_COMPLETED   = 2;
+
+    /**
+     * Count users enrolled in a program.
+     */
+    public static function count_enrolled(int $programid): int {
+        global $DB;
+        $dbman = $DB->get_manager();
+        if (!$dbman->table_exists(self::USERS_TABLE)) {
+            return 0;
+        }
+        return (int) $DB->count_records(self::USERS_TABLE, ['programid' => $programid]);
+    }
+
+    /**
+     * Count enrolments matching a search filter (for paginated WS).
+     */
+    public static function count_enrolled_filtered(int $programid, string $search = ''): int {
+        global $DB;
+        $dbman = $DB->get_manager();
+        if (!$dbman->table_exists(self::USERS_TABLE)) {
+            return 0;
+        }
+
+        $where = ['pu.programid = :pid'];
+        $params = ['pid' => $programid];
+        if (!empty($search)) {
+            $term = '%' . $DB->sql_like_escape($search) . '%';
+            $where[] = '(' . $DB->sql_like('u.firstname', ':s1', false) . ' OR ' .
+                $DB->sql_like('u.lastname', ':s2', false) . ' OR ' .
+                $DB->sql_like('u.email', ':s3', false) . ')';
+            $params['s1'] = $params['s2'] = $params['s3'] = $term;
+        }
+        $wheresql = implode(' AND ', $where);
+
+        return (int) $DB->count_records_sql(
+            "SELECT COUNT(*) FROM {" . self::USERS_TABLE . "} pu
+                JOIN {user} u ON u.id = pu.userid
+              WHERE $wheresql", $params);
+    }
+
+    /**
+     * Enrol one or more users. Idempotent. Rejects deleted/system users.
+     *
+     * @return int Count newly enrolled.
+     */
+    public static function enrol_users(int $programid, array $userids): int {
+        global $DB;
+
+        $DB->get_record(self::TABLE, ['id' => $programid], 'id', MUST_EXIST);
+
+        $userids = array_unique(array_filter(array_map('intval', $userids), fn($id) => $id > 0));
+        if (empty($userids)) {
+            return 0;
+        }
+
+        // Validate users.
+        [$insql, $inparams] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'uid');
+        $valid_ids = $DB->get_fieldset_select('user', 'id',
+            "id $insql AND deleted = 0 AND id > 2", $inparams);
+        if (empty($valid_ids)) {
+            return 0;
+        }
+
+        // Skip already-enrolled.
+        [$insql2, $inparams2] = $DB->get_in_or_equal($valid_ids, SQL_PARAMS_NAMED, 'uid2');
+        $existing = $DB->get_fieldset_select(self::USERS_TABLE, 'userid',
+            "programid = :pid AND userid $insql2",
+            array_merge($inparams2, ['pid' => $programid]));
+        $to_add = array_values(array_diff($valid_ids, $existing));
+        if (empty($to_add)) {
+            return 0;
+        }
+
+        $now = time();
+        $tx = $DB->start_delegated_transaction();
+        try {
+            foreach ($to_add as $uid) {
+                $DB->insert_record(self::USERS_TABLE, (object) [
+                    'programid'      => $programid,
+                    'userid'         => (int) $uid,
+                    'currentlevelid' => null,
+                    'status'         => self::ENROL_NEW,
+                    'timecreated'    => $now,
+                    'timecompleted'  => null,
+                ]);
+            }
+            $tx->allow_commit();
+        } catch (\Throwable $e) {
+            $tx->rollback($e);
+        }
+        return count($to_add);
+    }
+
+    /**
+     * Unenrol a user from a program. No-op if not enrolled.
+     */
+    public static function unenrol_user(int $programid, int $userid): bool {
+        global $DB;
+        $DB->delete_records(self::USERS_TABLE,
+            ['programid' => $programid, 'userid' => $userid]);
+        return true;
+    }
+
+    /**
+     * Get enrolled users with optional search/sort/page.
+     *
+     * @return array  Each row: id, userid, firstname, lastname, email,
+     *                status, currentlevelid, timecreated, timecompleted,
+     *                optional open_employeeid/designation.
+     */
+    public static function get_enrolled_users(int $programid, string $search = '',
+                                              string $sort = 'lastname', string $sortdir = 'ASC',
+                                              int $offset = 0, int $limit = 100): array {
+        global $DB;
+        $dbman = $DB->get_manager();
+        if (!$dbman->table_exists(self::USERS_TABLE)) {
+            return [];
+        }
+
+        $cols = $DB->get_columns('user');
+        $extra = '';
+        if (isset($cols['open_employeeid'])) { $extra .= ', u.open_employeeid'; }
+        if (isset($cols['open_designation'])) { $extra .= ', u.open_designation'; }
+
+        $where = ['pu.programid = :pid'];
+        $params = ['pid' => $programid];
+        if (!empty($search)) {
+            $term = '%' . $DB->sql_like_escape($search) . '%';
+            $where[] = '(' . $DB->sql_like('u.firstname', ':s1', false) . ' OR ' .
+                $DB->sql_like('u.lastname', ':s2', false) . ' OR ' .
+                $DB->sql_like('u.email', ':s3', false) . ')';
+            $params['s1'] = $params['s2'] = $params['s3'] = $term;
+        }
+        $wheresql = implode(' AND ', $where);
+
+        $allowed_sorts = ['firstname', 'lastname', 'email', 'status', 'timecreated'];
+        $sortcol = in_array($sort, $allowed_sorts, true) ? $sort : 'lastname';
+        if ($sortcol === 'timecreated') {
+            $sortcol = 'pu.timecreated';
+        } else if ($sortcol === 'status') {
+            $sortcol = 'pu.status';
+        } else {
+            $sortcol = "u.{$sortcol}";
+        }
+        $dir = strtoupper($sortdir) === 'DESC' ? 'DESC' : 'ASC';
+
+        $sql = "SELECT pu.id, pu.userid, pu.currentlevelid, pu.status,
+                       pu.timecreated AS enrolled_at, pu.timecompleted,
+                       u.firstname, u.lastname, u.email{$extra}
+                  FROM {" . self::USERS_TABLE . "} pu
+                  JOIN {user} u ON u.id = pu.userid
+                 WHERE $wheresql
+              ORDER BY $sortcol $dir, pu.id ASC";
+
+        return $DB->get_records_sql($sql, $params, $offset, $limit);
+    }
 }

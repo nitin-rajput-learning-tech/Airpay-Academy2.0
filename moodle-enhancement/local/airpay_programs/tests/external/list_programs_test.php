@@ -85,7 +85,9 @@ final class list_programs_test extends \advanced_testcase {
         $this->assertSame(1, (int) $result['total'],
             'caller at /1 leaked rows from /100 or /177');
         $this->assertCount(1, $result['rows']);
-        $this->assertSame('Airpay Onboarding', $result['rows'][0]['name']);
+        // Name is wrapped in an <a href="view.php?id=N"> link (G-03 nav fix);
+        // the literal program name is still substring-present.
+        $this->assertStringContainsString('Airpay Onboarding', $result['rows'][0]['name']);
     }
 
     /**
@@ -122,9 +124,10 @@ final class list_programs_test extends \advanced_testcase {
         $result = list_programs::execute('', 'notarealcolumn', 'asc', 0, 25, '{}');
 
         $this->assertSame(3, (int) $result['total']);
-        $this->assertSame('Alpha',   $result['rows'][0]['name']);
-        $this->assertSame('Bravo',   $result['rows'][1]['name']);
-        $this->assertSame('Charlie', $result['rows'][2]['name']);
+        // Name is wrapped in an <a> link (G-03); use substring assertion.
+        $this->assertStringContainsString('Alpha',   $result['rows'][0]['name']);
+        $this->assertStringContainsString('Bravo',   $result['rows'][1]['name']);
+        $this->assertStringContainsString('Charlie', $result['rows'][2]['name']);
     }
 
     /**
@@ -161,6 +164,7 @@ final class list_programs_test extends \advanced_testcase {
         $result = list_programs::execute('50%', 'name', 'asc', 0, 25, '{}');
 
         $this->assertSame(1, (int) $result['total']);
-        $this->assertSame('Airpay 50% Path', $result['rows'][0]['name']);
+        // Name is wrapped in an <a> link (G-03); use substring assertion.
+        $this->assertStringContainsString('Airpay 50% Path', $result['rows'][0]['name']);
     }
 }
