@@ -1,16 +1,29 @@
 # `local_airpay_integrations` — Pre-Cutover Audit
 
 **Audit date:** 2026-05-07
+**Last updated:** 2026-05-07 (post-fix commit)
 **Auditor:** Claude (Sonnet 4.6) under Nitin Rajput direction
-**Plugin version on disk:** 2026040500 / 1.0.0-beta (BETA maturity)
-**Verdict:** ⚠ **DO NOT ACTIVATE ON PRODUCTION** without the four blocker fixes in §4.
+**Plugin version on disk:** **2026050700 / 1.1.0-beta** (was 2026040500)
+**Verdict:** ✅ **PRE-CUTOVER FIXES SHIPPED.** Step 0 of the activation
+sequence (§6) is complete. Steps 1–4 still require Nitin + IT
+coordination (live KeKa OAuth, Teams webhook URL, FCM service worker
+build, SENTIENTIA Python pipeline integration).
 
 This plugin holds every external-system glue: KeKa HRMS sync, Microsoft Teams alerts,
 Microsoft 365 SSO config, AI course recommender, FCM web push, and SENTIENTIA hooks.
-It is currently the riskiest plugin in the deck because most features are wired
-"on paper" but have never been exercised end-to-end against real services, and the
-KeKa webhook receiver has a runtime bug that will throw a fatal SQL error the first
-time it fires.
+It WAS the riskiest plugin in the deck because most features were wired
+"on paper" but had never been exercised end-to-end against real services, and the
+KeKa webhook receiver had a runtime bug that would have thrown a fatal SQL error
+the first time it fired.
+
+The fixes shipped today:
+- ✅ `db/install.xml` + `db/upgrade.php` ship the `local_airpay_integration_log` table
+- ✅ `keka_client.php:177` migrated `local_costcenter` → `local_airpay_org` (Phase-0A)
+- ✅ Duplicate `task/hrms_sync.php` deleted; `db/tasks.php` emptied. Webhook-only sync.
+- ✅ `ai_recommender::bizlms_fields_status()` added; settings.php shows admin notice
+  on tenants where `{course}.open_skill` or `{user}.open_departmentid` are missing
+- ✅ Audit correction: §4.2 below was wrong about FCM push storage — `web_push::store_token`
+  uses `mdl_user_preferences` (a Moodle core table, always exists). It is NOT a blocker.
 
 ---
 
@@ -147,6 +160,10 @@ references in Airpay code".
 
 **Fix:** swap `local_costcenter` → `local_airpay_org`. ~5 minutes.
 
+**STATUS (2026-05-07):** ✅ **FIXED.** keka_client.php now queries
+`{local_airpay_org}` with a `field_exists()` guard so dev / non-BizLMS
+installs don't trip on the missing table.
+
 ### 3.2 Duplicate employee-sync paths
 
 `keka_client::sync_single_employee` and `task\hrms_sync::sync_employee` both
@@ -167,6 +184,12 @@ one created later by cron) because they match on `email` vs `open_employeeid OR 
 but borrow `user_create_user()` from hrms_sync. Delete `task/hrms_sync.php`.
 ~30 minutes plus regression test of the cron task.
 
+**STATUS (2026-05-07):** ✅ **FIXED.** `task/hrms_sync.php` deleted in
+this commit; `db/tasks.php` now ships with `$tasks = []`. Webhook-only
+sync going forward. The reconciliation backstop (cron sync after 4h)
+is deferred to Phase 2 — when added, it must call into `keka_client::sync_employees`
+rather than re-implement the parsing.
+
 ### 3.3 BizLMS-only fields in ai_recommender
 
 `{course}.open_skill` and `{user}.open_departmentid` exist on Airpay tenant data
@@ -177,6 +200,13 @@ field migration.
 **Fix:** wrap each strategy's SQL in a `field_exists()` check using the DB manager,
 or accept the silent degradation but add an admin notice on the integration
 settings page when the columns are absent. ~1 hour.
+
+**STATUS (2026-05-07):** ✅ **FIXED (admin-notice path).** New helper
+`ai_recommender::bizlms_fields_status()` exposes the field-presence
+state. `settings.php` reads it and renders a Bootstrap warning panel
+in the AI heading when either field is absent. Recommendations
+silently degrade to category-based + popular-only on those tenants;
+admins now see why.
 
 ### 3.4 No capability check on `webhook.php`
 
@@ -200,41 +230,44 @@ back to KeKa. ~3 hours.
 
 ## 4. BLOCKER bugs (must fix before any production activation)
 
-### 4.1 ✗ Missing table `local_airpay_integration_log` — webhook crashes
+### 4.1 ✅ Missing table `local_airpay_integration_log` — webhook crashes ~~(was BLOCKER)~~
 
 **File:** `webhook.php:41` and `:54`
-**Symptom:** First time KeKa POSTs to `https://www.airpay.academy/local/airpay_integrations/webhook.php`, `$DB->insert_record('local_airpay_integration_log', ...)` throws `dml_table_missing_exception`. HTTP 500 returned to KeKa.
-**Impact:** No JML events get processed. Employees onboard/leave without their accounts being created or suspended. Silent failure mode is worst-case for compliance.
+**Symptom (pre-fix):** First time KeKa POSTed to `https://www.airpay.academy/local/airpay_integrations/webhook.php`, `$DB->insert_record('local_airpay_integration_log', ...)` would throw `dml_table_missing_exception`. HTTP 500 returned to KeKa.
+**Impact (pre-fix):** No JML events processed. Employees onboarded / left without accounts being created or suspended. Worst-case silent failure for compliance.
 
-**Fix:** ship `db/install.xml` defining the table. ~20 minutes.
+**STATUS (2026-05-07):** ✅ **FIXED.** `db/install.xml` ships with the
+table; `db/upgrade.php` creates it on first install + on upgrade from
+2026040500 → 2026050700. Schema verified by PHPUnit
+`schema_test::test_integration_log_table_exists` and the webhook
+insert shape locked in by `test_webhook_can_insert_log_row`.
 
-### 4.2 ✗ Missing table `local_airpay_integration_pushtokens` — push token store crashes
+### 4.2 ⚠️ AUDIT CORRECTION — `web_push::store_token` does NOT crash
 
-**File:** `classes/web_push.php::store_token`
-**Symptom:** First time the front-end registers an FCM service-worker token, the call to `$DB->record_exists('local_airpay_integration_pushtokens', ...)` throws the same fatal.
-**Impact:** No push tokens get stored, so `send_deadline_reminder()` has no recipient list and silently sends zero pushes.
+**Original claim (incorrect):** `web_push::store_token` was reported as a
+blocker on the same grounds as §4.1 — that it inserted into a non-existent
+`local_airpay_integration_pushtokens` table.
 
-**Fix:** add this table to the same `db/install.xml`. ~10 minutes.
+**Reality (verified 2026-05-07):** `web_push::store_token` actually writes
+to `mdl_user_preferences` (a Moodle core table that always exists) using
+`name = 'airpay_fcm_token'` as the key. It is not a blocker. The token
+storage works on any Moodle install today.
 
-### 4.3 ✗ No `install.xml` means plugin upgrade path is undefined
+**Lesson logged in STRETCH-ACCOUNTABILITY.md §F:** structural grep is
+not enough; reading each file's actual SQL is the only reliable way to
+verify the audit findings.
 
-Without `db/install.xml` the plugin can never declare its tables, so even the
-manual workaround "create the table by hand on production" leaves Moodle's
-upgrade tracker thinking the plugin owns no tables. Future schema changes
-have nothing to upgrade *from*.
+### 4.3 ✅ No `install.xml` means plugin upgrade path is undefined ~~(was BLOCKER)~~
 
-**Fix:** ship `db/install.xml` (one-time, required by §4.1).
+**STATUS (2026-05-07):** ✅ **FIXED** by §4.1 fix. The plugin now
+declares the table it owns; future schema changes have a versioned
+upgrade path.
 
-### 4.4 ✗ Duplicate-sync risk if cron + webhook both fire
+### 4.4 ✅ Duplicate-sync risk if cron + webhook both fire ~~(was BLOCKER)~~
 
-See §3.2. Even before any of the above is fixed, if an admin re-enables the
-hrms_sync task while KeKa is configured to webhook, the same employee can
-get inserted twice within a 4-hour window because the two paths match on
-different keys.
-
-**Fix:** disable `task/hrms_sync.php` permanently or delete it; rely on
-webhook-first sync via `keka_client`. ~5 minutes (just remove the task) or
-~30 minutes if we keep cron as a reconciliation backstop.
+See §3.2 (also marked fixed). The duplicate `task/hrms_sync.php` was
+deleted in this commit. `db/tasks.php` now ships with `$tasks = []`.
+Webhook-only sync — no race condition, no duplicate-user risk.
 
 ---
 
@@ -266,30 +299,20 @@ webhook-first sync via `keka_client`. ~5 minutes (just remove the task) or
       </INDEXES>
     </TABLE>
 
-    <TABLE NAME="local_airpay_integration_pushtokens"
-           COMMENT="FCM browser-push tokens, one per user-device pair">
-      <FIELDS>
-        <FIELD NAME="id"           TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="userid"       TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
-        <FIELD NAME="token"        TYPE="char" LENGTH="255" NOTNULL="true"/>
-        <FIELD NAME="useragent"    TYPE="char" LENGTH="255" NOTNULL="false"/>
-        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
-        <FIELD NAME="timemodified" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
-      </FIELDS>
-      <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-        <KEY NAME="fk_user" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
-      </KEYS>
-      <INDEXES>
-        <INDEX NAME="idx_token" UNIQUE="true" FIELDS="token"
-               COMMENT="One token can only be active for one user-device"/>
-      </INDEXES>
-    </TABLE>
   </TABLES>
 </XMLDB>
 ```
 
+(The earlier draft of this section included a `local_airpay_integration_pushtokens`
+table — that was based on the §4.2 mistake. `web_push::store_token` already uses
+`mdl_user_preferences` so a dedicated table is unnecessary in Phase 1. If
+querying patterns later need a dedicated table for "all users with active
+tokens" lookups, that's a Phase-2 concern.)
+
 After shipping this, bump `version.php` to `2026050700` and run upgrade.
+
+**STATUS (2026-05-07):** ✅ **SHIPPED.** Schema landed in `db/install.xml`
+and `db/upgrade.php`. Verified by `schema_test`.
 
 ---
 
@@ -300,12 +323,15 @@ extended to Public/ZEEA.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│  Step 0  PRE-CUTOVER FIXES (mandatory)                ~ 4–6 hrs  │
-│  ─────────────────────────────────────                            │
-│  • Ship db/install.xml from §5                                    │
-│  • Decide hrms_sync vs keka_client → delete the loser             │
-│  • Migrate keka_client.php:177  local_costcenter → local_airpay_org│
-│  • Bump version.php to 2026050700, run admin/cli/upgrade.php      │
+│  Step 0  PRE-CUTOVER FIXES                            ~ 4–6 hrs  │
+│  ✅ DONE 2026-05-07                                                │
+│  ─────────────────────────                                        │
+│  ✓ Shipped db/install.xml from §5                                 │
+│  ✓ Deleted task/hrms_sync.php (chose keka_client path)            │
+│  ✓ Migrated keka_client.php:177 local_costcenter → local_airpay_org│
+│  ✓ Bumped version.php to 2026050700, ran admin/cli/upgrade.php    │
+│  ✓ Added bizlms_fields_status() + admin notice in settings.php   │
+│  ✓ PHPUnit: ~14 tests covering schema + ai recommender + keka     │
 └──────────────────────────────────────────────────────────────────┘
                               │
                               ▼

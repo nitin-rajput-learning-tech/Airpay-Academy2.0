@@ -171,14 +171,24 @@ class keka_client {
             'open_employmenttype' => $emp['employmentType'] ?? '',
         ];
 
-        // Map department to costcenter path.
+        // Map department name to airpay_org tenant path.
+        // Phase-0A migration: this lookup used to query {local_costcenter}
+        // (BizLMS legacy table) — replaced with {local_airpay_org} which
+        // is the airpay_org-owned table on production.
         $deptname = $emp['department'] ?? '';
         if (!empty($deptname)) {
-            $costcenter = $DB->get_record_select('local_costcenter',
-                $DB->sql_like('fullname', ':name'), ['name' => '%' . $DB->sql_like_escape($deptname) . '%'],
-                'id, path', IGNORE_MULTIPLE);
-            if ($costcenter) {
-                $userdata['open_path'] = $costcenter->path;
+            // Defensive: airpay_org table may not exist on stock Moodle test
+            // DBs. Skip the mapping rather than throw on missing table.
+            $orgtable = 'local_airpay_org';
+            $manager = $DB->get_manager();
+            if ($manager->table_exists($orgtable)) {
+                $org = $DB->get_record_select($orgtable,
+                    $DB->sql_like('fullname', ':name'),
+                    ['name' => '%' . $DB->sql_like_escape($deptname) . '%'],
+                    'id, path', IGNORE_MULTIPLE);
+                if ($org) {
+                    $userdata['open_path'] = $org->path;
+                }
             }
         }
 

@@ -27,6 +27,37 @@ class ai_recommender {
     }
 
     /**
+     * Inspect whether the BizLMS-only profile fields that two of the four
+     * recommendation strategies depend on are present in the schema.
+     *
+     * Strategies that need BizLMS fields:
+     *   recommend_by_skills  — needs {course}.open_skill
+     *   recommend_by_peers   — needs {user}.open_departmentid
+     *
+     * If the fields are missing, those strategies silently return [] (the
+     * try/catch in this class) — recommendations degrade to category-based
+     * + popular-only. The admin notice surfaced in settings.php is what
+     * makes that degradation visible to the operator.
+     *
+     * @return array{course_open_skill:bool, user_open_departmentid:bool, all_present:bool}
+     */
+    public static function bizlms_fields_status(): array {
+        global $DB;
+        $manager = $DB->get_manager();
+
+        $hasskill = $manager->field_exists('course',
+            new \xmldb_field('open_skill', XMLDB_TYPE_INTEGER, '10'));
+        $hasdept  = $manager->field_exists('user',
+            new \xmldb_field('open_departmentid', XMLDB_TYPE_INTEGER, '10'));
+
+        return [
+            'course_open_skill'      => $hasskill,
+            'user_open_departmentid' => $hasdept,
+            'all_present'            => $hasskill && $hasdept,
+        ];
+    }
+
+    /**
      * Get course recommendations for a user.
      *
      * @param int $userid User ID

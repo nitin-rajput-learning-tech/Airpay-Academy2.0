@@ -10,9 +10,27 @@ if ($hassiteconfig) {
         get_string('pluginname', 'local_airpay_integrations'));
 
     // ═══ AI FEATURES (Phase 9) ═══
+    // Build the heading description with a conditional warning when the
+    // BizLMS-only fields that two of four recommendation strategies depend
+    // on are not present (Public + ZEEA tenants on a stock-Moodle DB).
+    $aidesc = get_string('settings_desc', 'local_airpay_integrations');
+    $bizfields = \local_airpay_integrations\ai_recommender::bizlms_fields_status();
+    if (!$bizfields['all_present']) {
+        $missing = [];
+        if (!$bizfields['course_open_skill'])      { $missing[] = '{course}.open_skill'; }
+        if (!$bizfields['user_open_departmentid']) { $missing[] = '{user}.open_departmentid'; }
+        $aidesc .= '<div class="alert alert-warning mt-2 mb-0">'
+            . '<strong>Heads up.</strong> The recommender strategies '
+            . '<em>by skills</em> and <em>by peers</em> need BizLMS-added '
+            . 'profile fields that are not present on this database: '
+            . '<code>' . implode('</code>, <code>', array_map('s', $missing)) . '</code>. '
+            . 'Recommendations will silently degrade to category-based + popular-only '
+            . 'until those fields are migrated. Logged in INTEGRATIONS-AUDIT.md §3.3.'
+            . '</div>';
+    }
     $settings->add(new admin_setting_heading('ai_heading',
         get_string('ai_heading', 'local_airpay_integrations'),
-        get_string('settings_desc', 'local_airpay_integrations')));
+        $aidesc));
 
     $settings->add(new admin_setting_configcheckbox(
         'local_airpay_integrations/ai_enable',
