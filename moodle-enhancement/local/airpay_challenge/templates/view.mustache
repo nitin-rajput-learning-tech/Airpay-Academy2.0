@@ -1,0 +1,136 @@
+{{!
+   Airpay Gamification — single challenge detail (3 tabs).
+}}
+<div class="ap-card mb-3">
+  <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+    <div>
+      <a href="{{ index_url }}" class="text-muted text-decoration-none small">
+        <i class="fa fa-chevron-left me-1"></i>{{# str }}heading_index, local_airpay_challenge{{/ str }}
+      </a>
+      <h1 class="h3 m-0 mt-1">
+        {{ challenge.name }}
+        <code class="text-muted ms-2 fs-6">{{ challenge.shortname }}</code>
+      </h1>
+    </div>
+    <div>
+      <span class="{{ challenge.statuscss }}">{{ challenge.statuslabel }}</span>
+    </div>
+  </div>
+
+  <ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item">
+      <a class="nav-link {{# show_overview }}active{{/ show_overview }}" href="{{ overview_url }}">
+        {{# str }}tab_overview, local_airpay_challenge{{/ str }}
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {{# show_participants }}active{{/ show_participants }}" href="{{ participants_url }}">
+        {{# str }}tab_participants, local_airpay_challenge{{/ str }}
+        <span class="badge bg-secondary ms-1">{{ challenge.participants }}</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {{# show_leaderboard }}active{{/ show_leaderboard }}" href="{{ leaderboard_url }}">
+        {{# str }}tab_leaderboard, local_airpay_challenge{{/ str }}
+      </a>
+    </li>
+  </ul>
+
+  {{# show_overview }}
+    <div class="row g-3">
+      <div class="col-md-3">
+        <div class="ap-stat">
+          <div class="ap-stat__label">{{# str }}ov_participants, local_airpay_challenge{{/ str }}</div>
+          <div class="ap-stat__value">{{ challenge.participants }}</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="ap-stat">
+          <div class="ap-stat__label">{{# str }}ov_completed, local_airpay_challenge{{/ str }}</div>
+          <div class="ap-stat__value text-success">{{ challenge.completed }}</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="ap-stat">
+          <div class="ap-stat__label">{{# str }}col_target, local_airpay_challenge{{/ str }}</div>
+          <div class="ap-stat__value">{{ challenge.targetcount }}</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="ap-stat">
+          <div class="ap-stat__label">{{# str }}col_points, local_airpay_challenge{{/ str }}</div>
+          <div class="ap-stat__value">{{ challenge.pointsreward }}</div>
+        </div>
+      </div>
+
+      {{# challenge.joined }}
+      <div class="col-md-6">
+        <div class="ap-stat">
+          <div class="ap-stat__label">{{# str }}ov_my_progress, local_airpay_challenge{{/ str }}</div>
+          <div class="ap-stat__value">{{ challenge.myprogress }} / {{ challenge.mytarget }}</div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="ap-stat">
+          <div class="ap-stat__label">{{# str }}ov_my_status, local_airpay_challenge{{/ str }}</div>
+          <div class="ap-stat__value">{{ mystatus_label }}</div>
+        </div>
+      </div>
+      {{/ challenge.joined }}
+
+      {{# challenge.description }}
+      <div class="col-12">
+        <div class="ap-stat">
+          <div class="ap-stat__label">{{# str }}form_description, local_airpay_challenge{{/ str }}</div>
+          <div class="mt-2">{{{ challenge.description }}}</div>
+        </div>
+      </div>
+      {{/ challenge.description }}
+
+      <div class="col-12 mt-3">
+        {{# can_join }}
+          {{^ challenge.joined }}
+          <button type="button" class="btn btn-primary"
+                  data-action="join-challenge"
+                  data-challengeid="{{ challenge.id }}"
+                  data-name="{{ challenge.shortname }}">
+            <i class="fa fa-flag me-1"></i>{{# str }}btn_join, local_airpay_challenge{{/ str }}
+          </button>
+          {{/ challenge.joined }}
+          {{# challenge.joined }}
+          <button type="button" class="btn btn-outline-secondary"
+                  data-action="leave-challenge"
+                  data-challengeid="{{ challenge.id }}">
+            {{# str }}btn_leave, local_airpay_challenge{{/ str }}
+          </button>
+          {{/ challenge.joined }}
+        {{/ can_join }}
+        {{# can_manage }}
+          <button type="button" class="btn btn-link"
+                  data-action="edit-challenge"
+                  data-challengeid="{{ challenge.id }}">
+            <i class="fa fa-pencil me-1"></i>{{# str }}btn_edit, local_airpay_challenge{{/ str }}
+          </button>
+        {{/ can_manage }}
+      </div>
+    </div>
+  {{/ show_overview }}
+
+  {{# show_participants }}
+    <div id="airpay-challenge-participants-table"
+         data-region="airpay-datatable"
+         data-ws-name="local_airpay_challenge_get_leaderboard"
+         data-page-size="50"
+         data-columns-json="{{ lb_columns_json }}"
+         data-extra-args="{{ lb_extra_args_json }}"></div>
+  {{/ show_participants }}
+
+  {{# show_leaderboard }}
+    <div id="airpay-challenge-leaderboard-table"
+         data-region="airpay-datatable"
+         data-ws-name="local_airpay_challenge_get_leaderboard"
+         data-page-size="50"
+         data-columns-json="{{ lb_columns_json }}"
+         data-extra-args="{{ lb_extra_args_json }}"></div>
+  {{/ show_leaderboard }}
+</div>

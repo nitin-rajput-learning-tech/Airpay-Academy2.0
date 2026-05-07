@@ -283,7 +283,7 @@
 |---|---|---|
 | `airpay_assistant` | NEW (no BizLMS equivalent) | Chat bot; functional shell, low priority for cutover |
 | `airpay_catalog` | ✅ Replaces `search` | Learner course browsing — covered by `p1_phase_a_smoke.mjs` |
-| `airpay_challenge` | NEW; **STUB** (41 LOC) — intentional noop | `render_challenge_object()` returns empty string. Defensive scaffolding so `core_renderer` calls don't crash. Build out only when gamification has a spec. See `TIER-2-STUB-AUDIT.md`. |
+| `airpay_challenge` | NEW — **FUNCTIONAL Phase 1** — shipped 2026-05-07. Course-completion-based challenges + leaderboard + audit + ~45 PHPUnit tests. Engine wraps challenge lifecycle + event-driven progress + 15-min cron snapshot recompute. ~30 files, ~2500 LOC. Phase-2 (streak, quiz-score, badges, push, FE widget) deferred ~30h. State card: `airpay_challenge-state.md`. |
 | `airpay_compliance_report` | NEW + replaces parts of BizLMS reports | 4-table compliance schema, functional dashboard |
 | `airpay_emails` | NEW (Newsletter+) | 29 email templates, 4 tables, admin tab UI works |
 | `airpay_gamification` | NEW; partial (1017 LOC) | Replaces BizLMS `blocks/achievements`; 4 tables; functional |

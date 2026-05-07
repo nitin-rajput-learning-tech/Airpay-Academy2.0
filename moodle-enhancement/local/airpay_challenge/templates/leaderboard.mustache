@@ -1,0 +1,47 @@
+{{!
+   Airpay Gamification — global leaderboard (aggregate or per-challenge).
+}}
+<div class="ap-card mb-3">
+  <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+    <div>
+      <a href="{{ index_url }}" class="text-muted text-decoration-none small">
+        <i class="fa fa-chevron-left me-1"></i>{{# str }}heading_index, local_airpay_challenge{{/ str }}
+      </a>
+      <h1 class="h3 m-0 mt-1">
+        <i class="fa fa-trophy text-warning me-1"></i>{{# str }}heading_leaderboard, local_airpay_challenge{{/ str }}
+      </h1>
+    </div>
+  </div>
+
+  <form id="airpay-challenge-lb-filter" class="row g-2 mb-3">
+    <div class="col-md-5">
+      <label for="airpay-challenge-lb-challenge" class="form-label small mb-1">
+        {{# str }}lb_filter_challenge, local_airpay_challenge{{/ str }}
+      </label>
+      <select id="airpay-challenge-lb-challenge" class="form-select form-select-sm">
+        <option value="0">{{# str }}lb_filter_challenge_aggregate, local_airpay_challenge{{/ str }}</option>
+        {{# challenges_options }}
+          <option value="{{ value }}">{{ label }}</option>
+        {{/ challenges_options }}
+      </select>
+    </div>
+    {{# can_view_all }}
+    <div class="col-md-3">
+      <label for="airpay-challenge-lb-tenant" class="form-label small mb-1">
+        {{# str }}lb_filter_tenant, local_airpay_challenge{{/ str }}
+      </label>
+      <select id="airpay-challenge-lb-tenant" class="form-select form-select-sm">
+        <option value="mine">{{# str }}lb_filter_tenant_mine, local_airpay_challenge{{/ str }}</option>
+        <option value="all">{{# str }}lb_filter_tenant_all, local_airpay_challenge{{/ str }}</option>
+      </select>
+    </div>
+    {{/ can_view_all }}
+  </form>
+
+  <div id="airpay-challenge-leaderboard-global-table"
+       data-region="airpay-datatable"
+       data-ws-name="local_airpay_challenge_get_leaderboard"
+       data-page-size="50"
+       data-columns-json="{{ lb_columns_json }}"
+       data-extra-args="{{ lb_extra_args_json }}"></div>
+</div>

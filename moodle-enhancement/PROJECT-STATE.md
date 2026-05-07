@@ -1,12 +1,12 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-07 EOD post-stretch | **Phase:** Academy 3.4 — **Tier 1 closed (G-01..G-06)**, **Tier 4 a11y closed**, audits delivered, **airpay_roles UI shipped** (Tier-2 reclassified-then-built); **NOT production-ready** until airpay_challenge + airpay_integrations cleanup ship.
+**Updated:** 2026-05-07 EOD post-stretch (extended) | **Phase:** Academy 3.4 — **Tier 1 closed (G-01..G-06)**, **Tier 4 a11y closed**, audits delivered, **airpay_roles UI shipped**, **airpay_challenge Phase 1 shipped**; **NOT production-ready** until airpay_integrations cleanup ships (~6h).
 **Theme:** airpayux v1.0.0 | **Moodle:** 5.1.3+ on XAMPP
 **Version:** 3.3.0+ → working toward 4.0 enterprise-grade
 **GitHub:** Pushed to nitin-rajput-learning-tech/Airpay-Academy2.0 (production branch)
-**Latest commit:** (this stretch) airpay_roles UI build — index + view (3 tabs) + audit + CSV export + 56 PHPUnit tests
-**PHPUnit:** ~293 tests across ~30 test files (118 prior + 79 today's stretch + 56 airpay_roles + 40 misc)
+**Latest commit:** (this stretch) airpay_challenge Phase-1 — engine + leaderboard + 8 WS + observer + scheduled task + ~45 PHPUnit tests
+**PHPUnit:** ~338 tests across ~35 test files (293 prior + 45 airpay_challenge engine/WS)
 **Playwright:** 8 harnesses (WX-01..WX-07 deep workflows + smoke + axe a11y + keyboard nav + visual walk)
-**Today's audits:** `INTEGRATIONS-AUDIT.md` (5 bugs) + `STRETCH-ACCOUNTABILITY.md` + `airpay_roles-state.md`
+**Today's audits:** `INTEGRATIONS-AUDIT.md` (5 bugs) + `STRETCH-ACCOUNTABILITY.md` + `airpay_roles-state.md` + `airpay_challenge-state.md`
 
 > **Production posture (Nitin EOD 2026-05-06):** *"We will not go to production
 > till we have fixed everything. Not going to make a fool of myself going with
