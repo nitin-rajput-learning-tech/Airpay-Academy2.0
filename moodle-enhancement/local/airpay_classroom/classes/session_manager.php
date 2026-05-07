@@ -19,6 +19,7 @@ class session_manager {
     private const TABLE = 'local_airpay_classroom';
     private const SESSION_TABLE = 'local_airpay_classroom_sessions';
     private const ATTENDANCE_TABLE = 'local_airpay_classroom_attendance';
+    private const USERS_TABLE = 'local_airpay_classroom_users';
 
     /** @var string Legacy BizLMS table. */
     private const LEGACY_TABLE = 'local_classroom';
@@ -264,6 +265,11 @@ class session_manager {
             }
             // Delete sessions.
             $DB->delete_records(self::SESSION_TABLE, ['classroomid' => $id]);
+            // Delete classroom roster (G-02 added table — guard for fresh-install timing).
+            $dbman = $DB->get_manager();
+            if ($dbman->table_exists(self::USERS_TABLE)) {
+                $DB->delete_records(self::USERS_TABLE, ['classroomid' => $id]);
+            }
             // Delete classroom.
             $DB->delete_records(self::TABLE, ['id' => $id]);
             $transaction->allow_commit();
@@ -272,5 +278,404 @@ class session_manager {
         }
 
         return true;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // SESSION CRUD (G-02)
+    // ═══════════════════════════════════════════════════════════════════
+
+    /**
+     * Count sessions for a classroom (used by tab badges + overview stats).
+     */
+    public static function count_sessions(int $classroomid): int {
+        global $DB;
+        return (int) $DB->count_records(self::SESSION_TABLE, ['classroomid' => $classroomid]);
+    }
+
+    /**
+     * Create a session for a classroom.
+     *
+     * @param int $classroomid
+     * @param object $data sessiondate, starttime, endtime, location, title, trainerid, notes
+     * @return int New session ID
+     * @throws \moodle_exception
+     */
+    public static function create_session(int $classroomid, object $data): int {
+        global $DB;
+
+        $DB->get_record(self::TABLE, ['id' => $classroomid], 'id', MUST_EXIST);
+
+        $start = (int) ($data->starttime ?? 0);
+        $end   = (int) ($data->endtime ?? 0);
+        if ($start <= 0 || $end <= 0) {
+            throw new \moodle_exception('invalidsessiontime', 'local_airpay_classroom');
+        }
+        if ($end <= $start) {
+            throw new \moodle_exception('endbeforestart', 'local_airpay_classroom');
+        }
+
+        $now = time();
+        $record = new \stdClass();
+        $record->classroomid  = $classroomid;
+        $record->title        = trim((string) ($data->title ?? ''));
+        // Default sessiondate = day of starttime if not provided.
+        $record->sessiondate  = (int) ($data->sessiondate ?? $start);
+        $record->starttime    = $start;
+        $record->endtime      = $end;
+        $record->location     = trim((string) ($data->location ?? ''));
+        $tid = (int) ($data->trainerid ?? 0);
+        $record->trainerid    = $tid > 0 ? $tid : null;
+        $record->notes        = (string) ($data->notes ?? '');
+        $record->timecreated  = $now;
+        $record->timemodified = $now;
+
+        return $DB->insert_record(self::SESSION_TABLE, $record);
+    }
+
+    /**
+     * Update an existing session.
+     */
+    public static function update_session(int $sessionid, object $data): bool {
+        global $DB;
+
+        $existing = $DB->get_record(self::SESSION_TABLE, ['id' => $sessionid], '*', MUST_EXIST);
+
+        $record = (object) ['id' => $sessionid, 'timemodified' => time()];
+        $fields = ['title', 'sessiondate', 'starttime', 'endtime', 'location', 'trainerid', 'notes'];
+        foreach ($fields as $f) {
+            if (isset($data->$f)) {
+                $record->$f = $data->$f;
+            }
+        }
+
+        // Validate time range using either new or existing values.
+        $newstart = $record->starttime ?? $existing->starttime;
+        $newend   = $record->endtime   ?? $existing->endtime;
+        if ((int) $newend <= (int) $newstart) {
+            throw new \moodle_exception('endbeforestart', 'local_airpay_classroom');
+        }
+
+        $DB->update_record(self::SESSION_TABLE, $record);
+        return true;
+    }
+
+    /**
+     * Delete a session and its attendance records (atomic).
+     */
+    public static function delete_session(int $sessionid): bool {
+        global $DB;
+        $DB->get_record(self::SESSION_TABLE, ['id' => $sessionid], 'id', MUST_EXIST);
+
+        $tx = $DB->start_delegated_transaction();
+        try {
+            $DB->delete_records(self::ATTENDANCE_TABLE, ['sessionid' => $sessionid]);
+            $DB->delete_records(self::SESSION_TABLE,    ['id' => $sessionid]);
+            $tx->allow_commit();
+        } catch (\Throwable $e) {
+            $tx->rollback($e);
+        }
+        return true;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // CLASSROOM ROSTER (enrolment) — G-02
+    // ═══════════════════════════════════════════════════════════════════
+
+    /**
+     * Count users on a classroom roster (for tab badges + overview).
+     */
+    public static function count_enrolled(int $classroomid): int {
+        global $DB;
+        $dbman = $DB->get_manager();
+        if (!$dbman->table_exists(self::USERS_TABLE)) {
+            return 0;
+        }
+        return (int) $DB->count_records(self::USERS_TABLE, ['classroomid' => $classroomid]);
+    }
+
+    /**
+     * Enrol one or more users into a classroom roster. Idempotent.
+     *
+     * @param int   $classroomid
+     * @param int[] $userids
+     * @return int Count of users newly added.
+     * @throws \moodle_exception
+     */
+    public static function enrol_users(int $classroomid, array $userids): int {
+        global $DB, $USER;
+
+        $DB->get_record(self::TABLE, ['id' => $classroomid], 'id', MUST_EXIST);
+
+        $userids = array_unique(array_filter(array_map('intval', $userids), fn($id) => $id > 0));
+        if (empty($userids)) {
+            return 0;
+        }
+
+        // Reject system + non-existent + deleted users.
+        [$insql, $inparams] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'uid');
+        $valid_ids = $DB->get_fieldset_select('user', 'id',
+            "id $insql AND deleted = 0 AND id > 2", $inparams);
+        if (empty($valid_ids)) {
+            return 0;
+        }
+
+        // Skip already-enrolled.
+        [$insql2, $inparams2] = $DB->get_in_or_equal($valid_ids, SQL_PARAMS_NAMED, 'uid2');
+        $existing = $DB->get_fieldset_select(self::USERS_TABLE, 'userid',
+            "classroomid = :cid AND userid $insql2",
+            array_merge($inparams2, ['cid' => $classroomid]));
+        $to_add = array_values(array_diff($valid_ids, $existing));
+        if (empty($to_add)) {
+            return 0;
+        }
+
+        $now = time();
+        $tx = $DB->start_delegated_transaction();
+        try {
+            foreach ($to_add as $uid) {
+                $DB->insert_record(self::USERS_TABLE, (object) [
+                    'classroomid'  => $classroomid,
+                    'userid'       => (int) $uid,
+                    'enrolledby'   => (int) ($USER->id ?? 0),
+                    'timecreated'  => $now,
+                    'timemodified' => $now,
+                ]);
+            }
+            $tx->allow_commit();
+        } catch (\Throwable $e) {
+            $tx->rollback($e);
+        }
+
+        return count($to_add);
+    }
+
+    /**
+     * Unenrol a user from a classroom roster. Also removes their attendance
+     * across all sessions of this classroom.
+     */
+    public static function unenrol_user(int $classroomid, int $userid): bool {
+        global $DB;
+
+        $tx = $DB->start_delegated_transaction();
+        try {
+            // Remove attendance for this user across all sessions of this classroom.
+            $sessionids = $DB->get_fieldset_select(self::SESSION_TABLE, 'id',
+                'classroomid = :cid', ['cid' => $classroomid]);
+            if (!empty($sessionids)) {
+                [$insql, $inparams] = $DB->get_in_or_equal($sessionids, SQL_PARAMS_NAMED, 'sid');
+                $DB->delete_records_select(self::ATTENDANCE_TABLE,
+                    "userid = :uid AND sessionid $insql",
+                    array_merge($inparams, ['uid' => $userid]));
+            }
+            // Remove from roster.
+            $DB->delete_records(self::USERS_TABLE,
+                ['classroomid' => $classroomid, 'userid' => $userid]);
+            $tx->allow_commit();
+        } catch (\Throwable $e) {
+            $tx->rollback($e);
+        }
+        return true;
+    }
+
+    /**
+     * Get enrolled users for a classroom with optional search/sort/page.
+     *
+     * @return array  Each row: id (rosterid), userid, firstname, lastname,
+     *                email, enrolled_at, optional open_employeeid/designation.
+     */
+    public static function get_enrolled_users(int $classroomid, string $search = '',
+                                              string $sort = 'lastname', string $sortdir = 'ASC',
+                                              int $offset = 0, int $limit = 100): array {
+        global $DB;
+        $dbman = $DB->get_manager();
+        if (!$dbman->table_exists(self::USERS_TABLE)) {
+            return [];
+        }
+
+        $cols = $DB->get_columns('user');
+        $extra = '';
+        if (isset($cols['open_employeeid'])) { $extra .= ', u.open_employeeid'; }
+        if (isset($cols['open_designation'])) { $extra .= ', u.open_designation'; }
+
+        $where = ['cu.classroomid = :cid'];
+        $params = ['cid' => $classroomid];
+        if (!empty($search)) {
+            $term = '%' . $DB->sql_like_escape($search) . '%';
+            $where[] = '(' . $DB->sql_like('u.firstname', ':s1', false) . ' OR ' .
+                $DB->sql_like('u.lastname', ':s2', false) . ' OR ' .
+                $DB->sql_like('u.email', ':s3', false) . ')';
+            $params['s1'] = $params['s2'] = $params['s3'] = $term;
+        }
+        $wheresql = implode(' AND ', $where);
+
+        $allowed_sorts = ['firstname', 'lastname', 'email', 'timecreated'];
+        $sortcol = in_array($sort, $allowed_sorts, true) ? $sort : 'lastname';
+        $sortcol = ($sortcol === 'timecreated') ? 'cu.timecreated' : "u.{$sortcol}";
+        $dir = strtoupper($sortdir) === 'DESC' ? 'DESC' : 'ASC';
+
+        $sql = "SELECT cu.id, cu.userid, cu.timecreated AS enrolled_at,
+                       u.firstname, u.lastname, u.email{$extra}
+                  FROM {" . self::USERS_TABLE . "} cu
+                  JOIN {user} u ON u.id = cu.userid
+                 WHERE $wheresql
+              ORDER BY $sortcol $dir, cu.id ASC";
+
+        return $DB->get_records_sql($sql, $params, $offset, $limit);
+    }
+
+    /**
+     * Count rows that match the same filter as get_enrolled_users — used by
+     * the WS list endpoint for pagination "total".
+     */
+    public static function count_enrolled_filtered(int $classroomid, string $search = ''): int {
+        global $DB;
+        $dbman = $DB->get_manager();
+        if (!$dbman->table_exists(self::USERS_TABLE)) {
+            return 0;
+        }
+
+        $where = ['cu.classroomid = :cid'];
+        $params = ['cid' => $classroomid];
+        if (!empty($search)) {
+            $term = '%' . $DB->sql_like_escape($search) . '%';
+            $where[] = '(' . $DB->sql_like('u.firstname', ':s1', false) . ' OR ' .
+                $DB->sql_like('u.lastname', ':s2', false) . ' OR ' .
+                $DB->sql_like('u.email', ':s3', false) . ')';
+            $params['s1'] = $params['s2'] = $params['s3'] = $term;
+        }
+        $wheresql = implode(' AND ', $where);
+
+        return (int) $DB->count_records_sql(
+            "SELECT COUNT(*) FROM {" . self::USERS_TABLE . "} cu
+                JOIN {user} u ON u.id = cu.userid
+              WHERE $wheresql", $params);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // ATTENDANCE — G-02
+    // ═══════════════════════════════════════════════════════════════════
+
+    public const ATT_ABSENT  = 0;
+    public const ATT_PRESENT = 1;
+    public const ATT_LATE    = 2;
+    public const ATT_EXCUSED = 3;
+
+    /**
+     * Mark attendance for a single (session, user) pair. Upserts.
+     *
+     * @return int  Status that was persisted.
+     * @throws \moodle_exception
+     */
+    public static function mark_attendance(int $sessionid, int $userid, int $status,
+                                            string $notes = ''): int {
+        global $DB, $USER;
+
+        $valid = [self::ATT_ABSENT, self::ATT_PRESENT, self::ATT_LATE, self::ATT_EXCUSED];
+        if (!in_array($status, $valid, true)) {
+            throw new \moodle_exception('invalidattendancestatus', 'local_airpay_classroom');
+        }
+
+        $DB->get_record(self::SESSION_TABLE, ['id' => $sessionid], 'id', MUST_EXIST);
+
+        $now = time();
+        $existing = $DB->get_record(self::ATTENDANCE_TABLE,
+            ['sessionid' => $sessionid, 'userid' => $userid]);
+
+        if ($existing) {
+            $existing->status       = $status;
+            $existing->markedby     = (int) ($USER->id ?? 0);
+            $existing->notes        = $notes;
+            $existing->timemodified = $now;
+            $DB->update_record(self::ATTENDANCE_TABLE, $existing);
+        } else {
+            $DB->insert_record(self::ATTENDANCE_TABLE, (object) [
+                'sessionid'    => $sessionid,
+                'userid'       => $userid,
+                'status'       => $status,
+                'markedby'     => (int) ($USER->id ?? 0),
+                'notes'        => $notes,
+                'timecreated'  => $now,
+                'timemodified' => $now,
+            ]);
+        }
+
+        return $status;
+    }
+
+    /**
+     * Bulk mark attendance for a session.
+     *
+     * @param int $sessionid
+     * @param array $marks  [['userid' => int, 'status' => int, 'notes' => string], ...]
+     * @return int Count of rows upserted.
+     */
+    public static function bulk_mark_attendance(int $sessionid, array $marks): int {
+        global $DB;
+
+        $DB->get_record(self::SESSION_TABLE, ['id' => $sessionid], 'id', MUST_EXIST);
+
+        $count = 0;
+        $tx = $DB->start_delegated_transaction();
+        try {
+            foreach ($marks as $m) {
+                $uid = (int) ($m['userid'] ?? 0);
+                $st  = (int) ($m['status'] ?? self::ATT_ABSENT);
+                $notes = (string) ($m['notes'] ?? '');
+                if ($uid <= 0) { continue; }
+                self::mark_attendance($sessionid, $uid, $st, $notes);
+                $count++;
+            }
+            $tx->allow_commit();
+        } catch (\Throwable $e) {
+            $tx->rollback($e);
+        }
+        return $count;
+    }
+
+    /**
+     * Get attendance for a session — every roster member, joined with their
+     * attendance row (or default ABSENT if not yet marked).
+     *
+     * @return array  Each row: userid, firstname, lastname, email, status,
+     *                status_label, marked_at, notes.
+     */
+    public static function get_session_attendance(int $sessionid): array {
+        global $DB;
+        $dbman = $DB->get_manager();
+
+        $session = $DB->get_record(self::SESSION_TABLE, ['id' => $sessionid], '*', MUST_EXIST);
+
+        if (!$dbman->table_exists(self::USERS_TABLE)) {
+            return [];
+        }
+
+        $sql = "SELECT u.id AS userid, u.firstname, u.lastname, u.email,
+                       COALESCE(a.status, 0) AS status,
+                       a.timemodified AS marked_at,
+                       a.notes AS notes
+                  FROM {" . self::USERS_TABLE . "} cu
+                  JOIN {user} u ON u.id = cu.userid
+             LEFT JOIN {" . self::ATTENDANCE_TABLE . "} a
+                       ON a.sessionid = :sid AND a.userid = cu.userid
+                 WHERE cu.classroomid = :cid
+              ORDER BY u.lastname ASC, u.firstname ASC";
+        $rows = $DB->get_records_sql($sql, [
+            'sid' => $sessionid,
+            'cid' => (int) $session->classroomid,
+        ]);
+
+        $labels = [
+            self::ATT_ABSENT  => 'Absent',
+            self::ATT_PRESENT => 'Present',
+            self::ATT_LATE    => 'Late',
+            self::ATT_EXCUSED => 'Excused',
+        ];
+        foreach ($rows as $r) {
+            $r->status_label = $labels[(int) $r->status] ?? 'Absent';
+            $r->marked_at_human = $r->marked_at
+                ? userdate((int) $r->marked_at, '%d %b %Y %H:%M')
+                : '';
+        }
+        return $rows;
     }
 }

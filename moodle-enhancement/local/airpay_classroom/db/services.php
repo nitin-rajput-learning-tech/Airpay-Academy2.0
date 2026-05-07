@@ -17,6 +17,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $functions = [
+    // ── Classroom listing + status changes (existing) ────────────────────
     'local_airpay_classroom_list_classrooms' => [
         'classname'    => 'local_airpay_classroom\external\list_classrooms',
         'description'  => 'List classrooms for the shared datatable',
@@ -37,5 +38,60 @@ $functions = [
         'type'         => 'write',
         'ajax'         => true,
         'capabilities' => 'local/airpay_classroom:delete',
+    ],
+
+    // ── Sessions tab (G-02) ──────────────────────────────────────────────
+    'local_airpay_classroom_list_sessions' => [
+        'classname'    => 'local_airpay_classroom\external\list_classroom_sessions',
+        'description'  => 'List sessions for a classroom (Sessions tab datatable)',
+        'type'         => 'read',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_classroom:view',
+    ],
+    'local_airpay_classroom_delete_session' => [
+        'classname'    => 'local_airpay_classroom\external\delete_session',
+        'description'  => 'Delete a session and its attendance records',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_classroom:update',
+    ],
+
+    // ── Users / roster tab (G-02) ────────────────────────────────────────
+    'local_airpay_classroom_list_users' => [
+        'classname'    => 'local_airpay_classroom\external\list_classroom_users',
+        'description'  => 'List enrolled users for a classroom (Users tab datatable)',
+        'type'         => 'read',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_classroom:view',
+    ],
+    'local_airpay_classroom_unenrol_user' => [
+        'classname'    => 'local_airpay_classroom\external\unenrol_classroom_user',
+        'description'  => 'Remove a user from a classroom roster (cascades attendance)',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_classroom:update',
+    ],
+
+    // ── Attendance (G-02) ────────────────────────────────────────────────
+    'local_airpay_classroom_list_attendance' => [
+        'classname'    => 'local_airpay_classroom\external\list_session_attendance',
+        'description'  => 'List attendance for a session (Attendance UI)',
+        'type'         => 'read',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_classroom:view',
+    ],
+    'local_airpay_classroom_mark_attendance' => [
+        'classname'    => 'local_airpay_classroom\external\mark_session_attendance',
+        'description'  => 'Mark a single user attendance for a session',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_classroom:attendance',
+    ],
+    'local_airpay_classroom_bulk_mark_attendance' => [
+        'classname'    => 'local_airpay_classroom\external\bulk_mark_attendance',
+        'description'  => 'Bulk-mark attendance for many users at once',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_classroom:attendance',
     ],
 ];

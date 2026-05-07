@@ -448,6 +448,159 @@ async function wfx_learningpath_view(browser, report) {
     await page.close(); await ctx.close();
 }
 
+/**
+ * WX-05: airpay_classroom view detail (G-02).
+ *
+ * Verifies:
+ *  - Classroom index has at least 1 row, name is a link to view.php
+ *  - view.php?id=N loads with [data-region="airpay-classroom-view"]
+ *  - Three tabs present (Overview / Sessions / Users)
+ *  - Sessions tab datatable wiring: data-extra-args contains classroomid
+ *  - "Add Session" button visible + modal opens with starttime field
+ *  - Users tab datatable + "Enrol Users" button + modal opens with userids
+ *  - No console errors throughout
+ *
+ * Same modal-form-rendering caveat as WX-01/WX-04 — we don't submit the
+ * form; PHPUnit covers the actual create/enrol flow at the manager level.
+ */
+async function wfx_classroom_view(browser, report) {
+    const wf = { id: 'WX-05', name: 'airpay_classroom view detail (G-02)', cases: [] };
+    const ctx = await browser.newContext();
+    ctx.setDefaultTimeout(PAGE_TIMEOUT);
+    ctx.setDefaultNavigationTimeout(PAGE_TIMEOUT);
+    const page = await ctx.newPage();
+    const errs = [];
+    page.on('pageerror', e => errs.push(e.message));
+    page.on('console', m => { if (m.type() === 'error') errs.push(m.text()); });
+
+    const rec = (id, pass, note = '') => {
+        wf.cases.push({ id, pass, note });
+        console.log(`    ${pass ? '✓' : '✘'} ${id}${note ? ' — ' + note : ''}`);
+    };
+
+    console.log(`\n  ── ${wf.id}: ${wf.name} ──`);
+    try {
+        await login(page, ADMIN);
+        rec('login', true);
+
+        await page.goto(`${BASE}/local/airpay_classroom/index.php`, { waitUntil: 'domcontentloaded' });
+        await waitForTableRender(page);
+        await page.waitForSelector('[data-airpay-table] tbody tr[data-row-id]', { timeout: 15000 }).catch(() => {});
+        const rowCount = await page.locator('[data-airpay-table] tbody tr[data-row-id]').count();
+        rec('classrooms-listed', rowCount >= 1, `${rowCount} classrooms`);
+
+        if (rowCount === 0) {
+            await shoot(page, 'wx05_no_classrooms');
+            // Don't early-return — we still want this workflow recorded in the
+            // JSON report. Use a flag so the rest of the body skips.
+        }
+
+        // The classroom name in list_classrooms.php links to view.php (the
+        // anchor is rendered inside the Name column, not a separate icon).
+        let viewLinkPresent = false;
+        if (rowCount > 0) {
+            const viewLink = page.locator('[data-airpay-table] tbody tr[data-row-id] a[href*="/local/airpay_classroom/view.php"]').first();
+            viewLinkPresent = await viewLink.count() > 0;
+            rec('view-link-present', viewLinkPresent);
+            if (viewLinkPresent) {
+                await viewLink.click();
+                await page.waitForLoadState('domcontentloaded');
+                rec('view-page-loads', page.url().includes('/local/airpay_classroom/view.php'),
+                    `URL: ${page.url().substring(0, 90)}`);
+            } else {
+                await shoot(page, 'wx05_no_view_link');
+            }
+        } else {
+            rec('view-link-present', false, 'no classrooms in DB');
+        }
+
+        // Three tabs (Overview / Sessions / Users) — only if we navigated to view.php.
+        let tabsCount = 0;
+        if (viewLinkPresent) {
+            tabsCount = await page.locator('.nav-tabs .nav-link').count();
+        }
+        rec('three-tabs-present', tabsCount === 3, `${tabsCount} tabs (expected 3)`);
+
+        // Switch to the Sessions tab via direct link (avoids relying on
+        // anchor text matching which can be brittle to HTML markup).
+        const currentUrl = page.url();
+        const cidMatch = currentUrl.match(/[?&]id=(\d+)/);
+        const classroomid = cidMatch ? cidMatch[1] : null;
+        rec('captured-classroomid', !!classroomid, classroomid ? `id=${classroomid}` : 'no id in URL');
+
+        if (classroomid) {
+            await page.goto(`${BASE}/local/airpay_classroom/view.php?id=${classroomid}&tab=sessions`,
+                { waitUntil: 'domcontentloaded' });
+            await waitForTableRender(page);
+            await page.waitForSelector('[data-airpay-table-name="classroom-sessions"]', { timeout: 10000 }).catch(() => {});
+            const sessionsTableExists = await page.locator('[data-airpay-table-name="classroom-sessions"]').count() > 0;
+            rec('sessions-tab-renders-table', sessionsTableExists);
+
+            // extra-args attribute should contain classroomid.
+            const hasExtraArgs = await page.evaluate(() => {
+                const t = document.querySelector('[data-airpay-table-name="classroom-sessions"]');
+                return !!(t && t.dataset.extraArgs && t.dataset.extraArgs.includes('classroomid'));
+            });
+            rec('extra-args-attr-set', hasExtraArgs, 'data-extra-args contains classroomid');
+
+            // Add Session button + modal.
+            const addBtn = page.locator('[data-action="add-session"]').first();
+            const addBtnPresent = await addBtn.count() > 0;
+            rec('add-session-button-present', addBtnPresent);
+            if (addBtnPresent) {
+                await addBtn.click();
+                try {
+                    // edit_session form has a 'title' text input + the date_time_selector
+                    // for starttime renders as select[name="starttime[year]"]. Either
+                    // appearing means the modal rendered.
+                    await page.waitForSelector(
+                        'input[name="title"], select[name="starttime[year]"], select[name^="starttime"]',
+                        { timeout: 30000 });
+                    rec('add-session-modal-opens', true);
+                } catch {
+                    rec('add-session-modal-opens', false, 'session form fields never appeared');
+                    await shoot(page, 'wx05_no_session_modal');
+                }
+                await page.keyboard.press('Escape').catch(() => {});
+                await page.waitForTimeout(500);
+            }
+
+            // Switch to Users tab.
+            await page.goto(`${BASE}/local/airpay_classroom/view.php?id=${classroomid}&tab=users`,
+                { waitUntil: 'domcontentloaded' });
+            await waitForTableRender(page);
+            const usersTableExists = await page.locator('[data-airpay-table-name="classroom-users"]').count() > 0;
+            rec('users-tab-renders-table', usersTableExists);
+
+            const enrolBtn = page.locator('[data-action="enrol-users"]').first();
+            const enrolBtnPresent = await enrolBtn.count() > 0;
+            rec('enrol-users-button-present', enrolBtnPresent);
+            if (enrolBtnPresent) {
+                await enrolBtn.click();
+                try {
+                    await page.waitForSelector('select[name="userids"], input[name="userids"]', { timeout: 30000 });
+                    rec('enrol-users-modal-opens', true);
+                } catch {
+                    rec('enrol-users-modal-opens', false, 'userids field never appeared');
+                    await shoot(page, 'wx05_no_users_modal');
+                }
+                await page.keyboard.press('Escape').catch(() => {});
+            }
+        }
+
+        // No-console-errors guard.
+        rec('no-console-errors', errs.length === 0,
+            errs.length === 0 ? 'clean' : `${errs.length} errors: ${errs[0]?.substring(0, 80)}`);
+
+    } catch (e) {
+        rec('flow-exception', false, e.message.substring(0, 150));
+        await shoot(page, 'wx05_exception');
+    }
+    wf.console_errors = errs.length;
+    report.workflows.push(wf);
+    await page.close(); await ctx.close();
+}
+
 async function main() {
     await fs.mkdir(SHOTS_DIR, { recursive: true });
     const report = { phase: 'D-extended', date: new Date().toISOString(), workflows: [] };
@@ -463,6 +616,7 @@ async function main() {
     await wfx_courses_visibility(browser, report);
     await wfx_notifications(browser, report);
     await wfx_learningpath_view(browser, report);
+    await wfx_classroom_view(browser, report);
 
     await fs.writeFile(path.join(OUT_DIR, 'phase_d_extended.json'), JSON.stringify(report, null, 2));
 

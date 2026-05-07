@@ -28,6 +28,8 @@ import Ajax from 'core/ajax';
 
 const STATUS = {CANCELLED: 0, ACTIVE: 1, COMPLETED: 2};
 
+// ─── Classroom-level actions (existing — index.php) ───────────────────────
+
 const openClassroomForm = async (classroomid, returnFocus) => {
     const titleKey = (classroomid === 0) ? 'addclassroom' : 'editclassroom';
     const title = await getString(titleKey, 'local_airpay_classroom');
@@ -122,9 +124,127 @@ const handleClick = (event) => {
     }
 };
 
+// ─── View-page actions (G-02 — view.php sessions/users tabs) ──────────────
+
+const openSessionForm = async (classroomid, sessionid, returnFocus) => {
+    const titleKey = (sessionid === 0) ? 'add_session' : 'edit_session';
+    const title = await getString(titleKey, 'local_airpay_classroom');
+    const modalForm = new ModalForm({
+        formClass: 'local_airpay_classroom\\form\\edit_session',
+        args: {classroomid: classroomid, sessionid: sessionid},
+        modalConfig: {title: title, large: true},
+        returnFocus: returnFocus,
+    });
+    modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, (event) => {
+        const message = (event.detail && event.detail.message) || 'Saved.';
+        Notification.addNotification({message: message, type: 'success'});
+        window.location.reload();
+    });
+    modalForm.show();
+};
+
+const openEnrolUsersForm = async (classroomid, returnFocus) => {
+    const title = await getString('enrol_users', 'local_airpay_classroom');
+    const modalForm = new ModalForm({
+        formClass: 'local_airpay_classroom\\form\\enrol_classroom_users',
+        args: {classroomid: classroomid},
+        modalConfig: {title: title, large: true},
+        returnFocus: returnFocus,
+    });
+    modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, (event) => {
+        const message = (event.detail && event.detail.message) || 'Saved.';
+        Notification.addNotification({message: message, type: 'success'});
+        window.location.reload();
+    });
+    modalForm.show();
+};
+
+const confirmDeleteSession = async (sessionid, title, returnFocus) => {
+    const [confirmTitle, message, deleteLabel, successMsg] = await Promise.all([
+        getString('delete_session', 'local_airpay_classroom'),
+        getString('confirm_delete_session', 'local_airpay_classroom', title),
+        getString('delete', 'core'),
+        getString('sessiondeleted', 'local_airpay_classroom'),
+    ]);
+    Notification.deleteCancelPromise(confirmTitle, message, deleteLabel, returnFocus).then(() => {
+        Ajax.call([{
+            methodname: 'local_airpay_classroom_delete_session',
+            args: {sessionid: sessionid},
+        }])[0].then(() => {
+            Notification.addNotification({message: successMsg, type: 'success'});
+            window.location.reload();
+            return null;
+        }).catch(Notification.exception);
+        return true;
+    }, () => null);
+};
+
+const confirmUnenrolUser = async (classroomid, userid, name, returnFocus) => {
+    const [confirmTitle, message, removeLabel, successMsg] = await Promise.all([
+        getString('unenrol_user', 'local_airpay_classroom'),
+        getString('confirm_unenrol_user', 'local_airpay_classroom', name),
+        getString('remove', 'core'),
+        getString('userunenrolled', 'local_airpay_classroom'),
+    ]);
+    Notification.deleteCancelPromise(confirmTitle, message, removeLabel, returnFocus).then(() => {
+        Ajax.call([{
+            methodname: 'local_airpay_classroom_unenrol_user',
+            args: {classroomid: classroomid, userid: userid},
+        }])[0].then(() => {
+            Notification.addNotification({message: successMsg, type: 'success'});
+            window.location.reload();
+            return null;
+        }).catch(Notification.exception);
+        return true;
+    }, () => null);
+};
+
+const handleViewClick = (classroomid) => (event) => {
+    const trigger = event.target.closest('[data-action]');
+    if (!trigger) return;
+    const action = trigger.dataset.action;
+    switch (action) {
+        case 'add-session':
+            event.preventDefault();
+            openSessionForm(classroomid, 0, trigger);
+            break;
+        case 'edit-session': {
+            event.preventDefault();
+            const sid = parseInt(trigger.dataset.sessionid || '0', 10);
+            openSessionForm(classroomid, sid, trigger);
+            break;
+        }
+        case 'delete-session': {
+            event.preventDefault();
+            const sid = parseInt(trigger.dataset.sessionid || '0', 10);
+            const title = trigger.dataset.title || 'this session';
+            confirmDeleteSession(sid, title, trigger);
+            break;
+        }
+        case 'enrol-users':
+            event.preventDefault();
+            openEnrolUsersForm(classroomid, trigger);
+            break;
+        case 'unenrol-user': {
+            event.preventDefault();
+            const uid = parseInt(trigger.dataset.userid || '0', 10);
+            const name = trigger.dataset.name || 'this user';
+            confirmUnenrolUser(classroomid, uid, name, trigger);
+            break;
+        }
+    }
+};
+
 export const init = () => {
     const root = document.querySelector('[data-region="airpay-classroom"]') || document.body;
     if (root.dataset.airpayClassroomInit === '1') return;
     root.dataset.airpayClassroomInit = '1';
     root.addEventListener('click', handleClick);
+};
+
+export const initView = (classroomid) => {
+    const root = document.querySelector('[data-region="airpay-classroom-view"]') || document.body;
+    if (root.dataset.airpayClassroomViewInit === '1') return;
+    root.dataset.airpayClassroomViewInit = '1';
+    root.addEventListener('click', handleViewClick(classroomid));
 };

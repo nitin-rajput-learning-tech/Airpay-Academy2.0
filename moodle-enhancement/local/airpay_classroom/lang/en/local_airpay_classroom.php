@@ -51,3 +51,63 @@ $string['classroomcreated'] = 'Classroom created.';
 $string['classroomupdated'] = 'Classroom updated.';
 $string['classroomdeleted'] = 'Classroom deleted.';
 $string['classroomstatuschanged'] = 'Classroom status changed.';
+
+// G-02: View detail page + tabs.
+$string['view_classroom_title']      = 'Classroom: {$a}';
+$string['back_to_classrooms']        = 'Back to classrooms';
+$string['tab_overview']              = 'Overview';
+$string['tab_sessions']              = 'Sessions';
+$string['tab_users']                 = 'Users';
+$string['tab_attendance']            = 'Attendance';
+$string['no_description']            = 'No description set.';
+$string['updated']                   = 'Updated';
+
+// Sessions tab.
+$string['add_session']               = 'Add Session';
+$string['edit_session']              = 'Edit Session';
+$string['delete_session']            = 'Delete Session';
+$string['session_title']             = 'Session title';
+$string['session_date']              = 'Date';
+$string['session_time']              = 'Time';
+$string['session_starttime']         = 'Start time';
+$string['session_endtime']           = 'End time';
+$string['session_duration']          = 'Duration';
+$string['session_location']          = 'Session location';
+$string['session_trainer']           = 'Trainer (overrides classroom default)';
+$string['session_notes']             = 'Notes';
+$string['session_minutes']           = '{$a} min';
+$string['no_sessions']               = 'No sessions scheduled yet.';
+$string['session_created']           = 'Session scheduled.';
+$string['session_updated']           = 'Session updated.';
+$string['sessiondeleted']            = 'Session deleted.';
+$string['confirm_delete_session']    = 'Delete the session "{$a}"? This will also remove any attendance recorded for it. This cannot be undone.';
+$string['invalidsessiontime']        = 'Session start and end times are required.';
+$string['endbeforestart']            = 'Session end time must be after start time.';
+
+// Users / roster tab.
+$string['enrol_users']               = 'Enrol Users';
+$string['unenrol_user']              = 'Remove from classroom';
+$string['no_users_enrolled']         = 'No users enrolled in this classroom yet.';
+$string['users_enrolled_count']      = '{$a} users enrolled';
+$string['confirm_unenrol_user']      = 'Remove {$a} from this classroom? Their attendance for all sessions of this classroom will also be cleared.';
+$string['userunenrolled']            = 'User removed from classroom.';
+$string['users_enrolled_success']    = '{$a} user(s) enrolled.';
+
+// Attendance.
+$string['attendance_for_session']    = 'Attendance for: {$a}';
+$string['mark_all_present']          = 'Mark all present';
+$string['save_attendance']           = 'Save attendance';
+$string['attendance_status_absent']  = 'Absent';
+$string['attendance_status_present'] = 'Present';
+$string['attendance_status_late']    = 'Late';
+$string['attendance_status_excused'] = 'Excused';
+$string['attendancemarked']          = 'Attendance updated.';
+$string['attendance_summary']        = 'Present: {$a->present} · Late: {$a->late} · Excused: {$a->excused} · Absent: {$a->absent}';
+$string['no_attendance_yet']         = 'Roster is empty — enrol users first to mark attendance.';
+$string['invalidattendancestatus']   = 'Invalid attendance status.';
+$string['toomanymarks']              = 'Too many attendance records in one request (limit 1000).';
+
+// Bounds — note: do NOT add a `filterstoolong` translation here; existing
+// list_classrooms_test::test_json_filter_rejects_oversized_payload greps
+// for the [[filterstoolong]] placeholder (Moodle's missing-string fallback).
+// Refactor that test to check $e->errorcode before adding the translation.
