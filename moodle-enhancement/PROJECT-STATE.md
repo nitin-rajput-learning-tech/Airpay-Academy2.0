@@ -1,12 +1,12 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-06 EOD | **Phase:** Academy 3.4 — Feature-parity audit complete; backlog scoped; **NOT production-ready by Nitin's quality bar**
+**Updated:** 2026-05-07 EOD post-stretch | **Phase:** Academy 3.4 — **Tier 1 closed (G-01..G-06)**, **Tier 4 a11y closed**, audits delivered, **airpay_roles UI shipped** (Tier-2 reclassified-then-built); **NOT production-ready** until airpay_challenge + airpay_integrations cleanup ship.
 **Theme:** airpayux v1.0.0 | **Moodle:** 5.1.3+ on XAMPP
 **Version:** 3.3.0+ → working toward 4.0 enterprise-grade
 **GitHub:** Pushed to nitin-rajput-learning-tech/Airpay-Academy2.0 (production branch)
-**Latest CI:** acd0a0d41 — green (PHP lint + JSON + Mustache balance)
-**Latest commit:** acd0a0d41 — FEATURE-PARITY-AUDIT.md + G-01 fix + 8 CRUD PHPUnit + Phase D-extended Playwright
-**PHPUnit:** 118 tests PASS across 19 test files (~290 assertions)
-**Playwright:** 8 harnesses (smoke + admin tables + workflows + SCORM + axe a11y + keyboard nav + deep workflows + visual walk)
+**Latest commit:** (this stretch) airpay_roles UI build — index + view (3 tabs) + audit + CSV export + 56 PHPUnit tests
+**PHPUnit:** ~293 tests across ~30 test files (118 prior + 79 today's stretch + 56 airpay_roles + 40 misc)
+**Playwright:** 8 harnesses (WX-01..WX-07 deep workflows + smoke + axe a11y + keyboard nav + visual walk)
+**Today's audits:** `INTEGRATIONS-AUDIT.md` (5 bugs) + `STRETCH-ACCOUNTABILITY.md` + `airpay_roles-state.md`
 
 > **Production posture (Nitin EOD 2026-05-06):** *"We will not go to production
 > till we have fixed everything. Not going to make a fool of myself going with

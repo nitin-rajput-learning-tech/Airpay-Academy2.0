@@ -1,0 +1,59 @@
+{{!
+   Airpay Role Management — global audit log page.
+
+   Context:
+     can_export        bool
+     index_url         back link to roles index
+     exporturl         CSV export URL
+     audit_columns_json
+     audit_extra_args_json
+     roles_options[]   { value, label }
+     actions_options[] { value, label }
+}}
+<div class="ap-card mb-3">
+  <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+    <div>
+      <a href="{{ index_url }}" class="text-muted text-decoration-none small">
+        <i class="fa fa-chevron-left me-1"></i>{{# str }}heading_index, local_airpay_roles{{/ str }}
+      </a>
+      <h1 class="h3 m-0 mt-1">{{# str }}heading_audit, local_airpay_roles{{/ str }}</h1>
+    </div>
+    {{# can_export }}
+    <a href="{{ exporturl }}" class="btn btn-sm btn-outline-secondary">
+      <i class="fa fa-download me-1"></i>{{# str }}btn_export_csv, local_airpay_roles{{/ str }}
+    </a>
+    {{/ can_export }}
+  </div>
+
+  <form id="airpay-roles-audit-filter" class="row g-2 mb-3">
+    <div class="col-md-4">
+      <label for="airpay-roles-audit-role" class="form-label small mb-1">
+        {{# str }}audit_filter_role, local_airpay_roles{{/ str }}
+      </label>
+      <select id="airpay-roles-audit-role" class="form-select form-select-sm">
+        <option value="0">{{# str }}audit_filter_role_all, local_airpay_roles{{/ str }}</option>
+        {{# roles_options }}
+          <option value="{{ value }}">{{ label }}</option>
+        {{/ roles_options }}
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label for="airpay-roles-audit-action" class="form-label small mb-1">
+        {{# str }}audit_filter_action, local_airpay_roles{{/ str }}
+      </label>
+      <select id="airpay-roles-audit-action" class="form-select form-select-sm">
+        <option value="">{{# str }}audit_filter_action_all, local_airpay_roles{{/ str }}</option>
+        {{# actions_options }}
+          <option value="{{ value }}">{{ label }}</option>
+        {{/ actions_options }}
+      </select>
+    </div>
+  </form>
+
+  <div id="airpay-roles-audit-global-table"
+       data-region="airpay-datatable"
+       data-ws-name="local_airpay_roles_list_audit"
+       data-page-size="50"
+       data-columns-json="{{ audit_columns_json }}"
+       data-extra-args="{{ audit_extra_args_json }}"></div>
+</div>

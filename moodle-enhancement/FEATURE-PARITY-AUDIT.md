@@ -37,7 +37,7 @@
 | **skillrepository** | `airpay_skills` | 48% | 🟡 Partial — categories + skills CRUD works, missing skill levels + designation-skill assignment |
 | **notifications** | `airpay_notifications` | 42% | 🟡 Partial — generic rule engine present, missing 17 BizLMS-specific rule type handlers (cert reminder, course reminder, ILT feedback, etc.) |
 | **costcenter** | `airpay_org` | 60% | ✅ Matches — accesslib ported (Phase 0A), org tree + branding work, view + settings deferred |
-| **assignroles** | `airpay_roles` | 1% | ❌ Stub — only version.php and basic structure, no functional UI |
+| **assignroles** | `airpay_roles` | 80% | ✅ Functional — index + per-role view (3 tabs) + audit log + CSV export + 56 PHPUnit tests. Phase-2 follow-ups (bulk caps, role assignments tab, tenant-scoped roles) deferred. Shipped 2026-05-07. |
 | **ratings** | `airpay_ratings` | 8% | 🟡 Stub — DB tables shipped, no UI yet (Moodle core ratings used instead?) |
 | **myteam** | `airpay_manager` | 19% | 🟡 Partial — manager dashboard + member view work, missing approval workflow + course allocation UI |
 | **search** | `airpay_catalog` | 53% | ✅ Matches — learner catalog with filters + course detail working |
@@ -50,7 +50,7 @@
 | **request** | (none) | 0% | ⚫ Dropped — course request workflow removed |
 | **tags** | (none) | 0% | 🔵 Replaced by Moodle core tags |
 
-**Net status:** 14 / 22 BizLMS plugins have functioning airpay replacements. Of those 14, **2 fully match** (`airpay_org`, `airpay_catalog`), **11 are partial** (CRUD + listing works; advanced flows missing), **1 is stub** (`airpay_roles`).
+**Net status:** 14 / 22 BizLMS plugins have functioning airpay replacements. Of those 14, **2 fully match** (`airpay_org`, `airpay_catalog`), **12 are partial** (CRUD + listing works; advanced flows missing), **0 are stubs** (`airpay_roles` shipped 2026-05-07 EOD; reclassified from stub).
 
 ---
 
@@ -294,7 +294,7 @@
 | `airpay_privacy` | NEW + replaces `users/privacypolicy.php` | GDPR consents + privacy admin |
 | `airpay_ratings` | 🟡 Replaces `ratings` | 1 table + display layer (`rating_manager`: get_average, get_user_rating, render). **No submit UI** — Moodle core ratings handle user action. Display-only is intentional for cutover. See `TIER-2-STUB-AUDIT.md`. |
 | `airpay_reports` | NEW + wraps LearnerScript | Adds tenant scoping + run UI |
-| `airpay_roles` | ❌ Replaces `assignroles` | **STUB** (22 LOC) — version + 1 capability + comment "Build when custom role management is needed". DEFERRED until L&D specs role-UI requirements. See `TIER-2-STUB-AUDIT.md`. |
+| `airpay_roles` | ✅ Replaces `assignroles` | **FUNCTIONAL** — shipped 2026-05-07. Index page (paginated, archetype + search filters), per-role view with 3 tabs (Overview/Capabilities/Audit), append-only audit log, CSV export of capabilities + audit. 56 PHPUnit tests (24 manager + 32 WS). 28 files, ~1900 LOC. Phase 2 deferred: bulk cap toggle, role assignments tab, tenant-scoped roles. State card: `airpay_roles-state.md`. |
 
 ---
 

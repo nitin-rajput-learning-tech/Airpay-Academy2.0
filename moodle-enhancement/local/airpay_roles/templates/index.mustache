@@ -1,0 +1,50 @@
+{{!
+   Airpay Role Management — index page (listing).
+   Renders the page chrome + filter form + datatable mount point.
+   The actual rows come from local_airpay_roles_list_roles WS.
+}}
+<div class="ap-card mb-3">
+  <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+    <h1 class="h3 m-0">{{# str }}heading_index, local_airpay_roles{{/ str }}</h1>
+    <div class="btn-group">
+      {{# can_audit }}
+        <a href="{{ auditurl }}" class="btn btn-sm btn-outline-secondary">
+          <i class="fa fa-history me-1"></i>{{# str }}btn_audit_log, local_airpay_roles{{/ str }}
+        </a>
+      {{/ can_audit }}
+      {{# can_export }}
+        <a href="{{ exporturl }}" class="btn btn-sm btn-outline-secondary">
+          <i class="fa fa-download me-1"></i>{{# str }}btn_export_csv, local_airpay_roles{{/ str }}
+        </a>
+      {{/ can_export }}
+    </div>
+  </div>
+
+  <form id="airpay-roles-filter" class="row g-2 mb-3">
+    <div class="col-md-4">
+      <label for="airpay-roles-search" class="form-label small mb-1">
+        {{# str }}filter_search, local_airpay_roles{{/ str }}
+      </label>
+      <input type="search" id="airpay-roles-search" class="form-control form-control-sm"
+             placeholder="{{# str }}filter_search_placeholder, local_airpay_roles{{/ str }}">
+    </div>
+    <div class="col-md-3">
+      <label for="airpay-roles-archetype" class="form-label small mb-1">
+        {{# str }}filter_archetype, local_airpay_roles{{/ str }}
+      </label>
+      <select id="airpay-roles-archetype" class="form-select form-select-sm">
+        <option value="all">{{# str }}filter_archetype_all, local_airpay_roles{{/ str }}</option>
+        {{# archetypes }}
+          <option value="{{ key }}">{{ label }}</option>
+        {{/ archetypes }}
+      </select>
+    </div>
+  </form>
+
+  <div id="airpay-roles-table"
+       data-region="airpay-datatable"
+       data-ws-name="local_airpay_roles_list_roles"
+       data-page-size="25"
+       data-columns-json="{{ columns_json }}"
+       data-extra-args="{{ extra_args_json }}"></div>
+</div>
