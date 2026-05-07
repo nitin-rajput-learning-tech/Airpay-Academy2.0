@@ -14,11 +14,16 @@
         <h2 class="mb-1" style="font-weight: 700;">Training Evaluations</h2>
         <p class="text-muted mb-0">Build Kirkpatrick-level feedback forms — measure reaction, learning, behaviour, and business results.</p>
     </div>
-    {{#can_manage}}
-    <a href="#" class="btn btn-primary btn-sm" data-action="create-evaluation">
-        <i class="fa fa-plus fa-fw"></i> Create Evaluation
-    </a>
-    {{/can_manage}}
+    <div class="d-flex gap-2">
+        <a href="{{{analysis_url}}}" class="btn btn-outline-primary btn-sm">
+            <i class="fa fa-bar-chart fa-fw"></i> Analysis
+        </a>
+        {{#can_manage}}
+        <a href="#" class="btn btn-primary btn-sm" data-action="create-evaluation">
+            <i class="fa fa-plus fa-fw"></i> Create Evaluation
+        </a>
+        {{/can_manage}}
+    </div>
 </div>
 
 <div class="row mb-4">

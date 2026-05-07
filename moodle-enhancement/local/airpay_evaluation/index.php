@@ -48,6 +48,7 @@ $data = [
     'total_responses' => number_format($total_responses),
     'can_manage'      => $can_manage,
     'columns_json'    => s(json_encode($columns)),
+    'analysis_url'    => (new moodle_url('/local/airpay_evaluation/analysis.php'))->out(false),
 ];
 
 echo $OUTPUT->header();

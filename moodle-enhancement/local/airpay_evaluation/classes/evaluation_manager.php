@@ -574,4 +574,325 @@ class evaluation_manager {
                 break;
         }
     }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // FILTERED RESPONSES (G-05)
+    // ═══════════════════════════════════════════════════════════════════
+
+    /**
+     * Build a (where_sql, params) pair for response filtering.
+     *
+     * Recognised filters:
+     *   - evaluationid (int)
+     *   - date_from, date_to (unix ts) — bounds on timesubmitted
+     *   - courseid, programid, classroomid (int) — context match
+     *
+     * The caller composes these into their own SELECT.
+     *
+     * @param array $filters
+     * @return array [string $where, array $params]
+     */
+    public static function build_response_filter(array $filters): array {
+        global $DB;
+        $where  = ['1=1'];
+        $params = [];
+
+        if (!empty($filters['evaluationid'])) {
+            $where[] = 'r.evaluationid = :evid';
+            $params['evid'] = (int) $filters['evaluationid'];
+        }
+        if (!empty($filters['date_from'])) {
+            $where[] = 'r.timesubmitted >= :dfrom';
+            $params['dfrom'] = (int) $filters['date_from'];
+        }
+        if (!empty($filters['date_to'])) {
+            $where[] = 'r.timesubmitted <= :dto';
+            $params['dto'] = (int) $filters['date_to'];
+        }
+        if (!empty($filters['courseid'])) {
+            $where[] = 'r.courseid = :cid';
+            $params['cid'] = (int) $filters['courseid'];
+        }
+        if (!empty($filters['programid'])) {
+            $where[] = 'r.programid = :pid';
+            $params['pid'] = (int) $filters['programid'];
+        }
+        if (!empty($filters['classroomid'])) {
+            $where[] = 'r.classroomid = :crid';
+            $params['crid'] = (int) $filters['classroomid'];
+        }
+
+        return [implode(' AND ', $where), $params];
+    }
+
+    /**
+     * Count responses matching the filter set.
+     */
+    public static function count_responses_filtered(array $filters): int {
+        global $DB;
+        $dbman = $DB->get_manager();
+        if (!$dbman->table_exists(self::RESPONSES_TABLE)) {
+            return 0;
+        }
+        [$where, $params] = self::build_response_filter($filters);
+        return (int) $DB->count_records_sql(
+            "SELECT COUNT(*) FROM {" . self::RESPONSES_TABLE . "} r WHERE $where", $params);
+    }
+
+    /**
+     * Get filtered responses (raw) for a single evaluation. Caller still
+     * passes evaluationid in the filter; this enforces it for safety so
+     * cross-evaluation queries go through a different path.
+     *
+     * @return array  Each row: id, evaluationid, userid, courseid,
+     *                programid, classroomid, response_data (JSON), timesubmitted
+     */
+    public static function get_responses_filtered(array $filters,
+                                                  int $offset = 0, int $limit = 0): array {
+        global $DB;
+        $dbman = $DB->get_manager();
+        if (!$dbman->table_exists(self::RESPONSES_TABLE)) {
+            return [];
+        }
+        [$where, $params] = self::build_response_filter($filters);
+        $sql = "SELECT r.* FROM {" . self::RESPONSES_TABLE . "} r
+                 WHERE $where
+              ORDER BY r.timesubmitted DESC, r.id DESC";
+        return $DB->get_records_sql($sql, $params, $offset, $limit);
+    }
+
+    /**
+     * Get response stats for an evaluation, restricted by the same filter
+     * set used elsewhere (date range, course/program/classroom context).
+     *
+     * Same shape as get_response_stats() but driven by raw responses query.
+     */
+    public static function get_response_stats_filtered(int $evaluationid, array $filters): array {
+        global $DB;
+
+        // Force evaluationid into the filter.
+        $filters['evaluationid'] = $evaluationid;
+
+        $questions = self::get_questions($evaluationid);
+        $responses = self::get_responses_filtered($filters);
+
+        $stats = [];
+        foreach ($questions as $q) {
+            $stats[$q->id] = self::init_stats_bucket($q);
+        }
+        foreach ($responses as $r) {
+            $data = json_decode($r->response_data, true);
+            if (!is_array($data)) { continue; }
+            foreach ($data as $qid => $answer) {
+                $qid = (int) $qid;
+                if (!isset($stats[$qid])) { continue; }
+                if ($answer === null || $answer === '') { continue; }
+                self::accumulate_stat($stats[$qid], $questions[$qid] ?? null, $answer);
+            }
+        }
+        foreach ($stats as $qid => &$bucket) {
+            $q = $questions[$qid] ?? null;
+            if (!$q) { continue; }
+            self::finalise_stats($bucket, $q);
+        }
+        unset($bucket);
+
+        return [
+            'response_count' => count($responses),
+            'questions'      => $stats,
+        ];
+    }
+
+    /**
+     * Cross-evaluation Kirkpatrick aggregation. Buckets responses by the
+     * parent evaluation's `kirkpatrick_level` and returns:
+     *   per_level => [
+     *     evaluation_count,
+     *     response_count,
+     *     avg_rating (across all rating qs),
+     *     avg_nps   (across all nps qs),
+     *   ]
+     *
+     * Optional filter: same shape as build_response_filter (date_from,
+     * date_to, courseid, programid, classroomid).
+     */
+    public static function get_kirkpatrick_summary(array $filters = []): array {
+        global $DB;
+        $dbman = $DB->get_manager();
+        if (!$dbman->table_exists(self::TABLE)) {
+            return [];
+        }
+
+        $summary = [];
+        foreach (array_keys(self::KIRKPATRICK_LEVELS) as $level) {
+            $summary[$level] = [
+                'level'            => $level,
+                'level_label'      => self::KIRKPATRICK_LEVELS[$level],
+                'evaluation_count' => 0,
+                'response_count'   => 0,
+                'rating_sum'       => 0,
+                'rating_count'     => 0,
+                'avg_rating'       => 0,
+                'nps_sum'          => 0,
+                'nps_count'        => 0,
+                'avg_nps'          => 0,
+                'nps_promoters'    => 0,
+                'nps_detractors'   => 0,
+                'nps_score'        => 0,
+            ];
+        }
+
+        // Count evaluations per level (no filter — these are top-level).
+        $eval_counts = $DB->get_records_sql(
+            "SELECT kirkpatrick_level AS lvl, COUNT(*) AS c
+               FROM {" . self::TABLE . "}
+              GROUP BY kirkpatrick_level");
+        foreach ($eval_counts as $row) {
+            $lvl = (int) $row->lvl;
+            if (isset($summary[$lvl])) {
+                $summary[$lvl]['evaluation_count'] = (int) $row->c;
+            }
+        }
+
+        // Walk responses, decoding answers and accumulating per-question stats
+        // into the right Kirkpatrick bucket.
+        if (!$dbman->table_exists(self::RESPONSES_TABLE)) {
+            return $summary;
+        }
+
+        [$where, $params] = self::build_response_filter($filters);
+
+        $sql = "SELECT r.id, r.response_data, e.kirkpatrick_level
+                  FROM {" . self::RESPONSES_TABLE . "} r
+                  JOIN {" . self::TABLE . "} e ON e.id = r.evaluationid
+                 WHERE $where";
+        $rs = $DB->get_recordset_sql($sql, $params);
+
+        // Cache question types per evaluation to avoid N+1 lookups.
+        $qcache = [];
+        foreach ($rs as $row) {
+            $lvl = (int) $row->kirkpatrick_level;
+            if (!isset($summary[$lvl])) { continue; }
+            $summary[$lvl]['response_count']++;
+
+            $answers = json_decode($row->response_data, true);
+            if (!is_array($answers)) { continue; }
+
+            foreach ($answers as $qid => $answer) {
+                $qid = (int) $qid;
+                if (!isset($qcache[$qid])) {
+                    $qcache[$qid] = $DB->get_field(self::QUESTIONS_TABLE,
+                        'questiontype', ['id' => $qid]);
+                }
+                $qtype = $qcache[$qid] ?? null;
+                if (!$qtype) { continue; }
+
+                if ($qtype === 'rating') {
+                    $v = (int) $answer;
+                    if ($v >= 1 && $v <= 5) {
+                        $summary[$lvl]['rating_sum'] += $v;
+                        $summary[$lvl]['rating_count']++;
+                    }
+                } else if ($qtype === 'nps') {
+                    $v = (int) $answer;
+                    if ($v >= 0 && $v <= 10) {
+                        $summary[$lvl]['nps_sum'] += $v;
+                        $summary[$lvl]['nps_count']++;
+                        if ($v <= 6) {
+                            $summary[$lvl]['nps_detractors']++;
+                        } else if ($v >= 9) {
+                            $summary[$lvl]['nps_promoters']++;
+                        }
+                    }
+                }
+            }
+        }
+        $rs->close();
+
+        // Finalise averages + NPS scores per level.
+        foreach ($summary as $lvl => &$row) {
+            if ($row['rating_count'] > 0) {
+                $row['avg_rating'] = round($row['rating_sum'] / $row['rating_count'], 2);
+            }
+            if ($row['nps_count'] > 0) {
+                $row['avg_nps'] = round($row['nps_sum'] / $row['nps_count'], 1);
+                $promoter_pct  = ($row['nps_promoters']  / $row['nps_count']) * 100;
+                $detractor_pct = ($row['nps_detractors'] / $row['nps_count']) * 100;
+                $row['nps_score'] = round($promoter_pct - $detractor_pct);
+            }
+        }
+        unset($row);
+
+        return $summary;
+    }
+
+    /**
+     * Build a CSV-friendly row representation of a single response.
+     *
+     * The row has one column per question (in sortorder) plus context
+     * columns (Date, User, Email, Course, Program, Classroom).
+     * Anonymous evaluations leave User/Email blank.
+     *
+     * @param object $response  raw response row from DB
+     * @param array  $questions ordered question records (from get_questions)
+     * @param object $eval      parent evaluation record
+     * @return array  row of strings
+     */
+    public static function response_to_csv_row(object $response, array $questions,
+                                                object $eval): array {
+        global $DB;
+
+        $row = [];
+        $row[] = userdate((int) $response->timesubmitted, '%Y-%m-%d %H:%M');
+
+        if ((int) $eval->anonymous === 1 || (int) $response->userid === 0) {
+            $row[] = '(anonymous)';
+            $row[] = '';
+        } else {
+            $u = \core_user::get_user((int) $response->userid, 'id, firstname, lastname, email');
+            $row[] = $u ? fullname($u) : '(deleted user)';
+            $row[] = $u ? $u->email : '';
+        }
+
+        // Context columns.
+        $row[] = $response->courseid    ? (string) $response->courseid    : '';
+        $row[] = $response->programid   ? (string) $response->programid   : '';
+        $row[] = $response->classroomid ? (string) $response->classroomid : '';
+
+        // Per-question answers in the canonical sort order.
+        $answers = json_decode((string) $response->response_data, true);
+        if (!is_array($answers)) {
+            $answers = [];
+        }
+        foreach ($questions as $q) {
+            $a = $answers[$q->id] ?? '';
+            if (is_array($a)) {
+                $a = implode(' | ', array_map('strval', $a));
+            }
+            $row[] = (string) $a;
+        }
+
+        return $row;
+    }
+
+    /**
+     * CSV header row matching response_to_csv_row().
+     *
+     * @param array $questions ordered question records (from get_questions)
+     * @return array
+     */
+    public static function csv_header_row(array $questions): array {
+        $header = ['Submitted', 'Respondent', 'Email', 'Course ID', 'Program ID', 'Classroom ID'];
+        $i = 1;
+        foreach ($questions as $q) {
+            $label = 'Q' . $i . ': ' . trim((string) $q->questiontext);
+            // Trim down to keep column header readable.
+            if (mb_strlen($label) > 80) {
+                $label = mb_substr($label, 0, 77) . '...';
+            }
+            $header[] = $label;
+            $i++;
+        }
+        return $header;
+    }
 }

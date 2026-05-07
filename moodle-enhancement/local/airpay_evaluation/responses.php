@@ -1,5 +1,5 @@
 <?php
-// Admin response viewer — aggregate stats per question.
+// Admin response viewer — aggregate stats per question with filter form (G-05).
 //
 // @package    local_airpay_evaluation
 // @copyright  2026 Airpay Payment Services
@@ -12,6 +12,14 @@ $context = context_system::instance();
 require_capability('local/airpay_evaluation:manage', $context);
 
 $evaluationid = required_param('id', PARAM_INT);
+
+// Filter params (G-05).
+$date_from   = optional_param('date_from',   '', PARAM_RAW);
+$date_to     = optional_param('date_to',     '', PARAM_RAW);
+$courseid    = optional_param('courseid',    0,  PARAM_INT);
+$programid   = optional_param('programid',   0,  PARAM_INT);
+$classroomid = optional_param('classroomid', 0,  PARAM_INT);
+
 $evaluation = \local_airpay_evaluation\evaluation_manager::get($evaluationid);
 if (!$evaluation) {
     throw new moodle_exception('invalidevaluation', 'local_airpay_evaluation');
@@ -28,8 +36,32 @@ $PAGE->navbar->add(get_string('pluginname', 'local_airpay_evaluation'),
 $PAGE->navbar->add('Responses');
 
 $questions = \local_airpay_evaluation\evaluation_manager::get_questions($evaluationid);
-$stats = \local_airpay_evaluation\evaluation_manager::get_response_stats($evaluationid);
-$total_responses = \local_airpay_evaluation\evaluation_manager::count_responses($evaluationid);
+
+// Build the filter array (date strings → unix ts).
+$filters = ['evaluationid' => $evaluationid];
+$has_filter = false;
+if (!empty($date_from)) {
+    $ts = strtotime($date_from);
+    if ($ts !== false) { $filters['date_from'] = $ts; $has_filter = true; }
+}
+if (!empty($date_to)) {
+    $ts = strtotime($date_to . ' 23:59:59');
+    if ($ts !== false) { $filters['date_to'] = $ts; $has_filter = true; }
+}
+if ($courseid    > 0) { $filters['courseid']    = $courseid;    $has_filter = true; }
+if ($programid   > 0) { $filters['programid']   = $programid;   $has_filter = true; }
+if ($classroomid > 0) { $filters['classroomid'] = $classroomid; $has_filter = true; }
+
+// When no filter is set, use the cheaper unfiltered stats (it's a simpler query).
+if ($has_filter) {
+    $filtered = \local_airpay_evaluation\evaluation_manager::get_response_stats_filtered(
+        $evaluationid, $filters);
+    $stats           = $filtered['questions'];
+    $total_responses = $filtered['response_count'];
+} else {
+    $stats           = \local_airpay_evaluation\evaluation_manager::get_response_stats($evaluationid);
+    $total_responses = \local_airpay_evaluation\evaluation_manager::count_responses($evaluationid);
+}
 
 // Build template data per question with type-aware presentation.
 $question_rows = [];
@@ -53,7 +85,6 @@ foreach ($questions as $i => $q) {
     if ($q->questiontype === 'rating' && $bucket['count'] > 0) {
         $row['avg'] = $bucket['avg'];
         $row['avg_pct'] = round(($bucket['avg'] / 5) * 100);
-        // Distribution as bar chart data.
         $dist_rows = [];
         foreach ($bucket['distribution'] as $val => $count) {
             $pct = $bucket['count'] > 0 ? round(($count / $bucket['count']) * 100) : 0;
@@ -111,16 +142,42 @@ foreach ($questions as $i => $q) {
     $question_rows[] = $row;
 }
 
+// Build the export URL preserving filters.
+$export_params = ['id' => $evaluationid];
+if (!empty($date_from))   { $export_params['date_from']   = $date_from; }
+if (!empty($date_to))     { $export_params['date_to']     = $date_to; }
+if ($courseid    > 0)     { $export_params['courseid']    = $courseid; }
+if ($programid   > 0)     { $export_params['programid']   = $programid; }
+if ($classroomid > 0)     { $export_params['classroomid'] = $classroomid; }
+$export_url = (new moodle_url('/local/airpay_evaluation/exportcsv.php', $export_params))->out(false);
+
+// Reset URL clears all filters.
+$reset_url = (new moodle_url('/local/airpay_evaluation/responses.php',
+    ['id' => $evaluationid]))->out(false);
+
 $data = [
     'evaluationid'    => $evaluation->id,
     'name'            => format_string($evaluation->name),
     'description'     => format_string($evaluation->description ?? ''),
     'is_anonymous'    => (bool) $evaluation->anonymous,
+    'kirkpatrick_label' => \local_airpay_evaluation\evaluation_manager::KIRKPATRICK_LEVELS[(int) $evaluation->kirkpatrick_level] ?? '',
     'total_responses' => $total_responses,
     'has_responses'   => ($total_responses > 0),
     'questions'       => $question_rows,
     'has_questions'   => !empty($question_rows),
     'backurl'         => (new moodle_url('/local/airpay_evaluation/index.php'))->out(false),
+    'export_url'      => $export_url,
+    'reset_url'       => $reset_url,
+
+    // Filter form context.
+    'filter_action_url' => (new moodle_url('/local/airpay_evaluation/responses.php',
+        ['id' => $evaluationid]))->out(false),
+    'filter_date_from' => s($date_from),
+    'filter_date_to'   => s($date_to),
+    'filter_courseid'  => $courseid > 0 ? $courseid : '',
+    'filter_programid' => $programid > 0 ? $programid : '',
+    'filter_classroomid' => $classroomid > 0 ? $classroomid : '',
+    'has_filter'       => $has_filter,
 ];
 
 echo $OUTPUT->header();

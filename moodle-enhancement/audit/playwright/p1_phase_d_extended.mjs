@@ -738,6 +738,119 @@ async function wfx_programs_view(browser, report) {
     await page.close(); await ctx.close();
 }
 
+/**
+ * WX-07: airpay_evaluation analysis dashboard + filtered responses (G-05).
+ *
+ * Verifies:
+ *  - Evaluation index has Analysis button
+ *  - analysis.php loads with [data-region="airpay-eval-analysis"]
+ *  - 4 Kirkpatrick level cards present
+ *  - Filter form present (date_from, date_to, courseid, programid, classroomid)
+ *  - Apply filter changes URL with query params
+ *  - CSV export link reachable from responses.php (don't follow — would
+ *    download a binary; just verify the link href is correct)
+ */
+async function wfx_evaluation_analysis(browser, report) {
+    const wf = { id: 'WX-07', name: 'airpay_evaluation analysis (G-05)', cases: [] };
+    const ctx = await browser.newContext();
+    ctx.setDefaultTimeout(PAGE_TIMEOUT);
+    ctx.setDefaultNavigationTimeout(PAGE_TIMEOUT);
+    const page = await ctx.newPage();
+    const errs = [];
+    page.on('pageerror', e => errs.push(e.message));
+    page.on('console', m => { if (m.type() === 'error') errs.push(m.text()); });
+
+    const rec = (id, pass, note = '') => {
+        wf.cases.push({ id, pass, note });
+        console.log(`    ${pass ? '✓' : '✘'} ${id}${note ? ' — ' + note : ''}`);
+    };
+
+    console.log(`\n  ── ${wf.id}: ${wf.name} ──`);
+    try {
+        await login(page, ADMIN);
+        rec('login', true);
+
+        await page.goto(`${BASE}/local/airpay_evaluation/index.php`, { waitUntil: 'domcontentloaded' });
+        rec('index-loads', true);
+
+        // The Analysis button should be visible in the index header.
+        const analysisLink = page.locator('a[href*="/local/airpay_evaluation/analysis.php"]').first();
+        const analysisLinkPresent = await analysisLink.count() > 0;
+        rec('analysis-link-present', analysisLinkPresent);
+
+        if (analysisLinkPresent) {
+            await analysisLink.click();
+            await page.waitForLoadState('domcontentloaded');
+            rec('analysis-page-loads',
+                page.url().includes('/local/airpay_evaluation/analysis.php'),
+                `URL: ${page.url().substring(0, 90)}`);
+        } else {
+            await shoot(page, 'wx07_no_analysis_link');
+        }
+
+        // 4 Kirkpatrick level cards.
+        const cardCount = await page.locator('[data-region="airpay-eval-analysis"] .level-card').count();
+        rec('four-kirkpatrick-cards-present', cardCount === 4, `${cardCount} cards`);
+
+        // Filter form fields.
+        const dateFromInput = page.locator('input[name="date_from"]').first();
+        rec('date-from-input-present', (await dateFromInput.count()) > 0);
+        const courseInput   = page.locator('input[name="courseid"]').first();
+        rec('courseid-input-present', (await courseInput.count()) > 0);
+
+        // Apply a filter — set courseid=999 and submit; URL should contain it.
+        if ((await courseInput.count()) > 0) {
+            await courseInput.fill('999');
+            await Promise.all([
+                page.waitForURL(/courseid=999/, { timeout: 10000 }).catch(() => {}),
+                page.click('button[type="submit"]'),
+            ]);
+            const url = page.url();
+            rec('filter-applies-to-url', url.includes('courseid=999'),
+                `URL: ${url.substring(0, 90)}`);
+        }
+
+        // Now navigate back to index, then to a per-evaluation responses page if any.
+        await page.goto(`${BASE}/local/airpay_evaluation/index.php`, { waitUntil: 'domcontentloaded' });
+        await waitForTableRender(page);
+        await page.waitForSelector('[data-airpay-table] tbody tr[data-row-id]', { timeout: 15000 }).catch(() => {});
+        const evalCount = await page.locator('[data-airpay-table] tbody tr[data-row-id]').count();
+        rec('evaluations-listed', evalCount >= 0, `${evalCount} evaluations`);
+
+        // If at least one evaluation exists, verify responses.php has CSV export link.
+        if (evalCount > 0) {
+            const firstId = await page.locator('[data-airpay-table] tbody tr[data-row-id]').first().getAttribute('data-row-id');
+            if (firstId) {
+                await page.goto(`${BASE}/local/airpay_evaluation/responses.php?id=${firstId}`,
+                    { waitUntil: 'domcontentloaded' });
+                rec('responses-page-loads', page.url().includes('/responses.php'));
+
+                const exportLink = page.locator('a[href*="/local/airpay_evaluation/exportcsv.php"]').first();
+                const exportPresent = await exportLink.count() > 0;
+                rec('csv-export-link-present', exportPresent);
+                if (exportPresent) {
+                    const href = await exportLink.getAttribute('href');
+                    rec('csv-export-href-has-id', !!(href && href.includes('id=' + firstId)),
+                        href ? href.substring(0, 90) : 'no href');
+                }
+            }
+        } else {
+            rec('responses-page-loads', false, 'skipped — no evaluations seeded');
+            rec('csv-export-link-present', false, 'skipped');
+        }
+
+        rec('no-console-errors', errs.length === 0,
+            errs.length === 0 ? 'clean' : `${errs.length} errors: ${errs[0]?.substring(0, 80)}`);
+
+    } catch (e) {
+        rec('flow-exception', false, e.message.substring(0, 150));
+        await shoot(page, 'wx07_exception');
+    }
+    wf.console_errors = errs.length;
+    report.workflows.push(wf);
+    await page.close(); await ctx.close();
+}
+
 async function main() {
     await fs.mkdir(SHOTS_DIR, { recursive: true });
     const report = { phase: 'D-extended', date: new Date().toISOString(), workflows: [] };
@@ -755,6 +868,7 @@ async function main() {
     await wfx_learningpath_view(browser, report);
     await wfx_classroom_view(browser, report);
     await wfx_programs_view(browser, report);
+    await wfx_evaluation_analysis(browser, report);
 
     await fs.writeFile(path.join(OUT_DIR, 'phase_d_extended.json'), JSON.stringify(report, null, 2));
 

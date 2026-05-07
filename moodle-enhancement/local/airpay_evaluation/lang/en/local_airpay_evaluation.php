@@ -79,6 +79,25 @@ $string['questionupdated'] = 'Question updated.';
 $string['questiondeleted'] = 'Question deleted.';
 $string['orderupdated'] = 'Question order saved.';
 
+// G-05: Analysis dashboard + filtered responses + CSV export.
+$string['analysis_title']         = 'Evaluation Analysis';
+$string['analysis_subtitle']      = 'Cross-evaluation Kirkpatrick aggregation';
+$string['filter_from']            = 'Submitted from';
+$string['filter_to']              = 'Submitted to';
+$string['filter_courseid']        = 'Course ID';
+$string['filter_programid']       = 'Program ID';
+$string['filter_classroomid']     = 'Classroom ID';
+$string['filter_apply']           = 'Apply filters';
+$string['filter_clear']           = 'Clear';
+$string['filter_subset_hint']     = 'Stats below reflect the filtered subset';
+$string['export_csv']             = 'Export CSV';
+$string['no_responses_filtered']  = 'No responses match the current filter';
+$string['no_responses_filtered_help'] = 'Adjust the date range or context filters above, or wait for learners to submit evaluations.';
+$string['avg_rating']             = 'Avg rating';
+$string['nps_score']              = 'NPS score';
+$string['stat_evaluations']       = 'Evaluations';
+$string['stat_responses']         = 'Responses';
+
 // Response submission (learner-facing) and admin viewer.
 $string['viewresponses'] = 'View Responses';
 $string['evaluationnotactive'] = 'This evaluation is not currently accepting responses.';
