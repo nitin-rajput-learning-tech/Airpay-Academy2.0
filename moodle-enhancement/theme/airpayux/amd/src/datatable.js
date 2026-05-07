@@ -51,6 +51,21 @@ class Datatable {
         // the page on the other end is responsible for tenant scoping the CSV.
         this.exportUrl = root.dataset.exportUrl || '';
         this.exportLabel = root.dataset.exportLabel || 'Export CSV';
+        // Opt-in extra args merged into every WS call. Used by detail-page tables
+        // that need to pass contextual IDs (e.g. {pathid: 42} on a learning path
+        // detail page). Unlike `filters` which the user can change at runtime,
+        // these are static for the lifetime of this instance.
+        this.extraArgs = {};
+        if (root.dataset.extraArgs) {
+            try {
+                const parsed = JSON.parse(root.dataset.extraArgs);
+                if (parsed && typeof parsed === 'object') {
+                    this.extraArgs = parsed;
+                }
+            } catch (e) {
+                // Bad JSON — ignore. The fetch will simply not have these args.
+            }
+        }
 
         const firstSortable = this.columns.find(c => c.sortable);
         this.state = {
@@ -273,7 +288,10 @@ class Datatable {
         // a11y: announce that content is updating (screen readers will defer until aria-busy="false").
         this.root.setAttribute('aria-busy', 'true');
 
+        // Static extras (set via data-extra-args) merge in FIRST so user-controlled
+        // search/sort/page can't accidentally override required context IDs.
         const args = {
+            ...this.extraArgs,
             search: this.state.search,
             sort: this.state.sort,
             sortdir: this.state.sortdir,

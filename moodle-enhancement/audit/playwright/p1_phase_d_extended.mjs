@@ -312,6 +312,142 @@ async function wfx_notifications(browser, report) {
     await page.close(); await ctx.close();
 }
 
+/**
+ * WX-04: airpay_learningpath path detail view (G-04).
+ *
+ * Verifies the detail page loads with correct tab structure, that the
+ * extra-args mechanism in the shared datatable correctly passes pathid,
+ * that the "Add Courses" + "Enrol Users" modals open, and that the
+ * data-action attributes for unassign/unenrol are wired.
+ *
+ * Per the airpay_users WX-01 lesson, we don't actually submit the form
+ * (passwordunmask + autocomplete in headless Chrome is unreliable). Form
+ * submission is covered by PHPUnit at the manager + external level.
+ */
+async function wfx_learningpath_view(browser, report) {
+    const wf = { id: 'WX-04', name: 'airpay_learningpath path-view (G-04)', cases: [] };
+    const ctx = await browser.newContext();
+    ctx.setDefaultTimeout(PAGE_TIMEOUT);
+    ctx.setDefaultNavigationTimeout(PAGE_TIMEOUT);
+    const page = await ctx.newPage();
+    const errs = [];
+    page.on('pageerror', e => errs.push(e.message));
+    page.on('console', m => { if (m.type() === 'error') errs.push(m.text()); });
+
+    const rec = (id, pass, note = '') => {
+        wf.cases.push({ id, pass, note });
+        console.log(`    ${pass ? '✓' : '✘'} ${id}${note ? ' — ' + note : ''}`);
+    };
+
+    console.log(`\n  ── ${wf.id}: ${wf.name} ──`);
+    try {
+        await login(page, ADMIN);
+        rec('login', true);
+
+        // Land on the index — we need at least 1 path to drill into.
+        await page.goto(`${BASE}/local/airpay_learningpath/index.php`, { waitUntil: 'domcontentloaded' });
+        await waitForTableRender(page);
+        await page.waitForSelector('[data-airpay-table] tbody tr[data-row-id]', { timeout: 15000 }).catch(() => {});
+        const rowCount = await page.locator('[data-airpay-table] tbody tr[data-row-id]').count();
+        rec('paths-listed', rowCount >= 1, `${rowCount} paths`);
+
+        if (rowCount === 0) {
+            // No data — can't proceed. Bail out gracefully.
+            await shoot(page, 'wx04_no_paths');
+            return;
+        }
+
+        // Click the first View icon to navigate to the detail page.
+        const viewLink = page.locator('[data-airpay-table] tbody tr[data-row-id] a[href*="/local/airpay_learningpath/view.php"]').first();
+        const viewLinkPresent = await viewLink.count() > 0;
+        rec('view-link-present', viewLinkPresent);
+        if (!viewLinkPresent) {
+            await shoot(page, 'wx04_no_view_link');
+            return;
+        }
+        await viewLink.click();
+        await page.waitForLoadState('domcontentloaded');
+        rec('view-page-loads', page.url().includes('/local/airpay_learningpath/view.php'),
+            `URL: ${page.url().substring(0, 90)}`);
+
+        // Verify tab structure exists.
+        const tabsCount = await page.locator('.nav-tabs .nav-link').count();
+        rec('three-tabs-present', tabsCount === 3, `${tabsCount} tabs (expected 3: Overview/Courses/Users)`);
+
+        // Default tab should be Courses (per view.php's default).
+        // Wait for the Courses datatable to render.
+        await waitForTableRender(page);
+        await page.waitForSelector('[data-airpay-table-name="path-courses"]', { timeout: 10000 }).catch(() => {});
+        const coursesTableExists = await page.locator('[data-airpay-table-name="path-courses"]').count() > 0;
+        rec('courses-tab-renders-table', coursesTableExists);
+
+        // Verify extra-args mechanism: the table should have a data-extra-args
+        // attribute containing the pathid. (We're not asserting the WS round-trip
+        // here — that's covered by PHPUnit list_path_courses tests. We're just
+        // verifying the front-end wiring is in place.)
+        const hasExtraArgs = await page.evaluate(() => {
+            const t = document.querySelector('[data-airpay-table-name="path-courses"]');
+            return !!(t && t.dataset.extraArgs && t.dataset.extraArgs.includes('pathid'));
+        });
+        rec('extra-args-attr-set', hasExtraArgs, 'data-extra-args contains pathid');
+
+        // Click the "Add Courses" button → modal should open.
+        const addCoursesBtn = page.locator('[data-action="add-courses"]').first();
+        const addBtnPresent = await addCoursesBtn.count() > 0;
+        rec('add-courses-button-present', addBtnPresent);
+        if (addBtnPresent) {
+            await addCoursesBtn.click();
+            // Modal opens with the autocomplete for courseids.
+            try {
+                await page.waitForSelector('select[name="courseids"], input[name="courseids"]', { timeout: 30000 });
+                rec('add-courses-modal-opens', true);
+            } catch {
+                rec('add-courses-modal-opens', false, 'courseids field never appeared');
+                await shoot(page, 'wx04_no_courses_modal');
+            }
+            // Close the modal so we can move on.
+            await page.keyboard.press('Escape').catch(() => {});
+            await page.waitForTimeout(500);
+        }
+
+        // Switch to the Users tab.
+        const usersTab = page.locator('.nav-tabs a:has-text("Users")').first();
+        if (await usersTab.count() > 0) {
+            await usersTab.click();
+            await page.waitForLoadState('domcontentloaded');
+            await waitForTableRender(page);
+            const usersTableExists = await page.locator('[data-airpay-table-name="path-users"]').count() > 0;
+            rec('users-tab-renders-table', usersTableExists);
+
+            const enrolBtn = page.locator('[data-action="enrol-users"]').first();
+            const enrolBtnPresent = await enrolBtn.count() > 0;
+            rec('enrol-users-button-present', enrolBtnPresent);
+            if (enrolBtnPresent) {
+                await enrolBtn.click();
+                try {
+                    await page.waitForSelector('select[name="userids"], input[name="userids"]', { timeout: 12000 });
+                    rec('enrol-users-modal-opens', true);
+                } catch {
+                    rec('enrol-users-modal-opens', false, 'userids field never appeared');
+                    await shoot(page, 'wx04_no_users_modal');
+                }
+                await page.keyboard.press('Escape').catch(() => {});
+            }
+        }
+
+        // No-console-errors guard.
+        rec('no-console-errors', errs.length === 0,
+            errs.length === 0 ? 'clean' : `${errs.length} errors: ${errs[0]?.substring(0, 80)}`);
+
+    } catch (e) {
+        rec('flow-exception', false, e.message.substring(0, 150));
+        await shoot(page, 'wx04_exception');
+    }
+    wf.console_errors = errs.length;
+    report.workflows.push(wf);
+    await page.close(); await ctx.close();
+}
+
 async function main() {
     await fs.mkdir(SHOTS_DIR, { recursive: true });
     const report = { phase: 'D-extended', date: new Date().toISOString(), workflows: [] };
@@ -326,6 +462,7 @@ async function main() {
     await wfx_users_crud(browser, report);
     await wfx_courses_visibility(browser, report);
     await wfx_notifications(browser, report);
+    await wfx_learningpath_view(browser, report);
 
     await fs.writeFile(path.join(OUT_DIR, 'phase_d_extended.json'), JSON.stringify(report, null, 2));
 

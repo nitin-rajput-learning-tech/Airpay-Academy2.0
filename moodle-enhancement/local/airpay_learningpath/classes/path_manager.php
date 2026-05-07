@@ -237,4 +237,362 @@ class path_manager {
 
         return true;
     }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Course assignment (G-04)
+    // Manage which courses are part of this learning path, and their order.
+    // ═══════════════════════════════════════════════════════════════════
+
+    /** Status values for path-user enrolment. */
+    public const ENROL_NEW        = 0;
+    public const ENROL_INPROGRESS = 1;
+    public const ENROL_COMPLETED  = 2;
+
+    /**
+     * Assign one or more courses to a learning path. Idempotent — courses already
+     * on the path are silently skipped (the UNIQUE (pathid, courseid) index
+     * enforces this at the DB level).
+     *
+     * Newly-added courses go to the END of the existing sort order. Caller can
+     * reorder afterwards via reorder_courses().
+     *
+     * @param int   $pathid
+     * @param int[] $courseids
+     * @return int  Count of courses actually inserted (excluding skips).
+     * @throws \moodle_exception  If path doesn't exist.
+     */
+    public static function assign_courses(int $pathid, array $courseids): int {
+        global $DB;
+
+        $DB->get_record(self::TABLE, ['id' => $pathid], 'id', MUST_EXIST);
+
+        if (empty($courseids)) {
+            return 0;
+        }
+
+        // Validate that course IDs exist (avoid foreign key violation noise).
+        // Skip site course (id=1) — it's the global Moodle "site" pseudo-course
+        // and not a learner-facing course.
+        [$insql, $inparams] = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED, 'cid');
+        $valid_courses = $DB->get_fieldset_select('course',
+            'id',
+            "id $insql AND id > 1",
+            $inparams);
+
+        if (empty($valid_courses)) {
+            return 0;
+        }
+
+        // Find the current max sortorder so we can append.
+        $max_sort = (int) $DB->get_field_sql(
+            "SELECT COALESCE(MAX(sortorder), -1) FROM {" . self::COURSES_TABLE . "} WHERE pathid = :p",
+            ['p' => $pathid]);
+
+        // Find courses already assigned (so we can skip them and report accurate count).
+        [$insql2, $inparams2] = $DB->get_in_or_equal($valid_courses, SQL_PARAMS_NAMED, 'vcid');
+        $inparams2['p'] = $pathid;
+        $already_assigned = $DB->get_fieldset_select(self::COURSES_TABLE,
+            'courseid',
+            "pathid = :p AND courseid $insql2",
+            $inparams2);
+        $already_assigned = array_flip(array_map('intval', $already_assigned));
+
+        $inserted = 0;
+        $now = time();
+        $sortorder = $max_sort + 1;
+
+        $transaction = $DB->start_delegated_transaction();
+        try {
+            foreach ($valid_courses as $courseid) {
+                $cid = (int) $courseid;
+                if (isset($already_assigned[$cid])) {
+                    continue;
+                }
+                $DB->insert_record(self::COURSES_TABLE, (object) [
+                    'pathid'      => $pathid,
+                    'courseid'    => $cid,
+                    'sortorder'   => $sortorder++,
+                    'mandatory'   => 1,
+                    'timecreated' => $now,
+                ]);
+                $inserted++;
+            }
+            $transaction->allow_commit();
+        } catch (\Throwable $e) {
+            $transaction->rollback($e);
+        }
+
+        // Touch the parent path's timemodified so list views show the change.
+        if ($inserted > 0) {
+            $DB->set_field(self::TABLE, 'timemodified', $now, ['id' => $pathid]);
+        }
+
+        return $inserted;
+    }
+
+    /**
+     * Remove a single course from a learning path.
+     *
+     * Note: enrolled users keep their progress on that course (we don't touch
+     * mdl_course_completions). Users assigned to the path stay assigned —
+     * just one less mandatory course in their sequence.
+     *
+     * @param int $pathid
+     * @param int $courseid
+     * @return bool  True if removed; false if it wasn't on the path.
+     * @throws \moodle_exception  If path doesn't exist.
+     */
+    public static function unassign_course(int $pathid, int $courseid): bool {
+        global $DB;
+
+        $DB->get_record(self::TABLE, ['id' => $pathid], 'id', MUST_EXIST);
+
+        $existed = $DB->record_exists(self::COURSES_TABLE,
+            ['pathid' => $pathid, 'courseid' => $courseid]);
+
+        if (!$existed) {
+            return false;
+        }
+
+        $DB->delete_records(self::COURSES_TABLE,
+            ['pathid' => $pathid, 'courseid' => $courseid]);
+        $DB->set_field(self::TABLE, 'timemodified', time(), ['id' => $pathid]);
+
+        return true;
+    }
+
+    /**
+     * Reorder the courses within a path. Pass an ordered array of course IDs;
+     * each course's sortorder is set to its index in the array (0-based).
+     *
+     * Course IDs in the array but NOT on the path are ignored. Courses on the
+     * path but NOT in the array keep their existing sortorder (no change).
+     *
+     * @param int   $pathid
+     * @param int[] $ordered_course_ids
+     * @return int  Count of rows updated
+     * @throws \moodle_exception  If path doesn't exist.
+     */
+    public static function reorder_courses(int $pathid, array $ordered_course_ids): int {
+        global $DB;
+
+        $DB->get_record(self::TABLE, ['id' => $pathid], 'id', MUST_EXIST);
+
+        if (empty($ordered_course_ids)) {
+            return 0;
+        }
+
+        $updated = 0;
+        $transaction = $DB->start_delegated_transaction();
+        try {
+            $sortorder = 0;
+            foreach ($ordered_course_ids as $courseid) {
+                $cid = (int) $courseid;
+                $existing = $DB->get_record(self::COURSES_TABLE,
+                    ['pathid' => $pathid, 'courseid' => $cid], 'id, sortorder');
+                if (!$existing) {
+                    continue;
+                }
+                if ((int) $existing->sortorder !== $sortorder) {
+                    $DB->set_field(self::COURSES_TABLE, 'sortorder', $sortorder,
+                        ['id' => $existing->id]);
+                    $updated++;
+                }
+                $sortorder++;
+            }
+            $transaction->allow_commit();
+        } catch (\Throwable $e) {
+            $transaction->rollback($e);
+        }
+
+        if ($updated > 0) {
+            $DB->set_field(self::TABLE, 'timemodified', time(), ['id' => $pathid]);
+        }
+
+        return $updated;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // User enrolment (G-04)
+    // Assign learners to a learning path. Status starts at NEW; cron will
+    // promote to INPROGRESS once first course completion is detected, and
+    // to COMPLETED once all mandatory courses are finished.
+    // ═══════════════════════════════════════════════════════════════════
+
+    /**
+     * Bulk-enrol users in a learning path. Idempotent — users already enrolled
+     * are silently skipped (UNIQUE (pathid, userid) index enforces).
+     *
+     * @param int   $pathid
+     * @param int[] $userids
+     * @return int  Count of users actually enrolled (excluding already-enrolled)
+     * @throws \moodle_exception  If path doesn't exist.
+     */
+    public static function enrol_users(int $pathid, array $userids): int {
+        global $DB;
+
+        $DB->get_record(self::TABLE, ['id' => $pathid], 'id', MUST_EXIST);
+
+        if (empty($userids)) {
+            return 0;
+        }
+
+        // Validate user IDs (must exist + not deleted + not system/guest).
+        [$insql, $inparams] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'uid');
+        $valid_users = $DB->get_fieldset_select('user',
+            'id',
+            "id $insql AND deleted = 0 AND id > 2",
+            $inparams);
+
+        if (empty($valid_users)) {
+            return 0;
+        }
+
+        // Find users already enrolled.
+        [$insql2, $inparams2] = $DB->get_in_or_equal($valid_users, SQL_PARAMS_NAMED, 'vuid');
+        $inparams2['p'] = $pathid;
+        $already_enrolled = $DB->get_fieldset_select(self::USERS_TABLE,
+            'userid',
+            "pathid = :p AND userid $insql2",
+            $inparams2);
+        $already_enrolled = array_flip(array_map('intval', $already_enrolled));
+
+        $enrolled = 0;
+        $now = time();
+
+        $transaction = $DB->start_delegated_transaction();
+        try {
+            foreach ($valid_users as $userid) {
+                $uid = (int) $userid;
+                if (isset($already_enrolled[$uid])) {
+                    continue;
+                }
+                $DB->insert_record(self::USERS_TABLE, (object) [
+                    'pathid'      => $pathid,
+                    'userid'      => $uid,
+                    'status'      => self::ENROL_NEW,
+                    'timecreated' => $now,
+                ]);
+                $enrolled++;
+            }
+            $transaction->allow_commit();
+        } catch (\Throwable $e) {
+            $transaction->rollback($e);
+        }
+
+        if ($enrolled > 0) {
+            $DB->set_field(self::TABLE, 'timemodified', $now, ['id' => $pathid]);
+        }
+
+        return $enrolled;
+    }
+
+    /**
+     * Unenrol a single user from a learning path.
+     *
+     * Note: This does NOT unenrol the user from the underlying Moodle courses.
+     * Their enrolment in those courses (if any) survives. Their progress in
+     * those courses survives. Only the path-level association is removed.
+     *
+     * @param int $pathid
+     * @param int $userid
+     * @return bool  True if unenrolled; false if user wasn't on the path.
+     * @throws \moodle_exception  If path doesn't exist.
+     */
+    public static function unenrol_user(int $pathid, int $userid): bool {
+        global $DB;
+
+        $DB->get_record(self::TABLE, ['id' => $pathid], 'id', MUST_EXIST);
+
+        $existed = $DB->record_exists(self::USERS_TABLE,
+            ['pathid' => $pathid, 'userid' => $userid]);
+
+        if (!$existed) {
+            return false;
+        }
+
+        $DB->delete_records(self::USERS_TABLE,
+            ['pathid' => $pathid, 'userid' => $userid]);
+        $DB->set_field(self::TABLE, 'timemodified', time(), ['id' => $pathid]);
+
+        return true;
+    }
+
+    /**
+     * Get the users enrolled in a learning path with their progress + names.
+     * Returns an array of objects suitable for the shared datatable.
+     *
+     * Supports search (firstname/lastname/email) + pagination.
+     *
+     * @param int    $pathid
+     * @param string $search    Term to filter by (LIKE-escaped)
+     * @param int    $page      0-indexed
+     * @param int    $perpage
+     * @return array  ['total' => int, 'rows' => array]
+     */
+    public static function get_path_users(int $pathid, string $search = '',
+                                           int $page = 0, int $perpage = 25): array {
+        global $DB;
+
+        $where = ['lpu.pathid = :pid', 'u.deleted = 0'];
+        $params = ['pid' => $pathid];
+
+        if (!empty($search)) {
+            $term = '%' . $DB->sql_like_escape($search) . '%';
+            $where[] = '(' .
+                $DB->sql_like('u.firstname', ':s1', false) . ' OR ' .
+                $DB->sql_like('u.lastname',  ':s2', false) . ' OR ' .
+                $DB->sql_like('u.email',     ':s3', false) .
+            ')';
+            $params['s1'] = $term;
+            $params['s2'] = $term;
+            $params['s3'] = $term;
+        }
+        $wheresql = implode(' AND ', $where);
+
+        $total = (int) $DB->count_records_sql(
+            "SELECT COUNT(*)
+               FROM {" . self::USERS_TABLE . "} lpu
+               JOIN {user} u ON u.id = lpu.userid
+              WHERE $wheresql", $params);
+
+        $rows = [];
+        if ($total > 0) {
+            $records = $DB->get_records_sql(
+                "SELECT lpu.id AS rowid, lpu.userid, lpu.status, lpu.timecreated, lpu.timecompleted,
+                        u.firstname, u.lastname, u.email, u.open_employeeid, u.open_designation
+                   FROM {" . self::USERS_TABLE . "} lpu
+                   JOIN {user} u ON u.id = lpu.userid
+                  WHERE $wheresql
+               ORDER BY u.lastname ASC, u.firstname ASC, lpu.id ASC",
+                $params, $page * $perpage, $perpage);
+
+            $statusmap = [
+                self::ENROL_NEW        => 'Enrolled',
+                self::ENROL_INPROGRESS => 'In Progress',
+                self::ENROL_COMPLETED  => 'Completed',
+            ];
+            $cssmap = [
+                self::ENROL_NEW        => 'badge-secondary',
+                self::ENROL_INPROGRESS => 'badge-info',
+                self::ENROL_COMPLETED  => 'badge-success',
+            ];
+
+            foreach ($records as $r) {
+                $rows[] = (object) [
+                    'id'          => (int) $r->userid,
+                    'fullname'    => fullname($r),
+                    'employeeid'  => $r->open_employeeid ?: '—',
+                    'email'       => $r->email,
+                    'designation' => $r->open_designation ?: '—',
+                    'enrolled'    => userdate($r->timecreated, '%d %b %Y'),
+                    'completed'   => $r->timecompleted ? userdate($r->timecompleted, '%d %b %Y') : '—',
+                    'statuslabel' => $statusmap[(int) $r->status] ?? 'Unknown',
+                    'statuscss'   => $cssmap[(int) $r->status] ?? 'badge-secondary',
+                ];
+            }
+        }
+
+        return ['total' => $total, 'rows' => $rows];
+    }
 }

@@ -94,7 +94,8 @@ class list_paths extends external_api {
                 'created'     => $lp->timecreated ? userdate($lp->timecreated, '%d %b %Y') : '—',
                 'statuslabel' => $statusmap[(int) $lp->status] ?? 'Unknown',
                 'statuscss'   => $cssmap[(int) $lp->status] ?? 'badge-secondary',
-                'actions'     => '<a href="#" class="btn btn-sm btn-link p-1" data-action="edit-path" data-pathid="' . (int)$lp->id . '" data-name="' . s($lp->name) . '" title="Edit"><i class="fa fa-pencil"></i></a>'
+                'actions'     => '<a href="' . (new \moodle_url('/local/airpay_learningpath/view.php', ['id' => $lp->id]))->out(false) . '" class="btn btn-sm btn-link p-1" title="View path detail"><i class="fa fa-eye"></i></a>'
+                    . ' <a href="#" class="btn btn-sm btn-link p-1" data-action="edit-path" data-pathid="' . (int)$lp->id . '" data-name="' . s($lp->name) . '" title="Edit"><i class="fa fa-pencil"></i></a>'
                     . ' <a href="#" class="btn btn-sm btn-link p-1" data-action="delete-path" data-pathid="' . (int)$lp->id . '" data-name="' . s($lp->name) . '" title="Delete"><i class="fa fa-trash text-danger"></i></a>',
             ];
         }
