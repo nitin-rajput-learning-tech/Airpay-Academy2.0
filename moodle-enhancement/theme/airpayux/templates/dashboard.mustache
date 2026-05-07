@@ -134,8 +134,15 @@
                 </div>
             </header>
 
-            {{! Page content }}
+            {{! Page content
+                A11Y-8: visually-hidden h1 with the page title precedes the
+                visible content so screen readers always have a level-1
+                anchor.
+                A11Y-9: keep <main> as the SINGLE main landmark. Moodle's
+                region-main is a <section> with aria-label, not a main, so
+                there's no duplicate. }}
             <main class="ap-shell__content" id="ap-shell-content">
+                <h1 class="sr-only">{{#str}}myhome, core{{/str}}</h1>
                 <div id="page" class="d-print-block">
                     {{#secondarymoremenu}}
                         <div class="secondary-navigation">

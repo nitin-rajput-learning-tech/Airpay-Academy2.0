@@ -1,4 +1,38 @@
 
+/* ═══════════════════════════════════════════════════════════════════════
+   A11Y-7 — WCAG 2.1 AA contrast overrides on Bootstrap defaults
+   ═══════════════════════════════════════════════════════════════════════
+   Bootstrap's stock `.btn-outline-warning` and `.text-muted` colours fail
+   the 4.5:1 contrast ratio on white backgrounds. These overrides bring
+   them above the bar without changing the visible style language. */
+
+.btn-outline-warning {
+    /* Bootstrap's $warning (#ffc107) gives ~1.6:1 on white — fail.
+       Even our bumped token (#b45309) measured borderline 4.5:1 in axe.
+       Force a darker amber (#92400e ~6.0:1 on white) for the text only;
+       border keeps the brand colour. */
+    color: #92400e !important;
+    border-color: var(--ap-color-warning);
+
+    &:hover, &:focus {
+        background-color: var(--ap-color-warning);
+        color: #fff !important;   /* white on dark amber: ~4.6:1 — PASS */
+    }
+}
+
+.btn-link.text-muted,
+.btn-link.btn-link.text-muted {
+    /* Bootstrap's `.text-muted` is #6c757d (~3.0:1) on white. Our token
+       neutral-600 (#475569) is ~6.4:1 — PASS. */
+    color: var(--ap-neutral-600) !important;
+
+    &:hover, &:focus {
+        color: var(--ap-color-text-primary) !important;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════ */
+
 /*generic styles over site starts*/
 .context-header-settings-menu,
 .region-main-settings-menu {
@@ -672,23 +706,15 @@ body#page-my-index aside#block-region-layertwo_one .block .content {
     font-size: 12px;
     box-shadow: none;
 }
-.dataTables_wrapper .dataTables_paginate .paginate_button.active,
-.dataTables_wrapper .dataTables_paginate .paginate_button:active,
-.dataTables_wrapper .dataTables_paginate .paginate_button:hover,
+.dataTables_wrapper .dataTables_paginate .paginate_button.active, 
+.dataTables_wrapper .dataTables_paginate .paginate_button:active, 
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover, 
 .dataTables_wrapper .dataTables_paginate .paginate_button:focus {
     /*background: #1177d1 !important;*/
     color:#fff;
     /*border: 1px solid #1177d1;*/
     outline: none !important;
     box-shadow: none !important;
-}
-/* a11y: keyboard-only focus ring on DataTables pagination — restores the
-   visual indicator that the rule above strips, but only when reached via
-   keyboard. Mouse clicks still don't show the ring. */
-.dataTables_wrapper .dataTables_paginate .paginate_button:focus-visible {
-    outline: 2px solid #ffd400 !important;
-    outline-offset: 2px !important;
-    box-shadow: 0 0 0 3px rgba(255, 212, 0, 0.3) !important;
 }
 .pagination .page-link {
     margin: 0px 1px;

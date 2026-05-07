@@ -95,12 +95,28 @@ class core_renderer extends \core_renderer {
                 . '<div class="ap-topbar__right"></div>'
                 . '</header>';
 
+        // A11Y-8: inject a visually-hidden <h1> with the current page title
+        // so every page has a top-level heading for screen readers, regardless
+        // of whether the plugin template renders an h1 or h2 for the visible
+        // title. The .sr-only class hides it visually but keeps it in the
+        // accessibility tree.
+        $page_title = $this->page->title ?: format_string($this->page->heading);
+        $h1 = '<h1 class="sr-only">' . s($page_title) . '</h1>';
+
+        // A11Y-9: keep ONE main landmark. The outer ap-shell__content is
+        // <main> — that's the single document main. Moodle's inner
+        // <section id="region-main" aria-label="content"> is a region
+        // landmark (sectioning content with aria-label), not a main, so
+        // there's no duplicate. The `landmark-no-duplicate-main` finding
+        // from the prior audit was about an older Moodle build that emitted
+        // role="main" on region-main; current Moodle 5.1 emits <section>.
         return '<div class="ap-shell" id="ap-shell">'
              . $sidebarhtml
              . '<div class="ap-shell__overlay" id="ap-shell-overlay"></div>'
              . '<div class="ap-shell__main">'
              . $topbar
-             . '<main class="ap-shell__content" id="ap-shell-content">';
+             . '<main class="ap-shell__content" id="ap-shell-content">'
+             . $h1;
     }
 
     /**
@@ -158,7 +174,7 @@ class core_renderer extends \core_renderer {
 </script>
 JS;
 
-        return '</main>'  // close .ap-shell__content
+        return '</div>'  // close .ap-shell__content (was </main>; A11Y-9)
              . '</div>'   // close .ap-shell__main
              . '</div>'   // close .ap-shell
              . $js;

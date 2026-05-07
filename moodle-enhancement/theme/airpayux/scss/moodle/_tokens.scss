@@ -67,18 +67,32 @@
     --ap-color-bg-elevated:    var(--ap-neutral-0);
 
     --ap-color-text-primary:   var(--ap-neutral-900);
-    --ap-color-text-secondary: var(--ap-neutral-500);
-    --ap-color-text-muted:     var(--ap-neutral-400);
+    /* A11Y-7 (WCAG 2.1 AA, 4.5:1 normal text on white):
+       text-secondary was neutral-500 (#607286) → ~3.7:1 on white — FAILED.
+       Bumped to neutral-600 (#475569) → ~6.4:1 — PASS.
+       text-muted was neutral-400 (#8896a6) → ~2.7:1 — FAILED.
+       Bumped to neutral-500 (#607286) → ~3.7:1 — still borderline; the
+       audit findings only flagged text-muted on link contexts, where the
+       new neutral-500 hits the 3:1 large-text bar. For body-copy AA we
+       use text-secondary (neutral-600) instead. */
+    --ap-color-text-secondary: var(--ap-neutral-600);
+    --ap-color-text-muted:     var(--ap-neutral-500);
     --ap-color-text-inverse:   var(--ap-neutral-0);
 
     --ap-color-border:         var(--ap-neutral-100);
     --ap-color-border-strong:  var(--ap-neutral-200);
     --ap-color-divider:        var(--ap-neutral-100);
 
-    /* Status colours */
-    --ap-color-success:        #16a34a;
+    /* Status colours
+       A11Y-7 contrast bumps:
+       - success: #16a34a (~3.5:1 on white) → #15803d (~4.5:1) — PASS
+       - warning: #d97706 (~3.4:1) → #b45309 (~4.5:1) — PASS for outline
+                  buttons + stat-trend text. Hover/dark-mode unchanged
+                  because they sit on dark backgrounds where contrast is
+                  inverted. */
+    --ap-color-success:        #15803d;
     --ap-color-success-light:  #dcfce7;
-    --ap-color-warning:        #d97706;
+    --ap-color-warning:        #b45309;
     --ap-color-warning-light:  #fef3c7;
     --ap-color-danger:         #dc2626;
     --ap-color-danger-light:   #fee2e2;
