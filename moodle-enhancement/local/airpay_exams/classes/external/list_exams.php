@@ -36,6 +36,7 @@ class list_exams extends external_api {
         require_capability('local/airpay_exams:view', $context);
 
         $can_manage = has_capability('local/airpay_exams:manage', $context);
+        $can_enrol  = has_capability('local/airpay_exams:enrol', $context);
 
         if (strlen($params['filters']) > 4096) {
             throw new \moodle_exception('filterstoolong', 'local_airpay_exams');
@@ -78,8 +79,10 @@ class list_exams extends external_api {
 
         $records = [];
         if ($total > 0) {
+            // G-06: also fetch the parent course of the wrapping quiz —
+            // needed to deep-link Enrol Users to /enrol/users.php?id=<courseid>.
             $records = $DB->get_records_sql(
-                "SELECT e.*, q.attempts AS attempts_allowed, q.timelimit
+                "SELECT e.*, q.attempts AS attempts_allowed, q.timelimit, q.course AS quiz_courseid
                    FROM {local_airpay_exams} e
               LEFT JOIN {quiz} q ON q.id = e.quizid
                   WHERE $wheresql
@@ -93,6 +96,17 @@ class list_exams extends external_api {
             $statuscss = $e->status == 1 ? 'badge-success' : 'badge-secondary';
 
             $actions = [];
+            // G-06: Enrol Users — deep-link to Moodle core /enrol/users.php
+            // for the parent course of the wrapping quiz. Only emitted when
+            // we have a valid quiz_courseid (not null/0) — exams without a
+            // bound quiz can't be enrolled into yet.
+            if ($can_enrol && !empty($e->quiz_courseid)) {
+                $enrolurl = (new \moodle_url('/enrol/users.php',
+                    ['id' => (int) $e->quiz_courseid]))->out(false);
+                $actions[] = '<a href="' . s($enrolurl) . '" target="_blank" rel="noopener" '
+                    . 'class="btn btn-sm btn-link text-muted p-1" '
+                    . 'title="Enrol users"><i class="fa fa-user-plus"></i></a>';
+            }
             if ($can_manage) {
                 $actions[] = '<a href="#" class="btn btn-sm btn-link text-muted p-1" '
                     . 'data-action="edit-exam" data-examid="' . (int) $e->id . '" '

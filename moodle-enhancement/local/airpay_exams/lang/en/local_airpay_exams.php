@@ -4,6 +4,7 @@ defined('MOODLE_INTERNAL') || die();
 $string['pluginname'] = 'Airpay Online Exams';
 $string['airpay_exams:manage'] = 'Manage online exams';
 $string['airpay_exams:view'] = 'View online exams';
+$string['airpay_exams:enrol'] = 'Enrol users into exams (via parent quiz course)';
 
 // CRUD strings.
 $string['addexam'] = 'Register Exam';

@@ -28,10 +28,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_airpay_courses';
-$plugin->version   = 2026041903;
+$plugin->version   = 2026050802;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.2.0'; // Adds list_courses WS for shared datatable.
+$plugin->release   = '1.3.0'; // G-06: Enrol Users deep-link to /enrol/users.php
 $plugin->dependencies = [
     'local_airpay_org' => 2026041600,
 ];

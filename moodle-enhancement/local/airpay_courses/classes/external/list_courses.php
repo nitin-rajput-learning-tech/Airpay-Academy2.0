@@ -44,6 +44,7 @@ class list_courses extends external_api {
         $can_edit   = has_capability('local/airpay_courses:update', $context);
         $can_delete = has_capability('local/airpay_courses:delete', $context);
         $can_visibility = has_capability('local/airpay_courses:visibility', $context);
+        $can_enrol  = has_capability('local/airpay_courses:enrol', $context);
 
         // Sort whitelist.
         $allowed_sort = ['fullname', 'shortname', 'timecreated', 'visible', 'category'];
@@ -138,6 +139,16 @@ class list_courses extends external_api {
                            . s($c->fullname) . '</a>';
 
             $actions = [];
+            // G-06: Enrol Users — deep-link to Moodle core /enrol/users.php.
+            // Native modal would be ~6-8h; the deep-link gives admins a
+            // direct path without leaving the airpay context (opens in a
+            // new tab so the row context is preserved).
+            if ($can_enrol) {
+                $enrolurl = (new \moodle_url('/enrol/users.php', ['id' => (int) $c->id]))->out(false);
+                $actions[] = '<a href="' . s($enrolurl) . '" target="_blank" rel="noopener" '
+                    . 'class="btn btn-sm btn-link text-muted p-1" '
+                    . 'title="Enrol users"><i class="fa fa-user-plus"></i></a>';
+            }
             if ($can_edit) {
                 $actions[] = '<a href="#" class="btn btn-sm btn-link text-muted p-1" '
                     . 'data-action="edit-course" data-courseid="' . (int) $c->id . '" '

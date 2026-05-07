@@ -13,4 +13,10 @@ $capabilities = [
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes'   => ['manager' => CAP_ALLOW, 'editingteacher' => CAP_ALLOW],
     ],
+    'local/airpay_exams:enrol' => [
+        'riskbitmask'  => RISK_SPAM,
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => ['manager' => CAP_ALLOW],
+    ],
 ];
