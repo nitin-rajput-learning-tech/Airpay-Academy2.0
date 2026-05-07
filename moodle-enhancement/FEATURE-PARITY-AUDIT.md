@@ -283,18 +283,18 @@
 |---|---|---|
 | `airpay_assistant` | NEW (no BizLMS equivalent) | Chat bot; functional shell, low priority for cutover |
 | `airpay_catalog` | ✅ Replaces `search` | Learner course browsing — covered by `p1_phase_a_smoke.mjs` |
-| `airpay_challenge` | NEW; **STUB** (41 LOC) | Gamification challenges — not production-ready |
+| `airpay_challenge` | NEW; **STUB** (41 LOC) — intentional noop | `render_challenge_object()` returns empty string. Defensive scaffolding so `core_renderer` calls don't crash. Build out only when gamification has a spec. See `TIER-2-STUB-AUDIT.md`. |
 | `airpay_compliance_report` | NEW + replaces parts of BizLMS reports | 4-table compliance schema, functional dashboard |
 | `airpay_emails` | NEW (Newsletter+) | 29 email templates, 4 tables, admin tab UI works |
 | `airpay_gamification` | NEW; partial (1017 LOC) | Replaces BizLMS `blocks/achievements`; 4 tables; functional |
-| `airpay_integrations` | NEW; **mostly empty** (1457 LOC, 0 tables) | Placeholder for SSO + API hooks |
-| `airpay_lifecycle` | NEW; **STUB** (322 LOC) | User lifecycle automation — not yet wired up |
+| `airpay_integrations` | NEW; **FUNCTIONAL** (1457 LOC, 11 files, 0 tables — config-only) | Multiple working clients: Teams notifier, KeKa HRMS OAuth, HRMS sync, AI recommender, web push, webhook receiver. All OFF by default — IT enables per env. **Earlier "mostly empty" was wrong** — see `TIER-2-STUB-AUDIT.md`. |
+| `airpay_lifecycle` | NEW; **FUNCTIONAL** (322 LOC, MATURITY_BETA) | Auto-enrol observer + daily compliance scheduled task with Moodle messaging + manager alerts + optional Teams notifications. **Earlier "STUB / not wired up" was wrong** — see `TIER-2-STUB-AUDIT.md`. Promote to STABLE after 7 days of cron success in production. |
 | `airpay_manager` | 🟡 Replaces `myteam` | Manager dashboard works, course allocation UI missing |
 | `airpay_pages` | NEW (replaces BizLMS `blocks/masterinfo`) | Static page renderer — works |
 | `airpay_privacy` | NEW + replaces `users/privacypolicy.php` | GDPR consents + privacy admin |
-| `airpay_ratings` | 🟡 Replaces `ratings` | 1 table, **no UI** — Moodle core ratings used instead |
+| `airpay_ratings` | 🟡 Replaces `ratings` | 1 table + display layer (`rating_manager`: get_average, get_user_rating, render). **No submit UI** — Moodle core ratings handle user action. Display-only is intentional for cutover. See `TIER-2-STUB-AUDIT.md`. |
 | `airpay_reports` | NEW + wraps LearnerScript | Adds tenant scoping + run UI |
-| `airpay_roles` | ❌ Replaces `assignroles` | **STUB** (22 LOC) — only version.php; no functional UI |
+| `airpay_roles` | ❌ Replaces `assignroles` | **STUB** (22 LOC) — version + 1 capability + comment "Build when custom role management is needed". DEFERRED until L&D specs role-UI requirements. See `TIER-2-STUB-AUDIT.md`. |
 
 ---
 
