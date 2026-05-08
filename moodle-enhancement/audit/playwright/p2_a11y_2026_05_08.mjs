@@ -71,6 +71,8 @@ const SURFACES = [
     { id: 'courses-featured',      url: '/local/airpay_courses/featured.php' },
     // dashboard with the widget rendered
     { id: 'dashboard-with-featured', url: '/my/dashboard.php' },
+    // airpay_users Phase E.4 (bulk-import new users, 2026-05-08 v1.7.0)
+    { id: 'users-bulk-import',     url: '/local/airpay_users/bulk_import.php' },
 ];
 
 async function login(page, login_id) {

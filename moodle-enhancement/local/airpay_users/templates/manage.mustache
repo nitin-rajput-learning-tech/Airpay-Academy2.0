@@ -25,10 +25,13 @@
         </a>
         {{#can_bulkstatus}}
         <a href="/local/airpay_users/bulk_csv.php" class="btn btn-outline-secondary btn-sm">
-            <i class="fa fa-upload fa-fw"></i> Bulk CSV
+            <i class="fa fa-toggle-on fa-fw"></i> Bulk status
         </a>
         {{/can_bulkstatus}}
         {{#can_create}}
+        <a href="/local/airpay_users/bulk_import.php" class="btn btn-outline-secondary btn-sm">
+            <i class="fa fa-upload fa-fw"></i> Import CSV
+        </a>
         <a href="#" class="btn btn-primary btn-sm" data-action="create-user">
             <i class="fa fa-plus fa-fw"></i> Add User
         </a>

@@ -28,10 +28,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_airpay_users';
-$plugin->version   = 2026050902;
+$plugin->version   = 2026050903;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.6.0'; // +bulk-CSV status change (Phase E.3) — email,action upload with succeeded/skipped/failed buckets.
+$plugin->release   = '1.7.0'; // +bulk import (CSV new users) (Phase E.4).
 $plugin->dependencies = [
     'local_airpay_org' => 2026041600,
 ];
