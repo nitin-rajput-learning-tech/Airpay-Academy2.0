@@ -670,7 +670,7 @@ class rule_engine {
             return false; // Another process already claimed this notification.
         }
 
-        // Check user preferences.
+        // Check user preferences (Phase C.2 — channel + rule-type opt-out + quiet hours).
         $prefs = $DB->get_record('local_airpay_notif_prefs', ['userid' => $userid]);
         $channel = $rule->channel;
         if ($prefs) {
@@ -679,6 +679,30 @@ class rule_engine {
             }
             if ($channel === 'email' && !$prefs->channel_email) {
                 return false;
+            }
+            if ($channel === 'push' && !$prefs->channel_push) {
+                return false;
+            }
+            // Rule-type opt-out.
+            if (!empty($prefs->disabled_rule_types)) {
+                $disabled = array_map('trim',
+                    explode(',', (string) $prefs->disabled_rule_types));
+                if (in_array((string) $rule->rule_type, $disabled, true)) {
+                    return false;
+                }
+            }
+            // Quiet hours: skip during the user's DND window.
+            if ($prefs->quiet_hours_start !== null
+                    && $prefs->quiet_hours_end !== null) {
+                $hour = (int) date('G', time());
+                $qs = (int) $prefs->quiet_hours_start;
+                $qe = (int) $prefs->quiet_hours_end;
+                $inwindow = ($qs <= $qe)
+                    ? ($hour >= $qs && $hour < $qe)        // same-day window
+                    : ($hour >= $qs || $hour < $qe);       // wraps midnight
+                if ($inwindow) {
+                    return false;
+                }
             }
         }
 

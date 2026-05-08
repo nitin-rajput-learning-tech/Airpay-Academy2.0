@@ -57,6 +57,8 @@ const SURFACES = [
 
     // airpay_notifications (Phase C from 2026-05-08)
     { id: 'notifications-index',   url: '/local/airpay_notifications/index.php' },
+    // airpay_notifications Phase C.2 (per-user prefs, 2026-05-08 v1.4.0)
+    { id: 'notifications-prefs',   url: '/local/airpay_notifications/prefs.php' },
 ];
 
 async function login(page, login_id) {

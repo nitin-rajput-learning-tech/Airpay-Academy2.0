@@ -69,6 +69,12 @@
         <FIELD NAME="channel_push"  TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="digest_frequency" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="daily"
                COMMENT="none|daily|weekly"/>
+        <FIELD NAME="disabled_rule_types" TYPE="text" NOTNULL="false"
+               COMMENT="Comma-separated rule_type values the user opted out of"/>
+        <FIELD NAME="quiet_hours_start" TYPE="int" LENGTH="2" NOTNULL="false"
+               COMMENT="Quiet-hours window start hour (0-23, NULL = none)"/>
+        <FIELD NAME="quiet_hours_end" TYPE="int" LENGTH="2" NOTNULL="false"
+               COMMENT="Quiet-hours window end hour (0-23, NULL = none)"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
       </FIELDS>
       <KEYS>

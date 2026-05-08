@@ -142,9 +142,9 @@ A feature with **F✅ B✅ T✅ V❌ L❌** is NOT shipped. It's halfway.
 | **4 still-missing BizLMS rule types** | ❌ | ❌ | ❌ | ❌ | ❌ | Audit said 17 total; we're at 13 |
 | **WhatsApp channel** | ❌ | ❌ | ❌ | ❌ | ❌ | Schema supports it (`channel='whatsapp'`); no driver |
 | **Push channel** | ❌ | ❌ | ❌ | ❌ | ❌ | Depends on `airpay_integrations` FCM service worker |
-| **Per-user preferences override** | ❌ | ❌ | ❌ | ❌ | ❌ | Currently global rule on/off only |
-| **Test-send / preview UI** | ❌ | ❌ | ❌ | ❌ | ❌ |  |
-| **Quiet hours / DND windows** | ❌ | ❌ | ❌ | ❌ | ❌ |  |
+| **Per-user preferences override** | ✅ | ✅ | ✅ | ✅ | ⚠ | Phase C.2 (2026-05-08) — `prefs.php` user-facing page with channel toggles + digest + per-rule-type opt-out + quiet hours; rule_engine `send()` honours all 3 |
+| **Test-send / preview UI** | ✅ | ✅ | ✅ | ✅ | ⚠ | Phase C.2 — `preview_rule` + `test_send` WS endpoints; smoke-tested with sample placeholder substitution |
+| **Quiet hours / DND windows** | ✅ | ✅ | ✅ | ✅ | ⚠ | Phase C.2 — `quiet_hours_start/end` columns; same-day + wrap-midnight windows tested |
 
 ### `airpay_manager` ← Phase B shipped today
 

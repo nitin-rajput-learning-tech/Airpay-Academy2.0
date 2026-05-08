@@ -23,4 +23,27 @@ $functions = [
         'ajax'         => true,
         'capabilities' => 'local/airpay_notifications:manage',
     ],
+
+    // Phase C.2 (2026-05-08) — per-user prefs + preview / test-send.
+    'local_airpay_notifications_save_prefs' => [
+        'classname'    => 'local_airpay_notifications\external\save_prefs',
+        'description'  => 'Save current user notification preferences',
+        'type'         => 'write',
+        'ajax'         => true,
+        'loginrequired' => true,
+    ],
+    'local_airpay_notifications_preview_rule' => [
+        'classname'    => 'local_airpay_notifications\external\preview_rule',
+        'description'  => 'Render a rule message body without sending',
+        'type'         => 'read',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_notifications:manage',
+    ],
+    'local_airpay_notifications_test_send' => [
+        'classname'    => 'local_airpay_notifications\external\test_send',
+        'description'  => 'Send a one-off test notification using a rule template',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_notifications:manage',
+    ],
 ];
