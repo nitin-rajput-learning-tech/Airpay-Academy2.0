@@ -307,6 +307,7 @@ class skills_manager {
     private const ROLE_SKILL_TABLE = 'local_airpay_role_skills';
     private const COURSE_SKILL_TABLE = 'local_airpay_course_skills';
     private const USER_SKILL_TABLE = 'local_airpay_user_skills';
+    private const SKILL_LEVELS_TABLE = 'local_airpay_skill_levels';
 
     /** Get all categories for dropdowns. */
     public static function get_categories_options(): array {
@@ -440,7 +441,7 @@ class skills_manager {
     }
 
     /**
-     * Delete a skill and all its role/course/user mappings.
+     * Delete a skill and all its role/course/user/level mappings.
      */
     public static function delete_skill(int $id): bool {
         global $DB;
@@ -451,6 +452,10 @@ class skills_manager {
             $DB->delete_records(self::ROLE_SKILL_TABLE, ['skillid' => $id]);
             $DB->delete_records(self::COURSE_SKILL_TABLE, ['skillid' => $id]);
             $DB->delete_records(self::USER_SKILL_TABLE, ['skillid' => $id]);
+            // Phase A — also clean up level definitions if present.
+            if ($DB->get_manager()->table_exists(self::SKILL_LEVELS_TABLE)) {
+                $DB->delete_records(self::SKILL_LEVELS_TABLE, ['skillid' => $id]);
+            }
             $DB->delete_records(self::SKILL_TABLE, ['id' => $id]);
             $transaction->allow_commit();
         } catch (\Throwable $e) {
@@ -458,5 +463,233 @@ class skills_manager {
         }
 
         return true;
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // Phase A (2026-05-08) — skill-level definitions admin
+    // ─────────────────────────────────────────────────────────────────
+
+    /**
+     * Get the list of level definitions for one skill.
+     *
+     * Returns an array of length skill.max_level — one entry per level
+     * (1..max_level). Slots without a saved row return defaults so the
+     * admin UI can show an "empty" row for unfilled levels.
+     *
+     * @return array<int,array{level:int, label:string, description:string,
+     *                          saved:bool, id:int}>
+     */
+    public static function get_skill_levels(int $skillid): array {
+        global $DB;
+        $skill = $DB->get_record(self::SKILL_TABLE, ['id' => $skillid], '*', MUST_EXIST);
+        $maxlevel = max(1, min(10, (int) $skill->max_level));
+
+        $saved = $DB->get_records(self::SKILL_LEVELS_TABLE,
+            ['skillid' => $skillid], 'level ASC');
+        $byLevel = [];
+        foreach ($saved as $row) {
+            $byLevel[(int) $row->level] = $row;
+        }
+
+        $defaults = [
+            1 => 'Awareness',
+            2 => 'Basic',
+            3 => 'Intermediate',
+            4 => 'Advanced',
+            5 => 'Expert',
+        ];
+
+        $out = [];
+        for ($lvl = 1; $lvl <= $maxlevel; $lvl++) {
+            $row = $byLevel[$lvl] ?? null;
+            $out[] = [
+                'level'       => $lvl,
+                'id'          => $row ? (int) $row->id : 0,
+                'label'       => $row ? (string) $row->label : ($defaults[$lvl] ?? ''),
+                'description' => $row ? (string) ($row->description ?? '') : '',
+                'saved'       => $row !== null,
+            ];
+        }
+        return $out;
+    }
+
+    /**
+     * Upsert one level definition. Validates level is within
+     * (1..skill.max_level) and label is non-empty.
+     *
+     * @return int the ID of the saved row
+     */
+    public static function save_skill_level(int $skillid, int $level,
+                                             string $label, string $description = ''): int {
+        global $DB;
+        $skill = $DB->get_record(self::SKILL_TABLE, ['id' => $skillid], '*', MUST_EXIST);
+        if ($level < 1 || $level > (int) $skill->max_level) {
+            throw new \invalid_parameter_exception(
+                'Level must be between 1 and ' . (int) $skill->max_level);
+        }
+        if (trim($label) === '') {
+            throw new \invalid_parameter_exception('Label is required.');
+        }
+
+        $now = time();
+        $existing = $DB->get_record(self::SKILL_LEVELS_TABLE,
+            ['skillid' => $skillid, 'level' => $level]);
+        if ($existing) {
+            $existing->label = $label;
+            $existing->description = $description;
+            $existing->timemodified = $now;
+            $DB->update_record(self::SKILL_LEVELS_TABLE, $existing);
+            return (int) $existing->id;
+        }
+        return (int) $DB->insert_record(self::SKILL_LEVELS_TABLE, (object) [
+            'skillid'      => $skillid,
+            'level'        => $level,
+            'label'        => $label,
+            'description'  => $description,
+            'timemodified' => $now,
+        ]);
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // Phase A (2026-05-08) — designation-skill matrix admin
+    // ─────────────────────────────────────────────────────────────────
+
+    /**
+     * List distinct designations that have at least one role-skill row,
+     * plus distinct designations from the user table (so admins can
+     * pre-fill from existing user data without typing).
+     *
+     * @return list<string>
+     */
+    public static function list_designations(): array {
+        global $DB;
+        $rows = $DB->get_fieldset_sql("
+            SELECT DISTINCT designation FROM {" . self::ROLE_SKILL_TABLE . "}
+             WHERE designation IS NOT NULL AND designation <> ''");
+        // Also pull distinct designations from user table (BizLMS field).
+        try {
+            if ($DB->get_manager()->field_exists('user',
+                    new \xmldb_field('open_designation', XMLDB_TYPE_CHAR, '200'))) {
+                $userdesigs = $DB->get_fieldset_sql("
+                    SELECT DISTINCT open_designation FROM {user}
+                     WHERE open_designation IS NOT NULL AND open_designation <> ''
+                       AND deleted = 0
+                  ORDER BY open_designation ASC");
+                $rows = array_unique(array_merge($rows, $userdesigs));
+            }
+        } catch (\Throwable $e) {
+            // Field may not exist on stock Moodle — fine.
+        }
+        sort($rows, SORT_STRING | SORT_FLAG_CASE);
+        return array_values($rows);
+    }
+
+    /**
+     * Get the required-skill rows for one designation, joined with
+     * skill name + max_level + category.
+     */
+    public static function get_designation_skills(string $designation): array {
+        global $DB;
+        $rows = $DB->get_records_sql("
+            SELECT rs.id, rs.designation, rs.skillid, rs.required_level,
+                   s.name AS skill_name, s.max_level,
+                   c.name AS category_name, c.color AS category_color
+              FROM {" . self::ROLE_SKILL_TABLE . "} rs
+              JOIN {" . self::SKILL_TABLE . "} s ON s.id = rs.skillid
+         LEFT JOIN {" . self::CAT_TABLE . "} c ON c.id = s.categoryid
+             WHERE rs.designation = :d
+          ORDER BY c.sort_order ASC, s.name ASC",
+            ['d' => $designation]);
+
+        $out = [];
+        foreach ($rows as $r) {
+            $out[] = [
+                'id'             => (int) $r->id,
+                'skillid'        => (int) $r->skillid,
+                'skill_name'     => format_string($r->skill_name),
+                'required_level' => (int) $r->required_level,
+                'max_level'      => (int) $r->max_level,
+                'category_name'  => format_string((string) ($r->category_name ?? '')),
+                'category_color' => s((string) ($r->category_color ?? '#0066A7')),
+            ];
+        }
+        return $out;
+    }
+
+    /**
+     * Upsert one designation-skill requirement.
+     *
+     * @return int  ID of the row
+     */
+    public static function save_designation_skill(string $designation, int $skillid,
+                                                   int $required_level): int {
+        global $DB;
+        if (trim($designation) === '') {
+            throw new \invalid_parameter_exception('Designation is required.');
+        }
+        $skill = $DB->get_record(self::SKILL_TABLE, ['id' => $skillid], '*', MUST_EXIST);
+        if ($required_level < 1 || $required_level > (int) $skill->max_level) {
+            throw new \invalid_parameter_exception(
+                'Required level must be between 1 and ' . (int) $skill->max_level);
+        }
+        $existing = $DB->get_record(self::ROLE_SKILL_TABLE,
+            ['designation' => $designation, 'skillid' => $skillid]);
+        if ($existing) {
+            $existing->required_level = $required_level;
+            $DB->update_record(self::ROLE_SKILL_TABLE, $existing);
+            return (int) $existing->id;
+        }
+        return (int) $DB->insert_record(self::ROLE_SKILL_TABLE, (object) [
+            'designation'    => $designation,
+            'skillid'        => $skillid,
+            'required_level' => $required_level,
+            'timecreated'    => time(),
+        ]);
+    }
+
+    /**
+     * Remove one designation-skill row.
+     */
+    public static function delete_designation_skill(int $id): bool {
+        global $DB;
+        $DB->delete_records(self::ROLE_SKILL_TABLE, ['id' => $id]);
+        return true;
+    }
+
+    /**
+     * Bulk: copy all rows from one designation to another.
+     * Useful when a new designation has the same requirements as an
+     * existing one. Skips any (target,skillid) pair that already exists.
+     *
+     * @return int  number of rows copied
+     */
+    public static function copy_designation(string $from, string $to): int {
+        global $DB;
+        if (trim($to) === '' || $from === $to) {
+            return 0;
+        }
+        $rows = $DB->get_records(self::ROLE_SKILL_TABLE, ['designation' => $from]);
+        $copied = 0;
+        $now = time();
+        $tx = $DB->start_delegated_transaction();
+        try {
+            foreach ($rows as $row) {
+                if ($DB->record_exists(self::ROLE_SKILL_TABLE,
+                        ['designation' => $to, 'skillid' => $row->skillid])) {
+                    continue;
+                }
+                $DB->insert_record(self::ROLE_SKILL_TABLE, (object) [
+                    'designation'    => $to,
+                    'skillid'        => (int) $row->skillid,
+                    'required_level' => (int) $row->required_level,
+                    'timecreated'    => $now,
+                ]);
+                $copied++;
+            }
+            $tx->allow_commit();
+        } catch (\Throwable $e) {
+            $tx->rollback($e);
+        }
+        return $copied;
     }
 }

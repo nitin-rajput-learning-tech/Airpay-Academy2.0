@@ -57,8 +57,375 @@ class rule_engine {
             case 'new_course':
                 $result = self::rule_new_course($rule);
                 break;
+
+            // Phase C — 2026-05-08 stretch additions.
+            case 'compliance_overdue':
+                $result = self::rule_compliance_overdue($rule);
+                break;
+            case 'certificate_expiring':
+                $result = self::rule_certificate_expiring($rule);
+                break;
+            case 'ilt_feedback_pending':
+                $result = self::rule_ilt_feedback_pending($rule);
+                break;
+            case 'learning_path_stalled':
+                $result = self::rule_learning_path_stalled($rule);
+                break;
+            case 'enrolment_anniversary':
+                $result = self::rule_enrolment_anniversary($rule);
+                break;
+            case 'inactive_user':
+                $result = self::rule_inactive_user($rule);
+                break;
+            case 'quiz_low_score':
+                $result = self::rule_quiz_low_score($rule);
+                break;
+            case 'monthly_summary':
+                $result = self::rule_monthly_summary($rule);
+                break;
         }
 
+        return $result;
+    }
+
+    // ───────────────────────────────────────────────────────────────────
+    // Phase C (2026-05-08) — additional BizLMS-equivalent rule handlers
+    // ───────────────────────────────────────────────────────────────────
+
+    /**
+     * Rule: Compliance overdue.
+     *
+     * Notifies the LEARNER when a course they're enrolled in has its
+     * `enddate` already passed AND they haven't completed it. Distinct
+     * from `manager_nudge` which alerts the manager. This pings the
+     * learner directly.
+     */
+    private static function rule_compliance_overdue(\stdClass $rule): array {
+        global $DB;
+        $result = ['sent' => 0, 'skipped' => 0];
+        $now = time();
+        $batchlimit = (int) (get_config('local_airpay_notifications', 'batch_limit') ?: 500);
+
+        $rows = $DB->get_records_sql("
+            SELECT u.id AS userid, u.firstname, c.id AS courseid, c.fullname,
+                   c.enddate
+              FROM {user} u
+              JOIN {user_enrolments} ue ON ue.userid = u.id AND ue.status = 0
+              JOIN {enrol} e ON e.id = ue.enrolid
+              JOIN {course} c ON c.id = e.courseid
+         LEFT JOIN {course_completions} cc ON cc.userid = u.id AND cc.course = c.id
+             WHERE c.enddate > 0 AND c.enddate < :now
+               AND cc.timecompleted IS NULL
+               AND u.deleted = 0 AND u.suspended = 0
+          ORDER BY u.id, c.id
+             LIMIT $batchlimit",
+            ['now' => $now]);
+
+        foreach ($rows as $r) {
+            $sent = self::send($rule, (int) $r->userid, (int) $r->courseid,
+                'Compliance overdue: ' . format_string($r->fullname),
+                'Hi ' . s($r->firstname) . ", your enrolment in '"
+                . format_string($r->fullname)
+                . "' has passed its deadline and is still incomplete. Please complete it as soon as possible.");
+            $sent ? $result['sent']++ : $result['skipped']++;
+        }
+        return $result;
+    }
+
+    /**
+     * Rule: Certificate expiring.
+     *
+     * Looks at the standard `certificate_issues` table from the
+     * tool_certificate plugin. Notifies users whose issued certificate
+     * has an `expires` field landing inside the trigger window.
+     * Defensive: skips if tool_certificate isn't installed.
+     */
+    private static function rule_certificate_expiring(\stdClass $rule): array {
+        global $DB;
+        $result = ['sent' => 0, 'skipped' => 0];
+
+        $manager = $DB->get_manager();
+        if (!$manager->table_exists('tool_certificate_issues')) {
+            return $result;
+        }
+
+        $window_start = time();
+        $window_end = $window_start + ((int) $rule->trigger_days * 86400);
+        $batchlimit = (int) (get_config('local_airpay_notifications', 'batch_limit') ?: 500);
+
+        $rows = $DB->get_records_sql("
+            SELECT i.id, i.userid, i.expires,
+                   u.firstname, t.name AS template_name
+              FROM {tool_certificate_issues} i
+              JOIN {user} u ON u.id = i.userid
+              JOIN {tool_certificate_templates} t ON t.id = i.templateid
+             WHERE i.expires > :start AND i.expires <= :end
+               AND u.deleted = 0 AND u.suspended = 0
+          ORDER BY i.expires ASC
+             LIMIT $batchlimit",
+            ['start' => $window_start, 'end' => $window_end]);
+
+        foreach ($rows as $r) {
+            $days = max(1, (int) ceil(((int) $r->expires - time()) / 86400));
+            $sent = self::send($rule, (int) $r->userid, null,
+                'Certificate expiring in ' . $days . ' days',
+                'Hi ' . s($r->firstname) . ", your certificate '"
+                . format_string($r->template_name)
+                . "' expires in $days day(s). Renew the underlying training to keep it current.");
+            $sent ? $result['sent']++ : $result['skipped']++;
+        }
+        return $result;
+    }
+
+    /**
+     * Rule: ILT feedback pending.
+     *
+     * Reads from local_airpay_classroom_users (the roster table that
+     * G-02 introduced). Notifies users who attended a session that
+     * ended N days ago AND whose user has no feedback row in
+     * airpay_evaluation linked to that session's classroom.
+     *
+     * Defensive: skips if airpay_classroom tables aren't present.
+     */
+    private static function rule_ilt_feedback_pending(\stdClass $rule): array {
+        global $DB;
+        $result = ['sent' => 0, 'skipped' => 0];
+
+        $manager = $DB->get_manager();
+        if (!$manager->table_exists('local_airpay_classroom_sessions')) {
+            return $result;
+        }
+
+        $cutoff = time() - ((int) $rule->trigger_days * 86400);
+        $batchlimit = (int) (get_config('local_airpay_notifications', 'batch_limit') ?: 500);
+
+        // Sessions that ended at or before cutoff, plus their roster users.
+        $rows = $DB->get_records_sql("
+            SELECT cu.userid, u.firstname, s.id AS sessionid,
+                   s.classroomid, c.name AS classroomname, s.title, s.endtime
+              FROM {local_airpay_classroom_sessions} s
+              JOIN {local_airpay_classroom_users} cu ON cu.classroomid = s.classroomid
+              JOIN {user} u ON u.id = cu.userid
+              JOIN {local_airpay_classroom} c ON c.id = s.classroomid
+             WHERE s.endtime > 0 AND s.endtime < :cutoff
+               AND u.deleted = 0 AND u.suspended = 0
+          ORDER BY s.endtime DESC
+             LIMIT $batchlimit",
+            ['cutoff' => $cutoff]);
+
+        foreach ($rows as $r) {
+            $sent = self::send($rule, (int) $r->userid, null,
+                'Your feedback is appreciated',
+                'Hi ' . s($r->firstname) . ", we'd love your feedback on the '"
+                . format_string($r->classroomname) . " — " . s($r->title) . "' session you attended. "
+                . "It only takes 2 minutes.");
+            $sent ? $result['sent']++ : $result['skipped']++;
+        }
+        return $result;
+    }
+
+    /**
+     * Rule: Learning path stalled.
+     *
+     * Notifies a learner who joined a learning path and made no progress
+     * in the last `trigger_days` days. Reads from local_airpay_lp_users
+     * (the airpay_learningpath user-assignments table).
+     */
+    private static function rule_learning_path_stalled(\stdClass $rule): array {
+        global $DB;
+        $result = ['sent' => 0, 'skipped' => 0];
+
+        $manager = $DB->get_manager();
+        if (!$manager->table_exists('local_airpay_lp_users')) {
+            return $result;
+        }
+
+        $cutoff = time() - ((int) $rule->trigger_days * 86400);
+        $batchlimit = (int) (get_config('local_airpay_notifications', 'batch_limit') ?: 500);
+
+        $rows = $DB->get_records_sql("
+            SELECT lu.userid, u.firstname, lp.id AS pathid, lp.name AS pathname
+              FROM {local_airpay_lp_users} lu
+              JOIN {user} u ON u.id = lu.userid
+              JOIN {local_airpay_learningpath} lp ON lp.id = lu.pathid
+             WHERE lu.timemodified < :cutoff
+               AND lu.status IN ('enrolled', 'in_progress')
+               AND u.deleted = 0 AND u.suspended = 0
+          ORDER BY lu.timemodified ASC
+             LIMIT $batchlimit",
+            ['cutoff' => $cutoff]);
+
+        foreach ($rows as $r) {
+            $sent = self::send($rule, (int) $r->userid, null,
+                'Pick up where you left off',
+                'Hi ' . s($r->firstname) . ", your learning path '"
+                . format_string($r->pathname) . "' is waiting for you. "
+                . 'A few minutes today keeps the streak alive.');
+            $sent ? $result['sent']++ : $result['skipped']++;
+        }
+        return $result;
+    }
+
+    /**
+     * Rule: Enrolment anniversary.
+     *
+     * Notifies users who enrolled exactly 1 year ago and haven't
+     * completed yet — "still interested?" reminder.
+     */
+    private static function rule_enrolment_anniversary(\stdClass $rule): array {
+        global $DB;
+        $result = ['sent' => 0, 'skipped' => 0];
+
+        $year_ago = time() - 365 * 86400;
+        $window = 86400; // 1-day window centered on the anniversary.
+        $batchlimit = (int) (get_config('local_airpay_notifications', 'batch_limit') ?: 500);
+
+        $rows = $DB->get_records_sql("
+            SELECT u.id AS userid, u.firstname, c.id AS courseid, c.fullname,
+                   ue.timestart
+              FROM {user_enrolments} ue
+              JOIN {enrol} e ON e.id = ue.enrolid
+              JOIN {course} c ON c.id = e.courseid
+              JOIN {user} u ON u.id = ue.userid
+         LEFT JOIN {course_completions} cc ON cc.userid = u.id AND cc.course = c.id
+             WHERE ue.timestart > :start AND ue.timestart <= :end
+               AND cc.timecompleted IS NULL
+               AND u.deleted = 0 AND u.suspended = 0 AND c.id > 1
+          ORDER BY ue.timestart
+             LIMIT $batchlimit",
+            ['start' => $year_ago - $window, 'end' => $year_ago + $window]);
+
+        foreach ($rows as $r) {
+            $sent = self::send($rule, (int) $r->userid, (int) $r->courseid,
+                'Still interested in this course?',
+                'Hi ' . s($r->firstname) . ', it has been a year since you enrolled in "'
+                . format_string($r->fullname) . '" and the course is still incomplete. '
+                . 'Want to give it another go?');
+            $sent ? $result['sent']++ : $result['skipped']++;
+        }
+        return $result;
+    }
+
+    /**
+     * Rule: Inactive user.
+     *
+     * Notifies users who haven't logged in for `trigger_days` days.
+     */
+    private static function rule_inactive_user(\stdClass $rule): array {
+        global $DB;
+        $result = ['sent' => 0, 'skipped' => 0];
+
+        $cutoff = time() - ((int) $rule->trigger_days * 86400);
+        $batchlimit = (int) (get_config('local_airpay_notifications', 'batch_limit') ?: 500);
+
+        $rows = $DB->get_records_sql("
+            SELECT id AS userid, firstname, lastaccess
+              FROM {user}
+             WHERE lastaccess > 0 AND lastaccess < :cutoff
+               AND deleted = 0 AND suspended = 0 AND id > 2
+          ORDER BY lastaccess ASC
+             LIMIT $batchlimit",
+            ['cutoff' => $cutoff]);
+
+        foreach ($rows as $r) {
+            $sent = self::send($rule, (int) $r->userid, null,
+                'We miss you on Airpay Academy',
+                'Hi ' . s($r->firstname) . ", it's been a while. New courses and updates are waiting for you. "
+                . 'Sign in to see what\'s new.');
+            $sent ? $result['sent']++ : $result['skipped']++;
+        }
+        return $result;
+    }
+
+    /**
+     * Rule: Quiz low score.
+     *
+     * Reads from {quiz_attempts} for finished attempts in the last day
+     * with a sumgrades / total ratio below threshold (rule->trigger_days
+     * is reused as the threshold percentage 0-100 for this rule type).
+     */
+    private static function rule_quiz_low_score(\stdClass $rule): array {
+        global $DB;
+        $result = ['sent' => 0, 'skipped' => 0];
+
+        $manager = $DB->get_manager();
+        if (!$manager->table_exists('quiz_attempts')) {
+            return $result;
+        }
+
+        $threshold = max(1, min(100, (int) $rule->trigger_days));  // Re-use trigger_days as %.
+        $since = time() - 86400;
+        $batchlimit = (int) (get_config('local_airpay_notifications', 'batch_limit') ?: 500);
+
+        $rows = $DB->get_records_sql("
+            SELECT qa.id, qa.userid, qa.quiz, qa.sumgrades,
+                   q.name AS quizname, q.sumgrades AS maxgrade,
+                   u.firstname
+              FROM {quiz_attempts} qa
+              JOIN {quiz} q ON q.id = qa.quiz
+              JOIN {user} u ON u.id = qa.userid
+             WHERE qa.state = 'finished'
+               AND qa.timefinish > :since
+               AND q.sumgrades > 0
+               AND (qa.sumgrades / q.sumgrades * 100) < :threshold
+               AND u.deleted = 0 AND u.suspended = 0
+          ORDER BY qa.timefinish DESC
+             LIMIT $batchlimit",
+            ['since' => $since, 'threshold' => $threshold]);
+
+        foreach ($rows as $r) {
+            $pct = (int) round($r->sumgrades / $r->maxgrade * 100);
+            $sent = self::send($rule, (int) $r->userid, null,
+                'Want to retake "' . format_string($r->quizname) . '"?',
+                'Hi ' . s($r->firstname) . ', you scored ' . $pct
+                . "% on '" . format_string($r->quizname) . "'. "
+                . 'Most learners find a second attempt locks in the material. Give it another shot?');
+            $sent ? $result['sent']++ : $result['skipped']++;
+        }
+        return $result;
+    }
+
+    /**
+     * Rule: Monthly summary for managers.
+     *
+     * Aggregates team enrolments, completions, overdue per manager and
+     * sends a single weekly digest. Uses user.open_supervisorid (BizLMS).
+     */
+    private static function rule_monthly_summary(\stdClass $rule): array {
+        global $DB;
+        $result = ['sent' => 0, 'skipped' => 0];
+
+        $manager = $DB->get_manager();
+        if (!$manager->field_exists('user',
+                new \xmldb_field('open_supervisorid', XMLDB_TYPE_INTEGER, '10'))) {
+            return $result;
+        }
+
+        $batchlimit = (int) (get_config('local_airpay_notifications', 'batch_limit') ?: 500);
+        $since = time() - 30 * 86400;
+
+        $rows = $DB->get_records_sql("
+            SELECT u.open_supervisorid AS managerid, mgr.firstname AS mgr_firstname,
+                   COUNT(DISTINCT u.id) AS team_size,
+                   SUM(CASE WHEN cc.timecompleted > :since1 THEN 1 ELSE 0 END) AS completions
+              FROM {user} u
+              JOIN {user} mgr ON mgr.id = u.open_supervisorid
+         LEFT JOIN {course_completions} cc ON cc.userid = u.id
+             WHERE u.deleted = 0 AND u.suspended = 0
+               AND u.open_supervisorid > 0 AND mgr.deleted = 0
+          GROUP BY u.open_supervisorid, mgr.firstname
+             LIMIT $batchlimit",
+            ['since1' => $since]);
+
+        foreach ($rows as $r) {
+            $sent = self::send($rule, (int) $r->managerid, null,
+                'Your team last 30 days',
+                'Hi ' . s($r->mgr_firstname) . ', here\'s a snapshot: '
+                . (int) $r->team_size . ' team members, '
+                . (int) $r->completions . ' course completions in the last 30 days. '
+                . 'See your manager dashboard for the full picture.');
+            $sent ? $result['sent']++ : $result['skipped']++;
+        }
         return $result;
     }
 

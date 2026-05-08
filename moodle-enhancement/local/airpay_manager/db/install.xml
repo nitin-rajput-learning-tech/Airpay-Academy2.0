@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/airpay_manager/db" VERSION="20260508"
+       COMMENT="Airpay Manager — approval workflow + course allocation">
+  <TABLES>
+    <TABLE NAME="local_airpay_mgr_requests"
+           COMMENT="Enrolment requests from learners awaiting manager approval">
+      <FIELDS>
+        <FIELD NAME="id"             TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"         TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Requester (the learner)"/>
+        <FIELD NAME="courseid"       TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Course being requested"/>
+        <FIELD NAME="managerid"      TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Manager assigned to decide (typically user.open_supervisorid)"/>
+        <FIELD NAME="status"         TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="pending"
+               COMMENT="pending | approved | rejected | cancelled"/>
+        <FIELD NAME="reason"         TYPE="text" NOTNULL="false"
+               COMMENT="Why the learner needs the course"/>
+        <FIELD NAME="decision_reason" TYPE="text" NOTNULL="false"
+               COMMENT="Manager's note when approving/rejecting"/>
+        <FIELD NAME="decided_by"     TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="User ID who actually clicked approve/reject (may differ from managerid for delegated decisions)"/>
+        <FIELD NAME="decided_at"     TYPE="int"  LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="timecreated"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"   TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"   TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_user"   TYPE="foreign" FIELDS="userid"   REFTABLE="user"   REFFIELDS="id"/>
+        <KEY NAME="fk_course" TYPE="foreign" FIELDS="courseid" REFTABLE="course" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_managerid_status" UNIQUE="false" FIELDS="managerid, status"
+               COMMENT="Manager dashboard — pending request count + filter"/>
+        <INDEX NAME="idx_user_course"      UNIQUE="false" FIELDS="userid, courseid"
+               COMMENT="Prevent duplicate requests"/>
+        <INDEX NAME="idx_status"           UNIQUE="false" FIELDS="status"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_airpay_mgr_allocations"
+           COMMENT="Manager-driven course allocations to direct reports">
+      <FIELDS>
+        <FIELD NAME="id"             TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="managerid"      TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Manager who created the allocation"/>
+        <FIELD NAME="userid"         TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Learner the course is assigned to"/>
+        <FIELD NAME="courseid"       TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="due_date"       TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="Optional deadline (Unix ts)"/>
+        <FIELD NAME="status"         TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="assigned"
+               COMMENT="assigned | in_progress | completed | overdue | cancelled"/>
+        <FIELD NAME="note"           TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="timecreated"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"   TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"   TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_user"   TYPE="foreign" FIELDS="userid"   REFTABLE="user"   REFFIELDS="id"/>
+        <KEY NAME="fk_course" TYPE="foreign" FIELDS="courseid" REFTABLE="course" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_managerid"   UNIQUE="false" FIELDS="managerid"
+               COMMENT="Manager dashboard query"/>
+        <INDEX NAME="idx_user_course" UNIQUE="true"  FIELDS="userid, courseid"
+               COMMENT="One allocation per user-course pair"/>
+        <INDEX NAME="idx_status"      UNIQUE="false" FIELDS="status"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

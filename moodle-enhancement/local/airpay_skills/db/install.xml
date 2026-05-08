@@ -79,6 +79,29 @@
       </INDEXES>
     </TABLE>
 
+    <TABLE NAME="local_airpay_skill_levels"
+           COMMENT="Per-skill level definitions (e.g. Python L1='Hello world', L5='Architect Python infra'). One row per (skillid, level) pair.">
+      <FIELDS>
+        <FIELD NAME="id"          TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="skillid"     TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="level"       TYPE="int"  LENGTH="2"   NOTNULL="true" DEFAULT="1"
+               COMMENT="Level number (1-5; capped by parent skill.max_level)"/>
+        <FIELD NAME="label"       TYPE="char" LENGTH="100" NOTNULL="true"
+               COMMENT="Short display label (e.g. 'Awareness', 'Basic', 'Expert')"/>
+        <FIELD NAME="description" TYPE="text" NOTNULL="false"
+               COMMENT="Markdown describing what this level requires / demonstrates"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"  TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_skill" TYPE="foreign" FIELDS="skillid" REFTABLE="local_airpay_skills" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_skill_level" UNIQUE="true" FIELDS="skillid, level"
+               COMMENT="One level definition per skill+level pair"/>
+      </INDEXES>
+    </TABLE>
+
     <TABLE NAME="local_airpay_user_skills"
            COMMENT="User's current skill levels (earned through courses/assessments)">
       <FIELDS>

@@ -1,0 +1,42 @@
+{{!
+   Manager — course allocations to direct reports.
+}}
+<div class="ap-card mb-3">
+  <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+    <h1 class="h3 m-0">Course Allocations</h1>
+    <div class="btn-group">
+      <a href="{{ index_url }}" class="btn btn-sm btn-outline-secondary">
+        <i class="fa fa-tachometer-alt me-1"></i>Team dashboard
+      </a>
+      <a href="{{ requests_url }}" class="btn btn-sm btn-outline-secondary">
+        <i class="fa fa-inbox me-1"></i>Requests
+      </a>
+      {{# can_allocate }}
+      <button type="button" class="btn btn-sm btn-primary" data-action="create-allocation">
+        <i class="fa fa-plus me-1"></i>Assign course
+      </button>
+      {{/ can_allocate }}
+    </div>
+  </div>
+
+  <form id="ap-mgr-alloc-filter" class="row g-2 mb-3">
+    <div class="col-md-3">
+      <label for="ap-mgr-alloc-status" class="form-label small mb-1">Status</label>
+      <select id="ap-mgr-alloc-status" class="form-select form-select-sm">
+        <option value="all" selected>All</option>
+        <option value="assigned">Assigned</option>
+        <option value="in_progress">In progress</option>
+        <option value="completed">Completed</option>
+        <option value="overdue">Overdue</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+    </div>
+  </form>
+
+  <div id="ap-mgr-alloc-table"
+       data-region="airpay-datatable"
+       data-ws-name="local_airpay_manager_list_allocations"
+       data-page-size="25"
+       data-columns-json="{{ columns_json }}"
+       data-extra-args="{{ extra_args_json }}"></div>
+</div>

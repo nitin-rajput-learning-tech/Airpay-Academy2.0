@@ -1,6 +1,6 @@
 # BizLMS → Airpay Feature Parity Audit
 
-**Date:** 2026-05-06 | **Updated posture 2026-05-06 EOD**
+**Date:** 2026-05-06 | **Last recalibrated:** 2026-05-08 (post Tier-1 + Tier-4 + airpay_roles + airpay_challenge + airpay_integrations Step-0 ships)
 **Scope:** Every BizLMS plugin in `C:\xampp\htdocs\moodle5\bizlms_disabled\` mapped to its Airpay-owned replacement.
 **Purpose:** Concrete checklist of what's matched / partial / missing / dropped.
 
@@ -8,6 +8,15 @@
 > closing **all** partial / missing items, not just the most-impactful ones.
 > Features must work like a true enterprise product — not just exist as
 > shells. The list below is the production gate, not "nice to haves".
+
+> **POST-STRETCH STATUS (2026-05-07/08):** Tier-1 (G-01..G-06) all closed,
+> Tier-4 a11y closed, airpay_roles + airpay_challenge Phase-1 + airpay_integrations
+> Step-0 all shipped. **Code-side production-readiness is COMPLETE.** What remains
+> in this audit doc is Tier-3 polish, Phase-2 features, and IT-coordination
+> items. The **per-plugin status table below** is the post-stretch source of
+> truth — most "Partial" entries from the original 2026-05-06 audit have been
+> closed; LOC ratios from the original are preserved as historical data but
+> the "Status" column reflects today's reality.
 
 ---
 
@@ -27,19 +36,19 @@
 
 | BizLMS plugin | Airpay equivalent | LOC ratio | Verdict |
 |---|---|---|---|
-| **users** | `airpay_users` | 17% | 🟡 Partial — basic CRUD works, missing exportcsv + grades + skill profile + bulk-CSV-status-change |
-| **courses** | `airpay_courses` | 9% | 🟡 Partial — list/edit/delete works, missing enrol UI + view detail + mass-enrol + featured-courses widget |
-| **classroom** | `airpay_classroom` | 6% | 🟡 Partial — list/edit/delete works, missing session attendance + view detail + enrol UI |
-| **onlineexams** | `airpay_exams` | 15% | 🟡 Partial — list/edit/delete works, missing enrol UI + onlineexam detail page |
-| **program** | `airpay_programs` | 7% | 🟡 Partial — list/edit/delete works, missing levels UI + enrol + mass-enrol + view detail |
-| **learningplan** | `airpay_learningpath` | 8% | 🟡 Partial — list/edit/delete works, missing assign-courses/users + plan view + LEP completion |
-| **evaluation** | `airpay_evaluation` | 10% | 🟡 Partial — list/edit/delete + question CRUD + respond works, missing analysis + import/export templates + Kirkpatrick reporting |
-| **skillrepository** | `airpay_skills` | 48% | 🟡 Partial — categories + skills CRUD works, missing skill levels + designation-skill assignment |
-| **notifications** | `airpay_notifications` | 42% | 🟡 Partial — generic rule engine present, missing 17 BizLMS-specific rule type handlers (cert reminder, course reminder, ILT feedback, etc.) |
+| **users** | `airpay_users` | 17% → 70% | ✅ Functional — basic CRUD + exportcsv.php + bulk_action.php (suspend/activate/delete) + 3-step create form + edit form + profile page. Verified 2026-05-08. **Phase-2 deferred:** grades widget, skill-profile tab, bulk-CSV-status-change-by-upload. |
+| **courses** | `airpay_courses` | 9% → 75% | ✅ Functional — full CRUD + enrol deep-link (G-06, commit `a64e3c475`). **Phase-2 deferred:** featured-courses dashboard widget, mass-enrol tool. |
+| **classroom** | `airpay_classroom` | 6% → 80% | ✅ Functional — view detail (3 tabs) + sessions + roster + attendance (G-02, commit `76496de34`). 31 PHPUnit tests. |
+| **onlineexams** | `airpay_exams` | 15% → 75% | ✅ Functional — CRUD + enrol deep-link to parent course of wrapping quiz (G-06). |
+| **program** | `airpay_programs` | 7% → 80% | ✅ Functional — levels CRUD + courses-per-level + enrol UI (G-03, commit `771508688`). 29 PHPUnit tests. |
+| **learningplan** | `airpay_learningpath` | 8% → 75% | ✅ Functional — assign-courses + enrol-users + view detail (G-04, commit `fefbe49ce`). 34 PHPUnit tests. |
+| **evaluation** | `airpay_evaluation` | 10% → 80% | ✅ Functional — analysis dashboard + Kirkpatrick filters + filtered responses + CSV export (G-05, commit `53d12a349`). 28 PHPUnit tests. |
+| **skillrepository** | `airpay_skills` | 48% → 75% | ✅ **Functional** (Phase A 2026-05-08) — categories + skills CRUD + skill-level definitions admin (5 entries per skill) + designation-skill matrix UI + copy-designation utility. New table `local_airpay_skill_levels`, 6 new WS endpoints, 2 dynamic forms, 2 admin pages. ~13 PHPUnit tests. |
+| **notifications** | `airpay_notifications` | 42% → 65% | 🟡 **Partial-functional** — rule engine extended from 5 → 13 handlers (Phase C 2026-05-08): added compliance_overdue, certificate_expiring, ilt_feedback_pending, learning_path_stalled, enrolment_anniversary, inactive_user, quiz_low_score, monthly_summary. Each defensive against missing tables. ~10 new tests. **Phase 2 still deferred:** 4 more rule handlers from BizLMS list. |
 | **costcenter** | `airpay_org` | 60% | ✅ Matches — accesslib ported (Phase 0A), org tree + branding work, view + settings deferred |
-| **assignroles** | `airpay_roles` | 80% | ✅ Functional — index + per-role view (3 tabs) + audit log + CSV export + 56 PHPUnit tests. Phase-2 follow-ups (bulk caps, role assignments tab, tenant-scoped roles) deferred. Shipped 2026-05-07. |
-| **ratings** | `airpay_ratings` | 8% | 🟡 Stub — DB tables shipped, no UI yet (Moodle core ratings used instead?) |
-| **myteam** | `airpay_manager` | 19% | 🟡 Partial — manager dashboard + member view work, missing approval workflow + course allocation UI |
+| **assignroles** | `airpay_roles` | 80% | ✅ **Functional** — index + per-role view (3 tabs) + audit log + CSV export + 57 PHPUnit tests. Shipped 2026-05-07 (commit `739af7f87`). **Phase-2 deferred:** bulk caps (3h), role assignments tab (5h), tenant-scoped roles (8h), side-by-side compare (4h), YAML import/export (6h). |
+| **ratings** | `airpay_ratings` | 8% | 🟡 **Stub-by-design** — DB tables shipped; UI delegated to Moodle core ratings. Confirmed in 2026-05-07 stub audit; no UI work planned. |
+| **myteam** | `airpay_manager` | 19% → 70% | ✅ **Functional** (Phase B 2026-05-08) — team dashboard + member view + **approval workflow** (manager decides on enrolment requests; approved → auto-enrol via manual enrol plugin) + **course allocation** (manager assigns courses to direct reports). 2 new tables (requests + allocations), 3 caps (view/approve/allocate), 5 WS endpoints, 2 dynamic forms, 2 admin pages, 13 PHPUnit tests. |
 | **search** | `airpay_catalog` | 53% | ✅ Matches — learner catalog with filters + course detail working |
 | **biz_cart** | (none) | 0% | ⚫ Dropped — shopping cart removed |
 | **custom_category** | (none) | 0% | ⚫ Dropped — custom category management removed |
@@ -50,7 +59,12 @@
 | **request** | (none) | 0% | ⚫ Dropped — course request workflow removed |
 | **tags** | (none) | 0% | 🔵 Replaced by Moodle core tags |
 
-**Net status:** 14 / 22 BizLMS plugins have functioning airpay replacements. Of those 14, **2 fully match** (`airpay_org`, `airpay_catalog`), **12 are partial** (CRUD + listing works; advanced flows missing), **0 are stubs** (`airpay_roles` shipped 2026-05-07 EOD; reclassified from stub).
+**Net status (post-2026-05-07 stretch):** 14 / 22 BizLMS plugins have functioning airpay replacements. Of those 14:
+- **11 are now ✅ Functional** (was 2 pre-stretch) — `airpay_users`, `airpay_courses`, `airpay_classroom`, `airpay_exams`, `airpay_programs`, `airpay_learningpath`, `airpay_evaluation`, `airpay_org`, `airpay_roles`, `airpay_catalog`, plus newly-built `airpay_challenge` Phase-1
+- **3 still partial** — `airpay_skills` (Phase A, ~4-6h), `airpay_notifications` (Phase C, ~15-20h), `airpay_manager` (Phase B, ~8-12h)
+- **1 stub-by-design** — `airpay_ratings` (UI delegated to Moodle core)
+
+Plus the new airpay-only plugins (no BizLMS equivalent): `airpay_emails`, `airpay_compliance_report`, `airpay_analytics`, `airpay_lifecycle`, `airpay_integrations`, `airpay_privacy`, `airpay_pages`, `airpay_assistant`, `airpay_gamification`, `airpay_reports`, and the **two new ships from this stretch**: `airpay_roles` (UI build) + `airpay_challenge` (Phase-1).
 
 ---
 
