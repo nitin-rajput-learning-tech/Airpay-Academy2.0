@@ -139,13 +139,15 @@ class list_courses extends external_api {
                            . s($c->fullname) . '</a>';
 
             $actions = [];
-            // G-06: Enrol Users — deep-link to Moodle core /enrol/users.php.
-            // Native modal would be ~6-8h; the deep-link gives admins a
-            // direct path without leaving the airpay context (opens in a
-            // new tab so the row context is preserved).
+            // Phase F.5 (2026-05-08) — native enrol modal (replaces G-06
+            // deep-link). Opens in-page via local_airpay_courses/enrol_modal.
+            // Original deep-link kept as fallback (Shift-click / new-tab).
             if ($can_enrol) {
                 $enrolurl = (new \moodle_url('/enrol/users.php', ['id' => (int) $c->id]))->out(false);
-                $actions[] = '<a href="' . s($enrolurl) . '" target="_blank" rel="noopener" '
+                $actions[] = '<a href="' . s($enrolurl) . '" '
+                    . 'data-action="enrol-users-modal" '
+                    . 'data-courseid="' . (int) $c->id . '" '
+                    . 'data-name="' . s($c->fullname) . '" '
                     . 'class="btn btn-sm btn-link text-muted p-1" '
                     . 'title="Enrol users"><i class="fa fa-user-plus"></i></a>';
             }

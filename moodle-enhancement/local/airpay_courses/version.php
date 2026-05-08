@@ -28,10 +28,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_airpay_courses';
-$plugin->version   = 2026050902;
+$plugin->version   = 2026050903;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.5.0'; // +Phase F.4: mass-enrol via CSV (email,courseshortname,role)
+$plugin->release   = '1.6.0'; // +Phase F.5: native enrol modal (replaces deep-link)
 $plugin->dependencies = [
     'local_airpay_org' => 2026041600,
 ];

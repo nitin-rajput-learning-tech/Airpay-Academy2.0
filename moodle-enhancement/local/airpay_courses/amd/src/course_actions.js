@@ -92,12 +92,30 @@ const confirmDelete = async (courseid, coursename, returnFocus) => {
         }, () => null);
 };
 
+// Phase F.5 (2026-05-08) — native enrol modal (replaces deep-link).
+const openEnrolUsersModal = (courseid, coursename, returnFocus) => {
+    const modalForm = new ModalForm({
+        formClass: 'local_airpay_courses\\form\\enrol_users_modal',
+        args: {courseid: courseid},
+        modalConfig: {title: 'Enrol users — ' + coursename, large: true},
+        returnFocus: returnFocus,
+    });
+    modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, (event) => {
+        const message = (event.detail && event.detail.message) || 'Enrolled.';
+        Notification.addNotification({message, type: 'success'});
+        // No reload — the courses list doesn't show enrol counts inline.
+    });
+    modalForm.show();
+};
+
 const handleClick = (event) => {
     const trigger = event.target.closest('[data-action]');
     if (!trigger) return;
     const action = trigger.dataset.action;
     const courseid = parseInt(trigger.dataset.courseid || '0', 10);
-    const coursename = trigger.dataset.coursename || 'this course';
+    const coursename = trigger.dataset.coursename
+        || trigger.dataset.name
+        || 'this course';
     switch (action) {
         case 'create-course':
             event.preventDefault();
@@ -118,6 +136,10 @@ const handleClick = (event) => {
         case 'delete-course':
             event.preventDefault();
             confirmDelete(courseid, coursename, trigger);
+            break;
+        case 'enrol-users-modal':
+            event.preventDefault();
+            openEnrolUsersModal(courseid, coursename, trigger);
             break;
     }
 };
