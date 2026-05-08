@@ -1,0 +1,115 @@
+{
+  "timestamp": "2026-05-08T07:45:59.997Z",
+  "production_ready": true,
+  "total_critical": 0,
+  "total_serious": 0,
+  "total_moderate": 0,
+  "errored_count": 0,
+  "surfaces_scanned": 13,
+  "surfaces": [
+    {
+      "surface": "roles-index",
+      "url": "/local/airpay_roles/index.php",
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "violations": []
+    },
+    {
+      "surface": "roles-audit",
+      "url": "/local/airpay_roles/audit.php",
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "violations": []
+    },
+    {
+      "surface": "roles-view-overview",
+      "url": "/local/airpay_roles/view.php?id=1&tab=overview",
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "violations": []
+    },
+    {
+      "surface": "roles-view-caps",
+      "url": "/local/airpay_roles/view.php?id=1&tab=capabilities",
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "violations": []
+    },
+    {
+      "surface": "roles-view-audit",
+      "url": "/local/airpay_roles/view.php?id=1&tab=audit",
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "violations": []
+    },
+    {
+      "surface": "challenge-index",
+      "url": "/local/airpay_challenge/index.php",
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "violations": []
+    },
+    {
+      "surface": "challenge-leaderboard",
+      "url": "/local/airpay_challenge/leaderboard.php",
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "violations": []
+    },
+    {
+      "surface": "manager-index",
+      "url": "/local/airpay_manager/index.php",
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "violations": []
+    },
+    {
+      "surface": "manager-requests",
+      "url": "/local/airpay_manager/requests.php",
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "violations": []
+    },
+    {
+      "surface": "manager-allocations",
+      "url": "/local/airpay_manager/allocations.php",
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "violations": []
+    },
+    {
+      "surface": "skills-admin",
+      "url": "/local/airpay_skills/admin.php",
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "violations": []
+    },
+    {
+      "surface": "skills-designation-matrix",
+      "url": "/local/airpay_skills/designation_matrix.php",
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "violations": []
+    },
+    {
+      "surface": "notifications-index",
+      "url": "/local/airpay_notifications/index.php",
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "violations": []
+    }
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "timestamp": "2026-05-08T07:49:21.564Z",
+  "all_pass": true,
+  "total_pass": 15,
+  "total_fail": 0,
+  "total_console_errors": 0,
+  "total_failed_requests": 0,
+  "workflows": [
+    {
+      "id": "WX-08",
+      "plugin": "airpay_roles",
+      "cases": [
+        {
+          "name": "index_renders",
+          "pass": true
+        },
+        {
+          "name": "archetype_filter_exists",
+          "pass": true
+        },
+        {
+          "name": "overview_4_stats",
+          "pass": true
+        },
+        {
+          "name": "caps_table_renders",
+          "pass": true
+        },
+        {
+          "name": "audit_table_renders",
+          "pass": true
+        }
+      ],
+      "console_errors": [],
+      "failed_requests": []
+    },
+    {
+      "id": "WX-09",
+      "plugin": "airpay_challenge",
+      "cases": [
+        {
+          "name": "index_renders",
+          "pass": true
+        },
+        {
+          "name": "status_filter_exists",
+          "pass": true
+        },
+        {
+          "name": "leaderboard_renders",
+          "pass": true
+        }
+      ],
+      "console_errors": [],
+      "failed_requests": []
+    },
+    {
+      "id": "WX-10",
+      "plugin": "airpay_manager",
+      "cases": [
+        {
+          "name": "requests_table_renders",
+          "pass": true
+        },
+        {
+          "name": "allocations_table_renders",
+          "pass": true
+        },
+        {
+          "name": "bulk_allocate_button_present",
+          "pass": true
+        },
+        {
+          "name": "csv_export_link_present",
+          "pass": true
+        }
+      ],
+      "console_errors": [],
+      "failed_requests": []
+    },
+    {
+      "id": "WX-11",
+      "plugin": "airpay_skills",
+      "cases": [
+        {
+          "name": "designation_matrix_link_present",
+          "pass": true
+        },
+        {
+          "name": "create_category_button",
+          "pass": true
+        },
+        {
+          "name": "designation_selector_present",
+          "pass": true
+        }
+      ],
+      "console_errors": [],
+      "failed_requests": []
+    }
+  ]
+}

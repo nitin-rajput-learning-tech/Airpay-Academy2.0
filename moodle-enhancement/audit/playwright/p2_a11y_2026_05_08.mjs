@@ -61,12 +61,15 @@ async function login(page, login_id) {
         { waitUntil: 'domcontentloaded', timeout: PAGE_TIMEOUT });
     await page.fill('input[name="username"]', login_id);
     await page.fill('input[name="password"]', PASSWORD);
-    await Promise.all([
-        page.waitForURL(u => /\/(my|admin)\//.test(u.toString())
-                || u.toString().endsWith('/moodle/'),
-            { timeout: PAGE_TIMEOUT, waitUntil: 'domcontentloaded' }),
-        page.click('#loginbtn, button[type="submit"]'),
-    ]);
+    // noWaitAfter avoids Playwright's auto-wait for navigation timeout —
+    // we have an explicit waitForFunction that handles it more robustly.
+    await page.click('#loginbtn', { noWaitAfter: true });
+    // Pass undefined as arg so Playwright applies our options correctly.
+    await page.waitForFunction(() => {
+        if (window.location.href.includes('/login/index.php')) return false;
+        return !!document.querySelector(
+            'a[href*="/login/logout.php"], #user-menu-toggle, [data-region="user-menu"], a[data-region="logout-link"]');
+    }, undefined, { timeout: PAGE_TIMEOUT });
 }
 
 async function shoot(page, name) {
@@ -79,7 +82,15 @@ async function shoot(page, name) {
 async function main() {
     await fs.mkdir(SHOTS_DIR, { recursive: true });
 
-    const browser = await chromium.launch({ headless: true });
+    // Use the locally-installed Google Chrome instead of chromium-headless-shell.
+    // Real Chrome = real font rendering, real scrollbars, real viewport behavior
+    // — and avoids the STATUS_DLL_NOT_FOUND issue with the headless-shell binary.
+    // Set HARNESS_HEADLESS=1 in env to force headless mode (CI).
+    const headless = process.env.HARNESS_HEADLESS === '1';
+    const browser = await chromium.launch({
+        channel: 'chrome',
+        headless,
+    });
     const ctx = await browser.newContext({
         viewport: { width: 1440, height: 900 },
         locale: 'en-US',

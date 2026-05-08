@@ -34,12 +34,13 @@ async function login(page, login_id) {
         { waitUntil: 'domcontentloaded', timeout: PAGE_TIMEOUT });
     await page.fill('input[name="username"]', login_id);
     await page.fill('input[name="password"]', PASSWORD);
-    await Promise.all([
-        page.waitForURL(u => /\/(my|admin)\//.test(u.toString())
-                || u.toString().endsWith('/moodle/'),
-            { timeout: PAGE_TIMEOUT, waitUntil: 'domcontentloaded' }),
-        page.click('#loginbtn, button[type="submit"]'),
-    ]);
+    await page.click('#loginbtn', { noWaitAfter: true });
+    await page.waitForFunction(() => {
+        const url = window.location.href;
+        if (url.includes('/login/index.php')) return false;
+        return !!document.querySelector(
+            'a[href*="/login/logout.php"], #user-menu-toggle, [data-region="user-menu"], a[data-region="logout-link"]');
+    }, undefined, { timeout: PAGE_TIMEOUT });
 }
 
 async function shoot(page, name) {
@@ -224,7 +225,15 @@ async function wf_skills(page) {
 async function main() {
     await fs.mkdir(SHOTS_DIR, { recursive: true });
 
-    const browser = await chromium.launch({ headless: true });
+    // Use the locally-installed Google Chrome (real binary) instead of
+    // chromium-headless-shell. Visible browser by default so the operator
+    // can watch the workflow execute. Set HARNESS_HEADLESS=1 to suppress
+    // the window (e.g. in CI).
+    const headless = process.env.HARNESS_HEADLESS === '1';
+    const browser = await chromium.launch({
+        channel: 'chrome',
+        headless,
+    });
     const ctx = await browser.newContext({
         viewport: { width: 1440, height: 900 },
         locale: 'en-US',

@@ -34,20 +34,25 @@
   </div>
 
   <ul class="nav nav-tabs mb-3" role="tablist">
-    <li class="nav-item">
+    <li class="nav-item" role="presentation">
       <a class="nav-link {{# show_overview }}active{{/ show_overview }}"
-         href="{{ overview_url }}">{{# str }}tab_overview, local_airpay_roles{{/ str }}</a>
+         href="{{ overview_url }}" role="tab"
+         aria-selected="{{# show_overview }}true{{/ show_overview }}{{^ show_overview }}false{{/ show_overview }}">
+        {{# str }}tab_overview, local_airpay_roles{{/ str }}
+      </a>
     </li>
-    <li class="nav-item">
+    <li class="nav-item" role="presentation">
       <a class="nav-link {{# show_capabilities }}active{{/ show_capabilities }}"
-         href="{{ caps_url }}">
+         href="{{ caps_url }}" role="tab"
+         aria-selected="{{# show_capabilities }}true{{/ show_capabilities }}{{^ show_capabilities }}false{{/ show_capabilities }}">
         {{# str }}tab_capabilities, local_airpay_roles{{/ str }}
         <span class="badge bg-secondary ms-1">{{ role.caps_total }}</span>
       </a>
     </li>
-    <li class="nav-item">
+    <li class="nav-item" role="presentation">
       <a class="nav-link {{# show_audit }}active{{/ show_audit }}"
-         href="{{ audit_url }}">
+         href="{{ audit_url }}" role="tab"
+         aria-selected="{{# show_audit }}true{{/ show_audit }}{{^ show_audit }}false{{/ show_audit }}">
         {{# str }}tab_audit, local_airpay_roles{{/ str }}
         <span class="badge bg-secondary ms-1">{{ role.auditcount }}</span>
       </a>

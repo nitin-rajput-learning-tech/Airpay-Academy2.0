@@ -18,19 +18,25 @@
   </div>
 
   <ul class="nav nav-tabs mb-3" role="tablist">
-    <li class="nav-item">
-      <a class="nav-link {{# show_overview }}active{{/ show_overview }}" href="{{ overview_url }}">
+    <li class="nav-item" role="presentation">
+      <a class="nav-link {{# show_overview }}active{{/ show_overview }}"
+         href="{{ overview_url }}" role="tab"
+         aria-selected="{{# show_overview }}true{{/ show_overview }}{{^ show_overview }}false{{/ show_overview }}">
         {{# str }}tab_overview, local_airpay_challenge{{/ str }}
       </a>
     </li>
-    <li class="nav-item">
-      <a class="nav-link {{# show_participants }}active{{/ show_participants }}" href="{{ participants_url }}">
+    <li class="nav-item" role="presentation">
+      <a class="nav-link {{# show_participants }}active{{/ show_participants }}"
+         href="{{ participants_url }}" role="tab"
+         aria-selected="{{# show_participants }}true{{/ show_participants }}{{^ show_participants }}false{{/ show_participants }}">
         {{# str }}tab_participants, local_airpay_challenge{{/ str }}
         <span class="badge bg-secondary ms-1">{{ challenge.participants }}</span>
       </a>
     </li>
-    <li class="nav-item">
-      <a class="nav-link {{# show_leaderboard }}active{{/ show_leaderboard }}" href="{{ leaderboard_url }}">
+    <li class="nav-item" role="presentation">
+      <a class="nav-link {{# show_leaderboard }}active{{/ show_leaderboard }}"
+         href="{{ leaderboard_url }}" role="tab"
+         aria-selected="{{# show_leaderboard }}true{{/ show_leaderboard }}{{^ show_leaderboard }}false{{/ show_leaderboard }}">
         {{# str }}tab_leaderboard, local_airpay_challenge{{/ str }}
       </a>
     </li>

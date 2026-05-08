@@ -77,8 +77,12 @@
     <div class="d-flex flex-wrap align-items-end gap-3">
         {{#has_cat_options}}
         <div>
-            <label class="small text-muted mb-1 d-block">Category</label>
-            <select class="form-select form-select-sm" data-airpay-skills-filter="categoryid" style="min-width: 220px;">
+            <label class="small text-muted mb-1 d-block" for="ap-skills-cat-filter">Category</label>
+            <select id="ap-skills-cat-filter"
+                    class="form-select form-select-sm"
+                    data-airpay-skills-filter="categoryid"
+                    aria-label="Filter skills by category"
+                    style="min-width: 220px;">
                 <option value="0">All categories</option>
                 {{#cat_options}}
                 <option value="{{id}}">{{name}}</option>

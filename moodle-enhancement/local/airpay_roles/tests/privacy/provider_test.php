@@ -48,7 +48,11 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         role_manager::update_capability($rid, 'moodle/course:create', 'allow');
 
         $contexts = provider::get_contexts_for_userid((int) $u->id);
-        $this->assertContains($sysctx->id, $contexts->get_contextids());
+        $ids = array_map('intval', $contexts->get_contextids());
+        $this->assertNotEmpty($ids,
+            'context list must include the audit log\'s context');
+        $this->assertContains((int) $sysctx->id, $ids,
+            'sys context id must appear in the context list');
     }
 
     public function test_export_user_data_includes_their_audit_rows(): void {
