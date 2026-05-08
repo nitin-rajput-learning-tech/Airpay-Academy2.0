@@ -689,6 +689,10 @@
         {{/airpay}}
         {{! ═══ END AIRPAY DASHBOARD ═══ }}
 
+        {{! Phase F.2 (2026-05-08) — featured-courses widget for learners.
+            Rendered HTML is empty when no featured courses are pinned. }}
+        {{{ featured_widget_html }}}
+
         {{! Moodle block regions — hidden when sidebar shell is active (blocks not used) }}
         <div id="page-content" class="d-print-block" style="display: none;">
             {{{ output.main_content }}}

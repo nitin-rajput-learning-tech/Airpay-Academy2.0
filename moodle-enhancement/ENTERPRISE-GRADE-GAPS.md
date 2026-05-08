@@ -51,7 +51,7 @@ A feature with **F✅ B✅ T✅ V❌ L❌** is NOT shipped. It's halfway.
 | Create / edit / delete course | ✅ | ✅ | ✅ | ⚠ | ⚠ |  |
 | Enrol Users deep-link (G-06) | ✅ | ✅ | ✅ | ⚠ | ⚠ | Native modal deferred |
 | **Native enrol modal (vs deep-link)** | ❌ | ❌ | ❌ | ❌ | ❌ | Trade-off: Moodle core /enrol/users.php is feature-complete; modal wraps that. ~6h |
-| **Featured-courses dashboard widget** | ❌ | ❌ | ❌ | ❌ | ❌ | BizLMS had a "Featured" carousel on the home; we don't |
+| **Featured-courses dashboard widget** | ✅ | ✅ | ✅ | ✅ | ⚠ | Phase F.2 (2026-05-08) v1.4.0 — `local_airpay_featured_courses` schema + `featured_manager` (add/remove/reorder/list_all/get_widget_for_user) + `/local/airpay_courses/featured.php` admin page + `featured_widget.mustache` rendered on dashboard via lib helper; tenant-scoped + already-enrolled hide-out; smoke_featured.php verifies all 7 cases |
 | **Mass-enrol tool (CSV upload)** | ❌ | ❌ | ❌ | ❌ | ❌ |  |
 | **Course-skill mapping UI** | ✅ | ✅ | ✅ | ✅ | ✅ | Phase A.2 (2026-05-08) — `course_mapping.php` admin page + 4 WS endpoints + observer round-trip smoke-tested |
 

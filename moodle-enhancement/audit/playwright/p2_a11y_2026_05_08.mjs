@@ -67,6 +67,10 @@ const SURFACES = [
     { id: 'users-bulk-csv',        url: '/local/airpay_users/bulk_csv.php' },
     // airpay_evaluation Phase G.1 (import template, 2026-05-08 v1.5.0)
     { id: 'evaluation-import',     url: '/local/airpay_evaluation/import_template.php' },
+    // airpay_courses Phase F.2 (featured-courses widget admin, 2026-05-08 v1.4.0)
+    { id: 'courses-featured',      url: '/local/airpay_courses/featured.php' },
+    // dashboard with the widget rendered
+    { id: 'dashboard-with-featured', url: '/my/dashboard.php' },
 ];
 
 async function login(page, login_id) {

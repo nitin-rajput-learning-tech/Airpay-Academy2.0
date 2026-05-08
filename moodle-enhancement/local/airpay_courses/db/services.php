@@ -46,4 +46,27 @@ $functions = [
         'ajax'         => true,
         'capabilities' => 'local/airpay_courses:delete',
     ],
+
+    // Phase F.2 (2026-05-08) — featured-courses widget admin.
+    'local_airpay_courses_add_featured' => [
+        'classname'    => 'local_airpay_courses\external\add_featured',
+        'description'  => 'Pin a course to the featured-courses widget',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_courses:manage',
+    ],
+    'local_airpay_courses_remove_featured' => [
+        'classname'    => 'local_airpay_courses\external\remove_featured',
+        'description'  => 'Unpin a course from the featured-courses widget',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_courses:manage',
+    ],
+    'local_airpay_courses_reorder_featured' => [
+        'classname'    => 'local_airpay_courses\external\reorder_featured',
+        'description'  => 'Reorder featured-courses entries',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_courses:manage',
+    ],
 ];

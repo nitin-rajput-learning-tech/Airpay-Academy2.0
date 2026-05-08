@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/airpay_courses/db" VERSION="20260508"
+       COMMENT="Airpay Courses — admin-curated featured-courses widget">
+  <TABLES>
+    <TABLE NAME="local_airpay_featured_courses"
+           COMMENT="Admin-curated list of courses to feature on the learner dashboard">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="courseid"     TYPE="int"  LENGTH="10" NOTNULL="true"
+               COMMENT="Foreign key to {course}.id"/>
+        <FIELD NAME="costcenterid" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="0 = all tenants; non-zero = scope to that tenant root"/>
+        <FIELD NAME="sort_order"   TYPE="int"  LENGTH="6"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Lower = shown first in the widget"/>
+        <FIELD NAME="label"        TYPE="char" LENGTH="100" NOTNULL="false"
+               COMMENT="Optional caption (e.g. 'Manager track', 'New this month')"/>
+        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"   TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_course" TYPE="foreign" FIELDS="courseid" REFTABLE="course" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_costcenter_sort" UNIQUE="false"
+               FIELDS="costcenterid, sort_order"/>
+        <!-- fk_course key implicitly creates an index on courseid -->
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

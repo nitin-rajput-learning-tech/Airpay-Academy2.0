@@ -19,6 +19,7 @@ $PAGE->set_pagelayout('standard');
 $PAGE->set_secondary_navigation(false);
 
 $can_create = has_capability('local/airpay_courses:create', $context);
+$can_manage = has_capability('local/airpay_courses:manage', $context);
 
 // KPI counts.
 $total_count   = (int) $DB->count_records_select('course', 'id > 1');
@@ -50,6 +51,7 @@ $data = [
     'visible_count'  => number_format($visible_count),
     'hidden_count'   => number_format($hidden_count),
     'can_create'     => $can_create,
+    'can_manage'     => $can_manage,
     'cat_options'    => $cat_options,
     'has_cat_options' => !empty($cat_options),
     'columns_json'   => s(json_encode($columns)),

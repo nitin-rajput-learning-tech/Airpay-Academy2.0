@@ -17,11 +17,18 @@
         <h2 class="mb-1" style="font-weight: 700;">Course Management</h2>
         <p class="text-muted mb-0">Build, organise, and manage learning content across categories.</p>
     </div>
+    <div class="d-flex gap-2">
+    {{#can_manage}}
+    <a href="/local/airpay_courses/featured.php" class="btn btn-outline-secondary btn-sm">
+        <i class="fa fa-star fa-fw"></i> Featured
+    </a>
+    {{/can_manage}}
     {{#can_create}}
     <a href="#" class="btn btn-primary btn-sm" data-action="create-course">
         <i class="fa fa-plus fa-fw"></i> New Course
     </a>
     {{/can_create}}
+    </div>
 </div>
 
 <div class="row mb-4">
