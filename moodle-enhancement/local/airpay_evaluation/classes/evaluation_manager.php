@@ -202,6 +202,134 @@ class evaluation_manager {
             ['evaluationid' => $evaluationid], 'sortorder ASC, id ASC');
     }
 
+    // ─────────────────────────────────────────────────────────────────
+    // Phase G.1 (2026-05-08) — evaluation TEMPLATE import / export
+    //
+    // Lets admins move an evaluation form definition (without responses)
+    // between tenants or environments via a JSON file. Export + Import
+    // are inverses — the JSON shape is the contract.
+    // ─────────────────────────────────────────────────────────────────
+
+    /** JSON shape version — bump when fields change incompatibly. */
+    public const TEMPLATE_FORMAT_VERSION = 1;
+
+    /**
+     * Build a portable JSON template payload from one evaluation.
+     *
+     * @return array{
+     *   format: int,
+     *   exported_at: int,
+     *   evaluation: array{name:string, description:string,
+     *                     kirkpatrick_level:int, trigger_event:string,
+     *                     days_after:int, anonymous:int},
+     *   questions: list<array{questiontype:string, questiontext:string,
+     *                          options:array, required:int, sortorder:int}>
+     * }
+     */
+    public static function export_template(int $evaluationid): array {
+        global $DB;
+        $eval = $DB->get_record(self::TABLE, ['id' => $evaluationid],
+            '*', MUST_EXIST);
+        $questions = self::get_questions($evaluationid);
+
+        $payload = [
+            'format'      => self::TEMPLATE_FORMAT_VERSION,
+            'exported_at' => time(),
+            'evaluation'  => [
+                'name'              => (string) $eval->name,
+                'description'       => (string) ($eval->description ?? ''),
+                'kirkpatrick_level' => (int) $eval->kirkpatrick_level,
+                'trigger_event'     => (string) $eval->trigger_event,
+                'days_after'        => (int) $eval->days_after,
+                'anonymous'         => (int) $eval->anonymous,
+            ],
+            'questions'   => [],
+        ];
+
+        foreach ($questions as $q) {
+            $payload['questions'][] = [
+                'questiontype' => (string) $q->questiontype,
+                'questiontext' => (string) $q->questiontext,
+                'options'      => self::decode_options($q->options),
+                'required'     => (int) $q->required,
+                'sortorder'    => (int) $q->sortorder,
+            ];
+        }
+        return $payload;
+    }
+
+    /**
+     * Import a template payload (decoded from JSON) into a new evaluation.
+     * Returns the new evaluation ID. Does NOT import responses.
+     *
+     * @param array $payload    Same shape as export_template returns.
+     * @param int   $costcenterid  Tenant to assign the new evaluation to.
+     * @param int   $status        Initial status (default DRAFT).
+     * @return array{id:int, name:string, question_count:int}
+     */
+    public static function import_template(array $payload,
+                                            int $costcenterid = 0,
+                                            int $status = self::STATUS_DRAFT): array {
+        global $DB;
+
+        if (!isset($payload['format']) || (int) $payload['format'] > self::TEMPLATE_FORMAT_VERSION) {
+            throw new \invalid_parameter_exception(
+                'Unsupported template format (version '
+                . ($payload['format'] ?? 'missing') . ')');
+        }
+        $eval_data = $payload['evaluation'] ?? null;
+        $questions = $payload['questions'] ?? [];
+        if (!is_array($eval_data) || !is_array($questions)) {
+            throw new \invalid_parameter_exception(
+                'Malformed template — missing evaluation or questions');
+        }
+
+        $tx = $DB->start_delegated_transaction();
+        try {
+            $newid = self::create((object) [
+                'name'              => trim((string) ($eval_data['name'] ?? 'Imported evaluation')),
+                'description'       => (string) ($eval_data['description'] ?? ''),
+                'kirkpatrick_level' => (int) ($eval_data['kirkpatrick_level'] ?? 1),
+                'trigger_event'     => (string) ($eval_data['trigger_event'] ?? 'manual'),
+                'days_after'        => (int) ($eval_data['days_after'] ?? 0),
+                'anonymous'         => (int) ($eval_data['anonymous'] ?? 0),
+                'costcenterid'      => $costcenterid,
+                'status'            => $status,
+            ]);
+
+            $sortorder = 0;
+            foreach ($questions as $q) {
+                if (empty($q['questiontext'])) continue;
+                $sortorder++;
+                self::create_question((object) [
+                    'evaluationid' => $newid,
+                    'questiontype' => (string) ($q['questiontype'] ?? 'rating'),
+                    'questiontext' => (string) $q['questiontext'],
+                    // create_question expects newline-separated text
+                    // (parse_options() splits on \n). We stored the
+                    // options as an array in the JSON template, so
+                    // re-stringify them here.
+                    'options'      => isset($q['options']) && is_array($q['options'])
+                        ? implode("\n", array_map('strval',
+                            array_values($q['options'])))
+                        : '',
+                    'required'     => isset($q['required']) ? (int) $q['required'] : 1,
+                    'sortorder'    => (int) ($q['sortorder'] ?? $sortorder),
+                ]);
+            }
+            $tx->allow_commit();
+        } catch (\Throwable $e) {
+            $tx->rollback($e);
+        }
+
+        $imported = $DB->get_record(self::TABLE, ['id' => $newid], 'id, name');
+        return [
+            'id'             => (int) $imported->id,
+            'name'           => format_string($imported->name),
+            'question_count' => (int) self::count_questions((int) $imported->id),
+        ];
+    }
+
     public static function get_question(int $questionid) {
         global $DB;
         return $DB->get_record(self::QUESTIONS_TABLE, ['id' => $questionid]);

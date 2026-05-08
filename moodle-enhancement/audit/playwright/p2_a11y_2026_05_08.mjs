@@ -65,6 +65,8 @@ const SURFACES = [
     { id: 'programs-view',         url: '/local/airpay_programs/view.php?id=2&tab=overview' },
     // airpay_users Phase E.3 (bulk-CSV status change, 2026-05-08 v1.6.0)
     { id: 'users-bulk-csv',        url: '/local/airpay_users/bulk_csv.php' },
+    // airpay_evaluation Phase G.1 (import template, 2026-05-08 v1.5.0)
+    { id: 'evaluation-import',     url: '/local/airpay_evaluation/import_template.php' },
 ];
 
 async function login(page, login_id) {
