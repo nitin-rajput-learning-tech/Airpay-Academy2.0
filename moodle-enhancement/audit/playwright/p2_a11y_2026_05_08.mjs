@@ -51,6 +51,9 @@ const SURFACES = [
     { id: 'skills-admin',          url: '/local/airpay_skills/admin.php' },
     { id: 'skills-designation-matrix',
                                    url: '/local/airpay_skills/designation_matrix.php' },
+    // airpay_skills Phase A.2 (shipped 2026-05-08 v1.4.0)
+    { id: 'skills-course-mapping',
+                                   url: '/local/airpay_skills/course_mapping.php' },
 
     // airpay_notifications (Phase C from 2026-05-08)
     { id: 'notifications-index',   url: '/local/airpay_notifications/index.php' },

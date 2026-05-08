@@ -169,6 +169,114 @@ const wireDesignationSelector = () => {
     });
 };
 
+// ─── Phase A.2 (2026-05-08) — course-skill mapping admin ─────────────────
+
+const wireCourseSearch = () => {
+    const search = document.getElementById('ap-skill-course-search');
+    const list = document.getElementById('ap-skill-course-list');
+    if (!search || !list) return;
+    let timer;
+    search.addEventListener('input', () => {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+            const q = search.value.trim();
+            Ajax.call([{
+                methodname: 'local_airpay_skills_search_courses',
+                args: {q: q, limit: 50},
+            }])[0].then((res) => {
+                list.innerHTML = '';
+                if (!res.rows.length) {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item text-muted';
+                    li.textContent = 'No courses match "' + q + '".';
+                    list.appendChild(li);
+                    return null;
+                }
+                for (const row of res.rows) {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    const a = document.createElement('a');
+                    a.href = '?courseid=' + row.id;
+                    a.className = 'text-decoration-none flex-grow-1';
+                    a.innerHTML = '<div class="fw-semibold"></div><div class="small text-muted"></div>';
+                    a.querySelector('div.fw-semibold').textContent = row.fullname;
+                    a.querySelector('div.small').textContent = row.shortname;
+                    const span = document.createElement('span');
+                    span.className = 'badge bg-secondary rounded-pill';
+                    span.title = 'Skills mapped';
+                    span.textContent = String(row.mapped_count);
+                    li.appendChild(a);
+                    li.appendChild(span);
+                    list.appendChild(li);
+                }
+                return null;
+            }).catch(Notification.exception);
+        }, 250);
+    });
+};
+
+const wireAddCourseMappingForm = () => {
+    const form = document.getElementById('ap-skill-add-mapping');
+    if (!form) return;
+    const skillSel = document.getElementById('ap-skill-mapping-skill');
+    const levelSel = document.getElementById('ap-skill-mapping-level');
+    if (!skillSel || !levelSel) return;
+    // Cap "level" options to selected skill's max_level.
+    skillSel.addEventListener('change', () => {
+        const opt = skillSel.options[skillSel.selectedIndex];
+        const max = parseInt(opt && opt.dataset.max ? opt.dataset.max : '5', 10);
+        for (const o of levelSel.options) {
+            const v = parseInt(o.value, 10);
+            o.disabled = v > max;
+        }
+        if (parseInt(levelSel.value, 10) > max) levelSel.value = String(max);
+    });
+
+    form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const trigger = form.querySelector('[data-action="add-course-skill"]');
+        if (!trigger) return;
+        const courseid = parseInt(trigger.dataset.courseid || '0', 10);
+        const skillid = parseInt(skillSel.value || '0', 10);
+        const teaches_level = parseInt(levelSel.value || '0', 10);
+        if (!courseid || !skillid || !teaches_level) {
+            Notification.addNotification({
+                message: 'Please pick a skill and a level.',
+                type: 'warning',
+            });
+            return;
+        }
+        Ajax.call([{
+            methodname: 'local_airpay_skills_save_course_skill',
+            args: {courseid, skillid, teaches_level},
+        }])[0].then(() => {
+            Notification.addNotification({
+                message: 'Mapping saved.',
+                type: 'success',
+            });
+            window.location.reload();
+            return null;
+        }).catch(Notification.exception);
+    });
+};
+
+const confirmDeleteCourseSkill = (rowid, skillname, returnFocus) => {
+    Notification.deleteCancelPromise(
+        'Remove skill mapping',
+        `Remove "${skillname}" from this course's skill mappings?`,
+        'Remove', returnFocus).then(() => {
+        Ajax.call([{
+            methodname: 'local_airpay_skills_delete_course_skill',
+            args: {id: rowid},
+        }])[0].then(() => {
+            Notification.addNotification({message: 'Mapping removed.', type: 'success'});
+            window.location.reload();
+            return null;
+        }).catch(Notification.exception);
+        return true;
+    }, () => null);
+};
+
 const handleClick = (event) => {
     const trigger = event.target.closest('[data-action]');
     if (!trigger) return;
@@ -197,6 +305,8 @@ const handleClick = (event) => {
         case 'edit-designation-skill':    event.preventDefault(); openDesignationSkillForm(designation, rowid, trigger); break;
         case 'delete-designation-skill':  event.preventDefault(); confirmDeleteDesignationSkill(rowid, name || trigger.dataset.skill || 'this skill', trigger); break;
         case 'copy-designation':          event.preventDefault(); promptCopyDesignation(trigger.dataset.from || '', trigger); break;
+        // Phase A.2 — course-skill mapping
+        case 'delete-course-skill':       event.preventDefault(); confirmDeleteCourseSkill(rowid, name || trigger.dataset.skill || 'this mapping', trigger); break;
     }
 };
 
@@ -204,6 +314,10 @@ export const init = (config = {}) => {
     // Page-specific wiring.
     if (config && config.page === 'designation_matrix') {
         wireDesignationSelector();
+    }
+    if (config && config.page === 'course_mapping') {
+        wireCourseSearch();
+        wireAddCourseMappingForm();
     }
     // Click delegation works on body for our two new admin pages too.
     const root = document.querySelector('[data-region="airpay-skills"]') || document.body;

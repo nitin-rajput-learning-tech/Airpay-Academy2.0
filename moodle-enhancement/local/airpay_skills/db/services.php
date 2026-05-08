@@ -71,4 +71,34 @@ $functions = [
         'ajax'         => true,
         'capabilities' => 'local/airpay_skills:manage',
     ],
+
+    // Phase A.2 (2026-05-08) — course-skill mapping admin
+    'local_airpay_skills_list_course_skills' => [
+        'classname'    => 'local_airpay_skills\external\list_course_skills',
+        'description'  => 'Skills mapped to a course (with target level)',
+        'type'         => 'read',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_skills:manage',
+    ],
+    'local_airpay_skills_save_course_skill' => [
+        'classname'    => 'local_airpay_skills\external\save_course_skill',
+        'description'  => 'Upsert one course-skill mapping',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_skills:manage',
+    ],
+    'local_airpay_skills_delete_course_skill' => [
+        'classname'    => 'local_airpay_skills\external\delete_course_skill',
+        'description'  => 'Delete one course-skill mapping',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_skills:manage',
+    ],
+    'local_airpay_skills_search_courses' => [
+        'classname'    => 'local_airpay_skills\external\search_courses',
+        'description'  => 'Lookup courses by name/shortname for the picker',
+        'type'         => 'read',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_skills:manage',
+    ],
 ];

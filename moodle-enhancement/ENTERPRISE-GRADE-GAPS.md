@@ -53,7 +53,7 @@ A feature with **F✅ B✅ T✅ V❌ L❌** is NOT shipped. It's halfway.
 | **Native enrol modal (vs deep-link)** | ❌ | ❌ | ❌ | ❌ | ❌ | Trade-off: Moodle core /enrol/users.php is feature-complete; modal wraps that. ~6h |
 | **Featured-courses dashboard widget** | ❌ | ❌ | ❌ | ❌ | ❌ | BizLMS had a "Featured" carousel on the home; we don't |
 | **Mass-enrol tool (CSV upload)** | ❌ | ❌ | ❌ | ❌ | ❌ |  |
-| **Course-skill mapping UI** | ❌ | ❌ | ❌ | ❌ | ❌ | `local_airpay_course_skills` schema exists; no UI |
+| **Course-skill mapping UI** | ✅ | ✅ | ✅ | ✅ | ✅ | Phase A.2 (2026-05-08) — `course_mapping.php` admin page + 4 WS endpoints + observer round-trip smoke-tested |
 
 ### `airpay_classroom`
 
@@ -125,8 +125,8 @@ A feature with **F✅ B✅ T✅ V❌ L❌** is NOT shipped. It's halfway.
 | **Skill-level definitions** | ✅ | ✅ | ✅ | ❌ | ❌ | Phase A — built + unit-tested, NOT visually walked, NOT logically walked |
 | **Designation-skill matrix** | ✅ | ✅ | ✅ | ❌ | ❌ | Phase A — same |
 | **Copy-designation utility** | ✅ | ✅ | ✅ | ❌ | ❌ | Phase A — same |
-| **Course-skill mapping UI** | ❌ | ❌ | ❌ | ❌ | ❌ | `local_airpay_course_skills` schema; no UI |
-| **Skill credit on course completion event** | ❌ | ❌ | ❌ | ❌ | ❌ | Should auto-update `local_airpay_user_skills` when learner completes a course mapped to a skill |
+| **Course-skill mapping UI** | ✅ | ✅ | ✅ | ✅ | ✅ | Phase A.2 — `/local/airpay_skills/course_mapping.php` (course picker + skill picker capped to skill.max_level + mapped-rows table + delete) |
+| **Skill credit on course completion event** | ✅ | ✅ | ✅ | ✅ | ✅ | Phase A.2 — `\local_airpay_skills\observer::course_completed` listens to `\core\event\course_completed`, calls `update_from_course()` (no-downgrade guard verified by smoke_observer.php) |
 | **Skill assessment workflow (not course-derived)** | ❌ | ❌ | ❌ | ❌ | ❌ | Manager-driven assessment of skill levels |
 | **Bulk-import skill definitions** | ❌ | ❌ | ❌ | ❌ | ❌ |  |
 | **Skill heatmap export** | ⚠ | ⚠ | ❌ | ❌ | ❌ | `team_heatmap` exists; no CSV export, not tested |

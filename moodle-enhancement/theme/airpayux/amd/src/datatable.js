@@ -40,9 +40,16 @@ const escapeHtml = (s) => {
 class Datatable {
     constructor(root) {
         this.root = root;
-        this.endpoint = root.dataset.endpoint;
-        this.columns = JSON.parse(root.dataset.columns || '[]');
-        this.perpage = parseInt(root.dataset.perpage || '25', 10);
+        // Accept both attribute conventions:
+        //   - Original: data-endpoint, data-columns, data-perpage
+        //   - Alternative (used by 2026-05-08 plugins):
+        //     data-ws-name, data-columns-json, data-page-size
+        // This prevents silent breakage when copy/paste creates the wrong shape.
+        this.endpoint = root.dataset.endpoint || root.dataset.wsName;
+        this.columns = JSON.parse(
+            root.dataset.columns || root.dataset.columnsJson || '[]');
+        this.perpage = parseInt(
+            root.dataset.perpage || root.dataset.pageSize || '25', 10);
         this.searchPlaceholder = root.dataset.searchPlaceholder || 'Search…';
         this.actionsHtml = root.dataset.rowActions || '';
         this.selectable = root.dataset.selectable === '1';
@@ -422,10 +429,36 @@ class Datatable {
 const instances = new WeakMap();
 
 export const init = () => {
-    document.querySelectorAll('[data-airpay-table]').forEach((root) => {
+    // Match BOTH attribute conventions:
+    //   - data-airpay-table  (original; set as boolean attr)
+    //   - data-region="airpay-datatable"  (used by 2026-05-08 plugins)
+    const selector = '[data-airpay-table], [data-region="airpay-datatable"]';
+    document.querySelectorAll(selector).forEach((root) => {
         if (instances.has(root)) return;
         instances.set(root, new Datatable(root));
     });
+    // Listen once for external reload events. Plugins fire this on their
+    // root mount when their own filter forms change extraArgs:
+    //   mount.dataset.extraArgs = JSON.stringify({...});
+    //   mount.dispatchEvent(new CustomEvent('airpay-datatable:reload', { bubbles: true }));
+    // We re-read extraArgs from the dataset and refetch.
+    if (!document.body.dataset.airpayDatatableReloadWired) {
+        document.body.dataset.airpayDatatableReloadWired = '1';
+        document.body.addEventListener('airpay-datatable:reload', (event) => {
+            const target = event.target.closest(selector);
+            if (!target) return;
+            const dt = instances.get(target);
+            if (!dt) return;
+            try {
+                const parsed = JSON.parse(target.dataset.extraArgs || '{}');
+                if (parsed && typeof parsed === 'object') {
+                    dt.extraArgs = parsed;
+                }
+            } catch (e) { /* ignore bad JSON */ }
+            dt.state.page = 0;
+            dt.fetch();
+        });
+    }
 };
 
 /** Get the Datatable instance for a root element, for external CRUD module integration. */

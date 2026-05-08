@@ -656,6 +656,144 @@ class skills_manager {
         return true;
     }
 
+    // ─────────────────────────────────────────────────────────────────
+    // Phase A.2 (2026-05-08) — course-skill mapping admin
+    // ─────────────────────────────────────────────────────────────────
+
+    /**
+     * List the course-skill mapping rows for one course, joined with
+     * skill name + max_level + category.
+     *
+     * @return list<array{id:int, skillid:int, skill_name:string,
+     *                    teaches_level:int, max_level:int,
+     *                    category_name:string, category_color:string}>
+     */
+    public static function list_course_skills(int $courseid): array {
+        global $DB;
+        $rows = $DB->get_records_sql("
+            SELECT cs.id, cs.courseid, cs.skillid, cs.teaches_level,
+                   s.name AS skill_name, s.max_level,
+                   c.name AS category_name, c.color AS category_color
+              FROM {" . self::COURSE_SKILL_TABLE . "} cs
+              JOIN {" . self::SKILL_TABLE . "} s ON s.id = cs.skillid
+         LEFT JOIN {" . self::CAT_TABLE . "} c ON c.id = s.categoryid
+             WHERE cs.courseid = :cid
+          ORDER BY c.sort_order ASC, s.name ASC",
+            ['cid' => $courseid]);
+
+        $out = [];
+        foreach ($rows as $r) {
+            $out[] = [
+                'id'             => (int) $r->id,
+                'skillid'        => (int) $r->skillid,
+                'skill_name'     => format_string($r->skill_name),
+                'teaches_level'  => (int) $r->teaches_level,
+                'max_level'      => (int) $r->max_level,
+                'category_name'  => format_string((string) ($r->category_name ?? '')),
+                'category_color' => s((string) ($r->category_color ?? '#0066A7')),
+            ];
+        }
+        return $out;
+    }
+
+    /**
+     * Upsert one course-skill mapping row.
+     *
+     * @param int $courseid       Course to map skills onto
+     * @param int $skillid        Skill being taught
+     * @param int $teaches_level  Level (1..max_level) granted on completion
+     * @return int  Row ID
+     */
+    public static function save_course_skill(int $courseid, int $skillid,
+                                              int $teaches_level): int {
+        global $DB;
+        // Validate course exists.
+        $course = $DB->get_record('course', ['id' => $courseid], 'id', MUST_EXIST);
+        $skill = $DB->get_record(self::SKILL_TABLE, ['id' => $skillid], '*', MUST_EXIST);
+        if ($teaches_level < 1 || $teaches_level > (int) $skill->max_level) {
+            throw new \invalid_parameter_exception(
+                'teaches_level must be between 1 and ' . (int) $skill->max_level);
+        }
+        $existing = $DB->get_record(self::COURSE_SKILL_TABLE,
+            ['courseid' => $courseid, 'skillid' => $skillid]);
+        if ($existing) {
+            $existing->teaches_level = $teaches_level;
+            $DB->update_record(self::COURSE_SKILL_TABLE, $existing);
+            return (int) $existing->id;
+        }
+        return (int) $DB->insert_record(self::COURSE_SKILL_TABLE, (object) [
+            'courseid'      => $courseid,
+            'skillid'       => $skillid,
+            'teaches_level' => $teaches_level,
+            'timecreated'   => time(),
+        ]);
+    }
+
+    /**
+     * Remove one course-skill mapping by row ID.
+     */
+    public static function delete_course_skill(int $id): bool {
+        global $DB;
+        $DB->delete_records(self::COURSE_SKILL_TABLE, ['id' => $id]);
+        return true;
+    }
+
+    /**
+     * Lookup courses by name/shortname for the picker.
+     * Returns up to $limit visible courses matching the search term.
+     *
+     * @return list<array{id:int, fullname:string, shortname:string,
+     *                    mapped_count:int}>
+     */
+    public static function search_courses(string $q, int $limit = 25): array {
+        global $DB;
+        $q = trim($q);
+        $like = '%' . $DB->sql_like_escape($q) . '%';
+        $where = $q !== ''
+            ? 'AND (' . $DB->sql_like('c.fullname', ':q1', false)
+              . ' OR ' . $DB->sql_like('c.shortname', ':q2', false) . ')'
+            : '';
+        $params = ['siteid' => SITEID];
+        if ($q !== '') {
+            $params['q1'] = $like;
+            $params['q2'] = $like;
+        }
+        $sql = "SELECT c.id, c.fullname, c.shortname,
+                       (SELECT COUNT(*) FROM {" . self::COURSE_SKILL_TABLE . "} cs
+                         WHERE cs.courseid = c.id) AS mapped_count
+                  FROM {course} c
+                 WHERE c.id <> :siteid AND c.visible = 1 $where
+              ORDER BY c.fullname ASC";
+        $rows = $DB->get_records_sql($sql, $params, 0, $limit);
+        $out = [];
+        foreach ($rows as $r) {
+            $out[] = [
+                'id'           => (int) $r->id,
+                'fullname'     => format_string($r->fullname),
+                'shortname'    => format_string($r->shortname),
+                'mapped_count' => (int) $r->mapped_count,
+            ];
+        }
+        return $out;
+    }
+
+    /**
+     * Fetch a single course's basic info for header rendering.
+     */
+    public static function get_course_summary(int $courseid): ?array {
+        global $DB;
+        $c = $DB->get_record('course', ['id' => $courseid],
+            'id, fullname, shortname, summary');
+        if (!$c) {
+            return null;
+        }
+        return [
+            'id'        => (int) $c->id,
+            'fullname'  => format_string($c->fullname),
+            'shortname' => format_string($c->shortname),
+        ];
+    }
+
     /**
      * Bulk: copy all rows from one designation to another.
      * Useful when a new designation has the same requirements as an
