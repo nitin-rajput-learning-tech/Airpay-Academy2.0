@@ -107,5 +107,17 @@ $string['err_invalid_permission']  = 'Permission must be one of: inherit, allow,
 $string['err_cannot_modify_admin'] = 'Cannot modify capabilities on the site administrator role.';
 $string['err_filterstoolong']      = 'Filter blob exceeds limit.';
 
+// Privacy provider strings.
+$string['privacy:metadata:auditlog']               = 'Append-only audit log of role and capability mutations made through the airpay role-management UI.';
+$string['privacy:metadata:auditlog:roleid']        = 'The role being modified.';
+$string['privacy:metadata:auditlog:capability']    = 'The capability whose permission was changed.';
+$string['privacy:metadata:auditlog:oldpermission'] = 'The capability permission before the change.';
+$string['privacy:metadata:auditlog:newpermission'] = 'The capability permission after the change.';
+$string['privacy:metadata:auditlog:changedby']     = 'User ID of the admin who made the change.';
+$string['privacy:metadata:auditlog:targetuserid']  = 'User ID being assigned or unassigned (for role-assignment events).';
+$string['privacy:metadata:auditlog:reason']        = 'Optional admin justification text.';
+$string['privacy:metadata:auditlog:open_path']     = 'BizLMS tenant path of the admin at time of change.';
+$string['privacy:metadata:auditlog:timecreated']   = 'When the change occurred.';
+
 // Notifications.
 $string['cap_updated_success'] = 'Capability "{$a}" updated.';

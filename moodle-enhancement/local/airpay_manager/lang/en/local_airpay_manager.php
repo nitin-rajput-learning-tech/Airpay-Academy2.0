@@ -23,3 +23,24 @@ $string['notdirectreport']        = 'The selected user is not your direct report
 $string['duplicateallocation']    = 'This user already has an allocation for that course.';
 $string['manualenrolnotavailable'] = 'The course does not have manual enrolment enabled. Configure it in the course\'s enrolment methods.';
 $string['filterstoolong']         = 'Filter blob exceeds 4 KB limit.';
+
+// Privacy provider strings.
+$string['privacy:metadata:requests']             = 'Enrolment requests from learners awaiting manager approval.';
+$string['privacy:metadata:requests:userid']      = 'The learner who made the request.';
+$string['privacy:metadata:requests:courseid']    = 'The course being requested.';
+$string['privacy:metadata:requests:managerid']   = 'The manager assigned to decide.';
+$string['privacy:metadata:requests:status']      = 'pending | approved | rejected | cancelled.';
+$string['privacy:metadata:requests:reason']      = 'Why the learner needs the course (free text).';
+$string['privacy:metadata:requests:decision_reason'] = 'Manager note when approving/rejecting.';
+$string['privacy:metadata:requests:decided_by']  = 'User ID who clicked approve/reject.';
+$string['privacy:metadata:requests:decided_at']  = 'When the decision was made.';
+$string['privacy:metadata:requests:timecreated'] = 'When the request was filed.';
+
+$string['privacy:metadata:allocations']            = 'Manager-driven course allocations to direct reports.';
+$string['privacy:metadata:allocations:managerid']  = 'Manager who created the allocation.';
+$string['privacy:metadata:allocations:userid']     = 'Learner the course is assigned to.';
+$string['privacy:metadata:allocations:courseid']   = 'Course allocated.';
+$string['privacy:metadata:allocations:due_date']   = 'Optional deadline.';
+$string['privacy:metadata:allocations:status']     = 'assigned | in_progress | completed | overdue | cancelled.';
+$string['privacy:metadata:allocations:note']       = 'Manager note attached to the allocation.';
+$string['privacy:metadata:allocations:timecreated'] = 'When the allocation was created.';

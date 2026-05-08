@@ -152,3 +152,24 @@ $string['attempts_x_completed']  = '{$a} completed';
 
 // Scheduled task.
 $string['task_recompute_leaderboard'] = 'Recompute Airpay challenge leaderboards';
+
+// Privacy provider strings.
+$string['privacy:metadata:challenges']             = 'Challenge definitions created by admin users (gamification).';
+$string['privacy:metadata:challenges:createdby']   = 'User ID of the admin who created the challenge.';
+$string['privacy:metadata:challenges:name']        = 'Display name of the challenge.';
+$string['privacy:metadata:challenges:open_path']   = 'BizLMS tenant path of the creator at challenge-creation time.';
+$string['privacy:metadata:challenges:timecreated'] = 'When the challenge was created.';
+
+$string['privacy:metadata:attempts']             = 'Per-user enrolment + progress on a challenge.';
+$string['privacy:metadata:attempts:challengeid'] = 'The challenge the user joined.';
+$string['privacy:metadata:attempts:userid']      = 'The participant user ID.';
+$string['privacy:metadata:attempts:status']      = 'Current state (enrolled, in_progress, completed, failed, expired).';
+$string['privacy:metadata:attempts:progress']    = 'Number of qualifying actions completed toward the target.';
+$string['privacy:metadata:attempts:pointsawarded'] = 'Points awarded if completed.';
+$string['privacy:metadata:attempts:timecreated'] = 'When the user joined the challenge.';
+
+$string['privacy:metadata:leaderboard']             = 'Pre-computed leaderboard rankings.';
+$string['privacy:metadata:leaderboard:challengeid'] = 'The challenge being ranked (0 = aggregate).';
+$string['privacy:metadata:leaderboard:userid']      = 'The user ranked.';
+$string['privacy:metadata:leaderboard:points']      = 'Points score driving the ranking.';
+$string['privacy:metadata:leaderboard:userrank']    = '1-based rank position.';

@@ -68,3 +68,12 @@ $string['nodesignation'] = 'No role/designation set. Contact your manager to upd
 $string['noskillsmapped'] = 'No skills mapped for your role yet. Check back soon.';
 $string['teamheatmap'] = 'Team Skills Heat Map';
 $string['careerpath'] = 'Career Path';
+
+// Privacy provider strings.
+$string['privacy:metadata:user_skills']                = 'Earned skill levels per user.';
+$string['privacy:metadata:user_skills:userid']         = 'The user whose skill level is recorded.';
+$string['privacy:metadata:user_skills:skillid']        = 'The skill being recorded.';
+$string['privacy:metadata:user_skills:current_level']  = 'The level the user has been credited at (1..max_level).';
+$string['privacy:metadata:user_skills:source']         = 'Whether this was derived from a course completion, assessment, or manual entry.';
+$string['privacy:metadata:user_skills:source_id']      = 'Course or assessment ID that granted the level.';
+$string['privacy:metadata:user_skills:timecreated']    = 'When the level was first recorded.';
