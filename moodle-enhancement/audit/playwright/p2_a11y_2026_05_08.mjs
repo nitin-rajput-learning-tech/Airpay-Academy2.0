@@ -75,6 +75,8 @@ const SURFACES = [
     { id: 'users-bulk-import',     url: '/local/airpay_users/bulk_import.php' },
     // airpay_courses Phase F.4 (mass-enrol CSV, 2026-05-08 v1.5.0)
     { id: 'courses-enrol-csv',     url: '/local/airpay_courses/enrol_csv.php' },
+    // airpay_users Phase E.5 (photo upload, 2026-05-08 v1.8.0)
+    { id: 'users-photo',           url: '/local/airpay_users/photo.php?id=2' },
 ];
 
 async function login(page, login_id) {

@@ -4,6 +4,10 @@
             <div class="ap-profile__avatar">{{{userimage}}}</div>
             <div class="ap-profile__actions">
                 {{#capabilityedit}}
+                <a href="/local/airpay_users/photo.php?id={{userid}}"
+                   class="ap-profile__edit-btn" title="Change photo">
+                    <i class="fa fa-camera"></i>
+                </a>
                 <a href="{{{editprofile}}}" class="ap-profile__edit-btn" title="{{#str}}editprofile, local_airpay_users{{/str}}">
                     <i class="fa fa-pencil"></i>
                 </a>

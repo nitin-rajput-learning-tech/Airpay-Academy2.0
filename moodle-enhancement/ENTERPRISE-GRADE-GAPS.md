@@ -40,7 +40,7 @@ A feature with **F✅ B✅ T✅ V❌ L❌** is NOT shipped. It's halfway.
 | **Skill profile tab on profile** | ✅ | ✅ | ✅ | ✅ | ⚠ | Phase E.1 (2026-05-08) v1.4.0 — radar SVG (hand-rendered, no Chart.js) + per-skill rows + suggested gap-courses; smoke_profile_skills.php round-trip tested |
 | **Bulk-CSV status change (upload)** | ✅ | ✅ | ✅ | ✅ | ⚠ | Phase E.3 (2026-05-08) v1.6.0 — `bulk_csv.php` form upload + `bulk_csv_processor::process()` returns succeeded/skipped/failed buckets; smoke_bulk_csv.php tests 6-row mixed CSV (succeed/fail/skip/admin-guard/already-suspended/idempotent re-run) |
 | **CSV import (new users)** | ✅ | ✅ | ✅ | ✅ | ⚠ | Phase E.4 (2026-05-08) v1.7.0 — `bulk_import.php` filepicker + `bulk_import_processor::process()` reads required cols (email/firstname/lastname/username) + 10 optional open_* cols (designation/department/team/...); skips existing emails/usernames; tenant-scope guard; smoke_bulk_import.php tests 5-row mixed CSV (succeeded/skipped/failed/idempotent re-run) |
-| **Photo upload + crop** | ❌ | ❌ | ❌ | ❌ | ❌ | Currently uses Moodle core profile pic |
+| **Photo upload (crop deferred)** | ✅ | ✅ | ⚠ | ✅ | ⚠ | Phase E.5 (2026-05-08) v1.8.0 — `photo.php` filemanager form + `process_new_icon()` for server-side resize (100×100 + 35×35 thumb); fa-camera button on profile; 24/24 a11y clean. **Crop UI deferred** — would need Cropper.js; current MVP scales any square-ish upload. T axis ⚠ because no smoke (file-upload tests need real session) — manual UAT covered. |
 | **Reset-password + notify flow** | ❌ | ❌ | ❌ | ❌ | ❌ | Currently uses Moodle core; no in-page admin button |
 
 ### `airpay_courses`
