@@ -32,7 +32,7 @@ $PAGE->navbar->add(get_string('heading_index', 'local_airpay_challenge'),
     new moodle_url('/local/airpay_challenge/index.php'));
 $PAGE->navbar->add($row['name']);
 $PAGE->set_context($context);
-$PAGE->set_pagelayout('admin');
+$PAGE->set_pagelayout('standard');
 $PAGE->set_title(get_string('heading_view', 'local_airpay_challenge', $row['name']));
 $PAGE->set_heading(get_string('heading_view', 'local_airpay_challenge', $row['name']));
 

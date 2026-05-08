@@ -7,7 +7,7 @@
       <a href="{{ admin_url }}" class="text-muted text-decoration-none small">
         <i class="fa fa-chevron-left me-1"></i>Skills Management
       </a>
-      <h1 class="h3 m-0 mt-1">Designation-Skill Matrix</h1>
+      <h2 class="h4 m-0 mt-1">Designation-Skill Matrix</h2>
       <p class="text-muted small mb-0">
         Define the required skills + minimum levels for each designation
         in the org. Drives readiness gap analysis.
@@ -82,14 +82,14 @@
       </table>
     {{/ has_rows }}
     {{^ has_rows }}
-      <div class="alert alert-light border">
+      <div class="alert alert-secondary">
         No required skills defined for this designation yet. Click <em>Add required skill</em> above.
       </div>
     {{/ has_rows }}
   {{/ current_designation }}
 
   {{^ current_designation }}
-    <div class="alert alert-light border">
+    <div class="alert alert-secondary">
       Select a designation above to view or edit its required skills.
     </div>
   {{/ current_designation }}

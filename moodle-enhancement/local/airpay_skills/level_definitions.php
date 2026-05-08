@@ -20,7 +20,7 @@ $skill = $DB->get_record_sql("
 $PAGE->set_url(new moodle_url('/local/airpay_skills/level_definitions.php',
     ['skillid' => $skillid]));
 $PAGE->set_context($context);
-$PAGE->set_pagelayout('admin');
+$PAGE->set_pagelayout('standard');
 $PAGE->set_title('Skill levels: ' . format_string($skill->name));
 $PAGE->set_heading('Skill levels: ' . format_string($skill->name));
 $PAGE->navbar->add('Skills', new moodle_url('/local/airpay_skills/admin.php'));

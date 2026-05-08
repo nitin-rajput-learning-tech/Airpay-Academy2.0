@@ -13,7 +13,7 @@ $designation = optional_param('designation', '', PARAM_TEXT);
 $PAGE->set_url(new moodle_url('/local/airpay_skills/designation_matrix.php',
     $designation !== '' ? ['designation' => $designation] : []));
 $PAGE->set_context($context);
-$PAGE->set_pagelayout('admin');
+$PAGE->set_pagelayout('standard');
 $PAGE->set_title('Designation-Skill Matrix');
 $PAGE->set_heading('Designation-Skill Matrix');
 $PAGE->navbar->add('Skills', new moodle_url('/local/airpay_skills/admin.php'));

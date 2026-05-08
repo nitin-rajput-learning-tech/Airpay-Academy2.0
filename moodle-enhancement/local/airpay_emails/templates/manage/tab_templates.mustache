@@ -7,7 +7,7 @@
     <div>
         <span style="font-size:14px; color:#5a6070;">
             {{tabdata.total_airpay}} Airpay templates
-            {{#tabdata.total_bizlms}}· {{tabdata.total_bizlms}} BizLMS templates{{/tabdata.total_bizlms}}
+            {{#tabdata.total_bizlms}}· {{tabdata.total_bizlms}} legacy templates{{/tabdata.total_bizlms}}
             {{#tabdata.total_overrides}}· <span class="ap-manage-badge ap-manage-badge--override">{{tabdata.total_overrides}} overrides</span>{{/tabdata.total_overrides}}
         </span>
     </div>
@@ -42,7 +42,7 @@
                 </td>
                 <td>
                     {{#is_bizlms}}
-                    <span class="ap-manage-badge ap-manage-badge--bizlms">BizLMS</span>
+                    <span class="ap-manage-badge ap-manage-badge--bizlms">Legacy</span>
                     {{/is_bizlms}}
                     {{^is_bizlms}}
                         {{#has_override}}

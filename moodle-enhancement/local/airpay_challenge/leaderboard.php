@@ -12,7 +12,7 @@ $challengeid = optional_param('challengeid', 0, PARAM_INT);
 
 $PAGE->set_url('/local/airpay_challenge/leaderboard.php');
 $PAGE->set_context($context);
-$PAGE->set_pagelayout('admin');
+$PAGE->set_pagelayout('standard');
 $PAGE->set_title(get_string('heading_leaderboard', 'local_airpay_challenge'));
 $PAGE->set_heading(get_string('heading_leaderboard', 'local_airpay_challenge'));
 

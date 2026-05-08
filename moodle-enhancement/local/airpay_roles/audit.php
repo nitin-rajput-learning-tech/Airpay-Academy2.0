@@ -10,7 +10,7 @@ require_capability('local/airpay_roles:audit', $context);
 
 $PAGE->set_url('/local/airpay_roles/audit.php');
 $PAGE->set_context($context);
-$PAGE->set_pagelayout('admin');
+$PAGE->set_pagelayout('standard');
 $PAGE->set_title(get_string('heading_audit', 'local_airpay_roles'));
 $PAGE->set_heading(get_string('heading_audit', 'local_airpay_roles'));
 

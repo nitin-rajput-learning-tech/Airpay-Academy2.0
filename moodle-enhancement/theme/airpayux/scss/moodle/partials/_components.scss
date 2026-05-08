@@ -14,8 +14,8 @@
     --ap-surface: #ffffff;
     --ap-surface-alt: #f8f9fc;
     --ap-text: #1a1a2e;
-    --ap-text-secondary: #607286;
-    --ap-text-muted: #8896a6;
+    --ap-text-secondary: #5a6070;  /* WCAG AA on white: 6.96:1 */
+    --ap-text-muted: #6a7589;       /* WCAG AA on white: 4.66:1 (was #8896a6 = 3.01) */
     --ap-border: #e3eaf3;
     --ap-success: #16a34a;
     --ap-warning: #d97706;

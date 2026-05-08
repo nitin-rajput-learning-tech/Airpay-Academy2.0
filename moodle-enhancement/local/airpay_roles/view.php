@@ -22,7 +22,7 @@ $PAGE->navbar->add(get_string('heading_index', 'local_airpay_roles'),
     new moodle_url('/local/airpay_roles/index.php'));
 $PAGE->navbar->add($role['name']);
 $PAGE->set_context($context);
-$PAGE->set_pagelayout('admin');
+$PAGE->set_pagelayout('standard');
 $PAGE->set_title(get_string('heading_view', 'local_airpay_roles', $role['name']));
 $PAGE->set_heading(get_string('heading_view', 'local_airpay_roles', $role['name']));
 

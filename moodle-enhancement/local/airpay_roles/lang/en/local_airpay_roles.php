@@ -116,7 +116,7 @@ $string['privacy:metadata:auditlog:newpermission'] = 'The capability permission 
 $string['privacy:metadata:auditlog:changedby']     = 'User ID of the admin who made the change.';
 $string['privacy:metadata:auditlog:targetuserid']  = 'User ID being assigned or unassigned (for role-assignment events).';
 $string['privacy:metadata:auditlog:reason']        = 'Optional admin justification text.';
-$string['privacy:metadata:auditlog:open_path']     = 'BizLMS tenant path of the admin at time of change.';
+$string['privacy:metadata:auditlog:open_path']     = 'Airpay tenant path of the admin at time of change.';
 $string['privacy:metadata:auditlog:timecreated']   = 'When the change occurred.';
 
 // Notifications.

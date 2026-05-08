@@ -21,7 +21,7 @@ if ($hassiteconfig) {
         if (!$bizfields['user_open_departmentid']) { $missing[] = '{user}.open_departmentid'; }
         $aidesc .= '<div class="alert alert-warning mt-2 mb-0">'
             . '<strong>Heads up.</strong> The recommender strategies '
-            . '<em>by skills</em> and <em>by peers</em> need BizLMS-added '
+            . '<em>by skills</em> and <em>by peers</em> need Airpay-tenant '
             . 'profile fields that are not present on this database: '
             . '<code>' . implode('</code>, <code>', array_map('s', $missing)) . '</code>. '
             . 'Recommendations will silently degrade to category-based + popular-only '

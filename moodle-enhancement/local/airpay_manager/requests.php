@@ -10,7 +10,7 @@ require_capability('local/airpay_manager:view', $context);
 
 $PAGE->set_url('/local/airpay_manager/requests.php');
 $PAGE->set_context($context);
-$PAGE->set_pagelayout('admin');
+$PAGE->set_pagelayout('standard');
 $PAGE->set_title('Enrolment Requests');
 $PAGE->set_heading('Enrolment Requests');
 

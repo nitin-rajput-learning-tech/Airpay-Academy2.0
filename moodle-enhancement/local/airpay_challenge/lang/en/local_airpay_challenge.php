@@ -157,7 +157,7 @@ $string['task_recompute_leaderboard'] = 'Recompute Airpay challenge leaderboards
 $string['privacy:metadata:challenges']             = 'Challenge definitions created by admin users (gamification).';
 $string['privacy:metadata:challenges:createdby']   = 'User ID of the admin who created the challenge.';
 $string['privacy:metadata:challenges:name']        = 'Display name of the challenge.';
-$string['privacy:metadata:challenges:open_path']   = 'BizLMS tenant path of the creator at challenge-creation time.';
+$string['privacy:metadata:challenges:open_path']   = 'Airpay tenant path of the creator at challenge-creation time.';
 $string['privacy:metadata:challenges:timecreated'] = 'When the challenge was created.';
 
 $string['privacy:metadata:attempts']             = 'Per-user enrolment + progress on a challenge.';

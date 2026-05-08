@@ -10,7 +10,7 @@ require_capability('local/airpay_manager:view', $context);
 
 $PAGE->set_url('/local/airpay_manager/allocations.php');
 $PAGE->set_context($context);
-$PAGE->set_pagelayout('admin');
+$PAGE->set_pagelayout('standard');
 $PAGE->set_title('Course Allocations');
 $PAGE->set_heading('Course Allocations');
 

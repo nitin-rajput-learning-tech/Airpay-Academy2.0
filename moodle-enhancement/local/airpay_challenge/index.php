@@ -10,7 +10,7 @@ require_capability('local/airpay_challenge:view', $context);
 
 $PAGE->set_url('/local/airpay_challenge/index.php');
 $PAGE->set_context($context);
-$PAGE->set_pagelayout('admin');
+$PAGE->set_pagelayout('standard');
 $PAGE->set_title(get_string('heading_index', 'local_airpay_challenge'));
 $PAGE->set_heading(get_string('heading_index', 'local_airpay_challenge'));
 
