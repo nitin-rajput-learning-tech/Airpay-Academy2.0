@@ -293,6 +293,25 @@ Recommended sequencing (smallest first to build a green checklist):
 5. airpay_users grades widget (~4h) + skill profile tab (~3h) + bulk-CSV (~4h) + CSV import (~6h)
 6. airpay_manager direct-reports tree (~4h) + bulk allocation (~4h) + CSV export (~2h)
 7. airpay_notifications 4 remaining handlers (~6h) + per-user prefs (~6h) + preview UI (~4h)
+
+## Phase Z (2026-05-08) — GDPR coverage
+
+All 20 airpay_* plugins now have privacy providers. Cross-plugin DSR
+flow verified by `local/airpay_org/cli/smoke_dsr.php`:
+
+- 10 null_providers (config-only / wrapper plugins): users, org, courses,
+  catalog, compliance_report, exams, integrations, lifecycle, analytics, assistant
+- 10 full providers (data-storing): evaluation, classroom, programs,
+  learningpath, emails, notifications, roles, challenge, manager, skills
+  Each implements:
+    - `metadata\provider::get_metadata` declaring tables + fields
+    - `request\plugin\provider::get_contexts_for_userid`
+    - `request\plugin\provider::export_user_data`
+    - `request\plugin\provider::delete_data_for_user/all_users_in_context`
+    - `request\core_userlist_provider::get_users_in_context/delete_data_for_users`
+- 16 tables declared across the metadata collections
+- DSR smoke shows per-user context discovery works end-to-end (admin user
+  has data in 4 plugins: notifications, challenge, manager, skills)
 8. ... etc.
 
 Each step adds rows to the green column of the checklist above.

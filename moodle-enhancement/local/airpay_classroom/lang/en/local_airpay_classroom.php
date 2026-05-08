@@ -111,3 +111,15 @@ $string['toomanymarks']              = 'Too many attendance records in one reque
 // list_classrooms_test::test_json_filter_rejects_oversized_payload greps
 // for the [[filterstoolong]] placeholder (Moodle's missing-string fallback).
 // Refactor that test to check $e->errorcode before adding the translation.
+
+// Privacy strings (Phase Z.1).
+$string['privacy:metadata:roster'] = 'Per-classroom user roster (who is enrolled in which classroom).';
+$string['privacy:metadata:roster:classroomid'] = 'Classroom ID.';
+$string['privacy:metadata:roster:userid'] = 'Enrolled user ID.';
+$string['privacy:metadata:roster:timecreated'] = 'Enrolment timestamp.';
+$string['privacy:metadata:attendance'] = 'Per-session attendance records.';
+$string['privacy:metadata:attendance:sessionid'] = 'Session ID.';
+$string['privacy:metadata:attendance:userid'] = 'Attendee user ID.';
+$string['privacy:metadata:attendance:status'] = 'Attendance status (present/absent/late).';
+$string['privacy:metadata:attendance:markedat'] = 'When the attendance was marked.';
+$string['privacy:metadata:attendance:markedby'] = 'ID of the user who marked attendance.';

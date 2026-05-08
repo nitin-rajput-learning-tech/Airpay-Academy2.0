@@ -92,3 +92,6 @@ $string['userupdated'] = 'User updated successfully.';
 $string['userdeleted'] = 'User deleted.';
 $string['usersuspended'] = 'User suspended.';
 $string['useractivated'] = 'User activated.';
+
+// Privacy.
+$string['privacy:metadata'] = 'The Airpay Users plugin extends the core {user} table via open_* fields. These are exported by core_user; no airpay-owned tables store additional personal data.';

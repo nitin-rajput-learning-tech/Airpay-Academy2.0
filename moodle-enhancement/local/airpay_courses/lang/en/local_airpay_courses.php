@@ -81,3 +81,6 @@ $string['courseupdated'] = 'Course updated successfully.';
 $string['coursedeleted'] = 'Course deleted.';
 $string['coursehidden'] = 'Course hidden.';
 $string['courseshown'] = 'Course visible.';
+
+// Privacy.
+$string['privacy:metadata'] = 'The Airpay airpay_courses plugin does not store personal data in plugin-owned tables; user state lives on core Moodle tables exported by their respective providers.';

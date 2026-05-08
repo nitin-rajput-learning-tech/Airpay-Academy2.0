@@ -32,3 +32,14 @@ $string['rule_disabled'] = 'Rule disabled.';
 $string['noemailever_warning'] = 'Email sending is disabled on this server ($CFG->noemailever = true). All deliveries will be logged as suppressed.';
 $string['task_process_rules'] = 'Process notification rules';
 $string['notification_alert'] = 'Notification alert';
+
+// Privacy strings (Phase Z.1).
+$string['privacy:metadata:emaillog'] = 'Email send log — one row per email queued/sent to a user.';
+$string['privacy:metadata:emaillog:userid'] = 'Recipient user ID.';
+$string['privacy:metadata:emaillog:subject'] = 'Subject line.';
+$string['privacy:metadata:emaillog:recipient'] = 'Recipient email address.';
+$string['privacy:metadata:emaillog:status'] = 'Send status (queued/sent/bounced/failed).';
+$string['privacy:metadata:emaillog:timecreated'] = 'Send timestamp.';
+$string['privacy:metadata:emailprefs'] = 'Per-user email preferences.';
+$string['privacy:metadata:emailprefs:userid'] = 'User the preferences belong to.';
+$string['privacy:metadata:emailprefs:timemodified'] = 'Last update timestamp.';

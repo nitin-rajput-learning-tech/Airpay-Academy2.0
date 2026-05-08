@@ -101,3 +101,12 @@ $string['users_enrolled_success'] = '{$a} user(s) enrolled.';
 
 // Bounds.
 $string['toomanyusers']          = 'Too many users in one request (limit 500).';
+
+// Privacy strings (Phase Z.1).
+$string['privacy:metadata:enrol'] = 'Per-program user enrolment records.';
+$string['privacy:metadata:enrol:programid'] = 'Program ID.';
+$string['privacy:metadata:enrol:userid'] = 'Enrolled user ID.';
+$string['privacy:metadata:enrol:currentlevelid'] = 'Current level the user is on (NULL = not started).';
+$string['privacy:metadata:enrol:status'] = 'Enrolment status (new/in_progress/completed).';
+$string['privacy:metadata:enrol:timecreated'] = 'Enrolment timestamp.';
+$string['privacy:metadata:enrol:timecompleted'] = 'Completion timestamp (NULL if not completed).';

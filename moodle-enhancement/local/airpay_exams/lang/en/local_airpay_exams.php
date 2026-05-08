@@ -47,3 +47,6 @@ $string['examstatuschanged'] = 'Exam status updated.';
 
 // Index page.
 $string['noexams_subtitle'] = 'Register existing Moodle quizzes as enterprise exams to add tenant scoping, custom passing grades, and dashboard reporting.';
+
+// Privacy.
+$string['privacy:metadata'] = 'The Airpay airpay_exams plugin does not store personal data in plugin-owned tables.';

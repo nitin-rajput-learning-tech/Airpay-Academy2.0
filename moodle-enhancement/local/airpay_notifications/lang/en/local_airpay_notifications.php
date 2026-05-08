@@ -58,3 +58,25 @@ $string['learning'] = 'Learning';
 $string['achievement'] = 'Achievement';
 $string['viewall'] = 'View all notifications';
 $string['preferences'] = 'Notification preferences';
+
+// Privacy strings (Phase Z.1).
+$string['privacy:metadata:log'] = 'Sent notification log — one row per delivered (or attempted) notification.';
+$string['privacy:metadata:log:ruleid'] = 'The ID of the rule that triggered the notification.';
+$string['privacy:metadata:log:userid'] = 'The recipient user ID.';
+$string['privacy:metadata:log:courseid'] = 'Optional course context (NULL for site-wide notifications).';
+$string['privacy:metadata:log:channel'] = 'Delivery channel (inapp/email/push/whatsapp).';
+$string['privacy:metadata:log:subject'] = 'Subject line of the notification.';
+$string['privacy:metadata:log:message'] = 'Body text of the notification.';
+$string['privacy:metadata:log:status'] = 'Delivery state (sending/sent/read/failed).';
+$string['privacy:metadata:log:timecreated'] = 'Send timestamp.';
+$string['privacy:metadata:log:timeread'] = 'Read timestamp (NULL if unread).';
+$string['privacy:metadata:prefs'] = 'User-specific notification preferences (channel toggles, quiet hours, rule-type opt-outs).';
+$string['privacy:metadata:prefs:userid'] = 'The user the preferences belong to.';
+$string['privacy:metadata:prefs:channel_inapp'] = 'Whether the user accepts in-app messages.';
+$string['privacy:metadata:prefs:channel_email'] = 'Whether the user accepts email messages.';
+$string['privacy:metadata:prefs:channel_push'] = 'Whether the user accepts push notifications.';
+$string['privacy:metadata:prefs:digest_frequency'] = 'How often a digest is sent (none/daily/weekly).';
+$string['privacy:metadata:prefs:disabled_rule_types'] = 'Comma-separated list of rule types the user has silenced.';
+$string['privacy:metadata:prefs:quiet_hours_start'] = 'Quiet hours window start hour.';
+$string['privacy:metadata:prefs:quiet_hours_end'] = 'Quiet hours window end hour.';
+$string['privacy:metadata:prefs:timemodified'] = 'Last update timestamp.';

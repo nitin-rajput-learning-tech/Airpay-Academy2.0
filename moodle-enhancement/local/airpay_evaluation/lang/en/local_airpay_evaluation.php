@@ -110,3 +110,10 @@ $string['invalid_yesno'] = 'Answer must be Yes or No: {$a}';
 $string['invalid_multichoice'] = 'Selected option is not valid for: {$a}';
 $string['please_answer_required'] = 'Please answer all required questions before submitting.';
 $string['response_submitted'] = 'Thank you — your response has been recorded.';
+
+// Privacy strings (Phase Z.1).
+$string['privacy:metadata:responses'] = 'User-submitted evaluation responses (one row per submission).';
+$string['privacy:metadata:responses:evaluationid'] = 'The ID of the evaluation form being responded to.';
+$string['privacy:metadata:responses:userid'] = 'The ID of the user who submitted the response (0 if anonymous).';
+$string['privacy:metadata:responses:response_data'] = 'JSON-encoded answers (questionid → answer).';
+$string['privacy:metadata:responses:timesubmitted'] = 'Submission timestamp.';

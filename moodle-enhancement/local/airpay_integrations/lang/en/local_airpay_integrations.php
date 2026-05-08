@@ -64,3 +64,6 @@ $string['gamification_xp_per_completion'] = 'XP per Course Completion';
 $string['gamification_xp_per_completion_desc'] = 'XP awarded when a learner completes a course.';
 $string['gamification_leaderboard_enable'] = 'Enable Department Leaderboards';
 $string['gamification_leaderboard_desc'] = 'Show leaderboards filtered by costcenter/department.';
+
+// Privacy.
+$string['privacy:metadata'] = 'The Airpay airpay_integrations plugin does not store personal data in plugin-owned tables; user state lives on core Moodle tables exported by their respective providers.';

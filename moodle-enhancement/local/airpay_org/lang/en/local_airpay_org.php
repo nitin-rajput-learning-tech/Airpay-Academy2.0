@@ -97,3 +97,6 @@ $string['org_created']           = 'Organisation created.';
 $string['org_updated']           = 'Organisation updated.';
 $string['orgdeleted']            = 'Organisation deleted.';
 $string['orgvisibilitychanged']  = 'Organisation visibility updated.';
+
+// Privacy.
+$string['privacy:metadata'] = 'The Airpay airpay_org plugin does not store personal data in plugin-owned tables; user state lives on core Moodle tables exported by their respective providers.';

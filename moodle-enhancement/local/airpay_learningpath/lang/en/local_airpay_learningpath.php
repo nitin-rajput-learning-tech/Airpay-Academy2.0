@@ -66,3 +66,11 @@ $string['confirm_unenrol_user'] = 'Unenrol {$a} from this learning path?';
 // Empty states.
 $string['no_courses_assigned'] = 'No courses assigned yet. Click "Add Courses" to get started.';
 $string['no_users_enrolled'] = 'No users enrolled yet. Click "Enrol Users" to add learners.';
+
+// Privacy strings (Phase Z.1).
+$string['privacy:metadata:lp'] = 'Per-learning-path user assignments.';
+$string['privacy:metadata:lp:pathid'] = 'Learning path ID.';
+$string['privacy:metadata:lp:userid'] = 'Assigned user ID.';
+$string['privacy:metadata:lp:status'] = 'Assignment status.';
+$string['privacy:metadata:lp:timecreated'] = 'Assignment timestamp.';
+$string['privacy:metadata:lp:timemodified'] = 'Last update timestamp.';
