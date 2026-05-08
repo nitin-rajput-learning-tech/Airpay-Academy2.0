@@ -1,12 +1,30 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-07 EOD post-stretch (extended) | **Phase:** Academy 3.4 — **Tier 1 closed (G-01..G-06)**, **Tier 4 a11y closed**, audits delivered, **airpay_roles UI shipped**, **airpay_challenge Phase 1 shipped**, **airpay_integrations pre-cutover fixes shipped**. **Code work for production-ready: COMPLETE.** Remaining items are IT-coordination + Tier-3 polish (post-cutover).
+**Updated:** 2026-05-08 EOD — **PAUSED** ("not convinced if everything is working, save for now, continue tomorrow")
+**Phase:** Academy 3.6 — **22 enterprise gap rows closed across 9 plugins today**, automated verification green, **manual UAT walkthrough is the remaining gate before live deploy**.
 **Theme:** airpayux v1.0.0 | **Moodle:** 5.1.3+ on XAMPP
-**Version:** 3.3.0+ → working toward 4.0 enterprise-grade
+**Version:** 4.0-rc — Phase 2 enterprise-grade closure complete (code-side); UAT pending
 **GitHub:** Pushed to nitin-rajput-learning-tech/Airpay-Academy2.0 (production branch)
-**Latest commit:** (this stretch) airpay_integrations Step-0 cleanup — install.xml + dedup + Phase-0A migration + AI admin notice + ~14 PHPUnit tests
-**PHPUnit:** ~352 tests across ~38 test files (338 prior + 14 airpay_integrations)
-**Playwright:** 8 harnesses (WX-01..WX-07 deep workflows + smoke + axe a11y + keyboard nav + visual walk)
-**Today's audits:** `INTEGRATIONS-AUDIT.md` (Step-0 closed; FCM claim corrected) + `STRETCH-ACCOUNTABILITY.md` + `airpay_roles-state.md` + `airpay_challenge-state.md`
+**Latest commit:** `71f42bceb` Courses Phase F.5: native enrol modal (replaces deep-link)
+**Today's stretch:** 16 commits across 9 plugins.
+
+> **TOMORROW START HERE:** `state-cards/2026-05-08-EOD-state.md`
+>
+> Nitin's note 2026-05-08 EOD: *"still not convinced if everything is
+> working, save for now, continue tomorrow"*. Code is shipped, automated
+> tests green (15/15 workflows + 24/24 a11y + 16 CLI smoke tests +
+> 20/20 GDPR providers). **Manual UAT has not been walked** — the state
+> card has a 5-tier checklist in priority order. Don't ship live until
+> every Tier 1-4 row has a tick.
+
+---
+
+## Yesterday's snapshot (2026-05-07 EOD post-stretch — preserved for context)
+**Phase 3.4** — Tier 1 closed (G-01..G-06), Tier 4 a11y closed, audits
+delivered, airpay_roles UI shipped, airpay_challenge Phase 1 shipped,
+airpay_integrations pre-cutover fixes shipped.
+PHPUnit: ~352 tests across ~38 test files. Playwright: 8 harnesses.
+Audits: `INTEGRATIONS-AUDIT.md`, `STRETCH-ACCOUNTABILITY.md`,
+`airpay_roles-state.md`, `airpay_challenge-state.md`.
 
 > **Production posture (Nitin EOD 2026-05-06):** *"We will not go to production
 > till we have fixed everything. Not going to make a fool of myself going with
