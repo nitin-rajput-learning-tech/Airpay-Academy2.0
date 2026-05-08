@@ -19,6 +19,7 @@ $PAGE->set_pagelayout('standard');
 $PAGE->set_secondary_navigation(false);
 
 $can_create = has_capability('local/airpay_users:create', $context);
+$can_bulkstatus = has_capability('local/airpay_users:bulkstatuschange', $context);
 
 // ── KPI counts (cheap aggregate) ───────────────────────────────────
 $dbman = $DB->get_manager();
@@ -83,6 +84,7 @@ $data = [
     'active_count'    => number_format($active_count),
     'suspended_count' => number_format($suspended_count),
     'can_create'      => $can_create,
+    'can_bulkstatus'  => $can_bulkstatus,
     'org_options'     => $org_options,
     'has_org_options' => !empty($org_options),
     'export_url'      => (new moodle_url('/local/airpay_users/exportcsv.php'))->out(false),

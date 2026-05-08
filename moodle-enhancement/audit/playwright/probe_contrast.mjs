@@ -17,7 +17,8 @@ await page.click('#loginbtn', { noWaitAfter: true });
 await page.waitForFunction(() => !window.location.href.includes('/login/index.php'),
     undefined, { timeout: 60000 });
 
-for (const url of ['/local/airpay_programs/view.php?id=2&tab=overview',
+for (const url of ['/local/airpay_users/bulk_csv.php',
+                   '/local/airpay_programs/view.php?id=2&tab=overview',
                    '/local/airpay_roles/index.php',
                    '/local/airpay_manager/index.php',
                    '/local/airpay_skills/designation_matrix.php']) {

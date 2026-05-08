@@ -38,7 +38,7 @@ A feature with **F✅ B✅ T✅ V❌ L❌** is NOT shipped. It's halfway.
 | Profile page | ✅ | ✅ | ⚠ | ⚠ | ⚠ |  |
 | **Grades widget on profile** | ✅ | ✅ | ✅ | ✅ | ⚠ | Phase E.2 (2026-05-08) v1.5.0 — `get_grades_summary()` reads `course_completions` + `grade_grades` for course-itemtype; profile.mustache renders top-6 recent completions with grade % + average; smoke_grades_widget.php tests empty case + 85% case |
 | **Skill profile tab on profile** | ✅ | ✅ | ✅ | ✅ | ⚠ | Phase E.1 (2026-05-08) v1.4.0 — radar SVG (hand-rendered, no Chart.js) + per-skill rows + suggested gap-courses; smoke_profile_skills.php round-trip tested |
-| **Bulk-CSV status change (upload)** | ❌ | ❌ | ❌ | ❌ | ❌ | Missing |
+| **Bulk-CSV status change (upload)** | ✅ | ✅ | ✅ | ✅ | ⚠ | Phase E.3 (2026-05-08) v1.6.0 — `bulk_csv.php` form upload + `bulk_csv_processor::process()` returns succeeded/skipped/failed buckets; smoke_bulk_csv.php tests 6-row mixed CSV (succeed/fail/skip/admin-guard/already-suspended/idempotent re-run) |
 | **CSV import (new users)** | ❌ | ❌ | ❌ | ❌ | ❌ | BizLMS had this; we don't |
 | **Photo upload + crop** | ❌ | ❌ | ❌ | ❌ | ❌ | Currently uses Moodle core profile pic |
 | **Reset-password + notify flow** | ❌ | ❌ | ❌ | ❌ | ❌ | Currently uses Moodle core; no in-page admin button |

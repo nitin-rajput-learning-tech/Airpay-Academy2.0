@@ -28,10 +28,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_airpay_users';
-$plugin->version   = 2026050901;
+$plugin->version   = 2026050902;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.5.0'; // +grades widget on profile (Phase E.2) — recent completions + course-level grade %.
+$plugin->release   = '1.6.0'; // +bulk-CSV status change (Phase E.3) — email,action upload with succeeded/skipped/failed buckets.
 $plugin->dependencies = [
     'local_airpay_org' => 2026041600,
 ];
