@@ -59,6 +59,8 @@ const SURFACES = [
     { id: 'notifications-index',   url: '/local/airpay_notifications/index.php' },
     // airpay_notifications Phase C.2 (per-user prefs, 2026-05-08 v1.4.0)
     { id: 'notifications-prefs',   url: '/local/airpay_notifications/prefs.php' },
+    // airpay_users Phase E.1 (skills tab on profile, 2026-05-08 v1.4.0)
+    { id: 'users-profile-skills',  url: '/local/airpay_users/profile.php?id=2' },
 ];
 
 async function login(page, login_id) {

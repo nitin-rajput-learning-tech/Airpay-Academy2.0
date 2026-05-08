@@ -48,6 +48,9 @@ echo $OUTPUT->header();
 
 if (!empty($profilecontext)) {
     echo $OUTPUT->render_from_template('local_airpay_users/profile', $profilecontext);
+    if (!empty($profilecontext['ap_has_radar'])) {
+        $PAGE->requires->js_call_amd('local_airpay_users/skill_radar', 'init', []);
+    }
 } else {
     echo $OUTPUT->notification(get_string('orgnotfound', 'local_airpay_org'), 'error');
 }

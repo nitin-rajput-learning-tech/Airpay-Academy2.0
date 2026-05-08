@@ -134,7 +134,9 @@ class Datatable {
                                 <tr data-airpay-table-head></tr>
                             </thead>
                             <tbody data-airpay-table-body>
-                                <tr><td colspan="99" class="text-center py-5 text-muted" role="status">
+                                <tr><td colspan="99" class="text-center py-5"
+                                        style="color: var(--ap-text-secondary, #5a6070);"
+                                        role="status">
                                     <i class="fa fa-spinner fa-spin fa-2x d-block mb-2" aria-hidden="true"></i>
                                     <span>Loading…</span>
                                 </td></tr>

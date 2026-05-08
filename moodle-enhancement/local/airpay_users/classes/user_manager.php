@@ -199,15 +199,34 @@ class user_manager {
             }
         }
 
-        // Inject skills summary.
+        // Inject skills summary + radar + per-skill detail rows
+        // (Phase E.1, 2026-05-08 — full skills tab on profile).
         if (file_exists($CFG->dirroot . '/local/airpay_skills/classes/skills_manager.php')) {
             try {
                 $analysis = \local_airpay_skills\skills_manager::get_gap_analysis($userid);
                 if ($analysis['has_data'] ?? false) {
                     $context['ap_skills_summary'] = $analysis['summary'];
+                    $context['ap_skills_designation'] = $analysis['designation'] ?? '';
+                    $context['ap_skills_rows'] = $analysis['skills'] ?? [];
+                    $context['ap_has_skills'] = !empty($analysis['skills']);
+
+                    // Radar chart data for visual at-a-glance.
+                    $radar = \local_airpay_skills\skills_manager::get_radar_data($userid);
+                    if ($radar['has_radar'] ?? false) {
+                        $context['ap_skills_radar'] = $radar;
+                        $context['ap_has_radar'] = true;
+                    }
+                }
+                // Recommended courses to fill gaps.
+                $gap_courses = \local_airpay_skills\skills_manager::get_gap_courses($userid, 5);
+                if (!empty($gap_courses)) {
+                    $context['ap_skills_gap_courses'] = $gap_courses;
+                    $context['ap_has_gap_courses'] = true;
                 }
             } catch (\Throwable $e) {
                 // Skills not available.
+                debugging('Skills enrichment failed: ' . $e->getMessage(),
+                    DEBUG_DEVELOPER);
             }
         }
 

@@ -37,7 +37,7 @@ A feature with **F✅ B✅ T✅ V❌ L❌** is NOT shipped. It's halfway.
 | Export CSV | ✅ | ✅ | ⚠ | ⚠ | ⚠ | Endpoint exists; no PHPUnit on the streamer; not visually verified for column ordering vs filters |
 | Profile page | ✅ | ✅ | ⚠ | ⚠ | ⚠ |  |
 | **Grades widget on profile** | ❌ | ❌ | ❌ | ❌ | ❌ | Missing — Phase-2 from yesterday |
-| **Skill profile tab on profile** | ❌ | ❌ | ❌ | ❌ | ❌ | Missing |
+| **Skill profile tab on profile** | ✅ | ✅ | ✅ | ✅ | ⚠ | Phase E.1 (2026-05-08) v1.4.0 — radar SVG (hand-rendered, no Chart.js) + per-skill rows + suggested gap-courses; smoke_profile_skills.php round-trip tested |
 | **Bulk-CSV status change (upload)** | ❌ | ❌ | ❌ | ❌ | ❌ | Missing |
 | **CSV import (new users)** | ❌ | ❌ | ❌ | ❌ | ❌ | BizLMS had this; we don't |
 | **Photo upload + crop** | ❌ | ❌ | ❌ | ❌ | ❌ | Currently uses Moodle core profile pic |
@@ -155,9 +155,9 @@ A feature with **F✅ B✅ T✅ V❌ L❌** is NOT shipped. It's halfway.
 | **Approval workflow** | ✅ | ✅ | ✅ | ❌ | ❌ | Phase B — built + tested, not visually walked, not E2E |
 | **Course allocation** | ✅ | ✅ | ✅ | ❌ | ❌ | Phase B — same |
 | **Direct-reports tree (multi-level)** | ❌ | ❌ | ❌ | ❌ | ❌ | Currently flat list of direct reports only |
-| **Bulk allocation (1 course → N users)** | ❌ | ❌ | ❌ | ❌ | ❌ |  |
-| **CSV export of decisions** | ❌ | ❌ | ❌ | ❌ | ❌ |  |
-| **Notify learner on decision** | ❌ | ❌ | ❌ | ❌ | ❌ | `decide_request` should fire a Moodle message to the requester |
+| **Bulk allocation (1 course → N users)** | ✅ | ✅ | ✅ | ✅ | ⚠ | Phase B (2026-05-08) — `bulk_allocate()` returns succeeded/skipped/failed buckets; bulk_allocate_dynamic_form modal + WS endpoint |
+| **CSV export of decisions** | ✅ | ✅ | ✅ | ✅ | ⚠ | Phase B — `csv_iterator_decisions()` Generator + `exportcsv.php` UTF-8 BOM stream |
+| **Notify learner on decision** | ✅ | ✅ | ✅ | ✅ | ⚠ | Phase B — `notify_requester_of_decision()` + `notify_assignee_of_allocation()` via Moodle messaging; `db/messages.php` registers `request_decided` + `allocation_assigned` |
 | **Comment/discussion thread on requests** | ❌ | ❌ | ❌ | ❌ | ❌ |  |
 | **Manager hierarchy override (skip-level approval)** | ❌ | ❌ | ❌ | ❌ | ❌ |  |
 
