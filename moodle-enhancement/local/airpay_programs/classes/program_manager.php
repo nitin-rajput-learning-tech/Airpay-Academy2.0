@@ -348,6 +348,176 @@ class program_manager {
     // ═══════════════════════════════════════════════════════════════════
     // COURSE-PER-LEVEL CRUD (G-03)
     // ═══════════════════════════════════════════════════════════════════
+    // PREREQ ENFORCEMENT (Phase F.1, 2026-05-08) — sequential progression
+    // ═══════════════════════════════════════════════════════════════════
+
+    /**
+     * Has the user completed every mandatory course in this level?
+     *
+     * A level is considered "completed" if every course with mandatory=1
+     * has a course_completions row with timecompleted > 0 for this user.
+     */
+    public static function is_level_completed_by_user(int $levelid,
+                                                       int $userid): bool {
+        global $DB;
+        $mandatory_courseids = $DB->get_fieldset_select(self::COURSES_TABLE,
+            'courseid', 'levelid = :lid AND mandatory = 1',
+            ['lid' => $levelid]);
+        if (empty($mandatory_courseids)) {
+            // Level has no mandatory courses — treat as completed.
+            return true;
+        }
+        [$insql, $inparams] = $DB->get_in_or_equal($mandatory_courseids,
+            SQL_PARAMS_NAMED, 'mc');
+        $params = array_merge($inparams, ['uid' => $userid]);
+        $completed = (int) $DB->get_field_sql(
+            "SELECT COUNT(DISTINCT course)
+               FROM {course_completions}
+              WHERE userid = :uid AND timecompleted > 0
+                AND course $insql", $params);
+        return $completed >= count($mandatory_courseids);
+    }
+
+    /**
+     * Is the level unlocked for this user?
+     *
+     * Returns true iff every preceding level (lower sortorder) marked as
+     * completion_required = 1 has been completed by the user. The first
+     * level (smallest sortorder) is always unlocked.
+     */
+    public static function is_level_unlocked_for_user(int $levelid,
+                                                       int $userid): bool {
+        global $DB;
+        $level = $DB->get_record(self::LEVELS_TABLE, ['id' => $levelid]);
+        if (!$level) {
+            return false;
+        }
+        $earlier = $DB->get_records_sql(
+            "SELECT id, completion_required
+               FROM {" . self::LEVELS_TABLE . "}
+              WHERE programid = :pid AND sortorder < :so
+           ORDER BY sortorder ASC",
+            ['pid' => $level->programid, 'so' => $level->sortorder]);
+        foreach ($earlier as $prev) {
+            if ((int) $prev->completion_required === 1
+                && !self::is_level_completed_by_user((int) $prev->id, $userid)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Build a user-facing program-progress view: every level annotated
+     * with locked / unlocked / completed status + per-course progress.
+     *
+     * Returns:
+     *   ['levels' => [
+     *       'id', 'name', 'sortorder', 'completion_required',
+     *       'locked', 'completed', 'in_progress',
+     *       'mandatory_total', 'mandatory_completed',
+     *       'pct',
+     *       'courses' => [{courseid, fullname, completed, mandatory}]
+     *     ],
+     *    'current_level_id' => int|null,
+     *    'overall_pct'      => 0..100,
+     *    'completed_levels' => int,
+     *    'total_levels'     => int]
+     */
+    public static function get_user_program_state(int $programid,
+                                                   int $userid): array {
+        $levels_raw = self::get_levels($programid);
+        $levels = [];
+        $first_unlocked_in_progress = null;
+        $completed_levels = 0;
+        $total_levels = count($levels_raw);
+
+        foreach ($levels_raw as $lvl) {
+            $courses = self::get_level_courses((int) $lvl->id);
+            $mandatory_total = 0;
+            $mandatory_completed = 0;
+            $course_rows = [];
+            foreach ($courses as $c) {
+                $is_mandatory = (int) $c->mandatory === 1;
+                $is_done = false;
+                if ($is_mandatory) {
+                    $mandatory_total++;
+                    $is_done = self::user_completed_course((int) $userid,
+                        (int) $c->courseid);
+                    if ($is_done) $mandatory_completed++;
+                } else {
+                    $is_done = self::user_completed_course((int) $userid,
+                        (int) $c->courseid);
+                }
+                $course_rows[] = [
+                    'courseid'  => (int) $c->courseid,
+                    'fullname'  => format_string($c->fullname),
+                    'mandatory' => $is_mandatory,
+                    'completed' => $is_done,
+                    'viewurl'   => (new \moodle_url('/course/view.php',
+                        ['id' => $c->courseid]))->out(false),
+                ];
+            }
+
+            $level_completed = self::is_level_completed_by_user((int) $lvl->id,
+                $userid);
+            $level_unlocked = self::is_level_unlocked_for_user((int) $lvl->id,
+                $userid);
+            if ($level_completed) $completed_levels++;
+            $in_progress = $level_unlocked && !$level_completed
+                && $mandatory_completed > 0;
+            if ($in_progress && $first_unlocked_in_progress === null) {
+                $first_unlocked_in_progress = (int) $lvl->id;
+            }
+
+            $pct = $mandatory_total > 0
+                ? (int) round(($mandatory_completed / $mandatory_total) * 100) : 0;
+            $levels[] = [
+                'id'                  => (int) $lvl->id,
+                'name'                => format_string($lvl->name),
+                'sortorder'           => (int) $lvl->sortorder,
+                'completion_required' => (int) $lvl->completion_required === 1,
+                'locked'              => !$level_unlocked,
+                'completed'           => $level_completed,
+                'in_progress'         => $in_progress,
+                'mandatory_total'     => $mandatory_total,
+                'mandatory_completed' => $mandatory_completed,
+                'pct'                 => $pct,
+                'courses'             => $course_rows,
+            ];
+        }
+
+        // current_level_id = first in-progress, or first unlocked-not-completed.
+        if ($first_unlocked_in_progress === null) {
+            foreach ($levels as $l) {
+                if (!$l['locked'] && !$l['completed']) {
+                    $first_unlocked_in_progress = $l['id'];
+                    break;
+                }
+            }
+        }
+
+        $overall_pct = $total_levels > 0
+            ? (int) round(($completed_levels / $total_levels) * 100) : 0;
+
+        return [
+            'levels'           => $levels,
+            'current_level_id' => $first_unlocked_in_progress,
+            'overall_pct'      => $overall_pct,
+            'completed_levels' => $completed_levels,
+            'total_levels'     => $total_levels,
+        ];
+    }
+
+    /** Helper — has user completed this course? */
+    private static function user_completed_course(int $userid, int $courseid): bool {
+        global $DB;
+        return $DB->record_exists_select('course_completions',
+            'userid = :uid AND course = :cid AND timecompleted > 0',
+            ['uid' => $userid, 'cid' => $courseid]);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
 
     /**
      * Count courses assigned to a level.

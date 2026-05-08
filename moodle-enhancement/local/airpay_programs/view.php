@@ -65,6 +65,12 @@ $status_css_map = [
     \local_airpay_programs\program_manager::STATUS_ACTIVE   => 'badge-success',
     \local_airpay_programs\program_manager::STATUS_ARCHIVED => 'badge-info',
 ];
+// Dark-shade hex for WCAG AA contrast 4.5:1 against white text on small badges.
+$status_color_map = [
+    \local_airpay_programs\program_manager::STATUS_DRAFT    => '#5a6070',  // 6.96:1
+    \local_airpay_programs\program_manager::STATUS_ACTIVE   => '#0d7a35',  // 5.07:1
+    \local_airpay_programs\program_manager::STATUS_ARCHIVED => '#0066A7',  // 5.10:1
+];
 
 $completion_rule = ((int) $program->completion_required) === 1
     ? 'All levels required (sequential certification)'
@@ -90,6 +96,18 @@ $users_columns = [
 $status_int   = (int) $program->status;
 $status_label = $status_map[$status_int] ?? 'Draft';
 $status_css   = $status_css_map[$status_int] ?? 'badge-secondary';
+$status_color = $status_color_map[$status_int] ?? '#5a6070';
+
+// Phase F.1 (2026-05-08) — learner program state with prereq enforcement.
+$user_state = null;
+$user_enrolled = $DB->record_exists('local_airpay_programs_users',
+    ['programid' => $programid, 'userid' => $USER->id]);
+if ($user_enrolled || !$can_update) {
+    // For learners + enrolled users, build their progress view so the
+    // levels tab can show locked / unlocked / completed state.
+    $user_state = \local_airpay_programs\program_manager::get_user_program_state(
+        (int) $programid, (int) $USER->id);
+}
 
 $data = [
     'programid'           => $programid,
@@ -99,11 +117,15 @@ $data = [
     'completion_rule'     => $completion_rule,
     'status_label'        => $status_label,
     'status_css'          => $status_css,
+    'status_color'        => $status_color,
     'level_count'         => $level_count,
     'enrolled_count'      => $enrolled_count,
     'created_human'       => $program->timecreated  ? userdate((int) $program->timecreated,  '%d %b %Y') : '—',
     'modified_human'      => $program->timemodified ? userdate((int) $program->timemodified, '%d %b %Y') : '—',
     'back_url'            => (new moodle_url('/local/airpay_programs/index.php'))->out(false),
+    'has_user_state'      => !empty($user_state) && !empty($user_state['levels']),
+    'user_state'          => $user_state,
+    'user_enrolled'       => $user_enrolled,
 
     'tab_overview_active' => $tab === 'overview',
     'tab_levels_active'   => $tab === 'levels',

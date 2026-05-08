@@ -87,7 +87,7 @@ A feature with **F✅ B✅ T✅ V❌ L❌** is NOT shipped. It's halfway.
 | Levels CRUD | ✅ | ✅ | ✅ | ⚠ | ⚠ |  |
 | Courses-per-level | ✅ | ✅ | ✅ | ⚠ | ⚠ |  |
 | Enrol users in program | ✅ | ✅ | ✅ | ⚠ | ⚠ |  |
-| **Level prerequisites enforcement** | ⚠ | ⚠ | ❌ | ❌ | ❌ | Sequential progression — locked but no UI cue + no enforcement test |
+| **Level prerequisites enforcement** | ✅ | ✅ | ✅ | ✅ | ⚠ | Phase F.1 (2026-05-08) v1.3.0 — `is_level_unlocked_for_user()` + `is_level_completed_by_user()` + `get_user_program_state()`; view.mustache renders progress bar + per-level locked/unlocked/completed UI cues; smoke_prereq.php validates 3-level scenario |
 | **Program-completion certificate trigger** | ❌ | ❌ | ❌ | ❌ | ❌ | tool_certificate template binding |
 | **Mass-enrol cohort to program** | ❌ | ❌ | ❌ | ❌ | ❌ |  |
 

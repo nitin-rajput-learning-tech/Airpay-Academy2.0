@@ -31,7 +31,8 @@
             </a>
             <h2 class="mb-1 mt-1" style="font-weight: 700;">{{ name }}</h2>
             <div class="d-flex flex-wrap gap-2 align-items-center small text-muted">
-                <span class="badge {{ status_css }}">{{ status_label }}</span>
+                <span class="badge"
+                      style="background-color: {{ status_color }}; color: #fff;">{{ status_label }}</span>
                 <span>·</span>
                 <span>{{ level_count }} levels</span>
                 <span>·</span>
@@ -44,24 +45,30 @@
 
     {{! ── Tab nav ─────────────────────────────────────────────────────── }}
     <ul class="nav nav-tabs mb-3" role="tablist">
-        <li class="nav-item">
+        <li class="nav-item" role="presentation">
             <a class="nav-link {{# tab_overview_active }}active{{/ tab_overview_active }}"
-               href="{{{ tab_overview_url }}}" role="tab">
+               href="{{{ tab_overview_url }}}"
+               role="tab"
+               aria-selected="{{# tab_overview_active }}true{{/ tab_overview_active }}{{^ tab_overview_active }}false{{/ tab_overview_active }}">
                 <i class="fa fa-info-circle fa-fw" aria-hidden="true"></i>
                 {{# str }}tab_overview, local_airpay_programs{{/ str }}
             </a>
         </li>
-        <li class="nav-item">
+        <li class="nav-item" role="presentation">
             <a class="nav-link {{# tab_levels_active }}active{{/ tab_levels_active }}"
-               href="{{{ tab_levels_url }}}" role="tab">
+               href="{{{ tab_levels_url }}}"
+               role="tab"
+               aria-selected="{{# tab_levels_active }}true{{/ tab_levels_active }}{{^ tab_levels_active }}false{{/ tab_levels_active }}">
                 <i class="fa fa-list-ol fa-fw" aria-hidden="true"></i>
                 {{# str }}tab_levels, local_airpay_programs{{/ str }}
                 <span class="badge bg-light text-dark ms-1">{{ level_count }}</span>
             </a>
         </li>
-        <li class="nav-item">
+        <li class="nav-item" role="presentation">
             <a class="nav-link {{# tab_users_active }}active{{/ tab_users_active }}"
-               href="{{{ tab_users_url }}}" role="tab">
+               href="{{{ tab_users_url }}}"
+               role="tab"
+               aria-selected="{{# tab_users_active }}true{{/ tab_users_active }}{{^ tab_users_active }}false{{/ tab_users_active }}">
                 <i class="fa fa-users fa-fw" aria-hidden="true"></i>
                 {{# str }}tab_users, local_airpay_programs{{/ str }}
                 <span class="badge bg-light text-dark ms-1">{{ enrolled_count }}</span>
@@ -105,6 +112,64 @@
                 <div class="small text-uppercase text-muted">Completion rule</div>
                 <div>{{ completion_rule }}</div>
             </div>
+
+            {{! Phase F.1 — learner progress + level lock state }}
+            {{# has_user_state }}
+            <hr class="my-3">
+            <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+                <h3 class="h6 m-0">
+                    <i class="fa fa-graduation-cap text-primary me-1"></i>Your progress
+                </h3>
+                <span class="small text-muted">
+                    {{ user_state.completed_levels }}/{{ user_state.total_levels }}
+                    levels · {{ user_state.overall_pct }}%
+                </span>
+            </div>
+            <div class="progress mb-3" role="progressbar"
+                 aria-valuenow="{{ user_state.overall_pct }}"
+                 aria-valuemin="0" aria-valuemax="100"
+                 aria-label="Overall program progress {{ user_state.overall_pct }} percent">
+                <div class="progress-bar bg-primary"
+                     style="width: {{ user_state.overall_pct }}%;">
+                </div>
+            </div>
+            <ul class="list-group list-group-flush">
+                {{# user_state.levels }}
+                <li class="list-group-item d-flex align-items-start
+                       {{# locked }}opacity-50{{/ locked }}">
+                    <div class="me-2 pt-1">
+                        {{# completed }}
+                        <i class="fa fa-check-circle text-success" aria-label="Completed"></i>
+                        {{/ completed }}
+                        {{^ completed }}{{# locked }}
+                        <i class="fa fa-lock text-muted" aria-label="Locked"></i>
+                        {{/ locked }}{{/ completed }}
+                        {{^ completed }}{{^ locked }}
+                        <i class="fa fa-circle-o text-primary" aria-label="In progress"></i>
+                        {{/ locked }}{{/ completed }}
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold">
+                            Level {{ sortorder }}: {{ name }}
+                            {{# completion_required }}<span class="badge bg-light text-muted small ms-1">required</span>{{/ completion_required }}
+                            {{^ completion_required }}<span class="badge bg-light text-muted small ms-1">optional</span>{{/ completion_required }}
+                        </div>
+                        {{# locked }}
+                        <div class="small text-muted mt-1">
+                            <i class="fa fa-lock me-1"></i>Complete the previous required level to unlock.
+                        </div>
+                        {{/ locked }}
+                        {{^ locked }}
+                        <div class="small text-muted mt-1">
+                            {{ mandatory_completed }}/{{ mandatory_total }} required courses
+                            ({{ pct }}%)
+                        </div>
+                        {{/ locked }}
+                    </div>
+                </li>
+                {{/ user_state.levels }}
+            </ul>
+            {{/ has_user_state }}
         </div>
     </div>
     {{/ tab_overview_active }}
