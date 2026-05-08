@@ -180,6 +180,52 @@
 </div>
 {{/ap_has_skills}}
 
+{{! Grades widget — recent completions + average grade (Phase E.2) }}
+{{#ap_has_grades}}
+<div class="ap-profile__grades mt-4" data-region="ap-profile-grades">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <h2 class="h5 m-0">
+            <i class="fa fa-graduation-cap text-primary me-2"></i>Recent grades
+        </h2>
+        <div class="d-flex gap-3 small text-muted">
+            <span><strong>{{ap_grades_summary.completed}}</strong> completed</span>
+            {{#ap_grades_summary.average_pct}}
+            <span><strong>{{.}}%</strong> average</span>
+            {{/ap_grades_summary.average_pct}}
+        </div>
+    </div>
+
+    <div class="row g-2">
+        {{#ap_grades_recent}}
+        <div class="col-md-6 col-lg-4">
+            <a href="{{viewurl}}" class="ap-card ap-card--inset d-block h-100 text-decoration-none">
+                <div class="d-flex align-items-start justify-content-between">
+                    <div class="flex-grow-1 me-2">
+                        <div class="fw-semibold">{{fullname}}</div>
+                        <div class="small text-muted">{{shortname}}</div>
+                        <div class="small text-muted mt-1">
+                            <i class="fa fa-check-circle text-success me-1"></i>{{completed_label}}
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        {{#has_grade}}
+                        <div class="badge {{#grade_pct}}bg-primary{{/grade_pct}}{{^grade_pct}}bg-secondary{{/grade_pct}}"
+                             style="font-size:0.875rem;">
+                            {{grade_pct}}%
+                        </div>
+                        {{/has_grade}}
+                        {{^has_grade}}
+                        <span class="badge bg-secondary">No grade</span>
+                        {{/has_grade}}
+                    </div>
+                </div>
+            </a>
+        </div>
+        {{/ap_grades_recent}}
+    </div>
+</div>
+{{/ap_has_grades}}
+
 {{! Plugin content tabs }}
 {{#usercontent}}
 <div class="ap-profile__plugin-tab" id="plugin_tab_{{sequence}}">

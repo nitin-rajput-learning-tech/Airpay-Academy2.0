@@ -230,6 +230,19 @@ class user_manager {
             }
         }
 
+        // Phase E.2 (2026-05-08) — grades widget: completed courses + course-level grade.
+        try {
+            $grades = self::get_grades_summary($userid, 6);
+            if (!empty($grades['courses'])) {
+                $context['ap_grades_summary'] = $grades['summary'];
+                $context['ap_grades_recent']  = $grades['courses'];
+                $context['ap_has_grades']     = true;
+            }
+        } catch (\Throwable $e) {
+            debugging('Grades enrichment failed: ' . $e->getMessage(),
+                DEBUG_DEVELOPER);
+        }
+
         // Collect plugin profile tabs.
         $pluginlist = \core_component::get_plugin_list('local');
         $usercontent = [];
@@ -252,6 +265,81 @@ class user_manager {
         $context['existingplugin'] = array_values($existingplugin);
 
         return $context;
+    }
+
+    /**
+     * Phase E.2 (2026-05-08) — grades summary for profile widget.
+     *
+     * Returns recent course completions + their final grade as a percentage.
+     * Reads from {course_completions} for the completion timestamp and
+     * {grade_grades} joined to the course's grade_item (itemtype='course')
+     * for the percentage.
+     *
+     * @param int $userid
+     * @param int $limit  Max recent courses to return
+     * @return array{summary: array{completed:int, average_pct:?int,
+     *                              has_grade_count:int},
+     *                courses: list<array{courseid:int, fullname:string,
+     *                                    shortname:string, viewurl:string,
+     *                                    grade_pct:?int, completed_at:int,
+     *                                    completed_label:string}>}
+     */
+    public static function get_grades_summary(int $userid, int $limit = 6): array {
+        global $DB;
+
+        $rows = $DB->get_records_sql("
+            SELECT cc.id, cc.course, cc.timecompleted,
+                   c.fullname, c.shortname,
+                   gi.id AS grade_item_id, gi.grademax, gi.grademin,
+                   gg.finalgrade
+              FROM {course_completions} cc
+              JOIN {course} c ON c.id = cc.course
+         LEFT JOIN {grade_items} gi ON gi.courseid = c.id AND gi.itemtype = 'course'
+         LEFT JOIN {grade_grades} gg ON gg.itemid = gi.id AND gg.userid = cc.userid
+             WHERE cc.userid = :uid AND cc.timecompleted > 0
+               AND c.id <> :siteid
+          ORDER BY cc.timecompleted DESC",
+            ['uid' => $userid, 'siteid' => SITEID], 0, $limit);
+
+        $courses = [];
+        $total_pct = 0; $with_grade = 0;
+        foreach ($rows as $r) {
+            $pct = null;
+            if ($r->finalgrade !== null && $r->grademax > $r->grademin) {
+                $pct = (int) round(
+                    (((float) $r->finalgrade - (float) $r->grademin)
+                        / ((float) $r->grademax - (float) $r->grademin)) * 100);
+                $pct = max(0, min(100, $pct));
+                $total_pct += $pct;
+                $with_grade++;
+            }
+            $courses[] = [
+                'courseid'        => (int) $r->course,
+                'fullname'        => format_string($r->fullname),
+                'shortname'       => format_string($r->shortname),
+                'viewurl'         => (new \moodle_url('/course/view.php',
+                    ['id' => $r->course]))->out(false),
+                'grade_pct'       => $pct,
+                'has_grade'       => $pct !== null,
+                'completed_at'    => (int) $r->timecompleted,
+                'completed_label' => userdate((int) $r->timecompleted,
+                    get_string('strftimedatemonthabbr', 'core_langconfig')),
+            ];
+        }
+
+        $total_completed = $DB->count_records_select('course_completions',
+            'userid = :uid AND timecompleted > 0',
+            ['uid' => $userid]);
+
+        return [
+            'summary' => [
+                'completed'       => $total_completed,
+                'has_grade_count' => $with_grade,
+                'average_pct'     => $with_grade > 0
+                    ? (int) round($total_pct / $with_grade) : null,
+            ],
+            'courses' => $courses,
+        ];
     }
 
     /**

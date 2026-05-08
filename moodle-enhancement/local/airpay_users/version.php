@@ -28,10 +28,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_airpay_users';
-$plugin->version   = 2026050900;
+$plugin->version   = 2026050901;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.4.0'; // +full skills tab on profile (Phase E.1) — radar + per-skill rows + gap-course suggestions.
+$plugin->release   = '1.5.0'; // +grades widget on profile (Phase E.2) — recent completions + course-level grade %.
 $plugin->dependencies = [
     'local_airpay_org' => 2026041600,
 ];

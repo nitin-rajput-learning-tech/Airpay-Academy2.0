@@ -36,7 +36,7 @@ A feature with **F✅ B✅ T✅ V❌ L❌** is NOT shipped. It's halfway.
 | Bulk action (bulk_action.php) | ✅ | ✅ | ✅ | ⚠ | ⚠ | Selectable rows + batch suspend/activate/delete |
 | Export CSV | ✅ | ✅ | ⚠ | ⚠ | ⚠ | Endpoint exists; no PHPUnit on the streamer; not visually verified for column ordering vs filters |
 | Profile page | ✅ | ✅ | ⚠ | ⚠ | ⚠ |  |
-| **Grades widget on profile** | ❌ | ❌ | ❌ | ❌ | ❌ | Missing — Phase-2 from yesterday |
+| **Grades widget on profile** | ✅ | ✅ | ✅ | ✅ | ⚠ | Phase E.2 (2026-05-08) v1.5.0 — `get_grades_summary()` reads `course_completions` + `grade_grades` for course-itemtype; profile.mustache renders top-6 recent completions with grade % + average; smoke_grades_widget.php tests empty case + 85% case |
 | **Skill profile tab on profile** | ✅ | ✅ | ✅ | ✅ | ⚠ | Phase E.1 (2026-05-08) v1.4.0 — radar SVG (hand-rendered, no Chart.js) + per-skill rows + suggested gap-courses; smoke_profile_skills.php round-trip tested |
 | **Bulk-CSV status change (upload)** | ❌ | ❌ | ❌ | ❌ | ❌ | Missing |
 | **CSV import (new users)** | ❌ | ❌ | ❌ | ❌ | ❌ | BizLMS had this; we don't |
