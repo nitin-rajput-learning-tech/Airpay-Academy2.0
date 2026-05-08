@@ -71,5 +71,17 @@ function xmldb_local_airpay_evaluation_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026041910, 'local', 'airpay_evaluation');
     }
 
+    // 2026050901 — Phase G.2: per-question anonymous toggle.
+    if ($oldversion < 2026050901) {
+        $table = new xmldb_table('local_airpay_evaluation_questions');
+        $field = new xmldb_field('anonymous', XMLDB_TYPE_INTEGER, '1',
+            null, XMLDB_NOTNULL, null, '0', 'required');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        upgrade_plugin_savepoint(true, 2026050901,
+            'local', 'airpay_evaluation');
+    }
+
     return true;
 }

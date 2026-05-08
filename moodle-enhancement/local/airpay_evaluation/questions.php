@@ -51,6 +51,7 @@ foreach ($questions as $i => $q) {
         'questiontype'  => $q->questiontype,
         'typelabel'     => $short_types[$q->questiontype] ?? $q->questiontype,
         'required'      => (bool) $q->required,
+        'is_anonymous'  => (int) ($q->anonymous ?? 0) === 1,
         'is_multichoice' => ($q->questiontype === 'multichoice'),
         'options'       => array_map('format_string', $opts),
         'has_options'   => !empty($opts),

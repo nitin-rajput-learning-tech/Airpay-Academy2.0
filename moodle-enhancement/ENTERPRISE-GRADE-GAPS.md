@@ -113,7 +113,7 @@ A feature with **F✅ B✅ T✅ V❌ L❌** is NOT shipped. It's halfway.
 | Kirkpatrick filters | ✅ | ✅ | ✅ | ⚠ | ⚠ |  |
 | CSV export | ✅ | ✅ | ✅ | ⚠ | ⚠ |  |
 | **Import/export evaluation TEMPLATES** | ✅ | ✅ | ✅ | ✅ | ⚠ | Phase G.1 (2026-05-08) v1.5.0 — `evaluation_manager::export_template()` returns versioned JSON payload + `import_template()` creates new evaluation in DRAFT; export_template.php streams the file, import_template.php has filepicker form; smoke_template_io.php tests round-trip + multichoice options + future-format rejection |
-| **Anonymous-vs-named per-question toggle** | ❌ | ❌ | ❌ | ❌ | ❌ |  |
+| **Anonymous-vs-named per-question toggle** | ✅ | ✅ | ✅ | ✅ | ⚠ | Phase G.2 (2026-05-08) v1.6.0 — `anonymous` column on questions table; checkbox in edit_question form; badge on questions.php list; CSV export hides identity for whole row when ANY question is anonymous (correlation-attack guard); template export/import preserves the field; smoke_anonymous_question.php tests round-trip + CSV behavior toggle |
 | **Branching logic (skip questions)** | ❌ | ❌ | ❌ | ❌ | ❌ |  |
 
 ### `airpay_skills` ← Phase A shipped today

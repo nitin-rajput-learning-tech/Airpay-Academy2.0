@@ -52,6 +52,16 @@ class edit_question extends \core_form\dynamic_form {
         $mform->addElement('advcheckbox', 'required',
             get_string('question_required', 'local_airpay_evaluation'));
         $mform->setDefault('required', 1);
+
+        // ── Anonymous toggle (Phase G.2) ──────────────────────────────
+        // When set, the analysis surface hides responder identity for
+        // *this question only* — even if the parent evaluation isn't
+        // anonymous. Useful for sensitive questions in an otherwise
+        // attributed survey.
+        $mform->addElement('advcheckbox', 'anonymous',
+            'Anonymous response',
+            'Hide responder identity for this question only');
+        $mform->setDefault('anonymous', 0);
     }
 
     public function validation($data, $files) {
@@ -110,6 +120,7 @@ class edit_question extends \core_form\dynamic_form {
             'questiontext' => $q->questiontext,
             'options'      => $opts_text,
             'required'     => $q->required ?? 1,
+            'anonymous'    => $q->anonymous ?? 0,
         ]);
     }
 

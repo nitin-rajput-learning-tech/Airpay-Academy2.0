@@ -252,6 +252,7 @@ class evaluation_manager {
                 'questiontext' => (string) $q->questiontext,
                 'options'      => self::decode_options($q->options),
                 'required'     => (int) $q->required,
+                'anonymous'    => (int) ($q->anonymous ?? 0),
                 'sortorder'    => (int) $q->sortorder,
             ];
         }
@@ -314,6 +315,7 @@ class evaluation_manager {
                             array_values($q['options'])))
                         : '',
                     'required'     => isset($q['required']) ? (int) $q['required'] : 1,
+                    'anonymous'    => isset($q['anonymous']) ? (int) $q['anonymous'] : 0,
                     'sortorder'    => (int) ($q['sortorder'] ?? $sortorder),
                 ]);
             }
@@ -374,6 +376,8 @@ class evaluation_manager {
             'questiontext' => trim($data->questiontext),
             'options'      => $options_json,
             'required'     => isset($data->required) ? (int) $data->required : 1,
+            // Phase G.2 (2026-05-08) — per-question anonymous toggle.
+            'anonymous'    => isset($data->anonymous) ? (int) $data->anonymous : 0,
             'sortorder'    => isset($data->sortorder) ? (int) $data->sortorder : ((int) $maxsort + 1),
             'timecreated'  => time(),
         ];
@@ -395,6 +399,7 @@ class evaluation_manager {
         }
         if (isset($data->questiontext)) $record->questiontext = trim($data->questiontext);
         if (isset($data->required))     $record->required = (int) $data->required;
+        if (isset($data->anonymous))    $record->anonymous = (int) $data->anonymous;
         if (isset($data->sortorder))    $record->sortorder = (int) $data->sortorder;
 
         $finaltype = $record->questiontype ?? $existing->questiontype;
@@ -973,8 +978,23 @@ class evaluation_manager {
         $row = [];
         $row[] = userdate((int) $response->timesubmitted, '%Y-%m-%d %H:%M');
 
+        // Phase G.2 (2026-05-08) — when any question in the form is
+        // anonymous, hide the responder identity for the whole row to
+        // prevent correlation attacks. Otherwise honour the eval-level
+        // anonymous flag.
+        $any_anonymous_q = false;
+        foreach ($questions as $q) {
+            if ((int) ($q->anonymous ?? 0) === 1) {
+                $any_anonymous_q = true;
+                break;
+            }
+        }
+
         if ((int) $eval->anonymous === 1 || (int) $response->userid === 0) {
             $row[] = '(anonymous)';
+            $row[] = '';
+        } else if ($any_anonymous_q) {
+            $row[] = '(question-anonymous)';
             $row[] = '';
         } else {
             $u = \core_user::get_user((int) $response->userid, 'id, firstname, lastname, email');

@@ -74,6 +74,11 @@ foreach ($questions as $i => $q) {
         'questiontext' => format_string($q->questiontext),
         'questiontype' => $q->questiontype,
         'required'     => (bool) $q->required,
+        // Phase G.2 (2026-05-08) — per-question anonymous flag.
+        // Hidden in analysis only — the response_data still contains
+        // the responder's userid for audit purposes; the UI just
+        // doesn't surface it for this particular question.
+        'is_anonymous_question' => (int) ($q->anonymous ?? 0) === 1,
         'response_count' => $bucket['count'],
         'is_rating'    => ($q->questiontype === 'rating'),
         'is_nps'       => ($q->questiontype === 'nps'),

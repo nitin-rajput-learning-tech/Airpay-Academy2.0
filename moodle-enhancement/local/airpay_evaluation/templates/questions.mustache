@@ -127,6 +127,13 @@
                 <span class="badge bg-light text-dark">{{typelabel}}</span>
                 {{#required}}<span class="badge badge-required ms-1">Required</span>{{/required}}
                 {{^required}}<span class="badge bg-light text-muted ms-1">Optional</span>{{/required}}
+                {{#is_anonymous}}
+                <span class="badge ms-1"
+                      style="background-color:#5a6070;color:#fff;"
+                      title="Responder identity hidden for this question">
+                    <i class="fa fa-user-secret me-1" aria-hidden="true"></i>Anonymous
+                </span>
+                {{/is_anonymous}}
             </div>
             {{#has_options}}
             <ol class="question-options mb-0">

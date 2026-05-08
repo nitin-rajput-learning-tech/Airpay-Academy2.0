@@ -40,6 +40,8 @@
         <FIELD NAME="options"        TYPE="text" NOTNULL="false"
                COMMENT="JSON array for multichoice options"/>
         <FIELD NAME="required"       TYPE="int"  LENGTH="1" NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="anonymous"      TYPE="int"  LENGTH="1" NOTNULL="true" DEFAULT="0"
+               COMMENT="1 = hide responder identity for this question only"/>
         <FIELD NAME="sortorder"      TYPE="int"  LENGTH="6" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="timecreated"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
       </FIELDS>
