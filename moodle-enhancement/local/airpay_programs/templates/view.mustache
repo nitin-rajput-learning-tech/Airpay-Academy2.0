@@ -200,8 +200,13 @@
 
     {{! ── Users tab ───────────────────────────────────────────────────── }}
     {{# tab_users_active }}
-    <div class="d-flex justify-content-end mb-3">
+    <div class="d-flex justify-content-end mb-3 gap-2">
         {{# can_enrol }}
+        <button type="button" class="btn btn-outline-secondary btn-sm"
+                data-action="enrol-program-cohort">
+            <i class="fa fa-users fa-fw" aria-hidden="true"></i>
+            Mass-enrol cohort
+        </button>
         <button type="button" class="btn btn-primary btn-sm" data-action="enrol-program-users">
             <i class="fa fa-user-plus fa-fw" aria-hidden="true"></i>
             {{# str }}enrol_users, local_airpay_programs{{/ str }}

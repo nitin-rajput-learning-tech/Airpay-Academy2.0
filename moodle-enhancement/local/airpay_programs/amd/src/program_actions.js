@@ -120,6 +120,22 @@ const openEnrolUsersForm = async (programid, returnFocus) => {
     modalForm.show();
 };
 
+// Phase F.3 (2026-05-08) — mass-enrol cohort modal.
+const openEnrolCohortForm = (programid, returnFocus) => {
+    const modalForm = new ModalForm({
+        formClass: 'local_airpay_programs\\form\\enrol_program_cohort',
+        args: {programid: programid},
+        modalConfig: {title: 'Mass-enrol cohort', large: true},
+        returnFocus: returnFocus,
+    });
+    modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, (event) => {
+        const message = (event.detail && event.detail.message) || 'Cohort enrolled.';
+        Notification.addNotification({message: message, type: 'success'});
+        window.location.reload();
+    });
+    modalForm.show();
+};
+
 const confirmDeleteLevel = async (levelid, name, returnFocus) => {
     const [title, message, label, success] = await Promise.all([
         getString('delete_level', 'local_airpay_programs'),
@@ -183,6 +199,10 @@ const handleViewClick = (programid) => (event) => {
         case 'enrol-program-users':
             event.preventDefault();
             openEnrolUsersForm(programid, trigger);
+            break;
+        case 'enrol-program-cohort':
+            event.preventDefault();
+            openEnrolCohortForm(programid, trigger);
             break;
         case 'unenrol-program-user': {
             event.preventDefault();

@@ -659,6 +659,49 @@ class program_manager {
     }
 
     /**
+     * Phase F.3 (2026-05-08) — mass-enrol all members of a Moodle cohort.
+     *
+     * Pulls cohort_members → user IDs → delegates to enrol_users() for
+     * the existing idempotent + tenant-scope safe pathway.
+     *
+     * @param int $programid  Target program
+     * @param int $cohortid   Source cohort
+     * @return array{cohort_size:int, newly_enrolled:int, already_enrolled:int}
+     */
+    public static function enrol_cohort(int $programid, int $cohortid): array {
+        global $DB;
+
+        $DB->get_record(self::TABLE, ['id' => $programid], 'id', MUST_EXIST);
+        $DB->get_record('cohort', ['id' => $cohortid], 'id', MUST_EXIST);
+
+        $member_ids = $DB->get_fieldset_select('cohort_members', 'userid',
+            'cohortid = :cid', ['cid' => $cohortid]);
+        $cohort_size = count($member_ids);
+        if ($cohort_size === 0) {
+            return [
+                'cohort_size'      => 0,
+                'newly_enrolled'   => 0,
+                'already_enrolled' => 0,
+            ];
+        }
+
+        // Count already-enrolled BEFORE we add — so we can report it.
+        [$insql, $inparams] = $DB->get_in_or_equal($member_ids,
+            SQL_PARAMS_NAMED, 'mid');
+        $already = (int) $DB->count_records_sql(
+            "SELECT COUNT(*) FROM {" . self::USERS_TABLE . "}
+              WHERE programid = :pid AND userid $insql",
+            array_merge($inparams, ['pid' => $programid]));
+
+        $newly = self::enrol_users($programid, $member_ids);
+        return [
+            'cohort_size'      => $cohort_size,
+            'newly_enrolled'   => $newly,
+            'already_enrolled' => $already,
+        ];
+    }
+
+    /**
      * Enrol one or more users. Idempotent. Rejects deleted/system users.
      *
      * @return int Count newly enrolled.

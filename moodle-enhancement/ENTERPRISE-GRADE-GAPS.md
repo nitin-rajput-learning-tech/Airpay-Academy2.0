@@ -89,7 +89,7 @@ A feature with **F✅ B✅ T✅ V❌ L❌** is NOT shipped. It's halfway.
 | Enrol users in program | ✅ | ✅ | ✅ | ⚠ | ⚠ |  |
 | **Level prerequisites enforcement** | ✅ | ✅ | ✅ | ✅ | ⚠ | Phase F.1 (2026-05-08) v1.3.0 — `is_level_unlocked_for_user()` + `is_level_completed_by_user()` + `get_user_program_state()`; view.mustache renders progress bar + per-level locked/unlocked/completed UI cues; smoke_prereq.php validates 3-level scenario |
 | **Program-completion certificate trigger** | ❌ | ❌ | ❌ | ❌ | ❌ | tool_certificate template binding |
-| **Mass-enrol cohort to program** | ❌ | ❌ | ❌ | ❌ | ❌ |  |
+| **Mass-enrol cohort to program** | ✅ | ✅ | ✅ | ✅ | ⚠ | Phase F.3 (2026-05-08) v1.4.0 — `program_manager::enrol_cohort($pid, $cohortid)` reads cohort_members + delegates to existing enrol_users (idempotent + tenant-scope safe); `enrol_program_cohort` dynamic_form modal with cohort dropdown + member counts; "Mass-enrol cohort" button on program view Users tab; smoke_enrol_cohort.php tests 3-member cohort (all new → all already → empty cohort) |
 
 ### `airpay_learningpath`
 
