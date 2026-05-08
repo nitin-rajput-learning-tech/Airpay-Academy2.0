@@ -73,6 +73,8 @@ const SURFACES = [
     { id: 'dashboard-with-featured', url: '/my/dashboard.php' },
     // airpay_users Phase E.4 (bulk-import new users, 2026-05-08 v1.7.0)
     { id: 'users-bulk-import',     url: '/local/airpay_users/bulk_import.php' },
+    // airpay_courses Phase F.4 (mass-enrol CSV, 2026-05-08 v1.5.0)
+    { id: 'courses-enrol-csv',     url: '/local/airpay_courses/enrol_csv.php' },
 ];
 
 async function login(page, login_id) {

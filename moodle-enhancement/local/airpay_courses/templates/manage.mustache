@@ -23,6 +23,11 @@
         <i class="fa fa-star fa-fw"></i> Featured
     </a>
     {{/can_manage}}
+    {{#can_enrol}}
+    <a href="/local/airpay_courses/enrol_csv.php" class="btn btn-outline-secondary btn-sm">
+        <i class="fa fa-upload fa-fw"></i> Mass enrol
+    </a>
+    {{/can_enrol}}
     {{#can_create}}
     <a href="#" class="btn btn-primary btn-sm" data-action="create-course">
         <i class="fa fa-plus fa-fw"></i> New Course

@@ -28,10 +28,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_airpay_courses';
-$plugin->version   = 2026050901;
+$plugin->version   = 2026050902;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.4.0'; // +Phase F.2: featured-courses widget on learner dashboard
+$plugin->release   = '1.5.0'; // +Phase F.4: mass-enrol via CSV (email,courseshortname,role)
 $plugin->dependencies = [
     'local_airpay_org' => 2026041600,
 ];
