@@ -240,4 +240,201 @@ final class approval_manager_test extends \advanced_testcase {
         approval_manager::delete_allocation($id);
         $this->assertFalse($DB->record_exists('local_airpay_mgr_allocations', ['id' => $id]));
     }
+
+    // ─────────────────────────────────────────────────────────────────
+    // Notifications (v1.2.0) — close the dead-end where the learner had
+    // no idea their request was decided / a course was assigned.
+    // ─────────────────────────────────────────────────────────────────
+
+    public function test_decide_request_sends_notification_to_requester(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $this->preventResetByRollback();
+        $sink = $this->redirectMessages();
+
+        $u = $this->getDataGenerator()->create_user();
+        $mgr = $this->getDataGenerator()->create_user();
+        $course = $this->seed_course();
+        $reqid = approval_manager::create_request((int) $u->id, (int) $course->id,
+            (int) $mgr->id);
+
+        approval_manager::decide_request($reqid,
+            approval_manager::STATUS_APPROVED, 'OK', (int) $mgr->id);
+
+        $messages = $sink->get_messages();
+        $sink->close();
+
+        // At least one message landed in the requester's inbox from our component.
+        $found = false;
+        foreach ($messages as $m) {
+            if ($m->component === 'local_airpay_manager'
+                && $m->eventtype === 'request_decided'
+                && (int) $m->useridto === (int) $u->id) {
+                $found = true;
+                $this->assertStringContainsString('approved', $m->subject);
+                break;
+            }
+        }
+        $this->assertTrue($found,
+            'decide_request must dispatch a request_decided message to the requester');
+    }
+
+    public function test_decide_request_rejected_notifies_with_negative_subject(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $this->preventResetByRollback();
+        $sink = $this->redirectMessages();
+
+        $u = $this->getDataGenerator()->create_user();
+        $mgr = $this->getDataGenerator()->create_user();
+        $course = $this->seed_course();
+        $reqid = approval_manager::create_request((int) $u->id, (int) $course->id,
+            (int) $mgr->id);
+
+        approval_manager::decide_request($reqid,
+            approval_manager::STATUS_REJECTED, 'Already covered elsewhere', (int) $mgr->id);
+
+        $messages = $sink->get_messages();
+        $sink->close();
+
+        $found = false;
+        foreach ($messages as $m) {
+            if ($m->component === 'local_airpay_manager'
+                && $m->eventtype === 'request_decided'
+                && (int) $m->useridto === (int) $u->id) {
+                $found = true;
+                $this->assertStringContainsString('not approved', $m->subject);
+                $this->assertStringContainsString('Already covered elsewhere',
+                    $m->fullmessage);
+                break;
+            }
+        }
+        $this->assertTrue($found, 'rejected decision must notify the requester');
+    }
+
+    public function test_create_allocation_sends_notification_to_assignee(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $this->preventResetByRollback();
+        $sink = $this->redirectMessages();
+
+        $u = $this->getDataGenerator()->create_user();
+        $mgr = $this->getDataGenerator()->create_user();
+        $course = $this->seed_course();
+
+        approval_manager::create_allocation((int) $mgr->id, (int) $u->id,
+            (int) $course->id, time() + 86400 * 14, 'Q3 priority');
+
+        $messages = $sink->get_messages();
+        $sink->close();
+
+        $found = false;
+        foreach ($messages as $m) {
+            if ($m->component === 'local_airpay_manager'
+                && $m->eventtype === 'allocation_assigned'
+                && (int) $m->useridto === (int) $u->id) {
+                $found = true;
+                $this->assertStringContainsString('Q3 priority', $m->fullmessage);
+                $this->assertStringContainsString('Due:', $m->fullmessage);
+                break;
+            }
+        }
+        $this->assertTrue($found,
+            'create_allocation must dispatch allocation_assigned message to the user');
+    }
+
+    // ─── Bulk allocation + CSV export (v1.2.0) ──────────────────────
+
+    public function test_bulk_allocate_succeeds_skipped_failed_buckets(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $u1 = $this->getDataGenerator()->create_user();
+        $u2 = $this->getDataGenerator()->create_user();
+        $u3 = $this->getDataGenerator()->create_user();
+        $mgr = $this->getDataGenerator()->create_user();
+        $course = $this->seed_course();
+
+        // u3 already has an allocation — should be skipped.
+        approval_manager::create_allocation((int) $mgr->id, (int) $u3->id,
+            (int) $course->id);
+
+        $result = approval_manager::bulk_allocate((int) $mgr->id,
+            [(int) $u1->id, (int) $u2->id, (int) $u3->id, 0, -5],
+            (int) $course->id, null, 'Bulk Q3 push');
+
+        $this->assertCount(2, $result['succeeded'],
+            'u1 + u2 should succeed; u3 already-allocated should skip');
+        $this->assertGreaterThanOrEqual(1, count($result['skipped']));
+        $this->assertCount(0, $result['failed']);
+
+        $this->assertTrue($DB->record_exists('local_airpay_mgr_allocations',
+            ['userid' => $u1->id, 'courseid' => $course->id]));
+        $this->assertTrue($DB->record_exists('local_airpay_mgr_allocations',
+            ['userid' => $u2->id, 'courseid' => $course->id]));
+    }
+
+    public function test_bulk_allocate_dedupes_userid_array(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $u = $this->getDataGenerator()->create_user();
+        $mgr = $this->getDataGenerator()->create_user();
+        $course = $this->seed_course();
+
+        $result = approval_manager::bulk_allocate((int) $mgr->id,
+            [(int) $u->id, (int) $u->id, (int) $u->id], (int) $course->id);
+
+        $this->assertSame(1, count($result['succeeded']),
+            'duplicates in userids array must be pruned by array_unique');
+        $this->assertCount(0, $result['skipped']);
+    }
+
+    public function test_csv_iterator_decisions_yields_header_then_rows(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $u  = $this->getDataGenerator()->create_user();
+        $u2 = $this->getDataGenerator()->create_user();
+        $mgr = $this->getDataGenerator()->create_user();
+        $course = $this->seed_course();
+
+        $reqid = approval_manager::create_request((int) $u->id, (int) $course->id,
+            (int) $mgr->id);
+        approval_manager::decide_request($reqid,
+            approval_manager::STATUS_APPROVED, 'OK', (int) $mgr->id);
+        approval_manager::create_allocation((int) $mgr->id, (int) $u2->id,
+            (int) $course->id, null, 'manual push');
+
+        $rows = [];
+        foreach (approval_manager::csv_iterator_decisions((int) $mgr->id) as $row) {
+            $rows[] = $row;
+        }
+
+        $this->assertGreaterThanOrEqual(3, count($rows),
+            'header + at least one request + at least one allocation');
+        $this->assertSame('Type', $rows[0][0]);
+        $types = array_column(array_slice($rows, 1), 0);
+        $this->assertContains('request', $types);
+        $this->assertContains('allocation', $types);
+    }
+
+    public function test_csv_iterator_scopes_by_managerid(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $u = $this->getDataGenerator()->create_user();
+        $mgr1 = $this->getDataGenerator()->create_user();
+        $mgr2 = $this->getDataGenerator()->create_user();
+        $course = $this->seed_course();
+
+        approval_manager::create_request((int) $u->id, (int) $course->id, (int) $mgr1->id);
+
+        $for_mgr2 = [];
+        foreach (approval_manager::csv_iterator_decisions((int) $mgr2->id) as $row) {
+            $for_mgr2[] = $row;
+        }
+        $this->assertCount(1, $for_mgr2,
+            'mgr2 must see only the header row — none of mgr1\'s decisions');
+    }
 }

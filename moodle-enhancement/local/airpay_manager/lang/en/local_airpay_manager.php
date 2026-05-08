@@ -12,6 +12,10 @@ $string['airpay_manager:view']     = 'View team dashboard + requests + allocatio
 $string['airpay_manager:approve']  = 'Approve / reject enrolment requests';
 $string['airpay_manager:allocate'] = 'Assign courses to direct reports';
 
+// Message providers (db/messages.php).
+$string['messageprovider:request_decided']    = 'Outcome of your enrolment request';
+$string['messageprovider:allocation_assigned'] = 'Course assigned by your manager';
+
 // Phase B errors.
 $string['duplicaterequest']       = 'You already have a pending request for this course.';
 $string['alreadydecided']         = 'This request has already been decided.';

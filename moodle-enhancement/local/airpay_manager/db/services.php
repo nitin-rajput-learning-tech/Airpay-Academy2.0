@@ -39,4 +39,11 @@ $functions = [
         'ajax'         => true,
         'capabilities' => 'local/airpay_manager:allocate',
     ],
+    'local_airpay_manager_bulk_allocate' => [
+        'classname'    => 'local_airpay_manager\external\bulk_allocate',
+        'description'  => 'Allocate one course to N direct reports in a single batch',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_manager:allocate',
+    ],
 ];

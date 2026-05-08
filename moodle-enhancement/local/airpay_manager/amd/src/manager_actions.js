@@ -48,6 +48,30 @@ const openCreateAllocationForm = (returnFocus) => {
     modalForm.show();
 };
 
+const openBulkAllocateForm = (returnFocus) => {
+    const modalForm = new ModalForm({
+        formClass: 'local_airpay_manager\\form\\bulk_allocate_dynamic_form',
+        args: {},
+        modalConfig: {title: 'Bulk-assign course to direct reports', large: true},
+        returnFocus: returnFocus,
+    });
+    modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, (event) => {
+        const detail = event.detail || {};
+        const succ = detail.succeeded_count ?? 0;
+        const skip = detail.skipped_count ?? 0;
+        const fail = detail.failed_count ?? 0;
+        let msg = `Allocated to ${succ} user(s).`;
+        if (skip > 0) msg += ` ${skip} skipped (already had).`;
+        if (fail > 0) msg += ` ${fail} failed.`;
+        Notification.addNotification({
+            message: msg,
+            type: fail > 0 ? 'warning' : 'success',
+        });
+        window.location.reload();
+    });
+    modalForm.show();
+};
+
 const confirmDeleteAllocation = (allocid, name, returnFocus) => {
     Notification.deleteCancelPromise(
         'Cancel allocation',
@@ -84,6 +108,10 @@ const handleClick = (event) => {
         case 'create-allocation':
             event.preventDefault();
             openCreateAllocationForm(trigger);
+            break;
+        case 'bulk-allocate':
+            event.preventDefault();
+            openBulkAllocateForm(trigger);
             break;
         case 'delete-allocation':
             event.preventDefault();

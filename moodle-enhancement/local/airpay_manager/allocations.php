@@ -30,6 +30,8 @@ $data = [
     'extra_args_json' => json_encode(['status' => 'all']),
     'index_url'       => (new moodle_url('/local/airpay_manager/index.php'))->out(false),
     'requests_url'    => (new moodle_url('/local/airpay_manager/requests.php'))->out(false),
+    'exporturl'       => (new moodle_url('/local/airpay_manager/exportcsv.php',
+                            ['sesskey' => sesskey()]))->out(false),
     'can_allocate'    => $can_allocate,
 ];
 

@@ -3,7 +3,7 @@
 // License http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 defined('MOODLE_INTERNAL') || die();
 $plugin->component = 'local_airpay_manager';
-$plugin->version   = 2026050800;
+$plugin->version   = 2026050801;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.1.0'; // approval workflow + course allocation
+$plugin->release   = '1.2.0'; // notify learner on decision + on allocation

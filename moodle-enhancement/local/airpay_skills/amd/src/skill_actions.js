@@ -173,19 +173,24 @@ const handleClick = (event) => {
     const trigger = event.target.closest('[data-action]');
     if (!trigger) return;
     const action = trigger.dataset.action;
-    const id = parseInt(trigger.dataset.id || '0', 10);
-    const name = trigger.dataset.name || 'this item';
-    const skillid = parseInt(trigger.dataset.skillid || '0', 10);
-    const level = parseInt(trigger.dataset.level || '0', 10);
+    // Pre-existing data attribute names from the templates: data-skillid
+    // for skills (list_skills.php), data-categoryid for categories
+    // (manage.mustache). Older code read dataset.id and silently passed 0
+    // to every edit/delete handler — fixed 2026-05-08.
+    const skillid    = parseInt(trigger.dataset.skillid    || '0', 10);
+    const categoryid = parseInt(trigger.dataset.categoryid || '0', 10);
+    const id         = parseInt(trigger.dataset.id         || '0', 10);  // legacy
+    const name       = trigger.dataset.name || 'this item';
+    const level      = parseInt(trigger.dataset.level || '0', 10);
     const designation = trigger.dataset.designation || '';
-    const rowid = parseInt(trigger.dataset.rowid || '0', 10);
+    const rowid      = parseInt(trigger.dataset.rowid || '0', 10);
     switch (action) {
         case 'create-skill':    event.preventDefault(); openSkillForm(0, trigger); break;
-        case 'edit-skill':      event.preventDefault(); openSkillForm(id, trigger); break;
-        case 'delete-skill':    event.preventDefault(); confirmDeleteSkill(id, name, trigger); break;
+        case 'edit-skill':      event.preventDefault(); openSkillForm(skillid || id, trigger); break;
+        case 'delete-skill':    event.preventDefault(); confirmDeleteSkill(skillid || id, name, trigger); break;
         case 'create-category': event.preventDefault(); openCategoryForm(0, trigger); break;
-        case 'edit-category':   event.preventDefault(); openCategoryForm(id, trigger); break;
-        case 'delete-category': event.preventDefault(); confirmDeleteCategory(id, name, trigger); break;
+        case 'edit-category':   event.preventDefault(); openCategoryForm(categoryid || id, trigger); break;
+        case 'delete-category': event.preventDefault(); confirmDeleteCategory(categoryid || id, name, trigger); break;
         // Phase A
         case 'edit-level':                event.preventDefault(); openLevelForm(skillid, level, trigger); break;
         case 'add-designation-skill':     event.preventDefault(); openDesignationSkillForm(designation, 0, trigger); break;

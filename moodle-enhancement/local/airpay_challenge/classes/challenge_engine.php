@@ -291,6 +291,40 @@ class challenge_engine {
     }
 
     /**
+     * Phase 2 — expire any in-progress / enrolled attempts whose parent
+     * challenge has an enddate that has passed. Intended to be called by
+     * the recompute_leaderboard scheduled task once a day (or on demand).
+     *
+     * @return int  number of attempts marked expired
+     */
+    public static function expire_overdue_attempts(): int {
+        global $DB;
+        $now = time();
+        $count = 0;
+
+        $rows = $DB->get_records_sql("
+            SELECT a.id, a.challengeid
+              FROM {local_airpay_challenge_attempts} a
+              JOIN {local_airpay_challenge_challenges} c ON c.id = a.challengeid
+             WHERE c.enddate > 0 AND c.enddate < :now
+               AND a.status IN (:s1, :s2)",
+            ['now' => $now,
+             's1' => self::ATTEMPT_ENROLLED,
+             's2' => self::ATTEMPT_IN_PROGRESS]);
+
+        foreach ($rows as $r) {
+            $upd = (object) [
+                'id' => (int) $r->id,
+                'status' => self::ATTEMPT_EXPIRED,
+                'timemodified' => $now,
+            ];
+            $DB->update_record('local_airpay_challenge_attempts', $upd);
+            $count++;
+        }
+        return $count;
+    }
+
+    /**
      * Re-evaluate ALL active attempts for a given user.
      *
      * Called by the course_completed event observer.
@@ -323,15 +357,27 @@ class challenge_engine {
      */
     private static function compute_progress(\stdClass $challenge, int $userid): int {
         global $DB;
-        if ($challenge->type !== self::TYPE_COURSE_COMPLETION) {
-            // Phase 2 will branch on type here.
-            return 0;
-        }
 
+        // Phase 2 — branch on challenge type. Each branch reads a different
+        // source table; all defensive against missing fields/tables.
+        switch ($challenge->type) {
+            case self::TYPE_COURSE_COMPLETION:
+                return self::progress_course_completion($challenge, $userid);
+            case self::TYPE_STREAK:
+                return self::progress_streak($challenge, $userid);
+            case self::TYPE_QUIZ_SCORE:
+                return self::progress_quiz_score($challenge, $userid);
+            default:
+                return 0;
+        }
+    }
+
+    /** Course-completion-based progress (Phase 1). */
+    private static function progress_course_completion(\stdClass $challenge, int $userid): int {
+        global $DB;
         $courseids = self::decode_courseids($challenge->courseids ?? '');
 
         if (empty($courseids)) {
-            // Any course counts (excluding the site course at id=1).
             return (int) $DB->count_records_sql("
                 SELECT COUNT(*)
                   FROM {course_completions}
@@ -351,6 +397,96 @@ class challenge_engine {
                AND course $insql",
             $params);
     }
+
+    /**
+     * Streak-based progress (Phase 2).
+     *
+     * Counts the user's longest CURRENT consecutive-day login streak
+     * ending today. Reads from {user_lastaccess}. Falls back to 0 when
+     * the table is absent.
+     *
+     * Algorithm: walk back from today's date checking each day for any
+     * lastaccess record. Stop at the first day with no record. The count
+     * of consecutive days is the current streak.
+     */
+    private static function progress_streak(\stdClass $challenge, int $userid): int {
+        global $DB;
+        $manager = $DB->get_manager();
+        if (!$manager->table_exists('user_lastaccess')) {
+            return 0;
+        }
+
+        // Fetch all distinct day-buckets the user has lastaccess in
+        // (over the last 365 days — bounded for performance).
+        $since = strtotime('today', time()) - 365 * 86400;
+        $rows = $DB->get_records_sql("
+            SELECT DISTINCT FLOOR(timeaccess / 86400) AS day_bucket
+              FROM {user_lastaccess}
+             WHERE userid = :uid AND timeaccess >= :since
+          ORDER BY day_bucket DESC",
+            ['uid' => $userid, 'since' => $since]);
+
+        if (empty($rows)) return 0;
+
+        $today_bucket = (int) floor(time() / 86400);
+        $expected = $today_bucket;
+        $streak = 0;
+        foreach ($rows as $r) {
+            $bucket = (int) $r->day_bucket;
+            if ($bucket === $expected) {
+                $streak++;
+                $expected--;
+            } else if ($bucket === $expected + 1) {
+                // already counted (today's bucket appears as today+1 if
+                // we're in the "still counting today" window) — skip.
+                continue;
+            } else {
+                break;
+            }
+        }
+        return $streak;
+    }
+
+    /**
+     * Quiz-score-based progress (Phase 2).
+     *
+     * Counts the number of finished quiz attempts at or above the
+     * threshold percentage encoded in challenge.targetcount * 10.
+     * targetcount field is reused: a value of 7 means "7+ attempts at
+     * 70%+", value of 5 means "5+ at 50%+".
+     *
+     * Restricted to courses in challenge.courseids when set.
+     */
+    private static function progress_quiz_score(\stdClass $challenge, int $userid): int {
+        global $DB;
+        $manager = $DB->get_manager();
+        if (!$manager->table_exists('quiz_attempts')) {
+            return 0;
+        }
+
+        // Threshold derived from targetcount: 7 means 70%, etc. Cap 10..100.
+        $threshold = max(10, min(100, (int) $challenge->targetcount * 10));
+
+        $params = ['uid' => $userid, 'threshold' => $threshold];
+        $extracourse = '';
+        $courseids = self::decode_courseids($challenge->courseids ?? '');
+        if (!empty($courseids)) {
+            [$insql, $inparams] = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED, 'cid');
+            $extracourse = ' AND q.course ' . $insql;
+            $params = array_merge($params, $inparams);
+        }
+
+        return (int) $DB->count_records_sql("
+            SELECT COUNT(*) FROM {quiz_attempts} qa
+              JOIN {quiz} q ON q.id = qa.quiz
+             WHERE qa.userid = :uid
+               AND qa.state = 'finished'
+               AND q.sumgrades > 0
+               AND (qa.sumgrades / q.sumgrades * 100) >= :threshold
+               $extracourse",
+            $params);
+    }
+
 
     /** Decode the courseids JSON field. Returns int[]; empty on parse fail. */
     public static function decode_courseids(string $json): array {

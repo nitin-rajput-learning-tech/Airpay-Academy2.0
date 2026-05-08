@@ -14,4 +14,19 @@ $observers = [
         'priority'  => 100,
         'internal'  => false,
     ],
+    [
+        // Phase 2 — keep streak-based attempts fresh on every login.
+        'eventname' => '\core\event\user_loggedin',
+        'callback'  => '\local_airpay_challenge\observer::on_user_loggedin',
+        'priority'  => 100,
+        'internal'  => false,
+    ],
+    [
+        // Phase 2 — re-evaluate quiz-score-based attempts when a quiz
+        // attempt is submitted.
+        'eventname' => '\mod_quiz\event\attempt_submitted',
+        'callback'  => '\local_airpay_challenge\observer::on_quiz_attempt_submitted',
+        'priority'  => 100,
+        'internal'  => false,
+    ],
 ];

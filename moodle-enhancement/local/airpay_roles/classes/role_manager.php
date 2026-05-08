@@ -304,6 +304,187 @@ class role_manager {
     }
 
     /**
+     * Phase 2 — apply the same capability permission to N roles in one
+     * batch. Each role mutation goes through update_capability() so the
+     * lockout protection + audit-log invariants apply per-row.
+     *
+     * @param list<int> $roleids
+     * @param string $capability
+     * @param string $permission
+     * @param string $reason
+     * @return array {
+     *   succeeded: list<array{roleid:int, auditid:int}>,
+     *   skipped:   list<array{roleid:int, reason:string}>,
+     *   failed:    list<array{roleid:int, error:string}>
+     * }
+     */
+    public static function bulk_update_capability(array $roleids, string $capability,
+                                                    string $permission,
+                                                    string $reason = ''): array {
+        $succeeded = [];
+        $skipped   = [];
+        $failed    = [];
+
+        foreach (array_unique(array_map('intval', $roleids)) as $rid) {
+            if ($rid <= 0) {
+                $skipped[] = ['roleid' => $rid, 'reason' => 'invalid_roleid'];
+                continue;
+            }
+            try {
+                $entry = self::update_capability($rid, $capability, $permission, $reason);
+                $succeeded[] = ['roleid' => $rid, 'auditid' => (int) $entry['id']];
+            } catch (\moodle_exception $e) {
+                $skipped[] = ['roleid' => $rid,
+                    'reason' => $e->errorcode ?: $e->getMessage()];
+            } catch (\Throwable $e) {
+                $failed[] = ['roleid' => $rid, 'error' => $e->getMessage()];
+            }
+        }
+
+        return [
+            'succeeded' => $succeeded,
+            'skipped'   => $skipped,
+            'failed'    => $failed,
+        ];
+    }
+
+    /**
+     * Phase 2 — list users assigned to a role at the system context, with
+     * pagination + search.
+     */
+    public static function list_role_assignments(int $roleid, string $search = '',
+                                                   int $page = 0, int $perpage = 25): array {
+        global $DB;
+
+        $context = \context_system::instance();
+        $perpage = max(5, min(100, $perpage));
+        $page    = max(0, $page);
+
+        $where = ['ra.roleid = :rid', 'ra.contextid = :cid', 'u.deleted = 0'];
+        $params = ['rid' => $roleid, 'cid' => $context->id];
+
+        if ($search !== '') {
+            $term = '%' . $DB->sql_like_escape($search) . '%';
+            $where[] = '(' . $DB->sql_like('u.firstname', ':s1', false)
+                . ' OR ' . $DB->sql_like('u.lastname', ':s2', false)
+                . ' OR ' . $DB->sql_like('u.email', ':s3', false) . ')';
+            $params['s1'] = $term;
+            $params['s2'] = $term;
+            $params['s3'] = $term;
+        }
+        $wheresql = implode(' AND ', $where);
+
+        $total = (int) $DB->count_records_sql("
+            SELECT COUNT(DISTINCT ra.id) FROM {role_assignments} ra
+              JOIN {user} u ON u.id = ra.userid WHERE $wheresql", $params);
+
+        $rows = $DB->get_records_sql("
+            SELECT ra.id, ra.userid, ra.timemodified,
+                   u.firstname, u.lastname, u.email, u.suspended
+              FROM {role_assignments} ra
+              JOIN {user} u ON u.id = ra.userid
+             WHERE $wheresql
+          ORDER BY u.lastname ASC, u.firstname ASC, u.id ASC",
+            $params, $page * $perpage, $perpage);
+
+        $out = [];
+        foreach ($rows as $r) {
+            $out[] = [
+                'id'         => (int) $r->id,
+                'userid'     => (int) $r->userid,
+                'fullname'   => fullname((object) ['firstname' => $r->firstname,
+                    'lastname' => $r->lastname]),
+                'email'      => (string) ($r->email ?? ''),
+                'suspended'  => !empty($r->suspended),
+                'assigned_at' => userdate((int) $r->timemodified,
+                    get_string('strftimedatetimeshort', 'core_langconfig')),
+            ];
+        }
+        return ['total' => $total, 'rows' => $out, 'page' => $page, 'perpage' => $perpage];
+    }
+
+    /**
+     * Phase 2 — assign a user to a role at the system context. Idempotent
+     * (no-op if already assigned). Writes to the audit log.
+     *
+     * @return int  assignment row ID
+     */
+    public static function assign_user_to_role(int $roleid, int $userid,
+                                                  string $reason = ''): int {
+        global $DB, $USER;
+        $context = \context_system::instance();
+        $allroles = get_all_roles($context);
+        if (!isset($allroles[$roleid])) {
+            throw new \moodle_exception('err_role_not_found', 'local_airpay_roles');
+        }
+        $role = $allroles[$roleid];
+        if (!$DB->record_exists('user', ['id' => $userid, 'deleted' => 0])) {
+            throw new \moodle_exception('err_user_not_found', 'local_airpay_roles');
+        }
+
+        $tx = $DB->start_delegated_transaction();
+        try {
+            $assignmentid = (int) role_assign($roleid, $userid, $context->id);
+
+            $DB->insert_record('local_airpay_roles_auditlog', (object) [
+                'roleid'        => $roleid,
+                'roleshortname' => $role->shortname,
+                'action'        => 'role_assigned',
+                'capability'    => null,
+                'oldpermission' => null,
+                'newpermission' => null,
+                'contextid'     => $context->id,
+                'targetuserid'  => $userid,
+                'changedby'     => (int) $USER->id,
+                'reason'        => $reason !== '' ? $reason : null,
+                'open_path'     => (string) ($USER->open_path ?? ''),
+                'timecreated'   => time(),
+            ]);
+            $tx->allow_commit();
+        } catch (\Throwable $e) {
+            $tx->rollback($e);
+        }
+        return $assignmentid;
+    }
+
+    /**
+     * Phase 2 — remove a user's role assignment + audit log entry.
+     */
+    public static function unassign_user_from_role(int $roleid, int $userid,
+                                                      string $reason = ''): void {
+        global $DB, $USER;
+        $context = \context_system::instance();
+        $allroles = get_all_roles($context);
+        if (!isset($allroles[$roleid])) {
+            throw new \moodle_exception('err_role_not_found', 'local_airpay_roles');
+        }
+        $role = $allroles[$roleid];
+
+        $tx = $DB->start_delegated_transaction();
+        try {
+            role_unassign($roleid, $userid, $context->id);
+
+            $DB->insert_record('local_airpay_roles_auditlog', (object) [
+                'roleid'        => $roleid,
+                'roleshortname' => $role->shortname,
+                'action'        => 'role_unassigned',
+                'capability'    => null,
+                'oldpermission' => null,
+                'newpermission' => null,
+                'contextid'     => $context->id,
+                'targetuserid'  => $userid,
+                'changedby'     => (int) $USER->id,
+                'reason'        => $reason !== '' ? $reason : null,
+                'open_path'     => (string) ($USER->open_path ?? ''),
+                'timecreated'   => time(),
+            ]);
+            $tx->allow_commit();
+        } catch (\Throwable $e) {
+            $tx->rollback($e);
+        }
+    }
+
+    /**
      * List audit log entries with optional filters.
      *
      * @param int    $roleid     0 = all roles

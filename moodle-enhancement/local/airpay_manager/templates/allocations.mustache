@@ -11,7 +11,13 @@
       <a href="{{ requests_url }}" class="btn btn-sm btn-outline-secondary">
         <i class="fa fa-inbox me-1"></i>Requests
       </a>
+      <a href="{{ exporturl }}" class="btn btn-sm btn-outline-secondary">
+        <i class="fa fa-download me-1"></i>Export decisions CSV
+      </a>
       {{# can_allocate }}
+      <button type="button" class="btn btn-sm btn-outline-primary" data-action="bulk-allocate">
+        <i class="fa fa-users me-1"></i>Bulk assign
+      </button>
       <button type="button" class="btn btn-sm btn-primary" data-action="create-allocation">
         <i class="fa fa-plus me-1"></i>Assign course
       </button>

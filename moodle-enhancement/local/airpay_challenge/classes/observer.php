@@ -30,4 +30,37 @@ class observer {
                 DEBUG_DEVELOPER);
         }
     }
+
+    /**
+     * Phase 2 — when a user logs in, re-evaluate streak-typed challenges
+     * for them. This keeps the streak counter fresh without waiting for
+     * the 15-min cron.
+     */
+    public static function on_user_loggedin(\core\event\user_loggedin $event): void {
+        $userid = (int) $event->userid;
+        if ($userid <= 0) return;
+
+        try {
+            challenge_engine::reevaluate_user($userid);
+        } catch (\Throwable $e) {
+            debugging('local_airpay_challenge streak observer error: ' . $e->getMessage(),
+                DEBUG_DEVELOPER);
+        }
+    }
+
+    /**
+     * Phase 2 — when a quiz attempt is submitted, re-evaluate
+     * quiz-score-typed challenges for that user.
+     */
+    public static function on_quiz_attempt_submitted(\mod_quiz\event\attempt_submitted $event): void {
+        $userid = (int) $event->relateduserid;
+        if ($userid <= 0) return;
+
+        try {
+            challenge_engine::reevaluate_user($userid);
+        } catch (\Throwable $e) {
+            debugging('local_airpay_challenge quiz observer error: ' . $e->getMessage(),
+                DEBUG_DEVELOPER);
+        }
+    }
 }

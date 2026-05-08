@@ -198,11 +198,77 @@ class approval_manager {
             }
         }
 
+        // Close the dead-end: notify the requester their request was decided.
+        // Best-effort — failure here doesn't unwind the decision.
+        try {
+            self::notify_requester_of_decision($request, $decision, $decision_reason);
+        } catch (\Throwable $e) {
+            debugging('Failed to notify requester of decision (request '
+                . $requestid . '): ' . $e->getMessage(), DEBUG_DEVELOPER);
+        }
+
         return [
             'requestid'    => $requestid,
             'decision'     => $decision,
             'enrolwarning' => $enrolwarning,
         ];
+    }
+
+    /**
+     * Send an in-app + email Moodle message to the requester explaining
+     * the outcome. Honors the user's notification preferences.
+     */
+    public static function notify_requester_of_decision(\stdClass $request,
+                                                          string $decision,
+                                                          string $decision_reason = ''): void {
+        global $DB, $CFG;
+        require_once($CFG->dirroot . '/lib/messagelib.php');
+
+        $userto = $DB->get_record('user', ['id' => $request->userid], '*', MUST_EXIST);
+        $course = $DB->get_record('course', ['id' => $request->courseid],
+            'id, fullname', IGNORE_MISSING);
+        $coursename = $course ? format_string($course->fullname) : 'the requested course';
+
+        $isapproved = $decision === self::STATUS_APPROVED;
+        $subject = $isapproved
+            ? 'Your enrolment request was approved'
+            : 'Your enrolment request was not approved';
+
+        $note = $decision_reason !== ''
+            ? "\nManager note: " . $decision_reason . "\n"
+            : '';
+
+        if ($isapproved) {
+            $body = "Hi " . $userto->firstname . ",\n\n"
+                . "Your request to enrol in \"" . $coursename . "\" has been approved. "
+                . "You're now enrolled.\n"
+                . $note
+                . "\nStart the course: "
+                . (new \moodle_url('/course/view.php',
+                    ['id' => $request->courseid]))->out(false);
+        } else {
+            $body = "Hi " . $userto->firstname . ",\n\n"
+                . "Your request to enrol in \"" . $coursename . "\" was not approved at this time.\n"
+                . $note
+                . "\nReach out to your manager if you need clarification.";
+        }
+
+        $eventdata = new \core\message\message();
+        $eventdata->component         = 'local_airpay_manager';
+        $eventdata->name              = 'request_decided';
+        $eventdata->userfrom          = \core_user::get_noreply_user();
+        $eventdata->userto            = $userto;
+        $eventdata->subject           = $subject;
+        $eventdata->fullmessage       = $body;
+        $eventdata->fullmessageformat = FORMAT_PLAIN;
+        $eventdata->fullmessagehtml   = nl2br(s($body));
+        $eventdata->smallmessage      = $subject;
+        $eventdata->notification      = 1;
+        $eventdata->contexturl        = (new \moodle_url('/course/view.php',
+            ['id' => $request->courseid]))->out(false);
+        $eventdata->contexturlname    = $coursename;
+
+        message_send($eventdata);
     }
 
     /**
@@ -341,7 +407,63 @@ class approval_manager {
                 DEBUG_DEVELOPER);
         }
 
+        // Notify the learner that a course has been pushed to them.
+        try {
+            self::notify_assignee_of_allocation($managerid, $userid, $courseid,
+                $due_date, $note);
+        } catch (\Throwable $e) {
+            debugging('Allocation ' . $id . ' notify failed: ' . $e->getMessage(),
+                DEBUG_DEVELOPER);
+        }
+
         return $id;
+    }
+
+    /**
+     * Notify a learner that their manager has allocated a course to them.
+     */
+    public static function notify_assignee_of_allocation(int $managerid, int $userid,
+                                                          int $courseid, ?int $due_date,
+                                                          string $note = ''): void {
+        global $DB, $CFG;
+        require_once($CFG->dirroot . '/lib/messagelib.php');
+
+        $userto  = $DB->get_record('user',   ['id' => $userid],   '*', MUST_EXIST);
+        $manager = $DB->get_record('user',   ['id' => $managerid], 'firstname, lastname');
+        $course  = $DB->get_record('course', ['id' => $courseid], 'id, fullname');
+
+        $coursename = $course ? format_string($course->fullname) : 'a course';
+        $mgrname = $manager
+            ? fullname((object) ['firstname' => $manager->firstname, 'lastname' => $manager->lastname])
+            : 'your manager';
+
+        $duebit = $due_date
+            ? "\nDue: " . userdate($due_date, get_string('strftimedatefullshort', 'core_langconfig'))
+            : '';
+        $notebit = $note !== '' ? "\nNote from manager: " . $note : '';
+
+        $body = "Hi " . $userto->firstname . ",\n\n"
+            . $mgrname . " has assigned you the course \"" . $coursename . "\"."
+            . $duebit . $notebit . "\n\n"
+            . "Start now: "
+            . (new \moodle_url('/course/view.php', ['id' => $courseid]))->out(false);
+
+        $eventdata = new \core\message\message();
+        $eventdata->component         = 'local_airpay_manager';
+        $eventdata->name              = 'allocation_assigned';
+        $eventdata->userfrom          = \core_user::get_noreply_user();
+        $eventdata->userto            = $userto;
+        $eventdata->subject           = 'New course assigned: ' . $coursename;
+        $eventdata->fullmessage       = $body;
+        $eventdata->fullmessageformat = FORMAT_PLAIN;
+        $eventdata->fullmessagehtml   = nl2br(s($body));
+        $eventdata->smallmessage      = 'Course assigned: ' . $coursename;
+        $eventdata->notification      = 1;
+        $eventdata->contexturl        = (new \moodle_url('/course/view.php',
+            ['id' => $courseid]))->out(false);
+        $eventdata->contexturlname    = $coursename;
+
+        message_send($eventdata);
     }
 
     /**
@@ -359,5 +481,119 @@ class approval_manager {
         global $DB;
         return (int) $DB->count_records('local_airpay_mgr_requests',
             ['managerid' => $managerid, 'status' => self::STATUS_PENDING]);
+    }
+
+    /**
+     * Bulk allocation: assign one course to N users in a single batch.
+     * Each row goes through the same idempotency + enrol + notify path
+     * as create_allocation; failures on a single user don't abort the
+     * batch (they're surfaced in the result).
+     *
+     * @param int $managerid
+     * @param list<int> $userids
+     * @param int $courseid
+     * @param int|null $due_date  (Unix ts; null = no deadline)
+     * @param string $note
+     * @return array {
+     *   succeeded: list<array{userid:int, allocid:int}>,
+     *   skipped:   list<array{userid:int, reason:string}>,
+     *   failed:    list<array{userid:int, error:string}>
+     * }
+     */
+    public static function bulk_allocate(int $managerid, array $userids,
+                                          int $courseid, ?int $due_date = null,
+                                          string $note = ''): array {
+        $succeeded = [];
+        $skipped   = [];
+        $failed    = [];
+
+        foreach (array_unique(array_map('intval', $userids)) as $uid) {
+            if ($uid <= 0) {
+                $skipped[] = ['userid' => $uid, 'reason' => 'invalid_userid'];
+                continue;
+            }
+            try {
+                $allocid = self::create_allocation($managerid, $uid, $courseid,
+                    $due_date, $note);
+                $succeeded[] = ['userid' => $uid, 'allocid' => $allocid];
+            } catch (\moodle_exception $e) {
+                // Known business errors (duplicateallocation, notdirectreport)
+                // are 'skipped', not 'failed'.
+                $skipped[] = ['userid' => $uid,
+                    'reason' => $e->errorcode ?: $e->getMessage()];
+            } catch (\Throwable $e) {
+                $failed[] = ['userid' => $uid, 'error' => $e->getMessage()];
+            }
+        }
+
+        return [
+            'succeeded' => $succeeded,
+            'skipped'   => $skipped,
+            'failed'    => $failed,
+        ];
+    }
+
+    /**
+     * Stream the manager's decisions (requests + allocations) as CSV rows.
+     * Used by exportcsv.php for compliance review.
+     *
+     * @return \Generator yields header then one row per record
+     */
+    public static function csv_iterator_decisions(int $managerid): \Generator {
+        global $DB;
+
+        yield ['Type', 'When', 'User', 'Email', 'Course', 'Status',
+               'Decision reason / Note', 'Decided by user ID'];
+
+        $requests = $DB->get_records_sql("
+            SELECT r.*, u.firstname, u.lastname, u.email,
+                   c.fullname AS coursename
+              FROM {local_airpay_mgr_requests} r
+         LEFT JOIN {user}   u ON u.id = r.userid
+         LEFT JOIN {course} c ON c.id = r.courseid
+             WHERE r.managerid = :mgr
+          ORDER BY r.timecreated DESC",
+            ['mgr' => $managerid]);
+        foreach ($requests as $r) {
+            yield [
+                'request',
+                $r->decided_at
+                    ? userdate((int) $r->decided_at,
+                        get_string('strftimedatetimeshort', 'core_langconfig'))
+                    : userdate((int) $r->timecreated,
+                        get_string('strftimedatetimeshort', 'core_langconfig')),
+                $r->firstname ? fullname((object) ['firstname' => $r->firstname,
+                    'lastname' => $r->lastname]) : '—',
+                (string) ($r->email ?? ''),
+                (string) ($r->coursename ?? ''),
+                (string) $r->status,
+                (string) ($r->decision_reason ?? $r->reason ?? ''),
+                (int) ($r->decided_by ?? 0),
+            ];
+        }
+
+        $allocations = $DB->get_records_sql("
+            SELECT a.*, u.firstname, u.lastname, u.email,
+                   c.fullname AS coursename
+              FROM {local_airpay_mgr_allocations} a
+         LEFT JOIN {user}   u ON u.id = a.userid
+         LEFT JOIN {course} c ON c.id = a.courseid
+             WHERE a.managerid = :mgr
+          ORDER BY a.timecreated DESC",
+            ['mgr' => $managerid]);
+        foreach ($allocations as $a) {
+            yield [
+                'allocation',
+                userdate((int) $a->timecreated,
+                    get_string('strftimedatetimeshort', 'core_langconfig')),
+                $a->firstname ? fullname((object) ['firstname' => $a->firstname,
+                    'lastname' => $a->lastname]) : '—',
+                (string) ($a->email ?? ''),
+                (string) ($a->coursename ?? ''),
+                (string) $a->status,
+                (string) ($a->note ?? ''),
+                $managerid,
+            ];
+        }
     }
 }
