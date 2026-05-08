@@ -65,7 +65,7 @@ A feature with **F✅ B✅ T✅ V❌ L❌** is NOT shipped. It's halfway.
 | Sessions CRUD | ✅ | ✅ | ✅ | ⚠ | ⚠ |  |
 | Roster + attendance | ✅ | ✅ | ✅ | ⚠ | ⚠ |  |
 | **Trainer self-service portal** | ❌ | ❌ | ❌ | ❌ | ❌ | BizLMS allowed trainers to mark their own sessions complete + post materials |
-| **Session ICS download** | ❌ | ❌ | ❌ | ❌ | ❌ | Calendar invite for confirmed roster |
+| **Session ICS download** | ✅ | ✅ | ✅ | ✅ | ⚠ | Phase H.1 (2026-05-08) v1.4.0 — `ics_builder::build_session()` produces RFC 5545-compliant iCalendar with VEVENT (DTSTART/DTEND in UTC, line-folding ≤75 chars, special-char escaping for `;,\n`); `ics.php?sessionid=N` streams it as text/calendar attachment with access-cap guard; "Add to calendar" link added to session row actions; smoke_ics.php verifies structure + escaping + UID format |
 | **Session join link / Zoom integration** | ❌ | ❌ | ❌ | ❌ | ❌ |  |
 | **Post-session feedback survey trigger** | ⚠ | ⚠ | ⚠ | ❌ | ❌ | Phase C added the rule but no survey UI bound to the session |
 

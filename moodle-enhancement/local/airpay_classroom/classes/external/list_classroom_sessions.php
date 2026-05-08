@@ -103,6 +103,11 @@ class list_classroom_sessions extends external_api {
                 $actions[] = '<a href="' . s($atturl) . '" class="btn btn-sm btn-link p-1" '
                     . 'title="Mark attendance"><i class="fa fa-check-square-o"></i></a>';
             }
+            // Phase H.1 (2026-05-08) — calendar invite (.ics download).
+            $icsurl = (new \moodle_url('/local/airpay_classroom/ics.php',
+                ['sessionid' => (int) $s->id]))->out(false);
+            $actions[] = '<a href="' . s($icsurl) . '" class="btn btn-sm btn-link p-1" '
+                . 'title="Add to calendar"><i class="fa fa-calendar-plus-o"></i></a>';
             if ($can_update) {
                 $actions[] = '<a href="#" class="btn btn-sm btn-link text-muted p-1" '
                     . 'data-action="edit-session" data-sessionid="' . (int) $s->id . '" '
