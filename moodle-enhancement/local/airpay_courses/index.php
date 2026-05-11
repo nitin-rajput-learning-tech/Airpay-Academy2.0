@@ -58,6 +58,7 @@ $data = [
     // installs not rooted at / (this XAMPP runs at /moodle/).
     'featured_url'   => (new moodle_url('/local/airpay_courses/featured.php'))->out(false),
     'enrol_csv_url'  => (new moodle_url('/local/airpay_courses/enrol_csv.php'))->out(false),
+    'export_url'     => (new moodle_url('/local/airpay_courses/exportcsv.php'))->out(false),
     'cat_options'    => $cat_options,
     'has_cat_options' => !empty($cat_options),
     'columns_json'   => s(json_encode($columns)),
