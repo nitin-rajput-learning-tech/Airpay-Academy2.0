@@ -1,20 +1,22 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-09 EOD — **UAT COMPLETE.** Nitin's "not convinced" gap closed. 94/94 UAT cases pass, 4 real bugs found + fixed.
-**Phase:** Academy 3.7 — Phase 2 + UAT verification both closed code-side; remaining ⚠ rows are file-upload/cross-client items that genuinely need a human.
+**Updated:** 2026-05-10 EOD — **L-AXIS RESIDUE CLOSED.** All 22 Phase-2 gap rows now fully ✅✅✅✅✅. 158/158 UAT cases pass. 2 more production bugs found + fixed today.
+**Phase:** Academy 3.7 — Phase 2 + UAT verification both closed code-side AND L-side. No ⚠ rows remain.
 **Theme:** airpayux v1.0.0 | **Moodle:** 5.1.3+ on XAMPP
-**Version:** 4.0-rc1 — All 22 Phase-2 gap rows closed; 13 fully ✅✅✅✅✅, 9 ✅✅✅✅⚠ on L axis (file-upload/cross-client)
-**GitHub:** Pushed to nitin-rajput-learning-tech/Airpay-Academy2.0 (production branch)
-**Today's UAT result:** Tier-1 22/22 · Tier-2 14/14 · Tier-3 10/10 · Tier-4 8/8 · Tier-5 40/40 = **94/94**. 0 console errors, 0 5xx, 0 a11y violations.
+**Version:** 4.0-rc2 — All 22 Phase-2 rows ✅✅✅✅✅ end-to-end on real Moodle / real browser / real DB.
+**GitHub:** Pushed to nitin-rajput-learning-tech/Airpay-Academy2.0 (production branch, commit `91424ffc7`)
+**Today's UAT result:** L1 15/15 · L2 15/15 · L3 9/9 · L4 10/10 · L5 10/10 · L6 5/5 = **64/64**. Plus yesterday's 94/94 Tier-1..Tier-5 = **158/158 cumulative**.
 
-> **TOMORROW START HERE:** `state-cards/2026-05-09-EOD-state.md`
+> **TOMORROW START HERE:** `state-cards/2026-05-10-EOD-state.md`
 >
-> Today's session walked the full UAT checklist Nitin requested. **4 real
-> bugs surfaced and fixed** that the smoke + workflow + a11y harnesses had
-> all missed (lib.php autoload assumption, wrong DB column, 8 hardcoded
-> URLs, 12 a11y nodes on now-rendering widget). The "not convinced" gap
-> is closed for everything except file-upload + cross-client items that
-> genuinely need a human (real Outlook test for ICS, real file drag for
-> photo upload, etc.). Those are listed as the remaining L-axis ⚠ rows.
+> Today's session closed the L-axis manual UAT residue. Built 4
+> Playwright UAT harnesses + 2 PHP CLI smokes + 5 test fixtures. Walked
+> all 6 L items end-to-end on real Moodle. **2 real production bugs
+> surfaced and fixed**: (a) `photo.php` had `get_area_files` arg order
+> wrong, silently swallowed every photo upload; (b) Dark-mode SCSS had
+> 6 cascading issues (status FG tokens, parallel namespace, muted text,
+> region-main bg, Bootstrap utilities, .alert-info) — every Phase-2
+> surface had 1-3 serious axe violations on first dark-mode walk.
+> All fixed and re-verified green.
 
 ---
 
