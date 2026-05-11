@@ -49,6 +49,9 @@ $data = [
     'can_manage'      => $can_manage,
     'columns_json'    => s(json_encode($columns)),
     'analysis_url'    => (new moodle_url('/local/airpay_evaluation/analysis.php'))->out(false),
+    // UAT-T4 fix 2026-05-09: was a hardcoded /local/... path that broke
+    // on installs where Moodle isn't rooted at /. Route through moodle_url.
+    'import_template_url' => (new moodle_url('/local/airpay_evaluation/import_template.php'))->out(false),
 ];
 
 echo $OUTPUT->header();

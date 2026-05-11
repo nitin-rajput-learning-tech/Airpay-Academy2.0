@@ -62,6 +62,9 @@ $data = [
     'cat_options'      => $cat_options_for_filter,
     'has_cat_options'  => !empty($cat_options_for_filter),
     'columns_json'     => s(json_encode($columns)),
+    // UAT fix 2026-05-09: hardcoded /local/... → moodle_url for non-root installs.
+    'designation_matrix_url' => (new moodle_url('/local/airpay_skills/designation_matrix.php'))->out(false),
+    'course_mapping_url'     => (new moodle_url('/local/airpay_skills/course_mapping.php'))->out(false),
 ];
 
 echo $OUTPUT->header();

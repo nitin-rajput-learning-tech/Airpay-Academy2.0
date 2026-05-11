@@ -23,20 +23,28 @@
     <div class="col-md-6 col-lg-4">
       <div class="ap-card ap-card--inset h-100 d-flex flex-column">
         {{# has_label }}
-        <span class="badge bg-primary mb-2 align-self-start">{{ label }}</span>
+        {{! UAT a11y fix 2026-05-09: text-white explicit (Bootstrap 5's
+            bg-primary doesn't auto-set text color → black on dark blue
+            = 2.66 ratio, fails WCAG AA). }}
+        <span class="badge bg-primary text-white mb-2 align-self-start">{{ label }}</span>
         {{/ has_label }}
         <h3 class="h6 mb-1">
           <a href="{{ viewurl }}" class="text-decoration-none">{{ fullname }}</a>
         </h3>
-        <code class="small text-muted mb-2">{{ shortname }}</code>
+        {{! UAT a11y fix 2026-05-09: text-muted #6a737b on bg #f2f4fb =
+            4.39 (fails WCAG AA). Use --ap-text-secondary (6.96:1). }}
+        <code class="small mb-2" style="color: var(--ap-text-secondary, #5a6070);">{{ shortname }}</code>
         {{# has_snippet }}
-        <p class="small text-muted mb-3">{{ snippet }}</p>
+        <p class="small mb-3" style="color: var(--ap-text-secondary, #5a6070);">{{ snippet }}</p>
         {{/ has_snippet }}
         <div class="mt-auto d-flex gap-2">
           <a href="{{ enrolurl }}" class="btn btn-primary btn-sm">
             <i class="fa fa-sign-in me-1" aria-hidden="true"></i>Enrol
           </a>
-          <a href="{{ viewurl }}" class="btn btn-outline-secondary btn-sm">
+          {{! UAT a11y fix 2026-05-09: btn-outline-secondary uses muted
+              border + text → 4.39 on bg-light. Force darker text. }}
+          <a href="{{ viewurl }}" class="btn btn-outline-secondary btn-sm"
+             style="color: var(--ap-text-secondary, #5a6070); border-color: var(--ap-text-secondary, #5a6070);">
             Preview
           </a>
         </div>

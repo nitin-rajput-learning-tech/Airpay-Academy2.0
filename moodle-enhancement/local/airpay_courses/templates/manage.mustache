@@ -19,12 +19,12 @@
     </div>
     <div class="d-flex gap-2">
     {{#can_manage}}
-    <a href="/local/airpay_courses/featured.php" class="btn btn-outline-secondary btn-sm">
+    <a href="{{{ featured_url }}}" class="btn btn-outline-secondary btn-sm">
         <i class="fa fa-star fa-fw"></i> Featured
     </a>
     {{/can_manage}}
     {{#can_enrol}}
-    <a href="/local/airpay_courses/enrol_csv.php" class="btn btn-outline-secondary btn-sm">
+    <a href="{{{ enrol_csv_url }}}" class="btn btn-outline-secondary btn-sm">
         <i class="fa fa-upload fa-fw"></i> Mass enrol
     </a>
     {{/can_enrol}}

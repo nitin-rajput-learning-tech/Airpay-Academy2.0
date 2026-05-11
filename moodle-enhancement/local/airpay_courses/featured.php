@@ -25,14 +25,17 @@ global $DB;
 $tenant_options = [['value' => 0, 'label' => 'All tenants',
     'selected' => true]];
 if (is_siteadmin()) {
+    // Bug-fix 2026-05-09 (UAT-T1.1.c): local_airpay_org has 'fullname',
+    // not 'name'. Caught by UAT — the original query 500'd the whole
+    // page, hiding the admin form.
     $orgs = $DB->get_records_sql(
-        "SELECT id, name FROM {local_airpay_org}
+        "SELECT id, fullname FROM {local_airpay_org}
           WHERE id IN (1, 77, 177)
        ORDER BY id ASC");
     foreach ($orgs as $o) {
         $tenant_options[] = [
             'value'    => (int) $o->id,
-            'label'    => format_string($o->name),
+            'label'    => format_string($o->fullname),
             'selected' => false,
         ];
     }

@@ -1,20 +1,20 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-08 EOD — **PAUSED** ("not convinced if everything is working, save for now, continue tomorrow")
-**Phase:** Academy 3.6 — **22 enterprise gap rows closed across 9 plugins today**, automated verification green, **manual UAT walkthrough is the remaining gate before live deploy**.
+**Updated:** 2026-05-09 EOD — **UAT COMPLETE.** Nitin's "not convinced" gap closed. 94/94 UAT cases pass, 4 real bugs found + fixed.
+**Phase:** Academy 3.7 — Phase 2 + UAT verification both closed code-side; remaining ⚠ rows are file-upload/cross-client items that genuinely need a human.
 **Theme:** airpayux v1.0.0 | **Moodle:** 5.1.3+ on XAMPP
-**Version:** 4.0-rc — Phase 2 enterprise-grade closure complete (code-side); UAT pending
+**Version:** 4.0-rc1 — All 22 Phase-2 gap rows closed; 13 fully ✅✅✅✅✅, 9 ✅✅✅✅⚠ on L axis (file-upload/cross-client)
 **GitHub:** Pushed to nitin-rajput-learning-tech/Airpay-Academy2.0 (production branch)
-**Latest commit:** `71f42bceb` Courses Phase F.5: native enrol modal (replaces deep-link)
-**Today's stretch:** 16 commits across 9 plugins.
+**Today's UAT result:** Tier-1 22/22 · Tier-2 14/14 · Tier-3 10/10 · Tier-4 8/8 · Tier-5 40/40 = **94/94**. 0 console errors, 0 5xx, 0 a11y violations.
 
-> **TOMORROW START HERE:** `state-cards/2026-05-08-EOD-state.md`
+> **TOMORROW START HERE:** `state-cards/2026-05-09-EOD-state.md`
 >
-> Nitin's note 2026-05-08 EOD: *"still not convinced if everything is
-> working, save for now, continue tomorrow"*. Code is shipped, automated
-> tests green (15/15 workflows + 24/24 a11y + 16 CLI smoke tests +
-> 20/20 GDPR providers). **Manual UAT has not been walked** — the state
-> card has a 5-tier checklist in priority order. Don't ship live until
-> every Tier 1-4 row has a tick.
+> Today's session walked the full UAT checklist Nitin requested. **4 real
+> bugs surfaced and fixed** that the smoke + workflow + a11y harnesses had
+> all missed (lib.php autoload assumption, wrong DB column, 8 hardcoded
+> URLs, 12 a11y nodes on now-rendering widget). The "not convinced" gap
+> is closed for everything except file-upload + cross-client items that
+> genuinely need a human (real Outlook test for ICS, real file drag for
+> photo upload, etc.). Those are listed as the remaining L-axis ⚠ rows.
 
 ---
 

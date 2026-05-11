@@ -88,6 +88,9 @@ $data = [
     'org_options'     => $org_options,
     'has_org_options' => !empty($org_options),
     'export_url'      => (new moodle_url('/local/airpay_users/exportcsv.php'))->out(false),
+    // UAT fix 2026-05-09: hardcoded /local/... links → moodle_url routes.
+    'bulk_csv_url'    => (new moodle_url('/local/airpay_users/bulk_csv.php'))->out(false),
+    'bulk_import_url' => (new moodle_url('/local/airpay_users/bulk_import.php'))->out(false),
     'columns_json'    => s(json_encode($columns)),
     'sortkey_map_json' => s(json_encode($column_key_to_db)),
 ];

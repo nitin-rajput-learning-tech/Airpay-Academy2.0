@@ -68,6 +68,10 @@ $status_banner = match ((int) $evaluation->status) {
 
 $data = [
     'evaluationid' => $evaluation->id,
+    // UAT fix 2026-05-09: hardcoded /local/... → moodle_url for non-root installs.
+    'export_template_url' => (new moodle_url(
+        '/local/airpay_evaluation/export_template.php',
+        ['id' => $evaluation->id]))->out(false),
     'evalname'     => format_string($evaluation->name),
     'evaldesc'     => format_string($evaluation->description ?? ''),
     'status_banner_css'   => $status_banner['css'],

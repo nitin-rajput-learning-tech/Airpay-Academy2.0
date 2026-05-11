@@ -881,11 +881,19 @@ $templatecontext['use_shell'] = true;
 // Phase F.2 (2026-05-08) — featured-courses widget for the learner dashboard.
 // Empty string when no curated courses are available; dashboard template
 // can render `{{{featured_widget_html}}}` unconditionally.
-if (function_exists('local_airpay_courses_render_featured_widget')) {
-    $templatecontext['featured_widget_html'] =
-        local_airpay_courses_render_featured_widget((int) $USER->id, 6);
-} else {
-    $templatecontext['featured_widget_html'] = '';
+//
+// Bug-fix 2026-05-09 (UAT-T1.1): Moodle's setup.php does NOT auto-load
+// /local/*/lib.php for theme layout files (only locallib + PSR-4
+// classes). Without the explicit require_once, function_exists() always
+// returned false and the widget never rendered. UAT caught it on day 2.
+$templatecontext['featured_widget_html'] = '';
+$airpay_courses_lib = $CFG->dirroot . '/local/airpay_courses/lib.php';
+if (file_exists($airpay_courses_lib)) {
+    require_once($airpay_courses_lib);
+    if (function_exists('local_airpay_courses_render_featured_widget')) {
+        $templatecontext['featured_widget_html'] =
+            local_airpay_courses_render_featured_widget((int) $USER->id, 6);
+    }
 }
 
 // Topbar context.

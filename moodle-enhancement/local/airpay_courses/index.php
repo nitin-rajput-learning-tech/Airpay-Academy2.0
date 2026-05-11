@@ -54,6 +54,10 @@ $data = [
     'can_create'     => $can_create,
     'can_manage'     => $can_manage,
     'can_enrol'      => $can_enrol,
+    // UAT fix 2026-05-09: route URLs through moodle_url so they work on
+    // installs not rooted at / (this XAMPP runs at /moodle/).
+    'featured_url'   => (new moodle_url('/local/airpay_courses/featured.php'))->out(false),
+    'enrol_csv_url'  => (new moodle_url('/local/airpay_courses/enrol_csv.php'))->out(false),
     'cat_options'    => $cat_options,
     'has_cat_options' => !empty($cat_options),
     'columns_json'   => s(json_encode($columns)),

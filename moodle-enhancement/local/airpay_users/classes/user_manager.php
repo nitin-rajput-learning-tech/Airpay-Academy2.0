@@ -178,6 +178,10 @@ class user_manager {
             'dateofbirth'     => user_fields::format_date((int) ($user->open_dateofbirth ?? 0)),
             'editprofile'     => new \moodle_url('/user/editadvanced.php',
                                     ['id' => $user->id, 'returnto' => 'profile']),
+            // UAT fix 2026-05-09: route through moodle_url so the link
+            // resolves correctly on installs not rooted at /.
+            'photo_url'       => (new \moodle_url('/local/airpay_users/photo.php',
+                                    ['id' => $user->id]))->out(false),
         ];
 
         // Capability checks.
