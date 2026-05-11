@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "evaluation": {
+    "name": "UAT template 1778484987",
+    "description": "Imported via UAT L-axis harness.",
+    "kirkpatrick_level": 1,
+    "trigger_event": "manual",
+    "days_after": 0,
+    "anonymous": 0
+  },
+  "questions": [
+    {
+      "questiontype": "rating",
+      "questiontext": "How was the session?",
+      "options": [],
+      "required": 1,
+      "anonymous": 0,
+      "sortorder": 1
+    },
+    {
+      "questiontype": "text",
+      "questiontext": "Any free-text feedback?",
+      "options": [],
+      "required": 0,
+      "anonymous": 1,
+      "sortorder": 2
+    }
+  ]
+}

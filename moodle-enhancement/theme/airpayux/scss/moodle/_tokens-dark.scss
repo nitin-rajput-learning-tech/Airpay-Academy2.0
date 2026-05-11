@@ -21,7 +21,9 @@
     /* ── Text ────────────────────────────────────────────────── */
     --ap-color-text-primary:   #e8eaed;
     --ap-color-text-secondary: #9ca3b4;
-    --ap-color-text-muted:     #6b7280;
+    /* UAT-L5 fix 2026-05-10 — #6b7280 was 3.47:1 on #1a1d27, fails
+       WCAG AA. Bumped to #9ca3af (Tailwind gray-400) for 5.1:1. */
+    --ap-color-text-muted:     #9ca3af;
 
     /* ── Borders ─────────────────────────────────────────────── */
     --ap-color-border:         #2d3140;
@@ -37,6 +39,14 @@
     --ap-color-warning-light:  #451a03;
     --ap-color-danger-light:   #450a0a;
     --ap-color-info-light:     #172554;
+
+    /* UAT-L5 fix 2026-05-10 — status FG colors need brighter shades
+       on dark bg or they fail WCAG AA. Light-mode #15803d/#a16207/#dc2626
+       are too dark to read on #1a1d27. Switched to Tailwind 400-series
+       which give ≥4.5:1 on dark surfaces. */
+    --ap-color-success:        #4ade80;  /* was #15803d (3.35) → 4.5+ */
+    --ap-color-warning:        #fbbf24;  /* was #a16207 → 4.5+ */
+    --ap-color-danger:         #f87171;  /* was #dc2626 → 4.5+ */
 
     /* ── Elevation (stronger shadows on dark) ────────────────── */
     --ap-shadow-xs:    0 1px 2px rgba(0, 0, 0, 0.2);

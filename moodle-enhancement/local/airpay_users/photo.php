@@ -73,10 +73,22 @@ if ($data = $form->get_data()) {
     require_sesskey();
 
     // Pull the file from the draft area.
+    // Bug-fix 2026-05-10 (UAT-L1.5): get_area_files signature is
+    // ($contextid, $component, $filearea, $itemid, ...). The original
+    // code passed $newpicture (the itemid) as the first arg (contextid),
+    // causing file_storage to look in the wrong context. Result: no
+    // draft files found, "No file selected" error fired, user.picture
+    // never updated. UAT caught it on day 2 of UAT walks.
+    //
+    // Draft area lives under the CURRENT USER's context (the uploader),
+    // which for self-photo is == $usercontext. For admin-edits-someone-else
+    // it's the admin's user context, not the target user's. Look up the
+    // current user context dynamically.
+    $current_user_context = context_user::instance($USER->id);
     $usercontext = context_user::instance($userid);
     $fs = get_file_storage();
-    $draftfiles = $fs->get_area_files((int) $data->newpicture, 'user',
-        'draft', false, '', false);
+    $draftfiles = $fs->get_area_files($current_user_context->id, 'user',
+        'draft', (int) $data->newpicture, 'id', false);
     if (empty($draftfiles)) {
         \core\notification::error('No file selected.');
     } else {
