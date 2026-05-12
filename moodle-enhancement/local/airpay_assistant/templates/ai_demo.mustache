@@ -1,0 +1,89 @@
+{{!
+    @template local_airpay_assistant/ai_demo
+}}
+<div class="container">
+    <h2 class="mb-3">AI bridge demo</h2>
+
+    {{^available}}
+    <div class="alert alert-warning">
+        <strong>core_ai not available.</strong>
+        Either Moodle &lt; 5, no AI provider is configured, or the current
+        user hasn't accepted the AI usage policy.<br><br>
+        Configure providers at <a href="{{{ config_url }}}">Site admin → AI providers</a>.
+    </div>
+    {{/available}}
+
+    {{#available}}
+    <div class="alert alert-success">
+        <i class="fa fa-check-circle"></i> core_ai subsystem is configured and
+        at least one provider is enabled.
+    </div>
+    {{/available}}
+
+    {{#has_result}}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent"><strong>{{ result_title }}</strong></div>
+        <div class="card-body">
+            <pre style="white-space: pre-wrap;">{{ result_text }}</pre>
+        </div>
+    </div>
+    {{/has_result}}
+
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h5>Summarise course</h5>
+                    <p class="small text-muted">
+                        3-5 sentence learner-facing TL;DR via core_ai.
+                    </p>
+                    <form method="get">
+                        <input type="hidden" name="action" value="summarise">
+                        <select name="courseid" class="form-select form-select-sm mb-2">
+                            {{#courses}}
+                            <option value="{{ id }}">{{ label }}</option>
+                            {{/courses}}
+                        </select>
+                        <button type="submit" class="btn btn-primary btn-sm">Summarise</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h5>Generate quiz question</h5>
+                    <p class="small text-muted">
+                        Multiple-choice with options + explanation.
+                    </p>
+                    <form method="get">
+                        <input type="hidden" name="action" value="quiz">
+                        <input type="text" name="topic" class="form-control form-control-sm mb-2"
+                               placeholder="e.g. Anti-Money Laundering basics" required>
+                        <button type="submit" class="btn btn-primary btn-sm">Generate</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h5>Translate text</h5>
+                    <p class="small text-muted">
+                        For multi-lingual Public-tenant emails.
+                    </p>
+                    <form method="get">
+                        <input type="hidden" name="action" value="translate">
+                        <textarea name="text" class="form-control form-control-sm mb-2" rows="2"
+                                  placeholder="English text to translate" required></textarea>
+                        <input type="text" name="lang" class="form-control form-control-sm mb-2"
+                               placeholder="Hindi" value="Hindi" required>
+                        <button type="submit" class="btn btn-primary btn-sm">Translate</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
