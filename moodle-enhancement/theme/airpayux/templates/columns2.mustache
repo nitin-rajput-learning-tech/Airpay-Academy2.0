@@ -84,7 +84,15 @@
     {{{ output.airpay_shell_end }}}
 
 </div>
-{{{ output.standard_end_of_body_html }}}
+
+{{! Footer — added 2026-05-11 (Phase 1H bug fix). columns2 is mapped to
+    'standard' / 'base' / 'admin' / 'mydashboard' layouts; without this
+    partial the page rendered with NO footer at all — missing the tenant
+    footer override (Phase 1G) AND the Moodle-required standard_footer_html
+    + standard_end_of_body_html blocks. The footer partial already includes
+    standard_end_of_body_html so we drop the duplicate that was here. }}
+{{> theme_airpayux/footer }}
+
 </body>
 </html>
 {{#js}}

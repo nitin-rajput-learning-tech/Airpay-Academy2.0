@@ -151,6 +151,11 @@ class sidebar_navigation {
             $items[] = $this->divider();
             $items[] = $this->item('My Courses', 'fa-book', '/local/airpay_catalog/mycourses.php', $currenturl);
             $items[] = $this->item('Catalog', 'fa-compass', '/local/airpay_catalog/public.php', $currenturl);
+            // Cart for managers in cart-enabled tenants.
+            if ($this->is_cart_enabled_for_current_user()) {
+                $items[] = $this->item('My Cart', 'fa-shopping-cart',
+                    '/local/airpay_cart/index.php', $currenturl);
+            }
             $items[] = $this->item('Certificates', 'fa-certificate', '/local/airpay_pages/certificates.php', $currenturl);
             $items[] = $this->item('Profile', 'fa-user', '/local/airpay_users/profile.php', $currenturl);
             return $items;
@@ -163,10 +168,35 @@ class sidebar_navigation {
         $items[] = $this->item('Dashboard', 'fa-home', '/my/', $currenturl, null, ['/my/index.php']);
         $items[] = $this->item('My Courses', 'fa-book', '/local/airpay_catalog/mycourses.php', $currenturl);
         $items[] = $this->item('Catalog', 'fa-compass', '/local/airpay_catalog/public.php', $currenturl);
+
+        // ── Cart (only for tenants where cart is enabled — Phase 1G) ──
+        // Public/ZEEA tenants get a cart link; Airpay tenant employees
+        // get their training free and don't see this link.
+        if ($this->is_cart_enabled_for_current_user()) {
+            $items[] = $this->item('My Cart', 'fa-shopping-cart',
+                '/local/airpay_cart/index.php', $currenturl);
+        }
+
         $items[] = $this->item('Certificates', 'fa-certificate', '/local/airpay_pages/certificates.php', $currenturl);
         $items[] = $this->item('Profile', 'fa-user', '/local/airpay_users/profile.php', $currenturl);
 
         return $items;
+    }
+
+    /**
+     * Is the airpay_cart plugin enabled for the current user's tenant?
+     * Safe-fails if the plugin isn't installed.
+     */
+    private function is_cart_enabled_for_current_user(): bool {
+        global $USER;
+        if (!class_exists('\\local_airpay_cart\\cart_manager')) {
+            return false;
+        }
+        try {
+            return \local_airpay_cart\cart_manager::is_enabled_for_user($USER);
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 
     /**

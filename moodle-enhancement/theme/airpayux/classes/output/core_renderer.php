@@ -58,6 +58,57 @@ defined('MOODLE_INTERNAL') || die;
 class core_renderer extends \core_renderer {
 
     /**
+     * Override standard_head_html to inject tenant favicon, custom CSS,
+     * and brand colour overrides. Each per-tenant setting is pulled from
+     * local_airpay_org\tenant_settings — falls back gracefully if the
+     * org plugin or row doesn't exist yet.
+     *
+     * Added 2026-05-11 for Phase 1G (per-tenant settings).
+     */
+    public function standard_head_html() {
+        $output = parent::standard_head_html();
+
+        if (class_exists('\\local_airpay_org\\tenant_settings')) {
+            $brand_css  = \local_airpay_org\tenant_settings::brand_color_overrides();
+            $custom_css = \local_airpay_org\tenant_settings::custom_css();
+            $inline = trim($brand_css . "\n" . $custom_css);
+            if ($inline !== '') {
+                $output .= "\n<style id=\"airpay-tenant-css\">\n" . $inline . "\n</style>\n";
+            }
+
+            $favicon_url = \local_airpay_org\tenant_settings::favicon_url();
+            if ($favicon_url !== '') {
+                $tag = '<link rel="icon" href="' . s($favicon_url) . '">';
+                if (preg_match('#<link[^>]+rel=["\']icon["\'][^>]*>#i', $output)) {
+                    $output = preg_replace('#<link[^>]+rel=["\']icon["\'][^>]*>#i',
+                        $tag, $output, 1);
+                } else {
+                    $output .= "\n" . $tag . "\n";
+                }
+            }
+        }
+
+        return $output;
+    }
+
+    /**
+     * Override standard_footer_html to append tenant-specific footer text
+     * BEFORE the standard footer content (if set).
+     */
+    public function standard_footer_html() {
+        $tenant_footer = '';
+        if (class_exists('\\local_airpay_org\\tenant_settings')) {
+            $tenant_footer = \local_airpay_org\tenant_settings::footer_html();
+        }
+        $standard = parent::standard_footer_html();
+        if ($tenant_footer !== '') {
+            return '<div class="airpay-tenant-footer container py-2">' . $tenant_footer
+                . '</div>' . $standard;
+        }
+        return $standard;
+    }
+
+    /**
      * Render the sidebar shell opening: sidebar + topbar + content area open tag.
      *
      * Call this from ANY layout template via {{{output.airpay_shell_start}}}.

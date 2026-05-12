@@ -69,4 +69,17 @@ $capabilities = [
         'contextlevel' => CONTEXT_COURSECAT,
         'archetypes'   => [],
     ],
+
+    // Manage tenant-level settings (logo, branding, email-from, footer,
+    // hero, custom CSS). Granted to tenant admins for their OWN tenant
+    // root — enforcement of "own tenant" is done in tenant_settings.php
+    // by comparing the editing user's open_path with the target tenant.
+    'local/airpay_org:managetenant' => [
+        'riskbitmask'  => RISK_CONFIG,
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => [
+            'manager' => CAP_ALLOW,
+        ],
+    ],
 ];
