@@ -1,11 +1,11 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-12 NIGHT — **PHASE 8.1 SECURITY REMEDIATION SHIPPED.** All 11 blocking findings closed in one session (35 files, +787/-83). New shared `local_airpay_core` plugin systemises tenant-equality so this regression class can't return. Re-audit + Phase 7 UAT re-run are the next gates.
-**Phase:** Academy 4.0 — Phase 8.1 (remediation) complete. Phase 8.2 = re-audit + Phase 7 UAT re-run + staging k6 load test → cutover.
+**Updated:** 2026-05-12 LATE NIGHT — **PHASE 8.2 RE-AUDIT RETURNED GO.** All 11 BLOCKING findings VERIFIED fixed. 3 non-blocking N-findings addressed in-flight (N3 ip_check guard, N4 cap-migration savepoint + runbook SQL, N2 deploy-runbook X-Forwarded-For note). Moodle 5 messages.php compat fixed across 5 plugins.
+**Phase:** Academy 4.0 — Phase 8.2 complete (in-codebase gates). Remaining cutover gates are infra-dependent: IT deploy to staging + k6 load test + manual pen-test + Nitin sign-off.
 **Theme:** airpayux v1.0.0 | **Moodle:** 5.1.3+ on XAMPP
 **Version:** 4.0-rc3 — All 22 Phase-2 rows ✅ + cart + proctoring + recompletion + AI + cohorts + badges + 7-persona UAT.
-**GitHub:** Pushed to nitin-rajput-learning-tech/Airpay-Academy2.0 (production branch, commit `02ce2bc8e`)
-**Today's UAT result:** Phase 7 multi-role 84/85 (Site Admin, Tenant Admin, Manager, Trainer, Public Admin, ZEEA all 14/14; Public User 0/1 — transient login timeout). Plus prior 158/158 + Phase 1-6 smoke batteries = **270+ cumulative cases pass**.
-**Today's audit + remediation:** Phase 8 audit returned NO-GO at 11 BLOCKING findings — Phase 8.1 remediation shipped same day. Audit findings retained in `PHASE-8-SECURITY-AUDIT.md` for traceability; remediation diff is commit `02ce2bc8e`.
+**GitHub:** Pushed to nitin-rajput-learning-tech/Airpay-Academy2.0 (production branch, last cumulative commit `f060094d1` + Phase 8.2 pending push)
+**Today's UAT result:** Phase 7 multi-role re-run **84/85** post-Phase-8.1 (identical baseline — no regressions). Plus prior 158/158 + Phase 1-6 smoke batteries = **270+ cumulative cases pass**.
+**Today's audit + remediation + verification cycle:** Phase 8 audit NO-GO → Phase 8.1 remediation (35 files, +787/-83) → Phase 8.2 re-audit returned **GO** + Phase 7 UAT re-run **84/85** + N3 / N4 follow-ups shipped + Moodle 5 messages.php compat fixed across 5 plugins. Full Phase 8.x cycle complete in-codebase.
 
 > **TOMORROW START HERE:** Re-run security audit against the new diff.
 > Phase 8.2 sequence: (1) re-audit returns GO → (2) re-run Phase 7

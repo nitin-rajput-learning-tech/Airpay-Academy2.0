@@ -39,6 +39,9 @@ class ip_check {
         }
         [$subnet, $bits] = explode('/', $cidr, 2);
         $bits = (int) $bits;
+        if ($bits < 0) {
+            return false;
+        }
 
         $ip_bin     = @inet_pton($ip);
         $subnet_bin = @inet_pton($subnet);
@@ -47,6 +50,14 @@ class ip_check {
         }
         if (strlen($ip_bin) !== strlen($subnet_bin)) {
             return false;  // mixing v4/v6
+        }
+
+        // Phase 8.1 re-audit N3 fix — reject prefix > address-family width.
+        // Before this: /33+ on v4 would silently match because $ip_bin[4]
+        // is out of bounds → ord('') === 0 → both sides 0 → always equal.
+        $max_bits = strlen($ip_bin) * 8;  // 32 for v4, 128 for v6
+        if ($bits > $max_bits) {
+            return false;
         }
 
         // Compare first $bits bits.

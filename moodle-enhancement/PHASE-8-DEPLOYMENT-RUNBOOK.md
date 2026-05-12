@@ -27,6 +27,30 @@ Tick every box. If any unchecked, **abort and reschedule**.
 □ Rollback path documented and IT on-call confirmed available for 24h post-cutover
 □ Smoke-test test user accounts confirmed working: academy@, nitin.rajput@,
   shivam.sharma@, asif.ansari@, academyexadmin@, public.uat@, user.4156200@
+□ **Re-audit N2** — confirm production load balancer (AWS ALB / CloudFront /
+  nginx) OVERWRITES X-Forwarded-For instead of appending. The cart callback
+  `getremoteaddr()` uses XFF when `$CFG->reverseproxy=true`; if the LB
+  appends client-supplied XFF, an attacker can spoof source IP. Verify
+  one of: (a) ALB default behaviour (overwrites), (b) nginx
+  `proxy_set_header X-Forwarded-For $remote_addr` (overwrite), or
+  (c) set `$CFG->reverseproxyaddr_protected = 'X-Forwarded-For'`.
+□ **Re-audit N4** — capability cleanup for B9 (`local/airpay_cart:manageprices`).
+  Cap moved from CONTEXT_SYSTEM to CONTEXT_COURSE. On upgrade, archetype
+  role defaults (`manager`) re-apply automatically at the new context.
+  But any CUSTOM role granted the cap at CONTEXT_SYSTEM by hand will
+  silently no-op. Run this SQL against production AFTER cutover to find
+  stale grants:
+  ```sql
+  SELECT rc.id, r.shortname, c.contextlevel, c.instanceid
+    FROM mdl_role_capabilities rc
+    JOIN mdl_role r ON r.id = rc.roleid
+    JOIN mdl_context c ON c.id = rc.contextid
+   WHERE rc.capability = 'local/airpay_cart:manageprices'
+     AND c.contextlevel = 10;  -- CONTEXT_SYSTEM
+  ```
+  If any rows returned, re-grant at the relevant category context
+  (typically the tenant root category, contextlevel=40) for the
+  custom role.
 ```
 
 ---

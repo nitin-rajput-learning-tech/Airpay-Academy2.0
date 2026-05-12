@@ -8,36 +8,36 @@ $messageproviders = [
     'order_placed' => [
         'capability' => 'local/airpay_cart:view',
         'defaults'   => [
-            'email'   => MESSAGE_PERMITTED + MESSAGE_DEFAULT_LOGGEDIN + MESSAGE_DEFAULT_LOGGEDOFF,
-            'popup'   => MESSAGE_PERMITTED + MESSAGE_DEFAULT_LOGGEDIN,
+            'email'   => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
+            'popup'   => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
         ],
     ],
     'payment_received' => [
         'capability' => 'local/airpay_cart:view',
         'defaults'   => [
-            'email'   => MESSAGE_PERMITTED + MESSAGE_DEFAULT_LOGGEDIN + MESSAGE_DEFAULT_LOGGEDOFF,
-            'popup'   => MESSAGE_PERMITTED + MESSAGE_DEFAULT_LOGGEDIN,
+            'email'   => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
+            'popup'   => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
         ],
     ],
     'order_failed' => [
         'capability' => 'local/airpay_cart:view',
         'defaults'   => [
-            'email'   => MESSAGE_PERMITTED + MESSAGE_DEFAULT_LOGGEDIN + MESSAGE_DEFAULT_LOGGEDOFF,
-            'popup'   => MESSAGE_PERMITTED + MESSAGE_DEFAULT_LOGGEDIN,
+            'email'   => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
+            'popup'   => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
         ],
     ],
     'refund_processed' => [
         'capability' => 'local/airpay_cart:view',
         'defaults'   => [
-            'email'   => MESSAGE_PERMITTED + MESSAGE_DEFAULT_LOGGEDIN + MESSAGE_DEFAULT_LOGGEDOFF,
-            'popup'   => MESSAGE_PERMITTED + MESSAGE_DEFAULT_LOGGEDIN,
+            'email'   => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
+            'popup'   => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
         ],
     ],
     'admin_new_order' => [
         'capability' => 'local/airpay_cart:viewallorders',
         'defaults'   => [
-            'email'   => MESSAGE_PERMITTED + MESSAGE_DEFAULT_LOGGEDIN + MESSAGE_DEFAULT_LOGGEDOFF,
-            'popup'   => MESSAGE_PERMITTED + MESSAGE_DEFAULT_LOGGEDIN,
+            'email'   => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
+            'popup'   => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
         ],
     ],
 ];

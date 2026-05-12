@@ -4,13 +4,14 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-// Inline integer values to sidestep MESSAGE_PERMITTED bootstrap-order
-// issue during plugin install. Canonical Moodle constants (lib/messagelib.php):
-//   MESSAGE_PERMITTED = 1, MESSAGE_FORCED = 2, MESSAGE_DISALLOWED = 4
-//   MESSAGE_DEFAULT_LOGGEDIN = 8, MESSAGE_DEFAULT_LOGGEDOFF = 16
+// Moodle 5 message-provider defaults. Constants live in
+// message/lib.php: MESSAGE_PERMITTED=0x08, MESSAGE_DEFAULT_ENABLED=0x01.
+// The Moodle-4 constants MESSAGE_DEFAULT_LOGGEDIN / _LOGGEDOFF were
+// removed in Moodle 5 — the inline-integer workaround that used to
+// live here would have meant the wrong bitmask in Moodle 5.
 $defaults = [
-    'email' => 1 + 8 + 16,
-    'popup' => 1 + 8,
+    'email' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
+    'popup' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
 ];
 
 $messageproviders = [
