@@ -99,11 +99,15 @@ $check('Events recorded', $ev_count >= 4, "$ev_count events");
 
 // === 5. Register chunks ===
 echo "\n=== 5. Register recording chunks ===\n";
+// B3 fix: register_chunk now whitelists s3_key against
+// `^[a-zA-Z0-9/_.-]{1,512}$` — so we pass just the object key, not
+// the full `s3://bucket/...` URI (the bucket is configured separately
+// and prefixed by the recording-proxy).
 \local_airpay_proctoring\session_manager::register_chunk(
-    (int) $session->id, 'webcam', 0, "s3://bucket/sess{$session->id}/cam_0.webm",
+    (int) $session->id, 'webcam', 0, "sess{$session->id}/cam_0.webm",
     1024 * 512, 30000);
 \local_airpay_proctoring\session_manager::register_chunk(
-    (int) $session->id, 'screen', 0, "s3://bucket/sess{$session->id}/scr_0.webm",
+    (int) $session->id, 'screen', 0, "sess{$session->id}/scr_0.webm",
     1024 * 1024, 30000);
 $chunks = $DB->count_records('local_airpay_proctor_recordings',
     ['sessionid' => $session->id]);
@@ -156,14 +160,21 @@ $session3 = \local_airpay_proctoring\session_manager::finalize((int) $session3->
 $check('High-risk session scores fail', $session3->auto_decision === 'fail',
     "score={$session3->risk_score}");
 
-// Cleanup
-$DB->delete_records('local_airpay_proctor_events',
-    "sessionid IN (SELECT id FROM {local_airpay_proctor_sessions} WHERE userid = $user->id)");
-$DB->delete_records('local_airpay_proctor_recordings',
-    "sessionid IN (SELECT id FROM {local_airpay_proctor_sessions} WHERE userid = $user->id)");
+// Cleanup. delete_records() only takes array conditions; subqueries
+// must use delete_records_select(). Moodle 4 silently coerced; Moodle 5
+// strict-types catches the misuse. Use a two-step lookup instead.
+$session_ids = $DB->get_fieldset_select('local_airpay_proctor_sessions',
+    'id', 'userid = :uid', ['uid' => $user->id]);
+if (!empty($session_ids)) {
+    [$insql, $inparams] = $DB->get_in_or_equal($session_ids, SQL_PARAMS_NAMED, 'sid');
+    $DB->delete_records_select('local_airpay_proctor_events',
+        "sessionid $insql", $inparams);
+    $DB->delete_records_select('local_airpay_proctor_recordings',
+        "sessionid $insql", $inparams);
+    $DB->delete_records_select('local_airpay_proctor_reviews',
+        "sessionid $insql", $inparams);
+}
 $DB->delete_records('local_airpay_proctor_identity', ['userid' => $user->id]);
-$DB->delete_records('local_airpay_proctor_reviews',
-    "sessionid IN (SELECT id FROM {local_airpay_proctor_sessions} WHERE userid = $user->id)");
 $DB->delete_records('local_airpay_proctor_sessions', ['userid' => $user->id]);
 
 echo "\n" . str_repeat('=', 50) . "\n";
