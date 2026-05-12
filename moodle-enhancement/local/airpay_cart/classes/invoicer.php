@@ -121,23 +121,56 @@ class invoicer {
 
     /**
      * Render invoice as HTML (for in-app preview).
+     *
+     * Phase 8.1 B5 fix: invoice template used `{{{ }}}` (raw output) for
+     * `company_address` and `billing_address` because addresses contain
+     * embedded line breaks that need to render as `<br/>`. The old code
+     * called `nl2br(s($x))` in PHP to pre-escape + insert breaks, but
+     * the {{{ }}} pattern is fragile — any future code path that passes
+     * raw model data to the template re-introduces XSS.
+     *
+     * Hardened approach:
+     *   1. Wrap addresses in a `<div class="multiline">` whose CSS uses
+     *      `white-space: pre-line` to render `\n` as a visual break.
+     *   2. Escape the inner text with `s()` only (no `nl2br()` needed).
+     *   3. Template now uses `{{{ }}}` for the wrapper HTML, but the
+     *      inner content is plain-text-escaped with no HTML at all.
+     *   4. A future refactor that swaps in raw `$invoice->billing_address`
+     *      would be visibly broken (newlines collapse) instead of
+     *      silently XSS-vulnerable.
      */
     public static function render_html(\stdClass $invoice): string {
         global $OUTPUT;
         $items = json_decode($invoice->line_items_json ?: '[]', true) ?: [];
 
+        // Pre-build the address wrapper HTML. Inner text is escaped with
+        // s(); the wrapper itself is fixed HTML, no interpolation.
+        // CSS `white-space: pre-line` makes `\n` render as a visual line
+        // break without ever emitting a `<br/>` tag from user data.
+        $wrap_multiline = static fn(string $text): string =>
+            \html_writer::div(s($text), 'airpay-invoice-multiline',
+                ['style' => 'white-space: pre-line;']);
+
+        // Keep plain-text fields RAW — the Mustache `{{ }}` double-brace
+        // in the template does HTML-escape on output. Pre-escaping in
+        // PHP would double-escape (entities become entity-of-entities).
         $data = [
             'invoice_number'  => $invoice->invoice_number,
             'invoice_date'    => userdate($invoice->timecreated, '%d %b %Y'),
-            'company_name'    => get_config('local_airpay_cart', 'company_name'),
-            'company_address' => nl2br(s((string) get_config('local_airpay_cart', 'company_address'))),
-            'company_gstn'    => get_config('local_airpay_cart', 'our_gstn'),
-            'billing_name'    => $invoice->billing_name,
-            'billing_email'   => $invoice->billing_email,
-            'billing_address' => nl2br(s((string) $invoice->billing_address)),
-            'billing_gstn'    => $invoice->billing_gstn,
+            'company_name'    => (string) get_config('local_airpay_cart', 'company_name'),
+            // Pre-built HTML wrapper — template uses {{{ }}}.
+            'company_address' => $wrap_multiline(
+                (string) get_config('local_airpay_cart', 'company_address')),
+            'company_gstn'    => (string) get_config('local_airpay_cart', 'our_gstn'),
+            // billing_* are customer-supplied. Plain text — let Mustache
+            // {{ }} auto-escape. Don't pre-format.
+            'billing_name'    => (string) $invoice->billing_name,
+            'billing_email'   => (string) $invoice->billing_email,
+            // Pre-built HTML wrapper — template uses {{{ }}}.
+            'billing_address' => $wrap_multiline((string) $invoice->billing_address),
+            'billing_gstn'    => (string) $invoice->billing_gstn,
             'items'           => array_map(fn($i) => [
-                'name'    => $i['name'] ?? '',
+                'name'    => (string) ($i['name'] ?? ''),
                 'price'   => number_format($i['price'] ?? 0, 2),
                 'currency_symbol' => self::currency_symbol($invoice->currency),
             ], $items),

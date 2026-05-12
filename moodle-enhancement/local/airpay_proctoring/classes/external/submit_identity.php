@@ -32,17 +32,51 @@ class submit_identity extends external_api {
         self::validate_context($ctx);
         require_capability('local/airpay_proctoring:attempt', $ctx);
 
-        // Bound the photo size to prevent abuse (10 MB raw → ~13.3 MB b64).
-        if (strlen($params['id_b64']) > 14_000_000 || strlen($params['selfie_b64']) > 14_000_000) {
+        // ── B7 fix: per-user rate limit ─────────────────────────────────
+        // Without this an attacker can submit 28 MB (2 × 14 MB raw) per
+        // request unlimited times, exhausting PHP memory + AWS quota.
+        // 5 submits/hour is generous (legitimate UX: 1 submit per session).
+        $cache = \cache::make('local_airpay_proctoring', 'identity_rate');
+        $key   = 'u:' . (int) $USER->id . ':h:' . floor(time() / 3600);
+        $count = (int) ($cache->get($key) ?: 0);
+        if ($count >= 5) {
+            throw new \moodle_exception('error_session_state', 'local_airpay_proctoring',
+                '', 'Rate limit: too many identity submissions this hour');
+        }
+        $cache->set($key, $count + 1);
+
+        // ── B7 fix: tighten size cap from 14M to 5.5M (raw ≈ 4MB) ──────
+        // An ID + selfie at full HD is well under 2 MB each. The old
+        // 14M cap was lazy and let attackers ship oversize blobs.
+        if (strlen($params['id_b64']) > 5_500_000
+                || strlen($params['selfie_b64']) > 5_500_000) {
             throw new \moodle_exception('error_session_state', 'local_airpay_proctoring',
                 '', 'Photo too large');
         }
 
-        $id_bytes     = base64_decode($params['id_b64'], true) ?: '';
-        $selfie_bytes = base64_decode($params['selfie_b64'], true) ?: '';
-        if (empty($id_bytes) || empty($selfie_bytes)) {
+        // ── B7 fix: base64_decode strict-mode error handling ───────────
+        // The original `?: ''` swallowed false-on-error and let an
+        // empty string through. We want an explicit reject.
+        $id_bytes     = base64_decode($params['id_b64'], true);
+        $selfie_bytes = base64_decode($params['selfie_b64'], true);
+        if ($id_bytes === false || $selfie_bytes === false
+                || $id_bytes === '' || $selfie_bytes === '') {
             throw new \moodle_exception('error_session_state', 'local_airpay_proctoring',
                 '', 'Invalid photo encoding');
+        }
+
+        // ── B7 fix: MIME sniff — must be JPEG or PNG ───────────────────
+        // Don't trust client-supplied content-type. Sniff magic bytes.
+        // Without this, attacker can ship arbitrary bytes (zip bomb,
+        // polyglot) at AWS Rekognition and burn the quota.
+        $is_jpeg = static fn(string $b): bool =>
+            strlen($b) >= 3 && substr($b, 0, 3) === "\xFF\xD8\xFF";
+        $is_png = static fn(string $b): bool =>
+            strlen($b) >= 8 && substr($b, 0, 8) === "\x89PNG\r\n\x1A\n";
+        if (!($is_jpeg($id_bytes)     || $is_png($id_bytes))
+                || !($is_jpeg($selfie_bytes) || $is_png($selfie_bytes))) {
+            throw new \moodle_exception('error_session_state', 'local_airpay_proctoring',
+                '', 'Unsupported image format (JPEG or PNG only)');
         }
 
         $id_row = \local_airpay_proctoring\session_manager::submit_identity(

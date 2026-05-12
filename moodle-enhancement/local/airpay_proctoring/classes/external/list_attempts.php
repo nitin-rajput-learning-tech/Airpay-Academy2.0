@@ -37,8 +37,12 @@ class list_attempts extends external_api {
         $sort = in_array($params['sort'], $allowed, true) ? $params['sort'] : 'timecreated';
         $sortdir = strtolower($params['sortdir']) === 'asc' ? 'ASC' : 'DESC';
 
-        $where = '1=1';
-        $args = [];
+        // ── B2 fix: tenant scoping on attempt list ──────────────────────
+        // Reviewer/manager holding :viewattempts in their own tenant
+        // shouldn't see cross-tenant attempts. Site admin gets `1=1`.
+        [$tnsql, $tnargs] = \local_airpay_core\tenant::sql_filter('s');
+        $where = $tnsql;
+        $args = $tnargs;
         $client = json_decode($params['filters'] ?: '{}', true) ?: [];
         if (!empty($client['status'])) {
             $where .= ' AND s.status = :st';

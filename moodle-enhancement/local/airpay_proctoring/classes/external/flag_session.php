@@ -26,6 +26,9 @@ class flag_session extends external_api {
 
         $s = $DB->get_record('local_airpay_proctor_sessions',
             ['id' => $params['sessionid']], '*', MUST_EXIST);
+        // ── B2 fix: tenant equality before flagging ─────────────────────
+        \local_airpay_core\tenant::require_access((int) $s->costcenterid);
+
         $s->status = 'flagged';
         $s->timemodified = time();
         $DB->update_record('local_airpay_proctor_sessions', $s);

@@ -21,7 +21,11 @@ class upload_chunk extends external_api {
             'sessionid'   => new external_value(PARAM_INT, ''),
             'kind'        => new external_value(PARAM_ALPHA, 'webcam|screen|audio'),
             'chunk_idx'   => new external_value(PARAM_INT, ''),
-            's3_key'      => new external_value(PARAM_TEXT, ''),
+            // B3 fix: was PARAM_TEXT — too loose. session_manager
+            // validates the format against a regex, but document the
+            // intent here too.
+            's3_key'      => new external_value(PARAM_RAW_TRIMMED,
+                'opaque S3 object key — alphanumeric, _, /, ., -, max 512 chars'),
             'size_bytes'  => new external_value(PARAM_INT, ''),
             'duration_ms' => new external_value(PARAM_INT, ''),
         ]);

@@ -25,14 +25,18 @@ $page = optional_param('p', 0, PARAM_INT);
 $perpage = 50;
 
 $total = (int) $DB->count_records('local_airpay_recompletion_history');
+// B8 fix: LIMIT $perpage OFFSET ... was interpolated into the SQL string.
+// $perpage is a constant 50 here but the pattern is dangerous (one
+// refactor away from accepting user input). Use the 5th/6th args of
+// get_records_sql() for limitfrom + limitnum.
 $rows = $DB->get_records_sql(
     "SELECT h.*, u.firstname, u.lastname, u.email,
             c.fullname AS course_name
        FROM {local_airpay_recompletion_history} h
   LEFT JOIN {user}   u ON u.id = h.userid
   LEFT JOIN {course} c ON c.id = h.courseid
-      ORDER BY h.timecreated DESC
-      LIMIT $perpage OFFSET " . ($page * $perpage));
+      ORDER BY h.timecreated DESC",
+    [], (int) ($page * $perpage), (int) $perpage);
 
 $shape = [];
 foreach ($rows as $r) {

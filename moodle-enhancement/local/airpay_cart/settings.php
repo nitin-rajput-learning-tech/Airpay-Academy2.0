@@ -41,6 +41,15 @@ if ($hassiteconfig) {
         get_string('settings_gateway_airpay_secret_desc', 'local_airpay_cart'),
         ''));
 
+    // Phase 8.1 B11 fix: optional IP allow-list for callback.php. CSV of
+    // CIDR ranges or single IPs. Empty = accept from anywhere (legacy
+    // behaviour). If configured, callbacks from non-listed sources are
+    // silently dropped with a 404 — invisible to attackers scanning.
+    $settings->add(new admin_setting_configtext('local_airpay_cart/airpay_callback_iplist',
+        get_string('settings_callback_iplist', 'local_airpay_cart'),
+        get_string('settings_callback_iplist_desc', 'local_airpay_cart'),
+        '', PARAM_TEXT));
+
     // ── Tax & invoicing ────────────────────────────────────────────────
     $settings->add(new admin_setting_heading('local_airpay_cart/tax_heading',
         get_string('settings_tax', 'local_airpay_cart'), ''));

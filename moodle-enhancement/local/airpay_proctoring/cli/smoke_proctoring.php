@@ -31,9 +31,16 @@ $check = function(string $name, bool $ok, string $detail = '') use (&$test, &$pa
 };
 
 $user = $DB->get_record_sql(
-    "SELECT id, username, open_path FROM {user}
+    "SELECT * FROM {user}
       WHERE username = 'public.uat@airpay.test' AND deleted = 0 LIMIT 1");
 if (!$user) { echo "FAIL: test user not found\n"; exit(1); }
+
+// Switch the $USER global to the test user so the new B3 session-owner
+// checks in session_manager pass (we're calling as the candidate, not
+// as the admin who launched the CLI). `cron_setup_user()` was the v4
+// helper but is deprecated in v5; `\core\session\manager::set_user()`
+// is the modern equivalent and works identically for CLI scripts.
+\core\session\manager::set_user($user);
 
 // Pick any quiz on this install.
 $quiz = $DB->get_record_sql("SELECT id, name FROM {quiz} LIMIT 1");

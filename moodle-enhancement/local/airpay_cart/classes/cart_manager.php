@@ -408,7 +408,14 @@ class cart_manager {
 
     /**
      * Get one order with permission check.
-     * Owner can always view own; admins with viewallorders can view any.
+     *
+     * Three layers:
+     *   1. Owner can always view their own.
+     *   2. Other viewers need :viewallorders capability.
+     *   3. Phase 8.1 B1 fix — even with the cap, viewer's tenant must
+     *      match the order's tenant (or viewer must be site admin).
+     *      A manager in Public tenant holding :viewallorders does NOT
+     *      get to see Airpay-tenant order details.
      */
     public static function get_order(int $historyid, int $viewerid): \stdClass {
         global $DB;
@@ -420,6 +427,9 @@ class cart_manager {
                 && !has_capability('local/airpay_cart:viewallorders', $ctx, $viewerid)) {
                 throw new \moodle_exception('error_outoftenant', 'local_airpay_cart');
             }
+            // ── B1 fix: tenant-equality even when cap held ──────────────
+            \local_airpay_core\tenant::require_access(
+                (int) $cart->costcenterid, $viewerid);
         }
         return $cart;
     }

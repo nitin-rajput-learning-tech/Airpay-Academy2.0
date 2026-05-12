@@ -51,11 +51,17 @@ $capabilities = [
     ],
 
     // Manage course pricing.
+    // Phase 8.1 B9 fix: was CONTEXT_SYSTEM, moved to CONTEXT_COURSE.
+    // The cap now must be checked at the COURSE context, not system —
+    // managers in tenant X only get the cap on courses inside their
+    // tenant's category hierarchy. This prevents a Public-tenant
+    // manager from re-pricing an Airpay-tenant course.
     'local/airpay_cart:manageprices' => [
         'captype'      => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
+        'contextlevel' => CONTEXT_COURSE,
         'archetypes'   => [
             'manager' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
         ],
     ],
 ];

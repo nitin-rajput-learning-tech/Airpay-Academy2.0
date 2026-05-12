@@ -22,6 +22,9 @@ require_capability('local/airpay_proctoring:viewattempts', $ctx);
 
 $session = $DB->get_record('local_airpay_proctor_sessions',
     ['id' => $id], '*', MUST_EXIST);
+// ── B2 fix: tenant equality on attempt detail page ────────────────────
+\local_airpay_core\tenant::require_access((int) $session->costcenterid);
+
 $events = $DB->get_records('local_airpay_proctor_events',
     ['sessionid' => $session->id], 'timecreated ASC');
 $recordings = $DB->get_records('local_airpay_proctor_recordings',

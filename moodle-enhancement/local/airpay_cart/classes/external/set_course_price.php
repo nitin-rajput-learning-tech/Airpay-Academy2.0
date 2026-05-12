@@ -34,12 +34,17 @@ class set_course_price extends external_api {
         $params = self::validate_parameters(self::execute_parameters(),
             compact('courseid', 'price', 'currency'));
 
-        $ctx = \context_system::instance();
-        self::validate_context($ctx);
-        require_capability('local/airpay_cart:manageprices', $ctx);
-
         $course = $DB->get_record('course', ['id' => $params['courseid']],
             '*', MUST_EXIST);
+
+        // ── B9 fix: capability must be checked at COURSE context ────────
+        // Was previously checked at CONTEXT_SYSTEM, which meant any user
+        // holding :manageprices anywhere could re-price any course in
+        // any tenant. Checking at the course's own context ties the
+        // cap-grant to the course's category hierarchy → tenant.
+        $coursectx = \context_course::instance($course->id);
+        self::validate_context($coursectx);
+        require_capability('local/airpay_cart:manageprices', $coursectx);
 
         $existing = $DB->get_record('enrol',
             ['courseid' => $course->id, 'enrol' => 'fee', 'status' => 0]);

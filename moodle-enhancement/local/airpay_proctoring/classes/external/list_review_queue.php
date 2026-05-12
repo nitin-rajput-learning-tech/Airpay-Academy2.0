@@ -27,8 +27,15 @@ class list_review_queue extends external_api {
         self::validate_context($ctx);
         require_capability('local/airpay_proctoring:review', $ctx);
 
-        $total = (int) $DB->count_records('local_airpay_proctor_sessions',
-            ['status' => 'flagged']);
+        // ── B2 fix: tenant scoping on review queue ──────────────────────
+        // The :review cap is granted system-wide. Without this filter
+        // a reviewer in one tenant could see + decide on sessions
+        // belonging to candidates in another tenant — including
+        // identity match scores and biometric provenance.
+        [$tnsql, $tnargs] = \local_airpay_core\tenant::sql_filter('s');
+        $total = (int) $DB->count_records_sql(
+            "SELECT COUNT(*) FROM {local_airpay_proctor_sessions} s
+              WHERE s.status = 'flagged' AND $tnsql", $tnargs);
         $rows = [];
         if ($total > 0) {
             $records = $DB->get_records_sql(
@@ -36,9 +43,9 @@ class list_review_queue extends external_api {
                    FROM {local_airpay_proctor_sessions} s
               LEFT JOIN {user} u ON u.id = s.userid
               LEFT JOIN {quiz} q ON q.id = s.quizid
-                  WHERE s.status = 'flagged'
+                  WHERE s.status = 'flagged' AND $tnsql
                ORDER BY s.risk_score DESC, s.timecreated DESC",
-                [], $params['page'] * $params['perpage'], $params['perpage']);
+                $tnargs, $params['page'] * $params['perpage'], $params['perpage']);
             foreach ($records as $r) {
                 $rows[] = [
                     'id'           => (int) $r->id,

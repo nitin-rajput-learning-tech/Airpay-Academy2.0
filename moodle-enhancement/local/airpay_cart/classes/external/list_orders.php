@@ -58,12 +58,24 @@ class list_orders extends external_api {
         if (!$can_view_all) {
             $where[] = 'userid = :uid';
             $sqlparams['uid'] = (int) $USER->id;
+        } else {
+            // ── B1 fix: tenant scoping for admin views ──────────────────
+            // Even with :viewallorders, a non-siteadmin only sees orders
+            // in their own tenant. Without this clause a Public-tenant
+            // manager could list Airpay's order history. Site admins
+            // pass through with `1=1`.
+            [$tnsql, $tnargs] = \local_airpay_core\tenant::sql_filter('');
+            $where[] = $tnsql;
+            $sqlparams = array_merge($sqlparams, $tnargs);
         }
         if ($status_filter !== '') {
             $where[] = 'status = :st';
             $sqlparams['st'] = $status_filter;
         }
-        if ($tenant_filter > 0 && $can_view_all) {
+        if ($tenant_filter > 0 && $can_view_all && is_siteadmin()) {
+            // Only site admins get the "filter to specific tenant" knob;
+            // tenant-bound managers are already scoped above and can't
+            // override that.
             $where[] = 'costcenterid = :tn';
             $sqlparams['tn'] = $tenant_filter;
         }

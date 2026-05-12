@@ -2,6 +2,13 @@
     @template local_airpay_cart/invoice
 
     GST-compliant invoice (HTML — browser Print → Save as PDF).
+
+    Phase 8.1 B5 hardening:
+      - {{ }} double-brace for plain-text fields — Mustache auto-escapes.
+      - {{{ }}} triple-brace ONLY for pre-built HTML wrapper from PHP
+        (`company_address` and `billing_address` are <div> wrappers
+        whose inner text is already s()-escaped in invoicer.php).
+      - Never pass raw user input into a {{{ }}} field directly.
 }}
 <style>
 .airpay-invoice { max-width: 800px; margin: 2rem auto; padding: 2rem;

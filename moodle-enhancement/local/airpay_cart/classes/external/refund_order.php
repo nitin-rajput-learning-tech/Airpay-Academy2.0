@@ -22,13 +22,23 @@ class refund_order extends external_api {
     }
 
     public static function execute(int $historyid, float $amount, string $reason): array {
-        global $USER;
+        global $USER, $DB;
         $params = self::validate_parameters(self::execute_parameters(),
             compact('historyid', 'amount', 'reason'));
 
         $ctx = \context_system::instance();
         self::validate_context($ctx);
         require_capability('local/airpay_cart:refund', $ctx);
+
+        // ── B1 fix: tenant equality required before refund ──────────────
+        // The :refund cap is granted system-wide to managers, who may
+        // legitimately refund orders in their own tenant only. Without
+        // this check, a Public-tenant manager could refund Airpay or
+        // ZEEA orders. Fetch the order's tenant and gate by it.
+        $order = $DB->get_record('local_airpay_cart_history',
+            ['id' => (int) $params['historyid']], 'id, costcenterid', MUST_EXIST);
+        \local_airpay_core\tenant::require_access(
+            (int) $order->costcenterid, (int) $USER->id);
 
         $ok = \local_airpay_cart\cart_manager::refund(
             (int) $params['historyid'],

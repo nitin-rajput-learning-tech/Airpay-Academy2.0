@@ -39,21 +39,26 @@ class compliance_report extends external_api {
             throw new \moodle_exception('error_session_state', 'local_airpay_proctoring');
         }
 
+        // ── B2 fix: tenant scoping on aggregate ──────────────────────────
+        // Compliance dashboard for a tenant-bound reviewer must only sum
+        // their own tenant's sessions. Site admin sees the global view.
+        [$tnsql, $tnargs] = \local_airpay_core\tenant::sql_filter('s');
         $rows = $DB->get_records_sql(
-            "SELECT DATE(FROM_UNIXTIME(timecreated)) AS day,
+            "SELECT DATE(FROM_UNIXTIME(s.timecreated)) AS day,
                     COUNT(*) AS total,
-                    SUM(CASE WHEN auto_decision='clean' THEN 1 ELSE 0 END) AS auto_clean,
-                    SUM(CASE WHEN auto_decision='warn' THEN 1 ELSE 0 END) AS auto_warn,
-                    SUM(CASE WHEN auto_decision='fail' THEN 1 ELSE 0 END) AS auto_fail,
-                    SUM(CASE WHEN human_decision='clean' THEN 1 ELSE 0 END) AS rev_clean,
-                    SUM(CASE WHEN human_decision='warn' THEN 1 ELSE 0 END) AS rev_warn,
-                    SUM(CASE WHEN human_decision='fail' THEN 1 ELSE 0 END) AS rev_fail,
-                    AVG(risk_score) AS avg_risk
-               FROM {local_airpay_proctor_sessions}
-              WHERE timecreated BETWEEN :f AND :t
+                    SUM(CASE WHEN s.auto_decision='clean' THEN 1 ELSE 0 END) AS auto_clean,
+                    SUM(CASE WHEN s.auto_decision='warn' THEN 1 ELSE 0 END) AS auto_warn,
+                    SUM(CASE WHEN s.auto_decision='fail' THEN 1 ELSE 0 END) AS auto_fail,
+                    SUM(CASE WHEN s.human_decision='clean' THEN 1 ELSE 0 END) AS rev_clean,
+                    SUM(CASE WHEN s.human_decision='warn' THEN 1 ELSE 0 END) AS rev_warn,
+                    SUM(CASE WHEN s.human_decision='fail' THEN 1 ELSE 0 END) AS rev_fail,
+                    AVG(s.risk_score) AS avg_risk
+               FROM {local_airpay_proctor_sessions} s
+              WHERE s.timecreated BETWEEN :f AND :t
+                AND $tnsql
            GROUP BY day
            ORDER BY day DESC",
-            ['f' => $fromts, 't' => $tots]);
+            array_merge(['f' => $fromts, 't' => $tots], $tnargs));
 
         $out = [];
         foreach ($rows as $r) {

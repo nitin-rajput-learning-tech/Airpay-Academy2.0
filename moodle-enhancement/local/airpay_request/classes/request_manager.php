@@ -136,11 +136,19 @@ class request_manager {
         }
 
         // Auth: the assigned approver OR someone with overrideroute cap.
+        // ── B10 fix: tenant equality required even for override-route ────
+        // The :overrideroute cap is system-context. Without the tenant
+        // equality check below, a Public-tenant power user holding the
+        // cap could approve Airpay-internal compliance requests.
         if ((int) $rec->approver_userid !== $deciderid
-            && !is_siteadmin($deciderid)
-            && !has_capability('local/airpay_request:overrideroute',
-                \context_system::instance(), $deciderid)) {
-            throw new \moodle_exception('error_outoftenant', 'local_airpay_request');
+            && !is_siteadmin($deciderid)) {
+            $has_override = has_capability('local/airpay_request:overrideroute',
+                \context_system::instance(), $deciderid);
+            if (!$has_override) {
+                throw new \moodle_exception('error_outoftenant', 'local_airpay_request');
+            }
+            \local_airpay_core\tenant::require_access(
+                (int) $rec->costcenterid, $deciderid);
         }
 
         // Reject requires a note.

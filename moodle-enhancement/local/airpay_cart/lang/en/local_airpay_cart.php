@@ -107,6 +107,8 @@ $string['settings_companyaddress'] = 'Company address';
 $string['settings_invoiceprefix'] = 'Invoice number prefix';
 $string['settings_enabled_tenants'] = 'Tenants where cart is enabled';
 $string['settings_enabled_tenants_desc'] = 'Comma-separated tenant root IDs (e.g. "77,177"). Leave empty to enable for all tenants. Airpay tenant (id=1) typically does not need cart since training is a benefit.';
+$string['settings_callback_iplist'] = 'Gateway callback IP allow-list';
+$string['settings_callback_iplist_desc'] = 'Comma-separated CIDR ranges or single IPs allowed to POST to /local/airpay_cart/callback.php. Empty = accept from anywhere (legacy). When configured, requests from other sources are silently dropped with HTTP 404. Confirm gateway IPs with Airpay before enabling.';
 
 // Messages (notifications).
 $string['messageprovider:order_placed']    = 'Order placed confirmation';

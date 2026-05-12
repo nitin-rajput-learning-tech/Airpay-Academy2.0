@@ -85,6 +85,19 @@ class recompletion_engine {
             $where[] = 'c.enablecompletion = 1';
         }
 
+        // ── B6 fix: tenant scoping ────────────────────────────────────────
+        // The rule has a costcenterid column. Without filtering by it,
+        // a rule created for Airpay (tenant 1) was also wiping completions
+        // for Public-tenant (77) and ZEEA (177) users on the same course.
+        // Now: only users whose open_path starts with /{tenant}/... or
+        // exactly /{tenant} get hit. costcenterid=0 means "all tenants"
+        // and is reserved for site-admin global rules.
+        if ((int) $rule->costcenterid > 0) {
+            $where[] = "(u.open_path = :tnpath_exact OR u.open_path LIKE :tnpath_prefix)";
+            $args['tnpath_exact']  = '/' . (int) $rule->costcenterid;
+            $args['tnpath_prefix'] = '/' . (int) $rule->costcenterid . '/%';
+        }
+
         // Trigger-specific time field on completion row.
         switch ($rule->trigger_type) {
             case 'completion':
@@ -110,6 +123,11 @@ class recompletion_engine {
         $wheresql = implode(' AND ', $where);
 
         // Find candidate users to RESET (past the period_seconds threshold).
+        // B8 fix: $max_batch was string-interpolated into the SQL LIMIT
+        // clause. Even though it's an admin-only setting, that's a
+        // dangerous pattern — any code path that lets less-trusted
+        // input drive max_batch becomes RCE-via-SQL. Use the 5th/6th
+        // args of get_records_sql() instead.
         $rows = $DB->get_records_sql(
             "SELECT cc.id, cc.userid, cc.course AS courseid,
                     cc.timecompleted, c.fullname
@@ -124,9 +142,9 @@ class recompletion_engine {
              WHERE $wheresql
                AND u.deleted = 0 AND u.suspended = 0
                AND $time_field < :expiry
-          ORDER BY cc.id
-             LIMIT $max_batch",
-            array_merge($args, ['expiry' => $expiry_threshold]));
+          ORDER BY cc.id",
+            array_merge($args, ['expiry' => $expiry_threshold]),
+            0, $max_batch);
 
         foreach ($rows as $row) {
             // Skip if a recent reset for this user+course already happened
@@ -177,6 +195,7 @@ class recompletion_engine {
         // Pre-notification pass: warn users who are within the warn window.
         // (Only when not dryrun — pre-notifications are real.)
         if (!$dryrun && $rule->trigger_type !== 'fixed') {
+            // B8 fix: same LIMIT-interpolation issue as the main query.
             $warn_rows = $DB->get_records_sql(
                 "SELECT cc.id, cc.userid, cc.course AS courseid,
                         cc.timecompleted, c.fullname
@@ -187,9 +206,9 @@ class recompletion_engine {
                     AND u.deleted = 0 AND u.suspended = 0
                     AND $time_field < :warn_thr
                     AND $time_field >= :expiry2
-               ORDER BY cc.id
-                  LIMIT $max_batch",
-                array_merge($args, ['warn_thr' => $warn_threshold, 'expiry2' => $expiry_threshold]));
+               ORDER BY cc.id",
+                array_merge($args, ['warn_thr' => $warn_threshold, 'expiry2' => $expiry_threshold]),
+                0, $max_batch);
 
             foreach ($warn_rows as $row) {
                 // Suppress duplicate warn within 24h.
