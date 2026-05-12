@@ -11,6 +11,13 @@ defined('MOODLE_INTERNAL') || die();
 function xmldb_local_airpay_cart_install(): void {
     global $DB;
 
+    // db/access.php caps aren't registered yet when install hook runs.
+    // Force them in via update_capabilities() before assigning. Fixed
+    // 2026-05-11 — original install silently failed and we had to
+    // post-hoc patch caps via a CLI script. Now self-healing.
+    require_once($GLOBALS['CFG']->libdir . '/upgradelib.php');
+    update_capabilities('local/airpay_cart');
+
     $context = \context_system::instance();
 
     $rolemap = [
@@ -34,6 +41,9 @@ function xmldb_local_airpay_cart_install(): void {
             continue;  // role doesn't exist on this install (e.g. fresh moodle)
         }
         foreach ($caps as [$cap, $permission]) {
+            if (!$DB->record_exists('capabilities', ['name' => $cap])) {
+                continue;
+            }
             assign_capability($cap, $permission, $role->id, $context->id, true);
         }
     }

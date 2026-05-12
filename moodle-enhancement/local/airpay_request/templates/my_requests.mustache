@@ -1,0 +1,32 @@
+{{!
+    @template local_airpay_request/my_requests
+}}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">{{#str}}myrequests, local_airpay_request{{/str}}</h2>
+        {{#has_pending_cap}}
+        <a href="{{{ pending_url }}}" class="btn btn-outline-secondary btn-sm">
+            <i class="fa fa-check-square"></i>
+            {{#str}}pendingapprovals, local_airpay_request{{/str}}
+        </a>
+        {{/has_pending_cap}}
+    </div>
+
+    <div data-region="datatable"
+         data-component="local_airpay_request"
+         data-ws-name="local_airpay_request_list_mine"
+         data-columns="{{ columns_json }}"
+         data-default-sort="timecreated"
+         data-default-sortdir="desc"
+         data-extra-args='{}'>
+        <div class="text-center text-muted py-5">Loading...</div>
+    </div>
+</div>
+
+{{#js}}
+require(['theme_airpayux/datatable', 'local_airpay_request/my_requests'],
+    function(Datatable, M) {
+        Datatable.init(document.querySelector('[data-region="datatable"]'));
+        M.init();
+    });
+{{/js}}
