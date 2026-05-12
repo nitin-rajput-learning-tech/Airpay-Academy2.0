@@ -4,15 +4,14 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-global $CFG;
-require_once($CFG->libdir . '/messagelib.php');  // ensure MESSAGE_PERMITTED defined on first install
-
+// Inline integer values to sidestep MESSAGE_PERMITTED bootstrap-order issue.
+// MESSAGE_PERMITTED=1, MESSAGE_DEFAULT_LOGGEDIN=8, MESSAGE_DEFAULT_LOGGEDOFF=16
 $messageproviders = [
     'waitlist_promoted' => [
         'capability' => 'local/airpay_classroom:view',
         'defaults'   => [
-            'email' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_LOGGEDIN + MESSAGE_DEFAULT_LOGGEDOFF,
-            'popup' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_LOGGEDIN,
+            'email' => 1 + 8 + 16,
+            'popup' => 1 + 8,
         ],
     ],
 ];

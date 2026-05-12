@@ -119,5 +119,48 @@ function xmldb_local_airpay_classroom_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026051130, 'local', 'airpay_classroom');
     }
 
+    // ─── 2026051160: Phase 5 A.5 — locations table (Airpay-owned). ─────
+    // Replaces the dropped BizLMS local_location plugin. Locations are
+    // a property of classroom sessions, not a top-level concept.
+    if ($oldversion < 2026051160) {
+        $table = new \xmldb_table('local_airpay_locations');
+        $table->add_field('id',          XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+        $table->add_field('name',        XMLDB_TYPE_CHAR,    '200', null, XMLDB_NOTNULL);
+        $table->add_field('city',        XMLDB_TYPE_CHAR,    '100', null, null, null, '');
+        $table->add_field('address',     XMLDB_TYPE_TEXT,    null,  null, null, null, null,  'city');
+        $table->add_field('capacity',    XMLDB_TYPE_INTEGER, '10', null, null, null, '0',    'address');
+        $table->add_field('equipment',   XMLDB_TYPE_TEXT,    null,  null, null, null, null,  'capacity');
+        $table->add_field('latitude',    XMLDB_TYPE_NUMBER,  '10', null, null, null, null,
+            'equipment', null, '6');
+        $table->add_field('longitude',   XMLDB_TYPE_NUMBER,  '10', null, null, null, null,
+            'latitude',  null, '6');
+        $table->add_field('costcenterid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0',
+            'longitude');
+        $table->add_field('active',      XMLDB_TYPE_INTEGER, '1',  null, XMLDB_NOTNULL, null, '1');
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_index('idx_active',       XMLDB_INDEX_NOTUNIQUE, ['active']);
+        $table->add_index('idx_costcenter',   XMLDB_INDEX_NOTUNIQUE, ['costcenterid']);
+        $table->add_index('idx_city',         XMLDB_INDEX_NOTUNIQUE, ['city']);
+
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Add locationid FK to existing classroom + session tables.
+        foreach (['local_airpay_classroom', 'local_airpay_classroom_sessions'] as $tn) {
+            $t = new \xmldb_table($tn);
+            $f = new \xmldb_field('locationid', XMLDB_TYPE_INTEGER, '10', null, null, null, null,
+                'location');  // sits next to existing free-text 'location'
+            if ($dbman->table_exists($t) && !$dbman->field_exists($t, $f)) {
+                $dbman->add_field($t, $f);
+            }
+        }
+
+        upgrade_plugin_savepoint(true, 2026051160, 'local', 'airpay_classroom');
+    }
+
     return true;
 }
