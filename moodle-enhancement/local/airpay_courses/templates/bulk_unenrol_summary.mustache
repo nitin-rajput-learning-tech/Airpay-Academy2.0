@@ -43,11 +43,7 @@
         <tbody>
             {{#report}}
             <tr>
-                <td>
-                    {{#status}}
-                    <span class="badge bg-{{#status}}{{=<% %>=}}{{#=<% %>=}}{{/status}}{{status}}">{{ status }}</span>
-                    {{/status}}
-                </td>
+                <td><span class="badge {{ status_css }}">{{ status }}</span></td>
                 <td><code class="small">{{ line }}</code></td>
                 <td>{{ msg }}</td>
             </tr>

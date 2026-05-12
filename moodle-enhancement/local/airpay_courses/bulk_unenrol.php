@@ -120,12 +120,24 @@ if ($data = $form->get_data()) {
                              'msg' => $dryrun ? 'Would unenrol' : 'Unenrolled'];
             }
 
+            // Decorate each report row with a Bootstrap badge class.
+            $status_to_css = [
+                'ok'      => 'bg-success',
+                'failed'  => 'bg-danger',
+                'skipped' => 'bg-secondary',
+            ];
+            $visible = array_slice($report, 0, 50);
+            foreach ($visible as &$r) {
+                $r['status_css'] = $status_to_css[$r['status']] ?? 'bg-secondary';
+            }
+            unset($r);
+
             $summary = [
                 'processed' => $processed,
                 'skipped'   => $skipped,
                 'failed'    => $failed,
                 'dryrun'    => $dryrun,
-                'report'    => array_slice($report, 0, 50),  // cap visible rows
+                'report'    => $visible,
                 'report_truncated' => count($report) > 50,
             ];
         }
