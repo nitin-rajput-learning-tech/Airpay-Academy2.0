@@ -7,7 +7,9 @@ defined('MOODLE_INTERNAL') || die();
 function xmldb_local_airpay_proctoring_install(): void {
     global $DB, $CFG;
     require_once($CFG->libdir . '/upgradelib.php');
-    update_capabilities('local/airpay_proctoring');
+    // update_capabilities() needs underscore form (Moodle quirk —
+    // slash form silently returns 0 caps).
+    update_capabilities('local_airpay_proctoring');
 
     $context = \context_system::instance();
     $rolemap = [

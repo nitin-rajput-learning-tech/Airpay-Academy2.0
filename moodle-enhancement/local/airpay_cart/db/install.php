@@ -16,7 +16,9 @@ function xmldb_local_airpay_cart_install(): void {
     // 2026-05-11 — original install silently failed and we had to
     // post-hoc patch caps via a CLI script. Now self-healing.
     require_once($GLOBALS['CFG']->libdir . '/upgradelib.php');
-    update_capabilities('local/airpay_cart');
+    // update_capabilities() needs underscore form, not slash.
+    // Slash silently returns 0 caps (caught by Phase 7 UAT).
+    update_capabilities('local_airpay_cart');
 
     $context = \context_system::instance();
 

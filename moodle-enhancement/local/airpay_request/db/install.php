@@ -15,7 +15,11 @@ function xmldb_local_airpay_request_install(): void {
     // Cleanest pattern: pre-register the caps in mdl_capabilities table
     // ourselves via update_capabilities() before assigning.
     require_once($GLOBALS['CFG']->libdir . '/upgradelib.php');
-    update_capabilities('local/airpay_request');
+    // Note: Moodle's update_capabilities() expects the underscore form
+    // ('local_airpay_request'), NOT the slash form ('local/airpay_request').
+    // Slash form silently returns 0 caps registered — caught by Phase 7
+    // multi-role UAT (commit 3b117b664+1).
+    update_capabilities('local_airpay_request');
 
     $context = \context_system::instance();
     $rolemap = [

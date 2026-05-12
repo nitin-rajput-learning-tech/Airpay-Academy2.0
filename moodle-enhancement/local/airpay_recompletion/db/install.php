@@ -7,7 +7,8 @@ defined('MOODLE_INTERNAL') || die();
 function xmldb_local_airpay_recompletion_install(): void {
     global $DB, $CFG;
     require_once($CFG->libdir . '/upgradelib.php');
-    update_capabilities('local/airpay_recompletion');
+    // update_capabilities() needs underscore form (Moodle quirk).
+    update_capabilities('local_airpay_recompletion');
 
     $context = \context_system::instance();
     $rolemap = [
