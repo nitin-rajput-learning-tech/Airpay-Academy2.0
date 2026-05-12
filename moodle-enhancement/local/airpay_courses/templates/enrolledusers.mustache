@@ -1,0 +1,68 @@
+{{!
+    @template local_airpay_courses/enrolledusers
+}}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2 class="mb-0">{{ course_name }}</h2>
+            <code class="small text-muted">{{ course_short }}</code>
+        </div>
+        <div class="d-flex gap-2">
+            {{#can_enrol}}
+            <button type="button" class="btn btn-primary btn-sm"
+                    data-action="enrol-user-modal" data-courseid="{{ courseid }}"
+                    data-coursename="{{ course_name }}">
+                <i class="fa fa-user-plus"></i> Enrol user
+            </button>
+            <a href="{{{ bulk_enrol_url }}}" class="btn btn-outline-secondary btn-sm">
+                <i class="fa fa-upload"></i> Bulk enrol (CSV)
+            </a>
+            <a href="{{{ bulk_unenrol_url }}}" class="btn btn-outline-danger btn-sm">
+                <i class="fa fa-user-times"></i> Bulk unenrol (CSV)
+            </a>
+            {{/can_enrol}}
+            <a href="{{{ back_url }}}" class="btn btn-link"><i class="fa fa-arrow-left"></i> Back</a>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-4 mb-2">
+            <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
+                <div style="font-size: 1.75rem; font-weight: 800;">{{ total_enrolled }}</div>
+                <div class="text-muted small text-uppercase">Total enrolled</div>
+            </div></div>
+        </div>
+        <div class="col-md-4 mb-2">
+            <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
+                <div style="font-size: 1.75rem; font-weight: 800; color: var(--ap-color-success, #16a34a);">
+                    {{ total_completed }}
+                </div>
+                <div class="text-muted small text-uppercase">Completed</div>
+            </div></div>
+        </div>
+        <div class="col-md-4 mb-2">
+            <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
+                <div style="font-size: 1.75rem; font-weight: 800;">{{ completion_pct }}%</div>
+                <div class="text-muted small text-uppercase">Completion rate</div>
+            </div></div>
+        </div>
+    </div>
+
+    <div data-region="datatable"
+         data-component="local_airpay_courses"
+         data-ws-name="local_airpay_courses_list_course_enrolments"
+         data-columns="{{ columns_json }}"
+         data-default-sort="lastname"
+         data-default-sortdir="asc"
+         data-extra-args='{{ extra_args_json }}'>
+        <div class="text-center text-muted py-5">Loading...</div>
+    </div>
+</div>
+
+{{#js}}
+require(['theme_airpayux/datatable', 'local_airpay_courses/enrolledusers'],
+    function(Datatable, Mod) {
+        Datatable.init(document.querySelector('[data-region="datatable"]'));
+        Mod.init({{ courseid }}, '{{ course_name }}');
+    });
+{{/js}}

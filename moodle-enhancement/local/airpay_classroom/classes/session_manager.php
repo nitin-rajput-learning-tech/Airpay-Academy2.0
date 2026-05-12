@@ -474,6 +474,17 @@ class session_manager {
         } catch (\Throwable $e) {
             $tx->rollback($e);
         }
+
+        // Phase 3 B.4 (2026-05-11) — auto-promote head of waiting list.
+        // Runs AFTER the transaction commits so the seat is genuinely free.
+        if (class_exists('\\local_airpay_classroom\\waitlist_manager')) {
+            try {
+                \local_airpay_classroom\waitlist_manager::auto_promote($classroomid);
+            } catch (\Throwable $e) {
+                debugging('Waitlist auto-promote failed: ' . $e->getMessage(),
+                    DEBUG_DEVELOPER);
+            }
+        }
         return true;
     }
 

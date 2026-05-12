@@ -69,4 +69,27 @@ $functions = [
         'ajax'         => true,
         'capabilities' => 'local/airpay_courses:manage',
     ],
+
+    // Phase 3 B.2 (2026-05-11) — native enrolment UI.
+    'local_airpay_courses_list_course_enrolments' => [
+        'classname'    => 'local_airpay_courses\external\list_course_enrolments',
+        'description'  => 'List users enrolled in a course',
+        'type'         => 'read',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_courses:view',
+    ],
+    'local_airpay_courses_enrol_single' => [
+        'classname'    => 'local_airpay_courses\external\enrol_single',
+        'description'  => 'Enrol one user in a course by email/empid/username',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_courses:enrol',
+    ],
+    'local_airpay_courses_unenrol_single' => [
+        'classname'    => 'local_airpay_courses\external\unenrol_single',
+        'description'  => 'Unenrol one user from a course (manual instance)',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_courses:enrol',
+    ],
 ];

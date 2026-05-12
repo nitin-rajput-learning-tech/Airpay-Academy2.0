@@ -94,4 +94,27 @@ $functions = [
         'ajax'         => true,
         'capabilities' => 'local/airpay_classroom:attendance',
     ],
+
+    // Phase 3 B.4 (2026-05-11) — waiting list when classroom hits capacity.
+    'local_airpay_classroom_waitlist_join' => [
+        'classname'    => 'local_airpay_classroom\external\waitlist_join',
+        'description'  => 'Join the waiting list for a classroom',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_classroom:view',
+    ],
+    'local_airpay_classroom_waitlist_leave' => [
+        'classname'    => 'local_airpay_classroom\external\waitlist_leave',
+        'description'  => 'Leave the waiting list',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_classroom:view',
+    ],
+    'local_airpay_classroom_list_waitlist' => [
+        'classname'    => 'local_airpay_classroom\external\list_waitlist',
+        'description'  => 'List the waiting list for a classroom',
+        'type'         => 'read',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_classroom:view',
+    ],
 ];

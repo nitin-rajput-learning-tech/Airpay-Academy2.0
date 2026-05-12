@@ -80,5 +80,44 @@ function xmldb_local_airpay_classroom_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026050800, 'local', 'airpay_classroom');
     }
 
+    // ─── 2026051130: Phase 3 B.4 — waiting list. ───────────────────────
+    // When capacity is reached, additional users go to a queue. When an
+    // active enrolment cancels, the head of the queue auto-promotes.
+    if ($oldversion < 2026051130) {
+
+        $table = new \xmldb_table('local_airpay_classroom_waitlist');
+        $table->add_field('id',           XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('classroomid',  XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('userid',       XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('position',     XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0',
+            'userid');
+        $table->add_field('status',       XMLDB_TYPE_CHAR,    '20', null, XMLDB_NOTNULL, null, 'waiting',
+            'position');
+        $table->add_field('reason',       XMLDB_TYPE_TEXT,    null, null, null, null, null,
+            'status');
+        $table->add_field('promoted_at',  XMLDB_TYPE_INTEGER, '10', null, null, null, null,
+            'reason');
+        $table->add_field('removed_at',   XMLDB_TYPE_INTEGER, '10', null, null, null, null,
+            'promoted_at');
+        $table->add_field('timecreated',  XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('fk_classroom', XMLDB_KEY_FOREIGN,
+            ['classroomid'], 'local_airpay_classroom', ['id']);
+        $table->add_key('fk_user', XMLDB_KEY_FOREIGN, ['userid'], 'user', ['id']);
+
+        $table->add_index('idx_classroom_status', XMLDB_INDEX_NOTUNIQUE,
+            ['classroomid', 'status']);
+        $table->add_index('idx_user_status', XMLDB_INDEX_NOTUNIQUE,
+            ['userid', 'status']);
+
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026051130, 'local', 'airpay_classroom');
+    }
+
     return true;
 }

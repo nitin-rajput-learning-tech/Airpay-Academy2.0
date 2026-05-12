@@ -81,7 +81,8 @@ class list_skills extends external_api {
                 'max_level' => (int) $s->max_level,
                 'sort'      => (int) $s->sort_order,
                 'created'   => $s->timecreated ? userdate($s->timecreated, '%d %b %Y') : '—',
-                'actions'   => '<a href="' . s((new \moodle_url('/local/airpay_skills/level_definitions.php', ['skillid' => (int) $s->id]))->out(false)) . '" class="btn btn-sm btn-link text-muted p-1" title="Level definitions"><i class="fa fa-list-ol"></i></a>'
+                'actions'   => '<a href="' . s((new \moodle_url('/local/airpay_skills/view.php', ['id' => (int) $s->id]))->out(false)) . '" class="btn btn-sm btn-link p-1" title="View detail"><i class="fa fa-eye"></i></a>'
+                    . ' <a href="' . s((new \moodle_url('/local/airpay_skills/level_definitions.php', ['skillid' => (int) $s->id]))->out(false)) . '" class="btn btn-sm btn-link text-muted p-1" title="Level definitions"><i class="fa fa-list-ol"></i></a>'
                     . ' <a href="#" class="btn btn-sm btn-link p-1" data-action="edit-skill" data-skillid="' . (int)$s->id . '" data-name="' . s($s->name) . '" title="Edit"><i class="fa fa-pencil"></i></a>'
                     . ' <a href="#" class="btn btn-sm btn-link p-1" data-action="delete-skill" data-skillid="' . (int)$s->id . '" data-name="' . s($s->name) . '" title="Delete"><i class="fa fa-trash text-danger"></i></a>',
             ];

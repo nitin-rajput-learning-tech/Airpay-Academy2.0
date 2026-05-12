@@ -139,6 +139,13 @@ class list_courses extends external_api {
                            . s($c->fullname) . '</a>';
 
             $actions = [];
+            // Phase 3 B.2 (2026-05-11) — native enrolled-users page link.
+            $enrolledurl = (new \moodle_url('/local/airpay_courses/enrolledusers.php',
+                ['id' => (int) $c->id]))->out(false);
+            $actions[] = '<a href="' . s($enrolledurl) . '" '
+                . 'class="btn btn-sm btn-link text-muted p-1" '
+                . 'title="View enrolled users"><i class="fa fa-users"></i></a>';
+
             // Phase F.5 (2026-05-08) — native enrol modal (replaces G-06
             // deep-link). Opens in-page via local_airpay_courses/enrol_modal.
             // Original deep-link kept as fallback (Shift-click / new-tab).

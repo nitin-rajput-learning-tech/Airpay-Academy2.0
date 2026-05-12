@@ -96,16 +96,22 @@ class list_exams extends external_api {
             $statuscss = $e->status == 1 ? 'badge-success' : 'badge-secondary';
 
             $actions = [];
-            // G-06: Enrol Users — deep-link to Moodle core /enrol/users.php
-            // for the parent course of the wrapping quiz. Only emitted when
-            // we have a valid quiz_courseid (not null/0) — exams without a
-            // bound quiz can't be enrolled into yet.
+            // Phase 3 B.3 (2026-05-11) — standalone detail page.
+            $viewurl = (new \moodle_url('/local/airpay_exams/view.php',
+                ['id' => (int) $e->id]))->out(false);
+            $actions[] = '<a href="' . s($viewurl) . '" '
+                . 'class="btn btn-sm btn-link p-1" '
+                . 'title="View detail"><i class="fa fa-eye"></i></a>';
+
+            // Phase 3 B.3 (2026-05-11) — switched from deep-link to airpay
+            // core /enrol/users.php to airpay-native enrolledusers page,
+            // giving full datatable + modal enrol/unenrol + completion %.
             if ($can_enrol && !empty($e->quiz_courseid)) {
-                $enrolurl = (new \moodle_url('/enrol/users.php',
+                $enrolurl = (new \moodle_url('/local/airpay_courses/enrolledusers.php',
                     ['id' => (int) $e->quiz_courseid]))->out(false);
-                $actions[] = '<a href="' . s($enrolurl) . '" target="_blank" rel="noopener" '
+                $actions[] = '<a href="' . s($enrolurl) . '" '
                     . 'class="btn btn-sm btn-link text-muted p-1" '
-                    . 'title="Enrol users"><i class="fa fa-user-plus"></i></a>';
+                    . 'title="Manage enrolment"><i class="fa fa-user-plus"></i></a>';
             }
             if ($can_manage) {
                 $actions[] = '<a href="#" class="btn btn-sm btn-link text-muted p-1" '
