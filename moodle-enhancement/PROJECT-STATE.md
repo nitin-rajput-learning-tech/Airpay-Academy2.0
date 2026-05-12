@@ -1,15 +1,54 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-12 LATE — **PHASE 8 SECURITY AUDIT RETURNED NO-GO.** 11 blocking findings (1 critical CVSS 9.1 payment-tampering, 7 high CVSS 7.0-8.6 cross-tenant access). Cutover blocked pending 2-3 days remediation in Phase 8.1.
-**Phase:** Academy 4.0 — Enterprise-grade build at Phase 8 (security audit + load test scripts + deployment runbook complete). Phase 8.1 (remediation of 11 blocking findings) is the immediate next session.
+**Updated:** 2026-05-12 NIGHT — **PHASE 8.1 SECURITY REMEDIATION SHIPPED.** All 11 blocking findings closed in one session (35 files, +787/-83). New shared `local_airpay_core` plugin systemises tenant-equality so this regression class can't return. Re-audit + Phase 7 UAT re-run are the next gates.
+**Phase:** Academy 4.0 — Phase 8.1 (remediation) complete. Phase 8.2 = re-audit + Phase 7 UAT re-run + staging k6 load test → cutover.
 **Theme:** airpayux v1.0.0 | **Moodle:** 5.1.3+ on XAMPP
 **Version:** 4.0-rc3 — All 22 Phase-2 rows ✅ + cart + proctoring + recompletion + AI + cohorts + badges + 7-persona UAT.
-**GitHub:** Pushed to nitin-rajput-learning-tech/Airpay-Academy2.0 (production branch, commit `a1c7c38e5` + Phase 8 pending push)
+**GitHub:** Pushed to nitin-rajput-learning-tech/Airpay-Academy2.0 (production branch, commit `02ce2bc8e`)
 **Today's UAT result:** Phase 7 multi-role 84/85 (Site Admin, Tenant Admin, Manager, Trainer, Public Admin, ZEEA all 14/14; Public User 0/1 — transient login timeout). Plus prior 158/158 + Phase 1-6 smoke batteries = **270+ cumulative cases pass**.
-**Today's audit result:** Phase 8 security audit — **NO-GO** verdict. 11 BLOCKING findings, 9 non-blocking. Audit scope: 5 new plugins + 1 subplugin shipped over Phases 1-6 (~20K LOC). See `PHASE-8-SECURITY-AUDIT.md`.
+**Today's audit + remediation:** Phase 8 audit returned NO-GO at 11 BLOCKING findings — Phase 8.1 remediation shipped same day. Audit findings retained in `PHASE-8-SECURITY-AUDIT.md` for traceability; remediation diff is commit `02ce2bc8e`.
 
-> **TOMORROW START HERE:** `PHASE-8-REPORT.md` then `PHASE-8-SECURITY-AUDIT.md`
-> Phase 8.1 = fix B1-B11 in priority order. Auditor estimates 2 dev days + 1 test day.
-> No cutover until re-audit returns GO.
+> **TOMORROW START HERE:** Re-run security audit against the new diff.
+> Phase 8.2 sequence: (1) re-audit returns GO → (2) re-run Phase 7
+> multi-role UAT → (3) staging k6 load test against prod-sized RDS clone
+> → (4) follow `PHASE-8-DEPLOYMENT-RUNBOOK.md` for cutover.
+> No cutover until all three pre-cutover gates pass.
+
+## Phase 8.1 remediation summary
+
+11 blocking findings closed in one session, 35 files changed, +787/-83.
+
+Root cause: 10 of 11 findings shared one architectural gap — capability
+checks at `CONTEXT_SYSTEM` without an additional tenant-equality check.
+Public-tenant manager with `:viewallorders` legitimately held the cap;
+the second check was missing in every external.
+
+Fix: new `local_airpay_core` plugin with `\local_airpay_core\tenant`
+helper class — `root_for_user`, `viewer_can_access`, `require_access`,
+`sql_filter`. Every blocking finding now uses one of these helpers.
+8 PHPUnit tests guarantee cross-tenant rejection + site-admin passthrough.
+
+Per-finding fixes:
+- B4 (CVSS 9.1) Payment tampering: callback.php compares payload.amount
+  + currency to server-side cart.total_amount/currency BEFORE mark_paid.
+- B11 (CVSS 5.4) Callback DoS: generic 500, optional CIDR allow-list,
+  new ip_check helper with v4 + v6 CIDR matcher.
+- B1 (CVSS 8.6) Cart cross-tenant: cart_manager::get_order + refund +
+  list + daily_sums all use tenant::sql_filter() / require_access().
+- B2 (CVSS 8.1) Proctoring read leak: 5 read paths now tenant-scoped.
+- B3 (CVSS 8.2) Proctoring write IDOR: session_manager helpers verify
+  ownership; s3_key whitelisted to strict regex; size+duration bounded.
+- B5 (CVSS 7.4) Invoice XSS fragility: html_writer wrapper with
+  white-space: pre-line replaces the nl2br()+{{{ }}} pattern.
+- B6 (CVSS 7.5) Recompletion cross-tenant: rule.costcenterid now drives
+  a path-prefix filter on the candidate query.
+- B7 (CVSS 6.8) Identity photo abuse: 5 submits/hour rate limit, size
+  cap 14MB→5.5MB, base64 strict-mode, MIME magic-byte sniff (JPEG/PNG).
+- B8 (CVSS 6.5) LIMIT injection: 3 queries refactored to use limitfrom
+  /limitnum args instead of string interpolation.
+- B9 (CVSS 7.1) set_price context: :manageprices cap moved to
+  CONTEXT_COURSE; external uses context_course::instance() for the check.
+- B10 (CVSS 6.5) Approver bypass: request_manager::decide adds tenant
+  equality after :overrideroute cap check.
 >
 > Today shipped the enterprise-grade plan end-to-end: airpay_cart (full
 > e-commerce stack for external tenants), airpay_proctoring + quizaccess
