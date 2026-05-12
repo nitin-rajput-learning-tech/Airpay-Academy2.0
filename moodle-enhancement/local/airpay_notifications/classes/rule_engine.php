@@ -83,9 +83,262 @@ class rule_engine {
             case 'monthly_summary':
                 $result = self::rule_monthly_summary($rule);
                 break;
+
+            // Phase 4 B.8 — 2026-05-11 — final 4 BizLMS-equivalent rules.
+            case 'cert_expired':
+                $result = self::rule_cert_expired($rule);
+                break;
+            case 'training_overdue':
+                $result = self::rule_training_overdue($rule);
+                break;
+            case 'manager_summary_weekly':
+                $result = self::rule_manager_summary_weekly($rule);
+                break;
+            case 'peer_completion_celebration':
+                $result = self::rule_peer_completion_celebration($rule);
+                break;
         }
 
         return $result;
+    }
+
+    // ───────────────────────────────────────────────────────────────────
+    // Phase 4 B.8 (2026-05-11) — final 4 BizLMS-equivalent rule handlers
+    // ───────────────────────────────────────────────────────────────────
+
+    /**
+     * Rule: Cert expired (distinct from certificate_expiring which fires
+     * BEFORE expiry — this one fires AFTER).
+     *
+     * Notifies the learner that a previously-earned certificate has now
+     * lapsed and triggers the re-cert workflow.
+     */
+    private static function rule_cert_expired(\stdClass $rule): array {
+        global $DB;
+        $result = ['sent' => 0, 'skipped' => 0];
+        $batchlimit = (int) (get_config('local_airpay_notifications', 'batch_limit') ?: 500);
+        $now = time();
+
+        $dbman = $DB->get_manager();
+        if (!$dbman->table_exists('tool_certificate_issues')) {
+            return $result;  // cert plugin not installed — nothing to do
+        }
+
+        $rows = $DB->get_records_sql("
+            SELECT ci.id AS issueid, ci.userid, ci.expires, ci.code,
+                   u.firstname, ct.name AS cert_name
+              FROM {tool_certificate_issues} ci
+              JOIN {user} u ON u.id = ci.userid
+         LEFT JOIN {tool_certificate_templates} ct ON ct.id = ci.templateid
+             WHERE ci.expires > 0 AND ci.expires < :now
+               AND u.deleted = 0 AND u.suspended = 0
+          ORDER BY ci.expires DESC
+             LIMIT $batchlimit",
+            ['now' => $now]);
+
+        foreach ($rows as $r) {
+            $cert_name = $r->cert_name ?: 'your certificate';
+            $sent = self::send($rule, (int) $r->userid, null,
+                'Certificate expired: ' . format_string($cert_name),
+                'Hi ' . s($r->firstname) . ", your '"
+                . format_string($cert_name) . "' has expired on "
+                . userdate($r->expires, '%d %b %Y') . '. Please re-take the'
+                . " relevant training to maintain your compliance status.");
+            $sent ? $result['sent']++ : $result['skipped']++;
+        }
+        return $result;
+    }
+
+    /**
+     * Rule: Training overdue (admin digest).
+     *
+     * Different from compliance_overdue (learner-facing). This is for
+     * L&D / admins — counts overdue enrolments by tenant, sends a summary.
+     */
+    private static function rule_training_overdue(\stdClass $rule): array {
+        global $DB;
+        $result = ['sent' => 0, 'skipped' => 0];
+        $now = time();
+
+        $stats = $DB->get_records_sql("
+            SELECT SUBSTRING_INDEX(u.open_path, '/', 2) AS tenant_root,
+                   COUNT(DISTINCT u.id) AS overdue_users,
+                   COUNT(*) AS overdue_enrolments
+              FROM {user} u
+              JOIN {user_enrolments} ue ON ue.userid = u.id AND ue.status = 0
+              JOIN {enrol} e ON e.id = ue.enrolid
+              JOIN {course} c ON c.id = e.courseid
+         LEFT JOIN {course_completions} cc ON cc.userid = u.id AND cc.course = c.id
+             WHERE c.enddate > 0 AND c.enddate < :now
+               AND cc.timecompleted IS NULL
+               AND u.deleted = 0 AND u.suspended = 0
+          GROUP BY tenant_root", ['now' => $now]);
+
+        if (empty($stats)) return $result;
+
+        $body = "Training overdue summary as of " . userdate($now, '%d %b %Y') . ":\n\n";
+        $total_users = 0;
+        $total_enrolments = 0;
+        foreach ($stats as $s) {
+            $body .= sprintf("  Tenant %s: %d users / %d enrolments overdue\n",
+                $s->tenant_root, $s->overdue_users, $s->overdue_enrolments);
+            $total_users      += (int) $s->overdue_users;
+            $total_enrolments += (int) $s->overdue_enrolments;
+        }
+        $body .= "\nTotal: $total_users users with $total_enrolments overdue enrolments.";
+
+        $recipients = self::resolve_audience($rule);
+        foreach ($recipients as $uid) {
+            $sent = self::send($rule, $uid, null,
+                "Training overdue: $total_users users, $total_enrolments enrolments",
+                $body);
+            $sent ? $result['sent']++ : $result['skipped']++;
+        }
+        return $result;
+    }
+
+    /**
+     * Rule: Manager weekly summary.
+     *
+     * Every week: digest of direct reports' activity per manager
+     * (completions, attempts, active users).
+     */
+    private static function rule_manager_summary_weekly(\stdClass $rule): array {
+        global $DB;
+        $result = ['sent' => 0, 'skipped' => 0];
+        $week_ago = time() - (7 * 86400);
+
+        // Defensive: open_managerid is a BizLMS extension column. Skip if absent.
+        $cols = $DB->get_columns('user');
+        if (!isset($cols['open_managerid'])) {
+            return $result;
+        }
+
+        $managers = $DB->get_fieldset_sql(
+            "SELECT DISTINCT open_managerid FROM {user}
+              WHERE open_managerid > 0 AND deleted = 0 AND suspended = 0");
+
+        foreach ($managers as $mid) {
+            $manager = $DB->get_record('user',
+                ['id' => $mid, 'deleted' => 0, 'suspended' => 0]);
+            if (!$manager) continue;
+
+            $stats = $DB->get_record_sql("
+                SELECT
+                    COUNT(DISTINCT u.id) AS team_size,
+                    COUNT(DISTINCT cc.id) AS completions,
+                    COUNT(DISTINCT qa.id) AS quiz_attempts,
+                    SUM(CASE WHEN u.lastaccess > :week_ago THEN 1 ELSE 0 END) AS active_users
+                  FROM {user} u
+             LEFT JOIN {course_completions} cc
+                       ON cc.userid = u.id AND cc.timecompleted > :wa2
+             LEFT JOIN {quiz_attempts} qa
+                       ON qa.userid = u.id AND qa.state = 'finished'
+                       AND qa.timefinish > :wa3
+                 WHERE u.open_managerid = :mid
+                   AND u.deleted = 0 AND u.suspended = 0",
+                ['mid' => $mid, 'week_ago' => $week_ago,
+                 'wa2' => $week_ago, 'wa3' => $week_ago]);
+
+            if (!$stats || (int) $stats->team_size === 0) continue;
+
+            $body = "Hi " . s($manager->firstname) . ",\n\n"
+                . "Your team's L&D activity in the last 7 days:\n\n"
+                . "  Team size: {$stats->team_size}\n"
+                . "  Active users (logged in): {$stats->active_users}\n"
+                . "  Course completions: {$stats->completions}\n"
+                . "  Quiz attempts: {$stats->quiz_attempts}\n\n"
+                . "Check your Team page for individual details.";
+
+            $sent = self::send($rule, $mid, null,
+                "Your team's L&D summary — week of " . userdate(time(), '%d %b'),
+                $body);
+            $sent ? $result['sent']++ : $result['skipped']++;
+        }
+        return $result;
+    }
+
+    /**
+     * Rule: Peer completion celebration.
+     *
+     * When user X completes a course, notify their teammates (same manager).
+     * Targets only completions in the last 24h to keep volume manageable.
+     */
+    private static function rule_peer_completion_celebration(\stdClass $rule): array {
+        global $DB;
+        $result = ['sent' => 0, 'skipped' => 0];
+        $batchlimit = (int) (get_config('local_airpay_notifications', 'batch_limit') ?: 100);
+        $day_ago = time() - 86400;
+
+        // Defensive: open_managerid is a BizLMS extension. Skip if absent.
+        $cols = $DB->get_columns('user');
+        if (!isset($cols['open_managerid'])) {
+            return $result;
+        }
+
+        $rows = $DB->get_records_sql("
+            SELECT cc.id AS completionid, cc.userid AS completer_id,
+                   cc.course AS courseid, cc.timecompleted,
+                   u.firstname, u.lastname, u.open_managerid,
+                   c.fullname AS course_name
+              FROM {course_completions} cc
+              JOIN {user} u ON u.id = cc.userid
+              JOIN {course} c ON c.id = cc.course
+             WHERE cc.timecompleted > :day_ago
+               AND u.deleted = 0
+          ORDER BY cc.timecompleted DESC
+             LIMIT $batchlimit",
+            ['day_ago' => $day_ago]);
+
+        foreach ($rows as $r) {
+            if (empty($r->open_managerid)) continue;
+
+            $teammates = $DB->get_records_sql(
+                "SELECT id, firstname FROM {user}
+                  WHERE open_managerid = :mid
+                    AND id != :uid
+                    AND deleted = 0 AND suspended = 0",
+                ['mid' => $r->open_managerid, 'uid' => $r->completer_id]);
+
+            $completer_name = trim($r->firstname . ' ' . $r->lastname);
+            $course_name = format_string($r->course_name);
+
+            foreach ($teammates as $tm) {
+                $sent = self::send($rule, (int) $tm->id, (int) $r->courseid,
+                    "$completer_name completed $course_name",
+                    'Hi ' . s($tm->firstname) . ", your teammate "
+                    . s($completer_name) . " just finished '$course_name'. "
+                    . 'You can do it too — check the catalog.');
+                $sent ? $result['sent']++ : $result['skipped']++;
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * Resolve the rule's audience field to a list of recipient userids.
+     *
+     * Audience values:
+     *   "siteadmin"          → all configured site admins (default)
+     *   "1,2,3"              → comma-separated user IDs
+     *   "designation:Manager" → all users with that designation
+     */
+    private static function resolve_audience(\stdClass $rule): array {
+        global $DB, $CFG;
+        $audience = trim((string) ($rule->audience ?? ''));
+        if ($audience === '' || $audience === 'siteadmin') {
+            return array_map('intval',
+                array_filter(explode(',', $CFG->siteadmins ?? '')));
+        }
+        if (str_starts_with($audience, 'designation:')) {
+            $des = substr($audience, strlen('designation:'));
+            return $DB->get_fieldset_select('user',
+                'id', "open_designation = :d AND deleted = 0 AND suspended = 0",
+                ['d' => $des]);
+        }
+        $ids = array_filter(array_map('intval',
+            preg_split('/[\s,]+/', $audience)));
+        return $ids;
     }
 
     // ───────────────────────────────────────────────────────────────────

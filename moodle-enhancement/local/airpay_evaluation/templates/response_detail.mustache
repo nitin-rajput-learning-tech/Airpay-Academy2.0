@@ -1,0 +1,91 @@
+{{!
+    @template local_airpay_evaluation/response_detail
+}}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2 class="mb-0">{{ eval_name }}</h2>
+            <div class="small text-muted">
+                <span class="badge bg-secondary">Kirkpatrick {{ kirkpatrick }}</span>
+                · Response #{{ response_id }} · Submitted {{ submitted_at }}
+            </div>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{{ analysis_url }}}" class="btn btn-outline-primary btn-sm">
+                <i class="fa fa-chart-bar"></i> Analysis
+            </a>
+            <a href="{{{ back_url }}}" class="btn btn-link">
+                <i class="fa fa-arrow-left"></i> All responses
+            </a>
+        </div>
+    </div>
+
+    {{#is_anonymous}}
+    <div class="alert alert-info">
+        <i class="fa fa-eye-slash"></i> Anonymous evaluation — respondent identity hidden.
+    </div>
+    {{/is_anonymous}}
+    {{^is_anonymous}}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body py-2">
+            <strong>{{ user_name }}</strong> · <code class="small">{{ user_email }}</code>
+            {{#employee_id}}· <code class="small">{{ employee_id }}</code>{{/employee_id}}
+        </div>
+    </div>
+    {{/is_anonymous}}
+
+    <h4 class="mb-3">{{ question_count }} questions
+        <small class="text-muted">— compared against {{ total_responses }} total responses</small>
+    </h4>
+
+    {{#questions}}
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <h5 class="mb-0">{{ text }}</h5>
+                <span class="badge bg-light text-dark">{{ type }}</span>
+            </div>
+
+            <div class="mb-3">
+                <strong>Their answer:</strong>
+                {{#has_my_answer}}
+                <span class="badge bg-primary fs-6 ms-2">{{ my_answer }}</span>
+                {{/has_my_answer}}
+                {{^has_my_answer}}
+                <span class="text-muted ms-2">No answer provided</span>
+                {{/has_my_answer}}
+            </div>
+
+            {{#histogram}}
+            {{#level}}
+            <div class="d-flex align-items-center mb-1">
+                <div style="width:40px;"><span class="badge bg-secondary">{{ level }}</span></div>
+                <div class="flex-grow-1 mx-2">
+                    <div class="progress" style="height:18px;">
+                        <div class="progress-bar {{#is_my_choice}}bg-primary{{/is_my_choice}}{{^is_my_choice}}bg-secondary{{/is_my_choice}}"
+                             style="width:{{ pct }}%;">
+                            {{ count }}
+                        </div>
+                    </div>
+                </div>
+                <div style="width:60px;text-align:right;">{{ pct }}%</div>
+            </div>
+            {{/level}}
+            {{^level}}
+            {{#label}}
+            <div class="d-flex align-items-center mb-1">
+                <div style="width:160px;" class="small">{{ label }}</div>
+                <div class="flex-grow-1 mx-2">
+                    <div class="progress" style="height:18px;">
+                        <div class="progress-bar bg-secondary" style="width:{{ pct }}%;">{{ count }}</div>
+                    </div>
+                </div>
+                <div style="width:60px;text-align:right;">{{ pct }}%</div>
+            </div>
+            {{/label}}
+            {{/level}}
+            {{/histogram}}
+        </div>
+    </div>
+    {{/questions}}
+</div>

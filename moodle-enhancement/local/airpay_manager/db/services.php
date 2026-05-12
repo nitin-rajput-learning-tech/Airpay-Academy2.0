@@ -46,4 +46,20 @@ $functions = [
         'ajax'         => true,
         'capabilities' => 'local/airpay_manager:allocate',
     ],
+
+    // Phase 4 B.10 (2026-05-11) — bulk decide + team performance.
+    'local_airpay_manager_bulk_decide' => [
+        'classname'    => 'local_airpay_manager\external\bulk_decide',
+        'description'  => 'Approve or reject many requests in one batch',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_manager:approve',
+    ],
+    'local_airpay_manager_team_performance' => [
+        'classname'    => 'local_airpay_manager\external\team_performance',
+        'description'  => 'Aggregate per-direct-report metrics for the dashboard',
+        'type'         => 'read',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_manager:view',
+    ],
 ];

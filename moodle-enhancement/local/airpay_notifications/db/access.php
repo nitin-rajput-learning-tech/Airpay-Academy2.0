@@ -23,4 +23,11 @@ $capabilities = [
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes'   => ['manager' => CAP_ALLOW],
     ],
+    // Phase 4 B.8 (2026-05-11) — notification log viewer access.
+    'local/airpay_notifications:viewlogs' => [
+        'riskbitmask'  => RISK_PERSONAL,
+        'captype'      => 'read',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => ['manager' => CAP_ALLOW],
+    ],
 ];

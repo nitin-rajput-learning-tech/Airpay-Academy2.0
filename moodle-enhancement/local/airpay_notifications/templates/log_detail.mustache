@@ -1,0 +1,88 @@
+{{!
+    @template local_airpay_notifications/log_detail
+}}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Notification #{{ id }}</h2>
+        <a href="{{{ back_url }}}" class="btn btn-link">
+            <i class="fa fa-arrow-left"></i> Back to logs
+        </a>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h5>Summary</h5>
+                    <dl>
+                        <dt>Subject</dt><dd>{{ subject }}</dd>
+                        <dt>Channel</dt><dd>{{ channel }}</dd>
+                        <dt>Status</dt><dd><span class="{{ status_css }}">{{ status }}</span></dd>
+                        <dt>Sent at</dt><dd><code>{{ sent_at }}</code></dd>
+                        <dt>Read at</dt><dd><code>{{ read_at }}</code></dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    {{#has_user}}
+                    <h6>Recipient</h6>
+                    <p><strong>{{ user_name }}</strong><br>
+                        <code class="small">{{ user_email }}</code></p>
+                    {{/has_user}}
+                    {{#has_rule}}
+                    <h6 class="mt-3">Rule</h6>
+                    <p><strong>{{ rule_name }}</strong><br>
+                        <code class="small text-muted">{{ rule_type }}</code></p>
+                    {{/has_rule}}
+                    {{#has_course}}
+                    <h6 class="mt-3">Course</h6>
+                    <p>{{ course_name }}</p>
+                    {{/has_course}}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{#has_message}}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent"><strong>Message body</strong></div>
+        <div class="card-body">{{{ message }}}</div>
+    </div>
+    {{/has_message}}
+
+    {{#has_timeline}}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent">
+            <strong>Recent timeline</strong>
+            <span class="text-muted small">— same rule + recipient, last 30 days</span>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-sm mb-0">
+                <thead><tr><th>Time</th><th>Subject</th>
+                    <th>Status</th><th>Read</th><th></th></tr></thead>
+                <tbody>
+                    {{#timeline}}
+                    <tr {{#is_current}}class="table-active"{{/is_current}}>
+                        <td class="small">{{ time }}</td>
+                        <td>{{ subject }}</td>
+                        <td><span class="badge bg-light text-dark">{{ status }}</span></td>
+                        <td class="small text-muted">{{ read_at }}</td>
+                        <td>
+                            {{^is_current}}
+                            <a href="{{{ detail_url }}}" class="btn btn-sm btn-link">
+                                <i class="fa fa-info-circle"></i>
+                            </a>
+                            {{/is_current}}
+                            {{#is_current}}<span class="badge bg-primary">current</span>{{/is_current}}
+                        </td>
+                    </tr>
+                    {{/timeline}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {{/has_timeline}}
+</div>
