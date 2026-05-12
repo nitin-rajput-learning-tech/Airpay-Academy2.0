@@ -1,0 +1,36 @@
+{{!
+    @template local_airpay_cart/admin_orders
+
+    Admin orders dashboard — full table with filters + refund modal.
+}}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">{{#str}}allorders, local_airpay_cart{{/str}}</h2>
+        <div class="d-flex gap-2">
+            <a href="{{{ set_price_url }}}" class="btn btn-outline-secondary btn-sm">
+                <i class="fa fa-tag"></i> Set prices
+            </a>
+            <a href="{{{ daily_sums_url }}}" class="btn btn-outline-secondary btn-sm">
+                <i class="fa fa-chart-line"></i> Daily sums
+            </a>
+        </div>
+    </div>
+
+    <div data-region="datatable"
+         data-component="local_airpay_cart"
+         data-ws-name="local_airpay_cart_list_orders"
+         data-columns="{{ columns_json }}"
+         data-default-sort="timecreated"
+         data-default-sortdir="desc"
+         data-extra-args='{}'>
+        <div class="text-center text-muted py-5">Loading...</div>
+    </div>
+</div>
+
+{{#js}}
+require(['theme_airpayux/datatable', 'local_airpay_cart/admin_orders'],
+    function(Datatable, AdminOrders) {
+        Datatable.init(document.querySelector('[data-region="datatable"]'));
+        AdminOrders.init();
+    });
+{{/js}}

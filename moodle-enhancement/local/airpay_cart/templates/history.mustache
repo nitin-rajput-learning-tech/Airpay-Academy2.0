@@ -1,0 +1,29 @@
+{{!
+    @template local_airpay_cart/history
+
+    Order history — datatable.
+}}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">{{#str}}orderhistory, local_airpay_cart{{/str}}</h2>
+        <a href="{{{ back_url }}}" class="btn btn-link"><i class="fa fa-arrow-left"></i> Back to cart</a>
+    </div>
+
+    <div data-region="datatable"
+         data-component="local_airpay_cart"
+         data-ws-name="local_airpay_cart_list_orders"
+         data-columns="{{ columns_json }}"
+         data-default-sort="timecreated"
+         data-default-sortdir="desc"
+         data-extra-args='{}'>
+        <div class="text-center text-muted py-5">Loading...</div>
+    </div>
+</div>
+
+{{#js}}
+require(['theme_airpayux/datatable', 'local_airpay_cart/history'],
+    function(Datatable, History) {
+        Datatable.init(document.querySelector('[data-region="datatable"]'));
+        History.init();
+    });
+{{/js}}
