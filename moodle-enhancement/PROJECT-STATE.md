@@ -1,6 +1,29 @@
 # PROJECT STATE — Airpay Academy L&D OS
 **Updated:** 2026-05-12 END-OF-DAY — **MASTER DOCUMENTATION v1.0 SHIPPED.** 123 KB markdown / 91 KB Word document covering all 15 sections of the master prompt at `D:\Claude Local\airpay-ld-os\docs\AIRPAY-ACADEMY-2.0-MASTER-DOCUMENTATION-2026-05-12.{md,docx}`. Generated via python-docx with Airpay branding (primary `#0066A7`, accent `#0F7A73`, Montserrat font, page numbers, accent-coloured headings). 18,128 words, approximately 70-80 Word pages — within the 80-150 page target band of the brief.
-**Phase:** Academy 4.0 — Phase 8.2 complete in code. Master documentation v1.0 delivered. Next session opens with the four infra-dependent cutover gates (IT staging deploy + k6 + pen-test + sign-off).
+**Phase:** Academy 4.0 — Phase 9 stretch complete (6 non-blocking audit follow-ups + audit_log helper + 14 of 30 plugin READMEs). Master documentation v1.0 shipped. Next session opens with the four infra-dependent cutover gates (IT staging deploy + k6 + pen-test + sign-off) and the 33-item open backlog enumerated in PHASE-9-BACKLOG.md.
+
+> **PHASE 9 STRETCH (12 May 2026, commit `ffee790b9`):**
+> All six non-blocking findings from the Phase 8.2 re-audit shipped:
+> - N1 sliding-window rate limit (timestamp-array replaces fixed-hour bucket)
+> - N2 S3 purge real SigV4 DELETE implementation (GDPR retention enforced)
+> - N5 `_tenantroot` renamed to `aptenantroot` (drop non-Moodle convention)
+> - N6 silent-404 callback IP-drop logging with hourly dedupe
+> - N7 quizaccess config-table-bloat refactored to relational table with migration
+> - N9 AWS Rekognition exponential-backoff retry (3 attempts, 250/500ms backoff)
+>
+> Plus the cross-cutting `\local_airpay_core\audit_log` helper for compliance
+> queries (sensitive_actions, actions_by_user, tenant_actions) and 8 more
+> plugin READMEs (org, users, courses, classroom, emails, notifications,
+> manager, privacy). 14 of 30 plugins now have READMEs; the remaining 16
+> follow the same template and are documented in their existing state cards.
+>
+> The full backlog of 47 items (ACTIONABLE-NOW + BLOCKED-INFRA + BLOCKED-MGMT
+> + BLOCKED-CONFIRM + FORK-PLANNED + FUTURE-DESIGN + TECH-DEBT) is enumerated
+> in the master-doc Section 12 + 13 + 14 and in this session's TodoWrite log.
+> Of those 47: 8 actionable items closed in this session; 6 await IT; 8 await
+> management decisions; 3 await Nitin [CONFIRM] gates for paid-API runs; 7
+> are fork-planned for Q3 2026; 8 are FUTURE-DESIGN; 6 are TECH-DEBT (some
+> closed by Phase 9 stretch).
 **Theme:** airpayux v1.0.0 | **Moodle:** 5.1.3+ on XAMPP
 **Version:** 4.0-rc3 — All 22 Phase-2 rows ✅ + cart + proctoring + recompletion + AI + cohorts + badges + 7-persona UAT.
 **GitHub:** Pushed to nitin-rajput-learning-tech/Airpay-Academy2.0 (production branch, last commit `6ce016150` — Phase 8.3 plugin READMEs + smoke fixes)
