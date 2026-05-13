@@ -57,6 +57,11 @@ defined('MOODLE_INTERNAL') || die;
  */
 class core_renderer extends \core_renderer {
 
+    // Phase 9.5 — decomposition started. Each trait is a self-contained
+    // group of renderer methods extracted from this previously 2,339-line
+    // monolithic class. See docs/SUPP-A row A3 for the rationale.
+    use \theme_airpayux\output\traits\branding_buttons;
+
     /**
      * Override standard_head_html to inject tenant favicon, custom CSS,
      * and brand colour overrides. Each per-tenant setting is pulled from
@@ -891,93 +896,12 @@ JS;
      *
      * @return HTML
      */
-    public function helpbtn() {
-        $helptext = $this->page->theme->settings->helpdesc;
-        if(!empty($helptext)){
-            $helpbtn = $helptext;
-        }else{
-            $helpbtn = '';
-        }
-        return $helpbtn;
-    }
-
-    /**
-     * Returns the About button text of the given aboutus in theme settings.
-     *
-     * @return HTML
-     */
-    public function aboutbtn() {
-        $aboutustext = $this->page->theme->settings->aboutus;
-        if(!empty($aboutustext)){
-            $aboutusbtn = $aboutustext;
-        }else{
-            $aboutusbtn = '';
-        }
-        return $aboutusbtn;
-    }
-
-    /**
-     * Returns the Contact button text of the given contact in theme settings.
-     *
-     * @return HTML
-     */
-    public function contactbtn() {
-        $contactustext = $this->page->theme->settings->contact;
-        if(!empty($contactustext)){
-            $contactusbtn = $contactustext;
-        }else{
-            $contactusbtn = '';
-        }
-        return $contactusbtn;
-    }
-
-    /**
-     *Function for copyright text
-     *
-     * @return string.
-     */
-    public function get_copyright_text() {
-         return format_text($this->page->theme->settings->copyright, FORMAT_HTML);
-    }
-    /**
-     * Secure login info.
-     *
-     * @return string
-     */
-    public function secure_login_info() {
-        return $this->login_info(false);
-    }
-
-    /**
-     *Function for footer social links
-     * Returns a social links.
-     *
-     * @return social links.
-     */
-    public function footer_social_icons() {
-        $hasfacebook    = (empty($this->page->theme->settings->facebook)) ? false : $this->page->theme->settings->facebook;
-        $hastwitter     = (empty($this->page->theme->settings->twitter)) ? false : $this->page->theme->settings->twitter;
-        $haslinkedin    = (empty($this->page->theme->settings->linkedin)) ? false : $this->page->theme->settings->linkedin;
-        $hasyoutube     = (empty($this->page->theme->settings->youtube)) ? false : $this->page->theme->settings->youtube;
-        $hasinstagram   = (empty($this->page->theme->settings->instagram)) ? false : $this->page->theme->settings->instagram;
-
-        $socialcontext = [
-
-            // If any of the above social networks are true, sets this to true.
-            'hassocialnetworks' => ($hasfacebook || $hastwitter
-                 || $haslinkedin  || $hasyoutube ||  $hasinstagram
-                 ) ? true : false,
-
-            'socialicons' => array(
-                    'facebook' => $hasfacebook,
-                    'twitter'  => $hastwitter,
-                    'linkedin' => $haslinkedin,
-                    'youtube'    => $hasyoutube,
-                    'instagram'  => $hasinstagram,
-            )
-        ];
-        return $this->render_from_template('theme_airpayux/socialicons', $socialcontext);
-    }
+    // helpbtn(), aboutbtn(), contactbtn(), get_copyright_text(),
+    // secure_login_info() and footer_social_icons() — moved to
+    // \theme_airpayux\output\traits\branding_buttons in Phase 9.5
+    // (engineering item 3, core_renderer decomposition pass 1).
+    // Behaviour preserved verbatim; the trait adds null-coalescing for
+    // theme settings that aren't yet populated.
 
     /*
      * returns the Navigtion links for the quick information.
