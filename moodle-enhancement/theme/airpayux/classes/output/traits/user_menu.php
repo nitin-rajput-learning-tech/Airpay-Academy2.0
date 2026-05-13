@@ -1,0 +1,410 @@
+<?php
+// Copyright 2026 Airpay Payment Services
+// License http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+
+namespace theme_airpayux\output\traits;
+
+// Imports the trait uses — required because traits live in their own
+// file/namespace and don't inherit imports from the using class.
+use moodle_url;
+use html_writer;
+use context_system;
+use core_text;
+use action_menu;
+use action_menu_filler;
+use action_menu_link_secondary;
+use pix_icon;
+use stdClass;
+
+defined('MOODLE_INTERNAL') || die();
+
+/**
+ * User-menu renderer.
+ *
+ * Extracted from `core_renderer.php` in Engineering 32 (decomposition
+ * pass 7). The largest remaining method on the monolith — ~350
+ * lines — moves here verbatim:
+ *
+ *   user_menu($user, $withlinks): string
+ *     Builds the top-right user dropdown menu. Walks a long
+ *     decision tree covering:
+ *       - the not-logged-in / login-page / guest-user fallbacks,
+ *       - the role-switcher (employee + manager-level roles from
+ *         the BizLMS cost-center hierarchy via
+ *         \local_airpay_org\accesslib),
+ *       - the logout link,
+ *       - the "viewing as" + MNet + login-failures metadata
+ *         decorations on the avatar,
+ *       - the final action_menu construction with item-type
+ *         dispatch on each nav item.
+ *
+ * Why this method is large
+ * ------------------------
+ * The user menu has the most interleaved business logic in the whole
+ * renderer:
+ *
+ *   - tenant role-switching (depths/category iteration)
+ *   - the "switch to learner" shortcut hard-wired to the employee role
+ *   - the "auto-switch to highest available role on first visit" path
+ *     that triggers a redirect()
+ *   - the per-item css class assignments for active / disabled states
+ *
+ * Decomposing further would require also decomposing
+ * theme_airpayux_user_get_user_navigation_info() (in lib.php) which is
+ * the partner data builder. Out of scope for the trait extraction —
+ * tracked separately.
+ *
+ * Dependencies on the using class
+ * --------------------------------
+ *   - $this->page                       (inherited from \core_renderer)
+ *   - $this->is_login_page()            (inherited)
+ *   - $this->theme_airpayux_user_get_user_navigation_info(...)
+ *                                       (stays in core_renderer for now)
+ *   - $this->role_switch_basedon_userroles(...)
+ *                                       (stays in core_renderer)
+ *   - parent::render($am)               (resolves to \core_renderer::render)
+ *
+ * `parent::render($am)` works inside a trait because PHP resolves the
+ * `parent::` reference against the parent of the using class, not
+ * against the trait itself. The trait has no parent — the class that
+ * `use`s it has \core_renderer as its parent, and that's what
+ * `parent::` here resolves to.
+ *
+ * @package theme_airpayux
+ */
+trait user_menu {
+
+    /**
+     * Construct a user menu, returning HTML that can be echoed out by a
+     * layout file.
+     *
+     * @param stdClass $user A user object, usually $USER.
+     * @param bool $withlinks true if a dropdown should be built.
+     * @return string HTML fragment.
+     */
+    public function user_menu($user = null, $withlinks = null) {
+        global $USER, $CFG, $DB;
+        require_once($CFG->dirroot . '/user/lib.php');
+
+        if (is_null($user)) {
+            $user = $USER;
+        }
+        // Note: this behaviour is intended to match that of core_renderer::login_info,
+        // but should not be considered to be good practice; layout options are
+        // intended to be theme-specific. Please don't copy this snippet anywhere else.
+        if (is_null($withlinks)) {
+            $withlinks = empty($this->page->layout_options['nologinlinks']);
+        }
+
+        // Add a class for when $withlinks is false.
+        $usermenuclasses = 'usermenu';
+        if (!$withlinks) {
+            $usermenuclasses .= ' withoutlinks';
+        }
+
+        $returnstr = "";
+
+        // If during initial install, return the empty return string.
+        if (during_initial_install()) {
+            return $returnstr;
+        }
+
+        $loginpage = $this->is_login_page();
+        $loginurl = get_login_url();
+        // If not logged in, show the typical not-logged-in string.
+        if (!isloggedin()) {
+            $returnstr = get_string('loggedinnot', 'moodle');
+            if (!$loginpage) {
+                $returnstr .= " (<a href=\"$loginurl\">" . get_string('login') . '</a>)';
+            }
+            return html_writer::div(
+                html_writer::span(
+                    $returnstr,
+                    'login'
+                ),
+                $usermenuclasses
+            );
+
+        }
+
+        // If logged in as a guest user, show a string to that effect.
+        if (isguestuser()) {
+            $returnstr = get_string('loggedinasguest');
+            if (!$loginpage && $withlinks) {
+                $returnstr .= " (<a href=\"$loginurl\">".get_string('login').'</a>)';
+            }
+
+            return html_writer::div(
+                html_writer::span(
+                    $returnstr,
+                    'login'
+                ),
+                $usermenuclasses
+            );
+        }
+
+        // Get some navigation opts.
+        $opts = $this->theme_airpayux_user_get_user_navigation_info($user, $this->page, array('avatarsize' => 35));
+
+        /*Start of the role Switch */
+        $systemcontext = context_system::instance();
+        $roles = \local_airpay_org\accesslib::get_user_roles_in_catgeorycontexts($USER->id);
+
+        if (is_array($roles) && (count($roles) > 0)) {
+
+            $switchrole = new stdClass(); /*Role for the Learner i.e user role */
+            $switchrole->itemtype = 'link';
+            $learner_record_sql = "SELECT id, name, shortname
+                                    FROM {role}
+                                    WHERE shortname = 'employee' AND archetype = 'student' ";
+            $learnerroleid = $DB->get_record_sql($learner_record_sql);
+            if(!empty($USER->access['rsw'])){
+                $USER->access['rsw']['/1'] = $learnerroleid->id;
+            }
+            $rolename = get_string('employee','theme_airpayux');
+
+            $depths = [];
+            $depths['depth']=array();
+            $user_ra_array = array_values(array_filter(array_map(function($role)use(&$depths){
+
+                            $categoryids = array_values(array_filter((explode('/', $role->path))));
+                            $pathname=end($categoryids);
+                            $category = \local_airpay_org\accesslib::get_category_info($pathname, 'name');
+                                if(!in_array($role->depth.'_'.$categoryids[0], $depths['depth'])){
+                                    $depths['depth'][] = $role->depth.'_'.$categoryids[0];
+                                    $role->categoryname = $category;
+                                    $role->highest_catid = $categoryids[0];
+                                    return $role;
+                                }
+
+                        }, $roles)));
+
+            if(!empty($user_ra_array) && is_array($user_ra_array)){
+                $highest_roleinfo = max($user_ra_array);
+            }else{
+                $highest_roleinfo = (object)['roleid' => 0, 'contextid' => SYSCONTEXTID];
+            }
+
+            $current_roleid = isset($USER->useraccess['currentroleinfo']['roleid']) ? $USER->useraccess['currentroleinfo']['roleid'] : $highest_roleinfo->roleid;
+
+            $current_orgcatid = isset($USER->useraccess['currentroleinfo']['orgcatid']) ? $USER->useraccess['currentroleinfo']['orgcatid'] : $highest_roleinfo->highest_catid;
+
+            $current_depth = isset($USER->useraccess['currentroleinfo']['depth']) ? $USER->useraccess['currentroleinfo']['depth'] : $highest_roleinfo->depth;
+
+            if(!empty($learnerroleid)){
+                if($learnerroleid->id == $current_roleid){
+                    $disabled_role = 'user_role active_role';
+                 }else{
+                    $disabled_role = 'user_role';
+                 }
+                 $switchrole->url = new moodle_url('/my/switchrole.php', array('sesskey' => sesskey(),'confirm' => 1,'switchrole' => $learnerroleid->id));
+                 $switchrole->pix = "i/user";
+                 $switchrole->title = get_string('switchroleas','theme_airpayux').$rolename;
+                 $switchrole->titleidentifier = 'switchrole_'.$rolename.',moodle';
+                 $switchrole->class = $disabled_role;
+                 $opts->navitems[] = $switchrole;
+             }
+
+            foreach($user_ra_array as $role){   /*Get all the roles assigned to the user for display */
+                if(empty($role->rolename)){
+                    $rolename =  $role->categoryname.' - '.$role->rolecode;
+                }else{
+                    $rolename =  $role->categoryname.' - '.$role->rolename;
+                }
+
+                $switchrole = new stdClass();
+                $switchrole->itemtype = 'link';
+                if($role->roleid == $current_roleid && $current_depth == $role->depth && $current_orgcatid == $role->highest_catid ){
+                    $switchrole->url = new moodle_url('javascript:void(0)');
+                    $disabled_role = 'user_role active_role';
+                }else{
+                    $switchrole->url = new moodle_url('/my/switchrole.php', array('sesskey' => sesskey(),'confirm' => 1,'switchrole' => $role->roleid, 'contextid' => $role->contextid));
+                    $disabled_role = 'user_role';
+                }
+                $switchrole->pix = "i/switchrole";
+                $switchrole->title = get_string('switchroleas','theme_airpayux').$rolename;
+                $switchrole->titleidentifier = 'switchrole_'.$rolename.',moodle';
+                $switchrole->class = $disabled_role;
+                $opts->navitems[] = $switchrole;
+            }
+        }
+        $highest_roleid = '';
+        if((count($roles) > 0) && (!isset($USER->useraccess['currentroleinfo']) || empty($USER->useraccess['currentroleinfo'])) ){
+            if($highest_roleinfo->roleid){
+                $highest_roleid = $highest_roleinfo->roleid;
+                $contextid = $highest_roleinfo->contextid;
+                $this->role_switch_basedon_userroles($highest_roleid, false, $contextid);
+                 redirect(new moodle_url('/'));
+
+            }
+        }
+
+        // Build a logout link.
+        $logout = new stdClass();
+        $logout->itemtype = 'link';
+        $logout->url = new moodle_url('/login/logout.php', array('sesskey' => sesskey()));
+        $logout->pix = "a/logout";
+        $logout->title = get_string('logout');
+        $logout->titleidentifier = 'customlogout,moodle';
+        $opts->navitems[] = $logout;
+
+
+        $avatarclasses = "avatars";
+        $avatarcontents = html_writer::span($opts->metadata['useravatar'], 'avatar current');
+        $usertextcontents = isset($opts->metadata['userfullname']);
+
+        // Other user.
+        if (!empty($opts->metadata['asotheruser'])) {
+            $avatarcontents .= html_writer::span(
+                $opts->metadata['realuseravatar'],
+                'avatar realuser'
+            );
+            $usertextcontents = $opts->metadata['realuserfullname'];
+            $usertextcontents .= html_writer::tag(
+                'span',
+                get_string(
+                    'loggedinas',
+                    'moodle',
+                    html_writer::span(
+                        isset($opts->metadata['userfullname']),
+                        'value'
+                    )
+                ),
+                array('class' => 'meta viewingas')
+            );
+        }
+
+        // Role.
+        if (!empty($opts->metadata['asotherrole'])) {
+            $role = core_text::strtolower(preg_replace('#[ ]+#', '-', trim($opts->metadata['rolename'])));
+            $usertextcontents .= html_writer::span(
+                $opts->metadata['rolename'],
+                'meta role role-' . $role
+            );
+        }
+
+        // User login failures.
+        if (!empty($opts->metadata['userloginfail'])) {
+            $usertextcontents .= html_writer::span(
+                $opts->metadata['userloginfail'],
+                'meta loginfailures'
+            );
+        }
+
+        // MNet.
+        if (!empty($opts->metadata['asmnetuser'])) {
+            $mnet = strtolower(preg_replace('#[ ]+#', '-', trim($opts->metadata['mnetidprovidername'])));
+            $usertextcontents .= html_writer::span(
+                $opts->metadata['mnetidprovidername'],
+                'meta mnet mnet-' . $mnet
+            );
+        }
+
+        $returnstr .= html_writer::span(
+            html_writer::span($avatarcontents, $avatarclasses),
+            'userbutton'
+        );
+
+        // Create a divider (well, a filler).
+        $divider = new action_menu_filler();
+        $divider->primary = false;
+
+        $am = new action_menu();
+        $am->set_menu_trigger(
+            $returnstr
+        );
+        $am->set_menu_left(action_menu::TR, action_menu::BR);
+        $am->set_nowrap_on_items();
+        if ($withlinks) {
+            $navitemcount = count($opts->navitems);
+            $idx = 0;
+            foreach ($opts->navitems as $key => $value) {
+
+                switch ($value->itemtype) {
+                    case 'divider':
+                        // If the nav item is a divider, add one and skip link processing.
+                        $am->add($divider);
+                        break;
+
+                    case 'invalid':
+                        // Silently skip invalid entries (should we post a notification?).
+                        break;
+
+                    case 'link':
+                        // Process this as a link item.
+
+                        $pix = null;
+                        if (isset($value->pix) && !empty($value->pix)) {
+                            $pix = new pix_icon($value->pix, $value->title, null, array('class' => 'iconsmall'));
+                        } else if (isset($value->imgsrc) && !empty($value->imgsrc)) {
+                                $value->title = html_writer::img(
+                                $value->imgsrc,
+                                $value->title,
+                                array('class' => 'iconsmall')
+                            ) . $value->title;
+                        }
+                        $stringtitleidentifier = $value->titleidentifier;
+                        $component = explode(',', $stringtitleidentifier);
+                        $component = $component[0];
+                        if(($component == 'switchroleto') || ($component == 'logout')){
+                            //do nothing
+                        }elseif((strpos('switchrole_', $component) !== false)){
+                            $al = new action_menu_link_secondary(
+                                $value->url,
+                                $pix,
+                                $value->title,
+                                array('class' => 'icon')
+                            );
+                            if (!empty($value->titleidentifier)) {
+                                $al->attributes['data-title'] = $value->titleidentifier;
+                            }
+                            $al->attributes['class'] = $disabled_role;
+                            $am->add($al);
+                        }elseif((strpos('customlogout', $component) !== false)){
+                            $al = new action_menu_link_secondary(
+                                $value->url,
+                                $pix,
+                                $value->title,
+                                array('class' => 'icon')
+                            );
+                            if (!empty($value->titleidentifier)) {
+                                $al->attributes['data-title'] = $value->titleidentifier;
+                            }
+                            $am->add($al);
+                        }else{
+                            if(isset($value->class)){
+                                $valueclass = $value->class;
+                            }else{
+                                $valueclass = '';
+                            }
+                            $al = new action_menu_link_secondary(
+                                $value->url,
+                                $pix,
+                                $value->title,
+                                //$value->class,
+                                array('class' => 'icon '.$valueclass.'')
+                            );
+                            if (!empty($value->titleidentifier)) {
+                                $al->attributes['data-title'] = $value->titleidentifier;
+                            }
+                            $am->add($al);
+                        }
+
+                        break;
+                }
+
+                $idx++;
+
+                // Add dividers after the first item and before the last item.
+                if ($idx == 1 || $idx == $navitemcount - 1) {
+                    $am->add($divider);
+                }
+            }
+        }
+
+        return html_writer::div(
+            parent::render($am),
+            $usermenuclasses
+        );
+    }
+}
