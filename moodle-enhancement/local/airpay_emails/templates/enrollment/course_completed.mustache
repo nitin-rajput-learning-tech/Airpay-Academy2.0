@@ -32,14 +32,22 @@
     </table>
 
     {{#has_certificate}}
+    {{!
+        Sprint B (2026-05-13): the certificate PDF is ATTACHED to this
+        email by email_to_user() — it ships under the filename
+        "Airpay-certificate-<code>.pdf". The CTA below is a fallback
+        for clients that hide attachments or for re-downloading later
+        from the verification URL.
+    }}
     <p style="margin:0 0 8px; text-align:center; font-size:14px; color:#5a6070;">
-        Your certificate is ready to download:
+        Your certificate is <strong>attached to this email</strong> as a PDF.<br>
+        You can also view it online or re-download it any time:
     </p>
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0;">
     <tr>
         <td align="center" bgcolor="#16a34a" style="background-color:#16a34a; border-radius:8px;">
             <a href="{{certificate_url}}" target="_blank" style="display:inline-block; padding:14px 32px; font-family:'Montserrat',Arial,sans-serif; font-size:15px; font-weight:600; color:#ffffff; text-decoration:none; line-height:20px;">
-                Download Certificate
+                View certificate online
             </a>
         </td>
     </tr>

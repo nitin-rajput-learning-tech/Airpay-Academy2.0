@@ -73,6 +73,17 @@ class audit_log {
         // Proctoring sensitive actions.
         '\local_airpay_proctoring\event\session_flagged',
         '\local_airpay_proctoring\event\review_submitted',
+
+        // Sprint C+D (2026-05-13): cross-tenant course sharing audit.
+        // These five events tell the compliance auditor exactly who
+        // expanded a course's audience to another tenant and when —
+        // the kind of action that needs answering "who and why" in
+        // any GDPR / SOC2 review.
+        '\local_airpay_courses\event\course_share_created',
+        '\local_airpay_courses\event\course_share_withdrawn',
+        '\local_airpay_courses\event\course_share_requested',
+        '\local_airpay_courses\event\course_share_request_approved',
+        '\local_airpay_courses\event\course_share_request_rejected',
     ];
 
     /**
