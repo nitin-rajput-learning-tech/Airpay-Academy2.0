@@ -46,16 +46,14 @@ class list_reports extends external_api {
         $where = ['1=1'];
         $sqlparams = [];
 
-        if (!is_siteadmin()) {
-            $parts = explode('/', trim($USER->open_path ?? '', '/'));
-            $top = isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
-            if ($top > 0) {
-                // Reports without open_path are siteadmin-only.
-                $where[] = '(r.open_path = :rorgexact OR r.open_path LIKE :rorgprefix)';
-                $sqlparams['rorgexact']  = '/' . $top;
-                $sqlparams['rorgprefix'] = $DB->sql_like_escape('/' . $top . '/') . '%';
-            }
-        }
+        // Phase 9.6: back-ported to shared tenant helper. Reports
+        // without open_path remain siteadmin-only (helper returns 1=1
+        // for siteadmin, which matches; tenant users get the path
+        // filter without the IS-NULL clause so unscoped reports
+        // are not visible to them — same contract as before).
+        [$tnsql, $tnargs] = \local_airpay_core\tenant::path_filter('r');
+        $where[] = $tnsql;
+        $sqlparams = array_merge($sqlparams, $tnargs);
 
         $status_filter = (string) ($f['status'] ?? 'all');
         if ($status_filter !== 'all' && ctype_digit($status_filter)) {

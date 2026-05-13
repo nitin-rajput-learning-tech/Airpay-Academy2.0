@@ -43,15 +43,11 @@ class list_evaluations extends external_api {
         $where = ['1=1'];
         $sqlparams = [];
 
-        if (!is_siteadmin()) {
-            $parts = explode('/', trim($USER->open_path ?? '', '/'));
-            $top = isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
-            if ($top > 0) {
-                $where[] = '(e.open_path = :eorgexact OR e.open_path LIKE :eorgprefix)';
-                $sqlparams['eorgexact']  = '/' . $top;
-                $sqlparams['eorgprefix'] = $DB->sql_like_escape('/' . $top . '/') . '%';
-            }
-        }
+        // Phase 9.6: back-ported from inline open_path pattern to the
+        // shared `\local_airpay_core\tenant::path_filter()` helper.
+        [$tnsql, $tnargs] = \local_airpay_core\tenant::path_filter('e');
+        $where[] = $tnsql;
+        $sqlparams = array_merge($sqlparams, $tnargs);
 
         $status_filter = (string) ($f['status'] ?? 'all');
         if ($status_filter !== 'all' && ctype_digit($status_filter)) {
