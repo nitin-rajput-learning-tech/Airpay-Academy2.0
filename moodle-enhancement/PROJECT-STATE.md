@@ -1,6 +1,98 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-13 — **ENGINEERING 13-32 SHIPPED + PUSHED.** Twenty commits on the production branch covering: pre-deploy validation hardening (250x speedup on Gate 1 PHP-lint via single-process token_get_all batcher), axe-core a11y baseline + WCAG 2.1 AA fix for `block_airpay_cron_health`, five bespoke-tenant-pattern back-ports to `\local_airpay_core\tenant::require_path_access()` (closes one silent-pass bug surfaced during refactor), 7 PHPUnit regression tests guarding the helper, and four new traits extracted from `core_renderer.php` (`login_render`, `context_header`, `course_view`, `user_menu`) bringing the file from 2,046 → 1,365 lines (cumulative -974 from the 2,339-line original, ~42% decomposed).
-**Phase:** Academy 4.0 — Phase 9 stretch complete. Engineering 13-32 ship engineering improvements layered on top of Phase 9 stretch. Next session opens with the four infra-dependent cutover gates (IT staging deploy + k6 + pen-test + sign-off) and the 33-item open backlog enumerated in PHASE-9-BACKLOG.md.
+**Updated:** 2026-05-13 (late) — **ADMIN-FEEDBACK SPRINT A-D SHIPPED + PUSHED (9 commits on top of Eng 13-34).** Closes all four LMS Admin feedback items reported on 2026-05-13: (1) Learning Path admin UX diagnostic CLI; (2) course-completion email with PDF certificate attached via tool_certificate; (3) ramping daily reminders with cap + auto-stop-on-completion; (4) cross-tenant course sharing — both push (admin share UI) and pull (manager request workflow). Plus nav wiring, dashboard cert-health block, hi/kn/mr/sw translations, and a second axe-core a11y suite (now Gate 6 covers both Airpay dashboard blocks).
+**Phase:** Academy 4.0 — admin-feedback delivery complete. Cutover gates remain (IT staging deploy + k6 + pen-test + sign-off).
+
+> **ADMIN-FEEDBACK SPRINTS A-D (13 May 2026, commits `78647e47d..9e92d7dad`):**
+>
+> *Sprint A — Learning Path admin UX*
+> - 7-check diagnostic CLI at `local/airpay_learningpath/cli/diagnose_admin_ux.php`
+>   with `--fix-caps` idempotent capability repair + `--user=email` for
+>   per-user diagnosis + `--json` for CI integration.
+> - State card at `state-cards/airpay_learningpath-state.md`.
+>
+> *Sprint B — course-completion email + ramping reminders + audit*
+> - Event observer for `\core\event\course_completed` with fail-safe try/catch.
+> - `certificate_helper` materialises the `tool_certificate` PDF into
+>   `$CFG->tempdir/airpay_emails/` and the notification sender routes
+>   the email through `email_to_user()` so the PDF attaches (Moodle's
+>   `message_send()` doesn't carry attachments).
+> - New rule type `course_incomplete` in `process_rules.php` with
+>   ramping cadence (default `[1,3,7,14,21]` days from enrolment),
+>   `max_reminders_per_user` cap, `auto_stop_on_completion` flag.
+> - Audit CLI at `local/airpay_emails/cli/cert_emails_report.php`
+>   with `--since`, `--tenant`, `--status`, `--detail`, `--csv` flags.
+> - **Dashboard widget `block_airpay_cert_health`** — 3 KPI cards
+>   (sent / failed / suppressed in last 7 days) with the same WCAG
+>   2.1 AA pattern as cron_health. axe-core test: 16/16 passes,
+>   0 violations. Wired into pre_deploy Gate 6 alongside cron_health.
+>
+> *Sprint C — cross-tenant course sharing (push side)*
+> - New table `local_airpay_courses_tenant_share` (course × tenant).
+> - New capability `local/airpay_courses:share_to_tenant` (siteadmin only).
+> - `sharing_manager` class with `share_course`, `unshare_course`,
+>   `list_course_shares`, `is_course_shared_to`,
+>   `build_catalog_filter_sql` (the SQL that UNIONs owned + borrowed
+>   courses into one WHERE-clause fragment).
+> - Catalog manager's 4 query methods (`get_courses`, `get_trending`,
+>   `get_new`, `get_categories`) updated to call build_catalog_filter_sql.
+> - Catalog card now carries `is_borrowed` + `provider_tenant_name`
+>   and renders a "Provided by Airpay Academy" badge.
+> - Admin page `share.php?id=<courseid>` with tenant checkbox grid;
+>   the "Share" button is wired into the course-management row
+>   actions (only visible to users with the cap).
+> - 2 audit events (`course_share_created` / `course_share_withdrawn`).
+> - 3 WS endpoints; 15-case PHPUnit suite (all pass).
+>
+> *Sprint D — cross-tenant request workflow (pull side)*
+> - New table `local_airpay_courses_requests` (pending/approved/rejected).
+> - 2 new capabilities: `:request_course` (manager-grantable) +
+>   `:approve_request` (siteadmin only).
+> - `request_manager` class with `create_request` (idempotent on
+>   pending; short-circuits when already shared; throws on
+>   own-tenant or unknown course), `approve_request` (cascades to
+>   `sharing_manager::share_course` + purges catalog caches),
+>   `reject_request` (with optional rationale).
+> - `browse_airpay.php` — non-Airpay manager view of the full Airpay
+>   catalog with per-row "Request access" button.
+> - `manage_requests.php` — Airpay Super Admin pending-requests inbox
+>   with Approve / Reject buttons.
+> - 3 audit events (requested / approved / rejected).
+> - Sidebar navigation now exposes "Course-share Requests" for site
+>   admins and "Browse Airpay Library" for managers + L&D admins in
+>   non-Airpay tenants.
+> - 4 WS endpoints; 12-case PHPUnit suite (skipped in vanilla fixture
+>   pending the BizLMS open_path column on staging).
+>
+> *Sprint B+C hotfix — caught by full PHPUnit run*
+> - `local_airpay_email_log.status` was char(20) but the new
+>   `'suppressed_completion'` value is 21 chars. Widened to char(32)
+>   with index drop/re-add dance (Moodle's `ddl_dependency_exception`
+>   forbids changing a column under an index).
+> - `sharing_manager::known_tenants()` queried `local_airpay_org.name`
+>   but the column is actually `fullname` (renamed at port time).
+>
+> *Translations*
+> - All Sprint B/C new strings translated to hi / kn / mr / sw.
+>
+> *PHPUnit verification*
+> Sprint B: 16/16 pass (25 assertions).
+> Sprint C: 15/15 pass; Sprint D: 12 skip (need staging open_path).
+> Combined: 43 tests, 75 assertions, 0 errors, 0 failures.
+>
+> *pre_deploy_validate gates*
+>   Gate 0 — tenant-guard lint (132 externals, 0 violations) ✅
+>   Gate 1 — PHP syntax lint (764 files, single-process batch) ✅
+>   Gate 2 — Python compile (all sentientia agents) ✅
+>   Gate 3 — cron-health CLI (FAIL on dev — no cron daemon)
+>   Gate 4 — 4 plugin smokes ✅
+>   Gate 5 — PHPUnit (skip flag available)
+>   Gate 6 — axe-core a11y × 2 blocks ✅
+>     - a11y_block_cron_health (0 critical, 0 serious)
+>     - a11y_block_cert_health (0 critical, 0 serious)
+>   Gate 7 — Phase 7 UAT (opt-in)
+>
+> All 9 commits pushed to `nitin-rajput-learning-tech/Airpay-Academy2.0`
+> production branch.
 
 > **ENGINEERING 13-32 (13 May 2026, commits `2d71f0bb3..3da23ebe7`):**
 >
