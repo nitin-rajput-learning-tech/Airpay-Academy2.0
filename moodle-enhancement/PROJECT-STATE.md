@@ -24,6 +24,27 @@
 > management decisions; 3 await Nitin [CONFIRM] gates for paid-API runs; 7
 > are fork-planned for Q3 2026; 8 are FUTURE-DESIGN; 6 are TECH-DEBT (some
 > closed by Phase 9 stretch).
+>
+> **THREE SUPPLEMENTARY DOCUMENTS shipped alongside master v1.0:**
+> - `docs/SUPP-A-RISK-REGISTER-FULL-2026-05-12.md` — 32 risks across 9
+>   categories (people, security, compliance, infra, vendor, application,
+>   data, UX, strategic). Each with severity × likelihood × owner ×
+>   mitigation × residual. Aggregate: 1 high-residual (P1 key-person, until
+>   engineer hire lands), 4 medium-residual, all others low-residual after
+>   planned mitigations.
+> - `docs/SUPP-B-MOODLE5-UPGRADE-PLAN-2026-05-12.md` — strategic rationale,
+>   8 pre-upgrade prerequisites, per-plugin compatibility status (all 30
+>   plugins ✓ on Moodle 5.1.3), 8 theme carry-forward templates required,
+>   sequencing (Moodle 5 upgrade scheduled for Q4 2026 AFTER Phase 8 cutover
+>   AFTER BizLMS displacement P0 to avoid bundled-failure risk), validation
+>   gates per pass.
+> - `docs/SUPP-C-SENTIENTIA-DETAILED-PLAN-2026-05-12.md` — 6 agents specified
+>   end-to-end with cost-per-course model (₹70-125 vendor spend vs.
+>   ₹50,000-₹1,50,000 external-authoring benchmark), validation gates between
+>   agents, multi-language rollout (English first, then Hindi/Marathi/
+>   Kannada/Swahili), 3-course quality regression suite, 90-day build
+>   sequence (Weeks 5-8 of post-cutover stabilisation), vendor evaluation
+>   matrix with documented alternatives for every external API.
 **Theme:** airpayux v1.0.0 | **Moodle:** 5.1.3+ on XAMPP
 **Version:** 4.0-rc3 — All 22 Phase-2 rows ✅ + cart + proctoring + recompletion + AI + cohorts + badges + 7-persona UAT.
 **GitHub:** Pushed to nitin-rajput-learning-tech/Airpay-Academy2.0 (production branch, last commit `6ce016150` — Phase 8.3 plugin READMEs + smoke fixes)
