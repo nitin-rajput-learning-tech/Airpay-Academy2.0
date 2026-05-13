@@ -66,36 +66,39 @@ class bulk_action extends external_api {
         // C1 fix: tenant scope. A non-siteadmin can only act on users that
         // sit beneath their own top-level tenant in open_path. Without this,
         // an Airpay manager could bulk-suspend Public users by ID-guessing.
+        //
+        // For bulk operations we use tenant::path_filter() (SQL-level scoping)
+        // rather than require_path_access() (single-resource). path_filter
+        // returns '1=1' for site admins and the slash-bounded
+        // '(open_path = :exact OR open_path LIKE :prefix)' clause for
+        // tenant-bound users.
+        //
+        // We keep the explicit "invalid tenant" throw for non-admins with
+        // no tenant root — path_filter would return '1=0' (silently skip
+        // everything) but the bulk-action UX expects a hard error so the
+        // caller knows their request was denied.
         if (!is_siteadmin()) {
-            $parts = explode('/', trim($USER->open_path ?? '', '/'));
-            $top = isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
-            if ($top === 0) {
+            if (\local_airpay_core\tenant::root_for_current_user() <= 0) {
                 throw new \moodle_exception('invalidtenant', 'local_airpay_users');
             }
-            // SQL LIKE pattern '/1/%' (slash-bounded + escape) so '/1' never
-            // matches '/10' or '/177'. Also include exact tenant-root match.
-            [$inscope_sql, $inscope_params] = $DB->get_in_or_equal(
-                $clean_ids, SQL_PARAMS_NAMED, 'cuid');
-            $scope_exact  = '/' . $top;
-            $scope_prefix = $DB->sql_like_escape('/' . $top . '/') . '%';
-            $in_scope = $DB->get_fieldset_sql(
-                "SELECT id FROM {user}
-                  WHERE id $inscope_sql AND deleted = 0
-                    AND (open_path = :sexact OR open_path LIKE :sprefix)",
-                array_merge($inscope_params, [
-                    'sexact'  => $scope_exact,
-                    'sprefix' => $scope_prefix,
-                ]));
-            $clean_ids = array_values(array_intersect(
-                array_map('intval', $clean_ids),
-                array_map('intval', $in_scope)));
-            if (empty($clean_ids)) {
-                return [
-                    'action'  => $params['action'],
-                    'count'   => 0,
-                    'skipped' => count($params['userids']),
-                ];
-            }
+        }
+
+        [$tnsql, $tnargs] = \local_airpay_core\tenant::path_filter('', 'open_path');
+        [$inscope_sql, $inscope_params] = $DB->get_in_or_equal(
+            $clean_ids, SQL_PARAMS_NAMED, 'cuid');
+        $in_scope = $DB->get_fieldset_sql(
+            "SELECT id FROM {user}
+              WHERE id $inscope_sql AND deleted = 0 AND ($tnsql)",
+            array_merge($inscope_params, $tnargs));
+        $clean_ids = array_values(array_intersect(
+            array_map('intval', $clean_ids),
+            array_map('intval', $in_scope)));
+        if (empty($clean_ids)) {
+            return [
+                'action'  => $params['action'],
+                'count'   => 0,
+                'skipped' => count($params['userids']),
+            ];
         }
 
         [$insql, $inparams] = $DB->get_in_or_equal($clean_ids, SQL_PARAMS_NAMED, 'uid');

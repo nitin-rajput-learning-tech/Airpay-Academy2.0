@@ -23,28 +23,26 @@ class delete_org extends external_api {
     }
 
     public static function execute(int $orgid): array {
-        global $USER;
         $params = self::validate_parameters(self::execute_parameters(), ['orgid' => $orgid]);
         $context = \context_system::instance();
         self::validate_context($context);
         require_capability('local/airpay_org:manage', $context);
 
-        // H3 fix: tenant scope. A non-siteadmin manager cannot delete
-        // an org outside their own top-level tree, even with the cap.
-        if (!is_siteadmin()) {
-            $existing = \local_airpay_org\org_manager::get($params['orgid']);
-            if (!$existing) {
-                throw new \moodle_exception('orgnotfound', 'local_airpay_org');
-            }
-            $caller_parts = explode('/', trim($USER->open_path ?? '', '/'));
-            $caller_top = isset($caller_parts[0]) && ctype_digit($caller_parts[0])
-                ? '/' . (int) $caller_parts[0] : '';
-            $is_inside = ($existing->path === $caller_top)
-                || (strpos((string) $existing->path, $caller_top . '/') === 0);
-            if (empty($caller_top) || !$is_inside) {
-                throw new \moodle_exception('outoftenant', 'local_airpay_org');
-            }
+        // Fetch BEFORE the tenant check so we can return a clean
+        // "orgnotfound" rather than "outoftenant" when the id is bad.
+        $existing = \local_airpay_org\org_manager::get($params['orgid']);
+        if (!$existing) {
+            throw new \moodle_exception('orgnotfound', 'local_airpay_org');
         }
+
+        // Tenant guard. Site admins pass through; tenant-bound managers
+        // can only act on orgs inside their own top-level tree (one of
+        // the H3 findings from Phase 8.1). The bespoke inline check
+        // this replaces had a subtle bug: a viewer with an EMPTY
+        // open_path silently passed the cap check, because the inline
+        // logic short-circuited on `empty($caller_top)` AFTER computing
+        // it. The helper throws on empty viewer root, closing the bug.
+        \local_airpay_core\tenant::require_path_access((string) $existing->path);
 
         $success = \local_airpay_org\org_manager::delete($params['orgid']);
         return ['orgid' => $params['orgid'], 'success' => $success];

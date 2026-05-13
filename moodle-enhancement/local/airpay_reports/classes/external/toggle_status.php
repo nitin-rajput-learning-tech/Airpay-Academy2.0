@@ -23,30 +23,26 @@ class toggle_status extends external_api {
     }
 
     public static function execute(int $reportid): array {
-        global $USER;
         $params = self::validate_parameters(self::execute_parameters(), ['reportid' => $reportid]);
         $context = \context_system::instance();
         self::validate_context($context);
         require_capability('local/airpay_reports:manage', $context);
 
-        // H3 fix: tenant scope check.
-        if (!is_siteadmin()) {
-            $existing = \local_airpay_reports\report_manager::get($params['reportid']);
-            if (!$existing) {
-                throw new \moodle_exception('invalidreport', 'local_airpay_reports');
-            }
-            $caller_parts = explode('/', trim($USER->open_path ?? '', '/'));
-            $caller_top = isset($caller_parts[0]) && ctype_digit($caller_parts[0])
-                ? '/' . (int) $caller_parts[0] : '';
-            if (empty($existing->open_path)) {
-                throw new \moodle_exception('outoftenant', 'local_airpay_reports');
-            }
-            $is_inside = ($existing->open_path === $caller_top)
-                || (strpos((string) $existing->open_path, $caller_top . '/') === 0);
-            if (empty($caller_top) || !$is_inside) {
-                throw new \moodle_exception('outoftenant', 'local_airpay_reports');
-            }
+        // Look up first for a clean "invalidreport" error if the id is bad.
+        $existing = \local_airpay_reports\report_manager::get($params['reportid']);
+        if (!$existing) {
+            throw new \moodle_exception('invalidreport', 'local_airpay_reports');
         }
+
+        // Empty open_path = "all-organisations" report → site-admin-only.
+        // Reject explicitly before the shared helper (which would tolerate
+        // empty as legacy unscoped).
+        if (empty($existing->open_path) && !is_siteadmin()) {
+            throw new \moodle_exception('outoftenant', 'local_airpay_reports');
+        }
+
+        // Tenant guard for scoped reports.
+        \local_airpay_core\tenant::require_path_access((string) $existing->open_path);
 
         $newstate = \local_airpay_reports\report_manager::toggle_status($params['reportid']);
         return [

@@ -23,27 +23,22 @@ class toggle_visibility extends external_api {
     }
 
     public static function execute(int $orgid): array {
-        global $USER;
         $params = self::validate_parameters(self::execute_parameters(), ['orgid' => $orgid]);
         $context = \context_system::instance();
         self::validate_context($context);
         require_capability('local/airpay_org:manage', $context);
 
-        // H3 fix: tenant scope check on the target org.
-        if (!is_siteadmin()) {
-            $existing = \local_airpay_org\org_manager::get($params['orgid']);
-            if (!$existing) {
-                throw new \moodle_exception('orgnotfound', 'local_airpay_org');
-            }
-            $caller_parts = explode('/', trim($USER->open_path ?? '', '/'));
-            $caller_top = isset($caller_parts[0]) && ctype_digit($caller_parts[0])
-                ? '/' . (int) $caller_parts[0] : '';
-            $is_inside = ($existing->path === $caller_top)
-                || (strpos((string) $existing->path, $caller_top . '/') === 0);
-            if (empty($caller_top) || !$is_inside) {
-                throw new \moodle_exception('outoftenant', 'local_airpay_org');
-            }
+        // Look up first so an invalid id gets "orgnotfound" not "outoftenant".
+        $existing = \local_airpay_org\org_manager::get($params['orgid']);
+        if (!$existing) {
+            throw new \moodle_exception('orgnotfound', 'local_airpay_org');
         }
+
+        // Tenant guard via the airpay_core helper. Site admins pass
+        // through; tenant-bound managers can only flip visibility on
+        // orgs inside their own top-level tree. Replaces the bespoke
+        // inline pattern that had a silent-pass bug on empty open_path.
+        \local_airpay_core\tenant::require_path_access((string) $existing->path);
 
         $newstate = \local_airpay_org\org_manager::toggle_visibility($params['orgid']);
         return [
