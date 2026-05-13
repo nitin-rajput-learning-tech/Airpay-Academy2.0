@@ -132,4 +132,144 @@ class tenant_test extends \advanced_testcase {
         $this->assertSame('h.costcenterid = :aptenantroot', $sql);
         $this->assertSame(['aptenantroot' => 77], $args);
     }
+
+    // ── require_path_access() — added in Engineering 15, regression-guarded
+    //    here in Engineering 29 against the silent-pass bug that motivated
+    //    its introduction. The bespoke pre-helper pattern looked like:
+    //
+    //        $caller_top = '...';  // could be empty
+    //        $is_inside = strpos($existing->path, $caller_top . '/') === 0;
+    //                  ^^^ when $caller_top is empty, this becomes
+    //                  strpos($existing->path, '/'), which returns 0
+    //                  ("found at position 0") whenever the path starts
+    //                  with '/' — i.e. ALWAYS. Silent pass for any
+    //                  caller without a tenant root.
+    //
+    //    Tests below verify the helper closes that hole AND preserves
+    //    the legitimate happy paths.
+
+    public function test_require_path_access_empty_resource_returns_silently(): void {
+        // Legacy unscoped row — same tolerance as the inline pattern had.
+        tenant::require_path_access('');
+        $this->assertTrue(true);  // no exception is the assertion
+    }
+
+    public function test_require_path_access_siteadmin_passes_any_path(): void {
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+        tenant::require_path_access('/1');
+        tenant::require_path_access('/1/183');
+        tenant::require_path_access('/77');
+        tenant::require_path_access('/177');
+        $this->assertTrue(true);
+    }
+
+    public function test_require_path_access_accepts_exact_tenant_root(): void {
+        $this->resetAfterTest(true);
+        $this->skip_if_no_open_path();
+
+        global $DB;
+        $gen = $this->getDataGenerator();
+        $u = $gen->create_user(['open_path' => '/1']);
+        $DB->set_field('user', 'open_path', '/1', ['id' => $u->id]);
+        $u = $DB->get_record('user', ['id' => $u->id]);
+        $this->setUser($u);
+
+        tenant::require_path_access('/1');  // exact tenant root
+        $this->assertTrue(true);
+    }
+
+    public function test_require_path_access_accepts_nested_path_in_own_tenant(): void {
+        $this->resetAfterTest(true);
+        $this->skip_if_no_open_path();
+
+        global $DB;
+        $gen = $this->getDataGenerator();
+        $u = $gen->create_user(['open_path' => '/1']);
+        $DB->set_field('user', 'open_path', '/1', ['id' => $u->id]);
+        $u = $DB->get_record('user', ['id' => $u->id]);
+        $this->setUser($u);
+
+        tenant::require_path_access('/1/183');
+        tenant::require_path_access('/1/183/4');
+        $this->assertTrue(true);
+    }
+
+    public function test_require_path_access_throws_on_cross_tenant(): void {
+        $this->resetAfterTest(true);
+        $this->skip_if_no_open_path();
+
+        global $DB;
+        $gen = $this->getDataGenerator();
+        $u = $gen->create_user(['open_path' => '/1']);
+        $DB->set_field('user', 'open_path', '/1', ['id' => $u->id]);
+        $u = $DB->get_record('user', ['id' => $u->id]);
+        $this->setUser($u);
+
+        $this->expectException(\moodle_exception::class);
+        tenant::require_path_access('/77');
+    }
+
+    public function test_require_path_access_throws_on_prefix_collision(): void {
+        $this->resetAfterTest(true);
+        $this->skip_if_no_open_path();
+
+        global $DB;
+        $gen = $this->getDataGenerator();
+        // Tenant root /1, resource path /177 — naive substring match
+        // would let /1 match the front of /177 ("starts with /1"). The
+        // helper uses slash-bounded comparison so this throws.
+        $u = $gen->create_user(['open_path' => '/1']);
+        $DB->set_field('user', 'open_path', '/1', ['id' => $u->id]);
+        $u = $DB->get_record('user', ['id' => $u->id]);
+        $this->setUser($u);
+
+        $this->expectException(\moodle_exception::class);
+        tenant::require_path_access('/177');
+    }
+
+    public function test_require_path_access_throws_on_viewer_with_no_tenant(): void {
+        // REGRESSION TEST for the silent-pass bug. A user with an
+        // EMPTY open_path used to silently pass the bespoke inline
+        // pattern (because the explode() + strpos() chain returned
+        // truthy when caller_top was empty). The helper must throw.
+        $this->resetAfterTest(true);
+        $this->skip_if_no_open_path();
+
+        global $DB;
+        $gen = $this->getDataGenerator();
+        $u = $gen->create_user();
+        // Explicitly clear open_path so the user has no tenant root.
+        $DB->set_field('user', 'open_path', '', ['id' => $u->id]);
+        $u = $DB->get_record('user', ['id' => $u->id]);
+        $this->setUser($u);
+
+        $this->expectException(\moodle_exception::class);
+        tenant::require_path_access('/1/183');
+    }
+
+    public function test_require_path_access_accepts_named_viewerid(): void {
+        // Calling with an explicit viewerid should look up that user's
+        // tenant root, not the currently-logged-in $USER.
+        $this->resetAfterTest(true);
+        $this->skip_if_no_open_path();
+
+        global $DB;
+        $gen = $this->getDataGenerator();
+        $airpay = $gen->create_user(['open_path' => '/1']);
+        $public = $gen->create_user(['open_path' => '/77']);
+        $DB->set_field('user', 'open_path', '/1',  ['id' => $airpay->id]);
+        $DB->set_field('user', 'open_path', '/77', ['id' => $public->id]);
+
+        $this->setUser($airpay);  // current user is in /1
+
+        // But we pass viewerid = $public — so the helper checks
+        // against /77, not /1. /77 access to /77/x is allowed.
+        tenant::require_path_access('/77/100', $public->id);
+        $this->assertTrue(true);
+
+        // And /77 viewer trying /1 is denied.
+        $this->expectException(\moodle_exception::class);
+        tenant::require_path_access('/1/100', $public->id);
+    }
 }
