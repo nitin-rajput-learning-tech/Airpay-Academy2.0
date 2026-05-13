@@ -1,6 +1,44 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-12 END-OF-DAY — **MASTER DOCUMENTATION v1.0 SHIPPED.** 123 KB markdown / 91 KB Word document covering all 15 sections of the master prompt at `D:\Claude Local\airpay-ld-os\docs\AIRPAY-ACADEMY-2.0-MASTER-DOCUMENTATION-2026-05-12.{md,docx}`. Generated via python-docx with Airpay branding (primary `#0066A7`, accent `#0F7A73`, Montserrat font, page numbers, accent-coloured headings). 18,128 words, approximately 70-80 Word pages — within the 80-150 page target band of the brief.
-**Phase:** Academy 4.0 — Phase 9 stretch complete (6 non-blocking audit follow-ups + audit_log helper + 14 of 30 plugin READMEs). Master documentation v1.0 shipped. Next session opens with the four infra-dependent cutover gates (IT staging deploy + k6 + pen-test + sign-off) and the 33-item open backlog enumerated in PHASE-9-BACKLOG.md.
+**Updated:** 2026-05-13 — **ENGINEERING 13-32 SHIPPED + PUSHED.** Twenty commits on the production branch covering: pre-deploy validation hardening (250x speedup on Gate 1 PHP-lint via single-process token_get_all batcher), axe-core a11y baseline + WCAG 2.1 AA fix for `block_airpay_cron_health`, five bespoke-tenant-pattern back-ports to `\local_airpay_core\tenant::require_path_access()` (closes one silent-pass bug surfaced during refactor), 7 PHPUnit regression tests guarding the helper, and four new traits extracted from `core_renderer.php` (`login_render`, `context_header`, `course_view`, `user_menu`) bringing the file from 2,046 → 1,365 lines (cumulative -974 from the 2,339-line original, ~42% decomposed).
+**Phase:** Academy 4.0 — Phase 9 stretch complete. Engineering 13-32 ship engineering improvements layered on top of Phase 9 stretch. Next session opens with the four infra-dependent cutover gates (IT staging deploy + k6 + pen-test + sign-off) and the 33-item open backlog enumerated in PHASE-9-BACKLOG.md.
+
+> **ENGINEERING 13-32 (13 May 2026, commits `2d71f0bb3..3da23ebe7`):**
+>
+> *Pre-deploy validation pipeline*
+> - Eng 17: `pre_deploy_validate.sh` — single orchestrator with 7 gates
+> - Eng 18: `lint_tenant_guard.py` — architectural CI enforcement of the tenant-guard rule (132 externals, 0 violations)
+> - Eng 19: wire Gate 0 (tenant-guard) into pre_deploy_validate
+> - Eng 22: Gate 1 PHP-lint single-process `token_get_all` batcher (8 min → 2 sec for 729 files, 250x speedup, Windows-aware path translation)
+> - Eng 23: Gate 6 axe-core a11y wiring + `--skip-a11y` flag
+> - **Full pre-deploy now: 44 seconds (was 8+ min and often killed)**
+>
+> *Accessibility — `block_airpay_cron_health`*
+> - Eng 20: axe-core a11y baseline via static fixture (no XAMPP / DB dep)
+> - Eng 21: heading-order fix (h2→h5 → h2→h3), small-text contrast palette split (#15803d/#b45309/#b91c1c for 4.5:1), severity badge + ARIA labels to satisfy WCAG 1.4.1 (use of colour)
+> - **Result: WCAG 2.1 AA + best-practice clean (18 passes, 0 violations)**
+>
+> *Tenant guard back-ports*
+> - Eng 15 (earlier): `tenant::require_path_access()` helper introduced + back-port `list_course_enrolments`
+> - Eng 24-27: five more externals now using the helper:
+>   - `airpay_org/delete_org.php` + `airpay_org/toggle_visibility.php`
+>   - `airpay_reports/delete_report.php` + `airpay_reports/toggle_status.php`
+>   - `airpay_users/bulk_action.php` (uses `tenant::path_filter()` for SQL bulk filter)
+> - Eng 29: 7 PHPUnit regression tests, including the silent-pass-bug guard (empty `open_path` viewer → throws, was silent-pass in the inline pattern)
+>
+> *Other operations*
+> - Eng 13: SENTIENTIA Agent 2 production hardening (retry+backoff, token tracking, INR cost)
+> - Eng 14: `branding_assets` trait (-83 lines from core_renderer)
+> - Eng 16: `cron_health.php` CLI for the ops team
+>
+> *core_renderer.php decomposition*
+> - Eng 28: `login_render` trait (-77 → 1,969)
+> - Eng 30: `context_header` trait (-175 → 1,794)
+> - Eng 31: `course_view` trait (-73 → 1,721)
+> - Eng 32: `user_menu` trait (-356 → 1,365) ← the 350-line headline win
+> - **Cumulative: 2,339 → 1,365 = -974 lines (~42%) across 7 traits**
+>
+> All commits pushed to `nitin-rajput-learning-tech/Airpay-Academy2.0`
+> production branch.
 
 > **PHASE 9 STRETCH (12 May 2026, commit `ffee790b9`):**
 > All six non-blocking findings from the Phase 8.2 re-audit shipped:
