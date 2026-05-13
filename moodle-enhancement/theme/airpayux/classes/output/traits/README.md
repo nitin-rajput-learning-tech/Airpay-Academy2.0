@@ -13,8 +13,9 @@ small, single-responsibility trait files. Each trait is `use`d by
 
 | Trait | Status | Methods | Approx LOC |
 |---|---|---|---|
-| `branding_buttons` | ✅ shipped Phase 9.5 | helpbtn, aboutbtn, contactbtn, get_copyright_text, secure_login_info, footer_social_icons | ~70 |
-| `login_ui` | queued | loginslider, login_stat_users, login_stat_courses, login_stat_certs, login_stat_completion, render_login, render_otplogin, get_public_tenant_path | ~280 |
+| `branding_buttons` | ✅ shipped Phase 9.5 pass 1 | helpbtn, aboutbtn, contactbtn, get_copyright_text, secure_login_info, footer_social_icons | ~70 |
+| `login_ui` | ✅ shipped Phase 9.5 pass 2 | loginslider, welcometext, captiontext, login_stat_users, login_stat_courses, login_stat_certs, login_stat_completion, get_public_tenant_path | ~200 |
+| `login_render` | queued | render_login, render_otplogin (Moodle login-form renderer overrides — separate from stats helpers) | ~80 |
 | `branding_assets` | queued | should_display_navbar_logo, get_custom_logo, get_primarycolor, get_secondarycolor, get_hovercolor, getsitecolors_link | ~80 |
 | `navbar_navigation` | queued | navbar, custom_language_menu, left_navigation_quick_links, quickaccess_links, custom_secured_redirection | ~340 |
 | `context_header` | queued | context_header, render_context_header, course_context_header_settings_menu, full_header | ~390 |
