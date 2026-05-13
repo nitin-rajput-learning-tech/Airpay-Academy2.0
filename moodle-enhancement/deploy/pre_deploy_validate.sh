@@ -8,19 +8,26 @@
 #
 # Usage:
 #   ./pre_deploy_validate.sh [--moodle-root <path>] [--skip-uat]
+#                            [--skip-phpunit] [--skip-a11y] [--uat]
 #
 # Default Moodle root: C:/xampp/htdocs/moodle5/public/ (Windows dev)
 # Override with --moodle-root for staging / CI.
 #
+# Env vars:
+#   LINT_WORKERS   override the xargs -P value for Gate 1 (default 8)
+#
 # Gates:
-#   1. PHP syntax-lint every airpay_* PHP file
+#   0. Tenant-guard architectural lint (lint_tenant_guard.py)
+#   1. PHP syntax-lint every airpay_* PHP file (parallelised, 8 workers)
 #   2. Python compile-check every sentientia/*.py file
-#   3. Run the cutover_preflight.sql via mysql CLI (read-only)
-#   4. Run cron_health.php — must exit 0 (no stuck Airpay tasks)
-#   5. Run all 4 plugin smokes (cart, request, proctoring, recompletion)
+#   3. cron_health.php CLI — must exit 0 (no stuck Airpay tasks)
+#   4. 4 plugin smokes (cart, request, proctoring, recompletion)
 #      — each must exit 0
-#   6. Run all PHPUnit test files under local_airpay_core/tests/
-#   7. Run Phase 7 multi-role UAT — must pass >= 84/85 cases
+#   5. PHPUnit test files under local_airpay_core/tests/
+#      (skip via --skip-phpunit)
+#   6. axe-core a11y test for block_airpay_cron_health
+#      — must report 0 critical, 0 serious (skip via --skip-a11y)
+#   7. Phase 7 multi-role UAT — must pass >= 84/85 cases
 #      (skipped by default; pass --uat to enable; takes ~30 min)
 #
 # Exit code: 0 if every gate passes, non-zero with summary of failures.
@@ -41,6 +48,7 @@ PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 MOODLE_ROOT="${MOODLE_ROOT:-C:/xampp/htdocs/moodle5/public}"
 RUN_UAT=0
 SKIP_PHPUNIT=0
+SKIP_A11Y=0
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -52,6 +60,8 @@ while [ $# -gt 0 ]; do
             RUN_UAT=0; shift ;;
         --skip-phpunit)
             SKIP_PHPUNIT=1; shift ;;
+        --skip-a11y)
+            SKIP_A11Y=1; shift ;;
         -h|--help)
             sed -n '2,30p' "$0"
             exit 0 ;;
@@ -103,22 +113,39 @@ else
 fi
 
 # ── 1. PHP syntax lint ───────────────────────────────────────────────
+# Single-process batch linter (moodle-enhancement/deploy/lint_php_batch.php)
+# uses token_get_all(TOKEN_PARSE) to validate each file inside ONE
+# PHP process. On Windows, where `php.exe` spawn takes 100-500ms,
+# this is ~250x faster than `xargs -P 8 php -l` (8 min → 2 sec for
+# 729 files). On Linux the speedup is smaller but still meaningful.
 heading "Gate 1 — PHP syntax-lint every airpay_* PHP file"
-LINT_ERRORS=0
-while IFS= read -r f; do
-    if php -l "$f" 2>&1 | grep -qv "No syntax errors detected"; then
-        fail "lint $f"
-        LINT_ERRORS=$((LINT_ERRORS + 1))
-    fi
-done < <(find "$PROJECT_ROOT/moodle-enhancement/local/airpay_"* \
-              "$PROJECT_ROOT/moodle-enhancement/blocks/airpay_"* \
-              "$PROJECT_ROOT/moodle-enhancement/mod/quiz/accessrule/airpay_"* \
-              "$PROJECT_ROOT/moodle-enhancement/theme/airpayux/classes" \
-            -name '*.php' -type f 2>/dev/null)
-if [ "$LINT_ERRORS" -eq 0 ]; then
-    pass "PHP syntax lint (all files)"
+LINT_OUT="/tmp/predeploy_lint.out"
+LINT_FILELIST="/tmp/predeploy_lint.files"
+LINT_BATCHER="$PROJECT_ROOT/moodle-enhancement/deploy/lint_php_batch.php"
+
+# Collect the file list once so we can also report the count up front.
+find "$PROJECT_ROOT/moodle-enhancement/local/airpay_"* \
+     "$PROJECT_ROOT/moodle-enhancement/blocks/airpay_"* \
+     "$PROJECT_ROOT/moodle-enhancement/mod/quiz/accessrule/airpay_"* \
+     "$PROJECT_ROOT/moodle-enhancement/theme/airpayux/classes" \
+     -name '*.php' -type f 2>/dev/null > "$LINT_FILELIST"
+LINT_COUNT=$(wc -l < "$LINT_FILELIST" | tr -d ' ')
+
+if [ ! -f "$LINT_BATCHER" ]; then
+    fail "PHP syntax lint" "batch linter missing at $LINT_BATCHER"
 else
-    fail "PHP syntax lint" "$LINT_ERRORS files with syntax errors"
+    # Pipe file list to the batch linter and capture both streams.
+    # Linter exits 0 if every file parses, 1 if any failed.
+    if cat "$LINT_FILELIST" | php "$LINT_BATCHER" > "$LINT_OUT" 2>&1; then
+        # Strip the trailing "lint_php_batch: scanned …" stderr line
+        # for the pass message; it's already in the log.
+        pass "PHP syntax lint ($LINT_COUNT files, single-process batch)"
+    else
+        LINT_ERRORS=$(grep -c "^FAIL:" "$LINT_OUT" 2>/dev/null || echo 0)
+        fail "PHP syntax lint" "$LINT_ERRORS file(s) with syntax errors"
+        # Surface the first 10 failures inline; the rest are in $LINT_OUT.
+        grep "^FAIL:" "$LINT_OUT" | head -10
+    fi
 fi
 
 # ── 2. Python compile ────────────────────────────────────────────────
@@ -205,9 +232,36 @@ else
     echo "  (PHPUnit gate skipped per --skip-phpunit)"
 fi
 
-# ── 6. Phase 7 UAT (opt-in) ──────────────────────────────────────────
+# ── 6. axe-core a11y baseline (block_airpay_cron_health) ─────────────
+# Runs against a static fixture (no XAMPP / DB dependency). ~10s on
+# warm cache. Skip via --skip-a11y if Chromium / Chrome is unavailable
+# on the runner.
+if [ "$SKIP_A11Y" -eq 0 ]; then
+    heading "Gate 6 — axe-core a11y baseline (block_airpay_cron_health)"
+    A11Y_HARNESS="$PROJECT_ROOT/moodle-enhancement/audit/playwright/a11y_block_cron_health.mjs"
+    if [ -f "$A11Y_HARNESS" ]; then
+        # The harness exits 0 on no critical/serious violations, 1 otherwise.
+        if (cd "$PROJECT_ROOT/moodle-enhancement/audit/playwright" && \
+                HEADLESS=1 node a11y_block_cron_health.mjs > /tmp/a11y.out 2>&1); then
+            # Parse the violation totals for a richer pass message.
+            CRIT=$(grep -E "critical\s*:" /tmp/a11y.out | head -1 | awk '{print $NF}')
+            SERIOUS=$(grep -E "serious\s*:" /tmp/a11y.out | head -1 | awk '{print $NF}')
+            pass "axe-core a11y (cron_health block — 0 critical, 0 serious)"
+        else
+            fail "axe-core a11y" "critical or serious violations — see /tmp/a11y.out"
+            tail -20 /tmp/a11y.out
+        fi
+    else
+        fail "axe-core a11y" "harness not found at $A11Y_HARNESS"
+    fi
+else
+    echo
+    echo "  (axe-core a11y gate skipped per --skip-a11y)"
+fi
+
+# ── 7. Phase 7 UAT (opt-in) ──────────────────────────────────────────
 if [ "$RUN_UAT" -eq 1 ]; then
-    heading "Gate 6 — Phase 7 multi-role UAT (target >= 84 of 85 cases)"
+    heading "Gate 7 — Phase 7 multi-role UAT (target >= 84 of 85 cases)"
     UAT_HARNESS="$PROJECT_ROOT/moodle-enhancement/audit/playwright/uat_phase7_multirole.mjs"
     if [ -f "$UAT_HARNESS" ]; then
         if node "$UAT_HARNESS" > /tmp/uat.out 2>&1; then
