@@ -1,0 +1,96 @@
+{{!
+    Airpay Courses — receiving-tenant manager catalogue browse.
+
+    @template local_airpay_courses/browse_airpay
+    @package  local_airpay_courses
+    Sprint D (2026-05-13)
+
+    Context vars:
+      courses             array — one entry per Airpay course:
+                            id, fullname, shortname, summary, categoryname,
+                            state, state_label, state_class, can_request
+      has_courses         bool
+      viewer_tenant_name  string — used in the page intro copy
+      sesskey             string
+      post_url            string — POST target for "Request access"
+}}
+<div class="airpay-courses-browse">
+
+    <div class="ap-page-header d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h2 class="mb-1 mt-1" style="font-weight: 700;">
+                <i class="fa fa-handshake-o fa-fw text-primary"></i>
+                Browse Airpay Academy catalogue
+            </h2>
+            <div class="small text-muted">
+                Browse courses owned by Airpay Academy. Request access for any
+                course you'd like to add to your tenant ({{ viewer_tenant_name }})
+                catalogue. Once an Airpay administrator approves, the course
+                appears in your learners' catalog — completions stay segregated
+                to your tenant.
+            </div>
+        </div>
+    </div>
+
+    {{# has_courses }}
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Course</th>
+                        <th>Category</th>
+                        <th style="width: 150px;">Status</th>
+                        <th style="width: 180px;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{# courses }}
+                    <tr>
+                        <td>
+                            <div style="font-weight: 600;">{{ fullname }}</div>
+                            <div class="small text-muted">
+                                <code>{{ shortname }}</code> · {{ summary }}
+                            </div>
+                        </td>
+                        <td><span class="small text-muted">{{ categoryname }}</span></td>
+                        <td>
+                            <span class="badge {{ state_class }}">{{ state_label }}</span>
+                        </td>
+                        <td>
+                            {{# can_request }}
+                            <form method="POST" action="{{{ post_url }}}" class="m-0">
+                                <input type="hidden" name="sesskey"  value="{{ sesskey }}">
+                                <input type="hidden" name="courseid" value="{{ id }}">
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    <i class="fa fa-paper-plane fa-fw"></i> Request access
+                                </button>
+                            </form>
+                            {{/ can_request }}
+                            {{^ can_request }}
+                            <span class="small text-muted">—</span>
+                            {{/ can_request }}
+                        </td>
+                    </tr>
+                    {{/ courses }}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {{/ has_courses }}
+    {{^ has_courses }}
+    <div class="alert alert-light text-center">
+        <i class="fa fa-info-circle fa-fw"></i>
+        Airpay's library has no published courses to browse right now.
+    </div>
+    {{/ has_courses }}
+
+    <div class="alert alert-info mt-3" role="alert">
+        <i class="fa fa-shield fa-fw"></i>
+        Your tenant's learners will see borrowed courses with a
+        <strong>"Provided by Airpay Academy"</strong> badge. Completion data
+        stays inside your tenant — Airpay sees only Airpay completions,
+        and your reports show only {{ viewer_tenant_name }} learners.
+    </div>
+
+</div>

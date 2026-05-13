@@ -99,4 +99,28 @@ $capabilities = [
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes'   => [],  // Siteadmin only by default.
     ],
+
+    // Sprint D (2026-05-13): request a course be shared to my tenant.
+    // Granted to the `manager` archetype by default — anyone with
+    // managerial responsibility in a Public/ZEEA tenant can ask the
+    // Airpay Super Admin to add a specific course to their catalogue.
+    // No actual catalog change happens until an admin approves.
+    'local/airpay_courses:request_course' => [
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => [
+            'manager' => CAP_ALLOW,
+        ],
+    ],
+
+    // Sprint D: approve or reject a course-share request.
+    // Sibling of :share_to_tenant — approving fires share_course();
+    // rejecting just closes the request. Same trust level: siteadmin
+    // only by default.
+    'local/airpay_courses:approve_request' => [
+        'riskbitmask'  => RISK_SPAM | RISK_PERSONAL,
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => [],  // Siteadmin only by default.
+    ],
 ];

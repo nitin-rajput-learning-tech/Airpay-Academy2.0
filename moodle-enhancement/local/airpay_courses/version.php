@@ -28,10 +28,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_airpay_courses';
-$plugin->version   = 2026051302;
+$plugin->version   = 2026051303;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.7.0';
+$plugin->release   = '1.8.0';
 $plugin->dependencies = [
     'local_airpay_org' => 2026041600,
 ];
@@ -44,3 +44,13 @@ $plugin->dependencies = [
 //          + share.php admin page + share_modal.mustache template
 //          + sharing_manager class (CRUD + catalog-filter builder)
 //          + audit log entry per share/unshare
+// 1.8.0  Sprint D (2026-05-13) — pull/request workflow:
+//          + local_airpay_courses_requests table (pending/approved/rejected)
+//          + request_course / approve_request / reject_request WS
+//          + list_pending_requests / list_my_tenant_requests WS
+//          + local/airpay_courses:request_course capability (manager-grantable)
+//          + local/airpay_courses:approve_request capability (siteadmin only)
+//          + browse_airpay.php (manager catalogue view of the lendable library)
+//          + manage_requests.php (admin inbox)
+//          + request_manager class
+//          + course_share_requested / _approved / _rejected events

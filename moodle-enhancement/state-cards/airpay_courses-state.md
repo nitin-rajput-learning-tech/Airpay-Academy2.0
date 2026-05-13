@@ -1,9 +1,70 @@
 # State Card — local_airpay_courses
 **Component:** `local_airpay_courses`
-**Version:** 1.7.0 (2026051302)  — Sprint C
+**Version:** 1.8.0 (2026051303)  — Sprint D
 **Status:** STABLE — admin + learner flows shipped + tested
 **Depends on:** local_airpay_org (Phase 1)
-**Purpose:** Airpay-owned course management, progress tracking, open_* field ownership, **cross-tenant sharing (Sprint C)**
+**Purpose:** Airpay-owned course management, progress tracking, open_* field ownership, **cross-tenant sharing (Sprint C) + pull/request workflow (Sprint D)**
+
+---
+
+## Sprint D — pull/request workflow (2026-05-13)
+
+Closes the second half of the cross-tenant sharing feedback: a
+receiving-tenant manager (Public/77 or ZEEA/177) browses Airpay's
+full catalog and requests specific courses; an Airpay Super Admin
+approves or rejects from an inbox page.
+
+### New table
+
+`local_airpay_courses_requests`:
+
+| Column | Purpose |
+|--------|---------|
+| `id`, `courseid`, `requesting_tenant` | identity |
+| `requester_userid` | who filed the request |
+| `status` | `pending` \| `approved` \| `rejected` |
+| `decided_by`, `decision_reason`, `timedecided` | admin decision audit |
+| `timecreated` | when filed |
+
+Indexed on (status, courseid), (requesting_tenant, status), and (courseid, requesting_tenant, status) for the inbox / outbox / dedup queries.
+
+### New capabilities
+
+- `local/airpay_courses:request_course` — granted to the `manager` archetype by default. A manager in any non-Airpay tenant can file requests.
+- `local/airpay_courses:approve_request` — siteadmin-only (same risk profile as :share_to_tenant).
+
+### New manager class — `\local_airpay_courses\request_manager`
+
+- `create_request($courseid, $requester_userid)` — dedupes pending; returns 0 when already shared
+- `approve_request($request_id)` — flips status + cascades to `sharing_manager::share_course`, purges catalog caches
+- `reject_request($request_id, $reason)` — flips status + stores rationale
+- `list_pending_requests($limit)` — admin inbox query (joined with user + course)
+- `list_tenant_requests($tenant_id, $limit)` — manager outbox query (all statuses)
+- `request_state($courseid, $tenant_id)` — quick enum for the UI: `none` / `pending` / `approved` / `rejected` / `already_shared`
+
+### New audit events
+
+All picked up by Moodle's standard logstore:
+- `\local_airpay_courses\event\course_share_requested`
+- `\local_airpay_courses\event\course_share_request_approved`
+- `\local_airpay_courses\event\course_share_request_rejected`
+
+An approval fires TWO audit events: the decision event and the resulting `course_share_created` (from the cascading share insert). That's intentional — the request decision tracks "admin said yes" and the share row tracks "catalog now contains course X for tenant N".
+
+### New web services
+
+- `local_airpay_courses_request_course(courseid)` — manager calls
+- `local_airpay_courses_approve_request(requestid)` — admin calls
+- `local_airpay_courses_reject_request(requestid, reason)` — admin calls
+
+### New admin/manager pages
+
+| Path | Audience | Purpose |
+|------|----------|---------|
+| `/local/airpay_courses/browse_airpay.php` | Public/ZEEA managers | Browse all Airpay-owned courses; status pill per row; "Request access" button when allowed |
+| `/local/airpay_courses/manage_requests.php` | Airpay Super Admin | Pending-requests inbox with Approve / Reject buttons; reject pops a `prompt()` for optional rationale |
+
+Templates: `templates/browse_airpay.mustache`, `templates/manage_requests.mustache`.
 
 ---
 

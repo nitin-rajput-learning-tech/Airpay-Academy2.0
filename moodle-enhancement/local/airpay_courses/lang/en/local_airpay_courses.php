@@ -91,3 +91,17 @@ $string['event_course_share_created'] = 'Airpay: course shared to tenant';
 $string['event_course_share_withdrawn'] = 'Airpay: course share withdrawn from tenant';
 $string['share_saved'] = 'Share settings saved. The catalog will refresh for affected tenants within a few seconds.';
 $string['invalidparameter'] = 'One or more parameters is invalid.';
+
+// Sprint D (2026-05-13) — pull/request workflow.
+$string['airpay_courses:request_course'] = 'Request a course be shared to my tenant';
+$string['airpay_courses:approve_request'] = 'Approve / reject share-requests from other tenants';
+$string['event_course_share_requested'] = 'Airpay: course-share requested';
+$string['event_course_share_request_approved'] = 'Airpay: course-share request approved';
+$string['event_course_share_request_rejected'] = 'Airpay: course-share request rejected';
+$string['request_filed'] = 'Your request has been filed. An Airpay administrator will review it shortly.';
+$string['request_approved'] = 'Request approved. The course is now in the requesting tenant\'s catalogue.';
+$string['request_rejected'] = 'Request rejected. The requester will see the decision in their outbox.';
+$string['invalidtenant'] = 'Could not determine your tenant — your user account has no organisation path.';
+$string['invaliduser']  = 'The requesting user account is no longer active.';
+$string['invalidcourse'] = 'No such course.';
+$string['cannotrequestowncourse'] = 'You cannot request a course your tenant already owns.';

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <XMLDB PATH="local/airpay_courses/db" VERSION="20260513"
-       COMMENT="Airpay Courses — featured + cross-tenant sharing">
+       COMMENT="Airpay Courses — featured + cross-tenant sharing + request workflow">
   <TABLES>
     <TABLE NAME="local_airpay_featured_courses"
            COMMENT="Admin-curated list of courses to feature on the learner dashboard">
@@ -24,6 +24,46 @@
         <INDEX NAME="idx_costcenter_sort" UNIQUE="false"
                FIELDS="costcenterid, sort_order"/>
         <!-- fk_course key implicitly creates an index on courseid -->
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_airpay_courses_requests"
+           COMMENT="Sprint D — pull/request flow. A receiving-tenant manager (e.g. Public or ZEEA)
+                    requests that a specific Airpay course be added to their tenant's catalogue;
+                    the Airpay Super Admin sees the request in an inbox and approves or rejects.
+                    Approving inserts the corresponding row into local_airpay_courses_tenant_share
+                    (the actual sharing data store). Rejecting closes the request without sharing.">
+      <FIELDS>
+        <FIELD NAME="id"                TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="courseid"          TYPE="int"  LENGTH="10" NOTNULL="true"
+               COMMENT="FK to {course}.id"/>
+        <FIELD NAME="requesting_tenant" TYPE="int"  LENGTH="10" NOTNULL="true"
+               COMMENT="Tenant root that wants the course (e.g. 77 for Public)"/>
+        <FIELD NAME="requester_userid"  TYPE="int"  LENGTH="10" NOTNULL="true"
+               COMMENT="userid of the manager who filed the request"/>
+        <FIELD NAME="status"            TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="pending"
+               COMMENT="pending | approved | rejected"/>
+        <FIELD NAME="decided_by"        TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="userid of the admin who approved/rejected (null while pending)"/>
+        <FIELD NAME="decision_reason"   TYPE="text" NOTNULL="false"
+               COMMENT="Optional rejection rationale shown back to the requester"/>
+        <FIELD NAME="timecreated"       TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timedecided"       TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="When the decision was made (null while pending)"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"     TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_course"   TYPE="foreign" FIELDS="courseid"         REFTABLE="course" REFFIELDS="id"/>
+        <KEY NAME="fk_requester" TYPE="foreign" FIELDS="requester_userid" REFTABLE="user"   REFFIELDS="id"/>
+        <KEY NAME="fk_decider"  TYPE="foreign" FIELDS="decided_by"        REFTABLE="user"   REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_status_courseid"          UNIQUE="false" FIELDS="status, courseid"
+               COMMENT="Admin inbox: 'find all pending requests'"/>
+        <INDEX NAME="idx_tenant_status"            UNIQUE="false" FIELDS="requesting_tenant, status"
+               COMMENT="Manager outbox: 'find all requests from my tenant'"/>
+        <INDEX NAME="idx_course_tenant_status"     UNIQUE="false" FIELDS="courseid, requesting_tenant, status"
+               COMMENT="Dedup: 'does my tenant already have a pending request for this course?'"/>
       </INDEXES>
     </TABLE>
 

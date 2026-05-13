@@ -115,4 +115,27 @@ $functions = [
         'ajax'         => true,
         'capabilities' => 'local/airpay_courses:view',
     ],
+
+    // Sprint D (2026-05-13) — pull/request workflow.
+    'local_airpay_courses_request_course' => [
+        'classname'    => 'local_airpay_courses\external\request_course',
+        'description'  => 'Request an Airpay course be shared to my tenant',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_courses:request_course',
+    ],
+    'local_airpay_courses_approve_request' => [
+        'classname'    => 'local_airpay_courses\external\approve_request',
+        'description'  => 'Approve a pending share-request (admin)',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_courses:approve_request',
+    ],
+    'local_airpay_courses_reject_request' => [
+        'classname'    => 'local_airpay_courses\external\reject_request',
+        'description'  => 'Reject a pending share-request (admin)',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_courses:approve_request',
+    ],
 ];
