@@ -788,6 +788,8 @@ Replaces BizLMS `local_courses` (136 files, already gutted to 3 templates) with 
 | theme_airpayux | 595 files, 9,700+ lines SCSS | STABLE |
 | block_airpay_compliance | Compliance sidebar | STABLE |
 | block_airpay_trainer | Trainer dashboard | STABLE |
+| block_airpay_cron_health | Scheduled-task health dashboard widget (5 PHPUnit + a11y) | STABLE |
+| block_airpay_cert_health | Certificate-email health dashboard widget (Sprint B, 6 PHPUnit + a11y) | STABLE |
 
 ---
 
