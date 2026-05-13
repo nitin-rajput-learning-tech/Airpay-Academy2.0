@@ -17,7 +17,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_airpay_core';
-$plugin->version   = 2026051200;
+$plugin->version   = 2026051300;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.0.0'; // Phase 8.1: shared tenant helper
+$plugin->release   = '1.1.0'; // +cron-health publisher + audit_log + structured_logger
