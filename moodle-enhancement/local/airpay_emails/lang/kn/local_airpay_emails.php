@@ -31,3 +31,12 @@ $string['rule_disabled'] = 'ನಿಯಮ ನಿಷ್ಕ್ರಿಯಗೊಂಡ
 $string['noemailever_warning'] = 'ಈ ಸರ್ವರ್‌ನಲ್ಲಿ ಇಮೇಲ್ ಕಳುಹಿಸುವುದನ್ನು ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ. ಎಲ್ಲಾ ವಿತರಣೆಗಳನ್ನು ನಿಗ್ರಹಿಸಿದ ಎಂದು ಲಾಗ್ ಮಾಡಲಾಗುತ್ತದೆ.';
 $string['task_process_rules'] = 'ಅಧಿಸೂಚನೆ ನಿಯಮಗಳನ್ನು ಪ್ರಕ್ರಿಯೆಗೊಳಿಸಿ';
 $string['notification_alert'] = 'ಅಧಿಸೂಚನೆ ಎಚ್ಚರಿಕೆ';
+
+// Sprint B (2026-05-13) — course-completion email + ramping reminders.
+// Keep {$a} placeholders single-quoted; PHP must NOT interpolate at load.
+$string['sprintb_rule_completed_name'] = 'ಕೋರ್ಸ್ ಪೂರ್ಣ: ಅಭಿನಂದನೆ + ಪ್ರಮಾಣಪತ್ರ';
+$string['sprintb_rule_incomplete_name'] = 'ಕೋರ್ಸ್ ಅಪೂರ್ಣ: ಹೆಜ್ಜೆ ಜ್ಞಾಪನೆಗಳು (1-3-7-14-21)';
+$string['sprintb_email_subject_default'] = '{$a} ಪೂರ್ಣಗೊಳಿಸಿದ್ದಕ್ಕಾಗಿ ಅಭಿನಂದನೆಗಳು';
+$string['sprintb_reminder_subject_default'] = 'ಜ್ಞಾಪನೆ: ನಿಮ್ಮ ಕೋರ್ಸ್ {$a} ಮುಂದುವರಿಸಿ';
+$string['sprintb_certificate_display_name'] = 'Airpay-certificate-{$a}.pdf';
+$string['email_to_user_failed'] = 'Moodle email_to_user() false ಎಂದು ಮರಳಿಸಿತು. ಮೇಲ್ ಸರ್ವರ್ ಕಾನ್ಫಿಗ್ ಮತ್ತು ಸ್ವೀಕರಿಸುವವರ ವಿಳಾಸವನ್ನು ಪರಿಶೀಲಿಸಿ.';

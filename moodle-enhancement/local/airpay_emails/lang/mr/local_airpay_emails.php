@@ -31,3 +31,12 @@ $string['rule_disabled'] = 'नियम बंद झाला.';
 $string['noemailever_warning'] = 'या सर्व्हरवर ईमेल पाठवणे बंद आहे. सर्व डिलिव्हरी suppressed म्हणून लॉग होतील.';
 $string['task_process_rules'] = 'सूचना नियम प्रक्रिया करा';
 $string['notification_alert'] = 'सूचना अलर्ट';
+
+// Sprint B (2026-05-13) — course-completion email + ramping reminders.
+// Keep {$a} placeholders single-quoted; PHP must NOT interpolate at load.
+$string['sprintb_rule_completed_name'] = 'कोर्स पूर्ण: अभिनंदन + प्रमाणपत्र';
+$string['sprintb_rule_incomplete_name'] = 'कोर्स अपूर्ण: टप्पेवार स्मरणपत्रे (1-3-7-14-21)';
+$string['sprintb_email_subject_default'] = '{$a} पूर्ण केल्याबद्दल अभिनंदन';
+$string['sprintb_reminder_subject_default'] = 'स्मरणपत्र: तुमचा कोर्स {$a} सुरू ठेवा';
+$string['sprintb_certificate_display_name'] = 'Airpay-certificate-{$a}.pdf';
+$string['email_to_user_failed'] = 'Moodle email_to_user() false परतले. मेल सर्व्हर कॉन्फिग आणि प्राप्तकर्ता पत्ता तपासा.';

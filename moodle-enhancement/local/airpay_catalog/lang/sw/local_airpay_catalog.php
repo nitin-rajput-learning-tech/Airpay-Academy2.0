@@ -18,3 +18,6 @@ $string['loadmore'] = 'Pakia zaidi';
 $string['viewdetails'] = 'Tazama Maelezo';
 $string['enroll'] = 'Jiandikishe';
 $string['continue'] = 'Endelea';
+
+// Sprint C (2026-05-13) — cross-tenant provenance badge.
+$string['provenance_provided_by'] = 'Imetolewa na {$a}';

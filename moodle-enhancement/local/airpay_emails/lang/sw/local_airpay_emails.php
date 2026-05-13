@@ -31,3 +31,12 @@ $string['rule_disabled'] = 'Sheria imezimwa.';
 $string['noemailever_warning'] = 'Kutuma barua pepe kumezimwa kwenye seva hii. Uwasilishaji wote utarekodiwa kama umezuiwa.';
 $string['task_process_rules'] = 'Tekeleza sheria za arifa';
 $string['notification_alert'] = 'Arifa ya tahadhari';
+
+// Sprint B (2026-05-13) — course-completion email + ramping reminders.
+// Keep {$a} placeholders single-quoted; PHP must NOT interpolate at load.
+$string['sprintb_rule_completed_name'] = 'Kozi imekamilika: hongera + cheti';
+$string['sprintb_rule_incomplete_name'] = 'Kozi haijakamilika: vikumbusho vya hatua (1-3-7-14-21)';
+$string['sprintb_email_subject_default'] = 'Hongera kwa kukamilisha {$a}';
+$string['sprintb_reminder_subject_default'] = 'Kumbusho: endelea na kozi yako {$a}';
+$string['sprintb_certificate_display_name'] = 'Airpay-certificate-{$a}.pdf';
+$string['email_to_user_failed'] = 'Moodle email_to_user() ilirudisha false. Kagua usanidi wa seva ya barua na anwani ya mpokeaji.';

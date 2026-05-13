@@ -18,3 +18,6 @@ $string['loadmore'] = 'ಇನ್ನಷ್ಟು ಲೋಡ್ ಮಾಡಿ';
 $string['viewdetails'] = 'ವಿವರಗಳನ್ನು ನೋಡಿ';
 $string['enroll'] = 'ನೋಂದಾಯಿಸಿ';
 $string['continue'] = 'ಮುಂದುವರಿಸಿ';
+
+// Sprint C (2026-05-13) — cross-tenant provenance badge.
+$string['provenance_provided_by'] = '{$a} ಒದಗಿಸಿದ್ದು';
