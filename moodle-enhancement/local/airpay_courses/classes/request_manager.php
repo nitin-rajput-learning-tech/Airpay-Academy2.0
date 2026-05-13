@@ -287,24 +287,45 @@ class request_manager {
     /**
      * Quick lookup for the browse_airpay UI — "what's the current
      * request state for this (course, tenant) pair?". Returns one
-     * of `none`, `pending`, `approved`, `rejected` or `already_shared`.
+     * of `none`, `pending`, `rejected`, or `already_shared`.
+     *
+     * Notes on the state machine
+     * --------------------------
+     * - `already_shared` is determined by the CURRENT state of the
+     *   share table (status='active' on a row in
+     *   local_airpay_courses_tenant_share). NOT by historical request
+     *   approval — if an admin approved a request then later
+     *   unshared the course, the share row is now 'withdrawn' and
+     *   the manager should be able to re-request.
+     *
+     * - We look at the most recent PENDING or REJECTED request only.
+     *   Historical `approved` rows are deliberately ignored — once
+     *   approved, the share row is the source of truth. If the share
+     *   was later withdrawn, the manager should see "Not requested"
+     *   (and be able to re-request via the same button).
      *
      * @param int $courseid
      * @param int $tenant_id
-     * @return string
+     * @return string one of: none | pending | rejected | already_shared
      */
     public static function request_state(int $courseid, int $tenant_id): string {
         global $DB;
 
-        // already_shared takes precedence — the course is already in
-        // the receiving tenant's catalog, no need to request.
+        // already_shared takes precedence — the course is currently
+        // in the receiving tenant's catalog (active share row exists).
         if (sharing_manager::is_course_shared_to($courseid, $tenant_id)) {
             return 'already_shared';
         }
 
-        // Most recent request row, if any.
-        $rows = $DB->get_records('local_airpay_courses_requests',
-            ['courseid' => $courseid, 'requesting_tenant' => $tenant_id],
+        // Find the most recent OPEN-STATUS request row (pending or
+        // rejected). Approved requests are deliberately excluded —
+        // once approved, the share row is the source of truth, and
+        // if it later becomes withdrawn the manager should be able
+        // to re-request from a clean slate.
+        $rows = $DB->get_records_select('local_airpay_courses_requests',
+            'courseid = :cid AND requesting_tenant = :tid'
+                . " AND status IN ('pending', 'rejected')",
+            ['cid' => $courseid, 'tid' => $tenant_id],
             'timecreated DESC', 'id, status', 0, 1);
         if (empty($rows)) {
             return 'none';

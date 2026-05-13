@@ -242,6 +242,61 @@ class request_manager_test extends \advanced_testcase {
             request_manager::request_state((int) $course->id, 77));
     }
 
+    public function test_request_state_after_admin_unshares_an_approved_course(): void {
+        // The edge case: a request was filed → approved → share row is
+        // now active → admin LATER unshares → the manager should see
+        // 'none' so they can re-request. Without this guard the old
+        // request_state would still return 'approved' from the
+        // historical request row and the UI would say "In your catalog"
+        // when the catalog no longer has the course.
+        $this->resetAfterTest(true);
+        $this->skip_if_no_open_path();
+
+        $course = $this->make_airpay_course();
+        $manager = $this->make_tenant_user(77);
+        $this->setUser($manager);
+        request_manager::create_request((int) $course->id);
+
+        $this->setAdminUser();
+        $rid = (int) ($GLOBALS['DB']->get_field('local_airpay_courses_requests',
+            'id', ['courseid' => $course->id, 'requesting_tenant' => 77]));
+        request_manager::approve_request($rid);
+        $this->assertSame('already_shared',
+            request_manager::request_state((int) $course->id, 77));
+
+        // Now admin unshares the course.
+        sharing_manager::unshare_course((int) $course->id, 77);
+
+        // State should be 'none' — the historical 'approved' request
+        // row is deliberately ignored once the share is no longer
+        // active. (The whole point of request_state being decoupled
+        // from request-row status post-approval.)
+        $this->assertSame('none',
+            request_manager::request_state((int) $course->id, 77));
+    }
+
+    public function test_request_state_pending_request_wins_over_old_rejected(): void {
+        // Older rejected → newer pending should yield 'pending'.
+        $this->resetAfterTest(true);
+        $this->skip_if_no_open_path();
+
+        $course = $this->make_airpay_course();
+        $manager = $this->make_tenant_user(77);
+        $this->setUser($manager);
+
+        $rid1 = request_manager::create_request((int) $course->id);
+        $this->setAdminUser();
+        request_manager::reject_request($rid1, 'try again later');
+        $this->assertSame('rejected',
+            request_manager::request_state((int) $course->id, 77));
+
+        // Manager re-requests.
+        $this->setUser($manager);
+        request_manager::create_request((int) $course->id);
+        $this->assertSame('pending',
+            request_manager::request_state((int) $course->id, 77));
+    }
+
     public function test_list_pending_requests_returns_only_pending(): void {
         $this->resetAfterTest(true);
         $this->skip_if_no_open_path();
