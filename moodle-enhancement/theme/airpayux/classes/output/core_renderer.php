@@ -63,6 +63,7 @@ class core_renderer extends \core_renderer {
     use \theme_airpayux\output\traits\branding_buttons;
     use \theme_airpayux\output\traits\login_ui;
     use \theme_airpayux\output\traits\branding_assets;
+    use \theme_airpayux\output\traits\login_render;
 
     /**
      * Override standard_head_html to inject tenant favicon, custom CSS,
@@ -730,87 +731,9 @@ JS;
         // print_object($this->page->theme->settings->quickinfo);
         return $this->render_from_template('theme_airpayux/quickinfo', $quickInfo);
     }
-    /**
-     * Renders the login form.
-     *
-     * @param \core_auth\output\login $form The renderable.
-     * @return string
-     */
-    public function render_login(\core_auth\output\login $form) {
-        global $CFG, $SITE, $OUTPUT;
-    // Check both new (airpay_users) and legacy (local_users) config.
-    $organization_shortname = get_config('local_airpay_users', 'organization_shortname')
-                           ?: get_config('local_users', 'organization_shortname');
-    $activeregistration = get_config('local_airpay_users', 'activeregistration')
-                       ?: get_config('local_users', 'activeregistration');
-    $context = $form->export_for_template($this);
-        if(trim($organization_shortname != "") && $activeregistration == 1)
-        {
-            $context->signupurl_custom =new moodle_url('/local/airpay_users/signup.php');
-        }
+    // render_login() and render_otplogin() moved to
+    // \theme_airpayux\output\traits\login_render in Engineering 28.
 
-        // Override because rendering is not supported in template yet.
-        if ($CFG->rememberusername == 0) {
-            $context->cookieshelpiconformatted = $this->help_icon('cookiesenabledonlysession');
-        } else {
-            $context->cookieshelpiconformatted = $this->help_icon('cookiesenabled');
-        }
-        $context->errorformatted = $this->error_text($context->error);
-        $url = $this->get_logo_url();
-        if ($url) {
-            $url = $url->out(false);
-        }
-        $context->logourl = $url;
-        $context->sitename = format_string($SITE->fullname, true,
-            ['context' => context_course::instance(SITEID), "escape" => false]);
-        $context->output = $OUTPUT;
-        $helptext = $this->page->theme->settings->helpdesc;
-        $contactustext = $this->page->theme->settings->contact;
-        $aboutustext = $this->page->theme->settings->aboutus;
-        if(!empty($helptext)||(!empty($contactustext))||(!empty($aboutustext))){
-            $context->helptext = $helptext;
-            $context->contactustext = $contactustext;
-            $context->aboutustext = $aboutustext;
-        }else{
-            $context->helptext = '';
-            $context->contactustext = '';
-            $context->aboutustext = '';
-        }
-        return $this->render_from_template('core/loginform', $context);
-    }
-
-    /**
-     * Renders the otplogin form.
-     *
-     * @param \core_auth\output\otplogin $form The renderable.
-     * @return string
-     */
-    public function render_otplogin(\core_auth\output\otplogin $form) {
-        global $CFG, $SITE, $OUTPUT;
-
-        $context = $form->export_for_template($this);
-
-        // Override because rendering is not supported in template yet.
-        if ($CFG->rememberusername == 0) {
-            $context->cookieshelpiconformatted = $this->help_icon('cookiesenabledonlysession');
-        } else {
-            $context->cookieshelpiconformatted = $this->help_icon('cookiesenabled');
-        }
-        $context->errorformatted = $this->error_text($context->error);
-
-        $context->sitename = format_string($SITE->fullname, true,
-            ['context' => \context_course::instance(SITEID), "escape" => false]);
-        $url = $this->get_logo_url();
-        if ($url) {
-            $url = $url->out(false);
-        }
-        $context->logourl = $url;
-        $context->output = $OUTPUT;
-        $context->loginlogo = $this->loginlogo();
-        $context->loginslider = $this->loginslider();
-
-        return $this->render_from_template('core/otploginform', $context);
-    }
     /**
      * Wrapper for header elements.
      *
