@@ -67,6 +67,7 @@ class core_renderer extends \core_renderer {
     use \theme_airpayux\output\traits\context_header;
     use \theme_airpayux\output\traits\course_view;
     use \theme_airpayux\output\traits\user_menu;
+    use \theme_airpayux\output\traits\page_helpers;
 
     /**
      * Override standard_head_html to inject tenant favicon, custom CSS,
@@ -250,54 +251,9 @@ JS;
      * @param string $method
      * @return string HTML the button
      */
-    public function edit_button(moodle_url $url, string $method = 'post') {
-
-        if ($this->page->theme->haseditswitch) {
-            return;
-        }
-        $url->param('sesskey', sesskey());
-        if ($this->page->user_is_editing()) {
-            $url->param('edit', 'off');
-            $editstring = get_string('turneditingoff');
-        } else {
-            $url->param('edit', 'on');
-            $editstring = get_string('turneditingon');
-        }
-        $button = new \single_button($url, $editstring, $method, ['class' => 'btn btn-primary']);
-        return $this->render_single_button($button);
-    }
-    public function seteditswtich_display($status){
-        $this->enable_edit_switch = $status;
-    }
-    /**
-     * Create a navbar switch for toggling editing mode.
-     *
-     * @return string Html containing the edit switch
-     */
-    public function edit_switch() {
-        if ($this->page->user_allowed_editing() && $this->enable_edit_switch) {
-
-            $temp = (object) [
-                'legacyseturl' => (new moodle_url('/editmode.php'))->out(false),
-                'pagecontextid' => $this->page->context->id,
-                'pageurl' => $this->page->url,
-                'sesskey' => sesskey(),
-            ];
-            if ($this->page->user_is_editing()) {
-                $temp->checked = true;
-            }
-            return $this->render_from_template('core/editswitch', $temp);
-        }
-    }
-    /**
-     * Renders the "breadcrumb" for all pages in epsilon.
-     *
-     * @return string the HTML for the navbar.
-     */
-    public function navbar(): string {
-        $newnav = new \theme_airpayux\epsilonnavbar($this->page);
-        return $this->render_from_template('core/navbar', $newnav);
-    }
+    // edit_button(), seteditswtich_display(), edit_switch(), navbar(),
+    // is_admin_or_manager(), is_siteadmin_only() and loggedin_username()
+    // moved to \theme_airpayux\output\traits\page_helpers in Engineering 34.
 
     public function custom_language_menu(){
         $langs = get_string_manager()->get_list_of_translations();
@@ -510,13 +466,7 @@ JS;
     // is_admin_or_manager() and is_siteadmin_only() remain inline here
     // because they belong with the user-menu trait that will be
     // extracted in pass 3 (per traits/README.md).
-    public function is_admin_or_manager() {
-        $context = \context_system::instance();
-        return \local_airpay_courses\course_manager::can_manage($context);
-    }
-    public function is_siteadmin_only() {
-        return is_siteadmin();
-    }
+    // (is_admin_or_manager() and is_siteadmin_only() — see page_helpers trait.)
     /**
      * Returns the Help button text of the given helpdesc in theme settings.
      *
@@ -1356,10 +1306,6 @@ JS;
     // courseviewmenu_hidden(), course_bannerimage(), course_summary_data(),
     // hasrmaincontenthidden(), activityurl_get_course() moved to
     // \theme_airpayux\output\traits\course_view in Engineering 31.
-    public function loggedin_username() {
-        global $USER;
-        return ucwords($USER->firstname);
-
-    }
+    // (loggedin_username() — see page_helpers trait.)
 
 }
