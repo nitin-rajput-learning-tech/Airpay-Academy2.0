@@ -1,0 +1,108 @@
+=== airpay_cart ===
+  local/airpay_cart:manageprices
+  local/airpay_cart:purchase
+  local/airpay_cart:refund
+  local/airpay_cart:view
+  local/airpay_cart:viewallorders
+=== airpay_challenge ===
+  local/airpay_challenge:manage
+  local/airpay_challenge:participate
+  local/airpay_challenge:view
+  local/airpay_challenge:viewall
+=== airpay_classroom ===
+  local/airpay_classroom:attendance
+  local/airpay_classroom:create
+  local/airpay_classroom:delete
+  local/airpay_classroom:manage
+  local/airpay_classroom:update
+  local/airpay_classroom:view
+=== airpay_courses ===
+  local/airpay_courses:create
+  local/airpay_courses:delete
+  local/airpay_courses:enrol
+  local/airpay_courses:manage
+  local/airpay_courses:update
+  local/airpay_courses:view
+  local/airpay_courses:visibility
+=== airpay_emails ===
+  local/airpay_emails:manage
+  local/airpay_emails:manage_rules
+  local/airpay_emails:manage_settings
+  local/airpay_emails:manage_templates
+  local/airpay_emails:preview
+  local/airpay_emails:view_logs
+=== airpay_evaluation ===
+  local/airpay_evaluation:manage
+  local/airpay_evaluation:respond
+=== airpay_exams ===
+  local/airpay_exams:enrol
+  local/airpay_exams:manage
+  local/airpay_exams:view
+=== airpay_learningpath ===
+  local/airpay_learningpath:create
+  local/airpay_learningpath:delete
+  local/airpay_learningpath:enrol
+  local/airpay_learningpath:manage
+  local/airpay_learningpath:update
+  local/airpay_learningpath:view
+=== airpay_manager ===
+  local/airpay_manager:allocate
+  local/airpay_manager:approve
+  local/airpay_manager:view
+=== airpay_notifications ===
+  local/airpay_notifications:manage
+  local/airpay_notifications:view
+  local/airpay_notifications:viewlogs
+=== airpay_org ===
+  local/airpay_org:manage
+  local/airpay_org:manage_multiorganizations
+  local/airpay_org:manage_owndepartments
+  local/airpay_org:manage_ownorganization
+  local/airpay_org:managetenant
+  local/airpay_org:view
+=== airpay_privacy ===
+  local/airpay_privacy:manage
+  local/airpay_privacy:view
+=== airpay_proctoring ===
+  local/airpay_proctoring:attempt
+  local/airpay_proctoring:bypass
+  local/airpay_proctoring:manage
+  local/airpay_proctoring:review
+  local/airpay_proctoring:viewattempts
+=== airpay_programs ===
+  local/airpay_programs:create
+  local/airpay_programs:delete
+  local/airpay_programs:enrol
+  local/airpay_programs:manage
+  local/airpay_programs:update
+  local/airpay_programs:view
+=== airpay_recompletion ===
+  local/airpay_recompletion:manage
+  local/airpay_recompletion:reset
+  local/airpay_recompletion:view
+=== airpay_reports ===
+  local/airpay_reports:export
+  local/airpay_reports:manage
+  local/airpay_reports:view
+=== airpay_request ===
+  local/airpay_request:approve
+  local/airpay_request:overrideroute
+  local/airpay_request:request
+  local/airpay_request:viewall
+=== airpay_roles ===
+  local/airpay_roles:assign
+  local/airpay_roles:audit
+  local/airpay_roles:export
+  local/airpay_roles:manage
+  local/airpay_roles:view
+=== airpay_skills ===
+  local/airpay_skills:manage
+  local/airpay_skills:view
+=== airpay_users ===
+  local/airpay_users:bulkstatuschange
+  local/airpay_users:create
+  local/airpay_users:delete
+  local/airpay_users:edit
+  local/airpay_users:export
+  local/airpay_users:manage
+  local/airpay_users:view

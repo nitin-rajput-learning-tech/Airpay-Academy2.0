@@ -41,7 +41,7 @@ $rows = $DB->get_records_sql(
 | `tenant::assert_valid(int $tenantid): void` | Reject anything outside `{1, 77, 177}` |
 | `tenant::viewer_can_access(int $resource_tenant, ?int $viewerid = null): bool` | Site admin always true; otherwise tenant must match |
 | `tenant::require_access(int $resource_tenant, ?int $viewerid = null): void` | Throws `error_outoftenant` if not allowed |
-| `tenant::sql_filter(string $alias = ''): array` | Returns `[$sql_fragment, $named_args]` — admin → `1=1`, tenant user → `alias.costcenterid = :_tenantroot` |
+| `tenant::sql_filter(string $alias = ''): array` | Returns `[$sql_fragment, $named_args]` — admin → `1=1`, tenant user → `alias.costcenterid = :aptenantroot` |
 
 ## Tables
 

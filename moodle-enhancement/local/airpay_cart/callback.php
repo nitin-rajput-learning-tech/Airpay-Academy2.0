@@ -45,7 +45,19 @@ if ($iplist !== '') {
         }
     }
     if (!$allowed) {
-        // No body, no telltale. Just drop.
+        // ── N6 fix (Phase 8.2 re-audit): silent-drop is intentional but
+        // log the rejected IP so operators see when the gateway rotates
+        // its outbound addresses. Use cache-based dedupe to avoid log
+        // spam from a stuck scanner — one log entry per IP per hour.
+        $dedupe_cache = \cache::make('local_airpay_cart', 'callback_drop_dedupe');
+        $dedupe_key = 'drop:' . $remote . ':h:' . floor(time() / 3600);
+        if (!$dedupe_cache->get($dedupe_key)) {
+            \local_airpay_cart\callback_logger::log('ip_blocked',
+                ['remote_ip' => $remote, 'iplist' => $iplist],
+                '(silent-404 — request body not logged)');
+            $dedupe_cache->set($dedupe_key, 1);
+        }
+        // No body, no telltale to the caller. Just drop.
         http_response_code(404);
         exit;
     }

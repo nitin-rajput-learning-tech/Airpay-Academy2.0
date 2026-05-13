@@ -52,25 +52,58 @@ class aws_verifier implements identity_verifier_interface {
             'SimilarityThreshold' => (float) $threshold,
         ]);
 
-        $headers = self::sign_request($endpoint, $payload, $region, $key, $secret);
+        // N9 fix (Phase 8.2 re-audit): exponential backoff retry.
+        // AWS Rekognition occasionally returns 5xx (transient throttling
+        // or backend hiccup). The single-shot pattern locked the
+        // candidate out and failed the attempt. New behaviour: retry on
+        // 5xx and AWS Throttling exceptions up to two times with
+        // exponential backoff (250ms, 500ms). 4xx still fails fast.
+        $max_attempts = 3;
+        $backoff_ms   = [250, 500];
+        $http = 0;
+        $body = '';
+        $last_error = '';
 
-        $ch = curl_init($endpoint);
-        curl_setopt_array($ch, [
-            CURLOPT_POST           => true,
-            CURLOPT_POSTFIELDS     => $payload,
-            CURLOPT_HTTPHEADER     => $headers,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT        => 30,
-        ]);
-        $body = curl_exec($ch);
-        $http = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
+        for ($attempt = 1; $attempt <= $max_attempts; $attempt++) {
+            $headers = self::sign_request($endpoint, $payload, $region, $key, $secret);
+
+            $ch = curl_init($endpoint);
+            curl_setopt_array($ch, [
+                CURLOPT_POST           => true,
+                CURLOPT_POSTFIELDS     => $payload,
+                CURLOPT_HTTPHEADER     => $headers,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT        => 30,
+            ]);
+            $body = curl_exec($ch);
+            $http = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curl_err = curl_error($ch);
+            curl_close($ch);
+
+            if ($http === 200) {
+                break;
+            }
+
+            $last_error = $curl_err ?: substr((string) $body, 0, 200);
+
+            $retryable = ($http >= 500 && $http < 600)
+                || ($http === 0 && $curl_err !== '')
+                || (str_contains((string) $body, 'Throttling'));
+
+            if (!$retryable) {
+                break;
+            }
+
+            if ($attempt < $max_attempts) {
+                usleep($backoff_ms[$attempt - 1] * 1000);
+            }
+        }
 
         if ($http !== 200) {
             return [
                 'passed' => false, 'score' => 0.0,
                 'error_code' => 'aws_http_' . $http,
-                'error_msg'  => substr($body, 0, 500),
+                'error_msg'  => substr($last_error ?: (string) $body, 0, 500),
             ];
         }
 

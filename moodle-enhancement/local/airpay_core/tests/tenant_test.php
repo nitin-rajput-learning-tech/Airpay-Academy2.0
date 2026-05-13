@@ -129,7 +129,7 @@ class tenant_test extends \advanced_testcase {
         $u = $DB->get_record('user', ['id' => $u->id]);
         $this->setUser($u);
         [$sql, $args] = tenant::sql_filter('h');
-        $this->assertSame('h.costcenterid = :_tenantroot', $sql);
-        $this->assertSame(['_tenantroot' => 77], $args);
+        $this->assertSame('h.costcenterid = :aptenantroot', $sql);
+        $this->assertSame(['aptenantroot' => 77], $args);
     }
 }

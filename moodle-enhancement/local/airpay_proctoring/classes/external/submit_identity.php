@@ -36,14 +36,30 @@ class submit_identity extends external_api {
         // Without this an attacker can submit 28 MB (2 × 14 MB raw) per
         // request unlimited times, exhausting PHP memory + AWS quota.
         // 5 submits/hour is generous (legitimate UX: 1 submit per session).
+        //
+        // N1 fix (Phase 8.2 re-audit): replaced fixed-hour bucket with
+        // sliding-window. The old `floor(time() / 3600)` key meant that
+        // at the hour boundary an attacker could submit 5+5=10 in 2
+        // seconds because the bucket key flipped. The sliding window
+        // stores recent submission timestamps and rejects when more
+        // than 5 fall within the trailing 3600 seconds, no matter
+        // when the boundary lands.
         $cache = \cache::make('local_airpay_proctoring', 'identity_rate');
-        $key   = 'u:' . (int) $USER->id . ':h:' . floor(time() / 3600);
-        $count = (int) ($cache->get($key) ?: 0);
-        if ($count >= 5) {
+        $key   = 'u:' . (int) $USER->id;
+        $now   = time();
+        $window = 3600;          // trailing one hour
+        $limit  = 5;             // 5 submissions per trailing hour
+        $stamps = $cache->get($key);
+        $stamps = is_array($stamps) ? $stamps : [];
+        // Prune entries older than the window.
+        $stamps = array_values(array_filter($stamps,
+            static fn($t) => is_int($t) && ($now - $t) < $window));
+        if (count($stamps) >= $limit) {
             throw new \moodle_exception('error_session_state', 'local_airpay_proctoring',
-                '', 'Rate limit: too many identity submissions this hour');
+                '', 'Rate limit: too many identity submissions in the last hour');
         }
-        $cache->set($key, $count + 1);
+        $stamps[] = $now;
+        $cache->set($key, $stamps);
 
         // ── B7 fix: tighten size cap from 14M to 5.5M (raw ≈ 4MB) ──────
         // An ID + selfie at full HD is well under 2 MB each. The old

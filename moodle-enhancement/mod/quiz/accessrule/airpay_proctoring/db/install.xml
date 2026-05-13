@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="mod/quiz/accessrule/airpay_proctoring/db" VERSION="20260512"
+       COMMENT="Airpay proctoring quiz access rule — per-quiz settings table">
+  <TABLES>
+    <TABLE NAME="quizaccess_airpay_proctor"
+           COMMENT="Per-quiz proctoring settings. Replaces the get_config/set_config keyed-by-quizid pattern that polluted mdl_config_plugins at 1000+ quizzes scale (Phase 8 audit finding N7).">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="quizid"       TYPE="int" LENGTH="10" NOTNULL="true"
+               COMMENT="FK to mdl_quiz.id — one row per proctored quiz"/>
+        <FIELD NAME="enabled"      TYPE="int" LENGTH="1"  NOTNULL="true" DEFAULT="0"
+               COMMENT="0 = proctoring off; 1 = proctoring on"/>
+        <FIELD NAME="min_match_score" TYPE="number" LENGTH="3" DECIMALS="2"
+               NOTNULL="false" DEFAULT="0.85"
+               COMMENT="Identity-match threshold override for this quiz (NULL = use site default)"/>
+        <FIELD NAME="retention_days_override" TYPE="int" LENGTH="6"
+               NOTNULL="false"
+               COMMENT="Recording retention override for this quiz (NULL = use site default)"/>
+        <FIELD NAME="timecreated"  TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_quiz" TYPE="foreign" FIELDS="quizid" REFTABLE="quiz" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="uniq_quizid" UNIQUE="true" FIELDS="quizid"
+               COMMENT="One settings row per quiz"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

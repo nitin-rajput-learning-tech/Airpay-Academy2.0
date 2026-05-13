@@ -35,20 +35,41 @@ class rule extends access_rule_base {
     }
 
     /**
-     * Persist the form field. Stored as quiz config via the access rule pattern.
+     * Persist the form field.
+     *
+     * N7 fix (Phase 8.2 re-audit): the previous implementation stored
+     * the per-quiz flag in `mdl_config_plugins` via `set_config()` keyed
+     * by quizid. That works for small N but at 1000+ proctored quizzes
+     * the config-plugins table becomes a smell — config rows aren't
+     * indexed by name, the lookup is a sequential scan, and any future
+     * `purge_config` administrative action would wipe the proctoring
+     * configuration. Moved to a proper relational table
+     * `mdl_quizaccess_airpay_proctor` keyed by quizid with an extension
+     * column for per-quiz overrides of `min_match_score` and
+     * `retention_days_override`.
      */
     public static function save_settings($quiz): void {
         global $DB;
         $enabled = (int) ($quiz->airpay_proctoring_enabled ?? 0);
-        // Storage approach: a row in quiz_overrides-like table, OR a quiz
-        // custom field. For simplicity here, we set a config flag on the
-        // quiz instance via a separate table — but to avoid creating one,
-        // we just keep it in plugin config keyed by quizid.
-        set_config('quiz_' . $quiz->id . '_enabled', $enabled, 'quizaccess_airpay_proctoring');
+        $now = time();
+        $existing = $DB->get_record('quizaccess_airpay_proctor', ['quizid' => $quiz->id]);
+        if ($existing) {
+            $existing->enabled      = $enabled;
+            $existing->timemodified = $now;
+            $DB->update_record('quizaccess_airpay_proctor', $existing);
+        } else {
+            $DB->insert_record('quizaccess_airpay_proctor', (object) [
+                'quizid'       => (int) $quiz->id,
+                'enabled'      => $enabled,
+                'timecreated'  => $now,
+                'timemodified' => $now,
+            ]);
+        }
     }
 
     public static function delete_settings($quiz): void {
-        unset_config('quiz_' . $quiz->id . '_enabled', 'quizaccess_airpay_proctoring');
+        global $DB;
+        $DB->delete_records('quizaccess_airpay_proctor', ['quizid' => (int) $quiz->id]);
     }
 
     /**
@@ -56,10 +77,11 @@ class rule extends access_rule_base {
      * if proctoring is disabled for this quiz).
      */
     public static function make(quiz_settings $quizobj, $timenow, $canignoretimelimits): ?access_rule_base {
+        global $DB;
         $quiz = $quizobj->get_quiz();
-        $enabled = (int) get_config('quizaccess_airpay_proctoring',
-            'quiz_' . $quiz->id . '_enabled');
-        if (!$enabled) return null;
+        $row = $DB->get_record('quizaccess_airpay_proctor',
+            ['quizid' => $quiz->id], 'enabled');
+        if (!$row || empty($row->enabled)) return null;
         return new self($quizobj, $timenow);
     }
 
@@ -110,7 +132,9 @@ class rule extends access_rule_base {
      * Moodle quiz settings form can check it.
      */
     public static function is_quiz_proctored(int $quizid): bool {
-        return (bool) (int) get_config('quizaccess_airpay_proctoring',
-            'quiz_' . $quizid . '_enabled');
+        global $DB;
+        $row = $DB->get_record('quizaccess_airpay_proctor',
+            ['quizid' => $quizid], 'enabled');
+        return $row && !empty($row->enabled);
     }
 }

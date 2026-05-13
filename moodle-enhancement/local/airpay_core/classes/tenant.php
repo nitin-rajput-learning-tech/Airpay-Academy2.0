@@ -123,8 +123,8 @@ class tenant {
             return ['1=1', []];
         }
         return [
-            "$col = :_tenantroot",
-            ['_tenantroot' => self::root_for_current_user()],
+            "$col = :aptenantroot",
+            ['aptenantroot' => self::root_for_current_user()],
         ];
     }
 }
