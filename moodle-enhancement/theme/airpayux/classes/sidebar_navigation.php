@@ -169,9 +169,13 @@ class sidebar_navigation {
             // specific Airpay courses for their tenant's catalogue.
             // Airpay-tenant managers don't see this — they already own
             // every Airpay course by tree membership.
+            // Paired with "My Requests" outbox so they can track the
+            // status of every request they've filed.
             if ($this->is_non_airpay_tenant_user()) {
                 $items[] = $this->item('Browse Airpay Library', 'fa-handshake-o',
                     '/local/airpay_courses/browse_airpay.php', $currenturl);
+                $items[] = $this->item('My Requests', 'fa-clipboard-list',
+                    '/local/airpay_courses/my_requests.php', $currenturl);
             }
             // Cart for managers in cart-enabled tenants.
             if ($this->is_cart_enabled_for_current_user()) {
