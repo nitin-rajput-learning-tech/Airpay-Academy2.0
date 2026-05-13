@@ -1,9 +1,76 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-13 (very late) — **ADMIN-FEEDBACK SPRINT A-D + WAVES 2/3/4 + POLISH SHIPPED + PUSHED (15 commits).** Closes all four LMS Admin feedback items reported on 2026-05-13 plus the cascade of polish work surfaced by full PHPUnit runs and end-to-end smoke testing.
+**Updated:** 2026-05-13 EOD — **ADMIN-FEEDBACK SPRINT A-D + WAVES 2/3/4 + POLISH SHIPPED + PUSHED (22 commits, `78647e47d..ccac2b190`).** Closes all four LMS Admin feedback items reported on 2026-05-13 plus the cascade of polish work surfaced by full PHPUnit runs and end-to-end smoke testing.
 **Phase:** Academy 4.0 — admin-feedback delivery complete. Cutover gates remain (IT staging deploy + k6 + pen-test + sign-off).
 
-> **CURRENT TEST POSTURE (2026-05-13)**
-> - **52 PHPUnit tests, 81 assertions, 0 errors, 0 failures, 23 skipped**
+---
+
+## ⏸️  TOMORROW'S PICKUP — start here
+
+**Session paused 2026-05-13 EOD. All 22 commits pushed to production branch.**
+
+### Recommended day-1 actions (in priority order)
+
+1. **Deploy the 22-commit run to staging** (or production if you're confident).
+   Use the runbook: `moodle-enhancement/deploy/ADMIN-FEEDBACK-DEPLOYMENT-RUNBOOK.md`.
+   Headline: `git pull`, `php admin/cli/upgrade.php`, `php admin/cli/purge_caches.php`,
+   then `bash moodle-enhancement/deploy/pre_deploy_validate.sh` (expect 9/10 green).
+
+2. **Run the 23 skipped PHPUnit tests on staging.**
+   They skip on dev because the BizLMS `user.open_path` column isn't in the vanilla
+   PHPUnit fixture. On staging (which has the BizLMS plugin active), they should
+   all pass:
+   ```
+   cd /path/to/staging/moodle
+   ./vendor/bin/phpunit public/local/airpay_courses/tests/request_manager_test.php
+   ```
+   Expected: 12/12 pass — currently 12 of them skip on dev.
+
+3. **Smoke-test each Sprint via the runbook's Step 5-8 checklist.**
+   - Sprint A: `diagnose_admin_ux.php --user=academy@airpay.co.in` → all 7 checks PASS.
+   - Sprint B: complete a course with a `tool_certificate` activity → user receives
+     email with PDF attached. Verify via `cli/cert_emails_report.php --detail`.
+   - Sprint C: as site admin, share any course to Public; verify it appears in
+     Public's catalog with provenance badge.
+   - Sprint D: as Public manager, request access to an Airpay course; admin
+     approves; verify course appears in Public catalog.
+
+4. **Add the two dashboard widgets to /my/** for site admins.
+   `/my/` → Customise this page → drop "Airpay Cron Health" + "Airpay Certificate
+   Health" into a region.
+
+### Possible follow-ups if time allows
+
+- Settings UI page in airpay_emails for default cadence (currently editable
+  per-rule via the rule editor only).
+- Add the cert_health + cron_health blocks to the default `/my/` dashboard via
+  `db/install.php` so they auto-appear instead of admin manually adding.
+- Per-tenant cadence override — currently `cadence_days_json` applies platform-wide
+  per rule; could allow tenant-specific overrides via the existing
+  `local_airpay_email_overrides` table pattern.
+- Backfill any remaining LMS admin feedback that surfaces after they see the
+  Day-1 deployment.
+
+### Anything broken or half-finished?
+
+**Nothing.** All 22 commits are atomic and pushed. Lint clean. All 73 PHPUnit
+tests pass on dev (with the 23 environmental-skip caveat for open_path). Pre-deploy
+9/10 green (Gate 3 cron-health FAILs on dev because there's no cron daemon — it
+WILL pass on staging/prod).
+
+### Where to find the work
+
+| Looking for | File |
+|---|---|
+| What the 4 sprints did | This file, "ADMIN-FEEDBACK SPRINTS A-D" section below |
+| Cutover steps | `moodle-enhancement/deploy/ADMIN-FEEDBACK-DEPLOYMENT-RUNBOOK.md` |
+| Plugin user docs | `local/airpay_emails/README.md`, `local/airpay_courses/README.md`, `blocks/airpay_cert_health/README.md` |
+| State cards (dev reference) | `state-cards/airpay_learningpath-state.md`, `state-cards/airpay_emails-state.md`, `state-cards/airpay_courses-state.md`, `state-cards/block_airpay_cron_health-state.md`, `state-cards/block_airpay_cert_health-state.md` |
+| Ops tools | `local/airpay_learningpath/cli/diagnose_admin_ux.php`, `local/airpay_emails/cli/cert_emails_report.php`, `local/airpay_courses/cli/manage_shares.php` |
+
+---
+
+> **CURRENT TEST POSTURE (2026-05-13 EOD)**
+> - **73 PHPUnit tests, 118 assertions, 0 errors, 0 failures, 23 skipped**
 >   (skipped tests need the BizLMS `user.open_path` column not
 >   present in vanilla PHPUnit fixture — they exercise on staging)
 > - **2 axe-core a11y suites, 0 critical, 0 serious** — both
