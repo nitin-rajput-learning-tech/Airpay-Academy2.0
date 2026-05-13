@@ -231,5 +231,33 @@ function xmldb_local_airpay_emails_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026051301, 'local', 'airpay_emails');
     }
 
+    // ── Sprint B hotfix (2026-05-13): widen log.status from char(20)
+    //    to char(32). The new 'suppressed_completion' value introduced
+    //    in 2026051301 is 21 chars and overflows the original 20-char
+    //    column on MariaDB strict mode. Caught by PHPUnit's
+    //    observer_test::test_mark_reminders_suppressed_on_completion_stamps_sent_rows.
+    //
+    //    The status column carries an index (idx_status) — Moodle's
+    //    ddl_dependency_exception forbids changing a column under an
+    //    index. So: drop the index, widen the column, re-add the index.
+    if ($oldversion < 2026051302) {
+        $table = new xmldb_table('local_airpay_email_log');
+        $index = new xmldb_index('idx_status', XMLDB_INDEX_NOTUNIQUE, ['status']);
+        $field = new xmldb_field('status', XMLDB_TYPE_CHAR, '32',
+            null, XMLDB_NOTNULL, null, 'sent', 'error_message');
+
+        if ($dbman->index_exists($table, $index)) {
+            $dbman->drop_index($table, $index);
+        }
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->change_field_precision($table, $field);
+        }
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        upgrade_plugin_savepoint(true, 2026051302, 'local', 'airpay_emails');
+    }
+
     return true;
 }

@@ -93,8 +93,9 @@
         <FIELD NAME="channel"       TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="email"/>
         <FIELD NAME="subject"       TYPE="char" LENGTH="255" NOTNULL="true"/>
         <FIELD NAME="template_key"  TYPE="char" LENGTH="100" NOTNULL="false"/>
-        <FIELD NAME="status"        TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="sent"
-               COMMENT="sent, failed, bounced, suppressed, suppressed_completion"/>
+        <FIELD NAME="status"        TYPE="char" LENGTH="32" NOTNULL="true" DEFAULT="sent"
+               COMMENT="sent, failed, bounced, suppressed, suppressed_completion.
+                        Sprint B widened from 20 to 32 to fit 'suppressed_completion'."/>
         <FIELD NAME="error_message" TYPE="text" NOTNULL="false"/>
         <FIELD NAME="attachment_filename" TYPE="char" LENGTH="255" NOTNULL="false"
                COMMENT="Sprint B: name of any attached file (e.g. 'certificate.pdf').

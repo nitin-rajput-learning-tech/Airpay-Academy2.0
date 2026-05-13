@@ -310,18 +310,21 @@ class sharing_manager {
         global $DB;
 
         // Preferred source: BizLMS-style top-level org table.
+        // The org table column is `fullname` (not `name` — that's the
+        // bizlms-era costcenter column name we don't carry). Sprint C
+        // hotfix: corrected after PHPUnit caught the bad column name.
         if ($DB->get_manager()->table_exists('local_airpay_org')) {
             // Depth 1 = top-level orgs (tenants). path is something
             // like '/1' for Airpay's root org.
             $rows = $DB->get_records_sql(
-                "SELECT id, name FROM {local_airpay_org}
+                "SELECT id, fullname FROM {local_airpay_org}
                   WHERE depth = 1
                     AND visible = 1
                   ORDER BY id ASC");
             if (!empty($rows)) {
                 return array_map(fn($r) => (object) [
                     'id'   => (int) $r->id,
-                    'name' => $r->name,
+                    'name' => $r->fullname,
                 ], array_values($rows));
             }
         }
