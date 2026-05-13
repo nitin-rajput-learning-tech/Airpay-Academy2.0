@@ -46,18 +46,16 @@ class list_course_enrolments extends external_api {
             throw new \moodle_exception('invalidcourse');
         }
 
-        // Tenant scope: non-siteadmin can only inspect courses in their tree.
-        global $USER;
-        if (!is_siteadmin()) {
-            $course = $DB->get_record('course', ['id' => $courseid], 'open_path');
-            $userparts = explode('/', trim($USER->open_path ?? '', '/'));
-            $usertop = isset($userparts[0]) && ctype_digit($userparts[0])
-                ? '/' . (int) $userparts[0] : '';
-            if ($course && !empty($course->open_path)
-                && $course->open_path !== $usertop
-                && strpos($course->open_path, $usertop . '/') !== 0) {
-                throw new \moodle_exception('outoftenant', 'local_airpay_courses');
-            }
+        // Tenant scope: non-siteadmin can only inspect courses in their
+        // tree. Phase 9.7 — back-ported to
+        // `\local_airpay_core\tenant::require_path_access()`. The helper
+        // throws `error_outoftenant` on mismatch, ignores rows with
+        // empty open_path (legacy unscoped tolerance), and short-
+        // circuits for siteadmins.
+        $course = $DB->get_record('course', ['id' => $courseid], 'open_path');
+        if ($course) {
+            \local_airpay_core\tenant::require_path_access(
+                (string) ($course->open_path ?? ''));
         }
 
         $allowed_sort = ['lastname', 'firstname', 'email', 'lastaccess', 'completed'];

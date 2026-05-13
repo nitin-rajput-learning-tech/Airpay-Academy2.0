@@ -102,6 +102,61 @@ class tenant {
     }
 
     /**
+     * Path-based equivalent of `require_access()` — for when the
+     * resource carries an `open_path` string (e.g. `mdl_course.open_path`)
+     * rather than a flat `costcenterid` integer.
+     *
+     * The check: viewer's tenant root must match the FIRST segment of
+     * the resource's open_path, OR the resource path must descend from
+     * the viewer's tenant root (`/77/x/y` allowed when viewer root is 77).
+     *
+     * Site admins always pass. Empty / null resource path: pass (legacy
+     * unscoped rows treated as visible — matches the existing inline
+     * pattern's behaviour in the back-ported callers).
+     *
+     * Use case: after fetching one resource record by id and verifying
+     * the viewer has the right capability, call this to enforce that
+     * the resource itself is in the viewer's tenant tree.
+     *
+     *     $course = $DB->get_record('course', ['id' => $id], 'open_path',
+     *                                MUST_EXIST);
+     *     \local_airpay_core\tenant::require_path_access(
+     *         (string) $course->open_path);
+     *
+     * @param string $resource_path The resource's open_path (may be empty)
+     * @param int|null $viewerid    Defaults to current $USER
+     */
+    public static function require_path_access(string $resource_path,
+                                                ?int $viewerid = null): void {
+        if ($resource_path === '') {
+            return;  // legacy unscoped row — same tolerance as the inline pattern
+        }
+        global $DB, $USER;
+        $is_admin = ($viewerid === null || $viewerid === ($USER->id ?? 0))
+            ? is_siteadmin()
+            : is_siteadmin($viewerid);
+        if ($is_admin) {
+            return;
+        }
+        // Derive the viewer's tenant root.
+        if ($viewerid === null || $viewerid === ($USER->id ?? 0)) {
+            $viewer_root = self::root_for_user($USER);
+        } else {
+            $viewer = $DB->get_record('user', ['id' => $viewerid], 'id, open_path');
+            $viewer_root = $viewer ? self::root_for_user($viewer) : 0;
+        }
+        if ($viewer_root <= 0) {
+            throw new \moodle_exception('error_outoftenant', 'local_airpay_core');
+        }
+        $viewer_path_exact  = '/' . $viewer_root;
+        $viewer_path_prefix = '/' . $viewer_root . '/';
+        if ($resource_path !== $viewer_path_exact
+                && strpos($resource_path, $viewer_path_prefix) !== 0) {
+            throw new \moodle_exception('error_outoftenant', 'local_airpay_core');
+        }
+    }
+
+    /**
      * Build the WHERE-clause fragment for tenant-scoping a SELECT.
      *
      * Used in get_records_sql() when listing tenant-bound resources:
