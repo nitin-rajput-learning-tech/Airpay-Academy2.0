@@ -64,12 +64,25 @@ Custom output directory:
 from __future__ import annotations
 
 import argparse
+import io
 import json
 import re
 import sys
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
+
+# Force UTF-8 stdout/stderr on Windows (cp1252 default crashes on our
+# em-dash + check-mark progress glyphs).
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except (AttributeError, OSError):
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8",
+                                       errors="replace", line_buffering=True)
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8",
+                                       errors="replace", line_buffering=True)
 
 
 # ─── Quality gates (per SUPP-C Section 7.7) ────────────────────────────
