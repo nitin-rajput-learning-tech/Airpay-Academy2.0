@@ -234,32 +234,113 @@ def evaluate_narration(text: str) -> NarrationResult:
     )
 
 
-# ─── Anthropic API call (gated, not invoked in skeleton) ────────────────
+# ─── Anthropic API call (live, gated by [CONFIRM]) ─────────────────────
 
 
-def call_claude(prompt: str, model: str, max_tokens: int = 3500) -> str:
+@dataclass
+class ClaudeCallResult:
+    """Result of one live Claude call. Includes the response text plus
+    token-usage metadata for budget tracking."""
+    text: str
+    input_tokens: int
+    output_tokens: int
+    cache_creation_input_tokens: int = 0
+    cache_read_input_tokens: int = 0
+    model: str = ""
+    stop_reason: str = ""
+
+    @property
+    def estimated_cost_inr(self) -> float:
+        """Rough INR cost. Claude Sonnet input ~Rs 0.25 per 1k input
+        tokens; output ~Rs 1.25 per 1k output tokens (Mar 2026 rate).
+        Cache reads are 10x cheaper than fresh input."""
+        fresh_input = self.input_tokens - self.cache_read_input_tokens
+        cost = (
+            fresh_input * 0.00025
+            + self.cache_creation_input_tokens * 0.0003125  # 25% premium
+            + self.cache_read_input_tokens * 0.000025       # 10x discount
+            + self.output_tokens * 0.00125
+        )
+        # 83 INR per USD reference rate (per master doc cover page).
+        return round(cost * 83, 2)
+
+
+def call_claude(prompt: str, model: str,
+                 max_tokens: int = 3500,
+                 max_retries: int = 3,
+                 backoff_ms: tuple[int, ...] = (500, 1500)) -> ClaudeCallResult:
     """
     Live call to Claude. NOT invoked unless --confirm and the user
     has answered 'yes' at the interactive prompt.
 
-    Returns the narration text. Raises on API or quota errors.
+    Returns a ClaudeCallResult with the narration text + token usage
+    metadata for budget tracking. Raises on persistent API errors after
+    exhausting retries.
+
+    Phase 9.6 hardening:
+    - Exponential-backoff retry on 5xx + RateLimit + Overloaded errors
+      (mirrors the AWS Rekognition retry pattern in Agent 4 area).
+    - Captures input_tokens + output_tokens from `message.usage` for
+      structured logging and the actual-vs-estimated cost reconciliation
+      that the quarterly vendor-budget review needs.
     """
     # Imported lazily so dry-run mode doesn't require the SDK.
     import anthropic  # type: ignore
 
     client = anthropic.Anthropic()  # reads ANTHROPIC_API_KEY from env
-    message = client.messages.create(
-        model=model,
-        max_tokens=max_tokens,
-        messages=[{"role": "user", "content": prompt}],
+
+    last_error: Exception | None = None
+    for attempt in range(1, max_retries + 1):
+        try:
+            message = client.messages.create(
+                model=model,
+                max_tokens=max_tokens,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            parts = message.content
+            if not parts:
+                raise RuntimeError("Empty response from Claude")
+            block = parts[0]
+            if not hasattr(block, "text"):
+                raise RuntimeError(
+                    f"Unexpected response block type: {type(block).__name__}"
+                )
+
+            usage = getattr(message, "usage", None)
+            return ClaudeCallResult(
+                text=block.text,  # type: ignore[union-attr]
+                input_tokens=getattr(usage, "input_tokens", 0) if usage else 0,
+                output_tokens=getattr(usage, "output_tokens", 0) if usage else 0,
+                cache_creation_input_tokens=getattr(usage,
+                    "cache_creation_input_tokens", 0) if usage else 0,
+                cache_read_input_tokens=getattr(usage,
+                    "cache_read_input_tokens", 0) if usage else 0,
+                model=model,
+                stop_reason=getattr(message, "stop_reason", "") or "",
+            )
+
+        except anthropic.RateLimitError as e:        # 429
+            last_error = e
+        except anthropic.APIStatusError as e:        # 5xx
+            if 500 <= e.status_code < 600:
+                last_error = e
+            else:
+                raise
+        except anthropic.APIConnectionError as e:    # network blip
+            last_error = e
+
+        # Retryable error path.
+        if attempt < max_retries:
+            sleep_ms = backoff_ms[min(attempt - 1, len(backoff_ms) - 1)]
+            print(f"    (retry {attempt}/{max_retries - 1} after {sleep_ms}ms — "
+                  f"{type(last_error).__name__})")
+            import time
+            time.sleep(sleep_ms / 1000)
+            continue
+
+    raise RuntimeError(
+        f"Claude call failed after {max_retries} attempts: {last_error}"
     )
-    parts = message.content
-    if not parts:
-        raise RuntimeError("Empty response from Claude")
-    block = parts[0]
-    if not hasattr(block, "text"):
-        raise RuntimeError(f"Unexpected response block type: {type(block).__name__}")
-    return block.text  # type: ignore[no-any-return]
 
 
 def confirm_call(parsed_filename: str) -> bool:
@@ -315,7 +396,15 @@ def process_one(parsed_path: Path, output_dir: Path, dry_run: bool) -> bool:
 
     model = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-5-20250929")
     print(f"  Calling Claude (model={model})...")
-    narration = call_claude(prompt, model=model)
+    claude_result = call_claude(prompt, model=model)
+    narration = claude_result.text
+
+    # Log actual token usage + cost (vs. estimate).
+    print(f"  Tokens: input={claude_result.input_tokens:,} "
+          f"output={claude_result.output_tokens:,} "
+          f"cache_read={claude_result.cache_read_input_tokens:,}")
+    print(f"  Actual cost: Rs.{claude_result.estimated_cost_inr:.2f}")
+    print(f"  Stop reason: {claude_result.stop_reason}")
 
     result = evaluate_narration(narration)
     print(f"  Word count: {result.word_count}")
