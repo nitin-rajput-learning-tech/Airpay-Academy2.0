@@ -140,5 +140,96 @@ function xmldb_local_airpay_emails_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026041200, 'local', 'airpay_emails');
     }
 
+    // ── Sprint B (2026-05-13): course-completion email + ramping reminders ──
+    // Adds 2 columns to local_airpay_email_log (attachment_filename,
+    // certificate_issue_id) and 3 columns to local_airpay_email_rules
+    // (cadence_days_json, max_reminders_per_user, auto_stop_on_completion).
+    // Seeds two new default rules: 'course_completed' and 'course_incomplete'.
+    if ($oldversion < 2026051301) {
+
+        // --- local_airpay_email_log: attachment columns ---
+        $table = new xmldb_table('local_airpay_email_log');
+
+        $field = new xmldb_field('attachment_filename', XMLDB_TYPE_CHAR, '255',
+            null, null, null, null, 'error_message');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('certificate_issue_id', XMLDB_TYPE_INTEGER, '10',
+            null, null, null, null, 'attachment_filename');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // --- local_airpay_email_rules: cadence + cap + auto-stop columns ---
+        $table = new xmldb_table('local_airpay_email_rules');
+
+        $field = new xmldb_field('cadence_days_json', XMLDB_TYPE_CHAR, '255',
+            null, null, null, null, 'conditions_json');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('max_reminders_per_user', XMLDB_TYPE_INTEGER, '3',
+            null, XMLDB_NOTNULL, null, '0', 'cadence_days_json');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('auto_stop_on_completion', XMLDB_TYPE_INTEGER, '1',
+            null, XMLDB_NOTNULL, null, '1', 'max_reminders_per_user');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // --- Seed: course-completed and course-incomplete rules. ---
+        // Skip seeding if the rules already exist (admin may have created
+        // them manually before upgrade, or this upgrade may be re-running).
+        $now = time();
+        $sprintb_rules = [
+            [
+                'rule_name'              => 'Course completed: congratulations + certificate',
+                'rule_type'              => 'course_completed',
+                'trigger_event'          => '\\core\\event\\course_completed',
+                'trigger_days'           => null,
+                'channel'                => 'email',
+                'audience'               => 'learner',
+                'template_key'           => 'enrollment/course_completed',
+                'priority'               => 95,
+                'cadence_days_json'      => null,
+                'max_reminders_per_user' => 1,    // never resend on the same completion
+                'auto_stop_on_completion' => 0,   // n/a — this rule IS the completion email
+            ],
+            [
+                'rule_name'              => 'Course incomplete: ramping reminders (1-3-7-14-21)',
+                'rule_type'              => 'course_incomplete',
+                'trigger_event'          => 'cron',
+                'trigger_days'           => null,
+                'channel'                => 'email',
+                'audience'               => 'learner',
+                'template_key'           => 'notifications/course_not_started',
+                'priority'               => 60,
+                'cadence_days_json'      => '[1,3,7,14,21]',
+                'max_reminders_per_user' => 5,
+                'auto_stop_on_completion' => 1,
+            ],
+        ];
+        foreach ($sprintb_rules as $rule) {
+            if ($DB->record_exists('local_airpay_email_rules',
+                    ['rule_type' => $rule['rule_type'], 'tenant_id' => 0])) {
+                continue;
+            }
+            $rule['tenant_id']    = 0;
+            $rule['enabled']      = 1;
+            $rule['usermodified'] = 2;
+            $rule['timecreated']  = $now;
+            $rule['timemodified'] = $now;
+            $DB->insert_record('local_airpay_email_rules', (object) $rule);
+        }
+
+        upgrade_plugin_savepoint(true, 2026051301, 'local', 'airpay_emails');
+    }
+
     return true;
 }

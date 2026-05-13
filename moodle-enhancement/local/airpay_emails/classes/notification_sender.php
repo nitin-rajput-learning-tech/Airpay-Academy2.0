@@ -18,13 +18,22 @@ class notification_sender {
     /**
      * Send a notification via one or more channels.
      *
+     * Sprint B (2026-05-13): the optional $options array now supports
+     * a `certificate_issue` key. When present (a `tool_certificate_issues`
+     * row), the email channel attaches the generated PDF via
+     * `email_to_user($attachment, $attachname)` — that's the only Moodle
+     * API surface that supports attachments (`message_send()` cannot).
+     * Other channels (popup, teams, push) ignore the attachment.
+     *
      * @param object $rule      Rule definition from email_rules table
      * @param object $user      Moodle user object (recipient)
      * @param array  $context   Template context variables
      * @param int    $courseid  Optional course ID for logging
+     * @param array  $options   Sprint B: ['certificate_issue' => stdClass]
      * @return array [{channel, status, log_id}] results per channel
      */
-    public static function send(object $rule, object $user, array $context, int $courseid = 0): array {
+    public static function send(object $rule, object $user, array $context,
+                                 int $courseid = 0, array $options = []): array {
         global $CFG;
 
         $channels = array_map('trim', explode(',', $rule->channel));
@@ -44,6 +53,18 @@ class notification_sender {
             $html = email_renderer::render('local_airpay_emails/' . $templatekey, $context, $user->id);
         }
 
+        // Sprint B — materialise certificate PDF once for ALL channels in
+        // this send (not per channel — that would generate the same PDF
+        // multiple times). Materialisation is a no-op when no issue is
+        // attached.
+        $materialised = null;
+        $cert_issue_id = null;
+        if (!empty($options['certificate_issue'])) {
+            $issue = $options['certificate_issue'];
+            $materialised = certificate_helper::materialise_pdf($issue);
+            $cert_issue_id = (int) $issue->id;
+        }
+
         foreach ($channels as $channel) {
             $channel = trim($channel);
             $status = 'sent';
@@ -60,6 +81,17 @@ class notification_sender {
                 try {
                     switch ($channel) {
                         case 'email':
+                            // Sprint B: route through email_to_user when an
+                            // attachment is present (message_send can't
+                            // attach files). Otherwise the existing
+                            // message_send path keeps popup-mirror behaviour.
+                            if ($materialised) {
+                                self::send_email_with_attachment($user, $subject,
+                                    $html, $materialised);
+                            } else {
+                                self::send_moodle_message($user, $subject, $html, $rule);
+                            }
+                            break;
                         case 'popup':
                             self::send_moodle_message($user, $subject, $html, $rule);
                             break;
@@ -83,23 +115,70 @@ class notification_sender {
                 }
             }
 
-            // Log the delivery attempt.
+            // Log the delivery attempt — Sprint B adds attachment + cert id.
             $logid = delivery_log::log([
-                'rule_id'       => $rule->id ?? null,
-                'userid'        => $user->id,
-                'courseid'      => $courseid,
-                'tenant_id'     => $tenantid,
-                'channel'       => $channel,
-                'subject'       => $subject,
-                'template_key'  => $templatekey,
-                'status'        => $status,
-                'error_message' => $error,
+                'rule_id'              => $rule->id ?? null,
+                'userid'               => $user->id,
+                'courseid'             => $courseid,
+                'tenant_id'            => $tenantid,
+                'channel'              => $channel,
+                'subject'              => $subject,
+                'template_key'         => $templatekey,
+                'status'               => $status,
+                'error_message'        => $error,
+                // Record attachment metadata for the audit log even when
+                // suppressed — so admins can answer "was this user supposed
+                // to receive the certificate?" without inspecting code.
+                'attachment_filename'  => ($channel === 'email' && $materialised)
+                    ? $materialised['display_name']
+                    : null,
+                'certificate_issue_id' => ($channel === 'email')
+                    ? $cert_issue_id
+                    : null,
             ]);
 
             $results[] = ['channel' => $channel, 'status' => $status, 'log_id' => $logid];
         }
 
+        // Clean up the temp PDF — best effort. Always run, even on failure.
+        certificate_helper::cleanup_materialised($materialised);
+
         return $results;
+    }
+
+    /**
+     * Send an HTML email with a single file attachment via `email_to_user`.
+     *
+     * Moodle's `message_send()` API does not carry attachments — only the
+     * lower-level `email_to_user()` does. We bypass the message-send
+     * pipeline ONLY for the attachment case; everything else still flows
+     * through `send_moodle_message()` so popup + email stay synchronised.
+     *
+     * @param object $user        Recipient user object (must have ->email etc.)
+     * @param string $subject
+     * @param string $html        Full HTML body
+     * @param array  $materialised Output of certificate_helper::materialise_pdf()
+     */
+    private static function send_email_with_attachment(object $user, string $subject,
+                                                        string $html, array $materialised): void {
+        $noreply = \core_user::get_noreply_user();
+        $textbody = html_to_text($html);
+
+        // email_to_user signature:
+        //   email_to_user($user, $from, $subject, $messagetext, $messagehtml,
+        //                 $attachment, $attachname, $usetrueaddress, ...)
+        // `$attachment` is the RELATIVE path under $CFG->dataroot historically;
+        // recent Moodles also accept absolute paths and will resolve them.
+        $ok = email_to_user(
+            $user, $noreply, $subject,
+            $textbody, $html,
+            $materialised['rel_path'],
+            $materialised['display_name'],
+            true   // usetrueaddress
+        );
+        if (!$ok) {
+            throw new \moodle_exception('email_to_user_failed', 'local_airpay_emails');
+        }
     }
 
     /**

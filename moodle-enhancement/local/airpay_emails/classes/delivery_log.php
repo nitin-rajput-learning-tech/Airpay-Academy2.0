@@ -18,7 +18,14 @@ class delivery_log {
     /**
      * Log a notification delivery.
      *
-     * @param array $data {rule_id, userid, courseid, tenant_id, channel, subject, template_key, status, error_message}
+     * Sprint B (2026-05-13): two new fields are accepted —
+     *   attachment_filename   nullable string, e.g. "certificate.pdf"
+     *   certificate_issue_id  nullable int, FK to tool_certificate_issues
+     * Both fall back to NULL when the delivery had no attachment.
+     *
+     * @param array $data {rule_id, userid, courseid, tenant_id, channel,
+     *                     subject, template_key, status, error_message,
+     *                     attachment_filename?, certificate_issue_id?}
      * @return int log ID
      */
     public static function log(array $data): int {
@@ -31,20 +38,66 @@ class delivery_log {
         }
 
         $record = (object)array_merge([
-            'rule_id'       => null,
-            'legacy_type'   => null,
-            'userid'        => 0,
-            'courseid'      => null,
-            'tenant_id'     => 1,
-            'channel'       => 'email',
-            'subject'       => '',
-            'template_key'  => null,
-            'status'        => 'sent',
-            'error_message' => null,
-            'timecreated'   => time(),
+            'rule_id'              => null,
+            'legacy_type'          => null,
+            'userid'               => 0,
+            'courseid'             => null,
+            'tenant_id'            => 1,
+            'channel'              => 'email',
+            'subject'              => '',
+            'template_key'         => null,
+            'status'               => 'sent',
+            'error_message'        => null,
+            'attachment_filename'  => null,
+            'certificate_issue_id' => null,
+            'timecreated'          => time(),
         ], $data);
 
         return $DB->insert_record(self::TABLE, $record);
+    }
+
+    /**
+     * Mark all pending/sent reminders for a (user, course) as
+     * `suppressed_completion` — used by the course-completion observer
+     * to flag that subsequent ramping reminders for this user/course
+     * pair should be considered "obsolete due to completion".
+     *
+     * This is mostly for the audit trail: the rule processor's
+     * dedup check already catches the case ("user completed → skip"),
+     * but stamping the existing logs makes the dashboards correctly
+     * answer "did this learner finish?" without re-running queries
+     * against course_completions.
+     *
+     * Sprint B addition.
+     *
+     * @param int $userid
+     * @param int $courseid
+     * @return int Number of rows updated.
+     */
+    public static function mark_reminders_suppressed_on_completion(int $userid,
+                                                                    int $courseid): int {
+        global $DB;
+        if ($userid <= 0 || $courseid <= 0) {
+            return 0;
+        }
+        $sql = "UPDATE {" . self::TABLE . "}
+                   SET status = :newstatus,
+                       error_message = :errmsg
+                 WHERE userid = :uid
+                   AND courseid = :cid
+                   AND status = :oldstatus
+                   AND template_key NOT LIKE :complete_tpl";
+        $params = [
+            'newstatus'    => 'suppressed_completion',
+            'errmsg'       => 'User completed the course; reminder no longer relevant',
+            'uid'          => $userid,
+            'cid'          => $courseid,
+            'oldstatus'    => 'sent',
+            // Don't downgrade the completion email itself — only the
+            // incomplete/reminder rows.
+            'complete_tpl' => '%course_completed%',
+        ];
+        return $DB->execute($sql, $params) ? 1 : 0;
     }
 
     /**

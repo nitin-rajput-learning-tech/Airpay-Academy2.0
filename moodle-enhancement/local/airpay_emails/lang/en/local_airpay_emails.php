@@ -43,3 +43,16 @@ $string['privacy:metadata:emaillog:timecreated'] = 'Send timestamp.';
 $string['privacy:metadata:emailprefs'] = 'Per-user email preferences.';
 $string['privacy:metadata:emailprefs:userid'] = 'User the preferences belong to.';
 $string['privacy:metadata:emailprefs:timemodified'] = 'Last update timestamp.';
+
+// Sprint B (2026-05-13) — course-completion email + ramping reminders.
+// Note: Moodle lang strings with {$a} placeholders MUST be in
+// single quotes — PHP would otherwise try to interpolate $a at
+// load time, which is the warning the upgrade flagged on first
+// deploy.
+$string['sprintb_rule_completed_name'] = 'Course completed: congratulations + certificate';
+$string['sprintb_rule_incomplete_name'] = 'Course incomplete: ramping reminders (1-3-7-14-21)';
+$string['sprintb_email_subject_default'] = 'Congratulations on completing {$a}';
+$string['sprintb_reminder_subject_default'] = 'Reminder: continue your course {$a}';
+$string['sprintb_certificate_display_name'] = 'Airpay-certificate-{$a}.pdf';
+$string['email_to_user_failed'] = 'Moodle email_to_user() returned false. Check mail server config + recipient address.';
+

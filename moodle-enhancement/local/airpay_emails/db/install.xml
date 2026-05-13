@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/airpay_emails/db" VERSION="20260411"
+<XMLDB PATH="local/airpay_emails/db" VERSION="20260513"
        COMMENT="Airpay Academy - Email template management tables">
   <TABLES>
 
@@ -58,6 +58,13 @@
                COMMENT="1-100, higher = more important"/>
         <FIELD NAME="conditions_json" TYPE="text" NOTNULL="false"
                COMMENT="JSON for advanced filters: course IDs, min/max progress, etc."/>
+        <FIELD NAME="cadence_days_json" TYPE="char" LENGTH="255" NOTNULL="false"
+               COMMENT="Sprint B: JSON array of day offsets for ramping cadence,
+                        e.g. [1,3,7,14,21]. Used by course_incomplete rule type."/>
+        <FIELD NAME="max_reminders_per_user" TYPE="int" LENGTH="3" NOTNULL="true" DEFAULT="0"
+               COMMENT="Sprint B: cap per (user, course). 0 = unlimited."/>
+        <FIELD NAME="auto_stop_on_completion" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1"
+               COMMENT="Sprint B: 1=suppress reminders once user completes course."/>
         <FIELD NAME="usermodified"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="timemodified"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
@@ -87,8 +94,14 @@
         <FIELD NAME="subject"       TYPE="char" LENGTH="255" NOTNULL="true"/>
         <FIELD NAME="template_key"  TYPE="char" LENGTH="100" NOTNULL="false"/>
         <FIELD NAME="status"        TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="sent"
-               COMMENT="sent, failed, bounced, suppressed"/>
+               COMMENT="sent, failed, bounced, suppressed, suppressed_completion"/>
         <FIELD NAME="error_message" TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="attachment_filename" TYPE="char" LENGTH="255" NOTNULL="false"
+               COMMENT="Sprint B: name of any attached file (e.g. 'certificate.pdf').
+                        NULL when no attachment was sent."/>
+        <FIELD NAME="certificate_issue_id" TYPE="int" LENGTH="10" NOTNULL="false"
+               COMMENT="Sprint B: FK to tool_certificate_issues.id when this delivery
+                        carried a course-completion certificate PDF."/>
         <FIELD NAME="timecreated"   TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
       </FIELDS>
       <KEYS>
