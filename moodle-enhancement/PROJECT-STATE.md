@@ -1,6 +1,17 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-13 (late) — **ADMIN-FEEDBACK SPRINT A-D SHIPPED + PUSHED (9 commits on top of Eng 13-34).** Closes all four LMS Admin feedback items reported on 2026-05-13: (1) Learning Path admin UX diagnostic CLI; (2) course-completion email with PDF certificate attached via tool_certificate; (3) ramping daily reminders with cap + auto-stop-on-completion; (4) cross-tenant course sharing — both push (admin share UI) and pull (manager request workflow). Plus nav wiring, dashboard cert-health block, hi/kn/mr/sw translations, and a second axe-core a11y suite (now Gate 6 covers both Airpay dashboard blocks).
+**Updated:** 2026-05-13 (very late) — **ADMIN-FEEDBACK SPRINT A-D + WAVES 2/3/4 + POLISH SHIPPED + PUSHED (15 commits).** Closes all four LMS Admin feedback items reported on 2026-05-13 plus the cascade of polish work surfaced by full PHPUnit runs and end-to-end smoke testing.
 **Phase:** Academy 4.0 — admin-feedback delivery complete. Cutover gates remain (IT staging deploy + k6 + pen-test + sign-off).
+
+> **CURRENT TEST POSTURE (2026-05-13)**
+> - **52 PHPUnit tests, 81 assertions, 0 errors, 0 failures, 23 skipped**
+>   (skipped tests need the BizLMS `user.open_path` column not
+>   present in vanilla PHPUnit fixture — they exercise on staging)
+> - **2 axe-core a11y suites, 0 critical, 0 serious** — both
+>   dashboard blocks (cron_health + cert_health) WCAG 2.1 AA clean
+> - **pre_deploy_validate.sh: 9 of 10 gates green** (only Gate 3
+>   cron-health FAILs on dev — no cron daemon running locally)
+> - **All 15 commits pushed to** `nitin-rajput-learning-tech/Airpay-Academy2.0`
+>   production branch (`78647e47d..d3ba9784b`)
 
 > **ADMIN-FEEDBACK SPRINTS A-D (13 May 2026, commits `78647e47d..9e92d7dad`):**
 >
@@ -76,8 +87,65 @@
 >
 > *PHPUnit verification*
 > Sprint B: 16/16 pass (25 assertions).
-> Sprint C: 15/15 pass; Sprint D: 12 skip (need staging open_path).
-> Combined: 43 tests, 75 assertions, 0 errors, 0 failures.
+> Sprint C: 15/15 pass; Sprint D: 14 skip (need staging open_path).
+> block_airpay_cert_health: 6/6 pass (15 assertions).
+> Combined: 52 tests, 81 assertions, 0 errors, 0 failures.
+
+> **WAVE 2/3/4 polish + bugfix commits (78647e47d..d3ba9784b)**
+>
+> *Wave 2 — Sprint C+D wiring + cert-health block + translations*
+> - Share button in `airpay_courses/index.php` row actions (cap-gated).
+> - "Course-share Requests" + "Browse Airpay Library" in sidebar nav.
+> - `block_airpay_cert_health` — dashboard widget with 3 KPI cards
+>   (sent / failed / suppressed in last 7 days), same WCAG 2.1 AA
+>   pattern as cron_health block.
+> - Hi/kn/mr/sw translations for Sprint B + C strings.
+> - axe-core a11y test for cert_health block + Gate 6 expansion to
+>   run BOTH cron_health and cert_health a11y suites.
+>
+> *Wave 3 — audit + polish*
+> - All 5 Sprint C/D events added to
+>   `audit_log::SENSITIVE_EVENTS` so they surface in the compliance
+>   dashboard alongside role-change / refund / proctoring events.
+> - course_completed email template updated to mention the PDF
+>   attachment ("Your certificate is attached to this email").
+>
+> *Sprint D bugfix — request_state edge case*
+> - Historical 'approved' request rows no longer mis-report
+>   "In your catalog" once admin withdraws the share. `request_state`
+>   now only looks at pending/rejected request rows; the share
+>   table is the source of truth for current catalog membership.
+> - 2 new PHPUnit cases guard the edge case.
+>
+> *Sprint D follow-up — manager outbox*
+> - New page `my_requests.php` showing every request the manager
+>   has filed with status pill + admin rationale + per-status
+>   KPI strip. Sidebar nav exposes it as "My Requests".
+>
+> *Ops CLI — `cli/manage_shares.php`*
+> - Terminal-friendly share/request management for IT during early
+>   rollout. Supports `--list`, `--list-pending`, `--course=N
+>   --add=77,177`, `--course=N --remove=77`, `--approve=<rid>`,
+>   `--reject=<rid> --reason="..."`, `--course=N --history`,
+>   `--json` for scripting.
+>
+> *Event payload fix*
+> - All 5 Sprint C/D events now omit the top-level `courseid` key
+>   from `create()` payload — fixes Moodle's "Inconsistent courseid
+>   - context combination" debugging notice. The course id stays
+>   inside `other` for downstream consumers.
+>
+> *Docs*
+> - `local_airpay_courses/README.md` updated for Sprint C/D
+>   (capability table, page table, CLI table, audit events).
+> - `blocks/airpay_cert_health/README.md` created from scratch.
+> - `local_airpay_emails/README.md` updated for Sprint B (observer,
+>   helper, course_incomplete rule, schema additions, hotfix note).
+>
+> *PHPUnit additions*
+> - `blocks/airpay_cert_health/tests/block_test.php` — 6 tests
+>   covering silent-hide-for-non-admin, KPI labels, region landmark,
+>   count accuracy, non-cert-row exclusion.
 >
 > *pre_deploy_validate gates*
 >   Gate 0 — tenant-guard lint (132 externals, 0 violations) ✅
