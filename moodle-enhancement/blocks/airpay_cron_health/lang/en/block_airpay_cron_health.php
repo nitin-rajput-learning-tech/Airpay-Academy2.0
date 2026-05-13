@@ -16,3 +16,16 @@ $string['stuck_airpay_heading'] = 'Stuck Airpay tasks';
 $string['in_backoff_heading']   = 'Tasks in failure backoff';
 
 $string['view_task_logs']    = 'View full task logs →';
+
+// Severity badges — announced by screen readers in addition to the
+// colour-coded KPI value. WCAG 1.4.1 (use of colour) requires the
+// information conveyed by colour to also be available in another way.
+$string['severity_ok']        = 'OK';
+$string['severity_warning']   = 'Warning';
+$string['severity_critical']  = 'Critical';
+
+// ARIA labels for the KPI numbers — screen readers announce the full
+// "1, Airpay tasks stuck, Critical" rather than just the number.
+$string['kpi_aria_label']     = '{$a->value} {$a->label}, severity {$a->severity}';
+$string['region_label']       = 'Airpay cron health summary';
+$string['overdue_label']      = 'overdue by {$a}';

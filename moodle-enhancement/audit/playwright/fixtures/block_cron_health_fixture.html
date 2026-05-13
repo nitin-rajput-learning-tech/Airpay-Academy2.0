@@ -30,46 +30,83 @@
       block_airpay_cron_health::get_content()
     (moodle-enhancement/blocks/airpay_cron_health/block_airpay_cron_health.php)
 
-    Captured: 2026-05-13, with the production task_scheduled fixture that
-    surfaces 1 stuck airpay task + 1 task in failure-backoff.
+    Captured: 2026-05-13 (post-Engineering 21 a11y fix), with the
+    production task_scheduled fixture that surfaces 1 stuck airpay task
+    + 1 task in failure-backoff.
 
     This fixture is intentionally a verbatim copy of what the PHP renders
-    today, so that axe-core surfaces the a11y issues we need to fix in
-    the PHP source. When the block's a11y fixes ship, update this fixture
+    today, so that axe-core can verify the a11y guarantees we built into
+    the block. When the block's HTML output changes, update this fixture
     in the same commit (lockstep contract).
   -->
   <section class="block-region" aria-label="Cron health">
     <h2>Cron health</h2>
-    <div class="airpay-cron-health" style="display:flex;gap:8px;margin-bottom:8px;">
-      <div style="flex:1;padding:8px;border:1px solid #e2e6ef;border-radius:8px;background:#f8f9fc;text-align:center;">
-        <div style="font-size:1.6em;font-weight:700;color:#dc2626;">1</div>
-        <div style="font-size:0.75em;color:#5a6070;">Airpay tasks stuck</div>
-      </div>
-      <div style="flex:1;padding:8px;border:1px solid #e2e6ef;border-radius:8px;background:#f8f9fc;text-align:center;">
-        <div style="font-size:1.6em;font-weight:700;color:#16a34a;">0</div>
-        <div style="font-size:0.75em;color:#5a6070;">Other tasks stuck</div>
-      </div>
-      <div style="flex:1;padding:8px;border:1px solid #e2e6ef;border-radius:8px;background:#f8f9fc;text-align:center;">
-        <div style="font-size:1.6em;font-weight:700;color:#d97706;">1</div>
-        <div style="font-size:0.75em;color:#5a6070;">Tasks in failure backoff</div>
-      </div>
-    </div>
 
-    <h5 style="margin:12px 0 6px;font-size:0.95em;">Stuck Airpay tasks</h5>
-    <ul style="margin:0;padding-left:18px;font-size:0.85em;">
-      <li><code>\local_airpay_recompletion\task\run_rules</code>
-        <span style="color:#c00;">overdue 5h 23m</span></li>
-    </ul>
+    <section class="airpay-cron-health" role="region" aria-label="Airpay cron health summary">
 
-    <h5 style="margin:12px 0 6px;font-size:0.95em;">Tasks in failure backoff</h5>
-    <ul style="margin:0;padding-left:18px;font-size:0.85em;">
-      <li><code>\local_airpay_proctoring\task\sync_aws</code>
-        faildelay=1200s</li>
-    </ul>
+      <div class="airpay-cron-health__kpis" style="display:flex;gap:8px;margin-bottom:8px;">
 
-    <div style="margin-top:10px;font-size:0.85em;">
-      <a href="/admin/tasklogs.php">View task logs</a>
-    </div>
+        <div class="airpay-cron-health__kpi airpay-cron-health__kpi--critical"
+             role="group"
+             aria-label="1 Airpay tasks stuck, severity Critical"
+             style="flex:1;padding:8px;border:1px solid #e2e6ef;border-radius:8px;background:#f8f9fc;text-align:center;">
+          <div style="font-size:1.6em;font-weight:700;color:#dc2626;" aria-hidden="true">1</div>
+          <div style="font-size:0.75em;color:#5a6070;" aria-hidden="true">Airpay tasks stuck</div>
+          <div class="airpay-cron-health__severity airpay-cron-health__severity--critical"
+               style="font-size:0.7em;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#b91c1c;margin-top:2px;"
+               aria-hidden="true">Critical</div>
+        </div>
+
+        <div class="airpay-cron-health__kpi airpay-cron-health__kpi--ok"
+             role="group"
+             aria-label="0 Other tasks stuck, severity OK"
+             style="flex:1;padding:8px;border:1px solid #e2e6ef;border-radius:8px;background:#f8f9fc;text-align:center;">
+          <div style="font-size:1.6em;font-weight:700;color:#16a34a;" aria-hidden="true">0</div>
+          <div style="font-size:0.75em;color:#5a6070;" aria-hidden="true">Other tasks stuck</div>
+          <div class="airpay-cron-health__severity airpay-cron-health__severity--ok"
+               style="font-size:0.7em;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#15803d;margin-top:2px;"
+               aria-hidden="true">OK</div>
+        </div>
+
+        <div class="airpay-cron-health__kpi airpay-cron-health__kpi--warning"
+             role="group"
+             aria-label="1 In failure backoff, severity Warning"
+             style="flex:1;padding:8px;border:1px solid #e2e6ef;border-radius:8px;background:#f8f9fc;text-align:center;">
+          <div style="font-size:1.6em;font-weight:700;color:#d97706;" aria-hidden="true">1</div>
+          <div style="font-size:0.75em;color:#5a6070;" aria-hidden="true">In failure backoff</div>
+          <div class="airpay-cron-health__severity airpay-cron-health__severity--warning"
+               style="font-size:0.7em;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#b45309;margin-top:2px;"
+               aria-hidden="true">Warning</div>
+        </div>
+
+      </div>
+
+      <h3 class="airpay-cron-health__subheading"
+          style="margin:12px 0 6px;font-size:0.95em;">Stuck Airpay tasks</h3>
+      <ul class="airpay-cron-health__list"
+          style="margin:0;padding-left:18px;font-size:0.85em;">
+        <li aria-label="\local_airpay_recompletion\task\run_rules, overdue by 5h 23m">
+          <code>\local_airpay_recompletion\task\run_rules</code>
+          <span style="color:#c00;">overdue 5h 23m</span>
+        </li>
+      </ul>
+
+      <h3 class="airpay-cron-health__subheading"
+          style="margin:12px 0 6px;font-size:0.95em;">Tasks in failure backoff</h3>
+      <ul class="airpay-cron-health__list"
+          style="margin:0;padding-left:18px;font-size:0.85em;">
+        <li>
+          <code>\local_airpay_proctoring\task\sync_aws</code>
+          faildelay=1200s
+        </li>
+      </ul>
+
+      <div class="airpay-cron-health__footer-link"
+           style="margin-top:10px;font-size:0.85em;">
+        <a href="/admin/tasklogs.php">View full task logs →</a>
+      </div>
+
+    </section>
   </section>
 </main>
 </body>
