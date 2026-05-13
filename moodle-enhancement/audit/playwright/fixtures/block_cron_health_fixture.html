@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cron-health block — a11y fixture</title>
+  <style>
+    /* Surrounding chrome so axe sees a realistic page context.
+       Without a heading hierarchy axe flags `page-has-heading-one`
+       which would obscure the block-specific findings we care about. */
+    body { font-family: Montserrat, system-ui, sans-serif;
+           background:#F2F4FB; margin: 0; padding: 24px; }
+    main { max-width: 720px; margin: 0 auto; }
+    h1   { font-size: 1.4rem; margin: 0 0 24px; color:#1a1a2e; }
+    .block-region {
+        background:#fff; border:1px solid #e2e6ef;
+        border-radius:12px; padding:16px;
+    }
+    .block-region > h2 {
+        font-size: 1rem; margin: 0 0 12px; color:#1a1a2e;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Site administration</h1>
+
+  <!--
+    Snapshot of the HTML produced by:
+      block_airpay_cron_health::get_content()
+    (moodle-enhancement/blocks/airpay_cron_health/block_airpay_cron_health.php)
+
+    Captured: 2026-05-13, with the production task_scheduled fixture that
+    surfaces 1 stuck airpay task + 1 task in failure-backoff.
+
+    This fixture is intentionally a verbatim copy of what the PHP renders
+    today, so that axe-core surfaces the a11y issues we need to fix in
+    the PHP source. When the block's a11y fixes ship, update this fixture
+    in the same commit (lockstep contract).
+  -->
+  <section class="block-region" aria-label="Cron health">
+    <h2>Cron health</h2>
+    <div class="airpay-cron-health" style="display:flex;gap:8px;margin-bottom:8px;">
+      <div style="flex:1;padding:8px;border:1px solid #e2e6ef;border-radius:8px;background:#f8f9fc;text-align:center;">
+        <div style="font-size:1.6em;font-weight:700;color:#dc2626;">1</div>
+        <div style="font-size:0.75em;color:#5a6070;">Airpay tasks stuck</div>
+      </div>
+      <div style="flex:1;padding:8px;border:1px solid #e2e6ef;border-radius:8px;background:#f8f9fc;text-align:center;">
+        <div style="font-size:1.6em;font-weight:700;color:#16a34a;">0</div>
+        <div style="font-size:0.75em;color:#5a6070;">Other tasks stuck</div>
+      </div>
+      <div style="flex:1;padding:8px;border:1px solid #e2e6ef;border-radius:8px;background:#f8f9fc;text-align:center;">
+        <div style="font-size:1.6em;font-weight:700;color:#d97706;">1</div>
+        <div style="font-size:0.75em;color:#5a6070;">Tasks in failure backoff</div>
+      </div>
+    </div>
+
+    <h5 style="margin:12px 0 6px;font-size:0.95em;">Stuck Airpay tasks</h5>
+    <ul style="margin:0;padding-left:18px;font-size:0.85em;">
+      <li><code>\local_airpay_recompletion\task\run_rules</code>
+        <span style="color:#c00;">overdue 5h 23m</span></li>
+    </ul>
+
+    <h5 style="margin:12px 0 6px;font-size:0.95em;">Tasks in failure backoff</h5>
+    <ul style="margin:0;padding-left:18px;font-size:0.85em;">
+      <li><code>\local_airpay_proctoring\task\sync_aws</code>
+        faildelay=1200s</li>
+    </ul>
+
+    <div style="margin-top:10px;font-size:0.85em;">
+      <a href="/admin/tasklogs.php">View task logs</a>
+    </div>
+  </section>
+</main>
+</body>
+</html>
