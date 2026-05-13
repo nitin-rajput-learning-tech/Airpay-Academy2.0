@@ -34,6 +34,14 @@
             <span class="airpay-catalog__card-level">{{level}}</span>
             {{/has_level}}
         </div>
+        {{! Sprint C — provenance badge for cross-tenant shared courses. }}
+        {{#is_borrowed}}
+        <div class="airpay-catalog__card-provenance"
+             title="This course is provided by {{provider_tenant_name}} Academy.">
+            <i class="fa fa-handshake-o" aria-hidden="true"></i>
+            {{#str}}provenance_provided_by, local_airpay_catalog, {{provider_tenant_name}}{{/str}}
+        </div>
+        {{/is_borrowed}}
         <div class="airpay-catalog__card-footer">
             <span class="airpay-catalog__card-enrolled">
                 <i class="fa fa-users"></i> {{enrolled_count}}

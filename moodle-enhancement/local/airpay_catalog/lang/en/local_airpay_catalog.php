@@ -18,3 +18,8 @@ $string['loadmore'] = 'Load more';
 $string['viewdetails'] = 'View Details';
 $string['enroll'] = 'Enroll';
 $string['continue'] = 'Continue';
+
+// Sprint C (2026-05-13) — cross-tenant course sharing provenance badge.
+// The placeholder receives the provider tenant's name. Must stay
+// single-quoted so PHP doesn't pre-interpolate $a at file load time.
+$string['provenance_provided_by'] = 'Provided by {$a}';

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/airpay_courses/db" VERSION="20260508"
-       COMMENT="Airpay Courses — admin-curated featured-courses widget">
+<XMLDB PATH="local/airpay_courses/db" VERSION="20260513"
+       COMMENT="Airpay Courses — featured + cross-tenant sharing">
   <TABLES>
     <TABLE NAME="local_airpay_featured_courses"
            COMMENT="Admin-curated list of courses to feature on the learner dashboard">
@@ -24,6 +24,42 @@
         <INDEX NAME="idx_costcenter_sort" UNIQUE="false"
                FIELDS="costcenterid, sort_order"/>
         <!-- fk_course key implicitly creates an index on courseid -->
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_airpay_courses_tenant_share"
+           COMMENT="Sprint C — many-to-many map (course × tenant) for cross-tenant course sharing.
+                    A course appears in tenant N's catalog if (a) its open_path is within tenant N's
+                    tree (the 'owned' path), OR (b) a row exists here with status='active' for
+                    (courseid, tenant_id=N). Completion data stays per-tenant via mdl_user.open_path.">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="courseid"     TYPE="int"  LENGTH="10" NOTNULL="true"
+               COMMENT="FK to {course}.id"/>
+        <FIELD NAME="tenant_id"    TYPE="int"  LENGTH="10" NOTNULL="true"
+               COMMENT="Tenant root (1=Airpay, 77=Public, 177=ZEEA); matches the first
+                        segment of mdl_user.open_path. Must be > 0."/>
+        <FIELD NAME="shared_by"    TYPE="int"  LENGTH="10" NOTNULL="true"
+               COMMENT="userid of the admin who created this share"/>
+        <FIELD NAME="status"       TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="active"
+               COMMENT="active | withdrawn — withdrawn rows keep history but don't gate catalog"/>
+        <FIELD NAME="timeshared"   TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="When this share was first created"/>
+        <FIELD NAME="timemodified" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"   TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_course" TYPE="foreign" FIELDS="courseid" REFTABLE="course" REFFIELDS="id"/>
+        <KEY NAME="fk_sharer" TYPE="foreign" FIELDS="shared_by" REFTABLE="user"   REFFIELDS="id"/>
+        <KEY NAME="uk_course_tenant" TYPE="unique" FIELDS="courseid, tenant_id"
+              COMMENT="A course can only be shared to a given tenant once;
+                       toggling status re-uses the same row."/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_tenant_status" UNIQUE="false" FIELDS="tenant_id, status"
+               COMMENT="Catalog query: 'find all active shares for tenant N'"/>
+        <INDEX NAME="idx_status_courseid" UNIQUE="false" FIELDS="status, courseid"
+               COMMENT="Admin dashboard: 'who has access to course X right now'"/>
       </INDEXES>
     </TABLE>
   </TABLES>

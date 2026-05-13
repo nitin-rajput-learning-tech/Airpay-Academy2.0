@@ -92,4 +92,27 @@ $functions = [
         'ajax'         => true,
         'capabilities' => 'local/airpay_courses:enrol',
     ],
+
+    // Sprint C (2026-05-13) — cross-tenant course sharing.
+    'local_airpay_courses_share_course' => [
+        'classname'    => 'local_airpay_courses\external\share_course',
+        'description'  => 'Share a course to one or more tenants',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_courses:share_to_tenant',
+    ],
+    'local_airpay_courses_unshare_course' => [
+        'classname'    => 'local_airpay_courses\external\unshare_course',
+        'description'  => 'Withdraw a course-share from a tenant',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_courses:share_to_tenant',
+    ],
+    'local_airpay_courses_list_course_shares' => [
+        'classname'    => 'local_airpay_courses\external\list_course_shares',
+        'description'  => 'Get current + historic shares for a course',
+        'type'         => 'read',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_courses:view',
+    ],
 ];

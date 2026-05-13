@@ -85,4 +85,18 @@ $capabilities = [
             'manager' => CAP_ALLOW,
         ],
     ],
+
+    // Sprint C (2026-05-13): share a course across tenants.
+    // High-risk: affects what learners in OTHER tenants can see.
+    // Siteadmin-only by default — admin must explicitly grant to any
+    // other role via Site Admin → Users → Permissions → Define roles.
+    // The capability check happens in
+    // \local_airpay_courses\sharing_manager and the share_course /
+    // unshare_course external WS endpoints.
+    'local/airpay_courses:share_to_tenant' => [
+        'riskbitmask'  => RISK_SPAM | RISK_PERSONAL,
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => [],  // Siteadmin only by default.
+    ],
 ];

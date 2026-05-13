@@ -14,6 +14,32 @@ defined('MOODLE_INTERNAL') || die();
 class catalog_manager {
 
     /**
+     * Derive the viewer's top-level tenant root from $USER->open_path.
+     *
+     * Returns 0 for site admins (so every tenant-scoped query gets the
+     * "no filter" 1=1 from sharing_manager::build_catalog_filter_sql).
+     * Returns the integer tenant root for normal tenant-bound users.
+     *
+     * Sprint C addition — exposed as a single helper so all four
+     * catalog query methods compute the tenant the same way.
+     *
+     * @return int Tenant root (0 = unscoped / site admin)
+     */
+    private static function viewer_tenant_root(): int {
+        global $USER;
+        if (function_exists('is_siteadmin') && is_siteadmin()) {
+            return 0;
+        }
+        $path = $USER->open_path ?? '';
+        if ($path === '') {
+            return 0;
+        }
+        $parts = explode('/', trim($path, '/'));
+        $first = $parts[0] ?? '';
+        return ctype_digit($first) ? (int) $first : 0;
+    }
+
+    /**
      * Get courses for the catalog with filters and pagination.
      *
      * @param int    $userid      Current user ID
@@ -32,16 +58,18 @@ class catalog_manager {
         $conditions = ['c.visible = 1', 'c.id > 1'];
         $params = [];
 
-        // Tenant scoping — only show courses in user's org.
-        $userpath = $USER->open_path ?? '';
-        if (!empty($userpath)) {
-            $parts = explode('/', trim($userpath, '/'));
-            $orgpath = '/' . ($parts[0] ?? '');
-            // /-boundary so /1 doesn't match /10, /100, /177.
-            $conditions[] = "(c.open_path = :orgexact OR c.open_path LIKE :orgprefix)";
-            $params['orgexact']  = $orgpath;
-            $params['orgprefix'] = $DB->sql_like_escape($orgpath) . '/%';
-        }
+        // Sprint C: tenant scoping now also UNIONs in shared courses.
+        // The viewer sees:
+        //   (a) courses inside their tenant tree (the "owned" path), AND
+        //   (b) courses an Airpay admin has explicitly shared to their
+        //       tenant via local_airpay_courses_tenant_share.
+        // Site admins (viewer_tenant=0) get a 1=1 pass-through.
+        $viewer_tenant = self::viewer_tenant_root();
+        [$tenant_sql, $tenant_params] =
+            \local_airpay_courses\sharing_manager::build_catalog_filter_sql(
+                'c', $viewer_tenant);
+        $conditions[] = $tenant_sql;
+        $params = array_merge($params, $tenant_params);
 
         // Search filter.
         if (!empty($search)) {
@@ -131,21 +159,18 @@ class catalog_manager {
         global $DB, $USER;
 
         $cache = \cache::make('local_airpay_catalog', 'trending');
-        $cachekey = "tr_{$userid}_{$limit}";
+        // Sprint C: cache key must include tenant root so a Public learner
+        // gets a different cached list from an Airpay learner (the share
+        // table membership can differ per tenant).
+        $viewer_tenant = self::viewer_tenant_root();
+        $cachekey = "tr_{$userid}_{$limit}_t{$viewer_tenant}";
         $cached = $cache->get($cachekey);
         if ($cached !== false) { return $cached; }
 
-        $orgfilter = '';
         $params = ['since' => time() - (30 * 86400)];
-
-        $userpath = $USER->open_path ?? '';
-        if (!empty($userpath)) {
-            $parts = explode('/', trim($userpath, '/'));
-            $orgpath = '/' . ($parts[0] ?? '');
-            $orgfilter = "AND (c.open_path = :orgexact OR c.open_path LIKE :orgprefix)";
-            $params['orgexact']  = $orgpath;
-            $params['orgprefix'] = $DB->sql_like_escape($orgpath) . '/%';
-        }
+        [$tenant_sql, $tenant_params] =
+            \local_airpay_courses\sharing_manager::build_catalog_filter_sql('c', $viewer_tenant);
+        $params = array_merge($params, $tenant_params);
 
         $courses = $DB->get_records_sql(
             "SELECT c.id, c.fullname, c.shortname, c.summary, c.category, c.timecreated,
@@ -156,7 +181,7 @@ class catalog_manager {
                JOIN {course_categories} cc ON cc.id = c.category
                JOIN {enrol} e ON e.courseid = c.id
                JOIN {user_enrolments} ue ON ue.enrolid = e.id AND ue.timestart > :since
-              WHERE c.visible = 1 AND c.id > 1 $orgfilter
+              WHERE c.visible = 1 AND c.id > 1 AND $tenant_sql
            GROUP BY c.id, c.fullname, c.shortname, c.summary, c.category, c.timecreated,
                     c.open_path, c.open_level, c.open_skill, c.open_coursetype, cc.name
            ORDER BY recent_enrolments DESC",
@@ -174,21 +199,16 @@ class catalog_manager {
         global $DB, $USER;
 
         $cache = \cache::make('local_airpay_catalog', 'new_courses');
-        $cachekey = "new_{$userid}_{$limit}";
+        // Sprint C: cache key tenant-suffixed (share state varies per tenant).
+        $viewer_tenant = self::viewer_tenant_root();
+        $cachekey = "new_{$userid}_{$limit}_t{$viewer_tenant}";
         $cached = $cache->get($cachekey);
         if ($cached !== false) { return $cached; }
 
-        $orgfilter = '';
         $params = ['since' => time() - (30 * 86400)];
-
-        $userpath = $USER->open_path ?? '';
-        if (!empty($userpath)) {
-            $parts = explode('/', trim($userpath, '/'));
-            $orgpath = '/' . ($parts[0] ?? '');
-            $orgfilter = "AND (c.open_path = :orgexact OR c.open_path LIKE :orgprefix)";
-            $params['orgexact']  = $orgpath;
-            $params['orgprefix'] = $DB->sql_like_escape($orgpath) . '/%';
-        }
+        [$tenant_sql, $tenant_params] =
+            \local_airpay_courses\sharing_manager::build_catalog_filter_sql('c', $viewer_tenant);
+        $params = array_merge($params, $tenant_params);
 
         $courses = $DB->get_records_sql(
             "SELECT c.id, c.fullname, c.shortname, c.summary, c.category, c.timecreated,
@@ -197,7 +217,7 @@ class catalog_manager {
                     0 as enrolled_count
                FROM {course} c
                JOIN {course_categories} cc ON cc.id = c.category
-              WHERE c.visible = 1 AND c.id > 1 AND c.timecreated > :since $orgfilter
+              WHERE c.visible = 1 AND c.id > 1 AND c.timecreated > :since AND $tenant_sql
            ORDER BY c.timecreated DESC",
             $params, 0, $limit);
 
@@ -253,30 +273,28 @@ class catalog_manager {
     public static function get_categories(): array {
         global $DB, $USER;
 
-        // Tenant-scoped cache key.
-        $tenantpath = \local_airpay_org\tenant_manager::get_tenant_path();
+        // Sprint C: tenant scoping now includes shared courses (i.e. a
+        // Public learner's category list includes any Airpay categories
+        // whose courses have been shared to Public). Cache key suffixed
+        // by viewer_tenant so per-tenant caches stay distinct.
+        $viewer_tenant = self::viewer_tenant_root();
         $cache = \cache::make('local_airpay_catalog', 'categories');
-        $cachekey = 'cat_' . md5($tenantpath ?: 'none');
+        $cachekey = 'cat_t' . $viewer_tenant;
         $cached = $cache->get($cachekey);
         if ($cached !== false) { return $cached; }
 
-        $orgfilter = '';
-        $params = [];
-        if (!empty($tenantpath)) {
-            $orgfilter = " AND (c.open_path = :orgexact OR c.open_path LIKE :orgprefix)";
-            $params['orgexact']  = $tenantpath;
-            $params['orgprefix'] = $DB->sql_like_escape($tenantpath) . '/%';
-        }
+        [$tenant_sql, $tenant_params] =
+            \local_airpay_courses\sharing_manager::build_catalog_filter_sql('c', $viewer_tenant);
 
         $result = array_values($DB->get_records_sql(
             "SELECT cc.id, cc.name,
                     COUNT(c.id) as course_count
                FROM {course_categories} cc
                JOIN {course} c ON c.category = cc.id AND c.visible = 1 AND c.id > 1
-                    $orgfilter
+                    AND $tenant_sql
            GROUP BY cc.id, cc.name
              HAVING COUNT(c.id) > 0
-           ORDER BY COUNT(c.id) DESC", $params));
+           ORDER BY COUNT(c.id) DESC", $tenant_params));
         $cache->set($cachekey, $result);
         return $result;
     }
@@ -310,6 +328,40 @@ class catalog_manager {
         $daysold = (time() - $course->timecreated) / 86400;
         $is_new = ($daysold <= 30);
 
+        // Sprint C: provenance — is this course visible to the viewer
+        // because it was SHARED from another tenant (vs. owned)?
+        // The badge "Provided by Airpay Academy" appears on cards where
+        // the answer is "borrowed".
+        $viewer_tenant = self::viewer_tenant_root();
+        $is_borrowed = false;
+        $provider_tenant_name = '';
+        if ($viewer_tenant > 0) {
+            // Owned by viewer iff course's open_path is in viewer's tree.
+            $course_path = $course->open_path ?? '';
+            $exact_path  = '/' . $viewer_tenant;
+            $is_owned = ($course_path === $exact_path)
+                || (strpos($course_path, $exact_path . '/') === 0);
+            if (!$is_owned) {
+                // Must be present via an active share row.
+                if (\local_airpay_courses\sharing_manager::is_course_shared_to(
+                        (int) $course->id, $viewer_tenant)) {
+                    $is_borrowed = true;
+                    // Resolve provider tenant from course's open_path
+                    // first segment.
+                    $parts = explode('/', trim($course_path, '/'));
+                    $provider_root = isset($parts[0]) && ctype_digit($parts[0])
+                        ? (int) $parts[0] : 0;
+                    $known = \local_airpay_courses\sharing_manager::known_tenants();
+                    foreach ($known as $t) {
+                        if ((int) $t->id === $provider_root) {
+                            $provider_tenant_name = $t->name;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
         return [
             'id'            => $course->id,
             'fullname'      => format_string($course->fullname),
@@ -324,6 +376,9 @@ class catalog_manager {
             'is_enrolled'   => $enrolled,
             'is_completed'  => $completed,
             'is_new'        => $is_new,
+            // Sprint C provenance flags — for the "Provided by X" badge.
+            'is_borrowed'           => $is_borrowed,
+            'provider_tenant_name'  => $provider_tenant_name,
             // detailurl was pointing at /local/search/coursedetails.php (BizLMS-era
             // page; defunct since the BizLMS plugin removal). Use Moodle's
             // standard course view, same as viewurl.

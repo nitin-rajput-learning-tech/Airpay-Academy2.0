@@ -28,10 +28,19 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_airpay_courses';
-$plugin->version   = 2026050903;
+$plugin->version   = 2026051302;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.6.0'; // +Phase F.5: native enrol modal (replaces deep-link)
+$plugin->release   = '1.7.0';
 $plugin->dependencies = [
     'local_airpay_org' => 2026041600,
 ];
+// Release history:
+// 1.6.0  Phase F.5 — native enrol modal (replaces deep-link)
+// 1.7.0  Sprint C (2026-05-13) — cross-tenant course sharing:
+//          + local_airpay_courses_tenant_share table
+//          + share_course / unshare_course / list_course_shares WS
+//          + local/airpay_courses:share_to_tenant capability
+//          + share.php admin page + share_modal.mustache template
+//          + sharing_manager class (CRUD + catalog-filter builder)
+//          + audit log entry per share/unshare

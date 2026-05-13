@@ -84,3 +84,10 @@ $string['courseshown'] = 'Course visible.';
 
 // Privacy.
 $string['privacy:metadata'] = 'The Airpay airpay_courses plugin does not store personal data in plugin-owned tables; user state lives on core Moodle tables exported by their respective providers.';
+
+// Sprint C (2026-05-13) — cross-tenant sharing.
+$string['airpay_courses:share_to_tenant'] = 'Share a course to other tenants';
+$string['event_course_share_created'] = 'Airpay: course shared to tenant';
+$string['event_course_share_withdrawn'] = 'Airpay: course share withdrawn from tenant';
+$string['share_saved'] = 'Share settings saved. The catalog will refresh for affected tenants within a few seconds.';
+$string['invalidparameter'] = 'One or more parameters is invalid.';
