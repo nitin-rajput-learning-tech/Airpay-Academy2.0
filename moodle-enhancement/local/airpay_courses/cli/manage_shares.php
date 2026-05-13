@@ -44,6 +44,14 @@
  *   php local/airpay_courses/cli/manage_shares.php --course=42 --history
  *     -- show full history of shares for one course (active + withdrawn).
  *
+ *   php local/airpay_courses/cli/manage_shares.php --bulk-csv=path/to/file.csv
+ *     -- batch-process shares from CSV (one row per operation).
+ *        Required header: courseid,tenants,action
+ *        Example row:     42,"77,177",add
+ *
+ *   php local/airpay_courses/cli/manage_shares.php --bulk-csv=path --dry-run
+ *     -- validate the CSV without writing any rows.
+ *
  *   php local/airpay_courses/cli/manage_shares.php --json [--list|--list-pending|--history]
  *     -- machine-readable JSON for scripting.
  *
@@ -71,6 +79,8 @@ require_once($CFG->libdir . '/clilib.php');
     'reason'       => false,
     'history'      => false,
     'json'         => false,
+    'bulk-csv'     => false,    // Sprint A-D follow-up: batch share
+    'dry-run'      => false,    // pairs with --bulk-csv: validate without writing
 ], [
     'h' => 'help',
 ]);
@@ -325,6 +335,128 @@ if ($options['reject'] !== false) {
     exit(0);
 }
 
+// ── --bulk-csv=PATH ─────────────────────────────────────────────────
+// Batch-process a CSV file with one share operation per row. Useful
+// for the initial rollout when an admin needs to share dozens of
+// courses to a new tenant. CSV format:
+//   courseid,tenants,action
+//   42,"77,177",add
+//   43,77,add
+//   44,77,remove
+//
+// Pair with --dry-run to validate the CSV without writing anything.
+if ($options['bulk-csv'] !== false) {
+    $path = (string) $options['bulk-csv'];
+    if (!is_file($path) || !is_readable($path)) {
+        cli_error("--bulk-csv file not found or unreadable: $path", 2);
+    }
+    $dry = (bool) $options['dry-run'];
+    $admin = get_admin();
+
+    $fh = fopen($path, 'r');
+    if (!$fh) {
+        cli_error("Cannot open --bulk-csv file: $path", 2);
+    }
+    // First row = header. Expected columns: courseid, tenants, action.
+    $header = fgetcsv($fh);
+    if (!$header) {
+        cli_error("Empty CSV", 2);
+    }
+    $cols = array_map(fn($h) => strtolower(trim($h)), $header);
+    $required = ['courseid', 'tenants', 'action'];
+    foreach ($required as $r) {
+        if (!in_array($r, $cols, true)) {
+            cli_error("CSV missing required column '$r'. Expected header: "
+                . implode(',', $required), 2);
+        }
+    }
+    $idx_courseid = array_search('courseid', $cols, true);
+    $idx_tenants  = array_search('tenants',  $cols, true);
+    $idx_action   = array_search('action',   $cols, true);
+
+    $stats = ['ok' => 0, 'noop' => 0, 'errors' => 0];
+    $lineno = 1;  // header was line 1
+    cli_writeln('');
+    cli_writeln('  Bulk processing CSV: ' . $path
+        . ($dry ? ' (DRY RUN — no writes)' : ''));
+    cli_writeln('  ' . str_repeat('-', 80));
+
+    while (($row = fgetcsv($fh)) !== false) {
+        $lineno++;
+        if (empty($row[$idx_courseid])) {
+            continue;  // skip blank rows
+        }
+        $cid = (int) $row[$idx_courseid];
+        $tenants_str = (string) $row[$idx_tenants];
+        $action = strtolower(trim((string) $row[$idx_action]));
+        $tenants = array_filter(array_map('intval',
+            explode(',', $tenants_str)), fn($x) => $x > 0);
+
+        if ($cid <= 0 || empty($tenants) || !in_array($action, ['add', 'remove'], true)) {
+            cli_writeln(sprintf('  line %-4d: SKIP (bad row: courseid=%s tenants=%s action=%s)',
+                $lineno, $row[$idx_courseid], $tenants_str, $action));
+            $stats['errors']++;
+            continue;
+        }
+
+        try {
+            if ($action === 'add') {
+                if ($dry) {
+                    cli_writeln(sprintf('  line %-4d: WOULD share course=%d to tenants=%s',
+                        $lineno, $cid, implode(',', $tenants)));
+                    $stats['ok']++;
+                } else {
+                    $out = \local_airpay_courses\sharing_manager::share_course(
+                        $cid, $tenants, (int) $admin->id);
+                    $shared = count($out['shared']) + count($out['reactivated']);
+                    if ($shared > 0) {
+                        cli_writeln(sprintf('  line %-4d: OK    course=%d shared to %d tenant(s)',
+                            $lineno, $cid, $shared));
+                        $stats['ok']++;
+                    } else {
+                        cli_writeln(sprintf('  line %-4d: noop  course=%d already shared to %s',
+                            $lineno, $cid, implode(',', $out['unchanged'])));
+                        $stats['noop']++;
+                    }
+                    foreach ($out['errors'] as $tid => $err) {
+                        cli_writeln(sprintf('  line %-4d:   ! tenant %d: %s',
+                            $lineno, $tid, $err));
+                        $stats['errors']++;
+                    }
+                }
+            } else {
+                // remove
+                if ($dry) {
+                    cli_writeln(sprintf('  line %-4d: WOULD unshare course=%d from tenant=%d',
+                        $lineno, $cid, $tenants[0]));
+                    $stats['ok']++;
+                } else {
+                    $changed = \local_airpay_courses\sharing_manager::unshare_course(
+                        $cid, $tenants[0], (int) $admin->id);
+                    cli_writeln(sprintf('  line %-4d: %s  course=%d %s tenant=%d',
+                        $lineno,
+                        $changed ? 'OK   ' : 'noop ',
+                        $cid,
+                        $changed ? 'unshared from' : 'was not shared to',
+                        $tenants[0]));
+                    $changed ? $stats['ok']++ : $stats['noop']++;
+                }
+            }
+        } catch (\Throwable $e) {
+            cli_writeln(sprintf('  line %-4d: ERROR %s',
+                $lineno, $e->getMessage()));
+            $stats['errors']++;
+        }
+    }
+    fclose($fh);
+
+    cli_writeln('  ' . str_repeat('-', 80));
+    cli_writeln(sprintf('  Result: ok=%d  noop=%d  errors=%d',
+        $stats['ok'], $stats['noop'], $stats['errors']));
+    cli_writeln('');
+    exit($stats['errors'] > 0 ? 1 : 0);
+}
+
 // No recognised flag combo — print help.
 cli_writeln('');
 cli_writeln('  manage_shares.php — Airpay cross-tenant share/request CLI ops tool');
@@ -338,5 +470,8 @@ cli_writeln('    --course=N --add=77,177             share to multiple tenants')
 cli_writeln('    --course=N --remove=77              withdraw share from tenant 77');
 cli_writeln('    --approve=<request_id>              approve a pending request');
 cli_writeln('    --reject=<request_id> --reason="…"  reject a pending request');
+cli_writeln('    --bulk-csv=path/to/file.csv         batch-process from CSV');
+cli_writeln('    --bulk-csv=path/to/file.csv --dry-run');
+cli_writeln('                                        validate CSV without writing');
 cli_writeln('');
 exit(2);
