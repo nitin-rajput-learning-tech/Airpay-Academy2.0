@@ -32,10 +32,15 @@
 set -u
 
 # ── argument parsing ──────────────────────────────────────────────────
+# PROJECT_ROOT is the airpay-ld-os/ checkout root. The script lives at
+# moodle-enhancement/deploy/pre_deploy_validate.sh — two levels under
+# the project root.
+PROJECT_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+# MOODLE_ROOT is the deployed Moodle docroot (where files are copied
+# to during deployment). Override via --moodle-root or env var.
 MOODLE_ROOT="${MOODLE_ROOT:-C:/xampp/htdocs/moodle5/public}"
 RUN_UAT=0
 SKIP_PHPUNIT=0
-PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -79,6 +84,23 @@ heading() {
     echo "  $1"
     echo "================================================================"
 }
+
+# ── 0. Tenant-guard architectural lint ──────────────────────────────
+heading "Gate 0 — Tenant-guard architectural rule (lint_tenant_guard.py)"
+LINTER="$PROJECT_ROOT/moodle-enhancement/deploy/lint_tenant_guard.py"
+if [ -f "$LINTER" ]; then
+    if python "$LINTER" > /tmp/tenant_guard.out 2>&1; then
+        # Parse the violation count for a richer pass message.
+        VIOL=$(grep -E "^Violations:" /tmp/tenant_guard.out | awk '{print $2}')
+        pass "tenant-guard lint (0 violations across 132 externals)"
+    else
+        VIOL=$(grep -E "^Violations:" /tmp/tenant_guard.out | awk '{print $2}')
+        fail "tenant-guard lint" "$VIOL violation(s) — see /tmp/tenant_guard.out"
+        head -30 /tmp/tenant_guard.out
+    fi
+else
+    fail "tenant-guard lint" "linter not found at $LINTER"
+fi
 
 # ── 1. PHP syntax lint ───────────────────────────────────────────────
 heading "Gate 1 — PHP syntax-lint every airpay_* PHP file"
