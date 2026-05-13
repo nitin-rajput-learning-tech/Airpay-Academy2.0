@@ -25,26 +25,45 @@
 > are fork-planned for Q3 2026; 8 are FUTURE-DESIGN; 6 are TECH-DEBT (some
 > closed by Phase 9 stretch).
 >
-> **THREE SUPPLEMENTARY DOCUMENTS shipped alongside master v1.0:**
+> **FIVE SUPPLEMENTARY DOCUMENTS shipped alongside master v1.0:**
 > - `docs/SUPP-A-RISK-REGISTER-FULL-2026-05-12.md` — 32 risks across 9
->   categories (people, security, compliance, infra, vendor, application,
->   data, UX, strategic). Each with severity × likelihood × owner ×
->   mitigation × residual. Aggregate: 1 high-residual (P1 key-person, until
->   engineer hire lands), 4 medium-residual, all others low-residual after
->   planned mitigations.
+>   categories. Aggregate: 1 high-residual (P1 key-person, until engineer
+>   hire lands), 4 medium-residual, rest low-residual.
 > - `docs/SUPP-B-MOODLE5-UPGRADE-PLAN-2026-05-12.md` — strategic rationale,
->   8 pre-upgrade prerequisites, per-plugin compatibility status (all 30
->   plugins ✓ on Moodle 5.1.3), 8 theme carry-forward templates required,
->   sequencing (Moodle 5 upgrade scheduled for Q4 2026 AFTER Phase 8 cutover
->   AFTER BizLMS displacement P0 to avoid bundled-failure risk), validation
->   gates per pass.
-> - `docs/SUPP-C-SENTIENTIA-DETAILED-PLAN-2026-05-12.md` — 6 agents specified
->   end-to-end with cost-per-course model (₹70-125 vendor spend vs.
->   ₹50,000-₹1,50,000 external-authoring benchmark), validation gates between
->   agents, multi-language rollout (English first, then Hindi/Marathi/
->   Kannada/Swahili), 3-course quality regression suite, 90-day build
->   sequence (Weeks 5-8 of post-cutover stabilisation), vendor evaluation
->   matrix with documented alternatives for every external API.
+>   8 prereqs, per-plugin compat (30/30 ✓), Q4 2026 sequencing AFTER cutover
+>   AFTER BizLMS displacement.
+> - `docs/SUPP-C-SENTIENTIA-DETAILED-PLAN-2026-05-12.md` — 6 agents
+>   spec'd end-to-end, ₹70-125 per course economics, 90-day build sequence,
+>   vendor evaluation matrix.
+> - `docs/SUPP-D-BIZLMS-DISPLACEMENT-PLAN-2026-05-12.md` — Q3 2026 nine-week
+>   sequenced plan covering renderer-callsite displacement (P0, 13+5=18
+>   callsites), schema-column migration (50 `open_*` columns across user
+>   + course tables), plugin-directory removal, block displacement,
+>   LearnerScript decision. Done-criteria + risk register specific to the
+>   workstream.
+> - `docs/SUPP-F-ENGINEER-HIRE-BRIEF-2026-05-12.md` — operationalises
+>   Decision 13.3 (the highest-leverage decision on the platform). Role
+>   spec, compensation framing (₹22 lakh), 7-stage interview, 90-day
+>   onboarding ramp, success metrics at 6 and 12 months, sample JD draft.
+
+> **THREE EXECUTABLE ARTEFACTS shipped (acting on the backlog right away):**
+> - `moodle-enhancement/deploy/cutover_preflight.sql` — 9-section read-only
+>   pre-flight against production. Detects N4 stale manageprices grants,
+>   invalid open_path users, cart tenant-list config, callback IP allow-list,
+>   proctoring AWS config, recompletion rule tenancy, scheduled-task status,
+>   user-population sanity, plugin version alignment.
+> - `moodle-enhancement/local/airpay_core/cli/mask_pii_for_dev.php` —
+>   mitigates risk S7. Sanitises mdl_user PII, clears logstore IPs, masks
+>   cart billing PII, deletes proctor identity, masks email log. Hard
+>   safety guards (production-DB-name blocklist + --confirm flag +
+>   executive-name canary).
+> - `moodle-enhancement/local/airpay_core/classes/cron_health.php` —
+>   mitigates risk I5. Surfaces stuck Airpay scheduled tasks, faildelay
+>   backoff state, summary tuple for the dashboard widget.
+>
+> **ALL 30 PLUGIN READMEs SHIPPED.** Phase 8.3 (6) + Phase 9 (8) + this
+> session (17) = full coverage. Section 12.1 plugin-doc deferral closed
+> entirely.
 **Theme:** airpayux v1.0.0 | **Moodle:** 5.1.3+ on XAMPP
 **Version:** 4.0-rc3 — All 22 Phase-2 rows ✅ + cart + proctoring + recompletion + AI + cohorts + badges + 7-persona UAT.
 **GitHub:** Pushed to nitin-rajput-learning-tech/Airpay-Academy2.0 (production branch, last commit `6ce016150` — Phase 8.3 plugin READMEs + smoke fixes)
