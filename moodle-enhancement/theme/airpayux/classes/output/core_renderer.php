@@ -65,6 +65,7 @@ class core_renderer extends \core_renderer {
     use \theme_airpayux\output\traits\branding_assets;
     use \theme_airpayux\output\traits\login_render;
     use \theme_airpayux\output\traits\context_header;
+    use \theme_airpayux\output\traits\course_view;
 
     /**
      * Override standard_head_html to inject tenant favicon, custom CSS,
@@ -1708,83 +1709,9 @@ JS;
         }
     }
 
-     public function courseviewmenu_hidden(){
-
-       if(isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on')
-        $pageurl = "https";
-        else
-            $pageurl = "http";
-        $pageurl .= "://";
-        $pageurl .= $_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
-        $string = strpos($pageurl, '?');
-        if($string)
-            $newpageurl = substr($pageurl,0 , $string);
-        else
-            $newpageurl = $pageurl;
-
-        $checkingcourseurl = new moodle_url('/course/view.php');
-
-        $courseviewmenu=false;
-
-        if ($newpageurl == $checkingcourseurl) {
-
-            $courseviewmenu=true;
-        }
-
-        return $courseviewmenu;
-    }
-    public function course_bannerimage(){
-        global $COURSE;
-        // Use Moodle core API to get course image — no BizLMS dependency.
-        $course = new \core_course_list_element($COURSE);
-        foreach ($course->get_course_overviewfiles() as $file) {
-            if ($file->is_valid_image()) {
-                return \moodle_url::make_pluginfile_url(
-                    $file->get_contextid(), $file->get_component(), $file->get_filearea(),
-                    null, $file->get_filepath(), $file->get_filename()
-                )->out();
-            }
-        }
-        return $this->image_url('course_default', 'theme_airpayux')->out();
-    }
-    public function course_summary_data(){
-
-        global $COURSE,$CFG;
-
-        require_once("$CFG->libdir/externallib.php");
-
-        $course = $COURSE;
-
-        $context = \context_course::instance($course->id, IGNORE_MISSING);
-
-        list($course->summary, $course->summaryformat) =
-            external_format_text($course->summary, $course->summaryformat, $context->id, 'course', 'summary', null);
-        return $course->summary;
-    }
-    public function hasrmaincontenthidden(){
-
-        $hasrmaincontenthidden=false;
-
-        if ($this->courseviewmenu_hidden()) {
-
-            $hasrmaincontenthidden=true;
-        }
-
-        return $hasrmaincontenthidden;
-    }
-    public function activityurl_get_course() {
-
-        global $COURSE;
-        $courseformat = course_get_format($COURSE);
-
-        if($COURSE->format == 'singleactivity'){
-            $cm = $courseformat->reorder_activities();
-
-            return $cm->url;
-
-        }
-
-    }
+    // courseviewmenu_hidden(), course_bannerimage(), course_summary_data(),
+    // hasrmaincontenthidden(), activityurl_get_course() moved to
+    // \theme_airpayux\output\traits\course_view in Engineering 31.
     public function loggedin_username() {
         global $USER;
         return ucwords($USER->firstname);
