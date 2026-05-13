@@ -61,6 +61,7 @@ class core_renderer extends \core_renderer {
     // group of renderer methods extracted from this previously 2,339-line
     // monolithic class. See docs/SUPP-A row A3 for the rationale.
     use \theme_airpayux\output\traits\branding_buttons;
+    use \theme_airpayux\output\traits\login_ui;
 
     /**
      * Override standard_head_html to inject tenant favicon, custom CSS,
@@ -740,156 +741,21 @@ JS;
      *
      * @return URL
     */
-    public function loginslider(){
-        global $CFG;
-        if(isloggedin()){
-            return false;
-        }
-        $loginslider = '';
-        $loginslider .='<script> function loginpopup(test) {
-                            $("#div_loginpopup_"+test).toggleClass("open");
-                            }
-                            function closeonclick(test){
-                                $("#div_loginpopup_"+test).toggleClass("open");
-                            }
-
-                        </script>';
-
-        $img1_url = $this->page->theme->setting_file_url('slider1', 'slider1');
-        if(empty($img1_url)){
-            $img1_url = $this->image_url('slides/slide1', 'theme_airpayux');
-        }
-        $img2_url = $this->page->theme->setting_file_url('slider2', 'slider2');
-        if(empty($img2_url)){
-            $img2_url = $this->image_url('slides/slide2', 'theme_airpayux');
-        }
-        $img3_url = $this->page->theme->setting_file_url('slider3', 'slider3');
-        if(empty($img3_url)){
-            $img3_url = $this->image_url('slides/slide3', 'theme_airpayux');
-        }
-        $img4_url = $this->page->theme->setting_file_url('slider4', 'slider4');
-        if(empty($img4_url)){
-            $img4_url = $this->image_url('slides/slide4', 'theme_airpayux');
-        }
-        $img5_url = $this->page->theme->setting_file_url('slider5', 'slider5');
-        if(empty($img5_url)){
-            $img5_url = $this->image_url('slides/slide5', 'theme_airpayux');
-        }
-        $slider_context = [
-            "img1_url" => $img1_url,
-            "img2_url" => $img2_url,
-            "img3_url" => $img3_url,
-            "img4_url" => $img4_url,
-            "img5_url" => $img5_url,
-        ];
-        $loginslider .= $this->render_from_template('theme_airpayux/slider', $slider_context);
-        return $loginslider;
-    }
-
-    /**
-     * returns the login desc text given in theme settings
-     *
-     * @return HTML
-     */
-    function welcometext(){
-
-        $welcometext = $this->page->theme->settings->welcometext;
-        if(empty($welcometext)){
-            $welcometext = ' ';
-        }
-
-        if (strlen($welcometext) > 15) {
-                //truncate string
-                $stringCut = substr($welcometext, 0, 15);
-                $welcometext = $stringCut.' ';
-            }
-
-        return $welcometext;
-    }
-
-
-    /** Live active user count for login hero (last 90 days). */
-    /** Get the Public tenant path prefix for login/homepage stats. */
-    private function get_public_tenant_path(): string {
-        $tid = (int)get_config('local_airpay_pages', 'public_tenant_id');
-        if (!$tid) { $tid = 77; }
-        return '/' . $tid . '%';
-    }
-
-    public function login_stat_users() {
-        global $DB;
-        try {
-            $count = $DB->count_records_sql(
-                "SELECT COUNT(*) FROM {user}
-                 WHERE deleted = 0 AND suspended = 0 AND id > 1 AND open_path LIKE :p",
-                ['p' => $this->get_public_tenant_path()]);
-            return $count > 0 ? $count . '+' : '';
-        } catch (\Exception $e) {
-            return '';
-        }
-    }
-
-    /** Live course count for login hero — Public tenant ONLY. */
-    public function login_stat_courses() {
-        global $DB;
-        try {
-            $count = $DB->count_records_sql(
-                "SELECT COUNT(*) FROM {course} WHERE visible = 1 AND id > 1 AND open_path LIKE :p",
-                ['p' => $this->get_public_tenant_path()]);
-            return $count > 0 ? $count . '+' : '';
-        } catch (\Exception $e) {
-            return '';
-        }
-    }
-
-    /** Check if current user has admin/manager capabilities (for footer, nav filtering). */
+    // loginslider(), welcometext(), captiontext(), login_stat_users(),
+    // login_stat_courses(), login_stat_certs(), login_stat_completion()
+    // and get_public_tenant_path() — moved to
+    // \theme_airpayux\output\traits\login_ui in Phase 9.5 engineering
+    // item 12 (decomposition pass 2). Behaviour preserved.
+    //
+    // is_admin_or_manager() and is_siteadmin_only() remain inline here
+    // because they belong with the user-menu trait that will be
+    // extracted in pass 3 (per traits/README.md).
     public function is_admin_or_manager() {
         $context = \context_system::instance();
         return \local_airpay_courses\course_manager::can_manage($context);
     }
-
-    /** Check if current user is siteadmin only (not manager with admin caps). */
     public function is_siteadmin_only() {
         return is_siteadmin();
-    }
-
-    /** Certificate count for login hero — Public tenant only. */
-    public function login_stat_certs() {
-        return $this->login_stat_completion();
-    }
-
-    /** @deprecated Use login_stat_certs() */
-    public function login_stat_completion() {
-        global $DB;
-        try {
-            // Count certificates issued to Public tenant users.
-            if ($DB->get_manager()->table_exists('tool_certificate_issues')) {
-                $count = $DB->count_records_sql(
-                    "SELECT COUNT(ci.id) FROM {tool_certificate_issues} ci
-                     JOIN {user} u ON u.id = ci.userid
-                    WHERE u.open_path LIKE :p AND ci.archived = 0",
-                    ['p' => $this->get_public_tenant_path()]);
-                return $count > 0 ? $count . '+' : '';
-            }
-            return '';
-        } catch (\Exception $e) {
-            return '';
-        }
-    }
-
-    function captiontext(){
-
-        $captiontext = $this->page->theme->settings->logocaption;
-        if(empty($captiontext)){
-            $captiontext = '';
-        }
-
-        if (strlen($captiontext) > 80) {
-                //truncate string
-                $stringCut = substr($captiontext, 0, 80);
-                $captiontext = $stringCut.'...';
-            }
-        return $captiontext;
     }
     /**
      * Returns the Help button text of the given helpdesc in theme settings.
