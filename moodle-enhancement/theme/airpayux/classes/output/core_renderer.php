@@ -62,6 +62,7 @@ class core_renderer extends \core_renderer {
     // monolithic class. See docs/SUPP-A row A3 for the rationale.
     use \theme_airpayux\output\traits\branding_buttons;
     use \theme_airpayux\output\traits\login_ui;
+    use \theme_airpayux\output\traits\branding_assets;
 
     /**
      * Override standard_head_html to inject tenant favicon, custom CSS,
@@ -662,79 +663,10 @@ JS;
      *
      * @return bool
      */
-    public function should_display_navbar_logo() {
-        $logopath = \local_airpay_org\branding_manager::get_tenant_logo();
-        if (empty($logopath)) {
-            $logopath = $this->get_compact_logo_url();
-            if (empty($logopath)) {
-                $logopath = $this->image_url('default_logo', 'theme_airpayux');
-            }
-        }
-        return !empty($logopath);
-    }
-    /*
-     * Returns logo url to be displayed throughout the site
-     * @author Rizwana
-     *
-     * @return logo url
-    */
-    public function get_custom_logo() {
-        $logopath = \local_airpay_org\branding_manager::get_tenant_logo();
-        if (true) { // Preserve fallback block structure.
-        }
-        if (empty($logopath)) {
-            $logopath = $this->get_compact_logo_url();
-            if (empty($logopath)) {
-                $logopath = $this->image_url('default_logo', 'theme_airpayux');
-            }
-        }
-        return $logopath;
-    }
-    /**
-     * returns the login logo url if uploaded in theme settings else returns false
-     *
-     * @return URL
-     */
-    function carousellogo(){
-        $carousellogo = $this->page->theme->setting_file_url('carousellogo', 'carousellogo');
-        if(empty($carousellogo)){
-            $carousellogo = $this->image_url('carousel_logo', 'theme_airpayux');
-        }
-        return $carousellogo;
-
-    }
-    function loginlogo(){
-
-        $loginlogo = $this->page->theme->setting_file_url('loginlogo', 'loginlogo');
-        if(empty($loginlogo)){
-            $loginlogo = $this->image_url('login_logo', 'theme_airpayux');
-        }
-        return $loginlogo;
-    }
-    function logintext(){
-
-        $logintext = $this->page->theme->settings->logindesc;
-        if(empty($logintext)){
-            $logintext = '';
-        }
-
-        if (strlen($logintext) > 600) {
-                //truncate string
-                $stringCut = substr($logintext, 0, 600);
-                $logintext = $stringCut.'...';
-            }
-        return $logintext;
-    }
-    function loginordering($value='') {
-        $loginordering = $order = '';
-        $order = get_config('theme_airpayux', 'loginorder');
-        if($order == 0) {
-            $loginordering = false;
-        }else {
-            $loginordering = true;
-        }
-        return $loginordering;
-    }
+    // should_display_navbar_logo(), get_custom_logo(), carousellogo(),
+    // loginlogo(), logintext(), loginordering() — moved to
+    // \theme_airpayux\output\traits\branding_assets in Phase 9.5
+    // engineering item 14 (decomposition pass 3).
     /*
      * returns the images slider for the login page.
      * @author Raghuvaran Komati.
@@ -1986,24 +1918,9 @@ JS;
 
         return $block_content;
     }
-// theme related setting
-
-    public function get_primarycolor() {
-        $colors = \local_airpay_org\branding_manager::get_brand_colors();
-        return $colors->brand_color;
-    }
-    public function get_secondarycolor() {
-        $colors = \local_airpay_org\branding_manager::get_brand_colors();
-        return $colors->button_color;
-    }
-    public function get_hovercolor() {
-        $colors = \local_airpay_org\branding_manager::get_brand_colors();
-        return $colors->hover_color;
-    }
-    public function getsitecolors_link(){
-        // No longer depends on epsilon theme — colours come from branding_manager.
-        return '';
-    }
+    // get_primarycolor / get_secondarycolor / get_hovercolor /
+    // getsitecolors_link — moved to traits/branding_assets in
+    // Phase 9.5 engineering item 14.
     public function courseformat_drawer_content(){
 
         global $DB,$COURSE,$CFG,$USER;
