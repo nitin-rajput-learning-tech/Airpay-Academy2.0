@@ -138,11 +138,17 @@ class sharing_manager {
             }
 
             // Fire the audit event — every successful insert/reactivation.
+            // Note: we DON'T pass the top-level `courseid` key here.
+            // Moodle's event base would emit "Inconsistent courseid -
+            // context combination detected" because the context is
+            // system (this is a tenant-administrative action that
+            // crosses course boundaries) but courseid implies a
+            // single-course event. The course id lives inside `other`
+            // so audit consumers can still filter on it.
             $event = event\course_share_created::create([
                 'objectid'     => $courseid,
                 'context'      => \context_system::instance(),
                 'userid'       => $by_userid,
-                'courseid'     => $courseid,
                 'other'        => [
                     'tenant_id' => $tid,
                     'courseid'  => $courseid,
@@ -186,12 +192,13 @@ class sharing_manager {
         $existing->timemodified = time();
         $DB->update_record('local_airpay_courses_tenant_share', $existing);
 
-        // Audit event.
+        // Audit event. See course_share_created for the reason `courseid`
+        // is not on the top-level payload (Inconsistent courseid - context
+        // combination notice).
         $event = event\course_share_withdrawn::create([
             'objectid'     => $courseid,
             'context'      => \context_system::instance(),
             'userid'       => $by_userid,
-            'courseid'     => $courseid,
             'other'        => [
                 'tenant_id' => $tenant_id,
                 'courseid'  => $courseid,

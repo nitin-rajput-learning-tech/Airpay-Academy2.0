@@ -115,12 +115,15 @@ class request_manager {
             'timecreated'       => $now,
         ]);
 
-        // Audit event.
+        // Audit event. We omit the top-level `courseid` key because the
+        // event's context is CONTEXT_SYSTEM (tenant-administrative
+        // action) and Moodle's event base warns "Inconsistent courseid
+        // - context combination" when the two are mixed. The course id
+        // stays inside `other` so downstream consumers can filter.
         $event = event\course_share_requested::create([
             'objectid' => $id,
             'context'  => \context_system::instance(),
             'userid'   => $requester_userid,
-            'courseid' => $courseid,
             'other'    => [
                 'request_id'        => $id,
                 'courseid'          => $courseid,
@@ -171,12 +174,12 @@ class request_manager {
         sharing_manager::share_course((int) $req->courseid,
             [(int) $req->requesting_tenant], $by_userid);
 
-        // Audit event.
+        // Audit event. courseid stays in `other` only — see
+        // create_request for the explanation.
         $event = event\course_share_request_approved::create([
             'objectid' => (int) $req->id,
             'context'  => \context_system::instance(),
             'userid'   => $by_userid,
-            'courseid' => (int) $req->courseid,
             'other'    => [
                 'request_id'        => (int) $req->id,
                 'courseid'          => (int) $req->courseid,
@@ -225,7 +228,6 @@ class request_manager {
             'objectid' => (int) $req->id,
             'context'  => \context_system::instance(),
             'userid'   => $by_userid,
-            'courseid' => (int) $req->courseid,
             'other'    => [
                 'request_id'        => (int) $req->id,
                 'courseid'          => (int) $req->courseid,
