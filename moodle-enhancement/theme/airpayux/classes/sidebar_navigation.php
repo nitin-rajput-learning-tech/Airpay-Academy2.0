@@ -93,6 +93,12 @@ class sidebar_navigation {
             $items[] = $this->divider();
             $items[] = $this->item('Manage Users', 'fa-users', '/local/airpay_users/index.php', $currenturl);
             $items[] = $this->item('Manage Courses', 'fa-book', '/local/airpay_courses/index.php', $currenturl);
+            // Sprint D nav entry — Airpay admins see pending course-share
+            // requests from other tenants here. The page itself enforces
+            // the local/airpay_courses:approve_request cap (siteadmin only),
+            // so we only render the link for siteadmin.
+            $items[] = $this->item('Course-share Requests', 'fa-inbox',
+                '/local/airpay_courses/manage_requests.php', $currenturl);
             $items[] = $this->item('Online Exams', 'fa-edit', '/local/airpay_exams/index.php', $currenturl);
             $items[] = $this->item('Classrooms', 'fa-calendar', '/local/airpay_classroom/index.php', $currenturl);
             $items[] = $this->item('Learning Paths', 'fa-map-signs', '/local/airpay_learningpath/index.php', $currenturl);
@@ -128,6 +134,13 @@ class sidebar_navigation {
             $items[] = $this->divider();
             $items[] = $this->item('Manage Users', 'fa-users', '/local/airpay_users/index.php', $currenturl);
             $items[] = $this->item('Manage Courses', 'fa-book', '/local/airpay_courses/index.php', $currenturl);
+            // Sprint D — non-Airpay L&D admins (Public/ZEEA) get the
+            // Browse Airpay Library link to request specific courses
+            // from the Airpay tenant's library.
+            if ($this->is_non_airpay_tenant_user()) {
+                $items[] = $this->item('Browse Airpay Library', 'fa-handshake-o',
+                    '/local/airpay_courses/browse_airpay.php', $currenturl);
+            }
             $items[] = $this->item('Online Exams', 'fa-pencil-square-o', '/local/airpay_exams/index.php', $currenturl);
             $items[] = $this->item('Classrooms', 'fa-calendar', '/local/airpay_classroom/index.php', $currenturl);
             $items[] = $this->item('Learning Paths', 'fa-road', '/local/airpay_learningpath/index.php', $currenturl);
@@ -151,6 +164,15 @@ class sidebar_navigation {
             $items[] = $this->divider();
             $items[] = $this->item('My Courses', 'fa-book', '/local/airpay_catalog/mycourses.php', $currenturl);
             $items[] = $this->item('Catalog', 'fa-compass', '/local/airpay_catalog/public.php', $currenturl);
+            // Sprint D — managers in non-Airpay tenants (Public/ZEEA)
+            // get a "Browse Airpay Library" link so they can request
+            // specific Airpay courses for their tenant's catalogue.
+            // Airpay-tenant managers don't see this — they already own
+            // every Airpay course by tree membership.
+            if ($this->is_non_airpay_tenant_user()) {
+                $items[] = $this->item('Browse Airpay Library', 'fa-handshake-o',
+                    '/local/airpay_courses/browse_airpay.php', $currenturl);
+            }
             // Cart for managers in cart-enabled tenants.
             if ($this->is_cart_enabled_for_current_user()) {
                 $items[] = $this->item('My Cart', 'fa-shopping-cart',
@@ -197,6 +219,26 @@ class sidebar_navigation {
         } catch (\Throwable $e) {
             return false;
         }
+    }
+
+    /**
+     * Sprint D — true when the current user belongs to a tenant other
+     * than Airpay (i.e. Public/77, ZEEA/177, or any other receiving
+     * tenant). Those users get the "Browse Airpay Library" sidebar
+     * link to file share-requests. Airpay users (open_path under /1)
+     * don't see it — they already own Airpay's catalog by definition.
+     */
+    private function is_non_airpay_tenant_user(): bool {
+        global $USER;
+        $path = $USER->open_path ?? '';
+        if ($path === '') {
+            return false;
+        }
+        $parts = explode('/', trim($path, '/'));
+        $root = isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
+        // Airpay tenant root = 1 (per project convention). Anything
+        // else with a valid root is a "receiving" tenant.
+        return $root > 0 && $root !== 1;
     }
 
     /**

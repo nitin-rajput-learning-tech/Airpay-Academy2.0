@@ -45,6 +45,9 @@ class list_courses extends external_api {
         $can_delete = has_capability('local/airpay_courses:delete', $context);
         $can_visibility = has_capability('local/airpay_courses:visibility', $context);
         $can_enrol  = has_capability('local/airpay_courses:enrol', $context);
+        // Sprint C wiring: admins with the share capability get a "Share"
+        // icon in each row that links to /local/airpay_courses/share.php.
+        $can_share  = has_capability('local/airpay_courses:share_to_tenant', $context);
 
         // Sort whitelist.
         $allowed_sort = ['fullname', 'shortname', 'timecreated', 'visible', 'category'];
@@ -163,6 +166,16 @@ class list_courses extends external_api {
                 $actions[] = '<a href="#" class="btn btn-sm btn-link text-muted p-1" '
                     . 'data-action="' . $verb . '-course" data-courseid="' . (int) $c->id . '" '
                     . 'data-name="' . s($c->fullname) . '" title="' . ucfirst($verb) . '"><i class="fa ' . $icon . '"></i></a>';
+            }
+            if ($can_share) {
+                // Sprint C: link to /local/airpay_courses/share.php as a
+                // full page (not a modal) — the share form has enough
+                // state to warrant its own URL.
+                $shareurl = (new \moodle_url('/local/airpay_courses/share.php',
+                    ['id' => (int) $c->id]))->out(false);
+                $actions[] = '<a href="' . s($shareurl) . '" '
+                    . 'class="btn btn-sm btn-link text-muted p-1" '
+                    . 'title="Share to other tenants"><i class="fa fa-handshake-o text-primary"></i></a>';
             }
             if ($can_delete) {
                 $actions[] = '<a href="#" class="btn btn-sm btn-link text-muted p-1" '
