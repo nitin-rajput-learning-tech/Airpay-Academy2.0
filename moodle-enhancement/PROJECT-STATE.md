@@ -64,6 +64,38 @@
 > **ALL 30 PLUGIN READMEs SHIPPED.** Phase 8.3 (6) + Phase 9 (8) + this
 > session (17) = full coverage. Section 12.1 plugin-doc deferral closed
 > entirely.
+
+> **PHASE 9 EXTEND (12 May 2026 night):** Three more supplements, an
+> agent skeleton, a regression suite, a runbook, and a structured logger.
+>
+> - `docs/SUPP-E-BUDGET-MODEL-2026-05-12.md` — 12-month operating budget
+>   ₹35 lakh expected, ₹62 lakh savings, **+₹27 lakh** cash-positive net.
+>   Sensitivity analysis on SENTIENTIA throughput / hire timing / Public-
+>   tenant traction. Per-vendor sub-ceilings under Decision 13.2.
+> - `docs/SUPP-G-DR-DRILL-PLAN-2026-05-12.md` — RTO 4h, RPO 24h, four
+>   scenarios, drill checklist + role assignments + retention policy +
+>   cold-site spec. First live drill scheduled week 3-4 of 90-day plan.
+> - `docs/SUPP-H-OBSERVABILITY-PLAYBOOK-2026-05-12.md` — 6 SLIs/SLOs,
+>   alert taxonomy P0/P1/P2, structured-logging contract, error-budget
+>   framework, 12-month maturity roadmap. New Relic at ₹0-80,000/year.
+> - `sentientia/agent2_narration_generator.py` — full prompt template,
+>   validation gates, [CONFIRM] gate (tty-checked), batch + dry-run modes.
+>   Anthropic SDK gated; live integration is a small diff away.
+> - `sentientia/run_regression.py` — quality regression runner with
+>   word-count delta, sentence-distribution KS test, vocabulary recall,
+>   PII introduction check. Zero scipy dependency.
+> - `sentientia/references/README.md` — 3-course reference suite
+>   (POSH compliance, customer support playbook, AML fundamentals)
+>   with validation thresholds and anti-golden pattern documented.
+> - `moodle-enhancement/MFA-ENFORCEMENT-RUNBOOK.md` — three-tier
+>   enforcement plan (admins T+30d, managers T+90d, users 12-mo eval).
+>   Admin steps, comms template, verification SQL, rollback. DPDP s.8(4)
+>   compliance positioning.
+> - `moodle-enhancement/local/airpay_core/classes/structured_logger.php`
+>   — JSON-shaped log helper backing the SUPP-H structured-logging
+>   contract. ISO-8601 timestamp, request_id from upstream headers, APM
+>   custom-event hook, defensive PII scrub on extra dict.
+
 **Theme:** airpayux v1.0.0 | **Moodle:** 5.1.3+ on XAMPP
 **Version:** 4.0-rc3 — All 22 Phase-2 rows ✅ + cart + proctoring + recompletion + AI + cohorts + badges + 7-persona UAT.
 **GitHub:** Pushed to nitin-rajput-learning-tech/Airpay-Academy2.0 (production branch, last commit `6ce016150` — Phase 8.3 plugin READMEs + smoke fixes)
