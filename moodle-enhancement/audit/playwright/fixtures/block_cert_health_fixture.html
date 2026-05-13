@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cert-health block — a11y fixture</title>
+  <style>
+    /* Surrounding chrome so axe sees a realistic page context.
+       Without a heading hierarchy axe flags `page-has-heading-one`
+       which would obscure the block-specific findings we care about. */
+    body { font-family: Montserrat, system-ui, sans-serif;
+           background:#F2F4FB; margin: 0; padding: 24px; }
+    main { max-width: 720px; margin: 0 auto; }
+    h1   { font-size: 1.4rem; margin: 0 0 24px; color:#1a1a2e; }
+    .block-region {
+        background:#fff; border:1px solid #e2e6ef;
+        border-radius:12px; padding:16px;
+    }
+    .block-region > h2 {
+        font-size: 1rem; margin: 0 0 12px; color:#1a1a2e;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Site administration</h1>
+
+  <!--
+    Snapshot of the HTML produced by:
+      block_airpay_cert_health::get_content()
+    (moodle-enhancement/blocks/airpay_cert_health/block_airpay_cert_health.php)
+
+    Captured: 2026-05-13 (post-creation), with a synthetic data scenario:
+    24 cert emails sent successfully in the last 7 days, 1 failed,
+    3 suppressed. This is the realistic-shape fixture against which
+    axe-core runs.
+
+    Lockstep contract: when the block's PHP get_content() changes,
+    update this fixture in the same commit.
+  -->
+  <section class="block-region" aria-label="Cert health">
+    <h2>Cert health</h2>
+
+    <section class="airpay-cert-health" role="region"
+             aria-label="Airpay certificate-email health summary">
+
+      <div class="airpay-cert-health__kpis"
+           style="display:flex;gap:8px;margin-bottom:8px;">
+
+        <div class="airpay-cert-health__kpi airpay-cert-health__kpi--ok"
+             role="group"
+             aria-label="24 Certificates emailed (7d), severity OK"
+             style="flex:1;padding:8px;border:1px solid #e2e6ef;border-radius:8px;background:#f8f9fc;text-align:center;">
+          <div style="font-size:1.6em;font-weight:700;color:#16a34a;" aria-hidden="true">24</div>
+          <div style="font-size:0.75em;color:#5a6070;" aria-hidden="true">Certificates emailed (7d)</div>
+          <div class="airpay-cert-health__severity airpay-cert-health__severity--ok"
+               style="font-size:0.7em;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#15803d;margin-top:2px;"
+               aria-hidden="true">OK</div>
+        </div>
+
+        <div class="airpay-cert-health__kpi airpay-cert-health__kpi--critical"
+             role="group"
+             aria-label="1 Failed sends (7d), severity Critical"
+             style="flex:1;padding:8px;border:1px solid #e2e6ef;border-radius:8px;background:#f8f9fc;text-align:center;">
+          <div style="font-size:1.6em;font-weight:700;color:#dc2626;" aria-hidden="true">1</div>
+          <div style="font-size:0.75em;color:#5a6070;" aria-hidden="true">Failed sends (7d)</div>
+          <div class="airpay-cert-health__severity airpay-cert-health__severity--critical"
+               style="font-size:0.7em;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#b91c1c;margin-top:2px;"
+               aria-hidden="true">Critical</div>
+        </div>
+
+        <div class="airpay-cert-health__kpi airpay-cert-health__kpi--warning"
+             role="group"
+             aria-label="3 Suppressed sends (7d), severity Warning"
+             style="flex:1;padding:8px;border:1px solid #e2e6ef;border-radius:8px;background:#f8f9fc;text-align:center;">
+          <div style="font-size:1.6em;font-weight:700;color:#d97706;" aria-hidden="true">3</div>
+          <div style="font-size:0.75em;color:#5a6070;" aria-hidden="true">Suppressed sends (7d)</div>
+          <div class="airpay-cert-health__severity airpay-cert-health__severity--warning"
+               style="font-size:0.7em;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#b45309;margin-top:2px;"
+               aria-hidden="true">Warning</div>
+        </div>
+
+      </div>
+
+      <div class="airpay-cert-health__footer-link"
+           style="margin-top:10px;font-size:0.85em;">
+        <a href="/local/airpay_emails/manage.php?tab=logs">View full email delivery log →</a>
+      </div>
+
+    </section>
+  </section>
+</main>
+</body>
+</html>

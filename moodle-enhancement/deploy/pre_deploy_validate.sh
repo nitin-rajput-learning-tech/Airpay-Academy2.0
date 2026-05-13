@@ -232,28 +232,34 @@ else
     echo "  (PHPUnit gate skipped per --skip-phpunit)"
 fi
 
-# ── 6. axe-core a11y baseline (block_airpay_cron_health) ─────────────
-# Runs against a static fixture (no XAMPP / DB dependency). ~10s on
-# warm cache. Skip via --skip-a11y if Chromium / Chrome is unavailable
-# on the runner.
+# ── 6. axe-core a11y baselines (both Airpay dashboard blocks) ───────
+# Runs against static fixtures (no XAMPP / DB dependency). ~20s for
+# both blocks on warm cache. Skip via --skip-a11y if Chromium /
+# Chrome is unavailable on the runner.
+#
+# Two harnesses are run in sequence — block_airpay_cron_health and
+# block_airpay_cert_health. Either failure fails the gate.
 if [ "$SKIP_A11Y" -eq 0 ]; then
-    heading "Gate 6 — axe-core a11y baseline (block_airpay_cron_health)"
-    A11Y_HARNESS="$PROJECT_ROOT/moodle-enhancement/audit/playwright/a11y_block_cron_health.mjs"
-    if [ -f "$A11Y_HARNESS" ]; then
-        # The harness exits 0 on no critical/serious violations, 1 otherwise.
-        if (cd "$PROJECT_ROOT/moodle-enhancement/audit/playwright" && \
-                HEADLESS=1 node a11y_block_cron_health.mjs > /tmp/a11y.out 2>&1); then
-            # Parse the violation totals for a richer pass message.
-            CRIT=$(grep -E "critical\s*:" /tmp/a11y.out | head -1 | awk '{print $NF}')
-            SERIOUS=$(grep -E "serious\s*:" /tmp/a11y.out | head -1 | awk '{print $NF}')
-            pass "axe-core a11y (cron_health block — 0 critical, 0 serious)"
-        else
-            fail "axe-core a11y" "critical or serious violations — see /tmp/a11y.out"
-            tail -20 /tmp/a11y.out
+    heading "Gate 6 — axe-core a11y (cron_health + cert_health blocks)"
+    A11Y_FAILED=0
+    for harness_name in a11y_block_cron_health a11y_block_cert_health; do
+        A11Y_HARNESS="$PROJECT_ROOT/moodle-enhancement/audit/playwright/${harness_name}.mjs"
+        if [ ! -f "$A11Y_HARNESS" ]; then
+            fail "$harness_name" "harness not found at $A11Y_HARNESS"
+            A11Y_FAILED=1
+            continue
         fi
-    else
-        fail "axe-core a11y" "harness not found at $A11Y_HARNESS"
-    fi
+        # The harness exits 0 on no critical/serious violations, 1 otherwise.
+        out_file="/tmp/${harness_name}.out"
+        if (cd "$PROJECT_ROOT/moodle-enhancement/audit/playwright" && \
+                HEADLESS=1 node "${harness_name}.mjs" > "$out_file" 2>&1); then
+            pass "$harness_name (0 critical, 0 serious)"
+        else
+            fail "$harness_name" "critical/serious violations — see $out_file"
+            tail -15 "$out_file"
+            A11Y_FAILED=1
+        fi
+    done
 else
     echo
     echo "  (axe-core a11y gate skipped per --skip-a11y)"
