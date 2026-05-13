@@ -7,7 +7,7 @@ lives in `local_airpay_catalog`.
 | Field | Value |
 |---|---|
 | Component | `local_airpay_courses` |
-| Version | `2026050900` (1.6.0) |
+| Version | `2026051303` (1.8.0 — Sprint D) |
 | Depends on | `local_airpay_org` |
 
 ## What it does
@@ -20,22 +20,83 @@ lives in `local_airpay_catalog`.
 - CSV export of the current filter view.
 - Featured-courses curation (hot-list shown on learner catalogue).
 - Course visibility toggle gated by `:visibility` capability.
+- **Sprint C — cross-tenant course SHARING (push)**. An Airpay
+  admin can share any course to Public/77 or ZEEA/177 via
+  `share.php?id=N`; the receiving tenant's catalogue UNIONs
+  borrowed courses with their own. Completion data stays
+  segregated via `mdl_user.open_path`. See `sharing_manager` class.
+- **Sprint D — cross-tenant course REQUEST workflow (pull)**.
+  Non-Airpay managers browse Airpay's library at `browse_airpay.php`
+  and file requests; Airpay admin approves/rejects from
+  `manage_requests.php`. Managers track their own requests via
+  `my_requests.php`. See `request_manager` class.
 
-## Capabilities (7)
+## Capabilities (10)
 
-`:create`, `:update`, `:delete`, `:enrol`, `:manage`, `:view`,
-`:visibility` — all at `CONTEXT_SYSTEM` for archetype manager and
-editingteacher.
+| Cap | Granted to | Purpose |
+|-----|------------|---------|
+| `:create`, `:update`, `:delete`, `:enrol`, `:manage`, `:view`, `:visibility` | manager + editingteacher | day-to-day course admin |
+| `:share_to_tenant` | siteadmin only | Sprint C — push a course to another tenant's catalog |
+| `:request_course` | manager | Sprint D — request another tenant's course be added to mine |
+| `:approve_request` | siteadmin only | Sprint D — approve/reject pending requests |
 
 ## Tables
 
-`local_airpay_featured_courses` — one row per featured-course curation.
-`local_airpay_course_skills` — skill-tag mapping per course.
+| Table | Purpose |
+|-------|---------|
+| `local_airpay_featured_courses` | featured-course curation (Phase F.2) |
+| `local_airpay_courses_tenant_share` | Sprint C: course × tenant share map |
+| `local_airpay_courses_requests` | Sprint D: pending/approved/rejected requests |
 
-## Web services (10)
+## Pages
 
-List, create, edit, delete, enrol, unenrol, featured-toggle, csv-export
-plus the bulk-CSV variants.
+| URL | Audience | Purpose |
+|-----|----------|---------|
+| `/local/airpay_courses/index.php` | admin | course management table |
+| `/local/airpay_courses/share.php?id=N` | siteadmin | Sprint C: tenant checkbox grid |
+| `/local/airpay_courses/browse_airpay.php` | non-Airpay manager | Sprint D: browse Airpay library + file requests |
+| `/local/airpay_courses/manage_requests.php` | Airpay siteadmin | Sprint D: pending-requests inbox |
+| `/local/airpay_courses/my_requests.php` | non-Airpay manager | Sprint D: my-requests outbox |
+
+## CLI tools
+
+| Command | Purpose |
+|---------|---------|
+| `cli/manage_shares.php --list` | every active share with course + tenant names |
+| `cli/manage_shares.php --course=N --add=77,177` | push a share via terminal |
+| `cli/manage_shares.php --course=N --remove=77` | withdraw a share |
+| `cli/manage_shares.php --list-pending` | pending requests in admin-inbox shape |
+| `cli/manage_shares.php --approve=<req_id>` | approve a pending request |
+| `cli/manage_shares.php --reject=<req_id> --reason="..."` | reject with rationale |
+
+## Web services
+
+Day-to-day admin (Phase 8.x):
+list_courses, create_course (in edit_course form), delete_course, enrol_single,
+unenrol_single, list_course_enrolments, toggle_visibility, add_featured,
+remove_featured, reorder_featured.
+
+Sprint C (cross-tenant sharing):
+- `local_airpay_courses_share_course(courseid, tenantids[])`
+- `local_airpay_courses_unshare_course(courseid, tenantid)`
+- `local_airpay_courses_list_course_shares(courseid)`
+
+Sprint D (request workflow):
+- `local_airpay_courses_request_course(courseid)`
+- `local_airpay_courses_approve_request(requestid)`
+- `local_airpay_courses_reject_request(requestid, reason)`
+
+## Audit events
+
+All five Sprint C/D events are in `audit_log::SENSITIVE_EVENTS`, so
+they surface in the compliance dashboard at /admin/report/log/ AND
+the airpay_core audit_log helper:
+
+- `course_share_created`
+- `course_share_withdrawn`
+- `course_share_requested`
+- `course_share_request_approved`
+- `course_share_request_rejected`
 
 ## Verify after install
 
