@@ -127,4 +127,58 @@ class tenant {
             ['aptenantroot' => self::root_for_current_user()],
         ];
     }
+
+    /**
+     * Build the WHERE-clause fragment for tenant-scoping on a path-based
+     * column (e.g. `mdl_course.open_path`, `mdl_local_airpay_classroom.open_path`).
+     *
+     * The path-based pattern matches "/N" exactly OR "/N/..." as a prefix
+     * where N is the caller's tenant root. Site admins always pass.
+     *
+     * Used when the table being filtered carries an open_path-style column
+     * rather than a flat costcenterid. Replaces the inline
+     * "explode('/', $USER->open_path)" pattern that was duplicated in
+     * approximately 12 external WS classes prior to Phase 9.5.
+     *
+     * Examples:
+     *
+     *     [$tnsql, $tnargs] = \local_airpay_core\tenant::path_filter('c');
+     *     $rows = $DB->get_records_sql(
+     *         "SELECT * FROM {course} c WHERE $tnsql AND c.visible = 1",
+     *         $tnargs);
+     *
+     *     // With NULL legacy-row tolerance:
+     *     [$tnsql, $tnargs] = tenant::path_filter('c', 'open_path', true);
+     *
+     * @param string $alias  Table alias (defaults to no alias)
+     * @param string $column Path column name (default: 'open_path')
+     * @param bool   $allow_null Also match rows where the column is NULL
+     *                          (legacy/unscoped rows). Default false.
+     * @return array{0: string, 1: array}
+     */
+    public static function path_filter(string $alias = '',
+                                        string $column = 'open_path',
+                                        bool $allow_null = false): array {
+        $col = $alias === '' ? $column : "{$alias}.{$column}";
+        if (is_siteadmin()) {
+            return ['1=1', []];
+        }
+        $root = self::root_for_current_user();
+        if ($root <= 0) {
+            // Unknown tenant — return a filter that matches nothing.
+            // Defensive: a user without a valid tenant should not see
+            // any tenant-scoped resources.
+            return ['1=0', []];
+        }
+        $exact  = '/' . $root;
+        $prefix = '/' . $root . '/%';
+        $null_clause = $allow_null ? " OR {$col} IS NULL" : '';
+        return [
+            "({$col} = :appathexact OR {$col} LIKE :appathprefix{$null_clause})",
+            [
+                'appathexact'  => $exact,
+                'appathprefix' => $prefix,
+            ],
+        ];
+    }
 }

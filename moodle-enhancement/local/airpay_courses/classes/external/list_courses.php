@@ -67,22 +67,16 @@ class list_courses extends external_api {
         $where = ['c.id > 1']; // Exclude site course.
         $sqlparams = [];
 
-        // M3 fix: scope to caller's tenant (was missing entirely — any user
-        // with :view could see every course on the platform).
-        global $USER;
-        if (!is_siteadmin()) {
-            $parts = explode('/', trim($USER->open_path ?? '', '/'));
-            $top = isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
-            if ($top > 0) {
-                // Match: course at tenant root, in any descendant of it, OR
-                // courses with no open_path set (legacy/unscoped — visible
-                // to everyone today; tighten later once data is migrated).
-                $where[] = '(c.open_path = :corgexact OR c.open_path LIKE :corgprefix OR c.open_path IS NULL)';
-                $sqlparams['corgexact']  = '/' . $top;
-                $sqlparams['corgprefix'] =
-                    $DB->sql_like_escape('/' . $top . '/') . '%';
-            }
-        }
+        // Tenant scope — Phase 9.5 trait back-port. Replaces the M3 inline
+        // explode('/', $USER->open_path) pattern. `allow_null=true` keeps
+        // the legacy-courses tolerance the M3 fix intentionally added —
+        // courses with no open_path set remain visible to everyone today
+        // and will be tightened once the BizLMS displacement (FORK-PLAN
+        // Q3) has migrated those rows.
+        [$tnsql, $tnargs] = \local_airpay_core\tenant::path_filter('c',
+            'open_path', true);
+        $where[] = $tnsql;
+        $sqlparams = array_merge($sqlparams, $tnargs);
 
         if ($categoryid > 0) {
             $where[] = 'c.category = :catid';

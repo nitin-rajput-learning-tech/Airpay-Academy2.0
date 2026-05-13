@@ -56,16 +56,12 @@ class list_classrooms extends external_api {
         $where = ['1=1'];
         $sqlparams = [];
 
-        // Tenant scope.
-        if (!is_siteadmin()) {
-            $parts = explode('/', trim($USER->open_path ?? '', '/'));
-            $top = isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
-            if ($top > 0) {
-                $where[] = '(c.open_path = :corgexact OR c.open_path LIKE :corgprefix)';
-                $sqlparams['corgexact']  = '/' . $top;
-                $sqlparams['corgprefix'] = $DB->sql_like_escape('/' . $top . '/') . '%';
-            }
-        }
+        // Tenant scope — Phase 9.5 trait back-port. Replaces the
+        // inline explode('/', $USER->open_path) pattern with the
+        // shared `\local_airpay_core\tenant::path_filter()` helper.
+        [$tnsql, $tnargs] = \local_airpay_core\tenant::path_filter('c');
+        $where[] = $tnsql;
+        $sqlparams = array_merge($sqlparams, $tnargs);
 
         // Status filter.
         $status_filter = (string) ($client_filters['status'] ?? 'all');
