@@ -20,6 +20,9 @@ $string['switchboard_pagetitle'] = 'The Switchboard — feature flags';
 $string['switchboard_no_changes'] = 'No changes to apply.';
 $string['switchboard_applied']    = '{$a} flag change(s) applied. The new values take effect within 60 seconds (cache TTL).';
 
+// Phase A0.5 (2026-05-14) — Style Guide.
+$string['styleguide_pagetitle'] = 'Airpay Style Guide';
+
 $string['unknownflagkey'] = 'Unknown feature flag key: "{$a}". The key must be declared in a plugin\'s db/feature_flags.php registry file before it can be set.';
 
 // Surfaced when a flag-gated feature is disabled but the user tries to

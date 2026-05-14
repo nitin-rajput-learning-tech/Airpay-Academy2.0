@@ -17,10 +17,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_airpay_core';
-$plugin->version   = 2026051401;
+$plugin->version   = 2026051402;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.2.0';
+$plugin->release   = '1.2.1';
 // Release history
 // 1.1.0  cron-health publisher + audit_log + structured_logger
 // 1.2.0  Phase A0 — feature flags + Switchboard infrastructure.
@@ -29,3 +29,11 @@ $plugin->release   = '1.2.0';
 //          + \local_airpay_core\feature_flags resolver class
 //          + Switchboard admin page at /local/airpay_core/admin/switchboard.php
 //          + first 5 flags wired (assistant, gamification x2, share, request)
+// 1.2.1  Phase A0.5 — Style Guide + design-token expansion.
+//          + admin/styleguide.php — visual reference of every design token
+//          + theme/airpayux/scss/moodle/_tokens.scss extended with:
+//              motion (durations + easings from manifesto §5),
+//              breakpoint SCSS vars from manifesto §3,
+//              touch-target + control-height tokens from manifesto §8/§9,
+//              focus-ring tokens (WCAG 2.4.11),
+//              prefers-reduced-motion auto-collapse

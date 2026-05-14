@@ -1,6 +1,61 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-14 — **PHASE A0 SHIPPED.** The Switchboard is live: a generalised feature-flag system with tenant-scoped overrides, audit trail, and graceful-degradation contract. 5 capabilities (cross-tenant share, cross-tenant request, AI assistant, gamification) are now toggleable without breaking the platform. Strategy locked in 3 docs covering UI/UX manifesto, 22-surface roadmap, and configurability architecture. Test count went 80 → 91 (Phase A0 adds 11 PHPUnit tests).
-**Phase:** Academy 4.0 — admin-feedback delivery complete + Day-2/Day-3 extensions + Phase A0 configurability foundation. Cutover gates remain (IT staging deploy + k6 + pen-test + sign-off).
+**Updated:** 2026-05-14 — **PHASE A0 + A0.5 SHIPPED.** The Switchboard is live (configurability foundation) and the Style Guide is live (design-system foundation). Together they form the scaffolding every future surface hangs off. Test count went 80 → 91, design tokens went from "comprehensive but incomplete" to "manifesto-complete" (added motion/breakpoint/touch/focus-ring/control-height tokens). Style Guide visible at `/local/airpay_core/admin/styleguide.php`.
+**Phase:** Academy 4.0 — admin-feedback delivery complete + Day-2/Day-3 extensions + Phase A0 (configurability) + Phase A0.5 (design system). Cutover gates remain (IT staging deploy + k6 + pen-test + sign-off).
+
+---
+
+## 🆕 PHASE A0.5 — DESIGN SYSTEM FOUNDATION (2026-05-14)
+
+**Trigger:** the manifesto in `UI-UX-MANIFESTO.md` listed motion + breakpoint + touch-target tokens but they weren't actually in `_tokens.scss`. Without them, every new surface would either guess values or duplicate the manifesto inline — losing the single-source-of-truth contract.
+
+### Token expansion (`theme/airpayux/scss/moodle/_tokens.scss`)
+
+Added five categories of tokens that were specified in the manifesto but missing from the file:
+
+- **Motion durations** (manifesto §5.1): `--ap-duration-instant/quick/default/slow/deliberate` (0/150/250/400/700ms). Composite shortcuts `--ap-transition-quick/default/slow/emphatic` pair each duration with the right easing.
+- **Motion easings** (manifesto §5.2): `--ap-ease-out/in/in-out/spring` as named cubic-bezier curves. Replaces the old single-cube `ease` keyword that every transition was using.
+- **Breakpoint SCSS variables** (manifesto §3): `$ap-bp-mobile-s/mobile/tablet-s/tablet/laptop/desktop` at 380/590/768/992/1280/1600px. CSS custom properties can't live inside `@media`, so these are compile-time Sass vars — every new partial that needs a media query must reference them, not inline px literals.
+- **Touch targets** (manifesto §8 + §9 / WCAG 2.5.5): `--ap-tap-target-min` (44px) and `--ap-tap-target-cozy` (40px for dense admin tables).
+- **Control heights** for vertical rhythm: `--ap-control-height-sm/md/lg/xl` (32/40/48/56px). So buttons, inputs, and badges line up across every form and toolbar without bespoke padding everywhere.
+- **Focus-ring contract** (WCAG 2.4.11): `--ap-focus-ring-width/offset/color` + a universal `:focus-visible` rule applied to every interactive element. 3px width, 2px offset, primary blue.
+
+### Auto-respect for `prefers-reduced-motion`
+
+A single `@media (prefers-reduced-motion: reduce)` block at the bottom of `_tokens.scss` overrides every motion duration to 0ms. Because every component consumes `--ap-duration-*`, the OS-level preference automatically cascades — no per-component opt-in needed. Vestibular-disorder users get instant transitions without losing colour/state feedback.
+
+### Style Guide page (`/local/airpay_core/admin/styleguide.php`)
+
+New super-admin page that visually demonstrates every token in production. Eight sections (Colour / Typography / Spacing / Radius / Shadow / Motion / Breakpoints / A11y) with each demo referencing the live CSS variable via inline `style="var(--ap-...)"` — so the Style Guide auto-syncs with the compiled theme. Motion section is interactive: click any duration button to animate a target box with that duration + easing combo. Linked from Site Admin → Plugins → Local plugins next to the Switchboard.
+
+### What this enables
+
+When a designer/developer reaches for a token they no longer have to:
+1. Open `_tokens.scss` to remember the name.
+2. Compile the theme and inspect to see the value.
+3. Cross-check the manifesto for the spec.
+
+Instead they open `/local/airpay_core/admin/styleguide.php` and see the live, correct value — with the variable name to copy. Future PRs that introduce hex literals or magic durations get reviewed against this page.
+
+### Hex-literal sweep — deferred
+
+The codebase still has 1,237 hex literals scattered across 19 SCSS partials (notably `_moodle-overrides.scss` at 180, `_surface-dashboard.scss` at 66, `_surface-login.scss` at 75). Sweeping all of them in one session has high visual-regression risk and low priority (the literals work; they're just not auditable). The plan: migrate file-by-file as each surface comes up for its priority-roadmap redesign.
+
+### Version bump
+
+`local_airpay_core` 2026051401 → 2026051402, release `1.2.0` → `1.2.1`. Required because adding a new admin page to `settings.php` needs Moodle to re-scan the plugin's nav.
+
+### Files touched
+
+```
+moodle-enhancement/theme/airpayux/scss/moodle/
+  _tokens.scss                        [+ motion / breakpoints / touch / focus]
+
+moodle-enhancement/local/airpay_core/
+  version.php                         [bump 2026051402, release 1.2.1]
+  settings.php                        [+ styleguide admin_externalpage]
+  admin/styleguide.php                [new — Style Guide page]
+  lang/en/local_airpay_core.php       [+ styleguide_pagetitle string]
+```
 
 ---
 

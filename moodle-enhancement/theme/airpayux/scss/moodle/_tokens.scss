@@ -11,6 +11,32 @@
    Dark mode overrides live in _tokens-dark.scss using [data-theme="dark"].
    ═══════════════════════════════════════════════════════════════════════ */
 
+/* ── SCSS Breakpoints (compile-time, used in @media queries) ────────────
+   CSS custom properties can't appear inside @media rules, so the six
+   responsive breakpoints from UI-UX-MANIFESTO §3 live here as Sass vars.
+   Every new partial that needs a media query MUST use these — never
+   inline px literals.
+
+   Usage:
+       @media (max-width: $ap-bp-mobile)  { ... }   // < 590px
+       @media (min-width: $ap-bp-tablet)  { ... }   // ≥ 992px
+
+   Device-class mapping (manifesto §3):
+       mobile-s   < 380px   Galaxy S, iPhone SE
+       mobile     < 590px   iPhone Pro, Pixel
+       tablet-s   < 768px   iPad mini portrait, foldable inner
+       tablet     < 992px   iPad portrait, iPad Air landscape
+       laptop     < 1280px  13" laptops at 100%/125% zoom
+       desktop    < 1600px  external monitors, 14-16" at 100%
+       wide       ≥ 1600px  ultrawide, 4K (content caps at 1440px)
+   ──────────────────────────────────────────────────────────────────── */
+$ap-bp-mobile-s: 380px;
+$ap-bp-mobile:   590px;
+$ap-bp-tablet-s: 768px;
+$ap-bp-tablet:   992px;
+$ap-bp-laptop:   1280px;
+$ap-bp-desktop:  1600px;
+
 :root {
     /* ── Colour Primitives (brand palette) ───────────────────────── */
     --ap-blue-50:  #e8f4fd;
@@ -165,10 +191,52 @@
     --ap-content-max-width:       1400px;
     --ap-mobile-bottom-bar:       64px;
 
-    /* ── Transitions ─────────────────────────────────────────────── */
-    --ap-transition-fast:   150ms ease;
-    --ap-transition-normal: 200ms ease;
-    --ap-transition-slow:   350ms ease;
+    /* ── Motion — Durations (UI-UX-MANIFESTO §5.1) ───────────────── */
+    /* Manifesto-locked durations. Use the named token, not the literal. */
+    --ap-duration-instant:    0ms;        /* button press, checkbox tick */
+    --ap-duration-quick:    150ms;        /* small state changes */
+    --ap-duration-default:  250ms;        /* most transitions */
+    --ap-duration-slow:     400ms;        /* layout-affecting transitions */
+    --ap-duration-deliberate: 700ms;      /* celebration moments only */
+
+    /* ── Motion — Easing curves (UI-UX-MANIFESTO §5.2) ───────────── */
+    /* Use ease-out for entrance, ease-in for exit, ease-in-out for both. */
+    --ap-ease-out:     cubic-bezier(0.16, 1, 0.3, 1);     /* incoming */
+    --ap-ease-in:      cubic-bezier(0.7, 0, 0.84, 0);     /* outgoing */
+    --ap-ease-in-out:  cubic-bezier(0.5, 0, 0.5, 1);      /* bidirectional */
+    --ap-ease-spring:  cubic-bezier(0.34, 1.56, 0.64, 1); /* emphatic */
+
+    /* Composite shortcuts — pair the right duration with the right ease.
+       New components should reach for these by default. */
+    --ap-transition-quick:   var(--ap-duration-quick) var(--ap-ease-out);
+    --ap-transition-default: var(--ap-duration-default) var(--ap-ease-out);
+    --ap-transition-slow:    var(--ap-duration-slow) var(--ap-ease-in-out);
+    --ap-transition-emphatic: var(--ap-duration-default) var(--ap-ease-spring);
+
+    /* Legacy aliases — keep until every partial migrates off these.
+       DO NOT add new usages. */
+    --ap-transition-fast:    var(--ap-transition-quick);
+    --ap-transition-normal:  var(--ap-transition-default);
+
+    /* ── Touch & Focus (WCAG 2.2 AA + iPad commitment) ───────────── */
+    /* Manifesto §9: 44×44pt minimum tap target.
+       Manifesto §8: iPad as first-class device. */
+    --ap-tap-target-min:   44px;          /* WCAG 2.5.5 */
+    --ap-tap-target-cozy:  40px;          /* dense UIs (admin tables) only */
+
+    /* Focus-ring contract — every interactive element gets this on :focus-visible.
+       3px width hits the 3:1 visibility ratio at 1× and 2× DPR. */
+    --ap-focus-ring-width:  3px;
+    --ap-focus-ring-offset: 2px;
+    --ap-focus-ring-color:  var(--ap-color-primary);
+
+    /* ── Component sizing (vertical rhythm) ──────────────────────── */
+    /* Standardised heights so buttons, inputs, and badges line up across
+       every form and toolbar without bespoke padding everywhere. */
+    --ap-control-height-sm: 32px;         /* table-row controls, badges */
+    --ap-control-height-md: 40px;         /* default buttons + inputs */
+    --ap-control-height-lg: 48px;         /* primary CTAs, mobile inputs */
+    --ap-control-height-xl: 56px;         /* hero CTAs, single-field forms */
 
     /* ── Z-index scale ───────────────────────────────────────────── */
     --ap-z-dropdown:    1000;
@@ -177,4 +245,32 @@
     --ap-z-offcanvas:   1045;
     --ap-z-modal:       1055;
     --ap-z-toast:       1090;
+}
+
+/* ── Reduced motion (UI-UX-MANIFESTO §5.4) ─────────────────────────────
+   When the OS reports a reduced-motion preference, collapse every
+   manifesto duration to "instant" so animations don't trigger vestibular
+   discomfort. Components using --ap-duration-* automatically respect this
+   — no per-component opt-in required.
+
+   Essential state feedback (button-pressed, checkbox-tick) remains
+   visible because the colour/shape change is instantaneous anyway. */
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --ap-duration-quick:      0ms;
+        --ap-duration-default:    0ms;
+        --ap-duration-slow:       0ms;
+        --ap-duration-deliberate: 0ms;
+    }
+}
+
+/* ── Universal focus-visible (WCAG 2.4.11) ─────────────────────────────
+   Every interactive element gets a visible focus ring on keyboard nav.
+   :focus-visible targets keyboard focus only — mouse clicks don't show
+   a ring. Theme adapters / dark mode override --ap-focus-ring-color via
+   _tokens-dark.scss. */
+:focus-visible {
+    outline: var(--ap-focus-ring-width) solid var(--ap-focus-ring-color);
+    outline-offset: var(--ap-focus-ring-offset);
+    border-radius: var(--ap-radius-xs);
 }
