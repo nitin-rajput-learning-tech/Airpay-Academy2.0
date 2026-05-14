@@ -155,6 +155,23 @@ For each Airpay site admin (or for the default /my/ page):
 
 Subsequent admin logins will see the blocks automatically.
 
+### Step 10 — run the post-deploy verification (Day-2 addition)
+
+One command, all sprints checked, pass/fail report.
+
+```
+cd <production server's moodle parent root>
+bash <path-to-checkout>/moodle-enhancement/deploy/post_deploy_verify.sh \
+     --user=<admin email>
+```
+
+Expected output: 5+ PASS, 0 FAIL, optionally 1 WARN if cron hasn't
+cycled yet. Add `--json` for CI dashboard ingestion.
+
+The script wraps every diagnostic CLI shipped across Sprints A-D
+plus a presence check for both dashboard blocks. Run it after Steps
+2-9 are complete; sign off the cutover only when it reports 0 FAIL.
+
 ---
 
 ## Post-cutover (T+1h)
