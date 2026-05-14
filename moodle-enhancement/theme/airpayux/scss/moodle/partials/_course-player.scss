@@ -1,38 +1,57 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Course Player surface — sticky progress bar + sidebar
+   Phase B0 Player iter 1 (2026-05-14) — tokens migration
+
+   Pre-iter-1 this file used legacy --ap-surface / --ap-border / --ap-primary
+   / --ap-text / --ap-bg / --ap-gradient variable names that DON'T EXIST in
+   _tokens.scss. They were rendering via their var() fallback hex literals
+   — same silent-bug class as the empty-state CSS pre-iter-7.
+
+   This rewrite replaces them with proper --ap-color-* / --ap-gradient-cta
+   tokens. body.dark-mode rules collapsed to a few legitimate overrides;
+   the rest auto-flip via the global token remap in dark_mode.scss.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Sticky course progress bar ──────────────────────────────────────── */
 .ap-course-progress-bar {
-    background: var(--ap-surface);
-    border: 1px solid var(--ap-border);
-    border-radius: var(--ap-radius-sm);
-    padding: 10px 16px;
-    margin-bottom: 16px;
-    /* Sticky positioning — stays below navbar on scroll */
+    background: var(--ap-color-bg-surface);
+    border: 1px solid var(--ap-color-border);
+    border-radius: var(--ap-radius-md);
+    padding: var(--ap-space-2) var(--ap-space-4);
+    margin-bottom: var(--ap-space-4);
+    /* Stays below navbar on scroll. */
     position: sticky;
-    top: 56px;
-    z-index: 100;
+    top: var(--ap-topbar-height);
+    z-index: var(--ap-z-sticky);
 }
 .ap-course-progress-bar__info {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 8px;
+    gap: var(--ap-space-2);
+    margin-bottom: var(--ap-space-2);
 }
 .ap-course-progress-bar__back {
-    width: 28px; height: 28px;
-    border-radius: 6px;
-    background: var(--ap-bg);
-    display: flex; align-items: center; justify-content: center;
-    color: var(--ap-text-secondary);
+    width: 28px;
+    height: 28px;
+    border-radius: var(--ap-radius-xs);
+    background: var(--ap-color-bg-body);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ap-color-text-secondary);
     text-decoration: none;
-    transition: background 0.15s;
+    transition: background var(--ap-transition-quick),
+                color var(--ap-transition-quick);
     flex-shrink: 0;
 }
 .ap-course-progress-bar__back:hover {
-    background: var(--ap-primary-light);
-    color: var(--ap-primary);
+    background: var(--ap-color-primary-light);
+    color: var(--ap-color-primary);
 }
 .ap-course-progress-bar__name {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--ap-text);
+    font-size: var(--ap-text-sm);
+    font-weight: var(--ap-weight-semibold);
+    color: var(--ap-color-text-primary);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -40,62 +59,73 @@
     min-width: 0;
 }
 .ap-course-progress-bar__stats {
-    font-size: 12px;
-    color: var(--ap-text-muted);
+    font-size: var(--ap-text-xs);
+    color: var(--ap-color-text-muted);
     white-space: nowrap;
     flex-shrink: 0;
 }
 .ap-course-progress-bar__track {
     height: 6px;
-    background: var(--ap-border);
-    border-radius: 3px;
+    background: var(--ap-color-border);
+    border-radius: var(--ap-radius-xs);
     overflow: hidden;
 }
 .ap-course-progress-bar__fill {
     height: 100%;
-    background: var(--ap-gradient);
-    border-radius: 3px;
-    transition: width 0.5s ease;
+    background: var(--ap-gradient-cta);
+    border-radius: var(--ap-radius-xs);
+    transition: width var(--ap-transition-slow);
 }
 
-/* Next Activity CTA */
+/* ── Next-activity CTA ───────────────────────────────────────────────── */
 .ap-course-next {
     display: flex;
     justify-content: flex-end;
-    margin-top: 20px;
-    padding-top: 16px;
-    border-top: 1px solid var(--ap-border);
+    margin-top: var(--ap-space-5);
+    padding-top: var(--ap-space-4);
+    border-top: 1px solid var(--ap-color-border);
+}
+.ap-course-next__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ap-space-2);
+    padding: var(--ap-space-3) var(--ap-space-5);
+    border-radius: var(--ap-radius-md);
+    font-size: var(--ap-text-sm);
+    font-weight: var(--ap-weight-semibold);
+    min-height: var(--ap-control-height-md);
 }
 
-/* Dark mode */
-body.dark-mode .ap-course-progress-bar { background: #1a1d27; border-color: #2d3140; }
-body.dark-mode .ap-course-progress-bar__name { color: #e8eaed; }
-body.dark-mode .ap-course-progress-bar__back { background: #22252f; }
-body.dark-mode .ap-course-progress-bar__track { background: #2d3140; }
-
-/* ─── Progress Bar Enhancements (Sprint 5) ─── */
-/* Ensure parents don't break sticky with overflow */
+/* ── Progress-bar sticky parent fix ──────────────────────────────────── */
+/* Ensure parents don't break sticky with overflow. */
 .pagelayout-course #page-content,
 .pagelayout-incourse #page-content {
     overflow: visible !important;
 }
+
+/* ── Progress-bar toggle (collapse sidebar) ──────────────────────────── */
 .ap-course-progress-bar__toggle {
-    width: 28px; height: 28px;
-    border-radius: 6px;
-    background: var(--ap-bg, #F2F4FB);
+    width: 28px;
+    height: 28px;
+    border-radius: var(--ap-radius-xs);
+    background: var(--ap-color-bg-body);
     border: none;
-    display: flex; align-items: center; justify-content: center;
-    color: var(--ap-text-secondary, #607286);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ap-color-text-secondary);
     cursor: pointer;
-    transition: background 0.15s;
+    transition: background var(--ap-transition-quick),
+                color var(--ap-transition-quick);
     flex-shrink: 0;
 }
-.ap-course-progress-bar__toggle:hover {
-    background: var(--ap-primary-light, #e8f2f9);
-    color: var(--ap-primary, #0066A7);
+.ap-course-progress-bar__toggle:hover,
+.ap-course-progress-bar__toggle:focus-visible {
+    background: var(--ap-color-primary-light);
+    color: var(--ap-color-primary);
 }
 
-/* ═══ COURSE PLAYER SIDEBAR ═══ */
+/* ═══ COURSE PLAYER SIDEBAR ═══════════════════════════════════════════ */
 .ap-course-player {
     display: flex;
     gap: 0;
@@ -106,23 +136,26 @@ body.dark-mode .ap-course-progress-bar__track { background: #2d3140; }
     min-width: 0;
 }
 
-/* Sidebar */
+/* ── Sidebar ─────────────────────────────────────────────────────────── */
 .ap-course-sidebar {
     width: 280px;
     flex-shrink: 0;
-    background: var(--ap-surface, #fff);
-    border-right: 1px solid var(--ap-border, #e3eaf3);
+    background: var(--ap-color-bg-surface);
+    border-right: 1px solid var(--ap-color-border);
     position: sticky;
-    top: 100px; /* below navbar + progress bar */
+    top: 100px;  /* below navbar + progress bar */
     height: calc(100vh - 100px);
     overflow-y: auto;
-    transition: width 0.25s ease, opacity 0.25s ease;
+    transition: width var(--ap-transition-default),
+                opacity var(--ap-transition-default);
     scrollbar-width: thin;
 }
 .ap-course-sidebar::-webkit-scrollbar { width: 4px; }
-.ap-course-sidebar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 2px; }
+.ap-course-sidebar::-webkit-scrollbar-thumb {
+    background: var(--ap-color-border-strong);
+    border-radius: var(--ap-radius-xs);
+}
 
-/* Collapsed state */
 .ap-course-sidebar--collapsed {
     width: 0;
     overflow: hidden;
@@ -130,99 +163,109 @@ body.dark-mode .ap-course-progress-bar__track { background: #2d3140; }
     border-right: none;
 }
 
-/* Sidebar header */
 .ap-course-sidebar__header {
-    padding: 16px 16px 8px;
+    padding: var(--ap-space-4) var(--ap-space-4) var(--ap-space-2);
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 .ap-course-sidebar__title {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--ap-text, #1a1a2e);
+    font-size: var(--ap-text-sm);
+    font-weight: var(--ap-weight-bold);
+    color: var(--ap-color-text-primary);
     margin: 0;
 }
 .ap-course-sidebar__progress-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--ap-accent, #0f7a73);
+    font-size: var(--ap-text-xs);
+    font-weight: var(--ap-weight-semibold);
+    color: var(--ap-color-accent);
 }
 .ap-course-sidebar__progress-track {
     height: 4px;
-    background: var(--ap-border, #e3eaf3);
-    border-radius: 2px;
-    margin: 0 16px 12px;
+    background: var(--ap-color-border);
+    border-radius: var(--ap-radius-xs);
+    margin: 0 var(--ap-space-4) var(--ap-space-3);
 }
 .ap-course-sidebar__progress-fill {
     height: 100%;
-    background: var(--ap-gradient, linear-gradient(135deg, #0066A7, #0f7a73));
-    border-radius: 2px;
-    transition: width 0.5s;
+    background: var(--ap-gradient-cta);
+    border-radius: var(--ap-radius-xs);
+    transition: width var(--ap-transition-slow);
 }
 
-/* Sidebar navigation */
-.ap-course-sidebar__nav { padding: 0 0 16px; }
+/* ── Sidebar navigation ──────────────────────────────────────────────── */
+.ap-course-sidebar__nav { padding: 0 0 var(--ap-space-4); }
 .ap-course-sidebar__section { margin-bottom: 4px; }
 .ap-course-sidebar__section-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 16px;
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--ap-text-muted, #8896a6);
+    padding: var(--ap-space-2) var(--ap-space-4);
+    font-size: var(--ap-text-xs);
+    font-weight: var(--ap-weight-bold);
+    color: var(--ap-color-text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.05em;
 }
 .ap-course-sidebar__section-count {
-    width: 20px; height: 20px;
-    border-radius: 50%;
-    background: var(--ap-bg, #F2F4FB);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 10px; font-weight: 700; color: var(--ap-text-muted);
+    width: 20px;
+    height: 20px;
+    border-radius: var(--ap-radius-full);
+    background: var(--ap-color-bg-body);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: var(--ap-weight-bold);
+    color: var(--ap-color-text-muted);
 }
 .ap-course-sidebar__list {
     list-style: none;
     margin: 0;
     padding: 0;
 }
-.ap-course-sidebar__item {
-    margin: 0;
-}
+.ap-course-sidebar__item { margin: 0; }
 .ap-course-sidebar__link {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 16px;
-    font-size: 13px;
-    color: var(--ap-text-secondary, #607286);
+    gap: var(--ap-space-2);
+    padding: var(--ap-space-2) var(--ap-space-4);
+    font-size: var(--ap-text-sm);
+    color: var(--ap-color-text-secondary);
     text-decoration: none;
-    transition: background 0.12s, color 0.12s;
+    transition: background var(--ap-transition-quick),
+                color var(--ap-transition-quick);
     border-left: 3px solid transparent;
+    /* Activity rows in the sidebar need to clear 44pt for tap targets. */
+    min-height: var(--ap-tap-target-min);
 }
-.ap-course-sidebar__link:hover {
-    background: var(--ap-bg, #F2F4FB);
-    color: var(--ap-text, #1a1a2e);
+.ap-course-sidebar__link:hover,
+.ap-course-sidebar__link:focus-visible {
+    background: var(--ap-color-bg-body);
+    color: var(--ap-color-text-primary);
 }
 .ap-course-sidebar__item--current .ap-course-sidebar__link {
-    background: var(--ap-primary-light, #e8f2f9);
-    color: var(--ap-primary, #0066A7);
-    font-weight: 600;
-    border-left-color: var(--ap-primary, #0066A7);
+    background: var(--ap-color-primary-light);
+    color: var(--ap-color-primary);
+    font-weight: var(--ap-weight-semibold);
+    border-left-color: var(--ap-color-primary);
 }
 .ap-course-sidebar__item--done .ap-course-sidebar__link {
-    color: var(--ap-text-muted, #8896a6);
+    color: var(--ap-color-text-muted);
 }
 .ap-course-sidebar__icon {
     width: 18px;
     text-align: center;
-    font-size: 13px;
+    font-size: var(--ap-text-sm);
     flex-shrink: 0;
-    color: var(--ap-text-muted, #8896a6);
+    color: var(--ap-color-text-muted);
 }
-.ap-course-sidebar__icon--done { color: #16a34a !important; }
-.ap-course-sidebar__icon--current { color: var(--ap-primary, #0066A7) !important; }
+.ap-course-sidebar__icon--done {
+    color: var(--ap-color-success);
+}
+.ap-course-sidebar__icon--current {
+    color: var(--ap-color-primary);
+}
 .ap-course-sidebar__item-name {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -231,28 +274,17 @@ body.dark-mode .ap-course-progress-bar__track { background: #2d3140; }
     min-width: 0;
 }
 
-/* Next Activity CTA */
-.ap-course-next__btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 20px;
-    border-radius: 10px;
-    font-size: 14px;
-    font-weight: 600;
-}
-
-/* ─── Mobile: Sidebar becomes overlay drawer ─── */
+/* ── Mobile: sidebar becomes overlay drawer ──────────────────────────── */
 @media (max-width: 992px) {
     .ap-course-sidebar {
         position: fixed;
         left: 0;
         top: 0;
         height: 100vh;
-        z-index: 1050;
-        box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+        z-index: var(--ap-z-offcanvas);
+        box-shadow: var(--ap-shadow-lg);
         transform: translateX(0);
-        transition: transform 0.25s ease;
+        transition: transform var(--ap-transition-default);
     }
     .ap-course-sidebar--collapsed {
         transform: translateX(-100%);
@@ -265,14 +297,11 @@ body.dark-mode .ap-course-progress-bar__track { background: #2d3140; }
     .ap-course-progress-bar__name { display: none; }
 }
 
-/* Dark mode */
-body.dark-mode .ap-course-sidebar { background: #14161e; border-color: #2d3140; }
-body.dark-mode .ap-course-sidebar__title { color: #e8eaed; }
-body.dark-mode .ap-course-sidebar__section-header { color: #6b7280; }
-body.dark-mode .ap-course-sidebar__section-count { background: #22252f; color: #6b7280; }
-body.dark-mode .ap-course-sidebar__link { color: #9ca3b4; }
-body.dark-mode .ap-course-sidebar__link:hover { background: #1a1d27; color: #e8eaed; }
-body.dark-mode .ap-course-sidebar__item--current .ap-course-sidebar__link { background: #0d2540; color: #60a5fa; border-left-color: #0066A7; }
-body.dark-mode .ap-course-sidebar__progress-track { background: #2d3140; }
-body.dark-mode .ap-course-progress-bar__toggle { background: #22252f; color: #9ca3b4; }
-
+/* ── Dark mode — only overrides for cases tokens can't handle ───────── */
+/* The .__item--current background needs a darker tint than the auto-flipped
+   --ap-color-primary-light, otherwise it merges into the sidebar bg. */
+body.dark-mode .ap-course-sidebar__item--current .ap-course-sidebar__link {
+    background: var(--ap-blue-900);
+    color: var(--ap-blue-300);
+    border-left-color: var(--ap-color-primary);
+}
