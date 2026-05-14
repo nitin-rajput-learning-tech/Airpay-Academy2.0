@@ -1,20 +1,22 @@
 /* ═══════════════════════════════════════════════════════════
-   SPRINT 5 — COURSE DETAIL (local/search/coursedetails.php)
-   CSS-only overrides for BizLMS course detail page
+   COURSE DETAIL — /local/search/coursedetails.php
+   (BizLMS course detail page that sits between catalog browsing
+    and enrolment. Phase B0 Player iter 1b — tokens migration.
+    65 hex literals → 0. Same migration pattern as iter 1a on
+    _course-player.scss. Section 6+ below — admin page overrides —
+    deferred to iter 1c.)
    ═══════════════════════════════════════════════════════════ */
 
 /* === Hero Banner === */
 .path-local-search .content_era_left {
-    margin: -20px -15px 0;
+    margin: calc(var(--ap-space-5) * -1) calc(var(--ap-space-4) * -1) 0;
 }
 .path-local-search .coursedet_left {
-    background: #fff;
-    border-radius: 0 0 16px 16px;
+    background: var(--ap-color-bg-surface);
+    border-radius: 0 0 var(--ap-radius-lg) var(--ap-radius-lg);
     overflow: hidden;
 }
-.path-local-search .cousedet_topcontent {
-    position: relative;
-}
+.path-local-search .cousedet_topcontent { position: relative; }
 .path-local-search .img_summary {
     min-height: 320px;
     background-size: cover;
@@ -27,134 +29,139 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, rgba(0,30,60,0.15) 0%, rgba(0,30,60,0.85) 100%);
+    /* Dark overlay for hero readability. Keeping the literal rgba here
+       because it's a transparency curve, not a brand colour. */
+    background: linear-gradient(180deg, rgba(0, 30, 60, 0.15) 0%, rgba(0, 30, 60, 0.85) 100%);
     z-index: 1;
 }
 .path-local-search .CourseDetails_content {
     position: relative;
     z-index: 2;
-    padding: 32px 40px !important;
-    color: #fff;
+    padding: var(--ap-space-8) var(--ap-space-10) !important;
+    color: var(--ap-color-text-inverse);
 }
 .path-local-search .CourseDetails_content .course_title {
-    font-family: 'Montserrat', sans-serif;
-    font-size: 1.75rem !important;
-    font-weight: 700;
-    color: #fff !important;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    margin-bottom: 8px;
+    font-family: var(--ap-font-family);
+    font-size: var(--ap-text-3xl) !important;
+    font-weight: var(--ap-weight-bold);
+    color: var(--ap-color-text-inverse) !important;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    margin-bottom: var(--ap-space-2);
 }
 
 /* === Course Stats Bar === */
-.path-local-search .CourseDetails_content .row {
-    gap: 0;
-}
+.path-local-search .CourseDetails_content .row { gap: 0; }
 .path-local-search .user_completion,
 .path-local-search .user_enrollment,
 .path-local-search .skill_level_details {
-    background: rgba(255,255,255,0.12);
-    border-radius: 10px;
-    padding: 10px 16px !important;
-    margin-right: 12px;
+    /* Glass-effect chips over the hero image — semi-transparent white
+       on top of the brand-colour-tinted overlay. */
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: var(--ap-radius-sm);
+    padding: var(--ap-space-2) var(--ap-space-4) !important;
+    margin-right: var(--ap-space-3);
     backdrop-filter: blur(8px);
-    border: 1px solid rgba(255,255,255,0.15);
+    border: 1px solid rgba(255, 255, 255, 0.15);
 }
 .path-local-search .details_content,
 .path-local-search .CourseDetails_content .text-nowrap {
-    font-size: 0.75rem;
-    color: rgba(255,255,255,0.8);
-    font-weight: 500;
+    font-size: var(--ap-text-xs);
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: var(--ap-weight-medium);
 }
 .path-local-search .enroll_number,
 .path-local-search .skill_level {
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: #fff;
-    margin-left: 6px;
+    font-size: var(--ap-text-sm);
+    font-weight: var(--ap-weight-bold);
+    color: var(--ap-color-text-inverse);
+    margin-left: var(--ap-space-2);
 }
 
-/* User/enroll icons */
+/* === User/enroll icons === */
 .path-local-search .user_icon::before,
 .path-local-search .enroll_icon::before,
 .path-local-search .skill_icon::before {
     font-family: 'FontAwesome';
-    font-size: 1rem;
-    color: rgba(255,255,255,0.7);
+    font-size: var(--ap-text-base);
+    color: rgba(255, 255, 255, 0.7);
 }
-.path-local-search .user_icon::before { content: '\f00c'; } /* fa-check */
+.path-local-search .user_icon::before   { content: '\f00c'; } /* fa-check */
 .path-local-search .enroll_icon::before { content: '\f0c0'; } /* fa-users */
-.path-local-search .skill_icon::before { content: '\f0e4'; } /* fa-tachometer */
+.path-local-search .skill_icon::before  { content: '\f0e4'; } /* fa-tachometer */
 
 /* === Course Content Sections === */
 .path-local-search .coursedet_left > div:not(.cousedet_topcontent) {
-    padding: 0 24px;
+    padding: 0 var(--ap-space-6);
 }
 
-/* Tabs / sections below hero */
+/* === Tabs / sections below hero === */
 .path-local-search .nav-tabs {
-    border-bottom: 2px solid #e2e6ef;
-    padding: 0 24px;
-    background: #fff;
+    border-bottom: 2px solid var(--ap-color-border);
+    padding: 0 var(--ap-space-6);
+    background: var(--ap-color-bg-surface);
 }
 .path-local-search .nav-tabs .nav-link {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: #5a6070;
-    padding: 14px 20px;
+    font-family: var(--ap-font-family);
+    font-weight: var(--ap-weight-semibold);
+    font-size: var(--ap-text-sm);
+    color: var(--ap-color-text-secondary);
+    padding: var(--ap-space-3) var(--ap-space-5);
     border: none;
     border-bottom: 3px solid transparent;
-    transition: all 0.2s ease;
+    transition: color var(--ap-transition-quick),
+                border-color var(--ap-transition-quick);
+    min-height: var(--ap-tap-target-min);
 }
 .path-local-search .nav-tabs .nav-link.active,
 .path-local-search .nav-tabs .nav-link:hover {
-    color: #0066A7;
-    border-bottom-color: #0066A7;
+    color: var(--ap-color-primary);
+    border-bottom-color: var(--ap-color-primary);
     background: transparent;
 }
 
-/* Enroll button on detail page */
+/* === Enroll button on detail page === */
 .path-local-search .coursedet_left .btn-primary,
 .path-local-search .coursedet_left .enrol-btn,
 .path-local-search .coursedet_left [class*="enrol"] .btn {
-    background: #0066A7 !important;
-    border-color: #0066A7 !important;
-    border-radius: 8px !important;
-    padding: 10px 28px !important;
-    font-weight: 600;
-    font-family: 'Montserrat', sans-serif;
-    transition: all 0.2s ease;
+    background: var(--ap-color-primary) !important;
+    border-color: var(--ap-color-primary) !important;
+    border-radius: var(--ap-radius-sm) !important;
+    padding: var(--ap-space-3) var(--ap-space-8) !important;
+    font-weight: var(--ap-weight-semibold);
+    font-family: var(--ap-font-family);
+    transition: background var(--ap-transition-quick),
+                transform var(--ap-transition-quick),
+                box-shadow var(--ap-transition-quick);
+    min-height: var(--ap-control-height-md);
 }
 .path-local-search .coursedet_left .btn-primary:hover {
-    background: #004d80 !important;
+    background: var(--ap-color-primary-hover) !important;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,102,167,0.3);
+    box-shadow: var(--ap-shadow-md);
 }
 
-/* Course summary / description area */
+/* === Course summary / description area === */
 .path-local-search .coursedet_left .course_description,
 .path-local-search .coursedet_left #summary {
-    font-size: 0.95rem;
-    line-height: 1.7;
-    color: #374151;
-    padding: 24px 0;
+    font-size: var(--ap-text-base);
+    line-height: var(--ap-leading-relaxed);
+    color: var(--ap-color-text-secondary);
+    padding: var(--ap-space-6) 0;
 }
 
 /* === Course Detail Responsive === */
 @media (max-width: 768px) {
-    .path-local-search .img_summary {
-        min-height: 220px;
-    }
+    .path-local-search .img_summary { min-height: 220px; }
     .path-local-search .CourseDetails_content {
-        padding: 20px !important;
+        padding: var(--ap-space-5) !important;
     }
     .path-local-search .CourseDetails_content .course_title {
-        font-size: 1.25rem !important;
+        font-size: var(--ap-text-xl) !important;
     }
     .path-local-search .user_completion,
     .path-local-search .user_enrollment,
     .path-local-search .skill_level_details {
-        margin-bottom: 8px;
+        margin-bottom: var(--ap-space-2);
         flex: 1 1 100%;
     }
 }
@@ -271,12 +278,6 @@
         &:focus {
             border-color: #0066A7;
             outline: none;
-        }
-        /* a11y: keyboard-only focus ring — mouse clicks don't show it.
-           Border-only change isn't enough contrast for WCAG 2.4.7. */
-        &:focus-visible {
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(0,102,167,0.25);
         }
     }
 
