@@ -1,6 +1,37 @@
 # PROJECT STATE — Airpay Academy L&D OS
 **Updated:** 2026-05-14 absolute EOD — **36 commits shipped today. 7 of 7 P0 redesign priorities now COMPLETE.** Course Player iters 2-7 all shipped in one batch closing out the SURFACE-ROADMAP §6 priority list.
 
+---
+
+## 🌅 MORNING PICKUP (2026-05-15)
+
+**Last commit on `production`:** `9532d2e3a` — Course Player iters 2-7 in one go
+
+**Read first when you start tomorrow:**
+1. This file's "COURSE PLAYER ITERS 2-7" section just below (most recent work)
+2. `moodle-enhancement/PROJECT-STATE.md` → "FINAL BATCH" + "AI Assistant chat AMD module" + "Catalogue iter X" sections (today's commits in detail)
+3. `docs/platform-review-2026-05-14/*.md` — 6 strategy docs locked in today
+
+**What's at the top of the queue:**
+
+| Status | Item | Where to start |
+|---|---|---|
+| 🚀 Ready for IT deploy | Today's 36 commits to staging/prod via the deploy runbook | `moodle-enhancement/deploy/ADMIN-FEEDBACK-DEPLOYMENT-RUNBOOK.md` — same path as Day-1; expect ~20-minute upgrade due to two version bumps (airpay_core 1.2.1→1.3.0, airpay_assistant 1.0.0-beta→1.1.0-beta) |
+| 🧪 Visual regression sweep | Validate 7 redesigned surfaces at 360/768/1280/1600px × 4 role tiers (siteadmin/L&D admin/manager/learner) | `moodle-enhancement/audit/playwright/probe_*.mjs` — use the existing probe scripts |
+| 🧪 A11y axe-core run | Run axe-core CI on each redesigned surface; target 0 critical / 0 serious | `moodle-enhancement/audit/playwright/probe_contrast.mjs` (it's already a Playwright script — extend the probe URLs to cover all 7 surfaces) |
+| 📋 Phase A1 next | Begin WhatsApp/SMS implementation per the locked plan | `docs/platform-review-2026-05-14/PHASE-A1-WHATSAPP-SMS-PLAN.md` — pre-flight checklist before iter 3 (L&D + Legal sign-off on 5 templates, DLT registration, budget) |
+| 🌐 Translation review | Hi/Kn/Mr/Sw machine translations of 6 a11y strings need native-speaker validation | `local/airpay_assistant/lang/{hi,kn,mr,sw}/local_airpay_assistant.php` — last 6 strings in each |
+
+**Branch state:** clean on `production`, all today's work pushed. Pre-existing uncommitted leftovers (audit playwright probe, navbar.mustache, login partial) untouched — those are from before today's session and need their own context to commit.
+
+**Tomorrow's first session should probably be one of:**
+
+- **Deploy + validate** today's 36 commits on staging (highest priority — nothing's been visually verified yet on a deployed instance)
+- **Phase A1 iter 1** — WhatsApp opt-in UI (low-risk start to the new track)
+- **Pick from real-user feedback** if any has come in overnight (the L&D team may have flagged things from the day's commits as they review the diff)
+
+---
+
 ## ⏱️ COURSE PLAYER ITERS 2-7 — ALL SHIPPED IN ONE COMMIT
 
 User asked "continue Course Player iters 2-7 in one go" — done. Pragmatic-scope versions of each iter that capture the spirit of the plan without trying to ship full multi-session redesigns:
