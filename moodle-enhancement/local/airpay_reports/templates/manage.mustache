@@ -21,24 +21,14 @@
     {{/can_manage}}
 </div>
 
-<div class="row mb-4">
-    <div class="col-md-3 mb-2"><div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
-        <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-primary, #0066A7);">{{total_count}}</div>
-        <div class="text-muted small text-uppercase">Total Reports</div>
-    </div></div></div>
-    <div class="col-md-3 mb-2"><div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
-        <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-success, #16a34a);">{{active_count}}</div>
-        <div class="text-muted small text-uppercase">Active</div>
-    </div></div></div>
-    <div class="col-md-3 mb-2"><div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
-        <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-text-secondary, #5a6070);">{{archived_count}}</div>
-        <div class="text-muted small text-uppercase">Archived</div>
-    </div></div></div>
-    <div class="col-md-3 mb-2"><div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
-        <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-accent, #0f7a73);">{{total_runs}}</div>
-        <div class="text-muted small text-uppercase">Total Runs</div>
-    </div></div></div>
+{{! KPI Summary — Phase B0+: migrated to tokens-aware stat_card partial }}
+{{#has_kpi_tiles}}
+<div class="airpay-stat-grid mb-4">
+    {{#kpi_tiles}}
+    {{> theme_airpayux/components/stat_card }}
+    {{/kpi_tiles}}
 </div>
+{{/has_kpi_tiles}}
 
 <div class="ap-filter-bar">
     <div class="d-flex flex-wrap align-items-end gap-3">

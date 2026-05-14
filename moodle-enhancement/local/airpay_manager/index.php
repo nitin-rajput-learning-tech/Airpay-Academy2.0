@@ -58,6 +58,38 @@ foreach ($summary as $row) {
 $team_size = count($team_data);
 $avg_rate = $team_size > 0 ? round($total_completed / max($total_enrolled, 1) * 100) : 0;
 
+// Phase B0+ — stat_card-compatible KPI array. The legacy
+// {team_size, avg_rate, ...} flat fields are kept on the context so
+// other templates that read them keep working.
+$kpi_tiles = [
+    [
+        'label' => 'Team Members',
+        'value' => number_format($team_size),
+        'icon'  => 'users',
+        'color' => 'primary',
+    ],
+    [
+        'label' => 'Avg Completion',
+        'value' => $avg_rate . '%',
+        'icon'  => 'check-circle',
+        // Healthy when >= 80, warning when 50-79, danger below 50.
+        'color' => $avg_rate >= 80 ? 'success' : ($avg_rate >= 50 ? 'warning' : 'danger'),
+    ],
+    [
+        'label' => 'Overdue Items',
+        'value' => number_format($total_overdue),
+        'icon'  => 'exclamation-triangle',
+        // Danger when there ARE overdue; muted primary when zero.
+        'color' => $total_overdue > 0 ? 'danger' : 'primary',
+    ],
+    [
+        'label' => 'At Risk (<50%)',
+        'value' => number_format($at_risk),
+        'icon'  => 'warning',
+        'color' => $at_risk > 0 ? 'warning' : 'primary',
+    ],
+];
+
 $data = [
     'team'           => $team_data,
     'has_team'       => !empty($team_data),
@@ -67,6 +99,8 @@ $data = [
     'total_overdue'  => $total_overdue,
     'at_risk'        => $at_risk,
     'avg_rate'       => $avg_rate,
+    'kpi_tiles'      => $kpi_tiles,
+    'has_kpi_tiles'  => !empty($kpi_tiles),
     'manager_name'   => format_string($USER->firstname),
     'sesskey'        => sesskey(),
 ];

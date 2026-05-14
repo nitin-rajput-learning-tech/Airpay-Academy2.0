@@ -4,29 +4,14 @@
 }}
 <div class="ap-manager">
 
-    {{! KPI Summary }}
-    <div class="ap-manager__kpis">
-        <div class="ap-manager__kpi">
-            <i class="fa fa-users" style="color:#0066A7;"></i>
-            <strong>{{team_size}}</strong>
-            <small>Team Members</small>
-        </div>
-        <div class="ap-manager__kpi">
-            <i class="fa fa-check-circle" style="color:#16a34a;"></i>
-            <strong>{{avg_rate}}%</strong>
-            <small>Avg Completion</small>
-        </div>
-        <div class="ap-manager__kpi">
-            <i class="fa fa-exclamation-triangle" style="color:#dc2626;"></i>
-            <strong>{{total_overdue}}</strong>
-            <small>Overdue Items</small>
-        </div>
-        <div class="ap-manager__kpi">
-            <i class="fa fa-warning" style="color:#d97706;"></i>
-            <strong>{{at_risk}}</strong>
-            <small>At Risk (&lt;50%)</small>
-        </div>
+    {{! KPI Summary — Phase B0+: migrated to tokens-aware stat_card partial }}
+    {{#has_kpi_tiles}}
+    <div class="airpay-stat-grid">
+        {{#kpi_tiles}}
+        {{> theme_airpayux/components/stat_card }}
+        {{/kpi_tiles}}
     </div>
+    {{/has_kpi_tiles}}
 
     {{! Team Table }}
     {{#has_team}}

@@ -15,25 +15,14 @@
         Response deadline: 72 hours (data access), 30 days (deletion).
     </p>
 
-    {{! Stats cards }}
-    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px;">
-        <div style="background:#fff; border:1px solid #e2e6ef; border-radius:12px; padding:16px;">
-            <div style="font-size:12px; font-weight:600; color:#5a6070; text-transform:uppercase; letter-spacing:0.5px;">Total Requests</div>
-            <div style="font-size:28px; font-weight:700; color:#1a1a2e;">{{total}}</div>
-        </div>
-        <div style="background:#fff; border:1px solid #e2e6ef; border-radius:12px; padding:16px;">
-            <div style="font-size:12px; font-weight:600; color:#5a6070; text-transform:uppercase; letter-spacing:0.5px;">Pending</div>
-            <div style="font-size:28px; font-weight:700; color:#d97706;">{{pending}}</div>
-        </div>
-        <div style="background:#fff; border:1px solid #e2e6ef; border-radius:12px; padding:16px;">
-            <div style="font-size:12px; font-weight:600; color:#5a6070; text-transform:uppercase; letter-spacing:0.5px;">Completed</div>
-            <div style="font-size:28px; font-weight:700; color:#16a34a;">{{completed}}</div>
-        </div>
-        <div style="background:#fff; border:1px solid #e2e6ef; border-radius:12px; padding:16px;">
-            <div style="font-size:12px; font-weight:600; color:#5a6070; text-transform:uppercase; letter-spacing:0.5px;">Rejected</div>
-            <div style="font-size:28px; font-weight:700; color:#dc2626;">{{rejected}}</div>
-        </div>
+    {{! Stat cards — Phase B0+: migrated to tokens-aware stat_card partial }}
+    {{#has_kpi_tiles}}
+    <div class="airpay-stat-grid" style="margin-bottom: 24px;">
+        {{#kpi_tiles}}
+        {{> theme_airpayux/components/stat_card }}
+        {{/kpi_tiles}}
     </div>
+    {{/has_kpi_tiles}}
 
     {{! Requests table }}
     {{#has_requests}}

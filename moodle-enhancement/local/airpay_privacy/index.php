@@ -83,14 +83,47 @@ if (is_siteadmin() || has_capability('local/airpay_privacy:manage', context_syst
         ];
     }
 
+    $rejected = $total - $pending - $completed;
+
+    // Phase B0+ — stat_card-compatible KPI tiles.
+    $kpi_tiles = [
+        [
+            'label' => 'Total Requests',
+            'value' => number_format($total),
+            'icon'  => 'inbox',
+            'color' => 'primary',
+        ],
+        [
+            'label' => 'Pending',
+            'value' => number_format($pending),
+            'icon'  => 'clock-o',
+            // Pending DPDP requests have a 72h / 30d SLA — flag when > 0.
+            'color' => $pending > 0 ? 'warning' : 'primary',
+        ],
+        [
+            'label' => 'Completed',
+            'value' => number_format($completed),
+            'icon'  => 'check-circle',
+            'color' => 'success',
+        ],
+        [
+            'label' => 'Rejected',
+            'value' => number_format($rejected),
+            'icon'  => 'times-circle',
+            'color' => $rejected > 0 ? 'danger' : 'primary',
+        ],
+    ];
+
     $admindata = [
-        'sesskey'    => sesskey(),
-        'baseurl'    => (new moodle_url('/local/airpay_privacy/index.php'))->out(false),
-        'total'      => $total,
-        'pending'    => $pending,
-        'completed'  => $completed,
-        'rejected'   => $total - $pending - $completed,
-        'requests'   => $rows,
+        'sesskey'      => sesskey(),
+        'baseurl'      => (new moodle_url('/local/airpay_privacy/index.php'))->out(false),
+        'total'        => $total,
+        'pending'      => $pending,
+        'completed'    => $completed,
+        'rejected'     => $rejected,
+        'kpi_tiles'    => $kpi_tiles,
+        'has_kpi_tiles' => !empty($kpi_tiles),
+        'requests'     => $rows,
         'has_requests' => !empty($rows),
     ];
 

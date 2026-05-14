@@ -4,6 +4,42 @@
 
 ---
 
+## 🆕 PHASE B0+ — Component reuse sweep (batch 2) (2026-05-14)
+
+Three more admin surfaces adopt the canonical `stat_card`. Brings total to **34 KPI tiles across 7 surfaces** all consuming the same tokens-aware reusable.
+
+### Manager My Team (`local_airpay_manager`)
+
+4 tiles (Team Members / Avg Completion / Overdue Items / At Risk <50%) migrated. Semantic colour logic added in `index.php`:
+- Avg Completion: ≥80% → success, 50-79% → warning, <50% → danger
+- Overdue / At Risk: warning when present, primary (muted) when zero
+
+### Privacy DPDP admin panel (`local_airpay_privacy`)
+
+4 tiles (Total Requests / Pending / Completed / Rejected). DPDP requests have a 72h / 30d SLA so the "Pending" tile flips to warning when > 0.
+
+### Reports landing (`local_airpay_reports`)
+
+4 tiles (Total Reports / Active / Archived / Total Runs). All semantic from the start — no hex literals to migrate.
+
+### Files touched
+
+```
+moodle-enhancement/local/airpay_manager/
+  index.php                            [+ $kpi_tiles array]
+  templates/dashboard.mustache         [4 inline KPIs → partial iteration]
+
+moodle-enhancement/local/airpay_privacy/
+  index.php                            [+ $kpi_tiles array]
+  templates/admin_panel.mustache       [4 inline-styled KPI <div>s → partial]
+
+moodle-enhancement/local/airpay_reports/
+  index.php                            [+ $kpi_tiles array]
+  templates/manage.mustache            [4 Bootstrap-grid KPI cards → partial]
+```
+
+---
+
 ## 🆕 PHASE B0+ — Component reuse sweep (2026-05-14)
 
 After Phase B0 ship-out, the same KPI patterns existed in unrelated admin surfaces. Two further migrations land the `stat_card` partial on Analytics and Compliance dashboards — same component, same tokens, same mobile-first grid. Pure leverage move: every fix to `stat_card` from now on automatically propagates to four surfaces (main dashboard, Analytics, Compliance, plus future use).

@@ -40,11 +40,42 @@ $columns = [
     ['key' => 'statuslabel', 'label' => 'Status',      'sortable' => true,  'sortkey' => 'status', 'format' => 'badge'],
 ];
 
+// Phase B0+ — stat_card-compatible tiles. The legacy *_count fields
+// are kept for any template that still reads them.
+$kpi_tiles = [
+    [
+        'label' => 'Total Reports',
+        'value' => number_format($total),
+        'icon'  => 'bar-chart',
+        'color' => 'primary',
+    ],
+    [
+        'label' => 'Active',
+        'value' => number_format($active),
+        'icon'  => 'check-circle',
+        'color' => 'success',
+    ],
+    [
+        'label' => 'Archived',
+        'value' => number_format($archived),
+        'icon'  => 'archive',
+        'color' => 'info',
+    ],
+    [
+        'label' => 'Total Runs',
+        'value' => number_format($total_runs),
+        'icon'  => 'line-chart',
+        'color' => 'accent',
+    ],
+];
+
 $data = [
     'total_count'    => number_format($total),
     'active_count'   => number_format($active),
     'archived_count' => number_format($archived),
     'total_runs'     => number_format($total_runs),
+    'kpi_tiles'      => $kpi_tiles,
+    'has_kpi_tiles'  => !empty($kpi_tiles),
     'can_manage'     => $can_manage,
     'columns_json'   => s(json_encode($columns)),
 ];
