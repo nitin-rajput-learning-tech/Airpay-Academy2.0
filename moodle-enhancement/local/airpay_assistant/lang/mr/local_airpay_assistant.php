@@ -14,3 +14,11 @@ $string['poweredby'] = 'AI द्वारे संचालित';
 $string['ratelimited'] = 'दैनंदिन मर्यादा गाठली. उद्या परत या!';
 $string['notconfigured'] = 'AI सहाय्यक कॉन्फिगर केलेला नाही. तुमच्या प्रशासकाशी संपर्क साधा.';
 $string['queriesremaining'] = 'आज {$a} प्रश्न शिल्लक';
+
+// Phase B0 (2026-05-14) — चॅट बबलसाठी a11y लेबल.
+$string['toggle_assistant']  = 'AI शिक्षण सहाय्यक उघडा';
+$string['close_assistant']   = 'AI शिक्षण सहाय्यक बंद करा';
+$string['minimize_assistant'] = 'सहाय्यक पॅनेल लहान करा';
+$string['send_message']      = 'संदेश पाठवा';
+$string['type_question']     = 'तुमचा प्रश्न टाइप करा';
+$string['quick_questions']   = 'त्वरित प्रश्न';

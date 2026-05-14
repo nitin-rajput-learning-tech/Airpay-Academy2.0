@@ -14,3 +14,11 @@ $string['poweredby'] = 'Imeendeshwa na AI';
 $string['ratelimited'] = 'Kikomo cha kila siku kimefikiwa. Rudi kesho!';
 $string['notconfigured'] = 'Msaidizi wa AI haijasanidiwa. Wasiliana na msimamizi wako.';
 $string['queriesremaining'] = 'Maswali {$a} yamebaki leo';
+
+// Phase B0 (2026-05-14) — Lebo za a11y kwa kiputo cha mazungumzo.
+$string['toggle_assistant']  = 'Fungua Msaidizi wa Kujifunza wa AI';
+$string['close_assistant']   = 'Funga Msaidizi wa Kujifunza wa AI';
+$string['minimize_assistant'] = 'Punguza paneli ya msaidizi';
+$string['send_message']      = 'Tuma ujumbe';
+$string['type_question']     = 'Andika swali lako';
+$string['quick_questions']   = 'Maswali ya haraka';

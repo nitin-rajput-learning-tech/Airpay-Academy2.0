@@ -14,3 +14,11 @@ $string['poweredby'] = 'AI ಮೂಲಕ ನಡೆಸಲಾಗುತ್ತಿದ�
 $string['ratelimited'] = 'ದೈನಂದಿನ ಮಿತಿ ತಲುಪಿದೆ. ನಾಳೆ ಮರಳಿ ಬನ್ನಿ!';
 $string['notconfigured'] = 'AI ಸಹಾಯಕ ಕಾನ್ಫಿಗರ್ ಆಗಿಲ್ಲ. ನಿಮ್ಮ ನಿರ್ವಾಹಕರನ್ನು ಸಂಪರ್ಕಿಸಿ.';
 $string['queriesremaining'] = 'ಇಂದು {$a} ಪ್ರಶ್ನೆಗಳು ಉಳಿದಿವೆ';
+
+// Phase B0 (2026-05-14) — ಚಾಟ್ ಬಬಲ್‌ಗಾಗಿ a11y ಲೇಬಲ್‌ಗಳು.
+$string['toggle_assistant']  = 'AI ಕಲಿಕಾ ಸಹಾಯಕವನ್ನು ತೆರೆಯಿರಿ';
+$string['close_assistant']   = 'AI ಕಲಿಕಾ ಸಹಾಯಕವನ್ನು ಮುಚ್ಚಿ';
+$string['minimize_assistant'] = 'ಸಹಾಯಕ ಪ್ಯಾನೆಲ್ ಚಿಕ್ಕದಾಗಿಸಿ';
+$string['send_message']      = 'ಸಂದೇಶ ಕಳುಹಿಸಿ';
+$string['type_question']     = 'ನಿಮ್ಮ ಪ್ರಶ್ನೆಯನ್ನು ಟೈಪ್ ಮಾಡಿ';
+$string['quick_questions']   = 'ತ್ವರಿತ ಪ್ರಶ್ನೆಗಳು';
