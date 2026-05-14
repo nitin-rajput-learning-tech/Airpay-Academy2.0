@@ -1,0 +1,54 @@
+{{!
+    Airpay Stat Card Component — Phase A0.5 (2026-05-14)
+
+    Context:
+        value         (required) — the headline number / metric
+        label         (required) — the metric name
+        icon          (optional) — Font Awesome class without "fa-" prefix
+        color         (optional) — semantic colour: primary | accent | success | gold | warning | danger
+                                   defaults to "primary"
+        trend         (optional) — supporting text shown below label (e.g. "+12 this week")
+        trenddir      (optional) — "up" | "down" | "flat" — controls trend arrow + colour
+        href          (optional) — when present, wraps tile in <a> with focus-visible support
+        ariadesc      (optional) — overrides the auto-built aria-label
+
+    Behaviour:
+        - When href is set, the whole tile becomes a single click target with proper
+          keyboard focus + hover lift.
+        - When href is absent, renders as a plain div (no keyboard focus, no link).
+        - Trend respects motion tokens — fades in 250ms ease-out on load.
+
+    Usage:
+        {{> theme_airpayux/components/stat_card }}
+}}
+{{#href}}
+<a class="airpay-stat-card airpay-stat-card--{{#color}}{{color}}{{/color}}{{^color}}primary{{/color}} airpay-stat-card--linked"
+   href="{{href}}"
+   aria-label="{{#ariadesc}}{{ariadesc}}{{/ariadesc}}{{^ariadesc}}{{label}}: {{value}}{{#trend}}, {{trend}}{{/trend}}{{/ariadesc}}">
+{{/href}}
+{{^href}}
+<div class="airpay-stat-card airpay-stat-card--{{#color}}{{color}}{{/color}}{{^color}}primary{{/color}}"
+     role="group"
+     aria-label="{{#ariadesc}}{{ariadesc}}{{/ariadesc}}{{^ariadesc}}{{label}}: {{value}}{{#trend}}, {{trend}}{{/trend}}{{/ariadesc}}">
+{{/href}}
+    {{#icon}}
+    <div class="airpay-stat-card__icon" aria-hidden="true">
+        <i class="fa fa-{{icon}}"></i>
+    </div>
+    {{/icon}}
+    <div class="airpay-stat-card__body">
+        <span class="airpay-stat-card__value">{{value}}</span>
+        <span class="airpay-stat-card__label">{{label}}</span>
+        {{#trend}}
+        <span class="airpay-stat-card__trend airpay-stat-card__trend--{{#trenddir}}{{trenddir}}{{/trenddir}}{{^trenddir}}flat{{/trenddir}}">
+            {{#trenddir}}<i class="fa fa-arrow-{{trenddir}}" aria-hidden="true"></i>{{/trenddir}}
+            <span>{{trend}}</span>
+        </span>
+        {{/trend}}
+    </div>
+{{#href}}
+</a>
+{{/href}}
+{{^href}}
+</div>
+{{/href}}

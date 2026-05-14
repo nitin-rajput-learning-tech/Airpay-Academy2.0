@@ -99,6 +99,7 @@ echo $OUTPUT->header();
     <a href="#motion">Motion</a>
     <a href="#breakpoints">Breakpoints</a>
     <a href="#a11y">A11y &amp; Touch</a>
+    <a href="#components">Components</a>
 </nav>
 
 <!-- ─────────────────────────── COLOUR ─────────────────────────── -->
@@ -326,6 +327,78 @@ echo $OUTPUT->header();
         <input type="text" placeholder="Input" style="padding: var(--ap-space-3) var(--ap-space-4); border-radius: var(--ap-radius-sm); border: 1px solid var(--ap-color-border-strong); background: var(--ap-color-bg-surface);">
         <a href="#a11y" style="padding: var(--ap-space-3) var(--ap-space-4); color: var(--ap-color-primary);">Link</a>
     </div>
+</section>
+
+<!-- ─────────────────────────── COMPONENTS ─────────────────────────── -->
+<section class="ap-sg__section" id="components">
+    <h2 class="ap-sg__section-title">Components</h2>
+    <p class="ap-sg__section-desc">Reusable components composed from the tokens above. Every component is available as a Mustache partial under <code>theme_airpayux/components/*</code>. Source SCSS lives in <code>scss/moodle/partials/_components-*.scss</code>.</p>
+
+    <h3>Stat card &mdash; <code>theme_airpayux/components/stat_card</code></h3>
+    <p class="ap-sg__section-desc">Canonical KPI/metric tile. Used on every dashboard, report, analytics, and admin landing page. Mobile-first: 4 columns desktop &rarr; 2 columns tablet &rarr; 1 column mobile via <code>.airpay-stat-grid</code>.</p>
+
+    <h4 style="margin-top: var(--ap-space-6);">Six colour variants</h4>
+    <div class="airpay-stat-grid" style="margin-bottom: var(--ap-space-8);">
+        <?php
+        $variants = [
+            ['primary', 'users',         'Active Users',     '2,847', '+12% vs last month',     'up'],
+            ['accent',  'book',          'Courses',          '412',   '+3 new this week',       'up'],
+            ['success', 'check-circle',  'Completions',      '1,238', '78% completion rate',    'up'],
+            ['warning', 'clock-o',       'Overdue',          '47',    'attention needed',       'flat'],
+            ['danger',  'exclamation-triangle', 'Failed Logins', '23','+5 vs yesterday',        'down'],
+            ['info',    'line-chart',    'Avg Session',      '14m',   'steady',                 'flat'],
+        ];
+        foreach ($variants as [$color, $icon, $label, $value, $trend, $dir]) {
+            echo '<div class="airpay-stat-card airpay-stat-card--' . s($color) . '" role="group" aria-label="' . s($label . ': ' . $value . ', ' . $trend) . '">';
+            echo '<div class="airpay-stat-card__icon" aria-hidden="true"><i class="fa fa-' . s($icon) . '"></i></div>';
+            echo '<div class="airpay-stat-card__body">';
+            echo '<span class="airpay-stat-card__value">' . s($value) . '</span>';
+            echo '<span class="airpay-stat-card__label">' . s($label) . '</span>';
+            echo '<span class="airpay-stat-card__trend airpay-stat-card__trend--' . s($dir) . '">';
+            echo '<i class="fa fa-arrow-' . s($dir) . '" aria-hidden="true"></i>';
+            echo '<span>' . s($trend) . '</span></span>';
+            echo '</div></div>';
+        }
+        ?>
+    </div>
+
+    <h4 style="margin-top: var(--ap-space-6);">Linked variant &mdash; hover + focus states</h4>
+    <p style="font-size: var(--ap-text-sm); color: var(--ap-color-text-secondary); margin-bottom: var(--ap-space-3);">Hover lifts the tile by 2px with shadow upgrade. Tab into them to see the focus ring.</p>
+    <div class="airpay-stat-grid" style="grid-template-columns: repeat(3, 1fr); max-width: 800px; margin-bottom: var(--ap-space-8);">
+        <a href="#components" class="airpay-stat-card airpay-stat-card--primary airpay-stat-card--linked" aria-label="Click through to user management">
+            <div class="airpay-stat-card__icon" aria-hidden="true"><i class="fa fa-users"></i></div>
+            <div class="airpay-stat-card__body">
+                <span class="airpay-stat-card__value">2,847</span>
+                <span class="airpay-stat-card__label">Active Users</span>
+            </div>
+        </a>
+        <a href="#components" class="airpay-stat-card airpay-stat-card--success airpay-stat-card--linked" aria-label="Click through to completion report">
+            <div class="airpay-stat-card__icon" aria-hidden="true"><i class="fa fa-check-circle"></i></div>
+            <div class="airpay-stat-card__body">
+                <span class="airpay-stat-card__value">1,238</span>
+                <span class="airpay-stat-card__label">Completions</span>
+            </div>
+        </a>
+        <a href="#components" class="airpay-stat-card airpay-stat-card--warning airpay-stat-card--linked" aria-label="Click through to overdue list">
+            <div class="airpay-stat-card__icon" aria-hidden="true"><i class="fa fa-clock-o"></i></div>
+            <div class="airpay-stat-card__body">
+                <span class="airpay-stat-card__value">47</span>
+                <span class="airpay-stat-card__label">Overdue items</span>
+            </div>
+        </a>
+    </div>
+
+    <h4 style="margin-top: var(--ap-space-6);">Mustache usage</h4>
+    <pre style="background: var(--ap-color-bg-surface-alt); padding: var(--ap-space-4); border-radius: var(--ap-radius-sm); font-size: var(--ap-text-xs); overflow-x: auto;">{{&gt; theme_airpayux/components/stat_card }}
+{
+    "value":    "1,238",
+    "label":    "Completions",
+    "icon":     "check-circle",
+    "color":    "success",
+    "trend":    "78% rate",
+    "trenddir": "up",
+    "href":     "/local/airpay_reports/index.php"
+}</pre>
 </section>
 
 </div>

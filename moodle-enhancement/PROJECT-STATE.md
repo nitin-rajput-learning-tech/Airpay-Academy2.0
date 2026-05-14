@@ -1,6 +1,49 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-14 — **PHASE A0 + A0.5 SHIPPED.** The Switchboard is live (configurability foundation) and the Style Guide is live (design-system foundation). Together they form the scaffolding every future surface hangs off. Test count went 80 → 91, design tokens went from "comprehensive but incomplete" to "manifesto-complete" (added motion/breakpoint/touch/focus-ring/control-height tokens). Style Guide visible at `/local/airpay_core/admin/styleguide.php`.
-**Phase:** Academy 4.0 — admin-feedback delivery complete + Day-2/Day-3 extensions + Phase A0 (configurability) + Phase A0.5 (design system). Cutover gates remain (IT staging deploy + k6 + pen-test + sign-off).
+**Updated:** 2026-05-14 — **PHASE A0 + A0.5 SHIPPED + B0 STARTED.** The Switchboard (configurability), Style Guide (design system), and the first reusable component (`stat_card`) are all live. The Learner Dashboard redesign plan is documented; iteration 1 (stat card) is shipped and demonstrated in Style Guide → Components. Iterations 2-9 sequenced for next sessions.
+**Phase:** Academy 4.0 — admin-feedback delivery complete + Day-2/Day-3 extensions + Phase A0 (configurability) + Phase A0.5 (design system) + Phase B0 (learner-surface redesign — iteration 1). Cutover gates remain (IT staging deploy + k6 + pen-test + sign-off).
+
+---
+
+## 🆕 PHASE B0 — LEARNER DASHBOARD REDESIGN: ITERATION 1 (2026-05-14)
+
+**Trigger:** the user picked "Learner Dashboard redesign — start" as the next deliverable after Phase A0.5. The dashboard is #1 on the SURFACE-ROADMAP's 7-priority redesign list (front door, most-visited page in the platform). Full redesign is Effort=M (8 sessions); this session ships iteration 1: the reusable component every subsequent iteration depends on.
+
+### Redesign plan documented
+
+`docs/platform-review-2026-05-14/LEARNER-DASHBOARD-REDESIGN-PLAN.md` — 7-section plan covering current-state audit (908-line layout, 683-line SCSS, 66 hex literals just in `_surface-dashboard.scss`), 5 redesign principles locked from the UI/UX manifesto, 7 sequenced iterations with risk labels, 6 verification gates, and an 8-session breakdown.
+
+The plan's headline: **data layer is mature, presentation layer is what needs work.** The 4-tier role detection (siteadmin / L&D admin / manager / learner) is tenant-scoped via `open_path` and has caught real bugs over multiple sprints. Don't touch it. Rebuild the presentation layer component-by-component, validate each iteration on screenshot diff + a11y + dark mode + 3 tenants before shipping.
+
+### Iteration 1 — `stat_card` component (the most-reused visual unit)
+
+The KPI/metric tile appears in admin_kpis (4 tiles), manager_kpis (4 tiles), learner stats (4 tiles), useranalytics (5 tiles), and several reports pages. Currently each call site inlines the HTML and uses `.airpay-dash__stat` with hardcoded hex literals.
+
+Shipped:
+- **`templates/components/stat_card.mustache`** — enhanced existing partial with `href` (whole-tile linked variant), `trenddir` (up/down/flat semantics), auto-built `aria-label`, optional `ariadesc` override.
+- **`scss/moodle/partials/_components-stat-card.scss`** (new file) — tokens-aware styling. Zero hex literals. Six colour variants (`primary` / `accent` / `success` / `warning` / `danger` / `info`). `.airpay-stat-grid` wrapper that goes 4 → 2 → 1 columns at the manifesto's `$ap-bp-tablet` / `$ap-bp-mobile` breakpoints. Hover lift on linked variant respects `prefers-reduced-motion` via the duration tokens. Trend slides in on first paint with `--ap-duration-default --ap-ease-out`.
+- **`scss/moodle/custom_changes.scss`** — added `@import "partials/components-stat-card"` to the build entry.
+- **Style Guide demo** — new "Components" section at `/local/airpay_core/admin/styleguide.php` showing all 6 colour variants, the linked-tile interaction, and the Mustache usage snippet. Visible in production after cache purge.
+
+### What iteration 1 enables
+
+Every subsequent KPI surface (dashboard / reports / analytics / manager team / admin landings) can now adopt the canonical tile via a single `{{> theme_airpayux/components/stat_card }}` line. Iteration 2 (next session) will replace the 3 inlined `.airpay-dash__stat` call sites in `dashboard.mustache` — pure refactor, zero visual change because class names map 1:1.
+
+The dashboard.mustache replacement is intentionally NOT in this session's scope. The user-visible dashboard hasn't changed; only the tooling under it has gotten sharper. This lets Iteration 1 ship to production safely (no visual regression risk) while making Iteration 2 a single-file PR that's trivial to review.
+
+### Files touched
+
+```
+docs/platform-review-2026-05-14/
+  LEARNER-DASHBOARD-REDESIGN-PLAN.md  [new — 7-section redesign plan]
+
+moodle-enhancement/theme/airpayux/
+  templates/components/stat_card.mustache       [enhanced — href, trenddir, a11y]
+  scss/moodle/partials/_components-stat-card.scss   [new — tokens-aware styling]
+  scss/moodle/custom_changes.scss               [+ import the new partial]
+
+moodle-enhancement/local/airpay_core/
+  admin/styleguide.php                [+ Components section demoing stat_card]
+```
 
 ---
 

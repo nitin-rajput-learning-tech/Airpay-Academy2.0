@@ -1,0 +1,194 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   .airpay-stat-card — Phase A0.5 (2026-05-14)
+   ═══════════════════════════════════════════════════════════════════════
+   Canonical KPI/metric tile. Used on every dashboard, report, analytics
+   page, and admin landing. Replaces the inlined .airpay-dash__stat
+   pattern that scattered hex literals across the dashboard.
+
+   Template: theme_airpayux/components/stat_card
+   Tokens:   uses --ap-color-* / --ap-space-* / --ap-radius-* / motion
+   A11y:     focusable when linked; aria-label auto-built from value+label
+   Mobile:   container holds 1 col @<590px, 2 col @<992px, 4 col elsewhere
+
+   This file is imported via the main partials manifest. Component classes
+   are deliberately scoped under .airpay-stat-card so they can be used
+   anywhere — not just inside .airpay-dash.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* The grid wrapper. Use this around any group of stat cards.
+   Default is 4-column desktop, collapsing on the manifesto breakpoints. */
+.airpay-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--ap-space-4);
+
+    @media (max-width: $ap-bp-tablet) {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    @media (max-width: $ap-bp-mobile) {
+        grid-template-columns: 1fr;
+        gap: var(--ap-space-3);
+    }
+}
+
+.airpay-stat-card {
+    background: var(--ap-color-bg-surface);
+    border: 1px solid var(--ap-color-border);
+    border-radius: var(--ap-radius-md);
+    padding: var(--ap-space-5);
+    display: flex;
+    align-items: center;
+    gap: var(--ap-space-4);
+    box-shadow: var(--ap-shadow-sm);
+    transition: transform var(--ap-transition-quick),
+                box-shadow var(--ap-transition-quick),
+                border-color var(--ap-transition-quick);
+    min-height: 96px;
+    /* Keep it readable on tiny phones — the value must always be legible. */
+    min-width: 0;
+    color: inherit;
+    text-decoration: none;
+
+    /* Linked variant — make the whole tile a click target with proper
+       focus + keyboard support. */
+    &--linked {
+        cursor: pointer;
+
+        &:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--ap-shadow-hover);
+            border-color: var(--ap-color-border-strong);
+        }
+
+        &:focus-visible {
+            /* The global :focus-visible rule applies a ring; we add a
+               subtle background tint for extra affordance. */
+            background: var(--ap-color-bg-surface-alt);
+        }
+
+        &:active {
+            transform: translateY(0);
+        }
+    }
+
+    /* Mobile: tighter padding, smaller min-height so a vertical stack of
+       6 KPIs doesn't push the page below the fold on a 5" phone. */
+    @media (max-width: $ap-bp-mobile) {
+        padding: var(--ap-space-4);
+        min-height: 80px;
+    }
+}
+
+.airpay-stat-card__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--ap-radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    /* The colour comes from the modifier — see colour variants below. */
+    font-size: var(--ap-text-xl);
+
+    i, .fa {
+        font-size: var(--ap-text-xl);
+        line-height: 1;
+    }
+
+    @media (max-width: $ap-bp-mobile) {
+        width: 40px;
+        height: 40px;
+        font-size: var(--ap-text-lg);
+    }
+}
+
+.airpay-stat-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ap-space-1);
+    min-width: 0;
+    flex: 1;
+}
+
+.airpay-stat-card__value {
+    font-size: var(--ap-text-2xl);
+    font-weight: var(--ap-weight-extrabold);
+    color: var(--ap-color-text-primary);
+    line-height: var(--ap-leading-tight);
+    /* Long numbers (e.g. "1,234,567") shouldn't wrap mid-digit. */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    @media (max-width: $ap-bp-mobile) {
+        font-size: var(--ap-text-xl);
+    }
+}
+
+.airpay-stat-card__label {
+    font-size: var(--ap-text-sm);
+    font-weight: var(--ap-weight-medium);
+    color: var(--ap-color-text-secondary);
+    /* WCAG 1.4.3 — body label text uses --ap-color-text-secondary
+       which is the 6.4:1 contrast neutral-600, not the 3.7:1 neutral-500. */
+}
+
+.airpay-stat-card__trend {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ap-space-1);
+    font-size: var(--ap-text-xs);
+    font-weight: var(--ap-weight-medium);
+    margin-top: var(--ap-space-1);
+    /* Trend slides in on first render — respects reduced motion. */
+    animation: airpay-trend-in var(--ap-duration-default) var(--ap-ease-out);
+
+    i, .fa { font-size: var(--ap-text-xs); }
+
+    &--up {
+        color: var(--ap-color-success);
+    }
+    &--down {
+        color: var(--ap-color-danger);
+    }
+    &--flat {
+        color: var(--ap-color-text-muted);
+    }
+}
+
+@keyframes airpay-trend-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Colour variants ──────────────────────────────────────────────────
+   Each modifier sets the icon's tinted background + foreground colour.
+   Six semantic options. The default (--primary) is brand blue. */
+.airpay-stat-card--primary .airpay-stat-card__icon {
+    background: var(--ap-color-primary-light);
+    color: var(--ap-color-primary);
+}
+.airpay-stat-card--accent .airpay-stat-card__icon {
+    background: var(--ap-color-accent-light);
+    color: var(--ap-color-accent);
+}
+.airpay-stat-card--success .airpay-stat-card__icon {
+    background: var(--ap-color-success-light);
+    color: var(--ap-color-success);
+}
+.airpay-stat-card--warning .airpay-stat-card__icon,
+.airpay-stat-card--gold .airpay-stat-card__icon {
+    /* "gold" is the legacy name from the dashboard data layer — we map
+       it onto the warning palette since it's used for "attention needed"
+       metrics like overdue items. */
+    background: var(--ap-color-warning-light);
+    color: var(--ap-color-warning);
+}
+.airpay-stat-card--danger .airpay-stat-card__icon {
+    background: var(--ap-color-danger-light);
+    color: var(--ap-color-danger);
+}
+.airpay-stat-card--info .airpay-stat-card__icon {
+    background: var(--ap-color-info-light);
+    color: var(--ap-color-info);
+}

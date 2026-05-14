@@ -32,6 +32,7 @@
 
 // 6. Reusable components
 @import "partials/components";
+@import "partials/components-stat-card";   // Phase A0.5 — tokens-aware KPI tile
 @import "partials/course-player";
 @import "partials/ui-polish";
 @import "partials/datatable";

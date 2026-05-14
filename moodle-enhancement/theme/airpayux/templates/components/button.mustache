@@ -1,0 +1,12 @@
+{{!
+    Airpay Button Component
+    Context: { label, url, type (primary|outline|ghost), size (sm|md|lg), icon, id, disabled }
+    Usage: {{> theme_airpayux/components/button }}
+}}
+<a {{#url}}href="{{url}}"{{/url}}
+   {{#id}}id="{{id}}"{{/id}}
+   class="airpay-btn airpay-btn--{{#type}}{{type}}{{/type}}{{^type}}primary{{/type}} airpay-btn--{{#size}}{{size}}{{/size}}{{^size}}md{{/size}} {{#disabled}}airpay-btn--disabled{{/disabled}}"
+   {{#disabled}}aria-disabled="true" tabindex="-1"{{/disabled}}
+   role="button">
+    {{#icon}}<i class="fa fa-{{icon}}" aria-hidden="true"></i> {{/icon}}{{label}}
+</a>
