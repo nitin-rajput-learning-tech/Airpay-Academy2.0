@@ -593,6 +593,56 @@ echo $OUTPUT->header();
     "linkurl":   "/my/courses.php",
     "linklabel": "View all"
 }</pre>
+
+    <h3 style="margin-top: var(--ap-space-10);">Empty state &mdash; <code>theme_airpayux/components/empty_state</code></h3>
+    <p class="ap-sg__section-desc">Manifesto §1.5: "empty states are scenes." Three size variants (<code>sm</code> / <code>md</code> / <code>lg</code>). The CTA button has a min-height of 44pt (WCAG 2.5.5). Replaces the broken legacy <code>.ap-empty-state</code> CSS that referenced non-existent tokens.</p>
+
+    <h4 style="margin-top: var(--ap-space-6);">Medium (default) &mdash; section-level</h4>
+    <div style="background: var(--ap-color-bg-surface); border: 1px solid var(--ap-color-border); border-radius: var(--ap-radius-md); margin-bottom: var(--ap-space-8);">
+        <div class="airpay-empty-state airpay-empty-state--md" role="status">
+            <i class="fa fa-graduation-cap airpay-empty-state__icon" aria-hidden="true"></i>
+            <h4 class="airpay-empty-state__title">No courses in progress</h4>
+            <p class="airpay-empty-state__message">Browse the catalogue to find courses that match your interests and career goals.</p>
+            <a class="airpay-empty-state__cta" href="#components">
+                <i class="fa fa-search" aria-hidden="true"></i>
+                <span>Browse Catalogue</span>
+            </a>
+        </div>
+    </div>
+
+    <h4 style="margin-top: var(--ap-space-6);">Small &mdash; for narrow panels</h4>
+    <div style="max-width: 320px; background: var(--ap-color-bg-surface); border: 1px solid var(--ap-color-border); border-radius: var(--ap-radius-md); margin-bottom: var(--ap-space-8);">
+        <div class="airpay-empty-state airpay-empty-state--sm" role="status">
+            <i class="fa fa-bell-o airpay-empty-state__icon" aria-hidden="true"></i>
+            <h4 class="airpay-empty-state__title">All caught up</h4>
+            <p class="airpay-empty-state__message">No new notifications.</p>
+        </div>
+    </div>
+
+    <h4 style="margin-top: var(--ap-space-6);">Large &mdash; full-page</h4>
+    <div style="background: var(--ap-color-bg-surface); border: 1px solid var(--ap-color-border); border-radius: var(--ap-radius-md); margin-bottom: var(--ap-space-8);">
+        <div class="airpay-empty-state airpay-empty-state--lg" role="status">
+            <i class="fa fa-search airpay-empty-state__icon" aria-hidden="true"></i>
+            <h4 class="airpay-empty-state__title">No results for "compliance"</h4>
+            <p class="airpay-empty-state__message">Try a different search term or browse the catalogue by category.</p>
+            <a class="airpay-empty-state__cta" href="#components">
+                <i class="fa fa-th-large" aria-hidden="true"></i>
+                <span>Browse by category</span>
+            </a>
+        </div>
+    </div>
+
+    <h4 style="margin-top: var(--ap-space-6);">Mustache usage</h4>
+    <pre style="background: var(--ap-color-bg-surface-alt); padding: var(--ap-space-4); border-radius: var(--ap-radius-sm); font-size: var(--ap-text-xs); overflow-x: auto;">{{&gt; theme_airpayux/components/empty_state }}
+{
+    "icon":     "graduation-cap",
+    "title":    "No courses in progress",
+    "message":  "Browse the catalogue to find courses...",
+    "ctalabel": "Browse Catalogue",
+    "ctaicon":  "search",
+    "ctaurl":   "/local/airpay_catalog/index.php",
+    "size":     "md"
+}</pre>
 </section>
 
 </div>

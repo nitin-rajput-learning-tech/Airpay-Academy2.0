@@ -642,6 +642,18 @@ if (isloggedin() && !isguestuser()) {
         $airpay_dashboard['stats']['certificates'] = 0;
     }
 
+    // Phase B0 iter 7 — empty-state context for sections that may render
+    // zero rows. Each entry is a single-element array so the template can
+    // include the empty_state partial via {{#empty_X}}{{> ... }}{{/empty_X}}.
+    $airpay_dashboard['empty_continue'] = [[
+        'icon'     => 'graduation-cap',
+        'title'    => 'No courses in progress',
+        'message'  => 'Browse the catalogue to find courses that match your interests and career goals.',
+        'ctalabel' => 'Browse Catalogue',
+        'ctaicon'  => 'search',
+        'ctaurl'   => (new moodle_url('/local/airpay_catalog/index.php'))->out(false),
+    ]];
+
     // Phase B0 iter 2 (2026-05-14) — learner KPI tiles as a data array so
     // the dashboard template can iterate the stat_card partial instead of
     // inlining four near-identical <div> blocks. Mirrors admin_kpis shape.

@@ -88,52 +88,13 @@
     .ap-skeleton-stats { grid-template-columns: repeat(2, 1fr); }
 }
 
-/* ── Empty State Component ── */
-.ap-empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 48px 24px;
-    text-align: center;
-    color: var(--ap-text-secondary);
-}
-.ap-empty-state__icon {
-    font-size: 56px;
-    color: var(--ap-border);
-    margin-bottom: 16px;
-    opacity: 0.6;
-}
-.ap-empty-state__title {
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--ap-text);
-    margin: 0 0 8px;
-}
-.ap-empty-state__message {
-    font-size: 14px;
-    color: var(--ap-text-secondary);
-    margin: 0 0 20px;
-    max-width: 360px;
-}
-.ap-empty-state__cta {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 10px 20px;
-    background: var(--ap-gradient);
-    color: #fff;
-    border-radius: var(--ap-radius-sm);
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 14px;
-    transition: opacity 0.2s;
-}
-.ap-empty-state__cta:hover {
-    opacity: 0.9;
-    color: #fff;
-    text-decoration: none;
-}
+/* Empty state — moved to _components-empty-state.scss in Phase B0 iter 7.
+   The legacy .ap-empty-state class names are still recognised there
+   (aliased to .airpay-empty-state) so existing markup works unchanged.
+   The previous version of this rule referenced --ap-text / --ap-border /
+   --ap-gradient variables that don't actually exist in _tokens.scss —
+   the empty state was silently rendering with browser defaults. The
+   new tokens-aware version fixes that. */
 
 /* ── Dashboard Course Cards Polish ── */
 .airpay-dash__course-card {
