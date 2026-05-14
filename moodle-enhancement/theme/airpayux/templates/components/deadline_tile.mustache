@@ -1,0 +1,51 @@
+{{!
+    Airpay Deadline Tile — Phase B0 iter 5 (2026-05-14)
+
+    Canonical row for an "approaching deadline" list. Used in:
+      - Dashboard "Upcoming Deadlines" section (learner + manager)
+      - Manager team-compliance view (per-report overdue list)
+      - Notification email cadence engine (template inclusion)
+
+    Four urgency states map to semantic tokens:
+      urgency = "overdue"  past due, red bg, danger icon
+                "urgent"   < 24h to deadline, red bg, exclamation icon
+                "soon"     < 7d to deadline, amber bg, clock icon
+                "normal"   >= 7d, neutral bg, calendar icon (default)
+
+    Context:
+        coursename  (required) — escaped course title
+        duedate     (required) — pre-formatted due date string
+        urgency     (optional) — "overdue" | "urgent" | "soon" | "normal"
+        icon        (optional) — FA icon name. Data layer should set the
+                                 right icon for the urgency; partial
+                                 defaults to "calendar" if missing.
+        viewurl     (optional) — link to course. Renders the View button.
+        relative    (optional) — human relative string ("Due tomorrow")
+                                 shown instead of duedate when present.
+
+    A11y:
+      - Wrap in <ul class="airpay-deadline-list"> upstream.
+      - Icon is aria-hidden — urgency is conveyed by text.
+      - View link gets an aria-label combining course + due time.
+
+    Usage:
+        {{> theme_airpayux/components/deadline_tile }}
+}}
+<li class="airpay-deadline airpay-deadline--{{#urgency}}{{urgency}}{{/urgency}}{{^urgency}}normal{{/urgency}}">
+    <div class="airpay-deadline__icon" aria-hidden="true">
+        <i class="fa fa-{{#icon}}{{icon}}{{/icon}}{{^icon}}calendar{{/icon}}"></i>
+    </div>
+    <div class="airpay-deadline__body">
+        <span class="airpay-deadline__name">{{coursename}}</span>
+        <span class="airpay-deadline__date">
+            {{#relative}}{{relative}}{{/relative}}{{^relative}}Due: {{duedate}}{{/relative}}
+        </span>
+    </div>
+    {{#viewurl}}
+    <a href="{{viewurl}}"
+       class="airpay-deadline__action airpay-btn airpay-btn--outline airpay-btn--sm"
+       aria-label="View {{coursename}}, due {{#relative}}{{relative}}{{/relative}}{{^relative}}{{duedate}}{{/relative}}">
+        {{# str }}view, core{{/ str }}
+    </a>
+    {{/viewurl}}
+</li>

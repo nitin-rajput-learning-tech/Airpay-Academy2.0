@@ -546,24 +546,15 @@
 
             {{! ═══ TWO-COLUMN: Deadlines + Timeline ═══ }}
             <div class="airpay-dash__two-col">
-                {{! --- Upcoming Deadlines --- }}
+                {{! Upcoming Deadlines — Phase B0 iter 5: migrated to deadline_tile partial }}
                 {{#hasdeadlines}}
                 <div class="airpay-dash__section airpay-dash__deadlines">
                     <h3 class="airpay-dash__section-title"><i class="fa fa-calendar" aria-hidden="true"></i> {{# str }}upcomingevents, calendar{{/ str }}</h3>
-                    <div class="airpay-dash__deadline-list">
+                    <ul class="airpay-deadline-list">
                         {{#deadlines}}
-                        <div class="airpay-dash__deadline-item {{#urgent}}airpay-dash__deadline-item--urgent{{/urgent}}">
-                            <div class="airpay-dash__deadline-icon {{#urgent}}airpay-dash__deadline-icon--urgent{{/urgent}}{{^urgent}}airpay-dash__deadline-icon--normal{{/urgent}}">
-                                <i class="fa {{#urgent}}fa-exclamation-circle{{/urgent}}{{^urgent}}fa-clock-o{{/urgent}}" aria-hidden="true"></i>
-                            </div>
-                            <div class="airpay-dash__deadline-info">
-                                <span class="airpay-dash__deadline-name">{{coursename}}</span>
-                                <span class="airpay-dash__deadline-date">Due: {{duedate}}</span>
-                            </div>
-                            <a href="{{viewurl}}" class="airpay-btn airpay-btn--outline airpay-btn--sm">{{# str }}view, core{{/ str }}</a>
-                        </div>
+                        {{> theme_airpayux/components/deadline_tile }}
                         {{/deadlines}}
-                    </div>
+                    </ul>
                 </div>
                 {{/hasdeadlines}}
 

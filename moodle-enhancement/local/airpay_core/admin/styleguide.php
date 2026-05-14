@@ -512,6 +512,43 @@ echo $OUTPUT->header();
     "layout":  "inline",
     "href":    "/course/view.php?id=42"
 }</pre>
+
+    <h3 style="margin-top: var(--ap-space-10);">Deadline tile &mdash; <code>theme_airpayux/components/deadline_tile</code></h3>
+    <p class="ap-sg__section-desc">Four urgency states. The "urgent" variant icon pulses on render to draw the eye; "overdue" gets a thick left border. Used on the dashboard's Upcoming Deadlines, manager team compliance, and notification email templates.</p>
+
+    <div style="max-width: 640px; margin-bottom: var(--ap-space-8);">
+        <ul class="airpay-deadline-list">
+            <?php
+            $deadlines = [
+                ['normal',  'calendar',              'Diversity & Inclusion 2026',       'Due: 30 May 2026'],
+                ['soon',    'clock-o',               'KYC Customer Onboarding',          'Due in 3 days'],
+                ['urgent',  'exclamation-circle',    'Information Security Annual',      'Due tomorrow'],
+                ['overdue', 'exclamation-triangle',  'GDPR/DPDP Compliance Refresh',     'Overdue by 4 days'],
+            ];
+            foreach ($deadlines as [$urgency, $icon, $name, $when]) {
+                echo '<li class="airpay-deadline airpay-deadline--' . s($urgency) . '">';
+                echo '<div class="airpay-deadline__icon" aria-hidden="true"><i class="fa fa-' . s($icon) . '"></i></div>';
+                echo '<div class="airpay-deadline__body">';
+                echo '<span class="airpay-deadline__name">' . s($name) . '</span>';
+                echo '<span class="airpay-deadline__date">' . s($when) . '</span>';
+                echo '</div>';
+                echo '<a href="#components" class="airpay-deadline__action airpay-btn airpay-btn--outline airpay-btn--sm" aria-label="View ' . s($name) . '">View</a>';
+                echo '</li>';
+            }
+            ?>
+        </ul>
+    </div>
+
+    <h4 style="margin-top: var(--ap-space-6);">Mustache usage</h4>
+    <pre style="background: var(--ap-color-bg-surface-alt); padding: var(--ap-space-4); border-radius: var(--ap-radius-sm); font-size: var(--ap-text-xs); overflow-x: auto;">{{&gt; theme_airpayux/components/deadline_tile }}
+{
+    "coursename": "KYC Customer Onboarding",
+    "duedate":    "17 May 2026",
+    "urgency":    "soon",
+    "icon":       "clock-o",
+    "relative":   "Due in 3 days",
+    "viewurl":    "/course/view.php?id=42"
+}</pre>
 </section>
 
 </div>

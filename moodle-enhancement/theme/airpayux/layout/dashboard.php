@@ -745,12 +745,40 @@ if (isloggedin() && !isguestuser()) {
                 $params, 0, 5
             );
             foreach ($deadlinerecords as $dl) {
+                // Phase B0 iter 5 — compute urgency tier + matching icon for
+                // the deadline_tile partial. Four tiers map to semantic
+                // tokens (normal / soon / urgent / overdue).
+                $secs_to_due = $dl->enddate - $now;
+                $days_to_due = (int) floor($secs_to_due / 86400);
+
+                if ($secs_to_due <= 0) {
+                    $urgency = 'overdue';
+                    $icon    = 'exclamation-triangle';
+                    $rel     = 'Overdue';
+                } else if ($secs_to_due < 86400) {
+                    $urgency = 'urgent';
+                    $icon    = 'exclamation-circle';
+                    $rel     = ($days_to_due === 0) ? 'Due today' : 'Due tomorrow';
+                } else if ($secs_to_due < (7 * 86400)) {
+                    $urgency = 'soon';
+                    $icon    = 'clock-o';
+                    $rel     = 'Due in ' . $days_to_due . ' day' . ($days_to_due === 1 ? '' : 's');
+                } else {
+                    $urgency = 'normal';
+                    $icon    = 'calendar';
+                    $rel     = '';  // empty -> partial falls back to "Due: <date>"
+                }
+
                 $deadlines[] = [
-                    'coursename' => format_string($dl->fullname),
-                    'duedate' => userdate($dl->enddate, '%d %B %Y'),
+                    'coursename'   => format_string($dl->fullname),
+                    'duedate'      => userdate($dl->enddate, '%d %B %Y'),
                     'duetimestamp' => $dl->enddate,
-                    'urgent' => ($dl->enddate - $now) < (7 * 86400),
-                    'viewurl' => (new moodle_url('/course/view.php', ['id' => $dl->id]))->out(false),
+                    'urgency'      => $urgency,
+                    'icon'         => $icon,
+                    'relative'     => $rel,
+                    // Legacy field kept so anything else reading 'urgent' still works.
+                    'urgent'       => $secs_to_due < (7 * 86400),
+                    'viewurl'      => (new moodle_url('/course/view.php', ['id' => $dl->id]))->out(false),
                 ];
             }
         }
