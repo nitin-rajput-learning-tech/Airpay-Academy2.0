@@ -30,32 +30,30 @@ defined('MOODLE_INTERNAL') || die();
  */
 class request_manager_test extends \advanced_testcase {
 
-    private static function open_path_column_exists(): bool {
-        global $DB;
-        $columns = $DB->get_columns('user');
-        return isset($columns['open_path']);
-    }
+    // Day-3 (2026-05-14): pull in the airpay_core open_path fixture
+    // trait. Replaces the old skip_if_no_open_path() guards — the
+    // trait ensures the column exists on every test run.
+    use \local_airpay_core\phpunit\open_path_fixture_trait;
 
+    /**
+     * Kept for backwards compatibility — now a no-op. The trait
+     * guarantees the column is present so the skip never fires.
+     */
     private function skip_if_no_open_path(): void {
-        if (!self::open_path_column_exists()) {
-            $this->markTestSkipped('BizLMS user.open_path column missing.');
-        }
+        // Trait ensured the column exists. Nothing to do.
     }
 
     /**
      * Create a course in the Airpay tenant (open_path='/1').
      * Returns the course object.
+     *
+     * Day-3 update: the open_path_fixture_trait now ensures the
+     * `course.open_path` column exists before any test runs, so the
+     * pre-existing markTestSkipped guard is no longer needed.
      */
     private function make_airpay_course(): object {
         global $DB;
         $course = $this->getDataGenerator()->create_course();
-        // Stamp the course's open_path so it shows as "owned by Airpay".
-        // The column might not exist in PHPUnit fixture; tests that need
-        // this method already called skip_if_no_open_path.
-        $columns = $DB->get_columns('course');
-        if (!isset($columns['open_path'])) {
-            $this->markTestSkipped('mdl_course.open_path column missing.');
-        }
         $DB->set_field('course', 'open_path', '/1', ['id' => $course->id]);
         return $DB->get_record('course', ['id' => $course->id]);
     }

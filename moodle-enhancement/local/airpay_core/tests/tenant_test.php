@@ -19,21 +19,19 @@ defined('MOODLE_INTERNAL') || die();
  */
 class tenant_test extends \advanced_testcase {
 
-    /**
-     * Cached probe — does the BizLMS open_path column exist in this env?
-     */
-    private static function open_path_column_exists(): bool {
-        global $DB;
-        $columns = $DB->get_columns('user');
-        return isset($columns['open_path']);
-    }
+    // Day-3 (2026-05-14): pulls in the open_path_fixture_trait which
+    // adds `open_path` to {user} and {course} at setUpBeforeClass time.
+    // Replaces the old per-test `markTestSkipped` pattern — those skips
+    // hid the tests entirely from CI; now they actually run.
+    use \local_airpay_core\phpunit\open_path_fixture_trait;
 
+    /**
+     * Kept for callers — now a no-op because the trait guarantees the
+     * column is present. Left in place so old test bodies that still
+     * call $this->skip_if_no_open_path() don't fail.
+     */
     private function skip_if_no_open_path(): void {
-        if (!self::open_path_column_exists()) {
-            $this->markTestSkipped(
-                'BizLMS user.open_path column not present (PHPUnit fixture). '
-                . 'Test verifies production-only schema behaviour.');
-        }
+        // Trait ensured the column exists. Nothing to do.
     }
 
     public function test_root_for_user_resolves_first_path_segment(): void {

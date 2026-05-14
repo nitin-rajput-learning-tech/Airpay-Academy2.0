@@ -324,11 +324,20 @@ class request_manager {
         // once approved, the share row is the source of truth, and
         // if it later becomes withdrawn the manager should be able
         // to re-request from a clean slate.
+        //
+        // Sort by (timecreated DESC, id DESC) — the secondary key on
+        // id breaks ties when two rows share the same `timecreated`
+        // value. That happens in PHPUnit (two inserts within the same
+        // second on a fast machine) and is possible in production
+        // during a bulk re-request from the same manager. Without the
+        // tie-breaker, MariaDB's ORDER BY is undefined and a stale
+        // 'rejected' row could shadow a brand-new 'pending' row.
+        // Day-3 bugfix surfaced by request_manager_test.
         $rows = $DB->get_records_select('local_airpay_courses_requests',
             'courseid = :cid AND requesting_tenant = :tid'
                 . " AND status IN ('pending', 'rejected')",
             ['cid' => $courseid, 'tid' => $tenant_id],
-            'timecreated DESC', 'id, status', 0, 1);
+            'timecreated DESC, id DESC', 'id, status', 0, 1);
         if (empty($rows)) {
             return 'none';
         }
