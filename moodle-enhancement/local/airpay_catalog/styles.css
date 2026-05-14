@@ -729,3 +729,308 @@ body.dark-mode .airpay-catalog__category-icon {
         align-items: flex-start;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   My Learning (/local/airpay_catalog/mycourses.php)
+   Phase B0 Catalogue iter 2 (2026-05-14)
+
+   Extracted from a 110-line inline <style> block in mycourses.mustache.
+   Tokens-migrated — 30 hex literals → 0. Same .ap-mycourses__ class
+   names as the legacy template (no rename in this iter; that's iter 3
+   scope for BEM consistency).
+   ═══════════════════════════════════════════════════════════ */
+
+.ap-mycourses {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* ── Filter stats strip ──────────────────────────────────────────────── */
+.ap-mycourses__stats {
+    display: flex;
+    gap: var(--ap-space-3);
+    margin-bottom: var(--ap-space-6);
+    flex-wrap: wrap;
+}
+.ap-mycourses__stat {
+    flex: 1;
+    min-width: 120px;
+    text-align: center;
+    padding: var(--ap-space-4) var(--ap-space-3);
+    background: var(--ap-color-bg-surface);
+    border: 2px solid var(--ap-color-border);
+    border-radius: var(--ap-radius-md);
+    text-decoration: none;
+    transition: border-color var(--ap-transition-quick),
+                background var(--ap-transition-quick),
+                transform var(--ap-transition-quick);
+    cursor: pointer;
+    min-height: var(--ap-tap-target-min);
+}
+.ap-mycourses__stat:hover {
+    border-color: var(--ap-color-primary);
+    transform: translateY(-2px);
+}
+.ap-mycourses__stat:focus-visible {
+    border-color: var(--ap-color-primary);
+}
+.ap-mycourses__stat--active {
+    border-color: var(--ap-color-primary);
+    background: var(--ap-color-primary-light);
+}
+.ap-mycourses__stat-num {
+    display: block;
+    font-size: var(--ap-text-2xl);
+    font-weight: var(--ap-weight-extrabold);
+    color: var(--ap-color-text-primary);
+}
+/* Variant tints — In Progress / Completed / Not Started.
+   Replaces inline style="color:#..." in mycourses.mustache. */
+.ap-mycourses__stat-num--accent  { color: var(--ap-color-accent); }
+.ap-mycourses__stat-num--success { color: var(--ap-color-success); }
+.ap-mycourses__stat-num--muted   { color: var(--ap-color-text-muted); }
+.ap-mycourses__stat-label {
+    display: block;
+    font-size: var(--ap-text-xs);
+    color: var(--ap-color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: var(--ap-weight-medium);
+    margin-top: 2px;
+}
+
+/* ── Grid ────────────────────────────────────────────────────────────── */
+.ap-mycourses__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--ap-space-5);
+}
+
+/* ── Card ────────────────────────────────────────────────────────────── */
+.ap-mycourses__card {
+    background: var(--ap-color-bg-surface);
+    border: 1px solid var(--ap-color-border);
+    border-radius: var(--ap-radius-md);
+    overflow: hidden;
+    transition: transform var(--ap-transition-quick),
+                box-shadow var(--ap-transition-quick);
+    display: flex;
+    flex-direction: column;
+}
+.ap-mycourses__card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--ap-shadow-hover);
+}
+
+/* ── Image ───────────────────────────────────────────────────────────── */
+.ap-mycourses__card-image-link {
+    display: block;
+    position: relative;
+    text-decoration: none;
+}
+.ap-mycourses__card-image {
+    height: 140px;
+    background-size: cover;
+    background-position: center;
+    background-color: var(--ap-color-primary-light);
+}
+.ap-mycourses__card-image--fallback {
+    background: var(--ap-gradient-cta);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: var(--ap-text-lg);
+    font-weight: var(--ap-weight-bold);
+    letter-spacing: 0.05em;
+}
+.ap-mycourses__card-badge {
+    position: absolute;
+    top: var(--ap-space-2);
+    right: var(--ap-space-2);
+    padding: 3px var(--ap-space-2);
+    border-radius: var(--ap-radius-pill);
+    font-size: var(--ap-text-xs);
+    font-weight: var(--ap-weight-bold);
+}
+.ap-mycourses__card-badge--done {
+    background: var(--ap-color-success);
+    color: var(--ap-color-text-inverse);
+}
+
+/* ── Progress ring (continue-learning cards) ─────────────────────────── */
+.ap-mycourses__card-progress-ring {
+    position: absolute;
+    bottom: var(--ap-space-2);
+    right: var(--ap-space-2);
+}
+.ap-mycourses__card-progress-ring svg { display: block; }
+/* Inner SVG circles — stroke comes from CSS instead of attribute, so
+   colour-token swaps + dark mode propagate without inline SVG attrs. */
+.ap-mycourses__card-progress-ring-track {
+    stroke: rgba(255, 255, 255, 0.3);
+}
+.ap-mycourses__card-progress-ring-fill {
+    stroke: var(--ap-color-success);
+    transform: rotate(-90deg);
+    transform-origin: center;
+    transition: stroke-dashoffset var(--ap-transition-slow);
+}
+.ap-mycourses__card-progress-ring span {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 9px;
+    font-weight: var(--ap-weight-bold);
+    color: var(--ap-color-text-inverse);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Body ────────────────────────────────────────────────────────────── */
+.ap-mycourses__card-body {
+    padding: var(--ap-space-3) var(--ap-space-4);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+.ap-mycourses__card-category {
+    font-size: var(--ap-text-xs);
+    color: var(--ap-color-primary);
+    font-weight: var(--ap-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
+}
+.ap-mycourses__card-title {
+    margin: 0 0 var(--ap-space-2);
+    font-size: var(--ap-text-base);
+    font-weight: var(--ap-weight-bold);
+    line-height: var(--ap-leading-tight);
+}
+.ap-mycourses__card-title a {
+    color: var(--ap-color-text-primary);
+    text-decoration: none;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.ap-mycourses__card-title a:hover {
+    color: var(--ap-color-primary);
+}
+
+/* ── Progress bar (in-progress cards) ────────────────────────────────── */
+.ap-mycourses__card-progressbar {
+    height: 6px;
+    background: var(--ap-color-border);
+    border-radius: var(--ap-radius-xs);
+    margin-bottom: 4px;
+    overflow: hidden;
+}
+.ap-mycourses__card-progressbar-fill {
+    height: 100%;
+    background: var(--ap-gradient-cta);
+    border-radius: var(--ap-radius-xs);
+    transition: width var(--ap-transition-slow);
+}
+.ap-mycourses__card-progresstext {
+    font-size: var(--ap-text-xs);
+    color: var(--ap-color-text-secondary);
+    margin-bottom: var(--ap-space-2);
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────── */
+.ap-mycourses__card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+}
+.ap-mycourses__card-access {
+    font-size: var(--ap-text-xs);
+    color: var(--ap-color-text-muted);
+}
+.ap-mycourses__card-access i { margin-right: 3px; }
+.ap-mycourses__card-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: var(--ap-space-2) var(--ap-space-3);
+    border-radius: var(--ap-radius-sm);
+    font-size: var(--ap-text-sm);
+    font-weight: var(--ap-weight-semibold);
+    background: var(--ap-gradient-cta);
+    color: var(--ap-color-text-inverse);
+    text-decoration: none;
+    transition: opacity var(--ap-transition-quick);
+    min-height: 32px;
+}
+.ap-mycourses__card-cta:hover {
+    opacity: 0.9;
+    color: var(--ap-color-text-inverse);
+}
+
+/* ── Pagination (mycourses) ──────────────────────────────────────────── */
+.ap-mycourses__pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--ap-space-3);
+    margin-top: var(--ap-space-6);
+    padding-top: var(--ap-space-4);
+    border-top: 1px solid var(--ap-color-border);
+    flex-wrap: wrap;
+}
+.ap-mycourses__pagination-summary {
+    font-size: var(--ap-text-sm);
+    color: var(--ap-color-text-muted);
+}
+.ap-mycourses__pagination-pages {
+    display: flex;
+    gap: 4px;
+}
+.ap-mycourses__pagination-page {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    min-height: 32px;
+    border-radius: var(--ap-radius-sm);
+    font-size: var(--ap-text-sm);
+    font-weight: var(--ap-weight-semibold);
+    text-decoration: none;
+    background: var(--ap-color-bg-surface);
+    color: var(--ap-color-text-secondary);
+    border: 1px solid var(--ap-color-border);
+    transition: background var(--ap-transition-quick),
+                color var(--ap-transition-quick),
+                border-color var(--ap-transition-quick);
+}
+.ap-mycourses__pagination-page:hover {
+    background: var(--ap-color-primary-light);
+    color: var(--ap-color-primary);
+    border-color: var(--ap-color-primary);
+    text-decoration: none;
+}
+.ap-mycourses__pagination-page--active {
+    background: var(--ap-color-primary);
+    color: var(--ap-color-text-inverse);
+    border-color: var(--ap-color-primary);
+}
+.ap-mycourses__pagination-page--active:hover {
+    background: var(--ap-color-primary-hover);
+    color: var(--ap-color-text-inverse);
+    border-color: var(--ap-color-primary-hover);
+}
+
+/* ── Mobile ──────────────────────────────────────────────────────────── */
+@media (max-width: 590px) {
+    .ap-mycourses__grid { grid-template-columns: 1fr; }
+    .ap-mycourses__stats { flex-direction: row; }
+    .ap-mycourses__stat {
+        min-width: 0;
+        padding: var(--ap-space-3) var(--ap-space-2);
+    }
+    .ap-mycourses__stat-num { font-size: var(--ap-text-xl); }
+}

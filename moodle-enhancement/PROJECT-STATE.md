@@ -4,6 +4,62 @@
 
 ---
 
+## 🆕 PHASE B0 — Course Catalogue iter 2 (mycourses extraction) (2026-05-14)
+
+The mycourses page had a 110-line inline `<style>` block at the end of the Mustache template plus inline `style="color:#..."` attributes scattered through the body. Iter 2 extracts everything to `styles.css`, migrates to tokens, and adds a11y attrs. Closes the long-standing "mycourses deferred from sweep batch 4" todo.
+
+### What changed
+
+**Extracted to `styles.css`** (305 new lines):
+- All 110 lines of inline CSS (was at template end)
+- 4 new semantic stat-num modifiers (`--accent` / `--success` / `--muted`) for filter tab colours
+- Progress-ring track + fill rules (stroke comes from CSS instead of SVG `stroke="..."` attribute, so dark mode + tenant branding propagate)
+- Pagination component CSS (`.ap-mycourses__pagination*` — replaces inline `style="display:flex; gap..."` etc.)
+
+**Template cleanup** (`mycourses.mustache` 210 → 116 lines):
+- `<style>` block deleted (was lines 101-210)
+- All `style="color:#..."` on stat-nums replaced with semantic classes
+- All pagination inline styles replaced with `.ap-mycourses__pagination*` classes
+- SVG progress ring uses CSS for stroke instead of `stroke="#10b981"` attribute
+
+**A11y additions**:
+- Filter tabs strip: `role="group" aria-label="Filter your courses"`
+- Each filter tab: `aria-pressed="true|false"` reflecting active state
+- Progress ring: `role="progressbar"` + `aria-valuenow/min/max` + `aria-label="{progress}% complete"` (was just visual)
+- Pagination wrapper: `<nav aria-label="My courses pagination">` (was `<div>`)
+- Active pagination page: `aria-current="page"`
+- Decorative `<i>` elements marked `aria-hidden="true"`
+
+### Hex literals removed
+
+| File | Before | After |
+|---|---|---|
+| mycourses.mustache | 30 (in `<style>` + inline attrs) | 0 |
+| styles.css | 0 (catalog) | 2 (both inside comments documenting prior A11Y bump) |
+
+### Visible delta
+
+- Mycourses page now uses the same tokens-aware CSS as the rest of the platform — dark mode auto-flips
+- Filter tabs got `aria-pressed` so screen reader users hear "All Courses, pressed" or "In Progress, not pressed" instead of an unlabeled link
+- Progress ring announces "47% complete" via `aria-label` to screen readers (was silent before)
+- Pagination uses semantic `<nav>` + `aria-current="page"` instead of nested `<div>`s with inline styles
+
+### Cumulative coverage after catalog iter 2
+
+- **Catalog index page**: 87 hex → 0 (iter 1)
+- **Mycourses page**: 30 hex → 0 (iter 2)
+- **Total catalog hex literals removed**: 117
+
+### Files touched (iter 2)
+
+```
+moodle-enhancement/local/airpay_catalog/
+  styles.css                    [+305 lines — mycourses block at the end]
+  templates/mycourses.mustache  [210 → 116 lines; 0 hex literals; a11y added]
+```
+
+---
+
 ## 🆕 PHASE B0 — Course Catalogue iter 1 (tokens + a11y) (2026-05-14)
 
 The #2 priority redesign target from SURFACE-ROADMAP §6. Iter 1 ships the foundation: tokens migration on the 490-line styles.css (87 hex literals → 0), a11y improvements on the search bar + sort tabs + filter chip, and the 6-iteration redesign plan.
