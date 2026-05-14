@@ -643,6 +643,70 @@ echo $OUTPUT->header();
     "ctaurl":   "/local/airpay_catalog/index.php",
     "size":     "md"
 }</pre>
+
+    <h3 style="margin-top: var(--ap-space-10);">AI Assistant chat bubble &mdash; <code>local_airpay_assistant/chat_bubble</code></h3>
+    <p class="ap-sg__section-desc">Floating learner-facing chat assistant. Injected on every page footer for logged-in users (except login / upgrade pages). Gated by Phase A0 feature flag <code>ai.assistant.enabled</code> &mdash; super admin toggles via the Switchboard, per-tenant override supported.</p>
+
+    <h4 style="margin-top: var(--ap-space-6);">Bubble (closed state)</h4>
+    <p class="ap-sg__section-desc">56&times;56 fab at bottom-right (48&times;48 on mobile). Brand gradient, lifted shadow, scales 1.08 on hover via motion tokens.</p>
+    <div style="position: relative; height: 120px; background: var(--ap-color-bg-body); border-radius: var(--ap-radius-md); margin-bottom: var(--ap-space-6);">
+        <button type="button" class="airpay-assistant__toggle" style="position: absolute; bottom: var(--ap-space-4); right: var(--ap-space-4);" aria-label="Open AI learning assistant" aria-expanded="false">
+            <i class="fa fa-graduation-cap" aria-hidden="true"></i>
+        </button>
+    </div>
+
+    <h4 style="margin-top: var(--ap-space-6);">Panel (open state)</h4>
+    <p class="ap-sg__section-desc">380&times;520 panel with gradient header, message scroll area, quick-action chips, and a sending input. <code>role="dialog"</code>, <code>role="log"</code> on messages with <code>aria-live="polite"</code>.</p>
+    <div style="position: relative; height: 600px; background: var(--ap-color-bg-body); border-radius: var(--ap-radius-md); padding: var(--ap-space-3); margin-bottom: var(--ap-space-6); overflow: hidden;">
+        <div style="position: relative; width: 380px; max-height: 520px; background: var(--ap-color-bg-surface); border: 1px solid var(--ap-color-border); border-radius: var(--ap-radius-lg); box-shadow: var(--ap-shadow-lg); display: flex; flex-direction: column; overflow: hidden; margin: 0 auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--ap-space-3) var(--ap-space-4); background: var(--ap-gradient-cta); color: var(--ap-color-text-inverse);">
+                <div>
+                    <strong style="font-size: var(--ap-text-sm); font-weight: var(--ap-weight-semibold); display: block;">Airpay Learning Assistant</strong>
+                    <small style="opacity: 0.85; font-size: var(--ap-text-xs);">Powered by AI</small>
+                </div>
+                <button type="button" class="airpay-assistant__minimize" aria-label="Minimise" style="background: none; border: none; color: var(--ap-color-text-inverse); cursor: pointer;">
+                    <i class="fa fa-chevron-down" aria-hidden="true"></i>
+                </button>
+            </div>
+            <div style="flex: 1; overflow-y: auto; padding: var(--ap-space-3) var(--ap-space-4); max-height: 340px;">
+                <div class="airpay-assistant__msg airpay-assistant__msg--bot">
+                    <p>Hi Nitin! I'm your learning assistant. Ask me anything about your courses, deadlines, skills, or career path.</p>
+                    <div class="airpay-assistant__quick-actions">
+                        <button type="button">What to learn next?</button>
+                        <button type="button">My deadlines</button>
+                        <button type="button">Quiz me</button>
+                        <button type="button">Team status</button>
+                    </div>
+                </div>
+                <div class="airpay-assistant__msg airpay-assistant__msg--user">
+                    What should I learn next for my Compliance Officer track?
+                </div>
+                <div class="airpay-assistant__msg airpay-assistant__msg--bot">
+                    <p>Based on your role and current skill gaps, I'd suggest <strong>Anti-Money Laundering 2026</strong> (mandatory, 45 min) as the next priority. After that, the <strong>RBI Master Direction Refresh</strong> would round out your compliance core.</p>
+                </div>
+                <div class="airpay-assistant__msg--typing">
+                    <span class="airpay-assistant__dot"></span>
+                    <span class="airpay-assistant__dot"></span>
+                    <span class="airpay-assistant__dot"></span>
+                </div>
+            </div>
+            <div class="airpay-assistant__input-area">
+                <input type="text" placeholder="Ask me anything..." disabled>
+                <button type="button" disabled aria-label="Send"><i class="fa fa-paper-plane" aria-hidden="true"></i></button>
+            </div>
+            <div class="airpay-assistant__footer">
+                <small>17 questions remaining today</small>
+            </div>
+        </div>
+    </div>
+
+    <h4 style="margin-top: var(--ap-space-6);">Architecture</h4>
+    <ul style="font-size: var(--ap-text-sm); color: var(--ap-color-text-secondary); line-height: var(--ap-leading-relaxed);">
+        <li><strong>Inject point:</strong> <code>local_airpay_assistant\hook_callbacks::before_footer_html_generation</code> &mdash; Moodle 5.x footer hook</li>
+        <li><strong>Gating order:</strong> logged-in &amp; not guest &rarr; <code>feature_flags::is_enabled('ai.assistant.enabled')</code> &rarr; legacy <code>local_airpay_assistant/enabled</code> kill switch &rarr; not on login/upgrade pages</li>
+        <li><strong>Fallback:</strong> when the feature flag is off, <code>ai_client::ask()</code> returns a static "AI assistant temporarily disabled" response &mdash; zero cost, graceful degradation (Phase A0 §5.1)</li>
+        <li><strong>Rate limit:</strong> <code>local_airpay_assistant/rate_limit</code> queries per user per day (default 20). Counter shown in footer.</li>
+    </ul>
 </section>
 
 </div>

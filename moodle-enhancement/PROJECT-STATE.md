@@ -4,6 +4,57 @@
 
 ---
 
+## 🆕 PHASE B0 — AI Assistant drawer polish (2026-05-14)
+
+The 7th-priority redesign surface from SURFACE-ROADMAP §6. Builds on the already-shipped `local_airpay_assistant` plugin: a floating chat bubble injected into every page footer via the Moodle 5.x `before_footer_html_generation` hook. Pre-existing functionally; this iteration brings it up to the manifesto bar (tokens, a11y, feature-flag gating).
+
+### What changed
+
+**Tokens migration (`styles.css`)**: 207 → 347 lines, but **43 hex literals → 0**. Every colour, spacing, radius, motion duration now references `--ap-*` tokens. Removed the entire `[data-theme="dark"] / body.dark-mode` block — dark mode auto-flips via the same tokens. Mobile breakpoint changed from `590px` to the manifesto's `$ap-bp-mobile` (already 590 in tokens). New tap-target enforcement on the toggle fab (44pt min via `--ap-tap-target-min`).
+
+**Feature-flag gate (`hook_callbacks.php`)**: Now checks `\local_airpay_core\feature_flags::is_enabled('ai.assistant.enabled')` before rendering. Tenant-scoped — super admin toggles via the Switchboard (Site Admin → Local plugins → The Switchboard). The legacy `local_airpay_assistant/enabled` site config is kept as a second-line kill switch for backward compat with non-Switchboard deployments. The `ai_client::ask()` fallback (returns "temporarily disabled" message when flag is off) was already in place from Phase A0 — verified the chain is now end-to-end working.
+
+**A11y improvements (`chat_bubble.mustache`)**:
+- Toggle button: `aria-label`, `aria-expanded="false"`, `aria-controls="airpay-assistant-panel"`
+- Chat panel: `role="dialog"` + `aria-labelledby="airpay-assistant-title"` + `aria-modal="false"`
+- Message log: `role="log"` + `aria-live="polite"` + `aria-atomic="false"` (so screen readers announce new bot messages without re-reading the whole transcript)
+- Quick-actions group: `role="group"` + `aria-label="Quick questions"`
+- Input: explicit `<label class="sr-only">` for screen readers (was a bare placeholder before)
+- Send button: `aria-label="Send message"` instead of bare icon
+- Minimise button: `aria-label="Minimise assistant panel"`
+- All decorative `<i class="fa">` icons marked `aria-hidden="true"`
+
+**Lang strings added**: 6 new strings in `lang/en/local_airpay_assistant.php` (toggle_assistant, close_assistant, minimize_assistant, send_message, type_question, quick_questions). Hindi / Kannada / Marathi / Swahili translations to follow via the existing `tool_customlang` workflow.
+
+### Style Guide demo
+
+New "AI Assistant chat bubble" section at `/local/airpay_core/admin/styleguide.php` with two visual demos:
+1. **Bubble (closed)** — the 56×56 fab against a body-coloured backdrop
+2. **Panel (open)** — full 380×520 chat with realistic conversation (learner asking about Compliance Officer track), typing indicator, quick-action chips, input area, footer
+
+Plus an architecture note documenting the inject point, the 4-step gating order, the fallback contract, and the rate limit.
+
+### What still needs work (next iterations)
+
+- **Command palette integration** — the manifesto §4.1 spec'd `Cmd+K` to open the assistant. Currently only the floating button opens it. A keyboard shortcut would make it usable without taking a hand off the keyboard.
+- **AMD module refactor** — the current AMD module (`amd/src/...`) wasn't touched in this iteration. Worth a separate pass to verify focus management when the panel opens (should auto-focus the input) and `Esc` to close.
+- **Hi/Kn/Mr/Sw translations** for the 6 new a11y strings.
+
+### Files touched
+
+```
+moodle-enhancement/local/airpay_assistant/
+  styles.css                          [tokens migration — 43 hex literals → 0]
+  classes/hook_callbacks.php          [+ feature_flags gate before legacy config check]
+  templates/chat_bubble.mustache      [a11y attrs + role=dialog + aria-live message log]
+  lang/en/local_airpay_assistant.php  [+ 6 a11y strings]
+
+moodle-enhancement/local/airpay_core/
+  admin/styleguide.php                [+ AI Assistant chat bubble section with 2 demos]
+```
+
+---
+
 ## 🆕 PHASE B0+ — Component reuse sweep (batch 4 — final) (2026-05-14)
 
 Three more KPI strips migrated. Brings the sweep to its natural completion: **20 surfaces / 75+ KPI tiles** all consuming the canonical `stat_card`.

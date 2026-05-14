@@ -15,3 +15,11 @@ $string['poweredby'] = 'Powered by AI';
 $string['ratelimited'] = 'Daily limit reached. Come back tomorrow!';
 $string['notconfigured'] = 'AI assistant not configured. Contact your administrator.';
 $string['queriesremaining'] = '{$a} questions remaining today';
+
+// Phase B0 (2026-05-14) — a11y labels for the chat bubble.
+$string['toggle_assistant'] = 'Open AI learning assistant';
+$string['close_assistant']  = 'Close AI learning assistant';
+$string['minimize_assistant'] = 'Minimise assistant panel';
+$string['send_message']     = 'Send message';
+$string['type_question']    = 'Type your question';
+$string['quick_questions']  = 'Quick questions';
