@@ -100,7 +100,7 @@
                             data-action="toggle"
                             data-target="theme_airpayux-drawers-courseindex"
                             data-bs-toggle="tooltip"
-                            data-bs-placement="right"
+                            data-placement="right"
                             title="{{#str}}opendrawerindex, core{{/str}}"
                         >
                             <span class="sr-only">{{#str}}opendrawerindex, core{{/str}}</span>
@@ -109,14 +109,14 @@
                     </div>
                 {{/courseindex}}
                 {{#hasblocks}}
-                    <div class="drawer-toggler drawer-right-toggle ms-auto d-print-none">
+                    <div class="drawer-toggler drawer-right-toggle ml-auto d-print-none">
                         <button
                             class="btn icon-no-margin"
                             data-toggler="drawers"
                             data-action="toggle"
                             data-target="theme_airpayux-drawers-blocks"
                             data-bs-toggle="tooltip"
-                            data-bs-placement="right"
+                            data-placement="right"
                             title="{{#str}}opendrawerblocks, core{{/str}}"
                         >
                             <span class="sr-only">{{#str}}opendrawerblocks, core{{/str}}</span>
@@ -132,22 +132,41 @@
                     {{> core/moremenu}}
                 </div>
             {{/secondarymoremenu}}
-            {{! ═══ AIRPAY COURSE PROGRESS BAR (sticky top) ═══ }}
+            {{! ═══ AIRPAY COURSE PROGRESS BAR (sticky top) ═══
+                Phase B0 Player iter 2 — a11y polish: aria-label on icon
+                buttons (was title-only), aria-current on progress, real
+                progress-bar role on the track. }}
             {{#ap_has_progress}}
-            <div class="ap-course-progress-bar">
+            <div class="ap-course-progress-bar"
+                 role="region"
+                 aria-label="Course progress and navigation">
                 <div class="ap-course-progress-bar__info">
-                    <a href="{{ap_course_url}}" class="ap-course-progress-bar__back" title="Back to course">
-                        <i class="fa fa-arrow-left"></i>
+                    <a href="{{ap_course_url}}"
+                       class="ap-course-progress-bar__back"
+                       aria-label="Back to {{ap_course_name}}">
+                        <i class="fa fa-arrow-left" aria-hidden="true"></i>
                     </a>
                     {{#ap_has_sidebar}}
-                    <button class="ap-course-progress-bar__toggle" id="ap-sidebar-toggle" title="Toggle sidebar">
-                        <i class="fa fa-bars"></i>
+                    <button class="ap-course-progress-bar__toggle"
+                            type="button"
+                            id="ap-sidebar-toggle"
+                            aria-label="Toggle course sidebar"
+                            aria-controls="ap-course-sidebar">
+                        <i class="fa fa-bars" aria-hidden="true"></i>
                     </button>
                     {{/ap_has_sidebar}}
                     <span class="ap-course-progress-bar__name">{{ap_course_name}}</span>
-                    <span class="ap-course-progress-bar__stats">{{ap_course_completed}}/{{ap_course_total}} &middot; {{ap_course_progress}}%</span>
+                    <span class="ap-course-progress-bar__stats"
+                          aria-label="{{ap_course_completed}} of {{ap_course_total}} activities completed, {{ap_course_progress}}%">
+                        {{ap_course_completed}}/{{ap_course_total}} &middot; {{ap_course_progress}}%
+                    </span>
                 </div>
-                <div class="ap-course-progress-bar__track">
+                <div class="ap-course-progress-bar__track"
+                     role="progressbar"
+                     aria-valuenow="{{ap_course_progress}}"
+                     aria-valuemin="0"
+                     aria-valuemax="100"
+                     aria-label="Course completion progress">
                     <div class="ap-course-progress-bar__fill" style="width:{{ap_course_progress}}%;"></div>
                 </div>
             </div>

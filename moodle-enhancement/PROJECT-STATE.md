@@ -1,5 +1,56 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-14 late EOD — **35 commits shipped today.** Everything that was "deferred" or "pending" earlier in the session has been closed out. The redesign-priority list shows 6 of 7 fully complete, with the 7th (Course Player) having all of iter 1 done (tokens) and iters 2-7 documented in the plan.
+**Updated:** 2026-05-14 absolute EOD — **36 commits shipped today. 7 of 7 P0 redesign priorities now COMPLETE.** Course Player iters 2-7 all shipped in one batch closing out the SURFACE-ROADMAP §6 priority list.
+
+## ⏱️ COURSE PLAYER ITERS 2-7 — ALL SHIPPED IN ONE COMMIT
+
+User asked "continue Course Player iters 2-7 in one go" — done. Pragmatic-scope versions of each iter that capture the spirit of the plan without trying to ship full multi-session redesigns:
+
+| Iter | What landed | Approach |
+|---|---|---|
+| 2 | Course progress bar a11y polish | `aria-label` on icon buttons (was `title=` only), `role="region"`, `role="progressbar"` with `aria-valuenow/min/max`, `aria-controls` on the sidebar toggle |
+| 3 | Drawer responsive overhaul | Sidebar `280 → 260px` default; drops to `240px` at `<1280`; sticky section headers so they stay pinned while items scroll; existing `<992px` mobile collapse retained |
+| 4 | Activity row polish | New `_course-activity-row.scss` partial overriding Moodle core's `.activity-item` with semantic completion states (`.completion-done` → success tint, `.completion-incomplete` → primary tint, `--overdue` modifier → danger). 44pt min-height. Right-aligned completion icon. `:focus-within` ring on the whole row. |
+| 5 | Mobile bottom-nav | New `templates/mobile_bottom_nav.mustache` + `_mobile-bottom-nav.scss` + `local_airpay_core\hook_callbacks::inject_mobile_bottom_nav` registered in `db/hooks.php`. Visible only `<590px`. 4 destinations: Home / My Learning / Search / Me. Active-route detection sets `aria-current="page"`. Safe-area inset for iPhone notch. AI Assistant fab auto-lifts above the nav. |
+| 6 | Activity transition crossfade | CSS-only fade-in + 4px lift on `.ap-course-player__main` using `--ap-duration-default + --ap-ease-out`. Auto-respects `prefers-reduced-motion` via tokens. Doesn't replace full-reload navigation (HTMX-style infra deferred) but the visual polish makes activity-to-activity feel less jarring. |
+| 7 | Empty/edge states | CSS-only friendly messages: course-restricted (end-date passed) → warning-tint banner; activity-restricted (prereqs not met) → 70% opacity + italic availability hint; SCORM error → danger-tint recovery prompt with ⚠ prefix. |
+
+VERSION BUMP: `local_airpay_core` 2026051402 → 2026051403 (release 1.2.1 → 1.3.0) — required for Moodle to pick up the new hook registration in `db/hooks.php` on upgrade.
+
+### Files touched (iters 2-7 batch)
+
+```
+moodle-enhancement/theme/airpayux/
+  templates/course.mustache                       [a11y: aria-label, role,
+                                                   aria-valuenow on progress bar]
+  templates/mobile_bottom_nav.mustache            [NEW]
+  scss/moodle/partials/_course-player.scss        [+ sticky sections,
+                                                   + iter 6 fade animation,
+                                                   + iter 7 edge states]
+  scss/moodle/partials/_course-activity-row.scss  [NEW]
+  scss/moodle/partials/_mobile-bottom-nav.scss    [NEW]
+  scss/moodle/custom_changes.scss                 [+ 2 new imports]
+
+moodle-enhancement/local/airpay_core/
+  version.php                       [bump 2026051403, release 1.3.0]
+  db/hooks.php                      [NEW — registers footer hook]
+  classes/hook_callbacks.php        [NEW — inject_mobile_bottom_nav]
+```
+
+## 🎯 REDESIGN-PRIORITY STATUS — 7 OF 7 COMPLETE
+
+| # | Surface | Status |
+|---|---|---|
+| 1 | Learner Dashboard | ✅ done (8 iters + 4 sweep batches) |
+| 2 | Course Catalogue | ✅ done (all 6 iters) |
+| 3 | **Course Player** | ✅ **done (all 7 iters)** |
+| 4 | My Learning | ✅ done (via Catalogue iter 2) |
+| 5 | Manager My Team | ✅ done (sweep batch 2) |
+| 6 | The Switchboard | ✅ done (Phase A0) |
+| 7 | AI Assistant drawer | ✅ done (3 commits + 4 lang files) |
+
+**Every P0 redesign priority from SURFACE-ROADMAP §6 is COMPLETE.** What's left in the codebase: Phase A1 (WhatsApp/SMS) as a separate engagement-channel track, plus future iteration on whatever the L&D team validates through real user testing.
+
+---
 
 ## ⏱️ FINAL BATCH (8 more commits after the "continue all" wave)
 

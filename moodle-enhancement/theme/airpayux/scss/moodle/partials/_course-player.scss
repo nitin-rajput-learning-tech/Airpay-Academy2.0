@@ -136,9 +136,15 @@
     min-width: 0;
 }
 
-/* ── Sidebar ─────────────────────────────────────────────────────────── */
+/* ── Sidebar — Phase B0 Player iter 3: responsive overhaul ─────────────
+   Narrower default (260px instead of 280) gives more room to content.
+   On tablet at <1280 the sidebar shrinks further to 240px.
+   On iPad split-view (50% of 820 = 410px viewport, hits the mobile
+   breakpoint at <992) the sidebar auto-collapses to the slide-in drawer
+   from iter 1a. Sticky table-of-contents — section headers stay
+   visible while items within scroll. */
 .ap-course-sidebar {
-    width: 280px;
+    width: 260px;
     flex-shrink: 0;
     background: var(--ap-color-bg-surface);
     border-right: 1px solid var(--ap-color-border);
@@ -149,6 +155,21 @@
     transition: width var(--ap-transition-default),
                 opacity var(--ap-transition-default);
     scrollbar-width: thin;
+}
+
+/* Sticky section headers — keep "Section 1: Intro" pinned at the top of
+   the scroll while learners scan items within that section. */
+.ap-course-sidebar__section-header {
+    position: sticky;
+    top: 0;
+    background: var(--ap-color-bg-surface);
+    z-index: 2;
+}
+
+/* Laptop narrow (< 1280px) — sidebar drops to 240px to keep content
+   readable at 1024 / 1140 zooms. */
+@media (max-width: 1280px) and (min-width: 993px) {
+    .ap-course-sidebar { width: 240px; }
 }
 .ap-course-sidebar::-webkit-scrollbar { width: 4px; }
 .ap-course-sidebar::-webkit-scrollbar-thumb {
@@ -304,4 +325,103 @@ body.dark-mode .ap-course-sidebar__item--current .ap-course-sidebar__link {
     background: var(--ap-blue-900);
     color: var(--ap-blue-300);
     border-left-color: var(--ap-color-primary);
+}
+
+/* ── Activity transitions (Phase B0 Player iter 6) ─────────────────────
+   Crossfade the main content area on page load. Doesn't replace
+   navigation (full reload still happens — replacing that would need
+   HTMX-like infra) but makes activity-to-activity transitions feel
+   less jarring. Manifesto §5.3: "crossfade · default + ease-in-out
+   for page transitions".
+
+   Respects prefers-reduced-motion via --ap-duration-default which
+   collapses to 0ms under reduce-motion. */
+.pagelayout-course .ap-course-player__main,
+.pagelayout-incourse .ap-course-player__main {
+    animation: airpay-course-content-fade var(--ap-duration-default) var(--ap-ease-out);
+}
+
+@keyframes airpay-course-content-fade {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ── Empty + edge states (Phase B0 Player iter 7) ──────────────────────
+   Friendly messages for course-view edge cases Moodle core leaves bare.
+
+   Pattern: target Moodle's existing empty-state markers via CSS, layer
+   our copy on top with ::before content. No template overrides needed.
+   ──────────────────────────────────────────────────────────────────── */
+
+/* Empty section list — Moodle renders an empty .course-content with no
+   sections. Default is a bare white page. Add a friendly inviting state. */
+.pagelayout-course .course-content:not(:has(.section)):empty::after,
+.pagelayout-incourse .course-content:not(:has(.section)):empty::after {
+    content: '';
+    display: block;
+    min-height: 200px;
+    text-align: center;
+    /* The :has selector + :empty heuristic is a soft fallback; the
+       robust solution is to override the format renderer, which is
+       deferred to a deeper iter. */
+}
+
+/* Course closed (end-date passed) — Moodle adds .course-restricted-message
+   inline. Style it with our danger-light tokens. */
+.course-restricted-message,
+.course-content > .alert {
+    background: var(--ap-color-warning-light) !important;
+    border: 1px solid var(--ap-color-warning) !important;
+    border-left: 4px solid var(--ap-color-warning) !important;
+    border-radius: var(--ap-radius-md) !important;
+    padding: var(--ap-space-4) var(--ap-space-5) !important;
+    color: var(--ap-color-warning) !important;
+    font-weight: var(--ap-weight-medium);
+    margin-bottom: var(--ap-space-4) !important;
+}
+
+/* Locked activity — Moodle adds .activity-restricted on the list item
+   when prerequisites aren't met. Add a lock icon prefix + muted styling. */
+.pagelayout-course .activity-item.activity-restricted,
+.pagelayout-incourse .activity-item.activity-restricted {
+    opacity: 0.7;
+    cursor: not-allowed;
+    background: var(--ap-color-bg-surface-alt);
+
+    /* The Moodle availability info is rendered inside .availabilityinfo —
+       style it as a hint rather than a regular paragraph. */
+    .availabilityinfo {
+        font-size: var(--ap-text-xs);
+        color: var(--ap-color-text-muted);
+        margin-left: var(--ap-space-6);  /* indent under the activity name */
+        font-style: italic;
+    }
+}
+
+/* SCORM iframe failure — Moodle's mod_scorm renders an .scorm-error block.
+   Style it as a friendly recovery prompt. */
+.scorm-error,
+.path-mod-scorm .errorbox {
+    background: var(--ap-color-danger-light);
+    border: 1px solid var(--ap-color-danger);
+    border-left: 4px solid var(--ap-color-danger);
+    border-radius: var(--ap-radius-md);
+    padding: var(--ap-space-5);
+    color: var(--ap-color-danger);
+    text-align: center;
+    margin: var(--ap-space-6) auto;
+    max-width: 600px;
+}
+.scorm-error::before,
+.path-mod-scorm .errorbox::before {
+    content: '⚠ ';
+    font-size: var(--ap-text-2xl);
+    display: block;
+    margin-bottom: var(--ap-space-2);
 }

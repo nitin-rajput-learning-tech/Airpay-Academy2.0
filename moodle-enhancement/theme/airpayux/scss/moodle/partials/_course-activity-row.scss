@@ -1,0 +1,141 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   .activity-item — Phase B0 Player iter 4 (2026-05-14)
+   ═══════════════════════════════════════════════════════════════════════
+   CSS overrides for Moodle core's activity-item rows (rendered by
+   core_courseformat::activity_item.mustache). We can't change the
+   markup without overriding the core template, but we can re-style.
+
+   Goals:
+     - 44pt min tap target (WCAG 2.5.5)
+     - Semantic completion states using shared tokens
+         .activity-item.completion-done / .completion-incomplete /
+         .activity-item--overdue (custom modifier added via JS later)
+     - Right-aligned completion icon (was inline with name — visually noisy)
+     - Consistent 24px icon size from tokens
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.pagelayout-course .activity-item,
+.pagelayout-incourse .activity-item {
+    display: flex;
+    align-items: center;
+    gap: var(--ap-space-3);
+    padding: var(--ap-space-3) var(--ap-space-4);
+    min-height: var(--ap-tap-target-min);   /* WCAG 2.5.5 */
+    border-radius: var(--ap-radius-md);
+    background: var(--ap-color-bg-surface);
+    border: 1px solid var(--ap-color-border);
+    margin-bottom: var(--ap-space-2);
+    transition: background var(--ap-transition-quick),
+                border-color var(--ap-transition-quick),
+                transform var(--ap-transition-quick);
+
+    /* Activity icon (left). Moodle puts this in .activityiconcontainer. */
+    .activityiconcontainer,
+    .activity-icon {
+        width: 24px;
+        height: 24px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--ap-color-primary);
+    }
+
+    /* Activity name (centre). */
+    .activityname {
+        flex: 1;
+        font-size: var(--ap-text-sm);
+        font-weight: var(--ap-weight-medium);
+        color: var(--ap-color-text-primary);
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .activityname a {
+        color: inherit;
+        text-decoration: none;
+        display: block;
+    }
+
+    .activityname a:hover {
+        color: var(--ap-color-primary);
+    }
+
+    /* Completion icon (right). Moodle puts this in .completion-info. */
+    .completion-info,
+    .activity-completion {
+        flex-shrink: 0;
+        margin-left: auto;
+        font-size: var(--ap-text-sm);
+    }
+
+    /* Hover lift on the whole row. */
+    &:hover {
+        border-color: var(--ap-color-primary);
+        background: var(--ap-color-primary-light);
+        transform: translateY(-1px);
+    }
+
+    /* Keyboard focus on any child link gives the whole row a focus ring. */
+    &:focus-within {
+        border-color: var(--ap-color-primary);
+        outline: var(--ap-focus-ring-width) solid var(--ap-color-primary);
+        outline-offset: var(--ap-focus-ring-offset);
+    }
+}
+
+/* ── Completion state — Moodle core classes ──────────────────────────── */
+
+/* Completed activity. Moodle adds .completion-done. */
+.pagelayout-course .activity-item.completion-done,
+.pagelayout-incourse .activity-item.completion-done {
+    .activityname {
+        color: var(--ap-color-text-muted);
+    }
+    .completion-info {
+        color: var(--ap-color-success);
+    }
+    /* Subtle "completed" tint on the left edge. */
+    border-left: 3px solid var(--ap-color-success);
+}
+
+/* Incomplete but started. Moodle uses .completion-incomplete. */
+.pagelayout-course .activity-item.completion-incomplete,
+.pagelayout-incourse .activity-item.completion-incomplete {
+    border-left: 3px solid var(--ap-color-primary);
+}
+
+/* Current/active activity — Moodle marks it via .activity-current or via
+   :focus-within when the user has clicked into the activity. We also
+   recognise a custom .activity-item--current modifier the theme can add
+   programmatically. */
+.pagelayout-course .activity-item.activity-current,
+.pagelayout-course .activity-item--current,
+.pagelayout-incourse .activity-item.activity-current,
+.pagelayout-incourse .activity-item--current {
+    background: var(--ap-color-primary-light);
+    border-color: var(--ap-color-primary);
+    border-left-width: 3px;
+}
+
+/* Overdue activity — set via custom modifier when the course has a
+   completion deadline that's passed. Adds danger tint + bold weight. */
+.pagelayout-course .activity-item--overdue,
+.pagelayout-incourse .activity-item--overdue {
+    background: var(--ap-color-danger-light);
+    border-left: 3px solid var(--ap-color-danger);
+    .activityname { color: var(--ap-color-danger); font-weight: var(--ap-weight-semibold); }
+}
+
+/* ── Mobile — tighter padding, smaller min-height kept at 44pt floor ─ */
+@media (max-width: 590px) {
+    .pagelayout-course .activity-item,
+    .pagelayout-incourse .activity-item {
+        padding: var(--ap-space-2) var(--ap-space-3);
+        gap: var(--ap-space-2);
+        /* min-height stays at --ap-tap-target-min (44px) — never drop
+           below WCAG floor on mobile. */
+    }
+}
