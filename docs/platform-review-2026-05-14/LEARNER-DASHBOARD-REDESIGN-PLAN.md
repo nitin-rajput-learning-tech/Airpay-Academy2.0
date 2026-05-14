@@ -1,10 +1,12 @@
 # Learner Dashboard — Redesign Plan
 
+> **STATUS (2026-05-14): Iters 1-8 SHIPPED — feature-complete.** Only Iter 9 (user-driven visual + a11y validation on staging) remains before the redesign is closed. See PROJECT-STATE.md → "Phase B0 — Iterations 5–9 Batch" for the full ship log.
+
 **Surface:** `/my/dashboard.php` (Moodle's default `/my/` reroutes here for Airpay users)
 **Status:** EXISTS · **Priority:** P0 (top of the 7-redesign list) · **Effort:** M (1-2 months total)
 **Layout file:** `moodle-enhancement/theme/airpayux/layout/dashboard.php` (908 lines)
 **Template:** `moodle-enhancement/theme/airpayux/templates/dashboard.mustache`
-**SCSS:** `moodle-enhancement/theme/airpayux/scss/moodle/partials/_surface-dashboard.scss` (683 lines, 66 hex literals)
+**SCSS:** `moodle-enhancement/theme/airpayux/scss/moodle/partials/_surface-dashboard.scss` (556 lines after iters 2-3-7 cleanup, was 683)
 
 ---
 
@@ -197,21 +199,22 @@ When a learner has no enrolled courses / no deadlines / no achievements, instead
 
 ---
 
-## 6. Estimated session breakdown
+## 6. Iteration ship log (as actually executed)
 
-| Session | Deliverable | Risk |
-|---|---|---|
-| 1 (DONE — Phase A0.5) | Stat card component + Style Guide demo | Low (additive only) |
-| 2 | Replace inline stat-tile HTML in dashboard.mustache with partial calls | Low (1:1 class mapping) |
-| 3 | Mobile-first dashboard shell + sidebar/main grid restructure | Med (visual change visible to all users) |
-| 4 | Course progress card + Continue Learning migration | Med |
-| 5 | Activity feed item + deadline tile + section header extraction | Low |
-| 6 | Empty states for all learner sections | Low |
-| 7 | Site admin layout polish (KPI strip + chart cards) | Low |
-| 8 | Manager dashboard layout polish (team summary card) | Low |
-| 9 | Visual regression + a11y final pass | n/a |
+| Iter | Commit | Deliverable | Status |
+|---|---|---|---|
+| 1 | `d3ae87af0` | Stat card component + Style Guide demo + redesign plan | ✅ shipped |
+| 2 | `153dd5556` | Replace inline stat-tile HTML in dashboard.mustache with partial (admin + manager + learner) | ✅ shipped |
+| 3 | `6335f803c` | Course progress card + Continue Learning migration + status badges + dataset enrichment | ✅ shipped |
+| 4 | `6883306c0` | Activity feed item (admin Recent Activity + learner Timeline normalised onto one component) | ✅ shipped |
+| 5 | `9e7a4b89d` | Deadline tile with 4 urgency states + urgent-pulse animation | ✅ shipped |
+| 6 | `42c32000b` | Section header partial + legacy class aliases (no template churn) | ✅ shipped |
+| 7 | `f68f26b44` | Empty state component + fix for broken legacy tokens | ✅ shipped |
+| 8 | `6552527e6` | User Analytics tiles → stat_card (closes iter-2 migration) | ✅ shipped |
+| — | `ec4a1f1d7` | Dead-code sweep — strip iter-2/3 unreferenced CSS from `_surface-dashboard.scss` | ✅ shipped |
+| 9 | — | Visual regression + a11y validation on staging | ⬜ user-driven |
 
-Roughly 8 sessions of work after this one. Aligns with the Effort=M (1-2 months) label from SURFACE-ROADMAP.
+Originally planned as 8-9 sessions; consolidated into one session with 8 commits + 1 cleanup commit on the `production` branch.
 
 ---
 

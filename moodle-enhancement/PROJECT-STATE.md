@@ -4,6 +4,74 @@
 
 ---
 
+## 🆕 PHASE B0 — LEARNER DASHBOARD REDESIGN: ITERATIONS 5–9 BATCH (2026-05-14)
+
+Final batch of redesign iterations + a dead-code cleanup pass + a validation gate note. Phase B0 is now feature-complete; remaining work is user-driven visual + a11y validation on staging.
+
+### Cleanup commit (`ec4a1f1d7`) — `_surface-dashboard.scss`
+
+127 lines / 15 hex literals removed. Dead `.airpay-dash__stat*` and `.airpay-dash__course*` classes deleted after iters 2 and 3 made them unreachable. File went from 683 → 556 lines. Old `.airpay-dash__timeline-*` CSS lives in 4 other files and stays for now (low-value, higher-risk to sweep across files in one commit).
+
+### Iter 5 (`9e7a4b89d`) — Deadline tile
+
+`deadline_tile` component with 4 urgency states (`normal` / `soon` / `urgent` / `overdue`). Urgent variant icon pulses 700ms spring on render. Overdue gets a thick danger left-border for scan-readability. Data layer computes urgency + matching icon + relative-time string per deadline. Mobile <590px: view button moves below content to preserve the 44pt tap target.
+
+### Iter 6 (`42c32000b`) — Section header partial
+
+The h3 + "View all →" pattern lifted out of `_surface-dashboard.scss` into a dedicated component. Rather than migrating all 15 inline `<h3 class="airpay-dash__section-title">` sites (high churn, zero functional gain), the new SCSS aliases the legacy class names — existing inline markup automatically picks up the new tokens-aware styling. The "View all" link gets a hover pill + arrow nudge animation.
+
+### Iter 7 (`f68f26b44`) — Empty state component + fixed broken tokens
+
+`empty_state` component with 3 size variants (`sm` / `md` / `lg`). **Caught a real bug:** the legacy `.ap-empty-state` CSS in `_components.scss` referenced variables that don't exist in `_tokens.scss` (`--ap-text`, `--ap-border`, `--ap-gradient`). The empty state was silently rendering with browser defaults — nobody noticed because empty states aren't load-bearing. The new tokens-aware version fixes that and supplies the legacy class as an alias so existing markup picks up the fix.
+
+### Iter 8 (`6552527e6`) — User Analytics → stat_card
+
+Final inline-stat-tile site on the admin dashboard. Five User Analytics tiles converted from hex-coloured inline-style to semantic stat_card variants. Closes the migration started in iter 2.
+
+### Iter 9 — Validation gate
+
+The remaining work is user-driven visual + a11y validation:
+
+| Gate | Tool / process | Owner |
+|---|---|---|
+| **Visual regression** | Capture before/after screenshots at 360px / 768px / 1280px / 1600px for all 4 role tiers (siteadmin / L&D admin / manager / learner) on dev. Diff against the audit screenshots in `moodle-enhancement/audit/*.png`. | Nitin (on dev XAMPP after `php admin/cli/purge_caches.php`) |
+| **A11y axe-core scan** | Run axe-core CI sweep on `/my/dashboard.php` for all 4 role tiers. Target: 0 critical, 0 serious. | Nitin (`cd moodle-enhancement/audit/playwright && node probe_*.mjs`) |
+| **Dark mode parity** | Toggle `[data-theme="dark"]` via theme settings — verify every new component (stat_card / course_progress_card / activity_item / deadline / section_header / empty_state) renders correctly. | Nitin (Style Guide page is the fastest visual checker) |
+| **Tenant parity** | Render dashboard as Airpay (id=1), Public (id=77), ZEEA (id=177) users — verify tenant branding still propagates correctly to the new components. | Nitin (via `/my/switchrole.php`) |
+| **Reduced motion** | Set `prefers-reduced-motion: reduce` in DevTools — verify no animations play (stat_card hover, deadline pulse, activity today-pulse). | Nitin |
+
+Once all 5 gates pass, Phase B0 ships to staging via the existing deploy runbook (`moodle-enhancement/deploy/ADMIN-FEEDBACK-DEPLOYMENT-RUNBOOK.md` — Step 5 covers the dashboard).
+
+### Phase B0 summary
+
+7 iterations + 1 cleanup, 8 commits total in this session (`d3ae87af0..6552527e6`). The dashboard's six primary visual surfaces — KPI tiles, course progress cards, activity feed items, deadline tiles, section headers, empty states — all now consume tokens-aware reusables. Six new Mustache partials + six new SCSS partials, ~1,100 lines of new tokens-aware CSS, ~200 lines of dead legacy CSS removed.
+
+### Files touched (iters 5-9 + cleanup)
+
+```
+docs/platform-review-2026-05-14/
+  LEARNER-DASHBOARD-REDESIGN-PLAN.md   [referenced — not modified this batch]
+
+moodle-enhancement/theme/airpayux/
+  layout/dashboard.php                          [+ urgency on deadlines, empty_continue data,
+                                                  semantic variants on useranalytics]
+  templates/dashboard.mustache                  [migrated deadlines, empty state, useranalytics]
+  templates/components/deadline_tile.mustache    [new]
+  templates/components/section_header.mustache   [new]
+  templates/components/empty_state.mustache      [new]
+  scss/moodle/partials/_components-deadline.scss     [new]
+  scss/moodle/partials/_components-section-header.scss [new]
+  scss/moodle/partials/_components-empty-state.scss   [new]
+  scss/moodle/partials/_surface-dashboard.scss       [-140 lines dead code]
+  scss/moodle/partials/_components.scss              [removed broken empty-state]
+  scss/moodle/custom_changes.scss                    [+ 3 imports]
+
+moodle-enhancement/local/airpay_core/
+  admin/styleguide.php                          [+ Deadline / Section header / Empty state demos]
+```
+
+---
+
 ## 🆕 PHASE B0 — LEARNER DASHBOARD REDESIGN: ITERATION 4 (2026-05-14)
 
 **Activity feed item** — one component that handles both the admin "Recent Activity" inline feed AND the learner "Activity Timeline" with dot + connecting line. Two layouts, seven semantic variants, zero hex literals.
