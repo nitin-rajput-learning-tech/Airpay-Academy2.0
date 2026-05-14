@@ -1,206 +1,383 @@
-/* ═══════════════════════════════════════════════
-   Airpay LXP Catalog — Netflix-Style Design
-   ═══════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════
+   Airpay LXP Catalog — Netflix-Style Design (tokens migration)
+   Phase B0 Catalogue iter 1 (2026-05-14)
 
-.airpay-catalog { max-width: 1400px; margin: 0 auto; padding: 0 20px; }
+   Zero hex literals — every colour/spacing/radius value references
+   --ap-* tokens from theme/airpayux/scss/moodle/_tokens.scss.
+   Tokens auto-flip in dark mode via body.dark-mode (see dark_mode.scss
+   in the theme); per-rule dark overrides removed — they were doing
+   manually what the token system handles automatically.
+   ═══════════════════════════════════════════════════════════ */
 
-/* Search */
-.airpay-catalog__search-section { margin-bottom: 32px; }
+.airpay-catalog {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 var(--ap-space-5);
+}
+
+/* ── Search ──────────────────────────────────────────────────────────── */
+.airpay-catalog__search-section { margin-bottom: var(--ap-space-8); }
 .airpay-catalog__search-form {
     position: relative;
     max-width: 600px;
     margin: 0 auto;
 }
 .airpay-catalog__search-icon {
-    position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
-    color: #9ca3af; font-size: 1.1rem;
+    position: absolute;
+    left: var(--ap-space-4);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--ap-color-text-muted);
+    font-size: var(--ap-text-base);
 }
 .airpay-catalog__search-input {
-    width: 100%; padding: 14px 16px 14px 44px;
-    border: 2px solid #e2e6ef; border-radius: 12px;
-    font-size: 1rem; background: #fff;
-    transition: border-color 0.2s;
+    width: 100%;
+    padding: var(--ap-space-3) var(--ap-space-4) var(--ap-space-3) 44px;
+    border: 2px solid var(--ap-color-border);
+    border-radius: var(--ap-radius-md);
+    font-size: var(--ap-text-base);
+    background: var(--ap-color-bg-surface);
+    color: var(--ap-color-text-primary);
+    transition: border-color var(--ap-transition-quick);
+    min-height: var(--ap-control-height-lg);
 }
 .airpay-catalog__search-input:focus {
-    outline: none; border-color: #0066A7;
+    outline: none;
+    border-color: var(--ap-color-primary);
 }
 .airpay-catalog__search-clear {
-    position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
-    color: #9ca3af; font-size: 1rem;
+    position: absolute;
+    right: var(--ap-space-3);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--ap-color-text-muted);
+    font-size: var(--ap-text-sm);
 }
 
-/* Sections */
-.airpay-catalog__section { margin-bottom: 36px; }
+/* ── Sections ────────────────────────────────────────────────────────── */
+.airpay-catalog__section { margin-bottom: var(--ap-space-10); position: relative; }
 .airpay-catalog__section-title {
-    font-size: 1.15rem; font-weight: 700; color: #1a1a2e;
-    margin: 0 0 16px; display: flex; align-items: center; gap: 8px;
+    font-size: var(--ap-text-lg);
+    font-weight: var(--ap-weight-bold);
+    color: var(--ap-color-text-primary);
+    margin: 0 0 var(--ap-space-4);
+    display: flex;
+    align-items: center;
+    gap: var(--ap-space-2);
 }
-.airpay-catalog__section-title i { color: #0066A7; }
+.airpay-catalog__section-title i { color: var(--ap-color-primary); }
 .airpay-catalog__section-header {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--ap-space-4);
 }
 
-/* Sort */
+/* ── Sort tabs ───────────────────────────────────────────────────────── */
 .airpay-catalog__sort { display: flex; gap: 4px; }
 .airpay-catalog__sort a {
-    padding: 6px 14px; border-radius: 20px;
-    font-size: 0.85rem; text-decoration: none;
-    color: #5a6070; background: #f3f4f6;
-    transition: all 0.2s;
+    padding: var(--ap-space-2) var(--ap-space-4);
+    border-radius: var(--ap-radius-pill);
+    font-size: var(--ap-text-sm);
+    text-decoration: none;
+    color: var(--ap-color-text-secondary);
+    background: var(--ap-color-bg-surface-alt);
+    transition: background var(--ap-transition-quick),
+                color var(--ap-transition-quick);
+    min-height: 32px;
+    display: inline-flex;
+    align-items: center;
 }
 .airpay-catalog__sort a.active,
 .airpay-catalog__sort a:hover {
-    background: #0066A7; color: #fff;
+    background: var(--ap-color-primary);
+    color: var(--ap-color-text-inverse);
 }
 
-/* Carousel (horizontal scroll) */
+/* ── Carousel (horizontal scroll) ────────────────────────────────────── */
 .airpay-catalog__carousel {
-    display: flex; gap: 16px; overflow-x: auto;
-    scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
-    padding-bottom: 8px; scrollbar-width: thin;
+    display: flex;
+    gap: var(--ap-space-4);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: var(--ap-space-2);
+    scrollbar-width: thin;
 }
 .airpay-catalog__carousel::-webkit-scrollbar { height: 4px; }
-.airpay-catalog__carousel::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 2px; }
+.airpay-catalog__carousel::-webkit-scrollbar-thumb {
+    background: var(--ap-color-border-strong);
+    border-radius: var(--ap-radius-xs);
+}
 .airpay-catalog__carousel > * {
-    scroll-snap-align: start; flex: 0 0 280px; min-width: 280px;
+    scroll-snap-align: start;
+    flex: 0 0 280px;
+    min-width: 280px;
 }
 
-/* Grid */
+/* ── Grid ────────────────────────────────────────────────────────────── */
 .airpay-catalog__grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--ap-space-5);
 }
 
-/* Course Card */
+/* ── Course Card ─────────────────────────────────────────────────────── */
 .airpay-catalog__card {
-    background: #fff; border-radius: 12px; overflow: hidden;
-    border: 1px solid #e2e6ef; transition: transform 0.2s, box-shadow 0.2s;
+    background: var(--ap-color-bg-surface);
+    border-radius: var(--ap-radius-md);
+    overflow: hidden;
+    border: 1px solid var(--ap-color-border);
+    transition: transform var(--ap-transition-quick),
+                box-shadow var(--ap-transition-quick);
+    position: relative;
 }
 .airpay-catalog__card:hover {
-    transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+    box-shadow: var(--ap-shadow-hover);
 }
-.airpay-catalog__card-link { text-decoration: none; color: inherit; display: block; }
+.airpay-catalog__card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
 .airpay-catalog__card-thumb {
-    height: 140px; position: relative;
-    background: linear-gradient(135deg, #0066A7 0%, #0f7a73 100%);
-    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    overflow: hidden;
+    height: 160px;
+    background: var(--ap-gradient-cta);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 .airpay-catalog__card--progress .airpay-catalog__card-thumb {
-    height: 100px;
+    height: 140px;
 }
 .airpay-catalog__card-code {
-    font-size: 1.1rem; font-weight: 600; color: rgba(255,255,255,0.7);
-    letter-spacing: 1px;
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: var(--ap-weight-bold);
+    font-size: var(--ap-text-base);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
 .airpay-catalog__card-type {
-    position: absolute; top: 8px; left: 8px;
-    background: rgba(255,255,255,0.2); color: #fff;
-    padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 600;
+    position: absolute;
+    top: var(--ap-space-2);
+    left: var(--ap-space-2);
+    padding: 2px var(--ap-space-2);
+    background: rgba(0, 0, 0, 0.55);
+    color: var(--ap-color-text-inverse);
+    font-size: var(--ap-text-xs);
+    border-radius: var(--ap-radius-xs);
     text-transform: uppercase;
 }
 .airpay-catalog__badge {
-    position: absolute; top: 8px; right: 8px;
-    padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 700;
+    position: absolute;
+    top: var(--ap-space-2);
+    right: var(--ap-space-2);
+    padding: 2px var(--ap-space-2);
+    border-radius: var(--ap-radius-pill);
+    font-size: var(--ap-text-xs);
+    font-weight: var(--ap-weight-bold);
 }
-.airpay-catalog__badge--new { background: #fbbf24; color: #92400e; }
-.airpay-catalog__badge--done { background: #16a34a; color: #fff; }
-.airpay-catalog__card-body { padding: 12px 16px 16px; }
+.airpay-catalog__badge--new {
+    background: var(--ap-color-warning-light);
+    color: var(--ap-color-warning);
+}
+.airpay-catalog__badge--done {
+    background: var(--ap-color-success);
+    color: var(--ap-color-text-inverse);
+}
+
+.airpay-catalog__card-body { padding: var(--ap-space-3) var(--ap-space-4) var(--ap-space-4); }
 .airpay-catalog__card-title {
-    font-size: 0.95rem; font-weight: 600; color: #1a1a2e;
-    margin: 0 0 6px; line-height: 1.3;
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    font-size: var(--ap-text-sm);
+    font-weight: var(--ap-weight-semibold);
+    color: var(--ap-color-text-primary);
+    margin: 0 0 var(--ap-space-2);
+    line-height: var(--ap-leading-tight);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 .airpay-catalog__card-summary {
-    font-size: 0.8rem; color: #5a6070; margin: 0 0 10px; line-height: 1.4;
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    font-size: var(--ap-text-xs);
+    color: var(--ap-color-text-secondary);
+    margin: 0 0 var(--ap-space-3);
+    line-height: var(--ap-leading-normal);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 .airpay-catalog__card-meta {
-    display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;
+    display: flex;
+    gap: var(--ap-space-2);
+    margin-bottom: var(--ap-space-3);
+    flex-wrap: wrap;
 }
 .airpay-catalog__card-category {
-    font-size: 0.72rem; color: #0066A7; background: #e8f2f9;
-    padding: 2px 8px; border-radius: 10px; font-weight: 500;
-    max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block;
+    font-size: var(--ap-text-xs);
+    color: var(--ap-color-primary);
+    background: var(--ap-color-primary-light);
+    padding: 2px var(--ap-space-2);
+    border-radius: var(--ap-radius-pill);
+    font-weight: var(--ap-weight-medium);
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
 }
 .airpay-catalog__card-level {
-    font-size: 0.72rem; color: #0f7a73; background: #e5f4f3;
-    padding: 2px 8px; border-radius: 10px; font-weight: 500;
-    max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block;
+    font-size: var(--ap-text-xs);
+    color: var(--ap-color-accent);
+    background: var(--ap-color-accent-light);
+    padding: 2px var(--ap-space-2);
+    border-radius: var(--ap-radius-pill);
+    font-weight: var(--ap-weight-medium);
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
 }
 .airpay-catalog__card-footer {
-    display: flex; justify-content: space-between; align-items: center; overflow: hidden;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    overflow: hidden;
 }
 .airpay-catalog__card-enrolled {
-    font-size: 0.8rem; color: #9ca3af; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
+    font-size: var(--ap-text-xs);
+    color: var(--ap-color-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
 }
 .airpay-catalog__card-enrolled i { margin-right: 4px; }
 
-/* Progress bar (in-progress cards) */
+/* ── Progress bar (in-progress cards) ────────────────────────────────── */
 .airpay-catalog__progress {
-    height: 4px; background: #e5e7eb; border-radius: 2px; margin: 4px 0;
+    height: 4px;
+    background: var(--ap-color-border);
+    border-radius: var(--ap-radius-xs);
+    margin: 4px 0;
 }
 .airpay-catalog__progress-bar {
-    height: 100%; background: #0066A7; border-radius: 2px; transition: width 0.3s;
+    height: 100%;
+    background: var(--ap-color-primary);
+    border-radius: var(--ap-radius-xs);
+    transition: width var(--ap-transition-slow);
 }
 
-/* Buttons */
+/* ── Buttons ─────────────────────────────────────────────────────────── */
 .airpay-catalog__btn {
-    display: inline-block; padding: 6px 14px; border-radius: 8px;
-    font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    display: inline-block;
+    padding: var(--ap-space-2) var(--ap-space-4);
+    border-radius: var(--ap-radius-sm);
+    font-size: var(--ap-text-sm);
+    font-weight: var(--ap-weight-semibold);
+    cursor: pointer;
+    transition: background var(--ap-transition-quick),
+                color var(--ap-transition-quick);
     text-decoration: none;
+    min-height: 32px;
 }
-.airpay-catalog__btn--enroll { background: #0066A7; color: #fff; }
-.airpay-catalog__btn--enroll:hover { background: #004d80; }
-.airpay-catalog__btn--continue { background: #0f7a73; color: #fff; }
-.airpay-catalog__btn--continue:hover { background: #065a54; }
+.airpay-catalog__btn--enroll {
+    background: var(--ap-color-primary);
+    color: var(--ap-color-text-inverse);
+}
+.airpay-catalog__btn--enroll:hover {
+    background: var(--ap-color-primary-hover);
+    color: var(--ap-color-text-inverse);
+}
+.airpay-catalog__btn--continue {
+    background: var(--ap-color-accent);
+    color: var(--ap-color-text-inverse);
+}
+.airpay-catalog__btn--continue:hover {
+    background: var(--ap-color-accent-hover);
+    color: var(--ap-color-text-inverse);
+}
 
-/* Categories Grid */
+/* ── Categories Grid ─────────────────────────────────────────────────── */
 .airpay-catalog__categories {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--ap-space-3);
 }
 .airpay-catalog__category-card {
-    padding: 16px; background: #f8f9fc; border-radius: 10px;
-    border: 1px solid #e2e6ef; text-decoration: none;
-    transition: all 0.2s; display: flex; flex-direction: column;
+    padding: var(--ap-space-4);
+    background: var(--ap-color-bg-surface-alt);
+    border-radius: var(--ap-radius-md);
+    border: 1px solid var(--ap-color-border);
+    text-decoration: none;
+    transition: background var(--ap-transition-quick),
+                border-color var(--ap-transition-quick);
+    display: flex;
+    flex-direction: column;
 }
-.airpay-catalog__category-card:hover { border-color: #0066A7; background: #e8f2f9; }
-.airpay-catalog__category-card strong { color: #1a1a2e; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
-.airpay-catalog__category-card span { color: #5a6070; font-size: 0.8rem; margin-top: 2px; white-space: nowrap; }
+.airpay-catalog__category-card:hover {
+    border-color: var(--ap-color-primary);
+    background: var(--ap-color-primary-light);
+}
+.airpay-catalog__category-card strong {
+    color: var(--ap-color-text-primary);
+    font-size: var(--ap-text-sm);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+}
+.airpay-catalog__category-card span {
+    color: var(--ap-color-text-secondary);
+    font-size: var(--ap-text-xs);
+    margin-top: 2px;
+    white-space: nowrap;
+}
 
-/* Pagination */
+/* ── Pagination ──────────────────────────────────────────────────────── */
 .airpay-catalog__pagination {
-    display: flex; justify-content: center; align-items: center; gap: 16px;
-    margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e6ef;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--ap-space-4);
+    margin-top: var(--ap-space-6);
+    padding-top: var(--ap-space-4);
+    border-top: 1px solid var(--ap-color-border);
 }
-/* A11Y-7: was #9ca3af (~2.8:1 on white) — failed AA. Bumped to #475569 (~6.4:1). */
-.airpay-catalog__pagination span { color: #475569; font-size: 0.85rem; }
+/* A11Y-7: was #9ca3af (~2.8:1) → secondary (~6.4:1). */
+.airpay-catalog__pagination span {
+    color: var(--ap-color-text-secondary);
+    font-size: var(--ap-text-sm);
+}
 
-/* Empty state */
+/* ── Empty state (legacy — see enhanced block below) ─────────────────── */
 .airpay-catalog__empty {
-    text-align: center; padding: 48px 24px; color: #9ca3af;
+    text-align: center;
+    padding: var(--ap-space-12) var(--ap-space-6);
+    color: var(--ap-color-text-muted);
 }
-.airpay-catalog__empty i { font-size: 2rem; margin-bottom: 12px; }
+.airpay-catalog__empty i {
+    font-size: var(--ap-text-3xl);
+    margin-bottom: var(--ap-space-3);
+    display: block;
+    color: var(--ap-color-border-strong);
+}
+.airpay-catalog__empty h4 {
+    color: var(--ap-color-text-secondary);
+    font-size: var(--ap-text-lg);
+    margin: 0 0 var(--ap-space-2);
+}
+.airpay-catalog__empty p {
+    font-size: var(--ap-text-sm);
+    margin: 0 0 var(--ap-space-4);
+}
 
-/* ═══ Dark Mode ═══ */
-body.dark-mode .airpay-catalog__search-input { background: #1a1d27; border-color: #2d3140; color: #e8eaed; }
-body.dark-mode .airpay-catalog__section-title { color: #e8eaed; }
-body.dark-mode .airpay-catalog__card { background: #1a1d27; border-color: #2d3140; }
-body.dark-mode .airpay-catalog__card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
-body.dark-mode .airpay-catalog__card-title { color: #e8eaed; }
-body.dark-mode .airpay-catalog__card-summary { color: #9ca3b4; }
-body.dark-mode .airpay-catalog__card-category { background: #0d2540; color: #60a5fa; }
-body.dark-mode .airpay-catalog__card-level { background: #0a2e1a; color: #34d399; }
-body.dark-mode .airpay-catalog__card-enrolled { color: #6b7280; }
-body.dark-mode .airpay-catalog__category-card { background: #1a1d27; border-color: #2d3140; }
-body.dark-mode .airpay-catalog__category-card:hover { border-color: #0066A7; background: #0d2540; }
-body.dark-mode .airpay-catalog__category-card strong { color: #e8eaed; }
-body.dark-mode .airpay-catalog__category-card span { color: #9ca3b4; }
-body.dark-mode .airpay-catalog__sort a { background: #232733; color: #9ca3b4; }
-body.dark-mode .airpay-catalog__sort a.active { background: #0066A7; color: #fff; }
-body.dark-mode .airpay-catalog__progress { background: #2d3140; }
-
-/* ═══ Netflix Enhancements (Sprint 2) ═══ */
+/* ═══ Netflix Enhancements (Sprint 2) ═══════════════════════════════════ */
 
 /* Card hover overlay with description + CTA */
 .airpay-catalog__card-overlay {
@@ -208,21 +385,20 @@ body.dark-mode .airpay-catalog__progress { background: #2d3140; }
     bottom: 0;
     left: 0;
     right: 0;
-    background: linear-gradient(transparent, rgba(0,0,0,0.85));
-    padding: 40px 12px 12px;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.85));
+    padding: 40px var(--ap-space-3) var(--ap-space-3);
     opacity: 0;
-    transition: opacity 0.25s ease;
+    transition: opacity var(--ap-transition-default);
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
 }
-.airpay-catalog__card-thumb { position: relative; overflow: hidden; }
 .airpay-catalog__card:hover .airpay-catalog__card-overlay { opacity: 1; }
 .airpay-catalog__card-overlay p {
-    font-size: 0.75rem;
-    color: rgba(255,255,255,0.85);
-    margin: 0 0 8px;
-    line-height: 1.4;
+    font-size: var(--ap-text-xs);
+    color: rgba(255, 255, 255, 0.85);
+    margin: 0 0 var(--ap-space-2);
+    line-height: var(--ap-leading-normal);
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
@@ -230,70 +406,87 @@ body.dark-mode .airpay-catalog__progress { background: #2d3140; }
 }
 .airpay-catalog__card-overlay .airpay-catalog__btn {
     align-self: flex-start;
-    font-size: 0.75rem;
-    padding: 5px 12px;
+    font-size: var(--ap-text-xs);
+    padding: 5px var(--ap-space-3);
 }
 
 /* Bookmark / save-for-later heart */
 .airpay-catalog__bookmark {
     position: absolute;
-    top: 8px;
-    right: 8px;
+    top: var(--ap-space-2);
+    right: var(--ap-space-2);
     width: 30px;
     height: 30px;
-    border-radius: 50%;
-    background: rgba(0,0,0,0.4);
+    border-radius: var(--ap-radius-full);
+    background: rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     z-index: 2;
-    transition: background 0.2s, transform 0.15s;
+    transition: background var(--ap-transition-quick),
+                transform var(--ap-transition-quick);
     border: none;
-    color: rgba(255,255,255,0.7);
-    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: var(--ap-text-sm);
 }
-.airpay-catalog__bookmark:hover { background: rgba(0,0,0,0.6); transform: scale(1.1); }
-.airpay-catalog__bookmark--saved { color: #ef4444; background: rgba(239,68,68,0.2); }
-.airpay-catalog__bookmark--saved:hover { background: rgba(239,68,68,0.3); }
+.airpay-catalog__bookmark:hover {
+    background: rgba(0, 0, 0, 0.6);
+    transform: scale(1.1);
+}
+.airpay-catalog__bookmark--saved {
+    color: var(--ap-color-danger);
+    background: var(--ap-color-danger-light);
+}
+.airpay-catalog__bookmark--saved:hover {
+    background: var(--ap-color-danger-light);
+}
 
 /* Animated "NEW" badge */
-@keyframes ap-badge-pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(251,191,36,0.4); }
-    50% { box-shadow: 0 0 0 6px rgba(251,191,36,0); }
+@keyframes ap-catalog-badge-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.4); }
+    50%      { box-shadow: 0 0 0 6px rgba(217, 119, 6, 0); }
 }
 .airpay-catalog__badge--new {
-    animation: ap-badge-pulse 2s ease-in-out infinite;
+    animation: ap-catalog-badge-pulse 2s ease-in-out infinite;
 }
 
 /* Difficulty badge colors */
 .airpay-catalog__card-difficulty {
     position: absolute;
-    bottom: 8px;
-    left: 8px;
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-size: 0.68rem;
-    font-weight: 600;
+    bottom: var(--ap-space-2);
+    left: var(--ap-space-2);
+    padding: 2px var(--ap-space-2);
+    border-radius: var(--ap-radius-pill);
+    font-size: var(--ap-text-xs);
+    font-weight: var(--ap-weight-semibold);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.05em;
 }
-.airpay-catalog__card-difficulty--beginner { background: #dcfce7; color: #16a34a; }
-.airpay-catalog__card-difficulty--intermediate { background: #fef3c7; color: #d97706; }
-.airpay-catalog__card-difficulty--advanced { background: #fef2f2; color: #dc2626; }
+.airpay-catalog__card-difficulty--beginner {
+    background: var(--ap-color-success-light);
+    color: var(--ap-color-success);
+}
+.airpay-catalog__card-difficulty--intermediate {
+    background: var(--ap-color-warning-light);
+    color: var(--ap-color-warning);
+}
+.airpay-catalog__card-difficulty--advanced {
+    background: var(--ap-color-danger-light);
+    color: var(--ap-color-danger);
+}
 
 /* Carousel scroll navigation arrows */
-.airpay-catalog__section { position: relative; }
 .airpay-catalog__carousel-nav {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
     width: 36px;
     height: 36px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.9);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-radius: var(--ap-radius-full);
+    background: var(--ap-color-bg-surface);
+    box-shadow: var(--ap-shadow-md);
     border: none;
     cursor: pointer;
     display: flex;
@@ -301,12 +494,16 @@ body.dark-mode .airpay-catalog__progress { background: #2d3140; }
     justify-content: center;
     z-index: 5;
     opacity: 0;
-    transition: opacity 0.2s, background 0.15s;
-    font-size: 16px;
-    color: #1a1a2e;
+    transition: opacity var(--ap-transition-quick),
+                background var(--ap-transition-quick);
+    font-size: var(--ap-text-base);
+    color: var(--ap-color-text-primary);
 }
 .airpay-catalog__section:hover .airpay-catalog__carousel-nav { opacity: 1; }
-.airpay-catalog__carousel-nav:hover { background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+.airpay-catalog__carousel-nav:hover {
+    background: var(--ap-color-bg-surface);
+    box-shadow: var(--ap-shadow-hover);
+}
 .airpay-catalog__carousel-nav--left { left: -4px; }
 .airpay-catalog__carousel-nav--right { right: -4px; }
 
@@ -314,18 +511,18 @@ body.dark-mode .airpay-catalog__progress { background: #2d3140; }
 .airpay-catalog__card-proof {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 0.72rem;
-    color: #9ca3af;
+    gap: var(--ap-space-2);
+    font-size: var(--ap-text-xs);
+    color: var(--ap-color-text-muted);
     margin-top: 4px;
 }
-.airpay-catalog__card-proof i { color: #d97706; }
+.airpay-catalog__card-proof i { color: var(--ap-color-warning); }
 
 /* Progress ring on continue-learning cards */
 .airpay-catalog__card-ring {
     position: absolute;
-    bottom: 8px;
-    right: 8px;
+    bottom: var(--ap-space-2);
+    right: var(--ap-space-2);
 }
 .airpay-catalog__card-ring svg {
     transform: rotate(-90deg);
@@ -334,15 +531,15 @@ body.dark-mode .airpay-catalog__progress { background: #2d3140; }
 }
 .airpay-catalog__card-ring-track {
     fill: none;
-    stroke: rgba(255,255,255,0.3);
+    stroke: rgba(255, 255, 255, 0.3);
     stroke-width: 3;
 }
 .airpay-catalog__card-ring-fill {
     fill: none;
-    stroke: #10b981;
+    stroke: var(--ap-color-success);
     stroke-width: 3;
     stroke-linecap: round;
-    transition: stroke-dashoffset 0.8s ease;
+    transition: stroke-dashoffset var(--ap-transition-slow);
 }
 .airpay-catalog__card-ring-label {
     position: absolute;
@@ -350,141 +547,185 @@ body.dark-mode .airpay-catalog__progress { background: #2d3140; }
     left: 50%;
     transform: translate(-50%, -50%);
     font-size: 8px;
-    font-weight: 700;
-    color: #fff;
+    font-weight: var(--ap-weight-bold);
+    color: var(--ap-color-text-inverse);
 }
 
-/* ═══ Autocomplete Suggestions ═══ */
+/* ═══ Autocomplete Suggestions ═══════════════════════════════════════════ */
 .airpay-catalog__search-suggest {
     position: absolute;
     top: 100%;
     left: 0;
     right: 0;
-    background: #fff;
-    border: 1px solid #e2e6ef;
+    background: var(--ap-color-bg-surface);
+    border: 1px solid var(--ap-color-border);
     border-top: none;
-    border-radius: 0 0 12px 12px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-    z-index: 100;
+    border-radius: 0 0 var(--ap-radius-md) var(--ap-radius-md);
+    box-shadow: var(--ap-shadow-md);
+    z-index: var(--ap-z-dropdown);
     max-height: 280px;
     overflow-y: auto;
 }
-.airpay-catalog__search-form { position: relative; }
 .airpay-catalog__suggest-item {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 16px;
-    color: #1a1a2e;
+    gap: var(--ap-space-2);
+    padding: var(--ap-space-2) var(--ap-space-4);
+    color: var(--ap-color-text-primary);
     text-decoration: none;
-    font-size: 0.9rem;
-    transition: background 0.15s;
+    font-size: var(--ap-text-sm);
+    transition: background var(--ap-transition-quick);
 }
-.airpay-catalog__suggest-item:hover { background: #f3f4f6; color: #0066A7; }
-.airpay-catalog__suggest-item i { color: #9ca3af; font-size: 0.8rem; }
+.airpay-catalog__suggest-item:hover {
+    background: var(--ap-color-bg-surface-alt);
+    color: var(--ap-color-primary);
+}
+.airpay-catalog__suggest-item i {
+    color: var(--ap-color-text-muted);
+    font-size: var(--ap-text-xs);
+}
 
-/* ═══ Filter Chips ═══ */
+/* ═══ Filter Chips ═══════════════════════════════════════════════════════ */
 .airpay-catalog__filters {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--ap-space-2);
     flex-wrap: wrap;
 }
 .airpay-catalog__filter-chip {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 500;
+    gap: var(--ap-space-1);
+    padding: 5px var(--ap-space-3);
+    border-radius: var(--ap-radius-pill);
+    font-size: var(--ap-text-sm);
+    font-weight: var(--ap-weight-medium);
     text-decoration: none;
-    background: #e8f2f9;
-    color: #0066A7;
-    transition: all 0.15s;
+    background: var(--ap-color-primary-light);
+    color: var(--ap-color-primary);
+    transition: background var(--ap-transition-quick),
+                color var(--ap-transition-quick);
 }
-.airpay-catalog__filter-chip:hover { background: #0066A7; color: #fff; }
-.airpay-catalog__filter-chip .fa-times { font-size: 0.7rem; opacity: 0.7; }
+.airpay-catalog__filter-chip:hover {
+    background: var(--ap-color-primary);
+    color: var(--ap-color-text-inverse);
+}
+.airpay-catalog__filter-chip .fa-times {
+    font-size: var(--ap-text-xs);
+    opacity: 0.7;
+}
 
-/* ═══ Category Icon ═══ */
+/* ═══ Category Icon ══════════════════════════════════════════════════════ */
 .airpay-catalog__category-icon {
     width: 36px;
     height: 36px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, #0066A7, #0f7a73);
+    border-radius: var(--ap-radius-md);
+    background: var(--ap-gradient-cta);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #fff;
-    font-size: 14px;
-    margin-bottom: 8px;
+    color: var(--ap-color-text-inverse);
+    font-size: var(--ap-text-sm);
+    margin-bottom: var(--ap-space-2);
 }
 
-/* ═══ Lazy Load Fade-in ═══ */
+/* ═══ Lazy Load Fade-in ══════════════════════════════════════════════════ */
 .airpay-catalog__grid .airpay-catalog__card {
     opacity: 0;
     transform: translateY(12px);
-    transition: opacity 0.4s ease, transform 0.4s ease;
+    transition: opacity var(--ap-duration-slow) var(--ap-ease-out),
+                transform var(--ap-duration-slow) var(--ap-ease-out);
 }
 .airpay-catalog__grid .airpay-catalog__card--visible {
     opacity: 1;
     transform: translateY(0);
 }
 
-/* ═══ Load More Button Enhanced ═══ */
+/* ═══ Load More Button Enhanced ══════════════════════════════════════════ */
 .airpay-catalog__btn--load-more {
-    background: #f3f4f6;
-    color: #5a6070;
-    padding: 10px 24px;
-    border-radius: 12px;
-    font-weight: 600;
+    background: var(--ap-color-bg-surface-alt);
+    color: var(--ap-color-text-secondary);
+    padding: var(--ap-space-3) var(--ap-space-6);
+    border-radius: var(--ap-radius-md);
+    font-weight: var(--ap-weight-semibold);
 }
 .airpay-catalog__btn--load-more:hover {
-    background: #0066A7;
-    color: #fff;
+    background: var(--ap-color-primary);
+    color: var(--ap-color-text-inverse);
 }
-.airpay-catalog__btn--load-more i { margin-left: 6px; }
+.airpay-catalog__btn--load-more i { margin-left: var(--ap-space-2); }
 
-/* ═══ Empty State Enhanced ═══ */
+/* ═══ Empty State Enhanced ═══════════════════════════════════════════════ */
 .airpay-catalog__empty {
     text-align: center;
-    padding: 64px 24px;
-    color: #9ca3af;
+    padding: var(--ap-space-16) var(--ap-space-6);
+    color: var(--ap-color-text-muted);
 }
-.airpay-catalog__empty i { font-size: 3rem; margin-bottom: 16px; display: block; color: #d1d5db; }
-.airpay-catalog__empty h4 { color: #5a6070; font-size: 1.1rem; margin: 0 0 8px; }
-.airpay-catalog__empty p { font-size: 0.9rem; margin: 0 0 16px; }
+.airpay-catalog__empty i {
+    font-size: var(--ap-text-3xl);
+    margin-bottom: var(--ap-space-4);
+    display: block;
+    color: var(--ap-color-border-strong);
+}
+.airpay-catalog__empty h4 {
+    color: var(--ap-color-text-secondary);
+    font-size: var(--ap-text-lg);
+    margin: 0 0 var(--ap-space-2);
+}
+.airpay-catalog__empty p {
+    font-size: var(--ap-text-sm);
+    margin: 0 0 var(--ap-space-4);
+}
 
-/* ═══ Progress text in carousel cards ═══
-   A11Y-7: was #9ca3af (~2.8:1 on white) — failed AA. Bumped to #475569
-   (~6.4:1) to match the body-copy secondary text token. */
+/* ═══ Progress text in carousel cards ═══════════════════════════════════
+   A11Y-7: was #9ca3af (~2.8:1 on white) — failed AA. Now uses the
+   tokens-aware text-secondary (~6.4:1 — AA pass). */
 .airpay-catalog__card-progresstext {
-    font-size: 0.75rem;
-    color: #475569;
+    font-size: var(--ap-text-xs);
+    color: var(--ap-color-text-secondary);
 }
 
-/* ═══ Dark Mode — new additions ═══ */
-body.dark-mode .airpay-catalog__search-suggest { background: #1a1d27; border-color: #2d3140; }
-body.dark-mode .airpay-catalog__suggest-item { color: #e8eaed; }
-body.dark-mode .airpay-catalog__suggest-item:hover { background: #232733; }
-body.dark-mode .airpay-catalog__filter-chip { background: #0d2540; color: #60a5fa; }
-body.dark-mode .airpay-catalog__category-icon { background: linear-gradient(135deg, #0d4880, #0a5c56); }
-body.dark-mode .airpay-catalog__btn--load-more { background: #232733; color: #9ca3b4; }
-body.dark-mode .airpay-catalog__empty i { color: #4b5563; }
+/* ═══ Dark mode — gradient overrides only ════════════════════════════════
+   Token-based rules auto-flip via body.dark-mode in dark_mode.scss.
+   Only rules that use gradient/literal-rgb mixes need an explicit
+   override here. Everything else inherits dark colours automatically. */
+body.dark-mode .airpay-catalog__category-icon {
+    /* Use slightly muted brand colours in dark mode so the gradient
+       doesn't burn out against the dark surface. */
+    background: linear-gradient(135deg, var(--ap-blue-800), var(--ap-teal-800));
+}
 
-/* ═══ Mobile ═══ */
+/* ═══ Mobile breakpoints (manifesto §3) ══════════════════════════════════ */
 @media (max-width: 768px) {
-    .airpay-catalog__grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-    .airpay-catalog__carousel > * { flex: 0 0 240px; min-width: 240px; }
-    .airpay-catalog__categories { grid-template-columns: repeat(2, 1fr); }
+    .airpay-catalog__grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--ap-space-3);
+    }
+    .airpay-catalog__carousel > * {
+        flex: 0 0 240px;
+        min-width: 240px;
+    }
+    .airpay-catalog__categories {
+        grid-template-columns: repeat(2, 1fr);
+    }
     .airpay-catalog__carousel-nav { display: none; }
 }
 @media (max-width: 590px) {
-    .airpay-catalog { padding: 0 12px; }
+    .airpay-catalog { padding: 0 var(--ap-space-3); }
     .airpay-catalog__grid { grid-template-columns: 1fr; }
-    .airpay-catalog__carousel > * { flex: 0 0 85vw; min-width: 85vw; }
+    .airpay-catalog__carousel > * {
+        flex: 0 0 85vw;
+        min-width: 85vw;
+    }
     .airpay-catalog__categories { grid-template-columns: 1fr; }
-    .airpay-catalog__section-header { flex-direction: column; gap: 8px; align-items: flex-start; }
+    .airpay-catalog__section-header {
+        flex-direction: column;
+        gap: var(--ap-space-2);
+        align-items: flex-start;
+    }
     .airpay-catalog__card-thumb { height: 100px; }
-    .airpay-catalog__filters { flex-direction: column; align-items: flex-start; }
+    .airpay-catalog__filters {
+        flex-direction: column;
+        align-items: flex-start;
+    }
 }

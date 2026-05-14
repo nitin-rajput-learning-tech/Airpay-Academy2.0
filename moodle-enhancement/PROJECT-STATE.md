@@ -4,6 +4,67 @@
 
 ---
 
+## 🆕 PHASE B0 — Course Catalogue iter 1 (tokens + a11y) (2026-05-14)
+
+The #2 priority redesign target from SURFACE-ROADMAP §6. Iter 1 ships the foundation: tokens migration on the 490-line styles.css (87 hex literals → 0), a11y improvements on the search bar + sort tabs + filter chip, and the 6-iteration redesign plan.
+
+### Plan doc
+
+`docs/platform-review-2026-05-14/COURSE-CATALOGUE-REDESIGN-PLAN.md` — 5-section plan covering current-state audit (3 carousels + grid + filters + pagination, 87 hex literals, partial mobile responsiveness), what's already-correct (don't break — IA has semantic clustering, tenant scoping works, provenance badges wired), 5 manifesto principles applied to this surface, 6 iterations sequenced, and "what we're not changing" guardrails.
+
+### Tokens migration (styles.css)
+
+490 → 731 lines (+241), **87 hex literals → 0**. Every colour, spacing, radius, motion duration references `--ap-*` tokens. The `body.dark-mode .airpay-catalog__*` block (18 rules) collapsed to a single rule (gradient override on the category icon) — token-based selectors automatically flip in dark mode via the global `body.dark-mode` token-remap in `dark_mode.scss`.
+
+Key replacements:
+- `#0066A7` → `var(--ap-color-primary)`
+- `#0f7a73` → `var(--ap-color-accent)`
+- `#16a34a / #d97706 / #dc2626` → `var(--ap-color-success / warning / danger)`
+- Tinted backgrounds `#e8f2f9 / #e5f4f3 / #fef3c7 / #dcfce7 / #fef2f2` → `var(--ap-color-*-light)`
+- Greys (`#5a6070`, `#9ca3af`, `#475569`) → `var(--ap-color-text-secondary / text-muted)` per A11Y-7 contrast rules
+- All spacing `8/16/24/32px` → `var(--ap-space-2/4/6/8)` etc.
+- All transitions `0.2s / 0.25s / 0.3s` → `var(--ap-transition-quick / default / slow)` — auto-respects `prefers-reduced-motion`
+- Z-index 100 → `var(--ap-z-dropdown)`
+
+### A11y improvements (catalog.mustache)
+
+- Search `<form>`: `role="search"` landmark + `aria-label="Course catalogue search"`
+- Search `<input>`: hidden `<label>` (was placeholder-only), `aria-autocomplete="list"`, `aria-controls` pointing at the suggestions panel
+- Search suggestions: `role="listbox"` + `aria-label`
+- Search clear: explicit `aria-label="Clear search"` (was unlabeled icon)
+- Sort tabs: `role="group" aria-label="Sort courses by"` + per-tab `aria-pressed` reflecting the active state
+- Filter chip: `role="group"` wrapper + per-chip `aria-label="Remove category filter: {name}"` (was unlabeled `<a>` with two `<i>` icons)
+- Every decorative `<i class="fa">` marked `aria-hidden="true"`
+
+### Visible delta
+
+- Mostly invisible — this is foundation work. Dark mode now flips colours automatically (was using 19 manual override rules)
+- Screen reader users can now navigate the catalog via the search landmark + sort group + filter group, with sensible labels
+- Hover/focus transitions respect `prefers-reduced-motion` (manifesto §5.4)
+- Tap targets on sort tabs bumped to 32px min (was 14px height, below WCAG 2.5.5 floor)
+
+### Deferred to iter 2+
+
+- mycourses.mustache inline `<style>` block (210-line template ends with 100+ lines of inline CSS) — extract to a proper file
+- Search bar / filter chip / sort tabs as reusable components
+- Mobile filter bottom-sheet pattern
+- Card hover-overlay → persistent CTA migration
+- Empty states for empty search / no-matches
+- Skeleton loaders during data fetch
+
+### Files touched
+
+```
+docs/platform-review-2026-05-14/
+  COURSE-CATALOGUE-REDESIGN-PLAN.md   [new — 5-section plan]
+
+moodle-enhancement/local/airpay_catalog/
+  styles.css                           [490 → 731 lines, 87 hex → 0]
+  templates/catalog.mustache           [+ a11y: role/aria-label/aria-pressed]
+```
+
+---
+
 ## 🆕 PHASE B0 — AI Assistant chat AMD module (2026-05-14)
 
 **Critical find during the polish iteration**: the AI Assistant chat bubble was rendered on every page but **had no JS to wire it up** — the toggle button, send button, Enter key, and quick-action chips all did nothing. The bubble was dead UI in production. This commit ships the missing AMD module + adds the manifesto-spec'd Cmd+K shortcut.
