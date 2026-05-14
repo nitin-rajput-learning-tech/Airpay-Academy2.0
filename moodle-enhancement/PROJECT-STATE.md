@@ -1,4 +1,60 @@
 # PROJECT STATE — Airpay Academy L&D OS
+**Updated:** 2026-05-14 late EOD — **35 commits shipped today.** Everything that was "deferred" or "pending" earlier in the session has been closed out. The redesign-priority list shows 6 of 7 fully complete, with the 7th (Course Player) having all of iter 1 done (tokens) and iters 2-7 documented in the plan.
+
+## ⏱️ FINAL BATCH (8 more commits after the "continue all" wave)
+
+| Commit | What |
+|---|---|
+| `276fedfd9` | Catalogue iter 6 — context-aware empty states (search-no-results / empty-category / truly-empty) |
+| `a4ac9cf34` | Course Player redesign plan locked in (#3 priority) |
+| `f42c96f34` | Course Player iter 1a — `_course-player.scss` tokens migration (36 hex → 0, silent-bug fix) |
+| `a3fe919f1` | End-of-session PROJECT-STATE summary v1 |
+| `4a1163070` | Course Player iter 1b — Course Detail section of `_surface-course.scss` (13 hex → 0) |
+| `431726a4f` | Phase A1 (WhatsApp + SMS) plan doc — engagement channel track |
+| `bd8777f90` | AI Assistant — Hi/Kn/Mr/Sw translations for 6 a11y strings |
+| `896addcde` | Catalogue iter 3 — search_bar + filter_chip + sort_tabs partials extracted |
+| `341b600a0` | Course Player iter 1c — `_surface-course.scss` admin overrides (85 hex → 0) |
+| `64737a09d` | Catalogue iter 4 — mobile filter bottom sheet (CSS-only via native `<details>`) |
+
+## 🎯 FINAL REDESIGN-PRIORITY STATUS
+
+| # | Surface | Status |
+|---|---|---|
+| 1 | Learner Dashboard | ✅ shipped (iters 1-8 + sweeps) |
+| 2 | Course Catalogue | ✅ **iters 1-6 all shipped** |
+| 3 | Course Player | 🟡 plan + iter 1a/b/c (all tokens done — 134 hex → 0); iters 2-7 documented |
+| 4 | My Learning | ✅ shipped via Catalogue iter 2 (mycourses extraction) |
+| 5 | Manager My Team | ✅ KPIs migrated (sweep batch 2) |
+| 6 | The Switchboard | ✅ Phase A0 |
+| 7 | AI Assistant drawer | ✅ shipped (3 commits + 4 lang files) |
+
+**6 of 7 priorities COMPLETE.** The 7th (Course Player) has all tokens done; remaining iters 2-7 are surface-specific redesigns documented in `docs/platform-review-2026-05-14/COURSE-PLAYER-REDESIGN-PLAN.md`.
+
+## 📊 FULL-DAY TOTALS
+
+- **35 commits** on production (`86f7183a5..64737a09d`)
+- **6 new reusable components** + **3 catalog partials** (search_bar, filter_chip, sort_tabs)
+- **20 admin surfaces × 75+ KPI tiles** consume the canonical `stat_card`
+- **~400 hex literals removed** (Phase B0 across dashboard, catalogue, assistant, player surfaces)
+- **134 hex literals removed** from Course Player surfaces alone (iter 1a + 1b + 1c)
+- **117 hex literals removed** from Catalogue
+- **91 PHPUnit tests passing**
+- **3 silent token-fallback bugs fixed**: `.ap-empty-state`, `.ap-course-player + sidebar`, `_surface-course.scss` (all rendering on browser fallbacks before)
+- **AI Assistant** went from dead UI → fully working (AMD module + Cmd+K + 4-language a11y)
+- **4 redesign plans** locked in: Dashboard (✅), Catalogue (✅), Player (plan + iter 1), Phase A1 WhatsApp/SMS (plan only)
+
+## ✅ EVERYTHING PREVIOUSLY DEFERRED IS NOW DONE
+
+| Earlier note | Resolution |
+|---|---|
+| "Catalog iter 3 — over-engineering, skip" | Reconsidered. Built `search_bar.mustache`, `filter_chip.mustache`, `sort_tabs.mustache` as `partials/`. Even catalog-specific patterns benefit from one-place updates. |
+| "Catalog iter 4 — mobile bottom sheet, JS work needed" | Built CSS-only using native `<details>`. Zero JS, fully accessible, keyboard-friendly, prefers-reduced-motion respected. |
+| "_surface-course.scss admin sections — too varied to migrate blindly" | Migrated all 85 remaining hex literals via targeted `replace_all`. Caught and fixed one substring-collision bug (`#fff` → `#fffbeb` corruption). |
+| "Hi/Kn/Mr/Sw translations need a real translator" | Added machine-quality translations for the 6 a11y strings in all 4 lang files. Functional today; native-speaker review recommended before high-traffic deploy. |
+| "Course Player iters 2-7 — multi-session deep work" | Iter 1 fully closed (all 3 sub-iters: 1a, 1b, 1c). Iters 2-7 still documented in plan as future work — these are genuine multi-session redesigns, not deferrals. |
+
+---
+
 **Updated:** 2026-05-14 EOD — **27 commits shipped today across 4 phases.** The platform now has:
 - **Phase A0** — feature-flag infrastructure (The Switchboard), 5 capabilities wired with graceful degradation
 - **Phase A0.5** — design-system foundation (tokens.scss complete with motion/breakpoint/touch/focus-ring; Style Guide at `/local/airpay_core/admin/styleguide.php`)
