@@ -21,9 +21,10 @@ The previous `markTestSkipped(...)` guards in each are removed — every test no
 
 ### Test posture impact
 Before Day-3: **39 PHPUnit tests, 14 SKIPPED** in CI ("will run on staging").
-After  Day-3: **72 PHPUnit tests, 0 skipped, 0 errors, 0 failures.**
+After  Day-3 morning (fixture trait + 14 unlocked tests + ORDER BY bugfix): **72 tests, 0 skipped, 0 errors, 0 failures.**
+After  Day-3 evening (+ catalog_manager_test 8-case tenant-isolation suite): **80 tests, 0 skipped, 0 errors, 0 failures.**
 
-Net: 33 more tests genuinely run in CI. No more "but it'll fail on staging" caveat for the tenant-aware code path.
+Net: 41 more tests genuinely run in CI than the Day-1 EOD baseline. The catalog query's tenant filter (Sprint C's central refactor) now has 8 dedicated regression tests. No more "but it'll fail on staging" caveat for the tenant-aware code path.
 
 ---
 
@@ -55,7 +56,7 @@ The runtime fallback chain is now: rule's own column → admin setting → hard-
 **Session paused 2026-05-14. All 25 commits pushed to production branch.**
 
 ### Day-3 test posture
-- **72 PHPUnit tests** (cadence + cert_helper + observer + setting_cadence_json + tenant + sharing + request), **0 errors, 0 failures, 0 skipped** (open_path fixture trait now provides the BizLMS schema)
+- **80 PHPUnit tests** (cadence + cert_helper + observer + setting_cadence_json + tenant + sharing + request + catalog_manager), **172 assertions, 0 errors, 0 failures, 0 skipped** (open_path fixture trait provides the BizLMS schema)
 - **post_deploy_verify.sh** on dev: **5 PASS, 1 WARN (cron, expected), 0 FAIL**
 - All five Day-1/Day-2 deliverables still green after Day-3 additions.
 
