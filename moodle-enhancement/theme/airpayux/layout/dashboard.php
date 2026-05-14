@@ -631,6 +631,37 @@ if (isloggedin() && !isguestuser()) {
         $airpay_dashboard['stats']['certificates'] = 0;
     }
 
+    // Phase B0 iter 2 (2026-05-14) — learner KPI tiles as a data array so
+    // the dashboard template can iterate the stat_card partial instead of
+    // inlining four near-identical <div> blocks. Mirrors admin_kpis shape.
+    $airpay_dashboard['learner_kpis'] = [
+        [
+            'label' => 'Enrolled',
+            'value' => (int) ($airpay_dashboard['stats']['enrolled'] ?? 0),
+            'icon'  => 'book',
+            'color' => 'primary',
+        ],
+        [
+            'label' => 'In Progress',
+            'value' => (int) ($airpay_dashboard['stats']['inprogress'] ?? 0),
+            'icon'  => 'spinner',
+            'color' => 'accent',
+        ],
+        [
+            'label' => 'Completed',
+            'value' => (int) ($airpay_dashboard['stats']['completed'] ?? 0),
+            'icon'  => 'check-circle',
+            'color' => 'success',
+        ],
+        [
+            'label' => 'Certificates',
+            'value' => (int) ($airpay_dashboard['stats']['certificates'] ?? 0),
+            'icon'  => 'certificate',
+            'color' => 'warning',
+        ],
+    ];
+    $airpay_dashboard['haslearnerkpis'] = !empty($airpay_dashboard['hasstats']);
+
     // --- Section: Manager Team Overview (only for managers) ---
     // Uses local_airpay_manager\team_manager — batches 4 aggregate queries
     // instead of running N+1 progress calculations per team member.

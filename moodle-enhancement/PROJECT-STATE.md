@@ -4,6 +4,34 @@
 
 ---
 
+## 🆕 PHASE B0 — LEARNER DASHBOARD REDESIGN: ITERATION 2 (2026-05-14)
+
+Pure refactor — replaces the 3 inline `.airpay-dash__stat` HTML blocks in `dashboard.mustache` with `{{> theme_airpayux/components/stat_card }}` partial calls. User-visible: tiles now use the new tokens-aware styling (slightly larger icon, exact same colours, mobile-responsive 4→2→1 grid).
+
+### What changed
+
+- **Admin KPI section** (`isadmin` branch): 11 lines of inline HTML → 3 lines (partial call inside iteration).
+- **Manager KPI section** (`ismanager` branch): 10 lines of inline HTML → 3 lines.
+- **Learner stats section**: 4 hand-coded `<div>` blocks → 3-line iteration over a new `learner_kpis` data array.
+
+### Data-layer change
+
+`dashboard.php` gains a `learner_kpis` array built from the existing `stats` data — same source values (`enrolled`, `inprogress`, `completed`, `certificates`) re-shaped to match the `stat_card` partial's context shape (`label`, `value`, `icon`, `color`). No new queries — pure transformation. The legacy `stats` dict stays in the context for the progress ring's `{{stats.completed}} of {{stats.enrolled}}` caption.
+
+### Dead-code identified (cleanup deferred)
+
+The old `.airpay-dash__stat*` classes in `scss/moodle/partials/_surface-dashboard.scss` (lines 119-166) now have zero consumers across all `.mustache` and `.php` files — verified via grep. Cleanup deferred to a future iteration because removing 47 lines + 8 hex literals is a separate discrete change that's easier to review on its own.
+
+### Files touched
+
+```
+moodle-enhancement/theme/airpayux/
+  layout/dashboard.php          [+ $airpay_dashboard['learner_kpis'] data array]
+  templates/dashboard.mustache  [3 inline stat-tile blocks → partial calls]
+```
+
+---
+
 ## 🆕 PHASE B0 — LEARNER DASHBOARD REDESIGN: ITERATION 1 (2026-05-14)
 
 **Trigger:** the user picked "Learner Dashboard redesign — start" as the next deliverable after Phase A0.5. The dashboard is #1 on the SURFACE-ROADMAP's 7-priority redesign list (front door, most-visited page in the platform). Full redesign is Effort=M (8 sessions); this session ships iteration 1: the reusable component every subsequent iteration depends on.

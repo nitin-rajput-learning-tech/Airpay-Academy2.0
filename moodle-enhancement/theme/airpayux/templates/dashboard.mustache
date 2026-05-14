@@ -175,18 +175,11 @@
             {{! ═══ ADMIN DASHBOARD (siteadmin / L&D admin) ═══ }}
             {{#isadmin}}
 
-            {{! Admin KPI Tiles }}
+            {{! Admin KPI Tiles — Phase B0 iter 2: migrated to stat_card partial }}
             {{#hasadminkpis}}
-            <div class="airpay-dash__stats">
+            <div class="airpay-stat-grid">
                 {{#admin_kpis}}
-                <div class="airpay-dash__stat airpay-dash__stat--{{color}}">
-                    <div class="airpay-dash__stat-icon"><i class="fa fa-{{icon}}"></i></div>
-                    <div class="airpay-dash__stat-data">
-                        <span class="airpay-dash__stat-num">{{value}}</span>
-                        <span class="airpay-dash__stat-label">{{label}}</span>
-                        {{#trend}}<span class="airpay-dash__stat-trend airpay-dash__stat-trend--up">{{trend}}</span>{{/trend}}
-                    </div>
-                </div>
+                {{> theme_airpayux/components/stat_card }}
                 {{/admin_kpis}}
             </div>
             {{/hasadminkpis}}
@@ -373,15 +366,10 @@
             {{#hasmanagerkpis}}
             <div class="airpay-dash__section" style="margin-bottom: 20px;">
                 <h3 class="airpay-dash__section-title"><i class="fa fa-users"></i> My Team</h3>
-                <div class="airpay-dash__stats">
+                <div class="airpay-stat-grid">
+                    {{! Manager KPI tiles — Phase B0 iter 2: migrated to stat_card partial }}
                     {{#manager_kpis}}
-                    <div class="airpay-dash__stat airpay-dash__stat--{{color}}">
-                        <div class="airpay-dash__stat-icon"><i class="fa fa-{{icon}}"></i></div>
-                        <div class="airpay-dash__stat-data">
-                            <span class="airpay-dash__stat-num">{{value}}</span>
-                            <span class="airpay-dash__stat-label">{{label}}</span>
-                        </div>
-                    </div>
+                    {{> theme_airpayux/components/stat_card }}
                     {{/manager_kpis}}
                 </div>
             </div>
@@ -427,38 +415,15 @@
             {{! ═══ LEARNER DASHBOARD (employees, managers own learning, external learners) ═══ }}
             {{#islearner}}
 
-            {{! Stat Cards }}
-            {{#hasstats}}
-            <div class="airpay-dash__stats">
-                <div class="airpay-dash__stat airpay-dash__stat--primary">
-                    <div class="airpay-dash__stat-icon"><i class="fa fa-book"></i></div>
-                    <div class="airpay-dash__stat-data">
-                        <span class="airpay-dash__stat-num">{{stats.enrolled}}</span>
-                        <span class="airpay-dash__stat-label">Enrolled</span>
-                    </div>
-                </div>
-                <div class="airpay-dash__stat airpay-dash__stat--accent">
-                    <div class="airpay-dash__stat-icon"><i class="fa fa-spinner"></i></div>
-                    <div class="airpay-dash__stat-data">
-                        <span class="airpay-dash__stat-num">{{stats.inprogress}}</span>
-                        <span class="airpay-dash__stat-label">In Progress</span>
-                    </div>
-                </div>
-                <div class="airpay-dash__stat airpay-dash__stat--success">
-                    <div class="airpay-dash__stat-icon"><i class="fa fa-check-circle"></i></div>
-                    <div class="airpay-dash__stat-data">
-                        <span class="airpay-dash__stat-num">{{stats.completed}}</span>
-                        <span class="airpay-dash__stat-label">Completed</span>
-                    </div>
-                </div>
-                <div class="airpay-dash__stat airpay-dash__stat--gold">
-                    <div class="airpay-dash__stat-icon"><i class="fa fa-certificate"></i></div>
-                    <div class="airpay-dash__stat-data">
-                        <span class="airpay-dash__stat-num">{{stats.certificates}}</span>
-                        <span class="airpay-dash__stat-label">Certificates</span>
-                    </div>
-                </div>
+            {{! Learner KPI tiles — Phase B0 iter 2: migrated to stat_card partial.
+                Data shape comes from $airpay_dashboard['learner_kpis'] in dashboard.php. }}
+            {{#haslearnerkpis}}
+            <div class="airpay-stat-grid">
+                {{#learner_kpis}}
+                {{> theme_airpayux/components/stat_card }}
+                {{/learner_kpis}}
             </div>
+            {{/haslearnerkpis}}
 
             {{! Progress Ring — overall completion percentage }}
             {{#has_progress_ring}}
@@ -481,7 +446,6 @@
                 </div>
             </div>
             {{/has_progress_ring}}
-            {{/hasstats}}
 
             {{! Gamification Widgets — Points, Streaks, Leaderboard }}
             {{#hasgamification}}
