@@ -1,6 +1,122 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-14 — **DAY-3 EXTENSIONS SHIPPED.** PHPUnit fixture trait unlocked 14 previously-skipped tests; running them surfaced a real `request_state` ORDER BY bug that's now fixed. Test count went 39 → 72 with 0 skips.
-**Phase:** Academy 4.0 — admin-feedback delivery complete + Day-2/Day-3 extensions. Cutover gates remain (IT staging deploy + k6 + pen-test + sign-off).
+**Updated:** 2026-05-14 — **PHASE A0 SHIPPED.** The Switchboard is live: a generalised feature-flag system with tenant-scoped overrides, audit trail, and graceful-degradation contract. 5 capabilities (cross-tenant share, cross-tenant request, AI assistant, gamification) are now toggleable without breaking the platform. Strategy locked in 3 docs covering UI/UX manifesto, 22-surface roadmap, and configurability architecture. Test count went 80 → 91 (Phase A0 adds 11 PHPUnit tests).
+**Phase:** Academy 4.0 — admin-feedback delivery complete + Day-2/Day-3 extensions + Phase A0 configurability foundation. Cutover gates remain (IT staging deploy + k6 + pen-test + sign-off).
+
+---
+
+## 🆕 PHASE A0 — CONFIGURABILITY FOUNDATION (2026-05-14)
+
+**Trigger:** the user's career-defining mandate — "ai and all major capabilities in the platform should be configurable by super admin, should be able to toggle on/off without breaking the platform." Phase A0 ships the architectural scaffolding that all subsequent work hangs off.
+
+### Strategy docs (locked-in references for next 6 months)
+
+- **`docs/platform-review-2026-05-14/UI-UX-MANIFESTO.md`** — 11 sections covering bar/principles/identity/breakpoints/components/motion/voice/references/iPad/accessibility/enforcement. Locks the design palette (small-text-safe `#15803d/#b45309/#b91c1c`), 4pt grid, 6 breakpoints (320 / 360 / 768 / 1024 / 1440 / 1920), Linear/Notion/Things-3 as reference apps, WCAG 2.2 AA as the floor.
+- **`docs/platform-review-2026-05-14/SURFACE-ROADMAP.md`** — 22+ surfaces mapped end-to-end (12 learner + 4 manager + 7 L&D + 6 super admin). Every surface tagged with Status / Priority / Effort. Section 4.1 is the Switchboard spec that drove Part D below.
+- **`docs/platform-review-2026-05-14/CONFIGURABILITY-ARCHITECTURE.md`** — 4-step resolution contract (tenant override → global override → registered default → false), 8 category prefixes, 60+ flag inventory, 3 degradation patterns (Hide / No-op / Fall back), and the 5 starter flags shipped in Part D.
+
+### Feature-flag infrastructure (`local_airpay_core`)
+
+Two new tables (idempotent via `db/upgrade.php` savepoint `2026051401`):
+- `local_airpay_feature_flags(id, flag_key, tenant_id, is_enabled, modified_by, timecreated, timemodified)` with `UNIQUE(flag_key, tenant_id)` and a composite index on `(tenant_id, flag_key)`.
+- `local_airpay_feature_flag_audit(id, flag_key, tenant_id, old_value, new_value, changed_by, reason, timecreated)` — every write captured for compliance + rollback.
+
+Resolver class `\local_airpay_core\feature_flags` (in `classes/feature_flags.php`):
+- `is_enabled(string $key): bool` — convenience for the current user's tenant, derived from `$USER->open_path`.
+- `is_enabled_for_tenant(string $key, int $tenant_id): bool` — explicit tenant lookup (used by cron and admin tools).
+- `all(int $tenant_id = 0): array` — full registry walk for the Switchboard UI.
+- `set(string $key, int $tenant_id, ?bool $value, ?int $by_userid, string $reason): void` — writes an override row + audit row. `null` removes the override (reverts to default).
+- `load_registry(): array` — walks every plugin's `db/feature_flags.php` via `\core_component::get_plugin_types()` and merges. 60-second MUC cache (`feature_flags_registry`).
+
+Plugin registry pattern: any plugin can declare flags in `db/feature_flags.php`:
+```php
+$flags = [
+    'commerce.crossTenantShare.enabled' => [
+        'default'     => true,
+        'description' => 'Allow site admins to share courses to other tenants',
+    ],
+];
+```
+The 5 starter flags ship in `local_airpay_core/db/feature_flags.php`:
+1. `ai.assistant.enabled` (default ON) — gates the AI client in `local_airpay_assistant`.
+2. `ai.sentientia.enabled` (default OFF) — gates the SOP→SCORM pipeline (not yet built).
+3. `engagement.gamification.enabled` (default ON) — gates point-awarding in the course_completed observer.
+4. `commerce.crossTenantShare.enabled` (default ON) — gates the share button + page.
+5. `commerce.crossTenantRequest.enabled` (default ON) — gates manager-driven course requests.
+
+### The Switchboard admin UI (`/local/airpay_core/admin/switchboard.php`)
+
+Site admin → Plugins → Local plugins → **The Switchboard**. Tenant tabs (Global / Airpay / Public / ZEEA), category sections (AI & Automation, Engagement, Commerce, etc.), tri-state buttons per flag (ON / OFF / Use default). Pending changes shown in a sticky banner with an Apply modal that summarises every flag-by-flag transition before commit. CSRF-protected POST handler that calls `feature_flags::set()` for each change, then `purge` the registry cache.
+
+JS module `amd/src/switchboard.js` uses XSS-safe DOM construction (`createElement` + `textContent`, no `innerHTML`) — caught and corrected by the security hook on first attempt.
+
+### Graceful-degradation wiring (5 capabilities, 3 patterns)
+
+| Pattern | Where it's used | Behaviour when flag is OFF |
+|---|---|---|
+| **Hide** | `theme/airpayux/classes/sidebar_navigation.php` (3 nav entries) | Nav entries disappear from sidebar; deep links also throw `featuredisabled` exception. |
+| **Hide** | `local/airpay_courses/classes/external/list_courses.php` (Share button) | `can_share` returns false → button doesn't render in catalog. |
+| **Page gate** | `local/airpay_courses/share.php`, `browse_airpay.php`, `manage_requests.php` | Friendly `\moodle_exception('featuredisabled', ...)` with the flag name surfaced for support. |
+| **Fall back** | `local/airpay_assistant/classes/ai_client.php` | Returns a static message ("AI assistant is temporarily disabled — try again later") instead of calling the LLM. Cost goes to zero immediately. |
+| **No-op** | `local/airpay_gamification/classes/observer.php` (course_completed) | Observer fires, but `points_manager::award()` is skipped. No points written, no exception, no broken UI. |
+
+### Test posture impact
+
+Phase A0 adds 11 PHPUnit tests in `local_airpay_core/tests/feature_flags_test.php`:
+1. `test_registered_default_returns_when_no_override` — registry → resolver path.
+2. `test_unknown_key_returns_false_safely` — typo handling (`assertDebuggingCalled`).
+3. `test_set_creates_override_row` — write path produces a flags row.
+4. `test_tenant_override_wins_over_global` — 4-step resolution order.
+5. `test_null_value_reverts_to_default` — null deletes the override row.
+6. `test_set_writes_audit_row` — every transition captured. (Caught a real int-vs-string bug from Moodle's DB layer.)
+7. `test_set_with_same_value_is_noop` — re-writing same value doesn't double-audit.
+8. `test_set_with_unknown_key_throws` — write-side typo protection.
+9. `test_all_returns_every_registered_flag` — registry merge sanity check.
+10. `test_all_reflects_tenant_override_in_resolved` — Switchboard rendering path.
+11. `test_recent_audit_filters_by_key_prefix` — audit-trail filter for compliance UIs.
+
+Full regression: **91 PHPUnit tests, 204 assertions, 0 errors, 0 failures, 0 skipped** (was 80 at Day-3 EOD). Warnings/deprecations in output are from the legacy `blocks/learnerscript/classes/observer.php`, not Airpay code.
+
+### What this enables (next 6 months)
+
+Every new capability — WhatsApp/SMS reminders (A1), gamification widget (A2), self-service compliance (A3), public marketplace, recommendations, SSO — now plugs into the same contract. Add a flag to your plugin's `db/feature_flags.php`, gate the entry point with `feature_flags::is_enabled('your.flag.key')`, and the Switchboard picks it up automatically on next cache TTL. Roll-out is now: ship feature with default OFF, enable for one tenant, watch metrics, ramp.
+
+### Files touched (commit-ready)
+
+```
+docs/platform-review-2026-05-14/
+  UI-UX-MANIFESTO.md                  [new]
+  SURFACE-ROADMAP.md                  [new]
+  CONFIGURABILITY-ARCHITECTURE.md     [new]
+
+moodle-enhancement/local/airpay_core/
+  version.php                         [bump 2026051401, release 1.2.0]
+  db/install.xml                      [+ 2 tables]
+  db/upgrade.php                      [+ savepoint 2026051401]
+  db/feature_flags.php                [new — 5 seeded flags]
+  db/caches.php                       [+ feature_flags_registry definition]
+  classes/feature_flags.php           [new — resolver class]
+  admin/switchboard.php               [new — admin page]
+  templates/switchboard.mustache      [new]
+  amd/src/switchboard.js              [new — XSS-safe DOM]
+  settings.php                        [new — Site Admin nav registration]
+  lang/en/local_airpay_core.php       [+ Switchboard strings, flag categories]
+  tests/feature_flags_test.php        [new — 11 PHPUnit tests]
+
+moodle-enhancement/local/airpay_courses/
+  classes/external/list_courses.php   [+ commerce.crossTenantShare gate on can_share]
+  share.php                           [+ commerce.crossTenantShare page gate]
+  browse_airpay.php                   [+ commerce.crossTenantRequest page gate]
+  manage_requests.php                 [+ commerce.crossTenantRequest page gate]
+
+moodle-enhancement/local/airpay_assistant/
+  classes/ai_client.php               [+ ai.assistant.enabled fall-back]
+
+moodle-enhancement/local/airpay_gamification/
+  classes/observer.php                [+ engagement.gamification.enabled no-op]
+
+moodle-enhancement/theme/airpayux/
+  classes/sidebar_navigation.php      [+ commerce.crossTenantRequest gate on 3 nav entries]
+```
 
 ---
 
@@ -53,12 +169,27 @@ The runtime fallback chain is now: rule's own column → admin setting → hard-
 
 ## ⏸️  NEXT SESSION PICKUP
 
-**Session paused 2026-05-14. All 25 commits pushed to production branch.**
+**Session paused 2026-05-14 (Phase A0 EOD). All Day-1/2/3 + Phase A0 commits pushed to production branch.**
 
-### Day-3 test posture
-- **80 PHPUnit tests** (cadence + cert_helper + observer + setting_cadence_json + tenant + sharing + request + catalog_manager), **172 assertions, 0 errors, 0 failures, 0 skipped** (open_path fixture trait provides the BizLMS schema)
+### Phase A0 test posture
+- **91 PHPUnit tests** (cadence + cert_helper + observer + setting_cadence_json + tenant + sharing + request + catalog_manager + feature_flags), **204 assertions, 0 errors, 0 failures, 0 skipped**
 - **post_deploy_verify.sh** on dev: **5 PASS, 1 WARN (cron, expected), 0 FAIL**
-- All five Day-1/Day-2 deliverables still green after Day-3 additions.
+- **The Switchboard** smoke-tested end-to-end: global ON / tenant 1 OFF → verified tenant 1 sees OFF, tenant 77/177 inherit global ON; revert-to-default deletes the override row; audit trail captures every transition.
+- All Day-1/Day-2/Day-3/Phase-A0 deliverables green.
+
+### Phase A0 follow-ups (in priority order)
+
+1. **Design system foundation** — extract the UI/UX Manifesto's tokens into `theme/airpayux/scss/tokens.scss` (spacing, radius, shadow, motion, type scale). Add a Storybook scaffold so every new surface has a baseline component library to draw from. Locks the visual language before A1 onwards build new screens.
+
+2. **Phase A1 — WhatsApp Business + SMS fallback** (4 weeks per roadmap). Plugins:
+   - New `local_airpay_whatsapp` — Business API client + opt-in flow + DLT template registry.
+   - Extend `local_airpay_emails` cadence engine to use the new channel preference (`engagement.whatsapp.enabled` × user opt-in × DLT template availability). The fall-back-to-email pattern is already documented in CONFIGURABILITY-ARCHITECTURE.md §5.3.
+
+3. **Phase A2 — Gamification dashboard widget + streak nudges**. The `local_airpay_gamification` plugin has the data layer; needs a learner-facing dashboard block (points / level / streak / recent badges) and a streak-recovery nudge in the email cadence engine.
+
+4. **Phase A3 — Manager self-service compliance assignment**. New role-scoped UI for managers to assign mandatory courses to their direct reports without needing the LMS admin. Gated by a new flag `learning.managerAssign.enabled`.
+
+5. **Phase A4 — Translation sweep for Sprint B/C/D strings** (hi/kn/mr/sw). The Switchboard's new strings (`switchboard_pagetitle`, `flag_category_*`) also need translation. Ship via the existing `tool_customlang` workflow.
 
 ### Recommended day-1 actions (in priority order)
 

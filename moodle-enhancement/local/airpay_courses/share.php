@@ -30,6 +30,15 @@ $context = context_system::instance();
 $PAGE->set_context($context);
 require_capability('local/airpay_courses:share_to_tenant', $context);
 
+// Phase A0 (2026-05-14): Switchboard gate. When the flag is off,
+// even capability holders are blocked — graceful 403 with explanation
+// rather than a half-broken page. Site admins can re-enable via
+// /local/airpay_core/admin/switchboard.php.
+if (!\local_airpay_core\feature_flags::is_enabled('commerce.crossTenantShare.enabled')) {
+    throw new \moodle_exception('featuredisabled', 'local_airpay_core', '',
+        'commerce.crossTenantShare.enabled');
+}
+
 global $DB, $OUTPUT, $USER;
 
 $course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);

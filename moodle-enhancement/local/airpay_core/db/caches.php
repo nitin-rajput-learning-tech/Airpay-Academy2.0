@@ -21,4 +21,17 @@ $definitions = [
         'staticacceleration' => true,
     ],
 
+    // Phase A0 — feature flag registry cache.
+    // The registry is built by walking every plugin's db/feature_flags.php
+    // file. That's an O(plugins) filesystem scan we don't want to do on
+    // every is_enabled() call. Cached for 60s — short enough that flag
+    // toggles propagate within a minute even on multi-PHP-FPM-worker
+    // setups, long enough to amortise the scan across thousands of calls.
+    'feature_flags_registry' => [
+        'mode'        => cache_store::MODE_APPLICATION,
+        'ttl'         => 60,
+        'simplekeys'  => true,
+        'staticacceleration' => true,
+    ],
+
 ];

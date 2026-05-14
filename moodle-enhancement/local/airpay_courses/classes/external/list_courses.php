@@ -47,7 +47,14 @@ class list_courses extends external_api {
         $can_enrol  = has_capability('local/airpay_courses:enrol', $context);
         // Sprint C wiring: admins with the share capability get a "Share"
         // icon in each row that links to /local/airpay_courses/share.php.
-        $can_share  = has_capability('local/airpay_courses:share_to_tenant', $context);
+        //
+        // Phase A0 (2026-05-14): gated by the Switchboard flag
+        // `commerce.crossTenantShare.enabled`. When the super admin
+        // toggles off (e.g. policy change, vendor incident), the icon
+        // disappears from every row even for users who still hold the
+        // capability. Capability + flag must BOTH be on to render.
+        $can_share  = has_capability('local/airpay_courses:share_to_tenant', $context)
+            && \local_airpay_core\feature_flags::is_enabled('commerce.crossTenantShare.enabled');
 
         // Sort whitelist.
         $allowed_sort = ['fullname', 'shortname', 'timecreated', 'visible', 'category'];

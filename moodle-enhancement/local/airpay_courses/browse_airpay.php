@@ -27,6 +27,12 @@ $context = context_system::instance();
 $PAGE->set_context($context);
 require_capability('local/airpay_courses:request_course', $context);
 
+// Phase A0 (2026-05-14): Switchboard gate.
+if (!\local_airpay_core\feature_flags::is_enabled('commerce.crossTenantRequest.enabled')) {
+    throw new \moodle_exception('featuredisabled', 'local_airpay_core', '',
+        'commerce.crossTenantRequest.enabled');
+}
+
 global $DB, $OUTPUT, $USER;
 
 // Derive viewer's tenant root from open_path.

@@ -17,7 +17,15 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_airpay_core';
-$plugin->version   = 2026051300;
+$plugin->version   = 2026051401;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.1.0'; // +cron-health publisher + audit_log + structured_logger
+$plugin->release   = '1.2.0';
+// Release history
+// 1.1.0  cron-health publisher + audit_log + structured_logger
+// 1.2.0  Phase A0 — feature flags + Switchboard infrastructure.
+//          + local_airpay_feature_flags table (overrides)
+//          + local_airpay_feature_flag_audit table (history)
+//          + \local_airpay_core\feature_flags resolver class
+//          + Switchboard admin page at /local/airpay_core/admin/switchboard.php
+//          + first 5 flags wired (assistant, gamification x2, share, request)

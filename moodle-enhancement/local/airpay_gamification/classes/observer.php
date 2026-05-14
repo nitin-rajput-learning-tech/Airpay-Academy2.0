@@ -15,9 +15,19 @@ class observer {
 
     /**
      * Course completed — award 100 points (+ 150 bonus for first course).
+     *
+     * Phase A0 (2026-05-14): silently no-op when the Switchboard flag
+     * `engagement.gamification.enabled` is off. This is the "background
+     * job" degradation pattern from CONFIGURABILITY-ARCHITECTURE.md §5.1
+     * — the event still fires, the observer just doesn't award points.
      */
     public static function course_completed(\core\event\course_completed $event) {
         global $DB;
+
+        if (class_exists('\\local_airpay_core\\feature_flags')
+                && !\local_airpay_core\feature_flags::is_enabled('engagement.gamification.enabled')) {
+            return;  // silent no-op — gamification disabled platform-wide
+        }
 
         $userid   = $event->relateduserid;
         $courseid = $event->courseid;

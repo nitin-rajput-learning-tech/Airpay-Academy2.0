@@ -36,6 +36,24 @@ class ai_client {
     public static function ask(int $userid, string $query): array {
         global $DB;
 
+        // Phase A0 (2026-05-14) — Switchboard gate. When the super
+        // admin turns off `ai.assistant.enabled` (e.g. during a vendor
+        // outage or to comply with a temporary regulatory pause), the
+        // assistant returns a polite "temporarily unavailable" response
+        // rather than calling Claude. The drawer UI hides itself
+        // separately via the template's feature-flag helper.
+        if (class_exists('\\local_airpay_core\\feature_flags')
+                && !\local_airpay_core\feature_flags::is_enabled('ai.assistant.enabled')) {
+            return [
+                'response'  => "The AI assistant is temporarily disabled by your site administrator. "
+                             . "Please try again later, or contact your L&D team.",
+                'model'     => 'flag_disabled',
+                'cached'    => false,
+                'tokens_in' => 0,
+                'tokens_out' => 0,
+            ];
+        }
+
         // Rate limit check.
         $today_start = strtotime('today');
         $count = $DB->count_records_select('local_airpay_chat_log',

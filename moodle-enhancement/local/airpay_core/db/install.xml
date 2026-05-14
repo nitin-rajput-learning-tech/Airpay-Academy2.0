@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/airpay_core/db" VERSION="20260514"
+       COMMENT="Airpay Core — feature flags + audit + shared infrastructure tables">
+  <TABLES>
+
+    <TABLE NAME="local_airpay_feature_flags"
+           COMMENT="Phase A0 (2026-05-14) — Feature flag overrides set via the
+                    Switchboard UI. A row exists only when an admin has
+                    overridden the registered default. Missing rows mean the
+                    flag falls through to its registered default in
+                    db/feature_flags.php. (key, tenant_id)=0 is the GLOBAL
+                    override; (key, tenant_id)=N is the per-tenant override
+                    that wins over global.">
+      <FIELDS>
+        <FIELD NAME="id"          TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="flag_key"    TYPE="char" LENGTH="128" NOTNULL="true"
+               COMMENT="Three-level dotted key, e.g. ai.assistant.enabled"/>
+        <FIELD NAME="tenant_id"   TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="0 = global override, &gt;0 = per-tenant root (1=Airpay, 77=Public, 177=ZEEA)"/>
+        <FIELD NAME="is_enabled"  TYPE="int"  LENGTH="1"  NOTNULL="true"
+               COMMENT="0|1 — the override value"/>
+        <FIELD NAME="modified_by" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="userid of the admin who last toggled this row"/>
+        <FIELD NAME="timecreated" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"          TYPE="primary" FIELDS="id"/>
+        <KEY NAME="uk_key_tenant"    TYPE="unique"  FIELDS="flag_key, tenant_id"
+              COMMENT="One override per (flag, tenant). Toggling reuses the same row."/>
+        <KEY NAME="fk_modified_by"   TYPE="foreign" FIELDS="modified_by"
+              REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_tenant_key" UNIQUE="false" FIELDS="tenant_id, flag_key"
+               COMMENT="Lookup path for is_enabled_for_tenant() — tenant first, then key"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_airpay_feature_flag_audit"
+           COMMENT="Phase A0 (2026-05-14) — Every toggle on the Switchboard creates
+                    a row here. Retains the full history for SOC2 / GDPR audit
+                    evidence (target retention: 7 years). The Switchboard
+                    'Flag history' page surfaces this as a timeline.">
+      <FIELDS>
+        <FIELD NAME="id"          TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="flag_key"    TYPE="char" LENGTH="128" NOTNULL="true"/>
+        <FIELD NAME="tenant_id"   TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="old_value"   TYPE="int"  LENGTH="1"  NOTNULL="false"
+               COMMENT="0|1 before the change; NULL means 'was using registered default (no override row)'"/>
+        <FIELD NAME="new_value"   TYPE="int"  LENGTH="1"  NOTNULL="false"
+               COMMENT="0|1 after the change; NULL means 'reverted to registered default (override row deleted)'"/>
+        <FIELD NAME="changed_by"  TYPE="int"  LENGTH="10" NOTNULL="true"
+               COMMENT="userid of the admin who toggled — never NULL (the Switchboard requires auth)"/>
+        <FIELD NAME="reason"      TYPE="char" LENGTH="255" NOTNULL="false"
+               COMMENT="Optional admin-entered note explaining why this change was made"/>
+        <FIELD NAME="timecreated" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"        TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_changed_by"  TYPE="foreign" FIELDS="changed_by"
+              REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_key_time" UNIQUE="false" FIELDS="flag_key, timecreated"
+               COMMENT="Timeline lookup for a specific flag's history"/>
+        <INDEX NAME="idx_tenant_time" UNIQUE="false" FIELDS="tenant_id, timecreated"
+               COMMENT="Per-tenant audit feed"/>
+      </INDEXES>
+    </TABLE>
+
+  </TABLES>
+</XMLDB>

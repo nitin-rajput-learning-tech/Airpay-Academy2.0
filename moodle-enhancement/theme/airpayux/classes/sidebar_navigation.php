@@ -95,10 +95,16 @@ class sidebar_navigation {
             $items[] = $this->item('Manage Courses', 'fa-book', '/local/airpay_courses/index.php', $currenturl);
             // Sprint D nav entry — Airpay admins see pending course-share
             // requests from other tenants here. The page itself enforces
-            // the local/airpay_courses:approve_request cap (siteadmin only),
-            // so we only render the link for siteadmin.
-            $items[] = $this->item('Course-share Requests', 'fa-inbox',
-                '/local/airpay_courses/manage_requests.php', $currenturl);
+            // the local/airpay_courses:approve_request cap (siteadmin only).
+            //
+            // Phase A0 (2026-05-14): also gated by the Switchboard flag
+            // `commerce.crossTenantRequest.enabled`. When off, this link
+            // disappears AND /manage_requests.php returns a friendly
+            // "feature disabled" page.
+            if (\local_airpay_core\feature_flags::is_enabled('commerce.crossTenantRequest.enabled')) {
+                $items[] = $this->item('Course-share Requests', 'fa-inbox',
+                    '/local/airpay_courses/manage_requests.php', $currenturl);
+            }
             $items[] = $this->item('Online Exams', 'fa-edit', '/local/airpay_exams/index.php', $currenturl);
             $items[] = $this->item('Classrooms', 'fa-calendar', '/local/airpay_classroom/index.php', $currenturl);
             $items[] = $this->item('Learning Paths', 'fa-map-signs', '/local/airpay_learningpath/index.php', $currenturl);
@@ -137,7 +143,11 @@ class sidebar_navigation {
             // Sprint D — non-Airpay L&D admins (Public/ZEEA) get the
             // Browse Airpay Library link to request specific courses
             // from the Airpay tenant's library.
-            if ($this->is_non_airpay_tenant_user()) {
+            //
+            // Phase A0 (2026-05-14): also gated by the Switchboard flag
+            // `commerce.crossTenantRequest.enabled`.
+            if ($this->is_non_airpay_tenant_user()
+                    && \local_airpay_core\feature_flags::is_enabled('commerce.crossTenantRequest.enabled')) {
                 $items[] = $this->item('Browse Airpay Library', 'fa-handshake-o',
                     '/local/airpay_courses/browse_airpay.php', $currenturl);
             }
@@ -171,7 +181,11 @@ class sidebar_navigation {
             // every Airpay course by tree membership.
             // Paired with "My Requests" outbox so they can track the
             // status of every request they've filed.
-            if ($this->is_non_airpay_tenant_user()) {
+            //
+            // Phase A0 (2026-05-14): also gated by the Switchboard flag
+            // `commerce.crossTenantRequest.enabled`.
+            if ($this->is_non_airpay_tenant_user()
+                    && \local_airpay_core\feature_flags::is_enabled('commerce.crossTenantRequest.enabled')) {
                 $items[] = $this->item('Browse Airpay Library', 'fa-handshake-o',
                     '/local/airpay_courses/browse_airpay.php', $currenturl);
                 $items[] = $this->item('My Requests', 'fa-clipboard-list',
