@@ -1,12 +1,40 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-13 EOD — **ADMIN-FEEDBACK SPRINT A-D + WAVES 2/3/4 + POLISH SHIPPED + PUSHED (22 commits, `78647e47d..ccac2b190`).** Closes all four LMS Admin feedback items reported on 2026-05-13 plus the cascade of polish work surfaced by full PHPUnit runs and end-to-end smoke testing.
-**Phase:** Academy 4.0 — admin-feedback delivery complete. Cutover gates remain (IT staging deploy + k6 + pen-test + sign-off).
+**Updated:** 2026-05-14 — **DAY-2 EXTENSIONS SHIPPED.** Picked up the PROJECT-STATE follow-up list from Day-1 EOD. Added the admin Settings UI for ramping cadence + cert-attach toggle, plus a one-command post-deploy verifier that wraps every diagnostic CLI.
+**Phase:** Academy 4.0 — admin-feedback delivery complete + Day-2 extensions. Cutover gates remain (IT staging deploy + k6 + pen-test + sign-off).
 
 ---
 
-## ⏸️  TOMORROW'S PICKUP — start here
+## 🆕 DAY-2 ADDITIONS (2026-05-14, 3 commits: `6eae3a5cd..1650fa05c`)
 
-**Session paused 2026-05-13 EOD. All 22 commits pushed to production branch.**
+### 1. Admin Settings UI (`6eae3a5cd`)
+New page at Site Admin → Plugins → Local plugins → **Airpay Emails — Settings**:
+- `default_cadence_days_json` — JSON-validated, ≤10 entries, positive ints only
+- `default_max_reminders` — cap per (user × course), 0 = unlimited
+- `default_auto_stop` — checkbox, ON by default
+- `attach_certificate_pdf` — global kill-switch for the cert PDF attachment
+
+The runtime fallback chain is now: rule's own column → admin setting → hard-coded `[1,3,7,14,21]` baseline. Includes a custom validator class (`setting_cadence_json`) that rejects bad input at save time with a specific error message rather than the previous silent-fallback-at-runtime behaviour. 10-case PHPUnit test suite ships alongside.
+
+### 2. Post-deploy verifier (`1650fa05c`)
+`moodle-enhancement/deploy/post_deploy_verify.sh` — one command, 5 gates, pass/fail report. Wraps:
+- Sprint A `diagnose_admin_ux.php` (with optional `--user=email`)
+- Sprint B `cert_emails_report.php`
+- Sprint C `manage_shares.php --list`
+- `cron_health.php` (WARN-not-FAIL on stuck tasks; expected on fresh deploy)
+- Block presence check for cron_health + cert_health
+
+`--json` flag for CI dashboard ingestion. Runbook updated with Step 10 to run this before cutover-evidence sign-off.
+
+---
+
+## ⏸️  NEXT SESSION PICKUP
+
+**Session paused 2026-05-14. All 25 commits pushed to production branch.**
+
+### Day-2 test posture
+- **39 PHPUnit tests** (cadence + cert_helper + observer + setting_cadence_json + sharing + request), **0 errors, 0 failures, 14 skipped** (need staging open_path column)
+- **post_deploy_verify.sh** on dev: **5 PASS, 1 WARN (cron, expected), 0 FAIL**
+- All four Day-1 deliverables still green after Day-2 additions.
 
 ### Recommended day-1 actions (in priority order)
 
