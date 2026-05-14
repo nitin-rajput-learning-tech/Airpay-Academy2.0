@@ -6,32 +6,8 @@
 }}
 <div class="airpay-catalog">
 
-    {{! Search Bar with Autocomplete — a11y: role="search" landmark + aria-label }}
-    <div class="airpay-catalog__search-section">
-        <form action="{{searchurl}}" method="get"
-              class="airpay-catalog__search-form"
-              role="search"
-              aria-label="Course catalogue search">
-            <i class="fa fa-search airpay-catalog__search-icon" aria-hidden="true"></i>
-            <label for="ap-catalog-search" class="sr-only">{{#str}}search, local_airpay_catalog{{/str}}</label>
-            <input type="text" name="q" value="{{search_query}}"
-                   placeholder="{{#str}}search, local_airpay_catalog{{/str}}"
-                   class="airpay-catalog__search-input" autocomplete="off"
-                   id="ap-catalog-search" data-baseurl="{{baseurl}}"
-                   aria-autocomplete="list"
-                   aria-controls="ap-catalog-suggest">
-            {{#has_search}}
-            <a href="{{baseurl}}" class="airpay-catalog__search-clear" aria-label="Clear search">
-                <i class="fa fa-times" aria-hidden="true"></i>
-            </a>
-            {{/has_search}}
-        </form>
-        <div class="airpay-catalog__search-suggest"
-             id="ap-catalog-suggest"
-             role="listbox"
-             aria-label="Search suggestions"
-             style="display:none;"></div>
-    </div>
+    {{! Search Bar — Phase B0 Catalogue iter 3: extracted to partial }}
+    {{> local_airpay_catalog/partials/search_bar }}
 
     {{^has_search}}
     {{! ═══ Continue Learning Carousel ═══ }}
@@ -152,26 +128,14 @@
                 {{#str}}allcourses, local_airpay_catalog{{/str}} ({{total}})
                 {{/has_search}}
             </h3>
+            {{! Filters + sort — Phase B0 Catalogue iter 3: extracted to partials.
+                Data shapes built in index.php: active_filters[] for chips,
+                sort_options[] for tabs. }}
             <div class="airpay-catalog__filters" role="group" aria-label="Active filters">
-                {{#has_active_category}}
-                <a href="{{baseurl}}"
-                   class="airpay-catalog__filter-chip airpay-catalog__filter-chip--active"
-                   aria-label="Remove category filter: {{active_category_name}}">
-                    <i class="fa fa-tag" aria-hidden="true"></i> {{active_category_name}}
-                    <i class="fa fa-times" aria-hidden="true"></i>
-                </a>
-                {{/has_active_category}}
-                <div class="airpay-catalog__sort" role="group" aria-label="Sort courses by">
-                    <a href="{{baseurl}}?sort=newest{{#has_search}}&q={{search_query}}{{/has_search}}{{#has_active_category}}&category={{active_category_id}}{{/has_active_category}}"
-                       class="{{#sort_newest}}active{{/sort_newest}}"
-                       aria-pressed="{{#sort_newest}}true{{/sort_newest}}{{^sort_newest}}false{{/sort_newest}}">{{#str}}newest, local_airpay_catalog{{/str}}</a>
-                    <a href="{{baseurl}}?sort=popular{{#has_search}}&q={{search_query}}{{/has_search}}{{#has_active_category}}&category={{active_category_id}}{{/has_active_category}}"
-                       class="{{#sort_popular}}active{{/sort_popular}}"
-                       aria-pressed="{{#sort_popular}}true{{/sort_popular}}{{^sort_popular}}false{{/sort_popular}}">{{#str}}popular, local_airpay_catalog{{/str}}</a>
-                    <a href="{{baseurl}}?sort=name{{#has_search}}&q={{search_query}}{{/has_search}}{{#has_active_category}}&category={{active_category_id}}{{/has_active_category}}"
-                       class="{{#sort_name}}active{{/sort_name}}"
-                       aria-pressed="{{#sort_name}}true{{/sort_name}}{{^sort_name}}false{{/sort_name}}">{{#str}}atoz, local_airpay_catalog{{/str}}</a>
-                </div>
+                {{#active_filters}}
+                {{> local_airpay_catalog/partials/filter_chip }}
+                {{/active_filters}}
+                {{> local_airpay_catalog/partials/sort_tabs }}
             </div>
         </div>
 

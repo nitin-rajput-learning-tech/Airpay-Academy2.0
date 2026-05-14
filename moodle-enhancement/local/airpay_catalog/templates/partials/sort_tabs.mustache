@@ -1,0 +1,24 @@
+{{!
+    Catalogue sort tabs — Phase B0 Catalogue iter 3 (2026-05-14)
+
+    Extracted from catalog.mustache. Three-tab sort group with proper
+    aria-pressed reflecting active state.
+
+    Context:
+        sort_options  (required) — array of {url, label, is_active}
+                                   pre-built in index.php
+
+    Usage:
+        {{> local_airpay_catalog/partials/sort_tabs }}
+
+    A11y:
+        role="group" + aria-label on wrapper
+        aria-pressed="true|false" on each tab reflecting active state
+}}
+<div class="airpay-catalog__sort" role="group" aria-label="Sort courses by">
+    {{#sort_options}}
+    <a href="{{url}}"
+       class="{{#is_active}}active{{/is_active}}"
+       aria-pressed="{{#is_active}}true{{/is_active}}{{^is_active}}false{{/is_active}}">{{label}}</a>
+    {{/sort_options}}
+</div>

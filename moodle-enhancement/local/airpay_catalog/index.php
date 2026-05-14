@@ -94,6 +94,48 @@ $data = [
     'searchurl'         => (new moodle_url('/local/airpay_catalog/index.php'))->out(false),
 ];
 
+// Phase B0 Catalogue iter 3 — data shapes for the new partials.
+// Sort tabs (partials/sort_tabs.mustache) — array of pre-built URLs +
+// labels + is_active flags. Each URL preserves the current search +
+// category filter context.
+$sort_qs_extra = '';
+if (!empty($search)) {
+    $sort_qs_extra .= '&q=' . urlencode($search);
+}
+if (!empty($category)) {
+    $sort_qs_extra .= '&category=' . (int) $category;
+}
+$data['sort_options'] = [
+    [
+        'url'       => $data['baseurl'] . '?sort=newest' . $sort_qs_extra,
+        'label'     => get_string('newest',  'local_airpay_catalog'),
+        'is_active' => ($sort === 'newest'),
+    ],
+    [
+        'url'       => $data['baseurl'] . '?sort=popular' . $sort_qs_extra,
+        'label'     => get_string('popular', 'local_airpay_catalog'),
+        'is_active' => ($sort === 'popular'),
+    ],
+    [
+        'url'       => $data['baseurl'] . '?sort=name' . $sort_qs_extra,
+        'label'     => get_string('atoz',    'local_airpay_catalog'),
+        'is_active' => ($sort === 'name'),
+    ],
+];
+
+// Filter chips (partials/filter_chip.mustache). Currently the only
+// supported filter is category; the array shape makes it trivial to add
+// more (skill, level, duration, tenant) without further template changes.
+$data['active_filters'] = [];
+if (!empty($category) && !empty($active_category_name)) {
+    $data['active_filters'][] = [
+        'href'  => $data['baseurl'],   // removing the only filter goes back to root
+        'label' => $active_category_name,
+        'icon'  => 'tag',
+        'remove_label' => 'Remove category filter: ' . $active_category_name,
+    ];
+}
+
 // Phase B0 Catalogue iter 6 — context-aware empty state. Adapts the
 // copy + CTA based on whether the user is searching, filtering, or
 // looking at a truly-empty catalog. The empty_state partial expects a
