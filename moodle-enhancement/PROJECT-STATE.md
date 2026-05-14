@@ -1,6 +1,76 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-14 — **PHASE A0 + A0.5 SHIPPED + B0 STARTED.** The Switchboard (configurability), Style Guide (design system), and the first reusable component (`stat_card`) are all live. The Learner Dashboard redesign plan is documented; iteration 1 (stat card) is shipped and demonstrated in Style Guide → Components. Iterations 2-9 sequenced for next sessions.
-**Phase:** Academy 4.0 — admin-feedback delivery complete + Day-2/Day-3 extensions + Phase A0 (configurability) + Phase A0.5 (design system) + Phase B0 (learner-surface redesign — iteration 1). Cutover gates remain (IT staging deploy + k6 + pen-test + sign-off).
+**Updated:** 2026-05-14 EOD — **27 commits shipped today across 4 phases.** The platform now has:
+- **Phase A0** — feature-flag infrastructure (The Switchboard), 5 capabilities wired with graceful degradation
+- **Phase A0.5** — design-system foundation (tokens.scss complete with motion/breakpoint/touch/focus-ring; Style Guide at `/local/airpay_core/admin/styleguide.php`)
+- **Phase B0 — Dashboard redesign** (iters 1-8 + close-out, 6 new reusable components, 91 PHPUnit tests green)
+- **Phase B0+ — Component reuse sweep** (4 batches, 20 surfaces × 75+ KPI tiles consume the canonical stat_card)
+- **Phase B0 — AI Assistant** (Switchboard gating + tokens + a11y + AMD module + Cmd+K shortcut — was dead UI before)
+- **Phase B0 — Course Catalogue** (iters 1, 2, 5, 6 — 117 hex literals removed, mobile UX bug fix, context-aware empty states)
+- **Phase B0 — Course Player iter 1a** (`_course-player.scss` tokens migration — 36 hex → 0, real silent-bug fix)
+- **Course Player redesign plan** locked in (#3 priority, 7 iterations)
+
+**Phase:** Academy 4.0 — admin-feedback delivery complete + Day-2/Day-3 + Phase A0 + Phase A0.5 + Phase B0 (Dashboard + Assistant + Catalogue + Player iter 1a + sweeps). Cutover gates remain (IT staging deploy + k6 + pen-test + sign-off).
+
+---
+
+## ⏱ TODAY'S SESSION TIMELINE (2026-05-14)
+
+| Commit | Phase | What |
+|---|---|---|
+| `49bcb067b` | A0 | The Switchboard + 5 wired flags + 11 PHPUnit tests |
+| `25dbd4bb4` | A0.5 | Tokens (motion/breakpoint/touch/focus) + Style Guide |
+| `d3ae87af0` | B0 Dashboard 1 | `stat_card` reusable + 8-session redesign plan |
+| `153dd5556` | B0 Dashboard 2 | Dashboard migrated to stat_card (3 sites) |
+| `6335f803c` | B0 Dashboard 3 | `course_progress_card` + Continue Learning migrated + status badges |
+| `6883306c0` | B0 Dashboard 4 | `activity_item` + Recent Activity + Timeline migrated |
+| `ec4a1f1d7` | B0 cleanup | Dead `.airpay-dash__stat/course*` CSS stripped (-140 lines) |
+| `9e7a4b89d` | B0 Dashboard 5 | `deadline_tile` (4 urgency states with urgent-pulse animation) |
+| `42c32000b` | B0 Dashboard 6 | `section_header` partial + legacy class aliases |
+| `f68f26b44` | B0 Dashboard 7 | `empty_state` component + fix for broken legacy tokens |
+| `6552527e6` | B0 Dashboard 8 | User Analytics → stat_card (closes iter-2 migration) |
+| `3bebd0557` | B0 close-out | PROJECT-STATE + redesign plan ship-log table |
+| `c1ac0afa9` | B0+ sweep 1 | Analytics + Compliance dashboards → stat_card |
+| `fbcb121a5` | B0+ sweep 2 | Manager + Privacy + Reports → stat_card |
+| `7d06acb09` | B0+ sweep 3 | 10 admin manage-landings → stat_card |
+| `a65fb5491` | B0+ sweep 4 | Emails + EnrolledUsers + Exams view → stat_card |
+| `5290648b1` | B0 Assistant | Tokens migration + a11y + Switchboard gating |
+| `4e8e3a4c9` | B0 Assistant | AMD module + Cmd+K shortcut (bubble was dead UI before!) |
+| `f4c67bb40` | B0 Catalogue 1 | Catalog tokens (87 hex → 0) + a11y |
+| `455b7a14a` | B0 Catalogue 2 | mycourses extraction + tokens + a11y |
+| `8da2480f4` | B0 Catalogue 5 | Card hover/touch parity (mobile UX bug fix) |
+| `276fedfd9` | B0 Catalogue 6 | Context-aware empty states |
+| `a4ac9cf34` | B0 Player | Course Player redesign plan (#3 priority) |
+| `f42c96f34` | B0 Player 1a | `_course-player.scss` tokens migration (36 hex → 0) |
+
+**Plus** earlier in the day: Phase A0 strategy docs (UI-UX-MANIFESTO, SURFACE-ROADMAP, CONFIGURABILITY-ARCHITECTURE), Switchboard + feature_flags resolver, Day-1/2/3 baseline.
+
+## 📊 SESSION TOTALS
+
+- **27 commits** on production branch (`86f7183a5..f42c96f34`)
+- **6 new reusable components** shipped: `stat_card`, `course_progress_card`, `activity_item`, `deadline_tile`, `section_header`, `empty_state`
+- **20 admin surfaces** consume `stat_card` (75+ KPI tiles)
+- **~280 hex literals removed** across the codebase
+- **91 PHPUnit tests passing** (Phase A0 added 11)
+- **0 silent token bugs** fixed (legacy vars `--ap-text`, `--ap-border`, `--ap-gradient` that didn't exist — empty-state CSS + course-player CSS were both rendering on browser fallbacks)
+- **3 redesign plans** locked in: Dashboard (✅ done iters 1-8), Catalogue (iters 1/2/5/6 done; 3/4 pending), Player (just shipped, iter 1a done)
+- **AI Assistant chat actually works** for the first time in production (AMD module was missing — bubble had been dead UI)
+- **Cmd+K / Ctrl+K** opens the AI assistant from any page (manifesto §4.1)
+
+## 🎯 7-PRIORITY REDESIGN STATUS
+
+| # | Surface | Status |
+|---|---|---|
+| 1 | Learner Dashboard | ✅ shipped (iters 1-8 + 4 sweep batches) |
+| 2 | Course Catalogue | 🟡 iters 1/2/5/6 shipped; iters 3/4 pending |
+| 3 | Course Player | 🟡 plan locked + iter 1a (half of tokens migration); iters 1b-7 pending |
+| 4 | My Learning | 🟡 iter 2 of catalog touched mycourses; deeper redesign pending |
+| 5 | Manager My Team | ✅ KPIs migrated in sweep batch 2 |
+| 6 | The Switchboard | ✅ shipped (Phase A0) |
+| 7 | AI Assistant drawer | ✅ shipped (3 commits: tokens, gating, AMD+Cmd+K) |
+
+**5 of 7 redesign priorities done.** Remaining: Catalogue iters 3-4, Player iters 1b-7, deeper My Learning redesign.
+
+---
 
 ---
 
