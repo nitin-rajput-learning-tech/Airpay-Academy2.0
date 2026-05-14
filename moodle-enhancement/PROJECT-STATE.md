@@ -4,6 +4,91 @@
 
 ---
 
+## 🆕 PHASE B0 — LEARNER DASHBOARD REDESIGN: ITERATION 4 (2026-05-14)
+
+**Activity feed item** — one component that handles both the admin "Recent Activity" inline feed AND the learner "Activity Timeline" with dot + connecting line. Two layouts, seven semantic variants, zero hex literals.
+
+### What shipped
+
+- **`templates/components/activity_item.mustache`** (new) — partial with required `text` field and optional `subtext` / `icon` / `variant` / `layout` / `istoday` / `href`. Wraps in `<a>` when `href` set (with focus-visible), `<div>` otherwise. Renders as inline row by default; timeline layout adds dot+line via CSS pseudo-element.
+- **`scss/moodle/partials/_components-activity.scss`** (new) — 175 lines, tokens-only. Two layouts (`inline` / `timeline`) and seven semantic variants:
+  - `default` — neutral grey marker
+  - `completion` — success-green (course completed)
+  - `enrolment` — primary-blue (new enrolment)
+  - `badge` — warning-orange (achievement earned)
+  - `quiz` — accent-teal (quiz attempted)
+  - `submission` — info-blue (submission made)
+  - `alert` — danger-red (overdue / urgent)
+  - Timeline-mode "today" entries pulse once via `airpay-activity-pulse` keyframe (deliberate duration + spring easing per manifesto §5.3).
+- **Wired in `custom_changes.scss`** alongside the other component partials.
+
+### Data-layer normalisation
+
+Two separate data sources had two different shapes. Now both feed the same partial:
+
+| Source | Before | After |
+|---|---|---|
+| **Admin `recentactivity`** (line 347) | `{icon, color: '#16a34a', text, time, ts}` | `{icon, variant: 'completion', text, subtext, ts}` |
+| **Learner `timeline`** (line 832) | `{label, date, fulldate, istoday}` | `{text, subtext, variant, layout: 'timeline', istoday, ...legacy}` |
+
+The admin version drops the hex `color` field in favour of `variant` (which maps to tokens, so dark mode + tenant branding override correctly). The learner version adds `variant` derived from the Moodle event name (`course_completed` → completion, `badge_awarded` → badge, etc.) and `layout: 'timeline'` so the partial renders the dot+line variant.
+
+Both sources keep `text` and `subtext` as the canonical content fields.
+
+### Dashboard template migration
+
+Two inline blocks replaced with iterations over the partial:
+
+```diff
+- <div style="display: flex; align-items: flex-start; ...">  <!-- 7 lines of inline style -->
+-     <i class="fa fa-{{icon}}" style="color: {{color}}; ...">
+-     ...
+- </div>
++ {{> theme_airpayux/components/activity_item }}
+```
+
+Similar for the learner timeline. Both wrappers now use `<ul class="airpay-activity-list">` instead of `<div>` for semantic correctness.
+
+### Style Guide demo
+
+New "Activity item" section in `/local/airpay_core/admin/styleguide.php` showing:
+- Inline layout with 6 variant examples
+- Timeline layout with 5 entries, top one marked "Today" so the pulse animation is visible on page load
+- Mustache usage snippet
+
+### Visible delta on the dashboard
+
+- Activity markers now use semantic tokens instead of hardcoded hex colours (so dark mode auto-flips)
+- Timeline "today" entry pulses on load (700ms spring) — eye-catching for the most-relevant event
+- Hover lights the row background (was no hover state before)
+- Focus-visible ring on linked activity rows for keyboard nav
+- Inline-feed icons get a tinted background circle (was just coloured glyphs on white)
+
+### Dead code accumulating
+
+`_surface-dashboard.scss` still carries the old dead classes from iters 2, 3, and now 4:
+- `.airpay-dash__stat*` (iter 2)
+- `.airpay-dash__course*` (iter 3)
+- `.airpay-dash__timeline-item`, `.airpay-dash__timeline-dot`, `.airpay-dash__timeline-content`, `.airpay-dash__timeline-date`, `.airpay-dash__timeline-label` (iter 4)
+
+The `.airpay-dash__timeline-section` wrapper class is still in use (just for section layout), so don't remove that one.
+
+### Files touched
+
+```
+moodle-enhancement/theme/airpayux/
+  layout/dashboard.php                          [+ variant on each activity entry]
+  templates/dashboard.mustache                  [2 inline blocks → partial calls]
+  templates/components/activity_item.mustache   [new — 7 variants, 2 layouts]
+  scss/moodle/partials/_components-activity.scss [new — 175 lines, tokens-only]
+  scss/moodle/custom_changes.scss               [+ import]
+
+moodle-enhancement/local/airpay_core/
+  admin/styleguide.php                          [+ Activity item section]
+```
+
+---
+
 ## 🆕 PHASE B0 — LEARNER DASHBOARD REDESIGN: ITERATION 3 (2026-05-14)
 
 **Course progress card** — the single most-impactful learner-facing component. Used on every learner's dashboard ("Continue Learning"), every manager's team drilldown, the My Learning page, and the recommendations rail. Before iter 3, it was inline HTML in `dashboard.mustache` with 10+ hex literals and no mobile responsiveness. After iter 3, it's a tokens-aware reusable with status badges, focus-visible, and a mobile-first grid.

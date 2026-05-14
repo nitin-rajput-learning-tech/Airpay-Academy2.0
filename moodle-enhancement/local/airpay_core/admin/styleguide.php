@@ -447,6 +447,71 @@ echo $OUTPUT->header();
     "statuslabel": "In progress",
     "duration":    "45 min"
 }</pre>
+
+    <h3 style="margin-top: var(--ap-space-10);">Activity item &mdash; <code>theme_airpayux/components/activity_item</code></h3>
+    <p class="ap-sg__section-desc">Canonical row for any chronological-event list. Two layouts (<code>inline</code> default, <code>timeline</code> with dot+line) and seven semantic variants. Used on Dashboard "Recent Activity" (admin), "Activity Timeline" (learner), and the Manager team drilldown.</p>
+
+    <h4 style="margin-top: var(--ap-space-6);">Inline layout &mdash; admin Recent Activity</h4>
+    <div style="max-width: 560px; background: var(--ap-color-bg-surface); border: 1px solid var(--ap-color-border); border-radius: var(--ap-radius-md); padding: var(--ap-space-2); margin-bottom: var(--ap-space-8);">
+        <ul class="airpay-activity-list">
+            <?php
+            $activities = [
+                ['completion', 'check-circle',  'Sarah Khan completed Anti-Money Laundering 2026', '14 May, 10:32 AM'],
+                ['enrolment',  'plus-circle',   'Arjun Mehta enrolled in Customer Onboarding KYC', '14 May, 09:48 AM'],
+                ['badge',      'trophy',        'Priya Singh earned the 30-day streak badge',      '13 May, 06:12 PM'],
+                ['quiz',       'question-circle','Vikas Rao scored 100% on InfoSec Refresh quiz',   '13 May, 03:21 PM'],
+                ['submission', 'file-text-o',   'Rahul Das submitted Quiz 3 in KYC',               '12 May, 11:05 AM'],
+                ['alert',      'exclamation-triangle', '3 mandatory courses became overdue today', '14 May, 00:01 AM'],
+            ];
+            foreach ($activities as [$variant, $icon, $text, $subtext]) {
+                echo '<li class="airpay-activity airpay-activity--inline airpay-activity--' . s($variant) . '">';
+                echo '<div class="airpay-activity__marker" aria-hidden="true"><i class="fa fa-' . s($icon) . '"></i></div>';
+                echo '<div class="airpay-activity__body">';
+                echo '<p class="airpay-activity__text">' . s($text) . '</p>';
+                echo '<p class="airpay-activity__subtext">' . s($subtext) . '</p>';
+                echo '</div></li>';
+            }
+            ?>
+        </ul>
+    </div>
+
+    <h4 style="margin-top: var(--ap-space-6);">Timeline layout &mdash; learner Activity Timeline</h4>
+    <div style="max-width: 480px; background: var(--ap-color-bg-surface); border: 1px solid var(--ap-color-border); border-radius: var(--ap-radius-md); padding: var(--ap-space-3); margin-bottom: var(--ap-space-8);">
+        <ul class="airpay-activity-list">
+            <?php
+            $timeline = [
+                ['completion', 'Completed Customer Onboarding KYC',           'Today',     true],
+                ['quiz',       'Submitted quiz in InfoSec Refresh',           '13 May 2026', false],
+                ['enrolment',  'Enrolled in Anti-Money Laundering 2026',      '10 May 2026', false],
+                ['badge',      'Earned the 7-day learning streak badge',     '07 May 2026', false],
+                ['submission', 'Submitted quiz in DPDP Compliance',           '05 May 2026', false],
+            ];
+            foreach ($timeline as [$variant, $text, $subtext, $istoday]) {
+                $cls = 'airpay-activity airpay-activity--timeline airpay-activity--' . $variant;
+                if ($istoday) {
+                    $cls .= ' airpay-activity--today';
+                }
+                echo '<li class="' . s($cls) . '">';
+                echo '<div class="airpay-activity__marker" aria-hidden="true"></div>';
+                echo '<div class="airpay-activity__body">';
+                echo '<p class="airpay-activity__text">' . s($text) . '</p>';
+                echo '<p class="airpay-activity__subtext">' . s($subtext) . '</p>';
+                echo '</div></li>';
+            }
+            ?>
+        </ul>
+    </div>
+
+    <h4 style="margin-top: var(--ap-space-6);">Mustache usage</h4>
+    <pre style="background: var(--ap-color-bg-surface-alt); padding: var(--ap-space-4); border-radius: var(--ap-radius-sm); font-size: var(--ap-text-xs); overflow-x: auto;">{{&gt; theme_airpayux/components/activity_item }}
+{
+    "text":    "Sarah completed Anti-Money Laundering 2026",
+    "subtext": "14 May, 10:32 AM",
+    "icon":    "check-circle",
+    "variant": "completion",
+    "layout":  "inline",
+    "href":    "/course/view.php?id=42"
+}</pre>
 </section>
 
 </div>

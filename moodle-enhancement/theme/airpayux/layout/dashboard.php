@@ -345,11 +345,14 @@ if (isloggedin() && !isguestuser()) {
                    ORDER BY cc.timecompleted DESC", [], 0, 5);
                 foreach ($completions as $comp) {
                     $recentactivity[] = [
-                        'icon'  => 'check-circle',
-                        'color' => '#16a34a',
-                        'text'  => fullname($comp) . ' completed ' . format_string($comp->coursename),
-                        'time'  => userdate($comp->timecompleted, '%d %b, %I:%M %p'),
-                        'ts'    => $comp->timecompleted,
+                        // Phase B0 iter 4 — fields are the activity_item partial's
+                        // canonical shape. `icon`+`text`+`subtext`+`variant` go into
+                        // the component; `ts` is kept for usort below.
+                        'icon'    => 'check-circle',
+                        'variant' => 'completion',
+                        'text'    => fullname($comp) . ' completed ' . format_string($comp->coursename),
+                        'subtext' => userdate($comp->timecompleted, '%d %b, %I:%M %p'),
+                        'ts'      => $comp->timecompleted,
                     ];
                 }
 
@@ -364,11 +367,11 @@ if (isloggedin() && !isguestuser()) {
                    ORDER BY ue.timecreated DESC", [], 0, 5);
                 foreach ($enrolments as $enr) {
                     $recentactivity[] = [
-                        'icon'  => 'plus-circle',
-                        'color' => '#0066A7',
-                        'text'  => fullname($enr) . ' enrolled in ' . format_string($enr->coursename),
-                        'time'  => userdate($enr->timecreated, '%d %b, %I:%M %p'),
-                        'ts'    => $enr->timecreated,
+                        'icon'    => 'plus-circle',
+                        'variant' => 'enrolment',
+                        'text'    => fullname($enr) . ' enrolled in ' . format_string($enr->coursename),
+                        'subtext' => userdate($enr->timecreated, '%d %b, %I:%M %p'),
+                        'ts'      => $enr->timecreated,
                     ];
                 }
 
@@ -809,28 +812,42 @@ if (isloggedin() && !isguestuser()) {
             if ($log->courseid > 1) {
                 $coursename = $DB->get_field('course', 'fullname', ['id' => $log->courseid]);
             }
+            // Phase B0 iter 4 — map each Moodle event to the activity_item
+            // partial's canonical shape. `variant` drives the tokens-aware
+            // marker colour (e.g. completion -> success-green dot).
             $label = '';
+            $variant = 'default';
             switch ($log->eventname) {
                 case '\\core\\event\\course_completed':
                     $label = 'Completed ' . format_string($coursename);
+                    $variant = 'completion';
                     break;
                 case '\\core\\event\\user_enrolment_created':
                     $label = 'Enrolled in ' . format_string($coursename);
+                    $variant = 'enrolment';
                     break;
                 case '\\core\\event\\badge_awarded':
                     $label = 'Earned a badge';
+                    $variant = 'badge';
                     break;
                 case '\\mod_quiz\\event\\attempt_submitted':
                     $label = 'Submitted quiz in ' . format_string($coursename);
+                    $variant = 'submission';
                     break;
                 default:
                     $label = 'Activity recorded';
             }
             $timeline[] = [
-                'label' => $label,
-                'date' => userdate($log->timecreated, '%b %d'),
-                'fulldate' => userdate($log->timecreated, '%d %B %Y'),
+                // Canonical partial fields:
+                'text'    => $label,
+                'subtext' => userdate($log->timecreated, '%d %b %Y'),
+                'variant' => $variant,
+                'layout'  => 'timeline',   // dot + connecting line variant
                 'istoday' => (date('Ymd', $log->timecreated) === date('Ymd')),
+                // Legacy fields — kept for any consumer that hasn't migrated:
+                'label'    => $label,
+                'date'     => userdate($log->timecreated, '%b %d'),
+                'fulldate' => userdate($log->timecreated, '%d %B %Y'),
             ];
         }
         $airpay_dashboard['timeline'] = $timeline;

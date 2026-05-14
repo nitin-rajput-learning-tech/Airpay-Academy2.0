@@ -339,21 +339,15 @@
                 {{/hastopcourses}}
             </div>
 
-            {{! ── Recent Activity ── }}
+            {{! Recent Activity — Phase B0 iter 4: migrated to activity_item partial }}
             {{#hasrecentactivity}}
             <div class="airpay-dash__section" style="margin-top: 20px;">
-                <h3 class="airpay-dash__section-title"><i class="fa fa-clock-o"></i> Recent Activity</h3>
-                <div style="padding: 8px 16px;">
+                <h3 class="airpay-dash__section-title"><i class="fa fa-clock-o" aria-hidden="true"></i> Recent Activity</h3>
+                <ul class="airpay-activity-list">
                     {{#recentactivity}}
-                    <div style="display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--ap-color-border);">
-                        <i class="fa fa-{{icon}}" style="color: {{color}}; margin-top: 3px; width: 16px; text-align: center;"></i>
-                        <div style="flex: 1; min-width: 0;">
-                            <div style="font-size: 13px; color: var(--ap-color-text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{text}}</div>
-                            <div style="font-size: 11px; color: var(--ap-color-text-muted); margin-top: 2px;">{{time}}</div>
-                        </div>
-                    </div>
+                    {{> theme_airpayux/components/activity_item }}
                     {{/recentactivity}}
-                </div>
+                </ul>
             </div>
             {{/hasrecentactivity}}
 
@@ -573,21 +567,16 @@
                 </div>
                 {{/hasdeadlines}}
 
-                {{! --- Activity Timeline --- }}
+                {{! Activity Timeline — Phase B0 iter 4: migrated to activity_item partial.
+                    Each entry passes layout="timeline" via the data layer. }}
                 {{#hastimeline}}
                 <div class="airpay-dash__section airpay-dash__timeline-section">
                     <h3 class="airpay-dash__section-title"><i class="fa fa-history" aria-hidden="true"></i> Activity Timeline</h3>
-                    <div class="airpay-dash__timeline">
+                    <ul class="airpay-activity-list">
                         {{#timeline}}
-                        <div class="airpay-dash__timeline-item">
-                            <div class="airpay-dash__timeline-dot {{#istoday}}airpay-dash__timeline-dot--today{{/istoday}}"></div>
-                            <div class="airpay-dash__timeline-content">
-                                <span class="airpay-dash__timeline-date">{{date}}</span>
-                                <span class="airpay-dash__timeline-label">{{label}}</span>
-                            </div>
-                        </div>
+                        {{> theme_airpayux/components/activity_item }}
                         {{/timeline}}
-                    </div>
+                    </ul>
                 </div>
                 {{/hastimeline}}
             </div>
