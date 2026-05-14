@@ -70,9 +70,27 @@ class observer {
                 return;
             }
 
+            // Day-2 (2026-05-14): respect the admin toggle. Default ON.
+            // When ticked OFF (e.g. tool_certificate is misbehaving),
+            // the completion email still fires, just without the
+            // PDF attachment. The decision is recorded in the audit
+            // log via the empty `certificate_issue_id` column.
+            $attach_pdf = get_config('local_airpay_emails',
+                'attach_certificate_pdf');
+            // Treat unconfigured (false / null) as ON to preserve
+            // current behaviour for installs that haven't visited
+            // the settings page.
+            $attach_pdf = ($attach_pdf === false || $attach_pdf === null)
+                ? true
+                : (bool) $attach_pdf;
+
             // Look up any tool_certificate issue. May return null —
             // that's fine, we send the email without an attachment.
-            $issue = certificate_helper::get_issue_for_user_course($userid, $courseid);
+            // When the admin toggle is OFF, we skip the lookup
+            // entirely (saves a DB hit per completion).
+            $issue = $attach_pdf
+                ? certificate_helper::get_issue_for_user_course($userid, $courseid)
+                : null;
 
             // Compute completion details for the template context.
             $cc = $DB->get_record('course_completions',

@@ -234,8 +234,10 @@ class process_rules extends \core\task\scheduled_task {
     private function process_course_incomplete(object $rule): array {
         global $DB;
 
-        // Parse the cadence. Default to [1, 3, 7, 14, 21] when the
-        // column is empty — admin can override per rule.
+        // Parse the cadence. Day-2 (2026-05-14) — fallback order:
+        //   1. The rule row's own `cadence_days_json` (per-rule override)
+        //   2. The plugin-wide default from settings.php
+        //   3. Hard-coded baseline [1, 3, 7, 14, 21]
         $cadence = [];
         if (!empty($rule->cadence_days_json)) {
             $decoded = json_decode($rule->cadence_days_json, true);
@@ -244,12 +246,36 @@ class process_rules extends \core\task\scheduled_task {
             }
         }
         if (empty($cadence)) {
+            $admin_default = get_config('local_airpay_emails',
+                'default_cadence_days_json');
+            if (!empty($admin_default)) {
+                $decoded = json_decode($admin_default, true);
+                if (is_array($decoded)) {
+                    $cadence = array_map('intval', $decoded);
+                }
+            }
+        }
+        if (empty($cadence)) {
+            $cadence = [1, 3, 7, 14, 21];
+        }
+        // Defensive: filter out non-positive values silently and cap
+        // the array length at 10. A misconfigured cadence like
+        // [-1, 0, 99999] becomes [99999] — still wrong but won't crash.
+        $cadence = array_values(array_filter($cadence, fn($d) => $d > 0));
+        $cadence = array_slice($cadence, 0, 10);
+        if (empty($cadence)) {
             $cadence = [1, 3, 7, 14, 21];
         }
         $max_offset = (int) max($cadence);
 
-        $cap   = (int) ($rule->max_reminders_per_user ?? 0);  // 0 = unlimited
-        $auto_stop = (int) ($rule->auto_stop_on_completion ?? 1);
+        // Cap + auto-stop also fall back through rule → admin setting
+        // → hard-coded baseline.
+        $cap = (int) ($rule->max_reminders_per_user
+            ?? get_config('local_airpay_emails', 'default_max_reminders')
+            ?? 0);
+        $auto_stop = (int) ($rule->auto_stop_on_completion
+            ?? get_config('local_airpay_emails', 'default_auto_stop')
+            ?? 1);
 
         // Find candidates: enrolled in any course, enrolment within the
         // max cadence window. We intentionally don't filter by exact
