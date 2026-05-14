@@ -37,6 +37,50 @@ class manage_controller {
         // BizLMS stats (read-only).
         $bizlmsstats = legacy_bridge::get_email_stats();
 
+        // Phase B0+ — stat_card-compatible tile array. Six tiles cover
+        // the essential email-system metrics. Legacy flat fields preserved
+        // for the existing template + any consumer that reads them.
+        $kpi_tiles = [
+            [
+                'label' => 'Email Templates',
+                'value' => number_format($templatecount),
+                'icon'  => 'envelope-o',
+                'color' => 'primary',
+            ],
+            [
+                'label' => 'Active Rules',
+                'value' => number_format($rulestats->enabled) . ' / ' . number_format($rulestats->total),
+                'icon'  => 'bolt',
+                'color' => 'accent',
+            ],
+            [
+                'label' => 'Sent Today',
+                'value' => number_format($logstats->sent_today),
+                'icon'  => 'paper-plane',
+                'color' => 'success',
+            ],
+            [
+                'label' => 'Sent This Week',
+                'value' => number_format($logstats->sent_week),
+                'icon'  => 'calendar-check-o',
+                'color' => 'info',
+            ],
+            [
+                'label' => 'Failed',
+                'value' => number_format($logstats->failed),
+                'icon'  => 'exclamation-triangle',
+                // Failed flips to danger when > 0 — a single failure is
+                // still actionable (probably an SMTP misconfig).
+                'color' => $logstats->failed > 0 ? 'danger' : 'primary',
+            ],
+            [
+                'label' => 'Suppressed',
+                'value' => number_format($logstats->suppressed),
+                'icon'  => 'ban',
+                'color' => 'warning',
+            ],
+        ];
+
         return [
             'template_count'  => $templatecount,
             'rule_total'      => $rulestats->total,
@@ -47,6 +91,8 @@ class manage_controller {
             'log_sent_week'   => $logstats->sent_week,
             'log_failed'      => $logstats->failed,
             'log_suppressed'  => $logstats->suppressed,
+            'kpi_tiles'       => $kpi_tiles,
+            'has_kpi_tiles'   => !empty($kpi_tiles),
             'bizlms_total'    => $bizlmsstats->total,
             'bizlms_sent'     => $bizlmsstats->sent,
             'bizlms_pending'  => $bizlmsstats->pending,

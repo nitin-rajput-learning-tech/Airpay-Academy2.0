@@ -121,33 +121,14 @@
 
     {{#tab_analytics_active}}
     {{#has_analytics}}
-    <div class="row mb-4">
-        <div class="col-md-3 mb-3"><div class="card border-0 shadow-sm">
-            <div class="card-body text-center py-3">
-                <div style="font-size:2rem;font-weight:800;">{{ count_attempts }}</div>
-                <div class="text-muted small text-uppercase">Total attempts</div>
-            </div>
-        </div></div>
-        <div class="col-md-3 mb-3"><div class="card border-0 shadow-sm">
-            <div class="card-body text-center py-3">
-                <div style="font-size:2rem;font-weight:800;color:var(--ap-color-success,#16a34a);">{{ pass_pct }}%</div>
-                <div class="text-muted small text-uppercase">Pass rate</div>
-                <div class="small text-muted">{{ count_passed }} passed · {{ count_failed }} failed</div>
-            </div>
-        </div></div>
-        <div class="col-md-3 mb-3"><div class="card border-0 shadow-sm">
-            <div class="card-body text-center py-3">
-                <div style="font-size:2rem;font-weight:800;">{{ avg_score }}</div>
-                <div class="text-muted small text-uppercase">Avg score (max {{ max_grade }})</div>
-            </div>
-        </div></div>
-        <div class="col-md-3 mb-3"><div class="card border-0 shadow-sm">
-            <div class="card-body text-center py-3">
-                <div style="font-size:2rem;font-weight:800;">{{ avg_time }}</div>
-                <div class="text-muted small text-uppercase">Avg time</div>
-            </div>
-        </div></div>
+    {{! KPI Summary — Phase B0+: migrated to tokens-aware stat_card partial }}
+    {{#has_kpi_tiles}}
+    <div class="airpay-stat-grid mb-4">
+        {{#kpi_tiles}}
+        {{> theme_airpayux/components/stat_card }}
+        {{/kpi_tiles}}
     </div>
+    {{/has_kpi_tiles}}
     <div class="card border-0 shadow-sm">
         <div class="card-body">
             <h6 class="mb-2">Score range</h6>

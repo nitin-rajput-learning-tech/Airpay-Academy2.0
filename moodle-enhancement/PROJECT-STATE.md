@@ -4,6 +4,64 @@
 
 ---
 
+## 🆕 PHASE B0+ — Component reuse sweep (batch 4 — final) (2026-05-14)
+
+Three more KPI strips migrated. Brings the sweep to its natural completion: **20 surfaces / 75+ KPI tiles** all consuming the canonical `stat_card`.
+
+### Batch 4 surfaces migrated
+
+| Surface | Tiles | Notes |
+|---|---|---|
+| **Emails dashboard** (`local_airpay_emails`) | 6 | Templates / Active Rules / Sent Today / Sent Week / Failed (danger when >0) / Suppressed (warning) |
+| **Course Enrolled Users** (`local_airpay_courses/enrolledusers.php`) | 3 | Total Enrolled / Completed / Completion Rate (success ≥80, warning ≥50, danger else) |
+| **Exam Analytics tab** (`local_airpay_exams/view.php`) | 4 | Total Attempts / Pass Rate (semantic by band) / Avg Score / Avg Time |
+
+### Audited but NOT migrated (intentional)
+
+| Surface | Reason |
+|---|---|
+| `local_airpay_catalog/mycourses.mustache` | Custom rich card with progress ring + thumb image. Migrating to `course_progress_card` would be a downgrade — needs a dedicated iteration. |
+| `local_airpay_classroom/attendance.mustache` | KPI tiles have `data-counter="..."` attributes wired to JS. Migrating would break attendance-marking real-time updates. |
+| `local_airpay_manager/performance.mustache` | KPI tiles are JS-generated (not in the Mustache template). Belongs to a JS refactor commit. |
+| `local_airpay_learningpath/view.mustache` + `programs/view.mustache` | Inline summary text (no card wrapper) — different visual pattern, not a metric tile. |
+| `local_airpay_evaluation/analysis.mustache` + `responses.mustache` | `col-md-6` 2-column info pairs, not KPI tiles. |
+| `local_airpay_notifications/log_detail.mustache` | Timeline is a `<table>` (dense, multi-column). Not a stacked-row pattern. |
+
+### Cumulative coverage across all 4 sweep batches
+
+- **20 surfaces** using `stat_card`
+- **75+ KPI tiles** consuming the partial
+- **~100 hex literals** removed (inline `style="color: #....."` across all migrated surfaces)
+- **Zero new partials needed** — the canonical 7 components from Phase B0 (stat_card, course_progress_card, activity_item, deadline_tile, section_header, empty_state, plus the existing card/button/badge/progress) cover every dashboard-class surface in the codebase.
+
+### What's left for future sweeps
+
+`activity_item` and `deadline_tile` had no good migration candidates outside the main learner dashboard — the codebase's other "log/history" views use tables (denser, more sortable) instead of stacked-row patterns. Those tables stay where they are.
+
+`course_progress_card` has one obvious candidate (`catalog/mycourses.mustache`) but its existing custom card is more feature-rich. Migrating means either:
+- Enriching `course_progress_card` to match (adds complexity to a previously-simple component), or
+- A dedicated mycourses redesign session that picks the right level of richness
+
+That's a redesign decision worth doing intentionally, not as a sweep.
+
+### Files touched (batch 4)
+
+```
+moodle-enhancement/local/airpay_emails/
+  classes/manage_controller.php        [+ $kpi_tiles in tab_dashboard data]
+  templates/manage/tab_dashboard.mustache [6 inline cards → partial]
+
+moodle-enhancement/local/airpay_courses/
+  enrolledusers.php                    [+ $kpi_tiles]
+  templates/enrolledusers.mustache     [3 inline cards → partial]
+
+moodle-enhancement/local/airpay_exams/
+  view.php                             [+ $kpi_tiles on analytics tab]
+  templates/view.mustache              [4 inline cards → partial]
+```
+
+---
+
 ## 🆕 PHASE B0+ — Component reuse sweep (batch 3) (2026-05-14)
 
 Ten more admin manage-landings adopt the canonical `stat_card`. Brings the total to **17 surfaces / 65+ KPI tiles** all consuming the same tokens-aware reusable.

@@ -172,6 +172,38 @@ switch ($tab) {
             $tab_data['count_failed']  = max(0, $count_attempts - $count_passed);
             $tab_data['count_attempts'] = $count_attempts;
             $tab_data['has_analytics']  = $count_attempts > 0;
+
+            // Phase B0+ — stat_card-compatible KPI tiles for the
+            // analytics tab. Legacy flat fields above are preserved.
+            $tab_data['kpi_tiles'] = [
+                [
+                    'label' => 'Total Attempts',
+                    'value' => number_format($count_attempts),
+                    'icon'  => 'pencil-square-o',
+                    'color' => 'primary',
+                ],
+                [
+                    'label' => 'Pass Rate',
+                    'value' => $pass_pct . '%',
+                    'icon'  => 'check-circle',
+                    // Semantic by pass-rate band.
+                    'color' => $pass_pct >= 80 ? 'success'
+                             : ($pass_pct >= 50 ? 'warning' : 'danger'),
+                ],
+                [
+                    'label' => 'Avg Score',
+                    'value' => $tab_data['avg_score'] . ' / ' . $tab_data['max_grade'],
+                    'icon'  => 'star',
+                    'color' => 'accent',
+                ],
+                [
+                    'label' => 'Avg Time',
+                    'value' => $tab_data['avg_time'],
+                    'icon'  => 'clock-o',
+                    'color' => 'info',
+                ],
+            ];
+            $tab_data['has_kpi_tiles'] = !empty($tab_data['kpi_tiles']);
         }
         break;
 }

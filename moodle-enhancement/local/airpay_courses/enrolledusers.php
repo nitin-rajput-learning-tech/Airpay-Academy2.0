@@ -55,6 +55,29 @@ $columns = [
     ['key' => 'actions',          'label' => '',             'sortable' => false, 'format' => 'html'],
 ];
 
+// Phase B0+ — stat_card-compatible tiles.
+$kpi_tiles = [
+    [
+        'label' => 'Total Enrolled',
+        'value' => number_format($total_enrolled),
+        'icon'  => 'users',
+        'color' => 'primary',
+    ],
+    [
+        'label' => 'Completed',
+        'value' => number_format($total_completed),
+        'icon'  => 'check-circle',
+        'color' => 'success',
+    ],
+    [
+        'label' => 'Completion Rate',
+        'value' => $completion_pct . '%',
+        'icon'  => 'line-chart',
+        // Semantic colour by performance band.
+        'color' => $completion_pct >= 80 ? 'success' : ($completion_pct >= 50 ? 'warning' : 'danger'),
+    ],
+];
+
 $data = [
     'courseid'        => (int) $courseid,
     'course_name'     => format_string($course->fullname),
@@ -62,6 +85,8 @@ $data = [
     'total_enrolled'  => number_format($total_enrolled),
     'total_completed' => number_format($total_completed),
     'completion_pct'  => $completion_pct,
+    'kpi_tiles'       => $kpi_tiles,
+    'has_kpi_tiles'   => !empty($kpi_tiles),
     'columns_json'    => s(json_encode($columns)),
     'can_enrol'       => $can_enrol,
     'back_url'        => (new moodle_url('/local/airpay_courses/index.php'))->out(false),

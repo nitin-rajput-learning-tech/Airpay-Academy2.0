@@ -11,34 +11,14 @@
 </div>
 {{/tabdata.noemailever}}
 
-<div class="ap-manage-stats">
-    <div class="ap-manage-card">
-        <div class="ap-manage-card__title">Email Templates</div>
-        <div class="ap-manage-card__value" style="color:#0066A7;">{{tabdata.template_count}}</div>
-    </div>
-    <div class="ap-manage-card">
-        <div class="ap-manage-card__title">Active Rules</div>
-        <div class="ap-manage-card__value" style="color:#0f7a73;">
-            {{tabdata.rule_enabled}} <span style="font-size:14px; color:#5a6070;">/ {{tabdata.rule_total}}</span>
-        </div>
-    </div>
-    <div class="ap-manage-card">
-        <div class="ap-manage-card__title">Sent Today</div>
-        <div class="ap-manage-card__value" style="color:#16a34a;">{{tabdata.log_sent_today}}</div>
-    </div>
-    <div class="ap-manage-card">
-        <div class="ap-manage-card__title">Sent This Week</div>
-        <div class="ap-manage-card__value">{{tabdata.log_sent_week}}</div>
-    </div>
-    <div class="ap-manage-card">
-        <div class="ap-manage-card__title">Failed</div>
-        <div class="ap-manage-card__value" style="color:#dc2626;">{{tabdata.log_failed}}</div>
-    </div>
-    <div class="ap-manage-card">
-        <div class="ap-manage-card__title">Suppressed</div>
-        <div class="ap-manage-card__value" style="color:#d97706;">{{tabdata.log_suppressed}}</div>
-    </div>
+{{! KPI Summary — Phase B0+: migrated to tokens-aware stat_card partial }}
+{{#tabdata.has_kpi_tiles}}
+<div class="airpay-stat-grid" style="margin-bottom: 16px;">
+    {{#tabdata.kpi_tiles}}
+    {{> theme_airpayux/components/stat_card }}
+    {{/tabdata.kpi_tiles}}
 </div>
+{{/tabdata.has_kpi_tiles}}
 
 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
     <div class="ap-manage-card">
