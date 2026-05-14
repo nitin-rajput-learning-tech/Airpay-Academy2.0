@@ -4,6 +4,78 @@
 
 ---
 
+## 🆕 PHASE B0 — Course Catalogue iter 5 (card hover/touch parity) (2026-05-14)
+
+**Manifesto §1.3 — "content is the interface"** — direct fix. The course card had a hover overlay that revealed summary + CTA on desktop hover, but was **invisible on touch devices**. Mobile and tablet learners saw less content than desktop users. Real UX bug, real learner impact (most enrolment decisions happen on mobile per BizLMS analytics).
+
+### What was wrong
+
+```mustache
+{{! OLD overlay — only visible on :hover, no fallback for touch }}
+<div class="airpay-catalog__card-overlay">
+    <p>{{summary}}</p>
+    <span class="airpay-catalog__btn">View details</span>
+</div>
+```
+
+The overlay duplicated info already visible in the persistent card body (enrolled count + enroll/continue CTA in the footer). Touch users had no way to trigger the reveal — `:hover` doesn't fire on tap.
+
+### What changed
+
+**Removed the overlay** entirely. The hover-lift effect on `.airpay-catalog__card:hover` stays (tactile feedback for mouse users), but the content reveal is gone.
+
+**Added the summary persistently** to the card body using the existing `.airpay-catalog__card-summary` class (was defined in styles.css but unused in this card variant — only used in some other contexts):
+
+```mustache
+{{#summary}}
+<p class="airpay-catalog__card-summary">{{summary}}</p>
+{{/summary}}
+```
+
+The 2-line clamp from the existing CSS keeps card heights aligned across the grid.
+
+**A11y improvements** to the card:
+- Wrapper changed from `<div>` to `<article>` with `aria-labelledby` pointing at the title
+- Card-link `aria-label="View details for {fullname}"` (was unlabeled, just wrapping a thumb)
+- Badges (NEW / Completed) got proper `aria-label` (were unlabeled spans)
+- Difficulty badge `aria-label="Difficulty: {level}"`
+- Bookmark button: type="button", `aria-pressed="true|false"` reflecting saved state, `aria-label` that flips between "Save X for later" / "Remove X from saved" based on state
+- Enrolled count `aria-label="{N} learners enrolled"` instead of bare number + icon
+- All decorative `<i>` icons marked `aria-hidden="true"`
+
+### Dead code removed
+
+`.airpay-catalog__card-overlay` + 3 child rules in styles.css (28 lines). Zero remaining consumers.
+
+### Visible delta
+
+- **Touch + mobile users** now see the course summary (2 lines) on every card. Before: zero summary on touch.
+- **Desktop hover** still gets the lift + shadow upgrade (tactile feedback) but no content reveal — there's nothing left to reveal that wasn't already visible.
+- Card heights are uniform within a grid because of the 2-line summary clamp.
+- Bookmark button now usable by screen reader users (was an unlabeled heart icon).
+
+### Iter status after this commit
+
+| Iter | What | Status |
+|---|---|---|
+| 1 | Catalog tokens + a11y | ✅ shipped (`f4c67bb40`) |
+| 2 | mycourses extraction + tokens + a11y | ✅ shipped (`455b7a14a`) |
+| 3 | Extract search bar / filter chip / sort tabs reusables | ⬜ pending |
+| 4 | Mobile filter bottom sheet | ⬜ pending |
+| 5 | Card hover/touch parity | ✅ shipped (this commit) |
+| 6 | Empty states + skeleton loaders | ⬜ pending |
+
+### Files touched
+
+```
+moodle-enhancement/local/airpay_catalog/
+  templates/course_card.mustache  [61 → 88 lines — a11y attrs add length;
+                                   overlay block removed; semantic <article>]
+  styles.css                       [-28 lines dead overlay CSS]
+```
+
+---
+
 ## 🆕 PHASE B0 — Course Catalogue iter 2 (mycourses extraction) (2026-05-14)
 
 The mycourses page had a 110-line inline `<style>` block at the end of the Mustache template plus inline `style="color:#..."` attributes scattered through the body. Iter 2 extracts everything to `styles.css`, migrates to tokens, and adds a11y attrs. Closes the long-standing "mycourses deferred from sweep batch 4" todo.

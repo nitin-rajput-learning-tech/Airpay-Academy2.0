@@ -379,36 +379,13 @@
 
 /* ═══ Netflix Enhancements (Sprint 2) ═══════════════════════════════════ */
 
-/* Card hover overlay with description + CTA */
-.airpay-catalog__card-overlay {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: linear-gradient(transparent, rgba(0, 0, 0, 0.85));
-    padding: 40px var(--ap-space-3) var(--ap-space-3);
-    opacity: 0;
-    transition: opacity var(--ap-transition-default);
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-}
-.airpay-catalog__card:hover .airpay-catalog__card-overlay { opacity: 1; }
-.airpay-catalog__card-overlay p {
-    font-size: var(--ap-text-xs);
-    color: rgba(255, 255, 255, 0.85);
-    margin: 0 0 var(--ap-space-2);
-    line-height: var(--ap-leading-normal);
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-.airpay-catalog__card-overlay .airpay-catalog__btn {
-    align-self: flex-start;
-    font-size: var(--ap-text-xs);
-    padding: 5px var(--ap-space-3);
-}
+/* Card hover overlay — REMOVED in Phase B0 Catalogue iter 5.
+   The overlay duplicated content (summary + CTA) that was already in the
+   card body, and was invisible on touch devices — mobile users got LESS
+   than desktop users. Summary now lives in the body persistently via
+   the existing .airpay-catalog__card-summary class above; the body CTA
+   was never going anywhere. The hover-lift effect on
+   .airpay-catalog__card stays. */
 
 /* Bookmark / save-for-later heart */
 .airpay-catalog__bookmark {

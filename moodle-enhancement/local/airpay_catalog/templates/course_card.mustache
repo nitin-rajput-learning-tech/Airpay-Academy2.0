@@ -1,39 +1,65 @@
-<div class="airpay-catalog__card">
-    <a href="{{detailurl}}" class="airpay-catalog__card-link">
+{{!
+    Course catalogue card. Used in /local/airpay_catalog/index.php
+    (and the carousel sections).
+
+    Iter 5 (Phase B0 — 2026-05-14): removed the hover-only overlay
+    that duplicated summary + CTA already visible in the card body.
+    The overlay was invisible on touch devices — mobile learners saw
+    less than desktop. Now the summary is part of the persistent body,
+    so every viewer sees the same content. Hover still gets the lift
+    affordance via .airpay-catalog__card:hover in styles.css.
+}}
+<article class="airpay-catalog__card" aria-labelledby="course-{{id}}-title">
+    <a href="{{detailurl}}" class="airpay-catalog__card-link"
+       aria-label="View details for {{fullname}}">
         <div class="airpay-catalog__card-thumb">
-            <span class="airpay-catalog__card-code">{{shortname}}</span>
-            {{#is_new}}<span class="airpay-catalog__badge airpay-catalog__badge--new">NEW</span>{{/is_new}}
-            {{#is_completed}}<span class="airpay-catalog__badge airpay-catalog__badge--done"><i class="fa fa-check"></i></span>{{/is_completed}}
-            <span class="airpay-catalog__card-type">{{type}}</span>
+            <span class="airpay-catalog__card-code" aria-hidden="true">{{shortname}}</span>
+            {{#is_new}}
+            <span class="airpay-catalog__badge airpay-catalog__badge--new"
+                  aria-label="New course">NEW</span>
+            {{/is_new}}
+            {{#is_completed}}
+            <span class="airpay-catalog__badge airpay-catalog__badge--done"
+                  aria-label="Completed">
+                <i class="fa fa-check" aria-hidden="true"></i>
+            </span>
+            {{/is_completed}}
+            <span class="airpay-catalog__card-type" aria-hidden="true">{{type}}</span>
             {{#has_level}}
-            <span class="airpay-catalog__card-difficulty airpay-catalog__card-difficulty--{{level_class}}">{{level}}</span>
+            <span class="airpay-catalog__card-difficulty airpay-catalog__card-difficulty--{{level_class}}"
+                  aria-label="Difficulty: {{level}}">{{level}}</span>
             {{/has_level}}
-            {{! Hover overlay with summary + CTA }}
-            <div class="airpay-catalog__card-overlay">
-                <p>{{summary}}</p>
-                {{^is_enrolled}}
-                <span class="airpay-catalog__btn airpay-catalog__btn--enroll">{{#str}}viewdetails, local_airpay_catalog{{/str}}</span>
-                {{/is_enrolled}}
-                {{#is_enrolled}}
-                <span class="airpay-catalog__btn airpay-catalog__btn--continue">{{#str}}continue, local_airpay_catalog{{/str}}</span>
-                {{/is_enrolled}}
-            </div>
         </div>
     </a>
-    {{! Bookmark heart (outside link to prevent navigation) }}
-    <button class="airpay-catalog__bookmark" data-courseid="{{id}}" title="Save for later">
-        <i class="fa fa-heart"></i>
+
+    {{! Bookmark heart — separate click target so it doesn't navigate.
+        aria-pressed reflects saved state for screen reader users. }}
+    <button class="airpay-catalog__bookmark"
+            type="button"
+            data-courseid="{{id}}"
+            aria-label="{{#is_bookmarked}}Remove {{fullname}} from saved{{/is_bookmarked}}{{^is_bookmarked}}Save {{fullname}} for later{{/is_bookmarked}}"
+            aria-pressed="{{#is_bookmarked}}true{{/is_bookmarked}}{{^is_bookmarked}}false{{/is_bookmarked}}">
+        <i class="fa fa-heart" aria-hidden="true"></i>
     </button>
+
     <div class="airpay-catalog__card-body">
-        <h4 class="airpay-catalog__card-title">
+        <h4 class="airpay-catalog__card-title" id="course-{{id}}-title">
             <a href="{{detailurl}}">{{fullname}}</a>
         </h4>
+
+        {{! Iter 5 — summary now persistent (was hover-overlay only).
+            The CSS clamps to 2 lines so card heights stay aligned. }}
+        {{#summary}}
+        <p class="airpay-catalog__card-summary">{{summary}}</p>
+        {{/summary}}
+
         <div class="airpay-catalog__card-meta">
             <span class="airpay-catalog__card-category">{{categoryname}}</span>
             {{#has_level}}
             <span class="airpay-catalog__card-level">{{level}}</span>
             {{/has_level}}
         </div>
+
         {{! Sprint C — provenance badge for cross-tenant shared courses. }}
         {{#is_borrowed}}
         <div class="airpay-catalog__card-provenance"
@@ -42,9 +68,10 @@
             {{#str}}provenance_provided_by, local_airpay_catalog, {{provider_tenant_name}}{{/str}}
         </div>
         {{/is_borrowed}}
+
         <div class="airpay-catalog__card-footer">
-            <span class="airpay-catalog__card-enrolled">
-                <i class="fa fa-users"></i> {{enrolled_count}}
+            <span class="airpay-catalog__card-enrolled" aria-label="{{enrolled_count}} learners enrolled">
+                <i class="fa fa-users" aria-hidden="true"></i> {{enrolled_count}}
             </span>
             {{#is_enrolled}}
             <a href="{{viewurl}}" class="airpay-catalog__btn airpay-catalog__btn--continue">
@@ -58,4 +85,4 @@
             {{/is_enrolled}}
         </div>
     </div>
-</div>
+</article>
