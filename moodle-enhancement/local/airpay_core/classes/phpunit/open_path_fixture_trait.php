@@ -82,6 +82,11 @@ trait open_path_fixture_trait {
         $this->resetAfterTest(true);
         self::ensure_open_path_column('user');
         self::ensure_open_path_column('course');
+        // Day-3 catalog tests also touch open_level / open_skill /
+        // open_coursetype which the catalog_manager query selects.
+        // Adding them in the trait so any future catalog/admin test
+        // that uses BizLMS course fields gets them for free.
+        self::ensure_bizlms_course_columns();
     }
 
     /**
@@ -109,5 +114,34 @@ trait open_path_fixture_trait {
             return;
         }
         $dbman->add_field($xmldb_table, $field);
+    }
+
+    /**
+     * Add the rest of the BizLMS-extension course fields the catalog
+     * SELECTs need: open_level, open_skill, open_coursetype. All are
+     * nullable ints in BizLMS production. The catalog_manager query
+     * lists them in its SELECT clause; without them, every catalog
+     * test fails with "Unknown column 'c.open_level' in 'SELECT'".
+     */
+    private static function ensure_bizlms_course_columns(): void {
+        global $DB;
+        $dbman = $DB->get_manager();
+        $columns = $DB->get_columns('course');
+        $xmldb_table = new \xmldb_table('course');
+        if (!$dbman->table_exists($xmldb_table)) {
+            return;
+        }
+        $needed = [
+            'open_level'      => XMLDB_TYPE_INTEGER,
+            'open_skill'      => XMLDB_TYPE_INTEGER,
+            'open_coursetype' => XMLDB_TYPE_INTEGER,
+        ];
+        foreach ($needed as $name => $type) {
+            if (isset($columns[$name])) {
+                continue;
+            }
+            $field = new \xmldb_field($name, $type, '10', null, null, null, null);
+            $dbman->add_field($xmldb_table, $field);
+        }
     }
 }
