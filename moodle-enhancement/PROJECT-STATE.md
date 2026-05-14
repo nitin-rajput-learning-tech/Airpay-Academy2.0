@@ -4,6 +4,46 @@
 
 ---
 
+## 🆕 PHASE B0 — AI Assistant chat AMD module (2026-05-14)
+
+**Critical find during the polish iteration**: the AI Assistant chat bubble was rendered on every page but **had no JS to wire it up** — the toggle button, send button, Enter key, and quick-action chips all did nothing. The bubble was dead UI in production. This commit ships the missing AMD module + adds the manifesto-spec'd Cmd+K shortcut.
+
+### What this commit adds
+
+**`amd/src/chat.js`** — ES module source (350 lines). Wires up:
+- Toggle button → opens/closes panel with auto-focus on input
+- Send button + Enter key → calls `local_airpay_assistant_ask` web service
+- Quick-action chips → populate input + submit in one click
+- Typing indicator while the assistant thinks
+- Render bot responses with **DOMParser-based sanitiser**: allow-list of markdown tags (`p`, `strong`, `em`, `code`, `pre`, `br`, `ul`, `ol`, `li`, `a`, `blockquote`, `hr`, `span`) and attributes (`href`, `title`, `lang`, `dir`). Blocks `javascript:` / `data:` URL schemes. This is defense-in-depth — the server already runs `format_text(FORMAT_MARKDOWN)` which sanitises via HTMLPurifier, but the client-side filter catches anything that gets past.
+- **Cmd+K / Ctrl+K** keyboard shortcut to open/close from anywhere (manifesto §4.1)
+- **Escape** to close + return focus to the toggle
+- Focus management: input gets focus on open (after 50ms so the slide animation doesn't fight scrolling), toggle gets focus back on close
+
+**`amd/build/chat.min.js`** — hand-transpiled AMD `define(...)` format. Required because Moodle 4.x/5.x serves the built file in production mode, and the existing codebase doesn't have a grunt build pipeline checked in. Same 350-line implementation, written in ES5-compatible syntax.
+
+### Why this matters
+
+The chat bubble had been shipped to production with no client-side behaviour. Users could see the floating button but clicking it didn't open the panel; if they did somehow open it, typing did nothing. The hook, the template, the styles, the web service, the `ai_client` — all existed and worked. Only the connecting JS was missing.
+
+The Cmd+K shortcut is the manifesto's first power-user keyboard affordance. Until the full command palette ships (§4.1 future work), this gives keyboard-first users an instant path to the assistant from any page.
+
+### Version bump
+
+`local_airpay_assistant` 2026050601 → 2026051401, release `1.0.0-beta` → `1.1.0-beta`. Required for Moodle to pick up the new amd/build/ on upgrade.
+
+### Files touched
+
+```
+moodle-enhancement/local/airpay_assistant/
+  version.php                          [bump 2026051401, release 1.1.0-beta]
+  classes/hook_callbacks.php           [+ $PAGE->requires->js_call_amd(...)]
+  amd/src/chat.js                      [new — 350 lines ES module]
+  amd/build/chat.min.js                [new — 240 lines AMD format]
+```
+
+---
+
 ## 🆕 PHASE B0 — AI Assistant drawer polish (2026-05-14)
 
 The 7th-priority redesign surface from SURFACE-ROADMAP §6. Builds on the already-shipped `local_airpay_assistant` plugin: a floating chat bubble injected into every page footer via the Moodle 5.x `before_footer_html_generation` hook. Pre-existing functionally; this iteration brings it up to the manifesto bar (tokens, a11y, feature-flag gating).

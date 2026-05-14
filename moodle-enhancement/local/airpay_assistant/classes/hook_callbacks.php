@@ -78,5 +78,10 @@ class hook_callbacks {
         ];
 
         $hook->add_html($OUTPUT->render_from_template('local_airpay_assistant/chat_bubble', $data));
+
+        // Load the AMD module that actually wires up the bubble — without
+        // this the toggle/send/Cmd+K do nothing. Moodle's $PAGE->requires
+        // is the standard way to register an AMD module from a hook.
+        $PAGE->requires->js_call_amd('local_airpay_assistant/chat', 'init');
     }
 }
