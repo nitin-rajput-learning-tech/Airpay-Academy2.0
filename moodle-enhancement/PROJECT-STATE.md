@@ -4,6 +4,47 @@
 
 ---
 
+## 🆕 PHASE B0+ — Component reuse sweep (2026-05-14)
+
+After Phase B0 ship-out, the same KPI patterns existed in unrelated admin surfaces. Two further migrations land the `stat_card` partial on Analytics and Compliance dashboards — same component, same tokens, same mobile-first grid. Pure leverage move: every fix to `stat_card` from now on automatically propagates to four surfaces (main dashboard, Analytics, Compliance, plus future use).
+
+### Analytics dashboard (`local_airpay_analytics`)
+
+`analytics_manager::get_kpis()` previously returned KPIs with hex `color` strings (`#0066A7`, `#0f7a73`, etc.) and a `trend` object with `is_up`/`is_down` flags consumed via Mustache. Now produces both shapes:
+- **Canonical stat_card fields** — `color` as semantic variant (`primary` / `accent` / `success` / `warning`), `icon` without the `fa-` prefix, `trend` as a flat string (`"+12% vs previous"`), `trenddir` as `"up"` / `"down"` / `"flat"`.
+- **Legacy `trend_obj`** — preserved as a separate field so anything still reading `trend.is_up` keeps working. Tests that read `$kpis[0]['value']` are unaffected.
+
+Template change: 16 lines of inline `<div>` with inline-styled colours → 3 lines (`.airpay-stat-grid` + iteration + partial call).
+
+### Compliance Report dashboard (`local_airpay_compliance_report`)
+
+5 KPI tiles (Compliance Rate / Completed / Overdue / Not Enrolled / Exempted) were inlined as `<div class="airpay-compliance-rpt__kpi">` blocks with custom `--ok` / `--warn` / `--danger` modifier classes. Now use the canonical partial.
+
+The data layer in `index.php` derives a new `$kpi_tiles` array from the existing flat `$kpis` dict — the legacy `{{kpis.compliance_rate}}` etc. access pattern stays intact for anything else that reads it. Semantic colour mapping:
+- Compliance Rate ≥ 80% → success; otherwise warning
+- Overdue > 0 → danger; otherwise primary (muted)
+- Not Enrolled → warning
+- Exempted → info
+- Completed → success
+
+### What this enables
+
+Reports, Manager Team, Privacy DPDP, Site Admin landings — every screen with a KPI strip can now adopt the canonical tile in a 4-line PR (data reshape + template swap). The visual baseline rises across the entire admin surface area with minimal per-surface work.
+
+### Files touched
+
+```
+moodle-enhancement/local/airpay_analytics/
+  classes/analytics_manager.php        [+ canonical stat_card fields on each KPI]
+  templates/dashboard.mustache         [inline KPI HTML → partial call]
+
+moodle-enhancement/local/airpay_compliance_report/
+  index.php                            [+ $kpi_tiles derived array]
+  templates/dashboard.mustache         [5 hand-coded tiles → iteration over partial]
+```
+
+---
+
 ## 🆕 PHASE B0 — LEARNER DASHBOARD REDESIGN: ITERATIONS 5–9 BATCH (2026-05-14)
 
 Final batch of redesign iterations + a dead-code cleanup pass + a validation gate note. Phase B0 is now feature-complete; remaining work is user-driven visual + a11y validation on staging.

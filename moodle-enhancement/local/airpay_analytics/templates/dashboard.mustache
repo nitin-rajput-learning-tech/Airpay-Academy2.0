@@ -33,23 +33,11 @@
         </div>
     </div>
 
-    {{! KPI Cards with Trends }}
+    {{! KPI Cards — Phase B0 iter X: migrated to tokens-aware stat_card partial }}
     {{#has_kpis}}
-    <div class="airpay-analytics__kpis">
+    <div class="airpay-stat-grid">
         {{#kpis}}
-        <div class="airpay-analytics__kpi">
-            <div class="airpay-analytics__kpi-icon" style="color: {{color}};"><i class="fa {{icon}}"></i></div>
-            <div class="airpay-analytics__kpi-data">
-                <span class="airpay-analytics__kpi-value">{{value}}</span>
-                <span class="airpay-analytics__kpi-label">{{label}}</span>
-            </div>
-            <div class="airpay-analytics__kpi-trend {{#trend.is_up}}trend-up{{/trend.is_up}} {{#trend.is_down}}trend-down{{/trend.is_down}}">
-                {{#trend.is_up}}<i class="fa fa-arrow-up"></i>{{/trend.is_up}}
-                {{#trend.is_down}}<i class="fa fa-arrow-down"></i>{{/trend.is_down}}
-                {{trend.label}}
-                <small>vs previous</small>
-            </div>
-        </div>
+        {{> theme_airpayux/components/stat_card }}
         {{/kpis}}
     </div>
     {{/has_kpis}}

@@ -99,12 +99,36 @@ class analytics_manager {
               WHERE ci.timecreated >= :start AND ci.timecreated < :end $orgfilter",
             array_merge($params, ['start' => $previous_start, 'end' => $previous_end]));
 
-        $result = [
-            ['label' => 'Active Users',    'value' => $active_current, 'previous' => $active_previous, 'trend' => self::trend($active_current, $active_previous), 'icon' => 'fa-users',      'color' => '#0066A7'],
-            ['label' => 'New Enrolments',   'value' => $enrol_current,  'previous' => $enrol_previous,  'trend' => self::trend($enrol_current, $enrol_previous),   'icon' => 'fa-user-plus',  'color' => '#0f7a73'],
-            ['label' => 'Completions',      'value' => $comp_current,   'previous' => $comp_previous,   'trend' => self::trend($comp_current, $comp_previous),     'icon' => 'fa-check-circle','color' => '#16a34a'],
-            ['label' => 'Certificates',     'value' => $cert_current,   'previous' => $cert_previous,   'trend' => self::trend($cert_current, $cert_previous),     'icon' => 'fa-certificate','color' => '#d97706'],
+        // Phase B0 iter X — KPI shape now includes both the legacy `trend`
+        // object (kept for any consumer that still reads .is_up/.is_down)
+        // AND the canonical stat_card partial fields:
+        //   - color   : semantic variant ('primary' instead of hex)
+        //   - icon    : FA name WITHOUT the 'fa-' prefix
+        //   - trend   : already-formatted string for the partial's trend slot
+        //   - trenddir: "up" / "down" / "flat" — drives the arrow + colour
+        //   - trend_obj: legacy trend object — kept to avoid breaking tests
+        //                and consumers that read trend.is_up etc.
+        $result = [];
+        $kpis = [
+            ['Active Users',    $active_current, $active_previous, 'users',        'primary'],
+            ['New Enrolments',  $enrol_current,  $enrol_previous,  'user-plus',    'accent'],
+            ['Completions',     $comp_current,   $comp_previous,   'check-circle', 'success'],
+            ['Certificates',    $cert_current,   $cert_previous,   'certificate',  'warning'],
         ];
+        foreach ($kpis as [$label, $cur, $prev, $icon, $variant]) {
+            $trendobj = self::trend($cur, $prev);
+            $dir = $trendobj['direction'] ?? 'flat';
+            $result[] = [
+                'label'     => $label,
+                'value'     => $cur,
+                'previous'  => $prev,
+                'icon'      => $icon,
+                'color'     => $variant,
+                'trend'     => $trendobj['label'] . ' vs previous',
+                'trenddir'  => ($dir === 'up' || $dir === 'down') ? $dir : 'flat',
+                'trend_obj' => $trendobj,  // legacy — preserves .is_up / .is_down
+            ];
+        }
         $cache->set($cachekey, $result);
         return $result;
     }

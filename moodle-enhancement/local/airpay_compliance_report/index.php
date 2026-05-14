@@ -140,6 +140,48 @@ if ($kpis === false) {
     $kpis = $engine::get_summary_kpis($filterpath);
     $cache->set($cachekey, $kpis);  // TTL managed by Moodle cache definition.
 }
+
+// Phase B0 iter X — derive a stat_card-compatible array from the flat
+// $kpis dict so the dashboard template can iterate the canonical KPI
+// partial instead of 5 hand-coded <div> blocks. The legacy {{kpis.X}}
+// access pattern is preserved for any other template that still uses it.
+$compliance_rate = (int) ($kpis['compliance_rate'] ?? 0);
+$is_healthy      = $compliance_rate >= 80;  // matches the legacy is_healthy gate
+$overdue_count   = (int) ($kpis['overdue'] ?? 0);
+$kpi_tiles = [
+    [
+        'label' => 'Compliance Rate',
+        'value' => $compliance_rate . '%',
+        'icon'  => $is_healthy ? 'check-circle' : 'exclamation-circle',
+        'color' => $is_healthy ? 'success' : 'warning',
+    ],
+    [
+        'label' => 'Completed',
+        'value' => number_format((int) ($kpis['completed'] ?? 0)),
+        'icon'  => 'graduation-cap',
+        'color' => 'success',
+    ],
+    [
+        'label' => 'Overdue',
+        'value' => number_format($overdue_count),
+        'icon'  => 'exclamation-triangle',
+        // Overdue tile is danger when there ARE overdue items, primary
+        // (muted) when zero — "0 overdue" is good news, not alarming.
+        'color' => $overdue_count > 0 ? 'danger' : 'primary',
+    ],
+    [
+        'label' => 'Not Enrolled',
+        'value' => number_format((int) ($kpis['not_enrolled'] ?? 0)),
+        'icon'  => 'user-times',
+        'color' => 'warning',
+    ],
+    [
+        'label' => 'Exempted',
+        'value' => number_format((int) ($kpis['exempted'] ?? 0)),
+        'icon'  => 'shield',
+        'color' => 'info',
+    ],
+];
 $matrix = ($tab === 'matrix') ? $engine::get_compliance_matrix($filterpath, $page, 50) : null;
 $defaulters = ($tab === 'defaulters') ? $engine::get_defaulters($filterpath) : null;
 $scorecard = ($tab === 'scorecard') ? $engine::get_department_scorecard($filterpath) : null;
@@ -179,6 +221,8 @@ $data = [
     'last_refreshed'    => $last_refreshed,
     'is_stale'          => $is_stale,
     'kpis'              => $kpis,
+    'kpi_tiles'         => $kpi_tiles,  // Phase B0 iter X — stat_card-compatible KPIs
+    'has_kpi_tiles'     => !empty($kpi_tiles),
     'tab_matrix'        => ($tab === 'matrix'),
     'tab_defaulters'    => ($tab === 'defaulters'),
     'tab_scorecard'     => ($tab === 'scorecard'),
