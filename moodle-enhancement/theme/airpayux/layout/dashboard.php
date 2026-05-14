@@ -535,12 +535,45 @@ if (isloggedin() && !isguestuser()) {
                 'lastaccess > 0 AND lastaccess < :cutoff AND deleted = 0 AND suspended = 0',
                 ['cutoff' => time() - (30 * 86400)]);
 
+            // Phase B0 iter 8 — converted from hex `color` to semantic
+            // `color` strings so the useranalytics tiles can use the
+            // stat_card partial. Tiles automatically grey out (info variant
+            // = primary-blue muted) when the metric is zero.
             $airpay_dashboard['useranalytics'] = [
-                ['label' => 'Logins Today', 'value' => $loginstoday, 'icon' => 'sign-in', 'color' => '#0066A7'],
-                ['label' => 'Logins This Week', 'value' => $loginsweek, 'icon' => 'calendar-check-o', 'color' => '#0f7a73'],
-                ['label' => 'New Users (7d)', 'value' => $newusersweek, 'icon' => 'user-plus', 'color' => '#16a34a'],
-                ['label' => 'Never Logged In', 'value' => $neverloggedin, 'icon' => 'user-times', 'color' => ($neverloggedin > 0) ? '#d97706' : '#6b7280'],
-                ['label' => 'Inactive (30d+)', 'value' => $inactive30, 'icon' => 'hourglass-end', 'color' => ($inactive30 > 0) ? '#dc2626' : '#6b7280'],
+                [
+                    'label' => 'Logins Today',
+                    'value' => $loginstoday,
+                    'icon'  => 'sign-in',
+                    'color' => 'primary',
+                ],
+                [
+                    'label' => 'Logins This Week',
+                    'value' => $loginsweek,
+                    'icon'  => 'calendar-check-o',
+                    'color' => 'accent',
+                ],
+                [
+                    'label' => 'New Users (7d)',
+                    'value' => $newusersweek,
+                    'icon'  => 'user-plus',
+                    'color' => 'success',
+                ],
+                [
+                    'label' => 'Never Logged In',
+                    'value' => $neverloggedin,
+                    'icon'  => 'user-times',
+                    // Warning when there are unregistered users — primary
+                    // (muted) when zero, since "0 never logged in" is good.
+                    'color' => ($neverloggedin > 0) ? 'warning' : 'primary',
+                ],
+                [
+                    'label' => 'Inactive (30d+)',
+                    'value' => $inactive30,
+                    'icon'  => 'hourglass-end',
+                    // Danger when learners have gone dark; primary when
+                    // the metric is zero (good news).
+                    'color' => ($inactive30 > 0) ? 'danger' : 'primary',
+                ],
             ];
             $airpay_dashboard['hasuseranalytics'] = true;
 

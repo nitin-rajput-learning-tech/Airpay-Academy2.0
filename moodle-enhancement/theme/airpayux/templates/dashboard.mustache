@@ -222,21 +222,13 @@
                 {{/hassystemhealth}}
                 {{/issiteadmin}}
 
-                {{! User Analytics }}
+                {{! User Analytics — Phase B0 iter 8: migrated to stat_card partial }}
                 {{#hasuseranalytics}}
                 <div class="airpay-dash__section">
-                    <h3 class="airpay-dash__section-title"><i class="fa fa-users"></i> User Analytics</h3>
-                    <div class="airpay-dash__analytics-grid">
+                    <h3 class="airpay-dash__section-title"><i class="fa fa-users" aria-hidden="true"></i> User Analytics</h3>
+                    <div class="airpay-stat-grid">
                         {{#useranalytics}}
-                        <div class="airpay-dash__analytics-item">
-                            <div class="airpay-dash__analytics-icon" style="color: {{color}}">
-                                <i class="fa fa-{{icon}}"></i>
-                            </div>
-                            <div class="airpay-dash__analytics-data">
-                                <span class="airpay-dash__analytics-value" style="color: {{color}}">{{value}}</span>
-                                <span class="airpay-dash__analytics-label">{{label}}</span>
-                            </div>
-                        </div>
+                        {{> theme_airpayux/components/stat_card }}
                         {{/useranalytics}}
                     </div>
                 </div>
