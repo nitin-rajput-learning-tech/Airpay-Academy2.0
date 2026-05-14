@@ -128,15 +128,27 @@
                 {{#str}}allcourses, local_airpay_catalog{{/str}} ({{total}})
                 {{/has_search}}
             </h3>
-            {{! Filters + sort — Phase B0 Catalogue iter 3: extracted to partials.
-                Data shapes built in index.php: active_filters[] for chips,
-                sort_options[] for tabs. }}
-            <div class="airpay-catalog__filters" role="group" aria-label="Active filters">
-                {{#active_filters}}
-                {{> local_airpay_catalog/partials/filter_chip }}
-                {{/active_filters}}
-                {{> local_airpay_catalog/partials/sort_tabs }}
-            </div>
+            {{! Filters + sort — Phase B0 Catalogue iter 3 (partials) + iter 4
+                (mobile bottom sheet via native <details>). On desktop the
+                disclosure is always open (CSS); on mobile <590px the
+                summary becomes a tap target that toggles the sheet.
+                Native <details> is keyboard-accessible (Enter to toggle)
+                and screen-reader-friendly (announces expand/collapse). }}
+            <details class="airpay-catalog__filter-details" open>
+                <summary class="airpay-catalog__filter-summary">
+                    <i class="fa fa-sliders-h" aria-hidden="true"></i>
+                    <span>Filters &amp; Sort</span>
+                    {{#has_active_filters_badge}}
+                    <span class="airpay-catalog__filter-badge" aria-label="{{filter_count}} active">{{filter_count}}</span>
+                    {{/has_active_filters_badge}}
+                </summary>
+                <div class="airpay-catalog__filters" role="group" aria-label="Active filters and sort">
+                    {{#active_filters}}
+                    {{> local_airpay_catalog/partials/filter_chip }}
+                    {{/active_filters}}
+                    {{> local_airpay_catalog/partials/sort_tabs }}
+                </div>
+            </details>
         </div>
 
         {{#has_courses}}

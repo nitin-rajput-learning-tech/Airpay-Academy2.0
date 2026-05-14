@@ -136,6 +136,11 @@ if (!empty($category) && !empty($active_category_name)) {
     ];
 }
 
+// Phase B0 Catalogue iter 4 — badge count for the mobile filter sheet
+// summary. Empty when no filters are active.
+$data['filter_count'] = count($data['active_filters']);
+$data['has_active_filters_badge'] = $data['filter_count'] > 0;
+
 // Phase B0 Catalogue iter 6 — context-aware empty state. Adapts the
 // copy + CTA based on whether the user is searching, filtering, or
 // looking at a truly-empty catalog. The empty_state partial expects a

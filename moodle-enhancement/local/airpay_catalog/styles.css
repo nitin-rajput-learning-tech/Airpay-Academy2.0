@@ -544,6 +544,40 @@
     font-size: var(--ap-text-xs);
 }
 
+/* ═══ Filter Disclosure + Mobile Bottom Sheet ═══════════════════════════
+   Phase B0 Catalogue iter 4 (2026-05-14).
+
+   Native <details>/<summary> pattern: on desktop the disclosure stays
+   always-open (summary hidden); on mobile <590px the summary becomes
+   a tap target that toggles the filters as a bottom sheet.
+
+   Native <details> is keyboard-accessible (Enter/Space to toggle) and
+   screen readers announce expand/collapse — no JS needed, no
+   aria-expanded juggling. */
+.airpay-catalog__filter-details {
+    /* Desktop default — behave as a flex container, summary hidden. */
+    display: contents;
+}
+.airpay-catalog__filter-summary {
+    /* Desktop default — hide the summary, the disclosure is open and
+       the contained filters appear inline next to the section header. */
+    display: none;
+}
+.airpay-catalog__filter-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 var(--ap-space-1);
+    border-radius: var(--ap-radius-pill);
+    background: var(--ap-color-primary);
+    color: var(--ap-color-text-inverse);
+    font-size: var(--ap-text-xs);
+    font-weight: var(--ap-weight-bold);
+    margin-left: var(--ap-space-2);
+}
+
 /* ═══ Filter Chips ═══════════════════════════════════════════════════════ */
 .airpay-catalog__filters {
     display: flex;
@@ -664,10 +698,74 @@ body.dark-mode .airpay-catalog__category-icon {
         align-items: flex-start;
     }
     .airpay-catalog__card-thumb { height: 100px; }
-    .airpay-catalog__filters {
-        flex-direction: column;
-        align-items: flex-start;
+
+    /* ── Filter bottom sheet on mobile ────────────────────────────────
+       Native <details> takes over here. Summary becomes a tap target
+       that opens the filters as a slide-up sheet from the bottom. */
+    .airpay-catalog__filter-details {
+        display: block;
+        /* When OPEN, the sheet covers the bottom of the viewport. */
     }
+    .airpay-catalog__filter-summary {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ap-space-2);
+        padding: var(--ap-space-2) var(--ap-space-4);
+        background: var(--ap-color-bg-surface);
+        border: 1px solid var(--ap-color-border);
+        border-radius: var(--ap-radius-pill);
+        font-size: var(--ap-text-sm);
+        font-weight: var(--ap-weight-semibold);
+        color: var(--ap-color-text-primary);
+        cursor: pointer;
+        list-style: none;
+        min-height: var(--ap-tap-target-min);
+        user-select: none;
+    }
+    /* Hide the default disclosure triangle in Webkit + modern browsers. */
+    .airpay-catalog__filter-summary::-webkit-details-marker { display: none; }
+    .airpay-catalog__filter-summary::marker { display: none; }
+    .airpay-catalog__filter-summary:focus-visible {
+        background: var(--ap-color-primary-light);
+        border-color: var(--ap-color-primary);
+    }
+    /* When the disclosure is open: filters slide up as a bottom sheet. */
+    .airpay-catalog__filter-details[open] .airpay-catalog__filters {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: var(--ap-z-offcanvas);
+        background: var(--ap-color-bg-surface);
+        border-top: 1px solid var(--ap-color-border);
+        border-radius: var(--ap-radius-lg) var(--ap-radius-lg) 0 0;
+        box-shadow: var(--ap-shadow-lg);
+        padding: var(--ap-space-5) var(--ap-space-4) var(--ap-space-6);
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--ap-space-3);
+        max-height: 75vh;
+        overflow-y: auto;
+        animation: airpay-catalog-sheet-slide var(--ap-duration-default) var(--ap-ease-out);
+    }
+    /* Subtle drag-handle visual hint at the top of the open sheet. */
+    .airpay-catalog__filter-details[open] .airpay-catalog__filters::before {
+        content: '';
+        display: block;
+        width: 36px;
+        height: 4px;
+        background: var(--ap-color-border-strong);
+        border-radius: var(--ap-radius-pill);
+        margin: 0 auto var(--ap-space-3);
+    }
+    .airpay-catalog__filter-details[open]::backdrop {
+        background: rgba(0, 0, 0, 0.4);
+    }
+}
+
+@keyframes airpay-catalog-sheet-slide {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
 }
 
 /* ═══════════════════════════════════════════════════════════
