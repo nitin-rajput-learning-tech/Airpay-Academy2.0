@@ -399,6 +399,54 @@ echo $OUTPUT->header();
     "trenddir": "up",
     "href":     "/local/airpay_reports/index.php"
 }</pre>
+
+    <h3 style="margin-top: var(--ap-space-10);">Course progress card &mdash; <code>theme_airpayux/components/course_progress_card</code></h3>
+    <p class="ap-sg__section-desc">Canonical learner-facing course tile. Used on Dashboard "Continue Learning", My Learning, and Manager team drilldown. Mobile-first via <code>.airpay-course-grid</code> (3 &rarr; 2 &rarr; 1 cols).</p>
+
+    <h4 style="margin-top: var(--ap-space-6);">Four status variants</h4>
+    <div class="airpay-course-grid" style="margin-bottom: var(--ap-space-6);">
+        <?php
+        $courses = [
+            ['fullname' => 'Anti-Money Laundering 2026', 'shortname' => 'AML-26', 'progress' => 0,   'status' => 'not_started', 'statuslabel' => 'Not started',   'subtitle' => 'Mandatory · Compliance'],
+            ['fullname' => 'Customer Onboarding KYC', 'shortname' => 'KYC',    'progress' => 42,  'status' => 'in_progress', 'statuslabel' => 'In progress',  'subtitle' => 'Ops · 45 min',                'duration' => '45 min'],
+            ['fullname' => 'Information Security Annual Refresh', 'shortname' => 'INFOSEC', 'progress' => 100, 'status' => 'completed',  'statuslabel' => 'Completed',    'subtitle' => 'Mandatory · Security'],
+            ['fullname' => 'GDPR / DPDP Refresher (overdue)', 'shortname' => 'DPDP', 'progress' => 18,  'status' => 'overdue',    'statuslabel' => 'Overdue',      'subtitle' => 'Mandatory · was due 2026-04-30'],
+        ];
+        foreach ($courses as $c) {
+            echo '<a class="airpay-course-card airpay-course-card--' . s($c['status']) . '" href="#components" aria-label="' . s($c['fullname'] . ', ' . $c['progress'] . '% complete') . '">';
+            echo '<div class="airpay-course-card__thumb">';
+            echo '<span class="airpay-course-card__initial" aria-hidden="true">' . s($c['shortname']) . '</span>';
+            echo '<span class="airpay-course-card__badge airpay-course-card__badge--' . s($c['status']) . '">' . s($c['statuslabel']) . '</span>';
+            echo '</div>';
+            echo '<div class="airpay-course-card__body">';
+            echo '<h4 class="airpay-course-card__title">' . s($c['fullname']) . '</h4>';
+            echo '<p class="airpay-course-card__subtitle">' . s($c['subtitle']) . '</p>';
+            echo '<div class="airpay-course-card__progress">';
+            echo '<div class="airpay-course-card__track" role="progressbar" aria-valuenow="' . (int) $c['progress'] . '" aria-valuemin="0" aria-valuemax="100">';
+            echo '<div class="airpay-course-card__fill" style="width: ' . (int) $c['progress'] . '%;"></div>';
+            echo '</div>';
+            echo '<span class="airpay-course-card__progress-text">' . (int) $c['progress'] . '%</span>';
+            echo '</div>';
+            if (!empty($c['duration'])) {
+                echo '<span class="airpay-course-card__duration"><i class="fa fa-clock-o" aria-hidden="true"></i> ' . s($c['duration']) . '</span>';
+            }
+            echo '</div></a>';
+        }
+        ?>
+    </div>
+
+    <h4 style="margin-top: var(--ap-space-6);">Mustache usage</h4>
+    <pre style="background: var(--ap-color-bg-surface-alt); padding: var(--ap-space-4); border-radius: var(--ap-radius-sm); font-size: var(--ap-text-xs); overflow-x: auto;">{{&gt; theme_airpayux/components/course_progress_card }}
+{
+    "fullname":    "Anti-Money Laundering 2026",
+    "shortname":   "AML-26",
+    "progress":    42,
+    "viewurl":     "/course/view.php?id=123",
+    "subtitle":    "Mandatory · 45 min",
+    "status":      "in_progress",
+    "statuslabel": "In progress",
+    "duration":    "45 min"
+}</pre>
 </section>
 
 </div>

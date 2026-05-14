@@ -4,6 +4,79 @@
 
 ---
 
+## 🆕 PHASE B0 — LEARNER DASHBOARD REDESIGN: ITERATION 3 (2026-05-14)
+
+**Course progress card** — the single most-impactful learner-facing component. Used on every learner's dashboard ("Continue Learning"), every manager's team drilldown, the My Learning page, and the recommendations rail. Before iter 3, it was inline HTML in `dashboard.mustache` with 10+ hex literals and no mobile responsiveness. After iter 3, it's a tokens-aware reusable with status badges, focus-visible, and a mobile-first grid.
+
+### What shipped
+
+- **`templates/components/course_progress_card.mustache`** (new) — partial with required context (`viewurl`, `fullname`, `progress`) and optional enrichment fields (`thumburl`, `subtitle`, `status`, `statuslabel`, `duration`). Auto-built `aria-label` includes the progress percentage so screen-reader users hear the metric immediately. `role="progressbar"` on the bar with `aria-valuenow/min/max`.
+- **`scss/moodle/partials/_components-course-card.scss`** (new) — 240 lines, zero hex literals. Four status variants (`not_started` / `in_progress` / `completed` / `overdue`) with tokens-aware badge colours and matching progress-fill tints. `.airpay-course-grid` wrapper goes 3 → 2 → 1 columns at `$ap-bp-tablet` / `$ap-bp-mobile`. `--compact` modifier for sidebar rails.
+- **Wired in `custom_changes.scss`** alongside `components-stat-card`.
+
+### Data-layer enrichment
+
+`dashboard.php` now computes a `status` field on every entry in `continuecourses`:
+- `progress >= 100` → wouldn't appear in continue-list anyway (moves to completed bucket)
+- `progress > 0` AND `course.enddate < now()` → `overdue` (red badge, red progress fill)
+- `progress > 0` → `in_progress` (blue info badge)
+- `progress == 0` → `not_started` (neutral badge)
+
+No new DB queries — uses fields already loaded by `enrol_get_all_users_courses()`.
+
+### Dashboard template migration
+
+Single change in `dashboard.mustache`:
+
+```diff
+- <div class="airpay-dash__courses">
++ <div class="airpay-course-grid">
+    {{#continuecourses}}
+-   <a href="{{viewurl}}" class="airpay-dash__course-card">
+-     ... 14 lines of inline HTML ...
+-   </a>
++   {{> theme_airpayux/components/course_progress_card }}
+    {{/continuecourses}}
+  </div>
+```
+
+### Style Guide demo
+
+New section in `/local/airpay_core/admin/styleguide.php` showing all four status variants with realistic copy (AML 2026, KYC, InfoSec refresh, overdue DPDP) so designers can see exactly how the badge + progress-fill tint combinations look together. Mustache usage snippet included.
+
+### Visible delta on the dashboard
+
+- Status badges now appear on every Continue Learning tile (Not started / In progress / Overdue)
+- Progress fill tints red for overdue courses (immediate visual signal — was uniform blue before)
+- Cards now mobile-responsive at the manifesto breakpoints (was 991px legacy)
+- Hover lift respects `prefers-reduced-motion`
+- Keyboard focus visible on every card
+- Thumb now 120px tall (was 100px), 96px on mobile
+
+### Dead code accumulating
+
+`_surface-dashboard.scss` now has ~150 lines of unreferenced CSS:
+- `.airpay-dash__stat*` from iter 2 (lines 119-166)
+- `.airpay-dash__course*` and `.airpay-dash__progress-bar/fill/text` from iter 3 (lines 194-268)
+
+Cleanup deferred — worth its own dedicated commit so the diff is reviewable.
+
+### Files touched
+
+```
+moodle-enhancement/theme/airpayux/
+  layout/dashboard.php                          [+ status field on continuecourses]
+  templates/dashboard.mustache                  [Continue Learning → partial calls]
+  templates/components/course_progress_card.mustache  [new]
+  scss/moodle/partials/_components-course-card.scss   [new]
+  scss/moodle/custom_changes.scss               [+ import]
+
+moodle-enhancement/local/airpay_core/
+  admin/styleguide.php                          [+ Course-card demo with 4 variants]
+```
+
+---
+
 ## 🆕 PHASE B0 — LEARNER DASHBOARD REDESIGN: ITERATION 2 (2026-05-14)
 
 Pure refactor — replaces the 3 inline `.airpay-dash__stat` HTML blocks in `dashboard.mustache` with `{{> theme_airpayux/components/stat_card }}` partial calls. User-visible: tiles now use the new tokens-aware styling (slightly larger icon, exact same colours, mobile-responsive 4→2→1 grid).

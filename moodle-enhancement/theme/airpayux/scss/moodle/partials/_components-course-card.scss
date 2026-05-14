@@ -1,0 +1,236 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   .airpay-course-card — Phase B0 iter 3 (2026-05-14)
+   ═══════════════════════════════════════════════════════════════════════
+   Canonical learner-facing course progress tile. Used in:
+     - Dashboard "Continue Learning" section
+     - My Learning page (/local/airpay_catalog/mycourses.php)
+     - Manager team drilldown per member
+     - Recommendations rail (smaller variant via .airpay-course-card--compact)
+
+   Template: theme_airpayux/components/course_progress_card
+   Tokens:   uses --ap-* exclusively, zero hex literals
+   A11y:     :focus-visible ring, role="progressbar", aria-label on link
+   Mobile:   1 col @<590px, 2 col @<992px, 3 col elsewhere via the
+             surrounding .airpay-course-grid wrapper
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Grid wrapper. The dashboard wraps a collection of cards in this; uses
+   the manifesto breakpoints. */
+.airpay-course-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--ap-space-4);
+
+    @media (max-width: $ap-bp-tablet) {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    @media (max-width: $ap-bp-mobile) {
+        grid-template-columns: 1fr;
+        gap: var(--ap-space-3);
+    }
+}
+
+.airpay-course-card {
+    background: var(--ap-color-bg-surface);
+    border: 1px solid var(--ap-color-border);
+    border-radius: var(--ap-radius-md);
+    box-shadow: var(--ap-shadow-sm);
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    /* Hover/focus uses tokens — auto-respects prefers-reduced-motion. */
+    transition: transform var(--ap-transition-quick),
+                box-shadow var(--ap-transition-quick),
+                border-color var(--ap-transition-quick);
+    /* Keep the card from shrinking weirdly when the grid is tight. */
+    min-width: 0;
+
+    &:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--ap-shadow-hover);
+        border-color: var(--ap-color-border-strong);
+        text-decoration: none;
+        color: inherit;
+    }
+
+    &:focus-visible {
+        /* The global :focus-visible rule applies the 3px ring; we also
+           lift slightly so the focused card stands out in a grid. */
+        transform: translateY(-2px);
+    }
+
+    &:active {
+        transform: translateY(-1px);
+    }
+
+    /* Compact variant — used on recommendation rails / sidebars where
+       horizontal space is tight. Drops the thumb, halves the padding. */
+    &--compact {
+        .airpay-course-card__thumb { display: none; }
+        .airpay-course-card__body  { padding: var(--ap-space-3); }
+        .airpay-course-card__title { font-size: var(--ap-text-sm); }
+    }
+}
+
+.airpay-course-card__thumb {
+    position: relative;
+    height: 120px;
+    background: var(--ap-gradient-cta);
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    @media (max-width: $ap-bp-mobile) {
+        height: 96px;
+    }
+}
+
+.airpay-course-card__initial {
+    /* Shown over the gradient when no thumburl is provided. Soft-faded
+       so it doesn't compete with the headline below. */
+    color: rgba(255, 255, 255, 0.6);
+    font-size: var(--ap-text-xs);
+    font-weight: var(--ap-weight-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    max-width: 80%;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── Status badge (top-right corner of thumb) ──────────────────────────
+   Six status variants. Sits above the thumb gradient/image so it's
+   always visible. Uses semantic status tokens. */
+.airpay-course-card__badge {
+    position: absolute;
+    top: var(--ap-space-2);
+    right: var(--ap-space-2);
+    padding: var(--ap-space-1) var(--ap-space-2);
+    font-size: var(--ap-text-xs);
+    font-weight: var(--ap-weight-semibold);
+    border-radius: var(--ap-radius-pill);
+    background: var(--ap-color-bg-surface);
+    color: var(--ap-color-text-primary);
+    line-height: 1;
+    /* Bias toward legibility on busy gradient thumbs. */
+    box-shadow: var(--ap-shadow-xs);
+
+    &--not_started {
+        background: var(--ap-color-bg-surface);
+        color: var(--ap-color-text-secondary);
+    }
+    &--in_progress {
+        background: var(--ap-color-info-light);
+        color: var(--ap-color-info);
+    }
+    &--completed {
+        background: var(--ap-color-success-light);
+        color: var(--ap-color-success);
+    }
+    &--overdue {
+        background: var(--ap-color-danger-light);
+        color: var(--ap-color-danger);
+    }
+}
+
+.airpay-course-card__body {
+    padding: var(--ap-space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ap-space-2);
+    flex: 1;
+    min-width: 0;
+}
+
+.airpay-course-card__title {
+    font-size: var(--ap-text-sm);
+    font-weight: var(--ap-weight-semibold);
+    color: var(--ap-color-text-primary);
+    line-height: var(--ap-leading-tight);
+    margin: 0;
+    /* Clamp to 2 lines so the card doesn't grow wildly with long titles. */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
+}
+
+.airpay-course-card__subtitle {
+    font-size: var(--ap-text-xs);
+    color: var(--ap-color-text-secondary);
+    margin: 0;
+    /* Single line, ellipsis if it overflows. */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.airpay-course-card__progress {
+    display: flex;
+    align-items: center;
+    gap: var(--ap-space-2);
+    margin-top: auto;
+    /* Push to the bottom so cards with different title lengths still
+       align their progress bars at the same baseline. */
+}
+
+.airpay-course-card__track {
+    flex: 1;
+    height: 6px;
+    background: var(--ap-color-border);
+    border-radius: var(--ap-radius-pill);
+    overflow: hidden;
+    min-width: 0;
+}
+
+.airpay-course-card__fill {
+    height: 100%;
+    background: var(--ap-gradient-cta);
+    border-radius: var(--ap-radius-pill);
+    /* Width is set inline via style="width: N%". Animate the change so
+       progress updates feel intentional, not jumpy. */
+    transition: width var(--ap-transition-slow);
+    min-width: 4px;  /* show a sliver even at 0-1% */
+}
+
+.airpay-course-card__progress-text {
+    font-size: var(--ap-text-xs);
+    font-weight: var(--ap-weight-bold);
+    color: var(--ap-color-primary);
+    min-width: 32px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.airpay-course-card__duration {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ap-space-1);
+    font-size: var(--ap-text-xs);
+    color: var(--ap-color-text-muted);
+
+    i, .fa {
+        font-size: var(--ap-text-xs);
+    }
+}
+
+/* ── Status-coloured fill variants ─────────────────────────────────────
+   When the card has a status, tint the progress fill to match. Visual
+   reinforcement for the badge in the top-right of the thumb. */
+.airpay-course-card--completed .airpay-course-card__fill {
+    background: var(--ap-color-success);
+}
+.airpay-course-card--overdue .airpay-course-card__fill {
+    background: var(--ap-color-danger);
+}
+.airpay-course-card--overdue .airpay-course-card__progress-text {
+    color: var(--ap-color-danger);
+}

@@ -568,13 +568,19 @@ if (isloggedin() && !isguestuser()) {
                 $completed++;
             } else if ($progress !== null && $progress > 0) {
                 $inprogress++;
-                // Add to "Continue Learning" list
+                // Status — Phase B0 iter 3: feeds course_progress_card's badge.
+                // "overdue" if the course end-date has passed and progress<100.
+                $is_overdue = !empty($course->enddate)
+                    && (int) $course->enddate > 0
+                    && (int) $course->enddate < time();
                 $continuecourses[] = [
                     'id' => $course->id,
                     'fullname' => format_string($course->fullname),
                     'shortname' => format_string($course->shortname),
                     'progress' => round($progress),
                     'viewurl' => (new moodle_url('/course/view.php', ['id' => $course->id]))->out(false),
+                    'status' => $is_overdue ? 'overdue' : 'in_progress',
+                    'statuslabel' => $is_overdue ? 'Overdue' : 'In progress',
                 ];
             } else {
                 $notstarted++;
@@ -586,6 +592,8 @@ if (isloggedin() && !isguestuser()) {
                         'shortname' => format_string($course->shortname),
                         'progress' => 0,
                         'viewurl' => (new moodle_url('/course/view.php', ['id' => $course->id]))->out(false),
+                        'status' => 'not_started',
+                        'statuslabel' => 'Not started',
                     ];
                 }
             }

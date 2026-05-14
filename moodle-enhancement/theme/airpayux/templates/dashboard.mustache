@@ -522,29 +522,16 @@
             </div>
             {{/hasgamification}}
 
-            {{! Continue Learning }}
+            {{! Continue Learning — Phase B0 iter 3: migrated to course_progress_card partial }}
             {{#hascontinuecourses}}
             <div class="airpay-dash__section">
                 <div class="airpay-dash__section-header">
                     <h3 class="airpay-dash__section-title">Continue Learning</h3>
-                    <a href="{{{config.wwwroot}}}/my/courses.php" class="airpay-dash__section-link">View all <i class="fa fa-arrow-right"></i></a>
+                    <a href="{{{config.wwwroot}}}/my/courses.php" class="airpay-dash__section-link">View all <i class="fa fa-arrow-right" aria-hidden="true"></i></a>
                 </div>
-                <div class="airpay-dash__courses">
+                <div class="airpay-course-grid">
                     {{#continuecourses}}
-                    <a href="{{viewurl}}" class="airpay-dash__course-card">
-                        <div class="airpay-dash__course-thumb">
-                            <span class="airpay-dash__course-initial">{{shortname}}</span>
-                        </div>
-                        <div class="airpay-dash__course-body">
-                            <h4 class="airpay-dash__course-name">{{fullname}}</h4>
-                            <div class="airpay-dash__course-progress">
-                                <div class="airpay-dash__progress-bar">
-                                    <div class="airpay-dash__progress-fill" style="width: {{progress}}%"></div>
-                                </div>
-                                <span class="airpay-dash__progress-text">{{progress}}%</span>
-                            </div>
-                        </div>
-                    </a>
+                    {{> theme_airpayux/components/course_progress_card }}
                     {{/continuecourses}}
                 </div>
             </div>
