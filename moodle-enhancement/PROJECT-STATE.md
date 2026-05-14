@@ -1,6 +1,29 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-14 — **DAY-2 EXTENSIONS SHIPPED.** Picked up the PROJECT-STATE follow-up list from Day-1 EOD. Added the admin Settings UI for ramping cadence + cert-attach toggle, plus a one-command post-deploy verifier that wraps every diagnostic CLI.
-**Phase:** Academy 4.0 — admin-feedback delivery complete + Day-2 extensions. Cutover gates remain (IT staging deploy + k6 + pen-test + sign-off).
+**Updated:** 2026-05-14 — **DAY-3 EXTENSIONS SHIPPED.** PHPUnit fixture trait unlocked 14 previously-skipped tests; running them surfaced a real `request_state` ORDER BY bug that's now fixed. Test count went 39 → 72 with 0 skips.
+**Phase:** Academy 4.0 — admin-feedback delivery complete + Day-2/Day-3 extensions. Cutover gates remain (IT staging deploy + k6 + pen-test + sign-off).
+
+---
+
+## 🆕 DAY-3 ADDITIONS (2026-05-14, 1 commit: `802d35d7a`)
+
+### PHPUnit fixture trait unlocks 14 silent-skipped tests
+New class `\local_airpay_core\phpunit\open_path_fixture_trait`. Any test class that `use`s it gets `mdl_user.open_path` and `mdl_course.open_path` columns added programmatically at every `setUp()`. The trait is idempotent — does nothing when bizlms is loaded (staging) and adds the column when it's not (vanilla PHPUnit).
+
+Three test classes updated:
+- `local_airpay_core/tests/tenant_test.php`
+- `local_airpay_courses/tests/sharing_manager_test.php`
+- `local_airpay_courses/tests/request_manager_test.php`
+
+The previous `markTestSkipped(...)` guards in each are removed — every test now actually runs in CI.
+
+### Real production bug surfaced by the now-running tests
+`request_manager::request_state()` ordered request rows by `timecreated DESC` alone. When two rows share the same second (common in tests, possible in production for back-to-back manager actions), the SQL order is non-deterministic — a stale rejected row could shadow a brand-new pending one. Fixed by adding `id DESC` as the secondary sort key. The unlocked test `test_request_state_pending_request_wins_over_old_rejected` catches the regression.
+
+### Test posture impact
+Before Day-3: **39 PHPUnit tests, 14 SKIPPED** in CI ("will run on staging").
+After  Day-3: **72 PHPUnit tests, 0 skipped, 0 errors, 0 failures.**
+
+Net: 33 more tests genuinely run in CI. No more "but it'll fail on staging" caveat for the tenant-aware code path.
 
 ---
 
@@ -31,10 +54,10 @@ The runtime fallback chain is now: rule's own column → admin setting → hard-
 
 **Session paused 2026-05-14. All 25 commits pushed to production branch.**
 
-### Day-2 test posture
-- **39 PHPUnit tests** (cadence + cert_helper + observer + setting_cadence_json + sharing + request), **0 errors, 0 failures, 14 skipped** (need staging open_path column)
+### Day-3 test posture
+- **72 PHPUnit tests** (cadence + cert_helper + observer + setting_cadence_json + tenant + sharing + request), **0 errors, 0 failures, 0 skipped** (open_path fixture trait now provides the BizLMS schema)
 - **post_deploy_verify.sh** on dev: **5 PASS, 1 WARN (cron, expected), 0 FAIL**
-- All four Day-1 deliverables still green after Day-2 additions.
+- All five Day-1/Day-2 deliverables still green after Day-3 additions.
 
 ### Recommended day-1 actions (in priority order)
 
