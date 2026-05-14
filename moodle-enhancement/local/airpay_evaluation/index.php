@@ -41,11 +41,41 @@ $columns = [
     ['key' => 'statuslabel', 'label' => 'Status',       'sortable' => true,  'sortkey' => 'status', 'format' => 'badge'],
 ];
 
+// Phase B0+ — stat_card-compatible tiles.
+$kpi_tiles = [
+    [
+        'label' => 'Total Forms',
+        'value' => number_format($total),
+        'icon'  => 'list-alt',
+        'color' => 'primary',
+    ],
+    [
+        'label' => 'Active',
+        'value' => number_format($active),
+        'icon'  => 'play-circle',
+        'color' => 'success',
+    ],
+    [
+        'label' => 'Drafts',
+        'value' => number_format($draft),
+        'icon'  => 'pencil',
+        'color' => 'info',
+    ],
+    [
+        'label' => 'Responses',
+        'value' => number_format($total_responses),
+        'icon'  => 'comments',
+        'color' => 'accent',
+    ],
+];
+
 $data = [
     'total_count'     => number_format($total),
     'active_count'    => number_format($active),
     'draft_count'     => number_format($draft),
     'total_responses' => number_format($total_responses),
+    'kpi_tiles'       => $kpi_tiles,
+    'has_kpi_tiles'   => !empty($kpi_tiles),
     'can_manage'      => $can_manage,
     'columns_json'    => s(json_encode($columns)),
     'analysis_url'    => (new moodle_url('/local/airpay_evaluation/analysis.php'))->out(false),

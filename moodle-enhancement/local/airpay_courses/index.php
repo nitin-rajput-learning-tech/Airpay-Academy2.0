@@ -47,10 +47,34 @@ $columns = [
     ['key' => 'statuslabel', 'label' => 'Visibility',  'sortable' => true,  'sortkey' => 'visible', 'format' => 'badge'],
 ];
 
+// Phase B0+ — stat_card-compatible tiles.
+$kpi_tiles = [
+    [
+        'label' => 'Total Courses',
+        'value' => number_format($total_count),
+        'icon'  => 'book',
+        'color' => 'primary',
+    ],
+    [
+        'label' => 'Visible',
+        'value' => number_format($visible_count),
+        'icon'  => 'eye',
+        'color' => 'success',
+    ],
+    [
+        'label' => 'Hidden',
+        'value' => number_format($hidden_count),
+        'icon'  => 'eye-slash',
+        'color' => 'info',
+    ],
+];
+
 $data = [
     'total_count'    => number_format($total_count),
     'visible_count'  => number_format($visible_count),
     'hidden_count'   => number_format($hidden_count),
+    'kpi_tiles'      => $kpi_tiles,
+    'has_kpi_tiles'  => !empty($kpi_tiles),
     'can_create'     => $can_create,
     'can_manage'     => $can_manage,
     'can_enrol'      => $can_enrol,

@@ -53,10 +53,34 @@ $columns = [
     ['key' => 'created',   'label' => 'Created',    'sortable' => true,  'sortkey' => 'timecreated'],
 ];
 
+// Phase B0+ — stat_card-compatible tiles.
+$kpi_tiles = [
+    [
+        'label' => 'Categories',
+        'value' => number_format($total_cats),
+        'icon'  => 'folder-open-o',
+        'color' => 'accent',
+    ],
+    [
+        'label' => 'Skills',
+        'value' => number_format($total_skills),
+        'icon'  => 'star',
+        'color' => 'primary',
+    ],
+    [
+        'label' => 'Role Mappings',
+        'value' => number_format($total_role_maps),
+        'icon'  => 'sitemap',
+        'color' => 'success',
+    ],
+];
+
 $data = [
     'total_categories' => number_format($total_cats),
     'total_skills'     => number_format($total_skills),
     'total_role_maps'  => number_format($total_role_maps),
+    'kpi_tiles'        => $kpi_tiles,
+    'has_kpi_tiles'    => !empty($kpi_tiles),
     'categories'       => $cat_rows,
     'has_categories'   => !empty($cat_rows),
     'cat_options'      => $cat_options_for_filter,

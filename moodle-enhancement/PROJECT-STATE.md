@@ -4,6 +4,74 @@
 
 ---
 
+## 🆕 PHASE B0+ — Component reuse sweep (batch 3) (2026-05-14)
+
+Ten more admin manage-landings adopt the canonical `stat_card`. Brings the total to **17 surfaces / 65+ KPI tiles** all consuming the same tokens-aware reusable.
+
+Every plugin's "manage" page follows the identical Bootstrap-grid-KPI-cards pattern. Migrated in one batch since the recipe is now mechanical:
+1. Add `$kpi_tiles` array in the `.php` controller (3-5 tiles per surface)
+2. Reshape: `label`, `value`, `icon` (no fa- prefix), `color` (semantic variant)
+3. Replace the `<div class="row mb-4">…3 col-md-4 cards…</div>` block with `airpay-stat-grid + iteration + partial call`
+
+### Batch 3 surfaces migrated
+
+| Surface | Tiles | Notable colour logic |
+|---|---|---|
+| Manage Courses | 3 | Total / Visible / Hidden |
+| Manage Classrooms | 3 | Total / Active / Completed |
+| Manage Exams | 3 | Total / Active / Inactive |
+| Learning Paths | 3 | Total / Active / Completed |
+| Evaluations | 4 | Total Forms / Active / Drafts / Responses |
+| Notifications | 3 | Total Rules / Enabled / Disabled |
+| Organisation | 3 | Tenants / Total Org Units / Active Users |
+| Programs | 3 | Total / Active / Completed |
+| Skills | 3 | Categories / Skills / Role Mappings |
+| Users | 3 | Total / Active / Suspended *(danger when > 0)* |
+
+### Cumulative coverage (all today's commits)
+
+- **17 surfaces** using `stat_card`: main dashboard × 4 sections + Analytics + Compliance + Manager + Privacy + Reports + Courses + Classrooms + Exams + Paths + Evaluations + Notifications + Org + Programs + Skills + Users
+- **65+ KPI tiles** consuming the partial
+- **Zero hex literals** for KPI tile colours across all 17 surfaces (was ~70 inline `color: #....`)
+- Every surface gets mobile-responsive grid + dark-mode + focus-visible + tenant branding for free
+
+### Files touched (batch 3)
+
+```
+moodle-enhancement/local/airpay_courses/
+  index.php                            [+ $kpi_tiles]
+  templates/manage.mustache            [3 inline cards → partial]
+moodle-enhancement/local/airpay_classroom/
+  index.php                            [+ $kpi_tiles]
+  templates/manage.mustache            [3 inline cards → partial]
+moodle-enhancement/local/airpay_exams/
+  index.php                            [+ $kpi_tiles]
+  templates/manage.mustache            [3 inline cards → partial]
+moodle-enhancement/local/airpay_learningpath/
+  index.php                            [+ $kpi_tiles]
+  templates/manage.mustache            [3 inline cards → partial]
+moodle-enhancement/local/airpay_evaluation/
+  index.php                            [+ $kpi_tiles]
+  templates/manage.mustache            [4 inline cards → partial]
+moodle-enhancement/local/airpay_notifications/
+  index.php                            [+ $kpi_tiles]
+  templates/manage.mustache            [3 inline cards → partial]
+moodle-enhancement/local/airpay_org/
+  admin.php                            [+ $kpi_tiles]
+  templates/manage.mustache            [3 inline cards → partial]
+moodle-enhancement/local/airpay_programs/
+  index.php                            [+ $kpi_tiles]
+  templates/manage.mustache            [3 inline cards → partial]
+moodle-enhancement/local/airpay_skills/
+  admin.php                            [+ $kpi_tiles]
+  templates/manage.mustache            [3 inline cards → partial]
+moodle-enhancement/local/airpay_users/
+  index.php                            [+ $kpi_tiles]
+  templates/manage.mustache            [3 inline cards → partial]
+```
+
+---
+
 ## 🆕 PHASE B0+ — Component reuse sweep (batch 2) (2026-05-14)
 
 Three more admin surfaces adopt the canonical `stat_card`. Brings total to **34 KPI tiles across 7 surfaces** all consuming the same tokens-aware reusable.

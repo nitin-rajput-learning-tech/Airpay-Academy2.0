@@ -95,10 +95,34 @@ foreach ($tenant_records as $t) {
 $total_orgs = count($all_orgs);
 $total_users = $DB->count_records_select('user', 'deleted = 0 AND suspended = 0 AND id > 2');
 
+// Phase B0+ — stat_card-compatible tiles.
+$kpi_tiles = [
+    [
+        'label' => 'Tenants',
+        'value' => number_format(count($tenants)),
+        'icon'  => 'building',
+        'color' => 'primary',
+    ],
+    [
+        'label' => 'Total Org Units',
+        'value' => number_format($total_orgs),
+        'icon'  => 'sitemap',
+        'color' => 'accent',
+    ],
+    [
+        'label' => 'Active Users',
+        'value' => number_format($total_users),
+        'icon'  => 'users',
+        'color' => 'success',
+    ],
+];
+
 $data = [
     'total_orgs'    => $total_orgs,
     'total_tenants' => count($tenants),
     'total_users'   => number_format($total_users),
+    'kpi_tiles'     => $kpi_tiles,
+    'has_kpi_tiles' => !empty($kpi_tiles),
     'tenants'       => $tenants,
     'has_tenants'   => !empty($tenants),
     'can_manage'    => $can_manage,

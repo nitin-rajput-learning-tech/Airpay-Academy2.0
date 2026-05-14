@@ -38,10 +38,34 @@ $columns = [
     ['key' => 'statuslabel', 'label' => 'Status',    'sortable' => true,  'sortkey' => 'enabled', 'format' => 'badge'],
 ];
 
+// Phase B0+ — stat_card-compatible tiles.
+$kpi_tiles = [
+    [
+        'label' => 'Total Rules',
+        'value' => number_format($total),
+        'icon'  => 'bell',
+        'color' => 'primary',
+    ],
+    [
+        'label' => 'Enabled',
+        'value' => number_format($enabled),
+        'icon'  => 'check-circle',
+        'color' => 'success',
+    ],
+    [
+        'label' => 'Disabled',
+        'value' => number_format($disabled),
+        'icon'  => 'minus-circle',
+        'color' => 'info',
+    ],
+];
+
 $data = [
     'total_count'    => number_format($total),
     'enabled_count'  => number_format($enabled),
     'disabled_count' => number_format($disabled),
+    'kpi_tiles'      => $kpi_tiles,
+    'has_kpi_tiles'  => !empty($kpi_tiles),
     'can_manage'     => $can_manage,
     'columns_json'   => s(json_encode($columns)),
 ];

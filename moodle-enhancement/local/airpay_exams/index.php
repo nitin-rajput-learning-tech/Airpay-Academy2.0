@@ -41,10 +41,35 @@ $columns = [
     ['key' => 'statuslabel',  'label' => 'Status',        'sortable' => true,  'sortkey' => 'status', 'format' => 'badge'],
 ];
 
+// Phase B0+ — stat_card-compatible tiles.
+$inactive = $total - $active;
+$kpi_tiles = [
+    [
+        'label' => 'Total Exams',
+        'value' => number_format($total),
+        'icon'  => 'pencil-square-o',
+        'color' => 'primary',
+    ],
+    [
+        'label' => 'Active',
+        'value' => number_format($active),
+        'icon'  => 'play-circle',
+        'color' => 'success',
+    ],
+    [
+        'label' => 'Inactive',
+        'value' => number_format($inactive),
+        'icon'  => 'pause-circle',
+        'color' => 'info',
+    ],
+];
+
 $data = [
     'total_count'   => number_format($total),
     'active_count'  => number_format($active),
-    'inactive_count' => number_format($total - $active),
+    'inactive_count' => number_format($inactive),
+    'kpi_tiles'     => $kpi_tiles,
+    'has_kpi_tiles' => !empty($kpi_tiles),
     'can_create'    => $can_create,
     'columns_json'  => s(json_encode($columns)),
 ];

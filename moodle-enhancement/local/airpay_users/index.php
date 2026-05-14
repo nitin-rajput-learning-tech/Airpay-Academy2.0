@@ -79,10 +79,35 @@ $column_key_to_db = [
     'statuslabel' => 'suspended',
 ];
 
+// Phase B0+ — stat_card-compatible tiles. Suspended flips to danger
+// when > 0 (a suspended account usually means something escalated).
+$kpi_tiles = [
+    [
+        'label' => 'Total Users',
+        'value' => number_format($total_count),
+        'icon'  => 'users',
+        'color' => 'primary',
+    ],
+    [
+        'label' => 'Active',
+        'value' => number_format($active_count),
+        'icon'  => 'user-circle',
+        'color' => 'success',
+    ],
+    [
+        'label' => 'Suspended',
+        'value' => number_format($suspended_count),
+        'icon'  => 'user-times',
+        'color' => $suspended_count > 0 ? 'danger' : 'primary',
+    ],
+];
+
 $data = [
     'total_count'     => number_format($total_count),
     'active_count'    => number_format($active_count),
     'suspended_count' => number_format($suspended_count),
+    'kpi_tiles'       => $kpi_tiles,
+    'has_kpi_tiles'   => !empty($kpi_tiles),
     'can_create'      => $can_create,
     'can_bulkstatus'  => $can_bulkstatus,
     'org_options'     => $org_options,

@@ -80,26 +80,14 @@
     {{/can_manage}}
 </div>
 
-<div class="row mb-4">
-    <div class="col-md-4 mb-2">
-        <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
-            <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-primary, #0066A7);">{{total_tenants}}</div>
-            <div class="text-muted small text-uppercase">Tenants</div>
-        </div></div>
-    </div>
-    <div class="col-md-4 mb-2">
-        <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
-            <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-accent, #0f7a73);">{{total_orgs}}</div>
-            <div class="text-muted small text-uppercase">Total Org Units</div>
-        </div></div>
-    </div>
-    <div class="col-md-4 mb-2">
-        <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
-            <div style="font-size: 1.5rem; font-weight: 800; color: var(--ap-color-success, #16a34a);">{{total_users}}</div>
-            <div class="text-muted small text-uppercase">Active Users</div>
-        </div></div>
-    </div>
+{{! KPI Summary — Phase B0+: migrated to tokens-aware stat_card partial }}
+{{#has_kpi_tiles}}
+<div class="airpay-stat-grid mb-4">
+    {{#kpi_tiles}}
+    {{> theme_airpayux/components/stat_card }}
+    {{/kpi_tiles}}
 </div>
+{{/has_kpi_tiles}}
 
 {{! ── Tenants (depth=1) — collapsible cards ─── }}
 {{#has_tenants}}
