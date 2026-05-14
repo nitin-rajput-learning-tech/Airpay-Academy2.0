@@ -355,27 +355,9 @@
     font-size: var(--ap-text-sm);
 }
 
-/* ── Empty state (legacy — see enhanced block below) ─────────────────── */
-.airpay-catalog__empty {
-    text-align: center;
-    padding: var(--ap-space-12) var(--ap-space-6);
-    color: var(--ap-color-text-muted);
-}
-.airpay-catalog__empty i {
-    font-size: var(--ap-text-3xl);
-    margin-bottom: var(--ap-space-3);
-    display: block;
-    color: var(--ap-color-border-strong);
-}
-.airpay-catalog__empty h4 {
-    color: var(--ap-color-text-secondary);
-    font-size: var(--ap-text-lg);
-    margin: 0 0 var(--ap-space-2);
-}
-.airpay-catalog__empty p {
-    font-size: var(--ap-text-sm);
-    margin: 0 0 var(--ap-space-4);
-}
+/* Empty-state CSS removed in Phase B0 Catalogue iter 6.
+   The catalog now uses the canonical .airpay-empty-state from
+   _components-empty-state.scss via the empty_state Mustache partial. */
 
 /* ═══ Netflix Enhancements (Sprint 2) ═══════════════════════════════════ */
 
@@ -632,27 +614,8 @@
 }
 .airpay-catalog__btn--load-more i { margin-left: var(--ap-space-2); }
 
-/* ═══ Empty State Enhanced ═══════════════════════════════════════════════ */
-.airpay-catalog__empty {
-    text-align: center;
-    padding: var(--ap-space-16) var(--ap-space-6);
-    color: var(--ap-color-text-muted);
-}
-.airpay-catalog__empty i {
-    font-size: var(--ap-text-3xl);
-    margin-bottom: var(--ap-space-4);
-    display: block;
-    color: var(--ap-color-border-strong);
-}
-.airpay-catalog__empty h4 {
-    color: var(--ap-color-text-secondary);
-    font-size: var(--ap-text-lg);
-    margin: 0 0 var(--ap-space-2);
-}
-.airpay-catalog__empty p {
-    font-size: var(--ap-text-sm);
-    margin: 0 0 var(--ap-space-4);
-}
+/* Enhanced empty-state block also removed in iter 6 — both versions
+   replaced by the canonical .airpay-empty-state. */
 
 /* ═══ Progress text in carousel cards ═══════════════════════════════════
    A11Y-7: was #9ca3af (~2.8:1 on white) — failed AA. Now uses the

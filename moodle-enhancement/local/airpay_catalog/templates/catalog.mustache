@@ -193,15 +193,13 @@
         {{/has_more}}
         {{/has_courses}}
 
+        {{! Empty state — Phase B0 Catalogue iter 6: migrated to tokens-aware
+            empty_state partial with context-aware copy (search-no-results /
+            empty-category / truly-empty catalogue) built in index.php. }}
         {{^has_courses}}
-        <div class="airpay-catalog__empty">
-            <i class="fa fa-search"></i>
-            <h4>No courses found</h4>
-            <p>Try a different search term or browse by category.</p>
-            {{#has_search}}
-            <a href="{{baseurl}}" class="airpay-catalog__btn airpay-catalog__btn--enroll">Clear Search</a>
-            {{/has_search}}
-        </div>
+        {{#empty_state}}
+        {{> theme_airpayux/components/empty_state }}
+        {{/empty_state}}
         {{/has_courses}}
     </section>
 </div>

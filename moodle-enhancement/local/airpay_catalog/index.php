@@ -94,6 +94,44 @@ $data = [
     'searchurl'         => (new moodle_url('/local/airpay_catalog/index.php'))->out(false),
 ];
 
+// Phase B0 Catalogue iter 6 — context-aware empty state. Adapts the
+// copy + CTA based on whether the user is searching, filtering, or
+// looking at a truly-empty catalog. The empty_state partial expects a
+// single-element array, hence the [[...]] wrap.
+if (empty($results['courses'])) {
+    if (!empty($search)) {
+        $data['empty_state'] = [[
+            'icon'     => 'search',
+            'title'    => 'No results for "' . s($search) . '"',
+            'message'  => 'Try a different search term, or browse the full catalogue by category.',
+            'ctalabel' => 'Clear search',
+            'ctaicon'  => 'times',
+            'ctaurl'   => $data['baseurl'],
+            'size'     => 'md',
+        ]];
+    } else if (!empty($category)) {
+        $data['empty_state'] = [[
+            'icon'     => 'tag',
+            'title'    => 'No courses in this category yet',
+            'message'  => 'New courses are added every week — check back soon or browse all categories.',
+            'ctalabel' => 'See all categories',
+            'ctaicon'  => 'th-large',
+            'ctaurl'   => $data['baseurl'],
+            'size'     => 'md',
+        ]];
+    } else {
+        $data['empty_state'] = [[
+            'icon'     => 'graduation-cap',
+            'title'    => 'The catalogue is just getting started',
+            'message'  => 'Your L&D team is preparing courses — they\'ll appear here as soon as they\'re published.',
+            'size'     => 'md',
+        ]];
+    }
+    $data['has_empty_state'] = true;
+} else {
+    $data['has_empty_state'] = false;
+}
+
 echo $OUTPUT->header();
 echo $OUTPUT->render_from_template('local_airpay_catalog/catalog', $data);
 echo $OUTPUT->footer();
