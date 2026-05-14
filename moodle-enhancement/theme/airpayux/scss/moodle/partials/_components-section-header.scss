@@ -1,0 +1,108 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   .airpay-section-header — Phase B0 iter 6 (2026-05-14)
+   ═══════════════════════════════════════════════════════════════════════
+   The h3 + optional "View all →" pattern used on every section across
+   the dashboard, reports, analytics, and admin landings. Lifted out of
+   _surface-dashboard.scss so it's reusable beyond just /my/.
+
+   Template: theme_airpayux/components/section_header
+   Tokens:   --ap-color-* / --ap-space-* / --ap-text-* exclusively
+   A11y:     real <h3> element; link has aria-label combining target +
+             section name
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.airpay-section-header,
+.airpay-dash__section-header {  /* Legacy alias — see note at file bottom. */
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--ap-space-3);
+    margin-bottom: var(--ap-space-4);
+    /* Allow long titles to wrap without breaking the right-aligned link. */
+    flex-wrap: wrap;
+
+    &--compact {
+        margin-bottom: var(--ap-space-2);
+    }
+}
+
+.airpay-section-header__title,
+.airpay-dash__section-title {   /* Legacy alias — every inline <h3> on the dashboard uses this. */
+    font-size: var(--ap-text-lg);
+    font-weight: var(--ap-weight-bold);
+    color: var(--ap-color-text-primary);
+    margin: 0;
+    line-height: var(--ap-leading-tight);
+    display: flex;
+    align-items: center;
+    gap: var(--ap-space-2);
+    min-width: 0;
+    /* The icon + text live in a flex container so spacing stays
+       consistent regardless of icon presence. */
+
+    /* Inline icons inside the legacy <h3 class="airpay-dash__section-title">
+       <i class="fa fa-X"></i> Title</h3> pattern need the same primary
+       colour treatment as the new component's dedicated __icon class. */
+    i, .fa {
+        color: var(--ap-color-primary);
+        font-size: var(--ap-text-lg);
+        flex-shrink: 0;
+    }
+}
+
+.airpay-section-header__icon {
+    color: var(--ap-color-primary);
+    font-size: var(--ap-text-lg);
+    flex-shrink: 0;
+}
+
+.airpay-section-header__link,
+.airpay-dash__section-link {    /* Legacy alias — only Continue Learning uses this today. */
+    font-size: var(--ap-text-sm);
+    font-weight: var(--ap-weight-semibold);
+    color: var(--ap-color-primary);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ap-space-1);
+    padding: var(--ap-space-1) var(--ap-space-2);
+    margin: 0 calc(var(--ap-space-2) * -1);
+    border-radius: var(--ap-radius-sm);
+    transition: background var(--ap-transition-quick),
+                color var(--ap-transition-quick);
+    /* Negative margin keeps the visual hugging the right edge while the
+       padding+border-radius provide a comfortable hit target on hover. */
+    white-space: nowrap;
+
+    &:hover {
+        color: var(--ap-color-primary-hover);
+        background: var(--ap-color-primary-light);
+        text-decoration: none;
+    }
+
+    &:focus-visible {
+        background: var(--ap-color-primary-light);
+    }
+
+    i, .fa {
+        font-size: var(--ap-text-xs);
+        transition: transform var(--ap-transition-quick);
+    }
+    &:hover i,
+    &:hover .fa {
+        transform: translateX(2px);
+    }
+}
+
+/* ── Legacy-alias rationale ────────────────────────────────────────────
+   Iter 6 was originally going to rename every <h3 class="airpay-dash__
+   section-title"> instance in dashboard.mustache to the new BEM names.
+   That's 15+ template edits with non-zero regression risk for zero
+   functional change. Instead we alias the legacy classes inside this
+   component partial so the old markup picks up the new tokens-aware
+   styling automatically.
+
+   New code MUST use .airpay-section-header / __title / __link.
+   _surface-dashboard.scss's matching .airpay-dash__section-* rules were
+   removed in this same commit, so the aliases here are the only source.
+   ──────────────────────────────────────────────────────────────────── */

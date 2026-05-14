@@ -119,30 +119,12 @@
    tokens-aware .airpay-stat-card component from
    _components-stat-card.scss. See style guide for usage. */
 
-/* Section Headers */
+/* Section margins — kept here because .airpay-dash__section is the
+   outer wrapper used by every dashboard section. The header bits
+   (.airpay-dash__section-header / __title / __link) moved to
+   _components-section-header.scss in Phase B0 iter 6 — see that file
+   for the tokens-aware rules + legacy aliases. */
 .airpay-dash__section { margin-bottom: 24px; }
-.airpay-dash__section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
-}
-.airpay-dash__section-title {
-    font-size: 1.125rem;
-    font-weight: 700;
-    color: #1a1a2e;
-    margin: 0;
-}
-.airpay-dash__section-link {
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: #0066A7;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-.airpay-dash__section-link:hover { text-decoration: underline; }
 
 /* Course progress cards — removed Phase B0 iter 3. Continue Learning
    tiles now use the tokens-aware .airpay-course-card component from

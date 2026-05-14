@@ -549,6 +549,50 @@ echo $OUTPUT->header();
     "relative":   "Due in 3 days",
     "viewurl":    "/course/view.php?id=42"
 }</pre>
+
+    <h3 style="margin-top: var(--ap-space-10);">Section header &mdash; <code>theme_airpayux/components/section_header</code></h3>
+    <p class="ap-sg__section-desc">Small but used everywhere. Three variations: bare title, title with icon, title with icon plus "View all &rarr;" affordance. Legacy <code>.airpay-dash__section-title</code> markup is aliased in the SCSS so existing inline <code>&lt;h3&gt;</code> elements inherit the new tokens automatically.</p>
+
+    <div style="max-width: 760px; margin-bottom: var(--ap-space-8); display: flex; flex-direction: column; gap: var(--ap-space-6);">
+        <div>
+            <header class="airpay-section-header">
+                <h3 class="airpay-section-header__title"><span>Plain text only</span></h3>
+            </header>
+            <p style="font-size: var(--ap-text-sm); color: var(--ap-color-text-secondary); margin: 0;">When you don't need an icon or a link.</p>
+        </div>
+
+        <div>
+            <header class="airpay-section-header">
+                <h3 class="airpay-section-header__title">
+                    <i class="fa fa-trophy airpay-section-header__icon" aria-hidden="true"></i>
+                    <span>With icon</span>
+                </h3>
+            </header>
+            <p style="font-size: var(--ap-text-sm); color: var(--ap-color-text-secondary); margin: 0;">Icon takes the primary semantic colour.</p>
+        </div>
+
+        <div>
+            <header class="airpay-section-header">
+                <h3 class="airpay-section-header__title">
+                    <i class="fa fa-book airpay-section-header__icon" aria-hidden="true"></i>
+                    <span>Continue Learning</span>
+                </h3>
+                <a class="airpay-section-header__link" href="#components" aria-label="View all Continue Learning">
+                    View all <i class="fa fa-arrow-right" aria-hidden="true"></i>
+                </a>
+            </header>
+            <p style="font-size: var(--ap-text-sm); color: var(--ap-color-text-secondary); margin: 0;">The arrow nudges right on hover. Link has a 3:1-contrast hit-area on hover/focus.</p>
+        </div>
+    </div>
+
+    <h4 style="margin-top: var(--ap-space-6);">Mustache usage</h4>
+    <pre style="background: var(--ap-color-bg-surface-alt); padding: var(--ap-space-4); border-radius: var(--ap-radius-sm); font-size: var(--ap-text-xs); overflow-x: auto;">{{&gt; theme_airpayux/components/section_header }}
+{
+    "title":     "Continue Learning",
+    "icon":      "book",
+    "linkurl":   "/my/courses.php",
+    "linklabel": "View all"
+}</pre>
 </section>
 
 </div>

@@ -1,0 +1,43 @@
+{{!
+    Airpay Section Header — Phase B0 iter 6 (2026-05-14)
+
+    Small but used everywhere. Replaces ad-hoc <h3 class="airpay-dash__
+    section-title"> + inline link pattern with a single partial that
+    owns the spacing, typography, icon alignment, and optional
+    "View all →" affordance.
+
+    Always emits <h3> — most sections are section-level, and Mustache's
+    lack of conditional template selection makes mixing h2/h3/h4 in one
+    partial messier than helpful. For top-of-page <h2>, use a separate
+    page-header partial.
+
+    Context:
+        title       (required) — header text (escaped)
+        icon        (optional) — FA icon name without "fa-" prefix
+        linkurl     (optional) — URL for "View all →" affordance
+        linklabel   (optional) — overrides the default "View all"
+        compact     (optional) — bool — drops bottom margin for tight
+                                 stacked sections
+
+    A11y:
+      - <h3> is a real heading so screen reader users can navigate by
+        section.
+      - "View all" link has aria-label combining target + section name.
+
+    Usage:
+        {{> theme_airpayux/components/section_header }}
+}}
+<header class="airpay-section-header{{#compact}} airpay-section-header--compact{{/compact}}">
+    <h3 class="airpay-section-header__title">
+        {{#icon}}<i class="fa fa-{{icon}} airpay-section-header__icon" aria-hidden="true"></i>{{/icon}}
+        <span>{{title}}</span>
+    </h3>
+    {{#linkurl}}
+    <a class="airpay-section-header__link"
+       href="{{linkurl}}"
+       aria-label="{{#linklabel}}{{linklabel}}{{/linklabel}}{{^linklabel}}View all {{title}}{{/linklabel}}">
+        {{#linklabel}}{{linklabel}}{{/linklabel}}{{^linklabel}}View all{{/linklabel}}
+        <i class="fa fa-arrow-right" aria-hidden="true"></i>
+    </a>
+    {{/linkurl}}
+</header>
