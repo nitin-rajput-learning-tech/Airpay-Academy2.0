@@ -65,20 +65,40 @@ class list_users extends external_api {
         if (!is_array($client_filters) || json_last_error() !== JSON_ERROR_NONE) {
             $client_filters = [];
         }
-        $orgid  = (int)    ($client_filters['orgid']  ?? 0);
-        $status = (string) ($client_filters['status'] ?? 'active');
+        // 2026-05-15 BizLMS parity — multi-level hierarchy filter.
+        // Five levels: org_l1 (organisation root tenant) through org_l5
+        // (level-5 unit). Whichever is the DEEPEST non-zero value wins —
+        // we scope by that node's full path so descendants are included.
+        // The single legacy `orgid` parameter is still accepted as a
+        // synonym for org_l1 to keep existing API callers working.
+        $org_levels = [];
+        for ($lvl = 1; $lvl <= 5; $lvl++) {
+            $org_levels[$lvl] = (int) ($client_filters['org_l' . $lvl] ?? 0);
+        }
+        if (!array_filter($org_levels) && !empty($client_filters['orgid'])) {
+            // Back-compat: callers using the old single-level filter.
+            $org_levels[1] = (int) $client_filters['orgid'];
+        }
+        // Find the deepest non-zero level — that's the filter target.
+        $deepest_orgid = 0;
+        for ($lvl = 5; $lvl >= 1; $lvl--) {
+            if ($org_levels[$lvl] > 0) { $deepest_orgid = $org_levels[$lvl]; break; }
+        }
+        $status         = (string) ($client_filters['status']         ?? 'active');
+        $email_contains = (string) ($client_filters['email_contains'] ?? '');
+        $empid_contains = (string) ($client_filters['empid_contains'] ?? '');
 
         // ── WHERE assembly ──
         $where = ['u.deleted = 0', 'u.id > 2'];
         $sqlparams = [];
 
         // Tenant scoping. Two forks:
-        //  - client passed orgid → must verify it belongs to caller's tree (H1)
+        //  - client passed any org level → use the DEEPEST one's path
         //  - else fall back to caller's own top-level tenant
-        // In both cases the LIKE pattern is /<id>/%  (slash-bounded + escaped)
-        // so '/1' never matches '/10' or '/177' (C2).
-        if ($orgid > 0) {
-            $org = $DB->get_record('local_airpay_org', ['id' => $orgid], 'path');
+        // LIKE pattern is /<id>/% (slash-bounded + escaped) so '/1' never
+        // matches '/10' or '/177' (C2 hardening from earlier audit).
+        if ($deepest_orgid > 0) {
+            $org = $DB->get_record('local_airpay_org', ['id' => $deepest_orgid], 'path');
             if ($org && !empty($org->path)) {
                 if (!is_siteadmin()) {
                     $caller_parts = explode('/', trim($USER->open_path ?? '', '/'));
@@ -113,6 +133,19 @@ class list_users extends external_api {
             $where[] = 'u.suspended = 0';
         } else if ($status === 'suspended') {
             $where[] = 'u.suspended = 1';
+        }
+
+        // Email-contains filter (BizLMS parity: was a separate field in
+        // the legacy users_filters_form, alongside the generic search).
+        if ($email_contains !== '') {
+            $where[] = $DB->sql_like('u.email', ':emailterm', false);
+            $sqlparams['emailterm'] = '%' . $DB->sql_like_escape($email_contains) . '%';
+        }
+        // Employee-ID-contains filter (BizLMS parity).
+        if ($empid_contains !== '') {
+            $where[] = $DB->sql_like("COALESCE(u.open_employeeid, '')",
+                ':empidterm', false);
+            $sqlparams['empidterm'] = '%' . $DB->sql_like_escape($empid_contains) . '%';
         }
 
         if (!empty($params['search'])) {

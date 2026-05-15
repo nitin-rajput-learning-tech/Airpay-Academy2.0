@@ -120,6 +120,14 @@ $data = [
     'sortkey_map_json' => s(json_encode($column_key_to_db)),
 ];
 
+// 2026-05-15 BizLMS parity audit: explicit AMD bootstrap for the
+// 5-level hierarchy cascade. The {{#js}} block in the Mustache
+// template doesn't reliably emit when the layout's
+// {{{output.standard_end_of_body_html}}} placement collides with
+// custom shell rendering — calling js_call_amd() here guarantees
+// the cascade JS loads.
+$PAGE->requires->js_call_amd('theme_airpayux/org_cascade', 'init');
+
 echo $OUTPUT->header();
 echo $OUTPUT->render_from_template('local_airpay_users/manage', $data);
 echo $OUTPUT->footer();

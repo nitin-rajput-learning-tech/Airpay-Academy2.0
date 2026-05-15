@@ -99,6 +99,20 @@ class list_classroom_sessions extends external_api {
                 . s($title) . '</a>';
 
             $actions = [];
+            // W1-7 (2026-05-15) — virtual meeting + recording URLs.
+            // Prepend join/replay icons so attendees can launch the session
+            // straight from the list. Both fields are optional; only emit
+            // an icon if the URL is set.
+            if (!empty($s->meeting_url)) {
+                $actions[] = '<a href="' . s($s->meeting_url) . '" target="_blank"'
+                    . ' rel="noopener noreferrer" class="btn btn-sm btn-link text-primary p-1"'
+                    . ' title="Join live session"><i class="fa fa-video-camera"></i></a>';
+            }
+            if (!empty($s->recording_url)) {
+                $actions[] = '<a href="' . s($s->recording_url) . '" target="_blank"'
+                    . ' rel="noopener noreferrer" class="btn btn-sm btn-link text-info p-1"'
+                    . ' title="Watch recording"><i class="fa fa-play-circle-o"></i></a>';
+            }
             if ($can_attend) {
                 $actions[] = '<a href="' . s($atturl) . '" class="btn btn-sm btn-link p-1" '
                     . 'title="Mark attendance"><i class="fa fa-check-square-o"></i></a>';

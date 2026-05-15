@@ -43,10 +43,18 @@ class list_paths extends external_api {
         $where = ['1=1'];
         $sqlparams = [];
 
-        // Phase 9.6: back-ported to shared tenant helper.
-        [$tnsql, $tnargs] = \local_airpay_core\tenant::path_filter('lp');
-        $where[] = $tnsql;
-        $sqlparams = array_merge($sqlparams, $tnargs);
+        // W1-1 BizLMS parity: 5-level org cascade overrides default
+        // tenant scope.
+        [$cascadesql, $cascadeargs] =
+            \local_airpay_org\org_manager::cascade_where_sql($f, 'lp');
+        if ($cascadesql !== '') {
+            $where[] = $cascadesql;
+            $sqlparams = array_merge($sqlparams, $cascadeargs);
+        } else {
+            [$tnsql, $tnargs] = \local_airpay_core\tenant::path_filter('lp');
+            $where[] = $tnsql;
+            $sqlparams = array_merge($sqlparams, $tnargs);
+        }
 
         $status_filter = (string) ($f['status'] ?? 'all');
         if ($status_filter !== 'all' && ctype_digit($status_filter)) {

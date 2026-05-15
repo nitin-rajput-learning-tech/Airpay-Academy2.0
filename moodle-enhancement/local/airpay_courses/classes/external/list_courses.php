@@ -74,19 +74,40 @@ class list_courses extends external_api {
         $categoryid = (int) ($client_filters['categoryid'] ?? 0);
         $visibility = (string) ($client_filters['visibility'] ?? 'all');
 
+        // W1-1 BizLMS parity (2026-05-15): 5-level org hierarchy filter.
+        // Same shape as airpay_users — deepest non-zero level wins,
+        // scoping by that org's path so descendants are included.
+        $org_levels = [];
+        for ($lvl = 1; $lvl <= 5; $lvl++) {
+            $org_levels[$lvl] = (int) ($client_filters['org_l' . $lvl] ?? 0);
+        }
+        $deepest_orgid = 0;
+        for ($lvl = 5; $lvl >= 1; $lvl--) {
+            if ($org_levels[$lvl] > 0) { $deepest_orgid = $org_levels[$lvl]; break; }
+        }
+
         $where = ['c.id > 1']; // Exclude site course.
         $sqlparams = [];
 
         // Tenant scope — Phase 9.5 trait back-port. Replaces the M3 inline
         // explode('/', $USER->open_path) pattern. `allow_null=true` keeps
-        // the legacy-courses tolerance the M3 fix intentionally added —
-        // courses with no open_path set remain visible to everyone today
-        // and will be tightened once the BizLMS displacement (FORK-PLAN
-        // Q3) has migrated those rows.
-        [$tnsql, $tnargs] = \local_airpay_core\tenant::path_filter('c',
-            'open_path', true);
-        $where[] = $tnsql;
-        $sqlparams = array_merge($sqlparams, $tnargs);
+        // the legacy-courses tolerance the M3 fix intentionally added.
+        if ($deepest_orgid > 0) {
+            // Cascade-filter overrides the implicit tenant scope: scope to
+            // the selected org's full subtree.
+            $org = $DB->get_record('local_airpay_org', ['id' => $deepest_orgid], 'path');
+            if ($org && !empty($org->path)) {
+                $where[] = '(c.open_path = :ocascadeexact OR c.open_path LIKE :ocascadeprefix)';
+                $sqlparams['ocascadeexact']  = rtrim($org->path, '/');
+                $sqlparams['ocascadeprefix'] =
+                    $DB->sql_like_escape(rtrim($org->path, '/') . '/') . '%';
+            }
+        } else {
+            [$tnsql, $tnargs] = \local_airpay_core\tenant::path_filter('c',
+                'open_path', true);
+            $where[] = $tnsql;
+            $sqlparams = array_merge($sqlparams, $tnargs);
+        }
 
         if ($categoryid > 0) {
             $where[] = 'c.category = :catid';

@@ -28,10 +28,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_airpay_users';
-$plugin->version   = 2026050904;
+$plugin->version   = 2026051501;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.8.0'; // +photo upload (Phase E.5) — server-side resize via gdlib.
+$plugin->release   = '1.9.0'; // +BizLMS parity: 5-level hierarchy cascade + email/empid filters.
 $plugin->dependencies = [
-    'local_airpay_org' => 2026041600,
+    'local_airpay_org' => 2026051501,
 ];

@@ -349,4 +349,139 @@ final class path_assignment_test extends \advanced_testcase {
         $this->assertEquals(0, $DB->count_records('local_airpay_learningpath_users',   ['pathid' => $pid]));
         $this->assertEquals(0, $DB->count_records('local_airpay_learningpath',         ['id' => $pid]));
     }
+
+    // ════════════════════════════════════════════════════════════════════
+    // W1-2 (2026-05-15) — enrol-into-Moodle-courses behaviour.
+    //
+    // BEFORE W1-2: enrol_users() only wrote to local_airpay_learningpath_users.
+    // Learners assigned to a path could see it in their dashboard but every
+    // course on the path was inaccessible. assign_courses() added rows without
+    // enrolling existing users in new courses, so courses added late were
+    // silently missed.
+    //
+    // AFTER W1-2: enrol_users() back-fills user_enrolments via the standard
+    // `manual` enrol plugin, and assign_courses() does the same for users
+    // already on the path.
+    // ════════════════════════════════════════════════════════════════════
+
+    public function test_enrol_users_also_enrols_in_path_courses(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        global $DB;
+        $pid = $this->seed_path();
+        $c1 = $this->getDataGenerator()->create_course();
+        $c2 = $this->getDataGenerator()->create_course();
+        $u = $this->getDataGenerator()->create_user();
+
+        path_manager::assign_courses($pid, [(int) $c1->id, (int) $c2->id]);
+
+        // BEFORE THIS CALL the user is not enrolled in either course.
+        $this->assertFalse(is_enrolled(\context_course::instance($c1->id), $u, '', true));
+        $this->assertFalse(is_enrolled(\context_course::instance($c2->id), $u, '', true));
+
+        $count = path_manager::enrol_users($pid, [(int) $u->id]);
+        $this->assertSame(1, $count);
+
+        // AFTER: user must be enrolled in BOTH courses.
+        $this->assertTrue(is_enrolled(\context_course::instance($c1->id), $u, '', true),
+            'W1-2: enrol_users() must enrol the user in every Moodle course on the path');
+        $this->assertTrue(is_enrolled(\context_course::instance($c2->id), $u, '', true),
+            'W1-2: enrol_users() must enrol the user in every Moodle course on the path');
+
+        // Path-user row also created — the two are independent storage layers.
+        $this->assertEquals(1, $DB->count_records('local_airpay_learningpath_users', ['pathid' => $pid]));
+    }
+
+    public function test_enrol_users_works_when_path_has_no_courses_yet(): void {
+        // A path can legitimately have zero courses (admin still in setup mode);
+        // enrol_users() must succeed for the path-user side even with nothing to enrol into.
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        global $DB;
+        $pid = $this->seed_path();
+        $u = $this->getDataGenerator()->create_user();
+
+        $count = path_manager::enrol_users($pid, [(int) $u->id]);
+
+        $this->assertSame(1, $count);
+        $this->assertEquals(1, $DB->count_records('local_airpay_learningpath_users', ['pathid' => $pid]));
+    }
+
+    public function test_assign_courses_backfills_existing_users(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $pid = $this->seed_path();
+        $u1 = $this->getDataGenerator()->create_user();
+        $u2 = $this->getDataGenerator()->create_user();
+
+        // Step 1: enrol users while the path has zero courses.
+        path_manager::enrol_users($pid, [(int) $u1->id, (int) $u2->id]);
+
+        // Step 2: add a course later. Both users must be back-filled.
+        $c_late = $this->getDataGenerator()->create_course();
+        path_manager::assign_courses($pid, [(int) $c_late->id]);
+
+        $this->assertTrue(is_enrolled(\context_course::instance($c_late->id), $u1, '', true),
+            'W1-2: assign_courses() must back-fill course enrolment for existing path users');
+        $this->assertTrue(is_enrolled(\context_course::instance($c_late->id), $u2, '', true),
+            'W1-2: assign_courses() must back-fill course enrolment for existing path users');
+    }
+
+    public function test_enrol_users_is_idempotent_for_course_enrolments(): void {
+        // Calling enrol_users() with a mix of new + already-enrolled users
+        // should still leave each user enrolled exactly once in each course
+        // (i.e. no duplicate user_enrolments rows).
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        global $DB;
+        $pid = $this->seed_path();
+        $c = $this->getDataGenerator()->create_course();
+        $u = $this->getDataGenerator()->create_user();
+        path_manager::assign_courses($pid, [(int) $c->id]);
+
+        path_manager::enrol_users($pid, [(int) $u->id]);          // first time
+        path_manager::enrol_users($pid, [(int) $u->id]);          // duplicate
+
+        // Find the manual enrol instance for this course.
+        $manualinstance = $DB->get_record('enrol',
+            ['courseid' => $c->id, 'enrol' => 'manual'], '*', MUST_EXIST);
+        $count = $DB->count_records('user_enrolments',
+            ['enrolid' => $manualinstance->id, 'userid' => $u->id]);
+        $this->assertSame(1, $count,
+            'W1-2: repeated enrol_users() calls must not duplicate user_enrolments rows');
+    }
+
+    public function test_enrol_users_survives_course_with_disabled_manual_plugin(): void {
+        // If manual enrol is disabled on a particular course, the path-user
+        // row should still be created — the rest of the path's courses (if
+        // any) still get enrolled. Graceful degradation per audit.
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        global $DB;
+        $pid = $this->seed_path();
+        $c1 = $this->getDataGenerator()->create_course();
+        $c2 = $this->getDataGenerator()->create_course();
+
+        // Disable manual instance on c1.
+        $manual_c1 = $DB->get_record('enrol', ['courseid' => $c1->id, 'enrol' => 'manual']);
+        if ($manual_c1) {
+            $DB->set_field('enrol', 'status', ENROL_INSTANCE_DISABLED, ['id' => $manual_c1->id]);
+        }
+
+        $u = $this->getDataGenerator()->create_user();
+        path_manager::assign_courses($pid, [(int) $c1->id, (int) $c2->id]);
+
+        $count = path_manager::enrol_users($pid, [(int) $u->id]);
+
+        // Path-user row created despite c1 not accepting the enrol.
+        $this->assertSame(1, $count);
+        $this->assertEquals(1, $DB->count_records('local_airpay_learningpath_users', ['pathid' => $pid]));
+        // c2 still got enrolled.
+        $this->assertTrue(is_enrolled(\context_course::instance($c2->id), $u, '', true));
+    }
 }

@@ -71,6 +71,28 @@ class edit_session extends \core_form\dynamic_form {
             get_string('session_notes', 'local_airpay_classroom'),
             ['rows' => 3, 'cols' => 50]);
         $mform->setType('notes', PARAM_TEXT);
+
+        // ── W1-7 (2026-05-15) — virtual session fields ────────────────
+        // Live meeting URL (Zoom/Teams/Webex/Meet). Optional — in-person
+        // sessions can leave it empty. Shown in the session listing and
+        // session detail page as a "Join meeting" button when set.
+        $mform->addElement('header', 'virtualheader',
+            get_string('session_virtual_header', 'local_airpay_classroom'));
+        $mform->setExpanded('virtualheader', false);
+
+        $mform->addElement('url', 'meeting_url',
+            get_string('session_meeting_url', 'local_airpay_classroom'),
+            ['size' => 60, 'placeholder' => 'https://airpay.zoom.us/j/123456789'],
+            ['usefilepicker' => false]);
+        $mform->setType('meeting_url', PARAM_URL);
+        $mform->addHelpButton('meeting_url', 'session_meeting_url', 'local_airpay_classroom');
+
+        $mform->addElement('url', 'recording_url',
+            get_string('session_recording_url', 'local_airpay_classroom'),
+            ['size' => 60, 'placeholder' => 'https://airpay.zoom.us/rec/share/...'],
+            ['usefilepicker' => false]);
+        $mform->setType('recording_url', PARAM_URL);
+        $mform->addHelpButton('recording_url', 'session_recording_url', 'local_airpay_classroom');
     }
 
     public function validation($data, $files) {
@@ -135,14 +157,16 @@ class edit_session extends \core_form\dynamic_form {
             ['id' => $sessionid], '*', MUST_EXIST);
 
         $this->set_data((object) [
-            'classroomid' => (int) $s->classroomid,
-            'sessionid'   => (int) $s->id,
-            'title'       => $s->title ?? '',
-            'starttime'   => (int) $s->starttime,
-            'endtime'     => (int) $s->endtime,
-            'location'    => $s->location ?? '',
-            'trainerid'   => (int) ($s->trainerid ?? 0),
-            'notes'       => $s->notes ?? '',
+            'classroomid'   => (int) $s->classroomid,
+            'sessionid'     => (int) $s->id,
+            'title'         => $s->title ?? '',
+            'starttime'     => (int) $s->starttime,
+            'endtime'       => (int) $s->endtime,
+            'location'      => $s->location ?? '',
+            'trainerid'     => (int) ($s->trainerid ?? 0),
+            'notes'         => $s->notes ?? '',
+            'meeting_url'   => $s->meeting_url ?? '',
+            'recording_url' => $s->recording_url ?? '',
         ]);
     }
 

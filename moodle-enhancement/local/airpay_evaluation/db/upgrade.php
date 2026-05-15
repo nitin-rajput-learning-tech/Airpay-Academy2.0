@@ -83,5 +83,41 @@ function xmldb_local_airpay_evaluation_upgrade(int $oldversion): bool {
             'local', 'airpay_evaluation');
     }
 
+    // 2026051500 — W1-5: trigger queue + observer wiring.
+    //
+    // Adds the local_airpay_evaluation_triggers table so the event observer
+    // can enqueue future fires with a `days_after` delay, and a scheduled
+    // task can drain the queue. Before W1-5 the trigger_event column on the
+    // evaluation form was decorative; now an enabled course_completion
+    // evaluation actually queues + delivers.
+    if ($oldversion < 2026051500) {
+        $table = new xmldb_table('local_airpay_evaluation_triggers');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id',            XMLDB_TYPE_INTEGER, '10', null,
+                              XMLDB_NOTNULL, XMLDB_SEQUENCE);
+            $table->add_field('evaluationid',  XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+            $table->add_field('userid',        XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+            $table->add_field('itemid',        XMLDB_TYPE_INTEGER, '10', null,
+                              XMLDB_NOTNULL, null, '0');
+            $table->add_field('trigger_event', XMLDB_TYPE_CHAR,    '50', null, XMLDB_NOTNULL);
+            $table->add_field('fire_after',    XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+            $table->add_field('status',        XMLDB_TYPE_INTEGER, '2',  null,
+                              XMLDB_NOTNULL, null, '0');
+            $table->add_field('timecreated',   XMLDB_TYPE_INTEGER, '10', null,
+                              XMLDB_NOTNULL, null, '0');
+            $table->add_field('timefired',     XMLDB_TYPE_INTEGER, '10', null, null);
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_key('fk_evaluation', XMLDB_KEY_FOREIGN, ['evaluationid'],
+                            'local_airpay_evaluation', ['id']);
+            $table->add_key('uk_eval_user_item', XMLDB_KEY_UNIQUE,
+                            ['evaluationid', 'userid', 'itemid']);
+            $table->add_index('idx_fire_status', XMLDB_INDEX_NOTUNIQUE,
+                              ['status', 'fire_after']);
+            $table->add_index('idx_userid', XMLDB_INDEX_NOTUNIQUE, ['userid']);
+            $dbman->create_table($table);
+        }
+        upgrade_plugin_savepoint(true, 2026051500, 'local', 'airpay_evaluation');
+    }
+
     return true;
 }

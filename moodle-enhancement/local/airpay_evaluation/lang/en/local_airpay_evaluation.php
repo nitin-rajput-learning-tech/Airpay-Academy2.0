@@ -7,6 +7,12 @@ $string['pluginname'] = 'Airpay Evaluations';
 $string['airpay_evaluation:manage'] = 'Manage evaluation forms';
 $string['airpay_evaluation:respond'] = 'Respond to evaluation forms';
 
+// W1-5 (2026-05-15) — observer + trigger queue.
+$string['task_process_triggers'] = 'Process queued evaluation triggers';
+$string['messageprovider:evaluation_invite'] = 'Evaluation invitation';
+$string['invaliditemid']  = 'Invalid item ID for the trigger event';
+$string['invalidratearea'] = 'Invalid rating area';
+
 // CRUD strings.
 $string['addevaluation'] = 'Create Evaluation Form';
 $string['editevaluation'] = 'Edit Evaluation Form';

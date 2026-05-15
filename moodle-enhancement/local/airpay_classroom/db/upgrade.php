@@ -162,5 +162,29 @@ function xmldb_local_airpay_classroom_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026051160, 'local', 'airpay_classroom');
     }
 
+    // 2026051500 — W1-7: virtual meeting + recording URL fields on sessions.
+    //
+    // For a remote-first workforce, every classroom session needs a join link
+    // (Zoom/Teams/Webex/Meet) and, after the session, a recording link for
+    // late joiners and replay. BizLMS shipped these as `messagelink` +
+    // `recordinglink` — we use the clearer `meeting_url` + `recording_url`.
+    if ($oldversion < 2026051500) {
+        $table = new xmldb_table('local_airpay_classroom_sessions');
+
+        $field = new xmldb_field('meeting_url', XMLDB_TYPE_CHAR, '1024',
+            null, null, null, null, 'notes');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('recording_url', XMLDB_TYPE_CHAR, '1024',
+            null, null, null, null, 'meeting_url');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2026051500, 'local', 'airpay_classroom');
+    }
+
     return true;
 }

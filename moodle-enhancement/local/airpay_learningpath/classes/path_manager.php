@@ -262,7 +262,8 @@ class path_manager {
      * @throws \moodle_exception  If path doesn't exist.
      */
     public static function assign_courses(int $pathid, array $courseids): int {
-        global $DB;
+        global $DB, $CFG;
+        require_once($CFG->libdir . '/enrollib.php');
 
         $DB->get_record(self::TABLE, ['id' => $pathid], 'id', MUST_EXIST);
 
@@ -298,6 +299,7 @@ class path_manager {
         $already_assigned = array_flip(array_map('intval', $already_assigned));
 
         $inserted = 0;
+        $newcourseids = [];
         $now = time();
         $sortorder = $max_sort + 1;
 
@@ -316,10 +318,25 @@ class path_manager {
                     'timecreated' => $now,
                 ]);
                 $inserted++;
+                $newcourseids[] = $cid;
             }
             $transaction->allow_commit();
         } catch (\Throwable $e) {
             $transaction->rollback($e);
+        }
+
+        // W1-2 (2026-05-15) — back-fill enrolments: if this path already has
+        // users assigned, enrol each of them into the newly-added course(s).
+        // Without this, learners on the path would silently miss new courses
+        // added after their assignment date.
+        if ($inserted > 0 && !empty($newcourseids)) {
+            $existing_users = $DB->get_fieldset_select(self::USERS_TABLE,
+                'userid', 'pathid = :p', ['p' => $pathid]);
+            foreach ($existing_users as $uid) {
+                foreach ($newcourseids as $cid) {
+                    self::enrol_user_in_path_course((int) $uid, (int) $cid);
+                }
+            }
         }
 
         // Touch the parent path's timemodified so list views show the change.
@@ -423,13 +440,29 @@ class path_manager {
      * Bulk-enrol users in a learning path. Idempotent — users already enrolled
      * are silently skipped (UNIQUE (pathid, userid) index enforces).
      *
+     * W1-2 BizLMS parity (2026-05-15): in addition to inserting the path-user
+     * row, this also enrols each newly-assigned user into every Moodle course
+     * on the path via the standard `manual` enrol plugin. Without this step,
+     * learners assigned to a path see the path in their dashboard but cannot
+     * open any of its courses — which is what BizLMS solved with a dedicated
+     * `enrol_learningplan` plugin. We use `manual` instead because every Airpay
+     * course already has a manual instance, and it lets unenrolment + role
+     * checks go through Moodle's stock paths.
+     *
+     * Course enrolment failures are tolerated: the path-user row is still
+     * created, the count of "fully-enrolled users" is returned, and any
+     * per-course failures are logged via `debugging()` for the admin to
+     * investigate. The path-user row is the source of truth for "user is on
+     * path"; the course enrolments are the means by which they access content.
+     *
      * @param int   $pathid
      * @param int[] $userids
      * @return int  Count of users actually enrolled (excluding already-enrolled)
      * @throws \moodle_exception  If path doesn't exist.
      */
     public static function enrol_users(int $pathid, array $userids): int {
-        global $DB;
+        global $DB, $CFG;
+        require_once($CFG->libdir . '/enrollib.php');
 
         $DB->get_record(self::TABLE, ['id' => $pathid], 'id', MUST_EXIST);
 
@@ -457,9 +490,19 @@ class path_manager {
             $inparams2);
         $already_enrolled = array_flip(array_map('intval', $already_enrolled));
 
+        // W1-2: fetch the path's courses up-front so we can enrol the new
+        // users into each one. Empty paths (no courses yet) are valid —
+        // users just get the path-user row and no course enrolments.
+        $pathcourseids = $DB->get_fieldset_select(self::COURSES_TABLE,
+            'courseid', 'pathid = :p', ['p' => $pathid]);
+
         $enrolled = 0;
         $now = time();
 
+        // Path-user inserts go in a transaction. Course enrolments do NOT —
+        // they call Moodle's enrol plugin which manages its own transactions
+        // and we don't want a single bad course (e.g. manual plugin disabled)
+        // to roll back the entire path-user batch.
         $transaction = $DB->start_delegated_transaction();
         try {
             foreach ($valid_users as $userid) {
@@ -480,11 +523,67 @@ class path_manager {
             $transaction->rollback($e);
         }
 
+        // W1-2: enrol the newly-inserted users into each course on the path.
+        // Done after the transaction commits so each enrolment is independent.
+        if ($enrolled > 0 && !empty($pathcourseids)) {
+            foreach ($valid_users as $userid) {
+                $uid = (int) $userid;
+                if (isset($already_enrolled[$uid])) {
+                    continue;
+                }
+                foreach ($pathcourseids as $courseid) {
+                    self::enrol_user_in_path_course($uid, (int) $courseid);
+                }
+            }
+        }
+
         if ($enrolled > 0) {
             $DB->set_field(self::TABLE, 'timemodified', $now, ['id' => $pathid]);
         }
 
         return $enrolled;
+    }
+
+    /**
+     * W1-2 (2026-05-15): enrol a single user into a single course on a path
+     * via the `manual` enrol plugin. Safe to call repeatedly — `manual` is
+     * idempotent and updates timestart/end on an existing user_enrolments row
+     * rather than creating duplicates.
+     *
+     * Failure modes (all logged via debugging() and return false):
+     *   - course no longer exists (deleted between path setup and enrol)
+     *   - manual enrol plugin disabled site-wide
+     *   - manual enrol instance disabled on that specific course
+     *   - user already a teacher/admin in the course (is_enrolled() short-circuits)
+     *
+     * @param int $userid
+     * @param int $courseid
+     * @return bool  True if enrolled or already-enrolled; false on misconfig
+     */
+    private static function enrol_user_in_path_course(int $userid, int $courseid): bool {
+        try {
+            $context = \context_course::instance($courseid, IGNORE_MISSING);
+            if (!$context) {
+                debugging("local_airpay_learningpath: course $courseid context missing — skipping enrol of user $userid",
+                    DEBUG_DEVELOPER);
+                return false;
+            }
+            // Already enrolled via manual, learningplan, or any other plugin?
+            // Don't add a redundant row — Moodle's enrol API handles dups but
+            // is_enrolled() also includes admins/teachers we don't want to
+            // overwrite roles for.
+            if (is_enrolled($context, $userid)) {
+                return true;
+            }
+            // null roleid = use instance default (typically `student`).
+            // timestart = now so the course shows on the dashboard immediately.
+            // timeend = 0 (no expiry).
+            return (bool) enrol_try_internal_enrol($courseid, $userid, null, time(), 0);
+        } catch (\Throwable $e) {
+            debugging("local_airpay_learningpath: failed to enrol user $userid in course $courseid: "
+                . $e->getMessage(), DEBUG_DEVELOPER);
+            return false;
+        }
     }
 
     /**

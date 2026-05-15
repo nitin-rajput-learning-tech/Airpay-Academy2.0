@@ -56,12 +56,20 @@ class list_classrooms extends external_api {
         $where = ['1=1'];
         $sqlparams = [];
 
-        // Tenant scope — Phase 9.5 trait back-port. Replaces the
-        // inline explode('/', $USER->open_path) pattern with the
-        // shared `\local_airpay_core\tenant::path_filter()` helper.
-        [$tnsql, $tnargs] = \local_airpay_core\tenant::path_filter('c');
-        $where[] = $tnsql;
-        $sqlparams = array_merge($sqlparams, $tnargs);
+        // W1-1 BizLMS parity: 5-level org cascade overrides default
+        // tenant scope. If the user picked a specific org (any level
+        // 1..5), filter to that subtree. Otherwise apply the default
+        // path_filter (caller's own tenant tree).
+        [$cascadesql, $cascadeargs] =
+            \local_airpay_org\org_manager::cascade_where_sql($client_filters, 'c');
+        if ($cascadesql !== '') {
+            $where[] = $cascadesql;
+            $sqlparams = array_merge($sqlparams, $cascadeargs);
+        } else {
+            [$tnsql, $tnargs] = \local_airpay_core\tenant::path_filter('c');
+            $where[] = $tnsql;
+            $sqlparams = array_merge($sqlparams, $tnargs);
+        }
 
         // Status filter.
         $status_filter = (string) ($client_filters['status'] ?? 'all');

@@ -77,6 +77,16 @@ $string['session_trainer']           = 'Trainer (overrides classroom default)';
 $string['session_notes']             = 'Notes';
 $string['session_minutes']           = '{$a} min';
 $string['no_sessions']               = 'No sessions scheduled yet.';
+
+// W1-7 (2026-05-15) — virtual meeting + recording URLs on sessions.
+$string['session_virtual_header']    = 'Virtual session links';
+$string['session_meeting_url']       = 'Live meeting URL';
+$string['session_meeting_url_help']  = 'Optional. Paste the Zoom / Teams / Webex / Google Meet join link. Attendees will see a "Join live session" button on the session listing. Leave empty for in-person sessions.';
+$string['session_recording_url']     = 'Recording URL';
+$string['session_recording_url_help'] = 'Optional. Paste the post-session recording URL. Attendees who missed the live session can watch the replay. Add this after the session ends.';
+
+// W1-9 (2026-05-15) — event names.
+$string['event_classroom_completed'] = 'Classroom completed';
 $string['session_created']           = 'Session scheduled.';
 $string['session_updated']           = 'Session updated.';
 $string['sessiondeleted']            = 'Session deleted.';

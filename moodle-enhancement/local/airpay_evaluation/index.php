@@ -18,6 +18,9 @@ $PAGE->set_heading('Training Evaluations');
 $PAGE->set_pagelayout('standard');
 $PAGE->set_secondary_navigation(false);
 
+// W1-1: org cascade filter (5 cascading selects via list_children WS).
+$PAGE->requires->js_call_amd('theme_airpayux/org_cascade', 'init');
+
 $can_manage = is_siteadmin() || has_capability('local/airpay_evaluation:manage', $context);
 
 $dbman = $DB->get_manager();
@@ -77,6 +80,7 @@ $data = [
     'kpi_tiles'       => $kpi_tiles,
     'has_kpi_tiles'   => !empty($kpi_tiles),
     'can_manage'      => $can_manage,
+    'cascade_group'   => 'evaluation-filter',  // W1-1: scopes org cascade events.
     'columns_json'    => s(json_encode($columns)),
     'analysis_url'    => (new moodle_url('/local/airpay_evaluation/analysis.php'))->out(false),
     // UAT-T4 fix 2026-05-09: was a hardcoded /local/... path that broke

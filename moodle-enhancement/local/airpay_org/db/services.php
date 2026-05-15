@@ -16,4 +16,15 @@ $functions = [
         'ajax'         => true,
         'capabilities' => 'local/airpay_org:manage',
     ],
+    // 2026-05-15 parity audit: feeds the hierarchy cascade filter on
+    // admin list pages. One AJAX call per cascade level
+    // (Org → Dept → Sub-dept → L4 → L5). The same WS is reused by
+    // Manage Users, Manage Courses, Manage Programs, Classroom, etc.
+    'local_airpay_org_list_children' => [
+        'classname'    => 'local_airpay_org\external\list_children',
+        'description'  => 'List child org nodes under a parent (cascade filter)',
+        'type'         => 'read',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_users:view',
+    ],
 ];

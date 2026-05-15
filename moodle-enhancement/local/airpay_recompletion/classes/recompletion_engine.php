@@ -231,6 +231,17 @@ class recompletion_engine {
 
     /**
      * Reset one user's completion in one course. Atomic.
+     *
+     * W1-4 (2026-05-15) — now also resets:
+     *   - SCORM tracking data (mdl_scorm_attempt + mdl_scorm_scoes_value)
+     *     plus the legacy mdl_scorm_scoes_track for Moodle-4.x-upgraded sites
+     *   - Per-activity completion (mdl_course_modules_completion)
+     *
+     * Without these, the next time the learner opens the course Moodle's
+     * scorm_external_check_completion() reads cmi.completion_status='completed'
+     * from the stale tracking row and immediately re-marks course completion.
+     * Every Airpay compliance course (AML / KYC / POSH / DPDP) is SCORM, so
+     * this was the single most-broken behaviour in the recompletion engine.
      */
     public static function reset_user_in_course(int $userid, int $courseid,
                                                   bool $reset_grades = true,
@@ -246,7 +257,18 @@ class recompletion_engine {
             $DB->delete_records('course_completion_crit_compl',
                 ['userid' => $userid, 'course' => $courseid]);
 
-            // 3. Optionally reset grades for the course.
+            // 3. W1-4: clear per-activity completion. Without this, Moodle's
+            //    completion-cron rebuilds course_completions from the still-
+            //    "complete" course_modules_completion rows.
+            self::reset_activity_completion($userid, $courseid);
+
+            // 4. W1-4: reset SCORM tracking — the single biggest blocker for
+            //    Airpay compliance courses. Always run regardless of the
+            //    reset_attempts flag, because SCORM tracking is the SOURCE
+            //    that drives both completion AND attempts.
+            self::reset_scorm_tracking($userid, $courseid);
+
+            // 5. Optionally reset grades for the course.
             if ($reset_grades) {
                 // grade_items belong to the course; grade_grades hangs off
                 // grade_items. Find them all and zero the user's grades.
@@ -260,7 +282,7 @@ class recompletion_engine {
                 }
             }
 
-            // 4. Optionally reset quiz attempts.
+            // 6. Optionally reset quiz attempts.
             if ($reset_attempts) {
                 $quizids = $DB->get_fieldset_select('quiz', 'id',
                     'course = :cid', ['cid' => $courseid]);
@@ -291,6 +313,98 @@ class recompletion_engine {
         } catch (\Throwable $e) {
             $tx->rollback($e);
             return false;
+        }
+    }
+
+    /**
+     * W1-4 (2026-05-15) — purge SCORM tracking data for one user × one course.
+     *
+     * Handles both Moodle 5.x schema (scorm_attempt + scorm_scoes_value) and
+     * the legacy Moodle 4.x scorm_scoes_track table. Defensive `table_exists()`
+     * checks so this is forward-compatible if Moodle changes the schema again.
+     *
+     * @param int $userid
+     * @param int $courseid
+     */
+    private static function reset_scorm_tracking(int $userid, int $courseid): void {
+        global $DB;
+
+        $scormids = $DB->get_fieldset_select('scorm', 'id',
+            'course = :cid', ['cid' => $courseid]);
+        if (empty($scormids)) {
+            return;  // No SCORM activities in this course — common for
+                     // non-compliance courses; not an error.
+        }
+
+        $dbman = $DB->get_manager();
+        [$insql, $inparams] = $DB->get_in_or_equal($scormids, SQL_PARAMS_NAMED, 'scid');
+        $userargs = array_merge($inparams, ['uid' => $userid]);
+
+        // Moodle 5.x — `scorm_attempt` is the parent of `scorm_scoes_value`.
+        // Find the user's attempts in these scorms, then delete the values
+        // for those attempts, then delete the attempts themselves.
+        if ($dbman->table_exists('scorm_attempt')) {
+            $attemptids = $DB->get_fieldset_select('scorm_attempt', 'id',
+                "userid = :uid AND scormid $insql", $userargs);
+            if (!empty($attemptids)) {
+                [$aSql, $aArgs] = $DB->get_in_or_equal($attemptids, SQL_PARAMS_NAMED, 'aid');
+                if ($dbman->table_exists('scorm_scoes_value')) {
+                    $DB->delete_records_select('scorm_scoes_value',
+                        "attemptid $aSql", $aArgs);
+                }
+                $DB->delete_records_select('scorm_attempt',
+                    "id $aSql", $aArgs);
+            }
+        }
+
+        // AICC bridge — extremely rare but the schema supports it. Safety.
+        if ($dbman->table_exists('scorm_aicc_session')) {
+            $DB->delete_records_select('scorm_aicc_session',
+                "userid = :uid AND scormid $insql", $userargs);
+        }
+
+        // Legacy Moodle 4.x table — kept around on sites upgraded from 4.x
+        // until the migration cron drops it. Delete defensively if present.
+        if ($dbman->table_exists('scorm_scoes_track')) {
+            $DB->delete_records_select('scorm_scoes_track',
+                "userid = :uid AND scormid $insql", $userargs);
+        }
+    }
+
+    /**
+     * W1-4 (2026-05-15) — clear per-activity completion for a user × course.
+     *
+     * Without this, Moodle's completion API rebuilds course_completions from
+     * the still-complete course_modules_completion rows. We delete ALL the
+     * user's activity-completion rows for activities in the course, not just
+     * SCORM ones — recompletion semantics treat the course as "start over"
+     * regardless of what mix of activities it contains.
+     *
+     * @param int $userid
+     * @param int $courseid
+     */
+    private static function reset_activity_completion(int $userid, int $courseid): void {
+        global $DB;
+
+        $cmids = $DB->get_fieldset_select('course_modules', 'id',
+            'course = :cid', ['cid' => $courseid]);
+        if (empty($cmids)) {
+            return;
+        }
+
+        [$insql, $inparams] = $DB->get_in_or_equal($cmids, SQL_PARAMS_NAMED, 'cmid');
+        $DB->delete_records_select('course_modules_completion',
+            "userid = :uid AND coursemoduleid $insql",
+            array_merge($inparams, ['uid' => $userid]));
+
+        // Moodle 4.0+ added a separate `course_modules_viewed` table tracking
+        // first-view timestamps used for "must view" completion. Clear it too
+        // so the user gets a clean "haven't viewed yet" state.
+        $dbman = $DB->get_manager();
+        if ($dbman->table_exists('course_modules_viewed')) {
+            $DB->delete_records_select('course_modules_viewed',
+                "userid = :uid AND coursemoduleid $insql",
+                array_merge($inparams, ['uid' => $userid]));
         }
     }
 

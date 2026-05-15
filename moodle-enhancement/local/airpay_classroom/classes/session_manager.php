@@ -228,17 +228,39 @@ class session_manager {
      * @throws \moodle_exception
      */
     public static function change_status(int $id, int $status): int {
-        global $DB;
+        global $DB, $USER;
 
         if (!in_array($status, [self::STATUS_CANCELLED, self::STATUS_ACTIVE, self::STATUS_COMPLETED], true)) {
             throw new \moodle_exception('invalidstatus', 'local_airpay_classroom');
         }
+
+        // Read previous status so we only emit on a real transition.
+        $previous = (int) $DB->get_field(self::TABLE, 'status', ['id' => $id]);
 
         $DB->update_record(self::TABLE, (object) [
             'id'           => $id,
             'status'       => $status,
             'timemodified' => time(),
         ]);
+
+        // W1-9 (2026-05-15) — emit classroom_completed event on transition
+        // INTO completed state. The W1-5 evaluation observer listens to this
+        // and fans out post-training feedback forms to attendees.
+        if ($status === self::STATUS_COMPLETED && $previous !== self::STATUS_COMPLETED) {
+            try {
+                \local_airpay_classroom\event\classroom_completed::create([
+                    'context'  => \context_system::instance(),
+                    'objectid' => $id,
+                    'userid'   => (int) ($USER->id ?? 0),
+                    'other'    => ['classroomid' => $id],
+                ])->trigger();
+            } catch (\Throwable $e) {
+                // Audit logging must not break the state change itself.
+                debugging('local_airpay_classroom: failed to emit classroom_completed event: '
+                    . $e->getMessage(), DEBUG_DEVELOPER);
+            }
+        }
+
         return $status;
     }
 
@@ -326,10 +348,41 @@ class session_manager {
         $tid = (int) ($data->trainerid ?? 0);
         $record->trainerid    = $tid > 0 ? $tid : null;
         $record->notes        = (string) ($data->notes ?? '');
+        // W1-7 (2026-05-15) — virtual meeting + recording URLs.
+        $record->meeting_url   = self::sanitize_url($data->meeting_url   ?? null);
+        $record->recording_url = self::sanitize_url($data->recording_url ?? null);
         $record->timecreated  = $now;
         $record->timemodified = $now;
 
         return $DB->insert_record(self::SESSION_TABLE, $record);
+    }
+
+    /**
+     * W1-7 (2026-05-15) — minimal URL sanitiser for session_meeting_url +
+     * session_recording_url. Returns null for empty/invalid input.
+     *
+     * Accepts only http(s) URLs. Anything else is rejected — pasting a
+     * `javascript:` or `data:` URI silently fails so the column never
+     * stores a click-through XSS payload.
+     */
+    private static function sanitize_url(?string $url): ?string {
+        if ($url === null) {
+            return null;
+        }
+        $url = trim($url);
+        if ($url === '') {
+            return null;
+        }
+        $parts = parse_url($url);
+        if (!$parts || !isset($parts['scheme']) || !isset($parts['host'])) {
+            return null;
+        }
+        $scheme = strtolower($parts['scheme']);
+        if ($scheme !== 'http' && $scheme !== 'https') {
+            return null;
+        }
+        // Cap length to schema (1024 chars).
+        return mb_substr($url, 0, 1024);
     }
 
     /**
@@ -346,6 +399,13 @@ class session_manager {
             if (isset($data->$f)) {
                 $record->$f = $data->$f;
             }
+        }
+        // W1-7 (2026-05-15) — URL fields go through sanitiser.
+        if (property_exists($data, 'meeting_url')) {
+            $record->meeting_url = self::sanitize_url($data->meeting_url);
+        }
+        if (property_exists($data, 'recording_url')) {
+            $record->recording_url = self::sanitize_url($data->recording_url);
         }
 
         // Validate time range using either new or existing values.

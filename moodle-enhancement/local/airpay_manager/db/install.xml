@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/airpay_manager/db" VERSION="20260508"
-       COMMENT="Airpay Manager — approval workflow + course allocation">
+<XMLDB PATH="local/airpay_manager/db" VERSION="20260515"
+       COMMENT="Airpay Manager — approval workflow + multi-type allocation">
   <TABLES>
     <TABLE NAME="local_airpay_mgr_requests"
            COMMENT="Enrolment requests from learners awaiting manager approval">
@@ -39,14 +39,19 @@
     </TABLE>
 
     <TABLE NAME="local_airpay_mgr_allocations"
-           COMMENT="Manager-driven course allocations to direct reports">
+           COMMENT="Manager-driven allocations to direct reports — course, classroom, program, or learning path (W1-10)">
       <FIELDS>
         <FIELD NAME="id"             TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="managerid"      TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
                COMMENT="Manager who created the allocation"/>
         <FIELD NAME="userid"         TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
-               COMMENT="Learner the course is assigned to"/>
-        <FIELD NAME="courseid"       TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+               COMMENT="Learner the item is assigned to"/>
+        <FIELD NAME="item_type"      TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="course"
+               COMMENT="W1-10: course | classroom | program | path"/>
+        <FIELD NAME="itemid"         TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="W1-10: ID into the matching table (course, classroom, program, learningpath)"/>
+        <FIELD NAME="courseid"       TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Legacy column kept for backward compat — equals itemid when item_type=course"/>
         <FIELD NAME="due_date"       TYPE="int"  LENGTH="10" NOTNULL="false"
                COMMENT="Optional deadline (Unix ts)"/>
         <FIELD NAME="status"         TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="assigned"
@@ -64,8 +69,12 @@
         <INDEX NAME="idx_managerid"   UNIQUE="false" FIELDS="managerid"
                COMMENT="Manager dashboard query"/>
         <INDEX NAME="idx_user_course" UNIQUE="true"  FIELDS="userid, courseid"
-               COMMENT="One allocation per user-course pair"/>
+               COMMENT="One allocation per user-course pair (legacy)"/>
+        <INDEX NAME="idx_user_item"   UNIQUE="true"  FIELDS="userid, item_type, itemid"
+               COMMENT="W1-10: One allocation per (user, item_type, itemid)"/>
         <INDEX NAME="idx_status"      UNIQUE="false" FIELDS="status"/>
+        <INDEX NAME="idx_item_type"   UNIQUE="false" FIELDS="item_type"
+               COMMENT="Filter by allocation type"/>
       </INDEXES>
     </TABLE>
   </TABLES>

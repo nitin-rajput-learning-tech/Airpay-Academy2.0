@@ -31,7 +31,9 @@
 {{/has_kpi_tiles}}
 
 <div class="ap-filter-bar">
+    {{! W1-1 BizLMS parity: 5-level org cascade + status pills. }}
     <div class="d-flex flex-wrap align-items-end gap-3">
+        {{> theme_airpayux/components/org_cascade_filter }}
         <div>
             <label class="small text-muted mb-1 d-block">Status</label>
             <div class="btn-group btn-group-sm" role="group" data-airpay-programs-status>
@@ -64,6 +66,17 @@ require([
     var root = document.querySelector('[data-airpay-table]');
     var dt = Datatable.getInstance(root);
     if (!dt) return;
+
+    // W1-1: react to org cascade changes.
+    document.addEventListener('airpay:org-cascade:changed', function(e) {
+        if (!e.detail || e.detail.group !== 'programs-filter') return;
+        var lv = e.detail.levels || {};
+        dt.setFilter('org_l1', lv.level1 || 0);
+        dt.setFilter('org_l2', lv.level2 || 0);
+        dt.setFilter('org_l3', lv.level3 || 0);
+        dt.setFilter('org_l4', lv.level4 || 0);
+        dt.setFilter('org_l5', lv.level5 || 0);
+    });
 
     document.querySelectorAll('[data-airpay-programs-status] [data-status]').forEach(function(btn) {
         btn.addEventListener('click', function(e) {

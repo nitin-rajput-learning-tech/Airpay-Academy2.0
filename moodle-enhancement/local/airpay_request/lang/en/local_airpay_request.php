@@ -89,3 +89,8 @@ $string['privacy:metadata:local_airpay_request:decision_note']     = 'Approver\'
 $string['privacy:metadata:local_airpay_request:approver_userid']   = 'The user who decided the request';
 $string['privacy:metadata:local_airpay_request:status']            = 'Pending / approved / rejected / etc.';
 $string['privacy:metadata:local_airpay_request:timecreated']       = 'When the request was placed';
+
+// W1-9 (2026-05-15) — event names.
+$string['event_request_submitted'] = 'Access request submitted';
+$string['event_request_approved']  = 'Access request approved';
+$string['event_request_rejected']  = 'Access request rejected';

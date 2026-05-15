@@ -87,6 +87,24 @@ class request_manager {
         notifier::request_submitted($rec);
         notifier::request_pending($rec);
 
+        // W1-9 (2026-05-15) — audit-trail event.
+        try {
+            \local_airpay_request\event\request_submitted::create([
+                'context'       => \context_system::instance(),
+                'objectid'      => (int) $rec->id,
+                'relateduserid' => (int) $rec->userid,
+                'other'         => [
+                    'courseid'        => (int) $rec->courseid,
+                    'costcenterid'    => (int) $rec->costcenterid,
+                    'approver_userid' => (int) $rec->approver_userid,
+                    'route'           => $rec->route,
+                ],
+            ])->trigger();
+        } catch (\Throwable $e) {
+            debugging('local_airpay_request: failed to emit request_submitted: '
+                . $e->getMessage(), DEBUG_DEVELOPER);
+        }
+
         return $rec;
     }
 
@@ -173,11 +191,43 @@ class request_manager {
 
             notifier::request_decided($rec);
             $transaction->allow_commit();
-            return $rec;
         } catch (\Throwable $e) {
             $transaction->rollback($e);
             return $rec;
         }
+
+        // W1-9 (2026-05-15) — audit-trail event (outside the txn so even a
+        // logstore write failure doesn't roll back the actual decision).
+        try {
+            $event_other = [
+                'courseid'        => (int) $rec->courseid,
+                'costcenterid'    => (int) $rec->costcenterid,
+                'route'           => $rec->route,
+                'has_decision_note' => trim((string) ($rec->decision_note ?? '')) !== '',
+            ];
+            if ($decision === 'approved') {
+                \local_airpay_request\event\request_approved::create([
+                    'context'       => \context_system::instance(),
+                    'objectid'      => (int) $rec->id,
+                    'userid'        => $deciderid,
+                    'relateduserid' => (int) $rec->userid,
+                    'other'         => $event_other,
+                ])->trigger();
+            } else {
+                \local_airpay_request\event\request_rejected::create([
+                    'context'       => \context_system::instance(),
+                    'objectid'      => (int) $rec->id,
+                    'userid'        => $deciderid,
+                    'relateduserid' => (int) $rec->userid,
+                    'other'         => $event_other,
+                ])->trigger();
+            }
+        } catch (\Throwable $e) {
+            debugging('local_airpay_request: failed to emit decide event: '
+                . $e->getMessage(), DEBUG_DEVELOPER);
+        }
+
+        return $rec;
     }
 
     /** Requester cancels their own pending request. */

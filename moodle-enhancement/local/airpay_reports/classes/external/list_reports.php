@@ -46,14 +46,23 @@ class list_reports extends external_api {
         $where = ['1=1'];
         $sqlparams = [];
 
-        // Phase 9.6: back-ported to shared tenant helper. Reports
-        // without open_path remain siteadmin-only (helper returns 1=1
-        // for siteadmin, which matches; tenant users get the path
-        // filter without the IS-NULL clause so unscoped reports
-        // are not visible to them — same contract as before).
-        [$tnsql, $tnargs] = \local_airpay_core\tenant::path_filter('r');
-        $where[] = $tnsql;
-        $sqlparams = array_merge($sqlparams, $tnargs);
+        // W1-1 BizLMS parity: 5-level org cascade overrides default
+        // tenant scope.
+        [$cascadesql, $cascadeargs] =
+            \local_airpay_org\org_manager::cascade_where_sql($f, 'r');
+        if ($cascadesql !== '') {
+            $where[] = $cascadesql;
+            $sqlparams = array_merge($sqlparams, $cascadeargs);
+        } else {
+            // Phase 9.6: back-ported to shared tenant helper. Reports
+            // without open_path remain siteadmin-only (helper returns 1=1
+            // for siteadmin, which matches; tenant users get the path
+            // filter without the IS-NULL clause so unscoped reports
+            // are not visible to them — same contract as before).
+            [$tnsql, $tnargs] = \local_airpay_core\tenant::path_filter('r');
+            $where[] = $tnsql;
+            $sqlparams = array_merge($sqlparams, $tnargs);
+        }
 
         $status_filter = (string) ($f['status'] ?? 'all');
         if ($status_filter !== 'all' && ctype_digit($status_filter)) {

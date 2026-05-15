@@ -67,7 +67,11 @@ $data = [
     'has_kpi_tiles'   => !empty($kpi_tiles),
     'can_create'      => $can_create,
     'columns_json'    => s(json_encode($columns)),
+    // W1-1 BizLMS parity: 5-level org hierarchy cascade.
+    'cascade_group'   => 'paths-filter',
 ];
+
+$PAGE->requires->js_call_amd('theme_airpayux/org_cascade', 'init');
 
 echo $OUTPUT->header();
 echo $OUTPUT->render_from_template('local_airpay_learningpath/manage', $data);

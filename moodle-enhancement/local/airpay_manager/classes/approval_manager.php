@@ -384,6 +384,8 @@ class approval_manager {
             $id = (int) $DB->insert_record('local_airpay_mgr_allocations', (object) [
                 'managerid'    => $managerid,
                 'userid'       => $userid,
+                'item_type'    => self::ITEM_COURSE,
+                'itemid'       => $courseid,
                 'courseid'     => $courseid,
                 'due_date'     => $due_date,
                 'status'       => self::ALLOC_ASSIGNED,
@@ -417,6 +419,266 @@ class approval_manager {
         }
 
         return $id;
+    }
+
+    // ────────────────────────────────────────────────────────────────────
+    // W1-10 (2026-05-15) — multi-type allocation.
+    //
+    // BizLMS managers could allocate courses, classrooms, programs, and
+    // learning paths to direct reports. Airpay shipped course-only. The
+    // three new methods below close the parity gap. They:
+    //   1. validate the manager → direct-report relationship,
+    //   2. validate the target item exists,
+    //   3. insert one row into local_airpay_mgr_allocations with the new
+    //      (item_type, itemid) pair (courseid stays 0 for non-course types),
+    //   4. delegate to the matching plugin's enrol/assign helper so the
+    //      learner actually gets access,
+    //   5. send a notification.
+    //
+    // The legacy `courseid` column is preserved unchanged so existing
+    // dashboards keep working — non-course allocations leave it at 0.
+    // ────────────────────────────────────────────────────────────────────
+
+    /** Item-type enum values matching the install.xml comment. */
+    public const ITEM_COURSE    = 'course';
+    public const ITEM_CLASSROOM = 'classroom';
+    public const ITEM_PROGRAM   = 'program';
+    public const ITEM_PATH      = 'path';
+
+    /**
+     * Allocate a classroom (ILT) to a direct report.
+     */
+    public static function create_classroom_allocation(int $managerid, int $userid,
+                                                         int $classroomid,
+                                                         ?int $due_date = null,
+                                                         string $note = ''): int {
+        global $DB;
+
+        self::guard_direct_report($managerid, $userid);
+
+        // Classroom must exist + be active.
+        $classroom = $DB->get_record('local_airpay_classroom',
+            ['id' => $classroomid], 'id, name, status', MUST_EXIST);
+
+        if (self::allocation_exists($userid, self::ITEM_CLASSROOM, $classroomid)) {
+            throw new \moodle_exception('duplicateallocation', 'local_airpay_manager');
+        }
+
+        $id = self::insert_allocation_row($managerid, $userid,
+            self::ITEM_CLASSROOM, $classroomid, $due_date, $note);
+
+        // Enrol via airpay_classroom session_manager — that handles the
+        // local_airpay_classroom_users row insert + cancels duplicates.
+        if (class_exists('\\local_airpay_classroom\\session_manager')
+            && method_exists('\\local_airpay_classroom\\session_manager',
+                'add_users_to_classroom')) {
+            try {
+                \local_airpay_classroom\session_manager::add_users_to_classroom(
+                    $classroomid, [$userid], $managerid);
+            } catch (\Throwable $e) {
+                debugging('Classroom allocation ' . $id . ' enrol failed: '
+                    . $e->getMessage(), DEBUG_DEVELOPER);
+            }
+        }
+
+        self::notify_assignee_of_typed_allocation($managerid, $userid,
+            self::ITEM_CLASSROOM, $classroomid, $classroom->name ?? '',
+            $due_date, $note);
+
+        return $id;
+    }
+
+    /**
+     * Allocate a program (multi-level certification) to a direct report.
+     */
+    public static function create_program_allocation(int $managerid, int $userid,
+                                                       int $programid,
+                                                       ?int $due_date = null,
+                                                       string $note = ''): int {
+        global $DB;
+
+        self::guard_direct_report($managerid, $userid);
+
+        $program = $DB->get_record('local_airpay_programs',
+            ['id' => $programid], 'id, name, status', MUST_EXIST);
+
+        if (self::allocation_exists($userid, self::ITEM_PROGRAM, $programid)) {
+            throw new \moodle_exception('duplicateallocation', 'local_airpay_manager');
+        }
+
+        $id = self::insert_allocation_row($managerid, $userid,
+            self::ITEM_PROGRAM, $programid, $due_date, $note);
+
+        // Enrol into the program — inserts a local_airpay_programs_users row
+        // and (when implemented in the plugin) enrols into level-1 courses.
+        if (class_exists('\\local_airpay_programs\\program_manager')
+            && method_exists('\\local_airpay_programs\\program_manager',
+                'enrol_users')) {
+            try {
+                \local_airpay_programs\program_manager::enrol_users(
+                    $programid, [$userid]);
+            } catch (\Throwable $e) {
+                debugging('Program allocation ' . $id . ' enrol failed: '
+                    . $e->getMessage(), DEBUG_DEVELOPER);
+            }
+        }
+
+        self::notify_assignee_of_typed_allocation($managerid, $userid,
+            self::ITEM_PROGRAM, $programid, $program->name ?? '',
+            $due_date, $note);
+
+        return $id;
+    }
+
+    /**
+     * Allocate a learning path to a direct report.
+     *
+     * Uses `\local_airpay_learningpath\path_manager::enrol_users()` which (per
+     * W1-2 fix) inserts the path-user row AND enrols the learner into every
+     * course on the path via the manual enrol plugin.
+     */
+    public static function create_path_allocation(int $managerid, int $userid,
+                                                    int $pathid,
+                                                    ?int $due_date = null,
+                                                    string $note = ''): int {
+        global $DB;
+
+        self::guard_direct_report($managerid, $userid);
+
+        $path = $DB->get_record('local_airpay_learningpath',
+            ['id' => $pathid], 'id, name, status', MUST_EXIST);
+
+        if (self::allocation_exists($userid, self::ITEM_PATH, $pathid)) {
+            throw new \moodle_exception('duplicateallocation', 'local_airpay_manager');
+        }
+
+        $id = self::insert_allocation_row($managerid, $userid,
+            self::ITEM_PATH, $pathid, $due_date, $note);
+
+        // W1-2 (2026-05-15) — path_manager::enrol_users() also enrols the
+        // user into every Moodle course on the path. Perfect for our needs.
+        try {
+            \local_airpay_learningpath\path_manager::enrol_users($pathid, [$userid]);
+        } catch (\Throwable $e) {
+            debugging('Path allocation ' . $id . ' enrol failed: '
+                . $e->getMessage(), DEBUG_DEVELOPER);
+        }
+
+        self::notify_assignee_of_typed_allocation($managerid, $userid,
+            self::ITEM_PATH, $pathid, $path->name ?? '',
+            $due_date, $note);
+
+        return $id;
+    }
+
+    /**
+     * Shared: throw if the manager-user relationship is invalid.
+     */
+    private static function guard_direct_report(int $managerid, int $userid): void {
+        $reports = self::direct_report_ids($managerid);
+        if (!empty($reports) && !in_array($userid, $reports, true)) {
+            throw new \moodle_exception('notdirectreport', 'local_airpay_manager');
+        }
+    }
+
+    /**
+     * Shared: does an allocation row already exist for (user, type, item)?
+     */
+    private static function allocation_exists(int $userid, string $item_type,
+                                                int $itemid): bool {
+        global $DB;
+        return $DB->record_exists('local_airpay_mgr_allocations', [
+            'userid'    => $userid,
+            'item_type' => $item_type,
+            'itemid'    => $itemid,
+        ]);
+    }
+
+    /**
+     * Shared: insert the canonical allocation row for non-course types.
+     * `courseid` stays 0 (the legacy column is meaningless here).
+     */
+    private static function insert_allocation_row(int $managerid, int $userid,
+                                                    string $item_type, int $itemid,
+                                                    ?int $due_date, string $note): int {
+        global $DB;
+        $now = time();
+        return (int) $DB->insert_record('local_airpay_mgr_allocations', (object) [
+            'managerid'    => $managerid,
+            'userid'       => $userid,
+            'item_type'    => $item_type,
+            'itemid'       => $itemid,
+            'courseid'     => 0,
+            'due_date'     => $due_date,
+            'status'       => self::ALLOC_ASSIGNED,
+            'note'         => $note,
+            'timecreated'  => $now,
+            'timemodified' => $now,
+        ]);
+    }
+
+    /**
+     * Shared notifier for non-course allocations.
+     *
+     * Uses the same message provider as course allocations, just with
+     * different subject + URL.
+     */
+    private static function notify_assignee_of_typed_allocation(int $managerid,
+            int $userid, string $item_type, int $itemid, string $itemname,
+            ?int $due_date, string $note): void {
+        global $DB, $CFG;
+        require_once($CFG->dirroot . '/lib/messagelib.php');
+        try {
+            $user    = $DB->get_record('user', ['id' => $userid, 'deleted' => 0]);
+            $manager = $DB->get_record('user', ['id' => $managerid, 'deleted' => 0]);
+            if (!$user || !$manager) {
+                return;
+            }
+            $url = match ($item_type) {
+                self::ITEM_CLASSROOM => new \moodle_url(
+                    '/local/airpay_classroom/view.php', ['id' => $itemid]),
+                self::ITEM_PROGRAM   => new \moodle_url(
+                    '/local/airpay_programs/view.php', ['id' => $itemid]),
+                self::ITEM_PATH      => new \moodle_url(
+                    '/local/airpay_learningpath/view.php', ['id' => $itemid]),
+                default              => new \moodle_url('/my/'),
+            };
+            $type_label = match ($item_type) {
+                self::ITEM_CLASSROOM => 'classroom',
+                self::ITEM_PROGRAM   => 'program',
+                self::ITEM_PATH      => 'learning path',
+                default              => 'item',
+            };
+            $subject = $manager->firstname . ' assigned a ' . $type_label
+                . ' to you: ' . format_string($itemname);
+            $body = "Your manager " . fullname($manager) . " has assigned the "
+                . $type_label . ' "' . format_string($itemname) . '" to you. ';
+            if ($due_date) {
+                $body .= 'Due ' . userdate($due_date, '%d %b %Y') . '. ';
+            }
+            if ($note !== '') {
+                $body .= 'Note: ' . $note;
+            }
+
+            $msg = new \core\message\message();
+            $msg->component         = 'local_airpay_manager';
+            $msg->name              = 'allocation_assigned';
+            $msg->userfrom          = $manager;
+            $msg->userto            = $user;
+            $msg->subject           = $subject;
+            $msg->fullmessage       = $body;
+            $msg->fullmessageformat = FORMAT_PLAIN;
+            $msg->fullmessagehtml   = nl2br(s($body))
+                . '<p><a href="' . $url->out(false) . '">View</a></p>';
+            $msg->smallmessage      = $subject;
+            $msg->contexturl        = $url->out(false);
+            $msg->contexturlname    = 'View ' . $type_label;
+            $msg->notification      = 1;
+            message_send($msg);
+        } catch (\Throwable $e) {
+            debugging('Typed allocation notify failed: ' . $e->getMessage(),
+                DEBUG_DEVELOPER);
+        }
     }
 
     /**

@@ -110,3 +110,6 @@ $string['privacy:metadata:enrol:currentlevelid'] = 'Current level the user is on
 $string['privacy:metadata:enrol:status'] = 'Enrolment status (new/in_progress/completed).';
 $string['privacy:metadata:enrol:timecreated'] = 'Enrolment timestamp.';
 $string['privacy:metadata:enrol:timecompleted'] = 'Completion timestamp (NULL if not completed).';
+
+// W1-9 (2026-05-15) — event names.
+$string['event_program_completed'] = 'Program completed';

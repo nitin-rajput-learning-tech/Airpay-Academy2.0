@@ -86,7 +86,12 @@ $data = [
     'cat_options'    => $cat_options,
     'has_cat_options' => !empty($cat_options),
     'columns_json'   => s(json_encode($columns)),
+    // W1-1 BizLMS parity: 5-level org hierarchy cascade.
+    'cascade_group'  => 'courses-filter',
 ];
+
+// W1-1 BizLMS parity: explicit AMD bootstrap for the 5-level cascade.
+$PAGE->requires->js_call_amd('theme_airpayux/org_cascade', 'init');
 
 echo $OUTPUT->header();
 echo $OUTPUT->render_from_template('local_airpay_courses/manage', $data);

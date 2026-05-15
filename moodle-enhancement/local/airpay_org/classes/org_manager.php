@@ -214,6 +214,62 @@ class org_manager {
         }, $descendants);
     }
 
+    /**
+     * W1-1 BizLMS parity (2026-05-15) — turn the client-side cascade
+     * filter state into a single SQL fragment + params for a WS WHERE
+     * clause.
+     *
+     * The 5-level cascade can have up to 5 non-zero values, but only the
+     * DEEPEST one matters for filtering — that's the smallest subtree we
+     * want to scope the result set to. We resolve that org's full path
+     * once and then match either the path itself OR any descendant.
+     *
+     * Each plugin's WS just does:
+     *     [$orgsql, $orgargs] =
+     *         \local_airpay_org\org_manager::cascade_where_sql(
+     *             $client_filters, 'c', 'open_path');
+     *     if ($orgsql !== '') {
+     *         $where[] = $orgsql;
+     *         $sqlparams = array_merge($sqlparams, $orgargs);
+     *     }
+     *
+     * @param array  $client_filters    decoded JSON from `filters` param
+     * @param string $tablealias        e.g. 'c' for {course} or 'u' for {user}
+     * @param string $pathcolumn        column on that table that holds the
+     *                                  hierarchy path (default: open_path)
+     * @return array  [$sqlfragment, $params]  empty string if no cascade set
+     */
+    public static function cascade_where_sql(array $client_filters,
+            string $tablealias, string $pathcolumn = 'open_path'): array {
+        global $DB;
+
+        // Find the deepest non-zero level.
+        $deepest = 0;
+        for ($lvl = 5; $lvl >= 1; $lvl--) {
+            $val = (int) ($client_filters['org_l' . $lvl] ?? 0);
+            if ($val > 0) { $deepest = $val; break; }
+        }
+        if ($deepest === 0) {
+            return ['', []];
+        }
+
+        $org = $DB->get_record(self::TABLE, ['id' => $deepest], 'path');
+        if (!$org || empty($org->path)) {
+            return ['', []];
+        }
+
+        // Use unique param names so callers can pass alongside theirs.
+        $exactkey  = 'orgcascade_exact_' . $tablealias;
+        $prefixkey = 'orgcascade_prefix_' . $tablealias;
+        $sql = "({$tablealias}.{$pathcolumn} = :{$exactkey}"
+             . " OR {$tablealias}.{$pathcolumn} LIKE :{$prefixkey})";
+        $args = [
+            $exactkey  => rtrim($org->path, '/'),
+            $prefixkey => $DB->sql_like_escape(rtrim($org->path, '/') . '/') . '%',
+        ];
+        return [$sql, $args];
+    }
+
     // ═══════════════════════════════════════════════════════════════════
     // Write operations — CRUD (added April 2026)
     // ═══════════════════════════════════════════════════════════════════

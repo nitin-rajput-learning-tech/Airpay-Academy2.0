@@ -28,7 +28,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_airpay_org';
-$plugin->version   = 2026051170;
+$plugin->version   = 2026051501;
 $plugin->requires  = 2022041900; // Moodle 4.0+
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.3.0'; // +Phase 6 F.5: cohort sync from org tree
+$plugin->release   = '1.4.0'; // +BizLMS parity: list_children WS for cascade filter

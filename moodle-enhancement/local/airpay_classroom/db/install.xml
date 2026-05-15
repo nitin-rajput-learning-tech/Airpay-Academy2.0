@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/airpay_classroom/db" VERSION="20260507"
+<XMLDB PATH="local/airpay_classroom/db" VERSION="20260515"
        COMMENT="Airpay Classroom Training — replaces BizLMS local_classroom">
   <TABLES>
     <TABLE NAME="local_airpay_classroom" COMMENT="Classroom/ILT sessions (fork of local_classroom)">
@@ -43,6 +43,10 @@
         <FIELD NAME="trainerid"       TYPE="int"  LENGTH="10" NOTNULL="false"
                COMMENT="Override classroom trainer for this specific session"/>
         <FIELD NAME="notes"           TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="meeting_url"     TYPE="char" LENGTH="1024" NOTNULL="false"
+               COMMENT="W1-7: live meeting URL (Zoom/Teams/Webex/Meet)"/>
+        <FIELD NAME="recording_url"   TYPE="char" LENGTH="1024" NOTNULL="false"
+               COMMENT="W1-7: post-session recording URL"/>
         <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="timemodified"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
       </FIELDS>

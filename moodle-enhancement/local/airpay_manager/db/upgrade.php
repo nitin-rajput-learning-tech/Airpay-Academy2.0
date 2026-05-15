@@ -56,5 +56,48 @@ function xmldb_local_airpay_manager_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026050800, 'local', 'airpay_manager');
     }
 
+    // 2026051500 — W1-10: multi-type allocation. Add item_type + itemid
+    // columns to support allocating courses, classrooms, programs, and
+    // learning paths from a single table. The legacy `courseid` column is
+    // kept for backward compat and we backfill (item_type, itemid) from
+    // (course, courseid) for every existing row.
+    if ($oldversion < 2026051500) {
+        $table = new xmldb_table('local_airpay_mgr_allocations');
+
+        $field = new xmldb_field('item_type', XMLDB_TYPE_CHAR, '20',
+            null, XMLDB_NOTNULL, null, 'course', 'userid');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('itemid', XMLDB_TYPE_INTEGER, '10',
+            null, XMLDB_NOTNULL, null, '0', 'item_type');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Backfill existing rows: every legacy allocation is a course allocation.
+        $DB->execute(
+            "UPDATE {local_airpay_mgr_allocations}
+                SET itemid = courseid, item_type = 'course'
+              WHERE item_type = 'course' AND itemid = 0 AND courseid > 0"
+        );
+
+        // Unique index on (userid, item_type, itemid) so we cannot
+        // double-allocate the same item-type to the same user.
+        $index = new xmldb_index('idx_user_item', XMLDB_INDEX_UNIQUE,
+            ['userid', 'item_type', 'itemid']);
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        $index = new xmldb_index('idx_item_type', XMLDB_INDEX_NOTUNIQUE, ['item_type']);
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        upgrade_plugin_savepoint(true, 2026051500, 'local', 'airpay_manager');
+    }
+
     return true;
 }
