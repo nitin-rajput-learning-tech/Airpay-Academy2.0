@@ -1,0 +1,186 @@
+{{!
+    Communication preferences — Phase A1 iter 1.
+
+    Three channel sections (Email always-on, WhatsApp, SMS) + a primary-
+    channel selector + DLT consent. Uses tokens via the theme's design
+    system. Tenant-disabled channels show with a muted state rather than
+    being hidden entirely — so learners know the option exists but is
+    currently off for their org.
+
+    Context (from preferences.php):
+      action_url, sesskey
+      mobile_number, email_optin
+      whatsapp_enabled, whatsapp_optin
+      sms_enabled, sms_optin
+      prefer_email, prefer_whatsapp, prefer_sms
+      has_consent, consent_logged_at
+}}
+<div class="airpay-channel-prefs">
+
+    <p class="airpay-channel-prefs__intro">
+        {{# str }}preferences_intro, local_airpay_whatsapp{{/ str }}
+    </p>
+
+    <form method="post"
+          action="{{action_url}}"
+          class="airpay-channel-prefs__form"
+          aria-label="Communication preferences">
+        <input type="hidden" name="sesskey" value="{{sesskey}}">
+
+        {{! ── Mobile number capture ──────────────────────────────────── }}
+        <fieldset class="airpay-channel-prefs__field">
+            <label for="mobile_number" class="airpay-channel-prefs__label">
+                {{# str }}mobile_label, local_airpay_whatsapp{{/ str }}
+            </label>
+            <input type="tel"
+                   id="mobile_number"
+                   name="mobile_number"
+                   class="airpay-channel-prefs__input"
+                   value="{{mobile_number}}"
+                   placeholder="+919876543210"
+                   autocomplete="tel"
+                   pattern="^\+\d{1,3}\d{6,14}$"
+                   inputmode="tel">
+            <p class="airpay-channel-prefs__hint">
+                {{# str }}mobile_hint, local_airpay_whatsapp{{/ str }}
+            </p>
+        </fieldset>
+
+        {{! ── Email (always-on) ──────────────────────────────────────── }}
+        <fieldset class="airpay-channel-prefs__channel airpay-channel-prefs__channel--always-on">
+            <legend class="airpay-channel-prefs__channel-label">
+                <i class="fa fa-envelope" aria-hidden="true"></i>
+                {{# str }}channel_email, local_airpay_whatsapp{{/ str }}
+            </legend>
+            <p class="airpay-channel-prefs__channel-desc">
+                {{# str }}channel_email_desc, local_airpay_whatsapp{{/ str }}
+            </p>
+            {{! Email opt-in is always sent as 1 — checkbox is informational only. }}
+            <input type="hidden" name="email_optin" value="1">
+        </fieldset>
+
+        {{! ── WhatsApp ──────────────────────────────────────────────── }}
+        <fieldset class="airpay-channel-prefs__channel {{^whatsapp_enabled}}airpay-channel-prefs__channel--disabled{{/whatsapp_enabled}}">
+            <legend class="airpay-channel-prefs__channel-label">
+                <i class="fa fa-whatsapp" aria-hidden="true"></i>
+                {{# str }}channel_whatsapp, local_airpay_whatsapp{{/ str }}
+            </legend>
+            <p class="airpay-channel-prefs__channel-desc">
+                {{# str }}channel_whatsapp_desc, local_airpay_whatsapp{{/ str }}
+            </p>
+            {{#whatsapp_enabled}}
+            <label class="airpay-channel-prefs__toggle">
+                <input type="checkbox"
+                       name="whatsapp_optin"
+                       value="1"
+                       {{#whatsapp_optin}}checked{{/whatsapp_optin}}>
+                <span>Send me WhatsApp messages</span>
+            </label>
+            {{/whatsapp_enabled}}
+            {{^whatsapp_enabled}}
+            <p class="airpay-channel-prefs__channel-disabled-msg">
+                {{# str }}channel_disabled_tenant, local_airpay_whatsapp{{/ str }}
+            </p>
+            {{/whatsapp_enabled}}
+        </fieldset>
+
+        {{! ── SMS ──────────────────────────────────────────────────── }}
+        <fieldset class="airpay-channel-prefs__channel {{^sms_enabled}}airpay-channel-prefs__channel--disabled{{/sms_enabled}}">
+            <legend class="airpay-channel-prefs__channel-label">
+                <i class="fa fa-mobile" aria-hidden="true"></i>
+                {{# str }}channel_sms, local_airpay_whatsapp{{/ str }}
+            </legend>
+            <p class="airpay-channel-prefs__channel-desc">
+                {{# str }}channel_sms_desc, local_airpay_whatsapp{{/ str }}
+            </p>
+            {{#sms_enabled}}
+            <label class="airpay-channel-prefs__toggle">
+                <input type="checkbox"
+                       name="sms_optin"
+                       value="1"
+                       {{#sms_optin}}checked{{/sms_optin}}>
+                <span>Send me SMS messages</span>
+            </label>
+            {{/sms_enabled}}
+            {{^sms_enabled}}
+            <p class="airpay-channel-prefs__channel-disabled-msg">
+                {{# str }}channel_disabled_tenant, local_airpay_whatsapp{{/ str }}
+            </p>
+            {{/sms_enabled}}
+        </fieldset>
+
+        {{! ── Primary channel preference ─────────────────────────── }}
+        <fieldset class="airpay-channel-prefs__field">
+            <legend class="airpay-channel-prefs__label">
+                {{# str }}prefer_label, local_airpay_whatsapp{{/ str }}
+            </legend>
+            <p class="airpay-channel-prefs__hint">
+                {{# str }}prefer_hint, local_airpay_whatsapp{{/ str }}
+            </p>
+            <div class="airpay-channel-prefs__radio-group" role="radiogroup">
+                <label class="airpay-channel-prefs__radio">
+                    <input type="radio" name="prefer_channel" value="email"
+                           {{#prefer_email}}checked{{/prefer_email}}>
+                    <span>{{# str }}channel_email, local_airpay_whatsapp{{/ str }}</span>
+                </label>
+                {{#whatsapp_enabled}}
+                <label class="airpay-channel-prefs__radio">
+                    <input type="radio" name="prefer_channel" value="whatsapp"
+                           {{#prefer_whatsapp}}checked{{/prefer_whatsapp}}>
+                    <span>{{# str }}channel_whatsapp, local_airpay_whatsapp{{/ str }}</span>
+                </label>
+                {{/whatsapp_enabled}}
+                {{#sms_enabled}}
+                <label class="airpay-channel-prefs__radio">
+                    <input type="radio" name="prefer_channel" value="sms"
+                           {{#prefer_sms}}checked{{/prefer_sms}}>
+                    <span>{{# str }}channel_sms, local_airpay_whatsapp{{/ str }}</span>
+                </label>
+                {{/sms_enabled}}
+            </div>
+        </fieldset>
+
+        {{! ── DLT consent (only shown when WA/SMS available) ─────── }}
+        {{#whatsapp_enabled}}{{^has_consent}}
+        <fieldset class="airpay-channel-prefs__consent">
+            <legend class="airpay-channel-prefs__label">
+                {{# str }}dlt_consent_heading, local_airpay_whatsapp{{/ str }}
+            </legend>
+            <p class="airpay-channel-prefs__consent-body">
+                {{# str }}dlt_consent_body, local_airpay_whatsapp{{/ str }}
+            </p>
+            <label class="airpay-channel-prefs__toggle">
+                <input type="checkbox" name="dlt_consent" value="1" id="dlt_consent">
+                <span>I accept the consent statement above</span>
+            </label>
+        </fieldset>
+        {{/has_consent}}{{/whatsapp_enabled}}
+        {{#sms_enabled}}{{^has_consent}}{{^whatsapp_enabled}}
+        <fieldset class="airpay-channel-prefs__consent">
+            <legend class="airpay-channel-prefs__label">
+                {{# str }}dlt_consent_heading, local_airpay_whatsapp{{/ str }}
+            </legend>
+            <p class="airpay-channel-prefs__consent-body">
+                {{# str }}dlt_consent_body, local_airpay_whatsapp{{/ str }}
+            </p>
+            <label class="airpay-channel-prefs__toggle">
+                <input type="checkbox" name="dlt_consent" value="1" id="dlt_consent">
+                <span>I accept the consent statement above</span>
+            </label>
+        </fieldset>
+        {{/whatsapp_enabled}}{{/has_consent}}{{/sms_enabled}}
+        {{#has_consent}}
+        <p class="airpay-channel-prefs__consent-logged">
+            <i class="fa fa-check-circle" aria-hidden="true" style="color: var(--ap-color-success);"></i>
+            {{# str }}dlt_consent_logged_at, local_airpay_whatsapp, {{consent_logged_at}}{{/ str }}
+        </p>
+        {{/has_consent}}
+
+        {{! ── Submit ────────────────────────────────────────────── }}
+        <div class="airpay-channel-prefs__actions">
+            <button type="submit" class="airpay-channel-prefs__submit">
+                {{# str }}save_preferences, local_airpay_whatsapp{{/ str }}
+            </button>
+        </div>
+    </form>
+</div>

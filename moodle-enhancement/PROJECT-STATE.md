@@ -3,6 +3,117 @@
 
 ---
 
+## 🆕 PHASE A1 ITER 1 — WhatsApp/SMS opt-in scaffolding (2026-05-15)
+
+First commit of the morning. Picks up the "Phase A1 iter 1 — WhatsApp opt-in UI" item from the morning-pickup queue. Plan-locked at `docs/platform-review-2026-05-14/PHASE-A1-WHATSAPP-SMS-PLAN.md`; this iter ships exactly what the plan called for: data layer + UI + privacy + tests. No external API calls — provider integration is iter 3 after L&D + Legal + Budget sign-off per the pre-flight checklist.
+
+### New plugin: `local_airpay_whatsapp` (0.1.0-alpha, MATURITY_ALPHA)
+
+```
+local/airpay_whatsapp/
+  version.php                         depends on local_airpay_core 2026051401
+                                      (the feature_flags resolver from Phase A0)
+  lib.php                             myprofile_navigation callback — adds
+                                      "Communication preferences" link to the
+                                      user profile sidebar
+  lang/en/local_airpay_whatsapp.php   all UI strings + DLT consent body +
+                                      privacy:metadata for GDPR/DPDP export
+
+  db/install.xml                      TWO tables:
+    local_airpay_user_channel_prefs     1 row per user (userid UNIQUE),
+                                        mobile + 3 opt-in flags +
+                                        prefer_channel + DLT consent
+                                        (timestamp + frozen text snapshot)
+    local_airpay_user_channel_audit     append-only audit trail with IP +
+                                        changed_by — required for DPDP
+                                        consent provenance
+
+  classes/preference_manager.php      Public API:
+    ::get($userid)                      → row with DEFAULTS shape
+    ::is_valid_mobile($number)          → bool, +CC + 7-15 digits
+    ::normalise_mobile($number)         → strip whitespace
+    ::set($userid, $values, ...)        → transactional + audit per changed field
+    ::recent_audit($userid, $limit)     → newest-first audit history
+    ::resolve_channel($userid)          → 'whatsapp' | 'sms' | 'email'
+                                          with full fall-back chain (flag on +
+                                          opted in + mobile + consent → primary,
+                                          else email)
+    ::delete_user_data($userid)         → cascade-delete for DPDP erasure
+
+  classes/privacy/provider.php        Implements metadata + plugin + userlist
+                                      providers. export_user_data writes a
+                                      JSON-ish blob to the system context
+                                      including the full audit trail. Delete
+                                      methods route through preference_manager::
+                                      delete_user_data().
+
+  preferences.php                     Self-service page at
+                                      /local/airpay_whatsapp/preferences.php
+                                      - require_login() + user context only
+                                      - reads feature_flags::is_enabled() for
+                                        per-tenant enable/disable
+                                      - POST handler with require_sesskey()
+                                      - server-side enforcement of tenant flag
+                                        (browser can tick the box, server
+                                        force-disables if flag is off)
+                                      - silently downgrades prefer_channel
+                                        to email if the picked channel is off
+                                      - snapshots consent text into the row on
+                                        first opt-in
+
+  templates/preferences.mustache      Field groups for mobile / email-always-on
+                                      / WhatsApp / SMS / primary-channel /
+                                      DLT consent. Tenant-disabled channels
+                                      render with --disabled modifier (muted,
+                                      still visible — learners know the option
+                                      exists). FA icons aria-hidden, real
+                                      <label for=> on every input, <legend>
+                                      on every fieldset.
+
+  styles.css                          Tokens-only, zero hex literals. Uses
+                                      :focus-within on field groups,
+                                      :has(input:checked) on radio pills,
+                                      always-on email gets soft success tint,
+                                      DLT consent gets warning tint. Mobile
+                                      <590 stacks + full-width submit.
+
+  tests/preference_manager_test.php   11 test cases:
+    test_get_returns_defaults_when_user_has_no_row
+    test_is_valid_mobile_accepts_country_code_format
+    test_is_valid_mobile_rejects_bad_input
+    test_set_creates_row_on_first_save
+    test_set_with_invalid_mobile_throws
+    test_optin_without_consent_throws
+    test_optin_with_consent_succeeds
+    test_set_writes_audit_row_per_changed_field
+    test_idempotent_set_no_extra_audit_rows
+    test_resolve_channel_falls_back_to_email_when_no_optin
+    test_resolve_channel_falls_back_when_feature_flag_off
+    test_delete_user_data_clears_both_tables
+    test_recent_audit_returns_newest_first
+```
+
+### What's deferred to iter 2+ (per the plan)
+
+- DLT template registry + sync (iter 2)
+- WhatsApp provider integration — Karix/Meta API (iter 3, **[CONFIRM] gate** before any real send)
+- SMS provider integration — MSG91 or Gupshup (iter 4)
+- Analytics + opt-out + bounce-to-email cascade (iter 5)
+- Pre-flight checklist (L&D + Legal sign-off, DLT portal registration, budget approval)
+
+### Integration with Phase A0 (Switchboard)
+
+Two flags already exist from Phase A0 (`engagement.whatsapp.enabled`, `engagement.sms.enabled`, both default OFF). The UI reads them per-tenant via `feature_flags::is_enabled()`. Super admin can toggle them via the Switchboard at `/local/airpay_core/admin/switchboard.php`. Per-tenant override is supported — admin can enable WhatsApp for Airpay tenant only while leaving Public + ZEEA tenants on email-only.
+
+When a flag is off:
+- The channel's section in the preferences page renders muted with a "contact your administrator" message
+- The radio button for that channel doesn't render in the primary-channel selector
+- `preference_manager::resolve_channel()` falls through to email even if the user had previously opted in
+
+This is the manifesto "graceful degradation" pattern (CONFIGURABILITY-ARCHITECTURE.md §5) applied to a new domain.
+
+---
+
 ## 🌅 MORNING PICKUP (2026-05-15)
 
 **Last commit on `production`:** `9532d2e3a` — Course Player iters 2-7 in one go

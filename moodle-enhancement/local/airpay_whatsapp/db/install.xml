@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/airpay_whatsapp/db" VERSION="20260515"
+       COMMENT="Airpay WhatsApp + SMS engagement channel — opt-in preferences."
+>
+  <TABLES>
+    <TABLE NAME="local_airpay_user_channel_prefs"
+           COMMENT="Per-user opt-in preferences for WhatsApp / SMS / email channels. One row per user. Phase A1 iter 1.">
+      <FIELDS>
+        <FIELD NAME="id"             TYPE="int"   LENGTH="10" NOTNULL="true" SEQUENCE="true"
+               COMMENT="Primary key"/>
+        <FIELD NAME="userid"         TYPE="int"   LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="FK to mdl_user.id — one row per user (unique)"/>
+        <FIELD NAME="mobile_number"  TYPE="char"  LENGTH="32" NOTNULL="false"
+               COMMENT="Mobile number with country code, e.g. +919876543210"/>
+        <FIELD NAME="whatsapp_optin" TYPE="int"   LENGTH="1"  NOTNULL="true" DEFAULT="0"
+               COMMENT="0=opted out, 1=opted in to WhatsApp delivery"/>
+        <FIELD NAME="sms_optin"      TYPE="int"   LENGTH="1"  NOTNULL="true" DEFAULT="0"
+               COMMENT="0=opted out, 1=opted in to SMS delivery"/>
+        <FIELD NAME="email_optin"    TYPE="int"   LENGTH="1"  NOTNULL="true" DEFAULT="1"
+               COMMENT="Always-on by default. Users can suppress per the existing email cadence engine."/>
+        <FIELD NAME="prefer_channel" TYPE="char"  LENGTH="16" NOTNULL="true" DEFAULT="email"
+               COMMENT="Primary delivery channel: 'whatsapp' | 'sms' | 'email'. Falls back to email when delivery fails."/>
+        <FIELD NAME="dlt_consent_at" TYPE="int"   LENGTH="10" NOTNULL="false"
+               COMMENT="Unix timestamp when DLT consent was given. Required before WhatsApp/SMS can deliver."/>
+        <FIELD NAME="dlt_consent_text" TYPE="text" NOTNULL="false"
+               COMMENT="Snapshot of the consent language the user agreed to. Stored for audit / DPDP compliance."/>
+        <FIELD NAME="timecreated"    TYPE="int"   LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"   TYPE="int"   LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"        TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_user"        TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="uk_userid"      TYPE="unique"  FIELDS="userid"
+             COMMENT="One preference row per user"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_whatsapp_optin" UNIQUE="false" FIELDS="whatsapp_optin"
+               COMMENT="Cadence engine filter: WHERE whatsapp_optin = 1"/>
+        <INDEX NAME="idx_sms_optin"      UNIQUE="false" FIELDS="sms_optin"
+               COMMENT="Cadence engine filter: WHERE sms_optin = 1"/>
+        <INDEX NAME="idx_prefer_channel" UNIQUE="false" FIELDS="prefer_channel"
+               COMMENT="Channel router lookup pattern"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_airpay_user_channel_audit"
+           COMMENT="Append-only audit trail of every preference change. DPDP requires demonstrable consent provenance.">
+      <FIELDS>
+        <FIELD NAME="id"            TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"        TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="The user whose preferences changed"/>
+        <FIELD NAME="changed_by"    TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="Who made the change — usually the same as userid, but admins can edit on behalf of"/>
+        <FIELD NAME="field_name"    TYPE="char" LENGTH="32" NOTNULL="true"
+               COMMENT="Which field changed: 'whatsapp_optin' | 'sms_optin' | 'mobile_number' | 'prefer_channel' | 'dlt_consent_at'"/>
+        <FIELD NAME="old_value"     TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="new_value"     TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="reason"        TYPE="char" LENGTH="255" NOTNULL="false"
+               COMMENT="Optional context (e.g. 'self-service via /preferences.php', 'admin override')"/>
+        <FIELD NAME="ip_address"    TYPE="char" LENGTH="45" NOTNULL="false"
+               COMMENT="IPv4/IPv6 of the request that made the change — required by DPDP for consent provenance"/>
+        <FIELD NAME="timecreated"   TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"      TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_user"      TYPE="foreign" FIELDS="userid"     REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="fk_changedby" TYPE="foreign" FIELDS="changed_by" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_user_time"  UNIQUE="false" FIELDS="userid, timecreated"
+               COMMENT="Audit history per user, newest first"/>
+        <INDEX NAME="idx_field_time" UNIQUE="false" FIELDS="field_name, timecreated"
+               COMMENT="Bulk audit queries (e.g. all dlt_consent_at changes in date range)"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>
