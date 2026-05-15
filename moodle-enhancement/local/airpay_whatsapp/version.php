@@ -17,18 +17,29 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_airpay_whatsapp';
-$plugin->version   = 2026051500;
+$plugin->version   = 2026051501;
 $plugin->requires  = 2022041900;
-$plugin->maturity  = MATURITY_ALPHA;   // No sending yet — opt-in UI only
-$plugin->release   = '0.1.0-alpha';
+$plugin->maturity  = MATURITY_ALPHA;   // mock-mode only — [CONFIRM] required before live
+$plugin->release   = '0.2.0-alpha';
 $plugin->dependencies = [
     'local_airpay_core' => 2026051401,  // feature_flags resolver
 ];
 // Release history
 // 0.1.0-alpha  Phase A1 iter 1: opt-in + preference UI
-//                + local_airpay_user_channel_prefs table
-//                + classes/preference_manager
-//                + preferences.php user-facing page
-//                + classes/privacy/provider (GDPR + DPDP)
-//                + PHPUnit tests for preference_manager
-//              No external sending yet — that's iter 3.
+//                + local_airpay_user_channel_prefs + audit tables
+//                + classes/preference_manager + privacy/provider
+//                + 13 PHPUnit tests
+//              No external sending yet.
+// 0.2.0-alpha  Phase A1 iters 2-5 scaffolded in mock mode:
+//                + local_airpay_dlt_templates table + registry class
+//                + local_airpay_send_log table + send-log class
+//                + classes/whatsapp_client + sms_client (mock-mode default)
+//                + classes/channel_router (cadence-engine integration)
+//                + 5 seeded DLT templates (enrolment / completion /
+//                  deadline 7d/3d/1d / overdue / streak)
+//                + admin/templates.php template management UI
+//                + classes/analytics for channel-mix reporting
+//                + Hi/Kn/Mr/Sw translations
+//              External provider sending still [CONFIRM]-gated — flipping
+//              from mock to live mode requires Switchboard flag toggle +
+//              DLT registration + Karix/MSG91 credentials.

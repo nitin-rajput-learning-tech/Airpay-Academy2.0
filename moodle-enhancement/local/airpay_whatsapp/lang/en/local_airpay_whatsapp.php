@@ -43,6 +43,39 @@ $string['save_preferences']        = 'Save preferences';
 $string['preferences_saved']       = 'Communication preferences updated.';
 $string['preferences_unchanged']   = 'No changes to save.';
 
+// Settings page (Phase A1 iter 3+)
+$string['settings_pagetitle']         = 'Airpay WhatsApp & SMS — settings';
+$string['settings_heading_live_mode'] = 'Provider credentials';
+$string['settings_heading_live_mode_desc'] = 'These keys enable live WhatsApp/SMS sending. Until both keys are set AND the Switchboard flags engagement.whatsapp.enabled / engagement.sms.enabled are turned on, the plugin runs in mock mode — messages are logged but never sent to a real provider.';
+$string['settings_karix_api_key']     = 'Karix WhatsApp API key';
+$string['settings_karix_api_key_desc'] = 'Karix Business API token (https://www.karix.com). Required to flip WhatsApp from mock to live mode.';
+$string['settings_msg91_api_key']     = 'MSG91 SMS API key';
+$string['settings_msg91_api_key_desc'] = 'MSG91 authkey (https://msg91.com). Required to flip SMS from mock to live mode.';
+$string['settings_dlt_pe_id']         = 'DLT Principal Entity ID';
+$string['settings_dlt_pe_id_desc']    = 'Your organisation\'s DLT-registered Principal Entity ID (issued by the Indian DLT portal). Required for any operator-bound SMS.';
+
+// Template manager (Phase A1 iter 2)
+$string['templates_pagetitle']        = 'DLT template manager';
+$string['templates_heading']          = 'DLT-approved message templates';
+$string['templates_intro']            = 'Templates must be DLT-registered with the operator before the cadence engine will send them. Statuses move pending → submitted → approved/rejected. Only `approved` templates are usable.';
+$string['template_status_updated']    = 'Template status updated.';
+$string['show_body']                  = 'Show body';
+$string['th_template']                = 'Template key';
+$string['th_channel']                 = 'Channel';
+$string['th_status']                  = 'Status';
+$string['th_dlt_id']                  = 'DLT ID';
+$string['th_body']                    = 'Body';
+$string['th_actions']                 = 'Actions';
+$string['btn_submit']                 = 'Submit to DLT';
+$string['btn_approve']                = 'Mark approved';
+$string['btn_reject']                 = 'Reject';
+$string['btn_redraft']                = 'Redraft';
+$string['approved_ready']             = 'Ready to send';
+
+// Analytics dashboard (Phase A1 iter 5)
+$string['analytics_pagetitle']        = 'Channel analytics';
+$string['analytics_heading']          = 'WhatsApp / SMS / Email channel mix';
+
 // Privacy
 $string['privacy:metadata:local_airpay_user_channel_prefs']
     = 'Per-user opt-in preferences for WhatsApp / SMS / email channels, including mobile number and DLT consent timestamp.';

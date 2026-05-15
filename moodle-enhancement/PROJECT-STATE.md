@@ -3,6 +3,95 @@
 
 ---
 
+## 🆕 PHASE A1 ITERS 2-5 — Full WhatsApp/SMS scaffolding in mock mode (2026-05-15)
+
+User said "do everything in queue in one go." Done — iters 2 through 5 of the Phase A1 plan shipped in one commit, plus full Hi/Kn/Mr/Sw translations. Live mode is still [CONFIRM]-gated (per CLAUDE.md absolute rule on external API POSTs) — every code path that would call Karix or MSG91 falls back to mock-and-log until the gate flips.
+
+### What landed (continuing from iter 1's foundation)
+
+**iter 2 — DLT template registry**
+- `local_airpay_dlt_templates` table (template_key + channel + language UNIQUE, status state machine, dlt_id from operator)
+- `classes/dlt_template_registry.php` — public API: `get`, `get_approved`, `upsert`, `transition_status`, `list_all`, `extract_variables`, `render`
+- `db/install.php` — seeds 11 starter templates per the plan: enrolment / completion / deadline 7d/3d/1d / team_overdue (transactional) + streak_milestone (promotional, requires explicit consent). WhatsApp + SMS variants for each.
+- `admin/templates.php` — site-admin UI to transition templates through pending → submitted → approved/rejected with DLT ID capture + rejection-reason audit
+
+**iters 3 + 4 — Provider clients (mock-mode default)**
+- `classes/send_log.php` — append-only log of every attempt (queued/sent/delivered/failed/bounced/opted_out/mocked) with provider_id, cost_paise, retry count
+- `classes/whatsapp_client.php` — Karix-targeted abstraction. Four pre-flight gates (opt-in, mobile, DLT-approved template, feature flag). When ANY gate fails, mock-and-log instead of sending. The actual Karix HTTP call is COMMENTED OUT — flipping to live requires:
+  1. L&D + Legal sign-off on the 5 DLT templates
+  2. DLT portal registration complete
+  3. Karix account + `karix_api_key` set in plugin settings
+  4. `engagement.whatsapp.enabled` flag ON via the Switchboard
+  5. The commented HTTP block in `whatsapp_client::send_template()` un-commented
+- `classes/sms_client.php` — same pattern for MSG91
+- `classes/channel_router.php` — cascading dispatcher: tries the user's preferred channel, falls through to SMS, terminal-fallback to email. Every attempt logged.
+
+**iter 5 — Analytics + admin dashboard**
+- `classes/analytics.php` — `channel_mix()` aggregates send_log by (channel, status) for a date range; `cost_summary()` combines provider-reported costs + estimates from the plan's unit prices (₹0.55 WA / ₹0.20 SMS / ₹0.05 email)
+- `admin/analytics.php` + `templates/analytics.mustache` — reuses Phase B0 reusable components (`stat_card` for KPIs, `activity_item` for recent log) — proves the redesign foundation pays compounding dividends across new surfaces
+- KPI tiles: Attempted / Successful% / Mocked% / Cost estimate with semantic colour bands
+
+**Settings page**
+- `settings.php` registers 3 entries in Site Admin → Plugins → Local plugins:
+  - Channel settings (Karix + MSG91 API keys + DLT Principal Entity ID)
+  - DLT template manager link
+  - Channel analytics link
+
+**Translations (Hi/Kn/Mr/Sw)**
+- All four lang files now have the complete ~70 strings for the plugin (preferences page + templates manager + analytics dashboard + settings + privacy metadata). Machine quality; native-speaker review recommended before high-traffic deploy.
+
+### Tests added
+
+- `tests/dlt_template_registry_test.php` — 9 cases (upsert idempotency, invalid channel rejection, approved-state gating, variable extraction + dedup, render with missing-placeholder visibility, status transition timestamps, rejection reason capture)
+- `tests/channel_router_test.php` — 6 cases (router falls back when no opt-in, WhatsApp mocks when flag off, opted-out path, no-mobile failure, no-template failure, analytics aggregation)
+
+### Why every send is mock
+
+CLAUDE.md absolute rule: "NEVER POST to Moodle/ElevenLabs/Gamma without [CONFIRM]." Same logic applies to Karix and MSG91 — and they cost real money per message. Every code path that would call the external provider is shipped in a state where:
+- The HTTP code is commented out behind a documented checklist
+- `$CFG->noemailever` forces mock (same dev-mode contract as the email cadence engine)
+- The Phase A0 feature flags `engagement.whatsapp.enabled` / `engagement.sms.enabled` default OFF (per Phase A0's seed) so even without `noemailever` the gate stays shut
+- Missing API keys force mock regardless
+
+Flipping a deployment from mock to live requires deliberate human action across multiple safeguards.
+
+### What's left
+
+- **The actual provider HTTP calls.** The Karix + MSG91 endpoints + request shapes are documented inline in `whatsapp_client.php` and `sms_client.php`. When you give `[CONFIRM]` after the pre-flight checklist clears, the live block can be un-commented in ~10 minutes.
+- **DLT portal registration.** Operator-side process; can't be done from code.
+- **L&D + Legal sign-off** on the 5 starter templates' wording.
+- **Budget approval** (~₹5K/month at the realistic mix per the plan).
+- **Native-speaker translation review** for Hi/Kn/Mr/Sw.
+
+### Files touched (iters 2-5 batch)
+
+```
+moodle-enhancement/local/airpay_whatsapp/
+  version.php                          bump 0.1.0-alpha → 0.2.0-alpha
+  settings.php                         NEW — 3 admin entries
+  db/install.xml                       + 2 tables (dlt_templates, send_log)
+  db/install.php                       NEW — seeds 11 starter templates
+  db/upgrade.php                       NEW — idempotent table create
+  classes/dlt_template_registry.php    NEW — registry CRUD + render
+  classes/send_log.php                 NEW — append-only attempt log
+  classes/whatsapp_client.php          NEW — Karix abstraction, mock-mode
+  classes/sms_client.php               NEW — MSG91 abstraction, mock-mode
+  classes/channel_router.php           NEW — cascading dispatcher
+  classes/analytics.php                NEW — channel_mix + cost_summary
+  admin/templates.php                  NEW — template manager UI
+  admin/analytics.php                  NEW — channel analytics dashboard
+  templates/analytics.mustache         NEW — reuses Phase B0 stat_card + activity_item
+  tests/dlt_template_registry_test.php NEW — 9 cases
+  tests/channel_router_test.php        NEW — 6 cases
+  lang/en/local_airpay_whatsapp.php    + ~30 strings for iter 2-5
+  lang/hi/local_airpay_whatsapp.php    NEW — full Hindi translation
+  lang/kn/local_airpay_whatsapp.php    NEW — full Kannada translation
+  lang/mr/local_airpay_whatsapp.php    NEW — full Marathi translation
+  lang/sw/local_airpay_whatsapp.php    NEW — full Swahili translation
+```
+
+---
+
 ## 🆕 PHASE A1 ITER 1 — WhatsApp/SMS opt-in scaffolding (2026-05-15)
 
 First commit of the morning. Picks up the "Phase A1 iter 1 — WhatsApp opt-in UI" item from the morning-pickup queue. Plan-locked at `docs/platform-review-2026-05-14/PHASE-A1-WHATSAPP-SMS-PLAN.md`; this iter ships exactly what the plan called for: data layer + UI + privacy + tests. No external API calls — provider integration is iter 3 after L&D + Legal + Budget sign-off per the pre-flight checklist.
