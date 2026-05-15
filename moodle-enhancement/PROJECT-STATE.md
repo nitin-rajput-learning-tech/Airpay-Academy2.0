@@ -1,5 +1,56 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-14 absolute EOD — **36 commits shipped today. 7 of 7 P0 redesign priorities now COMPLETE.** Course Player iters 2-7 all shipped in one batch closing out the SURFACE-ROADMAP §6 priority list.
+**Updated:** 2026-05-15 EOD — **Wave 1 BizLMS parity 8/10 P0 fixes shipped + pushed.** Commit `d18a13909` on `production`. 105 files, ~8k insertions. Two remaining P0s (W1-6 HRMS import, W1-8 Public signup) deferred to Wave 1.5.
+
+---
+
+## 🆕 WAVE 1 BIZLMS PARITY — 8 of 10 P0 fixes shipped (2026-05-15)
+
+Closes 8 of the 10 highest-impact gaps from the 19-file BizLMS parity audit at `parity-audit-2026-05-15/`. Each fix paired with PHPUnit coverage and Moodle 5 upgrade steps. Commit: **`d18a13909`** on `production`.
+
+### Status matrix
+
+| # | Fix | Status | Plugin version after |
+|---|-----|--------|----------------------|
+| W1-1 | 5-level org cascade on 8 admin list pages (users, courses, classroom, exams, programs, learningpath, evaluation, reports) | ✅ shipped | Shared: `local_airpay_org_list_children` WS + `theme_airpayux/org_cascade` AMD + `components/org_cascade_filter` partial + `org_manager::cascade_where_sql()` helper |
+| W1-2 | `airpay_learningpath` enrolment fix — `enrol_users()` now also calls `enrol_try_internal_enrol()` per course, `assign_courses()` back-fills existing users | ✅ shipped | path_manager.php + new tests in `path_assignment_test.php` |
+| W1-3 | `airpay_ratings` write endpoint — interactive 5-star widget | ✅ shipped | `local_airpay_ratings` `2026051500` (1.1.0). New `submit_rating` WS + `local/airpay_ratings:rate` cap + AMD `rating_widget` |
+| W1-4 | `airpay_recompletion` SCORM reset — Moodle 5 `scorm_attempt` + `scorm_scoes_value` + legacy `scoes_track` + `course_modules_completion` | ✅ shipped | recompletion_engine.php + new `scorm_reset_test.php` |
+| W1-5 | `airpay_evaluation` trigger_event observer + queue + scheduled task | ✅ shipped | `local_airpay_evaluation` `2026051501` (1.7.1). New `local_airpay_evaluation_triggers` table + db/events.php + db/tasks.php + db/messages.php + `evaluation_engine` + `process_triggers` cron + `evaluation_invite` message provider |
+| W1-7 | `airpay_classroom` Zoom/Teams + recording URL fields on sessions | ✅ shipped | `local_airpay_classroom` `2026051501` (1.8.0). New `meeting_url` + `recording_url` columns (1024 chars), form fields with `addHelpButton`, datatable Join/Replay icons, URL sanitiser |
+| W1-9 | Event emission across `airpay_programs` (`program_completed`), `airpay_classroom` (`classroom_completed`), `airpay_request` (`request_submitted/approved/rejected`) | ✅ shipped | `local_airpay_programs` `2026051500` (1.5.0), `local_airpay_request` `2026051500` (1.1.0). 5 new event classes hitting `mdl_logstore_standard_log`. Unlocks W1-5 program + classroom triggers. |
+| W1-10 | Multi-type manager allocation — `item_type` + `itemid` columns + 3 new allocation methods (classroom/program/path) | ✅ shipped | `local_airpay_manager` `2026051500` (1.3.0). Backward-compat preserved — legacy course-only rows untouched. UNIQUE on (userid, item_type, itemid). |
+| W1-6 | HRMS 24-column Darwinbox/SAP CSV bulk import + cron sync | ⏸ **deferred** | Estimated 1-2 day session. Source: `bizlms_disabled/users/sync/`. Field map + cron task + sync errors table + statistics dashboard. |
+| W1-8 | Public-tenant `signup.php` + `privacypolicy.php` + `termscondition.php` | ⏸ **deferred** | ~½ day. Public tenant self-registration broken; compliance regression. Needs design discussion on captcha + email verification flow before code. |
+
+### Reusable infrastructure introduced
+
+- **`local_airpay_org\external\list_children`** — WS for cascade selects with N+1 elimination
+- **`theme_airpayux/org_cascade`** AMD — listens for `data-airpay-org-cascade` selects, dispatches `airpay:org-cascade:changed` custom event
+- **`components/org_cascade_filter.mustache`** — 5-level cascade partial; parent passes `cascade_group` for scoped events
+- **`org_manager::cascade_where_sql($filters, $alias)`** — drop-in SQL fragment producer; falls through to `tenant::path_filter()` when no cascade values supplied
+- **`evaluation_engine::process_due_triggers()`** — generic queue drainer, capped at 500/run, idempotent
+- **Event-class triplet pattern** — `crud` + `edulevel` + `objecttable` + `get_name()` + `get_description()` + `get_url()` (see `program_completed`, `classroom_completed`, `request_submitted` for the template)
+
+### Deferred Wave 2 / Wave 1.5 work
+
+- W1-1 leftover plugins (`airpay_notifications`, `airpay_skills`, `airpay_recompletion`) need **schema changes** (add `costcenterid` / `open_path`) before cascade UI is honest — they have no tenant column today. Documented in `parity-audit-2026-05-15/WAVE-1-PLAN.md` under W1-1 status section.
+- W1-6 HRMS import — port `bizlms_disabled/users/sync/index.php` (24 columns + cron + statistics)
+- W1-8 Public signup — design needed on captcha, email verification, admin moderation
+- airpay_cart event emission — defer to Wave 1.5 (refund logic needs review first)
+- airpay_notifications event emission — defer (admin config audit, lower SOX value)
+
+### Next session restart
+
+1. Read `parity-audit-2026-05-15/WAVE-1-PLAN.md` for status of all 10 W1 items
+2. Check `git log --oneline -1` should show `d18a13909 Wave 1 BizLMS parity — 8 of 10 P0 fixes shipped (2026-05-15)`
+3. Local XAMPP plugin versions verified at session end:
+   - airpay_evaluation: `2026051501`
+   - airpay_classroom: `2026051501`
+   - airpay_programs: `2026051500`
+   - airpay_request: `2026051500`
+   - airpay_manager: `2026051500`
+   - airpay_ratings: `2026051500`
+4. Pick up either W1-6 (HRMS) or W1-8 (signup) next, OR pivot to P1 items in the audit if user has different priorities
 
 ---
 
