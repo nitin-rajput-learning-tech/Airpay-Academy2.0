@@ -26,6 +26,8 @@
                COMMENT="P1 #17: Unix timestamp window closes. 0 = no constraint (never closes)."/>
         <FIELD NAME="multiple_submit"  TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="0"
                COMMENT="P1 #17: 1 = allow same user to re-submit (pulse surveys). 0 = one-and-done."/>
+        <FIELD NAME="notify_admin_on_response" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0"
+               COMMENT="P1 #19: 1 = send a Moodle notification to siteadmins on every submission."/>
         <FIELD NAME="timecreated"      TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="timemodified"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
       </FIELDS>

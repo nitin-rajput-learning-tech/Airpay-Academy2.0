@@ -105,20 +105,25 @@ class evaluation_manager {
             throw new \moodle_exception('eval_window_inverted', 'local_airpay_evaluation');
         }
 
+        // P1 #19 — opt-in admin notification on every response.
+        $notify_admin = isset($data->notify_admin_on_response)
+            ? (int) $data->notify_admin_on_response : 0;
+
         $record = (object) [
-            'name'              => trim($data->name),
-            'description'       => $data->description ?? '',
-            'kirkpatrick_level' => $level,
-            'trigger_event'     => $trigger,
-            'days_after'        => max(0, (int) ($data->days_after ?? 0)),
-            'costcenterid'      => (int) ($data->costcenterid ?? 0),
-            'status'            => (int) ($data->status ?? self::STATUS_DRAFT),
-            'anonymous'         => isset($data->anonymous) ? (int) $data->anonymous : 0,
-            'timeopen'          => $timeopen,
-            'timeclose'         => $timeclose,
-            'multiple_submit'   => $multiple_submit,
-            'timecreated'       => time(),
-            'timemodified'      => time(),
+            'name'                     => trim($data->name),
+            'description'              => $data->description ?? '',
+            'kirkpatrick_level'        => $level,
+            'trigger_event'            => $trigger,
+            'days_after'               => max(0, (int) ($data->days_after ?? 0)),
+            'costcenterid'             => (int) ($data->costcenterid ?? 0),
+            'status'                   => (int) ($data->status ?? self::STATUS_DRAFT),
+            'anonymous'                => isset($data->anonymous) ? (int) $data->anonymous : 0,
+            'timeopen'                 => $timeopen,
+            'timeclose'                => $timeclose,
+            'multiple_submit'          => $multiple_submit,
+            'notify_admin_on_response' => $notify_admin,
+            'timecreated'              => time(),
+            'timemodified'             => time(),
         ];
 
         if ($record->costcenterid > 0) {
@@ -166,6 +171,9 @@ class evaluation_manager {
         }
         if (property_exists($data, 'multiple_submit')) {
             $record->multiple_submit = (int) $data->multiple_submit;
+        }
+        if (property_exists($data, 'notify_admin_on_response')) {
+            $record->notify_admin_on_response = (int) $data->notify_admin_on_response;
         }
 
         // Validate window post-merge (compare against existing for fields
@@ -691,7 +699,104 @@ class evaluation_manager {
             'timesubmitted' => time(),
         ];
 
-        return $DB->insert_record(self::RESPONSES_TABLE, $record);
+        $responseid = $DB->insert_record(self::RESPONSES_TABLE, $record);
+
+        // P1 #19 — opt-in admin notification. Wrapped in try/catch so a
+        // misconfigured message provider can never break submission.
+        if ((int) ($eval->notify_admin_on_response ?? 0) === 1) {
+            try {
+                self::notify_admins_of_response($eval, $responseid,
+                    $stored_userid, (int) $userid);
+            } catch (\Throwable $e) {
+                // mtrace fallback for cron, debugging_only() for web.
+                debugging('notify_admins_of_response failed: ' . $e->getMessage(),
+                    DEBUG_NORMAL);
+            }
+        }
+
+        return $responseid;
+    }
+
+    /**
+     * P1 #19 — Send a Moodle notification to every siteadmin announcing
+     * that a new response has come in.
+     *
+     * - Recipients: get_admins() (each admin can opt out per-channel via
+     *   their own notification preferences — the message provider is
+     *   exposed in the user-profile UI).
+     * - Anonymous responses: subject/body omit the responder name and
+     *   include "(anonymous)" instead.
+     * - Body links to the admin's responses view, not the learner's.
+     */
+    private static function notify_admins_of_response(\stdClass $eval,
+                                                       int $responseid,
+                                                       int $stored_userid,
+                                                       int $actual_userid): void {
+        global $DB, $CFG;
+
+        $admins = get_admins();
+        if (empty($admins)) {
+            return;
+        }
+
+        // Respect anonymity at notification time too — even if the
+        // RESPONSES_TABLE stored userid=0, an admin who knows when the
+        // response landed could still cross-reference logs. Best policy:
+        // never expose responder identity in the notification when
+        // anonymous=1.
+        $is_anonymous = ((int) $eval->anonymous === 1);
+        if ($is_anonymous || $stored_userid === 0) {
+            $responder_label = get_string('eval_response_responder_anonymous',
+                'local_airpay_evaluation');
+        } else {
+            $responder = $DB->get_record('user',
+                ['id' => $stored_userid > 0 ? $stored_userid : $actual_userid]);
+            $responder_label = $responder
+                ? fullname($responder) . ' <' . $responder->email . '>'
+                : get_string('eval_response_responder_unknown',
+                    'local_airpay_evaluation');
+        }
+
+        $eval_name = format_string($eval->name);
+        $url = new \moodle_url('/local/airpay_evaluation/responses.php',
+            ['id' => (int) $eval->id]);
+        $url_str = $url->out(false);
+
+        $subject = get_string('eval_response_subject',
+            'local_airpay_evaluation', $eval_name);
+
+        $body_plain = get_string('eval_response_body_plain',
+            'local_airpay_evaluation', (object) [
+                'evalname'  => $eval_name,
+                'responder' => $responder_label,
+                'url'       => $url_str,
+            ]);
+        $body_html = get_string('eval_response_body_html',
+            'local_airpay_evaluation', (object) [
+                'evalname'  => $eval_name,
+                'responder' => s($responder_label),
+                'url'       => $url_str,
+            ]);
+        $small = get_string('eval_response_small',
+            'local_airpay_evaluation', $eval_name);
+
+        foreach ($admins as $admin) {
+            $msg = new \core\message\message();
+            $msg->component         = 'local_airpay_evaluation';
+            $msg->name              = 'evaluation_response';
+            $msg->userfrom          = \core_user::get_noreply_user();
+            $msg->userto            = $admin;
+            $msg->subject           = $subject;
+            $msg->fullmessage       = $body_plain;
+            $msg->fullmessageformat = FORMAT_PLAIN;
+            $msg->fullmessagehtml   = $body_html;
+            $msg->smallmessage      = $small;
+            $msg->notification      = 1;
+            $msg->contexturl        = $url_str;
+            $msg->contexturlname    = get_string('viewresponses',
+                'local_airpay_evaluation');
+            message_send($msg);
+        }
     }
 
     /**

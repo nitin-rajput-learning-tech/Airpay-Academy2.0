@@ -156,5 +156,25 @@ function xmldb_local_airpay_evaluation_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026051901, 'local', 'airpay_evaluation');
     }
 
+    // 2026051903 — P1 #19: email-on-response admin notification flag.
+    //
+    // Adds one column to local_airpay_evaluation:
+    //   notify_admin_on_response — 1 = fire `evaluation_response` message
+    //                              provider to siteadmins on every
+    //                              successful submission. 0 = silent.
+    //
+    // Closes audit item #17 from
+    // parity-audit-2026-05-15/airpay_evaluation.md.
+    if ($oldversion < 2026051903) {
+        $table = new xmldb_table('local_airpay_evaluation');
+        $field = new xmldb_field('notify_admin_on_response',
+            XMLDB_TYPE_INTEGER, '1', null,
+            XMLDB_NOTNULL, null, '0', 'multiple_submit');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        upgrade_plugin_savepoint(true, 2026051903, 'local', 'airpay_evaluation');
+    }
+
     return true;
 }

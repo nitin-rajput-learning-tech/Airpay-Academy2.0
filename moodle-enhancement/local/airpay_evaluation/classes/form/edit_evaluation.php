@@ -93,6 +93,17 @@ class edit_evaluation extends \core_form\dynamic_form {
             get_string('multiple_submit', 'local_airpay_evaluation'));
         $mform->addHelpButton('multiple_submit', 'multiple_submit', 'local_airpay_evaluation');
 
+        // ── P1 #19 (2026-05-16) — Notifications ───────────────────────
+        // Closes audit item #17 from
+        // parity-audit-2026-05-15/airpay_evaluation.md.
+        $mform->addElement('header', 'hdr_notifications',
+            get_string('heading_notifications', 'local_airpay_evaluation'));
+
+        $mform->addElement('advcheckbox', 'notify_admin_on_response',
+            get_string('notify_admin_on_response', 'local_airpay_evaluation'));
+        $mform->addHelpButton('notify_admin_on_response',
+            'notify_admin_on_response', 'local_airpay_evaluation');
+
         // ── Organisation ──────────────────────────────────────────────
         $orgs = $this->get_org_options();
         $mform->addElement('select', 'costcenterid',
@@ -168,6 +179,8 @@ class edit_evaluation extends \core_form\dynamic_form {
             'timeopen'          => (int) ($e->timeopen        ?? 0),
             'timeclose'         => (int) ($e->timeclose       ?? 0),
             'multiple_submit'   => (int) ($e->multiple_submit ?? 0),
+            // P1 #19 — pre-fill admin-notify checkbox.
+            'notify_admin_on_response' => (int) ($e->notify_admin_on_response ?? 0),
         ]);
     }
 

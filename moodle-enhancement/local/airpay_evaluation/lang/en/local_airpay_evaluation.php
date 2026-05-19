@@ -13,6 +13,9 @@ $string['messageprovider:evaluation_invite'] = 'Evaluation invitation';
 $string['invaliditemid']  = 'Invalid item ID for the trigger event';
 $string['invalidratearea'] = 'Invalid rating area';
 
+// P1 #19 (2026-05-16) — email-on-response admin notification.
+$string['messageprovider:evaluation_response'] = 'Evaluation response — admin notification';
+
 // CRUD strings.
 $string['addevaluation'] = 'Create Evaluation Form';
 $string['editevaluation'] = 'Edit Evaluation Form';
@@ -139,6 +142,21 @@ $string['invalid_numeric_below_min']   = 'Answer to "{$a->q}" must be at least {
 $string['invalid_numeric_above_max']   = 'Answer to "{$a->q}" must be at most {$a->max}.';
 $string['invalid_multichoice_multi']   = 'One or more selected options are not valid for: {$a}';
 $string['multichoice_multi_hint']      = 'Check all the options that apply.';
+
+// P1 #19 (2026-05-16) — admin notification on every response.
+$string['heading_notifications']         = 'Notifications';
+$string['notify_admin_on_response']      = 'Email site admins on every response';
+$string['notify_admin_on_response_help'] = 'When ticked, every successful submission fires a Moodle notification to all site admins. They can opt out per channel (email / popup / mobile push) in their own notification preferences. Useful for low-volume strategic surveys (C-suite pulse, post-incident debrief). Leave OFF for high-volume L1 reaction forms — otherwise you will drown admins in mail.';
+$string['eval_response_subject']         = 'New evaluation response: {$a}';
+$string['eval_response_small']           = 'New response: {$a}';
+$string['eval_response_body_plain']      = 'A new response was submitted for evaluation "{$a->evalname}".
+
+Responder: {$a->responder}
+
+View all responses: {$a->url}';
+$string['eval_response_body_html']       = '<p>A new response was submitted for evaluation <strong>{$a->evalname}</strong>.</p><p>Responder: {$a->responder}</p><p><a href="{$a->url}">View all responses for this evaluation</a></p>';
+$string['eval_response_responder_anonymous'] = '(anonymous)';
+$string['eval_response_responder_unknown']   = '(unknown — user account removed)';
 $string['answer_required'] = 'Required answer missing: {$a}';
 $string['invalid_rating'] = 'Rating must be 1-5: {$a}';
 $string['invalid_nps'] = 'NPS score must be 0-10: {$a}';
