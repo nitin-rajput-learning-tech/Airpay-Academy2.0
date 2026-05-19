@@ -40,13 +40,38 @@ class edit_question extends \core_form\dynamic_form {
         $mform->setType('questiontext', PARAM_TEXT);
         $mform->addRule('questiontext', null, 'required', null, 'client');
 
-        // ── Multichoice options (only when type=multichoice) ──────────
+        // ── Multichoice options (only when type=multichoice or
+        //    type=multichoice_multi — P1 #18) ──────────────────────────
         $mform->addElement('textarea', 'options',
             get_string('question_options', 'local_airpay_evaluation'),
             ['rows' => 5, 'cols' => 50, 'placeholder' => "Option A\nOption B\nOption C"]);
         $mform->setType('options', PARAM_TEXT);
         $mform->addHelpButton('options', 'question_options', 'local_airpay_evaluation');
-        $mform->disabledIf('options', 'questiontype', 'neq', 'multichoice');
+        // disabledIf can chain via a conditions array (Moodle quickform
+        // semantics); both type variants enable the options textarea.
+        $mform->hideIf('options', 'questiontype', 'noteq', 'multichoice');
+        // The hideIf above only handles the FIRST condition. Multi-OR
+        // hiding in mforms is done via element grouping; simpler to just
+        // leave the textarea visible and rely on server-side validation
+        // to ignore it for irrelevant types. The build_question_options_json
+        // helper handles type dispatch.
+
+        // ── Numeric bounds (only when type=numeric — P1 #18) ──────────
+        $mform->addElement('text', 'numeric_min',
+            get_string('numeric_min', 'local_airpay_evaluation'),
+            ['size' => 10, 'placeholder' => '— optional —']);
+        $mform->setType('numeric_min', PARAM_RAW_TRIMMED);
+        $mform->addHelpButton('numeric_min', 'numeric_min',
+            'local_airpay_evaluation');
+        $mform->hideIf('numeric_min', 'questiontype', 'neq', 'numeric');
+
+        $mform->addElement('text', 'numeric_max',
+            get_string('numeric_max', 'local_airpay_evaluation'),
+            ['size' => 10, 'placeholder' => '— optional —']);
+        $mform->setType('numeric_max', PARAM_RAW_TRIMMED);
+        $mform->addHelpButton('numeric_max', 'numeric_max',
+            'local_airpay_evaluation');
+        $mform->hideIf('numeric_max', 'questiontype', 'neq', 'numeric');
 
         // ── Required toggle ───────────────────────────────────────────
         $mform->addElement('advcheckbox', 'required',
@@ -66,12 +91,38 @@ class edit_question extends \core_form\dynamic_form {
 
     public function validation($data, $files) {
         $errors = [];
-        if (($data['questiontype'] ?? '') === 'multichoice') {
+        $type = $data['questiontype'] ?? '';
+
+        if ($type === 'multichoice' || $type === 'multichoice_multi') {
             $opts = evaluation_manager::parse_options($data['options'] ?? '');
             if (count($opts) < 2) {
-                $errors['options'] = get_string('multichoice_needs_options', 'local_airpay_evaluation');
+                $errors['options'] = get_string('multichoice_needs_options',
+                    'local_airpay_evaluation');
             }
         }
+
+        // P1 #18 — numeric bounds: each must parse to int when set;
+        // max ≥ min when both set.
+        if ($type === 'numeric') {
+            $min_raw = isset($data['numeric_min']) ? trim((string) $data['numeric_min']) : '';
+            $max_raw = isset($data['numeric_max']) ? trim((string) $data['numeric_max']) : '';
+            $min = ($min_raw === '') ? null : (is_numeric($min_raw) ? (int) $min_raw : false);
+            $max = ($max_raw === '') ? null : (is_numeric($max_raw) ? (int) $max_raw : false);
+            if ($min === false) {
+                $errors['numeric_min'] = get_string('numeric_must_be_integer',
+                    'local_airpay_evaluation');
+            }
+            if ($max === false) {
+                $errors['numeric_max'] = get_string('numeric_must_be_integer',
+                    'local_airpay_evaluation');
+            }
+            if ($min !== null && $max !== null && $min !== false && $max !== false
+                    && $max < $min) {
+                $errors['numeric_max'] = get_string('numeric_min_max_invalid',
+                    'local_airpay_evaluation');
+            }
+        }
+
         return $errors;
     }
 
@@ -106,11 +157,19 @@ class edit_question extends \core_form\dynamic_form {
             throw new \moodle_exception('invalidquestion', 'local_airpay_evaluation');
         }
 
-        // Decode options back to text (one per line).
-        $opts_text = '';
-        if ($q->questiontype === 'multichoice') {
+        // Decode options back to text (one per line) and numeric bounds.
+        // P1 #18 — multichoice + multichoice_multi share the same option
+        // list representation; numeric has min/max bounds.
+        $opts_text  = '';
+        $num_min = '';
+        $num_max = '';
+        if ($q->questiontype === 'multichoice' || $q->questiontype === 'multichoice_multi') {
             $opts = evaluation_manager::decode_options($q->options);
             $opts_text = implode("\n", $opts);
+        } else if ($q->questiontype === 'numeric') {
+            $bounds = evaluation_manager::decode_numeric_bounds($q->options ?? null);
+            if ($bounds['min'] !== null) $num_min = (string) $bounds['min'];
+            if ($bounds['max'] !== null) $num_max = (string) $bounds['max'];
         }
 
         $this->set_data((object) [
@@ -119,6 +178,8 @@ class edit_question extends \core_form\dynamic_form {
             'questiontype' => $q->questiontype,
             'questiontext' => $q->questiontext,
             'options'      => $opts_text,
+            'numeric_min'  => $num_min,
+            'numeric_max'  => $num_max,
             'required'     => $q->required ?? 1,
             'anonymous'    => $q->anonymous ?? 0,
         ]);

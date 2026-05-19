@@ -25,6 +25,19 @@ const collectAnswers = (root) => {
         if (qtype === 'text') {
             const ta = card.querySelector('textarea');
             value = ta ? ta.value.trim() : '';
+        } else if (qtype === 'numeric') {
+            // P1 #18 — integer input. Empty string → null (counts as
+            // "missing" for required questions); otherwise pass the raw
+            // string and let server-side validate_answer enforce bounds.
+            const input = card.querySelector('input[type="number"]');
+            value = (input && input.value.trim() !== '') ? input.value.trim() : null;
+        } else if (qtype === 'multichoice_multi') {
+            // P1 #18 — collect every checked option into an array. Serialise
+            // as JSON so the wire format (a single string per answer) stays
+            // intact; the PHP side json_decode()s it back.
+            const checked = card.querySelectorAll('input[type="checkbox"]:checked');
+            const picks = Array.from(checked).map((cb) => cb.value);
+            value = picks.length > 0 ? JSON.stringify(picks) : null;
         } else {
             // Radio-based: rating, nps, yesno, multichoice
             const checked = card.querySelector('input[type="radio"]:checked');

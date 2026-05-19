@@ -126,6 +126,19 @@ $string['eval_notyetopen_body']    = 'This evaluation opens on {$a}. Please come
 $string['eval_closed_heading']     = 'Evaluation closed';
 $string['eval_closed_body']        = 'This evaluation closed on {$a}. New responses are no longer accepted.';
 $string['eval_pulse_hint']         = 'This is a recurring (pulse) evaluation — you can submit a fresh response each time you visit.';
+
+// P1 #18 (2026-05-16) — numeric + multi-select multichoice question types.
+$string['numeric_min']                 = 'Minimum allowed value';
+$string['numeric_min_help']            = 'Optional. Leave empty for no lower bound. The learner sees this as the <code>min</code> attribute on the input — values below it are rejected at submit time. Examples: <code>0</code> for "non-negative integers", <code>18</code> for age.';
+$string['numeric_max']                 = 'Maximum allowed value';
+$string['numeric_max_help']            = 'Optional. Leave empty for no upper bound. Must be greater than or equal to the minimum if both are set. Examples: <code>100</code> for percentages, <code>120</code> for age.';
+$string['numeric_must_be_integer']     = 'Must be a whole number (e.g. 0, 5, 100).';
+$string['numeric_min_max_invalid']     = 'Maximum must be greater than or equal to the minimum.';
+$string['invalid_numeric']             = 'Answer must be a whole number for: {$a}';
+$string['invalid_numeric_below_min']   = 'Answer to "{$a->q}" must be at least {$a->min}.';
+$string['invalid_numeric_above_max']   = 'Answer to "{$a->q}" must be at most {$a->max}.';
+$string['invalid_multichoice_multi']   = 'One or more selected options are not valid for: {$a}';
+$string['multichoice_multi_hint']      = 'Check all the options that apply.';
 $string['answer_required'] = 'Required answer missing: {$a}';
 $string['invalid_rating'] = 'Rating must be 1-5: {$a}';
 $string['invalid_nps'] = 'NPS score must be 0-10: {$a}';

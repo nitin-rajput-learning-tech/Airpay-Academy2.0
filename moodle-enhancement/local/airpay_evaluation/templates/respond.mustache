@@ -292,6 +292,31 @@
         {{/options}}
         {{/is_multichoice}}
 
+        {{! P1 #18 — multichoice_multi: checkbox list (any number selected). }}
+        {{#is_multichoice_multi}}
+        <p class="small text-muted mb-2">
+            <i class="fa fa-check-square fa-fw" aria-hidden="true"></i>
+            {{#str}}multichoice_multi_hint, local_airpay_evaluation{{/str}}
+        </p>
+        {{#options}}
+        <div class="mc-option">
+            <input type="checkbox" name="q-{{../id}}-multi" id="{{inputid}}" value="{{value}}">
+            <label for="{{inputid}}">{{label}}</label>
+        </div>
+        {{/options}}
+        {{/is_multichoice_multi}}
+
+        {{! P1 #18 — numeric: integer input with optional min/max bounds. }}
+        {{#is_numeric}}
+        <input type="number" name="q-{{id}}" class="form-control" style="max-width: 180px;"
+               step="1"
+               {{#numeric_min}}min="{{.}}"{{/numeric_min}}
+               {{#numeric_max}}max="{{.}}"{{/numeric_max}}
+               placeholder="0"
+               {{#required}}required{{/required}}>
+        {{#numeric_hint}}<small class="text-muted d-block mt-1">{{.}}</small>{{/numeric_hint}}
+        {{/is_numeric}}
+
         {{#is_text}}
         <textarea name="q-{{id}}" class="form-control" rows="4"
                   placeholder="Your response..."

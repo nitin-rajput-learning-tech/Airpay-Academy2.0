@@ -86,6 +86,11 @@ foreach ($questions as $i => $q) {
         $nps_scale[] = ['value' => $n, 'label' => (string) $n];
     }
 
+    // P1 #18 — numeric bounds (decoded only when type=numeric).
+    $num_bounds = ($q->questiontype === 'numeric')
+        ? \local_airpay_evaluation\evaluation_manager::decode_numeric_bounds($q->options ?? null)
+        : ['min' => null, 'max' => null];
+
     $question_rows[] = [
         'id'              => $q->id,
         'position'        => $i + 1,
@@ -95,11 +100,25 @@ foreach ($questions as $i => $q) {
         'is_nps'          => ($q->questiontype === 'nps'),
         'is_yesno'        => ($q->questiontype === 'yesno'),
         'is_multichoice'  => ($q->questiontype === 'multichoice'),
+        // P1 #18 — both new types surface as flags + share option rows
+        // for multichoice_multi.
+        'is_multichoice_multi' => ($q->questiontype === 'multichoice_multi'),
+        'is_numeric'      => ($q->questiontype === 'numeric'),
         'is_text'         => ($q->questiontype === 'text'),
         'required'        => (bool) $q->required,
         'options'         => $option_rows,
         'rating_scale'    => $rating_scale,
         'nps_scale'       => $nps_scale,
+        // Mustache helpers — leave empty string when unset so the
+        // template's `<input min/max>` attrs render as the constraint
+        // only when present.
+        'numeric_min'     => $num_bounds['min'] !== null ? (string) $num_bounds['min'] : '',
+        'numeric_max'     => $num_bounds['max'] !== null ? (string) $num_bounds['max'] : '',
+        'numeric_hint'    => $num_bounds['min'] !== null || $num_bounds['max'] !== null
+            ? sprintf('Range: %s to %s',
+                $num_bounds['min'] !== null ? $num_bounds['min'] : '−∞',
+                $num_bounds['max'] !== null ? $num_bounds['max'] : '+∞')
+            : '',
     ];
 }
 

@@ -245,12 +245,25 @@ class evaluation_manager {
 
     /** Question types and their display labels. */
     public const QUESTION_TYPES = [
-        'rating'      => '5-point rating (1=Strongly Disagree → 5=Strongly Agree)',
-        'nps'         => 'NPS (0-10 likelihood)',
-        'yesno'       => 'Yes / No',
-        'multichoice' => 'Multiple choice (one answer)',
-        'text'        => 'Free text response',
+        'rating'             => '5-point rating (1=Strongly Disagree → 5=Strongly Agree)',
+        'nps'                => 'NPS (0-10 likelihood)',
+        'yesno'              => 'Yes / No',
+        'multichoice'        => 'Multiple choice (pick one)',
+        // P1 #18 (2026-05-16) — closes audit item #3.
+        'multichoice_multi'  => 'Multiple choice (check all that apply)',
+        // P1 #18 (2026-05-16) — closes audit item #6.
+        'numeric'            => 'Number (integer with optional min / max)',
+        'text'               => 'Free text response',
     ];
+
+    /**
+     * Returns true if the question type stores its option set (or numeric
+     * bounds) in the `options` JSON column. Centralised so create/update
+     * + the form keep in lockstep when we add more option-bearing types.
+     */
+    private static function needs_options(string $type): bool {
+        return in_array($type, ['multichoice', 'multichoice_multi', 'numeric'], true);
+    }
 
     public static function get_questions(int $evaluationid): array {
         global $DB;
@@ -411,15 +424,9 @@ class evaluation_manager {
             throw new \moodle_exception('invalidevaluation', 'local_airpay_evaluation');
         }
 
-        // Multichoice requires options.
-        $options_json = null;
-        if ($data->questiontype === 'multichoice') {
-            $opts = self::parse_options($data->options ?? '');
-            if (count($opts) < 2) {
-                throw new \moodle_exception('multichoice_needs_options', 'local_airpay_evaluation');
-            }
-            $options_json = json_encode($opts);
-        }
+        // P1 #18 — both multichoice variants need an options list; numeric
+        // optionally stores {min, max} in the same column.
+        $options_json = self::build_question_options_json($data);
 
         // Auto-increment sortorder.
         $maxsort = $DB->get_field_sql(
@@ -458,19 +465,85 @@ class evaluation_manager {
         if (isset($data->anonymous))    $record->anonymous = (int) $data->anonymous;
         if (isset($data->sortorder))    $record->sortorder = (int) $data->sortorder;
 
+        // P1 #18 — Re-derive the options JSON if the type or option
+        // metadata changed. For numeric we also accept numeric_min /
+        // numeric_max via build_question_options_json().
         $finaltype = $record->questiontype ?? $existing->questiontype;
-        if ($finaltype === 'multichoice' && isset($data->options)) {
-            $opts = self::parse_options($data->options);
-            if (count($opts) < 2) {
-                throw new \moodle_exception('multichoice_needs_options', 'local_airpay_evaluation');
-            }
-            $record->options = json_encode($opts);
-        } else if (isset($record->questiontype) && $record->questiontype !== 'multichoice') {
+        $options_was_touched = isset($data->options)
+            || isset($data->numeric_min) || isset($data->numeric_max);
+        if (self::needs_options($finaltype) && $options_was_touched) {
+            // Merge the type into the synthetic payload so the helper
+            // dispatches correctly.
+            $payload = clone $data;
+            $payload->questiontype = $finaltype;
+            $record->options = self::build_question_options_json($payload);
+        } else if (isset($record->questiontype) && !self::needs_options($finaltype)) {
+            // Type changed to one that doesn't store options — wipe the
+            // stale JSON so analysis surfaces don't dereference dead data.
             $record->options = null;
         }
 
         $DB->update_record(self::QUESTIONS_TABLE, $record);
         return true;
+    }
+
+    /**
+     * P1 #18 — Build the `options` JSON column for a question payload.
+     * Returns null when the type doesn't carry options.
+     *
+     *  - multichoice / multichoice_multi → ["Opt A", "Opt B", ...]
+     *  - numeric                          → {"min": int|null, "max": int|null}
+     *
+     * @throws \moodle_exception when options are malformed for the type.
+     */
+    private static function build_question_options_json(object $data): ?string {
+        $type = (string) ($data->questiontype ?? '');
+
+        if ($type === 'multichoice' || $type === 'multichoice_multi') {
+            $opts = self::parse_options($data->options ?? '');
+            if (count($opts) < 2) {
+                throw new \moodle_exception('multichoice_needs_options',
+                    'local_airpay_evaluation');
+            }
+            return json_encode(array_values($opts));
+        }
+
+        if ($type === 'numeric') {
+            // Empty string = "no constraint". We store null in JSON so the
+            // shape stays stable and the form can distinguish "unset" from
+            // "zero is the bound".
+            $min = (isset($data->numeric_min) && $data->numeric_min !== '')
+                ? (int) $data->numeric_min : null;
+            $max = (isset($data->numeric_max) && $data->numeric_max !== '')
+                ? (int) $data->numeric_max : null;
+            if ($min !== null && $max !== null && $max < $min) {
+                throw new \moodle_exception('numeric_min_max_invalid',
+                    'local_airpay_evaluation');
+            }
+            return json_encode(['min' => $min, 'max' => $max]);
+        }
+
+        return null;
+    }
+
+    /**
+     * P1 #18 — Decode the numeric `{min, max}` from a question's options
+     * JSON. Returns ['min' => int|null, 'max' => int|null].
+     */
+    public static function decode_numeric_bounds(?string $options_json): array {
+        if (!$options_json) {
+            return ['min' => null, 'max' => null];
+        }
+        $decoded = json_decode($options_json, true);
+        if (!is_array($decoded)) {
+            return ['min' => null, 'max' => null];
+        }
+        return [
+            'min' => isset($decoded['min']) && $decoded['min'] !== null
+                ? (int) $decoded['min'] : null,
+            'max' => isset($decoded['max']) && $decoded['max'] !== null
+                ? (int) $decoded['max'] : null,
+        ];
     }
 
     public static function delete_question(int $id): bool {
@@ -666,6 +739,67 @@ class evaluation_manager {
                         '', $question->questiontext);
                 }
                 return $raw;
+            case 'multichoice_multi':
+                // P1 #18 — accepts either a real JSON-decoded array
+                // (preferred path from the AJAX submit handler) or a
+                // delimited string ("A|B|C") as a fallback. Each value
+                // must be in the allowed options list.
+                $opts = self::decode_options($question->options);
+                if (is_string($raw)) {
+                    $decoded = json_decode($raw, true);
+                    if (is_array($decoded)) {
+                        $raw = $decoded;
+                    } else {
+                        $raw = array_filter(array_map('trim', explode('|', $raw)),
+                            fn($x) => $x !== '');
+                    }
+                }
+                if (!is_array($raw)) {
+                    throw new \moodle_exception('invalid_multichoice_multi',
+                        'local_airpay_evaluation', '', $question->questiontext);
+                }
+                $clean = [];
+                foreach ($raw as $v) {
+                    $v = trim((string) $v);
+                    if ($v === '') continue;
+                    if (!in_array($v, $opts, true)) {
+                        throw new \moodle_exception('invalid_multichoice_multi',
+                            'local_airpay_evaluation', '', $question->questiontext);
+                    }
+                    $clean[] = $v;
+                }
+                if ($required && empty($clean)) {
+                    throw new \moodle_exception('answer_required',
+                        'local_airpay_evaluation', '', $question->questiontext);
+                }
+                // De-duplicate to keep aggregate stats honest.
+                return array_values(array_unique($clean));
+            case 'numeric':
+                // P1 #18 — must parse cleanly to int + respect optional
+                // min/max bounds from the question's options JSON.
+                if (!is_numeric($raw)) {
+                    throw new \moodle_exception('invalid_numeric',
+                        'local_airpay_evaluation', '', $question->questiontext);
+                }
+                $v = (int) $raw;
+                $bounds = self::decode_numeric_bounds($question->options ?? null);
+                if ($bounds['min'] !== null && $v < $bounds['min']) {
+                    $a = (object) [
+                        'q'   => $question->questiontext,
+                        'min' => $bounds['min'],
+                    ];
+                    throw new \moodle_exception('invalid_numeric_below_min',
+                        'local_airpay_evaluation', '', $a);
+                }
+                if ($bounds['max'] !== null && $v > $bounds['max']) {
+                    $a = (object) [
+                        'q'   => $question->questiontext,
+                        'max' => $bounds['max'],
+                    ];
+                    throw new \moodle_exception('invalid_numeric_above_max',
+                        'local_airpay_evaluation', '', $a);
+                }
+                return $v;
             case 'text':
                 return trim((string) $raw);
             default:
@@ -724,6 +858,23 @@ class evaluation_manager {
                 $dist = [];
                 foreach ($opts as $o) $dist[$o] = 0;
                 return ['type' => 'multichoice', 'count' => 0, 'distribution' => $dist];
+            case 'multichoice_multi':
+                // P1 #18 — same shape as multichoice (per-option distribution)
+                // but each response can populate multiple buckets. Track
+                // response count (people answering) AND total picks
+                // (selections) separately so the analysis surface can
+                // distinguish them.
+                $opts = self::decode_options($q->options);
+                $dist = [];
+                foreach ($opts as $o) $dist[$o] = 0;
+                return ['type' => 'multichoice_multi', 'count' => 0,
+                        'total_picks' => 0, 'distribution' => $dist];
+            case 'numeric':
+                // P1 #18 — running min/max/sum so finalise can compute avg.
+                $bounds = self::decode_numeric_bounds($q->options ?? null);
+                return ['type' => 'numeric', 'count' => 0, 'sum' => 0,
+                        'min_seen' => null, 'max_seen' => null,
+                        'bound_min' => $bounds['min'], 'bound_max' => $bounds['max']];
             case 'text':
                 return ['type' => 'text', 'count' => 0, 'samples' => []];
             default:
@@ -761,6 +912,31 @@ class evaluation_manager {
                     $bucket['distribution'][$a]++;
                 }
                 break;
+            case 'multichoice_multi':
+                // P1 #18 — `count` is incremented once already (one person
+                // answered); we add each selected option to the
+                // distribution and bump total_picks for the per-pick rate.
+                $picks = is_array($answer) ? $answer
+                    : (is_string($answer) && ($d = json_decode($answer, true)) && is_array($d) ? $d : []);
+                foreach ($picks as $a) {
+                    $a = (string) $a;
+                    if (isset($bucket['distribution'][$a])) {
+                        $bucket['distribution'][$a]++;
+                        $bucket['total_picks']++;
+                    }
+                }
+                break;
+            case 'numeric':
+                if (!is_numeric($answer)) break;
+                $v = (int) $answer;
+                $bucket['sum'] += $v;
+                if ($bucket['min_seen'] === null || $v < $bucket['min_seen']) {
+                    $bucket['min_seen'] = $v;
+                }
+                if ($bucket['max_seen'] === null || $v > $bucket['max_seen']) {
+                    $bucket['max_seen'] = $v;
+                }
+                break;
             case 'text':
                 if (count($bucket['samples']) < 5) {
                     $bucket['samples'][] = (string) $answer;
@@ -789,6 +965,19 @@ class evaluation_manager {
             case 'yesno':
                 $bucket['yes_pct'] = $bucket['count'] > 0
                     ? round(($bucket['yes'] / $bucket['count']) * 100) : 0;
+                break;
+            case 'multichoice_multi':
+                // P1 #18 — average picks per respondent (1.0 = everyone
+                // picked exactly one option, 2.5 = avg of 2-3 picks each).
+                $bucket['avg_picks'] = $bucket['count'] > 0
+                    ? round($bucket['total_picks'] / $bucket['count'], 2) : 0;
+                break;
+            case 'numeric':
+                // P1 #18 — compute avg only if any responses came in;
+                // leave min_seen/max_seen as null when count=0 so the
+                // analysis surface can render "—" rather than "0".
+                $bucket['avg'] = $bucket['count'] > 0
+                    ? round($bucket['sum'] / $bucket['count'], 2) : 0;
                 break;
         }
     }
