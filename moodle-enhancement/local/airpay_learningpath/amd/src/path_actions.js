@@ -122,6 +122,42 @@ const openEnrolUsersForm = async (pathid, returnFocus) => {
     modalForm.show();
 };
 
+// P1 #11 (2026-05-16) — bulk enrol by target audience.
+const openBulkEnrolAudienceForm = async (pathid, returnFocus) => {
+    const title = await getString('audience_modal_title',
+        'local_airpay_learningpath');
+    const modalForm = new ModalForm({
+        formClass: 'local_airpay_learningpath\\form\\bulk_enrol_audience_form',
+        args: {pathid: pathid},
+        modalConfig: {title: title, large: true},
+        returnFocus: returnFocus,
+    });
+    // Once the modal renders, wire up the audience filter helper:
+    // populates dropdowns + fires live preview on every filter change.
+    modalForm.addEventListener(modalForm.events.LOADED, async () => {
+        // The audience_form_helper module discovers the modal body
+        // automatically via the data-airpay-audience-filter attribute.
+        const modalBody = document.querySelector('.modal.show .modal-body')
+            || document.querySelector('.modal-body');
+        if (modalBody) {
+            const helper = await import(
+                'local_airpay_learningpath/audience_form_helper');
+            helper.init(modalBody);
+        }
+    });
+    modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, (event) => {
+        const detail = event.detail || {};
+        const enrolled = detail.enrolled || 0;
+        const matched = detail.matched || 0;
+        const message = enrolled === matched
+            ? `Enrolled all ${enrolled} matching user${enrolled === 1 ? '' : 's'}.`
+            : `${enrolled} of ${matched} matching users enrolled (rest were already enrolled).`;
+        Notification.addNotification({message: message, type: 'success'});
+        refreshTable();
+    });
+    modalForm.show();
+};
+
 const confirmUnassignCourse = async (pathid, courseid, name, returnFocus) => {
     const [title, message, label] = await Promise.all([
         getString('add_courses', 'local_airpay_learningpath'),
@@ -198,6 +234,10 @@ const handleViewClick = (pathid) => (event) => {
         case 'enrol-users':
             event.preventDefault();
             openEnrolUsersForm(pathid, trigger);
+            break;
+        case 'bulk-enrol-audience':
+            event.preventDefault();
+            openBulkEnrolAudienceForm(pathid, trigger);
             break;
         case 'unassign-course':
             event.preventDefault();

@@ -31,6 +31,21 @@ $string['enddate']             = 'End date';
 $string['enddate_help']        = 'Optional. Path stops accepting new enrolments after this date. Existing enrolled learners are unaffected.';
 $string['enddate_before_start'] = 'End date must be on or after the start date.';
 
+// P1 #11 (2026-05-16) — bulk-enrol-by-audience modal.
+$string['audience_modal_title']      = 'Bulk enrol by target audience';
+$string['audience_form_intro']       = 'Pick one or more filter criteria to target a group of users. The preview below updates as you change filters. Click "Enrol matching users" to commit.';
+$string['audience_any']              = 'Any';
+$string['audience_any_cohort']       = 'Any cohort';
+$string['audience_users_matched']    = 'users match';
+$string['audience_pick_at_least_one'] = 'Pick at least one filter criterion (use the regular Enrol Users form to enrol all users).';
+$string['audience_enrol_button']     = 'Enrol matching users';
+$string['audience_enrol_result']     = '%d new enrolment(s); %d user(s) matched the audience.';
+$string['designation']               = 'Designation';
+$string['region']                    = 'Region';
+$string['location']                  = 'Location';
+$string['employmenttype']            = 'Employment type';
+$string['cohort']                    = 'Cohort';
+
 // Field labels.
 $string['name'] = 'Path name';
 $string['description'] = 'Description';

@@ -122,8 +122,14 @@
 
     {{! ── Users tab ─────────────────────────────────────────────── }}
     {{# tab_users_active }}
-    <div class="d-flex justify-content-end mb-3">
+    <div class="d-flex justify-content-end mb-3 gap-2">
         {{# can_enrol }}
+        {{! P1 #11 (2026-05-16) — bulk enrol by target audience }}
+        <button type="button" class="btn btn-outline-primary btn-sm"
+                data-action="bulk-enrol-audience"
+                title="Enrol all users matching a target audience">
+            <i class="fa fa-users fa-fw" aria-hidden="true"></i> Bulk Enrol by Audience
+        </button>
         <button type="button" class="btn btn-primary btn-sm" data-action="enrol-users">
             <i class="fa fa-user-plus fa-fw" aria-hidden="true"></i> Enrol Users
         </button>
