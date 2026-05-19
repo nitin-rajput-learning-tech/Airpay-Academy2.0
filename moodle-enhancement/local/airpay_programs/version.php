@@ -1,11 +1,10 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
 $plugin->component = 'local_airpay_programs';
-// W1-9 (2026-05-15) — emit program_completed event for SOX audit + W1-5
-// evaluation trigger flow. Registers db/events.php (course_completed
-// observer) + db/caches.php (program_complete_dedupe).
-$plugin->version   = 2026051500;
+// W1-9 + P1 #9/10 (2026-05-16) — program_completed event + enrolment-window
+// dates + rich-text + target-audience bulk-enrol + cohort filter.
+$plugin->version   = 2026051601;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.5.0';  // W1-9: program_completed event wired
+$plugin->release   = '1.7.0';  // +P1 cohort filter on audience enroller
 $plugin->dependencies = ['local_airpay_org' => 2026041600];

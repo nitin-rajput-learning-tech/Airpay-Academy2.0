@@ -101,5 +101,31 @@ function xmldb_local_airpay_programs_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026041906, 'local', 'airpay_programs');
     }
 
+    // 2026051600 — P1 #9: enrolment-window dates + rich-text description.
+    // Mirrors the airpay_learningpath W2 #2 commit (8df39b36f).
+    if ($oldversion < 2026051600) {
+        $table = new xmldb_table('local_airpay_programs');
+
+        $field = new xmldb_field('descriptionformat', XMLDB_TYPE_INTEGER, '2',
+            null, XMLDB_NOTNULL, null, '1', 'description');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('startdate', XMLDB_TYPE_INTEGER, '10',
+            null, null, null, null, 'visible');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('enddate', XMLDB_TYPE_INTEGER, '10',
+            null, null, null, null, 'startdate');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2026051600, 'local', 'airpay_programs');
+    }
+
     return true;
 }

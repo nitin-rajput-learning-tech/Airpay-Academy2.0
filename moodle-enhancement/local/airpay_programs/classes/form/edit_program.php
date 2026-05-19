@@ -30,9 +30,14 @@ class edit_program extends \core_form\dynamic_form {
         $mform->setType('name', PARAM_TEXT);
         $mform->addRule('name', null, 'required', null, 'client');
 
-        $mform->addElement('textarea', 'description', get_string('description', 'local_airpay_programs'),
-            ['rows' => 5, 'cols' => 50]);
-        $mform->setType('description', PARAM_TEXT);
+        // P1 #9 (2026-05-16) — swap textarea for rich-text editor (mirrors
+        // airpay_learningpath W2 #2 commit 8df39b36f).
+        $mform->addElement('editor', 'description_editor',
+            get_string('description', 'local_airpay_programs'),
+            ['rows' => 10, 'cols' => 80],
+            ['noclean' => true, 'subdirs' => 0, 'maxfiles' => 0,
+             'enable_filemanagement' => false]);
+        $mform->setType('description_editor', PARAM_RAW);
 
         // ── Organisation ──────────────────────────────────────────────
         $mform->addElement('header', 'hdr_org', get_string('heading_org', 'local_airpay_programs'));
@@ -53,6 +58,21 @@ class edit_program extends \core_form\dynamic_form {
         $mform->setType('completion_required', PARAM_INT);
         $mform->setDefault('completion_required', 1);
 
+        // ── Enrolment window (P1 #9 2026-05-16) ───────────────────────
+        $mform->addElement('header', 'hdr_window',
+            get_string('heading_window', 'local_airpay_programs'));
+        $mform->addElement('date_selector', 'startdate',
+            get_string('startdate', 'local_airpay_programs'),
+            ['optional' => true]);
+        $mform->setType('startdate', PARAM_INT);
+        $mform->addHelpButton('startdate', 'startdate', 'local_airpay_programs');
+
+        $mform->addElement('date_selector', 'enddate',
+            get_string('enddate', 'local_airpay_programs'),
+            ['optional' => true]);
+        $mform->setType('enddate', PARAM_INT);
+        $mform->addHelpButton('enddate', 'enddate', 'local_airpay_programs');
+
         // ── Status ────────────────────────────────────────────────────
         $mform->addElement('header', 'hdr_status', get_string('heading_status', 'local_airpay_programs'));
 
@@ -67,12 +87,28 @@ class edit_program extends \core_form\dynamic_form {
     }
 
     public function validation($data, $files) {
-        return [];
+        $errors = [];
+        // P1 #9 (2026-05-16) — enrolment-window validation.
+        $start = (int) ($data['startdate'] ?? 0);
+        $end   = (int) ($data['enddate']   ?? 0);
+        if ($start > 0 && $end > 0 && $end < $start) {
+            $errors['enddate'] = get_string('enddate_before_start',
+                'local_airpay_programs');
+        }
+        return $errors;
     }
 
     public function process_dynamic_submission() {
         $data = $this->get_data();
         $programid = (int) $data->programid;
+
+        // P1 #9 (2026-05-16) — unpack the editor element into description +
+        // descriptionformat columns.
+        if (isset($data->description_editor) && is_array($data->description_editor)) {
+            $data->description = (string) ($data->description_editor['text'] ?? '');
+            $data->descriptionformat =
+                (int) ($data->description_editor['format'] ?? FORMAT_HTML);
+        }
 
         if ($programid === 0) {
             $newid = \local_airpay_programs\program_manager::create($data);
@@ -88,7 +124,13 @@ class edit_program extends \core_form\dynamic_form {
         $programid = (int) ($this->optional_param('programid', 0, PARAM_INT));
 
         if ($programid === 0) {
-            $this->set_data((object) ['programid' => 0]);
+            $this->set_data((object) [
+                'programid' => 0,
+                'description_editor' => [
+                    'text'   => '',
+                    'format' => FORMAT_HTML,
+                ],
+            ]);
             return;
         }
 
@@ -96,10 +138,16 @@ class edit_program extends \core_form\dynamic_form {
         $this->set_data((object) [
             'programid'           => $p->id,
             'name'                => $p->name,
-            'description'         => $p->description ?? '',
+            // P1 #9 — repack description into editor format.
+            'description_editor'  => [
+                'text'   => (string) ($p->description ?? ''),
+                'format' => (int) ($p->descriptionformat ?? FORMAT_HTML),
+            ],
             'costcenterid'        => $p->costcenterid ?? 0,
             'completion_required' => $p->completion_required ?? 1,
             'status'              => $p->status ?? 0,
+            'startdate'           => (int) ($p->startdate ?? 0),
+            'enddate'             => (int) ($p->enddate ?? 0),
         ]);
     }
 

@@ -90,10 +90,14 @@ class program_manager {
         $record = new \stdClass();
         $record->name                = trim($data->name);
         $record->description         = $data->description ?? '';
+        // P1 #9 (2026-05-16) — descriptionformat + start/end dates.
+        $record->descriptionformat   = (int) ($data->descriptionformat ?? FORMAT_HTML);
         $record->costcenterid        = (int) ($data->costcenterid ?? 0);
         $record->status              = (int) ($data->status ?? self::STATUS_DRAFT);
         $record->visible             = isset($data->visible) ? (int) $data->visible : 1;
         $record->completion_required = isset($data->completion_required) ? (int) $data->completion_required : 1;
+        $record->startdate           = !empty($data->startdate) ? (int) $data->startdate : null;
+        $record->enddate             = !empty($data->enddate)   ? (int) $data->enddate   : null;
         $record->timecreated         = time();
         $record->timemodified        = time();
 
@@ -116,10 +120,18 @@ class program_manager {
         $existing = $DB->get_record(self::TABLE, ['id' => $id], '*', MUST_EXIST);
 
         $record = (object) ['id' => $id, 'timemodified' => time()];
-        $fields = ['name', 'description', 'costcenterid', 'status', 'visible', 'completion_required'];
+        // P1 #9 (2026-05-16) — descriptionformat + start/end dates.
+        $fields = ['name', 'description', 'descriptionformat',
+                   'costcenterid', 'status', 'visible', 'completion_required',
+                   'startdate', 'enddate'];
         foreach ($fields as $field) {
             if (isset($data->$field)) {
-                $record->$field = $data->$field;
+                if (in_array($field, ['startdate', 'enddate'], true)
+                    && empty($data->$field)) {
+                    $record->$field = null;
+                } else {
+                    $record->$field = $data->$field;
+                }
             }
         }
 

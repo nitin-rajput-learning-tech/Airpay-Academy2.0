@@ -2,7 +2,7 @@
 // Copyright 2026 Airpay Payment Services
 // License http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 
-namespace local_airpay_learningpath\external;
+namespace local_airpay_programs\external;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -12,47 +12,38 @@ use core_external\external_single_structure;
 use core_external\external_value;
 
 /**
- * P1 #8 (2026-05-16) — enrol every user matching a target audience into
- * a learning path.
+ * P1 #9 (2026-05-16) — bulk enrol matching users into a program.
  *
- * Pair with `preview_audience` to let admins sanity-check the resolved
- * count before clicking commit.
- *
- * Idempotent — already-enrolled users are silently skipped via the
- * UNIQUE (pathid, userid) index in `local_airpay_learningpath_users`.
- * The returned `enrolled` count is NEW enrolments only.
- *
- * @package local_airpay_learningpath
+ * @package local_airpay_programs
  */
 class bulk_enrol_by_audience extends external_api {
 
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
-            'pathid'  => new external_value(PARAM_INT, 'Learning path ID'),
-            'filters' => new external_value(PARAM_RAW,
+            'programid' => new external_value(PARAM_INT, 'Program ID'),
+            'filters'   => new external_value(PARAM_RAW,
                 'JSON filter map (same shape as preview_audience)',
                 VALUE_DEFAULT, '{}'),
         ]);
     }
 
-    public static function execute(int $pathid, string $filters = '{}'): array {
+    public static function execute(int $programid, string $filters = '{}'): array {
         global $USER;
         $params = self::validate_parameters(self::execute_parameters(),
-            compact('pathid', 'filters'));
+            compact('programid', 'filters'));
 
         $context = \context_system::instance();
         self::validate_context($context);
-        require_capability('local/airpay_learningpath:enrol', $context);
+        require_capability('local/airpay_programs:enrol', $context);
 
-        $filter_map = self::parse_filters($params['filters']);
-        $result = \local_airpay_learningpath\path_audience_enroller::enrol_by_filter(
-            (int) $params['pathid'], $filter_map, (int) $USER->id);
-        return $result;
+        $map = self::parse_filters($params['filters']);
+        return \local_airpay_programs\program_audience_enroller::enrol_by_filter(
+            (int) $params['programid'], $map, (int) $USER->id);
     }
 
     private static function parse_filters(string $raw): array {
         if (strlen($raw) > 4096) {
-            throw new \moodle_exception('filterstoolong', 'local_airpay_learningpath');
+            throw new \moodle_exception('filterstoolong', 'local_airpay_programs');
         }
         $decoded = json_decode($raw, true, 5);
         if (!is_array($decoded) || json_last_error() !== JSON_ERROR_NONE) {
@@ -67,11 +58,11 @@ class bulk_enrol_by_audience extends external_api {
 
     public static function execute_returns(): external_single_structure {
         return new external_single_structure([
-            'matched'  => new external_value(PARAM_INT, 'Users matching the filter'),
+            'matched'  => new external_value(PARAM_INT, 'Users matched by the filter'),
             'enrolled' => new external_value(PARAM_INT,
                 'New enrolments inserted (excludes already-enrolled users)'),
             'capped'   => new external_value(PARAM_BOOL,
-                'True if audience was capped at MAX_AUDIENCE_SIZE'),
+                'True if audience size hit MAX_AUDIENCE_SIZE'),
         ]);
     }
 }

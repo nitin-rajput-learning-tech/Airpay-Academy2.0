@@ -1,18 +1,25 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/airpay_programs/db" VERSION="20260504"
+<XMLDB PATH="local/airpay_programs/db" VERSION="20260516"
        COMMENT="Airpay Certification Programs — multi-level certification tracks">
   <TABLES>
     <TABLE NAME="local_airpay_programs" COMMENT="Certification programs (replaces BizLMS local_program)">
       <FIELDS>
         <FIELD NAME="id"              TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="name"            TYPE="char" LENGTH="254" NOTNULL="true"/>
-        <FIELD NAME="description"     TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="description"     TYPE="text" NOTNULL="false"
+               COMMENT="P1 #9 (2026-05-16): now rendered via rich-text editor on edit form"/>
+        <FIELD NAME="descriptionformat" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="1"
+               COMMENT="P1 #9 (2026-05-16): FORMAT_HTML(1) | FORMAT_PLAIN(2) | FORMAT_MARKDOWN(4)"/>
         <FIELD NAME="costcenterid"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
                COMMENT="Tenant org ID"/>
         <FIELD NAME="open_path"       TYPE="char" LENGTH="254" NOTNULL="false"/>
         <FIELD NAME="status"          TYPE="int"  LENGTH="2"  NOTNULL="true" DEFAULT="1"
                COMMENT="0=draft, 1=active, 2=archived"/>
         <FIELD NAME="visible"         TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="startdate"       TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="P1 #9 (2026-05-16): UNIX ts; program becomes enrollable from this date"/>
+        <FIELD NAME="enddate"         TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="P1 #9 (2026-05-16): UNIX ts; program closes for new enrolments after this date"/>
         <FIELD NAME="completion_required"  TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1"
                COMMENT="1=all levels required, 0=any level completes program"/>
         <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>

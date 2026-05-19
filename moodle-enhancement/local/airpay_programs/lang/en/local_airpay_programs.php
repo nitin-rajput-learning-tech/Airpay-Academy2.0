@@ -23,7 +23,15 @@ $string['draftprogram'] = 'Move to Draft';
 $string['heading_basic'] = 'Program Details';
 $string['heading_org'] = 'Organisation';
 $string['heading_completion'] = 'Completion Rules';
+$string['heading_window'] = 'Enrolment window (optional)';
 $string['heading_status'] = 'Status';
+
+// P1 #9 (2026-05-16) — enrolment window dates.
+$string['startdate']            = 'Start date';
+$string['startdate_help']       = 'Optional. Program becomes enrollable from this date. Leave empty to allow enrolment immediately.';
+$string['enddate']              = 'End date';
+$string['enddate_help']         = 'Optional. Program closes for new enrolments after this date. Existing enrolled learners are unaffected.';
+$string['enddate_before_start'] = 'End date must be on or after the start date.';
 
 // Field labels.
 $string['name'] = 'Program name';
