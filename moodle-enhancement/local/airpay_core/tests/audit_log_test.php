@@ -37,6 +37,27 @@ class audit_log_test extends \advanced_testcase {
             audit_log::SENSITIVE_EVENTS);
         $this->assertContains('\\core\\event\\user_created',
             audit_log::SENSITIVE_EVENTS);
+
+        // P1 #24 — closes audit item #13 from airpay_courses.md.
+        // Course CRUD events (including the previously-missing
+        // course_updated) and course_categories CRUD must all be
+        // audited. Without these, compliance can't answer "what
+        // changed on this course and when?".
+        foreach ([
+            '\\core\\event\\course_created',
+            '\\core\\event\\course_updated',
+            '\\core\\event\\course_deleted',
+            '\\core\\event\\course_visibility_updated',
+            '\\core\\event\\course_section_created',
+            '\\core\\event\\course_section_updated',
+            '\\core\\event\\course_category_created',
+            '\\core\\event\\course_category_updated',
+            '\\core\\event\\course_category_deleted',
+        ] as $eventname) {
+            $this->assertContains($eventname,
+                audit_log::SENSITIVE_EVENTS,
+                "audit_log::SENSITIVE_EVENTS missing $eventname — compliance gap");
+        }
     }
 
     public function test_tenant_actions_requires_admin_or_viewreports(): void {

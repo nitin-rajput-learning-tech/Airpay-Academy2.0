@@ -62,6 +62,20 @@ class audit_log {
         '\core\event\course_created',
         '\core\event\course_deleted',
         '\core\event\course_visibility_updated',
+        // P1 #24 (2026-05-16) — closes audit item #13 from
+        // parity-audit-2026-05-15/airpay_courses.md (BizLMS local_logs
+        // parity). Moodle fires `course_updated` from `update_course()`
+        // on every persistence path — `airpay_courses\course_manager`
+        // routes ALL its create/update/toggle_visibility traffic through
+        // that function, so adding the eventname here gives compliance
+        // auditors a complete "what changed on this course and who did
+        // it" timeline without writing a custom audit table.
+        '\core\event\course_updated',
+        '\core\event\course_section_updated',
+        '\core\event\course_section_created',
+        '\core\event\course_category_updated',
+        '\core\event\course_category_created',
+        '\core\event\course_category_deleted',
 
         // Bulk operations.
         '\core\event\users_bulk_imported',
