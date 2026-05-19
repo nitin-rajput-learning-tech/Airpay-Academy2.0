@@ -107,6 +107,21 @@ class edit_course extends \core_form\dynamic_form {
 
         $mform->addElement('date_time_selector', 'enddate', get_string('enddate', 'local_airpay_courses'),
             ['optional' => true]);
+
+        // ── Completion deadline (P1 #21 — 2026-05-16) ────────────────
+        // Closes audit item #28 from
+        // parity-audit-2026-05-15/airpay_courses.md. Column already
+        // exists in the `course` table (open_coursecompletiondays) but
+        // wasn't exposed on the form, so course-creators couldn't set
+        // it. `course_manager::get_completion_deadline()` already reads
+        // the value; restoring the form field unblocks that flow.
+        $mform->addElement('text', 'open_coursecompletiondays',
+            get_string('coursecompletiondays', 'local_airpay_courses'),
+            ['size' => 6, 'placeholder' => '0']);
+        $mform->setType('open_coursecompletiondays', PARAM_INT);
+        $mform->setDefault('open_coursecompletiondays', 0);
+        $mform->addHelpButton('open_coursecompletiondays',
+            'coursecompletiondays', 'local_airpay_courses');
     }
 
     /**
@@ -115,6 +130,15 @@ class edit_course extends \core_form\dynamic_form {
     public function validation($data, $files) {
         global $DB;
         $errors = [];
+
+        // P1 #21 — completion deadline must be non-negative.
+        if (isset($data['open_coursecompletiondays'])
+                && $data['open_coursecompletiondays'] !== ''
+                && (int) $data['open_coursecompletiondays'] < 0) {
+            $errors['open_coursecompletiondays']
+                = get_string('coursecompletiondays_invalid',
+                    'local_airpay_courses');
+        }
 
         $courseid = (int) ($data['courseid'] ?? 0);
         $iscreate = ($courseid === 0);
@@ -197,6 +221,10 @@ class edit_course extends \core_form\dynamic_form {
             'visible'   => $course->visible,
             'startdate' => $course->startdate,
             'enddate'   => $course->enddate,
+            // P1 #21 — pre-fill completion deadline. Column may not be
+            // present on installs that pre-date the BizLMS column add,
+            // so defensive null-coalesce.
+            'open_coursecompletiondays' => (int) ($course->open_coursecompletiondays ?? 0),
             'summary_editor' => [
                 'text'   => $course->summary ?? '',
                 'format' => $course->summaryformat ?? FORMAT_HTML,

@@ -28,10 +28,11 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_airpay_courses';
-$plugin->version   = 2026051303;
+// P1 #21 (2026-05-16) — restore open_coursecompletiondays on edit form.
+$plugin->version   = 2026051901;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.8.0';
+$plugin->release   = '1.9.0';
 $plugin->dependencies = [
     'local_airpay_org' => 2026041600,
 ];
@@ -44,6 +45,11 @@ $plugin->dependencies = [
 //          + share.php admin page + share_modal.mustache template
 //          + sharing_manager class (CRUD + catalog-filter builder)
 //          + audit log entry per share/unshare
+// 1.9.0  P1 #21 (2026-05-16) — restore open_coursecompletiondays
+//          numeric field on edit_course form. Column already existed
+//          on mdl_course; persistence wiring in course_manager.
+//          Closes audit item #28 from
+//          parity-audit-2026-05-15/airpay_courses.md.
 // 1.8.0  Sprint D (2026-05-13) — pull/request workflow:
 //          + local_airpay_courses_requests table (pending/approved/rejected)
 //          + request_course / approve_request / reject_request WS

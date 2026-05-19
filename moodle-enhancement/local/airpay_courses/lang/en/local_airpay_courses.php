@@ -66,6 +66,12 @@ $string['visibility'] = 'Visible to learners';
 $string['startdate'] = 'Start date';
 $string['enddate'] = 'End date';
 
+// P1 #21 (2026-05-16) — completion deadline. Closes audit item #28 from
+// parity-audit-2026-05-15/airpay_courses.md.
+$string['coursecompletiondays']      = 'Completion deadline (days from enrolment)';
+$string['coursecompletiondays_help'] = 'Number of days from enrolment by which learners must complete this course. Read by <code>course_manager::get_completion_deadline()</code> and used by the reminder workflow to decide when to nudge learners. Set to <code>0</code> for no deadline. Examples: <code>30</code> for monthly compliance modules, <code>180</code> for half-yearly refreshers, <code>365</code> for annual recertification.';
+$string['coursecompletiondays_invalid'] = 'Completion deadline must be 0 or a positive number of days.';
+
 // Error messages.
 $string['missingrequiredfields'] = 'Please fill in all required fields.';
 $string['shortnametaken'] = 'This short name is already in use. Please choose another.';

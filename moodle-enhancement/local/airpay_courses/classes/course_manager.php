@@ -203,6 +203,15 @@ class course_manager {
             }
         }
 
+        // P1 #21 (2026-05-16) — open_coursecompletiondays. Closes audit
+        // item #28 from parity-audit-2026-05-15/airpay_courses.md. The
+        // column already exists on mdl_course; we just had to start
+        // populating it from the form. 0 = no deadline (Moodle convention).
+        if (isset($data->open_coursecompletiondays)) {
+            $course->open_coursecompletiondays
+                = max(0, (int) $data->open_coursecompletiondays);
+        }
+
         // Create via core API.
         $newcourse = create_course($course);
 
@@ -251,6 +260,12 @@ class course_manager {
             if ($org) {
                 $course->open_path = $org->path;
             }
+        }
+
+        // P1 #21 — completion deadline. See create() for context.
+        if (isset($data->open_coursecompletiondays)) {
+            $course->open_coursecompletiondays
+                = max(0, (int) $data->open_coursecompletiondays);
         }
 
         update_course($course);
