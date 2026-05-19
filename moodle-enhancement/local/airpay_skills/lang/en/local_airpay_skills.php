@@ -77,3 +77,14 @@ $string['privacy:metadata:user_skills:current_level']  = 'The level the user has
 $string['privacy:metadata:user_skills:source']         = 'Whether this was derived from a course completion, assessment, or manual entry.';
 $string['privacy:metadata:user_skills:source_id']      = 'Course or assessment ID that granted the level.';
 $string['privacy:metadata:user_skills:timecreated']    = 'When the level was first recorded.';
+
+// P1 #22 (2026-05-16) — skill-level audit log privacy metadata.
+$string['privacy:metadata:user_skill_hist']                = 'Append-only audit log of every change to a user\'s skill level. Lets HR answer "when did this user reach this level?" and supports compliance reporting.';
+$string['privacy:metadata:user_skill_hist:userid']         = 'The user whose skill level changed.';
+$string['privacy:metadata:user_skill_hist:skillid']        = 'The skill that changed.';
+$string['privacy:metadata:user_skill_hist:previous_level'] = 'The level the user held before this change (0 if they had no level).';
+$string['privacy:metadata:user_skill_hist:new_level']      = 'The level the user holds after this change.';
+$string['privacy:metadata:user_skill_hist:source']         = 'What triggered the change (course completion, assessment, manual entry, import).';
+$string['privacy:metadata:user_skill_hist:source_id']      = 'Course or assessment ID that triggered the change.';
+$string['privacy:metadata:user_skill_hist:changed_by_userid'] = 'The acting user id (manager / admin). Null when the change was triggered automatically (e.g. by a course-completion observer).';
+$string['privacy:metadata:user_skill_hist:timecreated']    = 'When the change was recorded.';

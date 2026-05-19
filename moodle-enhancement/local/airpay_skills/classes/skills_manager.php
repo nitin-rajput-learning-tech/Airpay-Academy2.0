@@ -150,11 +150,18 @@ class skills_manager {
             if ($existing) {
                 // Only upgrade, never downgrade.
                 if ($cs->teaches_level > $existing->current_level) {
+                    $previous_level = (int) $existing->current_level;
                     $existing->current_level = $cs->teaches_level;
                     $existing->source        = 'course';
                     $existing->source_id     = $courseid;
                     $existing->timemodified   = time();
                     $DB->update_record('local_airpay_user_skills', $existing);
+
+                    // P1 #22 — audit log.
+                    self::record_skill_change(
+                        $userid, (int) $cs->skillid,
+                        $previous_level, (int) $cs->teaches_level,
+                        'course', $courseid, null);
                 }
             } else {
                 $DB->insert_record('local_airpay_user_skills', (object)[
@@ -166,8 +173,79 @@ class skills_manager {
                     'timecreated'   => time(),
                     'timemodified'  => time(),
                 ]);
+
+                // P1 #22 — first-time grant. previous_level = 0 (no prior).
+                self::record_skill_change(
+                    $userid, (int) $cs->skillid,
+                    0, (int) $cs->teaches_level,
+                    'course', $courseid, null);
             }
         }
+    }
+
+    /**
+     * P1 #22 (2026-05-16) — append a row to local_airpay_user_skill_hist.
+     *
+     * Public so future callers (admin manual override, self-rating
+     * workflow, HRMS import) can write history rows in one consistent
+     * place. The schema enforces append-only via convention; no UPDATE
+     * or DELETE outside the privacy provider's user-erasure path.
+     *
+     * Idempotency: a noop change (previous_level === new_level) is
+     * NOT recorded, so spammy re-application of the same course
+     * completion doesn't bloat the history table.
+     *
+     * @param int      $userid           User whose level changed.
+     * @param int      $skillid          Skill being changed.
+     * @param int      $previous_level   Level before the change (0 if none).
+     * @param int      $new_level        Level after the change.
+     * @param string   $source           One of course|assessment|manual|import.
+     * @param int|null $source_id        Course/assessment id (null for manual).
+     * @param int|null $changed_by_userid  Acting user id (null for auto/cron).
+     */
+    public static function record_skill_change(int $userid, int $skillid,
+                                                 int $previous_level,
+                                                 int $new_level,
+                                                 string $source = 'course',
+                                                 ?int $source_id = null,
+                                                 ?int $changed_by_userid = null): void {
+        global $DB;
+
+        // Skip noop "changes" — saves a row per stale-cache re-apply.
+        if ($previous_level === $new_level) {
+            return;
+        }
+
+        $DB->insert_record(self::USER_SKILL_HIST_TABLE, (object) [
+            'userid'             => $userid,
+            'skillid'            => $skillid,
+            'previous_level'     => $previous_level,
+            'new_level'          => $new_level,
+            'source'             => $source,
+            'source_id'          => $source_id,
+            'changed_by_userid'  => $changed_by_userid,
+            'timecreated'        => time(),
+        ]);
+    }
+
+    /**
+     * P1 #22 — query the history table.
+     *
+     * @param int $userid     Required.
+     * @param int $skillid    Optional — 0 returns all skills for the user.
+     * @param int $limit      0 = no limit.
+     * @return array<int, \stdClass>  Most recent first.
+     */
+    public static function get_user_skill_history(int $userid,
+                                                    int $skillid = 0,
+                                                    int $limit = 0): array {
+        global $DB;
+        $where  = ['userid' => $userid];
+        if ($skillid > 0) {
+            $where['skillid'] = $skillid;
+        }
+        return $DB->get_records(self::USER_SKILL_HIST_TABLE, $where,
+            'timecreated DESC, id DESC', '*', 0, $limit);
     }
 
     /**
@@ -308,6 +386,8 @@ class skills_manager {
     private const COURSE_SKILL_TABLE = 'local_airpay_course_skills';
     private const USER_SKILL_TABLE = 'local_airpay_user_skills';
     private const SKILL_LEVELS_TABLE = 'local_airpay_skill_levels';
+    // P1 #22 (2026-05-16) — audit log of level changes.
+    private const USER_SKILL_HIST_TABLE = 'local_airpay_user_skill_hist';
 
     /** Get all categories for dropdowns. */
     public static function get_categories_options(): array {

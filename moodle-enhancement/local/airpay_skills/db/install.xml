@@ -127,5 +127,40 @@
       </INDEXES>
     </TABLE>
 
+    <TABLE NAME="local_airpay_user_skill_hist"
+           COMMENT="P1 #22: append-only audit log of every skill-level change. Lets HR answer 'when did Alice's Python level go from 2 to 4?'. Closes audit item #23 from parity-audit-2026-05-15/airpay_skills.md.">
+      <FIELDS>
+        <FIELD NAME="id"               TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"           TYPE="int"  LENGTH="10" NOTNULL="true"
+               COMMENT="The user whose level changed"/>
+        <FIELD NAME="skillid"          TYPE="int"  LENGTH="10" NOTNULL="true"
+               COMMENT="FK to local_airpay_skills.id"/>
+        <FIELD NAME="previous_level"   TYPE="int"  LENGTH="2"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Level before the change (0 = had no level before)"/>
+        <FIELD NAME="new_level"        TYPE="int"  LENGTH="2"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Level after the change"/>
+        <FIELD NAME="source"           TYPE="char" LENGTH="50" NOTNULL="true" DEFAULT="course"
+               COMMENT="course|assessment|manual|import — what triggered the change"/>
+        <FIELD NAME="source_id"        TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="Course/assessment id when source != manual"/>
+        <FIELD NAME="changed_by_userid" TYPE="int" LENGTH="10" NOTNULL="false"
+               COMMENT="Acting user id (null for cron-driven/auto changes)"/>
+        <FIELD NAME="timecreated"      TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"  TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_user"  TYPE="foreign" FIELDS="userid"  REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="fk_skill" TYPE="foreign" FIELDS="skillid" REFTABLE="local_airpay_skills" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <!-- NB: a single-column FK on userid implicitly creates an index
+             on `userid`, so we do NOT declare one here. -->
+        <INDEX NAME="idx_user_skill_t" UNIQUE="false" FIELDS="userid, skillid, timecreated"
+               COMMENT="Skill-specific timeline: 'show me Alice's Python progression'"/>
+        <INDEX NAME="idx_changed_by"   UNIQUE="false" FIELDS="changed_by_userid"
+               COMMENT="Reverse lookup: 'show me every level change Bob made as a manager'"/>
+      </INDEXES>
+    </TABLE>
+
   </TABLES>
 </XMLDB>
