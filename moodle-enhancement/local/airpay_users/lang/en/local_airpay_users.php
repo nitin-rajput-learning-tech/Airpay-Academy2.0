@@ -95,3 +95,50 @@ $string['useractivated'] = 'User activated.';
 
 // Privacy.
 $string['privacy:metadata'] = 'The Airpay Users plugin extends the core {user} table via open_* fields. These are exported by core_user; no airpay-owned tables store additional personal data.';
+
+// W1-6 (2026-05-16) — HRMS 24-column bulk import.
+$string['hrms_pagetitle']         = 'HRMS bulk import (24-column CSV)';
+$string['hrms_pageheading']       = 'HRMS bulk import';
+$string['hrms_breadcrumb']        = 'HRMS import';
+$string['hrms_csvfile']           = 'HRMS CSV file';
+$string['hrms_runimport']         = 'Run import';
+$string['hrms_empty_csv']         = 'The uploaded CSV is empty. Please upload a file with a header row plus one or more data rows.';
+$string['hrms_import_done']       = 'HRMS import complete. Review results below.';
+$string['hrms_view_history']      = 'View import history';
+$string['hrms_history_title']     = 'HRMS import history';
+$string['hrms_history_breadcrumb'] = 'HRMS history';
+$string['hrms_new_import']        = 'New HRMS import';
+$string['hrms_no_runs']           = 'No HRMS imports have been run yet for this tenant.';
+$string['hrms_back_to_history']   = 'Back to history';
+$string['hrms_run_detail_title']  = 'HRMS run #{$a}';
+$string['hrms_run_detail_heading'] = 'HRMS run #{$a} — details';
+$string['hrms_no_errors']         = 'This run completed with no row-level errors or warnings.';
+$string['hrms_error_log']         = 'Row-level errors and warnings';
+$string['back_to_users']          = 'Back to user list';
+$string['manage_users']           = 'Manage users';
+
+// History table column headers.
+$string['hrms_col_id']        = 'Run #';
+$string['hrms_col_filename']  = 'File';
+$string['hrms_col_time']      = 'Time';
+$string['hrms_col_user']      = 'Run by';
+$string['hrms_col_source']    = 'Source';
+$string['hrms_col_status']    = 'Status';
+$string['hrms_col_total']     = 'Total rows';
+$string['hrms_col_inserted']  = 'Inserted';
+$string['hrms_col_updated']   = 'Updated';
+$string['hrms_col_errors']    = 'Errors';
+$string['hrms_col_warnings']  = 'Warnings';
+
+// Run-detail table column headers.
+$string['hrms_col_line']      = 'Line #';
+$string['hrms_col_severity']  = 'Severity';
+$string['hrms_col_email']     = 'Email';
+$string['hrms_col_empcode']   = 'Employee code';
+$string['hrms_col_username']  = 'Username';
+$string['hrms_col_name']      = 'Name';
+$string['hrms_col_message']   = 'Message';
+$string['hrms_col_missing']   = 'Missing mandatory';
+
+// CSV parse errors.
+$string['error_csv_header_missing'] = 'Required header column(s) missing: {$a}';

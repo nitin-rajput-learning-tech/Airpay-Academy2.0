@@ -28,10 +28,12 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_airpay_users';
-$plugin->version   = 2026051501;
+// W1-6 (2026-05-16) — HRMS 24-column Darwinbox/SAP CSV bulk import.
+// First db/install.xml in this plugin (2 audit tables: sync_runs + sync_errors).
+$plugin->version   = 2026051600;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.9.0'; // +BizLMS parity: 5-level hierarchy cascade + email/empid filters.
+$plugin->release   = '2.0.0';  // W1-6: HRMS 24-col importer + two-pass manager link
 $plugin->dependencies = [
     'local_airpay_org' => 2026051501,
 ];
