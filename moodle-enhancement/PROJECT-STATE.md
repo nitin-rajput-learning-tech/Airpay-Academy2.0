@@ -79,16 +79,44 @@ Commit: **`60293eaa3`**. Closes audit item #6 from `airpay_learningpath.md`. Bac
 - 7 PHPUnit cases
 - Live smoke against production data: `preview(designation=Manager)` → 45 real Managers found
 
-### Wave 2 totals (so far)
+## 🆕 WAVE 2 — P1 #9 + #10: programs feature parity + cohort audience filter (2026-05-16)
 
-8 P1 commits today, ~50 files touched, all live-smoke-tested. All P1 items from the audit's "user-facing pain points" list are now shipped except the per-question-anonymous toggle (already done in W1-5), capability granularity, and multilingual (Hi/Te/Es) language packs.
+Commit: **`1bdc2e4ed`**. Two P1 fixes paired.
 
-### Next batches
+- **P1 #9** parallel-ports W2 #2 + W2 #8 patterns to `airpay_programs`:
+  - schema: `startdate` + `enddate` + `descriptionformat`
+  - new class `program_audience_enroller`
+  - new WS: `local_airpay_programs_preview_audience` + `local_airpay_programs_bulk_enrol_by_audience`
+  - `local_airpay_programs` `2026051601` (1.7.0)
+- **P1 #10** extends both audience enrollers with a `cohortid` filter (logical AND with open_* filters). Uses `EXISTS (SELECT 1 FROM cohort_members ...)` to avoid row-multiplication.
+- Live smoke: path + programs both find 45 real Managers; cohort filter returns exact 3-member match; cohort+designation AND narrows to 1.
 
-- Cross-plugin: cohort-driven audience filtering (path_audience_enroller currently uses user.open_* only; cohort_members table would extend the same filter map)
-- airpay_programs start/end dates + audience filter (parallel to learningpath; would land as one commit)
-- Bulk-enrol UI (Wave 3 polish on top of P1 #8)
-- airpay_request UI: "Request access" button on path / classroom / program detail pages
+## 🆕 WAVE 2 — P1 #11 + #12: bulk-enrol modal UI + Hindi translations (2026-05-16)
+
+Commit: **`d8fbd7be4`**.
+
+- **P1 #11** ships a working UI on top of the W2 #8 + P1 #10 WS endpoints. "Bulk Enrol by Audience" button on the path Users tab opens a modal with 5 filter dropdowns + live preview + commit. Wires `core_form\modalform` + new `bulk_enrol_audience_form` + new `audience_form_helper.js` AMD module (debounced preview, color-coded count).
+- **P1 #12** ships Hindi (`hi`) translations for `local_airpay_users` (~30 strings: signup, welcome email, DOB/DOJ, supervisor, common labels) and `local_airpay_learningpath` (~30 strings: form labels, status, bulk-enrol modal). Verified live via `get_string_manager()`.
+- `local_airpay_learningpath` `2026051603` (1.7.0)
+
+### Wave 2 totals (today)
+
+12 P1 commits, ~70 files touched, all live-smoke-tested. Coverage now includes:
+- User-list chip filters + supervisor isolation + DOB/DOJ + welcome email tokens
+- Enrolment-window dates on learning path, classroom, programs (3 plugins)
+- Rich-text description on learning path + programs
+- Target-audience bulk enrol on learning path + programs (backend + UI on path)
+- Cohort-driven audience filter on both
+- airpay_request polymorphic (path requests supported)
+- Hindi locale for the two highest-traffic plugins
+
+### Next batches (when continuing)
+
+- airpay_classroom target-audience bulk enrol (parallel-port; same pattern as path/programs)
+- Bulk-enrol modal UI on the program Users tab (parallel-port of P1 #11)
+- airpay_classroom + airpay_programs Hindi packs
+- Cron-driven HRMS sync (P0 #4 from `airpay_users.md` — needs external URL/file-watch source)
+- Mobile-app web service surface (every plugin needs WS endpoints flagged for the Moodle Mobile app)
 
 ---
 
