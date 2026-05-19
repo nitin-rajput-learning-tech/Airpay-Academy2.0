@@ -27,6 +27,21 @@ if ((int) $evaluation->status !== \local_airpay_evaluation\evaluation_manager::S
     throw new moodle_exception('evaluationnotactive', 'local_airpay_evaluation');
 }
 
+// P1 #17 — outside the configured availability window? Show a friendly
+// banner instead of throwing a fatal. Admins still get through so they
+// can preview pre/post window.
+$window_status = null;  // null = open, otherwise = ['kind' => 'notyetopen'|'closed', 'when' => 'human-readable']
+if (!$is_admin) {
+    $now   = time();
+    $open  = (int) ($evaluation->timeopen  ?? 0);
+    $close = (int) ($evaluation->timeclose ?? 0);
+    if ($open > 0 && $now < $open) {
+        $window_status = ['kind' => 'notyetopen', 'when' => userdate($open)];
+    } else if ($close > 0 && $now >= $close) {
+        $window_status = ['kind' => 'closed', 'when' => userdate($close)];
+    }
+}
+
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/local/airpay_evaluation/respond.php', ['id' => $evaluationid]));
 $PAGE->set_title(format_string($evaluation->name));
@@ -108,6 +123,15 @@ $data = [
     'context_programid'   => $programid,
     'context_classroomid' => $classroomid,
     'backurl'           => (new moodle_url('/my/'))->out(false),
+    // P1 #17 — window status (null when open). The template renders a
+    // banner with the appropriate copy + hides the form.
+    'window_locked'     => $window_status !== null,
+    'window_notyetopen' => $window_status && $window_status['kind'] === 'notyetopen',
+    'window_closed'     => $window_status && $window_status['kind'] === 'closed',
+    'window_when'       => $window_status['when'] ?? '',
+    // P1 #17 — pulse-mode hint shown above the form so a re-submitting
+    // user understands why no "already responded" gate is firing.
+    'is_pulse'          => (int) ($evaluation->multiple_submit ?? 0) === 1,
 ];
 
 echo $OUTPUT->header();

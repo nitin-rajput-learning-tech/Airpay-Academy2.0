@@ -186,8 +186,37 @@
         </span>{{/is_anonymous}}
     </p>
     {{#description}}<p class="text-muted">{{.}}</p>{{/description}}
+    {{! P1 #17 — pulse hint (only on multi-submit, non-locked evaluations) }}
+    {{^window_locked}}{{#is_pulse}}
+    <p class="small mb-0" style="color: #0f7a73;">
+        <i class="fa fa-redo fa-fw" aria-hidden="true"></i>
+        {{#str}}eval_pulse_hint, local_airpay_evaluation{{/str}}
+    </p>
+    {{/is_pulse}}{{/window_locked}}
 </div>
 
+{{! P1 #17 — window-locked banner (renders instead of form). }}
+{{#window_locked}}
+<div class="card border-0 shadow-sm">
+    <div class="card-body text-center py-5">
+        {{#window_notyetopen}}
+        <i class="fa fa-hourglass-start fa-4x text-warning mb-3 d-block" aria-hidden="true"></i>
+        <h4 class="mb-2">{{#str}}eval_notyetopen_heading, local_airpay_evaluation{{/str}}</h4>
+        <p class="text-muted mb-4">{{#str}}eval_notyetopen_body, local_airpay_evaluation, {{window_when}}{{/str}}</p>
+        {{/window_notyetopen}}
+        {{#window_closed}}
+        <i class="fa fa-lock fa-4x text-secondary mb-3 d-block" aria-hidden="true"></i>
+        <h4 class="mb-2">{{#str}}eval_closed_heading, local_airpay_evaluation{{/str}}</h4>
+        <p class="text-muted mb-4">{{#str}}eval_closed_body, local_airpay_evaluation, {{window_when}}{{/str}}</p>
+        {{/window_closed}}
+        <a href="{{{backurl}}}" class="btn btn-outline-secondary btn-sm">
+            <i class="fa fa-arrow-left fa-fw" aria-hidden="true"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+{{/window_locked}}
+
+{{^window_locked}}
 {{#already_responded}}
 <div class="card border-0 shadow-sm">
     <div class="card-body text-center py-5">
@@ -293,6 +322,7 @@
 </div>
 {{/has_questions}}
 {{/already_responded}}
+{{/window_locked}}
 
 </div>
 {{#js}}

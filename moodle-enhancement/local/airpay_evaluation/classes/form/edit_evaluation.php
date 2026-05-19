@@ -68,6 +68,31 @@ class edit_evaluation extends \core_form\dynamic_form {
             get_string('anonymous', 'local_airpay_evaluation'));
         $mform->addHelpButton('anonymous', 'anonymous', 'local_airpay_evaluation');
 
+        // ── P1 #17 (2026-05-16) — availability window + pulse mode ────
+        // Time-bounded availability (timeopen/timeclose) closes audit
+        // item #15. Multiple-submit (multiple_submit) closes audit
+        // item #14 — both from parity-audit-2026-05-15/airpay_evaluation.md.
+        $mform->addElement('header', 'hdr_window',
+            get_string('heading_window', 'local_airpay_evaluation'));
+
+        // `date_time_selector` + `optional=true` produces a checkbox-gated
+        // datetime; ticked = "use this date", unticked = "no constraint
+        // (stored as 0)". Matches the Moodle convention used by core
+        // course.startdate / forum.cutoffdate.
+        $mform->addElement('date_time_selector', 'timeopen',
+            get_string('timeopen', 'local_airpay_evaluation'),
+            ['optional' => true]);
+        $mform->addHelpButton('timeopen', 'timeopen', 'local_airpay_evaluation');
+
+        $mform->addElement('date_time_selector', 'timeclose',
+            get_string('timeclose', 'local_airpay_evaluation'),
+            ['optional' => true]);
+        $mform->addHelpButton('timeclose', 'timeclose', 'local_airpay_evaluation');
+
+        $mform->addElement('advcheckbox', 'multiple_submit',
+            get_string('multiple_submit', 'local_airpay_evaluation'));
+        $mform->addHelpButton('multiple_submit', 'multiple_submit', 'local_airpay_evaluation');
+
         // ── Organisation ──────────────────────────────────────────────
         $orgs = $this->get_org_options();
         $mform->addElement('select', 'costcenterid',
@@ -91,6 +116,17 @@ class edit_evaluation extends \core_form\dynamic_form {
         if (isset($data['days_after']) && $data['days_after'] < 0) {
             $errors['days_after'] = get_string('days_after_invalid', 'local_airpay_evaluation');
         }
+
+        // P1 #17 — sanity-check the window. The date_time_selector with
+        // optional=true posts the timestamp as `0` when unticked, so we
+        // only validate when BOTH ends are set.
+        $open  = (int) ($data['timeopen']  ?? 0);
+        $close = (int) ($data['timeclose'] ?? 0);
+        if ($open > 0 && $close > 0 && $close < $open) {
+            $errors['timeclose'] = get_string('eval_window_inverted',
+                'local_airpay_evaluation');
+        }
+
         return $errors;
     }
 
@@ -127,6 +163,11 @@ class edit_evaluation extends \core_form\dynamic_form {
             'costcenterid'      => $e->costcenterid ?? 0,
             'status'            => $e->status ?? 0,
             'anonymous'         => $e->anonymous ?? 0,
+            // P1 #17 — pre-fill window + pulse fields. 0 sentinels render
+            // as unticked optional date_time_selector + unchecked checkbox.
+            'timeopen'          => (int) ($e->timeopen        ?? 0),
+            'timeclose'         => (int) ($e->timeclose       ?? 0),
+            'multiple_submit'   => (int) ($e->multiple_submit ?? 0),
         ]);
     }
 

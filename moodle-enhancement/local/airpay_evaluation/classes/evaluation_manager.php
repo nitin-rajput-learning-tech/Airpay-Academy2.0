@@ -93,6 +93,18 @@ class evaluation_manager {
             throw new \moodle_exception('invalidtrigger', 'local_airpay_evaluation');
         }
 
+        // P1 #17 (2026-05-16) — time window + multiple-submit. Default 0 (no
+        // constraint) so existing callers and import paths keep working
+        // unchanged.
+        $timeopen        = max(0, (int) ($data->timeopen        ?? 0));
+        $timeclose       = max(0, (int) ($data->timeclose       ?? 0));
+        $multiple_submit = isset($data->multiple_submit) ? (int) $data->multiple_submit : 0;
+
+        // Reject obvious misconfiguration where the window is inverted.
+        if ($timeopen > 0 && $timeclose > 0 && $timeclose < $timeopen) {
+            throw new \moodle_exception('eval_window_inverted', 'local_airpay_evaluation');
+        }
+
         $record = (object) [
             'name'              => trim($data->name),
             'description'       => $data->description ?? '',
@@ -102,6 +114,9 @@ class evaluation_manager {
             'costcenterid'      => (int) ($data->costcenterid ?? 0),
             'status'            => (int) ($data->status ?? self::STATUS_DRAFT),
             'anonymous'         => isset($data->anonymous) ? (int) $data->anonymous : 0,
+            'timeopen'          => $timeopen,
+            'timeclose'         => $timeclose,
+            'multiple_submit'   => $multiple_submit,
             'timecreated'       => time(),
             'timemodified'      => time(),
         ];
@@ -142,12 +157,53 @@ class evaluation_manager {
         if (isset($data->status))       $record->status = (int) $data->status;
         if (isset($data->anonymous))    $record->anonymous = (int) $data->anonymous;
 
+        // P1 #17 — time-window + multiple-submit fields.
+        if (property_exists($data, 'timeopen')) {
+            $record->timeopen = max(0, (int) $data->timeopen);
+        }
+        if (property_exists($data, 'timeclose')) {
+            $record->timeclose = max(0, (int) $data->timeclose);
+        }
+        if (property_exists($data, 'multiple_submit')) {
+            $record->multiple_submit = (int) $data->multiple_submit;
+        }
+
+        // Validate window post-merge (compare against existing for fields
+        // the caller didn't touch).
+        $effective_open  = $record->timeopen  ?? (int) ($existing->timeopen  ?? 0);
+        $effective_close = $record->timeclose ?? (int) ($existing->timeclose ?? 0);
+        if ($effective_open > 0 && $effective_close > 0
+                && $effective_close < $effective_open) {
+            throw new \moodle_exception('eval_window_inverted', 'local_airpay_evaluation');
+        }
+
         if (isset($record->costcenterid) && $record->costcenterid != $existing->costcenterid) {
             $org = $DB->get_record('local_airpay_org', ['id' => $record->costcenterid]);
             $record->open_path = $org ? $org->path : '';
         }
 
         $DB->update_record(self::TABLE, $record);
+        return true;
+    }
+
+    /**
+     * P1 #17 — Is the evaluation currently within its availability window?
+     *
+     * Returns true if:
+     *   - timeopen  == 0 OR now >= timeopen   AND
+     *   - timeclose == 0 OR now <  timeclose
+     *
+     * Pure function — does not check status (the caller still needs to
+     * confirm STATUS_ACTIVE). Pass `now` for deterministic tests.
+     */
+    public static function is_open_now(object $eval, int $now = 0): bool {
+        if ($now <= 0) {
+            $now = time();
+        }
+        $open  = (int) ($eval->timeopen  ?? 0);
+        $close = (int) ($eval->timeclose ?? 0);
+        if ($open  > 0 && $now < $open)  return false;
+        if ($close > 0 && $now >= $close) return false;
         return true;
     }
 
@@ -475,13 +531,25 @@ class evaluation_manager {
     // ═══════════════════════════════════════════════════════════════════
 
     /**
-     * Has the user already submitted this evaluation?
-     * Anonymous evaluations always allow re-submission.
+     * Has the user already submitted this evaluation in a way that
+     * should block a fresh submission?
+     *
+     * Returns false (= "user may submit again") when:
+     *   - the evaluation is anonymous (we don't tie responses to users
+     *     anyway, so re-submission is a no-op for identity), or
+     *   - the evaluation has multiple_submit=1 (P1 #17 — pulse surveys
+     *     explicitly allow re-submission).
+     *
+     * Otherwise checks for an existing response row.
      */
     public static function has_user_responded(int $evaluationid, int $userid): bool {
         global $DB;
         $eval = self::get($evaluationid);
         if (!$eval || (int) $eval->anonymous === 1) {
+            return false;
+        }
+        // P1 #17 — pulse surveys.
+        if ((int) ($eval->multiple_submit ?? 0) === 1) {
             return false;
         }
         return $DB->record_exists(self::RESPONSES_TABLE,
@@ -501,6 +569,23 @@ class evaluation_manager {
         }
         if ((int) $eval->status !== self::STATUS_ACTIVE) {
             throw new \moodle_exception('evaluationnotactive', 'local_airpay_evaluation');
+        }
+
+        // P1 #17 — gate on the configured availability window. Admins
+        // marking an evaluation "active" no longer have to manually
+        // archive it when its window closes.
+        if (!self::is_open_now($eval)) {
+            $now = time();
+            $open  = (int) ($eval->timeopen  ?? 0);
+            $close = (int) ($eval->timeclose ?? 0);
+            if ($open > 0 && $now < $open) {
+                throw new \moodle_exception('evaluationnotyetopen',
+                    'local_airpay_evaluation', '', userdate($open));
+            }
+            if ($close > 0 && $now >= $close) {
+                throw new \moodle_exception('evaluationclosed',
+                    'local_airpay_evaluation', '', userdate($close));
+            }
         }
 
         if ((int) $eval->anonymous !== 1 && $userid > 0) {

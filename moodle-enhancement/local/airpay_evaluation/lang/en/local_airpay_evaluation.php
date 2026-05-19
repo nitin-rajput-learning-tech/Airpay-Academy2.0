@@ -26,6 +26,7 @@ $string['heading_basic'] = 'Form Identity';
 $string['heading_kirkpatrick'] = 'Evaluation Framework';
 $string['heading_trigger'] = 'When to Send';
 $string['heading_privacy'] = 'Privacy';
+$string['heading_window'] = 'Availability window (optional)';
 
 // Form labels.
 $string['eval_name'] = 'Form name';
@@ -109,6 +110,22 @@ $string['viewresponses'] = 'View Responses';
 $string['evaluationnotactive'] = 'This evaluation is not currently accepting responses.';
 $string['alreadyresponded'] = 'You have already submitted this evaluation.';
 $string['evaluationhasnoquestions'] = 'This evaluation has no questions yet.';
+
+// P1 #17 (2026-05-16) — availability window + multiple-submit (pulse mode).
+$string['timeopen']            = 'Open from';
+$string['timeopen_help']       = 'Optional. Earliest date learners can submit a response. Leave the checkbox unticked to open the evaluation immediately. Use this for "compliance survey runs from 1 June to 30 June" workflows.';
+$string['timeclose']           = 'Close at';
+$string['timeclose_help']      = 'Optional. Date the evaluation stops accepting new responses (existing responses are preserved). Leave unticked to keep the evaluation open indefinitely. Must be on or after the open date.';
+$string['multiple_submit']     = 'Allow the same user to submit multiple responses';
+$string['multiple_submit_help'] = 'Tick to allow pulse-style surveys where the same learner re-submits over time (weekly engagement check, monthly compliance tick, etc.). When unticked (default), each user gets exactly one submission. Anonymous evaluations always allow re-submission regardless of this setting.';
+$string['eval_window_inverted'] = 'Close date must be on or after the open date.';
+$string['evaluationnotyetopen'] = 'This evaluation opens on {$a} — please come back then.';
+$string['evaluationclosed']     = 'This evaluation closed on {$a}.';
+$string['eval_notyetopen_heading'] = 'Not yet open';
+$string['eval_notyetopen_body']    = 'This evaluation opens on {$a}. Please come back then to submit your response.';
+$string['eval_closed_heading']     = 'Evaluation closed';
+$string['eval_closed_body']        = 'This evaluation closed on {$a}. New responses are no longer accepted.';
+$string['eval_pulse_hint']         = 'This is a recurring (pulse) evaluation — you can submit a fresh response each time you visit.';
 $string['answer_required'] = 'Required answer missing: {$a}';
 $string['invalid_rating'] = 'Rating must be 1-5: {$a}';
 $string['invalid_nps'] = 'NPS score must be 0-10: {$a}';

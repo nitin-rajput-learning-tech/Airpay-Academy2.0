@@ -119,5 +119,42 @@ function xmldb_local_airpay_evaluation_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026051500, 'local', 'airpay_evaluation');
     }
 
+    // 2026051901 — P1 #17: time-bounded availability + multiple-submit.
+    //
+    // Three new columns on local_airpay_evaluation:
+    //   timeopen        — Unix timestamp the evaluation becomes available
+    //                      (0 = immediately, no constraint).
+    //   timeclose       — Unix timestamp the evaluation stops accepting
+    //                      responses (0 = never closes, no constraint).
+    //   multiple_submit — 1 = the same user can submit more than once,
+    //                      used for pulse surveys (weekly engagement check,
+    //                      monthly compliance tick, etc.). 0 = one-and-done.
+    //
+    // Closes audit items #14 + #15 from
+    // parity-audit-2026-05-15/airpay_evaluation.md.
+    if ($oldversion < 2026051901) {
+        $table = new xmldb_table('local_airpay_evaluation');
+
+        $field = new xmldb_field('timeopen', XMLDB_TYPE_INTEGER, '10', null,
+            XMLDB_NOTNULL, null, '0', 'anonymous');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('timeclose', XMLDB_TYPE_INTEGER, '10', null,
+            XMLDB_NOTNULL, null, '0', 'timeopen');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('multiple_submit', XMLDB_TYPE_INTEGER, '1', null,
+            XMLDB_NOTNULL, null, '0', 'timeclose');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2026051901, 'local', 'airpay_evaluation');
+    }
+
     return true;
 }
