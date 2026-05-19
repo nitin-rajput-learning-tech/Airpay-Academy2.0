@@ -11,6 +11,8 @@
         <FIELD NAME="costcenterid"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
                COMMENT="Tenant org ID"/>
         <FIELD NAME="departmentid"    TYPE="int"  LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="categoryid"      TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="P1 #23: tagging — references mdl_course_categories.id (same taxonomy as courses). 0 = uncategorised."/>
         <FIELD NAME="open_path"       TYPE="char" LENGTH="254" NOTNULL="false"/>
         <FIELD NAME="duration"        TYPE="int"  LENGTH="10" NOTNULL="false"
                COMMENT="Exam duration in seconds"/>

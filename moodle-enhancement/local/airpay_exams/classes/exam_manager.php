@@ -157,11 +157,21 @@ class exam_manager {
             throw new \moodle_exception('quizalreadyregistered', 'local_airpay_exams');
         }
 
+        // P1 #23 — categoryid is a tagging field (FK to mdl_course_categories).
+        // We validate the referenced category exists so admins don't end up
+        // with orphan ids if the categories table changes underneath us.
+        $categoryid = (int) ($data->categoryid ?? 0);
+        if ($categoryid > 0
+                && !$DB->record_exists('course_categories', ['id' => $categoryid])) {
+            throw new \moodle_exception('invalidcategory', 'local_airpay_exams');
+        }
+
         $record = (object) [
             'name'         => trim($data->name),
             'quizid'       => (int) $data->quizid,
             'costcenterid' => (int) ($data->costcenterid ?? 0),
             'departmentid' => (int) ($data->departmentid ?? 0),
+            'categoryid'   => $categoryid,
             'duration'     => isset($data->duration) && $data->duration > 0 ? (int) $data->duration : null,
             'passinggrade' => isset($data->passinggrade) ? max(0, min(100, (float) $data->passinggrade)) : null,
             'status'       => (int) ($data->status ?? self::STATUS_ACTIVE),
@@ -206,6 +216,15 @@ class exam_manager {
         if (isset($data->passinggrade)) $record->passinggrade = max(0, min(100, (float) $data->passinggrade));
         if (isset($data->status))       $record->status = (int) $data->status;
         if (isset($data->visible))      $record->visible = (int) $data->visible;
+        // P1 #23 — category update with same FK validation as create().
+        if (isset($data->categoryid)) {
+            $catid = (int) $data->categoryid;
+            if ($catid > 0
+                    && !$DB->record_exists('course_categories', ['id' => $catid])) {
+                throw new \moodle_exception('invalidcategory', 'local_airpay_exams');
+            }
+            $record->categoryid = $catid;
+        }
 
         if (isset($record->costcenterid) && $record->costcenterid != $existing->costcenterid) {
             $org = $DB->get_record('local_airpay_org', ['id' => $record->costcenterid]);

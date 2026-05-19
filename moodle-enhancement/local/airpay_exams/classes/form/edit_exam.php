@@ -70,6 +70,19 @@ class edit_exam extends \core_form\dynamic_form {
             ['size' => 5, 'placeholder' => '70']);
         $mform->setType('passinggrade', PARAM_FLOAT);
 
+        // P1 #23 (2026-05-16) — exam category. Closes audit item #12 from
+        // parity-audit-2026-05-15/airpay_exams.md. Reuses the core
+        // course_categories taxonomy so admins can group exams next to
+        // their related training material (BizLMS treated exams as
+        // courses, so this is the natural carry-over).
+        $cats = $this->get_category_options();
+        $mform->addElement('select', 'categoryid',
+            get_string('exam_category', 'local_airpay_exams'), $cats);
+        $mform->setType('categoryid', PARAM_INT);
+        $mform->setDefault('categoryid', 0);
+        $mform->addHelpButton('categoryid', 'exam_category',
+            'local_airpay_exams');
+
         // ── Organisation ──────────────────────────────────────────────
         $mform->addElement('header', 'hdr_org', get_string('heading_org', 'local_airpay_exams'));
 
@@ -127,6 +140,8 @@ class edit_exam extends \core_form\dynamic_form {
             'duration'     => $e->duration ?? '',
             'passinggrade' => $e->passinggrade ?? '',
             'costcenterid' => $e->costcenterid ?? 0,
+            // P1 #23 — pre-fill category.
+            'categoryid'   => (int) ($e->categoryid ?? 0),
             'status'       => $e->status ?? 1,
         ]);
     }
@@ -151,6 +166,24 @@ class edit_exam extends \core_form\dynamic_form {
         foreach ($orgs as $o) {
             $indent = str_repeat('— ', max(0, $o->depth - 1));
             $options[$o->id] = $indent . format_string($o->fullname);
+        }
+        return $options;
+    }
+
+    /**
+     * P1 #23 — render the core course_categories tree as a select.
+     * Indented by depth so the hierarchy is visible (Compliance →
+     * Compliance/POSH, etc.).
+     */
+    private function get_category_options(): array {
+        global $DB;
+        $cats = $DB->get_records('course_categories', ['visible' => 1],
+            'sortorder ASC', 'id, name, depth, path');
+        $options = [0 => get_string('uncategorised',
+            'local_airpay_exams')];
+        foreach ($cats as $c) {
+            $indent = str_repeat('— ', max(0, (int) $c->depth - 1));
+            $options[$c->id] = $indent . format_string($c->name);
         }
         return $options;
     }

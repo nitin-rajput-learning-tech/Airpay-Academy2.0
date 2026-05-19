@@ -29,9 +29,16 @@ $string['passinggrade'] = 'Passing grade (%)';
 $string['organisation'] = 'Organisation (tenant)';
 $string['exam_active'] = 'Exam is active';
 
+// P1 #23 (2026-05-16) — exam categories. Closes audit item #12 from
+// parity-audit-2026-05-15/airpay_exams.md.
+$string['exam_category']      = 'Category';
+$string['exam_category_help'] = 'Tag this exam for discovery. Reuses the same category taxonomy as courses (set up at Site administration ▶ Courses ▶ Manage course categories) so admins can group exams next to the training that prepares for them. Common groupings: Compliance, Sales, Leadership, Onboarding. Leave as <em>Uncategorised</em> if the exam is one-off.';
+$string['uncategorised']      = '— Uncategorised —';
+
 // Errors.
 $string['missingrequiredfields'] = 'Please pick a quiz and provide a display name.';
 $string['invalidquiz'] = 'The selected quiz no longer exists.';
+$string['invalidcategory'] = 'The selected category no longer exists.';
 $string['quizalreadyregistered'] = 'This quiz is already registered as an exam. Edit the existing exam instead.';
 $string['duration_invalid'] = 'Duration must be 0 or a positive number of seconds.';
 $string['passinggrade_invalid'] = 'Passing grade must be between 0 and 100.';
