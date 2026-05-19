@@ -1,5 +1,5 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-16 — **Wave 1 BizLMS parity 9/10 P0 fixes shipped + pushed.** Commits `d18a13909` (W1-1..10 except W1-6/W1-8) + `d61508f16` (W1-6 HRMS importer) on `production`. One remaining P0 (W1-8 Public signup) deferred to next session.
+**Updated:** 2026-05-16 — **Wave 1 BizLMS parity COMPLETE: 10 of 10 P0 fixes shipped + pushed.** Commits `d18a13909` (W1-1..10 except W1-6/W1-8) + `d61508f16` (W1-6 HRMS importer) + `9013e4ea0` (W1-8 Public signup) on `production`. Next session: P1 items.
 
 ---
 
@@ -20,7 +20,7 @@ Closes 8 of the 10 highest-impact gaps from the 19-file BizLMS parity audit at `
 | W1-9 | Event emission across `airpay_programs` (`program_completed`), `airpay_classroom` (`classroom_completed`), `airpay_request` (`request_submitted/approved/rejected`) | ✅ shipped | `local_airpay_programs` `2026051500` (1.5.0), `local_airpay_request` `2026051500` (1.1.0). 5 new event classes hitting `mdl_logstore_standard_log`. Unlocks W1-5 program + classroom triggers. |
 | W1-10 | Multi-type manager allocation — `item_type` + `itemid` columns + 3 new allocation methods (classroom/program/path) | ✅ shipped | `local_airpay_manager` `2026051500` (1.3.0). Backward-compat preserved — legacy course-only rows untouched. UNIQUE on (userid, item_type, itemid). |
 | W1-6 | HRMS 24-column Darwinbox/SAP CSV bulk import + two-pass manager resolution | ✅ shipped (2026-05-16, commit `d61508f16`) | `local_airpay_users` `2026051600` (2.0.0). New: `classes/hrms_importer.php` (730 LOC), `classes/form/bulk_hrms_form.php`, `bulk_hrms.php`, `sync_runs.php`, `sync_run_detail.php`, FIRST `db/install.xml` for this plugin with 2 tables (sync_runs + sync_errors), 8 PHPUnit cases, CLI smoke test that passes end-to-end. Two-pass design picks up Mike→Sarah manager links even when manager is in a LATER row of the same CSV. |
-| W1-8 | Public-tenant `signup.php` + `privacypolicy.php` + `termscondition.php` | ⏸ **deferred** | ~½ day. Public tenant self-registration broken; compliance regression. Needs design discussion on captcha + email verification flow before code. |
+| W1-8 | Public-tenant `signup.php` + `privacypolicy.php` + `termscondition.php` | ✅ shipped (2026-05-16, commit `9013e4ea0`) | `local_airpay_users` `2026051601` (2.1.0). New: `classes/signup_service.php` (validate + register + confirm), `classes/form/signup_form.php` (with honeypot + ToS hard-gate), rewrote signup.php, NEW privacypolicy.php + termscondition.php (admin-override HTML + GDPR/DPDP-compliant defaults), 4 new settings, 11 PHPUnit cases. Flow uses Moodle's standard `auth/email` confirmation. Default tenant = `/77` (Public), configurable. **Moodle 5 gotcha**: `USER_CONFIRM_*` constants are now `AUTH_CONFIRM_*` in `lib/authlib.php`. |
 
 ### Reusable infrastructure introduced
 
