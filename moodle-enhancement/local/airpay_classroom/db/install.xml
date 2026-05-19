@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/airpay_classroom/db" VERSION="20260515"
+<XMLDB PATH="local/airpay_classroom/db" VERSION="20260516"
        COMMENT="Airpay Classroom Training — replaces BizLMS local_classroom">
   <TABLES>
     <TABLE NAME="local_airpay_classroom" COMMENT="Classroom/ILT sessions (fork of local_classroom)">
@@ -18,6 +18,10 @@
         <FIELD NAME="status"          TYPE="int"  LENGTH="2"  NOTNULL="true" DEFAULT="1"
                COMMENT="1=active, 0=cancelled, 2=completed"/>
         <FIELD NAME="visible"         TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="startdate"       TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="P1 batch (2026-05-16): UNIX ts — classroom becomes enrollable on this date"/>
+        <FIELD NAME="enddate"         TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="P1 batch (2026-05-16): UNIX ts — classroom closes for new enrolments on this date"/>
         <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="timemodified"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
       </FIELDS>

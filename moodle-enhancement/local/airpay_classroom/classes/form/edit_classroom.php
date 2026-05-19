@@ -81,6 +81,25 @@ class edit_classroom extends \core_form\dynamic_form {
         $mform->addElement('select', 'costcenterid', get_string('organisation', 'local_airpay_classroom'), $orgs);
         $mform->setType('costcenterid', PARAM_INT);
 
+        // ── Enrolment window (P1 batch 2026-05-16) ───────────────────
+        // Both dates optional. When both are set, validation enforces
+        // enddate >= startdate; same-day windows are allowed (single-day
+        // workshop / compliance event).
+        $mform->addElement('header', 'hdr_window',
+            get_string('heading_window', 'local_airpay_classroom'));
+
+        $mform->addElement('date_selector', 'startdate',
+            get_string('startdate', 'local_airpay_classroom'),
+            ['optional' => true]);
+        $mform->setType('startdate', PARAM_INT);
+        $mform->addHelpButton('startdate', 'startdate', 'local_airpay_classroom');
+
+        $mform->addElement('date_selector', 'enddate',
+            get_string('enddate', 'local_airpay_classroom'),
+            ['optional' => true]);
+        $mform->setType('enddate', PARAM_INT);
+        $mform->addHelpButton('enddate', 'enddate', 'local_airpay_classroom');
+
         // ── Status ────────────────────────────────────────────────────
         if (!$iscreate) {
             $mform->addElement('header', 'hdr_status', get_string('heading_status', 'local_airpay_classroom'));
@@ -98,6 +117,13 @@ class edit_classroom extends \core_form\dynamic_form {
         $errors = [];
         if (isset($data['capacity']) && $data['capacity'] < 1) {
             $errors['capacity'] = get_string('capacityinvalid', 'local_airpay_classroom');
+        }
+        // P1 batch (2026-05-16) — enddate must be >= startdate when both set.
+        $start = (int) ($data['startdate'] ?? 0);
+        $end   = (int) ($data['enddate']   ?? 0);
+        if ($start > 0 && $end > 0 && $end < $start) {
+            $errors['enddate'] = get_string('enddate_before_start',
+                'local_airpay_classroom');
         }
         return $errors;
     }
@@ -135,6 +161,8 @@ class edit_classroom extends \core_form\dynamic_form {
             'trainerid'    => $cr->trainerid ?? 0,
             'costcenterid' => $cr->costcenterid ?? 0,
             'status'       => $cr->status ?? 1,
+            'startdate'    => (int) ($cr->startdate ?? 0),
+            'enddate'      => (int) ($cr->enddate ?? 0),
         ]);
     }
 

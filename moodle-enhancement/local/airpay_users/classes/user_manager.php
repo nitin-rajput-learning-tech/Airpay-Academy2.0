@@ -526,11 +526,18 @@ class user_manager {
             if (property_exists($data, $field) && $data->$field !== null) {
                 $value = $data->$field;
                 // Date fields → unix timestamp.
+                // P1 batch (2026-05-16) — date_selector with optional=true
+                // returns 0 when the "enable" checkbox is unticked. Store
+                // NULL in that case so display logic can distinguish
+                // "not set" from "epoch zero".
                 if (in_array($field, ['open_joindate', 'open_dateofbirth'], true)) {
                     if (is_array($value) && !empty($value)) {
                         $value = mktime(0, 0, 0, $value['mon'] ?? 1, $value['day'] ?? 1, $value['year'] ?? 2000);
                     } else if (is_string($value) && !empty($value)) {
                         $value = strtotime($value);
+                    }
+                    if (empty($value)) {
+                        $value = null;
                     }
                 }
                 $update[$field] = $value;

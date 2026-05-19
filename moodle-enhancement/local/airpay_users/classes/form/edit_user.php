@@ -102,6 +102,32 @@ class edit_user extends \core_form\dynamic_form {
             ['size' => 25, 'maxlength' => 100]);
         $mform->setType('open_location', PARAM_TEXT);
 
+        // P1 batch (2026-05-16) — DOB + DOJ on admin edit form.
+        //
+        // Before this, admins could not fix HR errors in DOB/DOJ from the
+        // Airpay UI — they had to drop into Moodle's core
+        // `/user/editadvanced.php`, which is BizLMS-unaware and exposes
+        // every other core field on the same page (a confusing detour).
+        //
+        // Both fields are optional (date_selector ?optional=true) and
+        // empty input is stored as NULL by user_manager::apply_custom_fields()
+        // so we don't end up with users born on 1970-01-01.
+        $mform->addElement('date_selector', 'open_dateofbirth',
+            get_string('open_dateofbirth', 'local_airpay_users'),
+            ['optional' => true, 'startyear' => 1940,
+             'stopyear' => (int) date('Y')]);
+        $mform->setType('open_dateofbirth', PARAM_INT);
+        $mform->addHelpButton('open_dateofbirth', 'open_dateofbirth',
+            'local_airpay_users');
+
+        $mform->addElement('date_selector', 'open_joindate',
+            get_string('open_joindate', 'local_airpay_users'),
+            ['optional' => true, 'startyear' => 1990,
+             'stopyear' => (int) date('Y') + 1]);
+        $mform->setType('open_joindate', PARAM_INT);
+        $mform->addHelpButton('open_joindate', 'open_joindate',
+            'local_airpay_users');
+
         // ── Organisation ──────────────────────────────────────────────
         $mform->addElement('header', 'hdr_org', get_string('heading_organisation', 'local_airpay_users'));
 
@@ -263,6 +289,9 @@ class edit_user extends \core_form\dynamic_form {
             'open_designation' => $user->open_designation ?? '',
             'phone1' => $user->phone1 ?? '',
             'open_location' => $user->open_location ?? '',
+            // P1 batch (2026-05-16) — DOB + DOJ pre-fill from DB.
+            'open_dateofbirth' => (int) ($user->open_dateofbirth ?? 0),
+            'open_joindate'   => (int) ($user->open_joindate   ?? 0),
             'department' => $user->department ?? '',
             'open_costcenterid' => $orgid,
             'open_supervisorid' => $user->open_supervisorid ?? 0,

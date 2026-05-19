@@ -186,5 +186,32 @@ function xmldb_local_airpay_classroom_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026051500, 'local', 'airpay_classroom');
     }
 
+    // 2026051600 — P1 batch: time-bounded enrolment window on the classroom
+    // itself (mirrors the start/end-date fields added to airpay_learningpath
+    // in commit 8df39b36f).
+    //
+    //   startdate INT NULLABLE — UNIX ts; classroom becomes enrollable
+    //   enddate   INT NULLABLE — UNIX ts; classroom closes for new enrolments
+    //
+    // Empty form input (0) is stored as NULL so "WHERE enddate IS NULL"
+    // cleanly means "no window".
+    if ($oldversion < 2026051600) {
+        $table = new xmldb_table('local_airpay_classroom');
+
+        $field = new xmldb_field('startdate', XMLDB_TYPE_INTEGER, '10',
+            null, null, null, null, 'visible');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('enddate', XMLDB_TYPE_INTEGER, '10',
+            null, null, null, null, 'startdate');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2026051600, 'local', 'airpay_classroom');
+    }
+
     return true;
 }

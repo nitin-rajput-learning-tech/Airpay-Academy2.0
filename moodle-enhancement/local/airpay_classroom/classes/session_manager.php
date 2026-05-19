@@ -172,6 +172,9 @@ class session_manager {
         $record->capacity     = max(1, (int) ($data->capacity ?? 30));
         $record->status       = (int) ($data->status ?? self::STATUS_ACTIVE);
         $record->visible      = isset($data->visible) ? (int) $data->visible : 1;
+        // P1 batch (2026-05-16) — enrolment-window dates. Empty input → NULL.
+        $record->startdate    = !empty($data->startdate) ? (int) $data->startdate : null;
+        $record->enddate      = !empty($data->enddate)   ? (int) $data->enddate   : null;
         $record->timecreated  = time();
         $record->timemodified = time();
 
@@ -201,11 +204,20 @@ class session_manager {
 
         $record = (object) ['id' => $id, 'timemodified' => time()];
 
+        // P1 batch (2026-05-16) — startdate / enddate added.
         $fields = ['name', 'description', 'costcenterid', 'departmentid',
-                   'trainerid', 'location', 'capacity', 'status', 'visible'];
+                   'trainerid', 'location', 'capacity', 'status', 'visible',
+                   'startdate', 'enddate'];
         foreach ($fields as $field) {
             if (isset($data->$field)) {
-                $record->$field = $data->$field;
+                // Empty/0 date input → NULL so "no enrolment window" is
+                // distinguishable from "epoch zero".
+                if (in_array($field, ['startdate', 'enddate'], true)
+                    && empty($data->$field)) {
+                    $record->$field = null;
+                } else {
+                    $record->$field = $data->$field;
+                }
             }
         }
 

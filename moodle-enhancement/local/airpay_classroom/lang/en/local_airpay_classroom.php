@@ -23,7 +23,15 @@ $string['reopenclassroom'] = 'Reopen Classroom';
 $string['heading_basic'] = 'Basic Information';
 $string['heading_logistics'] = 'Logistics';
 $string['heading_org'] = 'Organisation';
+$string['heading_window'] = 'Enrolment window (optional)';
 $string['heading_status'] = 'Status';
+
+// P1 batch (2026-05-16) — enrolment window dates on the classroom.
+$string['startdate']            = 'Start date';
+$string['startdate_help']       = 'Optional. Classroom becomes enrollable from this date. Leave empty to allow enrolment immediately.';
+$string['enddate']              = 'End date';
+$string['enddate_help']         = 'Optional. Classroom closes for new enrolments after this date. Existing attendees and scheduled sessions are unaffected.';
+$string['enddate_before_start'] = 'End date must be on or after the start date.';
 
 // Form field labels.
 $string['name'] = 'Classroom name';
