@@ -545,9 +545,75 @@ class user_manager {
             }
         }
 
+        // P1 batch (2026-05-16) — server-side tenant guard on
+        // open_supervisorid. The new supervisor autocomplete WS is
+        // tenant-scoped on the frontend, but anyone POSTing the form
+        // directly could bypass that. Guard it here.
+        if (!empty($update['open_supervisorid'])) {
+            self::guard_supervisor_tenant_scope(
+                $userid,
+                (int) $update['open_supervisorid'],
+                $update['open_path'] ?? null
+            );
+        }
+
         if (count($update) > 1) {
             $DB->update_record('user', (object) $update);
         }
+    }
+
+    /**
+     * P1 batch (2026-05-16) — verify the chosen supervisor lives in the
+     * same tenant tree as the subordinate. Throws moodle_exception on
+     * cross-tenant attempts.
+     *
+     * Siteadmin bypasses the check.
+     *
+     * @param int $subordinate_userid     User being edited / created
+     * @param int $supervisor_userid      Picked supervisor
+     * @param string|null $new_subord_path open_path being applied (if any)
+     * @throws \moodle_exception
+     */
+    private static function guard_supervisor_tenant_scope(int $subordinate_userid,
+                                                            int $supervisor_userid,
+                                                            ?string $new_subord_path = null): void {
+        global $DB;
+        if (is_siteadmin()) {
+            return;  // siteadmin can cross tenants
+        }
+        if ($supervisor_userid <= 1) {
+            return;  // 0/null/guest — nothing to validate
+        }
+        $supervisor = $DB->get_record('user',
+            ['id' => $supervisor_userid, 'deleted' => 0], 'id, open_path');
+        if (!$supervisor || empty($supervisor->open_path)) {
+            // Supervisor has no tenant — let it through (legacy data).
+            return;
+        }
+        // Subordinate's effective open_path = new path (if being set) OR
+        // existing path from DB.
+        $subord_path = $new_subord_path
+            ?: (string) $DB->get_field('user', 'open_path',
+                ['id' => $subordinate_userid]);
+        if ($subord_path === '') {
+            return;  // no tenant on subordinate — allow
+        }
+
+        $sup_top = self::parse_tenant_root($supervisor->open_path);
+        $sub_top = self::parse_tenant_root($subord_path);
+        if ($sup_top > 0 && $sub_top > 0 && $sup_top !== $sub_top) {
+            throw new \moodle_exception('supervisor_wrong_tenant',
+                'local_airpay_users', '', (object) [
+                    'supervisor_tenant'  => $sup_top,
+                    'subordinate_tenant' => $sub_top,
+                ]);
+        }
+    }
+
+    /** Parse leading numeric segment from an open_path string. */
+    private static function parse_tenant_root(string $path): int {
+        $parts = explode('/', trim($path, '/'));
+        return isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
     }
 
     /**

@@ -180,3 +180,7 @@ $string['privacy_pagetitle'] = 'Privacy Policy — Airpay Academy';
 $string['privacy_heading']   = 'Privacy Policy';
 $string['tos_pagetitle']     = 'Terms of Use — Airpay Academy';
 $string['tos_heading']       = 'Terms of Use';
+
+// P1 batch (2026-05-16) — tenant-scoped supervisor autocomplete.
+$string['supervisor_help'] = 'Start typing the supervisor\'s name, email, or employee code. Only users from the same tenant tree are shown — you cannot pick a supervisor from a different tenant.';
+$string['supervisor_wrong_tenant'] = 'Supervisor (tenant {$a->supervisor_tenant}) does not belong to the same tenant as this user (tenant {$a->subordinate_tenant}). Pick a supervisor from the same tenant tree.';

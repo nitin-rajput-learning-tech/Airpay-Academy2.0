@@ -113,13 +113,17 @@ class edit_user extends \core_form\dynamic_form {
             ['size' => 30, 'maxlength' => 100]);
         $mform->setType('department', PARAM_TEXT);
 
-        // Reporting manager autocomplete — uses Moodle's user search.
+        // P1 batch (2026-05-16) — tenant-scoped reporting-manager autocomplete.
+        // Previously this used core_user/form_user_selector which is NOT
+        // tenant-aware; a Public-tenant admin could pick an Airpay-tenant
+        // manager and silently break the org chart. The new selector calls
+        // `local_airpay_users_search_supervisors` and intersects scope with
+        // both the caller's tenant AND (when editing) the subject's tenant.
         $mgr_options = [
             'multiple' => false,
-            'ajax' => 'core_user/form_user_selector',
+            'ajax' => 'local_airpay_users/supervisor_selector',
             'noselectionstring' => '— No supervisor —',
             'valuehtmlcallback' => function ($userid) {
-                global $OUTPUT;
                 $user = \core_user::get_user($userid);
                 if (!$user) {
                     return false;
@@ -130,6 +134,8 @@ class edit_user extends \core_form\dynamic_form {
         $mform->addElement('autocomplete', 'open_supervisorid',
             get_string('supervisor', 'local_airpay_users'), [], $mgr_options);
         $mform->setType('open_supervisorid', PARAM_INT);
+        $mform->addHelpButton('open_supervisorid', 'supervisor',
+            'local_airpay_users');
 
         // ── Password section ──────────────────────────────────────────
         if ($iscreate) {

@@ -40,6 +40,17 @@ $functions = [
         'ajax'        => true,
         'capabilities' => 'local/airpay_users:view',
     ],
+    // P1 batch (2026-05-16) — tenant-scoped supervisor autocomplete WS.
+    // Replaces core_user/form_user_selector on the edit-user form which is
+    // NOT tenant-aware — a Public-tenant admin could otherwise pick an
+    // Airpay-tenant manager and silently break the org chart.
+    'local_airpay_users_search_supervisors' => [
+        'classname'   => 'local_airpay_users\external\search_supervisors',
+        'description' => 'Tenant-scoped autocomplete for supervisor / reporting-manager picker',
+        'type'        => 'read',
+        'ajax'        => true,
+        'capabilities' => 'local/airpay_users:view',
+    ],
     'local_airpay_users_suspend_user' => [
         'classname'   => 'local_airpay_users\external\suspend_user',
         'description' => 'Suspend or activate a user',

@@ -28,12 +28,13 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_airpay_users';
-// W1-6 + W1-8 + P1 chip-filters (2026-05-16) — HRMS importer +
-// Public-tenant self-registration + designation/location/role filter chips.
-$plugin->version   = 2026051602;
+// W1-6 + W1-8 + P1 chip-filters + P1 supervisor-autocomplete (2026-05-16) —
+// HRMS importer + Public-tenant self-registration + chip filters +
+// tenant-scoped supervisor picker (closes a real isolation gap).
+$plugin->version   = 2026051603;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '2.2.0';  // +P1 chip-filter dropdowns + multi-value email/empid
+$plugin->release   = '2.3.0';  // +P1 tenant-scoped supervisor autocomplete
 $plugin->dependencies = [
     'local_airpay_org' => 2026051501,
 ];
