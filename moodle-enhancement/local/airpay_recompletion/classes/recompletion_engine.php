@@ -161,7 +161,10 @@ class recompletion_engine {
             if (!$dryrun) {
                 $ok = self::reset_user_in_course(
                     (int) $row->userid, (int) $row->courseid,
-                    (bool) $rule->reset_grades, (bool) $rule->reset_attempts);
+                    (bool) $rule->reset_grades, (bool) $rule->reset_attempts,
+                    // P1 #20 — cron path has no human reset_by; reason='cron'
+                    // gives observers the audit-friendly source label.
+                    null, 'cron');
                 if (!$ok) { $r['skipped']++; continue; }
             }
 
@@ -245,7 +248,9 @@ class recompletion_engine {
      */
     public static function reset_user_in_course(int $userid, int $courseid,
                                                   bool $reset_grades = true,
-                                                  bool $reset_attempts = true): bool {
+                                                  bool $reset_attempts = true,
+                                                  ?int $reset_by_userid = null,
+                                                  string $reason = 'cron'): bool {
         global $DB;
         $tx = $DB->start_delegated_transaction();
         try {
@@ -309,6 +314,30 @@ class recompletion_engine {
             }
 
             $tx->allow_commit();
+
+            // P1 #20 — fire the completion_reset event AFTER commit so
+            // observers only see durable state. Wrapped in try/catch
+            // because a broken third-party observer must never poison
+            // the reset itself (return true is what callers depend on
+            // to insert the history audit row).
+            try {
+                \local_airpay_recompletion\event\completion_reset::create([
+                    'context'       => \context_course::instance($courseid),
+                    'courseid'      => $courseid,
+                    'relateduserid' => $userid,
+                    'userid'        => $reset_by_userid ?: $userid,
+                    'other' => [
+                        'reset_by_userid' => $reset_by_userid,
+                        'reset_grades'    => $reset_grades ? 1 : 0,
+                        'reset_attempts'  => $reset_attempts ? 1 : 0,
+                        'reason'          => $reason,
+                    ],
+                ])->trigger();
+            } catch (\Throwable $e) {
+                debugging('completion_reset event trigger failed: '
+                    . $e->getMessage(), DEBUG_NORMAL);
+            }
+
             return true;
         } catch (\Throwable $e) {
             $tx->rollback($e);
@@ -421,7 +450,13 @@ class recompletion_engine {
             $uid = (int) $uid;
             $prev = $DB->get_field('course_completions', 'timecompleted',
                 ['userid' => $uid, 'course' => $courseid]);
-            $ok = self::reset_user_in_course($uid, $courseid, $reset_grades, $reset_attempts);
+            // P1 #20 — pass reset_by + reason into the engine so the
+            // completion_reset event payload carries them. Without this,
+            // bulk resets would fire the event with reset_by_userid=null
+            // and observers couldn't tell who initiated them.
+            $ok = self::reset_user_in_course($uid, $courseid,
+                $reset_grades, $reset_attempts,
+                $reset_by, $reason);
             if ($ok) {
                 $DB->insert_record('local_airpay_recompletion_history', (object) [
                     'ruleid'                 => 0,

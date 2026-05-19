@@ -47,6 +47,10 @@ $string['rule_enabled']         = 'Enabled';
 $string['messageprovider:recompletion_due_soon'] = 'Recompletion due soon';
 $string['messageprovider:recompletion_reset']    = 'Recompletion reset (completed)';
 
+// P1 #20 (2026-05-16) — event class names (shown on the Event monitor +
+// reports filters). Closes audit item #19.
+$string['event_completion_reset'] = 'Course completion reset';
+
 // UI.
 $string['nrules']              = '{$a} rules';
 $string['rules_empty']         = 'No recompletion rules configured yet.';
