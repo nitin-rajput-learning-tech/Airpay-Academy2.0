@@ -190,3 +190,15 @@ $string['open_dateofbirth']      = 'Date of birth';
 $string['open_dateofbirth_help'] = 'Optional. Used by reports and birthday-aware engagement campaigns. Leave the checkbox unticked to remove a previously-set DOB.';
 $string['open_joindate']         = 'Date of joining';
 $string['open_joindate_help']    = 'Optional. Date the employee joined the organisation. Used by tenure-based reports and HRMS reconciliation. Leave the checkbox unticked to remove a previously-set DOJ.';
+
+// P1 #7 (2026-05-16) — tenant-scoped welcome email + tokens.
+$string['messageprovider:welcome_email'] = 'Welcome email for newly-created users';
+$string['welcome_settings_heading'] = 'Welcome email (sent on user creation)';
+$string['welcome_settings_intro']   = 'When the "Email welcome" checkbox is ticked on the create-user form, the user receives this message. The body can include any of these tokens (case-insensitive, replaced at send time): <code>[employee_name]</code>, <code>[employee_email]</code>, <code>[employee_username]</code>, <code>[employee_password]</code>, <code>[employee_organization]</code>. Tenant-specific overrides below take precedence over the defaults.';
+$string['welcome_email_subject']    = 'Default welcome email subject';
+$string['welcome_email_subject_help'] = 'Used when no tenant-specific subject is set. Tokens are substituted before send.';
+$string['welcome_email_body']       = 'Default welcome email body';
+$string['welcome_email_body_help']  = 'Plain-text body. Tokens listed above are substituted before send. Sent as plain text + auto-formatted HTML (no script tags).';
+$string['welcome_email_subject_tenant'] = '{$a} tenant — subject override';
+$string['welcome_email_body_tenant']    = '{$a} tenant — body override';
+$string['welcome_email_body_tenant_help'] = 'Leave empty to use the default. Otherwise this overrides the default for users in the {$a} tenant tree.';

@@ -451,11 +451,19 @@ class user_manager {
         self::apply_custom_fields($userid, $data);
 
         // Email welcome (if requested and password set).
+        // P1 #7 (2026-05-16) — was `setnew_password_and_mail()` which sent
+        // Moodle's stock untemplated email with zero tenant branding.
+        // Now uses welcome_mailer with [employee_*] token replacement and
+        // per-tenant subject/body overrides.
         if (!empty($data->emailwelcome) && $password) {
-            $user->id = $userid;
-            setnew_password_and_mail($user);
-            unset_user_preference('create_password', $user);
-            set_user_preference('auth_forcepasswordchange', 1, $user);
+            try {
+                welcome_mailer::send($userid, $password);
+            } catch (\Throwable $e) {
+                // Welcome-email failure must NEVER block user creation.
+                debugging('local_airpay_users: welcome email failed for user '
+                    . $userid . ': ' . $e->getMessage(), DEBUG_DEVELOPER);
+            }
+            set_user_preference('auth_forcepasswordchange', 1, $userid);
         }
 
         return $userid;

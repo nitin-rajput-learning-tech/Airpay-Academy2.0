@@ -63,5 +63,39 @@ if ($hassiteconfig) {
         get_string('custom_tos_html_help', 'local_airpay_users'),
         ''));
 
+    // P1 #7 (2026-05-16) — welcome email template configuration.
+    $settings->add(new admin_setting_heading(
+        'local_airpay_users/welcome_heading',
+        get_string('welcome_settings_heading', 'local_airpay_users'),
+        get_string('welcome_settings_intro', 'local_airpay_users')));
+
+    $settings->add(new admin_setting_configtext(
+        'local_airpay_users/welcome_email_subject',
+        get_string('welcome_email_subject', 'local_airpay_users'),
+        get_string('welcome_email_subject_help', 'local_airpay_users'),
+        \local_airpay_users\welcome_mailer::DEFAULT_SUBJECT,
+        PARAM_TEXT));
+
+    $settings->add(new admin_setting_configtextarea(
+        'local_airpay_users/welcome_email_body',
+        get_string('welcome_email_body', 'local_airpay_users'),
+        get_string('welcome_email_body_help', 'local_airpay_users'),
+        \local_airpay_users\welcome_mailer::DEFAULT_BODY,
+        PARAM_RAW, 80, 15));
+
+    // Tenant-specific overrides (one per known tenant id).
+    // Airpay (id=1), Public (id=77), ZEEA (id=177) — per the project context.
+    foreach ([1 => 'Airpay', 77 => 'Public', 177 => 'ZEEA'] as $tid => $label) {
+        $settings->add(new admin_setting_configtext(
+            'local_airpay_users/welcome_email_subject_' . $tid,
+            get_string('welcome_email_subject_tenant', 'local_airpay_users', $label),
+            '', '', PARAM_TEXT));
+        $settings->add(new admin_setting_configtextarea(
+            'local_airpay_users/welcome_email_body_' . $tid,
+            get_string('welcome_email_body_tenant', 'local_airpay_users', $label),
+            get_string('welcome_email_body_tenant_help', 'local_airpay_users', $label),
+            '', PARAM_RAW, 80, 12));
+    }
+
     $ADMIN->add('localplugins', $settings);
 }

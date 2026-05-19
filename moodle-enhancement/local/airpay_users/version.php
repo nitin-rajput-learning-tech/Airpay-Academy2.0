@@ -28,13 +28,14 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_airpay_users';
-// W1-6 + W1-8 + P1 #1/3/5 (2026-05-16) — HRMS importer +
+// W1-6 + W1-8 + P1 #1/3/5/7 (2026-05-16) — HRMS importer +
 // Public-tenant self-registration + chip filters + tenant-scoped
-// supervisor picker + DOB/DOJ on edit-user form.
-$plugin->version   = 2026051604;
+// supervisor picker + DOB/DOJ on edit-user form +
+// tenant-scoped welcome email with token replacement.
+$plugin->version   = 2026051605;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '2.4.0';  // +P1 DOB/DOJ on edit form
+$plugin->release   = '2.5.0';  // +P1 welcome email tokens
 $plugin->dependencies = [
     'local_airpay_org' => 2026051501,
 ];
