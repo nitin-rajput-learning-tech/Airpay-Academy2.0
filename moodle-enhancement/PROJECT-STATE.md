@@ -24,13 +24,24 @@ Commit: **`8df39b36f`**. Closes audit items #22 (date range) and #25 (rich-text 
 - 7 PHPUnit cases in `tests/enrolment_window_test.php`
 - Live smoke: bigint columns added, create/update/clear cycle verified
 
+## 🆕 WAVE 2 — P1 BATCH #3: Tenant-scoped supervisor autocomplete (2026-05-16) — SECURITY
+
+Commit: **`24ad9e208`**. Closes audit item #20 from `airpay_users.md` — and it's a **tenant-isolation security gap**, not just UX.
+
+- Before: stock `core_user/form_user_selector` let a Public-tenant admin pick an Airpay-tenant manager
+- New WS `local_airpay_users_search_supervisors` returns ONLY same-tenant users (siteadmin bypass)
+- New AMD module `local_airpay_users/supervisor_selector` wires Moodle's autocomplete element to that WS
+- `user_manager::guard_supervisor_tenant_scope()` blocks cross-tenant POSTs server-side (defence-in-depth)
+- 7 PHPUnit cases including the cross-tenant attack vector
+- `local_airpay_users` `2026051603` (2.3.0)
+
 ### Next P1 candidates (audit ordering)
 
-1. `airpay_users.md` #20 — supervisor autocomplete org-scoped (tenant isolation gap)
-2. `airpay_users.md` #22 — tenant-scoped welcome email tokens
-3. `airpay_learningpath.md` #6 — target-audience filtering (designation/region/dept on path enrol form)
-4. `airpay_learningpath.md` #19 — `airpay_request` integration (learner can request path access)
-5. `airpay_classroom.md` — start/end dates (likely same pattern as learningpath)
+1. `airpay_users.md` #22 — tenant-scoped welcome email tokens
+2. `airpay_learningpath.md` #6 — target-audience filtering (designation/region/dept on path enrol form)
+3. `airpay_learningpath.md` #19 — `airpay_request` integration (learner can request path access)
+4. `airpay_classroom.md` start/end dates (same pattern as learningpath; quick port)
+5. `airpay_users.md` #16 — DOB + DOJ date selectors on edit form
 
 ---
 
