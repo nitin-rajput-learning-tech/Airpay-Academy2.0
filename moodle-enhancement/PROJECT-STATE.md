@@ -13,13 +13,24 @@ Commit: **`e37d1e4e0`**. Closes audit items #5, #6, #7 from `airpay_users.md`. C
 - 7 PHPUnit cases
 - Live-data smoke: 140 distinct designations + 11 employment types in our DB
 
+## 🆕 WAVE 2 — P1 BATCH #2: Learning path enrolment window + rich-text (2026-05-16)
+
+Commit: **`8df39b36f`**. Closes audit items #22 (date range) and #25 (rich-text description) from `airpay_learningpath.md`.
+
+- Schema: `startdate` + `enddate` + `descriptionformat` columns (`local_airpay_learningpath` `2026051600` / 1.4.0)
+- Form: `editor` element replaces `textarea` for description; `date_selector` (optional) for start/end
+- `path_manager::create()` + `::update()` persist new fields; empty dates → NULL
+- Validation: enddate must be ≥ startdate (same-day window allowed for single-day compliance events)
+- 7 PHPUnit cases in `tests/enrolment_window_test.php`
+- Live smoke: bigint columns added, create/update/clear cycle verified
+
 ### Next P1 candidates (audit ordering)
 
 1. `airpay_users.md` #20 — supervisor autocomplete org-scoped (tenant isolation gap)
 2. `airpay_users.md` #22 — tenant-scoped welcome email tokens
 3. `airpay_learningpath.md` #6 — target-audience filtering (designation/region/dept on path enrol form)
-4. `airpay_learningpath.md` #22 — start/end dates on path schema
-5. `airpay_learningpath.md` #25 — description rich-text editor (textarea → editor)
+4. `airpay_learningpath.md` #19 — `airpay_request` integration (learner can request path access)
+5. `airpay_classroom.md` — start/end dates (likely same pattern as learningpath)
 
 ---
 
