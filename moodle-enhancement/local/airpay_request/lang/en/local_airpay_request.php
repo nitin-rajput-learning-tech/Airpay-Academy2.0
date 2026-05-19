@@ -55,11 +55,14 @@ $string['messageprovider:request_escalated']  = 'Request escalated past SLA';
 
 // Errors.
 $string['error_reasonshort']     = 'Reason must be at least 20 characters.';
-$string['error_alreadyenrolled'] = 'You are already enrolled in this course.';
-$string['error_alreadyrequested'] = 'You already have a pending request for this course.';
+$string['error_alreadyenrolled'] = 'You are already enrolled in this course or learning path.';
+$string['error_alreadyrequested'] = 'You already have a pending request for this item.';
 $string['error_courseunavailable'] = 'This course is not available for request.';
 $string['error_invalidstate']    = 'Invalid request state for this action.';
 $string['error_outoftenant']     = 'This action is not allowed across tenants.';
+
+// P1 #6 (2026-05-16) — polymorphic requests (path support).
+$string['error_path_inactive']   = 'This learning path is not active and cannot be requested.';
 
 // Settings.
 $string['settings_sla_hours']        = 'SLA hours before escalation';

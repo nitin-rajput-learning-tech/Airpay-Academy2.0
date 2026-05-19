@@ -28,8 +28,14 @@ defined('MOODLE_INTERNAL') || die();
  */
 class request_manager {
 
+    /** P1 batch (2026-05-16) — polymorphic item-type enum. */
+    public const ITEM_COURSE = 'course';
+    public const ITEM_PATH   = 'path';
+
     /**
-     * Submit a new request.
+     * Submit a new course-enrolment request. Retains the historic
+     * course-only signature; for non-course items use `submit_path()`
+     * (and future siblings).
      *
      * @throws \moodle_exception on validation failure
      */
@@ -71,6 +77,11 @@ class request_manager {
 
         $rec = (object) [
             'userid'          => $userid,
+            // P1 batch (2026-05-16) — polymorphic; for backward-compat
+            // every course request also sets `courseid` so existing reports
+            // and the legacy `idx_userid_courseid` index keep working.
+            'item_type'       => self::ITEM_COURSE,
+            'itemid'          => $courseid,
             'courseid'        => $courseid,
             'costcenterid'    => $costcenterid,
             'reason'          => trim($reason),
@@ -106,6 +117,133 @@ class request_manager {
         }
 
         return $rec;
+    }
+
+    /**
+     * P1 batch (2026-05-16) — submit a request for a learning path.
+     *
+     * Mirrors `submit()` but persists `item_type='path'` + `itemid=$pathid`
+     * (and leaves the legacy `courseid` column at 0). On approval, the
+     * decide() flow detects the item type and enrols the user into the
+     * path via `\local_airpay_learningpath\path_manager::enrol_users()`,
+     * which (per W1-2) also enrols them into every Moodle course on the
+     * path.
+     *
+     * @throws \moodle_exception on validation failure
+     */
+    public static function submit_path(int $userid, int $pathid, string $reason): \stdClass {
+        global $DB, $USER;
+
+        if (strlen(trim($reason)) < 20) {
+            throw new \moodle_exception('error_reasonshort', 'local_airpay_request');
+        }
+
+        $user = $userid === (int) $USER->id
+            ? $USER
+            : $DB->get_record('user', ['id' => $userid], '*', MUST_EXIST);
+
+        // Path must exist + be active.
+        $path = $DB->get_record('local_airpay_learningpath',
+            ['id' => $pathid], 'id, name, status', MUST_EXIST);
+        if ((int) $path->status !== \local_airpay_learningpath\path_manager::STATUS_ACTIVE) {
+            throw new \moodle_exception('error_path_inactive', 'local_airpay_request');
+        }
+
+        // Already enrolled in the path?
+        if ($DB->record_exists('local_airpay_learningpath_users',
+            ['pathid' => $pathid, 'userid' => $userid])) {
+            throw new \moodle_exception('error_alreadyenrolled', 'local_airpay_request');
+        }
+
+        // Already pending path request?
+        if ($DB->record_exists('local_airpay_request', [
+            'userid'    => $userid,
+            'item_type' => self::ITEM_PATH,
+            'itemid'    => $pathid,
+            'status'    => 'pending',
+        ])) {
+            throw new \moodle_exception('error_alreadyrequested', 'local_airpay_request');
+        }
+
+        // Tenant snapshot.
+        $parts = explode('/', trim($user->open_path ?? '', '/'));
+        $costcenterid = isset($parts[0]) && ctype_digit($parts[0])
+            ? (int) $parts[0] : 0;
+
+        // Route: manager → courseowner-equivalent (path owner, if any) →
+        // default approver. Path-owner detection isn't implemented yet
+        // (no `local_airpay_learningpath.owner_userid` column), so fall
+        // through to manager-or-default.
+        [$route, $approverid] = self::route_approver_for_path($user, $pathid);
+
+        $sla_hours = (int) (get_config('local_airpay_request', 'sla_hours') ?: 48);
+        $now = time();
+        $timedue = $now + ($sla_hours * 3600);
+
+        $rec = (object) [
+            'userid'          => $userid,
+            'item_type'       => self::ITEM_PATH,
+            'itemid'          => $pathid,
+            'courseid'        => 0,
+            'costcenterid'    => $costcenterid,
+            'reason'          => trim($reason),
+            'status'          => 'pending',
+            'route'           => $route,
+            'approver_userid' => $approverid,
+            'timecreated'     => $now,
+            'timedue'         => $timedue,
+            'timemodified'    => $now,
+        ];
+        $rec->id = $DB->insert_record('local_airpay_request', $rec);
+
+        // Reuse the same notifier — it'll log "request for path X by Alice".
+        notifier::request_submitted($rec);
+        notifier::request_pending($rec);
+
+        // W1-9 (2026-05-15) — audit-trail event. Reuse the existing class;
+        // listeners that care about path requests can branch on `other.item_type`.
+        try {
+            \local_airpay_request\event\request_submitted::create([
+                'context'       => \context_system::instance(),
+                'objectid'      => (int) $rec->id,
+                'relateduserid' => (int) $rec->userid,
+                'other'         => [
+                    'item_type'       => self::ITEM_PATH,
+                    'itemid'          => $pathid,
+                    'pathid'          => $pathid,
+                    'costcenterid'    => (int) $rec->costcenterid,
+                    'approver_userid' => (int) $rec->approver_userid,
+                    'route'           => $rec->route,
+                ],
+            ])->trigger();
+        } catch (\Throwable $e) {
+            debugging('local_airpay_request: failed to emit path request_submitted: '
+                . $e->getMessage(), DEBUG_DEVELOPER);
+        }
+
+        return $rec;
+    }
+
+    /**
+     * P1 batch (2026-05-16) — path-flavoured routing. Same fallback chain
+     * as course requests but skips the course-owner step (no owner field
+     * on `local_airpay_learningpath` yet).
+     *
+     * @return array{0:string, 1:int}  [route_label, approver_userid]
+     */
+    public static function route_approver_for_path(\stdClass $user, int $pathid): array {
+        // 1. Direct manager.
+        if (!empty($user->open_managerid)) {
+            global $DB;
+            $manager = $DB->get_record('user',
+                ['id' => $user->open_managerid, 'deleted' => 0, 'suspended' => 0]);
+            if ($manager) {
+                return ['manager', (int) $manager->id];
+            }
+        }
+        // 2. Default approver.
+        $default = (int) (get_config('local_airpay_request', 'default_approver') ?: 2);
+        return ['admin', $default];
     }
 
     /**
@@ -175,6 +313,18 @@ class request_manager {
                 '', 'Decision note required for rejection');
         }
 
+        // P1 #6 (2026-05-16) — split the persistence transaction from the
+        // enrolment-side-effect call. `path_manager::enrol_users()` opens
+        // its OWN delegated transaction (per W1-2), and Moodle does not
+        // allow nesting two delegated transactions across plugin boundaries:
+        // committing the inner one before the outer one results in
+        // `dml_transaction_exception` at the outer commit.
+        //
+        // Solution: keep the txn scope to the actual `local_airpay_request`
+        // row update only. Do enrolment + notify AFTER the row commits.
+        // If enrolment fails, the request row is already approved; the
+        // failure is logged via debugging() and a separate retry job can
+        // pick it up later.
         $transaction = $DB->start_delegated_transaction();
         try {
             $now = time();
@@ -184,16 +334,36 @@ class request_manager {
             $rec->timedecided       = $now;
             $rec->timemodified      = $now;
             $DB->update_record('local_airpay_request', $rec);
-
-            if ($decision === 'approved') {
-                self::enrol_user($rec->userid, $rec->courseid);
-            }
-
-            notifier::request_decided($rec);
             $transaction->allow_commit();
         } catch (\Throwable $e) {
             $transaction->rollback($e);
             return $rec;
+        }
+
+        // ── Side effects (outside the txn) ─────────────────────────────
+        if ($decision === 'approved') {
+            try {
+                $type = $rec->item_type ?? self::ITEM_COURSE;
+                if ($type === self::ITEM_PATH) {
+                    // path_manager::enrol_users() inserts the path-user
+                    // row AND enrols the learner into every Moodle course
+                    // on the path via manual enrol (W1-2).
+                    \local_airpay_learningpath\path_manager::enrol_users(
+                        (int) $rec->itemid, [(int) $rec->userid]);
+                } else {
+                    self::enrol_user($rec->userid, (int) $rec->courseid);
+                }
+            } catch (\Throwable $e) {
+                debugging('local_airpay_request: enrolment failed for request '
+                    . $rec->id . ': ' . $e->getMessage(), DEBUG_DEVELOPER);
+            }
+        }
+
+        try {
+            notifier::request_decided($rec);
+        } catch (\Throwable $e) {
+            debugging('local_airpay_request: notifier failed for request '
+                . $rec->id . ': ' . $e->getMessage(), DEBUG_DEVELOPER);
         }
 
         // W1-9 (2026-05-15) — audit-trail event (outside the txn so even a
