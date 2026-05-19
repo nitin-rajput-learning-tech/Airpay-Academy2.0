@@ -1,5 +1,5 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-19 — **Wave 1 COMPLETE (10/10 P0s) + 19 Wave 2 P1 fixes shipped.** Latest commit `27f4ca00e` on `production` adds opt-in admin notification on every response submission for airpay_evaluation.
+**Updated:** 2026-05-19 — **Wave 1 COMPLETE (10/10 P0s) + 23 Wave 2 P1 fixes shipped.** Latest commit `9d7009c23` on `production` adds exam categories so admins can tag exams by topic (compliance/sales/leadership).
 
 ---
 
@@ -16,6 +16,10 @@ Seven more P1 batches shipped on top of the 12 from the previous update. All liv
 | **P1 #17** | **airpay_evaluation: timeopen/timeclose + multiple_submit** — closes audit items #14 + #15. Three new columns: `timeopen`, `timeclose`, `multiple_submit`. `submit_response()` gates on the window; `has_user_responded()` returns false in pulse mode. respond.mustache shows friendly "Not yet open" / "Closed" banners instead of fatal. | `818da486a` | `local_airpay_evaluation` `2026051901` (1.8.0) |
 | **P1 #18** | **airpay_evaluation: numeric + multi-select multichoice** — closes audit items #3 + #6. Brings question-type matrix from 5 → 7. New helper `build_question_options_json()` centralises options-JSON for all option-bearing types; numeric stores `{min,max}`, multichoice_multi stores option array. Validation + stats pipeline (count, sum, avg, min_seen, max_seen for numeric; distribution + total_picks + avg_picks for multi). | `7d7a5af59` | `local_airpay_evaluation` `2026051902` (1.9.0) |
 | **P1 #19** | **airpay_evaluation: email-on-response admin notification** — closes audit item #17. New `evaluation_response` message provider + `notify_admin_on_response` column. Opt-in per-evaluation (off by default). Fires Moodle notifications to siteadmins via `get_admins()`; admins opt out per channel in their own notification prefs. Anonymity preserved at notification time too (responder line shows "(anonymous)" when eval.anonymous=1). | `27f4ca00e` | `local_airpay_evaluation` `2026051903` (1.10.0) |
+| **P1 #20** | **airpay_recompletion: completion_reset event** — closes audit item #19. New `\local_airpay_recompletion\event\completion_reset` class fires from `recompletion_engine::reset_user_in_course()` after the txn commits. Other plugins (notifications, analytics, SIEM via logstore_standard_log) can now observe resets. Reset path also gained `reset_by_userid` + `reason` parameters threaded through both cron + bulk callers, so observers can distinguish auto vs manual vs bulk. | `a73612b9f` | `local_airpay_recompletion` `2026051901` (1.1.0) |
+| **P1 #21** | **airpay_courses: restore open_coursecompletiondays on edit form** — closes audit item #28. Column already existed on `mdl_course` and was read by `course_manager::get_completion_deadline()` but was never on the form, so it was always 0. Now exposed + persisted + validated (non-negative, server-side clamp). Unblocks the reminder workflow (audit #14/#15) when those tasks are restored. | `c77d07129` | `local_airpay_courses` `2026051901` (1.9.0) |
+| **P1 #22** | **airpay_skills: skill-level audit log** — closes audit item #23. New append-only table `local_airpay_user_skill_hist` (previous_level, new_level, source, source_id, changed_by_userid, timecreated). New public `skills_manager::record_skill_change()` helper + `get_user_skill_history()` query method. Wired into `update_from_course()` (the only existing mutator); idempotent on noop changes. Privacy provider extended to discover, export, and erase the new table including null-out of `changed_by_userid` references after subject erasure. | `8e7643b61` | `local_airpay_skills` `2026051901` (1.5.0) |
+| **P1 #23** | **airpay_exams: add category field** — closes audit item #12. New `categoryid` int(10) column on `local_airpay_exams` referencing `course_categories.id` (same taxonomy as courses — BizLMS treated exams as courses, so this matches). 0 = uncategorised (legacy data preserved). Form select indented by depth; create + update validate the FK and reject orphan ids with `invalidcategory`. | `9d7009c23` | `local_airpay_exams` `2026051901` (1.4.0) |
 
 ### What P1 #16 unlocks (HRMS sync)
 - Production sites get an automated daily HRMS reconciliation pull (default 02:30) without anyone clicking the manual upload page.
@@ -29,12 +33,14 @@ Seven more P1 batches shipped on top of the 12 from the previous update. All liv
 - Admin no longer has to poll `/responses.php` — opt-in notification fires on every submission for strategic surveys (C-suite pulse, post-incident debrief). Anonymous evals stay anonymous in the notification body too (#19).
 
 ### Next batches (when continuing)
-- airpay_evaluation show-non-respondents (audit #20) — blocked on assignments table (would also unblock target-audience assignment screen #21)
-- airpay_evaluation conditional question display (audit #10, recommendation #9) — depends_on_qid + depends_on_value schema + UI + JS show/hide
-- airpay_recompletion items (Catalyst IT extensions parity)
-- airpay_skills target-audience filtering
+- airpay_courses reminder + notification cron tasks (audit #14/#15) — now that P1 #21 surfaced the completion-deadline field, the reminder task can finally consume it
+- airpay_courses audit-trail / `local_logs` parity (audit #13) — compliance need
+- airpay_exams reminder task — now that P1 #21 has the deadline field for courses, exams might want the same
+- airpay_evaluation conditional question display (audit #10) — depends_on_qid + depends_on_value
+- airpay_evaluation show-non-respondents (audit #20) — blocked on assignments table
+- Hindi pack for airpay_evaluation (50+ strings)
+- airpay_skills self-rate workflow (audit #26)
 - Mobile-app WS surface flagging across the 31 plugins
-- Hindi pack for airpay_evaluation (now has 19+18+17 = 50+ new strings since the original)
 
 ---
 
