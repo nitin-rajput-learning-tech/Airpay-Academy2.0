@@ -1,11 +1,11 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-19 — **Wave 1 COMPLETE (10/10 P0s) + 18 Wave 2 P1 fixes shipped.** Latest commit `7d7a5af59` on `production` adds numeric + multi-select multichoice question types to airpay_evaluation, bringing the question-type matrix from 5 → 7.
+**Updated:** 2026-05-19 — **Wave 1 COMPLETE (10/10 P0s) + 19 Wave 2 P1 fixes shipped.** Latest commit `27f4ca00e` on `production` adds opt-in admin notification on every response submission for airpay_evaluation.
 
 ---
 
-## 🆕 WAVE 2 — P1 #13 → P1 #18 (2026-05-16 → 2026-05-19)
+## 🆕 WAVE 2 — P1 #13 → P1 #19 (2026-05-16 → 2026-05-19)
 
-Six more P1 batches shipped on top of the 12 from the previous update. All live-smoke-tested on the production-restored XAMPP (2,873 users, 411 courses, 3 tenants, 618 tables).
+Seven more P1 batches shipped on top of the 12 from the previous update. All live-smoke-tested on the production-restored XAMPP (2,873 users, 411 courses, 3 tenants, 618 tables).
 
 | # | Subject | Commit | Plugin version after |
 |---|---------|--------|----------------------|
@@ -15,23 +15,26 @@ Six more P1 batches shipped on top of the 12 from the previous update. All live-
 | **P1 #16** | **Cron-driven HRMS sync** (airpay_users) — closes audit item #4 from `airpay_users.md`. Scheduled task `\local_airpay_users\task\hrms_sync` reads CSV from URL or filesystem and pipes through the existing 24-col importer. Disabled by default; admin opts in via Site Admin → local plugins → Airpay User Engine + enables on Server → Scheduled tasks. | `34e9c72d1` | `local_airpay_users` `2026051606` (2.6.0) |
 | **P1 #17** | **airpay_evaluation: timeopen/timeclose + multiple_submit** — closes audit items #14 + #15. Three new columns: `timeopen`, `timeclose`, `multiple_submit`. `submit_response()` gates on the window; `has_user_responded()` returns false in pulse mode. respond.mustache shows friendly "Not yet open" / "Closed" banners instead of fatal. | `818da486a` | `local_airpay_evaluation` `2026051901` (1.8.0) |
 | **P1 #18** | **airpay_evaluation: numeric + multi-select multichoice** — closes audit items #3 + #6. Brings question-type matrix from 5 → 7. New helper `build_question_options_json()` centralises options-JSON for all option-bearing types; numeric stores `{min,max}`, multichoice_multi stores option array. Validation + stats pipeline (count, sum, avg, min_seen, max_seen for numeric; distribution + total_picks + avg_picks for multi). | `7d7a5af59` | `local_airpay_evaluation` `2026051902` (1.9.0) |
+| **P1 #19** | **airpay_evaluation: email-on-response admin notification** — closes audit item #17. New `evaluation_response` message provider + `notify_admin_on_response` column. Opt-in per-evaluation (off by default). Fires Moodle notifications to siteadmins via `get_admins()`; admins opt out per channel in their own notification prefs. Anonymity preserved at notification time too (responder line shows "(anonymous)" when eval.anonymous=1). | `27f4ca00e` | `local_airpay_evaluation` `2026051903` (1.10.0) |
 
 ### What P1 #16 unlocks (HRMS sync)
 - Production sites get an automated daily HRMS reconciliation pull (default 02:30) without anyone clicking the manual upload page.
 - `hrms_importer` matches existing users by email OR username OR employee_code — idempotent, so re-running on the same export updates rather than inserts duplicates.
 - Live smoke verified: 24-col CSV → `source=cron` run row → row reaches `company_code` org-tree validation (identical code path to manual upload, confirming cron is a thin fetcher).
 
-### What P1 #17 + #18 unlock (evaluation)
-- Compliance "30 days post-course" windows + monthly pulse surveys now work without admin manually flipping status.
-- Numeric questions (age, %, count) + "check all that apply" multichoice — the two BizLMS types most-cited in the audit.
-- Stats surface gains `min_seen`/`max_seen`/`avg` for numeric and `total_picks`/`avg_picks` for multi, so analytics renders "Range: 0-100, seen 10-80, avg 45.5" automatically.
+### What P1 #17 + #18 + #19 unlock (evaluation)
+- Compliance "30 days post-course" windows + monthly pulse surveys now work without admin manually flipping status (#17).
+- Numeric questions (age, %, count) + "check all that apply" multichoice — the two BizLMS types most-cited in the audit (#18).
+- Stats surface gains `min_seen`/`max_seen`/`avg` for numeric and `total_picks`/`avg_picks` for multi, so analytics renders "Range: 0-100, seen 10-80, avg 45.5" automatically (#18).
+- Admin no longer has to poll `/responses.php` — opt-in notification fires on every submission for strategic surveys (C-suite pulse, post-incident debrief). Anonymous evals stay anonymous in the notification body too (#19).
 
 ### Next batches (when continuing)
-- airpay_evaluation email-on-response notification (audit #17) — admins poll `/responses.php` today
 - airpay_evaluation show-non-respondents (audit #20) — blocked on assignments table (would also unblock target-audience assignment screen #21)
+- airpay_evaluation conditional question display (audit #10, recommendation #9) — depends_on_qid + depends_on_value schema + UI + JS show/hide
 - airpay_recompletion items (Catalyst IT extensions parity)
 - airpay_skills target-audience filtering
 - Mobile-app WS surface flagging across the 31 plugins
+- Hindi pack for airpay_evaluation (now has 19+18+17 = 50+ new strings since the original)
 
 ---
 
