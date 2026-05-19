@@ -142,3 +142,41 @@ $string['hrms_col_missing']   = 'Missing mandatory';
 
 // CSV parse errors.
 $string['error_csv_header_missing'] = 'Required header column(s) missing: {$a}';
+
+// W1-8 (2026-05-16) — Public-tenant signup + privacy + ToS.
+$string['signup_pagetitle']       = 'Create your Airpay Academy account';
+$string['signup_heading']         = 'Create an account';
+$string['signup_intro']           = 'Sign up for free to access Airpay Academy\'s public courses, certifications, and learning paths.';
+$string['signup_password']        = 'Password';
+$string['signup_password_help']   = 'Pick a strong password — at least 8 characters with a mix of letters, digits, and symbols.';
+$string['signup_password_confirm'] = 'Confirm password';
+$string['signup_tos_label']       = 'I have read and agree to the <a href="{$a->tos_url}" target="_blank">Terms of Use</a> and the <a href="{$a->privacy_url}" target="_blank">Privacy Policy</a>.';
+$string['signup_must_accept_tos'] = 'You must read and accept the Terms of Use and Privacy Policy before continuing.';
+$string['signup_submit']          = 'Create account';
+$string['signup_disabled']        = 'Self-registration is currently disabled. Please contact your administrator to request an account.';
+$string['signup_disabled_notice'] = 'Self-registration is currently disabled by the site administrator. If you believe you should be able to register, please email <a href="mailto:academy@airpay.co.in">academy@airpay.co.in</a>.';
+$string['signup_success_check_email'] = 'Account created. We have sent a confirmation link to your email — please click it to activate your account.';
+$string['signup_success_help']    = 'If you do not see the email within a few minutes, check your spam folder or contact academy@airpay.co.in for help.';
+$string['signup_back_to_login']   = 'Back to login';
+$string['signup_generic_error']   = 'We could not process your registration. Please try again.';
+$string['signup_validation_failed'] = 'Sign-up validation failed: {$a}';
+
+// Settings page.
+$string['settings_heading']        = 'Airpay Users — settings';
+$string['organization_shortname']  = 'Default organisation shortname';
+$string['activeregistration']      = 'Enable Public-tenant self-registration';
+$string['activeregistration_help'] = 'When enabled, users can sign up at /local/airpay_users/signup.php. New accounts go to the Public tenant by default (configurable below).';
+$string['signup_settings_heading'] = 'Self-registration (Public tenant)';
+$string['signup_settings_intro']   = 'Tune the Public-tenant signup flow below. Privacy + Terms pages render the admin-supplied HTML when set; otherwise they show the built-in GDPR-compliant default.';
+$string['signup_tenant_path']      = 'Tenant open_path for new signups';
+$string['signup_tenant_path_help'] = 'Open_path assigned to new self-registered users. Defaults to /77 (Public tenant). Do NOT point this at the Airpay tenant (id=1) — that tenant is HRMS-managed only.';
+$string['custom_privacy_policy_html'] = 'Privacy Policy HTML (override)';
+$string['custom_privacy_policy_html_help'] = 'Leave blank to use the built-in GDPR-compliant default. Set this to override with company-approved legal text.';
+$string['custom_tos_html']         = 'Terms of Use HTML (override)';
+$string['custom_tos_html_help']    = 'Leave blank to use the built-in default. Set this to override with company-approved legal text.';
+
+// Privacy + ToS pages.
+$string['privacy_pagetitle'] = 'Privacy Policy — Airpay Academy';
+$string['privacy_heading']   = 'Privacy Policy';
+$string['tos_pagetitle']     = 'Terms of Use — Airpay Academy';
+$string['tos_heading']       = 'Terms of Use';

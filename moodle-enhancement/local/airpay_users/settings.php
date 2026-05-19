@@ -39,7 +39,29 @@ if ($hassiteconfig) {
 
     $settings->add(new admin_setting_configcheckbox('local_airpay_users/activeregistration',
         get_string('activeregistration', 'local_airpay_users'),
-        '', 0));
+        get_string('activeregistration_help', 'local_airpay_users'), 0));
+
+    // W1-8 (2026-05-16) — Public-tenant signup configuration.
+    $settings->add(new admin_setting_heading('local_airpay_users/signup_heading',
+        get_string('signup_settings_heading', 'local_airpay_users'),
+        get_string('signup_settings_intro', 'local_airpay_users')));
+
+    $settings->add(new admin_setting_configtext('local_airpay_users/signup_tenant_path',
+        get_string('signup_tenant_path', 'local_airpay_users'),
+        get_string('signup_tenant_path_help', 'local_airpay_users'),
+        '/77', PARAM_TEXT));
+
+    $settings->add(new admin_setting_confightmleditor(
+        'local_airpay_users/custom_privacy_policy_html',
+        get_string('custom_privacy_policy_html', 'local_airpay_users'),
+        get_string('custom_privacy_policy_html_help', 'local_airpay_users'),
+        ''));
+
+    $settings->add(new admin_setting_confightmleditor(
+        'local_airpay_users/custom_tos_html',
+        get_string('custom_tos_html', 'local_airpay_users'),
+        get_string('custom_tos_html_help', 'local_airpay_users'),
+        ''));
 
     $ADMIN->add('localplugins', $settings);
 }
