@@ -40,9 +40,15 @@ class edit_path extends \core_form\dynamic_form {
         $mform->setType('name', PARAM_TEXT);
         $mform->addRule('name', null, 'required', null, 'client');
 
-        $mform->addElement('textarea', 'description', get_string('description', 'local_airpay_learningpath'),
-            ['rows' => 5, 'cols' => 50]);
-        $mform->setType('description', PARAM_TEXT);
+        // P1 batch (2026-05-16) — swap raw textarea for the rich-text editor so
+        // admins can embed images/links/formatted instructions. The editor
+        // element returns an array [text, format]; we unpack it in process().
+        $mform->addElement('editor', 'description_editor',
+            get_string('description', 'local_airpay_learningpath'),
+            ['rows' => 10, 'cols' => 80],
+            ['noclean' => true, 'subdirs' => 0, 'maxfiles' => 0,
+             'enable_filemanagement' => false]);
+        $mform->setType('description_editor', PARAM_RAW);
 
         // ── Organisation ──────────────────────────────────────────────
         $mform->addElement('header', 'hdr_org', get_string('heading_org', 'local_airpay_learningpath'));
@@ -51,6 +57,24 @@ class edit_path extends \core_form\dynamic_form {
         $mform->addElement('select', 'costcenterid', get_string('organisation', 'local_airpay_learningpath'), $orgs);
         $mform->setType('costcenterid', PARAM_INT);
         $mform->addHelpButton('costcenterid', 'organisation', 'local_airpay_learningpath');
+
+        // ── Compliance window (P1 batch 2026-05-16) ──────────────────
+        // Both dates optional; together they bound when the path is
+        // enrollable.
+        $mform->addElement('header', 'hdr_window',
+            get_string('heading_window', 'local_airpay_learningpath'));
+
+        $mform->addElement('date_selector', 'startdate',
+            get_string('startdate', 'local_airpay_learningpath'),
+            ['optional' => true]);
+        $mform->setType('startdate', PARAM_INT);
+        $mform->addHelpButton('startdate', 'startdate', 'local_airpay_learningpath');
+
+        $mform->addElement('date_selector', 'enddate',
+            get_string('enddate', 'local_airpay_learningpath'),
+            ['optional' => true]);
+        $mform->setType('enddate', PARAM_INT);
+        $mform->addHelpButton('enddate', 'enddate', 'local_airpay_learningpath');
 
         // ── Status ────────────────────────────────────────────────────
         if (!$iscreate) {
@@ -65,12 +89,31 @@ class edit_path extends \core_form\dynamic_form {
     }
 
     public function validation($data, $files) {
-        return [];
+        $errors = [];
+
+        // P1 batch (2026-05-16) — enddate must be on/after startdate when
+        // both supplied. Either being 0 / empty means "no bound".
+        $start = (int) ($data['startdate'] ?? 0);
+        $end   = (int) ($data['enddate']   ?? 0);
+        if ($start > 0 && $end > 0 && $end < $start) {
+            $errors['enddate'] = get_string('enddate_before_start',
+                'local_airpay_learningpath');
+        }
+        return $errors;
     }
 
     public function process_dynamic_submission() {
         $data = $this->get_data();
         $pathid = (int) $data->pathid;
+
+        // P1 batch (2026-05-16) — editor element returns
+        // ['text' => '...', 'format' => N]. Flatten into the columns the
+        // path_manager expects.
+        if (isset($data->description_editor) && is_array($data->description_editor)) {
+            $data->description = (string) ($data->description_editor['text'] ?? '');
+            $data->descriptionformat =
+                (int) ($data->description_editor['format'] ?? FORMAT_HTML);
+        }
 
         if ($pathid === 0) {
             $newid = \local_airpay_learningpath\path_manager::create($data);
@@ -86,7 +129,13 @@ class edit_path extends \core_form\dynamic_form {
         $pathid = (int) ($this->optional_param('pathid', 0, PARAM_INT));
 
         if ($pathid === 0) {
-            $this->set_data((object) ['pathid' => 0]);
+            $this->set_data((object) [
+                'pathid' => 0,
+                'description_editor' => [
+                    'text'   => '',
+                    'format' => FORMAT_HTML,
+                ],
+            ]);
             return;
         }
 
@@ -94,9 +143,15 @@ class edit_path extends \core_form\dynamic_form {
         $this->set_data((object) [
             'pathid'       => $p->id,
             'name'         => $p->name,
-            'description'  => $p->description ?? '',
+            // P1 batch — repack the description into editor-element format.
+            'description_editor' => [
+                'text'   => (string) ($p->description ?? ''),
+                'format' => (int) ($p->descriptionformat ?? FORMAT_HTML),
+            ],
             'costcenterid' => $p->costcenterid ?? 0,
             'status'       => $p->status ?? 1,
+            'startdate'    => (int) ($p->startdate ?? 0),
+            'enddate'      => (int) ($p->enddate ?? 0),
         ]);
     }
 

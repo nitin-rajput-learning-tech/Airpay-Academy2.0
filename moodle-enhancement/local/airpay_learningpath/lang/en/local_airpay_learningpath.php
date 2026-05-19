@@ -21,7 +21,15 @@ $string['activatepath'] = 'Activate Path';
 // Form sections.
 $string['heading_basic'] = 'Path Details';
 $string['heading_org'] = 'Organisation';
+$string['heading_window'] = 'Enrolment window (optional)';
 $string['heading_status'] = 'Status';
+
+// P1 batch (2026-05-16) — compliance window.
+$string['startdate']           = 'Start date';
+$string['startdate_help']      = 'Optional. Path becomes enrollable from this date. Leave empty to allow enrolment immediately.';
+$string['enddate']             = 'End date';
+$string['enddate_help']        = 'Optional. Path stops accepting new enrolments after this date. Existing enrolled learners are unaffected.';
+$string['enddate_before_start'] = 'End date must be on or after the start date.';
 
 // Field labels.
 $string['name'] = 'Path name';

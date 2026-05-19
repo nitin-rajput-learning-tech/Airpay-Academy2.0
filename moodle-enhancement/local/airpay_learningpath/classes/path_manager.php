@@ -155,10 +155,14 @@ class path_manager {
         $record = new \stdClass();
         $record->name         = trim($data->name);
         $record->description  = $data->description ?? '';
+        // P1 batch (2026-05-16) — descriptionformat + start/end dates.
+        $record->descriptionformat = (int) ($data->descriptionformat ?? FORMAT_HTML);
         $record->costcenterid = (int) ($data->costcenterid ?? 0);
         $record->departmentid = (int) ($data->departmentid ?? 0);
         $record->status       = (int) ($data->status ?? self::STATUS_ACTIVE);
         $record->visible      = isset($data->visible) ? (int) $data->visible : 1;
+        $record->startdate    = !empty($data->startdate) ? (int) $data->startdate : null;
+        $record->enddate      = !empty($data->enddate)   ? (int) $data->enddate   : null;
         $record->timecreated  = time();
         $record->timemodified = time();
 
@@ -182,10 +186,20 @@ class path_manager {
 
         $record = (object) ['id' => $id, 'timemodified' => time()];
 
-        $fields = ['name', 'description', 'costcenterid', 'departmentid', 'status', 'visible'];
+        // P1 batch (2026-05-16) — startdate/enddate/descriptionformat added.
+        $fields = ['name', 'description', 'descriptionformat',
+                   'costcenterid', 'departmentid', 'status', 'visible',
+                   'startdate', 'enddate'];
         foreach ($fields as $field) {
             if (isset($data->$field)) {
-                $record->$field = $data->$field;
+                // Empty date-selectors arrive as 0 — store NULL instead so
+                // queries like `enddate IS NULL` work.
+                if (in_array($field, ['startdate', 'enddate'], true)
+                    && empty($data->$field)) {
+                    $record->$field = null;
+                } else {
+                    $record->$field = $data->$field;
+                }
             }
         }
 

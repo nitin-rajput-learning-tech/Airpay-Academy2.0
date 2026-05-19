@@ -1,18 +1,25 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/airpay_learningpath/db" VERSION="20260416"
+<XMLDB PATH="local/airpay_learningpath/db" VERSION="20260516"
        COMMENT="Airpay Learning Paths — replaces BizLMS local_learningplan">
   <TABLES>
     <TABLE NAME="local_airpay_learningpath" COMMENT="Learning paths (fork of local_learningplan)">
       <FIELDS>
         <FIELD NAME="id"              TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="name"            TYPE="char" LENGTH="254" NOTNULL="true"/>
-        <FIELD NAME="description"     TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="description"     TYPE="text" NOTNULL="false"
+               COMMENT="P1 batch (2026-05-16): now rendered via the rich-text editor in edit_path form"/>
+        <FIELD NAME="descriptionformat" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="1"
+               COMMENT="P1 batch (2026-05-16): FORMAT_HTML(1) | FORMAT_PLAIN(2) | FORMAT_MARKDOWN(4)"/>
         <FIELD NAME="costcenterid"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="departmentid"    TYPE="int"  LENGTH="10" NOTNULL="false"/>
         <FIELD NAME="open_path"       TYPE="char" LENGTH="254" NOTNULL="false"/>
         <FIELD NAME="status"          TYPE="int"  LENGTH="2"  NOTNULL="true" DEFAULT="1"
                COMMENT="1=active, 0=archived"/>
         <FIELD NAME="visible"         TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="startdate"       TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="P1 batch (2026-05-16): UNIX ts — path becomes enrollable from this date"/>
+        <FIELD NAME="enddate"         TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="P1 batch (2026-05-16): UNIX ts — path closes for new enrolments on this date"/>
         <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="timemodified"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
       </FIELDS>
