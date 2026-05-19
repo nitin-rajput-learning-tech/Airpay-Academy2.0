@@ -1,5 +1,27 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-16 — **Wave 1 BizLMS parity COMPLETE: 10 of 10 P0 fixes shipped + pushed.** Commits `d18a13909` (W1-1..10 except W1-6/W1-8) + `d61508f16` (W1-6 HRMS importer) + `9013e4ea0` (W1-8 Public signup) on `production`. Next session: P1 items.
+**Updated:** 2026-05-16 — **Wave 1 COMPLETE (10/10 P0s) + first Wave 2 P1 shipped.** Latest commit `e37d1e4e0` on `production` adds chip-filter dropdowns to Manage Users (designation/location/employmenttype/hrmsrole + multi-value email/empid lists).
+
+---
+
+## 🆕 WAVE 2 — P1 BATCH #1: User-list chip filters (2026-05-16)
+
+Commit: **`e37d1e4e0`**. Closes audit items #5, #6, #7 from `airpay_users.md`. Closes the "single search box is too coarse for 'show me Senior Managers in Mumbai'" admin pain point.
+
+- New WS `local_airpay_users_list_filter_options` returns distinct values for 6 user fields in one roundtrip
+- New AMD `local_airpay_users/chip_filters` populates dropdowns on page load
+- `list_users.php` accepts new filter keys: `designation`, `location`, `employmenttype`, `hrmsrole`, `region`, `grade`, plus `email_list` + `empid_list` (multi-value with comma/newline splitting + 200-cap)
+- 7 PHPUnit cases
+- Live-data smoke: 140 distinct designations + 11 employment types in our DB
+
+### Next P1 candidates (audit ordering)
+
+1. `airpay_users.md` #20 — supervisor autocomplete org-scoped (tenant isolation gap)
+2. `airpay_users.md` #22 — tenant-scoped welcome email tokens
+3. `airpay_learningpath.md` #6 — target-audience filtering (designation/region/dept on path enrol form)
+4. `airpay_learningpath.md` #22 — start/end dates on path schema
+5. `airpay_learningpath.md` #25 — description rich-text editor (textarea → editor)
+
+---
 
 ---
 
