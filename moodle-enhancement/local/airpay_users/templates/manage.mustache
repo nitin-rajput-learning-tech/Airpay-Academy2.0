@@ -123,6 +123,46 @@
                    aria-label="Filter users by employee ID substring">
         </div>
 
+        {{! ── P1 batch (2026-05-16) — HR-attribute chip filters. ── }}
+        {{!   Dropdowns are populated by local_airpay_users_list_filter_options }}
+        {{!   on page load via the chip_filters AMD module. }}
+        <div>
+            <label for="airpay-users-designation" class="small text-muted mb-1 d-block">Designation</label>
+            <select id="airpay-users-designation" class="form-select form-select-sm"
+                    data-airpay-users-filter="designation"
+                    style="min-width: 160px;"
+                    aria-label="Filter users by designation">
+                <option value="">All designations</option>
+            </select>
+        </div>
+        <div>
+            <label for="airpay-users-location" class="small text-muted mb-1 d-block">Location</label>
+            <select id="airpay-users-location" class="form-select form-select-sm"
+                    data-airpay-users-filter="location"
+                    style="min-width: 140px;"
+                    aria-label="Filter users by location">
+                <option value="">All locations</option>
+            </select>
+        </div>
+        <div>
+            <label for="airpay-users-employmenttype" class="small text-muted mb-1 d-block">Employment</label>
+            <select id="airpay-users-employmenttype" class="form-select form-select-sm"
+                    data-airpay-users-filter="employmenttype"
+                    style="min-width: 130px;"
+                    aria-label="Filter users by employment type">
+                <option value="">All types</option>
+            </select>
+        </div>
+        <div>
+            <label for="airpay-users-hrmsrole" class="small text-muted mb-1 d-block">HRMS role</label>
+            <select id="airpay-users-hrmsrole" class="form-select form-select-sm"
+                    data-airpay-users-filter="hrmsrole"
+                    style="min-width: 140px;"
+                    aria-label="Filter users by HRMS role">
+                <option value="">All roles</option>
+            </select>
+        </div>
+
         {{! ── Status pills ── }}
         <div>
             <label class="small text-muted mb-1 d-block">Status</label>

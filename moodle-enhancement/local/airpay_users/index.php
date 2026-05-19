@@ -127,6 +127,9 @@ $data = [
 // custom shell rendering — calling js_call_amd() here guarantees
 // the cascade JS loads.
 $PAGE->requires->js_call_amd('theme_airpayux/org_cascade', 'init');
+// P1 batch (2026-05-16) — populate chip-filter dropdowns
+// (designation/location/employmenttype/hrmsrole) from distinct user values.
+$PAGE->requires->js_call_amd('local_airpay_users/chip_filters', 'init');
 
 echo $OUTPUT->header();
 echo $OUTPUT->render_from_template('local_airpay_users/manage', $data);

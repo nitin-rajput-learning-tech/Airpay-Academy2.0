@@ -28,11 +28,12 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_airpay_users';
-// W1-6 + W1-8 (2026-05-16) — HRMS importer + Public-tenant self-registration.
-$plugin->version   = 2026051601;
+// W1-6 + W1-8 + P1 chip-filters (2026-05-16) — HRMS importer +
+// Public-tenant self-registration + designation/location/role filter chips.
+$plugin->version   = 2026051602;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '2.1.0';  // W1-6 + W1-8
+$plugin->release   = '2.2.0';  // +P1 chip-filter dropdowns + multi-value email/empid
 $plugin->dependencies = [
     'local_airpay_org' => 2026051501,
 ];

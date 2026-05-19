@@ -88,6 +88,21 @@ class list_users extends external_api {
         $email_contains = (string) ($client_filters['email_contains'] ?? '');
         $empid_contains = (string) ($client_filters['empid_contains'] ?? '');
 
+        // P1 batch (2026-05-16) — chip filters for HR attributes. Each is a
+        // single-value exact match; pass empty string to skip.
+        $designation    = (string) ($client_filters['designation']    ?? '');
+        $location       = (string) ($client_filters['location']       ?? '');
+        $hrmsrole       = (string) ($client_filters['hrmsrole']       ?? '');
+        $employmenttype = (string) ($client_filters['employmenttype'] ?? '');
+        $region         = (string) ($client_filters['region']         ?? '');
+        $grade          = (string) ($client_filters['grade']          ?? '');
+
+        // P1 batch — multi-value email/empid (CSV string, splits on comma,
+        // becomes an `OR LIKE` chain so admins can paste "show me these 30
+        // emails" lists).
+        $email_list = (string) ($client_filters['email_list'] ?? '');
+        $empid_list = (string) ($client_filters['empid_list'] ?? '');
+
         // ── WHERE assembly ──
         $where = ['u.deleted = 0', 'u.id > 2'];
         $sqlparams = [];
@@ -146,6 +161,48 @@ class list_users extends external_api {
             $where[] = $DB->sql_like("COALESCE(u.open_employeeid, '')",
                 ':empidterm', false);
             $sqlparams['empidterm'] = '%' . $DB->sql_like_escape($empid_contains) . '%';
+        }
+
+        // P1 batch (2026-05-16) — HR-attribute chip filters. The 6 fields
+        // below are EXACT-match (came from a distinct-values dropdown so
+        // no need for LIKE). Skip empties.
+        $chip_map = [
+            'designation'    => ['col' => 'u.open_designation',    'val' => $designation],
+            'location'       => ['col' => 'u.open_location',       'val' => $location],
+            'hrmsrole'       => ['col' => 'u.open_hrmsrole',       'val' => $hrmsrole],
+            'employmenttype' => ['col' => 'u.open_employmenttype', 'val' => $employmenttype],
+            'region'         => ['col' => 'u.open_region',         'val' => $region],
+            'grade'          => ['col' => 'u.open_grade',          'val' => $grade],
+        ];
+        foreach ($chip_map as $key => $cfg) {
+            if ($cfg['val'] !== '') {
+                $param_key = 'chip_' . $key;
+                $where[] = $cfg['col'] . ' = :' . $param_key;
+                $sqlparams[$param_key] = $cfg['val'];
+            }
+        }
+
+        // P1 batch — multi-value email_list / empid_list.
+        // Admin pastes a comma- or newline-separated list; we split, trim,
+        // dedupe, and IN-clause it. Cap at 200 values to keep the query
+        // sane (Moodle DML limits IN clauses anyway).
+        if ($email_list !== '') {
+            $emails = self::normalise_csv_list($email_list, 200);
+            if (!empty($emails)) {
+                [$insql, $inargs] = $DB->get_in_or_equal($emails,
+                    SQL_PARAMS_NAMED, 'emaillist', true, '');
+                $where[] = 'LOWER(u.email) ' . $insql;
+                $sqlparams = array_merge($sqlparams, $inargs);
+            }
+        }
+        if ($empid_list !== '') {
+            $empids = self::normalise_csv_list($empid_list, 200);
+            if (!empty($empids)) {
+                [$insql, $inargs] = $DB->get_in_or_equal($empids,
+                    SQL_PARAMS_NAMED, 'empidlist', true, '');
+                $where[] = "COALESCE(u.open_employeeid, '') " . $insql;
+                $sqlparams = array_merge($sqlparams, $inargs);
+            }
         }
 
         if (!empty($params['search'])) {
@@ -239,6 +296,27 @@ class list_users extends external_api {
             'page'    => $params['page'],
             'perpage' => $params['perpage'],
         ];
+    }
+
+    /**
+     * P1 batch (2026-05-16) — split a CSV/newline-separated list into a
+     * sanitised array. Lower-cases each entry, trims whitespace, deduplicates,
+     * and caps the result at $max_items to bound the resulting IN clause.
+     *
+     * @param string $raw  Comma- or newline-separated input
+     * @param int    $max_items
+     * @return string[]  Cleaned values; possibly empty.
+     */
+    private static function normalise_csv_list(string $raw, int $max_items = 200): array {
+        $values = preg_split('/[,\n\r;]+/', $raw) ?: [];
+        $cleaned = [];
+        foreach ($values as $v) {
+            $v = strtolower(trim($v));
+            if ($v !== '') {
+                $cleaned[$v] = true;  // dedup via array-key
+            }
+        }
+        return array_slice(array_keys($cleaned), 0, $max_items);
     }
 
     public static function execute_returns(): external_single_structure {

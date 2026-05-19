@@ -32,6 +32,14 @@ $functions = [
         'ajax'        => true,
         'capabilities' => 'local/airpay_users:view',
     ],
+    // P1 batch (2026-05-16) — distinct values for chip-filter dropdowns.
+    'local_airpay_users_list_filter_options' => [
+        'classname'   => 'local_airpay_users\external\list_filter_options',
+        'description' => 'Return distinct designation/location/hrmsrole/employmenttype/region/grade values for filter dropdowns',
+        'type'        => 'read',
+        'ajax'        => true,
+        'capabilities' => 'local/airpay_users:view',
+    ],
     'local_airpay_users_suspend_user' => [
         'classname'   => 'local_airpay_users\external\suspend_user',
         'description' => 'Suspend or activate a user',
