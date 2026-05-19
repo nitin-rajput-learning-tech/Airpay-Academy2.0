@@ -35,13 +35,60 @@ Commit: **`24ad9e208`**. Closes audit item #20 from `airpay_users.md` — and it
 - 7 PHPUnit cases including the cross-tenant attack vector
 - `local_airpay_users` `2026051603` (2.3.0)
 
-### Next P1 candidates (audit ordering)
+## 🆕 WAVE 2 — P1 BATCH #4 + #5: Classroom dates + user DOB/DOJ (2026-05-16)
 
-1. `airpay_users.md` #22 — tenant-scoped welcome email tokens
-2. `airpay_learningpath.md` #6 — target-audience filtering (designation/region/dept on path enrol form)
-3. `airpay_learningpath.md` #19 — `airpay_request` integration (learner can request path access)
-4. `airpay_classroom.md` start/end dates (same pattern as learningpath; quick port)
-5. `airpay_users.md` #16 — DOB + DOJ date selectors on edit form
+Commit: **`8de8db6b8`**. Two related fixes — both stop admins detouring through Moodle core for HR-routine fields.
+
+- Classroom: `startdate` + `enddate` enrolment-window columns (`local_airpay_classroom` `2026051600` / 1.9.0)
+- User edit form: `open_dateofbirth` + `open_joindate` date_selector elements (`local_airpay_users` `2026051604` / 2.4.0)
+- `user_manager::apply_custom_fields()` now NULLs empty dates (was storing 0, breaking reports)
+- 6 + smoke PHPUnit cases for classroom; live-tested DOB/DOJ persistence
+
+## 🆕 WAVE 2 — P1 #6: airpay_request integration for learning paths (2026-05-16)
+
+Commit: **`069741d66`**. Closes audit item #19 from `airpay_learningpath.md`.
+
+- New polymorphic schema on `local_airpay_request`: `item_type` (`course | path | classroom | program`) + `itemid`
+- `request_manager::submit_path()` lets learners ticket "please enrol me in path X"
+- `decide(approved)` on a path request calls `path_manager::enrol_users()` (W1-2 chain — also enrols in the path's courses)
+- **Nested-transaction bugfix**: split persistence txn from enrolment side-effect call (Moodle doesn't allow nested delegated transactions across plugin boundaries)
+- `local_airpay_request` `2026051600` (1.2.0)
+- 5 PHPUnit cases + live end-to-end smoke (submit → approve → path-user row exists)
+
+## 🆕 WAVE 2 — P1 #7: Tenant-scoped welcome email with tokens (2026-05-16)
+
+Commit: **`9d1684014`**. Closes audit item #22 from `airpay_users.md`.
+
+- New `welcome_mailer` class with `[employee_name]`, `[employee_email]`, `[employee_username]`, `[employee_password]`, `[employee_organization]` tokens
+- Per-tenant subject/body overrides via admin settings (Airpay/Public/ZEEA slots)
+- `user_manager::create()` now uses welcome_mailer instead of `setnew_password_and_mail()`
+- New message provider `welcome_email`
+- `local_airpay_users` `2026051605` (2.5.0)
+- 5 PHPUnit cases
+
+## 🆕 WAVE 2 — P1 #8: Learning path target-audience bulk enrol (2026-05-16)
+
+Commit: **`60293eaa3`**. Closes audit item #6 from `airpay_learningpath.md`. Backend-only — UI is Wave 3 polish.
+
+- `path_audience_enroller::resolve_audience(filters, caller)` returns matching user IDs, tenant-scoped, capped at 2000
+- `path_audience_enroller::preview(...)` returns count + sample of 10 for admin sanity-check
+- `path_audience_enroller::enrol_by_filter(...)` resolves audience + enrols via `path_manager::enrol_users()` (idempotent)
+- 2 new WS: `local_airpay_learningpath_preview_audience` + `local_airpay_learningpath_bulk_enrol_by_audience`
+- Filters: designation, region, location, employmenttype, grade, hrmsrole, org_path (all optional, ANDed)
+- `local_airpay_learningpath` `2026051601` (1.5.0)
+- 7 PHPUnit cases
+- Live smoke against production data: `preview(designation=Manager)` → 45 real Managers found
+
+### Wave 2 totals (so far)
+
+8 P1 commits today, ~50 files touched, all live-smoke-tested. All P1 items from the audit's "user-facing pain points" list are now shipped except the per-question-anonymous toggle (already done in W1-5), capability granularity, and multilingual (Hi/Te/Es) language packs.
+
+### Next batches
+
+- Cross-plugin: cohort-driven audience filtering (path_audience_enroller currently uses user.open_* only; cohort_members table would extend the same filter map)
+- airpay_programs start/end dates + audience filter (parallel to learningpath; would land as one commit)
+- Bulk-enrol UI (Wave 3 polish on top of P1 #8)
+- airpay_request UI: "Request access" button on path / classroom / program detail pages
 
 ---
 
