@@ -1,5 +1,5 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-15 EOD — **Wave 1 BizLMS parity 8/10 P0 fixes shipped + pushed.** Commit `d18a13909` on `production`. 105 files, ~8k insertions. Two remaining P0s (W1-6 HRMS import, W1-8 Public signup) deferred to Wave 1.5.
+**Updated:** 2026-05-16 — **Wave 1 BizLMS parity 9/10 P0 fixes shipped + pushed.** Commits `d18a13909` (W1-1..10 except W1-6/W1-8) + `d61508f16` (W1-6 HRMS importer) on `production`. One remaining P0 (W1-8 Public signup) deferred to next session.
 
 ---
 
@@ -19,7 +19,7 @@ Closes 8 of the 10 highest-impact gaps from the 19-file BizLMS parity audit at `
 | W1-7 | `airpay_classroom` Zoom/Teams + recording URL fields on sessions | ✅ shipped | `local_airpay_classroom` `2026051501` (1.8.0). New `meeting_url` + `recording_url` columns (1024 chars), form fields with `addHelpButton`, datatable Join/Replay icons, URL sanitiser |
 | W1-9 | Event emission across `airpay_programs` (`program_completed`), `airpay_classroom` (`classroom_completed`), `airpay_request` (`request_submitted/approved/rejected`) | ✅ shipped | `local_airpay_programs` `2026051500` (1.5.0), `local_airpay_request` `2026051500` (1.1.0). 5 new event classes hitting `mdl_logstore_standard_log`. Unlocks W1-5 program + classroom triggers. |
 | W1-10 | Multi-type manager allocation — `item_type` + `itemid` columns + 3 new allocation methods (classroom/program/path) | ✅ shipped | `local_airpay_manager` `2026051500` (1.3.0). Backward-compat preserved — legacy course-only rows untouched. UNIQUE on (userid, item_type, itemid). |
-| W1-6 | HRMS 24-column Darwinbox/SAP CSV bulk import + cron sync | ⏸ **deferred** | Estimated 1-2 day session. Source: `bizlms_disabled/users/sync/`. Field map + cron task + sync errors table + statistics dashboard. |
+| W1-6 | HRMS 24-column Darwinbox/SAP CSV bulk import + two-pass manager resolution | ✅ shipped (2026-05-16, commit `d61508f16`) | `local_airpay_users` `2026051600` (2.0.0). New: `classes/hrms_importer.php` (730 LOC), `classes/form/bulk_hrms_form.php`, `bulk_hrms.php`, `sync_runs.php`, `sync_run_detail.php`, FIRST `db/install.xml` for this plugin with 2 tables (sync_runs + sync_errors), 8 PHPUnit cases, CLI smoke test that passes end-to-end. Two-pass design picks up Mike→Sarah manager links even when manager is in a LATER row of the same CSV. |
 | W1-8 | Public-tenant `signup.php` + `privacypolicy.php` + `termscondition.php` | ⏸ **deferred** | ~½ day. Public tenant self-registration broken; compliance regression. Needs design discussion on captcha + email verification flow before code. |
 
 ### Reusable infrastructure introduced
