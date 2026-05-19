@@ -202,10 +202,19 @@
     {{# tab_users_active }}
     <div class="d-flex justify-content-end mb-3 gap-2">
         {{# can_enrol }}
+        {{! P1 #14 (2026-05-16) — bulk enrol by target audience. Replaces
+            the cohort-only mass-enrol button (cohorts are still supported
+            via the new modal's cohortid filter). }}
+        <button type="button" class="btn btn-outline-primary btn-sm"
+                data-action="bulk-enrol-audience"
+                title="Enrol all users matching a target audience">
+            <i class="fa fa-users fa-fw" aria-hidden="true"></i>
+            {{# str }}audience_modal_title, local_airpay_programs{{/ str }}
+        </button>
         <button type="button" class="btn btn-outline-secondary btn-sm"
                 data-action="enrol-program-cohort">
-            <i class="fa fa-users fa-fw" aria-hidden="true"></i>
-            Mass-enrol cohort
+            <i class="fa fa-user-circle fa-fw" aria-hidden="true"></i>
+            Cohort only
         </button>
         <button type="button" class="btn btn-primary btn-sm" data-action="enrol-program-users">
             <i class="fa fa-user-plus fa-fw" aria-hidden="true"></i>

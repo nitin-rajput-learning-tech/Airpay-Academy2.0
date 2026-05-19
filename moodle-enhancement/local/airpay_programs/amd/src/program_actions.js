@@ -120,6 +120,38 @@ const openEnrolUsersForm = async (programid, returnFocus) => {
     modalForm.show();
 };
 
+// P1 #14 (2026-05-16) — bulk enrol by target audience.
+const openBulkEnrolAudienceForm = async (programid, returnFocus) => {
+    const title = await getString('audience_modal_title',
+        'local_airpay_programs');
+    const modalForm = new ModalForm({
+        formClass: 'local_airpay_programs\\form\\bulk_enrol_audience_form',
+        args: {programid: programid},
+        modalConfig: {title: title, large: true},
+        returnFocus: returnFocus,
+    });
+    modalForm.addEventListener(modalForm.events.LOADED, async () => {
+        const modalBody = document.querySelector('.modal.show .modal-body')
+            || document.querySelector('.modal-body');
+        if (modalBody) {
+            const helper = await import(
+                'local_airpay_programs/audience_form_helper');
+            helper.init(modalBody);
+        }
+    });
+    modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, (event) => {
+        const detail = event.detail || {};
+        const enrolled = detail.enrolled || 0;
+        const matched = detail.matched || 0;
+        const message = enrolled === matched
+            ? `Enrolled all ${enrolled} matching user${enrolled === 1 ? '' : 's'}.`
+            : `${enrolled} of ${matched} matching users enrolled (rest were already enrolled).`;
+        Notification.addNotification({message: message, type: 'success'});
+        window.location.reload();
+    });
+    modalForm.show();
+};
+
 // Phase F.3 (2026-05-08) — mass-enrol cohort modal.
 const openEnrolCohortForm = (programid, returnFocus) => {
     const modalForm = new ModalForm({
@@ -199,6 +231,10 @@ const handleViewClick = (programid) => (event) => {
         case 'enrol-program-users':
             event.preventDefault();
             openEnrolUsersForm(programid, trigger);
+            break;
+        case 'bulk-enrol-audience':
+            event.preventDefault();
+            openBulkEnrolAudienceForm(programid, trigger);
             break;
         case 'enrol-program-cohort':
             event.preventDefault();

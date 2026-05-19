@@ -159,6 +159,38 @@ const openEnrolUsersForm = async (classroomid, returnFocus) => {
     modalForm.show();
 };
 
+// P1 #13 (2026-05-16) — bulk enrol by target audience.
+const openBulkEnrolAudienceForm = async (classroomid, returnFocus) => {
+    const title = await getString('audience_modal_title',
+        'local_airpay_classroom');
+    const modalForm = new ModalForm({
+        formClass: 'local_airpay_classroom\\form\\bulk_enrol_audience_form',
+        args: {classroomid: classroomid},
+        modalConfig: {title: title, large: true},
+        returnFocus: returnFocus,
+    });
+    modalForm.addEventListener(modalForm.events.LOADED, async () => {
+        const modalBody = document.querySelector('.modal.show .modal-body')
+            || document.querySelector('.modal-body');
+        if (modalBody) {
+            const helper = await import(
+                'local_airpay_classroom/audience_form_helper');
+            helper.init(modalBody);
+        }
+    });
+    modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, (event) => {
+        const detail = event.detail || {};
+        const enrolled = detail.enrolled || 0;
+        const matched = detail.matched || 0;
+        const message = enrolled === matched
+            ? `Enrolled all ${enrolled} matching user${enrolled === 1 ? '' : 's'}.`
+            : `${enrolled} of ${matched} matching users enrolled (rest were already enrolled).`;
+        Notification.addNotification({message: message, type: 'success'});
+        window.location.reload();
+    });
+    modalForm.show();
+};
+
 const confirmDeleteSession = async (sessionid, title, returnFocus) => {
     const [confirmTitle, message, deleteLabel, successMsg] = await Promise.all([
         getString('delete_session', 'local_airpay_classroom'),
@@ -224,6 +256,10 @@ const handleViewClick = (classroomid) => (event) => {
         case 'enrol-users':
             event.preventDefault();
             openEnrolUsersForm(classroomid, trigger);
+            break;
+        case 'bulk-enrol-audience':
+            event.preventDefault();
+            openBulkEnrolAudienceForm(classroomid, trigger);
             break;
         case 'unenrol-user': {
             event.preventDefault();

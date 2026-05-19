@@ -117,4 +117,21 @@ $functions = [
         'ajax'         => true,
         'capabilities' => 'local/airpay_classroom:view',
     ],
+
+    // P1 #13 (2026-05-16) — target-audience bulk enrol (mirrors W2 #8 +
+    // P1 #9 in airpay_learningpath / airpay_programs).
+    'local_airpay_classroom_preview_audience' => [
+        'classname'    => 'local_airpay_classroom\external\preview_audience',
+        'description'  => 'Preview users matching a target-audience filter before bulk-enrolling',
+        'type'         => 'read',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_classroom:enrol',
+    ],
+    'local_airpay_classroom_bulk_enrol_by_audience' => [
+        'classname'    => 'local_airpay_classroom\external\bulk_enrol_by_audience',
+        'description'  => 'Resolve a target-audience filter and bulk-enrol all matching users into a classroom',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_classroom:enrol',
+    ],
 ];
