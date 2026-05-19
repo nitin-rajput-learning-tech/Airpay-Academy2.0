@@ -1,5 +1,39 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-16 — **Wave 1 COMPLETE (10/10 P0s) + first Wave 2 P1 shipped.** Latest commit `e37d1e4e0` on `production` adds chip-filter dropdowns to Manage Users (designation/location/employmenttype/hrmsrole + multi-value email/empid lists).
+**Updated:** 2026-05-19 — **Wave 1 COMPLETE (10/10 P0s) + 18 Wave 2 P1 fixes shipped.** Latest commit `7d7a5af59` on `production` adds numeric + multi-select multichoice question types to airpay_evaluation, bringing the question-type matrix from 5 → 7.
+
+---
+
+## 🆕 WAVE 2 — P1 #13 → P1 #18 (2026-05-16 → 2026-05-19)
+
+Six more P1 batches shipped on top of the 12 from the previous update. All live-smoke-tested on the production-restored XAMPP (2,873 users, 411 courses, 3 tenants, 618 tables).
+
+| # | Subject | Commit | Plugin version after |
+|---|---------|--------|----------------------|
+| P1 #13 | airpay_classroom target-audience bulk-enrol (parallel-port of W2 #8 + P1 #9) | `b54ce3d20` | `local_airpay_classroom` `2026051601` (1.10.0) |
+| P1 #14 | Bulk-enrol modal UI on program Users tab (parallel-port of P1 #11) | `b54ce3d20` | `local_airpay_programs` `2026051602` (1.8.0) |
+| P1 #15 | Hindi (`hi`) language packs for classroom + programs (~50 + ~40 strings) | `b54ce3d20` | (lang files only) |
+| **P1 #16** | **Cron-driven HRMS sync** (airpay_users) — closes audit item #4 from `airpay_users.md`. Scheduled task `\local_airpay_users\task\hrms_sync` reads CSV from URL or filesystem and pipes through the existing 24-col importer. Disabled by default; admin opts in via Site Admin → local plugins → Airpay User Engine + enables on Server → Scheduled tasks. | `34e9c72d1` | `local_airpay_users` `2026051606` (2.6.0) |
+| **P1 #17** | **airpay_evaluation: timeopen/timeclose + multiple_submit** — closes audit items #14 + #15. Three new columns: `timeopen`, `timeclose`, `multiple_submit`. `submit_response()` gates on the window; `has_user_responded()` returns false in pulse mode. respond.mustache shows friendly "Not yet open" / "Closed" banners instead of fatal. | `818da486a` | `local_airpay_evaluation` `2026051901` (1.8.0) |
+| **P1 #18** | **airpay_evaluation: numeric + multi-select multichoice** — closes audit items #3 + #6. Brings question-type matrix from 5 → 7. New helper `build_question_options_json()` centralises options-JSON for all option-bearing types; numeric stores `{min,max}`, multichoice_multi stores option array. Validation + stats pipeline (count, sum, avg, min_seen, max_seen for numeric; distribution + total_picks + avg_picks for multi). | `7d7a5af59` | `local_airpay_evaluation` `2026051902` (1.9.0) |
+
+### What P1 #16 unlocks (HRMS sync)
+- Production sites get an automated daily HRMS reconciliation pull (default 02:30) without anyone clicking the manual upload page.
+- `hrms_importer` matches existing users by email OR username OR employee_code — idempotent, so re-running on the same export updates rather than inserts duplicates.
+- Live smoke verified: 24-col CSV → `source=cron` run row → row reaches `company_code` org-tree validation (identical code path to manual upload, confirming cron is a thin fetcher).
+
+### What P1 #17 + #18 unlock (evaluation)
+- Compliance "30 days post-course" windows + monthly pulse surveys now work without admin manually flipping status.
+- Numeric questions (age, %, count) + "check all that apply" multichoice — the two BizLMS types most-cited in the audit.
+- Stats surface gains `min_seen`/`max_seen`/`avg` for numeric and `total_picks`/`avg_picks` for multi, so analytics renders "Range: 0-100, seen 10-80, avg 45.5" automatically.
+
+### Next batches (when continuing)
+- airpay_evaluation email-on-response notification (audit #17) — admins poll `/responses.php` today
+- airpay_evaluation show-non-respondents (audit #20) — blocked on assignments table (would also unblock target-audience assignment screen #21)
+- airpay_recompletion items (Catalyst IT extensions parity)
+- airpay_skills target-audience filtering
+- Mobile-app WS surface flagging across the 31 plugins
+
+---
 
 ---
 
