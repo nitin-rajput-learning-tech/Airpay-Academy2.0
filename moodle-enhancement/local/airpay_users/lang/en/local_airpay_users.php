@@ -202,3 +202,33 @@ $string['welcome_email_body_help']  = 'Plain-text body. Tokens listed above are 
 $string['welcome_email_subject_tenant'] = '{$a} tenant — subject override';
 $string['welcome_email_body_tenant']    = '{$a} tenant — body override';
 $string['welcome_email_body_tenant_help'] = 'Leave empty to use the default. Otherwise this overrides the default for users in the {$a} tenant tree.';
+
+// P1 #16 (2026-05-16) — cron-driven HRMS sync.
+$string['task_hrms_sync']             = 'HRMS sync (pull CSV and import)';
+$string['hrms_sync_settings_heading'] = 'HRMS sync (cron)';
+$string['hrms_sync_settings_intro']   = 'Configure an automated daily import that pulls a 24-column HRMS CSV from a URL or filesystem path and runs it through the same importer used by the manual upload page. The task is disabled by default — set the source mode to <em>URL</em> or <em>Filesystem</em>, then enable the task from Site administration ▶ Server ▶ Scheduled tasks. Default schedule: 02:30 daily.';
+$string['hrms_sync_mode']             = 'Source mode';
+$string['hrms_sync_mode_help']        = '<strong>Disabled</strong> — task is a no-op. <strong>URL</strong> — fetch via HTTP GET (with optional Authorization header). <strong>Filesystem</strong> — read from a server-local absolute path.';
+$string['hrms_sync_mode_disabled']    = 'Disabled (no-op)';
+$string['hrms_sync_mode_url']         = 'URL (HTTP GET)';
+$string['hrms_sync_mode_filesystem']  = 'Filesystem (server-local path)';
+$string['hrms_sync_url']              = 'CSV source URL';
+$string['hrms_sync_url_help']         = 'Used when source mode is <em>URL</em>. The endpoint must respond with the 24-column HRMS CSV body and HTTP 200. Connection timeout: 15s. Read timeout: 5min.';
+$string['hrms_sync_auth_header']      = 'Authorization header (optional)';
+$string['hrms_sync_auth_header_help'] = 'Pass the full header line, e.g. <code>Authorization: Bearer eyJhbGci...</code> or <code>X-Api-Key: ...</code>. Leave empty for unauthenticated endpoints. Stored unencrypted in the Moodle config table — rotate the token if you suspect a leak.';
+$string['hrms_sync_path']             = 'CSV filesystem path';
+$string['hrms_sync_path_help']        = 'Used when source mode is <em>Filesystem</em>. Must be an absolute server-local path (Unix: <code>/var/airpay/exports/hrms.csv</code> or Windows: <code>C:\airpay\hrms.csv</code>). The Moodle web-server user must have read permission. The file is re-read each run.';
+$string['hrms_sync_user_id']          = 'Runner user ID';
+$string['hrms_sync_user_id_help']     = 'Numeric user ID under which the import runs. Defaults to <code>2</code> (the site admin on a stock Moodle). Choose a user with the <code>local/airpay_users:edit</code> capability AND a tenant scope that covers every row in the CSV — otherwise rows will be rejected as cross-tenant.';
+$string['hrms_sync_status']           = 'Sync status';
+$string['hrms_sync_last_run_value']   = 'Last successful run: <strong>{$a->time}</strong> (run #{$a->runid}). View details on the <a href="../local/airpay_users/hrms_history.php">HRMS history page</a>.';
+$string['hrms_sync_last_run_never']   = 'Cron has never completed an HRMS sync successfully. Enable the task and check back after 02:30 server time, or run <code>php admin/cli/scheduled_task.php --execute=\\\\local_airpay_users\\\\task\\\\hrms_sync</code> from the command line to fire it manually.';
+
+// Error strings raised by the scheduled task itself.
+$string['hrms_sync_invalid_mode']        = 'Unrecognised source mode: {$a}';
+$string['hrms_sync_url_empty']           = 'Source mode is URL but no URL is configured.';
+$string['hrms_sync_url_http_error']      = 'HRMS URL fetch failed: {$a}';
+$string['hrms_sync_path_empty']          = 'Source mode is filesystem but no path is configured.';
+$string['hrms_sync_path_not_absolute']   = 'HRMS filesystem path must be absolute. Got: {$a}';
+$string['hrms_sync_path_not_readable']   = 'HRMS filesystem path is not readable by the web server: {$a}';
+$string['hrms_sync_path_read_failed']    = 'HRMS filesystem path could not be read: {$a}';

@@ -97,5 +97,68 @@ if ($hassiteconfig) {
             '', PARAM_RAW, 80, 12));
     }
 
+    // P1 #16 (2026-05-16) — cron-driven HRMS sync configuration.
+    $settings->add(new admin_setting_heading(
+        'local_airpay_users/hrms_sync_heading',
+        get_string('hrms_sync_settings_heading', 'local_airpay_users'),
+        get_string('hrms_sync_settings_intro', 'local_airpay_users')));
+
+    $settings->add(new admin_setting_configselect(
+        'local_airpay_users/hrms_sync_mode',
+        get_string('hrms_sync_mode', 'local_airpay_users'),
+        get_string('hrms_sync_mode_help', 'local_airpay_users'),
+        'disabled',
+        [
+            'disabled'   => get_string('hrms_sync_mode_disabled',   'local_airpay_users'),
+            'url'        => get_string('hrms_sync_mode_url',        'local_airpay_users'),
+            'filesystem' => get_string('hrms_sync_mode_filesystem', 'local_airpay_users'),
+        ]));
+
+    $settings->add(new admin_setting_configtext(
+        'local_airpay_users/hrms_sync_url',
+        get_string('hrms_sync_url', 'local_airpay_users'),
+        get_string('hrms_sync_url_help', 'local_airpay_users'),
+        '', PARAM_URL));
+
+    // Auth header value — masked because it usually contains a bearer
+    // token or basic-auth credential. Stored in plain config (Moodle
+    // doesn't encrypt admin settings), so rotate the token if you
+    // suspect leakage.
+    $settings->add(new admin_setting_configpasswordunmask(
+        'local_airpay_users/hrms_sync_auth_header',
+        get_string('hrms_sync_auth_header', 'local_airpay_users'),
+        get_string('hrms_sync_auth_header_help', 'local_airpay_users'),
+        ''));
+
+    $settings->add(new admin_setting_configtext(
+        'local_airpay_users/hrms_sync_path',
+        get_string('hrms_sync_path', 'local_airpay_users'),
+        get_string('hrms_sync_path_help', 'local_airpay_users'),
+        '', PARAM_RAW_TRIMMED));
+
+    $settings->add(new admin_setting_configtext(
+        'local_airpay_users/hrms_sync_user_id',
+        get_string('hrms_sync_user_id', 'local_airpay_users'),
+        get_string('hrms_sync_user_id_help', 'local_airpay_users'),
+        '2', PARAM_INT));
+
+    // Read-only status pane — surfaces "last run + last run id" so the
+    // admin can confirm the cron is firing without diving into mtrace
+    // logs. Implemented as a heading whose body is rendered dynamically.
+    $lastrun = (int) get_config('local_airpay_users', 'hrms_sync_last_run');
+    $lastrunid = (int) get_config('local_airpay_users', 'hrms_sync_last_run_id');
+    if ($lastrun > 0) {
+        $statusbody = get_string('hrms_sync_last_run_value', 'local_airpay_users', (object) [
+            'time'  => userdate($lastrun),
+            'runid' => $lastrunid,
+        ]);
+    } else {
+        $statusbody = get_string('hrms_sync_last_run_never', 'local_airpay_users');
+    }
+    $settings->add(new admin_setting_heading(
+        'local_airpay_users/hrms_sync_status',
+        get_string('hrms_sync_status', 'local_airpay_users'),
+        $statusbody));
+
     $ADMIN->add('localplugins', $settings);
 }
