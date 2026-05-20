@@ -1,5 +1,73 @@
-# PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-20 (late night) — **Wave 1 COMPLETE (10/10 P0s) + 60 Wave 2 P1 fixes shipped.** 20 batches added today (#41 → #60). Compliance now has: full template library (P1 #41), auto-expire cron (P1 #42), 100% Hindi parity across all 30 airpay_* plugins — 1,955 HI keys vs 1,951 EN keys (P1 #43 → #58, 14 Hindi batches), reCAPTCHA v2 on Public signup (P1 #59), comprehensive mobile-app WS surface audit categorising every 156 functions across 20 plugins (P1 #60).
+# PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
+**Updated:** 2026-05-20 (Day 0 — Sentientia LMS pivot) — **Strategic pivot from "patch Moodle deployment" to "build saleable enterprise LMS product".** Airpay Academy becomes customer-zero. ADR-001 records the decision. See `docs/adr/ADR-001-fork-strategy-and-product-pivot.md`.
+
+---
+
+## 🚀 DAY 0 — SENTIENTIA LMS FOUNDATION (2026-05-20)
+
+### Mission (NEW)
+Build **Sentientia LMS** — a white-label enterprise LMS/LXP/SaaS product. Airpay Academy is customer-zero. Product is positioned for future sale to other enterprises. Backwards compatibility with Airpay's current production is non-negotiable; new features ship behind feature flags, default OFF.
+
+### Roadmap (per Nitin's priority order, 2026-05-20)
+
+**Tier 1 (now):**
+1. PWA + push notifications (mobile-app-like web app, installable from browser)
+2. WhatsApp deepening (extend `local_airpay_whatsapp` for deadline / completion / cert notifications)
+3. **Mentimeter clone** (`local_sentientia_live`) — full feature parity over 8-12 sessions
+4. AI quiz generation (Anthropic Claude API + trainer-in-the-loop review)
+5. Hindi course content pipeline (Claude translate + ElevenLabs Hindi voice + SCORM re-pack)
+
+**Tier 2 (next):**
+6. Calendar sync (Outlook/Google)
+7. Real-time leaderboards (builds on Mentimeter SSE infra)
+8. Skills marketplace / peer mentorship
+9. Spaced repetition for compliance
+10. Microlearning playlists (Spotify-style)
+
+**Tier 3 (future):** Public cert verifier → multi-format export → PDF annotation → video bookmarks → avatar customisation → Whisper auto-captions → sentiment analysis → pre-test personalised paths → cohort sprints → predictive at-risk score
+
+**Tier 4 (out):** Use Zoom/Teams integration for live video; no whiteboard collaboration; no discussion forums (use Moodle core forum if needed)
+
+### Mobile strategy
+- **Phase X.1:** Expose 22 read-only WS endpoints to Moodle mobile-app surface
+- **Phase X.2:** Expose 14 learner-write WS endpoints to mobile-app surface
+- **Path B:** PWA (Progressive Web App) — manifest.json + service worker + push notifications, installable from browser
+- **Path C (long lead):** Cordova/Capacitor wrapper for App Store + Play Store submission — requires Apple Developer Program + Google Play Console enrolment + mobile-dev hire decision
+
+### Architecture
+Three-phase fork strategy per ADR-001:
+- **Phase 0 (now):** Foundation — branding, docs, ADRs, feature-flag infra, multi-customer architecture
+- **Phase 1 (Months 2-9):** Plugin-driven product — all 30 existing plugins gain enterprise polish + 100% feature-flag coverage; new features ship as `local_sentientia_*` plugins; surgical core overrides where plugins can't reach
+- **Phase 2 (Months 9-18):** Modern frontend overlay — React/Next.js (or Vue/Nuxt) calling Moodle WS layer; world-class LXP UX; Moodle PHP backend stays as engine room
+- **Phase 3 (Months 18-36, optional):** Strategic core replacements — reporting → ClickHouse, search → Elasticsearch, auth → modern OIDC/SAML
+
+### Operating model (Day 0)
+- **Engineering:** Solo (Claude as architect + senior dev + design + QA, Nitin co-working as PM/reviewer)
+- **Pace:** 1 session = 1 deliverable. Realistic v1.0 ETA: 30-50 sessions over 10-14 weeks
+- **Production cadence:** No deploy until built + tested + visually verified + UI/UX sign-off. Each version that meets the bar ships.
+- **Feature flags:** Mandatory for every new feature. Default OFF. Customer-level + tenant-level scope supported.
+- **Visual evidence:** Every UI-touching session ends with screenshots in `docs/visual-evidence/YYYY-MM-DD/`
+- **ADRs:** Every cross-cutting decision lands in `docs/adr/ADR-NNN-<slug>.md`
+- **Core mods:** Permitted (CLAUDE.md rule lifted), but recorded in `docs/core-mods/YYYY-MM-DD-<slug>.md` with `// SENTIENTIA-CORE-MOD:` markers
+
+### Day 0 deliverables (this session)
+- [x] CLAUDE.md v5.0 — new mission, new rules, new permissions
+- [x] ADR-001 — fork strategy + product pivot decision
+- [x] `docs/adr/`, `docs/core-mods/`, `docs/visual-evidence/`, `docs/customer-config/` directories scaffolded with README templates
+- [x] PROJECT-STATE.md updated to Day 0 baseline
+
+### Next session (Session 2)
+**Stream A foundation + Switchboard customer-level flags:**
+1. Extend `local_airpay_core` Switchboard to support customer-level feature flags (currently only tenant-level)
+2. Populate `docs/customer-config/airpay.md` as the customer-zero reference
+3. Create `docs/customer-config/TEMPLATE.md` for future customers
+4. Begin "Moodle" → "Sentientia" user-visible-string rename pass (selective — only user-visible labels, not internal class names; preserves upgrade-merge safety)
+
+---
+
+## 📦 PRIOR WORK — Wave 1 + Wave 2 (now baseline for Sentientia LMS customer-zero)
+
+Updated: 2026-05-20 (late night) — **Wave 1 COMPLETE (10/10 P0s) + 60 Wave 2 P1 fixes shipped.** 20 batches added today (#41 → #60). Compliance now has: full template library (P1 #41), auto-expire cron (P1 #42), 100% Hindi parity across all 30 airpay_* plugins — 1,955 HI keys vs 1,951 EN keys (P1 #43 → #58, 14 Hindi batches), reCAPTCHA v2 on Public signup (P1 #59), comprehensive mobile-app WS surface audit categorising every 156 functions across 20 plugins (P1 #60).
 
 ---
 
