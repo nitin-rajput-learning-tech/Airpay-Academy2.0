@@ -57,3 +57,32 @@ $string['noexams_subtitle'] = 'Register existing Moodle quizzes as enterprise ex
 
 // Privacy.
 $string['privacy:metadata'] = 'The Airpay airpay_exams plugin does not store personal data in plugin-owned tables.';
+
+// P1 #33 (2026-05-20) — deadline-reminder cron. Closes audit item #16
+// from parity-audit-2026-05-15/airpay_exams.md.
+$string['task_exam_reminder']              = 'Exam deadline reminder';
+$string['messageprovider:exam_reminder']   = 'Exam deadline reminder';
+
+$string['reminder_settings_heading']       = 'Exam deadline reminders (cron)';
+$string['reminder_settings_intro']         = 'Daily scheduled task that nudges learners whose exam deadline is approaching. Deadline source: <code>quiz.timeclose</code> (the calendar timestamp set on the wrapping quiz). The task is disabled by default; opt in via <code>reminder_enabled</code> below, then enable the task at <em>Site administration ▶ Server ▶ Scheduled tasks</em>. Default schedule: 09:15 daily.';
+$string['reminder_enabled']                = 'Enable exam reminders';
+$string['reminder_enabled_help']           = 'When OFF (default) the task is a no-op. When ON it fires daily, sends notifications to learners approaching exam timeclose, and dedupes via <code>local_airpay_exams_remind_sent</code>.';
+$string['reminder_days_before']            = 'Reminder buckets (days before timeclose)';
+$string['reminder_days_before_help']       = 'Comma-separated list of days-before-deadline thresholds. <code>7,3,1</code> nudges learners 7 days out, again at 3 days, and finally 1 day before. Bucket assignment is monotonic — a learner at 5 days out hits the "7" bucket once.';
+$string['reminder_max_per_run']            = 'Max notifications per run';
+$string['reminder_max_per_run_help']       = 'Safety cap so a misconfigured rule cannot mailbomb every learner in one cron tick. Default 500. Untreated learners roll over to the next run; the unique index dedupes.';
+$string['reminder_status']                 = 'Last run';
+$string['reminder_last_run_value']         = 'Last successful run: <strong>{$a->time}</strong>. Notifications sent in that run: <strong>{$a->count}</strong>.';
+$string['reminder_last_run_never']         = 'The exam-deadline-reminder cron has never run. Enable the task and check back after 09:15 server time, or run <code>php admin/cli/scheduled_task.php --execute=\\\\local_airpay_exams\\\\task\\\\exam_reminder</code> from the command line to fire it manually.';
+
+// Reminder message body — rendered by the cron task.
+$string['reminder_subject']      = 'Reminder: exam "{$a->examname}" is due in {$a->days_remaining} day(s)';
+$string['reminder_small']        = '"{$a->examname}" due in {$a->days_remaining} day(s)';
+$string['reminder_body_plain']   = 'Hi,
+
+This is a reminder that the exam "{$a->examname}" (course: {$a->coursename}) closes on {$a->deadline} — {$a->days_remaining} day(s) from now.
+
+Sit the exam here: {$a->exam_url}
+
+— Airpay Academy';
+$string['reminder_body_html']    = '<p>Hi,</p><p>This is a reminder that the exam <strong>{$a->examname}</strong> (course: {$a->coursename}) closes on <strong>{$a->deadline}</strong> — {$a->days_remaining} day(s) from now.</p><p><a href="{$a->exam_url}">Sit the exam</a></p><p style="color:#777;">— Airpay Academy</p>';
