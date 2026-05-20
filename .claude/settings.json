@@ -1,6 +1,16 @@
 {
   "model": "claude-sonnet-4-6",
 
+  "_pluginNote": "Vercel plugin disabled in this project — false-positive lexical matches on 'auth', 'nextjs', 'deployments-cicd' etc. add noise to a Moodle/PHP codebase. Kept user-globally for Nitin's other (real) Vercel projects.",
+  "disabledPlugins": [
+    "vercel@claude-plugins-official"
+  ],
+  "plugins": {
+    "disabled": [
+      "vercel@claude-plugins-official"
+    ]
+  },
+
   "permissions": {
     "allow": [
       "php -l *",

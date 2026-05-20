@@ -12,76 +12,27 @@ Extended the Switchboard infrastructure from tenant-scope to customer-scope per 
 | The Switchboard | `/local/airpay_core/admin/switchboard.php` | **None — identical to Phase A0** | New "Customer scope" pill tab strip ABOVE the existing tenant-scope tab strip. Scope banner copy adapts to the (customer, tenant) pair. New per-flag badges: "customer override", "inheriting customer", "legacy tenant override". |
 | Switchboard with `?customer=1&tenant=77` | Same URL with new query params | n/a (query params ignored) | Renders Airpay-customer / Public-tenant scope view |
 
-## Captured
+## Captured (all 9 images — Session 2 visual evidence complete)
 
-- `login-redirect-desktop.png` — proves the Switchboard URL exists and redirects to login (requires `moodle/site:config`). Confirms the URL routing works in the deployed plugin.
+| File | View mode | Resolution | What to see |
+|---|---|---|---|
+| `login-redirect-desktop.png` | URL routing proof (pre-login) | 1920×1080 | Switchboard URL redirects to login when not authenticated — confirms plugin deployed |
+| `01-switchboard-gate-off-desktop.png` | Gate OFF baseline (Phase A0 look) | 1920×1080 | NO customer-scope tab strip above the tenant tabs. Identical to Day-0 commit 672ccbe60 |
+| `02-switchboard-gate-off-mobile.png` | Gate OFF mobile | 390×844 | Same as #01 in mobile breakpoint — pre-existing responsive behaviour preserved |
+| `03-switchboard-gate-on-global-desktop.png` | Gate ON, customer=0, tenant=0 | 1920×1080 | NEW "Customer scope" pill strip with "All customers (global default)" + "Airpay Payment Services" pills. Global banner active. |
+| `04-switchboard-gate-on-customer-airpay-desktop.png` | Gate ON, customer=1, tenant=0 | 1920×1080 | Customer pill "Airpay Payment Services" highlighted. Primary-blue customer-scope banner: "You are editing the Airpay Payment Services customer scope..." Tenant strip shows "All tenants" active. |
+| `05-switchboard-gate-on-customer-tenant-airpay-desktop.png` | Gate ON, customer=1, tenant=1 | 1920×1080 | Customer "Airpay" + tenant "Airpay" both active. Warning banner: "...customer / Airpay tenant pair..." |
+| `06-switchboard-gate-on-customer-tenant-public-desktop.png` | Gate ON, customer=1, tenant=77 | 1920×1080 | Customer "Airpay" + tenant "Public" both active. Warning banner: "...customer / Public tenant pair..." |
+| `07-switchboard-gate-on-global-mobile.png` | Gate ON, customer=0, tenant=0 mobile | 390×844 | Customer pill strip stacks above tenant tabs in mobile breakpoint |
+| `08-switchboard-gate-on-customer-airpay-mobile.png` | Gate ON, customer=1, tenant=0 mobile | 390×844 | Customer-scope banner + selected customer pill in mobile breakpoint |
 
-## To be captured by Nitin (manual — admin login required)
+**Capture method:** Chrome DevTools MCP — Nitin logged in as `academy@airpay.co.in`, said "in", Claude took over Chrome and navigated through all 4 view modes capturing both desktop (1920×1080) and mobile (390×844) breakpoints. Gate was enabled via PHP CLI (`feature_flags::set()`) before capture and reverted to OFF after — clean state preserved.
 
-Per CLAUDE.md `user_privacy` rules, Claude cannot enter login credentials. Nitin needs to capture these screenshots from his admin session:
-
-### Gate OFF (default — Phase A0 visual baseline)
-
+**Verification:** Pre/post gate state confirmed via:
 ```
-URL: http://localhost:8080/moodle/local/airpay_core/admin/switchboard.php
-Expect: Tab strip shows Global default | Airpay | Public | ZEEA
-        NO customer-scope tab strip visible above it.
-        Identical to commit 672ccbe60 (Day 0).
+gate flag was: ON   (during capture)
+gate flag is now: OFF   (after capture, default-shipping state restored)
 ```
-
-- [ ] `switchboard-gate-off-desktop.png` (1920×1080)
-- [ ] `switchboard-gate-off-mobile.png` (390×844)
-
-### Gate ON
-
-Step 1 — toggle the gate ON:
-1. Visit `/local/airpay_core/admin/switchboard.php` (Global default tab)
-2. Find flag `sentientia.customer_level_flags.enabled` under "Sentientia Platform" category
-3. Click ON → Review & Apply → Confirm
-4. Wait 60s for cache TTL OR purge caches manually
-
-Step 2 — capture:
-```
-URL: http://localhost:8080/moodle/local/airpay_core/admin/switchboard.php
-Expect: NEW "Customer scope" pill strip appears above the tenant strip.
-        Pills: "All customers (global default)" | "Airpay Payment Services"
-```
-
-- [ ] `switchboard-gate-on-global-desktop.png` — gate ON, customer=0, tenant=0
-- [ ] `switchboard-gate-on-global-mobile.png`
-
-Step 3 — switch to customer view:
-```
-URL: http://localhost:8080/moodle/local/airpay_core/admin/switchboard.php?customer=1&tenant=0
-Expect: Banner: "You are editing the Airpay Payment Services customer scope..."
-        Customer pill "Airpay Payment Services" highlighted
-        Tenant tab "All tenants" highlighted
-        Flag rows render fresh (no customer-level overrides yet)
-```
-
-- [ ] `switchboard-customer-airpay-desktop.png`
-- [ ] `switchboard-customer-airpay-mobile.png`
-
-Step 4 — switch to customer+tenant view:
-```
-URL: http://localhost:8080/moodle/local/airpay_core/admin/switchboard.php?customer=1&tenant=77
-Expect: Banner: "You are editing the Airpay Payment Services customer / Public tenant pair..."
-        Customer pill "Airpay" highlighted
-        Tenant tab "Public" highlighted
-```
-
-- [ ] `switchboard-customer-tenant-public-desktop.png`
-- [ ] `switchboard-customer-tenant-public-mobile.png`
-
-### Reverting (cleanup)
-
-After visual capture, toggle the gate back OFF:
-1. Visit `/local/airpay_core/admin/switchboard.php`
-2. Find `sentientia.customer_level_flags.enabled` again
-3. Click OFF (or "Use default") → Apply
-4. Verify Switchboard returns to Phase A0 look
-
-This is a "feature ON to capture screenshots, feature OFF as a default-shipping state" pattern — backwards compat with Airpay's current production behaviour is preserved per ADR-002.
 
 ## Reviewed against prototypes
 
@@ -118,13 +69,14 @@ Runtime smoke test (gate ON path) — all 13 semantic checks passed:
 
 ## Sign-off
 
-- [ ] Nitin reviewed visual evidence
-- [ ] Mobile responsive verified at 590px breakpoint
-- [x] Hindi language strings added (100% parity preserved — 10 new EN strings, 10 new HI strings (30/30 total — 100% parity preserved))
+- [ ] Nitin reviewed visual evidence (pending — committed for review)
+- [x] Mobile responsive verified at 390px breakpoint (screenshots 02, 07, 08)
+- [x] Hindi language strings added (100% parity preserved — 10 new EN, 10 new HI, 30/30 total)
 - [ ] Dark mode tested (n/a — admin pages use Moodle's admin layout which has its own dark-mode handling)
-- [x] Both tenants verified (smoke test exercised customer=1/tenant=1, customer=1/tenant=77, customer=0/tenant=1)
+- [x] Both tenants verified (screenshots 05 captures customer=1/tenant=1, 06 captures customer=1/tenant=77)
 - [x] Browser console: zero JS errors expected (no new AMD module changes — Switchboard JS untouched)
-- [x] Backwards compat verified (gate OFF → identical to Phase A0)
+- [x] Backwards compat verified (gate OFF → identical to Phase A0; see screenshot 01 vs Day-0 baseline)
+- [x] Gate reverted to OFF after capture — production-ready default state restored
 
 ## Files committed in this session
 
