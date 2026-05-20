@@ -176,5 +176,36 @@ function xmldb_local_airpay_evaluation_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026051903, 'local', 'airpay_evaluation');
     }
 
+    // 2026052010 — P1 #30: conditional question display.
+    //
+    // Adds two columns to `local_airpay_evaluation_questions`:
+    //   depends_on_qid   — parent question id (nullable). NULL = always shown.
+    //   depends_on_value — required parent answer (nullable). NULL with a
+    //                       non-null parent = "show when parent has ANY
+    //                       non-empty answer".
+    //
+    // Closes audit item #10 from
+    // parity-audit-2026-05-15/airpay_evaluation.md. Enables branching
+    // surveys without a separate dependencies table — the parent ref
+    // lives on the child row.
+    if ($oldversion < 2026052010) {
+        $table = new xmldb_table('local_airpay_evaluation_questions');
+
+        $field = new xmldb_field('depends_on_qid', XMLDB_TYPE_INTEGER, '10',
+            null, null, null, null, 'anonymous');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('depends_on_value', XMLDB_TYPE_CHAR, '255',
+            null, null, null, null, 'depends_on_qid');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2026052010,
+            'local', 'airpay_evaluation');
+    }
+
     return true;
 }

@@ -50,6 +50,10 @@
         <FIELD NAME="required"       TYPE="int"  LENGTH="1" NOTNULL="true" DEFAULT="1"/>
         <FIELD NAME="anonymous"      TYPE="int"  LENGTH="1" NOTNULL="true" DEFAULT="0"
                COMMENT="1 = hide responder identity for this question only"/>
+        <FIELD NAME="depends_on_qid" TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="P1 #30: parent question id this question depends on. NULL = always shown (default)."/>
+        <FIELD NAME="depends_on_value" TYPE="char" LENGTH="255" NOTNULL="false"
+               COMMENT="P1 #30: only show this question when the parent's answer matches this value. For yesno parents: 'yes' or 'no'. For multichoice: one of the parent's options. For rating/nps/numeric: a stringified int. NULL with non-null depends_on_qid = 'show when parent has ANY non-empty answer'."/>
         <FIELD NAME="sortorder"      TYPE="int"  LENGTH="6" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="timecreated"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
       </FIELDS>

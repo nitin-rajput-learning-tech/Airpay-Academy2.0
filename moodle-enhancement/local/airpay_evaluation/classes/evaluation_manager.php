@@ -441,6 +441,26 @@ class evaluation_manager {
             "SELECT MAX(sortorder) FROM {" . self::QUESTIONS_TABLE . "} WHERE evaluationid = :eid",
             ['eid' => $data->evaluationid]);
 
+        // P1 #30 (2026-05-20) — conditional dependency. Validate the
+        // parent is a sibling AND not self-referential. Cycle detection
+        // is unnecessary at create time because the new row has no id
+        // yet, so no chain can lead back to it.
+        $depends_on_qid   = null;
+        $depends_on_value = null;
+        if (!empty($data->depends_on_qid)) {
+            $depends_on_qid = (int) $data->depends_on_qid;
+            self::validate_dep_parent($depends_on_qid,
+                (int) $data->evaluationid, null);
+            // depends_on_value can be empty string (meaning "any non-empty
+            // parent answer triggers showing this question"). Trim
+            // whitespace but preserve empty-string-means-anything.
+            $depends_on_value = isset($data->depends_on_value)
+                ? trim((string) $data->depends_on_value) : '';
+            if ($depends_on_value === '') {
+                $depends_on_value = null;
+            }
+        }
+
         $record = (object) [
             'evaluationid' => (int) $data->evaluationid,
             'questiontype' => $data->questiontype,
@@ -449,11 +469,68 @@ class evaluation_manager {
             'required'     => isset($data->required) ? (int) $data->required : 1,
             // Phase G.2 (2026-05-08) — per-question anonymous toggle.
             'anonymous'    => isset($data->anonymous) ? (int) $data->anonymous : 0,
+            'depends_on_qid'   => $depends_on_qid,
+            'depends_on_value' => $depends_on_value,
             'sortorder'    => isset($data->sortorder) ? (int) $data->sortorder : ((int) $maxsort + 1),
             'timecreated'  => time(),
         ];
 
         return $DB->insert_record(self::QUESTIONS_TABLE, $record);
+    }
+
+    /**
+     * P1 #30 — validate that $parent_qid is acceptable as a dependency
+     * parent for a question in $evaluationid. The optional $self_qid
+     * lets update_question() pass its own id to exclude self-cycles.
+     *
+     * Rules:
+     *   1. parent must exist
+     *   2. parent must live in the same evaluation
+     *   3. parent must not be the child itself (only meaningful on update)
+     *   4. following parent.depends_on_qid recursively must not loop back
+     *      to the child (cycle detection)
+     *
+     * Throws moodle_exception on any rule violation.
+     */
+    public static function validate_dep_parent(int $parent_qid,
+                                                 int $evaluationid,
+                                                 ?int $self_qid): void {
+        global $DB;
+        if ($parent_qid <= 0) {
+            throw new \moodle_exception('dep_invalid_parent',
+                'local_airpay_evaluation');
+        }
+        if ($self_qid !== null && $parent_qid === $self_qid) {
+            throw new \moodle_exception('dep_self_reference',
+                'local_airpay_evaluation');
+        }
+        $parent = $DB->get_record(self::QUESTIONS_TABLE,
+            ['id' => $parent_qid], 'id, evaluationid, depends_on_qid');
+        if (!$parent) {
+            throw new \moodle_exception('dep_invalid_parent',
+                'local_airpay_evaluation');
+        }
+        if ((int) $parent->evaluationid !== $evaluationid) {
+            throw new \moodle_exception('dep_parent_other_evaluation',
+                'local_airpay_evaluation');
+        }
+        // Walk the parent's chain. If we ever see $self_qid the dep
+        // would cycle. Use a visited-set guard in case the existing
+        // data has a pre-existing cycle (shouldn't happen because we
+        // validate at write time, but defensive).
+        if ($self_qid !== null) {
+            $visited = [];
+            $cursor = (int) ($parent->depends_on_qid ?? 0);
+            while ($cursor > 0 && !isset($visited[$cursor])) {
+                if ($cursor === $self_qid) {
+                    throw new \moodle_exception('dep_cycle',
+                        'local_airpay_evaluation');
+                }
+                $visited[$cursor] = true;
+                $cursor = (int) $DB->get_field(self::QUESTIONS_TABLE,
+                    'depends_on_qid', ['id' => $cursor]) ?: 0;
+            }
+        }
     }
 
     public static function update_question(int $id, object $data): bool {
@@ -489,6 +566,31 @@ class evaluation_manager {
             // Type changed to one that doesn't store options — wipe the
             // stale JSON so analysis surfaces don't dereference dead data.
             $record->options = null;
+        }
+
+        // P1 #30 — conditional dependency on update. property_exists()
+        // distinguishes "caller intentionally cleared the dep" (null)
+        // from "caller didn't touch this field" (key absent).
+        if (property_exists($data, 'depends_on_qid')) {
+            $new_parent = $data->depends_on_qid !== null && $data->depends_on_qid !== ''
+                ? (int) $data->depends_on_qid : null;
+            if ($new_parent === null) {
+                $record->depends_on_qid   = null;
+                $record->depends_on_value = null;
+            } else {
+                self::validate_dep_parent($new_parent,
+                    (int) $existing->evaluationid, $id);
+                $record->depends_on_qid = $new_parent;
+                $depends_on_value = isset($data->depends_on_value)
+                    ? trim((string) $data->depends_on_value) : '';
+                $record->depends_on_value = $depends_on_value === ''
+                    ? null : $depends_on_value;
+            }
+        } else if (property_exists($data, 'depends_on_value')
+                && (int) ($existing->depends_on_qid ?? 0) > 0) {
+            // Caller updated just the value (keeping the same parent).
+            $v = trim((string) $data->depends_on_value);
+            $record->depends_on_value = $v === '' ? null : $v;
         }
 
         $DB->update_record(self::QUESTIONS_TABLE, $record);
@@ -680,8 +782,22 @@ class evaluation_manager {
             throw new \moodle_exception('evaluationhasnoquestions', 'local_airpay_evaluation');
         }
 
+        // P1 #30 — determine which questions are VISIBLE given the
+        // answers submitted so far. A question with a dependency whose
+        // parent answer doesn't match is treated as hidden and its
+        // answer is forced to null (not validated, not stored). This
+        // is the server-side counterpart to the JS show/hide on the
+        // respond page: clients can't bypass dependency-required by
+        // crafting a payload that includes the hidden question's answer.
+        $visible = self::compute_visibility_map($questions, $answers);
+
         $cleaned = [];
         foreach ($questions as $q) {
+            if (empty($visible[$q->id])) {
+                // Hidden by dependency → answer is null regardless of payload.
+                $cleaned[$q->id] = null;
+                continue;
+            }
             $raw = $answers[$q->id] ?? null;
             $clean = self::validate_answer($q, $raw);
             $cleaned[$q->id] = $clean;
@@ -797,6 +913,82 @@ class evaluation_manager {
                 'local_airpay_evaluation');
             message_send($msg);
         }
+    }
+
+    /**
+     * P1 #30 — compute which question ids are visible given the
+     * answer payload so far. A question is visible iff:
+     *   - it has no dependency, OR
+     *   - its parent is itself visible AND the parent's answer matches.
+     *
+     * The matching rule:
+     *   - depends_on_value is null → "show when parent has any non-empty answer"
+     *   - depends_on_value is set  → "show when parent's answer === this value"
+     *     (string-equality after both sides are cast to string and trimmed)
+     *
+     * Parent visibility is computed before the child's because we walk
+     * the questions list in order — and `get_questions()` returns them
+     * sorted by sortorder ASC, so admins who put a child before its
+     * parent in the sort order get the obvious bug (we don't try to
+     * topologically sort here; that's an authoring error).
+     *
+     * @param array $questions  Indexed by sortorder (from get_questions).
+     * @param array $answers    Map of qid → raw submitted answer.
+     * @return array<int,bool>  qid → visible?
+     */
+    public static function compute_visibility_map(array $questions,
+                                                    array $answers): array {
+        // Index questions by id for O(1) parent lookup.
+        $byid = [];
+        foreach ($questions as $q) {
+            $byid[(int) $q->id] = $q;
+        }
+
+        $visible = [];
+        foreach ($questions as $q) {
+            $qid = (int) $q->id;
+            $parent_qid = (int) ($q->depends_on_qid ?? 0);
+            if ($parent_qid <= 0) {
+                $visible[$qid] = true;
+                continue;
+            }
+            // If the parent isn't in the same evaluation (orphaned
+            // foreign key after a delete) treat the child as hidden:
+            // we can't evaluate the dependency, so showing it would
+            // confuse the learner.
+            if (!isset($byid[$parent_qid])) {
+                $visible[$qid] = false;
+                continue;
+            }
+            // Parent must itself be visible.
+            if (empty($visible[$parent_qid])) {
+                $visible[$qid] = false;
+                continue;
+            }
+            $parent_raw = $answers[$parent_qid] ?? null;
+            if ($parent_raw === null || $parent_raw === ''
+                    || (is_array($parent_raw) && empty($parent_raw))) {
+                // Parent unanswered → child stays hidden until parent fills.
+                $visible[$qid] = false;
+                continue;
+            }
+            $needed = $q->depends_on_value;
+            if ($needed === null || $needed === '') {
+                // "Any non-empty answer triggers" mode.
+                $visible[$qid] = true;
+                continue;
+            }
+            // String-equality match. Multichoice_multi parents pass an
+            // array — show child when ANY selected option matches.
+            if (is_array($parent_raw)) {
+                $visible[$qid] = in_array((string) $needed, array_map(
+                    fn($v) => (string) $v, $parent_raw), true);
+            } else {
+                $visible[$qid] = (trim((string) $parent_raw)
+                    === trim((string) $needed));
+            }
+        }
+        return $visible;
     }
 
     /**

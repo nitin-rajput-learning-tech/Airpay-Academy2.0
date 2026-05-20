@@ -87,6 +87,70 @@ class edit_question extends \core_form\dynamic_form {
             'Anonymous response',
             'Hide responder identity for this question only');
         $mform->setDefault('anonymous', 0);
+
+        // ── Conditional dependency (P1 #30 — 2026-05-20) ──────────────
+        // Closes audit item #10. Lets admin make this question visible
+        // only when an earlier "parent" question has a specific answer.
+        // The parent picker only lists SIBLING questions in the same
+        // evaluation; the parent's own dependency chain is validated
+        // server-side to prevent cycles.
+        $mform->addElement('header', 'hdr_dependency',
+            get_string('heading_dependency', 'local_airpay_evaluation'));
+
+        // Build the sibling-questions dropdown.
+        $sibling_options = $this->get_sibling_options(
+            $evaluationid, $questionid);
+        $mform->addElement('select', 'depends_on_qid',
+            get_string('dep_parent', 'local_airpay_evaluation'),
+            $sibling_options);
+        $mform->setType('depends_on_qid', PARAM_INT);
+        $mform->setDefault('depends_on_qid', 0);  // 0 = always shown
+        $mform->addHelpButton('depends_on_qid', 'dep_parent',
+            'local_airpay_evaluation');
+
+        $mform->addElement('text', 'depends_on_value',
+            get_string('dep_value', 'local_airpay_evaluation'),
+            ['size' => 30, 'placeholder' => '— any non-empty answer —']);
+        $mform->setType('depends_on_value', PARAM_TEXT);
+        $mform->addHelpButton('depends_on_value', 'dep_value',
+            'local_airpay_evaluation');
+        // Hide the value field when no parent is picked. The
+        // empty-string default is correct: "any non-empty answer".
+        $mform->hideIf('depends_on_value', 'depends_on_qid', 'eq', 0);
+    }
+
+    /**
+     * P1 #30 — list sibling questions (same evaluation) for the
+     * "depends on" picker, EXCLUDING the question being edited so
+     * an author can't self-reference via the form.
+     */
+    private function get_sibling_options(int $evaluationid,
+                                           int $current_qid): array {
+        global $DB;
+        $options = [0 => get_string('dep_none',
+            'local_airpay_evaluation')];
+        if ($evaluationid <= 0) {
+            return $options;
+        }
+        $sql = "SELECT id, questiontext, sortorder
+                  FROM {local_airpay_evaluation_questions}
+                 WHERE evaluationid = :eid
+                   AND id != :selfid
+              ORDER BY sortorder ASC, id ASC";
+        $rows = $DB->get_records_sql($sql, [
+            'eid' => $evaluationid,
+            'selfid' => $current_qid,
+        ]);
+        foreach ($rows as $r) {
+            // Truncate long question text for the dropdown.
+            $text = format_string($r->questiontext);
+            if (mb_strlen($text) > 80) {
+                $text = mb_substr($text, 0, 77) . '…';
+            }
+            $options[(int) $r->id] = 'Q' . ((int) $r->sortorder + 1)
+                . ' — ' . $text;
+        }
+        return $options;
     }
 
     public function validation($data, $files) {
@@ -182,6 +246,9 @@ class edit_question extends \core_form\dynamic_form {
             'numeric_max'  => $num_max,
             'required'     => $q->required ?? 1,
             'anonymous'    => $q->anonymous ?? 0,
+            // P1 #30 — pre-fill dependency. 0 / '' means "always shown".
+            'depends_on_qid'   => (int) ($q->depends_on_qid ?? 0),
+            'depends_on_value' => (string) ($q->depends_on_value ?? ''),
         ]);
     }
 

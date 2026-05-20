@@ -143,6 +143,19 @@ $string['invalid_numeric_above_max']   = 'Answer to "{$a->q}" must be at most {$
 $string['invalid_multichoice_multi']   = 'One or more selected options are not valid for: {$a}';
 $string['multichoice_multi_hint']      = 'Check all the options that apply.';
 
+// P1 #30 (2026-05-20) — conditional question display. Closes audit
+// item #10 from parity-audit-2026-05-15/airpay_evaluation.md.
+$string['heading_dependency']      = 'Conditional display (optional)';
+$string['dep_none']                = '— Always shown —';
+$string['dep_parent']              = 'Show this question only if…';
+$string['dep_parent_help']         = 'Pick a parent question. This question will only appear on the respond page when the parent has been answered AND its answer matches the value below. Cycles are blocked at save time. Leave as <em>Always shown</em> for unconditional questions.';
+$string['dep_value']               = '… the parent\'s answer matches';
+$string['dep_value_help']          = 'For Yes/No parents, enter <code>yes</code> or <code>no</code>. For multiple-choice parents, enter exactly one of the option labels (case-sensitive). For rating / NPS / numeric parents, enter the numeric value. Leave empty to mean <em>any non-empty answer triggers showing this question</em> — useful for "if the user answers Q3 at all, ask Q4".';
+$string['dep_invalid_parent']      = 'The selected parent question does not exist.';
+$string['dep_self_reference']      = 'A question cannot depend on itself.';
+$string['dep_parent_other_evaluation'] = 'The parent question is not part of this evaluation. Pick a sibling.';
+$string['dep_cycle']               = 'This dependency would create a cycle (parent eventually depends back on this question).';
+
 // P1 #19 (2026-05-16) — admin notification on every response.
 $string['heading_notifications']         = 'Notifications';
 $string['notify_admin_on_response']      = 'Email site admins on every response';
