@@ -20,10 +20,12 @@ $plugin->component = 'local_airpay_core';
 // P1 #24 (2026-05-16) — extend audit_log::SENSITIVE_EVENTS to cover
 // course_updated + course section/category CRUD. Closes audit item #13
 // from parity-audit-2026-05-15/airpay_courses.md ("local_logs parity").
-$plugin->version   = 2026051901;
+// P1 #51 (2026-05-20) — Hindi pack: 20 strings (tenant errors, scheduled
+// tasks, cache definitions, Switchboard, Style Guide, flag categories).
+$plugin->version   = 2026052001;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.3.1';
+$plugin->release   = '1.3.2';  // +P1 #51 Hindi pack
 // Release history
 // 1.1.0  cron-health publisher + audit_log + structured_logger
 // 1.2.0  Phase A0 — feature flags + Switchboard infrastructure.
