@@ -21,6 +21,8 @@ class evaluation_manager {
     private const RESPONSES_TABLE = 'local_airpay_evaluation_responses';
     // P1 #37 (2026-05-20) — assignments table.
     private const ASSIGN_TABLE   = 'local_airpay_evaluation_assign';
+    // P1 #41 (2026-05-20) — template library.
+    private const TEMPLATE_TABLE = 'local_airpay_evaluation_template';
 
     /** Status values matching install.xml. */
     public const STATUS_DRAFT    = 0;
@@ -967,6 +969,100 @@ class evaluation_manager {
             'eid'    => $evaluationid,
             'status' => $status,
         ]);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // P1 #41 (2026-05-20) — DB-backed template library.
+    // ═══════════════════════════════════════════════════════════════════
+    //
+    // The Phase G.1 JSON export/import already produces a self-describing
+    // template payload. The template library is a thin DB cache of those
+    // payloads: save a row, look it up later, hand it back to
+    // `import_template()` for reuse. No new payload schema; the row
+    // stores the exact same JSON that export_template() produces.
+
+    /**
+     * Save an existing evaluation as a reusable template.
+     *
+     * @param int    $evaluationid     Source evaluation
+     * @param string $template_name    Display name for the template
+     * @param string $template_desc    Short description shown in the picker
+     * @param int    $createdby_userid Acting admin (recorded for audit)
+     * @param int    $costcenterid     Originating tenant (0 = global)
+     * @param bool   $ispublic         True = visible across tenants
+     * @return int  New template row id
+     */
+    public static function save_template_from_evaluation(int $evaluationid,
+                                                           string $template_name,
+                                                           string $template_desc,
+                                                           int $createdby_userid,
+                                                           int $costcenterid = 0,
+                                                           bool $ispublic = false): int {
+        global $DB;
+        if (trim($template_name) === '') {
+            throw new \moodle_exception('template_name_required',
+                'local_airpay_evaluation');
+        }
+        $payload = self::export_template($evaluationid);
+        $now = time();
+        return (int) $DB->insert_record(self::TEMPLATE_TABLE, (object) [
+            'name'             => trim($template_name),
+            'description'      => $template_desc,
+            'payload'          => json_encode($payload),
+            'createdby_userid' => $createdby_userid,
+            'costcenterid'     => $costcenterid,
+            'ispublic'         => $ispublic ? 1 : 0,
+            'timecreated'      => $now,
+            'timemodified'     => $now,
+        ]);
+    }
+
+    /**
+     * Create a new evaluation from a saved template.
+     * Returns the array `import_template()` returns (id, name, question_count).
+     */
+    public static function create_evaluation_from_template(int $templateid,
+                                                             int $target_costcenterid = 0,
+                                                             int $status = self::STATUS_DRAFT): array {
+        global $DB;
+        $row = $DB->get_record(self::TEMPLATE_TABLE, ['id' => $templateid],
+            '*', MUST_EXIST);
+        $payload = json_decode((string) $row->payload, true);
+        if (!is_array($payload)) {
+            throw new \moodle_exception('template_payload_corrupt',
+                'local_airpay_evaluation');
+        }
+        return self::import_template($payload, $target_costcenterid, $status);
+    }
+
+    /**
+     * Get templates visible to the given tenant. Returns ALL ispublic=1
+     * rows + the caller-tenant's own rows.
+     *
+     * @param int $caller_costcenterid  0 = siteadmin → return everything
+     * @return array<int, \stdClass>
+     */
+    public static function list_templates(int $caller_costcenterid = 0): array {
+        global $DB;
+        if ($caller_costcenterid === 0) {
+            return $DB->get_records(self::TEMPLATE_TABLE, null,
+                'timemodified DESC');
+        }
+        return $DB->get_records_sql(
+            "SELECT * FROM {" . self::TEMPLATE_TABLE . "}
+              WHERE ispublic = 1
+                 OR costcenterid = :cid
+           ORDER BY ispublic DESC, timemodified DESC",
+            ['cid' => $caller_costcenterid]);
+    }
+
+    /** Delete a template row. */
+    public static function delete_template(int $templateid): bool {
+        global $DB;
+        $DB->get_record(self::TEMPLATE_TABLE, ['id' => $templateid],
+            '*', MUST_EXIST);
+        $DB->delete_records(self::TEMPLATE_TABLE, ['id' => $templateid]);
+        return true;
     }
 
     /**

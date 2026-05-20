@@ -261,5 +261,48 @@ function xmldb_local_airpay_evaluation_upgrade(int $oldversion): bool {
             'local', 'airpay_evaluation');
     }
 
+    // 2026052030 — P1 #41: DB-backed template library.
+    //
+    // Stores reusable evaluation templates with the same JSON payload
+    // shape that import/export already speaks. Lets admins save the
+    // CURRENT evaluation as a template + lets them create a new
+    // evaluation by picking an existing one. ispublic=1 makes the
+    // template available to admins in other tenants.
+    //
+    // Closes audit item #11 from
+    // parity-audit-2026-05-15/airpay_evaluation.md.
+    if ($oldversion < 2026052030) {
+        $table = new xmldb_table('local_airpay_evaluation_template');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL, XMLDB_SEQUENCE);
+            $table->add_field('name', XMLDB_TYPE_CHAR, '254', null, XMLDB_NOTNULL);
+            $table->add_field('description', XMLDB_TYPE_TEXT, null, null, null);
+            $table->add_field('payload', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL,
+                null, null, 'description');
+            $table->add_field('createdby_userid', XMLDB_TYPE_INTEGER, '10',
+                null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('costcenterid', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL, null, '0');
+            $table->add_field('ispublic', XMLDB_TYPE_INTEGER, '1', null,
+                XMLDB_NOTNULL, null, '0');
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL, null, '0');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL, null, '0');
+
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+
+            $table->add_index('idx_creator', XMLDB_INDEX_NOTUNIQUE,
+                ['createdby_userid']);
+            $table->add_index('idx_costcenter_pub', XMLDB_INDEX_NOTUNIQUE,
+                ['costcenterid', 'ispublic']);
+
+            $dbman->create_table($table);
+        }
+        upgrade_plugin_savepoint(true, 2026052030,
+            'local', 'airpay_evaluation');
+    }
+
     return true;
 }

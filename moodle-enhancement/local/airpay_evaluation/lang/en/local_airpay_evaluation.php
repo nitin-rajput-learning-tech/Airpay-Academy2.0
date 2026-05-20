@@ -199,6 +199,19 @@ $string['audience_location']      = 'Location';
 $string['audience_employmenttype'] = 'Employment type';
 $string['audience_cohort']        = 'Cohort';
 
+// P1 #41 (2026-05-20) — DB-backed template library. Closes audit
+// item #11 from parity-audit-2026-05-15/airpay_evaluation.md.
+$string['template_name_required']  = 'Template name is required.';
+$string['template_payload_corrupt'] = 'This template\'s payload could not be decoded. The row may have been edited outside Moodle. Delete and re-save.';
+$string['template_saved']          = 'Template saved.';
+$string['template_deleted']        = 'Template deleted.';
+$string['template_save_modal_title']     = 'Save as template';
+$string['template_picker_modal_title']   = 'Create from template';
+$string['template_name_label']     = 'Template name';
+$string['template_desc_label']     = 'Short description (optional)';
+$string['template_ispublic']       = 'Make this template available to other tenants';
+$string['template_ispublic_help']  = 'When checked, admins in OTHER tenants can pick this template when creating an evaluation. Useful for HQ-curated forms (POSH, AML, anti-bribery). Leave unchecked to keep the template scoped to your tenant.';
+
 // P1 #19 (2026-05-16) — admin notification on every response.
 $string['heading_notifications']         = 'Notifications';
 $string['notify_admin_on_response']      = 'Email site admins on every response';

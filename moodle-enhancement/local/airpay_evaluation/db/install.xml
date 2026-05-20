@@ -124,6 +124,32 @@
       </INDEXES>
     </TABLE>
 
+    <TABLE NAME="local_airpay_evaluation_template"
+           COMMENT="P1 #41 (2026-05-20): DB-backed reusable templates. Same JSON payload as import/export. ispublic=1 makes the template visible to admins in other tenants. Closes audit item #11.">
+      <FIELDS>
+        <FIELD NAME="id"               TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="name"             TYPE="char" LENGTH="254" NOTNULL="true"/>
+        <FIELD NAME="description"      TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="payload"          TYPE="text" NOTNULL="true"
+               COMMENT="JSON shape matching evaluation_manager::export_template()"/>
+        <FIELD NAME="createdby_userid" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="costcenterid"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="0 = global / unscoped; otherwise the originating tenant"/>
+        <FIELD NAME="ispublic"         TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="0"
+               COMMENT="1 = template visible to admins in other tenants"/>
+        <FIELD NAME="timecreated"      TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_creator"        UNIQUE="false" FIELDS="createdby_userid"/>
+        <INDEX NAME="idx_costcenter_pub" UNIQUE="false" FIELDS="costcenterid, ispublic"
+               COMMENT="Template-picker lookup: 'public templates + my-tenant templates'"/>
+      </INDEXES>
+    </TABLE>
+
     <TABLE NAME="local_airpay_evaluation_assign"
            COMMENT="P1 #37: assignments — tracks WHO was meant to respond to an evaluation. Populated by the W1-5 trigger queue when invitations fire, plus future admin bulk-assign + signup auto-assign. submit_response marks status='responded'. Closes audit items #20 + #21 from parity-audit-2026-05-15/airpay_evaluation.md.">
       <FIELDS>
