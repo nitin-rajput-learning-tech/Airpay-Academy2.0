@@ -11,7 +11,11 @@ $plugin->component = 'local_airpay_skills';
 //                       audit item #26 from the same audit doc.
 // P1 #26 (2026-05-20) — learner self-rate UI (panel + modal + AMD).
 //                       Wires the front-end to the P1 #25 back-end.
-$plugin->version   = 2026052002;
+// P1 #32 (2026-05-20) — Hindi (hi) lang pack catch-up: 80 strings
+//                       translated, covering all P1 #22/#25 additions
+//                       plus the previously-missing admin CRUD + privacy
+//                       metadata. Was at 19/80; now 80/80.
+$plugin->version   = 2026052003;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.6.1'; // + P1 #26 self-rate UI
+$plugin->release   = '1.6.2'; // + P1 #32 full Hindi pack
