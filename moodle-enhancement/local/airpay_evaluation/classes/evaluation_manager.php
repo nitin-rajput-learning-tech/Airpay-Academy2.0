@@ -19,6 +19,8 @@ class evaluation_manager {
     private const TABLE          = 'local_airpay_evaluation';
     private const QUESTIONS_TABLE = 'local_airpay_evaluation_questions';
     private const RESPONSES_TABLE = 'local_airpay_evaluation_responses';
+    // P1 #37 (2026-05-20) — assignments table.
+    private const ASSIGN_TABLE   = 'local_airpay_evaluation_assign';
 
     /** Status values matching install.xml. */
     public const STATUS_DRAFT    = 0;
@@ -817,6 +819,21 @@ class evaluation_manager {
 
         $responseid = $DB->insert_record(self::RESPONSES_TABLE, $record);
 
+        // P1 #37 (2026-05-20) — mark any matching assignments as
+        // 'responded'. Anonymous responses still mark assignments
+        // because the assignment uses the ACTUAL userid (the responder
+        // who clicked submit), not the stored userid (which is 0 for
+        // anonymous). Wrapped in try/catch so a missing assignment row
+        // doesn't poison submission.
+        if ($userid > 0) {
+            try {
+                self::mark_assignments_responded((int) $eval->id, (int) $userid);
+            } catch (\Throwable $e) {
+                debugging('mark_assignments_responded failed: ' . $e->getMessage(),
+                    DEBUG_NORMAL);
+            }
+        }
+
         // P1 #19 — opt-in admin notification. Wrapped in try/catch so a
         // misconfigured message provider can never break submission.
         if ((int) ($eval->notify_admin_on_response ?? 0) === 1) {
@@ -824,13 +841,132 @@ class evaluation_manager {
                 self::notify_admins_of_response($eval, $responseid,
                     $stored_userid, (int) $userid);
             } catch (\Throwable $e) {
-                // mtrace fallback for cron, debugging_only() for web.
                 debugging('notify_admins_of_response failed: ' . $e->getMessage(),
                     DEBUG_NORMAL);
             }
         }
 
         return $responseid;
+    }
+
+    /**
+     * P1 #37 (2026-05-20) — record an assignment.
+     *
+     * Idempotent: the UNIQUE index on (evaluationid, userid,
+     * trigger_event, source_id) catches re-assigns. We do a
+     * record_exists pre-check (cheaper than catching the exception);
+     * if the row exists we just return its id. If it exists but is
+     * 'expired', we re-open it to 'assigned' (an admin re-assigning
+     * an expired evaluation is a deliberate action).
+     *
+     * @param int      $evaluationid
+     * @param int      $userid
+     * @param string   $trigger_event
+     * @param int      $source_id           0 for manual
+     * @param int|null $assigned_by_userid  null for auto
+     * @param int|null $due_at              optional deadline
+     * @return int  Row id (existing or new).
+     */
+    public static function ensure_assignment(int $evaluationid, int $userid,
+                                               string $trigger_event = 'manual',
+                                               int $source_id = 0,
+                                               ?int $assigned_by_userid = null,
+                                               ?int $due_at = null): int {
+        global $DB;
+
+        $existing = $DB->get_record(self::ASSIGN_TABLE, [
+            'evaluationid' => $evaluationid,
+            'userid'       => $userid,
+            'trigger_event' => $trigger_event,
+            'source_id'    => $source_id,
+        ]);
+        if ($existing) {
+            // Re-open an expired assignment — admin re-assignment is
+            // deliberate. Don't touch 'responded' rows; if the user
+            // has already responded, the assignment is already closed.
+            if ($existing->status === 'expired') {
+                $DB->update_record(self::ASSIGN_TABLE, (object) [
+                    'id'           => $existing->id,
+                    'status'       => 'assigned',
+                    'due_at'       => $due_at,
+                    'timemodified' => time(),
+                ]);
+            }
+            return (int) $existing->id;
+        }
+
+        $now = time();
+        return (int) $DB->insert_record(self::ASSIGN_TABLE, (object) [
+            'evaluationid'       => $evaluationid,
+            'userid'             => $userid,
+            'trigger_event'      => $trigger_event,
+            'source_id'          => $source_id,
+            'status'             => 'assigned',
+            'assigned_by_userid' => $assigned_by_userid,
+            'due_at'             => $due_at,
+            'timecreated'        => $now,
+            'timemodified'       => $now,
+        ]);
+    }
+
+    /**
+     * P1 #37 — close every open assignment for (evaluation, user)
+     * when the user submits a response. Idempotent — called from
+     * submit_response after the response row is inserted.
+     *
+     * A single user can have multiple open assignments for one
+     * evaluation (e.g. course_completion source=X AND
+     * program_completion source=Y both auto-assigned them). All
+     * matching rows flip to 'responded' on a single submission —
+     * one submission satisfies all outstanding assignments.
+     */
+    public static function mark_assignments_responded(int $evaluationid,
+                                                       int $userid): int {
+        global $DB;
+        $now = time();
+        // get_records first so we can return the count; bulk UPDATE
+        // would be one query but losing the count costs us testability.
+        $rows = $DB->get_records(self::ASSIGN_TABLE, [
+            'evaluationid' => $evaluationid,
+            'userid'       => $userid,
+            'status'       => 'assigned',
+        ]);
+        foreach ($rows as $row) {
+            $DB->update_record(self::ASSIGN_TABLE, (object) [
+                'id'           => $row->id,
+                'status'       => 'responded',
+                'responded_at' => $now,
+                'timemodified' => $now,
+            ]);
+        }
+        return count($rows);
+    }
+
+    /**
+     * P1 #37 — query helper for the show-non-respondents page (future
+     * P1 #38). Returns assignment rows joined to user details, filtered
+     * by status.
+     *
+     * @param int    $evaluationid
+     * @param string $status  'assigned' (default) | 'responded' | 'expired'
+     * @return array<int, \stdClass>
+     */
+    public static function list_assignments(int $evaluationid,
+                                              string $status = 'assigned'): array {
+        global $DB;
+        return $DB->get_records_sql("
+            SELECT a.id, a.userid, a.trigger_event, a.source_id,
+                   a.status, a.due_at, a.responded_at, a.timecreated,
+                   u.firstname, u.lastname, u.email
+              FROM {" . self::ASSIGN_TABLE . "} a
+              JOIN {user} u ON u.id = a.userid
+             WHERE a.evaluationid = :eid
+               AND a.status = :status
+               AND u.deleted = 0
+          ORDER BY a.timecreated DESC, u.lastname ASC", [
+            'eid'    => $evaluationid,
+            'status' => $status,
+        ]);
     }
 
     /**

@@ -231,6 +231,27 @@ class evaluation_engine {
 
             self::send_invite_notification((int) $row->userid, $eval);
 
+            // P1 #37 (2026-05-20) — also record an assignment row so
+            // compliance can see "who was assigned this evaluation
+            // and hasn't responded yet". Idempotent via the UNIQUE
+            // index on (evaluationid, userid, trigger_event, source_id);
+            // safe to call multiple times.
+            try {
+                evaluation_manager::ensure_assignment(
+                    (int) $row->evaluationid, (int) $row->userid,
+                    (string) $row->trigger_event,
+                    (int) ($row->itemid ?? 0),
+                    null,  // auto-assigned, no acting admin
+                    null   // no due_at on trigger-queue auto-assigns
+                );
+            } catch (\Throwable $e) {
+                // The invite already went out; missing audit row is
+                // a degraded-not-broken state. Log + continue.
+                mtrace('  ensure_assignment failed for eval='
+                    . $row->evaluationid . ' user=' . $row->userid
+                    . ': ' . $e->getMessage());
+            }
+
             $DB->update_record(self::TRIGGER_TABLE, (object) [
                 'id'        => $row->id,
                 'status'    => self::STATUS_FIRED,

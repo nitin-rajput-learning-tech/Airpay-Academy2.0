@@ -207,5 +207,59 @@ function xmldb_local_airpay_evaluation_upgrade(int $oldversion): bool {
             'local', 'airpay_evaluation');
     }
 
+    // 2026052020 — P1 #37: assignments table.
+    //
+    // Tracks WHO was meant to respond to an evaluation. Populated by:
+    //   • the W1-5 trigger queue when it fires invitations
+    //   • admin bulk-assign (future)
+    //   • signup flows (future) that pre-assign onboarding evaluations
+    //
+    // submit_response marks the row as 'responded'. Compliance can
+    // query "everyone assigned but not responded yet" with a single
+    // WHERE clause. Closes audit items #20 + #21 from
+    // parity-audit-2026-05-15/airpay_evaluation.md.
+    if ($oldversion < 2026052020) {
+        $table = new xmldb_table('local_airpay_evaluation_assign');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL, XMLDB_SEQUENCE);
+            $table->add_field('evaluationid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+            $table->add_field('userid',       XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+            $table->add_field('trigger_event', XMLDB_TYPE_CHAR, '50', null,
+                XMLDB_NOTNULL, null, 'manual');
+            // source_id is nullable because manual assignments have no
+            // course/program/classroom origin. Including it in the
+            // unique index (after a COALESCE'd zero for portability)
+            // lets multi-source auto-assignments coexist for the same
+            // (user, evaluation, trigger_event) tuple.
+            $table->add_field('source_id',    XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL, null, '0');
+            $table->add_field('status',       XMLDB_TYPE_CHAR, '20', null,
+                XMLDB_NOTNULL, null, 'assigned');
+            $table->add_field('assigned_by_userid', XMLDB_TYPE_INTEGER, '10', null);
+            $table->add_field('due_at',       XMLDB_TYPE_INTEGER, '10', null);
+            $table->add_field('responded_at', XMLDB_TYPE_INTEGER, '10', null);
+            $table->add_field('timecreated',  XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL, null, '0');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL, null, '0');
+
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_key('fk_evaluation', XMLDB_KEY_FOREIGN, ['evaluationid'],
+                'local_airpay_evaluation', ['id']);
+            $table->add_key('fk_user', XMLDB_KEY_FOREIGN, ['userid'],
+                'user', ['id']);
+
+            $table->add_index('idx_eval_user_src', XMLDB_INDEX_UNIQUE,
+                ['evaluationid', 'userid', 'trigger_event', 'source_id']);
+            $table->add_index('idx_eval_status', XMLDB_INDEX_NOTUNIQUE,
+                ['evaluationid', 'status']);
+
+            $dbman->create_table($table);
+        }
+        upgrade_plugin_savepoint(true, 2026052020,
+            'local', 'airpay_evaluation');
+    }
+
     return true;
 }
