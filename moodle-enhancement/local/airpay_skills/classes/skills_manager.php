@@ -249,6 +249,96 @@ class skills_manager {
     }
 
     /**
+     * P1 #25 (2026-05-20) — learner self-attestation.
+     *
+     * Closes audit item #26 from
+     * parity-audit-2026-05-15/airpay_skills.md.
+     *
+     * Persists the self-rated level via the same user_skills upsert
+     * pattern as `update_from_course()`, but tags the source as
+     * `'self'` so HR can distinguish self-attested vs course-earned
+     * levels in the analysis. The history table records both the
+     * acting user AND the subject — for self-rates these are the same
+     * id, but the call signature lets admins backfill on behalf of
+     * a learner during onboarding (with their consent).
+     *
+     * Design choices that fall out of L&D practice:
+     *   - DOWNGRADES allowed. If a learner reflects and realises they
+     *     over-rated themselves ("I marked myself L5 Python but on
+     *     reflection I'm really L3"), the workflow should let them
+     *     correct it. The audit-log row captures the truthful change.
+     *   - Refuses to upgrade above the parent skill's `max_level`.
+     *   - Noop self-rates (same level as current) write a history
+     *     row tagged 'self' anyway, because a re-attestation is itself
+     *     a signal of confidence — BUT this is handled by
+     *     `record_skill_change()` which skips identical-level writes.
+     *     If we want to record reaffirmations explicitly we'd need a
+     *     separate hist row type; for now the noop-skip is the simpler
+     *     contract.
+     *
+     * @param int      $userid          The learner whose level is being set.
+     * @param int      $skillid         FK to local_airpay_skills.
+     * @param int      $new_level       Target level (1..max_level).
+     * @param int|null $acting_userid   Who hit the button — null = same as
+     *                                   $userid (true self-rate). When an
+     *                                   admin backfills, pass their id here.
+     * @return int  The user_skills row id (after upsert).
+     * @throws \moodle_exception on invalid level / unknown skill
+     */
+    public static function self_rate_skill(int $userid, int $skillid,
+                                             int $new_level,
+                                             ?int $acting_userid = null): int {
+        global $DB;
+
+        $skill = $DB->get_record(self::SKILL_TABLE, ['id' => $skillid],
+            'id, max_level', MUST_EXIST);
+        $maxlevel = max(1, (int) $skill->max_level);
+
+        if ($new_level < 1 || $new_level > $maxlevel) {
+            $a = (object) ['level' => $new_level, 'max' => $maxlevel];
+            throw new \moodle_exception('self_rate_level_invalid',
+                'local_airpay_skills', '', $a);
+        }
+
+        $existing = $DB->get_record(self::USER_SKILL_TABLE, [
+            'userid' => $userid, 'skillid' => $skillid]);
+
+        $previous_level = (int) ($existing->current_level ?? 0);
+        $now = time();
+        $actor = $acting_userid ?? $userid;
+
+        if ($existing) {
+            $existing->current_level = $new_level;
+            $existing->source        = 'self';
+            $existing->source_id     = null;
+            $existing->timemodified  = $now;
+            $DB->update_record(self::USER_SKILL_TABLE, $existing);
+            $rowid = (int) $existing->id;
+        } else {
+            $rowid = (int) $DB->insert_record(self::USER_SKILL_TABLE, (object) [
+                'userid'        => $userid,
+                'skillid'       => $skillid,
+                'current_level' => $new_level,
+                'source'        => 'self',
+                'source_id'     => null,
+                'timecreated'   => $now,
+                'timemodified'  => $now,
+            ]);
+        }
+
+        // record_skill_change skips noop changes automatically, so a
+        // re-affirmation of the same level doesn't add a history row.
+        // changed_by_userid = the actor (matches userid for self, admin
+        // id when backfilling).
+        self::record_skill_change(
+            $userid, $skillid,
+            $previous_level, $new_level,
+            'self', null, $actor);
+
+        return $rowid;
+    }
+
+    /**
      * Get team skills heat map for managers.
      * Shows all team members and their skill levels.
      */

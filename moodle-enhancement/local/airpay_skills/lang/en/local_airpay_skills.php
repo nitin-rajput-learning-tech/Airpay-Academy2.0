@@ -7,6 +7,7 @@ $string['privacy:metadata'] = 'The skills plugin stores skill level data linked 
 // Capabilities.
 $string['airpay_skills:view'] = 'View skill matrix and gap analysis';
 $string['airpay_skills:manage'] = 'Manage skill categories and definitions';
+$string['airpay_skills:self_rate'] = 'Self-attest a proficiency level for a skill (the user\'s own profile only)';
 
 // CRUD strings.
 $string['addskill'] = 'Add Skill';
@@ -88,3 +89,14 @@ $string['privacy:metadata:user_skill_hist:source']         = 'What triggered the
 $string['privacy:metadata:user_skill_hist:source_id']      = 'Course or assessment ID that triggered the change.';
 $string['privacy:metadata:user_skill_hist:changed_by_userid'] = 'The acting user id (manager / admin). Null when the change was triggered automatically (e.g. by a course-completion observer).';
 $string['privacy:metadata:user_skill_hist:timecreated']    = 'When the change was recorded.';
+
+// P1 #25 (2026-05-20) — learner self-rate UI + error strings.
+$string['self_rate']               = 'Self-rate this skill';
+$string['self_rate_modal_title']   = 'Set your level for {$a}';
+$string['self_rate_intro']         = 'Pick the level that best reflects your current proficiency. Levels are descriptive — read the level definitions on this skill\'s page if you\'re not sure. Honesty helps your manager plan training for you.';
+$string['self_rate_current']       = 'Your current level: {$a}';
+$string['self_rate_not_yet']       = 'You haven\'t rated yourself yet.';
+$string['self_rate_submit']        = 'Save my level';
+$string['self_rate_saved']         = 'Your level has been saved.';
+$string['self_rate_level_invalid'] = 'Level {$a->level} is outside the allowed range (1..{$a->max}).';
+$string['self_rate_pick_level']    = 'Please pick a level first.';

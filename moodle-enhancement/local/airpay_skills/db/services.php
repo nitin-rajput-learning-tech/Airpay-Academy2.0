@@ -101,4 +101,16 @@ $functions = [
         'ajax'         => true,
         'capabilities' => 'local/airpay_skills:manage',
     ],
+
+    // P1 #25 (2026-05-20) — learner self-rate.
+    // Capability check is done inside the endpoint because it varies
+    // by `userid` parameter (self → :self_rate cap, backfill → :manage cap),
+    // so we don't whitelist a single cap here.
+    'local_airpay_skills_self_rate_skill' => [
+        'classname'    => 'local_airpay_skills\external\self_rate_skill',
+        'description'  => 'Learner self-attests a level (1..max_level) for a skill.',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_skills:self_rate',
+    ],
 ];
