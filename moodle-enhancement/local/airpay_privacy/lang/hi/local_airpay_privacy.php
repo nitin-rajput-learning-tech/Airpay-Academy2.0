@@ -9,3 +9,7 @@ $string['downloaddata'] = 'मेरा डेटा डाउनलोड क�
 $string['deleteaccount'] = 'मेरा खाता हटाएं';
 $string['requesthistory'] = 'अनुरोध इतिहास';
 $string['dpdpnotice'] = 'DPDP अधिनियम 2023 सूचना';
+
+// P1 #50 (2026-05-20) — Hindi top-up: 2 strings (message provider + privacy).
+$string['privacy:metadata']                = 'गोपनीयता अनुरोध रिकॉर्ड और सहमति लॉग संग्रहीत करता है।';
+$string['messageprovider:privacy_request'] = 'DPDP गोपनीयता अनुरोध सूचनाएँ';

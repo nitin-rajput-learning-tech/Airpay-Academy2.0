@@ -20,3 +20,8 @@ $string['minimize_assistant'] = 'सहायक पैनल छोटा क�
 $string['send_message']      = 'संदेश भेजें';
 $string['type_question']     = 'अपना प्रश्न लिखें';
 $string['quick_questions']   = 'त्वरित प्रश्न';
+
+// P1 #50 (2026-05-20) — Hindi top-up: 3 strings (settings + privacy).
+$string['enabled']          = 'AI सहायक सक्षम करें';
+$string['enabled_desc']     = 'सभी पेज पर AI चैटबॉट बबल दिखाएँ। साइट-व्यापी रूप से चैटबॉट छिपाने के लिए अनचेक करें।';
+$string['privacy:metadata'] = 'AI सहायक यूज़र ID से लिंक्ड चैट लॉग संग्रहीत करता है।';

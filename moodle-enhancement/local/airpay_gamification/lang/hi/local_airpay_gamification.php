@@ -40,3 +40,6 @@ $string['badge_quiz_ace'] = 'क्विज़ एस';
 $string['badge_quiz_ace_desc'] = '5 क्विज़ में 100% स्कोर करें';
 $string['badge_team_player'] = 'टीम प्लेयर';
 $string['badge_team_player_desc'] = 'टॉप 10 लीडरबोर्ड में पहुँचें';
+
+// P1 #50 (2026-05-20) — Hindi top-up: 1 string (privacy).
+$string['privacy:metadata'] = 'गेमिफ़िकेशन प्लगइन यूज़र ID से लिंक्ड अंक और बैज डेटा संग्रहीत करता है।';
