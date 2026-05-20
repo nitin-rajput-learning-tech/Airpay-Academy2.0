@@ -189,6 +189,16 @@ $string['bulk_assign_pick_at_least_one'] = 'Pick at least one filter criterion.'
 $string['bulk_assign_result']         = '{$a->assigned} new assignment(s); {$a->matched} user(s) matched the audience ({$a->existing} already assigned).';
 $string['bulk_assign_capped']         = 'Audience size hit the cap of {$a}. Refine your filter to assign more users (or run the bulk-assign twice with tighter criteria).';
 
+// P1 #40 (2026-05-20) — modal form labels (parallel to classroom/programs).
+$string['audience_any']           = 'Any';
+$string['audience_any_cohort']    = 'Any cohort';
+$string['audience_users_matched'] = 'users match this audience';
+$string['audience_designation']   = 'Designation';
+$string['audience_region']        = 'Region';
+$string['audience_location']      = 'Location';
+$string['audience_employmenttype'] = 'Employment type';
+$string['audience_cohort']        = 'Cohort';
+
 // P1 #19 (2026-05-16) — admin notification on every response.
 $string['heading_notifications']         = 'Notifications';
 $string['notify_admin_on_response']      = 'Email site admins on every response';

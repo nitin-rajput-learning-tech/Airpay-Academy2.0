@@ -96,6 +96,10 @@ $data = [
     'is_responded_tab' => $tab === 'responded',
 ];
 
+// P1 #40 — wire the bulk-assign modal trigger.
+$PAGE->requires->js_call_amd(
+    'local_airpay_evaluation/non_respondents_actions', 'init');
+
 echo $OUTPUT->header();
 echo $OUTPUT->render_from_template(
     'local_airpay_evaluation/non_respondents', $data);

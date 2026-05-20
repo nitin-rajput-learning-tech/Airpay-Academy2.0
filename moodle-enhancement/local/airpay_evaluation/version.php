@@ -11,10 +11,10 @@ $plugin->component = 'local_airpay_evaluation';
 // P1 #31 (2026-05-20) — front-end JS show/hide.
 // P1 #37 (2026-05-20) — assignments table.
 // P1 #38 (2026-05-20) — show-non-respondents admin page.
-// P1 #39 (2026-05-20) — bulk-assign by audience back-end (assigner class +
-//                       2 WS endpoints). Closes the assignment half of
-//                       audit item #21. UI modal is a follow-up.
-$plugin->version   = 2026052022;
+// P1 #39 (2026-05-20) — bulk-assign by audience back-end.
+// P1 #40 (2026-05-20) — bulk-assign modal + AMD wiring. Front-end
+//                       completion of #39. Closes audit item #21.
+$plugin->version   = 2026052023;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.14.0';  // +P1 #39 bulk-assign by audience
+$plugin->release   = '1.14.1';  // +P1 #40 bulk-assign UI
