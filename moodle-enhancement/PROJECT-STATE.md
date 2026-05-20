@@ -1,5 +1,5 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-20 — **Wave 1 COMPLETE (10/10 P0s) + 25 Wave 2 P1 fixes shipped.** Latest commit `f375891c8` on `production` adds the learner self-rate workflow to airpay_skills — closes audit item #26. Builds on P1 #22's history table from yesterday.
+**Updated:** 2026-05-20 (afternoon) — **Wave 1 COMPLETE (10/10 P0s) + 27 Wave 2 P1 fixes shipped.** Latest commit `3ec163181` on `production` ships the full Hindi pack for airpay_evaluation (132 strings). 3 batches shipped this morning: skills self-rate back-end (#25), self-rate UI (#26), and evaluation Hindi pack (#27).
 
 ---
 
@@ -22,6 +22,8 @@ Seven more P1 batches shipped on top of the 12 from the previous update. All liv
 | **P1 #23** | **airpay_exams: add category field** — closes audit item #12. New `categoryid` int(10) column on `local_airpay_exams` referencing `course_categories.id` (same taxonomy as courses — BizLMS treated exams as courses, so this matches). 0 = uncategorised (legacy data preserved). Form select indented by depth; create + update validate the FK and reject orphan ids with `invalidcategory`. | `9d7009c23` | `local_airpay_exams` `2026051901` (1.4.0) |
 | **P1 #24** | **airpay_core: course-CRUD audit-trail visibility** — closes audit item #13 from `airpay_courses.md` ("local_logs parity"). Re-framed: Moodle's `logstore_standard_log` already captures every `\core\event\course_*` event (because `airpay_courses\course_manager` routes all persistence through `create_course / update_course / delete_course`). Real gap was that `audit_log::SENSITIVE_EVENTS` only whitelisted course_created / course_deleted / course_visibility_updated. Added 6 more: course_updated + course_section_created/updated + course_category_created/updated/deleted. The compliance dashboard now surfaces every course config change with no other code touched. | `a5d9c16c5` | `local_airpay_core` `2026051901` (1.3.1) |
 | **P1 #25** | **airpay_skills: learner self-rate workflow** — closes audit item #26. New capability `local/airpay_skills:self_rate` (granted to `user` archetype) lets learners self-attest a level. New WS `local_airpay_skills_self_rate_skill` with dual-cap check: self-rate vs admin-backfill (the latter requires `:manage`). New `skills_manager::self_rate_skill()` upserts user_skills + writes history (source='self', changed_by_userid = actor). Downgrades are intentionally allowed (reflective correction is legitimate); noop re-attests skip history (idempotent via P1 #22's helper). | `f375891c8` | `local_airpay_skills` `2026052001` (1.6.0) |
+| **P1 #26** | **airpay_skills: self-rate UI (panel + modal + AMD)** — front-end completion of P1 #25. Skill detail page (view.php) renders a card showing current level + "Self-rate" button; clicking opens a Bootstrap modal with a level dropdown (populated from `local_airpay_skill_levels` for admin-curated labels). On submit, the AMD module calls the P1 #25 WS, shows a success toast, reloads. Security hook caught my initial `innerHTML` shortcut → refactored to `setButtonContent()` helper using `appendChild` + `textContent`. Both `amd/src/skill_actions.js` and `amd/build/skill_actions.min.js` updated. | `fea439baa` | `local_airpay_skills` `2026052002` (1.6.1) |
+| **P1 #27** | **airpay_evaluation: Hindi (hi) lang pack — 132 strings** — closes the localisation gap created by P1 #17 (window), #18 (numeric/multi types), #19 (admin notification). Brand-new `lang/hi/local_airpay_evaluation.php` mirroring the en file's grouping. Formal corporate-Hindi register; proper nouns (Kirkpatrick, NPS, Moodle, POSH) kept in Latin script per L&D-content convention. en keys: 132, hi keys: 132 — verified no silent fallback. | `3ec163181` | `local_airpay_evaluation` `2026052003` (1.11.0) |
 
 ### What P1 #16 unlocks (HRMS sync)
 - Production sites get an automated daily HRMS reconciliation pull (default 02:30) without anyone clicking the manual upload page.
@@ -35,13 +37,12 @@ Seven more P1 batches shipped on top of the 12 from the previous update. All liv
 - Admin no longer has to poll `/responses.php` — opt-in notification fires on every submission for strategic surveys (C-suite pulse, post-incident debrief). Anonymous evals stay anonymous in the notification body too (#19).
 
 ### Next batches (when continuing)
-- airpay_courses reminder + notification cron tasks (audit #14/#15) — P1 #21 surfaced the completion-deadline field; now needs the task that consumes it
-- airpay_skills self-rate UI (modal + AMD module to call the new P1 #25 WS) — the back-end shipped; only the front-end "Self-rate" button + modal is left
-- airpay_evaluation conditional question display (audit #10) — depends_on_qid + depends_on_value
-- airpay_evaluation show-non-respondents (audit #20) — blocked on assignments table
-- Hindi pack for airpay_evaluation (50+ strings)
-- airpay_exams reminder task — mirror P1 #21+#26's pattern but for exams
-- Mobile-app WS surface flagging across the 31 plugins
+- **airpay_courses reminder + notification cron tasks** (audit #14/#15) — P1 #21 surfaced the completion-deadline field; now needs the cron task that scans `course_completions` × `course.open_coursecompletiondays` and nudges learners approaching their deadline. Medium scope (~250 LOC).
+- **airpay_evaluation conditional question display** (audit #10) — depends_on_qid + depends_on_value columns; show/hide in respond.mustache JS. Medium scope.
+- **airpay_evaluation show-non-respondents** (audit #20) — blocked on assignments table (a separate P1 first).
+- **airpay_exams reminder task** — mirror P1 #21 schema work for exams.
+- **Mobile-app WS surface flagging** across the 31 plugins — bulk admin task.
+- Hindi packs for `airpay_skills`, `airpay_courses`, `airpay_exams` — symmetric work to P1 #27.
 
 ---
 
