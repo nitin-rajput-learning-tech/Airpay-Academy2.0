@@ -13,13 +13,12 @@ $plugin->component = 'local_airpay_evaluation';
 // P1 #38 (2026-05-20) — show-non-respondents admin page.
 // P1 #39 (2026-05-20) — bulk-assign by audience back-end.
 // P1 #40 (2026-05-20) — bulk-assign modal + AMD wiring.
-// P1 #41 (2026-05-20) — DB-backed template library. New
-//                       local_airpay_evaluation_template table +
-//                       save_template_from_evaluation /
-//                       create_evaluation_from_template /
-//                       list_templates / delete_template helpers.
-//                       Closes audit item #11.
-$plugin->version   = 2026052030;
+// P1 #41 (2026-05-20) — DB-backed template library.
+// P1 #42 (2026-05-20) — auto-expire overdue assignments cron. Daily
+//                       sweep that flips status='assigned' rows past
+//                       their due_at to 'expired'. Polish that pairs
+//                       with P1 #37/#38.
+$plugin->version   = 2026052031;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.15.0';  // +P1 #41 template library
+$plugin->release   = '1.15.1';  // +P1 #42 auto-expire cron

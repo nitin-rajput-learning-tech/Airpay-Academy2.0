@@ -19,4 +19,17 @@ $tasks = [
         'month'     => '*',
         'dayofweek' => '*',
     ],
+    // P1 #42 (2026-05-20) — daily sweep that flips assigned rows
+    // with `due_at > 0 AND now > due_at` to 'expired'. Lets the
+    // non-respondents page distinguish "actually still waiting" from
+    // "the deadline passed, this is dead weight in the report".
+    [
+        'classname' => '\\local_airpay_evaluation\\task\\expire_assignments',
+        'blocking'  => 0,
+        'minute'    => '0',
+        'hour'      => '1',
+        'day'       => '*',
+        'month'     => '*',
+        'dayofweek' => '*',
+    ],
 ];

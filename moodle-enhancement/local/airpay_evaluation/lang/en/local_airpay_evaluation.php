@@ -212,6 +212,9 @@ $string['template_desc_label']     = 'Short description (optional)';
 $string['template_ispublic']       = 'Make this template available to other tenants';
 $string['template_ispublic_help']  = 'When checked, admins in OTHER tenants can pick this template when creating an evaluation. Useful for HQ-curated forms (POSH, AML, anti-bribery). Leave unchecked to keep the template scoped to your tenant.';
 
+// P1 #42 (2026-05-20) — auto-expire overdue assignments.
+$string['task_expire_assignments'] = 'Auto-expire overdue evaluation assignments';
+
 // P1 #19 (2026-05-16) — admin notification on every response.
 $string['heading_notifications']         = 'Notifications';
 $string['notify_admin_on_response']      = 'Email site admins on every response';
