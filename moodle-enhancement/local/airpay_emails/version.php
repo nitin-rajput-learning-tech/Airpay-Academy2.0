@@ -2,10 +2,12 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_airpay_emails';
-$plugin->version   = 2026051302;
+// P1 #49 (2026-05-20) — Hindi top-up: 25 strings covering privacy metadata,
+// ramping reminder + certificate settings, and cadence JSON errors.
+$plugin->version   = 2026052001;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.1.1';
+$plugin->release   = '1.1.2';  // +P1 #49 Hindi top-up
 // 1.1   (Sprint B, 2026-05-13)
 //   + course_completed event observer + tool_certificate PDF attachment
 //   + course_incomplete rule type with ramping cadence + max-cap + completion auto-stop
