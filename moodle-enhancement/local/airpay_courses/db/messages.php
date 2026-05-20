@@ -19,4 +19,12 @@ $messageproviders = [
         // for compliance nudges.
         'capability' => null,
     ],
+
+    // P1 #29 (2026-05-20) — supervisor escalation when a learner is past
+    // their course deadline. Closes audit item #15. Recipient is the
+    // learner's `user.open_supervisorid`, NOT the learner themselves —
+    // managers benefit from email + popup defaults.
+    'course_overdue_supervisor' => [
+        'capability' => null,
+    ],
 ];

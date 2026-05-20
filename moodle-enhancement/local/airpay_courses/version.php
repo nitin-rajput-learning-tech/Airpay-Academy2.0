@@ -31,10 +31,13 @@ $plugin->component = 'local_airpay_courses';
 // P1 #21 (2026-05-16) — restore open_coursecompletiondays on edit form.
 // P1 #28 (2026-05-20) — daily deadline-reminder cron task. Closes audit
 //                       item #14 from parity-audit-2026-05-15/airpay_courses.md.
-$plugin->version   = 2026052001;
+// P1 #29 (2026-05-20) — daily overdue manager-escalation cron. Closes
+//                       audit item #15. Reuses P1 #28's _remind_sent
+//                       table with negative bucket values.
+$plugin->version   = 2026052002;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.10.0';
+$plugin->release   = '1.11.0';
 $plugin->dependencies = [
     'local_airpay_org' => 2026041600,
 ];
@@ -47,6 +50,14 @@ $plugin->dependencies = [
 //          + share.php admin page + share_modal.mustache template
 //          + sharing_manager class (CRUD + catalog-filter builder)
 //          + audit log entry per share/unshare
+// 1.11.0 P1 #29 (2026-05-20) — daily overdue manager-escalation cron.
+//          + classes/task/course_overdue.php
+//          + db/tasks.php — register at 09:30 daily (offset from #28)
+//          + db/messages.php — new course_overdue_supervisor provider
+//          + settings.php — overdue_enabled/_days_after/_max_per_run/_last_run
+//          + reuses P1 #28's _remind_sent table; negative bucket = post-deadline.
+//          Closes audit item #15 from
+//          parity-audit-2026-05-15/airpay_courses.md.
 // 1.10.0 P1 #28 (2026-05-20) — daily learner deadline-reminder cron.
 //          + classes/task/course_reminder.php
 //          + db/tasks.php (registers at 09:00 daily, disabled)

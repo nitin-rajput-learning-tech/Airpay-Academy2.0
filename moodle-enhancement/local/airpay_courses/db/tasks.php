@@ -30,4 +30,17 @@ $tasks = [
         'month'     => '*',
         'disabled'  => 1,
     ],
+    // P1 #29 (2026-05-20) — overdue manager-escalation task. Offset
+    // 30 minutes from the reminder task so they don't fight for the
+    // same DB locks if both are configured to fire on the same day.
+    [
+        'classname' => '\\local_airpay_courses\\task\\course_overdue',
+        'blocking'  => 0,
+        'minute'    => '30',
+        'hour'      => '9',
+        'day'       => '*',
+        'dayofweek' => '*',
+        'month'     => '*',
+        'disabled'  => 1,
+    ],
 ];

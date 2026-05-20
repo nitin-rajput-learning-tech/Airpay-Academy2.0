@@ -140,3 +140,37 @@ Pick it up here: {$a->course_url}
 
 — Airpay Academy';
 $string['reminder_body_html']    = '<p>Hi,</p><p>This is a reminder that your course <strong>{$a->fullname}</strong> is due to be completed by <strong>{$a->deadline}</strong> ({$a->days_remaining} day(s) from now).</p><p><a href="{$a->course_url}">Continue the course</a></p><p style="color:#777;">— Airpay Academy</p>';
+
+// P1 #29 (2026-05-20) — overdue manager-escalation cron. Closes audit
+// item #15 from parity-audit-2026-05-15/airpay_courses.md.
+$string['task_course_overdue']             = 'Course overdue — manager escalation';
+$string['messageprovider:course_overdue_supervisor'] = 'Course overdue — supervisor escalation';
+
+$string['overdue_settings_heading']        = 'Overdue manager escalation (cron)';
+$string['overdue_settings_intro']          = 'Sibling of the deadline reminder. When a learner misses their course deadline, this task notifies their direct supervisor (<code>user.open_supervisorid</code>). Learners with no supervisor on file are skipped — there\'s nobody to escalate to. The task is disabled by default; opt in via <code>overdue_enabled</code> and enable the scheduled task from <em>Site administration ▶ Server ▶ Scheduled tasks</em>. Default schedule: 09:30 daily.';
+$string['overdue_enabled']                 = 'Enable supervisor escalation';
+$string['overdue_enabled_help']            = 'When OFF (default), the task is a no-op. When ON, the task fires daily, escalates overdue learners to their supervisor, and de-dupes against the same <code>local_airpay_courses_remind_sent</code> table the reminder task uses (negative <code>days_before_deadline</code> values mark post-deadline rows).';
+$string['overdue_days_after']              = 'Escalation buckets (days after deadline)';
+$string['overdue_days_after_help']         = 'Comma-separated list of days-after-deadline thresholds. <code>1,7,14</code> escalates the supervisor 1 day after the learner missed, again at 7 days, and a final ping at 14 days. After the widest bucket, the cron stops nagging.';
+$string['overdue_max_per_run']             = 'Max escalations per run';
+$string['overdue_max_per_run_help']        = 'Safety cap so a misconfigured rule cannot mailbomb every manager in one cron tick. Default 500. Untreated learners roll over to the next cron run; the unique index dedupes.';
+$string['overdue_status']                  = 'Last overdue run';
+$string['overdue_last_run_value']          = 'Last successful run: <strong>{$a->time}</strong>. Escalations sent: <strong>{$a->count}</strong>.';
+$string['overdue_last_run_never']          = 'The supervisor-escalation cron has never run. Enable the task and check back after 09:30 server time tomorrow, or run <code>php admin/cli/scheduled_task.php --execute=\\\\local_airpay_courses\\\\task\\\\course_overdue</code> from the command line to fire it manually.';
+
+// Escalation message body — rendered by the cron task itself.
+$string['overdue_subject']      = '{$a->learner_name} is {$a->days_past} day(s) overdue on "{$a->course_name}"';
+$string['overdue_small']        = '{$a->learner_name} overdue on {$a->course_name}';
+$string['overdue_body_plain']   = 'Hi,
+
+Your team member {$a->learner_name} missed the deadline for the course "{$a->course_name}".
+
+Deadline: {$a->deadline} ({$a->days_past} day(s) ago).
+
+View course:    {$a->course_url}
+View learner:   {$a->learner_profile_url}
+
+Please follow up with them so they can complete the course as soon as possible.
+
+— Airpay Academy';
+$string['overdue_body_html']    = '<p>Hi,</p><p>Your team member <strong>{$a->learner_name}</strong> missed the deadline for the course <strong>{$a->course_name}</strong>.</p><p>Deadline: <strong>{$a->deadline}</strong> ({$a->days_past} day(s) ago).</p><ul><li><a href="{$a->course_url}">View course</a></li><li><a href="{$a->learner_profile_url}">View learner profile</a></li></ul><p>Please follow up with them so they can complete the course as soon as possible.</p><p style="color:#777;">— Airpay Academy</p>';
