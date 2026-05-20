@@ -72,10 +72,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $applied = 0;
     foreach ($changes as $key => $new_value) {
+        // 2026-05-20 bugfix: the AMD module sends 'on'/'off'/'default' as the
+        // tri-state value (matching the data-action="toggle-on/off/default"
+        // attribute names) but this handler previously only recognised
+        // 'true'/'false'/'default'. Mismatch meant every UI toggle resolved
+        // to $val=null (revert-to-default) — a silent no-op when no row
+        // existed. Now both vocabularies are accepted.
         $val = null;
-        if ($new_value === 'true' || $new_value === true) {
+        if ($new_value === 'true' || $new_value === true
+                || $new_value === 'on') {
             $val = true;
-        } else if ($new_value === 'false' || $new_value === false) {
+        } else if ($new_value === 'false' || $new_value === false
+                || $new_value === 'off') {
             $val = false;
         } else if ($new_value === 'default' || $new_value === null) {
             $val = null;
