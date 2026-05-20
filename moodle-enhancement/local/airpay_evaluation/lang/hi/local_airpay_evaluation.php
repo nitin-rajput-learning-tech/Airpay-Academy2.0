@@ -184,3 +184,71 @@ $string['privacy:metadata:responses:evaluationid']   = 'जिस मूल्�
 $string['privacy:metadata:responses:userid']         = 'प्रतिक्रिया सबमिट करने वाले उपयोगकर्ता की ID (गुमनाम होने पर 0)।';
 $string['privacy:metadata:responses:response_data']  = 'JSON-encoded उत्तर (questionid → उत्तर)।';
 $string['privacy:metadata:responses:timesubmitted']  = 'सबमिशन टाइमस्टैम्प।';
+
+// P1 #30 (2026-05-20) — conditional question display.
+$string['heading_dependency']             = 'सशर्त प्रदर्शन (वैकल्पिक)';
+$string['dep_none']                       = '— हमेशा दिखाएँ —';
+$string['dep_parent']                     = 'यह प्रश्न केवल तब दिखाएँ जब…';
+$string['dep_parent_help']                = 'एक पैरेंट प्रश्न चुनें। यह प्रश्न तभी दिखेगा जब पैरेंट का उत्तर दिया गया हो AND उसका उत्तर नीचे दिए गए मान से मेल खाता हो। सहेजते समय चक्र अवरुद्ध होते हैं।';
+$string['dep_value']                      = '… पैरेंट का उत्तर मेल खाता हो';
+$string['dep_value_help']                 = 'हाँ/नहीं पैरेंट के लिए, <code>yes</code> या <code>no</code> दर्ज करें। मल्टीचॉइस पैरेंट के लिए, विकल्पों में से एक दर्ज करें (केस-संवेदी)। रेटिंग / NPS / न्यूमेरिक पैरेंट के लिए, संख्यात्मक मान दर्ज करें। किसी भी गैर-खाली उत्तर पर ट्रिगर करने के लिए खाली छोड़ दें।';
+$string['dep_invalid_parent']             = 'चुना गया पैरेंट प्रश्न मौजूद नहीं है।';
+$string['dep_self_reference']             = 'कोई प्रश्न स्वयं पर निर्भर नहीं हो सकता।';
+$string['dep_parent_other_evaluation']    = 'पैरेंट प्रश्न इस मूल्यांकन का हिस्सा नहीं है। एक सहोदर चुनें।';
+$string['dep_cycle']                      = 'यह निर्भरता एक चक्र बनाएगी (पैरेंट अंततः इसी प्रश्न पर निर्भर हो जाता है)।';
+
+// P1 #38 (2026-05-20) — show-non-respondents admin page.
+$string['non_respondents_title']             = '{$a} — लंबित / पूर्ण';
+$string['non_respondents_heading']           = '"{$a}" का उत्तर किसने दिया है?';
+$string['non_respondents_subtitle']          = 'नियुक्त सीखने वाले और उनकी प्रतिक्रिया स्थिति। ऑटो-नियुक्तियाँ W1-5 ट्रिगर क्यू से आती हैं जब सीखने वाला योग्य कोर्स / प्रोग्राम / क्लासरूम पूरा करता है; मैन्युअल नियुक्तियाँ एडमिन UI के माध्यम से जोड़ी जा सकती हैं।';
+$string['back_to_evaluations']               = 'मूल्यांकनों पर वापस जाएँ';
+$string['non_respondents_tab_pending']       = 'लंबित';
+$string['non_respondents_tab_responded']     = 'उत्तर दिया';
+$string['non_respondents_col_name']          = 'नाम';
+$string['non_respondents_col_email']         = 'ईमेल';
+$string['non_respondents_col_trigger']       = 'नियुक्त के द्वारा';
+$string['non_respondents_col_assigned']      = 'नियुक्ति';
+$string['non_respondents_col_due']           = 'देय तिथि';
+$string['non_respondents_col_responded']     = 'उत्तर दिया गया';
+$string['non_respondents_trigger_manual']    = 'मैन्युअल';
+$string['non_respondents_trigger_course']    = 'कोर्स';
+$string['non_respondents_trigger_program']   = 'प्रोग्राम';
+$string['non_respondents_trigger_classroom'] = 'क्लासरूम';
+$string['non_respondents_empty_pending_heading']   = 'सभी ने उत्तर दे दिया है।';
+$string['non_respondents_empty_pending_body']      = 'या तो हर नियुक्त सीखने वाले ने यह मूल्यांकन भर दिया है, या अभी तक कोई नियुक्ति दर्ज नहीं हुई है।';
+$string['non_respondents_empty_responded_heading'] = 'अभी तक कोई उत्तर नहीं।';
+$string['non_respondents_empty_responded_body']    = 'जब नियुक्त सीखने वाले अपनी प्रतिक्रियाएँ सबमिट करेंगे, वे यहाँ दिखाई देंगे।';
+
+// P1 #39 (2026-05-20) — bulk-assign by audience.
+$string['filterstoolong']             = 'फ़िल्टर payload बहुत लंबा है।';
+$string['bulk_assign_modal_title']    = 'लक्षित दर्शकों द्वारा बल्क-नियुक्त करें';
+$string['bulk_assign_form_intro']     = 'यूज़र्स के समूह को लक्षित करने के लिए एक या अधिक फ़िल्टर मानदंड चुनें। फ़िल्टर बदलने पर नीचे पूर्वावलोकन अपडेट होता है। "मिलते यूज़र्स को नियुक्त करें" पर क्लिक करें — पहले से नियुक्त सीखने वाले चुपचाप डिडुप होते हैं।';
+$string['bulk_assign_button']         = 'मिलते यूज़र्स को नियुक्त करें';
+$string['bulk_assign_pick_at_least_one'] = 'कम से कम एक फ़िल्टर मानदंड चुनें।';
+$string['bulk_assign_result']         = '{$a->assigned} नई नियुक्ति; {$a->matched} यूज़र मिले ({$a->existing} पहले से नियुक्त)।';
+$string['bulk_assign_capped']         = 'दर्शक आकार {$a} की सीमा पर पहुँच गया। अधिक यूज़र्स नियुक्त करने के लिए अपना फ़िल्टर परिष्कृत करें।';
+
+// P1 #40 (2026-05-20) — modal form labels.
+$string['audience_any']           = 'कोई भी';
+$string['audience_any_cohort']    = 'कोई भी कोहोर्ट';
+$string['audience_users_matched'] = 'यूज़र इस दर्शकों से मेल खाते हैं';
+$string['audience_designation']   = 'पद';
+$string['audience_region']        = 'क्षेत्र';
+$string['audience_location']      = 'स्थान';
+$string['audience_employmenttype'] = 'रोज़गार प्रकार';
+$string['audience_cohort']        = 'कोहोर्ट';
+
+// P1 #41 (2026-05-20) — template library.
+$string['template_name_required']        = 'टेम्पलेट नाम आवश्यक है।';
+$string['template_payload_corrupt']      = 'इस टेम्पलेट का payload डिकोड नहीं हो सका। पंक्ति Moodle के बाहर संपादित की गई हो सकती है। हटाएँ और पुनः सहेजें।';
+$string['template_saved']                = 'टेम्पलेट सहेज लिया गया।';
+$string['template_deleted']              = 'टेम्पलेट हटा दिया गया।';
+$string['template_save_modal_title']     = 'टेम्पलेट के रूप में सहेजें';
+$string['template_picker_modal_title']   = 'टेम्पलेट से बनाएँ';
+$string['template_name_label']           = 'टेम्पलेट का नाम';
+$string['template_desc_label']           = 'संक्षिप्त विवरण (वैकल्पिक)';
+$string['template_ispublic']             = 'इस टेम्पलेट को अन्य टेनेंट्स के लिए उपलब्ध कराएँ';
+$string['template_ispublic_help']        = 'जब चेक किया जाता है, अन्य टेनेंट्स के एडमिन मूल्यांकन बनाते समय इस टेम्पलेट को चुन सकते हैं। HQ-क्यूरेटेड फॉर्म (POSH, AML, anti-bribery) के लिए उपयोगी।';
+
+// P1 #42 (2026-05-20) — auto-expire overdue assignments cron.
+$string['task_expire_assignments'] = 'अतिदेय मूल्यांकन नियुक्तियाँ स्वत: समाप्त करें';
