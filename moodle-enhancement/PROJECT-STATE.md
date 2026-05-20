@@ -74,14 +74,49 @@ Three-phase fork strategy per ADR-001:
 - [x] **Version bumped** — `local_airpay_core` 2026052001 → 2026052101 / 1.3.2 → 1.4.0.
 - [⏳] **Visual evidence — partial** — login-redirect screenshot captured; full Switchboard screenshots (gate OFF + gate ON in 4 view modes) require Nitin's admin login. See `docs/visual-evidence/2026-05-20/README.md` for capture checklist.
 
-### Next session (Session 3)
-**Stream A continuation OR begin first feature stream.** Pick one:
+### Session 2 followup — visual evidence + Vercel disable — ✅ SHIPPED commit `57b921de7`
+- [x] 8 Switchboard screenshots captured (gate OFF baseline + gate ON in 4 view modes, desktop + mobile)
+- [x] `.claude/settings.json` updated — `vercel@claude-plugins-official` disabled at project scope (false-positive lexical-match noise suppression; takes effect on Claude Code restart)
 
-- **Option A:** Begin "Moodle" → "Sentientia" user-visible-string rename pass (selective — only user-visible labels, not internal class names; preserves upgrade-merge safety). Touches lang strings, footer, login page, error pages. Estimated 1 session.
-- **Option B:** Start Tier 1 #2 — PWA + push notifications foundation (manifest.json + service worker scaffolding + Web Push subscription flow). Estimated 2-3 sessions.
-- **Option C:** Start Tier 1 #1 — WhatsApp deepening (extend `local_airpay_whatsapp` for deadline + completion + cert notifications). Estimated 1-2 sessions, highest immediate engagement ROI per ADR-001 §Hard dependencies.
+### Dark-mode flag wiring — ✅ SHIPPED commit `30daa33b0`
+- [x] **Orphan-flag bug fixed:** `ux.darkMode.enabled` was declared in Phase A0 but had NO consumer. Toggling did nothing.
+- [x] **Wired in `theme_airpayux\output\core_renderer::standard_head_html()`** — runs on EVERY page regardless of layout. When flag OFF: CSS `display:none` on dark-toggle button + JS sets `data-theme="light"` + clears `localStorage.airpay-theme` BEFORE body renders (no FOUC).
+- [x] Verified end-to-end via PHP CLI toggle: flag OFF → button hidden + light forced; revert → button visible + dark works.
 
-Nitin picks the start.
+### Session 3 — AMD pipeline triple bug fix — ✅ SHIPPED commit `43a3d784f`
+**Unblocks visual verification for ALL future sessions.** Pre-existing JS/PHP pipeline bug surfaced while investigating "Switchboard dark-mode toggle does nothing".
+
+- [x] **Bug 1:** 3 plugins shipped raw ES6 source in `amd/build/*.min.js` (programs, classroom, learningpath). `import ModalForm from 'core_form/modalform';` triggered `SyntaxError: Cannot use import statement outside a module` in Moodle's combined 4.7MB `core/first.js` bundle → broke ALL AMD modules sitewide. Rewrote as named-define AMD format (kept `amd/src/` as canonical ES6).
+- [x] **Bug 2:** `local_airpay_core/amd/build/switchboard.min.js` was missing (deleted in earlier cleanup) + source used anonymous `define([], function(){})`. Restored with `define('local_airpay_core/switchboard', [], ...)` named registration.
+- [x] **Bug 3:** AMD module sent `'on'`/`'off'`/`'default'` as tri-state values, PHP handler only mapped `'true'`/`'false'`/`'default'`. Vocabulary mismatch → every UI flag toggle was silently no-op'd. PHP handler in `admin/switchboard.php` now accepts both vocabularies.
+- [x] **End-to-end verified:** Switchboard UI click OFF → Apply → DB row saved → killswitch CSS injected → dark-toggle button hidden site-wide.
+
+### Session 4 — Stream A "Moodle" → Sentientia rename — ✅ SHIPPED (this session)
+**Per ADR-001 §License posture + §Trademark cleanup obligation.**
+
+Approach: surgical user-visible rename to **"platform"** (brand-neutral, technically accurate since the engine IS Moodle). Sentientia LMS brand surfaces in the footer attribution band only. GPL v3 attribution headers preserved everywhere (license requirement).
+
+- [x] **8 EN strings** renamed across 6 plugins + theme:
+  - `theme/airpayux/layout/dashboard.php:514` — admin system-health widget label "Moodle Version" → "Platform Version"
+  - `airpay_courses/lang/en` line 92 — `privacy:metadata` "core Moodle tables" → "core platform tables"
+  - `airpay_org/lang/en` line 102 — same shape
+  - `airpay_reports/lang/en` line 53 — same shape
+  - `airpay_integrations/lang/en` line 69 — same shape
+  - `airpay_evaluation/lang/en` line 205 — `template_payload_corrupt` "edited outside Moodle" → "edited outside the platform"
+  - `airpay_evaluation/lang/en` line 221 — `notify_admin_on_response_help` "fires a Moodle notification" → "fires a platform notification"
+  - `airpay_roles/lang/en` line 105 — `err_capability_not_found` "in this Moodle" → "in this platform"
+- [x] **7 Hindi mirrors** updated — "Moodle" → "प्लेटफ़ॉर्म" / "Moodle टेबल्स" → "प्लेटफ़ॉर्म टेबल्स" etc. 100% parity preserved.
+- [x] **Footer attribution band** added to `theme/airpayux/templates/footer.mustache` — Sentientia LMS brand + GPL attribution: "Sentientia LMS · Built on Moodle (GPL v3)". Inline-styled, lightweight, brand-neutral muted aesthetic.
+- [x] **Rename map doc** at `docs/core-mods/2026-05-20-moodle-to-sentientia-rename.md` — full inventory + disposition rationale per CLAUDE.md §core-mods discipline.
+- [x] **Kept as-is** (technical implementation references, not branding):
+  - `airpay_users` HRMS sync help text mentioning "Moodle config table", "Moodle web-server user" — SRE-relevant implementation details
+  - `airpay_emails` `email_to_user_failed` — references literal Moodle PHP function name
+  - `airpay_exams` strings mentioning "Moodle quiz" — refers to mod_quiz activity, may revisit later
+  - Login page hero — "Airpay Academy" preserved (customer-zero identity)
+- [⏳] **Visual evidence** — Chrome DevTools MCP is currently disconnected; screenshots deferred to next reconnect window.
+
+### Next continuous-build target
+Stream B (Tier 1 #2) — **PWA + push notifications foundation**. manifest.json + service worker + Web Push subscription flow. Continues directly in this session without prompt-drafting (per Nitin's directive).
 
 ---
 

@@ -107,7 +107,7 @@ $string['audit_action_role_deleted']     = 'रोल हटाया गया'
 // Errors.
 $string['err_role_not_found']       = 'रोल नहीं मिला।';
 $string['err_user_not_found']       = 'यूज़र नहीं मिला।';
-$string['err_capability_not_found'] = 'क्षमता "{$a}" इस Moodle में पंजीकृत नहीं है।';
+$string['err_capability_not_found'] = 'क्षमता "{$a}" इस प्लेटफ़ॉर्म में पंजीकृत नहीं है।';
 $string['err_invalid_permission']   = 'अनुमति इनमें से एक होनी चाहिए: inherit, allow, prevent, prohibit।';
 $string['err_cannot_modify_admin']  = 'साइट एडमिनिस्ट्रेटर रोल पर क्षमताएँ संशोधित नहीं कर सकते।';
 $string['err_filterstoolong']       = 'फ़िल्टर ब्लॉब सीमा से अधिक है।';

@@ -50,4 +50,4 @@ $string['reportdeleted']       = 'Report deleted.';
 $string['reportstatuschanged'] = 'Report status updated.';
 
 // Privacy.
-$string['privacy:metadata'] = 'The Airpay Reports plugin stores saved report definitions, but does not export user data directly. Generated reports may aggregate user activity from existing core Moodle tables.';
+$string['privacy:metadata'] = 'The Airpay Reports plugin stores saved report definitions, but does not export user data directly. Generated reports may aggregate user activity from existing core platform tables.';
