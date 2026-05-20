@@ -29,15 +29,13 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_airpay_courses';
 // P1 #21 (2026-05-16) — restore open_coursecompletiondays on edit form.
-// P1 #28 (2026-05-20) — daily deadline-reminder cron task. Closes audit
-//                       item #14 from parity-audit-2026-05-15/airpay_courses.md.
-// P1 #29 (2026-05-20) — daily overdue manager-escalation cron. Closes
-//                       audit item #15. Reuses P1 #28's _remind_sent
-//                       table with negative bucket values.
-$plugin->version   = 2026052002;
+// P1 #28 (2026-05-20) — daily deadline-reminder cron task.
+// P1 #29 (2026-05-20) — daily overdue manager-escalation cron.
+// P1 #35 (2026-05-20) — Hindi (hi) lang pack: 100 strings translated.
+$plugin->version   = 2026052003;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.11.0';
+$plugin->release   = '1.11.1';
 $plugin->dependencies = [
     'local_airpay_org' => 2026041600,
 ];
