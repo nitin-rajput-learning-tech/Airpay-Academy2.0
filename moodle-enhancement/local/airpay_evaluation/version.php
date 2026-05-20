@@ -12,7 +12,13 @@ $plugin->component = 'local_airpay_evaluation';
 // admin picks a parent + value; respond page hides children whose
 // parent answer doesn't match; submit_response treats hidden
 // questions as not-required.
-$plugin->version   = 2026052010;
+// P1 #31 (2026-05-20) — front-end JS show/hide. respond.mustache emits
+// data-depends-on-qid + data-depends-on-value; response_actions.js
+// recomputes visibility on every input event (mirrors PHP
+// compute_visibility_map). Hidden cards are cleared so stale answers
+// can't survive a parent flip. Also retrofits setButtonContent() to
+// drop the last two innerHTML usages.
+$plugin->version   = 2026052011;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.12.0';  // +P1 #30 conditional questions
+$plugin->release   = '1.12.1';  // +P1 #31 conditional question UI

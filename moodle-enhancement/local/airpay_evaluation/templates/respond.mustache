@@ -234,7 +234,16 @@
 {{#has_questions}}
 <form id="airpay-response-form" novalidate>
     {{#questions}}
-    <div class="question-card" data-questionid="{{id}}" data-questiontype="{{questiontype}}" data-required="{{#required}}1{{/required}}{{^required}}0{{/required}}">
+    {{!
+        P1 #31 (2026-05-20) — `data-depends-on-qid` + `data-depends-on-value`
+        feed the AMD module's visibility recompute on every input change.
+        When `data-depends-on-qid` > 0, the card starts hidden via inline
+        `style="display:none;"` and JS reveals it once the parent answer
+        matches. Server-side enforcement in submit_response is the source
+        of truth — this is UX polish only.
+    }}
+    <div class="question-card" data-questionid="{{id}}" data-questiontype="{{questiontype}}" data-required="{{#required}}1{{/required}}{{^required}}0{{/required}}"
+        {{#has_dependency}}data-depends-on-qid="{{depends_on_qid}}" data-depends-on-value="{{depends_on_value}}" style="display: none;"{{/has_dependency}}>
         <div class="question-text">
             <span class="question-position">{{position}}</span>
             {{questiontext}}

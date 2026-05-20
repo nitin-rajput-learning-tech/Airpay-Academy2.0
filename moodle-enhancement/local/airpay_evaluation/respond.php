@@ -119,6 +119,17 @@ foreach ($questions as $i => $q) {
                 $num_bounds['min'] !== null ? $num_bounds['min'] : '−∞',
                 $num_bounds['max'] !== null ? $num_bounds['max'] : '+∞')
             : '',
+        // P1 #31 (2026-05-20) — dependency wire-up for client show/hide.
+        // We emit raw values for the JS to consume; the server-side
+        // visibility check happens again in submit_response so a
+        // tampered client payload still can't bypass required-when-hidden.
+        'has_dependency'   => (int) ($q->depends_on_qid ?? 0) > 0,
+        'depends_on_qid'   => (int) ($q->depends_on_qid ?? 0),
+        // depends_on_value is intentionally NOT format_string'd — JS
+        // compares string-equality against the parent's raw answer,
+        // which is the user's literal input. The template emits this
+        // via `s()` so the attribute is HTML-escaped safely.
+        'depends_on_value' => (string) ($q->depends_on_value ?? ''),
     ];
 }
 
