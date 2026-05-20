@@ -28,7 +28,9 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_airpay_org';
-$plugin->version   = 2026051501;
+// P1 #54 (2026-05-20) — Hindi pack: 55 strings covering capabilities,
+// settings, CRUD form, hierarchy, branding, errors, confirmations.
+$plugin->version   = 2026052001;
 $plugin->requires  = 2022041900; // Moodle 4.0+
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.4.0'; // +BizLMS parity: list_children WS for cascade filter
+$plugin->release   = '1.4.1'; // +P1 #54 Hindi pack
