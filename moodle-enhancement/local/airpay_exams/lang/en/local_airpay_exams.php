@@ -86,3 +86,36 @@ Sit the exam here: {$a->exam_url}
 
 — Airpay Academy';
 $string['reminder_body_html']    = '<p>Hi,</p><p>This is a reminder that the exam <strong>{$a->examname}</strong> (course: {$a->coursename}) closes on <strong>{$a->deadline}</strong> — {$a->days_remaining} day(s) from now.</p><p><a href="{$a->exam_url}">Sit the exam</a></p><p style="color:#777;">— Airpay Academy</p>';
+
+// P1 #34 (2026-05-20) — overdue manager-escalation cron. Closes audit
+// item #17 (the sibling of #16 in parity-audit-2026-05-15/airpay_exams.md).
+$string['task_exam_overdue']               = 'Exam overdue — manager escalation';
+$string['messageprovider:exam_overdue_supervisor'] = 'Exam overdue — supervisor escalation';
+
+$string['overdue_settings_heading']        = 'Overdue manager escalation (cron)';
+$string['overdue_settings_intro']          = 'Sibling of the exam reminder. When a learner misses an exam\'s <code>quiz.timeclose</code>, this task notifies their direct supervisor (<code>user.open_supervisorid</code>). Learners with no supervisor are skipped. Reuses the <code>local_airpay_exams_remind_sent</code> table with NEGATIVE <code>days_before_deadline</code> values to mark post-deadline rows. Default schedule: 09:45 daily.';
+$string['overdue_enabled']                 = 'Enable supervisor escalation';
+$string['overdue_enabled_help']            = 'When OFF (default) the task is a no-op. When ON it fires daily, escalates overdue learners to their supervisor, and dedupes against the same table the reminder task uses.';
+$string['overdue_days_after']              = 'Escalation buckets (days after deadline)';
+$string['overdue_days_after_help']         = 'Comma-separated list of days-after-deadline thresholds. <code>1,7,14</code> escalates 1 / 7 / 14 days past quiz.timeclose, then stops.';
+$string['overdue_max_per_run']             = 'Max escalations per run';
+$string['overdue_max_per_run_help']        = 'Safety cap so a misconfigured rule cannot mailbomb every manager in one cron tick. Default 500.';
+$string['overdue_status']                  = 'Last overdue run';
+$string['overdue_last_run_value']          = 'Last successful run: <strong>{$a->time}</strong>. Escalations sent: <strong>{$a->count}</strong>.';
+$string['overdue_last_run_never']          = 'The exam supervisor-escalation cron has never run. Enable it and check back, or run <code>php admin/cli/scheduled_task.php --execute=\\\\local_airpay_exams\\\\task\\\\exam_overdue</code> manually.';
+
+$string['overdue_subject']      = '{$a->learner_name} is {$a->days_past} day(s) overdue on exam "{$a->exam_name}"';
+$string['overdue_small']        = '{$a->learner_name} overdue on {$a->exam_name}';
+$string['overdue_body_plain']   = 'Hi,
+
+Your team member {$a->learner_name} missed the deadline for exam "{$a->exam_name}" (course: {$a->coursename}).
+
+Deadline: {$a->deadline} ({$a->days_past} day(s) ago).
+
+View exam:    {$a->exam_url}
+View learner: {$a->learner_profile_url}
+
+Please follow up with them.
+
+— Airpay Academy';
+$string['overdue_body_html']    = '<p>Hi,</p><p>Your team member <strong>{$a->learner_name}</strong> missed the deadline for exam <strong>{$a->exam_name}</strong> (course: {$a->coursename}).</p><p>Deadline: <strong>{$a->deadline}</strong> ({$a->days_past} day(s) ago).</p><ul><li><a href="{$a->exam_url}">View exam</a></li><li><a href="{$a->learner_profile_url}">View learner profile</a></li></ul><p>Please follow up with them.</p><p style="color:#777;">— Airpay Academy</p>';

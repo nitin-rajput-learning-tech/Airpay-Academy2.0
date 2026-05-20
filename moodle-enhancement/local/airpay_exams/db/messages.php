@@ -12,4 +12,12 @@ $messageproviders = [
     'exam_reminder' => [
         'capability' => null,
     ],
+
+    // P1 #34 (2026-05-20) — supervisor escalation when a learner misses
+    // an exam's quiz.timeclose. Sister to P1 #29's airpay_courses
+    // course_overdue_supervisor. Recipient is the learner's
+    // user.open_supervisorid.
+    'exam_overdue_supervisor' => [
+        'capability' => null,
+    ],
 ];

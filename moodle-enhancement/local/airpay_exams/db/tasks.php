@@ -24,4 +24,17 @@ $tasks = [
         'month'     => '*',
         'disabled'  => 1,
     ],
+    // P1 #34 (2026-05-20) — exam overdue manager escalation. 45-min
+    // offset from #33's reminder so they don't fight for locks if both
+    // configured.
+    [
+        'classname' => '\\local_airpay_exams\\task\\exam_overdue',
+        'blocking'  => 0,
+        'minute'    => '45',
+        'hour'      => '9',
+        'day'       => '*',
+        'dayofweek' => '*',
+        'month'     => '*',
+        'disabled'  => 1,
+    ],
 ];
