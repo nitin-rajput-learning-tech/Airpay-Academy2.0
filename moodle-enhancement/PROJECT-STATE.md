@@ -1,5 +1,5 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-20 (late evening) — **Wave 1 COMPLETE (10/10 P0s) + 36 Wave 2 P1 fixes shipped.** Latest commit `29e5d74c8` on `production` completes the i18n + cron rounds: P1 #34 exam overdue escalation, P1 #35 courses Hindi pack (100 strings), P1 #36 exams Hindi pack (73 strings). Twelve batches today (#25 → #36). All cron families now have both reminder + overdue siblings; all four touched plugins have full Hindi parity.
+**Updated:** 2026-05-20 (late evening) — **Wave 1 COMPLETE (10/10 P0s) + 38 Wave 2 P1 fixes shipped.** Latest commit `4a73299a5` on `production` closes the last of today's chains: P1 #37 assignments table + auto-assign + mark-responded, P1 #38 admin show-non-respondents page. Fourteen batches today (#25 → #38). Compliance can now answer "who was meant to respond and hasn't yet?" with a single page click.
 
 ---
 
@@ -33,6 +33,8 @@ Seven more P1 batches shipped on top of the 12 from the previous update. All liv
 | **P1 #34** | **airpay_exams: overdue manager escalation cron** — closes audit item #17. Clones P1 #29 for exams: positive buckets are pre-deadline (#33), negative buckets are post-deadline (this task). Recipient is `user.open_supervisorid`. 09:45 daily, disabled by default. Together #33 + #34 give airpay_exams the same deadline workflow airpay_courses has (mirroring #28 + #29). | `63d0d5e97` | `local_airpay_exams` `2026052002` (1.6.0) |
 | **P1 #35** | **airpay_courses: Hindi (hi) lang pack — 100 strings** — brand-new lang/hi file. Covers capabilities, CRUD, P1 #21 completion-deadline, Sprint C cross-tenant sharing, Sprint D pull/request workflow, P1 #28/#29 reminder + overdue cron. Same conventions as P1 #27/#32. en/hi counts match. | `ef1f70009` | `local_airpay_courses` `2026052003` (1.11.1) |
 | **P1 #36** | **airpay_exams: Hindi (hi) lang pack — 73 strings** — brand-new lang/hi file. Covers base CRUD + P1 #23 categories + P1 #33 reminder + P1 #34 overdue. Final Hindi parity for the 4 most-touched plugins (evaluation, skills, courses, exams). | `29e5d74c8` | `local_airpay_exams` `2026052003` (1.6.1) |
+| **P1 #37** | **airpay_evaluation: assignments table + auto-assign + mark-responded** — closes audit items #20 + #21. New `local_airpay_evaluation_assign` table with UNIQUE (evaluationid, userid, trigger_event, source_id). Auto-populates from the W1-5 trigger queue (hooked in `evaluation_engine::process_due_triggers`). `submit_response` calls `mark_assignments_responded()` to flip all open rows. 4-gate smoke verified: ensure_assignment idempotency, distinct source_id creates new row, submit_response flips status to 'responded' + responded_at, multi-assignment-per-user works (one submission satisfies all). | `dd7c4e7a1` | `local_airpay_evaluation` `2026052020` (1.13.0) |
+| **P1 #38** | **airpay_evaluation: show-non-respondents admin page** — front-end completion of P1 #37. New `non_respondents.php` at `/local/airpay_evaluation/non_respondents.php?id=N` with Pending / Responded tabs. Table shows learner name, email, trigger source, assigned date, due-by (with red highlight when overdue). 18 lang strings. Server-render smoke verified empty + populated states + tab nav + count badges. Together P1 #37 + #38 close the assignment workflow. | `4a73299a5` | `local_airpay_evaluation` `2026052021` (1.13.1) |
 
 ### What P1 #16 unlocks (HRMS sync)
 - Production sites get an automated daily HRMS reconciliation pull (default 02:30) without anyone clicking the manual upload page.
@@ -46,10 +48,11 @@ Seven more P1 batches shipped on top of the 12 from the previous update. All liv
 - Admin no longer has to poll `/responses.php` — opt-in notification fires on every submission for strategic surveys (C-suite pulse, post-incident debrief). Anonymous evals stay anonymous in the notification body too (#19).
 
 ### Next batches (when continuing)
-- **airpay_evaluation assignments table + show-non-respondents** (audit #20 + #21 chain) — needs a `local_airpay_evaluation_assignments` table first; then the show-non-respondents page becomes a query against it. Medium-large scope.
-- **airpay_evaluation: template library** (audit #11) — convert the existing JSON export/import into a DB-backed reusable template picker. Medium scope.
-- **Mobile-app WS surface flagging** across the 31 plugins — bulk admin task. Vague scope; needs scoping pass first.
+- **airpay_evaluation: template library** (audit #11) — convert the existing JSON export/import into a DB-backed reusable template picker. Medium scope (~300 LOC + new table).
+- **airpay_evaluation: bulk-assign UI** (extends P1 #37) — admin form to manually assign N learners to an evaluation via audience filters (designation / region / cohort) — parallel to the bulk-enrol modals already shipping in classroom + programs.
+- **Mobile-app WS surface flagging** across the 31 plugins — bulk admin task; needs scoping pass first.
 - **Per-plugin Hindi gap analysis** — verify lang/hi parity for the remaining 27 plugins, ship batched as needed.
+- **airpay_evaluation: CAPTCHA on anonymous evaluations** (audit #9) — Moodle has \\core\\captcha\\hcaptcha; integrate.
 
 ---
 
