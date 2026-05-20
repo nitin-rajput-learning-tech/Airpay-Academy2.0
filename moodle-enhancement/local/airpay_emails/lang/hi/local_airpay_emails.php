@@ -39,7 +39,7 @@ $string['sprintb_rule_incomplete_name'] = 'कोर्स अधूरा: च�
 $string['sprintb_email_subject_default'] = '{$a} पूरा करने पर बधाई';
 $string['sprintb_reminder_subject_default'] = 'रिमाइंडर: अपना कोर्स {$a} जारी रखें';
 $string['sprintb_certificate_display_name'] = 'Airpay-certificate-{$a}.pdf';
-$string['email_to_user_failed'] = 'Moodle email_to_user() ने false लौटाया। मेल सर्वर कॉन्फ़िग और प्राप्तकर्ता पता जाँचें।';
+$string['email_to_user_failed'] = 'Sentientia LMS email_to_user() ने false लौटाया। मेल सर्वर कॉन्फ़िग और प्राप्तकर्ता पता जाँचें।';
 
 // P1 #49 (2026-05-20) — Hindi top-up: 25 strings covering privacy metadata,
 // ramping reminder + certificate settings, and cadence JSON errors.

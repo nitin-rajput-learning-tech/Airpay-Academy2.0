@@ -511,7 +511,7 @@ if (isloggedin() && !isguestuser()) {
             $airpay_dashboard['systemhealth'] = [
                 ['label' => 'Cron Last Run', 'value' => $cronlast ? userdate($cronlast, '%d %b, %I:%M %p') : 'Never',
                  'icon' => 'clock-o', 'status' => ($cronlast && (time() - $cronlast) < 3600) ? 'ok' : 'warning'],
-                ['label' => 'Platform Version', 'value' => $CFG->release ?? 'Unknown',
+                ['label' => 'Sentientia LMS Version', 'value' => $CFG->release ?? 'Unknown',
                  'icon' => 'info-circle', 'status' => 'ok'],
                 ['label' => 'Disk Usage', 'value' => $diskpercent . '% used',
                  'icon' => 'database', 'status' => ($diskpercent < 80) ? 'ok' : 'warning'],

@@ -28,13 +28,14 @@ if (empty($templatekey)) {
 // Double-check: strip any remaining traversal patterns.
 $templatekey = str_replace(['..', '//'], '', $templatekey);
 
-// Tenant ID with access validation — query active root-level costcenters dynamically.
+// Tenant ID with access validation.
+// Audit fix 2026-05-15: previous code queried `mdl_local_costcenter` (the
+// legacy BizLMS table) which doesn't exist in the Airpay rebuild — the
+// replacement is `mdl_local_airpay_org`. But the tenant list is already
+// hardcoded in $tenants below (1 Airpay / 77 Public / 177 ZEEA), so we
+// align with that single source of truth instead of issuing a DB query.
 $tenantid = optional_param('tenant', 1, PARAM_INT);
-$valid_tenants = $DB->get_fieldset_select('local_costcenter', 'id',
-    'parentid = 0 AND visible = 1', []);
-if (empty($valid_tenants)) {
-    $valid_tenants = [1]; // Fallback if costcenter table is empty.
-}
+$valid_tenants = [1, 77, 177];
 if (!in_array($tenantid, $valid_tenants, true)) {
     $tenantid = $valid_tenants[0];
 }

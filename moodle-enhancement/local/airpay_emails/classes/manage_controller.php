@@ -44,7 +44,11 @@ class manage_controller {
             [
                 'label' => 'Email Templates',
                 'value' => number_format($templatecount),
-                'icon'  => 'envelope-o',
+                // Audit fix M1 (2026-05-15): Moodle 5.1.3+ ships FontAwesome
+                // 5/6 which removed the -o (regular outline) variants.
+                // 'envelope-o' rendered as a blank box. 'envelope' is the
+                // current spelling that resolves in both FA4 and FA5+.
+                'icon'  => 'envelope',
                 'color' => 'primary',
             ],
             [
@@ -62,7 +66,9 @@ class manage_controller {
             [
                 'label' => 'Sent This Week',
                 'value' => number_format($logstats->sent_week),
-                'icon'  => 'calendar-check-o',
+                // Audit fix M1 (2026-05-15): FA4 'calendar-check-o' renamed
+                // to 'calendar-check' in FA5/6.
+                'icon'  => 'calendar-check',
                 'color' => 'info',
             ],
             [

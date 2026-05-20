@@ -30,7 +30,7 @@
             </div>
             <span class="ap-studio__source-badge ap-studio__source-badge--{{source}}">
                 {{#is_override}}<i class="fa fa-database"></i> DB Override{{/is_override}}
-                {{^is_override}}<i class="fa fa-file-code-o"></i> File Template{{/is_override}}
+                {{^is_override}}<i class="fa fa-file-code"></i> File Template{{/is_override}}
             </span>
         </div>
         <div class="ap-studio__topbar-right">
@@ -118,9 +118,18 @@
                     <label class="ap-studio__field-label">
                         <i class="fa fa-envelope"></i> Subject Line
                     </label>
+                    {{!
+                        Audit fix 2026-05-15 — the placeholder attribute used to
+                        read: Email subject with [[placeholders]]...
+                        Mustache parsed the inner {{placeholders}} as a variable
+                        interpolation. `placeholders` is the top-level array of
+                        placeholder groups, and calling s() on an array throws a
+                        TypeError. Escape the curly braces with HTML entities so
+                        the example renders as literal text.
+                    }}
                     <input type="text" name="subject" id="editor-subject" value="{{current_subject}}"
                            class="ap-studio__subject-input"
-                           placeholder="Email subject with {{placeholders}}..."
+                           placeholder="Email subject with &#123;&#123;placeholders&#125;&#125;..."
                            oninput="schedulePreview()">
                 </div>
 

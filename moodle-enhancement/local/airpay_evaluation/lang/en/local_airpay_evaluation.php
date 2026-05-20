@@ -202,7 +202,7 @@ $string['audience_cohort']        = 'Cohort';
 // P1 #41 (2026-05-20) — DB-backed template library. Closes audit
 // item #11 from parity-audit-2026-05-15/airpay_evaluation.md.
 $string['template_name_required']  = 'Template name is required.';
-$string['template_payload_corrupt'] = 'This template\'s payload could not be decoded. The row may have been edited outside the platform. Delete and re-save.';
+$string['template_payload_corrupt'] = 'This template\'s payload could not be decoded. The row may have been edited outside Sentientia LMS. Delete and re-save.';
 $string['template_saved']          = 'Template saved.';
 $string['template_deleted']        = 'Template deleted.';
 $string['template_save_modal_title']     = 'Save as template';
@@ -218,7 +218,7 @@ $string['task_expire_assignments'] = 'Auto-expire overdue evaluation assignments
 // P1 #19 (2026-05-16) — admin notification on every response.
 $string['heading_notifications']         = 'Notifications';
 $string['notify_admin_on_response']      = 'Email site admins on every response';
-$string['notify_admin_on_response_help'] = 'When ticked, every successful submission fires a platform notification to all site admins. They can opt out per channel (email / popup / mobile push) in their own notification preferences. Useful for low-volume strategic surveys (C-suite pulse, post-incident debrief). Leave OFF for high-volume L1 reaction forms — otherwise you will drown admins in mail.';
+$string['notify_admin_on_response_help'] = 'When ticked, every successful submission fires a Sentientia LMS notification to all site admins. They can opt out per channel (email / popup / mobile push) in their own notification preferences. Useful for low-volume strategic surveys (C-suite pulse, post-incident debrief). Leave OFF for high-volume L1 reaction forms — otherwise you will drown admins in mail.';
 $string['eval_response_subject']         = 'New evaluation response: {$a}';
 $string['eval_response_small']           = 'New response: {$a}';
 $string['eval_response_body_plain']      = 'A new response was submitted for evaluation "{$a->evalname}".

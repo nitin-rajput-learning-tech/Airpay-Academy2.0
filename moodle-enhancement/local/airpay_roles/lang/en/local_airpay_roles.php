@@ -102,7 +102,7 @@ $string['audit_action_role_deleted']     = 'Role deleted';
 // Errors.
 $string['err_role_not_found']      = 'Role not found.';
 $string['err_user_not_found']      = 'User not found.';
-$string['err_capability_not_found'] = 'Capability "{$a}" is not registered in this platform.';
+$string['err_capability_not_found'] = 'Capability "{$a}" is not registered in this Sentientia LMS install.';
 $string['err_invalid_permission']  = 'Permission must be one of: inherit, allow, prevent, prohibit.';
 $string['err_cannot_modify_admin'] = 'Cannot modify capabilities on the site administrator role.';
 $string['err_filterstoolong']      = 'Filter blob exceeds limit.';

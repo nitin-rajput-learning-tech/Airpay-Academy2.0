@@ -207,11 +207,11 @@ $string['hrms_sync_mode_filesystem']  = 'Filesystem (सर्वर-लोक�
 $string['hrms_sync_url']              = 'CSV स्रोत URL';
 $string['hrms_sync_url_help']         = 'जब स्रोत मोड <em>URL</em> हो तब इस्तेमाल होता है। एंडपॉइंट को 24-कॉलम HRMS CSV बॉडी और HTTP 200 के साथ जवाब देना चाहिए। कनेक्शन टाइमआउट: 15 सेकंड। रीड टाइमआउट: 5 मिनट।';
 $string['hrms_sync_auth_header']      = 'Authorization हेडर (वैकल्पिक)';
-$string['hrms_sync_auth_header_help'] = 'पूरी हेडर लाइन पास करें, जैसे <code>Authorization: Bearer eyJhbGci...</code> या <code>X-Api-Key: ...</code>। अप्रमाणीकृत एंडपॉइंट के लिए खाली छोड़ें। Moodle कॉन्फ़िग टेबल में अनएन्क्रिप्टेड संग्रहीत — लीक के संदेह पर टोकन घुमाएँ।';
+$string['hrms_sync_auth_header_help'] = 'पूरी हेडर लाइन पास करें, जैसे <code>Authorization: Bearer eyJhbGci...</code> या <code>X-Api-Key: ...</code>। अप्रमाणीकृत एंडपॉइंट के लिए खाली छोड़ें। Sentientia LMS कॉन्फ़िग टेबल में अनएन्क्रिप्टेड संग्रहीत — लीक के संदेह पर टोकन घुमाएँ।';
 $string['hrms_sync_path']             = 'CSV फ़ाइलसिस्टम पथ';
-$string['hrms_sync_path_help']        = 'जब स्रोत मोड <em>Filesystem</em> हो तब इस्तेमाल होता है। पूर्ण सर्वर-लोकल पथ होना चाहिए (Unix: <code>/var/airpay/exports/hrms.csv</code> या Windows: <code>C:\airpay\hrms.csv</code>)। Moodle वेब-सर्वर यूज़र को रीड परमिशन होना चाहिए। फ़ाइल हर रन पर फिर से पढ़ी जाती है।';
+$string['hrms_sync_path_help']        = 'जब स्रोत मोड <em>Filesystem</em> हो तब इस्तेमाल होता है। पूर्ण सर्वर-लोकल पथ होना चाहिए (Unix: <code>/var/airpay/exports/hrms.csv</code> या Windows: <code>C:\airpay\hrms.csv</code>)। Sentientia LMS वेब-सर्वर यूज़र को रीड परमिशन होना चाहिए। फ़ाइल हर रन पर फिर से पढ़ी जाती है।';
 $string['hrms_sync_user_id']          = 'रनर यूज़र ID';
-$string['hrms_sync_user_id_help']     = 'न्यूमेरिक यूज़र ID जिसके अंतर्गत आयात चलता है। डिफ़ॉल्ट <code>2</code> (स्टॉक Moodle पर साइट एडमिन)। ऐसा यूज़र चुनें जिसके पास <code>local/airpay_users:edit</code> क्षमता हो और CSV की हर पंक्ति को कवर करने वाला टेनेंट स्कोप हो — अन्यथा पंक्तियाँ क्रॉस-टेनेंट के रूप में अस्वीकार होंगी।';
+$string['hrms_sync_user_id_help']     = 'न्यूमेरिक यूज़र ID जिसके अंतर्गत आयात चलता है। डिफ़ॉल्ट <code>2</code> (स्टॉक Sentientia LMS पर साइट एडमिन)। ऐसा यूज़र चुनें जिसके पास <code>local/airpay_users:edit</code> क्षमता हो और CSV की हर पंक्ति को कवर करने वाला टेनेंट स्कोप हो — अन्यथा पंक्तियाँ क्रॉस-टेनेंट के रूप में अस्वीकार होंगी।';
 $string['hrms_sync_status']           = 'सिंक स्थिति';
 $string['hrms_sync_last_run_value']   = 'अंतिम सफल रन: <strong>{$a->time}</strong> (रन #{$a->runid})। विवरण <a href="../local/airpay_users/hrms_history.php">HRMS इतिहास पेज</a> पर देखें।';
 $string['hrms_sync_last_run_never']   = 'Cron ने अभी तक कोई HRMS सिंक सफलतापूर्वक पूर्ण नहीं किया है। कार्य सक्षम करें और सर्वर समय 02:30 के बाद देखें, या इसे मैन्युअली ट्रिगर करने के लिए कमांड लाइन से <code>php admin/cli/scheduled_task.php --execute=\\\\local_airpay_users\\\\task\\\\hrms_sync</code> चलाएँ।';

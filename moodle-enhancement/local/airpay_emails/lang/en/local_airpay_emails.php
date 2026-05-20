@@ -54,7 +54,7 @@ $string['sprintb_rule_incomplete_name'] = 'Course incomplete: ramping reminders 
 $string['sprintb_email_subject_default'] = 'Congratulations on completing {$a}';
 $string['sprintb_reminder_subject_default'] = 'Reminder: continue your course {$a}';
 $string['sprintb_certificate_display_name'] = 'Airpay-certificate-{$a}.pdf';
-$string['email_to_user_failed'] = 'Moodle email_to_user() returned false. Check mail server config + recipient address.';
+$string['email_to_user_failed'] = 'Sentientia LMS email_to_user() returned false. Check mail server config + recipient address.';
 
 // Day-2 (2026-05-14) — settings panel for ramping reminder + cert defaults.
 $string['setting_ramping_heading'] = 'Ramping reminder defaults';

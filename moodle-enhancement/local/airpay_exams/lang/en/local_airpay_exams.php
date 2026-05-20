@@ -20,7 +20,7 @@ $string['heading_org'] = 'Organisation';
 
 // Form labels.
 $string['quiz'] = 'Underlying quiz';
-$string['quiz_help'] = 'Pick an existing Moodle quiz activity to register as an enterprise exam. Only quizzes not already registered are shown. Build the quiz first in its course (Add activity > Quiz), then register it here.';
+$string['quiz_help'] = 'Pick an existing Sentientia LMS quiz activity to register as an enterprise exam. Only quizzes not already registered are shown. Build the quiz first in its course (Add activity > Quiz), then register it here.';
 $string['exam_name'] = 'Exam display name';
 $string['exam_name_help'] = 'A human-friendly name shown in reports and dashboards. May differ from the underlying quiz name.';
 $string['duration'] = 'Time limit (seconds)';
@@ -42,7 +42,7 @@ $string['invalidcategory'] = 'The selected category no longer exists.';
 $string['quizalreadyregistered'] = 'This quiz is already registered as an exam. Edit the existing exam instead.';
 $string['duration_invalid'] = 'Duration must be 0 or a positive number of seconds.';
 $string['passinggrade_invalid'] = 'Passing grade must be between 0 and 100.';
-$string['confirmdelete'] = 'Unregister exam "{$a}"? The underlying Moodle quiz will NOT be deleted — it stays in its course. Only the enterprise exam metadata (tenant, display name, status) is removed.';
+$string['confirmdelete'] = 'Unregister exam "{$a}"? The underlying Sentientia LMS quiz will NOT be deleted — it stays in its course. Only the enterprise exam metadata (tenant, display name, status) is removed.';
 $string['confirmactivate'] = 'Activate "{$a}"? Learners will see it as an available exam.';
 $string['confirmdeactivate'] = 'Deactivate "{$a}"? Learners will not see it but data is retained.';
 
@@ -53,7 +53,7 @@ $string['examdeleted'] = 'Exam unregistered (underlying quiz preserved).';
 $string['examstatuschanged'] = 'Exam status updated.';
 
 // Index page.
-$string['noexams_subtitle'] = 'Register existing Moodle quizzes as enterprise exams to add tenant scoping, custom passing grades, and dashboard reporting.';
+$string['noexams_subtitle'] = 'Register existing Sentientia LMS quizzes as enterprise exams to add tenant scoping, custom passing grades, and dashboard reporting.';
 
 // Privacy.
 $string['privacy:metadata'] = 'The Airpay airpay_exams plugin does not store personal data in plugin-owned tables.';

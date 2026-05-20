@@ -93,9 +93,12 @@ $PAGE->set_heading(get_string('pluginname', 'local_airpay_emails'));
 $PAGE->set_pagelayout('standard');
 
 // Build tab navigation data.
+// Audit fix M1 (2026-05-15): replaced FA4 'fa-envelope-o' with FA5/6
+// 'fa-envelope' since Moodle 5.1.3 ships the newer Font Awesome and
+// dropped the -o (regular) suffix.
 $tabs = [
     ['key' => 'dashboard',  'label' => 'Dashboard',  'icon' => 'fa-tachometer',  'active' => ($tab === 'dashboard')],
-    ['key' => 'templates',  'label' => 'Templates',  'icon' => 'fa-envelope-o',  'active' => ($tab === 'templates')],
+    ['key' => 'templates',  'label' => 'Templates',  'icon' => 'fa-envelope',    'active' => ($tab === 'templates')],
     ['key' => 'rules',      'label' => 'Rules',      'icon' => 'fa-bolt',        'active' => ($tab === 'rules')],
     ['key' => 'logs',       'label' => 'Logs',       'icon' => 'fa-list-alt',    'active' => ($tab === 'logs')],
     ['key' => 'settings',   'label' => 'Settings',   'icon' => 'fa-cog',         'active' => ($tab === 'settings')],
