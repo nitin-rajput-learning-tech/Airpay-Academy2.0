@@ -49,7 +49,7 @@
             // Update toggle icon to match current state.
             var toggleBtn = document.querySelector('.airpay-nav__theme-toggle i');
             if (toggleBtn) {
-                toggleBtn.className = isDark ? 'fa fa-sun-o' : 'fa fa-moon-o';
+                toggleBtn.className = isDark ? 'fa fa-sun' : 'fa fa-moon';
             }
             // Listen for OS theme changes (only if user hasn't set manual preference).
             if (window.matchMedia) {
@@ -58,7 +58,7 @@
                         document.documentElement.classList.toggle('dark-mode', e.matches);
                         document.body.classList.toggle('dark-mode', e.matches);
                         var btn = document.querySelector('.airpay-nav__theme-toggle i');
-                        if (btn) { btn.className = e.matches ? 'fa fa-sun-o' : 'fa fa-moon-o'; }
+                        if (btn) { btn.className = e.matches ? 'fa fa-sun' : 'fa fa-moon'; }
                     }
                 });
             }
@@ -134,6 +134,15 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="manifest" href="{{{config.wwwroot}}}/theme/airpayux/pix/brand/manifest.json">
     <link rel="apple-touch-icon" href="{{{config.wwwroot}}}/theme/airpayux/pix/brand/favicon_io/apple-touch-icon.png">
+    {{!
+        2026-05-20 / Stream B / Phase B.1 — Service worker registration.
+        Loads register.js which registers the SW from /local/sentientia_pwa/sw.php.
+        The PHP endpoint sends Service-Worker-Allowed: / so the SW controls
+        the whole Moodle install, not just /local/sentientia_pwa/. Unlocks
+        the manifest-driven install prompt (footer.mustache's
+        beforeinstallprompt handler) and Phase B.2+ push notifications.
+    }}
+    <script src="{{{config.wwwroot}}}/local/sentientia_pwa/register.js" defer></script>
     <style>
         html,body{
             font-family:"Montserrat", sans-serif;
@@ -155,7 +164,7 @@
             // Update toggle icon state
             var toggle = document.querySelector('.airpay-nav__theme-toggle i');
             if (toggle && t === 'dark') {
-                toggle.className = 'fa fa-sun-o';
+                toggle.className = 'fa fa-sun';
             }
         });
     })();
