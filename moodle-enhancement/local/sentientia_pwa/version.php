@@ -22,10 +22,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_pwa';
-$plugin->version   = 2026052001;
+$plugin->version   = 2026052003;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '0.1.0-beta';   // Phase B.1 — service worker + registration
+$plugin->release   = '0.2.1-beta';   // Phase B.2 — subscription backend (schema + WS + sender stub) — fixed db/upgrade.php savepoint
 $plugin->dependencies = [
     'local_airpay_core' => 2026051200,  // feature_flags resolver
 ];
