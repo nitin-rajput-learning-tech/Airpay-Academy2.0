@@ -1,5 +1,5 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-20 (evening) — **Wave 1 COMPLETE (10/10 P0s) + 33 Wave 2 P1 fixes shipped.** Latest commit `d5fb54262` on `production` ships the airpay_exams deadline-reminder cron, sister to P1 #28's airpay_courses task. Nine batches today (#25 → #33).
+**Updated:** 2026-05-20 (late evening) — **Wave 1 COMPLETE (10/10 P0s) + 36 Wave 2 P1 fixes shipped.** Latest commit `29e5d74c8` on `production` completes the i18n + cron rounds: P1 #34 exam overdue escalation, P1 #35 courses Hindi pack (100 strings), P1 #36 exams Hindi pack (73 strings). Twelve batches today (#25 → #36). All cron families now have both reminder + overdue siblings; all four touched plugins have full Hindi parity.
 
 ---
 
@@ -30,6 +30,9 @@ Seven more P1 batches shipped on top of the 12 from the previous update. All liv
 | **P1 #31** | **airpay_evaluation: conditional question UI (JS show/hide)** — front-end completion of P1 #30. respond.mustache emits `data-depends-on-qid` + `data-depends-on-value` on each `.question-card`; cards with a dep start hidden via inline `display:none`. response_actions.js mirrors PHP's `compute_visibility_map()` function-for-function — `readCardValue()` is extracted so submission + visibility share parsing logic, `applyVisibility()` clears hidden cards' inputs so stale answers can't survive a parent flip. Also retrofits the two remaining `innerHTML` usages to `setButtonContent()` (matches the security-hook fix from P1 #26). Server-render smoke verified all 5 attribute/style assertions on a 3-question branching evaluation. | `a68756b67` | `local_airpay_evaluation` `2026052011` (1.12.1) |
 | **P1 #32** | **airpay_skills: Hindi (hi) lang pack — 80 strings** — was at 19/80 (only learner-facing labels). Rewritten to 80/80: admin CRUD + privacy metadata + P1 #22 audit-log strings + P1 #25 self-rate strings. Same translation conventions as P1 #27 (formal corporate Hindi; technical proper nouns in Latin). Verified via array_diff_key + 10 spot-checks via get_string_manager. | `463c76d12` | `local_airpay_skills` `2026052003` (1.6.2) |
 | **P1 #33** | **airpay_exams: learner deadline-reminder cron** — closes audit item #16. Sister to P1 #28 but keyed on exams (not courses) and using `quiz.timeclose` as the deadline source (absolute calendar timestamp, shared by all takers) instead of relative enrolment offset. New `local_airpay_exams_remind_sent` table with the same dedupe shape. "Completion" = a graded `quiz_attempts` row exists. 09:15 daily, disabled by default. Smoke confirmed the cron correctly fires for ALL un-attempted learners on a quiz (the synthetic test plus 2 collateral real test-data users). | `d5fb54262` | `local_airpay_exams` `2026052001` (1.5.0) |
+| **P1 #34** | **airpay_exams: overdue manager escalation cron** — closes audit item #17. Clones P1 #29 for exams: positive buckets are pre-deadline (#33), negative buckets are post-deadline (this task). Recipient is `user.open_supervisorid`. 09:45 daily, disabled by default. Together #33 + #34 give airpay_exams the same deadline workflow airpay_courses has (mirroring #28 + #29). | `63d0d5e97` | `local_airpay_exams` `2026052002` (1.6.0) |
+| **P1 #35** | **airpay_courses: Hindi (hi) lang pack — 100 strings** — brand-new lang/hi file. Covers capabilities, CRUD, P1 #21 completion-deadline, Sprint C cross-tenant sharing, Sprint D pull/request workflow, P1 #28/#29 reminder + overdue cron. Same conventions as P1 #27/#32. en/hi counts match. | `ef1f70009` | `local_airpay_courses` `2026052003` (1.11.1) |
+| **P1 #36** | **airpay_exams: Hindi (hi) lang pack — 73 strings** — brand-new lang/hi file. Covers base CRUD + P1 #23 categories + P1 #33 reminder + P1 #34 overdue. Final Hindi parity for the 4 most-touched plugins (evaluation, skills, courses, exams). | `29e5d74c8` | `local_airpay_exams` `2026052003` (1.6.1) |
 
 ### What P1 #16 unlocks (HRMS sync)
 - Production sites get an automated daily HRMS reconciliation pull (default 02:30) without anyone clicking the manual upload page.
@@ -43,11 +46,10 @@ Seven more P1 batches shipped on top of the 12 from the previous update. All liv
 - Admin no longer has to poll `/responses.php` — opt-in notification fires on every submission for strategic surveys (C-suite pulse, post-incident debrief). Anonymous evals stay anonymous in the notification body too (#19).
 
 ### Next batches (when continuing)
-- **airpay_exams overdue cron** — sibling of P1 #33; sends supervisor escalations after a learner misses the exam's `quiz.timeclose`. Will reuse `_remind_sent` table with negative bucket values, same trick as P1 #29.
-- **airpay_evaluation assignments table + show-non-respondents** (audit #20 + #21 chain) — needs a `local_airpay_evaluation_assignments` table first; then the show-non-respondents page becomes a query against it.
-- **Hindi packs for `airpay_courses` + `airpay_exams`** — ~80 strings each, mechanical work parallel to P1 #27/#32.
-- **Mobile-app WS surface flagging** across the 31 plugins — bulk admin task.
-- **airpay_evaluation: template library** (audit #11) — convert the existing JSON export/import into a DB-backed reusable template picker.
+- **airpay_evaluation assignments table + show-non-respondents** (audit #20 + #21 chain) — needs a `local_airpay_evaluation_assignments` table first; then the show-non-respondents page becomes a query against it. Medium-large scope.
+- **airpay_evaluation: template library** (audit #11) — convert the existing JSON export/import into a DB-backed reusable template picker. Medium scope.
+- **Mobile-app WS surface flagging** across the 31 plugins — bulk admin task. Vague scope; needs scoping pass first.
+- **Per-plugin Hindi gap analysis** — verify lang/hi parity for the remaining 27 plugins, ship batched as needed.
 
 ---
 
