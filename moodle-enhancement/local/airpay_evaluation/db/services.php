@@ -44,4 +44,20 @@ $functions = [
         'ajax'         => true,
         'capabilities' => 'local/airpay_evaluation:respond',
     ],
+
+    // P1 #39 (2026-05-20) — bulk-assign by audience.
+    'local_airpay_evaluation_preview_audience' => [
+        'classname'    => 'local_airpay_evaluation\external\preview_audience',
+        'description'  => 'Preview the user count for a target-audience filter',
+        'type'         => 'read',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_evaluation:manage',
+    ],
+    'local_airpay_evaluation_bulk_assign_by_audience' => [
+        'classname'    => 'local_airpay_evaluation\external\bulk_assign_by_audience',
+        'description'  => 'Assign an evaluation to every user matching a target-audience filter',
+        'type'         => 'write',
+        'ajax'         => true,
+        'capabilities' => 'local/airpay_evaluation:manage',
+    ],
 ];

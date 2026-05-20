@@ -179,6 +179,16 @@ $string['non_respondents_empty_pending_body']      = 'Either every assigned lear
 $string['non_respondents_empty_responded_heading'] = 'No responses yet.';
 $string['non_respondents_empty_responded_body']    = 'Once assigned learners submit their responses, they will appear here.';
 
+// P1 #39 (2026-05-20) — bulk-assign by audience. Pairs with P1 #37
+// (assignments table) + P1 #38 (non-respondents view).
+$string['filterstoolong']             = 'Filter payload too long.';
+$string['bulk_assign_modal_title']    = 'Bulk-assign by audience';
+$string['bulk_assign_form_intro']     = 'Pick one or more filter criteria to target a group of users. The preview below updates as you change filters. Click "Assign matching users" to commit — already-assigned learners are silently deduped.';
+$string['bulk_assign_button']         = 'Assign matching users';
+$string['bulk_assign_pick_at_least_one'] = 'Pick at least one filter criterion.';
+$string['bulk_assign_result']         = '{$a->assigned} new assignment(s); {$a->matched} user(s) matched the audience ({$a->existing} already assigned).';
+$string['bulk_assign_capped']         = 'Audience size hit the cap of {$a}. Refine your filter to assign more users (or run the bulk-assign twice with tighter criteria).';
+
 // P1 #19 (2026-05-16) — admin notification on every response.
 $string['heading_notifications']         = 'Notifications';
 $string['notify_admin_on_response']      = 'Email site admins on every response';

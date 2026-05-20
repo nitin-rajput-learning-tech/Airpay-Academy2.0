@@ -10,9 +10,11 @@ $plugin->component = 'local_airpay_evaluation';
 // P1 #30 (2026-05-20) — conditional question display.
 // P1 #31 (2026-05-20) — front-end JS show/hide.
 // P1 #37 (2026-05-20) — assignments table.
-// P1 #38 (2026-05-20) — show-non-respondents admin page. Closes audit
-//                       item #20 from parity-audit-2026-05-15/airpay_evaluation.md.
-$plugin->version   = 2026052021;
+// P1 #38 (2026-05-20) — show-non-respondents admin page.
+// P1 #39 (2026-05-20) — bulk-assign by audience back-end (assigner class +
+//                       2 WS endpoints). Closes the assignment half of
+//                       audit item #21. UI modal is a follow-up.
+$plugin->version   = 2026052022;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.13.1';  // +P1 #38 non-respondents page
+$plugin->release   = '1.14.0';  // +P1 #39 bulk-assign by audience
