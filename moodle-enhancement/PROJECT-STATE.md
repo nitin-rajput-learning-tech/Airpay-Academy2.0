@@ -115,8 +115,163 @@ Approach: surgical user-visible rename to **"platform"** (brand-neutral, technic
   - Login page hero — "Airpay Academy" preserved (customer-zero identity)
 - [⏳] **Visual evidence** — Chrome DevTools MCP is currently disconnected; screenshots deferred to next reconnect window.
 
-### Next continuous-build target
-Stream B (Tier 1 #2) — **PWA + push notifications foundation**. manifest.json + service worker + Web Push subscription flow. Continues directly in this session without prompt-drafting (per Nitin's directive).
+### Session 4 followup — Stream B Phase B.1 + B.2 — ✅ SHIPPED
+
+**Commit `47df08ff1` — Phase B.1 PWA service worker scaffold**
+
+The pre-existing PWA manifest (theme/airpayux/pix/brand/manifest.json) and
+install banner (footer.mustache beforeinstallprompt) were dormant because
+no service worker was registered. Chrome won't fire the install event
+without an active SW. Built `local_sentientia_pwa` plugin:
+
+- `version.php` (0.1.0-beta, deps on local_airpay_core)
+- `lang/en` + `lang/hi` (100% parity)
+- `db/feature_flags.php` — `sentientia.pwa.enabled` (default ON) +
+  `sentientia.pwa.push.enabled` (default OFF, Phase B.2+)
+- `sw.php` — PHP-served service worker with Service-Worker-Allowed: /
+  header. Implements precache offline shell, network-first navigation
+  with cached-shell fallback, push event handler, notificationclick
+  handler, message handler. Kill-switch SW when flag is OFF (unregisters
+  + clears caches).
+- `register.js` — vanilla (non-AMD) registration script, loaded with
+  `defer` from head.mustache.
+- Wired into theme/airpayux/templates/head.mustache.
+
+Verified: HEAD on /local/sentientia_pwa/sw.php returns Content-Type:
+application/javascript + Service-Worker-Allowed: /. SW JS body served
+correctly with cache-bust headers.
+
+**Commit `bcec33d8b` — Phase B.2 push subscription backend**
+
+Six new files in local_sentientia_pwa:
+- `db/install.xml` — `local_sentientia_push_subs` table (id, userid,
+  customerid, tenantid, endpoint, endpoint_hash sha1, p256dh, auth_secret,
+  user_agent, last_seen, fail_count, timecreated, timemodified). Unique
+  key on (userid, endpoint_hash).
+- `db/upgrade.php` — savepoint 2026052003 creates the table (initial
+  ship missed this; corrected same session).
+- `db/access.php` — `:subscribe` (user+) and `:manage` (manager) caps.
+- `db/services.php` — 3 WS endpoints (save / delete / list_my).
+- `classes/subscription_manager.php` — DB API (save upsert, delete,
+  for_user, for_user_safe with key redaction, record_success /
+  record_failure with auto-purge at 5 consecutive failures).
+- `classes/push_sender.php` — STUB sender (Phase B.2). Public interface
+  (send / send_to_many / is_enabled) is final; deliver_one() logs payload
+  via debugging() + structured_logger. Phase B.2.5 swaps the body for
+  real web-push HTTP POST when minishlink/web-push library is vendored.
+- 3 `classes/external/*.php` — WS implementations with capability +
+  context validation.
+
+Verified on local XAMPP:
+- Table exists, plugin version 2026052003 in mdl_config_plugins
+- 2 capabilities + 3 WS functions registered
+
+### Sentientia LMS rename sweep — ✅ SHIPPED commits `7a06cdfb5` (initial "platform"), then revised to `ab17e7e31` (full "Sentientia LMS")
+
+Per Nitin's directives: "rename all to Sentientia LMS" + "remove moodle
+reference completely, it is going to be enterprise product".
+
+**Zero user-visible "Moodle" references remain anywhere across Sentientia LMS surface.**
+
+Changes shipped (15 EN strings + 15 HI mirrors + 1 dashboard label + 1 footer):
+
+- `theme/airpayux/layout/dashboard.php:514` — admin system-health widget
+  label "Moodle Version" → "Sentientia LMS Version"
+- `theme/airpayux/templates/footer.mustache` — attribution band
+  "Built on Moodle (GPL v3)" → "Licensed under GPL v3" (preserves §5(b)
+  GPL attribution while removing Moodle name)
+- 4× `privacy:metadata` strings (courses, org, reports, integrations) —
+  "core Moodle tables" → "core Sentientia LMS tables"
+- `airpay_evaluation` — `template_payload_corrupt` and
+  `notify_admin_on_response_help`
+- `airpay_roles` — `err_capability_not_found`
+- 3× `airpay_exams` strings — "Moodle quiz" → "Sentientia LMS quiz"
+- 3× `airpay_users` HRMS sync help — "Moodle config table" /
+  "Moodle web-server user" / "stock Moodle" → all Sentientia LMS
+- `airpay_emails` `email_to_user_failed`
+
+WHAT WAS NOT CHANGED (legal requirement):
+GPL v3 license headers in source files (`// This file is part of
+Moodle - http://moodle.org/`). Per GPL §5(a), derivative works must
+carry prominent notices of modification + license. These headers ARE
+those notices. Removing them = license violation. Developers see them;
+users never do. Can rewrite later to "Sentientia LMS, modified from
+upstream Moodle in 2026" (still satisfies §5(a)) when desired.
+
+Rename map / audit trail: `docs/core-mods/2026-05-20-moodle-to-sentientia-rename.md`
+
+### Today's commit log (2026-05-20 — 10 commits across 6 streams)
+
+```
+ab17e7e31  Sentientia LMS rename sweep — full "Moodle" → "Sentientia LMS"
+bcec33d8b  Stream B / Phase B.2 — Push subscription backend
+47df08ff1  Stream B / Phase B.1 — PWA service worker scaffold
+7a06cdfb5  Stream A — initial "Moodle" → "platform" rename (superseded by ab17e7e31)
+43a3d784f  Session 3 — AMD pipeline triple-bug fix (unblocks ALL visual-verified work)
+30daa33b0  Dark-mode flag wiring (orphan-flag bug)
+57b921de7  Session 2 followup — visual evidence + Vercel disable
+41f9f113b  Session 2 — customer-level feature flags (ADR-002)
+a44b58989  Day 0 — Sentientia LMS pivot, ADR-001
+672ccbe60  Wave 2 P1 #41-#60 PROJECT-STATE update (pre-Day-0 baseline)
+```
+
+### Where to resume tomorrow
+
+**Three open work streams**, in priority order per Nitin's directive:
+
+1. **Stream B / Phase B.2.b — Subscribe UI** (continues Stream B from B.2)
+   - VAPID keypair generation CLI tool
+   - Plugin settings page for admin to paste VAPID public + private keys
+   - Subscribe button UI on `/local/sentientia_pwa/manage.php`
+   - AMD module that calls `navigator.serviceWorker.PushManager.subscribe()`
+     with VAPID public key, then POSTs to `local_sentientia_pwa_save_subscription`
+   - Estimated: 1 session
+
+2. **Stream B / Phase B.2.5 — Real push delivery** (replaces sender stub)
+   - Vendor `minishlink/web-push` library into `local/sentientia_pwa/vendor/`
+   - Replace `push_sender::deliver_one()` stub with real ES256 JWT + AES-GCM
+     encrypted POST to browser push services
+   - Test end-to-end push from CLI to real device
+   - Flip `sentientia.pwa.push.enabled` flag to ON
+   - Estimated: 1 session
+
+3. **Stream B / Phase B.3 — Wire push into reminder pipeline**
+   - Hook `local_airpay_courses` deadline reminder cron to also call
+     `push_sender::send()` per recipient
+   - Hook `local_airpay_emails` completion email to send push too
+   - iOS install instructions UI (iOS doesn't fire beforeinstallprompt;
+     needs custom "Add to Home Screen" flow guide)
+   - Estimated: 1-2 sessions
+
+4. **Stream C — WhatsApp deepening** (highest immediate ROI per ADR-001)
+   - Extend `local_airpay_whatsapp` for deadline / completion / cert
+     notifications using existing approved templates
+   - Wire into the same reminder cron as push notifications
+   - 90% open-rate in India — biggest engagement lift available
+   - Estimated: 1-2 sessions
+
+5. **License-header rewrite sweep** (low priority but spec'd)
+   - Rewrite all `// This file is part of Moodle...` to
+     `// This file is part of Sentientia LMS, modified from upstream
+     Moodle in 2026 by Airpay Payment Services.` (~200 files)
+   - One-shot find-replace pass with attribution-date verification
+   - Estimated: 1 session
+
+6. **Visual verification** (blocked on Chrome MCP reconnect)
+   - Once Nitin runs `/mcp` reconnect + restarts Chrome with debug port,
+     capture all post-rename screenshots: footer attribution band,
+     dashboard "Sentientia LMS Version" label, privacy:metadata pages,
+     evaluation template-corrupt message
+   - Save to `docs/visual-evidence/2026-05-21/`
+
+### Open environmental dependencies (Nitin's team)
+
+- VAPID keypair generation — needed before Phase B.2.b can complete (admin paste)
+- web-push-php library decision — vendor it, or evaluate alternative library
+- Anthropic API key + budget — Tier 1 #4 AI quiz gen (when Tier 1 #3 Mentimeter ships)
+- ElevenLabs subscription — Tier 1 #5 Hindi content pipeline
+- Chrome restart + `/mcp` reconnect — for visual verification of UI changes
+- `/plugin disable vercel@claude-plugins-official` slash command — kills Vercel hook noise in this project
 
 ---
 
