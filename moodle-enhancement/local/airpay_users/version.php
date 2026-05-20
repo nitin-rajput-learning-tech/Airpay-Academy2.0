@@ -33,10 +33,12 @@ $plugin->component = 'local_airpay_users';
 // supervisor picker + DOB/DOJ on edit-user form +
 // tenant-scoped welcome email with token replacement +
 // cron-driven daily HRMS sync.
-$plugin->version   = 2026051606;
+// P1 #47 (2026-05-20) — Hindi top-up: 128 strings covering capabilities,
+// CRUD forms, errors, HRMS bulk import, welcome email, and HRMS sync cron.
+$plugin->version   = 2026052001;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '2.6.0';  // +P1 #16 cron-driven HRMS sync
+$plugin->release   = '2.6.1';  // +P1 #47 Hindi top-up
 $plugin->dependencies = [
     'local_airpay_org' => 2026051501,
 ];
