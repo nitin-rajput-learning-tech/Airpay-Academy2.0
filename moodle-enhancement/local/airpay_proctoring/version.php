@@ -5,10 +5,13 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_airpay_proctoring';
-$plugin->version   = 2026051201;  // Phase 8.1 security remediation
+// P1 #55 (2026-05-20) — Hindi pack: 90 strings covering consent flow,
+// identity verification, live monitoring, behavioural events, review queue,
+// status, settings, notifications, errors, privacy metadata (incl. AWS).
+$plugin->version   = 2026052001;
 $plugin->requires  = 2024042200;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.0.1';     // Phase 8.1: B2+B3+B7 fixes
+$plugin->release   = '1.0.2';     // +P1 #55 Hindi pack
 $plugin->dependencies = [
     'local_airpay_org'     => 2026040100,
     'local_airpay_privacy' => 2026040100,  // DSR pipeline integration
