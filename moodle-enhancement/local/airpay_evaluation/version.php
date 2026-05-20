@@ -9,12 +9,10 @@ $plugin->component = 'local_airpay_evaluation';
 // translated, covering all P1 #17/#18/#19 additions.
 // P1 #30 (2026-05-20) — conditional question display.
 // P1 #31 (2026-05-20) — front-end JS show/hide.
-// P1 #37 (2026-05-20) — assignments table. New local_airpay_evaluation_assign
-//                       tracks WHO was meant to respond; trigger queue auto-
-//                       creates rows; submit_response marks them 'responded'.
-//                       Closes audit items #20 + #21 from
-//                       parity-audit-2026-05-15/airpay_evaluation.md.
-$plugin->version   = 2026052020;
+// P1 #37 (2026-05-20) — assignments table.
+// P1 #38 (2026-05-20) — show-non-respondents admin page. Closes audit
+//                       item #20 from parity-audit-2026-05-15/airpay_evaluation.md.
+$plugin->version   = 2026052021;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.13.0';  // +P1 #37 assignments table
+$plugin->release   = '1.13.1';  // +P1 #38 non-respondents page

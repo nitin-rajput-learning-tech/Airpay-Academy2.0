@@ -156,6 +156,29 @@ $string['dep_self_reference']      = 'A question cannot depend on itself.';
 $string['dep_parent_other_evaluation'] = 'The parent question is not part of this evaluation. Pick a sibling.';
 $string['dep_cycle']               = 'This dependency would create a cycle (parent eventually depends back on this question).';
 
+// P1 #38 (2026-05-20) — show-non-respondents admin page. Closes audit
+// item #20 from parity-audit-2026-05-15/airpay_evaluation.md.
+$string['non_respondents_title']    = '{$a} — pending / completed';
+$string['non_respondents_heading']  = 'Who has responded to "{$a}"?';
+$string['non_respondents_subtitle'] = 'Assigned learners and their response status. Auto-assignments come from the W1-5 trigger queue when a learner completes the qualifying course / program / classroom; manual assignments can be added via the admin UI (future).';
+$string['back_to_evaluations']      = 'Back to evaluations';
+$string['non_respondents_tab_pending']    = 'Pending';
+$string['non_respondents_tab_responded']  = 'Responded';
+$string['non_respondents_col_name']       = 'Name';
+$string['non_respondents_col_email']      = 'Email';
+$string['non_respondents_col_trigger']    = 'Assigned via';
+$string['non_respondents_col_assigned']   = 'Assigned';
+$string['non_respondents_col_due']        = 'Due by';
+$string['non_respondents_col_responded']  = 'Responded';
+$string['non_respondents_trigger_manual']    = 'Manual';
+$string['non_respondents_trigger_course']    = 'Course';
+$string['non_respondents_trigger_program']   = 'Program';
+$string['non_respondents_trigger_classroom'] = 'Classroom';
+$string['non_respondents_empty_pending_heading']   = 'Everyone has responded.';
+$string['non_respondents_empty_pending_body']      = 'Either every assigned learner has filled in this evaluation, or no assignments have been recorded yet. Trigger-based evaluations auto-assign learners as they complete the qualifying activity.';
+$string['non_respondents_empty_responded_heading'] = 'No responses yet.';
+$string['non_respondents_empty_responded_body']    = 'Once assigned learners submit their responses, they will appear here.';
+
 // P1 #19 (2026-05-16) — admin notification on every response.
 $string['heading_notifications']         = 'Notifications';
 $string['notify_admin_on_response']      = 'Email site admins on every response';
