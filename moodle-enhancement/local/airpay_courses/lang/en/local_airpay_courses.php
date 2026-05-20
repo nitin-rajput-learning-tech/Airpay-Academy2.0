@@ -111,3 +111,32 @@ $string['invalidtenant'] = 'Could not determine your tenant — your user accoun
 $string['invaliduser']  = 'The requesting user account is no longer active.';
 $string['invalidcourse'] = 'No such course.';
 $string['cannotrequestowncourse'] = 'You cannot request a course your tenant already owns.';
+
+// P1 #28 (2026-05-20) — learner deadline-reminder cron. Closes audit
+// item #14 from parity-audit-2026-05-15/airpay_courses.md.
+$string['task_course_reminder']        = 'Course deadline reminder';
+$string['messageprovider:course_reminder'] = 'Course deadline reminder';
+
+$string['reminder_settings_heading']   = 'Course deadline reminders (cron)';
+$string['reminder_settings_intro']     = 'Daily scheduled task that nudges learners whose course deadline is approaching. Deadlines are computed from <code>enrolment.timestart + course.open_coursecompletiondays × 86400</code> — the field exposed on the edit-course form. The task is disabled by default; once you opt in, enable it from <em>Site administration ▶ Server ▶ Scheduled tasks</em>. Default schedule: 09:00 daily.';
+$string['reminder_enabled']            = 'Enable deadline reminders';
+$string['reminder_enabled_help']       = 'When OFF (default) the scheduled task is a no-op. When ON the task fires every day, sends notifications to learners approaching their deadline, and records each send in <code>local_airpay_courses_remind_sent</code> for de-dupe.';
+$string['reminder_days_before']        = 'Reminder buckets (days before deadline)';
+$string['reminder_days_before_help']   = 'Comma-separated list of days-before-deadline thresholds. <code>7,3,1</code> nudges learners 7 days out, again at 3 days, and a final ping 1 day before the deadline. Empty list = no reminders. Bucket assignment is monotonic — a learner at 5 days out hits the "7" bucket only once.';
+$string['reminder_max_per_run']        = 'Max notifications per run';
+$string['reminder_max_per_run_help']   = 'Safety cap so a misconfigured rule cannot mailbomb 50 000 users in one cron tick. Default 500. Untreated learners roll over to the next cron run; the unique index dedupes so nothing is lost.';
+$string['reminder_status']             = 'Last run';
+$string['reminder_last_run_value']     = 'Last successful run: <strong>{$a->time}</strong>. Notifications sent in that run: <strong>{$a->count}</strong>. (Lifetime audit available via <code>SELECT * FROM mdl_local_airpay_courses_remind_sent ORDER BY timesent DESC</code>.)';
+$string['reminder_last_run_never']     = 'The deadline-reminder cron has never run. Enable the task and check back after 09:00 server time tomorrow, or run <code>php admin/cli/scheduled_task.php --execute=\\\\local_airpay_courses\\\\task\\\\course_reminder</code> from the command line to fire it manually.';
+
+// Reminder message body — rendered by the cron task itself.
+$string['reminder_subject']      = 'Reminder: "{$a->fullname}" is due in {$a->days_remaining} day(s)';
+$string['reminder_small']        = '"{$a->fullname}" due in {$a->days_remaining} day(s)';
+$string['reminder_body_plain']   = 'Hi,
+
+This is a reminder that your course "{$a->fullname}" is due to be completed by {$a->deadline} ({$a->days_remaining} day(s) from now).
+
+Pick it up here: {$a->course_url}
+
+— Airpay Academy';
+$string['reminder_body_html']    = '<p>Hi,</p><p>This is a reminder that your course <strong>{$a->fullname}</strong> is due to be completed by <strong>{$a->deadline}</strong> ({$a->days_remaining} day(s) from now).</p><p><a href="{$a->course_url}">Continue the course</a></p><p style="color:#777;">— Airpay Academy</p>';

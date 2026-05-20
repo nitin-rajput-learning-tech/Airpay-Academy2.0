@@ -102,5 +102,34 @@
                COMMENT="Admin dashboard: 'who has access to course X right now'"/>
       </INDEXES>
     </TABLE>
+
+    <TABLE NAME="local_airpay_courses_remind_sent"
+           COMMENT="P1 #28: tracks every deadline-reminder notification fired by the course_reminder scheduled task. Lets the task de-dupe (don't nudge the same user × course × bucket twice) and gives admin a queryable audit trail of who got nudged when. Closes audit item #14 from parity-audit-2026-05-15/airpay_courses.md.">
+      <FIELDS>
+        <FIELD NAME="id"          TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"      TYPE="int" LENGTH="10" NOTNULL="true"
+               COMMENT="User who received the reminder"/>
+        <FIELD NAME="courseid"    TYPE="int" LENGTH="10" NOTNULL="true"
+               COMMENT="Course the deadline is on"/>
+        <FIELD NAME="days_before_deadline" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0"
+               COMMENT="Which configured bucket fired (e.g. 7, 3, 1). Lets one user get multiple reminders as the deadline approaches without re-firing the same bucket."/>
+        <FIELD NAME="deadline_ts" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Unix ts of the computed deadline at send time. Resetting completion (P1 #20) doesn't invalidate this row, but a new enrolment will compute a fresh deadline and so a fresh bucket."/>
+        <FIELD NAME="timesent"    TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"   TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_user"   TYPE="foreign" FIELDS="userid"   REFTABLE="user"   REFFIELDS="id"/>
+        <KEY NAME="fk_course" TYPE="foreign" FIELDS="courseid" REFTABLE="course" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_user_course_bucket" UNIQUE="true"
+               FIELDS="userid, courseid, days_before_deadline, deadline_ts"
+               COMMENT="Dedupe key — one row per (user, course, bucket, deadline). Including deadline_ts lets fresh enrolments fire fresh nudges."/>
+        <INDEX NAME="idx_timesent" UNIQUE="false" FIELDS="timesent"
+               COMMENT="Admin 'recent nudges' query"/>
+      </INDEXES>
+    </TABLE>
+
   </TABLES>
 </XMLDB>

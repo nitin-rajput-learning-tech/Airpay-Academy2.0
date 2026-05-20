@@ -29,10 +29,12 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_airpay_courses';
 // P1 #21 (2026-05-16) — restore open_coursecompletiondays on edit form.
-$plugin->version   = 2026051901;
+// P1 #28 (2026-05-20) — daily deadline-reminder cron task. Closes audit
+//                       item #14 from parity-audit-2026-05-15/airpay_courses.md.
+$plugin->version   = 2026052001;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.9.0';
+$plugin->release   = '1.10.0';
 $plugin->dependencies = [
     'local_airpay_org' => 2026041600,
 ];
@@ -45,6 +47,14 @@ $plugin->dependencies = [
 //          + share.php admin page + share_modal.mustache template
 //          + sharing_manager class (CRUD + catalog-filter builder)
 //          + audit log entry per share/unshare
+// 1.10.0 P1 #28 (2026-05-20) — daily learner deadline-reminder cron.
+//          + classes/task/course_reminder.php
+//          + db/tasks.php (registers at 09:00 daily, disabled)
+//          + db/messages.php (course_reminder provider)
+//          + settings.php (reminder_enabled/_days_before/_max_per_run/_last_run)
+//          + local_airpay_courses_remind_sent table (idempotency)
+//          Closes audit item #14 from
+//          parity-audit-2026-05-15/airpay_courses.md.
 // 1.9.0  P1 #21 (2026-05-16) — restore open_coursecompletiondays
 //          numeric field on edit_course form. Column already existed
 //          on mdl_course; persistence wiring in course_manager.
