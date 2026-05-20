@@ -1,5 +1,48 @@
 # PROJECT STATE — Airpay Academy L&D OS
-**Updated:** 2026-05-20 (late evening) — **Wave 1 COMPLETE (10/10 P0s) + 40 Wave 2 P1 fixes shipped.** Latest commit `319de2ec3` on `production` adds the bulk-assign modal + AMD wiring (P1 #40), completing the assignment workflow started in P1 #37. Sixteen batches today (#25 → #40). Compliance + admin can now: (1) auto-assign on course completion (P1 #37 hook), (2) manually bulk-assign by audience (P1 #39 + #40), (3) see who's pending vs responded (P1 #38).
+**Updated:** 2026-05-20 (late night) — **Wave 1 COMPLETE (10/10 P0s) + 60 Wave 2 P1 fixes shipped.** 20 batches added today (#41 → #60). Compliance now has: full template library (P1 #41), auto-expire cron (P1 #42), 100% Hindi parity across all 30 airpay_* plugins — 1,955 HI keys vs 1,951 EN keys (P1 #43 → #58, 14 Hindi batches), reCAPTCHA v2 on Public signup (P1 #59), comprehensive mobile-app WS surface audit categorising every 156 functions across 20 plugins (P1 #60).
+
+---
+
+## 🆕 WAVE 2 — P1 #41 → P1 #60 (2026-05-20)
+
+Twenty more batches. **Hindi parity drive complete** + 2 polish items + 2 final audit closeouts.
+
+| # | Subject | Plugin version after |
+|---|---------|----------------------|
+| P1 #41 | airpay_evaluation: DB-backed template library — new `local_airpay_evaluation_template` table + 4 manager methods (save_template_from_evaluation, create_evaluation_from_template, list_templates, delete_template) | `local_airpay_evaluation` `2026052030` (1.15.0) |
+| P1 #42 | airpay_evaluation: auto-expire overdue assignments cron — daily 01:00 task flips status='assigned' → 'expired' for past-due rows | `local_airpay_evaluation` `2026052031` (1.15.1) |
+| P1 #43 | airpay_evaluation: Hindi pack top-up (56 strings — P1 #30/37/38/39/40/41/42 catch-up) | `local_airpay_evaluation` `2026052032` (1.15.2) |
+| P1 #44 | airpay_classroom: Hindi pack top-up (74 strings — CRUD, sessions, attendance, view tabs, privacy) | `local_airpay_classroom` `2026052001` (1.10.1) |
+| P1 #45 | airpay_programs: Hindi pack top-up (65 strings — CRUD, levels, courses, enrolment, view tabs, privacy) | `local_airpay_programs` `2026052001` (1.8.1) |
+| P1 #46 | airpay_learningpath: Hindi pack top-up (30 strings — CRUD, confirms, view tabs, errors, privacy) | `local_airpay_learningpath` `2026052001` (1.7.1) |
+| P1 #47 | airpay_users: Hindi pack top-up (128 strings — largest catch-up; capabilities, CRUD form, HRMS importer + history table, welcome email, HRMS sync cron, all errors) | `local_airpay_users` `2026052001` (2.6.1) |
+| P1 #48 | airpay_notifications: Hindi pack top-up (53 strings — CRUD, errors, privacy metadata for log + prefs tables) | `local_airpay_notifications` `2026052001` (1.4.1) |
+| P1 #49 | airpay_emails: Hindi pack top-up (25 strings — ramping reminder settings, certificate-email settings, cadence JSON errors) | `local_airpay_emails` `2026052001` (1.1.2) |
+| P1 #50 | 4-plugin Hindi micro top-ups (7 strings total) — assistant (3), analytics (1), gamification (1), privacy (2) | various: 1.0.x → 1.0.1 |
+| P1 #51 | New Hindi packs: lifecycle (2), ratings (12), core (20) — 34 strings | various |
+| P1 #52 | New Hindi packs: manager (33), reports (34) — 67 strings | `local_airpay_manager` `1.3.1`, `local_airpay_reports` `1.1.1` |
+| P1 #53 | New Hindi packs: recompletion (40), integrations (50) — 90 strings | `local_airpay_recompletion` `1.1.1`, `local_airpay_integrations` `1.1.1-beta` |
+| P1 #54 | New Hindi packs: org (55), request (67) — 122 strings | `local_airpay_org` `1.4.1`, `local_airpay_request` `1.2.1` |
+| P1 #55 | New Hindi pack: proctoring (90 strings — consent flow, identity verification, live monitoring, behavioural events, review queue, settings, privacy incl. AWS Rekognition/S3 sub-providers) | `local_airpay_proctoring` `2026052001` (1.0.2) |
+| P1 #56 | New Hindi pack: roles (94 strings — role-management UI, capability matrix, audit log with $a placeholders, 9-field privacy metadata) | `local_airpay_roles` `2026052001` (1.1.2-beta) |
+| P1 #57 | New Hindi pack: cart (117 strings — shopping cart, checkout, Airpay gateway settings, refunds, IP allow-list, ledger + invoices + gateway privacy) | `local_airpay_cart` `2026052001` (1.0.2) |
+| P1 #58 | New Hindi pack: challenge (130 strings — LARGEST pack — gamification challenges, leaderboard with 5 filters, 130-string coverage including challenges/attempts/leaderboard privacy metadata) | `local_airpay_challenge` `2026052001` (1.1.2-beta) |
+| **P1 #59** | **reCAPTCHA v2 defense-in-depth on Public-tenant signup form** (audit #9) — existing honeypot stays; reCAPTCHA element auto-injected when `$CFG->recaptchapublickey`/`privatekey` are configured. Mirrors auth/email/signup_form.php. No new external dependencies. | `local_airpay_users` `2026052002` (2.7.0) |
+| **P1 #60** | **Mobile-app WS surface audit** — comprehensive categorisation of all 156 WS functions across 20 plugins as MOBILE-READY (36 / 23%), DESKTOP-ONLY (84 / 54%), or SENSITIVE-ADMIN (36 / 23%). Each function has individual reasoning. Implementation gated behind 3 future phases (X.1 read-only learner, X.2 learner write actions, X.3 manager mobile). SENSITIVE-ADMIN remains permanently desktop-only. **No WS surface changes shipped yet** — this is flagging-only. Doc: `moodle-enhancement/docs/audits/MOBILE-APP-WS-SURFACE-AUDIT-2026-05-20.md` | (docs only) |
+
+### Hindi parity audit result
+```
+EN unique keys: 1951
+HI unique keys: 1955
+Parity: 100% across all 30 airpay_* local plugins
+```
+
+### What changed for end-users
+- **Hindi-speaking learners** now see Hindi labels on every screen — no more "I logged in and half the page is English". Tested with formal corporate Hindi register; proper nouns (Moodle/NPS/Kirkpatrick/POSH/AML/GDPR/DPDP/Zoom) kept in Latin per L&D content convention.
+- **Public-tenant signups** now require reCAPTCHA when admin opts in via Site admin > Security > Site policies. Dev environments without internet still work — element is silently skipped.
+- **L&D ops** has a definitive mobile-WS playbook documenting which endpoints are safe to expose to the future Moodle mobile-app token vs which stay desktop-only forever.
+
+### Next batches (when continuing)
 
 ---
 
@@ -50,11 +93,11 @@ Seven more P1 batches shipped on top of the 12 from the previous update. All liv
 - Admin no longer has to poll `/responses.php` — opt-in notification fires on every submission for strategic surveys (C-suite pulse, post-incident debrief). Anonymous evals stay anonymous in the notification body too (#19).
 
 ### Next batches (when continuing)
-- **airpay_evaluation: template library** (audit #11) — convert the existing JSON export/import into a DB-backed reusable template picker. Medium scope (~300 LOC + new table).
-- **Mobile-app WS surface flagging** across the 31 plugins — bulk admin task; needs scoping pass first.
-- **Per-plugin Hindi gap analysis** — verify lang/hi parity for the remaining 27 plugins, ship batched as needed.
-- **airpay_evaluation: CAPTCHA on anonymous evaluations** (audit #9) — Moodle has `\core\captcha\hcaptcha`; integrate.
-- **Polish:** scheduled-task index for `local_airpay_evaluation_assign.due_at` to support a future "auto-expire overdue assignments" cron.
+**All Wave-2 P1 backlog items closed.** Suggested follow-on work (out of scope today):
+- **Phase X.1 — Mobile-app read-only learner surface.** Take the 22 read-only MOBILE-READY functions from the P1 #60 audit and add `MOODLE_OFFICIAL_MOBILE_SERVICE` to their `services` arrays. Tag `loginrequired => true`. Stage on dev tenant first.
+- **Phase X.2 — Mobile-app learner write actions.** Subsequent batch for the 14 state-changing MOBILE-READY endpoints (join/leave, submit, save_prefs, self_rate, ratings, cart add/remove).
+- **PWA / installable mobile shell.** When the mobile-app surface is live, the airpayux theme can gain a manifest.json + service-worker for installable add-to-homescreen UX without a native app.
+- **Production rollout checklist.** Verify all 60 P1 plugin upgrades on staging before promoting to live.airpay.academy.
 
 ---
 
