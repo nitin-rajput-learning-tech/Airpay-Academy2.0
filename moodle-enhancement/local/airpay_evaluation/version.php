@@ -5,7 +5,9 @@ $plugin->component = 'local_airpay_evaluation';
 // trigger queue + scheduled task + availability window + pulse mode +
 // numeric + multi-select multichoice question types + email-on-response
 // admin notification.
-$plugin->version   = 2026051903;
+// P1 #27 (2026-05-20) — Hindi (hi) lang pack catch-up: 132 strings
+// translated, covering all P1 #17/#18/#19 additions.
+$plugin->version   = 2026052003;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.10.0';  // +P1 #19 admin notification
+$plugin->release   = '1.11.0';  // +P1 #27 Hindi pack
