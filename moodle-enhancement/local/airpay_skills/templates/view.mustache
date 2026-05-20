@@ -1,7 +1,15 @@
 {{!
     @template local_airpay_skills/view
+
+    P1 #26 (2026-05-20) — self-rate panel + modal context vars (passed
+    in only when $can_self_rate is true):
+      can_self_rate            bool — gates panel + modal rendering
+      self_rate_has_current    bool — has the user previously rated?
+      self_rate_current_level  int  — 0 if never rated, else 1..max_level
+      self_rate_source         str  — 'course'|'self'|'manual'|'import'|''
+      self_rate_level_options  array of {value, label, selected}
 }}
-<div class="container">
+<div class="container" data-region="airpay-skills" data-skill-view-skillid="{{ skillid }}">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
             <h2 class="mb-0">{{ name }}</h2>
@@ -14,6 +22,38 @@
             <i class="fa fa-arrow-left"></i> All skills
         </a>
     </div>
+
+    {{! ── P1 #26 — Self-rate panel ───────────────────────────────────── }}
+    {{# can_self_rate }}
+    <div class="card border-0 shadow-sm mb-3" data-region="airpay-self-rate-panel">
+        <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                {{# self_rate_has_current }}
+                <div class="small text-uppercase text-muted mb-1">
+                    {{# str }}self_rate_current, local_airpay_skills, L{{ self_rate_current_level }}{{/ str }}
+                </div>
+                <div class="text-muted small">
+                    <i class="fa fa-info-circle fa-fw" aria-hidden="true"></i>
+                    Source: <code>{{ self_rate_source }}</code>
+                </div>
+                {{/ self_rate_has_current }}
+                {{^ self_rate_has_current }}
+                <div class="text-muted">
+                    <i class="fa fa-info-circle fa-fw" aria-hidden="true"></i>
+                    {{# str }}self_rate_not_yet, local_airpay_skills{{/ str }}
+                </div>
+                {{/ self_rate_has_current }}
+            </div>
+            <button type="button" class="btn btn-outline-primary"
+                    data-action="open-self-rate"
+                    data-skillid="{{ skillid }}"
+                    data-skillname="{{ name }}">
+                <i class="fa fa-pencil fa-fw" aria-hidden="true"></i>
+                {{# str }}self_rate, local_airpay_skills{{/ str }}
+            </button>
+        </div>
+    </div>
+    {{/ can_self_rate }}
 
     <ul class="nav nav-tabs mb-3">
         <li class="nav-item">
@@ -174,4 +214,59 @@
     </div>
     {{/has_learners}}
     {{/tab_learners_active}}
+
+    {{! ── P1 #26 — Self-rate modal (hidden until JS opens it) ────────── }}
+    {{# can_self_rate }}
+    <div class="modal fade" id="airpay-self-rate-modal" tabindex="-1"
+         aria-labelledby="airpay-self-rate-title" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="airpay-self-rate-title">
+                        {{# str }}self_rate_modal_title, local_airpay_skills, {{ name }}{{/ str }}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <form id="airpay-self-rate-form" data-skillid="{{ skillid }}">
+                    <div class="modal-body">
+                        <p class="text-muted small">
+                            {{# str }}self_rate_intro, local_airpay_skills{{/ str }}
+                        </p>
+                        <div class="mb-2">
+                            {{# self_rate_has_current }}
+                            <p class="small text-muted mb-3">
+                                <i class="fa fa-info-circle fa-fw" aria-hidden="true"></i>
+                                {{# str }}self_rate_current, local_airpay_skills, L{{ self_rate_current_level }}{{/ str }}
+                            </p>
+                            {{/ self_rate_has_current }}
+                            <label for="airpay-self-rate-level" class="form-label fw-semibold">
+                                {{# str }}self_rate, local_airpay_skills{{/ str }}
+                            </label>
+                            <select id="airpay-self-rate-level" name="level"
+                                    class="form-select" required>
+                                <option value="">— Pick a level —</option>
+                                {{# self_rate_level_options }}
+                                <option value="{{ value }}"
+                                    {{# selected }}selected{{/ selected }}>
+                                    L{{ value }} — {{ label }}
+                                </option>
+                                {{/ self_rate_level_options }}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link"
+                                data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary"
+                                data-action="submit-self-rate">
+                            <i class="fa fa-check fa-fw" aria-hidden="true"></i>
+                            {{# str }}self_rate_submit, local_airpay_skills{{/ str }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {{/ can_self_rate }}
 </div>

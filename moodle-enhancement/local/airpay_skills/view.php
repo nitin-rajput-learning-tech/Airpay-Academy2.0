@@ -120,13 +120,47 @@ switch ($tab) {
         break;
 }
 
+// P1 #26 (2026-05-20) — self-rate context. Show the user their current
+// level + a "Self-rate" button when they have the :self_rate capability.
+// The level dropdown is populated from local_airpay_skill_levels so
+// learners see the same "Awareness / Basic / Intermediate / ..." labels
+// the L&D team curated — not raw numbers.
+global $USER;
+$can_self_rate = has_capability('local/airpay_skills:self_rate', $ctx);
+$user_skill_row = $DB->get_record('local_airpay_user_skills',
+    ['userid' => $USER->id, 'skillid' => $skill->id],
+    'id, current_level, source, timemodified');
+$current_level = (int) ($user_skill_row->current_level ?? 0);
+
+// Build the level dropdown: 1..max_level. Use admin-curated labels
+// when available, fall back to "Level N" so the picker always works.
+$level_labels = $DB->get_records_menu('local_airpay_skill_levels',
+    ['skillid' => $skill->id], 'level ASC', 'level, label');
+$level_options = [];
+$maxlevel = (int) ($skill->max_level ?: 5);
+for ($n = 1; $n <= $maxlevel; $n++) {
+    $label = trim((string) ($level_labels[$n] ?? ''));
+    $level_options[] = [
+        'value'   => $n,
+        'label'   => $label !== '' ? format_string($label) : "Level $n",
+        'selected' => ($current_level === $n),
+    ];
+}
+
 $data = [
     'skillid'      => (int) $skill->id,
     'name'         => format_string($skill->name),
     'description'  => format_text($skill->description ?? '', FORMAT_HTML),
     'has_description' => !empty(trim($skill->description ?? '')),
     'category_name' => $category ? format_string($category->name) : 'Uncategorised',
-    'max_level'    => (int) ($skill->max_level ?: 5),
+    'max_level'    => $maxlevel,
+
+    // P1 #26 — self-rate panel context.
+    'can_self_rate'        => $can_self_rate,
+    'self_rate_current_level' => $current_level,
+    'self_rate_has_current' => $current_level > 0,
+    'self_rate_level_options' => $level_options,
+    'self_rate_source'        => (string) ($user_skill_row->source ?? ''),
 
     'count_levels'       => $count_levels,
     'count_designations' => $count_designations,
@@ -150,6 +184,13 @@ $data = [
     'tab' => $tab,
 ];
 $data = array_merge($data, $tab_data);
+
+// P1 #26 — initialise the self-rate JS only when the user can actually
+// use it. Avoids loading the AMD module for read-only viewers.
+if ($can_self_rate) {
+    $PAGE->requires->js_call_amd('local_airpay_skills/skill_actions',
+        'init', [['page' => 'skill_view']]);
+}
 
 echo $OUTPUT->header();
 echo $OUTPUT->render_from_template('local_airpay_skills/view', $data);

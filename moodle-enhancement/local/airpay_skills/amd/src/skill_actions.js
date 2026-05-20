@@ -277,6 +277,91 @@ const confirmDeleteCourseSkill = (rowid, skillname, returnFocus) => {
     }, () => null);
 };
 
+// ─── P1 #26 (2026-05-20) — learner self-rate modal ───────────────────────
+//
+// The view.php template renders a hidden Bootstrap modal with a single
+// <select> for the level. Clicking the "Self-rate" button shows it;
+// submitting POSTs the level through `local_airpay_skills_self_rate_skill`
+// and reloads on success. Capability check is duplicated server-side
+// in the WS — this code is just UX glue.
+
+/**
+ * Swap the contents of a button safely (no innerHTML, no XSS surface).
+ * Replaces all children with an <i> icon (if iconClass given) + a text node.
+ */
+const setButtonContent = (btn, iconClass, text) => {
+    while (btn.firstChild) btn.removeChild(btn.firstChild);
+    if (iconClass) {
+        const i = document.createElement('i');
+        i.className = iconClass;
+        i.setAttribute('aria-hidden', 'true');
+        btn.appendChild(i);
+        btn.appendChild(document.createTextNode(' '));
+    }
+    btn.appendChild(document.createTextNode(text));
+};
+
+const openSelfRateModal = (skillid, skillname) => {
+    const modalEl = document.getElementById('airpay-self-rate-modal');
+    if (!modalEl) return;
+    // Use Moodle's bundled Bootstrap 5 modal. window.bootstrap is
+    // exposed by the airpayux theme; fall back to jQuery's modal
+    // helper if the global isn't there (older theme builds).
+    if (window.bootstrap && window.bootstrap.Modal) {
+        const inst = window.bootstrap.Modal.getOrCreateInstance(modalEl);
+        inst.show();
+    } else if (window.$ && window.$(modalEl).modal) {
+        window.$(modalEl).modal('show');
+    } else {
+        // Last-resort: show the modal manually so the user is never blocked.
+        modalEl.classList.add('show');
+        modalEl.style.display = 'block';
+    }
+};
+
+const submitSelfRate = async (form) => {
+    const skillid = parseInt(form.dataset.skillid || '0', 10);
+    const levelSel = form.querySelector('#airpay-self-rate-level');
+    const level = parseInt(levelSel ? levelSel.value : '0', 10);
+    if (!skillid || !level) {
+        const msg = await getString('self_rate_pick_level', 'local_airpay_skills');
+        Notification.addNotification({message: msg, type: 'warning'});
+        return;
+    }
+    const submitBtn = form.querySelector('[data-action="submit-self-rate"]');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        setButtonContent(submitBtn, 'fa fa-spinner fa-spin fa-fw', 'Saving...');
+    }
+    try {
+        await Ajax.call([{
+            methodname: 'local_airpay_skills_self_rate_skill',
+            args: {skillid: skillid, level: level, userid: 0},
+        }])[0];
+        const success = await getString('self_rate_saved', 'local_airpay_skills');
+        Notification.addNotification({message: success, type: 'success'});
+        // Reload so the panel re-renders with the new current_level + the
+        // Learners tab count updates if this was a first-time grant.
+        setTimeout(() => window.location.reload(), 500);
+    } catch (err) {
+        Notification.exception(err);
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            setButtonContent(submitBtn, 'fa fa-check fa-fw', 'Save');
+        }
+    }
+};
+
+const wireSelfRateForm = () => {
+    const form = document.getElementById('airpay-self-rate-form');
+    if (!form || form.dataset.airpaySelfRateInit === '1') return;
+    form.dataset.airpaySelfRateInit = '1';
+    form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        submitSelfRate(form);
+    });
+};
+
 const handleClick = (event) => {
     const trigger = event.target.closest('[data-action]');
     if (!trigger) return;
@@ -307,6 +392,11 @@ const handleClick = (event) => {
         case 'copy-designation':          event.preventDefault(); promptCopyDesignation(trigger.dataset.from || '', trigger); break;
         // Phase A.2 — course-skill mapping
         case 'delete-course-skill':       event.preventDefault(); confirmDeleteCourseSkill(rowid, name || trigger.dataset.skill || 'this mapping', trigger); break;
+        // P1 #26 (2026-05-20) — learner self-rate
+        case 'open-self-rate':
+            event.preventDefault();
+            openSelfRateModal(skillid, trigger.dataset.skillname || 'this skill');
+            break;
     }
 };
 
@@ -318,6 +408,10 @@ export const init = (config = {}) => {
     if (config && config.page === 'course_mapping') {
         wireCourseSearch();
         wireAddCourseMappingForm();
+    }
+    // P1 #26 — skill_view page wires the inline self-rate form submit.
+    if (config && config.page === 'skill_view') {
+        wireSelfRateForm();
     }
     // Click delegation works on body for our two new admin pages too.
     const root = document.querySelector('[data-region="airpay-skills"]') || document.body;
