@@ -100,6 +100,44 @@ class core_renderer extends \core_renderer {
             }
         }
 
+        // ── 2026-05-20 — wire ux.darkMode.enabled feature flag (universal) ──
+        // Lives in standard_head_html() because it runs on EVERY page
+        // regardless of which layout the page uses. The earlier attempt
+        // in airpay_shell_end() only fired for layouts that called that
+        // method (columns2 etc.), missing /my/ (dashboard layout) and
+        // others. <head> emission means the CSS hits before body renders
+        // (button never visually appears) and the JS forces light theme
+        // before any paint.
+        if (class_exists('\\local_airpay_core\\feature_flags')) {
+            $darkmodeenabled = true;
+            try {
+                $darkmodeenabled = \local_airpay_core\feature_flags::is_enabled('ux.darkMode.enabled');
+            } catch (\Throwable $e) {
+                debugging('standard_head_html: ux.darkMode.enabled lookup failed: '
+                    . $e->getMessage(), DEBUG_DEVELOPER);
+            }
+            if (!$darkmodeenabled) {
+                $output .= "\n"
+                    . '<style id="airpay-darkmode-killswitch">'
+                    .   '#ap-dark-toggle, .ap-dark-toggle, [data-action="dark-toggle"]'
+                    .   ' { display: none !important; }'
+                    . '</style>'
+                    . "\n"
+                    . '<script id="airpay-darkmode-killswitch-js">'
+                    .   '(function(){'
+                    .     'var html=document.documentElement;'
+                    .     'html.setAttribute("data-theme","light");'
+                    .     'html.classList.remove("dark-mode");'
+                    .     'document.addEventListener("DOMContentLoaded",function(){'
+                    .       'if(document.body){document.body.classList.remove("dark-mode");}'
+                    .     '});'
+                    .     'try{localStorage.setItem("airpay-theme","light");}catch(e){}'
+                    .   '})();'
+                    . '</script>'
+                    . "\n";
+            }
+        }
+
         return $output;
     }
 
@@ -144,15 +182,27 @@ class core_renderer extends \core_renderer {
         $sidebarhtml = $this->render_from_template('theme_airpayux/sidebar', $context);
 
         // Build the topbar.
+        // Audit fix 2026-05-15 — context-aware search. The form action +
+        // placeholder default to Moodle global search; the JS in
+        // airpay_shell_end() rewires both when the current page exposes a
+        // scoped search affordance (.airpay-catalog__search-form OR
+        // [data-airpay-table]). The form/input carry id + data-default-*
+        // attributes the JS needs to find and reset them.
         $searchurl = $CFG->wwwroot . '/search/index.php';
+        $defaultplaceholder = 'Search courses, people, content...';
         $topbar = '<header class="ap-topbar" id="ap-topbar">'
                 . '<div class="ap-topbar__left">'
                 . '<button class="ap-topbar__hamburger d-lg-none" id="ap-sidebar-mobile-toggle" aria-label="Open menu"><i class="fa fa-bars"></i></button>'
                 . '</div>'
                 . '<div class="ap-topbar__center">'
-                . '<form action="' . s($searchurl) . '" method="get" class="ap-topbar__search">'
+                . '<form action="' . s($searchurl) . '" method="get"'
+                . ' class="ap-topbar__search" id="ap-topbar-search-form"'
+                . ' data-default-action="' . s($searchurl) . '"'
+                . ' data-default-placeholder="' . s($defaultplaceholder) . '">'
                 . '<i class="fa fa-search ap-topbar__search-icon"></i>'
-                . '<input type="text" name="q" class="ap-topbar__search-input" placeholder="Search courses, people, content..." autocomplete="off">'
+                . '<input type="text" name="q" class="ap-topbar__search-input"'
+                . ' id="ap-topbar-search-input"'
+                . ' placeholder="' . s($defaultplaceholder) . '" autocomplete="off">'
                 . '</form>'
                 . '</div>'
                 . '<div class="ap-topbar__right"></div>'
@@ -173,11 +223,44 @@ class core_renderer extends \core_renderer {
         // there's no duplicate. The `landmark-no-duplicate-main` finding
         // from the prior audit was about an older Moodle build that emitted
         // role="main" on region-main; current Moodle 5.1 emits <section>.
+        // Audit fix 2026-05-15 — admin tabs CSS shim.
+        //
+        // Two distinct bugs on Moodle 5.x tabbed admin pages
+        // (/admin/search.php, the plugins-check page, BizLMS user profile
+        // tabs, etc.) — both fixed here so the shell takes care of them
+        // once for every layout:
+        //
+        // 1) The served theme CSS hides every `.tab-pane` with display:none
+        //    but never restores display:block for the active one — clicks
+        //    moved the tablist underline (via the JS shim in
+        //    airpay_shell_end()) but the actual content never switched.
+        //
+        // 2) A legacy `.nav-tabs { position:fixed; width:calc(100% - 35px);
+        //    background:#fff; box-shadow:... }` rule (inherited from the
+        //    BizLMS profile-tabs styling) escaped its parent scope and
+        //    applied to every `.nav-tabs` on the page. That positioned the
+        //    site-admin tablist outside the visible viewport and gave it
+        //    a white background that fights dark mode. We reset to
+        //    `position:static; background:transparent` so the tablist
+        //    flows inline with the heading above it.
+        //
+        // !important is intentional defence-in-depth, not careless
+        // specificity escalation — the goal is for these rules to survive
+        // late-loading overrides like compiled airpayux SCSS bundles.
+        $tabcss = '<style>'
+                . '.tab-content > .tab-pane{display:none !important}'
+                . '.tab-content > .tab-pane.active{display:block !important}'
+                . '.nav-tabs{position:static !important;width:auto !important;'
+                . 'background-color:transparent !important;'
+                . 'box-shadow:none !important;padding-top:0 !important}'
+                . '</style>';
+
         return '<div class="ap-shell" id="ap-shell">'
              . $sidebarhtml
              . '<div class="ap-shell__overlay" id="ap-shell-overlay"></div>'
              . '<div class="ap-shell__main">'
              . $topbar
+             . $tabcss
              . '<main class="ap-shell__content" id="ap-shell-content">'
              . $h1;
     }
@@ -190,6 +273,42 @@ class core_renderer extends \core_renderer {
     public function airpay_shell_end(): string {
         if (!isloggedin() || isguestuser()) {
             return '';
+        }
+
+        // ── 2026-05-20 — wire ux.darkMode.enabled feature flag ──
+        // Phase A0 registered the flag but no consumer read it, so toggling
+        // it from the Switchboard had no effect. Now: when the flag is OFF
+        // we (a) hide every dark-mode toggle button via CSS, (b) force the
+        // light theme on page load, (c) clear any persisted dark preference
+        // from localStorage, (d) skip wiring the toggle JS handler entirely.
+        // Resolves the orphan-flag bug. See Switchboard "Sentientia Platform"
+        // category (eventually) — for now the flag lives in the "UX" group.
+        $darkmodeenabled = true;
+        if (class_exists('\\local_airpay_core\\feature_flags')) {
+            try {
+                $darkmodeenabled = \local_airpay_core\feature_flags::is_enabled('ux.darkMode.enabled');
+            } catch (\Throwable $e) {
+                // Defensive: never break page render if the resolver hiccups.
+                debugging('airpay_shell_end: ux.darkMode.enabled lookup failed: '
+                    . $e->getMessage(), DEBUG_DEVELOPER);
+            }
+        }
+
+        $darkmodekillswitch = '';
+        if (!$darkmodeenabled) {
+            $darkmodekillswitch = '<style>'
+                . '#ap-dark-toggle, .ap-dark-toggle, [data-action="dark-toggle"] '
+                . '{ display: none !important; }'
+                . '</style>'
+                . '<script>'
+                . '(function(){'
+                .   'var html=document.documentElement;'
+                .   'html.setAttribute("data-theme","light");'
+                .   'html.classList.remove("dark-mode");'
+                .   'if(document.body){document.body.classList.remove("dark-mode");}'
+                .   'try{localStorage.setItem("airpay-theme","light");}catch(e){}'
+                . '})();'
+                . '</script>';
         }
 
         $js = <<<'JS'
@@ -233,6 +352,117 @@ class core_renderer extends \core_renderer {
             if (label) label.textContent = nowDark ? 'Dark Mode' : 'Light Mode';
         });
     }
+
+    // ── Audit fix 2026-05-15 — Context-aware topbar search ──
+    // Many pages (catalog, every admin list table) ALSO render their own
+    // search bar, producing two visually identical search boxes that
+    // serve different purposes. This block detects what kind of scoped
+    // search the current page exposes and rewires the topbar to drive it
+    // — then hides the redundant scoped UI so only one input is visible.
+    //
+    // Detection order:
+    //   1. Catalog form-based search (.airpay-catalog__search-form). The
+    //      topbar form action is repointed to the catalog URL so submit
+    //      navigates with ?q=... and the catalog index reads it.
+    //   2. Datatable JS-driven search ([data-airpay-table] root). The
+    //      topbar drives the datatable's internal input via input events,
+    //      reusing the existing debounce + AJAX path in datatable.js
+    //      unchanged. The datatable's own search box is hidden once it
+    //      renders (MutationObserver — the datatable JS may not have run
+    //      when this script first executes).
+    //   3. Nothing scoped — default behaviour (Moodle global search).
+    var topbarForm = document.getElementById('ap-topbar-search-form');
+    var topbarInput = document.getElementById('ap-topbar-search-input');
+    if (topbarForm && topbarInput) {
+        var catalogForm = document.querySelector('.airpay-catalog__search-form');
+        var tableRoot = document.querySelector('[data-airpay-table]');
+        if (catalogForm) {
+            var action = catalogForm.getAttribute('action');
+            if (action) { topbarForm.setAttribute('action', action); }
+            var catalogInput = catalogForm.querySelector('input[name="q"]');
+            if (catalogInput) {
+                if (catalogInput.getAttribute('placeholder')) {
+                    topbarInput.setAttribute('placeholder', catalogInput.getAttribute('placeholder'));
+                }
+                if (catalogInput.value) { topbarInput.value = catalogInput.value; }
+            }
+            var scopedSection = document.querySelector('.airpay-catalog__search-section');
+            if (scopedSection) { scopedSection.style.display = 'none'; }
+        } else if (tableRoot) {
+            var customPlaceholder = tableRoot.dataset.searchPlaceholder;
+            if (customPlaceholder) { topbarInput.setAttribute('placeholder', customPlaceholder); }
+            var driveTableSearch = function(value) {
+                var s = tableRoot.querySelector('[data-airpay-table-search]');
+                if (s) { s.value = value; s.dispatchEvent(new Event('input', { bubbles: true })); }
+            };
+            var hideScopedSearchBox = function() {
+                var s = tableRoot.querySelector('[data-airpay-table-search]');
+                if (s) {
+                    var wrapper = s.closest('.airpay-datatable__search');
+                    if (wrapper) { wrapper.style.display = 'none'; }
+                    return true;
+                }
+                return false;
+            };
+            if (!hideScopedSearchBox()) {
+                var mo = new MutationObserver(function() { if (hideScopedSearchBox()) { mo.disconnect(); } });
+                mo.observe(tableRoot, { childList: true, subtree: true });
+            }
+            topbarInput.addEventListener('input', function() { driveTableSearch(topbarInput.value); });
+            topbarForm.addEventListener('submit', function(e) { e.preventDefault(); driveTableSearch(topbarInput.value); });
+        }
+        // Pattern 3 (default Moodle global search): no rewire.
+    }
+
+    // ── Audit fix 2026-05-15 — Bootstrap tab-pane shim ──
+    // Moodle 5.x admin pages (e.g. /admin/search.php) emit Bootstrap 5
+    // tab markup: <a href="#linkXXX" data-bs-toggle="tab"> + sibling
+    // <div class="tab-pane">. Our standalone airpayux theme ships its
+    // own Bootstrap 4.6 fork which only recognises BS4's `data-toggle`
+    // attribute (no `bs` prefix), so BS5 tabs only partially work: the
+    // active-state underline updates on click, but the tab-pane content
+    // never switches — every pane stays visible at once.
+    //
+    // This vanilla-JS shim wires up `[data-bs-toggle="tab"]` links to
+    // do what Bootstrap 5's Tab.show() would: toggle .active + .show on
+    // the target pane and clear those classes from siblings. Idempotent
+    // — if a real BS5 ever ships and beats us to the click handler, we
+    // simply do the same DOM mutation a second time.
+    document.querySelectorAll('a[data-bs-toggle="tab"]').forEach(function(link) {
+        if (link.dataset.airpayTabShim === '1') { return; }
+        link.dataset.airpayTabShim = '1';
+        link.addEventListener('click', function(e) {
+            var href = this.getAttribute('href') || '';
+            if (href.charAt(0) !== '#' || href.length < 2) { return; }
+            var target = document.querySelector(href);
+            if (!target || !target.classList.contains('tab-pane')) { return; }
+            // Hide every sibling pane.
+            var container = target.parentElement;
+            if (container) {
+                container.querySelectorAll(':scope > .tab-pane').forEach(function(p) {
+                    p.classList.remove('active', 'show');
+                });
+            }
+            // Show the target.
+            target.classList.add('active', 'show');
+            // Update active state on the tablist links.
+            var tablist = this.closest('[role="tablist"]') || (this.parentElement && this.parentElement.parentElement);
+            if (tablist) {
+                tablist.querySelectorAll('a[data-bs-toggle="tab"]').forEach(function(t) {
+                    t.classList.remove('active');
+                    t.setAttribute('aria-selected', 'false');
+                });
+            }
+            this.classList.add('active');
+            this.setAttribute('aria-selected', 'true');
+            e.preventDefault();
+        });
+    });
+    // On initial page load, honour the URL hash if it matches a tab.
+    if (window.location.hash) {
+        var initial = document.querySelector('a[data-bs-toggle="tab"][href="' + window.location.hash + '"]');
+        if (initial) { initial.click(); }
+    }
 })();
 </script>
 JS;
@@ -240,6 +470,7 @@ JS;
         return '</div>'  // close .ap-shell__content (was </main>; A11Y-9)
              . '</div>'   // close .ap-shell__main
              . '</div>'   // close .ap-shell
+             . $darkmodekillswitch  // empty string when flag ON; CSS+JS killswitch when OFF
              . $js;
     }
 
