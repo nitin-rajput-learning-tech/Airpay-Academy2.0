@@ -194,4 +194,192 @@ class feature_flags_test extends \advanced_testcase {
         // At least one row matches the filter.
         $this->assertNotEmpty($ai_only);
     }
+
+    // ════════════════════════════════════════════════════════════════
+    //  Session 2 / ADR-002 (2026-05-20) — customer-level scope tests
+    // ════════════════════════════════════════════════════════════════
+
+    /**
+     * The gate flag itself is registered and defaults to FALSE so all
+     * pre-Session-2 callers continue to see the legacy 3-level resolution.
+     */
+    public function test_customer_layer_gate_flag_registered_and_default_off(): void {
+        $registry = feature_flags::load_registry();
+        $this->assertArrayHasKey(feature_flags::CUSTOMER_LEVEL_FLAG, $registry);
+        $this->assertFalse(
+            (bool) $registry[feature_flags::CUSTOMER_LEVEL_FLAG]['default']);
+    }
+
+    /**
+     * When the gate is OFF, is_enabled_for() returns identically to the
+     * legacy 3-level resolver — customer-scoped DB rows are inert.
+     */
+    public function test_customer_scoped_row_inert_when_gate_off(): void {
+        global $DB;
+        $admin = get_admin();
+
+        // Insert a customer-scoped override row directly via DB so we
+        // bypass set()'s gate-off guard. This simulates a row that
+        // existed before the gate was turned off again.
+        $DB->insert_record('local_airpay_feature_flags', (object) [
+            'flag_key'     => 'ai.assistant.enabled',
+            'customer_id'  => 1,
+            'tenant_id'    => 0,
+            'is_enabled'   => 0,  // would set ai.assistant.enabled OFF for customer 1
+            'modified_by'  => $admin->id,
+            'timecreated'  => time(),
+            'timemodified' => time(),
+        ]);
+        feature_flags::invalidate_caches();
+
+        // Gate is OFF (default). is_enabled_for() should ignore the
+        // customer row and return the registered default (true).
+        $this->assertTrue(
+            feature_flags::is_enabled_for('ai.assistant.enabled', 1, 0));
+        $this->assertTrue(
+            feature_flags::is_enabled_for('ai.assistant.enabled', 1, 77));
+    }
+
+    /**
+     * When the gate is ON, a customer-wide override applies to every
+     * tenant within that customer, but does not bleed across customers.
+     */
+    public function test_customer_scoped_override_applies_within_customer_only(): void {
+        $admin = get_admin();
+        // Enable the gate via the legacy global path (gate has no
+        // customer scope itself — global is the legitimate place).
+        feature_flags::set(feature_flags::CUSTOMER_LEVEL_FLAG, 0, true, $admin->id);
+
+        // Set a customer-1 (Airpay) wide override to OFF.
+        feature_flags::set('ai.assistant.enabled', 0, false, $admin->id,
+            'turn off for airpay', customer::AIRPAY);
+
+        // Tenant 1 under customer 1 sees the customer-wide value (OFF).
+        $this->assertFalse(
+            feature_flags::is_enabled_for('ai.assistant.enabled',
+                customer::AIRPAY, 1));
+        // Tenant 77 under customer 1 also sees the customer-wide value.
+        $this->assertFalse(
+            feature_flags::is_enabled_for('ai.assistant.enabled',
+                customer::AIRPAY, 77));
+        // A view with customer=0 doesn't match the customer-1 row;
+        // falls back to the registered default (true).
+        $this->assertTrue(
+            feature_flags::is_enabled_for('ai.assistant.enabled', 0, 1));
+    }
+
+    /**
+     * Tenant-within-customer override wins over customer-wide override.
+     */
+    public function test_tenant_within_customer_wins_over_customer_wide(): void {
+        $admin = get_admin();
+        feature_flags::set(feature_flags::CUSTOMER_LEVEL_FLAG, 0, true, $admin->id);
+
+        // Customer 1 wide: OFF.
+        feature_flags::set('ai.assistant.enabled', 0, false, $admin->id,
+            'customer-wide off', customer::AIRPAY);
+        // Customer 1, tenant 77 specifically: ON.
+        feature_flags::set('ai.assistant.enabled', 77, true, $admin->id,
+            'tenant 77 override', customer::AIRPAY);
+
+        // Tenant 77 under customer 1: ON (most specific wins).
+        $this->assertTrue(
+            feature_flags::is_enabled_for('ai.assistant.enabled',
+                customer::AIRPAY, 77));
+        // Tenant 1 under customer 1: still OFF (customer-wide).
+        $this->assertFalse(
+            feature_flags::is_enabled_for('ai.assistant.enabled',
+                customer::AIRPAY, 1));
+    }
+
+    /**
+     * Customer-wide override wins over a legacy (customer_id=0) tenant
+     * override — when the gate is ON. Step 2 > Step 3 in the precedence.
+     */
+    public function test_customer_wide_wins_over_legacy_tenant_when_gate_on(): void {
+        $admin = get_admin();
+        feature_flags::set(feature_flags::CUSTOMER_LEVEL_FLAG, 0, true, $admin->id);
+
+        // Legacy tenant override on tenant 1: ON.
+        feature_flags::set('ai.assistant.enabled', 1, true, $admin->id);
+        // Customer 1 wide: OFF.
+        feature_flags::set('ai.assistant.enabled', 0, false, $admin->id,
+            'customer-wide off', customer::AIRPAY);
+
+        // Customer 1, tenant 1: customer-wide value (OFF) wins.
+        $this->assertFalse(
+            feature_flags::is_enabled_for('ai.assistant.enabled',
+                customer::AIRPAY, 1));
+    }
+
+    /**
+     * Customer-scoped writes are rejected when the gate is OFF.
+     * Assert on $errorcode (the lang key) rather than the rendered message
+     * — Moodle resolves the lang key into the user's locale at exception
+     * time, so message-text matching is locale-dependent.
+     */
+    public function test_customer_scoped_write_rejected_when_gate_off(): void {
+        $admin = get_admin();
+        $caught = null;
+        try {
+            feature_flags::set('ai.assistant.enabled', 0, false, $admin->id,
+                'should fail', customer::AIRPAY);
+        } catch (\moodle_exception $e) {
+            $caught = $e;
+        }
+        $this->assertNotNull($caught,
+            'Expected moodle_exception when writing customer-scoped row with gate off');
+        $this->assertSame('customer_layer_disabled', $caught->errorcode);
+    }
+
+    /**
+     * The gate flag itself cannot be set at customer scope — meta-flag
+     * semantics: it governs OTHER flags' customer scope, has none itself.
+     */
+    public function test_gate_flag_rejects_customer_scope_write(): void {
+        $admin = get_admin();
+        // Turn the gate ON first so the customer-layer-disabled guard
+        // doesn't fire first; we want to test the gate-specific guard.
+        feature_flags::set(feature_flags::CUSTOMER_LEVEL_FLAG, 0, true, $admin->id);
+
+        $caught = null;
+        try {
+            feature_flags::set(feature_flags::CUSTOMER_LEVEL_FLAG, 0, true,
+                $admin->id, '', customer::AIRPAY);
+        } catch (\moodle_exception $e) {
+            $caught = $e;
+        }
+        $this->assertNotNull($caught,
+            'Expected moodle_exception when writing gate flag at customer scope');
+        $this->assertSame('gateflag_no_customer_scope', $caught->errorcode);
+    }
+
+    /**
+     * customer::current() returns AIRPAY in Phase 0/1 — verifies the
+     * helper contract for code that already calls it.
+     */
+    public function test_customer_current_returns_airpay_in_phase_one(): void {
+        $this->assertSame(customer::AIRPAY, customer::current());
+    }
+
+    /**
+     * The all() summary surfaces has_customer_override + has_tenant_override
+     * separately so the Switchboard can render them with distinct badges.
+     */
+    public function test_all_distinguishes_customer_vs_tenant_overrides(): void {
+        $admin = get_admin();
+        feature_flags::set(feature_flags::CUSTOMER_LEVEL_FLAG, 0, true, $admin->id);
+
+        // Set a customer-wide override (customer=1, tenant=0).
+        feature_flags::set('ai.assistant.enabled', 0, false, $admin->id,
+            'customer-wide', customer::AIRPAY);
+
+        $summary = feature_flags::all(0, customer::AIRPAY);  // viewing customer=1, tenant=0
+
+        $this->assertArrayHasKey('ai.assistant.enabled', $summary);
+        $flag = $summary['ai.assistant.enabled'];
+        $this->assertTrue($flag['has_customer_override']);
+        $this->assertFalse($flag['has_tenant_override']);
+        $this->assertFalse($flag['has_legacy_tenant_override']);
+    }
 }

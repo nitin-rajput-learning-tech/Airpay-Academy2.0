@@ -22,10 +22,15 @@ $plugin->component = 'local_airpay_core';
 // from parity-audit-2026-05-15/airpay_courses.md ("local_logs parity").
 // P1 #51 (2026-05-20) — Hindi pack: 20 strings (tenant errors, scheduled
 // tasks, cache definitions, Switchboard, Style Guide, flag categories).
-$plugin->version   = 2026052001;
+// Session 2 / ADR-002 (2026-05-20) — customer-level feature flag scope.
+// Adds customer_id column to local_airpay_feature_flags + audit table.
+// New 5-level resolver (customer+tenant > customer > legacy tenant >
+// global > registered default). Gated by sentientia.customer_level_flags.enabled
+// (default OFF). New classes/customer.php helper + Switchboard customer tabs.
+$plugin->version   = 2026052101;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.3.2';  // +P1 #51 Hindi pack
+$plugin->release   = '1.4.0';  // +Session 2 customer-level feature flags
 // Release history
 // 1.1.0  cron-health publisher + audit_log + structured_logger
 // 1.2.0  Phase A0 — feature flags + Switchboard infrastructure.

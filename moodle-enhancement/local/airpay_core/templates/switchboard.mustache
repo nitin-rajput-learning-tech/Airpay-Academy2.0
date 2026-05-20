@@ -1,25 +1,40 @@
 {{!
-    The Switchboard — Phase A0 (2026-05-14).
+    The Switchboard — Phase A0 (2026-05-14) + Session 2 (2026-05-20).
 
     @template local_airpay_core/switchboard
     @package  local_airpay_core
 
     One screen, every feature flag, super-admin only.
 
+    Session 2 / ADR-002 (2026-05-20) — added the customer-scope tab strip
+    above the existing tenant-scope tab strip, gated on
+    {{ customer_layer_on }}. When OFF the template renders identically
+    to Phase A0.
+
     Context vars:
-      tenant_id      int     — currently viewed tenant root (0 = global)
-      tenant_label   string  — display label of current tenant
-      is_global      bool
-      tenants        array of {id, name, url, is_active}
-      categories     array of {category, category_label, flags[]}
+      customer_layer_on   bool    — gate flag for the customer scope layer
+      customer_id         int     — currently viewed customer (0 = all)
+      tenant_id           int     — currently viewed tenant root (0 = all)
+      scope_label         string  — display label of current (customer, tenant) pair
+      scope_banner        string  — the alert-banner copy for current scope
+      is_global           bool    — true when (customer=0, tenant=0)
+      is_customer_only    bool    — true when (customer>0, tenant=0)
+      is_customer_tenant  bool    — true when (customer>0, tenant>0)
+      is_legacy_tenant    bool    — true when (customer=0, tenant>0)
+      customers           array of {id, name, url, is_active, is_default} (empty when layer OFF)
+      tenants             array of {id, name, url, is_active}
+      categories          array of {category, category_label, flags[]}
         each flag: {key, description, default, default_label,
                     resolved, resolved_label, is_on, is_off, is_default,
-                    has_global_override, has_tenant_override,
-                    inherits_from_global, tri_state}
-      sesskey        string
-      post_url       string
-      history_url    string
-      flag_count     int
+                    has_global_override, has_customer_override,
+                    has_tenant_override, has_legacy_tenant_override,
+                    inherits_from, inherits_from_global,
+                    inherits_from_customer, inherits_from_tenant,
+                    tri_state}
+      sesskey             string
+      post_url            string
+      history_url         string
+      flag_count          int
 }}
 <div class="airpay-switchboard">
 
@@ -37,31 +52,73 @@
         </div>
     </div>
 
-    {{! ─── Tenant tabs ─────────────────────────────────────────── }}
-    <ul class="nav nav-tabs mb-4" role="tablist">
-        {{# tenants }}
-        <li class="nav-item">
-            <a class="nav-link {{# is_active }}active{{/ is_active }}"
-               href="{{{ url }}}" role="tab">
-                {{# is_active }}<i class="fa fa-check fa-fw"></i> {{/ is_active }}
-                {{ name }}
-            </a>
-        </li>
-        {{/ tenants }}
-    </ul>
+    {{# customer_layer_on }}
+    {{! ─── Customer tabs (Session 2 — gated) ───────────────────── }}
+    <div class="mb-3">
+        <div class="small text-muted text-uppercase mb-1" style="letter-spacing: 0.5px; font-weight: 600;">
+            <i class="fa fa-building fa-fw"></i>
+            Customer scope
+        </div>
+        <ul class="nav nav-pills mb-2" role="tablist">
+            {{# customers }}
+            <li class="nav-item">
+                <a class="nav-link {{# is_active }}active{{/ is_active }}"
+                   href="{{{ url }}}" role="tab">
+                    {{# is_active }}<i class="fa fa-check fa-fw"></i> {{/ is_active }}
+                    {{ name }}
+                </a>
+            </li>
+            {{/ customers }}
+        </ul>
+    </div>
+    {{/ customer_layer_on }}
 
+    {{! ─── Tenant tabs (Phase A0 — always rendered) ────────────── }}
+    <div class="mb-3">
+        {{# customer_layer_on }}
+        <div class="small text-muted text-uppercase mb-1" style="letter-spacing: 0.5px; font-weight: 600;">
+            <i class="fa fa-users fa-fw"></i>
+            Tenant scope
+        </div>
+        {{/ customer_layer_on }}
+        <ul class="nav nav-tabs mb-2" role="tablist">
+            {{# tenants }}
+            <li class="nav-item">
+                <a class="nav-link {{# is_active }}active{{/ is_active }}"
+                   href="{{{ url }}}" role="tab">
+                    {{# is_active }}<i class="fa fa-check fa-fw"></i> {{/ is_active }}
+                    {{ name }}
+                </a>
+            </li>
+            {{/ tenants }}
+        </ul>
+    </div>
+
+    {{! ─── Scope banner ────────────────────────────────────────── }}
     {{# is_global }}
     <div class="alert alert-info" role="alert">
         <i class="fa fa-info-circle fa-fw"></i>
-        You are editing the <strong>Global default</strong> — applies to every tenant unless overridden.
+        {{{ scope_banner }}}
     </div>
     {{/ is_global }}
-    {{^ is_global }}
+    {{# is_legacy_tenant }}
     <div class="alert alert-warning" role="alert">
         <i class="fa fa-info-circle fa-fw"></i>
-        You are editing the <strong>{{ tenant_label }}</strong> tenant. Toggles here override the global default for {{ tenant_label }} only. Set a flag to "Inherit" to fall back to the global value.
+        {{{ scope_banner }}}
     </div>
-    {{/ is_global }}
+    {{/ is_legacy_tenant }}
+    {{# is_customer_only }}
+    <div class="alert alert-primary" role="alert">
+        <i class="fa fa-building fa-fw"></i>
+        {{{ scope_banner }}}
+    </div>
+    {{/ is_customer_only }}
+    {{# is_customer_tenant }}
+    <div class="alert alert-warning" role="alert">
+        <i class="fa fa-info-circle fa-fw"></i>
+        {{{ scope_banner }}}
+    </div>
+    {{/ is_customer_tenant }}
 
     {{! ─── Pending-changes banner (revealed by JS) ───────────────── }}
     <div class="ap-switchboard-banner sticky-top bg-warning text-dark p-3 mb-3 rounded shadow-sm"
@@ -106,15 +163,31 @@
                                     <code>{{ key }}</code>
                                     {{# has_tenant_override }}
                                     <span class="badge bg-warning text-dark ms-2"
-                                          title="This flag has a tenant-specific override.">tenant override</span>
+                                          title="This flag has a tenant-within-customer override.">tenant override</span>
                                     {{/ has_tenant_override }}
-                                    {{# has_global_override }}{{^ has_tenant_override }}
+                                    {{# has_customer_override }}{{^ has_tenant_override }}
+                                    <span class="badge bg-primary ms-2"
+                                          title="This flag has a customer-wide override.">customer override</span>
+                                    {{/ has_tenant_override }}{{/ has_customer_override }}
+                                    {{# has_legacy_tenant_override }}{{^ has_tenant_override }}{{^ has_customer_override }}
+                                    <span class="badge bg-warning text-dark ms-2"
+                                          title="Legacy tenant override (no customer scope).">legacy tenant override</span>
+                                    {{/ has_customer_override }}{{/ has_tenant_override }}{{/ has_legacy_tenant_override }}
+                                    {{# has_global_override }}{{^ has_tenant_override }}{{^ has_customer_override }}{{^ has_legacy_tenant_override }}
                                     <span class="badge bg-secondary ms-2"
                                           title="This flag has a global override.">global override</span>
-                                    {{/ has_tenant_override }}{{/ has_global_override }}
+                                    {{/ has_legacy_tenant_override }}{{/ has_customer_override }}{{/ has_tenant_override }}{{/ has_global_override }}
+                                    {{# inherits_from_customer }}
+                                    <span class="badge bg-info text-dark ms-2"
+                                          title="No tenant override — inheriting the customer-wide value.">inheriting customer</span>
+                                    {{/ inherits_from_customer }}
+                                    {{# inherits_from_tenant }}
+                                    <span class="badge bg-info text-dark ms-2"
+                                          title="No customer override — inheriting the legacy tenant value.">inheriting tenant</span>
+                                    {{/ inherits_from_tenant }}
                                     {{# inherits_from_global }}
                                     <span class="badge bg-info text-dark ms-2"
-                                          title="No tenant override — inheriting from global.">inheriting global</span>
+                                          title="No customer or tenant override — inheriting the global default.">inheriting global</span>
                                     {{/ inherits_from_global }}
                                 </div>
                                 <div class="small text-muted mt-1">{{ description }}</div>
@@ -197,6 +270,17 @@
     }
     .airpay-switchboard__category {
         scroll-margin-top: 60px;
+    }
+    /* Session 2 — customer-scope tabs visually distinct from tenant tabs. */
+    .airpay-switchboard .nav-pills .nav-link {
+        background: #f0f4f9;
+        color: #0066A7;
+        font-weight: 500;
+        margin-right: 4px;
+    }
+    .airpay-switchboard .nav-pills .nav-link.active {
+        background: #0066A7;
+        color: #fff;
     }
 </style>
 

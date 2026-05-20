@@ -30,11 +30,28 @@ $string['unknownflagkey'] = 'Unknown feature flag key: "{$a}". The key must be d
 $string['featuredisabled'] = 'The feature "{$a}" is currently disabled by your site administrator. Ask them to re-enable it via the Switchboard.';
 
 // Flag-category display labels (shown as section headers on the Switchboard).
-$string['flag_category_ai']         = 'AI &amp; Automation';
-$string['flag_category_engagement'] = 'Engagement &amp; Communications';
-$string['flag_category_commerce']   = 'Commerce &amp; Marketplace';
-$string['flag_category_identity']   = 'Identity &amp; Access';
+// Audit fix H2 (2026-05-15): keep literal '&' here — Mustache auto-escapes
+// via {{ category_label }} in the template, so pre-encoding to &amp; would
+// double-escape and render as "&AMP;" under text-transform: uppercase.
+$string['flag_category_ai']         = 'AI & Automation';
+$string['flag_category_engagement'] = 'Engagement & Communications';
+$string['flag_category_commerce']   = 'Commerce & Marketplace';
+$string['flag_category_identity']   = 'Identity & Access';
 $string['flag_category_learning']   = 'Learning Delivery';
 $string['flag_category_search']     = 'Search';
 $string['flag_category_obs']        = 'Observability';
 $string['flag_category_ux']         = 'User Experience';
+$string['flag_category_sentientia'] = 'Sentientia Platform';
+
+// Session 2 / ADR-002 (2026-05-20) — customer-level feature flag scope.
+$string['customer_default_label']   = 'All customers (global default)';
+$string['error_invalidcustomer']    = 'Invalid customer identifier: {$a}.';
+$string['gateflag_no_customer_scope'] = 'The customer-level scope gate flag has no customer scope itself. Set it via the global or legacy-tenant scope only.';
+$string['customer_layer_disabled']  = 'Cannot set customer-scoped override for "{$a}" — the customer-level scope layer is currently disabled. Enable sentientia.customer_level_flags.enabled at the global scope first.';
+
+// Switchboard scope banner copy.
+$string['scope_global']                  = 'Global default';
+$string['scope_banner_global']           = 'You are editing the <strong>global default</strong> — this applies to every customer and every tenant unless overridden.';
+$string['scope_banner_legacy_tenant']    = 'You are editing the <strong>{$a}</strong> tenant (legacy scope — applies across all customers). Toggles here override the global default for {$a} only.';
+$string['scope_banner_customer']         = 'You are editing the <strong>{$a}</strong> customer scope. Toggles here apply to every tenant owned by this customer unless overridden at the tenant level.';
+$string['scope_banner_customer_tenant']  = 'You are editing the <strong>{$a->customer}</strong> customer / <strong>{$a->tenant}</strong> tenant pair. Toggles here override the customer-wide value for this specific tenant only.';

@@ -50,18 +50,38 @@ Three-phase fork strategy per ADR-001:
 - **ADRs:** Every cross-cutting decision lands in `docs/adr/ADR-NNN-<slug>.md`
 - **Core mods:** Permitted (CLAUDE.md rule lifted), but recorded in `docs/core-mods/YYYY-MM-DD-<slug>.md` with `// SENTIENTIA-CORE-MOD:` markers
 
-### Day 0 deliverables (this session)
+### Day 0 deliverables (2026-05-20 — session 1) — ✅ SHIPPED commit `a44b58989`
 - [x] CLAUDE.md v5.0 — new mission, new rules, new permissions
 - [x] ADR-001 — fork strategy + product pivot decision
 - [x] `docs/adr/`, `docs/core-mods/`, `docs/visual-evidence/`, `docs/customer-config/` directories scaffolded with README templates
 - [x] PROJECT-STATE.md updated to Day 0 baseline
 
-### Next session (Session 2)
-**Stream A foundation + Switchboard customer-level flags:**
-1. Extend `local_airpay_core` Switchboard to support customer-level feature flags (currently only tenant-level)
-2. Populate `docs/customer-config/airpay.md` as the customer-zero reference
-3. Create `docs/customer-config/TEMPLATE.md` for future customers
-4. Begin "Moodle" → "Sentientia" user-visible-string rename pass (selective — only user-visible labels, not internal class names; preserves upgrade-merge safety)
+### Session 2 deliverables (2026-05-20 — session 2) — ✅ SHIPPED
+
+**Extended Switchboard from tenant-scope to customer-scope (per ADR-002).**
+
+- [x] **ADR-002** — Customer-Level Feature Flags decision record (5-level resolution precedence: customer+tenant > customer > legacy tenant > global > registered default)
+- [x] **`local_airpay_core` schema migration** — `customer_id` column added to `local_airpay_feature_flags` + `local_airpay_feature_flag_audit`. Composite unique key `(flag_key, customer_id, tenant_id)`. New index `idx_cust_tenant_key`. Backwards-compatible: existing rows default `customer_id=0` ("all customers") and resolve identically to Phase A0.
+- [x] **`\local_airpay_core\customer` helper class** — `customer::AIRPAY = 1` constant, `customer::current()` returns AIRPAY in Phase 0/1, `customer::known_customers()` for Switchboard tab rendering. Designed for Phase 2 swap-in of a real customer-mapping table without changing any callsite.
+- [x] **Extended `feature_flags::is_enabled_for($key, $customer_id, $tenant_id)`** — new 5-level resolver. Recursion-guarded for the gate flag itself. Returns identically to Phase A0 when gate is OFF.
+- [x] **`sentientia.customer_level_flags.enabled` gate flag** — default OFF. Registered in `db/feature_flags.php` under new "Sentientia Platform" category. When OFF, customer-scoped DB rows are inert; `set()` rejects customer-scoped writes with `customer_layer_disabled`. When ON, full 5-level precedence runs.
+- [x] **Switchboard UI extended** — new "Customer scope" pill-tab strip ABOVE the existing tenant-scope tab strip, gated on the flag. New badges: "customer override", "inheriting customer", "legacy tenant override". Scope banner copy adapts to each (customer, tenant) pair. UI is IDENTICAL to Phase A0 until the gate is flipped ON.
+- [x] **Hindi parity preserved** — 10 new EN strings, 10 new HI strings. `local_airpay_core` lang remains 100% parity (30/30).
+- [x] **8 new PHPUnit tests** covering customer-scope semantics: gate-flag registered + default off; customer-scoped row inert when gate off; customer-scope applies within customer only; tenant-within-customer wins; customer-wide wins over legacy tenant; customer-scoped writes rejected when gate off; gate flag rejects customer-scope writes; `all()` distinguishes override layers.
+- [x] **Runtime smoke test** — 13/13 semantic checks passed on local XAMPP after `php admin/cli/upgrade.php` completed clean.
+- [x] **`docs/customer-config/airpay.md`** — customer-zero reference config: identity, tenant tree, branding tokens, recommended customer-wide flag state, integrations status, SLA, compliance posture, operational notes, Phase 2 priorities.
+- [x] **`docs/customer-config/TEMPLATE.md`** — copy-paste skeleton for onboarding future customers.
+- [x] **Version bumped** — `local_airpay_core` 2026052001 → 2026052101 / 1.3.2 → 1.4.0.
+- [⏳] **Visual evidence — partial** — login-redirect screenshot captured; full Switchboard screenshots (gate OFF + gate ON in 4 view modes) require Nitin's admin login. See `docs/visual-evidence/2026-05-20/README.md` for capture checklist.
+
+### Next session (Session 3)
+**Stream A continuation OR begin first feature stream.** Pick one:
+
+- **Option A:** Begin "Moodle" → "Sentientia" user-visible-string rename pass (selective — only user-visible labels, not internal class names; preserves upgrade-merge safety). Touches lang strings, footer, login page, error pages. Estimated 1 session.
+- **Option B:** Start Tier 1 #2 — PWA + push notifications foundation (manifest.json + service worker scaffolding + Web Push subscription flow). Estimated 2-3 sessions.
+- **Option C:** Start Tier 1 #1 — WhatsApp deepening (extend `local_airpay_whatsapp` for deadline + completion + cert notifications). Estimated 1-2 sessions, highest immediate engagement ROI per ADR-001 §Hard dependencies.
+
+Nitin picks the start.
 
 ---
 

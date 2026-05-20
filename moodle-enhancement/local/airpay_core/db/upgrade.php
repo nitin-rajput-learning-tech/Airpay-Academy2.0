@@ -83,5 +83,76 @@ function xmldb_local_airpay_core_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026051401, 'local', 'airpay_core');
     }
 
+    // ── Session 2 / ADR-002 (2026-05-20) — customer-level feature flags
+    // Adds customer_id column to both feature-flag tables, restructures the
+    // unique key + index to include the new column, and adds a per-customer
+    // audit-feed index. Backwards-compatible: existing rows get
+    // customer_id=0 (the "all customers" sentinel) and resolve identically
+    // to before. See docs/adr/ADR-002-customer-level-feature-flags.md.
+    if ($oldversion < 2026052101) {
+
+        // ── local_airpay_feature_flags ─────────────────────────────────
+        $table = new xmldb_table('local_airpay_feature_flags');
+
+        // 1. Add customer_id column. Default 0 preserves every existing row
+        //    as "applies to all customers" — the legacy resolution result.
+        $field = new xmldb_field('customer_id', XMLDB_TYPE_INTEGER, '10', null,
+            XMLDB_NOTNULL, null, '0', 'flag_key');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // 2. Drop the old uk_key_tenant unique key — it constrained
+        //    (flag_key, tenant_id) which is no longer enough now that
+        //    (flag_key, customer_id, tenant_id) is the row identity.
+        $old_uk = new xmldb_key('uk_key_tenant', XMLDB_KEY_UNIQUE,
+            ['flag_key', 'tenant_id']);
+        if ($dbman->find_key_name($table, $old_uk)) {
+            $dbman->drop_key($table, $old_uk);
+        }
+
+        // 3. Add the new composite unique key.
+        $new_uk = new xmldb_key('uk_key_cust_tenant', XMLDB_KEY_UNIQUE,
+            ['flag_key', 'customer_id', 'tenant_id']);
+        if (!$dbman->find_key_name($table, $new_uk)) {
+            $dbman->add_key($table, $new_uk);
+        }
+
+        // 4. Drop the old idx_tenant_key — replaced by idx_cust_tenant_key.
+        $old_idx = new xmldb_index('idx_tenant_key', XMLDB_INDEX_NOTUNIQUE,
+            ['tenant_id', 'flag_key']);
+        if ($dbman->index_exists($table, $old_idx)) {
+            $dbman->drop_index($table, $old_idx);
+        }
+
+        // 5. Add the new composite index covering the resolver's WHERE clause.
+        $new_idx = new xmldb_index('idx_cust_tenant_key', XMLDB_INDEX_NOTUNIQUE,
+            ['customer_id', 'tenant_id', 'flag_key']);
+        if (!$dbman->index_exists($table, $new_idx)) {
+            $dbman->add_index($table, $new_idx);
+        }
+
+        // ── local_airpay_feature_flag_audit ────────────────────────────
+        $audit_table = new xmldb_table('local_airpay_feature_flag_audit');
+
+        // 1. Add customer_id column. Default 0 — every historical audit row
+        //    is treated as "all customers" scope which is correct for the
+        //    pre-Session-2 single-customer world.
+        $field = new xmldb_field('customer_id', XMLDB_TYPE_INTEGER, '10', null,
+            XMLDB_NOTNULL, null, '0', 'flag_key');
+        if (!$dbman->field_exists($audit_table, $field)) {
+            $dbman->add_field($audit_table, $field);
+        }
+
+        // 2. Add the per-customer audit-feed index.
+        $audit_idx = new xmldb_index('idx_customer_time', XMLDB_INDEX_NOTUNIQUE,
+            ['customer_id', 'timecreated']);
+        if (!$dbman->index_exists($audit_table, $audit_idx)) {
+            $dbman->add_index($audit_table, $audit_idx);
+        }
+
+        upgrade_plugin_savepoint(true, 2026052101, 'local', 'airpay_core');
+    }
+
     return true;
 }

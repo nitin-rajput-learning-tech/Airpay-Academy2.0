@@ -41,3 +41,17 @@ $string['flag_category_learning']   = 'लर्निंग डिलीवर�
 $string['flag_category_search']     = 'सर्च';
 $string['flag_category_obs']        = 'ऑब्ज़र्वेबिलिटी';
 $string['flag_category_ux']         = 'यूज़र अनुभव';
+$string['flag_category_sentientia'] = 'Sentientia प्लेटफ़ॉर्म';
+
+// Session 2 / ADR-002 (2026-05-20) — customer-level feature flag scope.
+$string['customer_default_label']     = 'सभी कस्टमर (वैश्विक डिफ़ॉल्ट)';
+$string['error_invalidcustomer']      = 'अमान्य कस्टमर पहचानकर्ता: {$a}।';
+$string['gateflag_no_customer_scope'] = 'कस्टमर-स्तरीय स्कोप गेट फ़्लैग का स्वयं कोई कस्टमर स्कोप नहीं है। इसे केवल वैश्विक या लीगेसी-टेनेंट स्कोप के माध्यम से सेट करें।';
+$string['customer_layer_disabled']    = '"{$a}" के लिए कस्टमर-स्कोप ओवरराइड सेट नहीं किया जा सकता — कस्टमर-स्तरीय स्कोप लेयर वर्तमान में अक्षम है। पहले वैश्विक स्कोप पर sentientia.customer_level_flags.enabled सक्षम करें।';
+
+// Switchboard scope banner copy.
+$string['scope_global']                 = 'वैश्विक डिफ़ॉल्ट';
+$string['scope_banner_global']          = 'आप <strong>वैश्विक डिफ़ॉल्ट</strong> संपादित कर रहे हैं — यह हर कस्टमर और हर टेनेंट पर लागू होता है जब तक ओवरराइड न किया जाए।';
+$string['scope_banner_legacy_tenant']   = 'आप <strong>{$a}</strong> टेनेंट (लीगेसी स्कोप — सभी कस्टमर पर लागू) संपादित कर रहे हैं। यहाँ टॉगल केवल {$a} के लिए वैश्विक डिफ़ॉल्ट को ओवरराइड करते हैं।';
+$string['scope_banner_customer']        = 'आप <strong>{$a}</strong> कस्टमर स्कोप संपादित कर रहे हैं। यहाँ टॉगल इस कस्टमर के सभी टेनेंट पर लागू होते हैं जब तक टेनेंट स्तर पर ओवरराइड न किया जाए।';
+$string['scope_banner_customer_tenant'] = 'आप <strong>{$a->customer}</strong> कस्टमर / <strong>{$a->tenant}</strong> टेनेंट जोड़ी संपादित कर रहे हैं। यहाँ टॉगल केवल इस विशिष्ट टेनेंट के लिए कस्टमर-व्यापी मान को ओवरराइड करते हैं।';

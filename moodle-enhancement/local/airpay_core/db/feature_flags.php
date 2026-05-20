@@ -117,4 +117,23 @@ $flags = [
                           user sees the light theme.',
     ],
 
+    // ─── Sentientia (product-level) category ───────────────────────
+    // Session 2 / ADR-002 (2026-05-20) — meta-flag that gates the
+    // customer-level resolution layer added for the Sentientia LMS
+    // multi-customer SaaS model. Default OFF so Airpay's existing
+    // production resolves identically to Phase A0. Flip to ON after
+    // PHPUnit + smoke verification per ADR-002 §Verification gates.
+    'sentientia.customer_level_flags.enabled' => [
+        'default'     => false,
+        'description' => 'Sentientia LMS customer-level feature-flag layer.
+                          When OFF, the Switchboard exposes only tenant +
+                          global scopes (Phase A0 behaviour). When ON, an
+                          additional "customer" scope is added between
+                          tenant and global in the resolution precedence,
+                          allowing one customer\'s flag state to differ
+                          from another\'s. This flag has no customer scope
+                          itself — set it via the global default or a
+                          legacy tenant override.',
+    ],
+
 ];
