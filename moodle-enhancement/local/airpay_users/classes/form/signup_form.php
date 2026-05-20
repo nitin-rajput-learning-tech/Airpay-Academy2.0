@@ -85,8 +85,30 @@ class signup_form extends \moodleform {
         $mform->addElement('html',
             '<style>.fitem_id_honeypot_url { display: none !important; }</style>');
 
+        // P1 #59 (2026-05-20) — defense-in-depth: Google reCAPTCHA v2,
+        // shown only when the site admin has configured the keys in
+        // Site administration > Security > Site policies.
+        // The honeypot stays as the first line of defence; reCAPTCHA
+        // is the second, gated on admin opt-in so this form works
+        // on dev environments without internet access too.
+        if (signup_form::recaptcha_configured()) {
+            $mform->addElement('recaptcha', 'recaptcha_element',
+                get_string('security_question', 'auth'));
+            $mform->addHelpButton('recaptcha_element', 'recaptcha', 'auth');
+        }
+
         $this->add_action_buttons(true,
             get_string('signup_submit', 'local_airpay_users'));
+    }
+
+    /**
+     * Returns true when the site has reCAPTCHA v2 keys configured.
+     * P1 #59 (2026-05-20) — extracted so the validation method can
+     * call the same gate without duplicating the empty() check.
+     */
+    public static function recaptcha_configured(): bool {
+        global $CFG;
+        return !empty($CFG->recaptchapublickey) && !empty($CFG->recaptchaprivatekey);
     }
 
     public function validation($data, $files) {
@@ -97,6 +119,24 @@ class signup_form extends \moodleform {
             $errors['email'] = get_string('signup_generic_error',
                 'local_airpay_users');
             return $errors;
+        }
+
+        // P1 #59 — reCAPTCHA challenge verification, mirroring Moodle's
+        // own auth/email/signup_form.php logic. The form element rendered
+        // by the 'recaptcha' MoodleQuickForm element auto-injects the
+        // challenge + response fields under the recaptcha_element name.
+        if (signup_form::recaptcha_configured()) {
+            $recaptcha_element = $this->_form->getElement('recaptcha_element');
+            if (!empty($this->_form->_submitValues['g-recaptcha-response'])) {
+                $response = $this->_form->_submitValues['g-recaptcha-response'];
+                if (!$recaptcha_element->verify($response)) {
+                    $errors['recaptcha_element'] =
+                        get_string('incorrectpleasetryagain', 'auth');
+                }
+            } else {
+                $errors['recaptcha_element'] =
+                    get_string('missingrecaptchachallengefield');
+            }
         }
 
         // Delegate to the service for real validation.
