@@ -275,6 +275,52 @@ a44b58989  Day 0 — Sentientia LMS pivot, ADR-001
 
 ---
 
+## 🚀 DAYS 1–2 — SENTIENTIA LIVE STREAM E + PWA/WHATSAPP STREAMS B/C (2026-05-20 → 2026-05-21)
+
+Two-day push that completed:
+- **Stream B (PWA + Web Push)** Phases B.1 → B.3.d — service worker, VAPID keygen, ES256 JWT + AES-128-GCM payload crypto (hand-rolled per ADR-003, no Composer), wire push into reminder + overdue crons, admin push delivery log, iOS install UX hints
+- **Stream C (WhatsApp deepening)** Phases C.1.a → C.1.c — notification_bridge helper, 4 cron hooks (reminder + overdue × courses + exams), feature-flagged + DLT-compliant, e2e mock orchestrator passing
+- **Stream E (Sentientia Live / Mentimeter clone)** Phases E.0 → E.6 + E.11 — full feature set, audience-facing:
+  - **E.0**: ADR-004 + plugin scaffold + DB schema (4 tables: sessions, slides, responses, participants) + privacy provider + state card
+  - **E.1**: session_manager + event_journal + slide_manager + participant_manager classes (with 28 PHPUnit tests), trainer dashboard, create-session form, polymorphic slide form (6 question types: multichoice, rating, quiz, wordcloud, openended, ranking)
+  - **E.2**: response_recorder lib + audience/join.php + audience/play.php (anonymous-token auth + heartbeat presence)
+  - **E.3**: stream.php SSE endpoint (5-min wall-clock budget + 15s ping per ADR-004) + audience_sse + trainer_sse AMD clients
+  - **E.4**: result_panel renderable + 6 type-specific templates (horizontal bar chart, rating histogram, sized wordcloud, scrolling openended list, ranking table)
+  - **E.5**: response_added event payload expanded with full tally + chart_updater AMD module that mutates bar widths in place (textContent + style.width only — XSS-safe per ADR-004)
+  - **E.6**: quiz correct-answer summary ("X of Y got it right") + leaderboard (trainer-only, audience-hidden, sorted by time-to-answer)
+  - **E.11**: defensive @media (max-width: 590px) responsive rules for result panel + trainer runner
+- **VIS-1 → VIS-10** — full visual walkthrough of every Sentientia Live surface (login, dashboard, create form, edit page, run page, audience join + play, result panels), real Chrome MCP screenshots saved to `docs/visual-evidence/2026-05-21/`. **VIS-10** caught + fixed the SSE URL bug (`/local/...` resolved against domain root instead of `M.cfg.wwwroot + /local/...`) — the Phase E.3 smoke test had silently fallen through to polling-reload. Two-browser flow now verified working end-to-end.
+
+### Day 1 + 2 commit log (2026-05-20 evening → 2026-05-21)
+
+```
+3c7dc6971  Phase E.11 — mobile responsive pass at 590px
+a356a59ee  Phase E.6 — quiz leaderboard + correct-answer summary
+670b3c271  Fix: SSE URL resolved against M.cfg.wwwroot (+ remove withCredentials)
+855dd4842  Day 1 PROJECT-STATE update (17 commits across 5 streams)
+a28680661  Phase E.5 — Dynamic chart updates via SSE + UX polish
+e6ff68742  docs(visual-evidence) + Stream E bug fixes from walkthrough
+e91777ec3  Stream C verify — end-to-end WhatsApp pipeline (mock, ALL PASS)
+846b621cc  Phase E.4 — Live result panels (per-type charts)
+3a7d2c6e8  Phase E.3 — SSE realtime stream + AMD clients
+fe1c92a48  Phase E.2 — audience join + play + response recorder
+8b9d11a25  Phase E.1 — session/slide/participant managers + dashboard
+2bb74c1e9  Phase E.0 — plugin scaffold + DB schema + ADR-004
+...
+(Stream B + C earlier in the day — see commits 4abc70a..855dd48)
+```
+
+### Where to resume (next session)
+
+Stream E is feature-complete on the 7 phases the user prioritised. Remaining open work:
+1. **Real-mobile verification** of Stream E at 590px (real device or Chrome DevTools device-mode walk)
+2. **Security review** of B.2.5 crypto trio (ES256 JWT + AES-128-GCM + HKDF) per ADR-003 follow-up
+3. **Real browser push subscribe** — Phase B verification's remaining gate (needs real VAPID server keys + a real subscriber browser)
+4. **Phases E.7-E.10**: rating-scale UX polish + multi-tenant scoping verification + analytics export
+5. **Phase D — Mobile** (PWA install flow + native wrapper decision)
+
+---
+
 ## 📦 PRIOR WORK — Wave 1 + Wave 2 (now baseline for Sentientia LMS customer-zero)
 
 Updated: 2026-05-20 (late night) — **Wave 1 COMPLETE (10/10 P0s) + 60 Wave 2 P1 fixes shipped.** 20 batches added today (#41 → #60). Compliance now has: full template library (P1 #41), auto-expire cron (P1 #42), 100% Hindi parity across all 30 airpay_* plugins — 1,955 HI keys vs 1,951 EN keys (P1 #43 → #58, 14 Hindi batches), reCAPTCHA v2 on Public signup (P1 #59), comprehensive mobile-app WS surface audit categorising every 156 functions across 20 plugins (P1 #60).
