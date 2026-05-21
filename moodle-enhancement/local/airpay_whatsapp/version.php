@@ -17,10 +17,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_airpay_whatsapp';
-$plugin->version   = 2026051501;
+$plugin->version   = 2026052101;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;   // mock-mode only — [CONFIRM] required before live
-$plugin->release   = '0.2.0-alpha';
+$plugin->release   = '0.3.0-alpha';    // Stream C / C.1 — notification_bridge + cron hooks
 $plugin->dependencies = [
     'local_airpay_core' => 2026051401,  // feature_flags resolver
 ];

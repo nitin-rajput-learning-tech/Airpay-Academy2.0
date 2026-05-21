@@ -192,6 +192,20 @@ class exam_overdue extends \core\task\scheduled_task {
             );
         }
 
+        // Stream C / C.1.b — also WhatsApp/SMS to the supervisor.
+        if (class_exists('\\local_airpay_whatsapp\\notification_bridge')) {
+            \local_airpay_whatsapp\notification_bridge::also_send(
+                $supervisor,
+                'engagement.whatsapp.overdue',
+                'team_overdue',
+                [
+                    'firstname'     => $supervisor->firstname ?? '',
+                    'overdue_count' => 1,
+                    'manager_url'   => $a->learner_profile_url ?? $a->exam_url,
+                ]
+            );
+        }
+
         try {
             $DB->insert_record('local_airpay_exams_remind_sent', (object) [
                 'userid'   => (int) $row->userid,

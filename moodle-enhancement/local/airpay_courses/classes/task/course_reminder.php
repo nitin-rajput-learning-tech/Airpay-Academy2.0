@@ -228,6 +228,26 @@ class course_reminder extends \core\task\scheduled_task {
             );
         }
 
+        // Stream C / C.1.b (2026-05-21) — also fire WhatsApp/SMS via the
+        // airpay_whatsapp bridge. Picks template_key based on bucket
+        // (deadline_7d / _3d / _1d). Soft-coupled — no-op if plugin
+        // missing, user not opted in, no mobile number, template not
+        // DLT-approved, or master flag off.
+        if (class_exists('\\local_airpay_whatsapp\\notification_bridge')) {
+            $tpl_key = \local_airpay_whatsapp\notification_bridge::pick_deadline_template($days_remaining);
+            \local_airpay_whatsapp\notification_bridge::also_send(
+                $user,
+                'engagement.whatsapp.reminders',
+                $tpl_key,
+                [
+                    'firstname'   => $user->firstname ?? '',
+                    'coursename'  => $coursename,
+                    'duedate'     => $a->deadline,
+                    'course_url'  => $a->course_url,
+                ]
+            );
+        }
+
         // Record the audit row AFTER send. The unique index serves as
         // the de-dupe key; we ignore conflicts (race with a parallel
         // cron firing — very unlikely but cheap to defend against).

@@ -226,6 +226,23 @@ class course_overdue extends \core\task\scheduled_task {
             );
         }
 
+        // Stream C / C.1.b — also WhatsApp/SMS to the supervisor.
+        // team_overdue template — slightly awkward wording for a single-
+        // learner alert, but reuses an existing seeded DLT template so we
+        // avoid adding a new approval-pending row at this stage.
+        if (class_exists('\\local_airpay_whatsapp\\notification_bridge')) {
+            \local_airpay_whatsapp\notification_bridge::also_send(
+                $supervisor,
+                'engagement.whatsapp.overdue',
+                'team_overdue',
+                [
+                    'firstname'     => $supervisor->firstname ?? '',
+                    'overdue_count' => 1,
+                    'manager_url'   => $a->learner_profile_url,
+                ]
+            );
+        }
+
         try {
             $DB->insert_record('local_airpay_courses_remind_sent', (object) [
                 'userid'   => (int) $row->userid,  // subject = the learner

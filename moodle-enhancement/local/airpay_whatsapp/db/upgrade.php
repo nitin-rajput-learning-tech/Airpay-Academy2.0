@@ -112,5 +112,14 @@ function xmldb_local_airpay_whatsapp_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026051501, 'local', 'airpay_whatsapp');
     }
 
+    // ── 2026052101 — Stream C / Phase C.1 (no schema change) ──
+    // Adds classes/notification_bridge.php — the helper that cron tasks
+    // in other airpay_* plugins call to fan out their email send into
+    // an additional WhatsApp/SMS message. No DB changes. Just a savepoint
+    // so the upgrade pointer advances.
+    if ($oldversion < 2026052101) {
+        upgrade_plugin_savepoint(true, 2026052101, 'local', 'airpay_whatsapp');
+    }
+
     return true;
 }

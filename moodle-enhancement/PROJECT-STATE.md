@@ -3261,3 +3261,80 @@ Replaces BizLMS `local_courses` (136 files, already gutted to 3 templates) with 
 - Verify compliance snapshot with real data (2,871 users × 4 mandatory courses)
 - Test privacy self-service as Public tenant user
 - Production deployment (IT team — see DEPLOYMENT-RUNBOOK.md)
+
+---
+
+## 🚀 DAY 1 — STREAM B PHASE B.2.b + B.2.5 + B.3 + STREAM C PHASE C.1 (2026-05-21)
+
+### Today's Body of Work
+
+**Push notifications, end-to-end + WhatsApp wired to the same crons.** Five sub-phases shipped:
+
+#### Phase B.2.b — Subscribe UI (commit `493edf8b6`)
+- `classes/vapid_key_manager.php` — pure-PHP P-256 keypair generation via `openssl_pkey_new(['curve_name' => 'prime256v1'])`. Persists b64url public, raw private d, PEM (for JWT signer) in `mdl_config_plugin`. Windows openssl.cnf autodetect (probes 8 paths — xampp/php/extras/openssl/openssl.cnf works locally; standard Linux paths for production).
+- `cli/generate_vapid_keys.php` — idempotent CLI. `--info` shows current state; `-r` force-regenerates with explicit `yes` confirmation prompt. Generated keypair successfully on local: `BGpa0GacjOTHnQwOboBm9ayvyylsFQxzmX4vSNCMuxn3EYXRcIyG8ACdkHg8fzlWx3u-5RMhBjT7gaACxFmf_Hc`.
+- `amd/build/subscribe.min.js` (named-define ES5) + `amd/src/subscribe.js` (ES6 source). Handles `isPushSupported` → `Notification.requestPermission` → `pushManager.subscribe` → `Ajax.call('local_sentientia_pwa_save_subscription')`.
+- `classes/output/subscribe_widget.php` + `templates/subscribe_widget.mustache` — three render states: not-set-up / flag-off / ready.
+- `preferences.php` — user-facing page at `/local/sentientia_pwa/preferences.php`.
+- `lib.php` — `extend_navigation_user_settings` adds "Browser notifications" to user profile settings nav.
+- `settings.php` — VAPID status panel + vapid_subject (PARAM_RAW_TRIMMED, not PARAM_URL — mailto: scheme requires it) + default TTL + max payload.
+- 35 EN + 35 HI strings.
+- Version: 0.2.1-beta → 0.2.2-beta.
+
+#### Phase B.2.5 ALPHA — Real Web Push delivery (commit `d69408ee1`) + **ADR-003**
+Hand-rolled crypto, since `composer` isn't available and vendoring `minishlink/web-push` without it is brittle. ADR-003 records the decision and the safeguards. **18/18 crypto self-tests pass.**
+- `classes/jwt_signer.php` (236 LOC) — RFC 7515 JWS ES256. Uses `openssl_sign()` with P-256 PEM, converts DER → JWS raw r||s. RFC 8292 compliant: exp clamped to ≤ 24h.
+- `classes/payload_encrypter.php` (256 LOC) — RFC 8291 + RFC 8188 `aes128gcm`. Ephemeral P-256 keypair + ECDH (`openssl_pkey_derive`) + HKDF-SHA256 + AES-128-GCM. Hand-builds the SubjectPublicKeyInfo ASN.1 wrapper to feed raw 65-byte uncompressed point through `openssl_pkey_get_public`.
+- `classes/push_sender.php` — `deliver_one()` rewrote stub → real: encrypt → sign JWT → POST `Authorization: vapid t=<jwt>,k=<vapid_pub>` + `Content-Encoding: aes128gcm` + `TTL` + `Urgency: normal`. Response classifier: 201/204 = sent; 404/410 = sub gone (auto-delete); 400/403/413/429/5xx = record_failure.
+- `cli/test_crypto.php` — 18 assertions covering JWT sign+verify roundtrip, DER↔JOSE conversion roundtrip, aes128gcm encrypt+manual-UA-decrypt roundtrip with independent HKDF chain.
+- `cli/test_push.php` — operator-facing real-world push CLI (`--userid=N --dry-run --title --body --url`).
+- Fix: `openssl_pkey_export()` also needs the `config` arg on Windows, not just `openssl_pkey_new()`. Previous keygen runs silently wrote an empty PEM — caught + fixed.
+- Maturity: BETA → ALPHA (crypto needs security review before beta promotion).
+- Version: 0.2.2-beta → 0.2.5-alpha.
+
+#### Phase B.3 ALPHA — Push wired into reminder/escalation crons + delivery log + iOS hint (commit `21a984272`)
+- **B.3.a/b** — `classes/notification_bridge.php` in `local_sentientia_pwa`. Shared `also_push()` helper (soft-coupled, error-swallowing, flag-aware). 4 cron tasks wired (course_reminder, course_overdue, exam_reminder, exam_overdue) — they now fire dual email+push.
+- **B.3.c** — `classes/push_logger.php` + `db/install.xml + upgrade.php` (new `local_sentientia_push_log` table) + `admin/push_log.php` viewer (filter by result/user/since, stats banner, paginated 50/page). Retention scheduled task at 02:00 daily, `log_retention_days` admin setting (default 90).
+- **B.3.d** — `amd/build/ios_install_hint.min.js` — detects Safari iOS without home-screen install, injects dismissible "Add to Home Screen" banner. Built with `createElement` + `textContent` (never innerHTML — XSS-safe). localStorage `sentientia_pwa_ios_hint_dismissed` suppresses re-show.
+- 2 new flags: `sentientia.pwa.push.reminders` + `.overdue` (both default OFF).
+- 47 new lang strings (EN + HI parity preserved).
+- Version: 0.2.5-alpha → 0.3.3-alpha (4 successive savepoints: 2026052103, 2026052104, 2026052105, 2026052106).
+
+#### Stream C / Phase C.1 — WhatsApp wired into the same 4 crons (about to commit)
+- `local/airpay_whatsapp/classes/notification_bridge.php` — mirror of PWA notification_bridge. `also_send()` calls `whatsapp_client::send_template()` directly (NOT `channel_router::dispatch()` because that would cascade to email which already fired via `message_send()`). `pick_deadline_template()` selects deadline_7d / deadline_3d / deadline_1d by days-remaining bucket.
+- 4 crons updated: course_reminder + course_overdue + exam_reminder + exam_overdue now triple-fan-out (email + push + WhatsApp/SMS).
+- 2 new feature flags in `local_airpay_core/db/feature_flags.php`: `engagement.whatsapp.reminders` + `engagement.whatsapp.overdue`.
+- No new DLT templates — reuses existing seeded ones (`deadline_7d/3d/1d` + `team_overdue`).
+- Version: local_airpay_whatsapp 0.2.0-alpha → 0.3.0-alpha (savepoint 2026052101).
+
+### Architecture insight — the notification fan-out pattern
+4 cron tasks × 3 channels (email/push/WhatsApp) = 12 individual call sites if naive. With the bridge pattern it's 4 × 3 = 12 lines total (one bridge call per channel per cron). Adding a 5th cron in the future is 3 lines. Adding a 4th channel (e.g. Slack) is one new `notification_bridge` class + 4 lines added across the existing 4 crons.
+
+### Production rollout gate (must all be green before flipping push.enabled ON)
+1. `cli/test_crypto.php` green — **DONE** (18/18)
+2. `cli/test_push.php` to a real subscriber succeeds — **needs Chrome MCP or human browser** to create a subscription first
+3. Security review of jwt_signer + payload_encrypter + push_sender — **pending**
+4. Promote MATURITY_ALPHA → MATURITY_BETA — **post-review**
+5. Flip `sentientia.pwa.push.enabled` ON in Switchboard — **post-review**
+
+### Pending: DLT registration for live WhatsApp
+- The 5 seeded templates are in `pending` state. Until they're submitted + approved by the DLT portal AND Karix/MSG91 credentials are in `.env`, the WhatsApp client stays in mock mode (logs send_log row with `status = mocked` but never actually POSTs).
+- This isn't a code task — it's an ops task on Airpay's side. Stream C / Phase C.1 ships ready to go live the moment DLT approval lands + credentials added.
+
+### Today's commits (chronological)
+| Commit | Message |
+|--------|---------|
+| `50cb19f4c` | (yesterday) docs: end-of-day state save (2026-05-20) |
+| `493edf8b6` | Stream B / Phase B.2.b — Subscribe UI |
+| `d69408ee1` | Stream B / Phase B.2.5 ALPHA — Real Web Push delivery |
+| `21a984272` | Stream B / Phase B.3 ALPHA — Push into crons + log + iOS hint |
+| _next_ | Stream C / Phase C.1 — WhatsApp wired into reminder/overdue crons |
+
+### Resume next session (priority order)
+1. **Stream B — verify with a real subscriber.** Needs Chrome MCP reconnect OR Nitin uses a browser to: open `/local/sentientia_pwa/preferences.php`, click "Enable browser notifications", then run `php local/sentientia_pwa/cli/test_push.php --userid=<his-id>` from CLI. That validates the full end-to-end.
+2. **Stream B — security review of B.2.5 crypto trio** (per ADR-003).
+3. **Tier 1 #3 — Mentimeter clone** (`local_sentientia_live`). 8-12 sessions of work; biggest single chunk on the roadmap. Real-time polls/quizzes/Q&A with SSE.
+4. **Tier 1 #4 — AI quiz generation** (Anthropic Claude API + trainer review). Needs Anthropic API key in `.env` first.
+5. **Tier 1 #5 — Hindi course content pipeline** (Claude translate + ElevenLabs Hindi voice + SCORM re-pack). Needs ElevenLabs subscription confirmed.
+6. **License-header rewrite sweep** (~200 files) — GPL §5(a) compliance pass 2. Tedious but mechanical.
+7. **Visual verification** — blocked on Chrome MCP reconnect.

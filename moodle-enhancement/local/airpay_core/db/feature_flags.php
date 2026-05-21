@@ -74,6 +74,32 @@ $flags = [
                           Twilio integration ships.',
     ],
 
+    // ─── Stream C / Phase C.1 (2026-05-21) — per-channel sub-flags ───
+    // Companion to sentientia.pwa.push.reminders / .overdue. Each sub-
+    // channel is independently flagable so admins can roll out WhatsApp
+    // reminders WITHOUT also enabling manager overdue alerts. ALL of
+    // these require engagement.whatsapp.enabled = true as well.
+    'engagement.whatsapp.reminders' => [
+        'default'     => false,
+        'description' => 'Phase C.1 — WhatsApp deadline reminders to learners.
+                          Fires alongside the existing email reminder from
+                          local_airpay_courses\\task\\course_reminder +
+                          local_airpay_exams\\task\\exam_reminder. Picks
+                          DLT template by days-remaining bucket (deadline_7d
+                          / deadline_3d / deadline_1d). Master flag
+                          engagement.whatsapp.enabled must also be ON, AND
+                          the chosen DLT template must be approved, AND the
+                          recipient must have whatsapp_optin = 1.',
+    ],
+    'engagement.whatsapp.overdue' => [
+        'default'     => false,
+        'description' => 'Phase C.1 — WhatsApp overdue escalations to managers.
+                          Companion to local_airpay_courses\\task\\course_overdue
+                          + local_airpay_exams\\task\\exam_overdue. Reuses the
+                          team_overdue DLT template with overdue_count=1 for
+                          per-learner alerts.',
+    ],
+
     // ─── Commerce category ─────────────────────────────────────────
     'commerce.crossTenantShare.enabled' => [
         'default'     => true,
