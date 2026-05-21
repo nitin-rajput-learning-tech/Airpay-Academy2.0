@@ -252,3 +252,50 @@ $string['delete_slide_confirm_html']    = 'Delete the {$a->type} slide <strong>"
 // Set-current notices.
 $string['slide_made_current_notice']    = 'Now showing this slide to the audience.';
 $string['slide_make_current_failed']    = 'Could not set this slide as current. Make sure the session is live.';
+
+// ── Phase E.2 — audience UI strings ────────────────────────────────
+
+// Join page.
+$string['audience_join_pagetitle']      = 'Join live session';
+$string['audience_join_heading']        = 'Join a live session';
+$string['audience_join_intro']          = 'Enter the 6-digit code your presenter has shared.';
+$string['audience_invalid_code']        = 'No live session with that code. Double-check the digits with your presenter.';
+$string['audience_code_label']          = 'Session code';
+$string['audience_lookup_code']         = 'Find session';
+$string['audience_session_found']       = 'Found: <strong>{$a}</strong>';
+$string['audience_displayname_label']   = 'Your display name';
+$string['audience_displayname_placeholder'] = 'How should we list you?';
+$string['audience_join_button']         = 'Join session';
+$string['audience_cannot_join']         = 'You do not have permission to join this session.';
+$string['audience_anonymous_not_allowed']= 'This session does not accept anonymous joins. Please sign in first.';
+
+// Play page guards.
+$string['audience_must_join_first']     = 'Please enter the session code to join first.';
+$string['audience_token_invalid']       = 'Your join token is invalid or expired. Rejoin the session.';
+
+// Play page states.
+$string['audience_waiting_heading']     = 'Waiting for the next question…';
+$string['audience_waiting_body']        = 'Your presenter has not picked the first question yet. Hang on — this page refreshes automatically.';
+$string['audience_waiting_next']        = 'Hold tight — the next question will appear automatically.';
+$string['audience_current_slide_gone']  = 'The slide your presenter chose is no longer available.';
+$string['audience_session_ended_heading'] = 'Session ended';
+$string['audience_session_ended_body']    = 'Thanks for participating. Your responses have been recorded.';
+$string['audience_response_saved']      = 'Response received — thanks!';
+$string['audience_already_responded']   = 'You have already responded to this slide.';
+$string['audience_submit_response']     = 'Submit response';
+
+// Response-side placeholders.
+$string['wc_response_placeholder']      = 'Type one word…';
+$string['openended_response_placeholder']= 'Your answer…';
+$string['ranking_response_intro']       = 'Number each item from 1 (your top choice) downward. Each number must be unique — no ties.';
+
+// response_recorder errors.
+$string['response_slide_mismatch']      = 'That slide is not part of this session.';
+$string['response_int_required']        = 'A numeric response is required.';
+$string['response_text_required']       = 'A text response is required.';
+$string['response_text_too_long']       = 'Response too long. Maximum {$a} characters.';
+$string['response_out_of_range']        = 'Response value is out of the allowed range: {$a}';
+$string['response_ranking_bad_json']    = 'Ranking response must be a JSON array of item indices.';
+$string['response_ranking_incomplete']  = 'Please rank every item before submitting.';
+$string['invalidparticipant']           = 'Participant record not found.';
+$string['participant_session_mismatch'] = 'Participant does not belong to this session.';

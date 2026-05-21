@@ -252,3 +252,50 @@ $string['delete_slide_confirm_html']    = '{$a->type} स्लाइड <strong
 // Set-current notices.
 $string['slide_made_current_notice']    = 'अब ऑडियंस को यह स्लाइड दिखाई जा रही है।';
 $string['slide_make_current_failed']    = 'इस स्लाइड को वर्तमान के रूप में सेट नहीं कर सका। सुनिश्चित करें कि सेशन लाइव है।';
+
+// ── Phase E.2 — audience UI strings ────────────────────────────────
+
+// Join page.
+$string['audience_join_pagetitle']      = 'लाइव सेशन में join करें';
+$string['audience_join_heading']        = 'लाइव सेशन में join करें';
+$string['audience_join_intro']          = 'अपने प्रस्तुतकर्ता द्वारा साझा किया गया 6-अंक कोड दर्ज करें।';
+$string['audience_invalid_code']        = 'उस कोड के साथ कोई लाइव सेशन नहीं। अपने प्रस्तुतकर्ता से अंक पुनः जांचें।';
+$string['audience_code_label']          = 'सेशन कोड';
+$string['audience_lookup_code']         = 'सेशन ढूंढें';
+$string['audience_session_found']       = 'मिला: <strong>{$a}</strong>';
+$string['audience_displayname_label']   = 'आपका प्रदर्शन नाम';
+$string['audience_displayname_placeholder'] = 'हम आपको कैसे दिखाएं?';
+$string['audience_join_button']         = 'सेशन में join करें';
+$string['audience_cannot_join']         = 'इस सेशन में join करने की अनुमति आपके पास नहीं है।';
+$string['audience_anonymous_not_allowed']= 'यह सेशन अनाम joins स्वीकार नहीं करता। कृपया पहले sign in करें।';
+
+// Play page guards.
+$string['audience_must_join_first']     = 'कृपया पहले सेशन कोड दर्ज करके join करें।';
+$string['audience_token_invalid']       = 'आपका join token अमान्य या समाप्त है। सेशन में पुनः join करें।';
+
+// Play page states.
+$string['audience_waiting_heading']     = 'अगले प्रश्न की प्रतीक्षा कर रहे हैं…';
+$string['audience_waiting_body']        = 'आपके प्रस्तुतकर्ता ने अभी पहला प्रश्न नहीं चुना है। प्रतीक्षा करें — यह पृष्ठ स्वचालित रूप से refresh होता है।';
+$string['audience_waiting_next']        = 'थोड़ा रुकें — अगला प्रश्न स्वचालित रूप से दिखाई देगा।';
+$string['audience_current_slide_gone']  = 'आपके प्रस्तुतकर्ता द्वारा चुनी गई स्लाइड अब उपलब्ध नहीं है।';
+$string['audience_session_ended_heading'] = 'सेशन समाप्त';
+$string['audience_session_ended_body']    = 'भाग लेने के लिए धन्यवाद। आपकी प्रतिक्रियाएं रिकॉर्ड हो गई हैं।';
+$string['audience_response_saved']      = 'प्रतिक्रिया प्राप्त हुई — धन्यवाद!';
+$string['audience_already_responded']   = 'आप पहले ही इस स्लाइड पर प्रतिक्रिया दे चुके हैं।';
+$string['audience_submit_response']     = 'प्रतिक्रिया भेजें';
+
+// Response-side placeholders.
+$string['wc_response_placeholder']      = 'एक शब्द टाइप करें…';
+$string['openended_response_placeholder']= 'आपका उत्तर…';
+$string['ranking_response_intro']       = 'प्रत्येक आइटम को 1 (आपकी शीर्ष पसंद) से नीचे की ओर number करें। प्रत्येक संख्या अनूठी होनी चाहिए — कोई ties नहीं।';
+
+// response_recorder errors.
+$string['response_slide_mismatch']      = 'वह स्लाइड इस सेशन का हिस्सा नहीं है।';
+$string['response_int_required']        = 'संख्यात्मक प्रतिक्रिया आवश्यक है।';
+$string['response_text_required']       = 'पाठ प्रतिक्रिया आवश्यक है।';
+$string['response_text_too_long']       = 'प्रतिक्रिया बहुत लंबी है। अधिकतम {$a} अक्षर।';
+$string['response_out_of_range']        = 'प्रतिक्रिया मान अनुमत range से बाहर है: {$a}';
+$string['response_ranking_bad_json']    = 'Ranking प्रतिक्रिया item indices के JSON array के रूप में होनी चाहिए।';
+$string['response_ranking_incomplete']  = 'भेजने से पहले कृपया प्रत्येक आइटम को rank करें।';
+$string['invalidparticipant']           = 'प्रतिभागी record नहीं मिला।';
+$string['participant_session_mismatch'] = 'प्रतिभागी इस सेशन का नहीं है।';
