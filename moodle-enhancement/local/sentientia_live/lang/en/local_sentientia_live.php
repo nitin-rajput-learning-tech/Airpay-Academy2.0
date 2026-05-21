@@ -47,3 +47,76 @@ $string['sentientia_live:manage_all'] = 'Admin: view and manage every live sessi
 
 // Errors.
 $string['errorfeatureoff'] = 'Sentientia LMS Live engagement is currently disabled. Ask your administrator to enable the live.enabled feature flag.';
+$string['invalidsession']            = 'Live session does not exist.';
+$string['invalidslidetype']          = 'Invalid slide type: {$a}';
+$string['invalidtitle']              = 'Title is required and must be 200 characters or fewer.';
+$string['displayname_required']      = 'A display name is required to join the session.';
+$string['code_generation_failed']    = 'Unable to allocate a unique join code. Try again in a moment.';
+$string['invalid_event_type']        = 'Unknown event type: {$a}';
+$string['mc_options_count']          = 'Multiple-choice / quiz slides need 2-20 options (you provided {$a}).';
+$string['mc_option_type']            = 'Each option must be a string.';
+$string['mc_option_length']          = 'Each option must be 1-200 characters.';
+$string['quiz_correct_out_of_range'] = 'The correct-answer index is outside the options list.';
+$string['rating_scale_invalid']      = 'Rating scale must have 0 ≤ min < max ≤ 10.';
+$string['ranking_items_count']       = 'Ranking slides need 2-20 items (you provided {$a}).';
+$string['ranking_item_type']         = 'Each ranking item must be a string.';
+$string['ranking_item_length']       = 'Each ranking item must be 1-200 characters.';
+
+// ── Phase E.1.f — trainer dashboard strings ──
+$string['trainer_dashboard_pagetitle']  = 'Live sessions — trainer dashboard';
+$string['trainer_dashboard_heading']    = 'Your live sessions';
+$string['trainer_dashboard_subhead']    = 'Create, manage and run real-time polls, quizzes and word clouds with your audience.';
+$string['trainer_create_button']        = 'Create new session';
+$string['trainer_no_sessions_heading']  = 'No live sessions yet';
+$string['trainer_no_sessions_body']     = 'Create your first session to gather real-time feedback from your audience.';
+$string['state_draft']                  = 'Draft';
+$string['state_live']                   = 'Live';
+$string['state_ended']                  = 'Ended';
+$string['live_label']                   = 'live';
+$string['col_title']                    = 'Title';
+$string['col_state']                    = 'State';
+$string['col_code']                     = 'Join code';
+$string['col_slides']                   = 'Slides';
+$string['col_audience']                 = 'Audience';
+$string['col_created']                  = 'Created';
+$string['col_actions']                  = 'Actions';
+$string['action_edit']                  = 'Edit';
+$string['action_run']                   = 'Run';
+$string['action_end']                   = 'End';
+$string['action_view']                  = 'View';
+$string['confirm_end_session']          = 'End this live session? Audience disconnects and results are frozen.';
+$string['confirm_delete_session']       = 'Delete this session permanently? Slides, audience records and responses will all be removed.';
+$string['dashboard_session_count']      = '{$a} sessions total.';
+
+// ── Phase E.1.g — create-session strings ──
+$string['create_session_pagetitle']   = 'Create live session';
+$string['create_session_heading']     = 'New live session';
+$string['create_session_intro']       = 'Give your session a title and adjust the audience settings. You will be able to add slides next.';
+$string['session_created_notice']     = 'Session created. Add your first slide below.';
+
+// ── Phase E.1.g — session_form labels + help ──
+$string['form_title_label']           = 'Session title';
+$string['form_title_required']        = 'Please provide a session title.';
+$string['form_title_too_long']        = 'Session title must be 200 characters or fewer.';
+$string['form_title']                 = 'Session title';
+$string['form_title_help']            = 'A short name for this session — shown on the trainer dashboard and in audience-facing screens. Examples: "Q3 KYC refresher", "All-hands kickoff Sep 2026".';
+
+$string['form_settings_heading']      = 'Audience settings';
+
+$string['form_allow_anonymous_label'] = 'Allow anonymous audience';
+$string['form_allow_anonymous_desc']  = 'When ticked, audience members can join without logging in by entering a display name.';
+$string['form_allow_anonymous']       = 'Allow anonymous audience';
+$string['form_allow_anonymous_help']  = 'Default OFF for enterprise deployments — most organisations want responses correlated with learner IDs. Tick this only if you are running a workshop where attendee anonymity is the point.';
+
+$string['form_show_results_label']    = 'Show results to audience';
+$string['form_show_results_desc']     = 'When ticked, the audience sees the running tally (bar chart / word cloud / leaderboard) update in real time after they respond.';
+
+$string['form_allow_late_join_label'] = 'Allow late join';
+$string['form_allow_late_join_desc']  = 'When ticked, audience members can join the session after slides have already been answered. They see the current slide; past slides are skipped for them.';
+
+$string['form_max_concurrent_label']  = 'Maximum concurrent audience';
+$string['form_max_concurrent']        = 'Maximum concurrent audience';
+$string['form_max_concurrent_help']   = 'Hard cap on how many audience members can be connected simultaneously. Default 500 — chosen to protect server resources. Sessions above 500 attendees need infrastructure review (see ADR-004).';
+$string['form_max_concurrent_range']  = 'Maximum concurrent audience must be between 1 and 500.';
+
+$string['form_create_submit']         = 'Create session';

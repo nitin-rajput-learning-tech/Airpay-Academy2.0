@@ -1,0 +1,114 @@
+{{!
+    @template local_sentientia_live/trainer_dashboard
+
+    Trainer dashboard — list of sessions the logged-in trainer owns.
+
+    Context variables:
+      sessions       Array of session rows (see export_for_template)
+      has_sessions   true if any sessions exist
+      create_url     URL to /trainer/create.php
+      session_count  total number of sessions for this trainer
+}}
+<div class="sentientia-live-dashboard">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="h3 mb-1">{{#str}}trainer_dashboard_heading, local_sentientia_live{{/str}}</h2>
+      <p class="text-muted mb-0">
+        {{#str}}trainer_dashboard_subhead, local_sentientia_live{{/str}}
+      </p>
+    </div>
+    <a href="{{create_url}}" class="btn btn-primary">
+      <i class="fa fa-plus me-1"></i>
+      {{#str}}trainer_create_button, local_sentientia_live{{/str}}
+    </a>
+  </div>
+
+  {{^has_sessions}}
+    <div class="alert alert-info text-center my-5 py-4">
+      <p class="mb-3"><strong>{{#str}}trainer_no_sessions_heading, local_sentientia_live{{/str}}</strong></p>
+      <p class="mb-3 text-muted">{{#str}}trainer_no_sessions_body, local_sentientia_live{{/str}}</p>
+      <a href="{{create_url}}" class="btn btn-primary">
+        {{#str}}trainer_create_button, local_sentientia_live{{/str}}
+      </a>
+    </div>
+  {{/has_sessions}}
+
+  {{#has_sessions}}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>{{#str}}col_title, local_sentientia_live{{/str}}</th>
+            <th class="text-center">{{#str}}col_state, local_sentientia_live{{/str}}</th>
+            <th class="text-center">{{#str}}col_code, local_sentientia_live{{/str}}</th>
+            <th class="text-center">{{#str}}col_slides, local_sentientia_live{{/str}}</th>
+            <th class="text-center">{{#str}}col_audience, local_sentientia_live{{/str}}</th>
+            <th>{{#str}}col_created, local_sentientia_live{{/str}}</th>
+            <th class="text-end">{{#str}}col_actions, local_sentientia_live{{/str}}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#sessions}}
+            <tr>
+              <td>
+                <a href="{{edit_url}}" class="text-decoration-none">
+                  <strong>{{title}}</strong>
+                </a>
+              </td>
+              <td class="text-center">
+                {{#is_draft}}<span class="badge bg-secondary">{{state_label}}</span>{{/is_draft}}
+                {{#is_live}}<span class="badge bg-success">{{state_label}}</span>{{/is_live}}
+                {{#is_ended}}<span class="badge bg-light text-dark">{{state_label}}</span>{{/is_ended}}
+              </td>
+              <td class="text-center">
+                {{#is_live}}
+                  <code class="fs-5 fw-bold text-primary">{{code_pretty}}</code>
+                {{/is_live}}
+                {{^is_live}}
+                  <code class="text-muted">{{code_pretty}}</code>
+                {{/is_live}}
+              </td>
+              <td class="text-center">{{slide_count}}</td>
+              <td class="text-center">
+                {{#is_live}}
+                  <span class="badge bg-primary">{{audience_count}} {{#str}}live_label, local_sentientia_live{{/str}}</span>
+                {{/is_live}}
+                {{^is_live}}
+                  {{audience_count}}
+                {{/is_live}}
+              </td>
+              <td><small class="text-muted">{{timecreated_formatted}}</small></td>
+              <td class="text-end">
+                <div class="btn-group btn-group-sm" role="group">
+                  {{#is_draft}}
+                    <a href="{{edit_url}}" class="btn btn-outline-primary">{{#str}}action_edit, local_sentientia_live{{/str}}</a>
+                  {{/is_draft}}
+                  {{#is_live}}
+                    <a href="{{run_url}}" class="btn btn-success">{{#str}}action_run, local_sentientia_live{{/str}}</a>
+                    <a href="{{end_url}}" class="btn btn-outline-warning"
+                       data-confirm="{{#str}}confirm_end_session, local_sentientia_live{{/str}}">
+                       {{#str}}action_end, local_sentientia_live{{/str}}
+                    </a>
+                  {{/is_live}}
+                  {{#is_ended}}
+                    <a href="{{edit_url}}" class="btn btn-outline-secondary">{{#str}}action_view, local_sentientia_live{{/str}}</a>
+                  {{/is_ended}}
+                  <a href="{{delete_url}}" class="btn btn-outline-danger"
+                     data-confirm="{{#str}}confirm_delete_session, local_sentientia_live{{/str}}">
+                     <i class="fa fa-trash"></i>
+                  </a>
+                </div>
+              </td>
+            </tr>
+          {{/sessions}}
+        </tbody>
+      </table>
+    </div>
+
+    <p class="text-muted small mt-3">
+      {{#str}}dashboard_session_count, local_sentientia_live, {{session_count}}{{/str}}
+    </p>
+  {{/has_sessions}}
+
+</div>
