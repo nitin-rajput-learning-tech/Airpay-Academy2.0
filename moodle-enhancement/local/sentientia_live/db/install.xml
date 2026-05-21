@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/sentientia_live/db" VERSION="20260521"
+       COMMENT="Sentientia LMS Live engagement (Mentimeter clone) — Phase E.0 schema.
+                5 tables: sessions, slides, responses, participants, events.
+                Tables prefixed local_sentientia_live_ for global uniqueness.">
+  <TABLES>
+
+    <!-- ─── SESSIONS ─── -->
+    <TABLE NAME="local_sentientia_live_sessions"
+           COMMENT="A live engagement session — one row per Mentimeter-style
+                    event a trainer creates. Lifecycle: draft (created but
+                    not started) → live (audience can join + respond) →
+                    ended (final state; results frozen).
+
+                    The 6-digit code is the audience join key. Generated
+                    randomly at insert; collision-checked. Trainer URL
+                    accesses by id; audience URL accesses by code.
+
+                    Multi-tenant scope: customerid + tenantid derived from
+                    the creating user's open_path at session creation time
+                    — pinned to the row so a later open_path change doesn't
+                    move the session across tenants mid-run.">
+      <FIELDS>
+        <FIELD NAME="id"          TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="code"        TYPE="char" LENGTH="6"   NOTNULL="true"
+               COMMENT="6-digit numeric join code. Globally unique while
+                        session is in live state — recyclable after ended."/>
+        <FIELD NAME="ownerid"     TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="FK to user.id — trainer who created and runs the session"/>
+        <FIELD NAME="customerid"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="1"
+               COMMENT="Sentientia LMS customer scope. Phase 1: hardcoded 1 (Airpay)."/>
+        <FIELD NAME="tenantid"    TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="BizLMS tenant root. Pinned at session creation."/>
+        <FIELD NAME="title"       TYPE="char" LENGTH="200" NOTNULL="true"
+               COMMENT="Trainer-facing name for the session"/>
+        <FIELD NAME="state"       TYPE="char" LENGTH="16"  NOTNULL="true" DEFAULT="draft"
+               COMMENT="'draft' / 'live' / 'ended'"/>
+        <FIELD NAME="current_slide_id" TYPE="int" LENGTH="10" NOTNULL="false"
+               COMMENT="FK to local_sentientia_live_slides.id — which slide is
+                        currently shown to the audience. NULL = session not
+                        yet started."/>
+        <FIELD NAME="settings_json" TYPE="text" NOTNULL="false"
+               COMMENT="JSON: {allow_anonymous: bool, show_results_to_audience:
+                        bool, allow_late_join: bool, max_concurrent: int, ...}"/>
+        <FIELD NAME="timecreated"   TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timestarted"   TYPE="int" LENGTH="10" NOTNULL="false"
+               COMMENT="When the session transitioned to live state"/>
+        <FIELD NAME="timeended"     TYPE="int" LENGTH="10" NOTNULL="false"
+               COMMENT="When the session transitioned to ended state"/>
+        <FIELD NAME="timemodified"  TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"     TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_ownerid"  TYPE="foreign" FIELDS="ownerid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_code_state"       UNIQUE="false" FIELDS="code, state"
+               COMMENT="Audience join: find live session by code"/>
+        <INDEX NAME="idx_owner"            UNIQUE="false" FIELDS="ownerid, timecreated"
+               COMMENT="Trainer's own sessions list"/>
+        <INDEX NAME="idx_state"            UNIQUE="false" FIELDS="state, timestarted"
+               COMMENT="Admin dashboard: all currently-live sessions"/>
+        <INDEX NAME="idx_customer_tenant"  UNIQUE="false" FIELDS="customerid, tenantid"
+               COMMENT="Per-tenant analytics + cleanup"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- ─── SLIDES ─── -->
+    <TABLE NAME="local_sentientia_live_slides"
+           COMMENT="Slides within a live session — questions, polls, prompts.
+                    Ordered by position (1, 2, 3, ...). Trainer advances
+                    sessions.current_slide_id through the deck.
+
+                    type column: multichoice / wordcloud / openended / rating /
+                                 quiz / ranking. Each type gates on a feature
+                                 flag (live.questiontype.{type}) at create time.
+
+                    settings_json schema varies by type:
+                      multichoice: {options: ['Yes', 'No', 'Maybe']}
+                      rating:      {scale_min: 1, scale_max: 5, scale_labels: [...]}
+                      quiz:        {options: [...], correct_index: 2}
+                      ranking:     {items: [...]}
+                      wordcloud:   {max_word_length: 50, dedupe: true}
+                      openended:   {max_chars: 280}">
+      <FIELDS>
+        <FIELD NAME="id"             TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="sessionid"      TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="FK to local_sentientia_live_sessions.id"/>
+        <FIELD NAME="position"       TYPE="int"  LENGTH="5"   NOTNULL="true" DEFAULT="0"
+               COMMENT="Sort order within session (1-based)"/>
+        <FIELD NAME="type"           TYPE="char" LENGTH="20"  NOTNULL="true"
+               COMMENT="Question type — multichoice / wordcloud / openended /
+                        rating / quiz / ranking"/>
+        <FIELD NAME="title"          TYPE="text" NOTNULL="true"
+               COMMENT="Audience-facing question text"/>
+        <FIELD NAME="settings_json"  TYPE="text" NOTNULL="false"
+               COMMENT="Type-specific config (see TABLE comment for schema)"/>
+        <FIELD NAME="timecreated"    TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"        TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_sessionid"   TYPE="foreign" FIELDS="sessionid"
+             REFTABLE="local_sentientia_live_sessions" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_session_position" UNIQUE="false" FIELDS="sessionid, position"
+               COMMENT="Render slides in order for one session"/>
+        <INDEX NAME="idx_type"             UNIQUE="false" FIELDS="type"
+               COMMENT="Analytics: most-used question types per customer"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- ─── PARTICIPANTS ─── -->
+    <TABLE NAME="local_sentientia_live_participants"
+           COMMENT="Audience members in a live session. One row per (session,
+                    audience-member) pair. For anonymous joins, userid is
+                    null and display_name carries the join handle.
+
+                    Presence tracking via timelastseen — refreshed on every
+                    SSE heartbeat (~10s interval). Stale participants
+                    (timelastseen > 60s ago) considered offline for the
+                    trainer-side audience-count UI.">
+      <FIELDS>
+        <FIELD NAME="id"             TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="sessionid"      TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="FK to local_sentientia_live_sessions.id"/>
+        <FIELD NAME="userid"         TYPE="int"  LENGTH="10"  NOTNULL="false"
+               COMMENT="FK to user.id — NULL for anonymous participants"/>
+        <FIELD NAME="display_name"   TYPE="char" LENGTH="80"  NOTNULL="true"
+               COMMENT="Name shown in audience list / leaderboard. For
+                        logged-in users this defaults to fullname(); for
+                        anonymous joins it's the entered handle."/>
+        <FIELD NAME="join_token"     TYPE="char" LENGTH="40"  NOTNULL="true"
+               COMMENT="Random 40-char token. Anonymous participants use this
+                        as their bearer credential when POSTing responses
+                        (since they have no Moodle session). Also used to
+                        idempotent-rejoin a session on reconnect."/>
+        <FIELD NAME="timejoined"     TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timelastseen"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Last SSE heartbeat OR last response POST"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"      TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_sessionid" TYPE="foreign" FIELDS="sessionid"
+             REFTABLE="local_sentientia_live_sessions" REFFIELDS="id"/>
+        <KEY NAME="fk_userid"    TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="uk_join_token" TYPE="unique" FIELDS="join_token"
+              COMMENT="Token is the bearer credential — globally unique."/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_session_userid" UNIQUE="false" FIELDS="sessionid, userid"
+               COMMENT="Idempotent rejoin: find existing row for (session, user)"/>
+        <INDEX NAME="idx_session_lastseen" UNIQUE="false" FIELDS="sessionid, timelastseen"
+               COMMENT="Live audience-count: count where timelastseen > now - 60s"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- ─── RESPONSES ─── -->
+    <TABLE NAME="local_sentientia_live_responses"
+           COMMENT="Individual audience responses to one slide. Stored
+                    per-response (not per-slide-aggregate) so we can show
+                    a running tally + filter by participant.
+
+                    Type-specific storage:
+                      multichoice: value_int = chosen option index
+                      rating:      value_int = chosen rating
+                      quiz:        value_int = chosen option index;
+                                   value_correct (derived) = (value_int == correct_index)
+                      ranking:     value_text = JSON array of item indices in order
+                      wordcloud:   value_text = the entered word (single)
+                      openended:   value_text = the free text">
+      <FIELDS>
+        <FIELD NAME="id"             TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="slideid"        TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="FK to local_sentientia_live_slides.id"/>
+        <FIELD NAME="participantid"  TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="FK to local_sentientia_live_participants.id — never null,
+                        even for anonymous (anon has a participant row keyed by
+                        join_token)"/>
+        <FIELD NAME="value_int"      TYPE="int"  LENGTH="10"  NOTNULL="false"
+               COMMENT="Numeric value (option index, rating, ...)"/>
+        <FIELD NAME="value_text"     TYPE="text" NOTNULL="false"
+               COMMENT="Text value (free response, ranking JSON, ...)"/>
+        <FIELD NAME="timecreated"    TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"          TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_slideid"       TYPE="foreign" FIELDS="slideid"
+             REFTABLE="local_sentientia_live_slides" REFFIELDS="id"/>
+        <KEY NAME="fk_participantid" TYPE="foreign" FIELDS="participantid"
+             REFTABLE="local_sentientia_live_participants" REFFIELDS="id"/>
+        <KEY NAME="uk_slide_participant" TYPE="unique" FIELDS="slideid, participantid"
+              COMMENT="One response per participant per slide. Re-submission
+                       updates the existing row."/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_slide_created" UNIQUE="false" FIELDS="slideid, timecreated"
+               COMMENT="Stream responses in arrival order for openended/wordcloud"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- ─── EVENTS (SSE journal) ─── -->
+    <TABLE NAME="local_sentientia_live_events"
+           COMMENT="Append-only event journal that drives the SSE stream.
+                    The /stream.php endpoint polls
+                      SELECT * WHERE sessionid = ? AND id > $last_event_id
+                    every second and emits 'data: {payload}\n\n' lines.
+
+                    Event types:
+                      session_started — payload: {}
+                      session_ended   — payload: {final_results: {...}}
+                      slide_changed   — payload: {slide_id, position}
+                      response_added  — payload: {slide_id, count_now}
+                      participant_joined — payload: {participant_id, count_now}
+
+                    Retention: a daily cron purges events older than 24h
+                    after their session ended (or 72h if session is still
+                    in live state — caps runaway sessions).">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="sessionid"    TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="FK to local_sentientia_live_sessions.id"/>
+        <FIELD NAME="type"         TYPE="char" LENGTH="40"  NOTNULL="true"
+               COMMENT="Event type name (see TABLE comment for list)"/>
+        <FIELD NAME="payload_json" TYPE="text" NOTNULL="false"
+               COMMENT="Type-specific JSON payload"/>
+        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"      TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_sessionid" TYPE="foreign" FIELDS="sessionid"
+             REFTABLE="local_sentientia_live_sessions" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_session_id_window" UNIQUE="false" FIELDS="sessionid, id"
+               COMMENT="SSE poll query: WHERE sessionid = ? AND id > ?
+                        ORDER BY id ASC. This index is the hot path."/>
+        <INDEX NAME="idx_created"           UNIQUE="false" FIELDS="timecreated"
+               COMMENT="Retention purge query"/>
+      </INDEXES>
+    </TABLE>
+
+  </TABLES>
+</XMLDB>
