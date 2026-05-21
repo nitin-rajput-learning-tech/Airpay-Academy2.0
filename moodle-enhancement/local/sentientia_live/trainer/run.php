@@ -145,9 +145,12 @@ if ($current_slide) {
     echo \html_writer::tag('h4',
         format_string($current_slide->title),
         ['class' => 'h4 my-3']);
+    // d-inline-block keeps the type badge fit-to-content + show the
+    // localised label (multichoice -> "Multiple choice") not the slug.
     echo \html_writer::tag('span',
-        s($current_slide->type),
-        ['class' => 'badge bg-secondary']);
+        s(get_string('slide_type_' . $current_slide->type,
+            'local_sentientia_live')),
+        ['class' => 'badge bg-secondary d-inline-block']);
     echo \html_writer::end_div();
 } else {
     echo \html_writer::tag('div',
@@ -155,12 +158,11 @@ if ($current_slide) {
         ['class' => 'alert alert-warning']);
 }
 
-// ── Live runner UI pending Phase E.3 ──
-echo \html_writer::start_div('alert alert-info mt-4');
-echo '<strong>' . get_string('live_runner_pending_title',
-    'local_sentientia_live') . '</strong><br>';
-echo get_string('live_runner_pending_body', 'local_sentientia_live');
-echo \html_writer::end_div();
+// Phase E.3 / E.4 shipped — SSE projector + result panel + live
+// counters all wired via trainer_sse.min.js. Audience count + response
+// count update in place (textContent mutation); slide_changed +
+// session_ended trigger full reload. Phase E.5+ will add explicit
+// advance/back controls + a fullscreen mode.
 
 // ── End session button ──
 $end_url = new \moodle_url('/local/sentientia_live/trainer/end.php',

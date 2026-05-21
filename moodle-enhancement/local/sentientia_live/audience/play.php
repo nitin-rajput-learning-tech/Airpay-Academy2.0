@@ -207,8 +207,13 @@ if (!$current_slide) {
 }
 
 // ── Render the slide ──
-echo \html_writer::start_div('sentientia-audience-slide my-4 mx-auto',
-    null, ['style' => 'max-width: 720px;']);
+// Use start_tag (not start_div) so we can set BOTH class and style —
+// start_div's signature is (classes, attributes) — passing a style via
+// a third arg is silently dropped.
+echo \html_writer::start_tag('div', [
+    'class' => 'sentientia-audience-slide my-4 mx-auto',
+    'style' => 'max-width: 720px;',
+]);
 echo \html_writer::tag('h2',
     format_text($current_slide->title, FORMAT_PLAIN, ['filter' => false]),
     ['class' => 'mb-4 text-center']);
@@ -261,7 +266,7 @@ if ($response_saved) {
     render_response_form($current_slide, $sessionid, $token);
 }
 
-echo \html_writer::end_div();
+echo \html_writer::end_tag('div');
 echo $OUTPUT->footer();
 
 
