@@ -86,11 +86,41 @@ $PAGE->set_pagelayout('login');   // minimal chrome
 $PAGE->set_title(format_string($sess->title));
 $PAGE->set_heading(format_string($sess->title));
 
-// Auto-refresh until SSE lands in Phase E.3.
-$PAGE->requires->js_amd_inline("
-// Lightweight polling fallback — Phase E.3 will swap for EventSource.
-setTimeout(function() { window.location.reload(); }, 10000);
-");
+// Phase E.3 — SSE realtime. Loads the audience_sse AMD module which
+// opens an EventSource against /local/sentientia_live/stream.php. The
+// module falls back to meta-refresh polling if the server has SSE
+// disabled OR the browser is missing EventSource OR the connection
+// closes cleanly.
+$realtime_on = true;
+if (class_exists('\\local_airpay_core\\feature_flags')) {
+    try {
+        $realtime_on = \local_airpay_core\feature_flags::is_enabled(
+            'live.realtime.enabled');
+    } catch (\Throwable $e) {
+        $realtime_on = true;
+    }
+}
+if ($realtime_on) {
+    $sse_opts = [
+        'sessionid' => $sessionid,
+        'token'     => $token,
+    ];
+    $PAGE->requires->js_call_amd(
+        'local_sentientia_live/audience_sse', 'init', [$sse_opts]);
+} else {
+    // Polling fallback when realtime is disabled site-wide.
+    $PAGE->requires->js_amd_inline(
+        "setTimeout(function() { window.location.reload(); }, 10000);");
+}
+
+// Tag the body with the current slide ID so the SSE init can detect
+// page-load drift (user lingered while trainer advanced).
+if (!empty($sess->current_slide_id)) {
+    $PAGE->add_body_class('sentientia-live-audience');
+    $PAGE->requires->js_amd_inline(
+        "document.body.dataset.currentSlideId = '"
+        . (int) $sess->current_slide_id . "';");
+}
 
 // ── Handle response submission ──
 $response_error = null;

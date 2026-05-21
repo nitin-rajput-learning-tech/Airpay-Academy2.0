@@ -64,6 +64,23 @@ if ($sess->current_slide_id) {
 
 $code_pretty = substr($sess->code, 0, 3) . ' ' . substr($sess->code, 3);
 
+// Phase E.3.c — Wire the trainer SSE client so audience-count and
+// response-count update in place without a full page reload.
+$realtime_on = true;
+if (class_exists('\\local_airpay_core\\feature_flags')) {
+    try {
+        $realtime_on = \local_airpay_core\feature_flags::is_enabled(
+            'live.realtime.enabled');
+    } catch (\Throwable $e) {
+        $realtime_on = true;
+    }
+}
+if ($realtime_on) {
+    $PAGE->requires->js_call_amd(
+        'local_sentientia_live/trainer_sse', 'init',
+        [['sessionid' => $id]]);
+}
+
 echo $OUTPUT->header();
 
 // ── Big join code ──
@@ -81,16 +98,30 @@ echo \html_writer::tag('div',
     ['class' => 'text-muted small']);
 echo \html_writer::end_div();
 
-// ── Audience counter ──
+// ── Audience counter (live-updated by trainer_sse module) ──
 echo \html_writer::start_div('alert alert-info d-flex justify-content-between align-items-center');
 echo \html_writer::tag('div',
     '<strong>' . get_string('audience_count_label', 'local_sentientia_live')
-    . ':</strong> <span class="fs-4 ms-2">' . $audience_count . '</span> '
+    . ':</strong> <span id="sentientia-audience-count" class="fs-4 ms-2">'
+    . (int) $audience_count . '</span> '
     . get_string('audience_online', 'local_sentientia_live'));
 echo \html_writer::tag('div',
     '<small class="text-muted">' . get_string('total_slides_label',
         'local_sentientia_live', count($slides)) . '</small>');
 echo \html_writer::end_div();
+
+// ── Response counter for the current slide (live-updated) ──
+if ($sess->current_slide_id) {
+    $response_count = \local_sentientia_live\response_recorder::count_for_slide(
+        (int) $sess->current_slide_id);
+    echo \html_writer::start_div('alert alert-secondary d-flex justify-content-between align-items-center');
+    echo \html_writer::tag('div',
+        '<strong>' . get_string('response_count_label',
+            'local_sentientia_live') . ':</strong> '
+        . '<span id="sentientia-response-count" class="fs-4 ms-2">'
+        . (int) $response_count . '</span>');
+    echo \html_writer::end_div();
+}
 
 // ── Current slide ──
 echo \html_writer::tag('h3',

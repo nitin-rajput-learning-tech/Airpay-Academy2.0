@@ -160,6 +160,7 @@ $string['no_current_slide']           = 'अभी तक कोई स्ला
 $string['live_runner_pending_title']  = 'लाइव रनर — Phase E.3 में रीयल-टाइम प्रोजेक्टर आ रहा है';
 $string['live_runner_pending_body']   = 'वर्तमान placeholder सेशन जानकारी और basic state दिखाता है। Phase E.3 SSE-संचालित प्रोजेक्टर व्यू जोड़ता है (auto-updating ऑडियंस गिनती, लाइव प्रतिक्रिया चार्ट, आगे/पीछे बटन, full-screen मोड)।';
 $string['action_end_session']         = 'इस सेशन को समाप्त करें';
+$string['response_count_label']       = 'प्राप्त प्रतिक्रियाएं';
 
 // ── Phase E.1.j — slide editor strings ─────────────────────────────
 

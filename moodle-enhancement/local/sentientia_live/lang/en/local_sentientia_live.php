@@ -160,6 +160,7 @@ $string['no_current_slide']           = 'No slide selected yet. Use the slide ed
 $string['live_runner_pending_title']  = 'Live runner — real-time projector coming in Phase E.3';
 $string['live_runner_pending_body']   = 'The current placeholder shows session info and basic state. The Phase E.3 ship adds the SSE-driven projector view (auto-updating audience count, live response chart, advance/back buttons, full-screen mode).';
 $string['action_end_session']         = 'End this session';
+$string['response_count_label']       = 'Responses received';
 
 // ── Phase E.1.j — slide editor strings ─────────────────────────────
 
