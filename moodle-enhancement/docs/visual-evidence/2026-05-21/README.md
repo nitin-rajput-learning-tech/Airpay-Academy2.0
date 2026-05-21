@@ -120,3 +120,75 @@
 3. Test on mobile viewport (590px Chrome devtools mode)
 4. Test SSE realtime end-to-end with two browser windows (trainer in one, audience in another)
 5. Walk through push subscribe flow with a real browser subscription (Phase B verification's remaining gate)
+
+---
+
+## Addendum — late afternoon (2026-05-21 ~14:50)
+
+### VIS-10 — SSE → chart_updater two-browser verification (Phase E.5 closeout)
+
+**Root cause found + fixed:** `audience_sse.min.js` + `trainer_sse.min.js` hardcoded
+the SSE URL fallback as `/local/sentientia_live/stream.php` — leading slash
+resolves against domain root, so on our XAMPP `/moodle/...` install the
+EventSource hit `http://localhost:8080/local/...` (HTTP 503) instead of
+`http://localhost:8080/moodle/local/...`. The audience-side smoke test
+in Phase E.3 had silently fallen through to polling-reload — looked OK,
+wasn't real SSE.
+
+**Fix:** Default `streamUrl` is now `M.cfg.wwwroot + '/local/sentientia_live/stream.php'`.
+Guarded with `typeof M !== 'undefined' && M.cfg && M.cfg.wwwroot` — `M` is a
+bare Moodle global, not a `window.M` property, so the `typeof` check
+avoids ReferenceError.
+
+Also removed `withCredentials: true` from the trainer EventSource —
+Chrome treats it as CORS-credentials mode even same-origin, requiring an
+explicit Access-Control-Allow-Credentials response header that our
+same-origin SSE endpoint doesn't (and shouldn't have to) send.
+
+**Verified via Chrome MCP on session #17 / slide #28 (multichoice):**
+After deploy + cache purge + hard reload:
+- `stream.php` returns HTTP **200** (was 503)
+- `trainer_sse.init()` runs, EventSource opens, held in OPEN state
+- `window.sentientiaLiveTrainerSSE` set (`readyState === 1`)
+- CLI inserts 3rd then 4th response → SSE delivers `response_added`
+- Visible counters tick: "Responses received: 3 → 4"
+- `chart_updater` mutates bar widths in place: React 67% → 50%, Svelte 33% → 50%
+- **No page reload** during the transition — pure DOM mutation
+
+Files: 4 commits in `4abc70a..670b3c2` range (SSE URL fix + dedup).
+
+### E.6 — Quiz leaderboard + correct-answer summary
+
+Built + verified on the trainer view of session #17 / new quiz slide #29
+("Which planet do humans live on?" with options Mercury / Venus /
+**Earth** / Mars, correct_index = 2).
+
+CLI seeded 4 responses with staggered timestamps to simulate real
+answer timing:
+- Anna → Mars (wrong) at +12s
+- Ben → Earth (correct) at +5s ← first-to-answer
+- Carla → Earth (correct) at +18s
+- Mobile Tester → Venus (wrong) at +25s
+
+**Trainer view renders correctly:**
+- Bar chart shows all 4 options. Earth highlighted with green "Correct"
+  badge + green bar (full width since it has max count = 2)
+- Blue info alert: "**Quiz result: 2 of 4 got it right (50%)**" on left,
+  "Correct answer: **Earth**" on right
+- Leaderboard card with table:
+  - Rank 1 (winner-highlighted with `table-warning` yellow background): **Ben — 5s**
+  - Rank 2: Carla — 18s
+
+**Audience view (not yet visually walked):** leaderboard is hidden
+(`show_to_audience = true` default → trainer must pass `false` to see it).
+Audience sees the bar chart + correct-answer-revealed badge only,
+preserving the pacing where the trainer chooses when to reveal who
+got it right first.
+
+**SSE-driven update path:** `chart_updater` now also mutates the
+`.sentientia-quiz-correct-count` / `.sentientia-quiz-total` /
+`.sentientia-quiz-percent-correct` spans on each `response_added`
+event for quiz slides. Leaderboard refresh stays page-reload-driven
+(we don't build display-name DOM nodes via JS to preserve XSS safety
+per ADR-004 — mustache renders them at page load).
+

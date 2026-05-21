@@ -174,6 +174,18 @@ $string['live_results_rank_label']     = 'रैंक';
 $string['live_results_item_label']     = 'आइटम';
 $string['live_results_avg_pos_label']  = 'औसत स्थिति';
 
+// ── Phase E.6 — Quiz सारांश + leaderboard ─────────────────────────
+$string['quiz_summary_label']            = 'क्विज़ परिणाम:';
+$string['quiz_summary_of']               = 'में से';
+$string['quiz_summary_got_it_right']     = 'ने सही उत्तर दिया';
+$string['quiz_summary_correct_was']      = 'सही उत्तर:';
+$string['quiz_leaderboard_label']        = 'लीडरबोर्ड';
+$string['quiz_leaderboard_rank_col']     = 'रैंक';
+$string['quiz_leaderboard_name_col']     = 'नाम';
+$string['quiz_leaderboard_time_col']     = 'समय';
+$string['quiz_leaderboard_seconds_suffix']= 'से';
+$string['quiz_leaderboard_empty']        = 'अभी तक कोई सही उत्तर नहीं।';
+
 // ── Phase E.1.j — slide editor strings ─────────────────────────────
 
 $string['invalidslide']                = 'स्लाइड मौजूद नहीं है।';

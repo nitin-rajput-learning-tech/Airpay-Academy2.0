@@ -134,7 +134,11 @@ echo \html_writer::tag('h3',
 
 if ($current_slide) {
     // Phase E.4 — render the live result panel for the current slide.
-    $panel = new \local_sentientia_live\output\result_panel($current_slide);
+    // Phase E.6 — pass show_to_audience=false so quiz leaderboards
+    // render for the trainer. Audience-side (audience/play.php) uses
+    // the default true and gets the bar chart only.
+    $panel = new \local_sentientia_live\output\result_panel(
+        $current_slide, /* show_to_audience */ false);
     echo $OUTPUT->render_from_template(
         'local_sentientia_live/result_panel',
         $panel->export_for_template($OUTPUT));

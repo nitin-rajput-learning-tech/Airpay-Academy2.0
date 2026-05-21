@@ -45,9 +45,55 @@ const handleResponseAdded = (ev) => {
 
     if (slideType === 'multichoice' || slideType === 'quiz') {
         updateBarChart(panel, tally);
+        if (slideType === 'quiz') {
+            // Phase E.6 — also update the "X of Y got it right" summary
+            // numbers in place. Leaderboard refresh is page-reload-driven
+            // (we don't build DOM nodes with user display names here to
+            // stay XSS-safe; mustache renders them at page load).
+            updateQuizSummary(panel, tally, countNow);
+        }
     } else if (slideType === 'rating') {
         updateRatingChart(panel, tally);
     }
+};
+
+/**
+ * Phase E.6 — quiz summary numbers. The DOM has data-correct-index on
+ * the row that's marked correct (.sentientia-bar-row.border-success);
+ * we walk tally and find the count for that index. textContent only —
+ * no innerHTML, no shape change.
+ */
+const updateQuizSummary = (panel, tally, countNow) => {
+    const summary = panel.querySelector('.sentientia-quiz-summary');
+    if (!summary) {
+        return;  // not a quiz, or summary not rendered (no responses yet)
+    }
+    // The correct option is the row with bg-success class — find it.
+    const correctRow = panel.querySelector(
+        '.sentientia-bar-row .badge.bg-success');
+    let correctIdx = -1;
+    if (correctRow) {
+        const row = correctRow.closest('.sentientia-bar-row');
+        if (row && row.dataset.optionIndex !== undefined) {
+            correctIdx = parseInt(row.dataset.optionIndex, 10);
+        }
+    }
+    if (correctIdx < 0) {
+        return;
+    }
+    const correctCount = (typeof tally[correctIdx] === 'number')
+        ? tally[correctIdx]
+        : (typeof tally[String(correctIdx)] === 'number')
+        ? tally[String(correctIdx)] : 0;
+    const total = (typeof countNow === 'number') ? countNow : 0;
+    const percent = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+
+    const countEl = summary.querySelector('.sentientia-quiz-correct-count');
+    if (countEl) { countEl.textContent = String(correctCount); }
+    const totalEl = summary.querySelector('.sentientia-quiz-total');
+    if (totalEl) { totalEl.textContent = String(total); }
+    const pctEl = summary.querySelector('.sentientia-quiz-percent-correct');
+    if (pctEl) { pctEl.textContent = String(percent); }
 };
 
 const updateBarChart = (panel, tally) => {

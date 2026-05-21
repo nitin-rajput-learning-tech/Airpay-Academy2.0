@@ -174,6 +174,18 @@ $string['live_results_rank_label']     = 'Rank';
 $string['live_results_item_label']     = 'Item';
 $string['live_results_avg_pos_label']  = 'Avg position';
 
+// ── Phase E.6 — quiz correct-answer summary + leaderboard ─────────
+$string['quiz_summary_label']            = 'Quiz result:';
+$string['quiz_summary_of']               = 'of';
+$string['quiz_summary_got_it_right']     = 'got it right';
+$string['quiz_summary_correct_was']      = 'Correct answer:';
+$string['quiz_leaderboard_label']        = 'Leaderboard';
+$string['quiz_leaderboard_rank_col']     = 'Rank';
+$string['quiz_leaderboard_name_col']     = 'Name';
+$string['quiz_leaderboard_time_col']     = 'Time';
+$string['quiz_leaderboard_seconds_suffix']= 's';
+$string['quiz_leaderboard_empty']        = 'No correct answers yet.';
+
 // ── Phase E.1.j — slide editor strings ─────────────────────────────
 
 $string['invalidslide']                = 'Slide does not exist.';

@@ -60,10 +60,28 @@ class result_panel implements \renderable, \templatable {
         switch ($type) {
             case 'multichoice':
             case 'quiz':
+                $correct_idx = $type === 'quiz'
+                    ? (int) ($settings['correct_index'] ?? -1)
+                    : -1;
                 $ctx['options'] = $this->shape_bar_chart(
-                    $settings['options'] ?? [],
-                    $tally,
-                    $type === 'quiz' ? (int) ($settings['correct_index'] ?? -1) : -1);
+                    $settings['options'] ?? [], $tally, $correct_idx);
+                // Phase E.6 — quiz-only: "X of Y got it right" summary
+                // + leaderboard of who answered correctly first.
+                if ($type === 'quiz') {
+                    $ctx['quiz_summary'] = $this->shape_quiz_summary(
+                        $tally, $correct_idx, $total,
+                        $settings['options'] ?? []);
+                    // Leaderboard is trainer-only — audience never sees
+                    // who got it right (preserves answer-reveal pacing).
+                    if (!$this->show_to_audience) {
+                        $ctx['quiz_leaderboard'] = $this->shape_quiz_leaderboard(
+                            (int) $this->slide->id,
+                            (int) $this->slide->sessionid,
+                            $correct_idx);
+                        $ctx['has_quiz_leaderboard']
+                            = !empty($ctx['quiz_leaderboard']);
+                    }
+                }
                 break;
 
             case 'rating':
@@ -197,6 +215,121 @@ class result_panel implements \renderable, \templatable {
             ];
         }
         return $out;
+    }
+
+    /**
+     * Phase E.6 — Quiz summary: "X of Y got it right (Z%)" + the
+     * correct-option label for the trainer header.
+     *
+     * @param array $tally        {idx => count} from response_recorder
+     * @param int   $correct_idx  Index of the correct option (-1 if not set)
+     * @param int   $total        Total responses for this slide
+     * @param array $option_labels Option text labels by index
+     */
+    private function shape_quiz_summary(array $tally, int $correct_idx,
+                                         int $total, array $option_labels): array {
+        $correct_count = ($correct_idx >= 0
+            && isset($tally[$correct_idx]))
+            ? (int) $tally[$correct_idx]
+            : 0;
+        $percent_correct = $total > 0
+            ? round(($correct_count / $total) * 100)
+            : 0;
+        $correct_label = ($correct_idx >= 0
+            && isset($option_labels[$correct_idx]))
+            ? $option_labels[$correct_idx]
+            : '';
+        return [
+            'correct_count'   => $correct_count,
+            'total'           => $total,
+            'percent_correct' => $percent_correct,
+            'correct_label'   => $correct_label,
+            'has_correct'     => $correct_idx >= 0,
+        ];
+    }
+
+    /**
+     * Phase E.6 — Quiz leaderboard: list of participants who answered
+     * correctly, ordered by response time ascending (first to answer
+     * gets rank 1). Time-to-answer is computed as
+     * response.timecreated - slide_changed.timecreated_for_this_slide
+     * (falls back to session.timestarted if no slide_changed event found).
+     *
+     * Capped to top 20 — Mentimeter caps at 10, we go a bit higher
+     * because larger Airpay sessions exist (300+ live participants).
+     *
+     * @return array Each entry: ['rank', 'display_name', 'time_s']
+     */
+    private function shape_quiz_leaderboard(int $slideid, int $sessionid,
+                                              int $correct_idx): array {
+        global $DB;
+        if ($correct_idx < 0) {
+            return [];
+        }
+
+        // Find when this slide became current (latest slide_changed
+        // event referencing this slide_id). Without it, fall back to
+        // the session's timestarted.
+        $slide_start_t = $this->find_slide_start_time($sessionid, $slideid);
+
+        $rows = $DB->get_records_sql(
+            "SELECT r.id, r.participantid, r.value_int, r.timecreated,
+                    p.display_name
+               FROM {local_sentientia_live_responses} r
+          LEFT JOIN {local_sentientia_live_participants} p
+                    ON p.id = r.participantid
+              WHERE r.slideid     = :slideid
+                AND r.value_int   = :correct_idx
+           ORDER BY r.timecreated ASC, r.id ASC",
+            ['slideid' => $slideid, 'correct_idx' => $correct_idx],
+            0, 20
+        );
+
+        $out = [];
+        $rank = 1;
+        foreach ($rows as $r) {
+            $delta = max(0, (int) $r->timecreated - $slide_start_t);
+            $out[] = [
+                'rank'         => $rank,
+                'display_name' => $r->display_name ?? '?',
+                'time_s'       => $delta,
+                'is_winner'    => $rank === 1,
+            ];
+            $rank++;
+        }
+        return $out;
+    }
+
+    /**
+     * When did this slide become current? Looks at the latest
+     * slide_changed event whose payload references this slide_id.
+     * Falls back to the session's timestarted if no event found.
+     */
+    private function find_slide_start_time(int $sessionid, int $slideid): int {
+        global $DB;
+        // Cheap LIKE — event payload is small JSON, this fits an index
+        // on (sessionid, type, timecreated DESC) implicitly via the
+        // pk-ordered scan. Iterate newest-first, decode JSON, match
+        // on slide_id. Cap at 100 events to bound the scan.
+        $events = $DB->get_records(
+            'local_sentientia_live_events',
+            ['sessionid' => $sessionid, 'type' => 'slide_changed'],
+            'timecreated DESC, id DESC',
+            'id, payload_json, timecreated',
+            0, 100
+        );
+        foreach ($events as $e) {
+            $payload = json_decode($e->payload_json ?? '{}', true);
+            if (is_array($payload)
+                && (int) ($payload['slide_id'] ?? 0) === $slideid) {
+                return (int) $e->timecreated;
+            }
+        }
+        // Fallback — session start time. Better than 0 (which would
+        // make every time-to-answer absurdly large).
+        $sess = $DB->get_record('local_sentientia_live_sessions',
+            ['id' => $sessionid], 'timestarted, timecreated');
+        return (int) ($sess->timestarted ?: ($sess->timecreated ?? 0));
     }
 
     /**
