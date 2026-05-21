@@ -120,3 +120,43 @@ $string['form_max_concurrent_help']   = 'Hard cap on how many audience members c
 $string['form_max_concurrent_range']  = 'Maximum concurrent audience must be between 1 and 500.';
 
 $string['form_create_submit']         = 'Create session';
+
+// ── Phase E.1.i — edit / end / delete handler strings ──
+$string['edit_session_pagetitle']     = 'Edit live session';
+$string['cannot_edit_session']        = 'You do not have permission to edit this session.';
+$string['cannot_edit_live_session']   = 'A live session cannot be edited. End it first to make changes.';
+$string['cannot_run_session']         = 'You do not have permission to run this session.';
+$string['cannot_delete_session']      = 'You do not have permission to delete this session.';
+$string['session_updated_notice']     = 'Session updated.';
+$string['session_ended_notice']       = 'Session ended. Audience disconnected; results frozen.';
+$string['session_not_live_error']     = 'Cannot end this session — it is not currently live.';
+$string['session_deleted_notice']     = 'Session deleted permanently.';
+$string['delete_session_pagetitle']   = 'Delete live session';
+$string['delete_session_heading']     = 'Delete live session?';
+$string['delete_session_confirm_html'] = 'You are about to permanently delete <strong>{$a->title}</strong>. This will remove <strong>{$a->slide_count}</strong> slide(s) and <strong>{$a->participant_count}</strong> audience record(s) with all their responses.<br><br>This cannot be undone.';
+$string['state_label']                = 'State';
+$string['code_label']                 = 'Join code';
+$string['action_start_session']       = 'Start session';
+$string['add_slide_to_start']         = 'Add at least one slide before starting the session.';
+$string['slides_heading']             = 'Slides';
+$string['no_slides_yet']              = 'No slides added yet.';
+$string['slide_editor_pending_title']  = 'Slide editor — coming in Phase E.1.j';
+$string['slide_editor_pending_body']   = 'Adding and editing slides is being built next. Until then, the session frame is in place: you can rename it, adjust audience settings, and (once slides exist) start the session.';
+$string['settings_heading_inline']    = 'Audience settings';
+
+// ── Phase E.1.i — start/run page strings ──
+$string['session_started_notice']     = 'Session is now live. Audience can join using the code below.';
+$string['session_not_startable_error']= 'Could not start the session — it may not be in draft state.';
+$string['session_not_live_for_run']   = 'This session is not live. Start it first.';
+$string['run_session_pagetitle']      = 'Run live session';
+$string['audience_join_at']           = 'Audience joins at';
+$string['audience_join_url_hint']     = 'Send your audience to {$a} and they enter the code above.';
+$string['audience_count_label']       = 'Audience';
+$string['audience_online']            = 'online now';
+$string['total_slides_label']         = '{$a} slides in deck';
+$string['current_slide_heading']      = 'Current slide';
+$string['slide_position_of']          = 'Slide {$a->pos} of {$a->total}';
+$string['no_current_slide']           = 'No slide selected yet. Use the slide editor to pick which slide to show first.';
+$string['live_runner_pending_title']  = 'Live runner — real-time projector coming in Phase E.3';
+$string['live_runner_pending_body']   = 'The current placeholder shows session info and basic state. The Phase E.3 ship adds the SSE-driven projector view (auto-updating audience count, live response chart, advance/back buttons, full-screen mode).';
+$string['action_end_session']         = 'End this session';

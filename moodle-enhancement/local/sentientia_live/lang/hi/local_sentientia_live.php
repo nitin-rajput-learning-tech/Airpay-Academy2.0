@@ -120,3 +120,43 @@ $string['form_max_concurrent_help']   = 'एक साथ कितने ऑड
 $string['form_max_concurrent_range']  = 'अधिकतम सहवर्ती ऑडियंस 1 और 500 के बीच होना चाहिए।';
 
 $string['form_create_submit']         = 'सेशन बनाएं';
+
+// ── Phase E.1.i — edit / end / delete handler strings ──
+$string['edit_session_pagetitle']     = 'लाइव सेशन संपादित करें';
+$string['cannot_edit_session']        = 'इस सेशन को संपादित करने की अनुमति आपके पास नहीं है।';
+$string['cannot_edit_live_session']   = 'लाइव सेशन को संपादित नहीं किया जा सकता। बदलाव करने के लिए पहले इसे समाप्त करें।';
+$string['cannot_run_session']         = 'इस सेशन को चलाने की अनुमति आपके पास नहीं है।';
+$string['cannot_delete_session']      = 'इस सेशन को हटाने की अनुमति आपके पास नहीं है।';
+$string['session_updated_notice']     = 'सेशन अपडेट हुआ।';
+$string['session_ended_notice']       = 'सेशन समाप्त। ऑडियंस disconnect; परिणाम फ़्रीज़।';
+$string['session_not_live_error']     = 'इस सेशन को समाप्त नहीं किया जा सकता — यह वर्तमान में लाइव नहीं है।';
+$string['session_deleted_notice']     = 'सेशन स्थायी रूप से हट गया।';
+$string['delete_session_pagetitle']   = 'लाइव सेशन हटाएं';
+$string['delete_session_heading']     = 'लाइव सेशन हटाएं?';
+$string['delete_session_confirm_html'] = 'आप <strong>{$a->title}</strong> को स्थायी रूप से हटाने वाले हैं। यह <strong>{$a->slide_count}</strong> स्लाइड और <strong>{$a->participant_count}</strong> ऑडियंस रिकॉर्ड को उनकी सभी प्रतिक्रियाओं सहित हटा देगा।<br><br>इसे पूर्ववत नहीं किया जा सकता।';
+$string['state_label']                = 'स्थिति';
+$string['code_label']                 = 'Join कोड';
+$string['action_start_session']       = 'सेशन शुरू करें';
+$string['add_slide_to_start']         = 'सेशन शुरू करने से पहले कम से कम एक स्लाइड जोड़ें।';
+$string['slides_heading']             = 'स्लाइड';
+$string['no_slides_yet']              = 'अभी तक कोई स्लाइड नहीं जोड़ी गई।';
+$string['slide_editor_pending_title']  = 'स्लाइड संपादक — Phase E.1.j में आ रहा है';
+$string['slide_editor_pending_body']   = 'स्लाइड जोड़ना और संपादन अगला बनाया जा रहा है। तब तक, सेशन फ़्रेम अपनी जगह पर है: आप इसे rename कर सकते हैं, ऑडियंस सेटिंग्स समायोजित कर सकते हैं, और (एक बार स्लाइड मौजूद हो जाए) सेशन शुरू कर सकते हैं।';
+$string['settings_heading_inline']    = 'ऑडियंस सेटिंग्स';
+
+// ── Phase E.1.i — start/run page strings ──
+$string['session_started_notice']     = 'सेशन अब लाइव है। ऑडियंस नीचे दिए गए कोड का उपयोग करके join कर सकते हैं।';
+$string['session_not_startable_error']= 'सेशन शुरू नहीं कर सका — हो सकता है यह draft state में न हो।';
+$string['session_not_live_for_run']   = 'यह सेशन लाइव नहीं है। पहले इसे शुरू करें।';
+$string['run_session_pagetitle']      = 'लाइव सेशन चलाएं';
+$string['audience_join_at']           = 'ऑडियंस यहाँ join करें';
+$string['audience_join_url_hint']     = 'अपने ऑडियंस को {$a} पर भेजें और वे ऊपर दिया गया कोड दर्ज करें।';
+$string['audience_count_label']       = 'ऑडियंस';
+$string['audience_online']            = 'अभी ऑनलाइन';
+$string['total_slides_label']         = 'डेक में {$a} स्लाइड';
+$string['current_slide_heading']      = 'वर्तमान स्लाइड';
+$string['slide_position_of']          = 'स्लाइड {$a->pos} में से {$a->total}';
+$string['no_current_slide']           = 'अभी तक कोई स्लाइड चयनित नहीं। पहले कौन सी स्लाइड दिखानी है यह चुनने के लिए स्लाइड संपादक का उपयोग करें।';
+$string['live_runner_pending_title']  = 'लाइव रनर — Phase E.3 में रीयल-टाइम प्रोजेक्टर आ रहा है';
+$string['live_runner_pending_body']   = 'वर्तमान placeholder सेशन जानकारी और basic state दिखाता है। Phase E.3 SSE-संचालित प्रोजेक्टर व्यू जोड़ता है (auto-updating ऑडियंस गिनती, लाइव प्रतिक्रिया चार्ट, आगे/पीछे बटन, full-screen मोड)।';
+$string['action_end_session']         = 'इस सेशन को समाप्त करें';
