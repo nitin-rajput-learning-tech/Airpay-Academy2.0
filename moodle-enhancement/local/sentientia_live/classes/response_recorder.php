@@ -91,10 +91,22 @@ class response_recorder {
         participant_manager::heartbeat($participantid);
 
         // Emit response_added event for trainer-side SSE.
+        //
+        // Phase E.5 — include the FULL tally in the event payload so
+        // SSE clients can mutate bar widths + counts in place without
+        // a separate fetch. For chart types where the tally is shape
+        // {idx => count}, the JS uses [data-option-index] / [data-rating-value]
+        // selectors to find each bar and update its style.width +
+        // textContent. For wordcloud / openended / ranking the clients
+        // fall back to location.reload (DOM creation needs careful
+        // escaping; addressed in a later phase).
         $count_now = self::count_for_slide($slideid);
+        $tally     = self::tally($slideid);
         event_journal::write((int) $slide->sessionid, 'response_added', [
-            'slide_id'  => $slideid,
-            'count_now' => $count_now,
+            'slide_id'    => $slideid,
+            'slide_type'  => $slide->type,
+            'count_now'   => $count_now,
+            'tally'       => $tally,
         ]);
 
         return $response_id;

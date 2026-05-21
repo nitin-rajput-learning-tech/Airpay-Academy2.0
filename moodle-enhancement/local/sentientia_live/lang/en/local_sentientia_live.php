@@ -296,6 +296,7 @@ $string['audience_session_ended_body']    = 'Thanks for participating. Your resp
 $string['audience_response_saved']      = 'Response received — thanks!';
 $string['audience_already_responded']   = 'You have already responded to this slide.';
 $string['audience_submit_response']     = 'Submit response';
+$string['audience_slide_progress']      = 'Question {$a->pos} of {$a->total}';
 
 // Response-side placeholders.
 $string['wc_response_placeholder']      = 'Type one word…';

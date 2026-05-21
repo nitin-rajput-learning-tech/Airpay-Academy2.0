@@ -103,11 +103,15 @@ if ($sess && $action === 'join' && confirm_sesskey()) {
 
 // ── Step 1: render the form ──
 echo $OUTPUT->header();
-echo $OUTPUT->heading(get_string('audience_join_heading', 'local_sentientia_live'));
 
+// Phase E.5 UX nit — heading was rendering top-left because $OUTPUT->heading
+// honours layout default alignment. Wrap in a centered container.
+echo \html_writer::start_div('text-center');
+echo $OUTPUT->heading(get_string('audience_join_heading', 'local_sentientia_live'));
 echo \html_writer::tag('p',
     get_string('audience_join_intro', 'local_sentientia_live'),
-    ['class' => 'text-center text-muted mb-4']);
+    ['class' => 'text-muted mb-4']);
+echo \html_writer::end_div();
 
 echo \html_writer::start_tag('form',
     ['method' => 'get', 'action' => $PAGE->url->out_omit_querystring(),

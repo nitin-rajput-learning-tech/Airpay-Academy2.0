@@ -296,6 +296,7 @@ $string['audience_session_ended_body']    = 'भाग लेने के ल�
 $string['audience_response_saved']      = 'प्रतिक्रिया प्राप्त हुई — धन्यवाद!';
 $string['audience_already_responded']   = 'आप पहले ही इस स्लाइड पर प्रतिक्रिया दे चुके हैं।';
 $string['audience_submit_response']     = 'प्रतिक्रिया भेजें';
+$string['audience_slide_progress']      = 'प्रश्न {$a->pos} में से {$a->total}';
 
 // Response-side placeholders.
 $string['wc_response_placeholder']      = 'एक शब्द टाइप करें…';

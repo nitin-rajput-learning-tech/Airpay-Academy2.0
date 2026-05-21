@@ -107,6 +107,11 @@ if ($realtime_on) {
     ];
     $PAGE->requires->js_call_amd(
         'local_sentientia_live/audience_sse', 'init', [$sse_opts]);
+    // Phase E.5 — chart updater listens for the response_added
+    // CustomEvent that audience_sse dispatches, mutates bar widths +
+    // counts in place without a page reload.
+    $PAGE->requires->js_call_amd(
+        'local_sentientia_live/chart_updater', 'init');
 } else {
     // Polling fallback when realtime is disabled site-wide.
     $PAGE->requires->js_amd_inline(
@@ -214,6 +219,19 @@ echo \html_writer::start_tag('div', [
     'class' => 'sentientia-audience-slide my-4 mx-auto',
     'style' => 'max-width: 720px;',
 ]);
+
+// Phase E.5 UX nit — audience progress indicator. Shows "Question 1 of 5"
+// so the audience knows where they are in the session.
+$total_slides = \local_sentientia_live\slide_manager::count_for_session($sessionid);
+echo \html_writer::tag('div',
+    get_string('audience_slide_progress', 'local_sentientia_live',
+        (object) [
+            'pos'   => (int) $current_slide->position,
+            'total' => $total_slides,
+        ]
+    ),
+    ['class' => 'text-muted text-center small mb-2']);
+
 echo \html_writer::tag('h2',
     format_text($current_slide->title, FORMAT_PLAIN, ['filter' => false]),
     ['class' => 'mb-4 text-center']);

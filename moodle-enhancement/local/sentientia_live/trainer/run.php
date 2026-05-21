@@ -79,6 +79,10 @@ if ($realtime_on) {
     $PAGE->requires->js_call_amd(
         'local_sentientia_live/trainer_sse', 'init',
         [['sessionid' => $id]]);
+    // Phase E.5 — chart updater listens for response_added CustomEvent
+    // dispatched by trainer_sse, mutates bar widths + counts in place.
+    $PAGE->requires->js_call_amd(
+        'local_sentientia_live/chart_updater', 'init');
 }
 
 echo $OUTPUT->header();
