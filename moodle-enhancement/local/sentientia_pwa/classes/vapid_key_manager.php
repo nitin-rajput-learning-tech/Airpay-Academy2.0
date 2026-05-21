@@ -178,8 +178,17 @@ class vapid_key_manager {
         }
 
         // Export PEM — Phase B.2.5's JWT signer uses this via openssl_sign().
+        // openssl_pkey_export() ALSO needs the config arg on Windows when
+        // the OS-default openssl.cnf isn't on the search path — same root
+        // cause as openssl_pkey_new() above. Pass our autodetected path.
         $private_pem = '';
-        openssl_pkey_export($resource, $private_pem);
+        $export_opts = $config_path !== null ? ['config' => $config_path] : [];
+        $export_ok = openssl_pkey_export($resource, $private_pem, null, $export_opts);
+        if (!$export_ok || empty($private_pem)) {
+            throw new \moodle_exception('vapid_generation_failed',
+                'local_sentientia_pwa', '',
+                'openssl_pkey_export failed: ' . (openssl_error_string() ?: 'unknown'));
+        }
 
         // Base64url encode (RFC 4648 §5 — no padding).
         $public_b64url  = self::b64url_encode($public_key_bin);

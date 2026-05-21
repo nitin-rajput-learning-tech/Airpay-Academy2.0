@@ -22,10 +22,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_pwa';
-$plugin->version   = 2026052101;
+$plugin->version   = 2026052102;
 $plugin->requires  = 2022041900;
-$plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '0.2.2-beta';   // Phase B.2.b — VAPID keygen + subscribe UI + AMD module + admin settings
+$plugin->maturity  = MATURITY_ALPHA;   // Phase B.2.5 hand-rolls crypto — needs review before MATURITY_BETA promotion
+$plugin->release   = '0.2.5-alpha';    // Phase B.2.5 — real push delivery (ES256 JWT + aes128gcm encryption)
 $plugin->dependencies = [
     'local_airpay_core' => 2026051200,  // feature_flags resolver
 ];

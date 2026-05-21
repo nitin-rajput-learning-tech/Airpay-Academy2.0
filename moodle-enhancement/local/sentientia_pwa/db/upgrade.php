@@ -67,5 +67,14 @@ function xmldb_local_sentientia_pwa_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026052101, 'local', 'sentientia_pwa');
     }
 
+    // ── 2026052102 — Phase B.2.5: real push delivery (no schema changes) ──
+    // jwt_signer + payload_encrypter + push_sender rewrite. CLI test_crypto.php
+    // validates the math via self-consistent roundtrip. Maturity dropped to
+    // MATURITY_ALPHA because the crypto is hand-rolled — needs security
+    // review before flipping sentientia.pwa.push.enabled ON in production.
+    if ($oldversion < 2026052102) {
+        upgrade_plugin_savepoint(true, 2026052102, 'local', 'sentientia_pwa');
+    }
+
     return true;
 }
