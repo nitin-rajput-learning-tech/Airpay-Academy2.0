@@ -58,5 +58,14 @@ function xmldb_local_sentientia_pwa_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026052003, 'local', 'sentientia_pwa');
     }
 
+    // ── 2026052101 — Phase B.2.b: subscribe UI (no schema changes) ──
+    // This step ONLY advances the version pointer. The actual additions
+    // are PHP / JS / Mustache files that ship with the plugin — no DB
+    // mutation required. We still need the savepoint so Moodle stops
+    // re-running this upgrade.
+    if ($oldversion < 2026052101) {
+        upgrade_plugin_savepoint(true, 2026052101, 'local', 'sentientia_pwa');
+    }
+
     return true;
 }

@@ -1,0 +1,74 @@
+{{!
+    @template local_sentientia_pwa/subscribe_widget
+
+    Push subscription widget — renders the "Enable browser notifications"
+    button and drives the subscribe / unsubscribe AMD module.
+
+    Context variables:
+      vapidPublicKey  base64url-encoded VAPID public key (or empty string
+                      if no keypair has been generated yet)
+      isready         true if VAPID keypair exists AND push flag is on
+      pluginnotsetup  true if no keypair stored — shows "not set up" notice
+      pushflag_on     true if sentientia.pwa.push.enabled flag is on
+      wwwroot         site root URL (for help links)
+
+    Example context (json):
+    {
+        "vapidPublicKey": "BD...AbCdEf-_",
+        "isready": true,
+        "pluginnotsetup": false,
+        "pushflag_on": true,
+        "wwwroot": "https://www.airpay.academy/"
+    }
+}}
+<div class="sentientia-pwa-subscribe card p-4 my-3"
+     data-vapid-public-key="{{vapidPublicKey}}">
+
+  <h3 class="h5 mb-3">
+    {{#str}}subscribe_section_title, local_sentientia_pwa{{/str}}
+  </h3>
+
+  {{#pluginnotsetup}}
+    <div class="alert alert-warning mb-0" role="alert">
+      <strong>{{#str}}vapid_not_setup_title, local_sentientia_pwa{{/str}}</strong>
+      <p class="mb-0 mt-2">{{#str}}vapid_not_setup_body, local_sentientia_pwa{{/str}}</p>
+    </div>
+  {{/pluginnotsetup}}
+
+  {{^pushflag_on}}
+    {{^pluginnotsetup}}
+      <div class="alert alert-info mb-0" role="alert">
+        {{#str}}push_flag_off_notice, local_sentientia_pwa{{/str}}
+      </div>
+    {{/pluginnotsetup}}
+  {{/pushflag_on}}
+
+  {{#isready}}
+    {{#pushflag_on}}
+      <p class="text-muted">{{#str}}subscribe_intro, local_sentientia_pwa{{/str}}</p>
+
+      <div id="sentientia-pwa-status">
+        <button id="sentientia-pwa-subscribe-btn"
+                type="button"
+                class="btn btn-primary"
+                data-action="subscribe"
+                data-subscribe-label="{{#str}}subscribe_enable, local_sentientia_pwa{{/str}}"
+                data-unsubscribe-label="{{#str}}subscribe_disable, local_sentientia_pwa{{/str}}"
+                data-unsupported-label="{{#str}}subscribe_unsupported, local_sentientia_pwa{{/str}}"
+                data-denied-label="{{#str}}subscribe_denied, local_sentientia_pwa{{/str}}">
+          {{#str}}subscribe_enable, local_sentientia_pwa{{/str}}
+        </button>
+      </div>
+
+      <p class="text-muted small mt-3 mb-0">
+        <em>{{#str}}subscribe_privacy_note, local_sentientia_pwa{{/str}}</em>
+      </p>
+    {{/pushflag_on}}
+  {{/isready}}
+</div>
+
+{{#js}}
+require(['local_sentientia_pwa/subscribe'], function(Subscribe) {
+    Subscribe.init();
+});
+{{/js}}
