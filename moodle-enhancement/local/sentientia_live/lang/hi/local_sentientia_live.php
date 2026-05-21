@@ -162,6 +162,18 @@ $string['live_runner_pending_body']   = 'वर्तमान placeholder स�
 $string['action_end_session']         = 'इस सेशन को समाप्त करें';
 $string['response_count_label']       = 'प्राप्त प्रतिक्रियाएं';
 
+// ── Phase E.4 — result panel strings ───────────────────────────────
+$string['live_results_heading']        = 'लाइव परिणाम';
+$string['live_results_total_suffix']   = 'प्रतिक्रियाएं';
+$string['live_results_empty']          = 'अभी तक कोई प्रतिक्रिया नहीं — कोड साझा करें और अपने ऑडियंस की प्रतीक्षा करें।';
+$string['live_results_correct_label']  = 'सही';
+$string['live_results_avg_label']      = 'औसत';
+$string['live_results_responses_label']= 'प्रतिक्रियाएं';
+$string['live_results_scale_label']    = 'Scale';
+$string['live_results_rank_label']     = 'रैंक';
+$string['live_results_item_label']     = 'आइटम';
+$string['live_results_avg_pos_label']  = 'औसत स्थिति';
+
 // ── Phase E.1.j — slide editor strings ─────────────────────────────
 
 $string['invalidslide']                = 'स्लाइड मौजूद नहीं है।';

@@ -129,6 +129,12 @@ echo \html_writer::tag('h3',
     ['class' => 'h5 mt-4']);
 
 if ($current_slide) {
+    // Phase E.4 — render the live result panel for the current slide.
+    $panel = new \local_sentientia_live\output\result_panel($current_slide);
+    echo $OUTPUT->render_from_template(
+        'local_sentientia_live/result_panel',
+        $panel->export_for_template($OUTPUT));
+
     echo \html_writer::start_div('card p-4 my-3');
     echo \html_writer::tag('div',
         get_string('slide_position_of', 'local_sentientia_live', (object) [

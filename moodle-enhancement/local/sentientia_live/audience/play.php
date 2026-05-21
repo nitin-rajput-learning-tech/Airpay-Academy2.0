@@ -213,22 +213,45 @@ echo \html_writer::tag('h2',
     format_text($current_slide->title, FORMAT_PLAIN, ['filter' => false]),
     ['class' => 'mb-4 text-center']);
 
+$has_responded = \local_sentientia_live\response_recorder::has_responded(
+    (int) $current_slide->id, (int) $participant->id);
+$session_settings = \local_sentientia_live\session_manager::parse_settings($sess);
+$show_audience_results = $has_responded
+    && !empty($session_settings['show_results_to_audience']);
+
 if ($response_saved) {
     echo \html_writer::tag('div',
         '<i class="fa fa-check-circle fa-2x text-success me-2"></i>' .
             get_string('audience_response_saved', 'local_sentientia_live'),
         ['class' => 'alert alert-success text-center']);
-    echo \html_writer::tag('p',
-        get_string('audience_waiting_next', 'local_sentientia_live'),
-        ['class' => 'text-muted text-center']);
-} elseif (\local_sentientia_live\response_recorder::has_responded(
-            (int) $current_slide->id, (int) $participant->id)) {
-    echo \html_writer::tag('div',
-        get_string('audience_already_responded', 'local_sentientia_live'),
-        ['class' => 'alert alert-info text-center']);
-    echo \html_writer::tag('p',
-        get_string('audience_waiting_next', 'local_sentientia_live'),
-        ['class' => 'text-muted text-center']);
+    if ($show_audience_results) {
+        // Render the same result panel the trainer sees.
+        $panel = new \local_sentientia_live\output\result_panel($current_slide);
+        echo $OUTPUT->render_from_template(
+            'local_sentientia_live/result_panel',
+            $panel->export_for_template($OUTPUT));
+    } else {
+        echo \html_writer::tag('p',
+            get_string('audience_waiting_next', 'local_sentientia_live'),
+            ['class' => 'text-muted text-center']);
+    }
+} elseif ($has_responded) {
+    if ($show_audience_results) {
+        echo \html_writer::tag('div',
+            get_string('audience_already_responded', 'local_sentientia_live'),
+            ['class' => 'alert alert-info text-center']);
+        $panel = new \local_sentientia_live\output\result_panel($current_slide);
+        echo $OUTPUT->render_from_template(
+            'local_sentientia_live/result_panel',
+            $panel->export_for_template($OUTPUT));
+    } else {
+        echo \html_writer::tag('div',
+            get_string('audience_already_responded', 'local_sentientia_live'),
+            ['class' => 'alert alert-info text-center']);
+        echo \html_writer::tag('p',
+            get_string('audience_waiting_next', 'local_sentientia_live'),
+            ['class' => 'text-muted text-center']);
+    }
 } else {
     if ($response_error) {
         echo \html_writer::tag('div', $response_error,

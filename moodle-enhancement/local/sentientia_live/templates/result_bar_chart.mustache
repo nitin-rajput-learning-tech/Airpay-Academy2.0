@@ -1,0 +1,39 @@
+{{!
+    @template local_sentientia_live/result_bar_chart
+
+    Partial — horizontal bar chart used by multichoice + quiz result
+    panels. Expects an `options[]` array from the parent context with
+    {index, label, count, percent, bar_percent, is_correct}.
+
+    Pure HTML + inline width style — bars update via SSE by mutating
+    style.width (textContent-safe, no innerHTML).
+}}
+<div class="d-flex flex-column gap-2">
+  {{#options}}
+    <div class="sentientia-bar-row d-flex align-items-center gap-2{{#is_correct}} border border-success rounded p-2{{/is_correct}}"
+         data-option-index="{{index}}">
+      <div class="flex-grow-1">
+        <div class="d-flex justify-content-between">
+          <span class="fw-bold">
+            {{label}}
+            {{#is_correct}}
+              <span class="badge bg-success ms-2">
+                <i class="fa fa-check me-1"></i>
+                {{#str}}live_results_correct_label, local_sentientia_live{{/str}}
+              </span>
+            {{/is_correct}}
+          </span>
+          <span class="text-muted">
+            <span class="sentientia-bar-count">{{count}}</span>
+            (<span class="sentientia-bar-percent">{{percent}}</span>%)
+          </span>
+        </div>
+        <div class="bg-light rounded mt-1" style="height: 12px;">
+          <div class="sentientia-bar {{#is_correct}}bg-success{{/is_correct}}{{^is_correct}}bg-primary{{/is_correct}} rounded"
+               style="width: {{bar_percent}}%; height: 100%; transition: width 0.3s ease;">
+          </div>
+        </div>
+      </div>
+    </div>
+  {{/options}}
+</div>

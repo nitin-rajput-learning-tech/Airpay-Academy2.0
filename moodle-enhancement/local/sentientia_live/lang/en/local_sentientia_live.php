@@ -162,6 +162,18 @@ $string['live_runner_pending_body']   = 'The current placeholder shows session i
 $string['action_end_session']         = 'End this session';
 $string['response_count_label']       = 'Responses received';
 
+// ── Phase E.4 — result panel strings ───────────────────────────────
+$string['live_results_heading']        = 'Live results';
+$string['live_results_total_suffix']   = 'responses';
+$string['live_results_empty']          = 'No responses yet — share the code and wait for your audience.';
+$string['live_results_correct_label']  = 'Correct';
+$string['live_results_avg_label']      = 'Average';
+$string['live_results_responses_label']= 'Responses';
+$string['live_results_scale_label']    = 'Scale';
+$string['live_results_rank_label']     = 'Rank';
+$string['live_results_item_label']     = 'Item';
+$string['live_results_avg_pos_label']  = 'Avg position';
+
 // ── Phase E.1.j — slide editor strings ─────────────────────────────
 
 $string['invalidslide']                = 'Slide does not exist.';

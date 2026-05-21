@@ -1,0 +1,141 @@
+{{!
+    @template local_sentientia_live/result_panel
+
+    Live result panel for one slide. Type-specific branches via
+    is_multichoice / is_quiz / is_rating / is_wordcloud / is_openended /
+    is_ranking flags from the renderable.
+
+    Context (see classes/output/result_panel.php):
+      slideid, sessionid, type, total_responses, has_responses
+      is_multichoice/is_quiz: options[] = {index, label, count, percent, bar_percent, is_correct}
+      is_rating: rating = {bars[], avg, count, min, max}
+      is_wordcloud: cloud[] = {word, count, size_class}
+      is_openended: responses[] = {text, display_name, timeformat}
+      is_ranking: ranking[] = {index, label, avg}
+}}
+<div class="sentientia-results-panel my-4"
+     data-slideid="{{slideid}}"
+     data-sessionid="{{sessionid}}"
+     data-type="{{type}}"
+     data-refresh-on-response="1">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="h5 mb-0">
+      {{#str}}live_results_heading, local_sentientia_live{{/str}}
+    </h4>
+    <span class="badge bg-secondary">
+      <span class="sentientia-results-total">{{total_responses}}</span>
+      {{#str}}live_results_total_suffix, local_sentientia_live{{/str}}
+    </span>
+  </div>
+
+  {{^has_responses}}
+    <p class="text-muted text-center py-4">
+      <em>{{#str}}live_results_empty, local_sentientia_live{{/str}}</em>
+    </p>
+  {{/has_responses}}
+
+  {{#has_responses}}
+
+    {{! ===== MULTICHOICE / QUIZ ===== }}
+    {{#is_multichoice}}{{> local_sentientia_live/result_bar_chart }}{{/is_multichoice}}
+    {{#is_quiz}}{{> local_sentientia_live/result_bar_chart }}{{/is_quiz}}
+
+    {{! ===== RATING ===== }}
+    {{#is_rating}}
+      <div class="d-flex flex-column gap-2">
+        <div class="d-flex justify-content-around text-center mb-2">
+          <div>
+            <div class="text-muted small">{{#str}}live_results_avg_label, local_sentientia_live{{/str}}</div>
+            <div class="display-5 fw-bold sentientia-results-avg">{{rating.avg}}</div>
+          </div>
+          <div>
+            <div class="text-muted small">{{#str}}live_results_responses_label, local_sentientia_live{{/str}}</div>
+            <div class="display-5 fw-bold sentientia-results-count">{{rating.count}}</div>
+          </div>
+          <div>
+            <div class="text-muted small">{{#str}}live_results_scale_label, local_sentientia_live{{/str}}</div>
+            <div class="fs-5">{{rating.min}}–{{rating.max}}</div>
+          </div>
+        </div>
+        {{#rating.bars}}
+          <div class="d-flex align-items-center gap-2"
+               data-rating-value="{{value}}">
+            <div style="width:3em" class="text-end fw-bold">{{value}}</div>
+            <div class="flex-grow-1 bg-light rounded" style="height:24px;">
+              <div class="sentientia-bar bg-primary rounded"
+                   style="width:{{bar_percent}}%; height:100%; transition: width 0.3s ease;">
+              </div>
+            </div>
+            <div style="width:4em" class="text-end sentientia-bar-count">{{count}}</div>
+            {{#label}}
+              <div style="width:8em" class="text-muted small text-truncate">{{label}}</div>
+            {{/label}}
+          </div>
+        {{/rating.bars}}
+      </div>
+    {{/is_rating}}
+
+    {{! ===== WORDCLOUD ===== }}
+    {{#is_wordcloud}}
+      <div class="sentientia-wordcloud d-flex flex-wrap gap-3 justify-content-center align-items-center py-4 px-3 bg-light rounded">
+        {{#cloud}}
+          <span class="sentientia-wordcloud-word {{size_class}}"
+                data-word="{{word}}" data-count="{{count}}"
+                title="{{count}}">{{word}}</span>
+        {{/cloud}}
+      </div>
+      <style>
+        .sentientia-wordcloud-word { transition: font-size 0.3s ease; }
+        .cloud-size-1 { font-size: 0.875rem;  color: #6c757d; }
+        .cloud-size-2 { font-size: 1.125rem; color: #495057; }
+        .cloud-size-3 { font-size: 1.5rem;   color: #0066A7; }
+        .cloud-size-4 { font-size: 2rem;     color: #0066A7; font-weight: 600; }
+        .cloud-size-5 { font-size: 2.75rem;  color: #003e6b; font-weight: 700; }
+      </style>
+    {{/is_wordcloud}}
+
+    {{! ===== OPENENDED ===== }}
+    {{#is_openended}}
+      <div class="sentientia-openended d-flex flex-column gap-2"
+           style="max-height: 400px; overflow-y: auto;">
+        {{#responses}}
+          <div class="card p-3" style="border-left: 4px solid #0066A7;">
+            <div class="d-flex justify-content-between">
+              <strong class="small">{{display_name}}</strong>
+              <small class="text-muted">{{timeformat}}</small>
+            </div>
+            <div class="mt-2" style="white-space: pre-wrap;">{{text}}</div>
+          </div>
+        {{/responses}}
+      </div>
+    {{/is_openended}}
+
+    {{! ===== RANKING ===== }}
+    {{#is_ranking}}
+      <table class="table table-sm">
+        <thead>
+          <tr>
+            <th>{{#str}}live_results_rank_label, local_sentientia_live{{/str}}</th>
+            <th>{{#str}}live_results_item_label, local_sentientia_live{{/str}}</th>
+            <th class="text-end">{{#str}}live_results_avg_pos_label, local_sentientia_live{{/str}}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#ranking}}
+            <tr>
+              <td><strong>{{rank}}</strong></td>
+              <td>{{label}}</td>
+              <td class="text-end"><code>{{avg}}</code></td>
+            </tr>
+          {{/ranking}}
+        </tbody>
+      </table>
+    {{/is_ranking}}
+
+  {{/has_responses}}
+
+  <!-- Hidden machine-readable tally for SSE refresh logic -->
+  <script type="application/json"
+          class="sentientia-results-tally-json">{{{tally_json}}}</script>
+</div>
