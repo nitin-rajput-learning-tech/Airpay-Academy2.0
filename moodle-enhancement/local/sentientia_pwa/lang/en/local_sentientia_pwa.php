@@ -118,3 +118,5 @@ $string['ios_hint_dismiss'] = 'Dismiss';
 $string['invalid_subscription_endpoint']  = 'Subscription endpoint URL is not from a recognised push service.';
 $string['invalid_subscription_key_p256dh']= 'Subscription key (p256dh) is malformed.';
 $string['invalid_subscription_key_auth']  = 'Subscription auth secret is malformed.';
+$string['vapid_master_key_missing']       = 'The VAPID private key is encrypted on disk but the master key is not configured. Set SENTIENTIA_VAPID_MASTER_KEY env var or $CFG->sentientia_vapid_master_key.';
+$string['vapid_pem_decrypt_failed']       = 'Failed to decrypt the stored VAPID private key. Either the master key has rotated or the encrypted blob is tampered.';

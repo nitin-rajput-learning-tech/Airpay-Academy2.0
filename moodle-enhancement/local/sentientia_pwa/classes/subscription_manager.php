@@ -120,13 +120,62 @@ class subscription_manager {
      * Return all push subscriptions for a user. Used by the sender to
      * deliver one message to every device the user has subscribed.
      *
-     * @param int $userid
+     * Audit fix #4 (2026-05-21) — accepts optional customer + tenant
+     * filters. Cross-tenant pushes are refused at the sender layer;
+     * this method is the read gate. If a manager-level user needs to
+     * push across tenants (rare, audit-able), they must construct
+     * the call with an explicit tenant override — never the default.
+     * See `docs/audits/B25-CRYPTO-AUDIT-2026-05-21.md` finding #4.
+     *
+     * @param int      $userid              The recipient user
+     * @param int|null $expected_customerid If non-null, only return rows
+     *                                      matching this customer
+     * @param int|null $expected_tenantid   If non-null, only return rows
+     *                                      matching this tenant
      * @return array Array of subscription stdClass objects
      */
-    public static function for_user(int $userid): array {
+    public static function for_user(int $userid,
+                                     ?int $expected_customerid = null,
+                                     ?int $expected_tenantid = null): array {
         global $DB;
-        return $DB->get_records('local_sentientia_push_subs',
-            ['userid' => $userid], 'timecreated DESC');
+        $conds = ['userid' => $userid];
+        if ($expected_customerid !== null) {
+            $conds['customerid'] = $expected_customerid;
+        }
+        if ($expected_tenantid !== null) {
+            $conds['tenantid'] = $expected_tenantid;
+        }
+        return $DB->get_records('local_sentientia_push_subs', $conds,
+            'timecreated DESC');
+    }
+
+    /**
+     * Resolve a user's tenant ID from their `open_path` profile field.
+     * Mirrors the BizLMS convention used across local_airpay_*: first
+     * segment of `/N/M/...` is the costcenterid (1=Airpay, 77=Public,
+     * 177=ZEEA per CLAUDE.md). Returns 0 if open_path is unset/blank.
+     *
+     * Shared helper so push_sender can do cross-tenant gating without
+     * duplicating the parse logic.
+     *
+     * @param int $userid
+     * @return int 0 if unknown, otherwise the tenant integer
+     */
+    public static function tenant_for_user(int $userid): int {
+        global $DB;
+        $user = $DB->get_record('user', ['id' => $userid],
+            'id, open_path, deleted, suspended');
+        if (!$user || $user->deleted || $user->suspended) {
+            return 0;
+        }
+        if (empty($user->open_path)) {
+            return 0;
+        }
+        $parts = explode('/', trim($user->open_path, '/'));
+        if (!empty($parts[0]) && ctype_digit($parts[0])) {
+            return (int) $parts[0];
+        }
+        return 0;
     }
 
     /**

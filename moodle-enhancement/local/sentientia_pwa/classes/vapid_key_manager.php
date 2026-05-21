@@ -80,10 +80,18 @@ class vapid_key_manager {
 
     /**
      * @return string|null PEM-encoded EC private key (for openssl_sign), or null.
+     *
+     * Audit fix #6 (2026-05-21) — the stored value may be wrapped with
+     * the AES-256-GCM envelope (prefix `enc:v1:`). Unwrap transparently
+     * so callers always get a plaintext PEM. Legacy plaintext PEMs (from
+     * Phase B.2.b before the audit) continue to load unchanged.
      */
     public static function get_private_pem(): ?string {
         $value = get_config(self::CONFIG_PLUGIN, self::PEM_KEY_NAME);
-        return $value !== false && $value !== '' ? $value : null;
+        if ($value === false || $value === '') {
+            return null;
+        }
+        return self::unwrap_pem((string) $value);
     }
 
     /**
@@ -195,9 +203,17 @@ class vapid_key_manager {
         $private_b64url = self::b64url_encode($private_key_bin);
 
         // Persist. set_config() returns true on success.
+        // Audit fix #6 — wrap the PEM in AES-256-GCM if a master key is
+        // configured. The other two artefacts (public key + raw private)
+        // are not as sensitive (public is by definition public; raw
+        // private is identical info to the PEM but harder to misuse via
+        // CLI tools), but the PEM is what an attacker would dump and
+        // feed straight to openssl. Defence in depth.
+        $pem_for_storage = self::wrap_pem($private_pem);
+
         set_config(self::PUBLIC_KEY_NAME,   $public_b64url,  self::CONFIG_PLUGIN);
         set_config(self::PRIVATE_KEY_NAME,  $private_b64url, self::CONFIG_PLUGIN);
-        set_config(self::PEM_KEY_NAME,      $private_pem,    self::CONFIG_PLUGIN);
+        set_config(self::PEM_KEY_NAME,      $pem_for_storage, self::CONFIG_PLUGIN);
         set_config(self::GENERATED_AT_NAME, time(),          self::CONFIG_PLUGIN);
 
         return [
@@ -275,6 +291,125 @@ class vapid_key_manager {
         }
 
         return null;
+    }
+
+    /** Audit fix #6 — prefix marker for envelope-encrypted PEMs. */
+    private const ENC_PREFIX = 'enc:v1:';
+
+    /**
+     * Audit fix #6 (2026-05-21) — AES-256-GCM envelope encryption for
+     * the VAPID private PEM at rest. Wraps in:
+     *
+     *   enc:v1:<base64url(iv || tag || ciphertext)>
+     *
+     * IV is 12 random bytes (NIST 800-38D recommended), tag is 16 bytes,
+     * ciphertext is variable. Total overhead = 28 bytes raw, ~37 chars
+     * base64url'd.
+     *
+     * No master key configured?  Returns the plaintext unchanged so the
+     * upgrade path doesn't break installs that haven't set up the master
+     * key yet — but logs a developer-debug warning so the gap is visible.
+     *
+     * See `docs/audits/B25-CRYPTO-AUDIT-2026-05-21.md` finding #6 for
+     * the threat model + remediation rationale.
+     */
+    public static function wrap_pem(string $pem): string {
+        $master = self::master_key();
+        if ($master === null) {
+            debugging('[sentientia_pwa] VAPID master key not set — PEM stored plaintext '
+                . '(set SENTIENTIA_VAPID_MASTER_KEY env var or $CFG->sentientia_vapid_master_key)',
+                DEBUG_DEVELOPER);
+            return $pem;
+        }
+        $iv  = random_bytes(12);
+        $tag = '';
+        $ct  = openssl_encrypt($pem, 'aes-256-gcm', $master,
+            OPENSSL_RAW_DATA, $iv, $tag, '', 16);
+        if ($ct === false || strlen($tag) !== 16) {
+            // Fall through to plaintext on encryption failure rather
+            // than losing the key — but log loudly.
+            debugging('[sentientia_pwa] VAPID PEM wrap failed: '
+                . (openssl_error_string() ?: 'unknown'), DEBUG_NORMAL);
+            return $pem;
+        }
+        return self::ENC_PREFIX . self::b64url_encode($iv . $tag . $ct);
+    }
+
+    /**
+     * Inverse of wrap_pem(). Detects the `enc:v1:` prefix and decrypts;
+     * if absent, returns the value unchanged (legacy plaintext PEM
+     * from Phase B.2.b pre-audit).
+     *
+     * @throws \moodle_exception When the value is wrapped but the master
+     *                            key is missing OR decryption fails (tag
+     *                            mismatch = tampering OR wrong key).
+     */
+    public static function unwrap_pem(string $stored): string {
+        if (strpos($stored, self::ENC_PREFIX) !== 0) {
+            return $stored;  // legacy plaintext PEM
+        }
+        $master = self::master_key();
+        if ($master === null) {
+            throw new \moodle_exception('vapid_master_key_missing',
+                'local_sentientia_pwa');
+        }
+        $blob = self::b64url_decode(substr($stored, strlen(self::ENC_PREFIX)));
+        if (strlen($blob) < (12 + 16 + 1)) {
+            throw new \moodle_exception('vapid_pem_decrypt_failed',
+                'local_sentientia_pwa', '', 'wrapped PEM too short');
+        }
+        $iv  = substr($blob, 0,  12);
+        $tag = substr($blob, 12, 16);
+        $ct  = substr($blob, 28);
+        $plain = openssl_decrypt($ct, 'aes-256-gcm', $master,
+            OPENSSL_RAW_DATA, $iv, $tag);
+        if ($plain === false || $plain === '') {
+            throw new \moodle_exception('vapid_pem_decrypt_failed',
+                'local_sentientia_pwa');
+        }
+        return $plain;
+    }
+
+    /**
+     * Resolve the 32-byte AES-256-GCM master key for PEM envelope.
+     *
+     * Preference order (most secure → least secure):
+     *   1. Env var `SENTIENTIA_VAPID_MASTER_KEY` (base64url, 32 bytes
+     *      decoded). Best because it never lives on disk in plain text;
+     *      systemd / Docker / kubernetes inject it at runtime.
+     *   2. `$CFG->sentientia_vapid_master_key` (base64url). Lives in
+     *      `config.php` which IS on disk but is only readable by the
+     *      PHP process (typically 0600 root:apache). Still much better
+     *      than DB-cleartext.
+     *
+     * Returns `null` when neither is set — caller (wrap_pem) treats
+     * `null` as "skip encryption + log warning", so the upgrade path
+     * doesn't break.
+     */
+    private static function master_key(): ?string {
+        global $CFG;
+        $env = getenv('SENTIENTIA_VAPID_MASTER_KEY');
+        if (!empty($env)) {
+            $bytes = self::b64url_decode($env);
+            if (strlen($bytes) === 32) {
+                return $bytes;
+            }
+        }
+        if (!empty($CFG->sentientia_vapid_master_key)) {
+            $bytes = self::b64url_decode((string) $CFG->sentientia_vapid_master_key);
+            if (strlen($bytes) === 32) {
+                return $bytes;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Test-only helper — exposes wrap/unwrap state for self-tests.
+     * Returns true if a master key is currently configured.
+     */
+    public static function master_key_configured(): bool {
+        return self::master_key() !== null;
     }
 
     /**

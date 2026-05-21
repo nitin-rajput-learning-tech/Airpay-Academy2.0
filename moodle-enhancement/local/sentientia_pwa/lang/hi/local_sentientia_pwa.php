@@ -118,3 +118,5 @@ $string['ios_hint_dismiss'] = 'खारिज करें';
 $string['invalid_subscription_endpoint']  = 'सब्सक्रिप्शन एंडपॉइंट URL किसी मान्य पुश सेवा से नहीं है।';
 $string['invalid_subscription_key_p256dh']= 'सब्सक्रिप्शन कुंजी (p256dh) विकृत है।';
 $string['invalid_subscription_key_auth']  = 'सब्सक्रिप्शन auth secret विकृत है।';
+$string['vapid_master_key_missing']       = 'VAPID private key डिस्क पर एन्क्रिप्ट है लेकिन master key कॉन्फ़िगर नहीं है। SENTIENTIA_VAPID_MASTER_KEY env var या $CFG->sentientia_vapid_master_key सेट करें।';
+$string['vapid_pem_decrypt_failed']       = 'संग्रहित VAPID private key को डिक्रिप्ट नहीं किया जा सका। या तो master key बदली है या एन्क्रिप्टेड डेटा बदल गया है।';

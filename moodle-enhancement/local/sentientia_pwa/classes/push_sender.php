@@ -79,7 +79,43 @@ class push_sender {
             return 0;
         }
 
-        $subs = subscription_manager::for_user($userid);
+        // Audit fix #4 (2026-05-21) — tenant-boundary gate.
+        // Resolve the RECIPIENT's tenant from open_path. If a caller-
+        // level tenant scope is set (via local_airpay_core), refuse
+        // when the recipient lives in a different tenant. This closes
+        // the cross-tenant push leak flagged in
+        // `docs/audits/B25-CRYPTO-AUDIT-2026-05-21.md` finding #4.
+        $recipient_tenant = subscription_manager::tenant_for_user($userid);
+        if ($recipient_tenant === 0) {
+            // User deleted/suspended/missing open_path — refuse silently.
+            // Don't return early in DEV mode (so testing keeps working);
+            // production: just don't push.
+            global $CFG;
+            if (empty($CFG->debugdeveloper)) {
+                return 0;
+            }
+        }
+        $caller_tenant = null;
+        if (class_exists('\\local_airpay_core\\customer')
+            && method_exists('\\local_airpay_core\\customer', 'current_tenant')) {
+            try {
+                $caller_tenant = \local_airpay_core\customer::current_tenant();
+            } catch (\Throwable $e) {
+                // local_airpay_core not fully bootstrapped — fall back to no-scope
+                // (the WS endpoint level cap check still applies).
+                $caller_tenant = null;
+            }
+        }
+        if ($caller_tenant !== null && $caller_tenant !== 0
+            && $caller_tenant !== $recipient_tenant) {
+            debugging(sprintf(
+                '[sentientia_pwa] cross-tenant push refused: caller_tenant=%d recipient_tenant=%d userid=%d',
+                $caller_tenant, $recipient_tenant, $userid), DEBUG_DEVELOPER);
+            return 0;
+        }
+
+        // Tenant-scoped read — only the recipient's own tenant's subscriptions.
+        $subs = subscription_manager::for_user($userid, null, $recipient_tenant ?: null);
         if (empty($subs)) {
             return 0;
         }

@@ -54,4 +54,18 @@ $flags = [
                           email escalation.',
     ],
 
+    // ─── Phase D.1 — PWA install UX (per ADR-005) ────────────────────
+    'sentientia.pwa.install.enabled' => [
+        'default'     => false,
+        'description' => 'Phase D.1 (per ADR-005) — show the "Install
+                          Sentientia LMS" CTA on the dashboard when the
+                          browser fires beforeinstallprompt. Default OFF
+                          until the per-customer icon set + manifest
+                          branding is fully wired through
+                          local_airpay_core::customer::branding(). The
+                          manifest endpoint itself
+                          (/local/sentientia_pwa/manifest.php) always
+                          renders — this flag gates only the visible CTA.',
+    ],
+
 ];

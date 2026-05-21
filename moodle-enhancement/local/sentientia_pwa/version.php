@@ -22,10 +22,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_pwa';
-$plugin->version   = 2026052107;
+$plugin->version   = 2026052109;
 $plugin->requires  = 2022041900;
-$plugin->maturity  = MATURITY_ALPHA;   // Phase B.2.5 crypto reviewed 2026-05-21; 6 audit fixes in progress
-$plugin->release   = '0.3.4-alpha';    // Audit fixes #1 (SSRF), #2 (https-only), #3 (mock guard), #5 (base64url)
+$plugin->maturity  = MATURITY_ALPHA;   // Phase D.1.a — Web App Manifest (manifest.php + branding pipeline)
+$plugin->release   = '0.4.0-alpha';    // Phase D.1.a Web App Manifest + all 6 audit BLOCKING fixes
 $plugin->dependencies = [
     'local_airpay_core' => 2026051200,  // feature_flags resolver
 ];
