@@ -35,7 +35,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_live';
-$plugin->version   = 2026052102;
+$plugin->version   = 2026052103;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;   // Phase E.0 — scaffold only
 $plugin->release   = '0.1.0-alpha';

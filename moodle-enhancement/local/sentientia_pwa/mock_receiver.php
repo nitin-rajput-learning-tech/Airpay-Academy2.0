@@ -37,6 +37,16 @@ require(__DIR__ . '/../../config.php');
 
 global $CFG, $DB;
 
+// Audit fix #3 — refuse to run unless we're in developer-debug mode.
+// This file is a deliberate crypto oracle for the e2e self-test; on a
+// production install (debugdeveloper off) it must be a no-op even if
+// an attacker plants mock_subscriber.json. See
+// `docs/audits/B25-CRYPTO-AUDIT-2026-05-21.md` finding #3.
+if (empty($CFG->debugdeveloper)) {
+    http_response_code(404);
+    exit;
+}
+
 // Helper to fail with a status + plain-text body.
 $fail = function (int $code, string $msg): void {
     http_response_code($code);

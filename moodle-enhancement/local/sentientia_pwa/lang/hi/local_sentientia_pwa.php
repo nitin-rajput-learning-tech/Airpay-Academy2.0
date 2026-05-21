@@ -113,3 +113,8 @@ $string['ios_hint_step1']   = 'स्क्रीन के नीचे शे�
 $string['ios_hint_step2']   = 'नीचे स्क्रॉल करें और "होम स्क्रीन पर जोड़ें" चुनें।';
 $string['ios_hint_step3']   = 'होम स्क्रीन से Sentientia LMS खोलें और सूचनाएं चालू करने का दोबारा प्रयास करें।';
 $string['ios_hint_dismiss'] = 'खारिज करें';
+
+// ── Audit 2026-05-21 — subscription validation errors ─────────────
+$string['invalid_subscription_endpoint']  = 'सब्सक्रिप्शन एंडपॉइंट URL किसी मान्य पुश सेवा से नहीं है।';
+$string['invalid_subscription_key_p256dh']= 'सब्सक्रिप्शन कुंजी (p256dh) विकृत है।';
+$string['invalid_subscription_key_auth']  = 'सब्सक्रिप्शन auth secret विकृत है।';

@@ -186,6 +186,13 @@ $string['quiz_leaderboard_time_col']     = 'Time';
 $string['quiz_leaderboard_seconds_suffix']= 's';
 $string['quiz_leaderboard_empty']        = 'No correct answers yet.';
 
+// ── Phase E.7 — Session analytics CSV export ──────────────────────
+$string['action_export_csv']             = 'Export';
+$string['action_export_csv_title']       = 'Download all responses for this session as CSV';
+$string['export_session_label']          = 'Export session';
+$string['export_format_unsupported']     = 'Unsupported export format: {$a}';
+$string['export_open_failed']            = 'Could not open output stream for export.';
+
 // ── Phase E.1.j — slide editor strings ─────────────────────────────
 
 $string['invalidslide']                = 'Slide does not exist.';

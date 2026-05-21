@@ -94,6 +94,12 @@
                   {{#is_ended}}
                     <a href="{{edit_url}}" class="btn btn-outline-secondary">{{#str}}action_view, local_sentientia_live{{/str}}</a>
                   {{/is_ended}}
+                  {{#can_export}}
+                    <a href="{{export_url}}" class="btn btn-outline-info"
+                       title="{{#str}}action_export_csv_title, local_sentientia_live{{/str}}">
+                      <i class="fa fa-download me-1"></i>{{#str}}action_export_csv, local_sentientia_live{{/str}}
+                    </a>
+                  {{/can_export}}
                   <a href="{{delete_url}}" class="btn btn-outline-danger"
                      data-confirm="{{#str}}confirm_delete_session, local_sentientia_live{{/str}}">
                      <i class="fa fa-trash"></i>

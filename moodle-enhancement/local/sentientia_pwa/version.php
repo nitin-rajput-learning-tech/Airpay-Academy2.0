@@ -22,10 +22,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_pwa';
-$plugin->version   = 2026052106;
+$plugin->version   = 2026052107;
 $plugin->requires  = 2022041900;
-$plugin->maturity  = MATURITY_ALPHA;   // Phase B.2.5 crypto still needs review
-$plugin->release   = '0.3.3-alpha';    // Phase B.3.d — iOS install hint + retention task scan
+$plugin->maturity  = MATURITY_ALPHA;   // Phase B.2.5 crypto reviewed 2026-05-21; 6 audit fixes in progress
+$plugin->release   = '0.3.4-alpha';    // Audit fixes #1 (SSRF), #2 (https-only), #3 (mock guard), #5 (base64url)
 $plugin->dependencies = [
     'local_airpay_core' => 2026051200,  // feature_flags resolver
 ];

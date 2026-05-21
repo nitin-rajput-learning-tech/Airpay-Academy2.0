@@ -113,3 +113,8 @@ $string['ios_hint_step1']   = 'Tap the Share button at the bottom of the screen.
 $string['ios_hint_step2']   = 'Scroll down and choose "Add to Home Screen".';
 $string['ios_hint_step3']   = 'Open Sentientia LMS from your home screen and try Enable notifications again.';
 $string['ios_hint_dismiss'] = 'Dismiss';
+
+// ── Audit 2026-05-21 — subscription validation errors ─────────────
+$string['invalid_subscription_endpoint']  = 'Subscription endpoint URL is not from a recognised push service.';
+$string['invalid_subscription_key_p256dh']= 'Subscription key (p256dh) is malformed.';
+$string['invalid_subscription_key_auth']  = 'Subscription auth secret is malformed.';

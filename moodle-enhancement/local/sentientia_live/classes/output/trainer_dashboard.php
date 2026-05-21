@@ -77,6 +77,12 @@ class trainer_dashboard implements \renderable, \templatable {
                 'delete_url'    => (new \moodle_url(
                     '/local/sentientia_live/trainer/delete.php',
                     ['id' => (int) $sess->id, 'sesskey' => sesskey()]))->out(false),
+                // Phase E.7 — CSV export. Available once at least one
+                // slide exists (otherwise the file is empty + confusing).
+                'export_url'    => (new \moodle_url(
+                    '/local/sentientia_live/trainer/export.php',
+                    ['id' => (int) $sess->id, 'format' => 'csv']))->out(false),
+                'can_export'    => $slide_count > 0,
             ];
         }
 
