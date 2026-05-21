@@ -160,3 +160,95 @@ $string['no_current_slide']           = 'अभी तक कोई स्ला
 $string['live_runner_pending_title']  = 'लाइव रनर — Phase E.3 में रीयल-टाइम प्रोजेक्टर आ रहा है';
 $string['live_runner_pending_body']   = 'वर्तमान placeholder सेशन जानकारी और basic state दिखाता है। Phase E.3 SSE-संचालित प्रोजेक्टर व्यू जोड़ता है (auto-updating ऑडियंस गिनती, लाइव प्रतिक्रिया चार्ट, आगे/पीछे बटन, full-screen मोड)।';
 $string['action_end_session']         = 'इस सेशन को समाप्त करें';
+
+// ── Phase E.1.j — slide editor strings ─────────────────────────────
+
+$string['invalidslide']                = 'स्लाइड मौजूद नहीं है।';
+$string['back_to_session']             = 'सेशन पर वापस';
+
+// Type picker (add_slide.php step 1).
+$string['add_slide_pagetitle']          = 'स्लाइड जोड़ें';
+$string['add_slide_pick_type_heading']  = 'प्रश्न प्रकार चुनें';
+$string['add_slide_pick_type_intro']    = 'चुनें कि आपका ऑडियंस कैसे प्रतिक्रिया देगा। आप बाद में किसी भी प्रकार की और स्लाइड जोड़ सकते हैं।';
+$string['no_slide_types_enabled']       = 'इस सर्वर पर कोई प्रश्न प्रकार सक्षम नहीं है। अपने एडमिन से Switchboard के माध्यम से कम से कम एक सक्षम करने के लिए कहें।';
+$string['use_this_type']                = 'इस प्रकार का उपयोग करें';
+
+// Per-type display name + short description.
+$string['slide_type_multichoice']       = 'Multiple choice';
+$string['slide_type_multichoice_desc']  = 'ऑडियंस आपके दिए गए विकल्पों में से एक चुनता है। परिणाम बार चार्ट के रूप में दिखाई देते हैं।';
+$string['slide_type_quiz']              = 'क्विज़';
+$string['slide_type_quiz_desc']         = 'Multiple choice की तरह, लेकिन सही उत्तर के साथ। ऑडियंस को तुरंत सही / गलत दिखाई देता है और एक लाइव लीडरबोर्ड भी।';
+$string['slide_type_rating']            = 'रेटिंग scale';
+$string['slide_type_rating_desc']       = '1-5 (या 0-10 NPS) scale। परिणाम औसत + वितरण हिस्टोग्राम के रूप में दिखाए जाते हैं।';
+$string['slide_type_ranking']           = 'रैंकिंग';
+$string['slide_type_ranking_desc']      = 'ऑडियंस आइटम की सूची को अपने पसंदीदा क्रम में drag करता है। परिणाम aggregate रैंकिंग दिखाते हैं।';
+$string['slide_type_wordcloud']         = 'वर्ड क्लाउड';
+$string['slide_type_wordcloud_desc']    = 'ऑडियंस एक शब्द भेजता है। सामान्य उत्तर क्लाउड में बड़े होते जाते हैं।';
+$string['slide_type_openended']         = 'खुली प्रतिक्रिया';
+$string['slide_type_openended_desc']    = 'फ़्री-टेक्स्ट प्रतिक्रिया। ऑडियंस के भेजते ही उत्तर स्क्रीन पर scroll होते हैं।';
+
+// Add-slide form (step 2) + edit-slide.
+$string['add_slide_form_pagetitle']     = 'स्लाइड जोड़ें';
+$string['add_slide_form_heading']       = 'स्लाइड जोड़ें: {$a}';
+$string['edit_slide_pagetitle']         = 'स्लाइड संपादित करें';
+$string['edit_slide_heading']           = 'स्लाइड संपादित करें: {$a}';
+$string['slide_added_notice']           = 'स्लाइड जोड़ी गई।';
+$string['slide_updated_notice']         = 'स्लाइड अपडेट हुई।';
+$string['slide_deleted_notice']         = 'स्लाइड हट गई।';
+
+// Slide form labels.
+$string['slide_title_label']            = 'प्रश्न पाठ';
+$string['slide_title_required']         = 'प्रश्न पाठ आवश्यक है।';
+$string['slide_type_label']             = 'प्रकार';
+$string['slide_form_add_submit']        = 'स्लाइड जोड़ें';
+$string['slide_form_update_submit']     = 'परिवर्तन सहेजें';
+
+// Multiple choice + quiz options repeat.
+$string['mc_option']                    = 'विकल्प';
+$string['mc_add_more']                  = 'और विकल्प जोड़ें';
+$string['quiz_option']                  = 'विकल्प';
+$string['quiz_add_more']                = 'और विकल्प जोड़ें';
+$string['quiz_correct_index_label']     = 'सही विकल्प संख्या';
+$string['quiz_correct_index']           = 'सही विकल्प संख्या';
+$string['quiz_correct_index_required']  = 'निर्दिष्ट करें कि कौन सा विकल्प (1, 2, ...) सही उत्तर है।';
+$string['quiz_correct_index_help']      = 'सही विकल्प की 1-based स्थिति। तो यदि सही उत्तर आपके द्वारा टाइप किया गया दूसरा विकल्प है, तो 2 दर्ज करें। Server-side validated; out-of-range मान अस्वीकृत होते हैं।';
+
+// Rating scale.
+$string['rating_scale_min_label']       = 'Scale न्यूनतम';
+$string['rating_scale_max_label']       = 'Scale अधिकतम';
+$string['rating_scale_labels_label']    = 'Scale लेबल (वैकल्पिक, | से अलग किया गया)';
+$string['rating_scale_labels']          = 'Scale लेबल';
+$string['rating_scale_labels_help']     = 'Pipe-separated labels जो scale के प्रत्येक step पर क्रम में दिखाए जाएंगे। उदाहरण: "पूरी तरह असहमत|असहमत|तटस्थ|सहमत|पूरी तरह सहमत"। केवल संख्याएं दिखाने के लिए खाली छोड़ें।';
+
+// Ranking.
+$string['ranking_item']                 = 'आइटम';
+$string['ranking_add_more']             = 'और आइटम जोड़ें';
+
+// Word cloud.
+$string['wc_max_word_length_label']     = 'अधिकतम शब्द लंबाई';
+$string['wc_max_word_length']           = 'अधिकतम शब्द लंबाई';
+$string['wc_max_word_length_help']      = 'इस अक्षर संख्या से लंबे submissions truncate हो जाते हैं। क्लाउड को पढ़ने योग्य बनाए रखने में मदद करता है। Range 3-100।';
+$string['wc_dedupe_label']              = 'ऑडियंस submissions को de-duplicate करें';
+$string['wc_dedupe_desc']               = 'चेक करने पर, प्रत्येक ऑडियंस सदस्य केवल एक शब्द भेज सकता है। अनचेक करने पर, वे कई शब्द भेज सकते हैं।';
+
+// Open ended.
+$string['openended_max_chars_label']    = 'प्रति प्रतिक्रिया अधिकतम अक्षर';
+$string['openended_max_chars']          = 'प्रति प्रतिक्रिया अधिकतम अक्षर';
+$string['openended_max_chars_help']     = 'प्रतिक्रिया लंबाई पर हार्ड कैप। डिफ़ॉल्ट 280 (Twitter-style)। Range 10-2000।';
+
+// Slide row actions on edit.php.
+$string['action_add_slide']             = 'स्लाइड जोड़ें';
+$string['action_move_up']               = 'ऊपर ले जाएं';
+$string['action_move_down']             = 'नीचे ले जाएं';
+$string['action_delete_slide']          = 'हटाएं';
+$string['action_show_now']              = 'अभी दिखाएं';
+$string['badge_current_slide']          = 'वर्तमान';
+
+// Delete-slide confirmation.
+$string['delete_slide_pagetitle']       = 'स्लाइड हटाएं';
+$string['delete_slide_heading']         = 'स्लाइड हटाएं?';
+$string['delete_slide_confirm_html']    = '{$a->type} स्लाइड <strong>"{$a->title}"</strong> हटाएं? इस स्लाइड के किसी भी ऑडियंस प्रतिक्रियाएं हट जाएंगी।';
+
+// Set-current notices.
+$string['slide_made_current_notice']    = 'अब ऑडियंस को यह स्लाइड दिखाई जा रही है।';
+$string['slide_make_current_failed']    = 'इस स्लाइड को वर्तमान के रूप में सेट नहीं कर सका। सुनिश्चित करें कि सेशन लाइव है।';

@@ -143,36 +143,111 @@ if ($is_live) {
 echo \html_writer::end_div();
 
 // ── Slides section ──
+echo \html_writer::start_div('d-flex justify-content-between align-items-center mt-4');
 echo \html_writer::tag('h3',
     get_string('slides_heading', 'local_sentientia_live'),
-    ['class' => 'h5 mt-4']);
+    ['class' => 'h5 mb-0']);
+if ($is_editable) {
+    $add_url = new \moodle_url('/local/sentientia_live/trainer/add_slide.php',
+        ['sessionid' => $id]);
+    echo \html_writer::link($add_url->out(false),
+        '<i class="fa fa-plus me-1"></i>' .
+            get_string('action_add_slide', 'local_sentientia_live'),
+        ['class' => 'btn btn-primary btn-sm']);
+}
+echo \html_writer::end_div();
 
-$slides = \local_sentientia_live\slide_manager::list_for_session($id);
+$slides = array_values(\local_sentientia_live\slide_manager::list_for_session($id));
 if (empty($slides)) {
     echo \html_writer::tag('p',
         get_string('no_slides_yet', 'local_sentientia_live'),
-        ['class' => 'text-muted']);
+        ['class' => 'text-muted mt-3']);
 } else {
-    echo \html_writer::start_tag('ol', ['class' => 'list-group list-group-numbered mb-3']);
-    foreach ($slides as $slide) {
-        echo \html_writer::tag('li',
-            '<div class="d-flex justify-content-between align-items-center">'
-            . '<div><strong>' . format_string($slide->title) . '</strong>'
-            . ' <span class="badge bg-light text-dark ms-2">' . s($slide->type) . '</span></div>'
-            . '<small class="text-muted">pos ' . (int) $slide->position . '</small>'
-            . '</div>',
-            ['class' => 'list-group-item']);
-    }
-    echo \html_writer::end_tag('ol');
-}
+    $total = count($slides);
+    echo \html_writer::start_tag('div', ['class' => 'list-group mt-3']);
+    foreach ($slides as $i => $slide) {
+        $is_current = ((int) $sess->current_slide_id) === (int) $slide->id;
 
-// Slide editor — Phase E.1.j placeholder.
-if ($is_editable) {
-    echo \html_writer::start_div('alert alert-info');
-    echo '<strong>' . get_string('slide_editor_pending_title', 'local_sentientia_live')
-        . '</strong><br>';
-    echo get_string('slide_editor_pending_body', 'local_sentientia_live');
-    echo \html_writer::end_div();
+        echo \html_writer::start_div(
+            'list-group-item d-flex justify-content-between align-items-center'
+            . ($is_current ? ' border-primary border-2' : ''));
+
+        // Left — number, title, type badge.
+        echo \html_writer::start_div('flex-grow-1');
+        echo \html_writer::tag('span',
+            ((int) $slide->position) . '.',
+            ['class' => 'text-muted me-2']);
+        echo \html_writer::tag('strong', format_string($slide->title));
+        echo ' ' . \html_writer::tag('span',
+            get_string('slide_type_' . $slide->type, 'local_sentientia_live'),
+            ['class' => 'badge bg-light text-dark ms-2']);
+        if ($is_current) {
+            echo ' ' . \html_writer::tag('span',
+                get_string('badge_current_slide', 'local_sentientia_live'),
+                ['class' => 'badge bg-primary ms-2']);
+        }
+        echo \html_writer::end_div();
+
+        // Right — action buttons.
+        if ($is_editable) {
+            echo \html_writer::start_div('btn-group btn-group-sm ms-2');
+
+            // Up.
+            if ($i > 0) {
+                $up_url = new \moodle_url(
+                    '/local/sentientia_live/trainer/move_slide.php',
+                    ['id' => (int) $slide->id, 'direction' => 'up',
+                     'sesskey' => sesskey()]);
+                echo \html_writer::link($up_url->out(false),
+                    '<i class="fa fa-arrow-up"></i>',
+                    ['class' => 'btn btn-outline-secondary',
+                     'title' => get_string('action_move_up',
+                        'local_sentientia_live')]);
+            }
+            // Down.
+            if ($i < $total - 1) {
+                $down_url = new \moodle_url(
+                    '/local/sentientia_live/trainer/move_slide.php',
+                    ['id' => (int) $slide->id, 'direction' => 'down',
+                     'sesskey' => sesskey()]);
+                echo \html_writer::link($down_url->out(false),
+                    '<i class="fa fa-arrow-down"></i>',
+                    ['class' => 'btn btn-outline-secondary',
+                     'title' => get_string('action_move_down',
+                        'local_sentientia_live')]);
+            }
+            // Edit.
+            $edit_slide_url = new \moodle_url(
+                '/local/sentientia_live/trainer/edit_slide.php',
+                ['id' => (int) $slide->id]);
+            echo \html_writer::link($edit_slide_url->out(false),
+                get_string('action_edit', 'local_sentientia_live'),
+                ['class' => 'btn btn-outline-primary']);
+            // Delete.
+            $del_url = new \moodle_url(
+                '/local/sentientia_live/trainer/delete_slide.php',
+                ['id' => (int) $slide->id, 'sesskey' => sesskey()]);
+            echo \html_writer::link($del_url->out(false),
+                '<i class="fa fa-trash"></i>',
+                ['class' => 'btn btn-outline-danger',
+                 'title' => get_string('action_delete_slide',
+                    'local_sentientia_live')]);
+            echo \html_writer::end_div();
+        } else if ($is_live) {
+            // While live: trainer can set this as current.
+            if (!$is_current) {
+                $set_url = new \moodle_url(
+                    '/local/sentientia_live/trainer/set_current.php',
+                    ['id' => (int) $slide->id, 'sesskey' => sesskey()]);
+                echo \html_writer::link($set_url->out(false),
+                    get_string('action_show_now', 'local_sentientia_live'),
+                    ['class' => 'btn btn-sm btn-outline-primary']);
+            }
+        }
+
+        echo \html_writer::end_div();
+    }
+    echo \html_writer::end_tag('div');
 }
 
 // ── Settings form (or read-only summary for ended sessions) ──

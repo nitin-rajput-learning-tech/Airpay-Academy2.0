@@ -160,3 +160,95 @@ $string['no_current_slide']           = 'No slide selected yet. Use the slide ed
 $string['live_runner_pending_title']  = 'Live runner — real-time projector coming in Phase E.3';
 $string['live_runner_pending_body']   = 'The current placeholder shows session info and basic state. The Phase E.3 ship adds the SSE-driven projector view (auto-updating audience count, live response chart, advance/back buttons, full-screen mode).';
 $string['action_end_session']         = 'End this session';
+
+// ── Phase E.1.j — slide editor strings ─────────────────────────────
+
+$string['invalidslide']                = 'Slide does not exist.';
+$string['back_to_session']             = 'Back to session';
+
+// Type picker (add_slide.php step 1).
+$string['add_slide_pagetitle']          = 'Add a slide';
+$string['add_slide_pick_type_heading']  = 'Pick a question type';
+$string['add_slide_pick_type_intro']    = 'Choose how your audience will respond. You can add more slides of any type later.';
+$string['no_slide_types_enabled']       = 'No question types are enabled on this server. Ask your administrator to enable at least one via the Switchboard.';
+$string['use_this_type']                = 'Use this type';
+
+// Per-type display name + short description.
+$string['slide_type_multichoice']       = 'Multiple choice';
+$string['slide_type_multichoice_desc']  = 'Audience picks one of the options you provide. Results render as a bar chart.';
+$string['slide_type_quiz']              = 'Quiz';
+$string['slide_type_quiz_desc']         = 'Like multiple choice, but with a correct answer. Audience sees right / wrong instantly and a live leaderboard.';
+$string['slide_type_rating']            = 'Rating scale';
+$string['slide_type_rating_desc']       = '1-5 (or 0-10 NPS) scale. Results render as an average + distribution histogram.';
+$string['slide_type_ranking']           = 'Ranking';
+$string['slide_type_ranking_desc']      = 'Audience drags a list of items into their preferred order. Results show aggregate ranking.';
+$string['slide_type_wordcloud']         = 'Word cloud';
+$string['slide_type_wordcloud_desc']    = 'Audience submits one word. Common answers grow bigger in the cloud.';
+$string['slide_type_openended']         = 'Open-ended';
+$string['slide_type_openended_desc']    = 'Free-text response. Answers scroll across the screen as audience submits.';
+
+// Add-slide form (step 2) + edit-slide.
+$string['add_slide_form_pagetitle']     = 'Add slide';
+$string['add_slide_form_heading']       = 'Add slide: {$a}';
+$string['edit_slide_pagetitle']         = 'Edit slide';
+$string['edit_slide_heading']           = 'Edit slide: {$a}';
+$string['slide_added_notice']           = 'Slide added.';
+$string['slide_updated_notice']         = 'Slide updated.';
+$string['slide_deleted_notice']         = 'Slide deleted.';
+
+// Slide form labels.
+$string['slide_title_label']            = 'Question text';
+$string['slide_title_required']         = 'Question text is required.';
+$string['slide_type_label']             = 'Type';
+$string['slide_form_add_submit']        = 'Add slide';
+$string['slide_form_update_submit']     = 'Save changes';
+
+// Multiple choice + quiz options repeat.
+$string['mc_option']                    = 'Option';
+$string['mc_add_more']                  = 'Add more options';
+$string['quiz_option']                  = 'Option';
+$string['quiz_add_more']                = 'Add more options';
+$string['quiz_correct_index_label']     = 'Correct option number';
+$string['quiz_correct_index']           = 'Correct option number';
+$string['quiz_correct_index_required']  = 'Specify which option (1, 2, ...) is the correct answer.';
+$string['quiz_correct_index_help']      = 'The 1-based position of the correct option. So if the correct answer is the second option you typed, enter 2. Validated server-side; out-of-range values are rejected.';
+
+// Rating scale.
+$string['rating_scale_min_label']       = 'Scale minimum';
+$string['rating_scale_max_label']       = 'Scale maximum';
+$string['rating_scale_labels_label']    = 'Scale labels (optional, separated by | )';
+$string['rating_scale_labels']          = 'Scale labels';
+$string['rating_scale_labels_help']     = 'Pipe-separated labels to show at each step of the scale, in order. Example: "Strongly disagree|Disagree|Neutral|Agree|Strongly agree". Leave blank to show numbers only.';
+
+// Ranking.
+$string['ranking_item']                 = 'Item';
+$string['ranking_add_more']             = 'Add more items';
+
+// Word cloud.
+$string['wc_max_word_length_label']     = 'Max word length';
+$string['wc_max_word_length']           = 'Max word length';
+$string['wc_max_word_length_help']      = 'Audience submissions longer than this many characters are truncated. Helps keep the cloud readable. Range 3-100.';
+$string['wc_dedupe_label']              = 'De-duplicate audience submissions';
+$string['wc_dedupe_desc']               = 'When ticked, each audience member can submit only one word. When unticked, they can submit multiple.';
+
+// Open ended.
+$string['openended_max_chars_label']    = 'Max characters per response';
+$string['openended_max_chars']          = 'Max characters per response';
+$string['openended_max_chars_help']     = 'Hard cap on response length. Default 280 (Twitter-style). Range 10-2000.';
+
+// Slide row actions on edit.php.
+$string['action_add_slide']             = 'Add slide';
+$string['action_move_up']               = 'Move up';
+$string['action_move_down']             = 'Move down';
+$string['action_delete_slide']          = 'Delete';
+$string['action_show_now']              = 'Show now';
+$string['badge_current_slide']          = 'Current';
+
+// Delete-slide confirmation.
+$string['delete_slide_pagetitle']       = 'Delete slide';
+$string['delete_slide_heading']         = 'Delete slide?';
+$string['delete_slide_confirm_html']    = 'Delete the {$a->type} slide <strong>"{$a->title}"</strong>? Any audience responses to this slide will be removed.';
+
+// Set-current notices.
+$string['slide_made_current_notice']    = 'Now showing this slide to the audience.';
+$string['slide_make_current_failed']    = 'Could not set this slide as current. Make sure the session is live.';
