@@ -3321,20 +3321,71 @@ Hand-rolled crypto, since `composer` isn't available and vendoring `minishlink/w
 - The 5 seeded templates are in `pending` state. Until they're submitted + approved by the DLT portal AND Karix/MSG91 credentials are in `.env`, the WhatsApp client stays in mock mode (logs send_log row with `status = mocked` but never actually POSTs).
 - This isn't a code task — it's an ops task on Airpay's side. Stream C / Phase C.1 ships ready to go live the moment DLT approval lands + credentials added.
 
-### Today's commits (chronological)
-| Commit | Message |
-|--------|---------|
-| `50cb19f4c` | (yesterday) docs: end-of-day state save (2026-05-20) |
-| `493edf8b6` | Stream B / Phase B.2.b — Subscribe UI |
-| `d69408ee1` | Stream B / Phase B.2.5 ALPHA — Real Web Push delivery |
-| `21a984272` | Stream B / Phase B.3 ALPHA — Push into crons + log + iOS hint |
-| _next_ | Stream C / Phase C.1 — WhatsApp wired into reminder/overdue crons |
+### Day 1 commits (chronological — 17 commits, 5 streams, ~10,000 LOC)
+| Commit | Phase | Description |
+|--------|-------|-------------|
+| `50cb19f4c` | (Day 0 wrap) | end-of-day state save (2026-05-20) |
+| `493edf8b6` | **B.2.b** | Subscribe UI (VAPID gen + AMD module + preferences page) |
+| `d69408ee1` | **B.2.5 ALPHA** | Real Web Push delivery (hand-rolled ES256 + aes128gcm) + ADR-003 |
+| `21a984272` | **B.3 ALPHA** | Push into 4 crons + delivery log + admin viewer + iOS install hint |
+| `604354377` | **C.1** | WhatsApp wired into same 4 crons + PROJECT-STATE Day 1 |
+| `7417ef588` | **E.0** | Sentientia Live foundation (5 tables + 9 flags + ADR-004 SSE choice) |
+| `d8c6aa8b7` | **E.1.a/b** | session_manager + event_journal lib + 28 PHPUnit tests |
+| `aa5403035` | **E.1.c-h** | slide_manager + participant_manager + trainer dashboard + create form |
+| `6dede28c9` | **E.1.i** | end/delete/edit/start/run handlers (nav closed) |
+| `043781bf2` | **E.1.j** | Polymorphic slide editor (all 6 question types) |
+| `4abd73d1e` | **E.2** | Audience UI — join + play (full Mentimeter loop end-to-end) |
+| `38f515243` | **B-verify** | Mock subscriber + receiver + run_push_e2e (9/9 PASS) |
+| `b4581a812` | **E.3** | SSE realtime (stream.php + audience + trainer clients) |
+| `846b621cc` | **E.4** | Live result panels (per-type bar charts / wordcloud / etc) |
+| `e91777ec3` | **C-verify** | WhatsApp e2e orchestrator (ALL PASS, mock mode) |
+| `e6ff68742` | **VIS + fixes** | Visual evidence + 3 bug fixes from walkthrough |
+| `a28680661` | **E.5** | Dynamic chart updates via SSE + UX polish (audience progress, heading center) |
+
+### E2E regression tests (re-runnable in seconds)
+- `php local/sentientia_pwa/cli/test_crypto.php` — 18 crypto self-tests
+- `php local/sentientia_pwa/cli/run_push_e2e.php --userid=N` — 9 end-to-end push assertions
+- `php local/airpay_whatsapp/cli/run_whatsapp_e2e.php --userid=N` — 11 WhatsApp pipeline assertions
+
+### Sentientia Live status
+```
+Foundation (E.0):           ✅ shipped
+Lib layer (session/slide/   ✅ shipped (E.1.a/b/d/e)
+  participant/event):
+Trainer dashboard (E.1.f):  ✅ shipped + visually verified
+Create form (E.1.g):        ✅ shipped + visually verified
+Edit + handlers (E.1.i):    ✅ shipped + visually verified
+Slide editor (E.1.j):       ✅ shipped (form interaction not browser-verified)
+Audience UI (E.2):          ✅ shipped + visually verified
+SSE realtime (E.3):         ✅ shipped (verified via curl, not 2-window browser)
+Result panels (E.4):        ✅ shipped + visually verified (bar chart fires!)
+Dynamic chart updates (E.5):✅ shipped (event payload verified, browser pending)
+─────────────────────────────────────────────────────────────
+Phase E.6 — Quiz leaderboard:                          ⏳ pending
+Phase E.7+ — Per-type render polish (wordcloud/openended/ranking dynamic): ⏳ pending
+Phase E.10 — Customer-level settings + full privacy:   ⏳ pending
+Phase E.11 — Mobile responsive pass:                   ⏳ pending
+Phase E.12 — Analytics + export:                       ⏳ pending
+```
+
+### Visual evidence captured
+- `docs/visual-evidence/2026-05-21/README.md` — 12 surfaces walked, 7 issues catalogued (3 fixed)
+- Trainer dashboard, create form, edit page with slides, type picker, run page, audience join, audience play, audience play with bar chart, trainer run with populated data, PWA subscribe widget
 
 ### Resume next session (priority order)
-1. **Stream B — verify with a real subscriber.** Needs Chrome MCP reconnect OR Nitin uses a browser to: open `/local/sentientia_pwa/preferences.php`, click "Enable browser notifications", then run `php local/sentientia_pwa/cli/test_push.php --userid=<his-id>` from CLI. That validates the full end-to-end.
-2. **Stream B — security review of B.2.5 crypto trio** (per ADR-003).
-3. **Tier 1 #3 — Mentimeter clone** (`local_sentientia_live`). 8-12 sessions of work; biggest single chunk on the roadmap. Real-time polls/quizzes/Q&A with SSE.
-4. **Tier 1 #4 — AI quiz generation** (Anthropic Claude API + trainer review). Needs Anthropic API key in `.env` first.
-5. **Tier 1 #5 — Hindi course content pipeline** (Claude translate + ElevenLabs Hindi voice + SCORM re-pack). Needs ElevenLabs subscription confirmed.
-6. **License-header rewrite sweep** (~200 files) — GPL §5(a) compliance pass 2. Tedious but mechanical.
-7. **Visual verification** — blocked on Chrome MCP reconnect.
+1. **Phase E.5 two-browser verification** — open trainer/run + audience/play side-by-side, submit response, watch bars animate via the SSE → chart_updater pipeline. Needs Nitin or Chrome MCP improvements.
+2. **Phase E.6 — Quiz leaderboard** — quiz type currently shows the same bar chart as multichoice. Add a sorted leaderboard view + "X out of Y got it right" summary. ~1 hour.
+3. **Phase E.11 — Mobile responsive pass** — test audience/play at 590px viewport (Mentimeter's primary form factor). Most likely needs CSS adjustments.
+4. **Stream B / B.2.5 security review** — production gate per ADR-003 before push.enabled flips ON.
+5. **Stream B — real-browser subscribe verification** — open `/local/sentientia_pwa/preferences.php`, click "Enable browser notifications", run `php cli/test_push.php --userid=N`. Browser is the only remaining unmocked path.
+6. **Tier 1 #4 — AI quiz generation** — needs Anthropic API key budget approval first.
+7. **Tier 1 #5 — Hindi content pipeline** — needs ElevenLabs subscription confirmed.
+8. **License-header rewrite sweep** — ~200 files, GPL §5(a) compliance pass 2. Mechanical.
+
+### Open environmental dependencies (Nitin's team)
+- VAPID keypair on production AWS server (run `cli/generate_vapid_keys.php` once)
+- web-push live mode credentials (Karix/MSG91) — for Stream C live mode
+- DLT template submission for the 5 seeded WhatsApp templates
+- Anthropic API key + budget approval (Tier 1 #4)
+- ElevenLabs subscription confirmation (Tier 1 #5)
+- Chrome DevTools MCP reconnect for visual verification of E.5 + later phases
