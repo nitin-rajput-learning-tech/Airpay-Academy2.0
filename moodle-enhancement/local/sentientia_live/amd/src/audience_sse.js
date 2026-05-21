@@ -18,7 +18,11 @@ const POLL_FALLBACK_MS = 10000;
 const init = (opts = {}) => {
     const sessionid = opts.sessionid;
     const token     = opts.token || '';
-    const streamUrl = opts.streamUrl || '/local/sentientia_live/stream.php';
+    // Default to M.cfg.wwwroot-prefixed URL so this works in any
+    // Moodle deploy location (subfolder install vs root install).
+    // M is a bare global in Moodle (not window.M), hence typeof guard.
+    const wwwroot = (typeof M !== 'undefined' && M.cfg && M.cfg.wwwroot) ? M.cfg.wwwroot : '';
+    const streamUrl = opts.streamUrl || (wwwroot + '/local/sentientia_live/stream.php');
 
     if (!sessionid) {
         setTimeout(() => window.location.reload(), POLL_FALLBACK_MS);
