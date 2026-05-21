@@ -192,3 +192,55 @@ event for quiz slides. Leaderboard refresh stays page-reload-driven
 (we don't build display-name DOM nodes via JS to preserve XSS safety
 per ADR-004 — mustache renders them at page load).
 
+
+### E.11 — Mobile responsive pass at 590px viewport
+
+Defensive responsive rules added for the airpayux primary mobile
+breakpoint (`max-width: 590px` per `.claude/rules/frontend.md`). The
+audience pages already use Bootstrap responsive utility classes
+(`flex-wrap`, `flex-grow-1`, `w-100`, `form-control-lg`) so they
+narrow cleanly. The added rules tighten the result panel + trainer
+runner at narrow viewports.
+
+**Result panel** (`templates/result_panel.mustache`, inline `<style>`
+scoped to `.sentientia-results-panel`):
+- Bar chart labels at 0.95rem, count/percent at 0.8rem, `white-space: nowrap`
+  on the count so the percentage doesn't break inside the parens
+- Quiz summary alert: `flex-direction: column` so "Quiz result: X of Y"
+  and "Correct answer: <label>" stack vertically (no overflow)
+- Leaderboard table: smaller font + tighter padding
+- Wordcloud: tighter gap + smaller `cloud-size-4`/`5` so the largest
+  words don't overflow the panel width
+
+**Trainer runner** (`trainer/run.php`, inline `<style>` scoped to
+`.sentientia-trainer-runner`):
+- `display-2` join code → 3rem (was ~5.5rem), letter-spacing 0.05em
+  (was 0.1em) so a 6-digit code with a space (e.g. "219 839")
+  fits comfortably without horizontal scroll
+- Audience + Response alerts: stack flex-direction column instead of
+  flex-row, so the counter doesn't push the "X slides in deck" off
+- Slide info card: `p-4` → `p-3` for tighter mobile spacing
+
+**Audience pages** verified mobile-friendly by inspection (Bootstrap
+utility classes already mobile-first):
+- `audience/join.php` — single input + button, `form-control-lg`,
+  `login-pagelayout` strips nav for focused entry
+- `audience/play.php` — option buttons are full-width with `p-3`
+  padding (≥48px tap targets), labels at `fs-5`, rating row uses
+  `flex-wrap`, wordcloud + openended use `form-control-lg` full-width
+
+**Verification status:** desktop renders are visually identical
+(media query doesn't fire at >590px). Truly verifying 590px requires
+either Chrome DevTools device-mode (Ctrl+Shift+M) or a physical
+mobile device — Chrome MCP's `resize_window` resizes the OS window
+chrome but doesn't reliably set the inner viewport for content
+rendering, so the @media query couldn't be triggered through MCP.
+Defensive responsive rules added are CSS-spec-valid and won't break
+desktop rendering.
+
+**Follow-up for next session:**
+1. Walk audience flow on a real mobile (Galaxy S22, iPhone 14) to
+   confirm tap-target sizes + the SSE-driven chart_updater inline
+   refresh paths animate cleanly
+2. Capture mobile screenshots into `docs/visual-evidence/2026-05-21/mobile/`
+3. Test Service Worker + PWA install flow on real mobile (Phase D.1)

@@ -87,6 +87,20 @@ if ($realtime_on) {
 
 echo $OUTPUT->header();
 
+// Phase E.11 — Mobile responsive overrides for the trainer run page.
+// Scoped to .sentientia-trainer-runner so it doesn't pollute the rest
+// of the page. Tightens display-2 + alert paddings + counter font on
+// the 590px breakpoint (airpayux primary mobile bp per frontend.md).
+echo '<style>
+@media (max-width: 590px) {
+  .sentientia-trainer-runner .display-2 { font-size: 3rem !important; letter-spacing: 0.05em !important; }
+  .sentientia-trainer-runner .alert { flex-direction: column !important; align-items: flex-start !important; gap: 0.25rem; padding: 0.75rem !important; }
+  .sentientia-trainer-runner .alert .fs-4 { font-size: 1.25rem !important; }
+  .sentientia-trainer-runner .card.p-4 { padding: 1rem !important; }
+}
+</style>';
+echo \html_writer::start_div('sentientia-trainer-runner');
+
 // ── Big join code ──
 echo \html_writer::start_div('text-center my-4');
 echo \html_writer::tag('div',
@@ -183,5 +197,7 @@ echo \html_writer::link($end_url->out(false),
        addslashes(get_string('confirm_end_session', 'local_sentientia_live'))
        . "');"]);
 echo \html_writer::end_div();
+
+echo \html_writer::end_div();  // .sentientia-trainer-runner
 
 echo $OUTPUT->footer();
