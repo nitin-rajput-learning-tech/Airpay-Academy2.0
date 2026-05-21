@@ -80,6 +80,9 @@ $string['reminder_last_run_never']        = 'परीक्षा-समय-स
 
 $string['reminder_subject']      = 'रिमाइंडर: परीक्षा "{$a->examname}" {$a->days_remaining} दिन में देय है';
 $string['reminder_small']        = '"{$a->examname}" {$a->days_remaining} दिन में देय';
+// Phase B.3.a — push notification (छोटा, mobile-friendly).
+$string['reminder_push_title']   = 'परीक्षा {$a->days_remaining} दिन में देय';
+$string['reminder_push_body']    = '"{$a->examname}" — {$a->deadline} तक पूरा करें। प्रयास के लिए टैप करें।';
 $string['reminder_body_plain']   = 'नमस्ते,
 
 यह एक रिमाइंडर है कि परीक्षा "{$a->examname}" (कोर्स: {$a->coursename}) {$a->deadline} को बंद हो रही है — अब से {$a->days_remaining} दिन।
@@ -107,6 +110,9 @@ $string['overdue_last_run_never']    = 'परीक्षा पर्यवे
 
 $string['overdue_subject']      = '{$a->learner_name} परीक्षा "{$a->exam_name}" पर {$a->days_past} दिन अतिदेय हैं';
 $string['overdue_small']        = '{$a->learner_name} {$a->exam_name} पर अतिदेय';
+// Phase B.3.b — supervisor के लिए push notification.
+$string['overdue_push_title']   = '{$a->learner_name} — परीक्षा {$a->days_past} दिन अतिदेय';
+$string['overdue_push_body']    = '"{$a->exam_name}" की डेडलाइन चूकी ({$a->deadline})। फॉलो-अप के लिए टैप करें।';
 $string['overdue_body_plain']   = 'नमस्ते,
 
 आपके टीम सदस्य {$a->learner_name} ने परीक्षा "{$a->exam_name}" (कोर्स: {$a->coursename}) की समय-सीमा चूक दी है।

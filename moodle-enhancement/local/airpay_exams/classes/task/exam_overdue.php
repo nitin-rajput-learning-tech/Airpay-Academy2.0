@@ -179,6 +179,19 @@ class exam_overdue extends \core\task\scheduled_task {
 
         \message_send($msg);
 
+        // Phase B.3.b (2026-05-21) — also push to the supervisor.
+        if (class_exists('\\local_sentientia_pwa\\notification_bridge')) {
+            \local_sentientia_pwa\notification_bridge::also_push(
+                $supervisor,
+                'sentientia.pwa.push.overdue',
+                get_string('overdue_push_title', 'local_airpay_exams', $a),
+                get_string('overdue_push_body',  'local_airpay_exams', $a),
+                $a->learner_profile_url ?? $a->exam_url,
+                'sentientia-exam-overdue-' . md5($supervisor->id . ':' . $a->exam_url . ':' . $row->userid),
+                true   // require_interaction — managers should see this
+            );
+        }
+
         try {
             $DB->insert_record('local_airpay_exams_remind_sent', (object) [
                 'userid'   => (int) $row->userid,

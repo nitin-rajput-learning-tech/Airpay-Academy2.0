@@ -76,5 +76,65 @@ function xmldb_local_sentientia_pwa_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026052102, 'local', 'sentientia_pwa');
     }
 
+    // ── 2026052103 — Phase B.3.a/b: notification_bridge (no schema) ──
+    // Adds 2 new feature flags (sentientia.pwa.push.reminders, .overdue)
+    // and the notification_bridge::also_push() helper class. No DB changes.
+    if ($oldversion < 2026052103) {
+        upgrade_plugin_savepoint(true, 2026052103, 'local', 'sentientia_pwa');
+    }
+
+    // ── 2026052105 — Phase B.3.c: register retention scheduled task ──
+    // db/tasks.php declares push_log_retention; this savepoint triggers
+    // Moodle to re-read tasks.php and create the row in
+    // mdl_task_scheduled. No schema change otherwise.
+    if ($oldversion < 2026052105) {
+        upgrade_plugin_savepoint(true, 2026052105, 'local', 'sentientia_pwa');
+    }
+
+    // ── 2026052106 — Phase B.3.d: iOS install hint (no schema change) ──
+    // Adds amd/build/ios_install_hint.min.js + lang strings. No DB change.
+    // Bump exists to force Moodle to re-run plugin install hooks (which
+    // re-read db/tasks.php — the previous savepoint didn't pick up the
+    // task because the file landed after that upgrade ran).
+    if ($oldversion < 2026052106) {
+        upgrade_plugin_savepoint(true, 2026052106, 'local', 'sentientia_pwa');
+    }
+
+    // ── 2026052104 — Phase B.3.c: push delivery log table ──
+    // local_sentientia_push_log — one row per push delivery attempt.
+    // Written by push_sender::deliver_one(). Daily retention cron purges
+    // rows older than retention_days (admin setting, default 90).
+    if ($oldversion < 2026052104) {
+        $table = new xmldb_table('local_sentientia_push_log');
+
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id',             XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+            $table->add_field('userid',         XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
+            $table->add_field('sub_id',         XMLDB_TYPE_INTEGER, '10', null, null);  // NULL allowed
+            $table->add_field('endpoint_host',  XMLDB_TYPE_CHAR,   '100', null, null);
+            $table->add_field('title',          XMLDB_TYPE_CHAR,   '200', null, null);
+            $table->add_field('body_truncated', XMLDB_TYPE_CHAR,   '200', null, null);
+            $table->add_field('url',            XMLDB_TYPE_CHAR,   '500', null, null);
+            $table->add_field('tag',            XMLDB_TYPE_CHAR,   '100', null, null);
+            $table->add_field('http_code',      XMLDB_TYPE_INTEGER,  '3', null, null);
+            $table->add_field('result',         XMLDB_TYPE_CHAR,    '20', null, XMLDB_NOTNULL, null, 'unknown');
+            $table->add_field('error_detail',   XMLDB_TYPE_TEXT);
+            $table->add_field('sent_at',        XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+            $table->add_key('primary',   XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_key('fk_userid', XMLDB_KEY_FOREIGN, ['userid'], 'user', ['id']);
+            $table->add_key('fk_sub_id', XMLDB_KEY_FOREIGN, ['sub_id'],
+                'local_sentientia_push_subs', ['id']);
+
+            $table->add_index('idx_userid_sent_at', XMLDB_INDEX_NOTUNIQUE, ['userid', 'sent_at']);
+            $table->add_index('idx_sent_at',        XMLDB_INDEX_NOTUNIQUE, ['sent_at']);
+            $table->add_index('idx_result_sent_at', XMLDB_INDEX_NOTUNIQUE, ['result', 'sent_at']);
+
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026052104, 'local', 'sentientia_pwa');
+    }
+
     return true;
 }

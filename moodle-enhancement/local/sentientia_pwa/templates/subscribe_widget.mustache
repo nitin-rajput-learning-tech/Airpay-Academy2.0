@@ -22,7 +22,13 @@
     }
 }}
 <div class="sentientia-pwa-subscribe card p-4 my-3"
-     data-vapid-public-key="{{vapidPublicKey}}">
+     data-vapid-public-key="{{vapidPublicKey}}"
+     data-ios-title="{{#str}}ios_hint_title, local_sentientia_pwa{{/str}}"
+     data-ios-body="{{#str}}ios_hint_body, local_sentientia_pwa{{/str}}"
+     data-ios-step1="{{#str}}ios_hint_step1, local_sentientia_pwa{{/str}}"
+     data-ios-step2="{{#str}}ios_hint_step2, local_sentientia_pwa{{/str}}"
+     data-ios-step3="{{#str}}ios_hint_step3, local_sentientia_pwa{{/str}}"
+     data-ios-dismiss="{{#str}}ios_hint_dismiss, local_sentientia_pwa{{/str}}">
 
   <h3 class="h5 mb-3">
     {{#str}}subscribe_section_title, local_sentientia_pwa{{/str}}
@@ -68,7 +74,23 @@
 </div>
 
 {{#js}}
-require(['local_sentientia_pwa/subscribe'], function(Subscribe) {
+require([
+    'local_sentientia_pwa/subscribe',
+    'local_sentientia_pwa/ios_install_hint'
+], function(Subscribe, IosHint) {
+    // iOS install hint reads its translated labels from data-* attributes
+    // on the .sentientia-pwa-subscribe root div (set by the template).
+    var root = document.querySelector('.sentientia-pwa-subscribe');
+    if (root && IosHint && IosHint.init) {
+        IosHint.init({
+            title:   root.dataset.iosTitle,
+            body:    root.dataset.iosBody,
+            step1:   root.dataset.iosStep1,
+            step2:   root.dataset.iosStep2,
+            step3:   root.dataset.iosStep3,
+            dismiss: root.dataset.iosDismiss
+        });
+    }
     Subscribe.init();
 });
 {{/js}}

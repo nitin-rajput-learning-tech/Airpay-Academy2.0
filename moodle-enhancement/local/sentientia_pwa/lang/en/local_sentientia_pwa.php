@@ -65,3 +65,51 @@ $string['settings_default_ttl_desc']      = 'How long the push provider should k
 
 $string['settings_max_payload_label']     = 'Max payload size (bytes)';
 $string['settings_max_payload_desc']      = 'Largest payload allowed per push. Web Push spec mandates ≤ 4096 bytes after encryption. Default 3500 leaves headroom for the encryption overhead. Larger payloads will be silently truncated.';
+
+// ── Phase B.3.c — push delivery log strings ──────────────────────────
+
+$string['settings_log_retention_label']   = 'Log retention (days)';
+$string['settings_log_retention_desc']    = 'How long to keep rows in <code>mdl_local_sentientia_push_log</code>. A daily cron at 02:00 purges older rows. Set to 0 for unlimited retention (not recommended on chatty deployments — the table grows fast).';
+
+$string['settings_push_log_link']         = 'View push delivery log';
+$string['settings_push_log_link_desc']    = 'Operational log of every push attempt. Filterable by result, user, and time window.';
+
+$string['task_push_log_retention']        = 'PWA push log retention (daily purge)';
+
+// Admin viewer page.
+$string['push_log_page_title']            = 'PWA push delivery log';
+$string['push_log_page_heading']          = 'PWA push delivery log';
+$string['push_log_stats_24h']             = 'Last 24 hours';
+$string['push_log_stats_line']            = '<strong>{$a->total_24h}</strong> attempts — <span class="text-success"><strong>{$a->sent_24h}</strong> sent</span>, <span class="text-warning">{$a->gone_24h} gone</span>, <span class="text-danger">{$a->failed_24h} failed</span>. <strong>{$a->unique_users_24h}</strong> unique users.';
+$string['push_log_filter_apply']          = 'Apply';
+$string['push_log_filter_result']         = 'Result';
+$string['push_log_filter_since']          = 'Since';
+$string['push_log_filter_userid']         = 'User ID';
+$string['push_log_filter_any']            = 'Any';
+$string['push_log_filter_sent']           = 'Sent';
+$string['push_log_filter_failed']         = 'Failed';
+$string['push_log_filter_gone']           = 'Gone (sub deleted)';
+$string['push_log_filter_truncated']      = 'Truncated';
+$string['push_log_since_1h']              = 'Last 1 hour';
+$string['push_log_since_24h']             = 'Last 24 hours';
+$string['push_log_since_7d']              = 'Last 7 days';
+$string['push_log_since_30d']             = 'Last 30 days';
+$string['push_log_since_all']             = 'All time';
+$string['push_log_no_results']            = 'No push deliveries match the filter.';
+$string['push_log_total_count']           = '{$a} matching deliveries';
+$string['push_log_col_when']              = 'When';
+$string['push_log_col_user']              = 'User';
+$string['push_log_col_host']              = 'Push host';
+$string['push_log_col_title']             = 'Title';
+$string['push_log_col_result']            = 'Result';
+$string['push_log_col_http']              = 'HTTP';
+$string['push_log_col_error']             = 'Error detail';
+
+// ── Phase B.3.d — iOS install hint banner ─────────────────────────────
+
+$string['ios_hint_title']   = 'Install Sentientia LMS to enable push notifications';
+$string['ios_hint_body']    = 'On iOS Safari, push notifications only work when this site is added to your home screen:';
+$string['ios_hint_step1']   = 'Tap the Share button at the bottom of the screen.';
+$string['ios_hint_step2']   = 'Scroll down and choose "Add to Home Screen".';
+$string['ios_hint_step3']   = 'Open Sentientia LMS from your home screen and try Enable notifications again.';
+$string['ios_hint_dismiss'] = 'Dismiss';

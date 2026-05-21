@@ -212,6 +212,22 @@ class course_reminder extends \core\task\scheduled_task {
 
         \message_send($msg);
 
+        // Phase B.3.a — also fire a Web Push via the shared bridge.
+        // Soft-coupled to local_sentientia_pwa via class_exists. Push is
+        // opt-IN (absence of a subscription IS the opt-out), so we don't
+        // honor email opt-out preferences here.
+        if (class_exists('\\local_sentientia_pwa\\notification_bridge')) {
+            \local_sentientia_pwa\notification_bridge::also_push(
+                $user,
+                'sentientia.pwa.push.reminders',
+                get_string('reminder_push_title', 'local_airpay_courses', $a),
+                get_string('reminder_push_body',  'local_airpay_courses', $a),
+                $a->course_url,
+                'sentientia-reminder-course-' . md5($user->id . ':' . $a->course_url . ':' . $deadline_ts),
+                false   // require_interaction
+            );
+        }
+
         // Record the audit row AFTER send. The unique index serves as
         // the de-dupe key; we ignore conflicts (race with a parallel
         // cron firing — very unlikely but cheap to defend against).

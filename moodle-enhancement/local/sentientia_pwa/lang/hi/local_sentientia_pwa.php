@@ -65,3 +65,51 @@ $string['settings_default_ttl_desc']      = 'अगर डिवाइस ऑफ
 
 $string['settings_max_payload_label']     = 'अधिकतम पेलोड साइज़ (बाइट्स)';
 $string['settings_max_payload_desc']      = 'प्रति पुश अधिकतम अनुमत पेलोड। Web Push स्पेक एन्क्रिप्शन के बाद ≤ 4096 बाइट्स अनिवार्य करता है। डिफ़ॉल्ट 3500 एन्क्रिप्शन ओवरहेड के लिए जगह छोड़ता है। बड़े पेलोड चुपचाप कट जाएंगे।';
+
+// ── Phase B.3.c — push delivery log strings ──────────────────────────
+
+$string['settings_log_retention_label']   = 'लॉग रिटेंशन (दिन)';
+$string['settings_log_retention_desc']    = '<code>mdl_local_sentientia_push_log</code> में पंक्तियाँ कितने दिन रखें। दैनिक क्रॉन 02:00 पर पुरानी पंक्तियाँ हटाता है। असीमित रिटेंशन के लिए 0 पर सेट करें (व्यस्त डिप्लॉयमेंट पर अनुशंसित नहीं — टेबल तेज़ी से बढ़ती है)।';
+
+$string['settings_push_log_link']         = 'पुश डिलीवरी लॉग देखें';
+$string['settings_push_log_link_desc']    = 'हर पुश प्रयास का ऑपरेशनल लॉग। परिणाम, यूज़र और समय विंडो से फ़िल्टर करें।';
+
+$string['task_push_log_retention']        = 'PWA पुश लॉग रिटेंशन (दैनिक purge)';
+
+// Admin viewer page.
+$string['push_log_page_title']            = 'PWA पुश डिलीवरी लॉग';
+$string['push_log_page_heading']          = 'PWA पुश डिलीवरी लॉग';
+$string['push_log_stats_24h']             = 'पिछले 24 घंटे';
+$string['push_log_stats_line']            = '<strong>{$a->total_24h}</strong> प्रयास — <span class="text-success"><strong>{$a->sent_24h}</strong> भेजे गए</span>, <span class="text-warning">{$a->gone_24h} समाप्त</span>, <span class="text-danger">{$a->failed_24h} विफल</span>। <strong>{$a->unique_users_24h}</strong> विशिष्ट यूज़र।';
+$string['push_log_filter_apply']          = 'लागू करें';
+$string['push_log_filter_result']         = 'परिणाम';
+$string['push_log_filter_since']          = 'इसके बाद से';
+$string['push_log_filter_userid']         = 'यूज़र ID';
+$string['push_log_filter_any']            = 'कोई भी';
+$string['push_log_filter_sent']           = 'भेजे गए';
+$string['push_log_filter_failed']         = 'विफल';
+$string['push_log_filter_gone']           = 'समाप्त (sub डिलीट)';
+$string['push_log_filter_truncated']      = 'काटा गया';
+$string['push_log_since_1h']              = 'पिछला 1 घंटा';
+$string['push_log_since_24h']             = 'पिछले 24 घंटे';
+$string['push_log_since_7d']              = 'पिछले 7 दिन';
+$string['push_log_since_30d']             = 'पिछले 30 दिन';
+$string['push_log_since_all']             = 'सभी समय';
+$string['push_log_no_results']            = 'फ़िल्टर से कोई पुश डिलीवरी मेल नहीं खाती।';
+$string['push_log_total_count']           = '{$a} मेल खाती डिलीवरी';
+$string['push_log_col_when']              = 'कब';
+$string['push_log_col_user']              = 'यूज़र';
+$string['push_log_col_host']              = 'पुश होस्ट';
+$string['push_log_col_title']             = 'शीर्षक';
+$string['push_log_col_result']            = 'परिणाम';
+$string['push_log_col_http']              = 'HTTP';
+$string['push_log_col_error']             = 'त्रुटि विवरण';
+
+// ── Phase B.3.d — iOS install hint banner ─────────────────────────────
+
+$string['ios_hint_title']   = 'पुश सूचनाएं चालू करने के लिए Sentientia LMS इंस्टॉल करें';
+$string['ios_hint_body']    = 'iOS Safari पर, पुश सूचनाएं तभी काम करती हैं जब यह साइट होम स्क्रीन पर जोड़ी जाए:';
+$string['ios_hint_step1']   = 'स्क्रीन के नीचे शेयर बटन पर टैप करें।';
+$string['ios_hint_step2']   = 'नीचे स्क्रॉल करें और "होम स्क्रीन पर जोड़ें" चुनें।';
+$string['ios_hint_step3']   = 'होम स्क्रीन से Sentientia LMS खोलें और सूचनाएं चालू करने का दोबारा प्रयास करें।';
+$string['ios_hint_dismiss'] = 'खारिज करें';

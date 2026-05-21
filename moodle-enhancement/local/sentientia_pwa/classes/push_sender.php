@@ -149,14 +149,26 @@ class push_sender {
      *                       the subscription), false on any other failure.
      */
     protected static function deliver_one(\stdClass $sub, array $payload): bool|string {
+        // Capture payload fields up front so we can log them regardless of
+        // which branch returns.
+        $title = (string) ($payload['title'] ?? '');
+        $body  = (string) ($payload['body']  ?? '');
+        $url   = (string) ($payload['url']   ?? '');
+        $tag   = (string) ($payload['tag']   ?? '');
+
         if (empty(vapid_key_manager::get_public_key())) {
             debugging('[sentientia_pwa] no VAPID keypair — run cli/generate_vapid_keys.php',
                 DEBUG_NORMAL);
+            push_logger::log((int) $sub->userid, (int) $sub->id, $sub->endpoint,
+                $title, $body, $url, $tag,
+                null, push_logger::RESULT_FAILED, 'no VAPID keypair');
             return false;
         }
 
         $plaintext = self::json_encode_safe($payload);
+        $was_truncated = false;
         if (strlen($plaintext) > self::get_max_payload_bytes()) {
+            $was_truncated = true;
             debugging(sprintf(
                 '[sentientia_pwa] payload too large: %d > %d bytes — truncating',
                 strlen($plaintext),
@@ -164,34 +176,58 @@ class push_sender {
             ), DEBUG_NORMAL);
             // Truncate the body so something still goes through.
             $payload['body'] = substr($payload['body'] ?? '', 0, 200) . '…';
+            $body = (string) ($payload['body'] ?? '');
             $plaintext = self::json_encode_safe($payload);
         }
 
-        // 1. Encrypt payload (RFC 8291 aes128gcm).
-        $enc = payload_encrypter::encrypt_for_subscription(
-            $plaintext,
-            $sub->p256dh,
-            $sub->auth_secret
-        );
+        try {
+            // 1. Encrypt payload (RFC 8291 aes128gcm).
+            $enc = payload_encrypter::encrypt_for_subscription(
+                $plaintext,
+                $sub->p256dh,
+                $sub->auth_secret
+            );
 
-        // 2. Sign VAPID JWT for this endpoint's origin (RFC 8292).
-        $jwt = jwt_signer::sign_for_endpoint($sub->endpoint);
+            // 2. Sign VAPID JWT for this endpoint's origin (RFC 8292).
+            $jwt = jwt_signer::sign_for_endpoint($sub->endpoint);
 
-        // 3. POST to push service.
-        $vapid_pub = vapid_key_manager::get_public_key();  // already b64url
-        $ttl = self::get_default_ttl();
+            // 3. POST to push service.
+            $vapid_pub = vapid_key_manager::get_public_key();
+            $ttl = self::get_default_ttl();
 
-        $headers = [
-            'Authorization: vapid t=' . $jwt . ',k=' . $vapid_pub,
-            'Content-Encoding: aes128gcm',
-            'Content-Type: application/octet-stream',
-            'TTL: ' . $ttl,
-            'Urgency: ' . self::URGENCY_NORMAL,
-        ];
+            $headers = [
+                'Authorization: vapid t=' . $jwt . ',k=' . $vapid_pub,
+                'Content-Encoding: aes128gcm',
+                'Content-Type: application/octet-stream',
+                'TTL: ' . $ttl,
+                'Urgency: ' . self::URGENCY_NORMAL,
+            ];
 
-        $http_code = self::http_post_binary($sub->endpoint, $enc['ciphertext'], $headers);
+            $http_code = self::http_post_binary(
+                $sub->endpoint, $enc['ciphertext'], $headers);
 
-        return self::classify_response($http_code);
+            $outcome = self::classify_response($http_code);
+
+            // Map outcome → log result enum.
+            $result_str = $outcome === true ? push_logger::RESULT_SENT
+                : ($outcome === 'gone' ? push_logger::RESULT_GONE
+                : push_logger::RESULT_FAILED);
+            if ($was_truncated && $outcome === true) {
+                $result_str = push_logger::RESULT_TRUNCATED;
+            }
+
+            push_logger::log((int) $sub->userid, (int) $sub->id, $sub->endpoint,
+                $title, $body, $url, $tag,
+                $http_code, $result_str);
+
+            return $outcome;
+
+        } catch (\Throwable $e) {
+            push_logger::log((int) $sub->userid, (int) $sub->id, $sub->endpoint,
+                $title, $body, $url, $tag,
+                null, push_logger::RESULT_FAILED, $e->getMessage());
+            throw $e;  // caller catches + records failure on subscription
+        }
     }
 
     /**

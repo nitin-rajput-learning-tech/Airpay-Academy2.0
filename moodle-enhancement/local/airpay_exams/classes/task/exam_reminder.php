@@ -195,6 +195,20 @@ class exam_reminder extends \core\task\scheduled_task {
 
         \message_send($msg);
 
+        // Phase B.3.a (2026-05-21) — also fire a Web Push to the same
+        // learner. Soft-coupled to local_sentientia_pwa via the bridge.
+        if (class_exists('\\local_sentientia_pwa\\notification_bridge')) {
+            \local_sentientia_pwa\notification_bridge::also_push(
+                $user,
+                'sentientia.pwa.push.reminders',
+                get_string('reminder_push_title', 'local_airpay_exams', $a),
+                get_string('reminder_push_body',  'local_airpay_exams', $a),
+                $a->exam_url,
+                'sentientia-exam-reminder-' . md5($user->id . ':' . $a->exam_url . ':' . $deadline_ts),
+                false   // require_interaction
+            );
+        }
+
         try {
             $DB->insert_record('local_airpay_exams_remind_sent', (object) [
                 'userid'   => (int) $row->userid,

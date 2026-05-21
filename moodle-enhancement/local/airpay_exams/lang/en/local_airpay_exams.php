@@ -78,6 +78,9 @@ $string['reminder_last_run_never']         = 'The exam-deadline-reminder cron ha
 // Reminder message body — rendered by the cron task.
 $string['reminder_subject']      = 'Reminder: exam "{$a->examname}" is due in {$a->days_remaining} day(s)';
 $string['reminder_small']        = '"{$a->examname}" due in {$a->days_remaining} day(s)';
+// Phase B.3.a (2026-05-21) — push notification version of the exam reminder.
+$string['reminder_push_title']   = 'Exam due in {$a->days_remaining} day(s)';
+$string['reminder_push_body']    = '"{$a->examname}" — finish by {$a->deadline}. Tap to attempt.';
 $string['reminder_body_plain']   = 'Hi,
 
 This is a reminder that the exam "{$a->examname}" (course: {$a->coursename}) closes on {$a->deadline} — {$a->days_remaining} day(s) from now.
@@ -106,6 +109,9 @@ $string['overdue_last_run_never']          = 'The exam supervisor-escalation cro
 
 $string['overdue_subject']      = '{$a->learner_name} is {$a->days_past} day(s) overdue on exam "{$a->exam_name}"';
 $string['overdue_small']        = '{$a->learner_name} overdue on {$a->exam_name}';
+// Phase B.3.b — push notification for supervisors.
+$string['overdue_push_title']   = '{$a->learner_name} — exam {$a->days_past}d overdue';
+$string['overdue_push_body']    = 'Missed exam "{$a->exam_name}" deadline ({$a->deadline}). Tap to follow up.';
 $string['overdue_body_plain']   = 'Hi,
 
 Your team member {$a->learner_name} missed the deadline for exam "{$a->exam_name}" (course: {$a->coursename}).

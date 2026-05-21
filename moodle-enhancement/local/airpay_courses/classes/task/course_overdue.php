@@ -212,6 +212,20 @@ class course_overdue extends \core\task\scheduled_task {
 
         \message_send($msg);
 
+        // Phase B.3.b — also push to the supervisor via the shared bridge.
+        // Supervisor receives; learner is the subject of the message.
+        if (class_exists('\\local_sentientia_pwa\\notification_bridge')) {
+            \local_sentientia_pwa\notification_bridge::also_push(
+                $supervisor,
+                'sentientia.pwa.push.overdue',
+                get_string('overdue_push_title', 'local_airpay_courses', $a),
+                get_string('overdue_push_body',  'local_airpay_courses', $a),
+                $a->learner_profile_url,
+                'sentientia-overdue-' . md5($supervisor->id . ':' . $a->course_url . ':' . $row->userid),
+                true   // require_interaction — manager should see this
+            );
+        }
+
         try {
             $DB->insert_record('local_airpay_courses_remind_sent', (object) [
                 'userid'   => (int) $row->userid,  // subject = the learner

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/sentientia_pwa/db" VERSION="20260520"
-       COMMENT="Sentientia LMS PWA — Web Push subscription storage (Phase B.2)">
+<XMLDB PATH="local/sentientia_pwa/db" VERSION="20260521"
+       COMMENT="Sentientia LMS PWA — Web Push subscription storage (Phase B.2)
+                + delivery log (Phase B.3.c)">
   <TABLES>
 
     <TABLE NAME="local_sentientia_push_subs"
@@ -56,6 +57,58 @@
                COMMENT="Per-customer / per-tenant subscriber counts"/>
         <INDEX NAME="idx_last_seen"       UNIQUE="false" FIELDS="last_seen"
                COMMENT="Stale-subscription cleanup query (last_seen older than N days)"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_push_log"
+           COMMENT="Phase B.3.c (2026-05-21) — One row per push delivery attempt.
+                    Written by push_sender::deliver_one() after every POST to
+                    a push service, success or failure. The admin viewer
+                    (/local/sentientia_pwa/admin/push_log.php) reads this for
+                    operational visibility.
+
+                    Retention: rows older than retention_days (admin setting,
+                    default 90) are purged by a daily cron. Compliance — the
+                    log contains no message bodies (only first 200 chars of
+                    body, truncated) so it can be retained longer than typical
+                    audit logs without GDPR exposure.">
+      <FIELDS>
+        <FIELD NAME="id"            TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"        TYPE="int"  LENGTH="10" NOTNULL="true"
+               COMMENT="Recipient user ID"/>
+        <FIELD NAME="sub_id"        TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="FK to local_sentientia_push_subs.id. NULL if the sub was deleted between send and log write."/>
+        <FIELD NAME="endpoint_host" TYPE="char" LENGTH="100" NOTNULL="false"
+               COMMENT="Just the host part of the endpoint URL (e.g. fcm.googleapis.com). For grouping in the viewer."/>
+        <FIELD NAME="title"         TYPE="char" LENGTH="200" NOTNULL="false"
+               COMMENT="Push title as delivered (mirrors notification UI)"/>
+        <FIELD NAME="body_truncated" TYPE="char" LENGTH="200" NOTNULL="false"
+               COMMENT="First 200 chars of the body. Truncated to limit PII surface."/>
+        <FIELD NAME="url"           TYPE="char" LENGTH="500" NOTNULL="false"
+               COMMENT="Click-through URL"/>
+        <FIELD NAME="tag"           TYPE="char" LENGTH="100" NOTNULL="false"
+               COMMENT="Collapse tag (correlate with reminder buckets)"/>
+        <FIELD NAME="http_code"     TYPE="int"  LENGTH="3"  NOTNULL="false"
+               COMMENT="HTTP response from the push service (201/204/410/etc). NULL on network failure."/>
+        <FIELD NAME="result"        TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="unknown"
+               COMMENT="'sent' / 'failed' / 'gone' / 'flag_off' / 'truncated'"/>
+        <FIELD NAME="error_detail"  TYPE="text" NOTNULL="false"
+               COMMENT="Optional debug message — exception or curl error"/>
+        <FIELD NAME="sent_at"       TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Timestamp when this row was written"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"   TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_userid" TYPE="foreign" FIELDS="userid" REFTABLE="user"                       REFFIELDS="id"/>
+        <KEY NAME="fk_sub_id" TYPE="foreign" FIELDS="sub_id" REFTABLE="local_sentientia_push_subs" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_userid_sent_at" UNIQUE="false" FIELDS="userid, sent_at"
+               COMMENT="Per-user history view"/>
+        <INDEX NAME="idx_sent_at"        UNIQUE="false" FIELDS="sent_at"
+               COMMENT="Retention purge query (sent_at &lt; cutoff)"/>
+        <INDEX NAME="idx_result_sent_at" UNIQUE="false" FIELDS="result, sent_at"
+               COMMENT="Admin viewer: filter by result then order by recency"/>
       </INDEXES>
     </TABLE>
 

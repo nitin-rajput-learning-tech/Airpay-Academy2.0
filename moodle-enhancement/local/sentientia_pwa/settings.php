@@ -94,6 +94,28 @@ if ($hassiteconfig) {
         PARAM_INT
     ));
 
+    // ── Phase B.3.c — log retention ──
+    $settings->add(new admin_setting_configtext(
+        'local_sentientia_pwa/log_retention_days',
+        get_string('settings_log_retention_label', 'local_sentientia_pwa'),
+        get_string('settings_log_retention_desc',  'local_sentientia_pwa'),
+        '90',
+        PARAM_INT
+    ));
+
+    // Link to the log viewer.
+    $log_url = new \moodle_url('/local/sentientia_pwa/admin/push_log.php');
+    $settings->add(new admin_setting_heading(
+        'local_sentientia_pwa/push_log_link',
+        get_string('settings_push_log_link', 'local_sentientia_pwa'),
+        '<p><a class="btn btn-secondary" href="' . $log_url->out(false) . '">'
+            . get_string('settings_push_log_link', 'local_sentientia_pwa')
+            . '</a></p>'
+            . '<p class="text-muted small">'
+            . get_string('settings_push_log_link_desc', 'local_sentientia_pwa')
+            . '</p>'
+    ));
+
     // Register under the "Plugins → Local plugins" admin tree.
     $ADMIN->add('localplugins', $settings);
 }

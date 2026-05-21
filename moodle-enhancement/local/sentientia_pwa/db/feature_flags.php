@@ -29,7 +29,29 @@ $flags = [
         'default'     => false,
         'description' => 'Phase B.2+ — Web Push notifications via the
                           service worker. Default OFF until the backend
-                          (subscription table, WS endpoint, sender) ships.',
+                          (subscription table, WS endpoint, sender) ships.
+                          This is the MASTER push flag — all push channels
+                          (sentientia.pwa.push.*) require this to be ON too.',
+    ],
+
+    // ─── Phase B.3 — push delivery sub-channels ──────────────────────
+    // Each sub-channel is independently flagable so admins can enable
+    // course reminders WITHOUT enabling, say, overdue manager escalation.
+    // ALL sub-channels also require sentientia.pwa.push.enabled = true.
+    'sentientia.pwa.push.reminders' => [
+        'default'     => false,
+        'description' => 'Phase B.3 — push deadline reminders to learners.
+                          Fires alongside the existing email reminder
+                          from local_airpay_courses\\task\\course_reminder.
+                          Only fires for users who have a push subscription
+                          AND sentientia.pwa.push.enabled is ON.',
+    ],
+    'sentientia.pwa.push.overdue' => [
+        'default'     => false,
+        'description' => 'Phase B.3 — push overdue escalations to managers
+                          when a learner misses a deadline. Companion to
+                          the existing local_airpay_courses\\task\\course_overdue
+                          email escalation.',
     ],
 
 ];

@@ -113,6 +113,9 @@ $string['reminder_last_run_never']          = 'समय-सीमा-रिम�
 
 $string['reminder_subject']      = 'रिमाइंडर: "{$a->fullname}" {$a->days_remaining} दिन में देय है';
 $string['reminder_small']        = '"{$a->fullname}" {$a->days_remaining} दिन में देय';
+// Phase B.3.a — push notification (छोटा, mobile-friendly).
+$string['reminder_push_title']   = 'कोर्स {$a->days_remaining} दिन में देय';
+$string['reminder_push_body']    = '"{$a->fullname}" — {$a->deadline} तक पूरा करें। जारी रखने के लिए टैप करें।';
 $string['reminder_body_plain']   = 'नमस्ते,
 
 यह एक रिमाइंडर है कि आपके कोर्स "{$a->fullname}" को {$a->deadline} तक पूरा किया जाना है (अब से {$a->days_remaining} दिन)।
@@ -140,6 +143,9 @@ $string['overdue_last_run_never']          = 'पर्यवेक्षक-ए
 
 $string['overdue_subject']      = '{$a->learner_name} "{$a->course_name}" पर {$a->days_past} दिन अतिदेय हैं';
 $string['overdue_small']        = '{$a->learner_name} {$a->course_name} पर अतिदेय';
+// Phase B.3.b — supervisor के लिए push notification (mobile-friendly).
+$string['overdue_push_title']   = '{$a->learner_name} — {$a->days_past} दिन अतिदेय';
+$string['overdue_push_body']    = '"{$a->course_name}" की डेडलाइन चूकी ({$a->deadline})। फॉलो-अप के लिए टैप करें।';
 $string['overdue_body_plain']   = 'नमस्ते,
 
 आपके टीम सदस्य {$a->learner_name} ने कोर्स "{$a->course_name}" की समय-सीमा चूक दी है।

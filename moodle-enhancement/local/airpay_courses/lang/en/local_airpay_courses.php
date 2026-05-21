@@ -141,6 +141,12 @@ Pick it up here: {$a->course_url}
 — Airpay Academy';
 $string['reminder_body_html']    = '<p>Hi,</p><p>This is a reminder that your course <strong>{$a->fullname}</strong> is due to be completed by <strong>{$a->deadline}</strong> ({$a->days_remaining} day(s) from now).</p><p><a href="{$a->course_url}">Continue the course</a></p><p style="color:#777;">— Airpay Academy</p>';
 
+// Phase B.3.a (2026-05-21) — push notification version of the reminder.
+// Push title ~ <= 50 chars, body <= 120 chars to render cleanly on
+// Chrome/Firefox/Edge notification toasts AND on iOS lock-screen.
+$string['reminder_push_title']   = 'Course due in {$a->days_remaining} day(s)';
+$string['reminder_push_body']    = '"{$a->fullname}" — finish by {$a->deadline}. Tap to continue.';
+
 // P1 #29 (2026-05-20) — overdue manager-escalation cron. Closes audit
 // item #15 from parity-audit-2026-05-15/airpay_courses.md.
 $string['task_course_overdue']             = 'Course overdue — manager escalation';
@@ -161,6 +167,9 @@ $string['overdue_last_run_never']          = 'The supervisor-escalation cron has
 // Escalation message body — rendered by the cron task itself.
 $string['overdue_subject']      = '{$a->learner_name} is {$a->days_past} day(s) overdue on "{$a->course_name}"';
 $string['overdue_small']        = '{$a->learner_name} overdue on {$a->course_name}';
+// Phase B.3.b — push notification (short, mobile-friendly) for supervisors.
+$string['overdue_push_title']   = '{$a->learner_name} — {$a->days_past}d overdue';
+$string['overdue_push_body']    = 'Missed "{$a->course_name}" deadline ({$a->deadline}). Tap to follow up.';
 $string['overdue_body_plain']   = 'Hi,
 
 Your team member {$a->learner_name} missed the deadline for the course "{$a->course_name}".
