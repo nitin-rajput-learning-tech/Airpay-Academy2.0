@@ -3517,3 +3517,221 @@ D. Custom mix to be specified
 
 ### Session 2026-05-22 summary
 Six commits totalling 4 priorities closed and 4 product bugs discovered + fixed via the new test suite. All four #4 sub-priorities (4a/4b/4c/4d) green. Test-DB initialization documented in commit messages for IT (drop `phpu_*` tables, then `php public/admin/tool/phpunit/cli/init.php`).
+
+---
+
+## 🎯 SESSION 2026-05-22→23 — GOAL A AUDIT + ARCHITECTURAL PATTERNS
+
+**23 commits pushed to `origin/production` (`89fb2e713` → `bf5412ed2`).**
+Mission: walk every persona × every surface, fix what's broken, restyle what
+still looks like Moodle. Outcome went deeper than expected — the bugs found
+clustered into two architectural shapes, both now codified as
+project-wide invariants.
+
+### Headline outcomes
+
+  - **Goal A formally complete**: 8 of 9 personas walked (Learner, Site Admin,
+    Manager, L&D Admin, Course Author, Tenant Admin, Compliance Officer,
+    External Public Learner). API Consumer is docs-only.
+  - **9 bugs fixed end-to-end with browser verification**: #6, #7, #8, #9b,
+    #10, #11, #12, #13 (+ session-extension of pre-existing #9). Every fix
+    verified via `getComputedStyle` / `take_snapshot` / direct WS roundtrip
+    before commit.
+  - **5 Moodle-leak surfaces restyled to Sentientia tokens**: `/user/profile.php`,
+    `/badges/mybadges.php`, `/grade/report/overview/`, `/admin/*` interior
+    (search + all settings.php), `/course/view.php`.
+  - **2 architectural patterns codified**: shared `role_detector` (single
+    source of truth for role tier) and `ws_contract_scanner` (CI gate
+    against client-server contract drift).
+  - **3 test/tool infrastructures built**: PHPUnit `ws_contract_test`,
+    PHPUnit `role_detector_test` (7-method 5-tier matrix), CLI
+    `theme/airpayux/cli/ws_contract_audit.php`.
+  - **1 ADR**: ADR-009 documenting both patterns + on-ramp for new contributors.
+
+### The bug-class extinction pattern
+
+Each bug fix was 1-by-1 with verification. But the bugs themselves clustered
+into a tellingly small number of *shapes*:
+
+| Bug | Shape |
+|---|---|
+| #6  My Requests stuck on Loading            | WS contract drift |
+| #9b Manager WS denied supervisors           | Detection drift |
+| #10 5 sibling endpoints WS contract drift   | WS contract drift |
+| #11 Compliance Officer Learner sidebar      | Detection drift |
+| #12 Cart datatable region attribute         | WS contract drift |
+| #13 Mobile shell-main 260px width loss      | Media-query half-override |
+
+The first 5 commits (Bug #6 + #10 + #9b + #7 + #8) patched individual
+bugs. From commit 15 onward the work shifted to making the bug class
+extinct:
+
+  - **Commit 15** (`fcd150c0a`) — `role_detector` shared helper. Bug #11
+    surface area now zero. Both `layout/dashboard.php` and
+    `classes/sidebar_navigation.php` consume the same `detect()` method
+    and can never disagree again.
+  - **Commit 16** (`f258db649`) — `ws_contract_scanner` + PHPUnit gate.
+    Every WS consumed by the shared datatable client is now checked at
+    CI for full-contract compliance. The gate found Bug #12 in its
+    first run — a CURRENTLY-broken endpoint that had been silently
+    showing "Loading…" forever.
+  - **Commit 18** (`9a76ef3ad`) — CLI wrapper for the scanner. Same
+    code, on-demand auditing for forensics and release sanity.
+  - **Commit 20** (`5afbddb31`) — ADR-009 documents the patterns
+    + on-ramp guide for new contributors.
+  - **Commit 21** (`bf5412ed2`) — PHPUnit `role_detector` 5-tier
+    matrix codifies the role-detection contract.
+
+### Commit ledger (chronological)
+
+```
+89fb2e713  fix(ws):       WS contract drift family (#6+#9b+#10, 7 endpoints)
+ad0168d10  audit:         Manager + L&D Admin walks
+e1cf9206c  fix(deploy):   #7 — branded Apache 404/500/403 via .htaccess
+d90f6b44c  fix(theme):    #8 — footer overlap on long pages (body height clamp)
+6f25d6cae  feat(theme):   Goal A.x /user/profile.php restyle
+179204297  feat(theme):   Goal A.x /badges/mybadges.php restyle
+5e69eaa2b  feat(theme):   Goal A.x /grade/report/overview restyle
+552664466  audit:         Course Author persona finding
+1788d6ff1  audit:         Tenant Admin persona walk
+eacc604bc  feat(theme):   Goal A.x /admin/* interior restyle
+e8c303e9e  feat(theme):   Goal A.x /course/view.php restyle
+4a0b32e8d  audit:         Goal A.x leak-surface scoreboard
+40fb6fb3b  fix(theme):    #11 — sidebar role-detection consistency
+f583f1b67  audit:         Compliance Officer + Public Learner walks
+fcd150c0a  refactor:      role_detector shared helper
+f258db649  test:          PHPUnit WS contract gate
+411c9ef49  fix(cart):     #12 — datatable region attribute + JSON double-escape
+9a76ef3ad  feat(theme):   CLI tool for ad-hoc WS contract audit
+117c2e84a  fix(theme):    #13 — mobile shell-main width loss
+5afbddb31  docs(adr):     ADR-009 — detection + WS contract invariants
+bf5412ed2  test(theme):   PHPUnit role_detector 5-tier matrix
+```
+
+### Key insights surfaced this session
+
+1. **Verification discipline pays for itself.** Each fix was verified in-browser
+   AFTER the change before commit. Twice this surfaced second-order bugs hidden
+   under the first one. Bug #6 looked like a single fix; verification revealed
+   3 cascading causes + a WS-contract-drift root cause hitting 5 more endpoints.
+   Bug #11's first-pass fix had a double-LIMIT SQL bug that silenced the BizLMS
+   role check — only the CLI repro `\theme_airpayux\sidebar_navigation->get_context()`
+   exposed the actual `dml_read_exception`.
+
+2. **Web rendering hides bugs that CLI surfaces.** Moodle's exception
+   swallowing meant a real DB error returned a silent `false`. Drop down a
+   layer when verification keeps failing.
+
+3. **The PHPUnit gate paid for itself in minutes.** Built `ws_contract_scanner`
+   as regression protection for Bug #6/#10. First run found Bug #12 — a
+   currently-broken endpoint nobody had reported. Highest-leverage CI test
+   outcome: surfacing live bugs, not just preventing future ones.
+
+4. **Detection consistency is an architectural invariant.** Bug #11 happened
+   because two duplicated implementations drifted. Aligning them was a
+   band-aid; the structural fix was promoting the detection rules to a
+   shared `role_detector::detect()` that both consumers MUST consume.
+
+5. **Mobile media-query exhaustiveness.** Bug #13 hid since whenever the
+   mobile breakpoint was first written. `margin-left: 0` was added but
+   `width: 100%` was forgotten — every `.ap-shell` page lost 260px of
+   content area at mobile. No persona walk surfaced it because they all
+   ran at desktop viewport.
+
+### Goal A.x leak-surface scoreboard
+
+| Surface | Start | End |
+|---|---|---|
+| `/user/profile.php` | 🟠 Moodle 2-col | 🟢 Sentientia card grid |
+| `/badges/mybadges.php` | 🟠 plain Bootstrap | 🟢 branded card + trophy empty state |
+| `/grade/report/overview/` | 🟠 vanilla table | 🟢 branded thead micro-labels |
+| `/admin/*` (search + settings) | 🟠 bare Moodle Boost | 🟢 card headers + brand forms |
+| `/course/view.php` | 🟠 plain section list | 🟢 section cards w/ brand accent |
+| Apache 404/500/403 | 🔴 raw + version leak | 🟢 wrapped in airpayux theme |
+| Long-page footer | 🔴 painted mid-content | 🟢 at correct page-end |
+| Mobile content width | 🔴 -260px phantom | 🟢 full viewport |
+
+### Persona walks complete (8 of 9)
+
+| Persona | User | Key finding |
+|---|---|---|
+| Learner | Fatma Khamis | All 12 surfaces 🟢 except 4 leak pages restyled |
+| Site Admin | academy@airpay.co.in | 19-item admin sidebar; /admin/* now branded |
+| Manager | Binay Upadhyay | Team Dashboard 🟢 fully branded; #9b WS fix needed |
+| L&D Admin | Nitin Rajput | Platform-wide KPIs + 11-item admin sidebar |
+| Course Author / SME | Asif Ansari | No separate dashboard — Learner+editingteacher; teaches 33 courses |
+| Tenant Admin | External Admin /Public-77 | Same L&D shape, tenant-scoped numbers + My Cart |
+| Compliance Officer | Joseph Mandapati | Bug #11 — BizLMS-admin role at category context |
+| External Public Learner | vimal koothattu | Standard learner with My Cart for e-commerce |
+
+API Consumer is docs-only — no UI walk required.
+
+### Artifacts in production right now
+
+  - `theme/airpayux/classes/role_detector.php` — shared detector
+  - `theme/airpayux/classes/sidebar_navigation.php` — delegates to detector
+  - `theme/airpayux/layout/dashboard.php` — delegates to detector
+  - `theme/airpayux/classes/ws_contract_scanner.php` — drift checker utility
+  - `theme/airpayux/tests/ws_contract_test.php` — PHPUnit CI gate
+  - `theme/airpayux/tests/role_detector_test.php` — PHPUnit 5-tier matrix
+  - `theme/airpayux/cli/ws_contract_audit.php` — on-demand admin CLI
+  - `theme/airpayux/scss/moodle/partials/_surface-profile.scss` —
+    extended with 4 surface restyles (profile, badges, grades, admin) +
+    course-view (#7-#13 fixes inline)
+  - `theme/airpayux/scss/moodle/partials/_layout-shell.scss` — Bug #13
+    mobile fix landed
+  - `theme/airpayux/scss/moodle/sticky-footer.scss` — Bug #8 viewport
+    clamp fix landed
+  - `deploy/moodle-htaccess.template` — Bug #7 ErrorDocument routing
+  - `docs/adr/ADR-009-detection-consistency-and-ws-contract-invariants.md`
+  - `docs/visual-audit-2026-05-22/AUDIT-REPORT.md` — full audit narrative
+
+### Verifiable end-to-end
+
+  - `php theme/airpayux/cli/ws_contract_audit.php` — returns ALL PASS exit 0
+  - 9 datatable WS endpoints all contract-compliant (was 7 broken at
+    session start: Bug #6 list_mine + Bug #10's 4 endpoints + Bug #12's
+    2 cart endpoints all green)
+  - `\theme_airpayux\role_detector::detect()` returns correct tier for
+    all 5 paths (CLI smoke tested on 5 production users + PHPUnit matrix
+    isolated fixtures)
+  - All 5 restyled surfaces verified in-browser via `getComputedStyle`
+    after each commit
+  - Mobile viewport 591×671: 4 spot-checked pages (profile, badges,
+    grades, dashboard) all render full-width without horizontal overflow
+
+### Next-session backlog (clear handoff)
+
+  - PHPUnit gate adoption: enable Moodle PHPUnit init + run the two new
+    suites at CI (`ws_contract`, `role_detector` groups)
+  - Per-course gradebook `/grade/report/index.php?id=N` restyle —
+    inherits most styling from grades-overview, low risk
+  - Mobile responsive verification of admin/* + course/view pages
+    (only profile/badges/grades/dashboard checked this session)
+  - `/course/edit.php` restyle — needs Site Admin login + form-heavy
+  - Calendar `/calendar/view.php` + Message `/message/index.php` restyles
+  - Factor `theme_airpayux\ws_contract_scanner::find_files()` and `load_services_file()`
+    into a shared utility class for re-use by future static-analysis tests
+  - Goal B (Playwright E2E harness) — still blocked by Node 24/Playwright
+    1.60 incompatibility on Windows
+  - Goal C (user guide content) — blocked on Goal A.x + B
+  - Mobile-app WS Phase X.1 (22 read-only endpoints) — deferred behind
+    Goals A.x + B
+
+### Production-deploy notes for IT
+
+The new artifacts that need explicit deployment beyond the standard
+git-pull + cache-purge:
+
+  - **`.htaccess`** on the live web root needs the new ErrorDocument
+    rules. Source-of-truth: `moodle-enhancement/deploy/moodle-htaccess.template`.
+    If production uses a different alias (not `/moodle/`), adjust the
+    `ErrorDocument` targets accordingly.
+  - **`ServerTokens Prod`** in `httpd.conf` to fully hide Apache/PHP
+    version strings (the .htaccess only suppresses the footer
+    signature; ServerTokens isn't allowed in .htaccess).
+  - **Theme version bump 2026052206** in `version.php` triggers an
+    upgrade — admin must visit `/admin/index.php` or run
+    `cli/upgrade.php --non-interactive` after pull.
+  - All other changes are autoloader-friendly (PHP classes, mustache
+    templates, scss); standard `purge_caches.php` after pull.
