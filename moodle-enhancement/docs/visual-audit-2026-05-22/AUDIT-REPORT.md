@@ -1,8 +1,8 @@
 # Visual UI Audit — 2026-05-22 — Findings
 
 **Auditor:** Claude (driving Chrome via chrome-devtools MCP)
-**Personas walked so far:** Learner (Fatma Khamis), Site Administrator (academy@airpay.co.in), Manager (Binay Upadhyay), L&D Administrator (Nitin Rajput), Course Author / SME (Asif Ansari), Tenant Admin (External Admin /Public-77)
-**Total surfaces audited:** 28
+**Personas walked:** Learner (Fatma Khamis), Site Administrator (academy@airpay.co.in), Manager (Binay Upadhyay), L&D Administrator (Nitin Rajput), Course Author / SME (Asif Ansari), Tenant Admin (External Admin /Public-77), Compliance Officer (Joseph Mandapati), External Public Learner (vimal koothattu) — **8 of 9 personas**; API Consumer is docs-only.
+**Total surfaces audited:** 32
 
 ## Session shipment summary (2026-05-22)
 
@@ -18,6 +18,7 @@
 | Goal A.x | Restyle /grade/report/overview/ | ✅ Shipped | `5e69eaa2b` |
 | Goal A.x | Restyle /admin/* interior (search.php + all settings.php) | ✅ Shipped | `eacc604bc` |
 | Goal A.x | Restyle /course/view.php (every course session) | ✅ Shipped | `e8c303e9e` |
+| Bug | #11 — Sidebar role-detection inconsistency | ✅ Fixed | `40fb6fb3b` |
 
 **Final Goal A.x leak-surface scoreboard (start-of-session → end-of-session):**
 
@@ -158,6 +159,14 @@ So "Course Author" doesn't need a separate persona surface — fixing /grade/rep
 - Tenant scoping verified working — numbers differ from Airpay tenant view by exactly the expected delta. 🟢 Branded.
 
 Sub-conclusion: the Tenant Admin doesn't expose admin-only surfaces of their own — they consume the same dashboard chrome as L&D Admin with tenant filtering applied. No new Moodle-leak surfaces surfaced for this persona.
+
+**Compliance Officer finding (2026-05-22):** Walked Joseph Mandapati (joseph.mandapati@airpay.co.in, id 627). Page-layer auth accepts his BizLMS admin role at category context, so /local/airpay_compliance_report/ loaded correctly. BUT his **sidebar showed only 5 Learner items** — no Compliance, no Manage Users — because the sidebar's role-detection only checked the `local/courses:manage` capability, ignoring the BizLMS admin role assignment that dashboard.php's layout DID honour. The incoherence was the bug.
+
+🆕 **Bug #11 — Sidebar/dashboard role-detection inconsistency** (✅ Fixed `40fb6fb3b`). Sidebar now mirrors dashboard.php's L&D Admin detection: cap OR BizLMS administrator role at contextlevel 40. Verified end-to-end: Joseph now sees 9 sidebar items including Compliance, Reports, Analytics, Manage Users. Caught a second sub-bug en route: a double-`LIMIT 1` in `record_exists_sql()` that silently returned false (CLI test required to surface it — Moodle web swallowed the dml_read_exception).
+
+**External Public Learner finding (2026-05-22):** Walked vimal koothattu (id 869, Public tenant /77). Onboarding modal runs first ("Welcome, vimal!" + "Skip for now"). Post-skip dashboard renders the standard Learner shape with all-zero KPIs (fresh account). Sidebar has 6 items including **My Cart** (Public-tenant e-commerce). "Continue Learning" empty state is well-designed — "No courses in progress" headline + "Browse Catalogue" CTA. Tenant-scoped leaderboard shows 4 Public users. 🟢 Branded. No new bugs.
+
+**Total personas walked: 8 of 9** (Learner, Site Admin, Manager, L&D Admin, Course Author, Tenant Admin, Compliance Officer, External Public Learner). API Consumer is docs-only (no UI walk).
 
 ## Headline observations after Manager + L&D Admin walks
 
