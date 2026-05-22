@@ -1,0 +1,62 @@
+# =============================================================================
+# Airpay Academy / Sentientia LMS — Apache .htaccess
+# Deploy target: C:\xampp\htdocs\moodle5\public\.htaccess
+# (or whichever directory is served as DocumentRoot/Alias for the LMS)
+# =============================================================================
+#
+# Owner: Sentientia LMS Foundation (Day 0, 2026-05-22)
+# Bug fix: Goal A audit Bug #7 — raw Apache 404/500/403 pages leak the
+# Apache + OpenSSL + PHP version strings AND have zero branding. By
+# routing them through Moodle's own error/index.php, learners see the
+# branded "404 Error: File not found" page wrapped in the airpayux
+# sidebar + footer, instead of the stock Apache page.
+#
+# Production note: this file is REPO-MANAGED. On every deploy IT must
+# copy it to <Moodle public root>/.htaccess. The deploy script under
+# moodle-enhancement/deploy/ does this on dev. For production, see the
+# IT runbook step "Apply htaccess after pulling production branch".
+
+# -----------------------------------------------------------------------------
+# 1. Branded error pages
+# -----------------------------------------------------------------------------
+# Route Apache HTTP error codes through Moodle's standard error renderer
+# (https://docs.moodle.org/dev/HTTP_error_documents). The /moodle/ prefix
+# matches the Apache Alias on this server; for non-aliased deployments
+# the path simplifies to /error/index.php.
+ErrorDocument 404 /moodle/error/index.php
+ErrorDocument 403 /moodle/error/index.php
+ErrorDocument 500 /moodle/error/index.php
+ErrorDocument 503 /moodle/error/index.php
+
+# -----------------------------------------------------------------------------
+# 2. Hide Apache server identity in response footer
+# -----------------------------------------------------------------------------
+# ServerSignature controls the "Apache/X.X.X (Win64) OpenSSL/X.X.X
+# PHP/X.X.X Server at localhost Port 8080" footer that the default
+# Apache 404 page appends. Setting it Off removes the version-string
+# leak shown by old-style error pages (security: information disclosure).
+#
+# NOTE: this only suppresses the FOOTER text. The HTTP `Server:` response
+# header is controlled by `ServerTokens` which is NOT allowed in
+# .htaccess — it must be set in httpd.conf:
+#     ServerTokens Prod
+# The IT runbook should set that at the Apache config layer on production.
+ServerSignature Off
+
+# -----------------------------------------------------------------------------
+# 3. (Existing Moodle defaults you may want — uncomment as needed)
+# -----------------------------------------------------------------------------
+# Force HTTPS in production (DON'T enable on local XAMPP — it's HTTP only):
+# RewriteEngine On
+# RewriteCond %{HTTPS} off
+# RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Long cache for static asset URLs that already carry a Moodle cachekey
+# in the path (those URLs are content-addressed):
+# <IfModule mod_expires.c>
+#     ExpiresActive On
+#     ExpiresByType image/png   "access plus 1 year"
+#     ExpiresByType image/jpeg  "access plus 1 year"
+#     ExpiresByType image/webp  "access plus 1 year"
+#     ExpiresByType font/woff2  "access plus 1 year"
+# </IfModule>
