@@ -135,5 +135,48 @@ automatically reflect the new state without any content edit.
 
 ## Status
 
-⏳ **Pending L&amp;D unblocker** — test credentials + populated test data.
-Tracked as task #148 in the session task list.
+### ✅ Done (2026-05-22 afternoon)
+- 8 persona credentials set on the local DB (see `credentials.local.md`)
+- Playwright runner scaffolded (`audit-runner/walk-learner.mjs`)
+- One full Learner walkthrough attempted at desktop + mobile breakpoints
+- Login surface confirmed: **already nicely branded** (NOT looking like
+  Moodle — gradient hero, marketing stats, branded form)
+
+### 🟠 Blocked — local-only login bug
+
+The Playwright walker authenticates fine via `\authenticate_user_login()`
+at the CLI level (`local/airpay_core/cli/verify_password.php` returns
+PASS), but the **web login form rejects the same credentials**. Symptoms:
+
+- `POST /login/index.php` returns 303 → `/login/index.php?loginredirect=1`
+- The redirect page shows "Invalid login, please try again" banner
+- `cookiesecure=0` was tried (was 1) — no fix
+- All CSRF/Origin/Referer/UA headers tried — no fix
+
+Investigation so far:
+- `theme/airpayux/templates/core/loginform.mustache` ships two hidden
+  inputs `hashusername` / `hashpassword` (declared as "BizLMS security")
+  but **no JS populates them and no PHP validates them**. Vestigial.
+- Possible cause: a tenant-scoping observer in
+  `local_airpay_*/db/events.php` rejecting first-time logins on this
+  test prefix, or a custom auth_user_login_failure listener.
+
+### 🚀 Recommended next action
+
+**Option A (engineering-side):** Nitin or a developer steps into
+`/login/index.php` with `var_dump(authenticate_user_login(...))` after
+the form-validation block to identify exactly which check is rejecting
+the web login. ~30 min.
+
+**Option B (workaround):** Manual screenshot capture by Nitin —
+login once in Chrome, navigate each persona's pages, use DevTools
+"Capture screenshot" or "Capture full-size screenshot" per surface.
+The folder structure (`01-learner/desktop/`, etc.) is ready.
+
+**Option C (engineering fix-and-resume):** I investigate further next
+session — likely 1-2 hours to pin down the exact rejection path and
+either fix the airpayux template or write a session-injection helper
+that actually works (the `mint_session.php` attempt produced a sid
+but Moodle didn't accept the hand-rolled sessdata blob).
+
+Goal A cannot proceed cleanly until this is resolved.

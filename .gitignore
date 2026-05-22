@@ -75,3 +75,7 @@ release/airpay-academy-v1.0.0-rc1-full/.htaccess
 release/airpay-academy-v1.0.0-rc1/theme/
 release/airpay-academy-v1.0.0-rc1/plugins/
 release/airpay-academy-v1.0.0-rc1/bizlms-fixes/
+
+# Local-only credential files for the visual audit (never commit)
+moodle-enhancement/docs/visual-audit-*/credentials.local.md
+**/credentials.local.md
