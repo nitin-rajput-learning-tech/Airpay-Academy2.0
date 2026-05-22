@@ -3445,11 +3445,11 @@ ranked for maximum unblock-per-hour:
 
 | # | Title | Effort | Status |
 |---|---|---|---|
-| 1 | **Crypto audit non-blocking sweep** — close NB #7-#15 (9 findings) before flipping production push flag ON | ~2h | 🟢 in progress (this session) |
-| 2 | **Production master key + push flag-on dry run** — admin runs `cli/generate_master_key.php` + sets env/CFG + regenerates VAPID keypair → flip `sentientia.pwa.push.enabled` on local first, then production | ~1h | ⏳ next |
-| 3 | **Customer 2 readiness — implement ADR-008** — `local_airpay_customer_brand` table + migration backfilling the Airpay row + cached resolver replacing the hard-wired switch in `customer::branding()` | ~3h | ⏳ next |
-| 4 | **PHPUnit coverage for crypto stack** — promote `cli/test_audit_fixes.php` + `cli/run_push_e2e.php` to `tests/*_test.php`; add RFC 8291 §5.1 worked-example vector + tenant-isolation scenarios | ~2h | ⏳ next |
-| 5 | **Mobile-app WS surface (Phase X.1)** — expose the 22 read-only WS endpoints identified in `docs/audits/MOBILE-APP-WS-SURFACE-AUDIT-2026-05-20.md`. Unlocks the Moodle Mobile app for learners | ~4h | ⏳ next |
+| 1 | **Crypto audit non-blocking sweep** — close NB #7-#15 (9 findings) before flipping production push flag ON | ~2h | ✅ done (commit `88aae0bf0`) |
+| 2 | **Production master key + push flag-on dry run** — admin runs `cli/generate_master_key.php` + sets env/CFG + regenerates VAPID keypair → flip `sentientia.pwa.push.enabled` on local first, then production | ~1h | ✅ done (commit `047457d4f` — local complete; production handoff documented) |
+| 3 | **Customer 2 readiness — implement ADR-008** — `local_airpay_customer_brand` table + migration backfilling the Airpay row + cached resolver replacing the hard-wired switch in `customer::branding()` | ~3h | ✅ done (commits `047457d4f`, `4cc25410f`, `c31bc1346`) |
+| 4 | **PHPUnit coverage for crypto stack** — promote `cli/test_audit_fixes.php` + `cli/run_push_e2e.php` to `tests/*_test.php`; add RFC 8291 §5.1 worked-example vector + tenant-isolation scenarios | ~2h | ✅ done (commits `4cc25410f`, `b839dace0`, `c31bc1346`) — 53 tests / 141 assertions all green |
+| 5 | **Mobile-app WS surface (Phase X.1)** — expose the 22 read-only WS endpoints identified in `docs/audits/MOBILE-APP-WS-SURFACE-AUDIT-2026-05-20.md`. Unlocks the Moodle Mobile app for learners | ~4h | ⏳ next session |
 
 ### Out-of-scope until external action lands
 - AI quiz gen (Tier 1 #4) — needs `ANTHROPIC_API_KEY`
@@ -3459,8 +3459,11 @@ ranked for maximum unblock-per-hour:
 - `live.airpay.academy` deploy — needs IT staging environment + SMTP
 
 ### Definition-of-done checks for each priority
-1. Crypto sweep: all 9 NB fixes shipped + `test_audit_fixes.php` extended → all PASS
-2. Master key: documented in plugin README + tested locally with regenerated PEM + push delivers to mock receiver
-3. ADR-008 impl: migration ran cleanly + `customer::branding(1)` returns identical bundle pre/post migration + new admin UI lets you edit (or DB-only is fine for now)
-4. PHPUnit: `vendor/bin/phpunit local/sentientia_pwa/` runs green; CI hook drafted (no actual CI yet)
-5. Mobile WS: each of 22 endpoints returns 200 + correct schema via mobile-app-token; Moodle Mobile app installs + sees Airpay Academy correctly
+1. ✅ Crypto sweep: all 9 NB fixes shipped + `test_audit_fixes.php` extended → all PASS (28/28)
+2. ✅ Master key: documented in plugin README + tested locally with regenerated PEM + `cli/encrypt_existing_pem.php` + `cli/verify_signed_with_encrypted_pem.php` (9/9). Production handoff: admin runs `generate_master_key.php` → sets `$CFG->sentientia_vapid_master_key` → runs `encrypt_existing_pem.php` once.
+3. ✅ ADR-008 impl: migration `2026052201` ran cleanly + `customer::branding(1)` returns identical bundle pre/post migration + `cli/verify_brand_resolver.php` (20/20). Admin UI deferred to Phase 2 (DB-edit + `purge_caches.php` works today).
+4. ✅ PHPUnit: 4 test files (`customer_brand_test`, `audit_fixes_test`, `payload_encrypter_test`, `tenant_isolation_test`) — **53 tests, 141 assertions, 0 failures** under `vendor/bin/phpunit --testsuite local_airpay_core_testsuite,local_sentientia_pwa_testsuite`. Also uncovered + fixed 4 product bugs: (a) install.xml unescaped `<` in COMMENT attribute, (b) per-customer invalidate accidentally global-purged via event, (c) fresh-install seed missing (added `db/install.php`), (d) test bootstrap helpers for env where BizLMS is disabled.
+5. ⏳ Mobile WS: each of 22 endpoints returns 200 + correct schema via mobile-app-token; Moodle Mobile app installs + sees Airpay Academy correctly
+
+### Session 2026-05-22 summary
+Six commits totalling 4 priorities closed and 4 product bugs discovered + fixed via the new test suite. All four #4 sub-priorities (4a/4b/4c/4d) green. Test-DB initialization documented in commit messages for IT (drop `phpu_*` tables, then `php public/admin/tool/phpunit/cli/init.php`).
