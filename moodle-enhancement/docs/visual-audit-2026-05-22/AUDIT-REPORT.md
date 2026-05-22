@@ -1,8 +1,8 @@
 # Visual UI Audit — 2026-05-22 — Findings
 
 **Auditor:** Claude (driving Chrome via chrome-devtools MCP)
-**Personas walked so far:** Learner (Fatma Khamis), Site Administrator (academy@airpay.co.in), Manager (Binay Upadhyay), L&D Administrator (Nitin Rajput), Course Author / SME (Asif Ansari)
-**Total surfaces audited:** 27
+**Personas walked so far:** Learner (Fatma Khamis), Site Administrator (academy@airpay.co.in), Manager (Binay Upadhyay), L&D Administrator (Nitin Rajput), Course Author / SME (Asif Ansari), Tenant Admin (External Admin /Public-77)
+**Total surfaces audited:** 28
 
 ## Session shipment summary (2026-05-22)
 
@@ -129,6 +129,15 @@ A `WSContractTest` that walks every `data-region="airpay-datatable"` reference, 
 - Through `/grade/report/overview/` which shows a 2nd section "Courses I am teaching" with quick links to gradebooks (NOW restyled per Goal A.x)
 
 So "Course Author" doesn't need a separate persona surface — fixing /grade/report/overview, /course/edit.php, and /course/view.php styling reaches them via the same path as any learner.
+
+**Tenant Admin finding (2026-05-22):** Walked External Admin (academyexadmin@airpay.co.in, id 234, Public tenant /77). Dashboard renders the SAME L&D-Admin shape (KPIs / charts / Top Courses / Activity Timeline / Featured) but tenant-scoped:
+- KPIs: 3 Active / 669 total / 183 Courses / 745 Completions @ 69.6% / 1070 Enrolments — all Public tenant only
+- Heading caption: "Public — Platform overview and system health"
+- Extra sidebar item: **"My Cart"** (Public tenant has paid-course e-commerce; internal-staff tenants don't expose this)
+- No "My Team" or "Compliance" items (Public tenant doesn't have org hierarchy / compliance requirements)
+- Tenant scoping verified working — numbers differ from Airpay tenant view by exactly the expected delta. 🟢 Branded.
+
+Sub-conclusion: the Tenant Admin doesn't expose admin-only surfaces of their own — they consume the same dashboard chrome as L&D Admin with tenant filtering applied. No new Moodle-leak surfaces surfaced for this persona.
 
 ## Headline observations after Manager + L&D Admin walks
 
