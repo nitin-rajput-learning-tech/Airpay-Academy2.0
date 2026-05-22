@@ -30,8 +30,8 @@ defined('MOODLE_INTERNAL') || die();
 //     /user/profile.php (Goal A.x)
 // Version bump invalidates the cached compiled CSS bundle so theme
 // styles.php re-compiles SCSS on next request.
-$plugin->version   = 2026052205;
+$plugin->version   = 2026052206;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.5-beta';  // +Goal A.x /course/view restyle
+$plugin->release   = '1.0.6-beta';  // +Bug #13 mobile shell-main width

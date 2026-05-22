@@ -474,11 +474,19 @@
     .ap-sidebar.ap-sidebar--mobile-open {
         transform: translateX(0);
     }
+    /* Bug #13 fix (2026-05-22 — mobile responsive verification):
+       on viewport <= 1024px the sidebar slides off-canvas via
+       transform: translateX(-100%) but the desktop main width rule
+       `width: calc(100% - var(--ap-sidebar-width))` stays in effect.
+       Result: 260px (sidebar-width) of content area lost to nothing.
+       Reset width to 100% so main fills the freed space. */
     .ap-shell__main {
         margin-left: 0;
+        width: 100%;
     }
     .ap-sidebar[data-collapsed="true"] ~ .ap-shell__main {
         margin-left: 0;
+        width: 100%;
     }
     .ap-topbar__hamburger {
         display: flex;
