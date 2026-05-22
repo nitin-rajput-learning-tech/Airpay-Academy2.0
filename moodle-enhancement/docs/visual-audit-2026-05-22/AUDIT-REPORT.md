@@ -16,6 +16,26 @@
 | Goal A.x | Restyle /user/profile.php | ✅ Shipped | `6f25d6cae` |
 | Goal A.x | Restyle /badges/mybadges.php | ✅ Shipped | `179204297` |
 | Goal A.x | Restyle /grade/report/overview/ | ✅ Shipped | `5e69eaa2b` |
+| Goal A.x | Restyle /admin/* interior (search.php + all settings.php) | ✅ Shipped | `eacc604bc` |
+| Goal A.x | Restyle /course/view.php (every course session) | ✅ Shipped | `e8c303e9e` |
+
+**Final Goal A.x leak-surface scoreboard (start-of-session → end-of-session):**
+
+| Surface | Before | After |
+|---|---|---|
+| `/user/profile.php` | 🟠 Moodle 2-col | 🟢 Sentientia cards in grid |
+| `/badges/mybadges.php` | 🟠 plain Bootstrap alert | 🟢 branded card + trophy empty state |
+| `/grade/report/overview/` | 🟠 vanilla table | 🟢 branded card+thead micro-labels |
+| `/admin/*` (search + all settings) | 🟠 bare Moodle Boost | 🟢 card-headers + brand form controls |
+| `/course/view.php` | 🟠 plain section list | 🟢 section cards w/ brand accent bar |
+| Apache 404/500/403 | 🔴 raw + version-leak | 🟢 wrapped in airpayux theme |
+| Footer on long pages | 🔴 painted in middle | 🟢 at correct page-end position |
+
+**Remaining Moodle-leak surfaces** (not yet restyled — out of session scope):
+- `/course/edit.php` — gated by `course:update` perm; requires teacher login I didn't have during this session
+- `/grade/report/index.php?id=N` (per-course gradebook) — closely related to overview, expected to inherit
+- Quiz attempt UI, SCORM player chrome, H5P embeds — intentionally untouched (modtype-specific styling)
+- `/message/index.php`, `/calendar/view.php` — captured during Learner walk but not graded; likely 🟠 Moodle
 
 ## Headline finding (executive summary)
 
