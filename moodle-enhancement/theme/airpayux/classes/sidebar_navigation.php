@@ -37,6 +37,15 @@ class sidebar_navigation {
     private $issiteadmin;
     private $isldadmin;
     private $ismanager;
+    /**
+     * Goal A audit Bug #11 (2026-05-22) — Compliance Officer / HR / Trainer
+     * tier. Hold `moodle/site:viewreports` system cap without being a higher-
+     * tier role. Joseph Mandapati (Compliance Officer) hit this — he could
+     * load /local/airpay_compliance_report/ by URL but the sidebar didn't
+     * surface it. The page-layer auth already accepts viewreports, so the
+     * sidebar should reflect that.
+     */
+    private $iscomplianceuser;
 
     public function __construct(\moodle_page $page) {
         $this->page = $page;
@@ -217,6 +226,18 @@ class sidebar_navigation {
                 '/local/airpay_cart/index.php', $currenturl);
         }
 
+        // Goal A audit Bug #11 (2026-05-22) — Compliance Officer / HR /
+        // Trainer can hold `moodle/site:viewreports` without being Site
+        // Admin / L&D Admin / Manager. The page-layer auth already
+        // accepts this cap (see local/airpay_compliance_report/index.php
+        // line ~34); the sidebar should mirror that so the link is
+        // reachable without typing a URL. Inserted before Certificates
+        // so it sits with the high-value workflow links.
+        if ($this->iscomplianceuser) {
+            $items[] = $this->item('Compliance', 'fa-shield',
+                '/local/airpay_compliance_report/index.php', $currenturl);
+        }
+
         $items[] = $this->item('Certificates', 'fa-certificate', '/local/airpay_pages/certificates.php', $currenturl);
         $items[] = $this->item('Profile', 'fa-user', '/local/airpay_users/profile.php', $currenturl);
 
@@ -314,12 +335,34 @@ class sidebar_navigation {
 
         $this->issiteadmin = is_siteadmin();
 
-        // L&D Admin: has course manage capability.
+        // L&D Admin: has course manage capability OR BizLMS admin role.
+        // Bug #11 (2026-05-22): the dashboard layout already detects
+        // BizLMS-admin users (roleid `administrator` at category context)
+        // as L&D Admin — see theme/airpayux/layout/dashboard.php ~line 156.
+        // Sidebar was checking only the capability, which left
+        // BizLMS-admin users (Joseph Mandapati id=627) with the bare
+        // Learner sidebar even though the page treated them as L&D Admin.
+        // Mirror dashboard.php's detection here so the two are consistent.
         $this->isldadmin = false;
         if (!$this->issiteadmin) {
             $syscontext = \context_system::instance();
             $this->isldadmin = has_capability('local/airpay_courses:manage', $syscontext)
                             || has_capability('local/courses:manage', $syscontext);
+            if (!$this->isldadmin) {
+                // BizLMS admin role assignment at category context.
+                try {
+                    $this->isldadmin = $DB->record_exists_sql(
+                        "SELECT 1 FROM {role_assignments} ra
+                           JOIN {context} ctx ON ctx.id = ra.contextid
+                           JOIN {role} r ON r.id = ra.roleid
+                          WHERE ra.userid = :uid
+                            AND r.shortname = :rolename
+                            AND ctx.contextlevel = 40",
+                        ['uid' => $USER->id, 'rolename' => 'administrator']);
+                } catch (\Throwable $e) {
+                    // Schema mismatch on stock Moodle — fail closed.
+                }
+            }
         }
 
         // Manager: has direct reports.
@@ -329,6 +372,41 @@ class sidebar_navigation {
                 'open_supervisorid' => $USER->id,
                 'deleted' => 0,
             ]);
+        }
+
+        // Goal A audit Bug #11 (2026-05-22) — Compliance Officer / HR tier.
+        // Detect when a user can view the Compliance Report but isn't
+        // already surfaced as a higher tier. Mirrors EVERY auth path that
+        // local/airpay_compliance_report/index.php accepts:
+        //   (a) is_siteadmin() — already handled above
+        //   (b) local/courses:manage cap — handled by $isldadmin
+        //   (c) BizLMS administrator role (roleid 9) at category level
+        //       — NOT handled by $issiteadmin/$isldadmin; this is Joseph
+        //       Mandapati's path. We check for it here.
+        //   (d) moodle/site:viewreports cap — separate HR/Trainer tier
+        //   (e) has direct reports — handled by $ismanager
+        $this->iscomplianceuser = false;
+        if (!$this->issiteadmin && !$this->isldadmin && !$this->ismanager) {
+            $syscontext = \context_system::instance();
+            $hascap = has_capability('moodle/site:viewreports', $syscontext);
+            // BizLMS admin role assignment at category context. The Moodle
+            // role `administrator` (shortname) has been customised in BizLMS
+            // installations to grant compliance-view at category scope.
+            $hasbizlmsadminrole = false;
+            try {
+                $hasbizlmsadminrole = $DB->record_exists_sql(
+                    "SELECT 1 FROM {role_assignments} ra
+                       JOIN {context} ctx ON ctx.id = ra.contextid
+                       JOIN {role} r ON r.id = ra.roleid
+                      WHERE ra.userid = :uid
+                        AND r.shortname = :rolename
+                        AND ctx.contextlevel = 40
+                      LIMIT 1",
+                    ['uid' => $USER->id, 'rolename' => 'administrator']);
+            } catch (\Throwable $e) {
+                // Schema mismatch on stock Moodle without BizLMS — fail closed.
+            }
+            $this->iscomplianceuser = $hascap || $hasbizlmsadminrole;
         }
     }
 
