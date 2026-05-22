@@ -1,8 +1,21 @@
 # Visual UI Audit — 2026-05-22 — Findings
 
 **Auditor:** Claude (driving Chrome via chrome-devtools MCP)
-**Personas walked so far:** Learner (Fatma Khamis), Site Administrator (academy@airpay.co.in), Manager (Binay Upadhyay), L&D Administrator (Nitin Rajput)
-**Total surfaces audited:** 25
+**Personas walked so far:** Learner (Fatma Khamis), Site Administrator (academy@airpay.co.in), Manager (Binay Upadhyay), L&D Administrator (Nitin Rajput), Course Author / SME (Asif Ansari)
+**Total surfaces audited:** 27
+
+## Session shipment summary (2026-05-22)
+
+| Type | Item | Status | Commit |
+|---|---|---|---|
+| Bug | #6 — My Requests stuck on Loading | ✅ Fixed | `89fb2e713` |
+| Bug | #9b — Manager WS denied supervisors | ✅ Fixed | `89fb2e713` |
+| Bug | #10 — WS contract drift across 5 endpoints | ✅ Fixed | `89fb2e713` |
+| Bug | #7 — Apache 404/500 unbranded | ✅ Fixed | `e1cf9206c` |
+| Bug | #8 — Footer overlap on long pages | ✅ Fixed | `d90f6b44c` |
+| Goal A.x | Restyle /user/profile.php | ✅ Shipped | `6f25d6cae` |
+| Goal A.x | Restyle /badges/mybadges.php | ✅ Shipped | `179204297` |
+| Goal A.x | Restyle /grade/report/overview/ | ✅ Shipped | `5e69eaa2b` |
 
 ## Headline finding (executive summary)
 
@@ -106,11 +119,16 @@ A `WSContractTest` that walks every `data-region="airpay-datatable"` reference, 
 **Done:** Learner (12) + Site Admin (3) + Manager (4) + L&D Administrator (3) = 22 surfaces. 11 bugs found, 8 fixed, 3 retracted.
 
 **Pending personas:**
-- Course Author / SME
 - Compliance Officer
 - Tenant Administrator
 - External Public Learner
 - API Consumer (developer docs only — no UI walk)
+
+**Course Author / SME finding (2026-05-22):** Walked Asif Ansari (id 2304, 33 courses taught). The platform does NOT have a dedicated "course author" dashboard. The persona is the Learner persona with extra `editingteacher` capabilities. Course authoring happens:
+- Through individual courses they teach (gear menu → Edit settings)
+- Through `/grade/report/overview/` which shows a 2nd section "Courses I am teaching" with quick links to gradebooks (NOW restyled per Goal A.x)
+
+So "Course Author" doesn't need a separate persona surface — fixing /grade/report/overview, /course/edit.php, and /course/view.php styling reaches them via the same path as any learner.
 
 ## Headline observations after Manager + L&D Admin walks
 
