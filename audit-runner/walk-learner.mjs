@@ -60,19 +60,12 @@ async function captureAtBreakpoint(context, breakpoint, viewport) {
 
   await page.fill('#username', USERNAME);
   await page.fill('#password', PASSWORD);
-  // Some login forms submit via AJAX and don't trigger a real navigation;
-  // others do. Click + wait for *either* navigation OR the dashboard URL
-  // to appear in window.location. Don't fail the whole walk if either
-  // path times out — we'll still capture what's on screen.
-  await Promise.race([
-    Promise.all([
-      page.waitForURL(/dashboard|my|index/i, { timeout: 20000 }).catch(() => null),
-      page.click('#loginbtn'),
-    ]),
-    page.click('#loginbtn').then(() =>
-      page.waitForTimeout(8000)),
-  ]).catch(e => console.warn(`Login click warning: ${e.message.split('\n')[0]}`));
-  await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+  // Click once. waitForNavigation handles the post-submit redirect;
+  // catch the timeout so a slow page doesn't abort the walk.
+  await Promise.all([
+    page.waitForLoadState('networkidle', { timeout: 25000 }).catch(() => {}),
+    page.click('#loginbtn'),
+  ]);
   // Confirm we are logged in — if not, scream loud.
   const url = page.url();
   if (url.includes('login/index.php')) {
@@ -107,7 +100,10 @@ async function captureAtBreakpoint(context, breakpoint, viewport) {
   await page.close();
 }
 
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({
+  headless: true,
+  args: ['--no-sandbox', '--disable-dev-shm-usage'],
+});
 const context = await browser.newContext({
   ignoreHTTPSErrors: true,
   viewport: { width: 1440, height: 900 },
