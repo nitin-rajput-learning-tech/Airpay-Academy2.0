@@ -30,8 +30,8 @@ defined('MOODLE_INTERNAL') || die();
 //     /user/profile.php (Goal A.x)
 // Version bump invalidates the cached compiled CSS bundle so theme
 // styles.php re-compiles SCSS on next request.
-$plugin->version   = 2026052201;
+$plugin->version   = 2026052202;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.1-beta';
+$plugin->release   = '1.0.2-beta';  // +Goal A.x badges page restyle
