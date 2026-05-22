@@ -104,7 +104,7 @@
         <FIELD NAME="name"             TYPE="char" LENGTH="120" NOTNULL="true"
                COMMENT="Full display name (Web App Manifest `name` field)"/>
         <FIELD NAME="short_name"       TYPE="char" LENGTH="40"  NOTNULL="true"
-               COMMENT="Short name <=12 chars recommended (Manifest `short_name`)"/>
+               COMMENT="Short name (max 12 chars recommended, Manifest `short_name`)"/>
         <FIELD NAME="theme_color"      TYPE="char" LENGTH="7"   NOTNULL="true"
                COMMENT="Hex color like #0066A7 — Manifest theme_color + browser-chrome tint"/>
         <FIELD NAME="bg_color"         TYPE="char" LENGTH="7"   NOTNULL="true"
