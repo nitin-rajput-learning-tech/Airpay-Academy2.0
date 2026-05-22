@@ -22,10 +22,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_pwa';
-$plugin->version   = 2026052110;
+$plugin->version   = 2026052201;
 $plugin->requires  = 2022041900;
-$plugin->maturity  = MATURITY_ALPHA;   // Phase D.1 a/b/c/d — full install UX + offline fallback
-$plugin->release   = '0.5.0-alpha';    // Phase D.1.a-d Install CTA + iOS modal + offline shell
+$plugin->maturity  = MATURITY_ALPHA;   // Phase D.1 a-e + sticky-banner fix
+$plugin->release   = '0.5.1-alpha';    // Fix: sticky install banner, footer-mustache duplicate handler removed
 $plugin->dependencies = [
     'local_airpay_core' => 2026051200,  // feature_flags resolver
 ];

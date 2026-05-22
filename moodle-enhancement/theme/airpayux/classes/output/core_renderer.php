@@ -142,8 +142,21 @@ class core_renderer extends \core_renderer {
     }
 
     /**
-     * Override standard_footer_html to append tenant-specific footer text
-     * BEFORE the standard footer content (if set).
+     * Override standard_footer_html to:
+     *   1. Append tenant-specific footer text (legacy behaviour)
+     *   2. Strip the "Moodle Docs for this page" helplink — Sentientia
+     *      LMS is product-branded; the docs link reveals the underlying
+     *      Moodle deployment to end users.
+     *   3. Rewrite any remaining "Moodle" mentions to "Sentientia LMS"
+     *      so the footer reads cleanly when admin debug/performance
+     *      blocks render.
+     *
+     * 2026-05-22 — added the Moodle-string scrub. Per ADR-001, the
+     * product is Sentientia LMS — visible mentions of "Moodle" leak
+     * the underlying engine which the customer (Airpay) hasn't asked
+     * to surface. GPL §5 attribution is satisfied by the persistent
+     * "Licensed under GPL v3" badge in the airpay-footer__product-
+     * attribution band (footer.mustache:52-59).
      */
     public function standard_footer_html() {
         $tenant_footer = '';
@@ -151,6 +164,19 @@ class core_renderer extends \core_renderer {
             $tenant_footer = \local_airpay_org\tenant_settings::footer_html();
         }
         $standard = parent::standard_footer_html();
+
+        // Drop the "Moodle Docs for this page" link entirely (the
+        // helplink class wraps a <a href="moodle.org/...">).
+        $standard = preg_replace(
+            '#<div class="helplink">.*?</div>#s', '', $standard) ?? $standard;
+
+        // Rewrite remaining "Moodle" → "Sentientia LMS" for any
+        // performance / debug blocks Moodle injects.
+        $standard = str_replace(
+            ['Moodle '],
+            ['Sentientia LMS '],
+            $standard);
+
         if ($tenant_footer !== '') {
             return '<div class="airpay-tenant-footer container py-2">' . $tenant_footer
                 . '</div>' . $standard;

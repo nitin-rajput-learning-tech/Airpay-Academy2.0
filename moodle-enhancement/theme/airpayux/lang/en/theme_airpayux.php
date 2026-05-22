@@ -195,7 +195,7 @@ $string['instagramdesc'] = "The URL you added here will be the path for your Ins
 $string['footerbgcolor'] = "Footer's bg color";
 $string['footerbg_desc'] = "The color you added here will be affects as Footer's background color";
 $string['copyright'] = 'Copyright';
-$string['copyrightdesc'] = 'Whatever you add to this textarea will be displayed in the footer throughout your Moodle site, e.g. Copyright.';
+$string['copyrightdesc'] = 'Whatever you add to this textarea will be displayed in the footer throughout your Sentientia LMS site, e.g. Copyright.';
 $string['employee'] = "Employee";
 
 $string['quickinfo'] = 'Quick Info';

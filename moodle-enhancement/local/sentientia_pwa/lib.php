@@ -90,7 +90,7 @@ function local_sentientia_pwa_extend_navigation_user_settings(
  * @return string HTML to inject
  */
 function local_sentientia_pwa_before_standard_top_of_body_html(): string {
-    global $PAGE, $OUTPUT;
+    global $PAGE, $OUTPUT, $USER;
 
     if (!class_exists('\\local_airpay_core\\feature_flags')) {
         return '';
@@ -103,17 +103,32 @@ function local_sentientia_pwa_before_standard_top_of_body_html(): string {
         return '';
     }
 
-    // Only show on pages with a 'standard' layout — login pages,
-    // SCORM viewers, popup pages don't need an install nag.
+    // 2026-05-22 — tightened to ONLY 'mydashboard'. The CTA was leaking
+    // onto admin pages + manage-users pages where it overlapped existing
+    // content. Dashboard is the canonical install-prompt surface.
     $layout = $PAGE && $PAGE->pagelayout ? $PAGE->pagelayout : '';
-    if (!in_array($layout, ['standard', 'mydashboard', 'mycourses', 'course'], true)) {
+    if ($layout !== 'mydashboard') {
         return '';
     }
 
-    // Skip when the page is itself the manifest or the SW (defensive).
+    // Skip when the page is itself a PWA endpoint (defensive).
     $url_path = $PAGE && $PAGE->url ? (string) $PAGE->url->out_omit_querystring() : '';
     if (str_contains($url_path, '/local/sentientia_pwa/')) {
         return '';
+    }
+
+    // 2026-05-22 — honour the user's prior dismissal server-side.
+    // Without this gate, the JS-side localStorage check ran AFTER the
+    // server rendered the CTA, so the markup was still in the DOM and
+    // any race condition could reveal it. Now if the user dismissed
+    // within the last 7 days, no CTA HTML is sent at all.
+    if (!empty($USER->id) && (int) $USER->id > 1) {
+        $dismissed_at = (int) get_user_preferences(
+            'local_sentientia_pwa_install_dismissed_at', 0, $USER);
+        if ($dismissed_at > 0
+            && (time() - $dismissed_at) < (7 * 86400)) {
+            return '';
+        }
     }
 
     // Queue the AMD module init for this page.
@@ -143,6 +158,15 @@ function local_sentientia_pwa_user_preferences(): array {
             'null'    => NULL_NOT_ALLOWED,
             'default' => 0,
             'choices' => [0, 1],
+        ],
+        // Phase D.1.b (2026-05-22 fix) — UNIX timestamp of the
+        // user's last "Not now" click on the install CTA. Used by
+        // local_sentientia_pwa_before_standard_top_of_body_html() to
+        // gate the server-side render for 7 days.
+        'local_sentientia_pwa_install_dismissed_at' => [
+            'type'    => PARAM_INT,
+            'null'    => NULL_NOT_ALLOWED,
+            'default' => 0,
         ],
     ];
 }

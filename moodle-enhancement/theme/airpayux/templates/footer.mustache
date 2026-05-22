@@ -58,31 +58,19 @@
         <span>Licensed under GPL v3</span>
     </div>
 
-    {{! Moodle required — MUST be before </body> }}
+    {{! Standard footer/end-of-body output — MUST be before </body> }}
     {{{ output.standard_footer_html }}}
     {{{ output.standard_end_of_body_html }}}
     {{{ output.debug_footer_html }}}
 </footer>
-<script>
-// PWA Install Prompt — shows "Add to Home Screen" banner on mobile
-var deferredPrompt;
-window.addEventListener('beforeinstallprompt', function(e) {
-    e.preventDefault();
-    deferredPrompt = e;
-    var banner = document.createElement('div');
-    banner.id = 'pwa-install-banner';
-    banner.innerHTML = '<div style="position:fixed;bottom:0;left:0;right:0;background:#0066A7;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;z-index:9999;font-family:Montserrat,sans-serif;font-size:0.85rem;">' +
-        '<span>\uD83D\uDCF1 Install airpay academy for quick access</span>' +
-        '<div><button onclick="installPWA()" style="background:#fff;color:#0066A7;border:none;padding:6px 16px;border-radius:6px;font-weight:600;cursor:pointer;margin-right:8px;">Install</button>' +
-        '<button onclick="this.parentElement.parentElement.parentElement.remove()" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.5);padding:6px 12px;border-radius:6px;cursor:pointer;">Later</button></div></div>';
-    document.body.appendChild(banner);
-});
-function installPWA() {
-    if (deferredPrompt) {
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then(function() { deferredPrompt = null; });
-        var b = document.getElementById('pwa-install-banner');
-        if (b) b.remove();
-    }
-}
-</script>
+
+{{!
+    2026-05-22 — removed the inline PWA install banner that previously
+    lived here. That script ignored localStorage / dismissals and
+    re-rendered a position:fixed banner on EVERY page load, conflicting
+    with the official local_sentientia_pwa/install_prompt AMD module
+    (Phase D.1.b). The official module is the single source of truth:
+    it captures beforeinstallprompt, suppresses Chrome native bar,
+    renders a flag-gated dashboard-only CTA, persists Not now both
+    locally + via user preference, and respects a 7-day quarantine.
+}}
