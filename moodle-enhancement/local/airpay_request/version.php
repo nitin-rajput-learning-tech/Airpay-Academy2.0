@@ -11,10 +11,14 @@ $plugin->component = 'local_airpay_request';
 // P1 #54 (2026-05-20) — Hindi pack: 67 strings covering navigation,
 // capabilities, actions, status, SLA, routing, notifications, errors,
 // settings, UI, privacy, events.
-$plugin->version   = 2026052001;
+// Goal A audit Bug #6 (2026-05-22) — align list_mine + list_pending WS
+// contracts with the shared theme_airpayux/datatable client (accept
+// `search`, return status_badge + actions). Bumping version so Moodle
+// refreshes the cached external_function_parameters + return shape.
+$plugin->version   = 2026052201;
 $plugin->requires  = 2024042200;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.2.1';  // +P1 #54 Hindi pack
+$plugin->release   = '1.2.2';  // +Goal A Bug #6 WS-contract alignment
 $plugin->dependencies = [
     'local_airpay_org'         => 2026040100,
     'local_airpay_manager'     => 2026040100,  // Approval workflow patterns reused

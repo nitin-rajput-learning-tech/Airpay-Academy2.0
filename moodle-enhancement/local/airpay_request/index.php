@@ -32,7 +32,14 @@ $columns = [
 ];
 
 $data = [
-    'columns_json'   => s(json_encode($columns)),
+    // Bug fix 2026-05-22 (Goal A audit Bug #6): was `s(json_encode(...))`
+    // which double-escapes the JSON when Mustache's `{{ columns_json }}`
+    // auto-escapes it again. The browser then sees `&amp;quot;` instead
+    // of `&quot;` in the data attribute → JSON.parse() chokes at
+    // position 2 → Datatable.init() throws → "Loading..." never resolves.
+    // Pass raw JSON; Mustache will escape exactly once for the attribute,
+    // the browser unescapes once on dataset read.
+    'columns_json'   => json_encode($columns),
     'pending_url'    => has_capability('local/airpay_request:approve', $ctx)
         ? (new moodle_url('/local/airpay_request/approvals.php'))->out(false) : '',
     'has_pending_cap' => has_capability('local/airpay_request:approve', $ctx),

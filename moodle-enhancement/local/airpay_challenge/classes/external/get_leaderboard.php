@@ -17,7 +17,14 @@ use local_airpay_challenge\leaderboard_manager;
 class get_leaderboard extends external_api {
 
     public static function execute_parameters(): external_function_parameters {
+        // Goal A audit Bug #10 (2026-05-22): align with the shared
+        // theme_airpayux/datatable client contract. `search` is currently
+        // accepted but not yet acted on for leaderboard (leaderboard rows
+        // are bounded by perpage and search would skip the rank ordering
+        // anyway — pending UX decision on what "search a leaderboard"
+        // should mean).
         return new external_function_parameters([
+            'search'      => new external_value(PARAM_TEXT, 'Reserved — see WS comment', VALUE_DEFAULT, ''),
             'challengeid' => new external_value(PARAM_INT, '0 = aggregate', VALUE_DEFAULT, 0),
             'tenantmode'  => new external_value(PARAM_ALPHA, 'mine|all', VALUE_DEFAULT, 'mine'),
             'sort'        => new external_value(PARAM_ALPHAEXT, 'Sort', VALUE_DEFAULT, 'points'),
@@ -28,13 +35,14 @@ class get_leaderboard extends external_api {
         ]);
     }
 
-    public static function execute(int $challengeid = 0, string $tenantmode = 'mine',
+    public static function execute(string $search = '', int $challengeid = 0,
+                                    string $tenantmode = 'mine',
                                     string $sort = 'points', string $sortdir = 'desc',
                                     int $page = 0, int $perpage = 25,
                                     string $filters = '{}'): array {
         global $USER;
         $params = self::validate_parameters(self::execute_parameters(),
-            compact('challengeid', 'tenantmode', 'sort', 'sortdir', 'page', 'perpage', 'filters'));
+            compact('search', 'challengeid', 'tenantmode', 'sort', 'sortdir', 'page', 'perpage', 'filters'));
 
         $context = \context_system::instance();
         self::validate_context($context);

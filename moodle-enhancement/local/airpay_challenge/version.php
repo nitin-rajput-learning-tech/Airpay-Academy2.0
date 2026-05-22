@@ -7,7 +7,10 @@ $plugin->component = 'local_airpay_challenge';
 // capabilities, filters, attempt status, types, form, buttons, tabs,
 // overview, leaderboard, notifications, errors, scheduled task, privacy
 // metadata for challenges/attempts/leaderboard tables.
-$plugin->version   = 2026052001;
+// Goal A audit Bug #10 (2026-05-22) — align get_leaderboard WS with the
+// shared theme_airpayux/datatable contract (accept `search`, currently
+// reserved — leaderboard search semantics pending UX decision).
+$plugin->version   = 2026052201;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.1.2-beta'; // +P1 #58 Hindi pack
+$plugin->release   = '1.1.3-beta'; // +Goal A Bug #10 WS-contract alignment

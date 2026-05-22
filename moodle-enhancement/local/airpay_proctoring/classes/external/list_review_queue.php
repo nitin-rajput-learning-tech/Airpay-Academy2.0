@@ -14,15 +14,26 @@ use core_external\external_value;
 
 class list_review_queue extends external_api {
     public static function execute_parameters(): external_function_parameters {
+        // Goal A audit Bug #10 (2026-05-22): align with the shared
+        // theme_airpayux/datatable client contract — `search`, `sort`,
+        // `sortdir`, `filters` are always sent by the client even when
+        // the user hasn't typed anything. Strict validator rejects
+        // unknown keys → datatable stuck on Loading…
         return new external_function_parameters([
+            'search'  => new external_value(PARAM_TEXT, 'Free-text search', VALUE_DEFAULT, ''),
+            'sort'    => new external_value(PARAM_ALPHAEXT, 'Sort col', VALUE_DEFAULT, 'risk_score'),
+            'sortdir' => new external_value(PARAM_ALPHA, 'asc|desc', VALUE_DEFAULT, 'desc'),
             'page'    => new external_value(PARAM_INT, '', VALUE_DEFAULT, 0),
             'perpage' => new external_value(PARAM_INT, '', VALUE_DEFAULT, 25),
+            'filters' => new external_value(PARAM_RAW, 'Reserved', VALUE_DEFAULT, '{}'),
         ]);
     }
-    public static function execute(int $page = 0, int $perpage = 25): array {
+    public static function execute(string $search = '', string $sort = 'risk_score',
+                                    string $sortdir = 'desc', int $page = 0,
+                                    int $perpage = 25, string $filters = '{}'): array {
         global $DB;
         $params = self::validate_parameters(self::execute_parameters(),
-            compact('page', 'perpage'));
+            compact('search', 'sort', 'sortdir', 'page', 'perpage', 'filters'));
         $ctx = \context_system::instance();
         self::validate_context($ctx);
         require_capability('local/airpay_proctoring:review', $ctx);
@@ -33,9 +44,39 @@ class list_review_queue extends external_api {
         // belonging to candidates in another tenant — including
         // identity match scores and biometric provenance.
         [$tnsql, $tnargs] = \local_airpay_core\tenant::sql_filter('s');
+
+        $where = "s.status = 'flagged' AND $tnsql";
+        $args  = $tnargs;
+
+        // Goal A Bug #10: optional free-text search on candidate name + quiz.
+        // Note: q.name lives in the {quiz} table from mod_quiz — we already
+        // JOIN to it for display, so reusing the JOIN here costs nothing.
+        if (trim($params['search']) !== '') {
+            $term = '%' . $DB->sql_like_escape(trim($params['search'])) . '%';
+            $where .= ' AND ('
+                . $DB->sql_like('u.firstname', ':s1', false) . ' OR '
+                . $DB->sql_like('u.lastname',  ':s2', false) . ' OR '
+                . $DB->sql_like('u.email',     ':s3', false) . ' OR '
+                . $DB->sql_like('q.name',      ':s4', false)
+                . ')';
+            $args['s1'] = $term;
+            $args['s2'] = $term;
+            $args['s3'] = $term;
+            $args['s4'] = $term;
+        }
+
+        // Allow client-side sort on risk_score | timecreated only. Anything
+        // else falls back to risk_score DESC to keep highest-risk on top.
+        $allowed = ['risk_score', 'timecreated'];
+        $sortcol = in_array($params['sort'], $allowed, true)
+            ? $params['sort'] : 'risk_score';
+        $sortdir = strtolower($params['sortdir']) === 'asc' ? 'ASC' : 'DESC';
+
         $total = (int) $DB->count_records_sql(
             "SELECT COUNT(*) FROM {local_airpay_proctor_sessions} s
-              WHERE s.status = 'flagged' AND $tnsql", $tnargs);
+        LEFT JOIN {user} u ON u.id = s.userid
+        LEFT JOIN {quiz} q ON q.id = s.quizid
+             WHERE $where", $args);
         $rows = [];
         if ($total > 0) {
             $records = $DB->get_records_sql(
@@ -43,9 +84,9 @@ class list_review_queue extends external_api {
                    FROM {local_airpay_proctor_sessions} s
               LEFT JOIN {user} u ON u.id = s.userid
               LEFT JOIN {quiz} q ON q.id = s.quizid
-                  WHERE s.status = 'flagged' AND $tnsql
-               ORDER BY s.risk_score DESC, s.timecreated DESC",
-                $tnargs, $params['page'] * $params['perpage'], $params['perpage']);
+                  WHERE $where
+               ORDER BY s.$sortcol $sortdir, s.timecreated DESC",
+                $args, $params['page'] * $params['perpage'], $params['perpage']);
             foreach ($records as $r) {
                 $rows[] = [
                     'id'           => (int) $r->id,

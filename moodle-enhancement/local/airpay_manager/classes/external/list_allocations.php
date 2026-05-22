@@ -16,7 +16,10 @@ use local_airpay_manager\approval_manager;
 class list_allocations extends external_api {
 
     public static function execute_parameters(): external_function_parameters {
+        // Goal A audit Bug #10 (2026-05-22): align with the shared
+        // theme_airpayux/datatable client contract — same as list_requests.
         return new external_function_parameters([
+            'search'  => new external_value(PARAM_TEXT,     'Free-text search', VALUE_DEFAULT, ''),
             'status'  => new external_value(PARAM_ALPHAEXT, 'all|assigned|in_progress|completed|overdue|cancelled', VALUE_DEFAULT, 'all'),
             'sort'    => new external_value(PARAM_ALPHAEXT, 'Sort col', VALUE_DEFAULT, 'timecreated'),
             'sortdir' => new external_value(PARAM_ALPHA,    'asc|desc', VALUE_DEFAULT, 'desc'),
@@ -26,23 +29,28 @@ class list_allocations extends external_api {
         ]);
     }
 
-    public static function execute(string $status = 'all', string $sort = 'timecreated',
-                                    string $sortdir = 'desc', int $page = 0, int $perpage = 25,
+    public static function execute(string $search = '', string $status = 'all',
+                                    string $sort = 'timecreated', string $sortdir = 'desc',
+                                    int $page = 0, int $perpage = 25,
                                     string $filters = '{}'): array {
         global $USER;
         $params = self::validate_parameters(self::execute_parameters(),
-            compact('status', 'sort', 'sortdir', 'page', 'perpage', 'filters'));
+            compact('search', 'status', 'sort', 'sortdir', 'page', 'perpage', 'filters'));
 
         $context = \context_system::instance();
         self::validate_context($context);
-        require_capability('local/airpay_manager:view', $context);
+        // Bug fix 2026-05-22 (Goal A audit Bug #9b — corollary of Bug #9):
+        // use supervisor-aware helper at WS layer; otherwise the page loads
+        // (page-level check uses team_manager) but the AJAX rejects.
+        \local_airpay_manager\team_manager::require_manage();
 
         if (strlen($params['filters']) > 4096) {
             throw new \moodle_exception('filterstoolong', 'local_airpay_manager');
         }
 
         $result = approval_manager::list_allocations((int) $USER->id,
-            $params['status'], (int) $params['page'], (int) $params['perpage']);
+            $params['status'], (int) $params['page'], (int) $params['perpage'],
+            (string) $params['search']);
 
         $can_allocate = has_capability('local/airpay_manager:allocate', $context);
         foreach ($result['rows'] as &$row) {

@@ -16,7 +16,12 @@ use local_airpay_manager\approval_manager;
 class list_requests extends external_api {
 
     public static function execute_parameters(): external_function_parameters {
+        // Goal A audit Bug #10 (2026-05-22): added `search` to align with the
+        // shared theme_airpayux/datatable client contract — strict validator
+        // was rejecting the AJAX call with "Unexpected keys (search) detected"
+        // → datatable stuck on Loading…
         return new external_function_parameters([
+            'search'  => new external_value(PARAM_TEXT,     'Free-text search', VALUE_DEFAULT, ''),
             'status'  => new external_value(PARAM_ALPHAEXT, 'pending|approved|rejected|cancelled|all', VALUE_DEFAULT, 'pending'),
             'sort'    => new external_value(PARAM_ALPHAEXT, 'Sort col', VALUE_DEFAULT, 'timecreated'),
             'sortdir' => new external_value(PARAM_ALPHA,    'asc|desc', VALUE_DEFAULT, 'desc'),
@@ -26,23 +31,31 @@ class list_requests extends external_api {
         ]);
     }
 
-    public static function execute(string $status = 'pending', string $sort = 'timecreated',
-                                    string $sortdir = 'desc', int $page = 0, int $perpage = 25,
+    public static function execute(string $search = '', string $status = 'pending',
+                                    string $sort = 'timecreated', string $sortdir = 'desc',
+                                    int $page = 0, int $perpage = 25,
                                     string $filters = '{}'): array {
         global $USER;
         $params = self::validate_parameters(self::execute_parameters(),
-            compact('status', 'sort', 'sortdir', 'page', 'perpage', 'filters'));
+            compact('search', 'status', 'sort', 'sortdir', 'page', 'perpage', 'filters'));
 
         $context = \context_system::instance();
         self::validate_context($context);
-        require_capability('local/airpay_manager:view', $context);
+        // Bug fix 2026-05-22 (Goal A audit Bug #9b — corollary of Bug #9):
+        // PAGE layer (requests.php) was switched to team_manager::require_manage()
+        // earlier today, but the WS layer was missed. ~100 supervisors-without-
+        // -manager-role were getting "Failed to load data. Sorry, but you do not
+        // currently have permissions" inside an otherwise-branded datatable.
+        // Use the same supervisor-aware helper here.
+        \local_airpay_manager\team_manager::require_manage();
 
         if (strlen($params['filters']) > 4096) {
             throw new \moodle_exception('filterstoolong', 'local_airpay_manager');
         }
 
         $result = approval_manager::list_requests((int) $USER->id,
-            $params['status'], (int) $params['page'], (int) $params['perpage']);
+            $params['status'], (int) $params['page'], (int) $params['perpage'],
+            (string) $params['search']);
 
         $can_decide = has_capability('local/airpay_manager:approve', $context);
         foreach ($result['rows'] as &$row) {

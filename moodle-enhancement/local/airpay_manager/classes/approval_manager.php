@@ -100,10 +100,17 @@ class approval_manager {
     /**
      * Manager-side: list requests waiting for me, optionally filtered.
      *
+     * Goal A audit Bug #10 (2026-05-22): added $search to align with the
+     * shared theme_airpayux/datatable client which always sends a `search`
+     * parameter. When non-empty it filters across requester name/email,
+     * course name, and the requester's free-text reason. Used by
+     * external\list_requests::execute().
+     *
      * @return array<array> shaped for the requests datatable
      */
     public static function list_requests(int $managerid, string $status = 'pending',
-                                          int $page = 0, int $perpage = 25): array {
+                                          int $page = 0, int $perpage = 25,
+                                          string $search = ''): array {
         global $DB;
 
         $perpage = max(5, min(100, $perpage));
@@ -115,10 +122,31 @@ class approval_manager {
             $where[] = 'r.status = :st';
             $params['st'] = $status;
         }
+
+        // Free-text search — escape user wildcards first.
+        if (trim($search) !== '') {
+            $term = '%' . $DB->sql_like_escape(trim($search)) . '%';
+            $where[] = '('
+                . $DB->sql_like('u.firstname', ':s1', false) . ' OR '
+                . $DB->sql_like('u.lastname',  ':s2', false) . ' OR '
+                . $DB->sql_like('u.email',     ':s3', false) . ' OR '
+                . $DB->sql_like('c.fullname',  ':s4', false) . ' OR '
+                . $DB->sql_like('r.reason',    ':s5', false)
+                . ')';
+            $params['s1'] = $term;
+            $params['s2'] = $term;
+            $params['s3'] = $term;
+            $params['s4'] = $term;
+            $params['s5'] = $term;
+        }
         $wheresql = implode(' AND ', $where);
 
+        // Count needs the JOIN now because $wheresql may reference u./c.
         $total = (int) $DB->count_records_sql(
-            "SELECT COUNT(*) FROM {local_airpay_mgr_requests} r WHERE $wheresql",
+            "SELECT COUNT(*) FROM {local_airpay_mgr_requests} r
+        LEFT JOIN {user}   u ON u.id = r.userid
+        LEFT JOIN {course} c ON c.id = r.courseid
+             WHERE $wheresql",
             $params);
 
         $rows = $DB->get_records_sql("
@@ -297,9 +325,14 @@ class approval_manager {
 
     /**
      * Manager-side: list course allocations I've created.
+     *
+     * Goal A audit Bug #10 (2026-05-22): added $search to align with the
+     * shared theme_airpayux/datatable client; filters across direct-report
+     * name and course name (the note field is admin-private so excluded).
      */
     public static function list_allocations(int $managerid, string $status = 'all',
-                                              int $page = 0, int $perpage = 25): array {
+                                              int $page = 0, int $perpage = 25,
+                                              string $search = ''): array {
         global $DB;
 
         $perpage = max(5, min(100, $perpage));
@@ -311,10 +344,25 @@ class approval_manager {
             $where[] = 'a.status = :st';
             $params['st'] = $status;
         }
+
+        if (trim($search) !== '') {
+            $term = '%' . $DB->sql_like_escape(trim($search)) . '%';
+            $where[] = '('
+                . $DB->sql_like('u.firstname', ':s1', false) . ' OR '
+                . $DB->sql_like('u.lastname',  ':s2', false) . ' OR '
+                . $DB->sql_like('c.fullname',  ':s3', false)
+                . ')';
+            $params['s1'] = $term;
+            $params['s2'] = $term;
+            $params['s3'] = $term;
+        }
         $wheresql = implode(' AND ', $where);
 
         $total = (int) $DB->count_records_sql(
-            "SELECT COUNT(*) FROM {local_airpay_mgr_allocations} a WHERE $wheresql",
+            "SELECT COUNT(*) FROM {local_airpay_mgr_allocations} a
+        LEFT JOIN {user}   u ON u.id = a.userid
+        LEFT JOIN {course} c ON c.id = a.courseid
+             WHERE $wheresql",
             $params);
 
         $rows = $DB->get_records_sql("

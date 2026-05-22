@@ -19,7 +19,15 @@ use local_airpay_roles\role_manager;
 class list_audit extends external_api {
 
     public static function execute_parameters(): external_function_parameters {
+        // Goal A audit Bug #10 (2026-05-22): the shared
+        // theme_airpayux/datatable client always POSTs a `search` key, and
+        // the strict external_api validator rejects unknown keys with
+        // "Unexpected keys (search) detected" → datatable hangs on
+        // Loading… `search` here aliases to the existing `capability`
+        // filter for now (most-asked-for free-text search column);
+        // future enhancement could broaden it to roleshortname + reason.
         return new external_function_parameters([
+            'search'     => new external_value(PARAM_RAW_TRIMMED, 'Free-text search (aliased to capability filter)', VALUE_DEFAULT, ''),
             'roleid'     => new external_value(PARAM_INT, 'Role filter (0 = all)', VALUE_DEFAULT, 0),
             'action'     => new external_value(PARAM_ALPHAEXT, 'Action filter ("" = all)', VALUE_DEFAULT, ''),
             'capability' => new external_value(PARAM_RAW_TRIMMED, 'Capability filter', VALUE_DEFAULT, ''),
@@ -31,11 +39,12 @@ class list_audit extends external_api {
         ]);
     }
 
-    public static function execute(int $roleid = 0, string $action = '', string $capability = '',
+    public static function execute(string $search = '', int $roleid = 0,
+                                    string $action = '', string $capability = '',
                                     string $sort = 'timecreated', string $sortdir = 'desc',
                                     int $page = 0, int $perpage = 50, string $filters = '{}'): array {
         $params = self::validate_parameters(self::execute_parameters(),
-            compact('roleid', 'action', 'capability', 'sort', 'sortdir', 'page', 'perpage', 'filters'));
+            compact('search', 'roleid', 'action', 'capability', 'sort', 'sortdir', 'page', 'perpage', 'filters'));
 
         $context = \context_system::instance();
         self::validate_context($context);
@@ -45,10 +54,19 @@ class list_audit extends external_api {
             throw new \moodle_exception('err_filterstoolong', 'local_airpay_roles');
         }
 
+        // Honour `search` by falling through to the capability filter when
+        // the caller hasn't already populated it. This keeps the WS contract
+        // satisfied AND gives the search box in the datatable real meaning
+        // for audit reviewers (capability is the most-queried free-text
+        // column here).
+        $capfilter = $params['capability'] !== ''
+            ? $params['capability']
+            : $params['search'];
+
         $result = role_manager::list_audit(
             (int) $params['roleid'],
             $params['action'],
-            $params['capability'],
+            $capfilter,
             (int) $params['page'],
             (int) $params['perpage']
         );
