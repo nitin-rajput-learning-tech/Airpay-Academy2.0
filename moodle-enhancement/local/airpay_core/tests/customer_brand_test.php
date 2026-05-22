@@ -36,6 +36,40 @@ class customer_brand_test extends \advanced_testcase {
         parent::setUp();
         $this->resetAfterTest(true);
         customer::invalidate_branding_cache();
+        $this->seed_airpay_brand_row();
+    }
+
+    /**
+     * Seed the customer-zero row that `db/install.php` would normally
+     * insert on fresh install. We do this in setUp() rather than
+     * relying on the install path because Moodle's PHPUnit framework
+     * snapshots the DB BEFORE any plugin install.php has had a chance
+     * to seed the row in the current test prefix — so the snapshot is
+     * empty and resetAfterTest() rolls back any seed we'd insert here.
+     * Seeding per-test puts the row in scope of each test's own
+     * transaction lifetime.
+     */
+    private function seed_airpay_brand_row(): void {
+        global $DB;
+        if ($DB->record_exists('local_airpay_customer_brand', ['customerid' => 1])) {
+            return;
+        }
+        $now = time();
+        $DB->insert_record('local_airpay_customer_brand', (object) [
+            'customerid'       => 1,
+            'name'             => 'Airpay Academy',
+            'short_name'       => 'Academy',
+            'theme_color'      => '#0066A7',
+            'bg_color'         => '#F2F4FB',
+            'icon_192_url'     => '/local/airpay_core/pix/customer/1/icon-192.png',
+            'icon_512_url'     => '/local/airpay_core/pix/customer/1/icon-512.png',
+            'start_url'        => '/my/dashboard.php?utm_source=pwa_install',
+            'lang'             => 'en',
+            'status_bar_style' => 'default',
+            'categories'       => 'education,productivity',
+            'timecreated'      => $now,
+            'timemodified'     => $now,
+        ]);
     }
 
     // ════════════════════════════════════════════════════════════════
@@ -284,14 +318,18 @@ class customer_brand_test extends \advanced_testcase {
     /**
      * For a normal user with $USER->open_path = "/77/...", the helper
      * extracts the first integer segment (the costcenterid).
+     *
+     * Implementation note: we synthesize $USER directly rather than
+     * calling $this->setUser() because the latter fires every
+     * user-login observer in the deployed plugin set — and the
+     * learnerscript block's observer has an unrelated parse_url(null)
+     * deprecation that this test must not trigger. current_tenant()
+     * only consults $USER->id and $USER->open_path, so a synthetic
+     * stdClass is functionally equivalent.
      */
     public function test_current_tenant_parses_open_path(): void {
-        global $USER;
-        $user = $this->getDataGenerator()->create_user();
-        $this->setUser($user);
-        $USER->open_path = '/77/2/3/';
-
-        $this->assertSame(77, customer::current_tenant());
+        $this->with_user(['id' => 100, 'open_path' => '/77/2/3/'],
+            fn() => $this->assertSame(77, customer::current_tenant()));
     }
 
     /**
@@ -299,24 +337,16 @@ class customer_brand_test extends \advanced_testcase {
      * downstream guards then treat it as "no scope" rather than 0.
      */
     public function test_current_tenant_null_on_malformed_path(): void {
-        global $USER;
-        $user = $this->getDataGenerator()->create_user();
-        $this->setUser($user);
-        $USER->open_path = '/abc/def/';
-
-        $this->assertNull(customer::current_tenant());
+        $this->with_user(['id' => 100, 'open_path' => '/abc/def/'],
+            fn() => $this->assertNull(customer::current_tenant()));
     }
 
     /**
      * Missing open_path attribute (unset, never assigned) returns null.
      */
     public function test_current_tenant_null_when_open_path_unset(): void {
-        global $USER;
-        $user = $this->getDataGenerator()->create_user();
-        $this->setUser($user);
-        unset($USER->open_path);
-
-        $this->assertNull(customer::current_tenant());
+        $this->with_user(['id' => 100],
+            fn() => $this->assertNull(customer::current_tenant()));
     }
 
     /**
@@ -380,5 +410,30 @@ class customer_brand_test extends \advanced_testcase {
         $unknown = customer::label_for(9999);
         $this->assertStringContainsString('Unknown', $unknown);
         $this->assertStringContainsString('9999', $unknown);
+    }
+
+    /**
+     * Run $callback with $GLOBALS['USER'] swapped to a synthetic
+     * stdClass populated from $props, then restore. This bypasses
+     * setUser() and the observer chain it triggers — important
+     * because the deployed learnerscript block has a parse_url(null)
+     * deprecation in its user-login observer that PHPUnit treats as
+     * a fatal failure (failOnDeprecation="true" in phpunit.xml).
+     *
+     * @param array<string,mixed> $props Properties to set on $USER.
+     * @param callable $callback Test body executed with the swap in effect.
+     */
+    private function with_user(array $props, callable $callback): void {
+        global $USER;
+        $original = $USER;
+        $USER = new \stdClass();
+        foreach ($props as $key => $val) {
+            $USER->{$key} = $val;
+        }
+        try {
+            $callback();
+        } finally {
+            $USER = $original;
+        }
     }
 }

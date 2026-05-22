@@ -289,14 +289,21 @@ class customer {
         try {
             $cache = \cache::make('local_airpay_core', 'customer_brand');
             if ($customer_id === null) {
+                // Full purge — single-customer admin operation or
+                // bulk cron job. Also fire the cluster-wide
+                // invalidation event so peer nodes drop their
+                // static-acceleration layers (see db/caches.php).
                 $cache->purge();
+                \cache_helper::purge_by_event('customer_brand_updated');
             } else {
+                // Scoped invalidate — surgical, deletes ONLY the one
+                // customer's key. Do NOT fire purge_by_event here:
+                // it would flush every customer's cache entry across
+                // every node, defeating the whole point of scoping.
+                // The cluster-wide path is taken only when an admin
+                // explicitly calls the no-arg form.
                 $cache->delete('brand_' . (int) $customer_id);
             }
-            // Also fire the event so any cluster peers that subscribed
-            // to `customer_brand_updated` invalidate their static-
-            // acceleration layer (see db/caches.php).
-            \cache_helper::purge_by_event('customer_brand_updated');
         } catch (\Throwable $e) {
             // Cache backend not yet ready — silent. Next read will see
             // the new DB state on its first call (within the 1-hour TTL).

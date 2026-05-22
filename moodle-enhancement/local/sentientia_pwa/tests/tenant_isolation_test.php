@@ -41,6 +41,28 @@ class tenant_isolation_test extends \advanced_testcase {
     public function setUp(): void {
         parent::setUp();
         $this->resetAfterTest(true);
+        $this->ensure_open_path_column();
+    }
+
+    /**
+     * The `open_path` column on `mdl_user` is added by the BizLMS
+     * plugin suite (currently disabled in this XAMPP — see
+     * `bizlms_disabled/`). The phpu_user prefix never gets the column
+     * via install.xml because BizLMS isn't deployed. We add it here so
+     * subscription_manager::tenant_for_user() can SELECT it.
+     *
+     * Idempotent: the column-exists check makes re-entry safe across
+     * tests in the same run.
+     */
+    private function ensure_open_path_column(): void {
+        global $DB;
+        $dbman = $DB->get_manager();
+        $table = new \xmldb_table('user');
+        $field = new \xmldb_field('open_path', XMLDB_TYPE_CHAR, '255',
+            null, null, null, null);
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
     }
 
     // ════════════════════════════════════════════════════════════════
@@ -54,7 +76,7 @@ class tenant_isolation_test extends \advanced_testcase {
      * caller is the user themselves.
      */
     public function test_for_user_without_scope_returns_all_rows(): void {
-        $user = $this->getDataGenerator()->create_user();
+        $user = $this->make_user_minimal([]);
 
         // Three subs in three different (customer, tenant) combos.
         $this->insert_sub($user->id, 1, 1,  'ep-airpay-t1');
@@ -71,7 +93,7 @@ class tenant_isolation_test extends \advanced_testcase {
      * A row in customer=2 must NEVER appear when querying customer=1.
      */
     public function test_for_user_customerid_filter_excludes_other_customers(): void {
-        $user = $this->getDataGenerator()->create_user();
+        $user = $this->make_user_minimal([]);
         $this->insert_sub($user->id, 1, 1, 'ep-c1');
         $this->insert_sub($user->id, 2, 1, 'ep-c2');
 
@@ -95,7 +117,7 @@ class tenant_isolation_test extends \advanced_testcase {
      * The Airpay row (T1) must NEVER appear when querying ZEEA (T177).
      */
     public function test_for_user_tenantid_filter_excludes_other_tenants(): void {
-        $user = $this->getDataGenerator()->create_user();
+        $user = $this->make_user_minimal([]);
         $this->insert_sub($user->id, 1, 1,   'ep-t1');
         $this->insert_sub($user->id, 1, 77,  'ep-t77');
         $this->insert_sub($user->id, 1, 177, 'ep-t177');
@@ -114,7 +136,7 @@ class tenant_isolation_test extends \advanced_testcase {
      * AND tenant. This is the push_sender contract on send().
      */
     public function test_for_user_both_filters_combine_as_and(): void {
-        $user = $this->getDataGenerator()->create_user();
+        $user = $this->make_user_minimal([]);
         $this->insert_sub($user->id, 1, 1,  'ep-c1-t1');
         $this->insert_sub($user->id, 1, 77, 'ep-c1-t77');
         $this->insert_sub($user->id, 2, 1,  'ep-c2-t1');
@@ -132,7 +154,7 @@ class tenant_isolation_test extends \advanced_testcase {
      * pattern in push_sender depends on this contract.
      */
     public function test_for_user_returns_empty_array_on_no_match(): void {
-        $user = $this->getDataGenerator()->create_user();
+        $user = $this->make_user_minimal([]);
         $this->insert_sub($user->id, 1, 1, 'ep-only');
 
         $rows = subscription_manager::for_user($user->id, 9999, 9999);
@@ -149,7 +171,7 @@ class tenant_isolation_test extends \advanced_testcase {
      * Standard open_path "/77/2/3" → first segment 77 is the tenant.
      */
     public function test_tenant_for_user_parses_open_path(): void {
-        $user = $this->getDataGenerator()->create_user(['open_path' => '/77/2/3/']);
+        $user = $this->make_user_minimal(['open_path' => '/77/2/3/']);
         $this->assertSame(77, subscription_manager::tenant_for_user($user->id));
     }
 
@@ -157,7 +179,7 @@ class tenant_isolation_test extends \advanced_testcase {
      * No leading slash, but still valid: "1/2/3" → 1.
      */
     public function test_tenant_for_user_works_without_leading_slash(): void {
-        $user = $this->getDataGenerator()->create_user(['open_path' => '177/2/3']);
+        $user = $this->make_user_minimal(['open_path' => '177/2/3']);
         $this->assertSame(177, subscription_manager::tenant_for_user($user->id));
     }
 
@@ -168,7 +190,7 @@ class tenant_isolation_test extends \advanced_testcase {
      */
     public function test_tenant_for_user_zero_for_deleted_user(): void {
         global $DB;
-        $user = $this->getDataGenerator()->create_user(['open_path' => '/1/2/3/']);
+        $user = $this->make_user_minimal(['open_path' => '/1/2/3/']);
         $DB->set_field('user', 'deleted', 1, ['id' => $user->id]);
 
         $this->assertSame(0, subscription_manager::tenant_for_user($user->id),
@@ -180,7 +202,7 @@ class tenant_isolation_test extends \advanced_testcase {
      */
     public function test_tenant_for_user_zero_for_suspended_user(): void {
         global $DB;
-        $user = $this->getDataGenerator()->create_user(['open_path' => '/1/2/3/']);
+        $user = $this->make_user_minimal(['open_path' => '/1/2/3/']);
         $DB->set_field('user', 'suspended', 1, ['id' => $user->id]);
 
         $this->assertSame(0, subscription_manager::tenant_for_user($user->id));
@@ -191,7 +213,7 @@ class tenant_isolation_test extends \advanced_testcase {
      * may have empty open_path; refuse push to them rather than guessing.
      */
     public function test_tenant_for_user_zero_for_blank_open_path(): void {
-        $user = $this->getDataGenerator()->create_user(['open_path' => '']);
+        $user = $this->make_user_minimal(['open_path' => '']);
         $this->assertSame(0, subscription_manager::tenant_for_user($user->id));
     }
 
@@ -201,7 +223,7 @@ class tenant_isolation_test extends \advanced_testcase {
      * don't blow up, just refuse the push.
      */
     public function test_tenant_for_user_zero_for_malformed_path(): void {
-        $user = $this->getDataGenerator()->create_user(['open_path' => '/abc/def/']);
+        $user = $this->make_user_minimal(['open_path' => '/abc/def/']);
         $this->assertSame(0, subscription_manager::tenant_for_user($user->id));
     }
 
@@ -224,8 +246,8 @@ class tenant_isolation_test extends \advanced_testcase {
      * NOT surface user A's row even when both share customer=1.
      */
     public function test_cross_tenant_isolation_realistic_scenario(): void {
-        $airpay_user = $this->getDataGenerator()->create_user(['open_path' => '/1/2/3/']);
-        $public_user = $this->getDataGenerator()->create_user(['open_path' => '/77/2/3/']);
+        $airpay_user = $this->make_user_minimal(['open_path' => '/1/2/3/']);
+        $public_user = $this->make_user_minimal(['open_path' => '/77/2/3/']);
 
         $this->insert_sub($airpay_user->id, 1, 1,  'airpay-sub');
         $this->insert_sub($public_user->id, 1, 77, 'public-sub');
@@ -248,6 +270,43 @@ class tenant_isolation_test extends \advanced_testcase {
     // ════════════════════════════════════════════════════════════════
     //  Helpers
     // ════════════════════════════════════════════════════════════════
+
+    /**
+     * Create a minimal user row directly via $DB->insert_record, bypassing
+     * `getDataGenerator()->create_user()`. The data-generator fires the
+     * full user_created event chain, and the deployed `learnerscript`
+     * block has a parse_url(null) deprecation in its observer that
+     * PHPUnit treats as a failure (failOnDeprecation="true" in
+     * phpunit.xml). subscription_manager only reads open_path / id /
+     * deleted / suspended, so a synthetic row is functionally equivalent.
+     *
+     * @param array<string,mixed> $extra Properties to override on the row.
+     * @return \stdClass The created user row (with id populated).
+     */
+    private function make_user_minimal(array $extra = []): \stdClass {
+        global $DB;
+        static $counter = 0;
+        $counter++;
+        $base = [
+            'auth'          => 'manual',
+            'confirmed'     => 1,
+            'mnethostid'    => 1,
+            'deleted'       => 0,
+            'suspended'     => 0,
+            'username'      => 'phpunit_user_' . $counter . '_' . random_int(10000, 99999),
+            'password'      => 'unused',
+            'idnumber'      => '',
+            'firstname'     => 'PHPUnit',
+            'lastname'      => 'User' . $counter,
+            'email'         => 'phpunit_' . $counter . '@example.test',
+            'open_path'     => '',
+            'timecreated'   => time(),
+            'timemodified'  => time(),
+        ];
+        $row = (object) array_merge($base, $extra);
+        $row->id = $DB->insert_record('user', $row);
+        return $row;
+    }
 
     /**
      * Insert a synthetic push_subs row. We bypass subscription_manager::save()

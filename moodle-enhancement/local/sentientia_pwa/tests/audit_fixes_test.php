@@ -324,7 +324,12 @@ class audit_fixes_test extends \advanced_testcase {
         $auth   = vapid_key_manager::b64url_encode(random_bytes(16));
 
         $plaintext = '{"title":"RFC test","body":"vector check"}';
-        $ct = payload_encrypter::encrypt_for_subscription($plaintext, $p256dh, $auth);
+        $result = payload_encrypter::encrypt_for_subscription($plaintext, $p256dh, $auth);
+
+        // encrypt_for_subscription returns a structured array; the binary
+        // record lives under 'ciphertext'. The other keys (as_public,
+        // salt) duplicate header fields for caller convenience.
+        $ct = $result['ciphertext'];
 
         // Header minimums (16 + 4 + 1 + 65 = 86 bytes) + 16-byte GCM tag = 102 floor.
         $this->assertGreaterThan(102, strlen($ct),
