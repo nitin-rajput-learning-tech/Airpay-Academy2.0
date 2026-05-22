@@ -1,0 +1,122 @@
+# Airpay Academy 2.0 — User Documentation site
+# Static docs site built with MkDocs Material theme.
+#
+# Approved 2026-05-22 (Goal C, format option C, all 9 personas).
+# Outline approved at the same time: per-persona 8-section structure
+# (Welcome, Quick Start, Daily Ops, Reference, Troubleshooting,
+# Glossary, Changelog, Contact).
+#
+# Local preview:  pip install mkdocs-material && mkdocs serve
+# Production:     mkdocs gh-deploy (GitHub Pages) or build → static host
+
+site_name: Airpay Academy 2.0 — User Guides
+site_description: >
+  Step-by-step user documentation for every persona on Airpay Academy 2.0
+  (Sentientia LMS, customer-zero deployment). Nine guides covering Learner,
+  Manager, L&D Administrator, Course Author/SME, Compliance Officer, Tenant
+  Administrator, Site Administrator, External Public Learner, and API
+  Consumer audiences.
+site_author: Office of the Head of L&D, Airpay Payment Services
+copyright: Copyright &copy; 2026 Airpay Payment Services Pvt. Ltd. — Internal &amp; Confidential
+
+# Adjust this when the docs ship to docs.airpay.academy or similar.
+site_url: https://docs.airpay.academy/
+
+theme:
+  name: material
+  language: en
+  # Airpay design tokens — mirror the airpayux theme palette so the docs
+  # site visually belongs to the same product family.
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  font:
+    text: Montserrat
+    code: JetBrains Mono
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.path
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.action.edit
+    - toc.follow
+  icon:
+    logo: material/school
+  favicon: assets/favicon.ico
+
+extra_css:
+  - assets/airpay-brand.css
+
+# Navigation — mirrors the per-persona 8-section outline approved 2026-05-22.
+nav:
+  - Home: index.md
+  - Personas:
+    - Overview: personas/index.md
+    - Learner: personas/01-learner/index.md
+    - Manager: personas/02-manager/index.md
+    - L&D Administrator: personas/03-ld-administrator/index.md
+    - Course Author / SME: personas/04-course-author-sme/index.md
+    - Compliance Officer: personas/05-compliance-officer/index.md
+    - Tenant Administrator: personas/06-tenant-administrator/index.md
+    - Site Administrator: personas/07-site-administrator/index.md
+    - External Public Learner: personas/08-external-public-learner/index.md
+    - API Consumer: personas/09-api-consumer/index.md
+  - Shared:
+    - Glossary: shared/glossary.md
+    - Contact &amp; Escalation: shared/contact.md
+    - What's New vs v1: shared/changelog.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.emoji
+  - pymdownx.keys
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+plugins:
+  - search
+  - tags
+
+# Bake the source-of-truth commit into the footer when published, so any
+# user reading these guides can match them to the codebase state.
+extra:
+  generator: false
+  version:
+    provider: mike
+  social:
+    - icon: material/web
+      link: https://www.airpay.academy/
+      name: airpay.academy

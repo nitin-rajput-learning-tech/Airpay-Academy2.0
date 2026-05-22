@@ -1,0 +1,86 @@
+/* Airpay Academy 2.0 — docs site brand overrides for MkDocs Material.
+ *
+ * Mirrors the airpayux theme palette and Montserrat typography so the
+ * docs site visually belongs to the same product family. Tokens lifted
+ * from .claude/rules/frontend.md (the source of truth for the design
+ * system as of 2026-05-22).
+ */
+
+:root {
+  --md-primary-fg-color:           #0066A7;  /* Airpay blue */
+  --md-primary-fg-color--light:    #e8f2f9;
+  --md-primary-fg-color--dark:     #004d80;
+  --md-accent-fg-color:            #0f7a73;  /* Teal */
+  --md-accent-fg-color--transparent: rgba(15, 122, 115, 0.1);
+  --md-default-bg-color:           #F2F4FB;
+  --md-typeset-a-color:            #0066A7;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color:           #0066A7;
+  --md-accent-fg-color:            #0f7a73;
+  --md-default-bg-color:           #1a1a2e;
+}
+
+/* Tighten the body line-height + match Montserrat weights from the
+ * design system (400 body, 600 headings). */
+.md-typeset {
+  font-family: 'Montserrat', -apple-system, sans-serif;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3 {
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.md-typeset h1 {
+  font-size: 1.875rem;
+  border-bottom: 2px solid var(--md-primary-fg-color);
+  padding-bottom: 0.5rem;
+}
+
+/* Custom callout for "Quick win" tips */
+.md-typeset .admonition.tip,
+.md-typeset details.tip {
+  border-color: var(--md-accent-fg-color);
+}
+.md-typeset .tip > .admonition-title,
+.md-typeset .tip > summary {
+  background-color: var(--md-accent-fg-color--transparent);
+}
+
+/* Tables — match the airpayux card aesthetic */
+.md-typeset table:not([class]) {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.md-typeset table:not([class]) th {
+  background-color: var(--md-primary-fg-color);
+  color: white;
+  font-weight: 600;
+}
+
+/* Screenshot images get a subtle border + radius so they stand out from
+ * the surrounding text without looking like a UI element themselves. */
+.md-content img:not(.emojione):not(.twemoji) {
+  border: 1px solid #e2e6ef;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  max-width: 100%;
+}
+
+/* Mobile responsiveness — match the platform's 590px breakpoint */
+@media (max-width: 590px) {
+  .md-typeset h1 {
+    font-size: 1.5rem;
+  }
+  .md-typeset table:not([class]) {
+    font-size: 0.875rem;
+  }
+}
