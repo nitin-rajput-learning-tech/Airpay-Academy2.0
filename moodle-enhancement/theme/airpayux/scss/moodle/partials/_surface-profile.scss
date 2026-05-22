@@ -635,3 +635,235 @@ body.dark-mode #page-my-courses .card-header {
     .airpay-qr__code { width: 40vmin; height: 40vmin; }
 }
 
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Goal A.x (2026-05-22) — Sentientia design on vanilla /user/profile.php
+   ───────────────────────────────────────────────────────────────────────
+   The CUSTOM Sentientia profile at /local/airpay_users/profile.php uses
+   the `.edu_info` styles above. But learners + admins also reach Moodle's
+   vanilla profile at /user/profile.php through breadcrumbs, forum-author
+   "view profile" links, admin search-user clicks, etc.
+   The vanilla page uses different DOM classes (.userprofile / .profile_tree
+   / .node_category.card / dl > dt/dd) so the `.edu_info` styles don't
+   reach it. These rules retrofit the same Sentientia look + tokens onto
+   the vanilla profile without touching core PHP.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Container — center + cap width like other Sentientia surfaces */
+.userprofile {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 8px 0 32px;
+}
+
+/* The hidden h2 ("User profile") above the tree — keep hidden, just defensive */
+.userprofile > h2.visually-hidden {
+    position: absolute !important;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+}
+
+/* Profile tree — wrap section cards in a responsive grid so on wide
+   viewports the User Details / Course Details / Misc / Reports / Login
+   sections sit side-by-side instead of as a single tall column.
+   The masonry-style auto-fit gives a Notion-meets-Linear feel. */
+.userprofile .profile_tree {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+    align-items: start;
+    margin-top: 8px;
+}
+
+/* Each section is a `<section class="node_category card d-inline-block w-100 mb-3">` */
+.userprofile .profile_tree .node_category.card {
+    /* Reset Bootstrap defaults that fight our tokens */
+    display: block !important;
+    width: 100% !important;
+    margin-bottom: 0 !important;
+
+    /* Sentientia card */
+    background: var(--ap-color-bg-surface, #ffffff);
+    border: 1px solid var(--ap-color-border, #e5e7eb);
+    border-radius: 16px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+    overflow: hidden;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.userprofile .profile_tree .node_category.card:hover {
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+    transform: translateY(-1px);
+}
+
+.userprofile .profile_tree .node_category.card > .card-body {
+    padding: 20px 24px;
+}
+
+/* Section header — h3.lead "User details", "Course details" etc. */
+.userprofile .profile_tree .node_category h3.lead {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--ap-color-text-secondary, #5a6070);
+    margin: 0 0 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--ap-color-border, #e5e7eb);
+    position: relative;
+}
+
+.userprofile .profile_tree .node_category h3.lead::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -1px;
+    width: 36px;
+    height: 2px;
+    background: var(--ap-color-primary, #0066A7);
+    border-radius: 2px;
+}
+
+/* List inside each card — flat list, key-value rows */
+.userprofile .profile_tree .node_category ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.userprofile .profile_tree .node_category ul > li {
+    padding: 8px 0;
+    /* Faint divider between rows. Plain rgba avoids `color-mix()` which
+       scssphp (Moodle's SCSS compiler) may not parse cleanly. */
+    border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+}
+.userprofile .profile_tree .node_category ul > li:last-child {
+    border-bottom: none;
+}
+
+/* "Edit profile" CTA — first list item in User Details — promoted to button */
+.userprofile .profile_tree .node_category li.editprofile {
+    /* Lift out of the list flow visually */
+    border: none !important;
+    padding: 0 0 14px !important;
+}
+.userprofile .profile_tree .node_category li.editprofile > a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: var(--ap-color-primary, #0066A7);
+    color: #fff !important;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 10px;
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+.userprofile .profile_tree .node_category li.editprofile > a:hover {
+    background: var(--ap-color-primary-dark, #004d80);
+    transform: translateY(-1px);
+}
+
+/* Key-value <dl> rows — Moodle renders fields like Email/City/Timezone
+   as definition lists inside li.contentnode. Make dt+dd a 2-col grid. */
+.userprofile .profile_tree .node_category dl {
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    gap: 4px 12px;
+    margin: 0;
+}
+.userprofile .profile_tree .node_category dl > dt {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ap-color-text-secondary, #5a6070);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    align-self: center;
+}
+.userprofile .profile_tree .node_category dl > dd {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ap-color-text-primary, #1a1a2e);
+    margin: 0;
+    word-break: break-word;
+}
+/* Inline link inside dd (e.g., email mailto link) */
+.userprofile .profile_tree .node_category dl > dd a {
+    color: var(--ap-color-primary, #0066A7);
+    text-decoration: none;
+    font-weight: 500;
+}
+.userprofile .profile_tree .node_category dl > dd a:hover {
+    text-decoration: underline;
+}
+
+/* Plain link-list items (Course details, Misc, Reports sections — each
+   <li>'s child is just an <a>). Style them as a clean clickable row. */
+.userprofile .profile_tree .node_category li.contentnode > a:not(.btn):only-child,
+.userprofile .profile_tree .node_category ul > li > a:not(.btn):only-child {
+    display: block;
+    color: var(--ap-color-text-primary, #1a1a2e);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 4px 0;
+    transition: color 0.15s ease, padding-left 0.15s ease;
+}
+.userprofile .profile_tree .node_category li.contentnode > a:not(.btn):only-child:hover,
+.userprofile .profile_tree .node_category ul > li > a:not(.btn):only-child:hover {
+    color: var(--ap-color-primary, #0066A7);
+    padding-left: 4px;
+}
+
+/* The Course Details list often shows "Course profiles" as a label
+   followed by the list of courses. Treat the label as a subtle caption. */
+.userprofile .profile_tree .node_category li.contentnode > span:first-child:not(:only-child) {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ap-color-text-muted, #94a3b8);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 6px;
+}
+
+/* Login activity values look like timestamps — give them mono numbers */
+body#page-user-profile .node_category dd,
+.userprofile .profile_tree .node_category dd {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Dark-mode pass-through (vars handle most, but card borders need tuning) */
+html.dark-mode .userprofile .profile_tree .node_category.card,
+body.dark-mode .userprofile .profile_tree .node_category.card {
+    background: #1a1d27;
+    border-color: #2d3140;
+}
+html.dark-mode .userprofile .profile_tree .node_category h3.lead,
+body.dark-mode .userprofile .profile_tree .node_category h3.lead {
+    color: #94a3b4;
+    border-bottom-color: #2d3140;
+}
+
+/* Mobile — collapse the grid to a single column so cards stack */
+@media (max-width: 768px) {
+    .userprofile .profile_tree {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+    .userprofile .profile_tree .node_category.card > .card-body {
+        padding: 16px 18px;
+    }
+    .userprofile .profile_tree .node_category dl {
+        /* On narrow widths, dl labels above values is more readable */
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+    .userprofile .profile_tree .node_category dl > dt {
+        margin-top: 8px;
+    }
+}
+
