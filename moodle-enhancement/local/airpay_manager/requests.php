@@ -6,7 +6,10 @@ require_once(__DIR__ . '/../../config.php');
 
 require_login();
 $context = context_system::instance();
-require_capability('local/airpay_manager:view', $context);
+// Bug fix 2026-05-22 (Goal A audit): require_capability rejected
+// supervisors-via-open_supervisorid who don't hold the Moodle manager
+// archetype. See \local_airpay_manager\team_manager::can_manage().
+\local_airpay_manager\team_manager::require_manage();
 
 $PAGE->set_url('/local/airpay_manager/requests.php');
 $PAGE->set_context($context);

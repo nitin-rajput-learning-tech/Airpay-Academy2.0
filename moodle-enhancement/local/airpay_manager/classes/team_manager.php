@@ -248,6 +248,56 @@ class team_manager {
     }
 
     /**
+     * Can this user access the manager surface (team dashboard,
+     * approval queue, performance reports)? Bug fix 2026-05-22
+     * (Goal A audit): require_capability('local/airpay_manager:view')
+     * was rejecting users who had direct reports but had not been
+     * assigned the Moodle `manager` role. On the production data
+     * (110 users with direct reports, only ~10 with the manager
+     * archetype), this left ~100 supervisors unable to access their
+     * own team's data.
+     *
+     * Allow rule (ordered cheapest-first):
+     *   1. Site admins always.
+     *   2. Anyone with local/airpay_manager:view capability.
+     *   3. Anyone listed as `open_supervisorid` on at least one
+     *      active, non-deleted user (= has direct reports).
+     */
+    public static function can_manage(int $viewerid = 0): bool {
+        global $DB, $USER;
+        if (empty($viewerid)) {
+            $viewerid = (int) ($USER->id ?? 0);
+        }
+        if (empty($viewerid)) return false;
+        if (is_siteadmin($viewerid)) return true;
+        if (has_capability('local/airpay_manager:view',
+                \context_system::instance(), $viewerid)) {
+            return true;
+        }
+        return $DB->record_exists_select('user',
+            'open_supervisorid = :uid AND deleted = 0 AND suspended = 0',
+            ['uid' => $viewerid]);
+    }
+
+    /**
+     * require_login + can_manage in one call — drop-in replacement
+     * for `require_capability('local/airpay_manager:view', ...)`.
+     * Throws the same `required_capability_exception` shape so callers
+     * upstream don't need to special-case it.
+     */
+    public static function require_manage(): void {
+        global $USER;
+        if (!self::can_manage()) {
+            throw new \required_capability_exception(
+                \context_system::instance(),
+                'local/airpay_manager:view',
+                'nopermissions',
+                ''
+            );
+        }
+    }
+
+    /**
      * Verify the requesting user can view the target user's data.
      * Allows: admins, the target user themselves, the target's supervisor,
      * and the supervisor's supervisor (skip-level managers).

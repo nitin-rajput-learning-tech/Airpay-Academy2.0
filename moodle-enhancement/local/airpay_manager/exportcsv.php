@@ -6,7 +6,8 @@ require_once(__DIR__ . '/../../config.php');
 
 require_login();
 $context = context_system::instance();
-require_capability('local/airpay_manager:view', $context);
+// Bug fix 2026-05-22 (Goal A audit) — supervisor-or-capability check.
+\local_airpay_manager\team_manager::require_manage();
 require_sesskey();
 
 $filename = 'airpay-manager-decisions-' . date('Ymd-His') . '.csv';

@@ -19,7 +19,8 @@ $PAGE->set_url(new moodle_url('/local/airpay_manager/performance.php'));
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title('Team performance');
 $PAGE->set_heading('Team performance');
-require_capability('local/airpay_manager:view', $ctx);
+// Bug fix 2026-05-22 (Goal A audit) — supervisor-or-capability check.
+\local_airpay_manager\team_manager::require_manage();
 
 $period = optional_param('period', 30, PARAM_INT);
 
