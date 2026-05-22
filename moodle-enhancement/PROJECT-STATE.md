@@ -3449,7 +3449,57 @@ ranked for maximum unblock-per-hour:
 | 2 | **Production master key + push flag-on dry run** — admin runs `cli/generate_master_key.php` + sets env/CFG + regenerates VAPID keypair → flip `sentientia.pwa.push.enabled` on local first, then production | ~1h | ✅ done (commit `047457d4f` — local complete; production handoff documented) |
 | 3 | **Customer 2 readiness — implement ADR-008** — `local_airpay_customer_brand` table + migration backfilling the Airpay row + cached resolver replacing the hard-wired switch in `customer::branding()` | ~3h | ✅ done (commits `047457d4f`, `4cc25410f`, `c31bc1346`) |
 | 4 | **PHPUnit coverage for crypto stack** — promote `cli/test_audit_fixes.php` + `cli/run_push_e2e.php` to `tests/*_test.php`; add RFC 8291 §5.1 worked-example vector + tenant-isolation scenarios | ~2h | ✅ done (commits `4cc25410f`, `b839dace0`, `c31bc1346`) — 53 tests / 141 assertions all green |
-| 5 | **Mobile-app WS surface (Phase X.1)** — expose the 22 read-only WS endpoints identified in `docs/audits/MOBILE-APP-WS-SURFACE-AUDIT-2026-05-20.md`. Unlocks the Moodle Mobile app for learners | ~4h | ⏳ next session |
+| 5 | **Mobile-app WS surface (Phase X.1)** — expose the 22 read-only WS endpoints identified in `docs/audits/MOBILE-APP-WS-SURFACE-AUDIT-2026-05-20.md`. Unlocks the Moodle Mobile app for learners | ~4h | ⏳ deferred until Goals A/B/C are sequenced |
+
+---
+
+## 🎯 RANKED PRIORITIES — 2026-05-22 (afternoon — new goals added)
+
+Per Nitin's afternoon ask: three multi-session goals added. These are
+substantially larger than the morning priorities and will likely span
+multiple sessions each. Ranking optimised for the natural sequencing
+(audit produces screenshots → screenshots feed user guides; UI upgrades
+happen in the gap between audit findings and guide build):
+
+| # | Goal | Effort | Status | Notes |
+|---|---|---|---|---|
+| A | **Visual UI audit of every page surface per user type** — Chrome walkthrough of every page for each of the 9 user types in Section 10 of the May-12 master doc (Learner, Manager, L&D Admin, Course Author/SME, Compliance Officer, Tenant Admin, Site Admin, External Public Learner, API Consumer). Output: persona-bucketed desktop+mobile screenshots, audit report flagging "still looks like Moodle" surfaces, prioritised UI-upgrade backlog. | ~30h | ⏳ blocks A.x and C | First step is the audit; UI upgrade work (A.x) generated from findings. |
+| A.x | **UI upgrade work driven by audit findings** — each "looks like Moodle" surface gets a redesign sprint (SCSS, Mustache, before/after screenshots, mobile pass). Tracked separately. | varies | ⏳ blocked by A | Effort scales with how many surfaces A flags. |
+| B | **E2E click-through testing of every feature** — manual Chrome walkthrough first pass (catches UX issues automation can't see), then Playwright-driven repeat. Pass/fail matrix + broken-flow list + flow screenshots (which double as user-guide raw material). | ~25h | ⏳ blocked by A.x | Should run after UI upgrade lands so we test the new surfaces, not the old. |
+| C | **Detailed user guides per user type** — outline approval gate from Nitin (asked 2026-05-22 afternoon). Format + depth + audience-scope options presented via AskUserQuestion. Build starts after approval; consumes Goal A screenshots + Goal B flow recordings. | ~60–120h depending on format | ⏳ AWAITING OUTLINE APPROVAL | See `docs/user-guide-plan-2026-05-22/` for the full proposed structure. |
+| (5 above) | Mobile-app WS Phase X.1 — re-queued after A/B/C land. | ~4h | ⏳ deferred |
+
+### Goal C — outline + options awaiting approval
+
+**Outline proposed (per persona, applied to all 9 user types from Section 10):**
+
+1. **Welcome** (1 page) — who this guide is for, how to navigate, links to sibling personas
+2. **Quick Start** (3–5 pages) — first login, dashboard tour, "what to do in your first 15 minutes"
+3. **Daily Operations** (10–25 pages) — the 80 % of tasks done weekly, step-by-step with screenshots
+4. **Feature Reference** (30–50 pages) — every screen / button / setting documented, alphabetical
+5. **Troubleshooting / FAQ** (5–10 pages) — common issues + recovery
+6. **Glossary** (2–3 pages) — Moodle terms, BizLMS terms, Airpay-specific terms
+7. **Changelog / What's new vs v1** (2–3 pages) — per persona, the v1→v2 deltas from Section 10
+8. **Contact + Escalation** (1 page) — how to reach L&D, IT, super-admin
+
+**Format options (presented to Nitin via AskUserQuestion):**
+A. PDF per persona — print-ready, polished, ~30–50 pp each; stale on update
+B. Native Moodle Book module — lives in platform; looks like Moodle (the thing we're moving away from)
+C. **Static docs site** (MkDocs Material or Docusaurus) — brand-aligned CSS, searchable, version-controlled, mobile-friendly; published at /docs/ or docs.airpay.academy *(RECOMMENDED)*
+D. Embedded help plugin (`local_sentientia_help/`) — biggest build but lives inside the platform with full design-system styling
+E. Hybrid C + in-product help cards on each page
+
+**Depth options:**
+A. Quick Start only
+B. Daily Operations only
+C. Full Reference Manual only
+D. **Comprehensive** = Quick Start + Daily Ops + Reference + Troubleshooting *(RECOMMENDED)*
+
+**Audience-scope options:**
+A. All 9 personas (separate guides, with shared core to avoid duplication) *(RECOMMENDED — aligns with explicit "for each user" ask)*
+B. Consolidated 5 (Learner / Manager / L&D Admin / Tenant+Site Admin / External Public)
+C. Top 3 only (Learner / Manager / L&D Admin) — covers ~95 % of population
+D. Custom mix to be specified
 
 ### Out-of-scope until external action lands
 - AI quiz gen (Tier 1 #4) — needs `ANTHROPIC_API_KEY`
