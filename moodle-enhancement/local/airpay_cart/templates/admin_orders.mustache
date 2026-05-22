@@ -16,7 +16,15 @@
         </div>
     </div>
 
-    <div data-region="datatable"
+    {{!
+        Bug fix 2026-05-22 (Goal A audit Bug #12) — same shape as the
+        sibling history.mustache. theme_airpayux/datatable's selector
+        is [data-airpay-table], [data-region="airpay-datatable"]; the
+        old "datatable" value never matched so the admin orders table
+        rendered as a permanent "Loading..." spinner. Init() takes no
+        args; passing the wrong element is also a silent no-op.
+    }}
+    <div data-region="airpay-datatable"
          data-component="local_airpay_cart"
          data-ws-name="local_airpay_cart_list_orders"
          data-columns="{{ columns_json }}"
@@ -30,7 +38,7 @@
 {{#js}}
 require(['theme_airpayux/datatable', 'local_airpay_cart/admin_orders'],
     function(Datatable, AdminOrders) {
-        Datatable.init(document.querySelector('[data-region="datatable"]'));
+        Datatable.init();
         AdminOrders.init();
     });
 {{/js}}

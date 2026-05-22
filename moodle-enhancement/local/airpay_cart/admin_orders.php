@@ -32,7 +32,10 @@ $columns = [
 ];
 
 $data = [
-    'columns_json'    => s(json_encode($columns)),
+    // Bug fix 2026-05-22 (Goal A audit Bug #12 part 2): see history.php
+    // sibling for the long-form explanation of the s(json_encode())
+    // double-escape that breaks JSON.parse() at position 2.
+    'columns_json'    => json_encode($columns),
     'is_admin'        => true,
     'daily_sums_url'  => (new moodle_url('/local/airpay_cart/daily_sums.php'))->out(false),
     'set_price_url'   => (new moodle_url('/local/airpay_cart/set_price.php'))->out(false),

@@ -9,7 +9,18 @@
         <a href="{{{ back_url }}}" class="btn btn-link"><i class="fa fa-arrow-left"></i> Back to cart</a>
     </div>
 
-    <div data-region="datatable"
+    {{!
+        Bug fix 2026-05-22 (Goal A audit Bug #12):
+        - data-region was "datatable"; theme_airpayux/datatable's init()
+          looks for [data-airpay-table], [data-region="airpay-datatable"].
+          Renamed so the selector matches and the table renders.
+        - Datatable.init() takes no args — removed the bogus argument;
+          init() walks the DOM itself.
+        Same shape of fix that landed on local_airpay_request templates
+        in Bug #6 (commit 89fb2e713). The cart templates were missed
+        because Bug #6's audit walk didn't reach the cart page.
+    }}
+    <div data-region="airpay-datatable"
          data-component="local_airpay_cart"
          data-ws-name="local_airpay_cart_list_orders"
          data-columns="{{ columns_json }}"
@@ -23,7 +34,7 @@
 {{#js}}
 require(['theme_airpayux/datatable', 'local_airpay_cart/history'],
     function(Datatable, History) {
-        Datatable.init(document.querySelector('[data-region="datatable"]'));
+        Datatable.init();
         History.init();
     });
 {{/js}}
