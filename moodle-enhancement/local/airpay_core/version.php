@@ -27,10 +27,10 @@ $plugin->component = 'local_airpay_core';
 // New 5-level resolver (customer+tenant > customer > legacy tenant >
 // global > registered default). Gated by sentientia.customer_level_flags.enabled
 // (default OFF). New classes/customer.php helper + Switchboard customer tabs.
-$plugin->version   = 2026052101;
+$plugin->version   = 2026052201;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.4.0';  // +Session 2 customer-level feature flags
+$plugin->release   = '1.5.0';  // ADR-008 — customer_brand DB table + cached resolver
 // Release history
 // 1.1.0  cron-health publisher + audit_log + structured_logger
 // 1.2.0  Phase A0 — feature flags + Switchboard infrastructure.

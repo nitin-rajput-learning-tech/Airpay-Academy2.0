@@ -131,45 +131,175 @@ class customer {
      * Branding bundle for a customer — used by per-customer surfaces
      * like the PWA manifest, login splash, navbar logo, etc.
      *
-     * Phase 0/1: a single hard-wired Airpay bundle (because customer
-     * id 1 is the only real entry). Phase 2+ ADR-008 will replace this
-     * body with a DB lookup against `local_airpay_customer_brand` —
-     * same return shape, so callers won't change.
+     * ADR-008 (2026-05-22) — Phase 2 implementation. Reads from the
+     * `local_airpay_customer_brand` table (single row per customer id),
+     * cached via the `customer_brand` application cache (1-hour TTL,
+     * static acceleration). Falls back to the hard-coded Airpay bundle
+     * when:
+     *   - The table has no row for the requested customer_id (defensive
+     *     — production should always have at least customer=1 after the
+     *     upgrade savepoint)
+     *   - The DB is unavailable mid-request
      *
-     * The return shape is intentionally narrow so per-customer overrides
-     * stay disciplined:
-     *   - name         Display name (full)
-     *   - short_name   ≤ 12 chars, for PWA app shortcuts
-     *   - theme_color  Hex, used as PWA theme_color + browser-chrome tint
-     *   - bg_color     Hex, PWA background_color while shell warms up
-     *   - icon_192_url Absolute URL to 192×192 PNG (Android home-screen)
-     *   - icon_512_url Absolute URL to 512×512 PNG (splash + adaptive)
-     *   - start_url    Path the PWA launches into (relative to wwwroot)
-     *   - lang         BCP-47 language code (PWA `lang` field)
+     * The return shape is unchanged from Phase 0/1 — all callers
+     * (manifest.php, theme renderer, navbar logo) continue to work
+     * without modification.
+     *
+     * Returned keys:
+     *   - name             Display name (full)
+     *   - short_name       <=12 chars, for PWA app shortcuts
+     *   - theme_color      Hex, used as PWA theme_color + browser-chrome tint
+     *   - bg_color         Hex, PWA background_color while shell warms up
+     *   - icon_192_url     Absolute URL to 192x192 PNG
+     *   - icon_512_url     Absolute URL to 512x512 PNG
+     *   - start_url        Path the PWA launches into
+     *   - lang             BCP-47 language code (PWA `lang` field)
+     *   - status_bar_style iOS status-bar style (Phase 2 column)
+     *   - categories       Comma-separated PWA categories (Phase 2 column)
      *
      * @param int|null $customer_id Defaults to {@see current()}.
      * @return array
      */
     public static function branding(?int $customer_id = null): array {
-        global $CFG;
+        global $DB, $CFG;
+
         if ($customer_id === null) {
             $customer_id = self::current();
         }
-        // Phase 0/1 — single customer (Airpay). Future customers add
-        // their entries by extending the match below.
-        switch ($customer_id) {
-            case self::AIRPAY:
-            default:
-                return [
-                    'name'         => 'Airpay Academy',
-                    'short_name'   => 'Academy',
-                    'theme_color'  => '#0066A7',
-                    'bg_color'     => '#F2F4FB',
-                    'icon_192_url' => $CFG->wwwroot . '/local/airpay_core/pix/customer/1/icon-192.png',
-                    'icon_512_url' => $CFG->wwwroot . '/local/airpay_core/pix/customer/1/icon-512.png',
-                    'start_url'    => '/my/dashboard.php?utm_source=pwa_install',
-                    'lang'         => 'en',
-                ];
+        $customer_id = (int) $customer_id;
+
+        // Hot path — application cache hit avoids the DB round trip.
+        try {
+            $cache = \cache::make('local_airpay_core', 'customer_brand');
+            $key   = 'brand_' . $customer_id;
+            $bundle = $cache->get($key);
+            if (is_array($bundle)) {
+                return $bundle;
+            }
+        } catch (\Throwable $e) {
+            // Cache backend not yet ready (very early in bootstrap) —
+            // fall through to direct DB read.
+            $cache = null;
+        }
+
+        // DB lookup. Wrapped in try because the table may not yet
+        // exist during a multi-step upgrade where airpay_core hasn't
+        // run its 2026052201 savepoint.
+        $row = null;
+        try {
+            $row = $DB->get_record('local_airpay_customer_brand',
+                ['customerid' => $customer_id]);
+        } catch (\Throwable $e) {
+            $row = null;
+        }
+
+        if ($row) {
+            $bundle = [
+                'name'             => $row->name,
+                'short_name'       => $row->short_name,
+                'theme_color'      => $row->theme_color,
+                'bg_color'         => $row->bg_color,
+                'icon_192_url'     => self::resolve_url($row->icon_192_url),
+                'icon_512_url'     => self::resolve_url($row->icon_512_url),
+                'start_url'        => $row->start_url,
+                'lang'             => $row->lang,
+                'status_bar_style' => $row->status_bar_style ?? 'default',
+                'categories'       => self::parse_categories(
+                    $row->categories ?? ''),
+            ];
+        } else {
+            // Fallback — hard-coded Airpay bundle. Used when the brand
+            // table is empty (e.g. fresh install before the 052201
+            // savepoint runs) or for an unknown customer id.
+            $bundle = self::default_brand();
+        }
+
+        if ($cache !== null) {
+            try { $cache->set($key, $bundle); } catch (\Throwable $e) { /* swallow */ }
+        }
+        return $bundle;
+    }
+
+    /**
+     * Hard-coded fallback bundle. Used when:
+     *   - The brand table is empty / missing (mid-upgrade)
+     *   - An unknown customer id is requested (defensive default to
+     *     Airpay since that's the only real customer today)
+     *
+     * Identical to the Phase 0/1 bundle returned pre-Phase-2.
+     */
+    private static function default_brand(): array {
+        global $CFG;
+        return [
+            'name'             => 'Airpay Academy',
+            'short_name'       => 'Academy',
+            'theme_color'      => '#0066A7',
+            'bg_color'         => '#F2F4FB',
+            'icon_192_url'     => $CFG->wwwroot . '/local/airpay_core/pix/customer/1/icon-192.png',
+            'icon_512_url'     => $CFG->wwwroot . '/local/airpay_core/pix/customer/1/icon-512.png',
+            'start_url'        => '/my/dashboard.php?utm_source=pwa_install',
+            'lang'             => 'en',
+            'status_bar_style' => 'default',
+            'categories'       => ['education', 'productivity'],
+        ];
+    }
+
+    /**
+     * Make a brand-asset URL absolute. The table stores both relative
+     * (`/local/airpay_core/pix/...`) and absolute (`https://cdn...`)
+     * URLs; relatives are prefixed with `$CFG->wwwroot`.
+     */
+    private static function resolve_url(string $url): string {
+        global $CFG;
+        if ($url === '') {
+            return '';
+        }
+        if (str_starts_with($url, 'http://') || str_starts_with($url, 'https://')) {
+            return $url;
+        }
+        return rtrim($CFG->wwwroot, '/') . '/' . ltrim($url, '/');
+    }
+
+    /**
+     * Parse the comma-separated `categories` column into an array.
+     * Empty / null input returns the spec-recommended defaults.
+     */
+    private static function parse_categories(string $csv): array {
+        $csv = trim($csv);
+        if ($csv === '') {
+            return ['education', 'productivity'];
+        }
+        $parts = array_map('trim', explode(',', $csv));
+        return array_values(array_filter($parts, static fn($v) => $v !== ''));
+    }
+
+    /**
+     * Invalidate the per-customer branding cache.
+     *
+     * Call this from any admin-side write that touches a row in
+     * `local_airpay_customer_brand`. Future Phase 2 admin UI will wire
+     * this in; for now operators editing via DB should run
+     * `php admin/cli/purge_caches.php` (which clears the application
+     * cache layer along with everything else).
+     *
+     * @param int|null $customer_id If given, invalidate only that
+     *                              customer; otherwise invalidate all.
+     */
+    public static function invalidate_branding_cache(?int $customer_id = null): void {
+        try {
+            $cache = \cache::make('local_airpay_core', 'customer_brand');
+            if ($customer_id === null) {
+                $cache->purge();
+            } else {
+                $cache->delete('brand_' . (int) $customer_id);
+            }
+            // Also fire the event so any cluster peers that subscribed
+            // to `customer_brand_updated` invalidate their static-
+            // acceleration layer (see db/caches.php).
+            \cache_helper::purge_by_event('customer_brand_updated');
+        } catch (\Throwable $e) {
+            // Cache backend not yet ready — silent. Next read will see
+            // the new DB state on its first call (within the 1-hour TTL).
         }
     }
 

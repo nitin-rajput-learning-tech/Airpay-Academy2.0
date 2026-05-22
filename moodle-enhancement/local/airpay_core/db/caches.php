@@ -34,4 +34,18 @@ $definitions = [
         'staticacceleration' => true,
     ],
 
+    // ADR-008 (2026-05-22) — per-customer branding bundle cache.
+    // Read on every page (manifest.php, theme renderer, login splash,
+    // audience navbar), so it must be fast. 1-hour TTL means brand
+    // changes propagate within an hour without an explicit purge;
+    // the customer_brand_updated invalidation event clears it sooner
+    // when an admin edits a row.
+    'customer_brand' => [
+        'mode'               => cache_store::MODE_APPLICATION,
+        'ttl'                => 3600,
+        'simplekeys'         => true,
+        'staticacceleration' => true,
+        'invalidationevents' => ['customer_brand_updated'],
+    ],
+
 ];

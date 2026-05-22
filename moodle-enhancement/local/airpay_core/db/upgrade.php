@@ -154,5 +154,75 @@ function xmldb_local_airpay_core_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026052101, 'local', 'airpay_core');
     }
 
+    // ── ADR-008 (2026-05-22) — local_airpay_customer_brand table ─────
+    // Per-customer branding bundle. Replaces the hard-wired switch in
+    // \local_airpay_core\customer::branding() with a cached DB lookup.
+    // Back-compatible: the resolver falls back to the hard-coded Airpay
+    // bundle when the table is empty.
+    if ($oldversion < 2026052201) {
+        $brand_table = new xmldb_table('local_airpay_customer_brand');
+
+        if (!$dbman->table_exists($brand_table)) {
+            $brand_table->add_field('id', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL, XMLDB_SEQUENCE);
+            $brand_table->add_field('customerid', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL);
+            $brand_table->add_field('name', XMLDB_TYPE_CHAR, '120', null,
+                XMLDB_NOTNULL);
+            $brand_table->add_field('short_name', XMLDB_TYPE_CHAR, '40', null,
+                XMLDB_NOTNULL);
+            $brand_table->add_field('theme_color', XMLDB_TYPE_CHAR, '7', null,
+                XMLDB_NOTNULL);
+            $brand_table->add_field('bg_color', XMLDB_TYPE_CHAR, '7', null,
+                XMLDB_NOTNULL);
+            $brand_table->add_field('icon_192_url', XMLDB_TYPE_CHAR, '500', null,
+                XMLDB_NOTNULL);
+            $brand_table->add_field('icon_512_url', XMLDB_TYPE_CHAR, '500', null,
+                XMLDB_NOTNULL);
+            $brand_table->add_field('start_url', XMLDB_TYPE_CHAR, '500', null,
+                XMLDB_NOTNULL);
+            $brand_table->add_field('lang', XMLDB_TYPE_CHAR, '10', null,
+                XMLDB_NOTNULL, null, 'en');
+            $brand_table->add_field('status_bar_style', XMLDB_TYPE_CHAR, '20',
+                null, null);
+            $brand_table->add_field('categories', XMLDB_TYPE_CHAR, '200', null,
+                null);
+            $brand_table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL, null, '0');
+            $brand_table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL, null, '0');
+
+            $brand_table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $brand_table->add_key('uk_customer', XMLDB_KEY_UNIQUE, ['customerid']);
+
+            $dbman->create_table($brand_table);
+        }
+
+        // Backfill the Airpay customer-zero row from the bundle that
+        // \local_airpay_core\customer::branding() returned pre-Phase-2.
+        // Idempotent — the unique key on customerid blocks duplicates,
+        // so re-running this savepoint is a no-op.
+        if (!$DB->record_exists('local_airpay_customer_brand', ['customerid' => 1])) {
+            $now = time();
+            $DB->insert_record('local_airpay_customer_brand', (object) [
+                'customerid'       => 1,
+                'name'             => 'Airpay Academy',
+                'short_name'       => 'Academy',
+                'theme_color'      => '#0066A7',
+                'bg_color'         => '#F2F4FB',
+                'icon_192_url'     => '/local/airpay_core/pix/customer/1/icon-192.png',
+                'icon_512_url'     => '/local/airpay_core/pix/customer/1/icon-512.png',
+                'start_url'        => '/my/dashboard.php?utm_source=pwa_install',
+                'lang'             => 'en',
+                'status_bar_style' => 'default',
+                'categories'       => 'education,productivity',
+                'timecreated'      => $now,
+                'timemodified'     => $now,
+            ]);
+        }
+
+        upgrade_plugin_savepoint(true, 2026052201, 'local', 'airpay_core');
+    }
+
     return true;
 }

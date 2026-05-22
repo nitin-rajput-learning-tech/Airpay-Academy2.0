@@ -83,5 +83,52 @@
       </INDEXES>
     </TABLE>
 
+    <TABLE NAME="local_airpay_customer_brand"
+           COMMENT="Per-customer branding bundle (ADR-008, 2026-05-21).
+                    One row per customer id. Read on every page (manifest,
+                    theme renderer, login splash, audience navbar) so it
+                    is cached via local_airpay_core/customer_brand
+                    application cache.
+
+                    Phase 2: replaces the hard-wired switch in
+                    \local_airpay_core\customer::branding() with a SELECT
+                    from this table. The return shape is identical so all
+                    callsites are unchanged.
+
+                    Adding a new customer = 1 row insert + 2 icon files.
+                    No code deploy.">
+      <FIELDS>
+        <FIELD NAME="id"               TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="customerid"       TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="Unique customer identifier. Phase 0/1: only 1 (Airpay) exists. Phase 2+: 2..N for new customers."/>
+        <FIELD NAME="name"             TYPE="char" LENGTH="120" NOTNULL="true"
+               COMMENT="Full display name (Web App Manifest `name` field)"/>
+        <FIELD NAME="short_name"       TYPE="char" LENGTH="40"  NOTNULL="true"
+               COMMENT="Short name <=12 chars recommended (Manifest `short_name`)"/>
+        <FIELD NAME="theme_color"      TYPE="char" LENGTH="7"   NOTNULL="true"
+               COMMENT="Hex color like #0066A7 — Manifest theme_color + browser-chrome tint"/>
+        <FIELD NAME="bg_color"         TYPE="char" LENGTH="7"   NOTNULL="true"
+               COMMENT="Hex color — PWA background_color while shell warms up"/>
+        <FIELD NAME="icon_192_url"     TYPE="char" LENGTH="500" NOTNULL="true"
+               COMMENT="Absolute or relative URL to 192x192 PNG (Android home-screen)"/>
+        <FIELD NAME="icon_512_url"     TYPE="char" LENGTH="500" NOTNULL="true"
+               COMMENT="Absolute or relative URL to 512x512 PNG (splash + adaptive)"/>
+        <FIELD NAME="start_url"        TYPE="char" LENGTH="500" NOTNULL="true"
+               COMMENT="Path relative to wwwroot (e.g. /my/dashboard.php?utm=pwa)"/>
+        <FIELD NAME="lang"             TYPE="char" LENGTH="10"  NOTNULL="true" DEFAULT="en"
+               COMMENT="BCP-47 language code (en, hi, en-IN, etc)"/>
+        <FIELD NAME="status_bar_style" TYPE="char" LENGTH="20"  NOTNULL="false"
+               COMMENT="iOS apple-mobile-web-app-status-bar-style — default|black|black-translucent"/>
+        <FIELD NAME="categories"       TYPE="char" LENGTH="200" NOTNULL="false"
+               COMMENT="Comma-separated W3C PWA categories (education,productivity,...)"/>
+        <FIELD NAME="timecreated"      TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"     TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"      TYPE="primary" FIELDS="id"/>
+        <KEY NAME="uk_customer"  TYPE="unique"  FIELDS="customerid"/>
+      </KEYS>
+    </TABLE>
+
   </TABLES>
 </XMLDB>
