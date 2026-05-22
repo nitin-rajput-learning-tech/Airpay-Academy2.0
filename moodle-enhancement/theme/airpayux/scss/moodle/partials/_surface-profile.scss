@@ -1355,6 +1355,122 @@ body.path-admin {
 }
 
 
+/* ═══════════════════════════════════════════════════════════════════════
+   Goal A.x (2026-05-22) — Sentientia design on /course/view.php
+   ───────────────────────────────────────────────────────────────────────
+   Every course click in the LMS hits this page. Branded chrome was fine
+   but section/activity layout was bare Moodle Boost: no card boundaries,
+   plain section headings, default activity rows.
+
+   MINIMAL polish: brand the section as a card and the section heading,
+   leave activity internals untouched (Moodle's modtype-specific styling
+   handles those — adding more there risks regression).
+
+   Scope: body.path-course-view (covers all formats: topics, weeks, single).
+   ═══════════════════════════════════════════════════════════════════════ */
+body.path-course-view {
+
+    /* Course content container */
+    #region-main {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 16px 0 32px;
+    }
+
+    /* Each section card */
+    .course-content ul.section-list > li.section.course-section,
+    .course-content ul.topics > li.section.course-section,
+    .course-content ul.section-list > li.course-section,
+    .course-content ul.topics > li.course-section {
+        background: var(--ap-color-bg-surface, #ffffff);
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        border-radius: 16px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+        padding: 0;
+        margin: 0 0 16px;
+        list-style: none;
+        overflow: hidden;
+        transition: box-shadow 0.2s ease;
+    }
+    .course-content ul.section-list > li.section.course-section:hover,
+    .course-content ul.topics > li.section.course-section:hover {
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+    }
+
+    /* Section header — title bar */
+    .course-section .course-section-header,
+    .course-section .section-item > .course-section-header {
+        padding: 16px 24px 12px;
+        border-bottom: 1px solid var(--ap-color-border, #e5e7eb);
+        background: var(--ap-color-bg-surface-alt, #f8f9fc);
+        position: relative;
+    }
+    .course-section .course-section-header h3,
+    .course-section .course-section-header h2,
+    .course-section .course-section-header .sectionname {
+        font-size: 16px !important;
+        font-weight: 700;
+        color: var(--ap-color-text-primary, #1a1a2e);
+        margin: 0;
+        padding: 0;
+        border: none;
+    }
+    /* Brand accent bar at start of section header */
+    .course-section .course-section-header::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 16px;
+        bottom: 12px;
+        width: 3px;
+        background: var(--ap-color-primary, #0066A7);
+        border-radius: 0 3px 3px 0;
+    }
+
+    /* Section body — activity list area */
+    .course-section .section-item > div:not(.course-section-header),
+    .course-section .content {
+        padding: 12px 24px 18px;
+    }
+
+    /* Course title at top */
+    #region-main > .course-header,
+    .page-header-headings,
+    #region-main > h1 {
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--ap-color-border, #e5e7eb);
+        position: relative;
+    }
+
+    /* Activity rows — subtle hover only (don't override modtype internals) */
+    .course-section li.activity:hover,
+    .course-section .activity:hover {
+        background: var(--ap-color-bg-surface-alt, #f8f9fc);
+        border-radius: 8px;
+    }
+
+    /* Mobile — tighter padding */
+    @media (max-width: 768px) {
+        .course-content ul > li.course-section {
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+        .course-section .course-section-header {
+            padding: 14px 18px 10px;
+        }
+        .course-section .course-section-header::before {
+            top: 14px;
+            bottom: 10px;
+        }
+        .course-section .section-item > div:not(.course-section-header),
+        .course-section .content {
+            padding: 10px 18px 14px;
+        }
+    }
+}
+
+
 /* Dark-mode pass-through for badges page (outside body scope so html.dark-mode
    selector reaches it). */
 html.dark-mode body#page-badges-mybadges #region-main > #issued-badge-table.generalbox,
