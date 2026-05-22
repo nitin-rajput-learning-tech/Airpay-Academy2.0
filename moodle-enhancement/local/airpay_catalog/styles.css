@@ -622,16 +622,24 @@
     margin-bottom: var(--ap-space-2);
 }
 
-/* ═══ Lazy Load Fade-in ══════════════════════════════════════════════════ */
+/* ═══ Cards — always visible (Goal A audit, 2026-05-22) ════════════════════
+ * The previous version defaulted cards to opacity:0 and relied on an
+ * IntersectionObserver to add `--visible`. Two failure modes were
+ * shipped in production:
+ *   1. If a JS error broke the <script> block at the bottom of
+ *      catalog.mustache, no card ever got `--visible` → permanent
+ *      invisible grid.
+ *   2. Even with the script running, the observer only fires when a
+ *      card *enters* the viewport. Cards already at the top of the
+ *      grid that the user never scrolled past stayed invisible too.
+ *
+ * 12 cards per page = negligible render cost. The fade-in animation
+ * has been removed entirely. If we want it back later, ship it as a
+ * scroll-triggered enhancement that does NOT gate visibility.
+ */
 .airpay-catalog__grid .airpay-catalog__card {
-    opacity: 0;
-    transform: translateY(12px);
-    transition: opacity var(--ap-duration-slow) var(--ap-ease-out),
-                transform var(--ap-duration-slow) var(--ap-ease-out);
-}
-.airpay-catalog__grid .airpay-catalog__card--visible {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
 }
 
 /* ═══ Load More Button Enhanced ══════════════════════════════════════════ */

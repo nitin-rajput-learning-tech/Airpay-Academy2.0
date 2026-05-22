@@ -8,8 +8,13 @@
         sort_options  (required) — array of {url, label, is_active}
                                    pre-built in index.php
 
-    Usage:
-        {{> local_airpay_catalog/partials/sort_tabs }}
+    Usage (in a parent template):
+        partial: local_airpay_catalog/partials/sort_tabs
+
+    Bug fix 2026-05-22: the example above used to be a literal
+    `(double-brace-greater) local_airpay_catalog/partials/sort_tabs (double-brace)`
+    inline. The `(double-brace)` terminated the outer `(double-brace-bang)`
+    comment block, leaking the rest of this doc-string into the rendered HTML.
 
     A11y:
         role="group" + aria-label on wrapper

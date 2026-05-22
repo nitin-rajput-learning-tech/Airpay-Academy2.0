@@ -262,20 +262,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // ─── Lazy Load: reveal cards with staggered fade-in ───
-    if ('IntersectionObserver' in window) {
-        var observer = new IntersectionObserver(function(entries) {
-            entries.forEach(function(entry) {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('airpay-catalog__card--visible');
-                    observer.unobserve(entry.target);
-                }
-            });
-        }, { threshold: 0.1 });
-        document.querySelectorAll('.airpay-catalog__grid .airpay-catalog__card').forEach(function(card, i) {
-            card.style.transitionDelay = (i % 4) * 0.06 + 's';
-            observer.observe(card);
-        });
-    }
+    // Lazy-load fade-in removed 2026-05-22 (Goal A audit): the
+    // IntersectionObserver pattern silently hid cards that were already
+    // in viewport at page load. Cards are now visible by default via
+    // CSS (see styles.css). If we want fade-in back, add it as a
+    // scroll-triggered enhancement that does NOT gate visibility.
 });
 </script>
