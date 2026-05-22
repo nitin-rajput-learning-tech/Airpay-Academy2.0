@@ -24,14 +24,16 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-// Goal A audit (2026-05-22) — multiple SCSS additions:
+// Goal A audit (2026-05-22 + 2026-05-23) — multiple SCSS additions:
 //   - sticky-footer.scss: switch to min-height: 100vh (Bug #8)
 //   - partials/_surface-profile.scss: Sentientia branding on vanilla
-//     /user/profile.php (Goal A.x)
+//     /user/profile.php, /badges/mybadges.php, /grade/report/overview,
+//     /admin/*, /course/view.php, /grade/report/grader/ (Goal A.x)
+//   - partials/_layout-shell.scss: mobile shell-main width: 100% (Bug #13)
 // Version bump invalidates the cached compiled CSS bundle so theme
 // styles.php re-compiles SCSS on next request.
-$plugin->version   = 2026052206;
+$plugin->version   = 2026052207;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.6-beta';  // +Bug #13 mobile shell-main width
+$plugin->release   = '1.0.7-beta';  // +Goal A.x grader restyle
