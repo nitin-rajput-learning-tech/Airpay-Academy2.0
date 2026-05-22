@@ -1029,6 +1029,119 @@ body#page-badges-mybadges {
     }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   Goal A.x (2026-05-22) — Sentientia design on /grade/report/overview/
+   ───────────────────────────────────────────────────────────────────────
+   Linked from User Profile → Reports → Grades overview. Every learner +
+   every course author (33 courses for Asif Ansari!) hits this page.
+   Two sections: "Courses I am taking" (with grade column) + "Courses I am
+   teaching" (Course Author view). Currently a bare Moodle table; we
+   wrap each in a Sentientia card.
+   ═══════════════════════════════════════════════════════════════════════ */
+body#page-grade-report-overview-index {
+
+    #region-main {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 16px 0 32px;
+    }
+
+    /* Each "Courses I am taking/teaching" pair = an H2 + a .table-responsive wrapper.
+       Wrap that pair in a Sentientia card via grouping selectors. */
+    #region-main h2 {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--ap-color-text-primary, #1a1a2e);
+        margin: 24px 0 0;
+        padding: 20px 24px 12px;
+        background: var(--ap-color-bg-surface, #ffffff);
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        border-bottom: none;
+        border-radius: 16px 16px 0 0;
+        position: relative;
+    }
+    /* Brand accent bar under heading */
+    #region-main h2::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 24px;
+        width: 40px;
+        height: 2px;
+        background: var(--ap-color-primary, #0066A7);
+        border-radius: 2px;
+    }
+    /* The .table-responsive following each H2 closes the card */
+    #region-main .table-responsive {
+        background: var(--ap-color-bg-surface, #ffffff);
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        border-top: none;
+        border-radius: 0 0 16px 16px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+        padding: 12px 8px;
+        margin-bottom: 24px;
+    }
+
+    /* Tables — clean Sentientia style */
+    #region-main table.table {
+        margin: 0 !important;
+        border: none !important;
+    }
+    #region-main table.table thead th {
+        background: var(--ap-color-bg-surface-alt, #f8f9fc);
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--ap-color-text-secondary, #5a6070);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid var(--ap-color-border, #e5e7eb);
+        padding: 12px 16px;
+    }
+    #region-main table.table tbody td {
+        padding: 12px 16px;
+        font-size: 14px;
+        color: var(--ap-color-text-primary, #1a1a2e);
+        border-color: rgba(229, 231, 235, 0.5);
+        vertical-align: middle;
+    }
+    /* Course-name link inside row — brand color on hover */
+    #region-main table.table tbody td a {
+        color: var(--ap-color-text-primary, #1a1a2e);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.15s ease;
+    }
+    #region-main table.table tbody td a:hover {
+        color: var(--ap-color-primary, #0066A7);
+        text-decoration: underline;
+    }
+    /* Grade cell — tabular numbers, right-aligned for scanning */
+    #region-main #overview-grade tbody td:nth-child(2) {
+        font-variant-numeric: tabular-nums;
+        font-weight: 600;
+        text-align: right;
+        white-space: nowrap;
+    }
+    /* Striped rows — softer alternation */
+    #region-main table.table-striped tbody tr:nth-child(even) {
+        background: rgba(248, 249, 252, 0.5);
+    }
+    /* Hover row */
+    #region-main table.table-hover tbody tr:hover {
+        background: var(--ap-color-primary-light, #e8f2f9);
+        cursor: pointer;
+    }
+
+    /* Mobile — drop card padding so tables breathe */
+    @media (max-width: 768px) {
+        #region-main h2 { padding: 16px 18px 10px; }
+        #region-main .table-responsive { padding: 8px 4px; }
+        #region-main table.table thead th,
+        #region-main table.table tbody td { padding: 10px 12px; }
+    }
+}
+
+
 /* Dark-mode pass-through for badges page (outside body scope so html.dark-mode
    selector reaches it). */
 html.dark-mode body#page-badges-mybadges #region-main > #issued-badge-table.generalbox,
