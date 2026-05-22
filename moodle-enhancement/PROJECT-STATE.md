@@ -3435,3 +3435,32 @@ Phase E.12 — Analytics + export:                       ⏳ pending
 - Anthropic API key + budget approval (Tier 1 #4)
 - ElevenLabs subscription confirmation (Tier 1 #5)
 - Chrome DevTools MCP reconnect for visual verification of E.5 + later phases
+
+---
+
+## 🎯 RANKED PRIORITIES — 2026-05-22
+
+After gap-analysis review on 2026-05-22, the next-session queue is
+ranked for maximum unblock-per-hour:
+
+| # | Title | Effort | Status |
+|---|---|---|---|
+| 1 | **Crypto audit non-blocking sweep** — close NB #7-#15 (9 findings) before flipping production push flag ON | ~2h | 🟢 in progress (this session) |
+| 2 | **Production master key + push flag-on dry run** — admin runs `cli/generate_master_key.php` + sets env/CFG + regenerates VAPID keypair → flip `sentientia.pwa.push.enabled` on local first, then production | ~1h | ⏳ next |
+| 3 | **Customer 2 readiness — implement ADR-008** — `local_airpay_customer_brand` table + migration backfilling the Airpay row + cached resolver replacing the hard-wired switch in `customer::branding()` | ~3h | ⏳ next |
+| 4 | **PHPUnit coverage for crypto stack** — promote `cli/test_audit_fixes.php` + `cli/run_push_e2e.php` to `tests/*_test.php`; add RFC 8291 §5.1 worked-example vector + tenant-isolation scenarios | ~2h | ⏳ next |
+| 5 | **Mobile-app WS surface (Phase X.1)** — expose the 22 read-only WS endpoints identified in `docs/audits/MOBILE-APP-WS-SURFACE-AUDIT-2026-05-20.md`. Unlocks the Moodle Mobile app for learners | ~4h | ⏳ next |
+
+### Out-of-scope until external action lands
+- AI quiz gen (Tier 1 #4) — needs `ANTHROPIC_API_KEY`
+- Hindi content pipeline (Tier 1 #5) — needs ElevenLabs subscription
+- Path C native wrap (per ADR-005) — needs Apple Developer + Google Play enrolment
+- Phase 2 React/Next overlay (per ADR-001) — needs design system v2 sign-off
+- `live.airpay.academy` deploy — needs IT staging environment + SMTP
+
+### Definition-of-done checks for each priority
+1. Crypto sweep: all 9 NB fixes shipped + `test_audit_fixes.php` extended → all PASS
+2. Master key: documented in plugin README + tested locally with regenerated PEM + push delivers to mock receiver
+3. ADR-008 impl: migration ran cleanly + `customer::branding(1)` returns identical bundle pre/post migration + new admin UI lets you edit (or DB-only is fine for now)
+4. PHPUnit: `vendor/bin/phpunit local/sentientia_pwa/` runs green; CI hook drafted (no actual CI yet)
+5. Mobile WS: each of 22 endpoints returns 200 + correct schema via mobile-app-token; Moodle Mobile app installs + sees Airpay Academy correctly

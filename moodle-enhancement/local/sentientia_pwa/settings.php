@@ -26,9 +26,16 @@ if ($hassiteconfig) {
         $vapid_status_html .= \html_writer::tag('p',
             get_string('settings_vapid_ready', 'local_sentientia_pwa'),
             ['class' => 'alert alert-success']);
+        // Audit fix NB-14 (2026-05-22) — add an explicit note that this
+        // is the PUBLIC half of the keypair, so a casual admin doesn't
+        // mistake it for the private key (which is, separately, now
+        // envelope-encrypted at rest per audit fix #6).
         $vapid_status_html .= \html_writer::tag('p',
             '<strong>' . get_string('settings_vapid_public_label', 'local_sentientia_pwa') . ':</strong> ' .
-            '<code style="word-break:break-all">' . s($public_key) . '</code>');
+            '<code style="word-break:break-all">' . s($public_key) . '</code>' .
+            ' <small class="text-muted d-block mt-1">' .
+            get_string('settings_vapid_public_safe_note', 'local_sentientia_pwa') .
+            '</small>');
         if ($generated_at) {
             $vapid_status_html .= \html_writer::tag('p',
                 '<strong>' . get_string('settings_vapid_generated_label', 'local_sentientia_pwa') . ':</strong> ' .
@@ -101,6 +108,17 @@ if ($hassiteconfig) {
         get_string('settings_log_retention_desc',  'local_sentientia_pwa'),
         '90',
         PARAM_INT
+    ));
+
+    // Audit fix NB-11 (2026-05-22) — opt-in PII retention. Default OFF;
+    // push titles/bodies are hashed before insert into the log table.
+    // Forensics-mode deployments can flip this ON to retain readable
+    // copies (subject to the same 90-day default retention above).
+    $settings->add(new admin_setting_configcheckbox(
+        'local_sentientia_pwa/store_push_body_in_log',
+        get_string('settings_store_body_label', 'local_sentientia_pwa'),
+        get_string('settings_store_body_desc',  'local_sentientia_pwa'),
+        0  // default OFF (GDPR-safe)
     ));
 
     // Link to the log viewer.

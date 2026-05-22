@@ -67,9 +67,31 @@ class jwt_signer {
             throw new \moodle_exception('invalid_endpoint', 'local_sentientia_pwa');
         }
 
+        // Audit fix NB-7 (2026-05-22) — per-request JWT cache keyed by
+        // origin. A bulk-push (e.g. course reminder fanout to 3,500
+        // users) used to call sign_es256() once per delivery, even
+        // though the JWT body depends only on (origin, exp). We now
+        // sign once per origin, reuse for the rest of the cron run.
+        // Cache lives for the PHP request lifetime — resets between
+        // web requests / cron tasks (intentionally — no shared state).
+        // Reuse only when ≥ 10 minutes of validity remain so we never
+        // hand a near-expired JWT to the push service.
         $now = time();
+        if (isset(self::$jwt_cache[$origin])) {
+            $cached = self::$jwt_cache[$origin];
+            if (($cached['exp'] - $now) > 600) {
+                return $cached['jwt'];
+            }
+        }
+
+        // Audit fix NB-12 (2026-05-22) — add `iat` (issued-at) claim.
+        // RFC 8292 §2 doesn't require it, but Mozilla autopush has
+        // been observed rejecting JWTs with too-wide exp gaps and no
+        // iat as a pre-signed-token heuristic. Including iat documents
+        // the issuance time explicitly.
         $claim = [
             'aud' => $origin,
+            'iat' => $now,
             'exp' => $now + $expiry_seconds,
             'sub' => vapid_key_manager::get_subject(),
         ];
@@ -83,7 +105,28 @@ class jwt_signer {
         $signature = self::sign_es256($signing_input, $pem);
         $signature_b64 = vapid_key_manager::b64url_encode($signature);
 
-        return $signing_input . '.' . $signature_b64;
+        $jwt = $signing_input . '.' . $signature_b64;
+
+        // Cache for the rest of this request.
+        self::$jwt_cache[$origin] = [
+            'jwt' => $jwt,
+            'exp' => $claim['exp'],
+        ];
+        return $jwt;
+    }
+
+    /**
+     * Per-request JWT cache keyed by push-service origin. See NB-7.
+     * @var array<string, array{jwt: string, exp: int}>
+     */
+    private static array $jwt_cache = [];
+
+    /**
+     * Test-only — clear the cache between tests. Production callers
+     * never need this; cache lifetime IS the request lifetime.
+     */
+    public static function reset_jwt_cache(): void {
+        self::$jwt_cache = [];
     }
 
     /**
@@ -144,40 +187,78 @@ class jwt_signer {
      *     omitted. We left-pad with 0x00 to reach 32 bytes.
      */
     public static function der_to_jose(string $der): string {
+        // Audit fix NB-8 (2026-05-22) — buffer-overrun guards. The
+        // original parser trusted openssl_sign() to always emit a
+        // well-formed 70-72-byte P-256 DER signature. That's true
+        // today but an HSM-backed key OR a future openssl bug could
+        // hand us a malformed blob. With no length validation, the
+        // parser would read past the buffer end (PHP returns false →
+        // ord(false) = 0) and fail later with a confusing error. We
+        // now require each read to fit within the remaining buffer.
         $offset = 0;
+        $derlen = strlen($der);
+
+        $require = function (int $n) use ($derlen, &$offset): void {
+            if ($offset + $n > $derlen) {
+                throw new \moodle_exception('jwt_sign_failed',
+                    'local_sentientia_pwa', '',
+                    'DER signature truncated at offset ' . $offset
+                    . ' (need ' . $n . ' bytes, have '
+                    . ($derlen - $offset) . ')');
+            }
+        };
 
         // SEQUENCE tag
+        $require(1);
         if (ord($der[$offset]) !== 0x30) {
             throw new \moodle_exception('jwt_sign_failed', 'local_sentientia_pwa',
                 '', 'DER signature does not start with SEQUENCE tag');
         }
         $offset++;
 
-        // SEQUENCE length (assume short form: < 128 — true for P-256 since
-        // a P-256 ECDSA signature is at most 70-72 bytes total).
-        $offset++;  // skip length byte
+        // SEQUENCE length. P-256 ECDSA signatures are at most ~72 bytes
+        // so the length is always short-form (single byte < 128). Reject
+        // long-form explicitly so a corrupt-but-parseable input can't
+        // skip past the buffer.
+        $require(1);
+        $seq_len = ord($der[$offset]);
+        if (($seq_len & 0x80) !== 0) {
+            throw new \moodle_exception('jwt_sign_failed', 'local_sentientia_pwa',
+                '', 'DER SEQUENCE length uses long form — not P-256');
+        }
+        $offset++;
+        if ($offset + $seq_len !== $derlen) {
+            throw new \moodle_exception('jwt_sign_failed', 'local_sentientia_pwa',
+                '', 'DER signature has trailing bytes (length mismatch)');
+        }
 
         // INTEGER tag for r
+        $require(1);
         if (ord($der[$offset]) !== 0x02) {
             throw new \moodle_exception('jwt_sign_failed', 'local_sentientia_pwa',
                 '', 'DER r value missing INTEGER tag');
         }
         $offset++;
 
+        $require(1);
         $r_len = ord($der[$offset]);
         $offset++;
+        $require($r_len);
         $r = substr($der, $offset, $r_len);
         $offset += $r_len;
 
         // INTEGER tag for s
+        $require(1);
         if (ord($der[$offset]) !== 0x02) {
             throw new \moodle_exception('jwt_sign_failed', 'local_sentientia_pwa',
                 '', 'DER s value missing INTEGER tag');
         }
         $offset++;
 
+        $require(1);
         $s_len = ord($der[$offset]);
         $offset++;
+        $require($s_len);
         $s = substr($der, $offset, $s_len);
 
         // Strip leading 0x00 if present (DER positive-integer marker)

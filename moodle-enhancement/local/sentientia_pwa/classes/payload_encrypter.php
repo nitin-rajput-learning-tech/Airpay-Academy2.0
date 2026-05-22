@@ -99,8 +99,20 @@ class payload_encrypter {
         $nonce = self::hkdf_expand($prk, "Content-Encoding: nonce\x00", 12);
 
         // 6. Pad plaintext: append 0x02 (last-record delimiter) + zeros.
-        //    Minimum padding = just the 0x02 delimiter (1 byte).
+        //    Audit fix NB-13 (2026-05-22) — bucket the padded length to
+        //    a 256-byte boundary so a network observer can't read off
+        //    the exact plaintext size. RFC 8291 §3 explicitly
+        //    recommends padding: "applications SHOULD pad messages to
+        //    a common size to avoid leaking message length". The
+        //    receiver strips trailing zeros via the existing
+        //    preg_replace('/\x02\x00*$/', ...) — so the bucketed
+        //    padding is transparent to mock_receiver + real browsers.
         $plaintext_padded = $plaintext . "\x02";
+        $target_size = self::pad_target_size(strlen($plaintext_padded));
+        if (strlen($plaintext_padded) < $target_size) {
+            $plaintext_padded .= str_repeat("\x00",
+                $target_size - strlen($plaintext_padded));
+        }
 
         // 7. AES-128-GCM encryption — PHP returns ciphertext sans tag, tag fills $tag.
         $tag = '';
@@ -140,22 +152,64 @@ class payload_encrypter {
     /**
      * HKDF-Expand per RFC 5869 §2.3.
      *
-     * For output_len <= 32 (single block of SHA-256), we just compute T(1).
-     * For larger outputs (we don't need them) we'd loop T(N) = HMAC(prk, T(N-1) || info || N).
+     * Audit fix NB-10 (2026-05-22) — promoted from "≤ 32-byte only" to
+     * the full RFC 5869 §2.3 loop. Web Push itself never needs more
+     * than 32 bytes per call, but future related features (encrypted
+     * push receipts, expanded record types) might, and the spec-
+     * compliant loop is cheap to implement.
      *
-     * @param string $prk        Pseudorandom key (32 bytes — output of HMAC stage).
-     * @param string $info       Context-and-application-specific information.
-     * @param int    $output_len Desired output length in bytes (max 32 in our use cases).
+     *     T(0) = ""
+     *     T(N) = HMAC-SHA-256(PRK, T(N-1) || info || N)   for N = 1..ceil(L/32)
+     *     OKM  = first L bytes of T(1) || T(2) || ... || T(N)
+     *
+     * Max output: 255 * 32 = 8160 bytes (RFC 5869 §2.3 limit).
+     *
+     * @param string $prk        Pseudorandom key (32 bytes — HMAC PRK).
+     * @param string $info       Context-and-application-specific info.
+     * @param int    $output_len Desired output length in bytes (1..8160).
      * @return string $output_len bytes.
      */
     public static function hkdf_expand(string $prk, string $info, int $output_len): string {
-        if ($output_len <= 0 || $output_len > 32) {
+        if ($output_len <= 0 || $output_len > (255 * 32)) {
             throw new \moodle_exception('hkdf_bad_length', 'local_sentientia_pwa',
-                '', 'Web Push only needs ≤ 32-byte HKDF outputs; got ' . $output_len);
+                '', 'HKDF output length must be 1..' . (255 * 32)
+                . '; got ' . $output_len);
         }
-        // T(1) = HMAC-SHA-256(PRK, info || 0x01)
-        $t = self::hmac_sha256($prk, $info . "\x01");
-        return substr($t, 0, $output_len);
+        $n = (int) ceil($output_len / 32);
+        $okm = '';
+        $previous = '';
+        for ($i = 1; $i <= $n; $i++) {
+            $previous = self::hmac_sha256($prk, $previous . $info . chr($i));
+            $okm .= $previous;
+        }
+        return substr($okm, 0, $output_len);
+    }
+
+    /**
+     * Audit fix NB-13 (2026-05-22) — pad-target bucketing.
+     *
+     * Buckets the (already 0x02-delimited) padded plaintext to the
+     * next 256-byte boundary, capped at the record-size minus the
+     * AEAD tag (16 bytes) and the record header overhead the caller
+     * already accounts for. The cap (RECORD_SIZE - 16) means we
+     * never overflow into the next "record" — Web Push is single-
+     * record (rs is set high enough to fit), but the cap is the
+     * mathematical max.
+     *
+     * Why 256-byte buckets and not e.g. 1024:
+     *   - 256 is the smallest power-of-two boundary that hides the
+     *     difference between a 12-char title ("Order shipped") and a
+     *     180-char body ("Your KYC course expires …").
+     *   - Larger buckets waste bandwidth (per-push cost on FCM/APNs
+     *     is per-message, not per-byte, but mobile data isn't free).
+     *
+     * @param int $current_size Length of the 0x02-delimited plaintext.
+     * @return int Target padded length.
+     */
+    private static function pad_target_size(int $current_size): int {
+        $bucket = ((int) ceil($current_size / 256)) * 256;
+        $max = self::RECORD_SIZE - 16;  // -16 for the AEAD tag
+        return min($bucket, $max);
     }
 
     /**

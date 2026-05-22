@@ -167,6 +167,21 @@ cli_writeln('');
 //   2. curlsecurityallowedport — defaults to 80, 443 (XAMPP uses 8080)
 // Detect our wwwroot port and add it to allowed list. Restore everything
 // after the test.
+//
+// Audit fix NB-9 (2026-05-22) — wrap manipulation in try/finally + a
+// shutdown handler. The original code restored only on the happy path;
+// if the test crashed mid-run (timeout, fatal error, Ctrl-C) the
+// production-wide SSRF protection stayed disabled until the next
+// config write. Now: try/finally guarantees restoration on any normal
+// exit + register_shutdown_function covers fatal-error exits.
+// Defence in depth: refuse to run on the production host at all.
+if (stripos((string) $CFG->wwwroot, 'airpay.academy') !== false) {
+    cli_error("run_push_e2e.php refuses to run on a production host.\n"
+        . "  This script manipulates global SSRF protection settings;\n"
+        . "  a mid-run crash could leave them disabled. Run on local\n"
+        . "  dev / staging only.\n  wwwroot: " . $CFG->wwwroot, 2);
+}
+
 $prior_blocked = get_config(null, 'curlsecurityblockedhosts');
 $prior_allowed_port = get_config(null, 'curlsecurityallowedport');
 
@@ -175,10 +190,14 @@ $new_allowed = $prior_allowed_port === false || $prior_allowed_port === null
     ? (string) $wwwroot_port
     : $prior_allowed_port . "\n" . $wwwroot_port;
 
-set_config('curlsecurityblockedhosts', '');
-set_config('curlsecurityallowedport', $new_allowed);
-$CFG->curlsecurityblockedhosts = '';
-$CFG->curlsecurityallowedport  = $new_allowed;
+$restore_curl_settings = function () use ($prior_blocked, $prior_allowed_port) {
+    set_config('curlsecurityblockedhosts', $prior_blocked);
+    set_config('curlsecurityallowedport', $prior_allowed_port);
+    global $CFG;
+    $CFG->curlsecurityblockedhosts = $prior_blocked;
+    $CFG->curlsecurityallowedport  = $prior_allowed_port;
+};
+register_shutdown_function($restore_curl_settings);
 
 cli_writeln('Step 3: Call push_sender::send');
 cli_writeln('  curlsecurityblockedhosts: cleared');
@@ -188,14 +207,19 @@ $payload_title = 'E2E test ' . date('H:i:s');
 $payload_body  = 'If the receiver sees this exact string, the chain works.';
 $payload_url   = $CFG->wwwroot . '/my/dashboard.php';
 
-$delivered = \local_sentientia_pwa\push_sender::send(
-    $userid, $payload_title, $payload_body, $payload_url, 'e2e-test');
+$delivered = 0;
+try {
+    set_config('curlsecurityblockedhosts', '');
+    set_config('curlsecurityallowedport', $new_allowed);
+    $CFG->curlsecurityblockedhosts = '';
+    $CFG->curlsecurityallowedport  = $new_allowed;
 
-// Restore curl security policy immediately.
-set_config('curlsecurityblockedhosts', $prior_blocked);
-set_config('curlsecurityallowedport', $prior_allowed_port);
-$CFG->curlsecurityblockedhosts = $prior_blocked;
-$CFG->curlsecurityallowedport  = $prior_allowed_port;
+    $delivered = \local_sentientia_pwa\push_sender::send(
+        $userid, $payload_title, $payload_body, $payload_url, 'e2e-test');
+} finally {
+    // ALWAYS restore — covers normal exit, return, exceptions.
+    $restore_curl_settings();
+}
 
 cli_writeln('  push_sender::send() returned: ' . $delivered);
 $assert('push_sender delivered at least 1 push', $delivered > 0);

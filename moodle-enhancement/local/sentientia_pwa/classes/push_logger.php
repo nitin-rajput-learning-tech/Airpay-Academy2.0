@@ -58,12 +58,32 @@ class push_logger {
         global $DB;
 
         try {
+            // Audit fix NB-11 (2026-05-22) — opt-in PII retention.
+            // Reminder bodies often include employee names (e.g. "Hi
+            // Anjali, your KYC Compliance course expires Monday"); the
+            // log table previously kept these for 90 days by default.
+            // Now: only the SHA-256 hash of (title + body) lands in the
+            // DB unless the admin explicitly opts in to clear-text
+            // retention via the `store_push_body_in_log` site config.
+            // Forensics-mode deployments still have the option, but the
+            // default is GDPR-safe.
+            $store_body = (bool) get_config('local_sentientia_pwa',
+                'store_push_body_in_log');
+
             $row = new \stdClass();
             $row->userid         = $userid;
             $row->sub_id         = $sub_id;
             $row->endpoint_host  = self::extract_host($endpoint);
-            $row->title          = mb_substr($title, 0, 200);
-            $row->body_truncated = mb_substr($body, 0, self::BODY_TRUNCATE);
+            if ($store_body) {
+                $row->title          = mb_substr($title, 0, 200);
+                $row->body_truncated = mb_substr($body, 0, self::BODY_TRUNCATE);
+            } else {
+                // Hash so admins can still correlate by content shape
+                // (same hash = same reminder template fired N times).
+                $row->title          = '[hash:'
+                    . substr(hash('sha256', $title . "\x00" . $body), 0, 16) . ']';
+                $row->body_truncated = null;
+            }
             $row->url            = mb_substr($url, 0, 500);
             $row->tag            = mb_substr($tag, 0, 100);
             $row->http_code      = $http_code;

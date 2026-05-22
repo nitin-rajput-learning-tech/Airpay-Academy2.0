@@ -149,10 +149,17 @@ class push_sender {
                     subscription_manager::record_failure((int) $sub->id);
                 }
             } catch (\Throwable $e) {
+                // Audit fix NB-15 (2026-05-22) — redact endpoint paths
+                // before logging. Moodle's curl wrapper sometimes
+                // includes the URL in exception messages; the endpoint
+                // path carries a per-user registration token that's
+                // functionally equivalent to a bearer secret.
                 debugging(sprintf(
-                    '[sentientia_pwa] push delivery threw for sub %d: %s',
+                    '[sentientia_pwa] push delivery threw for sub %d (%s): %s',
                     (int) $sub->id,
-                    $e->getMessage()
+                    self::redact_endpoint((string) $sub->endpoint),
+                    self::scrub_endpoint_from_message($e->getMessage(),
+                        (string) $sub->endpoint)
                 ), DEBUG_DEVELOPER);
                 subscription_manager::record_failure((int) $sub->id);
             }
@@ -259,11 +266,57 @@ class push_sender {
             return $outcome;
 
         } catch (\Throwable $e) {
+            // Audit fix NB-15 — scrub endpoint URL from the error_detail
+            // before persisting it to the log table. Otherwise a curl
+            // exception that echoes back the URL leaks the per-user
+            // registration token into the DB.
             push_logger::log((int) $sub->userid, (int) $sub->id, $sub->endpoint,
                 $title, $body, $url, $tag,
-                null, push_logger::RESULT_FAILED, $e->getMessage());
+                null, push_logger::RESULT_FAILED,
+                self::scrub_endpoint_from_message($e->getMessage(),
+                    (string) $sub->endpoint));
             throw $e;  // caller catches + records failure on subscription
         }
+    }
+
+    /**
+     * Audit fix NB-15 (2026-05-22) — redact a subscription endpoint URL
+     * for log output. The host is kept (useful for ops triage) but the
+     * path (which carries the per-user registration token) is replaced
+     * by a length marker.
+     *
+     * Sample:
+     *   https://fcm.googleapis.com/fcm/send/eF_zT4Ck-Q:APA91bF...
+     * Becomes:
+     *   https://fcm.googleapis.com/[redacted 156-char path]
+     *
+     * Treat endpoint paths as bearer-token-grade secrets. See
+     * `docs/audits/B25-CRYPTO-AUDIT-2026-05-21.md` finding NB-15.
+     */
+    public static function redact_endpoint(string $endpoint): string {
+        $parsed = parse_url($endpoint);
+        if (!is_array($parsed)) {
+            return '[unparseable endpoint]';
+        }
+        $path = (string) ($parsed['path'] ?? '');
+        return ($parsed['scheme'] ?? '?') . '://'
+            . ($parsed['host'] ?? '?')
+            . '/[redacted ' . strlen($path) . '-char path]';
+    }
+
+    /**
+     * Audit fix NB-15 — strip an endpoint URL substring from an error
+     * message before logging it. Some curl error messages echo back
+     * the request URL — we don't want that URL persisted in the DB
+     * or written to the Apache error log.
+     */
+    public static function scrub_endpoint_from_message(string $message,
+                                                        string $endpoint): string {
+        if ($endpoint === '' || stripos($message, $endpoint) === false) {
+            return $message;
+        }
+        return str_ireplace($endpoint, self::redact_endpoint($endpoint),
+            $message);
     }
 
     /**

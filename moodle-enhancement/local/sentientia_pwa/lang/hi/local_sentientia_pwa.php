@@ -53,6 +53,10 @@ $string['settings_vapid_cli_instruction'] = 'सर्वर पर एक ब�
 $string['settings_vapid_public_label']    = 'पब्लिक की (base64url)';
 $string['settings_vapid_generated_label'] = 'जनरेट किया गया';
 $string['settings_active_subs_label']     = 'सक्रिय सब्सक्रिप्शन';
+$string['settings_vapid_public_safe_note'] = 'यह कीपेयर का सार्वजनिक हिस्सा है — हर subscribe करने वाले ब्राउज़र को बांटा जाता है और साझा करना सुरक्षित है। निजी हिस्सा at-rest envelope-encrypted है और एडमिन UI में कभी नहीं दिखाया जाता।';
+
+$string['settings_store_body_label']      = 'पुश शीर्षक + बॉडी को डिलीवरी लॉग में संग्रहीत करें';
+$string['settings_store_body_desc']       = 'डिफ़ॉल्ट बंद — पुश शीर्षक और बॉडी के पहले 200 अक्षर insert से पहले SHA-256 hash किए जाते हैं, ताकि लॉग को डिफ़ॉल्ट 90 दिन तक GDPR exposure के बिना सुरक्षित रखा जा सके। उन forensics-mode डिप्लॉयमेंट के लिए चालू करें जिन्हें downstream incidents के साथ सटीक पुश सामग्री correlate करनी हो। मौजूदा पंक्तियाँ फिर से नहीं लिखी जातीं।';
 
 $string['settings_vapid_subject_label']   = 'VAPID सब्जेक्ट';
 $string['settings_vapid_subject_desc']    = 'पुश प्रदाताओं (Google FCM, Mozilla autopush) को JWT में भेजा गया कॉन्टैक्ट आइडेंटिफ़ायर। mailto: या https: URL होना चाहिए। पुश वेंडर इसका इस्तेमाल आपसे एब्यूज़ शिकायतों के बारे में संपर्क करने के लिए करते हैं।';

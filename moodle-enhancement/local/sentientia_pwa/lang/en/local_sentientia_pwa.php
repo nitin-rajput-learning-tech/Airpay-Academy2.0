@@ -53,6 +53,10 @@ $string['settings_vapid_cli_instruction'] = 'Run the keygen CLI once on the serv
 $string['settings_vapid_public_label']    = 'Public key (base64url)';
 $string['settings_vapid_generated_label'] = 'Generated at';
 $string['settings_active_subs_label']     = 'Active subscriptions';
+$string['settings_vapid_public_safe_note'] = 'This is the PUBLIC half of the keypair — it is distributed to every browser that subscribes and is safe to share. The PRIVATE half is envelope-encrypted at rest and never displayed in admin UI.';
+
+$string['settings_store_body_label']      = 'Store push title + body in the delivery log';
+$string['settings_store_body_desc']       = 'Default OFF — push titles and the first 200 chars of body are SHA-256 hashed before insert, so the log can be safely retained for the default 90 days without GDPR exposure. Turn ON for forensics-mode deployments that need to correlate exact push content with downstream incidents. Existing rows are NOT rewritten.';
 
 $string['settings_vapid_subject_label']   = 'VAPID subject';
 $string['settings_vapid_subject_desc']    = 'The contact identifier sent in the JWT to push providers (Google FCM, Mozilla autopush). Must be a mailto: or https: URL. Push vendors use this to contact you about abuse complaints.';
