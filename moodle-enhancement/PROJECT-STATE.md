@@ -3735,3 +3735,81 @@ git-pull + cache-purge:
     `cli/upgrade.php --non-interactive` after pull.
   - All other changes are autoloader-friendly (PHP classes, mustache
     templates, scss); standard `purge_caches.php` after pull.
+
+
+### Session 2026-05-23 — Goal A.x grader restyle + PHPUnit gate adoption
+
+Three discrete shipments today, continuing the Goal A.x pattern of
+ship-verify-commit-push at 100% confidence.
+
+**Shipment 1 — Per-course gradebook restyle (Goal A.x)**
+  - Commit `b6f177b2f` — `feat(theme): Sentientia design on per-course gradebook`
+  - `/grade/report/grader/index.php?id=N` was the last vanilla Moodle
+    Boost surface Course Authors land on (Asif Ansari teaches 33
+    courses → 33 clicks per audit cycle into this page).
+  - Scoped under `body.path-grade-report-grader` (catches grader index
+    + nested grader pages, disjoint from existing
+    `body#page-grade-report-overview-index` scoping — overview
+    restyle verified non-regressed via DOM inspection).
+  - +213 SCSS lines: 16px-radius card chrome, action bar with brand-
+    pill inputs, branded student-initials avatars (32px primary-color
+    circle), uppercase letter-spaced column headers (matches every
+    other Sentientia table), tabular-nums grade cells, pass/fail pill
+    badges (green tint / red tint), branded average row, sticky-
+    footer with card styling, mobile breakpoints at 1024px + 768px.
+  - Theme version 2026052206 → 2026052207.
+  - Visual evidence: `docs/visual-evidence/2026-05-23/grader-*.png`
+    (before, after, after-table viewport).
+
+**Shipment 2 — Mobile @ 590px verification (Goal A.x follow-up)**
+  - Commit `a17b19e5e` — `docs(visual): mobile @ 590px verification`
+  - Grader @ 590px: wide table correctly engages horizontal scroll
+    inside `.gradeparent`; avatars, headers, grade cells legible.
+  - /course/view.php @ 590px: Sentientia hero banner spans full
+    width, action icons grouped, description flows correctly.
+  - /admin/* @ 590px deferred — needs Site Admin re-login (Asif
+    Ansari is Course Author). Tracked as task #177.
+
+**Shipment 3 — PHPUnit gate adoption (ADR-009 invariants verified)**
+  - Commit `8c4305093` — `test(theme): wire role_detector + ws_contract`
+  - Re-ran `php public/admin/tool/phpunit/cli/init.php` (full test-DB
+    install for Moodle 5.1.3+, ~5 min). Previous init was for an
+    older version; environment was stale.
+  - Both ADR-009 suites now PASS:
+      `role_detector_test` — 8 tests, 17 assertions, 4 skipped
+        (skips are BizLMS-schema-specific paths; all run on prod env)
+      `ws_contract_test` — 1 test, 2 assertions (walks every
+        `data-region="airpay-datatable"` consumer; passes today)
+  - `tests/README.md` runbook added — covers init, run-locally, CI
+    wiring (Jenkins / GH Actions block-on-non-zero pattern).
+  - The bug-class extinction patterns from this audit
+    (`role_detector` + `ws_contract_scanner`) are now structurally
+    enforced, not just documented.
+
+**Insight (carry forward):** The PHPUnit init re-run was the single
+biggest piece of value-revealing work today. The tests had been
+written (commit `bf5412ed2`) but never actually executed against the
+Moodle 5.1.3+ test environment. Lesson for future ADRs: "the test
+file exists" ≠ "the invariant is verified." Always end the ADR
+session by running the suite end-to-end and including the green
+output in the commit body.
+
+### Updated next-session backlog (after 2026-05-23)
+
+  - `/user/edit.php` restyle — profile-editing form, every persona
+    touches this. Was started in this session but pivoted to PHPUnit
+    adoption. Heavy form (`mform`-based), needs care.
+  - `/course/edit.php` restyle — still needs Site Admin login + form-
+    heavy. Course Authors don't have `moodle/course:update` cap.
+  - Mobile @ 590px verification of /admin/* — Site Admin re-login.
+  - Factor `ws_contract_scanner::find_files()` + `load_services_file()`
+    into a shared utility class.
+  - CI integration: wire the 2 PHPUnit suites into the Airpay-Academy
+    GitHub Actions workflow with block-on-fail. The `tests/README.md`
+    has the exact command.
+  - Calendar `/calendar/view.php` polish (day-header uppercase, today
+    highlight) — minor; deferred.
+  - Goal B (Playwright E2E) — still blocked.
+  - Goal C (user guides) — depends on Goal A.x + B.
+
+**Theme version after this session:** 2026052207 (1.0.7-beta).
