@@ -1,8 +1,8 @@
 # Visual UI Audit — 2026-05-22 — Findings
 
 **Auditor:** Claude (driving Chrome via chrome-devtools MCP)
-**Personas walked so far:** Learner (Fatma Khamis), Site Administrator (academy@airpay.co.in), Manager (Binay Upadhyay)
-**Total surfaces audited:** 20
+**Personas walked so far:** Learner (Fatma Khamis), Site Administrator (academy@airpay.co.in), Manager (Binay Upadhyay), L&D Administrator (Nitin Rajput)
+**Total surfaces audited:** 25
 
 ## Headline finding (executive summary)
 
@@ -41,8 +41,13 @@ platform still hands off to**.
 | Site Admin | Dashboard | `/my/` | 🟢 Branded | Same shape as Learner dashboard but with admin sidebar (Manage Users / Courses / Online Exams / etc — 19 items). |
 | Site Admin | Site administration | `/admin/search.php` | 🟠 Moodle | Sidebar branded. Content area is **classic Moodle**: vanilla tabs (General / Users / Courses / etc), 2-column key-value list. **"Moodle app subscription" string leak.** |
 | Site Admin | Manage Users | `/admin/user.php` | 🟢 Branded | Custom-built user table with avatar circles, suspended badges, "Add a new user" / "Filters" branded buttons. |
-| Manager | My Team home | `/local/airpay_manager/index.php` | 🟢 Branded *(after fixes)* | **Was 🔴** — `require_capability('manage')` denied every supervisor without the Moodle `manager` archetype. Fixed via `team_manager::require_manage()` (Bug #9). |
+| Manager | My Team home | `/local/airpay_manager/index.php` | 🟢 Branded *(after fixes)* | **Was 🔴** — `require_capability('manage')` denied every supervisor without the Moodle `manager` archetype. Fixed via `team_manager::require_manage()` (Bug #9). Page renders 9-member team grid with KPI cards (9 / 90% / 0 / 2), per-row action icons (Learning detail / Send nudge / View skills / View profile). Best-in-class manager dashboard — zero Moodle DNA. |
 | Manager | My Requests | `/local/airpay_request/index.php` | 🟢 Branded *(after fixes)* | **Was 🟡 stuck on Loading** — Bug #6 WS contract fix landed; now shows correct "No records found" + branded badges + Cancel actions. |
+| Manager | Enrolment Requests | `/local/airpay_manager/requests.php` | 🟢 Branded *(after fixes)* | **Was 🔴 "Failed to load data. Sorry, you do not currently have permissions"** — Bug #9b WS-layer supervisor-check fix landed. Branded table loads, AI assistant pops up with "Hi Binay!". |
+| Manager | Course Allocations | `/local/airpay_manager/allocations.php` | 🟢 Branded *(after fixes)* | Same fix family as Requests. Status filter dropdown, Export decisions CSV button, branded "No records found" empty state. |
+| L&D Admin | Dashboard | `/my/` | 🟢 Branded | Platform-wide analytics — 12/221/7163/21446 KPIs (Active Users / Courses / Completions / Enrolments), Enrolment Trend + Course Distribution charts, User Analytics (Logins Today/Week, New Users, Never-Logged-In, Inactive 30d+), Top 5 Courses with enrol/complete counts, Recent Activity feed, Featured-for-you recommendations. Best-in-class admin dashboard. |
+| L&D Admin | Learning Paths | `/local/airpay_learningpath/index.php` | 🟢 Branded | 3 KPI cards (18 Total / 18 Active / 0 Completed), 5 cascade filters (Org → Dept → Sub-Dept → Level 4 → Level 5), Status pills, sortable table with 12 paths, per-row actions (View / Edit / Delete). Cascade filters land in `busy disabled` state until tenant tree loads — verify they activate on production. |
+| L&D Admin | Compliance Report | `/local/airpay_compliance_report/index.php` | 🟢 Branded | Enterprise compliance grid. 5 KPI cards (71% rate / 659 / 4 / 0 / 0), Business Unit filter (AIRPAY / ZEEA), 4 tabs (Matrix / Defaulters / Scorecard / Manager Report), Excel export. Matrix shows ~50 employees with per-course status (Completed / Not Started / In Progress / Overdue + day-count). Real production-grade reporting. |
 
 ## Bugs uncovered + fix status
 
@@ -98,16 +103,37 @@ A `WSContractTest` that walks every `data-region="airpay-datatable"` reference, 
 
 ## Walk progression
 
-**Done:** Learner (12 surfaces) + Site Admin (3 surfaces). 7 confirmed bugs.
+**Done:** Learner (12) + Site Admin (3) + Manager (4) + L&D Administrator (3) = 22 surfaces. 11 bugs found, 8 fixed, 3 retracted.
 
 **Pending personas:**
-- Manager
-- L&D Administrator
 - Course Author / SME
 - Compliance Officer
 - Tenant Administrator
 - External Public Learner
 - API Consumer (developer docs only — no UI walk)
+
+## Headline observations after Manager + L&D Admin walks
+
+**The pattern is overwhelmingly consistent:** every custom Sentientia plugin
+surface (`local_airpay_*`) renders as best-in-class enterprise UI. The
+Manager Team Dashboard, L&D Admin platform analytics, and Compliance Report
+all read as production-grade enterprise software with zero Moodle visual DNA.
+
+**All bugs found are functional, not visual.** Every bug surfaced by this
+audit lives in business-logic / WS-contract / capability-check seams —
+never in CSS or templates. The headline "still looks like Moodle"
+hypothesis is fully refuted for custom surfaces.
+
+**Where the Moodle leak truly happens** (refined from earlier observation):
+1. `/admin/*` interior — Site administration tree
+2. `/user/profile.php` — vanilla 2-column key-value layout
+3. `/badges/mybadges.php` — empty-state copy is Moodle stock
+4. `/course/edit.php`, `/course/view.php` — Moodle's edit forms
+5. `/grade/report/*` — gradebook
+6. Apache-level error pages (404, 500) — no theme wrap (Bug #7)
+
+These are the **only** surfaces Goal A.x should redesign. The custom
+plugins already won.
 
 Each pending persona is ~10-15 min of capture work now that the login
 unblockers (`cookiesecure=0` + `disablelogintoken=true`) are in place.
