@@ -1142,6 +1142,219 @@ body#page-grade-report-overview-index {
 }
 
 
+/* ═══════════════════════════════════════════════════════════════════════
+   Goal A.x (2026-05-22) — Sentientia design on /admin/* interior
+   ───────────────────────────────────────────────────────────────────────
+   Site Administrators land here from the search bar in topbar or by URL.
+   The branded chrome (sidebar / header / footer) was correct but the
+   interior was bare Moodle Boost: vanilla h4 col-sm-3 grid of link lists,
+   tabs without padding, form inputs without our brand styling.
+
+   Body classes: `path-admin admin pagelayout-admin`. Scoping ALL rules
+   under body.path-admin keeps everything else untouched.
+   ═══════════════════════════════════════════════════════════════════════ */
+body.path-admin {
+
+    /* Container */
+    #region-main {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 16px 0 32px;
+    }
+
+    /* Tab nav (when present) — pill tabs with brand active state */
+    #region-main .nav-tabs {
+        border-bottom: 1px solid var(--ap-color-border, #e5e7eb);
+        gap: 4px;
+        margin-bottom: 16px;
+    }
+    #region-main .nav-tabs .nav-link {
+        border: none !important;
+        background: transparent !important;
+        color: var(--ap-color-text-secondary, #5a6070) !important;
+        font-size: 14px;
+        font-weight: 500;
+        padding: 10px 16px;
+        border-radius: 8px 8px 0 0;
+        margin: 0;
+        transition: all 0.15s ease;
+    }
+    #region-main .nav-tabs .nav-link:hover {
+        background: var(--ap-color-bg-surface-alt, #f8f9fc) !important;
+        color: var(--ap-color-text-primary, #1a1a2e) !important;
+    }
+    #region-main .nav-tabs .nav-link.active {
+        color: var(--ap-color-primary, #0066A7) !important;
+        background: var(--ap-color-bg-surface, #ffffff) !important;
+        border-bottom: 2px solid var(--ap-color-primary, #0066A7) !important;
+        font-weight: 600;
+    }
+
+    /* The tab-content rows organised as a 4-col grid of category cards */
+    #region-main .tab-pane.active .row > [class*="col-"] {
+        margin-bottom: 20px;
+    }
+
+    /* Each category card (col-sm-3 wrapping a section of admin links) */
+    #region-main .tab-pane.active .col-sm-3,
+    #region-main .tab-pane.active .col-sm-6 {
+        position: relative;
+    }
+    #region-main .tab-pane.active .col-sm-3 > h4,
+    #region-main .tab-pane.active .col-sm-6 > h4 {
+        /* Tighten the title styling — uppercase letter-spaced "AI", "Badges", etc. */
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: var(--ap-color-text-secondary, #5a6070);
+        margin: 0 0 12px;
+        padding: 16px 18px 10px;
+        background: var(--ap-color-bg-surface, #ffffff);
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        border-bottom: none;
+        border-radius: 12px 12px 0 0;
+        position: relative;
+    }
+    #region-main .tab-pane.active .col-sm-3 > h4::after,
+    #region-main .tab-pane.active .col-sm-6 > h4::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 18px;
+        width: 28px;
+        height: 2px;
+        background: var(--ap-color-primary, #0066A7);
+        border-radius: 2px;
+    }
+
+    /* The UL inside each category card */
+    #region-main .tab-pane.active .col-sm-3 > ul,
+    #region-main .tab-pane.active .col-sm-6 > ul,
+    #region-main .tab-pane.active .col-sm-3 > h4 + div ul,
+    #region-main .tab-pane.active .col-sm-6 > h4 + div ul {
+        list-style: none;
+        padding: 4px 14px 14px;
+        margin: 0;
+        background: var(--ap-color-bg-surface, #ffffff);
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        border-top: none;
+        border-radius: 0 0 12px 12px;
+        min-height: 120px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+    }
+    #region-main .tab-pane.active .col-sm-3 ul li,
+    #region-main .tab-pane.active .col-sm-6 ul li {
+        padding: 4px 0;
+    }
+    #region-main .tab-pane.active .col-sm-3 ul a,
+    #region-main .tab-pane.active .col-sm-6 ul a {
+        color: var(--ap-color-text-primary, #1a1a2e);
+        text-decoration: none;
+        font-size: 13.5px;
+        font-weight: 500;
+        display: block;
+        padding: 4px 8px;
+        margin: 0 -8px;
+        border-radius: 6px;
+        transition: all 0.15s ease;
+    }
+    #region-main .tab-pane.active .col-sm-3 ul a:hover,
+    #region-main .tab-pane.active .col-sm-6 ul a:hover {
+        background: var(--ap-color-primary-light, #e8f2f9);
+        color: var(--ap-color-primary, #0066A7);
+        padding-left: 12px;
+    }
+
+    /* Admin settings form pages (admin/settings.php style) — form rows */
+    #region-main .form-group,
+    #region-main .fitem,
+    #region-main .form-item {
+        margin-bottom: 16px;
+    }
+    #region-main .form-control,
+    #region-main input[type="text"],
+    #region-main input[type="email"],
+    #region-main input[type="url"],
+    #region-main input[type="number"],
+    #region-main textarea,
+    #region-main select {
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 14px;
+        background: var(--ap-color-bg-surface, #ffffff);
+        color: var(--ap-color-text-primary, #1a1a2e);
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    #region-main .form-control:focus,
+    #region-main input:focus,
+    #region-main textarea:focus,
+    #region-main select:focus {
+        border-color: var(--ap-color-primary, #0066A7);
+        box-shadow: 0 0 0 3px rgba(0, 102, 167, 0.1);
+        outline: none;
+    }
+
+    /* Admin "Settings" headings inside admin pages */
+    #region-main h2,
+    #region-main h3 {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--ap-color-text-primary, #1a1a2e);
+        margin: 24px 0 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--ap-color-border, #e5e7eb);
+        position: relative;
+    }
+    #region-main h2::after,
+    #region-main h3::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        width: 36px;
+        height: 2px;
+        background: var(--ap-color-primary, #0066A7);
+        border-radius: 2px;
+    }
+
+    /* Primary submit buttons on admin forms — brand color */
+    #region-main button.btn-primary,
+    #region-main input[type="submit"].btn-primary,
+    #region-main .btn-primary {
+        background: var(--ap-color-primary, #0066A7);
+        border-color: var(--ap-color-primary, #0066A7);
+        color: #fff;
+        font-weight: 600;
+        padding: 8px 18px;
+        border-radius: 10px;
+        transition: all 0.15s ease;
+    }
+    #region-main button.btn-primary:hover,
+    #region-main input[type="submit"].btn-primary:hover,
+    #region-main .btn-primary:hover {
+        background: var(--ap-color-primary-dark, #004d80);
+        border-color: var(--ap-color-primary-dark, #004d80);
+        transform: translateY(-1px);
+    }
+
+    /* Mobile — collapse to single column + tighten */
+    @media (max-width: 768px) {
+        #region-main .tab-pane.active .col-sm-3,
+        #region-main .tab-pane.active .col-sm-6 {
+            width: 100%;
+            max-width: 100%;
+            flex: 0 0 100%;
+        }
+        #region-main .nav-tabs .nav-link {
+            padding: 8px 12px;
+            font-size: 13px;
+        }
+    }
+}
+
+
 /* Dark-mode pass-through for badges page (outside body scope so html.dark-mode
    selector reaches it). */
 html.dark-mode body#page-badges-mybadges #region-main > #issued-badge-table.generalbox,
