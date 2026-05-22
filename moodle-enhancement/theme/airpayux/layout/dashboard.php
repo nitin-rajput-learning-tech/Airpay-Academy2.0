@@ -119,64 +119,24 @@ if (isloggedin() && !isguestuser()) {
     $airpay_dashboard['firstname'] = $USER->firstname ?? 'Learner';
 
     // --- Role detection (4 tiers) ---
+    // Single source of truth: \theme_airpayux\role_detector. The same
+    // helper is used by classes/sidebar_navigation.php, so the dashboard
+    // view and the sidebar nav can never disagree again (the root cause
+    // of Bug #11, 2026-05-22 Goal A audit, where Joseph Mandapati saw
+    // the L&D Admin dashboard wrapped in a Learner-shaped sidebar).
+    //
     // Siteadmin: is_siteadmin() — sees everything including System Health
-    // L&D Admin: has local/courses:manage but is NOT siteadmin — sees admin dashboard without System Health
-    // Manager: has moodle/site:viewreports but NOT local/courses:manage — sees team + learner
-    // Learner: everyone else — sees learner dashboard only
+    // L&D Admin: cap OR BizLMS administrator role at category context
+    // Manager: cap OR has direct reports via open_supervisorid
+    // Learner: everyone else
+    $roles = \theme_airpayux\role_detector::detect();
     $systemcontext = context_system::instance();
-    $issiteadmin = is_siteadmin();
-
-    // ═══ BizLMS Role Switch Detection ═══
-    // If user has switched to a lower role (e.g., admin → employee), respect it.
-    // BizLMS stores active role in $USER->useraccess['currentroleinfo'] or $SESSION.
-    $switched_to_employee = false;
-    $employee_role_id = (int)$DB->get_field('role', 'id', ['shortname' => 'employee']);
-
-    // Check our session-based switch (from /my/switchrole.php).
-    if (!empty($SESSION->airpay_switchrole->roleid)) {
-        $switched_roleid = (int)$SESSION->airpay_switchrole->roleid;
-        if ($switched_roleid === $employee_role_id) {
-            $switched_to_employee = true;
-        }
-    }
-
-    // Check BizLMS $USER->useraccess role switch (set during BizLMS login/switch flow).
-    if (!$switched_to_employee && !empty($USER->useraccess['currentroleinfo']['contextinfo'])) {
-        $firstrole = current($USER->useraccess['currentroleinfo']['contextinfo']);
-        $active_roleid = (int)($firstrole['roleid'] ?? 0);
-        if ($active_roleid === $employee_role_id) {
-            $switched_to_employee = true;
-        }
-    }
-
-    // L&D Admin detection — SKIP if user has switched to employee role.
-    // BizLMS assigns 'administrator' role at category context (level 40), not system (level 10).
-    $isldadmin = false;
-    if (!$issiteadmin && !$switched_to_employee) {
-        $isldadmin = has_capability('local/courses:manage', $systemcontext);
-        if (!$isldadmin) {
-            // BizLMS fallback: check if user has administrator role (id=9) at any category context.
-            $hasbizlmsadmin = $DB->record_exists_sql(
-                "SELECT 1 FROM {role_assignments} ra
-                 JOIN {context} ctx ON ctx.id = ra.contextid
-                 WHERE ra.userid = :uid AND ra.roleid = 9 AND ctx.contextlevel = 40",
-                ['uid' => $USER->id]
-            );
-            $isldadmin = $hasbizlmsadmin;
-        }
-    }
-    $isadmin = $issiteadmin || $isldadmin; // Both get admin dashboard
-    // Manager detection: capability OR has direct reports via open_supervisorid (BizLMS pattern)
-    $ismanager = !$isadmin && has_capability('moodle/site:viewreports', $systemcontext);
-    if (!$ismanager && !$isadmin) {
-        $directreports = $DB->count_records_select('user',
-            'open_supervisorid = :uid AND deleted = 0 AND suspended = 0',
-            ['uid' => $USER->id]);
-        if ($directreports > 0) {
-            $ismanager = true;
-        }
-    }
-    $islearner = !$isadmin && !$ismanager;
+    $issiteadmin           = $roles['issiteadmin'];
+    $isldadmin             = $roles['isldadmin'];
+    $isadmin               = $roles['isadmin'];
+    $ismanager             = $roles['ismanager'];
+    $islearner             = $roles['islearner'];
+    $switched_to_employee  = $roles['switched_to_employee'];
 
     $airpay_dashboard['issiteadmin'] = $issiteadmin; // System Health only
     $airpay_dashboard['isadmin'] = $isadmin;          // Admin dashboard (KPIs, charts, quick nav)
