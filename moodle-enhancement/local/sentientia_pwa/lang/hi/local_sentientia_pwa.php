@@ -7,7 +7,7 @@ defined('MOODLE_INTERNAL') || die();
 $string['pluginname'] = 'Sentientia LMS — PWA';
 
 // Privacy.
-$string['privacy:metadata'] = 'Sentientia LMS PWA प्लगइन प्रति-यूज़र वेब-पुश सब्सक्रिप्शन एंडपॉइंट संग्रहीत करता है (Phase B.2+)। Phase B.1 (केवल service worker) कोई व्यक्तिगत डेटा संग्रहीत नहीं करता।';
+$string['privacy:metadata'] = 'Sentientia LMS PWA प्लगइन प्रति-यूज़र वेब-पुश सब्सक्रिप्शन एंडपॉइंट संग्रहीत करता है। जब पुश सूचनाएं सक्षम नहीं हों, तब कोई व्यक्तिगत डेटा संग्रहीत नहीं होता।';
 
 // ── Phase B.2.b — subscribe UI strings ────────────────────────────────
 

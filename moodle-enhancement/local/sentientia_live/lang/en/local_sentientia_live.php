@@ -140,7 +140,7 @@ $string['action_start_session']       = 'Start session';
 $string['add_slide_to_start']         = 'Add at least one slide before starting the session.';
 $string['slides_heading']             = 'Slides';
 $string['no_slides_yet']              = 'No slides added yet.';
-$string['slide_editor_pending_title']  = 'Slide editor — coming in Phase E.1.j';
+$string['slide_editor_pending_title']  = 'Slide editor — coming soon';
 $string['slide_editor_pending_body']   = 'Adding and editing slides is being built next. Until then, the session frame is in place: you can rename it, adjust audience settings, and (once slides exist) start the session.';
 $string['settings_heading_inline']    = 'Audience settings';
 
@@ -157,8 +157,8 @@ $string['total_slides_label']         = '{$a} slides in deck';
 $string['current_slide_heading']      = 'Current slide';
 $string['slide_position_of']          = 'Slide {$a->pos} of {$a->total}';
 $string['no_current_slide']           = 'No slide selected yet. Use the slide editor to pick which slide to show first.';
-$string['live_runner_pending_title']  = 'Live runner — real-time projector coming in Phase E.3';
-$string['live_runner_pending_body']   = 'The current placeholder shows session info and basic state. The Phase E.3 ship adds the SSE-driven projector view (auto-updating audience count, live response chart, advance/back buttons, full-screen mode).';
+$string['live_runner_pending_title']  = 'Live runner — real-time projector coming soon';
+$string['live_runner_pending_body']   = 'The current placeholder shows session info and basic state. A future update will add the real-time projector view with auto-updating audience count, live response chart, advance/back buttons, and full-screen mode.';
 $string['action_end_session']         = 'End this session';
 $string['response_count_label']       = 'Responses received';
 

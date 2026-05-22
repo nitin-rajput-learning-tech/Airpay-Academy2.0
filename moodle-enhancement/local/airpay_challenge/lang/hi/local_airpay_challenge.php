@@ -57,8 +57,8 @@ $string['attempt_expired']     = 'समाप्त';
 
 // Type labels.
 $string['type_course_completion'] = 'कोर्स पूर्णता';
-$string['type_streak']            = 'लॉगिन स्ट्रीक (Phase 2)';
-$string['type_quiz_score']        = 'क्विज़ स्कोर (Phase 2)';
+$string['type_streak']            = 'लॉगिन स्ट्रीक';
+$string['type_quiz_score']        = 'क्विज़ स्कोर';
 $string['type_custom']            = 'कस्टम';
 
 // Index/table columns.

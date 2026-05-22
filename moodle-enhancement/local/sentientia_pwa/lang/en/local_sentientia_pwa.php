@@ -7,7 +7,7 @@ defined('MOODLE_INTERNAL') || die();
 $string['pluginname'] = 'Sentientia LMS — PWA';
 
 // Privacy.
-$string['privacy:metadata'] = 'The Sentientia LMS PWA plugin stores web-push subscription endpoints per-user (Phase B.2+). Phase B.1 (service worker only) stores no personal data.';
+$string['privacy:metadata'] = 'The Sentientia LMS PWA plugin stores web-push subscription endpoints per-user. When push notifications are not enabled, no personal data is stored.';
 
 // ── Phase B.2.b — subscribe UI strings ────────────────────────────────
 

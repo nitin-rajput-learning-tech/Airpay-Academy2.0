@@ -25,12 +25,12 @@ $flags = [
         'description' => 'Sentientia LMS Live engagement (Mentimeter clone).
                           Master flag. When OFF, the entry pages return 403
                           and the SSE stream endpoint short-circuits. Default
-                          OFF until Phase E.1 ships the trainer UI.',
+                          OFF until the trainer UI ships.',
     ],
 
     'live.realtime.enabled' => [
         'default'     => true,
-        'description' => 'Phase E.3 — Server-Sent Events realtime push.
+        'description' => 'Server-Sent Events realtime push.
                           When ON, audience and trainer screens use
                           EventSource(stream.php) for instant updates.
                           When OFF, fall back to 3s short polling — same
@@ -45,32 +45,32 @@ $flags = [
     // expose just multichoice without showing word-cloud surfaces.
     'live.questiontype.multichoice' => [
         'default'     => false,
-        'description' => 'Phase E.4 — Multiple-choice slide type
+        'description' => 'Multiple-choice slide type
                           (bar chart of audience selections).',
     ],
     'live.questiontype.wordcloud' => [
         'default'     => false,
-        'description' => 'Phase E.5 — Word cloud slide type (free text
+        'description' => 'Word cloud slide type (free text
                           aggregated into a tag cloud).',
     ],
     'live.questiontype.openended' => [
         'default'     => false,
-        'description' => 'Phase E.6 — Open-ended slide type (scrolling list
+        'description' => 'Open-ended slide type (scrolling list
                           of raw text responses).',
     ],
     'live.questiontype.rating' => [
         'default'     => false,
-        'description' => 'Phase E.7 — Rating-scale slide type (1-5 or 0-10
+        'description' => 'Rating-scale slide type (1-5 or 0-10
                           NPS-style).',
     ],
     'live.questiontype.quiz' => [
         'default'     => false,
-        'description' => 'Phase E.8 — Quiz slide type (right/wrong answer +
+        'description' => 'Quiz slide type (right/wrong answer +
                           live leaderboard).',
     ],
     'live.questiontype.ranking' => [
         'default'     => false,
-        'description' => 'Phase E.9 — Ranking slide type (drag-to-order
+        'description' => 'Ranking slide type (drag-to-order
                           a list of N items).',
     ],
 

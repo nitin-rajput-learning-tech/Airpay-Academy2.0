@@ -15,7 +15,7 @@ $string['settings_heading'] = 'एयरपे इंटीग्रेशंस
 $string['settings_desc']    = 'एयरपे अकैडमी के लिए बाहरी इंटीग्रेशंस कॉन्फ़िगर करें। प्रत्येक फ़ीचर डिफ़ॉल्ट रूप से अक्षम है — व्यक्तिगत रूप से सक्षम और कॉन्फ़िगर करें।';
 
 // AI features.
-$string['ai_heading']                = 'AI फ़ीचर (Phase 9)';
+$string['ai_heading']                = 'AI फ़ीचर';
 $string['ai_enable']                 = 'AI फ़ीचर सक्षम करें';
 $string['ai_enable_desc']            = 'सभी AI फ़ीचर के लिए मास्टर टॉगल। साइट एडमिन → AI में AI प्रदाता कॉन्फ़िगर होना चाहिए।';
 $string['ai_recommendations_enable'] = 'AI कोर्स अनुशंसाएँ सक्षम करें';
@@ -24,7 +24,7 @@ $string['ai_quiz_enable']            = 'AI क्विज़ जनरेशन
 $string['ai_quiz_desc']              = 'L&D एडमिन को AI का उपयोग करके कोर्स सामग्री से क्विज़ प्रश्न उत्पन्न करने की अनुमति दें।';
 
 // SENTIENTIA.
-$string['sentientia_heading']   = 'SENTIENTIA सामग्री पाइपलाइन (Phase 9)';
+$string['sentientia_heading']   = 'SENTIENTIA सामग्री पाइपलाइन';
 $string['sentientia_enable']    = 'SENTIENTIA पाइपलाइन सक्षम करें';
 $string['sentientia_desc']      = 'SOP → SCORM ऑटोमेशन पाइपलाइन। वॉइस जनरेशन के लिए ElevenLabs API कुंजी आवश्यक।';
 $string['elevenlabs_apikey']    = 'ElevenLabs API कुंजी';
@@ -33,7 +33,7 @@ $string['elevenlabs_voiceid']     = 'ElevenLabs वॉइस ID';
 $string['elevenlabs_voiceid_desc'] = 'नैरेशन जनरेशन के लिए उपयोग करने वाली वॉइस ID।';
 
 // Microsoft 365.
-$string['m365_heading']           = 'Microsoft 365 इंटीग्रेशन (Phase 10)';
+$string['m365_heading']           = 'Microsoft 365 इंटीग्रेशन ';
 $string['m365_enable']            = 'Microsoft 365 SSO सक्षम करें';
 $string['m365_desc']              = 'Azure AD सिंगल साइन-ऑन। OIDC प्लगइन कॉन्फ़िगर और Azure ऐप पंजीकरण आवश्यक।';
 $string['m365_tenant_id']         = 'Azure टेनेंट ID';
@@ -44,7 +44,7 @@ $string['m365_client_secret']     = 'Azure क्लाइंट सीक्र
 $string['m365_client_secret_desc'] = 'क्लाइंट सीक्रेट मान (हर 24 महीने में घूमता है)।';
 
 // Teams.
-$string['teams_heading']         = 'Microsoft Teams सूचनाएँ (Phase 10)';
+$string['teams_heading']         = 'Microsoft Teams सूचनाएँ ';
 $string['teams_enable']          = 'Teams सूचनाएँ सक्षम करें';
 $string['teams_desc']            = 'वेबहुक के माध्यम से Teams चैनलों पर लर्निंग इवेंट्स (नामांकन, डेडलाइन, पूर्णता) भेजें।';
 $string['teams_webhook_url']     = 'Teams वेबहुक URL';
@@ -53,7 +53,7 @@ $string['teams_events']           = 'सूचित करने वाले �
 $string['teams_events_desc']      = 'कौन से इवेंट्स Teams सूचनाएँ ट्रिगर करते हैं।';
 
 // HRMS.
-$string['hrms_heading']          = 'HRMS सिंक (Phase 10)';
+$string['hrms_heading']          = 'HRMS सिंक ';
 $string['hrms_enable']           = 'HRMS सिंक सक्षम करें';
 $string['hrms_desc']             = 'REST API के माध्यम से Keka या अन्य HRMS से रियल-टाइम कर्मचारी सिंक।';
 $string['hrms_api_url']          = 'HRMS API एंडपॉइंट';
@@ -64,7 +64,7 @@ $string['hrms_sync_interval']    = 'सिंक अंतराल (घंट�
 $string['hrms_sync_interval_desc'] = 'कर्मचारी अपडेट कितनी बार खींचना है। डिफ़ॉल्ट: 4 घंटे।';
 
 // Gamification.
-$string['gamification_heading']                = 'गेमिफ़िकेशन (Phase 11)';
+$string['gamification_heading']                = 'गेमिफ़िकेशन ';
 $string['gamification_enable']                 = 'गेमिफ़िकेशन सक्षम करें';
 $string['gamification_desc']                   = 'XP अंक, लीडरबोर्ड और लर्निंग स्ट्रीक। block_xp प्लगइन इंस्टॉल होना चाहिए।';
 $string['gamification_xp_per_completion']      = 'प्रति कोर्स पूर्णता XP';

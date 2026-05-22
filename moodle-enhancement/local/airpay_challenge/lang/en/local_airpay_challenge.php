@@ -50,8 +50,8 @@ $string['attempt_expired']     = 'Expired';
 
 // Type labels.
 $string['type_course_completion'] = 'Course completion';
-$string['type_streak']            = 'Login streak (Phase 2)';
-$string['type_quiz_score']        = 'Quiz score (Phase 2)';
+$string['type_streak']            = 'Login streak';
+$string['type_quiz_score']        = 'Quiz score';
 $string['type_custom']            = 'Custom';
 
 // Index/table columns.

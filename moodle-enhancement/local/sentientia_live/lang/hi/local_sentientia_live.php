@@ -140,7 +140,7 @@ $string['action_start_session']       = 'सेशन शुरू करें'
 $string['add_slide_to_start']         = 'सेशन शुरू करने से पहले कम से कम एक स्लाइड जोड़ें।';
 $string['slides_heading']             = 'स्लाइड';
 $string['no_slides_yet']              = 'अभी तक कोई स्लाइड नहीं जोड़ी गई।';
-$string['slide_editor_pending_title']  = 'स्लाइड संपादक — Phase E.1.j में आ रहा है';
+$string['slide_editor_pending_title']  = 'स्लाइड संपादक — जल्द आ रहा है';
 $string['slide_editor_pending_body']   = 'स्लाइड जोड़ना और संपादन अगला बनाया जा रहा है। तब तक, सेशन फ़्रेम अपनी जगह पर है: आप इसे rename कर सकते हैं, ऑडियंस सेटिंग्स समायोजित कर सकते हैं, और (एक बार स्लाइड मौजूद हो जाए) सेशन शुरू कर सकते हैं।';
 $string['settings_heading_inline']    = 'ऑडियंस सेटिंग्स';
 
@@ -157,8 +157,8 @@ $string['total_slides_label']         = 'डेक में {$a} स्ला�
 $string['current_slide_heading']      = 'वर्तमान स्लाइड';
 $string['slide_position_of']          = 'स्लाइड {$a->pos} में से {$a->total}';
 $string['no_current_slide']           = 'अभी तक कोई स्लाइड चयनित नहीं। पहले कौन सी स्लाइड दिखानी है यह चुनने के लिए स्लाइड संपादक का उपयोग करें।';
-$string['live_runner_pending_title']  = 'लाइव रनर — Phase E.3 में रीयल-टाइम प्रोजेक्टर आ रहा है';
-$string['live_runner_pending_body']   = 'वर्तमान placeholder सेशन जानकारी और basic state दिखाता है। Phase E.3 SSE-संचालित प्रोजेक्टर व्यू जोड़ता है (auto-updating ऑडियंस गिनती, लाइव प्रतिक्रिया चार्ट, आगे/पीछे बटन, full-screen मोड)।';
+$string['live_runner_pending_title']  = 'लाइव रनर — रीयल-टाइम प्रोजेक्टर जल्द आ रहा है';
+$string['live_runner_pending_body']   = 'वर्तमान placeholder सेशन जानकारी और basic state दिखाता है। आगामी अपडेट में रीयल-टाइम प्रोजेक्टर व्यू जोड़ा जाएगा (auto-updating ऑडियंस गिनती, लाइव प्रतिक्रिया चार्ट, आगे/पीछे बटन, full-screen मोड)।';
 $string['action_end_session']         = 'इस सेशन को समाप्त करें';
 $string['response_count_label']       = 'प्राप्त प्रतिक्रियाएं';
 

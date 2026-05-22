@@ -8,7 +8,7 @@ $string['settings_heading'] = 'Airpay Integrations Configuration';
 $string['settings_desc'] = 'Configure external integrations for Airpay Academy. Each feature is disabled by default — enable and configure individually.';
 
 // AI features
-$string['ai_heading'] = 'AI Features (Phase 9)';
+$string['ai_heading'] = 'AI Features';
 $string['ai_enable'] = 'Enable AI Features';
 $string['ai_enable_desc'] = 'Master toggle for all AI features. Requires AI provider configured in Site Admin → AI.';
 $string['ai_recommendations_enable'] = 'Enable AI Course Recommendations';
@@ -17,7 +17,7 @@ $string['ai_quiz_enable'] = 'Enable AI Quiz Generation';
 $string['ai_quiz_desc'] = 'Allow L&D admins to generate quiz questions from course content using AI.';
 
 // SENTIENTIA
-$string['sentientia_heading'] = 'SENTIENTIA Content Pipeline (Phase 9)';
+$string['sentientia_heading'] = 'SENTIENTIA Content Pipeline';
 $string['sentientia_enable'] = 'Enable SENTIENTIA Pipeline';
 $string['sentientia_desc'] = 'SOP → SCORM automation pipeline. Requires ElevenLabs API key for voice generation.';
 $string['elevenlabs_apikey'] = 'ElevenLabs API Key';
@@ -26,7 +26,7 @@ $string['elevenlabs_voiceid'] = 'ElevenLabs Voice ID';
 $string['elevenlabs_voiceid_desc'] = 'Voice ID to use for narration generation.';
 
 // Microsoft 365
-$string['m365_heading'] = 'Microsoft 365 Integration (Phase 10)';
+$string['m365_heading'] = 'Microsoft 365 Integration';
 $string['m365_enable'] = 'Enable Microsoft 365 SSO';
 $string['m365_desc'] = 'Azure AD Single Sign-On. Requires OIDC plugin configured and Azure app registration.';
 $string['m365_tenant_id'] = 'Azure Tenant ID';
@@ -37,7 +37,7 @@ $string['m365_client_secret'] = 'Azure Client Secret';
 $string['m365_client_secret_desc'] = 'Client secret value (rotates every 24 months).';
 
 // Teams
-$string['teams_heading'] = 'Microsoft Teams Notifications (Phase 10)';
+$string['teams_heading'] = 'Microsoft Teams Notifications';
 $string['teams_enable'] = 'Enable Teams Notifications';
 $string['teams_desc'] = 'Send learning events (enrolment, deadline, completion) to Teams channels via webhook.';
 $string['teams_webhook_url'] = 'Teams Webhook URL';
@@ -46,7 +46,7 @@ $string['teams_events'] = 'Events to Notify';
 $string['teams_events_desc'] = 'Which events trigger Teams notifications.';
 
 // HRMS
-$string['hrms_heading'] = 'HRMS Sync (Phase 10)';
+$string['hrms_heading'] = 'HRMS Sync';
 $string['hrms_enable'] = 'Enable HRMS Sync';
 $string['hrms_desc'] = 'Real-time employee sync from Keka or other HRMS via REST API.';
 $string['hrms_api_url'] = 'HRMS API Endpoint';
@@ -57,7 +57,7 @@ $string['hrms_sync_interval'] = 'Sync Interval (hours)';
 $string['hrms_sync_interval_desc'] = 'How often to pull employee updates. Default: 4 hours.';
 
 // Gamification
-$string['gamification_heading'] = 'Gamification (Phase 11)';
+$string['gamification_heading'] = 'Gamification';
 $string['gamification_enable'] = 'Enable Gamification';
 $string['gamification_desc'] = 'XP points, leaderboards, and learning streaks. Requires block_xp plugin installed.';
 $string['gamification_xp_per_completion'] = 'XP per Course Completion';

@@ -27,7 +27,7 @@ $flags = [
     ],
     'sentientia.pwa.push.enabled' => [
         'default'     => false,
-        'description' => 'Phase B.2+ — Web Push notifications via the
+        'description' => 'Web Push notifications via the
                           service worker. Default OFF until the backend
                           (subscription table, WS endpoint, sender) ships.
                           This is the MASTER push flag — all push channels
@@ -40,7 +40,7 @@ $flags = [
     // ALL sub-channels also require sentientia.pwa.push.enabled = true.
     'sentientia.pwa.push.reminders' => [
         'default'     => false,
-        'description' => 'Phase B.3 — push deadline reminders to learners.
+        'description' => 'Push deadline reminders to learners.
                           Fires alongside the existing email reminder
                           from local_airpay_courses\\task\\course_reminder.
                           Only fires for users who have a push subscription
@@ -48,7 +48,7 @@ $flags = [
     ],
     'sentientia.pwa.push.overdue' => [
         'default'     => false,
-        'description' => 'Phase B.3 — push overdue escalations to managers
+        'description' => 'Push overdue escalations to managers
                           when a learner misses a deadline. Companion to
                           the existing local_airpay_courses\\task\\course_overdue
                           email escalation.',
@@ -57,7 +57,7 @@ $flags = [
     // ─── Phase D.1 — PWA install UX (per ADR-005) ────────────────────
     'sentientia.pwa.install.enabled' => [
         'default'     => false,
-        'description' => 'Phase D.1 (per ADR-005) — show the "Install
+        'description' => 'Show the "Install
                           Sentientia LMS" CTA on the dashboard when the
                           browser fires beforeinstallprompt. Default OFF
                           until the per-customer icon set + manifest

@@ -81,7 +81,7 @@ $flags = [
     // these require engagement.whatsapp.enabled = true as well.
     'engagement.whatsapp.reminders' => [
         'default'     => false,
-        'description' => 'Phase C.1 — WhatsApp deadline reminders to learners.
+        'description' => 'WhatsApp deadline reminders to learners.
                           Fires alongside the existing email reminder from
                           local_airpay_courses\\task\\course_reminder +
                           local_airpay_exams\\task\\exam_reminder. Picks
@@ -93,7 +93,7 @@ $flags = [
     ],
     'engagement.whatsapp.overdue' => [
         'default'     => false,
-        'description' => 'Phase C.1 — WhatsApp overdue escalations to managers.
+        'description' => 'WhatsApp overdue escalations to managers.
                           Companion to local_airpay_courses\\task\\course_overdue
                           + local_airpay_exams\\task\\exam_overdue. Reuses the
                           team_overdue DLT template with overdue_count=1 for
