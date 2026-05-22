@@ -120,3 +120,12 @@ $string['invalid_subscription_key_p256dh']= 'Subscription key (p256dh) is malfor
 $string['invalid_subscription_key_auth']  = 'Subscription auth secret is malformed.';
 $string['vapid_master_key_missing']       = 'The VAPID private key is encrypted on disk but the master key is not configured. Set SENTIENTIA_VAPID_MASTER_KEY env var or $CFG->sentientia_vapid_master_key.';
 $string['vapid_pem_decrypt_failed']       = 'Failed to decrypt the stored VAPID private key. Either the master key has rotated or the encrypted blob is tampered.';
+
+// ── Phase D.1.b — Install CTA strings ──────────────────────────────
+$string['install_cta_title']        = 'Install Sentientia LMS';
+$string['install_cta_body']         = 'Add the app to your home screen for one-tap access, push notifications, and offline support.';
+$string['install_cta_install_btn']  = 'Install';
+$string['install_cta_dismiss']      = 'Not now';
+$string['install_cta_dismiss_aria'] = 'Dismiss the install prompt';
+$string['install_cta_aria_label']   = 'Install Sentientia LMS app';
+$string['install_cta_gotit']        = 'Got it';

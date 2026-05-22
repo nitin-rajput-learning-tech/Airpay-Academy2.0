@@ -22,10 +22,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_pwa';
-$plugin->version   = 2026052109;
+$plugin->version   = 2026052110;
 $plugin->requires  = 2022041900;
-$plugin->maturity  = MATURITY_ALPHA;   // Phase D.1.a — Web App Manifest (manifest.php + branding pipeline)
-$plugin->release   = '0.4.0-alpha';    // Phase D.1.a Web App Manifest + all 6 audit BLOCKING fixes
+$plugin->maturity  = MATURITY_ALPHA;   // Phase D.1 a/b/c/d — full install UX + offline fallback
+$plugin->release   = '0.5.0-alpha';    // Phase D.1.a-d Install CTA + iOS modal + offline shell
 $plugin->dependencies = [
     'local_airpay_core' => 2026051200,  // feature_flags resolver
 ];

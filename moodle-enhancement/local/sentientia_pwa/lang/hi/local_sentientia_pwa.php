@@ -120,3 +120,12 @@ $string['invalid_subscription_key_p256dh']= 'सब्सक्रिप्श�
 $string['invalid_subscription_key_auth']  = 'सब्सक्रिप्शन auth secret विकृत है।';
 $string['vapid_master_key_missing']       = 'VAPID private key डिस्क पर एन्क्रिप्ट है लेकिन master key कॉन्फ़िगर नहीं है। SENTIENTIA_VAPID_MASTER_KEY env var या $CFG->sentientia_vapid_master_key सेट करें।';
 $string['vapid_pem_decrypt_failed']       = 'संग्रहित VAPID private key को डिक्रिप्ट नहीं किया जा सका। या तो master key बदली है या एन्क्रिप्टेड डेटा बदल गया है।';
+
+// ── Phase D.1.b — Install CTA स्ट्रिंग्स ──────────────────────────
+$string['install_cta_title']        = 'Sentientia LMS इंस्टॉल करें';
+$string['install_cta_body']         = 'एक-टैप एक्सेस, पुश सूचना और ऑफ़लाइन सपोर्ट के लिए ऐप को होम स्क्रीन पर जोड़ें।';
+$string['install_cta_install_btn']  = 'इंस्टॉल करें';
+$string['install_cta_dismiss']      = 'अभी नहीं';
+$string['install_cta_dismiss_aria'] = 'इंस्टॉल प्रॉम्प्ट खारिज करें';
+$string['install_cta_aria_label']   = 'Sentientia LMS ऐप इंस्टॉल करें';
+$string['install_cta_gotit']        = 'समझ गया';

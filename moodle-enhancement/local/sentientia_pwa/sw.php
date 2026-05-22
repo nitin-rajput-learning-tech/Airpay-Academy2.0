@@ -53,7 +53,8 @@ $wwwpath = rtrim($wwwpath, '/');
 
 // Cache version — bump this whenever the SW body changes. The browser
 // triggers a fresh install + activate cycle on version change.
-$sw_version = 'sentientia-pwa-v1';
+// Phase D.1.d bumped to v2 to refresh caches with the new offline.html.
+$sw_version = 'sentientia-pwa-v2';
 
 if (!$pwa_enabled) {
     // Kill-switch SW — unregisters itself + clears all caches the
@@ -86,15 +87,20 @@ echo <<<JS
 // @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 
 const CACHE_NAME = '{$sw_version}';
-const OFFLINE_URL = '{$wwwpath}/my/';
+const OFFLINE_URL = '{$wwwpath}/local/sentientia_pwa/offline.html';
 const WWW_PATH = '{$wwwpath}';
 const PRECACHE_URLS = [
+    OFFLINE_URL,
+    '{$wwwpath}/local/sentientia_pwa/manifest.php',
     '{$wwwpath}/my/',
     '{$wwwpath}/theme/airpayux/pix/brand/academy-logo-350.png',
-    '{$wwwpath}/theme/airpayux/pix/brand/manifest.json',
     '{$wwwpath}/theme/airpayux/pix/brand/favicon_io/android-chrome-192x192.png',
     '{$wwwpath}/theme/airpayux/pix/brand/favicon_io/android-chrome-512x512.png',
 ];
+// Phase D.1.d — extensions we'll cache-first (static-ish assets). Anything
+// not in this list passes through to network on its own.
+const CACHE_FIRST_EXT = ['.css', '.js', '.woff', '.woff2', '.svg', '.png',
+                          '.jpg', '.jpeg', '.gif', '.ico'];
 
 // ── INSTALL ───────────────────────────────────────────────────
 // Try to cache the offline shell. Failures here don't block install —
@@ -126,37 +132,76 @@ self.addEventListener('activate', function(event) {
     );
 });
 
-// ── FETCH (NAVIGATION) ────────────────────────────────────────
-// Network-first for navigation requests with offline-shell fallback.
-// Non-navigation requests pass through transparently — we don't want
-// to interfere with REST API calls, image loads, file downloads, etc.
+// ── FETCH ─────────────────────────────────────────────────────
+// Phase D.1.d — two strategies:
+//   1) navigation requests        → network-first, offline.html fallback
+//   2) static-asset GETs           → cache-first with stale-revalidate
+//   3) everything else (XHR, SSE)  → pass through to network
+//
+// SSE streams (Server-Sent Events) deliberately bypass: caching long-
+// lived event streams would break the Sentientia Live realtime channel.
+// Same for REST API calls (Authorization header would not be replayed
+// from cache, returning stale auth state to the page).
 self.addEventListener('fetch', function(event) {
     const request = event.request;
-
-    // Only handle GET requests for HTML navigation under our wwwroot.
     if (request.method !== 'GET') { return; }
-    if (request.mode !== 'navigate') { return; }
     const url = new URL(request.url);
     if (url.origin !== self.location.origin) { return; }
 
-    event.respondWith(
-        fetch(request).catch(function() {
-            return caches.match(OFFLINE_URL, { ignoreSearch: true })
-                .then(function(cached) {
-                    return cached || new Response(
-                        '<!DOCTYPE html><meta charset="utf-8">' +
-                        '<title>Offline · Sentientia LMS</title>' +
-                        '<style>body{font-family:Montserrat,-apple-system,sans-serif;' +
-                        'padding:48px 24px;text-align:center;color:#1a1a2e;background:#F2F4FB;}' +
-                        'h1{color:#0066A7;}p{color:#5a6070;}</style>' +
-                        '<h1>You\\u2019re offline</h1>' +
-                        '<p>Connect to the internet and try again.</p>' +
-                        '<p><a href="' + WWW_PATH + '/" style="color:#0066A7;">Retry</a></p>',
-                        { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
-                    );
+    // Bypass SSE + REST API + Moodle's internal AJAX endpoints — these
+    // must always go to the network with current credentials.
+    if (url.pathname.indexOf('/lib/ajax/') === 0
+        || url.pathname.indexOf('/webservice/') === 0
+        || url.pathname.indexOf('/local/sentientia_live/stream.php') !== -1
+        || url.pathname.indexOf('/admin/cli/') === 0) {
+        return;
+    }
+
+    // 1) Navigation requests (HTML page loads) — network-first.
+    if (request.mode === 'navigate') {
+        event.respondWith(
+            fetch(request).catch(function() {
+                return caches.match(OFFLINE_URL, { ignoreSearch: true })
+                    .then(function(cached) {
+                        return cached || new Response(
+                            '<!DOCTYPE html><meta charset="utf-8"><title>Offline</title>'
+                            + '<p>You are offline. Connect and reload.</p>',
+                            { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+                        );
+                    });
+            })
+        );
+        return;
+    }
+
+    // 2) Static-asset GETs — cache-first with background revalidation.
+    const lower = url.pathname.toLowerCase();
+    let isStatic = false;
+    for (let i = 0; i < CACHE_FIRST_EXT.length; i++) {
+        if (lower.endsWith(CACHE_FIRST_EXT[i])) { isStatic = true; break; }
+    }
+    if (isStatic) {
+        event.respondWith(
+            caches.match(request).then(function(cached) {
+                const fetchPromise = fetch(request).then(function(networkResp) {
+                    if (networkResp && networkResp.status === 200
+                        && networkResp.type === 'basic') {
+                        const clone = networkResp.clone();
+                        caches.open(CACHE_NAME).then(function(cache) {
+                            cache.put(request, clone);
+                        });
+                    }
+                    return networkResp;
+                }).catch(function() {
+                    return cached;  // network down — fall back to cached
                 });
-        })
-    );
+                return cached || fetchPromise;
+            })
+        );
+        return;
+    }
+
+    // 3) Everything else — pass through.
 });
 
 // ── PUSH (Phase B.2+ scaffold) ───────────────────────────────
