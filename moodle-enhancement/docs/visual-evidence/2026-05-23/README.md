@@ -64,3 +64,29 @@ courses) landed on a bare table after clicking through from
   - `grader-before.png` — full-page (pre-restyle).
   - `grader-after.png` — full-page (post-restyle).
   - `grader-after-table.png` — viewport-only focused on the table.
+  - `grader-after-mobile-590.png` — 590px mobile viewport.
+  - `course-view-mobile-590.png` — sibling restyle (/course/view.php) at 590px.
+
+---
+
+## Mobile responsive verification (590px)
+
+After the desktop restyle landed I resized the browser to 590×800 and
+re-checked the gradebook + the recent /course/view restyle. Both render
+cleanly — no horizontal-scroll-of-the-shell, no padding loss, no
+broken-card chrome.
+
+  - **Grader @ 590px** (`grader-after-mobile-590.png`): wide grade table
+    correctly engages horizontal scroll inside `.gradeparent`
+    (overflow-x: auto). Avatars, branded headers, and grade cells remain
+    legible. Tertiary action bar wraps inputs onto multiple lines but
+    keeps the brand pill radius.
+
+  - **Course view @ 590px** (`course-view-mobile-590.png`): Sentientia
+    hero banner spans full width without clipping, action icons (chart
+    + download) stay grouped, course description flows with correct
+    margins.
+
+  - **/admin/*** at 590px **NOT VERIFIED THIS SESSION** — would require
+    re-login as Site Admin (Asif Ansari is Course Author, not Site
+    Admin). Flagged as follow-up task #176.
