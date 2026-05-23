@@ -2,6 +2,14 @@
 //
 // theme_airpayux/deprecated — emit graceful JS deprecation notices.
 //
+// @deprecated since Moodle 5.2 cutover — DELETE this file (and the
+//   compiled amd/build/deprecated.min.js + .map) once airpay.academy
+//   production is on Moodle 5.2. The 5.2 native module `core/deprecated`
+//   ships the identical API. Phase B.3.f audit (2026-05-23) found ZERO
+//   import callsites in our codebase, so deletion is a single-file
+//   removal with no rewrite work. See
+//   docs/5.2-merge/PHASE-B3F-AMD-CLEANUP.md.
+//
 // Borrows Moodle 5.2's core/deprecated module pattern (per ADR-010
 // P0 #8). Replaces ad-hoc `console.warn` calls in AMD modules with
 // a structured deprecation notice that:

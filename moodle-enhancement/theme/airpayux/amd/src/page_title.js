@@ -2,6 +2,14 @@
 //
 // theme_airpayux/page_title — clean document.title manipulation.
 //
+// @deprecated since Moodle 5.2 cutover — DELETE this file (and the
+//   compiled amd/build/page_title.min.js + .map) once airpay.academy
+//   production is on Moodle 5.2. The 5.2 native module `core/page_title`
+//   ships the identical API. Phase B.3.f audit (2026-05-23) found ZERO
+//   import callsites in our codebase, so deletion is a single-file
+//   removal with no rewrite work. See
+//   docs/5.2-merge/PHASE-B3F-AMD-CLEANUP.md.
+//
 // Borrows Moodle 5.2's core/page_title module pattern (per ADR-010
 // P0 #7). Provides a centralised API for mutating the browser tab
 // title — useful for:

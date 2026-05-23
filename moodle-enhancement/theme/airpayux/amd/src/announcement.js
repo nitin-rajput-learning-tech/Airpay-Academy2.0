@@ -2,6 +2,20 @@
 //
 // theme_airpayux/announcement — toast wrapper with a11y option.
 //
+// @deprecated since Moodle 5.2 cutover — REVIEW for deletion once
+//   airpay.academy production is on Moodle 5.2. Unlike page_title and
+//   deprecated, this shim does MORE than pure pass-through: the
+//   aria-live region with same-text re-announce trick (NVDA <2024 bug
+//   workaround) may not be in `core/toast`'s native `{visuallyHidden}`
+//   option. At cutover time:
+//     1. Test `core/toast` `{visuallyHidden: true}` against NVDA 2023 +
+//        same-message-twice scenario.
+//     2. If `core/toast` handles it → delete this file + rewrite the
+//        ZERO existing callsites (per Phase B.3.f audit 2026-05-23).
+//     3. If `core/toast` doesn't handle it → keep this shim + add a
+//        note explaining why.
+//   See docs/5.2-merge/PHASE-B3F-AMD-CLEANUP.md.
+//
 // Borrows the `visuallyHidden` parameter pattern from Moodle 5.2's
 // core/toast module (per ADR-010 P0 #6). On 5.2 we'd just call
 // core/toast directly; here we provide the same API surface for
