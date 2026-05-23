@@ -3837,28 +3837,51 @@ output in the commit body.
   - Mobile @ 768px: 3-col flex stacks to 1; verified.
   - Theme version 2026052208 → 2026052209.
 
-**Shipment 6 — CI integration: standalone ws_contract gate**
-  - Commit `80d18ed79` — `ci(theme): standalone ws_contract gate without Moodle bootstrap`
-  - The Moodle-aware ws_contract_test.php existed since `bf5412ed2`
-    and now passes via PHPUnit (Shipment 3) — but the existing CI
-    workflow `.github/workflows/ci.yml` explicitly opted out of
-    PHPUnit because Moodle install on every PR costs ~5-15 min.
-  - This commit lands a STANDALONE static-analysis variant at
-    `moodle-enhancement/tools/ci-ws-contract-check.php` that does the
-    same audit without any Moodle bootstrap: walks airpay_* plugin
-    mustache files for `data-region="airpay-datatable"` +
-    `data-ws-name="X"` pairs, loads each plugin's `db/services.php`
-    (stubs `MOODLE_INTERNAL` constant so the `defined() || die()`
-    guard doesn't kill the script), resolves classname → file path,
-    regex-greps `execute_parameters()` body for each of the 6
-    contract keys.
-  - Wired into `ci.yml` as `ws-contract-gate` job — runs on every PR
-    + push. Block-on-fail. Runtime ~2s.
-  - Verified locally: 9 consumers, 0 failures, exit 0.
-  - Plus 3 unit tests of `missing_keys_in_class_file()` against
-    synthetic files (all-6, missing-3, no-method) all pass.
-  - ADR-009's WS-contract-drift invariant is now enforced by every
-    PR — not just documented + locally testable.
+**Shipment 7 — Sentientia polish on /calendar/view.php (Goal A.x)**
+  - Commit `52b6bbaff` — `feat(theme): Sentientia polish on /calendar/view.php month`
+  - Calendar month view was the last item from the next-session
+    backlog that didn't need Site Admin. Already had decent tertiary
+    nav chrome but the calendar table itself was vanilla Moodle Boost.
+  - Scoped to `body#page-calendar-view` (month/day/upcoming views all
+    share this body id; Moodle uses ?view=X query param).
+  - Day-of-week headers (MON/TUE/WED) uppercase letter-spaced 11px;
+    today cell brand-light bg + 2px brand-primary border + brand-dark
+    text (overrides .weekend class so today-on-weekend stays
+    Sentientia, not red); weekend cells softer text; cells get 8px
+    radius + 4px border-spacing + hover state; event indicators
+    become brand-light pill chips.
+  - Card chrome wraps `.calendarwrapper` / `[data-region="calendar-month"]`.
+  - Mobile @ 768px: drop padding, header 10px, cells min-height 60px.
+  - Theme version 2026052209 → 2026052210 (1.0.10-beta).
+
+**Shipment 8 — PR template + v4.1.0 milestone tag**
+  - Commit `9ffe07991` — `docs(github): replace upstream PR template stub`
+  - Tag `v4.1.0-goal-a-audit` — annotated tag with full audit story.
+  - The inherited .github/PULL_REQUEST_TEMPLATE.txt was a 7-line stub
+    from upstream Moodle telling contributors NOT to open PRs on
+    GitHub. Wrong for our fork. Replaced with structured Markdown
+    template covering scope checkboxes, verification gates,
+    ws-contract-gate quick-links, role_detector usage rule, visual
+    evidence rule, Hindi parity, version bump, risk + rollback.
+  - Milestone tag chains naturally after v4.0.0-moodle5 in the
+    existing tag history.
+
+### Cumulative session count (2026-05-23 final)
+
+  - 11 commits + 1 annotated milestone tag pushed to production.
+  - Goal A.x surfaces shipped this session: 4 new
+    (/grade/report/grader/, /user/edit.php, /user/preferences.php,
+    /calendar/view.php). Total Sentientia surfaces now: 9.
+  - ADR-009 invariants now verified by BOTH PHPUnit (local) AND
+    GitHub Actions (every PR, ~2s, no Moodle install).
+  - Mobile @ 590px verification on grader + course/view + user-edit.
+  - Tests README runbook landed (`theme/airpayux/tests/README.md`).
+  - CI gate landed (`moodle-enhancement/tools/ci-ws-contract-check.php`
+    + new `ws-contract-gate` job in `.github/workflows/ci.yml`).
+  - PR template overhaul (`.github/PULL_REQUEST_TEMPLATE.md`).
+  - Milestone tag `v4.1.0-goal-a-audit` for permanent landmark.
+
+**Theme version after this session:** 2026052210 (1.0.10-beta).
 
 **Insight (carry forward):** "Moodle PHPUnit in CI" is conventionally
 treated as a binary — either you install Moodle (slow) or you don't
@@ -3870,17 +3893,12 @@ PHPUnit suite still runs locally (and could run nightly on a
 dedicated runner). But the bug-class extinction invariant lives in
 CI without paying the Moodle-install cost on every PR.
 
-### Cumulative session count (2026-05-23)
-
-  - 8 commits, 8 push events to production branch.
-  - Goal A.x surfaces shipped this session:
-    /grade/report/grader/, /user/edit.php, /user/preferences.php.
-  - ADR-009 invariants now verified by BOTH PHPUnit (local) AND
-    GitHub Actions (every PR, ~2s runtime, no Moodle install).
-  - Mobile @ 590px verification on grader + course/view + user-edit
-    + preferences.
-  - Tests README runbook landed (`theme/airpayux/tests/README.md`).
-  - CI gate landed (`moodle-enhancement/tools/ci-ws-contract-check.php`
-    + new ws-contract-gate job in `.github/workflows/ci.yml`).
-
-**Theme version after this session:** 2026052209 (1.0.9-beta).
+**Final remaining backlog (after 2026-05-23):**
+  - `/course/edit.php` restyle — still needs Site Admin login.
+  - `/admin/*` mobile @ 590px verification — needs Site Admin (#177).
+  - Refactor shared utility between `ws_contract_scanner` (Moodle-
+    aware) and `ci-ws-contract-check.php` (standalone) — low priority;
+    the divergence is intentional (different verification strategies)
+    and the duplication is minimal.
+  - Goal B (Playwright E2E harness) — still blocked.
+  - Goal C (user guide content) — depends on Goal A.x + B.
