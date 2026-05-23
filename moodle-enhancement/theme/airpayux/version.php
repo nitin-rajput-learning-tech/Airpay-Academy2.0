@@ -52,8 +52,15 @@ defined('MOODLE_INTERNAL') || die();
 // first) + course end date (soonest first). Template override at
 // templates/block_myoverview/nav-sort-selector.mustache. Lang strings
 // sortbystartdate / sortbyenddate added in en + hi (100% parity).
-$plugin->version   = 2026052322;
+//
+// Phase B.2 fix (2026-05-23) — Moodle 5.2 upgrade smoke surfaced a
+// stale reference to /theme/epsilon/scss/preset/*.scss in lib.php.
+// The epsilon parent theme was removed when we made airpayux a
+// standalone fork ($THEME->parents = []), but lib.php still had three
+// hard-coded epsilon paths. Repointed to /theme/airpayux/scss/preset/*.
+// All preset files (default.scss, plain.scss) already exist there.
+$plugin->version   = 2026052323;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.22-beta';  // +P0 #14 myoverview sort by start/end date
+$plugin->release   = '1.0.23-beta';  // epsilon stale-preset reference fix

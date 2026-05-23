@@ -123,14 +123,14 @@ function theme_airpayux_pluginfile($course, $cm, $context, $filearea, $args, $fo
 
 //     $context = context_system::instance();
 //     if ($filename == 'default.scss') {
-//         $scss .= file_get_contents($CFG->dirroot . '/theme/epsilon/scss/preset/default.scss');
+//         $scss .= file_get_contents($CFG->dirroot . '/theme/airpayux/scss/preset/default.scss');
 //     } else if ($filename == 'plain.scss') {
-//         $scss .= file_get_contents($CFG->dirroot . '/theme/epsilon/scss/preset/plain.scss');
+//         $scss .= file_get_contents($CFG->dirroot . '/theme/airpayux/scss/preset/plain.scss');
 //     } else if ($filename && ($presetfile = $fs->get_file($context->id, 'theme_airpayux', 'preset', 0, '/', $filename))) {
 //         $scss .= $presetfile->get_content();
 //     } else {
 //         // Safety fallback - maybe new installs etc.
-//         $scss .= file_get_contents($CFG->dirroot . '/theme/epsilon/scss/preset/default.scss');
+//         $scss .= file_get_contents($CFG->dirroot . '/theme/airpayux/scss/preset/default.scss');
 //     }
 
 //     $scheme_scss = '';
@@ -154,14 +154,14 @@ function theme_airpayux_get_main_scss_content($theme) {
 
     $context = context_system::instance();
     if ($filename == 'default.scss') {
-        $scss .= file_get_contents($CFG->dirroot . '/theme/epsilon/scss/preset/default.scss');
+        $scss .= file_get_contents($CFG->dirroot . '/theme/airpayux/scss/preset/default.scss');
     } else if ($filename == 'plain.scss') {
-        $scss .= file_get_contents($CFG->dirroot . '/theme/epsilon/scss/preset/plain.scss');
+        $scss .= file_get_contents($CFG->dirroot . '/theme/airpayux/scss/preset/plain.scss');
     } else if ($filename && ($presetfile = $fs->get_file($context->id, 'theme_airpayux', 'preset', 0, '/', $filename))) {
         $scss .= $presetfile->get_content();
     } else {
         // Safety fallback - maybe new installs etc.
-        $scss .= file_get_contents($CFG->dirroot . '/theme/epsilon/scss/preset/default.scss');
+        $scss .= file_get_contents($CFG->dirroot . '/theme/airpayux/scss/preset/default.scss');
     }
 
     return $scss;
