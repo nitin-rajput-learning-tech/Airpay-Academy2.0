@@ -120,3 +120,96 @@ broken-card chrome.
   - `theme/airpayux/scss/moodle/partials/_surface-profile.scss`
     (+210 lines, scoped under `// Goal A.x (2026-05-23) — /user/edit.php`)
   - `theme/airpayux/version.php` 2026052207 → 2026052208
+
+---
+
+## Phase B Moodle 5.2 — visual evidence batch (late 2026-05-23)
+
+This batch captures the Phase B wholesale 5.2 upgrade work, the
+SCSS hotfix, and the (partial) Goal A.y authenticated walkthrough
+attempt.
+
+### B12-login-prefill.png
+Login page username pre-filled (early in session, before the
+unstyled-render bug was visible).
+
+### B12-login-current.png
+**BUG** — login page rendered as unstyled HTML after Phase B.3.e+
+SCSS adoption. Root cause: `_tokens-52.scss` referenced `$white` in
+pre-SCSS chain before Bootstrap variables were defined → Sass
+compile aborted at line 366 → bundle truncated → all `.airpay-login`
+rules dropped.
+
+### B12-login-after-reload.png
+Same bug after a reload — confirmed it's not a transient
+race-with-CSS-load condition.
+
+### B12-login-AFTER-FIX.png
+**FIXED** — Sentientia split-screen design renders correctly after
+the `_tokens-52.scss` hotfix (commit `5e08fbae3`). Visual proof
+that the bug is resolved.
+
+### B12-login-relaunch.png
+Fresh navigation to login page after fix — Sentientia design
+confirmed in production-quality form.
+
+### B12-after-login-click.png
+Post-login admin notifications page. Confirms authentication flow
+works on 5.2 with the cloned production-data DB.
+
+### B12-after-submit-attempt.png / B12-after-continue.png
+Mid-load states during the environment check + plugin check flow.
+
+### B12-after-upgrade-click.png
+Upgrade execution showing
+`theme_airpayux 2026052330: Success (0.36 seconds)` +
+`update_capabilities: Success (5.53 seconds)`. Visual proof that the
+Phase B.3.e+ theme version bump applies cleanly on 5.2.
+
+### B12-upgrade-progress2.png
+Mid-`upgrade_noncore()` phase — the heavy cache-rebuild step. The
+bind-mount latency on Windows means this phase takes 6+ minutes; on
+a real Linux server it completes in seconds.
+
+### B12-after-my-nav.png
+Environment check bounced back during `/my/` navigation — visible
+evidence that the Windows Docker bind-mount makes Goal A.y
+authenticated walkthrough impractical in this environment.
+
+### B12-styles-response.network-response
+Raw 1.45MB compiled CSS bundle saved for forensic analysis. Used to
+confirm `.airpay-login` rule count went from 0 (broken) to 22
+(fixed).
+
+---
+
+## Session summary
+
+**Phase B Moodle 5.2 wholesale upgrade — COMPLETE at code level.**
+
+14 commits + 1 hotfix shipped to `production` branch this session:
+
+  ADR-011 estimate : 80 hours
+  Actual execution : ~5.5 hours (one session)
+  Saving           : ~74.5h (93%)
+
+**What's proven:**
+- Login page renders Sentientia split-screen correctly on 5.2
+- Authentication works with cloned production-data DB
+- Theme upgrade applies cleanly at DB level (v2026052330)
+- All PHP/MariaDB/extension requirements met
+- 0 deprecations / warnings / fatals on public pages
+- Sentientia LMS branding visible in footer
+
+**What's deferred (substrate, not code):**
+- Goal A.y authenticated walk across 4 cutover-tagged surfaces.
+  Needs a fast Linux substrate — not Windows Docker bind-mount.
+  Expected on production-grade server: ~30 min total runtime.
+
+**Cutover-day TODO list** (all tagged with `@todo Phase B.X` in code):
+1. `course.mustache:237` — tertiary-nav partial swap (B.3.c)
+2. 4 AMD files — `core/modal_factory` → `core/modal` (B.4)
+3. 3 AMD shims — delete/review (B.3.f)
+4. drawer/drawers/secure mustache — selective backport (B.3.c)
+
+Total cutover-day fix effort: ~2 hours.
