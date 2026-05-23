@@ -54,12 +54,12 @@ $string['loginbackgroundimage_desc'] = 'The image to display as a background for
 $string['nobootswatch'] = 'None';
 $string['customsettings'] = 'Custom settings';
 $string['colorsettings'] = 'Color settings';
-$string['pluginname'] = 'Epsilon';
+$string['pluginname'] = 'Airpay Academy UX (Sentientia)';
 $string['presetfiles'] = 'Additional theme preset files';
-$string['presetfiles_desc'] = 'Preset files can be used to dramatically alter the appearance of the theme. See <a href="#">Epsilon presets</a> for information on creating and sharing your own preset files, and see the <a href="#">Presets repository</a> for presets that others have shared.';
+$string['presetfiles_desc'] = 'Preset files can be used to dramatically alter the appearance of the theme. See <a href="#">Sentientia presets</a> for information on creating and sharing your own preset files, and see the <a href="#">Presets repository</a> for presets that others have shared.';
 $string['preset'] = 'Theme preset';
 $string['preset_desc'] = 'Pick a preset to broadly change the look of the theme.';
-$string['privacy:metadata'] = 'The Epsilon theme does not store any personal data about any user.';
+$string['privacy:metadata'] = 'The Airpay Academy UX (Sentientia) theme does not store any personal data about any user.';
 $string['rawscss'] = 'Raw SCSS';
 $string['rawscss_desc'] = 'Use this field to provide SCSS or CSS code which will be injected at the end of the style sheet.';
 $string['rawscsspre'] = 'Raw initial SCSS';
