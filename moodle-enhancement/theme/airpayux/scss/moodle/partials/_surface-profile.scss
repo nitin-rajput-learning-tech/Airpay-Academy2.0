@@ -1450,6 +1450,22 @@ body.path-course-view {
         border-radius: 8px;
     }
 
+    /* ─── Moodle 5.2 borrow P0 #3: anchor-link highlight ─────────────
+       When a learner clicks a section/activity anchor link (or
+       follows a deep-link from email/notification), the targeted
+       element flashes brand-light briefly so the eye lands. CSS-
+       only — no JS. Uses :target with a 2s ease-out animation. */
+    .course-section:target,
+    .course-section li.activity:target,
+    .course-section li.activity .activity-item:target {
+        animation: ap-anchor-flash 2s ease-out 1;
+    }
+    @keyframes ap-anchor-flash {
+          0% { background: var(--ap-color-primary-light, #e8f2f9); }
+         30% { background: var(--ap-color-primary-light, #e8f2f9); }
+        100% { background: transparent; }
+    }
+
     /* ─── Moodle 5.2 borrow P0 #2: activity header with completion labels ──
        Moodle 5.2 ships an `activityinfoinheader` layout option that
        moves the per-activity completion dropdown + due-date chip INTO
