@@ -3928,3 +3928,61 @@ next-session backlog is genuinely empty for visible-surface work —
 remaining items are either external blockers (Playwright + Node 24),
 strategic pivots (Workstream 0 per-customer branding), or
 low-priority optional refactors.
+
+### Strategic batch (A → B → C, 2026-05-23 final)
+
+**A — Workstream 0 per-customer branding** (commit `a3338d902`)
+  - ADR-008 customer_brand resolver had shipped in commit
+    `1e4c9c1ea` (#143) but the theme never consumed it.
+  - `core_renderer::standard_head_html()` now calls
+    `\local_airpay_core\customer::branding()` and injects
+    `<style id="sentientia-customer-brand">` with theme_color →
+    `--ap-color-primary` + bg_color → `--ap-color-bg`.
+  - Customer favicon (icon_192_url) also injected when no
+    tenant favicon overrides.
+  - Verified live: `getComputedStyle(:root).--ap-color-primary` ===
+    "#0066A7" on /my/. For Customer 2 onboarding, single DB INSERT
+    re-tints the stack — zero code change.
+  - Theme version 2026052211 → 2026052212 (1.0.12-beta).
+
+**B — Goal B Playwright harness wired** (commit `e2ab8657b`)
+  - Re-investigated the "Node 24 incompatibility" blocker — turns
+    out Playwright 1.59.1 installs cleanly on Node 24.14.1. The
+    actual blocker is local Windows AV blocking browser spawn from
+    `%LOCALAPPDATA%\ms-playwright\`. Same tests will run on
+    GitHub Actions runners.
+  - Shipped `playwright.config.mjs` (Firefox primary, Chromium
+    fallback, mobile-590 viewport project) + `tests/surfaces.spec.mjs`
+    (11 tests covering every Sentientia surface + Workstream 0
+    brand injection assertion).
+  - Each test asserts the signature CSS marker via
+    `getComputedStyle()` — catches SCSS cascade regression from
+    future theme version bumps.
+  - `tests/README.md` documents local run, the AV blocker, and
+    exact CI workflow YAML to drop into `ci.yml` next session.
+
+**C — Refactor ws_contract single-source-of-truth** (commit `b21843eba`)
+  - Both ws_contract gates (Moodle PHPUnit + standalone CI) had
+    hard-coded the 6-key contract list. Adding a 7th key (e.g.
+    'orderby') would need updates in both — a real drift surface,
+    exactly the bug class ADR-009 was supposed to prevent.
+  - Standalone CI gate now parses `REQUIRED_CONTRACT_KEYS` from
+    the canonical Moodle scanner file at runtime via regex
+    `/REQUIRED_CONTRACT_KEYS\s*=\s*\[(.*?)\]/s`. Falls back to
+    hard-coded list if canonical missing (e.g. running tool
+    outside full repo).
+  - Updating the contract = edit ONE file. Both gates pick it up.
+  - Verified: 9 consumers, 0 failures, exit 0 — same result as
+    pre-refactor.
+
+### Cumulative session total (A→B→C, after the strategic batch)
+
+  - 20 commits + 1 annotated milestone tag pushed to production.
+  - 10 Sentientia surfaces + calendar + admin-mobile coverage.
+  - Workstream 0 customer-branding wired end-to-end.
+  - Playwright @playwright/test framework wired and ready for CI.
+  - ws_contract gates now share REQUIRED_CONTRACT_KEYS source.
+  - ADR-009 invariants enforced at PHPUnit (local) AND GitHub
+    Actions (every PR).
+
+**Theme version after this session:** 2026052212 (1.0.12-beta).
