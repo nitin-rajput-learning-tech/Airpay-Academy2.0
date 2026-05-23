@@ -289,91 +289,40 @@ function theme_airpayux_get_css_for_costcenter_scss($costcenter_scheme = false){
     return '';
 }
 
-/**
- * P0 borrow #10 (Moodle 5.2, 2026-05-23) — inject suspended-user data
- * into pages that show user lists so the AMD decorator can paint
- * inline "Suspended" / "Deleted" badges next to user names.
- *
- * Triggers on pagetypes that surface user lists:
- *   - grade-report-*       (gradebook)
- *   - report-*             (activity/log/completion reports)
- *   - user-index           (course participants)
- *   - course-user          (per-user activity report)
- *
- * Server-side prefetch — one DB hit per request, scoped to the current
- * user's tenant via $USER->open_path. Avoids the WS round-trip and the
- * tenant + capability surface that would come with one. Failure is
- * silent (returns empty string) — never blocks the page.
- *
- * On Moodle 5.2 upgrade: replace this whole function with the upstream
- * `\core\hook\output\before_standard_top_of_body_html_generation` hook
- * + 5.2's built-in suspended-row marker.
- *
- * @return string HTML — a single hidden <script type="application/json"> blob
- *                consumed by AMD theme_airpayux/user_status_badge.
- */
-function theme_airpayux_before_standard_top_of_body_html() {
-    global $PAGE, $USER, $DB;
-
-    // Anonymous / unset session — nothing to render.
-    if (empty($USER->id) || isguestuser()) {
+// Legacy `before_standard_top_of_body_html` callback — Moodle 5.1 only.
+//
+// Moodle 5.2 introduced
+// `\core\hook\output\before_standard_top_of_body_html_generation` and
+// scans every plugin's lib.php for `<component>_<oldcallback>` function
+// names; if it finds one, it fires it AND prints a deprecation notice
+// (independent of whether a new-style hook subscription exists).
+//
+// To stay clean on 5.2 we CONDITIONALLY DEFINE the legacy function:
+// only when the new hook class is not present (i.e. we're on 5.1).
+// On 5.2 the canonical entry point is
+// `\theme_airpayux\hook_callbacks::before_standard_top_of_body_html_generation()`
+// wired via `db/hooks.php`.
+if (!class_exists('\\core\\hook\\output\\before_standard_top_of_body_html_generation')) {
+    /**
+     * Inject suspended-user data into pages that show user lists so the
+     * AMD decorator can paint inline "Suspended" / "Deleted" badges next
+     * to user names (P0 borrow #10).
+     *
+     * @deprecated since Moodle 5.2 — see classes/hook_callbacks.php +
+     *   db/hooks.php. This function is conditionally compiled out on 5.2
+     *   to suppress the `process_legacy_callbacks()` deprecation notice.
+     *
+     * @return string HTML — a single hidden <script type="application/json">
+     *                blob consumed by AMD theme_airpayux/user_status_badge.
+     *                Empty string when no badges are needed.
+     */
+    function theme_airpayux_before_standard_top_of_body_html(): string {
+        // Delegate to the same builder the hook class uses — single
+        // source of truth across 5.1 and 5.2.
+        if (class_exists('\\theme_airpayux\\hook_callbacks')) {
+            return \theme_airpayux\hook_callbacks::build_user_status_html();
+        }
         return '';
     }
-    if (empty($PAGE) || empty($PAGE->pagetype)) {
-        return '';
-    }
-
-    $pt = $PAGE->pagetype;
-    $needs = (
-        str_starts_with($pt, 'grade-report-')
-        || str_starts_with($pt, 'report-')
-        || $pt === 'user-index'
-        || $pt === 'course-user'
-    );
-    if (!$needs) {
-        return '';
-    }
-
-    // Tenant scope — BizLMS open_path. If column missing (test fixture
-    // without local_costcenter), silently no-op.
-    $tenantpath = $USER->open_path ?? '';
-    if (!$tenantpath) {
-        return '';
-    }
-
-    try {
-        // Fetch all suspended OR deleted users in the same tenant subtree.
-        // Suspended-user count in a 3500-user tenant is typically 50-300
-        // rows = a couple of KB on the wire. Faster than per-row lookups
-        // and cheaper than a WS round-trip with auth+cap on every page.
-        $sql = "SELECT id, suspended, deleted
-                  FROM {user}
-                 WHERE (suspended = 1 OR deleted = 1)
-                   AND open_path LIKE :path";
-        $rows = $DB->get_records_sql($sql, ['path' => $tenantpath . '%']);
-    } catch (\Throwable $e) {
-        // PHPUnit fixture without open_path, or DB hiccup.
-        // Never block a real report page on a status-badge prefetch.
-        return '';
-    }
-
-    if (empty($rows)) {
-        return '';
-    }
-
-    // Build compact userid → status map.
-    $data = [];
-    foreach ($rows as $r) {
-        $data[(int)$r->id] = !empty($r->deleted) ? 'deleted' : 'suspended';
-    }
-
-    // Queue the AMD decorator. It picks up the JSON blob on init.
-    $PAGE->requires->js_call_amd('theme_airpayux/user_status_badge', 'init');
-
-    // Embed the data inline. Hidden from screen readers via aria-hidden;
-    // type=application/json so it's never executed as JS, only parsed.
-    return '<script id="airpay-user-status-data" type="application/json" aria-hidden="true">'
-        . json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE)
-        . '</script>';
 }
 

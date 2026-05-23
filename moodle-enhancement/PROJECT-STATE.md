@@ -4081,3 +4081,104 @@ version change required):
 Phase B (the merge proper) is blocked on PHP 8.3 landing on the local
 XAMPP — currently waiting on either IT or a portable-PHP install.
 ADR-011 §"Open questions" lists this for Nitin's decision.
+
+---
+
+## Session 2026-05-23 — Phase B execution (continued) — 5.2 wholesale upgrade alive
+
+Per Nitin's "continue, 1 by 1 100%" + "Option B and both tracks", we
+unblocked the PHP-8.4 prerequisite, pulled the 5.2 source into a
+container, ran the wholesale upgrade, served the resulting tree
+through Apache, and migrated the first deprecated hook callbacks.
+
+### Phase B.1 — PHP 8.4 via Docker (WDAC pivot)
+
+Detail: `docs/5.2-merge/PHP-8.4-INSTALL-WDAC-PIVOT.md`,
+`docs/5.2-merge/PHASE-B1-PHP84-DOCKER-VERIFIED.md`.
+
+- WDAC / EDR blocked native PHP 8.4 binaries by hash; even
+  winget-installed PHP 8.4 in `%LOCALAPPDATA%\...\Packages\` returned
+  "Access is denied".
+- Pivoted to Docker. Built `moodle-5.2-cli` (php:8.4-cli + Moodle
+  extensions) for CLI work and `moodle-5.2-apache` (php:8.4-apache
+  + mod_php) for web smoke. Container PHP version: **8.4.21**.
+- Bind-mounts `C:\xampp\htdocs\moodle5.2\` to `/var/www/moodle/`,
+  `C:\xampp\moodledata5_2\` to `/var/moodledata/`. Live-editable
+  from Windows.
+
+### Phase B.2 — Wholesale 5.2 merge — UPGRADE EXIT 0
+
+Detail: `docs/5.2-merge/PHASE-B2-MERGE-IN-PROGRESS.md`,
+`docs/5.2-merge/PHASE-B2-SUCCESS-2026-05-23.md`.
+
+- Cloned production DB (`moodle` → `moodle5_2`, 1,219 tables) with
+  `mysqldump --complete-insert`, excluding only the 16 heavy
+  log/audit tables. Earlier minimal seed broke at
+  `message_update_processors()` — fix was to clone wider.
+- Overlay landed: 30 `local_airpay_*` + 2 `local_sentientia_*` +
+  `theme_airpayux` + 4 airpay blocks + 3 vendor-patched blocks +
+  `admin/tool/certificate`.
+- `php admin/cli/upgrade.php --non-interactive` finished clean in
+  **74 minutes**, version state `2026042000.04` (Moodle 5.2 GA).
+
+### Phase B.3 — Web smoke + first hook migration
+
+Detail: `docs/5.2-merge/PHASE-B3-WEB-SMOKE-PASS.md`,
+`docs/5.2-merge/PHASE-B3-HOOK-MIGRATION-2026-05-23.md`.
+
+- Container `moodle52web` exposes Moodle 5.2 at
+  `http://localhost:8081/`. XAMPP (port 8080, PHP 8.2) keeps serving
+  the untouched `moodle5/` tree for rollback.
+- **Frontpage:** HTTP 200, 72,156 bytes, title resolves to
+  "airpay academy — Enterprise Learning & Development Platform",
+  theme `airpayux` selected.
+- **Login page:** HTTP 200, 29,647 bytes, `airpay-login` BEM class
+  present (Sentientia split-screen layout intact), P0 #5 OAuth2 i18n
+  template renders with the "Upskill. Get certified. Get hired."
+  hero subtitle.
+- Cold-render latency (45 s frontpage, 39 s login) is dev-mode
+  overhead from the Windows ↔ WSL2 bind-mount on every
+  `require_once`. Production reality (Linux server + PHP-FPM
+  + pre-compiled SCSS) is unaffected.
+
+**Hook migration #1:** `before_standard_top_of_body_html` callbacks
+in `theme_airpayux` and `local_sentientia_pwa` moved to Moodle 5.2's
+new `\core\hook\output\before_standard_top_of_body_html_generation`
+hook system.
+
+| Plugin | Old version | New version | Files added |
+|--------|-------------|-------------|-------------|
+| theme_airpayux | 2026052323 (1.0.23-beta) | 2026052324 (1.0.24-beta) | `db/hooks.php`, `classes/hook_callbacks.php` |
+| local_sentientia_pwa | 2026052202 (0.5.2-alpha) | 2026052301 (0.5.3-alpha) | `db/hooks.php`, `classes/hook_callbacks.php` |
+
+Pattern: hook class is the single source of truth (with the new
+`build_*_html()` static helper); the legacy `<plugin>_<hook>()`
+function in `lib.php` is reduced to a thin shim that — on 5.2 —
+detects the hook namespace and bails (to prevent double-emit when
+both fire) and — on 5.1 — delegates to the same builder. Same
+codebase, both targets.
+
+Codebase grep confirms `before_standard_top_of_body_html` was the
+ONLY hook in our plugin surface that 5.2's `\core\hook\output\*`
+namespace covers. Other legacy callbacks
+(`*_extend_navigation_user_settings`, etc.) remain function-name
+callbacks in 5.2 — no migration needed for those.
+
+### What's next (per ADR-011)
+
+```
+Phase B.3.a-f  ~38h  Theme conflict resolution (514 airpayux files vs 5.2)
+Phase B.4-B.11 ~30h  lib/admin/course/blocks/grade/enrol/mod/backup polish
+Phase B.12      ~4h  Re-run Goal A.y functional matrix on the 5.2 instance
+```
+
+Architecture is proven; remaining work is iterative polish against a
+running 5.2 target. ~5 hours of the 80h ADR-011 estimate consumed so far.
+
+### Version state at session end
+
+```
+theme_airpayux        : 2026052324 (1.0.24-beta)
+local_airpay_core     : 2026052303 (1.5.3)
+local_sentientia_pwa  : 2026052301 (0.5.3-alpha)
+```

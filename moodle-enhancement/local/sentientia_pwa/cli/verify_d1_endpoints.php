@@ -150,7 +150,10 @@ require_once(__DIR__ . '/../lib.php');
 // Flag OFF → empty.
 \local_airpay_core\feature_flags::set('sentientia.pwa.install.enabled',
     0, false, 2, 'D.1 endpoint smoke', 0);
-expect_true(strlen(local_sentientia_pwa_before_standard_top_of_body_html() ?? '') === 0,
+// 2026-05-23 — call the canonical hook class helper. The legacy
+// function short-circuits to '' on Moodle 5.2 (the new hook fires
+// natively in production); the helper is the single source of truth.
+expect_true(strlen(\local_sentientia_pwa\hook_callbacks::build_install_cta_html()) === 0,
     'Flag OFF → callback returns empty string');
 
 // Flag ON + dashboard layout → non-empty + has marker.
@@ -160,7 +163,7 @@ global $PAGE;
 $PAGE->set_url('/my/dashboard.php');
 $PAGE->set_pagelayout('mydashboard');
 $PAGE->set_context(\context_system::instance());
-$html = local_sentientia_pwa_before_standard_top_of_body_html();
+$html = \local_sentientia_pwa\hook_callbacks::build_install_cta_html();
 expect_true(str_contains($html, 'sentientia-install-cta'),
     'Flag ON on dashboard → CTA HTML rendered');
 

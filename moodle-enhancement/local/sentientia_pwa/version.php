@@ -22,10 +22,14 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_pwa';
-$plugin->version   = 2026052202;
+// 2026-05-23 Phase B.3 — migrate before_standard_top_of_body_html to
+// Moodle 5.2's new hook system (\core\hook\output\...). Added
+// classes/hook_callbacks.php + db/hooks.php; lib.php function reduced
+// to a 5.1 backward-compat shim that delegates to the hook class.
+$plugin->version   = 2026052301;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;   // Crypto audit non-blocking sweep: NB #7-#15
-$plugin->release   = '0.5.2-alpha';    // JWT cache, DER guards, HKDF loop, padding, iat, redaction, PII opt-in
+$plugin->release   = '0.5.3-alpha';    // Phase B.3 hook migration
 $plugin->dependencies = [
     'local_airpay_core' => 2026051200,  // feature_flags resolver
 ];

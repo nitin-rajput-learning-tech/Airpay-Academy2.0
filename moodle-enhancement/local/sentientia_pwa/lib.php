@@ -74,70 +74,38 @@ function local_sentientia_pwa_extend_navigation_user_settings(
     $usernode->add_node($node);
 }
 
-/**
- * Inject the PWA Install CTA + auto-load install_prompt AMD module
- * above the standard top-of-body HTML on every page where the
- * `sentientia.pwa.install.enabled` flag is ON. Phase D.1.b.
- *
- * Mounts a `.sentientia-install-cta` banner; the AMD module reveals
- * it when the browser fires beforeinstallprompt and hides it
- * otherwise (so this is invisible noise until the user is on a
- * browser that supports the install flow).
- *
- * Returns an empty string when the flag is off — zero-cost when the
- * feature isn't active.
- *
- * @return string HTML to inject
- */
-function local_sentientia_pwa_before_standard_top_of_body_html(): string {
-    global $PAGE, $OUTPUT, $USER;
-
-    if (!class_exists('\\local_airpay_core\\feature_flags')) {
-        return '';
-    }
-    try {
-        if (!\local_airpay_core\feature_flags::is_enabled('sentientia.pwa.install.enabled')) {
-            return '';
+// Legacy `before_standard_top_of_body_html` callback — Moodle 5.1 only.
+//
+// Moodle 5.2 introduced
+// `\core\hook\output\before_standard_top_of_body_html_generation` and
+// scans every plugin's lib.php for `<component>_<oldcallback>` function
+// names; if it finds one, it fires it AND prints a deprecation notice
+// (independent of whether a new-style hook subscription exists).
+//
+// To stay clean on 5.2 we CONDITIONALLY DEFINE the legacy function:
+// only when the new hook class is not present (i.e. we're on 5.1).
+// On 5.2 the canonical entry point is
+// `\local_sentientia_pwa\hook_callbacks::before_standard_top_of_body_html_generation()`
+// wired via `db/hooks.php`.
+if (!class_exists('\\core\\hook\\output\\before_standard_top_of_body_html_generation')) {
+    /**
+     * Inject the PWA Install CTA + auto-load install_prompt AMD module
+     * above the standard top-of-body HTML on the user dashboard (Phase D.1.b).
+     *
+     * @deprecated since Moodle 5.2 — see classes/hook_callbacks.php +
+     *   db/hooks.php. This function is conditionally compiled out on 5.2
+     *   to suppress the `process_legacy_callbacks()` deprecation notice.
+     *
+     * @return string HTML to inject. Empty string when the feature flag
+     *                is off / page isn't mydashboard / user dismissed
+     *                recently.
+     */
+    function local_sentientia_pwa_before_standard_top_of_body_html(): string {
+        // Delegate to the same builder the hook class uses — single
+        // source of truth across 5.1 and 5.2.
+        if (class_exists('\\local_sentientia_pwa\\hook_callbacks')) {
+            return \local_sentientia_pwa\hook_callbacks::build_install_cta_html();
         }
-    } catch (\Throwable $e) {
-        return '';
-    }
-
-    // 2026-05-22 — tightened to ONLY 'mydashboard'. The CTA was leaking
-    // onto admin pages + manage-users pages where it overlapped existing
-    // content. Dashboard is the canonical install-prompt surface.
-    $layout = $PAGE && $PAGE->pagelayout ? $PAGE->pagelayout : '';
-    if ($layout !== 'mydashboard') {
-        return '';
-    }
-
-    // Skip when the page is itself a PWA endpoint (defensive).
-    $url_path = $PAGE && $PAGE->url ? (string) $PAGE->url->out_omit_querystring() : '';
-    if (str_contains($url_path, '/local/sentientia_pwa/')) {
-        return '';
-    }
-
-    // 2026-05-22 — honour the user's prior dismissal server-side.
-    // Without this gate, the JS-side localStorage check ran AFTER the
-    // server rendered the CTA, so the markup was still in the DOM and
-    // any race condition could reveal it. Now if the user dismissed
-    // within the last 7 days, no CTA HTML is sent at all.
-    if (!empty($USER->id) && (int) $USER->id > 1) {
-        $dismissed_at = (int) get_user_preferences(
-            'local_sentientia_pwa_install_dismissed_at', 0, $USER);
-        if ($dismissed_at > 0
-            && (time() - $dismissed_at) < (7 * 86400)) {
-            return '';
-        }
-    }
-
-    // Queue the AMD module init for this page.
-    $PAGE->requires->js_call_amd('local_sentientia_pwa/install_prompt', 'init');
-
-    // Render the hidden banner — AMD module reveals when beforeinstallprompt fires.
-    try {
-        return $OUTPUT->render_from_template('local_sentientia_pwa/install_cta', []);
-    } catch (\Throwable $e) {
         return '';
     }
 }

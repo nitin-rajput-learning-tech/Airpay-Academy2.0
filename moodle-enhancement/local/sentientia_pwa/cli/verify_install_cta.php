@@ -19,7 +19,11 @@ function expect_true(bool $got, string $desc) {
 // 1. Flag OFF — callback must return empty string.
 \local_airpay_core\feature_flags::set('sentientia.pwa.install.enabled',
     0, false, 2, 'verify_install_cta — start OFF', 0);
-$html_off = local_sentientia_pwa_before_standard_top_of_body_html();
+// 2026-05-23 — call the canonical helper directly. The legacy
+// `local_sentientia_pwa_before_standard_top_of_body_html()` function
+// short-circuits to '' on Moodle 5.2 (the new hook fires natively in
+// production, the helper is the single source of truth).
+$html_off = \local_sentientia_pwa\hook_callbacks::build_install_cta_html();
 expect_true(strlen($html_off ?? '') === 0,
     'Flag OFF → callback returns empty string');
 
@@ -32,7 +36,7 @@ $PAGE->set_url('/my/dashboard.php');
 $PAGE->set_pagelayout('mydashboard');
 $PAGE->set_context(\context_system::instance());
 
-$html_on = local_sentientia_pwa_before_standard_top_of_body_html();
+$html_on = \local_sentientia_pwa\hook_callbacks::build_install_cta_html();
 
 expect_true(strlen($html_on) > 0,
     'Flag ON on mydashboard → callback returns CTA HTML');
@@ -45,7 +49,7 @@ expect_true(str_contains($html_on, 'hidden'),
 
 // 3. Layout filter — popup/embedded layouts should NOT inject the CTA.
 $PAGE->set_pagelayout('popup');
-$html_popup = local_sentientia_pwa_before_standard_top_of_body_html();
+$html_popup = \local_sentientia_pwa\hook_callbacks::build_install_cta_html();
 expect_true(strlen($html_popup ?? '') === 0,
     'Flag ON on popup layout → no CTA (layout filter respected)');
 

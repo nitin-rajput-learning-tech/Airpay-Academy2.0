@@ -59,8 +59,16 @@ defined('MOODLE_INTERNAL') || die();
 // standalone fork ($THEME->parents = []), but lib.php still had three
 // hard-coded epsilon paths. Repointed to /theme/airpayux/scss/preset/*.
 // All preset files (default.scss, plain.scss) already exist there.
-$plugin->version   = 2026052323;
+//
+// Phase B.3 hook migration (2026-05-23) — Moodle 5.2 web smoke surfaced
+// a deprecation notice asking us to migrate
+// `theme_airpayux_before_standard_top_of_body_html()` to the new hook
+// system. Added classes/hook_callbacks.php + db/hooks.php registering
+// `\core\hook\output\before_standard_top_of_body_html_generation`.
+// Legacy lib.php function preserved as a thin shim for 5.1 deployments
+// (it no-ops on 5.2 because the hook subscription is canonical).
+$plugin->version   = 2026052324;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.23-beta';  // epsilon stale-preset reference fix
+$plugin->release   = '1.0.24-beta';  // Phase B.3 hook migration
