@@ -32,8 +32,15 @@ defined('MOODLE_INTERNAL') || die();
 //   - partials/_layout-shell.scss: mobile shell-main width: 100% (Bug #13)
 // Version bump invalidates the cached compiled CSS bundle so theme
 // styles.php re-compiles SCSS on next request.
-$plugin->version   = 2026052219;
+//
+// P0 borrow #5 (Moodle 5.2, 2026-05-23) — OAuth2 / identity-provider
+// button text and divider copy ("or sign in with") moved to lang string
+// $string['signinwithidentityprovider']. Both en + hi packs updated;
+// templates/core/loginform.mustache references via {{#str}} helper.
+// Customer admins can override via Site Admin → Language customisation
+// per-tenant. Aria-label appended for screen-reader announcement.
+$plugin->version   = 2026052220;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.19-beta';  // +P0 #7 page_title AMD +P0 #8 deprecated AMD
+$plugin->release   = '1.0.20-beta';  // +P0 #5 OAuth2 i18n

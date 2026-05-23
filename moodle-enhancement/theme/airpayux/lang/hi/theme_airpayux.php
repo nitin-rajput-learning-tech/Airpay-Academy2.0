@@ -4,6 +4,9 @@ defined('MOODLE_INTERNAL') || die();
 
 $string['advancedsettings'] = 'एडवांस्ड सेटिंग्स';
 $string['colorsettings'] = 'रंग सेटिंग्स';
+
+// P0 borrow #5 (Moodle 5.2) — OAuth2 बटन का लोकलाइज़्ड टेक्स्ट।
+$string['signinwithidentityprovider'] = 'या इससे साइन इन करें';
 $string['backgroundimage'] = 'बैकग्राउंड इमेज';
 $string['backgroundimage_desc'] = 'साइट के बैकग्राउंड में दिखाई जाने वाली इमेज।';
 $string['brandcolor'] = 'ब्रांड कलर';

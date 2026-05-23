@@ -27,6 +27,12 @@ defined('MOODLE_INTERNAL') || die();
 
 $string['advancedsettings'] = 'Advanced settings';
 $string['colorsettings'] = 'Color settings';
+
+// P0 borrow #5 (Moodle 5.2) — OAuth2 button text localisable.
+// Used by templates/core/loginform.mustache and identity-provider
+// listings. Customer admins can override via Site Admin → Language
+// customisation if they want a different phrasing.
+$string['signinwithidentityprovider'] = 'or sign in with';
 $string['backgroundimage'] = 'Background image';
 $string['backgroundimage_desc'] = 'The image to display as a background of the site. The background image you upload here will override the background image in your theme preset files.';
 $string['brandcolor'] = 'Brand colour';

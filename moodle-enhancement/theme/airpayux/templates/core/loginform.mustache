@@ -38,29 +38,35 @@
             </div>
 
             <h1 class="airpay-login__hero-title">airpay academy</h1>
-            <p class="airpay-login__hero-subtitle">Enterprise learning &amp; development platform for financial services</p>
+            <p class="airpay-login__hero-subtitle">Upskill. Get certified. Get hired.</p>
 
-            {{! Feature bullets — matches homepage enterprise positioning }}
+            {{!
+                Audit fix 2026-05-15 — login hero copy rewritten to target the
+                public learner persona: people upskilling on their own,
+                taking employer-graded assessments, and earning shareable
+                certificates. Replaces the previous enterprise-admin framing
+                (compliance / analytics / heatmaps). Icons updated to match.
+            }}
             <div class="airpay-login__hero-features">
                 <div class="airpay-login__hero-feature">
-                    <div class="airpay-login__hero-feature-icon"><i class="fa fa-shield"></i></div>
+                    <div class="airpay-login__hero-feature-icon"><i class="fa fa-rocket"></i></div>
                     <div>
-                        <strong>Compliance Training</strong>
-                        <span>AML, KYC, POSH, DPDP &mdash; with automated tracking</span>
+                        <strong>Upskill on demand</strong>
+                        <span>Job-ready courses in finance, payments, tech &amp; business &mdash; built by the people running real platforms.</span>
                     </div>
                 </div>
                 <div class="airpay-login__hero-feature">
-                    <div class="airpay-login__hero-feature-icon"><i class="fa fa-graduation-cap"></i></div>
+                    <div class="airpay-login__hero-feature-icon"><i class="fa fa-briefcase"></i></div>
                     <div>
-                        <strong>Skills &amp; Certifications</strong>
-                        <span>Role-based learning paths with verifiable certificates</span>
+                        <strong>Hiring assessments</strong>
+                        <span>Take employer-graded tests. Pass once, get shortlisted by hiring partners across the industry.</span>
                     </div>
                 </div>
                 <div class="airpay-login__hero-feature">
-                    <div class="airpay-login__hero-feature-icon"><i class="fa fa-bar-chart"></i></div>
+                    <div class="airpay-login__hero-feature-icon"><i class="fa fa-certificate"></i></div>
                     <div>
-                        <strong>Analytics &amp; Reporting</strong>
-                        <span>Manager dashboards, compliance heatmaps, CSV export</span>
+                        <strong>Verified certificates</strong>
+                        <span>Every completion ships with a tamper-proof certificate you can share on LinkedIn or attach to a CV.</span>
                     </div>
                 </div>
             </div>
@@ -69,15 +75,15 @@
             <div class="airpay-login__hero-stats">
                 <div class="airpay-login__hero-stat">
                     <strong>{{output.login_stat_users}}</strong>
-                    <span>Active Learners</span>
+                    <span>Learners upskilling</span>
                 </div>
                 <div class="airpay-login__hero-stat">
                     <strong>{{output.login_stat_courses}}</strong>
-                    <span>Courses</span>
+                    <span>Courses available</span>
                 </div>
                 <div class="airpay-login__hero-stat">
                     <strong>{{output.login_stat_certs}}</strong>
-                    <span>Certificates Issued</span>
+                    <span>Certificates earned</span>
                 </div>
             </div>
 
@@ -101,9 +107,9 @@
                 {{/logourl}}
             </div>
 
-            {{! Form header }}
+            {{! Form header — public-learner framing (audit fix 2026-05-15) }}
             <h2 class="airpay-login__form-title">Welcome back</h2>
-            <p class="airpay-login__form-subtitle">Sign in to continue your learning journey</p>
+            <p class="airpay-login__form-subtitle">Pick up your courses, take assessments, and earn your next certificate.</p>
 
             {{! Error display }}
             {{#error}}
@@ -174,18 +180,22 @@
                         <input type="hidden" name="username" value="guest">
                         <input type="hidden" name="password" value="guest">
                         <button class="airpay-login__guest-btn" type="submit">
-                            <i class="fa fa-user-o"></i> {{#str}}loginguest{{/str}}
+                            {{! Audit fix M1: FA4 fa-user-o → FA5+ fa-user (Moodle 5.1 ships FA5+). }}
+                            <i class="fa fa-user"></i> {{#str}}loginguest{{/str}}
                         </button>
                     </form>
                 </div>
             {{/canloginasguest}}
 
-            {{! SSO / Identity providers }}
+            {{! SSO / Identity providers — P0 borrow #5 (Moodle 5.2):
+                localisable divider text + alt fallback for screen readers
+                while keeping the provider-name as the admin-configured
+                literal (which can also be localised via lang customisation). }}
             {{#hasidentityproviders}}
                 <div class="airpay-login__sso">
-                    <div class="airpay-login__divider"><span>or sign in with</span></div>
+                    <div class="airpay-login__divider"><span>{{#str}}signinwithidentityprovider, theme_airpayux{{/str}}</span></div>
                     {{#identityproviders}}
-                        <a href="{{url}}" title={{#quote}}{{name}}{{/quote}} class="airpay-login__sso-btn">
+                        <a href="{{url}}" title={{#quote}}{{name}}{{/quote}} class="airpay-login__sso-btn" aria-label="{{#str}}signinwithidentityprovider, theme_airpayux{{/str}} {{name}}">
                             {{#iconurl}}<img src="{{iconurl}}" alt="" width="20" height="20">{{/iconurl}}
                             {{name}}
                         </a>
