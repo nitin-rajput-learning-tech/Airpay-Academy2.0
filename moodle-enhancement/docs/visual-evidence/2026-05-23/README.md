@@ -90,3 +90,33 @@ broken-card chrome.
   - **/admin/*** at 590px **NOT VERIFIED THIS SESSION** — would require
     re-login as Site Admin (Asif Ansari is Course Author, not Site
     Admin). Flagged as follow-up task #176.
+
+---
+
+## Goal A.x — Sentientia polish on /user/edit.php
+
+**File:** `theme/airpayux/scss/moodle/partials/_surface-profile.scss`
+(scoped to `body#page-user-edit`)
+
+**Theme version bump:** 2026052207 → 2026052208
+
+### Before / After
+  - `user-edit-before.png` (viewport) + `user-edit-fullpage-before.png`
+    (full-page) — vanilla Moodle `mform` collapsible fieldsets, plain
+    label/input grid, no card chrome.
+  - `user-edit-after.png` — same form wrapped in 5 Sentientia cards
+    (one per fieldset). Section header uppercase letter-spaced 14px
+    with chevron toggle + brand-blue accent bar. Form inputs polished
+    (8px radius, soft `surface-alt` background, focus brand-light glow).
+    Required-field asterisks softened (7px, 70% opacity).
+
+### Mobile @ 590px verification
+  - `user-edit-after-mobile-590.png` — `col-md-3 / col-md-9` grid
+    collapses to stacked label-above-input via `@media (max-width: 768px)`
+    rule. Inputs go to 100% width. Avatars and section headers stay
+    legible.
+
+### Files modified
+  - `theme/airpayux/scss/moodle/partials/_surface-profile.scss`
+    (+210 lines, scoped under `// Goal A.x (2026-05-23) — /user/edit.php`)
+  - `theme/airpayux/version.php` 2026052207 → 2026052208

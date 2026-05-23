@@ -1789,4 +1789,252 @@ body.path-grade-report-grader {
 }
 
 
+/* ═══════════════════════════════════════════════════════════════════════
+   Goal A.x (2026-05-23) — Sentientia polish on /user/edit.php
+   ───────────────────────────────────────────────────────────────────────
+   Profile-editing form every persona touches. The viewer
+   `/user/profile.php` is already a Sentientia surface; this is the
+   editing counterpart (linked from profile page → Edit profile).
+
+   Moodle `mform` structure (5 collapsible fieldsets — General, User
+   picture, Additional names, Interests, Optional). Each fieldset has:
+     fieldset
+       ├── legend.visually-hidden               (a11y label)
+       ├── div.d-flex.align-items-center.mb-2   (visible header row)
+       │     ├── div.ftoggler                    (chevron toggle)
+       │     └── h3                              (section title)
+       └── div.fcontainer.collapseable.collapse.show
+             └── div.fitem.form-group.row       (per field)
+                   ├── div.col-md-3  →  label
+                   └── div.col-md-9.felement →  input
+
+   Wrap each fieldset in a Sentientia card; polish chevron + section
+   heading; soften input chrome and add brand focus ring; stack
+   label-above-input at <768px.
+
+   Body scope: `body#page-user-edit` (the only Moodle page that uses
+   this exact ID — `/user/editadvanced.php` is a different body ID).
+   ═══════════════════════════════════════════════════════════════════════ */
+body#page-user-edit {
+
+    #region-main {
+        max-width: 920px;
+        margin: 0 auto;
+        padding: 16px 0 32px;
+    }
+
+    /* The wrapping form */
+    #region-main form.mform {
+        margin: 0;
+    }
+
+    /* Each fieldset becomes a Sentientia card */
+    #region-main form.mform fieldset {
+        background: var(--ap-color-bg-surface, #ffffff);
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        border-radius: 16px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+        padding: 20px 24px;
+        margin: 0 0 16px;
+        position: relative;
+    }
+
+    /* Header row of each fieldset (chevron + h3 title) */
+    #region-main form.mform fieldset > .d-flex.align-items-center {
+        padding: 0 0 16px;
+        margin: 0 0 16px;
+        border-bottom: 1px solid var(--ap-color-border, #e5e7eb);
+        position: relative;
+    }
+    /* Brand accent bar under heading (matches grader / overview pattern) */
+    #region-main form.mform fieldset > .d-flex.align-items-center::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        width: 32px;
+        height: 2px;
+        background: var(--ap-color-primary, #0066A7);
+        border-radius: 2px;
+    }
+    /* Section title (h3) */
+    #region-main form.mform fieldset h3 {
+        font-size: 14px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: var(--ap-color-text-primary, #1a1a2e);
+        margin: 0;
+        line-height: 1;
+    }
+    /* Chevron toggle */
+    #region-main form.mform fieldset .ftoggler .btn-icon,
+    #region-main form.mform fieldset .ftoggler .fheader {
+        background: transparent !important;
+        border: none !important;
+        color: var(--ap-color-text-secondary, #5a6070);
+        padding: 4px 8px;
+        margin: 0 8px 0 -4px !important;
+        transition: color 0.15s ease;
+    }
+    #region-main form.mform fieldset .ftoggler .btn-icon:hover,
+    #region-main form.mform fieldset .ftoggler .fheader:hover {
+        color: var(--ap-color-primary, #0066A7);
+        background: var(--ap-color-primary-light, #e8f2f9) !important;
+        border-radius: 6px;
+    }
+    /* When collapsed, hide the bottom-border of the header so the
+       card feels compact */
+    #region-main form.mform fieldset.collapsed > .d-flex.align-items-center {
+        padding-bottom: 0;
+        margin-bottom: 0;
+        border-bottom: none;
+    }
+    #region-main form.mform fieldset.collapsed > .d-flex.align-items-center::after {
+        display: none;
+    }
+
+    /* Form rows — label / input grid */
+    #region-main form.mform .fitem.form-group {
+        margin: 0 0 14px;
+        padding: 0;
+    }
+    #region-main form.mform .fitem.form-group:last-child {
+        margin-bottom: 0;
+    }
+    /* Label column */
+    #region-main form.mform .fitem .col-form-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--ap-color-text-primary, #1a1a2e);
+        padding-top: 8px;
+        padding-bottom: 4px;
+    }
+    /* "Required" icon — keep red but soften size */
+    #region-main form.mform .fitem .text-danger img,
+    #region-main form.mform .fitem .text-danger .icon {
+        width: 8px;
+        height: 8px;
+        opacity: 0.7;
+    }
+    /* Input field — Sentientia polish */
+    #region-main form.mform .felement input[type="text"],
+    #region-main form.mform .felement input[type="email"],
+    #region-main form.mform .felement input[type="number"],
+    #region-main form.mform .felement input[type="password"],
+    #region-main form.mform .felement input[type="url"],
+    #region-main form.mform .felement select,
+    #region-main form.mform .felement textarea {
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 14px;
+        color: var(--ap-color-text-primary, #1a1a2e);
+        background: var(--ap-color-bg-surface-alt, #f8f9fc);
+        transition: border-color 0.15s ease, box-shadow 0.15s ease,
+                    background-color 0.15s ease;
+        max-width: 480px;
+    }
+    /* Focus state — brand-light glow */
+    #region-main form.mform .felement input:focus,
+    #region-main form.mform .felement select:focus,
+    #region-main form.mform .felement textarea:focus {
+        outline: none;
+        border-color: var(--ap-color-primary, #0066A7);
+        box-shadow: 0 0 0 3px rgba(0, 102, 167, 0.12);
+        background: var(--ap-color-bg-surface, #ffffff);
+    }
+
+    /* Tag-input (Interests) chips */
+    #region-main form.mform .form-autocomplete-suggestions,
+    #region-main form.mform .form-autocomplete-selection {
+        border-radius: 8px;
+    }
+    #region-main form.mform .form-autocomplete-selection [data-value] {
+        background: var(--ap-color-primary-light, #e8f2f9);
+        color: var(--ap-color-primary-dark, #004d80);
+        border-radius: 12px;
+        padding: 2px 10px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    /* Help icon ("?") — softer styling */
+    #region-main form.mform .form-text {
+        color: var(--ap-color-text-secondary, #5a6070);
+        font-size: 12px;
+        margin-top: 4px;
+    }
+
+    /* Form action buttons — bottom card */
+    #region-main form.mform > div:last-of-type[class*="form-group"],
+    #region-main form.mform .form-buttons,
+    #region-main form.mform fieldset:last-of-type + div {
+        background: var(--ap-color-bg-surface, #ffffff);
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        border-radius: 16px;
+        padding: 16px 24px;
+        margin-top: 16px;
+        text-align: right;
+    }
+    #region-main form.mform button[type="submit"],
+    #region-main form.mform input[type="submit"] {
+        background: var(--ap-color-primary, #0066A7);
+        color: #ffffff;
+        border: none;
+        padding: 10px 24px;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 8px;
+        margin-right: 8px;
+        cursor: pointer;
+        transition: background-color 0.15s ease, transform 0.05s ease,
+                    box-shadow 0.15s ease;
+    }
+    #region-main form.mform button[type="submit"]:hover,
+    #region-main form.mform input[type="submit"]:hover {
+        background: var(--ap-color-primary-dark, #004d80);
+        box-shadow: 0 4px 12px rgba(0, 102, 167, 0.25);
+    }
+    #region-main form.mform button[type="submit"]:active,
+    #region-main form.mform input[type="submit"]:active {
+        transform: translateY(1px);
+    }
+    /* Cancel button — secondary */
+    #region-main form.mform .btn-secondary,
+    #region-main form.mform button:not([type="submit"]):not(.ftoggler *) {
+        background: transparent;
+        color: var(--ap-color-text-secondary, #5a6070);
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        padding: 10px 20px;
+        font-size: 14px;
+        font-weight: 500;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    #region-main form.mform .btn-secondary:hover {
+        background: var(--ap-color-bg-surface-alt, #f8f9fc);
+        color: var(--ap-color-text-primary, #1a1a2e);
+        border-color: var(--ap-color-text-secondary, #5a6070);
+    }
+
+    /* Mobile — stack label on top of input (don't use Bootstrap grid) */
+    @media (max-width: 768px) {
+        #region-main { padding: 12px 0 24px; }
+        #region-main form.mform fieldset { padding: 16px 18px; margin-bottom: 12px; }
+        #region-main form.mform fieldset > .d-flex.align-items-center { padding-bottom: 12px; margin-bottom: 12px; }
+        #region-main form.mform fieldset h3 { font-size: 12px; }
+        #region-main form.mform .fitem .col-md-3,
+        #region-main form.mform .fitem .col-md-9 {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+        #region-main form.mform .fitem .col-form-label { padding-bottom: 4px; padding-top: 0; }
+        #region-main form.mform .felement input,
+        #region-main form.mform .felement select,
+        #region-main form.mform .felement textarea { max-width: 100%; width: 100%; }
+    }
+}
+
 
