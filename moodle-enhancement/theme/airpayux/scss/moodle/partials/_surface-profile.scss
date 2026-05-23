@@ -2038,3 +2038,114 @@ body#page-user-edit {
 }
 
 
+/* ═══════════════════════════════════════════════════════════════════════
+   Goal A.x (2026-05-23) — Sentientia polish on /user/preferences.php
+   ───────────────────────────────────────────────────────────────────────
+   The preferences hub — User account / Blogs / Badges / Miscellaneous
+   section cards each containing a link list (Edit profile, Change
+   password, Preferred language, Forum prefs, etc.).
+
+   Existing chrome was reasonable (white cards, brand-blue links) but
+   the section h3 titles lacked the uppercase letter-spaced treatment +
+   brand accent that all other Sentientia surfaces use (admin, profile,
+   badges, grader). This block brings preferences into the same visual
+   family.
+
+   Body scope: `body#page-user-preferences`.
+   ═══════════════════════════════════════════════════════════════════════ */
+body#page-user-preferences {
+
+    #region-main {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 16px 0 32px;
+    }
+
+    /* Page title */
+    #region-main > h2,
+    #region-main h2:first-of-type {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--ap-color-text-primary, #1a1a2e);
+        margin: 0 0 20px;
+    }
+
+    /* Each section block — wrap with consistent card chrome */
+    #region-main .preferences-page,
+    #region-main .col-md-4 {
+        margin-bottom: 16px;
+    }
+    #region-main .preferences-group,
+    #region-main .col-md-4 > div {
+        background: var(--ap-color-bg-surface, #ffffff);
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        border-radius: 16px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+        padding: 20px 24px;
+        height: 100%;
+    }
+
+    /* Section heading h3 — uppercase + brand accent (matches admin pattern) */
+    #region-main h3 {
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: var(--ap-color-text-secondary, #5a6070);
+        margin: 0 0 16px;
+        padding: 0 0 12px;
+        position: relative;
+        border-bottom: 1px solid var(--ap-color-border, #e5e7eb);
+    }
+    #region-main h3::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        width: 32px;
+        height: 2px;
+        background: var(--ap-color-primary, #0066A7);
+        border-radius: 2px;
+    }
+
+    /* Link list — clean stacked layout with hover */
+    #region-main ul,
+    #region-main .list-group {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    #region-main ul li,
+    #region-main .list-group .list-group-item {
+        padding: 8px 0;
+        border: none;
+        background: transparent;
+    }
+    #region-main ul li a,
+    #region-main .list-group .list-group-item a {
+        color: var(--ap-color-primary, #0066A7);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: color 0.15s ease, transform 0.05s ease;
+    }
+    #region-main ul li a:hover,
+    #region-main .list-group .list-group-item a:hover {
+        color: var(--ap-color-primary-dark, #004d80);
+        text-decoration: underline;
+        transform: translateX(2px);
+    }
+
+    /* Mobile — stack columns */
+    @media (max-width: 768px) {
+        #region-main { padding: 12px 0 24px; }
+        #region-main .col-md-4 { flex: 0 0 100%; max-width: 100%; }
+        #region-main .preferences-group,
+        #region-main .col-md-4 > div { padding: 16px 18px; }
+    }
+}
+
+
