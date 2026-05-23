@@ -15,9 +15,26 @@
 // Naming follows upstream verbatim so a future "diff this file against
 // theme/boost/scss/moodle/variables.scss" is a no-op for the lines below.
 //
-// Wiring: imported from custom_changes.scss at the same position as
-// _tokens.scss / _tokens-dark.scss so component partials downstream see
-// them.
+// Wiring: appended to pre_scss by theme_airpayux_get_pre_scss().
+//
+// === Phase B.12 fix (2026-05-23) — undefined-variable compile failure ===
+// This file is loaded in PRE-SCSS, which runs BEFORE preset/default.scss
+// where Bootstrap variables ($white, $black, $gray-700, $primary, etc.)
+// are defined. So when this partial references those variables in `!default`
+// assignments, the Sass parser failed with "Undefined variable $white" at
+// line 366 — silently corrupting the rest of the bundle (dropping
+// `.airpay-login` rules, etc.).
+//
+// Fix: define the Bootstrap variables we depend on as `!default` at the
+// TOP of this file. On the pre-scss path they get our defaults; on the
+// main-scss path (where preset/default.scss defines them first) the
+// `!default` is a no-op. Same set of values either way.
+$white:           #fff      !default;
+$black:           #000      !default;
+$gray-700:        #495057   !default;
+$primary:         #0066A7   !default;  // Airpay blue
+$font-size-base:  0.9375rem !default;
+$btn-border-radius: 0.25rem !default;
 
 // === Atto (15 vars) =========================================================
 // Branding hooks for the legacy Atto editor toolbar + content area. Mostly
