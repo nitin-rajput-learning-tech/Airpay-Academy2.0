@@ -5,6 +5,15 @@
  * Native enrol modal + per-row unenrol handler for the enrolledusers page.
  *
  * @module local_airpay_courses/enrolledusers
+ *
+ * @todo Phase B.4 cutover (2026-05-23): Moodle 5.2 removed `core/modal_factory`
+ * and `core/modal_registry` (MDL-79182). At cutover-day:
+ *   1. Replace `import ModalFactory from 'core/modal_factory'` with
+ *      `import Modal from 'core/modal'`.
+ *   2. Replace `ModalFactory.create({type: ModalFactory.types.SAVE_CANCEL, ...})`
+ *      with `Modal.create({modalType: 'SAVE_CANCEL', ...})`.
+ *   3. Smoke test the enrol modal on /local/airpay_courses/enrolledusers.php.
+ * See docs/5.2-merge/PHASE-B4-LIB-ADMIN-CONFLICTS.md.
  */
 import Ajax from 'core/ajax';
 import Notification from 'core/notification';

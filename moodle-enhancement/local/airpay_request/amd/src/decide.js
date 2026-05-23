@@ -5,6 +5,10 @@
  * Approve / reject modal for pending course requests.
  *
  * @module local_airpay_request/decide
+ *
+ * @todo Phase B.4 cutover (2026-05-23): Moodle 5.2 removed
+ * `core/modal_factory` (MDL-79182). At cutover-day swap to
+ * `core/modal` per docs/5.2-merge/PHASE-B4-LIB-ADMIN-CONFLICTS.md.
  */
 import Ajax from 'core/ajax';
 import Notification from 'core/notification';

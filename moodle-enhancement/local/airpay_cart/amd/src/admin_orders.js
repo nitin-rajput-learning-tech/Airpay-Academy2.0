@@ -5,6 +5,10 @@
  * Admin orders — refund modal trigger + action handler.
  *
  * @module local_airpay_cart/admin_orders
+ *
+ * @todo Phase B.4 cutover (2026-05-23): Moodle 5.2 removed
+ * `core/modal_factory` (MDL-79182). At cutover-day swap to
+ * `core/modal` per docs/5.2-merge/PHASE-B4-LIB-ADMIN-CONFLICTS.md.
  */
 import Ajax from 'core/ajax';
 import Notification from 'core/notification';
