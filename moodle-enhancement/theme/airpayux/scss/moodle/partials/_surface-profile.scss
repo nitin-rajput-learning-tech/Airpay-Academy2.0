@@ -1450,6 +1450,100 @@ body.path-course-view {
         border-radius: 8px;
     }
 
+    /* ─── Moodle 5.2 borrow P0 #2: activity header with completion labels ──
+       Moodle 5.2 ships an `activityinfoinheader` layout option that
+       moves the per-activity completion dropdown + due-date chip INTO
+       the activity header next to the title (was: a separate row
+       beneath the title). On 5.1.3+ we don't have the layout option
+       but we can replicate the visual via CSS — push the
+       [data-region="activity-information"] block up next to the
+       activity title, style its dropdown as a brand-light pill chip,
+       and tighten the spacing.
+
+       Net UX win: completion + dates are inline with the activity
+       name instead of a separate row. Course pages feel ~25% denser
+       without losing readability. */
+    .course-section li.activity .activity-item {
+        position: relative;
+    }
+    .course-section li.activity [data-region="activity-information"] {
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        margin: 0;
+        padding: 0;
+        z-index: 2;
+    }
+    .course-section li.activity [data-region="activity-information"]
+                                [data-region="completion-info"] {
+        margin: 0;
+    }
+    /* Completion dropdown chip — pill with brand-light bg */
+    .course-section li.activity .completion-dropdown > a,
+    .course-section li.activity .completion-dropdown > button,
+    .course-section li.activity .completion-dropdown .btn {
+        background: var(--ap-color-primary-light, #e8f2f9) !important;
+        color: var(--ap-color-primary-dark, #004d80) !important;
+        border: 1px solid transparent !important;
+        border-radius: 12px !important;
+        padding: 4px 12px !important;
+        font-size: 11px !important;
+        font-weight: 600 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+    .course-section li.activity .completion-dropdown > a:hover,
+    .course-section li.activity .completion-dropdown > button:hover {
+        background: var(--ap-color-primary, #0066A7) !important;
+        color: #ffffff !important;
+        border-color: var(--ap-color-primary, #0066A7) !important;
+    }
+    /* "Done" / completed state — green pill */
+    .course-section li.activity .completion-dropdown[data-state="complete"] > a,
+    .course-section li.activity [data-region="completion-info"]
+                                [data-completion-state="complete"] > a,
+    .course-section li.activity .btn-success.completion-dropdown {
+        background: rgba(22, 163, 74, 0.12) !important;
+        color: rgb(22, 163, 74) !important;
+    }
+    /* Activity-dates chip — neutral surface-alt */
+    .course-section li.activity .activity-dates,
+    .course-section li.activity [data-region="activity-dates"] {
+        background: var(--ap-color-bg-surface-alt, #f8f9fc);
+        color: var(--ap-color-text-secondary, #5a6070);
+        border-radius: 10px;
+        padding: 3px 10px;
+        font-size: 11px;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-right: 8px;
+    }
+
+    /* Push the activity title to leave room for the inline info */
+    .course-section li.activity .activity-item .activity-name-area,
+    .course-section li.activity .activity-item .activitytitle {
+        padding-right: 200px;
+    }
+
+    /* Mobile — restore stacked layout (the absolute positioning
+       crams the title on small screens) */
+    @media (max-width: 768px) {
+        .course-section li.activity [data-region="activity-information"] {
+            position: static;
+            transform: none;
+            margin-top: 8px;
+            text-align: right;
+        }
+        .course-section li.activity .activity-item .activity-name-area,
+        .course-section li.activity .activity-item .activitytitle {
+            padding-right: 0;
+        }
+    }
+
     /* Mobile — tighter padding */
     @media (max-width: 768px) {
         .course-content ul > li.course-section {

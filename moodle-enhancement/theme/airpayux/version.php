@@ -32,8 +32,8 @@ defined('MOODLE_INTERNAL') || die();
 //   - partials/_layout-shell.scss: mobile shell-main width: 100% (Bug #13)
 // Version bump invalidates the cached compiled CSS bundle so theme
 // styles.php re-compiles SCSS on next request.
-$plugin->version   = 2026052213;
+$plugin->version   = 2026052214;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.13-beta';  // +P0 borrow #1 sticky footer submit buttons
+$plugin->release   = '1.0.14-beta';  // +P0 borrow #2 activity-header inline completion
