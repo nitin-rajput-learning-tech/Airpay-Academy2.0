@@ -82,6 +82,14 @@ trait login_render {
             ['context' => \context_course::instance(SITEID), "escape" => false]);
         $context->output   = $OUTPUT;
 
+        // Phase B.3.a (2026-05-23, Moodle 5.2 rebase) — 5.2 boost added
+        // `$context->hasauthinstructions = !empty($CFG->auth_instructions);`
+        // to render_login() so the login form's "Authentication instructions"
+        // block can conditionally render. Mirror it here so a Moodle 5.2
+        // template referencing this context key gets the expected boolean.
+        // 5.1 templates that don't reference it are unaffected.
+        $context->hasauthinstructions = !empty($CFG->auth_instructions);
+
         $helptext      = $this->page->theme->settings->helpdesc;
         $contactustext = $this->page->theme->settings->contact;
         $aboutustext   = $this->page->theme->settings->aboutus;

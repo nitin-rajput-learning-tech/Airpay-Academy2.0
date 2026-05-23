@@ -85,8 +85,16 @@ defined('MOODLE_INTERNAL') || die();
 //     as `!default`. Loaded LAST in lib.php's pre_scss chain so customer
 //     brand overrides above still win, but every new 5.2 variable is now
 //     available for component SCSS to consume.
-$plugin->version   = 2026052326;
+//
+// Phase B.3.a core_renderer rebase (2026-05-23) — 5.2 boost's
+// core_renderer.php added ONE method vs 5.1: `render_login()` (which
+// we already override) with a new `$context->hasauthinstructions` key
+// that conditionally renders the "Authentication instructions" block.
+// Our `traits/login_render.php::render_login()` now mirrors this key
+// for forward-compat with any 5.2 template fallback path.
+// See docs/5.2-merge/PHASE-B3A-CORE-RENDERER-REBASE.md.
+$plugin->version   = 2026052327;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.26-beta';  // Phase B.3.e+ BS5 + 5.2 vars
+$plugin->release   = '1.0.27-beta';  // Phase B.3.a core_renderer rebase
