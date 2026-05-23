@@ -41,10 +41,19 @@ $plugin->component = 'local_airpay_core';
 // by theme_airpayux/before_standard_top_of_body_html (server-rendered JSON)
 // + amd/user_status_badge.js (DOM decorator). PHPUnit covers cache, batch
 // lookup, defensive zero-id input, and badge HTML escaping.
-$plugin->version   = 2026052302;
+//
+// P0 borrow #11 (Moodle 5.2, 2026-05-23) — backup-filename template helper.
+// Adds classes/backup_filename.php — token-substitution helper for the
+// SENTIENTIA SCORM pipeline and future Sentientia LMS export jobs. Admin
+// setting at Site Admin → Plugins → Local plugins → Airpay Core. Default
+// template matches Moodle's built-in behaviour so the change is opt-in.
+// Lang strings settings_pagetitle + setting_backup_filename_* in en + hi
+// (4 each = 8 total). PHPUnit covers token substitution, sanitisation,
+// path traversal blocking, max length, and the fallback-on-empty contract.
+$plugin->version   = 2026052303;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.5.2';  // +P0 #10 user_status helper + 8 lang strings
+$plugin->release   = '1.5.3';  // +P0 #11 backup_filename helper + admin setting
 // Release history
 // 1.1.0  cron-health publisher + audit_log + structured_logger
 // 1.2.0  Phase A0 — feature flags + Switchboard infrastructure.

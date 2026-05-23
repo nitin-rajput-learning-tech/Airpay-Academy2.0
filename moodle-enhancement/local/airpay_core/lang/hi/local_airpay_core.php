@@ -63,3 +63,10 @@ $string['userstatus_suspended']        = 'निलंबित';
 $string['userstatus_deleted']          = 'हटाया गया';
 $string['userstatus_badge_aria']       = 'खाते की स्थिति: {$a}';
 $string['privacy:metadata:userstatus'] = 'यूज़र-स्थिति हेल्पर केवल यूज़र निलंबन फ्लैग पढ़ता है, संग्रहित नहीं करता।';
+
+// P0 बोरो #11 (Moodle 5.2, 2026-05-23) — बैकअप फ़ाइलनाम टेम्पलेट।
+// साइट एडमिन → प्लगइन्स → लोकल प्लगइन्स → Airpay Core।
+$string['settings_pagetitle']                    = 'Airpay Core';
+$string['setting_backup_filename_template']      = 'डिफ़ॉल्ट बैकअप फ़ाइलनाम टेम्पलेट';
+$string['setting_backup_filename_template_desc'] = 'SENTIENTIA पाइपलाइन (और भविष्य के Sentientia LMS एक्सपोर्ट जॉब्स) बैकअप फ़ाइलनाम बनाते समय यह टेम्पलेट इस्तेमाल करता है। नीचे दिए प्लेसहोल्डर टोकन का उपयोग करें — रन-टाइम पर वे रिप्लेस हो जाएंगे। टेम्पलेट में न होने वाले टोकन को नज़रअंदाज़ किया जाएगा। {extension} खुद-ब-खुद जुड़ जाता है।';
+$string['setting_backup_filename_tokens']        = 'उपलब्ध टोकन:';

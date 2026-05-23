@@ -64,3 +64,11 @@ $string['userstatus_suspended']      = 'Suspended';
 $string['userstatus_deleted']        = 'Deleted';
 $string['userstatus_badge_aria']     = 'Account status: {$a}';
 $string['privacy:metadata:userstatus'] = 'The user-status helper reads but does not store user suspension flags.';
+
+// P0 borrow #11 (Moodle 5.2, 2026-05-23) — Backup filename template.
+// Site Admin → Plugins → Local plugins → Airpay Core. Default value is
+// backwards-compatible with Moodle's built-in filename builder.
+$string['settings_pagetitle']                       = 'Airpay Core';
+$string['setting_backup_filename_template']         = 'Default backup filename template';
+$string['setting_backup_filename_template_desc']    = 'Template used when SENTIENTIA pipeline (and future Sentientia LMS export jobs) generates backup file names. Use the placeholder tokens listed below — they will be substituted at run time. Tokens not in the template are simply ignored. The {extension} is appended automatically.';
+$string['setting_backup_filename_tokens']           = 'Available tokens:';
