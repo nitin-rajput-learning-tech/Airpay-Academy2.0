@@ -27,10 +27,17 @@ $plugin->component = 'local_airpay_core';
 // New 5-level resolver (customer+tenant > customer > legacy tenant >
 // global > registered default). Gated by sentientia.customer_level_flags.enabled
 // (default OFF). New classes/customer.php helper + Switchboard customer tabs.
-$plugin->version   = 2026052201;
+//
+// P0 borrow #9 (Moodle 5.2, 2026-05-23) — cm_info::get_navigation_url()
+// resolver shim. Adds classes/cm_navigation.php + tests/cm_navigation_test.php.
+// Pure additive — no schema change, no behaviour change for callers that
+// keep using $cm->url. Wired into theme_airpayux course_view trait so a
+// module that registers mod_xxx_get_navigation_url($cm) can override the
+// launch URL. 5.2 migration: search-and-replace + delete cm_navigation.php.
+$plugin->version   = 2026052301;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.5.0';  // ADR-008 — customer_brand DB table + cached resolver
+$plugin->release   = '1.5.1';  // +P0 #9 cm_navigation resolver shim
 // Release history
 // 1.1.0  cron-health publisher + audit_log + structured_logger
 // 1.2.0  Phase A0 — feature flags + Switchboard infrastructure.
