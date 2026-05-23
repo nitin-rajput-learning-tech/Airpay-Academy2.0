@@ -34,10 +34,17 @@ $plugin->component = 'local_airpay_core';
 // keep using $cm->url. Wired into theme_airpayux course_view trait so a
 // module that registers mod_xxx_get_navigation_url($cm) can override the
 // launch URL. 5.2 migration: search-and-replace + delete cm_navigation.php.
-$plugin->version   = 2026052301;
+//
+// P0 borrow #10 (Moodle 5.2, 2026-05-23) — suspended-user status badge.
+// Adds classes/user_status.php — request-cached lookup of suspended/deleted
+// state. Lang strings userstatus_* in en + hi (4 each = 8 total). Consumed
+// by theme_airpayux/before_standard_top_of_body_html (server-rendered JSON)
+// + amd/user_status_badge.js (DOM decorator). PHPUnit covers cache, batch
+// lookup, defensive zero-id input, and badge HTML escaping.
+$plugin->version   = 2026052302;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.5.1';  // +P0 #9 cm_navigation resolver shim
+$plugin->release   = '1.5.2';  // +P0 #10 user_status helper + 8 lang strings
 // Release history
 // 1.1.0  cron-health publisher + audit_log + structured_logger
 // 1.2.0  Phase A0 — feature flags + Switchboard infrastructure.

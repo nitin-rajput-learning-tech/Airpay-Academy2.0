@@ -55,3 +55,12 @@ $string['scope_banner_global']           = 'You are editing the <strong>global d
 $string['scope_banner_legacy_tenant']    = 'You are editing the <strong>{$a}</strong> tenant (legacy scope — applies across all customers). Toggles here override the global default for {$a} only.';
 $string['scope_banner_customer']         = 'You are editing the <strong>{$a}</strong> customer scope. Toggles here apply to every tenant owned by this customer unless overridden at the tenant level.';
 $string['scope_banner_customer_tenant']  = 'You are editing the <strong>{$a->customer}</strong> customer / <strong>{$a->tenant}</strong> tenant pair. Toggles here override the customer-wide value for this specific tenant only.';
+
+// P0 borrow #10 (Moodle 5.2, 2026-05-23) — user-status badge on report
+// rows, participants list, and gradebook surfaces. Visible to anyone with
+// site:viewreports cap; covers the "why is this row at 0%? oh, they left"
+// confusion that surfaces in audit prep.
+$string['userstatus_suspended']      = 'Suspended';
+$string['userstatus_deleted']        = 'Deleted';
+$string['userstatus_badge_aria']     = 'Account status: {$a}';
+$string['privacy:metadata:userstatus'] = 'The user-status helper reads but does not store user suspension flags.';

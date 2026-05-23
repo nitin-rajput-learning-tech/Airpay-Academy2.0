@@ -39,8 +39,15 @@ defined('MOODLE_INTERNAL') || die();
 // templates/core/loginform.mustache references via {{#str}} helper.
 // Customer admins can override via Site Admin → Language customisation
 // per-tenant. Aria-label appended for screen-reader announcement.
-$plugin->version   = 2026052220;
+//
+// P0 borrow #10 (Moodle 5.2, 2026-05-23) — suspended-user badge AMD +
+// before_standard_top_of_body_html hook. Server pre-renders a JSON map
+// of suspended/deleted userids in the current tenant; the AMD decorator
+// paints inline badges next to user-name links on report-like pages
+// (gradebook, participants, report log, course-user). New SCSS partial
+// _components-user-status-badge.scss imported in custom_changes.scss.
+$plugin->version   = 2026052321;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.20-beta';  // +P0 #5 OAuth2 i18n
+$plugin->release   = '1.0.21-beta';  // +P0 #10 suspended-user badge
