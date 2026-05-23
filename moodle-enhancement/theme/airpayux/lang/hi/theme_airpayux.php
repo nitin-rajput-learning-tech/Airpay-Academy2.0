@@ -134,3 +134,8 @@ $string['learnerlogin'] = 'मोबाइल नंबर डालें';
 $string['enterotp'] = 'OTP डालें';
 $string['resentotp'] = 'OTP दोबारा भेजें';
 $string['entermobileotp'] = 'डाला गया मोबाइल नंबर रजिस्टर्ड नहीं है, कृपया चेक करें';
+
+// P0 बोरो #14 (Moodle 5.2, 2026-05-23) — "मेरे कोर्स" ड्रॉपडाउन में
+// अतिरिक्त सॉर्ट विकल्प।
+$string['sortbystartdate'] = 'कोर्स शुरू होने की तारीख';
+$string['sortbyenddate']   = 'कोर्स ख़त्म होने की तारीख';

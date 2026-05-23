@@ -1,0 +1,95 @@
+{{!
+    This file is part of Airpay Academy / Sentientia LMS.
+
+    Theme override of block_myoverview/nav-sort-selector.
+
+    P0 borrow #14 (Moodle 5.2, 2026-05-23) — extends the My Courses
+    "Sort by" dropdown with two new options:
+        - Course start date (newest first)  →  c.startdate desc
+        - Course end date (soonest first)   →  c.enddate asc
+
+    Why we can ship this with a pure template override
+    --------------------------------------------------
+    The data-value attribute lands directly in
+    enrol_get_my_courses($sort) which validates against a whitelist of
+    `c.<column>` from mdl_course (and `ul.`, `ue.`). Both startdate and
+    enddate are real columns on mdl_course, so they pass validation
+    without any PHP change — see lib/enrollib.php::enrol_get_my_courses
+    around line 603 ($allowedprefixesandfields).
+
+    Why server-side initial-label rendering is unchanged
+    ----------------------------------------------------
+    Moodle 5.1's block_myoverview\output\main::export_for_template()
+    only sets booleans for {title, lastaccessed, shortname}. When a user
+    has previously selected "Start date" and reloads the page, the
+    initial active-label render is empty — the dropdown text-region
+    self-populates via Moodle's data-active-item JS after page paint.
+    Acceptable trade-off; on the 5.2 wholesale upgrade we delete this
+    override file and the upstream renderer will surface the label.
+
+    Migration on 5.2
+    ----------------
+    Delete this file. Upstream 5.2's nav-sort-selector ships these two
+    items natively (plus active-label rendering on the server side).
+
+    Original context vars (preserved):
+        - title          boolean — sort by course full name is active
+        - lastaccessed   boolean — sort by last access is active
+        - shortname      boolean — sort by short name is active
+        - showsortbyshortname  boolean — show the shortname item at all
+        - uniqid         string — aria-controls target id for the courses view
+}}
+
+<div class="mb-1 me-1 d-flex flex-wrap align-items-center">
+    <div class="dropdown">
+        <button id="sortingdropdown" type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="{{#str}} aria:sortingdropdown, block_myoverview {{/str}}">
+            <span data-active-item-text>
+                {{#title}}{{#str}} sortbytitle, block_myoverview {{/str}}{{/title}}
+                {{#lastaccessed}}{{#str}} sortbylastaccessed, block_myoverview {{/str}}{{/lastaccessed}}
+                {{#shortname}}{{#str}} sortbyshortname, block_myoverview {{/str}}{{/shortname}}
+            </span>
+        </button>
+        <ul class="dropdown-menu" role="menu" data-show-active-item data-skip-active-class="true" aria-labelledby="sortingdropdown">
+            <li>
+                <a class="dropdown-item" href="#" data-filter="sort" data-pref="title" data-value="fullname" aria-controls="courses-view-{{uniqid}}" role="menuitem" {{#title}}aria-current="true"{{/title}}>
+                    {{#str}} sortbytitle, block_myoverview {{/str}}
+                </a>
+            </li>
+            {{#showsortbyshortname}}
+            <li>
+                <a class="dropdown-item" href="#" data-filter="sort" data-pref="shortname" data-value="shortname" aria-controls="courses-view-{{uniqid}}" role="menuitem" {{#shortname}}aria-current="true"{{/shortname}}>
+                    {{#str}} sortbyshortname, block_myoverview {{/str}}
+                </a>
+            </li>
+            {{/showsortbyshortname}}
+            <li>
+                <a class="dropdown-item" href="#" data-filter="sort" data-pref="lastaccessed" data-value="ul.timeaccess desc" aria-controls="courses-view-{{uniqid}}" role="menuitem" {{#lastaccessed}}aria-current="true"{{/lastaccessed}}>
+                    {{#str}} sortbylastaccessed, block_myoverview {{/str}}
+                </a>
+            </li>
+            {{!
+                ─── P0 borrow #14 additions ──────────────────────────────
+                Course start date (newest first) — useful for rolling
+                classroom cohorts that prefer to see the most recent
+                cohort at the top of My Courses.
+
+                Course end date (soonest first) — useful for compliance
+                courses that have a hard-stop close date.
+
+                Both data-value strings are whitelisted by
+                enrol_get_my_courses() through the
+                $allowedprefixesandfields['c'] column-name check.
+            }}
+            <li>
+                <a class="dropdown-item" href="#" data-filter="sort" data-pref="startdate" data-value="c.startdate desc" aria-controls="courses-view-{{uniqid}}" role="menuitem">
+                    {{#str}} sortbystartdate, theme_airpayux {{/str}}
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" href="#" data-filter="sort" data-pref="enddate" data-value="c.enddate asc" aria-controls="courses-view-{{uniqid}}" role="menuitem">
+                    {{#str}} sortbyenddate, theme_airpayux {{/str}}
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>

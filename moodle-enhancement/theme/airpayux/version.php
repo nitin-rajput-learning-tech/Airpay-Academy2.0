@@ -46,8 +46,14 @@ defined('MOODLE_INTERNAL') || die();
 // paints inline badges next to user-name links on report-like pages
 // (gradebook, participants, report log, course-user). New SCSS partial
 // _components-user-status-badge.scss imported in custom_changes.scss.
-$plugin->version   = 2026052321;
+//
+// P0 borrow #14 (Moodle 5.2, 2026-05-23) — extra sort options on the
+// block_myoverview "My Courses" dropdown: course start date (newest
+// first) + course end date (soonest first). Template override at
+// templates/block_myoverview/nav-sort-selector.mustache. Lang strings
+// sortbystartdate / sortbyenddate added in en + hi (100% parity).
+$plugin->version   = 2026052322;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.21-beta';  // +P0 #10 suspended-user badge
+$plugin->release   = '1.0.22-beta';  // +P0 #14 myoverview sort by start/end date

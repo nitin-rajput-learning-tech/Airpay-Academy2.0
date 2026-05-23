@@ -227,3 +227,10 @@ $string['enterotp'] = 'Enter OTP';
 $string['resentotp'] = 'Resend OTP';
 $string['showhideblocks'] = 'Show/Hide blocks';
 $string['entermobileotp'] = 'Entered mobile number is not exists, please check';
+
+// P0 borrow #14 (Moodle 5.2, 2026-05-23) — extra sort options on the
+// block_myoverview "My Courses" dropdown. The template override at
+// templates/block_myoverview/nav-sort-selector.mustache references
+// these strings via {{#str}}.
+$string['sortbystartdate'] = 'Course start date';
+$string['sortbyenddate']   = 'Course end date';
