@@ -1,0 +1,52 @@
+# Dockerfile for running PHP 8.4 CLI against Moodle 5.2 codebase.
+#
+# Why: WDAC blocks native PHP 8.4 binaries on the local machine.
+#      See docs/5.2-merge/PHP-8.4-INSTALL-WDAC-PIVOT.md.
+#
+# Build:
+#   docker build -t moodle-5.2-cli -f moodle-enhancement/tools/Dockerfile.moodle-5.2 \
+#       moodle-enhancement/tools
+#
+# Use:
+#   docker run --rm -v C:\xampp\htdocs\moodle5\public:/var/www/html \
+#       --add-host=host.docker.internal:host-gateway \
+#       moodle-5.2-cli php /var/www/html/../admin/cli/upgrade.php --non-interactive
+
+FROM php:8.4-cli-bookworm
+
+# System packages required by Moodle PHP extensions.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libfreetype-dev libjpeg62-turbo-dev libpng-dev \
+        libicu-dev libxml2-dev libzip-dev libsodium-dev \
+        libldap2-dev libcurl4-openssl-dev libxslt-dev \
+        libwebp-dev libonig-dev \
+        unzip default-mysql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# PHP extensions required by Moodle 5.2.
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
+    && docker-php-ext-configure intl \
+    && docker-php-ext-install -j$(nproc) \
+        gd intl mbstring mysqli pdo pdo_mysql xml zip opcache \
+        curl soap exif ldap xsl simplexml bcmath sodium
+
+# Recommended PHP settings for Moodle.
+RUN { \
+        echo 'memory_limit=512M'; \
+        echo 'max_execution_time=300'; \
+        echo 'upload_max_filesize=128M'; \
+        echo 'post_max_size=128M'; \
+        echo 'max_input_vars=5000'; \
+        echo 'opcache.enable=1'; \
+        echo 'opcache.enable_cli=1'; \
+        echo 'opcache.memory_consumption=256'; \
+    } > /usr/local/etc/php/conf.d/moodle.ini
+
+# Composer (used by tests and some dev tooling)
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www/html
+
+# Default to running php so `docker run ... php -v` works without an explicit command.
+ENTRYPOINT ["php"]
+CMD ["--version"]
