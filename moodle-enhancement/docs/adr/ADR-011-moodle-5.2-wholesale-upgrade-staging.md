@@ -210,8 +210,61 @@ makes rollback at any phase boundary trivial.
 2. **Maintenance window for the production cutover** — preferably a
    weekend; 4h window with 2h reserved for rollback if needed.
 3. **Communication plan** to active learners during the window.
-4. **Should the next session start Phase A.1-A.2 (codebase prep)?**
-   It's productive work even with PHP 8.2 still on local.
+4. ~~Should the next session start Phase A.1-A.2 (codebase prep)?~~
+   **DECIDED (2026-05-23) — YES.** Phase A.1-A.5 complete.
+
+---
+
+## Decision log (2026-05-23 amendments)
+
+### mform widget merge strategy — Option B (slow merge)
+
+Per Phase A.4 inventory the heaviest merge surface is the 52 mform
+widget overrides in `templates/core_form/`. Two options were on the
+table:
+
+- **Option A (fast merge):** "take theirs" on mform widgets, schedule
+  a 12-20h post-merge visual sprint. 80% Sentientia / 20% Boost on
+  day 1.
+- **Option B (slow merge):** invest 30-40h up front, keep visual
+  unchanged on day 1. 100% Sentientia / 0% Boost on day 1.
+
+**Decision: Option B locked in (Nitin, 2026-05-23).**
+
+Rationale:
+- The C-suite-approved 22 prototypes set the visual contract that
+  Airpay Academy live users see every day. A jarring 20% visual
+  regression for even a week is brand damage.
+- Sentientia LMS is being positioned for sale to other enterprises;
+  shipping a half-finished visual would undercut that positioning.
+- The 30-40h extra investment compresses to ~5 working days, which
+  fits inside our merge window comfortably.
+
+Phase B.3 (theme files conflict resolution) is therefore the LONGEST
+phase. Plan: 50% of Phase B time on theme; 25% on lib + admin;
+25% on plugins + AMD + SCSS.
+
+### Track 2 (implicit-nullable cleanup) — already done
+
+Originally flagged in PHASE-A3 as 13 implicit-nullable param
+signatures needing the `?type` prefix for PHP 8.4 readiness. On
+re-verification with a negative-lookbehind regex, the count is
+**zero** — every `=null` default param in the codebase already uses
+the explicit `?type` prefix. The earlier count was a false signal
+from a sloppy regex.
+
+Track 2 closed without a code change. PHASE-A3 doc updated.
+
+### Track 1 (5.2 source pull) — execute now
+
+Nitin OK'd both tracks on 2026-05-23. The source pull (~150 MB
+network, ~600 MB disk) lands outside the airpay-ld-os repo at
+`D:\Claude Local\moodle-5.2-source\`. The diff trio is generated
+into `D:\Claude Local\moodle-5.2-diffs\`. Neither directory enters
+git history.
+
+This unblocks Phase A.4b — the per-file conflict map for Phase B.3
+prioritisation.
 
 ---
 

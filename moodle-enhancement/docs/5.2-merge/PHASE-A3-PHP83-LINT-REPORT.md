@@ -93,24 +93,24 @@ PHP 8.4 deprecates `function f(string $x = null)` — must be
 `function f(?string $x = null)` instead. The runtime change is in 8.4,
 not 8.3, but adding the `?` now is free and unblocks the 8.4 jump.
 
-13 occurrences across 10 files:
+**Re-verified with negative-lookbehind regex on 2026-05-23:**
 
 ```
-local/airpay_challenge/tests/challenge_engine_test.php   (1)
-local/airpay_core/classes/tenant.php                     (2)
-local/airpay_challenge/classes/challenge_engine.php      (1)
-local/airpay_core/classes/customer.php                   (2)
-local/airpay_exams/classes/exam_manager.php              (1)
-local/airpay_org/tests/org_manager_test.php              (1)
-local/airpay_learningpath/classes/path_manager.php       (1)
-local/airpay_users/classes/user_manager.php              (1)
-local/airpay_notifications/classes/rule_manager.php      (2)
-local/airpay_gamification/classes/points_manager.php     (1)
+(?<!\?)\b(int|string|bool|float|array|object|callable|iterable|self|static|mixed|true|false)\s+\$\w+\s*=\s*null
+  → 0 matches across local/airpay_*/
+
+(?<!\?)\\\\?[A-Z]\w+\s+\$\w+\s*=\s*null   (class types)
+  → 0 matches across local/airpay_*/
 ```
 
-**Action:** Advisory only — does not block the 5.2 merge (PHP 8.3
-doesn't error on these). Fold into a follow-up cleanup commit before
-PHP 8.4 ships, ideally during Phase D pre-deploy polish.
+**Result: 0 implicit-nullable params. The codebase is PHP 8.4 ready.**
+
+An earlier draft of this document claimed "13 occurrences" — that was a
+false signal from a sloppy regex that matched `?int $x = null` strings
+without enforcing the no-`?` lookbehind. Every `=null` default param in
+the codebase already uses the explicit `?type` prefix.
+
+**Action:** None required. Track 2 of the post-A handoff is closed.
 
 ### Dynamic property writes (PHP 8.2 deprecation for user classes)
 
@@ -218,9 +218,10 @@ disk. The lint baseline established here is the regression target.
 
 ## Action items extracted
 
-1. **Phase D pre-deploy cleanup**: Add explicit `?type` to 13
-   implicit-nullable param signatures. One PR, ~30 min mechanical
-   work. Adds PHP 8.4-readiness for free.
+1. ~~Phase D pre-deploy cleanup: Add explicit `?type` to 13
+   implicit-nullable param signatures.~~ **CLOSED — already done; no
+   implicit-nullable params exist (verified with negative-lookbehind
+   regex).**
 2. **Phase B.1 smoke test**: Stress-test `airpay_courses` and
    `airpay_exams` reminder crons under PHP 8.3 — date handling
    is the highest-probability regression site.
