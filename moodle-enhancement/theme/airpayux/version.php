@@ -32,8 +32,8 @@ defined('MOODLE_INTERNAL') || die();
 //   - partials/_layout-shell.scss: mobile shell-main width: 100% (Bug #13)
 // Version bump invalidates the cached compiled CSS bundle so theme
 // styles.php re-compiles SCSS on next request.
-$plugin->version   = 2026052217;
+$plugin->version   = 2026052218;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.17-beta';  // +rename pluginname (Epsilon → Airpay Academy UX)
+$plugin->release   = '1.0.18-beta';  // +P0 #4 availability chip +P0 #6 announcement AMD

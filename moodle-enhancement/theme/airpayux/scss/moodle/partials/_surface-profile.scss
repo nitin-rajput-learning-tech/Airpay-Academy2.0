@@ -1478,6 +1478,53 @@ body.path-course-view {
         100% { background: transparent; }
     }
 
+    /* ─── Moodle 5.2 borrow P0 #4: availability conditions visible ──
+       In stock Moodle 5.1 the `.availabilityinfo` block (which
+       contains "Available from <date>", "Not available unless you
+       complete X", etc.) is muted-grey + visually de-emphasised.
+       Moodle 5.2 promotes it to a clearly-visible chip so learners
+       can SEE the unlock condition, not just bounce off the
+       "Restricted" label.
+
+       Borrow as a styled chip: amber-warning tint background,
+       small lock icon space-reserved, brand-secondary text. Sits
+       below the activity title (or below the section title for
+       section-level restrictions). */
+    .course-section .availabilityinfo,
+    .course-section li.activity .availabilityinfo,
+    .course-section .course-section-header .availabilityinfo {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(217, 119, 6, 0.10);       /* amber-warning 10% */
+        color: rgb(146, 64, 14);                    /* amber-warning dark */
+        border: 1px solid rgba(217, 119, 6, 0.25);
+        border-radius: 10px;
+        padding: 6px 12px;
+        font-size: 12px;
+        font-weight: 500;
+        margin: 8px 0 4px;
+        max-width: 100%;
+    }
+    /* Lock-icon prefix (CSS-only — no template change) */
+    .course-section .availabilityinfo::before,
+    .course-section li.activity .availabilityinfo::before {
+        content: '🔒';
+        font-size: 11px;
+        flex-shrink: 0;
+        opacity: 0.7;
+    }
+    /* Hide vanilla Moodle's separate lock icon — our pseudo replaces it */
+    .course-section .availabilityinfo .fa-lock,
+    .course-section .availabilityinfo .icon[title*="ock"] {
+        display: none;
+    }
+    /* If multiple availability lines (compound restrictions), stack */
+    .course-section .availabilityinfo + .availabilityinfo {
+        display: flex;
+        margin-top: 4px;
+    }
+
     /* ─── Moodle 5.2 borrow P0 #2: activity header with completion labels ──
        Moodle 5.2 ships an `activityinfoinheader` layout option that
        moves the per-activity completion dropdown + due-date chip INTO
