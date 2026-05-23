@@ -3837,14 +3837,50 @@ output in the commit body.
   - Mobile @ 768px: 3-col flex stacks to 1; verified.
   - Theme version 2026052208 → 2026052209.
 
+**Shipment 6 — CI integration: standalone ws_contract gate**
+  - Commit `80d18ed79` — `ci(theme): standalone ws_contract gate without Moodle bootstrap`
+  - The Moodle-aware ws_contract_test.php existed since `bf5412ed2`
+    and now passes via PHPUnit (Shipment 3) — but the existing CI
+    workflow `.github/workflows/ci.yml` explicitly opted out of
+    PHPUnit because Moodle install on every PR costs ~5-15 min.
+  - This commit lands a STANDALONE static-analysis variant at
+    `moodle-enhancement/tools/ci-ws-contract-check.php` that does the
+    same audit without any Moodle bootstrap: walks airpay_* plugin
+    mustache files for `data-region="airpay-datatable"` +
+    `data-ws-name="X"` pairs, loads each plugin's `db/services.php`
+    (stubs `MOODLE_INTERNAL` constant so the `defined() || die()`
+    guard doesn't kill the script), resolves classname → file path,
+    regex-greps `execute_parameters()` body for each of the 6
+    contract keys.
+  - Wired into `ci.yml` as `ws-contract-gate` job — runs on every PR
+    + push. Block-on-fail. Runtime ~2s.
+  - Verified locally: 9 consumers, 0 failures, exit 0.
+  - Plus 3 unit tests of `missing_keys_in_class_file()` against
+    synthetic files (all-6, missing-3, no-method) all pass.
+  - ADR-009's WS-contract-drift invariant is now enforced by every
+    PR — not just documented + locally testable.
+
+**Insight (carry forward):** "Moodle PHPUnit in CI" is conventionally
+treated as a binary — either you install Moodle (slow) or you don't
+run tests at all. The middle ground that worked here was: take the
+parts of the test that are pure file-system + regex work, extract
+them to a standalone script, stub the one Moodle constant the
+included PHP files check for (`MOODLE_INTERNAL`). The full Moodle
+PHPUnit suite still runs locally (and could run nightly on a
+dedicated runner). But the bug-class extinction invariant lives in
+CI without paying the Moodle-install cost on every PR.
+
 ### Cumulative session count (2026-05-23)
 
-  - 6 commits, 6 push events to production branch.
+  - 8 commits, 8 push events to production branch.
   - Goal A.x surfaces shipped this session:
     /grade/report/grader/, /user/edit.php, /user/preferences.php.
-  - ADR-009 invariants now verified by PHPUnit (both suites pass).
+  - ADR-009 invariants now verified by BOTH PHPUnit (local) AND
+    GitHub Actions (every PR, ~2s runtime, no Moodle install).
   - Mobile @ 590px verification on grader + course/view + user-edit
     + preferences.
   - Tests README runbook landed (`theme/airpayux/tests/README.md`).
+  - CI gate landed (`moodle-enhancement/tools/ci-ws-contract-check.php`
+    + new ws-contract-gate job in `.github/workflows/ci.yml`).
 
 **Theme version after this session:** 2026052209 (1.0.9-beta).
