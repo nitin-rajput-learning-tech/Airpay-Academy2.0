@@ -80,6 +80,69 @@ class core_renderer extends \core_renderer {
     public function standard_head_html() {
         $output = parent::standard_head_html();
 
+        // ── 2026-05-23 — Workstream 0 (per-customer branding) ─────────
+        // ADR-008 customer_brand resolver was shipped in commit
+        // 1e4c9c1ea (#143) but never consumed by the theme. Wire it now
+        // so Sentientia is genuinely white-labelable for Customer 2
+        // tomorrow (Enterprise N) — when a new row lands in
+        // local_airpay_customer_brand with different theme_color +
+        // bg_color, the whole stack re-tints without any code change.
+        //
+        // For Phase 0/1 (Airpay-only), the bundle's theme_color +
+        // bg_color match the SCSS defaults, so this is a visual no-op.
+        // The structural value is the wiring, not the immediate effect.
+        //
+        // Cascade order:
+        //   1. SCSS defaults (compiled stylesheet)
+        //   2. Customer brand CSS vars (this block — ALL users of customer)
+        //   3. Tenant brand CSS vars (next block below — tenant within customer)
+        //   4. Per-page inline overrides (rare)
+        // Later-in-document wins on equal specificity, so customer
+        // injects FIRST and tenant can override per-tenant.
+        if (class_exists('\\local_airpay_core\\customer')) {
+            try {
+                $brand = \local_airpay_core\customer::branding();
+                $themecolor = $brand['theme_color'] ?? '';
+                $bgcolor    = $brand['bg_color']    ?? '';
+                $css = '';
+                if ($themecolor !== '' && preg_match('/^#[0-9a-fA-F]{3,8}$/', $themecolor)) {
+                    // Wire customer primary into the theme's brand
+                    // primary token. SCSS rules already consume the
+                    // variable form `var(--ap-color-primary, #0066A7)`
+                    // throughout _surface-profile.scss et al.
+                    $css .= ":root { --ap-color-primary: {$themecolor}; }\n";
+                }
+                if ($bgcolor !== '' && preg_match('/^#[0-9a-fA-F]{3,8}$/', $bgcolor)) {
+                    $css .= ":root { --ap-color-bg: {$bgcolor}; }\n";
+                }
+                if ($css !== '') {
+                    $output .= "\n<style id=\"sentientia-customer-brand\">\n"
+                        . $css . "</style>\n";
+                }
+                // Customer favicon (icon_192_url) — only inject if no
+                // tenant-favicon override is about to kick in below.
+                // Sniff via the same class_exists guard.
+                if (!class_exists('\\local_airpay_org\\tenant_settings')
+                        || \local_airpay_org\tenant_settings::favicon_url() === '') {
+                    $icon = $brand['icon_192_url'] ?? '';
+                    if ($icon !== '' && filter_var($icon, FILTER_VALIDATE_URL)) {
+                        $tag = '<link rel="icon" href="' . s($icon) . '">';
+                        if (preg_match('#<link[^>]+rel=["\']icon["\'][^>]*>#i', $output)) {
+                            $output = preg_replace('#<link[^>]+rel=["\']icon["\'][^>]*>#i',
+                                $tag, $output, 1);
+                        } else {
+                            $output .= "\n" . $tag . "\n";
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Customer-brand failure must not break page rendering —
+                // the SCSS fallback values cover the gap.
+                debugging('standard_head_html: customer_brand wiring failed: '
+                    . $e->getMessage(), DEBUG_DEVELOPER);
+            }
+        }
+
         if (class_exists('\\local_airpay_org\\tenant_settings')) {
             $brand_css  = \local_airpay_org\tenant_settings::brand_color_overrides();
             $custom_css = \local_airpay_org\tenant_settings::custom_css();
