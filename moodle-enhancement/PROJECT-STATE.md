@@ -3794,11 +3794,8 @@ file exists" ≠ "the invariant is verified." Always end the ADR
 session by running the suite end-to-end and including the green
 output in the commit body.
 
-### Updated next-session backlog (after 2026-05-23)
+### Updated next-session backlog (after 2026-05-23, second batch)
 
-  - `/user/edit.php` restyle — profile-editing form, every persona
-    touches this. Was started in this session but pivoted to PHPUnit
-    adoption. Heavy form (`mform`-based), needs care.
   - `/course/edit.php` restyle — still needs Site Admin login + form-
     heavy. Course Authors don't have `moodle/course:update` cap.
   - Mobile @ 590px verification of /admin/* — Site Admin re-login.
@@ -3812,4 +3809,42 @@ output in the commit body.
   - Goal B (Playwright E2E) — still blocked.
   - Goal C (user guides) — depends on Goal A.x + B.
 
-**Theme version after this session:** 2026052207 (1.0.7-beta).
+**Shipment 4 — Sentientia polish on /user/edit.php (Goal A.x)**
+  - Commit `ed417ccec` — `feat(theme): Sentientia polish on /user/edit.php form`
+  - Profile-editing form every persona touches. Viewer
+    `/user/profile.php` was already Sentientia; this lands the
+    editing counterpart so they read as one product.
+  - 5 collapsible fieldsets (General, User picture, Additional names,
+    Interests, Optional) each get 16px-radius card chrome + uppercase
+    letter-spaced h3 + chevron toggle + brand-blue accent bar.
+  - Form inputs: 8px radius, surface-alt background, brand-light focus
+    glow. Required-field asterisks softened (7px / 70% opacity, was
+    16px glaring red).
+  - Submit button: brand primary with hover bg darken + 4px shadow +
+    active translateY press. Cancel: transparent outline.
+  - Mobile @ 768px: col-md-3/col-md-9 grid collapses to stacked
+    label-above-input; verified at 590x800.
+  - Theme version 2026052207 → 2026052208.
+
+**Shipment 5 — Sentientia polish on /user/preferences.php (Goal A.x)**
+  - Commit `1aa407be3` — `feat(theme): Sentientia polish on /user/preferences.php`
+  - Section headings (USER ACCOUNT / BLOGS / BADGES / MISCELLANEOUS)
+    now uppercase letter-spaced 13px with brand-blue 2px accent bar
+    underneath — matches grader, overview, admin, profile-edit.
+  - Card chrome 16px radius, soft shadow, full-height columns.
+  - Link list with hover slide-right (translateX 2px) + brand-dark
+    color shift + underline.
+  - Mobile @ 768px: 3-col flex stacks to 1; verified.
+  - Theme version 2026052208 → 2026052209.
+
+### Cumulative session count (2026-05-23)
+
+  - 6 commits, 6 push events to production branch.
+  - Goal A.x surfaces shipped this session:
+    /grade/report/grader/, /user/edit.php, /user/preferences.php.
+  - ADR-009 invariants now verified by PHPUnit (both suites pass).
+  - Mobile @ 590px verification on grader + course/view + user-edit
+    + preferences.
+  - Tests README runbook landed (`theme/airpayux/tests/README.md`).
+
+**Theme version after this session:** 2026052209 (1.0.9-beta).
