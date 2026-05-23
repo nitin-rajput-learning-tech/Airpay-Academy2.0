@@ -67,8 +67,15 @@ defined('MOODLE_INTERNAL') || die();
 // `\core\hook\output\before_standard_top_of_body_html_generation`.
 // Legacy lib.php function preserved as a thin shim for 5.1 deployments
 // (it no-ops on 5.2 because the hook subscription is canonical).
-$plugin->version   = 2026052324;
+//
+// Phase B.3.e SCSS rebase (2026-05-23) — Moodle 5.2 renamed the
+// activity-icon-colors map key `"interface"` → `"interactivecontent"`.
+// Our scss/moodle/variables.scss now ships BOTH keys with the same
+// Sentientia purple (#a378ff) so the lookup works on both 5.1 and 5.2.
+// See docs/5.2-merge/PHASE-B3E-SCSS-REBASE-INVENTORY.md for the wider
+// SCSS rebase strategy (BS4→BS5 migration deferred — we self-bundle BS4).
+$plugin->version   = 2026052325;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.24-beta';  // Phase B.3 hook migration
+$plugin->release   = '1.0.25-beta';  // Phase B.3.e SCSS dual-key fix
