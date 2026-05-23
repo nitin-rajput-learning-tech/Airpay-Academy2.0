@@ -1812,10 +1812,14 @@ body.path-grade-report-grader {
    heading; soften input chrome and add brand focus ring; stack
    label-above-input at <768px.
 
-   Body scope: `body#page-user-edit` (the only Moodle page that uses
-   this exact ID — `/user/editadvanced.php` is a different body ID).
+   Body scope: `body#page-user-edit` (covers /user/edit.php) AND
+   `body#page-course-edit` (covers /course/edit.php — same mform
+   shape, Site-Admin-only surface). Both share the identical
+   collapsible-fieldset + col-md-3/col-md-9 grid pattern, so a
+   single selector list covers them.
    ═══════════════════════════════════════════════════════════════════════ */
-body#page-user-edit {
+body#page-user-edit,
+body#page-course-edit {
 
     #region-main {
         max-width: 920px;
