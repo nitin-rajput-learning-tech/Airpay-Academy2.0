@@ -1,0 +1,71 @@
+# Dockerfile for serving Moodle 5.2 with PHP 8.4 via Apache.
+#
+# Why a separate image from moodle-5.2-cli?
+#   The CLI image uses php:8.4-cli (no Apache). For visual smoke
+#   testing we need a real web server. php:8.4-apache bundles
+#   Apache + mod_php pre-wired.
+#
+# Build:
+#   docker build -t moodle-5.2-apache \
+#       -f moodle-enhancement/tools/Dockerfile.moodle-5.2-apache \
+#       moodle-enhancement/tools
+#
+# Run:
+#   docker run --rm -d --name moodle52web -p 8081:80 \
+#       -v C:\xampp\htdocs\moodle5.2:/var/www/moodle \
+#       -v C:\xampp\moodledata5_2:/var/moodledata \
+#       --add-host=host.docker.internal:host-gateway \
+#       -e MOODLE_DBHOST=host.docker.internal \
+#       -e MOODLE_DATAROOT=/var/moodledata \
+#       moodle-5.2-apache
+#
+# Then browse: http://localhost:8081/
+#
+# DocumentRoot inside container: /var/www/html -> /var/www/moodle/public
+# (configured in apache conf below)
+
+FROM php:8.4-apache-bookworm
+
+# System packages required by Moodle PHP extensions.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libfreetype-dev libjpeg62-turbo-dev libpng-dev \
+        libicu-dev libxml2-dev libzip-dev libsodium-dev \
+        libldap2-dev libcurl4-openssl-dev libxslt-dev \
+        libwebp-dev libonig-dev \
+        unzip default-mysql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# PHP extensions (same as CLI image).
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
+    && docker-php-ext-configure intl \
+    && docker-php-ext-install -j$(nproc) \
+        gd intl mbstring mysqli pdo pdo_mysql xml zip opcache \
+        curl soap exif ldap xsl simplexml bcmath sodium
+
+# Apache modules Moodle needs.
+RUN a2enmod rewrite headers expires deflate
+
+# Recommended PHP settings for Moodle.
+RUN { \
+        echo 'memory_limit=512M'; \
+        echo 'max_execution_time=300'; \
+        echo 'upload_max_filesize=128M'; \
+        echo 'post_max_size=128M'; \
+        echo 'max_input_vars=5000'; \
+        echo 'opcache.enable=1'; \
+        echo 'opcache.memory_consumption=256'; \
+        echo 'date.timezone=Asia/Kolkata'; \
+    } > /usr/local/etc/php/conf.d/moodle.ini
+
+# Point Apache DocumentRoot to Moodle's /public subdirectory.
+RUN sed -i 's!/var/www/html!/var/www/moodle/public!g' /etc/apache2/sites-available/000-default.conf \
+    && sed -i 's!/var/www/html!/var/www/moodle/public!g' /etc/apache2/apache2.conf
+
+# Make sure AllowOverride All for .htaccess + RewriteEngine On.
+RUN echo '<Directory /var/www/moodle/public>\n\
+    Options Indexes FollowSymLinks\n\
+    AllowOverride All\n\
+    Require all granted\n\
+</Directory>' >> /etc/apache2/apache2.conf
+
+EXPOSE 80
