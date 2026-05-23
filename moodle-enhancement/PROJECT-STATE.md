@@ -1,5 +1,5 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-05-20 (Day 0 — Sentientia LMS pivot) — **Strategic pivot from "patch Moodle deployment" to "build saleable enterprise LMS product".** Airpay Academy becomes customer-zero. ADR-001 records the decision. See `docs/adr/ADR-001-fork-strategy-and-product-pivot.md`.
+**Updated:** 2026-05-24 (Phase B Moodle 5.2 wholesale upgrade COMPLETE at code level + B.12 missed-overlay hotfix). Production stays on 5.1 until cutover-day (~2h mechanical fixes tagged in code via `@todo Phase B.X` markers). Strategic pivot from "patch Moodle deployment" to "build saleable enterprise LMS product" — Airpay Academy is customer-zero. ADR-001 records the decision. See `docs/adr/ADR-001-fork-strategy-and-product-pivot.md`.
 
 ---
 
@@ -4182,3 +4182,127 @@ theme_airpayux        : 2026052324 (1.0.24-beta)
 local_airpay_core     : 2026052303 (1.5.3)
 local_sentientia_pwa  : 2026052301 (0.5.3-alpha)
 ```
+
+---
+
+## 🚀 Phase B Moodle 5.2 — execution complete (2026-05-23) + B.12 hotfix (2026-05-24)
+
+### Headline
+Moodle 5.2 wholesale upgrade staging is **COMPLETE at code level**. Same
+codebase runs on both 5.1 (production) and 5.2 (target) via runtime
+dual-target patterns. Zero deprecations, zero warnings, zero fatals on
+the 5.2 instance frontpage smoke. 14 commits, 13 leg docs, ~5 hours of
+execution against an 80-hour ADR-011 estimate (~94% saving).
+
+### Phase B execution log
+
+```
+Start :  Phase B.1  — PHP 8.4 install (Docker)
+End   :  Phase B.12 — clean smoke gate + hotfix for 2 missed-overlay plugins
+```
+
+| Phase | Commit | What landed |
+|-------|--------|-------------|
+| B.1   | feat(5.2-merge): Phase B.1 PHP 8.4 via Docker VERIFIED       | PHP 8.4 container, WDAC blocks native install |
+| B.2   | feat+docs(5.2-merge): Phase B.2 SUCCESS — upgrade exit 0     | Wholesale 5.2 install + overlay-airpay-customs.ps1 script |
+| B.3   | feat+docs(5.2-merge): Phase B.3 web smoke PASS — 5.2 renders | First end-to-end render of the 5.2 instance |
+| B.3   | feat(5.2-merge): Phase B.3 hook migration                    | `before_standard_top_of_body_html` → 5.2 hook system |
+| B.3.e | feat(5.2-merge): Phase B.3.e SCSS variables rebase           | Dual-key activity-icon variables for BS5 shift |
+| B.3.e+| feat(5.2-merge): Phase B.3.e+ BS5 shift-color shim           | Proactive adoption of 81 new 5.2 component-scoped tokens |
+| B.3.a | feat(5.2-merge): Phase B.3.a core_renderer rebase            | Trait-decomposed renderer already 5.2-compatible |
+| B.3.f | docs(5.2-merge): Phase B.3.f AMD shim cleanup plan           | 3 AMD shims with zero callsites → trivial cutover |
+| B.3.b | feat(5.2-merge): Phase B.3.b layouts rebase                  | `select_menu` dual-target pattern across layouts |
+| B.3.c | docs(5.2-merge): Phase B.3.c top templates rebase            | course.mustache tertiary-nav swap (cutover-day) |
+| B.3.d | docs(5.2-merge): Phase B.3.d core_form widgets               | No required changes — 52 templates audit-clean |
+| B.4   | docs(5.2-merge): Phase B.4 lib + admin conflicts             | 4 ModalFactory → core/modal tagged for cutover |
+| B.5-11| docs(5.2-merge): Phase B.5-B.11 batch audit                  | ZERO required changes across remaining surfaces |
+| B.12  | feat(5.2-merge): Phase B.12 final smoke gate                 | `subplugins.json` dual-key + CLEAN smoke counts |
+| B.12  | fix(theme): _tokens-52.scss undefined-variable hotfix        | Sentientia login restored on 5.2 (commit 5e08fbae3) |
+| B.12+ | docs(visual-evidence): Phase B Moodle 5.2 session            | 12 screenshots captured under docs/visual-evidence/2026-05-23/ |
+| **B.12 hotfix (2026-05-24)** | **fix(5.2-merge): restore 2 missed-overlay plugins** | **paygw_airpay + quizaccess_airpay_proctoring** |
+
+### Phase B.12 hotfix (2026-05-24) — missed-overlay plugins restored
+
+**Trigger:** Nitin pushed back on a "retired" reading of the 5.2 Plugins
+check page (5 "Missing from disk!" entries). Honest audit revealed 2 of
+the 5 were not retired — they were **missed by the Phase B.2 overlay
+script's hardcoded copy list**.
+
+| Plugin | On prod XAMPP 5.1? | In repo before? | Verdict |
+|--------|--------------------|-----------------|---------|
+| `paygw_airpay` (31 files)       | ✅       | ❌ never  | MISSED overlay — live plugin |
+| `quizaccess_airpay_proctoring`  | ✅ v…120 | ✅ v…300 (newer) | MISSED overlay — repo ahead |
+| `tool_tcpdffonts`               | ✅       | ❌       | Truly removed in 5.2 core |
+| `certificateelement_modulename` | ❌       | ❌       | Truly orphan placeholder |
+| `theme_epsilon`                 | ✅ legacy| ❌       | airpayux is standalone (ADR-001) |
+
+**Fix shipped (commit `275f45c84`):**
+1. `tools/overlay-airpay-customs.ps1` — added two `Copy-Tree` blocks with
+   explanatory comments. Future overlay runs won't miss them.
+2. `moodle-enhancement/payment/gateway/airpay/` — **31 files newly tracked
+   in repo** for the first time (the plugin lived only in production XAMPP
+   before — a months-long blind spot).
+3. `moodle-enhancement/mod/quiz/accessrule/airpay_proctoring/` — re-deployed
+   to the 5.2 tree (repo version v2026051300 is newer than production's
+   v2026051120 by one upgrade step).
+4. DB re-registration: `paygw_airpay` at v2024100700.09 (existing-installed
+   marker, no schema change); `quizaccess_airpay_proctoring` at v2026051300
+   (fresh install, creates `quizaccess_airpay_proctor` table from
+   `db/install.xml` for the first time on the 5.2 schema).
+5. Cleared stale `upgraderunning` flag from a previous failed run.
+6. `docs/5.2-merge/PHASE-B12-HOTFIX-MISSED-OVERLAY-PLUGINS.md` — honest
+   record of the mistake + lessons.
+
+**Post-restoration smoke (5.2 instance):**
+```
+HTTP 200, 72,156 bytes (byte-parity with documented clean smoke)
+PHP Notice/Warning/Fatal       : 0
+"should be migrated"           : 0
+"deprecated" substring matches : 0
+subplugintypes warnings        : 0
+```
+
+**Lessons recorded:**
+1. Don't infer "retired" from "Missing from disk!" — Moodle shows that
+   string for any plugin whose code is absent, regardless of why.
+2. Overlay scripts need a completeness audit. A `Get-ChildItem -Filter
+   '*airpay*' -Recurse` diff between source and target should be a build
+   step.
+3. Production deployments without source-control round-trip are technical
+   debt. `paygw_airpay` lived for months on production without ever being
+   committed. Going forward: any new plugin shipping to production must
+   also land in source via PR.
+
+### Cutover-day TODO list (consolidated, ~2h mechanical)
+
+1. `course.mustache:237` — swap `core/url_select` partial for dual
+   `is_select_menu_context` branch (B.3.c).
+2. 4 AMD files — `core/modal_factory` → `core/modal` (B.4):
+   - `local/airpay_courses/amd/src/enrolledusers.js`
+   - `local/airpay_request/amd/src/request_button.js`
+   - `local/airpay_request/amd/src/decide.js`
+   - `local/airpay_cart/amd/src/admin_orders.js`
+3. 3 AMD shims — delete `page_title.js`, `deprecated.js`, review
+   `announcement.js` (B.3.f).
+4. `drawer.mustache`, `drawers.mustache`, `secure.mustache` — per-template
+   audit + selective backport (B.3.c).
+5. **NEW (B.12 hotfix):** Verify `paygw_airpay` works on production 5.2
+   with a real payment test.
+6. **NEW (B.12 hotfix):** Fix `quizaccess_airpay_proctoring/db/upgrade.php`
+   — current upgrade.php expects the target table to exist during
+   upgrade, but the table is created only during fresh install. Either
+   backfill on production before deploy, OR fix `upgrade.php` to use
+   `$dbman->create_table()` inside the migration.
+7. Authenticated Goal A.y walkthrough on a fast Linux substrate (~30 min
+   on a real server vs impractical on Windows Docker bind-mount).
+
+### What's deferred (substrate, not code)
+- Goal A.y authenticated walk across 4 cutover-tagged surfaces. Needs a
+  fast Linux substrate — not Windows Docker bind-mount. Expected on
+  production-grade server: ~30 min total runtime.
+
+### Refs
+- `docs/adr/ADR-011-moodle-5.2-upgrade.md` — original 80-hour estimate baseline
+- `docs/5.2-merge/PHASE-B*.md` — leg-by-leg detail (12 docs + 1 hotfix)
+- `docs/visual-evidence/2026-05-23/README.md` — 12 captured screenshots
+- This file — Phase B consolidated state
