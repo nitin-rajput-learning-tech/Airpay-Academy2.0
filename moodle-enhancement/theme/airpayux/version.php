@@ -100,8 +100,15 @@ defined('MOODLE_INTERNAL') || die();
 // dashboard.php, drawers.php) to dual-target the new class, falling
 // back to the 5.1 `$overflowdata->export_for_template($OUTPUT)` path
 // when `\core\output\select_menu` isn't autoloadable.
-$plugin->version   = 2026052328;
+//
+// Phase B.3.c top templates rebase (2026-05-23) — audited 8 boost
+// template diffs (5.2 vs 5.1). Tagged course.mustache with the
+// cutover-day swap action for the tertiary-nav partial (the one
+// place where B.3.b's PHP context-shape change creates a mismatch
+// with our existing template). Full per-template plan in
+// docs/5.2-merge/PHASE-B3C-TOP-TEMPLATES-REBASE.md.
+$plugin->version   = 2026052329;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.28-beta';  // Phase B.3.b layouts rebase
+$plugin->release   = '1.0.29-beta';  // Phase B.3.c top templates inventory

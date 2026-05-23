@@ -234,6 +234,21 @@
                             {{#overflow}}
                                 <div class="container-fluid tertiary-navigation">
                                     <div class="navitem">
+                                        {{!-- @todo Phase B.3.c+ cutover:
+                                              B.3.b PHP layouts now pass select_menu context on 5.2
+                                              but url_select context on 5.1. At cutover-day, swap
+                                              this block to:
+                                                {{#is_select_menu_context}}
+                                                    {{> core/tertiary_navigation_selector }}
+                                                {{/is_select_menu_context}}
+                                                {{^is_select_menu_context}}
+                                                    {{> core/url_select }}
+                                                {{/is_select_menu_context}}
+                                              and have layout PHP set
+                                              $overflow->is_select_menu_context = true
+                                              on the 5.2 branch. See
+                                              docs/5.2-merge/PHASE-B3C-TOP-TEMPLATES-REBASE.md.
+                                              Today this still renders fine on 5.1 production. --}}
                                         {{> core/url_select}}
                                     </div>
                                 </div>
