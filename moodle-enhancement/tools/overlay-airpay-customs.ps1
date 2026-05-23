@@ -130,6 +130,21 @@ Log "=== admin/tool/certificate (vendor tool) ==="
 Copy-Tree 'admin-tool' 'admin\tool\certificate'
 
 Log ""
+Log "=== payment/gateway/airpay (live payment gateway plugin) ==="
+# Added 2026-05-23 — Phase B.12 hotfix. Earlier overlay missed this plugin
+# because it lived only in the production XAMPP tree, not in the
+# moodle-enhancement source repo. Now tracked in repo + copied through.
+Copy-Tree 'paygw' 'payment\gateway\airpay'
+
+Log ""
+Log "=== mod/quiz/accessrule/airpay_proctoring (quiz access proctoring) ==="
+# Added 2026-05-23 — Phase B.12 hotfix. Was tracked in repo but the overlay
+# script's copy list was incomplete. Source-of-truth is the repo version
+# (2026051300, has db/install.xml + db/upgrade.php) which is newer than
+# what production XAMPP 5.1 has (2026051120, no DB schema).
+Copy-Tree 'quizaccess' 'mod\quiz\accessrule\airpay_proctoring'
+
+Log ""
 Log "=== Root utility ==="
 Copy-File 'root' 'airpay-audit-loginas.php'
 
