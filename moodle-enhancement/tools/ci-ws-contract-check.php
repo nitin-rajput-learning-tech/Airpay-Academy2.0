@@ -82,14 +82,48 @@ if (!defined('MOODLE_INTERNAL')) {
 }
 
 // ── Configuration ──────────────────────────────────────────────────
-const REQUIRED_CONTRACT_KEYS = [
-    'search',
-    'sort',
-    'sortdir',
-    'page',
-    'perpage',
-    'filters',
+// Single source of truth — read REQUIRED_CONTRACT_KEYS from the
+// canonical Moodle-aware scanner file. This way, if a 7th key joins
+// the datatable client contract, only that file needs updating;
+// this standalone gate picks the new value up automatically.
+//
+// Falls back to the hard-coded list if the canonical file is missing
+// (e.g., running this script outside the full repo checkout).
+const REQUIRED_CONTRACT_KEYS_FALLBACK = [
+    'search', 'sort', 'sortdir', 'page', 'perpage', 'filters',
 ];
+$_required = load_required_contract_keys(realpath(__DIR__ . '/../../'));
+// Define after fallback so we always have something.
+define('REQUIRED_CONTRACT_KEYS_LIST', $_required ?? REQUIRED_CONTRACT_KEYS_FALLBACK);
+
+/**
+ * Parse REQUIRED_CONTRACT_KEYS const out of the canonical Moodle
+ * scanner file at theme/airpayux/classes/ws_contract_scanner.php.
+ * Returns null if file missing or const not found — caller falls
+ * back to the hard-coded list.
+ */
+function load_required_contract_keys(string $repoRoot): ?array {
+    $canonical = $repoRoot
+        . '/moodle-enhancement/theme/airpayux/classes/ws_contract_scanner.php';
+    if (!is_readable($canonical)) {
+        return null;
+    }
+    $content = file_get_contents($canonical);
+    if ($content === false) {
+        return null;
+    }
+    // Match: public const REQUIRED_CONTRACT_KEYS = [ ... ];
+    if (!preg_match(
+            '/REQUIRED_CONTRACT_KEYS\s*=\s*\[(.*?)\]/s',
+            $content, $m)) {
+        return null;
+    }
+    // Extract each quoted string.
+    if (!preg_match_all("/['\"]([a-z0-9_]+)['\"]/i", $m[1], $keys)) {
+        return null;
+    }
+    return $keys[1];
+}
 
 // Search paths — relative to repo root. The CI checks out the whole
 // repo so both layouts exist; we walk whichever has files.
@@ -334,7 +368,7 @@ function missing_keys_in_class_file(string $file): ?array {
     // Each required key must appear as a quoted string key in the
     // array. Pattern: 'search' => or "search" =>.
     $missing = [];
-    foreach (REQUIRED_CONTRACT_KEYS as $key) {
+    foreach (REQUIRED_CONTRACT_KEYS_LIST as $key) {
         $pattern = "/['\"]" . preg_quote($key, '/') . "['\"]\s*=>/";
         if (!preg_match($pattern, $body)) {
             $missing[] = $key;
