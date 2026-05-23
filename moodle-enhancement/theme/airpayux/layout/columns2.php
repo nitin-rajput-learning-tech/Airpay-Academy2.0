@@ -52,7 +52,22 @@ if ($PAGE->has_secondary_navigation()) {
     $secondarynavigation = $moremenu->export_for_template($OUTPUT);
     $overflowdata = $PAGE->secondarynav->get_overflow_menu_data();
     if (!is_null($overflowdata)) {
-        $overflow = $overflowdata->export_for_template($OUTPUT);
+        // Phase B.3.b (2026-05-23) — Moodle 5.2 introduced
+        // \core\output\select_menu and boost layouts now route the
+        // overflow renderable through it. Detect at runtime so the
+        // same code path works on both 5.1 and 5.2.
+        if (class_exists('\\core\\output\\select_menu')) {
+            $selectmenu = new \core\output\select_menu(
+                'tertiarynavigation',
+                $overflowdata->urls,
+                $overflowdata->selected,
+            );
+            $selectmenu->set_label($overflowdata->label, $overflowdata->labelattributes);
+            $overflow = $selectmenu->export_for_template($OUTPUT);
+        } else {
+            // 5.1 legacy path.
+            $overflow = $overflowdata->export_for_template($OUTPUT);
+        }
     }
 }
 

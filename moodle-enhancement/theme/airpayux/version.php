@@ -93,8 +93,15 @@ defined('MOODLE_INTERNAL') || die();
 // Our `traits/login_render.php::render_login()` now mirrors this key
 // for forward-compat with any 5.2 template fallback path.
 // See docs/5.2-merge/PHASE-B3A-CORE-RENDERER-REBASE.md.
-$plugin->version   = 2026052327;
+//
+// Phase B.3.b layouts rebase (2026-05-23) — 5.2 introduced
+// `\core\output\select_menu` for the tertiary navigation overflow
+// dropdown. Migrated 4 layouts (columns2.php, course.php,
+// dashboard.php, drawers.php) to dual-target the new class, falling
+// back to the 5.1 `$overflowdata->export_for_template($OUTPUT)` path
+// when `\core\output\select_menu` isn't autoloadable.
+$plugin->version   = 2026052328;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.27-beta';  // Phase B.3.a core_renderer rebase
+$plugin->release   = '1.0.28-beta';  // Phase B.3.b layouts rebase
