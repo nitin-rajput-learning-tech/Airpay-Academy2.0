@@ -225,6 +225,17 @@ function theme_airpayux_get_pre_scss($theme) {
         $scss .= '$font-size-base: ' . (1 / 100 * $theme->settings->fontsize) . "rem !default;\n";
     }
 
+    // 3. Moodle 5.2 component-scoped variable adoption (Phase B.3.e+).
+    //    Loaded LAST in the pre-scss chain so its `!default` declarations
+    //    only kick in when nothing above (our tokens, dark tokens, theme
+    //    settings, customer scsspre) has set the variable. This makes
+    //    every new 5.2 boost variable available to component SCSS without
+    //    clobbering customer brand overrides.
+    $tokens52path = $theme->dir . '/scss/moodle/_tokens-52.scss';
+    if (file_exists($tokens52path)) {
+        $scss .= file_get_contents($tokens52path);
+    }
+
     return $scss;
 }
 

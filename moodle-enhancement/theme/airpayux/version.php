@@ -73,9 +73,20 @@ defined('MOODLE_INTERNAL') || die();
 // Our scss/moodle/variables.scss now ships BOTH keys with the same
 // Sentientia purple (#a378ff) so the lookup works on both 5.1 and 5.2.
 // See docs/5.2-merge/PHASE-B3E-SCSS-REBASE-INVENTORY.md for the wider
-// SCSS rebase strategy (BS4→BS5 migration deferred — we self-bundle BS4).
-$plugin->version   = 2026052325;
+// SCSS rebase strategy.
+//
+// Phase B.3.e+ BS5 + proactive variables (2026-05-23) — per Nitin's
+// "BS5 migration NOW + proactive variable adoption" directive:
+//   - scss/bootstrap/_functions.scss adds the BS5 shift-color() helper
+//     alongside the existing BS4 theme-color-level() (both work, no
+//     callsite rewrites needed today).
+//   - scss/moodle/_tokens-52.scss — new partial — defines all 81
+//     component-scoped variables introduced in 5.2's boost variables.scss
+//     as `!default`. Loaded LAST in lib.php's pre_scss chain so customer
+//     brand overrides above still win, but every new 5.2 variable is now
+//     available for component SCSS to consume.
+$plugin->version   = 2026052326;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.25-beta';  // Phase B.3.e SCSS dual-key fix
+$plugin->release   = '1.0.26-beta';  // Phase B.3.e+ BS5 + 5.2 vars
