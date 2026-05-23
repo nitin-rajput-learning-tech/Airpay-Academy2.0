@@ -3986,3 +3986,98 @@ low-priority optional refactors.
     Actions (every PR).
 
 **Theme version after this session:** 2026052212 (1.0.12-beta).
+
+---
+
+## Session 2026-05-23 — P0 borrow wave complete + ADR-011 staging plan
+
+Per Nitin's directive "do pending and deferred, then upgrade 5.2,
+1 by 1 100%", this session completed the remaining P0 backports from
+ADR-010, then drafted ADR-011 for the wholesale 5.2 upgrade staging plan.
+
+### P0 borrows shipped this session (5 commits)
+
+| Commit | P0 | Item | Pattern |
+|--------|----|------|---------|
+| `b4c1289f0` | #5 | OAuth2 i18n on login form | Lang strings + Mustache `{{#str}}` + aria-label |
+| `555d66c9f` | #9 | cm_navigation::resolve_url() shim | Static helper + theme consumer + PHPUnit |
+| `d0acd4422` | #10 | Suspended-user status badge | Helper class + before_standard_top_of_body_html hook + AMD decorator + SCSS |
+| `ca6b1e3c6` | #11 | Backup-filename template helper | Helper class + admin setting + token cheat-sheet |
+| `46e5243ab` | #14 | My Courses sort by start/end date | Pure theme template override (no PHP change) |
+
+### P0 borrow inventory — final disposition
+
+| # | Status | Commit / Note |
+|---|--------|---------------|
+| 1 | OK Prior | Sticky footer submit buttons |
+| 2 | OK Prior | Activity header with completion labels |
+| 3 | OK Prior | Anchor-link navigation highlighting |
+| 4 | OK Prior | Restricted page availability conditions |
+| 5 | OK `b4c1289f0` | OAuth2 i18n |
+| 6 | OK Prior | Toast visuallyHidden a11y |
+| 7 | OK Prior | core/page_title AMD module |
+| 8 | OK Prior | core/deprecated AMD module |
+| 9 | OK `555d66c9f` | cm_info::get_navigation_url() shim |
+| 10 | OK `d0acd4422` | Suspended student status indicator |
+| 11 | OK `ca6b1e3c6` | Configurable backup filename template |
+| 12 | OK Bundled in #2 | Manual completion buttons |
+| 13 | OK Prior | Sticky course-title header |
+| 14 | OK `46e5243ab` | Sort by course start date |
+| 15 | -- Deferred | Quiz overall feedback when marks hidden — "auto when we upgrade" per ADR-010 |
+
+**Subtotal:** 13/13 buildable P0 items shipped. Two deferred per spec
+(P0 #12 bundled with #2; P0 #15 auto-resolves at 5.2 wholesale upgrade).
+
+### Hindi pack parity
+
+100% parity maintained across all 5 shipping commits:
+- P0 #5 — 1 string in en + hi (`signinwithidentityprovider`)
+- P0 #9 — no user-visible strings
+- P0 #10 — 4 strings in en + hi (`userstatus_*`)
+- P0 #11 — 4 strings in en + hi (`settings_pagetitle`, `setting_backup_filename_*`)
+- P0 #14 — 2 strings in en + hi (`sortbystartdate`, `sortbyenddate`)
+
+Total this session: 11 strings x 2 locales = 22 lang entries added.
+
+### Documentation shipped
+
+Five borrow guides + one ADR landed under `docs/`:
+
+- `docs/p0-borrows/p0-9-cm-navigation.md`
+- `docs/p0-borrows/p0-10-user-status-badge.md`
+- `docs/p0-borrows/p0-11-backup-filename-template.md`
+- `docs/p0-borrows/p0-14-myoverview-sort-by-startdate.md`
+- `docs/adr/ADR-011-moodle-5.2-wholesale-upgrade-staging.md`
+
+Each P0 borrow doc has a "Migration on 5.2 wholesale upgrade" section
+so the next phase work is mechanical search-and-replace.
+
+### Test surface added
+
+- `local/airpay_core/tests/cm_navigation_test.php` — 5 cases
+- `local/airpay_core/tests/user_status_test.php` — 9 cases
+- `local/airpay_core/tests/backup_filename_test.php` — 10 cases
+
+Total this session: 24 new PHPUnit cases.
+
+### Version state at session end
+
+```
+theme_airpayux        : 2026052322 (1.0.22-beta)
+local_airpay_core     : 2026052303 (1.5.3)
+```
+
+### Next session — Phase A.1 of the 5.2 wholesale upgrade
+
+Per ADR-011, the next session begins Phase A (codebase prep — no PHP
+version change required):
+
+- A.1 — Branch `5.2-merge-baseline` + tag `v4.1.1-pre-merge`
+- A.2 — Pull Moodle 5.2 source + generate diff
+- A.3 — PHP 8.3 lint pass on all 30 `local_airpay_*` plugins
+- A.4 — Theme conflict map for the ~514 files in `theme/airpayux/`
+- A.5 — Test surface inventory + CI re-run cadence
+
+Phase B (the merge proper) is blocked on PHP 8.3 landing on the local
+XAMPP — currently waiting on either IT or a portable-PHP install.
+ADR-011 §"Open questions" lists this for Nitin's decision.
