@@ -3894,11 +3894,37 @@ dedicated runner). But the bug-class extinction invariant lives in
 CI without paying the Moodle-install cost on every PR.
 
 **Final remaining backlog (after 2026-05-23):**
-  - `/course/edit.php` restyle — still needs Site Admin login.
-  - `/admin/*` mobile @ 590px verification — needs Site Admin (#177).
   - Refactor shared utility between `ws_contract_scanner` (Moodle-
     aware) and `ci-ws-contract-check.php` (standalone) — low priority;
     the divergence is intentional (different verification strategies)
     and the duplication is minimal.
   - Goal B (Playwright E2E harness) — still blocked.
   - Goal C (user guide content) — depends on Goal A.x + B.
+
+**Shipment 9 — Site-Admin batch closeout (commit `c91f4309c`)**
+  - `/course/edit.php` restyle: extended the existing
+    `body#page-user-edit` SCSS rule to also include
+    `body#page-course-edit`. Zero new SCSS lines — the pattern is
+    genuinely reusable. The 8 fieldsets (General, Description,
+    Course format, Appearance, Files and uploads, Completion
+    tracking, Groups, Tags) all get card chrome + uppercase
+    letter-spaced section headers + 8px input radius + 768px
+    mobile stack.
+  - `/admin/*` mobile @ 590px verification: walked /admin/search.php
+    and /admin/category.php?category=appearance at 590x800. Both
+    render correctly — sidebar collapses to hamburger, topbar wraps,
+    tab nav scrolls horizontally without breaking layout, category
+    headings retain brand-blue accent bars, link lists stack
+    vertically.
+  - Confirmed `/admin/user.php` (Manage Users) is a custom plugin
+    surface (already Sentientia by construction), not a Moodle leak
+    that needs separate restyling.
+  - Theme version 2026052210 → 2026052211 (1.0.11-beta).
+
+**Cumulative session total (final):** 16 commits + 1 annotated
+milestone tag pushed to production. **All 10 audit-identified
+Moodle-leak surfaces** plus calendar are now Sentientia. The
+next-session backlog is genuinely empty for visible-surface work —
+remaining items are either external blockers (Playwright + Node 24),
+strategic pivots (Workstream 0 per-customer branding), or
+low-priority optional refactors.
