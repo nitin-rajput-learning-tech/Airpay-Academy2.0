@@ -107,8 +107,16 @@ defined('MOODLE_INTERNAL') || die();
 // place where B.3.b's PHP context-shape change creates a mismatch
 // with our existing template). Full per-template plan in
 // docs/5.2-merge/PHASE-B3C-TOP-TEMPLATES-REBASE.md.
-$plugin->version   = 2026052329;
+//
+// Phase B.3.d core_form widgets rebase (2026-05-23) — diff audit
+// found that 5.2 added 2 new core_form mustache templates
+// (element-float.mustache, element-float-inline.mustache) and
+// modified zero existing ones. Both new templates already exist
+// in our fork with byte-identical content to 5.2 boost — no code
+// changes. Phase B.3 substantially complete (~2.5h vs ADR 38h
+// estimate). See docs/5.2-merge/PHASE-B3D-CORE-FORM-REBASE.md.
+$plugin->version   = 2026052330;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.29-beta';  // Phase B.3.c top templates inventory
+$plugin->release   = '1.0.30-beta';  // Phase B.3 complete milestone
