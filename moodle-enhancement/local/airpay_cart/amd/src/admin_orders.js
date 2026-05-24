@@ -6,14 +6,38 @@
  *
  * @module local_airpay_cart/admin_orders
  *
- * @todo Phase B.4 cutover (2026-05-23): Moodle 5.2 removed
- * `core/modal_factory` (MDL-79182). At cutover-day swap to
- * `core/modal` per docs/5.2-merge/PHASE-B4-LIB-ADMIN-CONFLICTS.md.
+ * Phase B.4 dual-target (2026-05-24): see createSaveCancelModal() below.
+ * Moodle 5.2 removed core/modal_factory (MDL-79182).
  */
 import Ajax from 'core/ajax';
 import Notification from 'core/notification';
-import ModalFactory from 'core/modal_factory';
 import ModalEvents from 'core/modal_events';
+
+/**
+ * Dual-target SAVE_CANCEL modal factory.
+ * 5.2: require('core/modal') -> Modal.create({modalType: 'SAVE_CANCEL', ...})
+ * 5.1: require('core/modal_factory') -> ModalFactory.create({type: ModalFactory.types.SAVE_CANCEL, ...})
+ * @param {{title: string, body: string}} spec
+ * @return {Promise<object>}
+ */
+const createSaveCancelModal = (spec) => new Promise((resolve, reject) => {
+    require(['core/modal'], (Modal) => {
+        if (Modal && typeof Modal.create === 'function') {
+            Modal.create({modalType: 'SAVE_CANCEL', title: spec.title, body: spec.body})
+                .then(resolve).catch(reject);
+            return;
+        }
+        require(['core/modal_factory'], (ModalFactory) => {
+            ModalFactory.create({type: ModalFactory.types.SAVE_CANCEL, title: spec.title, body: spec.body})
+                .then(resolve).catch(reject);
+        }, reject);
+    }, () => {
+        require(['core/modal_factory'], (ModalFactory) => {
+            ModalFactory.create({type: ModalFactory.types.SAVE_CANCEL, title: spec.title, body: spec.body})
+                .then(resolve).catch(reject);
+        }, reject);
+    });
+});
 
 export const init = () => {
     document.addEventListener('click', async (e) => {
@@ -25,8 +49,7 @@ export const init = () => {
         const orderid   = btn.dataset.orderid;
         if (!historyid) return;
 
-        const modal = await ModalFactory.create({
-            type: ModalFactory.types.SAVE_CANCEL,
+        const modal = await createSaveCancelModal({
             title: `Refund order #${orderid}`,
             body: `
                 <p>Order total: <strong>${total}</strong></p>
