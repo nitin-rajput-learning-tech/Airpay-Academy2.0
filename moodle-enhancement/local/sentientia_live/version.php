@@ -35,10 +35,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_live';
-$plugin->version   = 2026052401;
+$plugin->version   = 2026052402;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;   // Phase E.0 — scaffold only
-$plugin->release   = '0.1.1-alpha';
+$plugin->release   = '0.1.2-alpha';
 $plugin->dependencies = [
     'local_airpay_core' => 2026051401,  // feature_flags resolver
 ];
@@ -57,3 +57,13 @@ $plugin->dependencies = [
 //              P2 #22 / F-25 — Trainer-dashboard table a11y: added
 //              <caption class="sr-only"> and scope="col" on every <th>.
 //              New lang key trainer_sessions_table_caption (EN + HI).
+// 0.1.2-alpha  Phase E.4-E.9 scaffold — abstract_question_type base
+//              class + 6 concrete stubs (multiple_choice, word_cloud,
+//              open_ended, rating_scale, quiz, ranking) + the
+//              question_type_registry that maps slug→FQCN. Concrete
+//              methods throw coding_exception('not_implemented') —
+//              UI follows in E.4-E.9 chips. +12 string pairs en+hi
+//              (6 names + 6 descriptions). +1 PHPUnit test class
+//              with 7 assertions covering registry resolution +
+//              interface conformance. Docs:
+//              docs/sentientia-live/QUESTION-TYPES.md.

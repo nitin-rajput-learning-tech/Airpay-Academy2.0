@@ -337,6 +337,24 @@ $string['a11y_current_question_region']  = 'Current question';
 $string['a11y_waiting_for_question']     = 'Waiting for the next question';
 $string['a11y_already_responded']        = 'You have already responded to this question';
 
+// ── Phase E.4-E.9 scaffold — question-type registry strings ───────
+// One name + one description per registered abstract_question_type
+// subclass. Surfaced by question_type_registry::get_all() through
+// get_display_name() / get_description() — used by the slide-type
+// picker and any future "available question types" admin listing.
+$string['qtype_multichoice_name']        = 'Multiple choice';
+$string['qtype_multichoice_desc']        = 'Audience picks one of the options you provide. Results render as a horizontal bar chart with one bar per option, percentage and live count.';
+$string['qtype_wordcloud_name']          = 'Word cloud';
+$string['qtype_wordcloud_desc']          = 'Audience each submits one short word. Common answers grow larger in the tag cloud as frequency rises.';
+$string['qtype_openended_name']          = 'Open-ended';
+$string['qtype_openended_desc']          = 'Audience submits free-form text up to a configurable character cap. Answers stream across the projector as they arrive.';
+$string['qtype_rating_name']             = 'Rating scale';
+$string['qtype_rating_desc']             = '1-5 Likert or 0-10 NPS. Results render as a histogram plus an average + response-count summary.';
+$string['qtype_quiz_name']               = 'Quiz';
+$string['qtype_quiz_desc']               = 'Like multiple choice, but with a designated correct answer. Audience sees right/wrong instantly; trainer projector shows a live leaderboard ranked by correctness and speed.';
+$string['qtype_ranking_name']            = 'Ranking';
+$string['qtype_ranking_desc']            = 'Audience drags a list of items into their preferred order. Results show each item\'s aggregate average position — lower is more preferred.';
+
 // response_recorder errors.
 $string['response_slide_mismatch']      = 'That slide is not part of this session.';
 $string['response_int_required']        = 'A numeric response is required.';
