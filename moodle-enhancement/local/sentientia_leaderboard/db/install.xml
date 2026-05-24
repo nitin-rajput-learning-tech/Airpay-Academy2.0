@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/sentientia_leaderboard/db" VERSION="20260524"
-       COMMENT="Sentientia LMS Real-time leaderboards (Tier 2 #7) — Phase L.0 schema.
-                4 tables: boards (definitions), entries (snapshot rankings),
-                optouts (privacy), events (SSE journal). Tables prefixed
-                local_sentientia_lb_ for global uniqueness.
+<XMLDB PATH="local/sentientia_leaderboard/db" VERSION="20260525"
+       COMMENT="Sentientia LMS Real-time leaderboards (Tier 2 #7) — Phase L.0 + L.1.
+                5 tables: boards (definitions), entries (snapshot rankings),
+                optouts (privacy), events (SSE journal), notify_log (L.1
+                rank-change throttle). Tables prefixed local_sentientia_lb_
+                for global uniqueness.
                 See ADR-014 for the SSE-vs-WS-vs-polling decision.">
   <TABLES>
 
@@ -193,6 +194,51 @@
                         ORDER BY id ASC. This index is the hot path."/>
         <INDEX NAME="idx_created"         UNIQUE="false" FIELDS="timecreated"
                COMMENT="Retention purge query"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- ─── NOTIFY LOG (Phase L.1 throttle) ─── -->
+    <TABLE NAME="local_sentientia_lb_notify_log"
+           COMMENT="Phase L.1 — rank-change notification throttle. One row per
+                    (boardid, userid, customerid). last_sent holds the unix ts
+                    of the most-recent dispatched message; the observer skips
+                    a user when (time() - last_sent) &lt; 86400 (24h).
+                    last_old_rank / last_new_rank / last_reason are diagnostic
+                    only — useful for HR forensics (&quot;why did this learner get
+                    a celebration email?&quot;) but not consulted by the throttle.
+                    Unique key on (boardid, userid, customerid) lets us
+                    fetch-then-update or insert without an explicit
+                    transaction; a concurrent inserter loses to the UK and
+                    the update path runs.">
+      <FIELDS>
+        <FIELD NAME="id"            TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="boardid"       TYPE="int"  LENGTH="10" NOTNULL="true"
+               COMMENT="FK to local_sentientia_lb_boards.id"/>
+        <FIELD NAME="userid"        TYPE="int"  LENGTH="10" NOTNULL="true"
+               COMMENT="FK to user.id — the learner who received the message"/>
+        <FIELD NAME="customerid"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="1"
+               COMMENT="Sentientia LMS customer scope. Phase 1: hardcoded 1 (Airpay)."/>
+        <FIELD NAME="last_sent"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Unix ts of the last dispatched rank_change message"/>
+        <FIELD NAME="last_old_rank" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Diagnostic: previous rank at the moment of dispatch"/>
+        <FIELD NAME="last_new_rank" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Diagnostic: new rank at the moment of dispatch"/>
+        <FIELD NAME="last_reason"   TYPE="char" LENGTH="40" NOTNULL="true" DEFAULT=""
+               COMMENT="Diagnostic: 'top10_entry' | 'large_move'"/>
+        <FIELD NAME="timecreated"   TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"  TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"  TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_board" TYPE="foreign" FIELDS="boardid" REFTABLE="local_sentientia_lb_boards" REFFIELDS="id"/>
+        <KEY NAME="fk_user"  TYPE="foreign" FIELDS="userid"  REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="uk_board_user_customer" TYPE="unique" FIELDS="boardid, userid, customerid"
+              COMMENT="One throttle row per (board, user, customer)"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_last_sent" UNIQUE="false" FIELDS="last_sent"
+               COMMENT="Forensic queries + future retention purge"/>
       </INDEXES>
     </TABLE>
 

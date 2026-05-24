@@ -3,6 +3,105 @@
 
 ---
 
+## 🚀 TIER 2 #7 — LEADERBOARD PHASE L.1 (2026-05-24)
+
+### Session — `local_sentientia_leaderboard` rank-change notifications — ✅ SHIPPED
+
+**P3 workstream feature chip L.1.** Builds on the Phase L.0 MVP that
+ships ranking widgets via SSE; L.1 layers Moodle messaging on top so
+learners hear about meaningful rank shifts in their inbox / popup,
+without anyone having to refresh the dashboard.
+
+- [x] **New event class** `\local_sentientia_leaderboard\event\rankings_updated`
+      — fired after every successful `ranking_engine::recompute()`
+      commit. Payload `other.changes` carries the bounded delta list
+      (cap 500, sorted top-10 entries first then by absolute move size).
+- [x] **New observer** `\local_sentientia_leaderboard\observer::on_rankings_updated`
+      — listens on the Moodle event bus, gates on the L.1 master flag,
+      delegates to `message_helper::dispatch()`. Try/catch around the
+      whole body so a notification failure cannot abort the recompute
+      flow.
+- [x] **New helper** `\local_sentientia_leaderboard\message_helper` —
+      pure-static API: `classify_change()`, `compute_changes()`,
+      `is_throttled()`, `record_notification()`, `send_one()`,
+      `dispatch()`. Subject + body sourced from language strings so
+      Hindi parity is automatic.
+- [x] **New DB table** `local_sentientia_lb_notify_log` — one row per
+      `(boardid, userid, customerid)` with `last_sent` /
+      `last_old_rank` / `last_new_rank` / `last_reason` columns. Unique
+      key on the triple makes concurrent recompute paths safe. Created
+      via `db/install.xml` for fresh installs and `db/upgrade.php` at
+      savepoint `2026052500` for existing tenants.
+- [x] **New message provider** `rank_change` registered in
+      `db/messages.php` — popup + email permitted, both enabled by
+      default. Surfaces under `/message/notificationpreferences.php` so
+      learners can mute it without disabling the master flag.
+- [x] **New feature flag** `sentientia.leaderboards.notifications.enabled`
+      — default OFF, additive-shipping per CLAUDE.md. Task spec listed
+      `sentientia_leaderboard_notifications`; we kept the dotted
+      convention to match every other flag in this plugin and noted the
+      mapping in code + commit message.
+- [x] **Recompute rewiring** — `ranking_engine::recompute()` now
+      snapshots the pre-delete rank map via `get_records_menu()`,
+      captures the new rank map from a slightly-refactored
+      `insert_ranked()` (now returns `array<int,int>`), and triggers
+      `rankings_updated` after the SSE `leaderboard.recomputed` event
+      when the delta set is non-empty.
+- [x] **Throttle policy** — max 1 message per `(board, user, customer)`
+      per 24h. `last_sent` updated on every dispatch; a backdated row
+      releases on the next recompute past the window.
+- [x] **Privacy** — opt-out (`local_sentientia_lb_optouts`) is honoured
+      by `message_helper::dispatch()` BEFORE the throttle check, so an
+      opt-in / opt-out flip never burns a throttle slot.
+- [x] **Trigger rules** — top-10 entry (was outside top-10, now inside)
+      OR |delta| ≥ 5 positions. Top-10 entry wins when both apply
+      (more celebratory). New users with no prior rank only qualify via
+      the top-10 entry rule.
+- [x] **PHPUnit tests** (`tests/message_helper_test.php`, 10 test
+      methods) — covers the four required cases
+      (`test_rank_change_triggers_message_when_flag_on`,
+      `test_no_message_when_flag_off`,
+      `test_throttle_blocks_duplicate_within_24h`,
+      `test_top_10_entry_triggers_message`) plus opt-out honouring,
+      classification predicate edge cases, payload truncation, and a
+      full recompute → observer → `message_send` integration smoke.
+- [x] **Hindi parity 100%** — 93 keys EN, 93 keys HI (was 86 / 86 in
+      L.0; +7 for the L.1 message templates: event name, provider
+      label, three subject lines, three body lines).
+- [x] **Version bump** — `2026052400` → `2026052500`, release
+      `0.1.0-alpha` → `0.2.0-alpha`. Plugin still depends on
+      `local_airpay_core => 2026051401`.
+
+**Files touched (13):**
+```
++ classes/event/rankings_updated.php
++ classes/message_helper.php
++ classes/observer.php
++ db/messages.php
++ db/events.php
++ tests/message_helper_test.php
+~ classes/ranking_engine.php          (snapshot + trigger event)
+~ db/feature_flags.php                (+1 flag)
+~ db/install.xml                      (+1 table)
+~ db/upgrade.php                      (+1 savepoint 2026052500)
+~ lang/en/local_sentientia_leaderboard.php   (+7 strings)
+~ lang/hi/local_sentientia_leaderboard.php   (+7 strings)
+~ version.php                         (2026052400 → 2026052500)
+```
+
+**Acceptance evidence:**
+- Notifications fire on 5+ rank shift when L.1 flag ON
+  (`test_rank_change_triggers_message_when_flag_on`).
+- Flag OFF suppresses every dispatch + skips the throttle write
+  (`test_no_message_when_flag_off`).
+- Second dispatch within 24h is throttled; backdating the log row past
+  the window releases the throttle
+  (`test_throttle_blocks_duplicate_within_24h`).
+- Top-10 entry fires even when |delta| < 5
+  (`test_top_10_entry_triggers_message`).
+
+---
+
 ## 🚀 TIER 2.6 — CALENDAR SYNC PHASE 1 (2026-05-24)
 
 ### Session — `local_sentientia_calendar` (outbound ICS feed MVP) — ✅ SHIPPED

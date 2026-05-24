@@ -71,4 +71,18 @@ $flags = [
                           honoured at read time).',
     ],
 
+    // ─── Phase L.1: rank-change notifications ──────────────────
+    // Task spec uses `sentientia_leaderboard_notifications`; we keep the
+    // dotted convention used by every other flag in this plugin so the
+    // Switchboard groups it under `sentientia.leaderboards.*`.
+    'sentientia.leaderboards.notifications.enabled' => [
+        'default'     => false,
+        'description' => 'Rank-change notifications via Moodle messaging
+                          (Phase L.1). When ON, the recompute path triggers
+                          a Moodle message to any learner who either moves
+                          5+ positions on a board or enters the top 10.
+                          Throttled to 1 message per learner per board per
+                          24h. Default OFF — additive shipping per CLAUDE.md.',
+    ],
+
 ];

@@ -27,10 +27,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_leaderboard';
-$plugin->version   = 2026052400;
+$plugin->version   = 2026052500;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;
-$plugin->release   = '0.1.0-alpha';
+$plugin->release   = '0.2.0-alpha';
 $plugin->dependencies = [
     'local_airpay_core' => 2026051401,
 ];
@@ -39,3 +39,7 @@ $plugin->dependencies = [
 // 0.1.0-alpha  Phase L.0 (Tier 2 #7): MVP — 3 board types, opt-out, SSE,
 //              block widget, WS API, PHPUnit. Default OFF behind
 //              sentientia.leaderboards.enabled.
+// 0.2.0-alpha  Phase L.1: rank-change Moodle messaging. New
+//              `rankings_updated` event + observer + message_helper +
+//              `local_sentientia_lb_notify_log` throttle table. Default
+//              OFF behind sentientia.leaderboards.notifications.enabled.
