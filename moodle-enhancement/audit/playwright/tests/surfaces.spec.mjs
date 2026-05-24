@@ -51,9 +51,15 @@ const COURSE_ID = 275;
 /**
  * Shared login fixture — runs ONCE per test file before any test.
  * Stores the auth state so individual tests don't re-login.
+ *
+ * IMPORTANT: pass `storageState: undefined` explicitly. Without this,
+ * Playwright propagates the test.use({ storageState: '...' }) to ALL
+ * newContext() calls in the file — including this one — which tries
+ * to read fixtures/.auth-state.json BEFORE this beforeAll has written
+ * it, throwing ENOENT.
  */
 test.beforeAll(async ({ browser }) => {
-    const context = await browser.newContext();
+    const context = await browser.newContext({ storageState: undefined });
     const page = await context.newPage();
     await page.goto(`${BASE}/login/index.php`);
     await page.fill('input[name="username"]', SITE_ADMIN.username);

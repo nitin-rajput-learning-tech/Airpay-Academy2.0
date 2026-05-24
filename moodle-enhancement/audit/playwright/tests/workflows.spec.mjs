@@ -50,9 +50,13 @@ const COURSE_ID = 275;
  * Shared login fixture — runs ONCE per test file before any test.
  * Reuses the same .auth-state.json that surfaces.spec.mjs writes,
  * so a sequential run of both specs only logs in once.
+ *
+ * IMPORTANT: pass `storageState: undefined` explicitly to opt this
+ * one context out of the file-level test.use({ storageState }) — see
+ * surfaces.spec.mjs for the full rationale.
  */
 test.beforeAll(async ({ browser }) => {
-    const context = await browser.newContext();
+    const context = await browser.newContext({ storageState: undefined });
     const page = await context.newPage();
     await page.goto(`${BASE}/login/index.php`);
     await page.fill('input[name="username"]', SITE_ADMIN.username);

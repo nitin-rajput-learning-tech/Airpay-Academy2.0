@@ -59,5 +59,29 @@ export default defineConfig({
             name: 'chromium-mobile-590',
             use: { ...devices['Desktop Chrome'], viewport: { width: 590, height: 800 } },
         },
+        // ── WDAC workaround projects (2026-05-24) ──────────────────────
+        // Nitin's local machine has Windows Defender Application Control
+        // blocking the Playwright-downloaded Firefox + Chromium binaries
+        // at OS level (Access denied on direct invoke). The system-
+        // installed Chrome IS signed and unblocked, so we can use
+        // `channel: 'chrome'` to point Playwright at it instead.
+        // Use these projects on a Nitin-machine local run; the standard
+        // chromium-desktop project is correct for CI / non-WDAC hosts.
+        {
+            name: 'chrome-system-desktop',
+            use: {
+                ...devices['Desktop Chrome'],
+                viewport: { width: 1280, height: 900 },
+                channel: 'chrome',
+            },
+        },
+        {
+            name: 'chrome-system-mobile-590',
+            use: {
+                ...devices['Desktop Chrome'],
+                viewport: { width: 590, height: 800 },
+                channel: 'chrome',
+            },
+        },
     ],
 });
