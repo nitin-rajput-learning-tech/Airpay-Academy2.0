@@ -326,9 +326,19 @@ if (isloggedin() && !isguestuser()) {
             try {
                 $recentactivity = [];
 
+                // Wave A1 P0-cleanup (2026-05-24) — Moodle 4.x+ fullname()
+                // emits a debugging notice for every missing name field
+                // (firstnamephonetic, lastnamephonetic, middlename,
+                // alternatename) on the user record. Use the core_user
+                // fields helper to project the full set into the SELECT
+                // so fullname($comp) / fullname($enr) below have every
+                // column they expect.
+                $userfieldsapi = \core_user\fields::for_name();
+                $allusernames = $userfieldsapi->get_sql('u', false, '', '', false)->selects;
+
                 // Recent completions.
                 $completions = $DB->get_records_sql(
-                    "SELECT cc.id, u.firstname, u.lastname, c.fullname AS coursename, cc.timecompleted
+                    "SELECT cc.id, $allusernames, c.fullname AS coursename, cc.timecompleted
                        FROM {course_completions} cc
                        JOIN {user} u ON u.id = cc.userid
                        JOIN {course} c ON c.id = cc.course
@@ -347,9 +357,9 @@ if (isloggedin() && !isguestuser()) {
                     ];
                 }
 
-                // Recent enrolments.
+                // Recent enrolments. Reuses $allusernames (see comment above).
                 $enrolments = $DB->get_records_sql(
-                    "SELECT ue.id, u.firstname, u.lastname, c.fullname AS coursename, ue.timecreated
+                    "SELECT ue.id, $allusernames, c.fullname AS coursename, ue.timecreated
                        FROM {user_enrolments} ue
                        JOIN {enrol} e ON e.id = ue.enrolid
                        JOIN {user} u ON u.id = ue.userid
