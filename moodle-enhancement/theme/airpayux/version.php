@@ -184,7 +184,19 @@ defined('MOODLE_INTERNAL') || die();
 //     .airpay-footer__product-attribution padding (P1 #14 / F-07).
 //   - templates/footer.mustache: removed the 10-line "Made in India"
 //     removed-badge Mustache comment block (P2 #21 / F-09).
-$plugin->version   = 2026052403;
+//
+// P2 #20 / F-20 chip-Q (2026-05-24) — coursebannerimage CSS-url()
+// injection verification. Documented (via a 41-line Mustache comment
+// block above the courseheader <div> in course_full_header.mustache)
+// that the dynamic banner URL is safe in CSS url('...') context
+// because moodle_url::make_pluginfile_url(...)->out() routes every
+// path segment through rawurlencode(), percent-encoding every CSS-
+// terminating character (' " ( ) ; \\ < > space). Template uses
+// {{ }} double-brace HTML-escaping as defense in depth. No runtime
+// behaviour change; comment-only annotation. Cache bump is defensive
+// — Mustache templates are file-mtime cached, but a version bump
+// guarantees the comment block lands on next theme upgrade.
+$plugin->version   = 2026052404;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
@@ -203,7 +215,7 @@ $plugin->maturity  = MATURITY_BETA;
 // (83% reduction). Section 1 wrapped under body#page-login-index for
 // ID-specificity. Bundled bugfix: dark-mode selectors used descendant
 // combinator (never fired since #page-X IS body); now chained.
-$plugin->release   = '1.0.33-beta';  // P0 #1+#2+#3+#4+#5+#6+#7+#9 + F-13 + P1 #11+#12+#13+#14 + P2 #21 + cart_badge audit
+$plugin->release   = '1.0.34-beta';  // P0 #1+#2+#3+#4+#5+#6+#7+#9 + F-13 + P1 #11+#12+#13+#14 + P2 #20+#21 + cart_badge audit
 // P1 #10 chip-J (2026-05-24) — _surface-profile.scss (2,507 lines)
 // decomposed into 4 per-surface partials: _surface-user, _surface-badges,
 // _surface-grade-report, _surface-calendar. Admin fragments moved to

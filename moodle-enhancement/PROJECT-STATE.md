@@ -5723,3 +5723,83 @@ no coordination required beyond the standard append-only conventions.
 - Audit report: `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md` (F-24, F-25)
 - Frontend rules: `.claude/rules/frontend.md` §BEM
 - State card: `state-cards/sentientia_live-state.md`
+
+---
+
+## 🔒 P2 #20 — coursebannerimage XSS sanitisation (2026-05-24)
+
+**Branch:** `claude/vibrant-cori-dFy4m` on `nitin-rajput-learning-tech/Airpay-Academy2.0`
+**Chip:** Q (Wave-3 P2 follow-up — F-20 from the Platform Visual Audit)
+**Theme version:** `theme_airpayux` 2026052403 → 2026052404 (release `1.0.33-beta → 1.0.34-beta`)
+**Commit:** `docs(template): verify coursebannerimage sanitisation (P2 #20 / F-20)`
+
+### What was audited
+`templates/course_full_header.mustache` emits the dynamic course banner
+URL inside a CSS `url('...')` inline-style:
+
+```mustache
+<div class="courseheader" style="background-image: url('{{coursebannerimage}}');">
+```
+
+F-20 flagged this as XSS-prone if `coursebannerimage` is not URL-escaped
+upstream, because HTML-escaping (which `{{ }}` does) is not sufficient
+defence inside a CSS `url('...')` context.
+
+### Strategy chosen — verify + document
+**No migration to `data-cover-url` + AMD needed.** Upstream sanitisation
+is already sufficient.
+
+Trace from template back to source:
+
+```
+{{coursebannerimage}}
+  ← core_renderer.php:937   $header->coursebannerimage = $this->course_bannerimage();
+    ← classes/output/traits/course_view.php:74-88   course_bannerimage()
+      → moodle_url::make_pluginfile_url(...)->out()    (uploaded banner)
+      → image_url('course_default', 'theme_airpayux')->out()    (fallback)
+```
+
+`make_pluginfile_url` flows into `set_slashargument()`
+(`lib/classes/url.php:585-601`), which calls `rawurlencode()` on every
+path segment. Both code-paths (slasharguments on/off) route through
+`rawurlencode()`. `rawurlencode()` percent-encodes every char that could
+terminate the CSS `url('...')` context:
+`' " ( ) ; \ < > <space> { }`. Verified empirically on the local PHP
+runtime — a filename of `foo'); evil('` becomes
+`foo%27%29%3B%20evil%28%27` in the URL.
+
+The `{{ }}` double-brace HTML-escaping provides defense-in-depth on
+top of the URL encoding.
+
+### What changed
+- `templates/course_full_header.mustache` — added a 41-line Mustache
+  `{{! ... }}` comment block above the `.courseheader` div documenting
+  the upstream sanitisation chain, the worked example, and the
+  defense-in-depth note. No runtime behaviour change.
+- `version.php` — version + release bumped; audit-trail comment added.
+- `docs/visual-evidence/2026-05-24/wave3-chip-Q/README.md` — full
+  analysis + decision matrix + manual test procedure.
+
+### Out of scope (per chip prompt)
+- `templates/core_courseformat/local/courseindex/course_drawer_header.mustache`
+  — sibling template with the same pattern; not in this chip's scope.
+- Any plugin code, lang file, or SCSS file.
+- `course_bannerimage()` upstream — only the template's consumption
+  pattern is in scope.
+
+### Safety + parity
+- ✅ `php -l theme/airpayux/version.php` clean.
+- ✅ Mustache lint — `coursebannerimage` still emitted via `{{ }}`
+  double-brace HTML-escape; no `{{{ }}}` triple-brace introduced.
+- ✅ Mustache comment block `{{! ... }}` does not render to output.
+- ✅ Single template touched within chip scope; sibling template left
+  untouched (different chip).
+- ✅ No `coursebannerimage` upstream values changed.
+
+### Refs
+- Visual evidence: `docs/visual-evidence/2026-05-24/wave3-chip-Q/README.md`
+- Audit report: `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md` (F-20, row #20)
+- Upstream trace: `theme/airpayux/classes/output/traits/course_view.php:74-88`
+- Frontend rules: `.claude/rules/frontend.md` (Mustache correctness)
+- CLAUDE.md §5 — input/output escaping rules
+
