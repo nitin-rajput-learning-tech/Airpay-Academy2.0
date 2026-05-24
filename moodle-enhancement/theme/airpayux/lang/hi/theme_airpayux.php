@@ -135,7 +135,44 @@ $string['enterotp'] = 'OTP डालें';
 $string['resentotp'] = 'OTP दोबारा भेजें';
 $string['entermobileotp'] = 'डाला गया मोबाइल नंबर रजिस्टर्ड नहीं है, कृपया चेक करें';
 
+// P0 #3 फ़ॉलो-अप (2026-05-24) — पहले से मिसिंग 21 keys।
+// इन सब को en/theme_airpayux.php में पहले से डिफ़ाइन किया गया है,
+// लेकिन hi/ में नहीं था (parity gap 132/156). 100% file parity के लिए
+// add किया गया।
+$string['privacy:drawerblockclosed']                     = 'ब्लॉक ड्रॉअर बंद है।';
+$string['privacy:drawerblockopen']                       = 'ब्लॉक ड्रॉअर खुला है।';
+$string['privacy:drawerindexclosed']                     = 'इंडेक्स ड्रॉअर बंद है।';
+$string['privacy:drawerindexopen']                       = 'इंडेक्स ड्रॉअर खुला है।';
+$string['privacy:drawernavclosed']                       = 'नेविगेशन ड्रॉअर बंद है।';
+$string['privacy:drawernavopen']                         = 'नेविगेशन ड्रॉअर खुला है।';
+$string['privacy:metadata:preference:draweropenblock']   = 'ब्लॉक ड्रॉअर को छुपाने या दिखाने की यूज़र प्रेफ़रेंस।';
+$string['privacy:metadata:preference:draweropenindex']   = 'कोर्स इंडेक्स ड्रॉअर को छुपाने या दिखाने की यूज़र प्रेफ़रेंस।';
+$string['privacy:metadata:preference:draweropennav']     = 'नेविगेशन ड्रॉअर को छुपाने या दिखाने की यूज़र प्रेफ़रेंस।';
+$string['region-layerone_full']                          = 'लेयर एक फ़ुल वाइड्थ';
+$string['region-layerone_one']                           = 'लेयर एक-एक';
+$string['region-layerone_two']                           = 'लेयर एक-दो';
+$string['region-layerthree_one']                         = 'लेयर तीन-एक';
+$string['region-layerthree_two']                         = 'लेयर तीन-दो';
+$string['region-layertwo_four']                          = 'लेयर दो-चार';
+$string['region-layertwo_one']                           = 'लेयर दो-एक';
+$string['region-layertwo_three']                         = 'लेयर दो-तीन';
+$string['region-layertwo_two']                           = 'लेयर दो-दो';
+$string['region-teamdetail_one']                         = 'टीम डिटेल एक';
+$string['region-teamdetail_two']                         = 'टीम डिटेल दो';
+$string['region-teamoverview']                           = 'टीम ओवरव्यू';
+
 // P0 बोरो #14 (Moodle 5.2, 2026-05-23) — "मेरे कोर्स" ड्रॉपडाउन में
 // अतिरिक्त सॉर्ट विकल्प।
 $string['sortbystartdate'] = 'कोर्स शुरू होने की तारीख';
 $string['sortbyenddate']   = 'कोर्स ख़त्म होने की तारीख';
+
+// P0 #3 फ़ॉलो-अप (2026-05-24) — प्राइमरी नेवबार i18n।
+// templates/navbar.mustache के पांच पिल / मोबाइल नेव लेबल और तीन a11y विवरण।
+$string['nav_dashboard']  = 'डैशबोर्ड';
+$string['nav_courses']    = 'मेरे कोर्स';
+$string['nav_catalog']    = 'कैटलॉग';
+$string['nav_profile']    = 'प्रोफ़ाइल';
+$string['nav_home']       = 'होम';
+$string['a11y_search']    = 'कोर्स, लोग, कंटेंट खोजें';
+$string['a11y_usermenu']  = 'यूज़र मेनू';
+$string['a11y_mobilemenu'] = 'मोबाइल मेनू';

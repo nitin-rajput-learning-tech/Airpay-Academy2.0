@@ -58,9 +58,9 @@
 <nav class="navbar fixed-top navbar-light navbar-expand airpay-nav" aria-label="{{#str}}sitemenubar, admin{{/str}}">
 
     {{! Mobile hamburger }}
-    <button class="navbar-toggler aabtn d-block d-md-none px-1 my-1 border-0" data-toggler="drawers" data-action="toggle" data-target="theme_airpayux-drawers-primary">
+    <button class="navbar-toggler aabtn d-block d-md-none px-1 my-1 border-0" data-toggler="drawers" data-action="toggle" data-target="theme_airpayux-drawers-primary" aria-label="{{#str}}a11y_mobilemenu, theme_airpayux{{/str}}">
         <span class="navbar-toggler-icon"></span>
-        <span class="sr-only">{{#str}}sidepanel, core{{/str}}</span>
+        <span class="sr-only">{{#str}}a11y_mobilemenu, theme_airpayux{{/str}}</span>
     </button>
 
     {{! Left: Logo }}
@@ -76,15 +76,15 @@
     {{! Pill Navigation — siteadmin: Dashboard only. Everyone else: all 4. Guest: no Dashboard. }}
     <div class="airpay-nav__pills d-none d-md-flex">
         {{#isloggedin}}
-        <a href="{{{config.wwwroot}}}/my/" class="airpay-nav__pill airpay-nav__pill--dashboard">Dashboard</a>
+        <a href="{{{config.wwwroot}}}/my/" class="airpay-nav__pill airpay-nav__pill--dashboard">{{#str}}nav_dashboard, theme_airpayux{{/str}}</a>
         {{/isloggedin}}
         {{^output.is_siteadmin_only}}
         {{#isloggedin}}
-        <a href="{{{config.wwwroot}}}/local/airpay_catalog/mycourses.php" class="airpay-nav__pill airpay-nav__pill--courses">My Courses</a>
+        <a href="{{{config.wwwroot}}}/local/airpay_catalog/mycourses.php" class="airpay-nav__pill airpay-nav__pill--courses">{{#str}}nav_courses, theme_airpayux{{/str}}</a>
         {{/isloggedin}}
-        <a href="{{{config.wwwroot}}}/local/airpay_catalog/index.php" class="airpay-nav__pill airpay-nav__pill--catalog">Catalog</a>
+        <a href="{{{config.wwwroot}}}/local/airpay_catalog/index.php" class="airpay-nav__pill airpay-nav__pill--catalog">{{#str}}nav_catalog, theme_airpayux{{/str}}</a>
         {{#isloggedin}}
-        <a href="{{{config.wwwroot}}}/local/users/profile.php" class="airpay-nav__pill airpay-nav__pill--profile">Profile</a>
+        <a href="{{{config.wwwroot}}}/local/users/profile.php" class="airpay-nav__pill airpay-nav__pill--profile">{{#str}}nav_profile, theme_airpayux{{/str}}</a>
         {{/isloggedin}}
         {{/output.is_siteadmin_only}}
     </div>
@@ -93,9 +93,9 @@
     <div id="usernavigation" class="navbar-nav ml-auto airpay-nav__actions">
         {{! Search }}
         <div class="d-none d-md-flex align-items-center">
-            <form action="{{{config.wwwroot}}}/search/index.php" method="get" class="airpay-nav__search">
-                <i class="fa fa-search airpay-nav__search-icon"></i>
-                <input type="text" name="q" class="airpay-nav__search-input" placeholder="Search courses, people, content..." autocomplete="off">
+            <form action="{{{config.wwwroot}}}/search/index.php" method="get" class="airpay-nav__search" role="search" aria-label="{{#str}}a11y_search, theme_airpayux{{/str}}">
+                <i class="fa fa-search airpay-nav__search-icon" aria-hidden="true"></i>
+                <input type="text" name="q" class="airpay-nav__search-input" placeholder="{{#str}}a11y_search, theme_airpayux{{/str}}" aria-label="{{#str}}a11y_search, theme_airpayux{{/str}}" autocomplete="off">
             </form>
         </div>
 
@@ -142,7 +142,7 @@
         </button>
 
         {{! User menu (BizLMS role switching) }}
-        <div class="d-flex align-items-stretch usermenu-container" data-region="usermenu">
+        <div class="d-flex align-items-stretch usermenu-container" data-region="usermenu" aria-label="{{#str}}a11y_usermenu, theme_airpayux{{/str}}">
             {{{ output.user_menu }}}
         </div>
         {{{ output.edit_switch }}}
@@ -153,8 +153,8 @@
 {{#isloggedin}}
 <nav class="ap-mobile-nav d-md-none" aria-label="Mobile navigation">
     <a href="{{{config.wwwroot}}}/my/" class="ap-mobile-nav__item" data-page="dashboard">
-        <i class="fa fa-th-large"></i>
-        <span>Home</span>
+        <i class="fa fa-th-large" aria-hidden="true"></i>
+        <span>{{#str}}nav_home, theme_airpayux{{/str}}</span>
     </a>
     {{^output.is_siteadmin_only}}
     <a href="{{{config.wwwroot}}}/local/airpay_catalog/index.php" class="ap-mobile-nav__item" data-page="catalog">
@@ -171,8 +171,8 @@
         <span>Alerts</span>
     </a>
     <a href="{{{config.wwwroot}}}/local/users/profile.php" class="ap-mobile-nav__item" data-page="profile">
-        <i class="fa fa-user-circle"></i>
-        <span>Profile</span>
+        <i class="fa fa-user-circle" aria-hidden="true"></i>
+        <span>{{#str}}nav_profile, theme_airpayux{{/str}}</span>
     </a>
 </nav>
 <script>

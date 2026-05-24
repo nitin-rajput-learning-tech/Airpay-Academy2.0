@@ -59,7 +59,6 @@ $string['loginbackgroundimage'] = 'Login page background image';
 $string['loginbackgroundimage_desc'] = 'The image to display as a background for the login page.';
 $string['nobootswatch'] = 'None';
 $string['customsettings'] = 'Custom settings';
-$string['colorsettings'] = 'Color settings';
 $string['pluginname'] = 'Airpay Academy UX (Sentientia)';
 $string['presetfiles'] = 'Additional theme preset files';
 $string['presetfiles_desc'] = 'Preset files can be used to dramatically alter the appearance of the theme. See <a href="#">Sentientia presets</a> for information on creating and sharing your own preset files, and see the <a href="#">Presets repository</a> for presets that others have shared.';
@@ -221,11 +220,9 @@ $string['home'] = 'Dashboard';
 $string['colorschemes'] = 'Colorschemes';
 $string['phonenumber'] = 'Mobile Number';
 $string['learnerlogin'] ='Enter Mobile Number';
-$string['show_more_less'] = 'Show more/less';
 
 $string['enterotp'] = 'Enter OTP';
 $string['resentotp'] = 'Resend OTP';
-$string['showhideblocks'] = 'Show/Hide blocks';
 $string['entermobileotp'] = 'Entered mobile number is not exists, please check';
 
 // P0 borrow #14 (Moodle 5.2, 2026-05-23) — extra sort options on the
@@ -234,3 +231,15 @@ $string['entermobileotp'] = 'Entered mobile number is not exists, please check';
 // these strings via {{#str}}.
 $string['sortbystartdate'] = 'Course start date';
 $string['sortbyenddate']   = 'Course end date';
+
+// P0 #3 follow-up (2026-05-24) — primary navbar i18n. Wraps the five
+// pill / mobile nav labels and the three a11y descriptions referenced
+// by templates/navbar.mustache. See docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md F-01.
+$string['nav_dashboard']  = 'Dashboard';
+$string['nav_courses']    = 'My Courses';
+$string['nav_catalog']    = 'Catalog';
+$string['nav_profile']    = 'Profile';
+$string['nav_home']       = 'Home';
+$string['a11y_search']    = 'Search courses, people, content';
+$string['a11y_usermenu']  = 'User menu';
+$string['a11y_mobilemenu'] = 'Mobile menu';
