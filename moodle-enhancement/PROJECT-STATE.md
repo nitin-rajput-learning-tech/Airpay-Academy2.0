@@ -4789,3 +4789,58 @@ blocks/sentientia_leaderboard/
 
 ### Next
 Schedule a fix-sprint to close the 9-item P0 list before Phase 2 customer-zero promotion. The audit branch is push-ready; no PR opened (Nitin to request).
+
+---
+
+## 🔑 P1 #11 — _surface-login.scss !important refactor (2026-05-24)
+
+**Chip:** K (spawn 2026-05-24, branch `claude/admiring-knuth-Szn4E`)
+**Commits:** `94bbaa43`, `314f7e43`, plus the close-out below
+**Audit ref:** `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md` F-10 / §4 punch-list row 11
+**Visual evidence:** `docs/visual-evidence/2026-05-24/p1-followup-chip-K/README.md`
+
+### Outcome
+Reduced `moodle-enhancement/theme/airpayux/scss/moodle/partials/_surface-login.scss` from **66 lines containing `important` flags → 11** (83% reduction). Compiled CSS dropped from 74 occurrences → 11. Audit target was <15 — comfortably met.
+
+### Strategy (3 commits, one per logical scope)
+
+| # | Scope | Approach | Lines dropped |
+|---|---|---|---|
+| 1 | login-index page | Wrap section 1 under `body#page-login-index { … }` SCSS nest. All compiled selectors gain ID-level specificity (1,1,1), beating Moodle's `#page-wrapper` / `#region-main` / Bootstrap container defaults via class-count in the cascade rather than via `important`. | 4 lines / 9 CSS occurrences |
+| 2 | forgot-password + signup | Existing `#page-X .class` selectors already give (1,1,0) — combined with `.signup_form--simple` they reach (1,2,0), beating Moodle `.mform .fitem` (0,2,0) and Bootstrap grid utilities (which don't use `important` in BS5). | 31 lines / 32 CSS occurrences |
+| 3 | dark mode + close-out | Dark-mode selectors elevated to `body.dark-mode#page-X` (1,2,1) to match new light-mode specificity. Bundled bug-fix: prior `body.dark-mode #page-X` (descendant combinator with space) never matched because `#page-X` IS the body. Replaced with chained selector. | 19 lines / 21 CSS occurrences |
+
+### Preserved 11 declarations (each inline-commented)
+
+- **6 lines** on the white-card style for forgot-password / signup — defensive against Moodle's potential `body#page-X #region-main` rule at (2,0,0).
+- **1 line** on `display: none` for hidden Moodle chrome — fights Bootstrap `.d-*` utility classes that themselves carry `important`.
+- **2 lines** on `.fdescription` muted-gray colour — fights Bootstrap `.text-danger` (a utility that sets red with `important`) on the required-field `<abbr>`.
+- **2 lines** on dark-mode card override — mirrors the 2 preserved light-mode declarations on the same card.
+
+### Bundled bug-fix
+
+Prior dark-mode rules used `body.dark-mode #page-login-forgot_password .X` and `body.dark-mode #page-signup .X` (with a space). Selector semantics: that's an element with id `#page-X` *inside* a body.dark-mode. But `#page-X` IS the body — no inner element has that id, so the rules never fired. Replaced with chained `body.dark-mode#page-X .X` (no space). Dark mode on the forgot-password and signup pages will visually activate where it had been silently dead.
+
+### Coordination with chip H (P1 #12 / F-11)
+
+Chip H is concurrently adding `:focus-visible` siblings to 6 `:focus` rules in this same file. Locations preserved across the refactor:
+
+- `body#page-login-index .airpay-login__input:focus` (now wrapped under section 1)
+- 5 combined-selector `:focus` rules in section 2 forgot/signup (untouched)
+
+Whichever chip merges first, the other can rebase its additions purely additively. Chip H's `:focus-visible` siblings drop in alongside the existing `:focus` rules with no structural conflict.
+
+### Files touched
+
+- `moodle-enhancement/theme/airpayux/scss/moodle/partials/_surface-login.scss` — 699 → 753 lines (the 54-line growth is the section-1 wrapper indent and inline `preserved:` comments — same number of declarations)
+- `moodle-enhancement/theme/airpayux/version.php` — bumped `2026052401` → `2026052402`, release `1.0.31-beta` → `1.0.32-beta`
+- `moodle-enhancement/docs/visual-evidence/2026-05-24/p1-followup-chip-K/README.md` — full regression checklist
+- This `PROJECT-STATE.md` entry
+
+### What Nitin needs to do before merging to production
+
+1. Pull the chip branch into the local XAMPP build.
+2. `php admin/cli/purge_caches.php` — invalidate cached compiled CSS.
+3. Walk every checkbox in the visual evidence checklist (`docs/visual-evidence/2026-05-24/p1-followup-chip-K/README.md`) at desktop **and** mobile breakpoints, light **and** dark modes.
+4. **Critical check**: confirm dark-mode actually paints on `forgot_password.php` and `signup.php` post-refactor. If those pages look identical between light and dark, the chained-selector bug-fix didn't land and the chip needs a follow-up.
+5. If anything regresses on a specific surface, identify the failing rule and either bump specificity for that one declaration (preferred) or restore the `important` flag with a `// preserved: <reason>` comment.

@@ -607,9 +607,9 @@ body#page-login-index {
 #page-login-forgot_password .fitem,
 #page-signup .fitem { margin-bottom: 16px; }
 /* fdescription text — preserved: Moodle's required-field abbr carries
-   `class="text-danger"` which sets `color: red !important`. To render
-   muted-gray instead of red we need our own `important` regardless of
-   specificity. */
+   class="text-danger" which is a Bootstrap colour utility that sets red
+   with an important flag. To render muted-gray instead of red we need our
+   own important flag regardless of specificity. */
 #page-signup .fdescription.required,
 #page-signup .fdescription {
     text-align: center;
@@ -627,101 +627,124 @@ body#page-login-index {
 }
 #page-login-forgot_password .felement { width: 100%; }
 
-/* ── Dark mode for LOGIN page (right panel) ── */
-html.dark-mode .airpay-login__form-panel,
-body.dark-mode .airpay-login__form-panel {
-    background: #1a1d27 !important;
+/* ═══════════════════════════════════════════════════════════
+   DARK MODE — Sections 3a (login-index) + 3b (forgot/signup)
+
+   REFACTORED 2026-05-24 (P1 #11 / F-10, chip K):
+   Two changes here. First, selectors elevated to match the new
+   light-mode specificity after section 1's body#page-login-index
+   wrap — dark variants now hook the dark-mode class onto the same
+   body-id (body.dark-mode#page-X) to win the cascade by class
+   count rather than by `important`. Second, a pre-existing bug
+   fix: prior `body.dark-mode #page-X` selectors used a descendant
+   combinator (space), which only matches if an element with that
+   id sits *inside* a body.dark-mode. Since #page-X IS the body,
+   those rules never fired. Replaced with `body.dark-mode#page-X`
+   (chained, no space) so the rule actually applies.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── 3a. Dark mode for LOGIN page (right panel) ──
+   Light-mode after section 1 wrap is (1,1,1). Dark variant uses
+   body.dark-mode#page-login-index (1,2,1) to win by class count. */
+html.dark-mode body#page-login-index .airpay-login__form-panel,
+body.dark-mode#page-login-index .airpay-login__form-panel {
+    background: #1a1d27;
 }
-html.dark-mode .airpay-login__form-title,
-body.dark-mode .airpay-login__form-title {
-    color: #f1f5f9 !important;
+html.dark-mode body#page-login-index .airpay-login__form-title,
+body.dark-mode#page-login-index .airpay-login__form-title {
+    color: #f1f5f9;
 }
-html.dark-mode .airpay-login__form-subtitle,
-html.dark-mode .airpay-login__label,
-body.dark-mode .airpay-login__form-subtitle,
-body.dark-mode .airpay-login__label {
-    color: #94a3b8 !important;
+html.dark-mode body#page-login-index .airpay-login__form-subtitle,
+html.dark-mode body#page-login-index .airpay-login__label,
+body.dark-mode#page-login-index .airpay-login__form-subtitle,
+body.dark-mode#page-login-index .airpay-login__label {
+    color: #94a3b8;
 }
-html.dark-mode .airpay-login__input,
-body.dark-mode .airpay-login__input {
-    background: #0f172a !important;
-    border-color: #334155 !important;
-    color: #f1f5f9 !important;
+html.dark-mode body#page-login-index .airpay-login__input,
+body.dark-mode#page-login-index .airpay-login__input {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f1f5f9;
 }
-html.dark-mode .airpay-login__input::placeholder,
-body.dark-mode .airpay-login__input::placeholder {
-    color: #64748b !important;
+html.dark-mode body#page-login-index .airpay-login__input::placeholder,
+body.dark-mode#page-login-index .airpay-login__input::placeholder {
+    color: #64748b;
 }
-html.dark-mode .airpay-login__input-icon,
-body.dark-mode .airpay-login__input-icon {
-    color: #64748b !important;
+html.dark-mode body#page-login-index .airpay-login__input-icon,
+body.dark-mode#page-login-index .airpay-login__input-icon {
+    color: #64748b;
 }
-html.dark-mode .airpay-login__eye,
-body.dark-mode .airpay-login__eye {
-    color: #64748b !important;
+html.dark-mode body#page-login-index .airpay-login__eye,
+body.dark-mode#page-login-index .airpay-login__eye {
+    color: #64748b;
 }
-html.dark-mode .airpay-login__links a,
-html.dark-mode .airpay-login__legal a,
-body.dark-mode .airpay-login__links a,
-body.dark-mode .airpay-login__legal a {
-    color: #60a5fa !important;
+html.dark-mode body#page-login-index .airpay-login__links a,
+html.dark-mode body#page-login-index .airpay-login__legal a,
+body.dark-mode#page-login-index .airpay-login__links a,
+body.dark-mode#page-login-index .airpay-login__legal a {
+    color: #60a5fa;
 }
-html.dark-mode .airpay-login__links-sep,
-html.dark-mode .airpay-login__legal span,
-body.dark-mode .airpay-login__links-sep,
-body.dark-mode .airpay-login__legal span {
-    color: #475569 !important;
+html.dark-mode body#page-login-index .airpay-login__links-sep,
+html.dark-mode body#page-login-index .airpay-login__legal span,
+body.dark-mode#page-login-index .airpay-login__links-sep,
+body.dark-mode#page-login-index .airpay-login__legal span {
+    color: #475569;
 }
-html.dark-mode .airpay-login__divider span,
-body.dark-mode .airpay-login__divider span {
-    background: #1a1d27 !important;
-    color: #64748b !important;
+html.dark-mode body#page-login-index .airpay-login__divider span,
+body.dark-mode#page-login-index .airpay-login__divider span {
+    background: #1a1d27;
+    color: #64748b;
 }
-html.dark-mode .airpay-login__divider::before,
-html.dark-mode .airpay-login__divider::after,
-body.dark-mode .airpay-login__divider::before,
-body.dark-mode .airpay-login__divider::after {
-    background: #334155 !important;
+html.dark-mode body#page-login-index .airpay-login__divider::before,
+html.dark-mode body#page-login-index .airpay-login__divider::after,
+body.dark-mode#page-login-index .airpay-login__divider::before,
+body.dark-mode#page-login-index .airpay-login__divider::after {
+    background: #334155;
 }
-html.dark-mode .airpay-login__guest-btn,
-body.dark-mode .airpay-login__guest-btn {
-    background: #0f172a !important;
-    border-color: #334155 !important;
-    color: #f1f5f9 !important;
+html.dark-mode body#page-login-index .airpay-login__guest-btn,
+body.dark-mode#page-login-index .airpay-login__guest-btn {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f1f5f9;
 }
 
-/* ── Dark mode for forgot-password + signup ── */
+/* ── 3b. Dark mode for forgot-password + signup ──
+   Light-mode here is (1,1,0) for most rules. Dark variants use
+   body.dark-mode#page-X (1,2,0) to win by class count without
+   `important`. The white-card override below DOES keep `important`
+   because the light-mode card style (section 2) preserves
+   `important` defensively against Moodle's #region-main padding. */
 html.dark-mode #page-login-forgot_password .airpay-login-region,
-body.dark-mode #page-login-forgot_password .airpay-login-region,
+body.dark-mode#page-login-forgot_password .airpay-login-region,
 html.dark-mode #page-signup .airpay-login-region,
 body.dark-mode#page-signup .airpay-login-region {
-    background: #1e293b !important;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important;
+    background: #1e293b !important;             /* preserved: matches preserved light-mode flag on card bg */
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important;  /* preserved: matches preserved light-mode flag on card shadow */
 }
 html.dark-mode #page-login-forgot_password .forgotpasswordheader,
 html.dark-mode #page-login-forgot_password h2,
 html.dark-mode #page-login-forgot_password label,
 html.dark-mode #page-login-forgot_password .col-form-label,
 html.dark-mode #page-login-forgot_password .ftoggler,
-body.dark-mode #page-login-forgot_password label,
+body.dark-mode#page-login-forgot_password label,
 html.dark-mode #page-signup h2,
 html.dark-mode #page-signup label,
 body.dark-mode#page-signup label {
-    color: #f1f5f9 !important;
+    color: #f1f5f9;
 }
 html.dark-mode #page-login-forgot_password #region-main > p,
-body.dark-mode #page-login-forgot_password #region-main > p {
+body.dark-mode#page-login-forgot_password #region-main > p {
     color: #94a3b8;
 }
 html.dark-mode #page-login-forgot_password .form-control,
 html.dark-mode #page-login-forgot_password input[type="text"],
-body.dark-mode #page-login-forgot_password .form-control,
+body.dark-mode#page-login-forgot_password .form-control,
 html.dark-mode #page-signup .form-control,
 html.dark-mode #page-signup input[type="text"],
 html.dark-mode #page-signup input[type="password"],
 html.dark-mode #page-signup select,
 body.dark-mode#page-signup .form-control {
-    background: #0f172a !important; border-color: #334155 !important; color: #f1f5f9 !important;
+    background: #0f172a; border-color: #334155; color: #f1f5f9;
 }
 html.dark-mode #page-signup #id_cancel,
 body.dark-mode#page-signup #id_cancel {

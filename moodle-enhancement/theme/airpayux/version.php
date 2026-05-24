@@ -123,8 +123,20 @@ defined('MOODLE_INTERNAL') || die();
 // verification on production 5.2 substrate (per the audit doc — it has
 // an aria-live re-announce trick for NVDA <2024 that core/toast may
 // not handle). See docs/5.2-merge/PHASE-B3F-AMD-CLEANUP.md.
-$plugin->version   = 2026052401;
+//
+// P1 #11 / F-10 chip K (2026-05-24) — _surface-login.scss refactor.
+// 66 lines containing the `important` flag reduced to 11 (83% reduction)
+// by wrapping section 1 under body#page-login-index for ID-level
+// specificity, elevating section 2 forgot/signup rules from the existing
+// #page-X scope, and matching dark-mode selectors with the new
+// light-mode tier. Bundled bug-fix: prior dark-mode rules used
+// `body.dark-mode #page-X` (descendant combinator with a space) which
+// never fired because #page-X IS the body. Replaced with chained
+// `body.dark-mode#page-X`. See docs/visual-evidence/2026-05-24/
+// p1-followup-chip-K/README.md for the regression checklist Nitin must
+// validate before this lands on the live theme.
+$plugin->version   = 2026052402;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.31-beta';  // Phase B.3.f shim deletes
+$plugin->release   = '1.0.32-beta';  // P1 #11 chip K — login !important refactor
