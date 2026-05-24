@@ -152,3 +152,19 @@ $string['privacy:drawerblockclosed'] = 'Droo ya vizuizi imefungwa.';
 $string['privacy:drawerblockopen'] = 'Droo ya vizuizi imefunguliwa.';
 $string['privacy:drawernavclosed'] = 'Droo ya urambazaji imefungwa.';
 $string['privacy:drawernavopen'] = 'Droo ya urambazaji imefunguliwa.';
+
+// F-13 (Platform Visual Audit 2026-05-24) — Banner ya karibu ya dashibodi,
+// vichwa vya chati na lebo za KPI za utii. Hupakiwa kupitia {{#str}}
+// katika templates/dashboard.mustache. {$a} = jina la kwanza la mtumiaji.
+$string['welcome_back_admin']      = 'Karibu tena, {$a}';
+$string['subtitle_admin']          = 'Muhtasari wa jukwaa na hali ya mfumo';
+$string['welcome_manager']         = 'Karibu, {$a}';
+$string['subtitle_manager']        = 'Muhtasari wa timu na hali ya utii';
+$string['welcome_learner']         = 'Karibu tena, {$a}!';
+$string['subtitle_learner']        = 'Endelea kutoka pale ulipoacha na uendeleze ujuzi wako';
+$string['chart_enrolment_trend']   = 'Mwelekeo wa Usajili';
+$string['chart_course_distribution'] = 'Mgawanyo wa Kozi';
+$string['kpi_mandatory_courses']   = 'Kozi za Lazima';
+$string['kpi_compliance_rate']     = 'Kiwango cha Utii';
+$string['kpi_overdue']             = 'Zilizochelewa';
+$string['kpi_total_assigned']      = 'Jumla Zilizoteuliwa';
