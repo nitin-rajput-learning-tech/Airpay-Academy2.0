@@ -1,5 +1,71 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-05-24 (Night-run autonomous batch — 16 items shipped: Phase B.12 cutover-day mechanical fixes (A1-A8), plugin PHPUnit coverage (B1-B2), Goal C user guides for 6 personas (C1-C6); cutover-day TODO list is now mostly empty modulo NVDA verification + activity_header runtime test. **Paygw security follow-up shipped this session** — MD5 deprecated, require_login() at file scope removed, sandbox/live URL clarified, 13 new PHPUnit tests added). Phase B Moodle 5.2 upgrade is code-complete; production stays on 5.1 until customer-driven cutover decision. ADR-001 records the strategic pivot from "patch Moodle deployment" to "build saleable enterprise LMS product" — Airpay Academy is customer-zero. See `docs/adr/ADR-001-fork-strategy-and-product-pivot.md`.
+**Updated:** 2026-05-24 (Tier 2.6 Calendar Sync MVP shipped: new plugin `local_sentientia_calendar` with token-URL ICS feed, 4 feature flags, 28 PHPUnit assertions, ADR-013, Hindi parity 100%. Earlier today the night-run autonomous batch shipped 16 items: Phase B.12 cutover-day mechanical fixes (A1-A8), plugin PHPUnit coverage (B1-B2), Goal C user guides for 6 personas (C1-C6); cutover-day TODO list is now mostly empty modulo NVDA verification + activity_header runtime test. **Paygw security follow-up shipped earlier this session** — MD5 deprecated, require_login() at file scope removed, sandbox/live URL clarified, 13 new PHPUnit tests added). Phase B Moodle 5.2 upgrade is code-complete; production stays on 5.1 until customer-driven cutover decision. ADR-001 records the strategic pivot from "patch Moodle deployment" to "build saleable enterprise LMS product" — Airpay Academy is customer-zero. See `docs/adr/ADR-001-fork-strategy-and-product-pivot.md`.
+
+---
+
+## 🚀 TIER 2.6 — CALENDAR SYNC PHASE 1 (2026-05-24)
+
+### Session — `local_sentientia_calendar` (outbound ICS feed MVP) — ✅ SHIPPED
+
+**Per ADR-013** (this session). New plugin shipping Tier 2 #6 of the
+roadmap. Each user gets a personal ICS subscription URL they paste
+into Outlook / Google / Apple Calendar; their course deadlines,
+classroom (ILT) sessions, and exam close-dates appear automatically.
+Outbound-only — bi-directional OAuth sync deferred to Phase 2.
+
+- [x] **New plugin `local_sentientia_calendar`** (20 files, 1.0.0-beta,
+      version 2026052400)
+- [x] **ADR-013** — token-URL ICS vs OAuth decision recorded
+- [x] **DB table `local_sentientia_calendar_token`** — 64-char random
+      token per user (~381 bits entropy, generated via `random_bytes`),
+      audit fields (last_used_at, last_used_ip, use_count), revoked
+      flag, 90-day retention on revoked rows
+- [x] **4 feature flags** — master `sentientia.calendar_sync.enabled`
+      (default OFF) + 3 per-event-type sub-flags (default ON) for
+      courses / classroom / exams
+- [x] **3 public surfaces** — `/index.php` (UI), `/regenerate.php`
+      (sesskey-protected POST), `/ics.php` (token-authenticated feed
+      with `NO_MOODLE_COOKIES` so the calendar client fetch doesn't
+      create a Moodle session for the bearer)
+- [x] **RFC 5545 generator** — `ics_builder::build_for_user($userid)`
+      emits VCALENDAR with VTIMEZONE (`Asia/Kolkata`) + VEVENT per
+      course-deadline / classroom-session / exam-close. Strict
+      75-octet line folding (verified by Python `ics` library against
+      the sample feed)
+- [x] **Privacy provider** — full DPDP / GDPR export + delete (token
+      hash exported, not the token itself — denies broadened attack
+      surface in user data exports)
+- [x] **Daily cleanup task** `purge_old_tokens` — 03:17 daily, deletes
+      revoked rows older than 90 days
+- [x] **Hindi parity 100%** — 33 EN strings, 33 HI strings
+- [x] **28 PHPUnit assertions** — 17 token-lifecycle (idempotency,
+      revoke, isolation) + 11 ICS builder (RFC 5545 conformance, user
+      scoping, feature-flag scoping, CRLF endings, 75-octet folding)
+- [x] **State card** `state-cards/local_sentientia_calendar-state.md`
+- [x] **Visual evidence** `docs/visual-evidence/2026-05-24/` — README
+      with the capture checklist (live screenshots deferred to local
+      XAMPP session per past precedent), plus
+      `subscription-page-preview.html` (static HTML preview of the
+      Mustache template) and `sample-feed.ics` (validated against
+      Python `ics` library — 3 events, IST timezone, conformant)
+
+**Security model summary:**
+- ICS endpoint returns **404** for every authentication failure mode —
+  denies enumeration of users / tenants / flag state
+- Master flag enforced in **three** places (UI page, regenerate, feed)
+- Token comparison short-circuits on syntactic gates (length, charset)
+  before any DB hit — denies easy timing oracles
+- `Cache-Control: no-store` on feed responses; proxies / CDNs cannot
+  cache per-token bodies
+
+**Optional plugin dependencies** — graceful degradation per category:
+- `local_airpay_courses` for COURSE-DEADLINE events
+- `local_airpay_classroom` for CLASSROOM-SESSION events
+- `local_airpay_exams` for EXAM-CLOSE events
+
+Each event source checks `$DB->get_manager()->table_exists()` before
+querying — calendar plugin installs cleanly even when one source
+plugin is missing; that category simply disappears from the feed.
 
 ---
 

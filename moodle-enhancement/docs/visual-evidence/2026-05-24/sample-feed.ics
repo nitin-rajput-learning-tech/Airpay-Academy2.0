@@ -1,0 +1,61 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Sentientia LMS//Sentientia Calendar Sync 1.0//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Sentientia LMS — My learning
+X-WR-TIMEZONE:Asia/Kolkata
+X-WR-CALDESC:Course deadlines\, classroom sessions\, and exam close-dates f
+ rom Sentientia LMS.
+BEGIN:VTIMEZONE
+TZID:Asia/Kolkata
+X-LIC-LOCATION:Asia/Kolkata
+BEGIN:STANDARD
+DTSTART:19700101T000000
+TZOFFSETFROM:+0530
+TZOFFSETTO:+0530
+TZNAME:IST
+END:STANDARD
+END:VTIMEZONE
+BEGIN:VEVENT
+UID:sentientia-course-42-user-123@sentientia.local
+DTSTAMP:20260524T063000Z
+DTSTART;VALUE=DATE:20260815
+DTEND;VALUE=DATE:20260816
+SUMMARY:[Course Deadline] AML Compliance 2026
+DESCRIPTION:Complete the course "AML Compliance 2026" by the deadline. View
+  in Sentientia LMS: https://www.airpay.academy/course/view.php?id=42
+URL:https://www.airpay.academy/course/view.php?id=42
+CATEGORIES:COURSE-DEADLINE
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+END:VEVENT
+BEGIN:VEVENT
+UID:sentientia-classroom-session-7-user-123@sentientia.local
+DTSTAMP:20260524T063000Z
+DTSTART;TZID=Asia/Kolkata:20260601T100000
+DTEND;TZID=Asia/Kolkata:20260601T140000
+SUMMARY:[ILT] Day 1 — Onboarding
+DESCRIPTION:Classroom: Field Sales Onboarding\nDetails: https://www.airpay.
+ academy/local/airpay_classroom/index.php?id=4
+LOCATION:Mumbai HQ - Training Room A
+URL:https://www.airpay.academy/local/airpay_classroom/index.php?id=4
+CATEGORIES:CLASSROOM-SESSION
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+END:VEVENT
+BEGIN:VEVENT
+UID:sentientia-exam-9-user-123@sentientia.local
+DTSTAMP:20260524T063000Z
+DTSTART;TZID=Asia/Kolkata:20260715T230000
+DTEND;TZID=Asia/Kolkata:20260715T233000
+SUMMARY:[Exam Closes] Compliance Quiz Final
+DESCRIPTION:Exam "Compliance Quiz Final" closes for the course "AML Complia
+ nce 2026". Last chance to attempt. View in Sentientia LMS: https://www.air
+ pay.academy/mod/quiz/view.php?q=18
+URL:https://www.airpay.academy/mod/quiz/view.php?q=18
+CATEGORIES:EXAM-CLOSE
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+END:VEVENT
+END:VCALENDAR

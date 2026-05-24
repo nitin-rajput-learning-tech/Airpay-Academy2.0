@@ -1,0 +1,142 @@
+{{!
+    Subscription page — local_sentientia_calendar.
+
+    Context provided by index.php:
+      subscription_url   absolute URL the user pastes into Outlook / Google
+      regenerate_url     POST-style URL with sesskey baked in
+      sesskey            CSRF token (defence-in-depth — already in regenerate_url)
+      intro              page intro copy
+      copy_label         button label
+      copied_label       button label after success
+      regenerate_label   button label
+      regenerate_help    explanation text
+      security_note      warning about treating the URL like a password
+      events_heading     "What's included" heading
+      events_courses     bullet copy
+      events_classroom   bullet copy
+      events_exams       bullet copy
+      how_to_heading     "How to subscribe" heading
+      how_to_outlook     Outlook instructions
+      how_to_google      Google instructions
+      how_to_apple       Apple instructions
+
+    @template local_sentientia_calendar/subscription_page
+}}
+<div class="sentientia-calendar-page">
+
+    <p class="lead mb-4">{{intro}}</p>
+
+    {{! ─────────── Subscription URL card ─────────── }}
+    <div class="card sentientia-calendar__url-card mb-4">
+        <div class="card-body">
+            <label for="sentientia-calendar-url" class="form-label fw-bold mb-2">
+                {{#str}}page_heading, local_sentientia_calendar{{/str}}
+            </label>
+            <div class="input-group">
+                <input type="text"
+                       id="sentientia-calendar-url"
+                       class="form-control"
+                       value="{{subscription_url}}"
+                       readonly
+                       aria-readonly="true"
+                       onclick="this.select()">
+                <button type="button"
+                        id="sentientia-calendar-copy"
+                        class="btn btn-primary"
+                        data-copy-target="sentientia-calendar-url"
+                        data-copy-label="{{copy_label}}"
+                        data-copied-label="{{copied_label}}">
+                    {{copy_label}}
+                </button>
+            </div>
+            <p class="text-muted small mt-3 mb-0">
+                <i class="fa fa-shield"></i>
+                {{security_note}}
+            </p>
+        </div>
+    </div>
+
+    {{! ─────────── What's included ─────────── }}
+    <div class="card mb-4">
+        <div class="card-body">
+            <h3 class="h5 mb-3">{{events_heading}}</h3>
+            <ul class="mb-0">
+                <li>{{events_courses}}</li>
+                <li>{{events_classroom}}</li>
+                <li>{{events_exams}}</li>
+            </ul>
+        </div>
+    </div>
+
+    {{! ─────────── How-to instructions ─────────── }}
+    <div class="card mb-4">
+        <div class="card-body">
+            <h3 class="h5 mb-3">{{how_to_heading}}</h3>
+            <dl class="row mb-0">
+                <dt class="col-sm-3"><i class="fa fa-envelope"></i> Outlook</dt>
+                <dd class="col-sm-9">{{how_to_outlook}}</dd>
+
+                <dt class="col-sm-3"><i class="fa fa-google"></i> Google</dt>
+                <dd class="col-sm-9">{{how_to_google}}</dd>
+
+                <dt class="col-sm-3"><i class="fa fa-apple"></i> Apple</dt>
+                <dd class="col-sm-9 mb-0">{{how_to_apple}}</dd>
+            </dl>
+        </div>
+    </div>
+
+    {{! ─────────── Regenerate URL ─────────── }}
+    <div class="card border-warning">
+        <div class="card-body">
+            <h3 class="h5 mb-2">{{regenerate_label}}</h3>
+            <p class="text-muted small mb-3">{{regenerate_help}}</p>
+            <form method="post" action="{{regenerate_url}}">
+                <input type="hidden" name="sesskey" value="{{sesskey}}">
+                <button type="submit" class="btn btn-outline-warning">
+                    <i class="fa fa-refresh"></i>
+                    {{regenerate_label}}
+                </button>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+{{#js}}
+require(['jquery'], function($) {
+    'use strict';
+    // Copy-button behaviour. Uses the modern Clipboard API with a
+    // graceful fallback to execCommand for older browsers.
+    var btn = document.getElementById('sentientia-calendar-copy');
+    var input = document.getElementById('sentientia-calendar-url');
+    if (!btn || !input) {
+        return;
+    }
+    var defaultLabel = btn.getAttribute('data-copy-label');
+    var copiedLabel  = btn.getAttribute('data-copied-label');
+
+    btn.addEventListener('click', function() {
+        var copyDone = function() {
+            btn.textContent = copiedLabel;
+            btn.classList.add('btn-success');
+            btn.classList.remove('btn-primary');
+            setTimeout(function() {
+                btn.textContent = defaultLabel;
+                btn.classList.remove('btn-success');
+                btn.classList.add('btn-primary');
+            }, 2000);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(input.value).then(copyDone, function() {
+                input.select();
+                document.execCommand('copy');
+                copyDone();
+            });
+        } else {
+            input.select();
+            document.execCommand('copy');
+            copyDone();
+        }
+    });
+});
+{{/js}}
