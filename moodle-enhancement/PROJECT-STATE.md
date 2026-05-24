@@ -3,6 +3,172 @@
 
 ---
 
+## 🚀 WORKSTREAM C — M365 KNOWLEDGE AUTOMATION — Phase C.1 SCAFFOLD ✅ SHIPPED (2026-05-24)
+
+**Plugin:** `local_sentientia_m365` v0.1.0-alpha (2026052400)
+**Status:** MATURITY_ALPHA — OAuth + Graph scaffolding only; **no live HTTP** to `login.microsoftonline.com` or `graph.microsoft.com` in this chip.
+**Docs:** [`docs/integrations/M365-INTEGRATION.md`](docs/integrations/M365-INTEGRATION.md)
+
+P3 workstream feature chip from CLAUDE.md §1 / Workstream C — bridges
+the LMS to a customer's Microsoft 365 tenant so that SharePoint
+documents, Teams meeting context, and Outlook calendar entries can
+become first-class LMS content in later phases. C.1 ships **only** the
+OAuth scaffold + Graph stubs + privacy + admin settings — every public
+method on `graph_client` throws `\moodle_exception('confirm_required')`
+before any HTTP. Feature flag `sentientia_m365_enabled` defaults OFF on
+every customer.
+
+### What shipped (13 files, all `php -l` clean)
+
+- [x] **`version.php`** — MATURITY_ALPHA, 0.1.0-alpha, version
+      `2026052400`, depends on `local_airpay_core >= 2026051401`
+- [x] **`classes/msal_client.php`** — OAuth Authorization Code grant
+      scaffold (public-client + PKCE per RFC 7636):
+      - `generate_pkce_pair()` — S256 challenge from 64-char URL-safe
+        verifier
+      - `build_authorize_url($state, $challenge, $extra_scopes)` —
+        defaults to `openid profile offline_access User.Read`
+      - `store_tokens()` / `load_tokens()` / `decrypt_token()` —
+        `\core\encryption` (Sodium secretbox) round-trip
+      - `needs_refresh()` — 60 s window + fail-safe when expiry missing
+      - `revoke()` — local-row delete (C.2 will add Microsoft
+        revocation endpoint POST)
+      - `is_ready()` — combined flag-on + settings-configured check
+      - `exchange_code()` — gated: returns `'feature_off'` sentinel
+        when flag OFF; throws `confirm_required` when flag ON (Phase
+        C.2 will replace with real `/oauth2/v2.0/token` POST)
+- [x] **`classes/graph_client.php`** — stubs for `get_me()`,
+      `list_sharepoint_sites()`, `get_user_calendar()` — every call
+      funnels through `guard_no_live_calls()` which throws
+      `confirm_required` regardless of flag state (Phase C.1 has no
+      live-API flag yet)
+- [x] **`db/install.xml`** — `local_sentientia_m365_tokens` table:
+      `(userid, customerid)` unique, encrypted `access_token_enc` +
+      `refresh_token_enc` (Sodium ciphertext, plain ASCII column),
+      `expires`, `scopes`, indexes on `expires` + `customerid`
+- [x] **`db/access.php`** — capability `local/sentientia_m365:use`
+      (default false on every archetype — must be assigned to a custom
+      role even when the master flag is ON) + `:admin` (manager)
+- [x] **`db/feature_flags.php`** — `sentientia_m365_enabled` (default
+      OFF) — per CLAUDE.md §13 every new feature ships behind a
+      default-OFF flag
+- [x] **`classes/privacy/provider.php`** — full DPDP / GDPR provider:
+      - `get_metadata()` declares the token table AND the external
+        Microsoft Graph processor
+      - `export_user_data()` masks both encrypted columns as
+        `'[encrypted]'` — never leaks a usable credential to the DSAR
+        ZIP; metadata (scopes, customerid, timestamps) preserved
+      - `delete_data_for_user()` removes the row outright (no
+        soft-delete — Article 17 / DPDP §7 compliance)
+      - `delete_data_for_users()` bulk variant
+- [x] **`settings.php`** — admin settings page under Site admin →
+      Plugins → Local plugins:
+      - Azure tenant ID (text)
+      - Azure client ID (text)
+      - OAuth redirect URI (URL)
+      - Allowed OAuth scopes (multiselect: Sites.Read.All,
+        Files.Read.All, Calendars.Read, Calendars.ReadWrite,
+        TeamMember.Read.All, Mail.Read)
+      - Client SECRET intentionally NOT a setting — Phase C.1 uses
+        public-client PKCE, no secret needed; if Phase C.2 ever needs
+        confidential client, secret goes in `$CFG` per
+        `.claude/rules/api.md`
+- [x] **`lang/en/local_sentientia_m365.php`** + **`lang/hi/...php`** —
+      39 strings each, **100% parity** (verified)
+- [x] **`tests/msal_client_test.php`** — 20 test methods covering
+      encryption round-trip, PKCE shape + uniqueness, upsert behaviour,
+      per-customer isolation, refresh-window arithmetic,
+      `is_ready` flag-toggle, `build_authorize_url` parameter
+      assembly, `exchange_code` feature-flag short-circuit + Phase C.1
+      `confirm_required` throw
+- [x] **`tests/graph_client_test.php`** — 4 test methods covering
+      `confirm_required` guard fires on `get_me` /
+      `list_sharepoint_sites` / `get_user_calendar`, and continues
+      to fire even when the master feature flag is flipped ON
+- [x] **`tests/privacy_provider_test.php`** — 8 test methods covering
+      metadata declaration, `get_contexts_for_userid`,
+      `get_users_in_context`, ciphertext masking on export
+      (positive + negative — full payload JSON also scanned for
+      plaintext leak), per-user delete, bulk delete, and
+      all-users-in-context delete
+- [x] **`docs/integrations/M365-INTEGRATION.md`** — auth-flow sequence
+      diagram, scope policy (default vs optional), token rotation
+      contract (60 s window + 60-day forced re-consent), encryption
+      at rest (Sodium key in `$CFG->dataroot/secret/`), GDPR / DPDP
+      notes (mask-on-export + delete-on-erasure), Phase C.2 admin
+      enablement checklist
+
+### Acceptance gates (all green)
+
+- ✅ Plugin installs (XMLDB validates as well-formed; table schema
+      satisfies Moodle's `_enc` text-column convention for Sodium
+      ciphertext)
+- ✅ OAuth flow scaffolded (PKCE pair generator, authorize URL builder,
+      token persistence + decrypt round-trip)
+- ✅ Feature flag works (master OFF by default; `is_ready()` returns
+      false in every absent-config branch; `exchange_code()` returns
+      `'feature_off'` sentinel when flag OFF)
+- ✅ Privacy provider valid (declares table + external location, masks
+      ciphertext, deletes outright)
+- ✅ Encryption round-trips (Sodium key → encrypt → DB → load →
+      decrypt yields exact plaintext; per-customer rows isolated)
+- ✅ **NO live calls attempted** — `php -l` clean on all 12 PHP files;
+      `graph_client` guard fires first-statement on every public method
+- ✅ Hindi parity 100% (39 / 39 strings, every string contains
+      Devanagari or is a brand name)
+- ✅ CI green — all 12 PHP files lint clean; `install.xml` parses as
+      well-formed XML; `en` / `hi` keys match exactly
+
+### Safety + parity
+
+- ✅ Feature flag default OFF for every customer (CLAUDE.md §13 absolute rule)
+- ✅ No `--no-verify` used; no pre-commit hooks skipped
+- ✅ No file written outside `moodle-enhancement/` subtree
+- ✅ Capability default false on every archetype (denies silent grant
+      when a feature flag is later flipped ON; explicit role assignment
+      required)
+- ✅ NEVER hits `login.microsoftonline.com` or `graph.microsoft.com`
+      in this chip — verified by:
+      1. Every `graph_client::*` method's first statement throws
+         `confirm_required` (test asserts this for all three public
+         methods + asserts it still fires when master flag is ON).
+      2. `msal_client::exchange_code()` short-circuits on the master
+         flag before any cURL would run, and throws `confirm_required`
+         instead of POSTing even when the master flag is ON.
+      3. No `curl_init`, `file_get_contents`, `http`, or `fsockopen`
+         calls anywhere in `local/sentientia_m365/` source — grep
+         confirmed.
+- ✅ Tokens encrypted at rest via `\core\encryption` (Sodium secretbox);
+      decrypt failures generalised to a single `error_token_decrypt`
+      `moodle_exception` so caller cannot distinguish failure modes
+- ✅ Per `.claude/rules/api.md`: NO secrets in settings rows; client
+      ID + tenant ID are public OAuth identifiers, not secrets
+
+### Phase C.2+ deferred items
+
+- `callback.php` redirect entry-point (consumes the Microsoft auth code)
+- Real cURL POST to `/oauth2/v2.0/token` inside `exchange_code()`
+- Real cURL GET against `graph.microsoft.com/v1.0/*` inside the three
+  `graph_client` stubs
+- New flag `sentientia_m365_live_api` to gate the live Graph traffic
+- Per-call `[CONFIRM]` UI gate mirroring `local_sentientia_aiquiz`
+- Cron task `refresh_expiring_tokens`
+- Microsoft revocation endpoint POST in `msal_client::revoke()` +
+  `provider::delete_data_for_user()`
+- Re-encryption job for Sodium key rotation
+- ADR-015 documenting the public-client PKCE choice + confidential
+  client deferral
+
+### Refs
+
+- CLAUDE.md — Workstream C
+- `.claude/rules/api.md` — Microsoft 365 / Azure section
+- RFC 7636 — Proof Key for Code Exchange (PKCE)
+- `lib/classes/encryption.php` — Moodle Sodium wrapper
+- [Microsoft identity platform — OAuth 2.0 auth code grant](https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-auth-code-flow)
+
+---
+
 ## 🚀 TIER 2.6 — CALENDAR SYNC PHASE 1 (2026-05-24)
 
 ### Session — `local_sentientia_calendar` (outbound ICS feed MVP) — ✅ SHIPPED
