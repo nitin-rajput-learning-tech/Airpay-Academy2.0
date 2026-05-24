@@ -3608,3 +3608,79 @@ Course Authors paste source content (SCORM transcripts, narration text, SOP exce
 - G.3 — Cost analytics dashboard + per-customer token quota
 - G.4 — Real `mod_quiz` push (currently stubbed with `pushed_quizid=0`)
 - G.5 — Auto-suggest quiz placement
+
+---
+
+## ♿ P2 cutover-prep — NVDA verification procedure for `local_sentientia_live` (2026-05-24)
+
+**Status:** ✅ Done (1 commit on `claude/wonderful-allen-kRZr5`; pure
+documentation — no plugin / theme code change).
+
+**Why:** Phase E.0 of `local_sentientia_live` added 9 aria-live regions
+and 1 sr-only tally summary across `trainer/run.php`, `audience/play.php`,
+`templates/result_panel.mustache`, `templates/result_bar_chart.mustache`
+and the `chart_updater.js` AMD module. Markup conformance is verified by
+PHPUnit + Mustache lint, but a QA must still observe NVDA + Firefox /
+Chrome to confirm the announcements actually fire. The Platform Visual
+Audit cutover-day TODO list flagged "NVDA verification procedure missing"
+as a blocking item for Phase E.1+ ship; this chip closes it.
+
+**What shipped:**
+
+- **New doc** `docs/qa/NVDA-VERIFICATION-PROCEDURE.md` — 589 lines,
+  WCAG 4.1.3 / 1.3.1 / 2.4.7 mapped, covers all 9 aria-live regions plus
+  the sr-only tally summary written by `chart_updater.js`.
+- **12 scenarios**, each with surface, element, ARIA contract, action,
+  expected NVDA Speech Viewer line, WCAG criterion, browse-vs-focus mode,
+  browser parity expectation, and BLOCKING / NON-BLOCKING severity.
+- **Pre-test data setup** — 1 trainer account + 1 live session with 5
+  slides (multichoice / quiz / rating / wordcloud / openended) so every
+  result-panel branch is exercised.
+- **Cross-browser parity table** — known NVDA + Firefox vs NVDA + Chrome
+  behaviour differences (aria-atomic re-read, role=img depth, focus-mode
+  live-region announcement).
+- **Evidence-capture protocol** — screenshot + Speech Viewer transcript
+  per scenario per browser, audio recording for BLOCKING scenarios,
+  hub README template under
+  `docs/visual-evidence/YYYY-MM-DD/nvda-verification/`.
+- **Pass / Fail rubric** — 2-second timing budget; punctuation /
+  number-format variance tolerated; PASS / FAIL / BLOCKED definitions.
+- **Sign-off table template** — 12 rows × 2 browsers with version /
+  evidence / tester / date / notes columns, plus final ship-gate block
+  requiring PM acknowledgement of NON-BLOCKING fails.
+- **Defect reporting protocol** — GitHub issue template, label scheme
+  (`a11y`, `live-engagement`, `wcag-4.1.3`, severity), Slack escalation
+  for BLOCKING defects.
+- **Three appendices** — mode-change checklist per scenario, Hindi NVDA
+  parity backlog note, version history.
+
+**Acceptance criteria met:**
+- ✅ File at `docs/qa/NVDA-VERIFICATION-PROCEDURE.md` (folder + file
+  created — `docs/qa/` previously didn't exist).
+- ✅ 589 lines — well over the 200-line minimum.
+- ✅ Every Phase E.0 aria-live region covered (12 scenarios × 9 regions
+  + 1 sr-only span + 2 landmark / image roles + 1 stress test).
+- ✅ Pass / fail rubric with severity escalation.
+- ✅ Screenshot + recording requirements explicit.
+- ✅ Final sign-off block matches the template Nitin uses on other
+  cutover-day docs.
+- ✅ WCAG 4.1.3, 1.3.1, 2.4.7 mapped per scenario.
+
+**Out of scope (deferred):**
+- Hindi-language NVDA pass — flagged in Appendix B; backlog Phase E.12.
+- Mobile-screen-reader (TalkBack / VoiceOver) equivalents — not part of
+  cutover gate; tracked in mobile audit `docs/audits/MOBILE-APP-WS-SURFACE-AUDIT-2026-05-20.md`.
+- VPAT / WCAG conformance statement — separate compliance deliverable.
+
+**Refs:**
+- Doc: `docs/qa/NVDA-VERIFICATION-PROCEDURE.md`
+- Plugin source:
+  - `moodle-enhancement/local/sentientia_live/amd/src/chart_updater.js`
+  - `moodle-enhancement/local/sentientia_live/templates/result_panel.mustache`
+  - `moodle-enhancement/local/sentientia_live/templates/result_bar_chart.mustache`
+  - `moodle-enhancement/local/sentientia_live/audience/play.php`
+  - `moodle-enhancement/local/sentientia_live/trainer/run.php`
+- Lang strings: `moodle-enhancement/local/sentientia_live/lang/en/local_sentientia_live.php` (`a11y_*` keys)
+- Plugin version: `local_sentientia_live` v0.1.1-alpha (Phase E.0 a11y additions, P0 #8)
+- WCAG: 4.1.3 Status Messages (AA), 1.3.1 Info & Relationships (A),
+  2.4.7 Focus Visible (AA)
