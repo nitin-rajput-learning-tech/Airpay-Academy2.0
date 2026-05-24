@@ -15,6 +15,7 @@ course_extract.txt
 .claude/settings.local.json
 __pycache__/
 *.pyc
+.pytest_cache/
 
 # Release packages (too large for git — stored in Moodle Backup/)
 release/airpay-academy-v1.0.0-rc1-full.tar.gz
