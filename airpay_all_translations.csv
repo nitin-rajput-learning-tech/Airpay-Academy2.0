@@ -1,0 +1,387 @@
+﻿Plugin,"String Key",English,"Hindi (hi)","Marathi (mr)","Swahili (sw)","Kannada (kn)",Notes
+local_airpay_catalog,pluginname,"Airpay Course Catalog","एयरपे कोर्स कैटलॉग","एअरपे कोर्स कॅटलॉग","Katalogi ya Kozi za Airpay","ಏರ್‌ಪೇ ಕೋರ್ಸ್ ಕ್ಯಾಟಲಾಗ್",
+local_airpay_catalog,catalog,"Course Catalog","कोर्स कैटलॉग","कोर्स कॅटलॉग","Katalogi ya Kozi","ಕೋರ್ಸ್ ಕ್ಯಾಟಲಾಗ್",
+local_airpay_catalog,privacy:metadata,"The catalog plugin does not store personal data.","कैटलॉग प्लगइन व्यक्तिगत डेटा संग्रहीत नहीं करता है।","कॅटलॉग प्लगइन वैयक्तिक डेटा संग्रहित करत नाही.","Programu-jalizi ya katalogi haihifadhi data binafsi.","ಕ್ಯಾಟಲಾಗ್ ಪ್ಲಗಿನ್ ವೈಯಕ್ತಿಕ ಡೇಟಾವನ್ನು ಸಂಗ್ರಹಿಸುವುದಿಲ್ಲ.","ADMIN-ONLY (low priority)"
+local_airpay_catalog,search,"Search courses, topics, skills...","कोर्स, विषय, कौशल खोजें...","कोर्स, विषय, कौशल्ये शोधा...","Tafuta kozi, mada, ujuzi...","ಕೋರ್ಸ್‌ಗಳು, ವಿಷಯಗಳು, ಕೌಶಲ್ಯಗಳನ್ನು ಹುಡುಕಿ...",
+local_airpay_catalog,continuelearning,"Continue Learning","सीखना जारी रखें","शिकणे सुरू ठेवा","Endelea Kujifunza","ಕಲಿಕೆ ಮುಂದುವರಿಸಿ",
+local_airpay_catalog,trending,"Trending in Your Department","आपके विभाग में ट्रेंडिंग","तुमच्या विभागात ट्रेंडिंग","Maarufu katika Idara Yako","ನಿಮ್ಮ ವಿಭಾಗದಲ್ಲಿ ಟ್ರೆಂಡಿಂಗ್",
+local_airpay_catalog,newthismonth,"New This Month","इस महीने नया","या महिन्यात नवीन","Mpya Mwezi Huu","ಈ ತಿಂಗಳು ಹೊಸದು",
+local_airpay_catalog,browsecategory,"Browse by Category","श्रेणी से ब्राउज़ करें","श्रेणीनुसार ब्राउझ करा","Vinjari kwa Jamii","ವರ್ಗದ ಪ್ರಕಾರ ಬ್ರೌಸ್ ಮಾಡಿ",
+local_airpay_catalog,allcourses,"All Courses","सभी कोर्स","सर्व कोर्स","Kozi Zote","ಎಲ್ಲಾ ಕೋರ್ಸ್‌ಗಳು",
+local_airpay_catalog,newest,Newest,नवीनतम,नवीनतम,"Mpya zaidi",ಹೊಸ,
+local_airpay_catalog,popular,Popular,लोकप्रिय,लोकप्रिय,Maarufu,ಜನಪ್ರಿಯ,
+local_airpay_catalog,atoz,A-Z,क-ख,अ-ज्ञ,A-Z,ಅ-ಹ,
+local_airpay_catalog,nocourses,"No courses found.","कोई कोर्स नहीं मिला।","कोणतेही कोर्स सापडले नाहीत.","Hakuna kozi zilizopatikana.","ಯಾವುದೇ ಕೋರ್ಸ್‌ಗಳು ಕಂಡುಬಂದಿಲ್ಲ.",
+local_airpay_catalog,loadmore,"Load more","और लोड करें","अधिक लोड करा","Pakia zaidi","ಇನ್ನಷ್ಟು ಲೋಡ್ ಮಾಡಿ",
+local_airpay_catalog,viewdetails,"View Details","विवरण देखें","तपशील पहा","Tazama Maelezo","ವಿವರಗಳನ್ನು ನೋಡಿ",
+local_airpay_catalog,enroll,Enroll,"नामांकन करें","नोंदणी करा",Jiandikishe,ನೋಂದಾಯಿಸಿ,
+local_airpay_catalog,continue,Continue,"जारी रखें","सुरू ठेवा",Endelea,ಮುಂದುವರಿಸಿ,
+local_airpay_gamification,pluginname,"Airpay Gamification","एयरपे गेमिफिकेशन","एअरपे गेमिफिकेशन","Mchezo wa Airpay","ಏರ್‌ಪೇ ಗೇಮಿಫಿಕೇಶನ್",
+local_airpay_gamification,privacy:metadata,"The gamification plugin stores points and badge data linked to user IDs.","[NEEDS TRANSLATION]","गेमिफिकेशन प्लगइन वापरकर्ता आयडीशी जोडलेले गुण आणि बॅज डेटा संग्रहित करते.","Programu-jalizi ya mchezo huhifadhi data ya alama na beji zilizounganishwa na vitambulisho vya mtumiaji.","ಗೇಮಿಫಿಕೇಶನ್ ಪ್ಲಗಿನ್ ಬಳಕೆದಾರರ ಐಡಿಗಳಿಗೆ ಲಿಂಕ್ ಮಾಡಿದ ಅಂಕ ಮತ್ತು ಬ್ಯಾಡ್ಜ್ ಡೇಟಾವನ್ನು ಸಂಗ್ರಹಿಸುತ್ತದೆ.","ADMIN-ONLY (low priority)"
+local_airpay_gamification,points,Points,अंक,गुण,Alama,ಅಂಕಗಳು,
+local_airpay_gamification,totalpoints,"Total Points","कुल अंक","एकूण गुण","Jumla ya Alama","ಒಟ್ಟು ಅಂಕಗಳು",
+local_airpay_gamification,pointstoday,"Points Today","आज के अंक","आजचे गुण","Alama za Leo","ಇಂದಿನ ಅಂಕಗಳು",
+local_airpay_gamification,pointshistory,"Points History","अंक इतिहास","गुणांचा इतिहास","Historia ya Alama","ಅಂಕಗಳ ಇತಿಹಾಸ",
+local_airpay_gamification,level,Level,स्तर,स्तर,Ngazi,ಮಟ್ಟ,
+local_airpay_gamification,badges,Badges,बैज,बॅजेस,Beji,ಬ್ಯಾಡ್ಜ್‌ಗಳು,
+local_airpay_gamification,badgeearned,"Badge earned!","बैज अर्जित!","बॅज मिळाला!","Beji imepatikana!","ಬ್ಯಾಡ್ಜ್ ಗಳಿಸಿದ್ದೀರಿ!",
+local_airpay_gamification,badge_first_step,"First Step","पहला कदम","पहिले पाऊल","Hatua ya Kwanza","ಮೊದಲ ಹೆಜ್ಜೆ",
+local_airpay_gamification,badge_first_step_desc,"Complete your first course","अपना पहला कोर्स पूरा करें","तुमचा पहिला कोर्स पूर्ण करा","Kamilisha kozi yako ya kwanza","ನಿಮ್ಮ ಮೊದಲ ಕೋರ್ಸ್ ಪೂರ್ಣಗೊಳಿಸಿ","ADMIN-ONLY (low priority)"
+local_airpay_gamification,badge_quick_learner,"Quick Learner","तेज़ शिक्षार्थी","जलद शिकणारा","Mwanafunzi wa Haraka","ವೇಗದ ಕಲಿಕೆಗಾರ",
+local_airpay_gamification,badge_quick_learner_desc,"Complete 5 courses","5 कोर्स पूरे करें","५ कोर्स पूर्ण करा","Kamilisha kozi 5","5 ಕೋರ್ಸ್‌ಗಳನ್ನು ಪೂರ್ಣಗೊಳಿಸಿ","ADMIN-ONLY (low priority)"
+local_airpay_gamification,badge_knowledge_seeker,"Knowledge Seeker","ज्ञान साधक","ज्ञान शोधक","Mtafutaji wa Maarifa","ಜ್ಞಾನ ಅನ್ವೇಷಕ",
+local_airpay_gamification,badge_knowledge_seeker_desc,"Complete 10 courses","10 कोर्स पूरे करें","१० कोर्स पूर्ण करा","Kamilisha kozi 10","10 ಕೋರ್ಸ್‌ಗಳನ್ನು ಪೂರ್ಣಗೊಳಿಸಿ","ADMIN-ONLY (low priority)"
+local_airpay_gamification,badge_compliance_champion,"Compliance Champion","अनुपालन चैंपियन","अनुपालन चॅम्पियन","Bingwa wa Utiifu","ಅನುಸರಣೆ ಚಾಂಪಿಯನ್",
+local_airpay_gamification,badge_compliance_champion_desc,"Complete all mandatory compliance courses","सभी अनिवार्य अनुपालन कोर्स पूरे करें","सर्व अनिवार्य अनुपालन कोर्स पूर्ण करा","Kamilisha kozi zote za lazima za utiifu","ಎಲ್ಲಾ ಕಡ್ಡಾಯ ಅನುಸರಣೆ ಕೋರ್ಸ್‌ಗಳನ್ನು ಪೂರ್ಣಗೊಳಿಸಿ","ADMIN-ONLY (low priority)"
+local_airpay_gamification,badge_streak_master,"Streak Master","स्ट्रीक मास्टर","स्ट्रीक मास्टर","Bwana wa Mfululizo","ಸ್ಟ್ರೀಕ್ ಮಾಸ್ಟರ್",
+local_airpay_gamification,badge_streak_master_desc,"Maintain a 30-day login streak","30-दिन की लॉगिन स्ट्रीक बनाए रखें","३० दिवसांची लॉगिन स्ट्रीक टिकवा","Dumisha mfululizo wa kuingia kwa siku 30","30 ದಿನಗಳ ಲಾಗಿನ್ ಸ್ಟ್ರೀಕ್ ನಿರ್ವಹಿಸಿ","ADMIN-ONLY (low priority)"
+local_airpay_gamification,badge_quiz_ace,"Quiz Ace","क्विज़ एस","क्विझ एक्स","Bingwa wa Mtihani","ಕ್ವಿಜ್ ಏಸ್",
+local_airpay_gamification,badge_quiz_ace_desc,"Score 100% on 5 quizzes","5 क्विज़ में 100% स्कोर करें","५ क्विझमध्ये १००% गुण मिळवा","Pata alama 100% kwenye mitihani 5","5 ಕ್ವಿಜ್‌ಗಳಲ್ಲಿ 100% ಅಂಕ ಪಡೆಯಿರಿ","ADMIN-ONLY (low priority)"
+local_airpay_gamification,badge_team_player,"Team Player","टीम प्लेयर","टीम प्लेयर","Mchezaji wa Timu","ತಂಡದ ಆಟಗಾರ",
+local_airpay_gamification,badge_team_player_desc,"Reach the top 10 leaderboard","टॉप 10 लीडरबोर्ड में पहुँचें","लीडरबोर्डवर शीर्ष १० मध्ये पोहोचा","Fikia nafasi ya juu 10 kwenye ubao wa viongozi","ಲೀಡರ್‌ಬೋರ್ಡ್‌ನಲ್ಲಿ ಅಗ್ರ 10 ತಲುಪಿ","ADMIN-ONLY (low priority)"
+local_airpay_gamification,streak,Streak,स्ट्रीक,स्ट्रीक,Mfululizo,ಸ್ಟ್ರೀಕ್,
+local_airpay_gamification,currentstreak,"Current Streak","वर्तमान स्ट्रीक","सध्याची स्ट्रीक","Mfululizo wa Sasa","ಪ್ರಸ್ತುತ ಸ್ಟ್ರೀಕ್",
+local_airpay_gamification,longeststreak,"Longest Streak","सबसे लंबी स्ट्रीक","सर्वात लांब स्ट्रीक","Mfululizo Mrefu Zaidi","ಅತಿ ಉದ್ದ ಸ್ಟ್ರೀಕ್",
+local_airpay_gamification,streakdays,"{$a} days","{$a} दिन","{$a} दिवस","siku {$a}","{$a} ದಿನಗಳು",
+local_airpay_gamification,keepgoing,"Keep going!","जारी रखें!","सुरू ठेवा!",Endelea!,ಮುಂದುವರಿಸಿ!,
+local_airpay_gamification,leaderboard,Leaderboard,लीडरबोर्ड,लीडरबोर्ड,"Ubao wa Viongozi",ಲೀಡರ್‌ಬೋರ್ಡ್,
+local_airpay_gamification,globalleaderboard,"Global Leaderboard","वैश्विक लीडरबोर्ड","जागतिक लीडरबोर्ड","Ubao wa Viongozi wa Kimataifa","ಜಾಗತಿಕ ಲೀಡರ್‌ಬೋರ್ಡ್",
+local_airpay_gamification,departmentleaderboard,"Your Department","आपका विभाग","तुमचा विभाग","Idara Yako","ನಿಮ್ಮ ವಿಭಾಗ",
+local_airpay_gamification,yourrank,"Your Rank: #{$a}","आपकी रैंक: #{$a}","तुमचा क्रमांक: #{$a}","Nafasi Yako: #{$a}","ನಿಮ್ಮ ಶ್ರೇಣಿ: #{$a}",
+local_airpay_gamification,noentries,"No leaderboard entries yet. Start learning to earn points!","अभी तक कोई प्रविष्टि नहीं। अंक कमाने के लिए सीखना शुरू करें!","अजून लीडरबोर्ड एंट्री नाहीत. गुण मिळवण्यासाठी शिकायला सुरुवात करा!","Bado hakuna maingizo kwenye ubao wa viongozi. Anza kujifunza kupata alama!","ಇನ್ನೂ ಲೀಡರ್‌ಬೋರ್ಡ್ ನಮೂದುಗಳಿಲ್ಲ. ಅಂಕಗಳನ್ನು ಗಳಿಸಲು ಕಲಿಯಲು ಪ್ರಾರಂಭಿಸಿ!",
+local_airpay_gamification,level_beginner,Beginner,शुरुआती,नवशिक्या,Mwanzo,ಆರಂಭಿಕ,
+local_airpay_gamification,level_learner,Learner,शिक्षार्थी,शिकणारा,Mwanafunzi,ಕಲಿಕೆಗಾರ,
+local_airpay_gamification,level_achiever,Achiever,उपलब्धिकर्ता,कर्तृत्ववान,Mfanikaji,ಸಾಧಕ,
+local_airpay_gamification,level_expert,Expert,विशेषज्ञ,तज्ञ,Mtaalamu,ತಜ್ಞ,
+local_airpay_gamification,level_master,Master,मास्टर,मास्टर,Bwana,ಮಾಸ್ಟರ್,
+local_airpay_gamification,pointstonext,"{$a} points to next level","अगले स्तर तक {$a} अंक","पुढच्या स्तरासाठी {$a} गुण","alama {$a} kwa ngazi inayofuata","ಮುಂದಿನ ಮಟ್ಟಕ್ಕೆ {$a} ಅಂಕಗಳು",
+local_airpay_compliance_report,pluginname,"Airpay Compliance Report","एयरपे अनुपालन रिपोर्ट","एअरपे अनुपालन रिपोर्ट","Ripoti ya Utiifu ya Airpay","ಏರ್‌ಪೇ ಅನುಸರಣೆ ವರದಿ",
+local_airpay_compliance_report,privacy:metadata,"Stores compliance snapshot data linked to user IDs.","अनुपालन स्नैपशॉट डेटा संग्रहीत करता है जो उपयोगकर्ता आईडी से जुड़ा है।","वापरकर्ता आयडीशी जोडलेला अनुपालन स्नॅपशॉट डेटा संग्रहित करते.","Huhifadhi data ya picha ya utiifu iliyounganishwa na vitambulisho vya mtumiaji.","ಬಳಕೆದಾರರ ಐಡಿಗಳಿಗೆ ಲಿಂಕ್ ಮಾಡಿದ ಅನುಸರಣೆ ಸ್ನ್ಯಾಪ್‌ಶಾಟ್ ಡೇಟಾವನ್ನು ಸಂಗ್ರಹಿಸುತ್ತದೆ.","ADMIN-ONLY (low priority)"
+local_airpay_compliance_report,taskrefresh,"Refresh compliance snapshot","अनुपालन स्नैपशॉट ताज़ा करें","अनुपालन स्नॅपशॉट ताजे करा","Sasisha picha ya utiifu","ಅನುಸರಣೆ ಸ್ನ್ಯಾಪ್‌ಶಾಟ್ ರಿಫ್ರೆಶ್ ಮಾಡಿ",
+local_airpay_compliance_report,messageprovider:compliance_alert,"Compliance deadline alerts","अनुपालन समयसीमा अलर्ट","अनुपालन मुदत अलर्ट","Arifa za mwisho wa utiifu","ಅನುಸರಣೆ ಗಡುವು ಎಚ್ಚರಿಕೆಗಳು",
+local_airpay_compliance_report,settingsheading,"Compliance Report Settings","अनुपालन रिपोर्ट सेटिंग्स","अनुपालन रिपोर्ट सेटिंग्ज","Mipangilio ya Ripoti ya Utiifu","ಅನುಸರಣೆ ವರದಿ ಸೆಟ್ಟಿಂಗ್‌ಗಳು",
+local_airpay_compliance_report,settingsdesc,"Configure auto-enrolment, escalation rules, and email notifications for mandatory compliance courses.","अनिवार्य अनुपालन पाठ्यक्रमों के लिए स्वतः नामांकन, एस्केलेशन नियम और ईमेल सूचनाएं कॉन्फ़िगर करें।","अनिवार्य अनुपालन कोर्ससाठी स्वयं-नोंदणी, एस्केलेशन नियम आणि ईमेल सूचना कॉन्फिगर करा.","Sanidi uandikishaji-otomatiki, sheria za kupandisha na arifa za barua pepe kwa kozi za lazima za utiifu.","ಕಡ್ಡಾಯ ಅನುಸರಣೆ ಕೋರ್ಸ್‌ಗಳಿಗೆ ಸ್ವಯಂ-ನೋಂದಣಿ, ಹೆಚ್ಚಳ ನಿಯಮಗಳು ಮತ್ತು ಇಮೇಲ್ ಅಧಿಸೂಚನೆಗಳನ್ನು ಕಾನ್ಫಿಗರ್ ಮಾಡಿ.",
+local_airpay_compliance_report,autoenrol,"Auto-enrol missing employees","गायब कर्मचारियों को स्वतः नामांकित करें","गहाळ कर्मचाऱ्यांची स्वयं-नोंदणी करा","Andikisha wafanyakazi wanaokosekana otomatiki","ಕಾಣೆಯಾದ ಉದ್ಯೋಗಿಗಳನ್ನು ಸ್ವಯಂ-ನೋಂದಾಯಿಸಿ",
+local_airpay_compliance_report,autoenrol_desc,"Automatically enrol active employees in mandatory courses they are not enrolled in.","सक्रिय कर्मचारियों को उन अनिवार्य पाठ्यक्रमों में स्वचालित रूप से नामांकित करें जिनमें वे नामांकित नहीं हैं।","सक्रिय कर्मचाऱ्यांना त्यांनी नोंदणी न केलेल्या अनिवार्य कोर्समध्ये स्वयंचलितपणे नोंदणी करा.","Andikisha wafanyakazi hai otomatiki katika kozi za lazima ambazo hawajaandikishwa.","ನೋಂದಾಯಿಸದ ಕಡ್ಡಾಯ ಕೋರ್ಸ್‌ಗಳಲ್ಲಿ ಸಕ್ರಿಯ ಉದ್ಯೋಗಿಗಳನ್ನು ಸ್ವಯಂಚಾಲಿತವಾಗಿ ನೋಂದಾಯಿಸಿ.","ADMIN-ONLY (low priority)"
+local_airpay_compliance_report,reminderdays,"Reminder after (days)","रिमाइंडर के बाद (दिन)","स्मरणपत्र नंतर (दिवस)","Kikumbusho baada ya (siku)","ಜ್ಞಾಪನೆ ನಂತರ (ದಿನಗಳು)",
+local_airpay_compliance_report,reminderdays_desc,"Send a reminder if employee has not started after this many days.","यदि कर्मचारी ने इतने दिनों के बाद शुरू नहीं किया है तो रिमाइंडर भेजें।","कर्मचाऱ्याने इतक्या दिवसांनंतर सुरू केले नसल्यास स्मरणपत्र पाठवा.","Tuma kikumbusho ikiwa mfanyakazi hajaanza baada ya siku hizi.","ಉದ್ಯೋಗಿ ಈ ದಿನಗಳ ನಂತರ ಪ್ರಾರಂಭಿಸದಿದ್ದರೆ ಜ್ಞಾಪನೆ ಕಳುಹಿಸಿ.","ADMIN-ONLY (low priority)"
+local_airpay_compliance_report,managerescalation,"Manager escalation","प्रबंधक एस्केलेशन","व्यवस्थापक एस्केलेशन","Kupandisha kwa meneja","ವ್ಯವಸ್ಥಾಪಕರ ಹೆಚ್ಚಳ",
+local_airpay_compliance_report,managerescalation_desc,"Send overdue alerts to the employee's manager.","कर्मचारी के प्रबंधक को अतिदेय अलर्ट भेजें।","कर्मचाऱ्याच्या व्यवस्थापकाला विलंबित अलर्ट पाठवा.","Tuma arifa za kuchelewa kwa meneja wa mfanyakazi.","ಉದ್ಯೋಗಿಯ ವ್ಯವಸ್ಥಾಪಕರಿಗೆ ವಿಳಂಬ ಎಚ್ಚರಿಕೆಗಳನ್ನು ಕಳುಹಿಸಿ.","ADMIN-ONLY (low priority)"
+local_airpay_compliance_report,weeklyreport,"Weekly compliance email","साप्ताहिक अनुपालन ईमेल","साप्ताहिक अनुपालन ईमेल","Barua pepe ya utiifu ya kila wiki","ಸಾಪ್ತಾಹಿಕ ಅನುಸರಣೆ ಇಮೇಲ್",
+local_airpay_compliance_report,weeklyreport_desc,"Send a weekly compliance summary to L&D admins.","L&D व्यवस्थापकों को साप्ताहिक अनुपालन सारांश भेजें।","L&D प्रशासकांना साप्ताहिक अनुपालन सारांश पाठवा.","Tuma muhtasari wa utiifu wa kila wiki kwa wasimamizi wa L&D.","L&D ನಿರ್ವಾಹಕರಿಗೆ ಸಾಪ್ತಾಹಿಕ ಅನುಸರಣೆ ಸಾರಾಂಶ ಕಳುಹಿಸಿ.","ADMIN-ONLY (low priority)"
+local_airpay_compliance_report,compliancereport,"Compliance Report","अनुपालन रिपोर्ट","अनुपालन रिपोर्ट","Ripoti ya Utiifu","ಅನುಸರಣೆ ವರದಿ",
+local_airpay_compliance_report,compliancematrix,"Compliance Matrix","अनुपालन मैट्रिक्स","अनुपालन मॅट्रिक्स","Jedwali la Utiifu","ಅನುಸರಣೆ ಮ್ಯಾಟ್ರಿಕ್ಸ್",
+local_airpay_compliance_report,defaulters,Defaulters,डिफॉल्टर्स,डिफॉल्टर्स,Wasiotekeleza,ಡೀಫಾಲ್ಟರ್‌ಗಳು,
+local_airpay_compliance_report,departmentscorecard,"Department Scorecard","विभाग स्कोरकार्ड","विभाग स्कोरकार्ड","Kadi ya Alama ya Idara","ವಿಭಾಗ ಸ್ಕೋರ್‌ಕಾರ್ಡ್",
+local_airpay_compliance_report,managerreport,"Manager Report","प्रबंधक रिपोर्ट","व्यवस्थापक रिपोर्ट","Ripoti ya Meneja","ವ್ಯವಸ್ಥಾಪಕರ ವರದಿ",
+local_airpay_compliance_report,export,"Export to Excel","एक्सेल में निर्यात करें","एक्सेलमध्ये निर्यात करा","Hamisha kwa Excel","ಎಕ್ಸೆಲ್‌ಗೆ ರಫ್ತು ಮಾಡಿ",
+local_airpay_compliance_report,exportfilename,Compliance_Report,अनुपालन_रिपोर्ट,अनुपालन_रिपोर्ट,Ripoti_ya_Utiifu,ಅನುಸರಣೆ_ವರದಿ,
+local_airpay_compliance_report,status_completed,Completed,पूर्ण,पूर्ण,Imekamilika,ಪೂರ್ಣಗೊಂಡಿದೆ,
+local_airpay_compliance_report,status_in_progress,"In Progress","प्रगति में",प्रगतीत,Inaendelea,ಪ್ರಗತಿಯಲ್ಲಿ,
+local_airpay_compliance_report,status_overdue,Overdue,अतिदेय,विलंबित,Imechelewa,ವಿಳಂಬವಾಗಿದೆ,
+local_airpay_compliance_report,status_not_started,"Not Started","शुरू नहीं हुआ","सुरू नाही",Haijaanza,ಪ್ರಾರಂಭವಾಗಿಲ್ಲ,
+local_airpay_compliance_report,status_not_enrolled,"Not Enrolled","नामांकित नहीं","नोंदणी नाही",Haijaandikishwa,ನೋಂದಾಯಿಸಿಲ್ಲ,
+local_airpay_compliance_report,status_exempted,Exempted,"छूट प्राप्त","सूट दिलेले",Imesamehewa,ವಿನಾಯಿತಿ,
+local_airpay_compliance_report,compliancerate,"Compliance Rate","अनुपालन दर","अनुपालन दर","Kiwango cha Utiifu","ಅನುಸರಣೆ ದರ",
+local_airpay_compliance_report,totalitems,"Total Items","कुल आइटम","एकूण आयटम","Jumla ya Vipengele","ಒಟ್ಟು ಐಟಂಗಳು",
+local_airpay_compliance_report,overduecount,Overdue,अतिदेय,विलंबित,Imechelewa,ವಿಳಂಬ,
+local_airpay_compliance_report,notenrolledcount,"Not Enrolled","नामांकित नहीं","नोंदणी नाही",Haijaandikishwa,ನೋಂದಾಯಿಸಿಲ್ಲ,
+local_airpay_compliance_report,managecourses,"Manage Mandatory Courses","अनिवार्य पाठ्यक्रम प्रबंधित करें","अनिवार्य कोर्स व्यवस्थापित करा","Simamia Kozi za Lazima","ಕಡ್ಡಾಯ ಕೋರ್ಸ್‌ಗಳನ್ನು ನಿರ್ವಹಿಸಿ",
+local_airpay_compliance_report,addcourse,"Add Mandatory Course","अनिवार्य पाठ्यक्रम जोड़ें","अनिवार्य कोर्स जोडा","Ongeza Kozi ya Lazima","ಕಡ್ಡಾಯ ಕೋರ್ಸ್ ಸೇರಿಸಿ",
+local_airpay_compliance_report,exemptuser,"Exempt User","उपयोगकर्ता को छूट दें","वापरकर्त्याला सूट द्या","Samehe Mtumiaji","ಬಳಕೆದಾರರಿಗೆ ವಿನಾಯಿತಿ ನೀಡಿ",
+local_airpay_compliance_report,nodata,"No compliance data available. Run the snapshot task first.","कोई अनुपालन डेटा उपलब्ध नहीं है। पहले स्नैपशॉट कार्य चलाएं।","कोणताही अनुपालन डेटा उपलब्ध नाही. प्रथम स्नॅपशॉट कार्य चालवा.","Hakuna data ya utiifu inayopatikana. Endesha kazi ya picha kwanza.","ಯಾವುದೇ ಅನುಸರಣೆ ಡೇಟಾ ಲಭ್ಯವಿಲ್ಲ. ಮೊದಲು ಸ್ನ್ಯಾಪ್‌ಶಾಟ್ ಕಾರ್ಯ ಚಾಲನೆ ಮಾಡಿ.",
+local_airpay_compliance_report,lastrefreshed,"Last refreshed","अंतिम बार ताज़ा किया गया","शेवटचे ताजे केले","Ilisasishwa mara ya mwisho","ಕೊನೆಯ ರಿಫ್ರೆಶ್",
+local_airpay_skills,pluginname,"Airpay Skills Matrix","एयरपे कौशल मैट्रिक्स","एअरपे कौशल्य मॅट्रिक्स","Jedwali la Ujuzi la Airpay","ಏರ್‌ಪೇ ಕೌಶಲ್ಯ ಮ್ಯಾಟ್ರಿಕ್ಸ್",
+local_airpay_skills,privacy:metadata,"The skills plugin stores skill level data linked to user IDs.","[NEEDS TRANSLATION]","कौशल्य प्लगइन वापरकर्ता आयडीशी जोडलेला कौशल्य स्तर डेटा संग्रहित करते.","Programu-jalizi ya ujuzi huhifadhi data ya kiwango cha ujuzi iliyounganishwa na vitambulisho vya mtumiaji.","ಕೌಶಲ್ಯ ಪ್ಲಗಿನ್ ಬಳಕೆದಾರರ ಐಡಿಗಳಿಗೆ ಲಿಂಕ್ ಮಾಡಿದ ಕೌಶಲ್ಯ ಮಟ್ಟದ ಡೇಟಾವನ್ನು ಸಂಗ್ರಹಿಸುತ್ತದೆ.","ADMIN-ONLY (low priority)"
+local_airpay_skills,skills,Skills,कौशल,कौशल्ये,Ujuzi,ಕೌಶಲ್ಯಗಳು,
+local_airpay_skills,skillmatrix,"Skill Matrix","कौशल मैट्रिक्स","कौशल्य मॅट्रिक्स","Jedwali la Ujuzi","ಕೌಶಲ್ಯ ಮ್ಯಾಟ್ರಿಕ್ಸ್",
+local_airpay_skills,gapanalysis,"Gap Analysis","गैप विश्लेषण","गॅप विश्लेषण","Uchambuzi wa Pengo","ಅಂತರ ವಿಶ್ಲೇಷಣೆ",
+local_airpay_skills,yourskills,"Your Skills","आपके कौशल","तुमची कौशल्ये","Ujuzi Wako","ನಿಮ್ಮ ಕೌಶಲ್ಯಗಳು",
+local_airpay_skills,requiredskills,"Required for your role","आपकी भूमिका के लिए आवश्यक","तुमच्या भूमिकेसाठी आवश्यक","Inahitajika kwa nafasi yako","ನಿಮ್ಮ ಪಾತ್ರಕ್ಕೆ ಅಗತ್ಯ",
+local_airpay_skills,currentlevel,"Current Level","वर्तमान स्तर","सध्याचा स्तर","Kiwango cha Sasa","ಪ್ರಸ್ತುತ ಮಟ್ಟ",
+local_airpay_skills,requiredlevel,"Required Level","आवश्यक स्तर","आवश्यक स्तर","Kiwango Kinachohitajika","ಅಗತ್ಯ ಮಟ್ಟ",
+local_airpay_skills,gap,Gap,अंतर,गॅप,Pengo,ಅಂತರ,
+local_airpay_skills,met,Met,पूर्ण,पूर्ण,Imefikiwa,ಪೂರ್ಣ,
+local_airpay_skills,partial,"In Progress","प्रगति में",प्रगतीत,Inaendelea,ಪ್ರಗತಿಯಲ್ಲಿ,
+local_airpay_skills,missing,"Not Started","शुरू नहीं हुआ","सुरू नाही",Haijaanza,ಪ್ರಾರಂಭವಾಗಿಲ್ಲ,
+local_airpay_skills,skillsgap,"{$a->gaps} skill gaps out of {$a->total}","{$a->total} में से {$a->gaps} कौशल अंतर","{$a->total} पैकी {$a->gaps} कौशल्य गॅप","Mapengo {$a->gaps} kati ya {$a->total} ya ujuzi","{$a->total} ರಲ್ಲಿ {$a->gaps} ಕೌಶಲ್ಯ ಅಂತರಗಳು",
+local_airpay_skills,skillsmet,"{$a->met}/{$a->total} skills at required level ({$a->percentage}%)","{$a->total} में से {$a->met} कौशल आवश्यक स्तर पर ({$a->percentage}%)","{$a->met}/{$a->total} कौशल्ये आवश्यक स्तरावर ({$a->percentage}%)","Ujuzi {$a->met}/{$a->total} katika kiwango kinachohitajika ({$a->percentage}%)","{$a->met}/{$a->total} ಕೌಶಲ್ಯಗಳು ಅಗತ್ಯ ಮಟ್ಟದಲ್ಲಿ ({$a->percentage}%)",
+local_airpay_skills,recommendedcourses,"Recommended to fill gaps","अंतर भरने के लिए अनुशंसित","गॅप भरण्यासाठी शिफारस केलेले","Zinazopendekezwa kujaza mapengo","ಅಂತರ ತುಂಬಲು ಶಿಫಾರಸು ಮಾಡಿದವು",
+local_airpay_skills,nodesignation,"No role/designation set. Contact your manager to update your profile.","कोई भूमिका/पदनाम सेट नहीं है। अपनी प्रोफ़ाइल अपडेट करने के लिए अपने प्रबंधक से संपर्क करें।","कोणतीही भूमिका/पदनाम सेट नाही. तुमचे प्रोफाइल अपडेट करण्यासाठी तुमच्या व्यवस्थापकाशी संपर्क साधा.","Hakuna nafasi/jina la kazi lililowekwa. Wasiliana na meneja wako kusasisha wasifu wako.","ಯಾವುದೇ ಪಾತ್ರ/ಹುದ್ದೆ ಹೊಂದಿಸಿಲ್ಲ. ನಿಮ್ಮ ಪ್ರೊಫೈಲ್ ನವೀಕರಿಸಲು ನಿಮ್ಮ ವ್ಯವಸ್ಥಾಪಕರನ್ನು ಸಂಪರ್ಕಿಸಿ.",
+local_airpay_skills,noskillsmapped,"No skills mapped for your role yet. Check back soon.","आपकी भूमिका के लिए अभी तक कोई कौशल मैप नहीं किया गया। जल्द ही जाँचें।","तुमच्या भूमिकेसाठी अजून कौशल्ये मॅप केली नाहीत. लवकरच तपासा.","Bado hakuna ujuzi uliowekwa kwa nafasi yako. Angalia hivi karibuni.","ನಿಮ್ಮ ಪಾತ್ರಕ್ಕೆ ಇನ್ನೂ ಕೌಶಲ್ಯಗಳನ್ನು ಮ್ಯಾಪ್ ಮಾಡಿಲ್ಲ. ಶೀಘ್ರದಲ್ಲೇ ಪರಿಶೀಲಿಸಿ.",
+local_airpay_skills,teamheatmap,"Team Skills Heat Map","टीम कौशल हीट मैप","टीम कौशल्य हीट मॅप","Ramani ya Joto ya Ujuzi wa Timu","ತಂಡದ ಕೌಶಲ್ಯ ಹೀಟ್ ಮ್ಯಾಪ್",
+local_airpay_skills,careerpath,"Career Path","करियर पथ","करिअर मार्ग","Njia ya Kazi","ವೃತ್ತಿ ಮಾರ್ಗ",
+local_airpay_notifications,pluginname,"Airpay Smart Notifications","एयरपे स्मार्ट सूचनाएँ","एअरपे स्मार्ट सूचना","Arifa za Airpay","ಏರ್‌ಪೇ ಸ್ಮಾರ್ಟ್ ಅಧಿಸೂಚನೆಗಳು",
+local_airpay_notifications,privacy:metadata,"The notifications plugin stores notification preferences and delivery logs.","[NEEDS TRANSLATION]","सूचना प्लगइन सूचना प्राधान्ये आणि वितरण नोंदी संग्रहित करते.","Programu-jalizi ya arifa huhifadhi mapendeleo ya arifa na kumbukumbu za uwasilishaji.","ಅಧಿಸೂಚನೆ ಪ್ಲಗಿನ್ ಅಧಿಸೂಚನೆ ಆದ್ಯತೆಗಳು ಮತ್ತು ವಿತರಣಾ ದಾಖಲೆಗಳನ್ನು ಸಂಗ್ರಹಿಸುತ್ತದೆ.","ADMIN-ONLY (low priority)"
+local_airpay_notifications,taskprocessrules,"Process Airpay notification rules","एयरपे सूचना नियम प्रक्रिया","एअरपे सूचना नियम प्रक्रिया करा","Tekeleza sheria za arifa za Airpay","ಏರ್‌ಪೇ ಅಧಿಸೂಚನೆ ನಿಯಮಗಳನ್ನು ಪ್ರಕ್ರಿಯೆಗೊಳಿಸಿ",
+local_airpay_notifications,messageprovider:smart_alert,"Airpay learning alerts","एयरपे लर्निंग अलर्ट","एअरपे शिक्षण सूचना","Arifa za kujifunza za Airpay","ಏರ್‌ಪೇ ಕಲಿಕಾ ಎಚ್ಚರಿಕೆಗಳು",
+local_airpay_notifications,notifications,Notifications,सूचनाएँ,सूचना,Arifa,ಅಧಿಸೂಚನೆಗಳು,
+local_airpay_notifications,markallread,"Mark all as read","सभी पढ़ा हुआ चिन्हित करें","सर्व वाचले म्हणून चिन्हांकित करा","Weka zote kuwa zimesomwa","ಎಲ್ಲವನ್ನೂ ಓದಿದ ಎಂದು ಗುರುತಿಸಿ",
+local_airpay_notifications,nonotifications,"You're all caught up!","आप अपडेट हैं!","तुम्ही सर्व पाहिले आहे!","Umesoma zote!","ಎಲ್ಲವನ್ನೂ ನೋಡಿದ್ದೀರಿ!",
+local_airpay_notifications,urgent,Urgent,ज़रूरी,तातडीचे,Dharura,ತುರ್ತು,
+local_airpay_notifications,learning,Learning,शिक्षा,शिक्षण,Kujifunza,ಕಲಿಕೆ,
+local_airpay_notifications,achievement,Achievement,उपलब्धि,उपलब्धी,Mafanikio,ಸಾಧನೆ,
+local_airpay_notifications,viewall,"View all notifications","सभी सूचनाएँ देखें","सर्व सूचना पहा","Tazama arifa zote","ಎಲ್ಲಾ ಅಧಿಸೂಚನೆಗಳನ್ನು ನೋಡಿ",
+local_airpay_notifications,preferences,"Notification preferences","सूचना प्राथमिकताएँ","सूचना प्राधान्ये","Mapendeleo ya arifa","ಅಧಿಸೂಚನೆ ಆದ್ಯತೆಗಳು",
+local_airpay_privacy,pluginname,"Airpay Privacy (DPDP)","एयरपे गोपनीयता (DPDP)","एअरपे गोपनीयता (DPDP)","Faragha ya Airpay (DPDP)","ಏರ್‌ಪೇ ಗೌಪ್ಯತೆ (DPDP)",
+local_airpay_privacy,privacy:metadata,"Stores privacy request records and consent logs.","[NEEDS TRANSLATION]","गोपनीयता विनंती नोंदी आणि संमती नोंदी संग्रहित करते.","Huhifadhi rekodi za ombi la faragha na kumbukumbu za idhini.","ಗೌಪ್ಯತೆ ವಿನಂತಿ ದಾಖಲೆಗಳು ಮತ್ತು ಒಪ್ಪಿಗೆ ಲಾಗ್‌ಗಳನ್ನು ಸಂಗ್ರಹಿಸುತ್ತದೆ.","ADMIN-ONLY (low priority)"
+local_airpay_privacy,messageprovider:privacy_request,"DPDP privacy request notifications","[NEEDS TRANSLATION]","DPDP गोपनीयता विनंती सूचना","Arifa za ombi la faragha la DPDP","DPDP ಗೌಪ್ಯತೆ ವಿನಂತಿ ಅಧಿಸೂಚನೆಗಳು",
+local_airpay_privacy,myprivacy,"My Privacy & Data","मेरी गोपनीयता और डेटा","माझी गोपनीयता आणि डेटा","Faragha na Data Yangu","ನನ್ನ ಗೌಪ್ಯತೆ ಮತ್ತು ಡೇಟಾ",
+local_airpay_privacy,downloadrequested,"Your data export is being prepared. You will be notified when it is ready for download.","आपका डेटा एक्सपोर्ट तैयार किया जा रहा है। तैयार होने पर आपको सूचित किया जाएगा।","तुमचा डेटा निर्यात तयार होत आहे. तयार झाल्यावर तुम्हाला सूचित केले जाईल.","Usafirishaji wa data yako unatarishwa. Utaarifiwa itakapokuwa tayari.","ನಿಮ್ಮ ಡೇಟಾ ರಫ್ತು ಸಿದ್ಧಪಡಿಸಲಾಗುತ್ತಿದೆ. ಸಿದ್ಧವಾದಾಗ ನಿಮಗೆ ತಿಳಿಸಲಾಗುವುದು.",
+local_airpay_privacy,deleterequested,"Your account deletion request has been submitted. An administrator will review it within 3-5 business days.","आपका खाता हटाने का अनुरोध सबमिट किया गया है। एक व्यवस्थापक 3-5 कार्य दिवसों में इसकी समीक्षा करेगा।","तुमची खाते हटवण्याची विनंती सबमिट केली आहे. प्रशासक ३-५ कार्यदिवसांत त्याचे पुनरावलोकन करतील.","Ombi lako la kufuta akaunti limewasilishwa. Msimamizi atalitathmini ndani ya siku 3-5 za kazi.","ನಿಮ್ಮ ಖಾತೆ ಅಳಿಸುವ ವಿನಂತಿಯನ್ನು ಸಲ್ಲಿಸಲಾಗಿದೆ. ನಿರ್ವಾಹಕರು 3-5 ಕೆಲಸದ ದಿನಗಳಲ್ಲಿ ಪರಿಶೀಲಿಸುತ್ತಾರೆ.",
+local_airpay_privacy,downloaddata,"Download My Data","मेरा डेटा डाउनलोड करें","माझा डेटा डाउनलोड करा","Pakua Data Yangu","ನನ್ನ ಡೇಟಾ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ",
+local_airpay_privacy,deleteaccount,"Delete My Account","मेरा खाता हटाएं","माझे खाते हटवा","Futa Akaunti Yangu","ನನ್ನ ಖಾತೆ ಅಳಿಸಿ",
+local_airpay_privacy,requesthistory,"Request History","अनुरोध इतिहास","विनंती इतिहास","Historia ya Maombi","ವಿನಂತಿ ಇತಿಹಾಸ",
+local_airpay_privacy,dpdpnotice,"DPDP Act 2023 Notice","DPDP अधिनियम 2023 सूचना","DPDP कायदा 2023 सूचना","Notisi ya Sheria ya DPDP 2023","DPDP ಕಾಯ್ದೆ 2023 ಸೂಚನೆ",
+local_airpay_assistant,pluginname,"Airpay AI Learning Assistant","एयरपे AI शिक्षा सहायक","एअरपे AI शिक्षण सहाय्यक","Msaidizi wa Kujifunza wa AI wa Airpay","ಏರ್‌ಪೇ AI ಕಲಿಕಾ ಸಹಾಯಕ",
+local_airpay_assistant,enabled,"Enable AI Assistant","[NEEDS TRANSLATION]","AI सहाय्यक सक्षम करा","Washa Msaidizi wa AI","AI ಸಹಾಯಕ ಸಕ್ರಿಯಗೊಳಿಸಿ",
+local_airpay_assistant,enabled_desc,"Show the AI chatbot bubble on all pages. Uncheck to hide the chatbot site-wide.","[NEEDS TRANSLATION]","सर्व पृष्ठांवर AI चॅटबॉट बबल दाखवा. संपूर्ण साइटवर लपवण्यासाठी अनचेक करा.","Onyesha kiputo cha chatbot ya AI kwenye kurasa zote. Ondoa tiki kuficha chatbot kwenye tovuti nzima.","ಎಲ್ಲಾ ಪುಟಗಳಲ್ಲಿ AI ಚಾಟ್‌ಬಾಟ್ ಬಬಲ್ ತೋರಿಸಿ. ಸೈಟ್-ವ್ಯಾಪಿ ಮರೆಮಾಡಲು ಅನ್‌ಚೆಕ್ ಮಾಡಿ.","ADMIN-ONLY (low priority)"
+local_airpay_assistant,privacy:metadata,"The AI assistant stores chat logs linked to user IDs.","[NEEDS TRANSLATION]","AI सहाय्यक वापरकर्ता आयडीशी जोडलेल्या चॅट नोंदी संग्रहित करतो.","Msaidizi wa AI huhifadhi kumbukumbu za mazungumzo zilizounganishwa na vitambulisho vya mtumiaji.","AI ಸಹಾಯಕ ಬಳಕೆದಾರರ ಐಡಿಗಳಿಗೆ ಲಿಂಕ್ ಮಾಡಿದ ಚಾಟ್ ಲಾಗ್‌ಗಳನ್ನು ಸಂಗ್ರಹಿಸುತ್ತದೆ.","ADMIN-ONLY (low priority)"
+local_airpay_assistant,apikey,"Anthropic API Key","Anthropic API कुंजी","Anthropic API की","Ufunguo wa API wa Anthropic","Anthropic API ಕೀ",
+local_airpay_assistant,apikey_desc,"Your Claude API key from console.anthropic.com. Required for the AI assistant to function. Costs apply per query.","console.anthropic.com से आपकी Claude API कुंजी। AI सहायक के लिए आवश्यक।","console.anthropic.com वरून तुमची Claude API की. AI सहाय्यकासाठी आवश्यक.","Ufunguo wako wa Claude API kutoka console.anthropic.com. Inahitajika ili msaidizi wa AI afanye kazi.","console.anthropic.com ನಿಂದ ನಿಮ್ಮ Claude API ಕೀ. AI ಸಹಾಯಕ ಕಾರ್ಯನಿರ್ವಹಿಸಲು ಅಗತ್ಯ.","ADMIN-ONLY (low priority)"
+local_airpay_assistant,ratelimit,"Daily query limit per user","प्रति उपयोगकर्ता दैनिक प्रश्न सीमा","प्रति वापरकर्ता दैनंदिन प्रश्न मर्यादा","Kikomo cha maswali ya kila siku kwa mtumiaji","ಪ್ರತಿ ಬಳಕೆದಾರರಿಗೆ ದೈನಂದಿನ ಪ್ರಶ್ನೆ ಮಿತಿ",
+local_airpay_assistant,ratelimit_desc,"Maximum number of AI queries a user can make per day. Default: 20.","प्रति दिन AI प्रश्नों की अधिकतम संख्या। डिफ़ॉल्ट: 20.","वापरकर्ता दररोज करू शकणाऱ्या AI प्रश्नांची कमाल संख्या. डीफॉल्ट: 20.","Idadi ya juu ya maswali ya AI ambayo mtumiaji anaweza kuuliza kwa siku. Chaguo-msingi: 20.","ಬಳಕೆದಾರರು ಪ್ರತಿ ದಿನ ಕೇಳಬಹುದಾದ AI ಪ್ರಶ್ನೆಗಳ ಗರಿಷ್ಠ ಸಂಖ್ಯೆ. ಡೀಫಾಲ್ಟ್: 20.","ADMIN-ONLY (low priority)"
+local_airpay_assistant,assistant,"Learning Assistant","शिक्षा सहायक","शिक्षण सहाय्यक","Msaidizi wa Kujifunza","ಕಲಿಕಾ ಸಹಾಯಕ",
+local_airpay_assistant,askme,"Ask me anything...","मुझसे कुछ भी पूछें...","मला काहीही विचारा...","Niulize chochote...","ಏನಾದರೂ ಕೇಳಿ...",
+local_airpay_assistant,poweredby,"Powered by AI","AI द्वारा संचालित","AI द्वारे संचालित","Imeendeshwa na AI","AI ಮೂಲಕ ನಡೆಸಲಾಗುತ್ತಿದೆ",
+local_airpay_assistant,ratelimited,"Daily limit reached. Come back tomorrow!","दैनिक सीमा पूरी। कल वापस आएं!","दैनंदिन मर्यादा गाठली. उद्या परत या!","Kikomo cha kila siku kimefikiwa. Rudi kesho!","ದೈನಂದಿನ ಮಿತಿ ತಲುಪಿದೆ. ನಾಳೆ ಮರಳಿ ಬನ್ನಿ!",
+local_airpay_assistant,notconfigured,"AI assistant not configured. Contact your administrator.","AI सहायक कॉन्फ़िगर नहीं है। अपने व्यवस्थापक से संपर्क करें।","AI सहाय्यक कॉन्फिगर केलेला नाही. तुमच्या प्रशासकाशी संपर्क साधा.","Msaidizi wa AI haijasanidiwa. Wasiliana na msimamizi wako.","AI ಸಹಾಯಕ ಕಾನ್ಫಿಗರ್ ಆಗಿಲ್ಲ. ನಿಮ್ಮ ನಿರ್ವಾಹಕರನ್ನು ಸಂಪರ್ಕಿಸಿ.",
+local_airpay_assistant,queriesremaining,"{$a} questions remaining today","आज {$a} प्रश्न शेष","आज {$a} प्रश्न शिल्लक","Maswali {$a} yamebaki leo","ಇಂದು {$a} ಪ್ರಶ್ನೆಗಳು ಉಳಿದಿವೆ",
+local_airpay_analytics,pluginname,"Airpay Advanced Analytics","एयरपे उन्नत विश्लेषिकी","एअरपे प्रगत विश्लेषण","Uchambuzi wa Kina wa Airpay","ಏರ್‌ಪೇ ಸುಧಾರಿತ ವಿಶ್ಲೇಷಣೆ",
+local_airpay_analytics,analytics,"Analytics Dashboard","विश्लेषिकी डैशबोर्ड","विश्लेषण डॅशबोर्ड","Dashibodi ya Uchambuzi","ವಿಶ್ಲೇಷಣೆ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
+local_airpay_analytics,privacy:metadata,"The analytics plugin queries existing data and does not store personal data.","[NEEDS TRANSLATION]","विश्लेषण प्लगइन विद्यमान डेटा क्वेरी करते आणि वैयक्तिक डेटा संग्रहित करत नाही.","Programu-jalizi ya uchambuzi hutafuta data iliyopo na haihifadhi data binafsi.","ವಿಶ್ಲೇಷಣೆ ಪ್ಲಗಿನ್ ಅಸ್ತಿತ್ವದಲ್ಲಿರುವ ಡೇಟಾವನ್ನು ಪ್ರಶ್ನಿಸುತ್ತದೆ ಮತ್ತು ವೈಯಕ್ತಿಕ ಡೇಟಾವನ್ನು ಸಂಗ್ರಹಿಸುವುದಿಲ್ಲ.","ADMIN-ONLY (low priority)"
+local_airpay_pages,pluginname,"Airpay Pages","[NEEDS TRANSLATION]","एअरपे पेजेस","Kurasa za Airpay","ಏರ್‌ಪೇ ಪುಟಗಳು",
+local_airpay_pages,privacy_policy,"Privacy Policy","[NEEDS TRANSLATION]","गोपनीयता धोरण","Sera ya Faragha","ಗೌಪ್ಯತಾ ನೀತಿ",
+local_airpay_pages,terms_of_use,"Terms of Use","[NEEDS TRANSLATION]","वापराच्या अटी","Masharti ya Matumizi","ಬಳಕೆಯ ನಿಯಮಗಳು",
+local_airpay_pages,help_center,"Help Center","[NEEDS TRANSLATION]","मदत केंद्र","Kituo cha Msaada","ಸಹಾಯ ಕೇಂದ್ರ",
+local_airpay_pages,contact_us,"Contact Us","[NEEDS TRANSLATION]","आमच्याशी संपर्क साधा","Wasiliana Nasi","ನಮ್ಮನ್ನು ಸಂಪರ್ಕಿಸಿ",
+local_airpay_emails,pluginname,"Airpay Email Templates","एयरपे ईमेल टेम्पलेट","एअरपे ईमेल टेम्पलेट","Templeti za Barua Pepe za Airpay","ಏರ್‌ಪೇ ಇಮೇಲ್ ಟೆಂಪ್ಲೇಟ್‌ಗಳು",
+local_airpay_emails,emailpreview,"Email Template Preview","ईमेल टेम्पलेट प्रीव्यू","ईमेल टेम्पलेट प्रीव्यू","Hakiki Templeti ya Barua Pepe","ಇಮೇಲ್ ಟೆಂಪ್ಲೇಟ್ ಪೂರ್ವವೀಕ್ಷಣೆ",
+local_airpay_emails,emailpreview_desc,"Preview all branded email templates before deployment.","डिप्लॉयमेंट से पहले सभी ब्रांडेड ईमेल टेम्पलेट देखें।","डिप्लॉयमेंट आधी सर्व ब्रँडेड ईमेल टेम्पलेट पहा.","Hakiki templeti zote za barua pepe za chapa kabla ya kutumwa.","ಡಿಪ್ಲಾಯ್ ಮಾಡುವ ಮೊದಲು ಎಲ್ಲಾ ಬ್ರ್ಯಾಂಡೆಡ್ ಇಮೇಲ್ ಟೆಂಪ್ಲೇಟ್‌ಗಳನ್ನು ನೋಡಿ.","ADMIN-ONLY (low priority)"
+local_airpay_emails,selecttemplate,"Select a template","टेम्पलेट चुनें","टेम्पलेट निवडा","Chagua templeti","ಟೆಂಪ್ಲೇಟ್ ಆಯ್ಕೆ ಮಾಡಿ",
+local_airpay_emails,selecttenant,"Select tenant","टेनेंट चुनें","टेनंट निवडा","Chagua mpangaji","ಟೆನೆಂಟ್ ಆಯ್ಕೆ ಮಾಡಿ",
+local_airpay_emails,viewsource,"HTML Source","HTML सोर्स","HTML सोर्स","Chanzo cha HTML","HTML ಮೂಲ",
+local_airpay_emails,viewplaintext,"Plain Text","प्लेन टेक्स्ट","प्लेन टेक्स्ट","Maandishi Safi","ಸರಳ ಪಠ್ಯ",
+local_airpay_emails,viewvisual,"Visual Preview","विज़ुअल प्रीव्यू","विज़ुअल प्रीव्यू","Hakiki ya Kuona","ದೃಶ್ಯ ಪೂರ್ವವೀಕ್ಷಣೆ",
+local_airpay_emails,category_compliance,Compliance,अनुपालन,अनुपालन,Utiifu,ಅನುಸರಣೆ,
+local_airpay_emails,category_notifications,Notifications,सूचनाएं,सूचना,Arifa,ಅಧಿಸೂಚನೆಗಳು,
+local_airpay_emails,category_enrollment,Enrollment,नामांकन,नोंदणी,Uandikishaji,ನೋಂದಣಿ,
+local_airpay_emails,category_account,Account,अकाउंट,अकाउंट,Akaunti,ಖಾತೆ,
+local_airpay_emails,category_privacy,Privacy,गोपनीयता,गोपनीयता,Faragha,ಗೌಪ್ಯತೆ,
+local_airpay_emails,tenant_airpay,Airpay,एयरपे,एअरपे,Airpay,ಏರ್‌ಪೇ,
+local_airpay_emails,tenant_public,Public,पब्लिक,पब्लिक,Umma,ಸಾರ್ವಜನಿಕ,
+local_airpay_emails,tenant_zeea,ZEEA,ZEEA,ZEEA,ZEEA,ZEEA,
+local_airpay_emails,no_template_selected,"Select a template from the sidebar to preview.","प्रीव्यू के लिए साइडबार से कोई टेम्पलेट चुनें।","प्रीव्यूसाठी साइडबारमधून टेम्पलेट निवडा.","Chagua templeti kutoka upau wa pembeni kuhakiki.","ಪೂರ್ವವೀಕ್ಷಿಸಲು ಸೈಡ್‌ಬಾರ್‌ನಿಂದ ಟೆಂಪ್ಲೇಟ್ ಆಯ್ಕೆ ಮಾಡಿ.",
+local_airpay_emails,manage,"Notification Management","नोटिफ़िकेशन मैनेजमेंट","सूचना व्यवस्थापन","Usimamizi wa Arifa","ಅಧಿಸೂಚನೆ ನಿರ್ವಹಣೆ",
+local_airpay_emails,manage_desc,"Manage email templates, notification rules, and delivery logs.","ईमेल टेम्पलेट, नोटिफ़िकेशन रूल्स और डिलीवरी लॉग मैनेज करें।","ईमेल टेम्पलेट, सूचना नियम आणि डिलिव्हरी लॉग व्यवस्थापित करा.","Simamia templeti za barua pepe, sheria za arifa na kumbukumbu za uwasilishaji.","ಇಮೇಲ್ ಟೆಂಪ್ಲೇಟ್‌ಗಳು, ಅಧಿಸೂಚನೆ ನಿಯಮಗಳು ಮತ್ತು ವಿತರಣಾ ಲಾಗ್‌ಗಳನ್ನು ನಿರ್ವಹಿಸಿ.","ADMIN-ONLY (low priority)"
+local_airpay_emails,tab_dashboard,Dashboard,डैशबोर्ड,डॅशबोर्ड,Dashibodi,ಡ್ಯಾಶ್‌ಬೋರ್ಡ್,
+local_airpay_emails,tab_templates,Templates,टेम्पलेट्स,टेम्पलेट्स,Templeti,ಟೆಂಪ್ಲೇಟ್‌ಗಳು,
+local_airpay_emails,tab_rules,Rules,रूल्स,नियम,Sheria,ನಿಯಮಗಳು,
+local_airpay_emails,tab_logs,Logs,लॉग्स,लॉग्स,Kumbukumbu,ಲಾಗ್‌ಗಳು,
+local_airpay_emails,tab_settings,Settings,सेटिंग्स,सेटिंग्ज,Mipangilio,ಸೆಟ್ಟಿಂಗ್‌ಗಳು,
+local_airpay_emails,save_success,"Template saved successfully.","टेम्पलेट सेव हो गया।","टेम्पलेट सेव्ह झाले.","Templeti imehifadhiwa.","ಟೆಂಪ್ಲೇಟ್ ಉಳಿಸಲಾಗಿದೆ.",
+local_airpay_emails,revert_success,"Reverted to default template.","डिफ़ॉल्ट टेम्पलेट पर वापस गया।","डीफॉल्ट टेम्पलेटवर परत गेले.","Imerudi kwa templeti chaguo-msingi.","ಡೀಫಾಲ್ಟ್ ಟೆಂಪ್ಲೇಟ್‌ಗೆ ಮರಳಿದೆ.",
+local_airpay_emails,rule_enabled,"Rule enabled.","रूल चालू हो गया।","नियम चालू झाला.","Sheria imewashwa.","ನಿಯಮ ಸಕ್ರಿಯಗೊಂಡಿದೆ.",
+local_airpay_emails,rule_disabled,"Rule disabled.","रूल बंद हो गया।","नियम बंद झाला.","Sheria imezimwa.","ನಿಯಮ ನಿಷ್ಕ್ರಿಯಗೊಂಡಿದೆ.",
+local_airpay_emails,noemailever_warning,"Email sending is disabled on this server ($CFG->noemailever = true). All deliveries will be logged as suppressed.","इस सर्वर पर ईमेल भेजना बंद है। सभी डिलीवरी suppressed के तौर पर लॉग होंगी।","या सर्व्हरवर ईमेल पाठवणे बंद आहे. सर्व डिलिव्हरी suppressed म्हणून लॉग होतील.","Kutuma barua pepe kumezimwa kwenye seva hii. Uwasilishaji wote utarekodiwa kama umezuiwa.","ಈ ಸರ್ವರ್‌ನಲ್ಲಿ ಇಮೇಲ್ ಕಳುಹಿಸುವುದನ್ನು ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ. ಎಲ್ಲಾ ವಿತರಣೆಗಳನ್ನು ನಿಗ್ರಹಿಸಿದ ಎಂದು ಲಾಗ್ ಮಾಡಲಾಗುತ್ತದೆ.",
+local_airpay_emails,task_process_rules,"Process notification rules","नोटिफ़िकेशन रूल्स प्रोसेस करें","सूचना नियम प्रक्रिया करा","Tekeleza sheria za arifa","ಅಧಿಸೂಚನೆ ನಿಯಮಗಳನ್ನು ಪ್ರಕ್ರಿಯೆಗೊಳಿಸಿ",
+local_airpay_emails,notification_alert,"Notification alert","नोटिफ़िकेशन अलर्ट","सूचना अलर्ट","Arifa ya tahadhari","ಅಧಿಸೂಚನೆ ಎಚ್ಚರಿಕೆ",
+theme_airpayux,advancedsettings,"Advanced settings","एडवांस्ड सेटिंग्स","प्रगत सेटिंग्ज","Mipangilio ya juu","ಸುಧಾರಿತ ಸೆಟ್ಟಿಂಗ್‌ಗಳು",
+theme_airpayux,colorsettings,"Color settings","रंग सेटिंग्स","रंग सेटिंग्ज","Mipangilio ya rangi","ಬಣ್ಣ ಸೆಟ್ಟಿಂಗ್‌ಗಳು",
+theme_airpayux,backgroundimage,"Background image","बैकग्राउंड इमेज","पार्श्वभूमी चित्र","Picha ya mandhari","ಹಿನ್ನೆಲೆ ಚಿತ್ರ",
+theme_airpayux,backgroundimage_desc,"The image to display as a background of the site. The background image you upload here will override the background image in your theme preset files.","साइट के बैकग्राउंड में दिखाई जाने वाली इमेज।","साइटच्या पार्श्वभूमीसाठी दाखवण्यासाठी चित्र.","Picha ya kuonyeshwa kama mandhari ya tovuti.","ಸೈಟ್‌ನ ಹಿನ್ನೆಲೆಯಾಗಿ ತೋರಿಸಲು ಚಿತ್ರ.","ADMIN-ONLY (low priority)"
+theme_airpayux,brandcolor,"Brand colour","ब्रांड कलर","ब्रँड रंग","Rangi ya chapa","ಬ್ರ್ಯಾಂಡ್ ಬಣ್ಣ",
+theme_airpayux,brandcolor_desc,"The accent colour.","एक्सेंट कलर।","ऍक्सेंट रंग.","Rangi ya msisitizo.","ಒತ್ತು ಬಣ್ಣ.","ADMIN-ONLY (low priority)"
+theme_airpayux,primarycolor,"Site Primary Color","मुख्य रंग","प्राथमिक रंग","Rangi kuu","ಪ್ರಾಥಮಿಕ ಬಣ್ಣ",
+theme_airpayux,primarycolor_desc,"Pick your site primary color for Button , Icons and Tabs","बटन, आइकन और टैब्स के लिए मुख्य रंग चुनें","बटणे, आयकॉन आणि टॅबसाठी प्राथमिक रंग निवडा","Chagua rangi kuu kwa vifungo, aikoni na tabo","ಬಟನ್‌ಗಳು, ಐಕಾನ್‌ಗಳು ಮತ್ತು ಟ್ಯಾಬ್‌ಗಳಿಗೆ ಪ್ರಾಥಮಿಕ ಬಣ್ಣ ಆಯ್ಕೆ ಮಾಡಿ","ADMIN-ONLY (low priority)"
+theme_airpayux,secondarycolor,"Site Seconday Color","सेकेंडरी रंग","दुय्यम रंग","Rangi ya pili","ದ್ವಿತೀಯ ಬಣ್ಣ",
+theme_airpayux,secondarycolor_desc,"Pick your site seconday color","सेकेंडरी रंग चुनें","दुय्यम रंग निवडा","Chagua rangi ya pili","ದ್ವಿತೀಯ ಬಣ್ಣ ಆಯ್ಕೆ ಮಾಡಿ","ADMIN-ONLY (low priority)"
+theme_airpayux,hovercolor,"Site hover colour","होवर रंग","होव्हर रंग","Rangi ya hover","ಹೋವರ್ ಬಣ್ಣ",
+theme_airpayux,hovercolor_desc,"Pick your site hover colour","होवर रंग चुनें","होव्हर रंग निवडा","Chagua rangi ya hover","ಹೋವರ್ ಬಣ್ಣ ಆಯ್ಕೆ ಮಾಡಿ","ADMIN-ONLY (low priority)"
+theme_airpayux,bootswatch,Bootswatch,बूटस्वॉच,बूटस्वॉच,Bootswatch,ಬೂಟ್‌ಸ್ವಾಚ್,
+theme_airpayux,bootswatch_desc,"A bootswatch is a set of Bootstrap variables and css to style Bootstrap","Bootstrap स्टाइल करने के लिए वेरिएबल्स और CSS का सेट","Bootstrap स्टाइल करण्यासाठी व्हेरिएबल्स आणि CSS चा संच","Seti ya vigeu vya Bootstrap na CSS","Bootstrap ಸ್ಟೈಲ್ ಮಾಡಲು ವೇರಿಯೇಬಲ್‌ಗಳು ಮತ್ತು CSS ನ ಸೆಟ್","ADMIN-ONLY (low priority)"
+theme_airpayux,choosereadme,"airpay academy UX — forked from BizLMS epsilon. Full design system with airpay branding, multi-tenant support, and responsive mobile experience.","एयरपे एकेडमी UX — BizLMS epsilon से फोर्क। एयरपे ब्रांडिंग, मल्टी-टेनेंट सपोर्ट और मोबाइल अनुभव के साथ पूरा डिज़ाइन सिस्टम।","एअरपे अकॅडमी UX — BizLMS epsilon वरून फॉर्क केलेले. एअरपे ब्रँडिंग, मल्टी-टेनंट सपोर्ट आणि मोबाइल अनुभवासह पूर्ण डिझाइन सिस्टम.","Airpay Academy UX — muundo kamili wenye chapa ya Airpay, msaada wa wapangaji wengi, na uzoefu wa simu.","ಏರ್‌ಪೇ ಅಕಾಡೆಮಿ UX — ಪೂರ್ಣ ಡಿಸೈನ್ ಸಿಸ್ಟಮ್, ಬಹು-ಹಂಚಿಕೆದಾರ ಬೆಂಬಲ, ಮೊಬೈಲ್ ಅನುಭವ.",
+theme_airpayux,currentinparentheses,(current),(वर्तमान),(सध्याचे),"(sasa hivi)",(ಪ್ರಸ್ತುತ),
+theme_airpayux,configtitle,Epsilon,Epsilon,Epsilon,Epsilon,Epsilon,
+theme_airpayux,fontsize,"Theme base fontsize","फॉन्ट साइज़","थीम फॉन्ट आकार","Ukubwa wa fonti","ಫಾಂಟ್ ಗಾತ್ರ",
+theme_airpayux,fontsize_desc,"Enter a fontsize in %","% में फॉन्ट साइज़ डालें","% मध्ये फॉन्ट आकार टाका","Weka ukubwa wa fonti katika %","% ನಲ್ಲಿ ಫಾಂಟ್ ಗಾತ್ರ ನಮೂದಿಸಿ","ADMIN-ONLY (low priority)"
+theme_airpayux,generalsettings,"General settings","सामान्य सेटिंग्स","सामान्य सेटिंग्ज","Mipangilio ya jumla","ಸಾಮಾನ್ಯ ಸೆಟ್ಟಿಂಗ್‌ಗಳು",
+theme_airpayux,loginbackgroundimage,"Login page background image","लॉगिन पेज बैकग्राउंड इमेज","लॉगिन पेज पार्श्वभूमी चित्र","Picha ya mandhari ya kuingia","ಲಾಗಿನ್ ಪುಟ ಹಿನ್ನೆಲೆ ಚಿತ್ರ",
+theme_airpayux,loginbackgroundimage_desc,"The image to display as a background for the login page.","लॉगिन पेज के लिए बैकग्राउंड इमेज।","लॉगिन पेजसाठी पार्श्वभूमी चित्र.","Picha ya mandhari kwa ukurasa wa kuingia.","ಲಾಗಿನ್ ಪುಟಕ್ಕೆ ಹಿನ್ನೆಲೆ ಚಿತ್ರ.","ADMIN-ONLY (low priority)"
+theme_airpayux,nobootswatch,None,"कुछ नहीं","काहीही नाही",Hakuna,"ಯಾವುದೂ ಇಲ್ಲ",
+theme_airpayux,customsettings,"Custom settings","कस्टम सेटिंग्स","कस्टम सेटिंग्ज","Mipangilio maalum","ಕಸ್ಟಮ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳು",
+theme_airpayux,pluginname,Epsilon,Epsilon,Epsilon,Epsilon,Epsilon,
+theme_airpayux,presetfiles,"Additional theme preset files","एक्स्ट्रा थीम प्रीसेट फ़ाइलें","अतिरिक्त थीम प्रीसेट फाइल्स","Faili za ziada za mipangilio","ಹೆಚ್ಚುವರಿ ಥೀಮ್ ಪ್ರೀಸೆಟ್ ಫೈಲ್‌ಗಳು",
+theme_airpayux,presetfiles_desc,"Preset files can be used to dramatically alter the appearance of the theme. See <a href=""#"">Epsilon presets</a> for information on creating and sharing your own preset files, and see the <a href=""#"">Presets repository</a> for presets that others have shared.","थीम का लुक बदलने के लिए प्रीसेट फ़ाइलें इस्तेमाल करें।","थीमचे स्वरूप बदलण्यासाठी प्रीसेट फाइल्स वापरता येतात.","Faili za mipangilio zinaweza kubadilisha muonekano wa mandhari.","ಥೀಮ್ ನೋಟ ಬದಲಾಯಿಸಲು ಪ್ರೀಸೆಟ್ ಫೈಲ್‌ಗಳನ್ನು ಬಳಸಬಹುದು.","ADMIN-ONLY (low priority)"
+theme_airpayux,preset,"Theme preset","थीम प्रीसेट","थीम प्रीसेट","Mipangilio ya mandhari","ಥೀಮ್ ಪ್ರೀಸೆಟ್",
+theme_airpayux,preset_desc,"Pick a preset to broadly change the look of the theme.","थीम का लुक बदलने के लिए प्रीसेट चुनें।","थीमचे स्वरूप बदलण्यासाठी प्रीसेट निवडा.","Chagua mipangilio kubadilisha muonekano wa mandhari.","ಥೀಮ್ ನೋಟ ಬದಲಾಯಿಸಲು ಪ್ರೀಸೆಟ್ ಆಯ್ಕೆ ಮಾಡಿ.","ADMIN-ONLY (low priority)"
+theme_airpayux,privacy:metadata,"The Epsilon theme does not store any personal data about any user.","Epsilon थीम किसी भी यूज़र का पर्सनल डेटा स्टोर नहीं करती।","Epsilon थीम कोणत्याही वापरकर्त्याबद्दल वैयक्तिक डेटा संग्रहित करत नाही.","Mandhari ya Epsilon haihifadhi data binafsi ya mtumiaji yeyote.","Epsilon ಥೀಮ್ ಯಾವುದೇ ಬಳಕೆದಾರರ ವೈಯಕ್ತಿಕ ಡೇಟಾವನ್ನು ಸಂಗ್ರಹಿಸುವುದಿಲ್ಲ.","ADMIN-ONLY (low priority)"
+theme_airpayux,rawscss,"Raw SCSS","रॉ SCSS","रॉ SCSS","SCSS safi","ರಾ SCSS",
+theme_airpayux,rawscss_desc,"Use this field to provide SCSS or CSS code which will be injected at the end of the style sheet.","स्टाइलशीट के आखिर में इंजेक्ट होने वाला SCSS या CSS कोड।","स्टाइलशीटच्या शेवटी इंजेक्ट होणारा SCSS किंवा CSS कोड.","Msimbo wa SCSS au CSS utakaowekwa mwishoni mwa laha ya mtindo.","ಸ್ಟೈಲ್‌ಶೀಟ್ ಕೊನೆಯಲ್ಲಿ ಇಂಜೆಕ್ಟ್ ಆಗುವ SCSS ಅಥವಾ CSS ಕೋಡ್.","ADMIN-ONLY (low priority)"
+theme_airpayux,rawscsspre,"Raw initial SCSS","शुरुआती रॉ SCSS","प्रारंभिक रॉ SCSS","SCSS ya awali","ಆರಂಭಿಕ ರಾ SCSS",
+theme_airpayux,rawscsspre_desc,"In this field you can provide initialising SCSS code, it will be injected before everything else. Most of the time you will use this setting to define variables.","बाकी सब से पहले इंजेक्ट होने वाला SCSS कोड, आमतौर पर वेरिएबल्स के लिए।","इतर सगळ्यापूर्वी इंजेक्ट होणारा SCSS कोड, सामान्यतः व्हेरिएबल्ससाठी.","Msimbo wa SCSS wa kuanzisha, utawekwa kabla ya kila kitu kingine.","ಎಲ್ಲದಕ್ಕಿಂತ ಮೊದಲು ಇಂಜೆಕ್ಟ್ ಆಗುವ SCSS ಕೋಡ್, ಸಾಮಾನ್ಯವಾಗಿ ವೇರಿಯೇಬಲ್‌ಗಳಿಗಾಗಿ.","ADMIN-ONLY (low priority)"
+theme_airpayux,region-side-pre,Right,दाएं,उजवीकडे,Kulia,ಬಲ,"ADMIN SETTING (skip)"
+theme_airpayux,bodybgcolor,"Body bg color","बॉडी बैकग्राउंड रंग","बॉडी पार्श्वभूमी रंग","Rangi ya mandhari ya mwili","ಬಾಡಿ ಹಿನ್ನೆಲೆ ಬಣ್ಣ",
+theme_airpayux,bodybgcolor_desc,"The color you added here will be affects as Body's background color","बॉडी के बैकग्राउंड का रंग","बॉडीच्या पार्श्वभूमीसाठी रंग","Rangi ya mandhari ya mwili","ಬಾಡಿಯ ಹಿನ್ನೆಲೆ ಬಣ್ಣ","ADMIN-ONLY (low priority)"
+theme_airpayux,showfooter,"Show footer","फ़ुटर दिखाएं","फूटर दाखवा","Onyesha kijachini","ಅಡಿಟಿಪ್ಪಣಿ ತೋರಿಸಿ",
+theme_airpayux,unaddableblocks,"Unneeded blocks","ज़रूरत नहीं वाले ब्लॉक्स","अनावश्यक ब्लॉक्स","Vizuizi visivyohitajika","ಅನಗತ್ಯ ಬ್ಲಾಕ್‌ಗಳು",
+theme_airpayux,unaddableblocks_desc,"The blocks specified are not needed when using this theme and will not be listed in the 'Add a block' menu.","इस थीम के लिए ज़रूरत नहीं वाले ब्लॉक्स।","या थीमसाठी अनावश्यक ब्लॉक्स.","Vizuizi ambavyo havihitajiki kwa mandhari hii.","ಈ ಥೀಮ್‌ಗೆ ಅನಗತ್ಯ ಬ್ಲಾಕ್‌ಗಳು.","ADMIN-ONLY (low priority)"
+theme_airpayux,privacy:metadata:preference:draweropenblock,"The user's preference for hiding or showing the drawer with blocks.","[NEEDS TRANSLATION]","ब्लॉक ड्रॉवर दाखवा/लपवा","Onyesha/Ficha droo ya vizuizi","[NEEDS TRANSLATION]","ADMIN-ONLY (low priority)"
+theme_airpayux,privacy:metadata:preference:draweropenindex,"The user's preference for hiding or showing the drawer with course index.","[NEEDS TRANSLATION]","कोर्स इंडेक्स ड्रॉवर दाखवा/लपवा","Onyesha/Ficha droo ya fahirisi","[NEEDS TRANSLATION]","ADMIN-ONLY (low priority)"
+theme_airpayux,privacy:metadata:preference:draweropennav,"The user's preference for hiding or showing the drawer menu navigation.","[NEEDS TRANSLATION]","नेव्हिगेशन ड्रॉवर दाखवा/लपवा","Onyesha/Ficha droo ya urambazaji","[NEEDS TRANSLATION]","ADMIN-ONLY (low priority)"
+theme_airpayux,privacy:drawerindexclosed,"The current preference for the index drawer is closed.","[NEEDS TRANSLATION]","इंडेक्स ड्रॉवर बंद आहे.","Droo ya fahirisi imefungwa.","[NEEDS TRANSLATION]","ADMIN-ONLY (low priority)"
+theme_airpayux,privacy:drawerindexopen,"The current preference for the index drawer is open.","[NEEDS TRANSLATION]","इंडेक्स ड्रॉवर उघडा आहे.","Droo ya fahirisi imefunguliwa.","[NEEDS TRANSLATION]","ADMIN-ONLY (low priority)"
+theme_airpayux,privacy:drawerblockclosed,"The current preference for the block drawer is closed.","[NEEDS TRANSLATION]","ब्लॉक ड्रॉवर बंद आहे.","Droo ya vizuizi imefungwa.","[NEEDS TRANSLATION]","ADMIN-ONLY (low priority)"
+theme_airpayux,privacy:drawerblockopen,"The current preference for the block drawer is open.","[NEEDS TRANSLATION]","ब्लॉक ड्रॉवर उघडा आहे.","Droo ya vizuizi imefunguliwa.","[NEEDS TRANSLATION]","ADMIN-ONLY (low priority)"
+theme_airpayux,privacy:drawernavclosed,"The current preference for the navigation drawer is closed.","[NEEDS TRANSLATION]","नेव्हिगेशन ड्रॉवर बंद आहे.","Droo ya urambazaji imefungwa.","[NEEDS TRANSLATION]","ADMIN-ONLY (low priority)"
+theme_airpayux,privacy:drawernavopen,"The current preference for the navigation drawer is open.","[NEEDS TRANSLATION]","नेव्हिगेशन ड्रॉवर उघडा आहे.","Droo ya urambazaji imefunguliwa.","[NEEDS TRANSLATION]","ADMIN-ONLY (low priority)"
+theme_airpayux,customscss,"Custom SCSS","कस्टम SCSS","कस्टम SCSS","SCSS maalum","ಕಸ್ಟಮ್ SCSS",
+theme_airpayux,welcometext,"Welcome Text","स्वागत है","स्वागत आहे",Karibu,ಸ್ವಾಗತ,
+theme_airpayux,welcometext_desc,"Welcome Text  will be displayed on the login welcome text  (Length should be not Morethan 15 Characters","लॉगिन पेज पर दिखाई जाने वाला स्वागत टेक्स्ट","लॉगिन पेजवर दाखवला जाणारा स्वागत मजकूर","Maandishi ya kukaribisha kwenye ukurasa wa kuingia","ಲಾಗಿನ್ ಪುಟದಲ್ಲಿ ತೋರಿಸುವ ಸ್ವಾಗತ ಪಠ್ಯ","ADMIN-ONLY (low priority)"
+theme_airpayux,logocaption,"Caption Text","कैप्शन टेक्स्ट","कॅप्शन मजकूर","Maandishi ya nembo","ಕ್ಯಾಪ್ಶನ್ ಪಠ್ಯ",
+theme_airpayux,logocaptiondesc,"The Caption text That you want show in logo (Length Should be 80 Characters.)","लोगो के साथ दिखाया जाने वाला कैप्शन","लोगोसोबत दाखवायचा कॅप्शन मजकूर","Maandishi ya kuonyeshwa karibu na nembo","ಲೋಗೋ ಜೊತೆ ತೋರಿಸುವ ಕ್ಯಾಪ್ಶನ್",
+theme_airpayux,logo,"Head Logo","हेडर लोगो","हेडर लोगो","Nembo ya kichwa","ಹೆಡರ್ ಲೋಗೋ",
+theme_airpayux,logodesc,"The Logo you uploaded here will be displayed as a Logo in Header.","हेडर में दिखाई देने वाला लोगो।","हेडरमध्ये दिसणारा लोगो.","Nembo itakayoonyeshwa kwenye kichwa.","ಹೆಡರ್‌ನಲ್ಲಿ ಕಾಣಿಸುವ ಲೋಗೋ.",
+theme_airpayux,loginorder,"Login Form Order","लॉगिन फॉर्म की जगह","लॉगिन फॉर्म क्रम","Mpangilio wa fomu ya kuingia","ಲಾಗಿನ್ ಫಾರ್ಮ್ ಕ್ರಮ",
+theme_airpayux,loginorder_desc,"You can make login form get placed left/right side based on your choice","लॉगिन फॉर्म को बाएं/दाएं रखें","लॉगिन फॉर्म डाव्या/उजव्या बाजूला ठेवा","Weka fomu upande wa kushoto/kulia","ಲಾಗಿನ್ ಫಾರ್ಮ್ ಎಡ/ಬಲಕ್ಕೆ ಇರಿಸಿ","ADMIN-ONLY (low priority)"
+theme_airpayux,carousellogo,"Login Page Logo Right Side","लॉगिन पेज लोगो (दाएं)","लॉगिन पेज लोगो (उजवीकडे)","Nembo ya ukurasa wa kuingia (kulia)","ಲಾಗಿನ್ ಪುಟ ಲೋಗೋ (ಬಲ)",
+theme_airpayux,carousellogo_desc,"The Logo you uploaded here will be displayed on Login Page Slider Right Side.","लॉगिन पेज के दाएं तरफ़ दिखने वाला लोगो।","लॉगिन पेजच्या उजव्या बाजूला दिसणारा लोगो.","Nembo kwenye upande wa kulia wa ukurasa wa kuingia.","ಲಾಗಿನ್ ಪುಟದ ಬಲ ಬದಿಯ ಲೋಗೋ.","ADMIN-ONLY (low priority)"
+theme_airpayux,loginlogo,"Page Login Logo Left Side","लॉगिन पेज लोगो (बाएं)","लॉगिन पेज लोगो (डावीकडे)","Nembo ya ukurasa wa kuingia (kushoto)","ಲಾಗಿನ್ ಪುಟ ಲೋಗೋ (ಎಡ)",
+theme_airpayux,loginlogo_desc,"The Logo you uploaded here will be displayed on Login Page Life Side.","लॉगिन पेज के बाएं तरफ़ दिखने वाला लोगो।","लॉगिन पेजच्या डाव्या बाजूला दिसणारा लोगो.","Nembo kwenye upande wa kushoto wa ukurasa wa kuingia.","ಲಾಗಿನ್ ಪುಟದ ಎಡ ಬದಿಯ ಲೋಗೋ.","ADMIN-ONLY (low priority)"
+theme_airpayux,logindesc,"Login Desc","लॉगिन डिस्क्रिप्शन","लॉगिन वर्णन","Maelezo ya kuingia","ಲಾಗಿನ್ ವಿವರಣೆ",
+theme_airpayux,logindesc_desc,"The Text you you want to be displayed under the Login page in slider side (Length should be not more than 600 characters).","लॉगिन पेज पर स्लाइडर साइड में दिखने वाला टेक्स्ट।","लॉगिन पेजवरील स्लायडर बाजूला दिसणारा मजकूर.","Maandishi yanayoonyeshwa kwenye sehemu ya slider ya ukurasa wa kuingia.","ಲಾಗಿನ್ ಪುಟದ ಸ್ಲೈಡರ್ ಬದಿಯಲ್ಲಿ ತೋರಿಸುವ ಪಠ್ಯ.","ADMIN-ONLY (low priority)"
+theme_airpayux,helpdesc,"Help Desc","हेल्प डिस्क्रिप्शन","मदत वर्णन","Maelezo ya msaada","ಸಹಾಯ ವಿವರಣೆ",
+theme_airpayux,helpdesc_desc,"The Text you uploaded here will be displayed when you click on Help button on the Login page","लॉगिन पेज पर हेल्प बटन पर क्लिक करने पर दिखने वाला टेक्स्ट।","लॉगिन पेजवर मदत बटणावर क्लिक केल्यावर दिसणारा मजकूर.","Maandishi yanayoonyeshwa unapobonyeza kitufe cha Msaada.","ಸಹಾಯ ಬಟನ್ ಕ್ಲಿಕ್ ಮಾಡಿದಾಗ ತೋರಿಸುವ ಪಠ್ಯ.","ADMIN-ONLY (low priority)"
+theme_airpayux,contact,"Contact us Desc","हमसे संपर्क करें","आमच्याशी संपर्क साधा","Wasiliana nasi","ನಮ್ಮನ್ನು ಸಂಪರ್ಕಿಸಿ",
+theme_airpayux,contact_desc,"The Text you uploaded here will be displayed when you click on Contact us button on the Login page","लॉगिन पेज पर संपर्क बटन पर क्लिक करने पर दिखने वाला टेक्स्ट।","लॉगिन पेजवर संपर्क बटणावर क्लिक केल्यावर दिसणारा मजकूर.","Maandishi yanayoonyeshwa unapobonyeza kitufe cha Wasiliana nasi.","ಸಂಪರ್ಕ ಬಟನ್ ಕ್ಲಿಕ್ ಮಾಡಿದಾಗ ತೋರಿಸುವ ಪಠ್ಯ.","ADMIN-ONLY (low priority)"
+theme_airpayux,aboutus,"About us Desc","हमारे बारे में",आमच्याबद्दल,"Kuhusu sisi","ನಮ್ಮ ಬಗ್ಗೆ",
+theme_airpayux,aboutus_desc,"The Text you uploaded here will be displayed when you click on About us button on the Login page","लॉगिन पेज पर हमारे बारे में बटन पर क्लिक करने पर दिखने वाला टेक्स्ट।","लॉगिन पेजवर आमच्याबद्दल बटणावर क्लिक केल्यावर दिसणारा मजकूर.","Maandishi yanayoonyeshwa unapobonyeza kitufe cha Kuhusu sisi.","ನಮ್ಮ ಬಗ್ಗೆ ಬಟನ್ ಕ್ಲಿಕ್ ಮಾಡಿದಾಗ ತೋರಿಸುವ ಪಠ್ಯ.","ADMIN-ONLY (low priority)"
+theme_airpayux,slider1,"Login Slider1","लॉगिन स्लाइडर 1","लॉगिन स्लायडर १","Picha ya slider 1","ಸ್ಲೈಡರ್ 1","ADMIN SETTING (skip)"
+theme_airpayux,slider1desc,"<p class=""m-0"">Webp format  Image is preffered for better performance </p>The uploaded image will displayed as first slider for login page only","लॉगिन पेज के लिए पहली स्लाइडर इमेज","लॉगिन पेजसाठी पहिले स्लायडर चित्र","Picha ya kwanza ya slider kwa ukurasa wa kuingia","ಲಾಗಿನ್ ಪುಟಕ್ಕೆ ಮೊದಲ ಸ್ಲೈಡರ್ ಚಿತ್ರ","ADMIN SETTING (skip)"
+theme_airpayux,slider2,"Login Slider2","लॉगिन स्लाइडर 2","लॉगिन स्लायडर २","Picha ya slider 2","ಸ್ಲೈಡರ್ 2","ADMIN SETTING (skip)"
+theme_airpayux,slider2desc,"<p class=""m-0"">Webp format  Image is preffered for better performance </p>The uploaded image will displayed as second slider for login page only","लॉगिन पेज के लिए दूसरी स्लाइडर इमेज","लॉगिन पेजसाठी दुसरे स्लायडर चित्र","Picha ya pili ya slider kwa ukurasa wa kuingia","ಲಾಗಿನ್ ಪುಟಕ್ಕೆ ಎರಡನೇ ಸ್ಲೈಡರ್ ಚಿತ್ರ","ADMIN SETTING (skip)"
+theme_airpayux,slider3,"Login Slider3","लॉगिन स्लाइडर 3","लॉगिन स्लायडर ३","Picha ya slider 3","ಸ್ಲೈಡರ್ 3","ADMIN SETTING (skip)"
+theme_airpayux,slider3desc,"<p class=""m-0"">Webp format  Image is preffered for better performance </p>The uploaded image will displayed as third slider for login page only","लॉगिन पेज के लिए तीसरी स्लाइडर इमेज","लॉगिन पेजसाठी तिसरे स्लायडर चित्र","Picha ya tatu ya slider kwa ukurasa wa kuingia","ಲಾಗಿನ್ ಪುಟಕ್ಕೆ ಮೂರನೇ ಸ್ಲೈಡರ್ ಚಿತ್ರ","ADMIN SETTING (skip)"
+theme_airpayux,slider4,"Login Slider4","लॉगिन स्लाइडर 4","लॉगिन स्लायडर ४","Picha ya slider 4","ಸ್ಲೈಡರ್ 4","ADMIN SETTING (skip)"
+theme_airpayux,slider4desc,"<p class=""m-0"">Webp format  Image is preffered for better performance </p>The uploaded image will displayed as fourth slider for login page only","लॉगिन पेज के लिए चौथी स्लाइडर इमेज","लॉगिन पेजसाठी चौथे स्लायडर चित्र","Picha ya nne ya slider kwa ukurasa wa kuingia","ಲಾಗಿನ್ ಪುಟಕ್ಕೆ ನಾಲ್ಕನೇ ಸ್ಲೈಡರ್ ಚಿತ್ರ","ADMIN SETTING (skip)"
+theme_airpayux,slider5,"Login Slider5","लॉगिन स्लाइडर 5","लॉगिन स्लायडर ५","Picha ya slider 5","ಸ್ಲೈಡರ್ 5","ADMIN SETTING (skip)"
+theme_airpayux,slider5desc,"<p class=""m-0"">Webp format  Image is preffered for better performance </p>The uploaded image will displayed as fifth slider for login page only","लॉगिन पेज के लिए पांचवीं स्लाइडर इमेज","लॉगिन पेजसाठी पाचवे स्लायडर चित्र","Picha ya tano ya slider kwa ukurasa wa kuingia","ಲಾಗಿನ್ ಪುಟಕ್ಕೆ ಐದನೇ ಸ್ಲೈಡರ್ ಚಿತ್ರ","ADMIN SETTING (skip)"
+theme_airpayux,favicon,Favicon,फ़ेविकॉन,फेविकॉन,Favicon,ಫೆವಿಕಾನ್,
+theme_airpayux,favicondesc,"Your site’s “favourite icon”. Here, you may insert the favicon for your site.","अपनी साइट का फ़ेविकॉन यहां अपलोड करें।","तुमच्या साइटचे फेविकॉन इथे अपलोड करा.","Pakia favicon ya tovuti yako hapa.","ನಿಮ್ಮ ಸೈಟ್‌ನ ಫೆವಿಕಾನ್ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ.",
+theme_airpayux,font,Font,फ़ॉन्ट,फॉन्ट,Fonti,ಫಾಂಟ್,
+theme_airpayux,font_desc,"Selected font will be applied through out the LMS.","चुना गया फ़ॉन्ट पूरे LMS में लगेगा।","निवडलेला फॉन्ट संपूर्ण LMS मध्ये लागू होईल.","Fonti iliyochaguliwa itatumika katika LMS yote.","ಆಯ್ಕೆ ಮಾಡಿದ ಫಾಂಟ್ ಇಡೀ LMS ನಲ್ಲಿ ಅನ್ವಯವಾಗುತ್ತದೆ.","ADMIN-ONLY (low priority)"
+theme_airpayux,leftmenu_dashboard,Dashboard,डैशबोर्ड,डॅशबोर्ड,Dashibodi,ಡ್ಯಾಶ್‌ಬೋರ್ಡ್,
+theme_airpayux,leftmenu_adminstration,Administration,एडमिनिस्ट्रेशन,प्रशासन,Usimamizi,ಆಡಳಿತ,
+theme_airpayux,leftmenu_tm_dashboard,"My Team","मेरी टीम","माझी टीम","Timu Yangu","ನನ್ನ ತಂಡ",
+theme_airpayux,showhideblocks,"Show/Hide blocks","ब्लॉक्स दिखाएं/छुपाएं","ब्लॉक्स दाखवा/लपवा","Onyesha/Ficha vizuizi","ಬ್ಲಾಕ್‌ಗಳನ್ನು ತೋರಿಸಿ/ಮರೆಮಾಡಿ",
+theme_airpayux,leftmenu_gmleaderboard,Leaderboard,लीडरबोर्ड,लीडरबोर्ड,"Ubao wa Viongozi",ಲೀಡರ್‌ಬೋರ್ಡ್,
+theme_airpayux,region-layerone_full,"Layer one full width","[NEEDS TRANSLATION]","लेयर एक पूर्ण रुंदी","Safu ya kwanza upana kamili","[NEEDS TRANSLATION]","ADMIN SETTING (skip)"
+theme_airpayux,region-layerone_one,"Layer one-one","[NEEDS TRANSLATION]","लेयर एक-एक","Safu moja-moja","[NEEDS TRANSLATION]","ADMIN SETTING (skip)"
+theme_airpayux,region-layerone_two,"Layer one-two","[NEEDS TRANSLATION]","लेयर एक-दोन","Safu moja-mbili","[NEEDS TRANSLATION]","ADMIN SETTING (skip)"
+theme_airpayux,region-layertwo_one,"Layer two-one","[NEEDS TRANSLATION]","लेयर दोन-एक","Safu mbili-moja","[NEEDS TRANSLATION]","ADMIN SETTING (skip)"
+theme_airpayux,region-layertwo_two,"Layer two-two","[NEEDS TRANSLATION]","लेयर दोन-दोन","Safu mbili-mbili","[NEEDS TRANSLATION]","ADMIN SETTING (skip)"
+theme_airpayux,region-layertwo_three,"Layer two-three","[NEEDS TRANSLATION]","लेयर दोन-तीन","Safu mbili-tatu","[NEEDS TRANSLATION]","ADMIN SETTING (skip)"
+theme_airpayux,region-layertwo_four,"Layer two-four","[NEEDS TRANSLATION]","लेयर दोन-चार","Safu mbili-nne","[NEEDS TRANSLATION]","ADMIN SETTING (skip)"
+theme_airpayux,region-teamoverview,Teamoverview,"[NEEDS TRANSLATION]","टीम विहंगावलोकन","Muhtasari wa Timu","[NEEDS TRANSLATION]","ADMIN SETTING (skip)"
+theme_airpayux,region-teamdetail_one,"Teamdetail one","[NEEDS TRANSLATION]","टीम तपशील एक","Maelezo ya Timu moja","[NEEDS TRANSLATION]","ADMIN SETTING (skip)"
+theme_airpayux,region-teamdetail_two,"Teamdetail two","[NEEDS TRANSLATION]","टीम तपशील दोन","Maelezo ya Timu mbili","[NEEDS TRANSLATION]","ADMIN SETTING (skip)"
+theme_airpayux,region-layerthree_one,"Layer three-one","[NEEDS TRANSLATION]","लेयर तीन-एक","Safu tatu-moja","[NEEDS TRANSLATION]","ADMIN SETTING (skip)"
+theme_airpayux,region-layerthree_two,"Layer three-two","[NEEDS TRANSLATION]","लेयर तीन-दोन","Safu tatu-mbili","[NEEDS TRANSLATION]","ADMIN SETTING (skip)"
+theme_airpayux,switchroleto,"Switch role to:","रोल बदलें:","भूमिका बदला:","Badilisha nafasi kuwa:","ಪಾತ್ರ ಬದಲಾಯಿಸಿ:",
+theme_airpayux,switchroleas,"Switch role as ","इस रोल में बदलें ","भूमिका म्हणून बदला ","Badilisha nafasi kama ","ಪಾತ್ರವಾಗಿ ಬದಲಾಯಿಸಿ ",
+theme_airpayux,show_more_less,"Show more/less","और दिखाएं/कम दिखाएं","अधिक/कमी दाखवा","Onyesha zaidi/kidogo","ಹೆಚ್ಚು/ಕಡಿಮೆ ತೋರಿಸಿ",
+theme_airpayux,theme_scheme,"Theme scheme","थीम स्कीम","थीम स्कीम","Mpango wa mandhari","ಥೀಮ್ ಸ್ಕೀಮ್",
+theme_airpayux,theme_scheme_desc,"Theme scheme change this to bring lot of coloring changes to the site","साइट के रंग बदलने के लिए थीम स्कीम बदलें","साइटच्या रंग बदलण्यासाठी थीम स्कीम बदला","Badilisha mpango wa mandhari kubadilisha rangi za tovuti","ಸೈಟ್ ಬಣ್ಣಗಳನ್ನು ಬದಲಾಯಿಸಲು ಥೀಮ್ ಸ್ಕೀಮ್ ಬದಲಾಯಿಸಿ","ADMIN-ONLY (low priority)"
+theme_airpayux,scheme_1,"Scheme 1","स्कीम 1","स्कीम १","Mpango 1","[NEEDS TRANSLATION]",
+theme_airpayux,scheme_2,"Scheme 2","स्कीम 2","स्कीम २","Mpango 2","[NEEDS TRANSLATION]",
+theme_airpayux,scheme_3,"Scheme 3","स्कीम 3","स्कीम ३","Mpango 3","[NEEDS TRANSLATION]",
+theme_airpayux,scheme_4,"Scheme 4","स्कीम 4","स्कीम ४","Mpango 4","[NEEDS TRANSLATION]",
+theme_airpayux,scheme_5,"Scheme 5","स्कीम 5","स्कीम ५","Mpango 5","[NEEDS TRANSLATION]",
+theme_airpayux,scheme_6,"Scheme 6","स्कीम 6","स्कीम ६","Mpango 6","[NEEDS TRANSLATION]",
+theme_airpayux,square,Square,चौकोर,चौकोनी,Mraba,ಚೌಕ,
+theme_airpayux,rounded,Circle,गोल,गोलाकार,Mviringo,ವೃತ್ತ,
+theme_airpayux,rounded-square,Rounded-square,गोल-चौकोर,गोलाकार-चौकोनी,Mraba-mviringo,ದುಂಡು-ಚೌಕ,
+theme_airpayux,customscheme,"Use custom scheme","कस्टम स्कीम इस्तेमाल करें","कस्टम स्कीम वापरा","Tumia mpango maalum","ಕಸ್ಟಮ್ ಸ್ಕೀಮ್ ಬಳಸಿ",
+theme_airpayux,left_menu_requests,"Manage Requests","रिक्वेस्ट मैनेज करें","विनंत्या व्यवस्थापित करा","Simamia Maombi","ವಿನಂತಿಗಳನ್ನು ನಿರ್ವಹಿಸಿ",
+theme_airpayux,facebook,"Facebook URL","Facebook URL","Facebook URL","URL ya Facebook","Facebook URL",
+theme_airpayux,facebookdesc,"The URL you added here will be the path for your Facebook page","आपके Facebook पेज का URL","तुमच्या Facebook पेजचा URL","URL ya ukurasa wako wa Facebook","ನಿಮ್ಮ Facebook ಪುಟದ URL",
+theme_airpayux,twitter,"Twitter URL","Twitter URL","Twitter URL","URL ya Twitter","Twitter URL",
+theme_airpayux,twitterdesc,"The URL you added here will be the path for your Twitter page","आपके Twitter पेज का URL","तुमच्या Twitter पेजचा URL","URL ya ukurasa wako wa Twitter","ನಿಮ್ಮ Twitter ಪುಟದ URL",
+theme_airpayux,linkedin,linkedIn,LinkedIn,LinkedIn,LinkedIn,LinkedIn,
+theme_airpayux,linkedindesc,"The URL you added here will be the path for your linkedIn page","आपके LinkedIn पेज का URL","तुमच्या LinkedIn पेजचा URL","URL ya ukurasa wako wa LinkedIn","ನಿಮ್ಮ LinkedIn ಪುಟದ URL",
+theme_airpayux,youtube,"Youtube URL","Youtube URL","Youtube URL","URL ya Youtube","Youtube URL",
+theme_airpayux,youtubedesc,"The URL you added here will be the path for your Youtube page","आपके Youtube चैनल का URL","तुमच्या Youtube चॅनेलचा URL","URL ya kituo chako cha Youtube","ನಿಮ್ಮ Youtube ಚಾನೆಲ್ URL",
+theme_airpayux,instagram,"Instagram URL","Instagram URL","Instagram URL","URL ya Instagram","Instagram URL",
+theme_airpayux,instagramdesc,"The URL you added here will be the path for your Instagram page","आपके Instagram पेज का URL","तुमच्या Instagram पेजचा URL","URL ya ukurasa wako wa Instagram","ನಿಮ್ಮ Instagram ಪುಟದ URL",
+theme_airpayux,footerbgcolor,"Footer's bg color","फ़ुटर बैकग्राउंड रंग","फूटर पार्श्वभूमी रंग","Rangi ya mandhari ya kijachini","ಅಡಿಟಿಪ್ಪಣಿ ಹಿನ್ನೆಲೆ ಬಣ್ಣ",
+theme_airpayux,footerbg_desc,"The color you added here will be affects as Footer's background color","फ़ुटर के बैकग्राउंड का रंग","फूटरच्या पार्श्वभूमीसाठी रंग","Rangi ya mandhari ya kijachini","ಅಡಿಟಿಪ್ಪಣಿಯ ಹಿನ್ನೆಲೆ ಬಣ್ಣ","ADMIN-ONLY (low priority)"
+theme_airpayux,copyright,Copyright,कॉपीराइट,कॉपीराइट,Hakimiliki,ಹಕ್ಕುಸ್ವಾಮ್ಯ,
+theme_airpayux,copyrightdesc,"Whatever you add to this textarea will be displayed in the footer throughout your Moodle site, e.g. Copyright.","फ़ुटर में दिखने वाला कॉपीराइट टेक्स्ट।","फूटरमध्ये दिसणारा कॉपीराइट मजकूर.","Maandishi ya hakimiliki yatakayoonyeshwa kwenye kijachini.","ಅಡಿಟಿಪ್ಪಣಿಯಲ್ಲಿ ಕಾಣಿಸುವ ಹಕ್ಕುಸ್ವಾಮ್ಯ ಪಠ್ಯ.",
+theme_airpayux,employee,Employee,कर्मचारी,कर्मचारी,Mfanyakazi,ಉದ್ಯೋಗಿ,
+theme_airpayux,quickinfo,"Quick Info","क्विक इन्फ़ो","जलद माहिती","Taarifa za Haraka","ತ್ವರಿತ ಮಾಹಿತಿ",
+theme_airpayux,quickinfodesc,"Quick Information","क्विक इन्फ़ो","जलद माहिती","Taarifa za haraka","ತ್ವರಿತ ಮಾಹಿತಿ",
+theme_airpayux,quickinfo1,"Quick Info1","क्विक इन्फ़ो 1","जलद माहिती १","Taarifa ya Haraka 1","[NEEDS TRANSLATION]",
+theme_airpayux,quickinfo2,"Quick Info2","क्विक इन्फ़ो 2","जलद माहिती २","Taarifa ya Haraka 2","[NEEDS TRANSLATION]",
+theme_airpayux,quickinfo3,"Quick Info3","क्विक इन्फ़ो 3","जलद माहिती ३","Taarifa ya Haraka 3","[NEEDS TRANSLATION]",
+theme_airpayux,quickinfo4,"Quick Info4","क्विक इन्फ़ो 4","जलद माहिती ४","Taarifa ya Haraka 4","[NEEDS TRANSLATION]",
+theme_airpayux,quickinfo5,"Quick Info5","क्विक इन्फ़ो 5","जलद माहिती ५","Taarifa ya Haraka 5","[NEEDS TRANSLATION]",
+theme_airpayux,disable,Disable,बंद,बंद,Zima,ನಿಷ್ಕ್ರಿಯ,
+theme_airpayux,enable,Enable,चालू,चालू,Washa,ಸಕ್ರಿಯ,
+theme_airpayux,region-course-pre,"Course Pre","कोर्स प्री","कोर्स प्री","Kabla ya Kozi","ಕೋರ್ಸ್ ಪ್ರೀ","ADMIN SETTING (skip)"
+theme_airpayux,quickaccess,"Quick Access","क्विक एक्सेस","जलद प्रवेश","Ufikiaji wa Haraka","ತ್ವರಿತ ಪ್ರವೇಶ",
+theme_airpayux,home,Dashboard,डैशबोर्ड,डॅशबोर्ड,Dashibodi,ಡ್ಯಾಶ್‌ಬೋರ್ಡ್,
+theme_airpayux,colorschemes,Colorschemes,"कलर स्कीम",रंगसंगती,"Mipango ya Rangi","ಬಣ್ಣ ಯೋಜನೆಗಳು",
+theme_airpayux,phonenumber,"Mobile Number","मोबाइल नंबर","मोबाईल नंबर","Nambari ya Simu","ಮೊಬೈಲ್ ನಂಬರ್",
+theme_airpayux,learnerlogin,"Enter Mobile Number","मोबाइल नंबर डालें","मोबाईल नंबर टाका","Weka Nambari ya Simu","ಮೊಬೈಲ್ ನಂಬರ್ ನಮೂದಿಸಿ",
+theme_airpayux,enterotp,"Enter OTP","OTP डालें","OTP टाका","Weka OTP","OTP ನಮೂದಿಸಿ",
+theme_airpayux,resentotp,"Resend OTP","OTP दोबारा भेजें","OTP पुन्हा पाठवा","Tuma OTP tena","OTP ಮರುಕಳಿಸಿ",
+theme_airpayux,entermobileotp,"Entered mobile number is not exists, please check","डाला गया मोबाइल नंबर रजिस्टर्ड नहीं है, कृपया चेक करें","टाकलेला मोबाईल नंबर नोंदणीकृत नाही, कृपया तपासा","Nambari ya simu iliyowekwa haipo, tafadhali angalia","ನಮೂದಿಸಿದ ಮೊಬೈಲ್ ನಂಬರ್ ನೋಂದಾಯಿಸಿಲ್ಲ, ದಯವಿಟ್ಟು ಪರಿಶೀಲಿಸಿ",
+HARDCODED:dashboard.php,total_users_label,"Total Users","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:dashboard.php,active_courses_label,"Active Courses","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:dashboard.php,enrolments_label,Enrolments,"[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:dashboard.php,completion_rate_label,"Completion Rate","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:dashboard.php,quick_navigation,"Quick Navigation","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:dashboard.php,welcome_back,"Welcome back","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:dashboard.php,your_courses,"Your Courses","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:dashboard.php,upcoming_deadlines,"Upcoming Deadlines","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:dashboard.php,recent_achievements,"Recent Achievements","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:homepage.php,hero_title,"Build Skills That Drive Your Career Forward","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:homepage.php,hero_subtitle,"A comprehensive learning platform for employability, business training, and financial education.","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:homepage.php,explore_courses,"Explore Courses","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:homepage.php,sign_in,"Sign In","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:homepage.php,featured_courses,"Featured Courses","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:homepage.php,ready_to_start,"Ready to Start Learning?","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:homepage.php,get_started_free,"Get Started Free","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:homepage.php,three_pillars,"Three Pillars of Learning","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:homepage.php,pillar_employability,"Employability Skills","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:homepage.php,pillar_business,"Business Acumen","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:homepage.php,pillar_financial,"Financial Education","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:loginform.mustache,welcome_back_login,"Welcome back","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:loginform.mustache,sign_in_continue,"Sign in to continue your learning journey","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:loginform.mustache,forgot_password,"Forgot Password?","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:loginform.mustache,create_account,"Create an Account","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:loginform.mustache,access_guest,"Access as a guest","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:coursedetail.mustache,about_course,"About This Course","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:coursedetail.mustache,course_content,"Course Content","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:coursedetail.mustache,what_youll_learn,"What You'll Learn","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:coursedetail.mustache,share_course,"Share This Course","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:coursedetail.mustache,related_courses,"Related Courses","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:coursedetail.mustache,continue_learning,"Continue Learning","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:coursedetail.mustache,enroll_now,"Enroll Now — Free","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:coursedetail.mustache,view_details,"View Details","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:course.mustache,course_content_sidebar,"Course Content","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:course.mustache,percent_complete,"% complete","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:navbar.mustache,nav_home,Home,"[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:navbar.mustache,nav_explore,Explore,"[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:navbar.mustache,nav_learning,Learning,"[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:navbar.mustache,nav_alerts,Alerts,"[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:navbar.mustache,nav_profile,Profile,"[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:mycourses.mustache,all_courses,"All Courses","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:mycourses.mustache,in_progress,"In Progress","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:mycourses.mustache,completed,Completed,"[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:mycourses.mustache,not_started,"Not Started","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:mycourses.mustache,no_courses_found,"No courses found","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:mycourses.mustache,browse_catalog,"Browse Catalog","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:certificates.php,my_certificates,"My Certificates","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:certificates.php,certificates_earned,"certificates earned","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"
+HARDCODED:certificates.php,no_certificates,"No certificates yet","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","[NEEDS TRANSLATION]","HARDCODED — not in lang file yet, translate for future migration"

@@ -79,3 +79,29 @@ release/airpay-academy-v1.0.0-rc1/bizlms-fixes/
 # Local-only credential files for the visual audit (never commit)
 moodle-enhancement/docs/visual-audit-*/credentials.local.md
 **/credentials.local.md
+
+# Stash-cleanup additions (2026-05-24) — noise / artifacts that snuck
+# into the working tree but should never be committed.
+backups/*.zip
+backups/*.tar.gz
+_test.txt
+topbar_snapshot.txt
+audit-runner/
+moodle-enhancement/audit/playwright/test-results/
+moodle-enhancement/audit/playwright/playwright-report/
+moodle-enhancement/audit/playwright/fixtures/.auth-state.json
+*.network-response
+**/test-results/
+
+# Intermediate audit screenshots — proper visual-evidence lives at
+# moodle-enhancement/docs/visual-evidence/YYYY-MM-DD/. The loose images
+# in moodle-enhancement/audit/ are debugging-state captures.
+moodle-enhancement/audit/*.png
+moodle-enhancement/audit/*.jpeg
+moodle-enhancement/audit/*.jpg
+moodle-enhancement/audit/*-snapshot.txt
+moodle-enhancement/audit/users-page-snap*.txt
+moodle-enhancement/audit/dropdown-open.txt
+moodle-enhancement/audit/filtered-search.txt
+moodle-enhancement/audit/login*.txt
+moodle-enhancement/audit-2026-05-15/
