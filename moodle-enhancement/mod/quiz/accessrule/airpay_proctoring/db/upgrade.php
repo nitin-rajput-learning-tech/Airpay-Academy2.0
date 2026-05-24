@@ -47,9 +47,14 @@ function xmldb_quizaccess_airpay_proctoring_upgrade(int $oldversion): bool {
         $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null,
             XMLDB_NOTNULL, null, '0');
         $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        // FK on quizid auto-creates an index, so we only need to declare
+        // the unique constraint via the key (XMLDB_KEY_UNIQUE) instead of
+        // a separate add_index — the earlier `add_index('uniq_quizid', ...)`
+        // collided with the FK's implicit index and aborted upgrade with
+        // "Key fk_quiz collides with indexuniq_quizid". Fixed 2026-05-24.
+        $table->add_key('uniq_quizid', XMLDB_KEY_UNIQUE, ['quizid']);
         $table->add_key('fk_quiz', XMLDB_KEY_FOREIGN, ['quizid'],
             'quiz', ['id']);
-        $table->add_index('uniq_quizid', XMLDB_INDEX_UNIQUE, ['quizid']);
 
         if (!$dbman->table_exists($table)) {
             $dbman->create_table($table);
