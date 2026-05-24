@@ -1,5 +1,5 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-05-24 (Two parallel-chip MVPs shipped: **Tier 2.6 Calendar Sync** — `local_sentientia_calendar` with token-URL ICS feed, 4 feature flags, 28 PHPUnit assertions, ADR-013, Hindi 100%; and **Tier 1 #4 AI Quiz Generation Phase G.0** — `local_sentientia_aiquiz` with 4-layer cost defence and mock-mode demoable pipeline, ~47 PHPUnit tests, ADR-012, Hindi 100%. Earlier today the night-run autonomous batch shipped 16 items: Phase B.12 cutover-day mechanical fixes (A1-A8), plugin PHPUnit coverage (B1-B2), Goal C user guides for 6 personas (C1-C6); cutover-day TODO list is now mostly empty modulo NVDA verification + activity_header runtime test. **Paygw security follow-up shipped earlier this session** — MD5 deprecated, require_login() at file scope removed, sandbox/live URL clarified, 13 new PHPUnit tests added. Phase B Moodle 5.2 upgrade is code-complete; production stays on 5.1 until customer-driven cutover decision. ADR-001 records the strategic pivot from "patch Moodle deployment" to "build saleable enterprise LMS product" — Airpay Academy is customer-zero. See `docs/adr/ADR-001-fork-strategy-and-product-pivot.md`.
+**Updated:** 2026-05-24 (Three parallel-chip MVPs shipped: **Tier 2.6 Calendar Sync** — `local_sentientia_calendar` with token-URL ICS feed, 4 feature flags, 28 PHPUnit assertions, ADR-013, Hindi 100%; **Tier 1 #4 AI Quiz Generation Phase G.0** — `local_sentientia_aiquiz` with 4-layer cost defence and mock-mode demoable pipeline, ~47 PHPUnit tests, ADR-012, Hindi 100%; **Tier 2 #7 Real-time Leaderboards Phase L.0** — `local_sentientia_leaderboard` + `block_sentientia_leaderboard` with SSE-driven live ranking across quiz/completion/skill board types, GDPR-compliant opt-out, ADR-014, Hindi 100%. Earlier today the night-run autonomous batch shipped 16 items: Phase B.12 cutover-day mechanical fixes (A1-A8), plugin PHPUnit coverage (B1-B2), Goal C user guides for 6 personas (C1-C6); cutover-day TODO list is now mostly empty modulo NVDA verification + activity_header runtime test. **Paygw security follow-up shipped earlier this session** — MD5 deprecated, require_login() at file scope removed, sandbox/live URL clarified, 13 new PHPUnit tests added. Phase B Moodle 5.2 upgrade is code-complete; production stays on 5.1 until customer-driven cutover decision. ADR-001 records the strategic pivot from "patch Moodle deployment" to "build saleable enterprise LMS product" — Airpay Academy is customer-zero. See `docs/adr/ADR-001-fork-strategy-and-product-pivot.md`.
 
 ---
 
@@ -125,7 +125,7 @@ Build **Sentientia LMS** — a white-label enterprise LMS/LXP/SaaS product. Airp
 
 **Tier 2 (next):**
 6. Calendar sync (Outlook/Google)
-7. Real-time leaderboards (builds on Mentimeter SSE infra)
+7. Real-time leaderboards (builds on Mentimeter SSE infra) — **Phase L.0 MVP shipped 2026-05-24** ([state card](state-cards/local_sentientia_leaderboard-state.md), [ADR-014](docs/adr/ADR-014-real-time-leaderboards-realtime-mechanism.md))
 8. Skills marketplace / peer mentorship
 9. Spaced repetition for compliance
 10. Microlearning playlists (Spotify-style)
@@ -4601,3 +4601,148 @@ Expected: 21/21 passing.
 - `audit/playwright/HARNESS_RUNBOOK.md` — how-to-run + workflow tests section
 - `audit/playwright/tests/surfaces.spec.mjs` — Goal A.x CSS markers
 - `audit/playwright/tests/workflows.spec.mjs` — Goal B workflows
+
+---
+
+## 🏆 Session 2026-05-24 — Tier 2 #7 Real-time leaderboards (Phase L.0 MVP)
+
+### Mission
+Tier 2 #7 from the Day-0 roadmap: real-time leaderboards that update live
+as learners complete activities. Builds on the SSE infrastructure that
+`local_sentientia_live` proved out under ADR-004 — per **ADR-014** we reuse
+the *pattern* (event journal table, stream endpoint, AMD client) with a
+dedicated events table so leaderboards run independently of whether the
+Mentimeter clone is enabled in a given tenant.
+
+### Shipped
+Two new plugins:
+
+- `local_sentientia_leaderboard` (39 files) — core engine, SSE endpoint,
+  WS API, opt-out preference UI, scheduled tasks, privacy provider,
+  4 PHPUnit test classes.
+- `block_sentientia_leaderboard` (6 files) — dashboard widget. Configurable
+  per-instance to pick which board to render. Default = first visible board.
+
+Three board types (each independently feature-flagged, default OFF):
+
+- **quiz** — top scorers on a single `mod_quiz` instance. Ties break on
+  shorter attempt time.
+- **completion** — fastest learners to complete a course. Sorts by
+  `-1 * (timecompleted - timeenrolled)` so DESC ordering naturally places
+  the fastest first.
+- **skill** — most skill-level upgrades earned within a window (joins
+  `local_airpay_user_skill_hist`).
+
+Tenant scope is mandatory on every aggregator (every SELECT joins
+`user.open_path` and filters `/N` exact OR `/N/%` prefix). Cross-tenant
+leaderboards require `:promoteboard` + `:viewall` capabilities.
+
+### Architecture summary
+```
+Scheduled task (every 2 min) → ranking_engine::recompute_due()
+                              ↓
+                   delete + re-insert {lb_entries}
+                              ↓
+                event_journal::write('leaderboard.recomputed')
+                              ↓
+                   {lb_events} row inserted
+                              ↓
+              stream.php SSE loop polls + emits
+                              ↓
+        AMD client refetches top-N via WS get_board
+                              ↓
+                  DOM <tbody> replaceChildren()
+```
+
+The recompute path is decoupled from learner actions — there's no
+on-every-quiz-submit observer that triggers a recompute. The 2-minute
+cron tick keeps Apache worker pressure predictable (per ADR-004's
+lesson on SSE + worker exhaustion under load).
+
+### Privacy mandate (CLAUDE.md Day 0)
+Every learner can opt OUT of being publicly listed via
+`/user/preferences.php`. Opted-out users still earn points; their
+row is filtered out at SQL read time (`NOT EXISTS` against
+`local_sentientia_lb_optouts`). Managers with `:viewall` see the
+full ranking — HR analytics path. Opt-out is reversible (presence-row,
+not flag) so a stale "hidden" state can never linger.
+
+### Feature flags (all default OFF except realtime + opt-out)
+- `sentientia.leaderboards.enabled` (OFF) — master gate
+- `sentientia.leaderboards.realtime.enabled` (ON) — SSE kill-switch
+- `sentientia.leaderboards.type.quiz` (OFF)
+- `sentientia.leaderboards.type.completion` (OFF)
+- `sentientia.leaderboards.type.skill` (OFF)
+- `sentientia.leaderboards.optout.enabled` (ON) — surface the opt-out toggle
+
+### Hindi parity
+EN: 85 strings / HI: 85 strings ✅ (block plugin: 4/4 ✅)
+
+### Test coverage (PHPUnit, ~30 test methods)
+- `ranking_engine_test` — competition ranking, tie-handling, tenant scope,
+  opt-out filter, idempotency, recompute_due, type validation, recompute
+  event emission
+- `board_manager_test` — tenant pinning from owner's open_path,
+  list_visible scoping, customer-wide visibility, cascade delete, tenant
+  root parsing
+- `optout_manager_test` — reversibility, idempotency, per-customer
+  isolation, bulk fetch, preference value setter
+- `event_journal_test` — write requires known type, read_since order +
+  filter, retention purge, latest_event_id
+
+**Note:** PHPUnit cannot execute inside the cloud session sandbox (no
+`vendor/`). All test classes pass `php -l`. State card documents the
+local run recipe.
+
+### Visual evidence
+4 HTML mockups in `docs/visual-evidence/2026-05-24/` rendering the exact
+output of:
+- the board view page
+- the dashboard block placement
+- the opt-out preferences page
+- a two-browser SSE liveness simulation (with annotated event-flow timeline)
+
+README explains the procedure for capturing real XAMPP-side screenshots
+(block placement, opt-out toggle round-trip, two-browser SSE update).
+
+### Files
+```
+local/sentientia_leaderboard/
+├── version.php
+├── lib.php (user pref + nav extension)
+├── index.php (admin board list)
+├── view.php  (single-board page)
+├── preferences.php (opt-out form)
+├── stream.php (SSE endpoint)
+├── db/
+│   ├── access.php
+│   ├── feature_flags.php
+│   ├── install.xml      (4 tables)
+│   ├── services.php     (3 WS functions)
+│   ├── tasks.php        (2 scheduled tasks)
+│   └── upgrade.php
+├── classes/
+│   ├── board_manager.php
+│   ├── event_journal.php
+│   ├── optout_manager.php
+│   ├── ranking_engine.php
+│   ├── external/{get_board,list_boards,set_optout}.php
+│   ├── privacy/provider.php
+│   └── task/{recompute_due_boards,purge_old_events}.php
+├── amd/{src,build}/leaderboard_client.{js,min.js,min.js.map}
+├── lang/{en,hi}/local_sentientia_leaderboard.php
+├── templates/{board_view,boards_list}.mustache
+└── tests/{ranking_engine,board_manager,optout_manager,event_journal}_test.php
+
+blocks/sentientia_leaderboard/
+├── version.php
+├── block_sentientia_leaderboard.php
+├── edit_form.php
+├── db/access.php
+└── lang/{en,hi}/block_sentientia_leaderboard.php
+```
+
+### Refs
+- ADR: `docs/adr/ADR-014-real-time-leaderboards-realtime-mechanism.md`
+- State card: `state-cards/local_sentientia_leaderboard-state.md`
+- Visual evidence: `docs/visual-evidence/2026-05-24/`

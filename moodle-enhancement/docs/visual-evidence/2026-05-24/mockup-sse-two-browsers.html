@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mockup — SSE liveness across 2 browsers</title>
+<style>
+:root {
+  --ap-primary: #0066A7;
+  --ap-primary-light: #e8f2f9;
+  --ap-primary-dark: #004d80;
+  --ap-bg: #F2F4FB;
+  --ap-surface: #ffffff;
+  --ap-border: #e2e6ef;
+  --ap-text-primary: #1a1a2e;
+  --ap-text-secondary: #5a6070;
+  --ap-success: #16a34a;
+  --ap-warning: #d97706;
+}
+* { box-sizing: border-box; }
+body { font-family: 'Montserrat', -apple-system, sans-serif;
+       background: #d4d4d8; color: var(--ap-text-primary);
+       margin: 0; padding: 24px; }
+.note { background: #fffbea; border-left: 4px solid var(--ap-warning);
+  padding: 16px; margin-bottom: 24px; border-radius: 4px;
+  max-width: 1100px; margin: 0 auto 24px; }
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  max-width: 1100px; margin: 0 auto; }
+.browser-frame { background: var(--ap-surface); border: 1px solid #71717a;
+  border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+.browser-bar { background: #e4e4e7; padding: 8px 12px; display: flex;
+  align-items: center; gap: 8px; border-bottom: 1px solid #d4d4d8; }
+.browser-bar .dot { width: 12px; height: 12px; border-radius: 50%; }
+.dot-r { background: #ef4444; }
+.dot-y { background: #eab308; }
+.dot-g { background: #22c55e; }
+.url { flex: 1; background: white; border-radius: 4px; padding: 4px 8px;
+  font-size: 0.75rem; color: var(--ap-text-secondary); font-family: monospace; }
+.browser-tab { background: white; padding: 4px 12px; font-size: 0.8rem;
+  margin-left: 8px; border-radius: 4px 4px 0 0; }
+.browser-body { padding: 16px; background: var(--ap-bg); min-height: 480px; }
+.airpay-lb { background: var(--ap-surface); border: 1px solid var(--ap-border);
+  border-radius: 12px; padding: 16px; }
+.airpay-lb__header { display:flex; justify-content: space-between;
+  align-items: baseline; margin-bottom: 12px; flex-wrap: wrap; }
+.airpay-lb__title { font-size: 1rem; font-weight: 600; margin: 0; }
+.airpay-lb__type-badge { background: var(--ap-primary-light);
+  color: var(--ap-primary-dark); padding: 2px 8px;
+  border-radius: 20px; font-size: 0.7rem; }
+.airpay-lb__indicator { font-size: 0.7rem; }
+.airpay-lb__indicator--live { color: var(--ap-success); font-weight: 600; }
+.lb-row { display: grid; grid-template-columns: 30px 1fr auto;
+  padding: 8px 4px; border-bottom: 1px solid var(--ap-border);
+  font-size: 0.875rem; transition: background 0.5s; }
+.lb-row.changed { background: #fef3c7; animation: flash 1s; }
+@keyframes flash { 0% { background: #fde68a; } 100% { background: transparent; } }
+.lb-rank { font-weight: 700; }
+.lb-points { font-variant-numeric: tabular-nums; color: var(--ap-text-secondary); }
+.label { background: white; padding: 4px 8px; border-radius: 4px;
+  font-size: 0.875rem; font-weight: 600; margin-bottom: 8px; display: inline-block; }
+.label-a { color: var(--ap-primary); }
+.label-b { color: var(--ap-success); }
+.timeline { background: #18181b; color: #f4f4f5; padding: 16px;
+  border-radius: 8px; font-family: monospace; font-size: 0.8rem;
+  margin-top: 24px; max-width: 1100px; margin-left: auto; margin-right: auto; }
+.timeline div { margin: 4px 0; }
+.ts { color: #a1a1aa; }
+.evt-server { color: #f59e0b; }
+.evt-client { color: #34d399; }
+</style>
+</head>
+<body>
+
+<div class="note">
+  <strong>Mockup</strong> — illustrates the deliverable
+  "Two browsers open, one user submits a quiz, other browser's
+  leaderboard updates within 5 s." Window A is the trigger; Window B
+  is observing the change land via SSE without a page reload.
+  Real screenshots will replace this once XAMPP is reachable.
+</div>
+
+<div class="split">
+
+  <!-- Window A — admin triggers the recompute. -->
+  <div class="browser-frame">
+    <div class="browser-bar">
+      <span class="dot dot-r"></span><span class="dot dot-y"></span>
+      <span class="dot dot-g"></span>
+      <span class="browser-tab">Admin (Chrome)</span>
+      <span class="url">localhost:8080/moodle/admin/cli — recompute_due_boards</span>
+    </div>
+    <div class="browser-body">
+      <span class="label label-a">User A — admin</span>
+      <div style="background: #0a0a0a; color: #fff; padding: 12px;
+                  border-radius: 4px; font-family: monospace; font-size: 0.8rem;">
+        $ php admin/cli/scheduled_task.php \<br>
+        &nbsp;&nbsp;&nbsp;--execute=\local_sentientia_leaderboard\task\recompute_due_boards<br>
+        Execute scheduled task: Recompute due leaderboards (Sentientia)<br>
+        <span style="color: #34d399;">sentientia_leaderboard: recomputed 1 board(s)</span><br>
+        Scheduled task complete: Recompute due leaderboards (Sentientia)
+      </div>
+      <p style="font-size: 0.875rem; color: var(--ap-text-secondary);
+                margin-top: 16px;">
+        Recompute writes a <code>leaderboard.recomputed</code> event
+        into <code>mdl_local_sentientia_lb_events</code>. Window B's
+        open SSE connection picks it up within 1 second (the polling
+        loop inside <code>stream.php</code> sleeps 1s between reads).
+      </p>
+    </div>
+  </div>
+
+  <!-- Window B — learner sees the update. -->
+  <div class="browser-frame">
+    <div class="browser-bar">
+      <span class="dot dot-r"></span><span class="dot dot-y"></span>
+      <span class="dot dot-g"></span>
+      <span class="browser-tab">Learner (Firefox)</span>
+      <span class="url">localhost:8080/moodle/local/sentientia_leaderboard/view.php?id=1</span>
+    </div>
+    <div class="browser-body">
+      <span class="label label-b">User B — learner</span>
+
+      <div class="airpay-lb" data-boardid="1">
+        <div class="airpay-lb__header">
+          <h3 class="airpay-lb__title">Q2 Onboarding Speed</h3>
+          <div>
+            <span class="airpay-lb__type-badge">Fastest to complete</span>
+            <span class="airpay-lb__indicator airpay-lb__indicator--live">● Live</span>
+          </div>
+        </div>
+
+        <div class="lb-row">
+          <span class="lb-rank">1</span>
+          <span>Aisha Khan</span>
+          <span class="lb-points">-180</span>
+        </div>
+        <div class="lb-row changed">
+          <span class="lb-rank">2</span>
+          <span>Rajesh Iyer</span>
+          <span class="lb-points">-240</span>
+        </div>
+        <div class="lb-row changed">
+          <span class="lb-rank">2</span>
+          <span>Priya Sen</span>
+          <span class="lb-points">-240</span>
+        </div>
+        <div class="lb-row">
+          <span class="lb-rank">4</span>
+          <span><strong>You (Vikram)</strong></span>
+          <span class="lb-points">-420</span>
+        </div>
+        <div class="lb-row">
+          <span class="lb-rank">5</span>
+          <span>Sneha Mukherjee</span>
+          <span class="lb-points">-600</span>
+        </div>
+
+        <p style="font-size: 0.75rem; color: var(--ap-text-secondary);
+                  margin-top: 12px;">
+          ↻ Just now (was: 24 May 2026 10:14)
+        </p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="timeline">
+  <div><span class="ts">10:14:58</span> <span class="evt-server">SERVER</span> Recompute task finishes; event row inserted (id=42)</div>
+  <div><span class="ts">10:14:59</span> <span class="evt-server">SSE</span>    stream.php polls journal: WHERE id &gt; 41 returns 1 row</div>
+  <div><span class="ts">10:14:59</span> <span class="evt-server">SSE</span>    emits: <code>event: leaderboard.recomputed\ndata: {"boardid":1,"recomputed_at":1740391499}</code></div>
+  <div><span class="ts">10:14:59</span> <span class="evt-client">CLIENT</span> EventSource onmessage → fetchBoard(1) via WS</div>
+  <div><span class="ts">10:15:00</span> <span class="evt-client">CLIENT</span> WS local_sentientia_leaderboard_get_board returns top-25</div>
+  <div><span class="ts">10:15:00</span> <span class="evt-client">CLIENT</span> renderRows() replaces &lt;tbody&gt; — User B sees the update (2.0s end-to-end)</div>
+</div>
+
+</body>
+</html>

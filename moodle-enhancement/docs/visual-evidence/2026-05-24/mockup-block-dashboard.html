@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mockup — Leaderboard block on dashboard</title>
+<style>
+:root {
+  --ap-primary: #0066A7;
+  --ap-primary-light: #e8f2f9;
+  --ap-primary-dark: #004d80;
+  --ap-bg: #F2F4FB;
+  --ap-surface: #ffffff;
+  --ap-surface-2: #f8f9fc;
+  --ap-border: #e2e6ef;
+  --ap-text-primary: #1a1a2e;
+  --ap-text-secondary: #5a6070;
+  --ap-success: #16a34a;
+}
+* { box-sizing: border-box; }
+body { font-family: 'Montserrat', -apple-system, sans-serif;
+       background: var(--ap-bg); color: var(--ap-text-primary);
+       margin: 0; padding: 0; }
+.topbar { background: white; padding: 12px 24px; border-bottom: 1px solid var(--ap-border);
+  display: flex; justify-content: space-between; align-items: center; }
+.topbar strong { color: var(--ap-primary); }
+.dashboard { display: grid; grid-template-columns: 1fr 320px; gap: 24px; padding: 24px; }
+.col-main { display: flex; flex-direction: column; gap: 16px; }
+.welcome { background: white; border: 1px solid var(--ap-border);
+  border-radius: 12px; padding: 24px; }
+.course-grid { background: white; border: 1px solid var(--ap-border);
+  border-radius: 12px; padding: 24px; min-height: 200px; color: var(--ap-text-secondary); }
+.block { background: white; border: 1px solid var(--ap-border);
+  border-radius: 12px; padding: 16px; }
+.block__title { font-size: 1rem; font-weight: 600; margin: 0 0 12px; }
+.airpay-lb__header { display:flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.airpay-lb__type-badge { background: var(--ap-primary-light);
+  color: var(--ap-primary-dark); padding: 2px 6px;
+  border-radius: 12px; font-size: 0.7rem; }
+.airpay-lb__indicator--live { color: var(--ap-success);
+  font-size: 0.7rem; font-weight: 600; }
+.airpay-lb__my-rank { background: var(--ap-primary-light);
+  color: var(--ap-primary-dark); padding: 6px 8px;
+  border-radius: 6px; font-size: 0.8rem; font-weight: 500; margin-bottom: 8px; }
+.lb-row { display: grid; grid-template-columns: 30px 1fr auto;
+  padding: 6px 4px; border-bottom: 1px solid var(--ap-border);
+  font-size: 0.875rem; }
+.lb-row:last-child { border-bottom: none; }
+.lb-rank { font-weight: 700; }
+.lb-points { font-variant-numeric: tabular-nums; color: var(--ap-text-secondary); }
+.note { background: #fffbea; border-left: 4px solid #d97706;
+  padding: 12px 16px; margin: 0 24px 16px; font-size: 0.875rem;
+  border-radius: 4px; }
+.btn-link { color: var(--ap-primary); font-size: 0.875rem;
+  display: inline-block; margin-top: 8px; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <strong>Airpay Academy</strong>
+  <span>Dashboard · Vikram Joshi</span>
+</div>
+
+<div class="note">
+  <strong>Mockup</strong> — the <code>block_sentientia_leaderboard</code>
+  rendered in the right-hand column of <code>/my/dashboard.php</code>.
+  Top-5 view (full <code>view.php</code> shows top-25). The block's
+  "View" footer link goes to the full board page.
+</div>
+
+<div class="dashboard">
+  <div class="col-main">
+    <div class="welcome">
+      <h2 style="margin: 0 0 8px;">Welcome back, Vikram</h2>
+      <p style="margin: 0; color: var(--ap-text-secondary);">
+        You have 2 courses in progress and 1 mandatory compliance
+        course due in 4 days.
+      </p>
+    </div>
+    <div class="course-grid">[ Courses + Activities timeline ]</div>
+  </div>
+
+  <div class="col-side">
+
+    <!-- The leaderboard block. -->
+    <div class="block">
+      <h3 class="block__title">Leaderboard</h3>
+
+      <div class="airpay-lb" data-boardid="1" data-type="completion">
+        <div class="airpay-lb__header">
+          <span class="airpay-lb__type-badge">Fastest to complete</span>
+          <span class="airpay-lb__indicator--live">● Live</span>
+        </div>
+
+        <div class="airpay-lb__my-rank">Your rank: 4 · Points: -420</div>
+
+        <div class="lb-row">
+          <span class="lb-rank">1</span>
+          <span>Aisha Khan</span>
+          <span class="lb-points">-180</span>
+        </div>
+        <div class="lb-row">
+          <span class="lb-rank">2</span>
+          <span>Rajesh Iyer</span>
+          <span class="lb-points">-240</span>
+        </div>
+        <div class="lb-row">
+          <span class="lb-rank">2</span>
+          <span>Priya Sen</span>
+          <span class="lb-points">-240</span>
+        </div>
+        <div class="lb-row">
+          <span class="lb-rank">4</span>
+          <span><strong>You</strong></span>
+          <span class="lb-points">-420</span>
+        </div>
+        <div class="lb-row">
+          <span class="lb-rank">5</span>
+          <span>Sneha Mukherjee</span>
+          <span class="lb-points">-600</span>
+        </div>
+
+        <a class="btn-link" href="#">View full leaderboard →</a>
+      </div>
+    </div>
+
+    <!-- Other typical dashboard blocks for context. -->
+    <div class="block">
+      <h3 class="block__title">Compliance status</h3>
+      <p style="color: var(--ap-text-secondary); font-size: 0.875rem;">
+        [ Compliance block ]
+      </p>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

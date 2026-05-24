@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/sentientia_leaderboard/db" VERSION="20260524"
+       COMMENT="Sentientia LMS Real-time leaderboards (Tier 2 #7) — Phase L.0 schema.
+                4 tables: boards (definitions), entries (snapshot rankings),
+                optouts (privacy), events (SSE journal). Tables prefixed
+                local_sentientia_lb_ for global uniqueness.
+                See ADR-014 for the SSE-vs-WS-vs-polling decision.">
+  <TABLES>
+
+    <!-- ─── BOARDS ─── -->
+    <TABLE NAME="local_sentientia_lb_boards"
+           COMMENT="A leaderboard definition. One row per leaderboard a trainer or
+                    admin creates. Three types:
+                      - quiz       : top scorers on a single mod_quiz instance
+                      - completion : fastest learners to N% complete on a course
+                      - skill      : most skill points (local_airpay_skills) in
+                                     a date range
+                    Scope: tenant-bound by default. Site admin can promote to
+                    customer-wide by setting tenantid=0 (gated on
+                    :promoteboard capability). customerid is always pinned at
+                    creation from the creator's open_path resolution. Boards
+                    cannot move between customers.">
+      <FIELDS>
+        <FIELD NAME="id"             TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="name"           TYPE="char" LENGTH="200" NOTNULL="true"
+               COMMENT="Display name shown to learners"/>
+        <FIELD NAME="type"           TYPE="char" LENGTH="20"  NOTNULL="true"
+               COMMENT="quiz | completion | skill — gates on per-type feature flag"/>
+        <FIELD NAME="scope"          TYPE="char" LENGTH="20"  NOTNULL="true" DEFAULT="tenant"
+               COMMENT="course | tenant | customer — controls who is eligible
+                        to appear in this board. course requires courseid > 0;
+                        tenant scopes to the board's tenantid; customer
+                        requires :promoteboard cap to create."/>
+        <FIELD NAME="courseid"       TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="FK to course.id for type=quiz or course-scoped completion
+                        boards. 0 = not scoped to a course."/>
+        <FIELD NAME="quizid"         TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="FK to quiz.id (mod_quiz) for type=quiz boards"/>
+        <FIELD NAME="skill_ids_json" TYPE="text" NOTNULL="false"
+               COMMENT="JSON array of skill IDs for type=skill boards. NULL = all skills"/>
+        <FIELD NAME="window_start"   TYPE="int"  LENGTH="10"  NOTNULL="false"
+               COMMENT="Unix ts — start of the scoring window. NULL = open-ended"/>
+        <FIELD NAME="window_end"     TYPE="int"  LENGTH="10"  NOTNULL="false"
+               COMMENT="Unix ts — end of the scoring window. NULL = open-ended"/>
+        <FIELD NAME="recompute_seconds" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="120"
+               COMMENT="Minimum seconds between recomputes for this board.
+                        Default 120 (2 min) — matches the cron tick. Min 30."/>
+        <FIELD NAME="ownerid"        TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="FK to user.id — who created the board"/>
+        <FIELD NAME="customerid"     TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="1"
+               COMMENT="Sentientia LMS customer scope. Phase 1: hardcoded 1 (Airpay)."/>
+        <FIELD NAME="tenantid"       TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="BizLMS tenant root (1, 77, 177). 0 = customer-wide
+                        (requires :promoteboard cap to set)."/>
+        <FIELD NAME="status"         TYPE="char" LENGTH="20"  NOTNULL="true" DEFAULT="active"
+               COMMENT="active | disabled | archived"/>
+        <FIELD NAME="settings_json"  TYPE="text" NOTNULL="false"
+               COMMENT="JSON: {top_n: 10, show_my_rank: bool, anonymize_below_rank: int, ...}"/>
+        <FIELD NAME="last_recomputed" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Unix ts of the last recompute. 0 = never. Cron checks
+                        if now - last_recomputed >= recompute_seconds."/>
+        <FIELD NAME="timecreated"    TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"      TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_owner"     TYPE="foreign" FIELDS="ownerid"  REFTABLE="user"   REFFIELDS="id"/>
+        <KEY NAME="fk_course"    TYPE="foreign" FIELDS="courseid" REFTABLE="course" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_status_tenant" UNIQUE="false" FIELDS="status, tenantid"
+               COMMENT="List active boards in a tenant (block render hot path)"/>
+        <INDEX NAME="idx_type"          UNIQUE="false" FIELDS="type"
+               COMMENT="Per-type cron filter + analytics"/>
+        <INDEX NAME="idx_customer_tenant" UNIQUE="false" FIELDS="customerid, tenantid"
+               COMMENT="Per-tenant analytics + cleanup"/>
+        <INDEX NAME="idx_last_recomputed" UNIQUE="false" FIELDS="last_recomputed"
+               COMMENT="Cron query: SELECT * WHERE last_recomputed &lt; now - recompute_seconds"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- ─── ENTRIES (ranking snapshot) ─── -->
+    <TABLE NAME="local_sentientia_lb_entries"
+           COMMENT="Precomputed ranking snapshot, one row per (board, user). The
+                    ranking_engine recomputes wholesale: deletes every row for
+                    a boardid, recomputes, inserts. The userrank column uses
+                    competition ranking (1, 2, 2, 4) — tied points share a
+                    rank, next rank skips.
+                    Reads (block + WS) hit this table; never the source
+                    aggregation. That keeps the read path O(N) on rows
+                    returned, not on the full attempts/completions table.">
+      <FIELDS>
+        <FIELD NAME="id"             TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="boardid"        TYPE="int"  LENGTH="10" NOTNULL="true"
+               COMMENT="FK to local_sentientia_lb_boards.id"/>
+        <FIELD NAME="userid"         TYPE="int"  LENGTH="10" NOTNULL="true"
+               COMMENT="FK to user.id — the ranked user"/>
+        <FIELD NAME="points"         TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Primary ranking metric. Higher = better.
+                        quiz       : best quiz attempt grade * 100
+                        completion : -1 * seconds-to-complete (negate so DESC
+                                     orders fastest-first; UI displays as
+                                     duration)
+                        skill      : sum of points earned in window"/>
+        <FIELD NAME="secondary"      TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Secondary metric for UI display:
+                        quiz       : seconds taken (tiebreak: lower = better)
+                        completion : completion-percent * 100
+                        skill      : number of skills levelled in window"/>
+        <FIELD NAME="userrank"       TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="1-based rank with competition tie-handling (1, 2, 2, 4)"/>
+        <FIELD NAME="costcenterid"   TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Tenant root pinned at recompute time. Used for tenant
+                        scoping on read and for the privacy export."/>
+        <FIELD NAME="last_recomputed" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"   TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_board"  TYPE="foreign" FIELDS="boardid" REFTABLE="local_sentientia_lb_boards" REFFIELDS="id"/>
+        <KEY NAME="fk_user"   TYPE="foreign" FIELDS="userid"  REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="uk_board_user" TYPE="unique" FIELDS="boardid, userid"
+              COMMENT="One row per user per board — recompute uses delete-then-insert"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_board_rank" UNIQUE="false" FIELDS="boardid, userrank"
+               COMMENT="Top-N read query (block render hot path)"/>
+        <INDEX NAME="idx_costcenter" UNIQUE="false" FIELDS="costcenterid"
+               COMMENT="Tenant-scoped reads + privacy export"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- ─── OPT-OUTS (privacy) ─── -->
+    <TABLE NAME="local_sentientia_lb_optouts"
+           COMMENT="Per-user opt-out from being publicly LISTED on any leaderboard.
+                    Opted-out users still accrue points; rankings are still
+                    computed (so HR analytics under :viewall can see them);
+                    they are filtered out of every audience-facing read path.
+                    The opt-out is per-customer (a user joining a different
+                    customer would need to opt-out again — different
+                    populations, different visibility expectations).
+                    Toggleable from /user/preferences.php. Fully reversible
+                    via the timeoptedout = 0 path (delete the row).">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"       TYPE="int" LENGTH="10" NOTNULL="true"
+               COMMENT="FK to user.id — the user who opted out"/>
+        <FIELD NAME="customerid"   TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="1"
+               COMMENT="Sentientia LMS customer scope"/>
+        <FIELD NAME="timeoptedout" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Unix ts when the user opted out. Used for the privacy
+                        export to show the user *when* they hid themselves."/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"  TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_user"  TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="uk_user_customer" TYPE="unique" FIELDS="userid, customerid"
+              COMMENT="One opt-out row per user per customer"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_customer" UNIQUE="false" FIELDS="customerid"
+               COMMENT="Customer-wide opt-out filter on every read"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- ─── EVENTS (SSE journal) ─── -->
+    <TABLE NAME="local_sentientia_lb_events"
+           COMMENT="Append-only event journal that drives the SSE stream. Same
+                    shape as local_sentientia_live_events but with boardid in
+                    place of sessionid — per ADR-014 we reuse the pattern,
+                    not the table.
+                    Event types:
+                      leaderboard.recomputed         — payload: {boardid, recomputed_at}
+                      leaderboard.score_changed      — payload: {userid, points_now}
+                      leaderboard.position_changed   — payload: {userid, old_rank, new_rank}
+                    Retention: a daily cron purges events older than 7d.">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="boardid"      TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="FK to local_sentientia_lb_boards.id"/>
+        <FIELD NAME="type"         TYPE="char" LENGTH="40"  NOTNULL="true"
+               COMMENT="Event type name (see TABLE comment for list)"/>
+        <FIELD NAME="payload_json" TYPE="text" NOTNULL="false"
+               COMMENT="Type-specific JSON payload"/>
+        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"  TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_board" TYPE="foreign" FIELDS="boardid" REFTABLE="local_sentientia_lb_boards" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_board_id_window" UNIQUE="false" FIELDS="boardid, id"
+               COMMENT="SSE poll query: WHERE boardid = ? AND id &gt; ?
+                        ORDER BY id ASC. This index is the hot path."/>
+        <INDEX NAME="idx_created"         UNIQUE="false" FIELDS="timecreated"
+               COMMENT="Retention purge query"/>
+      </INDEXES>
+    </TABLE>
+
+  </TABLES>
+</XMLDB>
