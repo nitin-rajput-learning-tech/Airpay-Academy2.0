@@ -5245,3 +5245,59 @@ into `production` after review. Four discrete commits on the branch:
 274bc600 p0-4: footer i18n — 4 link labels + copyright wrapped in {{#str}}
 a5de1a1b p0-3: navbar i18n — 5 nav labels + 3 a11y descriptors wrapped in {{#str}}
 ```
+
+---
+
+## 🔧 P0 #9 follow-up — cart_badge AMD wiring verification (2026-05-24)
+
+**Branch:** `claude/tender-brahmagupta-Eb3M3`
+**Author:** Claude (Opus 4.7, 1M context)
+**Prompt:** Spawned chip — extend Chip B's `theme_airpayux/cart_badge` AMD wiring beyond the 2 layouts Chip B touched (dashboard.php + course.php).
+
+### TL;DR
+**No additional layouts need wiring.** After per-file verification across all 10 airpayux layouts, the cart-bearing `templates/navbar.mustache` partial is rendered by exactly **two** templates — `course.mustache` (always) and `dashboard.mustache` (only in the dead-code `{{^use_shell}}` fallback) — which are precisely the layouts Chip B already wired. The spawn prompt's premise that "8 other layouts" have a regression is incorrect: those layouts never rendered the cart badge in the first place. Chip B's coverage of P0 #9 is complete.
+
+### Verification — per-layout audit
+
+| Layout file | Layout mustache | Navbar render path | Renders `#ap-cart-badge`? | Wiring needed? |
+|---|---|---|---|---|
+| `course.php` | `course.mustache` | `{{> theme_airpayux/navbar }}` at line 60 | **YES (always)** | Chip B wired ✅ |
+| `dashboard.php` | `dashboard.mustache` | `{{> theme_airpayux/navbar }}` at line 787 (inside `{{^use_shell}}` fallback; `use_shell=true` is set unconditionally by `dashboard.php:980` so the partial is dead code today) | dead-code only | Chip B wired anyway ✅ |
+| `columns1.php` | `columns1.mustache` | NO navbar — minimal 1-column layout for `popup` / `frametop` / `print` page-layouts | NO | not needed |
+| `columns2.php` | `columns2.mustache` | `{{{ output.airpay_shell_start }}}` emits hamburger + search topbar — no cart icon | NO | not needed |
+| `drawers.php` | `drawers.mustache` | `{{{ output.airpay_shell_start }}}` (same shell as columns2) | NO | not needed |
+| `frontpage.php` | (PHP-only, no mustache) | custom `.ap-nav` HTML at lines 358-374; logged-in users are redirected to `/my/` at line 19-21 so the dynamic cart badge would never paint here | NO | not needed |
+| `login.php` | `login.mustache` | NONE | NO | not needed |
+| `maintenance.php` | `maintenance.mustache` | NONE | NO | not needed |
+| `secure.php` | `secure.mustache` | `{{> theme_airpayux/navbar-secure }}` — distinct template, no cart icon (verified in `templates/navbar-secure.mustache`) | NO | not needed |
+| `embedded.php` | `embedded.mustache` | NONE | NO | not needed |
+
+### Evidence
+- `grep -rn "ap-cart-badge\|airpay-nav__cart" theme/airpayux/templates/` returns 3 hits, all in `templates/navbar.mustache` (lines 115, 117, 124).
+- `grep -l "theme_airpayux/navbar\|> navbar" theme/airpayux/templates/*.mustache` returns only `navbar.mustache`, `dashboard.mustache`, `course.mustache`, `secure.mustache`, `navbar-secure.mustache` (last two reference `navbar-secure`, not the cart-bearing template).
+- The cart-count data element `#ap-cart-count-data` is injected globally via `local_airpay_catalog/classes/hook_callbacks.php::before_footer_html_generation()` — present on every page — but the **badge** (`#ap-cart-badge`) only renders inside `templates/navbar.mustache`.
+- The AMD module `theme_airpayux/cart_badge` (Chip B, branch `claude/festive-sagan-wvDSO`) no-ops gracefully when either element is absent, so the wiring is safe — but also redundant — on layouts where the badge isn't present.
+
+### What was considered and rejected
+
+1. **Direct wiring of the 4 candidate layouts (frontpage, columns1, columns2, drawers).** Rejected after verification — none of them render the cart-bearing partial. Adding the AMD call would queue a `require([...])` snippet that loads a module to do nothing.
+
+2. **Centralisation via `core_renderer` / `lib.php` callback.** Considered as the spawn prompt's alternative. Would future-proof against later layouts adopting `navbar.mustache`. Rejected for this chip because:
+   - It requires merging Chip B's branch into this one (to delete Chip B's two wirings and avoid double-load) — entangles independent chips.
+   - Or it accepts a temporary double-load until a follow-up cleanup chip removes Chip B's wirings.
+   - Current layout topology makes centralisation purely speculative — there is no second consumer to amortise the abstraction.
+
+3. **Defensive wiring of all layouts regardless of render path.** Rejected per the spawn prompt's own guidance: *"If the layout has NO navbar-related render, SKIP it (don't add the AMD call uselessly)."*
+
+### Suggested follow-up (out of scope for this chip)
+
+If the design intent is that the cart icon should appear on more pages (the airpay shell topbar is currently empty on its right side — `.ap-topbar__right` div at `core_renderer.php:297`), that's a UX surface change, not an AMD-wiring task. Filing as a candidate item for the next visual audit: *"Add `airpay-nav__cart` button to `airpay_shell_start()` topbar so columns2/drawers-based pages get the cart affordance."* Would also require sharing the partial between `navbar.mustache` and the shell, or duplicating the markup.
+
+### Files changed
+- `moodle-enhancement/PROJECT-STATE.md` — this section.
+- `moodle-enhancement/theme/airpayux/version.php` — bump to `1.0.33-beta` / `2026052403`.
+
+### Files NOT changed
+- All 10 layouts in `theme/airpayux/layout/` — verification shows none need additional wiring beyond Chip B's two existing additions in `dashboard.php` and `course.php`.
+- `templates/navbar.mustache` — owned by Chip B (already extracted the inline script).
+- `amd/src/cart_badge.js` + `amd/build/cart_badge.min.js` — owned by Chip B.

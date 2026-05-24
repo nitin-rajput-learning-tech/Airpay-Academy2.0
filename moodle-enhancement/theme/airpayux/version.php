@@ -163,8 +163,21 @@ defined('MOODLE_INTERNAL') || die();
 //     layout/dashboard.php + layout/course.php
 // Hindi parity restored to 100% (161 keys en / 161 keys hi) en route.
 // See docs/visual-evidence/2026-05-24/p0-followup-chip-B/README.md.
-$plugin->version   = 2026052402;
+//
+// P0 #9 follow-up verification (2026-05-24) — spawned chip audited the
+// AMD-wiring scope of the cart_badge module introduced by chip B.
+// Per-layout walkthrough of all 10 airpayux layouts found that the
+// cart-bearing templates/navbar.mustache partial is rendered by exactly
+// two templates (course.mustache always + dashboard.mustache in the
+// dead-code {{^use_shell}} fallback) — the same two layouts chip B
+// wired. No additional layouts need direct wiring; the other 8 use
+// either airpay_shell_start (columns2/drawers), a navbar-less minimal
+// shell (columns1/embedded/login/maintenance), a distinct
+// navbar-secure.mustache (secure), or a custom landing-page nav that
+// redirects logged-in users away (frontpage). Version bump signals
+// audit completion. Full per-layout evidence table in PROJECT-STATE.md.
+$plugin->version   = 2026052403;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.32-beta';  // P0 #1+#2 SCSS hygiene + P0 #3+#4+#6+#9 nav/footer/AMD + P0 #7 kn/mr/sw + P1 #12 :focus-visible
+$plugin->release   = '1.0.33-beta';  // P0 #1+#2+#3+#4+#6+#7+#9 + P1 #12 + cart_badge audit
