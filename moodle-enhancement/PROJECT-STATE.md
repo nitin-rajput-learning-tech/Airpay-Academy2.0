@@ -4792,7 +4792,6 @@ Schedule a fix-sprint to close the 9-item P0 list before Phase 2 customer-zero p
 
 ---
 
-<<<<<<< HEAD
 ## 🧹 P0 #1 + #2 — SCSS hygiene closed (2026-05-24)
 
 **Chip:** `claude/loving-planck-5wdGb` (spawned 2026-05-24)
@@ -5488,5 +5487,3 @@ All 12 NEW keys added to every locale → delta-parity is 100% across this commi
 - navbar / footer hardcoded chunks (P0 #3, #4) → Chip B
 - Hindi gap-fill of existing 24-string gap → Chip D
 - Kannada/Marathi/Swahili gap-fill of existing gaps → Chip F
-
->>>>>>> origin/claude/friendly-johnson-LNQTA

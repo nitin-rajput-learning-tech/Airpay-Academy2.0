@@ -232,10 +232,7 @@ $string['entermobileotp'] = 'Entered mobile number is not exists, please check';
 $string['sortbystartdate'] = 'Course start date';
 $string['sortbyenddate']   = 'Course end date';
 
-<<<<<<< HEAD
-// P0 #3 follow-up (2026-05-24) — primary navbar i18n. Wraps the five
-// pill / mobile nav labels and the three a11y descriptions referenced
-// by templates/navbar.mustache. See docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md F-01.
+// P0 #3 follow-up (2026-05-24, chip-B) — primary navbar i18n.
 $string['nav_dashboard']  = 'Dashboard';
 $string['nav_courses']    = 'My Courses';
 $string['nav_catalog']    = 'Catalog';
@@ -245,21 +242,15 @@ $string['a11y_search']    = 'Search courses, people, content';
 $string['a11y_usermenu']  = 'User menu';
 $string['a11y_mobilemenu'] = 'Mobile menu';
 
-// P0 #4 follow-up (2026-05-24) — footer i18n. Wraps the four compact
-// footer links + copyright string referenced by templates/footer.mustache.
-// See docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md F-05.
+// P0 #4 follow-up (2026-05-24, chip-B) — footer i18n.
 $string['footer_privacy']   = 'Privacy';
 $string['footer_terms']     = 'Terms';
 $string['footer_help']      = 'Help';
 $string['footer_contact']   = 'Contact';
 $string['footer_copyright'] = '&copy; 2026 airpay payment services pvt. ltd.';
-=======
-// F-13 (Platform Visual Audit 2026-05-24, §2.4) — dashboard role-aware
-// welcome banner, chart titles, and compliance KPI labels migrated from
-// hardcoded English in templates/dashboard.mustache to {{#str}} helpers so
-// the 4 non-English locales (hi, kn, mr, sw) can render localised text.
-// The {$a} placeholder in welcome_* receives the user's first name from
-// layout/dashboard.php → $output->dashboard_context()['firstname'].
+
+// F-13 (Platform Visual Audit 2026-05-24, chip-G) — dashboard welcome
+// banner, chart titles, and compliance KPI labels. {$a} = first name.
 $string['welcome_back_admin']      = 'Welcome back, {$a}';
 $string['subtitle_admin']          = 'Platform overview and system health';
 $string['welcome_manager']         = 'Welcome, {$a}';
@@ -272,4 +263,3 @@ $string['kpi_mandatory_courses']   = 'Mandatory Courses';
 $string['kpi_compliance_rate']     = 'Compliance Rate';
 $string['kpi_overdue']             = 'Overdue';
 $string['kpi_total_assigned']      = 'Total Assigned';
->>>>>>> origin/claude/friendly-johnson-LNQTA

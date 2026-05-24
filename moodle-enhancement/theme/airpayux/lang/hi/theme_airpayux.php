@@ -166,9 +166,7 @@ $string['region-teamoverview']                           = 'टीम ओवर�
 $string['sortbystartdate'] = 'कोर्स शुरू होने की तारीख';
 $string['sortbyenddate']   = 'कोर्स ख़त्म होने की तारीख';
 
-<<<<<<< HEAD
-// P0 #3 फ़ॉलो-अप (2026-05-24) — प्राइमरी नेवबार i18n।
-// templates/navbar.mustache के पांच पिल / मोबाइल नेव लेबल और तीन a11y विवरण।
+// P0 #3 फ़ॉलो-अप (2026-05-24, chip-B) — प्राइमरी नेवबार i18n।
 $string['nav_dashboard']  = 'डैशबोर्ड';
 $string['nav_courses']    = 'मेरे कोर्स';
 $string['nav_catalog']    = 'कैटलॉग';
@@ -178,17 +176,15 @@ $string['a11y_search']    = 'कोर्स, लोग, कंटेंट ख�
 $string['a11y_usermenu']  = 'यूज़र मेनू';
 $string['a11y_mobilemenu'] = 'मोबाइल मेनू';
 
-// P0 #4 फ़ॉलो-अप (2026-05-24) — फ़ुटर i18n।
-// templates/footer.mustache के चार कॉम्पैक्ट फ़ुटर लिंक + कॉपीराइट।
+// P0 #4 फ़ॉलो-अप (2026-05-24, chip-B) — फ़ुटर i18n।
 $string['footer_privacy']   = 'प्राइवेसी';
 $string['footer_terms']     = 'नियम और शर्तें';
 $string['footer_help']      = 'मदद';
 $string['footer_contact']   = 'संपर्क';
 $string['footer_copyright'] = '&copy; 2026 एयरपे पेमेंट सर्विसेस प्रा. लि.';
-=======
-// F-13 (Platform Visual Audit 2026-05-24) — डैशबोर्ड वेलकम बैनर, चार्ट
-// हेडिंग और कम्प्लायंस KPI लेबल्स। templates/dashboard.mustache में
-// {{#str}} हेल्पर के ज़रिए लोड होते हैं। {$a} = यूज़र का फ़र्स्ट नेम।
+
+// F-13 (Platform Visual Audit 2026-05-24, chip-G) — डैशबोर्ड वेलकम बैनर,
+// चार्ट हेडिंग और कम्प्लायंस KPI लेबल्स। {$a} = यूज़र का फ़र्स्ट नेम।
 $string['welcome_back_admin']      = 'फिर से स्वागत है, {$a}';
 $string['subtitle_admin']          = 'प्लेटफ़ॉर्म ओवरव्यू और सिस्टम हेल्थ';
 $string['welcome_manager']         = 'स्वागत है, {$a}';
@@ -201,4 +197,3 @@ $string['kpi_mandatory_courses']   = 'अनिवार्य कोर्स�
 $string['kpi_compliance_rate']     = 'कम्प्लायंस रेट';
 $string['kpi_overdue']             = 'ओवरड्यू';
 $string['kpi_total_assigned']      = 'टोटल असाइन्ड';
->>>>>>> origin/claude/friendly-johnson-LNQTA
