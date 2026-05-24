@@ -224,66 +224,73 @@ body.dark-mode {
 
     /* === Profile hero === */
     .path-local-users .user_gen_info {
-        background: linear-gradient(135deg, #0c3d66 0%, #0a4a44 100%) !important;
+        background: linear-gradient(135deg, #0c3d66 0%, #0a4a44 100%);
     }
     .path-local-users .nav-tabs {
-        background: #1a1d27 !important;
-        border-bottom-color: #2d3140 !important;
+        background: #1a1d27;
+        border-bottom-color: #2d3140;
     }
     .path-local-users .nav-tabs .nav-link {
-        color: #9ca3b4 !important;
+        color: #9ca3b4;
     }
     .path-local-users .nav-tabs .nav-link.active {
-        color: #93c5fd !important;
-        border-bottom-color: #3b82f6 !important;
+        color: #93c5fd;
+        border-bottom-color: #3b82f6;
     }
-    .path-local-users .profile_data_content,
+    /* profile_data_content matches _surface-profile.scss value (#1a1d27) — drop ours.
+       tab-content keeps !important because _surface-profile.scss line 479 sets it to
+       #14161e !important; without our !important, our path-scoped #1a1d27 loses. */
+    .path-local-users .profile_data_content {
+        background: #1a1d27;
+        border-color: #2d3140;
+    }
     .path-local-users .tab-content {
-        background: #1a1d27 !important;
-        border-color: #2d3140 !important;
+        background: #1a1d27 !important;  // preserved: beats _surface-profile.scss `body.dark-mode .tab-content { background: #14161e !important; }`
+        border-color: #2d3140;
     }
 
     /* === Inputs === */
     input, textarea, select, .form-control, .custom-select {
-        background: #232733 !important;
-        border-color: #3d4254 !important;
-        color: #e8eaed !important;
+        background: #232733;
+        border-color: #3d4254;
+        color: #e8eaed;
     }
     input:focus, textarea:focus, select:focus, .form-control:focus {
-        border-color: #3b82f6 !important;
-        box-shadow: 0 0 0 3px rgba(59,130,246,0.2) !important;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
     }
-    input::placeholder, .form-control::placeholder { color: #6b7280 !important; }
+    input::placeholder, .form-control::placeholder { color: #6b7280; }
 
     /* === Tables === */
     .generaltable {
-        background: #1a1d27 !important;
-        border-color: #2d3140 !important;
+        background: #1a1d27;
+        border-color: #2d3140;
     }
     .generaltable thead th {
-        background: #1e2d42 !important;
-        color: #93c5fd !important;
+        background: #1e2d42;
+        color: #93c5fd;
     }
-    .generaltable thead th a { color: #93c5fd !important; }
+    .generaltable thead th a { color: #93c5fd; }
     .generaltable tbody td {
-        border-bottom-color: #2d3140 !important;
+        border-bottom-color: #2d3140;
+        // preserved: beats the broader `table tbody tr td { color: #e8eaed !important; }` rule above (inline-style override) so generaltable cells stay #c4cad8
         color: #c4cad8 !important;
     }
-    .generaltable tbody tr:hover { background: #232733 !important; }
-    .generaltable tbody tr:nth-child(even) { background: #1e2130 !important; }
+    .generaltable tbody tr:hover { background: #232733; }
+    .generaltable tbody tr:nth-child(even) { background: #1e2130; }
 
     /* === Text === */
     h1, h2, h3, h4, h5, h6, .card-title,
     .course_name, .airpay-dash__stat-num, .totalcounts,
     .airpay-dash__section-title, .airpay-dash__deadline-name,
     .airpay-dash__achievement-title, .airpay-dash__rec-title {
-        color: #e8eaed !important;
+        color: #e8eaed;
     }
     p, .card-text, .course-desc, .userinfo-content,
     .airpay-dash__stat-label, .counts_data,
     .airpay-dash__deadline-date, .airpay-dash__achievement-desc,
     .airpay-dash__rec-summary, .airpay-dash__timeline-label {
-        color: #9ca3b4 !important;
+        color: #9ca3b4;
     }
 
     /* === Links === */
