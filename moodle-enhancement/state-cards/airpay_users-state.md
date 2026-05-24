@@ -1,9 +1,10 @@
 # State Card — local_airpay_users
 **Component:** `local_airpay_users`
-**Version:** 1.0.0 (2026041600)
-**Status:** PHASE 2 COMPLETE — Code written, lint passes, ready for install
+**Version:** 2.7.0 (2026052002)  — +P1 #59 reCAPTCHA on signup
+**Status:** STABLE — installed + live; HRMS importer + bulk + signup + welcome shipped
 **Depends on:** local_airpay_org (Phase 1)
-**Purpose:** Replaces BizLMS `local_users` — Airpay-owned user management, profile rendering, open_* field ownership
+**Purpose:** Replaces BizLMS `local_users` — Airpay-owned user management, profile rendering, open_* field ownership, signup, HRMS sync
+**Last refreshed:** 2026-05-24 (P1 state-card pass)
 
 ---
 
@@ -47,3 +48,71 @@
 |------|--------|
 | `local/users/renderer.php` | 7 BizLMS accesslib refs → \local_airpay_org (0 remaining) |
 | `theme/airpayux/core_renderer.php` | 2 config refs → dual-check airpay_users + local_users |
+
+---
+
+## Capabilities (7, post-2026-05-20)
+
+`local/airpay_users:` `view`, `create`, `edit`, `delete`, `manage`,
+`bulkstatuschange`, `export`. The `:export` cap was added with the
+CSV-export page (`exportcsv.php`); compliance teams can hold it
+read-only.
+
+## DB tables (2 — added post-Phase 2)
+
+| Table | Purpose |
+|-------|---------|
+| `local_airpay_users_sync_runs` | Per-run audit row for the HRMS importer (CSV file, started/finished, totals, status) |
+| `local_airpay_users_sync_errors` | One row per skipped/failed HRMS row with line number + error code |
+
+## Surfaces (post-Phase 2)
+
+- `profile.php` — user profile page (original Phase 2)
+- `index.php` — admin listing with filters + bulk actions
+- `signup.php` — public signup form (P1 #59 reCAPTCHA gate)
+- `privacypolicy.php`, `termscondition.php` — public legal pages
+- `bulk_csv.php`, `bulk_hrms.php`, `bulk_import.php` — CSV / HRMS import surfaces
+- `sync_runs.php`, `sync_run_detail.php` — HRMS run audit UI
+- `skillprofile.php` — skills tab; `photo.php` — avatar handler
+- `exportcsv.php` — CSV export; `sample.php` — CSV template download
+- `help.php` — admin help
+
+## classes/ (post-Phase 2)
+
+`user_fields.php`, `user_manager.php`, `signup_service.php`,
+`bulk_csv_processor.php`, `bulk_import_processor.php`, `hrms_importer.php`,
+`welcome_mailer.php`, `external/`, `form/`, `task/`, `privacy/`.
+
+## PHPUnit (8 classes, 70 methods)
+
+- `user_manager_test.php` — 14 methods
+- `signup_service_test.php` — 13 methods
+- `hrms_importer_test.php` — 9 methods
+- `chip_filters_test.php` — 7 methods
+- `supervisor_scope_test.php` — 7 methods
+- `welcome_mailer_test.php` — 6 methods
+- `external/list_users_test.php` — 7 methods
+- `external/bulk_action_test.php` — 7 methods
+
+## Feature flags
+
+None registered directly in this plugin. The new signup-flow reCAPTCHA
+(P1 #59) is gated on the existence of the admin-config recaptcha keys
+rather than a feature flag — when unset, the gate is a no-op.
+
+## State card refresh — 2026-05-24
+
+P1 state-card pass: bumped Current version `1.0.0 (2026041600)` →
+`2.7.0 (2026052002)`. Major changes:
+
+- **Phase 3 — Signup + HRMS importer + bulk CSV + welcome mailer**
+  shipped. New surfaces: signup, privacy policy, T&C, photo, skill
+  profile, bulk_csv, bulk_hrms, bulk_import, sync_runs, sync_run_detail,
+  exportcsv, sample, help.
+- **DB schema** — added `local_airpay_users_sync_runs` and
+  `local_airpay_users_sync_errors` (HRMS importer audit tables).
+- **Capabilities** — `:export` added beyond original 3.
+- **classes/** — added `signup_service`, `bulk_csv_processor`,
+  `bulk_import_processor`, `hrms_importer`, `welcome_mailer`.
+- **PHPUnit** — 8 classes, 70 methods.
+- **P1 #59 (2026-05-20)** — reCAPTCHA on signup (bumped to 2.7.0).
