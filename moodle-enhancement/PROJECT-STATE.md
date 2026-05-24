@@ -4789,3 +4789,68 @@ blocks/sentientia_leaderboard/
 
 ### Next
 Schedule a fix-sprint to close the 9-item P0 list before Phase 2 customer-zero promotion. The audit branch is push-ready; no PR opened (Nitin to request).
+
+---
+
+## 🌐 F-13 — dashboard i18n + 5-locale propagation (2026-05-24)
+
+**Chip:** `claude/friendly-johnson-LNQTA`
+**Commits:** `46bad8a2` (en) · `7a2500c6` (hi) · `7a95bbf0` (kn) · `1f5ad938` (mr) · `bbfcb849` (sw) · `55b5481a` (dashboard.mustache) · pending (version.php + this PROJECT-STATE entry)
+**Audit ref:** `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md` §2.4 + F-13 (one of the 9 P0 items)
+
+### What closed
+Last 4 entries of the §2.4 string-mapping table — the dashboard.mustache literals — were migrated from hardcoded English to `{{#str}}` helpers, with parallel new keys added to all 5 supported locales.
+
+### Strings added (per locale × 12 = 60 entries)
+| Key | EN | Hindi | Kannada | Marathi | Swahili |
+|---|---|---|---|---|---|
+| `welcome_back_admin` | `Welcome back, {$a}` | फिर से स्वागत है, {$a} | ಮತ್ತೆ ಸ್ವಾಗತ, {$a} | पुन्हा स्वागत आहे, {$a} | Karibu tena, {$a} |
+| `subtitle_admin` | Platform overview and system health | प्लेटफ़ॉर्म ओवरव्यू और सिस्टम हेल्थ | ಪ್ಲ್ಯಾಟ್‌ಫಾರ್ಮ್ ಅವಲೋಕನ ಮತ್ತು ಸಿಸ್ಟಮ್ ಆರೋಗ್ಯ | प्लॅटफॉर्म ओव्हरव्ह्यू आणि सिस्टम आरोग्य | Muhtasari wa jukwaa na hali ya mfumo |
+| `welcome_manager` | `Welcome, {$a}` | स्वागत है, {$a} | ಸ್ವಾಗತ, {$a} | स्वागत आहे, {$a} | Karibu, {$a} |
+| `subtitle_manager` | Team overview and compliance status | टीम ओवरव्यू और कम्प्लायंस स्टेटस | ತಂಡದ ಅವಲೋಕನ ಮತ್ತು ಕಂಪ್ಲಯನ್ಸ್ ಸ್ಥಿತಿ | टीम ओव्हरव्ह्यू आणि कंप्लायन्स स्थिती | Muhtasari wa timu na hali ya utii |
+| `welcome_learner` | `Welcome back, {$a}!` | फिर से स्वागत है, {$a}! | ಮತ್ತೆ ಸ್ವಾಗತ, {$a}! | पुन्हा स्वागत आहे, {$a}! | Karibu tena, {$a}! |
+| `subtitle_learner` | Continue where you left off and keep building your skills | जहाँ छोड़ा था वहीं से शुरू करें और अपनी स्किल्स बढ़ाते रहें | ನೀವು ಎಲ್ಲಿ ಬಿಟ್ಟಿದ್ದೀರೋ ಅಲ್ಲಿಂದಲೇ ಮುಂದುವರಿಸಿ ಮತ್ತು ನಿಮ್ಮ ಕೌಶಲ್ಯಗಳನ್ನು ಬೆಳೆಸಿಕೊಳ್ಳಿ | जिथे सोडले होते तिथून सुरू करा आणि तुमची स्किल्स वाढवत रहा | Endelea kutoka pale ulipoacha na uendeleze ujuzi wako |
+| `chart_enrolment_trend` | Enrolment Trend | एनरोलमेंट ट्रेंड | ನೋಂದಣಿ ಟ್ರೆಂಡ್ | एनरोलमेंट ट्रेंड | Mwelekeo wa Usajili |
+| `chart_course_distribution` | Course Distribution | कोर्स डिस्ट्रिब्यूशन | ಕೋರ್ಸ್ ವಿತರಣೆ | कोर्स वितरण | Mgawanyo wa Kozi |
+| `kpi_mandatory_courses` | Mandatory Courses | अनिवार्य कोर्सेज़ | ಕಡ್ಡಾಯ ಕೋರ್ಸ್‌ಗಳು | अनिवार्य कोर्सेस | Kozi za Lazima |
+| `kpi_compliance_rate` | Compliance Rate | कम्प्लायंस रेट | ಕಂಪ್ಲಯನ್ಸ್ ರೇಟ್ | कंप्लायन्स रेट | Kiwango cha Utii |
+| `kpi_overdue` | Overdue | ओवरड्यू | ಬಾಕಿ | मुदत संपलेले | Zilizochelewa |
+| `kpi_total_assigned` | Total Assigned | टोटल असाइन्ड | ಒಟ್ಟು ನಿಯೋಜಿತ | एकूण नियुक्त | Jumla Zilizoteuliwa |
+
+### Template diff
+12 surgical replacements in `moodle-enhancement/theme/airpayux/templates/dashboard.mustache`:
+- L174 (admin welcome `<h2>`)
+- L176 (admin subtitle `<p>`, tenant_scope prefix preserved)
+- L180, L181 (manager welcome + subtitle)
+- L184, L185 (learner welcome + subtitle, exclamation preserved on `welcome_learner`)
+- L207, L211 (Enrolment Trend, Course Distribution chart `<h3>` titles)
+- L312, L316, L320, L324 (compliance KPI labels in the four-tile grid)
+
+Inline `style="..."` attributes on those lines were **NOT** touched — Chip C (F-12) owns inline-style extraction. Merge expected to be clean (different sub-tokens on each line); if conflict arises, resolve by keeping both edits.
+
+### Parity status (post-commit)
+| Locale | Count (pre) | Count (post) | Gap vs en |
+|---|---|---|---|
+| en | 156 | 168 | — (canonical) |
+| hi | 132 | 144 | -24 (existing gap; Chip D owns) |
+| kn | 118 | 130 | -38 (existing gap; Chip F owns) |
+| mr | 150 | 162 | -6 (existing gap; Chip F owns) |
+| sw | 150 | 162 | -6 (existing gap; Chip F owns) |
+
+All 12 NEW keys added to every locale → delta-parity is 100% across this commit set. Absolute parity (each `grep -c '\$string\['` equal across all 5 files) will land after Chip D (hi gap-fill) and Chip F (kn/mr/sw gap-fill) merge their work. The pre-existing gap is documented in the audit at §2.4 (Hindi 85%, Kannada 76%) and §3 finding F-7.
+
+### Version bump
+`moodle-enhancement/theme/airpayux/version.php`: `2026052401` (`1.0.31-beta`) → `2026052402` (`1.0.32-beta`).
+
+### Verification
+- `php -l` clean on all 5 lang files + version.php
+- Mustache section balance preserved (76 `#`, 9 `^`, 85 `/` — all closed)
+- `{{#str}}` argument-passing syntax matches the existing convention used elsewhere in `course_context_header.mustache`
+- 12 substitutions present at expected lines, no leftover hardcoded F-13 strings in scope (line 390 `<th>Overdue</th>` in Team Compliance Table header is a separate occurrence outside the F-13 audit mapping)
+
+### Out of scope (handled by sibling chips)
+- F-12 inline-style extraction in `dashboard.mustache` (~28 attrs) → Chip C
+- navbar / footer hardcoded chunks (P0 #3, #4) → Chip B
+- Hindi gap-fill of existing 24-string gap → Chip D
+- Kannada/Marathi/Swahili gap-fill of existing gaps → Chip F
+
