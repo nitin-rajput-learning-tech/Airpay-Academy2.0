@@ -1,0 +1,264 @@
+name: Deploy to production
+
+# Manually triggered production deploy for Airpay Academy / Sentientia LMS.
+#
+# This workflow is intentionally:
+#   1. workflow_dispatch ONLY - never runs on push or PR. No accidental deploys.
+#   2. Behind a typed-confirmation gate - the operator must type the exact
+#      string "I-CONFIRM-PRODUCTION-DEPLOY" as the `confirm` input. This is
+#      the CLAUDE.md section 13 [CONFIRM] gate, lifted to CI.
+#   3. SSHs to the production host as the deploy user and runs git pull +
+#      Moodle CLI upgrade + cache purge. The live filesystem and DB belong
+#      to AWS RDS / EC2; we do NOT push code via the workflow, we pull on
+#      the host (the host already has the deploy key for the repo).
+#
+# Required secrets (configure in repo Settings -> Secrets and variables ->
+# Actions):
+#
+#   PRODUCTION_SSH_HOST     hostname / IP of the live host
+#                           (e.g. prod-moodle.airpay.in)
+#   PRODUCTION_SSH_USER     deploy user (typically `deploy` or `www-data`)
+#   PRODUCTION_SSH_KEY      private-key contents for the deploy user
+#                           (PEM-format, multi-line - paste the whole
+#                            key incl. BEGIN/END lines)
+#   PRODUCTION_SSH_PORT     OPTIONAL - defaults to 22
+#   PRODUCTION_MOODLE_PATH  OPTIONAL - defaults to /var/www/moodle
+#   SLACK_WEBHOOK_URL       OPTIONAL - posts on failure if set
+#
+# Reference: moodle-enhancement/docs/operations/deploy-runbook.md
+# Reference: moodle-enhancement/docs/operations/cutover-day-runbook.md
+#            (the 5.1 -> 5.2 cutover - this workflow handles routine
+#             post-cutover redeploys, not the cutover itself)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type I-CONFIRM-PRODUCTION-DEPLOY to proceed (CLAUDE.md section 13 gate)'
+        required: true
+        type: string
+        default: ''
+      reason:
+        description: 'Brief reason / change reference (e.g. "ship P1 deploy automation chip")'
+        required: true
+        type: string
+        default: ''
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  # ----------------------------------------------------------------------
+  # Gate job: verify the confirm string matches BEFORE we touch anything.
+  # If the operator typed the wrong string, this job fails with a clear
+  # ::error:: annotation and the deploy job is skipped (it depends on this
+  # job's success). No SSH, no production contact happens until the gate
+  # passes.
+  # ----------------------------------------------------------------------
+  confirm-gate:
+    name: Confirmation gate
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.confirm == 'I-CONFIRM-PRODUCTION-DEPLOY' }}
+    steps:
+      - name: Acknowledge confirmation
+        run: |
+          echo "::notice::Confirmation string accepted."
+          echo "::notice::Reason recorded: ${{ github.event.inputs.reason }}"
+          echo "::notice::Triggered by: ${{ github.actor }}"
+          echo "::notice::Commit: ${{ github.sha }}"
+
+  # ----------------------------------------------------------------------
+  # Fallback: if the confirm input is wrong, this job runs INSTEAD of the
+  # gate and emits a hard ::error:: + exits non-zero. This is what shows
+  # up in the GitHub UI when an operator mistypes the string.
+  # ----------------------------------------------------------------------
+  confirm-mismatch:
+    name: Confirmation gate (mismatch)
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.confirm != 'I-CONFIRM-PRODUCTION-DEPLOY' }}
+    steps:
+      - name: Refuse deploy
+        run: |
+          echo "::error::Confirmation string mismatch - refusing to deploy"
+          echo "::error::Expected: I-CONFIRM-PRODUCTION-DEPLOY"
+          echo "::error::Got: '${{ github.event.inputs.confirm }}'"
+          exit 1
+
+  # ----------------------------------------------------------------------
+  # Deploy job: SSH to the prod host and pull + upgrade + purge.
+  # Only runs if confirm-gate passed.
+  # ----------------------------------------------------------------------
+  deploy:
+    name: Deploy to live host
+    needs: confirm-gate
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+    steps:
+      - name: Validate required secrets
+        env:
+          PRODUCTION_SSH_HOST: ${{ secrets.PRODUCTION_SSH_HOST }}
+          PRODUCTION_SSH_USER: ${{ secrets.PRODUCTION_SSH_USER }}
+          PRODUCTION_SSH_KEY:  ${{ secrets.PRODUCTION_SSH_KEY }}
+        run: |
+          MISSING=0
+          if [ -z "$PRODUCTION_SSH_HOST" ]; then
+            echo "::error::PRODUCTION_SSH_HOST secret is not set"
+            MISSING=$((MISSING + 1))
+          fi
+          if [ -z "$PRODUCTION_SSH_USER" ]; then
+            echo "::error::PRODUCTION_SSH_USER secret is not set"
+            MISSING=$((MISSING + 1))
+          fi
+          if [ -z "$PRODUCTION_SSH_KEY" ]; then
+            echo "::error::PRODUCTION_SSH_KEY secret is not set"
+            MISSING=$((MISSING + 1))
+          fi
+          if [ $MISSING -gt 0 ]; then
+            echo "::error::$MISSING required secret(s) missing - configure under repo Settings -> Secrets and variables -> Actions"
+            exit 1
+          fi
+          echo "::notice::All required secrets present."
+
+      - name: SSH and run git pull + Moodle CLI upgrade + cache purge
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host:     ${{ secrets.PRODUCTION_SSH_HOST }}
+          username: ${{ secrets.PRODUCTION_SSH_USER }}
+          key:      ${{ secrets.PRODUCTION_SSH_KEY }}
+          port:     ${{ secrets.PRODUCTION_SSH_PORT || 22 }}
+          # 5-minute upper bound on the remote command; upgrade.php on a
+          # 30-plugin Moodle install usually finishes in 30-90 seconds.
+          command_timeout: 5m
+          # Fail the step the moment any command in the script returns
+          # non-zero. This is what stops a half-deploy from getting
+          # silently committed.
+          script_stop: true
+          # Env vars passed through to the remote shell. The remote
+          # script reads MOODLE_PATH so the path is overridable per
+          # environment without editing the workflow.
+          envs: MOODLE_PATH,DEPLOY_ACTOR,DEPLOY_REASON,DEPLOY_SHA
+          script: |
+            set -euo pipefail
+
+            # Resolve MOODLE_PATH with a default. Secrets cannot have
+            # defaults in the action input itself; we apply the default
+            # here.
+            MOODLE_PATH="${MOODLE_PATH:-/var/www/moodle}"
+
+            echo "=== Production deploy starting ==="
+            echo "Moodle path:   $MOODLE_PATH"
+            echo "Triggered by:  $DEPLOY_ACTOR"
+            echo "Reason:        $DEPLOY_REASON"
+            echo "Commit:        $DEPLOY_SHA"
+            echo "Host PHP:      $(php --version | head -1)"
+            echo "Host date:     $(date -u --iso-8601=seconds)"
+            echo ""
+
+            cd "$MOODLE_PATH"
+
+            echo "=== Step 1: git pull origin production ==="
+            git fetch --tags origin production
+            git checkout production
+            git pull --ff-only origin production
+            echo "Now at commit: $(git rev-parse HEAD)"
+            echo ""
+
+            echo "=== Step 2: php admin/cli/upgrade.php --non-interactive ==="
+            php admin/cli/upgrade.php --non-interactive
+            echo ""
+
+            echo "=== Step 3: php admin/cli/purge_caches.php ==="
+            php admin/cli/purge_caches.php
+            echo ""
+
+            echo "=== Production deploy complete ==="
+        env:
+          MOODLE_PATH:    ${{ secrets.PRODUCTION_MOODLE_PATH }}
+          DEPLOY_ACTOR:   ${{ github.actor }}
+          DEPLOY_REASON:  ${{ github.event.inputs.reason }}
+          DEPLOY_SHA:     ${{ github.sha }}
+
+      - name: Smoke-test the frontpage
+        run: |
+          # Quick check that the site returns HTTP 200 after the deploy.
+          # We deliberately do NOT use --fail-with-body here: a 5xx is the
+          # whole point of having a Slack alert below.
+          set +e
+          # Frontpage hostname is derived from the public production URL,
+          # not from the SSH host (different network path). Hardcoded
+          # because the public URL is not secret.
+          STATUS=$(curl -s -o /tmp/fp.html -w '%{http_code}' --max-time 30 https://www.airpay.academy/)
+          BYTES=$(wc -c < /tmp/fp.html)
+          set -e
+
+          echo "::notice::Frontpage status=$STATUS bytes=$BYTES"
+
+          if [ "$STATUS" != "200" ]; then
+            echo "::error::Frontpage smoke test failed (HTTP $STATUS, expected 200)"
+            exit 1
+          fi
+
+          # Catch the obvious PHP-side regression patterns. The cutover-day
+          # runbook documents the same grep on the same expected zero count.
+          if grep -E -i 'PHP (Fatal|Warning|Notice|Parse error)' /tmp/fp.html; then
+            echo "::error::PHP error(s) detected in frontpage HTML"
+            exit 1
+          fi
+
+          echo "::notice::Frontpage smoke test passed."
+
+  # ----------------------------------------------------------------------
+  # Notify Slack on failure - only if the webhook secret exists.
+  # ----------------------------------------------------------------------
+  notify-failure:
+    name: Notify Slack on failure
+    needs: deploy
+    if: ${{ failure() && needs.deploy.result == 'failure' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post failure to Slack
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          DEPLOY_ACTOR:     ${{ github.actor }}
+          DEPLOY_REASON:    ${{ github.event.inputs.reason }}
+          DEPLOY_SHA:       ${{ github.sha }}
+          DEPLOY_REPO:      ${{ github.repository }}
+          DEPLOY_RUN_ID:    ${{ github.run_id }}
+        run: |
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "::warning::SLACK_WEBHOOK_URL not set - skipping Slack notification"
+            exit 0
+          fi
+          export RUN_URL="https://github.com/${DEPLOY_REPO}/actions/runs/${DEPLOY_RUN_ID}"
+          # Build the JSON payload via python so we get reliable escaping
+          # (bash heredocs would collide with YAML literal-scalar parsing,
+          # and printf-based JSON construction is error-prone when fields
+          # might contain quotes / backticks).
+          PAYLOAD=$(python3 << 'PYEOF'
+          import json, os
+          actor  = os.environ.get('DEPLOY_ACTOR', '')
+          reason = os.environ.get('DEPLOY_REASON', '')
+          sha    = os.environ.get('DEPLOY_SHA', '')
+          url    = os.environ.get('RUN_URL', '')
+          msg = (
+              "*Airpay Academy production deploy FAILED*\n"
+              "Actor: `" + actor + "`\n"
+              "Reason: `" + reason + "`\n"
+              "Commit: `" + sha + "`\n"
+              "Run: <" + url + "|view in Actions>"
+          )
+          print(json.dumps({
+              "text": "Airpay Academy production deploy FAILED",
+              "blocks": [{
+                  "type": "section",
+                  "text": {"type": "mrkdwn", "text": msg},
+              }],
+          }))
+          PYEOF
+          )
+          curl -sS -X POST \
+            -H 'Content-Type: application/json' \
+            --data "$PAYLOAD" \
+            "$SLACK_WEBHOOK_URL"
