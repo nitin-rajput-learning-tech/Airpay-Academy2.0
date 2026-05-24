@@ -134,3 +134,46 @@ body.dark-mode .airpay-footer {
     background: #0f172a;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   P0 #6 (2026-05-24) — Sentientia LMS product-attribution band
+   ════════════════════════════════════════════════════════════
+   Migrates the inline-style band that previously lived on
+   templates/footer.mustache:52-58 into a class-based ruleset that
+   honours the --ap-* design tokens. Customer-N white-labels can now
+   recolour the band by overriding the four tokens at :root scope
+   without forking the template. Dark-mode override lives at the
+   bottom; the band reads as a darker pill in dark mode rather than
+   white-on-white.
+*/
+.airpay-footer__product-attribution {
+    text-align: center;
+    padding: 8px 16px;
+    font-family: var(--ap-font, 'Montserrat', -apple-system, sans-serif);
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+    color: var(--ap-text-secondary, #5a6070);
+    background: var(--ap-surface-alt, #f8f9fc);
+    border-top: 1px solid var(--ap-border, #e3eaf3);
+}
+.airpay-footer__product-attribution-brand {
+    font-weight: 600;
+    color: var(--ap-primary, #0066A7);
+}
+.airpay-footer__product-attribution-sep {
+    margin: 0 8px;
+    opacity: 0.5;
+}
+.airpay-footer__product-attribution-licence {
+    /* default cascade colour; intentionally no overrides */
+}
+
+/* Dark-mode override — the surface-alt token flips to a near-black
+   pill so the band still reads on a dark page. The brand pill stays
+   on the primary token (it ships its own light/dark dual already). */
+html.dark-mode .airpay-footer__product-attribution,
+body.dark-mode .airpay-footer__product-attribution {
+    background: #111827;
+    color: #94a3b8;
+    border-top-color: #1f2937;
+}
+

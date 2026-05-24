@@ -151,8 +151,20 @@ defined('MOODLE_INTERNAL') || die();
 // no longer flashes a phantom ring. Legacy :focus rules retained as
 // fallback for browsers without :focus-visible support. 22 selectors
 // added across 10 rules. Cache bump invalidates compiled CSS.
+//
+// P0 follow-up chip B (2026-05-24) — 4 P0s from PLATFORM-VISUAL-AUDIT
+// closed in this bump:
+//   - P0 #3: navbar i18n (5 nav labels + 3 a11y descriptors)
+//   - P0 #4: footer i18n (4 link labels + copyright)
+//   - P0 #6: footer Sentientia attribution band hex literals migrated
+//     to --ap-* design tokens in _surface-footer.scss
+//   - P0 #9: cart-badge inline <script> extracted into new
+//     theme_airpayux/cart_badge AMD module (src + build); wired from
+//     layout/dashboard.php + layout/course.php
+// Hindi parity restored to 100% (161 keys en / 161 keys hi) en route.
+// See docs/visual-evidence/2026-05-24/p0-followup-chip-B/README.md.
 $plugin->version   = 2026052402;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.32-beta';  // P0 #1+#2 SCSS hygiene + P0 #7 kn/mr/sw 100% + P1 #12 :focus-visible
+$plugin->release   = '1.0.32-beta';  // P0 #1+#2 SCSS hygiene + P0 #3+#4+#6+#9 nav/footer/AMD + P0 #7 kn/mr/sw + P1 #12 :focus-visible
