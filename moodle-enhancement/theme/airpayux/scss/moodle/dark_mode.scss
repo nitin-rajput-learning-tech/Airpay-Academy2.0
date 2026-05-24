@@ -101,73 +101,75 @@ body.dark-mode {
     /* UAT-L5 fix 2026-05-10 — #region-main (the section that wraps
        page content) had no dark-mode override, kept #ffffff. Inner
        text inherited dark-mode color (#e8eaed) → 1.2:1 on white.
-       Added #region-main alongside the existing rule. */
+       Added #region-main alongside the existing rule.
+       2026-05-24 P1 #13 — dropped !important; body.dark-mode prefix
+       (specificity 0,2,1) wins over Moodle core's bg without it. */
     #page, #page-wrapper, .pagelayout-standard,
     .pagelayout-mydashboard, .pagelayout-admin,
     #region-main, #region-main-box, #page-content {
-        background-color: #0f1117 !important;
+        background-color: #0f1117;
     }
 
     /* === Navbar === */
     nav.navbar, .airpay-nav, .fixed-top {
-        background: #161820 !important;
-        border-bottom: 1px solid #2d3140 !important;
+        background: #161820;
+        border-bottom: 1px solid #2d3140;
     }
     .navbar a, .navbar .nav-link {
-        color: #c4cad8 !important;
+        color: #c4cad8;
     }
     .airpay-nav__pill {
-        color: #9ca3b4 !important;
+        color: #9ca3b4;
     }
     .airpay-nav__pill:hover {
-        background: #232733 !important;
-        color: #e8eaed !important;
+        background: #232733;
+        color: #e8eaed;
     }
     /* Keep active pill blue */
     .pagelayout-mydashboard .airpay-nav__pill--dashboard,
     .path-my-courses .airpay-nav__pill--courses,
     .path-local-search .airpay-nav__pill--catalog,
     .path-local-users .airpay-nav__pill--profile {
-        background: #1e3a5f !important;
-        color: #93c5fd !important;
+        background: #1e3a5f;
+        color: #93c5fd;
     }
     .airpay-nav__search-input {
-        background: #232733 !important;
-        border-color: #3d4254 !important;
-        color: #e8eaed !important;
-        &::placeholder { color: #6b7280 !important; }
+        background: #232733;
+        border-color: #3d4254;
+        color: #e8eaed;
+        &::placeholder { color: #6b7280; }
     }
-    .airpay-nav__brand { color: #93c5fd !important; }
+    .airpay-nav__brand { color: #93c5fd; }
 
     /* === Welcome banner — keep gradient, mute slightly === */
     .airpay-dash__welcome, .user_gen_info {
-        background: linear-gradient(135deg, #0c3d66 0%, #0a4a44 100%) !important;
-        border-color: #2d3140 !important;
+        background: linear-gradient(135deg, #0c3d66 0%, #0a4a44 100%);
+        border-color: #2d3140;
     }
 
     /* === Stat cards === */
     .airpay-dash__stat {
-        background: #1a1d27 !important;
-        border: 1px solid #2d3140 !important;
+        background: #1a1d27;
+        border: 1px solid #2d3140;
     }
     .airpay-dash__stat-icon {
         opacity: 0.9;
     }
-    .airpay-dash__stat--primary .airpay-dash__stat-icon { background: rgba(59,130,246,0.15) !important; color: #60a5fa !important; }
-    .airpay-dash__stat--accent .airpay-dash__stat-icon { background: rgba(16,185,129,0.15) !important; color: #34d399 !important; }
-    .airpay-dash__stat--success .airpay-dash__stat-icon { background: rgba(52,211,153,0.15) !important; color: #34d399 !important; }
-    .airpay-dash__stat--gold .airpay-dash__stat-icon { background: rgba(251,191,36,0.15) !important; color: #fbbf24 !important; }
-    .airpay-dash__stat-num { color: #e8eaed !important; }
-    .airpay-dash__stat-label { color: #9ca3b4 !important; }
+    .airpay-dash__stat--primary .airpay-dash__stat-icon { background: rgba(59,130,246,0.15); color: #60a5fa; }
+    .airpay-dash__stat--accent .airpay-dash__stat-icon { background: rgba(16,185,129,0.15); color: #34d399; }
+    .airpay-dash__stat--success .airpay-dash__stat-icon { background: rgba(52,211,153,0.15); color: #34d399; }
+    .airpay-dash__stat--gold .airpay-dash__stat-icon { background: rgba(251,191,36,0.15); color: #fbbf24; }
+    .airpay-dash__stat-num { color: #e8eaed; }
+    .airpay-dash__stat-label { color: #9ca3b4; }
 
     /* === Moodle blocks (Timeline, Calendar, Recently accessed) === */
     .block .card {
-        background: #1a1d27 !important;
-        border-color: #2d3140 !important;
+        background: #1a1d27;
+        border-color: #2d3140;
     }
     .block .card-body {
-        background: #1a1d27 !important;
-        color: #c4cad8 !important;
+        background: #1a1d27;
+        color: #c4cad8;
     }
     /* Block headers — muted blue instead of bright */
     .block_timeline .card-title,
@@ -175,42 +177,49 @@ body.dark-mode {
     .block_recentlyaccesseditems .card-title,
     .block .block-title,
     .block h5.card-title {
-        background: #1e2d42 !important;
-        color: #93c5fd !important;
+        background: #1e2d42;
+        color: #93c5fd;
     }
 
     /* Calendar specific */
     .calendarwrapper, .calendar-controls, .calendartable {
-        background: #1a1d27 !important;
-        color: #c4cad8 !important;
+        background: #1a1d27;
+        color: #c4cad8;
     }
-    .calendartable td { border-color: #2d3140 !important; color: #c4cad8 !important; }
-    .calendartable th { color: #93c5fd !important; }
-    .day .day-number-circle { background: #1e3a5f !important; color: #ffffff !important; }
+    .calendartable td { border-color: #2d3140; color: #c4cad8; }
+    .calendartable th { color: #93c5fd; }
+    .day .day-number-circle { background: #1e3a5f; color: #ffffff; }
     /* A4: BizLMS buttons in dark mode — catch remaining bright ones */
     .btn-outline-secondary,
     .btn-info,
     .course_extended_menu_itemlink .btn,
     .block .btn-clear {
-        background: #232733 !important;
-        border-color: #3d4254 !important;
-        color: #93c5fd !important;
+        background: #232733;
+        border-color: #3d4254;
+        color: #93c5fd;
     }
 
-    /* === Cards (generic) === */
+    /* === Cards (generic) ===
+       Group bg/border use values matching _dark-mode-global.scss for the
+       items it also targets (.airpay-dash__deadline-item,
+       .airpay-dash__achievement, .airpay-dash__rec-card). Global keeps
+       !important so behaviour is preserved even though we drop ours.
+       The deadline-item override below still needs !important — different
+       value (#1e2130) than the global rule (#1a1d27). */
     .card, .coursecard_container, .airpay-dash__section,
     .airpay-dash__deadline-item, .airpay-dash__achievement,
     .airpay-dash__rec-card, .airpay-card {
-        background: #1a1d27 !important;
-        border-color: #2d3140 !important;
+        background: #1a1d27;
+        border-color: #2d3140;
     }
+    // preserved: beats _dark-mode-global.scss `.airpay-dash__deadline-item { background: #1a1d27 !important; }`
     .airpay-dash__deadline-item { background: #1e2130 !important; }
-    .airpay-dash__deadline-item--urgent { background: #2a1215 !important; border-color: #5c2020 !important; }
-    .airpay-dash__rec-body { background: #1a1d27 !important; }
+    .airpay-dash__deadline-item--urgent { background: #2a1215; border-color: #5c2020; }
+    .airpay-dash__rec-body { background: #1a1d27; }
 
     /* === Page header === */
     #page-header, .header-maxwidth {
-        background: #161820 !important;
+        background: #161820;
     }
 
     /* === Profile hero === */
@@ -366,26 +375,26 @@ body.dark-mode {
 
     /* === Quicknav cards in dark mode === */
     .airpay-dash__quicknav-card {
-        background: #1a1d27 !important;
-        border-color: #2d3140 !important;
+        background: #1a1d27;
+        border-color: #2d3140;
     }
-    .airpay-dash__quicknav-card span { color: #c4cad8 !important; }
+    .airpay-dash__quicknav-card span { color: #c4cad8; }
     .airpay-dash__quicknav-card .airpay-dash__quicknav-stat-value,
     .airpay-dash__quicknav-card strong,
     .airpay-dash__quicknav-card b {
-        color: #e8eaed !important;  /* Brighter for stat numbers */
+        color: #e8eaed;  /* Brighter for stat numbers */
         font-weight: 700;
     }
     .airpay-dash__quicknav-card .airpay-dash__quicknav-stat-label {
-        color: #9ca3b4 !important;  /* Labels stay muted */
+        color: #9ca3b4;  /* Labels stay muted */
     }
     .airpay-dash__quicknav-card:hover {
-        background: #232733 !important;
+        background: #232733;
     }
 
     /* === Activity feed in dark mode === */
-    .airpay-dash__activity-feed::before { background: #2d3140 !important; }
-    .airpay-dash__activity-label { color: #c4cad8 !important; }
+    .airpay-dash__activity-feed::before { background: #2d3140; }
+    .airpay-dash__activity-label { color: #c4cad8; }
 
     /* === BizLMS admin toolbar === */
     .course_extended_menu_itemlink {
