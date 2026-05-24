@@ -81,8 +81,13 @@ if ($PAGE->has_secondary_navigation()) {
             );
             $selectmenu->set_label($overflowdata->label, $overflowdata->labelattributes);
             $overflow = $selectmenu->export_for_template($OUTPUT);
+            // Phase B.3.c+ (2026-05-24) — flag set so course.mustache can pick
+            // the right partial (core/tertiary_navigation_selector vs
+            // core/url_select). See docs/5.2-merge/PHASE-B3C-TOP-TEMPLATES-REBASE.md.
+            $overflow->is_select_menu_context = true;
         } else {
             $overflow = $overflowdata->export_for_template($OUTPUT);
+            $overflow->is_select_menu_context = false;
         }
     }
 }
