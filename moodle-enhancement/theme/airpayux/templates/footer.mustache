@@ -30,16 +30,6 @@
             <a href="{{{config.wwwroot}}}/local/airpay_pages/index.php?page=contact">Contact</a>
         </nav>
         <span class="airpay-footer__copy">&copy; 2026 airpay payment services pvt. ltd.</span>
-        {{!
-            2026-05-15: removed the "Made in India" badge from the admin
-            footer. Original placement collided visually with adjacent dark
-            page content (e.g. table headers) on /local/airpay_users/,
-            Manage Courses, and other admin lists — the badge image carries
-            its own light pill background that read as a foreign element
-            inside the enterprise admin chrome. The badge still ships on
-            the public homepage (theme/airpayux/layout/frontpage.php:671)
-            where it has dedicated space.
-        }}
     </div>
 
     {{!
