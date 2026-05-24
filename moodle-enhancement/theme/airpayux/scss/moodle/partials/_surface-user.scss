@@ -636,6 +636,14 @@ body#page-course-edit {
         box-shadow: 0 0 0 3px rgba(0, 102, 167, 0.12);
         background: var(--ap-color-bg-surface, #ffffff);
     }
+    #region-main form.mform .felement input:focus-visible,
+    #region-main form.mform .felement select:focus-visible,
+    #region-main form.mform .felement textarea:focus-visible {
+        outline: none;
+        border-color: var(--ap-color-primary, #0066A7);
+        box-shadow: 0 0 0 3px rgba(0, 102, 167, 0.12);
+        background: var(--ap-color-bg-surface, #ffffff);
+    }
 
     /* Tag-input (Interests) chips */
     #region-main form.mform .form-autocomplete-suggestions,
