@@ -1295,6 +1295,14 @@ body.path-admin {
         box-shadow: 0 0 0 3px rgba(0, 102, 167, 0.1);
         outline: none;
     }
+    #region-main .form-control:focus-visible,
+    #region-main input:focus-visible,
+    #region-main textarea:focus-visible,
+    #region-main select:focus-visible {
+        border-color: var(--ap-color-primary, #0066A7);
+        box-shadow: 0 0 0 3px rgba(0, 102, 167, 0.1);
+        outline: none;
+    }
 
     /* Admin "Settings" headings inside admin pages */
     #region-main h2,
@@ -1716,6 +1724,14 @@ body.path-grade-report-grader {
         box-shadow: 0 0 0 3px rgba(0, 102, 167, 0.12);
         background: var(--ap-color-bg-surface, #ffffff);
     }
+    .tertiary-navigation input[type="text"]:focus-visible,
+    .tertiary-navigation input[type="search"]:focus-visible,
+    .tertiary-navigation .dropdown-toggle:focus-visible {
+        outline: none;
+        border-color: var(--ap-color-primary, #0066A7);
+        box-shadow: 0 0 0 3px rgba(0, 102, 167, 0.12);
+        background: var(--ap-color-bg-surface, #ffffff);
+    }
 
     /* Initial-letter alphabet filter (First name / Last name) — pill buttons */
     .initialbar {
@@ -2112,6 +2128,14 @@ body#page-course-edit {
     #region-main form.mform .felement input:focus,
     #region-main form.mform .felement select:focus,
     #region-main form.mform .felement textarea:focus {
+        outline: none;
+        border-color: var(--ap-color-primary, #0066A7);
+        box-shadow: 0 0 0 3px rgba(0, 102, 167, 0.12);
+        background: var(--ap-color-bg-surface, #ffffff);
+    }
+    #region-main form.mform .felement input:focus-visible,
+    #region-main form.mform .felement select:focus-visible,
+    #region-main form.mform .felement textarea:focus-visible {
         outline: none;
         border-color: var(--ap-color-primary, #0066A7);
         box-shadow: 0 0 0 3px rgba(0, 102, 167, 0.12);
