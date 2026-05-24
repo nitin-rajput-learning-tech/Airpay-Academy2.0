@@ -91,6 +91,120 @@ $ap-transition-slow: 0.35s ease;
 
 ---
 
+## Motion & `prefers-reduced-motion` (WCAG 2.3.3)
+
+The Sass `$ap-transition*` literals above are kept for legacy SCSS that still
+needs Sass values. **New code MUST use the CSS-custom-property tokens** defined
+in `scss/moodle/_tokens.scss:195–264`, because those tokens collapse to `0ms`
+under `@media (prefers-reduced-motion: reduce)`. Anything that hardcodes
+inline timing (e.g. `transition: all 0.2s ease`) bypasses the cascade and
+animates regardless of OS preference — a vestibular-accessibility violation.
+
+### Token cascade
+
+```scss
+/* From _tokens.scss — read, don't redefine. */
+:root {
+    --ap-duration-instant:    0ms;     /* button press, checkbox tick */
+    --ap-duration-quick:    150ms;     /* small state changes */
+    --ap-duration-default:  250ms;     /* most transitions */
+    --ap-duration-slow:     400ms;     /* layout-affecting transitions */
+    --ap-duration-deliberate: 700ms;   /* celebration moments only */
+
+    /* Composite shortcuts — duration + ease pre-paired: */
+    --ap-transition-quick:   var(--ap-duration-quick)   var(--ap-ease-out);
+    --ap-transition-default: var(--ap-duration-default) var(--ap-ease-out);
+    --ap-transition-slow:    var(--ap-duration-slow)    var(--ap-ease-in-out);
+    --ap-transition-emphatic: var(--ap-duration-default) var(--ap-ease-spring);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --ap-duration-quick:      0ms;
+        --ap-duration-default:    0ms;
+        --ap-duration-slow:       0ms;
+        --ap-duration-deliberate: 0ms;
+    }
+}
+```
+
+### How to write motion (✅ correct)
+
+```scss
+.airpay-card {
+    transition: transform var(--ap-transition-quick),
+                box-shadow var(--ap-transition-quick);
+}
+.airpay-card:hover {
+    transform: translateY(-2px);   /* nulls automatically under reduced motion */
+}
+
+/* Or, when you need to set duration separately: */
+.airpay-modal {
+    transition-property: opacity, transform;
+    transition-duration: var(--ap-duration-default);
+    transition-timing-function: var(--ap-ease-out);
+}
+```
+
+### Anti-pattern (❌ caught by the lint rule)
+
+```scss
+.foo { transition: all 0.2s ease; }              /* ❌ inline shorthand value */
+.bar { transition-duration: 150ms; }              /* ❌ literal duration */
+.baz { transition: color 0.15s ease, bg 0.15s; }  /* ❌ literal inside shorthand */
+```
+
+### Lint rule (enforced)
+
+`theme/airpayux/.stylelintrc.json` ships a `declaration-property-value-disallowed-list`
+rule scoped via `overrides` to `scss/moodle/partials/_surface-*.scss`:
+
+- `transition-duration` accepts only values that start with `var(` — anything
+  else fires.
+- `transition` (shorthand) fires if ANY numeric+unit pair (`0.2s`, `200ms`,
+  `1s`) appears in the value. Forces the shorthand to consume
+  `var(--ap-transition-*)` composite tokens.
+
+Run locally (stylelint is already a root devDependency at `^15.11.0`; run
+`npm install` once if `node_modules/` is empty):
+
+```powershell
+# From repo root:
+npx stylelint --config moodle-enhancement/theme/airpayux/.stylelintrc.json `
+              "moodle-enhancement/theme/airpayux/scss/moodle/partials/_surface-*.scss"
+
+# Or from the theme dir (auto-discovers the config):
+Set-Location moodle-enhancement\theme\airpayux
+npx stylelint "scss/moodle/partials/_surface-*.scss"
+```
+
+### Per-line opt-out (use sparingly + comment why)
+
+For an unavoidable inline value (e.g. a polyfill animation that the cascade
+cannot reach), disable the rule for just that declaration:
+
+```scss
+// stylelint-disable-next-line declaration-property-value-disallowed-list
+transition: all 0.2s ease;   /* explain WHY in this comment */
+```
+
+Per-file disables are discouraged — keep the opt-out scoped to the violating
+declaration. If you find yourself reaching for an opt-out more than once in
+the same file, that's a signal to add a missing token to `_tokens.scss`
+instead.
+
+### Refs
+
+- Token cascade source: `theme/airpayux/scss/moodle/_tokens.scss:195–264`.
+- Lint rule config: `theme/airpayux/.stylelintrc.json`.
+- Audit motivation: `moodle-enhancement/docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md`
+  §2.7 + P2 #19.
+- WCAG 2.3.3 — Animation from Interactions (Level AAA),
+  https://www.w3.org/WAI/WCAG21/Understanding/animation-from-interactions.html.
+
+---
+
 ## Responsive Breakpoints (from custom_media.scss)
 
 ```scss
