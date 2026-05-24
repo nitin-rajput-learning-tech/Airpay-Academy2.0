@@ -4789,3 +4789,50 @@ blocks/sentientia_leaderboard/
 
 ### Next
 Schedule a fix-sprint to close the 9-item P0 list before Phase 2 customer-zero promotion. The audit branch is push-ready; no PR opened (Nitin to request).
+
+
+## 🌙 P1 #13 — dark-mode token-cascade refactor (2026-05-24)
+
+**Commits:** `dceab2b4`, `8063ad17`, `f4a6655e`, `05e646ca`, `134e30f4` on branch `claude/sleepy-knuth-3fpPR`
+**Auditor mandate:** `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md` §2.2, P1 #13 — eliminate >90% of the 253 `!important` declarations in `scss/moodle/dark_mode.scss`.
+
+### Before / after
+| Measure | Before | After | Delta |
+|---|---|---|---|
+| `grep -c '!important'` (line count incl. comments) | 253 | 58 | −77.1% |
+| Actual `!important;` declarations (comments stripped) | ~253 | **36** | **−85.8%** |
+| `body.dark-mode` block declarations | 158 | 16 | −89.9% |
+| `body.high-contrast` block declarations | 95 | 20 | −78.9% |
+
+Target was `<30` declarations (>90% elimination). Final at **36** — slightly under the audit's 90% goal because of two genuine blockers documented inline with `// preserved:` comments:
+
+1. **Bootstrap utility class collisions** (`text-muted`, `text-dark`, `text-decoration-none`, `badge.bg-secondary`) — Bootstrap utilities are themselves declared with `!important`; only `!important` beats `!important`. ~7 declarations.
+2. **Cross-partial conflicts with `_bizlms-dark.scss` where the colour delta is visible** (pagination active state brand-blue, breadcrumb link colour). Harmonising these is out of scope for this chip — flagged as audit follow-up to harmonise both partials onto a single token in `_tokens-dark.scss`. ~2 declarations.
+3. **Standard high-contrast accessibility intent** — the `body.high-contrast` block uses `!important` on generic element selectors (p, h1-h6, a, input, .card, .btn) specifically to beat Bootstrap utility classes that could leak through. Dropping these would create accessibility regressions. ~19 declarations.
+
+### Per-bucket commits
+- **Bucket 1** (`dceab2b4`) — Page wrappers + navbar + dashboard surfaces. 253 → 206 (−47).
+- **Bucket 2** (`8063ad17`) — Profile + forms + tables + text. 206 → 186 (−20).
+- **Bucket 3** (`f4a6655e`) — Buttons + dropdowns + alerts + popovers + BizLMS containers + scrollbar. 186 → 123 (−63).
+- **Bucket 4** (`05e646ca`) — body.high-contrast "Production data polish" custom selectors + .generaltable. 123 → 64 (−59).
+- **Bucket 5** (`134e30f4`) — Relaxation of `!important` on idle modal + non-active pagination link (bizlms-dark delta is aesthetic-only). 64 → 58 (−6 lines).
+
+### Compile sanity-check
+`dart-sass 1.100.0 --no-source-map dark_mode.scss /tmp/dark_compiled.css` → exit 0, no warnings. Brace integrity 171/171.
+
+### Light-mode preservation
+Every edit is inside `html.dark-mode, body.dark-mode {...}` or `body.high-contrast {...}` scoped blocks. **Light mode untouched** — zero rules outside those scopes were modified.
+
+### Out-of-scope bug noted (not fixed)
+The "Production data polish (Phase 16)" section of `body.high-contrast` (lines 572+) uses dark-mode colour values (#1a1d27 backgrounds, #c4cad8 text) inside the high-contrast scope. High-contrast theory says white-bg / black-text — this section visibly contradicts the mode's accessibility intent. Documented inline. Recommend separate fix as part of audit follow-up.
+
+### Audit follow-ups flagged
+- Harmonise `_bizlms-dark.scss` and `dark_mode.scss` modal/pagination/breadcrumb palettes onto a single token in `_tokens-dark.scss` (would remove 4-5 remaining `!important` declarations).
+- Refactor `body.high-contrast` "Production data polish" section to use actual high-contrast colour values (or migrate to `_dark-mode-global.scss` if intent was dark-mode all along).
+- Eventually decompose `dark_mode.scss` into per-component dark-variants (Goal A.x style — one partial per surface), so the file shrinks from ~800 lines to a small orchestrator.
+
+### Deliverables
+- `moodle-enhancement/theme/airpayux/scss/moodle/dark_mode.scss` (refactored)
+- `moodle-enhancement/theme/airpayux/version.php` bumped to `2026052402` / `1.0.32-beta`
+- `moodle-enhancement/docs/visual-evidence/2026-05-24/p1-followup-chip-I/README.md` (analysis + post-deploy test checklist)
+- This PROJECT-STATE.md H2 section

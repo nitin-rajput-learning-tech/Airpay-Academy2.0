@@ -123,8 +123,22 @@ defined('MOODLE_INTERNAL') || die();
 // verification on production 5.2 substrate (per the audit doc — it has
 // an aria-live re-announce trick for NVDA <2024 that core/toast may
 // not handle). See docs/5.2-merge/PHASE-B3F-AMD-CLEANUP.md.
-$plugin->version   = 2026052401;
+//
+// P1 #13 dark-mode token-cascade refactor (2026-05-24) — scss/moodle/
+// dark_mode.scss reduced from 253 `!important` declarations to 36
+// (-85.8%). Both the body.dark-mode and body.high-contrast scoped
+// blocks refactored to rely on parent-class specificity rather than
+// the !important hammer; component-level overrides that previously
+// fought Bootstrap defaults now win via natural specificity. Every
+// preserved !important documented inline with `// preserved:` reason
+// (Bootstrap utility class collision, inline-style override, or
+// cross-partial conflict with a meaningfully-different value).
+// Version bump invalidates the compiled CSS bundle so the cleaner
+// SCSS re-compiles on next request. See visual-evidence/2026-05-24/
+// p1-followup-chip-I/README.md for the before/after analysis and the
+// post-deploy test checklist.
+$plugin->version   = 2026052402;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.31-beta';  // Phase B.3.f shim deletes
+$plugin->release   = '1.0.32-beta';  // P1 #13 dark-mode !important reduction
