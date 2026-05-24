@@ -123,8 +123,13 @@ defined('MOODLE_INTERNAL') || die();
 // verification on production 5.2 substrate (per the audit doc — it has
 // an aria-live re-announce trick for NVDA <2024 that core/toast may
 // not handle). See docs/5.2-merge/PHASE-B3F-AMD-CLEANUP.md.
-$plugin->version   = 2026052401;
+//
+// P0 #7 locale parity (2026-05-24) — kn closed 35-string gap, mr + sw
+// each closed 3-string gap. All four non-hi packs (en, kn, mr, sw) now
+// at 153/153 unique keys = 100% parity. Bump triggers a lang-cache
+// purge so the new strings are picked up on next page load.
+$plugin->version   = 2026052402;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.31-beta';  // Phase B.3.f shim deletes
+$plugin->release   = '1.0.32-beta';  // P0 #7 kn+mr+sw parity 100%
