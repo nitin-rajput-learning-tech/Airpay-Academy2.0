@@ -163,6 +163,23 @@ $string['signinwithidentityprovider'] = 'au ingia kwa';
 $string['sortbystartdate'] = 'Tarehe ya kuanza kozi';
 $string['sortbyenddate']   = 'Tarehe ya kumalizika kozi';
 
+// P0 #3 follow-up (2026-05-24, chip-B) — upau wa juu wa urambazaji i18n.
+$string['nav_dashboard']  = 'Dashibodi';
+$string['nav_courses']    = 'Kozi Zangu';
+$string['nav_catalog']    = 'Katalogi';
+$string['nav_profile']    = 'Wasifu';
+$string['nav_home']       = 'Nyumbani';
+$string['a11y_search']    = 'Tafuta kozi, watu, maudhui';
+$string['a11y_usermenu']  = 'Menyu ya mtumiaji';
+$string['a11y_mobilemenu'] = 'Menyu ya simu';
+
+// P0 #4 follow-up (2026-05-24, chip-B) — utepe wa chini i18n.
+$string['footer_privacy']   = 'Faragha';
+$string['footer_terms']     = 'Masharti';
+$string['footer_help']      = 'Msaada';
+$string['footer_contact']   = 'Mawasiliano';
+$string['footer_copyright'] = '&copy; 2026 airpay payment services pvt. ltd.';
+
 // F-13 (Platform Visual Audit 2026-05-24, chip-G) — Banner ya karibu ya
 // dashibodi, vichwa vya chati na lebo za KPI za utii. {$a} = jina la kwanza.
 $string['welcome_back_admin']      = 'Karibu tena, {$a}';
