@@ -123,8 +123,22 @@ defined('MOODLE_INTERNAL') || die();
 // verification on production 5.2 substrate (per the audit doc — it has
 // an aria-live re-announce trick for NVDA <2024 that core/toast may
 // not handle). See docs/5.2-merge/PHASE-B3F-AMD-CLEANUP.md.
-$plugin->version   = 2026052401;
+//
+// P0 #5 follow-up (2026-05-24) — dashboard inline-style avalanche
+// cleanup. 34 inline style="" attributes (including 5 raw hex literals
+// that bypassed the design-token cascade) migrated from
+// templates/dashboard.mustache into scss/moodle/partials/_surface-dashboard.scss
+// as token-driven BEM rules. Dynamic per-user gamification values
+// (level_color, level_progress) now flow via CSS custom properties on
+// the affected element so the cascade stays in SCSS. Welcome header,
+// compliance KPI grid, top-courses list, section spacing modifiers,
+// team-compliance row/cell hex literals, learner progress-summary,
+// and gamification widgets all token-clean. See PLATFORM-VISUAL-AUDIT-
+// 2026-05-24.md §3.4 F-12 + docs/visual-evidence/2026-05-24/
+// p0-followup-chip-C/ for the before/after notes. Version bump
+// invalidates the cached compiled CSS bundle.
+$plugin->version   = 2026052402;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.31-beta';  // Phase B.3.f shim deletes
+$plugin->release   = '1.0.32-beta';  // P0 #5 dashboard inline-style cleanup

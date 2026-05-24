@@ -4789,3 +4789,68 @@ blocks/sentientia_leaderboard/
 
 ### Next
 Schedule a fix-sprint to close the 9-item P0 list before Phase 2 customer-zero promotion. The audit branch is push-ready; no PR opened (Nitin to request).
+
+---
+
+## ✅ P0 #5 — dashboard inline-style cleanup (2026-05-24)
+
+**Chip:** C (parallel P0 follow-up)
+**Branch:** `claude/funny-einstein-fUaIE`
+**Commits:** `724906e9`, `faa9c7cd`, `5044c9d8`, `332f120e`, `fc3a3247`, plus this version-bump commit
+**Theme version:** `2026052401 → 2026052402` (release `1.0.31-beta → 1.0.32-beta`)
+
+### Scope closed
+Eliminated the dashboard inline-style avalanche identified as audit P0 #5
+(`docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md` §3.4 F-12 / §2.3).
+
+**Before:** 38 inline `style=""` attributes in `templates/dashboard.mustache`,
+including 7 raw hex literals (`#16a34a` × 3, `#dc2626` × 2, `#1a1a2e`,
+`#5a6070`, `#f97316` × 2, `#d97706`) that bypassed the design-token
+cascade and broke dark-mode rendering of the compliance KPI counters
+and progress-summary copy.
+
+**After:** 4 inline `style=""` attributes — 3 are CSS-custom-property
+carriers for server-controlled dynamic per-user gamification values
+(`level_color`, `level_progress`) and 1 is the JS-toggled
+`display: none` on `#page-content` (Moodle blocks fallback region when
+the sidebar shell is active).
+
+### What landed
+- Extracted 7 welcome-header styles → `.airpay-dash__welcome-header` BEM block
+- Extracted 14 compliance KPI grid styles → `.airpay-dash__compliance-*` BEM tree, with the 2 raw hex literals (`#16a34a`, `#dc2626`) swapped to `var(--ap-color-success)` / `var(--ap-color-danger)` semantic tokens
+- Extracted 4 top-courses list styles → `.airpay-dash__top-courses__*` BEM tree
+- Extracted 3 section-margin styles → `.airpay-dash__section--top-spacing` / `--bottom-spacing` modifiers
+- Extracted 4 team-compliance table cell styles (3 hex literals) → `.airpay-dash__team-table__*` BEM modifiers with semantic tokens
+- Extracted 4 progress-summary panel styles → `.airpay-dash__section--progress-summary` + `__title` / `__meta` elements + `.ap-progress-ring__label--lg` modifier
+- Extracted 9 gamification styles → `.airpay-dash__gamification-row`, `.airpay-gamification__*` rules, with dynamic `level_color` / `level_progress` flowing via CSS custom properties
+- Extracted 2 decorative gamification icon colours (`#f97316` fire, `#d97706` trophy) → `.airpay-dash__streak-icon` / `.airpay-dash__trophy-icon` rules in the partial (kept as literals because they are gamification-specific decorative semantics, not brand primitives)
+
+### Files touched
+```
+moodle-enhancement/theme/airpayux/templates/dashboard.mustache   (-86, +66)
+moodle-enhancement/theme/airpayux/scss/moodle/partials/_surface-dashboard.scss (+193)
+moodle-enhancement/theme/airpayux/version.php                    (version + release bump)
+moodle-enhancement/docs/visual-evidence/2026-05-24/p0-followup-chip-C/README.md (new)
+moodle-enhancement/PROJECT-STATE.md                              (this H2 append)
+```
+
+### Safety verifications
+- `php -l layout/dashboard.php` — clean (not modified; verified untouched)
+- `php -l version.php` — clean
+- Mustache section open/close balance — 71 / 71 ✓
+- SCSS brace balance — 126 / 126 ✓
+- Zero `{{{ user_input }}}` triple-stash introduced in template diff ✓
+- Visual regression risk noted in the visual-evidence README — same DOM
+  tree preserved across admin / manager / learner personas
+
+### Out of scope (untouched)
+- Navbar / footer templates (Chip B owns)
+- Plugin code
+- Orphan SCSS files (`partials/Claude`, `custom_changes_MONOLITH_BACKUP.scss`) — Chip A owns
+- `lang/*/theme_airpayux.php` — Chip B owns the i18n parity follow-up
+- `local/sentientia_live/*` — Chip E owns
+- `custom_changes.scss` directly — only the dashboard partial was modified
+
+### Refs
+- Audit: `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md` §3.4 F-12 + §2.3
+- Visual evidence: `docs/visual-evidence/2026-05-24/p0-followup-chip-C/`
