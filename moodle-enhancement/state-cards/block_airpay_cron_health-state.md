@@ -4,6 +4,7 @@
 **Current version:** `2026051300`  (1.0.0)
 **Maturity:** STABLE
 **Last touched:** 2026-05-13 (PHPUnit test added)
+**Last refreshed:** 2026-05-24 (P1 state-card pass — no drift)
 **Owner:** Head of L&D
 
 ---
@@ -79,3 +80,18 @@ have refused to install the block.
 | `lang/en/block_airpay_cron_health.php` | Strings (KPI labels, severity badges, aria labels) |
 | `tests/block_test.php` | 5 PHPUnit cases |
 | `version.php` | Plugin version, depends on local_airpay_core |
+
+---
+
+## State card refresh — 2026-05-24
+
+P1 state-card pass: confirmed plugin still at `2026051300` / `1.0.0`,
+MATURITY_STABLE. PHPUnit `tests/block_test.php` still has 5 methods.
+No code drift since ship; only touched by the Moodle 5.2 web-smoke
+merge (Phase B.3) which exercised it for regression coverage. Card
+remains accurate as-is.
+
+## Feature flags
+
+None — this is a read-only dashboard widget. Visibility is gated by
+the site-admin check inside `get_content()` rather than a flag.
