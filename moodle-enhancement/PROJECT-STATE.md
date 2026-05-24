@@ -3,7 +3,100 @@
 
 ---
 
-## 🚀 TIER 2.6 — CALENDAR SYNC PHASE 1 (2026-05-24)
+## 🧪 P2 CUTOVER-PREP — Automated 5.1 → 5.2 smoke test (2026-05-24)
+
+**Chip:** `claude/pensive-dijkstra-pISiI`
+**Files added:**
+- `scripts/cutover-smoke-test.py` — stdlib-only Python runner, 8 discrete
+  `test_*` functions, JUnit XML emitter, hostname safety guard
+- `docs/cutover/CUTOVER-SMOKE-TEST-RUNBOOK.md` — pre-cutover dry-run
+  procedure, cutover-day execution, rollback-trigger matrix
+- `tests/junit/.gitkeep` — directory placeholder (XML output gitignored)
+- `.gitignore` — `tests/junit/*.xml` added so runtime artefacts don't
+  pollute the working tree
+
+### What shipped
+Phase B's Moodle 5.2 upgrade is code-complete (per top-of-file summary);
+the missing piece for a live customer-driven cutover was an
+**automated go / no-go gate** for the upgraded site. Before this chip,
+the runbook called for manual click-through of eight surfaces — slow,
+error-prone, no audit trail. After this chip, one Python invocation
+covers all eight and emits a JUnit XML the CI / dry-run record-keepers
+can store alongside the DB backup.
+
+The eight tests, in execution order:
+
+| # | Function name                     | Coverage |
+|---|-----------------------------------|----------|
+| 1 | `test_login_page_renders`         | Anonymous GET `/login/index.php` — 200 + `logintoken` input present |
+| 2 | `test_dashboard_route_responds`   | Anonymous GET `/my/dashboard.php` — 200 or 30x, never 5xx |
+| 3 | `test_course_catalog_api`         | REST `core_course_get_courses` returns a non-empty list |
+| 4 | `test_scorm_endpoint_responds`    | REST `mod_scorm_get_scorms_by_courses` registered + responsive |
+| 5 | `test_bizlms_tenant_switching`    | Tenants 1 / 77 / 177 return distinct user counts via `core_user_get_users` |
+| 6 | `test_dark_mode_assets`           | Landing page has a `data-theme` attribute or `theme-toggle` marker |
+| 7 | `test_navbar_footer_rendering`    | Landing page emits `<nav>` + `<footer>` elements |
+| 8 | `test_rest_api_health`            | REST `core_webservice_get_site_info` returns expected key set |
+
+### Safety guards (non-negotiable)
+- **Hostname block-list** — any `--target` URL whose host contains
+  `airpay.academy` (case-insensitive) exits **2** before any HTTP traffic
+  is generated. Verified with both apex (`airpay.academy`) and `www.`
+  variants. Cutover smoke-tests are staging-only by construction.
+- **Token never logged** — `MOODLE_TOKEN` is read from `.env` and used
+  only inside the form-encoded REST POST body. stdout and JUnit XML
+  never echo it. JUnit XML surfaces only the site name + Moodle
+  release string from `core_webservice_get_site_info` — both safe to
+  appear in CI logs.
+- **READ-only HTTP** — every call is a `GET` (HTML surfaces) or a
+  REST READ function per `.claude/rules/api.md`. No write endpoints
+  are exercised, so the script is safe to re-run unattended.
+- **Transport errors classified as failures** — connection refused,
+  DNS, TLS, and timeout faults convert to clean JUnit `<failure>`
+  elements with one-line messages, not multi-screen tracebacks.
+
+### Dependencies
+**None.** Pure stdlib (`urllib.request`, `xml.etree.ElementTree`,
+`argparse`, `json`, `socket`, `re`). No `requirements-test.txt`
+created. Runs on the same Python the SENTIENTIA pipeline uses
+(`sentientia/run_pipeline.py` — Python 3.11+).
+
+### How it integrates with the runbook
+`docs/cutover/CUTOVER-SMOKE-TEST-RUNBOOK.md` defines three usage modes:
+1. **Pre-cutover dry-run (T-7 to T-1):** two consecutive green runs
+   required against staging — once on 5.1 (baseline), once after the
+   upgrade to 5.2.
+2. **Cutover-day execution (T-0):** run against the upgraded
+   in-flight host (via internal hostname / hosts file, never via the
+   public DNS until after the green run). XML archived alongside the
+   DB backup.
+3. **Rollback trigger:** specific test failures — 1, 2, 3, 5, 8 — are
+   classified as **immediate rollback**; 6 + 7 are deferable cosmetic
+   misses. The runbook contains the explicit go/no-go decision matrix.
+
+### Acceptance verification
+- ✅ Script exists, `python3 -m py_compile` passes
+- ✅ Refuses `https://www.airpay.academy` (exit 2, no HTTP)
+- ✅ Refuses bare `https://airpay.academy` (exit 2, no HTTP)
+- ✅ Refuses non-http schemes (`ftp://...`)
+- ✅ Runs against `http://localhost:8080/moodle` and emits
+  parseable JUnit XML (verified by `xml.etree.ElementTree.parse`)
+- ✅ XML schema validates: `<testsuites>` root, `<testsuite>` wrapper,
+  one `<testcase>` per function, `<failure>` / `<skipped>` /
+  `<system-out>` children as appropriate
+- ✅ With no `MOODLE_TOKEN`, REST tests skip cleanly (don't fail)
+- ✅ Runbook documents pre-cutover, cutover-day, rollback paths
+- ✅ CI surface: chip only touches Markdown + Python; PHP lint /
+  Mustache balance / WS-contract gates unaffected
+
+### Next
+- Wire the cutover-smoke-dry-run job in `.github/workflows/ci.yml`
+  once the ADR on ephemeral-Moodle-spin-up cost lands (out of scope
+  for this chip — see runbook §6).
+- Extend the SCORM test from "endpoint registered" to "launch a known
+  SCO and verify status payload" once a fixture course is published
+  to the staging tenant.
+
+
 
 ### Session — `local_sentientia_calendar` (outbound ICS feed MVP) — ✅ SHIPPED
 

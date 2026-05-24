@@ -105,3 +105,7 @@ moodle-enhancement/audit/dropdown-open.txt
 moodle-enhancement/audit/filtered-search.txt
 moodle-enhancement/audit/login*.txt
 moodle-enhancement/audit-2026-05-15/
+
+# Cutover smoke-test runtime output
+tests/junit/*.xml
+!tests/junit/.gitkeep
