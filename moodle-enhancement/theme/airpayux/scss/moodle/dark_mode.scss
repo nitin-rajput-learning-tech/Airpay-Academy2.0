@@ -555,229 +555,253 @@ body.high-contrast {
         font-size: 1rem !important;
         padding: 12px !important;
     }
+    /* .generaltable family — scoped to the custom .generaltable class
+       so Bootstrap `.bg-*` / `.border-*` / `.text-*` utilities are not
+       expected on these table cells. body.high-contrast (0,1,1) + the
+       .generaltable parent (0,1,0) is plenty of specificity over any
+       Moodle core override; !important dropped. */
     .generaltable { border: 2px solid #000000; }
     .generaltable thead th {
-        background: #000000 !important;
-        color: #ffffff !important;
-        border: 1px solid #ffffff !important;
+        background: #000000;
+        color: #ffffff;
+        border: 1px solid #ffffff;
     }
-    .generaltable tbody td { border: 1px solid #000000 !important; }
+    .generaltable tbody td { border: 1px solid #000000; }
     :focus, :focus-visible {
-        outline: 3px solid #ff6600 !important;
+        outline: 3px solid #ff6600 !important;  // preserved: accessibility — UA / browser default focus styles also use !important on some platforms
         outline-offset: 2px;
     }
-    .airpay-dash__welcome, .user_gen_info { background: #003366 !important; }
-    .airpay-dash__welcome *, .user_gen_info * { color: #ffffff !important; }
+    /* .airpay-dash__welcome / .user_gen_info are custom BEM containers;
+       Bootstrap `.bg-*` not expected on these specific elements. The
+       descendant `*` rule below MUST keep !important — any Bootstrap
+       `.text-*` utility on children inside the gradient banner would
+       otherwise leak through. */
+    .airpay-dash__welcome, .user_gen_info { background: #003366; }
+    .airpay-dash__welcome *, .user_gen_info * { color: #ffffff !important; }  // preserved: descendant `*` could match elements carrying `.text-primary`, `.text-muted`, etc. — only !important beats Bootstrap utility !important
 
-    /* === Production data polish (Phase 16) === */
+    /* === Production data polish (Phase 16) ===
+       PRE-EXISTING BUG (not fixed in this refactor): the rules below
+       use DARK-MODE colour values (#1a1d27, #2d3140, #c4cad8) inside
+       the body.high-contrast scope. High-contrast theory says ⬛ on ⬜.
+       Out of scope for P1 #13 — see audit follow-up. We're only removing
+       redundant !important markers here; visual rendering of the bug is
+       unchanged.
+
+       !important dropped from all custom BizLMS / BEM selectors below
+       — body.high-contrast prefix (0,1,1) + custom class (0,2,1) easily
+       wins over Bootstrap component defaults (0,1,0). Bootstrap utility
+       classes (.text-muted) still need !important — only one case below. */
 
     /* BizLMS Online Exams + Classrooms cards */
     .online_exam_card, .classroom_card,
     .onlineexam_module_detail, .classroom_module_detail {
-        background: #1a1d27 !important;
-        border-color: #2d3140 !important;
-        color: #c4cad8 !important;
+        background: #1a1d27;
+        border-color: #2d3140;
+        color: #c4cad8;
     }
 
     /* BizLMS Learning Path cards */
     .learningplan_card, .lp_course_block {
-        background: #1a1d27 !important;
-        border-color: #2d3140 !important;
+        background: #1a1d27;
+        border-color: #2d3140;
     }
     .learningplan_card a, .lp_course_block a {
-        color: #60a5fa !important;
+        color: #60a5fa;
     }
 
     /* BizLMS Report tables */
     .block_learnerscript table,
     .block_reportdashboard table {
-        background: #1a1d27 !important;
-        color: #c4cad8 !important;
+        background: #1a1d27;
+        color: #c4cad8;
     }
     .block_learnerscript th,
     .block_reportdashboard th {
-        background: #232733 !important;
-        color: #e8eaed !important;
-        border-color: #2d3140 !important;
+        background: #232733;
+        color: #e8eaed;
+        border-color: #2d3140;
     }
     .block_learnerscript td,
     .block_reportdashboard td {
-        border-color: #2d3140 !important;
+        border-color: #2d3140;
     }
 
     /* BizLMS Profile page header */
     .user_gen_info .profile_userinfo_box {
-        background: #003366 !important;
+        background: #003366;
     }
     .profiledatadisplay .nav-link {
-        color: #9ca3b4 !important;
+        color: #9ca3b4;
     }
     .profiledatadisplay .nav-link.active {
-        color: #60a5fa !important;
-        border-bottom-color: #60a5fa !important;
+        color: #60a5fa;
+        border-bottom-color: #60a5fa;
     }
 
     /* === Catalog (AngularJS) === */
     .local_search_course_card, .catalog_card,
     .cr_courses, .coursecard {
-        background: #1a1d27 !important;
-        border-color: #2d3140 !important;
+        background: #1a1d27;
+        border-color: #2d3140;
     }
     .local_search_course_card h4,
     .catalog_card .course_title,
     .cr_courses h4, .coursecard h4,
     .course_fullname, .course_shortname {
-        color: #e8eaed !important;
+        color: #e8eaed;
     }
     .cr_courses .course_desc,
     .coursecard .course_summary,
     .catcategory_text {
-        color: #9ca3b4 !important;
+        color: #9ca3b4;
     }
     /* Catalog filters sidebar */
     .module_filter_params {
-        background: #1a1d27 !important;
-        border-color: #2d3140 !important;
+        background: #1a1d27;
+        border-color: #2d3140;
     }
     .module_filter_params .icon-header,
     .module_filter_params label {
-        color: #c4cad8 !important;
+        color: #c4cad8;
     }
     .collapsed_settings_div {
-        border-color: #2d3140 !important;
+        border-color: #2d3140;
     }
     .checkbox-item label {
-        color: #9ca3b4 !important;
+        color: #9ca3b4;
     }
 
     /* === Online Exams + Classrooms cards === */
     .onlineexam_card, .classroom_card,
     .local_onlineexams .coursecard,
     .local_classroom .coursecard {
-        background: #1a1d27 !important;
-        border-color: #2d3140 !important;
+        background: #1a1d27;
+        border-color: #2d3140;
     }
     .onlineexam_card h4, .classroom_card h4 {
-        color: #e8eaed !important;
+        color: #e8eaed;
     }
     .classroom_tabs .nav-link {
-        color: #9ca3b4 !important;
+        color: #9ca3b4;
     }
     .classroom_tabs .nav-link.active {
-        background: #0066A7 !important;
-        color: #fff !important;
+        background: #0066A7;
+        color: #fff;
     }
 
     /* === Learning Paths === */
     .learningplan_view .card,
     .learning_plan_card {
-        background: #1a1d27 !important;
-        border-color: #2d3140 !important;
+        background: #1a1d27;
+        border-color: #2d3140;
     }
     .learningplan_view .card h4,
     .learning_plan_card h4,
     .plan_title {
-        color: #e8eaed !important;
+        color: #e8eaed;
     }
     .plan_details, .plan_code {
-        color: #9ca3b4 !important;
+        color: #9ca3b4;
     }
     /* Learning path course sequence arrows */
     .lp_course_sequence span {
-        color: #c4cad8 !important;
+        color: #c4cad8;
     }
 
     /* === Profile page === */
     .profile_header {
-        background: linear-gradient(135deg, #0a3d6b 0%, #0f7a73 100%) !important;
+        background: linear-gradient(135deg, #0a3d6b 0%, #0f7a73 100%);
     }
     .profile_content,
     .profile_info_section {
-        background: #1a1d27 !important;
-        border-color: #2d3140 !important;
+        background: #1a1d27;
+        border-color: #2d3140;
     }
     .profile_info_section label,
     .profile_info_section .info_label {
-        color: #9ca3b4 !important;
+        color: #9ca3b4;
     }
     .profile_info_section .info_value {
-        color: #e8eaed !important;
+        color: #e8eaed;
     }
     .profile_tab .nav-link {
-        color: #9ca3b4 !important;
+        color: #9ca3b4;
     }
     .profile_tab .nav-link.active {
-        color: #e8eaed !important;
-        border-bottom-color: #0066A7 !important;
+        color: #e8eaed;
+        border-bottom-color: #0066A7;
     }
 
     /* === Reports (LearnerScript) === */
     .learnerscript_report table,
     .learnerscript_report th,
     .learnerscript_report td {
-        background: #1a1d27 !important;
-        color: #c4cad8 !important;
-        border-color: #2d3140 !important;
+        background: #1a1d27;
+        color: #c4cad8;
+        border-color: #2d3140;
     }
     .learnerscript_report th {
-        background: #161820 !important;
-        color: #e8eaed !important;
+        background: #161820;
+        color: #e8eaed;
     }
     .learnerscript_report tr:hover td {
-        background: #232733 !important;
+        background: #232733;
     }
 
     /* === Moodle core pages in dark === */
     /* Global search */
     .search-results .result-content {
-        background: #1a1d27 !important;
-        border-color: #2d3140 !important;
+        background: #1a1d27;
+        border-color: #2d3140;
     }
     /* Course overview (My Courses) */
     .block_myoverview .course-summaryitem {
-        background: #1a1d27 !important;
-        border-color: #2d3140 !important;
+        background: #1a1d27;
+        border-color: #2d3140;
     }
     .block_myoverview .course-summaryitem .text-muted {
-        color: #9ca3b4 !important;
+        color: #9ca3b4 !important;  // preserved: Bootstrap utility `.text-muted` uses !important; only !important beats it
     }
 
-    /* === BizLMS Modals (Create User / Course) === */
+    /* === BizLMS Modals (Create User / Course) ===
+       This block is scoped to body.high-contrast, so it does NOT collide
+       with _bizlms-dark.scss (which is body.dark-mode scoped). The two
+       modes are mutually exclusive. Drop !important. */
     .modal.local_users,
     .modal.local_courses,
     .modal .modal-content {
-        background: #1a1d27 !important;
-        border-color: #2d3140 !important;
+        background: #1a1d27;
+        border-color: #2d3140;
     }
     .modal .modal-header {
-        background: #161820 !important;
-        border-color: #2d3140 !important;
-        color: #e8eaed !important;
+        background: #161820;
+        border-color: #2d3140;
+        color: #e8eaed;
     }
     .modal .modal-body {
-        background: #1a1d27 !important;
-        color: #c4cad8 !important;
+        background: #1a1d27;
+        color: #c4cad8;
     }
     .modal .modal-body label {
-        color: #c4cad8 !important;
+        color: #c4cad8;
     }
     .modal .modal-body input,
     .modal .modal-body select,
     .modal .modal-body textarea {
-        background: #232733 !important;
-        border-color: #2d3140 !important;
-        color: #e8eaed !important;
+        background: #232733;
+        border-color: #2d3140;
+        color: #e8eaed;
     }
     .modal .modal-footer {
-        background: #161820 !important;
-        border-color: #2d3140 !important;
+        background: #161820;
+        border-color: #2d3140;
     }
     /* Modal step wizard tabs */
     .modal .custom_modal_tabs .nav-link {
-        color: #9ca3b4 !important;
+        color: #9ca3b4;
     }
     .modal .custom_modal_tabs .nav-link.active {
-        background: #0066A7 !important;
-        color: #fff !important;
+        background: #0066A7;
+        color: #fff;
     }
 }
