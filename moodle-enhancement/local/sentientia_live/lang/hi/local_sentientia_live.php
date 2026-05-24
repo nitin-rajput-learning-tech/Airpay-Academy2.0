@@ -169,7 +169,7 @@ $string['live_results_empty']          = 'अभी तक कोई प्र�
 $string['live_results_correct_label']  = 'सही';
 $string['live_results_avg_label']      = 'औसत';
 $string['live_results_responses_label']= 'प्रतिक्रियाएं';
-$string['live_results_scale_label']    = 'Scale';
+$string['live_results_scale_label']    = 'स्केल';
 $string['live_results_rank_label']     = 'रैंक';
 $string['live_results_item_label']     = 'आइटम';
 $string['live_results_avg_pos_label']  = 'औसत स्थिति';
@@ -206,7 +206,7 @@ $string['no_slide_types_enabled']       = 'इस सर्वर पर को�
 $string['use_this_type']                = 'इस प्रकार का उपयोग करें';
 
 // Per-type display name + short description.
-$string['slide_type_multichoice']       = 'Multiple choice';
+$string['slide_type_multichoice']       = 'बहुविकल्पीय';
 $string['slide_type_multichoice_desc']  = 'ऑडियंस आपके दिए गए विकल्पों में से एक चुनता है। परिणाम बार चार्ट के रूप में दिखाई देते हैं।';
 $string['slide_type_quiz']              = 'क्विज़';
 $string['slide_type_quiz_desc']         = 'Multiple choice की तरह, लेकिन सही उत्तर के साथ। ऑडियंस को तुरंत सही / गलत दिखाई देता है और एक लाइव लीडरबोर्ड भी।';

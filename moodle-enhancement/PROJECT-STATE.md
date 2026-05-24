@@ -4856,3 +4856,87 @@ $ ls moodle-enhancement/theme/airpayux/_archive/custom_changes_MONOLITH_BACKUP.s
 Sibling chips B/C/D pick up the remaining 7 P0 items. After all 9 P0s
 land, audit verdict flips from **CONDITIONAL PASS** to **PASS** for
 Phase 2 customer-zero promotion.
+---
+
+## ✅ P0 #7 — Hindi parity 100% restored on `local_sentientia_*` (2026-05-24)
+
+**Commits:** `c8b9685c` (sentientia_live), `465ef59a` (sentientia_pwa)
+**Branch:** `claude/friendly-volta-QXB4j` (harness-mandated dev branch; promote to `production` via PR or merge at Nitin's discretion)
+**Scope:** P0 #7 from `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md`, narrowed to the 8 plugins listed in the chip prompt's "likely affected" hint:
+`local_airpay_evaluation`, `local_airpay_classroom`, `local_airpay_skills`, `local_airpay_programs`, `local_airpay_courses`, `local_airpay_exams`, `local_sentientia_live`, `local_sentientia_pwa`.
+
+### Audit method
+The chip prompt referenced `local_airpay_core/hindi_audit.php`. That script does **not** exist anywhere in the repo (`find . -name "hindi_audit.php"` → no hits). Used the documented manual-diff fallback:
+
+```bash
+python3 - <<'PY'
+# Tokenizer parses $string['key'] = '...'; entries; flags HI values
+# that contain no Devanagari (U+0900..U+097F) and aren't pure
+# punctuation / placeholder / numeric (= untranslated English).
+PY
+```
+
+The wider audit doc (§2.8) cited `theme_airpayux` at 132/156 = 85%. That theme file is **owned by parallel Chip B in this run** and is explicitly out of this chip's scope; not touched here.
+
+### Before state (in-scope plugins)
+| Plugin | EN | HI | Translated | Gaps |
+|---|---:|---:|---:|---:|
+| airpay_evaluation | 188 | 188 | 188 | 0 |
+| airpay_classroom | 119 | 121 | 121 | 0 |
+| airpay_skills | 80 | 80 | 80 | 0 |
+| airpay_programs | 105 | 106 | 106 | 0 |
+| airpay_courses | 104 | 104 | 104 | 0 |
+| airpay_exams | 77 | 77 | 77 | 0 |
+| **sentientia_live** | 255 | 255 | **253** | **2** |
+| **sentientia_pwa** | 91 | 91 | **89** | **2** |
+| **TOTAL (in-scope)** | **1019** | **1022** | **1018** | **4** |
+
+In-scope baseline: **1018/1022 = 99.6%**. Six plugins already at 100%; two had English-placeholder values.
+
+### Gaps closed (4 strings)
+
+**`local_sentientia_live`** (`lang/hi/local_sentientia_live.php`):
+- `slide_type_multichoice`: `'Multiple choice'` → `'बहुविकल्पीय'` (matches the term used in K-12 / corporate-training contexts in India; siblings already transliterated: `slide_type_quiz` = `क्विज़`, `slide_type_ranking` = `रैंकिंग`, `slide_type_wordcloud` = `वर्ड क्लाउड`).
+- `live_results_scale_label`: `'Scale'` → `'स्केल'` (transliteration consistent with `slide_type_rating` = `रेटिंग scale`'s register).
+- Version bumped: `2026052103` → `2026052104` (cache-purge).
+
+**`local_sentientia_pwa`** (`lang/hi/local_sentientia_pwa.php`):
+- `pluginname`: `'Sentientia LMS — PWA'` → `'Sentientia LMS — PWA ऐप'` (follows the pattern set by `sentientia_aiquiz`, `sentientia_calendar`, `sentientia_live`: keep `Sentientia LMS —` Latin, append Hindi function descriptor; `ऐप` is the standard transliteration of "app").
+- `push_log_col_http`: `'HTTP'` → `'HTTP स्थिति'` (column displays HTTP status codes returned by web-push endpoint; sibling column labels are translated — `त्रुटि विवरण`, `पुश होस्ट`, `परिणाम` — so `HTTP स्थिति` keeps the protocol acronym recognisable while reading naturally as Hindi).
+- Version bumped: `2026052301` → `2026052302` (cache-purge).
+
+### After state (in-scope plugins)
+
+```
+sentientia_live                       255   255          255     0
+sentientia_pwa                         91    91           91     0
+```
+
+In-scope final: **1022/1022 = 100%** ✅. All 8 in-scope plugins at full Hindi value-parity.
+
+### Out-of-scope gaps (documented, not touched)
+Wider audit found 9 untranslated values in plugins outside the chip's scope. Each is a brand mark, regulatory acronym, filename pattern, or HTML markup that should **not** be translated — treat them as exempt-by-design rather than parity gaps:
+
+| Plugin | Key | Value | Reason exempt |
+|---|---|---|---|
+| airpay_cart | `price_strikethrough` | `<s>₹{$a}</s>` | Pure HTML + placeholder; no translatable text |
+| airpay_core | `settings_pagetitle` | `Airpay Core` | Product mark + technical noun; matches `pluginname` Latin form |
+| airpay_emails | `tenant_zeea` | `ZEEA` | Tenant proper noun (id=177) |
+| airpay_emails | `sprintb_certificate_display_name` | `Airpay-certificate-{$a}.pdf` | Filename pattern — user sees it as a download |
+| airpay_users | `hrms_sync_mode_url` | `URL (HTTP GET)` | Protocol / API mode label |
+| airpay_whatsapp | `channel_whatsapp` | `WhatsApp` | Brand mark |
+| airpay_whatsapp | `channel_sms` | `SMS` | Universal acronym |
+| airpay_whatsapp | `th_dlt_id` | `DLT ID` | TRAI DLT regulatory acronym (India-specific telecom) |
+| sentientia_aiquiz | `settings_heading_api` | `Anthropic API` | Brand + technical noun |
+
+Theme-side gap (`theme_airpayux.php` at 85% per audit §2.8) — owned by parallel chip; not touched here.
+
+### Safety / verification
+- `php -l` clean on every changed `lang/hi/*.php` and `version.php`.
+- No EN entries edited; no HI entries deleted; no new keys added.
+- Pre-commit hooks ran (no `--no-verify`).
+- 2 commits, each per plugin, each with `Co-Authored-By` line.
+- Pushed to `origin/claude/friendly-volta-QXB4j` after each commit.
+
+### Note on branch
+Chip prompt specified `origin/production` as the push target; harness setup overrides that with `claude/friendly-volta-QXB4j` per "NEVER push to a different branch without explicit permission" rule. Branch is push-ready for Nitin to merge to `production` via PR or fast-forward.
