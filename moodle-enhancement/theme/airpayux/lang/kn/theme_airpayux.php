@@ -120,3 +120,20 @@ $string['learnerlogin'] = 'ಮೊಬೈಲ್ ನಂಬರ್ ನಮೂದಿಸ
 $string['enterotp'] = 'OTP ನಮೂದಿಸಿ';
 $string['resentotp'] = 'OTP ಮರುಕಳಿಸಿ';
 $string['entermobileotp'] = 'ನಮೂದಿಸಿದ ಮೊಬೈಲ್ ನಂಬರ್ ನೋಂದಾಯಿಸಿಲ್ಲ, ದಯವಿಟ್ಟು ಪರಿಶೀಲಿಸಿ';
+
+// F-13 (Platform Visual Audit 2026-05-24) — ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ಸ್ವಾಗತ ಬ್ಯಾನರ್,
+// ಚಾರ್ಟ್ ಶೀರ್ಷಿಕೆಗಳು ಮತ್ತು ಕಂಪ್ಲಯನ್ಸ್ KPI ಲೇಬಲ್‌ಗಳು.
+// templates/dashboard.mustache ನಲ್ಲಿ {{#str}} ಮೂಲಕ ಲೋಡ್ ಆಗುತ್ತವೆ.
+// {$a} = ಬಳಕೆದಾರನ ಮೊದಲ ಹೆಸರು.
+$string['welcome_back_admin']      = 'ಮತ್ತೆ ಸ್ವಾಗತ, {$a}';
+$string['subtitle_admin']          = 'ಪ್ಲ್ಯಾಟ್‌ಫಾರ್ಮ್ ಅವಲೋಕನ ಮತ್ತು ಸಿಸ್ಟಮ್ ಆರೋಗ್ಯ';
+$string['welcome_manager']         = 'ಸ್ವಾಗತ, {$a}';
+$string['subtitle_manager']        = 'ತಂಡದ ಅವಲೋಕನ ಮತ್ತು ಕಂಪ್ಲಯನ್ಸ್ ಸ್ಥಿತಿ';
+$string['welcome_learner']         = 'ಮತ್ತೆ ಸ್ವಾಗತ, {$a}!';
+$string['subtitle_learner']        = 'ನೀವು ಎಲ್ಲಿ ಬಿಟ್ಟಿದ್ದೀರೋ ಅಲ್ಲಿಂದಲೇ ಮುಂದುವರಿಸಿ ಮತ್ತು ನಿಮ್ಮ ಕೌಶಲ್ಯಗಳನ್ನು ಬೆಳೆಸಿಕೊಳ್ಳಿ';
+$string['chart_enrolment_trend']   = 'ನೋಂದಣಿ ಟ್ರೆಂಡ್';
+$string['chart_course_distribution'] = 'ಕೋರ್ಸ್ ವಿತರಣೆ';
+$string['kpi_mandatory_courses']   = 'ಕಡ್ಡಾಯ ಕೋರ್ಸ್‌ಗಳು';
+$string['kpi_compliance_rate']     = 'ಕಂಪ್ಲಯನ್ಸ್ ರೇಟ್';
+$string['kpi_overdue']             = 'ಬಾಕಿ';
+$string['kpi_total_assigned']      = 'ಒಟ್ಟು ನಿಯೋಜಿತ';
