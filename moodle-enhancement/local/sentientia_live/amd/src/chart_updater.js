@@ -7,6 +7,12 @@
  * Listens for sentientia-live:response_added CustomEvent and mutates
  * result panel DOM in place. NO innerHTML — only textContent + style.width.
  *
+ * P0 #8 — also writes a localised "<count> <suffix>" string to the
+ * panel's hidden sr-only [data-live-tally-summary] span so screen-
+ * reader users hear the tally change. The aria-live="polite"
+ * aria-atomic="true" on that span (set in result_panel.mustache)
+ * re-announces the full count phrase on each update.
+ *
  * @module local_sentientia_live/chart_updater
  */
 
@@ -24,11 +30,21 @@ const handleResponseAdded = (ev) => {
     const {slide_id: slideId, slide_type: slideType,
         count_now: countNow, tally} = ev.detail;
 
-    const totalEl = document.querySelector(
-        `.sentientia-results-panel[data-slideid="${slideId}"] .sentientia-results-total`);
+    const panel = document.querySelector(
+        `.sentientia-results-panel[data-slideid="${slideId}"]`);
+
+    const totalEl = panel
+        ? panel.querySelector('.sentientia-results-total')
+        : null;
     if (totalEl && typeof countNow === 'number') {
         totalEl.textContent = String(countNow);
     }
+
+    // P0 #8 — sr-only tally summary for screen readers. Writes the
+    // localised "<count> <suffix>" string to the aria-live="polite"
+    // region inside the panel. Fires on every response_added event;
+    // SR users hear "12 responses" on update.
+    updateSrOnlyTallySummary(panel, countNow);
 
     if (!INLINE_UPDATE_TYPES.includes(slideType)) {
         setTimeout(() => window.location.reload(), 500);
@@ -37,8 +53,6 @@ const handleResponseAdded = (ev) => {
     if (!tally) {
         return;
     }
-    const panel = document.querySelector(
-        `.sentientia-results-panel[data-slideid="${slideId}"]`);
     if (!panel) {
         return;
     }
@@ -55,6 +69,26 @@ const handleResponseAdded = (ev) => {
     } else if (slideType === 'rating') {
         updateRatingChart(panel, tally);
     }
+};
+
+/**
+ * P0 #8 — Write a localised "<count> <suffix>" summary to the panel's
+ * sr-only aria-live span. Suffix comes from data-a11y-tally-suffix
+ * on the panel (rendered server-side from get_string()), so the
+ * announcement matches the user's locale. textContent only — no
+ * innerHTML — to stay XSS-safe even if the server payload were
+ * tampered with.
+ */
+const updateSrOnlyTallySummary = (panel, countNow) => {
+    if (!panel || typeof countNow !== 'number') {
+        return;
+    }
+    const summaryEl = panel.querySelector('[data-live-tally-summary]');
+    if (!summaryEl) {
+        return;
+    }
+    const suffix = panel.dataset.a11yTallySuffix || '';
+    summaryEl.textContent = String(countNow) + (suffix ? ' ' + suffix : '');
 };
 
 /**
