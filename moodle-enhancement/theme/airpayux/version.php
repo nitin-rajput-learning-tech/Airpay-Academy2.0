@@ -184,7 +184,22 @@ defined('MOODLE_INTERNAL') || die();
 //     .airpay-footer__product-attribution padding (P1 #14 / F-07).
 //   - templates/footer.mustache: removed the 10-line "Made in India"
 //     removed-badge Mustache comment block (P2 #21 / F-09).
-$plugin->version   = 2026052403;
+//
+// P2 #19 chip-P (2026-05-24) — prefers-reduced-motion stylelint
+// enforcement. New theme-scoped config at
+// theme/airpayux/.stylelintrc.json adds the rule
+// `declaration-property-value-disallowed-list` for `transition-duration`
+// (must reference var()) and shorthand `transition` (no inline s/ms
+// timing values), scoped via overrides to
+// scss/moodle/partials/_surface-*.scss. The token cascade in
+// _tokens.scss already collapses --ap-duration-* to 0ms under
+// @media (prefers-reduced-motion: reduce); enforcing token-only timing
+// in new surface code keeps WCAG 2.3.3 vestibular accessibility
+// automatic going forward. No SCSS files were modified — existing
+// inline-timing violations (catalogued in the visual evidence README)
+// are deferred to a separate refactor chip. Bump invalidates the
+// cached compiled CSS bundle.
+$plugin->version   = 2026052404;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
@@ -203,7 +218,7 @@ $plugin->maturity  = MATURITY_BETA;
 // (83% reduction). Section 1 wrapped under body#page-login-index for
 // ID-specificity. Bundled bugfix: dark-mode selectors used descendant
 // combinator (never fired since #page-X IS body); now chained.
-$plugin->release   = '1.0.33-beta';  // P0 #1+#2+#3+#4+#5+#6+#7+#9 + F-13 + P1 #11+#12+#13+#14 + P2 #21 + cart_badge audit
+$plugin->release   = '1.0.34-beta';  // P0 #1+#2+#3+#4+#5+#6+#7+#9 + F-13 + P1 #11+#12+#13+#14 + P2 #19+#21 + cart_badge audit
 // P1 #10 chip-J (2026-05-24) — _surface-profile.scss (2,507 lines)
 // decomposed into 4 per-surface partials: _surface-user, _surface-badges,
 // _surface-grade-report, _surface-calendar. Admin fragments moved to

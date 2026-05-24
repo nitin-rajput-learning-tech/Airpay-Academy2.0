@@ -5723,3 +5723,131 @@ no coordination required beyond the standard append-only conventions.
 - Audit report: `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md` (F-24, F-25)
 - Frontend rules: `.claude/rules/frontend.md` §BEM
 - State card: `state-cards/sentientia_live-state.md`
+
+---
+
+## 🎚️ P2 #19 — prefers-reduced-motion stylelint enforcement (2026-05-24)
+
+**Chip:** P (`claude/happy-carson-LxfFQ`) — wave-3 follow-up
+**Audit ref:** `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md` §2.7 / P2 #19 (line 852)
+**Scope:** Config-only. Two commits, five files touched (1 new config, 1 version, 1 evidence README, 1 doc, 1 PROJECT-STATE H2). **Zero SCSS / mustache / PHP-plugin / lang changes.**
+
+### What shipped (in commit order)
+
+```
+????????   feat(theme): stylelint rule for prefers-reduced-motion token enforcement (P2 #19)
+????????   docs(rules): document the motion lint rule in .claude/rules/frontend.md
+```
+
+(commit hashes filled in by the merge step.)
+
+### Why
+
+`_tokens.scss:258` already collapses `--ap-duration-*` to `0ms` under
+`@media (prefers-reduced-motion: reduce)`, giving any token-driven
+animation automatic WCAG-2.3.3 compliance. But the audit spot-checked
+multiple surface partials and found 54 direct-value `transition: …
+0.15s ease`, `transition: all 0.2s ease`, etc. declarations that bypass
+the cascade. With no enforcement rule, future surfaces silently
+regress. This chip locks the door.
+
+### Files touched
+
+| File | Action | Why |
+|---|---|---|
+| `theme/airpayux/.stylelintrc.json` | new | Theme-scoped stylelint config; `declaration-property-value-disallowed-list` rule scoped to `scss/moodle/partials/_surface-*.scss` via `overrides`. Kept separate from the upstream Moodle `.stylelintrc` at repo root (which is JSON5 and belongs to grunt). |
+| `theme/airpayux/version.php` | bump | `2026052403` → `2026052404`; release `1.0.33-beta` → `1.0.34-beta`; full rationale block appended. Bump invalidates the CSS bundle cache. |
+| `docs/visual-evidence/2026-05-24/wave3-chip-P/README.md` | new | Rule explainer + sample violation (`_surface-course.scss:213`) + 9-row inventory table of existing violations deferred to chip-P+. |
+| `.claude/rules/frontend.md` | edit | New "Motion & `prefers-reduced-motion`" section under the design-token block — token cascade pattern, lint rule, opt-out pattern, WCAG ref. |
+| `moodle-enhancement/PROJECT-STATE.md` | append | This H2. |
+
+### The rule (full body in `.stylelintrc.json`)
+
+```json
+"declaration-property-value-disallowed-list": [
+    {
+        "transition-duration": ["/^(?!var\\().*$/"],
+        "transition": ["/[0-9]+(\\.[0-9]+)?(s|ms)/"]
+    },
+    { "message": "Motion timing must reference an --ap-duration-* / --ap-transition-* token …", "severity": "error" }
+]
+```
+
+Two patterns:
+1. `transition-duration` accepts only values starting with `var(` — anything else fires.
+2. `transition` (shorthand) fires if ANY numeric+unit pair (`0.2s`, `200ms`, `1s`, etc.) appears anywhere in the value. Forces shorthand to consume `var(--ap-transition-*)` composite tokens.
+
+### Sample violation the rule catches
+
+From `_surface-course.scss:213` (untouched today; deferred to chip-P+):
+
+```scss
+.course_extended_menu_itemlink {
+    /* ... */
+    transition: all 0.2s ease;   /* ← lint fires here */
+}
+```
+
+### Inventory of existing violations (deferred to chip-P+)
+
+```
+_surface-course.scss          13
+_surface-user.scss            11
+_surface-login.scss            9
+_surface-dashboard.scss        6
+_surface-grade-report.scss     5
+_surface-badges.scss           3
+_surface-footer.scss           3
+_surface-navbar.scss           2
+_surface-calendar.scss         2
+                             ── 54 total
+```
+
+Token-compliant usages already in place (positive examples kept for
+reference): `_surface-course.scss:111–112, 132–134` —
+`transition: <prop> var(--ap-transition-quick), …`.
+
+### Follow-up step for Nitin
+
+stylelint 15.11 is already installed as a root devDependency; no
+`package.json` change shipped today. To use the rule:
+
+```powershell
+# From repo root, after `npm install`:
+npx stylelint --config moodle-enhancement/theme/airpayux/.stylelintrc.json `
+              "moodle-enhancement/theme/airpayux/scss/moodle/partials/_surface-*.scss"
+```
+
+Expected: 54 errors across 9 partials. That output is the green-light
+to schedule chip-P+, which will migrate the 54 inline-timing
+declarations to `var(--ap-transition-quick|default|slow|emphatic)`.
+
+### Conflict avoidance
+
+Chip-P touches different files than every other 2026-05-24 chip — the
+config file is new, `version.php` is the central coordination point
+(but the bump is purely additive), and the doc file
+`.claude/rules/frontend.md` has had no concurrent edits in the wave-3
+sweep. PROJECT-STATE.md and the visual-evidence subtree follow the
+append-only conventions per `docs/CONTRIBUTING-PARALLEL-SESSIONS.md` §3 + §6.
+
+### Safety + parity
+
+- ✅ `.stylelintrc.json` parses as strict JSON
+      (`python -c "import json,sys; json.load(sys.stdin)"` silent).
+- ✅ `php -l theme/airpayux/version.php` clean.
+- ✅ Upstream Moodle `.stylelintrc` + `package.json` untouched.
+- ✅ Single plugin version bump for cache invalidation.
+- ✅ Zero SCSS / mustache / PHP-plugin / lang changes — config-only.
+- ✅ Pre-commit hook passes (no `--no-verify`).
+
+### Refs
+
+- Visual evidence: `docs/visual-evidence/2026-05-24/wave3-chip-P/README.md`
+- Audit report: `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md` §2.7 + P2 #19
+- Token cascade: `theme/airpayux/scss/moodle/_tokens.scss:195–264`
+- Frontend rules: `.claude/rules/frontend.md` → new "Motion & `prefers-reduced-motion`" section
+- WCAG 2.3.3 — Animation from Interactions (Level AAA)
+- Stylelint rule: `declaration-property-value-disallowed-list` (^15.11.0)
+- Deferred: chip-P+ — refactor 54 inline-timing declarations to tokens (~2 hrs)
+
