@@ -1,5 +1,5 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-05-24 (Three parallel-chip MVPs shipped: **Tier 2.6 Calendar Sync** — `local_sentientia_calendar` with token-URL ICS feed, 4 feature flags, 28 PHPUnit assertions, ADR-013, Hindi 100%; **Tier 1 #4 AI Quiz Generation Phase G.0** — `local_sentientia_aiquiz` with 4-layer cost defence and mock-mode demoable pipeline, ~47 PHPUnit tests, ADR-012, Hindi 100%; **Tier 2 #7 Real-time Leaderboards Phase L.0** — `local_sentientia_leaderboard` + `block_sentientia_leaderboard` with SSE-driven live ranking across quiz/completion/skill board types, GDPR-compliant opt-out, ADR-014, Hindi 100%. Earlier today the night-run autonomous batch shipped 16 items: Phase B.12 cutover-day mechanical fixes (A1-A8), plugin PHPUnit coverage (B1-B2), Goal C user guides for 6 personas (C1-C6); cutover-day TODO list is now mostly empty modulo NVDA verification + activity_header runtime test. **Paygw security follow-up shipped earlier this session** — MD5 deprecated, require_login() at file scope removed, sandbox/live URL clarified, 13 new PHPUnit tests added. Phase B Moodle 5.2 upgrade is code-complete; production stays on 5.1 until customer-driven cutover decision. ADR-001 records the strategic pivot from "patch Moodle deployment" to "build saleable enterprise LMS product" — Airpay Academy is customer-zero. See `docs/adr/ADR-001-fork-strategy-and-product-pivot.md`.
+**Updated:** 2026-05-24 (Three parallel-chip MVPs shipped: **Tier 2.6 Calendar Sync** — `local_sentientia_calendar` with token-URL ICS feed, 4 feature flags, 28 PHPUnit assertions, ADR-013, Hindi 100%; **Tier 1 #4 AI Quiz Generation Phase G.0** — `local_sentientia_aiquiz` with 4-layer cost defence and mock-mode demoable pipeline, ~47 PHPUnit tests, ADR-012, Hindi 100%; **Tier 2 #7 Real-time Leaderboards Phase L.0** — `local_sentientia_leaderboard` + `block_sentientia_leaderboard` with SSE-driven live ranking across quiz/completion/skill board types, GDPR-compliant opt-out, ADR-014, Hindi 100%. **Platform Visual Audit v4.1.0** shipped from mobile-app session — 14 surfaces audited (9 P0 / 8 P1 / 6 P2 findings), CONDITIONAL PASS verdict; full report at `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md`. Earlier today the night-run autonomous batch shipped 16 items: Phase B.12 cutover-day mechanical fixes (A1-A8), plugin PHPUnit coverage (B1-B2), Goal C user guides for 6 personas (C1-C6); cutover-day TODO list is now mostly empty modulo NVDA verification + activity_header runtime test. **Paygw security follow-up shipped earlier this session** — MD5 deprecated, require_login() at file scope removed, sandbox/live URL clarified, 13 new PHPUnit tests added. Phase B Moodle 5.2 upgrade is code-complete; production stays on 5.1 until customer-driven cutover decision. ADR-001 records the strategic pivot from "patch Moodle deployment" to "build saleable enterprise LMS product" — Airpay Academy is customer-zero. See `docs/adr/ADR-001-fork-strategy-and-product-pivot.md`.
 
 ---
 
@@ -4746,3 +4746,46 @@ blocks/sentientia_leaderboard/
 - ADR: `docs/adr/ADR-014-real-time-leaderboards-realtime-mechanism.md`
 - State card: `state-cards/local_sentientia_leaderboard-state.md`
 - Visual evidence: `docs/visual-evidence/2026-05-24/`
+
+---
+
+## 🔍 Platform Visual Audit — 2026-05-24
+
+**Auditor:** Claude (Opus 4.7, static code-level review)
+**Branch:** `claude/platform-visual-audit-mgare`
+**Report:** `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md`
+
+### Verdict
+**CONDITIONAL PASS** — promote with a 9-item P0 punch-list closed first.
+
+### Counts
+- 14 surfaces audited (Sprint 1 trio + 9 Goal A + 2 plugins)
+- **9 P0** (blocking promotion)
+- **8 P1** (this sprint)
+- **6 P2** (polish / document & defer)
+
+### Top P0s
+1. Orphan file `scss/moodle/partials/Claude` (98 KB, 135 !important, never imported) — DELETE
+2. `custom_changes_MONOLITH_BACKUP.scss` (284 KB, 682 !important) — move out of `scss/`
+3. Navbar hardcoded English (Dashboard / My Courses / Catalog / Profile / Home + 3 a11y labels)
+4. Footer hardcoded English (Privacy / Terms / Help / Contact + copyright)
+5. Dashboard inline-style avalanche (28 inline `style=` attributes, 2 hex literals bypass tokens)
+6. Footer Sentientia attribution band uses inline hex (`#0066A7`, `#5a6070`, `#f8f9fc`, `#e2e6ef`)
+7. Hindi locale at 85% parity (132/156) — violates CLAUDE.md "100% required" mandate
+8. `sentientia_live` has ZERO `aria-live` regions — real-time UI silent to screen readers
+9. `navbar.mustache` contains inline `<script>` block for cart-badge — should be AMD module
+
+### Top P1s
+- `_surface-profile.scss` is 2,507 lines / 164 !important — needs decomposition into 4 partials
+- 53 bare `:focus` rules across surface partials, zero `:focus-visible` — keyboard a11y debt
+- `dark_mode.scss` uses 253 `!important` — token-cascade refactor would eliminate most
+- `_surface-footer.scss` has zero `@media` breakpoints
+- Chart.js loaded from external CDN with no SRI hash
+
+### Remediation budget
+- P0: ~15 hours (~2 working days)
+- P1: ~3-4 working days
+- P2: backlog
+
+### Next
+Schedule a fix-sprint to close the 9-item P0 list before Phase 2 customer-zero promotion. The audit branch is push-ready; no PR opened (Nitin to request).
