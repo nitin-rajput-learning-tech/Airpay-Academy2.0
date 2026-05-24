@@ -249,3 +249,10 @@ $plugin->release   = '1.0.36-beta';  // P0 #1+#2+#3+#4+#5+#6+#7+#9 + F-13 + P1 #
 // decomposed into 4 per-surface partials: _surface-user, _surface-badges,
 // _surface-grade-report, _surface-calendar. Admin fragments moved to
 // _bizlms-admin.scss. Pure relocation refactor — no rule changes (F-16).
+// P2 #18 chip-O (2026-05-24) — _moodle-overrides.scss reduced from 136 to
+// 30 active !important declarations (-77.9%) via natural specificity wins.
+// Six logical commit buckets: nav-drawer scheme icons, A11Y warning + btn-group
+// radii, forms/cards/tables, toolbar/badge/focus/popovers, course-header/drawer,
+// pagination/table-text-align/filter form. 26 preserved with inline rationale
+// (Bootstrap utility .text-muted, DataTables vendor, YUI/JS inline styles,
+// intra-file conflicts, jQuery UI font-family).
