@@ -22,6 +22,7 @@
 @import "partials/surface-login";
 @import "partials/surface-dashboard";
 @import "partials/surface-course";
+@import "partials/surface-user";        // P1 #10 / F-16 — extracted from surface-profile (Goals A.1 / A.6 / A.7)
 @import "partials/surface-profile";
 
 // 5. BizLMS plugin overrides (remove after BizLMS fully removed)
