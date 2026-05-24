@@ -4,6 +4,7 @@
 **Current version:** `2026051300`  (1.0.0)
 **Maturity:** STABLE — Sprint B compliance dashboard widget
 **Created:** 2026-05-13
+**Last refreshed:** 2026-05-24 (P1 state-card pass — no drift)
 **Owner:** Head of L&D
 
 ---
@@ -79,3 +80,18 @@ rather than crashing the dashboard render.
 | `tests/block_test.php` | 6 PHPUnit cases (silent-hide, KPI labels, region landmark, count accuracy, non-cert-row exclusion) |
 | `version.php` | Plugin version, depends on local_airpay_emails |
 | `README.md` | Plugin user-facing documentation |
+
+---
+
+## State card refresh — 2026-05-24
+
+P1 state-card pass: confirmed plugin still at `2026051300` / `1.0.0`,
+MATURITY_STABLE. PHPUnit `tests/block_test.php` still has 6 methods.
+No code drift since ship; only touched by the Moodle 5.2 web-smoke
+merge (Phase B.3) which exercised it for regression coverage. Card
+remains accurate as-is.
+
+## Feature flags
+
+None — this is a read-only dashboard widget. Visibility is gated by
+the site-admin check inside `get_content()` rather than a flag.
