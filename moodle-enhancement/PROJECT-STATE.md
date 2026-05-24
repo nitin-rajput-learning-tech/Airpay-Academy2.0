@@ -4495,3 +4495,46 @@ Expected: 21/21 passing.
 - `audit/playwright/HARNESS_RUNBOOK.md` — how-to-run + workflow tests section
 - `audit/playwright/tests/surfaces.spec.mjs` — Goal A.x CSS markers
 - `audit/playwright/tests/workflows.spec.mjs` — Goal B workflows
+
+---
+
+## 🔍 Platform Visual Audit — 2026-05-24
+
+**Auditor:** Claude (Opus 4.7, static code-level review)
+**Branch:** `claude/platform-visual-audit-mgare`
+**Report:** `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md`
+
+### Verdict
+**CONDITIONAL PASS** — promote with a 9-item P0 punch-list closed first.
+
+### Counts
+- 14 surfaces audited (Sprint 1 trio + 9 Goal A + 2 plugins)
+- **9 P0** (blocking promotion)
+- **8 P1** (this sprint)
+- **6 P2** (polish / document & defer)
+
+### Top P0s
+1. Orphan file `scss/moodle/partials/Claude` (98 KB, 135 !important, never imported) — DELETE
+2. `custom_changes_MONOLITH_BACKUP.scss` (284 KB, 682 !important) — move out of `scss/`
+3. Navbar hardcoded English (Dashboard / My Courses / Catalog / Profile / Home + 3 a11y labels)
+4. Footer hardcoded English (Privacy / Terms / Help / Contact + copyright)
+5. Dashboard inline-style avalanche (28 inline `style=` attributes, 2 hex literals bypass tokens)
+6. Footer Sentientia attribution band uses inline hex (`#0066A7`, `#5a6070`, `#f8f9fc`, `#e2e6ef`)
+7. Hindi locale at 85% parity (132/156) — violates CLAUDE.md "100% required" mandate
+8. `sentientia_live` has ZERO `aria-live` regions — real-time UI silent to screen readers
+9. `navbar.mustache` contains inline `<script>` block for cart-badge — should be AMD module
+
+### Top P1s
+- `_surface-profile.scss` is 2,507 lines / 164 !important — needs decomposition into 4 partials
+- 53 bare `:focus` rules across surface partials, zero `:focus-visible` — keyboard a11y debt
+- `dark_mode.scss` uses 253 `!important` — token-cascade refactor would eliminate most
+- `_surface-footer.scss` has zero `@media` breakpoints
+- Chart.js loaded from external CDN with no SRI hash
+
+### Remediation budget
+- P0: ~15 hours (~2 working days)
+- P1: ~3-4 working days
+- P2: backlog
+
+### Next
+Schedule a fix-sprint to close the 9-item P0 list before Phase 2 customer-zero promotion. The audit branch is push-ready; no PR opened (Nitin to request).
