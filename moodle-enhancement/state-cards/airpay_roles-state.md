@@ -1,9 +1,10 @@
 # `local_airpay_roles` State Card
 
 **Component:** `local_airpay_roles`
-**Version:** `2026050700` / `1.0.0-beta` (BETA)
-**Status:** ✓ shipped 2026-05-07 (post-G-06 stretch)
-**Reclassified by Nitin:** stub → NEEDED → built (one stretch)
+**Version:** `2026052201` / `1.1.3-beta` (BETA)
+**Status:** ✓ Phase 1 + Phase 2 shipped + WS-contract aligned 2026-05-22 (Goal A Bug #10)
+**Reclassified by Nitin:** stub → NEEDED → built (Phase 1 + Phase 2)
+**Last refreshed:** 2026-05-24 (P1 state-card pass)
 
 ---
 
@@ -106,7 +107,17 @@ local/airpay_roles/
         └── list_audit_test.php                       (8 tests)
 ```
 
-Total: 28 files, ~1900 LOC of new code, 56 PHPUnit tests.
+Total: 28 files, ~1900 LOC of new code. PHPUnit method count (post-
+Phase 2 + Goal A Bug #10):
+- `role_manager_test`: 24 methods
+- `role_manager_phase_2_test`: 9 methods (Phase 2 bulk + role-assignment)
+- `external/list_roles_test`: 9 methods
+- `external/get_role_caps_test`: 7 methods
+- `external/update_capability_test`: 8 methods
+- `external/list_audit_test`: 9 methods
+- `privacy/provider_test`: 5 methods
+
+Total: 71 PHPUnit methods (up from 56 at Phase 1).
 
 ---
 
@@ -215,3 +226,24 @@ These are intentionally deferred:
 - **Add a tenant-scope filter**: add `costcenter_path` column to
   `local_airpay_roles_scope` (new table), join in `list_roles()`.
   Tenant scoping is already a Phase-0A pattern — see `airpay_org/accesslib`.
+
+---
+
+## State card refresh — 2026-05-24
+
+P1 state-card pass: bumped Current version `2026050700` / `1.0.0-beta`
+→ `2026052201` / `1.1.3-beta`. Cumulative changes since Phase 1 ship:
+
+- **Phase 2 follow-ups partially shipped** — `role_manager_phase_2_test`
+  (9 methods) covers the bulk + assignment additions called out in the
+  original Phase 2 follow-ups section. (The follow-ups list itself
+  hasn't been mass-revised; revisit when each item ships individually.)
+- **Goal A Bug #10 (2026-05-22)** — WS-contract alignment with the
+  external-functions audit. Forced version bump to `2026052201`.
+- **Privacy provider** — new `tests/privacy/provider_test.php` (5
+  methods) shipped.
+- **PHPUnit growth** — 71 total methods (up from 56).
+
+No DB schema, capability, or feature-flag drift. Feature flags: none
+registered directly (capability-based gating is sufficient for an
+admin-only role-management surface).
