@@ -128,6 +128,56 @@
         gap: 14px;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   F-07 / P1 #14 (2026-05-24) — Mobile breakpoint at 590px
+   ════════════════════════════════════════════════════════════
+   Primary mobile target per .claude/rules/frontend.md §Responsive
+   Breakpoints. The 768px block above already collapses the compact
+   row to a column; this block tightens spacing for narrow viewports
+   (Galaxy-S, iPhone SE), allows the copyright line to wrap (clears
+   the `white-space: nowrap` set at the base rule) and forces it to
+   render last so logo + links + copy stack as a clean ladder, and
+   trims the Sentientia attribution band so the pill stays compact.
+   The band also gains soft-wrap so a longer brand name from a future
+   white-label customer-N can break across lines without overflowing.
+   Tokens (--ap-space-*, --ap-text-xs) are referenced via var() with
+   fallbacks so the rule degrades gracefully if _tokens.scss is ever
+   loaded after this partial in the compile order.
+   ═══════════════════════════════════════════════════════════ */
+@media (max-width: 590px) {
+    .airpay-footer__compact {
+        flex-direction: column;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: var(--ap-space-3, 12px);
+        padding: var(--ap-space-4, 16px) var(--ap-space-5, 20px);
+    }
+
+    .airpay-footer__logo img {
+        height: 28px;
+    }
+
+    .airpay-footer__links {
+        margin-left: 0;
+        flex-wrap: wrap;
+        gap: var(--ap-space-3, 12px);
+    }
+
+    .airpay-footer__copy {
+        order: 99;
+        white-space: normal;
+        line-height: 1.4;
+    }
+
+    .airpay-footer__product-attribution {
+        padding: var(--ap-space-2, 8px) var(--ap-space-3, 12px);
+        font-size: var(--ap-text-xs, 0.75rem);
+        line-height: 1.5;
+        word-wrap: break-word;
+    }
+}
+
 /* Dark mode footer */
 html.dark-mode .airpay-footer,
 body.dark-mode .airpay-footer {
