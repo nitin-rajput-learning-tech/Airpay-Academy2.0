@@ -224,6 +224,23 @@
     color: var(--ap-color-text-secondary);
 }
 
+/* Team Compliance table — manager dashboard "Team Compliance" section.
+   Replaces 4 inline style attributes including 3 raw hex literals
+   (#dc2626 / #16a34a / #16a34a) and an opacity-dim on inactive rows.
+   The complementary table layout rules already live in
+   _bizlms-admin.scss and custom_media.scss. */
+.airpay-dash__team-table__row--inactive {
+    opacity: 0.65;
+}
+.airpay-dash__team-table__pending--has {
+    color: var(--ap-color-danger);
+    font-weight: var(--ap-weight-semibold);
+}
+.airpay-dash__team-table__pending--none,
+.airpay-dash__team-table__overdue--none {
+    color: var(--ap-color-success);
+}
+
 /* Course progress cards — removed Phase B0 iter 3. Continue Learning
    tiles now use the tokens-aware .airpay-course-card component from
    _components-course-card.scss with its mobile-responsive

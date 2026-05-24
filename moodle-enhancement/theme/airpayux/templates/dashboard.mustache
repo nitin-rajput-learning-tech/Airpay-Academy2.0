@@ -394,13 +394,13 @@
                     </thead>
                     <tbody>
                         {{#teamcompliance}}
-                        <tr {{#is_inactive}}style="opacity: 0.65;"{{/is_inactive}}>
+                        <tr class="{{#is_inactive}}airpay-dash__team-table__row--inactive{{/is_inactive}}">
                             <td><strong>{{name}}</strong></td>
                             <td>{{enrolled}}</td>
                             <td>{{completed}}</td>
                             <td><span class="badge badge-{{rate_class}}">{{rate}}%</span></td>
-                            <td>{{#haspending}}<span style="color: #dc2626; font-weight: 600;">{{pending}}</span>{{/haspending}}{{^haspending}}<span style="color: #16a34a;">0</span>{{/haspending}}</td>
-                            <td>{{#has_overdue}}<span class="badge badge-danger">{{overdue}}</span>{{/has_overdue}}{{^has_overdue}}<span style="color: #16a34a;">✓</span>{{/has_overdue}}</td>
+                            <td>{{#haspending}}<span class="airpay-dash__team-table__pending airpay-dash__team-table__pending--has">{{pending}}</span>{{/haspending}}{{^haspending}}<span class="airpay-dash__team-table__pending airpay-dash__team-table__pending--none">0</span>{{/haspending}}</td>
+                            <td>{{#has_overdue}}<span class="badge badge-danger">{{overdue}}</span>{{/has_overdue}}{{^has_overdue}}<span class="airpay-dash__team-table__overdue--none">✓</span>{{/has_overdue}}</td>
                             <td>{{lastaccess}}</td>
                             <td><a href="{{drilldown_url}}" class="btn btn-sm btn-link p-0" title="Drill down"><i class="fa fa-search-plus"></i></a></td>
                         </tr>
