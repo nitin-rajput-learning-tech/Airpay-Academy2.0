@@ -312,17 +312,26 @@ test('local_airpay_request_list_pending returns the WS contract shape (Bug #10 r
         return res.json();
     }, { sesskey, base: BASE });
 
-    // Either the WS responds with the expected shape, OR with a known
-    // 'no permission' error (Site Admin sees ALL — fine). Anything
-    // else is a regression.
+    // Verified contract via curl 2026-05-24:
+    //   [{"error":false,"data":{"total":0,"rows":[],"page":0,"perpage":25}}]
+    // data is a PAGINATED OBJECT {total, rows[], page, perpage}, not a
+    // raw array. The earlier draft of this test assumed Array.isArray(data)
+    // which was incorrect about the contract — fixed.
     expect(Array.isArray(payload)).toBe(true);
     if (payload[0].error === false) {
-        // Success — verify the contract shape locked in by Bug #10's fix.
         const data = payload[0].data;
-        expect(Array.isArray(data)).toBe(true);
-        if (data.length > 0) {
-            const row = data[0];
-            // Bug #10 + Bug #9b nailed these exact field names. Drift here
+        // Paginated shape: {total, rows, page, perpage}.
+        expect(typeof data).toBe('object');
+        expect(data).toHaveProperty('total');
+        expect(data).toHaveProperty('rows');
+        expect(data).toHaveProperty('page');
+        expect(data).toHaveProperty('perpage');
+        expect(typeof data.total).toBe('number');
+        expect(Array.isArray(data.rows)).toBe(true);
+
+        if (data.rows.length > 0) {
+            const row = data.rows[0];
+            // Bug #10 + Bug #9b field-name regression guard. Drift here
             // would silently break /local/airpay_request/approvals.php.
             expect(row).toHaveProperty('id');
             expect(row).toHaveProperty('courseid');
