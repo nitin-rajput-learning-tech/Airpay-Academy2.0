@@ -166,6 +166,23 @@ $string['signinwithidentityprovider'] = 'किंवा यांच्या�
 $string['sortbystartdate'] = 'कोर्स सुरुवात तारीख';
 $string['sortbyenddate']   = 'कोर्स समाप्ती तारीख';
 
+// P0 #3 फॉलो-अप (2026-05-24, chip-B) — प्रायमरी नेव्हबार i18n.
+$string['nav_dashboard']  = 'डॅशबोर्ड';
+$string['nav_courses']    = 'माझे कोर्सेस';
+$string['nav_catalog']    = 'कॅटलॉग';
+$string['nav_profile']    = 'प्रोफाइल';
+$string['nav_home']       = 'होम';
+$string['a11y_search']    = 'कोर्सेस, लोक, कंटेंट शोधा';
+$string['a11y_usermenu']  = 'वापरकर्ता मेनू';
+$string['a11y_mobilemenu'] = 'मोबाइल मेनू';
+
+// P0 #4 फॉलो-अप (2026-05-24, chip-B) — फूटर i18n.
+$string['footer_privacy']   = 'प्रायव्हसी';
+$string['footer_terms']     = 'अटी आणि नियम';
+$string['footer_help']      = 'मदत';
+$string['footer_contact']   = 'संपर्क';
+$string['footer_copyright'] = '&copy; 2026 एअरपे पेमेंट सर्व्हिसेस प्रा. लि.';
+
 // F-13 (Platform Visual Audit 2026-05-24, chip-G) — डॅशबोर्ड वेलकम बॅनर,
 // चार्ट हेडिंग आणि कंप्लायन्स KPI लेबल्स. {$a} = वापरकर्त्याचे पहिले नाव.
 $string['welcome_back_admin']      = 'पुन्हा स्वागत आहे, {$a}';
