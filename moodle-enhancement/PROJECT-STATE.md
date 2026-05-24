@@ -6119,3 +6119,111 @@ users no longer see the brand-light ring; keyboard `Tab` users still get it.
 - Chip H reference branch: `origin/claude/inspiring-mayer-kWs9O` (commits c4787fa0 login, 7ffbafb5 profile)
 - Lost-in-merge commits: `490b11a20` (chip-J split), `6e3cd87a7` (chip-K refactor)
 - Frontend rules: `.claude/rules/frontend.md`
+
+---
+
+## 🚦 P2 CUTOVER-PREP — CI gate `phpunit-5.2` against Moodle 5.2 (2026-05-24)
+
+**Status:** ✅ Shipped on `claude/laughing-volta-Caa7B` — CI workflow
+edited, docs written, ready for review + merge to `production`.
+
+**Why:** CI already runs three static gates (php-lint, JSON+Mustache
+balance, ws-contract drift), but there was no gate that catches
+*runtime* regressions in the 30+ `local_airpay_*` / `local_sentientia_*`
+plugins or the `block_airpay_*` / `quizaccess_airpay_*` family. Local
+PHPUnit (per `PHPUNIT-RUNBOOK.md`) is human-discipline only — easy to
+skip in a rush. With the 5.2 wholesale upgrade staged per ADR-011, we
+need a forward-compat safety net that runs on every PR, not a sometime-
+ritual that runs once per cutover rehearsal.
+
+**What changed (single chip — minimal surface):**
+
+| File | Change |
+|------|--------|
+| `.github/workflows/ci.yml` | New `phpunit-5.2` job (~13 steps, ~250 lines). Boots Postgres 14 service, clones Moodle 5.2 (`MOODLE_502_STABLE`), composer-installs (cached), copies every airpay/sentientia plugin into the Moodle tree, runs install + `init.php`, assembles a comma-separated `<frankenstyle>_testsuite` list, runs `phpunit --log-junit`, uploads JUnit XML as `phpunit-5.2-results` artifact. Header comment updated to list the new gate. |
+| `moodle-enhancement/docs/ci/PHPUNIT-GATE.md` | New 6-section runbook: how the gate works, how to read a failure, 7 common failure modes with the fix for each, how to skip a flaky test correctly (with the `markTestSkipped()` protocol), how to reproduce CI locally on the XAMPP rig, what the gate does NOT cover. |
+| `moodle-enhancement/PROJECT-STATE.md` | This section. |
+
+**Coverage on first run (read from the existing plugin tree):**
+
+- 28 `local_airpay_*` plugins with `tests/` — `local_airpay_users` (5
+  files), `local_airpay_org` (2), `local_airpay_courses` (3),
+  `local_airpay_evaluation` (3), `local_airpay_catalog` (1), … see
+  `find moodle-enhancement -path '*/tests/*_test.php' | awk -F/ '{print $(NF-2)}' | sort -u`
+- 5 `local_sentientia_*` plugins with `tests/` (calendar, leaderboard,
+  aiquiz, live, pwa)
+- 2 `block_airpay_*` plugins with `tests/` (cert_health, cron_health)
+- 1 `quizaccess_airpay_*` plugin with `tests/` (proctoring — `rule_test`
+  + `upgrade_test`)
+- 1 paygw plugin (`payment/gateway/airpay` — gateway, helper, checksum,
+  privacy_provider)
+- 1 theme (`theme/airpayux` — ws_contract, role_detector,
+  epsilonnavbar, scss, privacy)
+- **Total: ~115 `*_test.php` files** across ~38 testsuites.
+
+**Design choices worth recording:**
+
+1. **Native GitHub Actions, not `moodlehq/moodle-plugin-ci`.** The
+   latter is per-plugin. We want one install with ALL plugins
+   co-resident so cross-plugin dependencies (e.g. `quizaccess_airpay_proctoring`
+   ↔ `local_airpay_proctoring`) resolve naturally.
+2. **Postgres 14, not MariaDB.** Faster to boot in the runner; flushes
+   out PostgreSQL-strict typing issues that MariaDB hides. Per
+   `docs/PRODUCTION-DEPLOY.md`, production stays on MySQL 8.0.44 / 8.4
+   — but a plugin that passes against Postgres almost certainly passes
+   against MySQL (the $DB API abstracts the difference).
+3. **Composer cache keyed on `composer.lock` hash + Moodle branch.**
+   Survives plugin-only PRs; busts only when Moodle bumps a dependency.
+   Reduces cold ~12 min to warm ~5 min.
+4. **Testsuite list built dynamically.** A new plugin with `tests/`
+   joins the gate automatically — no CI edit required. A plugin whose
+   `tests/` is empty (only fixtures) is skipped so we don't get
+   "no tests ran" exit codes.
+5. **`--log-junit` always, artifact `phpunit-5.2-results` on
+   `if: always()`.** Failures surface in the artifact even when the
+   job exits non-zero, so triage doesn't require re-running.
+6. **PHP 8.2 not 8.3.** Matches production XAMPP + the
+   `moodlehq/moodle-php-apache:8.2` reference image. PHP 8.3 lands
+   only after the IT-side runtime upgrade (ADR-011 blocker §1). Bump
+   here when PHP 8.3 ships to RDS.
+
+**Acceptance check:**
+
+- ✅ `.github/workflows/ci.yml` parses with `yaml.safe_load` (5 jobs,
+  including `phpunit-5.2` with 13 steps and the Postgres service).
+- ✅ Gate triggers on the same paths as the existing gates
+  (`moodle-enhancement/**`, `local/airpay_**`, `theme/airpayux/**`,
+  `.github/workflows/**`) — PRs that don't touch any of these don't
+  pay the ~5 min cost.
+- ✅ Docs (`docs/ci/PHPUNIT-GATE.md`) explain remediation for 7 common
+  failure modes (init.php fatal, class-not-found, missing table,
+  generator missing, deprecation-as-exception, Postgres type strict,
+  random-order flake) and document the `markTestSkipped()` protocol.
+- ✅ Pre-commit hook passes (no `--no-verify`).
+- ⚠️ First real CI run is the source-of-truth — if it surfaces failures
+  they're real test bugs, not config errors. The runbook tells the
+  fixer how to triage.
+
+**Safety + parity:**
+
+- ✅ Zero plugin code changed — gate is config + docs only.
+- ✅ Zero core files touched.
+- ✅ Existing four gates (php-lint, static-checks, ws-contract-gate,
+  version-bump-check) preserved untouched.
+- ✅ Trigger paths unchanged — the new job piggybacks on the existing
+  `on:` filter.
+- ✅ Backwards compatible: the gate runs in parallel to the four
+  existing gates; a green run still requires all four to pass plus the
+  new fifth.
+- ✅ Per CLAUDE.md §13, the feature flag for cutover-day rollout would
+  be at the consumer level — the gate itself is binary (on or off) and
+  is on by default for `production` branch + every PR.
+
+**Refs:**
+
+- Workflow: `.github/workflows/ci.yml` — job `phpunit-5.2`
+- Runbook: `moodle-enhancement/docs/ci/PHPUNIT-GATE.md`
+- Local invocation: `moodle-enhancement/PHPUNIT-RUNBOOK.md`
+- 5.2 staging plan: `moodle-enhancement/docs/adr/ADR-011-moodle-5.2-wholesale-upgrade-staging.md`
+- DB rules (multi-tenant scoping in tests): `.claude/rules/database.md`
+- Plugin frankenstyle inventory: `find moodle-enhancement -name version.php | xargs grep '$plugin->component'`

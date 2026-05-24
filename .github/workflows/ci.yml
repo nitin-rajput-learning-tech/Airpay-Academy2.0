@@ -9,15 +9,15 @@ name: CI — Airpay Academy
 #                           static analysis; no Moodle bootstrap)
 #   4. version-bump-check — warns when plugin code changed without
 #                           a version.php bump (PR-only, non-blocking)
+#   5. phpunit-5.2        — full PHPUnit suite for every local_airpay_*,
+#                           local_sentientia_*, block_airpay_*, and
+#                           quizaccess_airpay_* plugin against a fresh
+#                           Moodle 5.2 install (~10-15 min cold, ~5 min
+#                           with composer cache). Blocks merge on red.
 #
-# Full Moodle PHPUnit + Playwright are NOT included here — they
-# require spinning up Moodle 5.1.3+ with our 30+ plugins on a fresh
-# runner (~5-15 min init per PR). Local invocation:
-#   cd C:\xampp\htdocs\moodle5
-#   php public/admin/tool/phpunit/cli/init.php
-#   vendor/bin/phpunit.bat --group ws_contract,role_detector \
-#     public/theme/airpayux/tests/
-# See theme/airpayux/tests/README.md for the full PHPUnit runbook.
+# Playwright is NOT included here — uses local-only fixtures.
+# See moodle-enhancement/PHPUNIT-RUNBOOK.md + docs/ci/PHPUNIT-GATE.md
+# for local invocation and how to triage CI failures.
 
 on:
   pull_request:
@@ -215,3 +215,286 @@ jobs:
             echo "$MISSING plugin(s) need version.php bump."
             # Don't fail the PR — this is a warning, not an error.
           fi
+
+  phpunit-5.2:
+    name: PHPUnit (Moodle 5.2 + airpay plugins)
+    runs-on: ubuntu-latest
+    # Cold init takes ~10-15 min; with composer cache ~5-7 min. Hard cap
+    # at 40 min so a stuck PHPUnit can't burn an hour of runner time.
+    timeout-minutes: 40
+
+    # Booted-by-Actions Postgres 14 — matches Moodle 5.x supported list and
+    # is faster to provision than MariaDB. Plugins must NOT assume MySQL-
+    # specific SQL syntax (Moodle's $DB API abstracts this — see
+    # .claude/rules/database.md "NEVER raw SQL when API exists").
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: moodle
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      MOODLE_BRANCH: MOODLE_502_STABLE
+      MOODLE_DIR: ${{ github.workspace }}/moodle
+      PLUGINS_SRC: ${{ github.workspace }}/airpay-academy/moodle-enhancement
+      JUNIT_DIR: ${{ github.workspace }}/tests/junit
+      # PHP 8.2 matches the moodlehq/moodle-php-apache:8.2 reference image
+      # and the production Airpay XAMPP runtime. Moodle 5.2 supports 8.2+.
+      PHP_VERSION: '8.2'
+
+    steps:
+      - name: Checkout airpay plugins
+        uses: actions/checkout@v4
+        with:
+          path: airpay-academy
+
+      - name: Setup PHP ${{ env.PHP_VERSION }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          # Extensions Moodle 5.x mandates + a few our plugins use (soap for
+          # whatsapp webhook signing, sodium for sentientia_calendar tokens,
+          # zip for SCORM packaging tests).
+          extensions: zip,gd,intl,xml,curl,soap,sodium,mbstring,opcache,pgsql,exif,fileinfo,iconv,ldap,xmlreader,xmlwriter,simplexml,dom
+          ini-values: max_input_vars=5000,memory_limit=512M,opcache.enable_cli=1
+          coverage: none
+          tools: composer:v2
+
+      - name: Clone Moodle ${{ env.MOODLE_BRANCH }}
+        run: |
+          set -e
+          git clone --depth 1 --branch "$MOODLE_BRANCH" \
+            https://github.com/moodle/moodle.git "$MOODLE_DIR"
+          # Print the exact commit so failures are reproducible locally.
+          cd "$MOODLE_DIR"
+          echo "Moodle HEAD:"
+          git log -1 --format='  %h %ci %s'
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.composer/cache
+            ${{ env.MOODLE_DIR }}/vendor
+          # composer.lock hash is stable per Moodle branch — cache survives
+          # plugin-only changes. Bust when Moodle bumps a dep.
+          key: composer-moodle-${{ env.MOODLE_BRANCH }}-php${{ env.PHP_VERSION }}-${{ hashFiles(format('{0}/composer.lock', env.MOODLE_DIR)) }}
+          restore-keys: |
+            composer-moodle-${{ env.MOODLE_BRANCH }}-php${{ env.PHP_VERSION }}-
+            composer-moodle-${{ env.MOODLE_BRANCH }}-
+
+      - name: Install Moodle composer deps
+        working-directory: ${{ env.MOODLE_DIR }}
+        run: composer install --no-progress --no-interaction --prefer-dist
+
+      - name: Copy airpay/sentientia plugins into the Moodle tree
+        run: |
+          set -e
+          # MOODLE_PLUGINS_PATH is NOT a Moodle config — it's how we organise
+          # source. Plugins must physically live under local/, blocks/, mod/.
+          # Copy (not symlink) so plugins look like a normal install.
+          copied=0
+
+          # local/* plugins (airpay_* + sentientia_*) — only dirs with
+          # version.php count; airpay_lifecycle/airpay_pages are partial
+          # plugins-in-progress and don't install.
+          for d in "$PLUGINS_SRC"/local/airpay_* "$PLUGINS_SRC"/local/sentientia_*; do
+            [ -d "$d" ] && [ -f "$d/version.php" ] || continue
+            name=$(basename "$d")
+            rm -rf "$MOODLE_DIR/local/$name"
+            cp -r "$d" "$MOODLE_DIR/local/$name"
+            copied=$((copied + 1))
+            echo "  local/$name"
+          done
+
+          # block/* plugins
+          for d in "$PLUGINS_SRC"/blocks/airpay_* "$PLUGINS_SRC"/blocks/sentientia_*; do
+            [ -d "$d" ] && [ -f "$d/version.php" ] || continue
+            name=$(basename "$d")
+            rm -rf "$MOODLE_DIR/blocks/$name"
+            cp -r "$d" "$MOODLE_DIR/blocks/$name"
+            copied=$((copied + 1))
+            echo "  blocks/$name"
+          done
+
+          # mod/quiz/accessrule/* (quizaccess sub-plugins)
+          if [ -d "$PLUGINS_SRC/mod/quiz/accessrule" ]; then
+            for d in "$PLUGINS_SRC"/mod/quiz/accessrule/airpay_*; do
+              [ -d "$d" ] && [ -f "$d/version.php" ] || continue
+              name=$(basename "$d")
+              rm -rf "$MOODLE_DIR/mod/quiz/accessrule/$name"
+              cp -r "$d" "$MOODLE_DIR/mod/quiz/accessrule/$name"
+              copied=$((copied + 1))
+              echo "  mod/quiz/accessrule/$name"
+            done
+          fi
+
+          # airpayux theme — needed so theme/airpayux/tests/ run with the
+          # rest of the suite (ws_contract, role_detector, etc.).
+          if [ -d "$PLUGINS_SRC/theme/airpayux" ]; then
+            rm -rf "$MOODLE_DIR/theme/airpayux"
+            cp -r "$PLUGINS_SRC/theme/airpayux" "$MOODLE_DIR/theme/airpayux"
+            copied=$((copied + 1))
+            echo "  theme/airpayux"
+          fi
+
+          # paygw/airpay payment plugin (has tests/)
+          if [ -d "$PLUGINS_SRC/payment/gateway/airpay" ]; then
+            mkdir -p "$MOODLE_DIR/payment/gateway"
+            rm -rf "$MOODLE_DIR/payment/gateway/airpay"
+            cp -r "$PLUGINS_SRC/payment/gateway/airpay" "$MOODLE_DIR/payment/gateway/airpay"
+            copied=$((copied + 1))
+            echo "  payment/gateway/airpay"
+          fi
+
+          echo
+          echo "::notice::Copied $copied plugin(s) into the Moodle tree"
+          if [ $copied -eq 0 ]; then
+            echo "::error::No plugins were copied — check PLUGINS_SRC path"
+            exit 1
+          fi
+
+      - name: Write Moodle config.php for PHPUnit
+        run: |
+          set -e
+          mkdir -p "$HOME/moodledata" "$HOME/moodledata_phpu"
+          chmod 0777 "$HOME/moodledata" "$HOME/moodledata_phpu"
+          cat > "$MOODLE_DIR/config.php" <<'PHP'
+          <?php
+          unset($CFG);
+          global $CFG;
+          $CFG = new stdClass();
+          $CFG->dbtype    = 'pgsql';
+          $CFG->dblibrary = 'native';
+          $CFG->dbhost    = 'localhost';
+          $CFG->dbname    = 'moodle';
+          $CFG->dbuser    = 'postgres';
+          $CFG->dbpass    = 'postgres';
+          $CFG->prefix    = 'mdl_';
+          $CFG->dboptions = [
+              'dbpersist' => false,
+              'dbport'    => 5432,
+              'dbsocket'  => '',
+          ];
+          $CFG->wwwroot   = 'http://localhost';
+          $CFG->dataroot  = getenv('HOME') . '/moodledata';
+          $CFG->admin     = 'admin';
+          $CFG->directorypermissions = 02777;
+          // PHPUnit isolation — separate dataroot + prefix per
+          // moodle-enhancement/PHPUNIT-RUNBOOK.md.
+          $CFG->phpunit_dataroot = getenv('HOME') . '/moodledata_phpu';
+          $CFG->phpunit_prefix   = 'phpu_';
+          $CFG->phpunit_directorypermissions = 02777;
+          require_once(__DIR__ . '/lib/setup.php');
+          PHP
+          php -l "$MOODLE_DIR/config.php"
+
+      - name: Install Moodle database
+        working-directory: ${{ env.MOODLE_DIR }}
+        run: |
+          # install_database.php seeds mdl_* tables so plugin install hooks
+          # have somewhere to write. PHPUnit init then mirrors this into
+          # phpu_* tables — same fixture, separate namespace.
+          php admin/cli/install_database.php \
+            --agree-license \
+            --fullname="Airpay Academy CI" \
+            --shortname="aac-ci" \
+            --adminuser=admin \
+            --adminpass='ci-Password1!' \
+            --adminemail='ci@airpay.academy' \
+            --non-interactive \
+            --allow-unstable
+
+      - name: Initialise PHPUnit (build phpunit.xml + seed phpu_ DB)
+        working-directory: ${{ env.MOODLE_DIR }}
+        run: |
+          # init.php auto-discovers every plugin with a tests/ dir and
+          # adds <testsuite name="<frankenstyle>_testsuite"> entries to
+          # phpunit.xml (built from phpunit.xml.dist).
+          php admin/tool/phpunit/cli/init.php
+
+      - name: Build airpay testsuite list
+        id: suites
+        working-directory: ${{ env.MOODLE_DIR }}
+        run: |
+          set -e
+          # Walk every airpay/sentientia plugin that ended up with tests/
+          # AFTER init.php and assemble the comma-separated testsuite list
+          # phpunit's --testsuite flag wants. Skips plugins whose tests/
+          # dir is empty or holds only fixtures.
+          SUITES=""
+          add_suite() {
+            local component="$1"
+            local dir="$2"
+            if [ -d "$dir/tests" ] && \
+               find "$dir/tests" -maxdepth 5 -name '*_test.php' -print -quit | grep -q .; then
+              SUITES="$SUITES,${component}_testsuite"
+              echo "  + ${component}_testsuite"
+            fi
+          }
+
+          echo "Discovered airpay testsuites:"
+          for d in local/airpay_* local/sentientia_*; do
+            [ -d "$d" ] && [ -f "$d/version.php" ] || continue
+            add_suite "local_$(basename "$d")" "$d"
+          done
+          for d in blocks/airpay_* blocks/sentientia_*; do
+            [ -d "$d" ] && [ -f "$d/version.php" ] || continue
+            add_suite "block_$(basename "$d")" "$d"
+          done
+          for d in mod/quiz/accessrule/airpay_*; do
+            [ -d "$d" ] && [ -f "$d/version.php" ] || continue
+            add_suite "quizaccess_$(basename "$d")" "$d"
+          done
+          if [ -d theme/airpayux/tests ]; then
+            add_suite "theme_airpayux" "theme/airpayux"
+          fi
+          if [ -d payment/gateway/airpay/tests ]; then
+            add_suite "paygw_airpay" "payment/gateway/airpay"
+          fi
+
+          SUITES="${SUITES#,}"
+          if [ -z "$SUITES" ]; then
+            echo "::error::No airpay testsuites discovered — copy step likely broken"
+            exit 1
+          fi
+          echo
+          echo "::notice::Will run $(echo "$SUITES" | tr ',' '\n' | wc -l) testsuite(s)"
+          echo "list=$SUITES" >> "$GITHUB_OUTPUT"
+
+      - name: Run PHPUnit
+        id: phpunit
+        working-directory: ${{ env.MOODLE_DIR }}
+        run: |
+          set -e
+          mkdir -p "$JUNIT_DIR"
+          # --log-junit writes results.xml for the artifact uploader.
+          # We do NOT use --stop-on-failure so the artifact contains
+          # every failure, not just the first.
+          vendor/bin/phpunit \
+            --log-junit "$JUNIT_DIR/phpunit-results.xml" \
+            --testsuite "${{ steps.suites.outputs.list }}"
+
+      - name: Upload PHPUnit JUnit XML
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phpunit-5.2-results
+          path: tests/junit/phpunit-results.xml
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Surface failure summary
+        if: failure()
+        run: |
+          echo "::error::PHPUnit failed. Download the 'phpunit-5.2-results' artifact and grep the JUnit XML for <failure> or <error> blocks. See docs/ci/PHPUNIT-GATE.md for remediation steps."
