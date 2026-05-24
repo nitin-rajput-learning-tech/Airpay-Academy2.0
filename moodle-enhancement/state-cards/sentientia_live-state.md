@@ -1,10 +1,10 @@
 # State Card — `local_sentientia_live` (Sentientia LMS Live engagement)
 
 **Current phase:** E.0 — Foundation  
-**Version:** 0.1.0-alpha (2026052101)  
-**Status:** Scaffold only; no UI; feature flag default OFF  
+**Version:** 0.1.1-alpha (2026052401)  
+**Status:** Scaffold + Phase E.1–E.6 features; feature flag default OFF; a11y pass complete  
 **Owner:** Nitin Rajput (PM) + Claude (engineering)  
-**Last updated:** 2026-05-21
+**Last updated:** 2026-05-24
 
 ---
 
@@ -120,3 +120,37 @@ in real time. Tier 1 priority #3 on the Sentientia LMS roadmap; estimated
 - Templates under `local/sentientia_live/templates/`
 
 ADR-004 has implementation notes for the SSE endpoint when we get to E.3.
+
+---
+
+## Change log
+
+### 2026-05-24 — a11y pass (P0 #8 from PLATFORM-VISUAL-AUDIT-2026-05-24)
+
+Added ARIA live regions across the trainer + audience surfaces so
+screen-reader users perceive real-time updates:
+
+- `templates/result_panel.mustache` — outer `role="region"` +
+  aria-label; new sr-only `[data-live-tally-summary]` with
+  `aria-live="polite"` `aria-atomic="true"`.
+- `templates/result_bar_chart.mustache` — `role="img"` + aria-label
+  on the chart container.
+- `audience/play.php` — `role="status"` `aria-live="assertive"` on
+  the response-saved confirmation, session-ended panel; polite on
+  waiting-for-question + already-responded; `role="region"` +
+  aria-label on the current-slide container.
+- `trainer/run.php` — `role="status"` `aria-live="polite"`
+  `aria-atomic="true"` on the audience-count + response-count alerts
+  with localised aria-label landmarks.
+- `amd/src/chart_updater.js` + `amd/build/chart_updater.min.js` —
+  new `updateSrOnlyTallySummary()` writes localised
+  `"<count> <suffix>"` to the panel's sr-only span on every
+  `response_added` SSE event.
+- `lang/en/local_sentientia_live.php` + `lang/hi/local_sentientia_live.php`
+  — 9 new a11y string pairs; 100% parity preserved (264/264).
+- `version.php` — `2026052401` / `0.1.1-alpha`.
+
+Branch: `claude/quirky-dirac-ly2Mz`.
+Evidence: `docs/visual-evidence/2026-05-24/p0-followup-chip-E/README.md`.
+Verified: PHP lint clean across all touched files; node --check clean
+on both ES6 source and ES5 build; Hindi parity 264 = 264.
