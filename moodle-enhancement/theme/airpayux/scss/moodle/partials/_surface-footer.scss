@@ -18,7 +18,7 @@
 
 #page-footer .footer_datacourse a {
     color: #9ba4b4;
-    transition: color 0.2s;
+    transition: color var(--ap-transition-quick);
 }
 #page-footer .footer_datacourse a:hover {
     color: #fff;
@@ -55,7 +55,7 @@
     font-size: 14px;
     z-index: 100;
     box-shadow: 0 4px 12px rgba(0,51,102,0.2);
-    transition: all 0.2s;
+    transition: all var(--ap-transition-quick);
     text-decoration: none;
 }
 #back2Top:hover {
@@ -101,7 +101,7 @@
     font-size: 0.8rem;
     font-weight: 500;
     text-decoration: none;
-    transition: color 0.2s;
+    transition: color var(--ap-transition-quick);
 }
 .airpay-footer__links a:hover {
     color: #fff;

@@ -68,7 +68,7 @@
     border-bottom: 2px solid transparent !important;
     font-weight: 500 !important;
     color: var(--ap-text-secondary) !important;
-    transition: all 0.15s !important;
+    transition: all var(--ap-transition-quick) !important;
 }
 .userprofile .nav-tabs .nav-link.active {
     color: var(--ap-primary) !important;
@@ -118,7 +118,7 @@ body.dark-mode .edu_info .u_info { color: #e8eaed !important; }
     border: 2px solid var(--ap-surface, #fff);
     display: flex; align-items: center; justify-content: center;
     font-size: 11px; cursor: pointer; text-decoration: none;
-    transition: background 0.15s;
+    transition: background var(--ap-transition-quick);
 }
 .ap-profile__edit-btn:hover { background: var(--ap-primary-dark, #004d7a); color: #fff; }
 .ap-profile__info { flex: 1; min-width: 0; }
@@ -188,7 +188,7 @@ body.dark-mode .ap-profile__stat { background: #22252f; }
     color: var(--ap-text-secondary, #607286);
     white-space: nowrap;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: all var(--ap-transition-quick);
     font-family: inherit;
 }
 .ap-profile-tabs__tab i {
@@ -299,7 +299,7 @@ body.dark-mode .ap-profile-tabs__tab--active { background: #0d2540 !important; c
     border-radius: 16px;
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
     overflow: hidden;
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    transition: box-shadow var(--ap-transition-quick), transform var(--ap-transition-quick);
 }
 
 .userprofile .profile_tree .node_category.card:hover {
@@ -369,7 +369,7 @@ body.dark-mode .ap-profile-tabs__tab--active { background: #0d2540 !important; c
     font-size: 13px;
     font-weight: 600;
     border-radius: 10px;
-    transition: background 0.15s ease, transform 0.15s ease;
+    transition: background var(--ap-transition-quick), transform var(--ap-transition-quick);
 }
 .userprofile .profile_tree .node_category li.editprofile > a:hover {
     background: var(--ap-color-primary-dark, #004d80);
@@ -419,7 +419,7 @@ body.dark-mode .ap-profile-tabs__tab--active { background: #0d2540 !important; c
     font-size: 14px;
     font-weight: 500;
     padding: 4px 0;
-    transition: color 0.15s ease, padding-left 0.15s ease;
+    transition: color var(--ap-transition-quick), padding-left var(--ap-transition-quick);
 }
 .userprofile .profile_tree .node_category li.contentnode > a:not(.btn):only-child:hover,
 .userprofile .profile_tree .node_category ul > li > a:not(.btn):only-child:hover {
@@ -567,7 +567,7 @@ body#page-course-edit {
         color: var(--ap-color-text-secondary, #5a6070);
         padding: 4px 8px;
         margin: 0 8px 0 -4px !important;
-        transition: color 0.15s ease;
+        transition: color var(--ap-transition-quick);
     }
     #region-main form.mform fieldset .ftoggler .btn-icon:hover,
     #region-main form.mform fieldset .ftoggler .fheader:hover {
@@ -623,8 +623,8 @@ body#page-course-edit {
         font-size: 14px;
         color: var(--ap-color-text-primary, #1a1a2e);
         background: var(--ap-color-bg-surface-alt, #f8f9fc);
-        transition: border-color 0.15s ease, box-shadow 0.15s ease,
-                    background-color 0.15s ease;
+        transition: border-color var(--ap-transition-quick), box-shadow var(--ap-transition-quick),
+                    background-color var(--ap-transition-quick);
         max-width: 480px;
     }
     /* Focus state — brand-light glow */
@@ -705,8 +705,11 @@ body#page-course-edit {
         border-radius: 8px;
         margin-right: 8px;
         cursor: pointer;
-        transition: background-color 0.15s ease, transform 0.05s ease,
-                    box-shadow 0.15s ease;
+        // transform 0.05s was a tactile-press feedback timing; --ap-transition-quick
+        // is the closest manifesto-locked token (150ms vs 50ms) — small visual
+        // change but keeps the cascade respecting prefers-reduced-motion.
+        transition: background-color var(--ap-transition-quick), transform var(--ap-transition-quick),
+                    box-shadow var(--ap-transition-quick);
     }
     #region-main form.mform button[type="submit"]:hover,
     #region-main form.mform input[type="submit"]:hover {
@@ -728,7 +731,7 @@ body#page-course-edit {
         font-weight: 500;
         border-radius: 8px;
         cursor: pointer;
-        transition: all 0.15s ease;
+        transition: all var(--ap-transition-quick);
     }
     #region-main form.mform .btn-secondary:hover {
         background: var(--ap-color-bg-surface-alt, #f8f9fc);
@@ -847,7 +850,9 @@ body#page-user-preferences {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        transition: color 0.15s ease, transform 0.05s ease;
+        // transform 0.05s rounded up to --ap-transition-quick (150ms); the list-link
+        // micro-shift is now slightly slower but token-driven for reduced motion.
+        transition: color var(--ap-transition-quick), transform var(--ap-transition-quick);
     }
     #region-main ul li a:hover,
     #region-main .list-group .list-group-item a:hover {

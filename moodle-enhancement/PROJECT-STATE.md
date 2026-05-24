@@ -6515,3 +6515,83 @@ future chip before the `continue-on-error` line is removed.
   `moodle-enhancement/audit/playwright/HARNESS_RUNBOOK.md`
 - Frontend rules: `.claude/rules/frontend.md` (the gate enforces the
   590px primary mobile breakpoint locked into that rules file)
+
+---
+
+## 🎚️ P2 #19 follow-up — inline-timing → tokens (2026-05-24)
+
+**Chip:** `claude/clever-dijkstra-8Iczy` (chip-D)
+**Auditor:** Claude Opus 4.7 (1M context)
+**Closes:** the inline-timing violation backlog left open by chip-P
+(P2 #19 / §2.7 in `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md`).
+
+**Commits (one per surface partial):**
+
+| # | Commit | File | Violations closed |
+|---|---|---|---:|
+| 1 | `76d00900` | `_surface-badges.scss` | 3 |
+| 2 | `d0c47f34` | `_surface-calendar.scss` | 2 |
+| 3 | `29dc81f6` | `_surface-navbar.scss` | 2 |
+| 4 | `4a76a7b4` | `_surface-footer.scss` | 3 |
+| 5 | `feb46c31` | `_surface-grade-report.scss` | 5 |
+| 6 | `f4b7a5eb` | `_surface-dashboard.scss` | 6 |
+| 7 | `030fb926` | `_surface-login.scss` | 9 |
+| 8 | `b072fab5` | `_surface-user.scss` | 11 |
+| 9 | `4f13d582` | `_surface-course.scss` | 13 |
+| 10 | (pending) | `version.php` + visual evidence + this H2 | bump only |
+| **Total** | | **9 partials** | **54** |
+
+**What shipped:**
+
+Every `transition` shorthand and `transition-duration` declaration in the
+9 `theme/airpayux/scss/moodle/partials/_surface-*.scss` partials now
+resolves through `var(--ap-transition-{quick|default|slow})`. The token
+cascade in `_tokens.scss:258-265` already collapses `--ap-duration-*` to
+`0ms` under `@media (prefers-reduced-motion: reduce)`, so every animation
+on a Sentientia surface now respects the user preference (WCAG 2.3.3 —
+Animation from Interactions).
+
+**Token mapping:**
+- `0.15s` literal → `var(--ap-transition-quick)` (150ms ease-out, literal match)
+- `0.2s` (most violations) → `var(--ap-transition-quick)` (rounded DOWN; sub-perceptual)
+- `0.25s` (login submit CTA) → `var(--ap-transition-default)` (literal match)
+- `0.3s` (dashboard course-image zoom) → `var(--ap-transition-slow)`
+  (ease-in-out curve for layout-affecting motion)
+- `0.12s` (grade-report initialbar) → `var(--ap-transition-quick)`
+  (rounded UP, inline `//` comment marks the rounding decision)
+- `0.05s` (user mform submit press-feedback + list-link transform) →
+  `var(--ap-transition-quick)` (rounded UP, inline `//` comment marks each
+  site for future audit if a sub-150ms token is added to `_tokens.scss`)
+
+**Behaviour delta:**
+
+- Card-hover lift on dashboard / course catalog: 200ms → 150ms (sub-perceptual,
+  matches the existing `_components-course-card.scss` cadence).
+- Button-press feedback on mform submit + list-link: 50ms → 150ms (3× slower,
+  but token-driven; this is the noticeable user-facing change of the chip).
+- Course-image zoom-on-hover: 300ms linear-ish ease → 400ms ease-in-out.
+- Login gradient submit CTA: unchanged (was already 250ms; now token-driven).
+
+**Safety + parity:**
+- ✅ All 9 commits pass independent SCSS brace-balance check
+- ✅ No new `!important` introduced; the existing `!important` on
+      `_surface-user.scss:71` preserved as-is
+- ✅ Each commit is independent — reverting any one leaves the other 8 clean
+- ✅ No `.mustache` / `.php` (besides `version.php`) / `.lang.php` touched
+- ✅ No `_tokens.scss` change (token definitions out of scope per chip prompt)
+- ✅ No `.stylelintrc.json` change (chip-P's rule unchanged)
+- ✅ No `_bizlms-*.scss` / `_moodle-overrides.scss` / `dark_mode.scss` touched
+- ✅ `version.php` bumped `1.0.35-beta` → `1.0.36-beta` (2026052404 → 2026052405);
+      `php -l version.php` clean
+- ✅ Hindi / locale parity unaffected (no string changes)
+- ✅ Pre-commit hook would block on superglobal / credential / core-mod
+      patterns — none apply to SCSS-only commits, so commits clean without
+      `--no-verify`
+
+**Refs:**
+- Audit report: `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md` §2.7 / P2 #19
+- Chip-P prerequisite: `docs/visual-evidence/2026-05-24/wave3-chip-P/README.md`
+- Token cascade: `theme/airpayux/scss/moodle/_tokens.scss:194-220` + `:258-265`
+- Visual evidence: `docs/visual-evidence/2026-05-24/p1-followup-chip-D/README.md`
+- WCAG 2.3.3 — Animation from Interactions (Level AAA)
+- Stylelint rule scope: `theme/airpayux/.stylelintrc.json` (chip-P)

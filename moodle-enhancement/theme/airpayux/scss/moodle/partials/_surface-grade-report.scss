@@ -83,7 +83,7 @@ body#page-grade-report-overview-index {
         color: var(--ap-color-text-primary, #1a1a2e);
         text-decoration: none;
         font-weight: 500;
-        transition: color 0.15s ease;
+        transition: color var(--ap-transition-quick);
     }
     #region-main table.table tbody td a:hover {
         color: var(--ap-color-primary, #0066A7);
@@ -164,7 +164,7 @@ body.path-grade-report-grader {
         background: var(--ap-color-bg-surface-alt, #f8f9fc);
         padding: 8px 12px;
         color: var(--ap-color-text-primary, #1a1a2e);
-        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        transition: border-color var(--ap-transition-quick), box-shadow var(--ap-transition-quick);
     }
     .tertiary-navigation input[type="text"]:focus,
     .tertiary-navigation input[type="search"]:focus,
@@ -213,7 +213,9 @@ body.path-grade-report-grader {
         border-radius: 6px;
         line-height: 24px;
         text-align: center;
-        transition: all 0.12s ease;
+        // 0.12s rounded up to nearest token (--ap-transition-quick = 150ms ease-out)
+        // so the alphabet pagination respects prefers-reduced-motion.
+        transition: all var(--ap-transition-quick);
     }
     .initialbar .page-link:hover {
         background: var(--ap-color-primary-light, #e8f2f9);
@@ -286,7 +288,7 @@ body.path-grade-report-grader {
         text-decoration: none;
         margin-left: 4px;
         opacity: 0.7;
-        transition: opacity 0.15s ease;
+        transition: opacity var(--ap-transition-quick);
     }
     #user-grades tr.heading > th a.arrow_link:hover {
         opacity: 1;
@@ -321,7 +323,7 @@ body.path-grade-report-grader {
         display: inline-flex;
         align-items: center;
         gap: 10px;
-        transition: color 0.15s ease;
+        transition: color var(--ap-transition-quick);
     }
     #user-grades tr.userrow .username:hover {
         color: var(--ap-color-primary, #0066A7);

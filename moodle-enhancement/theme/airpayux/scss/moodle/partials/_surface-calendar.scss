@@ -59,7 +59,7 @@ body#page-calendar-view {
         text-decoration: none;
         padding: 6px 12px;
         border-radius: 8px;
-        transition: background-color 0.15s ease, color 0.15s ease;
+        transition: background-color var(--ap-transition-quick), color var(--ap-transition-quick);
     }
     .calendar-controls .arrow_link:hover,
     .calendar-controls .previous:hover,
@@ -104,7 +104,7 @@ body#page-calendar-view {
         background: var(--ap-color-bg-surface, #ffffff);
         min-height: 80px;
         vertical-align: top;
-        transition: background-color 0.15s ease, border-color 0.15s ease;
+        transition: background-color var(--ap-transition-quick), border-color var(--ap-transition-quick);
     }
     /* Blank cells (leading/trailing days from neighbour months) */
     table.calendarmonth tbody td.dayblank,

@@ -93,7 +93,7 @@
     font-size: 0.8125rem;
     font-weight: 600;
     text-decoration: none;
-    transition: all 0.2s;
+    transition: all var(--ap-transition-quick);
 }
 .airpay-dash__welcome-btn--primary {
     background: #fff;
@@ -465,7 +465,7 @@
     font-size: 0.95rem;
     font-family: 'Montserrat', sans-serif;
     background: #fff;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: border-color var(--ap-transition-quick), box-shadow var(--ap-transition-quick);
 }
 .path-local-search input#search:focus,
 .path-local-search input[type="text"][placeholder*="Search for courses"]:focus {
@@ -499,7 +499,7 @@
     border-radius: 12px !important;
     overflow: hidden;
     background: #fff;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform var(--ap-transition-quick), box-shadow var(--ap-transition-quick);
     height: 100%;
     margin: 0 !important;
     box-shadow: 0 1px 4px rgba(0,0,0,0.06);
@@ -521,7 +521,7 @@
     background-size: cover;
     background-position: center;
     background-color: #e8f2f9;
-    transition: transform 0.3s ease;
+    transition: transform var(--ap-transition-slow);
 }
 .path-local-search .coursecard_container:hover .courseimg_bg {
     transform: scale(1.05);
@@ -643,7 +643,7 @@
     font-weight: 600 !important;
     font-family: 'Montserrat', sans-serif;
     text-transform: none;
-    transition: all 0.2s ease;
+    transition: all var(--ap-transition-quick);
 }
 .path-local-search .action_div .btn-primary,
 .path-local-search .action_div .appear_as_button.btn-primary {
@@ -692,7 +692,7 @@
     font-weight: 500;
     padding: 8px 14px;
     margin: 0 3px;
-    transition: all 0.2s ease;
+    transition: all var(--ap-transition-quick);
 }
 .path-local-search .pagination .page-item.active .page-link {
     background: #0066A7;

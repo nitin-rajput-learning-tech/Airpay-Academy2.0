@@ -124,7 +124,7 @@ body#page-login-index {
 
     .airpay-login__hero-social {
         margin-top: 24px;
-        a { color: rgba(255,255,255,0.6); margin: 0 6px; font-size: 1.1rem; transition: color 0.2s; }
+        a { color: rgba(255,255,255,0.6); margin: 0 6px; font-size: 1.1rem; transition: color var(--ap-transition-quick); }
         a:hover { color: #fff; text-decoration: none; }
     }
 
@@ -213,7 +213,7 @@ body#page-login-index {
         font-family: inherit;
         color: #1a1a2e;
         background: #fff;
-        transition: all 0.2s;
+        transition: all var(--ap-transition-quick);
         outline: none;
     }
     .airpay-login__input:focus {
@@ -237,7 +237,7 @@ body#page-login-index {
         cursor: pointer;
         font-size: 0.9rem;
         z-index: 1;
-        transition: color 0.2s;
+        transition: color var(--ap-transition-quick);
     }
     .airpay-login__eye:hover { color: #1a1a2e; }
 
@@ -254,7 +254,7 @@ body#page-login-index {
         font-weight: 700;
         font-family: inherit;
         cursor: pointer;
-        transition: all 0.25s;
+        transition: all var(--ap-transition-default);
         margin-top: 8px;
     }
     .airpay-login__submit:hover {
@@ -314,7 +314,7 @@ body#page-login-index {
         font-weight: 600;
         font-family: inherit;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all var(--ap-transition-quick);
     }
     .airpay-login__guest-btn:hover {
         border-color: #0066A7;
@@ -336,7 +336,7 @@ body#page-login-index {
         color: #1a1a2e;
         margin-bottom: 8px;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all var(--ap-transition-quick);
         text-decoration: none;
         img { margin-right: 8px; vertical-align: middle; }
     }
@@ -366,7 +366,7 @@ body#page-login-index {
         font-weight: 600;
         cursor: pointer;
         backdrop-filter: blur(8px);
-        transition: all 0.2s;
+        transition: all var(--ap-transition-quick);
     }
     .airpay-login__popup-btn:hover {
         background: rgba(0,0,0,0.6);
@@ -559,7 +559,7 @@ body#page-login-index {
     width: 100%; height: 48px; padding: 0 16px;
     border: 2px solid #e2e8f0; border-radius: 10px;
     font-size: 0.9rem; font-family: 'Montserrat', sans-serif;
-    transition: border-color 0.2s; background: #f8fafc;
+    transition: border-color var(--ap-transition-quick); background: #f8fafc;
 }
 #page-login-forgot_password .form-control:focus,
 #page-login-forgot_password input[type="text"]:focus,
@@ -586,7 +586,7 @@ body#page-login-index {
     background: linear-gradient(135deg, #0066A7, #0a5c50);
     color: #fff; border: none; border-radius: 10px;
     font-family: 'Montserrat', sans-serif; font-size: 0.95rem; font-weight: 700;
-    cursor: pointer; transition: opacity 0.2s; margin-top: 8px;
+    cursor: pointer; transition: opacity var(--ap-transition-quick); margin-top: 8px;
 }
 #page-login-forgot_password .btn-primary:hover,
 #page-signup .btn-primary:hover {
