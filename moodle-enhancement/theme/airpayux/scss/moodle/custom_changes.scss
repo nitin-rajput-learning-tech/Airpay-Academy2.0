@@ -22,7 +22,10 @@
 @import "partials/surface-login";
 @import "partials/surface-dashboard";
 @import "partials/surface-course";
-@import "partials/surface-profile";
+@import "partials/surface-user";          // P1 #10 / F-16 (Goals A.1 / A.6 / A.7) — split from _surface-profile.scss on 2026-05-24
+@import "partials/surface-badges";        // P1 #10 / F-16 (Goal A.2)               — split from _surface-profile.scss on 2026-05-24
+@import "partials/surface-grade-report";  // P1 #10 / F-16 (Goals A.3 / A.9)         — split from _surface-profile.scss on 2026-05-24
+@import "partials/surface-calendar";      // P1 #10 / F-16 (Goal A.8)               — split from _surface-profile.scss on 2026-05-24
 
 // 5. BizLMS plugin overrides (remove after BizLMS fully removed)
 @import "partials/bizlms-overrides";
