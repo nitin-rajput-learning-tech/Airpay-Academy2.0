@@ -62,4 +62,26 @@ $flags = [
                           the feed.',
     ],
 
+    // ─── Tier 2.6 Phase 2 — OAuth scaffolding (default OFF) ──────────
+    'sentientia.calendar_sync.oauth.enabled' => [
+        'default'     => false,
+        'description' => 'Sentientia LMS Calendar Sync — OAuth 2.0
+                          bi-directional sync (Microsoft 365 + Google
+                          Calendar). MASTER SWITCH for Phase 2. When OFF
+                          (the default for this chip): the connect /
+                          callback / refresh surfaces all 404, no live
+                          HTTP traffic reaches Microsoft or Google, and
+                          no rows accumulate in {local_sentientia_calendar_oauth}.
+                          When ON: the user-facing "Connect Outlook" /
+                          "Connect Google" buttons appear, the
+                          Authorization Code with PKCE flow runs, and
+                          access + refresh tokens are stored
+                          encrypted-at-rest via \\core\\encryption.
+                          Phase 2 ships SCAFFOLDING only — even when this
+                          flag is ON, the live HTTP exchange throws
+                          oauth_not_live until Phase 2.1 wires it up.
+                          Per ADR-013, default OFF stays until per-customer
+                          rollout decisions are made.',
+    ],
+
 ];

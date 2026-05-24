@@ -5,15 +5,35 @@
 /**
  * Privacy provider for local_sentientia_calendar.
  *
- * The only personal data this plugin stores is one row per user in
- * local_sentientia_calendar_token. That row holds:
- *   - userid (FK to mdl_user.id)
- *   - the token itself (64 random chars — not derived from PII, but
- *     functionally identifies the user to anyone holding it)
- *   - last_used_ip, last_used_at, use_count (audit trail)
+ * Phase 1: one row per user in {local_sentientia_calendar_token}.
+ * Phase 2: additionally one row per (user, provider) in
+ *           {local_sentientia_calendar_oauth} when the user has connected
+ *           Microsoft 365 and/or Google Calendar via OAuth.
  *
- * Export: dump the row as JSON.
- * Delete: drop the row.
+ * Both tables hold material that the privacy framework treats as
+ * personal data:
+ *   - The Phase 1 token row carries the user's secret subscription
+ *     credential + audit metadata (last_used_ip).
+ *   - The Phase 2 OAuth row carries encrypted access_token +
+ *     refresh_token (functionally PII because a refresh_token persists
+ *     the user's identity to the provider for months).
+ *
+ * Export contract
+ * ---------------
+ * Both kinds of tokens are EXCLUDED FROM EXPORT BODIES. We surface
+ * "you have a row" + metadata (provider, expires, scopes, timestamps);
+ * we deliberately do not write the actual secret credential into the
+ * user's exported archive. That archive is typically downloaded to the
+ * user's PC and a token in there would broaden the attack surface for
+ * very little legitimate utility — the user already has access to their
+ * own calendar.
+ *
+ * Delete contract
+ * ---------------
+ * On a right-to-erasure request we drop BOTH the Phase 1 token row(s)
+ * and the Phase 2 OAuth row(s). The user's tokens with the upstream
+ * providers (Microsoft / Google) are NOT touched here — the user must
+ * revoke those via account.microsoft.com / myaccount.google.com.
  *
  * @package local_sentientia_calendar
  */
@@ -48,6 +68,38 @@ class provider implements
             ],
             'privacy:metadata:token'
         );
+
+        $collection->add_database_table(
+            'local_sentientia_calendar_oauth',
+            [
+                'userid'            => 'privacy:metadata:oauth:userid',
+                'customerid'        => 'privacy:metadata:oauth:customerid',
+                'provider'          => 'privacy:metadata:oauth:provider',
+                'access_token_enc'  => 'privacy:metadata:oauth:access_token_enc',
+                'refresh_token_enc' => 'privacy:metadata:oauth:refresh_token_enc',
+                'expires'           => 'privacy:metadata:oauth:expires',
+                'scopes'            => 'privacy:metadata:oauth:scopes',
+                'timecreated'       => 'privacy:metadata:oauth:timecreated',
+                'timemodified'      => 'privacy:metadata:oauth:timemodified',
+            ],
+            'privacy:metadata:oauth'
+        );
+
+        // Disclose that we exchange data with Microsoft + Google when the
+        // Phase 2 OAuth feature is enabled. Even though Phase 2 scaffolding
+        // does NOT make live calls, the metadata system documents the
+        // INTENT — required for a clean GDPR review.
+        $collection->add_external_location_link(
+            'microsoft_graph',
+            ['userid' => 'privacy:metadata:microsoft_graph:userid'],
+            'privacy:metadata:microsoft_graph'
+        );
+        $collection->add_external_location_link(
+            'google_calendar',
+            ['userid' => 'privacy:metadata:google_calendar:userid'],
+            'privacy:metadata:google_calendar'
+        );
+
         return $collection;
     }
 
@@ -55,8 +107,13 @@ class provider implements
         global $DB;
         $contextlist = new contextlist();
 
-        if ($DB->record_exists('local_sentientia_calendar_token', ['userid' => $userid])) {
-            // Tokens live under the user's own user context (matches the
+        $has_token = $DB->record_exists('local_sentientia_calendar_token',
+            ['userid' => $userid]);
+        $has_oauth = $DB->record_exists('local_sentientia_calendar_oauth',
+            ['userid' => $userid]);
+
+        if ($has_token || $has_oauth) {
+            // Both tables live under the user's own user context (matches the
             // capability contextlevel in db/access.php).
             $contextlist->add_user_context($userid);
         }
@@ -70,7 +127,11 @@ class provider implements
             return;
         }
         $userid = $context->instanceid;
-        if ($DB->record_exists('local_sentientia_calendar_token', ['userid' => $userid])) {
+        $has_token = $DB->record_exists('local_sentientia_calendar_token',
+            ['userid' => $userid]);
+        $has_oauth = $DB->record_exists('local_sentientia_calendar_oauth',
+            ['userid' => $userid]);
+        if ($has_token || $has_oauth) {
             $userlist->add_user($userid);
         }
     }
@@ -83,11 +144,15 @@ class provider implements
             if ($context->contextlevel !== CONTEXT_USER || (int) $context->instanceid !== $userid) {
                 continue;
             }
+
+            $subcontext = [get_string('pluginname', 'local_sentientia_calendar')];
+
+            // ─── Phase 1 token rows ─────────────────────────────────
             $rows = $DB->get_records('local_sentientia_calendar_token',
                 ['userid' => $userid]);
-            $export = [];
+            $tokens_export = [];
             foreach ($rows as $row) {
-                $export[] = [
+                $tokens_export[] = [
                     // We do NOT export the token itself — it's a secret
                     // that authenticates the user's feed. Exporting it
                     // would create a copy in the user's exported archive
@@ -103,10 +168,34 @@ class provider implements
                     'timemodified' => (int) $row->timemodified,
                 ];
             }
-            if (!empty($export)) {
+
+            // ─── Phase 2 OAuth rows ─────────────────────────────────
+            // We never write the encrypted columns into the export. The
+            // user gets provider name + expiry + scopes — enough to know
+            // what's stored without putting a long-lived refresh_token
+            // into a downloadable archive.
+            $oauth_rows = \local_sentientia_calendar\oauth\token_vault::describe_for_user($userid);
+            $oauth_export = [];
+            foreach ($oauth_rows as $row) {
+                $oauth_export[] = [
+                    'oauth_exists'      => true,
+                    'provider'          => $row['provider'],
+                    'expires'           => $row['expires'],
+                    'scopes'            => $row['scopes'],
+                    'access_token_enc'  => '[REDACTED — encrypted credential not exported]',
+                    'refresh_token_enc' => '[REDACTED — encrypted credential not exported]',
+                    'timecreated'       => $row['timecreated'],
+                    'timemodified'      => $row['timemodified'],
+                ];
+            }
+
+            if (!empty($tokens_export) || !empty($oauth_export)) {
                 writer::with_context($context)->export_data(
-                    [get_string('pluginname', 'local_sentientia_calendar')],
-                    (object) ['tokens' => $export]
+                    $subcontext,
+                    (object) [
+                        'tokens'       => $tokens_export,
+                        'oauth_tokens' => $oauth_export,
+                    ]
                 );
             }
         }
@@ -117,8 +206,11 @@ class provider implements
             return;
         }
         global $DB;
+        $userid = $context->instanceid;
         $DB->delete_records('local_sentientia_calendar_token',
-            ['userid' => $context->instanceid]);
+            ['userid' => $userid]);
+        $DB->delete_records('local_sentientia_calendar_oauth',
+            ['userid' => $userid]);
     }
 
     public static function delete_data_for_user(approved_contextlist $contextlist): void {
@@ -127,6 +219,8 @@ class provider implements
         foreach ($contextlist->get_contexts() as $context) {
             if ($context->contextlevel === CONTEXT_USER && (int) $context->instanceid === $userid) {
                 $DB->delete_records('local_sentientia_calendar_token',
+                    ['userid' => $userid]);
+                $DB->delete_records('local_sentientia_calendar_oauth',
                     ['userid' => $userid]);
             }
         }
@@ -144,6 +238,8 @@ class provider implements
         }
         [$insql, $params] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
         $DB->delete_records_select('local_sentientia_calendar_token',
+            "userid $insql", $params);
+        $DB->delete_records_select('local_sentientia_calendar_oauth',
             "userid $insql", $params);
     }
 }

@@ -6119,3 +6119,152 @@ users no longer see the brand-light ring; keyboard `Tab` users still get it.
 - Chip H reference branch: `origin/claude/inspiring-mayer-kWs9O` (commits c4787fa0 login, 7ffbafb5 profile)
 - Lost-in-merge commits: `490b11a20` (chip-J split), `6e3cd87a7` (chip-K refactor)
 - Frontend rules: `.claude/rules/frontend.md`
+
+---
+
+## 🔐 TIER 2.6 — CALENDAR SYNC PHASE 2 OAuth scaffolding (2026-05-24)
+
+### Session — `local_sentientia_calendar` v1.1.0-beta — OAuth skeleton for M365 + Google ✅ SHIPPED
+
+**Per ADR-013 §"Why we keep Path B as a future option".** Phase 1
+shipped a token-URL ICS feed (outbound only). Phase 2 lays the
+foundation for bi-directional OAuth sync with Microsoft 365
+(Microsoft Graph) and Google Calendar APIs.
+
+**This chip ships SCAFFOLDING only:**
+- Authorization Code with PKCE flow plumbing is wired up to step ⑧
+  (state validation + verifier recovery on callback).
+- Steps ⑨–⑪ (live token-endpoint POST + DB persist) intentionally
+  throw `oauth_not_live` so a careless rollout cannot accidentally
+  hit `login.microsoftonline.com` / `oauth2.googleapis.com` before
+  per-customer privacy + security review. Phase 2.1 will lift the
+  gate behind the same feature flag.
+
+**What landed (12 file commits on `claude/practical-brahmagupta-tluHX`):**
+
+- [x] **New master feature flag** `sentientia.calendar_sync.oauth.enabled`
+      (default OFF) — gates every Phase 2 surface in four places per
+      `docs/integrations/CALENDAR-OAUTH.md` §"Feature-flag enforcement"
+- [x] **New DB table** `local_sentientia_calendar_oauth` — one row per
+      (user, provider). Phase 1's `_token` table is unchanged. Schema:
+      id / userid / customerid / provider / access_token_enc /
+      refresh_token_enc / expires / scopes / timecreated / timemodified.
+      `(userid, provider)` UNIQUE, two NOT-UNIQUE indexes for the
+      Phase 2.1 background-refresh job and per-customer reporting
+- [x] **Additive `db/upgrade.php`** — creates the new table on existing
+      Phase 1 installs without touching the Phase 1 schema. Savepoint
+      `2026052401`
+- [x] **`db/install.xml`** — extended for fresh installs to match
+- [x] **OAuth class hierarchy** (4 new classes under `classes/oauth/`):
+      - `oauth_base.php` — abstract provider with PKCE verifier /
+        S256 challenge (RFC 7636 §4.1+§4.2), CSRF state generator,
+        session-scoped pending-state vault with 10-min TTL +
+        single-use enforcement, lifecycle methods that all gate-check
+        the feature flag before doing any work
+      - `m365_oauth.php` — Microsoft Graph endpoints + scopes
+        (`openid profile offline_access Calendars.ReadWrite`); reads
+        Azure client ID + secret from admin settings
+      - `google_oauth.php` — Google Calendar API endpoints + narrow
+        scope `calendar.events.owned`; adds `access_type=offline` +
+        `prompt=consent` so a refresh_token is always minted
+      - `token_vault.php` — `store_tokens` / `get_tokens` /
+        `has_tokens` / `revoke_tokens` / `delete_all_for_user` /
+        `describe_for_user`. All access_token + refresh_token values
+        pass through `\core\encryption::encrypt()` / `::decrypt()`
+        (Sodium XSalsa20-Poly1305) at the boundary
+- [x] **`settings.php`** (NEW) — admin page at Site administration →
+      Plugins → Local plugins → Sentientia Calendar Sync. Configurable:
+      Microsoft + Google client IDs and secrets (via
+      `admin_setting_configpasswordunmask`), and a read-only display of
+      the registered redirect URI. A visible warning banner reminds
+      admins this is scaffolding only
+- [x] **`classes/privacy/provider.php`** extended — declares the new
+      `_oauth` table + two external destinations (`microsoft_graph`,
+      `google_calendar`). Export emits provider + expires + scopes +
+      timestamps; the encrypted columns are REPLACED with the literal
+      `[REDACTED — encrypted credential not exported]` string so a
+      future archive reader can't mistake the encrypted blob for a
+      real token. Delete drops both Phase 1 token rows AND Phase 2
+      OAuth rows on right-to-erasure
+- [x] **EN + HI lang strings** — 33 new strings each, **100% parity
+      verified** (66 EN / 66 HI total). Covers settings labels +
+      descriptions, OAuth-specific error messages, scaffolding-notice
+      banner, plus 12 new privacy metadata strings for the new table
+      and the two external destinations
+- [x] **`docs/integrations/CALENDAR-OAUTH.md`** (NEW) — flow diagram
+      (ASCII step ① through ⑫), scopes per provider with rationale,
+      token-rotation rules (access ≈ 1h, refresh ≈ 90d sliding for
+      M365 / indefinite for Google), three independent revocation
+      paths, GDPR / DPDP notes, and a Phase-2.1 security-review
+      checklist
+- [x] **PHPUnit suite** `tests/token_vault_test.php` — 24 tests:
+      - 8 encryption round-trip / DB-column-is-not-plaintext / user
+        isolation / two-providers-coexist / unique-key in-place update
+      - 7 feature-flag toggle: flag OFF blocks `build_authorize_url`,
+        flag ON + empty client_id blocks, flag ON + client_id present
+        builds a URL with the correct provider host + PKCE challenge +
+        state token, `handle_callback` throws `oauth_not_live` even
+        when state is valid (locks in the scaffolding gate)
+      - 4 privacy: `get_contexts_for_userid` picks up rows, export
+        redacts encrypted columns AND scrubs plaintext from the
+        exported JSON, `delete_data_for_user` drops both tables,
+        metadata declares both tables + both external destinations
+      - 5 PKCE invariants: verifier alphabet matches RFC 7636,
+        challenge equals `base64url(sha256(verifier))`, state is
+        32-byte CSRF-grade entropy, pending state is single-use +
+        TTL-enforced
+- [x] **`version.php`** bumped `2026052400` → `2026052401`, release
+      `1.0.0-beta` → `1.1.0-beta`
+
+**No live HTTP calls in this chip:**
+- `m365_oauth::handle_callback` throws `oauth_not_live` after
+  validating CSRF state + recovering the PKCE verifier
+- `google_oauth::handle_callback` same
+- `*_oauth::refresh_token` same
+- The PHPUnit suite asserts both of these gates fire correctly
+- `grep -rn login.microsoftonline.com|oauth2.googleapis.com` finds
+  hits ONLY in scope/endpoint constants — never inside a
+  `curl_*` / `\curl::` / `download_file_content` call
+
+**Security model summary:**
+- Encrypted at rest via Moodle's Sodium-backed `\core\encryption`
+  helper. Plaintext tokens never appear in any DB column, log, or
+  privacy export
+- Encryption key file (`$CFG->dataroot/secret/key/sodium.key`,
+  chmod 0400) is required IN ADDITION TO the DB row to recover any
+  token — DB-dump-only breach yields opaque ciphertext
+- PKCE verifier is 64 random bytes → 86-char base64url string
+  (~512 bits entropy); the verifier never leaves the server
+- State token is 32 random bytes → 43-char base64url string
+  (~256 bits entropy); CSRF defence + state replay prevention via
+  `hash_equals()` + single-use consume
+- Session-scoped pending state with 10-min TTL — even a parallel-tab
+  attempted swap can't reuse another user's verifier
+- Master feature flag enforced in 4 places per the integration doc;
+  flag OFF (default) means no row can be created via any code path
+
+**Hindi parity drive:**
+
+```
+EN keys: 66    HI keys: 66
+In EN, not HI: []
+In HI, not EN: []
+Hindi parity: 100%
+```
+
+**Refs:**
+- ADR: [ADR-013 — Calendar sync](docs/adr/ADR-013-calendar-sync.md)
+- Integration doc: `docs/integrations/CALENDAR-OAUTH.md` (NEW)
+- Phase 1 state card: `state-cards/local_sentientia_calendar-state.md`
+- Encryption helper: `lib/classes/encryption.php`
+- RFC 7636 (PKCE): https://datatracker.ietf.org/doc/html/rfc7636
+- RFC 6749 (OAuth 2.0): https://datatracker.ietf.org/doc/html/rfc6749
+
+**Deferred to Phase 2.1:**
+- Live token-endpoint POST in `handle_callback()`
+- Background-refresh scheduled task (the index
+  `idx_provider_expires` is already in place)
+- User-facing `/oauth_connect.php` + `/oauth_callback.php` surfaces
+- Provider-side revoke POST in `oauth_base::revoke()`
+- Admin "force revoke for user" tool gated on
+  `local/sentientia_calendar:manage_all`

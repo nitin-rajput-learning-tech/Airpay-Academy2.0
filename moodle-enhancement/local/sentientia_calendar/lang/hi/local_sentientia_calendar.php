@@ -45,8 +45,13 @@ $string['how_to_google']  = 'Google Calendar: Other calendars ▶ + ▶ From URL
 $string['how_to_apple']   = 'Apple Calendar (macOS): File ▶ New Calendar Subscription ▶ URL पेस्ट करें ▶ Subscribe। iOS: Settings ▶ Calendar ▶ Accounts ▶ Add Account ▶ Other ▶ Add Subscribed Calendar।';
 
 // Errors.
-$string['error_flag_off']        = 'आपके खाते के लिए कैलेंडर सिंक वर्तमान में सक्षम नहीं है। अपने एडमिनिस्ट्रेटर से संपर्क करें।';
-$string['error_token_collision'] = 'कई प्रयासों के बाद भी एक अद्वितीय कैलेंडर टोकन जनरेट नहीं हो सका। कृपया पुनः प्रयास करें।';
+$string['error_flag_off']                 = 'आपके खाते के लिए कैलेंडर सिंक वर्तमान में सक्षम नहीं है। अपने एडमिनिस्ट्रेटर से संपर्क करें।';
+$string['error_token_collision']          = 'कई प्रयासों के बाद भी एक अद्वितीय कैलेंडर टोकन जनरेट नहीं हो सका। कृपया पुनः प्रयास करें।';
+$string['error_oauth_clientid_missing']   = 'इस प्रोवाइडर के लिए OAuth क्लाइंट ID कॉन्फ़िगर नहीं है। एडमिनिस्ट्रेटर से ऐप रजिस्टर करने और साइट प्रशासन → प्लगिन्स → लोकल प्लगिन्स → Sentientia कैलेंडर सिंक में क्लाइंट ID जोड़ने का अनुरोध करें।';
+$string['error_oauth_state_invalid']      = 'OAuth स्टेट मेल नहीं खाया — अनुरोध किसी लंबित प्राधिकरण से मेल नहीं खाता। कृपया कनेक्ट प्रवाह फिर से शुरू करें।';
+$string['error_oauth_code_missing']       = 'OAuth कॉलबैक में प्राधिकरण कोड नहीं था। प्रोवाइडर ने सहमति अस्वीकार कर दी होगी। कृपया पुनः प्रयास करें।';
+$string['error_oauth_no_refresh_token']   = 'इस प्रोवाइडर के लिए कोई संग्रहीत रिफ्रेश टोकन नहीं है। नया जारी करने के लिए प्रोवाइडर से पुनः कनेक्ट करें।';
+$string['oauth_not_live']                 = 'OAuth Phase 2 वर्तमान में केवल स्कैफ़ोल्डिंग है। प्रति-ग्राहक रोलआउट की पुष्टि के बाद भविष्य की रिलीज़ में लाइव टोकन एक्सचेंज सक्षम किया जाएगा।';
 
 // Scheduled tasks.
 $string['task_purge_old_tokens'] = 'Sentientia कैलेंडर — रद्द किए गए टोकन हटाएँ';
@@ -55,8 +60,24 @@ $string['task_purge_old_tokens'] = 'Sentientia कैलेंडर — रद�
 $string['sentientia_calendar:subscribe']  = 'अपना कैलेंडर सदस्यता URL प्रबंधित करें';
 $string['sentientia_calendar:manage_all'] = 'किसी भी यूज़र के कैलेंडर सदस्यता टोकन प्रबंधित करें';
 
+// Settings — Phase 2 OAuth.
+$string['settings_pagetitle']               = 'Sentientia कैलेंडर सिंक';
+$string['settings_section_oauth']           = 'OAuth — Microsoft 365 और Google Calendar (Phase 2)';
+$string['settings_section_oauth_desc']      = 'द्विदिशीय सिंक प्रवाह के लिए क्लाइंट ID और सीक्रेट। खाली मान संबंधित "कनेक्ट…" बटन को यूज़र पेज पर छिपा देते हैं। सरफेस रेंडर होने के लिए फ़ीचर फ़्लैग <code>sentientia.calendar_sync.oauth.enabled</code> भी ON होना चाहिए।';
+$string['setting_microsoft_client_id']      = 'Microsoft Azure क्लाइंट ID';
+$string['setting_microsoft_client_id_desc'] = 'Azure AD ऐप रजिस्ट्रेशन से Application (client) ID। "Outlook कनेक्ट करें" बटन छिपाने के लिए खाली छोड़ें। नीचे दिखाए गए redirect URI के साथ जोड़ें — Azure को इसे "Authentication → Web → Redirect URIs" के तहत सटीक रूप से सूचीबद्ध करना होगा।';
+$string['setting_microsoft_client_secret']  = 'Microsoft Azure क्लाइंट सीक्रेट';
+$string['setting_microsoft_client_secret_desc'] = 'Azure ऐप रजिस्ट्रेशन से क्लाइंट सीक्रेट VALUE (ID नहीं)। सीक्रेट के रूप में संभाला जाता है — कभी लॉग नहीं होता, कभी ब्राउज़र पर वापस नहीं भेजा जाता।';
+$string['setting_google_client_id']         = 'Google OAuth क्लाइंट ID';
+$string['setting_google_client_id_desc']    = 'Google Cloud Console से OAuth 2.0 क्लाइंट ID। "Google Calendar कनेक्ट करें" बटन छिपाने के लिए खाली छोड़ें। नीचे दिखाए गए redirect URI के साथ जोड़ें — Google को इसे "Authorised redirect URIs" के तहत सटीक रूप से सूचीबद्ध करना होगा।';
+$string['setting_google_client_secret']     = 'Google OAuth क्लाइंट सीक्रेट';
+$string['setting_google_client_secret_desc'] = 'Google Cloud Console OAuth 2.0 क्लाइंट से क्लाइंट सीक्रेट। सीक्रेट के रूप में संभाला जाता है — कभी लॉग नहीं होता, कभी ब्राउज़र पर वापस नहीं भेजा जाता।';
+$string['setting_redirect_uri']             = 'OAuth redirect URI';
+$string['setting_redirect_uri_desc']        = 'OAuth प्रवाह सफल होने से पहले Microsoft Azure और Google Cloud Console दोनों को इस सटीक URL को एक अधिकृत redirect URI के रूप में सूचीबद्ध करना होगा। केवल-पढ़ने योग्य — <code>$CFG-&gt;wwwroot</code> से व्युत्पन्न।';
+$string['setting_scaffolding_notice']       = 'Phase 2 केवल SCAFFOLDING शिप करता है। लाइव टोकन एक्सचेंज अभी नहीं चलता — कॉलबैक हैंडलर जानबूझकर <code>oauth_not_live</code> थ्रो करता है ताकि लापरवाह रोलआउट गलती से प्रोवाइडरों को हिट न करे। Phase 2.1 उसी फ़ीचर फ़्लैग के पीछे लाइव HTTP एक्सचेंज को वायर करेगा।';
+
 // Privacy.
-$string['privacy:metadata'] = 'Sentientia LMS कैलेंडर सिंक प्रति-यूज़र एक गुप्त सदस्यता टोकन संग्रहीत करता है। कैलेंडर क्लाइंट इस टोकन से यूज़र की व्यक्तिगत फीड फेच करते हैं। कोई कोर्स कंटेंट या थर्ड-पार्टी डेटा संग्रहीत नहीं होता — केवल टोकन और ऑडिट मेटाडेटा (अंतिम उपयोग समय, IP, गणना)।';
+$string['privacy:metadata'] = 'Sentientia LMS कैलेंडर सिंक प्रति-यूज़र एक गुप्त सदस्यता टोकन संग्रहीत करता है। कैलेंडर क्लाइंट इस टोकन से यूज़र की व्यक्तिगत फीड फेच करते हैं। जब Phase 2 OAuth सक्षम होता है, तो यह यूज़र के लिए एन्क्रिप्टेड Microsoft 365 और/या Google Calendar OAuth टोकन भी संग्रहीत करता है। कोई कोर्स कंटेंट या थर्ड-पार्टी डेटा संग्रहीत नहीं होता — केवल क्रेडेंशियल और ऑडिट मेटाडेटा (अंतिम उपयोग समय, IP, गणना)।';
 $string['privacy:metadata:token']                = 'प्रत्येक यूज़र को जारी किया गया व्यक्तिगत कैलेंडर सदस्यता टोकन।';
 $string['privacy:metadata:token:userid']         = 'टोकन किस यूज़र का है।';
 $string['privacy:metadata:token:token']          = '64-वर्ण का रैंडम टोकन (कार्यात्मक रूप से क्रेडेंशियल)।';
@@ -65,3 +86,17 @@ $string['privacy:metadata:token:last_used_ip']   = 'अंतिम सफल �
 $string['privacy:metadata:token:use_count']      = 'कुल सफल फेच गणना।';
 $string['privacy:metadata:token:timecreated']    = 'टोकन पहली बार कब जारी हुआ।';
 $string['privacy:metadata:token:timemodified']   = 'टोकन अंतिम बार कब संशोधित (पुनः जनरेट या रद्द) हुआ।';
+$string['privacy:metadata:oauth']                    = 'Microsoft 365 या Google Calendar के लिए OAuth एक्सेस + रिफ्रेश टोकन — Moodle के Sodium-समर्थित एन्क्रिप्शन हेल्पर के माध्यम से रेस्ट पर एन्क्रिप्टेड। प्रति (यूज़र, प्रोवाइडर) एक पंक्ति।';
+$string['privacy:metadata:oauth:userid']             = 'वह यूज़र जिसके कैलेंडर को OAuth टोकन LMS को पढ़ने और लिखने का प्राधिकरण देते हैं।';
+$string['privacy:metadata:oauth:customerid']         = 'वह Sentientia LMS ग्राहक जिससे यूज़र संबंधित है।';
+$string['privacy:metadata:oauth:provider']           = 'टोकन किस प्रोवाइडर के हैं — m365 (Microsoft Graph) या google (Google Calendar API)।';
+$string['privacy:metadata:oauth:access_token_enc']   = 'एन्क्रिप्टेड शॉर्ट-लिव्ड एक्सेस टोकन (आमतौर पर 1 घंटे की वैधता)।';
+$string['privacy:metadata:oauth:refresh_token_enc']  = 'यूज़र को प्रॉम्प्ट किए बिना नए एक्सेस टोकन जारी करने के लिए उपयोग किया जाने वाला एन्क्रिप्टेड लॉन्ग-लिव्ड रिफ्रेश टोकन।';
+$string['privacy:metadata:oauth:expires']            = 'वह यूनिक्स टाइमस्टैम्प जिस पर एक्सेस टोकन समाप्त होता है।';
+$string['privacy:metadata:oauth:scopes']             = 'वे OAuth स्कोप जो प्रोवाइडर ने सहमति के समय प्रदान किए।';
+$string['privacy:metadata:oauth:timecreated']        = 'OAuth टोकन पहली बार कब जारी हुए (प्रारंभिक सहमति)।';
+$string['privacy:metadata:oauth:timemodified']       = 'OAuth टोकन अंतिम बार कब रिफ्रेश या पुनः सहमति प्राप्त हुए।';
+$string['privacy:metadata:microsoft_graph']          = 'जब OAuth फ़ीचर फ़्लैग सक्षम हो और यूज़र ने सहमति दी हो, Sentientia LMS यूज़र की ओर से Microsoft Graph के माध्यम से कैलेंडर इवेंट पढ़ता और लिखता है। जब तक यूज़र ऑप्ट-इन नहीं करता तब तक कोई डेटा नहीं भेजा जाता।';
+$string['privacy:metadata:microsoft_graph:userid']   = 'वह यूज़र जिसके कैलेंडर इवेंट पढ़े या लिखे जाते हैं।';
+$string['privacy:metadata:google_calendar']          = 'जब OAuth फ़ीचर फ़्लैग सक्षम हो और यूज़र ने सहमति दी हो, Sentientia LMS यूज़र की ओर से Google Calendar API के माध्यम से कैलेंडर इवेंट पढ़ता और लिखता है। जब तक यूज़र ऑप्ट-इन नहीं करता तब तक कोई डेटा नहीं भेजा जाता।';
+$string['privacy:metadata:google_calendar:userid']   = 'वह यूज़र जिसके कैलेंडर इवेंट पढ़े या लिखे जाते हैं।';
