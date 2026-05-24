@@ -4,7 +4,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Sentientia LMS — PWA';
+$string['pluginname'] = 'Sentientia LMS — PWA ऐप';
 
 // Privacy.
 $string['privacy:metadata'] = 'Sentientia LMS PWA प्लगइन प्रति-यूज़र वेब-पुश सब्सक्रिप्शन एंडपॉइंट संग्रहीत करता है। जब पुश सूचनाएं सक्षम नहीं हों, तब कोई व्यक्तिगत डेटा संग्रहीत नहीं होता।';
@@ -106,7 +106,7 @@ $string['push_log_col_user']              = 'यूज़र';
 $string['push_log_col_host']              = 'पुश होस्ट';
 $string['push_log_col_title']             = 'शीर्षक';
 $string['push_log_col_result']            = 'परिणाम';
-$string['push_log_col_http']              = 'HTTP';
+$string['push_log_col_http']              = 'HTTP स्थिति';
 $string['push_log_col_error']             = 'त्रुटि विवरण';
 
 // ── Phase B.3.d — iOS install hint banner ─────────────────────────────
