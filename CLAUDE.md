@@ -336,6 +336,49 @@ NEVER mark a session "done" without updating PROJECT-STATE.md
 docs/core-mods/ tracking discipline above. Core changes are permitted when
 justified and recorded.
 
+### Pre-commit guards (P0 cleanup A, 2026-05-24)
+
+The local pre-commit hook (`.claude/hooks/pre-commit.sh`) and the
+GitHub CI gate (`.github/workflows/ci.yml::conflict-marker-check`) form
+a two-layer defence against the failure mode that broke CI runs #397
+and #403 — mid-merge commits with stray `<<<<<<<` / `=======` /
+`>>>>>>>` markers in PHP and lang files.
+
+| Layer | Catches at | Scope | Bypass risk |
+|-------|------------|-------|-------------|
+| `.claude/hooks/pre-commit.sh` CHECK 11 | `git commit` time | STAGED `.php .mustache .scss .js .json .xml .md .yml` files | `--no-verify`, GUI tools that skip hooks, the hook not being installed |
+| `.github/workflows/ci.yml::conflict-marker-check` | Push to `production` + every PR | Whole working tree across `moodle-enhancement/`, `theme/airpayux/`, `local/`, `.github/`, `.claude/` | None — every push triggers it |
+
+Both layers use the same regex, matching git's exact marker format
+only:
+
+```
+^<<<<<<<( |$)    '<<<<<<< HEAD' or bare '<<<<<<<'
+^=======$        bare '=======' alone (not 32-wide '=====' banners
+                 or '// ====' SCSS comment dividers)
+^>>>>>>>( |$)    '>>>>>>> branch' or bare '>>>>>>>'
+```
+
+Verified clean against the existing repo. Setext-style help-text
+banners (`================` in a `<<<EOT` heredoc) and Mustache
+parent-template inheritance (`{{<base/columns}}`) do not false-positive.
+
+**Install the local hook (one-liner):**
+
+```powershell
+pwsh -Command "Copy-Item .claude/hooks/pre-commit.sh .git/hooks/pre-commit -Force"
+```
+
+Or run the wrapper from the repo root:
+
+```powershell
+pwsh -File tools/install-hooks.ps1
+```
+
+The hook is per-clone (`.git/hooks/` is not tracked), so every fresh
+clone or worktree needs a one-time install. The CI gate is global —
+it runs on every push to `production` regardless of who pushed.
+
 ---
 ## 14. GIT PROTOCOL
 
