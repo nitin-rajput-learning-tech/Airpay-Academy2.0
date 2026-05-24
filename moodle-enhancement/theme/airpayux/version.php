@@ -155,8 +155,4 @@ $plugin->version   = 2026052402;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
-<<<<<<< HEAD
-$plugin->release   = '1.0.32-beta';  // P0 #1+#2 SCSS hygiene + P0 #7 kn/mr/sw 100%
-=======
-$plugin->release   = '1.0.32-beta';  // P1 #12 :focus-visible coverage
->>>>>>> origin/claude/inspiring-mayer-kWs9O
+$plugin->release   = '1.0.32-beta';  // P0 #1+#2 SCSS hygiene + P0 #7 kn/mr/sw 100% + P1 #12 :focus-visible
