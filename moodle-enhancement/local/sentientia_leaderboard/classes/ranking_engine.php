@@ -25,6 +25,12 @@ class ranking_engine {
      * fresh, inserts. Emits a `leaderboard.recomputed` event after a
      * successful commit so any open SSE clients pick up the change.
      *
+     * Phase L.1: also captures pre/post rank maps and triggers a Moodle
+     * `rankings_updated` event when one or more learners moved 5+
+     * positions or entered the top 10. The observer (gated behind the
+     * `sentientia.leaderboards.notifications.enabled` feature flag —
+     * default OFF) routes those into Moodle messages.
+     *
      * @param int|\stdClass $board Board id or row.
      * @throws \moodle_exception on invalid input or unknown type.
      */
@@ -62,12 +68,21 @@ class ranking_engine {
             return (int) $a->userid - (int) $b->userid;
         });
 
+        // Phase L.1: snapshot the pre-recompute rank map so the
+        // notification observer can compute deltas. Map is small
+        // (one int per ranked user) so this is cheap even on the
+        // 200-row cap.
+        $old_ranks = $DB->get_records_menu('local_sentientia_lb_entries',
+            ['boardid' => $boardid], '', 'userid, userrank');
+        $old_ranks = array_map('intval', $old_ranks);
+
+        $new_ranks = [];
         $tx = $DB->start_delegated_transaction();
         try {
             $DB->delete_records('local_sentientia_lb_entries',
                 ['boardid' => $boardid]);
 
-            self::insert_ranked($rows, $boardid);
+            $new_ranks = self::insert_ranked($rows, $boardid);
             board_manager::mark_recomputed($boardid);
 
             $tx->allow_commit();
@@ -79,13 +94,26 @@ class ranking_engine {
         // After commit: emit the recomputed event so SSE clients refresh.
         // We DON'T compute per-user position_changed events on every recompute —
         // that would N-multiply the event volume. Clients refresh wholesale
-        // on `leaderboard.recomputed`. Per-user events are reserved for
-        // future incremental updates (Phase L.1+).
+        // on `leaderboard.recomputed`. Per-user position_changed events
+        // remain reserved for a future incremental-update path.
         event_journal::write($boardid, 'leaderboard.recomputed', [
             'boardid'        => $boardid,
             'recomputed_at'  => time(),
             'entry_count'    => count($rows),
         ]);
+
+        // Phase L.1: route the "interesting" rank changes (5+ positions
+        // or a fresh top-10 entry) through the Moodle event bus so the
+        // notification observer can fire messages. Empty change-set =
+        // no event (defends Moodle's log noise).
+        $changes = message_helper::compute_changes($old_ranks, $new_ranks);
+        if (!empty($changes)) {
+            event\rankings_updated::create([
+                'context'  => \context_system::instance(),
+                'objectid' => $boardid,
+                'other'    => ['changes' => $changes],
+            ])->trigger();
+        }
     }
 
     /**
@@ -330,14 +358,21 @@ class ranking_engine {
      * (1, 2, 2, 4 — competition ranking).
      *
      * Caller has already sorted $rows DESC by points (+secondary tiebreak).
+     *
+     * Returns a map of userid => assigned rank — used by recompute()
+     * to compute Phase L.1 rank-change deltas without re-reading the
+     * table.
+     *
+     * @return array<int, int>
      */
-    private static function insert_ranked(array $rows, int $boardid): void {
+    private static function insert_ranked(array $rows, int $boardid): array {
         global $DB;
         $rank = 0;
         $position = 0;
         $previous_points    = null;
         $previous_secondary = null;
         $now = time();
+        $new_ranks = [];
 
         foreach ($rows as $r) {
             $position++;
@@ -351,16 +386,19 @@ class ranking_engine {
             $previous_points    = $points;
             $previous_secondary = $secondary;
 
+            $userid = (int) $r->userid;
             $DB->insert_record('local_sentientia_lb_entries', (object) [
                 'boardid'        => $boardid,
-                'userid'         => (int) $r->userid,
+                'userid'         => $userid,
                 'points'         => $points,
                 'secondary'      => $secondary,
                 'userrank'       => $rank,
                 'costcenterid'   => (int) $r->costcenterid,
                 'last_recomputed' => $now,
             ]);
+            $new_ranks[$userid] = $rank;
         }
+        return $new_ranks;
     }
 
     /**

@@ -102,6 +102,22 @@ $string['invalid_event_type']    = 'Unknown event type: {$a}';
 $string['task_recompute_due_boards'] = 'Recompute due leaderboards (Sentientia)';
 $string['task_purge_old_events']     = 'Purge old leaderboard SSE events (Sentientia)';
 
+// ── Phase L.1: events + messages ───────────────────────────────
+$string['event_rankings_updated']     = 'Leaderboard rankings updated';
+$string['messageprovider:rank_change'] = 'Leaderboard rank change';
+
+// Top-10 entry — celebration. {$a->boardname}, {$a->new_rank}.
+$string['msg_top10_subject'] = 'You cracked the top {$a->new_rank} on {$a->boardname}!';
+$string['msg_top10_body']    = 'Great work — you just entered the top 10 on "{$a->boardname}" at rank #{$a->new_rank}. Keep going to climb even higher.';
+
+// Moved up — {$a->boardname}, {$a->old_rank}, {$a->new_rank}, {$a->delta}.
+$string['msg_moveup_subject'] = 'You moved up {$a->delta} places on {$a->boardname}';
+$string['msg_moveup_body']    = 'You climbed from rank #{$a->old_rank} to #{$a->new_rank} on "{$a->boardname}" — a jump of {$a->delta} positions. Nice run.';
+
+// Moved down — same placeholders.
+$string['msg_movedown_subject'] = 'You dropped {$a->delta} places on {$a->boardname}';
+$string['msg_movedown_body']    = 'Your rank on "{$a->boardname}" slipped from #{$a->old_rank} to #{$a->new_rank} (down {$a->delta} positions). Want to claw it back? Open the board and keep learning.';
+
 // ── User preference (opt-out) ─────────────────────────────────
 $string['preference_optout'] = 'Hide me from public leaderboards';
 

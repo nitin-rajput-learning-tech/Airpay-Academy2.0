@@ -102,6 +102,22 @@ $string['invalid_event_type']    = 'अज्ञात इवेंट प्र
 $string['task_recompute_due_boards'] = 'देय लीडरबोर्ड की पुनर्गणना करें (सेंटिएंटिया)';
 $string['task_purge_old_events']     = 'पुराने लीडरबोर्ड SSE इवेंट हटाएँ (सेंटिएंटिया)';
 
+// ── Phase L.1: events + messages ───────────────────────────────
+$string['event_rankings_updated']     = 'लीडरबोर्ड रैंकिंग अपडेट हुई';
+$string['messageprovider:rank_change'] = 'लीडरबोर्ड रैंक परिवर्तन';
+
+// Top-10 entry — celebration.
+$string['msg_top10_subject'] = 'आपने {$a->boardname} पर शीर्ष {$a->new_rank} में जगह बनाई!';
+$string['msg_top10_body']    = 'शाबाश — आपने अभी "{$a->boardname}" के शीर्ष 10 में रैंक #{$a->new_rank} पर प्रवेश किया है। और ऊँचाई तक पहुँचने के लिए जारी रखें।';
+
+// Moved up.
+$string['msg_moveup_subject'] = 'आप {$a->boardname} पर {$a->delta} स्थान ऊपर बढ़े';
+$string['msg_moveup_body']    = 'आप "{$a->boardname}" पर रैंक #{$a->old_rank} से #{$a->new_rank} तक चढ़े — {$a->delta} स्थानों की छलांग। बढ़िया प्रदर्शन।';
+
+// Moved down.
+$string['msg_movedown_subject'] = 'आप {$a->boardname} पर {$a->delta} स्थान नीचे गिरे';
+$string['msg_movedown_body']    = '"{$a->boardname}" पर आपकी रैंक #{$a->old_rank} से #{$a->new_rank} तक फिसल गई ({$a->delta} स्थान नीचे)। वापस ऊपर आना चाहते हैं? बोर्ड खोलें और सीखना जारी रखें।';
+
 // ── User preference (opt-out) ─────────────────────────────────
 $string['preference_optout'] = 'मुझे सार्वजनिक लीडरबोर्ड से छिपाएँ';
 
