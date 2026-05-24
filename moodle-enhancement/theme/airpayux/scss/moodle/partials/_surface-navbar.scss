@@ -106,6 +106,12 @@
         background: #fff !important;
         box-shadow: 0 0 0 3px rgba(0,102,167,0.1);
     }
+    &:focus-visible {
+        outline: none;
+        border-color: var(--airpay-primary, #0066A7) !important;
+        background: #fff !important;
+        box-shadow: 0 0 0 3px rgba(0,102,167,0.1);
+    }
 }
 
 /* Quick Access button — match circular icon style */
