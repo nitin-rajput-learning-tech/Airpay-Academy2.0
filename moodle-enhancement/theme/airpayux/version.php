@@ -225,7 +225,21 @@ defined('MOODLE_INTERNAL') || die();
 // during chip-J + chip-K merges. Re-added 12 selectors across 3
 // surface partials (login, user, grade-report). 4 selectors in
 // _bizlms-admin.scss still on backlog. WCAG 2.1.1 + 2.4.7.
-$plugin->version   = 2026052404;
+//
+// P2 #19 follow-up — inline-timing → tokens (2026-05-24, chip-D)
+// All 54 inline-timing transition declarations across the 9
+// _surface-*.scss partials migrated to var(--ap-transition-quick|
+// default|slow). The token cascade in _tokens.scss collapses
+// --ap-duration-* to 0ms under prefers-reduced-motion:reduce, so
+// every animation on a Sentientia surface now respects the user
+// preference (WCAG 2.3.3 — Animation from Interactions). 9 commits,
+// one per partial: badges (3), calendar (2), navbar (2), footer (3),
+// grade-report (5), dashboard (6), login (9), user (11), course (13).
+// Two declarations with sub-token timing (0.05s tactile-press) were
+// rounded up to --ap-transition-quick (150ms) with an inline comment
+// at the violating site explaining the rounding decision. Closes
+// the P2 #19 violation backlog flagged by chip-P's stylelint rule.
+$plugin->version   = 2026052405;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
@@ -244,7 +258,7 @@ $plugin->maturity  = MATURITY_BETA;
 // (83% reduction). Section 1 wrapped under body#page-login-index for
 // ID-specificity. Bundled bugfix: dark-mode selectors used descendant
 // combinator (never fired since #page-X IS body); now chained.
-$plugin->release   = '1.0.35-beta';  // P0 #1+#2+#3+#4+#5+#6+#7+#9 + F-13 + P1 #10+#11+#12+#13+#14+#17 + P2 #18+#19+#20+#21+#23 + cart_badge audit + P1 #12 re-apply
+$plugin->release   = '1.0.36-beta';  // P0 #1+#2+#3+#4+#5+#6+#7+#9 + F-13 + P1 #10+#11+#12+#13+#14+#17 + P2 #18+#19+#20+#21+#23 + cart_badge audit + P1 #12 re-apply + P2 #19 follow-up (inline-timing → tokens)
 // P1 #10 chip-J (2026-05-24) — _surface-profile.scss (2,507 lines)
 // decomposed into 4 per-surface partials: _surface-user, _surface-badges,
 // _surface-grade-report, _surface-calendar. Admin fragments moved to
