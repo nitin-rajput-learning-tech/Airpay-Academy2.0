@@ -3,6 +3,97 @@
 
 ---
 
+## 🚀 STREAM G — AI QUIZ PHASE G.1 SCAFFOLD (2026-05-24)
+
+### Session — `local_sentientia_ai_quiz` (Hindi + per-customer prompt scaffold) — ✅ SHIPPED (scaffold)
+
+**New plugin** `local_sentientia_ai_quiz` v0.1.0-alpha (version
+2026052410). Phase G.1 scaffold for Hindi quiz generation with
+per-customer Anthropic prompt templates. Sibling to the G.0 MVP
+`local_sentientia_aiquiz` (which already ships the English single-tenant
+draft + review workflow); this G.1 plugin lands additively so the
+Hindi + per-customer-prompt work can mature without touching G.0's
+production-bound surfaces.
+
+**Hard contract — NO live network calls in this chip.**
+`anthropic_client::generate_quiz()` unconditionally throws
+`\moodle_exception('confirm_required')`. The downstream live-wiring
+chip lands the real POST behind its own per-call [CONFIRM] gate.
+
+**Deliverables:**
+- [x] `version.php` — MATURITY_ALPHA, 0.1.0-alpha, depends on
+      `local_airpay_core` 2026051401 (feature_flags resolver)
+- [x] `db/install.xml` — single audit table
+      `local_sentientia_ai_quiz_log` (id, userid, courseid, customerid,
+      prompt_hash CHAR(64), model CHAR(50), tokens_in, tokens_out,
+      success TINYINT, error TEXT, timecreated, timemodified) with
+      three indexes (user+created, customer+created, success)
+- [x] `db/access.php` — single capability
+      `local/sentientia_ai_quiz:generate` with no archetype grants
+      (default deny; admins grant explicitly once live wiring is
+      reviewed)
+- [x] `db/feature_flags.php` — single flag `sentientia_ai_quiz_enabled`
+      default OFF, per-customer + per-tenant overridable through the
+      local_airpay_core 5-level resolver
+- [x] `classes/anthropic_client.php` — `generate_quiz(string
+      $sourcetext, string $lang = 'hi'): array` throws
+      `confirm_required` on every call; validates lang against
+      `['en','hi']` before throwing; static `prompt_hash()` helper for
+      log-table digests
+- [x] `classes/privacy/provider.php` — implements metadata + plugin
+      provider + core_userlist_provider; declares the log table + the
+      Anthropic external subsystem; export/delete return cleanly on
+      the empty Phase G.1 table
+- [x] `settings.php` — prompt template (textarea, default loaded), max
+      tokens (int default 4000), daily cost cap per customer (int
+      default 100 USD)
+- [x] `lang/en/local_sentientia_ai_quiz.php` — 35 strings (plugin
+      identity, capability, errors, settings, language labels, privacy
+      metadata + Anthropic external subsystem)
+- [x] `lang/hi/local_sentientia_ai_quiz.php` — 35 strings (verified
+      100% parity with EN via `array_diff_key`)
+- [x] `tests/feature_flags_test.php` — flag registry, default OFF,
+      per-customer override path, capability default-deny, confirm-gate
+      throw, default-lang=hi, unsupported-lang rejection, prompt_hash
+      determinism + format, EN/HI parity, confirm_required string
+      exists in both packs
+- [x] `tests/privacy_provider_test.php` — metadata declaration,
+      empty-state behaviour (no rows), user-list isolation,
+      delete_for_user / delete_for_users / delete_all_in_context
+      contracts, non-system context guards
+
+**Hard-rule compliance (CLAUDE.md):**
+- ✅ Feature flag default OFF (§13)
+- ✅ Hindi 100% parity (35/35 keys)
+- ✅ NEVER POST to api.anthropic.com without [CONFIRM] — every call
+      throws `confirm_required`; the live-wiring chip will add a fresh
+      [CONFIRM] gate
+- ✅ No API key persisted in DB; future live chip reads from `.env`
+- ✅ `db/install.xml` validated with `xmllint`; every `.php` file
+      passes `php -l`
+- ✅ Single capability default deny — no role gets `:generate` until
+      an administrator explicitly grants it post-review
+
+**Acceptance verification (local):**
+- `xmllint --noout db/install.xml` → valid
+- `php -l` clean across all 8 PHP files
+- EN keys = 35, HI keys = 35, missing = 0, extra = 0
+
+**Deferred (future Phase G.1 chips):**
+- Live wiring: `anthropic_client::call_live()` + response parser +
+  log-row insert + per-call [CONFIRM] gate at UI layer
+- Per-customer prompt resolution via planned
+  `local_airpay_core\customer::get_customer_config()` (does not yet
+  exist on master — added by the customer-config-hooks chip)
+- Hindi prompt v2 + en/hi A-B prompt evaluation
+- Cost analytics dashboard reading from the new log table
+- ADR-012 update: bump notes G.1 scaffold landed as a sibling plugin
+  rather than as a `prompt_version='v2-hindi'` row inside the G.0
+  plugin (originally planned in ADR-012). Trade-off recorded for the
+  next ADR revision
+
+---
+
 ## 🚀 TIER 2.6 — CALENDAR SYNC PHASE 1 (2026-05-24)
 
 ### Session — `local_sentientia_calendar` (outbound ICS feed MVP) — ✅ SHIPPED
