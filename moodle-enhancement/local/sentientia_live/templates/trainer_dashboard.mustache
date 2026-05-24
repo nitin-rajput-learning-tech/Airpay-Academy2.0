@@ -37,15 +37,16 @@
   {{#has_sessions}}
     <div class="table-responsive">
       <table class="table table-hover align-middle">
+        <caption class="sr-only">{{#str}}trainer_sessions_table_caption, local_sentientia_live{{/str}}</caption>
         <thead class="table-light">
           <tr>
-            <th>{{#str}}col_title, local_sentientia_live{{/str}}</th>
-            <th class="text-center">{{#str}}col_state, local_sentientia_live{{/str}}</th>
-            <th class="text-center">{{#str}}col_code, local_sentientia_live{{/str}}</th>
-            <th class="text-center">{{#str}}col_slides, local_sentientia_live{{/str}}</th>
-            <th class="text-center">{{#str}}col_audience, local_sentientia_live{{/str}}</th>
-            <th>{{#str}}col_created, local_sentientia_live{{/str}}</th>
-            <th class="text-end">{{#str}}col_actions, local_sentientia_live{{/str}}</th>
+            <th scope="col">{{#str}}col_title, local_sentientia_live{{/str}}</th>
+            <th scope="col" class="text-center">{{#str}}col_state, local_sentientia_live{{/str}}</th>
+            <th scope="col" class="text-center">{{#str}}col_code, local_sentientia_live{{/str}}</th>
+            <th scope="col" class="text-center">{{#str}}col_slides, local_sentientia_live{{/str}}</th>
+            <th scope="col" class="text-center">{{#str}}col_audience, local_sentientia_live{{/str}}</th>
+            <th scope="col">{{#str}}col_created, local_sentientia_live{{/str}}</th>
+            <th scope="col" class="text-end">{{#str}}col_actions, local_sentientia_live{{/str}}</th>
           </tr>
         </thead>
         <tbody>

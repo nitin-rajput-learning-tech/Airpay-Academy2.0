@@ -35,7 +35,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_live';
-$plugin->version   = 2026052103;
+$plugin->version   = 2026052401;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;   // Phase E.0 — scaffold only
 $plugin->release   = '0.1.0-alpha';
@@ -46,3 +46,13 @@ $plugin->dependencies = [
 // Release history
 // 0.1.0-alpha  Phase E.0: scaffold + DB schema + capabilities + privacy
 //              No UI yet. Tables exist; no callers.
+// 2026052401   P1 #15 / F-24 — Sentientia BEM tokens (airpay-badge/airpay-btn)
+//              layered over the Bootstrap utility classes used in
+//              trainer_dashboard / result_panel / result_bar_chart
+//              templates. Theme-side overrides ship in
+//              theme/airpayux/scss/moodle/partials/_bizlms-modern.scss.
+//
+//              P2 #22 / F-25 — Trainer-dashboard table a11y:
+//              added <caption class="sr-only"> and scope="col"
+//              on every <th>. New lang key
+//              trainer_sessions_table_caption (EN + HI, 100% parity).

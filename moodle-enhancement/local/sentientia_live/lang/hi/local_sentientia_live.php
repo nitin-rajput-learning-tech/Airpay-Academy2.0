@@ -87,6 +87,7 @@ $string['action_view']                  = 'देखें';
 $string['confirm_end_session']          = 'इस लाइव सेशन को समाप्त करें? ऑडियंस disconnect हो जाएगा और परिणाम फ़्रीज़ हो जाएंगे।';
 $string['confirm_delete_session']       = 'इस सेशन को स्थायी रूप से हटाएं? स्लाइड, ऑडियंस रिकॉर्ड और प्रतिक्रियाएं — सभी हट जाएंगे।';
 $string['dashboard_session_count']      = 'कुल {$a} सेशन।';
+$string['trainer_sessions_table_caption'] = 'आपके लाइव सेशन की सूची — स्थिति, join कोड, स्लाइड संख्या, ऑडियंस आकार, बनाने की तारीख और उपलब्ध क्रियाएं।';
 
 // ── Phase E.1.g — create-session strings ──
 $string['create_session_pagetitle']   = 'लाइव सेशन बनाएं';

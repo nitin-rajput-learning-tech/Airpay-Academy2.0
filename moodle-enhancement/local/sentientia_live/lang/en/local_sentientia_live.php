@@ -87,6 +87,7 @@ $string['action_view']                  = 'View';
 $string['confirm_end_session']          = 'End this live session? Audience disconnects and results are frozen.';
 $string['confirm_delete_session']       = 'Delete this session permanently? Slides, audience records and responses will all be removed.';
 $string['dashboard_session_count']      = '{$a} sessions total.';
+$string['trainer_sessions_table_caption'] = 'List of your live sessions with state, join code, slide count, audience size, creation date, and available actions.';
 
 // ── Phase E.1.g — create-session strings ──
 $string['create_session_pagetitle']   = 'Create live session';
