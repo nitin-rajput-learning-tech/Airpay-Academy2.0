@@ -5301,3 +5301,62 @@ If the design intent is that the cart icon should appear on more pages (the airp
 - All 10 layouts in `theme/airpayux/layout/` — verification shows none need additional wiring beyond Chip B's two existing additions in `dashboard.php` and `course.php`.
 - `templates/navbar.mustache` — owned by Chip B (already extracted the inline script).
 - `amd/src/cart_badge.js` + `amd/build/cart_badge.min.js` — owned by Chip B.
+
+---
+
+## 📱 P1 #14 + P2 #21 — footer mobile + comment cleanup (2026-05-24)
+
+**Chip:** `claude/determined-feynman-rcJw1` (chip L)
+**Commits:**
+- `f2926457a` — feat(scss): footer mobile breakpoint at 590px (P1 #14)
+- `a6a0da86b` — chore(template): delete removed-badge comment block in footer.mustache (P2 #21)
+- *(third commit pending — version bump + evidence)*
+
+### What shipped
+- `theme/airpayux/scss/moodle/partials/_surface-footer.scss` gains a
+  new `@media (max-width: 590px)` block (the primary mobile target per
+  `.claude/rules/frontend.md`). Stacks the compact footer row cleanly
+  on Galaxy-S / iPhone SE viewports, lets the copyright line wrap, and
+  trims padding on the Sentientia attribution band so the pill stays
+  compact when the band's child spans wrap to a second line.
+- `theme/airpayux/templates/footer.mustache` loses its 10-line
+  Mustache comment block (the 2026-05-15 "Made in India" badge
+  removal narrative). The comment was fact-of-history; the git log
+  preserves the original removal commit + rationale.
+- `theme/airpayux/version.php` bumped to `1.0.33-beta` / `2026052403`
+  so the cached compiled CSS bundle invalidates and the new breakpoint
+  reaches users on next request.
+
+### Why
+- F-07 (P1 #14) from `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md`
+  flagged `_surface-footer.scss` as having zero `@media` queries — no
+  responsive coverage declared, no `590px` rules whatsoever. The
+  768px block above the new addition gives intermediate stacking but
+  doesn't tighten for narrow mobile.
+- F-09 (P2 #21) flagged the 10-line history comment as cognitive load
+  for future template editors with no current-code rationale.
+
+### Concurrency with chip B
+Chip B (`festive-sagan-wvDSO`) is concurrently editing both files.
+Chip L was designed to compose with chip B:
+- footer.mustache: chip B replaces the inline-style attribution band
+  with BEM classes; chip L removes the unrelated history comment.
+  Merge-resolved by keeping both edits.
+- _surface-footer.scss: chip B adds the base rules for the new BEM
+  classes; chip L adds the `590px` overrides that target chip B's
+  classes. Additive, no overlap.
+- version.php: both chips bump the release. Chip L lands at
+  `1.0.33-beta` / `2026052403` (one higher than chip B's
+  `1.0.32-beta` / `2026052402`) so the higher version wins regardless
+  of merge order.
+
+### Visual evidence
+`docs/visual-evidence/2026-05-24/p1-p2-followup-chip-L/README.md`
+documents the change and supplies a 5-minute test procedure for
+Nitin (Chrome devtools → device toolbar → 590px viewport). No
+screenshots in-container — captures are Nitin's task at the dev
+workstation.
+
+### Next
+Two items still open from the audit's P1 backlog (focus-visible, dark-
+mode !important refactor). Tracking in a separate chip.

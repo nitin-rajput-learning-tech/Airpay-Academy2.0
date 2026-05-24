@@ -176,8 +176,16 @@ defined('MOODLE_INTERNAL') || die();
 // navbar-secure.mustache (secure), or a custom landing-page nav that
 // redirects logged-in users away (frontpage). Version bump signals
 // audit completion. Full per-layout evidence table in PROJECT-STATE.md.
+//
+// P1 #14 + P2 #21 follow-up chip-L (2026-05-24) — footer mobile +
+// comment cleanup:
+//   - partials/_surface-footer.scss: new @media (max-width: 590px)
+//     block stacks compact row on Galaxy-S sized viewports; tightens
+//     .airpay-footer__product-attribution padding (P1 #14 / F-07).
+//   - templates/footer.mustache: removed the 10-line "Made in India"
+//     removed-badge Mustache comment block (P2 #21 / F-09).
 $plugin->version   = 2026052403;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.33-beta';  // P0 #1+#2+#3+#4+#6+#7+#9 + P1 #12 + cart_badge audit
+$plugin->release   = '1.0.33-beta';  // P0 #1+#2+#3+#4+#6+#7+#9 + P1 #12+#14 + P2 #21 + cart_badge audit
