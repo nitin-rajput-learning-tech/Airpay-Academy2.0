@@ -24,12 +24,12 @@
             <img src="{{{config.wwwroot}}}/theme/airpayux/pix/brand/academy-logo-350.png" alt="airpay academy">
         </a>
         <nav class="airpay-footer__links">
-            <a href="{{{config.wwwroot}}}/local/airpay_pages/index.php?page=privacy">Privacy</a>
-            <a href="{{{config.wwwroot}}}/local/airpay_pages/index.php?page=terms">Terms</a>
-            <a href="{{{config.wwwroot}}}/local/airpay_pages/index.php?page=help">Help</a>
-            <a href="{{{config.wwwroot}}}/local/airpay_pages/index.php?page=contact">Contact</a>
+            <a href="{{{config.wwwroot}}}/local/airpay_pages/index.php?page=privacy">{{#str}}footer_privacy, theme_airpayux{{/str}}</a>
+            <a href="{{{config.wwwroot}}}/local/airpay_pages/index.php?page=terms">{{#str}}footer_terms, theme_airpayux{{/str}}</a>
+            <a href="{{{config.wwwroot}}}/local/airpay_pages/index.php?page=help">{{#str}}footer_help, theme_airpayux{{/str}}</a>
+            <a href="{{{config.wwwroot}}}/local/airpay_pages/index.php?page=contact">{{#str}}footer_contact, theme_airpayux{{/str}}</a>
         </nav>
-        <span class="airpay-footer__copy">&copy; 2026 airpay payment services pvt. ltd.</span>
+        <span class="airpay-footer__copy">{{#str}}footer_copyright, theme_airpayux{{/str}}</span>
         {{!
             2026-05-15: removed the "Made in India" badge from the admin
             footer. Original placement collided visually with adjacent dark

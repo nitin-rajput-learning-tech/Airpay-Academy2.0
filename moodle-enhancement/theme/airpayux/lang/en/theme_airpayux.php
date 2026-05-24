@@ -243,3 +243,12 @@ $string['nav_home']       = 'Home';
 $string['a11y_search']    = 'Search courses, people, content';
 $string['a11y_usermenu']  = 'User menu';
 $string['a11y_mobilemenu'] = 'Mobile menu';
+
+// P0 #4 follow-up (2026-05-24) — footer i18n. Wraps the four compact
+// footer links + copyright string referenced by templates/footer.mustache.
+// See docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md F-05.
+$string['footer_privacy']   = 'Privacy';
+$string['footer_terms']     = 'Terms';
+$string['footer_help']      = 'Help';
+$string['footer_contact']   = 'Contact';
+$string['footer_copyright'] = '&copy; 2026 airpay payment services pvt. ltd.';

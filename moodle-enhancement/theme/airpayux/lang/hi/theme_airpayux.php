@@ -176,3 +176,11 @@ $string['nav_home']       = 'होम';
 $string['a11y_search']    = 'कोर्स, लोग, कंटेंट खोजें';
 $string['a11y_usermenu']  = 'यूज़र मेनू';
 $string['a11y_mobilemenu'] = 'मोबाइल मेनू';
+
+// P0 #4 फ़ॉलो-अप (2026-05-24) — फ़ुटर i18n।
+// templates/footer.mustache के चार कॉम्पैक्ट फ़ुटर लिंक + कॉपीराइट।
+$string['footer_privacy']   = 'प्राइवेसी';
+$string['footer_terms']     = 'नियम और शर्तें';
+$string['footer_help']      = 'मदद';
+$string['footer_contact']   = 'संपर्क';
+$string['footer_copyright'] = '&copy; 2026 एयरपे पेमेंट सर्विसेस प्रा. लि.';
