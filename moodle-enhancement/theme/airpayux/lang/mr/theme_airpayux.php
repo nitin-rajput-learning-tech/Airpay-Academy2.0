@@ -155,3 +155,19 @@ $string['privacy:drawerblockclosed'] = 'ब्लॉक ड्रॉवर ब�
 $string['privacy:drawerblockopen'] = 'ब्लॉक ड्रॉवर उघडा आहे.';
 $string['privacy:drawernavclosed'] = 'नेव्हिगेशन ड्रॉवर बंद आहे.';
 $string['privacy:drawernavopen'] = 'नेव्हिगेशन ड्रॉवर उघडा आहे.';
+
+// F-13 (Platform Visual Audit 2026-05-24) — डॅशबोर्ड वेलकम बॅनर, चार्ट
+// हेडिंग आणि कंप्लायन्स KPI लेबल्स. templates/dashboard.mustache मध्ये
+// {{#str}} द्वारे लोड होतात. {$a} = वापरकर्त्याचे पहिले नाव.
+$string['welcome_back_admin']      = 'पुन्हा स्वागत आहे, {$a}';
+$string['subtitle_admin']          = 'प्लॅटफॉर्म ओव्हरव्ह्यू आणि सिस्टम आरोग्य';
+$string['welcome_manager']         = 'स्वागत आहे, {$a}';
+$string['subtitle_manager']        = 'टीम ओव्हरव्ह्यू आणि कंप्लायन्स स्थिती';
+$string['welcome_learner']         = 'पुन्हा स्वागत आहे, {$a}!';
+$string['subtitle_learner']        = 'जिथे सोडले होते तिथून सुरू करा आणि तुमची स्किल्स वाढवत रहा';
+$string['chart_enrolment_trend']   = 'एनरोलमेंट ट्रेंड';
+$string['chart_course_distribution'] = 'कोर्स वितरण';
+$string['kpi_mandatory_courses']   = 'अनिवार्य कोर्सेस';
+$string['kpi_compliance_rate']     = 'कंप्लायन्स रेट';
+$string['kpi_overdue']             = 'मुदत संपलेले';
+$string['kpi_total_assigned']      = 'एकूण नियुक्त';
