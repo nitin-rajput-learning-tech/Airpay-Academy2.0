@@ -139,3 +139,19 @@ $string['entermobileotp'] = 'डाला गया मोबाइल नंब
 // अतिरिक्त सॉर्ट विकल्प।
 $string['sortbystartdate'] = 'कोर्स शुरू होने की तारीख';
 $string['sortbyenddate']   = 'कोर्स ख़त्म होने की तारीख';
+
+// F-13 (Platform Visual Audit 2026-05-24) — डैशबोर्ड वेलकम बैनर, चार्ट
+// हेडिंग और कम्प्लायंस KPI लेबल्स। templates/dashboard.mustache में
+// {{#str}} हेल्पर के ज़रिए लोड होते हैं। {$a} = यूज़र का फ़र्स्ट नेम।
+$string['welcome_back_admin']      = 'फिर से स्वागत है, {$a}';
+$string['subtitle_admin']          = 'प्लेटफ़ॉर्म ओवरव्यू और सिस्टम हेल्थ';
+$string['welcome_manager']         = 'स्वागत है, {$a}';
+$string['subtitle_manager']        = 'टीम ओवरव्यू और कम्प्लायंस स्टेटस';
+$string['welcome_learner']         = 'फिर से स्वागत है, {$a}!';
+$string['subtitle_learner']        = 'जहाँ छोड़ा था वहीं से शुरू करें और अपनी स्किल्स बढ़ाते रहें';
+$string['chart_enrolment_trend']   = 'एनरोलमेंट ट्रेंड';
+$string['chart_course_distribution'] = 'कोर्स डिस्ट्रिब्यूशन';
+$string['kpi_mandatory_courses']   = 'अनिवार्य कोर्सेज़';
+$string['kpi_compliance_rate']     = 'कम्प्लायंस रेट';
+$string['kpi_overdue']             = 'ओवरड्यू';
+$string['kpi_total_assigned']      = 'टोटल असाइन्ड';
