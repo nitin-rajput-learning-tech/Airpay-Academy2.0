@@ -5723,3 +5723,77 @@ no coordination required beyond the standard append-only conventions.
 - Audit report: `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md` (F-24, F-25)
 - Frontend rules: `.claude/rules/frontend.md` §BEM
 - State card: `state-cards/sentientia_live-state.md`
+
+---
+
+## ♿ P1 #12 re-apply — :focus-visible restored on refactored partials (2026-05-24)
+
+**Status:** ✅ Done (3 file commits + 1 closeout commit on
+`claude/optimistic-dirac-PPYhV`; ready for merge into production).
+
+**Why:** P1 #12 originally landed on `claude/inspiring-mayer-kWs9O` (Chip H,
+22 `:focus-visible` selectors across 5 surface partials). Two subsequent
+merges dropped a subset of those rules:
+
+- **Chip K — `_surface-login.scss` `!important` refactor** (merge
+  `6e3cd87a7`, branch `claude/admiring-knuth-Szn4E`). Resolved its
+  modify/modify conflict via `git checkout --theirs`, taking Chip K's
+  refactored login partial wholesale. Net loss: **6 `:focus-visible`
+  selectors** that Chip H had added on the login form input + forgot-password
+  / signup field chain.
+- **Chip J — `_surface-profile.scss` decomposition** (merge `490b11a20`,
+  branch `claude/zealous-dijkstra-oftgB`). Resolved its modify/delete
+  conflict toward the delete (Chip J split the 2,507-line file into 4 new
+  per-surface partials). Net loss: **10 `:focus-visible` selectors** that
+  Chip H had added on `_surface-profile.scss`.
+
+The Chip H closeout commit and both merge commit messages flagged the loss
+as a follow-up TODO; this chip closes that TODO.
+
+**What changed (per partial):**
+
+| File | Selectors re-added | Rule block | Match for original Chip H location |
+|------|--------------------|------------|------------------------------------|
+| `_surface-login.scss` | 6 | 2 rule blocks | `.airpay-login__input:focus-visible` (now nested under `body#page-login-index` per Chip K's wrapper); `#page-login-forgot_password / #page-signup` 5-selector chain (top-level) |
+| `_surface-user.scss` | 3 | 1 rule block | `#region-main form.mform .felement input/select/textarea:focus-visible` — same body parent (`body#page-course-edit`) as Chip H's original |
+| `_surface-grade-report.scss` | 3 | 1 rule block | `.tertiary-navigation input[type=text]/[type=search]/.dropdown-toggle:focus-visible` — same body parent (`body.path-grade-report-grader`) as Chip H's original |
+| `_surface-badges.scss` | 0 | — | Chip J's split assigned no `:focus` rules to this partial; nothing to mirror |
+| `_surface-calendar.scss` | 0 | — | Chip J's split assigned no `:focus` rules to this partial; nothing to mirror |
+| **TOTAL re-added on this chip** | **12** | **4 rule blocks** | (3 file-commits + 1 version-bump closeout) |
+
+**Out of scope — left on P1 backlog:** Chip J relocated the original Block 1
+from `_surface-profile.scss` (`#region-main .form-control/input/textarea/select:focus`,
+4 selectors) into `_bizlms-admin.scss` lines 1560-1567. `_bizlms-*` partials
+are explicitly out of scope for this chip per the contributor brief — the
+4 selectors remain a separate P1 follow-up. Of Chip H's original 16 selectors
+across profile + login, **12 are now re-applied in surface partials and 4 are
+deferred to a follow-up chip touching `_bizlms-admin.scss`**.
+
+**Pattern used (mirrors Chip H exactly):**
+```scss
+&:focus { …declarations… }
+&:focus-visible { …same declarations… }
+```
+Legacy `:focus` rules retained as fallback for browsers without
+`:focus-visible` (Safari < 15.4, older Edge / IE residuals). Mouse-click
+users no longer see the brand-light ring; keyboard `Tab` users still get it.
+
+**Commits (in order, on `claude/optimistic-dirac-PPYhV`):**
+1. `feat(a11y): :focus-visible siblings on _surface-login.scss (P1 #12 re-apply after merge)` — 6 selectors / 2 rules
+2. `feat(a11y): :focus-visible siblings on _surface-user.scss (P1 #12 re-apply after merge)` — 3 selectors / 1 rule
+3. `feat(a11y): :focus-visible siblings on _surface-grade-report.scss (P1 #12 re-apply after merge)` — 3 selectors / 1 rule
+4. `chore(theme): bump airpayux version + log P1 #12 re-apply closeout` — version 2026052403 → 2026052404, release 1.0.33-beta → 1.0.34-beta + this PROJECT-STATE.md section
+
+**Safety + parity:**
+- ✅ Each per-partial commit independently SCSS-balanced (open `{` count == close `}` count verified per file)
+- ✅ `:focus-visible` rule declarations are byte-identical to the sibling `:focus` rule (no behaviour drift)
+- ✅ Idempotent: out-of-scope partials (`_surface-navbar.scss`, `_surface-course.scss`, `_surface-dashboard.scss`) verified still carrying Chip H's original `:focus-visible` siblings (1 / 3 / 2 rules respectively) — not touched
+- ✅ `php -l` clean on version.php
+- ✅ No pre-commit hooks skipped (`--no-verify` not used); no `--no-gpg-sign`; no `--amend`
+- ✅ Mustache / PHP / lang files untouched per chip scope
+
+**Refs:**
+- Audit report: `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md` §2.6 (WCAG 2.4.7 rationale; audit refs F-11, F-17)
+- Chip H reference branch: `origin/claude/inspiring-mayer-kWs9O` (commits c4787fa0 login, 7ffbafb5 profile)
+- Lost-in-merge commits: `490b11a20` (chip-J split), `6e3cd87a7` (chip-K refactor)
+- Frontend rules: `.claude/rules/frontend.md`

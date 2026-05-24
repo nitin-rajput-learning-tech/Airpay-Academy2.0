@@ -184,7 +184,19 @@ defined('MOODLE_INTERNAL') || die();
 //     .airpay-footer__product-attribution padding (P1 #14 / F-07).
 //   - templates/footer.mustache: removed the 10-line "Made in India"
 //     removed-badge Mustache comment block (P2 #21 / F-09).
-$plugin->version   = 2026052403;
+//
+// P1 #12 re-apply follow-up (2026-05-24) — restore the :focus-visible
+// sibling rules lost during the chip-J (490b11a20) and chip-K (6e3cd87a7)
+// merges. Re-added 12 selectors across 3 surface partials:
+//   - _surface-login.scss: 6 selectors (2 rules) — input + forgot/signup
+//   - _surface-user.scss: 3 selectors (1 rule) — mform .felement form fields
+//   - _surface-grade-report.scss: 3 selectors (1 rule) — tertiary-navigation
+// Note: 4 selectors (#region-main .form-control/input/textarea/select)
+// that Chip J relocated to _bizlms-admin.scss remain on the P1 backlog
+// (out of scope for this chip — _bizlms-* files require separate review).
+// Cache bump invalidates compiled CSS so the new rules ship on next page
+// load. WCAG 2.1.1 + 2.4.7. Audit ref F-11, F-17.
+$plugin->version   = 2026052404;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
@@ -203,7 +215,7 @@ $plugin->maturity  = MATURITY_BETA;
 // (83% reduction). Section 1 wrapped under body#page-login-index for
 // ID-specificity. Bundled bugfix: dark-mode selectors used descendant
 // combinator (never fired since #page-X IS body); now chained.
-$plugin->release   = '1.0.33-beta';  // P0 #1+#2+#3+#4+#5+#6+#7+#9 + F-13 + P1 #11+#12+#13+#14 + P2 #21 + cart_badge audit
+$plugin->release   = '1.0.34-beta';  // P0 #1+#2+#3+#4+#5+#6+#7+#9 + F-13 + P1 #10+#11+#12+#13+#14 + P2 #21 + cart_badge audit + P1 #12 re-apply
 // P1 #10 chip-J (2026-05-24) — _surface-profile.scss (2,507 lines)
 // decomposed into 4 per-surface partials: _surface-user, _surface-badges,
 // _surface-grade-report, _surface-calendar. Admin fragments moved to
