@@ -452,6 +452,11 @@
     background: var(--ap-bg, #F2F4FB);
     color: var(--ap-text, #1a1a2e);
 }
+.ap-static-page-nav__link:focus-visible {
+    outline: 2px solid var(--ap-color-primary, #0066A7);
+    outline-offset: 2px;
+    border-radius: var(--ap-radius-sm, 8px);
+}
 .ap-static-page-nav__link--active {
     background: var(--ap-primary-light, #e8f2f9) !important;
     color: var(--ap-primary, #0066A7) !important;
@@ -612,6 +617,11 @@ body.dark-mode .ap-static-page__footer { border-color: #2d3140; }
     border-color: var(--ap-primary, #0066A7);
     color: var(--ap-primary, #0066A7);
     text-decoration: none;
+}
+.ap-sp-qlink:focus-visible {
+    outline: 2px solid var(--ap-color-primary, #0066A7);
+    outline-offset: 2px;
+    border-radius: var(--ap-radius-sm, 8px);
 }
 .ap-sp-qlink__icon {
     width: 36px;
@@ -1194,6 +1204,11 @@ body.dark-mode .ap-sp-note--teal {
     background: var(--ap-primary-light);
     color: var(--ap-primary);
 }
+.ap-static-toc__link:focus-visible {
+    outline: 2px solid var(--ap-color-primary, #0066A7);
+    outline-offset: 2px;
+    border-radius: var(--ap-radius-sm, 8px);
+}
 
 /* Back to top button */
 .ap-back-to-top {
@@ -1453,6 +1468,11 @@ body.path-admin {
         background: var(--ap-color-bg-surface-alt, #f8f9fc) !important;
         color: var(--ap-color-text-primary, #1a1a2e) !important;
     }
+    #region-main .nav-tabs .nav-link:focus-visible {
+        outline: 2px solid var(--ap-color-primary, #0066A7);
+        outline-offset: 2px;
+        border-radius: var(--ap-radius-sm, 8px);
+    }
     #region-main .nav-tabs .nav-link.active {
         color: var(--ap-color-primary, #0066A7) !important;
         background: var(--ap-color-bg-surface, #ffffff) !important;
@@ -1535,6 +1555,12 @@ body.path-admin {
         color: var(--ap-color-primary, #0066A7);
         padding-left: 12px;
     }
+    #region-main .tab-pane.active .col-sm-3 ul a:focus-visible,
+    #region-main .tab-pane.active .col-sm-6 ul a:focus-visible {
+        outline: 2px solid var(--ap-color-primary, #0066A7);
+        outline-offset: 2px;
+        border-radius: var(--ap-radius-sm, 8px);
+    }
 
     /* Admin settings form pages (admin/settings.php style) — form rows */
     #region-main .form-group,
@@ -1561,6 +1587,14 @@ body.path-admin {
     #region-main input:focus,
     #region-main textarea:focus,
     #region-main select:focus {
+        border-color: var(--ap-color-primary, #0066A7);
+        box-shadow: 0 0 0 3px rgba(0, 102, 167, 0.1);
+        outline: none;
+    }
+    #region-main .form-control:focus-visible,
+    #region-main input:focus-visible,
+    #region-main textarea:focus-visible,
+    #region-main select:focus-visible {
         border-color: var(--ap-color-primary, #0066A7);
         box-shadow: 0 0 0 3px rgba(0, 102, 167, 0.1);
         outline: none;
@@ -1607,6 +1641,13 @@ body.path-admin {
         background: var(--ap-color-primary-dark, #004d80);
         border-color: var(--ap-color-primary-dark, #004d80);
         transform: translateY(-1px);
+    }
+    #region-main button.btn-primary:focus-visible,
+    #region-main input[type="submit"].btn-primary:focus-visible,
+    #region-main .btn-primary:focus-visible {
+        outline: 2px solid var(--ap-color-primary, #0066A7);
+        outline-offset: 2px;
+        border-radius: var(--ap-radius-sm, 8px);
     }
 
     /* Mobile — collapse to single column + tighten */

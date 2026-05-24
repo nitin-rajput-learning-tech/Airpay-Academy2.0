@@ -6119,3 +6119,99 @@ users no longer see the brand-light ring; keyboard `Tab` users still get it.
 - Chip H reference branch: `origin/claude/inspiring-mayer-kWs9O` (commits c4787fa0 login, 7ffbafb5 profile)
 - Lost-in-merge commits: `490b11a20` (chip-J split), `6e3cd87a7` (chip-K refactor)
 - Frontend rules: `.claude/rules/frontend.md`
+
+## Chip P0-B — bizlms-admin :focus-visible
+
+**Date:** 2026-05-24
+**Branch:** `claude/loving-noether-KKixA`
+**Audit ref:** `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md` §2.6 / F-17 follow-up
+**Closes:** Chip H deferred follow-up flagged in the P1 #12 re-apply section above (4 selectors in `_bizlms-admin.scss` left on backlog).
+
+**Why:** The P1 #12 re-apply closeout above explicitly deferred Chip H's
+`:focus-visible` work on `_bizlms-admin.scss` because `_bizlms-*` partials
+were out of scope for that chip. This chip closes the deferred work AND
+extends WCAG 2.4.7 coverage to interactive selectors in the partial that
+previously had only `:hover` declarations and no focus indicator at all.
+
+**Files patched (1):**
+
+| File | New `:focus-visible` rules | Selectors |
+|------|----------------------------|-----------|
+| `moodle-enhancement/theme/airpayux/scss/moodle/partials/_bizlms-admin.scss` | **7** rule blocks | **13** selectors |
+
+**Per-rule breakdown (in source order):**
+
+| # | Selector(s) | Pattern | Why |
+|---|---|---|---|
+| 1 | `.ap-static-page-nav__link:focus-visible` | WCAG outline (new focus rule) | Static-page tab nav link — interactive, only had `:hover` |
+| 2 | `.ap-sp-qlink:focus-visible` | WCAG outline (new focus rule) | Quick-link card — interactive, only had `:hover` |
+| 3 | `.ap-static-toc__link:focus-visible` | WCAG outline (new focus rule) | Static-page TOC anchor link — interactive, only had `:hover` |
+| 4 | `#region-main .nav-tabs .nav-link:focus-visible` | WCAG outline (new focus rule) | Admin tab bar — Tab key target, previously bare `:hover` |
+| 5 | `#region-main .tab-pane.active .col-sm-3 ul a:focus-visible, .col-sm-6 ul a:focus-visible` (2 selectors) | WCAG outline (new focus rule) | Admin category link list — primary admin navigation target |
+| 6 | `#region-main .form-control:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible` (4 selectors) | **Byte-identical sibling to existing `:focus` (mirrors Chip H exactly)** | The 4 deferred Chip H selectors flagged in the P1 #12 re-apply section. Preserves existing `border-color + box-shadow + outline:none` declarations to avoid behaviour drift on the form inputs |
+| 7 | `#region-main button.btn-primary:focus-visible, input[type="submit"].btn-primary:focus-visible, .btn-primary:focus-visible` (3 selectors) | WCAG outline (new focus rule) | Admin primary submit button — every admin form save action |
+
+**Pattern A (Chip H byte-identical sibling, rule #6 above):**
+```scss
+&:focus { …declarations… }
+&:focus-visible { …same declarations… }
+```
+Used where an existing `:focus` rule lives in the partial. Declarations
+copy verbatim (`border-color: var(--ap-color-primary, #0066A7); box-shadow:
+0 0 0 3px rgba(0, 102, 167, 0.1); outline: none;`). Zero non-focus
+regression on form inputs.
+
+**Pattern B (WCAG 2.4.7 outline, rules #1–5 + #7 above):**
+```scss
+&:focus-visible {
+    outline: 2px solid var(--ap-color-primary, #0066A7);
+    outline-offset: 2px;
+    border-radius: var(--ap-radius-sm, 8px);
+}
+```
+Used where the selector previously had no `:focus` or `:focus-visible`
+rule. Introduces the brand-blue ring at 2px with 2px offset and
+`--ap-radius-sm` (8px) so the indicator follows tokens, not literals.
+Tokens used:
+- `--ap-color-primary` (canonical brand-blue token from `_tokens.scss:81`)
+- `--ap-radius-sm: 8px` (canonical small radius from `_tokens.scss:157`)
+
+Existing `:hover` declarations preserved unchanged on every patched
+selector — keyboard `Tab` users see the ring; mouse-hover users still
+see the original hover state.
+
+**Acceptance check vs chip brief:**
+
+| Acceptance criterion | Result |
+|---|---|
+| ≥4 new `:focus-visible` rules | ✅ 7 new rule blocks (13 selectors) |
+| Mustache balance test = 0 unbalanced | ✅ Zero `.mustache` files modified |
+| No regression in non-focus styling | ✅ Only insertions; zero existing rule declarations modified; SCSS brace balance 339 open == 339 close |
+| `php -l` on changed PHP | ✅ `theme/airpayux/version.php` — "No syntax errors detected" |
+| CI green on push | Pending push (see Commit footer) |
+
+**Version bump:**
+- `theme/airpayux/version.php` `$plugin->version` 2026052404 → **2026052405**
+- `theme/airpayux/version.php` `$plugin->release` `1.0.35-beta` → **`1.0.36-beta`**
+- Bump invalidates cached compiled CSS bundle; `theme/styles.php` re-compiles SCSS on next request to pick up the new `:focus-visible` rules.
+
+**Diff stats:**
+```
+moodle-enhancement/theme/airpayux/scss/moodle/partials/_bizlms-admin.scss | +41 lines (pure insertions)
+moodle-enhancement/theme/airpayux/version.php                              | +16 / −2 lines (version + release + chip comment block)
+```
+
+**Safety:**
+- ✅ Pure additive — no existing rule body modified; only new sibling/standalone rules inserted
+- ✅ Brace balance verified on `_bizlms-admin.scss` (339 open == 339 close)
+- ✅ Selectors mirror existing partial naming + nesting style (`#region-main` prefix inside `body.path-admin`, flat at file root outside)
+- ✅ All new rules use design tokens (`--ap-color-primary`, `--ap-radius-sm`), not hex literals (literal fallbacks provided for compile-without-tokens safety, matching the rest of `_bizlms-admin.scss`)
+- ✅ No `!important` introduced — new outline rules win on specificity alone
+- ✅ No `--no-verify`, no `--amend`, no `--no-gpg-sign`
+- ✅ Lang / Mustache / PHP-logic untouched (`version.php` is the only PHP change and it lints clean)
+
+**Refs:**
+- Audit: `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md` §2.6 (WCAG 2.4.7) + F-17 deferred-selector list
+- Predecessor chip closeout: this PROJECT-STATE.md, "P1 #12 re-apply" section above
+- Tokens reference: `theme/airpayux/scss/moodle/_tokens.scss:81` (`--ap-color-primary`), `:157` (`--ap-radius-sm`)
+- Frontend rules: `.claude/rules/frontend.md` §Design System (token usage)
