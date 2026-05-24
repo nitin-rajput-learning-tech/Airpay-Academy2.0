@@ -48,7 +48,10 @@
     <div id="page" class="container-fluid">
         {{! Secured full header }}
 
-        <div id="page-header" class="row">
+        {{! Phase B.12 backport (2026-05-24) — vanilla 5.2 boost upgraded
+            this div to a semantic <header> with data-for="page-heading"
+            (5.2 JS reads it for focus management; 5.1 ignores the attribute). }}
+        <header id="page-header" class="row" data-for="page-heading">
             <div class="col-12 py-3">
                 <div class="page-context-header">
                     <div class="page-header-headings">
@@ -56,13 +59,22 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </header>
 
         <div id="page-content" class="row">
             <div id="region-main-box" class="col-12">
+                {{! Keep <section> + aria-label for a11y — vanilla 5.2 regressed
+                    this to a bare <div>; we keep the screen-reader landmark. }}
                 <section id="region-main" {{#hasblocks}}class="has-blocks"{{/hasblocks}} aria-label="{{#str}}content{{/str}}">
 
                     {{{ output.course_content_header }}}
+                    {{! Phase B.12 backport — render activity_header when present
+                        (5.2 added this block to surface completion labels +
+                        restricted-access conditions). headercontent is null
+                        on 5.1 today, so the block is inert until cutover. }}
+                    {{#headercontent}}
+                        {{> core/activity_header }}
+                    {{/headercontent}}
                     {{{ output.main_content }}}
                     {{{ output.course_content_footer }}}
 
