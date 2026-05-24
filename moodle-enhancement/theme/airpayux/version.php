@@ -123,8 +123,23 @@ defined('MOODLE_INTERNAL') || die();
 // verification on production 5.2 substrate (per the audit doc — it has
 // an aria-live re-announce trick for NVDA <2024 that core/toast may
 // not handle). See docs/5.2-merge/PHASE-B3F-AMD-CLEANUP.md.
-$plugin->version   = 2026052401;
+//
+// P1 #14 + P2 #21 follow-up chip (2026-05-24, chip-L) — footer
+// mobile + comment cleanup:
+//   - partials/_surface-footer.scss: new @media (max-width: 590px)
+//     block honouring .claude/rules/frontend.md primary mobile target.
+//     Stacks the compact row cleanly on Galaxy-S sized viewports;
+//     tightens .airpay-footer__product-attribution padding so the
+//     Sentientia band stays compact; lets a future white-label longer
+//     brand name wrap across lines.
+//   - templates/footer.mustache: removed a 10-line Mustache comment
+//     block describing the 2026-05-15 removal of the "Made in India"
+//     badge — fact-of-history, not code rationale (P2 #21 / F-09).
+// Closes F-07 (P1 #14) and F-09 (P2 #21) from
+// docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md. Cache version bump
+// re-triggers SCSS compile so the new breakpoint reaches users.
+$plugin->version   = 2026052403;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.31-beta';  // Phase B.3.f shim deletes
+$plugin->release   = '1.0.33-beta';  // P1 #14 + P2 #21 — footer mobile + comment cleanup
