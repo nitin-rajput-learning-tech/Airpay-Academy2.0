@@ -416,6 +416,22 @@ if (isloggedin() && !isguestuser()) {
             $airpay_dashboard['chart_labels'] = json_encode($chartlabels);
             $airpay_dashboard['chart_enrolments'] = json_encode($chartdata);
 
+            // P2 #23 / F-15 audit follow-up (2026-05-24, wave3-chip-N) —
+            // mirror the bar-chart series as an iterable {label,value} array
+            // so the <details><table> SR-only fallback in dashboard.mustache
+            // can render the same numbers Chart.js paints. Screen-reader
+            // users get the data; sighted users get the chart. Both come
+            // from the same source array so a future data shape change can
+            // only diverge them deliberately.
+            $airpay_dashboard['chart_enrolments_table'] = [];
+            $monthcount = count($chartlabels);
+            for ($j = 0; $j < $monthcount; $j++) {
+                $airpay_dashboard['chart_enrolments_table'][] = [
+                    'label' => $chartlabels[$j],
+                    'value' => (int) $chartdata[$j],
+                ];
+            }
+
             // Course distribution by category for pie chart.
             $catdist = $DB->get_records_sql(
                 "SELECT cc.name, COUNT(c.id) as cnt
@@ -426,12 +442,21 @@ if (isloggedin() && !isguestuser()) {
                ORDER BY cnt DESC", [], 0, 5);
             $pieLabels = [];
             $pieData = [];
+            $pieTable = [];
             foreach ($catdist as $cd) {
-                $pieLabels[] = format_string($cd->name);
-                $pieData[] = (int)$cd->cnt;
+                $catname = format_string($cd->name);
+                $catcount = (int) $cd->cnt;
+                $pieLabels[] = $catname;
+                $pieData[] = $catcount;
+                $pieTable[] = [
+                    'label' => $catname,
+                    'value' => $catcount,
+                ];
             }
             $airpay_dashboard['chart_pie_labels'] = json_encode($pieLabels);
             $airpay_dashboard['chart_pie_data'] = json_encode($pieData);
+            // SR-only iterable mirror — see chart_enrolments_table comment above.
+            $airpay_dashboard['chart_distribution_table'] = $pieTable;
             $airpay_dashboard['hascharts'] = true;
 
             // Quick navigation links with tenant-scoped live stats.

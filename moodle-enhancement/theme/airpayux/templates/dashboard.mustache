@@ -200,16 +200,80 @@
 
             {{! Quick Navigation REMOVED — sidebar handles navigation now }}
 
-            {{! Admin Charts (Chart.js) }}
+            {{! Admin Charts (Chart.js).
+
+                P2 #23 / F-15 audit fix (2026-05-24, wave3-chip-N): every
+                canvas now carries `role="img"` + an aria-label that
+                announces the chart title (reusing the existing
+                chart_enrolment_trend / chart_course_distribution lang
+                keys Chip G shipped across 5 locales). For SR users who
+                want the underlying numbers, each canvas is followed by
+                a <details> disclosure containing a <table> mirror of
+                the same data Chart.js paints (data flows through the
+                template via chart_enrolments_table / chart_distribution_table
+                — see layout/dashboard.php). Column-header strings come
+                from Moodle core lang (month / total / category / courses)
+                so no new theme_airpayux strings were added by this chip.
+                Visually-hidden via .sr-only on the <summary> wrapper,
+                so sighted users still see the chart; the disclosure
+                widget surfaces only via SR or keyboard navigation. }}
             {{#hascharts}}
             <div class="airpay-dash__two-col">
                 <div class="airpay-dash__section">
-                    <h3 class="airpay-dash__section-title"><i class="fa fa-line-chart"></i> {{# str }} chart_enrolment_trend, theme_airpayux {{/ str }}</h3>
-                    <canvas id="airpay-chart-enrolments" height="220"></canvas>
+                    <h3 class="airpay-dash__section-title" id="airpay-chart-enrolments-title"><i class="fa fa-line-chart" aria-hidden="true"></i> {{# str }} chart_enrolment_trend, theme_airpayux {{/ str }}</h3>
+                    <canvas id="airpay-chart-enrolments"
+                            height="220"
+                            role="img"
+                            aria-labelledby="airpay-chart-enrolments-title"
+                            aria-describedby="airpay-chart-enrolments-data"></canvas>
+                    <details id="airpay-chart-enrolments-data" class="airpay-chart-data-fallback">
+                        <summary class="sr-only">{{# str }} chart_enrolment_trend, theme_airpayux {{/ str }}</summary>
+                        <table class="generaltable airpay-chart-data-table">
+                            <caption class="sr-only">{{# str }} chart_enrolment_trend, theme_airpayux {{/ str }}</caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">{{# str }} month, core {{/ str }}</th>
+                                    <th scope="col">{{# str }} total, core {{/ str }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#chart_enrolments_table}}
+                                <tr>
+                                    <th scope="row">{{ label }}</th>
+                                    <td>{{ value }}</td>
+                                </tr>
+                                {{/chart_enrolments_table}}
+                            </tbody>
+                        </table>
+                    </details>
                 </div>
                 <div class="airpay-dash__section">
-                    <h3 class="airpay-dash__section-title"><i class="fa fa-pie-chart"></i> {{# str }} chart_course_distribution, theme_airpayux {{/ str }}</h3>
-                    <canvas id="airpay-chart-distribution" height="220"></canvas>
+                    <h3 class="airpay-dash__section-title" id="airpay-chart-distribution-title"><i class="fa fa-pie-chart" aria-hidden="true"></i> {{# str }} chart_course_distribution, theme_airpayux {{/ str }}</h3>
+                    <canvas id="airpay-chart-distribution"
+                            height="220"
+                            role="img"
+                            aria-labelledby="airpay-chart-distribution-title"
+                            aria-describedby="airpay-chart-distribution-data"></canvas>
+                    <details id="airpay-chart-distribution-data" class="airpay-chart-data-fallback">
+                        <summary class="sr-only">{{# str }} chart_course_distribution, theme_airpayux {{/ str }}</summary>
+                        <table class="generaltable airpay-chart-data-table">
+                            <caption class="sr-only">{{# str }} chart_course_distribution, theme_airpayux {{/ str }}</caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">{{# str }} category, core {{/ str }}</th>
+                                    <th scope="col">{{# str }} courses, core {{/ str }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#chart_distribution_table}}
+                                <tr>
+                                    <th scope="row">{{ label }}</th>
+                                    <td>{{ value }}</td>
+                                </tr>
+                                {{/chart_distribution_table}}
+                            </tbody>
+                        </table>
+                    </details>
                 </div>
             </div>
             {{/hascharts}}
