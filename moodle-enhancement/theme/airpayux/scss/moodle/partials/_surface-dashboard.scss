@@ -183,8 +183,46 @@
    outer wrapper used by every dashboard section. The header bits
    (.airpay-dash__section-header / __title / __link) moved to
    _components-section-header.scss in Phase B0 iter 6 — see that file
-   for the tokens-aware rules + legacy aliases. */
+   for the tokens-aware rules + legacy aliases.
+
+   Modifiers --top-spacing / --bottom-spacing replace 3 inline
+   style="margin-*: 20px" attributes (P0 #5) for the Recent Activity,
+   Manager KPI, and Team Compliance sections. */
 .airpay-dash__section { margin-bottom: 24px; }
+.airpay-dash__section--top-spacing    { margin-top:    var(--ap-space-5); }
+.airpay-dash__section--bottom-spacing { margin-bottom: var(--ap-space-5); }
+
+/* Top Courses list — admin "Top Courses" card on the dashboard.
+   Each row is an anchor that lays out the course name on the left and
+   a pair of stats on the right with truncation on overflow. Replaces
+   4 inline style attributes (P0 #5). */
+.airpay-dash__top-courses {
+    padding: var(--ap-space-2) var(--ap-space-4);
+}
+.airpay-dash__top-courses__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--ap-space-3) 0;
+    border-bottom: 1px solid var(--ap-color-border);
+    text-decoration: none;
+    color: inherit;
+}
+.airpay-dash__top-courses__name {
+    font-size: var(--ap-text-sm);
+    font-weight: var(--ap-weight-medium);
+    color: var(--ap-color-text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 60%;
+}
+.airpay-dash__top-courses__stats {
+    display: flex;
+    gap: var(--ap-space-4);
+    font-size: var(--ap-text-xs);
+    color: var(--ap-color-text-secondary);
+}
 
 /* Course progress cards — removed Phase B0 iter 3. Continue Learning
    tiles now use the tokens-aware .airpay-course-card component from
