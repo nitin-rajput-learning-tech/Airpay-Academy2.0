@@ -1,5 +1,5 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-05-24 (Phase B Moodle 5.2 wholesale upgrade COMPLETE at code level + B.12 missed-overlay hotfix). Production stays on 5.1 until cutover-day (~2h mechanical fixes tagged in code via `@todo Phase B.X` markers). Strategic pivot from "patch Moodle deployment" to "build saleable enterprise LMS product" — Airpay Academy is customer-zero. ADR-001 records the decision. See `docs/adr/ADR-001-fork-strategy-and-product-pivot.md`.
+**Updated:** 2026-05-24 (Night-run autonomous batch — 16 items shipped: Phase B.12 cutover-day mechanical fixes (A1-A8), plugin PHPUnit coverage (B1-B2), Goal C user guides for 6 personas (C1-C6); cutover-day TODO list is now mostly empty modulo paygw security follow-up + NVDA verification + activity_header runtime test). Phase B Moodle 5.2 upgrade is code-complete; production stays on 5.1 until customer-driven cutover decision. ADR-001 records the strategic pivot from "patch Moodle deployment" to "build saleable enterprise LMS product" — Airpay Academy is customer-zero. See `docs/adr/ADR-001-fork-strategy-and-product-pivot.md`.
 
 ---
 
@@ -4306,3 +4306,67 @@ subplugintypes warnings        : 0
 - `docs/5.2-merge/PHASE-B*.md` — leg-by-leg detail (12 docs + 1 hotfix)
 - `docs/visual-evidence/2026-05-23/README.md` — 12 captured screenshots
 - This file — Phase B consolidated state
+
+---
+
+## 🌙 Night-run 2026-05-24 — overnight autonomous batch
+
+Per Nitin's instruction "i want you to code all night for remaining, use
+routines or anything else, which will help you start again without me",
+a self-contained playbook + durable hourly scheduled task fired off 16
+items in a single overnight run. See `NIGHT-RUN-PLAYBOOK.md` at repo
+root for the full spec; the resumption task at
+`.claude/scheduled-tasks/airpay-night-run-resume/` will idle on the
+DONE marker.
+
+### Group A — Phase B.12 cutover-day mechanical fixes (8 items, all shipped)
+
+| # | Commit | What landed |
+|---|--------|-------------|
+| A1 | `114fed155` | `fix(quizaccess_airpay_proctoring)`: defensive `$dbman->create_table()` in upgrade.php so production v2026051120 → 2026052401 path doesn't fail when the table doesn't yet exist. Version 2026051300 → 2026052401, release 1.1.0 → 1.1.1. |
+| A2 | `838a14431` | `feat(airpay_courses)`: dual-target ModalFactory→core/modal in enrolledusers.js — lazy `require()` picks the right modal API at runtime. |
+| A3 | `5140524d0` | `feat(airpay_request)`: same pattern in request_button.js. |
+| A4 | `c27a77b8e` | `feat(airpay_request)`: same pattern in decide.js. |
+| A5 | `00ad286bf` | `feat(airpay_cart)`: same pattern in admin_orders.js. Completes the 4-of-4 modal migration tracked in Phase B.4. |
+| A6 | `bc807ac46` | `chore(theme_airpayux)`: dropped 2 unused AMD shims (page_title.js, deprecated.js — zero callsites per B.3.f audit). announcement.js KEPT pending NVDA verification. Theme version 2026052330 → 2026052401, release 1.0.30-beta → 1.0.31-beta. |
+| A7 | `6ab932b01` | `feat(theme_airpayux)`: dual-target course.mustache tertiary-nav — layout/course.php now sets `is_select_menu_context` flag, template picks core/tertiary_navigation_selector (5.2) vs core/url_select (5.1). |
+| A8 | `c8664d631` | `feat(theme_airpayux)`: 2 safe backports to secure.mustache (`<header data-for="page-heading">` semantic upgrade + conditional `{{#headercontent}}` activity-header block). drawer.mustache deferred to cutover-day (BS5 attribute rename), drawers.mustache intentionally diverged (Sentientia sidebar). Audit doc shipped. |
+
+### Group B — Plugin test coverage (2 items, all shipped)
+
+| # | Commit | What landed |
+|---|--------|-------------|
+| B1 | `131dc439d` | `test(paygw_airpay)`: initial PHPUnit coverage. 11 tests across gateway_test.php + privacy_provider_test.php. Out of scope (documented in test docblocks): checksum.php + airpay_helper.php — they have `require_login()` at file scope which blocks unit-testing. **Spawned a follow-up task** to fix the require_login + MD5 → SHA-256 + sandbox/live URL issues. |
+| B2 | `65ced95da` | `test(quizaccess_airpay_proctoring)`: rule + migration coverage. 13 tests across rule_test.php (9) + upgrade_test.php (4). The upgrade test directly verifies the A1 hotfix behavior — production-state simulation (drop table + seed legacy config rows + call upgrade function + assert table created + assert migration ran). |
+
+### Group C — Goal C user guides (6 personas, all shipped)
+
+| # | Commit | What landed |
+|---|--------|-------------|
+| C1 | `03546aba8` | `docs(user-guides)`: Site Admin (~280 lines, 12 sections — day-1 setup, tenant mgmt, plugin mgmt, user import, SCORM, audit/reporting, PWA, WhatsApp, branding, emergency procedures). |
+| C2-C6 | `a8e28e986` | `docs(user-guides)`: 5-guide batch. tenant-admin.md (scope matrix + tenant-scoped reports), course-author.md (course/activity/audience/grades/Hindi-readiness), manager.md (team dashboard + approvals + escalations + skills), learner.md (PWA + catalogue + courses + badges + mobile + Hindi), public-learner.md (signup + paid purchase + cert + limitations vs employee). |
+
+### Scheduled task — resumption insurance
+
+`mcp__scheduled-tasks` registered an hourly task `airpay-night-run-resume`
+that fires at minute 17 every hour. The prompt is fully self-contained:
+read playbook → pick first `[PENDING]` item → execute per spec → commit
++ push → flip to `[COMPLETED]`. With the DONE marker now in place, future
+fires will idle (read playbook → detect DONE → exit). Nitin can disable
+via `mcp__scheduled-tasks__update_scheduled_task` with `enabled: false`,
+or delete via the Scheduled tab in Claude Code.
+
+### Bytes pushed tonight
+- 12 commits to `nitin-rajput-learning-tech/Airpay-Academy2.0:production`
+- 16 work items + 1 spawned-task chip + 1 PROJECT-STATE update
+- ~5 hours of wall time, fully autonomous
+
+### Spawned task awaiting Nitin
+- **"Fix security issues in paygw_airpay (MD5 + require_login + sandbox/live URL)"** — chip is showing in the FleetView. One click spins it off into its own session and worktree. Covers 3 pre-existing defects uncovered during B1 test-writing.
+
+### Refs
+- `NIGHT-RUN-PLAYBOOK.md` (repo root) — full spec + completion log
+- `.claude/scheduled-tasks/airpay-night-run-resume/SKILL.md` — resumption prompt
+- `docs/5.2-merge/PHASE-B12-HOTFIX-MISSED-OVERLAY-PLUGINS.md` — context for A1 (yesterday's setup)
+- `docs/5.2-merge/PHASE-B12-DRAWER-SECURE-AUDIT.md` — shipped during A8
+- `docs/user-guides/` — six new guides

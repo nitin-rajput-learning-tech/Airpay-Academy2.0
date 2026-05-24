@@ -177,7 +177,7 @@ When ALL items reach `[COMPLETED]` or `[BLOCKED]`, append the line `=== NIGHT-RU
 
 ### C1 — Goal C user guide: Site Admin
 
-- **Status:** `[PENDING]`
+- **Status:** `[COMPLETED]` — commit `03546aba8`
 - **Why:** Goal C documentation outline approved; needs 6 persona-specific guides.
 - **Output:** `moodle-enhancement/docs/user-guides/site-admin.md`
 - **Persona:** Site Admin (full superuser, all tenants).
@@ -198,7 +198,7 @@ When ALL items reach `[COMPLETED]` or `[BLOCKED]`, append the line `=== NIGHT-RU
 
 ### C2 — Goal C user guide: Tenant Admin
 
-- **Status:** `[PENDING]`
+- **Status:** `[COMPLETED]` — commit `a8e28e986` (batch with C3-C6)
 - **Output:** `moodle-enhancement/docs/user-guides/tenant-admin.md`
 - **Persona:** Tenant Admin (BizLMS costcenter admin — scoped to Airpay id=1, Public id=77, ZEEA id=177).
 - **Sections:**
@@ -215,7 +215,7 @@ When ALL items reach `[COMPLETED]` or `[BLOCKED]`, append the line `=== NIGHT-RU
 
 ### C3 — Goal C user guide: Course Author
 
-- **Status:** `[PENDING]`
+- **Status:** `[COMPLETED]` — commit `a8e28e986` (batch)
 - **Output:** `moodle-enhancement/docs/user-guides/course-author.md`
 - **Persona:** Course Author (can create + edit + publish their assigned courses across one or more tenants).
 - **Sections:**
@@ -232,7 +232,7 @@ When ALL items reach `[COMPLETED]` or `[BLOCKED]`, append the line `=== NIGHT-RU
 
 ### C4 — Goal C user guide: Manager
 
-- **Status:** `[PENDING]`
+- **Status:** `[COMPLETED]` — commit `a8e28e986` (batch)
 - **Output:** `moodle-enhancement/docs/user-guides/manager.md`
 - **Persona:** Manager (line manager — sees team progress, approves requests, escalations).
 - **Sections:**
@@ -247,7 +247,7 @@ When ALL items reach `[COMPLETED]` or `[BLOCKED]`, append the line `=== NIGHT-RU
 
 ### C5 — Goal C user guide: Learner
 
-- **Status:** `[PENDING]`
+- **Status:** `[COMPLETED]` — commit `a8e28e986` (batch)
 - **Output:** `moodle-enhancement/docs/user-guides/learner.md`
 - **Persona:** Learner (most users — does courses, takes quizzes, earns badges).
 - **Sections:**
@@ -266,7 +266,7 @@ When ALL items reach `[COMPLETED]` or `[BLOCKED]`, append the line `=== NIGHT-RU
 
 ### C6 — Goal C user guide: External Public Learner
 
-- **Status:** `[PENDING]`
+- **Status:** `[COMPLETED]` — commit `a8e28e986` (batch)
 - **Output:** `moodle-enhancement/docs/user-guides/public-learner.md`
 - **Persona:** External Public Learner (Public tenant id=77 — self-registered users on airpay.academy/learning, no Airpay employment).
 - **Sections:**
@@ -312,3 +312,30 @@ When all 16 items are `[COMPLETED]` or `[BLOCKED]`:
 - `[COMPLETED]` — shipped + pushed (record commit hash)
 - `[BLOCKED]` — can't proceed (record reason)
 - `[PAUSED-AT]` — partial progress saved (record where to resume)
+
+---
+
+## Night-run summary (2026-05-24)
+
+All 16 items shipped. 12 commits pushed to `production` branch.
+
+```
+A1  fix(quizaccess_airpay_proctoring): defensive table_exists in upgrade.php   114fed155
+    + playbook scaffold + initial commit                                       35dfa5a42
+A2  feat(airpay_courses): dual-target ModalFactory→core/modal                  838a14431
+A3  feat(airpay_request): dual-target — request_button.js                      5140524d0
+A4  feat(airpay_request): dual-target — decide.js                              c27a77b8e
+A5  feat(airpay_cart): dual-target — admin_orders.js                           00ad286bf
+A6  chore(theme_airpayux): drop 2 AMD shims (B.3.f cleanup)                    bc807ac46
+A7  feat(theme_airpayux): dual-target course.mustache tertiary-nav             6ab932b01
+A8  feat(theme_airpayux): backport 2 non-breaking 5.2 changes to secure        c8664d631
+B1  test(paygw_airpay): initial PHPUnit coverage (gateway + privacy provider)  131dc439d
+B2  test(quizaccess_airpay_proctoring): rule + migration coverage              65ced95da
+C1  docs(user-guides): Site Admin guide                                        03546aba8
+C2-C6 docs(user-guides): Tenant Admin / Course Author / Manager / Learner /
+    Public Learner — 5-guide batch                                             a8e28e986
+```
+
+Spawned task: "Fix security issues in paygw_airpay (MD5 + require_login + sandbox/live URL)" — flagged during B1 test-writing for a dedicated cleanup session.
+
+=== NIGHT-RUN DONE ===
