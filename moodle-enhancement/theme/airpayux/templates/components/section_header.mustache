@@ -25,7 +25,10 @@
       - "View all" link has aria-label combining target + section name.
 
     Usage:
-        {{> theme_airpayux/components/section_header }}
+        Include the partial named "theme_airpayux/components/section_header".
+
+    Audit fix H1 (2026-05-15): keep this comment free of close-brace pairs.
+    See stat_card.mustache for the rationale and a longer explanation.
 }}
 <header class="airpay-section-header{{#compact}} airpay-section-header--compact{{/compact}}">
     <h3 class="airpay-section-header__title">

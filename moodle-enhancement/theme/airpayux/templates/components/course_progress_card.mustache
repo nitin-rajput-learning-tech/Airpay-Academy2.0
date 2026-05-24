@@ -29,7 +29,10 @@
           reader users get the headline metric immediately.
 
     Usage:
-        {{> theme_airpayux/components/course_progress_card }}
+        Include the partial named "theme_airpayux/components/course_progress_card".
+
+    Audit fix H1 (2026-05-15): keep this comment free of close-brace pairs.
+    See stat_card.mustache for the rationale and a longer explanation.
 }}
 <a class="airpay-course-card {{#status}}airpay-course-card--{{status}}{{/status}}"
    href="{{viewurl}}"
@@ -61,7 +64,7 @@
             <span class="airpay-course-card__progress-text">{{progress}}%</span>
         </div>
         {{#duration}}
-        <span class="airpay-course-card__duration"><i class="fa fa-clock-o" aria-hidden="true"></i> {{duration}}</span>
+        <span class="airpay-course-card__duration"><i class="fa fa-clock" aria-hidden="true"></i> {{duration}}</span>
         {{/duration}}
     </div>
 </a>

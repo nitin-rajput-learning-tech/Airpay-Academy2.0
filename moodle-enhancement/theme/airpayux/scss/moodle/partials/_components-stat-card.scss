@@ -16,15 +16,18 @@
    ═══════════════════════════════════════════════════════════════════════ */
 
 /* The grid wrapper. Use this around any group of stat cards.
-   Default is 4-column desktop, collapsing on the manifesto breakpoints. */
+   2026-05-15 fix: switched from a hard 4-column track to auto-fit with
+   a minmax floor so the grid adapts when it sits inside a half-width
+   container (e.g. the dashboard's airpay-dash__two-col section). The
+   old `repeat(4, 1fr)` squeezed every tile to ~10% of the viewport in
+   that case, hiding the value + label and leaving only the icon
+   visible (see User Analytics screenshot regression). 220px is the
+   minimum width that keeps the value, label, and icon all readable. */
 .airpay-stat-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: var(--ap-space-4);
 
-    @media (max-width: $ap-bp-tablet) {
-        grid-template-columns: repeat(2, 1fr);
-    }
     @media (max-width: $ap-bp-mobile) {
         grid-template-columns: 1fr;
         gap: var(--ap-space-3);
@@ -35,9 +38,14 @@
     background: var(--ap-color-bg-surface);
     border: 1px solid var(--ap-color-border);
     border-radius: var(--ap-radius-md);
-    padding: var(--ap-space-5);
+    padding: var(--ap-space-6); /* 24px — was 20px; gives the body more breathing room */
     display: flex;
-    align-items: center;
+    /* 2026-05-15 fix: `align-items: center` placed the icon at the body's
+       vertical middle — i.e. between the value and the label — which made
+       the prominent number and the icon feel disconnected. Anchor the
+       icon to the value's baseline instead so the eye reads them as one
+       unit, with the label + trend hanging below. */
+    align-items: flex-start;
     gap: var(--ap-space-4);
     box-shadow: var(--ap-shadow-sm);
     transition: transform var(--ap-transition-quick),
@@ -105,7 +113,10 @@
 .airpay-stat-card__body {
     display: flex;
     flex-direction: column;
-    gap: var(--ap-space-1);
+    /* 2026-05-15: bumped from --ap-space-1 (4px) to --ap-space-2 (8px) so
+       the value, label and trend have visible vertical rhythm. The 4px
+       gap made all three lines blur into one cramped block. */
+    gap: var(--ap-space-2);
     min-width: 0;
     flex: 1;
 }
@@ -139,7 +150,10 @@
     gap: var(--ap-space-1);
     font-size: var(--ap-text-xs);
     font-weight: var(--ap-weight-medium);
-    margin-top: var(--ap-space-1);
+    /* 2026-05-15: trend gets its own breathing room from the label above
+       (--ap-space-2 inherited from body gap is sufficient — no extra
+       margin-top stacking on top). Removing the extra 4px because it
+       fought the body's gap rhythm. */
     /* Trend slides in on first render — respects reduced motion. */
     animation: airpay-trend-in var(--ap-duration-default) var(--ap-ease-out);
 

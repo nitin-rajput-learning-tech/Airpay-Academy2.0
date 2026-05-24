@@ -2,7 +2,8 @@
     Airpay Card Component
     Context: { title, subtitle, body, imageurl, badge, badgetype (primary|accent|success|warning),
                actionurl, actionlabel, footer, extraclass }
-    Usage: {{> theme_airpayux/components/card }}
+    Usage: include the partial "theme_airpayux/components/card".
+    Audit fix H1 (2026-05-15) — see stat_card.mustache for the rationale.
 }}
 <div class="airpay-card {{extraclass}}">
     {{#imageurl}}

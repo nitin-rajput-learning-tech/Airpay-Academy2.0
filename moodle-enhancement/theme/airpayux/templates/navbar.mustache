@@ -64,9 +64,9 @@
     </button>
 
     {{! Left: Logo }}
-    <a href="{{{ config.homeurl }}}" class="navbar-brand d-none d-md-flex align-items-center m-0 me-3 p-0 aabtn">
+    <a href="{{{ config.homeurl }}}" class="navbar-brand d-none d-md-flex align-items-center m-0 mr-3 p-0 aabtn">
         {{# output.should_display_navbar_logo }}
-            <img src="{{output.get_custom_logo}}" class="logo me-1" alt="{{sitename}}">
+            <img src="{{output.get_custom_logo}}" class="logo mr-1" alt="{{sitename}}">
         {{/ output.should_display_navbar_logo }}
         {{^ output.should_display_navbar_logo }}
             <span class="airpay-nav__brand">{{{ sitename }}}</span>
@@ -90,7 +90,7 @@
     </div>
 
     {{! Right: Search + Quick Access + Plugins + User menu }}
-    <div id="usernavigation" class="navbar-nav ms-auto airpay-nav__actions">
+    <div id="usernavigation" class="navbar-nav ml-auto airpay-nav__actions">
         {{! Search }}
         <div class="d-none d-md-flex align-items-center">
             <form action="{{{config.wwwroot}}}/search/index.php" method="get" class="airpay-nav__search">
@@ -136,8 +136,9 @@
         </script>
 
         {{! Dark mode toggle — persists via localStorage, icon swaps }}
-        <button class="airpay-nav__theme-toggle" onclick="var d=document.body.classList.toggle('dark-mode');document.documentElement.classList.toggle('dark-mode');localStorage.setItem('airpay-theme',d?'dark':'light');this.querySelector('i').className=d?'fa fa-sun-o':'fa fa-moon-o';" title="Toggle dark mode" aria-label="Toggle dark mode">
-            <i class="fa fa-moon-o" aria-hidden="true"></i>
+        {{! Audit fix M1: FA4 -o icons replaced with FA5+ equivalents. }}
+        <button class="airpay-nav__theme-toggle" onclick="var d=document.body.classList.toggle('dark-mode');document.documentElement.classList.toggle('dark-mode');localStorage.setItem('airpay-theme',d?'dark':'light');this.querySelector('i').className=d?'fa fa-sun':'fa fa-moon';" title="Toggle dark mode" aria-label="Toggle dark mode">
+            <i class="fa fa-moon" aria-hidden="true"></i>
         </button>
 
         {{! User menu (BizLMS role switching) }}
@@ -166,11 +167,11 @@
     </a>
     {{/output.is_siteadmin_only}}
     <a href="#" class="ap-mobile-nav__item" data-page="notifications" id="ap-mobile-notif-btn">
-        <i class="fa fa-bell-o"></i>
+        <i class="fa fa-bell"></i>
         <span>Alerts</span>
     </a>
     <a href="{{{config.wwwroot}}}/local/users/profile.php" class="ap-mobile-nav__item" data-page="profile">
-        <i class="fa fa-user-circle-o"></i>
+        <i class="fa fa-user-circle"></i>
         <span>Profile</span>
     </a>
 </nav>

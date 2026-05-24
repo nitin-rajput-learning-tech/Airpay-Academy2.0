@@ -23,7 +23,9 @@ Automated deploy from working directory to XAMPP. Validates → copies → upgra
 # ═══════════════════════════════════════════════════
 
 $SRC = "D:\Claude Local\airpay-ld-os\moodle-enhancement\theme\airpayux"
-$DST = "C:\xampp\htdocs\moodle\theme\airpayux"
+# Audit fix O1 (2026-05-15): Apache alias /moodle → moodle5\public\, not moodle\.
+# The old moodle\ directory is a stale 4.5 backup that is never served.
+$DST = "C:\xampp\htdocs\moodle5\public\theme\airpayux"
 
 # Syntax check all PHP layout files
 Write-Host "→ PHP syntax check..."
@@ -60,7 +62,12 @@ Write-Host "  ✓ Copy complete"
 # PHASE 3: PURGE CACHES
 # ═══════════════════════════════════════════════════
 Write-Host "→ Purging Moodle caches..."
-php "C:\xampp\htdocs\moodle\admin\cli\purge_caches.php"
+# Audit fix O1 (2026-05-15): Moodle 5.1's admin/cli lives at the install
+# root, while config.php lives in public/. CLI scripts must be invoked
+# with the public/ directory as cwd so the relative config.php resolves.
+Push-Location "C:\xampp\htdocs\moodle5\public"
+php "C:\xampp\htdocs\moodle5\admin\cli\purge_caches.php"
+Pop-Location
 Write-Host "  ✓ Caches purged"
 
 # ═══════════════════════════════════════════════════
@@ -85,8 +92,12 @@ param([string]$PluginName)  # e.g., "local_airhub"
 
 $PLUGIN_TYPE = $PluginName.Split('_')[0]   # "local", "block", "mod"
 $PLUGIN_DIR  = ($PluginName -replace '^[^_]+_', '')  # "airhub"
-$SRC = "D:\Claude Local\airpay-ld-os\moodle-enhancement\plugins\$PluginName"
-$DST = "C:\xampp\htdocs\moodle\$PLUGIN_TYPE\$PLUGIN_DIR"
+# Audit fix O1 (2026-05-15):
+#   - Source plugins live under moodle-enhancement\<type>\<dir>\, not
+#     moodle-enhancement\plugins\<name>\.
+#   - Destination is moodle5\public\<type>\<dir>\, not moodle\<type>\<dir>\.
+$SRC = "D:\Claude Local\airpay-ld-os\moodle-enhancement\$PLUGIN_TYPE\$PluginName"
+$DST = "C:\xampp\htdocs\moodle5\public\$PLUGIN_TYPE\$PLUGIN_DIR"
 
 # ═══════════════════════════════════════════════════
 # PHASE 1: VALIDATE COMPLETENESS
@@ -144,11 +155,15 @@ Write-Host "  ✓ Copied to $DST"
 # PHASE 5: RUN MOODLE UPGRADE
 # ═══════════════════════════════════════════════════
 Write-Host "→ Running Moodle upgrade..."
-php "C:\xampp\htdocs\moodle\admin\cli\upgrade.php" --non-interactive
+# Audit fix O1 (2026-05-15): Moodle 5.1's admin/cli lives at the install
+# root, public/ holds config.php. cd into public/ before running CLI tools.
+Push-Location "C:\xampp\htdocs\moodle5\public"
+php "C:\xampp\htdocs\moodle5\admin\cli\upgrade.php" --non-interactive
 Write-Host "  ✓ Upgrade complete"
 
 # Purge caches
-php "C:\xampp\htdocs\moodle\admin\cli\purge_caches.php"
+php "C:\xampp\htdocs\moodle5\admin\cli\purge_caches.php"
+Pop-Location
 Write-Host "  ✓ Caches purged"
 
 # ═══════════════════════════════════════════════════

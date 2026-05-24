@@ -23,7 +23,10 @@
       - CTA is a real <a> with focus-visible support.
 
     Usage:
-        {{> theme_airpayux/components/empty_state }}
+        Include the partial named "theme_airpayux/components/empty_state".
+
+    Audit fix H1 (2026-05-15): keep this comment free of close-brace pairs.
+    See stat_card.mustache for the rationale and a longer explanation.
 }}
 <div class="airpay-empty-state airpay-empty-state--{{#size}}{{size}}{{/size}}{{^size}}md{{/size}}" role="status">
     {{#icon}}

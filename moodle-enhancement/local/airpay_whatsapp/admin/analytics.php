@@ -50,14 +50,23 @@ $kpi_tiles = [
         'value' => number_format($mix['totals']['successful'])
                     . ' (' . $mix['totals']['success_pct'] . '%)',
         'icon'  => 'check-circle',
-        'color' => $mix['totals']['success_pct'] >= 90 ? 'success'
-                : ($mix['totals']['success_pct'] >= 70 ? 'warning' : 'danger'),
+        // Audit fix H3 (2026-05-15): when there are zero attempts, the
+        // success_pct is 0 by definition, not a failure — paint the tile
+        // neutral/info instead of danger so a brand-new install does not
+        // look broken.
+        'color' => $mix['totals']['attempted'] === 0 ? 'info'
+                : ($mix['totals']['success_pct'] >= 90 ? 'success'
+                : ($mix['totals']['success_pct'] >= 70 ? 'warning' : 'danger')),
     ],
     [
         'label' => 'Mocked (dev / disabled)',
         'value' => $mix['totals']['mocked_pct'] . '%',
         'icon'  => 'eye-slash',
-        'color' => $mix['totals']['mocked_pct'] === 100 ? 'info' : 'warning',
+        // Audit fix H3 (2026-05-15): same zero-attempts guard so the
+        // "0% Mocked" tile reads as neutral, not a warning, on a fresh
+        // install.
+        'color' => $mix['totals']['attempted'] === 0 ? 'info'
+                : ($mix['totals']['mocked_pct'] === 100 ? 'info' : 'warning'),
     ],
     [
         'label' => 'Cost estimate',

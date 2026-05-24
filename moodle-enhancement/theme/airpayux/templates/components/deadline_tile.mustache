@@ -29,7 +29,10 @@
       - View link gets an aria-label combining course + due time.
 
     Usage:
-        {{> theme_airpayux/components/deadline_tile }}
+        Include the partial named "theme_airpayux/components/deadline_tile".
+
+    Audit fix H1 (2026-05-15): keep this comment free of close-brace pairs.
+    See stat_card.mustache for the rationale and a longer explanation.
 }}
 <li class="airpay-deadline airpay-deadline--{{#urgency}}{{urgency}}{{/urgency}}{{^urgency}}normal{{/urgency}}">
     <div class="airpay-deadline__icon" aria-hidden="true">

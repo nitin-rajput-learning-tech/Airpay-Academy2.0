@@ -107,6 +107,11 @@ Target:   22 C-suite prototypes at D:\Claude Local\Moodle Backup\03-prototypes\p
 Source:   moodle-enhancement/PROJECT-STATE.md (read first each session)
 Tenants:  Airpay id=1, Public id=77, ZEEA id=177 (3 tenants — all queries MUST be scoped)
 Tenant detection: Use open_path (NOT open_costcenterid — column doesn't exist on production)
+Local Moodle (XAMPP): Moodle 5.1.3+ at C:\xampp\htdocs\moodle5\public\ (Apache
+                       alias /moodle → moodle5\public\). admin/cli is at
+                       moodle5\admin\cli\ (run CLI tools with cwd = public\).
+                       moodle-4.5-backup\ is a stale 4.5 codebase that shares
+                       the same DB but is NOT served. Do NOT deploy there.
 GitHub:   nitin-rajput-learning-tech/Airpay-Academy2.0 (production branch)
 Prod DB:  MySQL 8.0.44 on AWS RDS (open_costcenterid resolved dynamically by BizLMS at runtime)
 ```

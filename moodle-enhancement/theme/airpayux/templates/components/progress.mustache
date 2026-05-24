@@ -1,7 +1,8 @@
 {{!
     Airpay Progress Bar Component
     Context: { percent (0-100), label, size (sm|md|lg), showlabel (bool) }
-    Usage: {{> theme_airpayux/components/progress }}
+    Usage: include the partial "theme_airpayux/components/progress".
+    Audit fix H1 (2026-05-15) — see stat_card.mustache for the rationale.
 }}
 <div class="airpay-progress {{#size}}airpay-progress--{{size}}{{/size}}">
     {{#showlabel}}

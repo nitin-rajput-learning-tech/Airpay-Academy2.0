@@ -1,7 +1,8 @@
 {{!
     Airpay Button Component
     Context: { label, url, type (primary|outline|ghost), size (sm|md|lg), icon, id, disabled }
-    Usage: {{> theme_airpayux/components/button }}
+    Usage: include the partial "theme_airpayux/components/button".
+    Audit fix H1 (2026-05-15) — see stat_card.mustache for the rationale.
 }}
 <a {{#url}}href="{{url}}"{{/url}}
    {{#id}}id="{{id}}"{{/id}}

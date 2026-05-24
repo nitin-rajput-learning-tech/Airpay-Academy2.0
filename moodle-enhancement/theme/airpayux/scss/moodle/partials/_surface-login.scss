@@ -537,8 +537,6 @@ body#page-login-index { background: #F2F4FB !important; }
 #page-signup input:focus,
 #page-signup select:focus {
     border-color: #0066A7; outline: none; background: #fff;
-    /* a11y: WCAG 2.4.7 — focus ring for keyboard users (border alone isn't enough). */
-    box-shadow: 0 0 0 4px rgba(0,102,167,0.10);
 }
 /* Submit buttons */
 #page-login-forgot_password .btn-primary,

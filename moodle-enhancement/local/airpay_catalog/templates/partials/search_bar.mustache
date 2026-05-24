@@ -28,9 +28,13 @@
           role="search"
           aria-label="Course catalogue search">
         <i class="fa fa-search airpay-catalog__search-icon" aria-hidden="true"></i>
-        <label for="ap-catalog-search" class="sr-only">{{# str }}{{#placeholder_str}}{{placeholder_str}}{{/placeholder_str}}{{^placeholder_str}}search{{/placeholder_str}}, local_airpay_catalog{{/ str }}</label>
+        {{! Audit fix C1 (2026-05-15) — wrap the conditional OUTSIDE the }}
+        {{! str helper. When placeholder_str is empty, the previous shape  }}
+        {{! collapsed to a leading comma plus component name, which the    }}
+        {{! string helper read as an empty identifier and threw.           }}
+        <label for="ap-catalog-search" class="sr-only">{{#placeholder_str}}{{# str }}{{placeholder_str}}, local_airpay_catalog{{/ str }}{{/placeholder_str}}{{^placeholder_str}}{{# str }}search, local_airpay_catalog{{/ str }}{{/placeholder_str}}</label>
         <input type="text" name="q" value="{{search_query}}"
-               placeholder="{{# str }}{{#placeholder_str}}{{placeholder_str}}{{/placeholder_str}}{{^placeholder_str}}search{{/placeholder_str}}, local_airpay_catalog{{/ str }}"
+               placeholder="{{#placeholder_str}}{{# str }}{{placeholder_str}}, local_airpay_catalog{{/ str }}{{/placeholder_str}}{{^placeholder_str}}{{# str }}search, local_airpay_catalog{{/ str }}{{/placeholder_str}}"
                class="airpay-catalog__search-input" autocomplete="off"
                id="ap-catalog-search" data-baseurl="{{baseurl}}"
                aria-autocomplete="list"

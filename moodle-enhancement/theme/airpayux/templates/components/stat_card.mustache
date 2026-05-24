@@ -19,7 +19,14 @@
         - Trend respects motion tokens — fades in 250ms ease-out on load.
 
     Usage:
-        {{> theme_airpayux/components/stat_card }}
+        Include the partial named "theme_airpayux/components/stat_card"
+        from any template that loops over a kpi_tiles array.
+
+    Audit fix H1 (2026-05-15): the previous usage example contained the
+    literal partial syntax with closing braces inside this comment, which
+    Mustache parses non-greedily — the in-body close prematurely ended
+    the comment and dumped the trailing close as literal text before every
+    rendered card. Keep this comment free of close-brace pairs.
 }}
 {{#href}}
 <a class="airpay-stat-card airpay-stat-card--{{#color}}{{color}}{{/color}}{{^color}}primary{{/color}} airpay-stat-card--linked"

@@ -124,9 +124,23 @@
                     </nav>
                 </div>
                 <div class="ap-topbar__center">
-                    <form action="{{{config.wwwroot}}}/search/index.php" method="get" class="ap-topbar__search">
+                    {{! Audit fix (2026-05-15) — context-aware topbar search. }}
+                    {{! Default action submits to Moodle global search. The }}
+                    {{! topbar_search.js bootstrap (below) rewires action,  }}
+                    {{! placeholder, and submit handler when the current   }}
+                    {{! page exposes a scoped search affordance (catalog    }}
+                    {{! search bar OR data-airpay-table) and hides the     }}
+                    {{! redundant scoped UI so only one search box stays   }}
+                    {{! visible per page.                                   }}
+                    <form action="{{{config.wwwroot}}}/search/index.php" method="get"
+                          class="ap-topbar__search" id="ap-topbar-search-form"
+                          data-default-action="{{{config.wwwroot}}}/search/index.php"
+                          data-default-placeholder="Search courses, people, content...">
                         <i class="fa fa-search ap-topbar__search-icon"></i>
-                        <input type="text" name="q" class="ap-topbar__search-input" placeholder="Search courses, people, content..." autocomplete="off">
+                        <input type="text" name="q" class="ap-topbar__search-input"
+                               id="ap-topbar-search-input"
+                               placeholder="Search courses, people, content..."
+                               autocomplete="off">
                     </form>
                 </div>
                 <div class="ap-topbar__right">
@@ -334,7 +348,7 @@
             {{! Recent Activity — Phase B0 iter 4: migrated to activity_item partial }}
             {{#hasrecentactivity}}
             <div class="airpay-dash__section" style="margin-top: 20px;">
-                <h3 class="airpay-dash__section-title"><i class="fa fa-clock-o" aria-hidden="true"></i> Recent Activity</h3>
+                <h3 class="airpay-dash__section-title"><i class="fa fa-clock" aria-hidden="true"></i> Recent Activity</h3>
                 <ul class="airpay-activity-list">
                     {{#recentactivity}}
                     {{> theme_airpayux/components/activity_item }}
@@ -676,6 +690,89 @@
             localStorage.setItem('airpay-theme', nowDark ? 'light' : 'dark');
             darkToggle.querySelector('i').className = nowDark ? 'fa fa-moon' : 'fa fa-sun';
         });
+    }
+
+    // ── Audit fix 2026-05-15 — Context-aware topbar search ──
+    // The topbar lives in the shell and shows on every authenticated page.
+    // Many pages (catalog, every admin list table) ALSO render their own
+    // search bar, producing two visually identical search boxes that
+    // serve different purposes. This block detects what kind of scoped
+    // search the current page exposes and rewires the topbar to drive it
+    // — then hides the redundant scoped UI so users only see one input.
+    //
+    // Detection order:
+    //   1. Catalog form-based search (.airpay-catalog__search-form). The
+    //      topbar form action gets repointed to the catalog URL so submit
+    //      navigates with ?q=... and the catalog index reads it.
+    //   2. Datatable JS-driven search ([data-airpay-table] root). The
+    //      topbar drives the datatable's internal input via input events,
+    //      so the existing debounce + AJAX path in datatable.js is reused
+    //      unchanged. The datatable's own search box is hidden once it
+    //      renders (MutationObserver — the datatable JS may not have
+    //      rendered when this script runs).
+    //   3. Nothing scoped — default behaviour (Moodle global search).
+    var topbarForm = document.getElementById('ap-topbar-search-form');
+    var topbarInput = document.getElementById('ap-topbar-search-input');
+    if (topbarForm && topbarInput) {
+        var catalogForm = document.querySelector('.airpay-catalog__search-form');
+        var tableRoot = document.querySelector('[data-airpay-table]');
+
+        if (catalogForm) {
+            // Pattern 1: Catalog. Rewire form action + placeholder, hide
+            // the scoped section.
+            var action = catalogForm.getAttribute('action');
+            if (action) { topbarForm.setAttribute('action', action); }
+            var catalogInput = catalogForm.querySelector('input[name="q"]');
+            if (catalogInput) {
+                if (catalogInput.getAttribute('placeholder')) {
+                    topbarInput.setAttribute('placeholder', catalogInput.getAttribute('placeholder'));
+                }
+                if (catalogInput.value) { topbarInput.value = catalogInput.value; }
+            }
+            var scopedSection = document.querySelector('.airpay-catalog__search-section');
+            if (scopedSection) { scopedSection.style.display = 'none'; }
+        } else if (tableRoot) {
+            // Pattern 2: Datatable. Drive its internal search input by
+            // mirroring the value + dispatching an input event so the
+            // existing debounce path in datatable.js handles it.
+            var customPlaceholder = tableRoot.dataset.searchPlaceholder;
+            if (customPlaceholder) {
+                topbarInput.setAttribute('placeholder', customPlaceholder);
+            }
+            var driveTableSearch = function(value) {
+                var s = tableRoot.querySelector('[data-airpay-table-search]');
+                if (s) {
+                    s.value = value;
+                    s.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            };
+            var hideScopedSearchBox = function() {
+                var s = tableRoot.querySelector('[data-airpay-table-search]');
+                if (s) {
+                    var wrapper = s.closest('.airpay-datatable__search');
+                    if (wrapper) { wrapper.style.display = 'none'; }
+                    return true;
+                }
+                return false;
+            };
+            // Hide on first render. The datatable JS may not have run yet,
+            // so observe the table root for the search input to appear.
+            if (!hideScopedSearchBox()) {
+                var mo = new MutationObserver(function() {
+                    if (hideScopedSearchBox()) { mo.disconnect(); }
+                });
+                mo.observe(tableRoot, { childList: true, subtree: true });
+            }
+            topbarInput.addEventListener('input', function() {
+                driveTableSearch(topbarInput.value);
+            });
+            topbarForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                driveTableSearch(topbarInput.value);
+            });
+        }
+        // Pattern 3 (default Moodle global search): no rewire — leave the
+        // form action and placeholder as the dashboard.mustache defaults.
     }
 })();
 </script>
