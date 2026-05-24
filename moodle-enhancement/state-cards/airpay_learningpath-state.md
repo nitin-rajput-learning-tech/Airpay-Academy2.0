@@ -1,9 +1,10 @@
 # airpay_learningpath — STATE CARD
 
 **Component string:** `local_airpay_learningpath`
-**Current version:** `2026050701`
+**Current version:** `2026052001`  (release `1.7.1`, +P1 #46 Hindi top-up)
 **Maturity:** STABLE (in production)
-**Last touched:** 2026-05-13 (Sprint A — diagnostic CLI)
+**Last touched:** 2026-05-20 (P1 #46 — Hindi top-up)
+**Last refreshed:** 2026-05-24 (P1 state-card pass)
 **Owner:** Head of L&D
 
 ---
@@ -128,3 +129,27 @@ needing to re-run the full Moodle upgrade.
 
 - None for Sprint A. The feature is complete and the diagnostic
   closes the production support loop.
+
+---
+
+## PHPUnit (6 classes, 62 methods)
+
+- `crud_test.php` — 4 methods
+- `audience_enroller_test.php` — 7 methods
+- `enrolment_window_test.php` — 7 methods
+- `path_assignment_test.php` — 23 methods
+- `external/list_paths_test.php` — 5 methods
+- `external/assignment_external_test.php` — 16 methods
+
+## Feature flags
+
+None. This plugin pre-dates the feature-flag mandate; behaviour is gated
+by the 6 capabilities and per-path `status` lifecycle column instead.
+
+## State card refresh — 2026-05-24
+
+P1 state-card pass: bumped Current version `2026050701` → `2026052001`
+(release `1.7.1`) after several point releases for the audience-
+enroller class + a Hindi top-up. No DB schema, capability, or
+feature-flag drift. Added explicit PHPUnit inventory (6 classes, 62
+methods) — previously implied by file count only.
