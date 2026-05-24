@@ -234,3 +234,22 @@ $string['entermobileotp'] = 'Entered mobile number is not exists, please check';
 // these strings via {{#str}}.
 $string['sortbystartdate'] = 'Course start date';
 $string['sortbyenddate']   = 'Course end date';
+
+// F-13 (Platform Visual Audit 2026-05-24, §2.4) — dashboard role-aware
+// welcome banner, chart titles, and compliance KPI labels migrated from
+// hardcoded English in templates/dashboard.mustache to {{#str}} helpers so
+// the 4 non-English locales (hi, kn, mr, sw) can render localised text.
+// The {$a} placeholder in welcome_* receives the user's first name from
+// layout/dashboard.php → $output->dashboard_context()['firstname'].
+$string['welcome_back_admin']      = 'Welcome back, {$a}';
+$string['subtitle_admin']          = 'Platform overview and system health';
+$string['welcome_manager']         = 'Welcome, {$a}';
+$string['subtitle_manager']        = 'Team overview and compliance status';
+$string['welcome_learner']         = 'Welcome back, {$a}!';
+$string['subtitle_learner']        = 'Continue where you left off and keep building your skills';
+$string['chart_enrolment_trend']   = 'Enrolment Trend';
+$string['chart_course_distribution'] = 'Course Distribution';
+$string['kpi_mandatory_courses']   = 'Mandatory Courses';
+$string['kpi_compliance_rate']     = 'Compliance Rate';
+$string['kpi_overdue']             = 'Overdue';
+$string['kpi_total_assigned']      = 'Total Assigned';
