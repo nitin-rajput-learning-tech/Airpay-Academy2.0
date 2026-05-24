@@ -119,12 +119,195 @@
    tokens-aware .airpay-stat-card component from
    _components-stat-card.scss. See style guide for usage. */
 
+/* Two-col wrapper modifier — pushes the row below the welcome header /
+   chart band by one space-5 step. Replaces an inline style="margin-top:20px"
+   from dashboard.mustache (P0 #5). */
+.airpay-dash__two-col--top-spacing {
+    margin-top: var(--ap-space-5);
+}
+
+/* Compliance KPI grid — admin "Compliance Overview" card, used by
+   {{#hascompliance}} block in dashboard.mustache. Replaces 14 inline
+   style attributes (P0 #5 of PLATFORM-VISUAL-AUDIT-2026-05-24), including
+   the 2 raw hex literals (#16a34a → --ap-color-success, #dc2626 →
+   --ap-color-danger) that previously bypassed the design-token cascade
+   and broke dark-mode rendering of the compliant / overdue counters. */
+.airpay-dash__compliance-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--ap-space-3);
+    padding: var(--ap-space-4);
+}
+.airpay-dash__compliance-card {
+    background: var(--ap-color-bg-surface);
+    border: 1px solid var(--ap-color-border);
+    border-radius: var(--ap-radius-sm);
+    padding: var(--ap-space-4);
+    text-align: center;
+}
+.airpay-dash__compliance-card__count {
+    font-size: 28px;
+    font-weight: var(--ap-weight-bold);
+}
+.airpay-dash__compliance-card__count--mandatory { color: var(--ap-color-primary); }
+.airpay-dash__compliance-card__count--compliant { color: var(--ap-color-success); }
+.airpay-dash__compliance-card__count--overdue   { color: var(--ap-color-danger); }
+.airpay-dash__compliance-card__count--assigned  { color: var(--ap-color-text-primary); }
+.airpay-dash__compliance-card__label {
+    font-size: var(--ap-text-xs);
+    color: var(--ap-color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Welcome header — compact greeting block used by admin / manager / learner
+   variants in dashboard.mustache. Replaces the inline-style avalanche
+   (P0 #5 of PLATFORM-VISUAL-AUDIT-2026-05-24). The full hero banner above
+   (.airpay-dash__welcome) is a separate design used elsewhere. */
+.airpay-dash__welcome-header {
+    margin-bottom: var(--ap-space-5);
+}
+.airpay-dash__welcome-header__title {
+    font-size: var(--ap-text-2xl);
+    font-weight: var(--ap-weight-bold);
+    color: var(--ap-color-text-primary);
+    margin: 0;
+}
+.airpay-dash__welcome-header__subtitle {
+    font-size: var(--ap-text-sm);
+    color: var(--ap-color-text-secondary);
+    margin: var(--ap-space-1) 0 0;
+}
+
 /* Section margins — kept here because .airpay-dash__section is the
    outer wrapper used by every dashboard section. The header bits
    (.airpay-dash__section-header / __title / __link) moved to
    _components-section-header.scss in Phase B0 iter 6 — see that file
-   for the tokens-aware rules + legacy aliases. */
+   for the tokens-aware rules + legacy aliases.
+
+   Modifiers --top-spacing / --bottom-spacing replace 3 inline
+   style="margin-*: 20px" attributes (P0 #5) for the Recent Activity,
+   Manager KPI, and Team Compliance sections. */
 .airpay-dash__section { margin-bottom: 24px; }
+.airpay-dash__section--top-spacing    { margin-top:    var(--ap-space-5); }
+.airpay-dash__section--bottom-spacing { margin-bottom: var(--ap-space-5); }
+
+/* Top Courses list — admin "Top Courses" card on the dashboard.
+   Each row is an anchor that lays out the course name on the left and
+   a pair of stats on the right with truncation on overflow. Replaces
+   4 inline style attributes (P0 #5). */
+.airpay-dash__top-courses {
+    padding: var(--ap-space-2) var(--ap-space-4);
+}
+.airpay-dash__top-courses__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--ap-space-3) 0;
+    border-bottom: 1px solid var(--ap-color-border);
+    text-decoration: none;
+    color: inherit;
+}
+.airpay-dash__top-courses__name {
+    font-size: var(--ap-text-sm);
+    font-weight: var(--ap-weight-medium);
+    color: var(--ap-color-text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 60%;
+}
+.airpay-dash__top-courses__stats {
+    display: flex;
+    gap: var(--ap-space-4);
+    font-size: var(--ap-text-xs);
+    color: var(--ap-color-text-secondary);
+}
+
+/* Team Compliance table — manager dashboard "Team Compliance" section.
+   Replaces 4 inline style attributes including 3 raw hex literals
+   (#dc2626 / #16a34a / #16a34a) and an opacity-dim on inactive rows.
+   The complementary table layout rules already live in
+   _bizlms-admin.scss and custom_media.scss. */
+.airpay-dash__team-table__row--inactive {
+    opacity: 0.65;
+}
+.airpay-dash__team-table__pending--has {
+    color: var(--ap-color-danger);
+    font-weight: var(--ap-weight-semibold);
+}
+.airpay-dash__team-table__pending--none,
+.airpay-dash__team-table__overdue--none {
+    color: var(--ap-color-success);
+}
+
+/* Progress-summary panel — learner dashboard "Overall Completion" card.
+   The .ap-progress-ring sits to the left, with a title + meta caption
+   on the right. Replaces 4 inline style attrs (line 430 wrapper, 439
+   label override, 442 title hex, 443 meta hex). */
+.airpay-dash__section--progress-summary {
+    display: flex;
+    align-items: center;
+    gap: var(--ap-space-6);
+    padding: var(--ap-space-5);
+    margin-top: var(--ap-space-4);
+}
+.airpay-dash__progress-summary__title {
+    font-size: var(--ap-text-base);
+    color: var(--ap-color-text-primary);
+}
+.airpay-dash__progress-summary__meta {
+    font-size: var(--ap-text-sm);
+    color: var(--ap-color-text-secondary);
+}
+/* Larger label variant for the progress-ring percent on the dashboard.
+   The base .ap-progress-ring__label rule in _ui-polish.scss sets 0.75rem;
+   the dashboard wants 1.1rem for legibility next to the welcome bar. */
+.ap-progress-ring__label--lg {
+    font-size: 1.1rem;
+}
+
+/* Gamification row — learner dashboard "Points + Badges" + "Streak +
+   Leaderboard" two-column block. Replaces 9 inline style attrs (line
+   453 wrapper grid, 457/458/475/510 dynamic level_color, 468/485 fire
+   icon, 500 leaderboard spacing, 502 trophy icon).
+
+   Dynamic per-user values flow through CSS custom properties set on
+   the affected element by the template:
+     --level-color    : hex from points_manager.php lookup table
+     --level-progress : percent 0–100 (rendered with trailing %)
+
+   These are server-controlled hex strings, not user input, so the
+   custom-property carrier is purely a presentation channel. */
+.airpay-dash__gamification-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--ap-space-4);
+}
+.airpay-gamification__level {
+    border-color: var(--level-color, var(--ap-color-border));
+}
+.airpay-gamification__level .airpay-gamification__level-badge {
+    background: var(--level-color, var(--ap-color-primary));
+}
+.airpay-gamification__progress-bar {
+    width: var(--level-progress, 0%);
+    background: var(--level-color, var(--ap-color-primary));
+}
+.airpay-gamification__leaderboard--spaced {
+    margin-top: var(--ap-space-3);
+}
+.airpay-gamification__leaderboard-avatar {
+    background: var(--level-color, var(--ap-color-primary));
+}
+
+/* Decorative icon colours — fire (streak) + trophy (leaderboard).
+   Held in the dashboard partial rather than the global token set
+   because they are gamification-specific semantics, not brand
+   primitives. If a customer-N rebrand needs them, override these two
+   rules in their customer-scoped stylesheet. */
+.airpay-dash__streak-icon  { color: #f97316; }
+.airpay-dash__trophy-icon  { color: #d97706; }
 
 /* Course progress cards — removed Phase B0 iter 3. Continue Learning
    tiles now use the tokens-aware .airpay-course-card component from

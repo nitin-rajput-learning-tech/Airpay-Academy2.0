@@ -188,4 +188,8 @@ $plugin->version   = 2026052403;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.33-beta';  // P0 #1+#2+#3+#4+#6+#7+#9 + P1 #12+#14 + P2 #21 + cart_badge audit
+// P0 #5 dashboard inline-style cleanup (2026-05-24, chip-C) — 34 inline
+// style attrs (incl. 5 raw hex literals) migrated from dashboard.mustache
+// into _surface-dashboard.scss as token-driven BEM rules; dynamic values
+// flow via CSS custom properties. See F-12 in PLATFORM-VISUAL-AUDIT.
+$plugin->release   = '1.0.33-beta';  // P0 #1+#2+#3+#4+#5+#6+#7+#9 + P1 #12+#14 + P2 #21 + cart_badge audit

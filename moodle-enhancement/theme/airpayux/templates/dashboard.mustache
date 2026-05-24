@@ -169,20 +169,20 @@
         <div class="airpay-dash">
 
             {{! Welcome header — all roles }}
-            <div class="airpay-dash__welcome-header" style="margin-bottom: 20px;">
+            <div class="airpay-dash__welcome-header">
                 {{#isadmin}}
-                <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--ap-color-text-primary); margin: 0;">Welcome back, {{firstname}}</h2>
-                <p style="font-size: 0.875rem; color: var(--ap-color-text-secondary); margin: 4px 0 0;">
+                <h2 class="airpay-dash__welcome-header__title">Welcome back, {{firstname}}</h2>
+                <p class="airpay-dash__welcome-header__subtitle">
                     {{#tenant_scope}}{{tenant_scope}} &mdash; {{/tenant_scope}}Platform overview and system health
                 </p>
                 {{/isadmin}}
                 {{#ismanager}}{{^isadmin}}
-                <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--ap-color-text-primary); margin: 0;">Welcome, {{firstname}}</h2>
-                <p style="font-size: 0.875rem; color: var(--ap-color-text-secondary); margin: 4px 0 0;">Team overview and compliance status</p>
+                <h2 class="airpay-dash__welcome-header__title">Welcome, {{firstname}}</h2>
+                <p class="airpay-dash__welcome-header__subtitle">Team overview and compliance status</p>
                 {{/isadmin}}{{/ismanager}}
                 {{^isadmin}}{{^ismanager}}
-                <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--ap-color-text-primary); margin: 0;">Welcome back, {{firstname}}!</h2>
-                <p style="font-size: 0.875rem; color: var(--ap-color-text-secondary); margin: 4px 0 0;">Continue where you left off and keep building your skills</p>
+                <h2 class="airpay-dash__welcome-header__title">Welcome back, {{firstname}}!</h2>
+                <p class="airpay-dash__welcome-header__subtitle">Continue where you left off and keep building your skills</p>
                 {{/ismanager}}{{/isadmin}}
             </div>
 
@@ -302,26 +302,26 @@
             {{/hascharts}}
 
             {{! ── Compliance Summary + Top Courses (two-column) ── }}
-            <div class="airpay-dash__two-col" style="margin-top: 20px;">
+            <div class="airpay-dash__two-col airpay-dash__two-col--top-spacing">
                 {{#hascompliance}}
                 <div class="airpay-dash__section">
                     <h3 class="airpay-dash__section-title"><i class="fa fa-shield"></i> Compliance Overview</h3>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px;">
-                        <div style="background: var(--ap-color-bg-surface); border: 1px solid var(--ap-color-border); border-radius: 10px; padding: 16px; text-align: center;">
-                            <div style="font-size: 28px; font-weight: 700; color: var(--ap-color-primary);">{{compliance.mandatory}}</div>
-                            <div style="font-size: 12px; color: var(--ap-color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Mandatory Courses</div>
+                    <div class="airpay-dash__compliance-grid">
+                        <div class="airpay-dash__compliance-card">
+                            <div class="airpay-dash__compliance-card__count airpay-dash__compliance-card__count--mandatory">{{compliance.mandatory}}</div>
+                            <div class="airpay-dash__compliance-card__label">Mandatory Courses</div>
                         </div>
-                        <div style="background: var(--ap-color-bg-surface); border: 1px solid var(--ap-color-border); border-radius: 10px; padding: 16px; text-align: center;">
-                            <div style="font-size: 28px; font-weight: 700; color: #16a34a;">{{compliance.compliant}}</div>
-                            <div style="font-size: 12px; color: var(--ap-color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Compliance Rate</div>
+                        <div class="airpay-dash__compliance-card">
+                            <div class="airpay-dash__compliance-card__count airpay-dash__compliance-card__count--compliant">{{compliance.compliant}}</div>
+                            <div class="airpay-dash__compliance-card__label">Compliance Rate</div>
                         </div>
-                        <div style="background: var(--ap-color-bg-surface); border: 1px solid var(--ap-color-border); border-radius: 10px; padding: 16px; text-align: center;">
-                            <div style="font-size: 28px; font-weight: 700; color: #dc2626;">{{compliance.overdue}}</div>
-                            <div style="font-size: 12px; color: var(--ap-color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Overdue</div>
+                        <div class="airpay-dash__compliance-card">
+                            <div class="airpay-dash__compliance-card__count airpay-dash__compliance-card__count--overdue">{{compliance.overdue}}</div>
+                            <div class="airpay-dash__compliance-card__label">Overdue</div>
                         </div>
-                        <div style="background: var(--ap-color-bg-surface); border: 1px solid var(--ap-color-border); border-radius: 10px; padding: 16px; text-align: center;">
-                            <div style="font-size: 28px; font-weight: 700; color: var(--ap-color-text-primary);">{{compliance.assigned}}</div>
-                            <div style="font-size: 12px; color: var(--ap-color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Total Assigned</div>
+                        <div class="airpay-dash__compliance-card">
+                            <div class="airpay-dash__compliance-card__count airpay-dash__compliance-card__count--assigned">{{compliance.assigned}}</div>
+                            <div class="airpay-dash__compliance-card__label">Total Assigned</div>
                         </div>
                     </div>
                 </div>
@@ -330,11 +330,11 @@
                 {{#hastopcourses}}
                 <div class="airpay-dash__section">
                     <h3 class="airpay-dash__section-title"><i class="fa fa-trophy"></i> Top Courses</h3>
-                    <div style="padding: 8px 16px;">
+                    <div class="airpay-dash__top-courses">
                         {{#topcourses}}
-                        <a href="{{{url}}}" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--ap-color-border); text-decoration: none; color: inherit;">
-                            <span style="font-size: 13px; font-weight: 500; color: var(--ap-color-text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60%;">{{name}}</span>
-                            <span style="display: flex; gap: 16px; font-size: 12px; color: var(--ap-color-text-secondary);">
+                        <a href="{{{url}}}" class="airpay-dash__top-courses__row">
+                            <span class="airpay-dash__top-courses__name">{{name}}</span>
+                            <span class="airpay-dash__top-courses__stats">
                                 <span>{{enrolled}} enrolled</span>
                                 <span>{{completions}} completed</span>
                             </span>
@@ -347,7 +347,7 @@
 
             {{! Recent Activity — Phase B0 iter 4: migrated to activity_item partial }}
             {{#hasrecentactivity}}
-            <div class="airpay-dash__section" style="margin-top: 20px;">
+            <div class="airpay-dash__section airpay-dash__section--top-spacing">
                 <h3 class="airpay-dash__section-title"><i class="fa fa-clock" aria-hidden="true"></i> Recent Activity</h3>
                 <ul class="airpay-activity-list">
                     {{#recentactivity}}
@@ -364,7 +364,7 @@
 
             {{! Manager KPI tiles }}
             {{#hasmanagerkpis}}
-            <div class="airpay-dash__section" style="margin-bottom: 20px;">
+            <div class="airpay-dash__section airpay-dash__section--bottom-spacing">
                 <h3 class="airpay-dash__section-title"><i class="fa fa-users"></i> My Team</h3>
                 <div class="airpay-stat-grid">
                     {{! Manager KPI tiles — Phase B0 iter 2: migrated to stat_card partial }}
@@ -377,7 +377,7 @@
 
             {{! Team Compliance Table }}
             {{#hasteamcompliance}}
-            <div class="airpay-dash__section" style="margin-bottom: 20px;">
+            <div class="airpay-dash__section airpay-dash__section--bottom-spacing">
                 <h3 class="airpay-dash__section-title"><i class="fa fa-shield"></i> Team Compliance</h3>
                 <table class="generaltable airpay-dash__team-table">
                     <thead>
@@ -394,13 +394,13 @@
                     </thead>
                     <tbody>
                         {{#teamcompliance}}
-                        <tr {{#is_inactive}}style="opacity: 0.65;"{{/is_inactive}}>
+                        <tr class="{{#is_inactive}}airpay-dash__team-table__row--inactive{{/is_inactive}}">
                             <td><strong>{{name}}</strong></td>
                             <td>{{enrolled}}</td>
                             <td>{{completed}}</td>
                             <td><span class="badge badge-{{rate_class}}">{{rate}}%</span></td>
-                            <td>{{#haspending}}<span style="color: #dc2626; font-weight: 600;">{{pending}}</span>{{/haspending}}{{^haspending}}<span style="color: #16a34a;">0</span>{{/haspending}}</td>
-                            <td>{{#has_overdue}}<span class="badge badge-danger">{{overdue}}</span>{{/has_overdue}}{{^has_overdue}}<span style="color: #16a34a;">✓</span>{{/has_overdue}}</td>
+                            <td>{{#haspending}}<span class="airpay-dash__team-table__pending airpay-dash__team-table__pending--has">{{pending}}</span>{{/haspending}}{{^haspending}}<span class="airpay-dash__team-table__pending airpay-dash__team-table__pending--none">0</span>{{/haspending}}</td>
+                            <td>{{#has_overdue}}<span class="badge badge-danger">{{overdue}}</span>{{/has_overdue}}{{^has_overdue}}<span class="airpay-dash__team-table__overdue--none">✓</span>{{/has_overdue}}</td>
                             <td>{{lastaccess}}</td>
                             <td><a href="{{drilldown_url}}" class="btn btn-sm btn-link p-0" title="Drill down"><i class="fa fa-search-plus"></i></a></td>
                         </tr>
@@ -427,7 +427,7 @@
 
             {{! Progress Ring — overall completion percentage }}
             {{#has_progress_ring}}
-            <div class="airpay-dash__section" style="display:flex; align-items:center; gap:24px; padding:20px; margin-top:16px;">
+            <div class="airpay-dash__section airpay-dash__section--progress-summary">
                 <div class="ap-progress-ring">
                     <svg width="88" height="88" viewBox="0 0 80 80">
                         <circle class="ap-progress-ring__track" cx="40" cy="40" r="36"/>
@@ -436,26 +436,31 @@
                                 stroke-dasharray="{{progress_ring.circumference}}"
                                 stroke-dashoffset="{{progress_ring.offset}}"/>
                     </svg>
-                    <span class="ap-progress-ring__label" style="font-size:1.1rem;">{{progress_ring.percent}}%</span>
+                    <span class="ap-progress-ring__label ap-progress-ring__label--lg">{{progress_ring.percent}}%</span>
                 </div>
-                <div>
-                    <strong style="font-size:1rem; color:#1a1a2e;">Overall Completion</strong><br>
-                    <span style="font-size:0.85rem; color:#5a6070;">
+                <div class="airpay-dash__progress-summary__text">
+                    <strong class="airpay-dash__progress-summary__title">Overall Completion</strong><br>
+                    <span class="airpay-dash__progress-summary__meta">
                         {{stats.completed}} of {{stats.enrolled}} courses completed
                     </span>
                 </div>
             </div>
             {{/has_progress_ring}}
 
-            {{! Gamification Widgets — Points, Streaks, Leaderboard }}
+            {{! Gamification Widgets — Points, Streaks, Leaderboard.
+                Dynamic per-user values (level_color, level_progress) flow
+                via CSS custom properties on the affected element, so the
+                cascade stays in SCSS. The level_color hex comes from
+                local_airpay_gamification/classes/points_manager.php
+                (5-step server-side lookup table — not user input). }}
             {{#hasgamification}}
             <div class="airpay-dash__section">
-                <div class="airpay-dash__gamification-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="airpay-dash__gamification-row">
                     {{! Points + Badges Summary }}
                     <div class="airpay-gamification">
                         <div class="airpay-gamification__header">
-                            <div class="airpay-gamification__level" style="border-color: {{gamification.level_color}};">
-                                <span class="airpay-gamification__level-badge" style="background: {{gamification.level_color}};">
+                            <div class="airpay-gamification__level" style="--level-color: {{gamification.level_color}};">
+                                <span class="airpay-gamification__level-badge">
                                     Lv.{{gamification.level_number}}
                                 </span>
                                 <div class="airpay-gamification__level-info">
@@ -465,14 +470,14 @@
                             </div>
                             {{#gamification.has_streak}}
                             <div class="airpay-gamification__streak">
-                                <i class="fa fa-fire" style="color: #f97316;"></i>
+                                <i class="fa fa-fire airpay-dash__streak-icon"></i>
                                 <strong>{{gamification.current_streak}}</strong>
                                 <small>day streak</small>
                             </div>
                             {{/gamification.has_streak}}
                         </div>
                         <div class="airpay-gamification__progress">
-                            <div class="airpay-gamification__progress-bar" style="width: {{gamification.level_progress}}%; background: {{gamification.level_color}};"></div>
+                            <div class="airpay-gamification__progress-bar" style="--level-progress: {{gamification.level_progress}}%; --level-color: {{gamification.level_color}};"></div>
                         </div>
                         <small class="airpay-gamification__progress-label">{{gamification.points_to_next}} pts to next level</small>
                     </div>
@@ -482,7 +487,7 @@
                     <div>
                         <div class="airpay-gamification__streak-calendar">
                             <div class="airpay-gamification__streak-header">
-                                <span><i class="fa fa-fire" style="color: #f97316;"></i> {{streak_calendar.current_streak}} day streak</span>
+                                <span><i class="fa fa-fire airpay-dash__streak-icon"></i> {{streak_calendar.current_streak}} day streak</span>
                                 <small>Best: {{streak_calendar.longest_streak}} days</small>
                             </div>
                             <div class="airpay-gamification__streak-days">
@@ -497,9 +502,9 @@
 
                         {{! Mini Leaderboard }}
                         {{#hasleaderboard}}
-                        <div class="airpay-gamification__leaderboard" style="margin-top: 12px;">
+                        <div class="airpay-gamification__leaderboard airpay-gamification__leaderboard--spaced">
                             <div class="airpay-gamification__leaderboard-header">
-                                <h4><i class="fa fa-trophy" style="color: #d97706;"></i> Leaderboard</h4>
+                                <h4><i class="fa fa-trophy airpay-dash__trophy-icon"></i> Leaderboard</h4>
                                 <small>Your department</small>
                             </div>
                             {{#leaderboard.has_entries}}
@@ -507,7 +512,7 @@
                                 {{#leaderboard.entries}}
                                 <div class="airpay-gamification__leaderboard-row {{#is_current_user}}airpay-gamification__leaderboard-row--you{{/is_current_user}}">
                                     <span class="airpay-gamification__leaderboard-rank {{#is_top3}}airpay-gamification__leaderboard-rank--top{{/is_top3}}">{{rank}}</span>
-                                    <span class="airpay-gamification__leaderboard-avatar" style="background: {{level_color}};">{{initials}}</span>
+                                    <span class="airpay-gamification__leaderboard-avatar" style="--level-color: {{level_color}};">{{initials}}</span>
                                     <span class="airpay-gamification__leaderboard-name">{{firstname}} {{lastname}} {{#is_current_user}}<small>(You)</small>{{/is_current_user}}</span>
                                     <span class="airpay-gamification__leaderboard-points">{{points}} pts</span>
                                 </div>
