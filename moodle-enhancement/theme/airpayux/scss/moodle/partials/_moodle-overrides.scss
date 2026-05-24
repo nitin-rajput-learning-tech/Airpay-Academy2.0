@@ -10,13 +10,15 @@
     /* Bootstrap's $warning (#ffc107) gives ~1.6:1 on white — fail.
        Even our bumped token (#b45309) measured borderline 4.5:1 in axe.
        Force a darker amber (#92400e ~6.0:1 on white) for the text only;
-       border keeps the brand colour. */
-    color: #92400e !important;
+       border keeps the brand colour.
+       Bootstrap's outline-variant mixin sets `color: $color` (no !important);
+       our partial loads later in the cascade, so source order wins. */
+    color: #92400e;
     border-color: var(--ap-color-warning);
 
     &:hover, &:focus {
         background-color: var(--ap-color-warning);
-        color: #fff !important;   /* white on dark amber: ~4.6:1 — PASS */
+        color: #fff;   /* white on dark amber: ~4.6:1 — PASS */
     }
 }
 
@@ -24,10 +26,9 @@
 .btn-link.btn-link.text-muted {
     /* Bootstrap's `.text-muted` is #6c757d (~3.0:1) on white. Our token
        neutral-600 (#475569) is ~6.4:1 — PASS. */
-    color: var(--ap-neutral-600) !important;
-
+    color: var(--ap-neutral-600) !important; // preserved: bootstrap `.text-muted` uses !important upstream — only !important beats !important
     &:hover, &:focus {
-        color: var(--ap-color-text-primary) !important;
+        color: var(--ap-color-text-primary) !important; // preserved: bootstrap `.text-muted` uses !important upstream
     }
 }
 
@@ -48,7 +49,7 @@ a.sub_dept_count {
     color: #fff;
 }
 
-header#page-header .card{margin-bottom: 1.0rem !important;}
+header#page-header .card{margin-bottom: 1.0rem !important;} // preserved: same selector reasserted at line ~98 with margin shorthand including margin-bottom: 1.25rem — !important forces 1.0rem win across the intra-file order
 header#page-header .card-body{padding: 0px 1.5rem;}
 header#page-header .card-body h1{margin: 0px;}
 .button {text-decoration: none;}
@@ -156,8 +157,9 @@ input[type=text], input[type=search] {
     float: left;
 }
 .page-context-header .btn-group.header-button-group a:first-child {
-    border-bottom-right-radius: 4px !important;
-    border-top-right-radius: 4px !important;
+    // Specificity (0,4,1) beats bootstrap `.btn-group > .btn:not(:last-child):not(.dropdown-toggle)` (0,4,0)
+    border-bottom-right-radius: 4px;
+    border-top-right-radius: 4px;
 }
 /*leftside menu related*/
 #nav-drawer.closed .user_navigation_ul .user_nav_div .user_navigation_link .classroom_icon_wrap{
