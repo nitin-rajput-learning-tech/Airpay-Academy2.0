@@ -4789,3 +4789,66 @@ blocks/sentientia_leaderboard/
 
 ### Next
 Schedule a fix-sprint to close the 9-item P0 list before Phase 2 customer-zero promotion. The audit branch is push-ready; no PR opened (Nitin to request).
+
+## 🧬 P1 #10 — _surface-profile.scss decomposition (2026-05-24)
+
+**Commits:** `d3f18280` → `c6b82eaa` → `0a15cab2` → `6b1a4290` → _this commit_
+**Branch:** `claude/zealous-dijkstra-oftgB` (chip J — P1 follow-up)
+**Audit ref:** `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md` §3.5, F-16
+**Verification:** `docs/visual-evidence/2026-05-24/p1-followup-chip-J/README.md`
+
+Pure-relocation decomposition of the 2,507-line / 164-`!important`
+`_surface-profile.scss` monolith into four focused per-surface partials,
+matching the existing navbar / footer / login / dashboard pattern.
+
+### What changed
+- `_surface-user.scss` (860 lines) — Goals A.1 / A.6 / A.7
+  (profile + edit + preferences)
+- `_surface-badges.scss` (243 lines) — Goal A.2
+- `_surface-grade-report.scss` (418 lines) — Goals A.3 / A.9
+- `_surface-calendar.scss` (171 lines) — Goal A.8
+- `_bizlms-admin.scss` extended (+854 lines) — `body.path-admin` +
+  parked `body.path-course-view` / `#page-my-courses` blocks + global
+  utility components (FAQ accordion, back-to-top, scroll-animate, notif
+  badge, heatmap, sparkline, gamification leaderboard row, Sprint 10
+  mobile bottom nav)
+- `_surface-profile.scss` deleted; `@import "partials/surface-profile";`
+  removed from `custom_changes.scss`
+
+### What did NOT change
+- No selectors changed
+- No rules changed (no declaration added, removed, or rewritten)
+- `!important` count unchanged (164 → 164 — F-18 is a separate concern)
+- No `.mustache` / `.php` / lang files touched
+- All eight surfaces render byte-identical post-refactor (compiled-CSS
+  sorted MD5 confirms: same set of declarations, only cascade order
+  reshuffles between disjoint `body.*` scopes)
+
+### Sanity check
+Compiled `custom_changes.scss` with `sass 1.100.0` before + after:
+- Before sorted MD5: `bb2c72485944a69a30bafafb6430732c`
+- After  sorted MD5: `bb2c72485944a69a30bafafb6430732c` ✓
+
+### Concurrent-chip note
+Chip H (F-17, `:focus-visible` rules) was operating on the **old**
+`_surface-profile.scss`. After this branch lands, the 11 affected lines
+live in three new locations:
+- Lines 1290–1293 → `_bizlms-admin.scss` (within `body.path-admin`)
+- Lines 1711–1713 → `_surface-grade-report.scss` (within `body.path-grade-report-grader`)
+- Lines 2112–2114 → `_surface-user.scss` (within `body#page-user-edit, body#page-course-edit`)
+
+Coordination: see chip J's visual-evidence README §D.
+
+### Theme version bump
+`theme/airpayux/version.php`:
+- `$plugin->version`: `2026052401` → `2026052402`
+- `$plugin->release`: `1.0.31-beta` → `1.0.32-beta`
+
+### Next
+Out-of-scope items deferred:
+- F-17 (P1 #11) bare `:focus` rules — Chip H
+- F-18 (P2) `!important` density reduction — own session
+- Migrate the parked `body.path-course-view` block from `_bizlms-admin.scss`
+  into `_surface-course.scss` once that partial enters active refactor
+- Migrate the parked `#page-my-courses` block from `_bizlms-admin.scss`
+  into `_surface-dashboard.scss` once that partial enters active refactor
