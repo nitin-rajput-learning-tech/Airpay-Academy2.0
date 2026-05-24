@@ -2,6 +2,7 @@
 # pre-commit.sh — Airpay Academy Pre-Commit Hook
 # Enforces CLAUDE.md Absolute Rules at git commit time.
 # Install: Copy to .git/hooks/pre-commit — git will auto-run it.
+#         (or run tools/install-hooks.ps1 from the repo root).
 #
 # Checks:
 #   1. PHP syntax — all staged .php files
@@ -14,6 +15,8 @@
 #   8. SCORM ZIP root validation
 #   9. version.php format check
 #  10. Uncommitted CONFIRM-tagged placeholders
+#  11. Stray git conflict markers in staged source files
+#      (P0 cleanup A, 2026-05-24 — CI #397/#403 root cause).
 
 set -euo pipefail
 
@@ -37,12 +40,18 @@ echo "╚═══════════════════════�
 STAGED_PHP=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep '\.php$' || true)
 STAGED_ALL=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null || true)
 STAGED_ZIP=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep '\.zip$' || true)
+# Conflict-marker scan targets — every text format that has ever broken
+# CI on a stray marker. .mustache uses {{<partial}} for parent-template
+# inheritance, which is why we anchor on ^<<<<<<< (line start) instead
+# of bare <<<<<<<.
+STAGED_CONFLICT=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null \
+    | grep -E '\.(php|mustache|scss|js|json|xml|md|yml)$' || true)
 
 # ============================================================
 # CHECK 1: PHP SYNTAX
 # ============================================================
 echo ""
-echo "→ [1/10] PHP syntax check..."
+echo "→ [1/11] PHP syntax check..."
 if [ -n "$STAGED_PHP" ]; then
     PHP_ERRORS=0
     while IFS= read -r file; do
@@ -62,7 +71,7 @@ fi
 # ============================================================
 # CHECK 2: MOODLE_INTERNAL GUARD
 # ============================================================
-echo "→ [2/10] MOODLE_INTERNAL guard..."
+echo "→ [2/11] MOODLE_INTERNAL guard..."
 GUARD_ISSUES=0
 while IFS= read -r file; do
     [ -f "$file" ] || continue
@@ -79,7 +88,7 @@ done <<< "$STAGED_PHP"
 # ============================================================
 # CHECK 3: RAW SUPERGLOBAL ACCESS
 # ============================================================
-echo "→ [3/10] Superglobal access (\$_GET/\$_POST)..."
+echo "→ [3/11] Superglobal access (\$_GET/\$_POST)..."
 SUPER_ISSUES=0
 while IFS= read -r file; do
     [ -f "$file" ] || continue
@@ -98,7 +107,7 @@ done <<< "$STAGED_PHP"
 # ============================================================
 # CHECK 4: CREDENTIAL PATTERNS
 # ============================================================
-echo "→ [4/10] Credential leak detection..."
+echo "→ [4/11] Credential leak detection..."
 CRED_ISSUES=0
 CRED_PATTERNS=(
     "(api_key|apikey|api_secret|secret_key)\s*=\s*['\"][a-zA-Z0-9_\-]{10,}"
@@ -124,7 +133,7 @@ done <<< "$STAGED_ALL"
 # ============================================================
 # CHECK 5: .env FILE PROTECTION
 # ============================================================
-echo "→ [5/10] .env file protection..."
+echo "→ [5/11] .env file protection..."
 if echo "$STAGED_ALL" | grep -qE '^\.env$|/\.env$'; then
     err ".env file staged — NEVER commit credentials"
     ERRORS=$((ERRORS+1))
@@ -135,7 +144,7 @@ fi
 # ============================================================
 # CHECK 6: MOODLE CORE FILE PROTECTION
 # ============================================================
-echo "→ [6/10] Moodle core file protection..."
+echo "→ [6/11] Moodle core file protection..."
 CORE_ISSUES=0
 CORE_PATTERNS=(
     "moodle/lib/"
@@ -158,7 +167,7 @@ done
 # ============================================================
 # CHECK 7: CONTENT/SOPS PROTECTION
 # ============================================================
-echo "→ [7/10] SOP file protection..."
+echo "→ [7/11] SOP file protection..."
 if git diff --cached --name-only --diff-filter=D 2>/dev/null | grep -q 'content/sops/'; then
     err "content/sops/ file DELETED — NEVER delete SOP source files"
 elif git diff --cached --name-only --diff-filter=M 2>/dev/null | grep -q 'content/sops/'; then
@@ -170,7 +179,7 @@ fi
 # ============================================================
 # CHECK 8: SCORM ZIP VALIDATION
 # ============================================================
-echo "→ [8/10] SCORM ZIP structure..."
+echo "→ [8/11] SCORM ZIP structure..."
 if [ -n "$STAGED_ZIP" ]; then
     while IFS= read -r zipfile; do
         [ -f "$zipfile" ] || continue
@@ -207,7 +216,7 @@ fi
 # ============================================================
 # CHECK 9: version.php FORMAT
 # ============================================================
-echo "→ [9/10] version.php format..."
+echo "→ [9/11] version.php format..."
 VERSION_ISSUES=0
 while IFS= read -r file; do
     [ -f "$file" ] || continue
@@ -240,7 +249,7 @@ done <<< "$STAGED_PHP"
 # ============================================================
 # CHECK 10: UNCOMMITTED [CONFIRM] PLACEHOLDERS
 # ============================================================
-echo "→ [10/10] Uncommitted CONFIRM placeholders..."
+echo "→ [10/11] Uncommitted CONFIRM placeholders..."
 CONFIRM_ISSUES=0
 while IFS= read -r file; do
     [ -f "$file" ] || continue
@@ -250,6 +259,33 @@ while IFS= read -r file; do
     fi
 done <<< "$STAGED_ALL"
 [ "$CONFIRM_ISSUES" -eq 0 ] && ok "No CONFIRM placeholders"
+
+# ============================================================
+# CHECK 11: GIT CONFLICT MARKERS (P0 cleanup A, 2026-05-24)
+# ============================================================
+# CI runs #397 + #403 failed because mid-merge commits had stray
+# <<<<<<<, =======, >>>>>>> markers in PHP + lang files. Markers
+# yield a PHP parse error which only surfaces when CI runs PHP -l.
+# We catch them at commit time instead.
+#
+# Anchored on line-start so {{<partial}} Mustache inheritance and
+# legit SCSS/MD `// =====` comment dividers don't false-positive.
+echo "→ [11/11] Git conflict-marker scan..."
+CONFLICT_ISSUES=0
+if [ -n "$STAGED_CONFLICT" ]; then
+    while IFS= read -r file; do
+        [ -f "$file" ] || continue
+        markers=$(grep -nE '^(<<<<<<<|=======|>>>>>>>)' "$file" 2>/dev/null || true)
+        if [ -n "$markers" ]; then
+            err "Git conflict marker in $file"
+            echo "$markers" | head -6 | sed 's/^/       /'
+            CONFLICT_ISSUES=$((CONFLICT_ISSUES + 1))
+        fi
+    done <<< "$STAGED_CONFLICT"
+    [ "$CONFLICT_ISSUES" -eq 0 ] && ok "No conflict markers in staged source files"
+else
+    ok "No scan-eligible files staged"
+fi
 
 # ============================================================
 # SUMMARY
