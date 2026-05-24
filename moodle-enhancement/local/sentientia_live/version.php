@@ -50,3 +50,10 @@ $plugin->dependencies = [
 //              result_bar_chart, audience/play.php, trainer/run.php;
 //              chart_updater emits sr-only tally summary on each
 //              response_added SSE event. +9 string pairs en+hi.
+//              P1 #15 / F-24 — Sentientia BEM tokens (airpay-badge/airpay-btn)
+//              layered over Bootstrap utility classes in trainer_dashboard
+//              / result_panel / result_bar_chart. Theme overrides in
+//              theme/airpayux/scss/moodle/partials/_bizlms-modern.scss.
+//              P2 #22 / F-25 — Trainer-dashboard table a11y: added
+//              <caption class="sr-only"> and scope="col" on every <th>.
+//              New lang key trainer_sessions_table_caption (EN + HI).

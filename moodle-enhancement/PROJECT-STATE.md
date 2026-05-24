@@ -5663,3 +5663,63 @@ Out-of-scope items deferred:
 
 ### Known follow-up
 Chip J branched before Chip H merged its 10 `:focus-visible` siblings on `_surface-profile.scss`. The split partials (`_surface-user`, `_surface-badges`, `_surface-grade-report`, `_surface-calendar`) do NOT contain those `:focus-visible` rules. Follow-up patch needed to add `&:focus-visible` siblings to the `:focus` rules in each of the 4 new partials. Filed as P1 follow-up.
+
+---
+
+## 🎨 P1 #15 + P2 #22 — sentientia_live tokens + table a11y (2026-05-24)
+
+**Branch:** `claude/nice-gauss-Jeyou` on `nitin-rajput-learning-tech/Airpay-Academy2.0`
+**Chip:** M (P1+P2 follow-up — F-24 + F-25 from the Platform Visual Audit)
+**Plugin version:** `local_sentientia_live` 2026052103 → 2026052401 (single bump)
+**Commits:**
+- `feat(sentientia_live): Sentientia BEM tokens replacing Bootstrap utilities (P1 #15)`
+- `feat(a11y): trainer_dashboard table caption + scope attrs (P2 #22)`
+
+### Item 1 — F-24 / P1 #15 fixed
+The `local_sentientia_live` templates rendered with raw Bootstrap utility
+classes (`.badge.bg-secondary`, `.btn.btn-outline-warning`, …) and so
+ignored Sentientia design tokens. We added a small BEM token layer in
+`theme/airpayux/scss/moodle/partials/_bizlms-modern.scss` scoped to
+`body.path-local-sentientia_live` (Moodle preserves underscores in the
+pagetype-derived body class) and amended the three live templates —
+`trainer_dashboard.mustache`, `result_panel.mustache`,
+`result_bar_chart.mustache` — so every badge and button now carries BOTH
+the Sentientia class and the Bootstrap fallback class
+(`class="airpay-badge--success badge bg-success"`). On airpayux the
+Sentientia tokens win; on vanilla Bootstrap deployments the Bootstrap
+classes still render.
+
+Mapping shipped (see visual-evidence README for the full table):
+- 4 badge variants (`primary`, `success`, `secondary`, `light`)
+- 7 button variants (`primary`, `success`, 5 outline-* flavours)
+- Dark-mode tweak so `airpay-badge--light` stays readable on
+  `body.dark-mode`
+
+### Item 2 — F-25 / P2 #22 fixed
+The trainer-sessions table had no `<caption>` and `<th>` cells had no
+`scope` attribute, breaking WCAG 1.3.1 / 4.1.2 announcements in NVDA /
+JAWS / VoiceOver. Added:
+- `<caption class="sr-only">{{# str }}trainer_sessions_table_caption{{/ str }}</caption>` immediately inside `<table>`.
+- `scope="col"` on all 7 `<th>` cells in `<thead>`.
+- New lang key `trainer_sessions_table_caption` in EN and HI lang files.
+
+### Conflict note (Chip E)
+Chip E is concurrently adding `aria-live` regions to
+`audience/play.mustache` and `trainer/run.mustache` (possibly
+`trainer_dashboard.mustache`). The two chips touch different attribute
+namespaces (`class` vs `aria-live`) and merge cleanly in either order —
+no coordination required beyond the standard append-only conventions.
+
+### Safety + parity
+- ✅ `php -l` clean on both lang files + version.php
+- ✅ Hindi parity 100% (256/256 keys — zero diff between lang/en and lang/hi)
+- ✅ Mustache lint — no new triple-brace `{{{ }}}` introduced
+- ✅ Bootstrap fallback markup retained on every changed element
+- ✅ Single plugin version bump (covers both items)
+- ✅ Body-class scope prevents bleed into other plugin surfaces
+
+### Refs
+- Visual evidence: `docs/visual-evidence/2026-05-24/p1-p2-followup-chip-M/README.md`
+- Audit report: `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md` (F-24, F-25)
+- Frontend rules: `.claude/rules/frontend.md` §BEM
+- State card: `state-cards/sentientia_live-state.md`

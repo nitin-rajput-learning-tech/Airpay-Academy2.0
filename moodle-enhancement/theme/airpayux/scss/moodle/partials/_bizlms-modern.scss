@@ -295,3 +295,157 @@ body.dark-mode .ap-dash-exam-card__desc { color: #9ca3b4; }
 body.dark-mode .ap-dash-exam-card__progress { background: #2d3140; }
 body.dark-mode .ap-dash-exam-card__access { color: #6b7280; }
 
+/* ═══════════════════════════════════════════════════════════
+   P1 #15 / F-24 — Sentientia LMS Live engagement BEM tokens
+   ═══════════════════════════════════════════════════════════
+   Maps the Bootstrap utility classes used by the
+   local_sentientia_live plugin templates onto Sentientia
+   design-system tokens.
+
+   Pattern (per .claude/rules/frontend.md §BEM):
+     airpay-[block]__[element]--[modifier]
+
+   The templates carry BOTH the airpay-* class and the
+   Bootstrap fallback class:
+     <span class="airpay-badge airpay-badge--success badge bg-success">
+
+   That way:
+     - Sentientia-themed deployments (airpayux) override via
+       the tokens below and pick up brand colours / radii.
+     - Non-Sentientia / vanilla-Bootstrap deployments fall
+       back to the Bootstrap utility — markup still renders.
+
+   Scoped to body.path-local-sentientia_live (the actual body
+   class Moodle generates from /local/sentientia_live/* —
+   underscores are preserved in pagetype, only `/` becomes `-`)
+   so we don't pollute the rest of the site.
+   ─────────────────────────────────────────────────────────── */
+body.path-local-sentientia_live {
+
+    /* ── Badge tokens — replace Bootstrap .bg-* on .badge ── */
+    .airpay-badge {
+        display: inline-block;
+        padding: 0.35em 0.65em;
+        font-size: 0.75em;
+        font-weight: 600;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: var(--ap-radius-pill);
+    }
+    .airpay-badge--primary {
+        background: var(--ap-primary) !important;
+        color: #fff !important;
+    }
+    .airpay-badge--success {
+        background: var(--ap-success) !important;
+        color: #fff !important;
+    }
+    .airpay-badge--secondary {
+        background: var(--ap-text-secondary) !important;
+        color: #fff !important;
+    }
+    .airpay-badge--light {
+        background: var(--ap-surface-alt) !important;
+        color: var(--ap-text) !important;
+        border: 1px solid var(--ap-border) !important;
+    }
+
+    /* ── Button tokens — replace Bootstrap .btn-* on .btn ── */
+    .airpay-btn {
+        display: inline-block;
+        font-weight: 600;
+        line-height: 1.5;
+        text-align: center;
+        text-decoration: none;
+        vertical-align: middle;
+        cursor: pointer;
+        padding: 0.375rem 0.75rem;
+        font-size: 0.95rem;
+        border-radius: var(--ap-radius-sm);
+        border: 1px solid transparent;
+        transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+    }
+    .airpay-btn--primary {
+        background: var(--ap-primary) !important;
+        border-color: var(--ap-primary) !important;
+        color: #fff !important;
+    }
+    .airpay-btn--primary:hover,
+    .airpay-btn--primary:focus {
+        background: var(--ap-primary-dark) !important;
+        border-color: var(--ap-primary-dark) !important;
+        color: #fff !important;
+    }
+    .airpay-btn--success {
+        background: var(--ap-success) !important;
+        border-color: var(--ap-success) !important;
+        color: #fff !important;
+    }
+    .airpay-btn--success:hover,
+    .airpay-btn--success:focus {
+        background: #138e40 !important;
+        border-color: #138e40 !important;
+        color: #fff !important;
+    }
+    .airpay-btn--outline-primary {
+        background: transparent !important;
+        border-color: var(--ap-primary) !important;
+        color: var(--ap-primary) !important;
+    }
+    .airpay-btn--outline-primary:hover,
+    .airpay-btn--outline-primary:focus {
+        background: var(--ap-primary) !important;
+        color: #fff !important;
+    }
+    .airpay-btn--outline-secondary {
+        background: transparent !important;
+        border-color: var(--ap-text-secondary) !important;
+        color: var(--ap-text-secondary) !important;
+    }
+    .airpay-btn--outline-secondary:hover,
+    .airpay-btn--outline-secondary:focus {
+        background: var(--ap-text-secondary) !important;
+        color: #fff !important;
+    }
+    .airpay-btn--outline-warning {
+        background: transparent !important;
+        border-color: var(--ap-warning) !important;
+        color: var(--ap-warning) !important;
+    }
+    .airpay-btn--outline-warning:hover,
+    .airpay-btn--outline-warning:focus {
+        background: var(--ap-warning) !important;
+        color: #fff !important;
+    }
+    .airpay-btn--outline-info {
+        background: transparent !important;
+        border-color: var(--ap-primary) !important;
+        color: var(--ap-primary) !important;
+    }
+    .airpay-btn--outline-info:hover,
+    .airpay-btn--outline-info:focus {
+        background: var(--ap-primary) !important;
+        color: #fff !important;
+    }
+    .airpay-btn--outline-danger {
+        background: transparent !important;
+        border-color: var(--ap-danger) !important;
+        color: var(--ap-danger) !important;
+    }
+    .airpay-btn--outline-danger:hover,
+    .airpay-btn--outline-danger:focus {
+        background: var(--ap-danger) !important;
+        color: #fff !important;
+    }
+}
+
+/* Dark-mode tweaks — keep airpay-badge--light readable on
+   dark backgrounds. The base badge/btn tokens already use
+   CSS custom properties so they follow the page palette. */
+body.dark-mode.path-local-sentientia_live .airpay-badge--light {
+    background: #2d3140 !important;
+    color: #e8eaed !important;
+    border-color: #3a4151 !important;
+}
