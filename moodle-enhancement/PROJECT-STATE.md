@@ -4789,3 +4789,70 @@ blocks/sentientia_leaderboard/
 
 ### Next
 Schedule a fix-sprint to close the 9-item P0 list before Phase 2 customer-zero promotion. The audit branch is push-ready; no PR opened (Nitin to request).
+
+---
+
+## 🧹 P0 #1 + #2 — SCSS hygiene closed (2026-05-24)
+
+**Chip:** `claude/loving-planck-5wdGb` (spawned 2026-05-24)
+**Auditor follow-up:** Closes two of the nine P0 items from
+`docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md` §2.10
+(Dead / Orphan Source Files in `scss/`). Scope: 2 file operations,
+no template / lang / plugin code touched.
+
+### Commits
+
+| # | SHA (short) | Op | Purpose |
+|---|---|---|---|
+| 1 | (1st commit of this chip) | `git rm` | Delete orphan `theme/airpayux/scss/moodle/partials/Claude` (98 KB, 135 !important, no extension, never imported) |
+| 2 | (2nd commit of this chip) | `git mv` + version bump + this PROJECT-STATE H2 | Move `theme/airpayux/scss/moodle/custom_changes_MONOLITH_BACKUP.scss` (284 KB, 682 !important) → `theme/airpayux/_archive/custom_changes_MONOLITH_BACKUP.scss`; bump `theme/airpayux/version.php` 2026052401 → 2026052402 (release `1.0.31-beta` → `1.0.32-beta`) |
+
+### Verification before delete
+
+```
+$ grep -rn 'partials/Claude\|"Claude"\|@import.*Claude\|@use.*Claude' \
+       moodle-enhancement/theme/airpayux/scss/
+(zero output — orphan was truly unreferenced)
+```
+
+### Verification after ops
+
+```
+$ ls moodle-enhancement/theme/airpayux/scss/moodle/partials/Claude
+ls: cannot access ...: No such file or directory  ✓
+$ ls moodle-enhancement/theme/airpayux/scss/moodle/custom_changes_MONOLITH_BACKUP.scss
+ls: cannot access ...: No such file or directory  ✓
+$ ls moodle-enhancement/theme/airpayux/_archive/custom_changes_MONOLITH_BACKUP.scss
+... (file present, 284 KB, history preserved via git mv)  ✓
+```
+
+### Impact on theme
+
+- `scss/moodle/` tree shrinks by 382 KB (98 KB orphan delete + 284 KB
+  backup moved out of the compiler-scanned tree).
+- Audit's `!important` Census (§2.2) drops the two top offenders:
+  682 (backup) + 135 (orphan) = 817 declarations removed from the
+  compiler-visible scan surface. The 1,150 first-party `!important`
+  total estimated in the audit collapses to ~333 across the remaining
+  partials.
+- Token Drift Index (§2.1) drops the orphan's 50+ hex literals from
+  clutter accounting.
+- Theme version bump (2026052401 → 2026052402) invalidates the cached
+  compiled CSS bundle on next request — defensive, since the orphan
+  was never compiled in.
+
+### Out of scope (parked for sibling chips)
+
+- P0 #3 — navbar hardcoded English (Chip B owns)
+- P0 #4 — footer hardcoded English (Chip B owns)
+- P0 #5 — dashboard inline-style avalanche (Chip C owns)
+- P0 #6 — footer Sentientia attribution band inline hex (Chip B owns)
+- P0 #7 — Hindi parity 85% → 100% (Chip D owns)
+- P0 #8 — sentientia_live aria-live regions
+- P0 #9 — navbar inline `<script>` → AMD module
+
+### Next
+
+Sibling chips B/C/D pick up the remaining 7 P0 items. After all 9 P0s
+land, audit verdict flips from **CONDITIONAL PASS** to **PASS** for
+Phase 2 customer-zero promotion.
