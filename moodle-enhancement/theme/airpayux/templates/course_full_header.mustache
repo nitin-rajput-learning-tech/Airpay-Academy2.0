@@ -1,0 +1,118 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template core/full_header
+
+    This template renders the header.
+
+    Example context (json):
+    {
+        "contextheader": "context_header_html",
+        "settingsmenu": "settings_html",
+        "hasnavbar": false,
+        "navbar": "navbar_if_available",
+        "courseheader": "course_header_html",
+        "welcomemessage": "welcomemessage"
+    }
+}}
+<header id="page-header" class="d-print-none">
+    <div class="w-100">
+        <div class="d-flex justify-content-end">
+            {{#hasnavbar}}
+                    <div id="page-navbar">
+                        {{{navbar}}}
+                    </div>
+                {{/hasnavbar}}
+        </div>
+        <div class="courseheader" style="background-image: url('{{coursebannerimage}}');">
+            
+            <div class="d-flex flex-column  course_heading h-100">
+              
+                <div class="heading" >
+                    {{{contextheader}}}
+                    {{#activityurl}}
+                        {{{course_summary_data}}}
+                    {{/activityurl}}
+                </div>
+                <div class="row mt-auto pb-4">
+                    <div class="col-md-3 rating_container d-flex align-items-center">
+                        {{{display_ratings}}}
+                    </div>      
+                                  
+                    {{{display_duedays}}}                       
+                    
+                    {{^courseprogresspercent}}
+                    <div class="col-md-3 user_enrollment d-flex">
+                        <div class="seats_icon">
+                            <i class="fa fa-shopping-cart"></i>
+                        </div>
+                        <div class="enroll_details d-flex">
+                            <span class="details_content text-nowrap">User Enrollements :</span>
+                            <span class="enroll_number">{{enrolledusercount}}</span>
+                        </div>
+                    </div>
+                    <div class=" user_completion col-md-3 d-flex">
+                        <div class="user_icon">
+                            <i class="fa fa-users"></i>
+                        </div>
+                        <div class="enroll_details d-flex">
+                            <span class="details_content text-nowrap">User Completion :</span>
+                            <span class="enroll_number">{{completedusercount}}/{{enrolledusercount}}</span>
+                        </div>
+                    </div>
+                    {{/courseprogresspercent}}
+                    {{#courseprogresspercent}}
+                    <div class="col-md-2"></div>
+                    <div class="col-md-4 align-items-center user_enrollment flex-column d-flex">
+                        
+                        {{#activityurl}}
+                            <div class="context-header-settings-menu">
+                                <a href="{{activityurl}}" title="Start" class='btn start_btn mb-3 btn-block btn-secondary'>
+                                        Start
+                                </a>
+                            </div>
+                        {{/activityurl}}
+                        <div class="d-flex w-100">
+                            <div class="max-progress d-flex align-items-center">
+                                <div class="progress flexgrow-1">
+                                    <div class="progress-bar text-center" role="progressbar" style="width:{{usercourseprogresspercent}}%;"
+                                        aria-valuenow="{{usercourseprogresspercent}}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <span>{{usercourseprogresspercent}}%</span>
+                            </div>
+                        </div>
+                    </div> 
+                    
+                    {{/courseprogresspercent}}
+                </div>
+            </div>
+            {{#settingsmenu}}
+                <div class="context-header-settings-menu">
+                    {{{settingsmenu}}}
+                </div>
+            {{/settingsmenu}}
+        </div>
+        {{#course_summary_data}}
+        <div class="px-3">
+            <h3 class="mt-2">Description</h3>
+            {{{course_summary_data}}}
+        </div>
+        {{/course_summary_data}}
+        
+    </div>
+    
+</header>
