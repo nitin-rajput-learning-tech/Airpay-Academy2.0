@@ -51,7 +51,7 @@ When ALL items reach `[COMPLETED]` or `[BLOCKED]`, append the line `=== NIGHT-RU
 
 ### A2 — `local/airpay_courses/amd/src/enrolledusers.js` — ModalFactory → core/modal dual-target
 
-- **Status:** `[PENDING]`
+- **Status:** `[COMPLETED]` — commit `838a14431`
 - **Why:** `core/modal_factory` removed in Moodle 5.2 (MDL-79182). Replace with `core/modal` while keeping 5.1 compatibility via a runtime check.
 - **File:** `moodle-enhancement/local/airpay_courses/amd/src/enrolledusers.js`
 - **Pattern (drop-in shim — copy into the file's existing `define([…])` array):**
@@ -87,7 +87,7 @@ When ALL items reach `[COMPLETED]` or `[BLOCKED]`, append the line `=== NIGHT-RU
 
 ### A3 — `local/airpay_request/amd/src/request_button.js` — same dual-target as A2
 
-- **Status:** `[PENDING]`
+- **Status:** `[COMPLETED]` — commit `5140524d0`
 - **File:** `moodle-enhancement/local/airpay_request/amd/src/request_button.js`
 - **Same pattern as A2.**
 - **Commit msg:** `feat(airpay_request): dual-target ModalFactory→core/modal — request_button.js`
@@ -95,7 +95,7 @@ When ALL items reach `[COMPLETED]` or `[BLOCKED]`, append the line `=== NIGHT-RU
 
 ### A4 — `local/airpay_request/amd/src/decide.js` — same dual-target as A2
 
-- **Status:** `[PENDING]`
+- **Status:** `[COMPLETED]` — commit `c27a77b8e`
 - **File:** `moodle-enhancement/local/airpay_request/amd/src/decide.js`
 - **Same pattern as A2.**
 - **Commit msg:** `feat(airpay_request): dual-target ModalFactory→core/modal — decide.js`
@@ -103,7 +103,7 @@ When ALL items reach `[COMPLETED]` or `[BLOCKED]`, append the line `=== NIGHT-RU
 
 ### A5 — `local/airpay_cart/amd/src/admin_orders.js` — same dual-target as A2
 
-- **Status:** `[PENDING]`
+- **Status:** `[COMPLETED]` — commit `00ad286bf`
 - **File:** `moodle-enhancement/local/airpay_cart/amd/src/admin_orders.js`
 - **Same pattern as A2.**
 - **Commit msg:** `feat(airpay_cart): dual-target ModalFactory→core/modal — admin_orders.js`
@@ -111,7 +111,7 @@ When ALL items reach `[COMPLETED]` or `[BLOCKED]`, append the line `=== NIGHT-RU
 
 ### A6 — 3 AMD shims cleanup (`page_title.js`, `deprecated.js`, `announcement.js`)
 
-- **Status:** `[PENDING]`
+- **Status:** `[COMPLETED]` — commit `bc807ac46` (deleted page_title + deprecated; KEPT announcement pending NVDA verify; theme bump 2026052330→2026052401)
 - **Why (per `docs/5.2-merge/PHASE-B.3.f-amd-shim-cleanup-plan.md`):**
   - `page_title.js` — borrowed for 5.2 readiness, zero callsites in airpayux. Delete.
   - `deprecated.js` — borrowed for 5.2 readiness, zero callsites in airpayux. Delete.
@@ -123,7 +123,7 @@ When ALL items reach `[COMPLETED]` or `[BLOCKED]`, append the line `=== NIGHT-RU
 
 ### A7 — `course.mustache:237` tertiary-nav swap (dual-target)
 
-- **Status:** `[PENDING]`
+- **Status:** `[COMPLETED]` — commit `6ab932b01` (layout/course.php sets is_select_menu_context; template picks tertiary_navigation_selector vs url_select)
 - **Why (per `docs/5.2-merge/PHASE-B.3.c-top-templates-rebase.md`):** `core/url_select` partial removed in 5.2; replaced by `core/select_menu`. Need a dual-target Mustache pattern.
 - **File:** `moodle-enhancement/theme/airpayux/templates/course.mustache` line ~237 (search for `{{> core/url_select }}` or similar).
 - **Change pattern:**
@@ -142,7 +142,7 @@ When ALL items reach `[COMPLETED]` or `[BLOCKED]`, append the line `=== NIGHT-RU
 
 ### A8 — `drawer/drawers/secure` mustache audit + selective backport
 
-- **Status:** `[PENDING]`
+- **Status:** `[COMPLETED]` — commit `c8664d631` (secure.mustache 2 backports applied; drawer deferred to cutover-day; drawers intentionally diverged; audit doc shipped)
 - **Why (per B.3.c plan):** 5.2 reshaped these layout templates. Audit our overrides; selectively backport only changes that don't break 5.1 rendering.
 - **Files:** `moodle-enhancement/theme/airpayux/templates/drawers.mustache`, `drawer.mustache`, `secure.mustache`.
 - **Method:** diff our copy vs vanilla Boost 5.2 (under `C:\xampp\htdocs\moodle5.2\public\theme\boost\templates\` inside the container at `/var/www/moodle/public/theme/boost/templates/`). Cherry-pick non-breaking adds. If a template has nothing 5.2-specific to backport, document that and skip.
@@ -151,7 +151,7 @@ When ALL items reach `[COMPLETED]` or `[BLOCKED]`, append the line `=== NIGHT-RU
 
 ### B1 — PHPUnit tests for `paygw_airpay`
 
-- **Status:** `[PENDING]`
+- **Status:** `[COMPLETED]` — commit `131dc439d` (gateway_test + privacy_provider_test, 11 tests total; spawned follow-up task to fix MD5/require_login security issues in checksum.php + airpay_helper.php)
 - **Why:** Plugin was just tracked in repo for the first time (commit `275f45c84`); zero test coverage. Risk: untested 31-file payment plugin.
 - **Files to test:**
   - `moodle-enhancement/payment/gateway/airpay/classes/gateway.php` — gateway capabilities, currency support, fee calculation if any.
@@ -166,7 +166,7 @@ When ALL items reach `[COMPLETED]` or `[BLOCKED]`, append the line `=== NIGHT-RU
 
 ### B2 — PHPUnit tests for `quizaccess_airpay_proctoring`
 
-- **Status:** `[PENDING]` (depends on A1)
+- **Status:** `[COMPLETED]` — commit `65ced95da` (rule_test 9 tests + upgrade_test 4 tests; verifies A1 hotfix behavior)
 - **Why:** Plugin shipped at v2026051300 with new relational schema + migration. Needs test for: rule loading, migration idempotence (A1's fix), table-creation-on-upgrade path.
 - **Files to test:**
   - `moodle-enhancement/mod/quiz/accessrule/airpay_proctoring/rule.php` — rule loading + form validation.
