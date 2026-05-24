@@ -96,7 +96,7 @@ local/sentientia_calendar/
 │   └── subscription_page.mustache               Copy-button + how-to
 └── tests/
     ├── token_manager_test.php                   17 tests
-    └── ics_builder_test.php                     11 tests
+    └── ics_builder_test.php                     13 tests
 ```
 
 ## Roadmap
@@ -121,9 +121,11 @@ local/sentientia_calendar/
 ## Tests
 
 ```
-tests/token_manager_test.php   17 assertions across token lifecycle + isolation
-tests/ics_builder_test.php     11 assertions: RFC 5545 conformance, user isolation, feature flags
+tests/token_manager_test.php   17 test methods across token lifecycle + isolation
+tests/ics_builder_test.php     13 test methods: RFC 5545 conformance, user isolation, feature flags
 ```
+
+Total: 2 test classes, 30 test methods.
 
 Run with:
 ```
@@ -156,3 +158,24 @@ local_airpay_exams     for EXAM-CLOSE events
 Each event source checks `$DB->get_manager()->table_exists()` before
 querying — installing the calendar plugin without one of the source
 plugins simply omits that event category.
+
+---
+
+## State card refresh — 2026-05-24
+
+P1 state-card pass: confirmed plugin still at `2026052400` /
+`1.0.0-beta` after the merge wave. Re-counted PHPUnit methods:
+token_manager 17 + ics_builder 13 = 30 total (corrected drift on
+ics_builder 11→13 in the inventory). Confirmed 1 DB table, 2
+capabilities, 4 feature flags, 3 public surfaces (`/index.php`,
+`/regenerate.php`, `/ics.php`), 1 scheduled task. README shipped.
+Master flag `sentientia.calendar_sync.enabled` still default OFF.
+
+## Open items
+
+- [ ] Phase 1.1 — Dashboard block plugin (a "Subscribe" CTA tile)
+- [ ] Phase 1.2 — Per-category filter UI on the subscription page
+- [ ] Phase 1.3 — Move hardcoded `Asia/Kolkata` to per-customer setting
+- [ ] Phase 2 — OAuth bi-directional sync (pending customer demand)
+- [ ] Per-user fetch-history audit log (Phase 1.1)
+- [ ] Include core `mdl_event` rows in the feed (Phase 1.4)
