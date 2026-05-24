@@ -1,0 +1,40 @@
+<?php
+// Copyright 2026 Airpay Payment Services
+// License http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+
+/**
+ * Sentientia LMS — Calendar Sync (Outlook / Google / Apple)
+ *
+ * Tier 2 #6 on the Sentientia LMS roadmap. Phase 1 (this version) ships
+ * OUTBOUND sync only: per-user ICS subscription URL that any RFC 5545
+ * calendar client can subscribe to. Inbound bi-directional sync (Phase
+ * 2) is deferred — see ADR-013 for the no-OAuth reasoning.
+ *
+ * Roadmap:
+ *  - 1.0  Outbound ICS feed: courses + classrooms + exams
+ *  - 1.1  Block + dashboard widget for "Subscribe to my calendar" CTA
+ *  - 1.2  Per-event-type filters (toggle classrooms-only etc.)
+ *  - 2.0  Inbound OAuth sync (Microsoft Graph + Google Calendar API)
+ *
+ * @package    local_sentientia_calendar
+ * @copyright  2026 Airpay Payment Services
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+defined('MOODLE_INTERNAL') || die();
+
+$plugin->component = 'local_sentientia_calendar';
+$plugin->version   = 2026052400;
+$plugin->requires  = 2022041900;
+$plugin->maturity  = MATURITY_BETA;
+$plugin->release   = '1.0.0-beta';
+$plugin->dependencies = [
+    'local_airpay_core' => 2026051401,  // feature_flags resolver
+];
+
+// Release history.
+// 1.0.0-beta  Tier 2.6 Phase 1: outbound ICS feed, token-authenticated
+//             subscription URL. Default OFF behind
+//             sentientia.calendar_sync.enabled. Surfaces course
+//             completion deadlines, classroom sessions, and quiz close
+//             dates for the authenticated user.

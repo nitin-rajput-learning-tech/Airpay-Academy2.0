@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calendar subscription — Sentientia LMS (static preview)</title>
+<style>
+  /* Approximate Airpay design tokens — mirrors .claude/rules/frontend.md */
+  :root {
+    --ap-primary:   #0066A7;
+    --ap-primary-light: #e8f2f9;
+    --ap-primary-dark: #004d80;
+    --ap-accent:    #0f7a73;
+    --ap-bg:        #F2F4FB;
+    --ap-surface:   #ffffff;
+    --ap-border:    #e2e6ef;
+    --ap-text-primary: #1a1a2e;
+    --ap-text-secondary: #5a6070;
+    --ap-warning:   #d97706;
+    --ap-success:   #16a34a;
+    --ap-radius-md: 12px;
+    --ap-radius-sm: 8px;
+    --ap-shadow-sm: 0 1px 4px rgba(0,0,0,0.06);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Montserrat', -apple-system, sans-serif;
+    background: var(--ap-bg);
+    color: var(--ap-text-primary);
+    line-height: 1.5;
+    padding: 32px 16px;
+  }
+  .container { max-width: 880px; margin: 0 auto; }
+  h1 { font-size: 1.5rem; margin: 0 0 24px; }
+  h3 { font-size: 1.125rem; margin: 0 0 12px; }
+  p.lead { font-size: 1rem; color: var(--ap-text-secondary); margin-bottom: 24px; }
+
+  .card {
+    background: var(--ap-surface);
+    border: 1px solid var(--ap-border);
+    border-radius: var(--ap-radius-md);
+    box-shadow: var(--ap-shadow-sm);
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+  .card.warning-card { border-color: var(--ap-warning); }
+
+  .form-label { display: block; font-weight: 600; margin-bottom: 8px; }
+  .input-group { display: flex; gap: 8px; }
+  .form-control {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid var(--ap-border);
+    border-radius: var(--ap-radius-sm);
+    font-family: monospace;
+    font-size: 0.875rem;
+  }
+  .form-control:read-only { background: #f8f9fc; }
+
+  .btn {
+    padding: 10px 20px;
+    border-radius: var(--ap-radius-sm);
+    border: 1px solid transparent;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.875rem;
+  }
+  .btn-primary {
+    background: var(--ap-primary);
+    color: white;
+    border-color: var(--ap-primary);
+  }
+  .btn-primary:hover { background: var(--ap-primary-dark); }
+  .btn-outline-warning {
+    background: white;
+    color: var(--ap-warning);
+    border-color: var(--ap-warning);
+  }
+  .text-muted { color: var(--ap-text-secondary); }
+  .small { font-size: 0.875rem; }
+  .mt-3 { margin-top: 16px; }
+  .mb-0 { margin-bottom: 0; }
+  .mb-2 { margin-bottom: 8px; }
+  .mb-3 { margin-bottom: 12px; }
+  .mb-4 { margin-bottom: 24px; }
+
+  ul { margin: 0; padding-left: 20px; }
+  ul li + li { margin-top: 6px; }
+
+  dl.row { margin: 0; }
+  dl.row dt { font-weight: 600; margin-top: 12px; }
+  dl.row dd { margin-left: 0; color: var(--ap-text-secondary); font-size: 0.875rem; }
+
+  .badge-icon {
+    display: inline-block;
+    width: 20px;
+    text-align: center;
+    color: var(--ap-primary);
+    font-weight: 700;
+    margin-right: 4px;
+  }
+
+  .preview-banner {
+    background: #fef3c7;
+    border: 1px solid #f59e0b;
+    color: #78350f;
+    padding: 12px 16px;
+    border-radius: var(--ap-radius-sm);
+    margin-bottom: 24px;
+    font-size: 0.875rem;
+  }
+
+  @media (max-width: 590px) {
+    .input-group { flex-direction: column; }
+    body { padding: 16px 12px; }
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+
+    <div class="preview-banner">
+      <strong>Static preview</strong> — this is a standalone HTML rendering of
+      <code>templates/subscription_page.mustache</code> with sample values, NOT a
+      live capture from a running Moodle instance. Use this to verify visual
+      design ahead of the live-XAMPP screenshots.
+    </div>
+
+    <h1>Calendar subscription</h1>
+
+    <p class="lead">
+      Add your Sentientia LMS course deadlines, classroom sessions, and exam dates
+      to Outlook, Google Calendar, or Apple Calendar. The link below is personal
+      to you — keep it private.
+    </p>
+
+    <!-- URL card -->
+    <div class="card">
+      <label class="form-label" for="url">Subscribe to your learning calendar</label>
+      <div class="input-group">
+        <input type="text"
+               id="url"
+               class="form-control"
+               readonly
+               value="https://www.airpay.academy/local/sentientia_calendar/ics.php?token=A1B2C3D4E5F6G7H8J9K1L2M3N4P5Q6R7S8T9U1V2W3X4Y5Z6a1b2c3d4e5f6g7h8">
+        <button class="btn btn-primary" onclick="copyUrl()">Copy subscription URL</button>
+      </div>
+      <p class="text-muted small mt-3 mb-0">
+        🛡 Treat this URL like a password — anyone who has it can read your learning
+        calendar. Use "Regenerate" below if you ever paste it somewhere by accident.
+      </p>
+    </div>
+
+    <!-- What's included -->
+    <div class="card">
+      <h3>What's included</h3>
+      <ul>
+        <li>Course completion deadlines for every course you're enrolled in</li>
+        <li>Classroom (instructor-led training) session start and end times</li>
+        <li>Exam close-dates for the next 90 days</li>
+      </ul>
+    </div>
+
+    <!-- How-to -->
+    <div class="card">
+      <h3>How to subscribe</h3>
+      <dl class="row">
+        <dt><span class="badge-icon">📧</span> Outlook</dt>
+        <dd>
+          Outlook on the web: Calendar ▶ Add calendar ▶ Subscribe from web ▶ paste the URL ▶
+          name it "Sentientia" ▶ Import. Desktop Outlook: File ▶ Account Settings ▶
+          Internet Calendars ▶ New ▶ paste the URL.
+        </dd>
+        <dt><span class="badge-icon">📅</span> Google</dt>
+        <dd>
+          Google Calendar: Other calendars ▶ + ▶ From URL ▶ paste the URL ▶ Add calendar.
+        </dd>
+        <dt><span class="badge-icon">🍎</span> Apple</dt>
+        <dd>
+          Apple Calendar (macOS): File ▶ New Calendar Subscription ▶ paste the URL ▶ Subscribe.
+          iOS: Settings ▶ Calendar ▶ Accounts ▶ Add Account ▶ Other ▶ Add Subscribed Calendar.
+        </dd>
+      </dl>
+    </div>
+
+    <!-- Regenerate -->
+    <div class="card warning-card">
+      <h3>Regenerate URL</h3>
+      <p class="text-muted small mb-3">
+        Invalidates the current URL and issues a fresh one. You'll need to update the
+        subscription in every calendar client you've already added.
+      </p>
+      <button class="btn btn-outline-warning">🔄 Regenerate URL</button>
+    </div>
+
+  </div>
+
+  <script>
+    function copyUrl() {
+      var input = document.getElementById('url');
+      input.select();
+      try {
+        document.execCommand('copy');
+        var btn = event.target;
+        var orig = btn.textContent;
+        btn.textContent = 'Copied!';
+        btn.style.background = '#16a34a';
+        setTimeout(function(){
+          btn.textContent = orig;
+          btn.style.background = '';
+        }, 2000);
+      } catch (e) {
+        alert('Press Cmd+C / Ctrl+C to copy');
+      }
+    }
+  </script>
+</body>
+</html>
