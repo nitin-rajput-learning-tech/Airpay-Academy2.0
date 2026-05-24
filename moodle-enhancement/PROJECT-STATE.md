@@ -3,6 +3,115 @@
 
 ---
 
+## 🚀 P2 CUTOVER-PREP — drawer.mustache 5.2 backport ✅ SHIPPED (2026-05-24)
+
+**Closes Phase B.12 deferred item.** The 2026-05-23 drawer/secure audit
+(`docs/5.2-merge/PHASE-B12-DRAWER-SECURE-AUDIT.md`) shipped two safe
+`secure.mustache` backports same-day, but deferred the structural
+`drawer.mustache` changes to cutover-day because they coupled to BS5
+utility classes (`btn-icon`, `icon-size-3`) and the BS5 tooltip attribute
+rename. The Phase B.3.e+ BS5 migration on production 5.1.3+ retired that
+blocker, so this chip closes the deferred half.
+
+### What landed
+
+- [x] **`templates/drawer.mustache` — 8 mechanical backports** matched
+      against vanilla 5.2 boost at upstream tag `v5.2.0`
+      (`public/theme/boost/templates/drawer.mustache`):
+  1. Add `<div class="drawerheading">` wrapper
+  2. Add `<div class="draweractions">` wrapper
+  3. Add `<div class="drawerheadercontent">` wrapper
+  4. Add `{{$drawerheading}}{{/drawerheading}}` block (empty default)
+  5. Add `{{$drawerheadercontent}}{{/drawerheadercontent}}` block (empty default)
+  6. Add `{{$closebuttonicon}}{{#pix}}e/cancel,core{{/pix}}{{/closebuttonicon}}`
+     block — default mirrors the pre-patch hard-coded icon byte-for-byte
+  7. Button class `drawertoggle icon-no-margin hidden` →
+     `btn btn-icon icon-size-3 drawertoggle` (`drawertoggle` retained as
+     the JS + SCSS hook on 5.1; `btn-icon`/`icon-size-3` inert on
+     non-BS5 surfaces; `hidden` dropped — the parent `.drawer` already
+     drives visibility via the `.show` modifier)
+  8. `data-placement` → `data-bs-placement` (BS5 attribute name; the
+     `data-bs-toggle="tooltip"` was already BS5, this fixes the mismatch)
+  9. Wrap `require(['theme_airpayux/drawers'])` with
+     `M.util.js_pending('theme_airpayux/drawer:load')` /
+     `M.util.js_complete('theme_airpayux/drawer:load')` (matches vanilla
+     5.2 instrumentation; both helpers exist in 5.1, safe on both)
+
+- [x] **`templates/secure.mustache` — re-verified, no changes.** The
+      Phase B.12 two backports (`<header data-for="page-heading">` +
+      `{{#headercontent}}` activity_header block) cover everything in
+      vanilla 5.2 v5.2.0 except the two intentional a11y-keeping
+      divergences (`<section id="region-main" aria-label="…">` and
+      `<section data-region="blocks-column" aria-label="…">` — 5.2
+      regressed those to bare `<div>`; we keep the landmarks).
+      All required `{{{output.standard_*}}}` blocks present.
+
+- [x] **Real existing bug fixed in passing.**
+      `primary-drawer-mobile.mustache` provides a `{{$drawerheading}}`
+      override containing the site logo. Pre-patch `drawer.mustache`
+      had no slot for that block, so the logo silently rendered
+      nothing in the primary mobile drawer on production. The new
+      `<div class="drawerheading">` wrapper now picks it up — verify
+      post-deploy at <590px viewport.
+
+- [x] **Mustache balance check** (custom Python harness at
+      `/tmp/mustache_check.py`, run over 5 files):
+      `drawer.mustache` 16/16 paired,
+      `secure.mustache` 6/6,
+      `drawers.mustache` 5/5,
+      `primary-drawer-mobile.mustache` 21/21,
+      `course.mustache` 58/58. **0 unbalanced.**
+
+- [x] **`theme/airpayux/version.php`** bumped 2026052404 → 2026052405,
+      release `1.0.35-beta` → `1.0.36-beta`. Triggers theme cache
+      invalidation so the new template renders on the next request.
+
+- [x] **Compat doc** `moodle-enhancement/docs/cutover/MOODLE-5.2-MUSTACHE-COMPAT.md`
+      created — full diff table, intentional-divergence rationale,
+      backwards-compat reasoning per change, post-deploy smoke
+      checklist for both 5.1.3+ and 5.2.
+
+### Backwards-compat reasoning (why this is safe on production today)
+
+| 5.2 change | Risk on 5.1.3+ | Mitigation |
+|---|---|---|
+| New HTML wrapper divs | None — empty divs are inert | n/a |
+| New block parameters | None — Mustache parent-default pattern | Defaults match pre-patch output byte-for-byte |
+| `btn-icon icon-size-3` classes | None — class names inert when CSS undefined | `drawertoggle` retained as the live hook |
+| Drop `hidden` from button | Tiny — close button always renders inside drawer | Parent `.drawer` `visibility:hidden` until `.show` |
+| `data-bs-placement` rename | None — production is BS5 (Phase B.3.e+) | BS5 reads only `data-bs-*` attrs |
+| js_pending/js_complete | None — helpers exist since Moodle 3.x | n/a |
+
+### Acceptance — all gates green
+
+- [x] `secure.mustache` 5.2-ready (verified, no changes)
+- [x] `drawer.mustache` 5.2-ready (patched)
+- [x] Compat doc exists at `docs/cutover/MOODLE-5.2-MUSTACHE-COMPAT.md`
+- [x] Mustache balance = 0 unbalanced across all 5 affected templates
+- [x] `version.php` bumped + `php -l` clean
+- [x] Source-of-truth `moodle-enhancement/theme/airpayux/` only —
+      did not touch the `/theme/airpayux/` deploy snapshot (already
+      out of sync from secure.mustache; outside this chip's scope)
+
+### Files touched (3)
+
+```
+moodle-enhancement/theme/airpayux/templates/drawer.mustache         57 → 95 lines
+moodle-enhancement/theme/airpayux/version.php                        version + release + comment block
+moodle-enhancement/docs/cutover/MOODLE-5.2-MUSTACHE-COMPAT.md        new (185 lines)
+moodle-enhancement/PROJECT-STATE.md                                  this H2
+```
+
+### Next chip (suggested)
+
+Sync `/theme/airpayux/templates/drawer.mustache` + `secure.mustache` to
+match the source-of-truth (the deploy snapshot is stale on
+`secure.mustache` since Phase B.12 and is now stale on `drawer.mustache`
+too) — single-file refresh chip, no functional review needed since the
+source has been audited and balance-checked.
+
+---
+
 ## 🚀 TIER 2.6 — CALENDAR SYNC PHASE 1 (2026-05-24)
 
 ### Session — `local_sentientia_calendar` (outbound ICS feed MVP) — ✅ SHIPPED
