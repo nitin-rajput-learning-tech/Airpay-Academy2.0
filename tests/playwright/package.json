@@ -1,0 +1,20 @@
+{
+  "name": "@airpay-academy/playwright-gate",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Linux-based Playwright E2E + visual gate for Airpay Academy / Sentientia LMS. Runs against a containerised Moodle in CI.",
+  "scripts": {
+    "test": "playwright test",
+    "test:chromium": "playwright test --project=chromium",
+    "test:firefox": "playwright test --project=firefox",
+    "test:webkit": "playwright test --project=webkit",
+    "test:update-snapshots": "playwright test --update-snapshots",
+    "test:ui": "playwright test --ui",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "@types/node": "^20.11.0",
+    "typescript": "^5.4.0"
+  }
+}
