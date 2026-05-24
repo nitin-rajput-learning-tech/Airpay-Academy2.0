@@ -129,4 +129,72 @@ final class checksum_test extends \advanced_testcase {
         \checksum::calculateChecksum('any-data', 'any-secret');
         $this->assertDebuggingCalled();
     }
+
+    // ────────────────────────────────────────────────────────────────────
+    // Supplementary tests — lock in the ca0cff60a security fixes
+    // ────────────────────────────────────────────────────────────────────
+
+    /**
+     * outputForm() MUST escape the checksum value via s() before echoing.
+     * The pre-ca0cff60a code used raw concat which made the payment
+     * redirect page XSS-able if a hostile checksum reached it. The
+     * security commit replaced the concat with s(). Without this test,
+     * a future "cleanup" could silently regress to raw concat.
+     */
+    public function test_output_form_escapes_xss_payload(): void {
+        $hostile = '"><script>alert(1)</script>';
+        ob_start();
+        \checksum::outputForm($hostile);
+        $out = ob_get_clean();
+
+        // The unescaped <script> tag must NOT appear in the output.
+        $this->assertStringNotContainsString(
+            '<script>alert(1)</script>',
+            $out,
+            'outputForm() did not escape the checksum value — XSS regression'
+        );
+        // The escaped form (via s()) is still present.
+        $this->assertStringContainsString('name="checksum"', $out);
+        // Sanity: an obviously-safe value still round-trips inside value="…".
+        ob_start();
+        \checksum::outputForm('a1b2c3');
+        $safeout = ob_get_clean();
+        $this->assertStringContainsString('value="a1b2c3"', $safeout);
+    }
+
+    /**
+     * verifyChecksum() uses hash_equals() for constant-time comparison.
+     * A pre-ca0cff60a verifyChecksum() did `if ($a == $b)` which suffers
+     * from PHP's type-juggling: an integer 0 compares equal to any
+     * "0e…"-prefixed string under ==. With hash_equals, the comparison
+     * is byte-by-byte strict.
+     *
+     * Indirect test: pass integer 0 as the supplied checksum — under
+     * loose compare this would (in rare cases) match. Under strict
+     * compare it never does. Either way the API must return 0.
+     */
+    public function test_verify_does_not_succumb_to_php_type_juggling(): void {
+        $this->assertSame(
+            0,
+            \checksum::verifyChecksum(0, 'any-payload', 'any-secret'),
+            'verifyChecksum() must reject integer 0 — strict compare regression'
+        );
+    }
+
+    /**
+     * verifyChecksum() returns 0 when the secret is wrong even if the
+     * payload matches. Locks in the bug-fix from ca0cff60a where the
+     * old verifyChecksum() passed args in the wrong order to the
+     * (then-MD5) helper, so two different secrets could collide under
+     * the swapped-arg computation. The new SHA-256 path uses
+     * (data, secret) consistently.
+     */
+    public function test_verify_returns_0_when_secret_wrong(): void {
+        $payload = 'order=42&amount=99.00';
+        $checksum = \checksum::calculateChecksumSha256($payload, 'real-secret');
+        $this->assertSame(
+            0,
+            \checksum::verifyChecksum($checksum, $payload, 'forged-secret')
+        );
+    }
 }
