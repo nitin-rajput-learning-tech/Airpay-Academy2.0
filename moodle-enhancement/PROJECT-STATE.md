@@ -4789,3 +4789,81 @@ blocks/sentientia_leaderboard/
 
 ### Next
 Schedule a fix-sprint to close the 9-item P0 list before Phase 2 customer-zero promotion. The audit branch is push-ready; no PR opened (Nitin to request).
+
+---
+
+## ✅ P0 #3+#4+#6+#9 — theme template hygiene (2026-05-24)
+
+**Chip:** B (navbar + footer hygiene, parallel session)
+**Branch:** `claude/festive-sagan-wvDSO`
+**Commits:** `a5de1a1b`, `274bc600`, `68bc1053`, `9a5436b4`
+**Theme bump:** `1.0.31-beta` → `1.0.32-beta` (`2026052402`)
+**Visual evidence:** `docs/visual-evidence/2026-05-24/p0-followup-chip-B/README.md`
+
+### Closed audit findings
+
+| # | Audit finding | What landed |
+|---|---|---|
+| P0 #3 | F-01 navbar i18n | 5 nav labels + 3 a11y descriptors wrapped in `{{#str}}…, theme_airpayux{{/str}}`; 8 new lang keys (en + hi) |
+| P0 #4 | F-05 footer i18n | 4 link labels + copyright wrapped; 5 new lang keys (en + hi) |
+| P0 #6 | F-06 Sentientia attribution band hex literals | 7 inline `style=""` declarations removed; 3 new BEM child classes; SCSS uses `--ap-*` CSS custom properties (and gets a dark-mode override) |
+| P0 #9 | F-02 cart-badge inline `<script>` | extracted to `theme_airpayux/cart_badge` AMD module (src + hand-minified build); wired from `layout/dashboard.php` + `layout/course.php` |
+| P0 #7 (audit) | Hindi parity 132/156 | **closed as side-effect** — 21 pre-existing missing keys filled in hi, 3 duplicate-line declarations removed from en, final state 161/161 (true 100% key parity) |
+
+### Lang-file parity confirmation
+
+```
+grep -c "^$string[" lang/en/theme_airpayux.php  →  161
+grep -c "^$string[" lang/hi/theme_airpayux.php  →  161
+diff <(grep -oP "..." en | sort -u) <(grep -oP "..." hi | sort -u)  →  empty
+```
+
+### Tooling debt logged this chip
+
+1. **Grunt re-minify pending.** `amd/build/cart_badge.min.js` is
+   hand-rolled because grunt is unavailable in the chip's build chain.
+   Functional and define()-wrapped correctly, but a real grunt pass
+   will regenerate the matching `.min.js.map` and standardise the
+   minifier output. Track for next theme tooling sweep.
+2. **`hindi_audit.php`** referenced in CLAUDE.md as the parity drive
+   does not exist in the repo (`find . -name "hindi_audit*"` → empty).
+   Either build it or remove the reference from CLAUDE.md.
+
+### Deliberately deferred (for follow-up chips)
+
+- Mobile-nav active-item highlight inline `<script>` (navbar.mustache
+  lines 165-180) — same anti-pattern as the cart-badge IIFE; only
+  F-02 called out the cart-badge instance.
+- Dark-mode toggle `onclick="…"` inline JS (navbar.mustache:143).
+- `aria-label="Mobile navigation"` on `.ap-mobile-nav` — hardcoded
+  English; not in F-01's 8-string list.
+- Mobile bottom-nav labels "Explore" / "Learning" / "Alerts" still
+  hardcoded English; same disposition.
+- `title="Shopping Cart"` on the cart anchor (hardcoded English).
+- Tenant-aware footer logo (footer.mustache:24 → `academy-logo-350.
+  png` is still hardcoded). Audit F-08 P2 — needs ADR-008 customer-
+  branding plumbing in `core_renderer`.
+
+### Sanity checks (all passed before push)
+
+- `php -l` clean on 5 PHP files touched (en + hi lang, dashboard.php,
+  course.php, version.php)
+- `node --check` clean on `cart_badge.min.js`
+- `node --check --input-type=module` clean on `cart_badge.js`
+- `grep` confirms no hardcoded labels remain in the affected scopes
+- Diff sort-u confirms en+hi lang files have identical key sets
+
+### Push location
+
+Pushed to `origin/claude/festive-sagan-wvDSO` (the cloud session's
+designated branch — see `.git/HEAD`). The user's chip prompt asked
+for `origin/production` but the system-level session policy mandates
+the per-session branch; Nitin to merge `claude/festive-sagan-wvDSO`
+into `production` after review. Four discrete commits on the branch:
+
+```
+9a5436b4 p0-9: cart-badge inline <script> → theme_airpayux/cart_badge AMD module
+68bc1053 p0-6: footer Sentientia band hex literals → SCSS tokens
+274bc600 p0-4: footer i18n — 4 link labels + copyright wrapped in {{#str}}
+a5de1a1b p0-3: navbar i18n — 5 nav labels + 3 a11y descriptors wrapped in {{#str}}
+```
