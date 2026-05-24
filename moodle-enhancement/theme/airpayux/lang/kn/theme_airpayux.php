@@ -174,6 +174,23 @@ $string['signinwithidentityprovider'] = 'ಅಥವಾ ಇದರೊಂದಿಗ�
 $string['sortbystartdate'] = 'ಕೋರ್ಸ್ ಆರಂಭಿಕ ದಿನಾಂಕ';
 $string['sortbyenddate']   = 'ಕೋರ್ಸ್ ಅಂತಿಮ ದಿನಾಂಕ';
 
+// P0 #3 ಫಾಲೋ-ಅಪ್ (2026-05-24, chip-B) — ಪ್ರೈಮರಿ ನ್ಯಾವಬಾರ್ i18n.
+$string['nav_dashboard']  = 'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್';
+$string['nav_courses']    = 'ನನ್ನ ಕೋರ್ಸ್‌ಗಳು';
+$string['nav_catalog']    = 'ಕ್ಯಾಟಲಾಗ್';
+$string['nav_profile']    = 'ಪ್ರೊಫೈಲ್';
+$string['nav_home']       = 'ಮುಖಪುಟ';
+$string['a11y_search']    = 'ಕೋರ್ಸ್‌ಗಳು, ಜನರು, ಕಂಟೆಂಟ್ ಹುಡುಕಿ';
+$string['a11y_usermenu']  = 'ಬಳಕೆದಾರ ಮೆನು';
+$string['a11y_mobilemenu'] = 'ಮೊಬೈಲ್ ಮೆನು';
+
+// P0 #4 ಫಾಲೋ-ಅಪ್ (2026-05-24, chip-B) — ಫೂಟರ್ i18n.
+$string['footer_privacy']   = 'ಗೌಪ್ಯತೆ';
+$string['footer_terms']     = 'ನಿಯಮಗಳು';
+$string['footer_help']      = 'ಸಹಾಯ';
+$string['footer_contact']   = 'ಸಂಪರ್ಕಿಸಿ';
+$string['footer_copyright'] = '&copy; 2026 ಏರ್‌ಪೇ ಪೇಮೆಂಟ್ ಸರ್ವಿಸಸ್ ಪ್ರೈ. ಲಿ.';
+
 // F-13 (Platform Visual Audit 2026-05-24, chip-G) — ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ಸ್ವಾಗತ ಬ್ಯಾನರ್,
 // ಚಾರ್ಟ್ ಶೀರ್ಷಿಕೆಗಳು ಮತ್ತು ಕಂಪ್ಲಯನ್ಸ್ KPI ಲೇಬಲ್‌ಗಳು. {$a} = ಬಳಕೆದಾರನ ಮೊದಲ ಹೆಸರು.
 $string['welcome_back_admin']      = 'ಮತ್ತೆ ಸ್ವಾಗತ, {$a}';
