@@ -48,14 +48,14 @@
         AND the Sentientia LMS product brand both live here. For Airpay
         Academy as customer-zero, this stays compact — a single line in
         muted text below the primary brand row.
+
+        P0 #6 follow-up (2026-05-24) — inline styles removed in favour of
+        BEM classes; tokens live in partials/_surface-footer.scss.
     }}
-    <div class="airpay-footer__product-attribution"
-         style="text-align:center;padding:8px 16px;font-size:0.75rem;color:#5a6070;
-                background:#f8f9fc;border-top:1px solid #e2e6ef;
-                font-family:Montserrat,-apple-system,sans-serif;letter-spacing:0.02em;">
-        <span style="font-weight:600;color:#0066A7;">Sentientia LMS</span>
-        <span style="margin:0 8px;opacity:0.5;">·</span>
-        <span>Licensed under GPL v3</span>
+    <div class="airpay-footer__product-attribution">
+        <span class="airpay-footer__product-attribution-brand">Sentientia LMS</span>
+        <span class="airpay-footer__product-attribution-sep" aria-hidden="true">·</span>
+        <span class="airpay-footer__product-attribution-licence">Licensed under GPL v3</span>
     </div>
 
     {{! Standard footer/end-of-body output — MUST be before </body> }}
