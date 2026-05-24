@@ -402,15 +402,23 @@ body#page-login-index {
 
 /* ═══════════════════════════════════════════════════════════
    FORGOT PASSWORD + SIGNUP — Flat selectors for Moodle SCSS
+
+   REFACTORED 2026-05-24 (P1 #11 / F-10, chip K):
+   Selectors already at (1,1,0) specificity via #page-login-forgot_password
+   or #page-signup body-id. The remaining cascade-breaker overrides preserved
+   below are ONLY those fighting either a known Bootstrap utility class with
+   built-in `important` (.text-danger on the abbr, .d-* on hidden chrome) or
+   Moodle's #region-main element-id (2,0,0) on the white card. All other
+   overrides dropped in favour of natural cascade.
    ═══════════════════════════════════════════════════════════ */
 /* Shared gradient wrapper for forgot-password and signup */
 #page-login-forgot_password .airpay-login-wrapper,
 #page-signup .airpay-login-wrapper {
-    min-height: 100vh !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    background: linear-gradient(135deg, #003052 0%, #0a4a42 100%) !important;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #003052 0%, #0a4a42 100%);
     position: relative;
     overflow: hidden;
 }
@@ -427,67 +435,74 @@ body#page-login-index {
 /* Constrained card container — responsive widths */
 #page-login-forgot_password .airpay-login-page,
 #page-signup .airpay-login-page {
-    position: relative !important;
-    z-index: 1 !important;
-    width: 100% !important;
-    max-width: 640px !important;
-    margin: 0 auto !important;
-    padding: 32px !important;
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 32px;
 }
 @media (max-width: 700px) {
     #page-login-forgot_password .airpay-login-page,
     #page-signup .airpay-login-page {
-        max-width: 100% !important;
-        padding: 16px !important;
+        max-width: 100%;
+        padding: 16px;
     }
 }
-/* ── Simplified signup: single-column stacked layout ── */
+/* ── Simplified signup: single-column stacked layout ──
+   Specificity #page-signup .signup_form--simple .X = (1,2,0)
+   beats Moodle's .mform .fitem (0,2,0) and Bootstrap grid (0,1,0). */
 #page-signup .signup_form--simple {
     display: flex;
     flex-direction: column;
 }
 #page-signup .signup_form--simple .fitem {
-    flex-direction: column !important;
-    align-items: stretch !important;
+    flex-direction: column;
+    align-items: stretch;
 }
 #page-signup .signup_form--simple .col-form-label {
-    flex: none !important;
-    max-width: 100% !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
+    flex: none;
+    max-width: 100%;
+    padding-left: 0;
+    padding-right: 0;
 }
 #page-signup .signup_form--simple .felement {
-    flex: none !important;
-    max-width: 100% !important;
-    width: 100% !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
+    flex: none;
+    max-width: 100%;
+    width: 100%;
+    padding-left: 0;
+    padding-right: 0;
 }
 #page-signup .signup_form--simple .row {
-    display: block !important;
-    margin: 0 !important;
+    display: block;
+    margin: 0;
 }
 #page-signup .signup_form--simple [class*="col-"] {
-    max-width: 100% !important;
-    flex: none !important;
-    padding: 0 !important;
+    max-width: 100%;
+    flex: none;
+    padding: 0;
 }
-/* White card */
+/* White card — preserved: Moodle wraps the card in <section id="region-main">
+   and may apply body#page-X #region-main padding at (2,0,0), beating our
+   (1,1,0) selector. The 6 declarations below carry `important` defensively. */
 #page-login-forgot_password .airpay-login-region,
 #page-signup .airpay-login-region {
-    background: #fff !important;
-    border-radius: 16px !important;
-    padding: 48px 56px !important;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3) !important;
+    background: #fff !important;        /* preserved: defensive vs #region-main */
+    border-radius: 16px !important;     /* preserved: defensive vs #region-main */
+    padding: 48px 56px !important;      /* preserved: defensive vs #region-main */
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3) !important;  /* preserved: defensive vs #region-main */
 }
 @media (max-width: 700px) {
     #page-login-forgot_password .airpay-login-region,
     #page-signup .airpay-login-region {
-        padding: 32px 20px !important;
-        border-radius: 12px !important;
+        padding: 32px 20px !important;      /* preserved: matches card style above */
+        border-radius: 12px !important;     /* preserved: matches card style above */
     }
 }
-/* Hide Moodle chrome */
+/* Hide Moodle chrome — preserved: fights potential Bootstrap utility
+   `.d-block` / `.d-flex` (0,1,0 with important) that Moodle may add to
+   #page-header etc. ID specificity alone (2,0,0) loses to a utility's
+   `important` so we keep ours. */
 #page-login-forgot_password #page-header,
 #page-login-forgot_password #page-navbar,
 #page-login-forgot_password .page-context-header,
@@ -497,7 +512,7 @@ body#page-login-index {
 #page-signup #page-navbar,
 #page-signup .page-context-header,
 #page-signup .secondary-navigation {
-    display: none !important;
+    display: none !important;           /* preserved: fights Bootstrap .d-* utility */
 }
 /* Headings */
 #page-login-forgot_password .forgotpasswordheader,
@@ -549,21 +564,22 @@ body#page-login-index {
 #page-signup select:focus {
     border-color: #0066A7; outline: none; background: #fff;
 }
-/* Submit buttons */
+/* Submit buttons — selector at (1,1,0) beats Bootstrap .btn-primary (0,1,0)
+   which uses CSS custom properties (no `important`). */
 #page-login-forgot_password .btn-primary,
 #page-login-forgot_password input[type="submit"],
 #page-signup .btn-primary,
 #page-signup input[type="submit"],
 #page-signup #id_submitbutton {
     display: block; width: 100%; height: 48px;
-    background: linear-gradient(135deg, #0066A7, #0a5c50) !important;
-    color: #fff !important; border: none !important; border-radius: 10px;
+    background: linear-gradient(135deg, #0066A7, #0a5c50);
+    color: #fff; border: none; border-radius: 10px;
     font-family: 'Montserrat', sans-serif; font-size: 0.95rem; font-weight: 700;
     cursor: pointer; transition: opacity 0.2s; margin-top: 8px;
 }
 #page-login-forgot_password .btn-primary:hover,
 #page-signup .btn-primary:hover {
-    opacity: 0.9; color: #fff !important;
+    opacity: 0.9; color: #fff;
 }
 /* Cancel / back */
 #page-login-forgot_password .btn-secondary,
@@ -590,11 +606,15 @@ body#page-login-index {
 }
 #page-login-forgot_password .fitem,
 #page-signup .fitem { margin-bottom: 16px; }
+/* fdescription text — preserved: Moodle's required-field abbr carries
+   `class="text-danger"` which sets `color: red !important`. To render
+   muted-gray instead of red we need our own `important` regardless of
+   specificity. */
 #page-signup .fdescription.required,
 #page-signup .fdescription {
     text-align: center;
     font-size: 0.8rem;
-    color: #94a3b8 !important;
+    color: #94a3b8 !important;          /* preserved: fights Bootstrap .text-danger important */
     margin-top: 8px;
 }
 #page-signup .fdescription.required .ods-icon,
@@ -603,7 +623,7 @@ body#page-login-index {
 #page-login-forgot_password .fdescription {
     text-align: center;
     font-size: 0.8rem;
-    color: #94a3b8 !important;
+    color: #94a3b8 !important;          /* preserved: fights Bootstrap .text-danger on abbr */
 }
 #page-login-forgot_password .felement { width: 100%; }
 
