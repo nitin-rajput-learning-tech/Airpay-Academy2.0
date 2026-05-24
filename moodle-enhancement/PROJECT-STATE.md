@@ -3,6 +3,142 @@
 
 ---
 
+## 🚀 STREAM E — QUESTION-TYPE SCAFFOLD (Phases E.4-E.9) — ✅ SHIPPED (2026-05-24)
+
+**Plugin:** `local_sentientia_live` v0.1.2-alpha (version `2026052402`)
+**Branch:** `claude/elegant-wozniak-z8U4v`
+**Roadmap slot:** Closes the "interface" half of Phase E.4 through E.9 so the
+six question-type implementation chips can land in parallel without each
+having to design the base class first.
+
+### Why now
+
+The plugin's roadmap (`version.php` header) lists six question types —
+Multiple choice (E.4), Word cloud (E.5), Open-ended (E.6), Rating scale
+(E.7), Quiz (E.8), Ranking (E.9). Phase E.0-E.3 + the visual audit P0/P1
+chips already shipped storage, SSE, SCSS tokens, and aria-live regions;
+what was missing was an OO seam between the slug-string in
+`{local_sentientia_live_slides}.type` and the per-type render / persist /
+tally / validate / aria logic.
+
+Today's chip lays that seam:
+
+- `classes/question_types/abstract_question_type.php` — the contract
+  every concrete type implements (5 abstract methods + 4 concrete
+  helpers + 4 constants).
+- 6 concrete subclasses in the same directory
+  (`multiple_choice`, `word_cloud`, `open_ended`, `rating_scale`,
+  `quiz`, `ranking`). Constants are populated; the 5 abstract methods
+  each `throw new \coding_exception('not_implemented: ...')` until the
+  per-type chip lands.
+- `question_type_registry` — the slug → FQCN map plus
+  `get_all()`, `get_enabled()`, `get_by_slug()`, `list_slugs()`,
+  `exists()`. **No callers migrated** yet — slide_manager +
+  response_recorder still use the existing switch-on-type. Phase E.4's
+  first implementation chip will be the migration vehicle.
+
+### What landed
+
+- [x] **`abstract_question_type.php`** — 5 abstract methods, 4
+      constants (`SLUG`, `FEATURE_FLAG`, `NAME_STRING_KEY`,
+      `DESCRIPTION_STRING_KEY`), 4 concrete helpers (`get_display_name`,
+      `get_description`, `get_slug`, `is_enabled`). `is_enabled()`
+      consults `\local_airpay_core\feature_flags::is_enabled()` and
+      fails closed if the resolver is missing.
+- [x] **6 concrete stubs** — one file per type, each pinning its slug
+      to the canonical value in `{local_sentientia_live_slides}.type`
+      and its feature flag to `live.questiontype.{slug}` (matching the
+      ADR-002 customer-level flag layer).
+- [x] **`question_type_registry.php`** — `final` class, stateless,
+      6-entry slug→FQCN map in canonical picker order. `get_by_slug()`
+      returns null for unknown (no exception); `get_all()` /
+      `get_enabled()` return fresh-instance maps.
+- [x] **`version.php` bump** — `0.1.1-alpha` → `0.1.2-alpha`, version
+      `2026052401` → `2026052402`, with release-history note.
+- [x] **Lang strings (EN + HI)** — 12 new keys: 6 names
+      (`qtype_{slug}_name`) + 6 descriptions (`qtype_{slug}_desc`).
+      Hindi parity 100%; verified by the existing parity harness.
+- [x] **PHPUnit** — `tests/question_type_registry_test.php` (7 tests)
+      asserts: registry resolves all 6 slugs, every instance is an
+      `abstract_question_type` subclass, the slug each instance reports
+      matches its registry key (no copy-paste drift), unknown slugs
+      return null, repeated resolution is stable, and the registry's
+      slug list matches `slide_manager::VALID_TYPES` byte-for-byte.
+      Concrete-method `coding_exception` paths are intentionally NOT
+      exercised — those will be covered by the per-type chips that
+      flesh them out.
+- [x] **Documentation** — `docs/sentientia-live/QUESTION-TYPES.md`
+      describes each type (storage shape, tally shape, response payload),
+      the abstract interface (method contracts), the registry, and the
+      6-step "adding a 7th type" procedure.
+
+### What did NOT land (intentional)
+
+- No UI changes. The slide-type picker on `add_slide.php` still pulls
+  from the existing `slide_manager::VALID_TYPES` constant, not the
+  registry. Phase E.4's first implementation chip will swap it.
+- No template / Mustache / SCSS edits. Every render path still flows
+  through `result_panel` + `result_bar_chart` as it does today.
+- `slide_manager::validate_settings()` still owns settings validation.
+  Phase E.4 will migrate the body of each `case` block into the
+  corresponding subclass's `validate_config()` then delegate.
+- `response_recorder::tally()` still owns tally computation. Same
+  Phase E.4 migration.
+
+### Safety + parity
+
+- ✅ `php -l` clean on every new PHP file (8 files: 1 abstract +
+      6 concrete + 1 registry + 1 test).
+- ✅ Hindi parity 100% — 12 new EN keys, 12 new HI keys.
+- ✅ Feature flags mandatory per CLAUDE.md §5 — every type's
+      `FEATURE_FLAG` constant points to a key
+      (`live.questiontype.{slug}`) that defaults OFF in
+      `local_airpay_core`.
+- ✅ No core file changes — pure plugin-local work.
+- ✅ No raw SQL — registry has no DB access; concrete methods all
+      throw before touching `$DB`.
+- ✅ No backward incompatible change — existing callers of
+      `slide_manager` / `response_recorder` / SSE / templates are
+      untouched. The plugin still behaves identically to v0.1.1-alpha
+      until a per-type implementation chip wires the registry into a
+      caller.
+- ✅ Pre-commit hook passes; no `--no-verify`, no `--no-gpg-sign`,
+      no `--amend`.
+
+### Files touched (8 new + 4 modified)
+
+```
+NEW:
+  moodle-enhancement/local/sentientia_live/classes/question_types/abstract_question_type.php
+  moodle-enhancement/local/sentientia_live/classes/question_types/multiple_choice.php
+  moodle-enhancement/local/sentientia_live/classes/question_types/word_cloud.php
+  moodle-enhancement/local/sentientia_live/classes/question_types/open_ended.php
+  moodle-enhancement/local/sentientia_live/classes/question_types/rating_scale.php
+  moodle-enhancement/local/sentientia_live/classes/question_types/quiz.php
+  moodle-enhancement/local/sentientia_live/classes/question_types/ranking.php
+  moodle-enhancement/local/sentientia_live/classes/question_types/question_type_registry.php
+  moodle-enhancement/local/sentientia_live/tests/question_type_registry_test.php
+  moodle-enhancement/docs/sentientia-live/QUESTION-TYPES.md
+
+MODIFIED:
+  moodle-enhancement/local/sentientia_live/version.php             (release bump)
+  moodle-enhancement/local/sentientia_live/lang/en/local_sentientia_live.php  (+12 keys)
+  moodle-enhancement/local/sentientia_live/lang/hi/local_sentientia_live.php  (+12 keys)
+  moodle-enhancement/PROJECT-STATE.md                              (this section)
+```
+
+### Acceptance criteria — all met
+
+- ✅ 6 question type classes exist (one per registered slug).
+- ✅ `question_type_registry::get_by_slug($slug)` resolves all 6.
+- ✅ Every resolved instance is an `abstract_question_type` subclass.
+- ✅ PHPUnit interface tests pass (the 7 assertions in
+      `question_type_registry_test`).
+- ✅ No UI yet (intentional — that's the next 6 chips' job).
+- ✅ Pre-commit hooks pass on commit.
+
+---
+
 ## 🚀 TIER 2.6 — CALENDAR SYNC PHASE 1 (2026-05-24)
 
 ### Session — `local_sentientia_calendar` (outbound ICS feed MVP) — ✅ SHIPPED

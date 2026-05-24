@@ -336,6 +336,24 @@ $string['a11y_current_question_region']  = 'वर्तमान प्रश�
 $string['a11y_waiting_for_question']     = 'अगले प्रश्न की प्रतीक्षा';
 $string['a11y_already_responded']        = 'आप पहले ही इस प्रश्न पर प्रतिक्रिया दे चुके हैं';
 
+// ── Phase E.4-E.9 scaffold — question-type registry strings ───────
+// प्रति registered abstract_question_type subclass एक नाम + एक विवरण।
+// question_type_registry::get_all() द्वारा get_display_name() /
+// get_description() के माध्यम से surface — slide-type picker और
+// "available question types" admin listing में उपयोग।
+$string['qtype_multichoice_name']        = 'बहुविकल्पीय';
+$string['qtype_multichoice_desc']        = 'ऑडियंस आपके दिए गए विकल्पों में से एक चुनता है। परिणाम प्रति विकल्प एक bar के साथ horizontal bar chart के रूप में प्रदर्शित होते हैं — प्रतिशत और live गिनती सहित।';
+$string['qtype_wordcloud_name']          = 'वर्ड क्लाउड';
+$string['qtype_wordcloud_desc']          = 'प्रत्येक ऑडियंस सदस्य एक छोटा शब्द भेजता है। आवृत्ति बढ़ने के साथ-साथ सामान्य उत्तर tag cloud में बड़े दिखाई देते हैं।';
+$string['qtype_openended_name']          = 'खुली प्रतिक्रिया';
+$string['qtype_openended_desc']          = 'ऑडियंस configurable अधिकतम अक्षर सीमा तक free-form text भेजता है। उत्तर पहुँचते ही projector पर scroll होते हैं।';
+$string['qtype_rating_name']             = 'रेटिंग scale';
+$string['qtype_rating_desc']             = '1-5 Likert या 0-10 NPS। परिणाम histogram के रूप में और औसत + प्रतिक्रिया-गिनती सारांश सहित प्रदर्शित होते हैं।';
+$string['qtype_quiz_name']               = 'क्विज़';
+$string['qtype_quiz_desc']               = 'Multiple choice की तरह, लेकिन एक निर्धारित सही उत्तर के साथ। ऑडियंस को तुरंत सही/गलत दिखाई देता है; trainer के projector पर शुद्धता और गति के आधार पर live leaderboard दिखाई देता है।';
+$string['qtype_ranking_name']             = 'रैंकिंग';
+$string['qtype_ranking_desc']             = 'ऑडियंस आइटम की सूची को अपने पसंदीदा क्रम में drag करता है। परिणाम प्रत्येक आइटम की aggregate औसत स्थिति दिखाते हैं — निम्न = अधिक पसंदीदा।';
+
 // response_recorder errors.
 $string['response_slide_mismatch']      = 'वह स्लाइड इस सेशन का हिस्सा नहीं है।';
 $string['response_int_required']        = 'संख्यात्मक प्रतिक्रिया आवश्यक है।';
