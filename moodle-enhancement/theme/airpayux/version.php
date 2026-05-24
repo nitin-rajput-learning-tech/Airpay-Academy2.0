@@ -123,8 +123,21 @@ defined('MOODLE_INTERNAL') || die();
 // verification on production 5.2 substrate (per the audit doc — it has
 // an aria-live re-announce trick for NVDA <2024 that core/toast may
 // not handle). See docs/5.2-merge/PHASE-B3F-AMD-CLEANUP.md.
-$plugin->version   = 2026052401;
+//
+// P0 #1 + #2 SCSS hygiene (2026-05-24) — closes the two dead-source
+// findings from PLATFORM-VISUAL-AUDIT-2026-05-24.md §2.10:
+//   - DELETE: scss/moodle/partials/Claude (orphan, 98 KB, 135 !important,
+//     never imported — verified zero @import/@use references).
+//   - MOVE:   scss/moodle/custom_changes_MONOLITH_BACKUP.scss (284 KB,
+//     682 !important) → _archive/ so the SCSS compiler's source tree
+//     no longer scans a 284 KB historical backup. Git history preserves
+//     the file via `git mv` rename detection.
+// Version bumped to invalidate the cached compiled CSS bundle so theme
+// styles.php re-compiles SCSS on next request (defensive — the orphan
+// was never compiled in, but the bump aligns the cache key with the
+// new on-disk tree).
+$plugin->version   = 2026052402;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.31-beta';  // Phase B.3.f shim deletes
+$plugin->release   = '1.0.32-beta';  // P0 #1+#2 SCSS hygiene
