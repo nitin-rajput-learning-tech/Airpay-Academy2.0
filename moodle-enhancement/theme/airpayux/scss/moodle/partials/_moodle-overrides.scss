@@ -10,13 +10,15 @@
     /* Bootstrap's $warning (#ffc107) gives ~1.6:1 on white — fail.
        Even our bumped token (#b45309) measured borderline 4.5:1 in axe.
        Force a darker amber (#92400e ~6.0:1 on white) for the text only;
-       border keeps the brand colour. */
-    color: #92400e !important;
+       border keeps the brand colour.
+       Bootstrap's outline-variant mixin sets `color: $color` (no !important);
+       our partial loads later in the cascade, so source order wins. */
+    color: #92400e;
     border-color: var(--ap-color-warning);
 
     &:hover, &:focus {
         background-color: var(--ap-color-warning);
-        color: #fff !important;   /* white on dark amber: ~4.6:1 — PASS */
+        color: #fff;   /* white on dark amber: ~4.6:1 — PASS */
     }
 }
 
@@ -24,10 +26,9 @@
 .btn-link.btn-link.text-muted {
     /* Bootstrap's `.text-muted` is #6c757d (~3.0:1) on white. Our token
        neutral-600 (#475569) is ~6.4:1 — PASS. */
-    color: var(--ap-neutral-600) !important;
-
+    color: var(--ap-neutral-600) !important; // preserved: bootstrap `.text-muted` uses !important upstream — only !important beats !important
     &:hover, &:focus {
-        color: var(--ap-color-text-primary) !important;
+        color: var(--ap-color-text-primary) !important; // preserved: bootstrap `.text-muted` uses !important upstream
     }
 }
 
@@ -48,7 +49,7 @@ a.sub_dept_count {
     color: #fff;
 }
 
-header#page-header .card{margin-bottom: 1.0rem !important;}
+header#page-header .card{margin-bottom: 1.0rem !important;} // preserved: same selector reasserted at line ~98 with margin shorthand including margin-bottom: 1.25rem — !important forces 1.0rem win across the intra-file order
 header#page-header .card-body{padding: 0px 1.5rem;}
 header#page-header .card-body h1{margin: 0px;}
 .button {text-decoration: none;}
@@ -156,8 +157,9 @@ input[type=text], input[type=search] {
     float: left;
 }
 .page-context-header .btn-group.header-button-group a:first-child {
-    border-bottom-right-radius: 4px !important;
-    border-top-right-radius: 4px !important;
+    // Specificity (0,4,1) beats bootstrap `.btn-group > .btn:not(:last-child):not(.dropdown-toggle)` (0,4,0)
+    border-bottom-right-radius: 4px;
+    border-top-right-radius: 4px;
 }
 /*leftside menu related*/
 #nav-drawer.closed .user_navigation_ul .user_nav_div .user_navigation_link .classroom_icon_wrap{
@@ -199,7 +201,9 @@ input[type=text], input[type=search] {
     background-size: 100% 100%;
 }
 #nav-drawer.closed .user_navigation_link:hover .classroom_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/scheme1]]) !important;
+    // Specificity (1,4,0) — #nav-drawer.closed + .user_navigation_link:hover + .classroom_icon_wrap.
+    // Beats base rule (0,4,0) via the #id, so !important is unnecessary.
+    background-image: url([[pix:theme_airpayux|scheme_icons/scheme1]]);
     width: 25px;
     background-repeat: no-repeat;
     float: left;
@@ -208,7 +212,7 @@ input[type=text], input[type=search] {
     margin-left: 22px;
 }
 #nav-drawer.closed .user_navigation_link:hover .skill_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/skillscheme1]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/skillscheme1]]);
     width: 25px;
     background-repeat: no-repeat;
     float: left;
@@ -235,7 +239,7 @@ input[type=text], input[type=search] {
     background-size: 100% 100%;
 }
 #nav-drawer.closed .user_navigation_link:hover .bootcamp_icon_wrap{
-    background-image: url([[pix:theme_airpayux|bcscheme1]]) !important;
+    background-image: url([[pix:theme_airpayux|bcscheme1]]);
     width: 25px;
     background-repeat: no-repeat;
     float: left;
@@ -254,7 +258,7 @@ input[type=text], input[type=search] {
     margin-left: 0px;
 }
 #nav-drawer.closed .user_navigation_link:hover .ilp_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/ilpscheme1]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/ilpscheme1]]);
     width: 25px;
     background-repeat: no-repeat;
     float: left;
@@ -316,125 +320,132 @@ input[type=text], input[type=search] {
 .organization_scheme6 .user_navigation_ul .user_nav_div .user_navigation_link .ilp_icon_wrap{
     background-image: url([[pix:theme_airpayux|scheme_icons/ilpschemefff]]);
 }
-.theme_scheme6 #nav-drawer.closed .user_navigation_link .classroom_icon_wrap, 
+.theme_scheme6 #nav-drawer.closed .user_navigation_link .classroom_icon_wrap,
 .organization_scheme6 #nav-drawer.closed .user_navigation_link .classroom_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/schemefff]]) !important;
+    // Specificity (1,4,0) — .theme_scheme6 + #nav-drawer.closed + .user_navigation_link + .classroom_icon_wrap.
+    // Beats base rule (0,4,0) via the #id; !important is unnecessary.
+    background-image: url([[pix:theme_airpayux|scheme_icons/schemefff]]);
 }
-.theme_scheme6 #nav-drawer.closed .user_navigation_link .bootcamp_icon_wrap, 
+.theme_scheme6 #nav-drawer.closed .user_navigation_link .bootcamp_icon_wrap,
 .organization_scheme6 #nav-drawer.closed .user_navigation_link .bootcamp_icon_wrap
 {
- background-image: url([[pix:theme_airpayux|scheme_icons/bcschemefff]]) !important;   
+ background-image: url([[pix:theme_airpayux|scheme_icons/bcschemefff]]);
 }
 #nav-drawer.closed .user_navigation_ul .user_nav_div .user_navigation_link .classroom_icon_wrap
 /*hover icons selections*/
+// Scheme-icon hover overrides — every selector below is (1,5,0):
+// .theme_schemeN (1 class) + #nav-drawer.closed (1 id + 1 class)
+// + .user_navigation_link:hover (1 class + 1 pseudo)
+// + .X_icon_wrap (1 class) = (1, 5, 0).
+// Base rule .user_navigation_ul .user_nav_div .user_navigation_link .X_icon_wrap is (0,4,0).
+// (1,5,0) > (0,4,0), so !important is unnecessary — dropped on all rules below.
 .theme_scheme1 #nav-drawer.closed .user_navigation_link:hover .classroom_icon_wrap,
 .organization_scheme1 #nav-drawer.closed .user_navigation_link:hover .classroom_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/scheme1]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/scheme1]]);
 }
 .theme_scheme1 #nav-drawer.closed .user_navigation_link:hover .skill_icon_wrap,
 .organization_scheme1 #nav-drawer.closed .user_navigation_link:hover .skill_icon_wrap,
 .theme_scheme1 .manage_skill_icon_wrap, .organization_scheme1 .manage_skill_icon_wrap {
-    background-image: url([[pix:theme_airpayux|scheme_icons/skillscheme1]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/skillscheme1]]);
 }
 .theme_scheme2 #nav-drawer.closed .user_navigation_link:hover .classroom_icon_wrap,
 .organization_scheme2 #nav-drawer.closed .user_navigation_link:hover .classroom_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/scheme2]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/scheme2]]);
 }
 .theme_scheme2 #nav-drawer.closed .user_navigation_link:hover .skill_icon_wrap,
 .organization_scheme2 #nav-drawer.closed .user_navigation_link:hover .skill_icon_wrap,
 .theme_scheme2 .manage_skill_icon_wrap, .organization_scheme2 .manage_skill_icon_wrap {
-    background-image: url([[pix:theme_airpayux|scheme_icons/skillscheme2]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/skillscheme2]]);
 }
 .theme_scheme3 #nav-drawer.closed .user_navigation_link:hover .classroom_icon_wrap,
 .organization_scheme3 #nav-drawer.closed .user_navigation_link:hover .classroom_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/scheme3]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/scheme3]]);
 }
 .theme_scheme3 #nav-drawer.closed .user_navigation_link:hover .skill_icon_wrap,
 .organization_scheme3 #nav-drawer.closed .user_navigation_link:hover .skill_icon_wrap,
 .theme_scheme3 .manage_skill_icon_wrap, .organization_scheme3 .manage_skill_icon_wrap {
-    background-image: url([[pix:theme_airpayux|scheme_icons/skillscheme3]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/skillscheme3]]);
 }
 .theme_scheme4 #nav-drawer.closed .user_navigation_link:hover .classroom_icon_wrap,
 .organization_scheme4 #nav-drawer.closed .user_navigation_link:hover .classroom_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/scheme4]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/scheme4]]);
 }
 .theme_scheme4 #nav-drawer.closed .user_navigation_link:hover .skill_icon_wrap,
 .organization_scheme4 #nav-drawer.closed .user_navigation_link:hover .skill_icon_wrap,
 .theme_scheme4 .manage_skill_icon_wrap, .organization_scheme4 .manage_skill_icon_wrap {
-    background-image: url([[pix:theme_airpayux|scheme_icons/skillscheme4]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/skillscheme4]]);
 }
 .theme_scheme5 #nav-drawer.closed .user_navigation_link:hover .classroom_icon_wrap,
 .organization_scheme5 #nav-drawer.closed .user_navigation_link:hover .classroom_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/scheme5]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/scheme5]]);
 }
 .theme_scheme6 #nav-drawer.closed .user_navigation_link:hover .classroom_icon_wrap,
 .organization_scheme6 #nav-drawer.closed .user_navigation_link:hover .classroom_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/classroomscheme6]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/classroomscheme6]]);
 }
 
 /*add*/
 .theme_scheme5 #nav-drawer.closed .user_navigation_link:hover .skill_icon_wrap,
 .organization_scheme5 #nav-drawer.closed .user_navigation_link:hover .skill_icon_wrap,
 .theme_scheme5 .manage_skill_icon_wrap, .organization_scheme5 .manage_skill_icon_wrap {
-    background-image: url([[pix:theme_airpayux|scheme_icons/skillscheme5]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/skillscheme5]]);
 }
 .theme_scheme6 #nav-drawer.closed .user_navigation_link:hover .skill_icon_wrap,
 .organization_scheme6 #nav-drawer.closed .user_navigation_link:hover .skill_icon_wrap,
 .theme_scheme6 .manage_skill_icon_wrap, .organization_scheme6 .manage_skill_icon_wrap {
-    background-image: url([[pix:theme_airpayux|scheme_icons/skillscheme6]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/skillscheme6]]);
 }
 .theme_scheme1 #nav-drawer.closed .user_navigation_link:hover .ilp_icon_wrap,
 .organization_scheme1 #nav-drawer.closed .user_navigation_link:hover .ilp_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/ilpscheme1]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/ilpscheme1]]);
 }
 .theme_scheme2 #nav-drawer.closed .user_navigation_link:hover .ilp_icon_wrap,
 .organization_scheme2 #nav-drawer.closed .user_navigation_link:hover .ilp_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/ilpschemme2]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/ilpschemme2]]);
 }
 .theme_scheme3 #nav-drawer.closed .user_navigation_link:hover .ilp_icon_wrap,
 .organization_scheme3 #nav-drawer.closed .user_navigation_link:hover .ilp_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/ilpscheme3]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/ilpscheme3]]);
 }
 .theme_scheme4 #nav-drawer.closed .user_navigation_link:hover .ilp_icon_wrap,
 .organization_scheme4 #nav-drawer.closed .user_navigation_link:hover .ilp_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/ilpscheme4]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/ilpscheme4]]);
 }
 .theme_scheme5 #nav-drawer.closed .user_navigation_link:hover .ilp_icon_wrap,
 .organization_scheme5 #nav-drawer.closed .user_navigation_link:hover .ilp_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/ilpscheme5]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/ilpscheme5]]);
 }
 .theme_scheme6 #nav-drawer.closed .user_navigation_link:hover .ilp_icon_wrap,
 .organization_scheme6 #nav-drawer.closed .user_navigation_link:hover .ilp_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/ilpscheme6]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/ilpscheme6]]);
 }
 .theme_scheme6 #nav-drawer.closed .user_navigation_link:hover .bootcamp_icon_wrap,
 .organization_scheme6 #nav-drawer.closed .user_navigation_link:hover .bootcamp_icon_wrap{
-     background-image: url([[pix:theme_airpayux|scheme_icons/bcscheme5]]) !important;
-   
+     background-image: url([[pix:theme_airpayux|scheme_icons/bcscheme5]]);
 }
 .theme_scheme1 #nav-drawer.closed .user_navigation_link:hover .bootcamp_icon_wrap,
 .organization_scheme1 #nav-drawer.closed .user_navigation_link:hover .bootcamp_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/bcscheme1]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/bcscheme1]]);
 }
 .theme_scheme2 #nav-drawer.closed .user_navigation_link:hover .bootcamp_icon_wrap,
 .organization_scheme2 #nav-drawer.closed .user_navigation_link:hover .bootcamp_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/bcscheme2]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/bcscheme2]]);
 }
 .theme_scheme3 #nav-drawer.closed .user_navigation_link:hover .bootcamp_icon_wrap,
 .organization_scheme3 #nav-drawer.closed .user_navigation_link:hover .bootcamp_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/bcscheme3]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/bcscheme3]]);
 }
 .theme_scheme4 #nav-drawer.closed .user_navigation_link:hover .bootcamp_icon_wrap,
 .organization_scheme4 #nav-drawer.closed .user_navigation_link:hover .bootcamp_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/bcscheme4]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/bcscheme4]]);
 }
 .theme_scheme5 #nav-drawer.closed .user_navigation_link:hover .bootcamp_icon_wrap,
 .organization_scheme5 #nav-drawer.closed .user_navigation_link:hover .bootcamp_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/bcscheme5]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/bcscheme5]]);
 }
 .theme_scheme6 #nav-drawer.closed .user_navigation_link:hover .bootcamp_icon_wrap,
 .organization_scheme6 #nav-drawer.closed .user_navigation_link:hover .bootcamp_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/bcscheme6]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/bcscheme6]]);
 }
 /*leftsidebar icons scheme wise ends*/
 
@@ -702,19 +713,19 @@ body#page-my-index aside#block-region-layertwo_one .block .content {
 
 /*css related to pagination & dataTables starts*/
 .dataTables_wrapper .dataTables_paginate .paginate_button {
-    padding: 2px 7px !important;
+    padding: 2px 7px !important; // preserved: defends against DataTables vendor CSS (loaded externally — not in our SCSS tree) which sets paginate_button padding at the same selector
     font-size: 12px;
     box-shadow: none;
 }
-.dataTables_wrapper .dataTables_paginate .paginate_button.active, 
-.dataTables_wrapper .dataTables_paginate .paginate_button:active, 
-.dataTables_wrapper .dataTables_paginate .paginate_button:hover, 
+.dataTables_wrapper .dataTables_paginate .paginate_button.active,
+.dataTables_wrapper .dataTables_paginate .paginate_button:active,
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover,
 .dataTables_wrapper .dataTables_paginate .paginate_button:focus {
     /*background: #1177d1 !important;*/
     color:#fff;
     /*border: 1px solid #1177d1;*/
-    outline: none !important;
-    box-shadow: none !important;
+    outline: none !important;       // preserved: DataTables vendor sets focus outline with !important
+    box-shadow: none !important;    // preserved: DataTables vendor sets focus box-shadow with !important
 }
 .pagination .page-link {
     margin: 0px 1px;
@@ -854,7 +865,9 @@ body .moodle-dialogue-confirm .confirmation-buttons{
 .customLeftMemubtn .icon{margin-right: 0;}
 /*leftmenu responsive styles ends*/
 #region-main .card {
-    border-radius: 12px !important;
+    // Specificity (1,1,0) beats preset/default.scss `.card { border-radius: 12px }` (0,1,0).
+    // Both rules set the same 12px value — the original !important was defensive.
+    border-radius: 12px;
     margin-bottom: 0.5rem;
 }
 .page-context-header .page-header-headings h3{font-weight: 400;}
@@ -868,7 +881,7 @@ body .moodle-dialogue-confirm .confirmation-buttons{
 }
 .pagelayout-course #page.drawers .main-inner {
     max-width: inherit; }
-.page-context-header .page-header-headings h1{font-weight: 400!important;}
+.page-context-header .page-header-headings h1{font-weight: 400;} // specificity (0,2,1) beats bootstrap h1 defaults (no !important upstream)
 .page-context-header .page-header-headings h1:after {
     content: '';
     width: 70px;
@@ -904,8 +917,9 @@ body#page-team-dashboard .teamlayout .course_extended_menu_list{
     margin-bottom: 10px;
 }
 #nav-drawer .left_sidebar .btn-secondary {
-    margin-right: 0px !important;
-    float: none !important;
+    // Specificity (1,3,0) beats bootstrap `.btn-secondary` (0,1,0); no upstream !important.
+    margin-right: 0px;
+    float: none;
     border: none;
     &:focus,
     &:active {
@@ -1067,10 +1081,11 @@ body#page-my-index .openLMStransition.local_users .modal-body .form-group:nth-ch
     margin-right: 10px;
 }
 .modal.openLMStransition .form_label .fa-question-circle{
+    // Specificity (0,4,0) beats fontawesome `.fa-question-circle` (0,1,0); no upstream !important
     font-size: 12px;
     height: 24px;
     line-height: 24px;
-    margin: 0px 0px 0px -5px !important;
+    margin: 0px 0px 0px -5px;
 }
 .modal.openLMStransition .modal-content .mform {
     float: none;
@@ -1162,7 +1177,7 @@ input.form-control-danger {
 }
 /*manage files popup alignment*/
 .moodle-dialogue-base iframe{
-    height: 450px !important
+    height: 450px !important; // preserved: YUI dialogue vendor CSS (loaded outside our SCSS tree) sets iframe inline height via JS — !important beats inline-style specificity (1,0,0,0)
 }
 body#page-lib-editor-atto-plugins-managefiles-manage{
     overflow-y: hidden;
@@ -1174,14 +1189,16 @@ body#page-lib-editor-atto-plugins-managefiles-manage #page{
     margin-top: 55px;
 }
 body#page-lib-editor-atto-plugins-managefiles-manage #region-main .card .card-body .fp-navbar.bg-faded.card{
-    border-radius: 0px !important;
+    // Specificity (2,5,1) — way above any upstream .card border-radius rule. !important defensive only.
+    border-radius: 0px;
 }
 body#page-lib-editor-atto-plugins-managefiles-manage #region-main .card .card-body .filemanager-container.card{
-    border-radius: 0px !important;
+    border-radius: 0px;
 }
 /*auto complete form changes*/
 .form-autocomplete-selection {
-    min-height: inherit !important;
+    // Same selector + specificity as forms.scss line 266; source order wins (our partial loads later in custom_changes.scss)
+    min-height: inherit;
     float: left;
     width: 100%;
     margin: 0px 0px 5px 0px;
@@ -1361,11 +1378,11 @@ body .moodle-dialogue-confirm .confirmation-buttons {
 
 /*css related to filters over site starts*/
 .jsenabled .collapsibleregion {
-    height: inherit !important;
+    height: inherit !important;  // preserved: collapsible JS writes inline style="height:..." at runtime — only !important beats inline-style specificity (1,0,0,0)
     overflow: inherit;
 }
 .jsenabled .collapsibleregion.collapsed {
-    height: 25px !important;
+    height: 25px !important;     // preserved: same JS-inline-style fight as above
 }
 // #filters_form .mform .autocomplete .form-inline .form-control{
 //     border: none;
@@ -1449,7 +1466,9 @@ body .moodle-dialogue-confirm .confirmation-buttons {
         width: 100%;
     }
     .form-group.form-submit {
-        width: unset !important;
+        // Same specificity (1,2,0) as sibling rule `#filters_form .fitem.form-group { width: 33% }` above;
+        // source order makes this rule win (declared later within the same #filters_form { ... } SCSS block).
+        width: unset;
         float: left;
         display: inline;
         margin: 0px 10px;
@@ -1485,8 +1504,8 @@ body .moodle-dialogue-confirm .confirmation-buttons {
 
 /*css related to enrolments pages starts*/
 .bootstrap-duallistbox-container select {
-    border-radius: 0px 0px 8px 8px; 
-    padding: 10px !important;  
+    border-radius: 0px 0px 8px 8px;
+    padding: 10px !important;  // preserved: bootstrap-duallistbox vendor CSS (loaded externally) sets select padding with !important
     min-height: 410px;
 }
 .bootstrap-duallistbox-container .buttons{
@@ -1530,7 +1549,7 @@ body .moodle-dialogue-confirm .confirmation-buttons {
 /*quick actions css starts*/
 .actionicons.opened .options_container{background-color: #2d2f3b; display: none;}
 .actionicons  .options_container:after{border-top-color: #2d2f3b;}
-.showoptions{padding: 5px !important;}
+.showoptions{padding: 5px !important;} // preserved: same selector reasserted at line ~1550 of this file with `padding: 10px` — !important forces 5px win across the intra-file source order
 .options_container:hover{background-color: #2d2f3b;}
 .options_container li:hover{
     background-color: #f26724;
@@ -1596,7 +1615,8 @@ body .moodle-dialogue-confirm .confirmation-buttons {
     box-sizing: content-box;
 }
 .tool-item .icon{
-    color: #fff !important;
+    // Specificity (0,2,0); icons.scss base `.icon { ... }` (0,1,0) sets no color — source order + specificity win.
+    color: #fff;
 }
 .options_container{
     list-style-type: none;
@@ -1604,7 +1624,8 @@ body .moodle-dialogue-confirm .confirmation-buttons {
     padding: 0px;
 }
 .quick_actions_list1.options_container li {
-    border-radius: 6px !important;
+    // Specificity (0,3,0) — no upstream li border-radius rule with !important; source order wins.
+    border-radius: 6px;
 }
 .options_container li:first-child:hover {
     border-radius: 6px 0px 0px 6px;
@@ -1772,7 +1793,8 @@ body#page-mod-forum-view #region-main-settings-menu.has-blocks div#action-menu-3
     padding-right: 20px;
 }
 body#page-mod-certificate-view table.generaltable thead th {
-    text-align: center !important;
+    // Specificity (1,1,4) beats both bootstrap th defaults and the later `.generaltable th:not(...)` rule (0,2,1).
+    text-align: center;
 }
 body#page-question-preview #previewcontrols input.btn {
     margin-right: 5px;
@@ -1835,10 +1857,11 @@ body#page-course-index-category #coursesearch,
     border: none;
 }
 #page-mod-scorm-view table.scorm_custom_table tbody tr td {
-    border-top: 1px solid #ddd !important;
+    // Specificity (1,2,4) beats tables.scss `.generaltable th, .generaltable td` (0,1,1) and bootstrap td defaults.
+    border-top: 1px solid #ddd;
 }
 #page-mod-scorm-view table.scorm_custom_table tbody tr:hover {
-    background-color: #fafafa !important;
+    background-color: #fafafa;
 }
 #page-mod-scorm-view table.scorm_custom_table tbody tr td:last-child {
     text-align: center;
@@ -1869,8 +1892,9 @@ body#page-user-editadvanced .page-context-header .btn-group.header-button-group 
     padding: 5px;
 }
 body#page-user-editadvanced .page-context-header .btn-group.header-button-group a:last-child {
-    border-bottom-left-radius: 4px !important;
-    border-top-left-radius: 4px !important;
+    // Specificity (1,4,2) beats bootstrap btn-group rules (0,4,1); no upstream !important on btn-group border-radius.
+    border-bottom-left-radius: 4px;
+    border-top-left-radius: 4px;
 }
 /*css for course management page*/
 #page-course-management #region-main i.fa {color: #999;}
