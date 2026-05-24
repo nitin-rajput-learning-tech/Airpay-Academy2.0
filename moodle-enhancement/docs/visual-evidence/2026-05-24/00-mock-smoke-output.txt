@@ -1,0 +1,62 @@
+================================================================
+ local_sentientia_aiquiz — end-to-end mock smoke test (G.0)
+================================================================
+
+STEP 1 — Source validation
+----------------------------------------------------------------
+  Source length: 38 words
+  Validation errors: none
+  PII detected: no
+
+STEP 2 — Prompt construction
+----------------------------------------------------------------
+  Prompt version: v1
+  System prompt length: 1706 chars
+  User message length: 437 chars
+
+STEP 3 — Anthropic mock call (sentientia.aiquiz.live_api OFF)
+----------------------------------------------------------------
+  Mode: mock
+  Tokens in/out: 0 / 0
+  Body length: 2220 chars
+  Error: none
+
+STEP 4 — Parse Claude response
+----------------------------------------------------------------
+  Questions parsed: 5
+
+  Q1: [MOCK Q1] Which statement best reflects the source about "Anti-money-laundering ...
+       Correct answer index: 2
+
+  Q2: [MOCK Q2] Which statement best reflects the source about "Anti-money-laundering ...
+       Correct answer index: 2
+
+  Q3: [MOCK Q3] Which statement best reflects the source about "Anti-money-laundering ...
+       Correct answer index: 2
+
+  Q4: [MOCK Q4] Which statement best reflects the source about "Anti-money-laundering ...
+       Correct answer index: 2
+
+  Q5: [MOCK Q5] Which statement best reflects the source about "Anti-money-laundering ...
+       Correct answer index: 2
+
+
+STEP 5 — Malformed-input robustness
+----------------------------------------------------------------
+  'empty                    ' -> 0 questions (expected 0)
+  'plain prose              ' -> 0 questions (expected 0)
+  'missing questions key    ' -> 0 questions (expected 0)
+  'wrong qtype              ' -> 0 questions (expected 0)
+  'wrong option count       ' -> 0 questions (expected 0)
+
+STEP 6 — PII detection
+----------------------------------------------------------------
+  [PASS] 'Clean training material' -> clean
+  [PASS] 'Aadhaar 1234 5678 9012 leak' -> PII
+  [PASS] 'Aadhaar 123456789012 (no spaces)' -> PII
+  [PASS] 'PAN ABCDE1234F leak' -> PII
+  [PASS] 'Section 42 of policy 12 (not PII)' -> clean
+
+================================================================
+ End-to-end mock pipeline: PASS
+================================================================

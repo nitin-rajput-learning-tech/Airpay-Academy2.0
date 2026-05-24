@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/sentientia_aiquiz/db" VERSION="20260524"
+       COMMENT="Sentientia LMS AI Quiz Generation — Phase G.0 (MVP) schema.
+                Two tables: drafts (one row per generation request) +
+                questions (one row per generated question, FK to draft).">
+  <TABLES>
+
+    <!-- ─── DRAFTS ─── -->
+    <TABLE NAME="local_sentientia_aiquiz_draft"
+           COMMENT="Phase G.0 (2026-05-24) — One row per AI-generation
+                    request. Lifecycle: pending (created, API call in
+                    flight) → generated (Claude returned, questions
+                    persisted, awaiting review) → approved (all
+                    questions reviewed + at least one approved) →
+                    pushed (approved questions copied to mod_quiz) →
+                    rejected (reviewer dismissed the whole draft).
+
+                    The `sourcetext` column carries the verbatim text
+                    that was sent to Claude — kept for traceability so
+                    we can re-generate against the same input with a
+                    new prompt version. PII screening is the trainer's
+                    responsibility (the UI warns them at paste time).
+
+                    `prompt_version` ties each draft to a versioned
+                    system prompt; new prompt revisions get a new
+                    version string so we can A/B test prompt quality
+                    without losing the audit trail.
+
+                    `customerid` + `costcenterid` follow the standard
+                    Sentientia LMS multi-customer / multi-tenant scope
+                    convention.">
+      <FIELDS>
+        <FIELD NAME="id"             TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="courseid"       TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="FK to course.id — the course the quiz draft belongs to. 0 = site-level (not yet assigned)."/>
+        <FIELD NAME="ownerid"        TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="FK to user.id — Course Author who created the draft."/>
+        <FIELD NAME="customerid"     TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="1"
+               COMMENT="Sentientia LMS customer scope. Phase 1: hardcoded 1 (Airpay)."/>
+        <FIELD NAME="costcenterid"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="BizLMS tenant root (1=Airpay, 77=Public, 177=ZEEA). Derived from creator open_path at draft time."/>
+        <FIELD NAME="title"          TYPE="char" LENGTH="200" NOTNULL="true"
+               COMMENT="Trainer-supplied draft title for the review queue list."/>
+        <FIELD NAME="sourcetext"     TYPE="text" NOTNULL="true"
+               COMMENT="The verbatim text sent to Claude as the user message. Trim/dedupe is the trainer's responsibility."/>
+        <FIELD NAME="model"          TYPE="char" LENGTH="64"  NOTNULL="true" DEFAULT="claude-sonnet-4-6"
+               COMMENT="Anthropic model identifier used for the generation. Recorded for audit."/>
+        <FIELD NAME="prompt_version" TYPE="char" LENGTH="32"  NOTNULL="true" DEFAULT="v1"
+               COMMENT="System-prompt revision tag (e.g. v1, v2-hindi). Allows safe A/B prompt-quality testing."/>
+        <FIELD NAME="num_requested"  TYPE="int"  LENGTH="4"   NOTNULL="true" DEFAULT="10"
+               COMMENT="How many questions the trainer asked for."/>
+        <FIELD NAME="num_generated"  TYPE="int"  LENGTH="4"   NOTNULL="true" DEFAULT="0"
+               COMMENT="How many questions Claude actually returned (parser-validated)."/>
+        <FIELD NAME="tokens_in"      TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Anthropic input_tokens reported by API for cost tracking."/>
+        <FIELD NAME="tokens_out"     TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Anthropic output_tokens reported by API for cost tracking."/>
+        <FIELD NAME="status"         TYPE="char" LENGTH="16"  NOTNULL="true" DEFAULT="pending"
+               COMMENT="pending | generated | approved | pushed | rejected | failed"/>
+        <FIELD NAME="error_detail"   TYPE="text" NOTNULL="false"
+               COMMENT="On status=failed: the exception message + HTTP code (no API key, never log keys)."/>
+        <FIELD NAME="reviewed_by"    TYPE="int"  LENGTH="10"  NOTNULL="false"
+               COMMENT="FK to user.id of the trainer who completed the review (NULL until reviewed)."/>
+        <FIELD NAME="reviewed_at"    TYPE="int"  LENGTH="10"  NOTNULL="false"
+               COMMENT="Unix timestamp when review completed."/>
+        <FIELD NAME="pushed_quizid"  TYPE="int"  LENGTH="10"  NOTNULL="false"
+               COMMENT="FK to mod_quiz.id once status=pushed. NULL until then."/>
+        <FIELD NAME="generated_at"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Unix timestamp of generation completion (or attempt timestamp on failure)."/>
+        <FIELD NAME="timecreated"    TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"     TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_ownerid"  TYPE="foreign" FIELDS="ownerid" REFTABLE="user"   REFFIELDS="id"/>
+        <KEY NAME="fk_courseid" TYPE="foreign" FIELDS="courseid" REFTABLE="course" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_owner_status"    UNIQUE="false" FIELDS="ownerid, status"
+               COMMENT="Trainer review queue: 'my drafts awaiting review'"/>
+        <INDEX NAME="idx_status_created"  UNIQUE="false" FIELDS="status, timecreated"
+               COMMENT="Admin queue across all trainers"/>
+        <INDEX NAME="idx_customer_tenant" UNIQUE="false" FIELDS="customerid, costcenterid"
+               COMMENT="Per-customer / per-tenant cost analytics"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- ─── QUESTIONS ─── -->
+    <TABLE NAME="local_sentientia_aiquiz_question"
+           COMMENT="Phase G.0 (2026-05-24) — One row per generated
+                    question. Cascade-delete with parent draft.
+
+                    `qtype` is restricted in Phase G.0 to 'multichoice'
+                    (4 options, exactly one correct). Future phases
+                    extend to 'truefalse', 'shortanswer', etc.
+
+                    `qoptions_json` is a JSON array of option strings.
+                    `qanswer` is the index (0-based) of the correct
+                    option in that array — stored as an int via the
+                    char column for forward-compat with non-numeric
+                    answer keys in future qtypes.
+
+                    `status` lifecycle: generated → approved | edited
+                    | rejected. The reviewer flips this per-question
+                    in the review UI; only `approved` + `edited` rows
+                    push to mod_quiz.">
+      <FIELDS>
+        <FIELD NAME="id"            TYPE="int"  LENGTH="10"   NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="draftid"       TYPE="int"  LENGTH="10"   NOTNULL="true"
+               COMMENT="FK to local_sentientia_aiquiz_draft.id"/>
+        <FIELD NAME="qtype"         TYPE="char" LENGTH="20"   NOTNULL="true" DEFAULT="multichoice"
+               COMMENT="multichoice | truefalse | shortanswer (G.1+)"/>
+        <FIELD NAME="qtext"         TYPE="text" NOTNULL="true"
+               COMMENT="Question stem as produced by Claude (or edited by reviewer)"/>
+        <FIELD NAME="qoptions_json" TYPE="text" NOTNULL="false"
+               COMMENT="JSON array of option strings. NULL for qtypes that don't have options (shortanswer)."/>
+        <FIELD NAME="qanswer"       TYPE="char" LENGTH="64"   NOTNULL="true" DEFAULT=""
+               COMMENT="Correct-answer marker: '0'..'3' for multichoice (index), 'true'/'false' for truefalse, free text for shortanswer."/>
+        <FIELD NAME="qexplanation"  TYPE="text" NOTNULL="false"
+               COMMENT="Optional rationale Claude produced explaining why the correct answer is correct. Shown in review UI."/>
+        <FIELD NAME="sortorder"     TYPE="int"  LENGTH="6"    NOTNULL="true" DEFAULT="0"
+               COMMENT="Display order within the draft (1, 2, 3, ...). Lower = first."/>
+        <FIELD NAME="status"        TYPE="char" LENGTH="16"   NOTNULL="true" DEFAULT="generated"
+               COMMENT="generated | approved | edited | rejected"/>
+        <FIELD NAME="reviewer_note" TYPE="text" NOTNULL="false"
+               COMMENT="Optional reviewer comment. Visible in audit history."/>
+        <FIELD NAME="timecreated"   TYPE="int"  LENGTH="10"   NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"  TYPE="int"  LENGTH="10"   NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"     TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_draftid"  TYPE="foreign" FIELDS="draftid"
+                                REFTABLE="local_sentientia_aiquiz_draft" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_draft_sort" UNIQUE="false" FIELDS="draftid, sortorder"
+               COMMENT="Render questions in display order for a draft"/>
+        <INDEX NAME="idx_status"     UNIQUE="false" FIELDS="status"
+               COMMENT="Push-to-quiz query: select where status IN ('approved','edited')"/>
+      </INDEXES>
+    </TABLE>
+
+  </TABLES>
+</XMLDB>

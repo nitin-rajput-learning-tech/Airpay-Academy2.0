@@ -3,6 +3,46 @@
 
 ---
 
+## 🚀 STREAM G — AI QUIZ GENERATION (Tier 1 #4) — Phase G.0 MVP ✅ SHIPPED (2026-05-24)
+
+**Plugin:** `local_sentientia_aiquiz` v0.1.0-alpha (2026052400)
+**Branch:** `claude/keen-cray-P7pQc`
+**ADR:** [ADR-012](docs/adr/ADR-012-ai-quiz-generation.md)
+**State card:** [local_sentientia_aiquiz-state.md](state-cards/local_sentientia_aiquiz-state.md)
+
+Course Authors paste source content (SCORM transcripts, narration text, SOP excerpts) and Anthropic Claude generates a multichoice quiz draft. Every draft passes through a mandatory human-review gate (approve / edit / reject per question) before any approved questions can be pushed to a `mod_quiz` activity.
+
+**Phase G.0 (MVP) deliverables:**
+- [x] Plugin scaffold — `version.php`, `lib.php`, `settings.php`, `db/install.xml` (2 tables), `db/access.php` (3 caps), `db/feature_flags.php` (3 flags)
+- [x] Core classes — `prompt_builder` (versioned v1 system prompt + PII heuristic), `response_parser` (strict JSON, drops malformed), `anthropic_client` (mock + live dispatchers), `draft_manager` (persistence + status lifecycle), `privacy/provider`
+- [x] UI — `generate.php` (form + [CONFIRM] gate + 4-layer cost defence) + `review.php` (list mode + detail mode with per-question approve/edit/reject + finalise + gated push)
+- [x] Feature flags default OFF — `sentientia.aiquiz.enabled`, `sentientia.aiquiz.live_api`, `sentientia.aiquiz.auto_push`
+- [x] Hindi pack 100% parity — 114 EN keys, 114 HI keys, verified via `array_diff_key`
+- [x] PHPUnit — 4 test classes (~47 tests) covering prompt builder, parser, draft manager, mock client; ZERO live API calls in tests
+- [x] CLI smoke test — `cli/mock_smoke.php` exercises full mock pipeline (verification output in `docs/visual-evidence/2026-05-24/00-mock-smoke-output.txt`)
+- [x] ADR-012 — model choice, prompt versioning, 4-layer cost defence, multi-tenant isolation, parser contract
+- [x] State card at `state-cards/local_sentientia_aiquiz-state.md`
+- [x] Visual-evidence README at `docs/visual-evidence/2026-05-24/README.md` with 11-screenshot capture checklist
+- [⏳] Live XAMPP install + screenshots — deferred to Nitin's local verification run (Chrome MCP currently disconnected)
+
+**Hard-rule compliance (verbatim from CLAUDE.md):**
+- ✅ NEVER POST to Anthropic without [CONFIRM] — checkbox in form rejects submission when unticked; even ticked, `sentientia.aiquiz.live_api` flag still gates the actual POST
+- ✅ Feature flag mandatory, default OFF — three new flags, all OFF
+- ✅ Hindi parity 100% — 114/114 keys, verified
+- ✅ ADR shipped — ADR-012
+- ✅ State card shipped
+- ✅ No live API calls in unit tests — `anthropic_client_test.php` only exercises `call_mock()` + no-API-key fast-fail branch
+- ✅ MVP demoable end-to-end in mock mode without spending money
+
+**Phase G.0 deferrals (NOT shipped here):**
+- G.1 — Per-customer prompt overrides + Hindi quiz generation (`prompt_version='v2-hindi'`)
+- G.2 — PDF upload pipeline
+- G.3 — Cost analytics dashboard + per-customer token quota
+- G.4 — Real `mod_quiz` push (currently stubbed with `pushed_quizid=0`)
+- G.5 — Auto-suggest quiz placement
+
+---
+
 ## 🚀 DAY 0 — SENTIENTIA LMS FOUNDATION (2026-05-20)
 
 ### Mission (NEW)
