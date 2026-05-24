@@ -123,8 +123,22 @@ defined('MOODLE_INTERNAL') || die();
 // verification on production 5.2 substrate (per the audit doc — it has
 // an aria-live re-announce trick for NVDA <2024 that core/toast may
 // not handle). See docs/5.2-merge/PHASE-B3F-AMD-CLEANUP.md.
-$plugin->version   = 2026052401;
+//
+// P0 #9 follow-up verification (2026-05-24) — spawned chip audited the
+// AMD-wiring scope of the cart_badge module introduced by chip B (which
+// bumps to 1.0.32-beta). Per-layout walkthrough of all 10 airpayux
+// layouts found that the cart-bearing templates/navbar.mustache partial
+// is rendered by exactly two templates (course.mustache always +
+// dashboard.mustache in the dead-code {{^use_shell}} fallback) — the
+// same two layouts chip B wired. No additional layouts need direct
+// wiring; the other 8 use either airpay_shell_start (columns2/drawers),
+// a navbar-less minimal shell (columns1/embedded/login/maintenance), a
+// distinct navbar-secure.mustache (secure), or a custom landing-page
+// nav that redirects logged-in users away (frontpage). Version bump
+// signals audit completion + invalidates compiled CSS cache. Full
+// per-layout evidence table appended to PROJECT-STATE.md.
+$plugin->version   = 2026052403;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.31-beta';  // Phase B.3.f shim deletes
+$plugin->release   = '1.0.33-beta';  // P0 #9 follow-up verification (cart_badge AMD scope)
