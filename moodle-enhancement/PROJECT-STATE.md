@@ -4435,3 +4435,63 @@ Added `$plugin->maturity = MATURITY_STABLE`.
 **Local + GitHub only.** Production payment gateway changes require
 explicit `[CONFIRM]` from Nitin (CLAUDE.md §3, §13). No live deploy
 performed this session.
+
+---
+
+## 🎯 Goal A.x + Goal B — code-complete (2026-05-24)
+
+Closes TaskList items **#149 (Goal A.x)** and **#150 (Goal B)**.
+
+### Headline
+138-URL load-time audit (Goal A.y, 2026-05-23) found 1 functional bug
+(cert TypeError, fixed in #192). 11 Sentientia surface restyles +
+21 Playwright regression tests now guard against drift.
+
+### Goal A.x — UI upgrades from audit findings
+All audit-discoverable surfaces shipped:
+- 11 restyles (TaskList #157-187)
+- 5 mobile 590px sweeps (TaskList #171, #176, #177)
+- Workstream 0 customer brand (TaskList #188)
+- Every restyle has a regression-guard test in `tests/surfaces.spec.mjs`
+
+Remaining work — "real human shadow observer walkthrough" — is not
+automatable. Belongs in a separate session with a live operator.
+
+### Goal B — End-to-end click-through testing
+- Pre-existing: `tests/surfaces.spec.mjs` (11 CSS-marker tests).
+- NEW commit `0f0a778c0`: `tests/workflows.spec.mjs` (10 non-mutating
+  POST/AJAX/round-trip tests) directly answering the Goal A.y audit's
+  "wire up Playwright POST tests for the top 10 user actions"
+  recommendation.
+
+5 categories covered:
+1. Session lifecycle (logout → sesskey destroyed)
+2. Form-validation rejection (mform validator catches; no DB write)
+3. Reversible toggle round-trip (`/user/language.php` save → flip → restore)
+4. AJAX/WS contract shape (3 endpoints incl. Bug #10 regression guard)
+5. Authorization boundary (CSRF wall + admin-page sanity)
+
+21 tests total. All safe to run repeatedly. Mutating workflows (course
+create / enrol / quiz attempt / refund) deferred to a future
+`tests/mutating.spec.mjs` with `--mutating` CI flag and DB
+snapshot+restore around each run.
+
+### Commits
+- `0f0a778c0` — `test(playwright): Goal B workflow spec — 10 non-mutating POST/AJAX tests`
+- `f2d588f44` — `docs(closeout): Goal A.x + Goal B — code-complete summary`
+
+### Awaits human step
+Spin up local XAMPP Moodle on `http://localhost:8080/moodle`, confirm
+`academy@airpay.co.in` password is `AcademyAudit2026!` (or update the
+constant in both spec files), then:
+```powershell
+cd moodle-enhancement\audit\playwright
+npx playwright test --project=firefox-desktop
+```
+Expected: 21/21 passing.
+
+### Refs
+- `docs/GOAL-A-B-CLOSEOUT-2026-05-24.md` — full closeout narrative
+- `audit/playwright/HARNESS_RUNBOOK.md` — how-to-run + workflow tests section
+- `audit/playwright/tests/surfaces.spec.mjs` — Goal A.x CSS markers
+- `audit/playwright/tests/workflows.spec.mjs` — Goal B workflows
