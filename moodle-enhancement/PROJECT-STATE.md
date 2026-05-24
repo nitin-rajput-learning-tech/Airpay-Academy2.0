@@ -6254,3 +6254,85 @@ future parity audits.
 - Chip F reference: previous kn/mr/sw top-up against 153-key baseline
 - Parallel-session convention: `docs/CONTRIBUTING-PARALLEL-SESSIONS.md` §7 (Hindi parity mandate extended to all locales)
 - Hard rule (CLAUDE.md §13): "NEVER break Airpay Academy current production behaviour" — closed gap is additive only; no en/hi key was modified
+
+---
+
+## 🛡️ P0 cleanup A — conflict-marker pre-commit hook (2026-05-24)
+
+CI runs **#397 + #403** on 2026-05-24 failed because mid-merge commits
+carried stray `<<<<<<<` / `=======` / `>>>>>>>` markers in PHP and lang
+files. Markers are invalid PHP → parse error → CI fails. Detection was
+delayed because we only saw the breakage when GitHub notifications
+arrived. This chip closes that gap with a two-layer defence:
+
+**Layer 1 — local hook** (`.claude/hooks/pre-commit.sh`, CHECK 11):
+- Scans every staged `.php .mustache .scss .js .json .xml .md .yml` file
+- Prints `file:line` for every marker found, then aborts the commit with
+  exit 1
+- Regex matches git's exact marker format only:
+  `^<<<<<<<( |$)`, `^=======$`, `^>>>>>>>( |$)`
+
+**Layer 2 — CI gate** (`.github/workflows/ci.yml::conflict-marker-check`):
+- ~5 second job, runs on every push to `production` + every PR
+- Scans the whole working tree across `moodle-enhancement/`,
+  `theme/airpayux/`, `local/`, `.github/`, `.claude/`
+- Surfaces hits as inline `::error file=path,line=N` GitHub annotations
+- Backstops the hook for `--no-verify` bypasses, hook-less tools, and
+  force-pushes
+
+**Why the strict regex matters:**
+Initial loose regex `^=======` false-positived on a 32-character
+setext-style heredoc banner inside
+`moodle-enhancement/theme/airpayux/cli/ws_contract_audit.php:80`. The
+tightened regex anchors `=======` at exact-7-chars-end-of-line and
+requires `<<<<<<<` / `>>>>>>>` to be followed by a space or EOL (the
+git format). Verified zero false-positives across the full repo.
+Verified the hook still triggers on synthetic `.mustache` + `.json`
+conflict markers in an end-to-end staged-commit test.
+
+**Local installation (one-liner from repo root):**
+
+```powershell
+pwsh -Command "Copy-Item .claude/hooks/pre-commit.sh .git/hooks/pre-commit -Force"
+```
+
+Or the wrapper script:
+
+```powershell
+pwsh -File tools/install-hooks.ps1
+```
+
+**Files in this chip:**
+
+| File | Change |
+|------|--------|
+| `.claude/hooks/pre-commit.sh` | +44 / -5 lines — CHECK 11 + renumber 10 prior checks to N/11 |
+| `.github/workflows/ci.yml` | +59 / -2 lines — new `conflict-marker-check` job + comment update |
+| `tools/install-hooks.ps1` | NEW (32 lines) — PowerShell installer wrapper |
+| `CLAUDE.md` | +50 lines — §13 "Pre-commit guards" subsection |
+| `moodle-enhancement/theme/airpayux/version.php` | bumped `2026052405 → 2026052406`, release `1.0.36-beta → 1.0.37-beta` (stacks on the kn/mr/sw locale parity chip's bump landed earlier the same day) |
+
+**Commits (in order, on `claude/magical-rubin-jlDVk`):**
+
+1. `feat(hooks): block stray git conflict markers at pre-commit (P0 cleanup A)` — hook CHECK 11
+2. `ci(workflows): add conflict-marker-check gate (P0 cleanup A)` — CI job + regex tightening exposed by full-repo dry-run
+3. `docs(claude+state): document P0 cleanup A + installer + version bump` — installer, CLAUDE.md §13, version bump, state log
+
+**Safety:**
+- ✅ End-to-end tested the hook against synthetic conflict-marker files
+  in `.php`, `.mustache`, `.json` (all three blocked at exit 1)
+- ✅ Verified the regex skips `{{<base/columns}}` Mustache parent
+  inheritance, `// =====` SCSS dividers, and `================` setext
+  CLI heredoc banners
+- ✅ Full-repo scan returns zero hits today, so the new CI gate will
+  pass on this same push
+- ✅ `php -l` clean on bumped version.php
+- ✅ No `--no-verify`, no `--amend`, no force push — three normal
+  commits + three normal fast-forward pushes
+
+**Refs:**
+- Failed CI runs: #397, #403 (2026-05-24)
+- Hook: `.claude/hooks/pre-commit.sh` lines 256-287 (CHECK 11)
+- CI gate: `.github/workflows/ci.yml` job `conflict-marker-check`
+- Docs: `CLAUDE.md` §13 → "Pre-commit guards"
+- Installer: `tools/install-hooks.ps1`
