@@ -115,8 +115,16 @@ defined('MOODLE_INTERNAL') || die();
 // in our fork with byte-identical content to 5.2 boost — no code
 // changes. Phase B.3 substantially complete (~2.5h vs ADR 38h
 // estimate). See docs/5.2-merge/PHASE-B3D-CORE-FORM-REBASE.md.
-$plugin->version   = 2026052330;
+//
+// Phase B.3.f shim cleanup (2026-05-24) — 2 of the 3 AMD borrow shims
+// (page_title.js, deprecated.js) deleted ahead of cutover after the
+// Phase B.3.f audit confirmed zero callsites. amd/build/*.min.js
+// counterparts deleted too. announcement.js KEPT pending NVDA
+// verification on production 5.2 substrate (per the audit doc — it has
+// an aria-live re-announce trick for NVDA <2024 that core/toast may
+// not handle). See docs/5.2-merge/PHASE-B3F-AMD-CLEANUP.md.
+$plugin->version   = 2026052401;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.30-beta';  // Phase B.3 complete milestone
+$plugin->release   = '1.0.31-beta';  // Phase B.3.f shim deletes
