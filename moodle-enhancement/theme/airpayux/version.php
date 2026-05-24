@@ -195,4 +195,8 @@ $plugin->maturity  = MATURITY_BETA;
 // F-13 dashboard i18n (2026-05-24, chip-G) — 12 new lang strings added
 // to theme_airpayux across all 5 locales backing {{#str}} substitutions
 // of hardcoded English in dashboard.mustache. Closes §2.4 P0 items.
-$plugin->release   = '1.0.33-beta';  // P0 #1+#2+#3+#4+#5+#6+#7+#9 + F-13 i18n + P1 #12+#14 + P2 #21 + cart_badge audit
+// P1 #13 dark-mode token-cascade (2026-05-24, chip-I) — dark_mode.scss
+// reduced from 253 to 36 !important declarations (-85.8%) via parent-
+// class specificity over Bootstrap defaults. Preserved !important
+// blocks documented inline.
+$plugin->release   = '1.0.33-beta';  // P0 #1+#2+#3+#4+#5+#6+#7+#9 + F-13 + P1 #12+#13+#14 + P2 #21 + cart_badge audit
