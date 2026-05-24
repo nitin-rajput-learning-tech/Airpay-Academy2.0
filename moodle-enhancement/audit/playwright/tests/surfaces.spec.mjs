@@ -60,13 +60,43 @@ const COURSE_ID = 275;
  */
 test.beforeAll(async ({ browser }) => {
     const context = await browser.newContext({ storageState: undefined });
-    const page = await context.newPage();
-    await page.goto(`${BASE}/login/index.php`);
-    await page.fill('input[name="username"]', SITE_ADMIN.username);
-    await page.fill('input[name="password"]', SITE_ADMIN.password);
-    await page.click('#loginbtn');
-    await page.waitForURL((url) => !url.toString().includes('/login/index.php'),
-        { timeout: 30_000 });
+
+    // Skip the DOM-based login entirely — the Sentientia airpayux
+    // loginform.mustache + Moodle's bundled JS combo silently
+    // interferes with Playwright's fill/pressSequentially/form.submit
+    // approaches (the password input value is reset before submit,
+    // returning the user to /login/index.php with no error banner).
+    //
+    // Instead, do an HTTP-level login via context.request — same flow
+    // as a curl test, no DOM at all:
+    //   1. GET /login/index.php → capture cookies + logintoken
+    //   2. POST /login/index.php with form fields → cookies update on success
+    //   3. storageState writes the now-authenticated cookies to disk
+    //
+    // The visible-page tests then `test.use({ storageState })` to
+    // inherit those cookies and behave as logged-in Site Admin.
+    const getResp = await context.request.get(`${BASE}/login/index.php`);
+    const html = await getResp.text();
+    const tokenMatch = html.match(/name="logintoken" value="([^"]+)"/);
+    if (!tokenMatch) {
+        throw new Error('No logintoken found in /login/index.php response');
+    }
+    const logintoken = tokenMatch[1];
+
+    const postResp = await context.request.post(`${BASE}/login/index.php`, {
+        form: {
+            username: SITE_ADMIN.username,
+            password: SITE_ADMIN.password,
+            logintoken,
+            anchor: '',
+        },
+        maxRedirects: 5,
+    });
+    const landedAt = postResp.url();
+    if (landedAt.includes('/login/index.php')) {
+        throw new Error('Login failed — landed back at /login/index.php (check credentials)');
+    }
+
     await context.storageState({ path: 'fixtures/.auth-state.json' });
     await context.close();
 });

@@ -57,13 +57,29 @@ const COURSE_ID = 275;
  */
 test.beforeAll(async ({ browser }) => {
     const context = await browser.newContext({ storageState: undefined });
-    const page = await context.newPage();
-    await page.goto(`${BASE}/login/index.php`);
-    await page.fill('input[name="username"]', SITE_ADMIN.username);
-    await page.fill('input[name="password"]', SITE_ADMIN.password);
-    await page.click('#loginbtn');
-    await page.waitForURL((url) => !url.toString().includes('/login/index.php'),
-        { timeout: 30_000 });
+
+    // HTTP-level login — see surfaces.spec.mjs for full rationale.
+    const getResp = await context.request.get(`${BASE}/login/index.php`);
+    const html = await getResp.text();
+    const tokenMatch = html.match(/name="logintoken" value="([^"]+)"/);
+    if (!tokenMatch) {
+        throw new Error('No logintoken found in /login/index.php response');
+    }
+    const logintoken = tokenMatch[1];
+
+    const postResp = await context.request.post(`${BASE}/login/index.php`, {
+        form: {
+            username: SITE_ADMIN.username,
+            password: SITE_ADMIN.password,
+            logintoken,
+            anchor: '',
+        },
+        maxRedirects: 5,
+    });
+    if (postResp.url().includes('/login/index.php')) {
+        throw new Error('Login failed — landed back at /login/index.php');
+    }
+
     await context.storageState({ path: 'fixtures/.auth-state.json' });
     await context.close();
 });
