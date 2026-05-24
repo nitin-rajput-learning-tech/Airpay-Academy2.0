@@ -111,29 +111,16 @@
         {{! Notifications, messaging (BizLMS plugins) }}
         {{{ output.navbar_plugin_output }}}
 
-        {{! Airpay Cart icon — links to custom cart page with session-based count }}
+        {{!
+            Airpay Cart icon — links to custom cart page with session-based count.
+            Badge text + visibility are painted by amd/src/cart_badge.js (P0 #9
+            audit follow-up 2026-05-24). The init call is wired from the layout
+            PHP that renders this navbar partial.
+        }}
         <a href="{{{config.wwwroot}}}/local/airpay_catalog/cart.php" class="airpay-nav__cart" title="Shopping Cart" id="ap-cart-link">
-            <i class="fa fa-shopping-cart"></i>
-            <span class="airpay-nav__cart-badge" id="ap-cart-badge" style="display:none;">0</span>
+            <i class="fa fa-shopping-cart" aria-hidden="true"></i>
+            <span class="airpay-nav__cart-badge" id="ap-cart-badge" hidden>0</span>
         </a>
-        <script>
-        // Update cart badge count from session (via lightweight AJAX or cookie).
-        // For now, use a simple inline check since cart count is in PHP session.
-        (function() {
-            document.addEventListener('DOMContentLoaded', function() {
-                var badge = document.getElementById('ap-cart-badge');
-                // Check if Moodle has set cart count in page (injected by lib.php if available).
-                var countEl = document.getElementById('ap-cart-count-data');
-                if (countEl && badge) {
-                    var count = parseInt(countEl.textContent || '0', 10);
-                    if (count > 0) {
-                        badge.textContent = count;
-                        badge.style.display = 'flex';
-                    }
-                }
-            });
-        })();
-        </script>
 
         {{! Dark mode toggle — persists via localStorage, icon swaps }}
         {{! Audit fix M1: FA4 -o icons replaced with FA5+ equivalents. }}

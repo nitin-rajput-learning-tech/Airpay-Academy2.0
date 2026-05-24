@@ -27,6 +27,13 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->libdir . '/behat/lib.php');
 require_once($CFG->dirroot . '/course/lib.php');
 
+// P0 #9 audit follow-up (2026-05-24) — paint the cart badge via the AMD
+// module extracted from the navbar inline <script>. The module reads a
+// hidden #ap-cart-count-data span optionally injected by the cart
+// provider plugin and gracefully no-ops when absent, so it's safe to
+// wire here even on pages where the cart isn't surfaced.
+$PAGE->requires->js_call_amd('theme_airpayux/cart_badge', 'init');
+
 // Add block button in editing mode.
 $addblockbutton = $OUTPUT->addblockbutton();
 
