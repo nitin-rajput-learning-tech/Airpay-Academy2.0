@@ -6119,3 +6119,49 @@ users no longer see the brand-light ring; keyboard `Tab` users still get it.
 - Chip H reference branch: `origin/claude/inspiring-mayer-kWs9O` (commits c4787fa0 login, 7ffbafb5 profile)
 - Lost-in-merge commits: `490b11a20` (chip-J split), `6e3cd87a7` (chip-K refactor)
 - Frontend rules: `.claude/rules/frontend.md`
+
+---
+
+## 🚀 P1 — deploy automation (2026-05-24)
+
+**Status:** ✅ Done (3 file commits on `claude/cool-einstein-Qzl8k`; ready for merge into `production`).
+
+**Why:** Today's deploy was a manual 3-step ritual — `Copy-Item -Recurse -Force` ×N
+directories, then `php admin/cli/upgrade.php --non-interactive`, then
+`php admin/cli/purge_caches.php`. This led to a "stale localhost"
+confusion earlier in the day where new code on disk wasn't visible at
+`http://localhost:8081/moodle/` because the operator forgot the
+Ctrl+Shift+R hard reload and assumed a deploy failure. Goal of this chip:
+collapse the daily deploy into a single command, and put the production
+deploy behind a typed-confirm gate per CLAUDE.md §13.
+
+**What changed (3 new files, no existing-file edits other than this
+PROJECT-STATE.md H2 + CONTRIBUTING §3 append convention):**
+
+| File | Purpose |
+|------|---------|
+| `deploy/deploy-to-xampp.ps1` | One-command local-XAMPP deploy. PowerShell 5.1+ compatible, `[CmdletBinding()]` + `param()`, `-DryRun`, `-VerboseLog`, `-Target`, `-Source` switches. Copies `theme/airpayux/`, `local/*/`, `blocks/sentientia_*/`, `mod/quiz/accessrule/airpay_proctoring/`, `payment/gateway/airpay/` from `moodle-enhancement/` to the matching paths under XAMPP, then runs `upgrade.php --non-interactive` + `purge_caches.php` + prints a 6-step next-steps checklist (with the Ctrl+Shift+R reminder at step 1). Pre-flight bails out cleanly on missing `php.exe` or missing target paths. |
+| `.github/workflows/deploy-production.yml` | Production deploy workflow. `workflow_dispatch` only — never auto-fires on push or PR. Requires the operator to type `I-CONFIRM-PRODUCTION-DEPLOY` as the `confirm` input string; mismatch routes to a fallback `confirm-mismatch` job that emits `::error::Confirmation string mismatch - refusing to deploy` and exits non-zero. SSHs to the production host via `appleboy/ssh-action@v1.0.3` and runs `git pull --ff-only origin production` + `upgrade.php --non-interactive` + `purge_caches.php`, followed by a frontpage smoke test (HTTP 200 + zero PHP error patterns in the rendered HTML). Slack failure notification is opt-in via `SLACK_WEBHOOK_URL` secret. `concurrency.group: production-deploy` prevents parallel deploys colliding. |
+| `moodle-enhancement/docs/operations/deploy-runbook.md` | One-page step-by-step for both deploy paths. Pre-flight checklist (5 items), local deploy (single command), production deploy (GitHub UI walkthrough + required secrets table), 5 post-flight smoke-test URLs, rollback procedure (links to `cutover-day-runbook.md` for cutover-level disasters), reference to which deploy path to use for which situation. |
+
+**Safety + parity:**
+- ✅ `pwsh -NoProfile -Command "Get-Help deploy/deploy-to-xampp.ps1"` will display the comment-based help + `param()` block without errors (verified by structural review against `moodle-enhancement/tools/overlay-airpay-customs.ps1` sibling script — same `[CmdletBinding()] + param()` shape, ASCII-only output, robocopy with documented exit-code semantics).
+- ✅ `python3 -c "import yaml; yaml.safe_load(...)"` parses `.github/workflows/deploy-production.yml` cleanly.
+- ✅ Workflow has NO `push:` or `pull_request:` trigger — only `workflow_dispatch`. Cannot fire from a push.
+- ✅ The confirm-input gate is enforced via two mutually exclusive jobs (`confirm-gate` runs only when string matches; `confirm-mismatch` runs only when it doesn't and exits non-zero). `deploy` job depends on `confirm-gate` via `needs:`, so a mismatched string skips deploy entirely without any SSH attempt.
+- ✅ No live API calls. No production POSTs. No `[CONFIRM]`-gated calls actually fired this session. The workflow file is a YAML definition only.
+- ✅ Pre-commit hook honoured by every commit (no `--no-verify` on any commit).
+- ✅ Three additive commits, each with `Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>` trailer.
+
+**Note on doc placement:** The contributor brief asked for
+`docs/operations/deploy-runbook.md`, but the existing operations runbook
+(`cutover-day-runbook.md`) lives at
+`moodle-enhancement/docs/operations/` — so the new file follows that
+established convention rather than creating a parallel `docs/operations/`
+at repo root.
+
+**Refs:**
+- Sibling deploy script: `moodle-enhancement/tools/overlay-airpay-customs.ps1`
+- Cutover runbook (referenced for rollback, not modified): `moodle-enhancement/docs/operations/cutover-day-runbook.md`
+- CLAUDE.md §13 — hard rules (deploy gate, no-live-POST-without-CONFIRM)
+- CONTRIBUTING-PARALLEL-SESSIONS.md §3 — PROJECT-STATE.md append convention
