@@ -61,13 +61,13 @@ in real time. Tier 1 priority #3 on the Sentientia LMS roadmap; estimated
 
 | Phase | Scope | Status |
 |-------|-------|--------|
-| **E.0** | Foundation — schema + capabilities + privacy + ADR | ✅ **CURRENT** |
-| E.1 | Trainer UI — create session, manage slides, copy join code | pending |
-| E.2 | Audience UI — join by code, show current slide, submit response | pending |
-| E.3 | SSE realtime — slide_changed + response_added + session_ended events | pending |
-| E.4 | Multichoice slide type — bar chart | pending |
-| E.5 | Word cloud slide type — tag cloud | pending |
-| E.6 | Open-ended slide type — scrolling response list | pending |
+| **E.0** | Foundation — schema + capabilities + privacy + ADR | ✅ shipped |
+| E.1 | Trainer UI — create session, manage slides, copy join code | ✅ shipped (`trainer/`) |
+| E.2 | Audience UI — join by code, show current slide, submit response | ✅ shipped (`audience/`) |
+| E.3 | SSE realtime — slide_changed + response_added + session_ended events | ✅ shipped (`stream.php` + 3 AMD clients) |
+| E.4 | Multichoice slide type — bar chart | ✅ shipped (`chart_updater.js`) |
+| E.5 | Word cloud slide type — tag cloud | partial |
+| E.6 | Open-ended slide type — scrolling response list | partial |
 | E.7 | Rating slide type — 1-5 or 0-10 NPS | pending |
 | E.8 | Quiz slide type — right/wrong + leaderboard | pending |
 | E.9 | Ranking slide type — drag-to-order | pending |
@@ -154,3 +154,51 @@ Branch: `claude/quirky-dirac-ly2Mz`.
 Evidence: `docs/visual-evidence/2026-05-24/p0-followup-chip-E/README.md`.
 Verified: PHP lint clean across all touched files; node --check clean
 on both ES6 source and ES5 build; Hindi parity 264 = 264.
+
+---
+
+## Key files
+
+```
+local/sentientia_live/
+├── version.php                                  2026052401 / 0.1.1-alpha
+├── index.php                                    Plugin landing page
+├── stream.php                                   SSE endpoint (long-lived HTTP)
+├── trainer/                                     Trainer surface (Phase E.1)
+├── audience/                                    Audience surface (Phase E.2)
+├── classes/
+│   ├── session_manager.php                      Session CRUD + lifecycle
+│   ├── slide_manager.php                        Slide CRUD
+│   ├── participant_manager.php                  Anonymous join token handling
+│   ├── response_recorder.php                    Per-slide response writer
+│   ├── event_journal.php                        SSE event journal helper
+│   ├── output/                                  Renderer overrides
+│   ├── forms/                                   Trainer + slide forms
+│   └── privacy/                                 GDPR/DPDP provider
+├── amd/src/
+│   ├── audience_sse.js                          Audience SSE consumer
+│   ├── trainer_sse.js                           Trainer SSE consumer
+│   └── chart_updater.js                         Live bar-chart updater
+├── templates/                                   Trainer + audience + result panel
+├── db/
+│   ├── install.xml                              5 tables
+│   ├── access.php                               5 capabilities
+│   └── feature_flags.php                        9 flags (1 master + 1 SSE + 6 question type + anonymous)
+├── lang/
+│   ├── en/local_sentientia_live.php             264 keys
+│   └── hi/local_sentientia_live.php             264 keys (100% parity)
+└── tests/
+    ├── session_manager_test.php                 20 tests
+    └── event_journal_test.php                   9 tests (29 total)
+```
+
+## State card refresh — 2026-05-24
+
+P1 state-card pass: confirmed plugin still at `2026052401` /
+`0.1.1-alpha` after the a11y follow-up. Re-counted PHPUnit methods:
+session_manager 20 + event_journal 9 = 29 total. Confirmed 5 DB tables
+(sessions, slides, participants, responses, events), 5 capabilities
+(`:create`, `:run`, `:join`, `:respond`, `:manage_all`), 9 feature flags
+(master + realtime + 6 question types + anonymous). Phase ladder
+updated to reflect E.1-E.4 now shipped; E.5-E.6 partial; E.7-E.12
+pending. Added full Key Files inventory. 45 files total in plugin tree.

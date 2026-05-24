@@ -1,8 +1,9 @@
 # State Card — local_airpay_org
 **Component:** `local_airpay_org`
-**Version:** 1.0.0 (2026041600)
-**Status:** PHASE 1 COMPLETE — Code written, lint passes, ready for install + migration
+**Version:** 1.4.1 (2026052001) — Hindi top-up (P1 #54)
+**Status:** STABLE — installed + migrated; supports current production
 **Purpose:** Replaces BizLMS `local_costcenter` — Airpay-owned org hierarchy, tenant management, accesslib, branding
+**Last refreshed:** 2026-05-24 (P1 state-card pass)
 
 ---
 
@@ -105,8 +106,51 @@
 
 ## What's NOT Done Yet (Future Phases)
 
-- [ ] Phase 2: local_airpay_users (user management fork)
-- [ ] Phase 3: local_airpay_courses (course management fork)
+- [x] Phase 2: local_airpay_users — shipped (see its own state card)
+- [x] Phase 3: local_airpay_courses — shipped (see its own state card)
 - [ ] Phase 7: Capability migration (local/costcenter:* → local/airpay_org:*)
 - [ ] Phase 7: Remove BizLMS local_costcenter plugin
 - [ ] Web services (9 endpoints — deferred, not used by our code)
+
+---
+
+## Capabilities (6, post-2026-05-20)
+
+`local/airpay_org:` `view`, `manage`, `manage_multiorganizations`,
+`manage_ownorganization`, `manage_owndepartments`, `managetenant`
+(added with the per-tenant settings UI).
+
+## Tests (2 classes, 14 methods)
+
+- `accesslib_test.php` — 7 methods (BizLMS API compat)
+- `org_manager_test.php` — 7 methods (CRUD + tenant scope)
+
+## Top-level files (post-Phase 1)
+
+- `version.php`, `lib.php`, `settings.php`, `README.md`
+- `admin.php`, `tenant_settings.php` (admin surfaces)
+- `data_migration.php` (CLI: costcenter → airpay_org)
+- `cli/`, `amd/`, `templates/`, `db/`, `lang/`
+- `classes/` — `accesslib.php`, `org_manager.php`, `tenant_manager.php`,
+  `tenant_settings.php`, `branding_manager.php`, `external/`, `form/`,
+  `task/`, `privacy/`, `test/`
+
+## Feature flags
+
+None registered directly — the plugin is foundational; capability-based
+gating is sufficient.
+
+## State card refresh — 2026-05-24
+
+P1 state-card pass: bumped Current version `1.0.0 (2026041600)` →
+`1.4.1 (2026052001)`. Cumulative changes:
+
+- Phase 2 / Phase 3 successors (`local_airpay_users`, `local_airpay_courses`)
+  shipped and live — checked off in the future-phases list.
+- New capability `local/airpay_org:managetenant` added with the per-
+  tenant settings page (`tenant_settings.php` + class).
+- `cli/`, `amd/`, `admin.php`, `tenant_settings.php` added beyond the
+  Phase 1 inventory.
+- PHPUnit shipped: 2 classes, 14 methods.
+
+No DB schema drift (still 1 table). No feature flags registered.

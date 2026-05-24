@@ -1,9 +1,10 @@
 # State Card — local_airpay_courses
 **Component:** `local_airpay_courses`
-**Version:** 1.8.0 (2026051303)  — Sprint D
+**Version:** 1.11.1 (2026052003)  — Sprint D + Hindi top-ups
 **Status:** STABLE — admin + learner flows shipped + tested
 **Depends on:** local_airpay_org (Phase 1)
 **Purpose:** Airpay-owned course management, progress tracking, open_* field ownership, **cross-tenant sharing (Sprint C) + pull/request workflow (Sprint D)**
+**Last refreshed:** 2026-05-24
 
 ---
 
@@ -184,3 +185,65 @@ borrowed courses (`{{#is_borrowed}}…{{/is_borrowed}}`).
 |------|--------|
 | `theme/airpayux/core_renderer.php` | 2 BizLMS accesslib calls → airpay_courses/airpay_org, 4 URL refs → airpay_catalog |
 | `theme/airpayux/dashboard.php` | 1 URL ref → airpay_catalog |
+
+---
+
+## State card refresh — 2026-05-24
+
+P1 state-card pass: bumped Current version `1.8.0 (2026051303)` →
+`1.11.1 (2026052003)` (point releases through Hindi parity top-ups +
+Sprint D fixes). Cumulative changes since Sprint D:
+
+### DB tables (4 in install.xml)
+
+| Table | Source sprint |
+|-------|--------------|
+| `local_airpay_courses_tenant_share` | Sprint C (cross-tenant sharing) |
+| `local_airpay_courses_requests` | Sprint D (pull/request workflow) |
+| `local_airpay_courses_remind_sent` | follow-on (cron reminder de-duplication) |
+| `local_airpay_featured_courses` | featured-courses manager |
+
+### Capabilities (10 in db/access.php)
+
+`local/airpay_courses:` `view`, `manage`, `create`, `update`, `delete`,
+`enrol`, `visibility`, `share_to_tenant` (Sprint C), `request_course`
+(Sprint D), `approve_request` (Sprint D).
+
+### Top-level files (16 plus dirs)
+
+- `version.php`, `README.md`, `lib.php`, `settings.php`
+- Admin / share / request UI: `index.php`, `share.php`,
+  `browse_airpay.php`, `manage_requests.php`, `my_requests.php`,
+  `featured.php`
+- Bulk / CSV / export: `enrol_csv.php`, `bulk_unenrol.php`,
+  `exportcsv.php`, `enrolledusers.php`
+- `cli/` — production CLIs
+
+### classes/
+
+`course_fields.php`, `course_manager.php`, `sharing_manager.php`,
+`request_manager.php` (Sprint D), `featured_manager.php`,
+`enrol_csv_processor.php`, `event/` (audit events), `external/`
+(8+ WS classes), `form/`, `task/`, `privacy/`.
+
+### PHPUnit (5 test classes, 43 methods)
+
+- `crud_test.php` — 7 methods
+- `sharing_manager_test.php` — 15 methods (Sprint C)
+- `request_manager_test.php` — 14 methods (Sprint D)
+- `external/list_courses_test.php` — 5 methods
+- `external/enrol_deeplink_test.php` — 2 methods
+
+### Feature flags
+
+None registered directly — this plugin pre-dates the feature-flag
+mandate. Sharing + request workflows ship behind capability gates +
+tenant scoping rather than a global flag.
+
+### Open items
+
+- [ ] Migrate `:share_to_tenant` audit into the central feature-flag
+      switchboard if multi-customer rollout demands per-customer toggles
+- [ ] WS endpoints for `featured.php` (currently page-only)
+- [ ] Bulk-tenant-share dialog for the catalog admin (single course →
+      N tenants in one click; currently one-by-one via `share.php`)

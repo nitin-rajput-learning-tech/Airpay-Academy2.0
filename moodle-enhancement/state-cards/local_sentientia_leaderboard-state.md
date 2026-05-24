@@ -193,7 +193,8 @@ flip) so a stale opted-out flag can never linger.
 | `optout_manager_test` | Reversibility, idempotency, per-customer isolation, bulk fetch |
 | `event_journal_test` | Write/read round-trip, last_event_id filter, board filter, retention purge, latest_event_id |
 
-Total: 4 test classes, ~30 test methods covering:
+Total: 4 test classes, 31 test methods (ranking_engine 12, optout_manager 7,
+event_journal 6, board_manager 6) covering:
 - ✅ Ranking correctness (1-2-2-4 competition format)
 - ✅ Tenant scope on every board type
 - ✅ Opt-out filter on learner read; bypass on `:viewall`
@@ -259,3 +260,20 @@ php C:\xampp\htdocs\moodle5\public\admin\cli\upgrade.php --non-interactive
 php C:\xampp\htdocs\moodle5\public\admin\cli\purge_caches.php
 # Browser: Ctrl+Shift+R on Dashboard, add block, choose a board.
 ```
+
+---
+
+## State card refresh — 2026-05-24
+
+P1 state-card pass: confirmed plugin still at `2026052400` /
+`0.1.0-alpha` after the merge wave. Re-counted PHPUnit methods:
+ranking_engine 12 + optout_manager 7 + event_journal 6 +
+board_manager 6 = 31 total (previously listed as "~30"). Confirmed
+4 DB tables (`lb_boards`, `lb_entries`, `lb_optouts`, `lb_events`),
+4 capabilities (`:view`, `:manageboard`, `:promoteboard`, `:viewall`),
+6 feature flags (master + realtime + 3 per-type + opt-out UI), 3 REST
+WS functions, 2 scheduled tasks, 4 frontend surfaces (block, view,
+admin index, preferences). Companion block plugin
+`block_sentientia_leaderboard` shipped same wave — see its own state
+card. Master flag `sentientia.leaderboards.enabled` still default OFF;
+plugin renders nothing on a vanilla install.
