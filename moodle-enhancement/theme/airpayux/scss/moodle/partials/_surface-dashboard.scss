@@ -119,6 +119,25 @@
    tokens-aware .airpay-stat-card component from
    _components-stat-card.scss. See style guide for usage. */
 
+/* Welcome header — compact greeting block used by admin / manager / learner
+   variants in dashboard.mustache. Replaces the inline-style avalanche
+   (P0 #5 of PLATFORM-VISUAL-AUDIT-2026-05-24). The full hero banner above
+   (.airpay-dash__welcome) is a separate design used elsewhere. */
+.airpay-dash__welcome-header {
+    margin-bottom: var(--ap-space-5);
+}
+.airpay-dash__welcome-header__title {
+    font-size: var(--ap-text-2xl);
+    font-weight: var(--ap-weight-bold);
+    color: var(--ap-color-text-primary);
+    margin: 0;
+}
+.airpay-dash__welcome-header__subtitle {
+    font-size: var(--ap-text-sm);
+    color: var(--ap-color-text-secondary);
+    margin: var(--ap-space-1) 0 0;
+}
+
 /* Section margins — kept here because .airpay-dash__section is the
    outer wrapper used by every dashboard section. The header bits
    (.airpay-dash__section-header / __title / __link) moved to

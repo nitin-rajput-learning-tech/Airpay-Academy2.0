@@ -169,20 +169,20 @@
         <div class="airpay-dash">
 
             {{! Welcome header — all roles }}
-            <div class="airpay-dash__welcome-header" style="margin-bottom: 20px;">
+            <div class="airpay-dash__welcome-header">
                 {{#isadmin}}
-                <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--ap-color-text-primary); margin: 0;">Welcome back, {{firstname}}</h2>
-                <p style="font-size: 0.875rem; color: var(--ap-color-text-secondary); margin: 4px 0 0;">
+                <h2 class="airpay-dash__welcome-header__title">Welcome back, {{firstname}}</h2>
+                <p class="airpay-dash__welcome-header__subtitle">
                     {{#tenant_scope}}{{tenant_scope}} &mdash; {{/tenant_scope}}Platform overview and system health
                 </p>
                 {{/isadmin}}
                 {{#ismanager}}{{^isadmin}}
-                <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--ap-color-text-primary); margin: 0;">Welcome, {{firstname}}</h2>
-                <p style="font-size: 0.875rem; color: var(--ap-color-text-secondary); margin: 4px 0 0;">Team overview and compliance status</p>
+                <h2 class="airpay-dash__welcome-header__title">Welcome, {{firstname}}</h2>
+                <p class="airpay-dash__welcome-header__subtitle">Team overview and compliance status</p>
                 {{/isadmin}}{{/ismanager}}
                 {{^isadmin}}{{^ismanager}}
-                <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--ap-color-text-primary); margin: 0;">Welcome back, {{firstname}}!</h2>
-                <p style="font-size: 0.875rem; color: var(--ap-color-text-secondary); margin: 4px 0 0;">Continue where you left off and keep building your skills</p>
+                <h2 class="airpay-dash__welcome-header__title">Welcome back, {{firstname}}!</h2>
+                <p class="airpay-dash__welcome-header__subtitle">Continue where you left off and keep building your skills</p>
                 {{/ismanager}}{{/isadmin}}
             </div>
 
