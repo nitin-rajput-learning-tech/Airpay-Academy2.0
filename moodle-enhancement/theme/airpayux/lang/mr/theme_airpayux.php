@@ -155,3 +155,13 @@ $string['privacy:drawerblockclosed'] = 'ब्लॉक ड्रॉवर ब�
 $string['privacy:drawerblockopen'] = 'ब्लॉक ड्रॉवर उघडा आहे.';
 $string['privacy:drawernavclosed'] = 'नेव्हिगेशन ड्रॉवर बंद आहे.';
 $string['privacy:drawernavopen'] = 'नेव्हिगेशन ड्रॉवर उघडा आहे.';
+
+// P0 #7 (2026-05-24) — close 3-string parity gap vs en pack.
+// P0 borrow #5 (Moodle 5.2) — OAuth2 button text. Used by
+// templates/core/loginform.mustache identity-provider list.
+$string['signinwithidentityprovider'] = 'किंवा यांच्याद्वारे साइन इन करा';
+
+// P0 borrow #14 (Moodle 5.2) — extra sort options on block_myoverview
+// "My Courses" dropdown.
+$string['sortbystartdate'] = 'कोर्स सुरुवात तारीख';
+$string['sortbyenddate']   = 'कोर्स समाप्ती तारीख';
