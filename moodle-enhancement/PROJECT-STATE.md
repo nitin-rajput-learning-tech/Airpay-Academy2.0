@@ -6119,3 +6119,92 @@ users no longer see the brand-light ring; keyboard `Tab` users still get it.
 - Chip H reference branch: `origin/claude/inspiring-mayer-kWs9O` (commits c4787fa0 login, 7ffbafb5 profile)
 - Lost-in-merge commits: `490b11a20` (chip-J split), `6e3cd87a7` (chip-K refactor)
 - Frontend rules: `.claude/rules/frontend.md`
+
+---
+
+## 🌐 Locale parity restored — kn+mr+sw at 178/178 (2026-05-24)
+
+**Commits (on `claude/lucid-dirac-kj3pj`):**
+- `91bc720e` lang(kn): close 13-key gap from chip-B nav/footer additions
+- `cc834a81` lang(mr): close 13-key gap from chip-B nav/footer additions
+- `a6a996c8` lang(sw): close 13-key gap from chip-B nav/footer additions
+- (version bump for v1.0.36-beta + this PROJECT-STATE.md entry — commit follows)
+
+**Scope:** `theme/airpayux/lang/{kn,mr,sw}/theme_airpayux.php`.
+
+**Problem:** Post the 18-chip audit-closure merge wave, locale key
+counts diverged. Chip B's nav/a11y/footer i18n landed in en+hi on
+2026-05-24 (10 nav/a11y + 3 footer strings), but chip F had already
+closed the previous parity gap on kn/mr/sw against the *153-key*
+baseline. Result: en+hi=178, kn/mr/sw=165 — a fresh 13-key gap.
+
+**Before:**
+```
+en: 178   hi: 178   kn: 165   mr: 165   sw: 165
+```
+
+**After (verified with `awk '/^\\$string\\[/{print $2}' | sort | wc -l`):**
+```
+en: 178   hi: 178   kn: 178   mr: 178   sw: 178
+```
+
+**Keys added per locale (identical 13 keys, three locales):**
+
+Primary navbar (chip-B P0 #3 follow-up — 5 keys):
+- `nav_dashboard`, `nav_courses`, `nav_catalog`, `nav_profile`, `nav_home`
+
+Accessibility (chip-B P0 #3 follow-up — 3 keys):
+- `a11y_search`, `a11y_usermenu`, `a11y_mobilemenu`
+
+Footer (chip-B P0 #4 follow-up — 5 keys):
+- `footer_privacy`, `footer_terms`, `footer_help`, `footer_contact`, `footer_copyright`
+
+**Translation choices:**
+
+| Key | kn (ಕನ್ನಡ) | mr (मराठी) | sw (Latin) |
+|-----|------------|------------|-------------|
+| nav_dashboard | ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ | डॅशबोर्ड | Dashibodi |
+| nav_courses | ನನ್ನ ಕೋರ್ಸ್‌ಗಳು | माझे कोर्सेस | Kozi Zangu |
+| nav_catalog | ಕ್ಯಾಟಲಾಗ್ | कॅटलॉग | Katalogi |
+| nav_profile | ಪ್ರೊಫೈಲ್ | प्रोफाइल | Wasifu |
+| nav_home | ಮುಖಪುಟ | होम | Nyumbani |
+| a11y_search | ಕೋರ್ಸ್‌ಗಳು, ಜನರು, ಕಂಟೆಂಟ್ ಹುಡುಕಿ | कोर्सेस, लोक, कंटेंट शोधा | Tafuta kozi, watu, maudhui |
+| a11y_usermenu | ಬಳಕೆದಾರ ಮೆನು | वापरकर्ता मेनू | Menyu ya mtumiaji |
+| a11y_mobilemenu | ಮೊಬೈಲ್ ಮೆನು | मोबाइल मेनू | Menyu ya simu |
+| footer_privacy | ಗೌಪ್ಯತೆ | प्रायव्हसी | Faragha |
+| footer_terms | ನಿಯಮಗಳು | अटी आणि नियम | Masharti |
+| footer_help | ಸಹಾಯ | मदत | Msaada |
+| footer_contact | ಸಂಪರ್ಕಿಸಿ | संपर्क | Mawasiliano |
+| footer_copyright | `&copy; 2026 ಏರ್‌ಪೇ ಪೇಮೆಂಟ್ ಸರ್ವಿಸಸ್ ಪ್ರೈ. ಲಿ.` | `&copy; 2026 एअरपे पेमेंट सर्व्हिसेस प्रा. लि.` | `&copy; 2026 airpay payment services pvt. ltd.` |
+
+Brand name handling mirrors existing precedent:
+- **kn** transliterates `airpay` → `ಏರ್‌ಪೇ` (matches `choosereadme` line 19)
+- **mr** transliterates `airpay` → `एअरपे` (matches `choosereadme` line where Marathi entry is set)
+- **sw** keeps the Latin company string verbatim (matches the rest of the
+  sw pack which mixes English brand names with localized prose)
+
+**Placement:** Each locale received the new keys between the
+`sortbyenddate` block and the F-13 chip-G welcome-banner block, in
+two H2-comment-headed groups (`P0 #3 follow-up — primary navbar i18n`
+and `P0 #4 follow-up — footer i18n`) mirroring en/hi ordering exactly.
+This keeps the file sectioning byte-for-byte alignable with en+hi for
+future parity audits.
+
+**Safety + parity:**
+- ✅ `php -l` clean on all three lang files + `version.php`
+- ✅ `diff` of sorted key lists against en returns empty for kn, mr, sw
+- ✅ Final counts: `for l in en hi kn mr sw; do echo "$l: $(grep -c '^\\$string\\[' …); done` → all 178
+- ✅ No pre-commit hooks skipped (no `--no-verify`)
+- ✅ No `--amend`, no `--no-gpg-sign`
+- ✅ Out-of-scope files untouched: en + hi lang packs, all plugin lang
+  files, all PHP/SCSS/mustache outside `version.php`
+- ✅ Each commit co-authored with `Claude Opus 4.7 (1M context)` per `CLAUDE.md` §14
+- ✅ Each commit pushed to `origin/claude/lucid-dirac-kj3pj` immediately
+  after creation
+
+**Refs:**
+- Audit report: `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md` §2.8 (original locale parity audit)
+- Chip B reference: production HEAD `4f7047ee9` (en+hi 178 keys, established 2026-05-24)
+- Chip F reference: previous kn/mr/sw top-up against 153-key baseline
+- Parallel-session convention: `docs/CONTRIBUTING-PARALLEL-SESSIONS.md` §7 (Hindi parity mandate extended to all locales)
+- Hard rule (CLAUDE.md §13): "NEVER break Airpay Academy current production behaviour" — closed gap is additive only; no en/hi key was modified

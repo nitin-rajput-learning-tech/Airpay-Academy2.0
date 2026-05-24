@@ -225,7 +225,7 @@ defined('MOODLE_INTERNAL') || die();
 // during chip-J + chip-K merges. Re-added 12 selectors across 3
 // surface partials (login, user, grade-report). 4 selectors in
 // _bizlms-admin.scss still on backlog. WCAG 2.1.1 + 2.4.7.
-$plugin->version   = 2026052404;
+$plugin->version   = 2026052405;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
@@ -244,7 +244,7 @@ $plugin->maturity  = MATURITY_BETA;
 // (83% reduction). Section 1 wrapped under body#page-login-index for
 // ID-specificity. Bundled bugfix: dark-mode selectors used descendant
 // combinator (never fired since #page-X IS body); now chained.
-$plugin->release   = '1.0.35-beta';  // P0 #1+#2+#3+#4+#5+#6+#7+#9 + F-13 + P1 #10+#11+#12+#13+#14+#17 + P2 #18+#19+#20+#21+#23 + cart_badge audit + P1 #12 re-apply
+$plugin->release   = '1.0.36-beta';  // P0 #1+#2+#3+#4+#5+#6+#7+#9 + F-13 + P1 #10+#11+#12+#13+#14+#17 + P2 #18+#19+#20+#21+#23 + cart_badge audit + P1 #12 re-apply + kn/mr/sw 13-key parity restore
 // P1 #10 chip-J (2026-05-24) — _surface-profile.scss (2,507 lines)
 // decomposed into 4 per-surface partials: _surface-user, _surface-badges,
 // _surface-grade-report, _surface-calendar. Admin fragments moved to
