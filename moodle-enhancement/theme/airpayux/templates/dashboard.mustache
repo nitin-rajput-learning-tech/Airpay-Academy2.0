@@ -315,23 +315,31 @@
 
             {{! Chart.js initialization.
 
-                P1 #17 / F-14 audit fix (2026-05-24, wave3-chip-N):
-                the external CDN <script src="https://cdn.jsdelivr.net/…">
-                was replaced with theme_airpayux/chart_loader, an AMD
-                module that delegates to Moodle's bundled core/chartjs
+                P1 #17 / F-14 follow-up (wave3-chip-N + this chip):
+                charts boot through theme_airpayux/chart_loader, an
+                AMD wrapper around Moodle's bundled core/chartjs
                 (Chart.js v4.4.2 in lib/amd/src/chartjs-lazy.js). The
                 loader exposes the constructor on window.Chart so the
-                init code below keeps using `new Chart(...)` unchanged
-                — only the loader changed. layout/dashboard.php also
-                pre-warms the module via $PAGE->requires->js_call_amd
-                so it's in the AMD cache before this inline require()
-                resolves. See:
+                init code below uses `new Chart(...)` unchanged.
+
+                The require() call sits inside Moodle's `js` section
+                helper (open/close section tags below) so Moodle queues
+                it via $PAGE->requires->js_amd_inline() — emitted once
+                at end-of-body through the standard JS collection path,
+                not as an in-place inline script tag. That lets CSP
+                deployments tighten `script-src` (the theme leaves no
+                in-place inline script element on the dashboard surface;
+                chart_loader is the SOLE Chart.js loader, ready for a
+                nonce-or-hash strict CSP). layout/dashboard.php also
+                pre-warms the loader via $PAGE->requires->js_call_amd
+                so the module is in the AMD cache by the time this
+                block resolves. See:
                   amd/src/chart_loader.js                — source
                   amd/build/chart_loader.min.js          — built
                   docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md F-14
             }}
             {{#hascharts}}
-            <script>
+            {{#js}}
             require(['theme_airpayux/chart_loader'], function() {
                 // Enrolment Trend Bar Chart
                 var ctx1 = document.getElementById('airpay-chart-enrolments');
@@ -377,7 +385,7 @@
                     });
                 }
             });
-            </script>
+            {{/js}}
             {{/hascharts}}
 
             {{! ── Compliance Summary + Top Courses (two-column) ── }}

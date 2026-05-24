@@ -225,7 +225,25 @@ defined('MOODLE_INTERNAL') || die();
 // during chip-J + chip-K merges. Re-added 12 selectors across 3
 // surface partials (login, user, grade-report). 4 selectors in
 // _bizlms-admin.scss still on backlog. WCAG 2.1.1 + 2.4.7.
-$plugin->version   = 2026052404;
+//
+// P2 #17 follow-up chip-RB4pr (2026-05-24) — CSP tightening on the
+// dashboard chart surface. The previous chip (wave3-chip-N) moved the
+// Chart.js dependency from a cdn.jsdelivr.net <script src=…> to the
+// new theme_airpayux/chart_loader AMD wrapper, but left the chart
+// initialiser in an in-place inline <script>…</script> block. This
+// chip migrates that inline block to Moodle's `{{#js}}` section
+// helper, so the chart init code is queued via
+// $PAGE->requires->js_amd_inline() and emitted once at end-of-body
+// through the standard JS collection path. After this chip, the
+// dashboard.mustache no longer carries any in-place inline <script>
+// tag — chart_loader is the SOLE Chart.js loader. Closes the
+// "CSP-strict-no-unsafe-inline deeper refactor" footnote called out
+// in docs/visual-evidence/2026-05-24/wave3-chip-N/README.md §3 (Test
+// plan "CSP-strict simulation"). Chart configuration logic
+// byte-identical to pre-chip — only the wrapper flipped from
+// <script> to `{{#js}}`. Cache key bump invalidates the cached
+// compiled template so the next request re-renders dashboard.mustache.
+$plugin->version   = 2026052405;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
@@ -244,7 +262,7 @@ $plugin->maturity  = MATURITY_BETA;
 // (83% reduction). Section 1 wrapped under body#page-login-index for
 // ID-specificity. Bundled bugfix: dark-mode selectors used descendant
 // combinator (never fired since #page-X IS body); now chained.
-$plugin->release   = '1.0.35-beta';  // P0 #1+#2+#3+#4+#5+#6+#7+#9 + F-13 + P1 #10+#11+#12+#13+#14+#17 + P2 #18+#19+#20+#21+#23 + cart_badge audit + P1 #12 re-apply
+$plugin->release   = '1.0.36-beta';  // P0 #1+#2+#3+#4+#5+#6+#7+#9 + F-13 + P1 #10+#11+#12+#13+#14+#17 + P2 #18+#19+#20+#21+#23 + cart_badge audit + P1 #12 re-apply + chip-RB4pr CSP tightening
 // P1 #10 chip-J (2026-05-24) — _surface-profile.scss (2,507 lines)
 // decomposed into 4 per-surface partials: _surface-user, _surface-badges,
 // _surface-grade-report, _surface-calendar. Admin fragments moved to

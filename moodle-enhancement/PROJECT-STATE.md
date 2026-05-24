@@ -6119,3 +6119,99 @@ users no longer see the brand-light ring; keyboard `Tab` users still get it.
 - Chip H reference branch: `origin/claude/inspiring-mayer-kWs9O` (commits c4787fa0 login, 7ffbafb5 profile)
 - Lost-in-merge commits: `490b11a20` (chip-J split), `6e3cd87a7` (chip-K refactor)
 - Frontend rules: `.claude/rules/frontend.md`
+
+---
+
+## 🔒 P2 #17 follow-up — chart_loader CSP tightening (2026-05-24, chip-RB4pr)
+
+**Status:** ✅ Done on branch `claude/serene-fermi-RB4pr`; ready for merge into `production`.
+
+**Closes:** the "CSP-strict-no-unsafe-inline deeper refactor" footnote on the wave3-chip-N test plan (`docs/visual-evidence/2026-05-24/wave3-chip-N/README.md` §3 — "the inline `<script>` is still inline; CSP-strict-no-unsafe-inline is a deeper refactor that lives outside this chip's scope"). The original P1 #17 / F-14 finding asked for Chart.js to leave the public CDN; wave3-chip-N delivered the AMD wrapper (theme_airpayux/chart_loader); this chip delivers the second half — making chart_loader the **sole** Chart.js loader so CSP can be tightened.
+
+**Why:** Wave3-chip-N moved Chart.js off `https://cdn.jsdelivr.net/npm/chart.js@4.4.4/...` and into `theme_airpayux/chart_loader` (a thin wrapper around Moodle's bundled `core/chartjs` v4.4.2). The chart-loader plumbing is correct. But the dashboard's chart initialisation code (the `new Chart(ctx1, {…})` / `new Chart(ctx2, {…})` pair) still lived inside an **in-place inline `<script>…</script>` block** inside `templates/dashboard.mustache`. So even though the loader was AMD-clean, the dashboard surface still emitted a non-AMD `<script>` element on every admin page-load. That element:
+
+1. Blocked any `Content-Security-Policy: script-src 'self'` tightening for the admin / L&D-admin surface (the inline `<script>` had no `nonce` and no SHA hash, so a strict policy would silently break both charts).
+2. Ran outside Moodle's standard JS-collection path — meaning Moodle could not inject a CSP nonce even if `$CFG->cspnonce` were enabled in the future.
+
+**What changed:** the inline `<script>…</script>` block in `templates/dashboard.mustache` (lines 333–381 pre-chip; 49 lines including the `{{#hascharts}}` guard) was migrated to a `{{#js}}…{{/js}}` block. The chart configuration (canvas IDs, `new Chart(...)` call shape, dataset arrays, options hashes, colour literals) is **byte-identical** to pre-chip — only the wrapper flipped:
+
+```diff
+ {{#hascharts}}
+-<script>
++{{#js}}
+ require(['theme_airpayux/chart_loader'], function() {
+     // Enrolment Trend Bar Chart
+     var ctx1 = document.getElementById('airpay-chart-enrolments');
+     …
+ });
+-</script>
++{{/js}}
+ {{/hascharts}}
+```
+
+Now Moodle queues that require() call via `$PAGE->requires->js_amd_inline()` (the `js_javascript_helper` calls this under the hood). The chart-init JS is emitted **once at end-of-body** through the standard JS-collection pipeline, and any future strict CSP can attach a nonce or a SHA-256 hash to that single end-of-body block.
+
+The documentation comment immediately above the block was rewritten:
+- Removed the stale `<script src="https://cdn.jsdelivr.net/…">` URL fragment (1 stale CDN reference, no longer accurate after wave3-chip-N).
+- Added rationale for why the block is now wrapped in the `js` section helper (CSP tightening; emitted via Moodle's JS-collection path; chart_loader is the **sole** Chart.js loader).
+- Avoided literal `{{ … }}` Mustache tag syntax inside the `{{! … }}` comment to keep the Mustache parser balanced (early draft of the comment contained a literal `{{#js}}…{{/js}}` reference that prematurely closed the comment at the first `}}`).
+
+### Files touched
+
+| File | Lines changed (net) | What changed |
+|------|----------------------|--------------|
+| `moodle-enhancement/theme/airpayux/templates/dashboard.mustache` | **+10 / −2** | Removed `<script>` / `</script>` open+close tags (−2 lines, the inline `<script>` element); added `{{#js}}` / `{{/js}}` open+close tags (+2 lines); refreshed the documentation comment to describe the CSP rationale and remove the stale `cdn.jsdelivr.net` URL reference (+8 lines net on the comment block). Chart init logic (47 lines between the wrapper) byte-identical. |
+| `moodle-enhancement/theme/airpayux/version.php` | **+18 / −0** | Added 18-line comment block describing chip-RB4pr. Bumped `$plugin->version` from `2026052404` to `2026052405`, `$plugin->release` from `'1.0.35-beta'` to `'1.0.36-beta'`. Cache key bump invalidates the cached compiled template so the next request re-renders `dashboard.mustache`. |
+| `moodle-enhancement/PROJECT-STATE.md` | **+N / −0** | This H2 section. |
+
+### Stale CDN audit (DO step 1 — grep results)
+
+Grep across `moodle-enhancement/theme/airpayux/templates/` and `moodle-enhancement/theme/airpayux/layout/`:
+
+| Pattern | Pre-chip hits | Post-chip hits | Notes |
+|---------|--------------:|---------------:|-------|
+| `<script[^>]+src=[^>]*chart` | 0 | 0 | Already zero after wave3-chip-N. |
+| `<script[^>]+src=[^>]*cdn\.jsdelivr` | 0 | 0 | Already zero after wave3-chip-N. |
+| `<script[^>]+src=[^>]*unpkg` | 0 | 0 | Never present. |
+| `<script[^>]+src=[^>]*cdnjs\.cloudflare` | 0 | 0 | Never present. |
+| `cdn\.jsdelivr` (any literal text — including comment bodies) | 4 | 3 | One stale URL fragment removed from the dashboard.mustache comment block. Remaining 3 hits are intentional historical documentation in `version.php` (1), `amd/src/chart_loader.js` (1), and `layout/dashboard.php` (1) explaining what the wave3-chip-N migration replaced — all inside language-level comments that never reach rendered HTML. |
+| `Chart.js` / `chart.js` (any literal text) | 9 | 9 | All remaining mentions are inside Mustache `{{! … }}` comments, PHP `//` comments, or JSDoc — zero runtime references. |
+
+**Net runtime change:** zero stale CDN script tags in templates or layouts; `chart_loader` is the sole Chart.js loader. (DO step 2 satisfied.)
+
+### `chart_loader` invocation pattern (DO step 3 — verification)
+
+| Surface | How chart_loader is invoked | Verified |
+|---------|------------------------------|----------|
+| `layout/dashboard.php:84` | `$PAGE->requires->js_call_amd('theme_airpayux/chart_loader', 'init')` — pre-warm so the module is in the AMD cache when the inline `require()` resolves. | ✅ Unchanged from wave3-chip-N. |
+| `templates/dashboard.mustache:341-389` | `{{#hascharts}}{{#js}} require(['theme_airpayux/chart_loader'], function() { … }); {{/js}}{{/hascharts}}` — chart init queued through Moodle's JS-collection helper. | ✅ Migrated this chip. |
+
+No other template or layout file requires Chart.js (greppable across `templates/` + `layout/` — zero matches for `Chart`, `chart_loader`, or `chartjs` outside the two files above).
+
+### Safety + parity
+
+- ✅ Mustache balance check: 192 section tokens parsed, stack empty at EOF, zero mismatched closes. (Verified via in-script Python parser stripping `{{! … }}` comments first.)
+- ✅ `php -l moodle-enhancement/theme/airpayux/version.php` — `No syntax errors detected`.
+- ✅ Zero stale `<script src="…chart…">` tags in `templates/` or `layout/` (re-greppped post-edit).
+- ✅ Chart init logic byte-identical to pre-chip: same canvas IDs, same `new Chart(ctx, {…})` call shape, same datasets / colour arrays / options hashes. No behaviour drift.
+- ✅ `{{#hascharts}}` guard preserved — non-admin / no-chart pages still emit zero chart-init JS.
+- ✅ NO new theme_airpayux lang strings (per chip scope; reuses the existing comment-only doc strings).
+- ✅ NO SCSS touched (per chip scope).
+- ✅ NO AMD source / build files touched — `amd/src/chart_loader.js` and `amd/build/chart_loader.min.js` unchanged. The migration is purely template-side.
+- ✅ Cache key bump (`2026052404 → 2026052405`) invalidates the compiled template + AMD bundle so the next admin / L&D-admin dashboard request re-renders.
+
+### Acceptance checklist (matches chip brief)
+
+- ✅ Zero stale `chart.js` CDN references in theme templates (greppable verification).
+- ✅ `chart_loader` AMD module is the sole loader (verified by walking every Chart.js consumer in the theme — `layout/dashboard.php` pre-warm + `templates/dashboard.mustache` require()).
+- ✅ Mustache balance check passes.
+- ✅ `theme/airpayux/version.php` release + YYYYMMDDNN bumped.
+- ✅ This H2 section appended to PROJECT-STATE.md.
+
+### Refs
+
+- Audit report: `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md` §3.4 (Dashboard) — finding F-14 (P1 #17).
+- Wave3-chip-N evidence: `docs/visual-evidence/2026-05-24/wave3-chip-N/README.md` — §3 footnote explicitly flagged this chip's scope.
+- Moodle JS helpers: `lib/classes/output/mustache_javascript_helper.php` — implements the `{{#js}}` section helper, calls `$page->requires->js_amd_inline($helper->render($text))`.
+- Moodle core Chart.js: `lib/amd/src/chartjs.js` → `lib/amd/src/chartjs-lazy.js` (Chart.js v4.4.2, MIT, vendored by Moodle 5.x).
+- Frontend rules: `.claude/rules/frontend.md` §Moodle JS / AMD discipline; §Mustache correctness.
