@@ -241,6 +241,74 @@
     color: var(--ap-color-success);
 }
 
+/* Progress-summary panel — learner dashboard "Overall Completion" card.
+   The .ap-progress-ring sits to the left, with a title + meta caption
+   on the right. Replaces 4 inline style attrs (line 430 wrapper, 439
+   label override, 442 title hex, 443 meta hex). */
+.airpay-dash__section--progress-summary {
+    display: flex;
+    align-items: center;
+    gap: var(--ap-space-6);
+    padding: var(--ap-space-5);
+    margin-top: var(--ap-space-4);
+}
+.airpay-dash__progress-summary__title {
+    font-size: var(--ap-text-base);
+    color: var(--ap-color-text-primary);
+}
+.airpay-dash__progress-summary__meta {
+    font-size: var(--ap-text-sm);
+    color: var(--ap-color-text-secondary);
+}
+/* Larger label variant for the progress-ring percent on the dashboard.
+   The base .ap-progress-ring__label rule in _ui-polish.scss sets 0.75rem;
+   the dashboard wants 1.1rem for legibility next to the welcome bar. */
+.ap-progress-ring__label--lg {
+    font-size: 1.1rem;
+}
+
+/* Gamification row — learner dashboard "Points + Badges" + "Streak +
+   Leaderboard" two-column block. Replaces 9 inline style attrs (line
+   453 wrapper grid, 457/458/475/510 dynamic level_color, 468/485 fire
+   icon, 500 leaderboard spacing, 502 trophy icon).
+
+   Dynamic per-user values flow through CSS custom properties set on
+   the affected element by the template:
+     --level-color    : hex from points_manager.php lookup table
+     --level-progress : percent 0–100 (rendered with trailing %)
+
+   These are server-controlled hex strings, not user input, so the
+   custom-property carrier is purely a presentation channel. */
+.airpay-dash__gamification-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--ap-space-4);
+}
+.airpay-gamification__level {
+    border-color: var(--level-color, var(--ap-color-border));
+}
+.airpay-gamification__level .airpay-gamification__level-badge {
+    background: var(--level-color, var(--ap-color-primary));
+}
+.airpay-gamification__progress-bar {
+    width: var(--level-progress, 0%);
+    background: var(--level-color, var(--ap-color-primary));
+}
+.airpay-gamification__leaderboard--spaced {
+    margin-top: var(--ap-space-3);
+}
+.airpay-gamification__leaderboard-avatar {
+    background: var(--level-color, var(--ap-color-primary));
+}
+
+/* Decorative icon colours — fire (streak) + trophy (leaderboard).
+   Held in the dashboard partial rather than the global token set
+   because they are gamification-specific semantics, not brand
+   primitives. If a customer-N rebrand needs them, override these two
+   rules in their customer-scoped stylesheet. */
+.airpay-dash__streak-icon  { color: #f97316; }
+.airpay-dash__trophy-icon  { color: #d97706; }
+
 /* Course progress cards — removed Phase B0 iter 3. Continue Learning
    tiles now use the tokens-aware .airpay-course-card component from
    _components-course-card.scss with its mobile-responsive

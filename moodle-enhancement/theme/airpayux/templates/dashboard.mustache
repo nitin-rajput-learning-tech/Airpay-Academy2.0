@@ -427,7 +427,7 @@
 
             {{! Progress Ring — overall completion percentage }}
             {{#has_progress_ring}}
-            <div class="airpay-dash__section" style="display:flex; align-items:center; gap:24px; padding:20px; margin-top:16px;">
+            <div class="airpay-dash__section airpay-dash__section--progress-summary">
                 <div class="ap-progress-ring">
                     <svg width="88" height="88" viewBox="0 0 80 80">
                         <circle class="ap-progress-ring__track" cx="40" cy="40" r="36"/>
@@ -436,26 +436,31 @@
                                 stroke-dasharray="{{progress_ring.circumference}}"
                                 stroke-dashoffset="{{progress_ring.offset}}"/>
                     </svg>
-                    <span class="ap-progress-ring__label" style="font-size:1.1rem;">{{progress_ring.percent}}%</span>
+                    <span class="ap-progress-ring__label ap-progress-ring__label--lg">{{progress_ring.percent}}%</span>
                 </div>
-                <div>
-                    <strong style="font-size:1rem; color:#1a1a2e;">Overall Completion</strong><br>
-                    <span style="font-size:0.85rem; color:#5a6070;">
+                <div class="airpay-dash__progress-summary__text">
+                    <strong class="airpay-dash__progress-summary__title">Overall Completion</strong><br>
+                    <span class="airpay-dash__progress-summary__meta">
                         {{stats.completed}} of {{stats.enrolled}} courses completed
                     </span>
                 </div>
             </div>
             {{/has_progress_ring}}
 
-            {{! Gamification Widgets — Points, Streaks, Leaderboard }}
+            {{! Gamification Widgets — Points, Streaks, Leaderboard.
+                Dynamic per-user values (level_color, level_progress) flow
+                via CSS custom properties on the affected element, so the
+                cascade stays in SCSS. The level_color hex comes from
+                local_airpay_gamification/classes/points_manager.php
+                (5-step server-side lookup table — not user input). }}
             {{#hasgamification}}
             <div class="airpay-dash__section">
-                <div class="airpay-dash__gamification-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="airpay-dash__gamification-row">
                     {{! Points + Badges Summary }}
                     <div class="airpay-gamification">
                         <div class="airpay-gamification__header">
-                            <div class="airpay-gamification__level" style="border-color: {{gamification.level_color}};">
-                                <span class="airpay-gamification__level-badge" style="background: {{gamification.level_color}};">
+                            <div class="airpay-gamification__level" style="--level-color: {{gamification.level_color}};">
+                                <span class="airpay-gamification__level-badge">
                                     Lv.{{gamification.level_number}}
                                 </span>
                                 <div class="airpay-gamification__level-info">
@@ -465,14 +470,14 @@
                             </div>
                             {{#gamification.has_streak}}
                             <div class="airpay-gamification__streak">
-                                <i class="fa fa-fire" style="color: #f97316;"></i>
+                                <i class="fa fa-fire airpay-dash__streak-icon"></i>
                                 <strong>{{gamification.current_streak}}</strong>
                                 <small>day streak</small>
                             </div>
                             {{/gamification.has_streak}}
                         </div>
                         <div class="airpay-gamification__progress">
-                            <div class="airpay-gamification__progress-bar" style="width: {{gamification.level_progress}}%; background: {{gamification.level_color}};"></div>
+                            <div class="airpay-gamification__progress-bar" style="--level-progress: {{gamification.level_progress}}%; --level-color: {{gamification.level_color}};"></div>
                         </div>
                         <small class="airpay-gamification__progress-label">{{gamification.points_to_next}} pts to next level</small>
                     </div>
@@ -482,7 +487,7 @@
                     <div>
                         <div class="airpay-gamification__streak-calendar">
                             <div class="airpay-gamification__streak-header">
-                                <span><i class="fa fa-fire" style="color: #f97316;"></i> {{streak_calendar.current_streak}} day streak</span>
+                                <span><i class="fa fa-fire airpay-dash__streak-icon"></i> {{streak_calendar.current_streak}} day streak</span>
                                 <small>Best: {{streak_calendar.longest_streak}} days</small>
                             </div>
                             <div class="airpay-gamification__streak-days">
@@ -497,9 +502,9 @@
 
                         {{! Mini Leaderboard }}
                         {{#hasleaderboard}}
-                        <div class="airpay-gamification__leaderboard" style="margin-top: 12px;">
+                        <div class="airpay-gamification__leaderboard airpay-gamification__leaderboard--spaced">
                             <div class="airpay-gamification__leaderboard-header">
-                                <h4><i class="fa fa-trophy" style="color: #d97706;"></i> Leaderboard</h4>
+                                <h4><i class="fa fa-trophy airpay-dash__trophy-icon"></i> Leaderboard</h4>
                                 <small>Your department</small>
                             </div>
                             {{#leaderboard.has_entries}}
@@ -507,7 +512,7 @@
                                 {{#leaderboard.entries}}
                                 <div class="airpay-gamification__leaderboard-row {{#is_current_user}}airpay-gamification__leaderboard-row--you{{/is_current_user}}">
                                     <span class="airpay-gamification__leaderboard-rank {{#is_top3}}airpay-gamification__leaderboard-rank--top{{/is_top3}}">{{rank}}</span>
-                                    <span class="airpay-gamification__leaderboard-avatar" style="background: {{level_color}};">{{initials}}</span>
+                                    <span class="airpay-gamification__leaderboard-avatar" style="--level-color: {{level_color}};">{{initials}}</span>
                                     <span class="airpay-gamification__leaderboard-name">{{firstname}} {{lastname}} {{#is_current_user}}<small>(You)</small>{{/is_current_user}}</span>
                                     <span class="airpay-gamification__leaderboard-points">{{points}} pts</span>
                                 </div>
