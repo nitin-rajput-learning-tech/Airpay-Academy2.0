@@ -1,9 +1,10 @@
 # airpay_emails — STATE CARD
 
 **Component:** `local_airpay_emails`
-**Current version:** `2026051301`  (release 1.1, Sprint B)
+**Current version:** `2026052001`  (release `1.1.2`, post-Sprint B + Hindi top-ups)
 **Maturity:** STABLE (production)
-**Last touched:** 2026-05-13 (Sprint B)
+**Last touched:** 2026-05-20 (P1 #49 — Hindi top-up)
+**Last refreshed:** 2026-05-24 (P1 state-card pass)
 **Owner:** Head of L&D
 
 ---
@@ -191,9 +192,55 @@ in the meantime so we're stamping the existing log rows to mark them
 
 ## Open / next-up
 
-- Hindi / Kannada / Marathi / Swahili lang-string copies of the
-  Sprint B strings.
+- ~~Hindi / Kannada / Marathi / Swahili lang-string copies of the
+  Sprint B strings.~~ ✅ shipped (P1 #49, version 1.1.2)
 - Settings-page (`settings.php`) UI controls for the cadence default
   and max-cap (admin can already edit via the rule editor).
 - Manager-facing "X learners on your team are 14 days into a course"
   digest — natural follow-on to course_incomplete.
+
+---
+
+## Capabilities (6 in db/access.php)
+
+`local/airpay_emails:` `preview`, `manage`, `manage_templates`,
+`manage_rules`, `view_logs`, `manage_settings`. Splitting `manage_*`
+into separate caps lets compliance auditors hold `:view_logs` without
+edit rights.
+
+## PHPUnit (4 classes, 26 methods)
+
+- `cadence_test.php` — 9 methods (Sprint B ramping cadence math)
+- `setting_cadence_json_test.php` — 10 methods (per-rule cadence array)
+- `certificate_helper_test.php` — 4 methods (Sprint B PDF helper)
+- `observer_test.php` — 3 methods (course_completed observer)
+
+## Top-level files
+
+- `version.php`, `README.md`, `lib.php`, `settings.php`, `styles.css`
+- Surfaces: `manage.php`, `editor.php`, `preview.php`,
+  `preview_ajax.php`
+- `cli/` — production audit + repair scripts
+- `amd/`, `templates/`, `db/`, `lang/`
+
+## classes/
+
+`admin/`, `external/`, `task/`, `privacy/`, plus:
+`rule_manager.php`, `template_manager.php`, `tenant_config.php`,
+`email_renderer.php`, `email_context.php`, `notification_sender.php`,
+`delivery_log.php`, `certificate_helper.php` (Sprint B),
+`observer.php` (Sprint B), `legacy_bridge.php`, `manage_controller.php`.
+
+## Feature flags
+
+None registered directly. Rule-by-rule "enabled" state lives on each
+row of `local_airpay_email_rules` (the rule editor toggle), not in
+the central feature-flag registry.
+
+## State card refresh — 2026-05-24
+
+P1 state-card pass: bumped Current version `1.1` → `1.1.2`
+(`2026051301` → `2026052001`) after the Hindi top-up (P1 #49) landed.
+No DB schema, capability, or feature-flag drift. Added explicit
+inventories of capabilities, PHPUnit classes, top-level files, and
+the `classes/` tree (previously implicit in the Sprint B section).
