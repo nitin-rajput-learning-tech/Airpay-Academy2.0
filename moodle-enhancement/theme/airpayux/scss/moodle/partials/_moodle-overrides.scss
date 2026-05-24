@@ -199,7 +199,9 @@ input[type=text], input[type=search] {
     background-size: 100% 100%;
 }
 #nav-drawer.closed .user_navigation_link:hover .classroom_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/scheme1]]) !important;
+    // Specificity (1,4,0) — #nav-drawer.closed + .user_navigation_link:hover + .classroom_icon_wrap.
+    // Beats base rule (0,4,0) via the #id, so !important is unnecessary.
+    background-image: url([[pix:theme_airpayux|scheme_icons/scheme1]]);
     width: 25px;
     background-repeat: no-repeat;
     float: left;
@@ -208,7 +210,7 @@ input[type=text], input[type=search] {
     margin-left: 22px;
 }
 #nav-drawer.closed .user_navigation_link:hover .skill_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/skillscheme1]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/skillscheme1]]);
     width: 25px;
     background-repeat: no-repeat;
     float: left;
@@ -235,7 +237,7 @@ input[type=text], input[type=search] {
     background-size: 100% 100%;
 }
 #nav-drawer.closed .user_navigation_link:hover .bootcamp_icon_wrap{
-    background-image: url([[pix:theme_airpayux|bcscheme1]]) !important;
+    background-image: url([[pix:theme_airpayux|bcscheme1]]);
     width: 25px;
     background-repeat: no-repeat;
     float: left;
@@ -254,7 +256,7 @@ input[type=text], input[type=search] {
     margin-left: 0px;
 }
 #nav-drawer.closed .user_navigation_link:hover .ilp_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/ilpscheme1]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/ilpscheme1]]);
     width: 25px;
     background-repeat: no-repeat;
     float: left;
@@ -316,125 +318,132 @@ input[type=text], input[type=search] {
 .organization_scheme6 .user_navigation_ul .user_nav_div .user_navigation_link .ilp_icon_wrap{
     background-image: url([[pix:theme_airpayux|scheme_icons/ilpschemefff]]);
 }
-.theme_scheme6 #nav-drawer.closed .user_navigation_link .classroom_icon_wrap, 
+.theme_scheme6 #nav-drawer.closed .user_navigation_link .classroom_icon_wrap,
 .organization_scheme6 #nav-drawer.closed .user_navigation_link .classroom_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/schemefff]]) !important;
+    // Specificity (1,4,0) — .theme_scheme6 + #nav-drawer.closed + .user_navigation_link + .classroom_icon_wrap.
+    // Beats base rule (0,4,0) via the #id; !important is unnecessary.
+    background-image: url([[pix:theme_airpayux|scheme_icons/schemefff]]);
 }
-.theme_scheme6 #nav-drawer.closed .user_navigation_link .bootcamp_icon_wrap, 
+.theme_scheme6 #nav-drawer.closed .user_navigation_link .bootcamp_icon_wrap,
 .organization_scheme6 #nav-drawer.closed .user_navigation_link .bootcamp_icon_wrap
 {
- background-image: url([[pix:theme_airpayux|scheme_icons/bcschemefff]]) !important;   
+ background-image: url([[pix:theme_airpayux|scheme_icons/bcschemefff]]);
 }
 #nav-drawer.closed .user_navigation_ul .user_nav_div .user_navigation_link .classroom_icon_wrap
 /*hover icons selections*/
+// Scheme-icon hover overrides — every selector below is (1,5,0):
+// .theme_schemeN (1 class) + #nav-drawer.closed (1 id + 1 class)
+// + .user_navigation_link:hover (1 class + 1 pseudo)
+// + .X_icon_wrap (1 class) = (1, 5, 0).
+// Base rule .user_navigation_ul .user_nav_div .user_navigation_link .X_icon_wrap is (0,4,0).
+// (1,5,0) > (0,4,0), so !important is unnecessary — dropped on all rules below.
 .theme_scheme1 #nav-drawer.closed .user_navigation_link:hover .classroom_icon_wrap,
 .organization_scheme1 #nav-drawer.closed .user_navigation_link:hover .classroom_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/scheme1]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/scheme1]]);
 }
 .theme_scheme1 #nav-drawer.closed .user_navigation_link:hover .skill_icon_wrap,
 .organization_scheme1 #nav-drawer.closed .user_navigation_link:hover .skill_icon_wrap,
 .theme_scheme1 .manage_skill_icon_wrap, .organization_scheme1 .manage_skill_icon_wrap {
-    background-image: url([[pix:theme_airpayux|scheme_icons/skillscheme1]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/skillscheme1]]);
 }
 .theme_scheme2 #nav-drawer.closed .user_navigation_link:hover .classroom_icon_wrap,
 .organization_scheme2 #nav-drawer.closed .user_navigation_link:hover .classroom_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/scheme2]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/scheme2]]);
 }
 .theme_scheme2 #nav-drawer.closed .user_navigation_link:hover .skill_icon_wrap,
 .organization_scheme2 #nav-drawer.closed .user_navigation_link:hover .skill_icon_wrap,
 .theme_scheme2 .manage_skill_icon_wrap, .organization_scheme2 .manage_skill_icon_wrap {
-    background-image: url([[pix:theme_airpayux|scheme_icons/skillscheme2]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/skillscheme2]]);
 }
 .theme_scheme3 #nav-drawer.closed .user_navigation_link:hover .classroom_icon_wrap,
 .organization_scheme3 #nav-drawer.closed .user_navigation_link:hover .classroom_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/scheme3]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/scheme3]]);
 }
 .theme_scheme3 #nav-drawer.closed .user_navigation_link:hover .skill_icon_wrap,
 .organization_scheme3 #nav-drawer.closed .user_navigation_link:hover .skill_icon_wrap,
 .theme_scheme3 .manage_skill_icon_wrap, .organization_scheme3 .manage_skill_icon_wrap {
-    background-image: url([[pix:theme_airpayux|scheme_icons/skillscheme3]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/skillscheme3]]);
 }
 .theme_scheme4 #nav-drawer.closed .user_navigation_link:hover .classroom_icon_wrap,
 .organization_scheme4 #nav-drawer.closed .user_navigation_link:hover .classroom_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/scheme4]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/scheme4]]);
 }
 .theme_scheme4 #nav-drawer.closed .user_navigation_link:hover .skill_icon_wrap,
 .organization_scheme4 #nav-drawer.closed .user_navigation_link:hover .skill_icon_wrap,
 .theme_scheme4 .manage_skill_icon_wrap, .organization_scheme4 .manage_skill_icon_wrap {
-    background-image: url([[pix:theme_airpayux|scheme_icons/skillscheme4]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/skillscheme4]]);
 }
 .theme_scheme5 #nav-drawer.closed .user_navigation_link:hover .classroom_icon_wrap,
 .organization_scheme5 #nav-drawer.closed .user_navigation_link:hover .classroom_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/scheme5]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/scheme5]]);
 }
 .theme_scheme6 #nav-drawer.closed .user_navigation_link:hover .classroom_icon_wrap,
 .organization_scheme6 #nav-drawer.closed .user_navigation_link:hover .classroom_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/classroomscheme6]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/classroomscheme6]]);
 }
 
 /*add*/
 .theme_scheme5 #nav-drawer.closed .user_navigation_link:hover .skill_icon_wrap,
 .organization_scheme5 #nav-drawer.closed .user_navigation_link:hover .skill_icon_wrap,
 .theme_scheme5 .manage_skill_icon_wrap, .organization_scheme5 .manage_skill_icon_wrap {
-    background-image: url([[pix:theme_airpayux|scheme_icons/skillscheme5]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/skillscheme5]]);
 }
 .theme_scheme6 #nav-drawer.closed .user_navigation_link:hover .skill_icon_wrap,
 .organization_scheme6 #nav-drawer.closed .user_navigation_link:hover .skill_icon_wrap,
 .theme_scheme6 .manage_skill_icon_wrap, .organization_scheme6 .manage_skill_icon_wrap {
-    background-image: url([[pix:theme_airpayux|scheme_icons/skillscheme6]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/skillscheme6]]);
 }
 .theme_scheme1 #nav-drawer.closed .user_navigation_link:hover .ilp_icon_wrap,
 .organization_scheme1 #nav-drawer.closed .user_navigation_link:hover .ilp_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/ilpscheme1]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/ilpscheme1]]);
 }
 .theme_scheme2 #nav-drawer.closed .user_navigation_link:hover .ilp_icon_wrap,
 .organization_scheme2 #nav-drawer.closed .user_navigation_link:hover .ilp_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/ilpschemme2]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/ilpschemme2]]);
 }
 .theme_scheme3 #nav-drawer.closed .user_navigation_link:hover .ilp_icon_wrap,
 .organization_scheme3 #nav-drawer.closed .user_navigation_link:hover .ilp_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/ilpscheme3]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/ilpscheme3]]);
 }
 .theme_scheme4 #nav-drawer.closed .user_navigation_link:hover .ilp_icon_wrap,
 .organization_scheme4 #nav-drawer.closed .user_navigation_link:hover .ilp_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/ilpscheme4]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/ilpscheme4]]);
 }
 .theme_scheme5 #nav-drawer.closed .user_navigation_link:hover .ilp_icon_wrap,
 .organization_scheme5 #nav-drawer.closed .user_navigation_link:hover .ilp_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/ilpscheme5]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/ilpscheme5]]);
 }
 .theme_scheme6 #nav-drawer.closed .user_navigation_link:hover .ilp_icon_wrap,
 .organization_scheme6 #nav-drawer.closed .user_navigation_link:hover .ilp_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/ilpscheme6]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/ilpscheme6]]);
 }
 .theme_scheme6 #nav-drawer.closed .user_navigation_link:hover .bootcamp_icon_wrap,
 .organization_scheme6 #nav-drawer.closed .user_navigation_link:hover .bootcamp_icon_wrap{
-     background-image: url([[pix:theme_airpayux|scheme_icons/bcscheme5]]) !important;
-   
+     background-image: url([[pix:theme_airpayux|scheme_icons/bcscheme5]]);
 }
 .theme_scheme1 #nav-drawer.closed .user_navigation_link:hover .bootcamp_icon_wrap,
 .organization_scheme1 #nav-drawer.closed .user_navigation_link:hover .bootcamp_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/bcscheme1]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/bcscheme1]]);
 }
 .theme_scheme2 #nav-drawer.closed .user_navigation_link:hover .bootcamp_icon_wrap,
 .organization_scheme2 #nav-drawer.closed .user_navigation_link:hover .bootcamp_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/bcscheme2]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/bcscheme2]]);
 }
 .theme_scheme3 #nav-drawer.closed .user_navigation_link:hover .bootcamp_icon_wrap,
 .organization_scheme3 #nav-drawer.closed .user_navigation_link:hover .bootcamp_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/bcscheme3]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/bcscheme3]]);
 }
 .theme_scheme4 #nav-drawer.closed .user_navigation_link:hover .bootcamp_icon_wrap,
 .organization_scheme4 #nav-drawer.closed .user_navigation_link:hover .bootcamp_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/bcscheme4]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/bcscheme4]]);
 }
 .theme_scheme5 #nav-drawer.closed .user_navigation_link:hover .bootcamp_icon_wrap,
 .organization_scheme5 #nav-drawer.closed .user_navigation_link:hover .bootcamp_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/bcscheme5]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/bcscheme5]]);
 }
 .theme_scheme6 #nav-drawer.closed .user_navigation_link:hover .bootcamp_icon_wrap,
 .organization_scheme6 #nav-drawer.closed .user_navigation_link:hover .bootcamp_icon_wrap{
-    background-image: url([[pix:theme_airpayux|scheme_icons/bcscheme6]]) !important;
+    background-image: url([[pix:theme_airpayux|scheme_icons/bcscheme6]]);
 }
 /*leftsidebar icons scheme wise ends*/
 
