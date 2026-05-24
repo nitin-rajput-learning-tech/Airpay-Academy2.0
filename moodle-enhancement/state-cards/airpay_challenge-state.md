@@ -1,9 +1,10 @@
 # `local_airpay_challenge` State Card
 
 **Component:** `local_airpay_challenge`
-**Version:** `2026050700` / `1.0.0-beta`
-**Status:** ✓ Phase 1 shipped 2026-05-07
-**Reclassified by Nitin:** stub → PRIORITY → Phase-1 built
+**Version:** `2026052201` / `1.1.3-beta`
+**Status:** ✓ Phase 1 + Phase 2 shipped + WS-contract aligned 2026-05-22 (Goal A Bug #10)
+**Reclassified by Nitin:** stub → PRIORITY → Phase-1 + Phase-2 built
+**Last refreshed:** 2026-05-24
 
 ---
 
@@ -104,7 +105,16 @@ local/airpay_challenge/
         └── get_leaderboard_test.php    (5 tests)
 ```
 
-Total: ~30 files, ~2500 LOC, ~45 PHPUnit tests.
+Total: ~30 files, ~2500 LOC. PHPUnit method counts after Phase 2:
+- `challenge_engine_test`: 23 methods
+- `challenge_engine_phase_2_test`: 6 methods (Phase 2 streak / quiz / expiry)
+- `leaderboard_manager_test`: 5 methods
+- `external/list_challenges_test`: 6 methods
+- `external/join_challenge_test`: 5 methods
+- `external/get_leaderboard_test`: 5 methods
+- `privacy/provider_test`: privacy provider coverage
+
+Total: ~50 PHPUnit methods (up from ~45 at 1.0.0-beta).
 
 ---
 
@@ -155,21 +165,18 @@ total points" denormalization or having to UNION two query shapes.
 
 ---
 
-## Phase-2 follow-ups (NOT in this ship)
+## Phase-2 status (since 2026-05-07 ship)
 
-| Item | Effort |
-|---|---:|
-| Streak-based challenges (daily login tracking) | 6h |
-| Quiz-score-based challenges (mod_quiz event listener) | 5h |
-| `tool_certificate` badge integration on completion | 4h |
-| FCM push notification when peer overtakes (depends on `airpay_integrations` cleanup first) | 3h |
-| Front-end leaderboard widget mountable on dashboard / course pages | 4h |
-| Cohort gating UI (schema field exists; admin form needs cohort autocomplete) | 2h |
-| Challenge expiry: auto-mark `expired` for past-end-date attempts that never completed | 2h |
-| Cross-tenant + per-cohort leaderboard combinations | 4h |
-
-Total Phase-2 effort: ~30h. Sequenceable independently of
-`airpay_integrations` cleanup except where noted.
+| Item | Status |
+|---|---|
+| Streak-based challenges (daily login tracking) | ✅ shipped (`TYPE_STREAK`) |
+| Quiz-score-based challenges (mod_quiz event listener) | ✅ shipped (`TYPE_QUIZ_SCORE`) |
+| Challenge expiry: auto-mark `expired` for past-end-date attempts that never completed | ✅ shipped (cron task) |
+| `tool_certificate` badge integration on completion | pending |
+| FCM push notification when peer overtakes (depends on `airpay_integrations` cleanup first) | pending |
+| Front-end leaderboard widget mountable on dashboard / course pages | pending (covered partially by `local_sentientia_leaderboard` Phase L.0) |
+| Cohort gating UI (schema field exists; admin form needs cohort autocomplete) | pending |
+| Cross-tenant + per-cohort leaderboard combinations | pending |
 
 ---
 
@@ -219,3 +226,24 @@ cd C:/xampp/htdocs/moodle5
 - **Cohort gating UI**: extend `edit_challenge_dynamic_form` with a
   cohort autocomplete element. The schema field `cohortid` and the
   cohort-membership check in `join()` already exist.
+
+---
+
+## State card refresh — 2026-05-24
+
+P1 state-card pass: bumped Current version to `2026052201` /
+`1.1.3-beta` (was `2026050700` / `1.0.0-beta`). Cumulative changes since
+Phase 1 ship:
+
+- **Phase 2** — streak + quiz-score challenge types shipped; auto-expiry
+  cron task; new test class `challenge_engine_phase_2_test` (6 methods).
+- **Goal A Bug #10 (2026-05-22)** — WS-contract alignment with the
+  external-functions audit. Forced version bump to `2026052201`.
+- **PHPUnit growth** — total methods ~50 (was ~45 at Phase 1). Privacy
+  provider test class also shipped.
+
+No new DB tables (3 retained), no new capabilities (4 retained), no
+feature flags registered (this plugin pre-dates the feature-flag
+mandate; new behaviour ships behind explicit `status='draft'` rows).
+Phase 2 follow-up table updated to reflect what's been delivered vs
+what remains.
