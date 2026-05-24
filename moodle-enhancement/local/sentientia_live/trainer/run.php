@@ -117,7 +117,18 @@ echo \html_writer::tag('div',
 echo \html_writer::end_div();
 
 // ── Audience counter (live-updated by trainer_sse module) ──
-echo \html_writer::start_div('alert alert-info d-flex justify-content-between align-items-center');
+// P0 #8 — role="status" + aria-live="polite" + aria-atomic="true" so
+// the count change announced as "Audience: 5 online now" (full
+// re-read of the label + number, not just the delta). The aria-label
+// gives SR users a recognisable name for this landmark.
+echo \html_writer::start_tag('div', [
+    'class' => 'alert alert-info d-flex justify-content-between align-items-center',
+    'role' => 'status',
+    'aria-live' => 'polite',
+    'aria-atomic' => 'true',
+    'aria-label' => get_string('a11y_audience_count_region',
+        'local_sentientia_live'),
+]);
 echo \html_writer::tag('div',
     '<strong>' . get_string('audience_count_label', 'local_sentientia_live')
     . ':</strong> <span id="sentientia-audience-count" class="fs-4 ms-2">'
@@ -126,19 +137,30 @@ echo \html_writer::tag('div',
 echo \html_writer::tag('div',
     '<small class="text-muted">' . get_string('total_slides_label',
         'local_sentientia_live', count($slides)) . '</small>');
-echo \html_writer::end_div();
+echo \html_writer::end_tag('div');
 
 // ── Response counter for the current slide (live-updated) ──
+// P0 #8 — same aria-live polite + atomic pattern as the audience
+// counter; SR announces "Responses received: 12" on each
+// response_added SSE event (trainer_sse.js mutates the count span's
+// textContent inside this region).
 if ($sess->current_slide_id) {
     $response_count = \local_sentientia_live\response_recorder::count_for_slide(
         (int) $sess->current_slide_id);
-    echo \html_writer::start_div('alert alert-secondary d-flex justify-content-between align-items-center');
+    echo \html_writer::start_tag('div', [
+        'class' => 'alert alert-secondary d-flex justify-content-between align-items-center',
+        'role' => 'status',
+        'aria-live' => 'polite',
+        'aria-atomic' => 'true',
+        'aria-label' => get_string('a11y_response_count_region',
+            'local_sentientia_live'),
+    ]);
     echo \html_writer::tag('div',
         '<strong>' . get_string('response_count_label',
             'local_sentientia_live') . ':</strong> '
         . '<span id="sentientia-response-count" class="fs-4 ms-2">'
         . (int) $response_count . '</span>');
-    echo \html_writer::end_div();
+    echo \html_writer::end_tag('div');
 }
 
 // ── Current slide ──

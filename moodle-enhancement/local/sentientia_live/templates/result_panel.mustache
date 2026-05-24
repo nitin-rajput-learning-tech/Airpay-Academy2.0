@@ -17,7 +17,19 @@
      data-slideid="{{slideid}}"
      data-sessionid="{{sessionid}}"
      data-type="{{type}}"
-     data-refresh-on-response="1">
+     data-refresh-on-response="1"
+     data-a11y-tally-suffix="{{#str}}live_results_total_suffix, local_sentientia_live{{/str}}"
+     role="region"
+     aria-label="{{#str}}a11y_results_region_label, local_sentientia_live{{/str}}">
+
+  {{! P0 #8 — sr-only live region. chart_updater.js writes a localised
+      "N responses" summary here on each response_added SSE event so
+      screen-reader users hear the tally change. aria-atomic="true"
+      re-announces the full count text every update. }}
+  <span class="sr-only"
+        aria-live="polite"
+        aria-atomic="true"
+        data-live-tally-summary></span>
 
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h4 class="h5 mb-0">

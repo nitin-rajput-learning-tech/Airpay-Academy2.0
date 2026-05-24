@@ -4940,3 +4940,63 @@ Theme-side gap (`theme_airpayux.php` at 85% per audit §2.8) — owned by parall
 
 ### Note on branch
 Chip prompt specified `origin/production` as the push target; harness setup overrides that with `claude/friendly-volta-QXB4j` per "NEVER push to a different branch without explicit permission" rule. Branch is push-ready for Nitin to merge to `production` via PR or fast-forward.
+
+---
+
+## ✅ P0 #8 — sentientia_live aria-live regions (2026-05-24)
+
+**Commits (branch `claude/quirky-dirac-ly2Mz`):**
+- `7d61d9ad` feat(sentientia_live): add aria-live regions to result templates
+- `0112bb6b` feat(sentientia_live): add aria-live regions to audience play page
+- `2296fa1b` feat(sentientia_live): add aria-live regions to trainer run page
+- `9e26afae` feat(sentientia_live): chart_updater writes sr-only tally summary
+
+### Scope
+Just P0 #8 from `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md`
+(F-23). The audit reported ZERO `aria-live` regions across all
+`local_sentientia_live` templates and AMD modules; with this chip the
+plugin exposes 5 live regions + 2 role-region landmarks across both
+trainer and audience surfaces.
+
+### What changed
+| Surface | Live region added |
+|---|---|
+| `templates/result_panel.mustache` | outer `role="region"` + sr-only `aria-live="polite"` `aria-atomic="true"` summary span |
+| `templates/result_bar_chart.mustache` | `role="img"` + aria-label |
+| `audience/play.php` | aria-live=assertive on session-ended + response-saved; polite on waiting + already-responded; role=region on current-slide container |
+| `trainer/run.php` | role=status + aria-live=polite + aria-atomic=true + aria-label on audience-count and response-count alerts |
+| `amd/{src,build}/chart_updater.{js,min.js}` | writes localised `<count> <suffix>` to the panel's sr-only aria-live span on every response_added SSE event |
+| `lang/{en,hi}/local_sentientia_live.php` | +9 string pairs, 100% Hindi parity preserved (264/264) |
+| `version.php` | bumped to `2026052401` / `0.1.1-alpha` |
+
+### AMD build note
+No grunt available in this remote-execution environment — both the
+ES6 source (`amd/src/chart_updater.js`) and the ES5 hand-rolled
+named-`define()` build (`amd/build/chart_updater.min.js`) were
+edited together so they stay in shape parity. Both verified clean
+with `node --check`. Next-session note: if/when grunt is wired up
+for the project, run `grunt amd` and confirm the build output
+matches what's checked in here.
+
+### Verification gates
+- PHP lint clean (`php -l` on all touched .php).
+- `node --check` clean on both ES6 source and ES5 build.
+- Hindi parity 264 == 264 (`grep -cE '^\$string\['`).
+- All four commits carry the required co-author line; none used
+  `--no-verify`, `--no-gpg-sign`, or `--amend`.
+- Pushed to `origin/claude/quirky-dirac-ly2Mz` after every commit.
+
+### Out of scope (logged for follow-up)
+- **F-24 (P1)** — Bootstrap utility classes → Sentientia BEM tokens
+  for the live plugin. Held for the P1 sweep.
+- **F-25 (P2)** — `<caption>` + `scope="col"` on the trainer
+  dashboard table.
+- **Pluralisation** of the sr-only tally string (always plural
+  noun today).
+- **Mobile SR** (TalkBack / VoiceOver iOS) regression check —
+  deferred to the Phase E.11 mobile pass.
+
+### Refs
+- Evidence + SR test procedure: `docs/visual-evidence/2026-05-24/p0-followup-chip-E/README.md`
+- State card: `state-cards/sentientia_live-state.md`
+- Audit finding: `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md` §4.2 F-23

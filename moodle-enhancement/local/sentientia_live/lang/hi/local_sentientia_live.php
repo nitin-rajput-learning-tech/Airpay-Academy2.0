@@ -322,6 +322,19 @@ $string['wc_response_placeholder']      = 'एक शब्द टाइप क�
 $string['openended_response_placeholder']= 'आपका उत्तर…';
 $string['ranking_response_intro']       = 'प्रत्येक आइटम को 1 (आपकी शीर्ष पसंद) से नीचे की ओर number करें। प्रत्येक संख्या अनूठी होनी चाहिए — कोई ties नहीं।';
 
+// ── Phase E.x — Accessibility (P0 #8 — aria-live regions) ─────────
+// aria-live क्षेत्रों के अंदर surface होने वाले strings — screen reader
+// इन्हें तब announce करते हैं जब underlying region update हो।
+$string['a11y_results_region_label']     = 'लाइव परिणाम';
+$string['a11y_results_bar_chart_label']  = 'लाइव परिणाम bar chart';
+$string['a11y_response_recorded']        = 'प्रतिक्रिया रिकॉर्ड हो गई';
+$string['a11y_session_ended_announce']   = 'सेशन समाप्त। आपकी प्रतिक्रियाएं रिकॉर्ड हो गई हैं।';
+$string['a11y_audience_count_region']    = 'लाइव दर्शक संख्या';
+$string['a11y_response_count_region']    = 'लाइव प्रतिक्रिया संख्या';
+$string['a11y_current_question_region']  = 'वर्तमान प्रश्न';
+$string['a11y_waiting_for_question']     = 'अगले प्रश्न की प्रतीक्षा';
+$string['a11y_already_responded']        = 'आप पहले ही इस प्रश्न पर प्रतिक्रिया दे चुके हैं';
+
 // response_recorder errors.
 $string['response_slide_mismatch']      = 'वह स्लाइड इस सेशन का हिस्सा नहीं है।';
 $string['response_int_required']        = 'संख्यात्मक प्रतिक्रिया आवश्यक है।';
