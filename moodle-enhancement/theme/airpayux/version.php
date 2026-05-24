@@ -141,8 +141,22 @@ defined('MOODLE_INTERNAL') || die();
 // each closed 3-string gap. All four non-hi packs (en, kn, mr, sw) now
 // at 153/153 unique keys = 100% parity. Bump also triggers a lang-cache
 // purge so the new strings are picked up on next page load.
+//
+// P1 #12 :focus-visible coverage (2026-05-24) — added :focus-visible
+// sibling rules adjacent to every bare :focus rule across the five
+// surface partials (navbar/dashboard/login/course/profile). Closes
+// audit findings F-03, F-11, F-17, F-19 from
+// docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md §2.6. WCAG 2.1.1 +
+// 2.4.7 — keyboard users still get the brand-light ring, mouse-click
+// no longer flashes a phantom ring. Legacy :focus rules retained as
+// fallback for browsers without :focus-visible support. 22 selectors
+// added across 10 rules. Cache bump invalidates compiled CSS.
 $plugin->version   = 2026052402;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
+<<<<<<< HEAD
 $plugin->release   = '1.0.32-beta';  // P0 #1+#2 SCSS hygiene + P0 #7 kn/mr/sw 100%
+=======
+$plugin->release   = '1.0.32-beta';  // P1 #12 :focus-visible coverage
+>>>>>>> origin/claude/inspiring-mayer-kWs9O

@@ -290,6 +290,12 @@
     box-shadow: 0 0 0 3px rgba(0,102,167,0.1);
     outline: none;
 }
+.path-local-search input#search:focus-visible,
+.path-local-search input[type="text"][placeholder*="Search for courses"]:focus-visible {
+    border-color: #0066A7;
+    box-shadow: 0 0 0 3px rgba(0,102,167,0.1);
+    outline: none;
+}
 
 /* === Course Cards Grid === */
 .path-local-search .course_view_list_container .row {

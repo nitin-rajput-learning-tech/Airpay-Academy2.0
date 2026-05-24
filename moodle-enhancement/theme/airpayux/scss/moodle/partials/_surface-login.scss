@@ -210,6 +210,10 @@ body#page-login-index { background: #F2F4FB !important; }
     border-color: #0066A7;
     box-shadow: 0 0 0 4px rgba(0,102,167,0.1);
 }
+.airpay-login__input:focus-visible {
+    border-color: #0066A7;
+    box-shadow: 0 0 0 4px rgba(0,102,167,0.1);
+}
 .airpay-login__input::placeholder {
     color: #8896a6;
 }
@@ -536,6 +540,13 @@ body#page-login-index { background: #F2F4FB !important; }
 #page-signup .form-control:focus,
 #page-signup input:focus,
 #page-signup select:focus {
+    border-color: #0066A7; outline: none; background: #fff;
+}
+#page-login-forgot_password .form-control:focus-visible,
+#page-login-forgot_password input[type="text"]:focus-visible,
+#page-signup .form-control:focus-visible,
+#page-signup input:focus-visible,
+#page-signup select:focus-visible {
     border-color: #0066A7; outline: none; background: #fff;
 }
 /* Submit buttons */

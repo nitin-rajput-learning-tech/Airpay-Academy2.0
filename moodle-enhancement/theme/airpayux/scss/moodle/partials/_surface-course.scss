@@ -260,6 +260,11 @@
             box-shadow: 0 0 0 3px rgba(0,102,167,0.1);
             outline: none;
         }
+        &:focus-visible {
+            border-color: var(--ap-color-primary);
+            box-shadow: 0 0 0 3px rgba(0,102,167,0.1);
+            outline: none;
+        }
     }
 
     /* Department filter selects */
@@ -276,6 +281,10 @@
         cursor: pointer;
         transition: border-color 0.2s ease;
         &:focus {
+            border-color: var(--ap-color-primary);
+            outline: none;
+        }
+        &:focus-visible {
             border-color: var(--ap-color-primary);
             outline: none;
         }
@@ -531,6 +540,10 @@
         font-size: 0.875rem;
         transition: border-color 0.2s ease;
         &:focus {
+            border-color: var(--ap-color-primary);
+            box-shadow: 0 0 0 3px rgba(0,102,167,0.1);
+        }
+        &:focus-visible {
             border-color: var(--ap-color-primary);
             box-shadow: 0 0 0 3px rgba(0,102,167,0.1);
         }
