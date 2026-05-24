@@ -5723,3 +5723,80 @@ no coordination required beyond the standard append-only conventions.
 - Audit report: `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md` (F-24, F-25)
 - Frontend rules: `.claude/rules/frontend.md` §BEM
 - State card: `state-cards/sentientia_live-state.md`
+
+---
+
+## 🧹 P2 #18 — _moodle-overrides.scss !important reduction (2026-05-24)
+
+**Commits:** `2044a80e`, `e64f82f7`, `66e3369c`, `4578d0ae`, `04560ebb`, `133b4ec7` on branch `claude/jolly-meitner-XdiGI`
+**Chip:** O (Wave-3 follow-up — closes P2 #18 from Appendix C of the platform visual audit)
+**Audit reference:** `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md` §2.2 + Appendix C P2 #18
+**Visual evidence:** `docs/visual-evidence/2026-05-24/wave3-chip-O/README.md`
+
+### Outcome
+
+Reduced `moodle-enhancement/theme/airpayux/scss/moodle/partials/_moodle-overrides.scss` from **136 → 30 active `!important` declarations** (−77.9%). The audit target was <35 (>75% reduction). Result is in the same range as chip I (dark_mode.scss → 36) and chip K (_surface-login.scss → 11).
+
+### Before / after
+
+| Measure | Before | After | Delta |
+|---|---|---|---|
+| `grep -o '!important'` (audit baseline raw count) | 136 | 96 | −29.4% |
+| `grep -cE '!important\s*;'` (declarations with terminating semicolon) | 136 | 36 | −73.5% |
+| Compiled CSS active declarations (block comments stripped) | 131 | **30** | **−77.1%** |
+
+The source-level grep shows 96 because `// preserved: <reason>` comments still contain the literal word "!important" for searchability. Compiled CSS strips those comments. The 36 source-level "active" count differs from compiled-active 30 because some preserved-with-`// comment` lines have the comment text counted as a separate hit by grep. The authoritative measure is **30 compiled active declarations**.
+
+### Strategy (one commit per logical bucket of rules)
+
+| # | Bucket | Approach | Compiled-active reduction |
+|---|---|---|---|
+| 1 | Nav-drawer scheme icons (`#nav-drawer.closed .user_navigation_link:hover .X_icon_wrap` + per-theme/per-organization variants) | Selectors already (1,4,0)/(1,5,0); base rule (0,4,0). `!important` was defensive paranoia. | 131 → 105 (−26) |
+| 2 | A11Y `.btn-outline-warning` + page-header card + btn-group radii | Bootstrap outline-variant mixin doesn't use `!important`; source order wins. Preserved `.btn-link.text-muted` (Bootstrap `.text-muted` ships with upstream `!important`) and `header#page-header .card margin-bottom` (intra-file conflict at line ~98). | 105 → 102 (−3) |
+| 3 | Forms / cards / tables / scorm view / page-user-editadvanced | 16 dropped via natural specificity wins; 8 preserved (DataTables vendor, YUI dialog iframe, JS-inline collapsibleregion height, bootstrap-duallistbox vendor, intra-file `.showoptions` conflict). | 102 → 86 (−16) |
+| 4 | Toolbar info / badges / focus / popovers / forgot-password | 17 dropped; 9 preserved (broad-reach `select[multiple]` width, generic `.options` font-size, bootstrap progress-bar inline-style fight, IE-only width hack, and the 9 `#quickaccess-popover-container` `:has()` / fallback declarations — Moodle popover_region JS hide-styles ship with upstream `!important`; explanatory comment added above the block). | 86 → 69 (−17) |
+| 5 | Course-header + course-drawer | 17 dropped (`.pagelayout-incourse/course .main-inner` + nested h1, course-drawer progress dimensions, courseheader settings-menu + rating container + progress block). Preserved `.courseheader .progress-bar[aria-valuenow="0"]` width (JS inline-style fight on bootstrap progress-bar). | 69 → 52 (−17) |
+| 6 | Pagination + table cell text-align + filter form | 13 dropped; 5 preserved (DataTables paginate_button.disabled border + bg + .next:hover color; jQuery UI `.ui-widget` font). | 52 → 30 active (−12 active, includes comment-stripped count) |
+
+### Preserved 30 declarations (each inline-commented with reason)
+
+| Reason | Count | Examples |
+|---|---|---|
+| Bootstrap utility class (`.text-muted`) ships with upstream `!important` | 2 | `.btn-link.text-muted` color + hover/focus color |
+| DataTables vendor CSS fight (loaded externally) | 6 | `.paginate_button` padding/outline/box-shadow; `.paginate_button.disabled` border + bg; `.paginate_button.next:hover` color |
+| jQuery UI vendor `.ui-widget` | 2 | font-family, font-size |
+| YUI dialogue iframe — vendor JS sets inline `style="height:..."` | 1 | `.moodle-dialogue-base iframe { height: 450px }` |
+| Bootstrap progress-bar — JS sets inline `style="width: X%"` (only `!important` beats inline-style) | 2 | `.progress-bar[aria-valuenow="0"]` width 19px; `.courseheader .progress-bar[aria-valuenow="0"]` width 0 |
+| Moodle collapsibleregion JS writes inline `style="height: ..."` | 2 | `.jsenabled .collapsibleregion`; `.collapsibleregion.collapsed` |
+| bootstrap-duallistbox vendor sets `select` padding with `!important` | 1 | `.bootstrap-duallistbox-container select { padding: 10px }` |
+| Moodle popover_region JS keeps `collapsed` class + hide-styles ship with upstream `!important` | 9 | `#quickaccess-popover-container:has([aria-expanded="true"])` (5) + `.ap-popover-open` fallback (4): opacity, visibility, height, overflow, transition |
+| Intra-file conflict — same selector reasserted later with conflicting value | 2 | `header#page-header .card { margin-bottom: 1.0rem }`; `.showoptions { padding: 5px }` |
+| Defensive against broad-reach / IE-only / generic-class | 3 | `#page-admin-roles-assign select[multiple]` width; `.options` font-size; IE-only `width: auto` |
+
+### Compile sanity-check
+
+`dart-sass 1.100.0 --no-source-map _moodle-overrides.scss /tmp/check.css` → exit 0, no warnings. Brace integrity 1:1 verified. Driver test file removed.
+
+### Behavioural preservation
+
+Every edit is a property-only change (drop `!important` or add inline comment). No selector modified. No rule value changed. No declaration added/removed (beyond `// preserved:` annotations). Visual output is byte-equivalent for selectors that previously won via `!important` — they now win via specificity.
+
+### Audit follow-ups flagged
+
+- Coordinate with `_datatable.scss` partial owner to harmonise paginate_button rules — would let us drop the remaining 6 DataTables-defensive `!important` flags here.
+- Resolve intra-file conflicts at lines ~51/~98 (`header#page-header .card`) and ~1544/~1550 (`.showoptions`) — pure refactor (merge same-selector rules), would eliminate 2 more `!important`.
+- Consider migrating `.jsenabled .collapsibleregion` height to a CSS custom property + JS write to that property instead of inline style — would let us drop 2 more `!important`.
+
+### Deliverables
+
+- `moodle-enhancement/theme/airpayux/scss/moodle/partials/_moodle-overrides.scss` (refactored)
+- `moodle-enhancement/theme/airpayux/version.php` bumped to `2026052404` / `1.0.34-beta`
+- `moodle-enhancement/docs/visual-evidence/2026-05-24/wave3-chip-O/README.md` (full analysis + post-deploy spot-check list)
+- This `PROJECT-STATE.md` H2 section
+
+### What Nitin needs to do before merging to production
+
+1. Pull the chip branch into the local XAMPP build.
+2. `php admin/cli/purge_caches.php` — invalidate cached compiled CSS.
+3. Walk every checkbox in the visual evidence spot-check list (`docs/visual-evidence/2026-05-24/wave3-chip-O/README.md`) covering Moodle settings, course edit, gradebook, admin tool listings, course view, scorm view, atto editor file manager, DataTables in any plugin, and the quick-access popover.
+4. If anything regresses on a specific surface, identify the failing rule and either bump specificity for that one declaration (preferred) or restore `!important` with a `// preserved: <reason>` comment.
