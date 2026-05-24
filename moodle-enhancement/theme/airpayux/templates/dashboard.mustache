@@ -302,26 +302,26 @@
             {{/hascharts}}
 
             {{! ── Compliance Summary + Top Courses (two-column) ── }}
-            <div class="airpay-dash__two-col" style="margin-top: 20px;">
+            <div class="airpay-dash__two-col airpay-dash__two-col--top-spacing">
                 {{#hascompliance}}
                 <div class="airpay-dash__section">
                     <h3 class="airpay-dash__section-title"><i class="fa fa-shield"></i> Compliance Overview</h3>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px;">
-                        <div style="background: var(--ap-color-bg-surface); border: 1px solid var(--ap-color-border); border-radius: 10px; padding: 16px; text-align: center;">
-                            <div style="font-size: 28px; font-weight: 700; color: var(--ap-color-primary);">{{compliance.mandatory}}</div>
-                            <div style="font-size: 12px; color: var(--ap-color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Mandatory Courses</div>
+                    <div class="airpay-dash__compliance-grid">
+                        <div class="airpay-dash__compliance-card">
+                            <div class="airpay-dash__compliance-card__count airpay-dash__compliance-card__count--mandatory">{{compliance.mandatory}}</div>
+                            <div class="airpay-dash__compliance-card__label">Mandatory Courses</div>
                         </div>
-                        <div style="background: var(--ap-color-bg-surface); border: 1px solid var(--ap-color-border); border-radius: 10px; padding: 16px; text-align: center;">
-                            <div style="font-size: 28px; font-weight: 700; color: #16a34a;">{{compliance.compliant}}</div>
-                            <div style="font-size: 12px; color: var(--ap-color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Compliance Rate</div>
+                        <div class="airpay-dash__compliance-card">
+                            <div class="airpay-dash__compliance-card__count airpay-dash__compliance-card__count--compliant">{{compliance.compliant}}</div>
+                            <div class="airpay-dash__compliance-card__label">Compliance Rate</div>
                         </div>
-                        <div style="background: var(--ap-color-bg-surface); border: 1px solid var(--ap-color-border); border-radius: 10px; padding: 16px; text-align: center;">
-                            <div style="font-size: 28px; font-weight: 700; color: #dc2626;">{{compliance.overdue}}</div>
-                            <div style="font-size: 12px; color: var(--ap-color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Overdue</div>
+                        <div class="airpay-dash__compliance-card">
+                            <div class="airpay-dash__compliance-card__count airpay-dash__compliance-card__count--overdue">{{compliance.overdue}}</div>
+                            <div class="airpay-dash__compliance-card__label">Overdue</div>
                         </div>
-                        <div style="background: var(--ap-color-bg-surface); border: 1px solid var(--ap-color-border); border-radius: 10px; padding: 16px; text-align: center;">
-                            <div style="font-size: 28px; font-weight: 700; color: var(--ap-color-text-primary);">{{compliance.assigned}}</div>
-                            <div style="font-size: 12px; color: var(--ap-color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Total Assigned</div>
+                        <div class="airpay-dash__compliance-card">
+                            <div class="airpay-dash__compliance-card__count airpay-dash__compliance-card__count--assigned">{{compliance.assigned}}</div>
+                            <div class="airpay-dash__compliance-card__label">Total Assigned</div>
                         </div>
                     </div>
                 </div>

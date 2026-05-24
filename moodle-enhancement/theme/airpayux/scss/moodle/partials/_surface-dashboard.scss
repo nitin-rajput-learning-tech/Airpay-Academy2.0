@@ -119,6 +119,47 @@
    tokens-aware .airpay-stat-card component from
    _components-stat-card.scss. See style guide for usage. */
 
+/* Two-col wrapper modifier — pushes the row below the welcome header /
+   chart band by one space-5 step. Replaces an inline style="margin-top:20px"
+   from dashboard.mustache (P0 #5). */
+.airpay-dash__two-col--top-spacing {
+    margin-top: var(--ap-space-5);
+}
+
+/* Compliance KPI grid — admin "Compliance Overview" card, used by
+   {{#hascompliance}} block in dashboard.mustache. Replaces 14 inline
+   style attributes (P0 #5 of PLATFORM-VISUAL-AUDIT-2026-05-24), including
+   the 2 raw hex literals (#16a34a → --ap-color-success, #dc2626 →
+   --ap-color-danger) that previously bypassed the design-token cascade
+   and broke dark-mode rendering of the compliant / overdue counters. */
+.airpay-dash__compliance-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--ap-space-3);
+    padding: var(--ap-space-4);
+}
+.airpay-dash__compliance-card {
+    background: var(--ap-color-bg-surface);
+    border: 1px solid var(--ap-color-border);
+    border-radius: var(--ap-radius-sm);
+    padding: var(--ap-space-4);
+    text-align: center;
+}
+.airpay-dash__compliance-card__count {
+    font-size: 28px;
+    font-weight: var(--ap-weight-bold);
+}
+.airpay-dash__compliance-card__count--mandatory { color: var(--ap-color-primary); }
+.airpay-dash__compliance-card__count--compliant { color: var(--ap-color-success); }
+.airpay-dash__compliance-card__count--overdue   { color: var(--ap-color-danger); }
+.airpay-dash__compliance-card__count--assigned  { color: var(--ap-color-text-primary); }
+.airpay-dash__compliance-card__label {
+    font-size: var(--ap-text-xs);
+    color: var(--ap-color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
 /* Welcome header — compact greeting block used by admin / manager / learner
    variants in dashboard.mustache. Replaces the inline-style avalanche
    (P0 #5 of PLATFORM-VISUAL-AUDIT-2026-05-24). The full hero banner above
