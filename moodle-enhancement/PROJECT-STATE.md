@@ -3,7 +3,64 @@
 
 ---
 
-## 🚀 TIER 2.6 — CALENDAR SYNC PHASE 1 (2026-05-24)
+## 🚀 SENTIENTIA CONTENT PIPELINE — Agent 1 Phase B.0 MVP (2026-05-24)
+
+### Session — `scripts/agents/agent1_sop_parser.py` (PDF SOP parser) — ✅ SHIPPED
+
+**Branch:** `claude/gifted-faraday-V761L`
+**Workstream:** B — SENTIENTIA Content Pipeline (per CLAUDE.md §9)
+**Doc:** [docs/sentientia-agents/AGENT-1-PDF-PARSER.md](../docs/sentientia-agents/AGENT-1-PDF-PARSER.md)
+
+First production stage of the SOP → SCORM pipeline. Reads a PDF SOP
+from `content/sops/` and writes layout-aware JSON to
+`content/parsed/<name>-parsed.json` for Agent 2 (Narration Generator)
+to consume. Pure local execution — no external API calls.
+
+- [x] **Agent script** `scripts/agents/agent1_sop_parser.py` — pdfplumber-driven, ~280 LoC
+- [x] **CLI**: `python scripts/agents/agent1_sop_parser.py --input X.pdf --output Y.json`
+- [x] **Output schema** matches the task contract — `title`, `headings[{level,text}]`, `paragraphs[]`, `lists[{type,items}]`, `word_count`, `source_file`, `parsed_at`
+- [x] **2000-word cap** enforced — raises `ValueError` with a clear message; CLI exits 1 and writes no output file
+- [x] **Scanned-PDF rejection** — no extractable text raises `ValueError` rather than silently producing empty JSON
+- [x] **Layout-aware heading levels** — font-size mode picks the body size, the three largest sizes above body map to levels 1/2/3
+- [x] **List detection** — 13 bullet glyphs (`• ‣ ▪ ◦ ● ○ ▶ ► ◆ ◇ ■ □ – — - *`) plus ordered markers (`1.`, `2)`, `(3)`, `a.`, `iv.`, etc.)
+- [x] **Sample fixture** `content/sops/SAMPLE-SOP.pdf` (2.5 KB) + reference `content/parsed/SAMPLE-SOP-parsed.json`
+- [x] **Test fixture builder** `tests/agents/_pdf_builder.py` — reportlab + Vera TTF (bundled with reportlab, ships proper /ToUnicode CMap so Unicode bullets round-trip cleanly)
+- [x] **29 unit + CLI tests** in `tests/agents/test_agent1.py` — schema, headings, lists, paragraphs, word-cap (over + under), regex coverage for every bullet/ordered marker, negative coverage (5 million ≠ ordered list), CLI exit-code matrix, determinism
+- [x] **Documentation** `docs/sentientia-agents/AGENT-1-PDF-PARSER.md` — usage, schema, error modes, structure-recovery algorithm, Agent 2 integration contract
+- [x] **`requirements.txt`** seeded — `pdfplumber>=0.11,<0.12`, `pytest>=8.0,<10.0`, `reportlab>=4.0,<5.0`
+
+**Sample run output (165 words, 5 headings, 3 paragraphs, 2 lists):**
+```
+agent1: parsed SAMPLE-SOP.pdf -> content/parsed/SAMPLE-SOP-parsed.json
+    (165 words, 5 headings, 3 paragraphs, 2 lists)
+```
+
+**Exit-code contract:**
+- `0` — parsed successfully, JSON written.
+- `1` — validation failure (word cap exceeded, no extractable text). Output file is **not** written; caller must split the SOP.
+- `2` — I/O failure (input missing, output dir not writable).
+
+**Determinism guarantee:** every field other than `parsed_at` is
+byte-for-byte identical across repeated runs. Verified by
+`test_repeated_runs_produce_same_structure`. Agent 2 will fingerprint
+inputs to short-circuit regenerations.
+
+**Pipeline integration (per CLAUDE.md §9):**
+Agent 1 emits `content/parsed/*-parsed.json`. Agent 2 (not yet built)
+reads exactly that file as its only input. No process-level chaining;
+disk-mediated handoff one session per agent. The 2000-word Agent 1 cap
+maps to ~15 min of narration at 130 wpm — comfortably inside the
+SCORM-module target.
+
+**Hard rules honoured:**
+- No external API calls (parser is pure local).
+- No file in `content/sops/` deleted or modified — sample is a fresh
+  fixture added under that directory.
+- No `--no-verify` on commit.
+
+---
+
+
 
 ### Session — `local_sentientia_calendar` (outbound ICS feed MVP) — ✅ SHIPPED
 

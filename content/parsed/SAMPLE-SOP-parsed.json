@@ -1,0 +1,53 @@
+{
+  "title": "Sentientia LMS Sample SOP",
+  "headings": [
+    {
+      "level": 1,
+      "text": "Sentientia LMS Sample SOP"
+    },
+    {
+      "level": 2,
+      "text": "Overview"
+    },
+    {
+      "level": 3,
+      "text": "Pipeline Stages"
+    },
+    {
+      "level": 3,
+      "text": "Guarantees"
+    },
+    {
+      "level": 2,
+      "text": "Acceptance"
+    }
+  ],
+  "paragraphs": [
+    "This document is a synthetic Standard Operating Procedure used as a fixture for the SENTIENTIA Content Pipeline. It exercises every block kind Agent 1 must recognise: titles, headings at two levels, paragraphs, ordered lists, and unordered lists.",
+    "The SENTIENTIA pipeline turns a written SOP into a SCORM training package. Agent 1 is the entry stage and converts the PDF into structured JSON the downstream agents can read.",
+    "A successful Agent 1 run emits a JSON file whose schema matches the contract published in the agent documentation. Agent 2 reads that file with no further transformation."
+  ],
+  "lists": [
+    {
+      "type": "ordered",
+      "items": [
+        "Parse the PDF into structured JSON.",
+        "Generate a narration script from the JSON.",
+        "Synthesise slides and voice from the narration.",
+        "Package the result into a SCORM 1.2 ZIP for upload."
+      ]
+    },
+    {
+      "type": "unordered",
+      "items": [
+        "Pure local execution; no external API in the parser.",
+        "Word count capped at two thousand words per SOP.",
+        "Fails loudly when the cap is exceeded.",
+        "Deterministic schema for the downstream contract."
+      ]
+    }
+  ],
+  "word_count": 165,
+  "source_file": "SAMPLE-SOP.pdf",
+  "parsed_at": "2026-05-24T12:32:43Z"
+}
