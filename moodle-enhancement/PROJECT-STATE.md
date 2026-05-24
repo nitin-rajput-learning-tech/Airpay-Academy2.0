@@ -5723,3 +5723,119 @@ no coordination required beyond the standard append-only conventions.
 - Audit report: `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md` (F-24, F-25)
 - Frontend rules: `.claude/rules/frontend.md` §BEM
 - State card: `state-cards/sentientia_live-state.md`
+
+## 📊 P1 #17 + P2 #23 — Chart.js vendoring + chart a11y (2026-05-24)
+
+**Commits:**
+- `27f28ed6` — `feat(theme): AMD-wrap Chart.js loader (P1 #17 / F-14)`
+- `5ee60488` — `feat(a11y): aria-label + sr-only data table on dashboard charts (P2 #23 / F-15)`
+- `(this commit)` — `chore(theme): bump theme_airpayux to 1.0.35-beta + wave3-chip-N evidence`
+
+**Chip:** `claude/keen-galileo-AAnnn` (wave3-chip-N).
+**Plugin version:** `theme_airpayux 1.0.35-beta` (2026052404).
+**Closes:** F-14 (P1 #17) and F-15 (P2 #23) from
+`docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md`.
+
+### Item 1 — F-14 / P1 #17 fixed (AMD-wrap chart loader)
+
+The admin / L&D-admin dashboard previously loaded Chart.js from
+`https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js`
+via an inline `<script src=…>` in `templates/dashboard.mustache:254`.
+Three risks called out in the audit:
+
+1. Customer-N on a restricted / offline network saw a silent chart
+   breakage — canvas tags rendered empty with no error path.
+2. No SRI hash on the script tag → supply-chain attack risk if the
+   CDN ever served a compromised build.
+3. The Chart.js version pin lived in the template, not in a
+   version-controlled JS asset.
+
+This chip introduced **`theme_airpayux/chart_loader`**, a thin AMD
+module that delegates to Moodle's bundled **`core/chartjs`**
+(Chart.js v4.4.2 in `lib/amd/src/chartjs-lazy.js`). The loader exposes
+the constructor on `window.Chart` as a side-effect so the existing
+inline chart-init scripts in `dashboard.mustache` keep using
+`new Chart(...)` unchanged — only the dependency-loader strategy
+flipped. The chart configuration (types / datasets / colour arrays /
+options hashes) is byte-identical to pre-chip.
+
+Files touched:
+- `theme/airpayux/amd/src/chart_loader.js` (NEW, 95 lines)
+- `theme/airpayux/amd/build/chart_loader.min.js` (NEW, hand-minified;
+  rebuild once grunt is back in the toolchain — same note as Chip B's
+  cart_badge module).
+- `theme/airpayux/templates/dashboard.mustache` — removed
+  `cdn.jsdelivr.net` script tag, wrapped inline init in
+  `require(['theme_airpayux/chart_loader'], …)`.
+- `theme/airpayux/layout/dashboard.php` — added
+  `$PAGE->requires->js_call_amd('theme_airpayux/chart_loader', 'init')`
+  next to the existing `cart_badge` wiring.
+
+### Item 2 — F-15 / P2 #23 fixed (chart canvas a11y)
+
+The two `<canvas>` elements (`airpay-chart-enrolments` bar chart +
+`airpay-chart-distribution` doughnut) previously carried no
+`aria-label`, no `role`, and no textual fallback — screen-reader users
+got silence where sighted users saw chart data. WCAG 1.1.1
+(non-text content) + 4.1.2 (name/role/value).
+
+Both canvases now carry:
+- `role="img"` — the canvas is treated as a single image-of-data.
+- `aria-labelledby` pointing at the matching section `<h3>` (which
+  got a new `id` so the labelledby resolves). The `<h3>` already uses
+  the existing `chart_enrolment_trend` / `chart_course_distribution`
+  lang strings (Chip G shipped these across en/hi/kn/mr/sw).
+- `aria-describedby` pointing at a sibling `<details>` disclosure
+  containing a `<table>` mirror of the same numbers Chart.js paints.
+  Open via SR or keyboard — hidden-by-default for sighted users.
+- The `<summary>` and table `<caption>` are wrapped in `.sr-only` so
+  the disclosure widget surfaces only to screen-reader / keyboard
+  navigation; no visual duplication of the chart title.
+
+Data plumbing: `layout/dashboard.php` now exposes two iterable
+mirrors — `chart_enrolments_table` and `chart_distribution_table` —
+populated from the same source arrays the json_encode'd Chart.js
+series consumes. Table and chart cannot diverge by accident.
+
+### String discipline
+
+Per chip scope, **NO new theme_airpayux lang keys were added**:
+- Chart titles + summaries + captions: reused
+  `chart_enrolment_trend` / `chart_course_distribution`
+  (Chip G) — 5-locale parity already in production.
+- Column headers: Moodle core lang —
+  `month, core`, `total, core`, `category, core`, `courses, core`.
+  All four keys are localised in every Moodle locale we ship.
+
+### Safety + parity
+
+- ✅ `php -l` clean on `layout/dashboard.php` and `version.php`.
+- ✅ Node syntax check clean on both AMD source + build.
+- ✅ Mustache lint — zero new triple-stash `{{{ }}}` introduced.
+- ✅ NO new theme_airpayux lang strings (per chip scope).
+- ✅ NO SCSS touched (per chip scope; `.sr-only` is upstream Bootstrap).
+- ✅ Chart configuration logic byte-identical to pre-chip code modulo
+  the `require()` wrapper.
+- ✅ Single plugin version bump (1.0.33-beta → 1.0.35-beta) covers
+  both items.
+
+### Conflict note (none expected)
+
+No other Wave-3 chips currently target `dashboard.mustache`'s chart
+canvas region or `layout/dashboard.php`'s chart-series block (Chip C
+finished dashboard inline-style cleanup; Chip G finished i18n
+substitutions). The wave3-chip-N changes compose cleanly with prior
+chips.
+
+### Refs
+
+- Audit report: `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md`
+  §3.4 (Dashboard) — F-14 and F-15.
+- Visual evidence: `docs/visual-evidence/2026-05-24/wave3-chip-N/README.md`
+- Frontend rules: `.claude/rules/frontend.md` §Moodle JS / AMD
+  discipline; §Mustache correctness.
+- Prior art (AMD pattern): `theme/airpayux/amd/src/cart_badge.js`
+  shipped by P0 follow-up chip B (2026-05-24).
+- Moodle core Chart.js: `lib/amd/src/chartjs.js` →
+  `lib/amd/src/chartjs-lazy.js` (Chart.js v4.4.2, MIT, vendored
+  by Moodle 5.x core).
