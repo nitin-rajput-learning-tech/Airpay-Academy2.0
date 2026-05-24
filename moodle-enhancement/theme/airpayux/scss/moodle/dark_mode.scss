@@ -59,28 +59,33 @@ body.dark-mode {
         color: #e8eaed !important;
     }
     /* alert-info: light-mode #0a3d62 on #172554 dark navy = 1.29:1.
-       Lighten the alert text + bg for dark mode. */
+       Lighten the alert text + bg for dark mode.
+       2026-05-24 P1 #13 — !important dropped; the later `.alert-info`
+       rule (under === Alerts ===) is the canonical dark-mode value and
+       both rules now drop !important so CSS source-order resolution
+       still picks the same final value. */
     .alert-info {
-        background-color: #172554 !important;
-        color: #c4cad8 !important;
-        border-color: #1e3a8a !important;
+        background-color: #172554;
+        color: #c4cad8;
+        border-color: #1e3a8a;
     }
     .alert-info strong {
-        color: #e8eaed !important;
+        color: #e8eaed;
     }
     /* Inline <code style="color:#0a3d62"> in the bulk-CSV/import/enrol
        help blocks was readable in light mode but unreadable on the
-       dark-mode #172554 bg (1.29:1). Force visible code text. */
+       dark-mode #172554 bg (1.29:1). Force visible code text against
+       the inline-style attribute selector. */
     .alert-info code, .alert-info code[style] {
-        color: #93c5fd !important;
-        background: transparent !important;
+        color: #93c5fd !important;  // preserved: overrides inline `style="color:#0a3d62"` baked into Moodle help blocks
+        background: transparent !important;  // preserved: overrides inline `style` background
     }
     .alert-secondary {
-        background-color: #232733 !important;
-        color: #c4cad8 !important;
-        border-color: #2d3140 !important;
+        background-color: #232733;
+        color: #c4cad8;
+        border-color: #2d3140;
     }
-    .alert-secondary strong { color: #e8eaed !important; }
+    .alert-secondary strong { color: #e8eaed; }
     /* Bootstrap text-decoration-none links (used in widget back-buttons)
        fall back to a muted #6a737b at 3.9:1. */
     .text-decoration-none {
@@ -299,85 +304,101 @@ body.dark-mode {
 
     /* === Buttons === */
     .btn-primary {
-        background: #1e3a5f !important;
-        border-color: #2563eb !important;
-        color: #93c5fd !important;
+        background: #1e3a5f;
+        border-color: #2563eb;
+        color: #93c5fd;
     }
     .btn-primary:hover {
-        background: #1e40af !important;
+        background: #1e40af;
     }
     .btn-secondary, .btn-outline-secondary {
-        background: #232733 !important;
-        border-color: #3d4254 !important;
-        color: #c4cad8 !important;
+        background: #232733;
+        border-color: #3d4254;
+        color: #c4cad8;
     }
 
     /* === Dropdowns === */
     .dropdown-menu {
-        background: #1a1d27 !important;
-        border-color: #2d3140 !important;
+        background: #1a1d27;
+        border-color: #2d3140;
     }
-    .dropdown-item { color: #c4cad8 !important; }
-    .dropdown-item:hover { background: #232733 !important; color: #93c5fd !important; }
+    .dropdown-item { color: #c4cad8; }
+    .dropdown-item:hover { background: #232733; color: #93c5fd; }
 
-    /* === Modals === */
-    .modal-content { background: #1a1d27 !important; border-color: #2d3140 !important; }
-    .modal-header, .modal-footer { border-color: #2d3140 !important; }
-    .modal-title { color: #e8eaed !important; }
+    /* === Modals ===
+       _bizlms-dark.scss also targets .modal-content / .modal-header /
+       .modal-footer with !important and DIFFERENT slate values (#1e293b /
+       #334155). Without our !important here the BizLMS-dark slate would
+       leak into all modals site-wide. Keep our values dominant. */
+    .modal-content {
+        background: #1a1d27 !important;  // preserved: bizlms-dark conflict
+        border-color: #2d3140 !important;  // preserved: bizlms-dark conflict
+    }
+    .modal-header, .modal-footer {
+        border-color: #2d3140 !important;  // preserved: bizlms-dark conflict
+    }
+    .modal-title {
+        color: #e8eaed !important;  // preserved: bizlms-dark .modal-header .modal-title sets #f1f5f9
+    }
 
     /* === Alerts === */
-    .alert-info { background: #172554 !important; color: #93c5fd !important; border-left-color: #3b82f6 !important; }
-    .alert-success { background: #052e16 !important; color: #86efac !important; border-left-color: #22c55e !important; }
-    .alert-warning { background: #451a03 !important; color: #fcd34d !important; border-left-color: #f59e0b !important; }
-    .alert-danger { background: #450a0a !important; color: #fca5a5 !important; border-left-color: #ef4444 !important; }
+    .alert-info { background: #172554; color: #93c5fd; border-left-color: #3b82f6; }
+    .alert-success { background: #052e16; color: #86efac; border-left-color: #22c55e; }
+    .alert-warning { background: #451a03; color: #fcd34d; border-left-color: #f59e0b; }
+    .alert-danger { background: #450a0a; color: #fca5a5; border-left-color: #ef4444; }
 
     /* === Filter sidebar (catalog) === */
     .filter_section {
-        background: #1a1d27 !important;
-        border-right-color: #2d3140 !important;
+        background: #1a1d27;
+        border-right-color: #2d3140;
     }
-    .filter_section .checkbox-item label { color: #c4cad8 !important; }
-    .filter_section .icon-header { color: #e8eaed !important; }
+    .filter_section .checkbox-item label { color: #c4cad8; }
+    .filter_section .icon-header { color: #e8eaed; }
 
-    /* === Pagination === */
+    /* === Pagination ===
+       _bizlms-dark.scss also targets .pagination .page-link and the
+       .active variant with !important and DIFFERENT colours (slate
+       #1e293b / brand #0066A7). Without our !important the BizLMS-dark
+       theme would override site-wide pagination on every dark-mode page.
+       Keep our values dominant. */
     .pagination .page-link {
-        background: #1a1d27 !important;
-        border-color: #2d3140 !important;
-        color: #c4cad8 !important;
+        background: #1a1d27 !important;  // preserved: bizlms-dark conflict
+        border-color: #2d3140 !important;  // preserved: bizlms-dark conflict
+        color: #c4cad8 !important;  // preserved: bizlms-dark conflict
     }
     .pagination .page-item.active .page-link {
-        background: #1e3a5f !important;
-        border-color: #3b82f6 !important;
-        color: #93c5fd !important;
+        background: #1e3a5f !important;  // preserved: bizlms-dark conflict
+        border-color: #3b82f6 !important;  // preserved: bizlms-dark conflict
+        color: #93c5fd !important;  // preserved: bizlms-dark conflict
     }
 
     /* === Moodle block filter buttons (Timeline "Next 7 days" etc) === */
     .block .btn-outline-secondary,
     .block .btn-secondary {
-        background: #232733 !important;
-        border-color: #3d4254 !important;
-        color: #93c5fd !important;
+        background: #232733;
+        border-color: #3d4254;
+        color: #93c5fd;
     }
     .block .btn-outline-secondary:hover,
     .block .btn-secondary:hover {
-        background: #2d3140 !important;
-        color: #bfdbfe !important;
+        background: #2d3140;
+        color: #bfdbfe;
     }
 
     /* === Moodle block list items + loading skeletons === */
     .list-group-item {
-        background: #1a1d27 !important;
-        border-color: #2d3140 !important;
-        color: #c4cad8 !important;
+        background: #1a1d27;
+        border-color: #2d3140;
+        color: #c4cad8;
     }
     .bg-pulse-grey {
-        background: #2d3140 !important;
+        background: #2d3140;
     }
     .block .form-control,
     .block input[type="text"] {
-        background: #232733 !important;
-        border-color: #3d4254 !important;
-        color: #e8eaed !important;
+        background: #232733;
+        border-color: #3d4254;
+        color: #e8eaed;
     }
 
     /* === Quicknav cards in dark mode === */
@@ -405,19 +426,19 @@ body.dark-mode {
 
     /* === BizLMS admin toolbar === */
     .course_extended_menu_itemlink {
-        background: #232733 !important;
-        border-color: #3d4254 !important;
-        color: #c4cad8 !important;
+        background: #232733;
+        border-color: #3d4254;
+        color: #c4cad8;
     }
     .course_extended_menu_itemlink:hover {
-        background: #2d3140 !important;
-        color: #93c5fd !important;
+        background: #2d3140;
+        color: #93c5fd;
     }
 
     /* === BizLMS Manage Company — costcenter stat cards === */
     .content_right,
     .costcenter_content {
-        background: #1a1d27 !important;
+        background: #1a1d27;
     }
     .details_content,
     .details_content.org_users,
@@ -426,14 +447,14 @@ body.dark-mode {
     .details_content.org_classrooms,
     .details_content.org_programs,
     .details_content.org_onlineexams {
-        background: #232733 !important;
-        border-color: #2d3140 !important;
-        color: #c4cad8 !important;
+        background: #232733;
+        border-color: #2d3140;
+        color: #c4cad8;
     }
     .details_content .counts_data,
     .details_content .totalcounts,
     .details_content .total_count_val {
-        color: #e8eaed !important;
+        color: #e8eaed;
     }
     .details_content .sub_count_data,
     .details_content .active_data,
@@ -441,14 +462,14 @@ body.dark-mode {
     .details_content .new_data,
     .details_content .completed_data,
     .details_content .hold_data {
-        color: #9ca3b4 !important;
+        color: #9ca3b4;
     }
     .org_detail {
-        border-color: #2d3140 !important;
+        border-color: #2d3140;
     }
     /* BizLMS org sidebar card (blue) — slightly darken in dark mode */
     .costcenter_data {
-        border-color: #1e3a5f !important;
+        border-color: #1e3a5f;
     }
 
     /* === BizLMS Manage Users / Manage Courses — content containers === */
@@ -457,34 +478,38 @@ body.dark-mode {
     [data-region$="-list-container"],
     .userslist_container,
     .courseslist_container {
-        background: transparent !important;
+        background: transparent;
     }
 
     /* === Footer (already dark by default — adjust border) === */
     .airpay-footer { border-top: 1px solid #2d3140; }
 
     /* === Scrollbar === */
-    ::-webkit-scrollbar-track { background: #1a1d27 !important; }
-    ::-webkit-scrollbar-thumb { background: #3d4254 !important; }
-    ::-webkit-scrollbar-thumb:hover { background: #5a6070 !important; }
+    ::-webkit-scrollbar-track { background: #1a1d27; }
+    ::-webkit-scrollbar-thumb { background: #3d4254; }
+    ::-webkit-scrollbar-thumb:hover { background: #5a6070; }
 
     /* === Selection === */
     ::selection { background: rgba(59,130,246,0.3); }
 
     /* === Popover (Quick Access etc) === */
-    .popover { background: #1a1d27 !important; border-color: #2d3140 !important; }
-    .popover-header { background: #232733 !important; border-color: #2d3140 !important; color: #e8eaed !important; }
-    .popover-body { color: #c4cad8 !important; }
+    .popover { background: #1a1d27; border-color: #2d3140; }
+    .popover-header { background: #232733; border-color: #2d3140; color: #e8eaed; }
+    .popover-body { color: #c4cad8; }
 
-    /* === Breadcrumbs === */
-    .breadcrumb { background: transparent !important; }
-    .breadcrumb-item a { color: #60a5fa !important; }
-    .breadcrumb-item.active { color: #9ca3b4 !important; }
+    /* === Breadcrumbs ===
+       _bizlms-dark.scss line 75 groups `.breadcrumb-item a` with the
+       page-header heading rule and sets it to #f1f5f9 !important. Our
+       brand blue #60a5fa must beat that — keep !important on just the
+       link colour. The wrapper bg + active state have no such conflict. */
+    .breadcrumb { background: transparent; }
+    .breadcrumb-item a { color: #60a5fa !important; }  // preserved: bizlms-dark conflict
+    .breadcrumb-item.active { color: #9ca3b4; }
 
     /* === Misc text that might still be black === */
     .course-content, .activity-header, .page-context-header,
     label, legend, .helptooltip, .form-label {
-        color: #c4cad8 !important;
+        color: #c4cad8;
     }
 }
 
