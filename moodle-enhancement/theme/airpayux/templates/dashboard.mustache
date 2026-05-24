@@ -171,18 +171,18 @@
             {{! Welcome header — all roles }}
             <div class="airpay-dash__welcome-header">
                 {{#isadmin}}
-                <h2 class="airpay-dash__welcome-header__title">Welcome back, {{firstname}}</h2>
+                <h2 class="airpay-dash__welcome-header__title">{{# str }} welcome_back_admin, theme_airpayux, {{firstname}} {{/ str }}</h2>
                 <p class="airpay-dash__welcome-header__subtitle">
-                    {{#tenant_scope}}{{tenant_scope}} &mdash; {{/tenant_scope}}Platform overview and system health
+                    {{#tenant_scope}}{{tenant_scope}} &mdash; {{/tenant_scope}}{{# str }} subtitle_admin, theme_airpayux {{/ str }}
                 </p>
                 {{/isadmin}}
                 {{#ismanager}}{{^isadmin}}
-                <h2 class="airpay-dash__welcome-header__title">Welcome, {{firstname}}</h2>
-                <p class="airpay-dash__welcome-header__subtitle">Team overview and compliance status</p>
+                <h2 class="airpay-dash__welcome-header__title">{{# str }} welcome_manager, theme_airpayux, {{firstname}} {{/ str }}</h2>
+                <p class="airpay-dash__welcome-header__subtitle">{{# str }} subtitle_manager, theme_airpayux {{/ str }}</p>
                 {{/isadmin}}{{/ismanager}}
                 {{^isadmin}}{{^ismanager}}
-                <h2 class="airpay-dash__welcome-header__title">Welcome back, {{firstname}}!</h2>
-                <p class="airpay-dash__welcome-header__subtitle">Continue where you left off and keep building your skills</p>
+                <h2 class="airpay-dash__welcome-header__title">{{# str }} welcome_learner, theme_airpayux, {{firstname}} {{/ str }}</h2>
+                <p class="airpay-dash__welcome-header__subtitle">{{# str }} subtitle_learner, theme_airpayux {{/ str }}</p>
                 {{/ismanager}}{{/isadmin}}
             </div>
 
@@ -204,11 +204,11 @@
             {{#hascharts}}
             <div class="airpay-dash__two-col">
                 <div class="airpay-dash__section">
-                    <h3 class="airpay-dash__section-title"><i class="fa fa-line-chart"></i> Enrolment Trend</h3>
+                    <h3 class="airpay-dash__section-title"><i class="fa fa-line-chart"></i> {{# str }} chart_enrolment_trend, theme_airpayux {{/ str }}</h3>
                     <canvas id="airpay-chart-enrolments" height="220"></canvas>
                 </div>
                 <div class="airpay-dash__section">
-                    <h3 class="airpay-dash__section-title"><i class="fa fa-pie-chart"></i> Course Distribution</h3>
+                    <h3 class="airpay-dash__section-title"><i class="fa fa-pie-chart"></i> {{# str }} chart_course_distribution, theme_airpayux {{/ str }}</h3>
                     <canvas id="airpay-chart-distribution" height="220"></canvas>
                 </div>
             </div>
@@ -309,19 +309,19 @@
                     <div class="airpay-dash__compliance-grid">
                         <div class="airpay-dash__compliance-card">
                             <div class="airpay-dash__compliance-card__count airpay-dash__compliance-card__count--mandatory">{{compliance.mandatory}}</div>
-                            <div class="airpay-dash__compliance-card__label">Mandatory Courses</div>
+                            <div class="airpay-dash__compliance-card__label">{{# str }} kpi_mandatory_courses, theme_airpayux {{/ str }}</div>
                         </div>
                         <div class="airpay-dash__compliance-card">
                             <div class="airpay-dash__compliance-card__count airpay-dash__compliance-card__count--compliant">{{compliance.compliant}}</div>
-                            <div class="airpay-dash__compliance-card__label">Compliance Rate</div>
+                            <div class="airpay-dash__compliance-card__label">{{# str }} kpi_compliance_rate, theme_airpayux {{/ str }}</div>
                         </div>
                         <div class="airpay-dash__compliance-card">
                             <div class="airpay-dash__compliance-card__count airpay-dash__compliance-card__count--overdue">{{compliance.overdue}}</div>
-                            <div class="airpay-dash__compliance-card__label">Overdue</div>
+                            <div class="airpay-dash__compliance-card__label">{{# str }} kpi_overdue, theme_airpayux {{/ str }}</div>
                         </div>
                         <div class="airpay-dash__compliance-card">
                             <div class="airpay-dash__compliance-card__count airpay-dash__compliance-card__count--assigned">{{compliance.assigned}}</div>
-                            <div class="airpay-dash__compliance-card__label">Total Assigned</div>
+                            <div class="airpay-dash__compliance-card__label">{{# str }} kpi_total_assigned, theme_airpayux {{/ str }}</div>
                         </div>
                     </div>
                 </div>
