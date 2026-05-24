@@ -6,18 +6,18 @@
  *
  * @module local_airpay_courses/enrolledusers
  *
- * @todo Phase B.4 cutover (2026-05-23): Moodle 5.2 removed `core/modal_factory`
- * and `core/modal_registry` (MDL-79182). At cutover-day:
- *   1. Replace `import ModalFactory from 'core/modal_factory'` with
- *      `import Modal from 'core/modal'`.
- *   2. Replace `ModalFactory.create({type: ModalFactory.types.SAVE_CANCEL, ...})`
- *      with `Modal.create({modalType: 'SAVE_CANCEL', ...})`.
- *   3. Smoke test the enrol modal on /local/airpay_courses/enrolledusers.php.
+ * Phase B.4 dual-target (2026-05-24): Moodle 5.2 removed `core/modal_factory`
+ * (MDL-79182). This module no longer statically imports `core/modal_factory`
+ * — that would break module-load on 5.2. Instead the version-specific module
+ * is loaded via AMD's runtime `require()` inside `createSaveCancelModal()`,
+ * with `core/modal`'s new static `.create({modalType, ...})` method preferred
+ * (5.2) and `ModalFactory.create({type: ModalFactory.types.X, ...})` as
+ * fallback (5.1).
+ *
  * See docs/5.2-merge/PHASE-B4-LIB-ADMIN-CONFLICTS.md.
  */
 import Ajax from 'core/ajax';
 import Notification from 'core/notification';
-import ModalFactory from 'core/modal_factory';
 import ModalEvents from 'core/modal_events';
 
 let COURSE_ID = 0;
@@ -52,9 +52,48 @@ export const init = (courseid, coursename) => {
     });
 };
 
+/**
+ * Dual-target SAVE_CANCEL modal factory.
+ *
+ * 5.2: require('core/modal') -> Modal.create({modalType: 'SAVE_CANCEL', ...})
+ * 5.1: require('core/modal_factory') -> ModalFactory.create({type: ModalFactory.types.SAVE_CANCEL, ...})
+ *
+ * @param {{title: string, body: string}} spec
+ * @return {Promise<object>} resolves to a Moodle modal instance
+ */
+const createSaveCancelModal = (spec) => new Promise((resolve, reject) => {
+    require(['core/modal'], (Modal) => {
+        if (Modal && typeof Modal.create === 'function') {
+            // Moodle 5.2 — new API.
+            Modal.create({
+                modalType: 'SAVE_CANCEL',
+                title: spec.title,
+                body: spec.body,
+            }).then(resolve).catch(reject);
+            return;
+        }
+        // Moodle 5.1 — Modal class exists but no static create(); use factory.
+        require(['core/modal_factory'], (ModalFactory) => {
+            ModalFactory.create({
+                type: ModalFactory.types.SAVE_CANCEL,
+                title: spec.title,
+                body: spec.body,
+            }).then(resolve).catch(reject);
+        }, reject);
+    }, () => {
+        // core/modal failed to load — try factory directly.
+        require(['core/modal_factory'], (ModalFactory) => {
+            ModalFactory.create({
+                type: ModalFactory.types.SAVE_CANCEL,
+                title: spec.title,
+                body: spec.body,
+            }).then(resolve).catch(reject);
+        }, reject);
+    });
+});
+
 const openEnrolModal = async () => {
-    const modal = await ModalFactory.create({
-        type: ModalFactory.types.SAVE_CANCEL,
+    const modal = await createSaveCancelModal({
         title: `Enrol user in "${COURSE_NAME}"`,
         body: `
             <p>Find user by <strong>email</strong>, <strong>employee ID</strong>, or <strong>username</strong>.</p>
