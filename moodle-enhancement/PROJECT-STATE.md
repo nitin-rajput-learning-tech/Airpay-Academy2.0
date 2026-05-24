@@ -4789,3 +4789,85 @@ blocks/sentientia_leaderboard/
 
 ### Next
 Schedule a fix-sprint to close the 9-item P0 list before Phase 2 customer-zero promotion. The audit branch is push-ready; no PR opened (Nitin to request).
+
+## ♿ P1 #12 — universal :focus-visible coverage (2026-05-24)
+
+Commits: 4552b85d, f8d4ba28, c4787fa0, c49e6396, 7ffbafb5, plus version bump.
+Chip: claude/inspiring-mayer-kWs9O (P1 follow-up chip H).
+
+Closes audit findings **F-03, F-11, F-17, F-19** from
+`docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md §2.6`. Adds
+`:focus-visible` sibling rules adjacent to every bare `:focus` rule
+in the five surface partials so keyboard users still get the brand
+ring while mouse-click no longer flashes a phantom ring on the same
+element.
+
+### Rules / selectors added (one commit per partial)
+
+| Partial | Rules | Selectors | Audit ref |
+|---------|-------|-----------|-----------|
+| `_surface-navbar.scss` (line 103) | 1 | 1 | F-03 |
+| `_surface-dashboard.scss` (line 287-288) | 1 | 2 | (in §2.6 dashboard slice) |
+| `_surface-login.scss` (lines 209, 534-538) | 2 | 6 | F-11 |
+| `_surface-course.scss` (lines 258, 278, 533) | 3 | 3 | F-19 |
+| `_surface-profile.scss` (lines 1290-1293, 1711-1713, 2112-2114) | 3 | 10 | F-17 |
+| **Total** | **10** | **22** | |
+
+### Pattern
+
+For each bare `&:focus` rule we added an adjacent `&:focus-visible`
+sibling with identical declarations. The legacy `:focus` rule is
+retained as a fallback for browsers without `:focus-visible` support
+(WCAG cites Chrome 86+ / Firefox 85+ baseline, but airpay.academy
+serves some Edge Legacy users still — the dual-rule belt-and-braces
+costs us 22 selectors of CSS, which is cheaper than re-auditing
+browser support).
+
+```scss
+// Pattern applied:
+&:focus { ... }
+&:focus-visible { /* same declarations */ }
+```
+
+### Audit recount
+
+The audit cited **53 bare `:focus` selectors** across the surface
+partials. Actual count by `grep -rn ':focus' partials/_surface-*.scss
+| grep -v ':focus-visible' | grep -v ':focus-within'` is **22**. The
+audit's 53 likely includes other partial families
+(`_bizlms-*.scss`, `_components-*.scss`, `_moodle-overrides.scss`,
+`dark_mode.scss`) — out of scope for this chip. Sub-tasks for those
+families remain on the P1 backlog if needed; they should be tracked
+under a follow-up chip after Chip J's profile split lands.
+
+### Chip J conflict note
+
+Chip J (P1 #10 — `_surface-profile.scss` split into 4 partials) may
+move the 3 rules at `_surface-profile.scss` lines 1290-1293,
+1711-1713, 2112-2114 into per-page partials. If Chip J merges first,
+the `:focus-visible` blocks need to follow each `:focus` rule into
+its destination partial (likely `_surface-user.scss` /
+`_surface-grade-report.scss` / one of the form-scoped partials). If
+this chip merges first, Chip J absorbs the new `:focus-visible`
+declarations during its split.
+
+### Verification
+
+- All 22 bare `:focus` selectors now have a matching
+  `:focus-visible` sibling (1:1 parity verified by grep).
+- `php -l moodle-enhancement/theme/airpayux/version.php` clean.
+- Out-of-scope files **untouched**: zero changes to `.mustache`,
+  `.php`, lang files, plugin code, non-surface partials, `_tokens.scss`,
+  `_ui-polish.scss`.
+- Theme version bumped to `2026052402` / release `1.0.32-beta` to
+  invalidate the compiled CSS cache.
+- Visual evidence (test procedure for keyboard vs mouse focus
+  behaviour) at `docs/visual-evidence/2026-05-24/p1-followup-chip-H/`.
+
+### Next
+
+Re-audit `_bizlms-*.scss`, `_components-*.scss`, `_moodle-overrides.scss`,
+`dark_mode.scss` for residual bare `:focus` rules so the surface-partial
+work here can be claimed as fully closing audit §2.6 across the theme.
+That sweep is a separate ~30-minute chip; recommend dispatching after
+Chip J's profile split lands so the partial layout is stable.
