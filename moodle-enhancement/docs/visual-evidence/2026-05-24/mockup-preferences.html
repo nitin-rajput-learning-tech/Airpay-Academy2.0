@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mockup — Opt-out preferences</title>
+<style>
+:root {
+  --ap-primary: #0066A7;
+  --ap-bg: #F2F4FB;
+  --ap-surface: #ffffff;
+  --ap-border: #e2e6ef;
+  --ap-text-primary: #1a1a2e;
+  --ap-text-secondary: #5a6070;
+  --ap-success: #16a34a;
+}
+* { box-sizing: border-box; }
+body { font-family: 'Montserrat', -apple-system, sans-serif;
+       background: var(--ap-bg); color: var(--ap-text-primary);
+       margin: 0; padding: 24px; }
+.page { max-width: 720px; margin: 0 auto;
+  background: var(--ap-surface); border: 1px solid var(--ap-border);
+  border-radius: 12px; padding: 32px; }
+.crumbs { font-size: 0.875rem; color: var(--ap-text-secondary); margin-bottom: 16px; }
+.crumbs a { color: var(--ap-primary); text-decoration: none; }
+h1 { font-size: 1.5rem; margin: 0 0 24px; }
+.form-row { margin-bottom: 24px; }
+.form-row label { display: flex; align-items: flex-start; gap: 12px;
+  cursor: pointer; font-weight: 500; }
+.form-row label input[type=checkbox] {
+  width: 20px; height: 20px; margin-top: 2px; accent-color: var(--ap-primary); }
+.form-help { font-size: 0.875rem; color: var(--ap-text-secondary);
+  margin: 8px 0 0 32px; }
+.notify-success { background: #d1fae5; color: #064e3b;
+  padding: 12px 16px; border-radius: 8px; margin-bottom: 24px;
+  border-left: 4px solid var(--ap-success); }
+.buttons { margin-top: 24px; display: flex; gap: 12px; }
+.btn { padding: 8px 24px; border-radius: 8px; border: none;
+  font-family: inherit; font-weight: 500; cursor: pointer; }
+.btn-primary { background: var(--ap-primary); color: white; }
+.btn-secondary { background: white; border: 1px solid var(--ap-border); color: var(--ap-text-primary); }
+.note { background: #fffbea; border-left: 4px solid #d97706;
+  padding: 12px 16px; margin-bottom: 16px; font-size: 0.875rem;
+  border-radius: 4px; max-width: 720px; margin: 0 auto 16px; }
+</style>
+</head>
+<body>
+
+<div class="note">
+  <strong>Mockup</strong> — <code>local/sentientia_leaderboard/preferences.php</code>.
+  Surfaced from Profile → Preferences via the user-settings navigation
+  node added by <code>lib.php</code>. Checkbox state is read from the
+  <code>local_sentientia_lb_optouts</code> table; submit hits
+  <code>optout_manager::set_preference_value()</code>.
+</div>
+
+<div class="page">
+
+  <div class="crumbs">
+    <a href="#">Dashboard</a> → <a href="#">Vikram Joshi</a> →
+    <a href="#">Preferences</a> → <strong>Hide me from public leaderboards</strong>
+  </div>
+
+  <h1>Hide me from public leaderboards</h1>
+
+  <div class="notify-success">
+    ✓ Changes saved
+  </div>
+
+  <form>
+    <div class="form-row">
+      <label>
+        <input type="checkbox" name="optout" checked>
+        <span>
+          Hide me from public leaderboards
+        </span>
+      </label>
+      <div class="form-help">
+        When checked, your name is hidden from every public leaderboard.
+        You still earn points, but other learners cannot see your ranking.
+      </div>
+    </div>
+
+    <div class="buttons">
+      <button type="submit" class="btn btn-primary">Save changes</button>
+      <button type="button" class="btn btn-secondary">Cancel</button>
+    </div>
+  </form>
+
+</div>
+
+</body>
+</html>

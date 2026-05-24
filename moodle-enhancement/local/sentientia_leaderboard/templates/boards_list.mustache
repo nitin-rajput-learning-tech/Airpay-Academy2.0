@@ -1,0 +1,41 @@
+{{!
+    @template local_sentientia_leaderboard/boards_list
+
+    Admin / trainer view: a table of boards visible to the caller.
+
+    Context:
+      boards — array<{id, name, type, type_label, scope, scope_label,
+                       view_url, last_recomputed}>
+
+    Example context:
+    {
+      "boards": [
+        {"id":1,"name":"Q2 Quiz","type":"quiz","type_label":"Quiz top scorers",
+         "scope":"tenant","scope_label":"Tenant",
+         "view_url":"/local/sentientia_leaderboard/view.php?id=1",
+         "last_recomputed":"24 May 2026 10:15"}
+      ]
+    }
+}}
+<table class="airpay-lb__boards generaltable">
+  <thead>
+    <tr>
+      <th>{{# str }}label_name, local_sentientia_leaderboard{{/ str }}</th>
+      <th>{{# str }}label_type, local_sentientia_leaderboard{{/ str }}</th>
+      <th>{{# str }}label_scope, local_sentientia_leaderboard{{/ str }}</th>
+      <th>{{# str }}last_recomputed_at, local_sentientia_leaderboard,&nbsp;{{/ str }}</th>
+      <th>&nbsp;</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{# boards }}
+    <tr>
+      <td>{{name}}</td>
+      <td>{{type_label}}</td>
+      <td>{{scope_label}}</td>
+      <td>{{last_recomputed}}</td>
+      <td><a class="btn btn-sm btn-secondary" href="{{view_url}}">{{# str }}action_view, local_sentientia_leaderboard{{/ str }}</a></td>
+    </tr>
+    {{/ boards }}
+  </tbody>
+</table>
