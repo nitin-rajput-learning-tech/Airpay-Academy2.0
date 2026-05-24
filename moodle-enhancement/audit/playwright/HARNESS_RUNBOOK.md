@@ -15,6 +15,43 @@ stretches.
 | `p1_phase_d_extended.mjs` | Deep CRUD workflows (WX-01..WX-07) |
 | `p2_a11y_2026_05_08.mjs` | **NEW** — axe scan over 13 admin surfaces shipped this stretch |
 | `p2_workflows_2026_05_08.mjs` | **NEW** — WX-08..WX-11 deep workflows for the 4 newly-shipped plugins |
+| `tests/surfaces.spec.mjs` | `@playwright/test` runner suite — computed-CSS markers on 11 Sentientia surfaces (Goal A.x regression guard) |
+| `tests/workflows.spec.mjs` | **NEW (2026-05-24)** — `@playwright/test` runner suite — 10 non-mutating workflow tests (logout, form-validation rejection, language-toggle round-trip, WS contract shapes, CSRF wall) per Goal A.y audit recommendation |
+
+## Workflow tests (Goal B closing tests)
+
+`tests/workflows.spec.mjs` was added 2026-05-24 in response to the
+Goal A.y audit conclusion that "the next bug-class lives DEEPER than
+top-level pages — in form submissions, AJAX endpoints, edge cases".
+
+Design constraint: every test in the file is **safe to run repeatedly**
+without corrupting local DB state. Categories:
+
+1. **Session lifecycle** — logout + sesskey-less POST CSRF wall.
+2. **Form-validation rejection** — POST empty required fields, verify
+   the mform validator catches them; no DB write happens because
+   validation fails first.
+3. **Reversible toggle round-trip** — save current → flip → flip back
+   in the same test. Restores the original state in finally semantics.
+4. **AJAX / WS contract shape** — read-only `lib/ajax/service.php`
+   probes that pin the JSON shape returned by:
+   - `core_user_get_users_by_field`
+   - `core_course_get_enrolled_courses_by_timeline_classification`
+   - `local_airpay_request_list_pending` (Bug #10 regression guard)
+
+Run:
+
+```powershell
+cd moodle-enhancement\audit\playwright
+npx playwright test tests/workflows.spec.mjs --project=firefox-desktop
+# Or all spec.mjs in one run:
+npx playwright test
+```
+
+Mutating workflows (course-create / user-delete / enrol / quiz-attempt
+/ refund) are intentionally NOT in this spec — they need DB snapshot +
+restore around each run and belong in a future `tests/mutating.spec.mjs`
+gated by a `--mutating` CI flag.
 
 ## Prerequisites
 
