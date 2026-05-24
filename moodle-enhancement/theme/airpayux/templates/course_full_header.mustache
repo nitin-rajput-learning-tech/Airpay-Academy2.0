@@ -38,6 +38,49 @@
                     </div>
                 {{/hasnavbar}}
         </div>
+        {{!
+            SECURITY — coursebannerimage CSS url() injection prevention (P2 #20 / F-20).
+
+            Source of `coursebannerimage`:
+              \theme_airpayux\output\traits\course_view::course_bannerimage()
+              (classes/output/traits/course_view.php:74-88).
+
+            That method only ever returns one of two values:
+              1. \moodle_url::make_pluginfile_url(
+                     $file->get_contextid(), $file->get_component(),
+                     $file->get_filearea(), null,
+                     $file->get_filepath(), $file->get_filename()
+                 )->out()
+                 — for course overview files uploaded by course editors.
+              2. $this->image_url('course_default', 'theme_airpayux')->out()
+                 — for the theme-bundled default banner (developer-controlled).
+
+            The user-controllable inputs ($filepath, $filename — uploaded
+            banner file name) flow through Moodle's
+            \core\url::set_slashargument() (lib/classes/url.php:585-601),
+            which applies rawurlencode() to every path segment.
+            rawurlencode() percent-encodes every character that could
+            terminate the CSS url('...') context:
+              '  "  (  )  ;  \  <  >  <space>
+
+            Worked example: a filename of   foo'); background:url('evil
+            becomes                          foo%27%29%3B%20background%3Aurl%28%27evil
+            in the final URL — inert in CSS context.
+
+            For the slasharguments=off code-path, the value is passed as a
+            query-string parameter (file=...) and url::get_query_string()
+            (lib/classes/url.php:298-323) likewise calls rawurlencode() on
+            every value before assembling the URL — same protection.
+
+            Defense in depth: the {{ }} double-brace below adds
+            HTML-escaping on top of the URL-encoding (covers the
+            HTML-attribute context too). DO NOT migrate to {{{ }}}
+            triple-brace here.
+
+            Verified 2026-05-24 / Wave-3 chip Q. See:
+              - docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md (F-20)
+              - docs/visual-evidence/2026-05-24/wave3-chip-Q/README.md
+        }}
         <div class="courseheader" style="background-image: url('{{coursebannerimage}}');">
             
             <div class="d-flex flex-column  course_heading h-100">

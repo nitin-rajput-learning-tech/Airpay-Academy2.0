@@ -207,6 +207,11 @@ defined('MOODLE_INTERNAL') || die();
 // aria-label/caption; column headers use Moodle core lang
 // (month, total, category, courses).
 // Visual evidence: docs/visual-evidence/2026-05-24/wave3-chip-N/.
+//
+// P2 #20 / F-20 chip-Q (2026-05-24) — coursebannerimage CSS-url()
+// injection verification. Confirmed safe: moodle_url::make_pluginfile_url()
+// rawurlencodes every CSS-terminating character. Doc-only comment
+// added above the courseheader div in course_full_header.mustache.
 $plugin->version   = 2026052404;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
@@ -226,7 +231,7 @@ $plugin->maturity  = MATURITY_BETA;
 // (83% reduction). Section 1 wrapped under body#page-login-index for
 // ID-specificity. Bundled bugfix: dark-mode selectors used descendant
 // combinator (never fired since #page-X IS body); now chained.
-$plugin->release   = '1.0.35-beta';  // P0 #1+#2+#3+#4+#5+#6+#7+#9 + F-13 + P1 #11+#12+#13+#14+#17 + P2 #21+#23 + cart_badge audit
+$plugin->release   = '1.0.35-beta';  // P0 #1+#2+#3+#4+#5+#6+#7+#9 + F-13 + P1 #11+#12+#13+#14+#17 + P2 #20+#21+#23 + cart_badge audit
 // P1 #10 chip-J (2026-05-24) — _surface-profile.scss (2,507 lines)
 // decomposed into 4 per-surface partials: _surface-user, _surface-badges,
 // _surface-grade-report, _surface-calendar. Admin fragments moved to
