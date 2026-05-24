@@ -71,6 +71,18 @@ require_once($CFG->libdir . '/behat/lib.php');
 // wire here even on pages where the cart isn't surfaced.
 $PAGE->requires->js_call_amd('theme_airpayux/cart_badge', 'init');
 
+// P1 #17 / F-14 audit follow-up (2026-05-24, wave3-chip-N) — pre-warm the
+// chart_loader AMD module so Moodle's bundled Chart.js (core/chartjs) is
+// in the AMD cache by the time the inline require() in dashboard.mustache
+// (after the {{#hascharts}} guard) resolves. Replaces the cdn.jsdelivr.net
+// <script src="…"> that previously lived in the template — supply-chain
+// safe + offline-network safe. The init() call is a no-op when the
+// dashboard has no admin charts ({{^hascharts}} branch) because the
+// inline require() never fires; loading the module ahead of time is
+// still cheap (single requirejs entry) and avoids a round-trip on
+// admin / L&D dashboards where charts ARE rendered.
+$PAGE->requires->js_call_amd('theme_airpayux/chart_loader', 'init');
+
 // Add block button in editing mode.
 $addblockbutton = $OUTPUT->addblockbutton();
 

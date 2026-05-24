@@ -249,11 +249,26 @@
                 {{/hasuseranalytics}}
             </div>
 
-            {{! Chart.js initialization }}
+            {{! Chart.js initialization.
+
+                P1 #17 / F-14 audit fix (2026-05-24, wave3-chip-N):
+                the external CDN <script src="https://cdn.jsdelivr.net/…">
+                was replaced with theme_airpayux/chart_loader, an AMD
+                module that delegates to Moodle's bundled core/chartjs
+                (Chart.js v4.4.2 in lib/amd/src/chartjs-lazy.js). The
+                loader exposes the constructor on window.Chart so the
+                init code below keeps using `new Chart(...)` unchanged
+                — only the loader changed. layout/dashboard.php also
+                pre-warms the module via $PAGE->requires->js_call_amd
+                so it's in the AMD cache before this inline require()
+                resolves. See:
+                  amd/src/chart_loader.js                — source
+                  amd/build/chart_loader.min.js          — built
+                  docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md F-14
+            }}
             {{#hascharts}}
-            <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
             <script>
-            document.addEventListener('DOMContentLoaded', function() {
+            require(['theme_airpayux/chart_loader'], function() {
                 // Enrolment Trend Bar Chart
                 var ctx1 = document.getElementById('airpay-chart-enrolments');
                 if (ctx1) {
