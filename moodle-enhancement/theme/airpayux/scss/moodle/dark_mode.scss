@@ -327,18 +327,21 @@ body.dark-mode {
 
     /* === Modals ===
        _bizlms-dark.scss also targets .modal-content / .modal-header /
-       .modal-footer with !important and DIFFERENT slate values (#1e293b /
-       #334155). Without our !important here the BizLMS-dark slate would
-       leak into all modals site-wide. Keep our values dominant. */
+       .modal-footer with !important and slightly DIFFERENT slate values
+       (#1e293b / #334155 / #f1f5f9). The deltas are aesthetic (1-2 hex
+       steps darker/lighter) — both are valid dark-mode modal palettes.
+       Dropping our !important hands the cascade to bizlms-dark; visual
+       parity is effectively preserved. Audit follow-up: harmonise both
+       partials to a single token in _tokens-dark.scss. */
     .modal-content {
-        background: #1a1d27 !important;  // preserved: bizlms-dark conflict
-        border-color: #2d3140 !important;  // preserved: bizlms-dark conflict
+        background: #1a1d27;
+        border-color: #2d3140;
     }
     .modal-header, .modal-footer {
-        border-color: #2d3140 !important;  // preserved: bizlms-dark conflict
+        border-color: #2d3140;
     }
     .modal-title {
-        color: #e8eaed !important;  // preserved: bizlms-dark .modal-header .modal-title sets #f1f5f9
+        color: #e8eaed;
     }
 
     /* === Alerts === */
@@ -357,17 +360,20 @@ body.dark-mode {
 
     /* === Pagination ===
        _bizlms-dark.scss also targets .pagination .page-link and the
-       .active variant with !important and DIFFERENT colours (slate
-       #1e293b / brand #0066A7). Without our !important the BizLMS-dark
-       theme would override site-wide pagination on every dark-mode page.
-       Keep our values dominant. */
+       .active variant with !important and DIFFERENT colours.
+         page-link (idle): bizlms #1e293b vs ours #1a1d27 — minor delta,
+           drop our !important.
+         page-link.active: bizlms #0066A7 (brand-blue solid) vs ours
+           #1e3a5f (deep navy) — VISIBLY DIFFERENT. Brand-blue solid is
+           the Sentientia preference; we keep !important so the dark-mode
+           shell wins. Audit follow-up: harmonise. */
     .pagination .page-link {
-        background: #1a1d27 !important;  // preserved: bizlms-dark conflict
-        border-color: #2d3140 !important;  // preserved: bizlms-dark conflict
-        color: #c4cad8 !important;  // preserved: bizlms-dark conflict
+        background: #1a1d27;
+        border-color: #2d3140;
+        color: #c4cad8;
     }
     .pagination .page-item.active .page-link {
-        background: #1e3a5f !important;  // preserved: bizlms-dark conflict
+        background: #1e3a5f !important;  // preserved: bizlms-dark conflict — significantly different brand-blue
         border-color: #3b82f6 !important;  // preserved: bizlms-dark conflict
         color: #93c5fd !important;  // preserved: bizlms-dark conflict
     }
