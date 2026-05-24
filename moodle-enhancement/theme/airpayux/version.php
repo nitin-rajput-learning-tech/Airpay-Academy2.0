@@ -199,4 +199,8 @@ $plugin->maturity  = MATURITY_BETA;
 // reduced from 253 to 36 !important declarations (-85.8%) via parent-
 // class specificity over Bootstrap defaults. Preserved !important
 // blocks documented inline.
-$plugin->release   = '1.0.33-beta';  // P0 #1+#2+#3+#4+#5+#6+#7+#9 + F-13 + P1 #12+#13+#14 + P2 #21 + cart_badge audit
+// P1 #11 chip-K (2026-05-24) — _surface-login.scss 66 → 11 !important
+// (83% reduction). Section 1 wrapped under body#page-login-index for
+// ID-specificity. Bundled bugfix: dark-mode selectors used descendant
+// combinator (never fired since #page-X IS body); now chained.
+$plugin->release   = '1.0.33-beta';  // P0 #1+#2+#3+#4+#5+#6+#7+#9 + F-13 + P1 #11+#12+#13+#14 + P2 #21 + cart_badge audit
