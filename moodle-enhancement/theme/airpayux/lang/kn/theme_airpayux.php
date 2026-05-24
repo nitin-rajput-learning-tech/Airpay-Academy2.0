@@ -120,3 +120,56 @@ $string['learnerlogin'] = 'ಮೊಬೈಲ್ ನಂಬರ್ ನಮೂದಿಸ
 $string['enterotp'] = 'OTP ನಮೂದಿಸಿ';
 $string['resentotp'] = 'OTP ಮರುಕಳಿಸಿ';
 $string['entermobileotp'] = 'ನಮೂದಿಸಿದ ಮೊಬೈಲ್ ನಂಬರ್ ನೋಂದಾಯಿಸಿಲ್ಲ, ದಯವಿಟ್ಟು ಪರಿಶೀಲಿಸಿ';
+
+// P0 #7 (2026-05-24) — close 35-string parity gap vs en pack (audit said
+// 38; raw count incl. duplicated EN keys = 38, unique = 35). Strings added
+// to bring kn locale to 100% parity with en/theme_airpayux.php.
+
+// Region IDs (used in layout configuration — admin-facing labels).
+$string['region-layerone_full']  = 'ಪದರ ಒಂದು ಪೂರ್ಣ ಅಗಲ';
+$string['region-layerone_one']   = 'ಪದರ ಒಂದು-ಒಂದು';
+$string['region-layerone_two']   = 'ಪದರ ಒಂದು-ಎರಡು';
+$string['region-layertwo_one']   = 'ಪದರ ಎರಡು-ಒಂದು';
+$string['region-layertwo_two']   = 'ಪದರ ಎರಡು-ಎರಡು';
+$string['region-layertwo_three'] = 'ಪದರ ಎರಡು-ಮೂರು';
+$string['region-layertwo_four']  = 'ಪದರ ಎರಡು-ನಾಲ್ಕು';
+$string['region-layerthree_one'] = 'ಪದರ ಮೂರು-ಒಂದು';
+$string['region-layerthree_two'] = 'ಪದರ ಮೂರು-ಎರಡು';
+$string['region-teamoverview']   = 'ತಂಡದ ಅವಲೋಕನ';
+$string['region-teamdetail_one'] = 'ತಂಡದ ವಿವರ ಒಂದು';
+$string['region-teamdetail_two'] = 'ತಂಡದ ವಿವರ ಎರಡು';
+
+// Theme schemes (admin colour-scheme selector).
+$string['scheme_1'] = 'ಯೋಜನೆ 1';
+$string['scheme_2'] = 'ಯೋಜನೆ 2';
+$string['scheme_3'] = 'ಯೋಜನೆ 3';
+$string['scheme_4'] = 'ಯೋಜನೆ 4';
+$string['scheme_5'] = 'ಯೋಜನೆ 5';
+$string['scheme_6'] = 'ಯೋಜನೆ 6';
+
+// Quick info slots (admin-configurable dashboard tiles).
+$string['quickinfo1'] = 'ತ್ವರಿತ ಮಾಹಿತಿ 1';
+$string['quickinfo2'] = 'ತ್ವರಿತ ಮಾಹಿತಿ 2';
+$string['quickinfo3'] = 'ತ್ವರಿತ ಮಾಹಿತಿ 3';
+$string['quickinfo4'] = 'ತ್ವರಿತ ಮಾಹಿತಿ 4';
+$string['quickinfo5'] = 'ತ್ವರಿತ ಮಾಹಿತಿ 5';
+
+// Privacy metadata + drawer-state strings (GDPR / Moodle privacy API).
+$string['privacy:metadata:preference:draweropenblock'] = 'ಬ್ಲಾಕ್‌ಗಳ ಡ್ರಾಯರ್ ತೋರಿಸುವ ಅಥವಾ ಮರೆಮಾಡುವ ಬಳಕೆದಾರರ ಆದ್ಯತೆ.';
+$string['privacy:metadata:preference:draweropenindex'] = 'ಕೋರ್ಸ್ ಸೂಚ್ಯಂಕ ಡ್ರಾಯರ್ ತೋರಿಸುವ ಅಥವಾ ಮರೆಮಾಡುವ ಬಳಕೆದಾರರ ಆದ್ಯತೆ.';
+$string['privacy:metadata:preference:draweropennav']   = 'ನ್ಯಾವಿಗೇಶನ್ ಡ್ರಾಯರ್ ತೋರಿಸುವ ಅಥವಾ ಮರೆಮಾಡುವ ಬಳಕೆದಾರರ ಆದ್ಯತೆ.';
+$string['privacy:drawerindexclosed'] = 'ಸೂಚ್ಯಂಕ ಡ್ರಾಯರ್‌ಗಾಗಿ ಪ್ರಸ್ತುತ ಆದ್ಯತೆ ಮುಚ್ಚಲಾಗಿದೆ.';
+$string['privacy:drawerindexopen']   = 'ಸೂಚ್ಯಂಕ ಡ್ರಾಯರ್‌ಗಾಗಿ ಪ್ರಸ್ತುತ ಆದ್ಯತೆ ತೆರೆದಿದೆ.';
+$string['privacy:drawerblockclosed'] = 'ಬ್ಲಾಕ್ ಡ್ರಾಯರ್‌ಗಾಗಿ ಪ್ರಸ್ತುತ ಆದ್ಯತೆ ಮುಚ್ಚಲಾಗಿದೆ.';
+$string['privacy:drawerblockopen']   = 'ಬ್ಲಾಕ್ ಡ್ರಾಯರ್‌ಗಾಗಿ ಪ್ರಸ್ತುತ ಆದ್ಯತೆ ತೆರೆದಿದೆ.';
+$string['privacy:drawernavclosed']   = 'ನ್ಯಾವಿಗೇಶನ್ ಡ್ರಾಯರ್‌ಗಾಗಿ ಪ್ರಸ್ತುತ ಆದ್ಯತೆ ಮುಚ್ಚಲಾಗಿದೆ.';
+$string['privacy:drawernavopen']     = 'ನ್ಯಾವಿಗೇಶನ್ ಡ್ರಾಯರ್‌ಗಾಗಿ ಪ್ರಸ್ತುತ ಆದ್ಯತೆ ತೆರೆದಿದೆ.';
+
+// P0 borrow #5 (Moodle 5.2) — OAuth2 button text. Used by
+// templates/core/loginform.mustache identity-provider list.
+$string['signinwithidentityprovider'] = 'ಅಥವಾ ಇದರೊಂದಿಗೆ ಸೈನ್ ಇನ್ ಮಾಡಿ';
+
+// P0 borrow #14 (Moodle 5.2) — extra sort options on block_myoverview
+// "My Courses" dropdown.
+$string['sortbystartdate'] = 'ಕೋರ್ಸ್ ಆರಂಭಿಕ ದಿನಾಂಕ';
+$string['sortbyenddate']   = 'ಕೋರ್ಸ್ ಅಂತಿಮ ದಿನಾಂಕ';

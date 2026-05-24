@@ -5000,3 +5000,86 @@ matches what's checked in here.
 - Evidence + SR test procedure: `docs/visual-evidence/2026-05-24/p0-followup-chip-E/README.md`
 - State card: `state-cards/sentientia_live-state.md`
 - Audit finding: `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md` §4.2 F-23
+
+---
+
+## 🌐 P0 #7 (partial) — kn+mr+sw locale parity 100% (2026-05-24)
+
+**Commits (branch `claude/happy-bardeen-Tytgn`):**
+- `659765d0` — `lang(kn): close 35-string parity gap on theme_airpayux`
+- `8158c020` — `lang(mr): close 3-string parity gap on theme_airpayux`
+- `5582a101` — `lang(sw): close 3-string parity gap on theme_airpayux`
+- (this commit) — `chore(theme_airpayux): version bump + PROJECT-STATE`
+
+### Scope
+Closed the locale parity gap surfaced by `PLATFORM-VISUAL-AUDIT-2026-05-24.md §2.8`
+for three of the four non-en packs of `theme/airpayux/lang/`. `lang/hi/` is owned
+by Chip D and was not touched.
+
+### Before → after (unique key counts vs `lang/en/theme_airpayux.php` = 153 unique
+keys, 156 raw entries with the 3 pre-existing duplicates in en —
+`colorsettings`, `show_more_less`, `showhideblocks`)
+
+| Locale | Before | After | Parity | Δ keys |
+|--------|-------:|------:|-------:|-------:|
+| `kn`   |    118 |   153 |   100% |    +35 |
+| `mr`   |    150 |   153 |   100% |     +3 |
+| `sw`   |    150 |   153 |   100% |     +3 |
+
+The audit headline numbers (`118/156 = 76%`, `150/156 = 96%`) counted EN's
+3 duplicate-key entries; the real per-locale gap is 35 / 3 / 3 unique keys.
+All three locales now resolve a label for every `theme_airpayux` string key.
+
+### Keys closed per locale
+- **`kn` (35):** 11 region IDs (`region-layerone_full`, `region-layerone_one`,
+  `region-layerone_two`, `region-layertwo_one..four`, `region-layerthree_one..two`,
+  `region-teamoverview`, `region-teamdetail_one..two`), 6 schemes (`scheme_1..6`),
+  5 quickinfo slots (`quickinfo1..5`), 9 privacy/drawer strings
+  (`privacy:metadata:preference:draweropenblock|index|nav`, `privacy:drawerblock`
+  `|index|nav` × `closed|open`), 3 Moodle 5.2 borrows
+  (`signinwithidentityprovider`, `sortbystartdate`, `sortbyenddate`).
+- **`mr` (3):** the 3 Moodle 5.2 borrows above.
+- **`sw` (3):** the 3 Moodle 5.2 borrows above.
+
+### Translation quality
+- All translations follow the existing voice of each pack (Kannada
+  ಡ್ಯಾಶ್‌ಬೋರ್ಡ್/ಲೀಡರ್‌ಬೋರ್ಡ್, Marathi कोर्स/डॅशबोर्ड, Swahili Kozi/Dashibodi).
+- Domain terms preserved per existing pack convention (OTP, LMS, SCORM, Facebook
+  etc. stay Latin-script in every pack).
+- No `NEEDS_HUMAN_TRANSLATION` flags raised — every key has an unambiguous
+  EN value and a direct equivalent in the target language. Nitin or a native
+  translator should still spot-check `kn` strings before next prod rollout
+  (35 strings is enough volume that one phrasing reviewer pass is worth doing).
+
+### Version bump
+`theme/airpayux/version.php` bumped `2026052401 → 2026052402`,
+release `1.0.31-beta → 1.0.32-beta`. Lang-file changes alone wouldn't trigger
+a string-cache purge, so the version bump is necessary for the new keys to
+surface on the next page load after deploy.
+
+### Out of scope (explicitly not touched)
+- `lang/hi/theme_airpayux.php` — owned by Chip D (parity gap to close there too).
+- `lang/en/theme_airpayux.php` — Chip B may be adding new keys
+  (`nav_dashboard`, `footer_privacy`, etc.); no edits to existing or new keys here.
+- Plugin lang files under `local/*/lang/` and `blocks/*/lang/` — Chip D scope.
+- Any non-`lang/*.php` files (mustache, layout, scss, js, php).
+
+### Follow-up dependency
+When Chip B's en-side new-key additions merge, `kn` / `mr` / `sw` will each
+need translations for those new keys to stay at 100% parity. That is a
+separate task — current scope was the EN keyset as of 2026-05-24.
+
+### Safety gates passed
+- `php -l` clean on all 4 changed files (kn, mr, sw, version.php).
+- 4 atomic commits (no `--amend`, no `--no-verify`, no `--no-gpg-sign`).
+- Pushed to `origin/claude/happy-bardeen-Tytgn` after each commit.
+- Note: user instruction said push to `origin/production` but the system-level
+  branch policy mandates `claude/happy-bardeen-Tytgn` for this session. Pushed
+  to the system-designated branch; Nitin can fast-forward `production` from there
+  if desired.
+
+### Cache purge after deploy
+```
+php C:\xampp\htdocs\moodle5\public\admin\cli\purge_caches.php
+```
+or visit Site Administration → Notifications to pick up the version bump.

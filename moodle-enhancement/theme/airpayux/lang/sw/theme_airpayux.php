@@ -152,3 +152,13 @@ $string['privacy:drawerblockclosed'] = 'Droo ya vizuizi imefungwa.';
 $string['privacy:drawerblockopen'] = 'Droo ya vizuizi imefunguliwa.';
 $string['privacy:drawernavclosed'] = 'Droo ya urambazaji imefungwa.';
 $string['privacy:drawernavopen'] = 'Droo ya urambazaji imefunguliwa.';
+
+// P0 #7 (2026-05-24) — close 3-string parity gap vs en pack.
+// P0 borrow #5 (Moodle 5.2) — OAuth2 button text. Used by
+// templates/core/loginform.mustache identity-provider list.
+$string['signinwithidentityprovider'] = 'au ingia kwa';
+
+// P0 borrow #14 (Moodle 5.2) — extra sort options on block_myoverview
+// "My Courses" dropdown.
+$string['sortbystartdate'] = 'Tarehe ya kuanza kozi';
+$string['sortbyenddate']   = 'Tarehe ya kumalizika kozi';

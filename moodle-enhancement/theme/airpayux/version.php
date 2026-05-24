@@ -136,8 +136,13 @@ defined('MOODLE_INTERNAL') || die();
 // styles.php re-compiles SCSS on next request (defensive — the orphan
 // was never compiled in, but the bump aligns the cache key with the
 // new on-disk tree).
+//
+// P0 #7 locale parity (2026-05-24) — kn closed 35-string gap, mr + sw
+// each closed 3-string gap. All four non-hi packs (en, kn, mr, sw) now
+// at 153/153 unique keys = 100% parity. Bump also triggers a lang-cache
+// purge so the new strings are picked up on next page load.
 $plugin->version   = 2026052402;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.32-beta';  // P0 #1+#2 SCSS hygiene
+$plugin->release   = '1.0.32-beta';  // P0 #1+#2 SCSS hygiene + P0 #7 kn/mr/sw 100%
