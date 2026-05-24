@@ -35,10 +35,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_live';
-$plugin->version   = 2026052103;
+$plugin->version   = 2026052401;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;   // Phase E.0 — scaffold only
-$plugin->release   = '0.1.0-alpha';
+$plugin->release   = '0.1.1-alpha';
 $plugin->dependencies = [
     'local_airpay_core' => 2026051401,  // feature_flags resolver
 ];
@@ -46,3 +46,7 @@ $plugin->dependencies = [
 // Release history
 // 0.1.0-alpha  Phase E.0: scaffold + DB schema + capabilities + privacy
 //              No UI yet. Tables exist; no callers.
+// 0.1.1-alpha  P0 #8 a11y — aria-live regions added to result_panel,
+//              result_bar_chart, audience/play.php, trainer/run.php;
+//              chart_updater emits sr-only tally summary on each
+//              response_added SSE event. +9 string pairs en+hi.

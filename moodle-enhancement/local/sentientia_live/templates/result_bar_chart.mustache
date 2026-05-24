@@ -7,8 +7,16 @@
 
     Pure HTML + inline width style — bars update via SSE by mutating
     style.width (textContent-safe, no innerHTML).
+
+    P0 #8 — Bar chart container is an `img` role with an accessible
+    label so screen readers identify it. The numeric breakdown each
+    row already exposes textContent of count + percent — those update
+    in place via chart_updater.js and live in the panel's outer
+    aria-live region.
 }}
-<div class="d-flex flex-column gap-2">
+<div class="d-flex flex-column gap-2"
+     role="img"
+     aria-label="{{#str}}a11y_results_bar_chart_label, local_sentientia_live{{/str}}">
   {{#options}}
     <div class="sentientia-bar-row d-flex align-items-center gap-2{{#is_correct}} border border-success rounded p-2{{/is_correct}}"
          data-option-index="{{index}}">

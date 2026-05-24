@@ -322,6 +322,20 @@ $string['wc_response_placeholder']      = 'Type one word…';
 $string['openended_response_placeholder']= 'Your answer…';
 $string['ranking_response_intro']       = 'Number each item from 1 (your top choice) downward. Each number must be unique — no ties.';
 
+// ── Phase E.x — Accessibility (P0 #8 — aria-live regions) ─────────
+// Strings surfaced inside aria-live / role=region wrappers in the
+// result panel, audience play page, and trainer run page. Screen
+// readers announce these when the underlying region updates.
+$string['a11y_results_region_label']     = 'Live results';
+$string['a11y_results_bar_chart_label']  = 'Live results bar chart';
+$string['a11y_response_recorded']        = 'Response recorded';
+$string['a11y_session_ended_announce']   = 'Session ended. Your responses have been recorded.';
+$string['a11y_audience_count_region']    = 'Live audience count';
+$string['a11y_response_count_region']    = 'Live response count';
+$string['a11y_current_question_region']  = 'Current question';
+$string['a11y_waiting_for_question']     = 'Waiting for the next question';
+$string['a11y_already_responded']        = 'You have already responded to this question';
+
 // response_recorder errors.
 $string['response_slide_mismatch']      = 'That slide is not part of this session.';
 $string['response_int_required']        = 'A numeric response is required.';
