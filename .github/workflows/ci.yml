@@ -3,12 +3,16 @@ name: CI — Airpay Academy
 # Runs on every PR + every push to production branch.
 #
 # Gates (all block merge on failure):
-#   1. php-lint           — PHP syntax check on every airpay file
-#   2. static-checks      — JSON validity + Mustache balance
-#   3. ws-contract-gate   — ADR-009 contract drift gate (standalone
-#                           static analysis; no Moodle bootstrap)
-#   4. version-bump-check — warns when plugin code changed without
-#                           a version.php bump (PR-only, non-blocking)
+#   1. php-lint              — PHP syntax check on every airpay file
+#   2. static-checks         — JSON validity + Mustache balance
+#   3. ws-contract-gate      — ADR-009 contract drift gate (standalone
+#                              static analysis; no Moodle bootstrap)
+#   4. conflict-marker-check — fail-fast scan for stray git conflict
+#                              markers in source files (P0 cleanup A,
+#                              backstop for the local pre-commit hook
+#                              when someone bypasses --no-verify)
+#   5. version-bump-check    — warns when plugin code changed without
+#                              a version.php bump (PR-only, non-blocking)
 #
 # Full Moodle PHPUnit + Playwright are NOT included here — they
 # require spinning up Moodle 5.1.3+ with our 30+ plugins on a fresh
@@ -178,6 +182,61 @@ jobs:
           # CI doesn't need to install Moodle on every PR (which would
           # cost ~5-15 min per run).
           php moodle-enhancement/tools/ci-ws-contract-check.php
+
+  conflict-marker-check:
+    name: Stray git conflict markers
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Scan source tree for conflict markers
+        run: |
+          # Backstop for .claude/hooks/pre-commit.sh CHECK 11. Local
+          # hook catches markers at commit; this CI gate catches them
+          # if someone bypassed the hook with --no-verify, committed
+          # via a tool that doesn't run hooks, or pushed a force-update.
+          #
+          # CI runs #397 + #403 on 2026-05-24 failed because mid-merge
+          # commits carried stray <<<<<<<, =======, >>>>>>> markers in
+          # PHP and lang files — invalid PHP, only detected once the
+          # delayed CI notification fired. This gate is ~5 seconds and
+          # eliminates the surprise.
+          #
+          # Regex matches git's exact conflict-marker format:
+          #   ^<<<<<<<( |$)  '<<<<<<< HEAD' or bare '<<<<<<<'
+          #   ^=======$      bare '=======' alone (never '========'
+          #                  setext banners or 32-wide CLI heredoc
+          #                  dividers like ws_contract_audit.php:80)
+          #   ^>>>>>>>( |$)  '>>>>>>> branch-name' or bare '>>>>>>>'
+          # Skips legit {{<partial}} Mustache inheritance + SCSS/MD
+          # `// =====` comment dividers + setext heredoc help text.
+          set +e
+          MARKERS=$(grep -rnE '^<<<<<<<( |$)|^=======$|^>>>>>>>( |$)' \
+            --include='*.php' \
+            --include='*.mustache' \
+            --include='*.scss' \
+            --include='*.js' \
+            --include='*.json' \
+            --include='*.xml' \
+            --include='*.md' \
+            --include='*.yml' \
+            moodle-enhancement/ \
+            theme/airpayux/ \
+            local/ \
+            .github/ \
+            .claude/ 2>/dev/null)
+          if [ -n "$MARKERS" ]; then
+            echo "::error::Stray git conflict markers detected:"
+            echo "$MARKERS" | while IFS= read -r line; do
+              FILE=$(echo "$line" | cut -d: -f1)
+              LINENO=$(echo "$line" | cut -d: -f2)
+              CONTENT=$(echo "$line" | cut -d: -f3-)
+              echo "::error file=$FILE,line=$LINENO::Conflict marker: $CONTENT"
+            done
+            exit 1
+          fi
+          echo "::notice::No conflict markers found"
 
   version-bump-check:
     name: version.php bump on plugin changes

@@ -268,14 +268,21 @@ done <<< "$STAGED_ALL"
 # yield a PHP parse error which only surfaces when CI runs PHP -l.
 # We catch them at commit time instead.
 #
-# Anchored on line-start so {{<partial}} Mustache inheritance and
-# legit SCSS/MD `// =====` comment dividers don't false-positive.
+# Regex matches git's exact conflict-marker format:
+#   ^<<<<<<<( |$)   — '<<<<<<< HEAD' or bare '<<<<<<<'
+#   ^=======$       — bare '=======' alone (never '========' setext
+#                     banners or 32-wide CLI dividers)
+#   ^>>>>>>>( |$)   — '>>>>>>> branch-name' or bare '>>>>>>>'
+# This is strict enough to skip:
+#   - {{<base/columns}}  Mustache parent-template inheritance
+#   - `// =====`         SCSS section comment dividers
+#   - `================`  setext-style heredoc CLI help banners
 echo "→ [11/11] Git conflict-marker scan..."
 CONFLICT_ISSUES=0
 if [ -n "$STAGED_CONFLICT" ]; then
     while IFS= read -r file; do
         [ -f "$file" ] || continue
-        markers=$(grep -nE '^(<<<<<<<|=======|>>>>>>>)' "$file" 2>/dev/null || true)
+        markers=$(grep -nE '^<<<<<<<( |$)|^=======$|^>>>>>>>( |$)' "$file" 2>/dev/null || true)
         if [ -n "$markers" ]; then
             err "Git conflict marker in $file"
             echo "$markers" | head -6 | sed 's/^/       /'
