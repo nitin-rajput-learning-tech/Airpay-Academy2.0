@@ -82,10 +82,13 @@ record. Highlights:
 ```
 local/sentientia_aiquiz/
 ├── version.php                                      (2026052400, 0.1.0-alpha)
+├── README.md                                        (developer + admin notes)
 ├── lib.php                                          (navigation hook)
 ├── settings.php                                     (5 admin settings)
 ├── generate.php                                     (Course Author form + [CONFIRM] gate)
 ├── review.php                                       (Reviewer queue + per-question controls)
+├── cli/
+│   └── mock_smoke.php                               (CLI smoke: deterministic end-to-end with mock client)
 ├── db/
 │   ├── install.xml                                  (2 tables, 3 indexes each)
 │   ├── access.php                                   (3 capabilities)
@@ -101,9 +104,9 @@ local/sentientia_aiquiz/
 │   └── hi/local_sentientia_aiquiz.php               (80+ keys — 100% parity)
 └── tests/
     ├── prompt_builder_test.php                      (12 tests)
-    ├── response_parser_test.php                     (15 tests)
-    ├── draft_manager_test.php                       (12 tests)
-    └── anthropic_client_test.php                    (8 tests)
+    ├── response_parser_test.php                     (14 tests)
+    ├── draft_manager_test.php                       (13 tests)
+    └── anthropic_client_test.php                    (8 tests — 47 total)
 ```
 
 ## Open questions for Nitin
@@ -154,3 +157,14 @@ local/sentientia_aiquiz/
 | Commit | Subject |
 |--------|---------|
 | (this commit) | Tier 1 #4 — `local_sentientia_aiquiz` Phase G.0 MVP scaffold |
+
+---
+
+## State card refresh — 2026-05-24
+
+P1 state-card pass: confirmed plugin still at `2026052400` / `0.1.0-alpha`;
+re-counted PHPUnit methods (47 in 4 classes — prompt_builder 12, response_parser 14,
+draft_manager 13, anthropic_client 8); added `README.md` and `cli/mock_smoke.php`
+to the file inventory (both shipped at G.0 but missing from the original card).
+No DB-schema drift, no new capabilities, no new flags. Plugin still feature-flag
+OFF on production.
