@@ -173,30 +173,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && confirm_sesskey()) {
 echo $OUTPUT->header();
 
 // ── Session-ended state ──
+// P0 #8 — aria-live="assertive" so SR users get the urgent "session
+// over" announcement the moment this state renders (typically right
+// after audience_sse fires session_ended and we reload).
 if ($sess->state === \local_sentientia_live\session_manager::STATE_ENDED) {
-    echo \html_writer::start_div('text-center my-5');
+    echo \html_writer::start_tag('div', [
+        'class' => 'text-center my-5',
+        'role' => 'status',
+        'aria-live' => 'assertive',
+        'aria-atomic' => 'true',
+        'aria-label' => get_string('a11y_session_ended_announce',
+            'local_sentientia_live'),
+    ]);
     echo \html_writer::tag('h2',
         get_string('audience_session_ended_heading', 'local_sentientia_live'));
     echo \html_writer::tag('p',
         get_string('audience_session_ended_body', 'local_sentientia_live'),
         ['class' => 'text-muted']);
-    echo \html_writer::end_div();
+    echo \html_writer::end_tag('div');
     echo $OUTPUT->footer();
     exit;
 }
 
 // ── No current slide yet ──
+// P0 #8 — aria-live="polite" — non-urgent waiting state, SR can read
+// it after current speech finishes.
 if (!$sess->current_slide_id) {
-    echo \html_writer::start_div('text-center my-5');
+    echo \html_writer::start_tag('div', [
+        'class' => 'text-center my-5',
+        'role' => 'status',
+        'aria-live' => 'polite',
+        'aria-label' => get_string('a11y_waiting_for_question',
+            'local_sentientia_live'),
+    ]);
     echo \html_writer::tag('h2',
         get_string('audience_waiting_heading', 'local_sentientia_live'));
     echo \html_writer::tag('p',
         get_string('audience_waiting_body', 'local_sentientia_live'),
         ['class' => 'text-muted']);
     echo \html_writer::tag('div',
-        '<i class="fa fa-spinner fa-spin fa-2x text-muted"></i>',
+        '<i class="fa fa-spinner fa-spin fa-2x text-muted" aria-hidden="true"></i>',
         ['class' => 'mt-4']);
-    echo \html_writer::end_div();
+    echo \html_writer::end_tag('div');
     echo $OUTPUT->footer();
     exit;
 }
@@ -215,9 +233,16 @@ if (!$current_slide) {
 // Use start_tag (not start_div) so we can set BOTH class and style —
 // start_div's signature is (classes, attributes) — passing a style via
 // a third arg is silently dropped.
+// P0 #8 — role="region" with aria-label so SR users have an
+// addressable landmark for the current question area. slide_changed
+// fires a full page reload (per amd/src/audience_sse.js), so we don't
+// need aria-live here — the new heading is announced naturally.
 echo \html_writer::start_tag('div', [
     'class' => 'sentientia-audience-slide my-4 mx-auto',
     'style' => 'max-width: 720px;',
+    'role' => 'region',
+    'aria-label' => get_string('a11y_current_question_region',
+        'local_sentientia_live'),
 ]);
 
 // Phase E.5 UX nit — audience progress indicator. Shows "Question 1 of 5"
@@ -243,10 +268,16 @@ $show_audience_results = $has_responded
     && !empty($session_settings['show_results_to_audience']);
 
 if ($response_saved) {
+    // P0 #8 — aria-live="assertive" so the SR interrupts whatever it
+    // was reading to confirm the vote landed. role="status" pairs
+    // with aria-live to mark this as a state message.
     echo \html_writer::tag('div',
-        '<i class="fa fa-check-circle fa-2x text-success me-2"></i>' .
+        '<i class="fa fa-check-circle fa-2x text-success me-2" aria-hidden="true"></i>' .
             get_string('audience_response_saved', 'local_sentientia_live'),
-        ['class' => 'alert alert-success text-center']);
+        ['class' => 'alert alert-success text-center',
+         'role' => 'status',
+         'aria-live' => 'assertive',
+         'aria-atomic' => 'true']);
     if ($show_audience_results) {
         // Render the same result panel the trainer sees.
         $panel = new \local_sentientia_live\output\result_panel($current_slide);
@@ -259,10 +290,15 @@ if ($response_saved) {
             ['class' => 'text-muted text-center']);
     }
 } elseif ($has_responded) {
+    // P0 #8 — already-responded state is informational, not urgent —
+    // aria-live="polite". Two render branches keep the existing layout.
     if ($show_audience_results) {
         echo \html_writer::tag('div',
             get_string('audience_already_responded', 'local_sentientia_live'),
-            ['class' => 'alert alert-info text-center']);
+            ['class' => 'alert alert-info text-center',
+             'role' => 'status',
+             'aria-live' => 'polite',
+             'aria-atomic' => 'true']);
         $panel = new \local_sentientia_live\output\result_panel($current_slide);
         echo $OUTPUT->render_from_template(
             'local_sentientia_live/result_panel',
@@ -270,7 +306,10 @@ if ($response_saved) {
     } else {
         echo \html_writer::tag('div',
             get_string('audience_already_responded', 'local_sentientia_live'),
-            ['class' => 'alert alert-info text-center']);
+            ['class' => 'alert alert-info text-center',
+             'role' => 'status',
+             'aria-live' => 'polite',
+             'aria-atomic' => 'true']);
         echo \html_writer::tag('p',
             get_string('audience_waiting_next', 'local_sentientia_live'),
             ['class' => 'text-muted text-center']);
