@@ -95,10 +95,12 @@ test('logout redirects to the public login page', async ({ page }) => {
     // GET /login/logout.php?sesskey=<key> — destroys the session and
     // bounces to login.
     await page.goto(`${BASE}/`);
-    const sesskey = await page.evaluate(() => window.M?.cfg?.sesskey || '');
-    expect(sesskey, 'sesskey must be present for an authenticated page').not.toBe('');
+    const sesskeyBefore = await page.evaluate(() => window.M?.cfg?.sesskey || '');
+    const useridBefore = await page.evaluate(() => window.M?.cfg?.userId || 0);
+    expect(sesskeyBefore, 'sesskey must be present for an authenticated page').not.toBe('');
+    expect(useridBefore, 'userId > 0 for an authenticated session').toBeGreaterThan(0);
 
-    await page.goto(`${BASE}/login/logout.php?sesskey=${sesskey}`);
+    await page.goto(`${BASE}/login/logout.php?sesskey=${sesskeyBefore}`);
     // Moodle 5.1 shows an interstitial confirm; click the form if present.
     const continueBtn = page.locator('form[action*="logout.php"] button[type="submit"]').first();
     if (await continueBtn.count() > 0) {
@@ -107,9 +109,17 @@ test('logout redirects to the public login page', async ({ page }) => {
     // Final landing page — either /login/index.php or homepage with login link.
     await page.waitForURL((url) => /\/(login\/index\.php|index\.php|$)/.test(url.toString()),
         { timeout: 15_000 });
-    // No sesskey on a logged-out page.
+    // Verify the authenticated session was destroyed. Moodle DOES still
+    // assign a sesskey to anonymous sessions (so checking sesskey===''
+    // is wrong). The right post-logout signals are:
+    //   - userId === 0 (anonymous)
+    //   - sesskey changed (new anon session, not the old auth one)
+    const useridAfter = await page.evaluate(() => window.M?.cfg?.userId || 0);
     const sesskeyAfter = await page.evaluate(() => window.M?.cfg?.sesskey || '');
-    expect(sesskeyAfter).toBe('');
+    expect(useridAfter, 'userId must be 0 after logout (anonymous)').toBe(0);
+    expect(sesskeyAfter,
+        'sesskey must rotate on logout (new anon session, not the auth one)')
+        .not.toBe(sesskeyBefore);
 });
 
 // ──────────────────────────────────────────────────────────────────
@@ -152,8 +162,11 @@ test('/login/index.php rejects an empty username submit', async ({ page, context
     const anon = await context.browser().newContext();
     const anonPage = await anon.newPage();
     await anonPage.goto(`${BASE}/login/index.php`);
-    await anonPage.fill('input[name="username"]', '');
-    await anonPage.fill('input[name="password"]', '');
+    // Use ID selectors — the airpayux loginform has two input[name="username"]
+    // and two input[name="password"] (main + guest forms), so the name=
+    // selectors are ambiguous and hang. #username + #password disambiguate.
+    await anonPage.fill('#username', '');
+    await anonPage.fill('#password', '');
     await anonPage.click('#loginbtn');
     // After submit, we should land back on /login/index.php with an
     // alert visible. Moodle renders `<div class="loginerrors">` or a
@@ -168,6 +181,11 @@ test('/login/index.php rejects an empty username submit', async ({ page, context
 // ──────────────────────────────────────────────────────────────────
 
 test('/user/preferences.php language toggle round-trips en → hi → en', async ({ page }) => {
+    // This test does 4 full-page navigations through Moodle's preferences
+    // pages. On the slow XAMPP / Windows bind-mount substrate each one is
+    // 10-30s, so the default 60s test timeout is too tight. Bump it.
+    test.setTimeout(180_000);
+
     // The user-preferences language picker is a select element that
     // POSTs to /user/preferences.php with the `lang` field.
     await page.goto(`${BASE}/user/preferences.php`);
