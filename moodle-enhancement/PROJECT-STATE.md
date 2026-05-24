@@ -1,5 +1,5 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-05-24 (Night-run autonomous batch — 16 items shipped: Phase B.12 cutover-day mechanical fixes (A1-A8), plugin PHPUnit coverage (B1-B2), Goal C user guides for 6 personas (C1-C6); cutover-day TODO list is now mostly empty modulo paygw security follow-up + NVDA verification + activity_header runtime test). Phase B Moodle 5.2 upgrade is code-complete; production stays on 5.1 until customer-driven cutover decision. ADR-001 records the strategic pivot from "patch Moodle deployment" to "build saleable enterprise LMS product" — Airpay Academy is customer-zero. See `docs/adr/ADR-001-fork-strategy-and-product-pivot.md`.
+**Updated:** 2026-05-24 (Night-run autonomous batch — 16 items shipped: Phase B.12 cutover-day mechanical fixes (A1-A8), plugin PHPUnit coverage (B1-B2), Goal C user guides for 6 personas (C1-C6); cutover-day TODO list is now mostly empty modulo NVDA verification + activity_header runtime test. **Paygw security follow-up shipped this session** — MD5 deprecated, require_login() at file scope removed, sandbox/live URL clarified, 13 new PHPUnit tests added). Phase B Moodle 5.2 upgrade is code-complete; production stays on 5.1 until customer-driven cutover decision. ADR-001 records the strategic pivot from "patch Moodle deployment" to "build saleable enterprise LMS product" — Airpay Academy is customer-zero. See `docs/adr/ADR-001-fork-strategy-and-product-pivot.md`.
 
 ---
 
@@ -4370,3 +4370,68 @@ or delete via the Scheduled tab in Claude Code.
 - `docs/5.2-merge/PHASE-B12-HOTFIX-MISSED-OVERLAY-PLUGINS.md` — context for A1 (yesterday's setup)
 - `docs/5.2-merge/PHASE-B12-DRAWER-SECURE-AUDIT.md` — shipped during A8
 - `docs/user-guides/` — six new guides
+
+---
+
+## 🔒 Session 2026-05-24 — paygw_airpay security follow-up
+
+**Resolves the spawned task from night-run B1 (commit `131dc439d`).** Three
+pre-existing defects in the Airpay payment gateway plugin, all uncovered
+while writing initial PHPUnit coverage:
+
+- **Issue 1 — `require_login()` at file scope** in `classes/checksum.php`.
+  The class file was unloadable in PHPUnit, CLI, and during autoloader
+  probes because `require_login()` was called at top-level (line 24).
+  Replaced with `defined('MOODLE_INTERNAL') || die()` — same intent (no
+  direct HTTP load), correct mechanism. Class is now testable.
+
+- **Issue 2 — MD5 checksum migration.** Audited every callsite of
+  `calculateChecksum()` (no `Sha256` suffix). The sole caller was the
+  internal `verifyChecksum()` method, itself unused anywhere in the
+  codebase. Production payment flow (`pay.php:69`) already routes through
+  `calculateChecksumSha256()`, confirming Airpay accepts SHA-256.
+  - `calculateChecksum()` marked `@deprecated since 1.0.1` with a
+    `debugging()` warning. Behaviour preserved for any unknown external
+    caller; the warning surfaces lingering callers in dev/staging.
+  - `verifyChecksum()` migrated to SHA-256 and fixed the latent
+    data/secret argument-order bug while in the file. Now uses
+    `hash_equals()` for constant-time comparison.
+  - Minor XSS fix: `outputForm()` now passes `$checksum` through `s()`.
+
+- **Issue 3 — Identical sandbox + live URLs.** `airpay_helper::get_url()`
+  returned the same `payments.airpay.co.in/pay/index.php` URL in both
+  branches. Confirmed via lang strings + the production pay.php flow
+  that Airpay uses a single endpoint and switches sandbox/live via
+  merchant credentials (`mercid`), not URL. Simplified to a single
+  return with a clear docblock noting the open vendor question, and
+  widened method visibility from `protected` to `public` so future
+  callers can route the form action through it (today pay.php hardcodes
+  the URL — Phase 2 cleanup).
+
+- **Bonus — `airpay_helper.php` load order.** `defined()` guard now
+  precedes the `require_once` of `checksum.php`. The require itself
+  upgraded from bare `require` to `require_once`.
+
+### Tests added
+- `tests/checksum_test.php` — 7 cases: SHA-256 vector, encrypt envelope,
+  encryptSha256 plain hash, verifyChecksum match + tamper, MD5
+  deprecation behaviour + warning emission.
+- `tests/airpay_helper_test.php` — 6 cases: ORDER_STATUS constants,
+  get_unprocessed_order false-when-empty, get_url across live + sandbox
+  + unknown environments.
+
+Out of scope (documented in test docblocks):
+- `create_order` / `update_order` — needs cross-plugin fixture
+  (`local_biz_cart_history` + `paygw_course_enrolmentlog` tables).
+- `check_payment` — current body is fully commented-out vendor code.
+- `process_payment` — needs real `core_payment` payable + account fixture.
+- Root-level `checksum.php` sibling — legacy entry-point stub, out of brief.
+
+### Version
+`paygw_airpay` 2024100700.09 → 2024100700.10, release `'1.0.0'` → `'1.0.1'`.
+Added `$plugin->maturity = MATURITY_STABLE`.
+
+### Deploy posture
+**Local + GitHub only.** Production payment gateway changes require
+explicit `[CONFIRM]` from Nitin (CLAUDE.md §3, §13). No live deploy
+performed this session.

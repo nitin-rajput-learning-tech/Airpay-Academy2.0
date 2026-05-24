@@ -15,115 +15,73 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * TODO describe file checksum
+ * Checksum helper for the paygw_airpay payment gateway.
+ *
+ * Loaded as a global `\checksum` class via require_once from
+ * classes/airpay_helper.php — pay.php instantiates it as `new \checksum`.
+ * Kept in the global namespace for backwards compatibility with the
+ * vendor-supplied integration flow; a Phase 2 cleanup should move this
+ * under the paygw_airpay namespace and update pay.php accordingly.
  *
  * @package    paygw_airpay
- * @copyright  2024 YOUR NAME <your@email.com>
+ * @copyright  2024 Airpay Payment Services
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-require_login();
 
-Class checksum {
+defined('MOODLE_INTERNAL') || die();
+
+class checksum {
+
+    /**
+     * MD5 checksum (DEPRECATED — MD5 is cryptographically broken).
+     *
+     * Kept for binary backwards compatibility with any external caller
+     * that may exist outside this codebase. The production payment path
+     * (pay.php) uses calculateChecksumSha256() — see paygw_airpay/pay.php:69.
+     * The sole internal caller, verifyChecksum(), has been migrated to
+     * the SHA-256 variant.
+     *
+     * @deprecated since 1.0.1 — use {@see calculateChecksumSha256()}
+     * @param string $data
+     * @param string $secret_key
+     * @return string MD5 hex digest
+     */
     public static function calculateChecksum($data, $secret_key) {
-		$checksum = md5($data.$secret_key);
-		return $checksum;
-	}
+        debugging(
+            'checksum::calculateChecksum() uses MD5 and is deprecated. ' .
+            'Use checksum::calculateChecksumSha256() instead.',
+            DEBUG_DEVELOPER
+        );
+        return md5($data . $secret_key);
+    }
 
     public static function encrypt($data, $salt) {
         // Build a 256-bit $key which is a SHA256 hash of $salt and $password.
-        $key = hash('SHA256', $salt.'@'.$data);
-        return $key;
-    }	
-
-	public static function encryptSha256($data) {    
-        $key = hash('SHA256', $data);
-        return $key;
-    }    
-    public static function calculateChecksumSha256($data, $salt) { 
-		// print($data);
-		// exit;
-        $checksum = hash('SHA256', $salt.'@'.$data);
-        return $checksum;
+        return hash('SHA256', $salt . '@' . $data);
     }
-	
-/*  public static function getAllParams() {
-		//ksort($_POST);
-		$all = '';
-        $except_list=array('checksum','privatekey','mercid','message');
-		foreach($_POST as $key => $value)	{
-			if(!in_array($key,$except_list)) {
-				$all .= "'";
-					$_POST[key] = Checksum::sanitizedParam($value);
-			}
-		}
-	}
-*/
+
+    public static function encryptSha256($data) {
+        return hash('SHA256', $data);
+    }
+
+    public static function calculateChecksumSha256($data, $salt) {
+        return hash('SHA256', $salt . '@' . $data);
+    }
+
     public static function outputForm($checksum) {
-		echo '<input type="text" name="checksum" value="'.$checksum.'"/>'."\n";
-	}
+        echo '<input type="text" name="checksum" value="' . s($checksum) . '"/>' . "\n";
+    }
 
+    /**
+     * Verify a SHA-256 checksum against a payload.
+     *
+     * @param string $checksum The checksum to verify
+     * @param string $all      The payload that was checksummed
+     * @param string $secret   The shared secret/salt
+     * @return int 1 on match, 0 on mismatch
+     */
     public static function verifyChecksum($checksum, $all, $secret) {
-		$cal_checksum = Checksum::calculateChecksum($secret, $all);
-		$bool = 0;
-		if($checksum == $cal_checksum)	{
-			$bool = 1;
-		}
-
-		return $bool;
-	}
-
-/*	
-    public static function sanitizedParam($param) {
-	        $pattern[0] = "%\{%";
-	        $pattern[1] = "%\}%";
-	        $pattern[2] = "%<%";
-	        $pattern[3] = "%>%";
-	        $pattern[4] = "%`%";
-	        $pattern[5] = "%!%";		
-	        $pattern[6] = "%\[%";
-	        $pattern[7] = "%\]%";
-	        $pattern[8] = "%\*%";
-	        $pattern[9] = "%&%";
-	        $pattern[10] = "%\\$%";
-	        $pattern[11] = "%\%%";
-	        $pattern[12] = "%\^%";
-	        $pattern[13] = "%=%";
-	        $pattern[14] = "%\+%";
-	        $pattern[15] = "%\|%";
-	        $pattern[16] = "%\\\%";
-	        $pattern[17] = "%:%";
-	        $pattern[18] = "%'%";
-	        $pattern[19] = "%\"%";
-	        $pattern[21] = "%~%";
-        	$sanitizedParam = preg_replace($pattern, "", $param);
-		return $sanitizedParam;
-	}
-
-    public static function sanitizedURL($param) {
-		$pattern[0] = "%,%";
-	        $pattern[1] = "%\(%";
-       		$pattern[2] = "%\)%";
-	        $pattern[3] = "%\{%";
-	        $pattern[4] = "%\}%";
-	        $pattern[5] = "%<%";
-	        $pattern[6] = "%>%";
-	        $pattern[7] = "%`%";
-	        $pattern[8] = "%!%";
-	        $pattern[9] = "%\\$%";
-	        $pattern[10] = "%\%%";
-	        $pattern[11] = "%\^%";
-	        $pattern[12] = "%\+%";
-	        $pattern[13] = "%\|%";
-	        $pattern[14] = "%\\\%";
-	        $pattern[15] = "%'%";
-	        $pattern[16] = "%\"%";
-	        $pattern[17] = "%;%";
-	        $pattern[18] = "%~%";
-	        $pattern[19] = "%\[%";
-	        $pattern[20] = "%\]%";
-	        $pattern[21] = "%\*%";
-        	$sanitizedParam = preg_replace($pattern, "", $param);
-		return $sanitizedParam;
-	}
-*/	
+        $cal_checksum = self::calculateChecksumSha256($all, $secret);
+        return hash_equals((string) $cal_checksum, (string) $checksum) ? 1 : 0;
+    }
 }
