@@ -7,12 +7,54 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Phase 9 (N7 follow-up) upgrade: migrate get_config/set_config based
  * per-quiz settings into a proper relational table.
+ *
+ * Phase B.12 hotfix (2026-05-24): the `< 2026051300` savepoint
+ * originally assumed `quizaccess_airpay_proctor` would already exist
+ * by the time upgrade.php ran. That's true for fresh installs (where
+ * install.xml creates the table) but FALSE for upgrades from any
+ * pre-2026051300 version on production, because production never had
+ * the table — it had the old key-value config rows in
+ * mdl_config_plugins instead. The defensive `table_exists()` +
+ * `create_table()` block at the top of the savepoint is what makes
+ * this upgrade safe on production.
+ *
+ * @param int $oldversion
+ * @return bool
  */
 function xmldb_quizaccess_airpay_proctoring_upgrade(int $oldversion): bool {
     global $DB;
     $dbman = $DB->get_manager();
 
     if ($oldversion < 2026051300) {
+        // Phase B.12 hotfix — ensure the table exists before the
+        // migration tries to write to it. On a fresh install this is
+        // a no-op (install.xml already created it). On a production
+        // upgrade from v2026051120 this is the line that prevents a
+        // "table does not exist" fatal halfway through the upgrade.
+        $table = new xmldb_table('quizaccess_airpay_proctor');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null,
+            XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('quizid', XMLDB_TYPE_INTEGER, '10', null,
+            XMLDB_NOTNULL, null, null);
+        $table->add_field('enabled', XMLDB_TYPE_INTEGER, '1', null,
+            XMLDB_NOTNULL, null, '0');
+        $table->add_field('min_match_score', XMLDB_TYPE_NUMBER, '3,2',
+            null, null, null, '0.85');
+        $table->add_field('retention_days_override', XMLDB_TYPE_INTEGER,
+            '6', null, null, null, null);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null,
+            XMLDB_NOTNULL, null, '0');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null,
+            XMLDB_NOTNULL, null, '0');
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('fk_quiz', XMLDB_KEY_FOREIGN, ['quizid'],
+            'quiz', ['id']);
+        $table->add_index('uniq_quizid', XMLDB_INDEX_UNIQUE, ['quizid']);
+
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
         // Migrate every existing `quizaccess_airpay_proctoring`
         // `quiz_<id>_enabled` config entry into the new table.
         $rows = $DB->get_records_select('config_plugins',
@@ -39,6 +81,13 @@ function xmldb_quizaccess_airpay_proctoring_upgrade(int $oldversion): bool {
             $DB->delete_records('config_plugins', ['id' => $row->id]);
         }
         upgrade_plugin_savepoint(true, 2026051300, 'quizaccess', 'airpay_proctoring');
+    }
+
+    if ($oldversion < 2026052401) {
+        // Phase B.12 hotfix marker savepoint — no functional change.
+        // Records that this DB has the table-exists-guarded upgrade
+        // shipped on 2026-05-24. Useful for support diagnostics.
+        upgrade_plugin_savepoint(true, 2026052401, 'quizaccess', 'airpay_proctoring');
     }
 
     return true;

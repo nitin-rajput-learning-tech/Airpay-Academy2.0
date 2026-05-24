@@ -5,10 +5,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'quizaccess_airpay_proctoring';
-$plugin->version   = 2026051300;     // Phase 8.2 N7 — relational settings table
+$plugin->version   = 2026052401;     // Phase B.12 hotfix — defensive table_exists() in upgrade.php
 $plugin->requires  = 2024042200;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.1.0';
+$plugin->release   = '1.1.1';
 $plugin->dependencies = [
     'local_airpay_proctoring' => 2026051201,
 ];
