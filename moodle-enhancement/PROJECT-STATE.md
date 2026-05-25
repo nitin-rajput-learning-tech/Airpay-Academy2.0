@@ -3850,3 +3850,110 @@ PROJECT-STATE.md history split for fast load.
 All chips ran on Opus 4.7 (1M context) in FleetView parallel worktrees.
 Zero hand-edited code outside conflict resolution. Pre-commit hook
 caught zero stray markers (P0-A working as designed).
+
+---
+
+## 🚀 Wave A3 P0-cleanup — multi-target deploy script (2026-05-25)
+
+**Branch:** `claude/dazzling-fermi-vw5wc`.
+**Status:** ✅ Script + runbook + this entry shipped. Real-deploy
+verification is a Windows-only step — see **Deferred verification**
+below.
+
+**Why:** Today's `deploy/deploy-to-xampp.ps1` accepts a single
+`-Target <absolute path>` flag, but only one XAMPP install — port 8080,
+`C:\xampp\htdocs\moodle5\public` — has ever been documented. The
+parallel `:8081` snapshot install used for comparison testing fell off
+the deploy cadence (theme rev stuck at v1.0.31-beta while `:8080` shipped
+v1.0.37-beta this morning). Without a named-target switch the operator
+has to remember (or look up) the second install's absolute path every
+time, so in practice they don't, so snapshot tests against `:8081`
+silently diverge from current behaviour.
+
+**What changed (3 files):**
+
+| File | Change |
+|------|--------|
+| `deploy/deploy-to-xampp.ps1` | Added an ordered `$Targets` hashtable registering `local80` (the existing default) + `local81` (the snapshot install). New `-TargetName` param with `[ValidateSet('local80','local81','all')]` for tab completion. Extracted the per-target deploy body into `Invoke-OneTarget` so `-TargetName all` can fan out without code duplication. Added `Resolve-PhpExe` so each target uses its OWN `<xampp_root>\php\php.exe` rather than picking up whichever `php.exe` happens to be first on PATH (matters when both XAMPPs are PATHed). Added `-SkipCli` for the case where host PHP version doesn't match the target's required PHP. Fixed a latent bug — the next-steps checklist URLs were hardcoded `http://localhost:8081/...` regardless of which target was deployed; they now pull from each target's `Url` field. New per-target summary table at end of multi-target runs. `-Target` still works as a per-run override (back-compat). |
+| `moodle-enhancement/docs/operations/deploy-runbook.md` | New "Named targets" subsection in §1 with the registered-target table, examples for `local81` + `all`, instructions for discovering the actual `:8081` Apache DocumentRoot via `Get-NetTCPConnection` + `netstat`. New "Idempotency" callout noting `robocopy /E` + `upgrade.php` semantics. Switches table extended with `-TargetName` + `-SkipCli` rows. |
+| `moodle-enhancement/PROJECT-STATE.md` | This H2 entry. |
+
+**Default target behaviour preserved 1:1.** Running
+`pwsh -NoProfile -File deploy/deploy-to-xampp.ps1` with no flags resolves
+to `local80` → `C:\xampp\htdocs\moodle5\public` — same path the script
+hit before this chip. Anyone whose muscle memory is the bare command
+keeps working. Anyone who was already passing `-Target <path>` to
+override also keeps working (explicit `-Target` still wins over the
+named-target lookup; only `-TargetName all` rejects it as ambiguous).
+
+**Safety + parity:**
+- ✅ PowerShell AST parser accepts the new script clean
+  (`[Parser]::ParseFile(...)` returns 0 errors).
+- ✅ Tokenizer pass clean (`[PSParser]::Tokenize(...)`).
+- ✅ Linux dry-run smoke (fake XAMPP layout at `/tmp/fake-xampp80,81`):
+  `-TargetName local80` resolves + pre-flight passes + copy plan
+  enumerates 41 subtrees; `-TargetName all` runs both targets
+  sequentially, prints per-target URL block + summary table, exits 0;
+  `-TargetName all -Target <path>` correctly rejected with
+  `-Target cannot be combined with -TargetName 'all'. Pick one.`;
+  `-TargetName bogus` correctly rejected by `[ValidateSet]` before any
+  script body runs; `-SkipCli -TargetName local81` correctly bypasses
+  the PHP discovery + CLI invocation steps.
+- ✅ Pre-commit hook honoured (no `--no-verify`).
+- ✅ No live API calls; no production POSTs; no `[CONFIRM]`-gated calls.
+- ✅ ASCII-only output (PowerShell 5.1 compatible) preserved.
+
+**Deferred verification (Windows-only — out of scope for this Linux
+session):**
+
+Steps 3-5 from the chip brief require the Windows XAMPP host:
+- Step 3: real `pwsh ... -DryRun -TargetName local81` against the
+  actual install — exercises path resolution against the real
+  filesystem.
+- Step 4: real deploy run — `pwsh ... -TargetName local81` copies +
+  `upgrade.php` + `purge_caches.php`. Watch for XMLDB / proctoring
+  upgrade collision (Phase B.12 hotfix already fixed in source —
+  should be clean).
+- Step 5: hit `http://localhost:8081/moodle/my/dashboard.php` and
+  confirm the rendered HTML's theme stamp matches `:8080`
+  (v1.0.37-beta).
+
+Recommended one-liner to run on the Windows host when picking this
+back up:
+
+```powershell
+# 1. Discover where :8081 Apache is rooted (may differ from default).
+Get-NetTCPConnection -LocalPort 8081 |
+    Select-Object -ExpandProperty OwningProcess -First 1 |
+    ForEach-Object { Get-Process -Id $_ | Select-Object Path }
+
+# 2. If the path matches C:\xampp81\htdocs\moodle5\public — proceed
+#    as-is. Otherwise edit deploy/deploy-to-xampp.ps1's $Targets
+#    hashtable Path entry for local81 (one-line change).
+
+# 3. Dry-run to confirm resolution + copy plan.
+pwsh -NoProfile -File deploy/deploy-to-xampp.ps1 -TargetName local81 -DryRun
+
+# 4. Real deploy.
+pwsh -NoProfile -File deploy/deploy-to-xampp.ps1 -TargetName local81
+
+# 5. Smoke test - confirm theme rev matches :8080 (v1.0.37-beta).
+$h81 = Invoke-WebRequest http://localhost:8081/moodle/my/dashboard.php -UseBasicParsing
+$h80 = Invoke-WebRequest http://localhost:8080/moodle/my/dashboard.php -UseBasicParsing
+($h81.Content -match '1\.0\.37') ; ($h80.Content -match '1\.0\.37')
+```
+
+If both `-match` evaluations are `True`, the acceptance criterion
+(parity between `:8080` and `:8081`) is met.
+
+**Refs:**
+- Prior chip: P1-E / `cool-einstein-Qzl8k` (original
+  `deploy/deploy-to-xampp.ps1` single-target version).
+- Stale-localhost root cause: PROJECT-STATE.md line 3038 (chip-P1 H2,
+  2026-05-24).
+- Docker `moodle52web` context (the other thing that historically
+  served `:8081`): `docs/5.2-merge/PHASE-B3-WEB-SMOKE-PASS.md` — noted
+  here so future maintainers know the port can map to either
+  (a) the parallel XAMPP install, (b) the Docker 5.2 container — and
+  the deploy target is `(a)`.
+- Runbook updated: `docs/operations/deploy-runbook.md` §1.
