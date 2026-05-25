@@ -437,4 +437,229 @@ final class message_helper_test extends \advanced_testcase {
         $msg = $messages[0];
         $this->assertSame((int) $learner->id, (int) $msg->useridto);
     }
+
+    /**
+     * Wave C5 chip lock-in: drive the chain through the scheduled-task
+     * entry point `recompute_due_boards::execute()` rather than calling
+     * `ranking_engine::recompute()` directly. This is the actual cron
+     * surface a deployed Moodle hits every 2 minutes — the chip brief
+     * names it explicitly, so it deserves a test that exercises the
+     * wrapper + the master flag gate the wrapper carries.
+     */
+    public function test_recompute_due_boards_task_runs_full_chain(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $this->preventResetByRollback();
+
+        // Both flags ON — master + notifications.
+        feature_flags::set('sentientia.leaderboards.enabled',
+            0, true, (int) $GLOBALS['USER']->id, 'phpunit');
+        $this->set_notifications_flag(true);
+
+        $owner = $this->create_user();
+        $learner = $this->create_user();
+
+        $course = $this->getDataGenerator()->create_course(
+            ['enablecompletion' => 1]);
+        $now = time();
+        $DB->insert_record('course_completions', (object) [
+            'userid'        => $learner->id,
+            'course'        => $course->id,
+            'timeenrolled'  => $now - 50,
+            'timestarted'   => $now - 50,
+            'timecompleted' => $now,
+            'reaggregate'   => 0,
+        ]);
+
+        $boardid = board_manager::create([
+            'name'     => 'TaskWrapper',
+            'type'     => board_manager::TYPE_COMPLETION,
+            'scope'    => board_manager::SCOPE_COURSE,
+            'courseid' => (int) $course->id,
+            'ownerid'  => (int) $owner->id,
+            'tenantid' => 1,
+        ]);
+
+        // Pre-seed a stale rank so the recompute looks like a large move.
+        $DB->insert_record('local_sentientia_lb_entries', (object) [
+            'boardid'         => $boardid,
+            'userid'          => $learner->id,
+            'points'          => -999999,
+            'secondary'       => 0,
+            'userrank'        => 15,
+            'costcenterid'    => 1,
+            'last_recomputed' => $now - 200,
+        ]);
+
+        // Backdate the board so board_manager::boards_due_for_recompute()
+        // picks it up on this tick.
+        $DB->set_field('local_sentientia_lb_boards', 'last_recomputed',
+            $now - 9000, ['id' => $boardid]);
+
+        $sink = $this->redirectMessages();
+        $task = new \local_sentientia_leaderboard\task\recompute_due_boards();
+        $task->execute();
+        $messages = $this->ours($sink);
+        $sink->close();
+
+        $this->assertGreaterThanOrEqual(1, count($messages),
+            'scheduled task entry point must drive the full event chain');
+        $this->assertSame((int) $learner->id, (int) $messages[0]->useridto,
+            'message must arrive at the affected learner');
+    }
+
+    /**
+     * Wave C5 chip lock-in: when a recompute produces zero qualifying
+     * rank changes, the `rankings_updated` event must NOT fire — this
+     * defends Moodle's standard log from per-tick noise on quiet boards.
+     * The contract is documented in ranking_engine.php lines 109-110.
+     */
+    public function test_recompute_skips_event_when_no_qualifying_changes(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $this->set_notifications_flag(true);
+
+        $u = $this->create_user();
+        $course = $this->getDataGenerator()->create_course(
+            ['enablecompletion' => 1]);
+        $now = time();
+        $DB->insert_record('course_completions', (object) [
+            'userid'        => $u->id,
+            'course'        => $course->id,
+            'timeenrolled'  => $now - 50,
+            'timestarted'   => $now - 50,
+            'timecompleted' => $now,
+            'reaggregate'   => 0,
+        ]);
+
+        $boardid = board_manager::create([
+            'name'     => 'Quiet',
+            'type'     => board_manager::TYPE_COMPLETION,
+            'scope'    => board_manager::SCOPE_COURSE,
+            'courseid' => (int) $course->id,
+            'ownerid'  => (int) $u->id,
+            'tenantid' => 1,
+        ]);
+
+        // First recompute primes the table with the learner at rank 1.
+        ranking_engine::recompute($boardid);
+        $this->assertSame(1, (int) $DB->get_field(
+            'local_sentientia_lb_entries', 'userrank',
+            ['boardid' => $boardid, 'userid' => $u->id]),
+            'priming recompute must place the only learner at rank 1');
+
+        // Second recompute with no data change: nobody moves, nobody
+        // crosses the top-10 gate freshly (rank 1 was already inside).
+        // Expect zero `rankings_updated` events and zero messages.
+        $event_sink = $this->redirectEvents();
+        $msg_sink   = $this->redirectMessages();
+        ranking_engine::recompute($boardid);
+        $events = $event_sink->get_events();
+        $messages = $this->ours($msg_sink);
+        $event_sink->close();
+        $msg_sink->close();
+
+        $ours = array_filter($events, function($e) {
+            return $e instanceof event\rankings_updated;
+        });
+        $this->assertCount(0, $ours,
+            'idempotent recompute with no rank shifts must skip the event');
+        $this->assertCount(0, $messages,
+            'no qualifying changes => no messages');
+    }
+
+    /**
+     * Wave C5 chip lock-in: when the recompute does fire the event, its
+     * payload must carry the expected shape — `objectid` set to the
+     * boardid, `other.changes` populated with the userid + old_rank +
+     * new_rank + reason quadruple per affected learner. This is the
+     * exact contract observer.php reads against (lines 49-56), so a
+     * regression here breaks the chain silently.
+     */
+    public function test_rankings_updated_event_carries_changes_payload(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        // Notifications flag OFF — we're testing the event emission
+        // contract from recompute, not the downstream dispatch.
+        $this->set_notifications_flag(false);
+
+        $owner = $this->create_user();
+        $learner = $this->create_user();
+
+        $course = $this->getDataGenerator()->create_course(
+            ['enablecompletion' => 1]);
+        $now = time();
+        $DB->insert_record('course_completions', (object) [
+            'userid'        => $learner->id,
+            'course'        => $course->id,
+            'timeenrolled'  => $now - 50,
+            'timestarted'   => $now - 50,
+            'timecompleted' => $now,
+            'reaggregate'   => 0,
+        ]);
+
+        $boardid = board_manager::create([
+            'name'     => 'PayloadShape',
+            'type'     => board_manager::TYPE_COMPLETION,
+            'scope'    => board_manager::SCOPE_COURSE,
+            'courseid' => (int) $course->id,
+            'ownerid'  => (int) $owner->id,
+            'tenantid' => 1,
+        ]);
+
+        // Pre-seed rank 30 so the upcoming recompute (puts learner at
+        // rank 1) qualifies as BOTH a top-10 entry AND a large move.
+        // top-10 entry wins because classify_change() returns the more
+        // celebratory reason first.
+        $DB->insert_record('local_sentientia_lb_entries', (object) [
+            'boardid'         => $boardid,
+            'userid'          => $learner->id,
+            'points'          => -999999,
+            'secondary'       => 0,
+            'userrank'        => 30,
+            'costcenterid'    => 1,
+            'last_recomputed' => $now - 200,
+        ]);
+
+        $sink = $this->redirectEvents();
+        ranking_engine::recompute($boardid);
+        $events = $sink->get_events();
+        $sink->close();
+
+        $ours = array_values(array_filter($events, function($e) {
+            return $e instanceof event\rankings_updated;
+        }));
+        $this->assertCount(1, $ours,
+            'exactly one rankings_updated event must fire per recompute '
+            . 'with qualifying changes');
+        $event = $ours[0];
+        $this->assertSame($boardid, (int) $event->objectid,
+            'event objectid must be the recomputed board id');
+        $this->assertArrayHasKey('changes', (array) $event->other,
+            'event other-payload must carry a changes list');
+        $changes = $event->other['changes'];
+        $this->assertNotEmpty($changes,
+            'changes payload must include the affected learner');
+
+        $matching = array_values(array_filter($changes, function($c) use ($learner) {
+            return (int) $c['userid'] === (int) $learner->id;
+        }));
+        $this->assertCount(1, $matching,
+            'changes list must include the affected learner exactly once');
+        $row = $matching[0];
+        $this->assertSame((int) $learner->id, (int) $row['userid']);
+        $this->assertSame(30, (int) $row['old_rank'],
+            'old_rank must reflect the pre-recompute snapshot');
+        $this->assertSame(1, (int) $row['new_rank'],
+            'new_rank must reflect the post-recompute assigned rank');
+        $this->assertSame(message_helper::REASON_TOP10_ENTRY,
+            $row['reason'],
+            'a 30 -> 1 shift crosses the top-10 gate AND exceeds the '
+            . 'large-move threshold; top-10 wins per classify_change()');
+    }
 }

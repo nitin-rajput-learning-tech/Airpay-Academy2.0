@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mockup — Notification bell after L.1 rank-change dispatch</title>
+<!--
+   Mockup: Moodle top-navbar bell icon after a learner receives one
+   rank_change message via the L.1 chain.
+
+   What this mock represents:
+   - The bell icon is the standard Moodle navbar notification toggle
+     (#nav-notification-popover-container in core_renderer output).
+   - The red "1" badge is Moodle's unread-count indicator. It's
+     populated automatically by core when message_send() writes a row
+     to mdl_message with notification=1 and the recipient hasn't
+     marked it read.
+   - Clicking the bell opens the popover with the message preview
+     (modeled in mockup-message-body.html).
+   - The avatar to the right of the bell shows the logged-in learner.
+
+   For a real screenshot replace this mock once the chain is run
+   against XAMPP and a learner crosses the top-10 or moves 5+ places.
+-->
+<style>
+  body { font: 14px/1.4 "Montserrat", -apple-system, sans-serif;
+         background: #F2F4FB; margin: 0; }
+  .navbar {
+    background: #fff;
+    border-bottom: 1px solid #e2e6ef;
+    display: flex; align-items: center;
+    padding: 12px 32px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  }
+  .brand {
+    color: #0066A7; font-weight: 800; font-size: 18px;
+    margin-right: 48px;
+  }
+  .navlinks {
+    flex: 1; display: flex; gap: 24px;
+    color: #5a6070; font-weight: 500;
+  }
+  .navlinks .active { color: #0066A7; font-weight: 700; }
+  .iconbar { display: flex; align-items: center; gap: 16px; }
+  .bell {
+    position: relative;
+    width: 28px; height: 28px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: #e8f2f9; border-radius: 50%;
+    color: #0066A7;
+  }
+  .bell svg { width: 16px; height: 16px; fill: currentColor; }
+  .badge {
+    position: absolute; top: -4px; right: -4px;
+    background: #dc2626; color: #fff;
+    font-size: 10px; font-weight: 700;
+    border-radius: 50%; min-width: 16px; height: 16px;
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 0 4px;
+    border: 2px solid #fff;
+  }
+  .avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: linear-gradient(135deg, #0066A7, #0f7a73);
+    color: #fff; font-weight: 700; font-size: 12px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .stage {
+    padding: 32px;
+    color: #1a1a2e;
+  }
+  .stage h1 { font-size: 22px; margin: 0 0 8px; color: #1a1a2e; }
+  .stage p  { color: #5a6070; max-width: 720px; }
+  .annot {
+    margin-top: 24px;
+    background: #fff; border: 1px solid #e2e6ef;
+    border-radius: 12px;
+    padding: 20px 24px;
+    max-width: 720px;
+  }
+  .annot dt { color: #5a6070; font-weight: 600; font-size: 12px;
+              text-transform: uppercase; letter-spacing: .04em;
+              margin-top: 12px; }
+  .annot dt:first-child { margin-top: 0; }
+  .annot dd { margin: 4px 0 0; color: #1a1a2e; }
+  code { font-family: "Courier New", monospace;
+         background: #f8f9fc; padding: 1px 6px;
+         border-radius: 4px; font-size: 13px; }
+</style>
+</head>
+<body>
+  <nav class="navbar" aria-label="Site primary nav">
+    <span class="brand">AIRPAY ACADEMY</span>
+    <div class="navlinks">
+      <span>Dashboard</span>
+      <span class="active">Leaderboards</span>
+      <span>Catalog</span>
+      <span>My Profile</span>
+    </div>
+    <div class="iconbar">
+      <span class="bell" aria-label="Notifications, 1 unread">
+        <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7v3.59l-1.71 1.71A1 1 0 0 0 4 16h16a1 1 0 0 0 .71-1.71L19 12.59V9a7 7 0 0 0-7-7zm-2 17a2 2 0 0 0 4 0z"/></svg>
+        <span class="badge" aria-hidden="true">1</span>
+      </span>
+      <span class="avatar" aria-label="Learner avatar">PG</span>
+    </div>
+  </nav>
+
+  <section class="stage">
+    <h1>Notification bell — post-dispatch state</h1>
+    <p>After the cron tick ran <code>recompute_due_boards::execute()</code>
+       and the rank-change moved learner Priya Gupta from rank 12 to
+       rank 1 on the "Q2 Compliance Speed-Run" board, the L.1 chain
+       dispatched a single <code>rank_change</code> message. Moodle's
+       core navbar bell picks up the unread <code>mdl_message</code>
+       row automatically and shows the red badge.</p>
+
+    <dl class="annot">
+      <dt>Component</dt>
+      <dd><code>local_sentientia_leaderboard</code></dd>
+      <dt>Provider</dt>
+      <dd><code>rank_change</code></dd>
+      <dt>Recipient</dt>
+      <dd>Priya Gupta — <code>useridto = 4271</code> — tenant <code>open_path = /1</code> (Airpay)</dd>
+      <dt>Trigger</dt>
+      <dt>old_rank → new_rank</dt>
+      <dd>12 → 1 (top-10 entry — wins over large-move classification)</dd>
+      <dt>Throttle row</dt>
+      <dd><code>local_sentientia_lb_notify_log</code> upserted with
+          <code>last_sent = unix(now)</code>, <code>last_reason = 'top10_entry'</code></dd>
+      <dt>Next eligible dispatch</dt>
+      <dd>now + 86 400 s (24 h) per <code>message_helper::THROTTLE_SECONDS</code></dd>
+    </dl>
+  </section>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mockup — 24h throttle blocking a second dispatch</title>
+<style>
+  body { font: 14px/1.6 "Montserrat", sans-serif; background: #F2F4FB; margin: 0; padding: 32px; color: #1a1a2e; }
+  h1 { font-size: 22px; margin: 0 0 8px; }
+  h2 { font-size: 16px; margin: 24px 0 8px; color: #0066A7; }
+  p { color: #5a6070; max-width: 820px; }
+  pre {
+    background: #1a1a2e; color: #f3f4f6;
+    font-family: "Courier New", monospace; font-size: 12px;
+    padding: 16px 20px; border-radius: 12px;
+    overflow-x: auto; max-width: 820px;
+    line-height: 1.5;
+  }
+  pre .ok    { color: #34d399; }
+  pre .warn  { color: #fbbf24; }
+  pre .info  { color: #60a5fa; }
+  pre .blocked { color: #f87171; }
+  table {
+    border-collapse: collapse; max-width: 820px;
+    background: #fff; border: 1px solid #e2e6ef;
+    border-radius: 12px; overflow: hidden;
+  }
+  th, td {
+    padding: 8px 14px; text-align: left;
+    border-bottom: 1px solid #e2e6ef;
+    font-size: 13px;
+  }
+  th {
+    background: #0066A7; color: #fff;
+    font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+    font-size: 11px;
+  }
+  tr:last-child td { border-bottom: 0; }
+  code { font-family: "Courier New", monospace;
+         background: #f8f9fc; padding: 1px 5px;
+         border-radius: 3px; font-size: 12px; }
+</style>
+</head>
+<body>
+
+  <h1>24 h throttle — second dispatch blocked</h1>
+  <p>Simulated mtrace output of two successive cron ticks ten minutes
+     apart. The first emits the event + sends the message. The second
+     re-emits the event (the recompute itself doesn't track throttle —
+     that's a per-user concern carried by the message_helper) but the
+     observer's per-user throttle row blocks the actual
+     <code>message_send()</code>.</p>
+
+  <h2>Tick 1 — 14:02:00 — first dispatch</h2>
+<pre><span class="info">[cron]</span> Running scheduled task: \local_sentientia_leaderboard\task\recompute_due_boards
+<span class="info">[task]</span> sentientia_leaderboard: master flag check — sentientia.leaderboards.enabled = ON
+<span class="info">[task]</span> sentientia_leaderboard: 1 board(s) due for recompute (board id=482, last_recomputed=14:00:00)
+<span class="info">[engine]</span> board=482 type=completion tenant=1
+<span class="info">[engine]</span>   pre-recompute snapshot: 4 ranked users captured
+<span class="info">[engine]</span>   wholesale transaction starting…
+<span class="info">[engine]</span>   delete + insert + mark_recomputed — committed
+<span class="info">[engine]</span>   SSE event 'leaderboard.recomputed' written (entry_count=4)
+<span class="info">[engine]</span>   compute_changes(old_ranks, new_ranks): 1 qualifying change(s)
+<span class="info">[engine]</span>     userid=4271 old_rank=12 new_rank=1 reason=top10_entry
+<span class="ok">[event]</span> \local_sentientia_leaderboard\event\rankings_updated triggered (objectid=482, 1 change)
+<span class="info">[observer]</span> on_rankings_updated: notifications flag = ON
+<span class="info">[observer]</span> dispatching to message_helper::dispatch(boardid=482, 1 change)
+<span class="info">[helper]</span> board=482 user=4271: opt-out=NO, throttled=NO → sending
+<span class="ok">[helper]</span>   message_send() returned OK — id=99812 component=local_sentientia_leaderboard provider=rank_change
+<span class="ok">[helper]</span>   throttle row UPSERTED: local_sentientia_lb_notify_log (board=482, user=4271, customer=1) last_sent=14:02:00
+<span class="info">[task]</span> sentientia_leaderboard: recomputed 1 board(s)
+<span class="ok">[cron]</span> Task ended successfully — 1 message dispatched
+</pre>
+
+  <h2>Tick 2 — 14:12:00 — same board re-recomputed within 24 h</h2>
+<pre><span class="info">[cron]</span> Running scheduled task: \local_sentientia_leaderboard\task\recompute_due_boards
+<span class="info">[task]</span> sentientia_leaderboard: master flag check — sentientia.leaderboards.enabled = ON
+<span class="info">[task]</span> sentientia_leaderboard: 1 board(s) due for recompute (board id=482, last_recomputed=14:02:00)
+<span class="info">[engine]</span> board=482 type=completion tenant=1
+<span class="info">[engine]</span>   pre-recompute snapshot: 4 ranked users captured
+<span class="info">[engine]</span>   wholesale transaction starting…
+<span class="info">[engine]</span>   delete + insert + mark_recomputed — committed
+<span class="info">[engine]</span>   SSE event 'leaderboard.recomputed' written (entry_count=4)
+<span class="info">[engine]</span>   compute_changes(old_ranks, new_ranks): 1 qualifying change(s)
+<span class="info">[engine]</span>     userid=4271 old_rank=1 new_rank=8 reason=large_move
+<span class="ok">[event]</span> \local_sentientia_leaderboard\event\rankings_updated triggered (objectid=482, 1 change)
+<span class="info">[observer]</span> on_rankings_updated: notifications flag = ON
+<span class="info">[observer]</span> dispatching to message_helper::dispatch(boardid=482, 1 change)
+<span class="info">[helper]</span> board=482 user=4271: opt-out=NO, <span class="blocked">throttled=YES</span> → skipping
+<span class="blocked">[helper]</span>   last_sent=14:02:00, now=14:12:00, elapsed=600s &lt; 86400s — BLOCKED
+<span class="info">[helper]</span>   throttle row LEFT UNCHANGED — still last_sent=14:02:00
+<span class="info">[task]</span> sentientia_leaderboard: recomputed 1 board(s)
+<span class="warn">[cron]</span> Task ended successfully — 0 messages dispatched (1 throttled)
+</pre>
+
+  <h2>Throttle row state after both ticks</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>id</th>
+        <th>boardid</th>
+        <th>userid</th>
+        <th>customerid</th>
+        <th>last_sent</th>
+        <th>last_old_rank</th>
+        <th>last_new_rank</th>
+        <th>last_reason</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1041</td>
+        <td>482</td>
+        <td>4271</td>
+        <td>1</td>
+        <td>14:02:00</td>
+        <td>12</td>
+        <td>1</td>
+        <td>top10_entry</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>What this proves</h2>
+  <p>Tick 2's rank shift (1 → 8) is a qualifying large-move under
+     <code>message_helper::LARGE_MOVE_THRESHOLD</code>, AND
+     <code>compute_changes()</code> emits it in the event payload, AND
+     the observer reaches <code>message_helper::dispatch()</code>. The
+     only thing stopping the message from being sent is the per-user
+     throttle row — exactly the contract the
+     <code>test_throttle_blocks_duplicate_within_24h</code> test pins
+     in mock mode, here demonstrated as cron output.</p>
+  <p>The throttle row's <code>last_old_rank</code> and
+     <code>last_new_rank</code> remain frozen at the tick-1 values —
+     the helper only updates the row on a successful
+     <code>message_send()</code> return. That keeps the diagnostic
+     fields accurate for HR forensics.</p>
+</body>
+</html>
