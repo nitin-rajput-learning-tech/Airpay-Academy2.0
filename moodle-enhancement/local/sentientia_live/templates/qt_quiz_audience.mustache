@@ -1,0 +1,65 @@
+{{!
+    @template local_sentientia_live/qt_quiz_audience
+
+    Audience-facing form for a quiz slide (Phase E.8 / D4). Same
+    interaction shape as multichoice (one-of-N radio) but the slide
+    has a correct_index — once submitted, audience sees a right/wrong
+    badge on the play.php confirmation panel.
+
+    Context:
+      slideid        int
+      sessionid      int
+      aria_id_prefix string
+      options[]               — one per option:
+        index        int      — 0-based option index.
+        label        string   — option text.
+        input_id     string   — DOM ID for the radio.
+      has_options    bool
+      sesskey        string
+      submit_label   string
+      legend         string   — fieldset legend.
+
+    a11y: fieldset+legend gives the radio group an accessible name. Each
+    label has visible text so SR users can read each choice. We never
+    leak which option is correct on this template — that surface is
+    server-rendered in the post-submit confirmation only.
+}}
+<div class="sentientia-qt-quiz-audience"
+     data-slideid="{{slideid}}"
+     data-sessionid="{{sessionid}}"
+     data-qt-type="quiz"
+     role="region">
+
+  <fieldset class="mb-3">
+    <legend class="form-label fw-bold mb-3">{{legend}}</legend>
+
+    {{#has_options}}
+      <div class="d-flex flex-column gap-2 sentientia-qt-quiz-options"
+           role="radiogroup">
+        {{#options}}
+          <div class="form-check sentientia-qt-quiz-option p-3 border rounded"
+               style="cursor: pointer;">
+            <input type="radio"
+                   class="form-check-input sentientia-qt-quiz-input me-2"
+                   name="option_index"
+                   id="{{input_id}}"
+                   value="{{index}}"
+                   required>
+            <label for="{{input_id}}"
+                   class="form-check-label fs-5 sentientia-qt-quiz-label">
+              {{label}}
+            </label>
+          </div>
+        {{/options}}
+      </div>
+    {{/has_options}}
+  </fieldset>
+
+  <input type="hidden" name="sesskey" value="{{sesskey}}">
+  <input type="hidden" name="slide_id" value="{{slideid}}">
+
+  <button type="submit"
+          class="btn btn-primary btn-lg w-100 sentientia-qt-quiz-submit">
+    {{submit_label}}
+  </button>
+</div>

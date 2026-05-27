@@ -1,0 +1,64 @@
+{{!
+    @template local_sentientia_live/qt_open_ended_audience
+
+    Audience-facing response form for an open-ended slide (Phase E.6 / D4).
+    Renders a free-text textarea with explicit character counter and an
+    aria-labelledby label. The submitting form (POST action) is provided
+    by the parent — this partial contributes the body of the form only.
+
+    Context:
+      slideid        int       — slide ID (carried in a data attr).
+      sessionid      int       — parent session ID.
+      max_chars      int       — hard cap on input length (D4: ≤500).
+      aria_id_prefix string    — prefix for input + label IDs (a11y).
+      placeholder    string    — textarea placeholder.
+      submit_label   string    — text on the submit button.
+      sesskey        string    — Moodle CSRF token, written as hidden input.
+      label_text     string    — visible label above the textarea.
+
+    a11y: aria-describedby points at the counter span; charcount updated
+    by JS or by re-render. textcontent is plain — no innerHTML hooks.
+}}
+<div class="sentientia-qt-openended-audience"
+     data-slideid="{{slideid}}"
+     data-sessionid="{{sessionid}}"
+     data-qt-type="openended"
+     role="region"
+     aria-labelledby="{{aria_id_prefix}}-label">
+
+  <label for="{{aria_id_prefix}}-input"
+         id="{{aria_id_prefix}}-label"
+         class="form-label fw-bold mb-2">
+    {{label_text}}
+  </label>
+
+  <textarea name="text"
+            id="{{aria_id_prefix}}-input"
+            class="form-control form-control-lg mb-2 sentientia-qt-openended-input"
+            rows="4"
+            maxlength="{{max_chars}}"
+            placeholder="{{placeholder}}"
+            aria-describedby="{{aria_id_prefix}}-counter"
+            data-max-chars="{{max_chars}}"
+            required></textarea>
+
+  <div class="d-flex justify-content-between text-muted small mb-3"
+       id="{{aria_id_prefix}}-counter">
+    <span aria-live="polite" aria-atomic="true">
+      <span class="sentientia-qt-openended-charcount">0</span>
+      /
+      <span class="sentientia-qt-openended-charmax">{{max_chars}}</span>
+    </span>
+    <span class="sentientia-qt-openended-charhint">
+      {{#str}}qt_openended_char_hint, local_sentientia_live{{/str}}
+    </span>
+  </div>
+
+  <input type="hidden" name="sesskey" value="{{sesskey}}">
+  <input type="hidden" name="slide_id" value="{{slideid}}">
+
+  <button type="submit"
+          class="btn btn-primary btn-lg w-100 sentientia-qt-openended-submit">
+    {{submit_label}}
+  </button>
+</div>

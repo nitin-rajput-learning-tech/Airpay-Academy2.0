@@ -1,0 +1,111 @@
+{{!
+    @template local_sentientia_live/qt_ranking_result
+
+    Trainer + audience result view for a ranking slide (Phase E.9 / D4).
+    Renders the Borda-count-sorted ranking with both Borda points AND
+    average position columns for triangulation.
+
+    Context:
+      slideid           int
+      sessionid         int
+      total_responses   int          — count of full-permutation responses.
+      has_responses     bool
+      item_count        int
+      rows[]                         — ranked list (winner first):
+        rank            int
+        index           int          — item index (0-based).
+        label           string
+        borda           int          — Borda points (higher = preferred).
+        avg_position    float|null   — avg position (lower = preferred).
+        has_avg         bool
+        is_winner       bool
+
+    a11y: table caption hidden via sr-only describing the ranking.
+    scope="col" on every <th>.
+}}
+<div class="sentientia-qt-ranking-result"
+     data-slideid="{{slideid}}"
+     data-sessionid="{{sessionid}}"
+     data-qt-type="ranking"
+     role="region"
+     aria-label="{{#str}}qt_ranking_result_a11y_label, local_sentientia_live{{/str}}">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="h5 mb-0">
+      {{#str}}qt_ranking_result_heading, local_sentientia_live{{/str}}
+    </h4>
+    <span class="airpay-badge airpay-badge--secondary badge bg-secondary">
+      <span class="sentientia-qt-ranking-total">{{total_responses}}</span>
+      {{#str}}live_results_total_suffix, local_sentientia_live{{/str}}
+    </span>
+  </div>
+
+  <span class="sr-only"
+        aria-live="polite"
+        aria-atomic="true"
+        data-live-tally-summary></span>
+
+  {{^has_responses}}
+    <p class="text-muted text-center py-4">
+      <em>{{#str}}live_results_empty, local_sentientia_live{{/str}}</em>
+    </p>
+  {{/has_responses}}
+
+  {{#has_responses}}
+    <table class="table table-sm align-middle sentientia-qt-ranking-table">
+      <caption class="sr-only">
+        {{#str}}qt_ranking_table_caption, local_sentientia_live{{/str}}
+      </caption>
+      <thead class="table-light">
+        <tr>
+          <th scope="col" style="width:4em">
+            {{#str}}live_results_rank_label, local_sentientia_live{{/str}}
+          </th>
+          <th scope="col">
+            {{#str}}live_results_item_label, local_sentientia_live{{/str}}
+          </th>
+          <th scope="col" class="text-end" style="width:8em">
+            {{#str}}qt_ranking_borda_label, local_sentientia_live{{/str}}
+          </th>
+          <th scope="col" class="text-end" style="width:8em">
+            {{#str}}live_results_avg_pos_label, local_sentientia_live{{/str}}
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#rows}}
+          <tr class="sentientia-qt-ranking-row{{#is_winner}} table-warning{{/is_winner}}"
+              data-item-index="{{index}}">
+            <td>
+              <strong>
+                {{#is_winner}}
+                  <i class="fa fa-medal text-warning me-1" aria-hidden="true"></i>
+                {{/is_winner}}
+                {{rank}}
+              </strong>
+            </td>
+            <td>{{label}}</td>
+            <td class="text-end">
+              <code class="sentientia-qt-ranking-borda">{{borda}}</code>
+            </td>
+            <td class="text-end">
+              {{#has_avg}}
+                <code class="sentientia-qt-ranking-avg">{{avg_position}}</code>
+              {{/has_avg}}
+              {{^has_avg}}
+                <span class="text-muted">—</span>
+              {{/has_avg}}
+            </td>
+          </tr>
+        {{/rows}}
+      </tbody>
+    </table>
+
+    <p class="text-muted small">
+      {{#str}}qt_ranking_borda_explainer, local_sentientia_live{{/str}}
+    </p>
+  {{/has_responses}}
+
+  <script type="application/json"
+          class="sentientia-results-tally-json">{{{tally_json}}}</script>
+</div>

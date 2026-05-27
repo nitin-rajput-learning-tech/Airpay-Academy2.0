@@ -69,8 +69,15 @@ if ($type === '') {
         get_string('add_slide_pick_type_intro', 'local_sentientia_live'),
         ['class' => 'text-muted mb-4']);
 
+    // Picker is driven by the question_type_registry — the single
+    // source of truth for which types exist (all 6 as of Phase E.9 /
+    // D4). list_slugs() is guaranteed equal to slide_manager::VALID_TYPES
+    // by question_type_registry_test::test_list_slugs_matches_slide_manager_valid_types.
+    // Flag gating stays fail-open when the core resolver is absent (dev /
+    // CI without local_airpay_core) so every registered type still
+    // surfaces during local testing.
     $available = [];
-    foreach (\local_sentientia_live\slide_manager::VALID_TYPES as $t) {
+    foreach (\local_sentientia_live\question_types\question_type_registry::list_slugs() as $t) {
         $flag = 'live.questiontype.' . $t;
         $is_on = true;
         if (class_exists('\\local_airpay_core\\feature_flags')) {

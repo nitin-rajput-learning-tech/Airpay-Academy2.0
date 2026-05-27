@@ -35,9 +35,9 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_live';
-$plugin->version   = 2026052501;
+$plugin->version   = 2026052502;
 $plugin->requires  = 2022041900;
-$plugin->maturity  = MATURITY_ALPHA;   // Phase E.4 + E.5 — multichoice + word cloud live
+$plugin->maturity  = MATURITY_ALPHA;   // Phases E.4-E.9 — all 6 question types live
 $plugin->release   = '0.2.0-alpha';
 $plugin->dependencies = [
     'local_airpay_core' => 2026051401,  // feature_flags resolver
@@ -137,3 +137,18 @@ $plugin->dependencies = [
 //              on the 0→1 transition (container only exists once
 //              has_responses), validate_config cross-field error
 //              attaches to the right field.
+// 0.2.0-alpha  Wave D4 — full implementation of the remaining 4
+//              question types (open_ended, rating_scale, quiz, ranking;
+//              multichoice + word_cloud land via parallel chips C1/C2).
+//              Each type now ships render() / persist_response() /
+//              tally() / validate_config() / get_aria_announcements()
+//              plus qt_<type>_audience + qt_<type>_result Mustache
+//              templates. open_ended: 500-char cap, paginated display,
+//              moderation toggle. rating_scale: stars (1-5) | NPS (1-10),
+//              mean + median. quiz: required correct_index, per-response
+//              scoring, top-10 fastest-correct leaderboard. ranking:
+//              drag-to-order with numeric a11y fallback, Borda count +
+//              average position. Trainer picker now registry-driven.
+//              +66 string pairs en+hi (Hindi parity 100%). +4 PHPUnit
+//              test classes (≥24 methods) covering valid/invalid config,
+//              persist, tally aggregation, registry resolution.

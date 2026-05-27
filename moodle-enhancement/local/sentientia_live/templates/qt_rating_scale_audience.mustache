@@ -1,0 +1,109 @@
+{{!
+    @template local_sentientia_live/qt_rating_scale_audience
+
+    Audience-facing form for a rating-scale slide (Phase E.7 / D4).
+    Two visual modes selected by is_stars / is_nps flags:
+
+      Stars (1-5) — large star icons in a horizontal row. Each step
+                    is a btn-check radio so keyboard navigation works
+                    via the native radio-group arrow-key contract.
+
+      NPS (1-10)  — numeric pill buttons (1 … 10). Colour gradient
+                    from amber (low NPS) to teal (high NPS) matches
+                    Sentientia's design tokens.
+
+    Context:
+      slideid        int
+      sessionid      int
+      aria_id_prefix string   — prefix for radio IDs (a11y).
+      scale_type     string   — 'stars' | 'nps' (informational data attr).
+      is_stars       bool     — render stars block.
+      is_nps         bool     — render NPS block.
+      steps[]                 — one entry per scale step:
+        value      int        — the numeric value (1-5 for stars, 1-10 NPS).
+        label      string     — optional per-step label.
+        has_label  bool       — whether to render the label badge.
+        input_id   string     — DOM ID for the radio.
+      sesskey        string
+      submit_label   string
+      legend         string   — fieldset legend (per scale_type variant).
+
+    a11y: every input has a <label for="..."> with a visible OR sr-only
+    text — even the stars row gives screen readers "1 star", "2 stars"
+    etc. via the sr-only span. fieldset+legend gives the group a name.
+}}
+<div class="sentientia-qt-rating-audience"
+     data-slideid="{{slideid}}"
+     data-sessionid="{{sessionid}}"
+     data-qt-type="rating"
+     data-scale-type="{{scale_type}}"
+     role="region">
+
+  <fieldset class="mb-3">
+    <legend class="form-label fw-bold mb-3">{{legend}}</legend>
+
+    {{#is_stars}}
+      <div class="d-flex justify-content-center gap-2 flex-wrap sentientia-qt-rating-stars"
+           role="radiogroup"
+           aria-labelledby="{{aria_id_prefix}}-legend">
+        {{#steps}}
+          <input type="radio"
+                 class="btn-check sentientia-qt-rating-input"
+                 name="value"
+                 id="{{input_id}}"
+                 value="{{value}}"
+                 required>
+          <label for="{{input_id}}"
+                 class="btn btn-outline-warning btn-lg sentientia-qt-rating-star-label"
+                 style="min-width: 4rem;">
+            <span aria-hidden="true">★</span>
+            <span class="d-block fw-bold">{{value}}</span>
+            {{#has_label}}
+              <span class="d-block small">{{label}}</span>
+            {{/has_label}}
+            <span class="sr-only">
+              {{value}}
+              {{#str}}qt_rating_star_suffix, local_sentientia_live{{/str}}
+              {{#has_label}}— {{label}}{{/has_label}}
+            </span>
+          </label>
+        {{/steps}}
+      </div>
+    {{/is_stars}}
+
+    {{#is_nps}}
+      <div class="d-flex justify-content-center gap-2 flex-wrap sentientia-qt-rating-nps"
+           role="radiogroup"
+           aria-labelledby="{{aria_id_prefix}}-legend">
+        {{#steps}}
+          <input type="radio"
+                 class="btn-check sentientia-qt-rating-input"
+                 name="value"
+                 id="{{input_id}}"
+                 value="{{value}}"
+                 required>
+          <label for="{{input_id}}"
+                 class="btn btn-outline-primary btn-lg sentientia-qt-rating-nps-label"
+                 style="min-width: 3.5rem;">
+            <span class="fw-bold fs-4">{{value}}</span>
+            {{#has_label}}
+              <span class="d-block small text-truncate">{{label}}</span>
+            {{/has_label}}
+          </label>
+        {{/steps}}
+      </div>
+      <div class="d-flex justify-content-between mt-2 text-muted small">
+        <span>{{#str}}qt_rating_nps_low, local_sentientia_live{{/str}}</span>
+        <span>{{#str}}qt_rating_nps_high, local_sentientia_live{{/str}}</span>
+      </div>
+    {{/is_nps}}
+  </fieldset>
+
+  <input type="hidden" name="sesskey" value="{{sesskey}}">
+  <input type="hidden" name="slide_id" value="{{slideid}}">
+
+  <button type="submit"
+          class="btn btn-primary btn-lg w-100 sentientia-qt-rating-submit">
+    {{submit_label}}
+  </button>
+</div>

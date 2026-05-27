@@ -353,7 +353,7 @@ class response_recorder {
                     throw new \moodle_exception('response_text_required',
                         'local_sentientia_live');
                 }
-                $max_chars = (int) ($settings['max_chars'] ?? 280);
+                $max_chars = (int) ($settings['max_chars'] ?? 500);
                 if (mb_strlen($value_text) > $max_chars) {
                     throw new \moodle_exception('response_text_too_long',
                         'local_sentientia_live', '', $max_chars);
@@ -374,6 +374,21 @@ class response_recorder {
                 if (count($order) !== $item_count) {
                     throw new \moodle_exception('response_ranking_incomplete',
                         'local_sentientia_live');
+                }
+                // Must be a complete permutation of [0, item_count): every
+                // index in range, no duplicates. Without this, a negative or
+                // out-of-range index (e.g. [-1, 5] for a 2-item slide) passes
+                // the count check and is stored, then silently contributes
+                // nothing to the Borda / average-position tally while still
+                // inflating the response total.
+                $seen = [];
+                foreach ($order as $idx) {
+                    if (!is_int($idx) || $idx < 0 || $idx >= $item_count
+                            || isset($seen[$idx])) {
+                        throw new \moodle_exception('response_ranking_bad_json',
+                            'local_sentientia_live');
+                    }
+                    $seen[$idx] = true;
                 }
                 break;
         }

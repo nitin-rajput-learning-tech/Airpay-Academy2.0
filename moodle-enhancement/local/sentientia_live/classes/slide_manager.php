@@ -24,7 +24,7 @@ defined('MOODLE_INTERNAL') || die();
  *   quiz        : {options: [...], correct_index: int}
  *   ranking     : {items: [...]}
  *   wordcloud   : {max_word_length?: 50, dedupe?: true}
- *   openended   : {max_chars?: 280}
+ *   openended   : {max_chars?: 500}
  *
  * Settings are validated against the type at add/update time.
  *
@@ -298,8 +298,10 @@ class slide_manager {
      */
     public static function default_settings_for_type(string $type): array {
         return match ($type) {
+            // Merged C1 (multichoice render_style) + C2 (wordcloud rich
+            // fields) + D4 (rating scale_type, openended 500-char cap).
             'multichoice' => ['options' => [], 'render_style' => 'radio'],
-            'rating'      => ['scale_min' => 1, 'scale_max' => 5, 'scale_labels' => []],
+            'rating'      => ['scale_type' => 'stars', 'scale_min' => 1, 'scale_max' => 5, 'scale_labels' => []],
             'quiz'        => ['options' => [], 'correct_index' => 0],
             'ranking'     => ['items' => []],
             'wordcloud'   => [
@@ -312,7 +314,7 @@ class slide_manager {
                 'max_responses_per_user' => 3,
                 'locale'                 => 'en',
             ],
-            'openended'   => ['max_chars' => 280],
+            'openended'   => ['max_chars' => 500],
             default       => [],
         };
     }
@@ -383,6 +385,13 @@ class slide_manager {
                 break;
 
             case 'rating':
+                // scale_type lets the config pick between a 1-5 star
+                // scale and a 1-10 NPS scale. Default 'stars'. Invalid
+                // values fall back to 'stars' rather than throwing —
+                // the explicit min/max below are the authoritative bounds.
+                $scale_type = $settings['scale_type'] ?? 'stars';
+                $out['scale_type'] = in_array($scale_type, ['stars', 'nps'], true)
+                    ? $scale_type : 'stars';
                 $min = (int) ($settings['scale_min'] ?? 1);
                 $max = (int) ($settings['scale_max'] ?? 5);
                 if ($min < 0 || $max <= $min || $max > 10) {
@@ -443,8 +452,12 @@ class slide_manager {
                 break;
 
             case 'openended':
-                $mc = (int) ($settings['max_chars'] ?? 280);
-                $out['max_chars'] = max(10, min(2000, $mc));
+                // D4 ceiling is 500 (was 280 in the E.0 scaffold). Keep
+                // this clamp in lockstep with
+                // open_ended::MAX_CHARS_CEILING / MAX_CHARS_FLOOR so the
+                // storage layer and the question-type layer agree.
+                $mc = (int) ($settings['max_chars'] ?? 500);
+                $out['max_chars'] = max(10, min(500, $mc));
                 break;
         }
 

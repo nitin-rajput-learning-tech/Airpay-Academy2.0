@@ -1,0 +1,123 @@
+{{!
+    @template local_sentientia_live/qt_rating_scale_result
+
+    Trainer + audience result view for rating-scale (Phase E.7 / D4).
+    Distribution histogram + mean + median + count summary.
+
+    Context:
+      slideid           int
+      sessionid         int
+      total_responses   int
+      has_responses     bool
+      scale_type        string   — 'stars' | 'nps' (data attr).
+      summary                    — pre-shaped stat panel:
+        mean            float|null  rounded 2dp; null when no responses.
+        median          float|null
+        count           int
+        min             int
+        max             int
+        has_mean        bool        false when count = 0.
+      bars[]                     — one per scale step:
+        value           int
+        count           int
+        bar_percent     int        (0-100 based on max bin)
+        label           string     optional per-step label.
+        has_label       bool
+        is_winner       bool       — bar with the highest count.
+
+    a11y: sr-only summary updated by chart_updater. The histogram is a
+    role="img" with an aria-label, plus a hidden table-of-values that
+    SR users can navigate (data-summary-text on each bar row).
+}}
+<div class="sentientia-qt-rating-result"
+     data-slideid="{{slideid}}"
+     data-sessionid="{{sessionid}}"
+     data-qt-type="rating"
+     data-scale-type="{{scale_type}}"
+     role="region"
+     aria-label="{{#str}}qt_rating_result_a11y_label, local_sentientia_live{{/str}}">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="h5 mb-0">
+      {{#str}}qt_rating_result_heading, local_sentientia_live{{/str}}
+    </h4>
+    <span class="airpay-badge airpay-badge--secondary badge bg-secondary">
+      <span class="sentientia-qt-rating-total">{{total_responses}}</span>
+      {{#str}}live_results_total_suffix, local_sentientia_live{{/str}}
+    </span>
+  </div>
+
+  {{! sr-only live region — chart_updater rewrites this on response_added }}
+  <span class="sr-only"
+        aria-live="polite"
+        aria-atomic="true"
+        data-live-tally-summary></span>
+
+  {{^has_responses}}
+    <p class="text-muted text-center py-4">
+      <em>{{#str}}live_results_empty, local_sentientia_live{{/str}}</em>
+    </p>
+  {{/has_responses}}
+
+  {{#has_responses}}
+    <div class="row text-center mb-4 sentientia-qt-rating-summary">
+      <div class="col">
+        <div class="text-muted small">
+          {{#str}}qt_rating_mean_label, local_sentientia_live{{/str}}
+        </div>
+        <div class="display-6 fw-bold sentientia-qt-rating-mean">
+          {{#summary.has_mean}}{{summary.mean}}{{/summary.has_mean}}
+          {{^summary.has_mean}}—{{/summary.has_mean}}
+        </div>
+      </div>
+      <div class="col">
+        <div class="text-muted small">
+          {{#str}}qt_rating_median_label, local_sentientia_live{{/str}}
+        </div>
+        <div class="display-6 fw-bold sentientia-qt-rating-median">
+          {{#summary.has_mean}}{{summary.median}}{{/summary.has_mean}}
+          {{^summary.has_mean}}—{{/summary.has_mean}}
+        </div>
+      </div>
+      <div class="col">
+        <div class="text-muted small">
+          {{#str}}live_results_responses_label, local_sentientia_live{{/str}}
+        </div>
+        <div class="display-6 fw-bold sentientia-qt-rating-count">
+          {{summary.count}}
+        </div>
+      </div>
+      <div class="col">
+        <div class="text-muted small">
+          {{#str}}live_results_scale_label, local_sentientia_live{{/str}}
+        </div>
+        <div class="fs-4 fw-semibold">{{summary.min}}–{{summary.max}}</div>
+      </div>
+    </div>
+
+    <div class="d-flex flex-column gap-2 sentientia-qt-rating-histogram"
+         role="img"
+         aria-label="{{#str}}qt_rating_histogram_a11y_label, local_sentientia_live{{/str}}">
+      {{#bars}}
+        <div class="d-flex align-items-center gap-2 sentientia-qt-rating-bar-row{{#is_winner}} sentientia-qt-rating-bar-row--winner{{/is_winner}}"
+             data-rating-value="{{value}}">
+          <div style="width:3.5em" class="text-end fw-bold">{{value}}</div>
+          <div class="flex-grow-1 bg-light rounded" style="height:22px;">
+            <div class="sentientia-bar {{#is_winner}}bg-success{{/is_winner}}{{^is_winner}}bg-primary{{/is_winner}} rounded"
+                 style="width:{{bar_percent}}%; height:100%; transition: width 0.3s ease;">
+            </div>
+          </div>
+          <div style="width:4em" class="text-end sentientia-bar-count">{{count}}</div>
+          {{#has_label}}
+            <div style="width:9em"
+                 class="text-muted small text-truncate"
+                 title="{{label}}">{{label}}</div>
+          {{/has_label}}
+        </div>
+      {{/bars}}
+    </div>
+  {{/has_responses}}
+
+  <script type="application/json"
+          class="sentientia-results-tally-json">{{{tally_json}}}</script>
+</div>

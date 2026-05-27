@@ -267,7 +267,7 @@ $string['wc_dedupe_desc']               = 'When ticked, a learner\'s repeated wo
 // Open ended.
 $string['openended_max_chars_label']    = 'Max characters per response';
 $string['openended_max_chars']          = 'Max characters per response';
-$string['openended_max_chars_help']     = 'Hard cap on response length. Default 280 (Twitter-style). Range 10-2000.';
+$string['openended_max_chars_help']     = 'Hard cap on response length. Default 500. Range 10-500.';
 
 // Slide row actions on edit.php.
 $string['action_add_slide']             = 'Add slide';
@@ -388,6 +388,7 @@ $string['response_text_too_long']       = 'Response too long. Maximum {$a} chara
 $string['response_out_of_range']        = 'Response value is out of the allowed range: {$a}';
 $string['response_ranking_bad_json']    = 'Ranking response must be a JSON array of item indices.';
 $string['response_ranking_incomplete']  = 'Please rank every item before submitting.';
+$string['response_ranking_duplicate']   = 'Ranking response contains a duplicate item — each item may appear only once.';
 $string['invalidparticipant']           = 'Participant record not found.';
 $string['participant_session_mismatch'] = 'Participant does not belong to this session.';
 
@@ -410,3 +411,73 @@ $string['mc_correct_label']             = 'Correct answer (optional)';
 $string['mc_correct_help']              = 'Optional. Enter the option number (1, 2, …) that is the correct answer, or leave blank for a poll with no right answer. The trainer results view marks the correct option; the audience does not see it until you reveal.';
 $string['a11y_mc_tally_updated']        = 'Vote tally updated';
 $string['a11y_mc_correct_revealed']     = 'Correct answer revealed';
+// ── Phase E.6-E.9 D4 — Question type implementations ───────────────
+// One key family per type — audience-side legends, result-panel
+// headings, a11y announcements, validation errors. Hindi parity 100%.
+
+// Shared: openended audience + result.
+$string['qt_openended_audience_label']     = 'Your answer';
+$string['qt_openended_char_hint']          = 'HTML is stripped — plain text only.';
+$string['qt_openended_result_heading']     = 'Open-ended responses';
+$string['qt_openended_result_a11y_label']  = 'Open-ended response list';
+$string['qt_openended_item_aria_prefix']   = 'Response from';
+$string['qt_openended_moderation_label']   = 'Show moderation controls (hide / show individual responses)';
+$string['qt_openended_moderate_aria']      = 'Toggle visibility of this response';
+$string['qt_openended_hide']               = 'Hide';
+$string['qt_openended_show']               = 'Show';
+$string['qt_openended_pagination_aria']    = 'Response pagination';
+$string['qt_openended_page_prev']          = 'Previous page';
+$string['qt_openended_page_next']          = 'Next page';
+$string['qt_openended_page_of']            = 'Page';
+$string['qt_openended_a11y_new_response']  = 'A new response has been received';
+$string['qt_openended_a11y_response_hidden'] = 'Response hidden from the projector view';
+$string['qt_openended_a11y_response_shown']  = 'Response is now visible on the projector view';
+
+// validate_config errors — openended.
+$string['openended_max_chars_int_required'] = 'Maximum character count must be a whole number.';
+$string['openended_max_chars_out_of_range'] = 'Maximum character count must be between {$a->min} and {$a->max}.';
+$string['openended_moderation_bool']        = 'Moderation toggle must be on or off.';
+
+// Rating-scale audience + result.
+$string['qt_rating_audience_legend_stars'] = 'Tap a star to rate (1 = lowest, 5 = highest).';
+$string['qt_rating_audience_legend_nps']   = 'Tap a number to score (1 = not at all likely, 10 = extremely likely).';
+$string['qt_rating_star_suffix']           = 'star';
+$string['qt_rating_nps_low']               = 'Not at all likely';
+$string['qt_rating_nps_high']              = 'Extremely likely';
+$string['qt_rating_result_heading']        = 'Rating distribution';
+$string['qt_rating_result_a11y_label']     = 'Rating-scale results';
+$string['qt_rating_histogram_a11y_label']  = 'Histogram of rating responses';
+$string['qt_rating_mean_label']            = 'Mean';
+$string['qt_rating_median_label']          = 'Median';
+$string['qt_rating_a11y_mean_updated']     = 'Mean rating has been updated';
+$string['qt_rating_a11y_median_updated']   = 'Median rating has been updated';
+
+// validate_config errors — rating.
+$string['rating_scale_type_invalid']         = 'Scale type must be "stars" (1-5) or "nps" (1-10).';
+$string['rating_scale_labels_must_array']    = 'Scale labels must be a list.';
+$string['rating_scale_labels_must_string']   = 'Each scale label must be a string.';
+$string['rating_scale_labels_length_mismatch'] = 'Expected {$a->expected} scale labels but received {$a->got}.';
+
+// Quiz audience + result.
+$string['qt_quiz_audience_legend']         = 'Pick the option you think is correct.';
+$string['qt_quiz_result_heading']          = 'Quiz results';
+$string['qt_quiz_result_a11y_label']       = 'Quiz response distribution and leaderboard';
+$string['qt_quiz_result_correct_aria']     = 'Correct answer:';
+$string['qt_quiz_leaderboard_heading']     = 'Leaderboard';
+$string['qt_quiz_leaderboard_subhead']     = '(top 10 fastest correct)';
+$string['qt_quiz_leaderboard_caption']     = 'Top 10 participants who answered correctly, ranked by response time.';
+$string['qt_quiz_a11y_correct']            = 'Your answer was correct';
+$string['qt_quiz_a11y_incorrect']          = 'Your answer was incorrect';
+$string['qt_quiz_a11y_leaderboard']        = 'Quiz leaderboard updated';
+
+// Ranking audience + result.
+$string['qt_ranking_audience_sortable_hint'] = 'Or drag-and-drop the items above into your preferred order.';
+$string['qt_ranking_position_for']           = 'Position for';
+$string['qt_ranking_result_heading']         = 'Ranking results (Borda count)';
+$string['qt_ranking_result_a11y_label']      = 'Ranking results table';
+$string['qt_ranking_table_caption']          = 'Items ranked by Borda count (higher = more preferred) with average position as a tie-breaker.';
+$string['qt_ranking_borda_label']            = 'Borda points';
+$string['qt_ranking_item_fallback']          = 'Item {$a}';
+$string['qt_ranking_borda_explainer']        = 'Borda points reward higher positions: with N items, position 1 earns N points down to position N earning 1 point. Higher total = more preferred.';
+$string['qt_ranking_a11y_item_moved']        = 'Item moved to a new position';
+$string['qt_ranking_a11y_ranking_changed']   = 'Ranking results have changed';

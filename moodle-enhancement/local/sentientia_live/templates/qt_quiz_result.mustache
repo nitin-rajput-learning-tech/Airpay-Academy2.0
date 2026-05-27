@@ -1,0 +1,178 @@
+{{!
+    @template local_sentientia_live/qt_quiz_result
+
+    Trainer result view for a quiz slide (Phase E.8 / D4). Bar chart of
+    audience picks with the correct row highlighted + a top-10
+    fastest-correct leaderboard underneath.
+
+    Context:
+      slideid          int
+      sessionid        int
+      total_responses  int
+      has_responses    bool
+      summary                — pre-shaped:
+        correct_count  int
+        total          int
+        percent_correct int
+        correct_label  string  — text label of the correct option.
+        has_correct    bool
+      bars[]                 — one per option:
+        index          int
+        label          string
+        count          int
+        percent        int       (% of total responses)
+        bar_percent    int       (% of max bin, drives bar width)
+        is_correct     bool
+      leaderboard[]          — top-10 fastest-correct:
+        rank           int
+        display_name   string
+        elapsed_s      int
+        is_winner      bool
+      has_leaderboard  bool
+
+    a11y: leaderboard table has <caption class="sr-only"> + scoped <th>
+    so SR users can navigate the rank/name/time grid. Correct row in the
+    bar chart carries aria-label="Correct answer: <label>" to give a
+    spoken cue.
+}}
+<div class="sentientia-qt-quiz-result"
+     data-slideid="{{slideid}}"
+     data-sessionid="{{sessionid}}"
+     data-qt-type="quiz"
+     role="region"
+     aria-label="{{#str}}qt_quiz_result_a11y_label, local_sentientia_live{{/str}}">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="h5 mb-0">
+      {{#str}}qt_quiz_result_heading, local_sentientia_live{{/str}}
+    </h4>
+    <span class="airpay-badge airpay-badge--secondary badge bg-secondary">
+      <span class="sentientia-qt-quiz-total">{{total_responses}}</span>
+      {{#str}}live_results_total_suffix, local_sentientia_live{{/str}}
+    </span>
+  </div>
+
+  {{! sr-only live region — chart_updater rewrites on response_added. }}
+  <span class="sr-only"
+        aria-live="polite"
+        aria-atomic="true"
+        data-live-tally-summary></span>
+
+  {{^has_responses}}
+    <p class="text-muted text-center py-4">
+      <em>{{#str}}live_results_empty, local_sentientia_live{{/str}}</em>
+    </p>
+  {{/has_responses}}
+
+  {{#has_responses}}
+    <div class="d-flex flex-column gap-2 mb-3 sentientia-qt-quiz-bars"
+         role="img"
+         aria-label="{{#str}}a11y_results_bar_chart_label, local_sentientia_live{{/str}}">
+      {{#bars}}
+        <div class="sentientia-bar-row sentientia-qt-quiz-bar-row d-flex align-items-center gap-2{{#is_correct}} border border-success rounded p-2{{/is_correct}}"
+             data-option-index="{{index}}"
+             {{#is_correct}}aria-label="{{#str}}qt_quiz_result_correct_aria, local_sentientia_live{{/str}} {{label}}"{{/is_correct}}>
+          <div class="flex-grow-1">
+            <div class="d-flex justify-content-between">
+              <span class="fw-bold">
+                {{label}}
+                {{#is_correct}}
+                  <span class="airpay-badge airpay-badge--success badge bg-success ms-2">
+                    <i class="fa fa-check me-1" aria-hidden="true"></i>
+                    {{#str}}live_results_correct_label, local_sentientia_live{{/str}}
+                  </span>
+                {{/is_correct}}
+              </span>
+              <span class="text-muted">
+                <span class="sentientia-bar-count">{{count}}</span>
+                (<span class="sentientia-bar-percent">{{percent}}</span>%)
+              </span>
+            </div>
+            <div class="bg-light rounded mt-1" style="height: 12px;">
+              <div class="sentientia-bar {{#is_correct}}bg-success{{/is_correct}}{{^is_correct}}bg-primary{{/is_correct}} rounded"
+                   style="width: {{bar_percent}}%; height: 100%; transition: width 0.3s ease;">
+              </div>
+            </div>
+          </div>
+        </div>
+      {{/bars}}
+    </div>
+
+    {{#summary.has_correct}}
+      <div class="alert alert-info d-flex justify-content-between align-items-center mb-3 sentientia-qt-quiz-summary"
+           data-slideid="{{slideid}}">
+        <div>
+          <strong>{{#str}}quiz_summary_label, local_sentientia_live{{/str}}</strong>
+          <span class="ms-2">
+            <span class="sentientia-qt-quiz-correct-count">{{summary.correct_count}}</span>
+            {{#str}}quiz_summary_of, local_sentientia_live{{/str}}
+            <span class="sentientia-qt-quiz-summary-total">{{summary.total}}</span>
+            {{#str}}quiz_summary_got_it_right, local_sentientia_live{{/str}}
+            <span class="text-muted">
+              (<span class="sentientia-qt-quiz-percent-correct">{{summary.percent_correct}}</span>%)
+            </span>
+          </span>
+        </div>
+        <div class="text-end">
+          <span class="text-muted small">
+            {{#str}}quiz_summary_correct_was, local_sentientia_live{{/str}}
+          </span>
+          <strong class="ms-1">{{summary.correct_label}}</strong>
+        </div>
+      </div>
+    {{/summary.has_correct}}
+
+    {{#has_leaderboard}}
+      <div class="card mt-2 sentientia-qt-quiz-leaderboard" data-slideid="{{slideid}}">
+        <div class="card-header py-2 d-flex align-items-center">
+          <i class="fa fa-trophy text-warning me-2" aria-hidden="true"></i>
+          <strong>{{#str}}qt_quiz_leaderboard_heading, local_sentientia_live{{/str}}</strong>
+          <span class="text-muted ms-2 small">
+            {{#str}}qt_quiz_leaderboard_subhead, local_sentientia_live{{/str}}
+          </span>
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-sm mb-0">
+            <caption class="sr-only">
+              {{#str}}qt_quiz_leaderboard_caption, local_sentientia_live{{/str}}
+            </caption>
+            <thead class="table-light">
+              <tr>
+                <th scope="col" style="width:4em">
+                  {{#str}}quiz_leaderboard_rank_col, local_sentientia_live{{/str}}
+                </th>
+                <th scope="col">
+                  {{#str}}quiz_leaderboard_name_col, local_sentientia_live{{/str}}
+                </th>
+                <th scope="col" class="text-end" style="width:9em">
+                  {{#str}}quiz_leaderboard_time_col, local_sentientia_live{{/str}}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#leaderboard}}
+                <tr{{#is_winner}} class="table-warning"{{/is_winner}}>
+                  <td>
+                    <strong>
+                      {{#is_winner}}
+                        <i class="fa fa-medal text-warning me-1" aria-hidden="true"></i>
+                      {{/is_winner}}
+                      {{rank}}
+                    </strong>
+                  </td>
+                  <td>{{display_name}}</td>
+                  <td class="text-end">
+                    <code>{{elapsed_s}}{{#str}}quiz_leaderboard_seconds_suffix, local_sentientia_live{{/str}}</code>
+                  </td>
+                </tr>
+              {{/leaderboard}}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {{/has_leaderboard}}
+  {{/has_responses}}
+
+  <script type="application/json"
+          class="sentientia-results-tally-json">{{{tally_json}}}</script>
+</div>

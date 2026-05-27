@@ -1,10 +1,18 @@
 # State Card — `local_sentientia_live` (Sentientia LMS Live engagement)
 
-**Current phase:** E.0 — Foundation  
-**Version:** 0.1.1-alpha (2026052401)  
-**Status:** Scaffold + Phase E.1–E.6 features; feature flag default OFF; a11y pass complete  
+**Current phase:** E.9 — all 6 question types implemented (Wave D4)  
+**Version:** 0.2.0-alpha (2026052403)  
+**Status:** Trainer + audience UI live; 6 question types fully implemented (D4: open_ended, rating_scale, quiz, ranking; C1/C2: multichoice, word_cloud); feature flags default OFF; a11y pass complete  
 **Owner:** Nitin Rajput (PM) + Claude (engineering)  
 **Last updated:** 2026-05-24
+
+> **Wave D4 (2026-05-24):** open_ended (500-char, paginated, moderation),
+> rating_scale (stars/NPS + mean/median), quiz (correct_index + scoring +
+> top-10 leaderboard), ranking (Borda count + avg position) all moved from
+> stub → full impl. +8 Mustache templates, +66 en/hi string pairs (parity
+> 100%), +49 PHPUnit methods. Registry-driven trainer picker. See the
+> PROJECT-STATE.md Wave D4 H2 and
+> `docs/visual-evidence/2026-05-24/D4-question-types/`.
 
 ---
 

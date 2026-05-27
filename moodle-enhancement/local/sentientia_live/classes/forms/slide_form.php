@@ -209,7 +209,7 @@ class slide_form extends \moodleform {
                         'local_sentientia_live'),
                     ['size' => 6]);
                 $mform->setType('max_chars', PARAM_INT);
-                $mform->setDefault('max_chars', 280);
+                $mform->setDefault('max_chars', 500);
                 $mform->addHelpButton('max_chars',
                     'openended_max_chars', 'local_sentientia_live');
                 break;
@@ -356,7 +356,7 @@ class slide_form extends \moodleform {
                 ];
 
             case 'openended':
-                return ['max_chars' => (int) ($data['max_chars'] ?? 280)];
+                return ['max_chars' => (int) ($data['max_chars'] ?? 500)];
 
             default:
                 return [];
