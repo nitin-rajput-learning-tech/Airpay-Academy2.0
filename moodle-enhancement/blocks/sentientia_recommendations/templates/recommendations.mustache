@@ -1,0 +1,50 @@
+{{!
+    Copyright 2026 Airpay Payment Services
+    License http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+
+    @template block_sentientia_recommendations/recommendations
+
+    Renders the learner's top course recommendations inside the dashboard
+    block. Each item links to the course and shows a match-score badge +
+    an optional one-line rationale.
+
+    Context variables:
+    * items - array of { rank, recid, courseid, coursename, courseurl, score, reasoning, has_reason }
+    * score_label - localised "Match" label
+    * why_label - localised "Why this?" label
+
+    Example context (json):
+    {
+        "score_label": "Match",
+        "why_label": "Why this?",
+        "items": [
+            {
+                "rank": 1,
+                "recid": 42,
+                "courseid": 12,
+                "coursename": "Advanced AML",
+                "courseurl": "https://example.com/course/view.php?id=12",
+                "score": 87,
+                "reasoning": "Builds on the AML basics you just completed.",
+                "has_reason": true
+            }
+        ]
+    }
+}}
+<div class="sentientia-recommendations">
+    <ul class="list-group list-group-flush">
+        {{#items}}
+        <li class="list-group-item px-0 sentientia-rec-item" data-recid="{{recid}}">
+            <div class="d-flex justify-content-between align-items-start">
+                <a href="{{courseurl}}" class="sentientia-rec-link fw-bold">{{coursename}}</a>
+                <span class="badge bg-primary rounded-pill ms-2" title="{{score_label}}">{{score}}</span>
+            </div>
+            {{#has_reason}}
+            <div class="small text-muted mt-1 sentientia-rec-reason">
+                <span class="fw-semibold">{{why_label}}</span> {{reasoning}}
+            </div>
+            {{/has_reason}}
+        </li>
+        {{/items}}
+    </ul>
+</div>

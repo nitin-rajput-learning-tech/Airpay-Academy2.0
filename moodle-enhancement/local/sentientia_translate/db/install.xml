@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/sentientia_translate/db" VERSION="20260525"
+       COMMENT="Sentientia LMS AI Content Translation — Phase T.0 (MVP) schema.
+                Two tables: translations_log (one row per translation request)
+                + brand_overrides (per-customer per-language brand-name
+                substitution map, e.g. 'Airpay' -> the Kannada-script form).">
+  <TABLES>
+
+    <!-- ─── TRANSLATIONS LOG ─── -->
+    <TABLE NAME="local_sentientia_tr_log"
+           COMMENT="Phase T.0 (2026-05-25) — One row per translation
+                    request. Lifecycle: pending (created, API call in
+                    flight) -> translated (Claude returned, awaiting
+                    save) -> saved (admin accepted the diff) -> failed
+                    (API error) -> discarded (admin rejected the diff).
+
+                    'sourcehash' is a SHA-1 of (sourcetext + targetlang)
+                    used as a dedup / translation-memory key in T.4.
+
+                    'brand_terms_applied' records how many brand-override
+                    substitutions were applied to the output, for audit.
+
+                    'customerid' + 'costcenterid' follow the standard
+                    Sentientia LMS multi-customer / multi-tenant scope
+                    convention.">
+      <FIELDS>
+        <FIELD NAME="id"             TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="ownerid"        TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="FK to user.id — admin who created the translation."/>
+        <FIELD NAME="customerid"     TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="1"
+               COMMENT="Sentientia LMS customer scope. Phase 1: hardcoded 1 (Airpay)."/>
+        <FIELD NAME="costcenterid"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="BizLMS tenant root (1=Airpay, 77=Public, 177=ZEEA). Derived from creator open_path at translation time."/>
+        <FIELD NAME="sourcehash"     TYPE="char" LENGTH="40"  NOTNULL="true" DEFAULT=""
+               COMMENT="SHA-1 of sourcetext + targetlang. Dedup / translation-memory key."/>
+        <FIELD NAME="sourcelang"     TYPE="char" LENGTH="8"   NOTNULL="true" DEFAULT="en"
+               COMMENT="Source language code. Phase T.0: always 'en'."/>
+        <FIELD NAME="targetlang"     TYPE="char" LENGTH="8"   NOTNULL="true" DEFAULT="hi"
+               COMMENT="Target language code: hi | mr | kn | sw."/>
+        <FIELD NAME="title"          TYPE="char" LENGTH="200" NOTNULL="true" DEFAULT=""
+               COMMENT="Admin-supplied label for the translation queue list."/>
+        <FIELD NAME="sourcetext"     TYPE="text" NOTNULL="true"
+               COMMENT="The verbatim English source text sent to Claude."/>
+        <FIELD NAME="translatedtext" TYPE="text" NOTNULL="false"
+               COMMENT="The translated output (after brand-override post-processing). NULL until status=translated."/>
+        <FIELD NAME="model"          TYPE="char" LENGTH="64"  NOTNULL="true" DEFAULT="claude-sonnet-4-6"
+               COMMENT="Anthropic model identifier used for the translation. Recorded for audit."/>
+        <FIELD NAME="prompt_version" TYPE="char" LENGTH="32"  NOTNULL="true" DEFAULT="v1"
+               COMMENT="System-prompt revision tag. Allows safe A/B prompt-quality testing."/>
+        <FIELD NAME="brand_terms_applied" TYPE="int" LENGTH="6" NOTNULL="true" DEFAULT="0"
+               COMMENT="Count of brand-override substitutions applied to the output."/>
+        <FIELD NAME="tokens_in"      TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Anthropic input_tokens reported by API for cost tracking."/>
+        <FIELD NAME="tokens_out"     TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Anthropic output_tokens reported by API for cost tracking."/>
+        <FIELD NAME="mode"           TYPE="char" LENGTH="8"   NOTNULL="true" DEFAULT="mock"
+               COMMENT="mock | live — which client generated this row."/>
+        <FIELD NAME="status"         TYPE="char" LENGTH="16"  NOTNULL="true" DEFAULT="pending"
+               COMMENT="pending | translated | saved | failed | discarded"/>
+        <FIELD NAME="error_detail"   TYPE="text" NOTNULL="false"
+               COMMENT="On status=failed: the exception message + HTTP code (no API key, never log keys)."/>
+        <FIELD NAME="generated_at"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Unix timestamp of translation completion (or attempt timestamp on failure)."/>
+        <FIELD NAME="timecreated"    TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"    TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_ownerid" TYPE="foreign" FIELDS="ownerid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_owner_status"    UNIQUE="false" FIELDS="ownerid, status"
+               COMMENT="Admin translation queue: 'my translations awaiting save'"/>
+        <INDEX NAME="idx_sourcehash"      UNIQUE="false" FIELDS="sourcehash"
+               COMMENT="Translation-memory lookup (T.4)"/>
+        <INDEX NAME="idx_customer_tenant" UNIQUE="false" FIELDS="customerid, costcenterid"
+               COMMENT="Per-customer / per-tenant cost analytics"/>
+        <INDEX NAME="idx_targetlang"      UNIQUE="false" FIELDS="targetlang"
+               COMMENT="Filter translations by target language"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- ─── BRAND-NAME OVERRIDES ─── -->
+    <TABLE NAME="local_sentientia_tr_brand"
+           COMMENT="Phase T.0 (2026-05-25) — Per-customer, per-target-language
+                    brand-name substitution map. When translating into a
+                    target language, every occurrence of `brand_source`
+                    in the output is replaced with `brand_target` so a
+                    brand renders in the correct local script (e.g.
+                    'Airpay' -> the Kannada-script form for kn). When no
+                    row exists for a (customer, brand, lang) triple, the
+                    brand is preserved verbatim (Latin script) by the
+                    prompt instruction. The unique key prevents duplicate
+                    mappings for the same brand in the same language for
+                    the same customer.">
+      <FIELDS>
+        <FIELD NAME="id"            TYPE="int"  LENGTH="10"   NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="customerid"    TYPE="int"  LENGTH="10"   NOTNULL="true" DEFAULT="1"
+               COMMENT="Sentientia LMS customer scope. Phase 1: hardcoded 1 (Airpay)."/>
+        <FIELD NAME="brand_source"  TYPE="char" LENGTH="128"  NOTNULL="true"
+               COMMENT="The brand term as it appears in English source (e.g. 'Airpay')."/>
+        <FIELD NAME="targetlang"    TYPE="char" LENGTH="8"    NOTNULL="true" DEFAULT="hi"
+               COMMENT="Target language code this override applies to: hi | mr | kn | sw."/>
+        <FIELD NAME="brand_target"  TYPE="char" LENGTH="255"  NOTNULL="true"
+               COMMENT="The brand term in the target script (e.g. the Kannada-script form of 'Airpay')."/>
+        <FIELD NAME="timecreated"   TYPE="int"  LENGTH="10"   NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"  TYPE="int"  LENGTH="10"   NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="uniq_customer_brand_lang" UNIQUE="true" FIELDS="customerid, brand_source, targetlang"
+               COMMENT="One mapping per brand per language per customer"/>
+        <INDEX NAME="idx_customer_lang"        UNIQUE="false" FIELDS="customerid, targetlang"
+               COMMENT="Load the override map for a (customer, lang) pair"/>
+      </INDEXES>
+    </TABLE>
+
+  </TABLES>
+</XMLDB>

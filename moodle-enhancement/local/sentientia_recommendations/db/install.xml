@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/sentientia_recommendations/db" VERSION="20260525"
+       COMMENT="Sentientia LMS AI Course Recommendations — Phase H.0 (MVP) schema.
+                One table: recommendations_log (one row per generated recommendation
+                for a learner). Each row carries the model, the prompt version,
+                the score Claude assigned, and the reasoning so a learner can
+                ask 'why was this suggested?'.">
+  <TABLES>
+
+    <!-- ─── RECOMMENDATIONS LOG ─── -->
+    <TABLE NAME="local_sentientia_rec_log"
+           COMMENT="Phase H.0 (2026-05-25) — One row per generated course
+                    recommendation. A single 'batch' of N recommendations
+                    for a learner is keyed by batchid — used to display
+                    the most recent batch in the dashboard block and to
+                    invalidate stale recommendations.
+
+                    'score' is a normalised 0..100 confidence score that
+                    Claude assigns to each suggestion (used to order them
+                    in the dashboard block — highest first).
+
+                    'reasoning' is the short, one-sentence rationale
+                    Claude produced explaining why this course is a good
+                    next step for this learner — surfaced to the learner
+                    via a 'Why this?' link.
+
+                    'customerid' + 'costcenterid' follow the standard
+                    Sentientia LMS multi-customer / multi-tenant scope
+                    convention.">
+      <FIELDS>
+        <FIELD NAME="id"             TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"         TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="FK to user.id — the learner the recommendation is for."/>
+        <FIELD NAME="courseid"       TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="FK to course.id — the recommended course."/>
+        <FIELD NAME="customerid"     TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="1"
+               COMMENT="Sentientia LMS customer scope. Phase 1: hardcoded 1 (Airpay)."/>
+        <FIELD NAME="costcenterid"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="BizLMS tenant root (1=Airpay, 77=Public, 177=ZEEA). Derived from learner open_path at recommendation time."/>
+        <FIELD NAME="batchid"        TYPE="char" LENGTH="40"  NOTNULL="true" DEFAULT=""
+               COMMENT="Identifier shared by all rows produced from a single Claude call. Used to display the most recent batch + invalidate stale ones."/>
+        <FIELD NAME="model"          TYPE="char" LENGTH="64"  NOTNULL="true" DEFAULT="claude-sonnet-4-6"
+               COMMENT="Anthropic model identifier used for the generation. Recorded for audit."/>
+        <FIELD NAME="prompt_version" TYPE="char" LENGTH="32"  NOTNULL="true" DEFAULT="v1"
+               COMMENT="System-prompt revision tag (e.g. v1, v2-cohort). Allows safe A/B prompt-quality testing."/>
+        <FIELD NAME="score"          TYPE="int"  LENGTH="4"   NOTNULL="true" DEFAULT="0"
+               COMMENT="Confidence score 0..100 Claude assigned to this suggestion. Used for ordering."/>
+        <FIELD NAME="rank_order"     TYPE="int"  LENGTH="4"   NOTNULL="true" DEFAULT="0"
+               COMMENT="Display order within the batch (1, 2, 3, ...). Lower = more prominent."/>
+        <FIELD NAME="reasoning"      TYPE="text" NOTNULL="false"
+               COMMENT="Short rationale Claude produced explaining why this course is the right next step for this learner."/>
+        <FIELD NAME="mode"           TYPE="char" LENGTH="8"   NOTNULL="true" DEFAULT="mock"
+               COMMENT="mock | live — which client generated this row."/>
+        <FIELD NAME="tokens_in"      TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Anthropic input_tokens reported by API for cost tracking. Divided pro-rata across batch rows."/>
+        <FIELD NAME="tokens_out"     TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Anthropic output_tokens reported by API for cost tracking. Divided pro-rata across batch rows."/>
+        <FIELD NAME="status"         TYPE="char" LENGTH="16"  NOTNULL="true" DEFAULT="active"
+               COMMENT="active | dismissed | enrolled | expired — lifecycle of the recommendation."/>
+        <FIELD NAME="generated_at"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Unix timestamp of generation completion."/>
+        <FIELD NAME="timecreated"    TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"     TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_userid"   TYPE="foreign" FIELDS="userid"   REFTABLE="user"   REFFIELDS="id"/>
+        <KEY NAME="fk_courseid" TYPE="foreign" FIELDS="courseid" REFTABLE="course" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_user_batch"      UNIQUE="false" FIELDS="userid, batchid"
+               COMMENT="Block render path: load the latest batch for a learner"/>
+        <INDEX NAME="idx_user_status"     UNIQUE="false" FIELDS="userid, status"
+               COMMENT="Filter active vs dismissed/enrolled rows for a learner"/>
+        <INDEX NAME="idx_customer_tenant" UNIQUE="false" FIELDS="customerid, costcenterid"
+               COMMENT="Per-customer / per-tenant cost analytics"/>
+        <INDEX NAME="idx_generated_at"    UNIQUE="false" FIELDS="generated_at"
+               COMMENT="Expire stale batches (cron)"/>
+      </INDEXES>
+    </TABLE>
+
+  </TABLES>
+</XMLDB>
