@@ -69,3 +69,32 @@ new `cli/seed_demo_session.php`. The audience was then driven in a fresh
 All 9 Live engagement flags were ON globally (via `set_live_flags --on`).
 `live.enabled`, `multichoice`, `allow_anonymous` were already ON from
 prior VIS tests; this session added the remaining 5 question-type flags.
+
+---
+
+## Multi-user login test (after deploying latest 42029e4dd to local)
+
+Deployed the latest `sentientia_live` (2026052504) to local XAMPP
+(`upgrade.php` completed successfully, caches purged), then set a
+**temporary LOCAL-DEV-ONLY** password on 6 representative accounts (one per
+user type) via Moodle's `update_internal_user_password()` (proper hashing,
+`moodle` DB only — **never production**) and tested the real login flow.
+
+> ⚠ The temporary password is **local-dev-only** for QA on localhost:8080.
+> It must never be used on `airpay.academy`. Production credentials are
+> untouched.
+
+| # | Account | Type | `airpay123` validates | Login flow | Landing |
+|---|---------|------|:---:|:---:|---------|
+| 1 | academy@airpay.co.in (id 2) | Site Admin | ✓ | ✅ tested | Admin dashboard (Manage Users/Courses, Compliance, Analytics) — `login-01-academy-siteadmin.png`. **Resolves the earlier "login not working" for this account.** |
+| 2 | jitendra.mane@airpay.co.in (483) | Learner (Airpay) | ✓ | ✅ tested | Personalised onboarding ("Welcome, Jitendra!") + learner-scoped nav — `login-02-jitendra-learner.png` |
+| 3 | academyexadmin@airpay.co.in (234) | Tenant Admin (Public /77) | ✓ | ✅ tested | `/my/` dashboard (login confirmed; screenshot skipped — render-heavy page timed out the capture) |
+| 4 | nitin.rajput@airpay.co.in (142) | Airpay admin/manager | ✓ | credential-ready | dashboard verified in prior Goal A walk |
+| 5 | asif.ansari@airpay.co.in (2304) | Course Author | ✓ | credential-ready | dashboard verified in prior Goal A walk |
+| 6 | joseph.mandapati@airpay.co.in (627) | Compliance Officer | ✓ | credential-ready | dashboard verified in prior Goal A walk |
+
+All 6 validate the password (CLI `validate_internal_user_password`). Three
+tiers were driven through the real login form end-to-end (Site Admin,
+Learner, Tenant Admin), confirming role- + tenant-appropriate routing. The
+other three are credential-ready for the operator to log in directly; their
+dashboards were already captured in the Goal A persona walks.
