@@ -262,7 +262,7 @@ $string['wc_max_word_length_label']     = 'अधिकतम शब्द ल�
 $string['wc_max_word_length']           = 'अधिकतम शब्द लंबाई';
 $string['wc_max_word_length_help']      = 'इस अक्षर संख्या से लंबे submissions truncate हो जाते हैं। क्लाउड को पढ़ने योग्य बनाए रखने में मदद करता है। Range 3-100।';
 $string['wc_dedupe_label']              = 'ऑडियंस submissions को de-duplicate करें';
-$string['wc_dedupe_desc']               = 'चेक करने पर, प्रत्येक ऑडियंस सदस्य केवल एक शब्द भेज सकता है। अनचेक करने पर, वे कई शब्द भेज सकते हैं।';
+$string['wc_dedupe_desc']               = 'चेक करने पर, किसी learner के दोहराए गए शब्द एक बार गिने जाते हैं — वे एक ही शब्द को बार-बार भेजकर उसे inflate नहीं कर सकते। अधिकतम-प्रतिक्रिया कैप अभी भी सीमित करता है कि प्रत्येक learner कितने भिन्न शब्द योगदान करता है। अनचेक करने पर, एक ही learner का वही शब्द हर बार गिना जाता है।';
 
 // Open ended.
 $string['openended_max_chars_label']    = 'प्रति प्रतिक्रिया अधिकतम अक्षर';
@@ -364,12 +364,19 @@ $string['setting_default_min_word_length_desc'] = 'इस अक्षर सं
 $string['setting_default_max_responses']        = 'डिफ़ॉल्ट प्रति learner अधिकतम प्रतिक्रियाएं';
 $string['setting_default_max_responses_desc']   = 'एक ऑडियंस सदस्य एक वर्ड क्लाउड स्लाइड में कितने शब्द योगदान कर सकता है, इस पर हार्ड कैप। डिफ़ॉल्ट 3 — Mentimeter के मानक से मिलान।';
 
+// Word-cloud slide-editor form fields (per-slide overrides).
+$string['wc_min_word_length_label']      = 'न्यूनतम शब्द लंबाई';
+$string['wc_max_responses_label']        = 'प्रति learner अधिकतम शब्द';
+$string['wc_max_responses']              = 'प्रति learner अधिकतम शब्द';
+$string['wc_max_responses_help']         = 'एक ऑडियंस सदस्य इस स्लाइड में कितने शब्द योगदान कर सकता है (1-10)। प्रत्येक submission इस कैप तक शब्द जोड़ता है। डिफ़ॉल्ट साइट-व्यापी सेटिंग।';
+
 // Audience response form (word cloud).
 $string['wc_audience_input_label']       = 'क्लाउड में योगदान देने के लिए एक शब्द टाइप करें';
 $string['wc_remaining_hint']             = '{$a->max} में से {$a->remaining} शब्द शेष';
 $string['wc_max_responses_reached']      = 'आप अधिकतम {$a} शब्द पहले ही योगदान कर चुके हैं।';
 $string['wc_max_responses_invalid']      = 'प्रति learner अधिकतम प्रतिक्रियाएं {$a->min} और {$a->max} के बीच होनी चाहिए।';
-$string['wc_min_word_length_invalid']    = 'न्यूनतम शब्द लंबाई 1 और 20 के बीच होनी चाहिए, और अधिकतम शब्द लंबाई से अधिक नहीं होनी चाहिए।';
+$string['wc_min_word_length_invalid']    = 'न्यूनतम शब्द लंबाई 1 और 20 के बीच होनी चाहिए।';
+$string['wc_min_exceeds_max']            = 'न्यूनतम शब्द लंबाई अधिकतम शब्द लंबाई से अधिक नहीं हो सकती।';
 $string['wc_a11y_new_word_added']        = 'क्लाउड में नया शब्द जोड़ा गया';
 
 // response_recorder errors.

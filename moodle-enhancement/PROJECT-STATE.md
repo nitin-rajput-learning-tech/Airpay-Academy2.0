@@ -3928,19 +3928,52 @@ flip it via the Switchboard when ready.
 
 ### Tests
 
-`tests/word_cloud_test.php` — 18 assertions: profanity blocking
-(default + substring + mixed clean/dirty + customer override),
-valid single + multi-word submission, lowercase aggregation,
-max-responses cap (overflow reject + multi-word boundary trim),
-empty/whitespace/too-short rejection, multi-word + punctuation
-splitting, tally sort-desc, Unicode (Devanagari) tokenise survival,
-legacy plain-string + JSON-array decode back-compat, `validate_config`
-range checks.
+`tests/word_cloud_test.php` — 24 test methods: profanity blocking
+(default + whole-word matching with no Scunthorpe false-positives +
+mixed clean/dirty + customer override), valid single + multi-word
+submission, lowercase aggregation, max-responses cap (overflow reject +
+multi-word boundary trim), dedupe collapse (on + off), empty/whitespace/
+too-short rejection, multi-word + punctuation splitting, tally sort-desc,
+Unicode (Devanagari) tokenise survival, legacy plain-string (single
+token) + JSON-array decode back-compat, `validate_config` range checks.
 
 ### Lang
 
-+14 string pairs en+hi (settings labels + audience form + error
-strings). Hindi parity preserved at **290/290**.
++19 string pairs en+hi (settings labels + per-slide form fields +
+audience form + error strings). Hindi parity preserved at **295/295**.
+
+### Code-review fixes (folded in pre-merge)
+
+A two-agent max-effort review (line-by-line + cross-file trace) caught
+six real issues, all fixed before commit:
+
+1. **Live 0→1 regression (HIGH).** Adding `wordcloud` to
+   `HANDLED_ELSEWHERE_TYPES` removed the page-reload fallback, but the
+   `.sentientia-wordcloud` container only renders inside
+   `{{#has_responses}}` — so the very first response had no DOM target
+   and was silently dropped. Fix: `wordcloud_updater` reloads when the
+   container is absent (matches chart_updater's non-inline fallback);
+   subsequent responses update in place.
+2. **Profanity substring → whole-word (HIGH).** Substring matching
+   censored "pakistan" (via "paki"), "dickens" (via "dick"), etc. Fix:
+   Unicode-boundary whole-word regex; verified against 11 cases.
+3. **Legacy-row re-tokenisation (HIGH, prod-behaviour).** `decode_words`
+   split pre-E.5 plain-string rows on whitespace, shifting tallies + the
+   per-user cap for in-flight sessions. Fix: legacy plain strings decode
+   as a single token (1-row = 1-word, as before).
+4. **`dedupe` setting ignored (MEDIUM).** The default-on checkbox did
+   nothing. Fix: dedupe now collapses a participant's repeated words
+   (orthogonal to the count cap); lang desc updated to match.
+5. **`render()` was dead code (MEDIUM).** `play.php` still used a
+   hand-rolled form, so the cap-aware UX never shipped. Fix: `play.php`
+   delegates the wordcloud form to `word_cloud::render()`; old branch
+   removed. Per-slide `min_word_length` + `max_responses_per_user`
+   fields added to `slide_form` + `edit_slide` prefill so the config is
+   actually settable.
+6. **Privacy export raw JSON + validate_config wrong field key (LOW).**
+   GDPR export now decodes wordcloud `value_text` to a readable list;
+   the min>max cross-check attaches to `max_word_length` with a
+   dedicated string.
 
 ### Visual evidence
 

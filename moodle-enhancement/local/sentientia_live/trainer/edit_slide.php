@@ -100,8 +100,10 @@ switch ($slide->type) {
         $prefill['items_text'] = $current_settings['items'] ?? [];
         break;
     case 'wordcloud':
-        $prefill['max_word_length'] = $current_settings['max_word_length'] ?? 50;
-        $prefill['dedupe']          = !empty($current_settings['dedupe']) ? 1 : 0;
+        $prefill['max_word_length']        = $current_settings['max_word_length'] ?? 50;
+        $prefill['min_word_length']        = $current_settings['min_word_length'] ?? 2;
+        $prefill['max_responses_per_user'] = $current_settings['max_responses_per_user'] ?? 3;
+        $prefill['dedupe']                 = !empty($current_settings['dedupe']) ? 1 : 0;
         break;
     case 'openended':
         $prefill['max_chars'] = $current_settings['max_chars'] ?? 280;

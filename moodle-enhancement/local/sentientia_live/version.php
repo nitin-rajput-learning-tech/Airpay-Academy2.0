@@ -86,15 +86,28 @@ $plugin->dependencies = [
 //              subscriber, mutates DOM via textContent + className
 //              only — XSS-safe). chart_updater extended with
 //              HANDLED_ELSEWHERE_TYPES = ['wordcloud'] so it doesn't
-//              fight wordcloud_updater. +14 string pairs en+hi.
-//              +1 PHPUnit test class (word_cloud_test) with 18
-//              assertions covering profanity, tokenisation,
-//              max-responses cap, multi-word splitting, lowercase
-//              aggregation, Unicode (Devanagari) survival, and
-//              legacy-row decode back-compat. response_recorder
+//              fight wordcloud_updater. +19 string pairs en+hi.
+//              +1 PHPUnit test class (word_cloud_test) with 24 test
+//              methods covering profanity (whole-word, no
+//              Scunthorpe false-positives), tokenisation, max-responses
+//              cap, dedupe collapse (on/off), multi-word splitting,
+//              lowercase aggregation, Unicode (Devanagari) survival,
+//              and legacy-row decode back-compat. response_recorder
 //              updated to delegate decode/tokenise to word_cloud
 //              (back-compat preserved for any in-flight legacy
-//              rows). audience/play.php + trainer/run.php now
-//              attach the new AMD modules. Default master flag
+//              rows). audience/play.php now renders the cap-aware form
+//              via word_cloud::render(); play.php + trainer/run.php
+//              attach the new AMD modules. slide_form + edit_slide add
+//              per-slide min_word_length + max_responses_per_user
+//              fields. privacy provider decodes wordcloud value_text
+//              to a readable word list on export. Default master flag
 //              live.questiontype.wordcloud stays OFF — admins flip
 //              it via Switchboard when ready.
+//              Code-review fixes folded in pre-merge: whole-word
+//              profanity matching (was substring → false-positives),
+//              legacy plain-string rows decode as a single token
+//              (was re-tokenised → tally/cap drift), dedupe setting
+//              now honoured (was ignored), wordcloud_updater reloads
+//              on the 0→1 transition (container only exists once
+//              has_responses), validate_config cross-field error
+//              attaches to the right field.

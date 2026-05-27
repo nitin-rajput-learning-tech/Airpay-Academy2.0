@@ -344,7 +344,7 @@ if ($response_saved) {
             ['class' => 'alert alert-danger']);
     }
     // Render type-specific response form.
-    render_response_form($current_slide, $sessionid, $token);
+    render_response_form($current_slide, $sessionid, $token, $participant);
 }
 
 echo \html_writer::end_tag('div');
@@ -355,13 +355,36 @@ echo $OUTPUT->footer();
  * Render the response form appropriate to the slide's type.
  * Hand-written (not moodleform) so the audience-facing UI is minimal +
  * mobile-friendly. POST goes back to this same play.php URL.
+ *
+ * Phase E.5 — wordcloud delegates to the question type's render() so the
+ * cap-aware UX (remaining-words hint + auto-disable at the cap) ships
+ * from one place. Other types keep the hand-rolled branches below.
  */
 function render_response_form(\stdClass $slide, int $sessionid,
-                                string $token): void {
+                                string $token,
+                                ?\stdClass $participant = null): void {
     $settings = \local_sentientia_live\slide_manager::parse_settings($slide);
 
     $action_url = new \moodle_url('/local/sentientia_live/audience/play.php',
         array_filter(['sessionid' => $sessionid, 'token' => $token]));
+
+    // Phase E.5 — word cloud owns its own form markup (input + remaining
+    // hint + cap-disable) inside word_cloud::render(). Delegate and bail
+    // before the generic <form> wrapper so we don't double-wrap.
+    if ($slide->type === 'wordcloud') {
+        $qtype = \local_sentientia_live\question_types\question_type_registry::get_by_slug('wordcloud');
+        if ($qtype !== null) {
+            echo $qtype->render([
+                'slide'          => $slide,
+                'settings'       => $settings,
+                'participant'    => $participant,
+                'action_url'     => $action_url,
+                'sesskey'        => sesskey(),
+                'aria_id_prefix' => 'wc_' . (int) $slide->id,
+            ]);
+            return;
+        }
+    }
 
     echo \html_writer::start_tag('form',
         ['method' => 'post', 'action' => $action_url->out(false)]);
@@ -417,19 +440,8 @@ function render_response_form(\stdClass $slide, int $sessionid,
             echo \html_writer::end_div();
             break;
 
-        case 'wordcloud':
-            $max_len = (int) ($settings['max_word_length'] ?? 50);
-            echo \html_writer::empty_tag('input', [
-                'type'      => 'text',
-                'name'      => 'value_text',
-                'class'     => 'form-control form-control-lg text-center mb-3',
-                'maxlength' => $max_len,
-                'placeholder' => get_string('wc_response_placeholder',
-                    'local_sentientia_live'),
-                'autofocus' => 'autofocus',
-                'required'  => 'required',
-            ]);
-            break;
+        // 'wordcloud' is handled by word_cloud::render() via the early
+        // delegation above — no branch here on purpose.
 
         case 'openended':
             $max_chars = (int) ($settings['max_chars'] ?? 280);

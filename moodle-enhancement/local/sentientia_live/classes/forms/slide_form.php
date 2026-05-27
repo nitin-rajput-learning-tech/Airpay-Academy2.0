@@ -24,7 +24,8 @@ use local_sentientia_live\slide_manager;
  *   quiz        — title + 2-20 options + correct-answer radio
  *   rating      — title + scale_min + scale_max + optional N labels
  *   ranking     — title + 2-20 items (repeat_elements)
- *   wordcloud   — title + max_word_length + dedupe checkbox
+ *   wordcloud   — title + max_word_length + min_word_length +
+ *                 max_responses_per_user + dedupe checkbox
  *   openended   — title + max_chars
  *
  * Customdata expected:
@@ -147,6 +148,29 @@ class slide_form extends \moodleform {
                 $mform->setDefault('max_word_length', 50);
                 $mform->addHelpButton('max_word_length',
                     'wc_max_word_length', 'local_sentientia_live');
+
+                // Phase E.5 — per-slide min word length + max submissions
+                // per learner. Defaults come from the admin Switchboard
+                // (default_min_word_length / default_max_responses).
+                $mform->addElement('text', 'min_word_length',
+                    get_string('wc_min_word_length_label',
+                        'local_sentientia_live'),
+                    ['size' => 4]);
+                $mform->setType('min_word_length', PARAM_INT);
+                $mform->setDefault('min_word_length',
+                    (int) (get_config('local_sentientia_live',
+                        'default_min_word_length') ?: 2));
+
+                $mform->addElement('text', 'max_responses_per_user',
+                    get_string('wc_max_responses_label',
+                        'local_sentientia_live'),
+                    ['size' => 4]);
+                $mform->setType('max_responses_per_user', PARAM_INT);
+                $mform->setDefault('max_responses_per_user',
+                    (int) (get_config('local_sentientia_live',
+                        'default_max_responses') ?: 3));
+                $mform->addHelpButton('max_responses_per_user',
+                    'wc_max_responses', 'local_sentientia_live');
 
                 $mform->addElement('advcheckbox', 'dedupe',
                     get_string('wc_dedupe_label', 'local_sentientia_live'),
@@ -290,8 +314,10 @@ class slide_form extends \moodleform {
 
             case 'wordcloud':
                 return [
-                    'max_word_length' => (int) ($data['max_word_length'] ?? 50),
-                    'dedupe'          => !empty($data['dedupe']),
+                    'max_word_length'        => (int) ($data['max_word_length'] ?? 50),
+                    'min_word_length'        => (int) ($data['min_word_length'] ?? 2),
+                    'max_responses_per_user' => (int) ($data['max_responses_per_user'] ?? 3),
+                    'dedupe'                 => !empty($data['dedupe']),
                 ];
 
             case 'openended':

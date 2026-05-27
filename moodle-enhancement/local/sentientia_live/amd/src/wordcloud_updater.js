@@ -68,6 +68,21 @@ const handleResponseAdded = (ev) => {
     if (!tally || typeof tally !== 'object') {
         return;
     }
+
+    // The .sentientia-wordcloud container is rendered server-side only
+    // inside the template's {{#has_responses}} block — so at the 0→1
+    // transition it doesn't exist yet. In that case fall back to a full
+    // reload (the same pattern chart_updater uses for types it can't
+    // update inline): the reload re-renders the panel with the cloud
+    // present, and every subsequent response updates in place. Without
+    // this, the very first word on a fresh wordcloud slide would never
+    // appear until a manual refresh.
+    const container = panel.querySelector('.sentientia-wordcloud');
+    if (!container) {
+        setTimeout(() => window.location.reload(), 500);
+        return;
+    }
+
     // Delegate the actual DOM mutation to the loader. This keeps
     // "what's a word cloud?" in one module — swap renderers without
     // changing the SSE subscription wiring.

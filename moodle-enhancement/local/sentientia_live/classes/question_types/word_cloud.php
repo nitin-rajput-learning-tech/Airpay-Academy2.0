@@ -113,9 +113,11 @@ class word_cloud extends abstract_question_type {
 
         // How many submissions has this participant already made? Drives
         // the "n of m remaining" hint + disables the form when capped.
+        // Nullsafe ?-> : participant may be null (e.g. preview render) —
+        // avoids a PHP 8 "property on null" warning.
         $already = $this->count_existing_words(
             $slide ? (int) $slide->id : 0,
-            (int) ($context['participant']->id ?? 0));
+            (int) ($context['participant']?->id ?? 0));
         $remaining = max(0, $max_resp - $already);
 
         $action_url = $context['action_url'] ?? '#';
@@ -270,17 +272,36 @@ class word_cloud extends abstract_question_type {
             ? self::decode_words((string) ($existing_row->value_text ?? ''))
             : [];
 
-        $merged = array_merge($existing_words, $clean);
-
-        // Cap at max_resp — only the first N words count. Reject if
-        // the participant already submitted max_resp words (and none of
-        // their new ones would fit). Without this guard, submitting
-        // exactly max_resp once and then anything more would silently
-        // no-op; better to surface a clear error.
+        // Reject when the participant is already at the cap — surfaces a
+        // clear error instead of a silent no-op.
         if (count($existing_words) >= $max_resp) {
             throw new \moodle_exception('wc_max_responses_reached',
                 'local_sentientia_live', '', $max_resp);
         }
+
+        $merged = array_merge($existing_words, $clean);
+
+        // dedupe (default ON) collapses a single participant's repeated
+        // words case-insensitively, so one person can't inflate a word's
+        // tally weight by submitting it twice. The max_responses_per_user
+        // cap governs HOW MANY words; dedupe governs UNIQUENESS — they're
+        // orthogonal. When dedupe is OFF the trainer has explicitly opted
+        // into allowing duplicates.
+        $dedupe = (bool) ($settings['dedupe'] ?? true);
+        if ($dedupe) {
+            $seen = [];
+            $deduped = [];
+            foreach ($merged as $w) {
+                $k = mb_strtolower($w, 'UTF-8');
+                if (isset($seen[$k])) {
+                    continue;
+                }
+                $seen[$k] = true;
+                $deduped[] = $w;
+            }
+            $merged = $deduped;
+        }
+
         if (count($merged) > $max_resp) {
             $merged = array_slice($merged, 0, $max_resp);
         }
@@ -360,8 +381,11 @@ class word_cloud extends abstract_question_type {
             && isset($config['max_word_length'])) {
             if ((int) $config['min_word_length']
                 > (int) $config['max_word_length']) {
-                $errors['min_word_length'] = get_string(
-                    'wc_min_word_length_invalid',
+                // Attach to max_word_length with a dedicated message —
+                // the min field is valid in isolation; it's the max that
+                // was set too low relative to min.
+                $errors['max_word_length'] = get_string(
+                    'wc_min_exceeds_max',
                     'local_sentientia_live');
             }
         }
@@ -443,10 +467,17 @@ class word_cloud extends abstract_question_type {
             return $out;
         }
         if (is_string($decoded) && $decoded !== '') {
-            return self::tokenise($decoded);
+            // Legacy single-word JSON string — one token, as stored.
+            return [$decoded];
         }
-        // Plain string fallback (legacy rows before this chip).
-        return self::tokenise($value_text);
+        // Plain-string legacy row (pre-E.5 stored the whole entry as a
+        // single "word", and the old tally counted it as one key). Keep
+        // that 1-row = 1-token semantics — do NOT split on whitespace,
+        // or in-flight sessions' tallies AND the per-user cap shift on
+        // upgrade (CLAUDE.md: never break current production behaviour).
+        // New submissions never reach here: persist_response always
+        // stores a JSON array, which the is_array() branch above handles.
+        return [$value_text];
     }
 
     /**

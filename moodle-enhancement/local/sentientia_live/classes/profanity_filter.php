@@ -27,9 +27,13 @@ defined('MOODLE_INTERNAL') || die();
  *
  * Algorithm:
  *   - Tokens are matched case-insensitively against the resolved list.
- *   - Substring matches count (so "f**k", "fk1ng" etc. trip the filter
- *     when the candidate contains a denied word). Concretely:
- *     contains() uses mb_stripos so multi-byte (UTF-8) input works.
+ *   - WHOLE-WORD matching (Unicode-aware boundaries), NOT substring.
+ *     Substring matching caused Scunthorpe-class false positives —
+ *     "pakistan" tripping "paki", "dickens" tripping "dick" — which in a
+ *     financial-services L&D context silently censors legitimate words
+ *     (nationalities, surnames). A denied entry only fires as a
+ *     standalone word. Punctuation-obfuscated input ("f**k") is already
+ *     split into harmless fragments by word_cloud::tokenise() upstream.
  *   - The default list is intentionally short — it's a smoke-test, not
  *     a content-moderation engine. Enterprise customers add their own
  *     denylist via the customer config hook.
@@ -100,7 +104,14 @@ final class profanity_filter {
             if ($bad === '') {
                 continue;
             }
-            if (mb_stripos($needle, $bad, 0, 'UTF-8') !== false) {
+            // Whole-word match with Unicode-aware boundaries. preg_quote
+            // keeps a denied entry containing regex metachars literal.
+            // The negative look-around on \p{L}\p{N} means "paki" matches
+            // the standalone word "paki" but NOT "pakistan"/"pakistani".
+            $pattern = '/(?<![\p{L}\p{N}])'
+                . preg_quote($bad, '/')
+                . '(?![\p{L}\p{N}])/u';
+            if (preg_match($pattern, $needle) === 1) {
                 return true;
             }
         }

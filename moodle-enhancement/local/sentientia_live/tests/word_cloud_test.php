@@ -112,14 +112,31 @@ final class word_cloud_test extends \advanced_testcase {
             'Dirty token must be filtered; clean token must persist.');
     }
 
-    public function test_profanity_filter_blocks_substring_matches(): void {
+    public function test_profanity_filter_matches_whole_word_only(): void {
+        // Whole-word matching: an exact denied word is blocked...
+        $this->assertTrue(profanity_filter::is_denied('shit'));
+        $this->assertTrue(profanity_filter::is_denied('FUCK'));
+        // ...but legitimate words that merely CONTAIN a denied substring
+        // are NOT blocked (Scunthorpe problem). 'pakistan' contains
+        // 'paki', 'dickens' contains 'dick', 'scunthorpe' contains 'cunt'.
+        $this->assertFalse(profanity_filter::is_denied('pakistan'),
+            'Nationality must not be censored by the "paki" substring.');
+        $this->assertFalse(profanity_filter::is_denied('pakistani'));
+        $this->assertFalse(profanity_filter::is_denied('dickens'));
+        $this->assertFalse(profanity_filter::is_denied('scunthorpe'));
+        $this->assertFalse(profanity_filter::is_denied('analysis'),
+            'Common word must survive.');
+    }
+
+    public function test_clean_word_with_denied_substring_persists(): void {
         $wc = new word_cloud();
-        // 'fucking' contains the denied substring 'fuck' — should fail.
-        $this->expectException(\moodle_exception::class);
+        // 'pakistan' must reach the cloud — whole-word filter spares it.
         $wc->persist_response($this->participantid, [
             'slideid'    => $this->slideid,
-            'value_text' => 'fucking',
+            'value_text' => 'pakistan',
         ]);
+        $tally = $wc->tally($this->sessionid, $this->slideid);
+        $this->assertSame(['pakistan' => 1], $tally);
     }
 
     public function test_customer_override_replaces_default_list(): void {
@@ -340,5 +357,50 @@ final class word_cloud_test extends \advanced_testcase {
     public function test_decode_words_handles_json_array_shape(): void {
         $words = word_cloud::decode_words('["trust","innovation"]');
         $this->assertSame(['trust', 'innovation'], $words);
+    }
+
+    public function test_decode_words_legacy_plain_text_is_single_token(): void {
+        // A pre-E.5 row stored "machine learning" as ONE entry; the old
+        // tally counted it as one cloud key. decode_words must NOT split
+        // it on whitespace, or in-flight tallies + the per-user cap shift
+        // on upgrade.
+        $words = word_cloud::decode_words('machine learning');
+        $this->assertSame(['machine learning'], $words,
+            'Legacy plain-string row must stay a single token.');
+    }
+
+    // ── 7. dedupe semantics ─────────────────────────────────────────
+
+    public function test_dedupe_collapses_repeated_words_from_one_user(): void {
+        // dedupe defaults ON. A participant submitting the same word
+        // twice should not inflate that word's count from one person.
+        $wc = new word_cloud();
+        $wc->persist_response($this->participantid, [
+            'slideid'    => $this->slideid,
+            'value_text' => 'trust trust speed',
+        ]);
+        $tally = $wc->tally($this->sessionid, $this->slideid);
+        $this->assertSame(['trust' => 1, 'speed' => 1], $tally,
+            'dedupe must collapse one participant\'s repeated word.');
+    }
+
+    public function test_dedupe_off_allows_repeated_words(): void {
+        global $DB;
+        // A slide with dedupe explicitly OFF lets a participant's
+        // repeated word count multiple times.
+        $sid = slide_manager::add($this->sessionid, 'wordcloud',
+            'Dedupe off slide',
+            ['max_responses_per_user' => 3, 'min_word_length' => 2,
+             'dedupe' => false]);
+        session_manager::set_current_slide($this->sessionid, $sid);
+
+        $wc = new word_cloud();
+        $wc->persist_response($this->participantid, [
+            'slideid'    => $sid,
+            'value_text' => 'trust trust speed',
+        ]);
+        $tally = $wc->tally($this->sessionid, $sid);
+        $this->assertSame(['trust' => 2, 'speed' => 1], $tally,
+            'With dedupe off, the repeated word counts each time.');
     }
 }
