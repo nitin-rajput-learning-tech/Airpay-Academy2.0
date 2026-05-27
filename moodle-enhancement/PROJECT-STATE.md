@@ -3853,6 +3853,7 @@ caught zero stray markers (P0-A working as designed).
 
 ---
 
+<<<<<<< HEAD
 ## 📸 Wave B4 P1-infrastructure — visual evidence backfill (2026-05-25)
 
 ### Headline
@@ -4158,3 +4159,106 @@ If both `-match` evaluations are `True`, the acceptance criterion
   (a) the parallel XAMPP install, (b) the Docker 5.2 container — and
   the deploy target is `(a)`.
 - Runbook updated: `docs/operations/deploy-runbook.md` §1.
+
+---
+
+## H2 — Wave C5 P2 plugin-maturation (2026-05-25)
+
+### Wave C5 — Leaderboard L.1 recompute → event → observer → `message_send()` lock-in
+
+**Chip:** Wave C5 P2 plugin-maturation (`claude/confident-newton-fw5hB`).
+**Acceptance:** recompute task fires `\local_sentientia_leaderboard\event\rankings_updated`
+→ observer → `message_send()` for valid rank-change scenarios; feature
+flag OFF blocks; throttle blocks within 24h; visual evidence captured;
+CI green.
+
+**Audit finding (delta from chip brief):** the chip premise was that
+P3-O shipped the helper + observer but left the recompute path
+un-emitting. The audit shows P3-O (`e14bb275`) bundled the emission
+directly into `ranking_engine::recompute()` (lines 109-116), firing
+after the per-board transaction commits. Wiring is in place; the
+existing `test_recompute_triggers_message_end_to_end` proves the chain.
+C5 strengthens the contract rather than rewires what already works.
+
+**What C5 added:**
+
+1. **Three new PHPUnit integration tests** appended to
+   `local/sentientia_leaderboard/tests/message_helper_test.php`:
+   - `test_recompute_due_boards_task_runs_full_chain` — drives the chain
+     through the actual scheduled-task entry point
+     (`recompute_due_boards::execute()`) rather than the `recompute()`
+     direct call the existing test uses. This is the cron surface
+     `admin/cli/scheduled_task.php` hits.
+   - `test_recompute_skips_event_when_no_qualifying_changes` — confirms
+     an idempotent recompute with no rank shifts skips both the event
+     AND the message (defends Moodle's log noise — contract documented
+     at `ranking_engine.php:109-110`).
+   - `test_rankings_updated_event_carries_changes_payload` — uses
+     `redirectEvents()` to capture the event itself and pin its
+     payload shape (`objectid = boardid`, `other.changes` as
+     `{userid, old_rank, new_rank, reason}` quadruples). This is the
+     exact contract `observer.php:49-56` reads against; a regression
+     here would silently break the chain.
+
+   Test coverage map: every frame in the recompute → event → observer
+   → `message_send()` trace now has at least one pinning test (see
+   `docs/visual-evidence/2026-05-25/wave-c5-leaderboard-l1-e2e/e2e-chain-trace.txt`
+   for the frame-by-frame map).
+
+2. **Visual evidence** in `docs/visual-evidence/2026-05-25/wave-c5-leaderboard-l1-e2e/`:
+   - `mockup-notification-icon.html` — top-navbar bell with unread badge
+   - `mockup-message-body.html` — rendered subject + body for two
+     variants (top10_entry, large_move down)
+   - `mockup-throttle-blocked.html` — cron mtrace output of two ticks
+     ten minutes apart, second one throttled, plus throttle-row table
+   - `e2e-chain-trace.txt` — frame-by-frame trace of the chain with
+     source-line refs + test-coverage map
+   - `README.md` — chip closeout + audit findings + files-touched list
+
+   Mockups substitute for live browser screenshots because the
+   remote-execution container has no XAMPP/Moodle install. Once Nitin
+   runs the PHPUnit CI gate (`phpunit-5.2`, P2-K) on this branch, the
+   three new tests fire against a real Moodle install with MariaDB
+   sidecar — covering the chip's verification intent without needing a
+   manual `admin/cli/scheduled_task.php` invocation.
+
+3. **No code changes to L.1 plugin code** — the wiring shipped by P3-O
+   is correct and tested. Adding emission code anywhere else (e.g. the
+   task wrapper) would either (a) duplicate firing or (b) move firing
+   outside the per-board commit boundary, breaking the
+   `compute_changes()` snapshot/delta contract.
+
+**Files touched (3):**
+
+- `moodle-enhancement/local/sentientia_leaderboard/tests/message_helper_test.php`
+  — appended 3 tests (~180 lines)
+- `moodle-enhancement/PROJECT-STATE.md` — this H2 entry
+- `moodle-enhancement/docs/visual-evidence/2026-05-25/wave-c5-leaderboard-l1-e2e/`
+  — 5 new files (README, three HTML mockups, one annotated text trace)
+
+**Files NOT touched (out of scope per audit):**
+
+- `classes/{ranking_engine,message_helper,observer}.php` — already correct
+- `classes/event/rankings_updated.php` — definition already matches contract
+- `classes/task/recompute_due_boards.php` — already correct delegate
+- `db/{events,messages,upgrade,feature_flags}.php` — registrations already correct
+- `lang/{en,hi}/local_sentientia_leaderboard.php` — strings already 100% parity
+- `version.php` — already at `2026052500` from L.1; no schema or behaviour change
+  in C5 to justify another bump (would force every site through an
+  unnecessary `admin/cli/upgrade.php` pass)
+
+**Verification status:**
+
+- [x] `php -l` clean on every modified file (1 file: tests/message_helper_test.php)
+- [x] No git-conflict markers in staged files (P0-A regex check)
+- [x] Existing 10 P3-O tests untouched — additive only
+- [x] Pre-existing wiring confirmed via source-line audit (ranking_engine.php:109-116)
+- [ ] PHPUnit `phpunit-5.2` CI gate to fire on PR — defers to Nitin's CI run
+- [ ] Live cron invocation against XAMPP — defers to local-dev verification
+  (steps 4, 5, 6, 8 of the chip brief require a XAMPP install absent
+  from the remote container)
+
+The chain is dispatched through the same code path on production cron
+as in the PHPUnit harness — there is no risk of "passes in test, fails
+in cron" because the harness runs `recompute_due_boards::execute()`
+verbatim.

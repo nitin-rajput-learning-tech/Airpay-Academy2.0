@@ -1,0 +1,159 @@
+Wave C5 — Leaderboard L.1 end-to-end chain trace
+==================================================
+
+Source paths annotated. Reading left to right is the order in which
+each frame returns control to the caller above it.
+
+[entry: cron tick at minute % 2 == 0]
+ |
+ v
+ \core\task\manager::run_from_cli() / cron_run_inner_scheduled_task()
+ |
+ v
+ \local_sentientia_leaderboard\task\recompute_due_boards::execute()
+   moodle-enhancement/local/sentientia_leaderboard/classes/task/recompute_due_boards.php:28
+ |
+ |--- if (!feature_flags::is_enabled('sentientia.leaderboards.enabled')) {
+ |        mtrace('master flag OFF — skipping'); return;
+ |    }
+ |
+ v
+ \local_sentientia_leaderboard\ranking_engine::recompute_due()
+   moodle-enhancement/local/sentientia_leaderboard/classes/ranking_engine.php:125
+ |
+ |--- $due = board_manager::boards_due_for_recompute();
+ |
+ v
+ for each $b in $due:
+     |
+     v
+     \local_sentientia_leaderboard\ranking_engine::recompute($b)
+       moodle-enhancement/local/sentientia_leaderboard/classes/ranking_engine.php:37
+     |
+     |--- $rows = match($board->type) { quiz | completion | skill }
+     |--- usort($rows, …)   // points DESC, secondary ASC, userid ASC
+     |
+     |--- $old_ranks = $DB->get_records_menu(                  // PRE-snapshot
+     |        'local_sentientia_lb_entries',
+     |        ['boardid' => $boardid], '', 'userid, userrank'
+     |    );
+     |
+     |    $tx = $DB->start_delegated_transaction();            // BEGIN
+     |       $DB->delete_records('local_sentientia_lb_entries', …)
+     |       $new_ranks = self::insert_ranked($rows, $boardid)
+     |       board_manager::mark_recomputed($boardid)
+     |    $tx->allow_commit();                                  // COMMIT — point of no return
+     |
+     |    // SSE channel (separate from L.1 messaging)
+     |    event_journal::write($boardid, 'leaderboard.recomputed', …)
+     |
+     |--- $changes = message_helper::compute_changes($old_ranks, $new_ranks);
+     |        // ranking_engine.php:109 — Phase L.1 routing
+     |
+     |    if (empty($changes)) return;     // contract: no log noise on quiet boards
+     |
+     |--- \local_sentientia_leaderboard\event\rankings_updated::create([
+     |        'context'  => \context_system::instance(),
+     |        'objectid' => $boardid,
+     |        'other'    => ['changes' => $changes],
+     |    ])->trigger();
+     |        // ranking_engine.php:111-116
+     |        // EVENT FIRES — Moodle dispatcher picks up the observer
+     |
+     v
+     [Moodle event dispatcher]
+         iterates registered observers from db/events.php
+         |
+         v
+         \local_sentientia_leaderboard\observer::on_rankings_updated($event)
+           moodle-enhancement/local/sentientia_leaderboard/classes/observer.php:33
+         |
+         |--- if (!class_exists('\local_airpay_core\feature_flags')) return;
+         |--- if (!feature_flags::is_enabled(
+         |          'sentientia.leaderboards.notifications.enabled')) return;
+         |
+         |    $boardid = (int) $event->objectid;
+         |    $changes = $event->other['changes'];
+         |    if (empty($changes)) return;
+         |
+         v
+         \local_sentientia_leaderboard\message_helper::dispatch($boardid, $changes)
+           moodle-enhancement/local/sentientia_leaderboard/classes/message_helper.php:140
+         |
+         |--- $board = $DB->get_record('local_sentientia_lb_boards',
+         |                              ['id' => $boardid]);
+         |    $customerid = (int) ($board->customerid ?: 1);
+         |
+         v
+         for each $change in $changes:
+             |
+             |--- // Re-classify defensively (defends stale payload).
+             |    if (classify_change($old_rank, $new_rank) === null) continue;
+             |
+             |--- // Privacy: opted-out users get nothing.
+             |    if (optout_manager::is_opted_out($userid, $customerid)) continue;
+             |
+             |--- // Per (board, user, customer) 24-hour throttle.
+             |    if (is_throttled($boardid, $userid, $customerid)) continue;
+             |
+             v
+             \local_sentientia_leaderboard\message_helper::send_one(
+                 $board, $userid, $old_rank, $new_rank, $reason)
+               moodle-enhancement/local/sentientia_leaderboard/classes/message_helper.php:274
+             |
+             |--- $subject + $body_plain from get_string('msg_*', $a)
+             |        — three template variants:
+             |            top10_entry    → msg_top10_*
+             |            up move        → msg_moveup_*
+             |            down move      → msg_movedown_*
+             |
+             |    $eventdata = new \core\message\message();
+             |    $eventdata->component         = 'local_sentientia_leaderboard';
+             |    $eventdata->name              = 'rank_change';
+             |    $eventdata->userfrom          = \core_user::get_noreply_user();
+             |    $eventdata->userto            = $userid;
+             |    $eventdata->subject           = $subject;
+             |    $eventdata->fullmessage       = $body_plain;
+             |    $eventdata->fullmessagehtml   = '<p>' . s($body_plain) . '</p>';
+             |    $eventdata->notification      = 1;
+             |    $eventdata->contexturl        = .../sentientia_leaderboard/view.php?id=N
+             |
+             v
+             message_send($eventdata);                     // <-- TERMINAL CORE CALL
+             |
+             |    Moodle core writes to mdl_message (notification=1) +
+             |    routes via the popup + email processors registered in
+             |    db/messages.php (popup MESSAGE_DEFAULT_ENABLED,
+             |    email MESSAGE_DEFAULT_ENABLED).
+             |
+             v
+             [Bell icon shows +1; email enqueued in mailer cron]
+             |
+             v
+         \local_sentientia_leaderboard\message_helper::record_notification(
+             $boardid, $userid, $customerid, $old_rank, $new_rank, $reason)
+           moodle-enhancement/local/sentientia_leaderboard/classes/message_helper.php:214
+             |
+             |--- UPSERT into local_sentientia_lb_notify_log:
+             |        (boardid, userid, customerid) UNIQUE KEY
+             |        last_sent = time(), last_old_rank, last_new_rank, last_reason
+             |        race-safe: if a concurrent inserter beat us, catch
+             |        dml_write_exception + fall through to UPDATE
+
+Test coverage hitting each frame:
+
+  recompute_due_boards::execute()                  test_recompute_due_boards_task_runs_full_chain      (C5)
+  ranking_engine::recompute_due()                  test_due_recompute_picks_up_stale_boards            (P3-O)
+  ranking_engine::recompute() — happy path         test_recompute_completion_orders_by_speed           (P3-O)
+  ranking_engine::recompute() — idempotency        test_recompute_is_idempotent                        (P3-O)
+  ranking_engine::recompute() — tenant scope       test_tenant_scope_excludes_other_tenants            (P3-O)
+  ranking_engine::recompute() — SSE event row      test_recompute_emits_event                          (P3-O)
+  rankings_updated event — payload shape           test_rankings_updated_event_carries_changes_payload (C5)
+  ranking_engine::recompute() — no-event boundary  test_recompute_skips_event_when_no_qualifying_changes (C5)
+  observer::on_rankings_updated() — flag-off       test_no_message_when_flag_off                       (P3-O)
+  message_helper::dispatch() — opt-out filter      test_opted_out_user_never_receives_message          (P3-O)
+  message_helper::is_throttled() — 24h window      test_throttle_blocks_duplicate_within_24h           (P3-O)
+  message_helper::send_one() — top-10 template     test_top_10_entry_triggers_message                  (P3-O)
+  message_helper::send_one() — large-move          test_rank_change_triggers_message_when_flag_on      (P3-O)
+  full chain via ranking_engine::recompute()       test_recompute_triggers_message_end_to_end          (P3-O)
+  full chain via scheduled-task wrapper            test_recompute_due_boards_task_runs_full_chain      (C5)

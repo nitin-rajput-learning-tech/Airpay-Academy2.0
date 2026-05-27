@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mockup — L.1 rank_change message body (two variants)</title>
+<!--
+   Mockup: the rendered Moodle popup message body for two variants of
+   the L.1 rank_change provider — top10_entry and large_move (down).
+   The subject + fullmessage strings come from lang/en/local_sentientia_leaderboard.php
+   keys msg_top10_subject/body and msg_movedown_subject/body, which are
+   formatted at dispatch time via get_string('msg_…', 'local_sentientia_leaderboard', $a).
+
+   Hindi parity (lang/hi/local_sentientia_leaderboard.php) ships
+   identical strings translated; learners with lang=hi see those instead.
+-->
+<style>
+  body { font: 14px/1.5 "Montserrat", sans-serif; background: #F2F4FB; margin: 0; padding: 32px; color: #1a1a2e; }
+  h1 { font-size: 22px; margin: 0 0 16px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 1100px; }
+  .card {
+    background: #fff; border: 1px solid #e2e6ef;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,.08);
+    overflow: hidden;
+  }
+  .card header {
+    background: #0066A7; color: #fff;
+    padding: 12px 20px;
+    font-weight: 700;
+  }
+  .card .meta {
+    padding: 8px 20px;
+    background: #e8f2f9;
+    color: #004d80;
+    font-size: 12px;
+  }
+  .card .body { padding: 20px; }
+  .card .subject { font-size: 16px; font-weight: 700; color: #1a1a2e; margin-bottom: 12px; }
+  .card .body p { margin: 0; color: #1a1a2e; }
+  .card .context {
+    border-top: 1px solid #e2e6ef;
+    margin-top: 16px; padding-top: 12px;
+    font-size: 12px; color: #5a6070;
+  }
+  .cta {
+    display: inline-block; margin-top: 12px;
+    background: #0066A7; color: #fff;
+    padding: 8px 16px; border-radius: 8px;
+    text-decoration: none; font-weight: 600; font-size: 13px;
+  }
+  code { font-family: "Courier New", monospace;
+         background: #f8f9fc; padding: 1px 5px;
+         border-radius: 3px; font-size: 12px; }
+  .pill {
+    display: inline-block; background: #e5f4f3; color: #0f7a73;
+    padding: 2px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .04em;
+  }
+  .pill.down { background: #fef3c7; color: #b45309; }
+</style>
+</head>
+<body>
+  <h1>Message body — two variants from the L.1 chain</h1>
+
+  <div class="grid">
+
+    <!-- Variant 1: top-10 entry -->
+    <div class="card">
+      <header>Notifications — Airpay Academy</header>
+      <div class="meta">
+        From <strong>noreply@airpay.academy</strong> ·
+        Component <code>local_sentientia_leaderboard</code> ·
+        Type <code>rank_change</code> · <span class="pill">top10 entry</span>
+      </div>
+      <div class="body">
+        <div class="subject">You cracked the top 1 on Q2 Compliance Speed-Run!</div>
+        <p>Great work — you just entered the top 10 on
+           "Q2 Compliance Speed-Run" at rank #1. Keep going to climb
+           even higher.</p>
+        <div class="context">
+          Triggered by: <code>old_rank=12 → new_rank=1</code> ·
+          Reason: <code>top10_entry</code> ·
+          Throttle window: 24 h
+        </div>
+        <a class="cta"
+           href="/local/sentientia_leaderboard/view.php?id=482">
+           Open leaderboard →</a>
+      </div>
+    </div>
+
+    <!-- Variant 2: large_move (down) -->
+    <div class="card">
+      <header>Notifications — Airpay Academy</header>
+      <div class="meta">
+        From <strong>noreply@airpay.academy</strong> ·
+        Component <code>local_sentientia_leaderboard</code> ·
+        Type <code>rank_change</code> · <span class="pill down">large move (down)</span>
+      </div>
+      <div class="body">
+        <div class="subject">You dropped 7 places on Q2 Compliance Speed-Run</div>
+        <p>Your rank on "Q2 Compliance Speed-Run" slipped from #3 to
+           #10 (down 7 positions). Want to claw it back? Open the board
+           and keep learning.</p>
+        <div class="context">
+          Triggered by: <code>old_rank=3 → new_rank=10</code> ·
+          Reason: <code>large_move</code> ·
+          Throttle window: 24 h
+        </div>
+        <a class="cta"
+           href="/local/sentientia_leaderboard/view.php?id=482">
+           Open leaderboard →</a>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>
