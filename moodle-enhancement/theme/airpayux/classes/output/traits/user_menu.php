@@ -407,4 +407,145 @@ trait user_menu {
             $usermenuclasses
         );
     }
+
+    /**
+     * Build the BizLMS role-switch options as a flat, template-ready array.
+     *
+     * Why this exists separately from user_menu()
+     * -------------------------------------------
+     * user_menu() above renders a Moodle action_menu dropdown designed to
+     * live in a top-right navbar. The airpayux dashboard "shell" layout
+     * (layout/dashboard.php → templates/dashboard.mustache, use_shell=true)
+     * moved all user controls into the left sidebar and renders neither
+     * navbar.mustache nor topbar.mustache — so the switcher built by
+     * user_menu() was never surfaced (it sat unused in the topbar context).
+     * Multi-role users (e.g. an L&D admin who is also a learner) therefore
+     * had no visible way to switch roles in the shell, even though
+     * /my/switchrole.php + \local_airpay_org\accesslib work fine.
+     *
+     * This method returns just the switch *data* (no action_menu, no avatar,
+     * no logout) so the sidebar can paint a native airpayux control. It is a
+     * deliberate, isolated sibling of user_menu(): the role-resolution logic
+     * is intentionally duplicated rather than shared, because user_menu() is
+     * still invoked for the (currently dormant) topbar context and also
+     * carries a first-visit redirect() side-effect — refactoring a shared
+     * helper out of it would risk that live path. Tracked as a follow-up
+     * de-duplication candidate. Keep the two in sync if the switch URL
+     * contract changes.
+     *
+     * Backwards-compat: single-role users (the overwhelming majority —
+     * ordinary learners) get hasoptions=false and the sidebar renders
+     * nothing new, so their experience is unchanged.
+     *
+     * @return array {
+     *     hasoptions:   bool   true only when 2+ distinct switch targets exist
+     *     currentlabel: string human label of the currently-active role ('' if unknown)
+     *     options:      array  list of [url, label, icon, active]
+     * }
+     */
+    public function get_role_switch_options(): array {
+        global $USER, $DB;
+
+        $result = ['hasoptions' => false, 'currentlabel' => '', 'options' => []];
+
+        // BizLMS-only capability. On a vanilla Moodle (a future non-BizLMS
+        // Sentientia customer) the resolver is absent — fail closed, render
+        // nothing. Mirrors the defensive open_path read in session_manager.
+        if (!class_exists('\\local_airpay_org\\accesslib')) {
+            return $result;
+        }
+
+        $roles = \local_airpay_org\accesslib::get_user_roles_in_catgeorycontexts($USER->id);
+        if (!is_array($roles) || count($roles) === 0) {
+            return $result;
+        }
+
+        // The hard-wired "switch to learner" shortcut — the BizLMS employee
+        // role (archetype student). Same lookup user_menu() uses.
+        $learnerrole = $DB->get_record_sql(
+            "SELECT id, name, shortname
+               FROM {role}
+              WHERE shortname = 'employee' AND archetype = 'student'");
+
+        // De-dupe the category-context roles by depth + top-category, exactly
+        // as user_menu() does, so the sidebar list matches the dropdown.
+        $depths = [];
+        $userra = array_values(array_filter(array_map(function($role) use (&$depths) {
+            $categoryids = array_values(array_filter(explode('/', $role->path)));
+            if (empty($categoryids)) {
+                return null;
+            }
+            $pathname = end($categoryids);
+            $category = \local_airpay_org\accesslib::get_category_info($pathname, 'name');
+            $key = $role->depth . '_' . $categoryids[0];
+            if (!in_array($key, $depths, true)) {
+                $depths[] = $key;
+                $role->categoryname = $category;
+                $role->highest_catid = $categoryids[0];
+                return $role;
+            }
+            return null;
+        }, $roles)));
+
+        // The currently-active role: set in $USER->useraccess after a prior
+        // switch, otherwise the highest available (matches user_menu()).
+        if (!empty($userra)) {
+            $highest = max($userra);
+        } else {
+            $highest = (object) ['roleid' => 0, 'highest_catid' => 0, 'depth' => 0];
+        }
+        $currentroleid = $USER->useraccess['currentroleinfo']['roleid'] ?? $highest->roleid;
+        $currentcatid  = $USER->useraccess['currentroleinfo']['orgcatid'] ?? ($highest->highest_catid ?? 0);
+        $currentdepth  = $USER->useraccess['currentroleinfo']['depth'] ?? ($highest->depth ?? 0);
+
+        // Learner / employee shortcut.
+        if (!empty($learnerrole)) {
+            $islearneractive = ((int) $learnerrole->id === (int) $currentroleid);
+            $label = get_string('employee', 'theme_airpayux');
+            $result['options'][] = [
+                'url'    => $islearneractive ? '' : (new moodle_url('/my/switchrole.php', [
+                    'sesskey'    => sesskey(),
+                    'confirm'    => 1,
+                    'switchrole' => $learnerrole->id,
+                ]))->out(false),
+                'label'  => $label,
+                'icon'   => 'fa-user',
+                'active' => $islearneractive,
+            ];
+            if ($islearneractive) {
+                $result['currentlabel'] = $label;
+            }
+        }
+
+        // One option per distinct category role the user holds.
+        foreach ($userra as $role) {
+            if (!empty($role->rolename)) {
+                $label = $role->categoryname . ' - ' . $role->rolename;
+            } else {
+                $label = $role->categoryname . ' - ' . ($role->rolecode ?? '');
+            }
+            $isactive = ((int) $role->roleid === (int) $currentroleid
+                && (int) $currentdepth === (int) $role->depth
+                && (int) $currentcatid === (int) $role->highest_catid);
+            $result['options'][] = [
+                'url'    => $isactive ? '' : (new moodle_url('/my/switchrole.php', [
+                    'sesskey'    => sesskey(),
+                    'confirm'    => 1,
+                    'switchrole' => $role->roleid,
+                    'contextid'  => $role->contextid,
+                ]))->out(false),
+                'label'  => $label,
+                'icon'   => 'fa-user-circle-o',
+                'active' => $isactive,
+            ];
+            if ($isactive) {
+                $result['currentlabel'] = $label;
+            }
+        }
+
+        // Only surface the control when there's an actual choice to make.
+        $result['hasoptions'] = count($result['options']) > 1;
+
+        return $result;
+    }
 }

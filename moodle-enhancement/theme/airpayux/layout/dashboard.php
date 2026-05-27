@@ -1059,4 +1059,11 @@ $templatecontext['topbar'] = [
     'usermenu' => $OUTPUT->user_menu($USER, ''),
 ];
 
+// Role switcher (2026-05-27) — surface BizLMS role switching in the shell
+// sidebar. The shell renders neither navbar.mustache nor topbar.mustache, so
+// the switcher built inside $OUTPUT->user_menu() (above) was never shown.
+// get_role_switch_options() returns just the switch data; the sidebar paints
+// a native control. hasoptions is false for single-role users (no UI change).
+$templatecontext['roleswitch'] = $OUTPUT->get_role_switch_options();
+
 echo $OUTPUT->render_from_template('theme_airpayux/dashboard', $templatecontext);

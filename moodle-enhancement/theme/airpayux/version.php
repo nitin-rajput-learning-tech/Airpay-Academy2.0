@@ -266,7 +266,28 @@ defined('MOODLE_INTERNAL') || die();
 // error.log. Version bump invalidates the cached compiled CSS bundle
 // (defensive — no SCSS changed) so theme styles.php re-compiles on
 // next request.
-$plugin->version   = 2026052407;
+//
+// Sidebar role switcher (2026-05-27) — surface BizLMS role switching in
+// the dashboard shell. The shell layout (use_shell=true) renders neither
+// navbar.mustache nor topbar.mustache, so the role switcher built inside
+// core_renderer::user_menu() was never shown — multi-role users (e.g. an
+// L&D admin who is also a learner, like Nitin) had no visible way to
+// switch in the shell, only the raw /my/switchrole.php URL. Restores
+// parity with live airpay.academy (top-right user-menu switch).
+//   - classes/output/traits/user_menu.php: new get_role_switch_options()
+//     data-builder (isolated sibling of user_menu(); reuses the same
+//     \local_airpay_org\accesslib source). Returns hasoptions/currentlabel/
+//     options[]. class_exists-guarded for vanilla-Moodle Sentientia customers.
+//   - layout/dashboard.php: $templatecontext['roleswitch'].
+//   - templates/dashboard.mustache: {{#roleswitch.hasoptions}} sidebar
+//     control above the theme toggle; active role marked (aria-current +
+//     check), others are switchrole links. Single-role users see nothing
+//     new (hasoptions=false) — production behaviour unchanged.
+//   - scss/.../_layout-shell.scss: .ap-sidebar__roleswitch* (dark-sidebar
+//     tokens, reduced-motion-aware transition, hidden when collapsed).
+//   - No new lang keys (reuses switchroleto + employee; hi parity intact).
+// Visual evidence: docs/visual-evidence/2026-05-27/ (roleswitch-*.png).
+$plugin->version   = 2026052408;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
@@ -285,7 +306,7 @@ $plugin->maturity  = MATURITY_BETA;
 // (83% reduction). Section 1 wrapped under body#page-login-index for
 // ID-specificity. Bundled bugfix: dark-mode selectors used descendant
 // combinator (never fired since #page-X IS body); now chained.
-$plugin->release   = '1.0.38-beta';  // P0 #1+#2+#3+#4+#5+#6+#7+#9 + F-13 + P1 #10+#11+#12+#13+#14+#17 + P2 #18+#19+#20+#21+#23 + cart_badge audit + P1 #12 re-apply + kn/mr/sw 13-key parity restore + P0 cleanup A (conflict-marker hook + CI) + P2 #19 follow-up (inline-timing → tokens) + Wave A2 P0-cleanup (scssphp array-to-string warning fix)
+$plugin->release   = '1.0.39-beta';  // P0 #1+#2+#3+#4+#5+#6+#7+#9 + F-13 + P1 #10+#11+#12+#13+#14+#17 + P2 #18+#19+#20+#21+#23 + cart_badge audit + P1 #12 re-apply + kn/mr/sw 13-key parity restore + P0 cleanup A (conflict-marker hook + CI) + P2 #19 follow-up (inline-timing → tokens) + Wave A2 P0-cleanup (scssphp array-to-string warning fix) + sidebar role switcher (multi-role shell parity)
 // P1 #10 chip-J (2026-05-24) — _surface-profile.scss (2,507 lines)
 // decomposed into 4 per-surface partials: _surface-user, _surface-badges,
 // _surface-grade-report, _surface-calendar. Admin fragments moved to

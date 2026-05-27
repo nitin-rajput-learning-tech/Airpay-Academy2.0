@@ -88,7 +88,36 @@
                 {{/navitems}}
             </nav>
 
-            {{! ── Footer: theme + user ─────────────────── }}
+            {{! ── Footer: role switch + theme + user ─────── }}
+            {{#roleswitch.hasoptions}}
+            {{! Role switcher — only rendered for multi-role users (BizLMS
+                category-context roles). Single-role learners never see this,
+                so their sidebar is unchanged. Surfaces the same switch the
+                top-right user menu shows on live airpay.academy. }}
+            <div class="ap-sidebar__roleswitch" data-region="roleswitch">
+                <span class="ap-sidebar__roleswitch-label">
+                    <i class="fa fa-exchange ap-sidebar__roleswitch-icon"></i>
+                    <span class="ap-sidebar__roleswitch-label-text">{{#str}}switchroleto, theme_airpayux{{/str}}</span>
+                </span>
+                <div class="ap-sidebar__roleswitch-list" role="group" aria-label="{{#str}}switchroleto, theme_airpayux{{/str}}">
+                    {{#roleswitch.options}}
+                        {{#active}}
+                        <span class="ap-sidebar__roleswitch-item ap-sidebar__roleswitch-item--active" aria-current="true">
+                            <i class="fa {{icon}} ap-sidebar__roleswitch-item-icon"></i>
+                            <span class="ap-sidebar__roleswitch-item-text">{{label}}</span>
+                            <i class="fa fa-check ap-sidebar__roleswitch-check" aria-hidden="true"></i>
+                        </span>
+                        {{/active}}
+                        {{^active}}
+                        <a href="{{{url}}}" class="ap-sidebar__roleswitch-item" data-roleswitch-link="1">
+                            <i class="fa {{icon}} ap-sidebar__roleswitch-item-icon"></i>
+                            <span class="ap-sidebar__roleswitch-item-text">{{label}}</span>
+                        </a>
+                        {{/active}}
+                    {{/roleswitch.options}}
+                </div>
+            </div>
+            {{/roleswitch.hasoptions}}
             <div class="ap-sidebar__footer-actions">
                 <button class="ap-sidebar__theme-btn" id="ap-dark-toggle" title="Toggle theme">
                     <i class="fa fa-moon"></i>

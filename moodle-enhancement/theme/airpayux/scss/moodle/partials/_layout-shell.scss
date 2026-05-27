@@ -211,6 +211,83 @@
     text-overflow: ellipsis;
 }
 
+/* ── Role switcher in sidebar footer ───────────── */
+/* Surfaces BizLMS role switching for multi-role users (e.g. an admin who
+   is also a learner). Rendered above the theme toggle; single-role users
+   never get the markup. Motion uses the reduced-motion-aware token per
+   frontend.md (collapses to 0ms under prefers-reduced-motion). */
+.ap-sidebar__roleswitch {
+    padding: 8px 8px 4px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ap-sidebar__roleswitch-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 4px 6px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.35);
+}
+.ap-sidebar__roleswitch-icon {
+    font-size: 12px;
+}
+
+.ap-sidebar__roleswitch-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ap-sidebar__roleswitch-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.55);
+    text-decoration: none;
+    transition: background-color var(--ap-transition-quick),
+                color var(--ap-transition-quick);
+}
+a.ap-sidebar__roleswitch-item:hover {
+    background: rgba(255, 255, 255, 0.07);
+    color: #fff;
+}
+
+.ap-sidebar__roleswitch-item-icon {
+    font-size: 13px;
+    width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.ap-sidebar__roleswitch-item-text {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ap-sidebar__roleswitch-item--active {
+    background: rgba(0, 102, 167, 0.25); /* Airpay primary #0066A7 tint */
+    color: #fff;
+    box-shadow: inset 2px 0 0 0 #2b8fd6; /* left accent — matches active nav */
+    cursor: default;
+}
+
+.ap-sidebar__roleswitch-check {
+    font-size: 11px;
+    color: #4ade80; /* success green — marks the role you're in */
+    flex-shrink: 0;
+}
+
 /* ── User Footer ───────────────────────────────── */
 .ap-sidebar__user {
     border-top: 1px solid rgba(255, 255, 255, 0.06);
@@ -299,7 +376,8 @@
 .ap-sidebar[data-collapsed="true"] .ap-sidebar__user-info,
 .ap-sidebar[data-collapsed="true"] .ap-sidebar__user-name,
 .ap-sidebar[data-collapsed="true"] .ap-sidebar__user-action,
-.ap-sidebar[data-collapsed="true"] .ap-sidebar__signout {
+.ap-sidebar[data-collapsed="true"] .ap-sidebar__signout,
+.ap-sidebar[data-collapsed="true"] .ap-sidebar__roleswitch {
     display: none;
 }
 

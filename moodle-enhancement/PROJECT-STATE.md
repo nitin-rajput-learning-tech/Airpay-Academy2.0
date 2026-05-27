@@ -1,7 +1,51 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-05-25 (**Goal C CLOSED** — four full per-persona user guides shipped under `docs/user-guides/` (Tenant Admin, Course Author, Compliance Officer, Learner), each ≥20 pages with login + full walkthrough + mobile + troubleshooting + v1.0.37-beta changelog; plus a README index with chooser flowchart and 4 screenshot manifests. See the "GOAL C CLOSED" H2 immediately below. Prior update 2026-05-24:) (Three parallel-chip MVPs shipped: **Tier 2.6 Calendar Sync** — `local_sentientia_calendar` with token-URL ICS feed, 4 feature flags, 28 PHPUnit assertions, ADR-013, Hindi 100%; **Tier 1 #4 AI Quiz Generation Phase G.0** — `local_sentientia_aiquiz` with 4-layer cost defence and mock-mode demoable pipeline, ~47 PHPUnit tests, ADR-012, Hindi 100%; **Tier 2 #7 Real-time Leaderboards Phase L.0** — `local_sentientia_leaderboard` + `block_sentientia_leaderboard` with SSE-driven live ranking across quiz/completion/skill board types, GDPR-compliant opt-out, ADR-014, Hindi 100%. **Platform Visual Audit v4.1.0** shipped from mobile-app session — 14 surfaces audited (9 P0 / 8 P1 / 6 P2 findings), CONDITIONAL PASS verdict; full report at `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md`. Earlier today the night-run autonomous batch shipped 16 items: Phase B.12 cutover-day mechanical fixes (A1-A8), plugin PHPUnit coverage (B1-B2), Goal C user guides for 6 personas (C1-C6); cutover-day TODO list is now mostly empty modulo NVDA verification + activity_header runtime test. **Paygw security follow-up shipped earlier this session** — MD5 deprecated, require_login() at file scope removed, sandbox/live URL clarified, 13 new PHPUnit tests added. Phase B Moodle 5.2 upgrade is code-complete; production stays on 5.1 until customer-driven cutover decision. ADR-001 records the strategic pivot from "patch Moodle deployment" to "build saleable enterprise LMS product" — Airpay Academy is customer-zero. See `docs/adr/ADR-001-fork-strategy-and-product-pivot.md`.
+**Updated:** 2026-05-27 (**Sidebar role switcher** — surfaced BizLMS role switching in the airpayux shell sidebar for multi-role users; backend already worked but the shell discarded the switcher HTML. Verified Admin↔Learner round-trip for Nitin. See top H2. Prior 2026-05-25:) (**Goal C CLOSED** — four full per-persona user guides shipped under `docs/user-guides/` (Tenant Admin, Course Author, Compliance Officer, Learner), each ≥20 pages with login + full walkthrough + mobile + troubleshooting + v1.0.37-beta changelog; plus a README index with chooser flowchart and 4 screenshot manifests. See the "GOAL C CLOSED" H2 immediately below. Prior update 2026-05-24:) (Three parallel-chip MVPs shipped: **Tier 2.6 Calendar Sync** — `local_sentientia_calendar` with token-URL ICS feed, 4 feature flags, 28 PHPUnit assertions, ADR-013, Hindi 100%; **Tier 1 #4 AI Quiz Generation Phase G.0** — `local_sentientia_aiquiz` with 4-layer cost defence and mock-mode demoable pipeline, ~47 PHPUnit tests, ADR-012, Hindi 100%; **Tier 2 #7 Real-time Leaderboards Phase L.0** — `local_sentientia_leaderboard` + `block_sentientia_leaderboard` with SSE-driven live ranking across quiz/completion/skill board types, GDPR-compliant opt-out, ADR-014, Hindi 100%. **Platform Visual Audit v4.1.0** shipped from mobile-app session — 14 surfaces audited (9 P0 / 8 P1 / 6 P2 findings), CONDITIONAL PASS verdict; full report at `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md`. Earlier today the night-run autonomous batch shipped 16 items: Phase B.12 cutover-day mechanical fixes (A1-A8), plugin PHPUnit coverage (B1-B2), Goal C user guides for 6 personas (C1-C6); cutover-day TODO list is now mostly empty modulo NVDA verification + activity_header runtime test. **Paygw security follow-up shipped earlier this session** — MD5 deprecated, require_login() at file scope removed, sandbox/live URL clarified, 13 new PHPUnit tests added. Phase B Moodle 5.2 upgrade is code-complete; production stays on 5.1 until customer-driven cutover decision. ADR-001 records the strategic pivot from "patch Moodle deployment" to "build saleable enterprise LMS product" — Airpay Academy is customer-zero. See `docs/adr/ADR-001-fork-strategy-and-product-pivot.md`.
 
 **Historical context:** Wave 1 + Wave 2 audit entries archived at `docs/_archive/PROJECT-STATE-history.md`.
+
+---
+
+## ✅ Sidebar role switcher — multi-role shell parity (2026-05-27)
+
+**Why:** Nitin (and any multi-role user — e.g. an L&D admin who is also a
+learner) switches roles on live `airpay.academy` via the top-right user
+menu. The airpayux **shell** layout (`use_shell=true`) moved user controls
+into the left sidebar and renders neither `navbar.mustache` nor
+`topbar.mustache` — so the switcher that `core_renderer::user_menu()` builds
+was computed every load (layout line 1059) but **its HTML was discarded**.
+DOM-verified gap: `switchrole_links_count: 0`, no usermenu container. The
+backend (`/my/switchrole.php` + `\local_airpay_org\accesslib`) worked; only
+the visible control was orphaned.
+
+**Fix (additive, parity-restoring — theme airpayux `2026052407 → 2026052408`,
+`1.0.39-beta`):**
+- `classes/output/traits/user_menu.php` — new `get_role_switch_options()`
+  data-builder. Isolated sibling of `user_menu()` (left untouched — it still
+  feeds the topbar context + carries a first-visit `redirect()`), reusing the
+  same `accesslib` source. Returns `hasoptions` / `currentlabel` / `options[]`
+  (each `url`/`label`/`icon`/`active`). `class_exists`-guarded so a vanilla
+  (non-BizLMS) Sentientia customer renders nothing rather than fatals.
+- `layout/dashboard.php` — `$templatecontext['roleswitch']`.
+- `templates/dashboard.mustache` — `{{#roleswitch.hasoptions}}` **"⇄ SWITCH
+  ROLE TO:"** control in the sidebar footer above the theme toggle; active
+  role = non-clickable `<span>` + check (`aria-current`), others are
+  `switchrole.php` links.
+- `scss/.../partials/_layout-shell.scss` — `.ap-sidebar__roleswitch*`
+  (dark-sidebar tokens, reduced-motion-aware `var(--ap-transition-quick)`,
+  hidden when sidebar collapsed).
+- **No new lang keys** (reuses `switchroleto` + `employee`; Hindi parity
+  intact). **Backwards-compat:** single-role users ⇒ `hasoptions=false` ⇒
+  zero new markup, so the common learner experience is unchanged.
+
+**Verified visually (Nitin id 142, real login, local-dev `airpay123`):**
+Admin → Employee → Admin round-trip. Each switch fully transforms BOTH the
+dashboard (admin KPIs ↔ learner gamification/Continue-Learning) AND the
+sidebar nav; active role correctly marked after each switch; **zero JS
+console errors** across login + both switches + a fresh `/my/` reload.
+Evidence + DOM-probe matrix in `docs/visual-evidence/2026-05-27/`
+(role-switcher section). **Known non-blocking polish:** on the very first
+pre-switch load (no `currentroleinfo` pinned) neither option is highlighted —
+links still work; tracked for a later `role_detector` fallback.
 
 ---
 
