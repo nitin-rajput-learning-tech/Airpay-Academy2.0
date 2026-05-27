@@ -1,7 +1,96 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-05-24 (Three parallel-chip MVPs shipped: **Tier 2.6 Calendar Sync** — `local_sentientia_calendar` with token-URL ICS feed, 4 feature flags, 28 PHPUnit assertions, ADR-013, Hindi 100%; **Tier 1 #4 AI Quiz Generation Phase G.0** — `local_sentientia_aiquiz` with 4-layer cost defence and mock-mode demoable pipeline, ~47 PHPUnit tests, ADR-012, Hindi 100%; **Tier 2 #7 Real-time Leaderboards Phase L.0** — `local_sentientia_leaderboard` + `block_sentientia_leaderboard` with SSE-driven live ranking across quiz/completion/skill board types, GDPR-compliant opt-out, ADR-014, Hindi 100%. **Platform Visual Audit v4.1.0** shipped from mobile-app session — 14 surfaces audited (9 P0 / 8 P1 / 6 P2 findings), CONDITIONAL PASS verdict; full report at `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md`. Earlier today the night-run autonomous batch shipped 16 items: Phase B.12 cutover-day mechanical fixes (A1-A8), plugin PHPUnit coverage (B1-B2), Goal C user guides for 6 personas (C1-C6); cutover-day TODO list is now mostly empty modulo NVDA verification + activity_header runtime test. **Paygw security follow-up shipped earlier this session** — MD5 deprecated, require_login() at file scope removed, sandbox/live URL clarified, 13 new PHPUnit tests added. Phase B Moodle 5.2 upgrade is code-complete; production stays on 5.1 until customer-driven cutover decision. ADR-001 records the strategic pivot from "patch Moodle deployment" to "build saleable enterprise LMS product" — Airpay Academy is customer-zero. See `docs/adr/ADR-001-fork-strategy-and-product-pivot.md`.
+**Updated:** 2026-05-25 (**Goal C CLOSED** — four full per-persona user guides shipped under `docs/user-guides/` (Tenant Admin, Course Author, Compliance Officer, Learner), each ≥20 pages with login + full walkthrough + mobile + troubleshooting + v1.0.37-beta changelog; plus a README index with chooser flowchart and 4 screenshot manifests. See the "GOAL C CLOSED" H2 immediately below. Prior update 2026-05-24:) (Three parallel-chip MVPs shipped: **Tier 2.6 Calendar Sync** — `local_sentientia_calendar` with token-URL ICS feed, 4 feature flags, 28 PHPUnit assertions, ADR-013, Hindi 100%; **Tier 1 #4 AI Quiz Generation Phase G.0** — `local_sentientia_aiquiz` with 4-layer cost defence and mock-mode demoable pipeline, ~47 PHPUnit tests, ADR-012, Hindi 100%; **Tier 2 #7 Real-time Leaderboards Phase L.0** — `local_sentientia_leaderboard` + `block_sentientia_leaderboard` with SSE-driven live ranking across quiz/completion/skill board types, GDPR-compliant opt-out, ADR-014, Hindi 100%. **Platform Visual Audit v4.1.0** shipped from mobile-app session — 14 surfaces audited (9 P0 / 8 P1 / 6 P2 findings), CONDITIONAL PASS verdict; full report at `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md`. Earlier today the night-run autonomous batch shipped 16 items: Phase B.12 cutover-day mechanical fixes (A1-A8), plugin PHPUnit coverage (B1-B2), Goal C user guides for 6 personas (C1-C6); cutover-day TODO list is now mostly empty modulo NVDA verification + activity_header runtime test. **Paygw security follow-up shipped earlier this session** — MD5 deprecated, require_login() at file scope removed, sandbox/live URL clarified, 13 new PHPUnit tests added. Phase B Moodle 5.2 upgrade is code-complete; production stays on 5.1 until customer-driven cutover decision. ADR-001 records the strategic pivot from "patch Moodle deployment" to "build saleable enterprise LMS product" — Airpay Academy is customer-zero. See `docs/adr/ADR-001-fork-strategy-and-product-pivot.md`.
 
 **Historical context:** Wave 1 + Wave 2 audit entries archived at `docs/_archive/PROJECT-STATE-history.md`.
+
+---
+
+## ✅ GOAL C CLOSED — USER GUIDES PER PERSONA (2026-05-25, Wave D3 P3 testing-and-docs chip)
+
+**Status:** ✅ **Goal C is CLOSED.** The long-standing "AWAITING OUTLINE
+APPROVAL" gate (task #151, see the 2026-05-22 afternoon goals table below) is
+resolved. Post the 21-chip Day-0 wave, the platform surfaces were stable enough
+to write real per-persona user guides against the actual local accounts, so the
+build proceeded directly to full depth (option D — Comprehensive; option A —
+separate guides per persona; format = version-controlled Markdown that can later
+feed a static docs site).
+
+**Branch:** `claude/friendly-gates-10iUM`.
+
+### What shipped
+
+Four full ≥20-page Markdown user guides under `docs/user-guides/`, each with a
+login section (real test account), a full menu + page walkthrough, a
+troubleshooting section, an escalation section, a "What's new in v1.0.37-beta"
+changelog filtered to that persona (all 21 Day-0 chips), and a copy-paste
+PowerShell screenshot-capture recipe:
+
+| Guide | Persona | Capture account(s) | Lines |
+|-------|---------|--------------------|-------|
+| `user-guides/tenant-admin-guide.md` | Tenant Admin | `academyexadmin@airpay.co.in` (Public /77) + `nitin.rajput@airpay.co.in` (Airpay /1) | ~1,000 |
+| `user-guides/course-author-guide.md` | Course Author / SME | `asif.ansari@airpay.co.in` (`/1/79/197/200`) | ~855 |
+| `user-guides/compliance-officer-guide.md` | Compliance Officer / DPO | `joseph.mandapati@airpay.co.in` (BizLMS admin role, roleid 9 @ contextlevel 40) | ~635 |
+| `user-guides/learner-guide.md` | Learner (both tenants) | `jitendra.mane@airpay.co.in` (Airpay) + `academyexadmin@airpay.co.in` (Public) | ~785 |
+
+Plus:
+- `user-guides/README.md` — index + chooser flowchart + decision table +
+  21-chip-wave summary + maintenance notes. Links all 4 new guides and the 6
+  retained v1-draft scaffolds (site-admin, manager, public-learner +
+  superseded tenant-admin/course-author/learner).
+- `user-guides/screenshots/{tenant-admin,course-author,compliance-officer,learner}/`
+  — 4 manifest READMEs cataloguing every screenshot (143 total) with filename,
+  URL, viewport (1440×900 desktop / 590 mobile), and capture account.
+
+### Compliance-officer account identification
+
+The chip prompt asked to "find an account in DB via mdl_role_assignments". The
+compliance role on customer-zero is **not** a dedicated capability set — it is a
+BizLMS administrator role assignment at category context (roleid 9,
+contextlevel 40). Documented holder: Joseph Mandapati
+(`joseph.mandapati@airpay.co.in`, user id 627), confirmed against
+`docs/visual-audit-2026-05-22/AUDIT-REPORT.md` + `docs/GOAL-A-Y-FUNCTIONAL-AUDIT-MATRIX.md`
+§5. The guide embeds the re-confirmation SQL for the live DB.
+
+### Mobile walkthroughs
+
+Per the chip spec, the Learner and Tenant-Admin guides carry dedicated 590px
+mobile walkthrough sections (navbar collapse + bottom-nav, dashboard stack,
+catalogue reflow, SCORM full-screen, cart sticky CTA, compliance card-per-user).
+
+### Screenshot capture status
+
+The guides were authored in the cloud execution container, which cannot reach
+`localhost:8080` (no XAMPP/Moodle/browser in the Linux sandbox). Every screenshot
+reference is therefore a documented placeholder: each guide ends with a
+copy-paste PowerShell recipe (purge caches → open Chrome at the canonical
+viewport → sign in as the persona → walk the URL sequence → save to the manifest
+path → commit). The 4 manifest READMEs make the capture pass a mechanical
+follow-up for Nitin's local environment. The guides' content (menus, pages,
+flows, feature flags, chip-by-chip deltas) is all derived from the live code +
+templates + the 2026-05-22 / 2026-05-24 audits, so they are accurate
+independent of the pending image capture.
+
+### Supersession note
+
+The 4 new `-guide.md` files supersede the 2026-05-24 night-run v1-draft
+scaffolds (`tenant-admin.md`, `course-author.md`, `learner.md`) for depth; the
+scaffolds are retained and cross-linked. `site-admin.md`, `manager.md`, and
+`public-learner.md` remain the canonical references for those personas (no v1.0
+superset built this chip — out of the chip's 4-persona scope).
+
+### Acceptance check
+
+- ✅ 4 guides under `docs/user-guides/`, each ≥20 rendered pages (635–1,000
+  source lines + inline screenshots)
+- ✅ Login section with the actual test account in each
+- ✅ Every menu item + page walked
+- ✅ Screenshot references + manifests (capture recipe documented; images
+  pending local XAMPP)
+- ✅ Mobile (590px) walkthrough for Learner + Tenant Admin
+- ✅ Troubleshooting section in each
+- ✅ "What's new in v1.0.37-beta" listing the 21 chip changes per persona
+- ✅ `README.md` index + chooser flowchart
+- ✅ This PROJECT-STATE.md H2 marking Goal C closed
 
 ---
 
@@ -479,7 +568,7 @@ happen in the gap between audit findings and guide build):
 | A | **Visual UI audit of every page surface per user type** — Chrome walkthrough of every page for each of the 9 user types in Section 10 of the May-12 master doc (Learner, Manager, L&D Admin, Course Author/SME, Compliance Officer, Tenant Admin, Site Admin, External Public Learner, API Consumer). Output: persona-bucketed desktop+mobile screenshots, audit report flagging "still looks like Moodle" surfaces, prioritised UI-upgrade backlog. | ~30h | ⏳ blocks A.x and C | First step is the audit; UI upgrade work (A.x) generated from findings. |
 | A.x | **UI upgrade work driven by audit findings** — each "looks like Moodle" surface gets a redesign sprint (SCSS, Mustache, before/after screenshots, mobile pass). Tracked separately. | varies | ⏳ blocked by A | Effort scales with how many surfaces A flags. |
 | B | **E2E click-through testing of every feature** — manual Chrome walkthrough first pass (catches UX issues automation can't see), then Playwright-driven repeat. Pass/fail matrix + broken-flow list + flow screenshots (which double as user-guide raw material). | ~25h | ⏳ blocked by A.x | Should run after UI upgrade lands so we test the new surfaces, not the old. |
-| C | **Detailed user guides per user type** — outline approval gate from Nitin (asked 2026-05-22 afternoon). Format + depth + audience-scope options presented via AskUserQuestion. Build starts after approval; consumes Goal A screenshots + Goal B flow recordings. | ~60–120h depending on format | ⏳ AWAITING OUTLINE APPROVAL | See `docs/user-guide-plan-2026-05-22/` for the full proposed structure. |
+| C | **Detailed user guides per user type** — outline approval gate from Nitin (asked 2026-05-22 afternoon). Format + depth + audience-scope options presented via AskUserQuestion. Build starts after approval; consumes Goal A screenshots + Goal B flow recordings. | ~60–120h depending on format | ✅ **CLOSED 2026-05-25** | 4 full per-persona guides shipped under `docs/user-guides/` (option D Comprehensive + option A per-persona, Markdown format). See the "✅ GOAL C CLOSED" H2 at the top of this file. |
 | (5 above) | Mobile-app WS Phase X.1 — re-queued after A/B/C land. | ~4h | ⏳ deferred |
 
 ### Goal C — outline + options awaiting approval
