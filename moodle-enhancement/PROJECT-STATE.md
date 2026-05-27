@@ -4570,3 +4570,115 @@ pipeline is end-to-end.
 Agent 5 (SCORM packager: `slides.json` + `voice.mp3` → SCORM 1.2 ZIP,
 `CLAUDE.md §8` validation gates) and Agent 6 (Moodle upload, `[CONFIRM]`
 to live). Neither is in this chip.
+---
+
+## 🎤 STREAM E — SENTIENTIA LIVE PHASE E.4: MULTIPLE CHOICE FUNCTIONAL ✅ SHIPPED (2026-05-25)
+
+**Plugin:** `local_sentientia_live` v0.1.3-alpha (2026052501)
+**Branch:** `claude/trusting-hypatia-ohwH8`
+**Chip:** Wave C1 P2 plugin-maturation — Phase E.4 (per `version.php` roadmap)
+**Predecessor:** P3-R (`elegant-wozniak-z8U4v`, merge `de2455fed`) shipped the
+abstract base class + 6 stubs throwing `coding_exception('not_implemented')`.
+This chip turns the `multiple_choice` stub into the first **fully functional,
+end-to-end** question type — the reference implementation for E.5–E.9.
+
+### What shipped
+
+**1. `multiple_choice` class — all 5 contract methods implemented**
+(`classes/question_types/multiple_choice.php`):
+- `render(array $context): string` — drives the new
+  `qt_multiple_choice_audience` Mustache template; supports a `render_style`
+  of `radio` (default) or `buttons`, builds per-option `input_id`s, and
+  optionally marks the correct option (`show_correct`, default false —
+  audience never sees the answer until reveal).
+- `persist_response(int $userid, array $payload): int` — server-authoritative
+  bounds check (`option_index ∈ [0, N)`, re-read from the stored slide, not
+  trusting the payload), then delegates to `response_recorder::submit()` for
+  the idempotent upsert + `response_added` SSE event. Rejects missing /
+  null / out-of-range / negative index and missing slide/participant.
+- `tally(int $sessionid, int $slideid): array` — rich shape
+  `[{index, label, count, is_correct}, …]` in option order (not count-sorted),
+  reusing `response_recorder::tally()` for the count map so there's no SQL
+  duplication.
+- `validate_config(array $config): array` — class-layer 2–6 option cap
+  (the chip's spec), per-option non-empty/≤200-char check, optional
+  `correct_index` (negative = "no correct answer" = valid; ≥ count = error),
+  optional `render_style` enum. Returns a field→message map, never throws.
+- `get_aria_announcements(): array` — `response_recorded` / `tally_updated` /
+  `correct_revealed`, resolved via `get_string()` for the SR live region.
+- Plus a type-specific companion `render_result(sessionid, slideid,
+  show_correct)` that renders `qt_multiple_choice_result` with the same
+  bar-width maths `result_panel` + `chart_updater.js` use, so server render
+  and live SSE mutation stay pixel-identical.
+
+**2. Two Mustache templates** (`templates/`):
+- `qt_multiple_choice_audience.mustache` — complete audience `<form>`
+  (radio-group OR button-group via `is_radio`/`is_buttons` flags), BEM names
+  (`sentientia-mc-audience__option/--correct`), `role="radiogroup"` +
+  `aria-label` = question text, `name="value_int"` (POST contract identical
+  to the legacy inline path), ≤590px mobile overrides.
+- `qt_multiple_choice_result.mustache` — trainer bar chart using the
+  `.sentientia-results-panel` / `.sentientia-bar-row[data-option-index]` DOM
+  that `chart_updater.js` already targets, so bars + counts + percentages
+  update **in place via SSE with no page reload**. sr-only
+  `[data-live-tally-summary]` aria-live region preserved.
+
+**3. End-to-end wiring (class is the live code path, not dead code):**
+- `audience/play.php` — multichoice response form now renders via
+  `multiple_choice::render()`; multichoice POST persists via
+  `multiple_choice::persist_response()`. Other 5 (still-scaffold) types keep
+  their inline path. POST contract unchanged.
+- `trainer/run.php` — multichoice current-slide result renders via
+  `multiple_choice::render_result(…, show_correct: true)` so the trainer sees
+  the live bar chart **with the correct answer marked**; other types keep
+  `result_panel`.
+- `slide_manager` — `default_settings_for_type('multichoice')` gains
+  `render_style: 'radio'`; `validate_settings` now persists multichoice's
+  optional `render_style` + optional `correct_index` (storage support that
+  was previously quiz-only). **Backwards-compatible**: pre-existing slides
+  with no `render_style` parse to `radio`; the 2–20 storage cap is unchanged
+  (only the class layer enforces 2–6).
+- `slide_form` + `edit_slide.php` — multichoice editor gains a Display-style
+  dropdown (radio | buttons) + an optional 1-based correct-answer field
+  (blank = no correct answer), with prefill on edit.
+
+**4. Lang — 14 new string pairs en+hi, Hindi parity 100% (291/291 keys,
+verified via `array_diff_key`).** New keys: `mc_options_must_be_array`,
+`mc_options_count_2_6`, `mc_option_index_required`, `mc_render_style`(+`_label`
+/`_radio`/`_buttons`/`_help`/`_invalid`), `mc_correct`(+`_label`/`_help`),
+`a11y_mc_tally_updated`, `a11y_mc_correct_revealed`.
+
+**5. PHPUnit — `tests/multiple_choice_test.php`, 16 tests** covering the
+chip's acceptance list: 4 valid configs, 3 invalid configs, persist with a
+valid payload + 4 invalid payloads (out-of-range / negative / missing index /
+missing participant), tally aggregation, idempotent resubmission (no
+double-count), correct-answer reveal flag, mismatched-session empty tally,
+registry slug resolution, and the aria-announcement contract.
+
+### Acceptance status
+
+- [x] MC fully functional end-to-end — class drives audience render + persist,
+  trainer bar chart, correct-answer marking.
+- [x] PHPUnit written (16 tests) — runnable via
+  `vendor/bin/phpunit local/sentientia_live/tests/multiple_choice_test.php`.
+  **Not executed in the cloud chip env (no Moodle DB bootstrap)** — Nitin's
+  local `phpunit` run is the gate.
+- [x] Hindi parity 100% (291/291).
+- [x] All 12 touched/new PHP files `php -l` clean; zero conflict markers.
+- [⏳] Visual evidence — SSE chart-update screenshots **deferred to local**:
+  the cloud container has no XAMPP/Chrome. Full capture checklist +
+  acceptance bar at
+  `docs/visual-evidence/2026-05-25/E4-multiple-choice/README.md` (6
+  screenshots incl. the side-by-side SSE mid-vote shot).
+
+### Scope decisions (confirmed with Nitin)
+
+- **Option cap:** `validate_config` enforces 2–6 (chip spec); `slide_manager`
+  keeps 2–20 for back-compat with stored production rows. Class layer is the
+  stricter gate.
+- **Slug:** canonical storage slug stays `multichoice` (DB schema +
+  `slide_manager::VALID_TYPES` + existing registry test). `get_by_slug(
+  'multichoice')` resolves to `multiple_choice::class`; the chip brief's
+  `'multiple_choice'` phrasing referred to the class file, not a new slug.
+- **Visual evidence:** documented capture checklist (cloud env can't
+  screenshot localhost).

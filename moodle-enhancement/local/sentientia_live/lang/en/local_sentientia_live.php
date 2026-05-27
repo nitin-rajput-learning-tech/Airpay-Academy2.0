@@ -365,3 +365,23 @@ $string['response_ranking_bad_json']    = 'Ranking response must be a JSON array
 $string['response_ranking_incomplete']  = 'Please rank every item before submitting.';
 $string['invalidparticipant']           = 'Participant record not found.';
 $string['participant_session_mismatch'] = 'Participant does not belong to this session.';
+
+// ── Phase E.4 — multiple_choice question type ─────────────────────
+// Class-layer constraints (validate_config) and audience-render
+// surfaces. The 2-6 cap is enforced by the class layer only;
+// slide_manager::validate_settings still accepts up to 20 options
+// for backwards compat with stored production rows.
+$string['mc_options_must_be_array']     = 'Options must be provided as a list.';
+$string['mc_options_count_2_6']         = 'Multiple choice slides need between 2 and 6 options (you provided {$a}).';
+$string['mc_option_index_required']     = 'A selected option is required.';
+$string['mc_render_style']              = 'Display style';
+$string['mc_render_style_invalid']      = 'Render style must be either "radio" or "buttons".';
+$string['mc_render_style_label']        = 'Display style';
+$string['mc_render_style_radio']        = 'Radio buttons';
+$string['mc_render_style_buttons']      = 'Tap-target buttons';
+$string['mc_render_style_help']         = 'Radio buttons fit dense option lists; tap-target buttons are easier on mobile when each option is short.';
+$string['mc_correct']                   = 'Correct answer';
+$string['mc_correct_label']             = 'Correct answer (optional)';
+$string['mc_correct_help']              = 'Optional. Enter the option number (1, 2, …) that is the correct answer, or leave blank for a poll with no right answer. The trainer results view marks the correct option; the audience does not see it until you reveal.';
+$string['a11y_mc_tally_updated']        = 'Vote tally updated';
+$string['a11y_mc_correct_revealed']     = 'Correct answer revealed';

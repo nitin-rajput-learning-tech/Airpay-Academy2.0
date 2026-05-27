@@ -364,3 +364,23 @@ $string['response_ranking_bad_json']    = 'Ranking प्रतिक्रि�
 $string['response_ranking_incomplete']  = 'भेजने से पहले कृपया प्रत्येक आइटम को rank करें।';
 $string['invalidparticipant']           = 'प्रतिभागी record नहीं मिला।';
 $string['participant_session_mismatch'] = 'प्रतिभागी इस सेशन का नहीं है।';
+
+// ── Phase E.4 — multiple_choice question type ─────────────────────
+// Class-layer constraints (validate_config) और audience-render
+// surfaces। 2-6 cap केवल class layer में लगता है;
+// slide_manager::validate_settings backwards compat के लिए अब भी
+// 20 तक options स्वीकार करता है।
+$string['mc_options_must_be_array']     = 'विकल्प सूची के रूप में देने होंगे।';
+$string['mc_options_count_2_6']         = 'बहुविकल्पीय स्लाइड के लिए 2 से 6 विकल्प चाहिए (आपने {$a} दिए)।';
+$string['mc_option_index_required']     = 'चयनित विकल्प आवश्यक है।';
+$string['mc_render_style']              = 'प्रदर्शन शैली';
+$string['mc_render_style_invalid']      = 'Render style "radio" या "buttons" होना चाहिए।';
+$string['mc_render_style_label']        = 'प्रदर्शन शैली';
+$string['mc_render_style_radio']        = 'Radio बटन';
+$string['mc_render_style_buttons']      = 'Tap-target बटन';
+$string['mc_render_style_help']         = 'Radio बटन घने विकल्प सूचियों के लिए उपयुक्त हैं; tap-target बटन मोबाइल पर तब आसान हैं जब प्रत्येक विकल्प छोटा हो।';
+$string['mc_correct']                   = 'सही उत्तर';
+$string['mc_correct_label']             = 'सही उत्तर (वैकल्पिक)';
+$string['mc_correct_help']              = 'वैकल्पिक। वह विकल्प संख्या (1, 2, …) दर्ज करें जो सही उत्तर है, या बिना सही उत्तर वाले पोल के लिए खाली छोड़ें। ट्रेनर परिणाम दृश्य सही विकल्प को चिह्नित करता है; ऑडियंस इसे तब तक नहीं देखती जब तक आप प्रकट नहीं करते।';
+$string['a11y_mc_tally_updated']        = 'मत गिनती अद्यतन हुई';
+$string['a11y_mc_correct_revealed']     = 'सही उत्तर प्रकट किया गया';

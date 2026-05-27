@@ -89,6 +89,15 @@ switch ($slide->type) {
             $prefill['correct_index_1based'] =
                 ((int) ($current_settings['correct_index'] ?? 0)) + 1;
         }
+        if ($slide->type === 'multichoice') {
+            $prefill['render_style'] =
+                $current_settings['render_style'] ?? 'radio';
+            // Optional correct answer — prefill 1-based, blank if none.
+            $prefill['mc_correct_index_1based'] =
+                isset($current_settings['correct_index'])
+                    ? (string) (((int) $current_settings['correct_index']) + 1)
+                    : '';
+        }
         break;
     case 'rating':
         $prefill['scale_min'] = $current_settings['scale_min'] ?? 1;

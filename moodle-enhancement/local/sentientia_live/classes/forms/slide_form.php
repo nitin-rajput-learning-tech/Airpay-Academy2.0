@@ -85,6 +85,31 @@ class slide_form extends \moodleform {
             case 'multichoice':
                 $this->add_options_repeat($mform, 'options',
                     'mc_option', 'mc_add_more');
+
+                // Phase E.4 — render style (radio | buttons).
+                $mform->addElement('select', 'render_style',
+                    get_string('mc_render_style_label',
+                        'local_sentientia_live'),
+                    [
+                        'radio'   => get_string('mc_render_style_radio',
+                            'local_sentientia_live'),
+                        'buttons' => get_string('mc_render_style_buttons',
+                            'local_sentientia_live'),
+                    ]);
+                $mform->setType('render_style', PARAM_ALPHA);
+                $mform->setDefault('render_style', 'radio');
+                $mform->addHelpButton('render_style',
+                    'mc_render_style', 'local_sentientia_live');
+
+                // Phase E.4 — OPTIONAL correct-answer marking (1-based;
+                // blank = no correct answer). Unlike quiz, multichoice
+                // does not require a correct answer.
+                $mform->addElement('text', 'mc_correct_index_1based',
+                    get_string('mc_correct_label', 'local_sentientia_live'),
+                    ['size' => 4]);
+                $mform->setType('mc_correct_index_1based', PARAM_TEXT);
+                $mform->addHelpButton('mc_correct_index_1based',
+                    'mc_correct', 'local_sentientia_live');
                 break;
 
             case 'quiz':
@@ -261,6 +286,16 @@ class slide_form extends \moodleform {
                 if ($type === 'quiz') {
                     $idx1 = (int) ($data['correct_index_1based'] ?? 1);
                     $settings['correct_index'] = max(0, $idx1 - 1);  // 1-based -> 0-based
+                }
+                if ($type === 'multichoice') {
+                    $rs = $data['render_style'] ?? 'radio';
+                    $settings['render_style'] =
+                        in_array($rs, ['radio', 'buttons'], true) ? $rs : 'radio';
+                    // Optional correct answer — blank / non-numeric = none.
+                    $raw = trim((string) ($data['mc_correct_index_1based'] ?? ''));
+                    if ($raw !== '' && ctype_digit($raw) && (int) $raw >= 1) {
+                        $settings['correct_index'] = (int) $raw - 1;  // 1-based -> 0-based
+                    }
                 }
                 return $settings;
 
