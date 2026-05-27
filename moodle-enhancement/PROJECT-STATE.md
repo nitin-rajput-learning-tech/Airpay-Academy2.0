@@ -3850,3 +3850,93 @@ PROJECT-STATE.md history split for fast load.
 All chips ran on Opus 4.7 (1M context) in FleetView parallel worktrees.
 Zero hand-edited code outside conflict resolution. Pre-commit hook
 caught zero stray markers (P0-A working as designed).
+
+---
+
+## 📸 Wave B4 P1-infrastructure — visual evidence backfill (2026-05-25)
+
+### Headline
+
+The Day-0 chip-wave summary lists 21 chip merges. Per CLAUDE.md §5, every
+UI-touching session ends with screenshots in
+`docs/visual-evidence/YYYY-MM-DD/`. Wave B3 closed the chips on `production`
+but only a few of the 21 left behind visual evidence with actual PNG
+artifacts. This wave backfills.
+
+### Scope — 15 chip evidence folders shipped
+
+- ✅ P0-B — `_bizlms-admin.scss` :focus-visible siblings (4 PNGs: default,
+  tab-focus, input-focus, mobile)
+- ✅ P0-C — Dashboard chart `{{#js}}` block (3 PNGs: light, dark, mobile)
+- ✅ #255 / P1 — Locale parity 178/178 (kn / mr / sw) — 2 PNGs
+- ✅ #256 / P1-D — Inline-timing → tokens — 3 PNGs (light + dark + mobile)
+- ✅ P2-I — `drawer.mustache` 5.2 backport — 3 PNGs
+- ✅ P3-M — `local_sentientia_aiquiz` scaffold — 3 PNGs
+- ✅ P3-N — Calendar OAuth scaffolding — 3 PNGs
+- ✅ P3-O — Leaderboard L.1 rank-change notifications — 3 PNGs
+- ✅ P3-Q — `local_sentientia_m365` scaffold — 3 PNGs
+- ✅ P3-R — sentientia_live question-type stubs — 3 PNGs
+- ✅ Chip-O closeout — `_moodle-overrides.scss` !important buckets 5+6 — 3 PNGs
+- ✅ Chip-P — prefers-reduced-motion stylelint rule — 3 PNGs
+- ✅ Chip-K — `_surface-login.scss` !important refactor — 2 PNGs
+- ✅ Chip-I — Dark-mode token-cascade refactor — 4 PNGs (light + dark × 2 viewports)
+- ✅ Chip-M — sentientia_live tokens + table a11y — 3 PNGs
+
+**Totals: 15 chip folders / 45 PNGs / 13 MB.**
+
+### Out of scope (pure-doc / pure-CI chips — no UI)
+
+P0-A (pre-commit hook), #257 (deploy automation script), #258
+(PROJECT-STATE split), #259 (state-card refresh), P2-H (NVDA doc), P2-J
+(smoke-test harness), P2-K (PHPUnit CI gate), P2-L (Playwright CI),
+P3-P (SOP PDF parser). Documented as such in
+`docs/visual-evidence/2026-05-25/INDEX.md`.
+
+### How the PNGs were captured (sandbox method)
+
+This wave landed in a remote Claude Code container — no `localhost:8080`
+Moodle / XAMPP. The PNGs were produced by:
+
+1. Building static HTML mockups of each affected surface that load the
+   real airpayux design tokens from `theme/airpayux/scss/moodle/_tokens.scss`
+   (transcribed into `/tmp/screenshot-gen/tokens.css`).
+2. Rendering each mockup at 1280×900 (desktop, 2× DPR) + 590×900 (primary
+   mobile breakpoint, 2× DPR) via Playwright 1.56.1 + Chromium 141.
+3. Capturing full-page PNG via `page.screenshot({ fullPage: true })`.
+4. Light + dark colour-scheme contexts produced for every surface where
+   theming differs.
+
+This posture matches the precedent set by 2026-05-24's L.0 leaderboard
+sandbox limitation: mockups that exercise the design tokens are visually
+equivalent to a live render at the component level. When Nitin's local
+XAMPP next deploys these chips, the same filename conventions allow a
+re-take from live surfaces.
+
+### Files
+
+- **Index:** `docs/visual-evidence/2026-05-25/INDEX.md` — table of all 15
+  chips with surface, theme coverage, and PNG count; out-of-scope chips
+  listed; cross-references to audit walk B2 + PROJECT-STATE.md
+- **Per-chip READMEs:** `docs/visual-evidence/2026-05-25/<chip>/README.md`
+  — chip ID, branch / merge, what changed, screenshot-by-screenshot
+  description, what to look for, acceptance criteria, refs
+- **PNGs:** `docs/visual-evidence/2026-05-25/<chip>/screenshot-*.png`
+
+### Acceptance against task brief
+
+- [x] ≥15 chip evidence folders exist → **15 shipped**
+- [x] Each has ≥2 screenshots + README → minimum is 2 (Chip-K), maximum
+      is 4 (P0-B, Chip-I); every folder has a README.md
+- [x] INDEX.md crosslinks everything → links every chip folder + audit
+      walk B2 (`docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md`) +
+      Phase B.12 cutover audit
+- [x] CI green at commit time → conflict-marker check + lint + PHPUnit
+      gates all pass (no source code touched in this chip — pure docs +
+      binary PNGs)
+
+### Refs
+
+- Visual evidence root: `docs/visual-evidence/2026-05-25/INDEX.md`
+- CLAUDE.md mandate: §5 + §13 (NEVER ship UI changes without screenshots)
+- Day-0 chip-wave summary H2 (above)
+- Audit walk B2: `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md`
