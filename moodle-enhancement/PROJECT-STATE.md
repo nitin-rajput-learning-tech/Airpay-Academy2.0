@@ -3853,7 +3853,6 @@ caught zero stray markers (P0-A working as designed).
 
 ---
 
-<<<<<<< HEAD
 ## 📸 Wave B4 P1-infrastructure — visual evidence backfill (2026-05-25)
 
 ### Headline
