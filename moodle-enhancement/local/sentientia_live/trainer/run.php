@@ -83,6 +83,13 @@ if ($realtime_on) {
     // dispatched by trainer_sse, mutates bar widths + counts in place.
     $PAGE->requires->js_call_amd(
         'local_sentientia_live/chart_updater', 'init');
+    // Phase E.5 — wordcloud_updater handles wordcloud-type panels
+    // (mutates font-size buckets in place; no innerHTML). loader stays
+    // small enough to attach unconditionally.
+    $PAGE->requires->js_call_amd(
+        'local_sentientia_live/wordcloud_loader', 'init');
+    $PAGE->requires->js_call_amd(
+        'local_sentientia_live/wordcloud_updater', 'init');
 }
 
 echo $OUTPUT->header();

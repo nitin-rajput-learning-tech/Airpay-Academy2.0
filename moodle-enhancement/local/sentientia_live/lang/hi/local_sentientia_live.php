@@ -262,7 +262,7 @@ $string['wc_max_word_length_label']     = 'अधिकतम शब्द ल�
 $string['wc_max_word_length']           = 'अधिकतम शब्द लंबाई';
 $string['wc_max_word_length_help']      = 'इस अक्षर संख्या से लंबे submissions truncate हो जाते हैं। क्लाउड को पढ़ने योग्य बनाए रखने में मदद करता है। Range 3-100।';
 $string['wc_dedupe_label']              = 'ऑडियंस submissions को de-duplicate करें';
-$string['wc_dedupe_desc']               = 'चेक करने पर, प्रत्येक ऑडियंस सदस्य केवल एक शब्द भेज सकता है। अनचेक करने पर, वे कई शब्द भेज सकते हैं।';
+$string['wc_dedupe_desc']               = 'चेक करने पर, किसी learner के दोहराए गए शब्द एक बार गिने जाते हैं — वे एक ही शब्द को बार-बार भेजकर उसे inflate नहीं कर सकते। अधिकतम-प्रतिक्रिया कैप अभी भी सीमित करता है कि प्रत्येक learner कितने भिन्न शब्द योगदान करता है। अनचेक करने पर, एक ही learner का वही शब्द हर बार गिना जाता है।';
 
 // Open ended.
 $string['openended_max_chars_label']    = 'प्रति प्रतिक्रिया अधिकतम अक्षर';
@@ -353,6 +353,31 @@ $string['qtype_quiz_name']               = 'क्विज़';
 $string['qtype_quiz_desc']               = 'Multiple choice की तरह, लेकिन एक निर्धारित सही उत्तर के साथ। ऑडियंस को तुरंत सही/गलत दिखाई देता है; trainer के projector पर शुद्धता और गति के आधार पर live leaderboard दिखाई देता है।';
 $string['qtype_ranking_name']             = 'रैंकिंग';
 $string['qtype_ranking_desc']             = 'ऑडियंस आइटम की सूची को अपने पसंदीदा क्रम में drag करता है। परिणाम प्रत्येक आइटम की aggregate औसत स्थिति दिखाते हैं — निम्न = अधिक पसंदीदा।';
+
+// ── Phase E.5 — Word cloud पूर्ण कार्यान्वयन (admin + audience) ──
+// Admin settings page strings.
+$string['settings_pagetitle']            = 'Sentientia लाइव एंगेजमेंट';
+$string['settings_wc_heading']           = 'वर्ड क्लाउड डिफ़ॉल्ट';
+$string['settings_wc_heading_desc']      = 'ट्रेनर द्वारा वर्ड क्लाउड स्लाइड बनाते समय लागू डिफ़ॉल्ट। प्रति स्लाइड सेटिंग्स इन्हें override करती हैं।';
+$string['setting_default_min_word_length']      = 'डिफ़ॉल्ट न्यूनतम शब्द लंबाई';
+$string['setting_default_min_word_length_desc'] = 'इस अक्षर संख्या से छोटे tokens tokenisation के दौरान drop होते हैं। डिफ़ॉल्ट 2 — एकल-अक्षर noise हटाता है पर "AI" या "UX" जैसे छोटे शब्द रखता है।';
+$string['setting_default_max_responses']        = 'डिफ़ॉल्ट प्रति learner अधिकतम प्रतिक्रियाएं';
+$string['setting_default_max_responses_desc']   = 'एक ऑडियंस सदस्य एक वर्ड क्लाउड स्लाइड में कितने शब्द योगदान कर सकता है, इस पर हार्ड कैप। डिफ़ॉल्ट 3 — Mentimeter के मानक से मिलान।';
+
+// Word-cloud slide-editor form fields (per-slide overrides).
+$string['wc_min_word_length_label']      = 'न्यूनतम शब्द लंबाई';
+$string['wc_max_responses_label']        = 'प्रति learner अधिकतम शब्द';
+$string['wc_max_responses']              = 'प्रति learner अधिकतम शब्द';
+$string['wc_max_responses_help']         = 'एक ऑडियंस सदस्य इस स्लाइड में कितने शब्द योगदान कर सकता है (1-10)। प्रत्येक submission इस कैप तक शब्द जोड़ता है। डिफ़ॉल्ट साइट-व्यापी सेटिंग।';
+
+// Audience response form (word cloud).
+$string['wc_audience_input_label']       = 'क्लाउड में योगदान देने के लिए एक शब्द टाइप करें';
+$string['wc_remaining_hint']             = '{$a->max} में से {$a->remaining} शब्द शेष';
+$string['wc_max_responses_reached']      = 'आप अधिकतम {$a} शब्द पहले ही योगदान कर चुके हैं।';
+$string['wc_max_responses_invalid']      = 'प्रति learner अधिकतम प्रतिक्रियाएं {$a->min} और {$a->max} के बीच होनी चाहिए।';
+$string['wc_min_word_length_invalid']    = 'न्यूनतम शब्द लंबाई 1 और 20 के बीच होनी चाहिए।';
+$string['wc_min_exceeds_max']            = 'न्यूनतम शब्द लंबाई अधिकतम शब्द लंबाई से अधिक नहीं हो सकती।';
+$string['wc_a11y_new_word_added']        = 'क्लाउड में नया शब्द जोड़ा गया';
 
 // response_recorder errors.
 $string['response_slide_mismatch']      = 'वह स्लाइड इस सेशन का हिस्सा नहीं है।';

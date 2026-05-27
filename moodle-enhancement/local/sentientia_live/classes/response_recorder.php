@@ -220,13 +220,23 @@ class response_recorder {
                 return $tally;
 
             case 'wordcloud':
+                // Phase E.5 — value_text now carries a JSON array of
+                // words per participant ("trust","innovation",...).
+                // word_cloud::decode_words() also handles legacy plain-
+                // string rows (single-word, pre-E.5) by tokenising on
+                // whitespace, so in-flight sessions don't break when
+                // this chip lands.
                 $tally = [];
                 foreach ($rows as $r) {
-                    $word = mb_strtolower(trim((string) $r->value_text));
-                    if ($word === '') {
-                        continue;
+                    $words = \local_sentientia_live\question_types\word_cloud
+                        ::decode_words((string) ($r->value_text ?? ''));
+                    foreach ($words as $w) {
+                        $w = mb_strtolower(trim($w), 'UTF-8');
+                        if ($w === '') {
+                            continue;
+                        }
+                        $tally[$w] = ($tally[$w] ?? 0) + 1;
                     }
-                    $tally[$word] = ($tally[$word] ?? 0) + 1;
                 }
                 arsort($tally);
                 return $tally;
@@ -313,14 +323,28 @@ class response_recorder {
                 break;
 
             case 'wordcloud':
+                // Phase E.5 — value_text is now a JSON array of cleaned
+                // tokens prepared by word_cloud::persist_response. The
+                // per-word length cap was applied during tokenisation,
+                // so here we only assert non-empty.
                 if ($value_text === null || trim($value_text) === '') {
                     throw new \moodle_exception('response_text_required',
                         'local_sentientia_live');
                 }
-                $max_len = (int) ($settings['max_word_length'] ?? 50);
-                if (mb_strlen($value_text) > $max_len) {
-                    throw new \moodle_exception('response_text_too_long',
-                        'local_sentientia_live', '', $max_len);
+                $decoded = json_decode($value_text, true);
+                if (is_array($decoded)) {
+                    // Canonical JSON-array shape — non-empty assertion only.
+                    if (empty($decoded)) {
+                        throw new \moodle_exception('response_text_required',
+                            'local_sentientia_live');
+                    }
+                } else {
+                    // Legacy single-word path — still honour the per-word cap.
+                    $max_len = (int) ($settings['max_word_length'] ?? 50);
+                    if (mb_strlen($value_text) > $max_len) {
+                        throw new \moodle_exception('response_text_too_long',
+                            'local_sentientia_live', '', $max_len);
+                    }
                 }
                 break;
 

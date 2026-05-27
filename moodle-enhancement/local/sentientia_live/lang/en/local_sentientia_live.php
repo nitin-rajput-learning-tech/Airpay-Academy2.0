@@ -262,7 +262,7 @@ $string['wc_max_word_length_label']     = 'Max word length';
 $string['wc_max_word_length']           = 'Max word length';
 $string['wc_max_word_length_help']      = 'Audience submissions longer than this many characters are truncated. Helps keep the cloud readable. Range 3-100.';
 $string['wc_dedupe_label']              = 'De-duplicate audience submissions';
-$string['wc_dedupe_desc']               = 'When ticked, each audience member can submit only one word. When unticked, they can submit multiple.';
+$string['wc_dedupe_desc']               = 'When ticked, a learner\'s repeated words are counted once — they can\'t inflate a single word by submitting it again. The maximum-responses cap still limits how many distinct words each learner contributes. When unticked, the same word from one learner is counted each time.';
 
 // Open ended.
 $string['openended_max_chars_label']    = 'Max characters per response';
@@ -354,6 +354,31 @@ $string['qtype_quiz_name']               = 'Quiz';
 $string['qtype_quiz_desc']               = 'Like multiple choice, but with a designated correct answer. Audience sees right/wrong instantly; trainer projector shows a live leaderboard ranked by correctness and speed.';
 $string['qtype_ranking_name']            = 'Ranking';
 $string['qtype_ranking_desc']            = 'Audience drags a list of items into their preferred order. Results show each item\'s aggregate average position — lower is more preferred.';
+
+// ── Phase E.5 — Word cloud full implementation (admin + audience) ──
+// Admin settings page strings.
+$string['settings_pagetitle']            = 'Sentientia Live engagement';
+$string['settings_wc_heading']           = 'Word-cloud defaults';
+$string['settings_wc_heading_desc']      = 'Defaults applied when a trainer creates a word-cloud slide. Per-slide settings override these.';
+$string['setting_default_min_word_length']      = 'Default minimum word length';
+$string['setting_default_min_word_length_desc'] = 'Tokens shorter than this many characters are dropped during tokenisation. Set to 2 by default — drops single-letter noise but keeps short words like "AI" or "UX".';
+$string['setting_default_max_responses']        = 'Default maximum responses per learner';
+$string['setting_default_max_responses_desc']   = 'Hard cap on how many words a single audience member can contribute to one word-cloud slide. Default 3 — mirrors Mentimeter\'s standard.';
+
+// Word-cloud slide-editor form fields (per-slide overrides).
+$string['wc_min_word_length_label']      = 'Minimum word length';
+$string['wc_max_responses_label']        = 'Max words per learner';
+$string['wc_max_responses']              = 'Max words per learner';
+$string['wc_max_responses_help']         = 'How many words a single audience member can contribute to this slide (1-10). Each submission adds words up to this cap. Defaults to the site-wide setting.';
+
+// Audience response form (word cloud).
+$string['wc_audience_input_label']       = 'Type a word to contribute to the cloud';
+$string['wc_remaining_hint']             = '{$a->remaining} of {$a->max} words remaining';
+$string['wc_max_responses_reached']      = 'You have already contributed the maximum of {$a} words.';
+$string['wc_max_responses_invalid']      = 'Max responses per learner must be between {$a->min} and {$a->max}.';
+$string['wc_min_word_length_invalid']    = 'Minimum word length must be between 1 and 20.';
+$string['wc_min_exceeds_max']            = 'Minimum word length cannot exceed maximum word length.';
+$string['wc_a11y_new_word_added']        = 'New word added to the cloud';
 
 // response_recorder errors.
 $string['response_slide_mismatch']      = 'That slide is not part of this session.';

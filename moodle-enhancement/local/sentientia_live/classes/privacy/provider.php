@@ -185,11 +185,22 @@ class provider implements
             $responses = $DB->get_records('local_sentientia_live_responses',
                 ['participantid' => $p->id]);
             foreach ($responses as $r) {
+                // Phase E.5 — wordcloud value_text is stored as a JSON
+                // array of words. Decode it to a human-readable,
+                // comma-separated list for the export so the subject sees
+                // their words, not raw JSON. Other types export as-is.
+                $value_text = $r->value_text;
+                $slide = \local_sentientia_live\slide_manager::get((int) $r->slideid);
+                if ($slide && $slide->type === 'wordcloud') {
+                    $words = \local_sentientia_live\question_types\word_cloud
+                        ::decode_words((string) ($r->value_text ?? ''));
+                    $value_text = implode(', ', $words);
+                }
                 writer::with_context($context)->export_data(
                     ['Sentientia Live', 'Your responses', $p->sessionid . '-' . $r->slideid],
                     (object) [
                         'value_int'   => $r->value_int,
-                        'value_text'  => $r->value_text,
+                        'value_text'  => $value_text,
                         'timecreated' => $r->timecreated,
                     ]
                 );
