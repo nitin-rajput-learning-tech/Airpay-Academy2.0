@@ -3850,3 +3850,62 @@ PROJECT-STATE.md history split for fast load.
 All chips ran on Opus 4.7 (1M context) in FleetView parallel worktrees.
 Zero hand-edited code outside conflict resolution. Pre-commit hook
 caught zero stray markers (P0-A working as designed).
+
+---
+
+## 🔁 WAVE B2 P1 — PLATFORM VISUAL RE-AUDIT (2026-05-25) — ✅ SHIPPED
+
+### Session — verify the 21-chip wave closed the 2026-05-24 audit
+
+New doc: `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-25.md`. Re-verifies all 25
+prior findings (F-01…F-25) at code level against production tip `65c35b9a`, sweeps
+for chip-wave regressions, files new findings, and re-ranks the next-wave backlog.
+
+**Methodology (honesty note):** run from the Linux cloud container, which has **no
+route to `localhost:8080/moodle`** (XAMPP is on the Windows host) and no browser to
+the LMS. Verification is static + git-diff. The 10-surface × 5-persona browser walk
+is a **local follow-up** — runnable harness at
+`docs/visual-evidence/2026-05-25/audit-walk/VISUAL-WALK-CHECKLIST.md`; PNG drop
+paths in the audit's Appendix B read "pending local capture" until run on Windows.
+
+### Closure scorecard — 25 prior findings
+
+| Status | Count | Findings |
+|---|---|---|
+| ✅ CLOSED | **21** | F-01,02,03,04,05,06,07,10,11,12,13,14,15,16,17,19,20,21,23,24,25 |
+| ◑ PARTIAL | 2 | F-09 (footer comment bloat in new form), F-18 (profile `!important` 164→91, `_surface-user` 69) |
+| ❌ OPEN | 1 | F-08 (footer `alt="airpay academy"` — never scheduled, P2) |
+| ◑ process-N/A | 1 | F-22 (was "templates not deep-read", not a code defect) |
+
+**0 open P0** — the single blocking condition of the 2026-05-24 audit is met.
+Non-F backlog also confirmed: P0 #1/#2 (orphan files deleted), P0 #7 (locale parity
+178×5 = 100%), P1 #13 (`dark_mode.scss` 253→56 active `!important`), P2 #16/#18
+(`_moodle-overrides` 136→39), P2 #19 (`prefers-reduced-motion` stylelint rule).
+
+### New findings — 6 + 2 carry-forward (zero P0)
+
+| # | Sev | Surface | Item |
+|---|---|---|---|
+| N-01 | **P1** | Navbar | `navbar.mustache:165` inline `<script>` (mobile-nav) → AMD (CSP). Pre-existing; F-02 closed only the cart sibling |
+| N-02 | **P1** | Dashboard | ~10 hardcoded English strings (team-table headers, System Health, Continue Learning, Dark Mode) i18n missed |
+| N-03 | P2 | Dashboard | Chart palette hardcoded hex in `{{#js}}` — not dark-mode/white-label aware |
+| N-04 | P2 | User | `_surface-user.scss` 69 active `!important` — new top offender post-split |
+| N-05 | P2 | Course | 2nd `coursebannerimage` (drawer 5.2 backport) safe but lacks F-20 comment |
+| N-06 | P3 | Messaging | No `_surface-message.scss` — `/message/` un-themed vs design system |
+| F-08 | P2 | Footer | (carry) logo `alt` → `{{sitename}}` |
+| F-09 | P2 | Footer | (carry) move two history comment blocks to git/docs |
+
+### Verdict
+
+**CONDITIONAL PASS (2026-05-24) → PASS (2026-05-25).** Promote to Phase 2
+customer-zero. Next-wave P1 head: N-01, N-02. No functional regressions detected;
+conflict-marker CI gate clean (0) across all 21 merges.
+
+### Deliverables this session
+- `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-25.md` (re-audit, §2.1–§2.12 + App. A/B/C)
+- `docs/visual-evidence/2026-05-25/audit-walk/` (README + VISUAL-WALK-CHECKLIST)
+- This `PROJECT-STATE.md` H2 section
+
+### What Nitin needs to do
+- Run the visual walk on the Windows host (Chrome) per the checklist; drop 14 PNGs.
+- Schedule N-01 + N-02 (P1) for the next wave.
