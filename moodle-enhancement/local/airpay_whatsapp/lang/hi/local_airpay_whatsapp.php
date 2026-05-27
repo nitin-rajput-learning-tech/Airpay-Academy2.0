@@ -93,3 +93,16 @@ $string['privacy:metadata:local_airpay_user_channel_prefs:dlt_consent_at']
     = 'टाइमस्टैम्प जब उपयोगकर्ता ने लेन-देन संदेशों के लिए DLT सहमति दी।';
 $string['privacy:metadata:local_airpay_user_channel_prefs:dlt_consent_text']
     = 'ऑप्ट-इन के समय उपयोगकर्ता को प्रस्तुत सहमति भाषा का स्नैपशॉट।';
+
+// ── Stream F / Wave E2 P4 (2026-05-25) — content notifications ──
+$string['content_notifications_heading'] = 'सामग्री सूचनाएँ (WhatsApp)';
+$string['content_notifications_intro']   = 'चार सामग्री-इवेंट WhatsApp ट्रिगर के लिए मास्टर स्विच: आपकी कैटलॉग में नया कोर्स प्रकाशित, कोर्स 48 घंटों से कम समय में देय, सर्टिफिकेट तैयार, और लर्निंग-पाथ माइलस्टोन पूर्ण। डिफ़ॉल्ट रूप से बंद — एडमिन को Switchboard के माध्यम से ऑप्ट-इन करना होगा। सभी ट्रिगर के लिए मास्टर WhatsApp engagement फ़्लैग भी चालू होना चाहिए।';
+$string['content_flag_new_course']           = 'आपकी कैटलॉग में नया कोर्स प्रकाशित';
+$string['content_flag_course_due_soon']      = 'कोर्स 48 घंटों से कम समय में देय';
+$string['content_flag_certificate_ready']    = 'सर्टिफिकेट तैयार';
+$string['content_flag_path_milestone']       = 'लर्निंग-पाथ माइलस्टोन पूर्ण (25 / 50 / 75 / 100%)';
+$string['content_template_new_course']       = 'नमस्ते {firstname}, अब आपकी कैटलॉग में एक नया कोर्स उपलब्ध है: {course_name}. यहाँ से शुरू करें: {course_url}';
+$string['content_template_course_due_soon']  = 'नमस्ते {firstname}, {course_name} {deadline} में देय है। अभी पूरा करें: {course_url}';
+$string['content_template_certificate_ready'] = 'बधाई हो {firstname}! {course_name} के लिए आपका सर्टिफिकेट तैयार है: {certificate_url}';
+$string['content_template_path_milestone']   = 'नमस्ते {firstname}, आपने {path_name} का {milestone_label} पूरा कर लिया है। जारी रखें: {path_url}';
+$string['content_throttle_note']             = '{$a} घंटों के भीतर एक ही ट्रिगर के डुप्लिकेट संदेशों को बर्स्ट नोटिफिकेशन से बचाने के लिए दबा दिया जाता है।';

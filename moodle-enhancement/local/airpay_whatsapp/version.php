@@ -17,10 +17,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_airpay_whatsapp';
-$plugin->version   = 2026052101;
+$plugin->version   = 2026052501;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;   // mock-mode only — [CONFIRM] required before live
-$plugin->release   = '0.3.0-alpha';    // Stream C / C.1 — notification_bridge + cron hooks
+$plugin->release   = '0.4.0-alpha';    // Stream F / Wave E2 P4 — content notifications
 $plugin->dependencies = [
     'local_airpay_core' => 2026051401,  // feature_flags resolver
 ];
@@ -43,3 +43,24 @@ $plugin->dependencies = [
 //              External provider sending still [CONFIRM]-gated — flipping
 //              from mock to live mode requires Switchboard flag toggle +
 //              DLT registration + Karix/MSG91 credentials.
+// 0.3.0-alpha  Stream C / Phase C.1 — notification_bridge + cron hooks
+//                + classes/notification_bridge::also_send() wired into
+//                  course_reminder + course_overdue + exam_reminder
+//                  + exam_overdue tasks.
+// 0.4.0-alpha  Stream F / Wave E2 P4 (2026-05-25) — content notifications
+//                + 4 new bridge methods (send_new_course_notification,
+//                  send_course_due_soon, send_certificate_ready,
+//                  send_path_milestone)
+//                + classes/observer.php for course_updated +
+//                  certificate_issued + course_completed
+//                + db/events.php registers all 3 observers
+//                + db/feature_flags.php registers new master flag
+//                  airpay_whatsapp_content_notifications (default OFF)
+//                + 4 new DLT templates (content_new_course /
+//                  content_course_due_soon / content_certificate_ready /
+//                  content_path_milestone) seeded via install.php +
+//                  upgrade.php (idempotent)
+//                + 6h per-(user, template, context) throttle to suppress
+//                  duplicate sends.
+//                + tests/notification_bridge_content_test.php
+//                + Hi lang strings appended.

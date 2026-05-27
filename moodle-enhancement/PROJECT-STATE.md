@@ -3850,3 +3850,73 @@ PROJECT-STATE.md history split for fast load.
 All chips ran on Opus 4.7 (1M context) in FleetView parallel worktrees.
 Zero hand-edited code outside conflict resolution. Pre-commit hook
 caught zero stray markers (P0-A working as designed).
+
+---
+
+## 📲 STREAM F — WHATSAPP CONTENT NOTIFICATIONS (Wave E2 P4) ✅ SHIPPED (2026-05-25)
+
+**Plugin:** `local_airpay_whatsapp` → `2026052501` / `0.4.0-alpha`
+**Also touched:** `local_airpay_courses` → `2026052501` / `1.11.2` (inline <48h hook)
+**Branch:** `claude/bold-knuth-Fc2EL`
+**State card:** [airpay_whatsapp-state.md](state-cards/airpay_whatsapp-state.md)
+
+Tier 1 #2 "WhatsApp deepening" — extends the Stream C reminder/overdue
+channel to four **course-content** events. Everything runs in mock mode;
+no external WhatsApp Business API POST happens without `[CONFIRM]` (the
+existing `whatsapp_client` mock/live gate is untouched).
+
+**Four content-event triggers (all on `notification_bridge`):**
+- `send_new_course_notification($userid, $courseid)` — fired by
+  `observer::course_updated` on the visibility 0→1 transition. Because
+  `course_updated` carries no previous-visibility value, a per-course
+  "already announced" marker (single JSON config key — not a per-course
+  config row, so the cached config bag stays O(1)) makes it announce
+  **exactly once per publish**; a genuine hide → re-publish re-announces.
+- `send_course_due_soon($userid, $courseid, $hours_remaining)` — fired
+  inline from `local_airpay_courses\task\course_reminder` for the urgent
+  **<48h** surface, independent of the 7d/3d/1d deadline cadence.
+- `send_certificate_ready($userid, $certificateid)` — fired by
+  `observer::certificate_issued` (`\tool_certificate\event\certificate_issued`),
+  with a defensive issue-userid == recipient sanity check.
+- `send_path_milestone($userid, $pathid, $milestone_label)` — fired by
+  `observer::course_completed`, which recomputes the user's learning-path
+  completion % and pings on a 25 / 50 / 75 / 100% crossing.
+
+**Feature flag (mandatory, default OFF, per-customer override):**
+- `airpay_whatsapp_content_notifications` — registered in the plugin's
+  new `db/feature_flags.php`. Each `send_*` method short-circuits to
+  `flag_off` when OFF, so Airpay's existing production behaviour is
+  unchanged until the customer-zero opt-in flips it. Resolves through
+  the 5-level resolver (ADR-002), so a future customer can differ.
+
+**Throttle:** 6h per-(user, template, context). The context marker
+`[ctx=course:42]` / `[ctx=cert:7]` / `[ctx=path:3:50%]` is stamped into
+`local_airpay_send_log.failure_reason`; the next attempt's check matches
+it with an **escaped** LIKE (the literal `%` in "50%" is escaped, not a
+wildcard). Only SENT/MOCKED/DELIVERED rows count — opted-out/failed
+attempts don't block a legitimate retry.
+
+**Deliverables:**
+- [x] `classes/notification_bridge.php` — 4 new public methods + `content_flag_on()` + private `dispatch`/`can_throttle_pass`/`marker`/`get_user`/`format_hours`
+- [x] `classes/observer.php` — 3 handlers, all fail-safe (try/catch → debugging), publish-once marker, milestone threshold computation, enrolment fan-out (capped at 500)
+- [x] `db/events.php` — 3 observer registrations (course_updated, certificate_issued, course_completed)
+- [x] `db/feature_flags.php` — new master flag, default OFF
+- [x] 4 new DLT templates (`content_new_course`, `content_course_due_soon`, `content_certificate_ready`, `content_path_milestone`) seeded via `install.php` + idempotent `upgrade.php` step (2026052501)
+- [x] `local_airpay_courses\task\course_reminder` — inline `send_course_due_soon` call for the <48h window
+- [x] PHPUnit — `notification_bridge_content_test` (16 methods) + `observer_test` (6 methods), all mock-mode, zero live API
+- [x] Lang en + hi parity (14 new keys each)
+- [x] version.php bumps (whatsapp 0.4.0-alpha, courses 1.11.2)
+- [x] State card refreshed
+
+**Hard-rule compliance:**
+- ✅ NEVER POST to live WhatsApp Business API without [CONFIRM] — all sends go through the existing mock-mode `whatsapp_client`; the live branch stays commented + flag-gated
+- ✅ Feature flag mandatory, default OFF, per-customer override
+- ✅ Hindi parity preserved
+- ✅ No live API calls in tests
+- ✅ State card + PROJECT-STATE updated
+
+**Deferrals (NOT in this stream):**
+- SMS variants of the 4 content templates (WhatsApp-only for now)
+- Per-tenant template-body overrides
+- Admin settings UI toggles per content sub-event (the single master flag governs all four today)
+- Live DLT submission of the 4 new templates (they ship in `pending`, like the originals)
