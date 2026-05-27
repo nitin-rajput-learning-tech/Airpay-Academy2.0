@@ -3850,3 +3850,103 @@ PROJECT-STATE.md history split for fast load.
 All chips ran on Opus 4.7 (1M context) in FleetView parallel worktrees.
 Zero hand-edited code outside conflict resolution. Pre-commit hook
 caught zero stray markers (P0-A working as designed).
+
+---
+
+## 🧹 Wave A2 P0-cleanup — scssphp "Array to string conversion" warning fix (2026-05-27)
+
+**Branch:** `claude/beautiful-goodall-4Fwr9`
+**File changed:** `moodle-enhancement/theme/airpayux/scss/moodle/partials/_moodle-overrides.scss` (1 selector) + `version.php` bump
+**Fix level:** SCSS (no core mod — `lib/scssphp/Compiler.php` left untouched)
+**Reference:** scssphp issue [#606](https://github.com/scssphp/scssphp/issues/606)
+
+### Symptom
+
+Apache `error.log` logged on every theme SCSS (re)compile — i.e. on `/my/`, `/login/`, `/admin/`, any page after a cache purge:
+
+```
+PHP Warning: Array to string conversion in
+  .../lib/scssphp/src/Compiler.php on line 927, referer: http://localhost:8080/moodle/
+```
+
+Appeared **only after the Day-0 chip wave** deployed the partials-based
+`custom_changes.scss` (the live monolith never carried the offending rule).
+
+### Root cause
+
+`Compiler.php:927` lives in `matchExtends()`:
+
+```php
+if (\count($part) > 1) {
+    foreach ($partsPile as $previousPart) {
+        if (! \count(array_diff($previousPart, $part))) {   // ← line 927
+            continue 2;
+        }
+    }
+}
+```
+
+`array_diff()` stringifies every element. When a selector **part** contains a
+nested array, PHP 8.x emits "Array to string conversion". scssphp's parser
+produces a nested array node whenever a **pseudo-class argument starts with a
+bare attribute selector** — e.g. the quoted value in `[aria-expanded="true"]`
+is kept as a `["string", …]` AST node. The single rule that hit this shape was
+`_moodle-overrides.scss:2574` (added in the chip-O / P2 #18 popover-fix block):
+
+```scss
+#quickaccess-popover-container:has([aria-expanded="true"]) .popover-region-container { … }
+```
+
+The warning fires only while an `@extend` is active (non-empty `extendsMap`)
+and a later multi-part selector drives `matchExtends` recursion with the
+`:has([attr])` part on `partsPile` — which is exactly what the full theme
+bundle does. `:not([attr])` is **safe** (scssphp special-cases `:not` at
+`Compiler.php:1147`), which is why the codebase's many `:not([class])` /
+`:not([aria-expanded="true"])` selectors never tripped it.
+
+### Fix
+
+```diff
+- #quickaccess-popover-container:has([aria-expanded="true"]) .popover-region-container {
++ #quickaccess-popover-container:has(*[aria-expanded="true"]) .popover-region-container {
+```
+
+The leading `*` makes the `:has()` argument start with a string-led part
+(universal selector) instead of an attribute-selector array node, sidestepping
+the bug. `*[attr]` ≡ `[attr]` in CSS — identical match set, identical `(0,1,0)`
+specificity — so the rendered result is unchanged. An inline comment at the
+site explains why the `*` is load-bearing, not cosmetic.
+
+### Verification
+
+Authoritative full-bundle compile through the **actual bundled scssphp 1.12.1**,
+replicating Moodle's exact assembly (`pre_scss` = `_tokens` + `_tokens-dark` +
+`_tokens-52`; `main_scss` = epsilon `preset/default.scss` → fontawesome +
+bootstrap + moodle → `custom_changes` → all partials; `extra_scss` =
+`components` + `dark_mode`):
+
+| Measure | Before | After |
+|---|---|---|
+| "Array to string conversion" warnings | **1** (Compiler.php:927) | **0** |
+| Compiled CSS size | 1,191,573 B | 1,192,012 B |
+| Comment-stripped CSS rule-level diff | — | exactly **1 line**: the `*` insertion |
+
+Tree-wide scan confirms no other live trigger remains: every other
+`:(has\|is\|where)\(\[…` occurrence is either inside `_archive/` (uncompiled
+backup) or a safe `:not([…])`. `/my/`, `/login/`, `/admin/` all share this one
+compiled bundle, so the warning is eliminated on every surface.
+
+### Deliverables
+
+- `_moodle-overrides.scss` — 1 selector rewritten + load-bearing comment
+- `version.php` → `2026052700` / `1.0.38-beta` (invalidates cached compiled CSS)
+- This PROJECT-STATE.md H2
+
+### Why no core mod
+
+The task offered a `lib/scssphp/Compiler.php` patch (with ADR + `docs/core-mods/`
+record per CLAUDE.md §13) as the fallback. Rejected: scssphp is a vendored
+upstream library on the active Moodle 5.2 upgrade path — a core patch would be
+silently clobbered by the next upstream pull and carry a permanent re-apply
+burden. The one-character SCSS fix is lower-risk, upgrade-safe, and the task's
+stated preference.

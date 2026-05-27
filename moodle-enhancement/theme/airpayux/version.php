@@ -251,7 +251,20 @@ defined('MOODLE_INTERNAL') || die();
 // rounded up to --ap-transition-quick (150ms) with an inline comment
 // at the violating site explaining the rounding decision. Closes
 // the P2 #19 violation backlog flagged by chip-P's stylelint rule.
-$plugin->version   = 2026052406;
+//
+// Wave A2 P0-cleanup (2026-05-27) — scssphp "Array to string conversion"
+// warning fix. The chip-wave rule in _moodle-overrides.scss used
+// `:has([aria-expanded="true"])` — a pseudo-class whose argument STARTS
+// with a bare attribute selector. scssphp 1.12.1 (lib/scssphp/Compiler.php
+// line 927, array_diff over selector parts in matchExtends) throws
+// "Array to string conversion" on that shape because the parser keeps the
+// quoted attribute value as a nested array node, which array_diff then
+// stringifies. Rewrote to `:has(*[aria-expanded="true"])` — CSS-identical
+// (same match set, same (0,1,0) specificity) but parses to a string-led
+// part, sidestepping the bug. SCSS-level fix (no core mod). Verified via
+// full pre+main+extra theme compile: 1 warning → 0; comment-stripped CSS
+// diff shows the single `*` insertion and nothing else. scssphp issue #606.
+$plugin->version   = 2026052700;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
@@ -270,7 +283,7 @@ $plugin->maturity  = MATURITY_BETA;
 // (83% reduction). Section 1 wrapped under body#page-login-index for
 // ID-specificity. Bundled bugfix: dark-mode selectors used descendant
 // combinator (never fired since #page-X IS body); now chained.
-$plugin->release   = '1.0.37-beta';  // P0 #1+#2+#3+#4+#5+#6+#7+#9 + F-13 + P1 #10+#11+#12+#13+#14+#17 + P2 #18+#19+#20+#21+#23 + cart_badge audit + P1 #12 re-apply + kn/mr/sw 13-key parity restore + P0 cleanup A (conflict-marker hook + CI) + P2 #19 follow-up (inline-timing → tokens)
+$plugin->release   = '1.0.38-beta';  // P0 #1+#2+#3+#4+#5+#6+#7+#9 + F-13 + P1 #10+#11+#12+#13+#14+#17 + P2 #18+#19+#20+#21+#23 + cart_badge audit + P1 #12 re-apply + kn/mr/sw 13-key parity restore + P0 cleanup A (conflict-marker hook + CI) + P2 #19 follow-up (inline-timing → tokens) + Wave A2 P0-cleanup (scssphp array-to-string warning fix)
 // P1 #10 chip-J (2026-05-24) — _surface-profile.scss (2,507 lines)
 // decomposed into 4 per-surface partials: _surface-user, _surface-badges,
 // _surface-grade-report, _surface-calendar. Admin fragments moved to
