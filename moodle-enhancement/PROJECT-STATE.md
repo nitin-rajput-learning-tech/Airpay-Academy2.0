@@ -41,6 +41,19 @@ latest-code (this session's C1-D4 + open_path + agents) re-rehearsal on 5.2
 is an optional micro-follow-up (needs a plugin re-sync to the moodle5.2 root
 layout + Apache:8081).
 
+**P3 — one live API path: wiring built + mock-validated, NO paid call
+made** (user chose "build wiring only"). `local_sentientia_aiquiz`'s live
+Anthropic path was already complete + production-quality: `call_live()` is
+a real curl POST to api.anthropic.com (key never logged), dispatched by the
+`sentientia.aiquiz.live_api` flag, behind a 4-layer cost defence + a UI
+`[CONFIRM]` checkbox (`require_capability` + `require_sesskey` +
+server-validated confirm). Verified: `cli/mock_smoke.php` → "End-to-end mock
+pipeline: PASS"; parser rejects malformed questions; PII (Aadhaar/PAN)
+detection passes. The first live run is an operator step — see the new
+`docs/ai-quiz/LIVE-API-RUNBOOK.md` (set api_key → flip 2 flags → tick the
+UI confirm → review draft → revert flag). **No Anthropic call was made; no
+spend.**
+
 ---
 
 ## ✅ SENTIENTIA Content Pipeline — Agents 5 + 6 built (SOP→SCORM→upload complete) (2026-05-27)
