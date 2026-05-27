@@ -2,10 +2,12 @@
 SENTIENTIA Content Pipeline — end-to-end integration smoke test
 ==============================================================
 
-Drives Agents 1 -> 2 -> 3 -> 4 with a single sample SOP and asserts each
-stage's output exists and parses. Every external API call is **disabled**
-unless the caller passes ``--confirm``; the default invocation costs
-nothing.
+Drives Agents 1 -> 2 -> 3 -> 4 -> 5 -> 6 with a single sample SOP and
+asserts each stage's output exists and parses. Agent 5 (SCORM packaging)
+is fully local; Agent 6 (Moodle upload) runs in MOCK mode here. Every
+external API call (Agents 2 & 4 live mode, Agent 6 live upload) is
+**disabled** unless the caller passes ``--confirm``; the default
+invocation costs nothing and touches no live server.
 
 CLAUDE.md §9 forbids chaining agents inside one process; this script
 **spawns a fresh subprocess per agent** so the pipeline-contract rule is
@@ -49,7 +51,13 @@ AGENT1 = REPO_ROOT / "scripts" / "agents" / "agent1_sop_parser.py"
 AGENT2 = REPO_ROOT / "scripts" / "agents" / "agent2_narration_generator.py"
 AGENT3 = REPO_ROOT / "scripts" / "agents" / "agent3_slides_generator.py"
 AGENT4 = REPO_ROOT / "scripts" / "agents" / "agent4_voice_generator.py"
+AGENT5 = REPO_ROOT / "scripts" / "agents" / "agent5_scorm_packager.py"
+AGENT6 = REPO_ROOT / "scripts" / "agents" / "agent6_moodle_upload.py"
 DEFAULT_SOP = REPO_ROOT / "content" / "sops" / "SAMPLE-SOP.pdf"
+
+# Agent 5 derives its input filenames from a course stem
+# (<stem>-slides.json / <stem>-voice.mp3), so the smoke run pins one.
+SMOKE_COURSE = "smoke"
 
 
 def _run(label: str, argv: Sequence[str]) -> None:
@@ -141,8 +149,11 @@ def main(argv: list[str] | None = None) -> int:
 
     parsed_path = workdir / "parsed.json"
     narration_path = workdir / "narration.txt"
-    slides_path = workdir / "slides.json"
-    voice_path = workdir / "voice.mp3"
+    # Agent 5 reads <stem>-slides.json + <stem>-voice.mp3 from its
+    # --slides-dir / --voice-dir, so name these with the course stem.
+    slides_path = workdir / f"{SMOKE_COURSE}-slides.json"
+    voice_path = workdir / f"{SMOKE_COURSE}-voice.mp3"
+    scorm_path = workdir / f"{SMOKE_COURSE}-scorm.zip"
 
     try:
         _run("Agent 1 (PDF -> JSON)", [
@@ -185,11 +196,34 @@ def main(argv: list[str] | None = None) -> int:
         _run("Agent 4 (narration -> voice MP3)", agent4_args)
         _assert_exists("Agent 4", voice_path, min_bytes=10)
 
+        # Agent 5 — package slides + voice into a SCORM 1.2 ZIP. No API;
+        # it self-validates the package (manifest at root, hrefs resolve)
+        # and refuses to write a broken ZIP, so a clean exit + a present
+        # file means the package is structurally sound.
+        _run("Agent 5 (slides + voice -> SCORM ZIP)", [
+            sys.executable, str(AGENT5), SMOKE_COURSE,
+            "--slides-dir", str(workdir),
+            "--voice-dir", str(workdir),
+            "--output-dir", str(workdir),
+        ])
+        _assert_exists("Agent 5", scorm_path, min_bytes=200)
+
+        # Agent 6 — Moodle upload, MOCK mode (no --confirm) so the smoke
+        # run never touches a live server. It re-validates the ZIP and
+        # prints the planned upload; a clean exit proves the 5 -> 6
+        # handoff + the package's upload-readiness offline.
+        _run("Agent 6 (SCORM ZIP -> Moodle, mock)", [
+            sys.executable, str(AGENT6), str(scorm_path),
+            "--target-course-id", "1",
+        ])
+
         print("\nPIPELINE OK")
         print(f"  parsed:    {parsed_path}")
         print(f"  narration: {narration_path}")
         print(f"  slides:    {slides_path}")
         print(f"  voice:     {voice_path}")
+        print(f"  scorm:     {scorm_path}")
+        print(f"  upload:    mock OK (pass --confirm on agent6 for a LIVE upload)")
         return 0
     finally:
         if cleanup and workdir.exists():

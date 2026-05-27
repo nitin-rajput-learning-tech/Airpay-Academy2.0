@@ -5,6 +5,65 @@
 
 ---
 
+## ✅ SENTIENTIA Content Pipeline — Agents 5 + 6 built (SOP→SCORM→upload complete) (2026-05-27)
+
+**Context:** Second execution item of the user's re-prioritised plan
+("4,3,5,2,1"). The content pipeline previously stopped at Agent 4 (voice);
+this completes the sellable SOP→SCORM feature with Agent 5 (SCORM
+packager) + Agent 6 (Moodle upload), both in the canonical
+`scripts/agents/` location matching the Wave-E1 conventions (mock-default
++ `--confirm` gate, pure testable functions, `main()`→exit codes). Proven
+logic was harvested from the May-13 `sentientia/` prototype and adapted to
+the current Agent-3 `bullets` slide schema.
+
+**Agent 5 — `scripts/agents/agent5_scorm_packager.py`** (no external API):
+- Reads `content/slides/<course>-slides.json` (+ optional
+  `content/voice/<course>-voice.mp3`) → `content/scorm-output/<course>-scorm.zip`.
+- SCORM 1.2: `imsmanifest.xml` (masteryscore), `index.html` (slide deck +
+  prev/next + keyboard nav + audio + Complete→`SCORM.complete`),
+  `scormdriver.js` (LMSInitialize/SetValue/Commit/Finish), `audio/narration.mp3`.
+- Validation gates BEFORE (slide schema, 3-30 slides, bullet caps) and
+  AFTER write (manifest at ZIP root, launch file present, every
+  `<file href>` resolves) — a failed package is deleted, never shipped.
+- `--mastery-score` (default 70; configurable per customer), `--dry-run`,
+  `--strict`. Accepts `bullets` (current) or legacy `points`.
+- **Verified end-to-end on SAMPLE-SOP**: no-audio (3 KB, 10 slides) +
+  with-audio (Agent 4 mock voice → `audio/narration.mp3` bundled +
+  manifest-referenced). Structure independently inspected.
+
+**Agent 6 — `scripts/agents/agent6_moodle_upload.py`** ([CONFIRM]-gated):
+- Mock-default (no network). `--confirm` = LIVE upload (mutates
+  production) — requires `MOODLE_URL` + `MOODLE_TOKEN`; refuses with
+  exit 3 if absent. `--stage-only` uploads to the draft area only.
+- Real, injectable `call_moodle()` REST wrapper + `upload_to_draft()`
+  (stock `/webservice/upload.php`) — the prototype left these as
+  skeletons; now implemented. Token never logged.
+- **Server-side dependency:** Moodle has no stock WS to attach a
+  `mod_scorm` activity, so full activity creation calls a custom
+  `local_airpay_courses_create_scorm_activity` WS (NOT YET REGISTERED).
+  `--stage-only` is the complete live path today; the full path surfaces
+  Moodle's "function not available" cleanly. **Next server-side task.**
+
+**Tests** (`tests/agents/test_agent5.py` + `test_agent6.py`): 41 tests,
+**36 pass on Windows**; the 5 failures are all CLI subprocess tests hitting
+the known Windows-only `[WinError 6]` (pass on Linux CI, same as
+agent1-4). Coverage: schema validation (bullets+points), manifest/driver/
+html generation, ZIP structural validation, end-to-end `package_one`
+(audio + no-audio + dry-run + strict), and Agent 6's full + stage-only
+live paths via injected fakes (no socket opened).
+
+**Orchestrator:** `run_pipeline_test.py` extended to a full 1→6 rehearsal
+(Agent 5 local + Agent 6 mock). NOTE: the local 1→6 run is blocked at
+Agent 1 by a pre-existing Windows dependency fault
+(`charset_normalizer` C-extension "DLL load failed: Access is denied" via
+pdfplumber) — environmental, unrelated to this work, and unaffected on
+Linux CI. The 4→5→6 tail was verified directly.
+
+**No external API calls were made.** Agent 6 live upload is [CONFIRM]-gated
+and was NOT run.
+
+---
+
 ## ✅ Sentientia Live — 6 question types VERIFIED end-to-end + open_path robustness fix (2026-05-27)
 
 **Context:** First execution item of the user's re-prioritised plan
