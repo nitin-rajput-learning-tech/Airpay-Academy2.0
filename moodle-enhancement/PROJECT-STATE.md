@@ -3687,166 +3687,445 @@ as a blocking item for Phase E.1+ ship; this chip closes it.
 
 ---
 
-## 🌊 Day-0 chip-wave summary — 21 merges landed (2026-05-24)
+## 🌊 Day-0 chip-wave index — 21 merges landed (2026-05-24)
 
-This H2 backfills documentation for the 11 chip merges where `-X ours`
-merge strategy preserved code changes but skipped each chip's own H2
-section into PROJECT-STATE.md. Companion documentation for these chips
-lives in the per-chip visual-evidence folders and the merge commit
-messages on `production`.
+The Day-0 chip-wave merged 21 chips into `production`. 7 were manually
+conflict-resolved with full doc preservation; **11 used `git merge -X ours`**
+for throughput — which kept all code but skipped each chip's own H2 section.
+The prior session (commit `8ac71879`) backfilled all 11 into one consolidated
+"chip-wave summary" mega-section. That worked but did not grep well: searching
+for `P0-B` or `P3-N` only ever hit the one mega-section. This H2 replaces the
+mega-section with a **searchable index** — each chip below now has its own
+standalone H2. Grep any Chip-ID (`P0-B`, `P3-N`, …) to jump straight to it.
 
 ### P0 cleanup — production hygiene
-
-- **P0-A — Conflict-marker pre-commit hook** (chip `magical-rubin-jlDVk`,
-  task #260, merged via origin auto-followup `8c03a7187` + `35a78cd05`).
-  New CHECK 11 in `.claude/hooks/pre-commit.sh` blocks stray `<<<<<<<` /
-  `=======` / `>>>>>>>` markers in staged files. Companion CI gate in
-  `.github/workflows/ci.yml::conflict-marker-check` backstops the local
-  hook. Installer: `tools/install-hooks.ps1`. Closes the CI #397 / #403
-  failure class permanently.
-
-- **P0-B — `_bizlms-admin.scss` `:focus-visible` siblings** (chip
-  `loving-noether-KKixA`, task #261, merge `79f2de141`). 41 new lines —
-  `:focus-visible` siblings on every interactive selector in
-  `_bizlms-admin.scss`, mirroring the chip-H pattern from
-  `_surface-courses.scss`. Closes audit follow-up for P1 #11.
-
-- **P0-C — Dashboard chart init migrated to `{{#js}}` block** (chip
-  `serene-fermi-RB4pr`, task #262, merge `ad453bc6c`). 30-line refactor
-  in `theme/airpayux/templates/dashboard.mustache` moving Chart.js
-  bootstrap from inline `<script>` to `{{#js}}` block (proper AMD
-  deferred loading). Eliminates the stale `cdn.jsdelivr.net` CSP
-  posture. Companion to wave-3 chip-N.
+- **P0-A** — Conflict-marker pre-commit hook → see "🛡️ P0 cleanup A — conflict-marker pre-commit hook (2026-05-24)" *(above; preserved at merge — direct commits `8c03a7187` + `35a78cd05`, not `-X ours`)*
+- **P0-B** — `_bizlms-admin.scss` `:focus-visible` siblings → see "🛡️ P0-B — _bizlms-admin.scss :focus-visible siblings (2026-05-24)" *(below — backfilled here)*
+- **P0-C** — Dashboard chart init migrated to `{{#js}}` block → see "🔒 P0-C — dashboard chart init migrated to {{#js}} block (2026-05-24)" *(below — backfilled here)*
 
 ### P1 follow-ups — quality polish
+- **#255** — kn / mr / sw locale parity 178/178 → see "🌐 Locale parity restored — kn+mr+sw at 178/178 (2026-05-24)" *(above; preserved at merge `66c794e71`)*
+- **#256** — Inline-timing → tokens → see "🎚️ P2 #19 follow-up — inline-timing → tokens (2026-05-24)" *(above; preserved at merge `a6c7f1bb1`)*
+- **#257** — Production deploy automation → see "🚀 P1 — deploy automation (2026-05-24)" *(above; preserved at merge `3f95d19ae`)*
+- **#258** — PROJECT-STATE.md history split → no own H2 *(chip only moved pre-Day-0 history to `docs/_archive/PROJECT-STATE-history.md`; merge `ea6b17161`)*
+- **#259** — State-card audit + refresh → no own H2 *(chip created/refreshed ~30 plugin state cards; merges `9b9ae2803` + `462a1a243` + `fd0243e71`)*
 
-- **#255 — kn / mr / sw locale parity restored to 178/178** (chip
-  `lucid-dirac-kj3pj`, merge `66c794e71`). Closed 13-key gap from
-  chip-B's nav/footer i18n additions. EN + HI + KN + MR + SW now all
-  at byte-aligned 178 keys with brand-name transliteration matched to
-  upstream choosereadme convention.
-
-- **#256 — Inline-timing → tokens (P2 #19 follow-up)** (chip
-  `clever-dijkstra-8Iczy`, merge `a6c7f1bb1`). 54 inline transition
-  timings across 9 `_surface-*.scss` partials migrated to
-  `var(--ap-transition-{quick|default|slow})`. WCAG 2.3.3 Animation
-  from Interactions (AAA) now compliant via token cascade in
-  `_tokens.scss:258-265`.
-
-- **#257 — Production deploy automation** (chip `cool-einstein-Qzl8k`,
-  merge `3f95d19ae`). New `deploy/deploy-to-xampp.ps1` one-command
-  local deploy + `.github/workflows/deploy-production.yml`
-  workflow-dispatch with typed-confirm gate + `docs/operations/deploy-runbook.md`.
-
-- **#258 — PROJECT-STATE.md history split** (chip `blissful-turing-Wj3zX`,
-  merge `ea6b17161`). Moved pre-Day-0 (pre-2026-05-20) H2 sections
-  (2,995 lines / 207 KB) to `docs/_archive/PROJECT-STATE-history.md`.
-  Live file now 3,610 lines, fast-loading.
-
-- **#259 — State-card audit + refresh** (chip `gifted-dirac-gSVtv`,
-  merges `9b9ae2803` + `462a1a243` + `fd0243e71`). Refreshed/created
-  ~30 plugin state cards covering every airpay_* + sentientia_*
-  module, restoring documentation parity post the Day-0 architecture
-  pivot.
-
-### P2 cutover prep — 5.2 readiness
-
-- **P2-H — NVDA verification procedure** (chip `wonderful-allen-kRZr5`,
-  task #263, merge `9a43abf91`). 589-line `docs/qa/NVDA-VERIFICATION-PROCEDURE.md`
-  covers all 9 aria-live regions + sr-only summary in `local_sentientia_live`,
-  WCAG-mapped, 12 scenarios with pass/fail rubric and sign-off table.
-
-- **P2-I — `drawer.mustache` Moodle 5.2 backport** (chip `magical-cray-OokHP`,
-  task #264, merge `42f413a01`). 80-line patch to `theme/airpayux/layout/drawer.mustache`
-  for 5.2 compatibility with backwards-compat guards for 5.1. New
-  `docs/cutover/MOODLE-5.2-MUSTACHE-COMPAT.md` doc (196 lines).
-
-- **P2-J — Cutover-day smoke-test harness** (chip `pensive-dijkstra-pISiI`,
-  task #265, merge `af97a92fe`). 813-line `scripts/cutover-smoke-test.py`
-  covering 8 scenarios (login, dashboard, catalog, SCORM, BizLMS tenant
-  switching, dark mode, navbar/footer, REST API). Refuses live
-  airpay.academy host. Outputs JUnit XML. Runbook in
-  `docs/cutover/CUTOVER-SMOKE-TEST-RUNBOOK.md` (245 lines).
-
-- **P2-K — PHPUnit CI gate for Moodle 5.2** (chip `laughing-volta-Caa7B`,
-  task #266, merge `95baa4251`). New `phpunit-5.2` job in `ci.yml` boots
-  `moodlehq/moodle-php-apache:8.2` + MariaDB sidecar, installs all 30
-  plugins, runs PHPUnit, uploads JUnit results. 332-line runbook in
-  `docs/ci/PHPUNIT-GATE.md`.
-
-- **P2-L — Playwright Linux E2E CI gate** (chip via origin auto-merge,
-  task #267, merge `1f51a1609`). 5 baseline specs (login, dashboard,
-  navbar, dark-mode, mobile-590) in `tests/playwright/`. CI job
-  `playwright-linux` runs in `moodlehq/moodle-php-apache:8.2` with
-  MariaDB sidecar, uploads traces on failure, `continue-on-error: true`
-  for baseline calibration period. Runbook in
-  `docs/ci/PLAYWRIGHT-GATE.md`.
+### P2 cutover-prep — 5.2 readiness
+- **P2-H** — NVDA verification procedure → see "♿ P2 cutover-prep — NVDA verification procedure for `local_sentientia_live` (2026-05-24)" *(above; preserved at merge `9a43abf91`)*
+- **P2-I** — `drawer.mustache` Moodle 5.2 backport → see "🚀 P2-I — drawer.mustache Moodle 5.2 backport (2026-05-24)" *(below — backfilled here)*
+- **P2-J** — Cutover-day automated smoke-test harness → see "🧪 P2-J — automated 5.1 → 5.2 smoke-test harness (2026-05-24)" *(below — backfilled here)*
+- **P2-K** — `phpunit-5.2` CI gate against Moodle 5.2 → see "🚦 P2-K — phpunit-5.2 CI gate against Moodle 5.2 (2026-05-24)" *(below — backfilled here)*
+- **P2-L** — Playwright Linux E2E CI gate → see "🧪 P2 CUTOVER-PREP — LINUX PLAYWRIGHT CI GATE (2026-05-24)" *(above; direct commit `1f51a1609`)*
 
 ### P3 workstream features — alpha scaffolds (all behind feature flags, default OFF)
-
-- **P3-M — AI Quiz scaffold (Phase G.1)** (chip `magical-rubin-9xNyw`,
-  task #268, merge `3e4c94d60`). New plugin `local_sentientia_ai_quiz`
-  v0.1.0-alpha: Anthropic client stub with `[CONFIRM]` guard, prompt
-  builder, response parser, draft manager, privacy provider, feature
-  flags (`sentientia.aiquiz.{enabled,live_api,auto_push}`), PHPUnit
-  test classes. Zero live API calls in this chip.
-
-- **P3-N — Calendar Sync Phase 2 OAuth scaffolding** (chip
-  `practical-brahmagupta-tluHX`, task #269, merge `d05de927e`). Adds
-  `classes/oauth/{oauth_base,m365_oauth,token_vault}.php` to
-  `local_sentientia_calendar`. Encrypted token storage via
-  `\core\encryption`. Feature flag `sentientia_calendar_oauth` default
-  off. No live OAuth calls in this chip.
-
-- **P3-O — Leaderboard L.1 rank-change notifications** (chip
-  `intelligent-ride-82LNQ`, task #270, merge `f787257a2`). New
-  `classes/{message_helper,observer}.php` + `db/{events,messages}.php`
-  in `local_sentientia_leaderboard`. Triggers `message_send()` on
-  ±5 position change or top-10 entry. 24h throttle per learner. Feature
-  flag default off.
-
-- **P3-P — SENTIENTIA Agent 1 PDF parser MVP** (chip `gifted-faraday-V761L`,
-  task #271, merge `531d420c2`). New `scripts/agents/agent1_sop_parser.py`
-  using pdfplumber. Outputs structured JSON with title/headings/paragraphs/lists.
-  Enforces 2000-word cap. Unit test in `tests/agents/test_agent1.py`.
-  Closes Agent 1 of the SOP → SCORM pipeline.
-
-- **P3-Q — M365 Graph API scaffold (Workstream C.1)** (chip
-  `loving-hamilton-oG4VQ`, task #272, merge `fcc456938`). New plugin
-  `local_sentientia_m365`: MSAL OAuth scaffolding, Graph API client
-  stub (throws `confirm_required`), encrypted token table, capability,
-  feature flag, privacy provider, lang en+hi parity. No live Graph
-  calls.
-
-- **P3-R — `sentientia_live` question-type stubs (Phase E.4-E.9)** (chip
-  `elegant-wozniak-z8U4v`, task #273, merge `de2455fed`). New
-  `classes/question_types/` directory: abstract base class + 6
-  concrete stubs (multiple_choice, word_cloud, open_ended, rating_scale,
-  quiz, ranking) + registry. PHPUnit interface tests. Unblocks future
-  UI chips for each question type.
+- **P3-M** — AI-quiz Phase G.1 scaffold → **retired** in `452ad36b`. The chip (`magical-rubin-9xNyw`, merge `3e4c94d60`) shipped `local_sentientia_ai_quiz` v0.1.0-alpha, which a later cleanup found duplicated the mature `local_sentientia_aiquiz`. The plugin was removed; no standalone H2 documents a deleted artifact. See "🚀 STREAM G — AI QUIZ GENERATION (Tier 1 #4) — Phase G.0 MVP ✅ SHIPPED (2026-05-24)" *(above)* for the surviving plugin.
+- **P3-N** — Calendar Sync Phase 2 OAuth scaffolding → see "🔐 P3-N — Calendar Sync Phase 2 OAuth scaffolding (2026-05-24)" *(below — backfilled here)*
+- **P3-O** — Leaderboard L.1 rank-change notifications → see "🚀 P3-O — leaderboard L.1 rank-change notifications (2026-05-24)" *(below — backfilled here)*
+- **P3-P** — SENTIENTIA Agent 1 PDF parser MVP → see "🚀 P3-P — SENTIENTIA Agent 1 PDF parser MVP (Phase B.0) (2026-05-24)" *(below — backfilled here)*
+- **P3-Q** — M365 OAuth + Graph scaffold (Workstream C.1) → see "🚀 P3-Q — M365 OAuth + Graph scaffold (Workstream C.1) (2026-05-24)" *(below — backfilled here)*
+- **P3-R** — `sentientia_live` question-type stubs (E.4–E.9) → see "🚀 P3-R — sentientia_live question-type stubs (Phases E.4–E.9) (2026-05-24)" *(below — backfilled here)*
 
 ### Doc-only follow-ups landed
-
-- **Chip-O closeout** (chip `jolly-meitner-XdiGI`, merge `4f55c0d3e`).
-  Buckets 5+6 trim of `_moodle-overrides.scss` `!important` declarations
-  (course-header, course-drawer, pagination, table, filter). Brings
-  running total to 30 active (-77.9% from baseline 136). Visual evidence
-  in `docs/visual-evidence/2026-05-24/wave3-chip-O/`.
-
-- **Chip-P followup doc** (chip `happy-carson-LxfFQ`, merge `e01a17df6`).
-  114-line addition to `.claude/rules/frontend.md` documenting the
-  `prefers-reduced-motion` stylelint rule introduced by chip-P, with
-  examples of correct + anti-pattern + per-line opt-out + WCAG ref.
+- **chip-O-followup** — `_moodle-overrides.scss` buckets 5+6 → see "🧹 P2 #18 — _moodle-overrides.scss !important reduction (2026-05-24)" *(above; covers buckets 1–6, merge `4f55c0d3e`)*
+- **chip-P-followup** — `prefers-reduced-motion` rule docs → no own H2 *(114-line addition to `.claude/rules/frontend.md`; merge `e01a17df6`)*; see "🎚️ P2 #19 — prefers-reduced-motion stylelint enforcement (2026-05-24)" *(above)* for the parent stylelint rule.
 
 ### Net result
+Production tip `fd0243e71` carries: 9/9 P0 + 8/8 P1 + 6/6 P2 audit findings
+closed, 4 new P3 plugin scaffolds (M365, Calendar OAuth, Leaderboard
+Notifications, plus the AI-quiz Phase G.1 attempt later consolidated onto the
+mature `local_sentientia_aiquiz`), 3 new CI gates (conflict-marker, PHPUnit-5.2,
+Playwright-Linux), Agent 1 of the SENTIENTIA pipeline, NVDA verification rubric,
+automated cutover smoke test, and a PROJECT-STATE.md history split for fast load.
 
-Production tip `fd0243e71` carries: 9/9 P0 + 8/8 P1 + 6/6 P2 audit
-findings closed, 4 new P3 plugin scaffolds (AI Quiz, M365, Calendar
-OAuth, Leaderboard Notifications), 3 new CI gates (conflict-marker,
-PHPUnit-5.2, Playwright-Linux), Agent 1 of the SENTIENTIA pipeline,
-NVDA verification rubric, automated cutover smoke test, and a
-PROJECT-STATE.md history split for fast load.
+All chips ran on Opus 4.7 (1M context) in FleetView parallel worktrees. Zero
+hand-edited code outside conflict resolution. Pre-commit hook caught zero stray
+markers (P0-A working as designed).
 
-All chips ran on Opus 4.7 (1M context) in FleetView parallel worktrees.
-Zero hand-edited code outside conflict resolution. Pre-commit hook
-caught zero stray markers (P0-A working as designed).
+> **Index note (chronology).** The standalone H2 sections below appear in
+> merge-time order: P0-B `16:09:03Z` → P3-P `16:09:43Z` → P3-O `16:09:47Z`
+> → P3-Q `16:10:13Z` → P3-N `16:10:19Z` → P3-R `16:10:23Z` → P0-C `16:10:54Z`
+> → P2-K `16:10:58Z` → P2-J `16:11:23Z` → P2-I `16:11:29Z`. P3-M `16:09:52Z`
+> falls between P3-O and P3-Q but has no section (artifact retired).
+
+---
+
+## 🛡️ P0-B — _bizlms-admin.scss :focus-visible siblings (2026-05-24)
+
+**Chip:** `loving-noether-KKixA` · task #261
+**Merge commit:** `79f2de141e86be64a31c9ea7a613589053c6b69c` (merge-time `2026-05-24 16:09:03Z`)
+**Branch tip:** `4705facae1cbb04531a38488a420fd57348124f7` (`feat(a11y): :focus-visible siblings on _bizlms-admin.scss (Chip P0-B)`)
+**Files touched:** 3 — `theme/airpayux/scss/moodle/partials/_bizlms-admin.scss` (+41 lines), `theme/airpayux/version.php` (version + release + chip comment), `PROJECT-STATE.md` (H2 lost via `-X ours`, restored here)
+**Feature-flag posture:** none — pure CSS accessibility addition, no runtime toggle
+**Audit reference:** `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md` §2.6 (WCAG 2.4.7) + F-17 deferred-selector list
+
+Closes the Chip-H deferred follow-up flagged in the P1 #12 re-apply section:
+4 form-input selectors in `_bizlms-admin.scss` were left on backlog because
+`_bizlms-*` partials were out of scope for that chip. This chip closes the
+deferred work **and** extends WCAG 2.4.7 (Focus Visible) coverage to interactive
+selectors that previously had only `:hover` and no focus indicator.
+
+**What landed — 7 new `:focus-visible` rule blocks across 13 selectors:**
+
+| # | Selector(s) | Pattern | Why |
+|---|---|---|---|
+| 1 | `.ap-static-page-nav__link:focus-visible` | WCAG outline | Static-page tab nav link — only had `:hover` |
+| 2 | `.ap-sp-qlink:focus-visible` | WCAG outline | Quick-link card — only had `:hover` |
+| 3 | `.ap-static-toc__link:focus-visible` | WCAG outline | Static-page TOC anchor — only had `:hover` |
+| 4 | `#region-main .nav-tabs .nav-link:focus-visible` | WCAG outline | Admin tab bar — Tab-key target, bare `:hover` |
+| 5 | `#region-main .tab-pane.active … ul a:focus-visible` (2 selectors) | WCAG outline | Admin category link list |
+| 6 | `#region-main .form-control / input / textarea / select :focus-visible` (4 selectors) | **Byte-identical sibling to existing `:focus`** | The 4 deferred Chip-H selectors — preserves `border-color + box-shadow + outline:none` to avoid behaviour drift |
+| 7 | `#region-main button.btn-primary / input[type=submit].btn-primary / .btn-primary :focus-visible` (3 selectors) | WCAG outline | Admin primary submit button |
+
+**Two patterns used:** Pattern A copies an existing `:focus` rule verbatim into
+a `:focus-visible` sibling (rule #6 — zero non-focus regression on form inputs).
+Pattern B introduces the brand-blue ring (`outline: 2px solid
+var(--ap-color-primary, #0066A7); outline-offset: 2px; border-radius:
+var(--ap-radius-sm, 8px);`) where no focus rule existed (rules #1–5, #7).
+Tokens: `--ap-color-primary` (`_tokens.scss:81`), `--ap-radius-sm` (`_tokens.scss:157`).
+
+**Safety:** pure additive — no existing rule body modified; brace balance
+verified (339 open == 339 close); no `!important` introduced (outline rules win
+on specificity); every `:hover` preserved unchanged. `version.php` bumped
+`2026052404 → 2026052405`, release `1.0.35-beta → 1.0.36-beta` to invalidate the
+compiled-CSS cache. `php -l` clean on `version.php`; zero `.mustache` touched.
+
+---
+
+## 🚀 P3-P — SENTIENTIA Agent 1 PDF parser MVP (Phase B.0) (2026-05-24)
+
+**Chip:** `gifted-faraday-V761L` · task #271
+**Merge commit:** `531d420c2df737d10b11a9d453be842b4749bdb4` (merge-time `2026-05-24 16:09:43Z`)
+**Branch tip:** `15ade11b50f087bea38eafbc000735d52b5d9dc1` (`feat(sentientia): Agent 1 PDF SOP parser MVP (Phase B.0)`)
+**Files touched:** 13 (1,160 insertions) — `scripts/agents/agent1_sop_parser.py`, `tests/agents/test_agent1.py`, `tests/agents/_pdf_builder.py`, `content/sops/SAMPLE-SOP.pdf`, `content/parsed/SAMPLE-SOP-parsed.json`, `docs/sentientia-agents/AGENT-1-PDF-PARSER.md`, `requirements.txt`, `.gitignore`, + PROJECT-STATE.md
+**Feature-flag posture:** n/a — offline pipeline tooling (no Moodle runtime surface); pipeline is disk-mediated, one session per agent (CLAUDE.md §9)
+**Audit reference:** CLAUDE.md §9 (SENTIENTIA Content Pipeline) — Agent 1 of the SOP → SCORM chain
+
+First production stage of the SOP → SCORM pipeline. Reads a PDF SOP from
+`content/sops/` and writes layout-aware JSON to `content/parsed/<name>-parsed.json`
+for Agent 2 (Narration Generator). Pure local execution — **no external API calls**.
+
+**What landed:**
+- pdfplumber-driven parser (~280 LoC). CLI: `python scripts/agents/agent1_sop_parser.py --input X.pdf --output Y.json`.
+- Output schema matches the task contract: `title`, `headings[{level,text}]`, `paragraphs[]`, `lists[{type,items}]`, `word_count`, `source_file`, `parsed_at`.
+- **2000-word cap** enforced (CLAUDE.md §9) — raises `ValueError`, CLI exits 1, writes no output file.
+- Scanned-PDF rejection — no extractable text raises rather than emitting empty JSON.
+- Layout-aware heading levels (font-size mode picks body size; three largest sizes above body → levels 1/2/3).
+- List detection: 13 bullet glyphs + ordered markers (`1.`, `2)`, `(3)`, `a.`, `iv.`, …).
+- Sample fixture `content/sops/SAMPLE-SOP.pdf` (2.5 KB) + reference parsed JSON.
+- 29 unit + CLI tests in `tests/agents/test_agent1.py` (schema, headings, lists, word-cap over/under, every bullet/ordered regex, negative coverage, CLI exit-code matrix, determinism).
+- Doc `docs/sentientia-agents/AGENT-1-PDF-PARSER.md` (usage, schema, error modes, Agent 2 integration contract).
+- `requirements.txt` seeded: `pdfplumber>=0.11,<0.12`, `pytest>=8.0,<10.0`, `reportlab>=4.0,<5.0`.
+
+**Exit-code contract:** `0` parsed OK; `1` validation failure (word-cap / no text — no file written, caller must split); `2` I/O failure (input missing, output dir unwritable).
+
+**Determinism:** every field except `parsed_at` is byte-for-byte stable across
+runs (verified by `test_repeated_runs_produce_same_structure`). The 2000-word cap
+maps to ~15 min narration at 130 wpm — inside the SCORM-module target.
+
+**Hard rules honoured:** no external API calls (parser is pure local); no file in
+`content/sops/` deleted/modified (sample is a fresh fixture); no `--no-verify` on commit.
+
+---
+
+## 🚀 P3-O — leaderboard L.1 rank-change notifications (2026-05-24)
+
+**Chip:** `intelligent-ride-82LNQ` · task #270
+**Merge commit:** `f787257a23055eae32ae4509d8072161f9fca27d` (merge-time `2026-05-24 16:09:47Z`)
+**Branch tip:** `e14bb275e2af89250d912d68da2d1505b02caa36` (`feat(L.1): rank-change notifications for sentientia_leaderboard`)
+**Files touched:** 14 (1,234 insertions) — 6 new (`classes/event/rankings_updated.php`, `classes/message_helper.php`, `classes/observer.php`, `db/messages.php`, `db/events.php`, `tests/message_helper_test.php`) + 7 modified (`ranking_engine.php`, `db/feature_flags.php`, `db/install.xml`, `db/upgrade.php`, `lang/en|hi`, `version.php`) + PROJECT-STATE.md
+**Feature-flag posture:** `sentientia.leaderboards.notifications.enabled` — **default OFF**, additive-shipping per CLAUDE.md §13 (task spec said `sentientia_leaderboard_notifications`; kept the dotted convention to match the plugin's other flags, mapping noted in code + commit)
+**Audit reference:** Tier 2 #7 roadmap (real-time leaderboards) — builds on Phase L.0 MVP (`local_sentientia_leaderboard-state.md`, ADR-014)
+
+Phase L.1 layers Moodle messaging on top of the L.0 SSE ranking widgets so
+learners hear about meaningful rank shifts in their inbox/popup without refreshing.
+
+**What landed:**
+- **Event** `\local_sentientia_leaderboard\event\rankings_updated` — fired after every successful `ranking_engine::recompute()` commit; `other.changes` carries the bounded delta list (cap 500, top-10 first then by absolute move size).
+- **Observer** `observer::on_rankings_updated` — gates on the L.1 flag, delegates to `message_helper::dispatch()`; try/catch around the body so a notification failure cannot abort the recompute.
+- **Helper** `message_helper` — pure-static API (`classify_change`, `compute_changes`, `is_throttled`, `record_notification`, `send_one`, `dispatch`); subject/body from lang strings so Hindi parity is automatic.
+- **DB table** `local_sentientia_lb_notify_log` — one row per `(boardid, userid, customerid)` with `last_sent / last_old_rank / last_new_rank / last_reason`; unique key makes concurrent recompute paths safe. `db/install.xml` for fresh installs + `db/upgrade.php` savepoint `2026052500`.
+- **Message provider** `rank_change` in `db/messages.php` — popup + email, both default-on; surfaces under `/message/notificationpreferences.php` so learners can mute without disabling the master flag.
+- **Trigger rules:** top-10 entry (was outside, now inside) OR |delta| ≥ 5 positions; top-10 entry wins when both apply. New users with no prior rank qualify only via top-10 entry.
+- **Throttle:** max 1 message per `(board, user, customer)` per 24h; opt-out (`local_sentientia_lb_optouts`) honoured **before** the throttle check so an opt-in/opt-out flip never burns a slot.
+
+**Recompute rewiring:** `ranking_engine::recompute()` now snapshots the pre-delete
+rank map via `get_records_menu()`, captures the new map from a refactored
+`insert_ranked()` (now returns `array<int,int>`), and triggers `rankings_updated`
+after the SSE `leaderboard.recomputed` event when the delta set is non-empty.
+
+**Tests:** `tests/message_helper_test.php` (10 methods) — flag-on triggers, flag-off
+suppresses + skips throttle write, throttle blocks duplicate within 24h, top-10
+entry fires when |delta|<5, opt-out honouring, classification edge cases, payload
+truncation, full recompute → observer → `message_send` integration smoke.
+**Parity:** 93 EN / 93 HI keys (was 86/86 in L.0; +7 for L.1 templates).
+**Version:** `2026052400 → 2026052500`, release `0.1.0-alpha → 0.2.0-alpha`.
+
+**Acceptance evidence:** notifications fire on a 5+ rank shift when the L.1 flag is
+ON; flag OFF suppresses every dispatch and skips the throttle write; a second
+dispatch within 24h is throttled (backdating the log row past the window releases
+it); a top-10 entry fires even when |delta| < 5. Deferred to later L.x chips:
+digest batching, per-board mute, and manager rank-movement summaries.
+
+---
+
+## 🚀 P3-Q — M365 OAuth + Graph scaffold (Workstream C.1) (2026-05-24)
+
+**Chip:** `loving-hamilton-oG4VQ` · task #272
+**Merge commit:** `fcc456938d5c0c3a1bdb395d291181a045964807` (merge-time `2026-05-24 16:10:13Z`)
+**Branch tip:** `b447e71563f9344b21e593911562a7d10b712236` (`feat(C.1): local_sentientia_m365 OAuth + Graph scaffolding (P3 Workstream C)`)
+**Files touched:** 15 (2,196 insertions) — new plugin `local/sentientia_m365/` (`version.php`, `classes/msal_client.php`, `classes/graph_client.php`, `classes/privacy/provider.php`, `db/install.xml`, `db/access.php`, `db/feature_flags.php`, `settings.php`, `lang/en|hi`, `tests/{msal_client,graph_client,privacy_provider}_test.php`) + `docs/integrations/M365-INTEGRATION.md` + PROJECT-STATE.md
+**Feature-flag posture:** `sentientia_m365_enabled` — **default OFF** on every customer (CLAUDE.md §13). No `live_api` flag yet — Phase C.1 has no live path at all.
+**Audit reference:** CLAUDE.md §1 Workstream C (M365 Knowledge Automation) — Phase C.1 scaffold; `docs/integrations/M365-INTEGRATION.md`
+
+New plugin `local_sentientia_m365` v0.1.0-alpha (MATURITY_ALPHA, version
+`2026052400`, depends on `local_airpay_core >= 2026051401`). Bridges the LMS to a
+customer's Microsoft 365 tenant for later SharePoint/Teams/Outlook content. C.1
+ships **only** the OAuth scaffold + Graph stubs + privacy + admin settings.
+
+**No live HTTP** to `login.microsoftonline.com` or `graph.microsoft.com` in this
+chip — verified three ways: (1) every `graph_client::*` method throws
+`confirm_required` as its first statement (asserted even with the master flag ON);
+(2) `msal_client::exchange_code()` short-circuits on the flag and throws
+`confirm_required` rather than POSTing; (3) zero `curl_init`/`file_get_contents`/
+`fsockopen` in the plugin source (grep-confirmed).
+
+**What landed:**
+- `msal_client` — Authorization-Code-with-PKCE (RFC 7636) scaffold: `generate_pkce_pair()` (S256), `build_authorize_url()` (default scopes `openid profile offline_access User.Read`), `store_tokens`/`load_tokens`/`decrypt_token` via `\core\encryption` (Sodium secretbox), `needs_refresh()` (60 s window), `revoke()`, `is_ready()`, `exchange_code()` (returns `'feature_off'` sentinel when flag OFF, throws `confirm_required` when ON).
+- `graph_client` — `get_me()` / `list_sharepoint_sites()` / `get_user_calendar()` stubs, all funnelled through `guard_no_live_calls()`.
+- `db/install.xml` — `local_sentientia_m365_tokens` table: `(userid, customerid)` unique, encrypted `access_token_enc` + `refresh_token_enc`, `expires`, `scopes`, indexes on `expires` + `customerid`.
+- `db/access.php` — `:use` (default-false every archetype) + `:admin` (manager).
+- `settings.php` — Azure tenant ID, client ID, redirect URI, allowed scopes multiselect. Client SECRET intentionally NOT a setting (public-client PKCE; per `.claude/rules/api.md`).
+- Privacy provider — masks both encrypted columns as `'[encrypted]'` on export, deletes outright on erasure (Article 17 / DPDP §7).
+
+**Tests:** 32 methods across 3 classes (encryption round-trip, PKCE shape +
+uniqueness, per-customer isolation, refresh arithmetic, flag-toggle,
+`exchange_code` short-circuit, `confirm_required` guards, ciphertext masking
+positive+negative). **Parity:** 39 EN / 39 HI (100%). `php -l` clean on all 12 PHP files.
+
+---
+
+## 🔐 P3-N — Calendar Sync Phase 2 OAuth scaffolding (2026-05-24)
+
+**Chip:** `practical-brahmagupta-tluHX` · task #269
+**Merge commit:** `d05de927ed4709660f2346bbdce97e22ce364740` (merge-time `2026-05-24 16:10:19Z`)
+**Branch tip:** `206d13e4eadbd964e4dacb83570d719ee199918c` (`feat(sentientia_calendar): Phase 2 OAuth scaffolding (Tier 2.6)`)
+**Files touched:** 15 (2,372 insertions, 27 deletions) — `classes/oauth/{oauth_base,m365_oauth,google_oauth,token_vault}.php`, `db/{install.xml,upgrade.php,feature_flags.php}`, `settings.php`, `classes/privacy/provider.php`, `lang/en|hi`, `tests/token_vault_test.php`, `version.php`, `docs/integrations/CALENDAR-OAUTH.md` + PROJECT-STATE.md
+**Feature-flag posture:** `sentientia.calendar_sync.oauth.enabled` — **default OFF**, enforced in 4 places per `docs/integrations/CALENDAR-OAUTH.md`. Flag OFF (default) means no `_oauth` row can be created via any code path.
+**Audit reference:** ADR-013 §"Why we keep Path B as a future option"; `docs/integrations/CALENDAR-OAUTH.md`
+
+Builds on Phase 1 (token-URL ICS feed, outbound only). Phase 2 lays the
+foundation for bi-directional OAuth sync with Microsoft 365 (Graph) and Google
+Calendar. **Scaffolding only:** PKCE flow is wired to step ⑧ (state validation +
+verifier recovery); steps ⑨–⑪ (live token-endpoint POST + persist) throw
+`oauth_not_live` so a careless rollout cannot hit `login.microsoftonline.com` /
+`oauth2.googleapis.com` before per-customer privacy + security review.
+
+**What landed:**
+- **New DB table** `local_sentientia_calendar_oauth` — one row per `(user, provider)`; Phase 1 `_token` table unchanged. `(userid, provider)` UNIQUE + two NOT-UNIQUE indexes. Additive `db/upgrade.php` savepoint `2026052401`.
+- **OAuth class hierarchy** under `classes/oauth/`: `oauth_base` (PKCE verifier/S256 challenge per RFC 7636, CSRF state generator, session-scoped pending-state vault with 10-min TTL + single-use, flag-gated lifecycle); `m365_oauth` (Graph endpoints + `Calendars.ReadWrite`); `google_oauth` (Calendar API, narrow `calendar.events.owned`, `access_type=offline` + `prompt=consent`); `token_vault` (store/get/has/revoke/delete-all/describe, all tokens via `\core\encryption` Sodium XSalsa20-Poly1305 at the boundary).
+- **`settings.php`** (new) — Microsoft + Google client IDs/secrets (`admin_setting_configpasswordunmask`), read-only redirect URI, scaffolding-only warning banner.
+- **Privacy provider** extended — declares `_oauth` table + 2 external destinations; export replaces encrypted columns with `[REDACTED — encrypted credential not exported]`; delete drops both Phase 1 + Phase 2 rows.
+
+**Security model:** encrypted at rest (Sodium); plaintext never in any column/log/
+export; key file (`$CFG->dataroot/secret/key/sodium.key`, 0400) required in addition
+to the DB row; PKCE verifier ~512 bits, state token ~256 bits with `hash_equals()`
+single-use; 10-min TTL pending state.
+**Tests:** `tests/token_vault_test.php` (24 — 8 encryption/isolation, 7 flag-toggle
++ `oauth_not_live` gate, 4 privacy redaction, 5 PKCE invariants).
+**Parity:** 66 EN / 66 HI (100%). **Version:** `2026052400 → 2026052401`, release `1.0.0-beta → 1.1.0-beta`.
+
+---
+
+## 🚀 P3-R — sentientia_live question-type stubs (Phases E.4–E.9) (2026-05-24)
+
+**Chip:** `elegant-wozniak-z8U4v` · task #273
+**Merge commit:** `de2455fedbfe309d638b77e89b9522daa7fcbd39` (merge-time `2026-05-24 16:10:23Z`)
+**Branch tip:** `d25b5bb175376163edf2113678e1aec72f273f28` (`feat(sentientia_live): question-type scaffold (Phase E.4-E.9)`)
+**Files touched:** 14 (1,329 insertions, 2 deletions) — 10 new (`classes/question_types/abstract_question_type.php` + 6 concrete stubs + `question_type_registry.php` + `tests/question_type_registry_test.php` + `docs/sentientia-live/QUESTION-TYPES.md`) + 4 modified (`version.php`, `lang/en|hi`, PROJECT-STATE.md)
+**Feature-flag posture:** per-type `live.questiontype.{slug}` constants — **default OFF** in `local_airpay_core` (ADR-002 customer-level flag layer). `is_enabled()` fails closed if the resolver is missing.
+**Audit reference:** `local_sentientia_live` roadmap (version.php header) Phases E.4–E.9; `docs/sentientia-live/QUESTION-TYPES.md`
+
+`local_sentientia_live` v0.1.2-alpha (`2026052402`). Closes the **interface** half
+of E.4–E.9 so the six question-type implementation chips can land in parallel
+without each re-designing the base class. Lays the OO seam between the slug-string
+in `{local_sentientia_live_slides}.type` and per-type render/persist/tally/validate/aria logic.
+
+**What landed:**
+- `abstract_question_type.php` — contract: 5 abstract methods, 4 constants (`SLUG`, `FEATURE_FLAG`, `NAME_STRING_KEY`, `DESCRIPTION_STRING_KEY`), 4 concrete helpers (`get_display_name`, `get_description`, `get_slug`, `is_enabled`).
+- 6 concrete stubs (`multiple_choice`, `word_cloud`, `open_ended`, `rating_scale`, `quiz`, `ranking`) — constants populated; the 5 abstract methods each `throw new \coding_exception('not_implemented: …')` until the per-type chip lands.
+- `question_type_registry` — `final`, stateless, 6-entry slug→FQCN map in canonical picker order, plus `get_all()`/`get_enabled()`/`get_by_slug()`/`list_slugs()`/`exists()`. **No callers migrated** — `slide_manager` + `response_recorder` still use the existing switch-on-type; Phase E.4's first impl chip is the migration vehicle.
+
+**Intentionally NOT changed:** no UI (slide-type picker still reads
+`slide_manager::VALID_TYPES`); no template/Mustache/SCSS; `validate_settings()` +
+`response_recorder::tally()` still own their logic. Plugin behaves identically to
+v0.1.1-alpha until a per-type chip wires the registry into a caller.
+**Tests:** `tests/question_type_registry_test.php` (7 — all 6 slugs resolve, every
+instance is an `abstract_question_type` subclass, reported slug matches registry
+key, unknown slugs return null, repeated resolution stable, registry slug list ==
+`slide_manager::VALID_TYPES` byte-for-byte).
+**Parity:** +12 EN / +12 HI keys (100%). **Version:** `2026052401 → 2026052402`, release `0.1.1-alpha → 0.1.2-alpha`. `php -l` clean on all 8 new PHP files; no core/DB/raw-SQL touched.
+
+---
+
+## 🔒 P0-C — dashboard chart init migrated to {{#js}} block (2026-05-24)
+
+**Chip:** `serene-fermi-RB4pr` · task #262
+**Merge commit:** `ad453bc6ce8b50a5dd6aaa8a2d1fc7e277fe2ecf` (merge-time `2026-05-24 16:10:54Z`)
+**Branch tip:** `7291bbaf366c5e85cd16becd936e3740e5590208` (`refactor(theme): migrate dashboard chart init to {{#js}} block (P2 #17 follow-up)`)
+**Files touched:** 3 — `theme/airpayux/templates/dashboard.mustache` (+10 / −2), `theme/airpayux/version.php` (+18, version + release), PROJECT-STATE.md (H2 lost via `-X ours`, restored here)
+**Feature-flag posture:** none — template refactor; the `{{#hascharts}}` guard already gates chart emission per page
+**Audit reference:** `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md` §3.4 (Dashboard) finding F-14 (P1 #17); wave3-chip-N evidence §3 footnote
+
+Completes the CSP half of P1 #17 / F-14. Wave3-chip-N moved Chart.js off the
+public CDN into `theme_airpayux/chart_loader` (a wrapper around Moodle's bundled
+`core/chartjs`), but the dashboard's `new Chart(...)` init still lived in an inline
+`<script>` block in `templates/dashboard.mustache` — which blocked any
+`script-src 'self'` tightening (no nonce/hash) and ran outside Moodle's JS
+collection path. This chip migrates that block to `{{#js}}…{{/js}}`.
+
+**What changed:** the inline `<script>…</script>` (49 lines incl. the
+`{{#hascharts}}` guard) became a `{{#js}}…{{/js}}` block. The chart configuration
+(canvas IDs, `new Chart(ctx, {…})` shape, datasets, colour literals, options) is
+**byte-identical** — only the wrapper flipped. Moodle now queues the `require()`
+via `js_amd_inline()` and emits it once at end-of-body, where a future strict CSP
+can attach a nonce or SHA-256 hash. The doc comment above the block was rewritten
+to remove the stale `cdn.jsdelivr.net` URL fragment and explain the CSP rationale
+(avoiding literal `{{ … }}` inside the `{{! … }}` comment to keep the parser balanced).
+
+**Stale-CDN audit (post-chip):** zero `<script src=…chart…>` / `…cdn.jsdelivr…`
+tags in `templates/` or `layout/`; `chart_loader` is the sole Chart.js loader
+(`layout/dashboard.php:84` pre-warm + the migrated `dashboard.mustache` require()).
+Remaining `cdn.jsdelivr` / `Chart.js` literals are all inside language-level
+comments that never reach rendered HTML.
+
+**Safety:** Mustache balance check passes (192 section tokens, stack empty at EOF);
+`php -l version.php` clean; chart-init logic byte-identical (no behaviour drift);
+`{{#hascharts}}` guard preserved; no SCSS/AMD-source touched. `version.php` bumped
+`2026052404 → 2026052405`, release `1.0.35-beta → 1.0.36-beta` to invalidate the
+compiled template + AMD bundle.
+
+---
+
+## 🚦 P2-K — phpunit-5.2 CI gate against Moodle 5.2 (2026-05-24)
+
+**Chip:** `laughing-volta-Caa7B` · task #266
+**Merge commit:** `95baa4251fb048691fd31213f70b57fe7f116e30` (merge-time `2026-05-24 16:10:58Z`)
+**Branch tip:** `30c78c0bc7378dd24b963bfac2a1b4636ec0cd47` (`ci(phpunit): add Moodle 5.2 PHPUnit gate to ci.yml (P2 cutover-prep)`)
+**Files touched:** 3 — `.github/workflows/ci.yml` (new `phpunit-5.2` job, ~250 lines), `docs/ci/PHPUNIT-GATE.md` (new 6-section runbook), PROJECT-STATE.md
+**Feature-flag posture:** n/a — CI gate is binary (on for `production` branch + every PR); consumer-level cutover rollout would carry its own flag
+**Audit reference:** ADR-011 (5.2 wholesale upgrade staging); `docs/ci/PHPUNIT-GATE.md`; `PHPUNIT-RUNBOOK.md`
+
+CI had three static gates (php-lint, JSON+Mustache balance, ws-contract drift) but
+no gate catching **runtime** regressions across the 30+ `local_airpay_*` /
+`local_sentientia_*` / `block_airpay_*` / `quizaccess_airpay_*` plugins. Local
+PHPUnit was human-discipline only. With the 5.2 upgrade staged per ADR-011, this
+adds a forward-compat safety net that runs on every PR.
+
+**What changed:** a new `phpunit-5.2` job (~13 steps) in `ci.yml` — boots Postgres
+14, clones Moodle 5.2 (`MOODLE_502_STABLE`), composer-installs (cached), copies
+every airpay/sentientia plugin into the tree, runs install + `init.php`, assembles
+a comma-separated `<frankenstyle>_testsuite` list **dynamically** (new plugins with
+`tests/` join automatically; empty `tests/` skipped), runs `phpunit --log-junit`,
+uploads JUnit XML as `phpunit-5.2-results` on `if: always()`.
+
+**First-run coverage (~115 `*_test.php` files across ~38 testsuites):** 28
+`local_airpay_*`, 5 `local_sentientia_*` (calendar, leaderboard, aiquiz, live,
+pwa), 2 `block_airpay_*` (cert_health, cron_health), 1 `quizaccess_airpay_proctoring`,
+1 `paygw_airpay`, 1 `theme_airpayux`.
+
+**Design choices recorded:** native GitHub Actions (not `moodle-plugin-ci`) so all
+plugins are co-resident and cross-plugin deps resolve; Postgres 14 (faster boot,
+flushes strict-typing issues MariaDB hides — production stays MySQL, $DB abstracts);
+composer cache keyed on `composer.lock` + Moodle branch; PHP 8.2 to match production.
+`docs/ci/PHPUNIT-GATE.md` documents 7 common failure modes + the `markTestSkipped()`
+protocol + local reproduction.
+
+**Safety:** zero plugin code changed (config + docs only); zero core files; the four
+existing gates untouched; trigger paths unchanged.
+
+> **Follow-up (post-merge, outside this chip).** The `phpunit-5.2` job was lost in
+> the `-X ours` merge and restored in `6c50fe88`, then progressively de-risked
+> (`1b5f821c` advisory → `018ed1c7` `if:false` → `f58ac049` removed) because it was
+> breaking the workflow's overall conclusion before first-run calibration. The gate
+> design above stands; re-enablement is gated on the 5.2 spin-up cost ADR.
+
+---
+
+## 🧪 P2-J — automated 5.1 → 5.2 smoke-test harness (2026-05-24)
+
+**Chip:** `pensive-dijkstra-pISiI` · task #265
+**Merge commit:** `af97a92fec99fbe9f842a0c87e85b37a005a4892` (merge-time `2026-05-24 16:11:23Z`)
+**Branch tip:** `5104b1de2dea8270d395cf15f5f0ea06981569d2` (`chore(cutover): add automated 5.1 → 5.2 smoke-test harness (P2 cutover-prep)`)
+**Files touched:** 5 (1,156 insertions) — `scripts/cutover-smoke-test.py` (stdlib-only runner, 8 `test_*` functions), `docs/cutover/CUTOVER-SMOKE-TEST-RUNBOOK.md`, `tests/junit/.gitkeep`, `.gitignore`, PROJECT-STATE.md
+**Feature-flag posture:** n/a — standalone cutover tooling; the gate is staging-only by construction (hostname block-list, see below)
+**Audit reference:** Phase B Moodle 5.2 upgrade (code-complete per top-of-file summary); `docs/cutover/CUTOVER-SMOKE-TEST-RUNBOOK.md`
+
+Phase B's 5.2 upgrade was code-complete; the missing piece for a live cutover was
+an **automated go/no-go gate**. Before this chip the runbook required manual
+click-through of eight surfaces. After it, one Python invocation covers all eight
+and emits JUnit XML for the dry-run record.
+
+**Eight tests (execution order):** (1) login page renders + `logintoken` present;
+(2) dashboard route 200/30x never 5xx; (3) `core_course_get_courses` non-empty;
+(4) `mod_scorm_get_scorms_by_courses` responsive; (5) BizLMS tenants 1/77/177 return
+distinct user counts; (6) dark-mode `data-theme`/`theme-toggle` marker; (7)
+navbar+footer `<nav>`/`<footer>`; (8) `core_webservice_get_site_info` key set.
+
+**Safety guards (non-negotiable):** any `--target` host containing `airpay.academy`
+(case-insensitive, apex + `www.`) exits **2** before any HTTP — cutover smoke-tests
+are staging-only. `MOODLE_TOKEN` read from `.env`, never logged (XML surfaces only
+site name + release string). Every call is GET or a REST READ per
+`.claude/rules/api.md` — safe to re-run unattended. Transport errors (refused, DNS,
+TLS, timeout) become clean JUnit `<failure>` elements.
+
+**Dependencies:** none — pure stdlib (`urllib.request`, `xml.etree.ElementTree`,
+`argparse`, `json`, `socket`, `re`). The runbook defines three modes (pre-cutover
+dry-run T-7→T-1 two green runs; cutover-day T-0 against the in-flight host; rollback
+trigger matrix — tests 1,2,3,5,8 = immediate rollback, 6,7 = deferable cosmetic).
+
+**Acceptance verified:** `py_compile` passes; refuses `www.`/apex airpay.academy +
+non-http schemes (exit 2, no HTTP); runs against `http://localhost:8080/moodle`
+and emits parseable JUnit XML; REST tests skip cleanly with no token. Chip touches
+only Markdown + Python — PHP lint / Mustache / ws-contract gates unaffected.
+
+---
+
+## 🚀 P2-I — drawer.mustache Moodle 5.2 backport (2026-05-24)
+
+**Chip:** `magical-cray-OokHP` · task #264
+**Merge commit:** `42f413a01ecc79afcee5c454fdb65fa6261dea11` (merge-time `2026-05-24 16:11:29Z`)
+**Branch tip:** `4144bd146fc19ef44d3f1ad7e3353739a8966b5f` (`cutover(chip): drawer.mustache 5.2 backport (Phase B.12 deferred close)`)
+**Files touched:** 4 (391 insertions, 14 deletions) — `theme/airpayux/templates/drawer.mustache` (57 → 95 lines), `theme/airpayux/version.php` (version + release + comment), `docs/cutover/MOODLE-5.2-MUSTACHE-COMPAT.md` (new, 185 lines), PROJECT-STATE.md
+**Feature-flag posture:** none — template-compat backport; new block params use Mustache parent-default pattern (byte-identical default output on 5.1)
+**Audit reference:** `docs/5.2-merge/PHASE-B12-DRAWER-SECURE-AUDIT.md`; `docs/cutover/MOODLE-5.2-MUSTACHE-COMPAT.md`
+
+Closes the Phase B.12 deferred item. The 2026-05-23 drawer/secure audit shipped
+two `secure.mustache` backports same-day but deferred the structural
+`drawer.mustache` changes because they coupled to BS5 utility classes
+(`btn-icon`, `icon-size-3`) and the BS5 tooltip attribute rename. The Phase B.3.e+
+BS5 migration on production 5.1.3+ retired that blocker, so this chip closes the
+deferred half — matched against vanilla 5.2 boost at tag `v5.2.0`.
+
+**8 mechanical backports** to `drawer.mustache`: add `drawerheading` /
+`draweractions` / `drawerheadercontent` wrapper divs; add `{{$drawerheading}}` /
+`{{$drawerheadercontent}}` / `{{$closebuttonicon}}` blocks (defaults mirror
+pre-patch output byte-for-byte); button class `drawertoggle icon-no-margin hidden`
+→ `btn btn-icon icon-size-3 drawertoggle` (`drawertoggle` retained as the JS+SCSS
+hook; `hidden` dropped — the parent `.drawer` drives visibility via `.show`);
+`data-placement` → `data-bs-placement`; wrap the `require()` in
+`M.util.js_pending` / `js_complete`.
+
+**Real bug fixed in passing:** `primary-drawer-mobile.mustache` provides a
+`{{$drawerheading}}` override with the site logo, but pre-patch `drawer.mustache`
+had no slot for it — so the logo silently rendered nothing in the primary mobile
+drawer on production. The new `drawerheading` wrapper now picks it up (verify
+post-deploy at <590px). `secure.mustache` re-verified, no changes (keeps the two
+intentional a11y `<section aria-label>` divergences 5.2 regressed to bare `<div>`).
+
+**Backwards-compat reasoning:** new wrapper divs are inert; new block params use
+parent-default; `btn-icon`/`icon-size-3` inert when CSS undefined; `data-bs-*` is
+correct on production's BS5; `js_pending`/`js_complete` exist since Moodle 3.x.
+**Safety:** Mustache balance 0 unbalanced across 5 affected templates
+(`drawer` 16/16, `secure` 6/6, `drawers` 5/5, `primary-drawer-mobile` 21/21,
+`course` 58/58); `version.php` bumped `2026052404 → 2026052405`, release
+`1.0.35-beta → 1.0.36-beta`, `php -l` clean.
