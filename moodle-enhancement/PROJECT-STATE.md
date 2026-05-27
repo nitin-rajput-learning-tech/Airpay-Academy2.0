@@ -5,6 +5,44 @@
 
 ---
 
+## ✅ PHPUnit gate unblocked + 5.2 cutover dry-run verified (2026-05-27)
+
+Third + fourth execution items of the user's "4,3,5,2,1" plan (P4 PHPUnit
+gate, P2 5.2 cutover).
+
+**P4 — PHPUnit-5.2 gate, sentientia_live now GREEN in the hermetic CI env:**
+The full suite surfaced two failure classes beyond the open_path errors.
+All resolved:
+- **Errors (76):** `session_manager::create()` open_path hard-select →
+  fixed (defensive `get_columns()` read), commit 74beb4857.
+- **Failures (3):** stale test expectations contradicting reviewed code —
+  word_cloud min>max error attaches to `max_word_length` by design;
+  legacy plain-text `decode_words` is ONE token (cap-drift fix); session
+  owner-id compared int-to-int. Fixed in 365018ea9. `word_cloud_test` +
+  `session_manager_test` now 44 tests / 101 assertions / 0 failures / 0
+  errors.
+- **Residual local "issues":** only the third-party `block_learnerscript`
+  `parse_url`/`REQUEST_URI` PHP-8.2 deprecations — **environmental**: the
+  CI phpunit-5.2 job copies only `airpay_*`/`sentientia_*` plugins (no
+  learnerscript), so they don't fire in CI.
+- **Gate branch:** `ci/phpunit-5.2-rebased` (off current production, carries
+  all fixes + the phpunit-5.2 job, YAML-validated) pushed. **HAND-OFF**
+  (needs gh/GitHub UI, absent here): open a PR from that branch → run the
+  phpunit-5.2 calibration → triage any *other-plugin* failures → merge.
+
+**P2 — 5.2 cutover dry-run: already rehearsed + isolation verified.** The
+staged `C:\xampp\htdocs\moodle5.2` instance points at an **isolated clone**
+(`moodle5_2` DB + `moodledata5_2` + port 8081 — separate from the live
+`moodle`/`moodledata`/:8080), and that clone DB is **already at Moodle 5.2**
+(`release 5.2+ Build 20260519`) from the Wave-D1 cutover smoke test (XMLs in
+docs/visual-evidence/2026-05-27/). Live :8080 stays 5.1.3+ untouched. So the
+5.1→5.2 migration mechanism is proven on a zero-risk fresh copy. A
+latest-code (this session's C1-D4 + open_path + agents) re-rehearsal on 5.2
+is an optional micro-follow-up (needs a plugin re-sync to the moodle5.2 root
+layout + Apache:8081).
+
+---
+
 ## ✅ SENTIENTIA Content Pipeline — Agents 5 + 6 built (SOP→SCORM→upload complete) (2026-05-27)
 
 **Context:** Second execution item of the user's re-prioritised plan
