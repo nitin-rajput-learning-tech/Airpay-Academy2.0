@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuites name="cutover-smoke" tests="8" failures="0" errors="0" skipped="0" time="0.133">
+  <testsuite name="cutover_smoke_test" tests="8" failures="0" errors="0" skipped="0" time="0.133" timestamp="2026-05-27T09:22:41">
+    <testcase classname="cutover_smoke_test" name="test_login_page_renders" time="0.021" />
+    <testcase classname="cutover_smoke_test" name="test_dashboard_route_responds" time="0.026" />
+    <testcase classname="cutover_smoke_test" name="test_course_catalog_api" time="0.011">
+      <system-out>course count: 1</system-out>
+    </testcase>
+    <testcase classname="cutover_smoke_test" name="test_scorm_endpoint_responds" time="0.009" />
+    <testcase classname="cutover_smoke_test" name="test_bizlms_tenant_switching" time="0.022">
+      <system-out>tenant attribution (costcenterid -&gt; users): {'1': 2, '77': 1, '177': 1}</system-out>
+    </testcase>
+    <testcase classname="cutover_smoke_test" name="test_dark_mode_assets" time="0.014" />
+    <testcase classname="cutover_smoke_test" name="test_navbar_footer_rendering" time="0.013">
+      <system-out>airpayux theme rendered on anonymous surface (login)</system-out>
+    </testcase>
+    <testcase classname="cutover_smoke_test" name="test_rest_api_health" time="0.017">
+      <system-out>sitename='Airpay Academy Smoke' release='4.5.10 (Build: 20260216)'</system-out>
+    </testcase>
+  </testsuite>
+</testsuites>

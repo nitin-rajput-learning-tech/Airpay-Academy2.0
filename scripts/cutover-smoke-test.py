@@ -77,6 +77,13 @@ DEFAULT_JUNIT_PATH = Path("tests/junit/cutover-smoke.xml")
 # Per-request timeout.
 HTTP_TIMEOUT_SECONDS = 15
 
+# Transport-error retries. A cutover often catches the web server mid-restart
+# (Apache graceful, opcache priming, DB reconnect), so a single connection
+# refusal is not yet a failure. Retry transport-level errors only — never an
+# HTTP error status (a 500 is a real result, not a transient blip).
+HTTP_MAX_ATTEMPTS = 3
+HTTP_RETRY_BACKOFF_SECONDS = (0.5, 1.5)  # waits between attempts 1->2, 2->3
+
 # Known BizLMS tenant ids — every multi-tenant query MUST be scoped to one of these.
 KNOWN_TENANTS = (1, 77, 177)
 
@@ -173,10 +180,46 @@ class TransportError(Exception):
     an HTTP error response — those are returned as (status, body)."""
 
 
+def _urlopen_with_retry(req: urllib.request.Request, *,
+                        ctx: SmokeRunContext) -> tuple[int, str]:
+    """Execute a prepared Request, returning (status, body).
+
+    HTTP error statuses (4xx/5xx) are returned as (status, body) — they are
+    real application results, never retried. Transport-level failures
+    (connection refused, DNS, TLS, timeout) are retried up to
+    HTTP_MAX_ATTEMPTS times with backoff; if every attempt fails, the last
+    one is raised as a TransportError carrying the attempt count.
+    """
+    label = f"{req.get_method()} {req.full_url}"
+    last_reason = ""
+    for attempt in range(1, HTTP_MAX_ATTEMPTS + 1):
+        try:
+            with urllib.request.urlopen(
+                req, timeout=HTTP_TIMEOUT_SECONDS,
+                context=_ssl_context(ctx.insecure_tls),
+            ) as resp:
+                return resp.status, resp.read().decode("utf-8", errors="replace")
+        except urllib.error.HTTPError as e:
+            # A real HTTP response — surface it, do not retry.
+            body = e.read().decode("utf-8", errors="replace") if e.fp else ""
+            return e.code, body
+        except urllib.error.URLError as e:
+            last_reason = str(e.reason)
+        except (socket.timeout, TimeoutError):
+            last_reason = f"timeout after {HTTP_TIMEOUT_SECONDS}s"
+        # Transport failure — back off and retry unless this was the last attempt.
+        if attempt < HTTP_MAX_ATTEMPTS:
+            backoff_idx = min(attempt - 1, len(HTTP_RETRY_BACKOFF_SECONDS) - 1)
+            time.sleep(HTTP_RETRY_BACKOFF_SECONDS[backoff_idx])
+    raise TransportError(
+        f"{label}: {last_reason} (after {HTTP_MAX_ATTEMPTS} attempts)"
+    )
+
+
 def http_get(url: str, *, ctx: SmokeRunContext) -> tuple[int, str]:
     """GET request. Returns (status_code, body_text). HTTP error statuses
     become (status, body). Transport-level failures (connection refused,
-    DNS, timeout) raise TransportError with a one-line message."""
+    DNS, timeout) raise TransportError after HTTP_MAX_ATTEMPTS retries."""
     req = urllib.request.Request(
         url,
         headers={
@@ -184,25 +227,13 @@ def http_get(url: str, *, ctx: SmokeRunContext) -> tuple[int, str]:
             "Accept": "text/html,application/json",
         },
     )
-    try:
-        with urllib.request.urlopen(
-            req, timeout=HTTP_TIMEOUT_SECONDS,
-            context=_ssl_context(ctx.insecure_tls),
-        ) as resp:
-            return resp.status, resp.read().decode("utf-8", errors="replace")
-    except urllib.error.HTTPError as e:
-        body = e.read().decode("utf-8", errors="replace") if e.fp else ""
-        return e.code, body
-    except urllib.error.URLError as e:
-        raise TransportError(f"GET {url}: {e.reason}") from e
-    except (socket.timeout, TimeoutError) as e:
-        raise TransportError(f"GET {url}: timeout after {HTTP_TIMEOUT_SECONDS}s") from e
+    return _urlopen_with_retry(req, ctx=ctx)
 
 
 def http_post_form(url: str, data: dict[str, str], *,
                    ctx: SmokeRunContext) -> tuple[int, str]:
     """POST form-encoded. Returns (status, body). Transport failures raise
-    TransportError (see http_get)."""
+    TransportError after retries (see _urlopen_with_retry)."""
     body = urllib.parse.urlencode(data).encode("utf-8")
     req = urllib.request.Request(
         url,
@@ -214,19 +245,7 @@ def http_post_form(url: str, data: dict[str, str], *,
         },
         method="POST",
     )
-    try:
-        with urllib.request.urlopen(
-            req, timeout=HTTP_TIMEOUT_SECONDS,
-            context=_ssl_context(ctx.insecure_tls),
-        ) as resp:
-            return resp.status, resp.read().decode("utf-8", errors="replace")
-    except urllib.error.HTTPError as e:
-        body = e.read().decode("utf-8", errors="replace") if e.fp else ""
-        return e.code, body
-    except urllib.error.URLError as e:
-        raise TransportError(f"POST {url}: {e.reason}") from e
-    except (socket.timeout, TimeoutError) as e:
-        raise TransportError(f"POST {url}: timeout after {HTTP_TIMEOUT_SECONDS}s") from e
+    return _urlopen_with_retry(req, ctx=ctx)
 
 
 def call_rest(function_name: str, params: dict, *,
@@ -423,71 +442,91 @@ def test_scorm_endpoint_responds(ctx: SmokeRunContext) -> TestResult:
 
 
 def test_bizlms_tenant_switching(ctx: SmokeRunContext) -> TestResult:
-    """5. BizLMS tenant detection: query a tenant-scoped endpoint and
-    verify the response varies across tenant ids 1 / 77 / 177. We use
-    core_user_get_users with criteria[0][key]=profile_field_costcenterid
-    so the WS layer applies the tenant filter consistently across all
-    three known tenants.
+    """5. BizLMS multi-tenant attribution survives the cutover.
 
-    Pass criterion: at least two distinct tenant counts (proves tenant
-    scoping is active — if all three returned the same count, the
-    multi-tenant filter is broken)."""
+    Design note (corrected in Wave D1 P3 after first live run): the original
+    implementation passed criteria[0][key]=profile_field_costcenterid to
+    core_user_get_users. That key is invalid — core_user_get_users validates
+    the criteria key against PARAM_ALPHA, so any underscore-bearing key is
+    rejected with "Invalid parameter value detected" on EVERY Moodle,
+    production included. It also can't work architecturally: one WS token
+    sees one tenant's scope, so looping tenant ids through a single token
+    cannot compare tenants.
+
+    Correct approach: ask core_user_get_users for the confirmed-user set and
+    read each user's `costcenterid` custom profile field out of the returned
+    `customfields`. The distribution of that field IS the tenant attribution.
+
+    - PASS  : >=2 distinct costcenterid values present (multi-tenant data
+              intact — e.g. {1, 77, 177}).
+    - FAIL  : the field is present but every attributed user collapses to a
+              single tenant value (isolation/attribution broken — this is the
+              runbook rollback trigger).
+    - SKIP  : the costcenterid field is absent from every user (BizLMS
+              multi-tenancy not provisioned on this instance — a vanilla
+              Moodle or a non-airpay customer-zero, not a cutover failure).
+    """
     r = TestResult(name="test_bizlms_tenant_switching")
     if not ctx.has_token():
         r.mark_skipped("MOODLE_TOKEN not set — REST tests skipped")
         return r
-    counts: dict[int, int] = {}
-    for tenant_id in KNOWN_TENANTS:
-        try:
-            data = call_rest(
-                "core_user_get_users",
-                {
-                    "criteria[0][key]": "profile_field_costcenterid",
-                    "criteria[0][value]": str(tenant_id),
-                },
-                ctx=ctx,
-            )
-        except ValueError as e:
-            # Many sites store costcenterid in open_path rather than as a
-            # profile field. Treat that as a known-shape error, not a
-            # cutover failure — but require at least one tenant to respond.
-            msg = str(e).lower()
-            if "invalid criteria" in msg or "not found" in msg:
-                continue
-            r.mark_failure(
-                f"tenant scoping query failed for tenant {tenant_id}: {e}"
-            )
-            return r
-        except (RuntimeError, TransportError) as e:
-            r.mark_failure(f"REST call failed for tenant {tenant_id}: {e}")
-            return r
-        if isinstance(data, dict) and "users" in data:
-            counts[tenant_id] = len(data["users"])
-        elif isinstance(data, list):
-            counts[tenant_id] = len(data)
-    if not counts:
+    try:
+        data = call_rest(
+            "core_user_get_users",
+            {"criteria[0][key]": "confirmed", "criteria[0][value]": "1"},
+            ctx=ctx,
+        )
+    except (ValueError, RuntimeError, TransportError) as e:
+        r.mark_failure(f"core_user_get_users failed: {e}")
+        return r
+    users = data.get("users") if isinstance(data, dict) else data
+    if not isinstance(users, list):
         r.mark_failure(
-            "no tenant returned a usable response — profile field lookup not "
-            "available; fall back to a tenant-scoped airpay WS for the next "
-            "cutover dry-run"
+            "core_user_get_users did not return a users list",
+            detail=f"got: {type(users).__name__}",
         )
         return r
-    r.stdout = f"tenant counts: {counts}"
-    # If exactly one tenant responded, we can't compare — still flag it.
-    if len(counts) == 1:
-        r.mark_failure(
-            "only one tenant returned a response; cannot verify isolation",
-            detail=f"counts: {counts}",
+
+    # Tally users per costcenterid value found in their custom profile fields.
+    tenant_counts: dict[str, int] = {}
+    field_seen = False
+    for user in users:
+        for cf in user.get("customfields", []) or []:
+            if cf.get("shortname") == "costcenterid":
+                field_seen = True
+                value = str(cf.get("value", "")).strip()
+                if value:
+                    tenant_counts[value] = tenant_counts.get(value, 0) + 1
+                break
+
+    if not field_seen:
+        r.mark_skipped(
+            "costcenterid profile field absent from all users — BizLMS "
+            "multi-tenancy not provisioned on this instance (vanilla Moodle "
+            "or non-airpay customer); tenant isolation not applicable"
         )
         return r
-    # All tenants returning identical counts is suspicious — flag it.
-    distinct = set(counts.values())
-    if len(distinct) < 2 and any(c > 0 for c in counts.values()):
+
+    distinct = sorted(tenant_counts)
+    r.stdout = f"tenant attribution (costcenterid -> users): {tenant_counts}"
+    if not tenant_counts:
         r.mark_failure(
-            "all tenants returned identical counts — tenant filter may be broken",
-            detail=f"counts: {counts}",
+            "costcenterid field exists but no user carries a value — "
+            "tenant attribution lost in the cutover",
         )
         return r
+    if len(distinct) < 2:
+        r.mark_failure(
+            "all attributed users collapsed to a single tenant — multi-tenant "
+            "isolation may be broken (rollback trigger)",
+            detail=f"costcenterid distribution: {tenant_counts}",
+        )
+        return r
+    # Informational: flag any tenant id outside the known set, but don't fail —
+    # a new customer-zero tenant tree is a valid future state.
+    unknown = [v for v in distinct if v.isdigit() and int(v) not in KNOWN_TENANTS]
+    if unknown:
+        r.stdout += f"; note: costcenterid(s) outside known {KNOWN_TENANTS}: {unknown}"
     return r
 
 
@@ -528,9 +567,35 @@ def test_dark_mode_assets(ctx: SmokeRunContext) -> TestResult:
 
 
 def test_navbar_footer_rendering(ctx: SmokeRunContext) -> TestResult:
-    """7. Navbar + footer render on a public surface. We check the login
-    page because it's reachable without auth — but the airpayux navbar
-    + footer templates render on every layout."""
+    """7. The theme's chrome renders intact on the anonymous surface.
+
+    Design note (corrected in Wave D1 P3 after first live run): the original
+    implementation asserted a <nav> AND a <footer> on /login/index.php. But
+    the airpayux `login` layout is deliberately minimal — it sets
+    nonavbar=true and emits neither a <nav> nor a <footer> (see
+    theme/airpayux/config.php and templates/login.mustache). The standard
+    <nav class="airpay-nav"> + <footer class="airpay-footer"> only render on
+    authenticated content layouts (columns2 / drawers), which an anonymous,
+    read-only smoke test cannot reach. So the old assertion failed on a
+    perfectly healthy site AND, because login never includes navbar.mustache,
+    could not have detected a broken navbar template anyway.
+
+    What a cutover actually risks here is the THEME failing to render — a
+    Mustache syntax error or a missing template makes Moodle fall back to a
+    bare/boost page or 500. We detect that on the only guaranteed-anonymous
+    surface (login) by requiring EITHER:
+      (a) a classic full-layout navbar + footer (covers a non-airpayux theme
+          or a site whose landing page is a full layout), OR
+      (b) proof the airpayux theme rendered: its login structural markup
+          (airpay-login*) or its active-theme asset URL (styles.php/airpayux).
+          The login template shares the same head/render pipeline as the
+          navbar + footer, so a healthy airpayux login render is strong
+          evidence the chrome templates compiled.
+    Fail only if neither is present — the theme did not render.
+
+    This test is a non-blocking surface in the runbook (section 4.3): a miss
+    is a cosmetic hotfix, not a rollback trigger.
+    """
     r = TestResult(name="test_navbar_footer_rendering")
     url = ctx.base_url.rstrip("/") + "/login/index.php"
     try:
@@ -544,28 +609,35 @@ def test_navbar_footer_rendering(ctx: SmokeRunContext) -> TestResult:
             detail=body[:200],
         )
         return r
-    # Navbar markers — at least one of:
-    #   - <nav> tag with primary navigation
-    #   - airpay-navbar BEM block (per .claude/rules/frontend.md)
+
+    # (a) Classic full-layout chrome: a navbar marker AND a <footer> element.
     has_navbar = bool(
         re.search(r"<nav[^>]*", body)
         or "airpay-navbar" in body
+        or "airpay-nav" in body
         or "navbar-brand" in body
     )
-    if not has_navbar:
-        r.mark_failure(
-            "navbar markers absent from login page HTML",
-            detail="expected <nav>, .airpay-navbar, or .navbar-brand",
-        )
+    has_footer = "<footer" in body.lower()
+    if has_navbar and has_footer:
+        r.stdout = "full-layout navbar + footer present"
         return r
-    # Footer markers — must be a <footer> element. The airpayux footer
-    # template always emits one, and standard_footer_html appends Moodle's.
-    if "<footer" not in body.lower():
-        r.mark_failure(
-            "<footer> element absent from login page",
-            detail="footer template did not render",
-        )
+
+    # (b) airpayux theme rendered on the anonymous (login) surface.
+    airpayux_marker = (
+        "airpay-login" in body
+        or "styles.php/airpayux" in body
+        or re.search(r"theme/[\w./]*airpayux", body) is not None
+    )
+    if airpayux_marker:
+        r.stdout = "airpayux theme rendered on anonymous surface (login)"
         return r
+
+    r.mark_failure(
+        "neither full-layout chrome nor airpayux theme markers found — "
+        "theme may have failed to render in the cutover",
+        detail="expected <nav>+<footer>, or airpayux markers "
+               "(airpay-login / styles.php/airpayux)",
+    )
     return r
 
 

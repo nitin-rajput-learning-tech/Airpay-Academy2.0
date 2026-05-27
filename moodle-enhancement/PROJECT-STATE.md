@@ -1,5 +1,5 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-05-24 (Three parallel-chip MVPs shipped: **Tier 2.6 Calendar Sync** — `local_sentientia_calendar` with token-URL ICS feed, 4 feature flags, 28 PHPUnit assertions, ADR-013, Hindi 100%; **Tier 1 #4 AI Quiz Generation Phase G.0** — `local_sentientia_aiquiz` with 4-layer cost defence and mock-mode demoable pipeline, ~47 PHPUnit tests, ADR-012, Hindi 100%; **Tier 2 #7 Real-time Leaderboards Phase L.0** — `local_sentientia_leaderboard` + `block_sentientia_leaderboard` with SSE-driven live ranking across quiz/completion/skill board types, GDPR-compliant opt-out, ADR-014, Hindi 100%. **Platform Visual Audit v4.1.0** shipped from mobile-app session — 14 surfaces audited (9 P0 / 8 P1 / 6 P2 findings), CONDITIONAL PASS verdict; full report at `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md`. Earlier today the night-run autonomous batch shipped 16 items: Phase B.12 cutover-day mechanical fixes (A1-A8), plugin PHPUnit coverage (B1-B2), Goal C user guides for 6 personas (C1-C6); cutover-day TODO list is now mostly empty modulo NVDA verification + activity_header runtime test. **Paygw security follow-up shipped earlier this session** — MD5 deprecated, require_login() at file scope removed, sandbox/live URL clarified, 13 new PHPUnit tests added. Phase B Moodle 5.2 upgrade is code-complete; production stays on 5.1 until customer-driven cutover decision. ADR-001 records the strategic pivot from "patch Moodle deployment" to "build saleable enterprise LMS product" — Airpay Academy is customer-zero. See `docs/adr/ADR-001-fork-strategy-and-product-pivot.md`.
+**Updated:** 2026-05-27 (**Wave D1 P3** — cutover smoke test executed live for the first time: 5/8→8/8 on two localhost targets. Fixed a real install-crash bug in `local/airpay_lifecycle/db/messages.php` (missed in the Phase 8.2 `MESSAGE_DEFAULT_*` sweep), rewrote two script defects that would have failed on cutover day (test 5's invalid `profile_field_costcenterid` criteria key; test 7's unsatisfiable anonymous navbar/footer assertion), and added transport-retry logic. JUnit evidence in `docs/visual-evidence/2026-05-27/`. See §"Wave D1 P3" below. — Prior update:) 2026-05-24 (Three parallel-chip MVPs shipped: **Tier 2.6 Calendar Sync** — `local_sentientia_calendar` with token-URL ICS feed, 4 feature flags, 28 PHPUnit assertions, ADR-013, Hindi 100%; **Tier 1 #4 AI Quiz Generation Phase G.0** — `local_sentientia_aiquiz` with 4-layer cost defence and mock-mode demoable pipeline, ~47 PHPUnit tests, ADR-012, Hindi 100%; **Tier 2 #7 Real-time Leaderboards Phase L.0** — `local_sentientia_leaderboard` + `block_sentientia_leaderboard` with SSE-driven live ranking across quiz/completion/skill board types, GDPR-compliant opt-out, ADR-014, Hindi 100%. **Platform Visual Audit v4.1.0** shipped from mobile-app session — 14 surfaces audited (9 P0 / 8 P1 / 6 P2 findings), CONDITIONAL PASS verdict; full report at `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md`. Earlier today the night-run autonomous batch shipped 16 items: Phase B.12 cutover-day mechanical fixes (A1-A8), plugin PHPUnit coverage (B1-B2), Goal C user guides for 6 personas (C1-C6); cutover-day TODO list is now mostly empty modulo NVDA verification + activity_header runtime test. **Paygw security follow-up shipped earlier this session** — MD5 deprecated, require_login() at file scope removed, sandbox/live URL clarified, 13 new PHPUnit tests added. Phase B Moodle 5.2 upgrade is code-complete; production stays on 5.1 until customer-driven cutover decision. ADR-001 records the strategic pivot from "patch Moodle deployment" to "build saleable enterprise LMS product" — Airpay Academy is customer-zero. See `docs/adr/ADR-001-fork-strategy-and-product-pivot.md`.
 
 **Historical context:** Wave 1 + Wave 2 audit entries archived at `docs/_archive/PROJECT-STATE-history.md`.
 
@@ -3850,3 +3850,80 @@ PROJECT-STATE.md history split for fast load.
 All chips ran on Opus 4.7 (1M context) in FleetView parallel worktrees.
 Zero hand-edited code outside conflict resolution. Pre-commit hook
 caught zero stray markers (P0-A working as designed).
+
+---
+
+## 🧪 Wave D1 P3 — Cutover smoke-test FIRST LIVE RUN + remediation (2026-05-27)
+
+**Chip:** Wave D1 P3 testing chip. **Pairs with:** P2-J (`pensive-dijkstra-pISiI`,
+the chip that *wrote* `scripts/cutover-smoke-test.py` but never executed it).
+
+**Goal:** Run the 8-scenario cutover smoke test against a live Moodle for the
+first time, fix every FAIL (real bug or test defect), get both localhost
+targets green, and capture JUnit evidence.
+
+### How it was run
+Stood up an ephemeral Moodle **4.5.10** stack inside the chip container
+(MariaDB 10.11 + PHP built-in server + the repo as docroot at `/moodle`),
+installed the DB, enabled the REST WS + a token for `academy@airpay.co.in`
+(the admin user), set the site theme to **airpayux** (production theme), and
+provisioned a `costcenterid` custom profile field with four multi-tenant
+users (1×2, 77×1, 177×1). Served the same site on **:8080 and :8081** (wwwroot
+derived from the Host header) to satisfy the "both localhost targets" gate.
+All scaffolding (`config.php`, `.env`, the bring-up script) is gitignored /
+outside the repo — **nothing scaffold-related is committed.**
+
+### First-run result: 5 pass / 3 fail → after remediation: **8 pass / 8 pass**
+
+| # | Test | First run | Root cause | Disposition |
+|---|------|-----------|------------|-------------|
+| 5 | `test_bizlms_tenant_switching` | **FAIL** | **Script defect (would fail on production too).** Sent `criteria[0][key]=profile_field_costcenterid` to `core_user_get_users`; that key is validated against `PARAM_ALPHA`, so the underscores make Moodle reject it with *"Invalid parameter value detected … expecting alpha type"* on every Moodle. Also architecturally impossible: one WS token = one tenant scope, so looping tenant ids can't compare tenants. | **Rewrote** the test to read the `costcenterid` custom profile field out of `core_user_get_users`' returned `customfields`; PASS on ≥2 distinct tenant values, SKIP if the field is absent (vanilla Moodle), FAIL if all users collapse to one tenant (the runbook rollback trigger). |
+| 7 | `test_navbar_footer_rendering` | **FAIL** | **Script defect.** Asserted `<nav>`+`<footer>` on `/login/index.php`, but the airpayux `login` layout sets `nonavbar=true` and `login.mustache` emits neither (`theme/airpayux/config.php`, `templates/login.mustache`). The `<nav class="airpay-nav">`/`<footer class="airpay-footer">` chrome only renders on authenticated content layouts an anonymous smoke test can't reach — so the old assertion failed on a healthy site AND couldn't have detected a broken navbar template anyway. | **Reframed** to verify the airpayux theme *rendered* on the anonymous surface: accepts full-layout `<nav>`+`<footer>` **or** airpayux markers (`airpay-login*` / `styles.php/airpayux`). Catches the real cutover risk (theme fails → boost fallback / 500). Non-blocking surface per runbook §4.3. |
+| 6 | `test_dark_mode_assets` | FAIL→PASS | **Environment artifact, not a bug.** Failed only because the fresh install defaulted to `boost`; the `theme-toggle` marker is emitted by airpayux's `head.mustache`. Passed once the site theme was set to airpayux (the production config). No code change. | No fix needed. |
+| 1,2,3,4,8 | login / dashboard / catalog / SCORM / REST | PASS | — | Unchanged. |
+
+### Real product bug found + fixed
+- **`local/airpay_lifecycle/db/messages.php`** used the Moodle-4 constants
+  `MESSAGE_DEFAULT_LOGGEDIN` + `MESSAGE_DEFAULT_LOGGEDOFF`, removed in Moodle 5
+  in favour of `MESSAGE_DEFAULT_ENABLED`. Install/upgrade **crashed** with
+  *"Undefined constant MESSAGE_DEFAULT_LOGGEDIN"* at this plugin. This is the
+  same class of bug the Phase 8.2 sweep fixed in five other `db/messages.php`
+  files (`airpay_cart`, `airpay_proctoring`, `airpay_recompletion`,
+  `airpay_request`, `airpay_classroom`) — `airpay_lifecycle` was **missed** in
+  that sweep. Fixed both lines to `MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED`,
+  matching the established pattern. Backward-compatible (Moodle treats the old
+  bitmask values as enabled). The smoke test surfaced it because installing the
+  scaffold is the first time this plugin's `messages.php` was evaluated on a
+  Moodle-5-era constant set in this branch.
+
+### Script improvements (task item 8)
+- **Transport retry logic** — extracted `_urlopen_with_retry()`; transport-level
+  failures (connection refused, DNS, timeout) now retry up to
+  `HTTP_MAX_ATTEMPTS=3` with backoff. A cutover frequently catches the web
+  server mid-restart (Apache graceful, opcache prime, DB reconnect), and a
+  single refusal shouldn't trip a false rollback. HTTP error *statuses*
+  (4xx/5xx) are never retried — they're real results.
+- **Better failure/skip messaging** on tests 5 and 7 (distinguishes "BizLMS not
+  provisioned → SKIP" from "tenant collapse → FAIL").
+
+### Evidence
+- `tests/junit/cutover-smoke-2026-05-27.xml` (8080) +
+  `tests/junit/cutover-smoke-2026-05-27-localhost8081.xml` (8081) — both
+  8 pass / 0 fail / 0 skip. (`tests/junit/*.xml` is gitignored; durable copies
+  committed under `docs/visual-evidence/2026-05-27/`.)
+- Safety guard re-verified: `--target https://www.airpay.academy` (and any
+  `*airpay.academy*`) still exits `2` with no HTTP traffic.
+
+### Notes / non-blocking observations
+- On the PHP **built-in-server** scaffold, the front page `/` self-redirect-loops
+  (`/?redirect=0` → itself). This is a dev-server artifact of Moodle's
+  SITEID/`require_course_login` redirect interacting with the built-in server's
+  session handling — **not reproduced on real Apache and not a confirmed product
+  bug**, so not filed. It does not affect any smoke-test scenario (tests 6/7 use
+  the login surface, which renders fine). Flagged here for the next operator who
+  runs the script against a built-in-server scaffold rather than XAMPP/Apache.
+
+**Files changed (committed):** `scripts/cutover-smoke-test.py` (tests 5+7
+rewrite + retry), `local/airpay_lifecycle/db/messages.php` (bug fix),
+`docs/cutover/CUTOVER-SMOKE-TEST-RUNBOOK.md` (test 5/7 + retry docs),
+`docs/visual-evidence/2026-05-27/` (JUnit + README), this PROJECT-STATE H2.
