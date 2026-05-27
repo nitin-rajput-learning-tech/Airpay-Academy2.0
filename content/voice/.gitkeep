@@ -1,0 +1,2 @@
+# Output directory for SENTIENTIA Agent 4 (voice MP3s).
+# voice.mp3 files are generated on demand (mock or live) and are not committed.

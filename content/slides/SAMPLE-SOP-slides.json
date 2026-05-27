@@ -1,0 +1,93 @@
+{
+  "title": "Sentientia LMS Sample SOP",
+  "slide_count": 10,
+  "slides": [
+    {
+      "index": 1,
+      "title": "Welcome to Sentientia LMS Sample SOP.",
+      "bullets": [
+        "We'll walk through this together step by step"
+      ],
+      "speaker_notes": "Welcome to Sentientia LMS Sample SOP. We'll walk through this together step by step."
+    },
+    {
+      "index": 2,
+      "title": "Sentientia LMS Sample SOP",
+      "bullets": [
+        "This document is a synthetic Standard Operating Procedure"
+      ],
+      "speaker_notes": "Section: Sentientia LMS Sample SOP. This document is a synthetic Standard Operating Procedure used as a fixture for the SENTIENTIA Content Pipeline."
+    },
+    {
+      "index": 3,
+      "title": "It exercises every block kind Agent 1 must",
+      "bullets": [
+        "Step 1",
+        "Parse the PDF into structured JSON"
+      ],
+      "speaker_notes": "It exercises every block kind Agent 1 must recognise: titles, headings at two levels, paragraphs, ordered lists, and unordered lists. Step 1. Parse the PDF into structured JSON."
+    },
+    {
+      "index": 4,
+      "title": "Step 2.",
+      "bullets": [
+        "Generate a narration script from the JSON",
+        "Step 3",
+        "Synthesise slides and voice from the narration",
+        "Step 4",
+        "Package the result into a SCORM 1.2 ZIP"
+      ],
+      "speaker_notes": "Step 2. Generate a narration script from the JSON. Step 3. Synthesise slides and voice from the narration. Step 4. Package the result into a SCORM 1.2 ZIP for upload."
+    },
+    {
+      "index": 5,
+      "title": "Overview",
+      "bullets": [
+        "The SENTIENTIA pipeline turns a written SOP into",
+        "Agent 1 is the entry stage and converts"
+      ],
+      "speaker_notes": "Section: Overview. The SENTIENTIA pipeline turns a written SOP into a SCORM training package. Agent 1 is the entry stage and converts the PDF into structured JSON the downstream agents can read."
+    },
+    {
+      "index": 6,
+      "title": "Pure local execution; no external API in the",
+      "bullets": [
+        "Word count capped at two thousand words per",
+        "Fails loudly when the cap is exceeded",
+        "Deterministic schema for the downstream contract"
+      ],
+      "speaker_notes": "Pure local execution; no external API in the parser. Word count capped at two thousand words per SOP. Fails loudly when the cap is exceeded. Deterministic schema for the downstream contract."
+    },
+    {
+      "index": 7,
+      "title": "Pipeline Stages",
+      "bullets": [
+        "A successful Agent 1 run emits a JSON",
+        "Agent 2 reads that file with no further"
+      ],
+      "speaker_notes": "Section: Pipeline Stages. A successful Agent 1 run emits a JSON file whose schema matches the contract published in the agent documentation. Agent 2 reads that file with no further transformation."
+    },
+    {
+      "index": 8,
+      "title": "Guarantees",
+      "bullets": [],
+      "speaker_notes": "Section: Guarantees."
+    },
+    {
+      "index": 9,
+      "title": "Acceptance",
+      "bullets": [],
+      "speaker_notes": "Section: Acceptance."
+    },
+    {
+      "index": 10,
+      "title": "That concludes Sentientia LMS Sample SOP.",
+      "bullets": [
+        "Thank you for completing this module"
+      ],
+      "speaker_notes": "That concludes Sentientia LMS Sample SOP. Thank you for completing this module."
+    }
+  ],
+  "source_file": "SAMPLE-SOP-narration.txt",
+  "generated_at": "2026-05-27T04:18:47Z"
+}

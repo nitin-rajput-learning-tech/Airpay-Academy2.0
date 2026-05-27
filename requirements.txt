@@ -4,6 +4,10 @@
 # Agent 1 — PDF SOP parser.
 pdfplumber>=0.11,<0.12
 
+# Agents 2 & 4 — live-mode HTTP client (Anthropic + ElevenLabs).
+# Only used when --confirm is passed; mock mode needs no network.
+requests>=2.31,<3.0
+
 # Test runner (pytest fixtures + assertions).
 pytest>=8.0,<10.0
 

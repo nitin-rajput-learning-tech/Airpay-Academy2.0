@@ -1,0 +1,13 @@
+Welcome to Sentientia LMS Sample SOP. We'll walk through this together step by step.
+
+Section: Sentientia LMS Sample SOP. This document is a synthetic Standard Operating Procedure used as a fixture for the SENTIENTIA Content Pipeline. It exercises every block kind Agent 1 must recognise: titles, headings at two levels, paragraphs, ordered lists, and unordered lists. Step 1. Parse the PDF into structured JSON. Step 2. Generate a narration script from the JSON. Step 3. Synthesise slides and voice from the narration. Step 4. Package the result into a SCORM 1.2 ZIP for upload.
+
+Section: Overview. The SENTIENTIA pipeline turns a written SOP into a SCORM training package. Agent 1 is the entry stage and converts the PDF into structured JSON the downstream agents can read. Pure local execution; no external API in the parser. Word count capped at two thousand words per SOP. Fails loudly when the cap is exceeded. Deterministic schema for the downstream contract.
+
+Section: Pipeline Stages. A successful Agent 1 run emits a JSON file whose schema matches the contract published in the agent documentation. Agent 2 reads that file with no further transformation.
+
+Section: Guarantees.
+
+Section: Acceptance.
+
+That concludes Sentientia LMS Sample SOP. Thank you for completing this module.
