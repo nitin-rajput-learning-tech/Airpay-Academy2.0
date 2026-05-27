@@ -338,7 +338,10 @@ final class word_cloud_test extends \advanced_testcase {
             'min_word_length' => 10,
             'max_word_length' => 5,
         ]);
-        $this->assertArrayHasKey('min_word_length', $errors);
+        // The cross-field error attaches to max_word_length by design:
+        // min is valid in isolation (10 is within 1-20); it's the max
+        // that was set too low relative to min. See word_cloud::validate_config.
+        $this->assertArrayHasKey('max_word_length', $errors);
     }
 
     public function test_tokenise_keeps_unicode_letters(): void {
@@ -348,10 +351,13 @@ final class word_cloud_test extends \advanced_testcase {
     }
 
     public function test_decode_words_back_compat_with_legacy_plain_text(): void {
-        // Pre-Phase-E.5 rows stored value_text as a plain string.
-        // decode_words must tokenise on whitespace in that case.
-        $words = word_cloud::decode_words('trust innovation');
-        $this->assertSame(['trust', 'innovation'], $words);
+        // Pre-Phase-E.5 rows stored value_text as a plain string — ONE
+        // entry per submission. decode_words keeps a legacy plain string
+        // as a SINGLE token; splitting it would inflate the tally + the
+        // per-user cap (the code-review fix recorded in version.php
+        // 0.2.0-alpha; see test_decode_words_legacy_plain_text_is_single_token).
+        $words = word_cloud::decode_words('trust');
+        $this->assertSame(['trust'], $words);
     }
 
     public function test_decode_words_handles_json_array_shape(): void {

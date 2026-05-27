@@ -40,7 +40,7 @@ final class session_manager_test extends \advanced_testcase {
         $this->assertNotNull($row);
         $this->assertSame('Q3 KYC refresher', $row->title);
         $this->assertSame(session_manager::STATE_DRAFT, $row->state);
-        $this->assertSame($user->id, (int) $row->ownerid);
+        $this->assertSame((int) $user->id, (int) $row->ownerid);
         $this->assertSame(session_manager::CODE_LENGTH, strlen($row->code));
         $this->assertMatchesRegularExpression('/^[1-9]\d{5}$/', $row->code,
             'Code should be 6 digits and not start with 0');

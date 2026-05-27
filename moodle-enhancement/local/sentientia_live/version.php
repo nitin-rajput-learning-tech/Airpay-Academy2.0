@@ -35,7 +35,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_live';
-$plugin->version   = 2026052503;
+$plugin->version   = 2026052504;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;   // Phases E.4-E.9 — all 6 question types live + verified
 $plugin->release   = '0.2.1-alpha';
@@ -168,3 +168,12 @@ $plugin->dependencies = [
 //              18/18 green. New QA CLIs: cli/set_live_flags.php (flip the
 //              Live flag set) + cli/seed_demo_session.php (seed a LIVE
 //              session with all 6 types + responses).
+//              Full-suite green follow-up (0 errors / 0 failures): three
+//              stale test expectations corrected to match the reviewed
+//              code — word_cloud min>max error attaches to max_word_length
+//              (not min_word_length); a legacy plain-text decode_words is
+//              ONE token (not whitespace-split, matching the cap-drift
+//              fix); session_manager owner-id compared int-to-int (was
+//              assertSame string-vs-int). Residual local PHPUnit noise is
+//              the third-party block_learnerscript parse_url/REQUEST_URI
+//              deprecation — absent in the hermetic CI plugin set.
