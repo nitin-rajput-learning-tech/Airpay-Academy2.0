@@ -302,7 +302,16 @@ class slide_manager {
             'rating'      => ['scale_min' => 1, 'scale_max' => 5, 'scale_labels' => []],
             'quiz'        => ['options' => [], 'correct_index' => 0],
             'ranking'     => ['items' => []],
-            'wordcloud'   => ['max_word_length' => 50, 'dedupe' => true],
+            'wordcloud'   => [
+                'max_word_length'        => 50,
+                'dedupe'                 => true,
+                // Phase E.5 — new fields. Defaults match the admin-
+                // wide Switchboard settings (default_min_word_length,
+                // default_max_responses); per-slide values override.
+                'min_word_length'        => 2,
+                'max_responses_per_user' => 3,
+                'locale'                 => 'en',
+            ],
             'openended'   => ['max_chars' => 280],
             default       => [],
         };
@@ -392,6 +401,21 @@ class slide_manager {
                 $mw = (int) ($settings['max_word_length'] ?? 50);
                 $out['max_word_length'] = max(3, min(100, $mw));
                 $out['dedupe'] = (bool) ($settings['dedupe'] ?? true);
+                // Phase E.5 — admin-default fallbacks live in
+                // get_config('local_sentientia_live', '…'); slide_form
+                // can override per-slide.
+                $default_min = (int) (get_config('local_sentientia_live',
+                    'default_min_word_length') ?: 2);
+                $default_max_resp = (int) (get_config('local_sentientia_live',
+                    'default_max_responses') ?: 3);
+                $mn = (int) ($settings['min_word_length'] ?? $default_min);
+                $out['min_word_length'] = max(1, min(20, $mn));
+                $mr = (int) ($settings['max_responses_per_user']
+                    ?? $default_max_resp);
+                $out['max_responses_per_user'] = max(1, min(10, $mr));
+                $out['locale'] = is_string($settings['locale'] ?? null)
+                    ? mb_substr(trim($settings['locale']), 0, 16, 'UTF-8')
+                    : 'en';
                 break;
 
             case 'openended':

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Word Cloud — audience input (Phase E.5)</title>
+<!--
+  Faithful render of word_cloud::render() output (the audience-facing
+  submission form) at the 590px mobile breakpoint. Markup mirrors the
+  string concatenation in classes/question_types/word_cloud.php render():
+  hidden sesskey/slideid, the text input with maxlength, the aria-live
+  "N of M remaining" hint, and the submit button. Two states shown:
+  (1) words remaining, (2) capped (input + button disabled).
+-->
+<style>
+  body {
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #F2F4FB; color: #1a1a2e; margin: 0; padding: 24px;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; }
+  h1 { font-size: 1.5rem; }
+  .device-label {
+    font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em;
+    color: #5a6070; margin: 20px 0 8px;
+  }
+  .frame-mobile {
+    width: 590px; max-width: 100%; border: 8px solid #1a1a2e;
+    border-radius: 24px; overflow: hidden; background: #fff;
+  }
+  .audience-slide { padding: 24px; max-width: 720px; margin: 0 auto; }
+  .progress-hint { color: #5a6070; font-size: 0.8rem; text-align: center; margin-bottom: 8px; }
+  .question { text-align: center; font-size: 1.5rem; margin: 0 0 24px; }
+  .form-control {
+    display: block; width: 100%; box-sizing: border-box;
+    padding: 12px 16px; font-size: 1.25rem; text-align: center;
+    border: 1px solid #e2e6ef; border-radius: 8px; margin-bottom: 8px;
+  }
+  .form-control:disabled { background: #f8f9fc; color: #a0a9b8; }
+  .hint { color: #5a6070; font-size: 0.875rem; text-align: center; margin-bottom: 16px; }
+  .btn {
+    display: block; width: 100%; box-sizing: border-box; padding: 14px;
+    font-size: 1.125rem; font-weight: 600; color: #fff; background: #0066A7;
+    border: none; border-radius: 8px; cursor: pointer;
+  }
+  .btn:disabled { background: #a0a9b8; cursor: not-allowed; }
+  .two-col { display: flex; gap: 24px; flex-wrap: wrap; }
+  .two-col > div { flex: 1 1 300px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Word Cloud — audience submission form (mobile 590px)</h1>
+  <div class="two-col">
+    <div>
+      <div class="device-label">State 1 — 2 of 3 words remaining</div>
+      <div class="frame-mobile">
+        <div class="audience-slide">
+          <div class="progress-hint">Question 2 of 5</div>
+          <h2 class="question">What three words describe Airpay culture?</h2>
+          <form class="sentientia-wordcloud-form">
+            <label for="wc1" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);">Type a word to contribute to the cloud</label>
+            <input type="text" id="wc1" class="form-control" maxlength="50"
+                   placeholder="Type one word…" value="" autocomplete="off">
+            <div class="hint" role="status" aria-live="polite">2 of 3 words remaining</div>
+            <button type="submit" class="btn">Submit response</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="device-label">State 2 — capped (0 remaining, form disabled)</div>
+      <div class="frame-mobile">
+        <div class="audience-slide">
+          <div class="progress-hint">Question 2 of 5</div>
+          <h2 class="question">What three words describe Airpay culture?</h2>
+          <form class="sentientia-wordcloud-form">
+            <input type="text" class="form-control" maxlength="50"
+                   placeholder="Type one word…" value="" disabled>
+            <div class="hint" role="status" aria-live="polite">0 of 3 words remaining</div>
+            <button type="submit" class="btn" disabled>Submit response</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

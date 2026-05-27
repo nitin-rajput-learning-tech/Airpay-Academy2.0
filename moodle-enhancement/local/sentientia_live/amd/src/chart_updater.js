@@ -18,6 +18,12 @@
 
 const INLINE_UPDATE_TYPES = ['multichoice', 'quiz', 'rating'];
 
+// Phase E.5 — types whose updates are handled by a different module
+// (wordcloud_updater.js owns wordcloud; in future, openended_updater
+// would own openended). chart_updater early-returns for these without
+// triggering a full page reload so we don't double-handle the event.
+const HANDLED_ELSEWHERE_TYPES = ['wordcloud'];
+
 const init = () => {
     window.addEventListener(
         'sentientia-live:response_added', handleResponseAdded);
@@ -46,6 +52,11 @@ const handleResponseAdded = (ev) => {
     // SR users hear "12 responses" on update.
     updateSrOnlyTallySummary(panel, countNow);
 
+    if (HANDLED_ELSEWHERE_TYPES.includes(slideType)) {
+        // wordcloud_updater (or future per-type updaters) takes over
+        // from here — return without reload so we don't fight it.
+        return;
+    }
     if (!INLINE_UPDATE_TYPES.includes(slideType)) {
         setTimeout(() => window.location.reload(), 500);
         return;

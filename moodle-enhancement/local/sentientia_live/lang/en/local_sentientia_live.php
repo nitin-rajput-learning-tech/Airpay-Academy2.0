@@ -355,6 +355,24 @@ $string['qtype_quiz_desc']               = 'Like multiple choice, but with a des
 $string['qtype_ranking_name']            = 'Ranking';
 $string['qtype_ranking_desc']            = 'Audience drags a list of items into their preferred order. Results show each item\'s aggregate average position — lower is more preferred.';
 
+// ── Phase E.5 — Word cloud full implementation (admin + audience) ──
+// Admin settings page strings.
+$string['settings_pagetitle']            = 'Sentientia Live engagement';
+$string['settings_wc_heading']           = 'Word-cloud defaults';
+$string['settings_wc_heading_desc']      = 'Defaults applied when a trainer creates a word-cloud slide. Per-slide settings override these.';
+$string['setting_default_min_word_length']      = 'Default minimum word length';
+$string['setting_default_min_word_length_desc'] = 'Tokens shorter than this many characters are dropped during tokenisation. Set to 2 by default — drops single-letter noise but keeps short words like "AI" or "UX".';
+$string['setting_default_max_responses']        = 'Default maximum responses per learner';
+$string['setting_default_max_responses_desc']   = 'Hard cap on how many words a single audience member can contribute to one word-cloud slide. Default 3 — mirrors Mentimeter\'s standard.';
+
+// Audience response form (word cloud).
+$string['wc_audience_input_label']       = 'Type a word to contribute to the cloud';
+$string['wc_remaining_hint']             = '{$a->remaining} of {$a->max} words remaining';
+$string['wc_max_responses_reached']      = 'You have already contributed the maximum of {$a} words.';
+$string['wc_max_responses_invalid']      = 'Max responses per learner must be between {$a->min} and {$a->max}.';
+$string['wc_min_word_length_invalid']    = 'Minimum word length must be between 1 and 20, and must not exceed the maximum word length.';
+$string['wc_a11y_new_word_added']        = 'New word added to the cloud';
+
 // response_recorder errors.
 $string['response_slide_mismatch']      = 'That slide is not part of this session.';
 $string['response_int_required']        = 'A numeric response is required.';

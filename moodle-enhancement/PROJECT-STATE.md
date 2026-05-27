@@ -3850,3 +3850,111 @@ PROJECT-STATE.md history split for fast load.
 All chips ran on Opus 4.7 (1M context) in FleetView parallel worktrees.
 Zero hand-edited code outside conflict resolution. Pre-commit hook
 caught zero stray markers (P0-A working as designed).
+
+---
+
+## 🌬️ Wave C2 P2 — Word Cloud full implementation (Phase E.5) (2026-05-25)
+
+**Chip:** `relaxed-einstein-HTo0t` — `local_sentientia_live` Word Cloud
+question type, P3-R stub → production impl.
+**Plugin version:** `local_sentientia_live` 0.1.2-alpha → **0.2.0-alpha**
+(`2026052402` → `2026052501`).
+
+### Headline
+
+The `word_cloud` question type was a P3-R scaffold — every method threw
+`coding_exception('not_implemented')`. This chip ships the full
+behaviour: audience submits free text, we tokenise → profanity-filter →
+aggregate → render a live tag cloud that updates without a page reload.
+Master gate `live.questiontype.wordcloud` stays **OFF** by default; admins
+flip it via the Switchboard when ready.
+
+### What shipped
+
+- **`classes/question_types/word_cloud.php`** — full implementation:
+  - `render()` — audience text-input form with an aria-live "N of M
+    words remaining" hint; input + submit disable once the per-learner
+    cap is reached.
+  - `persist_response()` — tokenises on whitespace + punctuation
+    (Unicode-safe, Devanagari survives), drops too-short tokens, runs
+    each through `profanity_filter`, lower-cases for aggregation, then
+    **appends** to the participant's JSON-array `value_text` (capped at
+    `max_responses_per_user`, default 3). Re-submission updates the same
+    row via the existing `uk_slide_participant` unique key, so reloads
+    can't inflate the cloud.
+  - `tally()` — word-frequency map sorted desc, case-insensitive.
+  - `validate_config()` — `max_responses_per_user` (1-10),
+    `min_word_length` (1-20), `max_word_length` (3-100), `locale`.
+  - `decode_words()` — back-compat decoder: handles the new JSON-array
+    shape AND legacy plain-string rows (pre-E.5 single-word), so
+    in-flight sessions don't break on upgrade.
+
+- **`classes/profanity_filter.php`** (new) — default English denylist +
+  per-customer override hook. Probes
+  `local_airpay_core::customer::get_customer_config('profanity_denylist')`
+  (and a `customer_config::get` fallback) and **fails soft to the default
+  list** when the Phase-2 customer-config layer isn't present (today's
+  single-customer deployment). Substring + case-insensitive +
+  multi-byte matching via `mb_stripos`.
+
+- **AMD modules** (src + hand-bundled ES5 build, per the project's AMD
+  pipeline convention):
+  - `wordcloud_loader.js` — owns the "render a cloud into a panel"
+    capability, mirroring `theme_airpayux/chart_loader.js` (chip-N,
+    F-14). **No d3-cloud vendor** — a 5-bucket CSS-class cloud
+    (`cloud-size-1…5`, already in `result_panel.mustache`) doesn't
+    justify d3-cloud's ~12 KB + 200 KB d3 dependency on a mobile
+    audience page. Swap the `render()` body later if force-directed
+    layout is ever needed; the API surface is stable.
+  - `wordcloud_updater.js` — subscribes to the
+    `sentientia-live:response_added` SSE CustomEvent, re-renders the
+    cloud in place (textContent + className only — XSS-safe).
+  - `chart_updater.js` extended with `HANDLED_ELSEWHERE_TYPES =
+    ['wordcloud']` so it stops force-reloading the page for wordcloud
+    and yields to `wordcloud_updater`.
+
+- **`settings.php`** (new) — Site admin → Plugins → Local plugins →
+  Sentientia Live: `default_min_word_length` (int, 2) +
+  `default_max_responses` (int, 3). Consumed by
+  `slide_manager::validate_settings` as the per-slide fallback.
+
+- **`response_recorder.php`** — wordcloud tally + validation delegate to
+  `word_cloud::decode_words()`; legacy single-word path preserved.
+
+- **`audience/play.php`** — wordcloud submissions route through the
+  question-type (`question_type_registry::get_by_slug('wordcloud')`)
+  so tokenise + profanity-filter + cap all apply; other types unchanged.
+  Both `play.php` + `trainer/run.php` attach the two new AMD modules.
+
+### Tests
+
+`tests/word_cloud_test.php` — 18 assertions: profanity blocking
+(default + substring + mixed clean/dirty + customer override),
+valid single + multi-word submission, lowercase aggregation,
+max-responses cap (overflow reject + multi-word boundary trim),
+empty/whitespace/too-short rejection, multi-word + punctuation
+splitting, tally sort-desc, Unicode (Devanagari) tokenise survival,
+legacy plain-string + JSON-array decode back-compat, `validate_config`
+range checks.
+
+### Lang
+
++14 string pairs en+hi (settings labels + audience form + error
+strings). Hindi parity preserved at **290/290**.
+
+### Visual evidence
+
+`docs/visual-evidence/2026-05-25/wave-c2-p2-wordcloud/` — desktop +
+590px mobile cloud render (20 responses, 2-tab session, profanity
+dropped) and the audience input form in active + capped states.
+Rendered headless from faithful HTML harnesses (live Moodle is on the
+dev XAMPP host, unreachable from the cloud container); harnesses copy
+the shipped markup + `computeSize()` maths verbatim. Behavioural proof
+is the PHPUnit suite.
+
+### Back-compat / risk
+
+Additive + feature-flagged (default OFF). `value_text` shape change
+(plain string → JSON array) is forward-only and the decoder reads both,
+so a session mid-flight during deploy keeps working. No schema change.
+

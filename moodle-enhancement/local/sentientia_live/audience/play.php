@@ -112,6 +112,14 @@ if ($realtime_on) {
     // counts in place without a page reload.
     $PAGE->requires->js_call_amd(
         'local_sentientia_live/chart_updater', 'init');
+    // Phase E.5 — wordcloud updater handles the wordcloud-type panel
+    // (re-renders the cloud's font-size buckets in place when new
+    // responses arrive). Loads cheap, so we attach unconditionally;
+    // it's a no-op on non-wordcloud slides.
+    $PAGE->requires->js_call_amd(
+        'local_sentientia_live/wordcloud_loader', 'init');
+    $PAGE->requires->js_call_amd(
+        'local_sentientia_live/wordcloud_updater', 'init');
 } else {
     // Polling fallback when realtime is disabled site-wide.
     $PAGE->requires->js_amd_inline(
@@ -157,12 +165,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && confirm_sesskey()) {
         }
 
         try {
-            \local_sentientia_live\response_recorder::submit(
-                $slideid_submit,
-                (int) $participant->id,
-                $value_int,
-                $value_text
-            );
+            if ($current_slide->type === 'wordcloud') {
+                // Phase E.5 — route through the question-type so the
+                // submission gets tokenised, profanity-filtered, and
+                // appended to the participant's word list (respecting
+                // max_responses_per_user from settings).
+                $qtype = \local_sentientia_live\question_types\question_type_registry::get_by_slug('wordcloud');
+                if ($qtype === null) {
+                    throw new \moodle_exception('invalidslidetype',
+                        'local_sentientia_live', '', 'wordcloud');
+                }
+                $qtype->persist_response((int) $participant->id, [
+                    'slideid'    => $slideid_submit,
+                    'value_text' => $value_text,
+                ]);
+            } else {
+                \local_sentientia_live\response_recorder::submit(
+                    $slideid_submit,
+                    (int) $participant->id,
+                    $value_int,
+                    $value_text
+                );
+            }
             $response_saved = true;
         } catch (\moodle_exception $e) {
             $response_error = $e->getMessage();

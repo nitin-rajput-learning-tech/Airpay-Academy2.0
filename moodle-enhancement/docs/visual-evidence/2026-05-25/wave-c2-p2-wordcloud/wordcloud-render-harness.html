@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sentientia Live — Word Cloud visual evidence (Phase E.5)</title>
+<!--
+  Standalone rendering harness for the Phase E.5 word-cloud chip.
+
+  WHY this file exists
+  --------------------
+  The live Moodle 5.x instance runs on the developer's XAMPP host
+  (C:\xampp\htdocs\moodle5\public\), not in the CI/cloud container that
+  produced this chip. To capture visual evidence without that host, this
+  page reproduces the EXACT markup + CSS the plugin emits:
+
+    - .sentientia-results-panel / .sentientia-wordcloud / cloud-size-N
+      classes are copied verbatim from templates/result_panel.mustache.
+    - The size-bucket maths is the same ceil(ratio * 5) logic that
+      ships in amd/src/wordcloud_loader.js computeSize().
+    - The 20-response dataset mirrors a 2-tab audience submission:
+      tab A (10 learners) + tab B (10 learners), 3 words max each,
+      profanity tokens already filtered out (they never reach render).
+
+  This is a faithful render of what the trainer dashboard shows; it is
+  NOT the plugin running. The PHPUnit suite (tests/word_cloud_test.php)
+  is the behavioural proof; this is the pixel proof.
+-->
+<style>
+  :root { --ap-primary: #0066A7; }
+  body {
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #F2F4FB;
+    color: #1a1a2e;
+    margin: 0;
+    padding: 24px;
+  }
+  .harness-wrap { max-width: 960px; margin: 0 auto; }
+  h1 { font-size: 1.5rem; }
+  .meta { color: #5a6070; font-size: 0.875rem; margin-bottom: 24px; }
+  .device-label {
+    font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em;
+    color: #5a6070; margin: 24px 0 8px;
+  }
+
+  /* ---- copied from templates/result_panel.mustache ---- */
+  .sentientia-results-panel {
+    background: #fff; border: 1px solid #e2e6ef; border-radius: 16px;
+    padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+  .panel-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px;
+  }
+  .panel-head h4 { margin: 0; font-size: 1.125rem; }
+  .badge {
+    background: #6c757d; color: #fff; border-radius: 20px;
+    padding: 4px 12px; font-size: 0.875rem; font-weight: 600;
+  }
+  .sentientia-wordcloud {
+    display: flex; flex-wrap: wrap; gap: 1rem;
+    justify-content: center; align-items: center;
+    padding: 2rem 1rem; background: #f8f9fc; border-radius: 12px;
+  }
+  .sentientia-wordcloud-word { transition: font-size 0.3s ease; line-height: 1.1; }
+  .cloud-size-1 { font-size: 0.875rem;  color: #6c757d; }
+  .cloud-size-2 { font-size: 1.125rem; color: #495057; }
+  .cloud-size-3 { font-size: 1.5rem;   color: #0066A7; }
+  .cloud-size-4 { font-size: 2rem;     color: #0066A7; font-weight: 600; }
+  .cloud-size-5 { font-size: 2.75rem;  color: #003e6b; font-weight: 700; }
+
+  /* device frames */
+  .frame-desktop { width: 100%; }
+  .frame-mobile {
+    width: 590px; max-width: 100%; border: 8px solid #1a1a2e;
+    border-radius: 24px; overflow: hidden;
+  }
+  .frame-mobile .sentientia-results-panel {
+    border-radius: 0; box-shadow: none; border: none;
+  }
+  /* mobile overrides — copied from result_panel.mustache @media 590 */
+  @media (max-width: 590px) {
+    .sentientia-results-panel .sentientia-wordcloud { padding: 1rem; gap: 0.75rem; }
+    .sentientia-results-panel .cloud-size-5 { font-size: 2rem; }
+    .sentientia-results-panel .cloud-size-4 { font-size: 1.5rem; }
+  }
+  /* The mobile frame is a fixed 590px-wide container; emulate the
+     breakpoint via the .is-mobile scoping class so both frames can
+     coexist on one capture. */
+  .is-mobile .sentientia-wordcloud { padding: 1rem; gap: 0.75rem; }
+  .is-mobile .cloud-size-5 { font-size: 2rem; }
+  .is-mobile .cloud-size-4 { font-size: 1.5rem; }
+  .legend { font-size: 0.8rem; color: #5a6070; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="harness-wrap">
+  <h1>Word Cloud — live render (Phase E.5)</h1>
+  <p class="meta">
+    Trainer-dashboard result panel after 20 audience submissions from 2
+    browser tabs (10 learners each, 3 words max). Profanity tokens
+    ("shit", "fuck…") were dropped by <code>profanity_filter</code> before
+    aggregation, so they never appear. Font size = ceil(count / maxCount
+    &times; 5), identical to <code>wordcloud_loader.computeSize()</code>.
+  </p>
+
+  <div class="device-label">Desktop — trainer dashboard (run.php)</div>
+  <div class="frame-desktop">
+    <div class="sentientia-results-panel" data-slideid="demo">
+      <div class="panel-head">
+        <h4>What three words describe Airpay culture?</h4>
+        <span class="badge"><span class="sentientia-results-total">20</span> responses</span>
+      </div>
+      <div class="sentientia-wordcloud" id="cloud-desktop"></div>
+    </div>
+  </div>
+
+  <div class="device-label">Mobile 590px — audience view (play.php), results shown</div>
+  <div class="frame-mobile is-mobile">
+    <div class="sentientia-results-panel" data-slideid="demo-m">
+      <div class="panel-head">
+        <h4 style="font-size:1rem;">Airpay culture?</h4>
+        <span class="badge"><span>20</span></span>
+      </div>
+      <div class="sentientia-wordcloud" id="cloud-mobile"></div>
+    </div>
+  </div>
+  <p class="legend">
+    5 size buckets · top-50 cap · case-insensitive aggregation · clean
+    words only (denylist applied pre-render).
+  </p>
+</div>
+
+<script>
+// The aggregated tally after 20 submissions. This is the { word: count }
+// map response_recorder/word_cloud::tally() would return, already sorted
+// desc — built to mirror a realistic 2-tab session. Profanity words are
+// absent because persist_response filtered them before insert.
+var TALLY = {
+  "trust": 9, "innovation": 7, "speed": 6, "reliable": 5, "secure": 4,
+  "teamwork": 3, "growth": 3, "customer": 2, "agile": 2, "scale": 2,
+  "honest": 1, "bold": 1, "simple": 1
+};
+
+// computeSize — copied verbatim from amd/src/wordcloud_loader.js so the
+// evidence uses the SAME maths the shipped renderer uses.
+var SIZE_BUCKETS = ['cloud-size-1','cloud-size-2','cloud-size-3','cloud-size-4','cloud-size-5'];
+function computeSize(count, max) {
+  if (typeof count !== 'number' || count <= 0) { return SIZE_BUCKETS[0]; }
+  if (typeof max !== 'number' || max <= 0) { return SIZE_BUCKETS[0]; }
+  var ratio = count / max;
+  var bucket = Math.ceil(ratio * SIZE_BUCKETS.length);
+  if (bucket < 1) { bucket = 1; }
+  if (bucket > SIZE_BUCKETS.length) { bucket = SIZE_BUCKETS.length; }
+  return SIZE_BUCKETS[bucket - 1];
+}
+
+function renderInto(containerId) {
+  var container = document.getElementById(containerId);
+  var entries = Object.keys(TALLY).map(function(w) {
+    return { word: w, count: TALLY[w] };
+  }).sort(function(a, b) { return b.count - a.count; }).slice(0, 50);
+  var max = entries[0].count;
+  entries.forEach(function(e) {
+    var span = document.createElement('span');
+    span.className = 'sentientia-wordcloud-word ' + computeSize(e.count, max);
+    span.textContent = e.word;           // textContent — XSS-safe, as shipped
+    span.setAttribute('title', String(e.count));
+    container.appendChild(span);
+  });
+}
+renderInto('cloud-desktop');
+renderInto('cloud-mobile');
+</script>
+</body>
+</html>

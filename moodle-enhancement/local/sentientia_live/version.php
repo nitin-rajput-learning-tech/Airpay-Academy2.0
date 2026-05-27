@@ -35,10 +35,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_live';
-$plugin->version   = 2026052402;
+$plugin->version   = 2026052501;
 $plugin->requires  = 2022041900;
-$plugin->maturity  = MATURITY_ALPHA;   // Phase E.0 — scaffold only
-$plugin->release   = '0.1.2-alpha';
+$plugin->maturity  = MATURITY_ALPHA;   // Phase E.5 — word cloud full impl
+$plugin->release   = '0.2.0-alpha';
 $plugin->dependencies = [
     'local_airpay_core' => 2026051401,  // feature_flags resolver
 ];
@@ -67,3 +67,34 @@ $plugin->dependencies = [
 //              with 7 assertions covering registry resolution +
 //              interface conformance. Docs:
 //              docs/sentientia-live/QUESTION-TYPES.md.
+// 0.2.0-alpha  Phase E.5 — Word cloud full implementation. Replaces
+//              the P3-R stub with: render() (text input + remaining
+//              hint), persist_response() (tokenise → profanity-filter
+//              → append to JSON-array value_text, capped at
+//              max_responses_per_user), tally() (frequency map sorted
+//              desc, case-insensitive aggregation),
+//              validate_config() (max_responses_per_user 1-10,
+//              min/max word length, locale). New
+//              classes/profanity_filter.php with default English
+//              denylist + per-customer override hook
+//              (local_airpay_core::customer_config). New settings.php
+//              exposing default_min_word_length (int, 2) and
+//              default_max_responses (int, 3). New AMD modules:
+//              wordcloud_loader.js (CSS-bucket renderer, no external
+//              vendor — d3-cloud weight not justified for 5-bucket
+//              CSS-driven cloud) + wordcloud_updater.js (SSE
+//              subscriber, mutates DOM via textContent + className
+//              only — XSS-safe). chart_updater extended with
+//              HANDLED_ELSEWHERE_TYPES = ['wordcloud'] so it doesn't
+//              fight wordcloud_updater. +14 string pairs en+hi.
+//              +1 PHPUnit test class (word_cloud_test) with 18
+//              assertions covering profanity, tokenisation,
+//              max-responses cap, multi-word splitting, lowercase
+//              aggregation, Unicode (Devanagari) survival, and
+//              legacy-row decode back-compat. response_recorder
+//              updated to delegate decode/tokenise to word_cloud
+//              (back-compat preserved for any in-flight legacy
+//              rows). audience/play.php + trainer/run.php now
+//              attach the new AMD modules. Default master flag
+//              live.questiontype.wordcloud stays OFF — admins flip
+//              it via Switchboard when ready.
