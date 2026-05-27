@@ -2570,8 +2570,14 @@ body .que .info>div {
    the parent class 'collapsed' and its corresponding hide-styles ALSO ship
    with !important upstream — the only way to beat upstream !important is our
    own !important. Specificity is already (1,2,0) — bumping it further would
-   not help against the upstream importance flag. */
-#quickaccess-popover-container:has([aria-expanded="true"]) .popover-region-container {
+   not help against the upstream importance flag.
+   The leading `*` in `:has(*[aria-expanded="true"])` is required, not
+   cosmetic: scssphp 1.12.1 throws "Array to string conversion" at
+   Compiler.php:927 (array_diff over selector parts) whenever a pseudo-class
+   argument *starts* with a bare attribute selector. `*[attr]` is identical to
+   `[attr]` in CSS (same match set, same (0,1,0) specificity) but parses to a
+   string-led part, sidestepping the bug. See scssphp issue #606. */
+#quickaccess-popover-container:has(*[aria-expanded="true"]) .popover-region-container {
     opacity: 1 !important;
     visibility: visible !important;
     height: auto !important;
