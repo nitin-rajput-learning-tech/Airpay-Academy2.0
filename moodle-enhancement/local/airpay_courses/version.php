@@ -32,10 +32,13 @@ $plugin->component = 'local_airpay_courses';
 // P1 #28 (2026-05-20) — daily deadline-reminder cron task.
 // P1 #29 (2026-05-20) — daily overdue manager-escalation cron.
 // P1 #35 (2026-05-20) — Hindi (hi) lang pack: 100 strings translated.
-$plugin->version   = 2026052003;
+// Stream F / Wave E2 P4 (2026-05-25) — inline call to
+// \local_airpay_whatsapp\notification_bridge::send_course_due_soon
+// from course_reminder for the <48h urgent surface. No schema change.
+$plugin->version   = 2026052501;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.11.1';
+$plugin->release   = '1.11.2';
 $plugin->dependencies = [
     'local_airpay_org' => 2026041600,
 ];

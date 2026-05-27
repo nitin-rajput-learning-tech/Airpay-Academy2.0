@@ -100,6 +100,46 @@ function seed_starter_templates(): void {
             'category'     => 'promotional',
             'body'         => "Hi {{firstname}}, congratulations on your {{streak_days}}-day learning streak! Keep going: {{dashboard_url}}",
         ],
+
+        // ── Stream F / Wave E2 P4 (2026-05-25) — content-event templates ──
+        // Four new templates for the WhatsApp content-notification triggers
+        // wired by classes/notification_bridge.php + classes/observer.php.
+        // All transactional (regulatory-safe — sent in response to an
+        // explicit course/cert action; no consent uplift required).
+
+        // (a) New course published in user's catalogue.
+        [
+            'template_key' => 'content_new_course',
+            'channel'      => 'whatsapp',
+            'category'     => 'transactional',
+            'body'         => "Hi {{firstname}}, a new course is now available in your catalogue: {{course_name}}. Start here: {{course_url}}",
+        ],
+
+        // (b) Course due in <48h (separate from the 7d/3d/1d cadence so
+        // admins can mute deadline reminders but keep the urgent <48h
+        // surface, or vice versa).
+        [
+            'template_key' => 'content_course_due_soon',
+            'channel'      => 'whatsapp',
+            'category'     => 'transactional',
+            'body'         => "Hi {{firstname}}, {{course_name}} is due in {{deadline}}. Complete it now: {{course_url}}",
+        ],
+
+        // (c) Certificate ready.
+        [
+            'template_key' => 'content_certificate_ready',
+            'channel'      => 'whatsapp',
+            'category'     => 'transactional',
+            'body'         => "Congratulations {{firstname}}! Your certificate for {{course_name}} is ready: {{certificate_url}}",
+        ],
+
+        // (d) Learning-path milestone (25 / 50 / 75 / 100%).
+        [
+            'template_key' => 'content_path_milestone',
+            'channel'      => 'whatsapp',
+            'category'     => 'transactional',
+            'body'         => "Hi {{firstname}}, you've reached {{milestone_label}} of {{path_name}}. Keep going: {{path_url}}",
+        ],
     ];
 
     foreach ($templates as $tpl) {

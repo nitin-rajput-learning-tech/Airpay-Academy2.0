@@ -121,5 +121,18 @@ function xmldb_local_airpay_whatsapp_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026052101, 'local', 'airpay_whatsapp');
     }
 
+    // ── 2026052501 — Stream F / Wave E2 P4 (no schema change) ──
+    // Adds 4 content-event triggers on classes/notification_bridge.php
+    // + classes/observer.php + db/events.php + db/feature_flags.php
+    // + 4 new DLT templates. Seeds the templates idempotently here
+    // because install.php only runs on fresh installs.
+    if ($oldversion < 2026052501) {
+        require_once(__DIR__ . '/install.php');
+        if (function_exists('seed_starter_templates')) {
+            seed_starter_templates();
+        }
+        upgrade_plugin_savepoint(true, 2026052501, 'local', 'airpay_whatsapp');
+    }
+
     return true;
 }

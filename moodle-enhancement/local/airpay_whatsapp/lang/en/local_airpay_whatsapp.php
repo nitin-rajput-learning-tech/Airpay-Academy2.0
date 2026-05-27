@@ -91,3 +91,16 @@ $string['privacy:metadata:local_airpay_user_channel_prefs:dlt_consent_at']
     = 'Timestamp when the user gave DLT consent for transactional messaging.';
 $string['privacy:metadata:local_airpay_user_channel_prefs:dlt_consent_text']
     = 'A snapshot of the consent language presented to the user when they opted in.';
+
+// ── Stream F / Wave E2 P4 (2026-05-25) — content notifications ──
+$string['content_notifications_heading'] = 'Content notifications (WhatsApp)';
+$string['content_notifications_intro']   = 'Master switch for the four content-event WhatsApp triggers: new course published in your catalogue, course due in under 48 hours, certificate ready, and learning-path milestone reached. Default off — admin must opt in via the Switchboard. All triggers also require the master WhatsApp engagement flag to be on.';
+$string['content_flag_new_course']           = 'New course published in your catalogue';
+$string['content_flag_course_due_soon']      = 'Course due in under 48 hours';
+$string['content_flag_certificate_ready']    = 'Certificate ready';
+$string['content_flag_path_milestone']       = 'Learning-path milestone reached (25 / 50 / 75 / 100%)';
+$string['content_template_new_course']       = 'Hi {firstname}, a new course is now available in your catalogue: {course_name}. Start here: {course_url}';
+$string['content_template_course_due_soon']  = 'Hi {firstname}, {course_name} is due in {deadline}. Complete it now: {course_url}';
+$string['content_template_certificate_ready'] = 'Congratulations {firstname}! Your certificate for {course_name} is ready: {certificate_url}';
+$string['content_template_path_milestone']   = 'Hi {firstname}, you have reached {milestone_label} of {path_name}. Keep going: {path_url}';
+$string['content_throttle_note']             = 'Duplicate sends of the same trigger to the same learner within {$a} hours are suppressed to protect against burst notifications.';

@@ -246,6 +246,18 @@ class course_reminder extends \core\task\scheduled_task {
                     'course_url'  => $a->course_url,
                 ]
             );
+
+            // Stream F / Wave E2 P4 (2026-05-25) — extra urgent "due
+            // in <48h" surface, gated independently on
+            // airpay_whatsapp_content_notifications (default OFF) +
+            // its own 6h throttle. Fires from the same cron walk so
+            // we don't need a second scheduled task.
+            $secs_remaining_now = $deadline_ts - time();
+            if ($secs_remaining_now > 0 && $secs_remaining_now < 48 * 3600) {
+                $hours_remaining = (int) ceil($secs_remaining_now / 3600);
+                \local_airpay_whatsapp\notification_bridge::send_course_due_soon(
+                    $userid, $courseid, $hours_remaining);
+            }
         }
 
         // Record the audit row AFTER send. The unique index serves as
