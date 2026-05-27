@@ -1,9 +1,13 @@
 # Sentientia Live — Question Types Reference
 
 **Plugin:** `local_sentientia_live` (Mentimeter-style real-time engagement)
-**Phase covered:** E.4 scaffold (2026-05-24) — base class + 6 stubs + registry.
-**Status:** Scaffolding only. Concrete render / persist / tally implementations
-land in Phase E.4 through Phase E.9.
+**Phase covered:** E.4 scaffold (2026-05-24) — base class + 6 stubs + registry;
+Wave D4 (2026-05-24) — full implementation of `open_ended`, `rating_scale`,
+`quiz`, `ranking` (`multichoice` + `word_cloud` via parallel chips C1/C2).
+**Status:** Implemented. All 6 types ship full `render` / `persist_response` /
+`tally` / `validate_config` / `get_aria_announcements` plus
+`qt_<type>_audience` + `qt_<type>_result` Mustache templates. Plugin
+`0.2.0-alpha`.
 
 ---
 

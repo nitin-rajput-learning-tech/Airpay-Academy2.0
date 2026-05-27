@@ -267,7 +267,7 @@ $string['wc_dedupe_desc']               = 'चेक करने पर, प्
 // Open ended.
 $string['openended_max_chars_label']    = 'प्रति प्रतिक्रिया अधिकतम अक्षर';
 $string['openended_max_chars']          = 'प्रति प्रतिक्रिया अधिकतम अक्षर';
-$string['openended_max_chars_help']     = 'प्रतिक्रिया लंबाई पर हार्ड कैप। डिफ़ॉल्ट 280 (Twitter-style)। Range 10-2000।';
+$string['openended_max_chars_help']     = 'प्रतिक्रिया लंबाई पर हार्ड कैप। डिफ़ॉल्ट 500। Range 10-500।';
 
 // Slide row actions on edit.php.
 $string['action_add_slide']             = 'स्लाइड जोड़ें';
@@ -362,5 +362,77 @@ $string['response_text_too_long']       = 'प्रतिक्रिया ब
 $string['response_out_of_range']        = 'प्रतिक्रिया मान अनुमत range से बाहर है: {$a}';
 $string['response_ranking_bad_json']    = 'Ranking प्रतिक्रिया item indices के JSON array के रूप में होनी चाहिए।';
 $string['response_ranking_incomplete']  = 'भेजने से पहले कृपया प्रत्येक आइटम को rank करें।';
+$string['response_ranking_duplicate']   = 'Ranking प्रतिक्रिया में डुप्लिकेट आइटम है — प्रत्येक आइटम केवल एक बार आ सकता है।';
 $string['invalidparticipant']           = 'प्रतिभागी record नहीं मिला।';
 $string['participant_session_mismatch'] = 'प्रतिभागी इस सेशन का नहीं है।';
+
+// ── Phase E.6-E.9 D4 — Question type implementations ───────────────
+// प्रति टाइप एक key family — audience-side legends, result-panel
+// headings, a11y announcements, validation errors। Hindi parity 100%।
+
+// Shared: openended audience + result.
+$string['qt_openended_audience_label']     = 'आपका उत्तर';
+$string['qt_openended_char_hint']          = 'HTML हटा दिया जाएगा — केवल सादा पाठ।';
+$string['qt_openended_result_heading']     = 'खुली प्रतिक्रियाएं';
+$string['qt_openended_result_a11y_label']  = 'खुली-प्रतिक्रिया सूची';
+$string['qt_openended_item_aria_prefix']   = 'प्रतिक्रिया देने वाले';
+$string['qt_openended_moderation_label']   = 'मॉडरेशन नियंत्रण दिखाएं (व्यक्तिगत प्रतिक्रियाएं छिपाएं / दिखाएं)';
+$string['qt_openended_moderate_aria']      = 'इस प्रतिक्रिया की दृश्यता टॉगल करें';
+$string['qt_openended_hide']               = 'छिपाएं';
+$string['qt_openended_show']               = 'दिखाएं';
+$string['qt_openended_pagination_aria']    = 'प्रतिक्रिया pagination';
+$string['qt_openended_page_prev']          = 'पिछला पृष्ठ';
+$string['qt_openended_page_next']          = 'अगला पृष्ठ';
+$string['qt_openended_page_of']            = 'पृष्ठ';
+$string['qt_openended_a11y_new_response']  = 'एक नई प्रतिक्रिया प्राप्त हुई है';
+$string['qt_openended_a11y_response_hidden'] = 'प्रतिक्रिया projector दृश्य से छिपा दी गई';
+$string['qt_openended_a11y_response_shown']  = 'प्रतिक्रिया अब projector दृश्य पर दिख रही है';
+
+// validate_config errors — openended.
+$string['openended_max_chars_int_required'] = 'अधिकतम अक्षर संख्या पूर्ण संख्या होनी चाहिए।';
+$string['openended_max_chars_out_of_range'] = 'अधिकतम अक्षर संख्या {$a->min} और {$a->max} के बीच होनी चाहिए।';
+$string['openended_moderation_bool']        = 'मॉडरेशन टॉगल चालू या बंद होना चाहिए।';
+
+// Rating-scale audience + result.
+$string['qt_rating_audience_legend_stars'] = 'रेट करने के लिए star टैप करें (1 = सबसे कम, 5 = सबसे अधिक)।';
+$string['qt_rating_audience_legend_nps']   = 'स्कोर करने के लिए संख्या टैप करें (1 = बिल्कुल संभव नहीं, 10 = अत्यधिक संभव)।';
+$string['qt_rating_star_suffix']           = 'star';
+$string['qt_rating_nps_low']               = 'बिल्कुल संभव नहीं';
+$string['qt_rating_nps_high']              = 'अत्यधिक संभव';
+$string['qt_rating_result_heading']        = 'रेटिंग वितरण';
+$string['qt_rating_result_a11y_label']     = 'रेटिंग-scale परिणाम';
+$string['qt_rating_histogram_a11y_label']  = 'रेटिंग प्रतिक्रियाओं का हिस्टोग्राम';
+$string['qt_rating_mean_label']            = 'औसत (Mean)';
+$string['qt_rating_median_label']          = 'मध्यमान (Median)';
+$string['qt_rating_a11y_mean_updated']     = 'औसत रेटिंग अपडेट हुई है';
+$string['qt_rating_a11y_median_updated']   = 'मध्यमान रेटिंग अपडेट हुई है';
+
+// validate_config errors — rating.
+$string['rating_scale_type_invalid']         = 'Scale प्रकार "stars" (1-5) या "nps" (1-10) होना चाहिए।';
+$string['rating_scale_labels_must_array']    = 'Scale labels एक सूची होनी चाहिए।';
+$string['rating_scale_labels_must_string']   = 'प्रत्येक scale label एक string होना चाहिए।';
+$string['rating_scale_labels_length_mismatch'] = 'अपेक्षित {$a->expected} scale labels लेकिन प्राप्त {$a->got}।';
+
+// Quiz audience + result.
+$string['qt_quiz_audience_legend']         = 'वह विकल्प चुनें जो आपको सही लगता है।';
+$string['qt_quiz_result_heading']          = 'क्विज़ परिणाम';
+$string['qt_quiz_result_a11y_label']       = 'क्विज़ प्रतिक्रिया वितरण और leaderboard';
+$string['qt_quiz_result_correct_aria']     = 'सही उत्तर:';
+$string['qt_quiz_leaderboard_heading']     = 'लीडरबोर्ड';
+$string['qt_quiz_leaderboard_subhead']     = '(शीर्ष 10 सबसे तेज़ सही)';
+$string['qt_quiz_leaderboard_caption']     = 'शीर्ष 10 प्रतिभागी जिन्होंने सही उत्तर दिया, प्रतिक्रिया समय के अनुसार रैंक किए गए।';
+$string['qt_quiz_a11y_correct']            = 'आपका उत्तर सही था';
+$string['qt_quiz_a11y_incorrect']          = 'आपका उत्तर ग़लत था';
+$string['qt_quiz_a11y_leaderboard']        = 'क्विज़ leaderboard अपडेट हुआ';
+
+// Ranking audience + result.
+$string['qt_ranking_audience_sortable_hint'] = 'या ऊपर दिए गए आइटम को अपने पसंदीदा क्रम में drag-and-drop करें।';
+$string['qt_ranking_position_for']           = 'स्थिति के लिए';
+$string['qt_ranking_result_heading']         = 'रैंकिंग परिणाम (Borda count)';
+$string['qt_ranking_result_a11y_label']      = 'रैंकिंग परिणाम तालिका';
+$string['qt_ranking_table_caption']          = 'Borda count के अनुसार रैंक किए गए आइटम (अधिक = अधिक पसंदीदा) के साथ औसत स्थिति tie-breaker के रूप में।';
+$string['qt_ranking_borda_label']            = 'Borda अंक';
+$string['qt_ranking_item_fallback']          = 'आइटम {$a}';
+$string['qt_ranking_borda_explainer']        = 'Borda अंक उच्च स्थानों को पुरस्कृत करते हैं: N आइटम के साथ, स्थिति 1 को N अंक से स्थिति N को 1 अंक मिलता है। उच्च कुल = अधिक पसंदीदा।';
+$string['qt_ranking_a11y_item_moved']        = 'आइटम एक नई स्थिति में ले जाया गया';
+$string['qt_ranking_a11y_ranking_changed']   = 'रैंकिंग परिणाम बदल गए हैं';

@@ -1,0 +1,115 @@
+{{!
+    @template local_sentientia_live/qt_ranking_audience
+
+    Audience-facing form for a ranking slide (Phase E.9 / D4). The
+    primary interaction is drag-to-order; we also render a numeric-input
+    fallback that screen-reader users (and any client without JS) can
+    use unmodified.
+
+    Strategy: render BOTH the sortable list AND the numeric inputs in
+    DOM, marked with the same data-item-index. A small inline JS block
+    (audience_ranking_sortable.js in a future chip, or vanilla inline
+    here) wires up Sortable.js when JS + a pointer are available, and
+    keeps the numeric inputs in sync. With JS off, the numeric inputs
+    are visible and the sortable list collapses (display:none via the
+    `js-only` class).
+
+    Context:
+      slideid        int
+      sessionid      int
+      aria_id_prefix string
+      items[]                  — one per item:
+        index        int       — 0-based.
+        label        string
+        input_id     string    — DOM ID for the numeric input.
+      has_items      bool
+      item_count     int
+      sesskey        string
+      submit_label   string
+      intro          string    — "Number each item from 1 …" (existing key).
+      sortable_hint  string    — "Or drag-and-drop on desktop" type hint.
+
+    a11y: numeric inputs are the SR-and-keyboard-accessible path —
+    sortable list is supplementary. Each numeric input has min=1,
+    max=item_count + aria-describedby the intro paragraph.
+}}
+<div class="sentientia-qt-ranking-audience"
+     data-slideid="{{slideid}}"
+     data-sessionid="{{sessionid}}"
+     data-qt-type="ranking"
+     data-item-count="{{item_count}}"
+     role="region">
+
+  <p class="text-muted small mb-3" id="{{aria_id_prefix}}-intro">{{intro}}</p>
+
+  {{#has_items}}
+    {{! Drag-and-drop UI — JS-enhanced. Hidden via CSS class when JS
+        cannot find Sortable; numeric inputs below remain the canonical
+        path. Order here is purely the initial display order. }}
+    <ol class="list-group mb-3 sentientia-qt-ranking-sortable js-only"
+        id="{{aria_id_prefix}}-sortable"
+        role="list"
+        aria-describedby="{{aria_id_prefix}}-intro">
+      {{#items}}
+        <li class="list-group-item d-flex align-items-center sentientia-qt-ranking-sortable-item"
+            data-item-index="{{index}}"
+            draggable="true">
+          <i class="fa fa-grip-vertical text-muted me-2" aria-hidden="true"></i>
+          <span class="flex-grow-1">{{label}}</span>
+        </li>
+      {{/items}}
+    </ol>
+
+    {{! Fallback / keyboard / SR path — numeric inputs. Always rendered,
+        always submittable. Inline JS keeps these in sync with the
+        sortable order. }}
+    <div class="sentientia-qt-ranking-numeric mb-3"
+         id="{{aria_id_prefix}}-numeric"
+         aria-describedby="{{aria_id_prefix}}-intro">
+      {{#items}}
+        <div class="input-group mb-2">
+          <label class="input-group-text" for="{{input_id}}" style="min-width: 4.5rem;">
+            <span class="sr-only">
+              {{#str}}qt_ranking_position_for, local_sentientia_live{{/str}}
+            </span>
+            {{label}}
+          </label>
+          <input type="number"
+                 class="form-control sentientia-qt-ranking-numeric-input"
+                 id="{{input_id}}"
+                 name="rank_{{index}}"
+                 data-item-index="{{index}}"
+                 min="1"
+                 max="{{item_count}}"
+                 placeholder="#"
+                 required>
+        </div>
+      {{/items}}
+    </div>
+
+    <p class="text-muted small sentientia-qt-ranking-hint js-only">
+      <i class="fa fa-info-circle me-1" aria-hidden="true"></i>{{sortable_hint}}
+    </p>
+  {{/has_items}}
+
+  <input type="hidden" name="sesskey" value="{{sesskey}}">
+  <input type="hidden" name="slide_id" value="{{slideid}}">
+  <input type="hidden"
+         name="value_text"
+         class="sentientia-qt-ranking-order-json"
+         id="{{aria_id_prefix}}-order-json"
+         value="">
+
+  <button type="submit"
+          class="btn btn-primary btn-lg w-100 sentientia-qt-ranking-submit">
+    {{submit_label}}
+  </button>
+</div>
+
+<style>
+  /* JS-only enhancement — hide sortable + hint when JS hasn't promoted
+     them; numeric inputs stay visible as the canonical path. */
+  .sentientia-qt-ranking-audience .js-only { display: none; }
+  .sentientia-qt-ranking-audience.js-active .js-only { display: block; }
+  .sentientia-qt-ranking-audience.js-active .sentientia-qt-ranking-numeric { display: none; }
+</style>

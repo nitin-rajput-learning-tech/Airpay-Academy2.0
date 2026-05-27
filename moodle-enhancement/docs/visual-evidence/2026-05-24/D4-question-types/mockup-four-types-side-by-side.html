@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<!--
+  Visual evidence — Wave D4 — sentientia_live 4 question types.
+  Self-contained static mockup (no Moodle bootstrap required) rendering
+  each new type's AUDIENCE view (left) beside its TRAINER RESULT view
+  (right), as they appear after the Mustache templates render. Markup +
+  classes mirror the actual qt_<type>_audience.mustache /
+  qt_<type>_result.mustache templates so this doubles as a layout
+  reference for QA.
+
+  Open in any browser. Tokens lifted from .claude/rules/frontend.md.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sentientia Live — D4 question types (audience + trainer)</title>
+<style>
+  :root {
+    --ap-primary: #0066A7; --ap-primary-light: #e8f2f9; --ap-accent: #0f7a73;
+    --ap-bg: #F2F4FB; --ap-surface: #fff; --ap-border: #e2e6ef;
+    --ap-text: #1a1a2e; --ap-muted: #5a6070; --ap-success: #16a34a;
+    --ap-warning: #d97706;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: Montserrat, -apple-system, system-ui, sans-serif;
+         background: var(--ap-bg); color: var(--ap-text); margin: 0; padding: 24px; }
+  h1 { font-size: 1.6rem; }
+  h2 { font-size: 1.25rem; border-bottom: 2px solid var(--ap-primary);
+       padding-bottom: 6px; margin-top: 40px; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 16px 0; }
+  @media (max-width: 860px) { .pair { grid-template-columns: 1fr; } }
+  .panel { background: var(--ap-surface); border: 1px solid var(--ap-border);
+           border-radius: 12px; padding: 20px; }
+  .panel h3 { margin-top: 0; font-size: .8rem; text-transform: uppercase;
+              letter-spacing: .04em; color: var(--ap-muted); }
+  .q { font-size: 1.15rem; font-weight: 600; margin: 4px 0 16px; }
+  .btn { display: block; width: 100%; padding: 12px; border-radius: 8px;
+         border: none; background: var(--ap-primary); color: #fff;
+         font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 12px; }
+  .opt { border: 1px solid var(--ap-border); border-radius: 8px;
+         padding: 14px; margin-bottom: 8px; cursor: pointer; }
+  textarea { width: 100%; border: 1px solid var(--ap-border); border-radius: 8px;
+             padding: 12px; font: inherit; }
+  .counter { display: flex; justify-content: space-between; color: var(--ap-muted);
+             font-size: .8rem; margin: 6px 0 2px; }
+  .badge { background: var(--ap-muted); color: #fff; border-radius: 20px;
+           padding: 3px 10px; font-size: .8rem; }
+  .badge.ok { background: var(--ap-success); }
+  .bar-track { background: #eef0f6; border-radius: 6px; height: 12px; margin-top: 4px; }
+  .bar { height: 100%; border-radius: 6px; background: var(--ap-primary); }
+  .bar.correct { background: var(--ap-success); }
+  .row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .star { border: 1px solid var(--ap-warning); border-radius: 8px; padding: 10px 14px;
+          text-align: center; min-width: 64px; }
+  .star .sym { color: var(--ap-warning); }
+  .nps { border: 1px solid var(--ap-primary); border-radius: 8px; padding: 10px 0;
+         text-align: center; min-width: 44px; font-weight: 700; }
+  .summary { display: flex; gap: 28px; margin-bottom: 16px; }
+  .summary .stat { text-align: center; }
+  .summary .stat .n { font-size: 2rem; font-weight: 700; }
+  .summary .stat .l { font-size: .75rem; color: var(--ap-muted); }
+  table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--ap-border); }
+  th { background: #f6f8fc; }
+  tr.winner { background: #fff6e0; }
+  .sortable li { list-style: none; border: 1px solid var(--ap-border);
+                 border-radius: 8px; padding: 12px; margin-bottom: 6px;
+                 display: flex; align-items: center; gap: 10px; }
+  .grip { color: var(--ap-muted); cursor: grab; }
+  .alert { background: var(--ap-primary-light); border-radius: 8px; padding: 12px;
+           margin: 12px 0; }
+  .legend { font-weight: 600; margin-bottom: 12px; }
+  .pagination { display: flex; gap: 6px; justify-content: center; margin-top: 12px; }
+  .pagination span { border: 1px solid var(--ap-border); border-radius: 6px;
+                     padding: 4px 10px; font-size: .85rem; }
+  .pagination .active { background: var(--ap-primary); color: #fff; }
+  .resp-item { border-left: 4px solid var(--ap-primary); background: #fafbfe;
+               border-radius: 6px; padding: 8px 12px; margin-bottom: 8px; }
+  .resp-item .meta { display: flex; justify-content: space-between;
+                     font-size: .8rem; color: var(--ap-muted); }
+  .note { color: var(--ap-muted); font-size: .85rem; }
+</style>
+</head>
+<body>
+<h1>Sentientia Live — Wave D4 question types</h1>
+<p class="note">Audience view (left) + trainer result view (right) for each
+of the 4 types implemented in D4. Markup mirrors the
+<code>qt_&lt;type&gt;_audience.mustache</code> /
+<code>qt_&lt;type&gt;_result.mustache</code> templates. One simulated
+session running all four back-to-back.</p>
+
+<!-- ===================== OPEN ENDED ===================== -->
+<h2>1. Open-ended — free text (max 500), display-all + pagination + moderation</h2>
+<div class="pair">
+  <div class="panel">
+    <h3>Audience · play.php</h3>
+    <div class="q">What's one thing you'll apply from today's KYC session?</div>
+    <textarea rows="4" placeholder="Your answer…">Double-check the address proof against the PAN before approving.</textarea>
+    <div class="counter"><span>61 / 500</span><span>HTML is stripped — plain text only.</span></div>
+    <button class="btn">Submit response</button>
+  </div>
+  <div class="panel">
+    <h3>Trainer · result panel</h3>
+    <div class="row"><strong>Open-ended responses</strong>
+      <span class="badge" style="margin-left:auto">37 responses</span></div>
+    <label class="note"><input type="checkbox" checked> Show moderation controls</label>
+    <div style="margin-top:10px">
+      <div class="resp-item"><div class="meta"><b>Priya N.</b><span>14:02</span></div>
+        Double-check the address proof against the PAN before approving.</div>
+      <div class="resp-item"><div class="meta"><b>Arjun R.</b><span>14:02</span></div>
+        Escalate mismatches instead of guessing.</div>
+      <div class="resp-item" style="opacity:.5"><div class="meta"><b>(hidden)</b><span>14:01</span></div>
+        &lt;moderated&gt;</div>
+    </div>
+    <div class="pagination"><span class="active">1</span><span>2</span><span>3</span><span>4</span></div>
+    <p class="note" style="text-align:center">Page 1 / 4</p>
+  </div>
+</div>
+
+<!-- ===================== RATING SCALE ===================== -->
+<h2>2. Rating scale — 1-5 stars OR 1-10 NPS; histogram + mean + median</h2>
+<div class="pair">
+  <div class="panel">
+    <h3>Audience · stars (1-5)</h3>
+    <div class="legend">Tap a star to rate (1 = lowest, 5 = highest).</div>
+    <div class="row">
+      <div class="star"><div class="sym">★</div><b>1</b></div>
+      <div class="star"><div class="sym">★</div><b>2</b></div>
+      <div class="star"><div class="sym">★</div><b>3</b></div>
+      <div class="star" style="background:var(--ap-warning);color:#fff"><div class="sym" style="color:#fff">★</div><b>4</b></div>
+      <div class="star"><div class="sym">★</div><b>5</b></div>
+    </div>
+    <button class="btn">Submit response</button>
+    <p class="note">NPS variant renders 1–10 numeric pills with "Not at all likely → Extremely likely".</p>
+  </div>
+  <div class="panel">
+    <h3>Trainer · distribution histogram</h3>
+    <div class="summary">
+      <div class="stat"><div class="n">4.31</div><div class="l">Mean</div></div>
+      <div class="stat"><div class="n">4</div><div class="l">Median</div></div>
+      <div class="stat"><div class="n">42</div><div class="l">Responses</div></div>
+      <div class="stat"><div class="n">1–5</div><div class="l">Scale</div></div>
+    </div>
+    <div class="row"><b style="width:2em">5</b><div class="bar-track" style="flex:1"><div class="bar" style="width:100%"></div></div><span>20</span></div>
+    <div class="row"><b style="width:2em">4</b><div class="bar-track" style="flex:1"><div class="bar" style="width:70%"></div></div><span>14</span></div>
+    <div class="row"><b style="width:2em">3</b><div class="bar-track" style="flex:1"><div class="bar" style="width:25%"></div></div><span>5</span></div>
+    <div class="row"><b style="width:2em">2</b><div class="bar-track" style="flex:1"><div class="bar" style="width:10%"></div></div><span>2</span></div>
+    <div class="row"><b style="width:2em">1</b><div class="bar-track" style="flex:1"><div class="bar" style="width:5%"></div></div><span>1</span></div>
+  </div>
+</div>
+
+<!-- ===================== QUIZ ===================== -->
+<h2>3. Quiz — correct_index + right/wrong + top-10 fastest leaderboard</h2>
+<div class="pair">
+  <div class="panel">
+    <h3>Audience · play.php</h3>
+    <div class="legend">Pick the option you think is correct.</div>
+    <div class="opt">Aadhaar card</div>
+    <div class="opt" style="border-color:var(--ap-success);background:#f0fbf3">PAN card <span class="badge ok" style="float:right">✓ Correct</span></div>
+    <div class="opt">Voter ID</div>
+    <div class="alert" style="margin-top:14px"><b>Your answer was correct!</b></div>
+  </div>
+  <div class="panel">
+    <h3>Trainer · result + leaderboard</h3>
+    <div class="row"><b style="width:9em">PAN card ✓</b><div class="bar-track" style="flex:1"><div class="bar correct" style="width:100%"></div></div><span>28 (74%)</span></div>
+    <div class="row"><b style="width:9em">Aadhaar card</b><div class="bar-track" style="flex:1"><div class="bar" style="width:25%"></div></div><span>7 (18%)</span></div>
+    <div class="row"><b style="width:9em">Voter ID</b><div class="bar-track" style="flex:1"><div class="bar" style="width:11%"></div></div><span>3 (8%)</span></div>
+    <div class="alert">Quiz result: <b>28</b> of 38 got it right (74%) — Correct answer: <b>PAN card</b></div>
+    <table>
+      <caption class="note" style="text-align:left">Top 10 fastest correct</caption>
+      <thead><tr><th>Rank</th><th>Name</th><th style="text-align:right">Time</th></tr></thead>
+      <tbody>
+        <tr class="winner"><td>🥇 1</td><td>Sana K.</td><td style="text-align:right"><code>1s</code></td></tr>
+        <tr><td>2</td><td>Vikram P.</td><td style="text-align:right"><code>2s</code></td></tr>
+        <tr><td>3</td><td>Meera D.</td><td style="text-align:right"><code>3s</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===================== RANKING ===================== -->
+<h2>4. Ranking — drag-to-order; Borda count + average position</h2>
+<div class="pair">
+  <div class="panel">
+    <h3>Audience · drag-to-order (+ numeric a11y fallback)</h3>
+    <div class="note" style="margin-bottom:10px">Number each item from 1 (top choice) downward, or drag.</div>
+    <ul class="sortable" style="padding:0">
+      <li><span class="grip">⠿</span> Speed of resolution</li>
+      <li><span class="grip">⠿</span> Quality of answer</li>
+      <li><span class="grip">⠿</span> Cost to serve</li>
+    </ul>
+    <button class="btn">Submit response</button>
+  </div>
+  <div class="panel">
+    <h3>Trainer · Borda ranking</h3>
+    <table>
+      <thead><tr><th>Rank</th><th>Item</th><th style="text-align:right">Borda</th><th style="text-align:right">Avg pos</th></tr></thead>
+      <tbody>
+        <tr class="winner"><td>🥇 1</td><td>Quality of answer</td><td style="text-align:right"><code>94</code></td><td style="text-align:right"><code>1.4</code></td></tr>
+        <tr><td>2</td><td>Speed of resolution</td><td style="text-align:right"><code>71</code></td><td style="text-align:right"><code>2.0</code></td></tr>
+        <tr><td>3</td><td>Cost to serve</td><td style="text-align:right"><code>45</code></td><td style="text-align:right"><code>2.6</code></td></tr>
+      </tbody>
+    </table>
+    <p class="note">Borda points reward higher positions: with N items, position 1 earns N points down to position N earning 1. Higher total = more preferred.</p>
+  </div>
+</div>
+
+<p class="note" style="margin-top:40px">Generated for Wave D4 visual evidence,
+2026-05-24. Layout reference only — live rendering happens through Moodle's
+<code>$OUTPUT-&gt;render_from_template()</code> against the
+<code>qt_&lt;type&gt;_*.mustache</code> templates.</p>
+</body>
+</html>

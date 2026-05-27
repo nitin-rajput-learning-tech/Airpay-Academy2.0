@@ -3850,3 +3850,70 @@ PROJECT-STATE.md history split for fast load.
 All chips ran on Opus 4.7 (1M context) in FleetView parallel worktrees.
 Zero hand-edited code outside conflict resolution. Pre-commit hook
 caught zero stray markers (P0-A working as designed).
+
+---
+
+## 🎤 WAVE D4 — `sentientia_live` 4 question types implemented (Phases E.6-E.9) ✅ SHIPPED (2026-05-24)
+
+**Chip:** `claude/admiring-albattani-tGAjg` · **Plugin:**
+`local_sentientia_live` `0.1.2-alpha` → `0.2.0-alpha` (`2026052403`).
+
+P3-R landed the 6 question-type stubs + registry; parallel chips C1/C2
+own `multiple_choice` + `word_cloud`. **D4 implements the remaining 4 in
+one chip** (they share template + tally + a11y patterns): `open_ended`,
+`rating_scale`, `quiz`, `ranking`. Each stub's five abstract methods —
+`render` / `persist_response` / `tally` / `validate_config` /
+`get_aria_announcements` — are now full implementations.
+
+### What shipped
+
+| Type | Highlights |
+|------|-----------|
+| **open_ended** | Free text, **500-char ceiling** (raised from the stub's 280; `slide_manager` clamp + `response_recorder` fallback + `slide_form` default all moved to 500 in lockstep). HTML stripped at persist via `clean_param(PARAM_TEXT)`. No aggregation — `tally()` returns raw list newest-first; static `paginate()` slices for the trainer's paginated panel; moderation toggle (hide/show) in the result template. |
+| **rating_scale** | `scale_type` config picks **1-5 stars** OR **1-10 NPS**; now persisted through `slide_manager`. Tally adds **mean + median** (pure static helpers `compute_mean` / `compute_median`) atop the distribution histogram; `_avg` alias retained for the existing `chart_updater`. |
+| **quiz** | Like multichoice with **required `correct_index`**. Per-response scoring via static `score_response()` (1/0). Tally adds correct-count + a **top-10 fastest-correct leaderboard** (ordered by elapsed time vs the slide_changed event, then row id). |
+| **ranking** | Drag-to-order audience template with an always-present **numeric-input a11y fallback** (SR / no-JS). Tally computes **Borda count** (higher = preferred, robust to strategic voting) AND average position (lower = preferred), exposed as pure static helpers. |
+
+### Deliverables
+
+- **8 Mustache templates** — `qt_<type>_audience` + `qt_<type>_result`
+  for each of the 4 types. All pass the CI Mustache-balance gate; every
+  UI string via `{{#str}}`; `{{{ }}}` only on JSON tally payloads;
+  sesskey on every form.
+- **Lang en+hi — parity 100%** (332/332 keys, byte-aligned). +66 D4
+  pairs; `openended_max_chars_help` default text updated 280 → 500.
+- **49 new PHPUnit methods** across `qt_open_ended_test` (12),
+  `qt_rating_scale_test` (12), `qt_quiz_test` (13), `qt_ranking_test`
+  (12) — each covering 3 valid + 2-3 invalid configs, persist
+  (valid + invalid payload), tally aggregation, pure helpers, aria, and
+  registry resolution. Exceeds the ≥20 acceptance bar.
+- **Registry** `get_all()` resolves all 6 (verified by the pre-existing
+  `question_type_registry_test`). **Trainer picker** (`add_slide.php`) is
+  now registry-driven via `question_type_registry::list_slugs()` —
+  behaviour-preserving (`list_slugs()` == `slide_manager::VALID_TYPES`,
+  enforced by an existing test).
+- **version.php** `0.1.2-alpha` → `0.2.0-alpha`; release-history note added.
+- **Visual evidence:** `docs/visual-evidence/2026-05-24/D4-question-types/`
+  — self-contained `mockup-four-types-side-by-side.html` (audience +
+  trainer per type) + README with the XAMPP screenshot + NVDA + mobile
+  smoke-test plan to complete before production merge.
+
+### Acceptance
+
+All 6 question types resolve through the registry and have full
+implementations. PHPUnit covers all 4 D4 types (49 methods). Hindi parity
+100%. PHP lint + Mustache balance + JSON gates pass locally; the CI
+`phpunit-5.2` job runs the new tests on push (no DB bootstrap in the chip
+container). No conflict markers.
+
+### Deferred (out of scope for D4)
+
+- Live XAMPP screenshots (no Moodle in the chip container — mockup +
+  smoke-test plan stand in; capture on deploy).
+- A dedicated `qt_ranking_sortable` AMD module (the audience template
+  ships the numeric fallback as the canonical path; Sortable.js
+  enhancement is a follow-up per the E.9/E.11 note).
+- `result_panel.php` / `play.php` migration to call the new
+  `question_type` classes directly — the existing switch-based renderer
+  + recorder still drive runtime; the type classes are additive and the
+  registry/tests pin the contract. Migration is a clean follow-up chip.
