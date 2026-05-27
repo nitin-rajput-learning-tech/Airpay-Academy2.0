@@ -35,10 +35,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_live';
-$plugin->version   = 2026052502;
+$plugin->version   = 2026052503;
 $plugin->requires  = 2022041900;
-$plugin->maturity  = MATURITY_ALPHA;   // Phases E.4-E.9 — all 6 question types live
-$plugin->release   = '0.2.0-alpha';
+$plugin->maturity  = MATURITY_ALPHA;   // Phases E.4-E.9 — all 6 question types live + verified
+$plugin->release   = '0.2.1-alpha';
 $plugin->dependencies = [
     'local_airpay_core' => 2026051401,  // feature_flags resolver
 ];
@@ -152,3 +152,19 @@ $plugin->dependencies = [
 //              +66 string pairs en+hi (Hindi parity 100%). +4 PHPUnit
 //              test classes (≥24 methods) covering valid/invalid config,
 //              persist, tally aggregation, registry resolution.
+// 0.2.1-alpha  Verification + robustness. Two-browser acceptance test of
+//              all 6 question types on local XAMPP: every audience render
+//              confirmed (multichoice/wordcloud/openended/rating/quiz/
+//              ranking), SSE live auto-advance demonstrated, server
+//              persist+tally proven on real DB, zero JS console errors.
+//              Evidence in docs/visual-evidence/2026-05-27/.
+//              BUGFIX: session_manager::create() hard-selected the
+//              BizLMS-only `open_path` column from {user}, which threw
+//              `Unknown column 'open_path'` on a vanilla Moodle (and the
+//              PHPUnit test DB), erroring all 76 persist/tally tests. Now
+//              reads open_path defensively via get_columns() — works on
+//              BizLMS (Airpay), vanilla Moodle (future Sentientia
+//              customers), and the test DB alike. multiple_choice_test now
+//              18/18 green. New QA CLIs: cli/set_live_flags.php (flip the
+//              Live flag set) + cli/seed_demo_session.php (seed a LIVE
+//              session with all 6 types + responses).

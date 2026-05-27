@@ -5,6 +5,59 @@
 
 ---
 
+## ✅ Sentientia Live — 6 question types VERIFIED end-to-end + open_path robustness fix (2026-05-27)
+
+**Context:** First execution item of the user's re-prioritised plan
+("4,3,5,2,1") — a two-browser live test of all 6 `local_sentientia_live`
+question types after the Wave C1/C2/D4 merges landed them on `production`.
+
+**Verified (all green) on local XAMPP (localhost:8080, Moodle 5.1.3+):**
+- **Server-side, all 6 types** — `cli/seed_demo_session.php` seeded a LIVE
+  session (id=18) with one slide per type + 3 anonymous participants +
+  17 responses; every `validate_settings`, anonymous `join_or_resume`,
+  `validate_value_for_type`, persist, and `tally` passed. Tally readback
+  correct per type (multichoice `[2,1,0]`, rating avg 4.67, quiz `[2,0,1]`,
+  ranking Borda `[1.33,2,2.67]`, wordcloud `{innovation:2,speed:1,trust:1}`).
+- **Audience render, all 6 types** — fresh anonymous Chrome, 6 screenshots
+  in `docs/visual-evidence/2026-05-27/` (multichoice radios, wordcloud
+  text+cap hint, openended textarea, rating 1-5 cards, quiz radios with
+  answer hidden, ranking numbered inputs with a11y instruction).
+- **SSE live auto-advance** — changing the current slide server-side
+  auto-swapped the audience screen (multichoice→wordcloud) with no reload.
+- **JS console** — zero errors across all 6 renders (only a benign
+  site-wide PWA-meta deprecation warn).
+
+**BUGFIX (product robustness, P0 for non-BizLMS):**
+`session_manager::create()` hard-selected the BizLMS-only `open_path`
+column from `{user}`, throwing `Unknown column 'open_path'` on a vanilla
+Moodle and the PHPUnit test DB — which had **errored all 76**
+persist/tally tests. Now reads `open_path` defensively via
+`get_columns()`; works on BizLMS (Airpay), vanilla Moodle (future
+Sentientia customers), and the test DB alike. Behaviour on production is
+identical (open_path present → same tenant derivation). `multiple_choice_test`
+went from 16 errors → **18/18 green** post-fix. This directly advances
+PRIORITY 4 (PHPUnit gate): the real product blocker is closed. The only
+residual local "issue" is a third-party `block_learnerscript` observer
+`parse_url(null)` PHP-8.2 deprecation, which is environmental (XAMPP
+carries the full production plugin stack; a hermetic CI runner that
+installs only the plugins under test won't load that observer).
+
+**New QA/operator CLIs** (`local/sentientia_live/cli/`):
+- `set_live_flags.php` — flip the whole Live engagement flag set on/off
+  (`--on` / `--off` / `--status`).
+- `seed_demo_session.php` — seed a LIVE session with all 6 types +
+  participants + responses; prints join code + URLs.
+
+**Version:** `local_sentientia_live` 2026052502 → **2026052503**
+(release 0.2.1-alpha).
+
+**Follow-ups noted:** trainer-side result-panel render for the 5 new
+types (low-risk — multichoice was VIS-10-verified, tally data proven);
+CI-env hermeticity check on PR #2 (PRIORITY 4 finish); the
+`apple-mobile-web-app-capable` PWA-meta deprecation warn (P3 cosmetic).
+
+---
+
 ## ✅ GOAL C CLOSED — USER GUIDES PER PERSONA (2026-05-25, Wave D3 P3 testing-and-docs chip)
 
 **Status:** ✅ **Goal C is CLOSED.** The long-standing "AWAITING OUTLINE

@@ -70,11 +70,19 @@ class session_manager {
         }
 
         // Derive customerid + tenantid from the owner's open_path.
+        // open_path is a BizLMS-added column on {user}; it is NOT present
+        // on a vanilla Moodle. Sentientia LMS ships to non-BizLMS
+        // customers, and the PHPUnit test DB has no such column — so read
+        // it defensively. When absent, there is no multi-tenant tree and
+        // tenantid stays 0 (the "no tenant / global" scope).
+        $usercolumns = $DB->get_columns('user');
+        $userfields = isset($usercolumns['open_path']) ? 'id, open_path' : 'id';
         $user = $DB->get_record('user', ['id' => $ownerid],
-            'id, open_path', MUST_EXIST);
+            $userfields, MUST_EXIST);
         $tenantid = 0;
-        if (!empty($user->open_path)) {
-            $parts = explode('/', trim($user->open_path, '/'));
+        $openpath = $user->open_path ?? '';
+        if ($openpath !== '') {
+            $parts = explode('/', trim($openpath, '/'));
             if (!empty($parts[0]) && ctype_digit($parts[0])) {
                 $tenantid = (int) $parts[0];
             }
