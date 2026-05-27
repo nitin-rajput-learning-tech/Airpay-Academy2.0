@@ -40,6 +40,26 @@ $string['how_to_outlook'] = 'Outlook on the web: Calendar ▶ Add calendar ▶ S
 $string['how_to_google']  = 'Google Calendar: Other calendars ▶ + ▶ From URL ▶ paste the URL ▶ Add calendar.';
 $string['how_to_apple']   = 'Apple Calendar (macOS): File ▶ New Calendar Subscription ▶ paste the URL ▶ Subscribe. iOS: Settings ▶ Calendar ▶ Accounts ▶ Add Account ▶ Other ▶ Add Subscribed Calendar.';
 
+// OAuth bi-directional sync — Phase 2.1 UI strings.
+$string['oauth_heading']             = 'Two-way calendar sync (Beta)';
+$string['oauth_intro']                = 'Connect your Outlook or Google calendar to push Sentientia LMS deadlines straight into it, and have your responses (accept / decline) flow back to Sentientia automatically.';
+$string['oauth_provider_m365']        = 'Microsoft 365 (Outlook)';
+$string['oauth_provider_desc_m365']   = 'Read + write events in your Outlook calendar. We only touch events the LMS itself adds.';
+$string['oauth_provider_google']      = 'Google Calendar';
+$string['oauth_provider_desc_google'] = 'Read + write events the LMS creates in your Google calendar. We never see your personal events.';
+$string['oauth_connect_m365']         = 'Connect Outlook';
+$string['oauth_connect_google']       = 'Connect Google Calendar';
+$string['oauth_reconnect']            = 'Reconnect';
+$string['oauth_disconnect']           = 'Disconnect';
+$string['oauth_status_connected']     = 'Connected (expires {$a->date})';
+$string['oauth_status_expired']       = 'Expired — please reconnect';
+$string['oauth_status_disconnected']  = 'Not connected';
+$string['connect_success_m365']       = 'Microsoft 365 calendar connected — your Sentientia deadlines will start syncing shortly.';
+$string['connect_success_google']     = 'Google Calendar connected — your Sentientia deadlines will start syncing shortly.';
+$string['disconnect_success_m365']    = 'Microsoft 365 calendar disconnected. Existing events already pushed will remain in your calendar.';
+$string['disconnect_success_google']  = 'Google Calendar disconnected. Existing events already pushed will remain in your calendar.';
+$string['connect_error']              = 'Calendar provider rejected the connection ({$a->code}). {$a->description}';
+
 // Errors.
 $string['error_flag_off']                 = 'Calendar sync is not currently enabled for your account. Contact your administrator.';
 $string['error_token_collision']          = 'Could not generate a unique calendar token after multiple attempts. Please try again.';
@@ -47,6 +67,10 @@ $string['error_oauth_clientid_missing']   = 'OAuth client ID is not configured f
 $string['error_oauth_state_invalid']      = 'OAuth state mismatch — the request did not match a pending authorisation. Please start the connect flow again.';
 $string['error_oauth_code_missing']       = 'OAuth callback did not include an authorisation code. The provider may have rejected the consent. Please try again.';
 $string['error_oauth_no_refresh_token']   = 'No stored refresh token for this provider. Reconnect to the provider to mint a new one.';
+$string['error_oauth_token_response']     = 'Calendar provider returned an unexpected response ({$a}). Please try again or contact your administrator.';
+$string['error_oauth_invalid_grant']      = 'Your calendar provider revoked our access. Please reconnect to grant fresh consent.';
+$string['error_oauth_http_failure']       = 'Could not reach the calendar provider ({$a}). The network or provider may be down — please try again in a few minutes.';
+$string['error_oauth_unknown_provider']   = 'Unknown OAuth provider: {$a}.';
 $string['oauth_not_live']                 = 'OAuth Phase 2 is currently scaffolding only. Live token exchange will be enabled in a future release once per-customer rollout is confirmed.';
 
 // Scheduled tasks.
@@ -58,7 +82,7 @@ $string['sentientia_calendar:manage_all'] = 'Manage any user\'s calendar subscri
 
 // Settings — Phase 2 OAuth.
 $string['settings_pagetitle']               = 'Sentientia Calendar Sync';
-$string['settings_section_oauth']           = 'OAuth — Microsoft 365 & Google Calendar (Phase 2)';
+$string['settings_section_oauth']           = 'OAuth — Microsoft 365 & Google Calendar';
 $string['settings_section_oauth_desc']      = 'Client IDs and secrets for the bi-directional sync flow. Empty values disable the corresponding "Connect…" button on the user-facing page. The feature flag <code>sentientia.calendar_sync.oauth.enabled</code> must also be ON for the surfaces to render.';
 $string['setting_microsoft_client_id']      = 'Microsoft Azure client ID';
 $string['setting_microsoft_client_id_desc'] = 'Application (client) ID from the Azure AD app registration. Leave empty to hide the "Connect Outlook" button. Pair this with the redirect URI shown below — Azure must list it verbatim under "Authentication → Web → Redirect URIs".';
@@ -70,7 +94,7 @@ $string['setting_google_client_secret']     = 'Google OAuth client secret';
 $string['setting_google_client_secret_desc'] = 'Client secret from the Google Cloud Console OAuth 2.0 client. Treated as a secret — never logged, never echoed back to the browser.';
 $string['setting_redirect_uri']             = 'OAuth redirect URI';
 $string['setting_redirect_uri_desc']        = 'Both Microsoft Azure and Google Cloud Console must list this exact URL as an authorised redirect URI before the OAuth dance will succeed. Read-only — derived from <code>$CFG-&gt;wwwroot</code>.';
-$string['setting_scaffolding_notice']       = 'Phase 2 ships SCAFFOLDING only. Live token exchange does NOT run yet — the callback handler intentionally throws <code>oauth_not_live</code> so a careless rollout cannot accidentally start hitting the providers. Phase 2.1 will wire up the live HTTP exchange behind the same feature flag.';
+$string['setting_scaffolding_notice']       = 'OAuth Phase 2.1 ships live token exchange behind the master feature flag <code>sentientia.calendar_sync.oauth.enabled</code> (default OFF). Filling in the credentials below stages the integration; flipping the flag ON for a customer activates it. Tests use mock endpoints — no live OAuth calls run from CI.';
 
 // Privacy.
 $string['privacy:metadata'] = 'Sentientia LMS Calendar Sync stores one secret subscription token per user. Calendar clients fetch the user\'s personal feed using this token. When Phase 2 OAuth is enabled, it additionally stores encrypted Microsoft 365 and/or Google Calendar OAuth tokens for the user. No course content or third-party data is stored — only the credentials and audit metadata (last-used time, IP, count).';

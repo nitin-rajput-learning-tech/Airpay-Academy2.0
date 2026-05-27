@@ -1,13 +1,23 @@
-# Calendar Sync — Phase 2 OAuth Integration (Scaffolding)
+# Calendar Sync — Phase 2 OAuth Integration
 
-**Status:** Phase 2 — SCAFFOLDING shipped (2026-05-24). Live token
-exchange deferred to Phase 2.1 pending per-customer rollout decisions.
-**Plugin:** `local_sentientia_calendar` v1.1.0-beta (version
-`2026052401`).
+**Status:** Phase 2.1 — LIVE OAuth wired (Wave C4, 2026-05-27). The
+Authorization Code + PKCE flow now exchanges codes for tokens, refreshes
+on expiry, and revokes at the provider + locally. Still gated behind the
+master feature flag (default **OFF**) — live traffic requires the flag ON
+for the customer AND no test mock registered.
+**Plugin:** `local_sentientia_calendar` v1.2.0-beta (version
+`2026052700`).
 **ADR:** [ADR-013 — Calendar sync](../adr/ADR-013-calendar-sync.md) §
 "Why we keep Path B as a future option".
 **Feature flag:** `sentientia.calendar_sync.oauth.enabled` — default
 **OFF**.
+
+> History: Phase 2 (P3-N, 2026-05-24, v1.1.0-beta) shipped the
+> scaffolding — the four lifecycle methods threw `oauth_not_live`. Phase
+> 2.1 (this chip) replaced those throws with the live token-endpoint
+> POST. CI exercises every branch through a mock HTTP handler
+> (`oauth_base::set_http_handler_for_testing()`); no live provider
+> traffic ever leaves CI.
 
 ---
 
@@ -17,19 +27,29 @@ This document describes the OAuth 2.0 Authorization Code with PKCE flow
 that `local_sentientia_calendar` uses for bi-directional sync against
 Microsoft 365 (Microsoft Graph) and Google Calendar.
 
-In Phase 2 (this chip) **the scaffolding is shipped but no live HTTP
-calls are made**. That means:
+In Phase 2.1 (this chip) **the live exchange is wired**, gated by two
+independent kill switches:
 
-- The DB table `local_sentientia_calendar_oauth` exists, is queryable,
-  and round-trips encrypted tokens — but no real tokens are stored yet.
-- The `oauth_base` / `m365_oauth` / `google_oauth` classes know how to
-  build the authorize URL and recover a PKCE verifier on callback — but
-  the token-endpoint POST is intentionally absent. `handle_callback()`
-  and `refresh_token()` throw `oauth_not_live`.
-- The settings page exists. Admins can paste in client IDs + secrets,
-  but those credentials are inert until Phase 2.1 wires up the live POST.
+- The DB table `local_sentientia_calendar_oauth` round-trips encrypted
+  tokens, and the live flow now writes real rows once a user connects.
+- The `oauth_base` / `m365_oauth` / `google_oauth` classes build the
+  authorize URL, recover the PKCE verifier on callback, POST to the
+  token endpoint, refresh on expiry, and revoke.
+- Three public endpoints — `oauth/connect.php`, `oauth/callback.php`,
+  `oauth/disconnect.php` — drive the browser-facing flow. connect +
+  disconnect are sesskey-protected; callback validates the OAuth `state`.
+- The settings page collects client IDs + secrets. They activate the
+  moment the master feature flag is flipped ON for a customer.
 
-Phase 2.1 ships the live exchange behind the same feature flag.
+**Two kill switches, both must clear for live traffic:**
+
+1. **Feature flag** `sentientia.calendar_sync.oauth.enabled` (default
+   OFF). Every lifecycle method calls `assert_feature_flag_enabled()`
+   before any HTTP could leave the server.
+2. **Test mock** — `oauth_base::set_http_handler_for_testing()`. When a
+   test registers a handler, all outbound HTTP routes through it. The
+   handler stays `null` in production. CI populates it in setUp(), so no
+   live provider call ever runs in CI.
 
 ---
 
@@ -91,8 +111,8 @@ designing the schema from scratch".
      │◀──────────────────────────────────────────────────────┤
      │                       │                              │
      │  ⑦ HTTP GET           │                              │
-     │  /oauth_callback.php  │                              │
-     │  ?code=…&state=…      │                              │
+     │  /oauth/callback.php  │                              │
+     │  ?provider&code&state │                              │
      ├──────────────────────▶│                              │
      │                       │                              │
      │                       │  ⑧ consume {state} from      │
@@ -101,9 +121,9 @@ designing the schema from scratch".
      │                       │     CSRF state via           │
      │                       │     hash_equals()            │
      │                       │                              │
-     │                       │  ⑨ POST to provider's        │  ◀── PHASE 2.1
-     │                       │     /token with code +       │      (not in
-     │                       │     code_verifier            │       this chip)
+     │                       │  ⑨ POST to provider's        │
+     │                       │     /token with code +       │
+     │                       │     code_verifier            │
      │                       ├──────────────────────────────▶
      │                       │                              │
      │                       │  ⑩ provider responds with    │
@@ -124,8 +144,9 @@ designing the schema from scratch".
      │◀──────────────────────┤                              │
 ```
 
-This chip implements steps ① – ⑧. Steps ⑨ – ⑪ throw `oauth_not_live`
-intentionally — Phase 2.1 lifts that gate.
+This chip implements the full flow ① – ⑫. Steps ⑨ – ⑪ (the token POST
+and encrypted store) run live when the feature flag is ON, and route
+through the test mock handler under PHPUnit / Behat.
 
 Step ⑫ is the regular Moodle-redirect-with-notification UX; no
 provider involvement.
@@ -282,10 +303,13 @@ The user has **three independent revocation paths**:
    managers revoke tokens for any user under their tenant via the
    `local/sentientia_calendar:manage_all` capability.
 
-Phase 2.1 will additionally POST to the provider's revoke endpoint
-(`https://oauth2.googleapis.com/revoke`; Microsoft has no standalone
-revoke endpoint — they treat consent removal as the only revocation
-path) before dropping the local row, so revocation is end-to-end.
+`oauth_base::revoke()` (Phase 2.1) POSTs the refresh_token to the
+provider's revoke endpoint (`https://oauth2.googleapis.com/revoke`;
+Microsoft has no standalone revoke endpoint — they treat consent removal
+as the only revocation path) BEFORE dropping the local row, so
+revocation is end-to-end for Google. The provider call is best-effort:
+if it fails, the local row is still dropped so the user gets a clean
+local state.
 
 ---
 
@@ -295,20 +319,23 @@ The master flag `sentientia.calendar_sync.oauth.enabled` is consulted in
 **four** places:
 
 1. `oauth_base::assert_feature_flag_enabled()` is called by
-   `build_authorize_url()`, `handle_callback()`, and `refresh_token()`.
+   `build_authorize_url()`, `handle_callback()`, `refresh_token()`, and
+   `get_valid_access_token()`.
 2. The user-facing connect buttons on
-   `/local/sentientia_calendar/index.php` (Phase 2.1) are hidden when
-   the flag is OFF — the page doesn't even render a "Connect Outlook"
-   button to click.
-3. The `/local/sentientia_calendar/oauth_callback.php` endpoint
-   (Phase 2.1) returns 404 when the flag is OFF, denying any oracle
-   that might let an attacker infer the feature is being trialled.
+   `/local/sentientia_calendar/index.php` are hidden when the flag is
+   OFF — `local_sentientia_calendar_oauth_section_context()` returns
+   `oauth_section_visible = false` so the page doesn't render a
+   "Connect Outlook" button to click.
+3. The `/local/sentientia_calendar/oauth/callback.php` endpoint throws
+   `error_flag_off` when the flag is OFF, denying any oracle that might
+   let an attacker infer the feature is being trialled.
 4. The settings page renders the credential fields regardless (so
-   admins can pre-stage configuration), but a visible banner makes the
-   scaffolding-only status explicit.
+   admins can pre-stage configuration), with a banner explaining that
+   the flag must be ON for the surfaces to activate.
 
 When the flag is OFF, **no row can be written to
-`local_sentientia_calendar_oauth`** by any code path in this plugin.
+`local_sentientia_calendar_oauth`** by any live code path in this
+plugin, and **no outbound HTTP** reaches Microsoft or Google.
 
 ---
 
@@ -343,19 +370,21 @@ On a **data-portability export** the provider emits:
 
 ---
 
-## Security-review checklist (gate for Phase 2.1)
+## Security-review checklist (gate for live rollout)
 
 Before flipping `sentientia.calendar_sync.oauth.enabled` ON for any
 customer, this checklist must be ticked:
 
-- [ ] PHPUnit suite green — `tests/token_vault_test.php` round-trip,
-      feature-flag toggle, and privacy export all pass.
+- [ ] PHPUnit suite green — `tests/token_vault_test.php` round-trip +
+      feature-flag toggle + privacy export, and `tests/oauth_flow_test.php`
+      covering callback, refresh, rotation, invalid_grant, revoke, and
+      expiry-triggered refresh, all pass against the mock handler.
 - [ ] `\core\encryption::key_exists()` returns true on the target
       Moodle instance. The Sodium key file is chmod 0400 and backed up.
 - [ ] Azure / Google app registration uses the SECRET (not the public
       client / mobile app type). Confidential-client flow is required.
 - [ ] Redirect URI on both app registrations matches
-      `$CFG->wwwroot . '/local/sentientia_calendar/oauth_callback.php'`
+      `$CFG->wwwroot . '/local/sentientia_calendar/oauth/callback.php'`
       verbatim — no trailing slash drift.
 - [ ] Client secrets are stored via `admin_setting_configpasswordunmask`
       (this plugin) — not in `.env`, not in source control.

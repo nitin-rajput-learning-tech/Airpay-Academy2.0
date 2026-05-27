@@ -20,6 +20,24 @@
       how_to_google      Google instructions
       how_to_apple       Apple instructions
 
+    Phase 2.1 additions (OAuth bi-directional sync card):
+      oauth_section_visible boolean — render the OAuth card?
+      oauth_heading         card heading
+      oauth_intro           card intro copy
+      oauth_providers       array of provider rows:
+        - name              'm365' or 'google'
+        - label             "Microsoft 365" / "Google Calendar"
+        - description       per-provider explanatory copy
+        - connected         boolean
+        - expired           boolean
+        - state_label       status badge text
+        - state_class       Bootstrap badge class (badge-success/-warning/-secondary)
+        - connect_url       absolute URL to oauth/connect.php
+        - disconnect_url    absolute URL to oauth/disconnect.php
+        - connect_label     "Connect Outlook" / "Connect Google Calendar"
+        - reconnect_label   "Reconnect" (shown when expired)
+        - disconnect_label  "Disconnect"
+
     @template local_sentientia_calendar/subscription_page
 }}
 <div class="sentientia-calendar-page">
@@ -84,6 +102,51 @@
             </dl>
         </div>
     </div>
+
+    {{! ─────────── OAuth bi-directional sync (Phase 2.1) ─────────── }}
+    {{#oauth_section_visible}}
+    <div class="card mb-4 sentientia-calendar__oauth-card">
+        <div class="card-body">
+            <h3 class="h5 mb-2">{{oauth_heading}}</h3>
+            <p class="text-muted small mb-3">{{oauth_intro}}</p>
+
+            <ul class="list-unstyled mb-0">
+                {{#oauth_providers}}
+                <li class="d-flex justify-content-between align-items-center
+                           py-3 border-bottom sentientia-calendar__oauth-row"
+                    data-provider="{{name}}">
+                    <div>
+                        <strong>{{label}}</strong>
+                        <span class="badge {{state_class}} ms-2">{{state_label}}</span>
+                        <p class="text-muted small mb-0">{{description}}</p>
+                    </div>
+                    <div>
+                        {{#connected}}
+                            <form method="post" action="{{disconnect_url}}" class="d-inline">
+                                <input type="hidden" name="sesskey" value="{{sesskey}}">
+                                <input type="hidden" name="provider" value="{{name}}">
+                                <button type="submit" class="btn btn-outline-secondary btn-sm">
+                                    {{disconnect_label}}
+                                </button>
+                            </form>
+                            {{#expired}}
+                                <a href="{{connect_url}}" class="btn btn-warning btn-sm ms-1">
+                                    {{reconnect_label}}
+                                </a>
+                            {{/expired}}
+                        {{/connected}}
+                        {{^connected}}
+                            <a href="{{connect_url}}" class="btn btn-primary btn-sm">
+                                {{connect_label}}
+                            </a>
+                        {{/connected}}
+                    </div>
+                </li>
+                {{/oauth_providers}}
+            </ul>
+        </div>
+    </div>
+    {{/oauth_section_visible}}
 
     {{! ─────────── Regenerate URL ─────────── }}
     <div class="card border-warning">

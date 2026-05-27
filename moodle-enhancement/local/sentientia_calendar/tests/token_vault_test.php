@@ -49,6 +49,14 @@ final class token_vault_test extends \advanced_testcase {
         $this->userid = (int) $user->id;
     }
 
+    public function tearDown(): void {
+        // The HTTP handler is a static on oauth_base — resetAfterTest()
+        // does NOT clear static class state, so a mock leaking into the
+        // next test (or into a live run) would be a footgun. Reset it.
+        oauth_base::set_http_handler_for_testing(null);
+        parent::tearDown();
+    }
+
     // ─────────────────────────────────────────────────────────────────
     // (1) Encrypted-at-rest round-trip.
     // ─────────────────────────────────────────────────────────────────
@@ -244,27 +252,64 @@ final class token_vault_test extends \advanced_testcase {
             'Google flow must force consent to ensure refresh_token is reissued');
     }
 
-    public function test_handle_callback_throws_oauth_not_live_in_scaffolding(): void {
+    public function test_handle_callback_exchanges_code_and_stores_tokens(): void {
         $this->enable_oauth_flag();
-        // Plant a pending state so the callback can decode it.
-        $verifier = oauth_base::generate_pkce_verifier();
-        oauth_base::store_pending_state($this->userid, 'm365',
-            'state-XYZ', $verifier);
 
-        $this->expectException(\moodle_exception::class);
-        $this->expectExceptionMessageMatches('/Phase 2 is currently scaffolding/');
+        // Mock the token endpoint to return a canned token response — no
+        // live HTTP. The handler asserts we POST the right grant + the
+        // recovered PKCE verifier.
+        oauth_base::set_http_handler_for_testing(function (string $url, array $params): array {
+            $this->assertStringContainsString('login.microsoftonline.com', $url);
+            $this->assertSame('authorization_code', $params['grant_type']);
+            $this->assertSame('mock-auth-code', $params['code']);
+            $this->assertArrayHasKey('code_verifier', $params);
+            return [
+                'http_code' => 200,
+                'body'      => json_encode([
+                    'access_token'  => 'fresh-access',
+                    'refresh_token' => 'fresh-refresh',
+                    'expires_in'    => 3600,
+                    'scope'         => 'openid profile https://graph.microsoft.com/Calendars.ReadWrite',
+                ]),
+            ];
+        });
+
+        $verifier = oauth_base::generate_pkce_verifier();
+        oauth_base::store_pending_state($this->userid, 'm365', 'state-XYZ', $verifier);
+
         m365_oauth::handle_callback($this->userid, 'mock-auth-code', 'state-XYZ');
+
+        $stored = token_vault::get_tokens($this->userid, 'm365');
+        $this->assertNotNull($stored);
+        $this->assertSame('fresh-access', $stored->access_token);
+        $this->assertSame('fresh-refresh', $stored->refresh_token);
+        $this->assertGreaterThan(time() + 3000, $stored->expires);
     }
 
-    public function test_refresh_token_throws_oauth_not_live_in_scaffolding(): void {
+    public function test_refresh_token_replaces_access_token(): void {
         $this->enable_oauth_flag();
-        // Plant a stored row so the "no refresh token" guard doesn't fire first.
         token_vault::store_tokens($this->userid, 1, 'm365',
-            'access', 'refresh-value', time() + 60, 'openid');
+            'old-access', 'refresh-value', time() - 10, 'openid');
 
-        $this->expectException(\moodle_exception::class);
-        $this->expectExceptionMessageMatches('/Phase 2 is currently scaffolding/');
+        oauth_base::set_http_handler_for_testing(function (string $url, array $params): array {
+            $this->assertSame('refresh_token', $params['grant_type']);
+            $this->assertSame('refresh-value', $params['refresh_token']);
+            return [
+                'http_code' => 200,
+                'body'      => json_encode([
+                    'access_token' => 'rotated-access',
+                    'expires_in'   => 3600,
+                ]),
+            ];
+        });
+
         m365_oauth::refresh_token($this->userid);
+
+        $stored = token_vault::get_tokens($this->userid, 'm365');
+        $this->assertSame('rotated-access', $stored->access_token);
+        // Provider sent no new refresh_token → existing one is kept.
+        $this->assertSame('refresh-value', $stored->refresh_token);
+        $this->assertGreaterThan(time() + 3000, $stored->expires);
     }
 
     public function test_refresh_token_throws_no_refresh_token_when_row_missing(): void {

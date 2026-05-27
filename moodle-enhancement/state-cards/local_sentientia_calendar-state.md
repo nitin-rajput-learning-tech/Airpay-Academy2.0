@@ -1,10 +1,15 @@
 # State Card — `local_sentientia_calendar` (Sentientia LMS Calendar Sync)
 
-**Current phase:** 1 — Outbound ICS Feed (MVP)
-**Version:** 1.0.0-beta (2026052400)
-**Status:** First shippable build; feature flag default OFF
+**Current phase:** 2.1 — Live OAuth bi-directional sync (Wave C4)
+**Version:** 1.2.0-beta (2026052700)
+**Status:** OAuth flow live behind master flag (default OFF); Phase 1 ICS feed unchanged
 **Owner:** Nitin Rajput (PM) + Claude (engineering)
-**Last updated:** 2026-05-24
+**Last updated:** 2026-05-27
+
+**Phase history:**
+- 1.0.0-beta (2026-05-24) — Phase 1 outbound ICS feed.
+- 1.1.0-beta (2026-05-24, P3-N) — Phase 2 OAuth SCAFFOLDING (stubs threw `oauth_not_live`).
+- 1.2.0-beta (2026-05-27, C4) — Phase 2.1 LIVE OAuth: token exchange, refresh, revoke wired; 3 public endpoints; per-provider status UI.
 
 ---
 
@@ -30,6 +35,7 @@ keep Sentientia LMS open in a browser tab.
 | Table | Rows per | Purpose |
 |-------|----------|---------|
 | `local_sentientia_calendar_token` | one ACTIVE per user (revoked rows kept 90 days) | The credential that authenticates ICS-feed fetches. Includes audit fields (last_used_at, last_used_ip, use_count) for abuse forensics |
+| `local_sentientia_calendar_oauth` (Phase 2) | one per (user, provider) | Encrypted-at-rest OAuth access + refresh tokens via `\core\encryption`. UNIQUE(userid, provider). Phase 2.1 writes real rows once a user connects. |
 
 ## Capability matrix
 
@@ -46,14 +52,18 @@ keep Sentientia LMS open in a browser tab.
 | `sentientia.calendar_sync.events.courses` | ON | Include course completion deadlines in the feed |
 | `sentientia.calendar_sync.events.classroom` | ON | Include classroom (ILT) sessions |
 | `sentientia.calendar_sync.events.exams` | ON | Include exam close-dates (quiz.timeclose) |
+| `sentientia.calendar_sync.oauth.enabled` | OFF | Phase 2.1 OAuth master switch. When OFF: connect/callback/refresh throw `error_flag_off`, no provider HTTP, OAuth UI section hidden. |
 
 ## Public surfaces
 
 | URL | Auth | Purpose |
 |-----|------|---------|
-| `/local/sentientia_calendar/index.php` | session login | User-facing page — shows subscription URL + how-to + Regenerate button |
+| `/local/sentientia_calendar/index.php` | session login | User-facing page — subscription URL + how-to + Regenerate + OAuth connect/disconnect status (Phase 2.1) |
 | `/local/sentientia_calendar/regenerate.php` | session login + sesskey | Revokes old token, issues new one, redirects back |
 | `/local/sentientia_calendar/ics.php?token=…` | token in URL | ICS feed endpoint fetched by calendar clients (no Moodle session) |
+| `/local/sentientia_calendar/oauth/connect.php` | session login + sesskey + flag | Builds authorize URL (PKCE + state), redirects browser to provider |
+| `/local/sentientia_calendar/oauth/callback.php` | session login + state-CSRF + flag | Exchanges code for tokens, stores encrypted, redirects back with flash |
+| `/local/sentientia_calendar/oauth/disconnect.php` | session login + sesskey | Revokes at provider (Google) + drops local row |
 
 ## Event sources (V1 — 3 categories)
 
