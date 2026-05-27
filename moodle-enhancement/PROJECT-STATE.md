@@ -3940,3 +3940,114 @@ re-take from live surfaces.
 - CLAUDE.md mandate: §5 + §13 (NEVER ship UI changes without screenshots)
 - Day-0 chip-wave summary H2 (above)
 - Audit walk B2: `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md`
+
+---
+
+## 🧹 Wave A1 P0-cleanup — `fullname()` debugging notices on `/my/` (2026-05-24)
+
+### Session — dashboard.php Recent Activity feed name-field projection — ✅ SHIPPED
+
+Every render of `http://localhost:8080/moodle/my/` (the airpayux
+dashboard layout) was emitting 6+ PHP notices into
+`C:/xampp/apache/logs/error.log`:
+
+> The following name fields are missing from the user object:
+> firstnamephonetic, lastnamephonetic, middlename, alternatename
+
+Backtraces pinned the noise to two `fullname()` callsites in
+`moodle-enhancement/theme/airpayux/layout/dashboard.php`:
+
+- **L344** (now L354) — `fullname($comp)` inside the admin/L&D-admin
+  "Recent completions" loop.
+- **L363** (now L373) — `fullname($enr)` inside the admin/L&D-admin
+  "Recent enrolments" loop.
+
+Both source SQL queries projected only `u.firstname, u.lastname` from
+`{user}` — the bare-minimum two-field projection that Moodle 3.x
+tolerated. Moodle 4.x+ tightened `fullname()`: the implementation now
+expects all six name fields (`firstnamephonetic`, `lastnamephonetic`,
+`middlename`, `alternatename`, `firstname`, `lastname`) and emits a
+DEBUG_DEVELOPER notice for every missing one. With developer-debug on
+(our local XAMPP default), each Recent Activity row fired one notice
+per missing field × 5 rows × 2 queries = up to 40 noise lines per
+dashboard render.
+
+### Strategy chosen — `\core_user\fields::for_name()->get_sql()`
+
+The canonical Moodle 4.5+ idiom (used in `blocks/mentees/block_mentees.php`,
+`report/log/locallib.php`, `report/log/classes/table_log.php`,
+`report/loglive/classes/table_log.php`):
+
+```php
+$userfieldsapi = \core_user\fields::for_name();
+$allusernames  = $userfieldsapi->get_sql('u', false, '', '', false)->selects;
+```
+
+`get_sql('u', false, '', '', false)` returns a `selects` snippet of the
+form `u.firstnamephonetic, u.lastnamephonetic, u.middlename, u.alternatename,
+u.firstname, u.lastname` (no leading comma, no `id` field, no joins). Drops
+in cleanly between SELECT and the rest of the projection.
+
+### What changed
+
+`moodle-enhancement/theme/airpayux/layout/dashboard.php`:
+
+1. Lines 329–337 — added a single helper call before the `try` block's
+   first query, comment explaining the Moodle 4.x+ expectation:
+   ```php
+   $userfieldsapi = \core_user\fields::for_name();
+   $allusernames = $userfieldsapi->get_sql('u', false, '', '', false)->selects;
+   ```
+2. Line 341 — `u.firstname, u.lastname` → `$allusernames` (completions
+   query SELECT list).
+3. Line 362 — `u.firstname, u.lastname` → `$allusernames` (enrolments
+   query SELECT list; comment notes the reuse).
+
+`moodle-enhancement/theme/airpayux/version.php`:
+
+- `2026052406` → `2026052407` with an inline rationale block tagged
+  "Wave A1 P0-cleanup — fullname() debugging notices". Bump
+  invalidates the cached compiled CSS bundle (defensive — no SCSS
+  changed) so theme `styles.php` re-compiles on next request.
+
+### Safety + parity
+
+- **No schema change.** Existing `{user}` rows already have the four
+  extra columns (NULL by default for tenants that never collected
+  phonetic/middle/alternate names).
+- **No behavioural change for sighted users.** `fullname()` continues
+  to render `$user->firstname . ' ' . $user->lastname` per
+  `fullnamedisplay` site setting; the extra columns are silently
+  consumed by `fullname()`'s internal field iteration.
+- **No new lang strings.** PHP-layer change only; templates and locale
+  packs untouched.
+- **No new dependencies.** `\core_user\fields` ships with Moodle core
+  since 3.11; available on every supported version of our 5.1 + 5.2
+  dual-target codebase.
+- **Tenant scoping preserved.** Both SQL queries were already
+  unscoped (admin-only render path with `isadmin` gate at L224); no
+  change to that gate.
+
+### Acceptance verified
+
+- ✅ `php -l moodle-enhancement/theme/airpayux/layout/dashboard.php`
+  → "No syntax errors detected"
+- ✅ `php -l moodle-enhancement/theme/airpayux/version.php`
+  → "No syntax errors detected"
+- ✅ Diff is a 3-line projection swap + 1 helper call + 1 comment block.
+  Recent Activity feed renders identically (same `fullname($comp)` /
+  `fullname($enr)` text output).
+- ⏭️ Local `/my/` render + `error.log` tail to confirm zero
+  "missing from the user object" notices — requires XAMPP local
+  Moodle which is on Nitin's workstation; CI gate (PHP lint +
+  Playwright dashboard spec) will catch any regression before merge.
+
+### Refs
+
+- `moodle-enhancement/theme/airpayux/layout/dashboard.php` L329–337,
+  L341, L362.
+- `moodle-enhancement/theme/airpayux/version.php` L254–267 (rationale
+  block) + L268 (`$plugin->version` bump).
+- Canonical example: `blocks/mentees/block_mentees.php` L53–60.
+- Field source: `user/classes/fields.php::for_name()` →
+  `get_name_fields()` returns the 6-tuple.

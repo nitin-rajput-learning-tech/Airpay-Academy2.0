@@ -251,7 +251,22 @@ defined('MOODLE_INTERNAL') || die();
 // rounded up to --ap-transition-quick (150ms) with an inline comment
 // at the violating site explaining the rounding decision. Closes
 // the P2 #19 violation backlog flagged by chip-P's stylelint rule.
-$plugin->version   = 2026052406;
+//
+// Wave A1 P0-cleanup — fullname() debugging notices (2026-05-24, chip H2)
+// dashboard.php layout was emitting 6+ PHP notices per /my/ render:
+// "The following name fields are missing from the user object:
+//  firstnamephonetic, lastnamephonetic, middlename, alternatename".
+// Two SQL queries in the admin/L&D-admin Recent Activity feed selected
+// only u.firstname + u.lastname, then passed each row through fullname().
+// Moodle 4.x+ fullname() expects all 6 name fields from
+// core_user\fields::for_name(). Replaced the literal column list with
+// the canonical $userfieldsapi->get_sql('u', false, '', '', false)
+// helper so every fullname() call has the columns it needs. No schema
+// change, no behavioural change for sighted users — just clean
+// error.log. Version bump invalidates the cached compiled CSS bundle
+// (defensive — no SCSS changed) so theme styles.php re-compiles on
+// next request.
+$plugin->version   = 2026052407;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
