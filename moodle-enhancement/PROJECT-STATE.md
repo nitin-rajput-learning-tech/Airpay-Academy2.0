@@ -3850,3 +3850,77 @@ PROJECT-STATE.md history split for fast load.
 All chips ran on Opus 4.7 (1M context) in FleetView parallel worktrees.
 Zero hand-edited code outside conflict resolution. Pre-commit hook
 caught zero stray markers (P0-A working as designed).
+
+---
+
+## 📅 Wave C4 P2 — Calendar Sync OAuth Phase 2.1 (live wire) (2026-05-27)
+
+**Chip:** `claude/amazing-lovelace-mpW4X` (Wave C4 P2 plugin-maturation).
+**Plugin:** `local_sentientia_calendar` 1.1.0-beta (`2026052401`) →
+**1.2.0-beta** (`2026052700`).
+**Builds on:** P3-N (OAuth scaffolding). **Doc:**
+`docs/integrations/CALENDAR-OAUTH.md` (updated to Phase 2.1).
+
+### What shipped
+
+P3-N left the OAuth lifecycle methods as stubs that threw
+`oauth_not_live`. C4 replaced those throws with the live
+Authorization-Code-with-PKCE exchange for **Microsoft 365 (Graph)** and
+**Google Calendar**, end-to-end:
+
+- **`classes/oauth/oauth_base.php`** — live `handle_callback()` (state +
+  PKCE verify → token-endpoint POST → encrypted store),
+  `refresh_token()` (rotation-aware; `invalid_grant` drops the row +
+  re-prompts; transient 5xx keeps the row), `revoke()` (best-effort
+  provider POST + unconditional local clear), plus helpers
+  `get_valid_access_token()` (expiry-triggered refresh),
+  `describe_connection()` (UI status snapshot), and `provider_class()`
+  (string → subclass factory). Outbound HTTP goes through Moodle's
+  `\curl` as an `application/x-www-form-urlencoded` body string
+  (mirrors core `oauthlib::build_post_data()` — array params would force
+  multipart and break the token endpoint).
+- **`m365_oauth.php` / `google_oauth.php`** — both now declare
+  `get_client_secret()` as a `#[\Override]` of the new abstract;
+  Google class supplies the RFC 7009 revoke endpoint + `access_type=offline`
+  / `prompt=consent`. Microsoft is local-only revoke (no standalone endpoint).
+- **3 new public endpoints** — `oauth/connect.php` (sesskey + flag),
+  `oauth/callback.php` (state-CSRF + flag), `oauth/disconnect.php`
+  (sesskey). Redirect URI moved to `oauth/callback.php` (settings +
+  doc updated).
+- **`index.php` + `subscription_page.mustache`** — per-provider OAuth
+  card: status badge (connected / expired / disconnected), Connect /
+  Reconnect / Disconnect buttons. Hidden entirely when the flag is OFF
+  or the provider's client_id is unset.
+
+### Two-gate NoLiveAPI safety
+
+Live provider traffic requires BOTH: (1) master flag
+`sentientia.calendar_sync.oauth.enabled` ON (default **OFF** — every
+lifecycle method asserts it), AND (2) no test mock registered. Tests
+inject `oauth_base::set_http_handler_for_testing()` in setUp() and clear
+it in tearDown() — **no live OAuth call ever leaves CI**. No `[CONFIRM]`
+live OAuth was attempted in this chip.
+
+### Tests
+
+- `tests/token_vault_test.php` — the two scaffolding `oauth_not_live`
+  tests rewritten as live-flow assertions (callback exchange, refresh
+  replace); added `tearDown()` resetting the static HTTP handler.
+- `tests/oauth_flow_test.php` (NEW) — 25 tests covering: code-exchange
+  happy path (m365 + google), scope fallback, state CSRF (wrong /
+  missing / replayed), empty code, refresh rotation, `invalid_grant`
+  row-drop, transient-error row-survival, Google provider revoke,
+  m365 local-only revoke, revoke-swallows-provider-failure,
+  expiry-triggered refresh, connection-status snapshot, flag-OFF kill
+  switch on every entry point, malformed-200 + unknown-provider mapping.
+
+### Verification
+
+- PHP lint: 1191 files clean (CI lint gate).
+- Mustache balance: 7 opens / 7 closes.
+- Conflict-marker scan: clean.
+- Hindi parity: EN 88 / HI 88, keys byte-identical.
+- version.php bumped (version-bump CI gate).
+- PHPUnit not run in this container (no bootstrap) — tests exercised by
+  the Moodle-container PHPUnit job when re-enabled; logic reviewed +
+  lint-clean here.

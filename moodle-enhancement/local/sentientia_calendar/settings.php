@@ -46,7 +46,7 @@ if ($hassiteconfig) {
     // Computed from $CFG->wwwroot so it always reflects the current
     // canonical URL. Admins paste this verbatim into the Azure /
     // Google app registration's "redirect URIs" panel.
-    $redirecturi = (new \moodle_url('/local/sentientia_calendar/oauth_callback.php'))
+    $redirecturi = (new \moodle_url('/local/sentientia_calendar/oauth/callback.php'))
         ->out(false);
     $settings->add(new admin_setting_description(
         'local_sentientia_calendar/redirect_uri',

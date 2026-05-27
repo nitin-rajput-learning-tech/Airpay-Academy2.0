@@ -3,13 +3,11 @@
 // License http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 
 /**
- * Microsoft 365 (Microsoft Graph) OAuth 2.0 provider — Tier 2.6 Phase 2.
+ * Microsoft 365 (Microsoft Graph) OAuth 2.0 provider — Tier 2.6 Phase 2.1.
  *
- * SCAFFOLDING ONLY: this class supplies the Microsoft-specific endpoint
- * URLs, scope string, and client-ID lookup. The lifecycle methods it
- * inherits from {@see oauth_base} do NOT perform live HTTP calls in
- * this chip — they validate inputs + throw `oauth_not_live`. Phase 2.1
- * adds the live POST.
+ * Concrete provider supplying Microsoft-specific endpoints, scopes, and
+ * the client_id / client_secret lookups. Lifecycle (authorize, callback,
+ * refresh, revoke) is inherited from {@see oauth_base}.
  *
  * Microsoft tenancy model
  * -----------------------
@@ -27,15 +25,9 @@
  *   - https://graph.microsoft.com/Calendars.ReadWrite
  *                                    read + write user's calendar(s)
  *
- * Compare to Phase 1's outbound-only ICS feed: Phase 2 OAuth lets us
- * also CREATE events in the user's primary calendar (bi-directional
- * sync — see ADR-013 §"Why we keep Path B as a future option").
- *
- * If/when admins want to use `\core\oauth2\api` instead — for example
- * to share a single Microsoft issuer record with auth_oauth2 — this
- * class will be retrofitted to read the issuer's stored client_id /
- * client_secret instead of going through admin settings. The scaffolding
- * deliberately keeps that swap small (single getter override).
+ * Revocation: Microsoft does not publish a standalone revoke endpoint.
+ * {@see oauth_base::revoke()} treats Microsoft revocation as local-only;
+ * the user must revoke at account.microsoft.com to fully cut consent.
  *
  * @package local_sentientia_calendar
  */
@@ -106,9 +98,6 @@ class m365_oauth extends oauth_base {
      * Returns '' (the empty string) when the admin hasn't configured one
      * yet — callers should treat this as "OAuth for m365 unavailable".
      *
-     * The client SECRET is NOT exposed via this getter — it never leaves
-     * {@see oauth_base::get_token_endpoint()} HTTP body (Phase 2.1).
-     *
      * @return string
      */
     #[\Override]
@@ -120,12 +109,13 @@ class m365_oauth extends oauth_base {
     /**
      * Read the Microsoft Azure app's client secret from admin settings.
      *
-     * SCAFFOLDING — only consumed in Phase 2.1 when the token-endpoint
-     * POST actually fires. Phase 2 scaffolding does NOT log, return, or
-     * persist this value to the audit log.
+     * Confidential-client model: the secret is sent in the body of the
+     * token-endpoint POST. It NEVER reaches the browser, NEVER appears
+     * in a log, and is admin-write-only via {@see configpasswordunmask}.
      *
      * @return string
      */
+    #[\Override]
     public static function get_client_secret(): string {
         $value = get_config('local_sentientia_calendar', 'microsoft_client_secret');
         return is_string($value) ? trim($value) : '';

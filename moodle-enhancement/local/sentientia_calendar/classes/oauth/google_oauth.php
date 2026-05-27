@@ -3,11 +3,11 @@
 // License http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 
 /**
- * Google Calendar OAuth 2.0 provider — Tier 2.6 Phase 2.
+ * Google Calendar OAuth 2.0 provider — Tier 2.6 Phase 2.1.
  *
- * SCAFFOLDING ONLY: supplies the Google-specific endpoint URLs, scope
- * string, and client-ID lookup. Lifecycle methods inherited from
- * {@see oauth_base} do NOT perform live HTTP calls in this chip.
+ * Concrete provider supplying Google-specific endpoints, scopes, and
+ * the client_id / client_secret lookups. Lifecycle (authorize, callback,
+ * refresh, revoke) is inherited from {@see oauth_base}.
  *
  * Google notes
  * ------------
@@ -18,20 +18,22 @@
  *   authorize, which forces a fresh refresh_token even if the user has
  *   previously consented. Without this, re-running the flow returns the
  *   access_token but NO refresh_token, leaving us with no way to
- *   re-mint when the access_token expires. Setting `prompt=consent` is
- *   the right call for an opt-in feature where we own the token store.
+ *   re-mint when the access_token expires.
  * - The Google calendar.events scope grants read + write to events
  *   the user creates via our app. calendar.events.owned is narrower
  *   (only events owned by the user) which is what we want for Sentientia.
  *
+ * Revocation: Google publishes an RFC 7009-style POST endpoint at
+ * https://oauth2.googleapis.com/revoke. {@see oauth_base::revoke()}
+ * POSTs the refresh_token there before dropping the local row.
+ *
  * Google client SECRETS
  * ---------------------
  * Google's web-flow REQUIRES the client_secret in the token-endpoint
- * POST. (Microsoft Graph also accepts client_secret on confidential
- * clients; this class follows the confidential-client model for both.)
- * The secret is stored in Moodle's `config_plugins` table — admin only
- * — and never reaches the browser, never appears in logs, never is
- * returned by any public method except {@see get_client_secret}.
+ * POST. The secret is stored in Moodle's `config_plugins` table — admin
+ * write-only via `admin_setting_configpasswordunmask` — and never
+ * reaches the browser, never appears in logs, never is returned by any
+ * public method except {@see get_client_secret}.
  *
  * @package local_sentientia_calendar
  */
@@ -119,12 +121,13 @@ class google_oauth extends oauth_base {
     /**
      * Read the Google OAuth client secret from admin settings.
      *
-     * SCAFFOLDING — only consumed in Phase 2.1 token-endpoint POST.
-     * Phase 2 scaffolding does NOT log, return-from-public-API, or
-     * persist this value to the audit log.
+     * Confidential-client model: the secret is sent in the body of the
+     * token-endpoint POST. It NEVER reaches the browser, NEVER appears
+     * in a log, and is admin-write-only via {@see configpasswordunmask}.
      *
      * @return string
      */
+    #[\Override]
     public static function get_client_secret(): string {
         $value = get_config('local_sentientia_calendar', 'google_client_secret');
         return is_string($value) ? trim($value) : '';

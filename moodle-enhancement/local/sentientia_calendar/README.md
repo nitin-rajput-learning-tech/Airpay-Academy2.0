@@ -68,23 +68,41 @@ matrix.
 ```
 version.php                                   Plugin manifest
 lib.php                                       Nav callback
-index.php                                     User-facing subscription page
+index.php                                     User-facing subscription page (+ OAuth status section)
 regenerate.php                                Token regenerate POST
 ics.php                                       The feed endpoint
-classes/token_manager.php                     Token lifecycle
+oauth/connect.php                             OAuth connect entry (sesskey-protected)
+oauth/callback.php                            OAuth callback (state-CSRF validated)
+oauth/disconnect.php                          OAuth disconnect/revoke (sesskey-protected)
+classes/token_manager.php                     ICS token lifecycle
 classes/ics_builder.php                       RFC 5545 generator
+classes/oauth/oauth_base.php                  OAuth 2.0 Auth-Code + PKCE engine (live)
+classes/oauth/m365_oauth.php                  Microsoft 365 provider
+classes/oauth/google_oauth.php                Google Calendar provider
+classes/oauth/token_vault.php                 Encrypted-at-rest OAuth token store
 classes/task/purge_old_tokens.php             Daily cleanup
-classes/privacy/provider.php                  GDPR / DPDP
-db/install.xml                                Single table
+classes/privacy/provider.php                  GDPR / DPDP (both tables)
+db/install.xml                                Two tables (token + oauth)
 db/access.php                                 Two capabilities
-db/feature_flags.php                          1 master + 3 sub-flags
+db/feature_flags.php                          1 master + 3 sub-flags + 1 OAuth master
 db/tasks.php                                  Cron registration
-lang/en/local_sentientia_calendar.php         28 strings
-lang/hi/local_sentientia_calendar.php         28 strings (100% parity)
-templates/subscription_page.mustache          UI
+settings.php                                  Admin OAuth client ID/secret config
+lang/en/local_sentientia_calendar.php         88 strings
+lang/hi/local_sentientia_calendar.php         88 strings (100% parity)
+templates/subscription_page.mustache          UI (+ OAuth provider rows)
 tests/token_manager_test.php
 tests/ics_builder_test.php
+tests/token_vault_test.php                    Vault round-trip, flag toggle, privacy, PKCE
+tests/oauth_flow_test.php                     Live flow: callback, refresh, revoke, expiry
 ```
+
+## Phase 2.1 — OAuth bi-directional sync (Wave C4)
+
+The plugin now wires the OAuth 2.0 Authorization Code + PKCE flow for
+Microsoft 365 (Microsoft Graph) and Google Calendar. Gated behind the
+master flag `sentientia.calendar_sync.oauth.enabled` (default OFF). See
+[CALENDAR-OAUTH.md](../../docs/integrations/CALENDAR-OAUTH.md) for the
+full flow, scopes, token-storage, rotation, and revocation design.
 
 ## Feature flags
 
@@ -94,6 +112,7 @@ tests/ics_builder_test.php
 | `sentientia.calendar_sync.events.courses` | ON | Course-deadline VEVENTs omitted |
 | `sentientia.calendar_sync.events.classroom` | ON | Classroom-session VEVENTs omitted |
 | `sentientia.calendar_sync.events.exams` | ON | Exam-close VEVENTs omitted |
+| `sentientia.calendar_sync.oauth.enabled` | OFF | OAuth connect/callback/refresh throw; no provider HTTP; OAuth section hidden on index.php |
 
 ## Security model
 

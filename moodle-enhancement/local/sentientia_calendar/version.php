@@ -24,10 +24,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_calendar';
-$plugin->version   = 2026052401;
+$plugin->version   = 2026052700;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.1.0-beta';
+$plugin->release   = '1.2.0-beta';
 $plugin->dependencies = [
     'local_airpay_core' => 2026051401,  // feature_flags resolver
 ];
@@ -46,3 +46,15 @@ $plugin->dependencies = [
 //             sentientia.calendar_sync.oauth.enabled (default OFF).
 //             No live HTTP calls in this chip — handle_callback() and
 //             refresh_token() throw oauth_not_live until Phase 2.1.
+// 1.2.0-beta  Tier 2.6 Phase 2.1 (Wave C4): LIVE OAuth wired. The
+//             Authorization Code + PKCE flow now exchanges the code for
+//             tokens via the provider token endpoint, refreshes on
+//             expiry, and revokes at the provider (Google) + locally.
+//             New public endpoints oauth/{connect,callback,disconnect}.php
+//             (sesskey + state-CSRF protected). index.php renders
+//             per-provider connection status with connect/disconnect
+//             buttons. Outbound HTTP is mockable via
+//             oauth_base::set_http_handler_for_testing() so CI never
+//             hits a live provider. Master flag stays default OFF — live
+//             traffic requires (a) flag ON for the customer AND (b) no
+//             test mock registered.
