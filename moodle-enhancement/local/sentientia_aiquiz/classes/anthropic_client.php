@@ -9,7 +9,7 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Anthropic API client for Sentientia LMS AI Quiz Generation.
  *
- * Phase G.0 (MVP) ships TWO call modes:
+ * Phase G.0 (MVP) shipped TWO call modes:
  *
  *   - call_mock()  — deterministic 10-question fake response. Used when
  *                    sentientia.aiquiz.live_api is OFF (default). Costs
@@ -23,6 +23,19 @@ defined('MOODLE_INTERNAL') || die();
  *                      (d) The caller has passed the [CONFIRM] gate at
  *                          the UI layer (gate enforced by generate.php,
  *                          not by this client)
+ *
+ * Phase G.1 (2026-05-25) — every call mode now accepts an optional
+ * `$promptctx` array describing which prompt version + customer
+ * template to use:
+ *
+ *     [
+ *       'version'  => 'v1' | 'v2-hindi',
+ *       'template' => null | '<customer-pasted prompt body>',
+ *     ]
+ *
+ * The mock client also honours the version (produces Devanagari mock
+ * questions when v2-hindi is requested) so a trainer driving the UI in
+ * Hindi sees Hindi mock content end-to-end with no live spend.
  *
  * The [CONFIRM] gate lives in the UI because it's a per-user-action
  * decision. This class is plumbing — it executes the call the UI
@@ -54,20 +67,53 @@ class anthropic_client {
     /**
      * Top-level dispatcher. Routes to mock or live based on the feature flag.
      *
-     * @param string $sourcetext   Trainer-supplied source
-     * @param int    $numrequested 1..MAX_QUESTIONS
-     * @param string $model        Anthropic model identifier (e.g. 'claude-sonnet-4-6')
+     * @param string     $sourcetext   Trainer-supplied source
+     * @param int        $numrequested 1..MAX_QUESTIONS
+     * @param string     $model        Anthropic model identifier (e.g. 'claude-sonnet-4-6')
+     * @param array|null $promptctx    Optional [version=>?, template=>?] from
+     *                                  prompt_builder::resolve_for(). Defaults
+     *                                  to v1 / no template (Phase G.0 behaviour).
      * @return array {body: string, tokens_in: int, tokens_out: int, mode: 'mock'|'live'|'failed', error: ?string}
      */
-    public static function generate(string $sourcetext, int $numrequested, string $model = self::DEFAULT_MODEL): array {
+    public static function generate(string $sourcetext, int $numrequested, string $model = self::DEFAULT_MODEL, ?array $promptctx = null): array {
+        $promptctx = self::normalise_promptctx($promptctx);
+
         $islive = class_exists('\\local_airpay_core\\feature_flags')
             && \local_airpay_core\feature_flags::is_enabled('sentientia.aiquiz.live_api');
 
         if (!$islive) {
-            return self::call_mock($sourcetext, $numrequested);
+            return self::call_mock($sourcetext, $numrequested, $promptctx);
         }
 
-        return self::call_live($sourcetext, $numrequested, $model);
+        return self::call_live($sourcetext, $numrequested, $model, $promptctx);
+    }
+
+    /**
+     * Normalise the prompt-context array into a [version, template] pair.
+     *
+     * Accepts null / partial input and fills in sane defaults so callers
+     * don't have to construct the full shape themselves. Unknown versions
+     * fall back to v1.
+     *
+     * @param array|null $promptctx
+     * @return array {version: string, template: ?string}
+     */
+    private static function normalise_promptctx(?array $promptctx): array {
+        $version = prompt_builder::VERSION_V1;
+        $template = null;
+
+        if (is_array($promptctx)) {
+            if (isset($promptctx['version']) && is_string($promptctx['version'])
+                    && in_array($promptctx['version'], prompt_builder::valid_versions(), true)) {
+                $version = $promptctx['version'];
+            }
+            if (isset($promptctx['template']) && is_string($promptctx['template'])
+                    && trim($promptctx['template']) !== '') {
+                $template = $promptctx['template'];
+            }
+        }
+
+        return ['version' => $version, 'template' => $template];
     }
 
     /**
@@ -80,34 +126,60 @@ class anthropic_client {
      * The questions are obviously fake (mention "MOCK" in qtext) so a
      * reviewer can't accidentally push them through to learners.
      *
-     * @param string $sourcetext
-     * @param int    $numrequested
+     * Phase G.1 — when `$promptctx['version']` is `v2-hindi`, the mock
+     * payload uses Devanagari stems / options / explanation so a Hindi-
+     * locale trainer sees Hindi UI content end-to-end without any live
+     * spend. The `[MOCK]` marker stays in Latin so reviewers spot it
+     * regardless of language.
+     *
+     * @param string     $sourcetext
+     * @param int        $numrequested
+     * @param array|null $promptctx Optional [version=>, template=>]
      * @return array
      */
-    public static function call_mock(string $sourcetext, int $numrequested): array {
+    public static function call_mock(string $sourcetext, int $numrequested, ?array $promptctx = null): array {
+        $promptctx = self::normalise_promptctx($promptctx);
+        $hindi = ($promptctx['version'] === prompt_builder::VERSION_V2_HINDI);
+
         $numrequested = max(1, min(prompt_builder::MAX_QUESTIONS, $numrequested));
-        // Use the first 80 chars of source as a snippet for the mock stem so
-        // the trainer sees their input reflected back — proves the pipeline
-        // is wired end-to-end.
-        $snippet = trim(preg_replace('/\s+/u', ' ', mb_substr(trim($sourcetext), 0, 80)));
+        // Use the first 80 chars (unicode-safe) of source as a snippet for
+        // the mock stem so the trainer sees their input reflected back —
+        // proves the pipeline is wired end-to-end.
+        $clean = trim((string) preg_replace('/\s+/u', ' ', trim($sourcetext)));
+        $snippet = mb_substr($clean, 0, 80);
         if ($snippet === '') {
-            $snippet = '(empty source)';
+            $snippet = $hindi ? '(रिक्त स्रोत)' : '(empty source)';
         }
 
         $questions = [];
         for ($i = 1; $i <= $numrequested; $i++) {
-            $questions[] = [
-                'qtype'         => 'multichoice',
-                'qtext'         => "[MOCK Q{$i}] Which statement best reflects the source about \"{$snippet}\"?",
-                'qoptions'      => [
-                    "Mock answer A for Q{$i}",
-                    "Mock answer B for Q{$i}",
-                    "Mock answer C for Q{$i} (CORRECT)",
-                    "Mock answer D for Q{$i}",
-                ],
-                'qanswer_index' => 2,
-                'qexplanation'  => "This is a mock explanation produced without calling Anthropic — feature flag sentientia.aiquiz.live_api is OFF.",
-            ];
+            if ($hindi) {
+                $questions[] = [
+                    'qtype'         => 'multichoice',
+                    'qtext'         => "[MOCK प्रश्न {$i}] स्रोत \"{$snippet}\" के अनुसार कौन-सा कथन सर्वाधिक उपयुक्त है?",
+                    'qoptions'      => [
+                        "नकली विकल्प A (प्रश्न {$i})",
+                        "नकली विकल्प B (प्रश्न {$i})",
+                        "नकली विकल्प C (प्रश्न {$i}) — सही",
+                        "नकली विकल्प D (प्रश्न {$i})",
+                    ],
+                    'qanswer_index' => 2,
+                    'qexplanation'  => "यह एक mock व्याख्या है — Anthropic कॉल नहीं की गई (feature flag sentientia.aiquiz.live_api OFF है)।",
+                ];
+            } else {
+                $questions[] = [
+                    'qtype'         => 'multichoice',
+                    'qtext'         => "[MOCK Q{$i}] Which statement best reflects the source about \"{$snippet}\"?",
+                    'qoptions'      => [
+                        "Mock answer A for Q{$i}",
+                        "Mock answer B for Q{$i}",
+                        "Mock answer C for Q{$i} (CORRECT)",
+                        "Mock answer D for Q{$i}",
+                    ],
+                    'qanswer_index' => 2,
+                    'qexplanation'  => "This is a mock explanation produced without calling Anthropic — feature flag sentientia.aiquiz.live_api is OFF.",
+                ];
+            }
         }
         $body = json_encode(['questions' => $questions], JSON_UNESCAPED_UNICODE);
 
@@ -132,12 +204,22 @@ class anthropic_client {
      * Failures are returned as a result array (no thrown exceptions) so
      * the UI can persist the failed draft for re-try / audit.
      *
-     * @param string $sourcetext
-     * @param int    $numrequested
-     * @param string $model
+     * Phase G.1 — `$promptctx` selects the system prompt body:
+     *   - When `$promptctx['template']` is a non-empty string, that
+     *     literal text becomes the system prompt (admin override).
+     *   - Otherwise the version-dispatched baseline runs (v1 = English,
+     *     v2-hindi = Hindi).
+     * The user-message wrapper always follows the version's locale.
+     *
+     * @param string     $sourcetext
+     * @param int        $numrequested
+     * @param string     $model
+     * @param array|null $promptctx
      * @return array {body, tokens_in, tokens_out, mode, error}
      */
-    public static function call_live(string $sourcetext, int $numrequested, string $model): array {
+    public static function call_live(string $sourcetext, int $numrequested, string $model, ?array $promptctx = null): array {
+        $promptctx = self::normalise_promptctx($promptctx);
+
         $apikey = get_config('local_sentientia_aiquiz', 'api_key');
         if (empty($apikey) || !is_string($apikey)) {
             return [
@@ -146,8 +228,8 @@ class anthropic_client {
             ];
         }
 
-        $system = prompt_builder::build_system_prompt();
-        $user   = prompt_builder::build_user_message($sourcetext, $numrequested);
+        $system = prompt_builder::build_system_prompt($promptctx['version'], $promptctx['template']);
+        $user   = prompt_builder::build_user_message($sourcetext, $numrequested, $promptctx['version']);
 
         $payload = [
             'model'      => $model,
@@ -162,7 +244,7 @@ class anthropic_client {
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_POST           => true,
-            CURLOPT_POSTFIELDS     => json_encode($payload),
+            CURLOPT_POSTFIELDS     => json_encode($payload, JSON_UNESCAPED_UNICODE),
             CURLOPT_HTTPHEADER     => [
                 'Content-Type: application/json',
                 'x-api-key: ' . $apikey,

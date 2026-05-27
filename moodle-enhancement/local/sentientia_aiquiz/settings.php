@@ -5,11 +5,21 @@
 /**
  * Admin settings for Sentientia LMS AI Quiz Generation.
  *
- * Phase G.0 (MVP) — three settings:
+ * Phase G.0 (MVP) settings:
  *   - api_key            Anthropic API key (passwordunmask)
  *   - default_model      Model identifier (defaults to claude-sonnet-4-6)
  *   - max_questions      Per-request question count ceiling (default 10)
  *   - daily_token_cap    Soft cap on tokens/day before generate is blocked
+ *   - max_source_words   Per-draft source word cap
+ *
+ * Phase G.1 (2026-05-25) adds per-customer prompt template overrides.
+ * The textarea fields write into the `local_airpay_core` config namespace
+ * keyed as `customer_<id>_aiquiz_prompt_template` — the same key that
+ * `\local_airpay_core\customer::get_customer_config()` reads on the
+ * generate-page request. Crossing namespaces is intentional: the
+ * authoritative read side lives in airpay_core (so future plugins can
+ * share the same per-customer config registry) while the admin UI for
+ * pasting the template lives next to the consumer plugin.
  *
  * @package local_sentientia_aiquiz
  */
@@ -71,6 +81,30 @@ if ($hassiteconfig) {
         get_string('setting_max_source_words_desc', 'local_sentientia_aiquiz'),
         '4000',
         PARAM_INT
+    ));
+
+    // Phase G.1 — per-customer prompt template overrides.
+    //
+    // Phase 0/1 has a single customer (Airpay, id=1) so we render a single
+    // textarea today. When Phase 2 brings a real customer table in,
+    // settings.php can loop over customer::known_customers() and render
+    // one textarea per customer. The READ side
+    // (\local_airpay_core\customer::get_customer_config) already supports
+    // arbitrary customer ids — only the admin UI is single-customer today.
+    $settings->add(new admin_setting_heading(
+        'local_sentientia_aiquiz/heading_customer_prompts',
+        get_string('settings_heading_customer_prompts', 'local_sentientia_aiquiz'),
+        get_string('settings_heading_customer_prompts_desc', 'local_sentientia_aiquiz')
+    ));
+
+    $settings->add(new admin_setting_configtextarea(
+        'local_airpay_core/customer_1_aiquiz_prompt_template',
+        get_string('setting_customer_1_prompt_template', 'local_sentientia_aiquiz'),
+        get_string('setting_customer_1_prompt_template_desc', 'local_sentientia_aiquiz'),
+        '',
+        PARAM_RAW,
+        80,
+        12
     ));
 
     $ADMIN->add('localplugins', $settings);

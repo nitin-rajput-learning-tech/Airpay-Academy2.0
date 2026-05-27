@@ -3850,3 +3850,98 @@ PROJECT-STATE.md history split for fast load.
 All chips ran on Opus 4.7 (1M context) in FleetView parallel worktrees.
 Zero hand-edited code outside conflict resolution. Pre-commit hook
 caught zero stray markers (P0-A working as designed).
+
+---
+
+## 🧠 WAVE C3 P2 — AI QUIZ PHASE G.1: HINDI + PER-CUSTOMER PROMPTS (2026-05-25)
+
+**Chip:** plugin-maturation, Workstream G (Tier 1 #4). Matures
+`local_sentientia_aiquiz` (the canonical plugin — NOT the retired
+`local_sentientia_ai_quiz`) from G.0 English-only to G.1: Hindi quiz
+generation + per-customer prompt overrides. Branch
+`claude/epic-goodall-fcFDS`. Plugin `0.1.0-alpha → 0.2.0-alpha`
+(`2026052500`); `local_airpay_core` `1.5.3 → 1.6.0` (`2026052500`).
+
+### What shipped
+
+- **`prompt_version='v2-hindi'`** — `prompt_builder` gains a full
+  Devanagari system prompt (instructions + a Devanagari few-shot example)
+  alongside the unchanged `v1` English baseline. Technical proper nouns
+  (`JSON`, `qoptions`, `qanswer_index`, `multichoice`, `Aadhaar`, `PAN`)
+  stay Latin per L&D-content convention. Locale → version routing via
+  `version_for_locale()` (`hi*` → v2-hindi, else v1, unknown → v1
+  safe-default). User-message wrapper is localised too (Hindi
+  begin/end markers + "ठीक N प्रश्न").
+
+- **Per-customer prompt override** — new
+  `\local_airpay_core\customer::get_customer_config($key, $customerid, $default)`
+  + `set_customer_config()`: a storage-agnostic per-customer config
+  registry (config_plugins today under
+  `local_airpay_core/customer_<id>_<key>`; a real customer-config table
+  in Phase 2 without touching callers). `prompt_builder::resolve_for($customer, $locale)`
+  returns a `(version, template)` pair — a non-empty admin-pasted
+  template replaces the system-prompt body verbatim; the locale still
+  drives the user-message wrapper.
+
+- **`prompt_version` recording** — `resolve_prompt_version()` records
+  `v1` / `v2-hindi` / `custom:v1` / `custom:v2-hindi` on each draft
+  (all ≤32 chars). `draft_manager::create_pending()` now takes the
+  resolved version (defaults to `v1` — G.0 callsites unchanged).
+
+- **generate.php UI** — language picker (English / हिन्दी, defaulting to
+  the trainer's `current_language()`), a collapsible **prompt preview**
+  showing the exact resolved system prompt + the resolved version label +
+  a "custom template active" badge, and the **unchanged** [CONFIRM]
+  checkbox. The picker/preview are pure pre-submission UI — no network
+  call. settings.php gains a per-customer prompt-template textarea
+  (writes to the `local_airpay_core` namespace key the getter reads).
+
+- **Devanagari-safe parser** — `response_parser` swaps `strlen`/`substr`
+  for `mb_strlen`/`mb_substr` so `MAX_TEXT_LEN` is a *character* budget,
+  not a byte budget (a 200-char Hindi stem is ~600 bytes — the old check
+  mis-measured it and could slice a multibyte char mid-truncation).
+  `JSON_UNESCAPED_UNICODE` on every Devanagari-bearing encode; parser
+  decodes both raw-UTF-8 and `\uXXXX`-escaped Hindi.
+
+- **Mock mode speaks Hindi** — `anthropic_client::call_mock()` emits
+  Devanagari stems/options/explanations when version is `v2-hindi`
+  (`[MOCK` marker stays Latin). Makes "generate a Hindi quiz via the UI"
+  verifiable end-to-end with `sentientia.aiquiz.live_api` still **OFF**.
+
+### Cost / safety posture — unchanged
+
+The 4-layer cost defence (ADR-012 D3) is intact. No test calls
+`call_live()` past its no-API-key fast-fail. The live Anthropic POST
+stays gated behind the `live_api` flag (default OFF) **and** the per-call
+[CONFIRM] tick. **No POST to api.anthropic.com was made in this chip.**
+
+### Tests
+
+- aiquiz: 82 PHPUnit methods across 4 classes (G.0 + G.1 additions):
+  Hindi prompt builds + Devanagari assertions, version resolution +
+  custom-prefix, `resolve_for` customer override + locale fallback +
+  blank-template fallback + per-customer scoping, Devanagari parse +
+  JSON round-trip + escaped-unicode + character-budget length,
+  Hindi mock → parse → persist, prompt_version recording.
+- airpay_core: new `tests/customer_config_test.php` — 11 methods
+  (get/set round-trip, canonical-key read, blank→default, per-customer +
+  per-key scoping, null-revert, invalid-id guards, Devanagari round-trip).
+- Verified standalone (no Moodle bootstrap): prompt logic (20 checks) +
+  mock→parse pipeline (12 checks) both fully green. `php -l` clean on all
+  14 touched files. Hindi parity 125/125.
+
+### Docs
+
+- ADR-012 G.1 addendum (5 decisions: prompt versioning, `custom:` prefix,
+  the airpay_core config registry rationale, Devanagari parser
+  correctness, Hindi mock mode).
+- README G.1 section (Hindi generation + per-customer templates).
+- version.php release notes (both plugins).
+
+### Acceptance — met
+
+✅ Hindi quiz generates via the UI in mock mode (Devanagari end-to-end).
+✅ Per-customer prompt override resolves; falls back to v1/v2-hindi by
+locale when absent. ✅ Anthropic POST still [CONFIRM]-gated. ✅ Hindi
+parity. ⏳ Full PHPUnit + live-API Hindi smoke run in CI / manual gate
+(unchanged from G.0 deferral discipline).

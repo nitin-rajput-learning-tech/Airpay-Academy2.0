@@ -57,6 +57,15 @@ $string['generate_confirm_help']  = 'This is the per-call confirmation gate. Whe
 $string['generate_submit']        = 'Generate quiz draft';
 $string['generate_cancel']        = 'Cancel';
 
+// ── G.1 language picker + prompt preview ──────────────────────────
+$string['generate_form_language']       = 'Quiz language';
+$string['generate_form_language_help']  = 'Selects the system prompt sent to Claude. English uses the v1 baseline prompt. Hindi uses the v2-hindi prompt and asks Claude to return questions in Devanagari.';
+$string['generate_form_language_en']    = 'English (v1)';
+$string['generate_form_language_hi']    = 'हिन्दी / Hindi (v2-hindi)';
+$string['generate_prompt_preview_summary'] = 'Preview the system prompt Claude will see (prompt version: {$a->version}, customer: {$a->customer})';
+$string['generate_prompt_preview_help']    = 'This is the exact system prompt that will be sent to Anthropic if you click Generate with the live API flag ON. Mock mode produces fake questions and does not call the API. When a per-customer template is configured below, it replaces the baseline prompt body verbatim.';
+$string['generate_prompt_preview_custom_badge'] = 'Custom per-customer template active';
+
 // ── Result / status badges ─────────────────────────────────────────
 $string['mode_mock_badge']        = 'MOCK MODE — no live API call (set sentientia.aiquiz.live_api = ON for real generation)';
 $string['mode_live_badge']        = 'LIVE API — Anthropic call billed to your account';
@@ -130,6 +139,12 @@ $string['setting_daily_token_cap']        = 'Per-user daily token cap';
 $string['setting_daily_token_cap_desc']   = 'Soft cap on tokens (input + output) a single user can spend per day. Once exceeded, generate.php returns an error until midnight.';
 $string['setting_max_source_words']       = 'Maximum source words per draft';
 $string['setting_max_source_words_desc']  = 'Source text is rejected if it exceeds this word count. Defaults to 4000 — about 8 pages.';
+
+// ── G.1 per-customer prompt template settings ─────────────────────
+$string['settings_heading_customer_prompts']        = 'Per-customer prompt templates';
+$string['settings_heading_customer_prompts_desc']   = 'Optional override of the system prompt sent to Claude, per Sentientia LMS customer. When set, the textarea contents REPLACE the baseline v1 (English) or v2-hindi prompt body verbatim. Leave blank to use the in-code baseline. The user-message wrapper (begin/end markers + the "exactly N questions" instruction) always follows the language picker on the generate form.';
+$string['setting_customer_1_prompt_template']       = 'Airpay (customer 1) — custom prompt template';
+$string['setting_customer_1_prompt_template_desc']  = 'Paste a customer-specific system prompt for Airpay. Leave blank to use the v1/v2-hindi baseline. Stored under local_airpay_core/customer_1_aiquiz_prompt_template — read by \\local_airpay_core\\customer::get_customer_config(). Drafts generated while a custom template is active have their prompt_version recorded as "custom:v1" or "custom:v2-hindi".';
 
 // ── Misc ───────────────────────────────────────────────────────────
 $string['source_word_count'] = 'Word count: {$a}';

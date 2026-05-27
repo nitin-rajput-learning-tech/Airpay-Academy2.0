@@ -36,14 +36,23 @@ $plugin->component = 'local_sentientia_aiquiz';
 // 2026-05-24 G.0 — MVP scaffold. Schema + feature flag + Anthropic
 // client (curl-based) + prompt builder + response parser + generate UI
 // + review UI + mod_quiz push stub + Hindi pack + ADR-012.
-$plugin->version   = 2026052400;
+// 2026-05-25 G.1 — Hindi quiz generation (prompt_version 'v2-hindi',
+// full Devanagari system prompt + few-shot) + per-customer prompt
+// template override via local_airpay_core::get_customer_config +
+// generate.php language picker + prompt preview + Devanagari-safe
+// response parser (mb_strlen/mb_substr). No live API in tests
+// (call_mock only). ADR-012 G.1 addendum. Hindi parity 125/125.
+$plugin->version   = 2026052500;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;     // MVP — needs prod sign-off before flag flips
-$plugin->release   = '0.1.0-alpha';
+$plugin->release   = '0.2.0-alpha';
 $plugin->dependencies = [
-    'local_airpay_core' => 2026051401,   // feature_flags resolver + customer scope
+    'local_airpay_core' => 2026051401,   // feature_flags resolver + customer scope + get_customer_config
 ];
 
 // Release history
 // 0.1.0-alpha  Phase G.0: MVP scaffold. Feature flag default OFF.
 //              No live API calls without explicit per-call [CONFIRM].
+// 0.2.0-alpha  Phase G.1: Hindi (v2-hindi) prompt + per-customer prompt
+//              template overrides. Mock-mode Hindi demoable end-to-end.
+//              Live API still gated by [CONFIRM] + live_api flag (OFF).

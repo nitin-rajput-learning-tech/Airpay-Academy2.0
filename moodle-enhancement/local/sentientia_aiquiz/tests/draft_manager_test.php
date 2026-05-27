@@ -279,6 +279,84 @@ final class draft_manager_test extends \advanced_testcase {
         $this->assertSame(177, draft_manager::tenant_root_for($u));
     }
 
+    // ════════════════════════════════════════════════════════════════
+    //  G.1 — prompt_version recording
+    // ════════════════════════════════════════════════════════════════
+
+    public function test_create_pending_defaults_prompt_version_to_v1(): void {
+        $this->resetAfterTest();
+        $user = $this->getDataGenerator()->create_user();
+        // No prompt_version arg → must default to 'v1' (Phase G.0 contract).
+        $did = draft_manager::create_pending(
+            (int)$user->id, 0, 'D', 'src', 'claude-sonnet-4-6', 3
+        );
+        global $DB;
+        $row = $DB->get_record(draft_manager::DRAFT_TABLE, ['id' => $did], '*', MUST_EXIST);
+        $this->assertSame('v1', $row->prompt_version);
+    }
+
+    public function test_create_pending_records_hindi_prompt_version(): void {
+        $this->resetAfterTest();
+        $user = $this->getDataGenerator()->create_user();
+        $did = draft_manager::create_pending(
+            (int)$user->id, 0, 'D', 'स्रोत', 'claude-sonnet-4-6', 3,
+            prompt_builder::VERSION_V2_HINDI
+        );
+        global $DB;
+        $row = $DB->get_record(draft_manager::DRAFT_TABLE, ['id' => $did], '*', MUST_EXIST);
+        $this->assertSame('v2-hindi', $row->prompt_version);
+    }
+
+    public function test_create_pending_records_custom_prompt_version(): void {
+        $this->resetAfterTest();
+        $user = $this->getDataGenerator()->create_user();
+        $version = prompt_builder::resolve_prompt_version(prompt_builder::VERSION_V2_HINDI, true);
+        $did = draft_manager::create_pending(
+            (int)$user->id, 0, 'D', 'स्रोत', 'claude-sonnet-4-6', 3, $version
+        );
+        global $DB;
+        $row = $DB->get_record(draft_manager::DRAFT_TABLE, ['id' => $did], '*', MUST_EXIST);
+        $this->assertSame('custom:v2-hindi', $row->prompt_version);
+    }
+
+    public function test_create_pending_clamps_blank_prompt_version_to_v1(): void {
+        $this->resetAfterTest();
+        $user = $this->getDataGenerator()->create_user();
+        $did = draft_manager::create_pending(
+            (int)$user->id, 0, 'D', 'src', 'claude-sonnet-4-6', 3, '   '
+        );
+        global $DB;
+        $row = $DB->get_record(draft_manager::DRAFT_TABLE, ['id' => $did], '*', MUST_EXIST);
+        $this->assertSame('v1', $row->prompt_version);
+    }
+
+    public function test_create_pending_hindi_draft_persists_devanagari_questions(): void {
+        // End-to-end mock-mode Hindi: create pending → mock generate →
+        // parse → persist. Proves Devanagari survives the whole pipeline.
+        $this->resetAfterTest();
+        $user = $this->getDataGenerator()->create_user();
+        $did = draft_manager::create_pending(
+            (int)$user->id, 0, 'D', 'अनुपालन स्रोत', 'claude-sonnet-4-6', 3,
+            prompt_builder::VERSION_V2_HINDI
+        );
+        $mock = anthropic_client::call_mock('अनुपालन स्रोत', 3,
+            ['version' => prompt_builder::VERSION_V2_HINDI, 'template' => null]);
+        $questions = response_parser::parse($mock['body']);
+        $this->assertCount(3, $questions);
+        draft_manager::persist_questions($did, $questions, 0, 0, 'mock');
+
+        global $DB;
+        $persisted = $DB->get_records(draft_manager::QUESTION_TABLE,
+            ['draftid' => $did], 'sortorder ASC');
+        $this->assertCount(3, $persisted);
+        foreach ($persisted as $q) {
+            $this->assertMatchesRegularExpression('/\p{Devanagari}/u', $q->qtext);
+            $decoded = json_decode($q->qoptions_json, true);
+            $this->assertCount(4, $decoded);
+            $this->assertMatchesRegularExpression('/\p{Devanagari}/u', $decoded[0]);
+        }
+    }
+
     // ── helpers ───────────────────────────────────────────────────────
 
     /**

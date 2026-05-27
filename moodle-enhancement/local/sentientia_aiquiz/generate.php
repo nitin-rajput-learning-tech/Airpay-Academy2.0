@@ -3,10 +3,11 @@
 // License http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 
 /**
- * Sentientia LMS AI Quiz — Generate page (Phase G.0 MVP).
+ * Sentientia LMS AI Quiz — Generate page (Phase G.0 MVP + G.1).
  *
  * Course Author flow:
- *   GET  : show the form (course picker + title + source paste + count)
+ *   GET  : show the form (course picker + title + source paste + count
+ *          + language picker + per-customer prompt preview).
  *   POST : validate -> [CONFIRM] gate -> create pending draft ->
  *          call Anthropic (or mock) -> parse -> persist questions ->
  *          redirect to review.php?draftid=N
@@ -16,6 +17,13 @@
  *   2. Capability local/sentientia_aiquiz:generate
  *   3. Per-user daily token cap not exceeded
  *   4. The confirm checkbox in the form is ticked (the [CONFIRM] gate)
+ *
+ * Phase G.1 adds:
+ *   - Language picker (en | hi). Routes the prompt through
+ *     prompt_builder::resolve_for() to pick v1 or v2-hindi.
+ *   - Per-customer prompt preview. Renders the resolved system prompt
+ *     body (custom template if set, else baseline) so the trainer can
+ *     verify what Claude will see before clicking [CONFIRM].
  *
  * The actual Anthropic call is dispatched via
  * anthropic_client::generate() which inspects sentientia.aiquiz.live_api
@@ -69,6 +77,16 @@ if ($defaultmodel === '') {
     $defaultmodel = anthropic_client::DEFAULT_MODEL;
 }
 
+// Resolve current customer (Phase 0/1 hardcoded Airpay). Used for both
+// the prompt-template lookup and the draft.customerid column.
+$currentcustomer = class_exists('\\local_airpay_core\\customer')
+    ? \local_airpay_core\customer::current()
+    : 1;
+
+// Determine the trainer's UI locale — drives the default language picker
+// selection. The user can override per-call via the form.
+$uilocale = (string)(current_language() ?? 'en');
+
 $errors = [];
 $prefill = [
     'title'      => '',
@@ -76,6 +94,7 @@ $prefill = [
     'sourcetext' => '',
     'num'        => min(10, $maxquestions),
     'model'      => $defaultmodel,
+    'language'   => prompt_builder::version_for_locale($uilocale) === prompt_builder::VERSION_V2_HINDI ? 'hi' : 'en',
     'confirm'    => 0,
 ];
 
@@ -90,6 +109,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $prefill['sourcetext'] = optional_param('sourcetext', '', PARAM_RAW);
     $prefill['num']        = optional_param('num', $prefill['num'], PARAM_INT);
     $prefill['model']      = trim(optional_param('model', $defaultmodel, PARAM_TEXT));
+    $prefill['language']   = strtolower(trim(optional_param('language', $prefill['language'], PARAM_ALPHA)));
+    if (!in_array($prefill['language'], ['en', 'hi'], true)) {
+        $prefill['language'] = 'en';
+    }
     $prefill['confirm']    = optional_param('confirm', 0, PARAM_INT) ? 1 : 0;
 
     if ($prefill['title'] === '') {
@@ -131,6 +154,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($errors)) {
+        // Resolve prompt context (version + customer template) for this submission.
+        $resolved = prompt_builder::resolve_for($currentcustomer, $prefill['language']);
+        $promptctx = [
+            'version'  => $resolved['version'],
+            'template' => $resolved['template'],
+        ];
+        $promptversion = prompt_builder::resolve_prompt_version(
+            $resolved['version'],
+            $resolved['template'] !== null
+        );
+
         // Persist the pending draft FIRST so a crash mid-call leaves an audit trail.
         $draftid = draft_manager::create_pending(
             (int)$USER->id,
@@ -138,11 +172,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $prefill['title'],
             $prefill['sourcetext'],
             $prefill['model'],
-            $prefill['num']
+            $prefill['num'],
+            $promptversion
         );
 
         // Dispatch to mock or live based on sentientia.aiquiz.live_api flag.
-        $result = anthropic_client::generate($prefill['sourcetext'], $prefill['num'], $prefill['model']);
+        // The prompt context routes Hindi / customer-template selection
+        // through both call paths; the [CONFIRM] checkbox above is the
+        // per-call gate before any live POST happens.
+        $result = anthropic_client::generate(
+            $prefill['sourcetext'],
+            $prefill['num'],
+            $prefill['model'],
+            $promptctx
+        );
 
         if ($result['mode'] === 'failed') {
             draft_manager::mark_failed($draftid, (string)$result['error']);
@@ -165,6 +208,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect(new moodle_url('/local/sentientia_aiquiz/review.php', ['draftid' => $draftid]));
     }
 }
+
+// ──────────────────────────────────────────────────────────────────
+// Resolve a preview prompt-context for the current form state.
+// Used to render the "what Claude will see" preview panel.
+// ──────────────────────────────────────────────────────────────────
+$previewresolved = prompt_builder::resolve_for($currentcustomer, $prefill['language']);
+$previewbody = prompt_builder::build_system_prompt(
+    $previewresolved['version'],
+    $previewresolved['template']
+);
+$previewlabel = prompt_builder::resolve_prompt_version(
+    $previewresolved['version'],
+    $previewresolved['template'] !== null
+);
 
 // ──────────────────────────────────────────────────────────────────
 // Mode badge — which way will this submission be routed?
@@ -194,6 +251,11 @@ foreach ($courses as $c) {
 }
 
 $tokensusedtoday = draft_manager::tokens_used_today((int)$USER->id);
+
+$languageoptions = [
+    'en' => get_string('generate_form_language_en', 'local_sentientia_aiquiz'),
+    'hi' => get_string('generate_form_language_hi', 'local_sentientia_aiquiz'),
+];
 
 // ──────────────────────────────────────────────────────────────────
 // Render
@@ -264,6 +326,19 @@ echo html_writer::div(get_string('generate_form_course_help', 'local_sentientia_
     'form-text text-muted');
 echo html_writer::end_div();
 
+// Language picker (G.1).
+echo html_writer::start_div('mb-3');
+echo html_writer::tag('label',
+    get_string('generate_form_language', 'local_sentientia_aiquiz'),
+    ['for' => 'sentientia-aiquiz-language', 'class' => 'form-label']);
+echo html_writer::select($languageoptions, 'language', $prefill['language'], false, [
+    'id' => 'sentientia-aiquiz-language',
+    'class' => 'form-control',
+]);
+echo html_writer::div(get_string('generate_form_language_help', 'local_sentientia_aiquiz'),
+    'form-text text-muted');
+echo html_writer::end_div();
+
 // Source content.
 echo html_writer::start_div('mb-3');
 echo html_writer::tag('label',
@@ -317,6 +392,30 @@ echo html_writer::empty_tag('input', [
 echo html_writer::div(get_string('generate_form_model_help', 'local_sentientia_aiquiz'),
     'form-text text-muted');
 echo html_writer::end_div();
+
+// Prompt preview (G.1) — collapsible "what Claude will see".
+echo html_writer::start_tag('details', ['class' => 'mb-3 sentientia-aiquiz-prompt-preview']);
+$previewsummary = get_string('generate_prompt_preview_summary', 'local_sentientia_aiquiz',
+    (object)[
+        'version'    => $previewlabel,
+        'customer'   => class_exists('\\local_airpay_core\\customer')
+            ? \local_airpay_core\customer::label_for($currentcustomer)
+            : 'Airpay Payment Services',
+    ]);
+echo html_writer::tag('summary', s($previewsummary), ['class' => 'fw-bold']);
+echo html_writer::div(
+    get_string('generate_prompt_preview_help', 'local_sentientia_aiquiz'),
+    'form-text text-muted mt-2 mb-2');
+if ($previewresolved['template'] !== null) {
+    echo html_writer::div(
+        get_string('generate_prompt_preview_custom_badge', 'local_sentientia_aiquiz'),
+        'badge bg-info text-dark mb-2');
+}
+echo html_writer::tag('pre',
+    s($previewbody),
+    ['class' => 'sentientia-aiquiz-prompt-preview-body small bg-light p-3 border rounded',
+     'style' => 'white-space: pre-wrap; max-height: 320px; overflow-y: auto;']);
+echo html_writer::end_tag('details');
 
 // Confirm checkbox.
 echo html_writer::start_div('mb-3 alert alert-warning');

@@ -320,3 +320,181 @@ Before any future "promote G.0 to production" decision:
 - Tier 1 #4 in PROJECT-STATE.md
 - Plugin: `moodle-enhancement/local/sentientia_aiquiz/`
 - State card: `moodle-enhancement/state-cards/local_sentientia_aiquiz-state.md`
+
+---
+
+## Addendum — Phase G.1 (2026-05-25): Hindi + per-customer prompt overrides
+
+- **Status:** Accepted
+- **Supersedes:** nothing — purely additive to the G.0 decisions above.
+- **Scope:** Hindi quiz generation (`prompt_version='v2-hindi'`) and a
+  per-customer prompt-template override. Plugin bumped to
+  `0.2.0-alpha` (version `2026052500`). `local_airpay_core` bumped to
+  `1.6.0` (version `2026052500`) for the new config registry.
+
+### G.1-D1 — Prompt versioning: two baselines + a custom layer
+
+Phase G.0's D2 decided prompts live versioned-in-code. G.1 realises the
+`v2-hindi` version promised there and adds a customer-override layer on
+top. The system now resolves a **(version, template)** pair for every
+generation:
+
+| Layer | Source | Wins when |
+|-------|--------|-----------|
+| Custom template | `customer::get_customer_config('aiquiz_prompt_template', $customerid)` | A non-empty admin-pasted template exists for the customer |
+| `v2-hindi` baseline | `prompt_builder::system_prompt_v2_hindi()` | UI locale resolves to `hi` and no custom template |
+| `v1` baseline | `prompt_builder::system_prompt_v1()` | otherwise (English / unknown locale) — the safe default |
+
+Key design points:
+
+- **Locale → version** is computed by `prompt_builder::version_for_locale()`
+  (first two chars of the locale; `hi*` → `v2-hindi`, everything else →
+  `v1`). Unknown locales fall back to English so a future locale code
+  never produces an empty prompt.
+- **The custom template replaces only the *system* prompt body.** The
+  *user-message* wrapper (the "exactly N questions" sentence + the
+  begin/end source markers) still follows the locale-derived version, so
+  a Hindi run keeps Hindi framing around the source even when the
+  customer pasted their own system prompt. This keeps the source-framing
+  contract (what the parser depends on) stable regardless of customer
+  edits.
+- **The few-shot example.** `v2-hindi` embeds one worked Devanagari
+  question as a JSON literal inside the system prompt, giving Claude a
+  concrete shape to match. `v1` relies on the field-by-field spec alone
+  (unchanged from G.0).
+- **Technical proper nouns stay in Latin** inside the Hindi prompt
+  (`JSON`, `qoptions`, `qanswer_index`, `multichoice`, `Aadhaar`, `PAN`,
+  `Anthropic`, `SCORM`) — they are API field names and regulatory
+  identifiers, not translatable terms. This matches the plugin's existing
+  Hindi-pack convention.
+
+### G.1-D2 — `prompt_version` recording: the `custom:` prefix
+
+The draft row's `prompt_version` column (CHAR(32), defined in G.0)
+records the **resolved** version so the review UI and any future
+cost/quality analytics can tell which prompt produced which questions:
+
+| Recorded value | Meaning |
+|----------------|---------|
+| `v1` | Stock English |
+| `v2-hindi` | Stock Hindi |
+| `custom:v1` | Admin template active, English user-message wrapper |
+| `custom:v2-hindi` | Admin template active, Hindi user-message wrapper |
+
+`prompt_builder::resolve_prompt_version($version, $customused)` is the
+single source of truth for this string. All four forms fit the 32-char
+column. The literal template body is *not* snapshotted onto the draft —
+it is recoverable via `draft.customerid` + the customer-config value, on
+the understanding that editing the template loses exact historical
+reproducibility (acceptable for an alpha; a future phase can snapshot the
+body if A/B rigour demands it).
+
+### G.1-D3 — Per-customer config registry in `local_airpay_core`
+
+Rather than store the prompt template in the aiquiz plugin's own config,
+G.1 introduces a **shared per-customer config registry** on the
+`customer` helper:
+
+```php
+\local_airpay_core\customer::get_customer_config(string $key, int $customer_id, $default = null);
+\local_airpay_core\customer::set_customer_config(string $key, int $customer_id, ?string $value);
+```
+
+- **Why in `local_airpay_core`, not the aiquiz plugin?** The multi-customer
+  layer is core platform infrastructure (ADR-002 put feature-flag
+  customer-scope there). Per-customer *config* is the same class of
+  concern; future plugins (per-customer email templates, per-customer
+  SCORM defaults, …) reuse the same getter rather than each reinventing a
+  storage convention. The signature is deliberately storage-agnostic so
+  Phase 2's real customer-config table can swap in underneath without
+  touching a single caller — the same forward-compat contract `customer::current()`
+  already follows.
+- **Storage today:** Moodle `config_plugins` under the `local_airpay_core`
+  namespace, keyed `customer_<id>_<key>`. Empty / whitespace values
+  resolve to the supplied default (treated as "no override").
+- **Admin write path:** `settings.php` in the aiquiz plugin declares a
+  `admin_setting_configtextarea` whose name is
+  `local_airpay_core/customer_1_aiquiz_prompt_template`. Declaring the
+  setting under the `local_airpay_core` namespace (from the aiquiz
+  settings page) means the admin form writes to exactly the key the
+  getter reads — no bespoke save handler, no drift. Phase 0/1 renders one
+  textarea (Airpay = customer 1); when Phase 2 adds real customers,
+  `settings.php` loops `customer::known_customers()` and the getter is
+  already customer-id-agnostic.
+
+### G.1-D4 — Devanagari correctness in the parser
+
+`response_parser` validated text lengths with `strlen()` in G.0. A
+Devanagari character is 3 UTF-8 bytes, so a 200-character Hindi stem is
+~600 bytes — `strlen()` would mis-measure it and the 1000-cap truncation
+(`substr`) could slice a multi-byte character in half, corrupting the
+stored JSON. G.1 swaps every length check to `mb_strlen()` and the
+defensive truncation to `mb_substr()`. `MAX_TEXT_LEN` is now a
+*character* budget, not a byte budget — the same 1000 limit is now
+language-fair. `prompt_builder::word_count()` already used the unicode
+(`/u`) split, so word-cap validation was correct for Hindi from G.0; a
+regression test now pins that.
+
+`JSON_UNESCAPED_UNICODE` is used on every `json_encode` that may carry
+Devanagari (mock body, persisted `qoptions_json`, the live-call payload)
+so logs and stored rows hold readable Hindi rather than `\uXXXX` runs.
+The parser's `json_decode` handles both raw-UTF-8 and `\uXXXX`-escaped
+input, so a model that escapes its output still round-trips (pinned by
+`test_parse_devanagari_escaped_unicode_also_decodes`).
+
+### G.1-D5 — Mock mode speaks Hindi
+
+Per G.0's D5, the MVP must be demoable without spend. G.1 extends
+`anthropic_client::call_mock()` so that when the resolved version is
+`v2-hindi` it emits Devanagari stems / options / explanations (the
+`[MOCK` marker stays Latin so a reviewer always spots mock content
+regardless of language). The source snippet echoed back into the stem is
+sliced with `mb_substr()` so a multibyte source is reflected without
+corruption. This makes "generate a quiz in Hindi via the UI" verifiable
+end-to-end with `sentientia.aiquiz.live_api` still **OFF**.
+
+### G.1 — [CONFIRM] gate unchanged
+
+The per-call confirmation checkbox (G.0 D3 layer 3) is untouched. No
+test in this phase calls `call_live()` past its no-API-key fast-fail; the
+live Anthropic POST remains gated behind both the `live_api` flag (default
+OFF) and the per-call [CONFIRM] tick. The language picker and prompt
+preview are pure pre-submission UI — they never trigger a network call.
+
+### G.1 consequences
+
+**Positive**
+- Hindi quiz authoring is demoable today (mock mode), live-ready when the
+  flag + budget are approved — no further code needed for the language
+  itself.
+- The per-customer config registry is reusable platform infrastructure,
+  not an aiquiz one-off.
+- `prompt_version` audit trail now distinguishes language and customer
+  customisation at a glance.
+
+**Negative / deferred**
+- The custom template body is not snapshotted per draft (see G.1-D2) —
+  exact historical prompt reproduction is lost if an admin edits the
+  template later. Acceptable for alpha.
+- Only `en` + `hi` are wired. Adding a third language is a new
+  `system_prompt_v3_xx()` + a `version_for_locale()` branch + a Hindi-style
+  parity pass — not a structural change.
+- Phase 0/1 still single-customer in the *admin UI* (one textarea); the
+  read path is already multi-customer.
+
+### G.1 verification gates
+
+1. ✅ `php -l` clean on every touched file.
+2. ✅ Standalone logic check: version resolution, Hindi system prompt
+   (Devanagari + few-shot + Latin field names + PII rule), custom-template
+   override + blank fallback, Hindi user-message wrapper, Devanagari word
+   count + PII detection.
+3. ✅ Standalone mock→parse pipeline: English + Hindi mock both parse;
+   Devanagari survives `qoptions_json` round-trip; 400-char Devanagari
+   stem accepted under the character-budget cap; unknown version falls
+   back to English.
+4. ✅ Hindi parity: 125/125 keys (`lang/en` == `lang/hi`).
+5. ⏳ Full PHPUnit run on a Moodle 5.x checkout (the new tests assume the
+   test DB bootstrap) — runs in CI's `phpunit-5.2` gate.
+6. ⏳ Live-API Hindi smoke — manual, one-shot, [CONFIRM] ticked, real
+   budget. Still gated; out of scope for this chip.

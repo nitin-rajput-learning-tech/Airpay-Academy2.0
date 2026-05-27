@@ -6,11 +6,12 @@ generates a multichoice quiz draft. Every draft passes through a
 mandatory human-review gate (approve / edit / reject per question)
 before any approved questions are pushed to a `mod_quiz` activity.
 
-**Status:** Phase G.0 — MVP scaffold. Feature flag default OFF.
-Mock-mode demoable end-to-end without spending money.
+**Status:** Phase G.1 — Hindi + per-customer prompts on top of the G.0
+MVP. Feature flag default OFF. Mock-mode demoable end-to-end (English
+*and* Hindi) without spending money.
 
-See [ADR-012](../../docs/adr/ADR-012-ai-quiz-generation.md) for the
-architecture record and
+See [ADR-012](../../docs/adr/ADR-012-ai-quiz-generation.md) (G.1 addendum
+at the foot) for the architecture record and
 [state card](../../state-cards/local_sentientia_aiquiz-state.md) for
 current status + open questions.
 
@@ -99,8 +100,10 @@ vendor/bin/phpunit local/sentientia_aiquiz/tests/draft_manager_test.php
 vendor/bin/phpunit local/sentientia_aiquiz/tests/anthropic_client_test.php
 ```
 
-Expected: 4 test classes, ~47 test methods, 100% pass without an API
-key (everything uses `call_mock()`).
+Expected: 4 test classes, 82 test methods (G.0 + G.1), 100% pass
+without an API key (everything uses `call_mock()`). The per-customer
+config registry is covered separately in
+`local/airpay_core/tests/customer_config_test.php` (11 methods).
 
 ---
 
@@ -130,13 +133,37 @@ a different tenant unless the caller has the `:manage_all` capability.
 
 ---
 
-## Hindi (hi) language pack
+## Hindi (hi) language pack + Hindi quiz generation
 
-100% parity with English. Every key in `lang/en/local_sentientia_aiquiz.php`
-has a corresponding entry in `lang/hi/local_sentientia_aiquiz.php`.
-Formal corporate-Hindi register; technical proper nouns (Anthropic,
-Claude, Sonnet, Aadhaar, PAN, JSON, API, SCORM, SOP) kept in Latin
-script per L&D-content convention.
+100% parity with English (125/125 keys). Every key in
+`lang/en/local_sentientia_aiquiz.php` has a corresponding entry in
+`lang/hi/local_sentientia_aiquiz.php`. Formal corporate-Hindi register;
+technical proper nouns (Anthropic, Claude, Sonnet, Aadhaar, PAN, JSON,
+API, SCORM, SOP) kept in Latin script per L&D-content convention.
+
+**Hindi quiz generation (G.1).** The generate form has a language picker
+(English / हिन्दी). Choosing Hindi routes the request through the
+`v2-hindi` prompt version — a full Devanagari system prompt with a
+Devanagari few-shot example — and asks Claude to return questions in
+Devanagari. The default picker selection follows the trainer's UI
+locale (`current_language()`); they can override per generation. Mock
+mode produces Devanagari mock questions so the Hindi flow is demoable
+without spending money.
+
+## Per-customer prompt templates (G.1)
+
+Admins can override the system prompt per Sentientia LMS customer at
+**Site admin → Plugins → Local plugins → AI Quiz → Per-customer prompt
+templates**. A non-empty template replaces the `v1`/`v2-hindi` system
+prompt body verbatim (the user-message wrapper still follows the
+language picker). The value is stored under
+`local_airpay_core/customer_<id>_aiquiz_prompt_template` and read on the
+generate request via
+`\local_airpay_core\customer::get_customer_config('aiquiz_prompt_template', $customerid)`.
+The generate form's **prompt preview** panel shows the exact resolved
+system prompt before the trainer ticks [CONFIRM]. Drafts generated while
+a custom template is active record `prompt_version` as `custom:v1` /
+`custom:v2-hindi`.
 
 ---
 

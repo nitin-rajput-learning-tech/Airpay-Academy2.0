@@ -1,10 +1,10 @@
 # State Card — `local_sentientia_aiquiz` (Sentientia LMS AI Quiz Generation)
 
-**Current phase:** G.0 — MVP scaffold
-**Version:** 0.1.0-alpha (2026052400)
-**Status:** MVP feature-complete, feature flag default OFF, mock-mode demoable
+**Current phase:** G.1 — Hindi + per-customer prompts
+**Version:** 0.2.0-alpha (2026052500)
+**Status:** G.1 feature-complete, feature flag default OFF, mock-mode demoable (English + Hindi)
 **Owner:** Nitin Rajput (PM) + Claude (engineering)
-**Last updated:** 2026-05-24
+**Last updated:** 2026-05-25
 
 ---
 
@@ -70,8 +70,8 @@ record. Highlights:
 
 | Phase | Scope | Status |
 |-------|-------|--------|
-| **G.0** | MVP scaffold — schema + capabilities + feature flags + generate + review + mock pipeline + PHPUnit + Hindi parity + ADR-012 | ✅ **CURRENT** |
-| G.1 | Per-customer prompt overrides + Hindi quiz generation (`prompt_version='v2-hindi'`) | pending |
+| G.0 | MVP scaffold — schema + capabilities + feature flags + generate + review + mock pipeline + PHPUnit + Hindi parity + ADR-012 | ✅ shipped 2026-05-24 |
+| **G.1** | Per-customer prompt overrides + Hindi quiz generation (`prompt_version='v2-hindi'`) + Devanagari-safe parser + language picker + prompt preview | ✅ **CURRENT** (2026-05-25) |
 | G.2 | PDF upload pipeline (admin uploads SOP → extracts text → generates) | pending |
 | G.3 | Cost analytics dashboard + per-customer token quota | pending |
 | G.4 | Real `mod_quiz` push (replaces `pushed_quizid=0` stub) | pending |
@@ -168,3 +168,44 @@ draft_manager 13, anthropic_client 8); added `README.md` and `cli/mock_smoke.php
 to the file inventory (both shipped at G.0 but missing from the original card).
 No DB-schema drift, no new capabilities, no new flags. Plugin still feature-flag
 OFF on production.
+
+---
+
+## Phase G.1 — Hindi + per-customer prompts — 2026-05-25
+
+Bumped `0.1.0-alpha → 0.2.0-alpha` (`2026052500`). Dependency
+`local_airpay_core` bumped to `1.6.0` (`2026052500`) for the new
+per-customer config registry. **No DB-schema change** — `prompt_version`
+(CHAR(32), present since G.0) now carries `v2-hindi` / `custom:v1` /
+`custom:v2-hindi` in addition to `v1`.
+
+**Shipped:**
+- `prompt_builder`: `VERSION_V1` + `VERSION_V2_HINDI` constants, full
+  Devanagari `v2-hindi` system prompt with a Devanagari few-shot example,
+  `version_for_locale()`, `resolve_for($customer,$locale)`,
+  `resolve_prompt_version()`. Backwards-compatible `VERSION='v1'` kept.
+- `\local_airpay_core\customer::get_customer_config()` /
+  `set_customer_config()` — per-customer config registry (key
+  `aiquiz_prompt_template`).
+- `anthropic_client`: `generate/call_mock/call_live` accept an optional
+  `$promptctx` (version + template); mock emits Devanagari when
+  `v2-hindi`.
+- `response_parser`: `mb_strlen`/`mb_substr` (character-budget, not
+  byte-budget) — Devanagari-safe.
+- `generate.php`: language picker (en/hi) + collapsible prompt preview;
+  [CONFIRM] checkbox unchanged.
+- `settings.php`: per-customer prompt-template textarea
+  (`local_airpay_core/customer_1_aiquiz_prompt_template`).
+- Lang: 17 new keys × 2 packs, parity 125/125.
+- ADR-012 G.1 addendum (5 decisions).
+
+**Tests:** aiquiz now 82 PHPUnit methods (prompt_builder 32,
+response_parser 18, draft_manager 18, anthropic_client 14);
+`local_airpay_core/tests/customer_config_test.php` adds 11. Standalone
+logic + mock→parse pipeline checks green; `php -l` clean on all touched
+files. No `call_live()` invocation past its no-key fast-fail — **no POST
+to api.anthropic.com in this chip.**
+
+**Still deferred (unchanged):** real `mod_quiz` push (G.4), PDF upload
+(G.2), cost dashboard (G.3), live-API budget approval, per-draft snapshot
+of custom-template body.
