@@ -36,6 +36,9 @@ on:
       - 'local/airpay_**'
       - 'theme/airpayux/**'
       - 'tests/playwright/**'
+      - 'scripts/agents/**'
+      - 'tests/agents/**'
+      - 'requirements.txt'
       - '.github/workflows/**'
   push:
     branches:
@@ -45,6 +48,9 @@ on:
       - 'local/airpay_**'
       - 'theme/airpayux/**'
       - 'tests/playwright/**'
+      - 'scripts/agents/**'
+      - 'tests/agents/**'
+      - 'requirements.txt'
       - '.github/workflows/**'
 
 jobs:
@@ -282,6 +288,36 @@ jobs:
             echo "$MISSING plugin(s) need version.php bump."
             # Don't fail the PR — this is a warning, not an error.
           fi
+
+  python-agents:
+    name: SENTIENTIA pipeline agents (pytest + smoke)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Blocking gate. The agent tests are hermetic — every external API
+    # (Anthropic, ElevenLabs) is exercised through an injected fake, so
+    # this job never reaches the network and never spends. The pipeline
+    # smoke test runs Agents 1->2->3->4 in mock mode end-to-end.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install pipeline dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run agent unit tests
+        run: |
+          python -m pytest tests/agents/ -v
+
+      - name: Run end-to-end pipeline smoke test (mock mode)
+        run: |
+          python scripts/agents/run_pipeline_test.py
 
   playwright-linux:
     name: Playwright E2E + visual (Linux)

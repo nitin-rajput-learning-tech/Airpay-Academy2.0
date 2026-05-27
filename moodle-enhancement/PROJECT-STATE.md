@@ -3850,3 +3850,89 @@ PROJECT-STATE.md history split for fast load.
 All chips ran on Opus 4.7 (1M context) in FleetView parallel worktrees.
 Zero hand-edited code outside conflict resolution. Pre-commit hook
 caught zero stray markers (P0-A working as designed).
+
+---
+
+## 🎙️ Wave E1 P4 — SENTIENTIA Agents 2, 3, 4 (Phase B.1–B.3) (2026-05-27)
+
+**Chip `sleepy-fermi-YHAeG`.** Closes the middle of the SOP → SCORM
+content pipeline (`CLAUDE.md §9`). Agent 1 (PDF → JSON, Phase B.0,
+chip `gifted-faraday-V761L`) already shipped; this chip adds the three
+agents that turn that JSON into narration, slides, and voice — leaving
+only Agent 5 (SCORM packager) and Agent 6 (Moodle upload) before the
+pipeline is end-to-end.
+
+### What shipped
+
+- **Agent 2 — Narration Generator** (`scripts/agents/agent2_narration_generator.py`).
+  Input `content/parsed/*-parsed.json` → output
+  `content/narrations/*-narration.txt`. **Mock mode (default)** builds a
+  deterministic narration offline; **live mode (`--confirm`)** POSTs to
+  the Anthropic Messages API (`claude-opus-4-7`). Enforces the pipeline
+  constraints after generation: ≤2000 words total, ≤25 words/sentence,
+  plain text only (no HTML/markdown). Live `call_anthropic` accepts an
+  injected `post_fn` so tests never hit the network. Exit codes
+  0/1/2/3 (success / validation / I/O / API-config).
+
+- **Agent 3 — Slides Generator** (`scripts/agents/agent3_slides_generator.py`).
+  Input `content/narrations/*-narration.txt` → output
+  `content/slides/*-slides.json`. **Pure Python, no API, no [CONFIRM].**
+  Splits the narration on blank-line paragraphs and rebalances to a
+  10–15 slide target band (splits long paragraphs / merges short pairs,
+  hard cap 30). Each slide: `title` ≤8 words (from a `Section: X.`
+  prefix when present), `bullets` ≤5 × ≤8 words, `speaker_notes` =
+  verbatim paragraph. Every constraint re-validated before write.
+
+- **Agent 4 — Voice Generator** (`scripts/agents/agent4_voice_generator.py`).
+  Input `content/narrations/*-narration.txt` → output
+  `content/voice/*-voice.mp3`. **Mock mode (default)** writes a
+  deterministic placeholder MP3 (valid ID3v2.4 header + narration
+  payload) so Agent 5 has a real file in CI/rehearsal with zero spend;
+  **live mode (`--confirm`)** POSTs to ElevenLabs with the
+  `.claude/rules/api.md` recommended voice settings. Input guard rejects
+  PII-shaped tokens (email / phone / salary / employee-id / SSN) per
+  `CLAUDE.md §13`, caps at 2100 words, and prints the USD cost estimate
+  before any live POST. `synthesise_voice` accepts an injected `post_fn`
+  for hermetic tests.
+
+- **End-to-end pipeline test** (`scripts/agents/run_pipeline_test.py`).
+  Spawns a fresh subprocess per agent (honouring the "never chain agents
+  in one process" rule) and runs 1 → 2 → 3 → 4 against
+  `content/sops/SAMPLE-SOP.pdf` in mock mode. Asserts each stage's output
+  exists and parses. `--live --confirm` would use the real APIs but
+  refuses to run `--live` without `--confirm`.
+
+- **Tests** — `tests/agents/test_agent2.py` (31), `test_agent3.py` (21),
+  `test_agent4.py` (20) on top of the existing 29 Agent 1 tests:
+  **101 hermetic tests, 0 network calls.** Live API paths are covered via
+  injected fake `post_fn`; CLI `--confirm` paths assert the env-var gate
+  exits 3 with no key set, so CI can never accidentally spend.
+
+- **CI gate** — new blocking `python-agents` job in `.github/workflows/ci.yml`
+  (Python 3.11 + `pip install -r requirements.txt` + `pytest tests/agents/`
+  + the mock-mode pipeline smoke test). Trigger paths extended to
+  `scripts/agents/**`, `tests/agents/**`, `requirements.txt`.
+
+- **Docs** — `docs/sentientia-agents/AGENT-2-NARRATION-GENERATOR.md`,
+  `AGENT-3-SLIDES-GENERATOR.md`, `AGENT-4-VOICE-GENERATOR.md`.
+  `requirements.txt` gains `requests` (live-mode HTTP, mock mode needs
+  no network).
+
+- **Reference outputs committed** — `content/narrations/SAMPLE-SOP-narration.txt`
+  and `content/slides/SAMPLE-SOP-slides.json` (generated from the
+  checked-in `SAMPLE-SOP-parsed.json`) as contracts for Agent 5 builders.
+  `content/voice/.gitkeep` tracks the dir; mock/live MP3s are generated
+  on demand, not committed.
+
+### Acceptance — met
+
+- ✅ All 3 new agents run locally with mock data (no API key needed).
+- ✅ Live API calls only fire behind `--confirm` (Anthropic + ElevenLabs).
+- ✅ Pipeline integration test runs end-to-end in mock mode.
+- ✅ 101/101 agent tests pass; new `python-agents` CI gate added.
+
+### Next in the pipeline
+
+Agent 5 (SCORM packager: `slides.json` + `voice.mp3` → SCORM 1.2 ZIP,
+`CLAUDE.md §8` validation gates) and Agent 6 (Moodle upload, `[CONFIRM]`
+to live). Neither is in this chip.
