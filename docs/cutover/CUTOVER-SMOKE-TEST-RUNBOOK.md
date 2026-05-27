@@ -23,10 +23,24 @@ during minor-version Moodle upgrades on Airpay Academy:
 | 2 | `test_dashboard_route_responds` | `/my/dashboard.php` returns 200 or 30x — never 5xx |
 | 3 | `test_course_catalog_api`     | `core_course_get_courses` returns a non-empty list |
 | 4 | `test_scorm_endpoint_responds`| `mod_scorm_get_scorms_by_courses` is registered and responds without 5xx |
-| 5 | `test_bizlms_tenant_switching`| Tenants 1 / 77 / 177 return different counts via `core_user_get_users` |
-| 6 | `test_dark_mode_assets`       | Landing page exposes a `data-theme` attribute or `theme-toggle` class |
-| 7 | `test_navbar_footer_rendering`| Landing page has a `<nav>` + `<footer>` element |
+| 5 | `test_bizlms_tenant_switching`| `core_user_get_users` returns ≥2 distinct `costcenterid` profile-field values (multi-tenant attribution intact). Skips if the field is absent (no BizLMS), fails if all users collapse to one tenant. |
+| 6 | `test_dark_mode_assets`       | Login page exposes a `data-theme` attribute or `theme-toggle` marker |
+| 7 | `test_navbar_footer_rendering`| Login page renders full-layout `<nav>`+`<footer>` **or** proves the airpayux theme rendered (`airpay-login*` / `styles.php/airpayux`) — i.e. the theme chrome didn't break in the cutover |
 | 8 | `test_rest_api_health`        | `core_webservice_get_site_info` returns the expected key set |
+
+> **Wave D1 P3 correction (2026-05-27):** Tests 5 and 7 were rewritten after
+> the script's first-ever live run. Test 5 previously sent
+> `criteria[0][key]=profile_field_costcenterid` to `core_user_get_users` — an
+> invalid key that `core_user_get_users` rejects (PARAM_ALPHA) on **every**
+> Moodle, so it would have hard-failed on cutover day. It now reads the
+> `costcenterid` custom profile field out of the returned `customfields`.
+> Test 7 previously asserted `<nav>`+`<footer>` on `/login/index.php`, but the
+> airpayux `login` layout sets `nonavbar=true` and emits neither — the chrome
+> only renders on authenticated content layouts an anonymous smoke test can't
+> reach. It now accepts airpayux theme-render markers on the login surface.
+> See PROJECT-STATE.md §H2 for the full root-cause writeup. The script also
+> now retries transport-level failures (`HTTP_MAX_ATTEMPTS=3`) so a web server
+> caught mid-restart during cutover doesn't trip a false failure.
 
 ---
 
@@ -113,9 +127,9 @@ T-0 until both dry-runs are green.** Save XML to
 | 2 dashboard route   | `/my/dashboard.php` PHP error or layout missing | Check `/var/log/apache2/error.log` for stack trace |
 | 3 course catalog API | WS layer not enabled or token revoked | Admin → Plugins → Web services → Overview |
 | 4 SCORM endpoint    | `mod_scorm` upgrade DB step pending | `php admin/cli/upgrade.php --non-interactive` |
-| 5 tenant switching  | `profile_field_costcenterid` column missing or BizLMS plugin disabled | Check `mdl_user_info_field` for the custom field; verify `local_airpay_org` is enabled |
-| 6 dark mode assets  | Theme cache stale | `php admin/cli/purge_caches.php` + retest |
-| 7 navbar/footer     | Theme template syntax error | `php admin/cli/maintenance.php --enable` then inspect `templates/navbar.mustache` |
+| 5 tenant switching  | If SKIP: `costcenterid` profile field not provisioned (expected on a vanilla Moodle). If FAIL (single tenant): BizLMS tenant filter collapsed | Check `mdl_user_info_field` has a `costcenterid` row; confirm users carry distinct values in `mdl_user_info_data`; verify the BizLMS plugin is enabled |
+| 6 dark mode assets  | Theme cache stale / theme not airpayux | `php admin/cli/purge_caches.php` + confirm `$CFG->theme` (or site theme) is `airpayux`, then retest |
+| 7 navbar/footer     | Theme failed to render (Mustache syntax error → boost fallback / 500) | `php admin/cli/purge_caches.php`; inspect `theme/airpayux/templates/{login,head,navbar,footer}.mustache` for syntax errors; confirm the login page carries `airpay-login` / `styles.php/airpayux` markers |
 | 8 site_info         | Token expired or WS user account suspended | Regenerate token; ensure WS user has `webservice/rest:use` capability |
 
 ---
