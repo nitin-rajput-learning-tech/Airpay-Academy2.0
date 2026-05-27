@@ -57,6 +57,15 @@ $string['generate_confirm_help']  = 'यह प्रति-कॉल पुष�
 $string['generate_submit']        = 'क्विज़ ड्राफ्ट तैयार करें';
 $string['generate_cancel']        = 'रद्द करें';
 
+// ── G.1 language picker + prompt preview ──────────────────────────
+$string['generate_form_language']       = 'क्विज़ की भाषा';
+$string['generate_form_language_help']  = 'Claude को भेजे जाने वाले system प्रॉम्प्ट का चयन करती है। English से v1 बेसलाइन प्रॉम्प्ट का उपयोग होता है। हिन्दी से v2-hindi प्रॉम्प्ट चलता है और Claude देवनागरी में प्रश्न लौटाता है।';
+$string['generate_form_language_en']    = 'English (v1)';
+$string['generate_form_language_hi']    = 'हिन्दी / Hindi (v2-hindi)';
+$string['generate_prompt_preview_summary'] = 'Claude को भेजा जाने वाला system प्रॉम्प्ट देखें (प्रॉम्प्ट संस्करण: {$a->version}, ग्राहक: {$a->customer})';
+$string['generate_prompt_preview_help']    = 'यदि लाइव API फ़्लैग ON हो और आप Generate दबाएँ, तो यही system प्रॉम्प्ट Anthropic को भेजा जाएगा। मॉक मोड नकली प्रश्न उत्पन्न करता है और API कॉल नहीं करता। यदि नीचे ग्राहक-विशिष्ट टेम्पलेट कॉन्फ़िगर हो, तो वह बेसलाइन प्रॉम्प्ट को पूर्णतः प्रतिस्थापित करता है।';
+$string['generate_prompt_preview_custom_badge'] = 'ग्राहक-विशिष्ट टेम्पलेट सक्रिय';
+
 // ── Result / status badges ─────────────────────────────────────────
 $string['mode_mock_badge']        = 'मॉक मोड — कोई लाइव API कॉल नहीं (वास्तविक निर्माण हेतु sentientia.aiquiz.live_api = ON करें)';
 $string['mode_live_badge']        = 'लाइव API — Anthropic कॉल आपके खाते से बिल होगी';
@@ -130,6 +139,12 @@ $string['setting_daily_token_cap']        = 'प्रति उपयोगक�
 $string['setting_daily_token_cap_desc']   = 'एकल उपयोगकर्ता प्रति दिन (इनपुट + आउटपुट) कितने टोकन खर्च कर सकता है उसकी सॉफ्ट सीमा। सीमा पार होने पर generate.php मध्यरात्रि तक त्रुटि लौटाता है।';
 $string['setting_max_source_words']       = 'प्रति ड्राफ्ट अधिकतम स्रोत-शब्द';
 $string['setting_max_source_words_desc']  = 'इस शब्द-गणना से अधिक होने पर स्रोत-पाठ अस्वीकृत होता है। डिफ़ॉल्ट 4000 — लगभग 8 पृष्ठ।';
+
+// ── G.1 per-customer prompt template settings ─────────────────────
+$string['settings_heading_customer_prompts']        = 'ग्राहक-विशिष्ट प्रॉम्प्ट टेम्पलेट';
+$string['settings_heading_customer_prompts_desc']   = 'प्रत्येक Sentientia LMS ग्राहक हेतु, Claude को भेजे जाने वाले system प्रॉम्प्ट का वैकल्पिक override। यदि सेट हो, तो textarea की सामग्री बेसलाइन v1 (English) अथवा v2-hindi प्रॉम्प्ट को पूर्णतः प्रतिस्थापित कर देती है। इन-कोड बेसलाइन उपयोग करने हेतु रिक्त छोड़ें। user-message रैपर (आरम्भ/समाप्ति चिह्न + "ठीक N प्रश्न" निर्देश) सदैव generate फ़ॉर्म के भाषा-पिकर के अनुसार चलता है।';
+$string['setting_customer_1_prompt_template']       = 'Airpay (ग्राहक 1) — कस्टम प्रॉम्प्ट टेम्पलेट';
+$string['setting_customer_1_prompt_template_desc']  = 'Airpay हेतु ग्राहक-विशिष्ट system प्रॉम्प्ट पेस्ट करें। v1/v2-hindi बेसलाइन उपयोग करने हेतु रिक्त छोड़ें। मान local_airpay_core/customer_1_aiquiz_prompt_template के अन्तर्गत संग्रहीत होता है — \\local_airpay_core\\customer::get_customer_config() इसे पढ़ती है। कस्टम टेम्पलेट सक्रिय रहते बने ड्राफ्ट का prompt_version "custom:v1" अथवा "custom:v2-hindi" के रूप में दर्ज होता है।';
 
 // ── Misc ───────────────────────────────────────────────────────────
 $string['source_word_count'] = 'शब्द-गणना: {$a}';

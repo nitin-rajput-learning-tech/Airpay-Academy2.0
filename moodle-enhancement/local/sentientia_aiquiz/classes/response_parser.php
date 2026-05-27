@@ -32,6 +32,12 @@ defined('MOODLE_INTERNAL') || die();
  *       ...
  *     ]
  *
+ * Phase G.1 (2026-05-25) — Devanagari support. All text-length checks
+ * use mb_strlen() so a Hindi question containing N Devanagari characters
+ * counts as N (not 3N as raw strlen would report on UTF-8 bytes). The
+ * defensive truncation in the explanation field uses mb_substr() so it
+ * never produces a half-character at the cut point.
+ *
  * @package local_sentientia_aiquiz
  */
 class response_parser {
@@ -39,7 +45,7 @@ class response_parser {
     /** Multichoice: each item must have exactly this many options. */
     public const MULTICHOICE_OPTIONS = 4;
 
-    /** Max char length for stems / options / explanations (defensive). */
+    /** Max character length for stems / options / explanations (defensive). */
     public const MAX_TEXT_LEN = 1000;
 
     /**
@@ -131,7 +137,7 @@ class response_parser {
         }
 
         $qtext = isset($item['qtext']) && is_string($item['qtext']) ? trim($item['qtext']) : '';
-        if ($qtext === '' || strlen($qtext) > self::MAX_TEXT_LEN) {
+        if ($qtext === '' || mb_strlen($qtext) > self::MAX_TEXT_LEN) {
             return null;
         }
 
@@ -144,7 +150,7 @@ class response_parser {
                 return null;
             }
             $clean = trim($opt);
-            if ($clean === '' || strlen($clean) > self::MAX_TEXT_LEN) {
+            if ($clean === '' || mb_strlen($clean) > self::MAX_TEXT_LEN) {
                 return null;
             }
             $options[] = $clean;
@@ -173,8 +179,8 @@ class response_parser {
         $explanation = '';
         if (isset($item['qexplanation']) && is_string($item['qexplanation'])) {
             $explanation = trim($item['qexplanation']);
-            if (strlen($explanation) > self::MAX_TEXT_LEN) {
-                $explanation = substr($explanation, 0, self::MAX_TEXT_LEN);
+            if (mb_strlen($explanation) > self::MAX_TEXT_LEN) {
+                $explanation = mb_substr($explanation, 0, self::MAX_TEXT_LEN);
             }
         }
 

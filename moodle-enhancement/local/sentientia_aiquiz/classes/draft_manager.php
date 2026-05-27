@@ -62,12 +62,20 @@ class draft_manager {
     /**
      * Create a pending draft row before the API call goes out.
      *
+     * Phase G.1 (2026-05-25) — the resolved prompt_version is now a
+     * caller-supplied argument so Hindi / customer-template drafts get
+     * the right version tag recorded against them. Callers that don't
+     * specify a version inherit the Phase G.0 default ('v1').
+     *
      * @param int    $ownerid
-     * @param int    $courseid     0 = not yet bound to a course
+     * @param int    $courseid       0 = not yet bound to a course
      * @param string $title
      * @param string $sourcetext
      * @param string $model
      * @param int    $numrequested
+     * @param string $prompt_version Recorded on the draft row. One of:
+     *                                'v1' | 'v2-hindi' | 'custom:v1' |
+     *                                'custom:v2-hindi'. Defaults to 'v1'.
      * @return int Draft id
      */
     public static function create_pending(
@@ -76,12 +84,23 @@ class draft_manager {
         string $title,
         string $sourcetext,
         string $model,
-        int $numrequested
+        int $numrequested,
+        string $prompt_version = prompt_builder::VERSION_V1
     ): int {
         global $DB;
 
         $owner = $DB->get_record('user', ['id' => $ownerid], 'id, open_path', MUST_EXIST);
         $now = time();
+
+        // Defensive: never persist an empty or oversize prompt_version
+        // tag — the column is CHAR(32) so we cap at that length.
+        $version = trim($prompt_version);
+        if ($version === '') {
+            $version = prompt_builder::VERSION_V1;
+        }
+        if (strlen($version) > 32) {
+            $version = substr($version, 0, 32);
+        }
 
         $record = new \stdClass();
         $record->courseid       = $courseid;
@@ -91,7 +110,7 @@ class draft_manager {
         $record->title          = $title === '' ? 'Untitled draft' : $title;
         $record->sourcetext     = $sourcetext;
         $record->model          = $model;
-        $record->prompt_version = prompt_builder::VERSION;
+        $record->prompt_version = $version;
         $record->num_requested  = $numrequested;
         $record->num_generated  = 0;
         $record->tokens_in      = 0;

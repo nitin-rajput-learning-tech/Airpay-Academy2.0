@@ -347,4 +347,84 @@ class customer {
         }
         return 'Unknown (' . $customer_id . ')';
     }
+
+    /**
+     * Per-customer scoped configuration accessor.
+     *
+     * Sentientia LMS plugins (e.g. `local_sentientia_aiquiz`) need
+     * configuration that can vary per customer — for instance, a
+     * customer-pasted prompt template for AI quiz generation. This is
+     * the single registry method those plugins use.
+     *
+     * Phase G.1 (2026-05-25) — storage is Moodle's config_plugins table
+     * under the `local_airpay_core` namespace, keyed as
+     * `customer_<customer_id>_<key>`. The aiquiz plugin's settings.php
+     * writes through the same key so admins can paste a custom prompt
+     * template in the local plugin settings UI; the helper here is the
+     * authoritative read side.
+     *
+     * Resolution:
+     *   1. Look up `local_airpay_core/customer_<id>_<key>`.
+     *   2. If unset / empty string → return $default.
+     *   3. Otherwise return the string value verbatim.
+     *
+     * The string value is returned untouched (no escaping, no html
+     * filtering) — callers MUST treat it as untrusted admin-pasted
+     * content and pass it through `format_text()` / `s()` before
+     * rendering to a page. The function is a config getter, not a
+     * sanitiser.
+     *
+     * Phase 2+ contract (when a real customer-config table lands per
+     * future ADR): this method changes its internal storage layer but
+     * keeps the signature. Every caller (the aiquiz prompt-template
+     * resolver today, future per-customer feature toggles tomorrow)
+     * continues to work unchanged.
+     *
+     * @param string     $key         Config key (e.g. 'aiquiz_prompt_template')
+     * @param int        $customer_id Customer id (1=Airpay)
+     * @param mixed|null $default     Value returned when no override exists
+     * @return mixed Stored string, or $default when unset / empty
+     */
+    public static function get_customer_config(string $key, int $customer_id, $default = null) {
+        if ($customer_id <= 0 || $key === '') {
+            return $default;
+        }
+        $config_key = 'customer_' . $customer_id . '_' . $key;
+        $value = get_config('local_airpay_core', $config_key);
+        if ($value === false || $value === null) {
+            return $default;
+        }
+        if (is_string($value) && trim($value) === '') {
+            return $default;
+        }
+        return $value;
+    }
+
+    /**
+     * Per-customer scoped configuration setter — mirror of
+     * {@see get_customer_config()}.
+     *
+     * Used by plugin admin UIs (e.g. aiquiz settings.php) when the
+     * plugin chooses to route its admin form fields through this helper
+     * rather than declaring them with the canonical
+     * `local_airpay_core/customer_<id>_<key>` setting name directly.
+     *
+     * Passing `null` deletes the override (revert to default).
+     *
+     * @param string      $key
+     * @param int         $customer_id
+     * @param string|null $value      String value to store; null to revert
+     * @return void
+     */
+    public static function set_customer_config(string $key, int $customer_id, ?string $value): void {
+        if ($customer_id <= 0 || $key === '') {
+            return;
+        }
+        $config_key = 'customer_' . $customer_id . '_' . $key;
+        if ($value === null) {
+            unset_config($config_key, 'local_airpay_core');
+            return;
+        }
+        set_config($config_key, $value, 'local_airpay_core');
+    }
 }

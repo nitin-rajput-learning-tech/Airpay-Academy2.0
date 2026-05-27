@@ -50,10 +50,18 @@ $plugin->component = 'local_airpay_core';
 // Lang strings settings_pagetitle + setting_backup_filename_* in en + hi
 // (4 each = 8 total). PHPUnit covers token substitution, sanitisation,
 // path traversal blocking, max length, and the fallback-on-empty contract.
-$plugin->version   = 2026052303;
+//
+// G.1 (2026-05-25) — per-customer scoped config registry. Adds
+// customer::get_customer_config() + set_customer_config() — a stable
+// get/set surface for plugins that need configuration varying per
+// Sentientia LMS customer (first consumer: local_sentientia_aiquiz's
+// AI-quiz prompt-template override). Pure additive — no schema change,
+// stored under config_plugins (local_airpay_core/customer_<id>_<key>).
+// PHPUnit in tests/customer_config_test.php (12 methods).
+$plugin->version   = 2026052500;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.5.3';  // +P0 #11 backup_filename helper + admin setting
+$plugin->release   = '1.6.0';  // +G.1 per-customer config registry (get/set_customer_config)
 // Release history
 // 1.1.0  cron-health publisher + audit_log + structured_logger
 // 1.2.0  Phase A0 — feature flags + Switchboard infrastructure.

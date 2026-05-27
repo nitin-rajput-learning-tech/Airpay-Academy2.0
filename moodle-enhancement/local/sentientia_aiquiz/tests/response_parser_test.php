@@ -194,4 +194,100 @@ final class response_parser_test extends \advanced_testcase {
         $this->assertCount(1, $parsed);
         $this->assertSame('1', $parsed[0]->qanswer);
     }
+
+    // ════════════════════════════════════════════════════════════════
+    //  G.1 — Devanagari / Hindi quiz JSON
+    // ════════════════════════════════════════════════════════════════
+
+    public function test_parse_handles_devanagari_question(): void {
+        $body = json_encode([
+            'questions' => [
+                [
+                    'qtype' => 'multichoice',
+                    'qtext' => 'अनुपालन प्रशिक्षण का मुख्य उद्देश्य क्या है?',
+                    'qoptions' => [
+                        'कर्मचारियों को नियमों से अवगत कराना',
+                        'नई नौकरी प्रदान करना',
+                        'वेतन-वृद्धि की समीक्षा',
+                        'ग्राहक-शिकायत निवारण',
+                    ],
+                    'qanswer_index' => 0,
+                    'qexplanation' => 'अनुपालन-प्रशिक्षण कर्मचारियों को कानूनों से अवगत कराने हेतु होता है।',
+                ],
+            ],
+        ], JSON_UNESCAPED_UNICODE);
+
+        $parsed = response_parser::parse($body);
+        $this->assertCount(1, $parsed);
+        $this->assertSame('multichoice', $parsed[0]->qtype);
+        $this->assertSame('अनुपालन प्रशिक्षण का मुख्य उद्देश्य क्या है?', $parsed[0]->qtext);
+        $this->assertCount(4, $parsed[0]->qoptions);
+        $this->assertSame('कर्मचारियों को नियमों से अवगत कराना', $parsed[0]->qoptions[0]);
+        $this->assertSame('0', $parsed[0]->qanswer);
+        $this->assertStringContainsString('अनुपालन-प्रशिक्षण', $parsed[0]->qexplanation);
+    }
+
+    public function test_parse_devanagari_options_round_trip_through_json(): void {
+        // The persisted qoptions_json must decode back to the same Hindi
+        // strings — proving JSON_UNESCAPED_UNICODE preserves Devanagari.
+        $body = json_encode([
+            'questions' => [
+                [
+                    'qtype' => 'multichoice',
+                    'qtext' => 'प्रश्न?',
+                    'qoptions' => ['विकल्प क', 'विकल्प ख', 'विकल्प ग', 'विकल्प घ'],
+                    'qanswer_index' => 2,
+                ],
+            ],
+        ], JSON_UNESCAPED_UNICODE);
+
+        $parsed = response_parser::parse($body);
+        $this->assertCount(1, $parsed);
+        $decoded = json_decode($parsed[0]->qoptions_json, true);
+        $this->assertSame(['विकल्प क', 'विकल्प ख', 'विकल्प ग', 'विकल्प घ'], $decoded);
+    }
+
+    public function test_parse_devanagari_escaped_unicode_also_decodes(): void {
+        // If the model returns \uXXXX-escaped Hindi (not raw UTF-8), the
+        // parser must still decode it correctly.
+        $escaped = json_encode([
+            'questions' => [
+                [
+                    'qtype' => 'multichoice',
+                    'qtext' => 'प्रश्न?',
+                    'qoptions' => ['क', 'ख', 'ग', 'घ'],
+                    'qanswer_index' => 1,
+                ],
+            ],
+        ]); // No JSON_UNESCAPED_UNICODE → produces \uXXXX escapes.
+        $this->assertStringContainsString('\\u', $escaped);
+
+        $parsed = response_parser::parse($escaped);
+        $this->assertCount(1, $parsed);
+        $this->assertSame('प्रश्न?', $parsed[0]->qtext);
+        $this->assertSame(['क', 'ख', 'ग', 'घ'], $parsed[0]->qoptions);
+    }
+
+    public function test_parse_counts_devanagari_length_by_characters_not_bytes(): void {
+        // A 400-Devanagari-character stem is ~1200 bytes but well within
+        // the 1000-CHARACTER limit. It must be accepted (mb_strlen), not
+        // dropped (raw strlen would see >1000 bytes and reject it).
+        $stem = str_repeat('क', 400) . '?';
+        $this->assertLessThanOrEqual(response_parser::MAX_TEXT_LEN, mb_strlen($stem));
+        $this->assertGreaterThan(response_parser::MAX_TEXT_LEN, strlen($stem));
+
+        $body = json_encode([
+            'questions' => [
+                [
+                    'qtype' => 'multichoice',
+                    'qtext' => $stem,
+                    'qoptions' => ['क', 'ख', 'ग', 'घ'],
+                    'qanswer_index' => 0,
+                ],
+            ],
+        ], JSON_UNESCAPED_UNICODE);
+
+        $parsed = response_parser::parse($body);
+        $this->assertCount(1, $parsed, 'Devanagari stem within char limit must not be dropped');
+    }
 }
