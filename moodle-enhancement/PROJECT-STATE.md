@@ -3776,165 +3776,59 @@ as a blocking item for Phase E.1+ ship; this chip closes it.
 
 ---
 
-## 🌊 Day-0 chip-wave summary — 21 merges landed (2026-05-24)
+## 🌊 Day-0 chip-wave index — 21 merges landed (2026-05-24)
 
-This H2 backfills documentation for the 11 chip merges where `-X ours`
-merge strategy preserved code changes but skipped each chip's own H2
-section into PROJECT-STATE.md. Companion documentation for these chips
-lives in the per-chip visual-evidence folders and the merge commit
-messages on `production`.
+The Day-0 chip-wave merged 21 chips into `production`. 7 were manually
+conflict-resolved with full doc preservation; **11 used `git merge -X ours`**
+for throughput — which kept all code but skipped each chip's own H2 section.
+The prior session (commit `8ac71879`) backfilled all 11 into one consolidated
+"chip-wave summary" mega-section. That worked but did not grep well: searching
+for `P0-B` or `P3-N` only ever hit the one mega-section. This H2 replaces the
+mega-section with a **searchable index** — each chip below now has its own
+standalone H2. Grep any Chip-ID (`P0-B`, `P3-N`, …) to jump straight to it.
 
 ### P0 cleanup — production hygiene
-
-- **P0-A — Conflict-marker pre-commit hook** (chip `magical-rubin-jlDVk`,
-  task #260, merged via origin auto-followup `8c03a7187` + `35a78cd05`).
-  New CHECK 11 in `.claude/hooks/pre-commit.sh` blocks stray `<<<<<<<` /
-  `=======` / `>>>>>>>` markers in staged files. Companion CI gate in
-  `.github/workflows/ci.yml::conflict-marker-check` backstops the local
-  hook. Installer: `tools/install-hooks.ps1`. Closes the CI #397 / #403
-  failure class permanently.
-
-- **P0-B — `_bizlms-admin.scss` `:focus-visible` siblings** (chip
-  `loving-noether-KKixA`, task #261, merge `79f2de141`). 41 new lines —
-  `:focus-visible` siblings on every interactive selector in
-  `_bizlms-admin.scss`, mirroring the chip-H pattern from
-  `_surface-courses.scss`. Closes audit follow-up for P1 #11.
-
-- **P0-C — Dashboard chart init migrated to `{{#js}}` block** (chip
-  `serene-fermi-RB4pr`, task #262, merge `ad453bc6c`). 30-line refactor
-  in `theme/airpayux/templates/dashboard.mustache` moving Chart.js
-  bootstrap from inline `<script>` to `{{#js}}` block (proper AMD
-  deferred loading). Eliminates the stale `cdn.jsdelivr.net` CSP
-  posture. Companion to wave-3 chip-N.
+- **P0-A** — Conflict-marker pre-commit hook → see "🛡️ P0 cleanup A — conflict-marker pre-commit hook (2026-05-24)" *(above; preserved at merge — direct commits `8c03a7187` + `35a78cd05`, not `-X ours`)*
+- **P0-B** — `_bizlms-admin.scss` `:focus-visible` siblings → see "🛡️ P0-B — _bizlms-admin.scss :focus-visible siblings (2026-05-24)" *(below — backfilled here)*
+- **P0-C** — Dashboard chart init migrated to `{{#js}}` block → see "🔒 P0-C — dashboard chart init migrated to {{#js}} block (2026-05-24)" *(below — backfilled here)*
 
 ### P1 follow-ups — quality polish
+- **#255** — kn / mr / sw locale parity 178/178 → see "🌐 Locale parity restored — kn+mr+sw at 178/178 (2026-05-24)" *(above; preserved at merge `66c794e71`)*
+- **#256** — Inline-timing → tokens → see "🎚️ P2 #19 follow-up — inline-timing → tokens (2026-05-24)" *(above; preserved at merge `a6c7f1bb1`)*
+- **#257** — Production deploy automation → see "🚀 P1 — deploy automation (2026-05-24)" *(above; preserved at merge `3f95d19ae`)*
+- **#258** — PROJECT-STATE.md history split → no own H2 *(chip only moved pre-Day-0 history to `docs/_archive/PROJECT-STATE-history.md`; merge `ea6b17161`)*
+- **#259** — State-card audit + refresh → no own H2 *(chip created/refreshed ~30 plugin state cards; merges `9b9ae2803` + `462a1a243` + `fd0243e71`)*
 
-- **#255 — kn / mr / sw locale parity restored to 178/178** (chip
-  `lucid-dirac-kj3pj`, merge `66c794e71`). Closed 13-key gap from
-  chip-B's nav/footer i18n additions. EN + HI + KN + MR + SW now all
-  at byte-aligned 178 keys with brand-name transliteration matched to
-  upstream choosereadme convention.
-
-- **#256 — Inline-timing → tokens (P2 #19 follow-up)** (chip
-  `clever-dijkstra-8Iczy`, merge `a6c7f1bb1`). 54 inline transition
-  timings across 9 `_surface-*.scss` partials migrated to
-  `var(--ap-transition-{quick|default|slow})`. WCAG 2.3.3 Animation
-  from Interactions (AAA) now compliant via token cascade in
-  `_tokens.scss:258-265`.
-
-- **#257 — Production deploy automation** (chip `cool-einstein-Qzl8k`,
-  merge `3f95d19ae`). New `deploy/deploy-to-xampp.ps1` one-command
-  local deploy + `.github/workflows/deploy-production.yml`
-  workflow-dispatch with typed-confirm gate + `docs/operations/deploy-runbook.md`.
-
-- **#258 — PROJECT-STATE.md history split** (chip `blissful-turing-Wj3zX`,
-  merge `ea6b17161`). Moved pre-Day-0 (pre-2026-05-20) H2 sections
-  (2,995 lines / 207 KB) to `docs/_archive/PROJECT-STATE-history.md`.
-  Live file now 3,610 lines, fast-loading.
-
-- **#259 — State-card audit + refresh** (chip `gifted-dirac-gSVtv`,
-  merges `9b9ae2803` + `462a1a243` + `fd0243e71`). Refreshed/created
-  ~30 plugin state cards covering every airpay_* + sentientia_*
-  module, restoring documentation parity post the Day-0 architecture
-  pivot.
-
-### P2 cutover prep — 5.2 readiness
-
-- **P2-H — NVDA verification procedure** (chip `wonderful-allen-kRZr5`,
-  task #263, merge `9a43abf91`). 589-line `docs/qa/NVDA-VERIFICATION-PROCEDURE.md`
-  covers all 9 aria-live regions + sr-only summary in `local_sentientia_live`,
-  WCAG-mapped, 12 scenarios with pass/fail rubric and sign-off table.
-
-- **P2-I — `drawer.mustache` Moodle 5.2 backport** (chip `magical-cray-OokHP`,
-  task #264, merge `42f413a01`). 80-line patch to `theme/airpayux/layout/drawer.mustache`
-  for 5.2 compatibility with backwards-compat guards for 5.1. New
-  `docs/cutover/MOODLE-5.2-MUSTACHE-COMPAT.md` doc (196 lines).
-
-- **P2-J — Cutover-day smoke-test harness** (chip `pensive-dijkstra-pISiI`,
-  task #265, merge `af97a92fe`). 813-line `scripts/cutover-smoke-test.py`
-  covering 8 scenarios (login, dashboard, catalog, SCORM, BizLMS tenant
-  switching, dark mode, navbar/footer, REST API). Refuses live
-  airpay.academy host. Outputs JUnit XML. Runbook in
-  `docs/cutover/CUTOVER-SMOKE-TEST-RUNBOOK.md` (245 lines).
-
-- **P2-K — PHPUnit CI gate for Moodle 5.2** (chip `laughing-volta-Caa7B`,
-  task #266, merge `95baa4251`). New `phpunit-5.2` job in `ci.yml` boots
-  `moodlehq/moodle-php-apache:8.2` + MariaDB sidecar, installs all 30
-  plugins, runs PHPUnit, uploads JUnit results. 332-line runbook in
-  `docs/ci/PHPUNIT-GATE.md`.
-
-- **P2-L — Playwright Linux E2E CI gate** (chip via origin auto-merge,
-  task #267, merge `1f51a1609`). 5 baseline specs (login, dashboard,
-  navbar, dark-mode, mobile-590) in `tests/playwright/`. CI job
-  `playwright-linux` runs in `moodlehq/moodle-php-apache:8.2` with
-  MariaDB sidecar, uploads traces on failure, `continue-on-error: true`
-  for baseline calibration period. Runbook in
-  `docs/ci/PLAYWRIGHT-GATE.md`.
+### P2 cutover-prep — 5.2 readiness
+- **P2-H** — NVDA verification procedure → see "♿ P2 cutover-prep — NVDA verification procedure for `local_sentientia_live` (2026-05-24)" *(above; preserved at merge `9a43abf91`)*
+- **P2-I** — `drawer.mustache` Moodle 5.2 backport → see "🚀 P2-I — drawer.mustache Moodle 5.2 backport (2026-05-24)" *(below — backfilled here)*
+- **P2-J** — Cutover-day automated smoke-test harness → see "🧪 P2-J — automated 5.1 → 5.2 smoke-test harness (2026-05-24)" *(below — backfilled here)*
+- **P2-K** — `phpunit-5.2` CI gate against Moodle 5.2 → see "🚦 P2-K — phpunit-5.2 CI gate against Moodle 5.2 (2026-05-24)" *(below — backfilled here)*
+- **P2-L** — Playwright Linux E2E CI gate → see "🧪 P2 CUTOVER-PREP — LINUX PLAYWRIGHT CI GATE (2026-05-24)" *(above; direct commit `1f51a1609`)*
 
 ### P3 workstream features — alpha scaffolds (all behind feature flags, default OFF)
-
-- **P3-M — AI Quiz scaffold (Phase G.1)** (chip `magical-rubin-9xNyw`,
-  task #268, merge `3e4c94d60`). New plugin `local_sentientia_ai_quiz`
-  v0.1.0-alpha: Anthropic client stub with `[CONFIRM]` guard, prompt
-  builder, response parser, draft manager, privacy provider, feature
-  flags (`sentientia.aiquiz.{enabled,live_api,auto_push}`), PHPUnit
-  test classes. Zero live API calls in this chip.
-
-- **P3-N — Calendar Sync Phase 2 OAuth scaffolding** (chip
-  `practical-brahmagupta-tluHX`, task #269, merge `d05de927e`). Adds
-  `classes/oauth/{oauth_base,m365_oauth,token_vault}.php` to
-  `local_sentientia_calendar`. Encrypted token storage via
-  `\core\encryption`. Feature flag `sentientia_calendar_oauth` default
-  off. No live OAuth calls in this chip.
-
-- **P3-O — Leaderboard L.1 rank-change notifications** (chip
-  `intelligent-ride-82LNQ`, task #270, merge `f787257a2`). New
-  `classes/{message_helper,observer}.php` + `db/{events,messages}.php`
-  in `local_sentientia_leaderboard`. Triggers `message_send()` on
-  ±5 position change or top-10 entry. 24h throttle per learner. Feature
-  flag default off.
-
-- **P3-P — SENTIENTIA Agent 1 PDF parser MVP** (chip `gifted-faraday-V761L`,
-  task #271, merge `531d420c2`). New `scripts/agents/agent1_sop_parser.py`
-  using pdfplumber. Outputs structured JSON with title/headings/paragraphs/lists.
-  Enforces 2000-word cap. Unit test in `tests/agents/test_agent1.py`.
-  Closes Agent 1 of the SOP → SCORM pipeline.
-
-- **P3-Q — M365 Graph API scaffold (Workstream C.1)** (chip
-  `loving-hamilton-oG4VQ`, task #272, merge `fcc456938`). New plugin
-  `local_sentientia_m365`: MSAL OAuth scaffolding, Graph API client
-  stub (throws `confirm_required`), encrypted token table, capability,
-  feature flag, privacy provider, lang en+hi parity. No live Graph
-  calls.
-
-- **P3-R — `sentientia_live` question-type stubs (Phase E.4-E.9)** (chip
-  `elegant-wozniak-z8U4v`, task #273, merge `de2455fed`). New
-  `classes/question_types/` directory: abstract base class + 6
-  concrete stubs (multiple_choice, word_cloud, open_ended, rating_scale,
-  quiz, ranking) + registry. PHPUnit interface tests. Unblocks future
-  UI chips for each question type.
+- **P3-M** — AI-quiz Phase G.1 scaffold → **retired** in `452ad36b`. The chip (`magical-rubin-9xNyw`, merge `3e4c94d60`) shipped `local_sentientia_ai_quiz` v0.1.0-alpha, which a later cleanup found duplicated the mature `local_sentientia_aiquiz`. The plugin was removed; no standalone H2 documents a deleted artifact. See "🚀 STREAM G — AI QUIZ GENERATION (Tier 1 #4) — Phase G.0 MVP ✅ SHIPPED (2026-05-24)" *(above)* for the surviving plugin.
+- **P3-N** — Calendar Sync Phase 2 OAuth scaffolding → see "🔐 P3-N — Calendar Sync Phase 2 OAuth scaffolding (2026-05-24)" *(below — backfilled here)*
+- **P3-O** — Leaderboard L.1 rank-change notifications → see "🚀 P3-O — leaderboard L.1 rank-change notifications (2026-05-24)" *(below — backfilled here)*
+- **P3-P** — SENTIENTIA Agent 1 PDF parser MVP → see "🚀 P3-P — SENTIENTIA Agent 1 PDF parser MVP (Phase B.0) (2026-05-24)" *(below — backfilled here)*
+- **P3-Q** — M365 OAuth + Graph scaffold (Workstream C.1) → see "🚀 P3-Q — M365 OAuth + Graph scaffold (Workstream C.1) (2026-05-24)" *(below — backfilled here)*
+- **P3-R** — `sentientia_live` question-type stubs (E.4–E.9) → see "🚀 P3-R — sentientia_live question-type stubs (Phases E.4–E.9) (2026-05-24)" *(below — backfilled here)*
 
 ### Doc-only follow-ups landed
-
-- **Chip-O closeout** (chip `jolly-meitner-XdiGI`, merge `4f55c0d3e`).
-  Buckets 5+6 trim of `_moodle-overrides.scss` `!important` declarations
-  (course-header, course-drawer, pagination, table, filter). Brings
-  running total to 30 active (-77.9% from baseline 136). Visual evidence
-  in `docs/visual-evidence/2026-05-24/wave3-chip-O/`.
-
-- **Chip-P followup doc** (chip `happy-carson-LxfFQ`, merge `e01a17df6`).
-  114-line addition to `.claude/rules/frontend.md` documenting the
-  `prefers-reduced-motion` stylelint rule introduced by chip-P, with
-  examples of correct + anti-pattern + per-line opt-out + WCAG ref.
+- **chip-O-followup** — `_moodle-overrides.scss` buckets 5+6 → see "🧹 P2 #18 — _moodle-overrides.scss !important reduction (2026-05-24)" *(above; covers buckets 1–6, merge `4f55c0d3e`)*
+- **chip-P-followup** — `prefers-reduced-motion` rule docs → no own H2 *(114-line addition to `.claude/rules/frontend.md`; merge `e01a17df6`)*; see "🎚️ P2 #19 — prefers-reduced-motion stylelint enforcement (2026-05-24)" *(above)* for the parent stylelint rule.
 
 ### Net result
+Production tip `fd0243e71` carries: 9/9 P0 + 8/8 P1 + 6/6 P2 audit findings
+closed, 4 new P3 plugin scaffolds (M365, Calendar OAuth, Leaderboard
+Notifications, plus the AI-quiz Phase G.1 attempt later consolidated onto the
+mature `local_sentientia_aiquiz`), 3 new CI gates (conflict-marker, PHPUnit-5.2,
+Playwright-Linux), Agent 1 of the SENTIENTIA pipeline, NVDA verification rubric,
+automated cutover smoke test, and a PROJECT-STATE.md history split for fast load.
 
-Production tip `fd0243e71` carries: 9/9 P0 + 8/8 P1 + 6/6 P2 audit
-findings closed, 4 new P3 plugin scaffolds (AI Quiz, M365, Calendar
-OAuth, Leaderboard Notifications), 3 new CI gates (conflict-marker,
-PHPUnit-5.2, Playwright-Linux), Agent 1 of the SENTIENTIA pipeline,
-NVDA verification rubric, automated cutover smoke test, and a
-PROJECT-STATE.md history split for fast load.
+All chips ran on Opus 4.7 (1M context) in FleetView parallel worktrees. Zero
+hand-edited code outside conflict resolution. Pre-commit hook caught zero stray
+markers (P0-A working as designed).
 
 All chips ran on Opus 4.7 (1M context) in FleetView parallel worktrees.
 Zero hand-edited code outside conflict resolution. Pre-commit hook
