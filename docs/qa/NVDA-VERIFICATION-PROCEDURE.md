@@ -463,6 +463,13 @@ Variance that **FAILS**:
 Copy this table into the evidence-folder README and fill in. Both rows per
 scenario must be PASS (or NON-BLOCKING FAIL with PM ack) before sign-off.
 
+### Attempt log
+
+| Attempt # | Date       | Tester / chip                         | Outcome  | Evidence folder                                                                |
+| --------- | ---------- | ------------------------------------- | -------- | ------------------------------------------------------------------------------ |
+| 1         | 2026-05-25 | Claude (Opus 4.7) — `zen-albattani-LWHr8` | SKIPPED — Linux cloud container, no NVDA / browser / audio. Static analysis surfaced 2 NON-BLOCKING doc-clarity findings (F-1, F-2). | [`../visual-evidence/2026-05-25/nvda-verification/`](../visual-evidence/2026-05-25/nvda-verification/) |
+| 2         | _(pending)_ | _(human QA at Windows workstation)_   | _(pending — runbook in evidence folder ENVIRONMENT-GAP.md)_ | _(append link when run)_                                                       |
+
 | #  | Scenario name                            | Severity     | Firefox result | Firefox version | Chrome result | Chrome version | Evidence file (FF)        | Evidence file (CR)        | Tester initials | Date       | Notes |
 |----|------------------------------------------|--------------|----------------|-----------------|----------------|-----------------|---------------------------|---------------------------|------------------|------------|-------|
 | 1  | Trainer audience-count region            | BLOCKING     |                |                 |                |                 |                           |                           |                  |            |       |

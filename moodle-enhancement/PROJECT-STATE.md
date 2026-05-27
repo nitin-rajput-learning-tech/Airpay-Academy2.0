@@ -4261,3 +4261,138 @@ The chain is dispatched through the same code path on production cron
 as in the PHPUnit harness — there is no risk of "passes in test, fails
 in cron" because the harness runs `recompute_due_boards::execute()`
 verbatim.
+
+---
+
+## ♿ Wave D2 P3 — NVDA verification Attempt #1 (2026-05-25)
+
+**Status:** ⏭️ SKIPPED with documented environmental gap (1 commit on
+`claude/zen-albattani-LWHr8`; pure documentation + evidence — no plugin /
+theme code change). The release-gating NVDA pass for Phase E.1+ remains
+**OPEN** — a human QA tester on a Windows workstation is still required.
+
+**Counts (per task §7 schema):**
+
+- Firefox: **0/12 PASS** — 12 scenarios SKIPPED (no browser in container)
+- Chrome:  **0/12 PASS** — 12 scenarios SKIPPED (no browser in container)
+- BLOCKING defects filed against plugin code: **0**
+- NON-BLOCKING doc-clarity findings (against procedure doc, not plugin): **2** — captured for Attempt #2 reviewer, not filed as separate spawn tasks (rationale below)
+
+**Why:** Wave D2 P3 was assigned to run the 12-scenario NVDA + Firefox /
+Chrome verification rubric that P2-H chip `wonderful-allen-kRZr5`
+shipped on 2026-05-24. NVDA verification is inherently a Windows-only,
+human-in-the-loop test (NVDA is Win32; verification depends on a tester
+hearing announcement ordering on a real screen reader pairing). The
+chip's remote execution environment is a headless Ubuntu 24.04
+container — no Windows, no NVDA, no Firefox, no Chrome, no audio
+subsystem. Per the chip's own §1 instruction ("If NVDA is not
+available, document the gap and skip with a warning"), Attempt #1
+recorded the gap.
+
+**What shipped:**
+
+- **Evidence folder** `docs/visual-evidence/2026-05-25/nvda-verification/`
+  with the canonical Attempt #1 sign-off:
+  - `README.md` — Attempt #1 sign-off record, fully populated 12-row
+    table with SKIPPED in all 24 PASS/FAIL cells, rationale, links to
+    static-analysis findings, final ship-gate block ("Cleared to ship
+    Phase E.1+? **NO**").
+  - `ENVIRONMENT-GAP.md` — Runbook for the next human tester. Lists
+    every component they need installed (Windows 10/11 + NVDA 2024.x+
+    + Firefox ESR + stable + Chrome + audio + XAMPP Moodle 5.1.3+),
+    NVDA configuration baseline, fixture setup, per-scenario workflow,
+    evidence file layout, and a ~2–2.5 hour time estimate for
+    Attempt #2.
+  - `STATIC-ANALYSIS.md` — Per-scenario static review of the 5 plugin
+    files (`audience/play.php`, `trainer/run.php`,
+    `templates/result_panel.mustache`, `templates/result_bar_chart.mustache`,
+    `amd/src/chart_updater.js`) against the procedure's ARIA / lang /
+    JS contracts. **10/12 scenarios PASS cleanly under static
+    review.** 1 scenario (S12 stress test) is not statically testable.
+    Confirms all 9 aria-live regions + 1 sr-only tally + 1 role="img"
+    are wired correctly, XSS posture of `chart_updater.js` is sound
+    (`textContent` only; no `innerHTML`).
+  - 12 empty placeholder folders `scenario-NN/{firefox,chrome}/` so the
+    next attempt has zero filesystem setup.
+- **Procedure doc update** —
+  `docs/qa/NVDA-VERIFICATION-PROCEDURE.md` §10 gains an "Attempt log"
+  table above the (still-empty) sign-off template. Row #1 logs the
+  skip event with a link to the evidence folder; row #2 reserves a
+  pending slot for the next human attempt. The template table itself
+  is **untouched** — it remains a blank copy-target as the procedure
+  intends.
+
+**Static-analysis findings (2 NON-BLOCKING, against procedure doc only):**
+
+- **F-1** — Procedure §6 Scenario 6 "Expected" announcement line omits
+  the actual `Thanks for participating. ` prefix in lang string
+  `audience_session_ended_body` (line 315 of
+  `lang/en/local_sentientia_live.php`). A strict-match tester would
+  fail S6 even when the actual UI is working correctly. Recommended
+  fix (post Attempt #2): update procedure §6 S6 Expected verbatim.
+- **F-2** — Procedure §6 Scenario 10 "Expected" line says "this
+  question" but lang string `audience_already_responded` (line 317)
+  says "this slide". Same risk class as F-1. Recommended fix: update
+  procedure to read "slide" (cheaper than changing the string and
+  re-translating across 6 locales).
+
+Neither finding indicates a defect in the plugin code; both are doc
+drift between the procedure and the lang file. They are **not filed as
+separate spawn tasks** because (a) they are pure doc edits, (b) the
+human tester running Attempt #2 will hit the same observations and is
+the right party to confirm fix direction, and (c) Attempt #2 may
+batch larger real defects with these NON-BLOCKING items.
+
+**Out-of-scope candidates flagged (not findings; future Wave D triage):**
+
+- `lang/en/local_sentientia_live.php:332` `a11y_response_recorded` —
+  not referenced by any of the 5 reviewed files. Possible dead-code.
+- `lang/en/local_sentientia_live.php:338` `a11y_already_responded`
+  vs line 317 `audience_already_responded`. Possible duplicate.
+
+Both require a wider grep than this chip's scope.
+
+**Acceptance criteria status (per task ACCEPTANCE):**
+
+- ✅ Sign-off table fully populated — 12 rows × 2 browsers, all
+  SKIPPED with linked rationale (Attempt #1 README §4). Procedure
+  doc §10 template intact for Attempt #2.
+- ✅ Evidence captured (env-gap report + static analysis + 12 empty
+  scenario folders prepared).
+- ✅ BLOCKING defects (zero against plugin code) are NOT filed as
+  separate spawn tasks because zero exist. The 2 NON-BLOCKING doc
+  findings are documented for next attempt, not spawned.
+- ⏳ CI green — pending after push.
+
+**Acceptance criteria NOT met (and why):**
+
+- ❌ Live NVDA Speech Viewer transcripts per scenario per browser —
+  fundamentally cannot run in Linux container. Gap documented;
+  Attempt #2 (Windows + human) required.
+- ❌ Cross-browser parity confirmation — same reason.
+
+**Path to closing the gap:**
+
+A human QA tester on a Windows 10/11 workstation needs to run the
+~2-hour procedure once. Runbook in `ENVIRONMENT-GAP.md`. The skip on
+Attempt #1 is the kind of expected outcome when a Windows-only
+human-in-the-loop test is dispatched to a Linux cloud agent. The
+artefacts shipped here (env-gap runbook + static analysis confirming
+markup contract) reduce Attempt #2's effort to the irreducible
+human-listener portion.
+
+**Refs:**
+
+- Evidence folder: `docs/visual-evidence/2026-05-25/nvda-verification/`
+  - `README.md` (Attempt #1 sign-off)
+  - `ENVIRONMENT-GAP.md` (Attempt #2 runbook)
+  - `STATIC-ANALYSIS.md` (per-scenario contract check)
+- Procedure: `docs/qa/NVDA-VERIFICATION-PROCEDURE.md` v1.0 (P2-H chip
+  `wonderful-allen-kRZr5`, shipped 2026-05-24)
+- Predecessor H2 entry: this file §"♿ P2 cutover-prep — NVDA
+  verification procedure for `local_sentientia_live` (2026-05-24)"
+- Plugin source root: `moodle-enhancement/local/sentientia_live/`
+- Plugin version: `local_sentientia_live` v0.1.1-alpha (Phase E.0
+  P0 #8 a11y additions)
+- WCAG: 4.1.3 Status Messages (AA), 1.3.1 Info & Relationships (A),
+  2.4.7 Focus Visible (AA)
