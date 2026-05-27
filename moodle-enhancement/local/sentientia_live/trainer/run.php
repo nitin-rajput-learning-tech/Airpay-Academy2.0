@@ -169,15 +169,27 @@ echo \html_writer::tag('h3',
     ['class' => 'h5 mt-4']);
 
 if ($current_slide) {
-    // Phase E.4 — render the live result panel for the current slide.
-    // Phase E.6 — pass show_to_audience=false so quiz leaderboards
-    // render for the trainer. Audience-side (audience/play.php) uses
-    // the default true and gets the bar chart only.
-    $panel = new \local_sentientia_live\output\result_panel(
-        $current_slide, /* show_to_audience */ false);
-    echo $OUTPUT->render_from_template(
-        'local_sentientia_live/result_panel',
-        $panel->export_for_template($OUTPUT));
+    if ($current_slide->type === 'multichoice') {
+        // Phase E.4 — the matured multichoice type renders its own
+        // result template (qt_multiple_choice_result) with the correct
+        // answer marked (show_correct=true — trainer sees the tally
+        // first; the audience never sees the correct answer until a
+        // reveal). The bar-row DOM matches what chart_updater.js targets,
+        // so bars update in place on each SSE response_added event.
+        $mc = \local_sentientia_live\question_types\question_type_registry::get_by_slug('multichoice');
+        echo $mc->render_result(
+            $id, (int) $current_slide->id, /* show_correct */ true);
+    } else {
+        // Phase E.4 — render the live result panel for the current slide.
+        // Phase E.6 — pass show_to_audience=false so quiz leaderboards
+        // render for the trainer. Audience-side (audience/play.php) uses
+        // the default true and gets the bar chart only.
+        $panel = new \local_sentientia_live\output\result_panel(
+            $current_slide, /* show_to_audience */ false);
+        echo $OUTPUT->render_from_template(
+            'local_sentientia_live/result_panel',
+            $panel->export_for_template($OUTPUT));
+    }
 
     echo \html_writer::start_div('card p-4 my-3');
     echo \html_writer::tag('div',

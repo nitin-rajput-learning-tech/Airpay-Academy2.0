@@ -137,12 +137,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && confirm_sesskey()) {
     if (!$current_slide || (int) $current_slide->sessionid !== $sessionid) {
         $response_error = get_string('response_slide_mismatch',
             'local_sentientia_live');
+    } else if ($current_slide->type === 'multichoice') {
+        // Phase E.4 — persist multichoice through the matured question
+        // type so its server-authoritative bounds check + delegation to
+        // response_recorder::submit() own the write path.
+        try {
+            $qtype = \local_sentientia_live\question_types\question_type_registry::get_by_slug('multichoice');
+            $qtype->persist_response((int) ($USER->id ?? 0), [
+                'option_index'  => optional_param('value_int', null, PARAM_INT),
+                'slideid'       => $slideid_submit,
+                'participantid' => (int) $participant->id,
+            ]);
+            $response_saved = true;
+        } catch (\moodle_exception $e) {
+            $response_error = $e->getMessage();
+        }
     } else {
         $value_int = null;
         $value_text = null;
 
         switch ($current_slide->type) {
-            case 'multichoice':
             case 'quiz':
             case 'rating':
                 $value_int = optional_param('value_int', null, PARAM_INT);
@@ -338,6 +352,33 @@ function render_response_form(\stdClass $slide, int $sessionid,
 
     $action_url = new \moodle_url('/local/sentientia_live/audience/play.php',
         array_filter(['sessionid' => $sessionid, 'token' => $token]));
+
+    // Phase E.4 — render the multichoice audience form through the
+    // matured question type. The class template owns the COMPLETE form
+    // (its own <form>, hidden sesskey + slideid, options as radio or
+    // buttons, and the submit button), so we render it before opening
+    // the shared inline <form> below and return early. The POST
+    // contract (name="value_int", action_url, sesskey) is identical to
+    // the inline path, so the POST handler at the top of this file is
+    // unchanged. Other types stay on the inline form until they mature.
+    if ($slide->type === 'multichoice') {
+        $qtype = \local_sentientia_live\question_types\question_type_registry::get_by_slug('multichoice');
+        if ($qtype !== null) {
+            echo $qtype->render([
+                'slide'          => $slide,
+                'settings'       => $settings,
+                'session'        => \local_sentientia_live\session_manager::get($sessionid),
+                'aria_id_prefix' => 'mc_' . (int) $slide->id,
+                'action_url'     => $action_url->out(false),
+                'sesskey'        => sesskey(),
+                'token'          => $token,
+                'show_correct'   => false,
+            ]);
+            return;
+        }
+        // Defensive: registry couldn't resolve the type — fall through
+        // to the generic inline form so the audience can still respond.
+    }
 
     echo \html_writer::start_tag('form',
         ['method' => 'post', 'action' => $action_url->out(false)]);

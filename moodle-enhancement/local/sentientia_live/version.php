@@ -35,10 +35,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_live';
-$plugin->version   = 2026052402;
+$plugin->version   = 2026052501;
 $plugin->requires  = 2022041900;
-$plugin->maturity  = MATURITY_ALPHA;   // Phase E.0 — scaffold only
-$plugin->release   = '0.1.2-alpha';
+$plugin->maturity  = MATURITY_ALPHA;   // Phase E.4 — multiple_choice live
+$plugin->release   = '0.1.3-alpha';
 $plugin->dependencies = [
     'local_airpay_core' => 2026051401,  // feature_flags resolver
 ];
@@ -67,3 +67,29 @@ $plugin->dependencies = [
 //              with 7 assertions covering registry resolution +
 //              interface conformance. Docs:
 //              docs/sentientia-live/QUESTION-TYPES.md.
+// 0.1.3-alpha  Phase E.4 multiple_choice — class fully implemented:
+//              render() drives a Mustache audience template (radio or
+//              button render style), persist_response() bounds-checks
+//              option_index against the slide's stored options and
+//              delegates to response_recorder::submit() for the
+//              idempotent upsert + SSE event, tally() returns a rich
+//              [{index, label, count, is_correct}, ...] shape, and
+//              validate_config() enforces the class-layer 2-6 option
+//              cap (slide_manager keeps its looser 2-20 for back-
+//              compat with stored production rows).
+//              +2 Mustache templates: qt_multiple_choice_audience
+//              (radio | buttons render style, BEM names, aria-
+//              labelledby, mobile <=590px overrides), and
+//              qt_multiple_choice_result (sentientia-bar-row dom that
+//              chart_updater.js already targets — bars update in
+//              place via SSE without page reload).
+//              +10 string pairs en+hi covering class-layer error
+//              messages + render-style picker + 2 aria announcements
+//              (mc tally + correct revealed). Hindi parity remains at
+//              100% (287 / 287 keys verified).
+//              +1 PHPUnit test class (multiple_choice_test, 16
+//              assertions) covering 4 valid configs, 3 invalid
+//              configs, persist with valid + 4 invalid payloads,
+//              tally aggregation, idempotent resubmission, correct-
+//              answer reveal, registry slug resolution, and aria
+//              announcement contract.

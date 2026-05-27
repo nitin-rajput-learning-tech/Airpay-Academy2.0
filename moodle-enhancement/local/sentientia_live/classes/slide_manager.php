@@ -298,7 +298,7 @@ class slide_manager {
      */
     public static function default_settings_for_type(string $type): array {
         return match ($type) {
-            'multichoice' => ['options' => []],
+            'multichoice' => ['options' => [], 'render_style' => 'radio'],
             'rating'      => ['scale_min' => 1, 'scale_max' => 5, 'scale_labels' => []],
             'quiz'        => ['options' => [], 'correct_index' => 0],
             'ranking'     => ['items' => []],
@@ -346,6 +346,30 @@ class slide_manager {
                             'local_sentientia_live');
                     }
                     $out['correct_index'] = $correct;
+                }
+                if ($type === 'multichoice') {
+                    // Phase E.4 — multichoice render style (radio | buttons).
+                    $rs = $settings['render_style'] ?? 'radio';
+                    $out['render_style'] = in_array($rs, ['radio', 'buttons'], true)
+                        ? $rs : 'radio';
+                    // Phase E.4 — OPTIONAL correct-answer marking. Unlike
+                    // quiz (where it's required), multichoice may have no
+                    // correct answer. A blank / null / negative value
+                    // means "none" and is simply omitted; an explicit
+                    // in-range index is persisted; an out-of-range index
+                    // is rejected.
+                    if (isset($settings['correct_index'])
+                        && $settings['correct_index'] !== ''
+                        && $settings['correct_index'] !== null) {
+                        $ci = (int) $settings['correct_index'];
+                        if ($ci >= count($cleaned)) {
+                            throw new \moodle_exception('quiz_correct_out_of_range',
+                                'local_sentientia_live');
+                        }
+                        if ($ci >= 0) {
+                            $out['correct_index'] = $ci;
+                        }
+                    }
                 }
                 break;
 
