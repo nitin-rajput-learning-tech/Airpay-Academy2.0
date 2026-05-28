@@ -40,11 +40,18 @@ defined('MOODLE_INTERNAL') || die();
  *
  *   issiteadmin = is_siteadmin($USER)
  *   isldadmin   = !issiteadmin && !switched_to_employee && (
- *                   has_capability('local/courses:manage', system) ||
+ *                   has_capability('local/airpay_courses:manage', system) ||
  *                   record_exists in {role_assignments} with
  *                     role.shortname = 'administrator' AND
  *                     context.contextlevel = 40 (category)
  *                 )
+ *
+ * Cap-rename note (2026-05-28 stabilization audit F-080/F-088): we used to
+ * also probe the non-namespaced `local/courses:manage` here — but the cap
+ * was never registered in any db/access.php, so every call logged a debug
+ * Notice. The fallback has been removed; the airpay_courses-namespaced
+ * cap is the only one we need (it covers the L&D Admin and Operations
+ * Administrator roles that grant manage on the org subtree).
  *   ismanager   = !isadmin && (
  *                   has_capability('moodle/site:viewreports', system) ||
  *                   count_records(user open_supervisorid = $USER->id) > 0
@@ -114,8 +121,12 @@ class role_detector {
         // Skip if user has switched to employee role.
         $isldadmin = false;
         if (!$issiteadmin && !$switchedtoemployee) {
-            $isldadmin = has_capability('local/courses:manage', $systemcontext, $userid)
-                      || has_capability('local/airpay_courses:manage', $systemcontext, $userid);
+            // Phase 1 stabilization fix (F-080/F-088, 2026-05-28): removed
+            // `local/courses:manage` probe — cap was never registered, so it
+            // logged a debug Notice every page render and silently locked
+            // L&D Admins out of the course-management sidebar. The
+            // airpay_courses-namespaced cap is the canonical one.
+            $isldadmin = has_capability('local/airpay_courses:manage', $systemcontext, $userid);
             if (!$isldadmin) {
                 try {
                     // Note: no LIMIT clause — record_exists_sql adds it

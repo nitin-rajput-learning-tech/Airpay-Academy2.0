@@ -186,9 +186,12 @@ class user_manager {
 
         // Capability checks.
         $syscontext = \context_system::instance();
+        // Cap fix (F-080/F-088, 2026-05-28): dropped the `local/users:edit`
+        // fallback — cap was never registered in any db/access.php and
+        // logged a debug Notice on every profile render. The
+        // airpay_users-namespaced cap is the canonical one.
         $context['capabilityedit'] = (is_siteadmin() ||
-            has_capability('local/airpay_users:edit', $syscontext) ||
-            has_capability('local/users:edit', $syscontext)) ? 1 : 0;
+            has_capability('local/airpay_users:edit', $syscontext)) ? 1 : 0;
         $context['loginasurl'] = has_capability('moodle/user:loginas', $syscontext)
             ? new \moodle_url('/course/loginas.php', ['id' => 1, 'user' => $user->id, 'sesskey' => sesskey()])
             : false;

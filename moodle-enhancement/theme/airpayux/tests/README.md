@@ -51,7 +51,7 @@ vendor/bin/phpunit.bat --group role_detector,ws_contract ^
 
   - `role_detector_test`: **8 tests, 17 assertions, 4 skipped**.
     Skips are intentional — they cover paths that require BizLMS
-    schema (e.g., `local/courses:manage` capability,
+    schema (e.g., `local/airpay_courses:manage` capability,
     `open_supervisorid` column, `employee` role) which a vanilla
     Moodle test environment doesn't have. On a BizLMS-installed
     Moodle they all run.
