@@ -78,11 +78,11 @@
 
 /* Dark mode */
 body.dark-mode .edu_info .profile_data_content {
-    background: #1a1d27 !important;
-    border-color: #2d3140 !important;
+    background: #1a1d27;
+    border-color: #2d3140;
 }
-body.dark-mode .edu_info .userinfo-lable { color: #e8eaed !important; border-color: #2d3140 !important; }
-body.dark-mode .edu_info .u_info { color: #e8eaed !important; }
+body.dark-mode .edu_info .userinfo-lable { color: #e8eaed; border-color: #2d3140; }
+body.dark-mode .edu_info .u_info { color: #e8eaed; }
 
 /* ═══ Profile Page (ap-profile) ═══ */
 .ap-profile { max-width: 900px; margin: 0 auto; }
@@ -211,28 +211,28 @@ body.dark-mode .ap-profile__stat { background: #22252f; }
 
 /* Dark mode */
 /* Profile page: BizLMS tab wrapper + content area */
-body.dark-mode .userprfltabs_container { background: transparent !important; }
-body.dark-mode .userprfltabs_container .nav-tabs { background: #1a1d27 !important; border-color: #2d3140 !important; }
-body.dark-mode .userprfltabs_container .nav-tabs .nav-link { color: #9ca3b4 !important; }
-body.dark-mode .userprfltabs_container .nav-tabs .nav-link.active { color: #60a5fa !important; border-color: #0066A7 !important; }
-body.dark-mode .tab-content { background: #14161e !important; }
-body.dark-mode #profile_tab { background: transparent !important; }
-body.dark-mode #display_modulesdata { background: transparent !important; }
-body.dark-mode .skillprfltabs_container { background: transparent !important; }
+body.dark-mode .userprfltabs_container { background: transparent; }
+body.dark-mode .userprfltabs_container .nav-tabs { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .userprfltabs_container .nav-tabs .nav-link { color: #9ca3b4; }
+body.dark-mode .userprfltabs_container .nav-tabs .nav-link.active { color: #60a5fa; border-color: #0066A7; }
+body.dark-mode .tab-content { background: #14161e; }
+body.dark-mode #profile_tab { background: transparent; }
+body.dark-mode #display_modulesdata { background: transparent; }
+body.dark-mode .skillprfltabs_container { background: transparent; }
 /* BizLMS profile data sections (the actual content cards) */
-body.dark-mode .profile_data_content { background: #1a1d27 !important; border-color: #2d3140 !important; }
-body.dark-mode .userinfo-lable { color: #e8eaed !important; }
-body.dark-mode .u_info { color: #c4cad8 !important; }
-body.dark-mode .u_info .u_info_key { color: #8896a6 !important; }
-body.dark-mode .u_info .u_info_value { color: #e8eaed !important; }
+body.dark-mode .profile_data_content { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .userinfo-lable { color: #e8eaed; }
+body.dark-mode .u_info { color: #c4cad8; }
+body.dark-mode .u_info .u_info_key { color: #8896a6; }
+body.dark-mode .u_info .u_info_value { color: #e8eaed; }
 /* Profile enrichment cards (gamification + skills) */
-body.dark-mode .ap-profile__enrich-card { background: #1a1d27 !important; border-color: #2d3140 !important; }
-body.dark-mode .ap-profile__enrich-data strong { color: #e8eaed !important; }
-body.dark-mode .ap-profile__enrich-data small { color: #8896a6 !important; }
+body.dark-mode .ap-profile__enrich-card { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .ap-profile__enrich-data strong { color: #e8eaed; }
+body.dark-mode .ap-profile__enrich-data small { color: #8896a6; }
 body.dark-mode .ap-profile-tabs { background: #1a1d27; border-color: #2d3140; }
 body.dark-mode .ap-profile-tabs__tab { color: #9ca3b4; }
 body.dark-mode .ap-profile-tabs__tab:hover { background: #22252f; color: #e8eaed; }
-body.dark-mode .ap-profile-tabs__tab--active { background: #0d2540 !important; color: #60a5fa !important; }
+body.dark-mode .ap-profile-tabs__tab--active { background: #0d2540; color: #60a5fa; }
 
 /* Mobile: tabs scroll horizontally */
 @media (max-width: 590px) {
