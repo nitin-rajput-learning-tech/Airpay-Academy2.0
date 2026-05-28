@@ -49,40 +49,83 @@ $PAGE->set_url('/local/airpay_pages/onboarding.php');
 $PAGE->set_title('Welcome to Airpay Academy');
 $PAGE->set_pagelayout('embedded'); // Minimal layout — no navbar clutter.
 
-// Get available categories for interest selection.
-$categories = $DB->get_records_sql(
-    "SELECT cc.id, cc.name, COUNT(c.id) as course_count
-       FROM {course_categories} cc
-       JOIN {course} c ON c.category = cc.id AND c.visible = 1 AND c.id > 1
-     GROUP BY cc.id, cc.name
-       HAVING COUNT(c.id) > 0
-     ORDER BY COUNT(c.id) DESC",
-    [], 0, 12);
-
-$catdata = [];
-$icons = ['fa-briefcase', 'fa-shield', 'fa-line-chart', 'fa-users', 'fa-code', 'fa-university',
-    'fa-cogs', 'fa-graduation-cap', 'fa-lightbulb-o', 'fa-heart', 'fa-rocket', 'fa-globe'];
-$i = 0;
-foreach ($categories as $cat) {
-    $catdata[] = [
-        'id'    => $cat->id,
-        'name'  => format_string($cat->name),
-        'count' => $cat->course_count,
-        'icon'  => $icons[$i % count($icons)],
-    ];
-    $i++;
+// ─── Tenant isolation (2026-05-28) ─────────────────────────────────────
+// Resolve the user's top-level tenant category. Without this, learners
+// from one tenant could see another tenant's org-tree categories (e.g. a
+// Public learner seeing AIRPAY PAYMENT SERVICES, ZEEA, Vyaapaar, Tanzania
+// subsidiaries in their interest picker — a real cross-tenant leak we
+// shipped to local on 2026-05-28).
+//
+// Resolution chain (in local_airpay_org\accesslib::get_tenant_category_id):
+//   1. BizLMS canonical via local_costcenter.category by path (prod)
+//   2. Sentientia-native via org.shortname ↔ category.idnumber (works on
+//      vanilla Moodle Sentientia deployments without BizLMS)
+//   3. null → fail closed (render zero categories rather than leak all)
+//
+// Site admins and the rare admin-impersonating-onboarding case still get
+// scoped to whichever tenant their open_path indicates — admins are
+// already redirected away from onboarding in layout/dashboard.php, so
+// this branch is for learners and managers only.
+$tenant_catid = \local_airpay_org\accesslib::get_tenant_category_id(
+    (string) ($USER->open_path ?? ''));
+$tenant_catpath = '';
+if ($tenant_catid) {
+    $tenant_catpath = (string) $DB->get_field('course_categories', 'path',
+        ['id' => $tenant_catid]);
 }
 
-// Get 3 recommended courses for the user (most enrolled, visible).
-$recommended = $DB->get_records_sql(
-    "SELECT c.id, c.fullname, c.shortname, COUNT(ue.id) as enrolcount
-       FROM {course} c
-       JOIN {enrol} e ON e.courseid = c.id
-       JOIN {user_enrolments} ue ON ue.enrolid = e.id
-      WHERE c.visible = 1 AND c.id > 1
-     GROUP BY c.id, c.fullname, c.shortname
-     ORDER BY COUNT(ue.id) DESC",
-    [], 0, 3);
+$catdata = [];
+if ($tenant_catid && $tenant_catpath !== '') {
+    // Get categories within the user's tenant subtree (root + descendants).
+    // Excludes the tenant root category itself when it has direct courses —
+    // we surface the subsidiaries/topics, not the tenant label.
+    $categories = $DB->get_records_sql(
+        "SELECT cc.id, cc.name, COUNT(c.id) AS course_count
+           FROM {course_categories} cc
+           JOIN {course} c ON c.category = cc.id AND c.visible = 1 AND c.id > 1
+          WHERE cc.id = :catid OR " . $DB->sql_like('cc.path', ':catpathwild') . "
+       GROUP BY cc.id, cc.name
+         HAVING COUNT(c.id) > 0
+       ORDER BY COUNT(c.id) DESC",
+        [
+            'catid'        => $tenant_catid,
+            'catpathwild'  => $tenant_catpath . '/%',
+        ], 0, 12);
+
+    $icons = ['fa-briefcase', 'fa-shield', 'fa-line-chart', 'fa-users', 'fa-code', 'fa-university',
+        'fa-cogs', 'fa-graduation-cap', 'fa-lightbulb-o', 'fa-heart', 'fa-rocket', 'fa-globe'];
+    $i = 0;
+    foreach ($categories as $cat) {
+        $catdata[] = [
+            'id'    => $cat->id,
+            'name'  => format_string($cat->name),
+            'count' => $cat->course_count,
+            'icon'  => $icons[$i % count($icons)],
+        ];
+        $i++;
+    }
+}
+
+// Get 3 recommended courses for the user (most enrolled, visible) —
+// scoped to the user's tenant subtree. Same resolver as above.
+if ($tenant_catid && $tenant_catpath !== '') {
+    $recommended = $DB->get_records_sql(
+        "SELECT c.id, c.fullname, c.shortname, COUNT(ue.id) AS enrolcount
+           FROM {course} c
+           JOIN {course_categories} cc ON cc.id = c.category
+           JOIN {enrol} e ON e.courseid = c.id
+           JOIN {user_enrolments} ue ON ue.enrolid = e.id
+          WHERE c.visible = 1 AND c.id > 1
+            AND (cc.id = :catid OR " . $DB->sql_like('cc.path', ':catpathwild') . ")
+       GROUP BY c.id, c.fullname, c.shortname
+       ORDER BY COUNT(ue.id) DESC",
+        [
+            'catid'        => $tenant_catid,
+            'catpathwild'  => $tenant_catpath . '/%',
+        ], 0, 3);
+} else {
+    $recommended = [];
+}
 
 $recdata = [];
 foreach ($recommended as $r) {

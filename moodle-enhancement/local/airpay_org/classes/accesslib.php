@@ -533,6 +533,84 @@ class accesslib {
     }
 
     /**
+     * Resolve the TOP-LEVEL tenant course category id for a user's open_path.
+     *
+     * Sentientia's multi-tenant isolation requires scoping catalog,
+     * onboarding, and recommendation views to the user's tenant. This
+     * method takes a full open_path (e.g. '/1/79/115') and returns the
+     * `course_categories.id` for the user's TOP tenant ('/1' → the AIRPAY
+     * category root). Sub-org scoping is intentionally NOT applied — many
+     * org-wide compliance courses live at the tenant root and must remain
+     * visible to all sub-org employees.
+     *
+     * Resolution order (defensive — each step gracefully falls through):
+     *   1. **BizLMS canonical** — `local_costcenter.category` keyed by the
+     *      top-level org path. This is the canonical mapping on production
+     *      (where the BizLMS costcenter plugin is installed).
+     *   2. **Sentientia-native fallback** — match `local_airpay_org.shortname`
+     *      ↔ `course_categories.idnumber` for the same top org. This is
+     *      a deterministic 1:1 convention that lets multi-tenant scoping
+     *      work on a vanilla-Moodle Sentientia deployment without BizLMS
+     *      (and on dev environments where local_costcenter isn't installed).
+     *   3. **null** — caller MUST fail closed (render no tenant-scoped
+     *      content rather than leak everything). Returning the system
+     *      context's instanceid (0) would be a tenant-isolation hole.
+     *
+     * @param string $open_path  User's full org path, e.g. '/1' or '/1/2/3'
+     * @return int|null          Category id of the user's top tenant, or null
+     */
+    public static function get_tenant_category_id(string $open_path): ?int {
+        global $DB;
+
+        if ($open_path === '') {
+            return null;
+        }
+        $parts = array_values(array_filter(explode('/', $open_path)));
+        if (empty($parts)) {
+            return null;
+        }
+        $top_id   = (int) $parts[0];
+        $top_path = '/' . $top_id;
+
+        // Per-request memoisation.
+        static $cache = [];
+        if (array_key_exists($top_path, $cache)) {
+            return $cache[$top_path];
+        }
+
+        // (1) BizLMS canonical lookup.
+        $manager = $DB->get_manager();
+        if ($manager->table_exists('local_costcenter')) {
+            try {
+                $catid = (int) $DB->get_field('local_costcenter', 'category', ['path' => $top_path]);
+                if ($catid > 0) {
+                    return $cache[$top_path] = $catid;
+                }
+            } catch (\Throwable $e) {
+                // Schema mismatch — fall through.
+            }
+        }
+
+        // (2) Sentientia-native fallback: org.shortname ↔ category.idnumber.
+        try {
+            $shortname = $DB->get_field('local_airpay_org', 'shortname',
+                ['id' => $top_id, 'depth' => 1]);
+            if (!empty($shortname)) {
+                $catid = (int) $DB->get_field('course_categories', 'id',
+                    ['idnumber' => $shortname, 'depth' => 1]);
+                if ($catid > 0) {
+                    return $cache[$top_path] = $catid;
+                }
+            }
+        } catch (\Throwable $e) {
+            // local_airpay_org or column missing — fall through.
+        }
+
+        // (3) Defensive fail-closed.
+        return $cache[$top_path] = null;
+    }
+
+    /**
      * Strip the last `/segment` from a path. Returns '' once the path
      * has no more segments to strip.
      *
