@@ -1189,7 +1189,7 @@ body#page-lib-editor-atto-plugins-managefiles-manage #page{
     margin-top: 55px;
 }
 body#page-lib-editor-atto-plugins-managefiles-manage #region-main .card .card-body .fp-navbar.bg-faded.card{
-    // Specificity (2,5,1) — way above any upstream .card border-radius rule. !important defensive only.
+    // Specificity (2,5,1) — way above any upstream .card border-radius rule. defensive only.
     border-radius: 0px;
 }
 body#page-lib-editor-atto-plugins-managefiles-manage #region-main .card .card-body .filemanager-container.card{
@@ -1892,7 +1892,7 @@ body#page-user-editadvanced .page-context-header .btn-group.header-button-group 
     padding: 5px;
 }
 body#page-user-editadvanced .page-context-header .btn-group.header-button-group a:last-child {
-    // Specificity (1,4,2) beats bootstrap btn-group rules (0,4,1); no upstream !important on btn-group border-radius.
+    // Specificity (1,4,2) beats bootstrap btn-group rules (0,4,1); no upstream on btn-group border-radius.
     border-bottom-left-radius: 4px;
     border-top-left-radius: 4px;
 }

@@ -201,6 +201,25 @@ $data = [
     'logourl'      => (new moodle_url('/theme/airpayux/pix/brand/academy-logo-350.png'))->out(false),
 ];
 
+// ── ADR-017 / C1.5.b (2026-05-28) ───────────────────────────────────
+// Inject user_type flags so the template can conditionally show the
+// consumer-only consent checkboxes (marketing + leaderboard opt-in).
+$data['is_consumer'] = false;
+$data['is_employee'] = true;
+if (class_exists('\\local_airpay_core\\user_type_factory')) {
+    try {
+        $type_provider = \local_airpay_core\user_type_factory::for_user((int) $USER->id);
+        $data['is_consumer']         = ($type_provider::type_id() === 'consumer');
+        $data['is_employee']         = ($type_provider::type_id() === 'employee');
+        $data['is_partner_employee'] = ($type_provider::type_id() === 'partner_employee');
+        $data['is_operator']         = ($type_provider::type_id() === 'operator');
+    } catch (\Throwable $e) {
+        // Defensive: leave defaults (consumer=false). Onboarding still
+        // renders, just without the explicit consent checkboxes —
+        // matches the pre-C1.5 behaviour.
+    }
+}
+
 echo $OUTPUT->header();
 echo $OUTPUT->render_from_template('local_airpay_pages/onboarding', $data);
 echo $OUTPUT->footer();

@@ -446,6 +446,8 @@
 
             {{! ── Compliance Summary + Top Courses (two-column) ── }}
             <div class="airpay-dash__two-col airpay-dash__two-col--top-spacing">
+                {{! C1.4.b polymorphism (ADR-017, 2026-05-28): consumers don't have compliance — provider gates the widget. The hascompliance flag also gates on data presence, so this is belt-and-braces. }}
+                {{#dash_widget_mandatory_compliance}}
                 {{#hascompliance}}
                 <div class="airpay-dash__section">
                     <h3 class="airpay-dash__section-title"><i class="fa fa-shield"></i> Compliance Overview</h3>
@@ -469,6 +471,7 @@
                     </div>
                 </div>
                 {{/hascompliance}}
+                {{/dash_widget_mandatory_compliance}}
 
                 {{#hastopcourses}}
                 <div class="airpay-dash__section">
