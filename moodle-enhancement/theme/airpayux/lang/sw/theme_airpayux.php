@@ -179,6 +179,7 @@ $string['footer_terms']     = 'Masharti';
 $string['footer_help']      = 'Msaada';
 $string['footer_contact']   = 'Mawasiliano';
 $string['footer_copyright'] = '&copy; 2026 airpay payment services pvt. ltd.';
+$string['footer_logo_alt'] = 'airpay academy';
 
 // F-13 (Platform Visual Audit 2026-05-24, chip-G) — Banner ya karibu ya
 // dashibodi, vichwa vya chati na lebo za KPI za utii. {$a} = jina la kwanza.
@@ -194,3 +195,11 @@ $string['kpi_mandatory_courses']   = 'Kozi za Lazima';
 $string['kpi_compliance_rate']     = 'Kiwango cha Utii';
 $string['kpi_overdue']             = 'Zilizochelewa';
 $string['kpi_total_assigned']      = 'Jumla Zilizoteuliwa';
+
+// B10/F-065 dash i18n (2026-05-28)
+$string['dash_dark_mode_label']    = 'Hali ya Giza';
+$string['dash_profile_settings']   = 'Wasifu na Mipangilio';
+$string['dash_overall_completion'] = 'Ukamilifu wa Jumla';
+$string['dash_continue_learning']  = 'Endelea Kujifunza';
+$string['dash_view_all']           = 'Tazama zote';
+$string['dash_explore']            = 'Chunguza';

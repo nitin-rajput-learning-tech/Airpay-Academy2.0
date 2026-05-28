@@ -121,7 +121,7 @@
             <div class="ap-sidebar__footer-actions">
                 <button class="ap-sidebar__theme-btn" id="ap-dark-toggle" title="Toggle theme">
                     <i class="fa fa-moon"></i>
-                    <span class="ap-sidebar__theme-label">Dark Mode</span>
+                    <span class="ap-sidebar__theme-label">{{#str}}dash_dark_mode_label, theme_airpayux{{/str}}</span>
                 </button>
             </div>
             <div class="ap-sidebar__user">
@@ -129,7 +129,7 @@
                     <div class="ap-sidebar__user-avatar">{{{useravatar}}}</div>
                     <div class="ap-sidebar__user-info">
                         <span class="ap-sidebar__user-name">{{userfullname}}</span>
-                        <span class="ap-sidebar__user-action">Profile &amp; Settings</span>
+                        <span class="ap-sidebar__user-action">{{#str}}dash_profile_settings, theme_airpayux{{/str}}</span>
                     </div>
                 </a>
                 <a href="{{{logouturl}}}" class="ap-sidebar__signout" title="Sign out"><i class="fa fa-sign-out"></i></a>
@@ -555,7 +555,7 @@
                     <span class="ap-progress-ring__label ap-progress-ring__label--lg">{{progress_ring.percent}}%</span>
                 </div>
                 <div class="airpay-dash__progress-summary__text">
-                    <strong class="airpay-dash__progress-summary__title">Overall Completion</strong><br>
+                    <strong class="airpay-dash__progress-summary__title">{{#str}}dash_overall_completion, theme_airpayux{{/str}}</strong><br>
                     <span class="airpay-dash__progress-summary__meta">
                         {{stats.completed}} of {{stats.enrolled}} courses completed
                     </span>
@@ -647,8 +647,8 @@
             {{#hascontinuecourses}}
             <div class="airpay-dash__section">
                 <div class="airpay-dash__section-header">
-                    <h3 class="airpay-dash__section-title">Continue Learning</h3>
-                    <a href="{{{config.wwwroot}}}/my/courses.php" class="airpay-dash__section-link">View all <i class="fa fa-arrow-right" aria-hidden="true"></i></a>
+                    <h3 class="airpay-dash__section-title">{{#str}}dash_continue_learning, theme_airpayux{{/str}}</h3>
+                    <a href="{{{config.wwwroot}}}/my/courses.php" class="airpay-dash__section-link">{{#str}}dash_view_all, theme_airpayux{{/str}} <i class="fa fa-arrow-right" aria-hidden="true"></i></a>
                 </div>
                 <div class="airpay-course-grid">
                     {{#continuecourses}}
@@ -729,7 +729,7 @@
                         <div class="airpay-dash__rec-body">
                             <h4 class="airpay-dash__rec-title">{{fullname}}</h4>
                             <p class="airpay-dash__rec-summary">{{summary}}</p>
-                            <span class="airpay-dash__rec-action">Explore <i class="fa fa-arrow-right" aria-hidden="true"></i></span>
+                            <span class="airpay-dash__rec-action">{{#str}}dash_explore, theme_airpayux{{/str}} <i class="fa fa-arrow-right" aria-hidden="true"></i></span>
                         </div>
                     </a>
                     {{/recommendations}}

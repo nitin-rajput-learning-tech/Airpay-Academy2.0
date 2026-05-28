@@ -182,6 +182,7 @@ $string['footer_terms']     = 'नियम और शर्तें';
 $string['footer_help']      = 'मदद';
 $string['footer_contact']   = 'संपर्क';
 $string['footer_copyright'] = '&copy; 2026 एयरपे पेमेंट सर्विसेस प्रा. लि.';
+$string['footer_logo_alt'] = 'एयरपे अकैडमी';
 
 // F-13 (Platform Visual Audit 2026-05-24, chip-G) — डैशबोर्ड वेलकम बैनर,
 // चार्ट हेडिंग और कम्प्लायंस KPI लेबल्स। {$a} = यूज़र का फ़र्स्ट नेम।
@@ -197,3 +198,11 @@ $string['kpi_mandatory_courses']   = 'अनिवार्य कोर्स�
 $string['kpi_compliance_rate']     = 'कम्प्लायंस रेट';
 $string['kpi_overdue']             = 'ओवरड्यू';
 $string['kpi_total_assigned']      = 'टोटल असाइन्ड';
+
+// B10/F-065 dash i18n (2026-05-28)
+$string['dash_dark_mode_label']    = 'डार्क मोड';
+$string['dash_profile_settings']   = 'प्रोफ़ाइल और सेटिंग्स';
+$string['dash_overall_completion'] = 'कुल पूर्णता';
+$string['dash_continue_learning']  = 'सीखना जारी रखें';
+$string['dash_view_all']           = 'सभी देखें';
+$string['dash_explore']            = 'एक्सप्लोर करें';

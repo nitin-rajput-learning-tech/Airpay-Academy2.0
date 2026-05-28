@@ -112,10 +112,14 @@ class catalog_manager {
         $where = implode(' AND ', $conditions);
 
         // Sort.
+        // B6/F-072 stabilization fix (2026-05-28): removed the 'rating'
+        // case until the `local_airpay_ratings` join is wired. The case
+        // used to fall through to `c.fullname ASC` which silently lied
+        // to any caller passing sort=rating. No UI surface currently
+        // exposes a rating-sort option, so removal is zero-impact.
         $orderby = match($sort) {
             'popular' => 'enrolled_count DESC',
             'name'    => 'c.fullname ASC',
-            'rating'  => 'c.fullname ASC', // TODO: add actual rating sort when rating table is available
             default   => 'c.timecreated DESC',
         };
 

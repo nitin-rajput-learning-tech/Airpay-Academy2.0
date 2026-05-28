@@ -248,6 +248,16 @@ $string['footer_terms']     = 'Terms';
 $string['footer_help']      = 'Help';
 $string['footer_contact']   = 'Contact';
 $string['footer_copyright'] = '&copy; 2026 airpay payment services pvt. ltd.';
+// B8/F-070 stabilization fix (2026-05-28) — i18n the brand-logo alt text.
+$string['footer_logo_alt']  = 'airpay academy';
+// B10/F-065 stabilization fix (2026-05-28) — i18n the 6 hardcoded English
+// secondary labels the F-13 sweep missed on dashboard.mustache.
+$string['dash_dark_mode_label']        = 'Dark Mode';
+$string['dash_profile_settings']       = 'Profile &amp; Settings';
+$string['dash_overall_completion']     = 'Overall Completion';
+$string['dash_continue_learning']      = 'Continue Learning';
+$string['dash_view_all']               = 'View all';
+$string['dash_explore']                = 'Explore';
 
 // F-13 (Platform Visual Audit 2026-05-24, chip-G) — dashboard welcome
 // banner, chart titles, and compliance KPI labels. {$a} = first name.

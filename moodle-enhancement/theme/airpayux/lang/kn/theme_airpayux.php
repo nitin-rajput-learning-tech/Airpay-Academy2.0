@@ -190,6 +190,7 @@ $string['footer_terms']     = 'ನಿಯಮಗಳು';
 $string['footer_help']      = 'ಸಹಾಯ';
 $string['footer_contact']   = 'ಸಂಪರ್ಕಿಸಿ';
 $string['footer_copyright'] = '&copy; 2026 ಏರ್‌ಪೇ ಪೇಮೆಂಟ್ ಸರ್ವಿಸಸ್ ಪ್ರೈ. ಲಿ.';
+$string['footer_logo_alt'] = 'ಏರ್‌ಪೇ ಅಕಾಡೆಮಿ';
 
 // F-13 (Platform Visual Audit 2026-05-24, chip-G) — ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ಸ್ವಾಗತ ಬ್ಯಾನರ್,
 // ಚಾರ್ಟ್ ಶೀರ್ಷಿಕೆಗಳು ಮತ್ತು ಕಂಪ್ಲಯನ್ಸ್ KPI ಲೇಬಲ್‌ಗಳು. {$a} = ಬಳಕೆದಾರನ ಮೊದಲ ಹೆಸರು.
@@ -205,3 +206,11 @@ $string['kpi_mandatory_courses']   = 'ಕಡ್ಡಾಯ ಕೋರ್ಸ್‌�
 $string['kpi_compliance_rate']     = 'ಕಂಪ್ಲಯನ್ಸ್ ರೇಟ್';
 $string['kpi_overdue']             = 'ಬಾಕಿ';
 $string['kpi_total_assigned']      = 'ಒಟ್ಟು ನಿಯೋಜಿತ';
+
+// B10/F-065 dash i18n (2026-05-28)
+$string['dash_dark_mode_label']    = 'ಡಾರ್ಕ್ ಮೋಡ್';
+$string['dash_profile_settings']   = 'ಪ್ರೊಫೈಲ್ ಮತ್ತು ಸೆಟ್ಟಿಂಗ್‌ಗಳು';
+$string['dash_overall_completion'] = 'ಒಟ್ಟಾರೆ ಪೂರ್ಣಗೊಳಿಸುವಿಕೆ';
+$string['dash_continue_learning']  = 'ಕಲಿಕೆಯನ್ನು ಮುಂದುವರಿಸಿ';
+$string['dash_view_all']           = 'ಎಲ್ಲವನ್ನು ವೀಕ್ಷಿಸಿ';
+$string['dash_explore']            = 'ಅನ್ವೇಷಿಸಿ';
