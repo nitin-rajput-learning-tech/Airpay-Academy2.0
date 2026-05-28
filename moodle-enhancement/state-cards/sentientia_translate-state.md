@@ -1,10 +1,33 @@
 # State Card — `local_sentientia_translate` (Sentientia LMS AI Content Translation)
 
-**Current phase:** T.0 — MVP scaffold
-**Version:** 0.1.0-alpha (2026052500)
-**Status:** MVP feature-complete, feature flag default OFF, mock-mode demoable
+**Current phase:** T.0 — MVP scaffold + C16 admin queue/landing
+**Version:** 0.2.0-alpha (2026052801)
+**Status:** MVP feature-complete + unified admin landing/queue dashboard.
+Feature flag default OFF. Mock-mode demoable.
 **Owner:** Nitin Rajput (PM) + Claude (engineering)
-**Last updated:** 2026-05-25
+**Last updated:** 2026-05-28 (C16 stabilization audit follow-up)
+
+## What changed since last revision (2026-05-25 → 2026-05-28)
+
+- **C16 admin landing/queue dashboard** shipped — new
+  `admin/index.php` (~290 LOC) + `admin_externalpage` registration.
+  4 stats cards (Total / Pending / Saved / Failed) + status + lang
+  filter chips + 25-row recent-translations table. Scoping mirrors
+  `translate_engine::list_for_actor()` (full-customer view if
+  `manage_all` cap, own-rows-plus-tenant otherwise).
+- 30 new EN lang strings (`admin_index_*`, `stats_*`, `filter_*`,
+  `col_*`, `action_*`).
+- Version bump 0.1.0-alpha → 0.2.0-alpha, savepoint 2026052801.
+- State-card naming fixed: renamed from `local_sentientia_translate-state.md`
+  → `sentientia_translate-state.md` (Bucket F4 fix) to match
+  dir-name convention required by the new state-card freshness gate.
+- **C17 seed CLI** shipped: `cli/seed_demo_translations.php`.
+  Creates 6 sample translation rows across all 5 statuses (pending,
+  translated, saved, failed, discarded) in 4 target languages
+  (hi, mr, kn, sw) + 2 brand overrides. Uses `translate_engine`
+  static methods so data shape matches live translations. `--purge`
+  removes only `[DEMO]`-titled rows. Idempotent; re-runs guard against
+  double-seeding.
 
 ---
 

@@ -4,7 +4,22 @@
 **Version:** 0.2.0-alpha (2026052500)
 **Status:** G.1 feature-complete, feature flag default OFF, mock-mode demoable (English + Hindi)
 **Owner:** Nitin Rajput (PM) + Claude (engineering)
-**Last updated:** 2026-05-25
+**Last updated:** 2026-05-28 (C17 seed CLI added; F-053..F-056 card rename)
+
+## What changed 2026-05-28
+
+- State-card renamed from `local_sentientia_aiquiz-state.md` →
+  `sentientia_aiquiz-state.md` to match dir-name convention
+  expected by the new state-card freshness gate (Bucket E4).
+- **C17 seed CLI** shipped: `cli/seed_demo_drafts.php`.
+  Creates 4 sample drafts across all 4 lifecycle statuses
+  (pending, generated, approved, failed) + 6 multichoice questions
+  (3 per reviewable draft). Uses `draft_manager` static methods
+  so data shape matches what live runs produce. `--purge` removes
+  only `[DEMO]`-titled drafts (and their questions via FK).
+  Idempotent.
+- C8 live POST against Anthropic is still gated per CLAUDE.md
+  — seed CLI is mock-only, no API spend.
 
 ---
 
