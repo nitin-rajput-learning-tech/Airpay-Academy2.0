@@ -38,36 +38,57 @@ None registered.
 ```
 local/airpay_pages/
 ├── README.md
+├── version.php                                   ✓ added (F-091 back-port 2026-05-28)
 ├── index.php                                     Pages directory
 ├── homepage.php                                  Site landing
-├── onboarding.php                                New-employee journey
+├── onboarding.php                                New-employee journey (tenant-scoped F-008 2026-05-28)
 ├── qr_attendance.php                             QR attendance scan
+├── qr_scan.php                                   QR redirect handler
 ├── certificates.php                              Certificate gallery
-├── pages/                                        Supporting partials
+├── cli/                                          ✓ back-ported 11 setup/seed scripts (F-091 2026-05-28)
+│   ├── setup_costcenters.php
+│   ├── setup_bizlms_data.php
+│   ├── setup_policies.php
+│   ├── seed_users.php
+│   ├── seed_testdata.php
+│   ├── seed_production_data.php
+│   ├── fix_bizlms_columns.php
+│   ├── fix_all_bizlms_data.php
+│   ├── fix_manager_role.php
+│   ├── create_hrbp_role.php
+│   └── enable_completion.php
+├── pages/                                        Static HTML (privacy, terms, help, contact, dpdp)
 ├── templates/                                    Mustache templates
-└── lang/                                         (en + hi)
+└── lang/                                         (en + hi + kn + mr + sw — 5 locales)
 ```
 
-This plugin has **no `version.php`** at the top level — it's not a
-standard Moodle local plugin in the usual sense. Pages are
-deployed-but-not-installed; they reference data + helpers from the
-plugins that own the underlying state.
+**Status update 2026-05-28:** the plugin DOES have `version.php` (back-ported
+from xampp during F-091 fix). The "no version.php" claim above was stale.
+It IS a formally installed Moodle local plugin.
 
 ## Tests
 
 None — each page is exercised manually + the upstream plugin's
 PHPUnit suite covers the underlying queries.
 
+## Stabilization notes
+
+- F-091 (workspace drift) — RESOLVED 2026-05-28 by back-porting 17 files
+  (version.php, EN lang pack, 11 CLI scripts, 3 HTML pages, qr_scan.php)
+  from deployed (commit `e32473e58`).
+- F-074 (state-card stale) — RESOLVED 2026-05-28 by this refresh (B19).
+- Tenant leak in onboarding.php — RESOLVED 2026-05-28 (commit `db5242c9a`).
+
 ## Open items
 
-- [ ] Decision: promote each page into its owning plugin or formalise
-      this plugin with a `version.php` so it has a proper Moodle install
-      cycle
-- [ ] Hindi parity audit per page
+- [ ] Hindi/locale parity audit for the 11 CLI scripts (they emit
+      cli_writeln messages — mostly admin-facing, but still)
 - [ ] Mobile responsiveness per page (Phase 6B follow-on)
 - [ ] Visual evidence snapshot for the 4 active pages
 - [ ] `qr_attendance.php` integration with `local_airpay_classroom`
       attendance writer
+- [ ] Add a `MATURITY_BETA` stamp in `version.php` (currently
+      back-ported as-is from xampp)
 
 ## State card created — 2026-05-24
 

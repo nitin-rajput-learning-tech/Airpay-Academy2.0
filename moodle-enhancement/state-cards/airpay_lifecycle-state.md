@@ -1,28 +1,61 @@
 # State Card — `local_airpay_lifecycle`
 
 **Component:** `local_airpay_lifecycle`
-**Status:** Skeleton / placeholder — no version.php, minimal code
-**Maturity:** N/A (skeleton)
-**Last refreshed:** 2026-05-24 (P1 state-card pass)
+**Status:** Live observer + compliance-check cron — not just a skeleton
+**Maturity:** BETA (no formal stamp yet — see version.php)
+**Last refreshed:** 2026-05-28 (B20 stabilization sweep — F-073/F-092 closure)
 
 ---
 
 ## Mission
 
-Reserved namespace for the planned course-lifecycle automation plugin.
-Future-state ownership: automatic course archive on N-month-no-activity,
-auto-publish on review-cycle completion, auto-deprecate on
-replacement-course flag.
+Course-lifecycle automation plugin. Observes events on courses,
+enrolments, and completions; runs a daily compliance-check cron task
+that flags overdue mandatory training; emits notification messages
+via the Moodle messages API.
 
-Today: skeleton only.
+Earlier state cards described this plugin as a skeleton. **It is
+not** — the runtime (db/events.php + db/tasks.php + db/messages.php
++ classes/observer.php + classes/task/compliance_check.php) all exist
+in deployed xampp. They were missing from the workspace mirror until
+the F-092 back-port on 2026-05-28 (commit `e32473e58`).
 
 ## DB tables
 
-None — schema not designed yet.
+None — the plugin uses Moodle's standard event + scheduled-task
+infrastructure (no plugin-owned tables).
 
 ## Capabilities
 
-None.
+None directly. Compliance-check reads `local/airpay_compliance:view`
+indirectly via the airpay_compliance_report dependency.
+
+## Wired surfaces
+
+- `db/events.php` — subscribes to:
+  - `\core\event\course_completed`
+  - `\core\event\user_enrolment_created`
+  - `\core\event\user_enrolment_deleted`
+- `db/tasks.php` — registers `\local_airpay_lifecycle\task\compliance_check`
+  to run daily at 02:00 IST.
+- `db/messages.php` — declares the `compliance_overdue` and
+  `compliance_due_soon` message providers.
+- `classes/observer.php` — handles the 3 subscribed events.
+- `classes/task/compliance_check.php` — runs the daily compliance scan.
+- `classes/privacy/provider.php` — privacy provider (already in workspace).
+
+## Stabilization notes
+
+- F-092 (workspace drift) — RESOLVED 2026-05-28 by back-porting
+  `version.php`, `db/`, `classes/observer.php`,
+  `classes/task/compliance_check.php` from deployed.
+- F-073 (state-card stale) — RESOLVED 2026-05-28 by this refresh.
+
+## Open follow-ups
+
+- Add explicit `MATURITY_BETA` stamp in `version.php`.
+- Add PHPUnit tests for observer + task (no test file present today).
+- Document the lifecycle event flow in an ADR (currently implicit).
 
 ## Feature flags
 
