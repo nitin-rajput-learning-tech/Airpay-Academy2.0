@@ -171,6 +171,50 @@ class signup_service {
 
         $userid = \user_create_user($user, false, false);
 
+        // ── ADR-017 / C1.6 (2026-05-28) ─────────────────────────────────
+        // Every Public-signup user is a consumer per the §Resolution rule
+        // (Q1 ruling: types are immutable per account; a consumer who is
+        // later hired gets a NEW account, not a promotion).
+        //
+        // Write the user_type row immediately so first-login dashboard /
+        // sidebar / profile all see the right shape.
+        if (class_exists('\\local_airpay_core\\user_type_factory')) {
+            try {
+                $now = time();
+                $DB->insert_record('local_airpay_user_type', (object) [
+                    'userid'              => (int) $userid,
+                    'user_type'           => 'consumer',
+                    'provisioning_source' => 'signup_public',
+                    'provisioned_at'      => $now,
+                    'timecreated'         => $now,
+                    'timemodified'        => $now,
+                ]);
+
+                // Seed an empty consumer_profile row. Onboarding (C1.5
+                // change) populates interests + weekly_goal + consents
+                // on first login.
+                $DB->insert_record('local_airpay_consumer_profile', (object) [
+                    'userid'              => (int) $userid,
+                    'interests_json'      => null,
+                    'weekly_goal'         => null,
+                    'referral_source'     => $data->referral_source ?? null,
+                    'consent_marketing'   => 0,  // default OFF (DPDP §7(a))
+                    'consent_leaderboard' => 0,  // default OFF
+                    'payment_history_url' => null,
+                    'timecreated'         => $now,
+                    'timemodified'        => $now,
+                ]);
+            } catch (\Throwable $e) {
+                // Defensive: don't break signup if user_type write fails.
+                // The classification CLI can backfill later. The user
+                // can still log in + complete onboarding; profile will
+                // default to employee badge until row is repaired.
+                debugging('Signup: user_type row write failed for userid='
+                    . $userid . ': ' . $e->getMessage(),
+                    DEBUG_DEVELOPER);
+            }
+        }
+
         // Send Moodle's standard email-confirmation token.
         // Re-read the user so we have a row that includes the auto-set
         // user.id + the secret we generated above.
