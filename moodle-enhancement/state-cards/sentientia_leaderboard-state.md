@@ -3,6 +3,26 @@
 **Tier:** 2 #7 (Sentientia LMS roadmap)
 **Maturity:** `MATURITY_ALPHA`
 **Version:** 2026052400 / 0.1.0-alpha
+**Last updated:** 2026-05-28 (C17 seed CLI + F-053..F-056 rename)
+
+## 2026-05-28 updates
+
+- **C17 second-wave seed CLI** shipped: `cli/seed_demo_boards.php`.
+  Creates 2 boards (completion-type/course-scope + skill-type/customer-
+  scope) via `board_manager::create()`, then optionally calls
+  `ranking_engine::recompute()` to fill `lb_entries` from REAL local
+  course-completion data. On the local 2,871-user DB the
+  completion-type board yields 108 entries against the "Introduction
+  to airpay" course in ~0.5s.
+- Also seeds one customer-wide opt-out (per-customer, not per-board)
+  so the consent gate (B3/F-002) has something visible on local.
+- `--purge` removes `[DEMO]` boards (and their entries via FK delete)
+  but intentionally leaves the customer-wide opt-out alone — those
+  belong to the user, not the seed.
+- State-card renamed from `local_sentientia_leaderboard-state.md` →
+  `sentientia_leaderboard-state.md` via F-053..F-056 cleanup.
+
+
 **Component:** `local_sentientia_leaderboard` + `block_sentientia_leaderboard`
 **ADR:** [ADR-014 — Real-time mechanism for `local_sentientia_leaderboard`](../docs/adr/ADR-014-real-time-leaderboards-realtime-mechanism.md)
 

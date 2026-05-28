@@ -3,6 +3,22 @@
 **Current phase:** H.0 — MVP scaffold
 **Version:** 0.1.0-alpha (2026052500)
 **Status:** MVP feature-complete, feature flag default OFF, mock-mode demoable
+**Last updated:** 2026-05-28 (C17 seed CLI + F-053..F-056 rename)
+
+## 2026-05-28 updates
+
+- **C17 second-wave seed CLI** shipped:
+  `cli/seed_demo_recommendations.php`. Creates one batch of 5
+  recommendations for a real local user across 5 real local courses
+  via `recommendation_engine::persist_batch()`, then flips rank-2 to
+  `dismissed` and rank-3 to `enrolled` via `update_status()` so the
+  full lifecycle (active / dismissed / enrolled) shows on the
+  dashboard block. Uses a sentinel model identifier
+  `[DEMO]-claude-mock-seed` so `--purge` finds seed rows precisely.
+- State-card renamed from `local_sentientia_recommendations-state.md`
+  → `sentientia_recommendations-state.md` via F-053..F-056 cleanup.
+
+
 **Owner:** Nitin Rajput (PM) + Claude (engineering)
 **Last updated:** 2026-05-25
 
