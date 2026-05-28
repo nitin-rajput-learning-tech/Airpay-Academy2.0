@@ -224,5 +224,178 @@ function xmldb_local_airpay_core_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026052201, 'local', 'airpay_core');
     }
 
+    // ── ADR-017 / Phase 0 (2026-05-28) — Polymorphic user-types
+    // Schema-only. No behaviour change at this savepoint; classification
+    // CLI (Phase 1) backfills rows, providers (Phase 2-5) read them.
+    //
+    // 4 v1 types: employee | consumer | partner_employee | operator.
+    // Tables are append-only (per Q1 immutability ruling); promotion
+    // creates a new mdl_user account, not a row update.
+    if ($oldversion < 2026052801) {
+
+        // ── local_airpay_user_type — the classification row, 1:1 with mdl_user
+        $table = new xmldb_table('local_airpay_user_type');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL, XMLDB_SEQUENCE);
+            $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL);
+            $table->add_field('user_type', XMLDB_TYPE_CHAR, '20', null,
+                XMLDB_NOTNULL);
+            $table->add_field('provisioning_source', XMLDB_TYPE_CHAR, '40', null,
+                XMLDB_NOTNULL, null, 'unknown');
+            $table->add_field('provisioned_at', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL, null, '0');
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL, null, '0');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL, null, '0');
+
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_key('uk_userid', XMLDB_KEY_UNIQUE, ['userid']);
+            $table->add_key('fk_userid', XMLDB_KEY_FOREIGN, ['userid'],
+                'user', ['id']);
+            $table->add_index('idx_type', XMLDB_INDEX_NOTUNIQUE, ['user_type']);
+
+            $dbman->create_table($table);
+        }
+
+        // ── local_airpay_employee_profile — Airpay-customer staff
+        $table = new xmldb_table('local_airpay_employee_profile');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL, XMLDB_SEQUENCE);
+            $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL);
+            $table->add_field('employee_id', XMLDB_TYPE_CHAR, '40', null,
+                null, null, null);
+            $table->add_field('department', XMLDB_TYPE_CHAR, '80', null,
+                null, null, null);
+            $table->add_field('job_title', XMLDB_TYPE_CHAR, '80', null,
+                null, null, null);
+            $table->add_field('manager_userid', XMLDB_TYPE_INTEGER, '10', null,
+                null, null, null);
+            $table->add_field('hire_date', XMLDB_TYPE_INTEGER, '10', null,
+                null, null, null);
+            $table->add_field('cost_center_path', XMLDB_TYPE_CHAR, '255', null,
+                null, null, null);
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL, null, '0');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL, null, '0');
+
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_key('uk_userid', XMLDB_KEY_UNIQUE, ['userid']);
+            $table->add_key('fk_userid', XMLDB_KEY_FOREIGN, ['userid'],
+                'user', ['id']);
+            $table->add_key('fk_manager', XMLDB_KEY_FOREIGN,
+                ['manager_userid'], 'user', ['id']);
+            // FK on manager_userid already creates the underlying index;
+            // no need for a separate XMLDB index entry.
+            $table->add_index('idx_dept', XMLDB_INDEX_NOTUNIQUE, ['department']);
+
+            $dbman->create_table($table);
+        }
+
+        // ── local_airpay_consumer_profile — public-signup learners
+        $table = new xmldb_table('local_airpay_consumer_profile');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL, XMLDB_SEQUENCE);
+            $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL);
+            $table->add_field('interests_json', XMLDB_TYPE_TEXT, null, null,
+                null, null, null);
+            $table->add_field('weekly_goal', XMLDB_TYPE_INTEGER, '2', null,
+                null, null, null);
+            $table->add_field('referral_source', XMLDB_TYPE_CHAR, '40', null,
+                null, null, null);
+            $table->add_field('consent_marketing', XMLDB_TYPE_INTEGER, '1', null,
+                XMLDB_NOTNULL, null, '0');
+            $table->add_field('consent_leaderboard', XMLDB_TYPE_INTEGER, '1', null,
+                XMLDB_NOTNULL, null, '0');
+            $table->add_field('payment_history_url', XMLDB_TYPE_CHAR, '255', null,
+                null, null, null);
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL, null, '0');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL, null, '0');
+
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_key('uk_userid', XMLDB_KEY_UNIQUE, ['userid']);
+            $table->add_key('fk_userid', XMLDB_KEY_FOREIGN, ['userid'],
+                'user', ['id']);
+
+            $dbman->create_table($table);
+        }
+
+        // ── local_airpay_partner_employee_profile — B2B partner-org staff
+        $table = new xmldb_table('local_airpay_partner_employee_profile');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL, XMLDB_SEQUENCE);
+            $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL);
+            $table->add_field('customer_id', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL);
+            $table->add_field('partner_employee_id', XMLDB_TYPE_CHAR, '40', null,
+                null, null, null);
+            $table->add_field('partner_department', XMLDB_TYPE_CHAR, '80', null,
+                null, null, null);
+            $table->add_field('partner_job_title', XMLDB_TYPE_CHAR, '80', null,
+                null, null, null);
+            $table->add_field('partner_manager_userid', XMLDB_TYPE_INTEGER, '10',
+                null, null, null, null);
+            $table->add_field('partner_hire_date', XMLDB_TYPE_INTEGER, '10', null,
+                null, null, null);
+            $table->add_field('cost_center_path', XMLDB_TYPE_CHAR, '255', null,
+                null, null, null);
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL, null, '0');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL, null, '0');
+
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_key('uk_userid', XMLDB_KEY_UNIQUE, ['userid']);
+            $table->add_key('fk_userid', XMLDB_KEY_FOREIGN, ['userid'],
+                'user', ['id']);
+            $table->add_key('fk_manager', XMLDB_KEY_FOREIGN,
+                ['partner_manager_userid'], 'user', ['id']);
+            // FK on partner_manager_userid creates the underlying index.
+            $table->add_index('idx_customer', XMLDB_INDEX_NOTUNIQUE,
+                ['customer_id']);
+
+            $dbman->create_table($table);
+        }
+
+        // ── local_airpay_operator_profile — platform operators / Site Admins
+        $table = new xmldb_table('local_airpay_operator_profile');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL, XMLDB_SEQUENCE);
+            $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL);
+            $table->add_field('operator_role', XMLDB_TYPE_CHAR, '40', null,
+                null, null, null);
+            $table->add_field('contact_phone', XMLDB_TYPE_CHAR, '40', null,
+                null, null, null);
+            $table->add_field('oncall_for_customer_id', XMLDB_TYPE_INTEGER, '10',
+                null, null, null, null);
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL, null, '0');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL, null, '0');
+
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_key('uk_userid', XMLDB_KEY_UNIQUE, ['userid']);
+            $table->add_key('fk_userid', XMLDB_KEY_FOREIGN, ['userid'],
+                'user', ['id']);
+
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026052801, 'local', 'airpay_core');
+    }
+
     return true;
 }

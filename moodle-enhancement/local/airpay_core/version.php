@@ -58,10 +58,17 @@ $plugin->component = 'local_airpay_core';
 // AI-quiz prompt-template override). Pure additive — no schema change,
 // stored under config_plugins (local_airpay_core/customer_<id>_<key>).
 // PHPUnit in tests/customer_config_test.php (12 methods).
-$plugin->version   = 2026052500;
+//
+// ADR-017 Phase 0 (2026-05-28) — polymorphic user_type schema. Adds 5
+// tables: local_airpay_user_type (the type classification, 1:1 with
+// user) + 4 profile shells (employee, consumer, partner_employee,
+// operator). Schema-only at this version — classification CLI runs in
+// Phase 1, providers consume in Phase 2-5. Q1 immutability ruling
+// means no UPDATE path on user_type column — append-only by design.
+$plugin->version   = 2026052801;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.6.0';  // +G.1 per-customer config registry (get/set_customer_config)
+$plugin->release   = '1.7.0';  // +ADR-017 Phase 0 user_type schema (5 tables)
 // Release history
 // 1.1.0  cron-health publisher + audit_log + structured_logger
 // 1.2.0  Phase A0 — feature flags + Switchboard infrastructure.
