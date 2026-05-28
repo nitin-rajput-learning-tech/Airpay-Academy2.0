@@ -93,3 +93,20 @@ $string['privacy:metadata:local_airpay_user_channel_prefs:dlt_consent_at']
     = 'वापरकर्त्याने DLT संमती दिल्याची वेळ.';
 $string['privacy:metadata:local_airpay_user_channel_prefs:dlt_consent_text']
     = 'ऑप्ट-इनच्या वेळी संमती भाषेचा स्नॅपशॉट.';
+
+// C14/F-082 stabilization (2026-05-28) - unified admin landing
+$string['admin_index_title'] = 'WhatsApp नियंत्रण पॅनेल';
+$string['admin_index_intro'] = 'WhatsApp चॅनेल प्रशासनासाठी एकत्रित लँडिंग.';
+$string['stats_sent_week'] = 'पाठवले (7 दिवस)';
+$string['stats_active_templates'] = 'सक्रिय टेम्पलेट';
+$string['stats_failures_24h'] = 'अपयश (24 तास)';
+$string['stats_flag_on'] = 'चालू';
+$string['stats_flag_off'] = 'बंद';
+$string['stats_flag_label'] = 'फीचर फ्लॅग';
+$string['admin_index_quicknav'] = 'त्वरित नेव्हिगेशन';
+$string['admin_index_link_templates'] = 'DLT टेम्पलेट व्यवस्थापक';
+$string['admin_index_link_templates_desc'] = 'टेम्पलेट व्यवस्थापित करा.';
+$string['admin_index_link_analytics'] = 'चॅनेल विश्लेषण';
+$string['admin_index_link_analytics_desc'] = 'ट्रेंड आणि अपयश दर.';
+$string['admin_index_link_settings'] = 'चॅनेल सेटिंग्ज';
+$string['admin_index_link_settings_desc'] = 'API की.';

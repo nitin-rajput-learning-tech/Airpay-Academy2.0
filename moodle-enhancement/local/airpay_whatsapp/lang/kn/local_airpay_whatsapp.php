@@ -93,3 +93,20 @@ $string['privacy:metadata:local_airpay_user_channel_prefs:dlt_consent_at']
     = 'ಬಳಕೆದಾರರು DLT ಒಪ್ಪಿಗೆ ನೀಡಿದ ಟೈಮ್‌ಸ್ಟ್ಯಾಂಪ್.';
 $string['privacy:metadata:local_airpay_user_channel_prefs:dlt_consent_text']
     = 'ಆಪ್ಟ್-ಇನ್ ಸಮಯದಲ್ಲಿ ಒಪ್ಪಿಗೆ ಭಾಷೆಯ ಸ್ನ್ಯಾಪ್‌ಶಾಟ್.';
+
+// C14/F-082 stabilization (2026-05-28) - unified admin landing
+$string['admin_index_title'] = 'WhatsApp ನಿಯಂತ್ರಣ ಫಲಕ';
+$string['admin_index_intro'] = 'WhatsApp ಚಾನೆಲ್ ಆಡಳಿತಕ್ಕಾಗಿ ಏಕೀಕೃತ ಲ್ಯಾಂಡಿಂಗ್.';
+$string['stats_sent_week'] = 'ಕಳುಹಿಸಲಾಗಿದೆ (7 ದಿನ)';
+$string['stats_active_templates'] = 'ಸಕ್ರಿಯ ಟೆಂಪ್ಲೇಟ್';
+$string['stats_failures_24h'] = 'ವೈಫಲ್ಯ (24h)';
+$string['stats_flag_on'] = 'ON';
+$string['stats_flag_off'] = 'OFF';
+$string['stats_flag_label'] = 'ಫೀಚರ್ ಫ್ಲ್ಯಾಗ್';
+$string['admin_index_quicknav'] = 'ತ್ವರಿತ ನ್ಯಾವಿಗೇಷನ್';
+$string['admin_index_link_templates'] = 'DLT ಟೆಂಪ್ಲೇಟ್ ಮ್ಯಾನೇಜರ್';
+$string['admin_index_link_templates_desc'] = 'ಟೆಂಪ್ಲೇಟ್ ನಿರ್ವಹಿಸಿ.';
+$string['admin_index_link_analytics'] = 'ಚಾನೆಲ್ ಅನಾಲಿಟಿಕ್ಸ್';
+$string['admin_index_link_analytics_desc'] = 'ಪ್ರವೃತ್ತಿಗಳು ಮತ್ತು ವೈಫಲ್ಯ ದರ.';
+$string['admin_index_link_settings'] = 'ಚಾನೆಲ್ ಸೆಟ್ಟಿಂಗ್';
+$string['admin_index_link_settings_desc'] = 'API ಕೀಲಿಗಳು.';

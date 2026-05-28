@@ -93,3 +93,20 @@ $string['privacy:metadata:local_airpay_user_channel_prefs:dlt_consent_at']
     = 'Muda ambapo mtumiaji alitoa idhini ya DLT.';
 $string['privacy:metadata:local_airpay_user_channel_prefs:dlt_consent_text']
     = 'Picha ya lugha ya idhini wakati wa kuchagua.';
+
+// C14/F-082 stabilization (2026-05-28) - unified admin landing
+$string['admin_index_title'] = 'Paneli ya udhibiti wa WhatsApp';
+$string['admin_index_intro'] = 'Mahali pamoja pa kusimamia kituo cha WhatsApp.';
+$string['stats_sent_week'] = 'Imetumwa (siku 7)';
+$string['stats_active_templates'] = 'Violezo amilifu';
+$string['stats_failures_24h'] = 'Kushindwa (24h)';
+$string['stats_flag_on'] = 'Imewashwa';
+$string['stats_flag_off'] = 'Imezimwa';
+$string['stats_flag_label'] = 'Bendera';
+$string['admin_index_quicknav'] = 'Urambazaji wa haraka';
+$string['admin_index_link_templates'] = 'Kidhibiti cha violezo';
+$string['admin_index_link_templates_desc'] = 'Simamia violezo.';
+$string['admin_index_link_analytics'] = 'Uchanganuzi';
+$string['admin_index_link_analytics_desc'] = 'Mwelekeo na kushindwa.';
+$string['admin_index_link_settings'] = 'Mipangilio';
+$string['admin_index_link_settings_desc'] = 'Funguo za API.';

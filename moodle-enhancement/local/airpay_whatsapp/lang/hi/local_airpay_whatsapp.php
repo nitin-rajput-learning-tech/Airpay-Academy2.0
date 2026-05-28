@@ -106,3 +106,20 @@ $string['content_template_course_due_soon']  = 'नमस्ते {firstname}, 
 $string['content_template_certificate_ready'] = 'बधाई हो {firstname}! {course_name} के लिए आपका सर्टिफिकेट तैयार है: {certificate_url}';
 $string['content_template_path_milestone']   = 'नमस्ते {firstname}, आपने {path_name} का {milestone_label} पूरा कर लिया है। जारी रखें: {path_url}';
 $string['content_throttle_note']             = '{$a} घंटों के भीतर एक ही ट्रिगर के डुप्लिकेट संदेशों को बर्स्ट नोटिफिकेशन से बचाने के लिए दबा दिया जाता है।';
+
+// C14/F-082 stabilization (2026-05-28) - unified admin landing
+$string['admin_index_title'] = 'WhatsApp नियंत्रण पैनल';
+$string['admin_index_intro'] = 'WhatsApp चैनल प्रशासन के लिए एकीकृत लैंडिंग।';
+$string['stats_sent_week'] = 'भेजा (7 दिन)';
+$string['stats_active_templates'] = 'सक्रिय DLT टेम्पलेट';
+$string['stats_failures_24h'] = 'विफलताएं (24h)';
+$string['stats_flag_on'] = 'चैनल चालू';
+$string['stats_flag_off'] = 'चैनल बंद';
+$string['stats_flag_label'] = 'फीचर फ्लैग';
+$string['admin_index_quicknav'] = 'त्वरित नेविगेशन';
+$string['admin_index_link_templates'] = 'DLT टेम्पलेट प्रबंधक';
+$string['admin_index_link_templates_desc'] = 'DLT टेम्पलेट जोड़ें और अनुमोदित करें।';
+$string['admin_index_link_analytics'] = 'चैनल एनालिटिक्स';
+$string['admin_index_link_analytics_desc'] = 'भेजने की मात्रा और विफलता दर।';
+$string['admin_index_link_settings'] = 'चैनल सेटिंग्स';
+$string['admin_index_link_settings_desc'] = 'प्रदाता API कुंजी।';

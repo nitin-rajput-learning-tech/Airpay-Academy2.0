@@ -58,6 +58,17 @@ if ($hassiteconfig) {
         32
     ));
 
+    // ── C14/F-082 stabilization (2026-05-28): Unified landing page ───
+    // Registered FIRST so it's the top entry under the local-plugins
+    // node (Moodle preserves registration order). Surfaces a stats
+    // snapshot + links to templates + analytics + settings.
+    $ADMIN->add($category, new admin_externalpage(
+        'local_airpay_whatsapp_index',
+        get_string('admin_index_title', 'local_airpay_whatsapp'),
+        new moodle_url('/local/airpay_whatsapp/admin/index.php'),
+        'moodle/site:config'
+    ));
+
     // ── DLT templates page ───────────────────────────────────────────
     $ADMIN->add($category, new admin_externalpage(
         'local_airpay_whatsapp_templates',

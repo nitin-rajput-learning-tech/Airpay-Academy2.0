@@ -104,3 +104,20 @@ $string['content_template_course_due_soon']  = 'Hi {firstname}, {course_name} is
 $string['content_template_certificate_ready'] = 'Congratulations {firstname}! Your certificate for {course_name} is ready: {certificate_url}';
 $string['content_template_path_milestone']   = 'Hi {firstname}, you have reached {milestone_label} of {path_name}. Keep going: {path_url}';
 $string['content_throttle_note']             = 'Duplicate sends of the same trigger to the same learner within {$a} hours are suppressed to protect against burst notifications.';
+
+// C14/F-082 stabilization (2026-05-28) - unified admin landing
+$string['admin_index_title'] = 'WhatsApp control panel';
+$string['admin_index_intro'] = 'Unified landing for WhatsApp channel administration. Use the quick links below to manage DLT templates, review analytics, or adjust channel settings.';
+$string['stats_sent_week'] = 'Sent (last 7 days)';
+$string['stats_active_templates'] = 'Active DLT templates';
+$string['stats_failures_24h'] = 'Failures (24h)';
+$string['stats_flag_on'] = 'Channel ON';
+$string['stats_flag_off'] = 'Channel OFF';
+$string['stats_flag_label'] = 'Feature flag';
+$string['admin_index_quicknav'] = 'Quick navigation';
+$string['admin_index_link_templates'] = 'DLT template manager';
+$string['admin_index_link_templates_desc'] = 'Add, edit, and approve DLT-compliant message templates.';
+$string['admin_index_link_analytics'] = 'Channel analytics';
+$string['admin_index_link_analytics_desc'] = 'Send-volume trends, failure rate, and per-template performance.';
+$string['admin_index_link_settings'] = 'Channel settings';
+$string['admin_index_link_settings_desc'] = 'Provider API keys, sandbox vs live mode, opt-out keywords.';
