@@ -1,10 +1,23 @@
 # State Card — `local_sentientia_live` (Sentientia LMS Live engagement)
 
-**Current phase:** E.9 — all 6 question types implemented (Wave D4)  
-**Version:** 0.2.0-alpha (2026052403)  
-**Status:** Trainer + audience UI live; 6 question types fully implemented (D4: open_ended, rating_scale, quiz, ranking; C1/C2: multichoice, word_cloud); feature flags default OFF; a11y pass complete  
+**Current phase:** E.10 partial (per-tenant kill switch UI shipped 2026-05-28 / B18)  
+**Version:** 0.2.1-alpha (post-B18)  
+**Status:** Trainer + audience UI live; 6 question types fully implemented; feature flags default OFF; a11y pass complete; **per-tenant kill switch admin UI now available at Site administration → Plugins → Local plugins → Sentientia Live tenant switches**.  
 **Owner:** Nitin Rajput (PM) + Claude (engineering)  
-**Last updated:** 2026-05-24
+**Last updated:** 2026-05-28 (C7 / F-022 stabilization audit closure)
+
+> **B18 (2026-05-28) — per-tenant kill switch:** New admin page at
+> `local/sentientia_live/admin/tenant_switches.php` lets a siteadmin
+> see the current state of every `live.*` feature flag per
+> (customer, tenant) pair and flip individual rows inline. Closes
+> F-089 audit finding "Sentientia Live flags globally enabled with no
+> per-tenant rollback path." 14 new lang strings in en + hi.
+
+> **F-022 audit closure (2026-05-28):** state-card was flagged stale.
+> This refresh reconciles it with reality. **E.10 admin UI is now
+> partially complete (kill switch shipped; per-tenant analytics +
+> per-tenant question-type override deferred to v2).** E.11 mobile
+> + E.12 analytics remain — see Open follow-ups below.
 
 > **Wave D4 (2026-05-24):** open_ended (500-char, paginated, moderation),
 > rating_scale (stars/NPS + mean/median), quiz (correct_index + scoring +
