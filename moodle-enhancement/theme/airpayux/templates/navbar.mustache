@@ -162,22 +162,15 @@
         <span>{{#str}}nav_profile, theme_airpayux{{/str}}</span>
     </a>
 </nav>
-<script>
-// Highlight active mobile nav item based on current URL.
-(function() {
-    var path = window.location.pathname;
-    var items = document.querySelectorAll('.ap-mobile-nav__item');
-    items.forEach(function(item) {
-        var page = item.getAttribute('data-page');
-        if ((page === 'dashboard' && (path.indexOf('/my/') !== -1 || path.indexOf('/my/dashboard') !== -1)) ||
-            (page === 'catalog' && path.indexOf('airpay_catalog/index') !== -1) ||
-            (page === 'courses' && path.indexOf('mycourses') !== -1) ||
-            (page === 'profile' && path.indexOf('profile') !== -1)) {
-            item.classList.add('ap-mobile-nav__item--active');
-        }
-    });
-})();
-</script>
+{{!
+    B9/F-064 stabilization fix (2026-05-28): inline <script> extracted to
+    AMD module `theme_airpayux/mobile_nav_highlight` so CSP-hardened
+    deployments don't block the highlighter. Same logic, no behavior
+    change.
+}}
+{{#js}}
+require(['theme_airpayux/mobile_nav_highlight'], function(m) { m.init(); });
+{{/js}}
 {{/isloggedin}}
 
 {{> theme_airpayux/primary-drawer-mobile }}

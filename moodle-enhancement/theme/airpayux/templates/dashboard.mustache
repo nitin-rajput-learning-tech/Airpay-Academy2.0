@@ -370,6 +370,30 @@
             {{#hascharts}}
             {{#js}}
             require(['theme_airpayux/chart_loader'], function() {
+                // B11/F-066 stabilization fix (2026-05-28): pull chart
+                // palette from CSS custom-properties so dark-mode + future
+                // per-customer brand overrides flow into chart fills
+                // automatically. The tokens live in _tokens.scss; reading
+                // them at chart-init time means a tenant brand change
+                // doesn't require a chart code change.
+                var rs = getComputedStyle(document.documentElement);
+                var palette = {
+                    primary:   rs.getPropertyValue('--ap-color-primary').trim()         || '#0066A7',
+                    accent:    rs.getPropertyValue('--ap-color-accent').trim()          || '#0f7a73',
+                    series3:   rs.getPropertyValue('--ap-color-chart-series-3').trim()  || '#7c3aed',
+                    warning:   rs.getPropertyValue('--ap-color-warning').trim()         || '#d97706',
+                    error:     rs.getPropertyValue('--ap-color-danger').trim()          || '#dc2626',
+                };
+                // rgba() shadow for bar chart — derive at runtime from
+                // primary hex (chart.js wants string; build a 70% alpha).
+                var hexToRgba = function(hex, alpha) {
+                    hex = hex.replace('#', '');
+                    var r = parseInt(hex.substring(0,2), 16);
+                    var g = parseInt(hex.substring(2,4), 16);
+                    var b = parseInt(hex.substring(4,6), 16);
+                    return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+                };
+
                 // Enrolment Trend Bar Chart
                 var ctx1 = document.getElementById('airpay-chart-enrolments');
                 if (ctx1) {
@@ -380,8 +404,8 @@
                             datasets: [{
                                 label: 'Enrolments',
                                 data: {{{chart_enrolments}}},
-                                backgroundColor: 'rgba(0, 102, 167, 0.7)',
-                                borderColor: '#0066A7',
+                                backgroundColor: hexToRgba(palette.primary, 0.7),
+                                borderColor: palette.primary,
                                 borderWidth: 1,
                                 borderRadius: 6
                             }]
@@ -402,7 +426,10 @@
                             labels: {{{chart_pie_labels}}},
                             datasets: [{
                                 data: {{{chart_pie_data}}},
-                                backgroundColor: ['#0066A7', '#0f7a73', '#7c3aed', '#d97706', '#dc2626'],
+                                backgroundColor: [
+                                    palette.primary, palette.accent, palette.series3,
+                                    palette.warning, palette.error
+                                ],
                                 borderWidth: 0
                             }]
                         },

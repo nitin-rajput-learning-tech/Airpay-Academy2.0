@@ -125,6 +125,16 @@ $ap-bp-desktop:  1600px;
     --ap-color-info:           var(--ap-color-primary);
     --ap-color-info-light:     var(--ap-color-primary-light);
 
+    /* Chart series palette — extends primary/accent/warning/danger
+       with neutral mid-tones for 5+ series doughnut/pie. Used by
+       dashboard chart code (F-066 fix) so dark-mode flip + future
+       per-customer brand overrides flow into chart fills without
+       touching the JS.
+    */
+    --ap-color-chart-series-3: #7c3aed;  /* purple — 3rd series after primary+accent */
+    --ap-color-chart-series-4: var(--ap-color-warning); /* warning amber */
+    --ap-color-chart-series-5: var(--ap-color-danger);  /* danger red */
+
     /* Gradients */
     --ap-gradient-hero:        linear-gradient(160deg, var(--ap-blue-900), var(--ap-blue-600), var(--ap-teal-500));
     --ap-gradient-cta:         linear-gradient(135deg, var(--ap-color-primary), var(--ap-color-accent));
