@@ -34,6 +34,58 @@ if ($action === 'complete' && confirm_sesskey()) {
     $goal = optional_param('weekly_goal', 3, PARAM_INT);
     set_user_preference('airpay_weekly_goal', min(max($goal, 1), 7), $USER->id);
 
+    // ── ADR-017 / C1.5 (2026-05-28) ─────────────────────────────────
+    // For consumer learners, also persist these choices to the
+    // local_airpay_consumer_profile table so they survive cross-device
+    // and feed into the provider's profile_context() / dashboard widgets.
+    // The user_preference rows are kept for backward compat with widgets
+    // that still read them.
+    $consent_marketing   = optional_param('consent_marketing', 0, PARAM_INT) ? 1 : 0;
+    $consent_leaderboard = optional_param('consent_leaderboard', 0, PARAM_INT) ? 1 : 0;
+
+    if (class_exists('\\local_airpay_core\\user_type_factory')) {
+        try {
+            $type_provider = \local_airpay_core\user_type_factory::for_user((int) $USER->id);
+            if ($type_provider::type_id() === 'consumer') {
+                // Upsert the consumer profile row.
+                $now = time();
+                $existing = $DB->get_record('local_airpay_consumer_profile',
+                    ['userid' => $USER->id]);
+                $row = (object) [
+                    'userid'              => $USER->id,
+                    'interests_json'      => !empty($interests)
+                        ? implode(',', array_map('intval', $interests))
+                        : null,
+                    'weekly_goal'         => min(max($goal, 1), 7),
+                    'referral_source'     => $existing->referral_source ?? null,
+                    'consent_marketing'   => $consent_marketing,
+                    'consent_leaderboard' => $consent_leaderboard,
+                    'payment_history_url' => $existing->payment_history_url ?? null,
+                    'timemodified'        => $now,
+                ];
+                if ($existing) {
+                    $row->id = $existing->id;
+                    $DB->update_record('local_airpay_consumer_profile', $row);
+                } else {
+                    $row->timecreated = $now;
+                    $DB->insert_record('local_airpay_consumer_profile', $row);
+                }
+
+                // Honour leaderboard consent through optout_manager so
+                // the new opt-IN gate (B3/F-002) is in sync.
+                if (class_exists(
+                    '\\local_sentientia_leaderboard\\optout_manager')) {
+                    \local_sentientia_leaderboard\optout_manager::set_consumer_consent(
+                        (int) $USER->id, (bool) $consent_leaderboard);
+                }
+            }
+        } catch (\Throwable $e) {
+            // Defensive: never block onboarding completion on profile-
+            // write failure. The user_preference fallback above still
+            // captures the data.
+        }
+    }
+
     redirect(new moodle_url('/my/'), 'Welcome to Airpay Academy! Your dashboard is ready.', null,
         \core\output\notification::NOTIFY_SUCCESS);
 }

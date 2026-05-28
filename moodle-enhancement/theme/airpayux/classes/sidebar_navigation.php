@@ -62,6 +62,25 @@ class sidebar_navigation {
 
         $collapsed = get_user_preferences('theme_airpayux_sidebar_collapsed', false);
 
+        // ── ADR-017 / C1.5 (2026-05-28) ─────────────────────────────────
+        // Expose user_type axis to the sidebar template. Role-axis
+        // filters above already exclude admin items from non-admin
+        // sidebars, so consumers naturally see the learner shape. This
+        // exposure lets the template add type-specific accent styling
+        // (e.g. consumer badge in header) and gives a safety net for
+        // future surfaces.
+        $user_type = 'employee';
+        $user_type_label = '';
+        if (class_exists('\\local_airpay_core\\user_type_factory')) {
+            try {
+                $type_provider = \local_airpay_core\user_type_factory::for_user((int) $USER->id);
+                $user_type = $type_provider::type_id();
+                $user_type_label = $type_provider::label();
+            } catch (\Throwable $e) {
+                // Defensive: leave defaults.
+            }
+        }
+
         return [
             'wwwroot'       => $CFG->wwwroot,
             'collapsed'     => (bool) $collapsed,
@@ -71,6 +90,12 @@ class sidebar_navigation {
             'issiteadmin'   => $this->issiteadmin,
             'isldadmin'     => $this->isldadmin,
             'ismanager'     => $this->ismanager,
+            'user_type'         => $user_type,
+            'user_type_label'   => $user_type_label,
+            'is_employee'         => ($user_type === 'employee'),
+            'is_consumer'         => ($user_type === 'consumer'),
+            'is_partner_employee' => ($user_type === 'partner_employee'),
+            'is_operator'         => ($user_type === 'operator'),
             'userfullname'  => fullname($USER),
             'useravatar'    => $OUTPUT->user_picture($USER, ['size' => 36, 'link' => false]),
             'userinitials'  => $this->get_initials($USER),
