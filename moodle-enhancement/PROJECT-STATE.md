@@ -5,6 +5,67 @@
 
 ---
 
+## 🔴 Tenant leak in onboarding wizard — FIXED (2026-05-28)
+
+**Severity: high** — found while debugging today's auth issue. A Public-
+tenant learner (user 2997, `open_path=/77`) hitting
+`/local/airpay_pages/onboarding.php` step 2 ("What do you want to learn?")
+saw **all 9 categories across all 3 tenants** — including internal Airpay
+subsidiaries (Vyaapaar Fintech, Vyaapaar, ZANZIBAR, Airpay Tanzania, Sales
+and Distribution, Airpay Payment Services). Worst case for a SaaS LMS
+positioning as "white-label multi-tenant."
+
+**Root cause:** both `onboarding.php` queries (interest categories +
+recommended courses) had **zero tenant scoping** — pulled all visible
+`{course_categories}` and `{course}` rows globally.
+
+**Fix (commit `db5242c9a`):**
+- New `\local_airpay_org\accesslib::get_tenant_category_id($open_path)` —
+  resolves a user's full `open_path` (e.g. `/1/79/115`) to the TOP-LEVEL
+  tenant's `course_categories.id` (`/1` → 2 = AIRPAY root).
+  Resolution chain (defensive):
+    1. **BizLMS canonical** — `local_costcenter.category` keyed by path
+       (works on production where BizLMS is installed).
+    2. **Sentientia-native** — `local_airpay_org.shortname` ↔
+       `course_categories.idnumber` (works on local + future non-BizLMS
+       Sentientia deployments — deterministic 1:1 convention).
+    3. `null` → caller fails closed (renders zero categories rather than
+       leak everything).
+- `onboarding.php` both queries scoped via
+  `cc.id = :catid OR cc.path LIKE :catpathwild`.
+
+**Verified per user type:**
+
+| Persona | `open_path` | Resolved tenant | Saw in onboarding (before / after) |
+|---------|-------------|-----------------|-----|
+| Public learner (uid 2997) | `/77` | cat 78 "Public" | **9 tiles → 1 tile** (Public 183 courses) |
+| Airpay employee (Nitin, uid 142) | `/1/183/184/231` | cat 2 "AIRPAY..." | (would have seen all 9) → 6 Airpay-tenant tiles only |
+| ZEEA employee (hypothetical) | `/177` | cat 178 "ZEEA" | → 2 ZEEA-tenant tiles only |
+| Site Admin (academy, uid 2) | `""` | `null` (defensive) | empty (admins skip onboarding via layout/dashboard.php anyway) |
+
+**Visual proof:** user 2997 re-ran onboarding step 2 after the fix → now
+shows exactly one "Public · 183 courses" tile, no AIRPAY/ZEEA leak.
+
+**Broader sweep needed (separate task):** other learner-facing surfaces
+that list courses/categories should be audited for the same anti-pattern:
+- `local/airpay_catalog/{index.php, public.php, mycourses.php}` via
+  `classes/catalog_manager.php` (browse / search)
+- `local/airpay_catalog/cart.php` (course details + checkout)
+- `theme/airpayux/layout/dashboard.php` learner "Recommended for You"
+  block (lines ~958-996 — naturally tenant-scoped by enrolment today, but
+  brittle for new learners)
+- `local/sentientia_recommendations/classes/recommendation_engine.php`
+  (AI-driven recommendations; ensure the prompt context is tenant-scoped)
+- `local/search/*` search results
+- featured-courses widget in `local/airpay_courses/lib.php`
+
+**Action for production:** the fix needs to be deployed to production
+(it's a real cross-tenant leak — recommend treating as a hotfix). On
+production `local_costcenter` is installed, so the canonical resolver
+path will be used; behaviour identical to local-dev verification above.
+
+---
+
 ## ✅ Auth diagnostic — "invalid login" after admin password reset (2026-05-28)
 
 User report: admin (`academy@airpay.co.in`) reset the password of
