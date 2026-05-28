@@ -17,6 +17,9 @@
 #  10. Uncommitted CONFIRM-tagged placeholders
 #  11. Stray git conflict markers in staged source files
 #      (P0 cleanup A, 2026-05-24 — CI #397/#403 root cause).
+#  12. State-card freshness — every staged plugin change should also
+#      stage its corresponding state-cards/<plugin>-state.md (Bucket
+#      E4, 2026-05-28 — F-099 Stabilization Audit).
 
 set -euo pipefail
 
@@ -51,7 +54,7 @@ STAGED_CONFLICT=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null \
 # CHECK 1: PHP SYNTAX
 # ============================================================
 echo ""
-echo "→ [1/11] PHP syntax check..."
+echo "→ [1/12] PHP syntax check..."
 if [ -n "$STAGED_PHP" ]; then
     PHP_ERRORS=0
     while IFS= read -r file; do
@@ -71,7 +74,7 @@ fi
 # ============================================================
 # CHECK 2: MOODLE_INTERNAL GUARD
 # ============================================================
-echo "→ [2/11] MOODLE_INTERNAL guard..."
+echo "→ [2/12] MOODLE_INTERNAL guard..."
 GUARD_ISSUES=0
 while IFS= read -r file; do
     [ -f "$file" ] || continue
@@ -88,7 +91,7 @@ done <<< "$STAGED_PHP"
 # ============================================================
 # CHECK 3: RAW SUPERGLOBAL ACCESS
 # ============================================================
-echo "→ [3/11] Superglobal access (\$_GET/\$_POST)..."
+echo "→ [3/12] Superglobal access (\$_GET/\$_POST)..."
 SUPER_ISSUES=0
 while IFS= read -r file; do
     [ -f "$file" ] || continue
@@ -107,7 +110,7 @@ done <<< "$STAGED_PHP"
 # ============================================================
 # CHECK 4: CREDENTIAL PATTERNS
 # ============================================================
-echo "→ [4/11] Credential leak detection..."
+echo "→ [4/12] Credential leak detection..."
 CRED_ISSUES=0
 CRED_PATTERNS=(
     "(api_key|apikey|api_secret|secret_key)\s*=\s*['\"][a-zA-Z0-9_\-]{10,}"
@@ -133,7 +136,7 @@ done <<< "$STAGED_ALL"
 # ============================================================
 # CHECK 5: .env FILE PROTECTION
 # ============================================================
-echo "→ [5/11] .env file protection..."
+echo "→ [5/12] .env file protection..."
 if echo "$STAGED_ALL" | grep -qE '^\.env$|/\.env$'; then
     err ".env file staged — NEVER commit credentials"
     ERRORS=$((ERRORS+1))
@@ -144,7 +147,7 @@ fi
 # ============================================================
 # CHECK 6: MOODLE CORE FILE PROTECTION
 # ============================================================
-echo "→ [6/11] Moodle core file protection..."
+echo "→ [6/12] Moodle core file protection..."
 CORE_ISSUES=0
 CORE_PATTERNS=(
     "moodle/lib/"
@@ -167,7 +170,7 @@ done
 # ============================================================
 # CHECK 7: CONTENT/SOPS PROTECTION
 # ============================================================
-echo "→ [7/11] SOP file protection..."
+echo "→ [7/12] SOP file protection..."
 if git diff --cached --name-only --diff-filter=D 2>/dev/null | grep -q 'content/sops/'; then
     err "content/sops/ file DELETED — NEVER delete SOP source files"
 elif git diff --cached --name-only --diff-filter=M 2>/dev/null | grep -q 'content/sops/'; then
@@ -179,7 +182,7 @@ fi
 # ============================================================
 # CHECK 8: SCORM ZIP VALIDATION
 # ============================================================
-echo "→ [8/11] SCORM ZIP structure..."
+echo "→ [8/12] SCORM ZIP structure..."
 if [ -n "$STAGED_ZIP" ]; then
     while IFS= read -r zipfile; do
         [ -f "$zipfile" ] || continue
@@ -216,7 +219,7 @@ fi
 # ============================================================
 # CHECK 9: version.php FORMAT
 # ============================================================
-echo "→ [9/11] version.php format..."
+echo "→ [9/12] version.php format..."
 VERSION_ISSUES=0
 while IFS= read -r file; do
     [ -f "$file" ] || continue
@@ -249,7 +252,7 @@ done <<< "$STAGED_PHP"
 # ============================================================
 # CHECK 10: UNCOMMITTED [CONFIRM] PLACEHOLDERS
 # ============================================================
-echo "→ [10/11] Uncommitted CONFIRM placeholders..."
+echo "→ [10/12] Uncommitted CONFIRM placeholders..."
 CONFIRM_ISSUES=0
 while IFS= read -r file; do
     [ -f "$file" ] || continue
@@ -277,7 +280,7 @@ done <<< "$STAGED_ALL"
 #   - {{<base/columns}}  Mustache parent-template inheritance
 #   - `// =====`         SCSS section comment dividers
 #   - `================`  setext-style heredoc CLI help banners
-echo "→ [11/11] Git conflict-marker scan..."
+echo "→ [11/12] Git conflict-marker scan..."
 CONFLICT_ISSUES=0
 if [ -n "$STAGED_CONFLICT" ]; then
     while IFS= read -r file; do
@@ -292,6 +295,35 @@ if [ -n "$STAGED_CONFLICT" ]; then
     [ "$CONFLICT_ISSUES" -eq 0 ] && ok "No conflict markers in staged source files"
 else
     ok "No scan-eligible files staged"
+fi
+
+# ============================================================
+# CHECK 12: STATE-CARD FRESHNESS (Bucket E4, 2026-05-28)
+# ============================================================
+# F-099 Stabilization Audit found 8 state cards in state-cards/ that
+# had drifted into fiction — plugins had been actively modified but
+# the state-cards/<plugin>-state.md was untouched for >90 days.
+#
+# This check runs in --mode=staged: looks at staged plugin changes
+# and warns if the matching state card is NOT also staged. Soft
+# warning (does not block — author may be splitting commits).
+echo "→ [12/12] State-card freshness check..."
+FRESHNESS_SCRIPT="tools/check_state_card_freshness.sh"
+if [ -f "$FRESHNESS_SCRIPT" ]; then
+    # NOTE: Use grep -c + sed instead of `... | while; warn`. A pipe
+    # forks a subshell and any `WARNINGS=$((...))` inside is lost.
+    FRESHNESS_OUT=$(bash "$FRESHNESS_SCRIPT" --mode=staged 2>&1 || true)
+    F_WARN_COUNT=$(echo "$FRESHNESS_OUT" | grep -c '^⚠' || true)
+    if [ "$F_WARN_COUNT" -gt 0 ]; then
+        # Surface up to 20 lines of context so authors can act.
+        warn "Plugin staged without matching state-card update"
+        echo "$FRESHNESS_OUT" | sed 's/^/         /' | head -20
+        WARNINGS=$((WARNINGS + F_WARN_COUNT - 1))  # already +1'd by warn
+    else
+        ok "State cards staged for all touched plugins"
+    fi
+else
+    ok "Freshness gate not installed — skip"
 fi
 
 # ============================================================
