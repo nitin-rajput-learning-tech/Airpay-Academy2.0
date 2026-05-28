@@ -181,3 +181,51 @@ which isn't registered in the local DB → a debug notice per non-admin
 dashboard load. Benign (Nitin resolves via his category-admin role) and
 absent on production where `local_courses` is installed; flagged for a
 separate look.
+
+### Multi-user cold-load confirmation (2026-05-28)
+
+The fix was re-verified visually on two additional multi-role users on a
+fresh session each (login → land on `/my/` → no prior switch):
+
+| User | Detected tier | Switcher cold-load | Result |
+|------|---------------|---------------------|--------|
+| Asif Ansari (id 2304, Course Author) | learner-style dashboard | **"Operations - Trainer" ACTIVE** ✓ (green check) + "Employee" link | PASS |
+| Joseph Mandapati (id 627, Compliance Officer) | admin dashboard (L&D Admin tier via category-context administrator role) | **"Operations - Administrator" ACTIVE** ✓ + "Employee" link | PASS |
+
+Both screenshots also incidentally re-confirm **Bug #11** (Joseph reaches
+Compliance from the sidebar) and the learner-vs-admin nav rules from the
+role_detector matrix tests.
+
+---
+
+## Trainer-side result panels — 5 newer Live question types (2026-05-28)
+
+Closes the "low-risk visual follow-up" noted in the question-types section
+above: yesterday only captured the audience-side renders + the multichoice
+trainer result panel (via VIS-6/7/10). Today's session captures the trainer
+result panel for the **5 remaining question types**, exercising the same
+seeded session 18 (code 800 844) and its persisted responses.
+
+Captures were driven by setting `local_sentientia_live_sessions.current_slide_id`
+to each slide id in turn (PHP CLI), then reloading `/local/sentientia_live/trainer/run.php?id=18`.
+Each capture cross-references the tally numbers in the question-types section above:
+
+| Type | Trainer panel renders | Tally cross-ref (yesterday's CLI) |
+|------|------------------------|-----------------------------------|
+| wordcloud (slide 31) | CSS-bucket frequency cloud — "innovation" largest, "speed" + "trust" smaller | `{innovation:2, speed:1, trust:1}` |
+| openended (slide 32) | Named-response list — "Bob: Very practical, thank you." (first of 2) | 2 responses |
+| rating (slide 33) | Summary cards: "Average 4.67 · Responses 3 · Scale 1–5" | avg 4.67 |
+| quiz (slide 34) | Correct-answer reveal: "Paris ✓ Correct" with prominent green bar `2 (66…%)` | `[2,0,1]` correct=index 0 |
+| ranking (slide 35) | "Rank · Item · Avg position" table — "Quality / 1.33" at rank 1 | Borda `[1.33, 2, 2.67]` |
+
+**Environmental note:** XAMPP's prefork Apache holds one worker per open
+SSE connection, so `run.php` (which opens an SSE channel) intermittently
+hangs subsequent screenshot/JS calls on the same tab. The captures above
+each landed cleanly on first or second try; the rendered panel is below
+the large join-code banner so each screenshot frames the top of the panel
+(enough to verify the type-specific layout). A proper MPM (production
+Apache or nginx) doesn't have this constraint.
+
+After capture, session 18's `current_slide_id` was restored to slide 30
+(multichoice, position 1 — the natural start) so the demo is left in a
+clean state.
