@@ -4,8 +4,24 @@
 **Current version:** `2026052001`  (release `1.1.2`, post-Sprint B + Hindi top-ups)
 **Maturity:** STABLE (production)
 **Last touched:** 2026-05-20 (P1 #49 — Hindi top-up)
-**Last refreshed:** 2026-05-24 (P1 state-card pass)
+**Last refreshed:** 2026-05-28 (F-039 closeout — runtime DB probe + table inventory)
 **Owner:** Head of L&D
+
+## 2026-05-28 runtime snapshot (F-039 closeout)
+
+`tools/audit_table_inventory.php` against the local Moodle DB:
+
+| Table | Row count | Interpretation |
+|-------|-----------|----------------|
+| `local_airpay_email_rules` | 12 | Phase 1–4 rule registry populated; all 11 rule types live on local |
+| `local_airpay_email_overrides` | 0 | Tenant-override admin UI present but unused on local (Airpay tenant uses default templates only) |
+| `local_airpay_email_log` | 0 | Outbound log writer is conditional on the admin opting in; default OFF on local. Production has rows (target = SOC2 audit retention 7y) |
+| `local_airpay_email_prefs` | 0 | Per-rule channel opt-out — populated when consumer learners run onboarding; no consumer signup yet on this DB |
+
+**Verdict** — no outstanding "Phase 5" work. The Sprint B observer +
+ramping reminders + certificate-PDF attach all shipped and verified
+under the 2026-05-13 work. Audit's F-039 was a stale "what's left"
+question already answered by the existing state-card content. Closed.
 
 ---
 

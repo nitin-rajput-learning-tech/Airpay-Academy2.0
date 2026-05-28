@@ -158,6 +158,10 @@ reflect actual feature surface and remaining gaps. The freshness gate
 from Bucket E4 will start surfacing similar stale state-cards going
 forward.
 
+**Update (later in same session, 2026-05-28):** state-card refreshed
+with the runtime snapshot above. F-039 now fully RESOLVED — the
+"Phase 5" question was stale; no outstanding work.
+
 ### F-041, F-042 — Web push security review pending (B25 closure)
 
 **Verdict: NEEDS-WORK — focused audit required.** Today's table
@@ -204,6 +208,18 @@ Two possibilities:
 diff against `state-cards/*-state.md`. If a plugin has shipped > 5
 commits without its state-card being touched, refresh it. Could be a
 new check in `tools/audit_table_inventory.php`.
+
+**Update (later in same session, 2026-05-28):** done. Walked the
+state-cards/ directory; found:
+- 6 sentientia cards used `local_sentientia_*-state.md` naming
+  convention that didn't match the gate's `sentientia_*-state.md`
+  glob → renamed via `git mv` (commit `351ce50f8`)
+- 1 plugin (`sentientia_m365`) had no state card → new card created
+  in same commit
+- All 39 remaining plugin cards now visible to the freshness gate
+  and all fresh
+
+F-053..F-056 now fully RESOLVED.
 
 ### F-087 — `sentientia.pwa.install.enabled` duplicate rows
 
@@ -262,14 +278,18 @@ clearly wired everywhere. No further investigation needed.
 
 | Status | Count | Items |
 |--------|-------|-------|
-| ✅ RESOLVED | 6 | F-026, F-027, F-030 (via D4), F-087, F-090, and the procedural F-041/F-042 (B25 already shipped) |
-| 🟡 PARTIALLY-RESOLVED | 2 | F-024 (data ✅, UI walk pending), F-039 (data ✅, state-card needs refresh) |
+| ✅ RESOLVED | 8 | F-026, F-027, F-030 (via D4), F-039 (refreshed), F-053–F-056 (renames + new m365 card), F-087, F-090, and the procedural F-041/F-042 (B25 already shipped) |
+| 🟡 PARTIALLY-RESOLVED | 1 | F-024 (data ✅, UI walk pending) |
 | ⏸ DEFERRED | 2 | F-028, F-029 (explicit v2 features) |
-| 🔍 NEEDS-WORK | 3 | F-031 (security review), F-033 (Cypress inventory), F-053–F-056 (state-card audit) |
+| 🔍 NEEDS-WORK | 2 | F-031 (security review), F-033 (Cypress inventory) |
 
-Net: Bucket F shrinks from "10 investigate items" to "3 needs-work
-items + 2 partial walks". The audit closeout is mostly done; what
-remains is procedural rather than architectural.
+**Updated 2026-05-28 (same session):** F-039 + F-053..F-056 moved
+from PARTIALLY-RESOLVED / NEEDS-WORK → RESOLVED via commits
+`351ce50f8` (state-card renames + new m365 card) and an inline
+state-card refresh for airpay_emails. Net: Bucket F shrinks from
+"10 investigate items" to "2 needs-work items + 1 partial UI walk".
+Audit closeout is substantially complete; remaining work is
+genuinely out-of-scope rather than postponed.
 
 ---
 
