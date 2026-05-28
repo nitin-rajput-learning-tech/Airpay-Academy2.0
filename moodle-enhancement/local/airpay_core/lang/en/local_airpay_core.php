@@ -72,3 +72,39 @@ $string['settings_pagetitle']                       = 'Airpay Core';
 $string['setting_backup_filename_template']         = 'Default backup filename template';
 $string['setting_backup_filename_template_desc']    = 'Template used when SENTIENTIA pipeline (and future Sentientia LMS export jobs) generates backup file names. Use the placeholder tokens listed below — they will be substituted at run time. Tokens not in the template are simply ignored. The {extension} is appended automatically.';
 $string['setting_backup_filename_tokens']           = 'Available tokens:';
+
+// ADR-017 Phase 2 / C1.2 (2026-05-28) — Polymorphic user_type labels + profile keys.
+// 4 user_types: employee | consumer | partner_employee | operator.
+// Per Q6 ruling: blocking in all 5 locales before any provider call-site cuts over.
+$string['usertype_employee_label']          = 'Employee';
+$string['usertype_consumer_label']          = 'Learner';
+$string['usertype_partner_employee_label']  = 'Partner staff';
+$string['usertype_operator_label']          = 'Operator';
+// Profile field labels (rendered by all 4 providers' profile_context())
+$string['profile_field_department']         = 'Department';
+$string['profile_field_job_title']          = 'Job title';
+$string['profile_field_employee_id']        = 'Employee ID';
+$string['profile_field_manager_name']       = 'Manager';
+$string['profile_field_hire_date']          = 'Joined';
+$string['profile_field_interests']          = 'Topics you follow';
+$string['profile_field_weekly_goal_hours']  = 'Weekly learning goal (hours)';
+$string['profile_field_referral_source']    = 'Heard about us from';
+$string['profile_field_courses_enrolled']   = 'Courses enrolled';
+$string['profile_field_consent_marketing']  = 'Marketing emails';
+$string['profile_field_consent_leaderboard'] = 'Visible on leaderboard';
+$string['profile_field_customer_name']      = 'Organisation';
+$string['profile_field_partner_employee_id'] = 'Employee ID';
+$string['profile_field_partner_department'] = 'Department';
+$string['profile_field_partner_job_title']  = 'Role';
+$string['profile_field_partner_manager']    = 'Manager';
+$string['profile_field_operator_role']      = 'Operator role';
+$string['profile_field_contact_phone']      = 'Contact';
+$string['profile_field_oncall_for']         = 'On-call for';
+// Onboarding step labels
+$string['onboarding_step_welcome']          = 'Welcome';
+$string['onboarding_step_interests']        = 'Pick your topics';
+$string['onboarding_step_weekly_goal']      = 'Set a weekly goal';
+$string['onboarding_step_manager_intro']    = 'Meet your manager';
+$string['onboarding_step_compliance_walkthrough'] = 'Mandatory training';
+$string['onboarding_step_consent_capture']  = 'Privacy choices';
+$string['onboarding_step_finish']           = 'You\'re all set';
