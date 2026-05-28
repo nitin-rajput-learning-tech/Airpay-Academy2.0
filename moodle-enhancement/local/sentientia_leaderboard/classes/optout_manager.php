@@ -7,23 +7,108 @@ namespace local_sentientia_leaderboard;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Privacy opt-out manager.
+ * Privacy opt-out manager — consent gate for leaderboard visibility.
  *
- * One row per (user, customer) in `local_sentientia_lb_optouts`. A user
- * is "opted out" if a row exists. There is no boolean — presence-only,
- * so reversal is a `delete_records` rather than a column flip. That makes
- * privacy export trivial (every row in the table represents an active
- * opt-out by definition) and means we can never accidentally restore a
- * leaderboard row for a previously-opted-out learner.
+ * Two consent regimes, gated by user_type (F-002 stabilization fix
+ * 2026-05-28; full ADR-017 user_type axis will collapse this into one
+ * provider call):
  *
- * Read-time semantics: the ranking_engine + WS reads filter their JOINs
- * against this table — an opted-out user's row is excluded from the
- * audience-facing payload but still computed internally (so HR analytics
- * under :viewall capability still sees them).
+ *   1. **EMPLOYEE** (legitimate-interest basis under GDPR Art. 6(1)(f)
+ *      and India DPDP Act 2023 §7(b) — workplace learning context):
+ *      ABSENCE from `local_sentientia_lb_optouts` = visible. User can
+ *      opt OUT via `/user/preferences.php` toggle.
+ *
+ *   2. **CONSUMER** (consent basis under GDPR Art. 6(1)(a) and DPDP §7(a)
+ *      — self-directed public learner, no employment context, no
+ *      legitimate-interest argument): user preference
+ *      `sentientia_leaderboard_consent_explicit = 1` MUST be present
+ *      for visibility. Default is hidden. User toggles IN via
+ *      `/local/sentientia_leaderboard/preferences.php`.
+ *
+ * Resolution rule for who is a consumer (interim, until ADR-017):
+ *   `open_path LIKE '/77%'` (Public tenant subtree).
+ *
+ * Read-time semantics: `ranking_engine` + WS reads filter JOINs against
+ * the union of (employee opt-outs ∪ consumers-without-consent). Both
+ * sets are excluded from audience-facing payload but :viewall capability
+ * holders (HR analytics) still see everyone in private aggregate views.
  *
  * @package local_sentientia_leaderboard
  */
 class optout_manager {
+
+    /**
+     * User preference key for consumer consent.
+     * Per-user, presence required (any value != '1' or missing = not consented).
+     */
+    public const CONSUMER_CONSENT_PREF = 'sentientia_leaderboard_consent_explicit';
+
+    /**
+     * Path prefix that classifies a user as "consumer" rather than
+     * "employee". Until ADR-017 lands, this is the lookup. After
+     * ADR-017, the resolver is `user_type_factory::for_user()`.
+     */
+    private const CONSUMER_OPEN_PATH_PREFIX = '/77';
+
+    /**
+     * Is the given user a consumer (no employment context)?
+     *
+     * Interim resolution (F-002 fix, 2026-05-28) — once
+     * `local_airpay_user_type` table lands per ADR-017, this method
+     * becomes a one-line lookup against that table and the open_path
+     * check is the migration backfill rule, not the runtime rule.
+     *
+     * @param int $userid
+     * @return bool
+     */
+    public static function user_is_consumer(int $userid): bool {
+        global $DB;
+        if ($userid <= 0) {
+            return false;
+        }
+        $openpath = (string) $DB->get_field('user', 'open_path',
+            ['id' => $userid], IGNORE_MISSING);
+        if ($openpath === '') {
+            // No tenant assigned (e.g. siteadmins) → treat as employee
+            // (workplace context). ADR-017 will revisit this default.
+            return false;
+        }
+        // open_path = '/77' OR '/77/...' subtree
+        return $openpath === self::CONSUMER_OPEN_PATH_PREFIX
+            || str_starts_with($openpath, self::CONSUMER_OPEN_PATH_PREFIX . '/');
+    }
+
+    /**
+     * Does the consumer have explicit consent to appear in leaderboards?
+     * For non-consumers this always returns true (consent not required).
+     *
+     * @param int $userid
+     * @return bool
+     */
+    public static function consumer_has_consent(int $userid): bool {
+        if ($userid <= 0) {
+            return false;
+        }
+        if (!self::user_is_consumer($userid)) {
+            return true; // Non-consumer: consent not required (employee basis).
+        }
+        $val = get_user_preferences(self::CONSUMER_CONSENT_PREF, '0', $userid);
+        return ((string) $val) === '1';
+    }
+
+    /**
+     * Set / clear consumer explicit consent. No-op for non-consumers.
+     *
+     * @param int $userid
+     * @param bool $consented
+     */
+    public static function set_consumer_consent(int $userid, bool $consented): void {
+        if (!self::user_is_consumer($userid)) {
+            return;
+        }
+        set_user_preference(self::CONSUMER_CONSENT_PREF,
+            $consented ? '1' : '0', $userid);
+    }
 
     /**
      * Is the given user opted out from public listing in the given customer?
@@ -76,20 +161,58 @@ class optout_manager {
     }
 
     /**
-     * Get the set of opted-out userids in a customer (for the ranking
-     * engine to filter results in bulk). Returns an array indexed by
-     * userid for O(1) hash lookup.
+     * Get the union of (employee opt-outs) ∪ (consumers without consent)
+     * for a customer — the ranking_engine filters this set out of
+     * audience-facing leaderboard payloads in bulk.
      *
-     * @param int $customerid
+     * F-002 stabilization fix (2026-05-28): added the second set.
+     * Previously this method only returned explicit opt-outs, which meant
+     * EVERY public learner was visible by default with no lawful basis.
+     * Now consumers (open_path starting with /77) are excluded unless
+     * they have explicit consent stored as a user preference.
+     *
+     * Performance note: the consumer-set query is keyed on `open_path`
+     * which has no index. On a 2,871-user local this still runs in <50ms
+     * and the result is cached for the duration of a single SSE
+     * connection. If production sees larger tenants we can index
+     * `mdl_user(open_path(20))` or memoize the consumer set per-request.
+     *
+     * @param int $customerid Defaults to 1 (Airpay).
      * @return array<int, bool> Map: userid => true
      */
     public static function opted_out_userids(int $customerid = 1): array {
         global $DB;
+        $out = [];
+
+        // Set 1: explicit employee opt-outs (existing behavior).
         $rows = $DB->get_records('local_sentientia_lb_optouts',
             ['customerid' => $customerid], '', 'id, userid');
-        $out = [];
         foreach ($rows as $r) {
             $out[(int) $r->userid] = true;
+        }
+
+        // Set 2: consumers (open_path = '/77' subtree) without explicit
+        // consent. F-002 (DPDP/GDPR consent gate). Resolver pivots once
+        // ADR-017 user_type table is live.
+        $prefix = self::CONSUMER_OPEN_PATH_PREFIX;
+        $consumer_no_consent = $DB->get_records_sql(
+            "SELECT u.id
+               FROM {user} u
+              WHERE u.deleted = 0 AND u.suspended = 0
+                AND (u.open_path = :exact OR " .
+                    $DB->sql_like('u.open_path', ':subtree') . ")
+                AND NOT EXISTS (
+                  SELECT 1 FROM {user_preferences} p
+                   WHERE p.userid = u.id
+                     AND p.name = :prefname
+                     AND p.value = '1')",
+            [
+                'exact'    => $prefix,
+                'subtree'  => $prefix . '/%',
+                'prefname' => self::CONSUMER_CONSENT_PREF,
+            ]);
+        foreach ($consumer_no_consent as $r) {
+            $out[(int) $r->id] = true;
         }
         return $out;
     }
