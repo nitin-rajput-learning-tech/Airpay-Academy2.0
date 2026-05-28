@@ -184,6 +184,49 @@ class user_manager {
                                     ['id' => $user->id]))->out(false),
         ];
 
+        // ── ADR-017 Phase 3 / C1.3 (2026-05-28) ─────────────────────────
+        // Polymorphic user_type integration. The hardcoded fields above
+        // are employee-shape; the provider supplies type-correct extras
+        // + the visible badge label per Q4 ruling.
+        //
+        // Backward-compat: employee-shape fields stay populated for
+        // user_type=employee so existing Mustache templates don't break.
+        // The conditional Mustache rendering (only show department for
+        // employees, only show interests for consumers, etc.) lands in
+        // the C1.3.b template-update chip; here we just expose the
+        // polymorphic data so the template has it when ready.
+        if (class_exists('\\local_airpay_core\\user_type_factory')) {
+            try {
+                $type_provider = \local_airpay_core\user_type_factory::for_user($userid);
+                $type_data     = $type_provider->profile_context($user);
+
+                $context['user_type']        = $type_provider::type_id();
+                $context['user_type_label']  = $type_provider::label();
+                $context['user_type_extras'] = $type_data['extras'] ?? [];
+
+                // Boolean flags for conditional Mustache rendering — one
+                // per type so templates can `{{#is_consumer}}...{{/is_consumer}}`
+                // without a string-equality test.
+                $context['is_employee']         = ($type_provider::type_id() === 'employee');
+                $context['is_consumer']         = ($type_provider::type_id() === 'consumer');
+                $context['is_partner_employee'] = ($type_provider::type_id() === 'partner_employee');
+                $context['is_operator']         = ($type_provider::type_id() === 'operator');
+            } catch (\Throwable $e) {
+                // Defensive: never break profile render if classification
+                // fails (e.g. fresh user with no row yet). Default to
+                // employee badge — consistent with the factory's
+                // defensive default.
+                $context['user_type']        = 'employee';
+                $context['user_type_label']  = get_string('usertype_employee_label',
+                    'local_airpay_core');
+                $context['user_type_extras'] = [];
+                $context['is_employee']         = true;
+                $context['is_consumer']         = false;
+                $context['is_partner_employee'] = false;
+                $context['is_operator']         = false;
+            }
+        }
+
         // Capability checks.
         $syscontext = \context_system::instance();
         // Cap fix (F-080/F-088, 2026-05-28): dropped the `local/users:edit`
