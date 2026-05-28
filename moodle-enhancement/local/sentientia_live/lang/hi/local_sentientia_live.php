@@ -480,3 +480,19 @@ $string['qt_ranking_item_fallback']          = 'आइटम {$a}';
 $string['qt_ranking_borda_explainer']        = 'Borda अंक उच्च स्थानों को पुरस्कृत करते हैं: N आइटम के साथ, स्थिति 1 को N अंक से स्थिति N को 1 अंक मिलता है। उच्च कुल = अधिक पसंदीदा।';
 $string['qt_ranking_a11y_item_moved']        = 'आइटम एक नई स्थिति में ले जाया गया';
 $string['qt_ranking_a11y_ranking_changed']   = 'रैंकिंग परिणाम बदल गए हैं';
+
+// B18/F-089 — Sentientia Live tenant switches (2026-05-28)
+$string['tenant_switches_title']    = 'सेंटिएंशिया लाइव टेनेंट स्विच';
+$string['tenant_switches_intro']    = 'प्रति-टेनेंट सेंटिएंशिया लाइव सुविधाओं को टॉगल करें। ग्लोबल फ्लैग सभी टेनेंट पर लागू होते हैं जब तक ओवरराइड न हो।';
+$string['tenant_switches_empty']    = 'अभी तक कोई सेंटिएंशिया लाइव फ़ीचर फ़्लैग नहीं मिला।';
+$string['tenant_switches_add_hint'] = 'एक नया प्रति-टेनेंट ओवरराइड बनाने के लिए, cli/set_live_flags.php स्क्रिप्ट का उपयोग करें।';
+$string['tenant_switches_flipped']  = 'स्विच अपडेट किया गया।';
+$string['th_flag_key']     = 'Flag key';
+$string['th_customer_id']  = 'Customer';
+$string['th_tenant_id']    = 'Tenant';
+$string['th_enabled']      = 'State';
+$string['th_modified']     = 'Last modified';
+$string['th_action']       = 'Action';
+$string['action_enable']   = 'सक्षम करें';
+$string['action_disable']  = 'अक्षम करें';
+$string['invalidflag']     = 'Unknown flag.';

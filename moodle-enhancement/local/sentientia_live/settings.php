@@ -64,4 +64,13 @@ if ($hassiteconfig) {
     ));
 
     $ADMIN->add('localplugins', $settings);
+
+    // ── B18 / F-089 stabilization (2026-05-28) ──────────────────────
+    // Per-tenant Sentientia Live kill switches admin page.
+    $ADMIN->add('localplugins', new admin_externalpage(
+        'local_sentientia_live_tenant_switches',
+        get_string('tenant_switches_title', 'local_sentientia_live'),
+        new moodle_url('/local/sentientia_live/admin/tenant_switches.php'),
+        'moodle/site:config'
+    ));
 }

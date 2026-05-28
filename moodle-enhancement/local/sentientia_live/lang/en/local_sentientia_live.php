@@ -365,6 +365,22 @@ $string['setting_default_min_word_length_desc'] = 'Tokens shorter than this many
 $string['setting_default_max_responses']        = 'Default maximum responses per learner';
 $string['setting_default_max_responses_desc']   = 'Hard cap on how many words a single audience member can contribute to one word-cloud slide. Default 3 — mirrors Mentimeter\'s standard.';
 
+// B18/F-089 stabilization (2026-05-28) — per-tenant Sentientia Live kill switch admin page.
+$string['tenant_switches_title']      = 'Sentientia Live tenant switches';
+$string['tenant_switches_intro']      = 'Toggle Sentientia Live features per tenant. Global flags apply to all tenants unless overridden; per-tenant rows shadow the global value for that (customer, tenant) pair. Use this to roll back Live to a single tenant if something goes wrong, or to dark-launch a new question type to one customer.';
+$string['tenant_switches_empty']      = 'No Sentientia Live feature flags found yet. Run the cli/set_live_flags.php script to seed defaults, then refresh this page.';
+$string['tenant_switches_add_hint']   = 'To create a new per-tenant override, run cli/set_live_flags.php with the appropriate customer_id and tenant_id arguments. A future chip will add an inline "Add override" form here.';
+$string['tenant_switches_flipped']    = 'Switch updated. Feature-flag cache invalidated; the change is live for the next request.';
+$string['th_flag_key']     = 'Flag key';
+$string['th_customer_id']  = 'Customer';
+$string['th_tenant_id']    = 'Tenant';
+$string['th_enabled']      = 'State';
+$string['th_modified']     = 'Last modified';
+$string['th_action']       = 'Action';
+$string['action_enable']   = 'Enable';
+$string['action_disable']  = 'Disable';
+$string['invalidflag']     = 'Unknown Sentientia Live flag.';
+
 // Word-cloud slide-editor form fields (per-slide overrides).
 $string['wc_min_word_length_label']      = 'Minimum word length';
 $string['wc_max_responses_label']        = 'Max words per learner';
