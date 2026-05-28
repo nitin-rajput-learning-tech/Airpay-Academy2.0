@@ -157,15 +157,39 @@ echo 'Done';
 
 ## Test Accounts (for post-deploy verification)
 
-| Username | Password | Role | What to Check |
-|----------|----------|------|---------------|
-| superadmin | Academy@2026 | Siteadmin | Full admin dashboard, Manage Users/Courses/Company, System Health |
-| test_admin | Airpay@2026 | L&D Admin | Admin dashboard without System Health, Quick Access menu |
-| test_manager | Airpay@2026 | Manager | Team KPIs, compliance table, 10 team members visible |
-| test_employee | Airpay@2026 | Employee | Employee dashboard, catalog browsing, course enrolment |
-| test_external | Airpay@2026 | External | Employee dashboard, Public tenant (id=77) |
+⚠ **F-076 reconciliation (2026-05-28):** The runbook previously listed
+`test_admin`, `test_manager`, `test_employee`, `test_external` with the
+password `Airpay@2026`. **These usernames do not exist on local — they
+were aspirational fixtures, not actual seed output.** What `seed_users.php`
+actually produces on a fresh local DB depends on the production-data
+import; check `mdl_user` for the real fixture set.
 
-**Note:** These are localhost test accounts. On production, use existing admin credentials. The test accounts can be created on staging using `local/airpay_pages/cli/seed_users.php`.
+| Username | Password | Tenant / Role | What to Check |
+|----------|----------|---------------|---------------|
+| `academy@airpay.co.in` | Academy@2026 | Site Admin (id=2, no tenant) | Full admin dashboard, Manage Users/Courses/Company, System Health |
+| `externaltest` | (set via `admin/reset_pwd.php` or use the CLI below) | Public learner (`open_path=/77`, id=773) | Consumer-shape dashboard, catalog browsing, signup flow |
+| `minadmin` | (set via reset) | Site Admin via role assignment (id=233, `open_path=/1`) | Confirms admin-via-role (not just is_siteadmin) detection works |
+| `shivam.sharma@airpay.co.in` | (set via reset) | Internal Airpay employee (id=64, `open_path=/1/2/7/218`) | Employee dashboard, internal tenant content |
+
+**To prepare test accounts on local (one-off per fresh install):**
+```bash
+# Reset passwords on existing fixture users
+php -r "
+define('CLI_SCRIPT', true);
+require_once('config.php');
+require_once(\$CFG->libdir . '/moodlelib.php');
+foreach ([
+    ['academy@airpay.co.in', 'Academy@2026'],
+    ['externaltest',           'Test@2026'],
+    ['shivam.sharma@airpay.co.in', 'Test@2026'],
+] as [\$u, \$p]) {
+    \$user = \$DB->get_record('user', ['username' => \$u]);
+    if (\$user) update_internal_user_password(\$user, \$p);
+}
+"
+```
+
+**On production:** Use existing admin credentials. Do NOT seed `airpay_pages/cli/seed_users.php` against the production DB — that CLI is local-dev-only.
 
 ---
 

@@ -1,0 +1,2507 @@
+/* ═══ Sprint 6 — User Profile Modernization ═══ */
+/* Modernize BizLMS profile without changing templates. */
+
+.edu_info {
+    max-width: 900px;
+    margin: 0 auto;
+}
+.edu_info .profile_data_content {
+    background: var(--ap-surface) !important;
+    border: 1px solid var(--ap-border) !important;
+    border-radius: var(--ap-radius-sm) !important;
+    padding: 24px !important;
+    margin-bottom: 16px !important;
+}
+.edu_info .userinfo-lable {
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    color: var(--ap-text) !important;
+    padding-bottom: 10px !important;
+    margin-bottom: 16px !important;
+    border-bottom: 2px solid var(--ap-border) !important;
+    position: relative;
+}
+.edu_info .userinfo-lable::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 40px;
+    height: 2px;
+    background: var(--ap-gradient);
+}
+.edu_info .cnt-left {
+    margin-bottom: 12px !important;
+}
+.edu_info .u_info {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: var(--ap-text) !important;
+}
+.edu_info label,
+.edu_info .cnt-left > span:first-child {
+    font-size: 12px !important;
+    color: var(--ap-text-muted) !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Profile avatar enhancement */
+.profile_data_content .userpicture,
+.userprofile .userpicture {
+    border: 3px solid transparent !important;
+    background-image: linear-gradient(#fff, #fff), var(--ap-gradient) !important;
+    background-origin: border-box !important;
+    background-clip: content-box, border-box !important;
+    border-radius: 50% !important;
+    padding: 2px !important;
+}
+
+/* Profile tabs (if exists) */
+.userprofile .nav-tabs .nav-link {
+    border: none !important;
+    border-bottom: 2px solid transparent !important;
+    font-weight: 500 !important;
+    color: var(--ap-text-secondary) !important;
+    transition: all 0.15s !important;
+}
+.userprofile .nav-tabs .nav-link.active {
+    color: var(--ap-primary) !important;
+    border-bottom-color: var(--ap-primary) !important;
+    background: transparent !important;
+}
+
+/* Dark mode */
+body.dark-mode .edu_info .profile_data_content {
+    background: #1a1d27 !important;
+    border-color: #2d3140 !important;
+}
+body.dark-mode .edu_info .userinfo-lable { color: #e8eaed !important; border-color: #2d3140 !important; }
+body.dark-mode .edu_info .u_info { color: #e8eaed !important; }
+
+/* ═══ Sprint 7 — Admin Dashboard Sparklines + Compliance Heatmap ═══ */
+
+/* Compliance heatmap cells */
+.ap-heatmap-cell {
+    width: 24px; height: 24px;
+    border-radius: 4px;
+    display: inline-block;
+    margin: 1px;
+}
+.ap-heatmap-cell--green { background: #dcfce7; }
+.ap-heatmap-cell--amber { background: #fef3c7; }
+.ap-heatmap-cell--red { background: #fef2f2; }
+.ap-heatmap-cell--empty { background: #f0f2f7; }
+
+/* Sparkline mini chart (inline SVG) */
+.ap-sparkline {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 8px;
+}
+.ap-sparkline svg { height: 20px; width: 60px; }
+.ap-sparkline-line { fill: none; stroke: var(--ap-primary); stroke-width: 1.5; }
+.ap-sparkline-line--up { stroke: var(--ap-success); }
+.ap-sparkline-line--down { stroke: var(--ap-danger); }
+
+/* ═══ Sprint 8 — Gamification Polish ═══ */
+
+/* Leaderboard rank highlight */
+.airpay-gamification__leaderboard-row--me {
+    background: var(--ap-primary-light) !important;
+    border-left: 3px solid var(--ap-primary) !important;
+    font-weight: 600;
+}
+
+/* Badge earned/locked states */
+.ap-badge-card {
+    padding: 16px;
+    border-radius: var(--ap-radius-sm);
+    border: 1px solid var(--ap-border);
+    text-align: center;
+    transition: transform 0.2s;
+}
+.ap-badge-card:hover { transform: translateY(-2px); }
+.ap-badge-card--earned {
+    background: var(--ap-surface);
+}
+.ap-badge-card--locked {
+    background: var(--ap-surface-alt, #f8f9fc);
+    opacity: 0.5;
+    filter: grayscale(0.8);
+}
+.ap-badge-card__icon {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    margin: 0 auto 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+}
+.ap-badge-card--earned .ap-badge-card__icon {
+    background: var(--ap-gradient);
+    color: #fff;
+}
+.ap-badge-card--locked .ap-badge-card__icon {
+    background: var(--ap-border);
+    color: var(--ap-text-muted);
+}
+
+/* Achievement unlock animation */
+@keyframes ap-badge-unlock {
+    0% { transform: scale(0.5); opacity: 0; }
+    60% { transform: scale(1.15); }
+    100% { transform: scale(1); opacity: 1; }
+}
+.ap-badge-card--just-earned {
+    animation: ap-badge-unlock 0.5s ease-out;
+}
+
+/* Streak heatmap (GitHub-style) */
+.ap-streak-heatmap {
+    display: grid;
+    grid-template-columns: repeat(7, 20px);
+    gap: 3px;
+}
+.ap-streak-heatmap__day {
+    width: 20px; height: 20px;
+    border-radius: 3px;
+    background: #ebedf0;
+}
+.ap-streak-heatmap__day--l1 { background: #c6e48b; }
+.ap-streak-heatmap__day--l2 { background: #7bc96f; }
+.ap-streak-heatmap__day--l3 { background: #239a3b; }
+.ap-streak-heatmap__day--l4 { background: #196127; }
+
+/* ═══ Sprint 8 — Notification Bell Badge ═══ */
+.ap-notif-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    background: var(--ap-danger);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    border: 2px solid var(--ap-surface);
+    animation: ap-counter-fadein 0.3s ease-out;
+}
+
+/* ═══ Sprint 9 — Static Pages Polish ═══ */
+
+/* FAQ accordion */
+.ap-faq-item {
+    border: 1px solid var(--ap-border);
+    border-radius: var(--ap-radius-sm);
+    margin-bottom: 8px;
+    overflow: hidden;
+}
+.ap-faq-item__question {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    font-weight: 600;
+    color: var(--ap-text);
+    cursor: pointer;
+    transition: background 0.15s;
+    font-size: 14px;
+}
+.ap-faq-item__question:hover { background: var(--ap-surface-alt, #f8f9fc); }
+.ap-faq-item__question i { transition: transform 0.2s; color: var(--ap-text-muted); }
+.ap-faq-item--open .ap-faq-item__question i { transform: rotate(180deg); }
+.ap-faq-item__answer {
+    display: none;
+    padding: 0 16px 14px;
+    font-size: 14px;
+    color: var(--ap-text-secondary);
+    line-height: 1.6;
+}
+.ap-faq-item--open .ap-faq-item__answer { display: block; }
+
+/* Static page TOC sidebar */
+.ap-static-toc {
+    position: sticky;
+    top: 80px;
+    padding: 16px;
+    background: var(--ap-surface);
+    border: 1px solid var(--ap-border);
+    border-radius: var(--ap-radius-sm);
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+}
+.ap-static-toc__title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ap-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 12px;
+}
+.ap-static-toc__link {
+    display: block;
+    padding: 6px 10px;
+    font-size: 13px;
+    color: var(--ap-text-secondary);
+    text-decoration: none;
+    border-radius: 6px;
+    transition: all 0.15s;
+}
+.ap-static-toc__link:hover,
+.ap-static-toc__link--active {
+    background: var(--ap-primary-light);
+    color: var(--ap-primary);
+}
+
+/* Back to top button */
+.ap-back-to-top {
+    position: fixed;
+    bottom: 24px;
+    right: 80px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--ap-primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: var(--ap-shadow-md);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.3s, transform 0.3s;
+    z-index: 99;
+    border: none;
+    font-size: 16px;
+}
+.ap-back-to-top--visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ═══ Sprint 10 — Mobile Bottom Nav ═══ */
+@media (max-width: 590px) {
+    .ap-mobile-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 1050;
+        background: var(--ap-surface);
+        border-top: 1px solid var(--ap-border);
+        display: flex;
+        justify-content: space-around;
+        padding: 6px 0 env(safe-area-inset-bottom, 0);
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.06);
+    }
+    .ap-mobile-nav__item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 6px 12px;
+        font-size: 10px;
+        color: var(--ap-text-muted);
+        text-decoration: none;
+        transition: color 0.15s;
+    }
+    .ap-mobile-nav__item i { font-size: 18px; margin-bottom: 2px; }
+    .ap-mobile-nav__item--active { color: var(--ap-primary); font-weight: 600; }
+    .ap-mobile-nav__item:hover { color: var(--ap-primary); }
+
+    /* Add bottom padding to body so content doesn't hide behind nav */
+    body { padding-bottom: 56px !important; }
+
+    /* Dark mode */
+    body.dark-mode .ap-mobile-nav {
+        background: #1a1d27;
+        border-color: #2d3140;
+    }
+}
+
+/* Hide mobile nav on desktop */
+@media (min-width: 591px) {
+    .ap-mobile-nav { display: none !important; }
+}
+
+/* ═══ Sprint 10 — Homepage Scroll Animations ═══ */
+@keyframes ap-fade-in-up {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.ap-scroll-animate {
+    opacity: 0;
+    transform: translateY(24px);
+}
+.ap-scroll-animate--visible {
+    animation: ap-fade-in-up 0.6s ease-out forwards;
+}
+.ap-scroll-animate--delay-1 { animation-delay: 0.1s; }
+.ap-scroll-animate--delay-2 { animation-delay: 0.2s; }
+.ap-scroll-animate--delay-3 { animation-delay: 0.3s; }
+
+/* ═══ Profile Page (ap-profile) ═══ */
+.ap-profile { max-width: 900px; margin: 0 auto; }
+.ap-profile__header {
+    background: var(--ap-surface, #fff);
+    border: 1px solid var(--ap-border, #e3eaf3);
+    border-radius: 16px;
+    padding: 28px 32px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+.ap-profile__avatar-section { position: relative; flex-shrink: 0; }
+.ap-profile__avatar img,
+.ap-profile__avatar .userpicture {
+    width: 72px !important; height: 72px !important;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    background-image: linear-gradient(#fff, #fff), var(--ap-gradient);
+    background-origin: border-box;
+    background-clip: content-box, border-box;
+    padding: 2px;
+}
+.ap-profile__actions {
+    position: absolute; bottom: -4px; right: -4px;
+    display: flex; gap: 4px;
+}
+.ap-profile__edit-btn {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--ap-primary, #0066A7); color: #fff;
+    border: 2px solid var(--ap-surface, #fff);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; cursor: pointer; text-decoration: none;
+    transition: background 0.15s;
+}
+.ap-profile__edit-btn:hover { background: var(--ap-primary-dark, #004d7a); color: #fff; }
+.ap-profile__info { flex: 1; min-width: 0; }
+.ap-profile__name {
+    font-size: 22px; font-weight: 800; color: var(--ap-text, #1a1a2e);
+    margin: 0 0 4px; line-height: 1.2;
+}
+.ap-profile__email {
+    font-size: 13px; color: var(--ap-text-secondary, #607286); margin: 0;
+}
+.ap-profile__email i { margin-right: 4px; }
+.ap-profile__stats {
+    display: flex; gap: 10px; flex-wrap: wrap;
+}
+.ap-profile__stat {
+    text-align: center; padding: 6px 14px;
+    background: var(--ap-bg, #F2F4FB);
+    border-radius: 10px; min-width: 60px;
+}
+.ap-profile__stat-num {
+    display: block; font-size: 20px; font-weight: 800;
+    color: var(--ap-primary, #0066A7); line-height: 1.2;
+}
+.ap-profile__stat-label {
+    display: block; font-size: 10px; color: var(--ap-text-muted, #8896a6);
+    text-transform: uppercase; letter-spacing: 0.3px; font-weight: 500;
+}
+/* Dark mode */
+body.dark-mode .ap-profile__header { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .ap-profile__name { color: #e8eaed; }
+body.dark-mode .ap-profile__email { color: #9ca3b4; }
+body.dark-mode .ap-profile__stat { background: #22252f; }
+@media (max-width: 590px) {
+    .ap-profile__header { flex-direction: column; text-align: center; padding: 20px 16px; }
+    .ap-profile__stats { justify-content: center; }
+}
+
+/* ═══ Profile Tabs (Modern) ═══ */
+.ap-profile-tabs {
+    max-width: 900px;
+    margin: 0 auto 20px;
+    background: var(--ap-surface, #fff);
+    border: 1px solid var(--ap-border, #e3eaf3);
+    border-radius: 12px;
+    overflow: hidden;
+}
+.ap-profile-tabs__scroll {
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding: 4px;
+    gap: 2px;
+}
+.ap-profile-tabs__scroll::-webkit-scrollbar { display: none; }
+
+.ap-profile-tabs__tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ap-text-secondary, #607286);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+}
+.ap-profile-tabs__tab i {
+    font-size: 14px;
+    width: 16px;
+    text-align: center;
+}
+.ap-profile-tabs__tab:hover {
+    background: var(--ap-bg, #F2F4FB);
+    color: var(--ap-text, #1a1a2e);
+}
+.ap-profile-tabs__tab--active {
+    background: var(--ap-primary-light, #e8f2f9) !important;
+    color: var(--ap-primary, #0066A7) !important;
+    font-weight: 600;
+}
+.ap-profile-tabs__tab--active i {
+    color: var(--ap-primary, #0066A7);
+}
+
+/* Dark mode */
+/* Profile page: BizLMS tab wrapper + content area */
+body.dark-mode .userprfltabs_container { background: transparent !important; }
+body.dark-mode .userprfltabs_container .nav-tabs { background: #1a1d27 !important; border-color: #2d3140 !important; }
+body.dark-mode .userprfltabs_container .nav-tabs .nav-link { color: #9ca3b4 !important; }
+body.dark-mode .userprfltabs_container .nav-tabs .nav-link.active { color: #60a5fa !important; border-color: #0066A7 !important; }
+body.dark-mode .tab-content { background: #14161e !important; }
+body.dark-mode #profile_tab { background: transparent !important; }
+body.dark-mode #display_modulesdata { background: transparent !important; }
+body.dark-mode .skillprfltabs_container { background: transparent !important; }
+/* BizLMS profile data sections (the actual content cards) */
+body.dark-mode .profile_data_content { background: #1a1d27 !important; border-color: #2d3140 !important; }
+body.dark-mode .userinfo-lable { color: #e8eaed !important; }
+body.dark-mode .u_info { color: #c4cad8 !important; }
+body.dark-mode .u_info .u_info_key { color: #8896a6 !important; }
+body.dark-mode .u_info .u_info_value { color: #e8eaed !important; }
+/* Profile enrichment cards (gamification + skills) */
+body.dark-mode .ap-profile__enrich-card { background: #1a1d27 !important; border-color: #2d3140 !important; }
+body.dark-mode .ap-profile__enrich-data strong { color: #e8eaed !important; }
+body.dark-mode .ap-profile__enrich-data small { color: #8896a6 !important; }
+body.dark-mode .ap-profile-tabs { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .ap-profile-tabs__tab { color: #9ca3b4; }
+body.dark-mode .ap-profile-tabs__tab:hover { background: #22252f; color: #e8eaed; }
+body.dark-mode .ap-profile-tabs__tab--active { background: #0d2540 !important; color: #60a5fa !important; }
+
+/* Mobile: tabs scroll horizontally */
+@media (max-width: 590px) {
+    .ap-profile-tabs__tab { padding: 8px 12px; font-size: 12px; }
+    .ap-profile-tabs__tab span { display: none; }
+    .ap-profile-tabs__tab i { font-size: 16px; }
+}
+
+/* Legacy compatibility — hide old nav-tabs inside profile */
+.userprfltabs_container .nav-tabs { display: none !important; }
+
+/* ═══ My Courses (/my/courses.php) — Moodle core block_myoverview ═══ */
+/* Learners see this when clicking "My Courses" in navbar. Core Moodle block. */
+
+/* Page title */
+#page-my-courses h2 {
+    font-size: 22px !important;
+    font-weight: 800 !important;
+    color: var(--ap-text) !important;
+}
+
+/* Remove heavy blue banner header on Course overview block */
+.block_myoverview > .card > .card-header,
+#page-my-courses .card-header {
+    background: var(--ap-primary) !important;
+    border-radius: var(--ap-radius-sm) var(--ap-radius-sm) 0 0 !important;
+    padding: 10px 16px !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+}
+
+/* Course cards */
+.block_myoverview .course-card,
+#page-my-courses .course-card {
+    border: 1px solid var(--ap-border, #e3eaf3) !important;
+    border-radius: var(--ap-radius-sm, 12px) !important;
+    transition: transform 0.2s, box-shadow 0.2s !important;
+    overflow: hidden !important;
+    background: var(--ap-surface, #fff) !important;
+}
+.block_myoverview .course-card:hover,
+#page-my-courses .course-card:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: var(--ap-shadow-md) !important;
+}
+
+/* Course name */
+.block_myoverview .coursename a,
+.block_myoverview .course-info-container a.aalink {
+    font-weight: 700 !important;
+    color: var(--ap-primary, #0066A7) !important;
+    text-decoration: none !important;
+    font-size: 14px !important;
+}
+.block_myoverview .coursename a:hover,
+.block_myoverview .course-info-container a.aalink:hover {
+    color: var(--ap-primary-dark, #004d7a) !important;
+}
+
+/* Category */
+.block_myoverview .course-card .text-muted {
+    font-size: 12px !important;
+    color: var(--ap-text-secondary) !important;
+}
+
+/* Progress bar */
+.block_myoverview .course-card .progress,
+#page-my-courses .course-card .progress {
+    height: 6px !important;
+    border-radius: 3px !important;
+    background: var(--ap-border) !important;
+}
+.block_myoverview .course-card .progress-bar,
+#page-my-courses .course-card .progress-bar {
+    background: var(--ap-gradient) !important;
+    border-radius: 3px !important;
+}
+
+/* Progress text */
+.block_myoverview .course-card .small,
+.block_myoverview .course-card small {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: var(--ap-text-secondary) !important;
+}
+
+/* 3-dot dropdown */
+.block_myoverview .course-card .dropdown-menu {
+    border-radius: 10px !important;
+    box-shadow: var(--ap-shadow-md) !important;
+    border: 1px solid var(--ap-border) !important;
+    padding: 6px !important;
+}
+.block_myoverview .course-card .dropdown-item {
+    border-radius: 6px !important;
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+}
+.block_myoverview .course-card .dropdown-item:hover {
+    background: var(--ap-primary-light, #e8f2f9) !important;
+}
+
+/* Filter bar */
+#page-my-courses [data-region="filter"] .dropdown-toggle,
+.block_myoverview .btn.dropdown-toggle {
+    border-radius: 8px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+}
+
+/* Card grid spacing */
+#page-my-courses .card-deck { gap: 12px !important; }
+
+/* Dark mode */
+body.dark-mode .block_myoverview .course-card,
+body.dark-mode #page-my-courses .course-card {
+    background: #1a1d27 !important;
+    border-color: #2d3140 !important;
+}
+body.dark-mode .block_myoverview .coursename a,
+body.dark-mode .block_myoverview .course-info-container a.aalink {
+    color: #60a5fa !important;
+}
+body.dark-mode .block_myoverview .course-card .text-muted {
+    color: #9ca3b4 !important;
+}
+body.dark-mode .block_myoverview > .card > .card-header,
+body.dark-mode #page-my-courses .card-header {
+    background: #004d7a !important;
+}
+
+/* B16: Mobile landscape orientation — prevent content overflow */
+@media (max-width: 900px) and (orientation: landscape) {
+    .ap-mobile-nav { display: none !important; }
+    .ap-course-sidebar { height: calc(100vh - 56px); }
+    .ap-course-progress-bar { position: relative; top: 0; }
+    .airpay-homepage__hero { min-height: 50vh; padding: 20px 20px 16px; }
+    .ap-onboard__card { max-height: 90vh; overflow-y: auto; }
+    .airpay-qr__code { width: 40vmin; height: 40vmin; }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Goal A.x (2026-05-22) — Sentientia design on vanilla /user/profile.php
+   ───────────────────────────────────────────────────────────────────────
+   The CUSTOM Sentientia profile at /local/airpay_users/profile.php uses
+   the `.edu_info` styles above. But learners + admins also reach Moodle's
+   vanilla profile at /user/profile.php through breadcrumbs, forum-author
+   "view profile" links, admin search-user clicks, etc.
+   The vanilla page uses different DOM classes (.userprofile / .profile_tree
+   / .node_category.card / dl > dt/dd) so the `.edu_info` styles don't
+   reach it. These rules retrofit the same Sentientia look + tokens onto
+   the vanilla profile without touching core PHP.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Container — center + cap width like other Sentientia surfaces */
+.userprofile {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 8px 0 32px;
+}
+
+/* The hidden h2 ("User profile") above the tree — keep hidden, just defensive */
+.userprofile > h2.visually-hidden {
+    position: absolute !important;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+}
+
+/* Profile tree — wrap section cards in a responsive grid so on wide
+   viewports the User Details / Course Details / Misc / Reports / Login
+   sections sit side-by-side instead of as a single tall column.
+   The masonry-style auto-fit gives a Notion-meets-Linear feel. */
+.userprofile .profile_tree {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+    align-items: start;
+    margin-top: 8px;
+}
+
+/* Each section is a `<section class="node_category card d-inline-block w-100 mb-3">` */
+.userprofile .profile_tree .node_category.card {
+    /* Reset Bootstrap defaults that fight our tokens */
+    display: block !important;
+    width: 100% !important;
+    margin-bottom: 0 !important;
+
+    /* Sentientia card */
+    background: var(--ap-color-bg-surface, #ffffff);
+    border: 1px solid var(--ap-color-border, #e5e7eb);
+    border-radius: 16px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+    overflow: hidden;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.userprofile .profile_tree .node_category.card:hover {
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+    transform: translateY(-1px);
+}
+
+.userprofile .profile_tree .node_category.card > .card-body {
+    padding: 20px 24px;
+}
+
+/* Section header — h3.lead "User details", "Course details" etc. */
+.userprofile .profile_tree .node_category h3.lead {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--ap-color-text-secondary, #5a6070);
+    margin: 0 0 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--ap-color-border, #e5e7eb);
+    position: relative;
+}
+
+.userprofile .profile_tree .node_category h3.lead::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -1px;
+    width: 36px;
+    height: 2px;
+    background: var(--ap-color-primary, #0066A7);
+    border-radius: 2px;
+}
+
+/* List inside each card — flat list, key-value rows */
+.userprofile .profile_tree .node_category ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.userprofile .profile_tree .node_category ul > li {
+    padding: 8px 0;
+    /* Faint divider between rows. Plain rgba avoids `color-mix()` which
+       scssphp (Moodle's SCSS compiler) may not parse cleanly. */
+    border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+}
+.userprofile .profile_tree .node_category ul > li:last-child {
+    border-bottom: none;
+}
+
+/* "Edit profile" CTA — first list item in User Details — promoted to button */
+.userprofile .profile_tree .node_category li.editprofile {
+    /* Lift out of the list flow visually */
+    border: none !important;
+    padding: 0 0 14px !important;
+}
+.userprofile .profile_tree .node_category li.editprofile > a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: var(--ap-color-primary, #0066A7);
+    color: #fff !important;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 10px;
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+.userprofile .profile_tree .node_category li.editprofile > a:hover {
+    background: var(--ap-color-primary-dark, #004d80);
+    transform: translateY(-1px);
+}
+
+/* Key-value <dl> rows — Moodle renders fields like Email/City/Timezone
+   as definition lists inside li.contentnode. Make dt+dd a 2-col grid. */
+.userprofile .profile_tree .node_category dl {
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    gap: 4px 12px;
+    margin: 0;
+}
+.userprofile .profile_tree .node_category dl > dt {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ap-color-text-secondary, #5a6070);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    align-self: center;
+}
+.userprofile .profile_tree .node_category dl > dd {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ap-color-text-primary, #1a1a2e);
+    margin: 0;
+    word-break: break-word;
+}
+/* Inline link inside dd (e.g., email mailto link) */
+.userprofile .profile_tree .node_category dl > dd a {
+    color: var(--ap-color-primary, #0066A7);
+    text-decoration: none;
+    font-weight: 500;
+}
+.userprofile .profile_tree .node_category dl > dd a:hover {
+    text-decoration: underline;
+}
+
+/* Plain link-list items (Course details, Misc, Reports sections — each
+   <li>'s child is just an <a>). Style them as a clean clickable row. */
+.userprofile .profile_tree .node_category li.contentnode > a:not(.btn):only-child,
+.userprofile .profile_tree .node_category ul > li > a:not(.btn):only-child {
+    display: block;
+    color: var(--ap-color-text-primary, #1a1a2e);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 4px 0;
+    transition: color 0.15s ease, padding-left 0.15s ease;
+}
+.userprofile .profile_tree .node_category li.contentnode > a:not(.btn):only-child:hover,
+.userprofile .profile_tree .node_category ul > li > a:not(.btn):only-child:hover {
+    color: var(--ap-color-primary, #0066A7);
+    padding-left: 4px;
+}
+
+/* The Course Details list often shows "Course profiles" as a label
+   followed by the list of courses. Treat the label as a subtle caption. */
+.userprofile .profile_tree .node_category li.contentnode > span:first-child:not(:only-child) {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ap-color-text-muted, #94a3b8);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 6px;
+}
+
+/* Login activity values look like timestamps — give them mono numbers */
+body#page-user-profile .node_category dd,
+.userprofile .profile_tree .node_category dd {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Dark-mode pass-through (vars handle most, but card borders need tuning) */
+html.dark-mode .userprofile .profile_tree .node_category.card,
+body.dark-mode .userprofile .profile_tree .node_category.card {
+    background: #1a1d27;
+    border-color: #2d3140;
+}
+html.dark-mode .userprofile .profile_tree .node_category h3.lead,
+body.dark-mode .userprofile .profile_tree .node_category h3.lead {
+    color: #94a3b4;
+    border-bottom-color: #2d3140;
+}
+
+/* Mobile — collapse the grid to a single column so cards stack */
+@media (max-width: 768px) {
+    .userprofile .profile_tree {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+    .userprofile .profile_tree .node_category.card > .card-body {
+        padding: 16px 18px;
+    }
+    .userprofile .profile_tree .node_category dl {
+        /* On narrow widths, dl labels above values is more readable */
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+    .userprofile .profile_tree .node_category dl > dt {
+        margin-top: 8px;
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Goal A.x (2026-05-22) — Sentientia design on /badges/mybadges.php
+   ───────────────────────────────────────────────────────────────────────
+   Every learner has Badges in their sidebar. Branded chrome was correct,
+   but the body was vanilla Moodle: bare .generalbox containers, default
+   alert empty state, no Sentientia polish. These rules retrofit our
+   design without core PHP changes.
+
+   Scope: only the badges page (body#page-badges-mybadges). The .generalbox
+   class is shared across many Moodle pages — we DON'T want to restyle
+   gradebook, quiz, etc.
+   ═══════════════════════════════════════════════════════════════════════ */
+body#page-badges-mybadges {
+
+    /* Center + cap width like other Sentientia surfaces */
+    #region-main {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 16px 0 32px;
+    }
+
+    /* Each .generalbox becomes a Sentientia card */
+    #region-main #issued-badge-table.generalbox,
+    #region-main .generalbox {
+        background: var(--ap-color-bg-surface, #ffffff);
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        border-radius: 16px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+        padding: 24px 28px;
+        margin: 0 0 20px;
+    }
+
+    /* Section headings */
+    #region-main .generalbox > h2,
+    #region-main #issued-badge-table > h2 {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--ap-color-text-primary, #1a1a2e);
+        margin: 0 0 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--ap-color-border, #e5e7eb);
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    /* Brand accent bar under section heading */
+    #region-main > .generalbox > h2::after,
+    #region-main > #issued-badge-table > h2::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        width: 40px;
+        height: 2px;
+        background: var(--ap-color-primary, #0066A7);
+        border-radius: 2px;
+    }
+    /* The "help" question-mark link beside the heading — tame it */
+    #region-main > .generalbox > h2 > a.btn-link,
+    #region-main > #issued-badge-table > h2 > a.btn-link {
+        padding: 0 !important;
+        margin: 0 !important;
+        color: var(--ap-color-text-muted, #94a3b8);
+    }
+    #region-main > .generalbox > h2 > a.btn-link:hover,
+    #region-main > #issued-badge-table > h2 > a.btn-link:hover {
+        color: var(--ap-color-primary, #0066A7);
+    }
+
+    /* Search form — already styled by Bootstrap; tighten layout */
+    .box.boxwidthwide.boxaligncenter {
+        background: transparent !important;
+        padding: 4px 0 12px !important;
+        margin: 0 !important;
+    }
+    .box .form-inline {
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    /* Empty state — currently a Bootstrap alert with default theme;
+       upgrade to a soft "no badges yet" empty state with icon */
+    .alert.alert-info.alert-block {
+        background: linear-gradient(180deg,
+            rgba(15, 122, 115, 0.06) 0%,
+            rgba(0, 102, 167, 0.04) 100%);
+        border: 1px dashed var(--ap-color-accent, #0f7a73);
+        border-radius: 14px;
+        color: var(--ap-color-text-primary, #1a1a2e);
+        font-size: 14px;
+        font-weight: 500;
+        padding: 28px 24px;
+        text-align: center;
+        position: relative;
+    }
+    /* Trophy icon before the empty-state text */
+    .alert.alert-info.alert-block::before {
+        content: "\f091";  /* FontAwesome fa-trophy */
+        font-family: "Font Awesome 6 Free", "FontAwesome", sans-serif;
+        font-weight: 900;
+        display: block;
+        font-size: 28px;
+        color: var(--ap-color-accent, #0f7a73);
+        margin-bottom: 10px;
+        opacity: 0.7;
+    }
+    /* Hide the dismiss-X — empty state is informational, not transient */
+    .alert.alert-info.alert-block > button.btn-close {
+        display: none;
+    }
+
+    /* Backpack settings region: keep the row but soften the indent */
+    .box.py-3.row.ms-5 {
+        margin-left: 0 !important;
+        padding: 12px 0 0 !important;
+    }
+    .box.py-3.row.ms-5 .btn-secondary {
+        background: var(--ap-color-bg-surface, #ffffff);
+        color: var(--ap-color-text-primary, #1a1a2e);
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        font-weight: 500;
+        border-radius: 10px;
+        padding: 8px 16px;
+        transition: all 0.15s ease;
+    }
+    .box.py-3.row.ms-5 .btn-secondary:hover {
+        background: var(--ap-color-primary, #0066A7);
+        color: #fff;
+        border-color: var(--ap-color-primary, #0066A7);
+    }
+
+    /* When the user DOES have badges, Moodle renders them as <a class="badge-image">
+       cards in a table or grid. Style those defensively so populated state
+       feels just as polished. */
+    .badge-image {
+        display: inline-block;
+        padding: 8px;
+        border-radius: 12px;
+        background: var(--ap-color-bg-surface-alt, #f8f9fc);
+        transition: all 0.2s ease;
+    }
+    .badge-image:hover {
+        background: var(--ap-color-primary-light, #e8f2f9);
+        transform: translateY(-2px);
+    }
+    .badge-image img {
+        max-width: 100px;
+        border-radius: 8px;
+    }
+
+    /* Mobile — tighten padding so cards don't waste real estate */
+    @media (max-width: 768px) {
+        #region-main > .generalbox,
+        #region-main > #issued-badge-table.generalbox {
+            padding: 18px 18px;
+            border-radius: 12px;
+        }
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Goal A.x (2026-05-22) — Sentientia design on /grade/report/overview/
+   ───────────────────────────────────────────────────────────────────────
+   Linked from User Profile → Reports → Grades overview. Every learner +
+   every course author (33 courses for Asif Ansari!) hits this page.
+   Two sections: "Courses I am taking" (with grade column) + "Courses I am
+   teaching" (Course Author view). Currently a bare Moodle table; we
+   wrap each in a Sentientia card.
+   ═══════════════════════════════════════════════════════════════════════ */
+body#page-grade-report-overview-index {
+
+    #region-main {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 16px 0 32px;
+    }
+
+    /* Each "Courses I am taking/teaching" pair = an H2 + a .table-responsive wrapper.
+       Wrap that pair in a Sentientia card via grouping selectors. */
+    #region-main h2 {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--ap-color-text-primary, #1a1a2e);
+        margin: 24px 0 0;
+        padding: 20px 24px 12px;
+        background: var(--ap-color-bg-surface, #ffffff);
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        border-bottom: none;
+        border-radius: 16px 16px 0 0;
+        position: relative;
+    }
+    /* Brand accent bar under heading */
+    #region-main h2::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 24px;
+        width: 40px;
+        height: 2px;
+        background: var(--ap-color-primary, #0066A7);
+        border-radius: 2px;
+    }
+    /* The .table-responsive following each H2 closes the card */
+    #region-main .table-responsive {
+        background: var(--ap-color-bg-surface, #ffffff);
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        border-top: none;
+        border-radius: 0 0 16px 16px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+        padding: 12px 8px;
+        margin-bottom: 24px;
+    }
+
+    /* Tables — clean Sentientia style */
+    #region-main table.table {
+        margin: 0 !important;
+        border: none !important;
+    }
+    #region-main table.table thead th {
+        background: var(--ap-color-bg-surface-alt, #f8f9fc);
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--ap-color-text-secondary, #5a6070);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid var(--ap-color-border, #e5e7eb);
+        padding: 12px 16px;
+    }
+    #region-main table.table tbody td {
+        padding: 12px 16px;
+        font-size: 14px;
+        color: var(--ap-color-text-primary, #1a1a2e);
+        border-color: rgba(229, 231, 235, 0.5);
+        vertical-align: middle;
+    }
+    /* Course-name link inside row — brand color on hover */
+    #region-main table.table tbody td a {
+        color: var(--ap-color-text-primary, #1a1a2e);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.15s ease;
+    }
+    #region-main table.table tbody td a:hover {
+        color: var(--ap-color-primary, #0066A7);
+        text-decoration: underline;
+    }
+    /* Grade cell — tabular numbers, right-aligned for scanning */
+    #region-main #overview-grade tbody td:nth-child(2) {
+        font-variant-numeric: tabular-nums;
+        font-weight: 600;
+        text-align: right;
+        white-space: nowrap;
+    }
+    /* Striped rows — softer alternation */
+    #region-main table.table-striped tbody tr:nth-child(even) {
+        background: rgba(248, 249, 252, 0.5);
+    }
+    /* Hover row */
+    #region-main table.table-hover tbody tr:hover {
+        background: var(--ap-color-primary-light, #e8f2f9);
+        cursor: pointer;
+    }
+
+    /* Mobile — drop card padding so tables breathe */
+    @media (max-width: 768px) {
+        #region-main h2 { padding: 16px 18px 10px; }
+        #region-main .table-responsive { padding: 8px 4px; }
+        #region-main table.table thead th,
+        #region-main table.table tbody td { padding: 10px 12px; }
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Goal A.x (2026-05-22) — Sentientia design on /admin/* interior
+   ───────────────────────────────────────────────────────────────────────
+   Site Administrators land here from the search bar in topbar or by URL.
+   The branded chrome (sidebar / header / footer) was correct but the
+   interior was bare Moodle Boost: vanilla h4 col-sm-3 grid of link lists,
+   tabs without padding, form inputs without our brand styling.
+
+   Body classes: `path-admin admin pagelayout-admin`. Scoping ALL rules
+   under body.path-admin keeps everything else untouched.
+   ═══════════════════════════════════════════════════════════════════════ */
+body.path-admin {
+
+    /* Container */
+    #region-main {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 16px 0 32px;
+    }
+
+    /* Tab nav (when present) — pill tabs with brand active state */
+    #region-main .nav-tabs {
+        border-bottom: 1px solid var(--ap-color-border, #e5e7eb);
+        gap: 4px;
+        margin-bottom: 16px;
+    }
+    #region-main .nav-tabs .nav-link {
+        border: none !important;
+        background: transparent !important;
+        color: var(--ap-color-text-secondary, #5a6070) !important;
+        font-size: 14px;
+        font-weight: 500;
+        padding: 10px 16px;
+        border-radius: 8px 8px 0 0;
+        margin: 0;
+        transition: all 0.15s ease;
+    }
+    #region-main .nav-tabs .nav-link:hover {
+        background: var(--ap-color-bg-surface-alt, #f8f9fc) !important;
+        color: var(--ap-color-text-primary, #1a1a2e) !important;
+    }
+    #region-main .nav-tabs .nav-link.active {
+        color: var(--ap-color-primary, #0066A7) !important;
+        background: var(--ap-color-bg-surface, #ffffff) !important;
+        border-bottom: 2px solid var(--ap-color-primary, #0066A7) !important;
+        font-weight: 600;
+    }
+
+    /* The tab-content rows organised as a 4-col grid of category cards */
+    #region-main .tab-pane.active .row > [class*="col-"] {
+        margin-bottom: 20px;
+    }
+
+    /* Each category card (col-sm-3 wrapping a section of admin links) */
+    #region-main .tab-pane.active .col-sm-3,
+    #region-main .tab-pane.active .col-sm-6 {
+        position: relative;
+    }
+    #region-main .tab-pane.active .col-sm-3 > h4,
+    #region-main .tab-pane.active .col-sm-6 > h4 {
+        /* Tighten the title styling — uppercase letter-spaced "AI", "Badges", etc. */
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: var(--ap-color-text-secondary, #5a6070);
+        margin: 0 0 12px;
+        padding: 16px 18px 10px;
+        background: var(--ap-color-bg-surface, #ffffff);
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        border-bottom: none;
+        border-radius: 12px 12px 0 0;
+        position: relative;
+    }
+    #region-main .tab-pane.active .col-sm-3 > h4::after,
+    #region-main .tab-pane.active .col-sm-6 > h4::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 18px;
+        width: 28px;
+        height: 2px;
+        background: var(--ap-color-primary, #0066A7);
+        border-radius: 2px;
+    }
+
+    /* The UL inside each category card */
+    #region-main .tab-pane.active .col-sm-3 > ul,
+    #region-main .tab-pane.active .col-sm-6 > ul,
+    #region-main .tab-pane.active .col-sm-3 > h4 + div ul,
+    #region-main .tab-pane.active .col-sm-6 > h4 + div ul {
+        list-style: none;
+        padding: 4px 14px 14px;
+        margin: 0;
+        background: var(--ap-color-bg-surface, #ffffff);
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        border-top: none;
+        border-radius: 0 0 12px 12px;
+        min-height: 120px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+    }
+    #region-main .tab-pane.active .col-sm-3 ul li,
+    #region-main .tab-pane.active .col-sm-6 ul li {
+        padding: 4px 0;
+    }
+    #region-main .tab-pane.active .col-sm-3 ul a,
+    #region-main .tab-pane.active .col-sm-6 ul a {
+        color: var(--ap-color-text-primary, #1a1a2e);
+        text-decoration: none;
+        font-size: 13.5px;
+        font-weight: 500;
+        display: block;
+        padding: 4px 8px;
+        margin: 0 -8px;
+        border-radius: 6px;
+        transition: all 0.15s ease;
+    }
+    #region-main .tab-pane.active .col-sm-3 ul a:hover,
+    #region-main .tab-pane.active .col-sm-6 ul a:hover {
+        background: var(--ap-color-primary-light, #e8f2f9);
+        color: var(--ap-color-primary, #0066A7);
+        padding-left: 12px;
+    }
+
+    /* Admin settings form pages (admin/settings.php style) — form rows */
+    #region-main .form-group,
+    #region-main .fitem,
+    #region-main .form-item {
+        margin-bottom: 16px;
+    }
+    #region-main .form-control,
+    #region-main input[type="text"],
+    #region-main input[type="email"],
+    #region-main input[type="url"],
+    #region-main input[type="number"],
+    #region-main textarea,
+    #region-main select {
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 14px;
+        background: var(--ap-color-bg-surface, #ffffff);
+        color: var(--ap-color-text-primary, #1a1a2e);
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    #region-main .form-control:focus,
+    #region-main input:focus,
+    #region-main textarea:focus,
+    #region-main select:focus {
+        border-color: var(--ap-color-primary, #0066A7);
+        box-shadow: 0 0 0 3px rgba(0, 102, 167, 0.1);
+        outline: none;
+    }
+
+    /* Admin "Settings" headings inside admin pages */
+    #region-main h2,
+    #region-main h3 {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--ap-color-text-primary, #1a1a2e);
+        margin: 24px 0 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--ap-color-border, #e5e7eb);
+        position: relative;
+    }
+    #region-main h2::after,
+    #region-main h3::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        width: 36px;
+        height: 2px;
+        background: var(--ap-color-primary, #0066A7);
+        border-radius: 2px;
+    }
+
+    /* Primary submit buttons on admin forms — brand color */
+    #region-main button.btn-primary,
+    #region-main input[type="submit"].btn-primary,
+    #region-main .btn-primary {
+        background: var(--ap-color-primary, #0066A7);
+        border-color: var(--ap-color-primary, #0066A7);
+        color: #fff;
+        font-weight: 600;
+        padding: 8px 18px;
+        border-radius: 10px;
+        transition: all 0.15s ease;
+    }
+    #region-main button.btn-primary:hover,
+    #region-main input[type="submit"].btn-primary:hover,
+    #region-main .btn-primary:hover {
+        background: var(--ap-color-primary-dark, #004d80);
+        border-color: var(--ap-color-primary-dark, #004d80);
+        transform: translateY(-1px);
+    }
+
+    /* Mobile — collapse to single column + tighten */
+    @media (max-width: 768px) {
+        #region-main .tab-pane.active .col-sm-3,
+        #region-main .tab-pane.active .col-sm-6 {
+            width: 100%;
+            max-width: 100%;
+            flex: 0 0 100%;
+        }
+        #region-main .nav-tabs .nav-link {
+            padding: 8px 12px;
+            font-size: 13px;
+        }
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Goal A.x (2026-05-22) — Sentientia design on /course/view.php
+   ───────────────────────────────────────────────────────────────────────
+   Every course click in the LMS hits this page. Branded chrome was fine
+   but section/activity layout was bare Moodle Boost: no card boundaries,
+   plain section headings, default activity rows.
+
+   MINIMAL polish: brand the section as a card and the section heading,
+   leave activity internals untouched (Moodle's modtype-specific styling
+   handles those — adding more there risks regression).
+
+   Scope: body.path-course-view (covers all formats: topics, weeks, single).
+   ═══════════════════════════════════════════════════════════════════════ */
+body.path-course-view {
+
+    /* Course content container */
+    #region-main {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 16px 0 32px;
+    }
+
+    /* Each section card */
+    .course-content ul.section-list > li.section.course-section,
+    .course-content ul.topics > li.section.course-section,
+    .course-content ul.section-list > li.course-section,
+    .course-content ul.topics > li.course-section {
+        background: var(--ap-color-bg-surface, #ffffff);
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        border-radius: 16px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+        padding: 0;
+        margin: 0 0 16px;
+        list-style: none;
+        overflow: hidden;
+        transition: box-shadow 0.2s ease;
+    }
+    .course-content ul.section-list > li.section.course-section:hover,
+    .course-content ul.topics > li.section.course-section:hover {
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+    }
+
+    /* Section header — title bar */
+    .course-section .course-section-header,
+    .course-section .section-item > .course-section-header {
+        padding: 16px 24px 12px;
+        border-bottom: 1px solid var(--ap-color-border, #e5e7eb);
+        background: var(--ap-color-bg-surface-alt, #f8f9fc);
+        position: relative;
+    }
+    .course-section .course-section-header h3,
+    .course-section .course-section-header h2,
+    .course-section .course-section-header .sectionname {
+        font-size: 16px !important;
+        font-weight: 700;
+        color: var(--ap-color-text-primary, #1a1a2e);
+        margin: 0;
+        padding: 0;
+        border: none;
+    }
+    /* Brand accent bar at start of section header */
+    .course-section .course-section-header::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 16px;
+        bottom: 12px;
+        width: 3px;
+        background: var(--ap-color-primary, #0066A7);
+        border-radius: 0 3px 3px 0;
+    }
+
+    /* Section body — activity list area */
+    .course-section .section-item > div:not(.course-section-header),
+    .course-section .content {
+        padding: 12px 24px 18px;
+    }
+
+    /* Course title at top — STICKY (Moodle 5.2 borrow P0 #13)
+       Pin the course name + tab nav to the top of the viewport
+       during long-page scroll so learners always know which
+       course they're in. Useful when course-view scrolls past
+       multiple sections + activities. Lift off the content
+       beneath with backdrop blur + soft shadow when stuck. */
+    #region-main > .course-header,
+    .page-header-headings,
+    #region-main > h1 {
+        margin-bottom: 20px;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--ap-color-border, #e5e7eb);
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border-radius: 0 0 12px 12px;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    }
+
+    /* Activity rows — subtle hover only (don't override modtype internals) */
+    .course-section li.activity:hover,
+    .course-section .activity:hover {
+        background: var(--ap-color-bg-surface-alt, #f8f9fc);
+        border-radius: 8px;
+    }
+
+    /* ─── Moodle 5.2 borrow P0 #3: anchor-link highlight ─────────────
+       When a learner clicks a section/activity anchor link (or
+       follows a deep-link from email/notification), the targeted
+       element flashes brand-light briefly so the eye lands. CSS-
+       only — no JS. Uses :target with a 2s ease-out animation. */
+    .course-section:target,
+    .course-section li.activity:target,
+    .course-section li.activity .activity-item:target {
+        animation: ap-anchor-flash 2s ease-out 1;
+    }
+    @keyframes ap-anchor-flash {
+          0% { background: var(--ap-color-primary-light, #e8f2f9); }
+         30% { background: var(--ap-color-primary-light, #e8f2f9); }
+        100% { background: transparent; }
+    }
+
+    /* ─── Moodle 5.2 borrow P0 #4: availability conditions visible ──
+       In stock Moodle 5.1 the `.availabilityinfo` block (which
+       contains "Available from <date>", "Not available unless you
+       complete X", etc.) is muted-grey + visually de-emphasised.
+       Moodle 5.2 promotes it to a clearly-visible chip so learners
+       can SEE the unlock condition, not just bounce off the
+       "Restricted" label.
+
+       Borrow as a styled chip: amber-warning tint background,
+       small lock icon space-reserved, brand-secondary text. Sits
+       below the activity title (or below the section title for
+       section-level restrictions). */
+    .course-section .availabilityinfo,
+    .course-section li.activity .availabilityinfo,
+    .course-section .course-section-header .availabilityinfo {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(217, 119, 6, 0.10);       /* amber-warning 10% */
+        color: rgb(146, 64, 14);                    /* amber-warning dark */
+        border: 1px solid rgba(217, 119, 6, 0.25);
+        border-radius: 10px;
+        padding: 6px 12px;
+        font-size: 12px;
+        font-weight: 500;
+        margin: 8px 0 4px;
+        max-width: 100%;
+    }
+    /* Lock-icon prefix (CSS-only — no template change) */
+    .course-section .availabilityinfo::before,
+    .course-section li.activity .availabilityinfo::before {
+        content: '🔒';
+        font-size: 11px;
+        flex-shrink: 0;
+        opacity: 0.7;
+    }
+    /* Hide vanilla Moodle's separate lock icon — our pseudo replaces it */
+    .course-section .availabilityinfo .fa-lock,
+    .course-section .availabilityinfo .icon[title*="ock"] {
+        display: none;
+    }
+    /* If multiple availability lines (compound restrictions), stack */
+    .course-section .availabilityinfo + .availabilityinfo {
+        display: flex;
+        margin-top: 4px;
+    }
+
+    /* ─── Moodle 5.2 borrow P0 #2: activity header with completion labels ──
+       Moodle 5.2 ships an `activityinfoinheader` layout option that
+       moves the per-activity completion dropdown + due-date chip INTO
+       the activity header next to the title (was: a separate row
+       beneath the title). On 5.1.3+ we don't have the layout option
+       but we can replicate the visual via CSS — push the
+       [data-region="activity-information"] block up next to the
+       activity title, style its dropdown as a brand-light pill chip,
+       and tighten the spacing.
+
+       Net UX win: completion + dates are inline with the activity
+       name instead of a separate row. Course pages feel ~25% denser
+       without losing readability. */
+    .course-section li.activity .activity-item {
+        position: relative;
+    }
+    .course-section li.activity [data-region="activity-information"] {
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        margin: 0;
+        padding: 0;
+        z-index: 2;
+    }
+    .course-section li.activity [data-region="activity-information"]
+                                [data-region="completion-info"] {
+        margin: 0;
+    }
+    /* Completion dropdown chip — pill with brand-light bg */
+    .course-section li.activity .completion-dropdown > a,
+    .course-section li.activity .completion-dropdown > button,
+    .course-section li.activity .completion-dropdown .btn {
+        background: var(--ap-color-primary-light, #e8f2f9) !important;
+        color: var(--ap-color-primary-dark, #004d80) !important;
+        border: 1px solid transparent !important;
+        border-radius: 12px !important;
+        padding: 4px 12px !important;
+        font-size: 11px !important;
+        font-weight: 600 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+    .course-section li.activity .completion-dropdown > a:hover,
+    .course-section li.activity .completion-dropdown > button:hover {
+        background: var(--ap-color-primary, #0066A7) !important;
+        color: #ffffff !important;
+        border-color: var(--ap-color-primary, #0066A7) !important;
+    }
+    /* "Done" / completed state — green pill */
+    .course-section li.activity .completion-dropdown[data-state="complete"] > a,
+    .course-section li.activity [data-region="completion-info"]
+                                [data-completion-state="complete"] > a,
+    .course-section li.activity .btn-success.completion-dropdown {
+        background: rgba(22, 163, 74, 0.12) !important;
+        color: rgb(22, 163, 74) !important;
+    }
+    /* Activity-dates chip — neutral surface-alt */
+    .course-section li.activity .activity-dates,
+    .course-section li.activity [data-region="activity-dates"] {
+        background: var(--ap-color-bg-surface-alt, #f8f9fc);
+        color: var(--ap-color-text-secondary, #5a6070);
+        border-radius: 10px;
+        padding: 3px 10px;
+        font-size: 11px;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-right: 8px;
+    }
+
+    /* Push the activity title to leave room for the inline info */
+    .course-section li.activity .activity-item .activity-name-area,
+    .course-section li.activity .activity-item .activitytitle {
+        padding-right: 200px;
+    }
+
+    /* Mobile — restore stacked layout (the absolute positioning
+       crams the title on small screens) */
+    @media (max-width: 768px) {
+        .course-section li.activity [data-region="activity-information"] {
+            position: static;
+            transform: none;
+            margin-top: 8px;
+            text-align: right;
+        }
+        .course-section li.activity .activity-item .activity-name-area,
+        .course-section li.activity .activity-item .activitytitle {
+            padding-right: 0;
+        }
+    }
+
+    /* Mobile — tighter padding */
+    @media (max-width: 768px) {
+        .course-content ul > li.course-section {
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+        .course-section .course-section-header {
+            padding: 14px 18px 10px;
+        }
+        .course-section .course-section-header::before {
+            top: 14px;
+            bottom: 10px;
+        }
+        .course-section .section-item > div:not(.course-section-header),
+        .course-section .content {
+            padding: 10px 18px 14px;
+        }
+    }
+}
+
+
+/* Dark-mode pass-through for badges page (outside body scope so html.dark-mode
+   selector reaches it). */
+html.dark-mode body#page-badges-mybadges #region-main > #issued-badge-table.generalbox,
+html.dark-mode body#page-badges-mybadges #region-main > .generalbox,
+body.dark-mode#page-badges-mybadges #region-main > #issued-badge-table.generalbox,
+body.dark-mode#page-badges-mybadges #region-main > .generalbox {
+    background: #1a1d27;
+    border-color: #2d3140;
+}
+html.dark-mode body#page-badges-mybadges #region-main > .generalbox > h2,
+html.dark-mode body#page-badges-mybadges #region-main > #issued-badge-table > h2,
+body.dark-mode#page-badges-mybadges #region-main > .generalbox > h2,
+body.dark-mode#page-badges-mybadges #region-main > #issued-badge-table > h2 {
+    color: #e5e7eb;
+    border-bottom-color: #2d3140;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Goal A.x (2026-05-23) — Sentientia design on /grade/report/grader/
+   ───────────────────────────────────────────────────────────────────────
+   Per-course gradebook. Course Authors land here when they click a row
+   in the "I am teaching" section of /grade/report/overview/. Vanilla
+   Moodle Boost styling: plain table, vanilla pagination, plain initial
+   alphabet filter, no card chrome.
+
+   We wrap the grader in a Sentientia card and apply the same typographic
+   discipline as the overview restyle: uppercase letter-spaced thead,
+   tabular-num grade cells, brand-light hover rows, pill-buttons for
+   initial-filter + pagination.
+
+   Body class scoping: `body.path-grade-report-grader` is wider than
+   `body#page-grade-report-grader-index` (catches future nested grader
+   pages), and won't collide with the overview restyle which is scoped
+   to body#page-grade-report-overview-index.
+   ═══════════════════════════════════════════════════════════════════════ */
+body.path-grade-report-grader {
+
+    #region-main {
+        max-width: 1280px;     // wider than overview (1080) — grader has more cols
+        margin: 0 auto;
+        padding: 16px 0 32px;
+    }
+
+    /* Tertiary navigation row (Gradebook nav combobox + Search users + Filter)
+       — wrap in a clean white surface above the table. */
+    .tertiary-navigation.full-width-bottom-border {
+        background: var(--ap-color-bg-surface, #ffffff);
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        border-radius: 16px 16px 0 0;
+        border-bottom: none;
+        padding: 16px 20px;
+        margin: 0;
+    }
+    /* Gradebook nav dropdown + Search users field — consistent height */
+    .tertiary-navigation [data-region="page-toggler"] .dropdown-toggle,
+    .tertiary-navigation .dropdown-toggle,
+    .tertiary-navigation input[type="text"],
+    .tertiary-navigation input[type="search"] {
+        font-size: 14px;
+        font-weight: 500;
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        border-radius: 8px;
+        background: var(--ap-color-bg-surface-alt, #f8f9fc);
+        padding: 8px 12px;
+        color: var(--ap-color-text-primary, #1a1a2e);
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .tertiary-navigation input[type="text"]:focus,
+    .tertiary-navigation input[type="search"]:focus,
+    .tertiary-navigation .dropdown-toggle:focus {
+        outline: none;
+        border-color: var(--ap-color-primary, #0066A7);
+        box-shadow: 0 0 0 3px rgba(0, 102, 167, 0.12);
+        background: var(--ap-color-bg-surface, #ffffff);
+    }
+
+    /* Initial-letter alphabet filter (First name / Last name) — pill buttons */
+    .initialbar {
+        gap: 4px;
+        margin-bottom: 8px;
+    }
+    .initialbarlabel {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--ap-color-text-secondary, #5a6070);
+        align-self: center;
+    }
+    .initialbar .pagination {
+        gap: 2px;
+        margin: 0;
+    }
+    .initialbar .page-link,
+    .initialbar input.page-link {
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--ap-color-text-secondary, #5a6070);
+        font-size: 12px;
+        font-weight: 600;
+        min-width: 26px;
+        height: 26px;
+        padding: 0 6px;
+        border-radius: 6px;
+        line-height: 24px;
+        text-align: center;
+        transition: all 0.12s ease;
+    }
+    .initialbar .page-link:hover {
+        background: var(--ap-color-primary-light, #e8f2f9);
+        color: var(--ap-color-primary, #0066A7);
+    }
+    .initialbar .page-item.active .page-link,
+    .initialbar .page-link.dropdown-item-active {
+        background: var(--ap-color-primary, #0066A7);
+        color: #ffffff;
+        border-color: var(--ap-color-primary, #0066A7);
+        box-shadow: 0 1px 3px rgba(0, 102, 167, 0.25);
+    }
+
+    /* The grade table container */
+    .gradeparent {
+        background: var(--ap-color-bg-surface, #ffffff);
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        border-top: none;
+        border-radius: 0 0 16px 16px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+        padding: 0;
+        overflow-x: auto;
+        margin-bottom: 24px;
+    }
+
+    /* The grader table itself */
+    #user-grades.gradereport-grader-table {
+        margin: 0 !important;
+        border: none !important;
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 100%;
+    }
+
+    /* Top "Participants" + activity-name row — subtle brand surface */
+    #user-grades > tbody > tr:first-child,
+    #user-grades > tr:first-child {
+        background: var(--ap-color-bg-surface-alt, #f8f9fc);
+    }
+    #user-grades > tbody > tr:first-child > th,
+    #user-grades > tr:first-child > th {
+        background: var(--ap-color-bg-surface-alt, #f8f9fc);
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--ap-color-border, #e5e7eb);
+    }
+    /* Activity (column) header title text */
+    #user-grades .gradeitemheader {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--ap-color-text-primary, #1a1a2e);
+        text-transform: none;
+        letter-spacing: 0;
+    }
+
+    /* Heading row — First name / Last name + activity columns */
+    #user-grades tr.heading > th {
+        background: var(--ap-color-bg-surface, #ffffff);
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--ap-color-text-secondary, #5a6070);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 12px 16px;
+        border-bottom: 2px solid var(--ap-color-border, #e5e7eb);
+        border-top: none;
+        vertical-align: middle;
+    }
+    #user-grades tr.heading > th a.arrow_link {
+        color: inherit;
+        text-decoration: none;
+        margin-left: 4px;
+        opacity: 0.7;
+        transition: opacity 0.15s ease;
+    }
+    #user-grades tr.heading > th a.arrow_link:hover {
+        opacity: 1;
+        color: var(--ap-color-primary, #0066A7);
+    }
+
+    /* User rows — soft striping + branded hover */
+    #user-grades tr.userrow > th,
+    #user-grades tr.userrow > td {
+        padding: 12px 16px;
+        font-size: 14px;
+        color: var(--ap-color-text-primary, #1a1a2e);
+        border-color: rgba(229, 231, 235, 0.5);
+        border-top: 1px solid rgba(229, 231, 235, 0.5);
+        vertical-align: middle;
+    }
+    #user-grades tr.userrow.even > th,
+    #user-grades tr.userrow.even > td {
+        background: rgba(248, 249, 252, 0.5);
+    }
+    #user-grades tr.userrow:hover > th,
+    #user-grades tr.userrow:hover > td {
+        background: var(--ap-color-primary-light, #e8f2f9);
+        cursor: default;
+    }
+
+    /* User name cell — branded link + initials avatar polish */
+    #user-grades tr.userrow .username {
+        color: var(--ap-color-text-primary, #1a1a2e);
+        text-decoration: none;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        transition: color 0.15s ease;
+    }
+    #user-grades tr.userrow .username:hover {
+        color: var(--ap-color-primary, #0066A7);
+    }
+    #user-grades tr.userrow .userinitials {
+        background: var(--ap-color-primary, #0066A7) !important;
+        color: #ffffff !important;
+        font-weight: 600;
+        font-size: 12px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    /* Email cell — softer typography */
+    #user-grades tr.userrow td.useremail {
+        color: var(--ap-color-text-secondary, #5a6070);
+        font-size: 13px;
+    }
+
+    /* Grade cells — tabular-nums, right aligned for scanning */
+    #user-grades tr.userrow td.grade,
+    #user-grades tr.userrow td[class*="cell"][class*="c"] {
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+    /* Course total column — emphasized */
+    #user-grades tr.userrow td.cell.lastcol,
+    #user-grades tr.userrow td.lastcol {
+        font-weight: 600;
+        background: rgba(248, 249, 252, 0.7);
+    }
+    #user-grades tr.userrow:hover td.cell.lastcol,
+    #user-grades tr.userrow:hover td.lastcol {
+        background: var(--ap-color-primary-light, #e8f2f9);
+    }
+
+    /* Pass / Fail icon — pill-shaped badges */
+    #user-grades img[src*="i/grade_correct"],
+    #user-grades img[src*="i/valid"] {
+        padding: 3px 8px;
+        background: rgba(22, 163, 74, 0.12);
+        border-radius: 12px;
+    }
+    #user-grades img[src*="i/grade_incorrect"],
+    #user-grades img[src*="i/invalid"] {
+        padding: 3px 8px;
+        background: rgba(220, 38, 38, 0.12);
+        border-radius: 12px;
+    }
+
+    /* Average / total summary row at bottom */
+    #user-grades tr.avg > th,
+    #user-grades tr.avg > td {
+        background: var(--ap-color-bg-surface-alt, #f8f9fc);
+        font-weight: 700;
+        color: var(--ap-color-text-primary, #1a1a2e);
+        border-top: 2px solid var(--ap-color-border, #e5e7eb);
+        padding: 14px 16px;
+    }
+
+    /* Sticky footer: page-size selector (Show 20 / 100 / All) */
+    #sticky-footer {
+        background: var(--ap-color-bg-surface, #ffffff);
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        border-radius: 12px;
+        padding: 10px 16px;
+        margin: 16px 0;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+    }
+    #sticky-footer .singleselect {
+        gap: 8px;
+        align-items: center;
+    }
+    #sticky-footer .urlselect,
+    #sticky-footer select {
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-size: 13px;
+        font-weight: 600;
+        background: var(--ap-color-bg-surface-alt, #f8f9fc);
+        color: var(--ap-color-text-primary, #1a1a2e);
+    }
+
+    /* Mobile — drop card padding so the wide table breathes */
+    @media (max-width: 1024px) {
+        #region-main { padding: 12px 0 24px; }
+        #user-grades tr.userrow > th,
+        #user-grades tr.userrow > td { padding: 10px 12px; font-size: 13px; }
+        #user-grades tr.heading > th { padding: 10px 12px; }
+    }
+    @media (max-width: 768px) {
+        .tertiary-navigation.full-width-bottom-border { padding: 12px 14px; }
+        .initialbar { font-size: 11px; }
+        .initialbar .page-link { min-width: 22px; height: 22px; padding: 0 4px; }
+        #user-grades tr.userrow .userinitials { width: 28px; height: 28px; font-size: 11px; }
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Goal A.x (2026-05-23) — Sentientia polish on /user/edit.php
+   ───────────────────────────────────────────────────────────────────────
+   Profile-editing form every persona touches. The viewer
+   `/user/profile.php` is already a Sentientia surface; this is the
+   editing counterpart (linked from profile page → Edit profile).
+
+   Moodle `mform` structure (5 collapsible fieldsets — General, User
+   picture, Additional names, Interests, Optional). Each fieldset has:
+     fieldset
+       ├── legend.visually-hidden               (a11y label)
+       ├── div.d-flex.align-items-center.mb-2   (visible header row)
+       │     ├── div.ftoggler                    (chevron toggle)
+       │     └── h3                              (section title)
+       └── div.fcontainer.collapseable.collapse.show
+             └── div.fitem.form-group.row       (per field)
+                   ├── div.col-md-3  →  label
+                   └── div.col-md-9.felement →  input
+
+   Wrap each fieldset in a Sentientia card; polish chevron + section
+   heading; soften input chrome and add brand focus ring; stack
+   label-above-input at <768px.
+
+   Body scope: `body#page-user-edit` (covers /user/edit.php) AND
+   `body#page-course-edit` (covers /course/edit.php — same mform
+   shape, Site-Admin-only surface). Both share the identical
+   collapsible-fieldset + col-md-3/col-md-9 grid pattern, so a
+   single selector list covers them.
+   ═══════════════════════════════════════════════════════════════════════ */
+body#page-user-edit,
+body#page-course-edit {
+
+    #region-main {
+        max-width: 920px;
+        margin: 0 auto;
+        padding: 16px 0 32px;
+    }
+
+    /* The wrapping form */
+    #region-main form.mform {
+        margin: 0;
+    }
+
+    /* Each fieldset becomes a Sentientia card */
+    #region-main form.mform fieldset {
+        background: var(--ap-color-bg-surface, #ffffff);
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        border-radius: 16px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+        padding: 20px 24px;
+        margin: 0 0 16px;
+        position: relative;
+    }
+
+    /* Header row of each fieldset (chevron + h3 title) */
+    #region-main form.mform fieldset > .d-flex.align-items-center {
+        padding: 0 0 16px;
+        margin: 0 0 16px;
+        border-bottom: 1px solid var(--ap-color-border, #e5e7eb);
+        position: relative;
+    }
+    /* Brand accent bar under heading (matches grader / overview pattern) */
+    #region-main form.mform fieldset > .d-flex.align-items-center::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        width: 32px;
+        height: 2px;
+        background: var(--ap-color-primary, #0066A7);
+        border-radius: 2px;
+    }
+    /* Section title (h3) */
+    #region-main form.mform fieldset h3 {
+        font-size: 14px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: var(--ap-color-text-primary, #1a1a2e);
+        margin: 0;
+        line-height: 1;
+    }
+    /* Chevron toggle */
+    #region-main form.mform fieldset .ftoggler .btn-icon,
+    #region-main form.mform fieldset .ftoggler .fheader {
+        background: transparent !important;
+        border: none !important;
+        color: var(--ap-color-text-secondary, #5a6070);
+        padding: 4px 8px;
+        margin: 0 8px 0 -4px !important;
+        transition: color 0.15s ease;
+    }
+    #region-main form.mform fieldset .ftoggler .btn-icon:hover,
+    #region-main form.mform fieldset .ftoggler .fheader:hover {
+        color: var(--ap-color-primary, #0066A7);
+        background: var(--ap-color-primary-light, #e8f2f9) !important;
+        border-radius: 6px;
+    }
+    /* When collapsed, hide the bottom-border of the header so the
+       card feels compact */
+    #region-main form.mform fieldset.collapsed > .d-flex.align-items-center {
+        padding-bottom: 0;
+        margin-bottom: 0;
+        border-bottom: none;
+    }
+    #region-main form.mform fieldset.collapsed > .d-flex.align-items-center::after {
+        display: none;
+    }
+
+    /* Form rows — label / input grid */
+    #region-main form.mform .fitem.form-group {
+        margin: 0 0 14px;
+        padding: 0;
+    }
+    #region-main form.mform .fitem.form-group:last-child {
+        margin-bottom: 0;
+    }
+    /* Label column */
+    #region-main form.mform .fitem .col-form-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--ap-color-text-primary, #1a1a2e);
+        padding-top: 8px;
+        padding-bottom: 4px;
+    }
+    /* "Required" icon — keep red but soften size */
+    #region-main form.mform .fitem .text-danger img,
+    #region-main form.mform .fitem .text-danger .icon {
+        width: 8px;
+        height: 8px;
+        opacity: 0.7;
+    }
+    /* Input field — Sentientia polish */
+    #region-main form.mform .felement input[type="text"],
+    #region-main form.mform .felement input[type="email"],
+    #region-main form.mform .felement input[type="number"],
+    #region-main form.mform .felement input[type="password"],
+    #region-main form.mform .felement input[type="url"],
+    #region-main form.mform .felement select,
+    #region-main form.mform .felement textarea {
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 14px;
+        color: var(--ap-color-text-primary, #1a1a2e);
+        background: var(--ap-color-bg-surface-alt, #f8f9fc);
+        transition: border-color 0.15s ease, box-shadow 0.15s ease,
+                    background-color 0.15s ease;
+        max-width: 480px;
+    }
+    /* Focus state — brand-light glow */
+    #region-main form.mform .felement input:focus,
+    #region-main form.mform .felement select:focus,
+    #region-main form.mform .felement textarea:focus {
+        outline: none;
+        border-color: var(--ap-color-primary, #0066A7);
+        box-shadow: 0 0 0 3px rgba(0, 102, 167, 0.12);
+        background: var(--ap-color-bg-surface, #ffffff);
+    }
+
+    /* Tag-input (Interests) chips */
+    #region-main form.mform .form-autocomplete-suggestions,
+    #region-main form.mform .form-autocomplete-selection {
+        border-radius: 8px;
+    }
+    #region-main form.mform .form-autocomplete-selection [data-value] {
+        background: var(--ap-color-primary-light, #e8f2f9);
+        color: var(--ap-color-primary-dark, #004d80);
+        border-radius: 12px;
+        padding: 2px 10px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    /* Help icon ("?") — softer styling */
+    #region-main form.mform .form-text {
+        color: var(--ap-color-text-secondary, #5a6070);
+        font-size: 12px;
+        margin-top: 4px;
+    }
+
+    /* Form action buttons — STICKY FOOTER (Moodle 5.2 borrow P0 #1)
+       Borrowed from Moodle 5.2 Boost where Submit/Cancel buttons
+       were moved to a sticky-positioned footer so they stay visible
+       no matter how long the form scrolls. Massive UX win on long
+       mform pages like /course/edit (8 fieldsets) where Save was
+       previously below the fold.
+
+       Sticky positioning anchors to the bottom of the viewport
+       (with a 16px gap) and stretches the full content width.
+       Backdrop blur + box shadow lifts the strip off the page
+       content underneath. */
+    #region-main form.mform > div:last-of-type[class*="form-group"],
+    #region-main form.mform .form-buttons,
+    #region-main form.mform fieldset:last-of-type + div {
+        position: sticky;
+        bottom: 16px;
+        z-index: 10;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        border-radius: 16px;
+        padding: 16px 24px;
+        margin-top: 16px;
+        text-align: right;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08),
+                    0 2px 4px rgba(15, 23, 42, 0.04);
+    }
+    #region-main form.mform button[type="submit"],
+    #region-main form.mform input[type="submit"] {
+        background: var(--ap-color-primary, #0066A7);
+        color: #ffffff;
+        border: none;
+        padding: 10px 24px;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 8px;
+        margin-right: 8px;
+        cursor: pointer;
+        transition: background-color 0.15s ease, transform 0.05s ease,
+                    box-shadow 0.15s ease;
+    }
+    #region-main form.mform button[type="submit"]:hover,
+    #region-main form.mform input[type="submit"]:hover {
+        background: var(--ap-color-primary-dark, #004d80);
+        box-shadow: 0 4px 12px rgba(0, 102, 167, 0.25);
+    }
+    #region-main form.mform button[type="submit"]:active,
+    #region-main form.mform input[type="submit"]:active {
+        transform: translateY(1px);
+    }
+    /* Cancel button — secondary */
+    #region-main form.mform .btn-secondary,
+    #region-main form.mform button:not([type="submit"]):not(.ftoggler *) {
+        background: transparent;
+        color: var(--ap-color-text-secondary, #5a6070);
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        padding: 10px 20px;
+        font-size: 14px;
+        font-weight: 500;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    #region-main form.mform .btn-secondary:hover {
+        background: var(--ap-color-bg-surface-alt, #f8f9fc);
+        color: var(--ap-color-text-primary, #1a1a2e);
+        border-color: var(--ap-color-text-secondary, #5a6070);
+    }
+
+    /* Mobile — stack label on top of input (don't use Bootstrap grid) */
+    @media (max-width: 768px) {
+        #region-main { padding: 12px 0 24px; }
+        #region-main form.mform fieldset { padding: 16px 18px; margin-bottom: 12px; }
+        #region-main form.mform fieldset > .d-flex.align-items-center { padding-bottom: 12px; margin-bottom: 12px; }
+        #region-main form.mform fieldset h3 { font-size: 12px; }
+        #region-main form.mform .fitem .col-md-3,
+        #region-main form.mform .fitem .col-md-9 {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+        #region-main form.mform .fitem .col-form-label { padding-bottom: 4px; padding-top: 0; }
+        #region-main form.mform .felement input,
+        #region-main form.mform .felement select,
+        #region-main form.mform .felement textarea { max-width: 100%; width: 100%; }
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Goal A.x (2026-05-23) — Sentientia polish on /user/preferences.php
+   ───────────────────────────────────────────────────────────────────────
+   The preferences hub — User account / Blogs / Badges / Miscellaneous
+   section cards each containing a link list (Edit profile, Change
+   password, Preferred language, Forum prefs, etc.).
+
+   Existing chrome was reasonable (white cards, brand-blue links) but
+   the section h3 titles lacked the uppercase letter-spaced treatment +
+   brand accent that all other Sentientia surfaces use (admin, profile,
+   badges, grader). This block brings preferences into the same visual
+   family.
+
+   Body scope: `body#page-user-preferences`.
+   ═══════════════════════════════════════════════════════════════════════ */
+body#page-user-preferences {
+
+    #region-main {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 16px 0 32px;
+    }
+
+    /* Page title */
+    #region-main > h2,
+    #region-main h2:first-of-type {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--ap-color-text-primary, #1a1a2e);
+        margin: 0 0 20px;
+    }
+
+    /* Each section block — wrap with consistent card chrome */
+    #region-main .preferences-page,
+    #region-main .col-md-4 {
+        margin-bottom: 16px;
+    }
+    #region-main .preferences-group,
+    #region-main .col-md-4 > div {
+        background: var(--ap-color-bg-surface, #ffffff);
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        border-radius: 16px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+        padding: 20px 24px;
+        height: 100%;
+    }
+
+    /* Section heading h3 — uppercase + brand accent (matches admin pattern) */
+    #region-main h3 {
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: var(--ap-color-text-secondary, #5a6070);
+        margin: 0 0 16px;
+        padding: 0 0 12px;
+        position: relative;
+        border-bottom: 1px solid var(--ap-color-border, #e5e7eb);
+    }
+    #region-main h3::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        width: 32px;
+        height: 2px;
+        background: var(--ap-color-primary, #0066A7);
+        border-radius: 2px;
+    }
+
+    /* Link list — clean stacked layout with hover */
+    #region-main ul,
+    #region-main .list-group {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    #region-main ul li,
+    #region-main .list-group .list-group-item {
+        padding: 8px 0;
+        border: none;
+        background: transparent;
+    }
+    #region-main ul li a,
+    #region-main .list-group .list-group-item a {
+        color: var(--ap-color-primary, #0066A7);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: color 0.15s ease, transform 0.05s ease;
+    }
+    #region-main ul li a:hover,
+    #region-main .list-group .list-group-item a:hover {
+        color: var(--ap-color-primary-dark, #004d80);
+        text-decoration: underline;
+        transform: translateX(2px);
+    }
+
+    /* Mobile — stack columns */
+    @media (max-width: 768px) {
+        #region-main { padding: 12px 0 24px; }
+        #region-main .col-md-4 { flex: 0 0 100%; max-width: 100%; }
+        #region-main .preferences-group,
+        #region-main .col-md-4 > div { padding: 16px 18px; }
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Goal A.x (2026-05-23) — Sentientia polish on /calendar/view.php
+   ───────────────────────────────────────────────────────────────────────
+   Month view of the Moodle calendar. Tertiary nav (Gradebook-style
+   "Month" dropdown + "All courses" + "New event") already styled via
+   the theme's general .tertiary-navigation rules. This block polishes
+   the calendar table itself:
+     - Day-of-week headers (Mon/Tue/Wed) → uppercase letter-spaced,
+       matches every other Sentientia table (admin, grader, overview,
+       profile, preferences).
+     - Today's cell → branded ring + light brand fill, no longer just
+       "weekend" red.
+     - Weekend cells → softer text color (was harsh red).
+     - Cells get subtle hover state + cleaner borders.
+
+   Body scope: `body#page-calendar-view` (the month/day/upcoming view
+   all share this body id — Moodle uses query params to switch view).
+   ═══════════════════════════════════════════════════════════════════════ */
+body#page-calendar-view {
+
+    #region-main {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 16px 0 32px;
+    }
+
+    /* Wrap the calendar in a Sentientia card */
+    .calendarwrapper,
+    [data-region="calendar-month"] {
+        background: var(--ap-color-bg-surface, #ffffff);
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        border-radius: 16px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+        padding: 16px 20px;
+        margin: 0 0 16px;
+    }
+
+    /* Month-name heading "May 2026" */
+    .calendar-controls h2,
+    .calendar-controls .current,
+    .calendarwrapper h2 {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--ap-color-text-primary, #1a1a2e);
+        margin: 0 0 16px;
+    }
+
+    /* Prev/next month nav (◀ April / June ▶) */
+    .calendar-controls .arrow_link,
+    .calendar-controls .previous,
+    .calendar-controls .next {
+        color: var(--ap-color-primary, #0066A7);
+        font-weight: 600;
+        text-decoration: none;
+        padding: 6px 12px;
+        border-radius: 8px;
+        transition: background-color 0.15s ease, color 0.15s ease;
+    }
+    .calendar-controls .arrow_link:hover,
+    .calendar-controls .previous:hover,
+    .calendar-controls .next:hover {
+        background: var(--ap-color-primary-light, #e8f2f9);
+        color: var(--ap-color-primary-dark, #004d80);
+        text-decoration: none;
+    }
+
+    /* Calendar table */
+    table.calendarmonth,
+    table.calendartable {
+        margin: 0 !important;
+        border-collapse: separate !important;
+        border-spacing: 4px !important;
+        width: 100%;
+    }
+
+    /* Day-of-week headers (Mon/Tue/Wed/Thu/Fri/Sat/Sun) */
+    table.calendarmonth thead th,
+    table.calendartable thead th {
+        background: var(--ap-color-bg-surface-alt, #f8f9fc);
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: var(--ap-color-text-secondary, #5a6070);
+        padding: 12px 8px;
+        border: none !important;
+        border-radius: 6px;
+        text-align: center;
+    }
+
+    /* Day cells */
+    table.calendarmonth tbody td,
+    table.calendartable tbody td {
+        border: 1px solid var(--ap-color-border, #e5e7eb) !important;
+        border-radius: 8px;
+        padding: 10px 10px;
+        font-size: 13px;
+        color: var(--ap-color-text-primary, #1a1a2e);
+        background: var(--ap-color-bg-surface, #ffffff);
+        min-height: 80px;
+        vertical-align: top;
+        transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+    /* Blank cells (leading/trailing days from neighbour months) */
+    table.calendarmonth tbody td.dayblank,
+    table.calendartable tbody td.dayblank {
+        background: rgba(248, 249, 252, 0.4);
+        border-color: rgba(229, 231, 235, 0.4) !important;
+    }
+    /* Clickable cell hover */
+    table.calendarmonth tbody td.clickable:hover,
+    table.calendartable tbody td.clickable:hover {
+        background: var(--ap-color-primary-light, #e8f2f9);
+        border-color: var(--ap-color-primary, #0066A7) !important;
+        cursor: pointer;
+    }
+    /* Weekend cells — softer text, not harsh red like vanilla Moodle */
+    table.calendarmonth tbody td.weekend,
+    table.calendartable tbody td.weekend {
+        color: var(--ap-color-text-secondary, #5a6070);
+    }
+    /* Today cell — brand-light bg + brand border (matches Sentientia tone) */
+    table.calendarmonth tbody td.today,
+    table.calendarmonth tbody td.today.weekend,
+    table.calendartable tbody td.today,
+    table.calendartable tbody td.today.weekend {
+        background: var(--ap-color-primary-light, #e8f2f9) !important;
+        border: 2px solid var(--ap-color-primary, #0066A7) !important;
+        color: var(--ap-color-primary-dark, #004d80);
+        font-weight: 700;
+    }
+
+    /* Day number inside cell — top-right, tabular numbers */
+    table.calendarmonth tbody td .day,
+    table.calendartable tbody td .day,
+    table.calendarmonth tbody td > a:first-child,
+    table.calendartable tbody td > a:first-child {
+        font-variant-numeric: tabular-nums;
+        font-weight: 600;
+    }
+
+    /* Event indicators inside day cell */
+    table.calendarmonth tbody td .events-courseevent,
+    table.calendarmonth tbody td .events-userevent,
+    table.calendarmonth tbody td [data-region="event-list"] li {
+        font-size: 11px;
+        padding: 2px 6px;
+        margin-top: 4px;
+        border-radius: 4px;
+        background: var(--ap-color-primary-light, #e8f2f9);
+        color: var(--ap-color-primary-dark, #004d80);
+    }
+
+    /* Mobile — drop padding so calendar fits on phones */
+    @media (max-width: 768px) {
+        #region-main { padding: 12px 0 24px; }
+        .calendarwrapper,
+        [data-region="calendar-month"] { padding: 12px 14px; }
+        table.calendarmonth thead th,
+        table.calendartable thead th { padding: 8px 4px; font-size: 10px; }
+        table.calendarmonth tbody td,
+        table.calendartable tbody td { padding: 6px 6px; min-height: 60px; font-size: 12px; }
+    }
+}
+
+
