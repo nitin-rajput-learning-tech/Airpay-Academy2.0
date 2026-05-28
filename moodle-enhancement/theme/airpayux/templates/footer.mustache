@@ -32,16 +32,7 @@
         <span class="airpay-footer__copy">{{#str}}footer_copyright, theme_airpayux{{/str}}</span>
     </div>
 
-    {{!
-        2026-05-20 / Session 4 — Sentientia LMS product attribution band.
-        Per ADR-001 § Trademark cleanup, the GPL-required Moodle attribution
-        AND the Sentientia LMS product brand both live here. For Airpay
-        Academy as customer-zero, this stays compact — a single line in
-        muted text below the primary brand row.
-
-        P0 #6 follow-up (2026-05-24) — inline styles removed in favour of
-        BEM classes; tokens live in partials/_surface-footer.scss.
-    }}
+    {{! Product attribution + GPL licence per ADR-001 §Trademark cleanup. }}
     <div class="airpay-footer__product-attribution">
         <span class="airpay-footer__product-attribution-brand">Sentientia LMS</span>
         <span class="airpay-footer__product-attribution-sep" aria-hidden="true">·</span>
@@ -54,13 +45,4 @@
     {{{ output.debug_footer_html }}}
 </footer>
 
-{{!
-    2026-05-22 — removed the inline PWA install banner that previously
-    lived here. That script ignored localStorage / dismissals and
-    re-rendered a position:fixed banner on EVERY page load, conflicting
-    with the official local_sentientia_pwa/install_prompt AMD module
-    (Phase D.1.b). The official module is the single source of truth:
-    it captures beforeinstallprompt, suppresses Chrome native bar,
-    renders a flag-gated dashboard-only CTA, persists Not now both
-    locally + via user preference, and respects a 7-day quarantine.
-}}
+{{! PWA install banner moved to local_sentientia_pwa/install_prompt AMD (Phase D.1.b). }}

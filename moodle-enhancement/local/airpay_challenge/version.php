@@ -10,7 +10,13 @@ $plugin->component = 'local_airpay_challenge';
 // Goal A audit Bug #10 (2026-05-22) — align get_leaderboard WS with the
 // shared theme_airpayux/datatable contract (accept `search`, currently
 // reserved — leaderboard search semantics pending UX decision).
-$plugin->version   = 2026052201;
+// Stabilization Audit D4 / F-096 (2026-05-28) — downgraded BETA → ALPHA.
+// The plugin's `classes/challenge_renderer.php` self-describes as "stub
+// replacing BizLMS local_challenge"; all `mdl_local_airpay_challenge_*`
+// tables are empty on local + production. MATURITY_BETA was aspirational.
+// Promote back to BETA once the renderer ships its real implementation
+// and the challenge tables hold real attempt data.
+$plugin->version   = 2026052801;
 $plugin->requires  = 2024100700;
-$plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.1.3-beta'; // +Goal A Bug #10 WS-contract alignment
+$plugin->maturity  = MATURITY_ALPHA;
+$plugin->release   = '1.1.4-alpha'; // +D4 maturity-stamp honesty
