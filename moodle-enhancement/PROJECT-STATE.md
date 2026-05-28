@@ -37,6 +37,26 @@ and **Bucket C (admin landings)**:
 
 Closes Tasks #315, #316, #317, #318. Today's three commits hit production at `d7dbd7885`, `cadd25191`, `3df780c76`.
 
+**Continued wave (same session, 2026-05-28 evening):** Bucket F
+closeout + state-card cleanup landed:
+
+- `0b92d5d35` — Bucket F closeout doc + new `tools/audit_table_inventory.php`. 10 investigate findings triaged: ✅ 6 RESOLVED (F-026/F-027/F-030/F-087/F-090/F-041+F-042), 🟡 1 PARTIALLY (F-024 UI walk pending), ⏸ 2 DEFERRED (F-028/F-029 v2 features), 🔍 3 NEEDS-WORK at that point (F-031/F-033/F-053–F-056)
+- `351ce50f8` — F-053..F-056 closeout. 6 `local_sentientia_*-state.md` cards renamed to `sentientia_*-state.md` to match the freshness gate's glob; new `sentientia_m365-state.md` created (the only plugin without a card). Freshness gate now sees 39 cards (up from 32).
+- `f43a16493` — F-039 closeout + Bucket F status refresh. `airpay_emails-state.md` updated with the runtime DB row snapshot. F-039 + F-053..F-056 now fully RESOLVED. Bucket F rollup: ✅ 8 RESOLVED, 🟡 1 partial, ⏸ 2 deferred, 🔍 2 needs-work (F-031 security + F-033 Cypress — both out of today's scope).
+
+Today's **seven** commits to production: `d7dbd7885`, `cadd25191`, `3df780c76`, `c16064946`, `0b92d5d35`, `351ce50f8`, `f43a16493`. Audit progress: **4 of 6 buckets substantially shipped (D, E, C admin landings, F)**.
+
+Remaining audit work explicitly deferred per user direction or future sessions:
+  - C4 (catalog Netflix UX) — large design+impl, discrete session
+  - C8 (live Anthropic POST) — gated; user-team [CONFIRM] required
+  - C9 (Calendar OAuth Phase 2) — needs live OAuth credentials
+  - C10 (Certificate stack) — partial; needs design investigation
+  - C12 (5.2 prod cutover), C13 (PWA prod), B5 (auth-via-email on prod) — user-team production decisions
+  - C17 (seed-data CLIs) — useful but multi-CLI build
+  - F-031, F-033 — out-of-scope (separate audits)
+  - §5 (21 explicit v2-locked items)
+  - F-024 (sentientia_live analytics UI walk) — visual-evidence session
+
 ---
 
 ## 🔴 Tenant leak in onboarding wizard — FIXED (2026-05-28)
