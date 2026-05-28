@@ -871,3 +871,31 @@ body#page-user-preferences {
 }
 
 
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ADR-017 / C1.3.b — user_type badge in profile header
+   2026-05-28 stabilization (closes F-005 visible arm)
+   ═══════════════════════════════════════════════════════════════════════ */
+.ap-profile__user-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: var(--ap-color-primary-light, #e8f2f9);
+    color: var(--ap-color-primary, #0066A7);
+    font-size: var(--ap-text-sm, 0.875rem);
+    font-weight: var(--ap-font-weight-semi, 600);
+    margin: 8px 0 0;
+    width: -moz-fit-content;
+    width: fit-content;
+
+    i.fa {
+        font-size: 0.95em;
+    }
+}
+
+body.dark-mode .ap-profile__user-type-badge {
+    background: rgba(96, 165, 250, 0.15);
+    color: #60a5fa;
+}

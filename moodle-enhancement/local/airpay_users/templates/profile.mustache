@@ -22,6 +22,16 @@
         <div class="ap-profile__info">
             <h1 class="ap-profile__name">{{prefix}}{{username}}</h1>
             <p class="ap-profile__email"><i class="fa fa-envelope"></i> {{user_email}}</p>
+            {{! ADR-017 Q4 — user_type badge (read-only, profile-page only). }}
+            {{#user_type_label}}
+            <p class="ap-profile__user-type-badge">
+                {{#is_employee}}<i class="fa fa-id-card"></i>{{/is_employee}}
+                {{#is_consumer}}<i class="fa fa-graduation-cap"></i>{{/is_consumer}}
+                {{#is_partner_employee}}<i class="fa fa-handshake-o"></i>{{/is_partner_employee}}
+                {{#is_operator}}<i class="fa fa-shield"></i>{{/is_operator}}
+                <span class="ap-profile__user-type-label">{{user_type_label}}</span>
+            </p>
+            {{/user_type_label}}
             {{#designation}}<p class="ap-profile__role"><i class="fa fa-briefcase"></i> {{designation}}</p>{{/designation}}
         </div>
         <div class="ap-profile__stats">
@@ -81,8 +91,19 @@
     {{/has_badges}}{{/ap_gamification}}
 </div>
 
-{{! Profile detail tabs — org, contact, employment info }}
+{{!
+    Profile detail grid — C1.3.b polymorphism (2026-05-28). Renders the
+    right shape per user_type:
+      - employee + partner_employee: org + department + manager + employee ID
+      - consumer: interests + weekly goal + courses enrolled + consents
+      - operator: operator role + contact + on-call rotation
+    All sections share location/phone/join-date so the lower row stays
+    consistent across types.
+}}
 <div class="ap-profile__details">
+
+    {{! ── Employee / partner_employee — org-tree shape ───────────────── }}
+    {{#is_employee}}
     <div class="ap-profile__detail-grid">
         <div class="ap-profile__detail"><label>Organisation</label><span>{{organisation}}</span></div>
         <div class="ap-profile__detail"><label>Department</label><span>{{department}}</span></div>
@@ -93,6 +114,82 @@
         <div class="ap-profile__detail"><label>Phone</label><span>{{phnumber}}</span></div>
         <div class="ap-profile__detail"><label>Join Date</label><span>{{joindate}}</span></div>
     </div>
+    {{/is_employee}}
+
+    {{#is_partner_employee}}
+    <div class="ap-profile__detail-grid">
+        <div class="ap-profile__detail"><label>{{#str}}profile_field_customer_name, local_airpay_core{{/str}}</label><span>{{user_type_extras.customer_name}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}profile_field_partner_department, local_airpay_core{{/str}}</label><span>{{user_type_extras.partner_department}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}profile_field_partner_job_title, local_airpay_core{{/str}}</label><span>{{user_type_extras.partner_job_title}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}profile_field_partner_manager, local_airpay_core{{/str}}</label><span>{{user_type_extras.partner_manager_name}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}profile_field_partner_employee_id, local_airpay_core{{/str}}</label><span>{{user_type_extras.partner_employee_id}}</span></div>
+        <div class="ap-profile__detail"><label>Location</label><span>{{location}}</span></div>
+        <div class="ap-profile__detail"><label>Phone</label><span>{{phnumber}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}profile_field_hire_date, local_airpay_core{{/str}}</label><span>{{user_type_extras.partner_hire_date_str}}</span></div>
+    </div>
+    {{/is_partner_employee}}
+
+    {{! ── Consumer — self-directed learner shape ──────────────────────── }}
+    {{#is_consumer}}
+    <div class="ap-profile__detail-grid">
+        <div class="ap-profile__detail">
+            <label>{{#str}}profile_field_interests, local_airpay_core{{/str}}</label>
+            <span>{{#user_type_extras.interests_csv}}{{user_type_extras.interests_csv}}{{/user_type_extras.interests_csv}}{{^user_type_extras.interests_csv}}—{{/user_type_extras.interests_csv}}</span>
+        </div>
+        <div class="ap-profile__detail">
+            <label>{{#str}}profile_field_weekly_goal_hours, local_airpay_core{{/str}}</label>
+            <span>{{#user_type_extras.weekly_goal_hours}}{{user_type_extras.weekly_goal_hours}}h/week{{/user_type_extras.weekly_goal_hours}}{{^user_type_extras.weekly_goal_hours}}—{{/user_type_extras.weekly_goal_hours}}</span>
+        </div>
+        <div class="ap-profile__detail">
+            <label>{{#str}}profile_field_courses_enrolled, local_airpay_core{{/str}}</label>
+            <span>{{user_type_extras.courses_enrolled}}</span>
+        </div>
+        <div class="ap-profile__detail">
+            <label>Email</label><span>{{user_email}}</span>
+        </div>
+        <div class="ap-profile__detail">
+            <label>{{#str}}profile_field_consent_marketing, local_airpay_core{{/str}}</label>
+            <span>{{#user_type_extras.consent_marketing}}<i class="fa fa-check text-success"></i> Yes{{/user_type_extras.consent_marketing}}{{^user_type_extras.consent_marketing}}<i class="fa fa-times text-muted"></i> No{{/user_type_extras.consent_marketing}}</span>
+        </div>
+        <div class="ap-profile__detail">
+            <label>{{#str}}profile_field_consent_leaderboard, local_airpay_core{{/str}}</label>
+            <span>{{#user_type_extras.consent_leaderboard}}<i class="fa fa-check text-success"></i> Yes{{/user_type_extras.consent_leaderboard}}{{^user_type_extras.consent_leaderboard}}<i class="fa fa-times text-muted"></i> No{{/user_type_extras.consent_leaderboard}}</span>
+        </div>
+        <div class="ap-profile__detail">
+            <label>Phone</label><span>{{phnumber}}</span>
+        </div>
+        <div class="ap-profile__detail">
+            <label>{{#str}}profile_field_hire_date, local_airpay_core{{/str}}</label><span>{{joindate}}</span>
+        </div>
+    </div>
+    {{/is_consumer}}
+
+    {{! ── Operator — platform staff shape ─────────────────────────────── }}
+    {{#is_operator}}
+    <div class="ap-profile__detail-grid">
+        <div class="ap-profile__detail"><label>{{#str}}profile_field_operator_role, local_airpay_core{{/str}}</label><span>{{user_type_extras.operator_role}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}profile_field_contact_phone, local_airpay_core{{/str}}</label><span>{{user_type_extras.contact_phone}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}profile_field_oncall_for, local_airpay_core{{/str}}</label><span>{{#user_type_extras.oncall_for}}{{user_type_extras.oncall_for}}{{/user_type_extras.oncall_for}}{{^user_type_extras.oncall_for}}—{{/user_type_extras.oncall_for}}</span></div>
+        <div class="ap-profile__detail"><label>Email</label><span>{{user_email}}</span></div>
+        <div class="ap-profile__detail"><label>Location</label><span>{{location}}</span></div>
+        <div class="ap-profile__detail"><label>Phone</label><span>{{phnumber}}</span></div>
+        <div class="ap-profile__detail"><label>Join Date</label><span>{{joindate}}</span></div>
+    </div>
+    {{/is_operator}}
+
+    {{! Fallback — if no user_type was set yet (pre-C1.0 user), render the original employee grid. }}
+    {{^user_type}}
+    <div class="ap-profile__detail-grid">
+        <div class="ap-profile__detail"><label>Organisation</label><span>{{organisation}}</span></div>
+        <div class="ap-profile__detail"><label>Department</label><span>{{department}}</span></div>
+        <div class="ap-profile__detail"><label>Sub-department</label><span>{{subdepartment}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}reportingto, local_airpay_users{{/str}}</label><span>{{supervisorname}}</span></div>
+        <div class="ap-profile__detail"><label>Employee ID</label><span>{{empid}}</span></div>
+        <div class="ap-profile__detail"><label>Location</label><span>{{location}}</span></div>
+        <div class="ap-profile__detail"><label>Phone</label><span>{{phnumber}}</span></div>
+        <div class="ap-profile__detail"><label>Join Date</label><span>{{joindate}}</span></div>
+    </div>
+    {{/user_type}}
 </div>
 
 {{! Skills tab — full readiness panel + radar (Phase E.1) }}
