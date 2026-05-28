@@ -43,10 +43,14 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_m365';
 // 2026-05-24 C.1 — OAuth scaffold + Graph stubs + privacy + Hindi pack.
-$plugin->version   = 2026052400;
+// 2026-05-28 C15 — OAuth admin landing dashboard (Bucket C of the
+// Stabilization Audit). New: admin/index.php + admin_externalpage
+// registration + ~25 lang strings (en) surfacing config status,
+// feature-flag state, connected-token count, and C.1–C.6 roadmap.
+$plugin->version   = 2026052801;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;     // Scaffold — no live calls
-$plugin->release   = '0.1.0-alpha';
+$plugin->release   = '0.2.0-alpha';
 $plugin->dependencies = [
     'local_airpay_core' => 2026051401,   // feature_flags resolver + customer scope
 ];

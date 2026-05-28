@@ -127,3 +127,39 @@ $string['setting_prompt_template_note_desc']   = 'Free-form notes about the curr
 // ── Misc ───────────────────────────────────────────────────────────
 $string['source_word_count'] = 'Word count: {$a}';
 $string['tokens_used_today'] = 'Tokens used today (customer-wide): {$a->used} / {$a->cap}';
+
+// ── C16 admin landing/queue UI (Bucket C / 2026-05-28) ─────────────
+$string['admin_index_title']     = 'AI translation';
+$string['admin_index_intro']     = 'Manage AI-driven content translations. Submit new translation jobs, review pending diffs, and audit past activity.';
+$string['admin_index_flag_off_notice'] = 'The AI translation feature flag (sentientia.translate.enabled) is currently OFF. Translations can still be reviewed but no new Anthropic calls will run.';
+$string['admin_index_queue']     = 'Recent translations';
+$string['admin_index_empty']     = 'No translations match the current filters.';
+$string['admin_index_truncated'] = 'Showing the 25 most recent rows. Refine the filters to narrow further.';
+$string['admin_index_quicknav']  = 'Quick navigation';
+$string['admin_index_link_translate']      = 'New translation';
+$string['admin_index_link_translate_desc'] = 'Paste English source content and run a translation job into Hindi, Marathi, Kannada or Swahili.';
+$string['admin_index_link_brands']         = 'Brand override map';
+$string['admin_index_link_brands_desc']    = 'Manage per-customer brand-name substitutions (e.g. "Airpay" preserved verbatim or rendered in the target script).';
+$string['admin_index_link_settings']       = 'Translation settings';
+$string['admin_index_link_settings_desc']  = 'Anthropic API key, default model, per-customer daily token cap and source-word limits.';
+
+$string['stats_total']   = 'Total translations';
+$string['stats_pending'] = 'Pending / awaiting review';
+$string['stats_saved']   = 'Saved (accepted)';
+$string['stats_failed']  = 'Failed';
+
+$string['filter_status'] = 'Status:';
+$string['filter_lang']   = 'Target language:';
+$string['filter_all']    = 'All';
+$string['filter_apply']  = 'Apply';
+$string['filter_reset']  = 'Reset';
+
+$string['col_title']   = 'Title';
+$string['col_lang']    = 'Target';
+$string['col_status']  = 'Status';
+$string['col_tokens']  = 'Tokens (in + out)';
+$string['col_created'] = 'Created';
+$string['col_actions'] = 'Actions';
+
+$string['action_review'] = 'Review diff';
+$string['action_open']   = 'Open';

@@ -93,6 +93,16 @@ if ($hassiteconfig) {
 
     $ADMIN->add('localplugins', $settings);
 
+    // C16 (Bucket C, 2026-05-28): unified admin queue/landing.
+    // Listed FIRST so admins clicking "Translation" hit the dashboard
+    // rather than the single-row diff page.
+    $ADMIN->add('localplugins', new admin_externalpage(
+        'local_sentientia_translate_queue',
+        get_string('admin_index_title', 'local_sentientia_translate'),
+        new moodle_url('/local/sentientia_translate/admin/index.php'),
+        'local/sentientia_translate:translate'
+    ));
+
     // External pages: the translate UI + brand-override manager.
     $ADMIN->add('localplugins', new admin_externalpage(
         'local_sentientia_translate_brands',

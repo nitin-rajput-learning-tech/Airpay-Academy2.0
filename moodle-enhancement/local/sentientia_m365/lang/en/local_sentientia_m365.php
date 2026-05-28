@@ -56,3 +56,40 @@ $string['privacy:metadata:tokens:timemodified']      = 'When the tokens were mos
 $string['privacy:metadata:microsoft_graph']        = 'Microsoft Graph receives the user\'s access token whenever a Sentientia LMS feature reads M365 data on the user\'s behalf. The user\'s identity claim flows outward; responses from Microsoft Graph (profile fields, calendar events, SharePoint metadata) flow back to the LMS.';
 $string['privacy:metadata:microsoft_graph:userid'] = 'The Moodle user on whose behalf the call is made (used to look up the encrypted token).';
 $string['privacy:metadata:microsoft_graph:scopes'] = 'OAuth scopes the access token was granted — defines which Graph endpoints can be called.';
+
+// ── C15 admin OAuth landing dashboard (Bucket C / 2026-05-28) ─────
+$string['admin_index_title']     = 'Microsoft 365';
+$string['admin_index_intro']     = 'Configure and monitor the Sentientia LMS connection to a Microsoft 365 tenant. Phase C.1 ships the OAuth scaffold; live Graph calls land in Phase C.2.';
+$string['admin_index_flag_off_notice'] = 'The Microsoft 365 feature flag (sentientia_m365_enabled) is currently OFF. The OAuth scaffold exists but no Graph endpoints are reachable.';
+$string['admin_index_phase_c1_notice'] = 'Phase C.1 ships in confirm-required mode. Every call into graph_client throws moodle_exception("confirm_required") — by design. Phase C.2 will replace stubs with real Graph calls behind per-call [CONFIRM] gates.';
+$string['admin_index_readiness'] = 'MSAL client readiness';
+$string['admin_index_ready_yes'] = 'msal_client reports READY — Azure tenant + client + redirect URI are configured and parseable.';
+$string['admin_index_ready_no']  = 'msal_client reports NOT READY — at least one of Azure tenant ID, client ID, or redirect URI is unset or unparseable. Visit Settings to complete the configuration.';
+$string['admin_index_roadmap']   = 'Roadmap';
+$string['admin_index_quicknav']  = 'Quick navigation';
+$string['admin_index_link_settings']       = 'Azure & OAuth settings';
+$string['admin_index_link_settings_desc']  = 'Azure tenant ID, application client ID, redirect URI and the optional-scope multiselect.';
+$string['admin_index_link_privacy']        = 'Privacy & data subject rights';
+$string['admin_index_link_privacy_desc']   = 'Moodle Site Administration → Privacy & Policies. M365 tokens are exposed to the standard data export and erasure flows.';
+$string['admin_index_footnote'] = 'This page reads configuration values and counts encrypted-token rows. It does not call Microsoft Graph and does not decrypt any token at runtime.';
+
+$string['stats_configured']    = 'Configured';
+$string['stats_unconfigured']  = 'Not set';
+$string['stats_tenant_id']     = 'Azure tenant ID';
+$string['stats_client_id']     = 'Azure client ID';
+$string['stats_flag_label']    = 'Feature flag';
+$string['stats_flag_on']       = 'Enabled';
+$string['stats_flag_off']      = 'Disabled';
+$string['stats_connected_users'] = 'Connected users';
+
+$string['roadmap_col_phase']   = 'Phase';
+$string['roadmap_col_what']    = 'What ships';
+$string['roadmap_col_status']  = 'Status';
+$string['roadmap_done']        = 'Done';
+$string['roadmap_planned']     = 'Planned';
+$string['roadmap_c1'] = 'C.1 — OAuth scaffold, Graph stubs, encrypted-token storage, privacy provider.';
+$string['roadmap_c2'] = 'C.2 — Replace confirm_required stubs with real Graph calls behind per-call [CONFIRM]. get_me, list_sites, calendar baseline.';
+$string['roadmap_c3'] = 'C.3 — SharePoint document ingestion into the SENTIENTIA SOP parser pipeline.';
+$string['roadmap_c4'] = 'C.4 — Outlook meeting → LMS classroom event sync.';
+$string['roadmap_c5'] = 'C.5 — Teams attendance ingestion → completion record.';
+$string['roadmap_c6'] = 'C.6 — Per-customer prompt + scope overrides + Hindi consent UI.';

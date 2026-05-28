@@ -88,4 +88,15 @@ if ($hassiteconfig) {
     ));
 
     $ADMIN->add('localplugins', $settings);
+
+    // C15 (Bucket C, 2026-05-28): OAuth admin landing dashboard.
+    // Surfaces config status, feature flag, connected-token count
+    // and the C.1–C.6 roadmap on one page so admins clicking
+    // "Microsoft 365" in any nav land somewhere readable.
+    $ADMIN->add('localplugins', new admin_externalpage(
+        'local_sentientia_m365_index',
+        get_string('admin_index_title', 'local_sentientia_m365'),
+        new moodle_url('/local/sentientia_m365/admin/index.php'),
+        'moodle/site:config'
+    ));
 }
