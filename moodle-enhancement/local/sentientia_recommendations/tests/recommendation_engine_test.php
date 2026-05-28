@@ -207,4 +207,49 @@ final class recommendation_engine_test extends \advanced_testcase {
         $this->assertNotContains((int)$c2->id, $ids);
         $this->assertContains((int)$c3->id, $ids);
     }
+
+    /**
+     * Tenant scoping (2026-05-28 hotfix follow-up to db5242c9a): when a
+     * profile carries a tenant id that the accesslib resolver can't map to
+     * a course_categories.id, build_candidate_list MUST return [] rather
+     * than fall through to "all visible courses." This is the fail-closed
+     * guard that prevents Claude from being fed a cross-tenant catalog
+     * when the BizLMS↔Sentientia resolver chain breaks.
+     */
+    public function test_build_candidate_list_fails_closed_on_unresolvable_tenant(): void {
+        $this->resetAfterTest();
+        $gen = $this->getDataGenerator();
+        $gen->create_course();
+        $gen->create_course();
+
+        $profile = new \stdClass();
+        $profile->completed = [];
+        // 9999 is intentionally not a tenant on this Moodle — neither
+        // local_costcenter.path='/9999' nor local_airpay_org id=9999 exist,
+        // so the resolver returns null and we expect [].
+        $profile->tenant = 9999;
+
+        $candidates = recommendation_engine::build_candidate_list($profile, 100);
+        $this->assertSame([], $candidates,
+            'unresolvable tenant must fail closed, not fall through to all courses');
+    }
+
+    /**
+     * No-tenant profile (siteadmin trigger or test fixture without
+     * open_path) keeps the legacy unscoped behaviour — important so the
+     * rare admin-runs-it-for-debugging path still works.
+     */
+    public function test_build_candidate_list_unscoped_when_tenant_zero(): void {
+        $this->resetAfterTest();
+        $gen = $this->getDataGenerator();
+        $c1 = $gen->create_course();
+
+        $profile = new \stdClass();
+        $profile->completed = [];
+        $profile->tenant = 0;
+
+        $candidates = recommendation_engine::build_candidate_list($profile, 100);
+        $ids = array_map(fn($c) => (int)$c->id, $candidates);
+        $this->assertContains((int)$c1->id, $ids);
+    }
 }

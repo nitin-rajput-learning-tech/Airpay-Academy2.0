@@ -102,7 +102,22 @@ class recommendation_engine {
      * Build a candidate-course list (a learner's visible catalog) with
      * already-completed courses filtered out.
      *
-     * @param \stdClass $profile  Learner profile (uses ->completed)
+     * Tenant scoping (2026-05-28 hotfix follow-up to commit db5242c9a):
+     * the candidate list is the catalog excerpt fed to Anthropic. Without
+     * tenant scoping, Claude is shown course IDs from every tenant in
+     * the database and can recommend cross-tenant courses to a Public
+     * learner. The resolver in \local_airpay_org\accesslib::get_tenant_category_id
+     * is reused so onboarding, dashboard, and AI recs all agree on what
+     * "this learner's tenant" means.
+     *
+     * Behaviour:
+     *   - profile->tenant > 0 + tenant resolves -> scope to that tenant subtree
+     *   - profile->tenant > 0 + tenant unresolved -> fail closed (return [])
+     *   - profile->tenant unset / 0 (siteadmin or test fixture) -> unscoped (legacy
+     *     behaviour preserved so test_build_candidate_list_excludes_completed
+     *     and the rare siteadmin-triggered generation still work).
+     *
+     * @param \stdClass $profile  Learner profile (uses ->completed, ->tenant)
      * @param int       $maxitems Hard cap on candidates returned
      * @return array Array of objects with ->id, ->fullname, ->shortname, ->summary
      */
@@ -113,15 +128,50 @@ class recommendation_engine {
         $completed = isset($profile->completed) && is_array($profile->completed)
             ? array_map('intval', $profile->completed) : [];
 
-        $candidates = $DB->get_records_select(
-            'course',
-            'visible = 1 AND id > 1',
-            null,
-            'fullname ASC',
-            'id, fullname, shortname, summary',
-            0,
-            $maxitems
-        );
+        $tenantroot = isset($profile->tenant) ? (int) $profile->tenant : 0;
+
+        if ($tenantroot > 0) {
+            $tenant_catid = \local_airpay_org\accesslib::get_tenant_category_id(
+                '/' . $tenantroot);
+            if ($tenant_catid === null) {
+                // Tenant given but cannot be resolved — fail closed rather
+                // than feed Claude a cross-tenant catalog.
+                return [];
+            }
+            $tenant_catpath = (string) $DB->get_field('course_categories', 'path',
+                ['id' => $tenant_catid]);
+            if ($tenant_catpath === '') {
+                return [];
+            }
+            $candidates = $DB->get_records_sql(
+                "SELECT c.id, c.fullname, c.shortname, c.summary
+                   FROM {course} c
+                   JOIN {course_categories} cc ON cc.id = c.category
+                  WHERE c.visible = 1 AND c.id > 1
+                    AND (cc.id = :catid OR " . $DB->sql_like('cc.path', ':catpathwild') . ")
+               ORDER BY c.fullname ASC",
+                [
+                    'catid'       => $tenant_catid,
+                    'catpathwild' => $tenant_catpath . '/%',
+                ],
+                0,
+                $maxitems
+            );
+        } else {
+            // No tenant on profile — siteadmin-triggered generation or
+            // PHPUnit fixture. Preserve the pre-hotfix unscoped behaviour
+            // so the existing test suite still passes; production callers
+            // always have a tenant via build_profile().
+            $candidates = $DB->get_records_select(
+                'course',
+                'visible = 1 AND id > 1',
+                null,
+                'fullname ASC',
+                'id, fullname, shortname, summary',
+                0,
+                $maxitems
+            );
+        }
 
         // Filter out completed courses.
         $out = [];
