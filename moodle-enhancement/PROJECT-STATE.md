@@ -5,6 +5,63 @@
 
 ---
 
+## ✅ Auth diagnostic — "invalid login" after admin password reset (2026-05-28)
+
+User report: admin (`academy@airpay.co.in`) reset the password of
+`ntinirajput@gmail.com` (user id 2997) to `test123` via the Moodle admin
+UI, then trying to log in with the email + new password returned
+"invalid login."
+
+**Root cause (none in our code).** Three facts pinned the diagnosis:
+
+1. The password hash for user 2997 validates against `test123` —
+   `validate_internal_user_password()` returns true. The reset DID work.
+2. The account's **username is `nitinrajput17`**, but its email is
+   `ntinirajput@gmail.com` (with a typo). Username ≠ email here.
+3. Site setting `authloginviaemail` was **`0`** locally — Moodle was
+   only matching on username. Typing the email at the login form
+   produced "unknown username" → "invalid login."
+
+Fix: `set_config('authloginviaemail', 1)` + purge caches. The user can now
+log in with either `nitinrajput17 / test123` or
+`ntinirajput@gmail.com / test123`.
+
+**Systematic sweep — our code is clean:**
+
+- `templates/core/loginform.mustache` already toggles its placeholder
+  between "Username" and "Username / email" based on `canloginbyemail`,
+  so the form will surface the new capability without any template
+  change.
+- `local_airpay_users/classes/welcome_mailer.php` (P1 #7) already
+  includes Username **and** Email **and** Password in the welcome body
+  sent on initial account creation — new signups already know their
+  username.
+- `local_airpay_users/classes/signup_service::derive_username($email)`
+  uses the email local part (e.g. `alice@gmail.com → alice`, with a
+  numeric suffix on collision). Predictable and Moodle-charset-safe.
+- `local_airpay_users/classes/user_manager.php` (HRMS importer) uses
+  whatever username is in the CSV row.
+- `DEPLOYMENT-RUNBOOK.md` already prescribed
+  `set_config('authloginviaemail', 1)` as a step — the local XAMPP was
+  the one out of sync (likely a dev-env bootstrap predating that
+  runbook). Production should already have this if the runbook was
+  followed.
+
+**Runbook tightening:** updated `DEPLOYMENT-RUNBOOK.md` to set both
+`defaulthomepage` and `authloginviaemail` **unconditionally** on every
+fresh Sentientia deployment (the previous wording made it sound
+conditional on only `defaulthomepage`) and added a `CRITICAL` note
+explaining why `authloginviaemail=1` is required.
+
+**Remaining UX gap (Moodle core, not us):** admin password reset doesn't
+send a notification email to the user — they have to be told the new
+password (and their username if it differs from the email) out of band.
+A future enhancement could hook the `\core\event\user_password_updated`
+event and send a Sentientia-branded notification. Not blocking; logged
+as a future-look item.
+
+---
+
 ## ✅ PHPUnit-5.2 CI gate MERGED to production (2026-05-28)
 
 Closes the lingering #296 hand-off from 2026-05-27. The

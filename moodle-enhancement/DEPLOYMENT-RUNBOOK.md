@@ -93,7 +93,19 @@ echo 'authloginviaemail: ' . get_config('moodle', 'authloginviaemail') . PHP_EOL
 "
 ```
 
-If `defaulthomepage` is not `0`, set it:
+Set both unconditionally on fresh deployments — they are
+**opinionated Sentientia defaults** and re-setting an already-correct value is
+a no-op:
+
+- `defaulthomepage = 0` (site home, not the user dashboard, as the after-
+  login landing) — needed for the airpayux brand surface to render first.
+- `authloginviaemail = 1` — **CRITICAL**: lets users log in with username
+  OR email. Without it, anyone whose username ≠ email (e.g. a user manually
+  created with custom username, or signup-derived usernames where the email
+  local part collided + suffix was added) cannot log in by typing their
+  email. Diagnostic shipped 2026-05-28 after a real local-env miss; this
+  setting must be `'1'` on every Sentientia deployment.
+
 ```bash
 sudo -u www-data php -r "
 define('CLI_SCRIPT', true);
