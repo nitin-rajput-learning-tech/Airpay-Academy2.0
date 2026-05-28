@@ -1033,6 +1033,49 @@ $templatecontext = [
     'airpay' => $airpay_dashboard ?? [],
 ];
 
+// ── ADR-017 Phase 3 / C1.4 (2026-05-28) ────────────────────────────
+// Inject user_type provider's dashboard_widgets() decision so the
+// dashboard template can conditionally render widgets per user_type.
+// Consumer learners should not see mandatory_compliance or
+// team_certifications; operators get admin_system_health.
+//
+// The existing $airpay_dashboard data is built unconditionally — this
+// just exposes the type info so the template chooses which widgets to
+// render. C1.4-followup chip will refactor each widget into a
+// conditional block.
+if (class_exists('\\local_airpay_core\\user_type_factory')) {
+    try {
+        $type_provider = \local_airpay_core\user_type_factory::for_user((int) $USER->id);
+        $widget_keys = $type_provider->dashboard_widgets($USER);
+
+        // Boolean flags for {{#dash_widget_<key>}}...{{/}} conditionals
+        $templatecontext['user_type']        = $type_provider::type_id();
+        $templatecontext['user_type_label']  = $type_provider::label();
+        $templatecontext['is_employee']         = ($type_provider::type_id() === 'employee');
+        $templatecontext['is_consumer']         = ($type_provider::type_id() === 'consumer');
+        $templatecontext['is_partner_employee'] = ($type_provider::type_id() === 'partner_employee');
+        $templatecontext['is_operator']         = ($type_provider::type_id() === 'operator');
+
+        // Per-widget show flags — every recognised widget key in the
+        // provider's catalog. The template tests
+        // `{{#dash_widget_team_certifications}}...{{/}}` to decide.
+        foreach ([
+            'continue_learning', 'mandatory_compliance', 'team_certifications',
+            'interest_recommendations', 'paid_courses_history',
+            'partner_team_compliance', 'admin_system_health',
+        ] as $widget) {
+            $templatecontext['dash_widget_' . $widget] = in_array($widget, $widget_keys, true);
+        }
+    } catch (\Throwable $e) {
+        // Defensive: never break dashboard render. Default to employee
+        // shape (matches the legacy behaviour).
+        $templatecontext['user_type'] = 'employee';
+        $templatecontext['is_employee'] = true;
+        $templatecontext['dash_widget_continue_learning'] = true;
+        $templatecontext['dash_widget_mandatory_compliance'] = true;
+    }
+}
+
 // Inject sidebar navigation context.
 $sidebarnav = new \theme_airpayux\sidebar_navigation($PAGE);
 $templatecontext['sidebar'] = $sidebarnav->get_context();
