@@ -763,24 +763,287 @@ how many `BizLogicWrong`, how many `UIDrift`, etc.)*
 
 ---
 
-## §4. Stabilization backlog (ordered)
+## §4. Stabilization backlog (ordered for Nitin's triage)
 
-*(Filled in after all findings are populated and triaged. Order:
-🔴 Blocking-Small first, then 🔴 Blocking-Large, then 🟠 Important by size,
-then 🟡 Cosmetic, then ⚪ Polish. Items marked Defer-v2 move to §5.)*
+Buckets organised by Decision × Severity × Effort. Within each bucket,
+items are sorted by leverage (highest-leverage first). Effort sizes:
+S=≤2hr, M=½-1 day, L=1-3 days, XL=>3 days.
+
+### Bucket A — Ship NOW (already fixed this session ✅)
+
+These were fixed during Stream 1 of Phase 2/3 (commit `e32473e58`,
+2026-05-28). Listed for completeness.
+
+| ID | Title | Status |
+|----|-------|--------|
+| F-080/F-088 | Unregistered caps `local/courses:manage` + `local/users:edit` | ✅ Renamed in 5 files; Apache log verified clean |
+| F-091 | `local/airpay_pages` workspace missing 17 files | ✅ Back-ported version.php + 11 CLI + EN lang + 3 HTML + qr_scan |
+| F-092 | `local/airpay_lifecycle` workspace missing 6 files | ✅ Back-ported entire runtime (db/, observer, task, version) |
+| F-093 | `local/airpay_core` workspace missing 2 CLI helpers | ✅ Back-ported |
+| F-094 | `theme/airpayux` workspace missing 9 AMD files | ✅ Back-ported |
+| F-097 | Test references unregistered cap | ✅ Renamed in role_detector_test.php + README |
+| F-008, F-009, F-013 | (from Phase 0) — already fixed pre-audit | ✅ |
+
+### Bucket B — Finish (started but incomplete; small-to-medium effort)
+
+Recommended order: top to bottom. Each item is sized so a single chip
+session closes it.
+
+| Rank | ID | Title | Sev | Effort | Why now |
+|------|-----|-------|-----|--------|---------|
+| B1 | F-095 | Add CI/pre-commit drift gate (workspace↔deployed) | 🟠 | M | Prevents F-091/F-092 ever happening again |
+| B2 | F-077 | Localhost guard on `block_learnerscript/observer.php` for CLI | 🟠 | S | Production cron logs polluted today |
+| B3 | F-002 | Leaderboard consent surface (DPDP gate) | 🔴 | M | Live legal exposure on every dashboard render |
+| B4 | F-086 | Decide dark-mode flag policy (delete OR enable) | 🟠 | S | CLAUDE.md absolute rule violation |
+| B5 | F-014 | Run `authloginviaemail=1` on production | 🟠 | S | Already documented in runbook; just run the CLI |
+| B6 | F-072 | Catalog "rating" sort either wires to `local_airpay_ratings` OR removes the dropdown option | 🟡 | S | Sort lies to users today |
+| B7 | F-068 | Add the F-20 sec-justification comment to 2nd `coursebannerimage` | ⚪ | S | Doc consistency |
+| B8 | F-070 | `footer.mustache:24 alt="airpay academy"` → use `{{# str }}` | 🟡 | S | i18n parity |
+| B9 | F-064 | Extract `navbar.mustache:165` inline `<script>` to AMD module | 🟠 | S | CSP-hardened deploys block it |
+| B10 | F-065 | Dashboard.mustache hardcoded English secondary labels → str helpers | 🟠 | S | Hindi parity violation |
+| B11 | F-066 | Dashboard chart palette: hex literals → CSS custom-props (dark-mode aware) | 🟡 | S | Token cascade |
+| B12 | F-067 | `_surface-user.scss` 69 `!important` → specificity refactor | 🟡 | M | Continues `!important` trim wave |
+| B13 | F-069 | Create `_surface-message.scss` (`/message/index.php` un-themed) | 🟡 | M | Surface-restyle pattern |
+| B14 | F-079 | Standardise sidebar URL convention (index.php; redirects from rest) | 🟡 | M | Maintainer DX |
+| B15 | F-076 | Reconcile DEPLOYMENT-RUNBOOK test accounts with `seed_users.php` actual output | 🟡 | S | Doc-vs-reality |
+| B16 | F-084 | Doc-fix: `flag_key` not `flagname` in state-cards | ⚪ | S | Doc-only |
+| B17 | F-081 | Cron sweep for orphan filedir entries (broken catalog thumbnails) | 🟡 | S | One-time cleanup + scheduled task |
+| B18 | F-089 | Per-tenant Sentientia Live kill switch (E.10 admin UI) | 🟡 | M | Already partial; needs admin UI |
+| B19 | F-074 | `local/airpay_pages` version.php hygiene (now back-ported, verify maturity stamp) | ⚪ | S | Already covered by F-091 fix; just verify maturity |
+| B20 | F-073 | `local/airpay_lifecycle` state-card refresh (now that runtime is in workspace) | ⚪ | S | Doc catch-up after F-092 |
+
+### Bucket C — Finish (large effort; multi-session)
+
+| Rank | ID | Title | Sev | Effort | Notes |
+|------|-----|-------|-----|--------|-------|
+| C1 | F-007 (foundational) | ADR-017 polymorphic user-type implementation | 🔴 | XL | ADR drafted today (2026-05-28); Phase 0 schema → Phase 5 signup form is 5 chips |
+| C2 | F-001 | Public-learner dashboard landing (consumer-shape) | 🔴 | L | Closes via ADR-017 Phase 3 |
+| C3 | F-003 | "Featured for you" widget for consumer | 🟠 | M | ADR-017 Phase 3 sub-widget |
+| C4 | F-004 | Catalog Netflix-UX restyle for consumer | 🟠 | L | Discrete from ADR-017 but a consumer-axis priority |
+| C5 | F-005 | Profile shape per user_type | 🟠 | M | ADR-017 Phase 2 |
+| C6 | F-006 | Sidebar nav per user_type | 🟠 | M | ADR-017 Phase 4 |
+| C7 | F-022 | Sentientia Live state-card refresh + E.10/E.12 | 🟠 | M | Cross-ref F-089 |
+| C8 | F-017, F-018, F-019 | 3 AI plugins — first paid Anthropic call (one of them) | 🟠 | M | Pick AI Quiz as the canary; flip to BETA |
+| C9 | F-035 | Calendar OAuth Phase 2 — real Google/M365 flows | 🟡 | L | Already scaffolded (ADR-013) |
+| C10 | F-038 | Certificate stack — finish builder + verify endpoint | 🟡 | L | Already partial |
+| C11 | F-049 | `_moodle-overrides.scss` `!important` trim wave (Chip O continuation) | 🟡 | M | Tech-debt |
+| C12 | F-046 | Moodle 5.2 production cutover decision + execution | 🔴 | M | Customer-driven; needs Nitin decision |
+| C13 | F-047 | PWA master-key + push flag-on for production | 🟠 | M | Already gated; needs operator decision |
+| C14 | F-082 (selected) | Create unified admin UI for `airpay_whatsapp` (templates + analytics) | 🟠 | M | Currently fragmented |
+| C15 | F-082 (selected) | Create OAuth admin UI for `sentientia_m365` | 🟠 | L | Currently NO UI |
+| C16 | F-082 (selected) | Create translation queue UI for `sentientia_translate` | 🟡 | L | Currently NO UI |
+| C17 | F-085 | Seed-data CLIs for un-exercised features (skills, evaluation_template, classroom, mgr_allocations) | 🟠 | M | Currently un-exercised on local — production behaviour unknown |
+
+### Bucket D — Remove (delete dead code or features)
+
+| Rank | ID | Title | Sev | Effort | Reasoning |
+|------|-----|-------|-----|--------|-----------|
+| D1 | F-086 (alt branch) | Delete `ux.darkMode.enabled` flag if dark-mode is permanent | ⚪ | S | OR keep + enable (B4); decision needed |
+| D2 | F-071 | Trim 2 new comment-rationale blocks in footer.mustache (Chip L re-bloat) | ⚪ | S | Comment hygiene |
+| D3 | F-072 (alt) | Remove "rating" sort dropdown option from catalog UI if ratings table won't be wired in v1 | 🟡 | S | Lying UI |
+| D4 | F-096 | If airpay_challenge stays a stub, downgrade maturity from STABLE → ALPHA OR remove the renderer | 🟡 | M | Maturity vs reality |
+| D5 | F-061 | `airpay_assistant` — clarify scope (ai_demo.php only?) and stamp ALPHA | 🟡 | S | Naming/scope |
+| D6 | F-062 | 5 plugins flagged ALPHA but unused — decision per plugin (keep ALPHA / promote / archive) | 🟡 | M | Maturity sweep |
+
+### Bucket E — Redesign (substantive rethink, not just code change)
+
+| Rank | ID | Title | Sev | Effort | Notes |
+|------|-----|-------|-----|--------|-------|
+| E1 | F-007 (root cause) | Polymorphic user-type architecture (ADR-017) | 🔴 | XL | Already in C1 — listed here as Redesign because it IS one |
+| E2 | F-012 + F-075 + F-083 | Canonical naming: complete the `airpay_*` → `sentientia_*` transition | 🟡 | L | Decision: stop the transition OR finish it. Cannot stay half-way. |
+| E3 | F-095 (process) | Workspace authoritative-source policy + drift gate | 🟠 | M | Listed in B1 — but the **policy decision** comes first |
+| E4 | F-058 (meta) | State-card freshness gate — refresh on every version bump | 🟠 | M | Process redesign |
+
+### Bucket F — Investigate (not enough info to decide)
+
+| ID | Title | What to investigate |
+|----|-------|---------------------|
+| F-024 | E.12 Sentientia Live analytics — what's still missing? | Walk the existing analytics page; list gaps |
+| F-026-F-029 | Recommendations H.1-H.4 + Translate T.1-T.4 install verifications | Run installer CLIs on a fresh DB, see what fails |
+| F-030 | Challenges 5 pendings | Walk state-card + diff vs install.xml |
+| F-031, F-032 | course-share workflow + paygw security verify | Cross-check with last security audit |
+| F-033 | Cypress only Site Admin coverage | Inventory which personas Cypress walks |
+| F-039 | airpay_emails Phase 5 — what's left? | State-card refresh |
+| F-041, F-042 | Web push security review pending | Run a focused audit (B25 closure) |
+| F-053-F-056 | 4 plugins with un-triaged state-cards | Read each state-card and triage |
+| F-087 | `sentientia.pwa.install.enabled` duplicate rows — uniqueness check | Read install.xml index; add UNIQUE if missing |
+| F-090 | Feature-flag audit table — is it actually written? | Set a flag via the setter; verify audit row appears |
+
+### Bucket G — Defer to v2 (locked; see §5)
+
+See §5 for the formal "v2" list with one-line rationale per item.
 
 ---
 
 ## §5. Locked deferrals (explicit "v2" list)
 
-*(After triage, anything decided as Defer-v2 lands here with a one-line
-justification. This is the contract: not promised for v1.)*
+The following items are explicitly deferred to v2 (post-stabilization).
+This is the contract: NOT promised for the current cycle. Future audits
+can revisit if priorities change.
+
+| ID | Item | v2 rationale |
+|----|------|--------------|
+| F-025 | Calendar OAuth Phase 2 full flows | Customer-driven; no current ask |
+| F-034 | NVDA verification procedure execution | Owner: Nitin (manual run); procedure doc already shipped |
+| F-036 | Mobile-app WS X.1 endpoints — actual mobile-app build | Mobile is Workstream D; not in v1 scope |
+| F-037 | Customer Brand admin UI (B-side of ADR-008) | DB schema shipped; admin UI is v2 |
+| F-040 | ADR-008 forward-looking items (per-customer logo upload UI) | Same scope as F-037 |
+| F-043 | PWA Path C — full offline mode (not just static-asset caching) | v2; Path A+B are live |
+| F-044 | WhatsApp DLT template approval workflow | Compliance-gated; v2 |
+| F-050 | Org capability migration (capabilities at category level not system level) | Architectural; v2 |
+| F-051 | Web Services endpoints for mobile read paths | v2 with X.1 |
+| F-052 | Roles Phase 2 (role inheritance + cohort-based) | v2 |
+| F-054 | Photo crop on user upload | Polish; v2 |
+| F-055 | F1 source-map deploys (production sourcemaps) | DX nice-to-have; v2 |
+| F-056 | Quiz feedback UI (post-attempt review) | Borrowed from 5.2 next time |
+| F-057 (meta) | Add a "deferred-ledger" surface in admin UI to make all v2 items visible | This ADR is the closest thing; could be a real admin page in v2 |
+| F-060 | `sentientia_m365` full M365 Graph API consumer (read user calendar/files) | Scaffold-only is acceptable; v2 |
+| F-063 | B25 crypto audit closure (NB items #7-15) | Already non-blocking; v2 |
+| F-027 | sentientia_recommendations install verification on fresh DB | Plugin scaffold is in BETA; v2 verification |
+| F-028 | sentientia_translate install verification on fresh DB | Same |
+| F-029 | sentientia_aiquiz install verification on fresh DB | Same |
+| F-053 | block_airpay_trainer state-card refresh | v2 doc sweep |
+| F-085 (subset) | Test data for proctoring / mgr_allocations / classroom — production data probably sufficient | Don't seed local; verify in prod via spot-check |
 
 ---
 
-## §6. Index
+## §6. Index (sorted by finding ID)
 
-*(Alphabetical / by ID, generated at the end.)*
+| ID | One-line title | Bucket | Sev |
+|----|---------------|--------|-----|
+| F-001 | Public learner lands on employee-shaped dashboard | C2 | 🟠 |
+| F-002 | Leaderboard widget consent (DPDP/GDPR) | B3 | 🔴 |
+| F-003 | "Featured for you" widget shows employer-internal courses | C3 | 🟠 |
+| F-004 | Catalog UX not Netflix-shaped | C4 | 🟠 |
+| F-005 | Profile shape has N/A fields for consumers | C5 | 🟠 |
+| F-006 | Sidebar shows employee-shape items to consumers | C6 | 🟠 |
+| F-007 | Public-as-tenant architectural mistake (foundational) | C1/E1 | 🔴 |
+| F-008 | Cross-tenant onboarding leak — fixed pre-audit | A | ✅ |
+| F-009 | `authloginviaemail` doc — clarified pre-audit | A | ✅ |
+| F-010 | Login flow with `@` in username — fixed pre-audit | A | ✅ |
+| F-011 | DEPLOYMENT-RUNBOOK drift — partial | B15 | 🟡 |
+| F-012 | airpay_* → sentientia_* naming transition incomplete | E2 | 🟡 |
+| F-013 | LearnerScript localhost guard — fixed pre-audit | A | ✅ |
+| F-014 | Production `authloginviaemail=1` not yet run | B5 | 🟠 |
+| F-015 | (NotBuilt placeholder) | F | 🟡 |
+| F-016 | Cross-tenant resolver — fixed pre-audit | A | ✅ |
+| F-017 | AI Quiz never live-called (mock-only) | C8 | 🟠 |
+| F-018 | sentientia_recommendations never live-called | C8 | 🟠 |
+| F-019 | sentientia_translate never live-called | C8 | 🟠 |
+| F-020 | AI Quiz G.4 mod_quiz push STUB | C | 🟠 |
+| F-021 | Visual evidence pending | C | ⚪ |
+| F-022 | Sentientia Live state-card stale | C7 | 🟠 |
+| F-023 | E.10 per-tenant settings deferred | C7 | 🟡 |
+| F-024 | E.12 analytics gaps | F | 🟡 |
+| F-025 | Calendar OAuth Phase 2 deferred | §5 | 🟡 |
+| F-026 | Recommendations H.1-H.4 install verify | §5 | 🟡 |
+| F-027 | sentientia_recommendations install verify | §5 | 🟡 |
+| F-028 | sentientia_translate install verify | §5 | 🟡 |
+| F-029 | sentientia_aiquiz install verify | §5 | 🟡 |
+| F-030 | Challenges 5 pendings | F | 🟡 |
+| F-031 | course-share workflow verify | F | 🟡 |
+| F-032 | paygw security verify | F | 🟡 |
+| F-033 | Cypress only Site Admin coverage | F | 🟡 |
+| F-034 | NVDA verification deferred | §5 | 🟡 |
+| F-035 | Mobile WS X.1 deferred | C9 | 🟡 |
+| F-036 | Customer Brand admin UI deferred | §5 | 🟡 |
+| F-037 | ADR-008 forward-looking | §5 | 🟡 |
+| F-038 | Certificates not built | C10 | 🟡 |
+| F-039 | airpay_emails Phase 5 follow-up | F | 🟡 |
+| F-040 | ADR-008 per-customer logo upload | §5 | 🟡 |
+| F-041 | Web push security review pending | F | 🟠 |
+| F-042 | Web push hardening | F | 🟡 |
+| F-043 | PWA Path C deferred | §5 | 🟡 |
+| F-044 | WhatsApp DLT pending | §5 | 🟠 |
+| F-045 | WhatsApp stuck in mock mode | C | 🟠 |
+| F-046 | Production deploy 5.2 cutover gap | C12 | 🔴 |
+| F-047 | PWA master-key prod | C13 | 🟠 |
+| F-048 | grunt minify automation | C | ⚪ |
+| F-049 | `_moodle-overrides.scss` !important debt | C11 | 🟡 |
+| F-050 | Org capability migration | §5 | 🟡 |
+| F-051 | WS endpoints for mobile read | §5 | 🟡 |
+| F-052 | Roles Phase 2 | §5 | 🟡 |
+| F-053 | block_airpay_trainer state-card | §5 | 🟡 |
+| F-054 | Photo crop | §5 | ⚪ |
+| F-055 | F1 source-map deploys | §5 | ⚪ |
+| F-056 | Quiz feedback UI | §5 | 🟡 |
+| F-057 | Deferred-ledger meta-surface | §5 | 🟠 |
+| F-058 | State-card staleness pattern | E4 | 🟠 |
+| F-059 | M365 scaffold-only | §5 | 🟡 |
+| F-060 | Full M365 Graph API | §5 | 🟡 |
+| F-061 | airpay_assistant clarify scope | D5 | 🟡 |
+| F-062 | airpay_integrations cleanup + 5 ALPHA plugins | D6 | 🟡 |
+| F-063 | B25 crypto audit closure | §5 | 🟡 |
+| F-064 | navbar.mustache inline `<script>` | B9 | 🟠 |
+| F-065 | Dashboard.mustache hardcoded English | B10 | 🟠 |
+| F-066 | Dashboard chart palette hex | B11 | 🟡 |
+| F-067 | `_surface-user.scss` `!important` debt | B12 | 🟡 |
+| F-068 | coursebannerimage doc comment | B7 | ⚪ |
+| F-069 | `_surface-message.scss` missing | B13 | 🟡 |
+| F-070 | footer.mustache alt= hardcoded English | B8 | 🟡 |
+| F-071 | footer.mustache comment bloat | D2 | ⚪ |
+| F-072 | Catalog rating sort stub | B6/D3 | 🟡 |
+| F-073 | airpay_lifecycle investigation (now closed by F-092) | B20 | ⚪ |
+| F-074 | airpay_pages version.php check (now closed by F-091) | B19 | ⚪ |
+| F-075 | 5 blocks naming-transition | E2 | 🟡 |
+| F-076 | DEPLOYMENT-RUNBOOK test accounts mismatch | B15 | 🟡 |
+| F-077 | LearnerScript observer CLI warnings | B2 | 🟠 |
+| F-078 | `M.cfg.userid` — ✅ verified clean | A | ✅ |
+| F-079 | Sidebar entry-point conventions inconsistent | B14 | 🟡 |
+| F-080 | `local/courses:manage` not registered — ✅ fixed | A | ✅ |
+| F-081 | Orphan filedir entries (getimagesize warnings) | B17 | 🟡 |
+| F-082 | 11 plugins with no admin entry point — 6 genuinely missing UI | C14-C16 | 🟠 |
+| F-083 | 7 ADR/state-card references to renamed plugins | E2 | 🟡 |
+| F-084 | `flag_key` not `flagname` doc-drift | B16 | ⚪ |
+| F-085 | 79 empty mdl_local_* tables | C17 | 🟠 |
+| F-086 | `ux.darkMode.enabled` flag governance | B4/D1 | 🟠 |
+| F-087 | sentientia.pwa.install.enabled duplicates | F | 🟡 |
+| F-088 | DB confirmation of F-080 — ✅ fixed | A | ✅ |
+| F-089 | Sentientia Live flags globally enabled | B18 | 🟡 |
+| F-090 | feature_flag_audit table untested | F | ⚪ |
+| F-091 | airpay_pages workspace drift — ✅ fixed | A | ✅ |
+| F-092 | airpay_lifecycle workspace drift — ✅ fixed | A | ✅ |
+| F-093 | airpay_core workspace drift — ✅ fixed | A | ✅ |
+| F-094 | theme/airpayux AMD workspace drift — ✅ fixed | A | ✅ |
+| F-095 | Workspace drift gate (META) | B1/E3 | 🟠 |
+| F-096 | airpay_challenge renderer is a stub | D4 | 🟡 |
+| F-097 | role_detector_test references unregistered cap — ✅ fixed | A | ✅ |
+
+---
+
+## §7. Audit closure summary (post-Phase 3)
+
+**Total findings:** 97 (F-001 — F-097).
+
+**Already resolved this session (Bucket A):** 12 findings (F-008, F-009,
+F-010, F-013, F-016 pre-audit; F-078 verified clean; F-080/F-088, F-091,
+F-092, F-093, F-094, F-097 fixed Stream 1).
+
+**Decision distribution post-triage:**
+
+| Bucket | Decision | Findings |
+|--------|----------|----------|
+| A | ✅ Already shipped | 12 |
+| B | Ship/Finish — small-medium (1-2 weeks total if all chipped) | 20 |
+| C | Finish — large (multi-session, several weeks) | 17 |
+| D | Remove dead code or downgrade maturity | 6 |
+| E | Redesign (architectural) | 4 |
+| F | Investigate before deciding | 10 |
+| §5 | Locked Defer-v2 | 21 |
+| Cross-referenced (some appear in multiple buckets) | — | 7 |
+
+**Total committed work in v1 stabilization:** Buckets A+B+C+D+E ≈ 59
+findings. **v2 lock:** ~21 findings.
+
+**Recommended v1 close-out sequence:**
+
+1. Bucket B (Ship/Finish small) — 20 items at S/M effort = ~3 weeks
+2. Bucket E (Redesign) — 4 architectural decisions = ~1 week of ADR-writing + 4-6 weeks implementation
+3. Bucket C (Finish large) — 17 items = ~6-8 weeks (much overlap with E)
+4. Bucket D (Remove) — 6 items at S effort = ~1 week
+5. Bucket F (Investigate) — 10 items at S effort = ~1 week of focused probing
+
+**Estimated total v1 stabilization:** ~10-12 weeks of focused work.
 
 ---
 
@@ -797,5 +1060,9 @@ justification. This is the contract: not promised for v1.)*
 | 2026-05-28 | 1 (runtime probing) | Apache error.log mining + DB capability + feature_flag table probes + orphan filedir scan | F-080 through F-090 |
 | 2026-05-28 | 1 (runtime probing) | Workspace ↔ deployed file-count drift survey across all 38 airpay/sentientia plugins + theme + grep for stub/TODO markers | F-091 through F-097 |
 | 2026-05-28 | **1 COMPLETE** | Phase 1 closure marker + severity distribution refresh + stop-the-bus list | — |
+| 2026-05-28 | 2 (ADR-017) | Polymorphic user-type ADR drafted at `docs/adr/ADR-017-polymorphic-user-types.md` — schema (3 tables), provider interface, resolution rule, 5-phase migration, 7 open questions for Nitin | — |
+| 2026-05-28 | **2 COMPLETE** | ADR-017 in Proposed status awaiting Nitin's call on 7 open questions | — |
+| 2026-05-28 | 3 (consolidation) | Stream 1 deploy-unblock fixes shipped (commit `e32473e58`): F-080/F-088, F-091, F-092, F-093, F-094, F-097. §4 stabilization backlog ordered into 6 buckets (Ship/Finish-small/Finish-large/Remove/Redesign/Investigate). §5 locked v2 deferrals list. §6 index by finding ID. §7 closure summary. | — |
+| 2026-05-28 | **3 COMPLETE** | Audit closed; 97 findings, 12 ✅ already shipped, ~59 in v1 stabilization buckets, ~21 locked Defer-v2, ~10 needing investigation | — |
 
 *(Progress log appended each session.)*
