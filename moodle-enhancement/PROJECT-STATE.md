@@ -1,7 +1,102 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-05-27 (**Sidebar role switcher** — surfaced BizLMS role switching in the airpayux shell sidebar for multi-role users; backend already worked but the shell discarded the switcher HTML. Verified Admin↔Learner round-trip for Nitin. See top H2. Prior 2026-05-25:) (**Goal C CLOSED** — four full per-persona user guides shipped under `docs/user-guides/` (Tenant Admin, Course Author, Compliance Officer, Learner), each ≥20 pages with login + full walkthrough + mobile + troubleshooting + v1.0.37-beta changelog; plus a README index with chooser flowchart and 4 screenshot manifests. See the "GOAL C CLOSED" H2 immediately below. Prior update 2026-05-24:) (Three parallel-chip MVPs shipped: **Tier 2.6 Calendar Sync** — `local_sentientia_calendar` with token-URL ICS feed, 4 feature flags, 28 PHPUnit assertions, ADR-013, Hindi 100%; **Tier 1 #4 AI Quiz Generation Phase G.0** — `local_sentientia_aiquiz` with 4-layer cost defence and mock-mode demoable pipeline, ~47 PHPUnit tests, ADR-012, Hindi 100%; **Tier 2 #7 Real-time Leaderboards Phase L.0** — `local_sentientia_leaderboard` + `block_sentientia_leaderboard` with SSE-driven live ranking across quiz/completion/skill board types, GDPR-compliant opt-out, ADR-014, Hindi 100%. **Platform Visual Audit v4.1.0** shipped from mobile-app session — 14 surfaces audited (9 P0 / 8 P1 / 6 P2 findings), CONDITIONAL PASS verdict; full report at `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md`. Earlier today the night-run autonomous batch shipped 16 items: Phase B.12 cutover-day mechanical fixes (A1-A8), plugin PHPUnit coverage (B1-B2), Goal C user guides for 6 personas (C1-C6); cutover-day TODO list is now mostly empty modulo NVDA verification + activity_header runtime test. **Paygw security follow-up shipped earlier this session** — MD5 deprecated, require_login() at file scope removed, sandbox/live URL clarified, 13 new PHPUnit tests added. Phase B Moodle 5.2 upgrade is code-complete; production stays on 5.1 until customer-driven cutover decision. ADR-001 records the strategic pivot from "patch Moodle deployment" to "build saleable enterprise LMS product" — Airpay Academy is customer-zero. See `docs/adr/ADR-001-fork-strategy-and-product-pivot.md`.
+**Updated:** 2026-05-28 (**role_detector capability-probe guard** — wrapped both `has_capability('local/courses:manage')` calls in `theme/airpayux/classes/role_detector.php` and `theme/airpayux/layout/dashboard.php` with `get_capability_info(name, false)` existence guards. Debug-notice cleanup only — tier detection itself was already correct (falls through to administrator-role-at-category-context check). Theme `2026052409 → 2026052410`, `1.0.40-beta`. See top H2. Prior 2026-05-27:) (**Sidebar role switcher** — surfaced BizLMS role switching in the airpayux shell sidebar for multi-role users; backend already worked but the shell discarded the switcher HTML. Verified Admin↔Learner round-trip for Nitin. See H2 below. Prior 2026-05-25:) (**Goal C CLOSED** — four full per-persona user guides shipped under `docs/user-guides/` (Tenant Admin, Course Author, Compliance Officer, Learner), each ≥20 pages with login + full walkthrough + mobile + troubleshooting + v1.0.37-beta changelog; plus a README index with chooser flowchart and 4 screenshot manifests. See the "GOAL C CLOSED" H2 immediately below. Prior update 2026-05-24:) (Three parallel-chip MVPs shipped: **Tier 2.6 Calendar Sync** — `local_sentientia_calendar` with token-URL ICS feed, 4 feature flags, 28 PHPUnit assertions, ADR-013, Hindi 100%; **Tier 1 #4 AI Quiz Generation Phase G.0** — `local_sentientia_aiquiz` with 4-layer cost defence and mock-mode demoable pipeline, ~47 PHPUnit tests, ADR-012, Hindi 100%; **Tier 2 #7 Real-time Leaderboards Phase L.0** — `local_sentientia_leaderboard` + `block_sentientia_leaderboard` with SSE-driven live ranking across quiz/completion/skill board types, GDPR-compliant opt-out, ADR-014, Hindi 100%. **Platform Visual Audit v4.1.0** shipped from mobile-app session — 14 surfaces audited (9 P0 / 8 P1 / 6 P2 findings), CONDITIONAL PASS verdict; full report at `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md`. Earlier today the night-run autonomous batch shipped 16 items: Phase B.12 cutover-day mechanical fixes (A1-A8), plugin PHPUnit coverage (B1-B2), Goal C user guides for 6 personas (C1-C6); cutover-day TODO list is now mostly empty modulo NVDA verification + activity_header runtime test. **Paygw security follow-up shipped earlier this session** — MD5 deprecated, require_login() at file scope removed, sandbox/live URL clarified, 13 new PHPUnit tests added. Phase B Moodle 5.2 upgrade is code-complete; production stays on 5.1 until customer-driven cutover decision. ADR-001 records the strategic pivot from "patch Moodle deployment" to "build saleable enterprise LMS product" — Airpay Academy is customer-zero. See `docs/adr/ADR-001-fork-strategy-and-product-pivot.md`.
 
 **Historical context:** Wave 1 + Wave 2 audit entries archived at `docs/_archive/PROJECT-STATE-history.md`.
+
+---
+
+## ✅ role_detector capability-probe guard — debug-notice cleanup (2026-05-28)
+
+**Why:** Local XAMPP Moodle 5.1 (`C:\xampp\htdocs\moodle5\public`) was emitting
+> `Capability "local/courses:manage" was not found! This has to be fixed in code.`
+
+on every non-admin `/my/dashboard.php` load — twice per render, in fact. The
+notice came from `lib/accesslib.php::has_capability()` → `get_capability_info()`,
+which `debugging()`s when probed for a capability that isn't registered in
+`{capabilities}`. Root cause is dual-name on-going-rollout — both names are
+real, but only one is installed per env:
+
+| Capability | Defined in | Installed on |
+|---|---|---|
+| `local/courses:manage` | `local/courses/db/access.php:94` (epsilon-era) | production `airpay.academy` |
+| `local/airpay_courses:manage` | `moodle-enhancement/local/airpay_courses/db/access.php:29` (rename target) | local XAMPP working tree |
+
+The two callsites that fire the probe on every `/my/` load:
+
+1. `theme/airpayux/classes/role_detector.php:117–118` — L&D-Admin tier detection
+   (already had the dual-name fallback; just unguarded).
+2. `theme/airpayux/layout/dashboard.php:52` — onboarding-redirect gate
+   (single-name; one-side fix preserves prod parity while silencing local).
+
+**Fix (additive, behaviour-preserving — theme airpayux `2026052409 →
+2026052410`, `1.0.40-beta`):**
+
+- `classes/role_detector.php` — each `has_capability()` now guarded by
+  `get_capability_info($name, false)`. The guard returns `null` silently
+  when the cap isn't registered, so the absent name is skipped instead
+  of warned about. Docblock updated to declare the dual-name probe is
+  by design. Pattern mirrors `lib/accesslib.php` core uses at `:1421`,
+  `:1490`, `:4279`.
+- `layout/dashboard.php` — same guard applied. Bonus: the rebranded
+  `local/airpay_courses:manage` is now also honoured by the onboarding
+  redirect gate, matching role_detector's dual-name semantics. Stops
+  the divergence where an L&D Admin on the rename-target plugin
+  would have been sent through the learner onboarding wizard.
+
+**Behaviour preserved on production:** the cap-name `local/courses:manage`
+is registered in prod's `mdl_capabilities` (verified via
+`local/courses/db/access.php`), so `get_capability_info()` returns the
+info object → `has_capability()` proceeds normally. Production output
+unchanged.
+
+**Behaviour change on local XAMPP only:** if the local XAMPP install has
+`local_airpay_courses` (rename target) deployed but NOT `local_courses`
+(epsilon-era), L&D-Admin users are now correctly recognised by the
+onboarding-redirect gate on first load (previously they slipped through
+the cap check; the `role_assignments` SQL still catches them via
+administrator-at-category-context). Net: stricter on local, identical
+on prod.
+
+**Tier detection wasn't broken** — the existing fallback to the
+`role_assignments` SQL (administrator role + category context) covered
+both envs anyway. This is purely a logspam fix.
+
+**Verification (TODO on the XAMPP host — cannot run from Linux session):**
+
+- `php /theme/airpayux/cli/verify_roleswitch.php --userid=142` — must
+  still print `RESULT: all states PASS — exactly one option active per
+  state.` Exit code `0`.
+- `vendor/bin/phpunit --group role_detector` — `role_detector_test.php`
+  (8 methods) must still pass. The test already uses
+  `get_all_capabilities()` as its existence guard, so it stays
+  compatible with the new code path.
+- Smoke: log in as Joseph Mandapati (id 627, Compliance Officer) →
+  visit `/my/dashboard.php` → check `error.log` for the
+  `Capability "local/courses:manage" was not found` line — must be
+  absent.
+
+**Deploy:**
+```
+Copy-Item D:\Claude Local\airpay-ld-os\moodle-enhancement\theme\airpayux\classes\role_detector.php `
+          C:\xampp\htdocs\moodle5\public\theme\airpayux\classes\role_detector.php -Force
+Copy-Item D:\Claude Local\airpay-ld-os\moodle-enhancement\theme\airpayux\layout\dashboard.php `
+          C:\xampp\htdocs\moodle5\public\theme\airpayux\layout\dashboard.php -Force
+Copy-Item D:\Claude Local\airpay-ld-os\moodle-enhancement\theme\airpayux\version.php `
+          C:\xampp\htdocs\moodle5\public\theme\airpayux\version.php -Force
+php C:\xampp\htdocs\moodle5\admin\cli\upgrade.php --non-interactive
+php C:\xampp\htdocs\moodle5\admin\cli\purge_caches.php
+# Hard-refresh /my/dashboard.php as a non-admin and tail error.log.
+```
+
+**Files touched:**
+
+- `moodle-enhancement/theme/airpayux/classes/role_detector.php` — guard +
+  docblock update
+- `moodle-enhancement/theme/airpayux/layout/dashboard.php` — guard +
+  rebrand-cap fallback
+- `moodle-enhancement/theme/airpayux/version.php` — version bump +
+  changelog entry
+- `moodle-enhancement/PROJECT-STATE.md` — this entry
 
 ---
 

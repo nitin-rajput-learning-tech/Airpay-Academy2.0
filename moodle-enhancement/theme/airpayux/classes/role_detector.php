@@ -40,11 +40,17 @@ defined('MOODLE_INTERNAL') || die();
  *
  *   issiteadmin = is_siteadmin($USER)
  *   isldadmin   = !issiteadmin && !switched_to_employee && (
- *                   has_capability('local/courses:manage', system) ||
+ *                   has_capability('local/courses:manage', system) ||           <-- prod plugin
+ *                   has_capability('local/airpay_courses:manage', system) ||   <-- rename target
  *                   record_exists in {role_assignments} with
  *                     role.shortname = 'administrator' AND
  *                     context.contextlevel = 40 (category)
  *                 )
+ *
+ *   Both capability names are guarded by `get_capability_info()` so the
+ *   absent name is silently skipped on whichever install lacks the
+ *   corresponding plugin (avoids the "Capability X was not found"
+ *   debug notice from `has_capability()`).
  *   ismanager   = !isadmin && (
  *                   has_capability('moodle/site:viewreports', system) ||
  *                   count_records(user open_supervisorid = $USER->id) > 0
@@ -112,10 +118,33 @@ class role_detector {
 
         // L&D Admin: cap-based OR BizLMS administrator role at category context.
         // Skip if user has switched to employee role.
+        //
+        // Dual-name capability probe — by design.
+        //   - Production (`airpay.academy`) deploys the epsilon-era plugin
+        //     `local_courses`, which registers `local/courses:manage`
+        //     (see `local/courses/db/access.php`).
+        //   - The renamed working-tree plugin `local_airpay_courses` registers
+        //     `local/airpay_courses:manage` (see
+        //     `moodle-enhancement/local/airpay_courses/db/access.php`). The
+        //     rename ships as an additive rollout; both names are valid
+        //     L&D-Admin indicators in their respective install.
+        //
+        // Each `has_capability()` is guarded by `get_capability_info()` so
+        // the absent name is silently skipped on whichever install lacks it.
+        // Without the guard, `has_capability()` calls `debugging("Capability
+        // X was not found! This has to be fixed in code.")` — see
+        // `lib/accesslib.php::has_capability()` and `::get_capability_info()`.
+        // Passing `false` for the second arg suppresses the deprecation debug
+        // path too. Mirrors the guard pattern Moodle core uses at
+        // `lib/accesslib.php:1421`, `:1490`, `:4279`.
         $isldadmin = false;
         if (!$issiteadmin && !$switchedtoemployee) {
-            $isldadmin = has_capability('local/courses:manage', $systemcontext, $userid)
-                      || has_capability('local/airpay_courses:manage', $systemcontext, $userid);
+            if (get_capability_info('local/courses:manage', false)) {
+                $isldadmin = has_capability('local/courses:manage', $systemcontext, $userid);
+            }
+            if (!$isldadmin && get_capability_info('local/airpay_courses:manage', false)) {
+                $isldadmin = has_capability('local/airpay_courses:manage', $systemcontext, $userid);
+            }
             if (!$isldadmin) {
                 try {
                     // Note: no LIMIT clause — record_exists_sql adds it

@@ -48,8 +48,19 @@ $is_supervisor = $DB->record_exists_select(
     'user',
     'open_supervisorid = :uid AND deleted = 0',
     ['uid' => $USER->id]);
+// Dual-name capability probe (see role_detector::detect() docblock):
+//   - Production `local_courses` registers `local/courses:manage`.
+//   - Rename target `local_airpay_courses` registers `local/airpay_courses:manage`.
+// Each `has_capability()` is guarded by `get_capability_info(name, false)` so
+// the absent name is silently skipped on whichever install lacks it — avoids
+// the "Capability X was not found! This has to be fixed in code." debug
+// notice from `lib/accesslib.php::has_capability()`.
+$has_courses_manage_cap = (get_capability_info('local/courses:manage', false)
+        && has_capability('local/courses:manage', context_system::instance()))
+    || (get_capability_info('local/airpay_courses:manage', false)
+        && has_capability('local/airpay_courses:manage', context_system::instance()));
 $has_any_admin_role = is_siteadmin()
-    || has_capability('local/courses:manage', context_system::instance())
+    || $has_courses_manage_cap
     || $DB->record_exists_sql(
         "SELECT 1 FROM {role_assignments} ra JOIN {context} ctx ON ctx.id = ra.contextid
          WHERE ra.userid = :uid AND ra.roleid = 9 AND ctx.contextlevel = 40",
