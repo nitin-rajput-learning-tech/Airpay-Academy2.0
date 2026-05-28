@@ -1064,5 +1064,10 @@ findings. **v2 lock:** ~21 findings.
 | 2026-05-28 | **2 COMPLETE** | ADR-017 in Proposed status awaiting Nitin's call on 7 open questions | — |
 | 2026-05-28 | 3 (consolidation) | Stream 1 deploy-unblock fixes shipped (commit `e32473e58`): F-080/F-088, F-091, F-092, F-093, F-094, F-097. §4 stabilization backlog ordered into 6 buckets (Ship/Finish-small/Finish-large/Remove/Redesign/Investigate). §5 locked v2 deferrals list. §6 index by finding ID. §7 closure summary. | — |
 | 2026-05-28 | **3 COMPLETE** | Audit closed; 97 findings, 12 ✅ already shipped, ~59 in v1 stabilization buckets, ~21 locked Defer-v2, ~10 needing investigation | — |
+| 2026-05-28 | 4 (Stream 2/3) | ADR-017 Phases 0–6 shipped end-to-end (schema, providers, factory, classify CLI, dashboard/sidebar/signup wiring, profile template, onboarding consent, dashboard widget gating) — commits `7525d413b → d56e9fe85`. Closes Tasks #309–#314. | — |
+| 2026-05-28 | 4 (Bucket D) | D2 footer comment trim + D4 airpay_challenge BETA→ALPHA + D5 airpay_assistant BETA→ALPHA + D6 maturity-triage doc covering all 31 plugins. Commit `d7dbd7885`. | — |
+| 2026-05-28 | 4 (Bucket E) | E2 RENAMES.md airpay→sentientia migration policy + E3 WORKSPACE-POLICY.md formalising workspace-as-source-of-truth + E4 state-card freshness gate + CHECK 12 pre-commit wiring. Commit `cadd25191`. | — |
+| 2026-05-28 | 4 (Bucket C) | C15 sentientia_m365 OAuth admin landing + C16 sentientia_translate admin queue/landing — both modelled on C14 (4-card stats + quick-nav). admin_externalpage registration, lang strings, version bumps. Commit `3df780c76`. | — |
+| 2026-05-28 | **4 COMPLETE** | Today's stabilization wave closes Tasks #315–#318. Audit moves from "closed but tracked" to "Bucket D+E+C15+C16 shipped"; remaining open in Bucket C: C4/C8/C9/C10/C17 (deferred per user). Bucket F (10 investigate items) + §5 v2-lock items still pending review. | — |
 
 *(Progress log appended each session.)*

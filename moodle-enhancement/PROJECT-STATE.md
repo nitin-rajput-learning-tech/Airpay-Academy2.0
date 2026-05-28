@@ -5,6 +5,40 @@
 
 ---
 
+## ✅ Stabilization Audit Buckets D + E + C15/C16 SHIPPED (2026-05-28)
+
+Three follow-on commits to the Stabilization Audit landed today across
+**Bucket D (remove/downgrade)**, **Bucket E (naming/policy/freshness)**,
+and **Bucket C (admin landings)**:
+
+**Commit `d7dbd7885` — Bucket D**
+- D2: trim verbose comment blocks in `theme/airpayux/templates/footer.mustache` (19 lines of git-archaeology comments → 2 short reference lines)
+- D4: `local_airpay_challenge` `MATURITY_BETA` → `MATURITY_ALPHA` (F-096 — the renderer self-described as "stub replacing BizLMS local_challenge"; attempt tables empty on local + prod)
+- D5: `local_airpay_assistant` `MATURITY_BETA` → `MATURITY_ALPHA` (F-061 — `core_ai_bridge` has never POSTed to a live AI provider; only `ai_demo.php` works)
+- D6: new `docs/audits/MATURITY-TRIAGE-2026-05-28.md` reviewing all 31 plugins; defines the gate that future maturity changes must reference audit-finding evidence or production-data evidence
+- Result: 17 STABLE / 7 BETA / 9 ALPHA — every stamp now backed by either prod-row-count or audit-finding evidence
+
+**Commit `cadd25191` — Bucket E**
+- E2: new `docs/RENAMES.md` documenting the airpay_* → sentientia_* migration policy. Tl;dr — 17 STABLE plugins stay `airpay_*` forever (rename breaks `config_plugins`, file areas, capabilities, preferences); new plugins ship as `sentientia_*` from day 1
+- E3: new `docs/WORKSPACE-POLICY.md` formalising the F-091/F-092 lesson — workspace is source of truth, deployed XAMPP is build artifact, edits flow workspace→deployed and never reverse, drift gate enforces via pre-commit (soft) + CI (--strict)
+- E4: new `tools/check_state_card_freshness.sh` — two-mode gate (`--mode=staged` for pre-commit, `--mode=stale` for weekly cron). Perf-tuned via GNU find `-printf '%T@'` (fork-cost on Git Bash for Windows was killing the naive per-file `stat` version). Initial sweep: ✅ all 32 plugin state cards fresh
+- CHECK 12 wired into `.claude/hooks/pre-commit.sh`; warning-counter uses `grep -c` outside the pipe to avoid bash's classic subshell-variable-loss footgun
+- Hook installed into `.git/hooks/pre-commit` for this clone (per-clone — fresh clones need `tools/install-hooks.ps1`)
+
+**Commit `3df780c76` — Bucket C (C15 + C16)**
+- C16: new `local/sentientia_translate/admin/index.php` (~290 LOC) — unified queue dashboard. 4 stat cards (Total / Pending / Saved / Failed), filter chips (status + target-lang), 25-row recent-translations table with status badges + action links to `translate.php?rowid=`, quick-nav to New translation / Brand overrides / Settings. Scoping mirrors `translate_engine::list_for_actor()` — full-customer view for `manage_all` cap, own-rows-plus-tenant otherwise.
+- C15: new `local/sentientia_m365/admin/index.php` (~245 LOC) — OAuth landing dashboard. 4 stat cards (Tenant ID configured · Client ID configured · Feature flag · Connected user count), `msal_client::is_ready()` summary banner, C.1–C.6 roadmap table with Done/Planned badges, quick-nav to Azure & OAuth settings + Privacy. Reads config only — zero live Graph round-trips. Phase-C.1 confirm-required notice surfaces the design choice that `graph_client` methods throw `moodle_exception('confirm_required')` until C.2.
+- Both plugins: `admin_externalpage` registered in `settings.php`, lang strings added (30 + 25 EN), versions bumped (2026052801, both moving 0.1.0-alpha → 0.2.0-alpha)
+- Smoke test: PHP -l clean × 8, Moodle upgrade applied both savepoints, HTTP probes returned 303 (login redirect — not 500), workspace_sync gate ✅ no drift
+
+**Remaining open audit items** (deferred — explicit user decisions or further design):
+- Bucket B/C: B5 (`authloginviaemail=1` on prod), C4 (catalog Netflix UX), C8 (live AI POST against Anthropic), C9 (Calendar OAuth Phase 2), C10 (certificate stack), C12 (5.2 prod cutover), C13 (PWA prod), C17 (seed-data CLIs)
+- Bucket F (investigate, 10 items) and §5 (v2 lock, 21 items) — still pending review
+
+Closes Tasks #315, #316, #317, #318. Today's three commits hit production at `d7dbd7885`, `cadd25191`, `3df780c76`.
+
+---
+
 ## 🔴 Tenant leak in onboarding wizard — FIXED (2026-05-28)
 
 **Severity: high** — found while debugging today's auth issue. A Public-
