@@ -297,7 +297,21 @@ defined('MOODLE_INTERNAL') || die();
 // shared key), tightens with contextid/orgcatid only when present, and
 // falls back to role_detector (the dashboard's source of truth) so exactly
 // one option is always marked — agreeing with the rendered dashboard.
-$plugin->version   = 2026052409;
+//
+// Recommended-for-You tenant scoping (2026-05-28) — broader-sweep follow-up
+// to commit db5242c9a (cross-tenant onboarding leak). The dashboard's
+// "Recommended for You" learner block was naturally tenant-safe via the
+// user's enrolled-course categories (enrolments are tenant-scoped), but
+// two failure modes existed: (a) brand-new learners with zero enrolments
+// got an empty block + no fallback; (b) cross-tenant SHARED enrolments
+// (Sprint C/D) surfaced the lender tenant's categories in $categories,
+// mixing tenants in the recommendation block. Now resolves the user's
+// tenant_catid via \local_airpay_org\accesslib::get_tenant_category_id
+// and constrains every candidate to (cc.id = :catid OR cc.path LIKE
+// :catpathwild). Adds a cold-start fallback that surfaces the
+// most-enrolled courses in the user's home tenant for brand-new learners.
+// Fail-closed when the resolver returns null (matches onboarding.php).
+$plugin->version   = 2026052410;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;

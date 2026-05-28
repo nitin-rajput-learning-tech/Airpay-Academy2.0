@@ -956,40 +956,120 @@ if (isloggedin() && !isguestuser()) {
     }
 
     // --- Section: Recommended for You ---
+    //
+    // Tenant scoping (2026-05-28 hotfix follow-up to db5242c9a). The
+    // original query was naturally tenant-safe for learners with at least
+    // one enrolment, because `categories` was derived from enrolled
+    // courses and enrolments are tenant-scoped. Two failure modes the
+    // explicit scope below closes:
+    //   1. Brand-new learners with zero enrolments fell through to an
+    //      empty result (not a leak, but also not useful for the user).
+    //   2. Cross-tenant SHARED enrolments (Sprint C/D): a Public learner
+    //      enrolled in a borrowed Airpay course would have Airpay's
+    //      category in $categories, surfacing more Airpay courses in
+    //      "Recommended for You" -- mixing tenants in a learner block.
+    //
+    // Strategy (matches onboarding.php): resolve user's tenant_catid via
+    // accesslib::get_tenant_category_id and constrain every candidate to
+    // sit inside that tenant subtree. If the resolver fails closed, the
+    // block stays empty (preferable to leaking).
     try {
         $recommendations = [];
+        $rec_tenant_catid = \local_airpay_org\accesslib::get_tenant_category_id(
+            (string) ($USER->open_path ?? ''));
+        $rec_tenant_catpath = '';
+        if ($rec_tenant_catid) {
+            $rec_tenant_catpath = (string) $DB->get_field('course_categories',
+                'path', ['id' => $rec_tenant_catid]);
+        }
         $enrolledids = array_keys($enrolledcourses ?? []);
-        if (!empty($enrolledids)) {
-            // Get categories of enrolled courses
-            $categories = $DB->get_fieldset_sql(
-                "SELECT DISTINCT category FROM {course} WHERE id IN (" .
-                implode(',', array_map('intval', $enrolledids)) . ")"
-            );
+        if ($rec_tenant_catid && $rec_tenant_catpath !== '') {
+            // Tenant-scoped category set — used to bound recommendations to
+            // the user's home tenant regardless of any cross-tenant shared
+            // enrolments they happen to have.
+            $tenant_cat_params = [
+                'rec_catid'        => $rec_tenant_catid,
+                'rec_catpathwild'  => $rec_tenant_catpath . '/%',
+            ];
+            $tenant_cat_clause = "(cc.id = :rec_catid OR " .
+                $DB->sql_like('cc.path', ':rec_catpathwild') . ")";
+
+            if (!empty($enrolledids)) {
+                // Get categories of enrolled courses, but only those within
+                // the user's tenant subtree (drops borrowed-from-Airpay
+                // categories for a Public learner).
+                [$exsql, $exparams] = $DB->get_in_or_equal($enrolledids,
+                    SQL_PARAMS_NAMED, 'cat_ex');
+                $catfetch_params = array_merge($tenant_cat_params, $exparams);
+                $categories = $DB->get_fieldset_sql(
+                    "SELECT DISTINCT c.category
+                       FROM {course} c
+                       JOIN {course_categories} cc ON cc.id = c.category
+                      WHERE c.id $exsql AND $tenant_cat_clause",
+                    $catfetch_params
+                );
+            } else {
+                // Brand-new learner — no enrolments. Recommend popular
+                // courses inside the user's tenant subtree as a starting
+                // point. Capped at the same 3 the enrolled-path uses.
+                $categories = [];
+            }
+
             if (!empty($categories)) {
-                [$catsql, $catparams] = $DB->get_in_or_equal($categories, SQL_PARAMS_NAMED, 'cat');
-                [$exsql, $exparams] = $DB->get_in_or_equal($enrolledids, SQL_PARAMS_NAMED, 'ex', false);
-                $params = array_merge($catparams, $exparams);
+                [$catsql, $catparams] = $DB->get_in_or_equal($categories,
+                    SQL_PARAMS_NAMED, 'cat');
+                [$exsql2, $exparams2] = $DB->get_in_or_equal($enrolledids,
+                    SQL_PARAMS_NAMED, 'ex', false);
+                $params = array_merge($tenant_cat_params, $catparams,
+                    $exparams2);
                 $recs = $DB->get_records_sql(
                     "SELECT c.id, c.fullname, c.summary, c.category
                        FROM {course} c
+                       JOIN {course_categories} cc ON cc.id = c.category
                       WHERE c.category $catsql
-                        AND c.id $exsql
+                        AND c.id $exsql2
                         AND c.visible = 1 AND c.id > 1
+                        AND $tenant_cat_clause
                    ORDER BY c.timecreated DESC",
                     $params, 0, 3
                 );
-                foreach ($recs as $rec) {
-                    $catname = $DB->get_field('course_categories', 'name', ['id' => $rec->category]);
-                    $recommendations[] = [
-                        'id' => $rec->id,
-                        'fullname' => format_string($rec->fullname),
-                        'summary' => shorten_text(strip_tags(format_string($rec->summary)), 80),
-                        'category' => format_string($catname),
-                        'viewurl' => (new moodle_url('/course/view.php', ['id' => $rec->id]))->out(false),
-                    ];
-                }
+            } else if (empty($enrolledids)) {
+                // Cold-start fallback: most-enrolled courses inside the
+                // tenant subtree. Excludes nothing because they have no
+                // enrolments yet.
+                $recs = $DB->get_records_sql(
+                    "SELECT c.id, c.fullname, c.summary, c.category,
+                            COUNT(ue.id) AS enrolcount
+                       FROM {course} c
+                       JOIN {course_categories} cc ON cc.id = c.category
+                       JOIN {enrol} e ON e.courseid = c.id
+                       JOIN {user_enrolments} ue ON ue.enrolid = e.id
+                      WHERE c.visible = 1 AND c.id > 1
+                        AND $tenant_cat_clause
+                   GROUP BY c.id, c.fullname, c.summary, c.category
+                   ORDER BY COUNT(ue.id) DESC, c.timecreated DESC",
+                    $tenant_cat_params, 0, 3
+                );
+            } else {
+                $recs = [];
+            }
+
+            foreach ($recs as $rec) {
+                $catname = $DB->get_field('course_categories', 'name',
+                    ['id' => $rec->category]);
+                $recommendations[] = [
+                    'id' => $rec->id,
+                    'fullname' => format_string($rec->fullname),
+                    'summary' => shorten_text(strip_tags(format_string($rec->summary)), 80),
+                    'category' => format_string($catname),
+                    'viewurl' => (new moodle_url('/course/view.php', ['id' => $rec->id]))->out(false),
+                ];
             }
         }
+        // else: tenant cannot be resolved -> fail closed, recommendations
+        // stays empty. Site admins and admin-impersonating sessions land
+        // here too, but they don't see the learner dashboard anyway (they
+        // get the admin branch above).
         $airpay_dashboard['recommendations'] = $recommendations;
         $airpay_dashboard['hasrecommendations'] = count($recommendations) > 0;
     } catch (Exception $e) {
