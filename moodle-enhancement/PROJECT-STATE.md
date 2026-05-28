@@ -5,6 +5,33 @@
 
 ---
 
+## ✅ PHPUnit-5.2 CI gate MERGED to production (2026-05-28)
+
+Closes the lingering #296 hand-off from 2026-05-27. The
+`ci/phpunit-5.2-rebased` branch (sha `98930d8ec`, ahead of production by 2
+commits — the phpunit-5.2 job + a prior rebase merge) was merged into
+`production` with `--no-ff` as commit **`3f13d83b3`** ("Merge
+ci/phpunit-5.2-rebased: PHPUnit 5.2 CI gate"). Confirmed conflict-free
+pre-merge: only file changed was `.github/workflows/ci.yml` (+292/-3),
+zero overlap with the 6 production-only commits since the branch base.
+
+The merge SHA itself triggers the new `phpunit-5.2` job on production —
+the calibration run yesterday's PROJECT-STATE was waiting on. Watch it at
+https://github.com/nitin-rajput-learning-tech/Airpay-Academy2.0/actions
+
+The job uses a hermetic postgres:14 service and copies only
+airpay_*/sentientia_* plugins (no third-party `block_learnerscript`, which
+fires a benign PHP 8.2 `parse_url`/`REQUEST_URI` deprecation absent from
+production runs). Local prerequisites were green from yesterday: the
+sentientia_live PHPUnit suite passes 0/0 errors+failures after the
+open_path defensive read (74beb4857) + the three stale test-expectation
+corrections (365018ea9).
+
+Cleanup follow-up (when convenient): delete the merged feature branch
+`ci/phpunit-5.2-rebased` from the remote.
+
+---
+
 ## ✅ Sidebar role switcher — multi-role shell parity (2026-05-27)
 
 **Why:** Nitin (and any multi-role user — e.g. an L&D admin who is also a
