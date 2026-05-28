@@ -487,34 +487,44 @@ trait user_menu {
             return null;
         }, $roles)));
 
-        // The currently-active role: set in $USER->useraccess after a prior
-        // switch, otherwise the highest available (matches user_menu()).
+        // The currently-active role. $USER->useraccess['currentroleinfo'] is
+        // written by two different paths with DIFFERENT key sets:
+        //   - accesslib::set_user_role_switch()  (the /my/switchrole.php path)
+        //         -> {roleid, contextid}                  (no orgcatid/depth)
+        //   - core_renderer::role_switch_basedon_userroles() (first-visit
+        //         auto-redirect) -> {roleid, orgcatid, depth, contextinfo}
+        //                                                  (no top-level contextid)
+        // roleid is the ONLY key both guarantee, so match primarily on roleid
+        // and tighten with contextid / orgcatid only when they're present.
+        // (The old triple roleid+depth+orgcatid match silently failed after a
+        // switchrole.php switch, because depth/orgcatid were absent and fell
+        // back to the highest role's values — VIS follow-up 2026-05-28.)
         if (!empty($userra)) {
             $highest = max($userra);
         } else {
             $highest = (object) ['roleid' => 0, 'highest_catid' => 0, 'depth' => 0];
         }
-        $currentroleid = $USER->useraccess['currentroleinfo']['roleid'] ?? $highest->roleid;
-        $currentcatid  = $USER->useraccess['currentroleinfo']['orgcatid'] ?? ($highest->highest_catid ?? 0);
-        $currentdepth  = $USER->useraccess['currentroleinfo']['depth'] ?? ($highest->depth ?? 0);
+        $cri             = $USER->useraccess['currentroleinfo'] ?? [];
+        $switchroleid    = (int) ($cri['roleid'] ?? 0);
+        $switchcontextid = (int) ($cri['contextid'] ?? 0);
+        $switchcatid     = (int) ($cri['orgcatid'] ?? 0);
 
-        // Learner / employee shortcut.
+        // Build a working list, decide which one is active, THEN render urls —
+        // the active option is a non-clickable marker, not a switch link.
+        $work = [];
+
+        // Learner / employee shortcut — matched on roleid alone (it carries no
+        // meaningful category/context).
         if (!empty($learnerrole)) {
-            $islearneractive = ((int) $learnerrole->id === (int) $currentroleid);
-            $label = get_string('employee', 'theme_airpayux');
-            $result['options'][] = [
-                'url'    => $islearneractive ? '' : (new moodle_url('/my/switchrole.php', [
-                    'sesskey'    => sesskey(),
-                    'confirm'    => 1,
-                    'switchrole' => $learnerrole->id,
-                ]))->out(false),
-                'label'  => $label,
-                'icon'   => 'fa-user',
-                'active' => $islearneractive,
+            $work[] = [
+                'label'      => get_string('employee', 'theme_airpayux'),
+                'icon'       => 'fa-user',
+                '_roleid'    => (int) $learnerrole->id,
+                '_contextid' => 0,
+                '_catid'     => 0,
+                '_islearner' => true,
+                'active'     => ($switchroleid > 0 && (int) $learnerrole->id === $switchroleid),
             ];
-            if ($islearneractive) {
-                $result['currentlabel'] = $label;
-            }
         }
 
         // One option per distinct category role the user holds.
@@ -524,22 +534,82 @@ trait user_menu {
             } else {
                 $label = $role->categoryname . ' - ' . ($role->rolecode ?? '');
             }
-            $isactive = ((int) $role->roleid === (int) $currentroleid
-                && (int) $currentdepth === (int) $role->depth
-                && (int) $currentcatid === (int) $role->highest_catid);
-            $result['options'][] = [
-                'url'    => $isactive ? '' : (new moodle_url('/my/switchrole.php', [
+            $active = ($switchroleid > 0
+                && (int) $role->roleid === $switchroleid
+                && ($switchcontextid === 0 || (int) $role->contextid === $switchcontextid)
+                && ($switchcatid === 0 || (int) $role->highest_catid === $switchcatid));
+            $work[] = [
+                'label'      => $label,
+                'icon'       => 'fa-user-circle-o',
+                '_roleid'    => (int) $role->roleid,
+                '_contextid' => (int) $role->contextid,
+                '_catid'     => (int) $role->highest_catid,
+                '_islearner' => false,
+                'active'     => $active,
+            ];
+        }
+
+        // Fallback: if nothing matched (a fresh session before any switch, or
+        // a switch whose stored keys didn't line up), align the marker with
+        // role_detector — the SAME source of truth that selects which dashboard
+        // renders — so the highlighted role always matches what the user sees.
+        $anyactive = false;
+        foreach ($work as $w) {
+            if ($w['active']) { $anyactive = true; break; }
+        }
+        if (!$anyactive && !empty($work) && class_exists('\\theme_airpayux\\role_detector')) {
+            $tier = \theme_airpayux\role_detector::detect();
+            $marked = false;
+            if (!empty($tier['switched_to_employee'])) {
+                foreach ($work as $i => $w) {
+                    if ($w['_islearner']) { $work[$i]['active'] = true; $marked = true; break; }
+                }
+            }
+            if (!$marked) {
+                // Default: the highest category role — what the auto-redirect
+                // selects on first visit and what the admin/manager dashboard
+                // reflects.
+                foreach ($work as $i => $w) {
+                    if (!$w['_islearner']
+                            && $w['_roleid'] === (int) $highest->roleid
+                            && $w['_catid'] === (int) ($highest->highest_catid ?? 0)) {
+                        $work[$i]['active'] = true; $marked = true; break;
+                    }
+                }
+                if (!$marked) {
+                    foreach ($work as $i => $w) {
+                        if (!$w['_islearner']) { $work[$i]['active'] = true; break; }
+                    }
+                }
+            }
+        }
+
+        // Render: active = non-clickable marker (empty url); others = links.
+        foreach ($work as $w) {
+            if ($w['active']) {
+                $url = '';
+            } else if ($w['_islearner']) {
+                $url = (new moodle_url('/my/switchrole.php', [
                     'sesskey'    => sesskey(),
                     'confirm'    => 1,
-                    'switchrole' => $role->roleid,
-                    'contextid'  => $role->contextid,
-                ]))->out(false),
-                'label'  => $label,
-                'icon'   => 'fa-user-circle-o',
-                'active' => $isactive,
+                    'switchrole' => $w['_roleid'],
+                ]))->out(false);
+            } else {
+                $url = (new moodle_url('/my/switchrole.php', [
+                    'sesskey'    => sesskey(),
+                    'confirm'    => 1,
+                    'switchrole' => $w['_roleid'],
+                    'contextid'  => $w['_contextid'],
+                ]))->out(false);
+            }
+            $result['options'][] = [
+                'url'    => $url,
+                'label'  => $w['label'],
+                'icon'   => $w['icon'],
+                'active' => $w['active'],
             ];
-            if ($isactive) {
-                $result['currentlabel'] = $label;
+            if ($w['active']) {
+                $result['currentlabel'] = $w['label'];
             }
         }
 

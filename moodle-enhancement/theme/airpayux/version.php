@@ -287,7 +287,17 @@ defined('MOODLE_INTERNAL') || die();
 //     tokens, reduced-motion-aware transition, hidden when collapsed).
 //   - No new lang keys (reuses switchroleto + employee; hi parity intact).
 // Visual evidence: docs/visual-evidence/2026-05-27/ (roleswitch-*.png).
-$plugin->version   = 2026052408;
+//
+// Role switcher active-marker fix (2026-05-28) — the first-load "current
+// role" highlight was absent because get_role_switch_options() required
+// roleid+depth+orgcatid to ALL match, but the two writers of
+// $USER->useraccess['currentroleinfo'] store different keys
+// (set_user_role_switch: roleid+contextid; role_switch_basedon_userroles:
+// roleid+orgcatid+depth+contextinfo). Now matches on roleid (the only
+// shared key), tightens with contextid/orgcatid only when present, and
+// falls back to role_detector (the dashboard's source of truth) so exactly
+// one option is always marked — agreeing with the rendered dashboard.
+$plugin->version   = 2026052409;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;

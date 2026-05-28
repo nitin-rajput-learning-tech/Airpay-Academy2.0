@@ -43,9 +43,21 @@ dashboard (admin KPIs ↔ learner gamification/Continue-Learning) AND the
 sidebar nav; active role correctly marked after each switch; **zero JS
 console errors** across login + both switches + a fresh `/my/` reload.
 Evidence + DOM-probe matrix in `docs/visual-evidence/2026-05-27/`
-(role-switcher section). **Known non-blocking polish:** on the very first
-pre-switch load (no `currentroleinfo` pinned) neither option is highlighted —
-links still work; tracked for a later `role_detector` fallback.
+(role-switcher section).
+
+**Active-marker fix (2026-05-28, theme 2026052409).** The first-load polish
+above is done. `get_role_switch_options()` required roleid+depth+orgcatid to
+all match, but `currentroleinfo` is written by two paths with different keys
+(`set_user_role_switch` → roleid+contextid; `role_switch_basedon_userroles`
+→ roleid+orgcatid+depth+contextinfo), so the marker silently failed whenever
+depth/orgcatid were absent. Now matches on roleid (the only shared key),
+tightens with contextid/orgcatid when present, and falls back to
+`role_detector` (the dashboard's source of truth) so exactly one option is
+always marked. New keepable QA CLI `theme/airpayux/cli/verify_roleswitch.php`
+proves it headlessly for Nitin across all 3 states (fresh→Operations-Admin,
+→Employee, →category-role) — all PASS. (Env note: local DB misses the
+`local/courses:manage` capability that `role_detector` probes — benign debug
+notice, absent on prod; flagged for a separate look.)
 
 ---
 

@@ -144,10 +144,40 @@ them inline rather than to disk):
 | Backwards-compat (single-role) | ✓ PASS | `get_role_switch_options()` returns `hasoptions=false` for users w/o category-context roles ⇒ zero new markup |
 | JS console health | ✓ PASS | Zero console errors/exceptions across login, both switches, and a fresh `/my/` reload |
 
-### Known minor follow-up (non-blocking)
+### Active-marker fix — RESOLVED 2026-05-28 (theme 2026052409)
 
-On the very first load *before any switch* (fresh session, no
-`$USER->useraccess['currentroleinfo']` pinned), neither option is
-highlighted — the links work, but the "current" marker only appears once a
-switch sets the active-role info. Cosmetic only; tracked for a later polish
-(fall back to `role_detector` to pre-mark the default role).
+The first-load gap noted above (neither option highlighted before any
+switch) is fixed. Root cause: `$USER->useraccess['currentroleinfo']` is
+written by two paths with different keys —
+`accesslib::set_user_role_switch()` stores `{roleid, contextid}` while
+`core_renderer::role_switch_basedon_userroles()` stores
+`{roleid, orgcatid, depth, contextinfo}` — but the builder required
+`roleid` **and** `depth` **and** `orgcatid` to all match, so it silently
+failed whenever the last two were absent. Now it matches on `roleid` (the
+only key both paths guarantee), tightens with `contextid`/`orgcatid` only
+when present, and falls back to `role_detector` (the same source of truth
+that selects the dashboard) when there is no switch state — guaranteeing
+exactly one option is marked, agreeing with the rendered dashboard.
+
+Verified headlessly via the new
+`theme/airpayux/cli/verify_roleswitch.php` (a keepable QA tool) against the
+real Nitin (id 142) across all three `currentroleinfo` states:
+
+```
+A: fresh login (no switch)        -> Operations - Administrator  ACTIVE   PASS
+B: switched to Employee           -> Employee                    ACTIVE   PASS
+C: switched to category role      -> Operations - Administrator  ACTIVE   PASS   (the {roleid,contextid}-only shape the old triple-match missed)
+RESULT: all states PASS — exactly one option active per state.
+```
+
+The CLI is the deterministic regression check; it covers cases (cold load,
+the set_user_role_switch shape) that a single screenshot cannot. The
+sidebar's rendered appearance is unchanged from the captures above — only
+*which* option carries the active highlight on a cold load changed.
+
+Pre-existing env note (not introduced here): on this local XAMPP,
+`role_detector::detect()` calls `has_capability('local/courses:manage')`,
+which isn't registered in the local DB → a debug notice per non-admin
+dashboard load. Benign (Nitin resolves via his category-admin role) and
+absent on production where `local_courses` is installed; flagged for a
+separate look.
