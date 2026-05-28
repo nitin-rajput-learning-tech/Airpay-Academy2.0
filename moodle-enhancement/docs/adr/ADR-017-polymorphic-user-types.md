@@ -1,10 +1,27 @@
-# ADR-017 — Polymorphic User Types (employee vs consumer)
+# ADR-017 — Polymorphic User Types
 
-**Status:** Proposed (drafted 2026-05-28 during Stabilization Audit Phase 2)
+**Status:** Accepted (2026-05-28 — Nitin answered all 7 open questions)
 **Date:** 2026-05-28
-**Deciders:** Nitin Rajput (pending review), Claude (drafter)
+**Deciders:** Nitin Rajput, Claude (drafter)
 **Builds on:** ADR-001 (fork strategy + product pivot), ADR-008 (customer brand)
 **Born from:** Stabilization Audit findings F-001, F-003, F-004, F-005, F-006, F-007 (foundational)
+
+## Resolution summary (post-Q&A 2026-05-28)
+
+The 7 open questions in §Open questions have been answered. Key
+deviations from the original draft:
+
+| Q | Decision | Schema impact |
+|---|----------|---------------|
+| Q1 — promotion semantics | **Accounts never merge.** A hired consumer gets a NEW employee account. No data crosses types. | No "promotion" code path; user_type is immutable per account |
+| Q2 — partner-org users | **Third type: `partner_employee`.** B2B partner staff is its own type. | New `local_airpay_partner_employee_profile` table |
+| Q3 — Site Admins | **Fourth type: `operator`.** Platform operators explicit. | New `local_airpay_operator_profile` table |
+| Q4 — self-visibility | **Visible read-only badge** on profile page header | Mustache change only |
+| Q5 — role composition | **Two separate axes** (user_type_factory + role_detector compose at call-site) | None |
+| Q6 — locale parity | **All 5 locales blocking** (en+hi+kn+mr+sw) before merge | ~150 lang strings before merge |
+| Q7 — Manager modelling | **Capability of employee** (manager_userid pointer), NOT a separate type | None |
+
+**v1 has 4 user_types:** `employee`, `consumer`, `partner_employee`, `operator`.
 
 ---
 
@@ -66,18 +83,22 @@ to exist as first-class concerns.
 ## Decision
 
 Introduce **`user_type`** as a first-class concept on `mdl_user`, with
-exactly two values in v1:
+**four values** in v1 (post-Q&A 2026-05-28):
 
 | Value | Meaning | Example | Identifying signal |
 |-------|---------|---------|--------------------|
-| `employee` | Person learning in a workplace context (organisation tenant) | Airpay HR rep, ZEEA staff | `open_path` resolves to a tenant root that has a non-null `local_costcenter` row marking it as an org tenant |
-| `consumer` | Person learning in a self-directed context (no workplace tenant) | Public-signup learner | `open_path = '/77'` (the Public root, by convention) OR newly-signed-up users with no managed-org membership |
+| `employee` | Person learning in a workplace context as Airpay-customer staff | Airpay HR rep, ZEEA staff | `open_path` resolves to the customer-zero tenant subtree (`/1`, `/177` for ZEEA) AND `local_costcenter.customerid = AIRPAY` |
+| `consumer` | Self-directed public learner, no employment context | Public-signup learner at airpay.academy/signup | `open_path` starts with `/77` (Public root) — no employer relationship |
+| `partner_employee` | B2B partner-organisation employee (future Sentientia customers' staff) | BankCo HR rep when BankCo onboards as a customer | `open_path` resolves to a non-Airpay customer tenant — different `local_costcenter.customerid` |
+| `operator` | Platform operator — Site Admin or Sentientia-side staff | Airpay platform team, support engineers | `is_siteadmin()` true OR explicit role assignment; usually `open_path` NULL |
 
-`user_type` is **derived** at provisioning time (signup OR HRMS-sync) and
-**stored** in the new `mdl_local_airpay_user_type` extension table. It is
-NOT re-derived on every request — once classified, the user keeps their
-type until an explicit migration event (an L&D Admin promotes a public
-learner to a tenant employee).
+`user_type` is **derived** at provisioning time (signup OR HRMS-sync OR
+admin-create OR partner-org sync) and **stored** in
+`mdl_local_airpay_user_type`. It is **immutable per account** (Q1 ruling
+2026-05-28): a consumer who joins a customer-org gets a NEW account
+provisioned as `employee` — no data carries over from the consumer
+account. The consumer account remains as a separate identity. This
+keeps the type axis simple and the data privacy story clean.
 
 ### Schema changes
 
@@ -89,7 +110,7 @@ Two new tables (additive — does NOT touch `mdl_user`):
     <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
     <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true"/>
     <FIELD NAME="user_type" TYPE="char" LENGTH="20" NOTNULL="true"
-           COMMENT="employee | consumer"/>
+           COMMENT="employee | consumer | partner_employee | operator"/>
     <FIELD NAME="provisioning_source" TYPE="char" LENGTH="40" NOTNULL="true"
            COMMENT="signup_public | hrms_sync | manual_admin | invite_paid"/>
     <FIELD NAME="provisioned_at" TYPE="int" LENGTH="10" NOTNULL="true"/>
@@ -129,6 +150,56 @@ Two new tables (additive — does NOT touch `mdl_user`):
     <KEY NAME="fk_user" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
     <KEY NAME="fk_manager" TYPE="foreign" FIELDS="manager_userid"
          REFTABLE="user" REFFIELDS="id"/>
+  </KEYS>
+</TABLE>
+
+<TABLE NAME="local_airpay_partner_employee_profile" COMMENT="Partner-org employee profile (B2B customer staff, e.g. BankCo HR)">
+  <FIELDS>
+    <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+    <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+    <FIELD NAME="customer_id" TYPE="int" LENGTH="10" NOTNULL="true"
+           COMMENT="FK to local_airpay_core.customer registry — partner org"/>
+    <FIELD NAME="partner_employee_id" TYPE="char" LENGTH="40" NOTNULL="false"
+           COMMENT="employee ID as supplied by the partner-org HRMS sync"/>
+    <FIELD NAME="partner_department" TYPE="char" LENGTH="80" NOTNULL="false"/>
+    <FIELD NAME="partner_job_title" TYPE="char" LENGTH="80" NOTNULL="false"/>
+    <FIELD NAME="partner_manager_userid" TYPE="int" LENGTH="10" NOTNULL="false"
+           COMMENT="FK to mdl_user.id (supervisor in same partner org)"/>
+    <FIELD NAME="partner_hire_date" TYPE="int" LENGTH="10" NOTNULL="false"/>
+    <FIELD NAME="cost_center_path" TYPE="char" LENGTH="255" NOTNULL="false"
+           COMMENT="cached open_path within the partner-org subtree"/>
+    <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true"/>
+    <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true"/>
+  </FIELDS>
+  <KEYS>
+    <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+    <KEY NAME="unique_user" TYPE="unique" FIELDS="userid"/>
+    <KEY NAME="fk_user" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+    <KEY NAME="fk_manager" TYPE="foreign" FIELDS="partner_manager_userid"
+         REFTABLE="user" REFFIELDS="id"/>
+  </KEYS>
+  <INDEXES>
+    <INDEX NAME="idx_customer" UNIQUE="false" FIELDS="customer_id"
+           COMMENT="every partner-scoped query hits this"/>
+  </INDEXES>
+</TABLE>
+
+<TABLE NAME="local_airpay_operator_profile" COMMENT="Platform operator profile (Site Admins, Sentientia-side staff)">
+  <FIELDS>
+    <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+    <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+    <FIELD NAME="operator_role" TYPE="char" LENGTH="40" NOTNULL="false"
+           COMMENT="siteadmin | support | sentientia_staff | dpdp_dpo"/>
+    <FIELD NAME="contact_phone" TYPE="char" LENGTH="40" NOTNULL="false"/>
+    <FIELD NAME="oncall_for_customer_id" TYPE="int" LENGTH="10" NOTNULL="false"
+           COMMENT="if support-rotation, the customer this operator owns this week"/>
+    <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true"/>
+    <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true"/>
+  </FIELDS>
+  <KEYS>
+    <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+    <KEY NAME="unique_user" TYPE="unique" FIELDS="userid"/>
+    <KEY NAME="fk_user" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
   </KEYS>
 </TABLE>
 
@@ -191,8 +262,10 @@ interface user_type_provider {
     public function feature_supported(string $featurekey): bool;
 }
 
-class employee_provider implements user_type_provider { /* impl */ }
-class consumer_provider implements user_type_provider { /* impl */ }
+class employee_provider         implements user_type_provider { /* impl */ }
+class consumer_provider         implements user_type_provider { /* impl */ }
+class partner_employee_provider implements user_type_provider { /* impl */ }
+class operator_provider         implements user_type_provider { /* impl */ }
 
 class user_type_factory {
     public static function for_user(int $userid): user_type_provider {
@@ -206,38 +279,57 @@ class user_type_factory {
 
 ```php
 // local/airpay_core/classes/user_type_resolver.php
-function classify_user_at_provisioning(int $userid, string $source): string {
+function classify_user_at_provisioning(int $userid, string $source,
+                                        ?int $customerid = null): string {
     global $DB;
     $user = $DB->get_record('user', ['id' => $userid], '*', MUST_EXIST);
 
-    // Rule 1: public signup → consumer (unless the signup form explicitly
-    //         indicates an employee invitation token).
+    // Rule 1: public signup at airpay.academy/signup → consumer.
     if ($source === 'signup_public') {
         return 'consumer';
     }
 
-    // Rule 2: HRMS sync → employee.
+    // Rule 2: HRMS sync from a customer org → employee or partner_employee
+    //         depending on whether the customer is Airpay (customer-zero)
+    //         or a B2B partner customer.
     if ($source === 'hrms_sync') {
-        return 'employee';
+        $isairpay = ($customerid === null
+            || $customerid === \local_airpay_core\customer::AIRPAY);
+        return $isairpay ? 'employee' : 'partner_employee';
     }
 
-    // Rule 3: Manual admin creation → employee (admin must explicitly
-    //         pick consumer via the user-type radio).
+    // Rule 3: Manual admin creation → admin picks the type via the
+    //         user-type radio (defaults employee for Airpay-context admin,
+    //         operator only available to siteadmins).
     if ($source === 'manual_admin') {
-        // The form field is required and defaults to 'employee'.
-        return optional_param('user_type', 'employee', PARAM_ALPHA);
+        $allowed = ['employee', 'consumer', 'partner_employee', 'operator'];
+        $picked = optional_param('user_type', 'employee', PARAM_ALPHA);
+        return in_array($picked, $allowed, true) ? $picked : 'employee';
     }
 
-    // Rule 4: Paid invite (B2B partner) → consumer (paid B2C-style, not
-    //         an Airpay employee).
-    if ($source === 'invite_paid') {
-        return 'consumer';
+    // Rule 4: Operator (Site Admin) provisioning is admin-only and uses
+    //         source 'manual_admin' OR 'sentientia_internal'.
+    if ($source === 'sentientia_internal') {
+        return 'operator';
+    }
+
+    // Rule 5: Paid invite from a partner-org bulk-purchase flow.
+    if ($source === 'invite_paid' && $customerid !== null) {
+        $isairpay = ($customerid === \local_airpay_core\customer::AIRPAY);
+        return $isairpay ? 'consumer' : 'partner_employee';
     }
 
     // Default (defensive): employee. The migration phase classifies
-    // existing /77 users as consumer explicitly via the migration CLI.
+    // existing users explicitly via the backfill CLI.
     return 'employee';
 }
+
+// IMMUTABILITY RULE (Q1 ruling 2026-05-28): once classified, a user's
+// type cannot change for the lifetime of that account. If a consumer
+// gets hired, they get a NEW employee account; the consumer account
+// stays as-is. Implementation: `local_airpay_user_type.user_type` has
+// no UPDATE path; only INSERT-on-provisioning + soft-archive via
+// `mdl_user.deleted = 1` on the old account.
 ```
 
 ### How existing call-sites change
@@ -368,38 +460,52 @@ Walks every user, applies the resolution rule retroactively:
 
 ---
 
-## Open questions (for Nitin to triage before implementation)
+## Open questions (RESOLVED 2026-05-28)
 
-These are NOT blockers but they need a call before Phase 2-5 execute:
+All 7 questions answered by Nitin via `AskUserQuestion` 2026-05-28.
+Summary table at top of this ADR; full text of each below.
 
-1. **Mid-life promotion semantics.** A consumer who later becomes an employee — does their consumer interest history transfer to their employee dashboard? Or does the previous identity get archived and a fresh employee profile created? Recommendation: preserve interest history (it's still useful) but the new employee profile is the "source of truth" going forward. Their old consumer profile becomes read-only.
+1. **✅ Q1 — Mid-life promotion semantics.** RULING: **Accounts never merge.** A consumer who is hired becomes a NEW employee account; no data carries over from the consumer account. The consumer account remains as a separate identity (`deleted=0` until manually offboarded). `user_type` is immutable per account. This is stricter than the original recommendation but cleaner for both data privacy (no implicit cross-context data flow) and the data model (no "promotion" code path).
 
-2. **Partner-org users (third tenant pattern).** ZEEA users today are modelled the same as Airpay employees. When we onboard the next Sentientia customer (let's call them BankCo), are BankCo's employees `employee` or do we need a third type? Recommendation: stay with two types for v1; the tenant axis already gives us per-customer scoping. Only add a third type if we genuinely have a non-employee-non-consumer use case (e.g. instructors-as-vendors).
+2. **✅ Q2 — Partner-org users.** RULING: **Third type `partner_employee`.** When BankCo onboards as a customer, BankCo's HR staff get user_type=`partner_employee`. They share the same workplace-context legitimate-interest basis as Airpay employees but their profile shape (employee_id, department, manager) is in a separate `local_airpay_partner_employee_profile` table tagged with `customer_id` to enforce per-customer scoping.
 
-3. **What about Site Admins?** They have `open_path = NULL` and are technically neither employees nor consumers — they're operators. Recommendation: default to `employee` for siteadmins (the profile fields department/manager mostly apply if they ARE Airpay staff). Don't introduce a third type for ~3 admin users.
+3. **✅ Q3 — Site Admins.** RULING: **Fourth type `operator`.** Platform operators (Airpay platform team, Sentientia support) are explicitly modelled. `local_airpay_operator_profile` carries contact_phone + operator_role + (if applicable) oncall_for_customer_id.
 
-4. **Should `user_type` be visible to users themselves?** I.e. on the profile-edit page, can a user see/change their own type? Recommendation: visible (badge in header) but NOT editable. Changing user-type is an admin operation.
+4. **✅ Q4 — Self-visibility.** RULING: **Visible read-only badge.** Profile page renders a small badge ("Learner" / "Employee" / "Partner staff" / "Operator") that the user can see but not edit. Changing user_type is an admin-only operation; in practice it's near-zero since type is immutable per account (per Q1).
 
-5. **Provider for Site Admin role?** Or do we delegate to provider's behaviour with `is_siteadmin($USER)` bypass everywhere? Recommendation: providers are not role-aware; they only model the user-type. Role-aware behaviour (siteadmin can see everything; L&D admin sees admin surfaces) stays where it is today, in `role_detector`. The two axes (user_type, role) compose.
+5. **✅ Q5 — Role composition.** RULING: **Two separate axes.** `user_type_factory` returns a provider keyed only on user_type. `role_detector` (existing) handles role-aware behaviour. Call-sites compose: `user_type_factory::for_user($u)->dashboard_widgets($u, role_detector::detect($u))`. Single-responsibility, easier to test.
 
-6. **Hindi parity for the user-type strings.** New strings (label, profile field labels, consent surfaces, onboarding step titles) need 100% Hindi parity per CLAUDE.md absolute rule. Add ~30 strings × 5 locales = 150 lang strings before merge.
+6. **✅ Q6 — Locale parity.** RULING: **All 5 locales blocking before merge.** ~30 new strings × 5 locales (en, hi, kn, mr, sw) = ~150 lang strings. CLAUDE.md §13 absolute rule. Translation owner: Nitin (or whoever owned the recent kn/mr/sw catch-up wave).
 
-7. **Does Manager fit somewhere here?** A manager is an employee who ALSO has a `team_members` list. Recommendation: keep manager as a *capability* of the employee user-type, not a separate user-type. `employee_provider` returns "team certification stats" widget when the user is a supervisor; otherwise it skips.
+7. **✅ Q7 — Manager modelling.** RULING: **Capability of employee.** A manager is an employee with a `manager_userid` pointer pointing AT them (i.e. they are someone's supervisor). `employee_provider::dashboard_widgets()` queries for `mdl_user WHERE manager_userid = $USER->id` and adds the "Team certification stats" widget when result is non-empty. No separate user_type. v1 user_type count stays at 4.
 
 ---
 
-## Acceptance criteria (when this ADR is "accepted")
+## Acceptance criteria
 
-1. Nitin reviews the 7 open questions above and gives a yes/no on each.
-2. Phase 0 (schema migration) lands on local with no behaviour change.
-3. Phase 1 (CLI classification) runs against local DB and produces a clean
-   2,871-row CSV of `userid, user_type, source` for review.
-4. Phase 2 (profile-page refactor) lands and both a `/77` user and a `/1`
-   user render their correct profile shape with visual evidence captured.
-5. ADR-017 status changes from Proposed → Accepted.
+- [x] Nitin reviewed all 7 open questions (2026-05-28).
+- [x] ADR status flipped Proposed → Accepted (this commit).
+- [ ] Phase 0 (schema migration with 3 profile tables + user_type table) lands on local — IN BUCKET C, ready to start.
+- [ ] Phase 1 (CLI classification) runs against local DB and produces a clean 2,871-row CSV.
+- [ ] Phase 2 (profile-page refactor) lands and all 4 user-types render their correct profile shape with visual evidence.
+- [ ] Locale parity: 150 new lang strings × 5 locales merged before any provider call-site cuts over.
 
-If question (2) above (Site Admin user-type) lands differently than the
-recommendation, the migration CLI changes accordingly.
+---
+
+## Implementation order (Bucket C tracking)
+
+Per the §4 stabilization backlog, this ADR's implementation falls into
+Bucket C (Finish — large). Phased delivery:
+
+| Phase | Deliverable | Effort | Bucket |
+|-------|-------------|--------|--------|
+| 0 | DB migration (`local_airpay_core/db/upgrade.php` adds 4 tables) | S | C1.0 |
+| 1 | Classification CLI + dry-run CSV | S | C1.1 |
+| 2 | Provider interface + 4 provider classes (with locale-parity strings) | M | C1.2 |
+| 3 | Profile page consumes provider | M | C1.3 |
+| 4 | Dashboard consumes provider | M | C1.4 |
+| 5 | Sidebar + onboarding + leaderboard consume provider | M | C1.5 |
+| 6 | Signup form gains user-type radio | S | C1.6 |
 
 ---
 
