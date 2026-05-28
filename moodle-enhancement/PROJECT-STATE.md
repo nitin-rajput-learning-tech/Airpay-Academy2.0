@@ -37,6 +37,23 @@ and **Bucket C (admin landings)**:
 
 Closes Tasks #315, #316, #317, #318. Today's three commits hit production at `d7dbd7885`, `cadd25191`, `3df780c76`.
 
+**Late-evening wave additions (same session, 2026-05-28):**
+
+- `0c689e557` — **C17 first wave** seed CLIs (translate + aiquiz). 10
+  rows + 6 questions on local. Powers the C16 admin queue with real
+  data without burning Anthropic tokens.
+- `96b45de9d` — **C17 second wave** seed CLIs (leaderboard +
+  recommendations). 108 real ranking entries from local
+  course-completion data + 5-row recommendation batch.
+- `__c10__` — **C10 investigation** closeout. New
+  `docs/audits/C10-CERTIFICATE-STACK-INVESTIGATION-2026-05-28.md`.
+  Runtime probe found 11,415 real issued certificates + 9 templates
+  on local — the certificate stack is MORE complete than the audit
+  suggested. Documented 6 discrete polish gaps (per-customer
+  branding, bulk re-issue, tenant filtering, Hindi pack, mobile PDF,
+  JSON verify) ranked by Sentientia LMS product impact. New
+  `tools/probe_certificate_state.php` runs the same probe on demand.
+
 **Continued wave (same session, 2026-05-28 evening):** Bucket F
 closeout + state-card cleanup landed:
 
