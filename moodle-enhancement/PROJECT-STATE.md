@@ -39,7 +39,7 @@ behaviour changed** — this was verification, not a build.
 
 Closes Tasks #325–#329. Commit `5dc268cc5`.
 
-**F-033 build follow-on (Task #330, commit `__f033__`).** Per "continue
+**F-033 build follow-on (Task #330, commit `45253f83d`).** Per "continue
 remaining", built the persona E2E scaffold the verify pass had left
 PENDING NITIN. New `tests/playwright/`: `persona-helpers.ts` (shared
 env-var login + `assertAuthenticated`/`assertReachable`) + 4 specs —
