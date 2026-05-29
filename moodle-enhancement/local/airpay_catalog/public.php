@@ -21,7 +21,7 @@ require_once(__DIR__ . '/../../config.php');
 
 // NO require_login() — this page is accessible to guests.
 
-global $DB, $CFG, $OUTPUT, $PAGE;
+global $DB, $CFG, $OUTPUT, $PAGE, $USER;
 
 $PAGE->set_context(context_system::instance());
 $PAGE->set_url('/local/airpay_catalog/public.php');
@@ -35,6 +35,12 @@ $page = optional_param('page', 0, PARAM_INT);
 
 $results = \local_airpay_catalog\commerce::get_public_catalog($search, $sort, $page, 12);
 $cart_count = \local_airpay_catalog\commerce::get_cart_count();
+
+// QA-walk P1 (2026-05-29) — does THIS viewer get one-click "Enrol now" on
+// free courses (vs Add-to-cart)? Computed once for the whole grid: true only
+// for a logged-in internal-tenant user with the flag ON. False (cart, exactly
+// today's behaviour) for guests, the Public tenant, and when the flag is OFF.
+$viewer_oneclick = \local_airpay_catalog\enrolment::should_offer_oneclick($USER, ['is_free' => true]);
 
 // ── C4 feature flag ────────────────────────────────────────────────
 $lxp_on = false;
@@ -82,17 +88,21 @@ if ($lxp_on) {
 
     // Render one guest course card with a commerce footer, reusing the
     // member catalog's card classes so the look is identical.
-    $render_card = function (array $course): string {
+    $render_card = function (array $course) use ($viewer_oneclick): string {
         $detail = $course['detailurl'];
+        $isfree = !empty($course['is_free']);
+        // Internal-tenant viewer + free course → one-click enrol; else cart.
+        $oneclick = $viewer_oneclick && $isfree;
         $addurl = (new moodle_url('/local/airpay_catalog/course.php', [
             'id'      => $course['id'],
-            'action'  => 'addtocart',
+            'action'  => $oneclick ? 'enrolnow' : 'addtocart',
             'sesskey' => sesskey(),
         ]))->out(false);
-        $isfree = !empty($course['is_free']);
-        $cta = $isfree
-            ? get_string('public_enrolfree', 'local_airpay_catalog')
-            : get_string('public_addtocart', 'local_airpay_catalog');
+        $cta = $oneclick
+            ? get_string('enrol_now_free', 'local_airpay_catalog')
+            : ($isfree
+                ? get_string('public_enrolfree', 'local_airpay_catalog')
+                : get_string('public_addtocart', 'local_airpay_catalog'));
         $pricecls = $isfree
             ? 'airpay-catalog__pubprice airpay-catalog__pubprice--free'
             : 'airpay-catalog__pubprice';
@@ -100,9 +110,15 @@ if ($lxp_on) {
         $h  = '<article class="airpay-catalog__card">';
         $h .= '<a href="' . s($detail) . '" class="airpay-catalog__card-link" aria-label="'
             . s($course['fullname']) . '">';
-        $h .= '<div class="airpay-catalog__card-thumb">';
-        $h .= '<span class="airpay-catalog__card-code" aria-hidden="true">'
-            . s($course['shortname'] ?? '') . '</span>';
+        $variant = (int) ($course['id'] ?? 0) % 6;
+        $h .= '<div class="airpay-catalog__card-thumb airpay-catalog__card-thumb--v' . $variant . '">';
+        if (!empty($course['has_image'])) {
+            $h .= '<img class="airpay-catalog__card-img" src="' . s($course['imageurl'])
+                . '" alt="" loading="lazy" aria-hidden="true">';
+        } else {
+            $h .= '<span class="airpay-catalog__card-code" aria-hidden="true">'
+                . s($course['shortname'] ?? '') . '</span>';
+        }
         if ($isfree) {
             $h .= '<span class="airpay-catalog__badge airpay-catalog__badge--new">'
                 . s(get_string('public_free', 'local_airpay_catalog')) . '</span>';
@@ -343,10 +359,18 @@ body.dark-mode .airpay-catalog__pubsearch input { background:#1a1d27; border-col
                            style="padding:6px 14px; border-radius:8px; font-size:13px; font-weight:600;
                                   border:1px solid var(--ap-border,#e3eaf3); color:var(--ap-text,#1a1a2e);
                                   text-decoration:none;">Details</a>
-                        <a href="<?php echo s((new moodle_url('/local/airpay_catalog/course.php', ['id' => $course['id'], 'action' => 'addtocart', 'sesskey' => sesskey()]))->out(false)); ?>"
+                        <?php
+                        // Internal-tenant viewer + free course → one-click enrol; else
+                        // the legacy cart route (byte-for-byte unchanged when flag OFF).
+                        $lg_oneclick = $viewer_oneclick && !empty($course['is_free']);
+                        $lg_label = $lg_oneclick
+                            ? get_string('enrol_now_free', 'local_airpay_catalog')
+                            : ($course['is_free'] ? 'Enroll' : 'Add to Cart');
+                        ?>
+                        <a href="<?php echo s((new moodle_url('/local/airpay_catalog/course.php', ['id' => $course['id'], 'action' => $lg_oneclick ? 'enrolnow' : 'addtocart', 'sesskey' => sesskey()]))->out(false)); ?>"
                            style="padding:6px 14px; border-radius:8px; font-size:13px; font-weight:600;
                                   background:var(--ap-primary,#0066A7); color:#fff; text-decoration:none;">
-                            <?php echo $course['is_free'] ? 'Enroll' : 'Add to Cart'; ?>
+                            <?php echo s($lg_label); ?>
                         </a>
                     </div>
                 </div>

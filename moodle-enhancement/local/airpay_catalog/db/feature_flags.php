@@ -32,4 +32,22 @@ $flags = [
                           in both modes.',
     ],
 
+    'sentientia.catalog.free_oneclick_enrol.enabled' => [
+        'default'     => false,
+        'description' => 'One-click free self-enrolment for internal-tenant
+                          employees (QA-walk P1, 2026-05-29). When OFF
+                          (default) every free-course "Enroll" button routes
+                          through the session cart — exactly today\'s
+                          production behaviour. When ON, a logged-in user
+                          from an INTERNAL tenant (any tenant that is not the
+                          Public storefront tenant /77) clicking a FREE course
+                          is enrolled immediately via the manual enrol plugin
+                          (bypassing any self-enrol enrolment key) and taken
+                          straight into the course — no cart/checkout step.
+                          The Public storefront keeps Add-to-Cart, and paid
+                          courses always use the cart, in both modes. Enable
+                          per internal tenant (e.g. Airpay /1, ZEEA /177) to
+                          unblock employees. See classes/enrolment.php.',
+    ],
+
 ];

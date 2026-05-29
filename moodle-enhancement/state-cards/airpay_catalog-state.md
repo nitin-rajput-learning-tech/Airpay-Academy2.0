@@ -1,10 +1,10 @@
 # State Card — `local_airpay_catalog`
 
 **Component:** `local_airpay_catalog`
-**Version:** `2026052900` / `1.0.1-beta`
+**Version:** `2026052902` / `1.0.2-beta`
 **Maturity:** `MATURITY_BETA`
 **Status:** Live on airpay.academy. Public + learner course catalog surface.
-**Last refreshed:** 2026-05-29 (C4 / F-004 — public storefront LXP restyle)
+**Last refreshed:** 2026-05-29 (E-01 — one-click free self-enrol for internal tenants)
 
 ---
 
@@ -29,7 +29,9 @@ and `local_airpay_courses_tenant_share`.
 ## Capabilities
 
 None declared. Surface gating relies on core `moodle/course:view` +
-the upstream `local_airpay_courses` cap layer.
+the upstream `local_airpay_courses` cap layer. `enrolment::enrol_now()`
+enrols via the core **`manual`** enrol plugin (no new capability), which
+is what lets it bypass a self-enrol enrolment key.
 
 ## Feature flags
 
@@ -40,6 +42,13 @@ Registered (in `db/feature_flags.php`):
   the member catalog's `airpay-catalog__*` card + carousel language
   ("Popular picks" scroll-snap rail above a searchable/sortable grid).
   Commerce (price, add-to-cart, cart pill) preserved in both modes.
+- `sentientia.catalog.free_oneclick_enrol.enabled` (default **OFF**) — E-01.
+  When OFF, every free-course "Enroll" button routes through the cart
+  (today's behaviour). When ON, a logged-in INTERNAL-tenant user (any
+  tenant that is not the Public storefront tenant /77) clicking a FREE
+  course is enrolled immediately via the manual plugin (key bypassed),
+  no cart step. Public /77 + guests keep the cart; paid always carts.
+  **Enable per internal tenant (Airpay /1, ZEEA /177) to activate.**
 
 Consumes:
 - `ai.recommendations.enabled` (toggles the "For You" recommended feed
@@ -74,9 +83,13 @@ local/airpay_catalog/
 
 ## Tests
 
-`tests/` directory exists but no `*_test.php` files yet — query
-correctness is exercised indirectly by `local_airpay_courses` PHPUnit
-suite (which is where the underlying queries live).
+- `tests/enrolment_test.php` (8 cases) — E-01 one-click free self-enrol:
+  policy (`should_offer_oneclick`) across internal/Public/guest/paid/flag-off,
+  and mechanism (`enrol_now` key bypass, idempotency, paid refusal, manual
+  instance self-provision). Uses `local_airpay_core\phpunit\open_path_fixture_trait`.
+  (Runs in CI — local XAMPP has no `vendor/bin/phpunit`.)
+- `catalog_manager` query correctness is still exercised indirectly by the
+  `local_airpay_courses` PHPUnit suite (where the underlying queries live).
 
 ## Open items
 
@@ -116,3 +129,41 @@ language, behind `sentientia.catalog.public_lxp.enabled` (default OFF).
   README in `docs/visual-evidence/2026-05-29/`. Flag reverted to
   default OFF after capture.
 - Scoping rationale: `docs/audits/C4-CATALOG-NETFLIX-SCOPING-2026-05-29.md`.
+
+## E-01 — one-click free self-enrol for internal tenants (2026-05-29)
+
+QA-walk P1 (`docs/qa-walk-2026-05-29/BUG-LOG.md` E-01): Airpay employees
+could not self-enrol in "Free" courses.
+
+**Root cause (verified — corrected the bug-log's "no self-enrol / auto-enrol"
+guess).** The "Enroll" button routed free courses to `course.php?action=addtocart`
+(session cart) and never enrolled. Course 71 *does* have an enabled self-enrol
+instance, but with an **enrolment key**, so the cart's `enrollfree` called core
+`enrol_self()` which silently no-ops on key-gated courses (`enrol/self/lib.php:171-175`)
+yet still reported success. No cross-tenant access hook exists.
+
+**Fix.** NEW `classes/enrolment.php`:
+- `should_offer_oneclick($user, $pricing)` — policy: flag ON for the user's
+  tenant **and** logged-in non-guest **and** free **and** internal tenant
+  (`root > 0 && root !== public_tenant_id`). User-centric (viewer's tenant).
+- `enrol_now($courseid, $userid)` — idempotent **manual** enrol that bypasses
+  the self-enrol key (self-provisions a manual instance if missing, refuses
+  paid courses), mirroring `local_airpay_cart\cart_manager::enrol_user_in_course()`.
+
+Wired into `course.php` (new `action=enrolnow` handler + one-click CTA branch on
+the detail page; old `/enrol/index.php` path kept as the non-internal fallback),
+`public.php` (grid button → `enrolnow` for internal viewers, both legacy + LXP
+paths), and `cart.php` (`enrollfree` rerouted through `enrol_now()` — fixes the
+silent-success lie). Behind `sentientia.catalog.free_oneclick_enrol.enabled`
+(default OFF). +4 lang strings (`enrol_now_free`, `enrolled_welcome`,
+`enrolled_count`, `enrolled_none`) × 5 languages (en/hi/kn/mr/sw).
+
+version 2026052901 → 2026052902, release 1.0.1-beta → 1.0.2-beta.
+
+**Verified.** CLI + real-browser (qa_employee one-click-enrolled courses 71 + 403,
+"My Courses" now shows 2 — was the empty-page symptom). 8-case PHPUnit suite +
+3 screenshots in `docs/visual-evidence/2026-05-29/enrol-fix-*`. New diagnostics
+`tools/enrol-diag.php` (read-only) + `tools/enrol-verify.php` (local-dev-guarded).
+
+**PROD rollout:** deploy files + upgrade + purge, then **enable the flag per
+internal tenant** (Airpay /1, ZEEA /177) via the Switchboard.

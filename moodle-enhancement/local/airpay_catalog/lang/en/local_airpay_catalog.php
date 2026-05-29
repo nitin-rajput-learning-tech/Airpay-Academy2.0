@@ -41,3 +41,9 @@ $string['public_clearsearch'] = 'Clear search';
 $string['public_sort_popular'] = 'Popular';
 $string['public_sort_newest'] = 'Newest';
 $string['public_sort_name'] = 'A-Z';
+
+// QA-walk P1 (2026-05-29) — one-click free self-enrolment for internal tenants.
+$string['enrol_now_free'] = 'Enrol now — free';
+$string['enrolled_welcome'] = 'You\'re enrolled — welcome to the course!';
+$string['enrolled_count'] = 'Enrolled in {$a} free course(s)!';
+$string['enrolled_none'] = 'We couldn\'t complete your free enrolment. Please try again or contact your administrator.';
