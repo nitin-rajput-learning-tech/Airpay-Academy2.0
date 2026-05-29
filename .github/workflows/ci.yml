@@ -483,9 +483,22 @@ jobs:
         run: |
           docker logs moodle-web --tail=100 || true
           docker rm -f moodle-web || true
-  phpunit-5.2:
+  phpunit-52:
     name: PHPUnit (Moodle 5.2 + airpay plugins)
     runs-on: ubuntu-latest
+    # ⚠ Job id MUST be dot-free. GitHub Actions rejects a '.' in a job id
+    # (ids must match [A-Za-z_][A-Za-z0-9_-]*), which fails the ENTIRE
+    # workflow at startup with ZERO jobs created — every push then shows a
+    # red ❌ "ci.yml run failed" with no job logs. The old id `phpunit-5.2`
+    # caused exactly that (runs #496–#509, 2026-05-29); the recurring
+    # "remove/reintroduce phpunit gate" commits in git history were all
+    # chasing this same startup failure. Renamed `phpunit-5.2` → `phpunit-52`.
+    #
+    # ADVISORY during 5.2 calibration (continue-on-error: true) — mirrors
+    # playwright-linux. Production runs Moodle 5.1, so a 5.2 PHPUnit failure
+    # is forward-looking, not production-blocking; it must not fail the run
+    # until the gate graduates to blocking per docs/ci/PHPUNIT-GATE.md.
+    continue-on-error: true
     # Cold init takes ~10-15 min; with composer cache ~5-7 min. Hard cap
     # at 40 min so a stuck PHPUnit can't burn an hour of runner time.
     timeout-minutes: 40
