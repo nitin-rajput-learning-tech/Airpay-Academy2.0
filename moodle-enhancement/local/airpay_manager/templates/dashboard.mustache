@@ -93,8 +93,8 @@
     {{^has_team}}
     <div class="ap-empty-state">
         <i class="fa fa-users ap-empty-state__icon"></i>
-        <h4 class="ap-empty-state__title">You have no team members assigned yet</h4>
-        <p class="ap-empty-state__message">Direct reports are assigned via the user supervisor field on the user profile.</p>
+        <h4 class="ap-empty-state__title">{{#str}}emptyteam_title, local_airpay_manager{{/str}}</h4>
+        <p class="ap-empty-state__message">{{#str}}emptyteam_message, local_airpay_manager{{/str}}</p>
     </div>
     {{/has_team}}
 </div>

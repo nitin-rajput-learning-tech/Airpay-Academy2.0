@@ -11,6 +11,10 @@ defined('MOODLE_INTERNAL') || die();
 $string['pluginname']       = 'एयरपे मैनेजर डैशबोर्ड';
 $string['myteam']           = 'मेरी टीम';
 $string['teamlearning']     = 'टीम लर्निंग डैशबोर्ड';
+
+// Empty-state — manager dashboard with no direct reports (QA Walk T-03).
+$string['emptyteam_title']   = 'अभी तक आपको कोई टीम सदस्य नहीं सौंपा गया है।';
+$string['emptyteam_message'] = 'प्रत्यक्ष अधीनस्थ यूज़र प्रोफ़ाइल में सुपरवाइज़र फ़ील्ड के माध्यम से सौंपे जाते हैं।';
 $string['privacy:metadata'] = 'मैनेजर डैशबोर्ड प्लगइन अनुपालन / ऑडिट उद्देश्यों के लिए मैनेजर द्वारा किए गए नामांकन अनुरोध और कोर्स आवंटन रिकॉर्ड करता है।';
 
 // Capability descriptions.

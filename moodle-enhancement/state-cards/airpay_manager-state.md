@@ -108,6 +108,7 @@ is retained.
   new copy renders, zero console errors. Evidence:
   `docs/visual-evidence/2026-05-29/T-03-myteam-empty-state-qa_trainer-200.png`.
 
-Known debt: the `{{^has_team}}` strings in `templates/dashboard.mustache` are
-hardcoded English — should move to `{{#str}}` with en+hi parity (the
-project's i18n rule). Tracked as a follow-up.
+i18n: the `{{^has_team}}` strings are now lang strings — `emptyteam_title`
+and `emptyteam_message` in `lang/en` + `lang/hi` (100% parity), resolved via
+`{{#str}}` helpers in `templates/dashboard.mustache`. Replaces the earlier
+hardcoded English (resolved 2026-05-29).

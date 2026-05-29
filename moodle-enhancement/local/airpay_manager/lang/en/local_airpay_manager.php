@@ -5,6 +5,10 @@ defined('MOODLE_INTERNAL') || die();
 $string['pluginname'] = 'Airpay Manager Dashboard';
 $string['myteam'] = 'My Team';
 $string['teamlearning'] = 'Team Learning Dashboard';
+
+// Empty-state — manager dashboard with no direct reports (QA Walk T-03).
+$string['emptyteam_title'] = 'You have no team members assigned yet';
+$string['emptyteam_message'] = 'Direct reports are assigned via the user supervisor field on the user profile.';
 $string['privacy:metadata'] = 'The manager dashboard plugin records enrolment requests + course allocations made by managers for compliance / audit purposes.';
 
 // Capability descriptions.
