@@ -111,9 +111,13 @@
                     local_airpay_consumer_profile + invalidates the
                     leaderboard opt-in cache.
 
-                    Wrapped in {{#is_consumer}} so employees / partner
-                    staff / operators don't see consumer-only consents
-                    during their own onboarding flows.
+                    Wrapped in the is_consumer section (see below) so
+                    employees / partner staff / operators don't see
+                    consumer-only consents during their own onboarding
+                    flows. (Comment intentionally avoids the literal
+                    section-open syntax — the CI Mustache balance check
+                    is a count-only heuristic that would otherwise count
+                    a tag mentioned in prose as a real unclosed section.)
                 }}
                 {{#is_consumer}}
                 <div class="ap-onboard__consents">
