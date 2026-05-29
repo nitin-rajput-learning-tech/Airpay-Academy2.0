@@ -21,3 +21,9 @@ $string['continue'] = 'Endelea';
 
 // Sprint C (2026-05-13) — cross-tenant provenance badge.
 $string['provenance_provided_by'] = 'Imetolewa na {$a}';
+
+// QA-walk P1 (2026-05-29) — usajili wa bure wa mbofyo-mmoja kwa wapangaji wa ndani.
+$string['enrol_now_free'] = 'Jiandikishe sasa — bila malipo';
+$string['enrolled_welcome'] = 'Umejiandikisha — karibu kwenye kozi!';
+$string['enrolled_count'] = 'Umejiandikisha katika kozi {$a} za bure!';
+$string['enrolled_none'] = 'Hatukuweza kukamilisha usajili wako wa bure. Tafadhali jaribu tena au wasiliana na msimamizi wako.';
