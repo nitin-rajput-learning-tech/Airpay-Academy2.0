@@ -2,15 +2,36 @@
    LAYOUT SHELL — Sidebar + Topbar + Content Grid
    ═══════════════════════════════════════════════════════════════════════ */
 
-/* ── Shell grid ────────────────────────────────── */
-.ap-shell {
-    /* App-shell scroll model (2026-05-29): lock the shell to the viewport so the
-       fixed sidebar + sticky topbar stay pinned and ONLY the content region scrolls.
-       Was `min-height: 100vh`, which let .ap-shell__main grow to full content height
-       and the whole DOCUMENT scroll (one root scrollbar) — the "whole page scrolls"
-       report. 100dvh keeps it correct under the mobile browser address bar. */
+/* ═══ App-shell scroll model (2026-05-29, refined) ═══════════════════════════
+   Lock the BODY to the viewport as a flex column so ONLY the content region scrolls,
+   while the sidebar (fixed) + topbar (sticky) stay pinned AND the page footer stays at
+   the bottom. Was `min-height:100vh` on .ap-shell, which let it grow to full content
+   height and the whole DOCUMENT scroll ("whole page scrolls"). Capping just .ap-shell
+   left a residual document scroll on layouts that render #page-footer OUTSIDE the shell,
+   so we lock the body instead. Scoped via :has(.ap-shell): login / frontpage / guest
+   have no shell and keep normal document scroll; if :has() is unsupported it degrades
+   gracefully to the old document scroll. 100dvh handles the mobile browser address bar. */
+body:has(.ap-shell) {
     height: 100vh;
     height: 100dvh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+body:has(.ap-shell) > #page-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;        /* let the shell own the scroll, not the body */
+    display: flex;
+    flex-direction: column;
+}
+body:has(.ap-shell) > #page-footer {
+    flex: 0 0 auto;        /* footer keeps its height, pinned at the bottom, always visible */
+}
+
+/* ── Shell grid ────────────────────────────────── */
+.ap-shell {
+    flex: 1 1 auto;        /* fill #page-wrapper (the viewport-locked flex column above) */
+    min-height: 0;
     overflow: hidden;
     /* No grid — sidebar is position:fixed, main uses margin-left */
 }
@@ -420,11 +441,10 @@ a.ap-sidebar__roleswitch-item:hover {
 .ap-shell__main {
     margin-left: var(--ap-sidebar-width);
     width: calc(100% - var(--ap-sidebar-width));
-    /* App-shell scroll: fixed viewport height + hidden overflow so the inner content
-       region (.ap-shell__content) is the scroller, not the document. (Was
-       min-height:100vh, which grew with content and let the page scroll as a whole.) */
-    height: 100vh;
-    height: 100dvh;
+    /* App-shell scroll: fill .ap-shell (height:100%, not 100vh — the body/#page-wrapper
+       flex chain above owns the viewport height) + hidden overflow so the inner content
+       region (.ap-shell__content) is the scroller, not the document. */
+    height: 100%;
     overflow: hidden;
     display: flex;
     flex-direction: column;

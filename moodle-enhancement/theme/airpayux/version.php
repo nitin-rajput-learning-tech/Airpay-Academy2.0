@@ -306,7 +306,14 @@ defined('MOODLE_INTERNAL') || die();
 // via :not(:has(.airpay-login)) so they get the branded centred card
 // instead of rendering flush-left + unstyled. The real split-screen login
 // page is excluded by the :has() guard. Light + dark variants both added.
-$plugin->version   = 2026052900;
+// App-shell scroll fix (2026-05-29) — _layout-shell.scss: lock the authenticated
+// shell (body:has(.ap-shell)) to a viewport-height flex column so ONLY the content
+// region scrolls (sidebar fixed + topbar sticky stay pinned; #page-footer pinned at
+// the bottom) instead of the whole document scrolling. Was min-height:100vh on
+// .ap-shell, which grew to full content height and scrolled the document. Bump
+// invalidates the cached compiled CSS bundle + changes themerev so clients fetch the
+// new CSS without a manual hard refresh.
+$plugin->version   = 2026052901;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
@@ -325,7 +332,7 @@ $plugin->maturity  = MATURITY_BETA;
 // (83% reduction). Section 1 wrapped under body#page-login-index for
 // ID-specificity. Bundled bugfix: dark-mode selectors used descendant
 // combinator (never fired since #page-X IS body); now chained.
-$plugin->release   = '1.0.40-beta';  // P0 #1+#2+#3+#4+#5+#6+#7+#9 + F-13 + P1 #10+#11+#12+#13+#14+#17 + P2 #18+#19+#20+#21+#23 + cart_badge audit + P1 #12 re-apply + kn/mr/sw 13-key parity restore + P0 cleanup A (conflict-marker hook + CI) + P2 #19 follow-up (inline-timing → tokens) + Wave A2 P0-cleanup (scssphp array-to-string warning fix) + sidebar role switcher (multi-role shell parity) + signup-flow UI fixes (tall-card scroll + login-index notice card)
+$plugin->release   = '1.0.41-beta';  // …signup-flow UI fixes + app-shell scroll fix (content-only scroll: shell pinned, only the content region scrolls, footer pinned at bottom)
 // P1 #10 chip-J (2026-05-24) — _surface-profile.scss (2,507 lines)
 // decomposed into 4 per-surface partials: _surface-user, _surface-badges,
 // _surface-grade-report, _surface-calendar. Admin fragments moved to
