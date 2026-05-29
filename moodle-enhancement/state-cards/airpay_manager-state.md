@@ -4,7 +4,7 @@
 **Version:** `2026052201` / `1.3.2`  (+Goal A Bug #10 WS-contract alignment)
 **Maturity:** `MATURITY_STABLE`
 **Status:** Live on airpay.academy. Manager (line-manager) dashboard + team workflows.
-**Last refreshed:** 2026-05-24 (P1 state-card pass)
+**Last refreshed:** 2026-05-29 (QA Walk T-03 — empty-state handling)
 
 ---
 
@@ -87,3 +87,27 @@ re-routing on supervisor change).
 Initial state card. Plugin has been live for many phases; created now
 as part of the P1 state-card pass. Goal A Bug #10 (2026-05-22)
 WS-contract alignment was the most recent touch.
+
+## 2026-05-29 — QA Walk T-03 (empty-state handling)
+
+`index.php` no longer throws `moodle_exception('nopermission')` (HTTP 500)
+when a Manager-shell user (e.g. a trainer / HRBP with `viewreports` but
+zero direct reports) opens the "My Team" link. `get_team()` /
+`summarize_team()` return `[]` for a zero-report viewer, so the page now
+falls through to the dashboard template's `{{^has_team}}` empty state and
+renders HTTP 200. (`require_manage()` — the class's other `nopermissions`
+throw — is never called from `index.php`.)
+
+Empty-state copy reworded from "No team members found" to
+"You have no team members assigned yet"; the supervisor-field helper line
+is retained.
+
+- Graceful empty state (remove throw): commit `8c0a986a1`
+- Empty-state copy reword: commit `ad7956559`
+- Verified live as `qa_trainer` (id 3419): `/local/airpay_manager/index.php` → HTTP 200,
+  new copy renders, zero console errors. Evidence:
+  `docs/visual-evidence/2026-05-29/T-03-myteam-empty-state-qa_trainer-200.png`.
+
+Known debt: the `{{^has_team}}` strings in `templates/dashboard.mustache` are
+hardcoded English — should move to `{{#str}}` with en+hi parity (the
+project's i18n rule). Tracked as a follow-up.
