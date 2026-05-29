@@ -1,10 +1,22 @@
 # State Card — `local_sentientia_live` (Sentientia LMS Live engagement)
 
 **Current phase:** E.10 partial (per-tenant kill switch UI shipped 2026-05-28 / B18)  
-**Version:** 0.2.1-alpha (post-B18)  
-**Status:** Trainer + audience UI live; 6 question types fully implemented; feature flags default OFF; a11y pass complete; **per-tenant kill switch admin UI now available at Site administration → Plugins → Local plugins → Sentientia Live tenant switches**.  
+**Version:** 0.2.2-alpha (`2026052900`)  
+**Status:** Trainer + audience UI live; 6 question types fully implemented; feature flags default OFF; a11y pass complete; per-tenant kill switch admin UI available; **the BizLMS `trainer` role can now create/run sessions and reach the trainer dashboard from the sidebar (T-01/T-02 fixed 2026-05-29)**.  
 **Owner:** Nitin Rajput (PM) + Claude (engineering)  
-**Last updated:** 2026-05-28 (C7 / F-022 stabilization audit closure)
+**Last updated:** 2026-05-29 (T-01/T-02 — trainer-role access fix)
+
+> **T-01 / T-02 (2026-05-29) — trainer-role access fix:** The BizLMS
+> `trainer` role (archetype `teacher`) was excluded from `:create`/`:run`
+> (granted only `editingteacher`+`manager`), and no sidebar link pointed to
+> `trainer/index.php`. Fixed: `db/access.php` adds `'teacher' => CAP_ALLOW`
+> to both caps, `db/upgrade.php` (savepoint `2026052900`) back-fills the
+> default onto existing teacher-archetype roles, and
+> `theme_airpayux\sidebar_navigation` adds a capability+`live.enabled`-gated
+> "Live Sessions" link in the Manager + Learner shells. Plugin
+> `2026052504`→`2026052900`. From the trainer QA walk
+> (`docs/qa-walk-2026-05-29/trainer.md`). Verified: qa_trainer `:create`/`:run`
+> → YES; sidebar link renders.
 
 > **B18 (2026-05-28) — per-tenant kill switch:** New admin page at
 > `local/sentientia_live/admin/tenant_switches.php` lets a siteadmin
@@ -58,8 +70,8 @@ in real time. Tier 1 priority #3 on the Sentientia LMS roadmap; estimated
 
 | Capability | role allowed | Notes |
 |------------|--------------|-------|
-| `local/sentientia_live:create` | editingteacher+, manager | Create a session |
-| `local/sentientia_live:run` | editingteacher+, manager | Start/advance/end a session you own |
+| `local/sentientia_live:create` | teacher+ (incl. BizLMS `trainer`), manager | Create a session. **T-01 (2026-05-29):** `teacher` archetype added so the BizLMS trainer role qualifies. |
+| `local/sentientia_live:run` | teacher+ (incl. BizLMS `trainer`), manager | Start/advance/end a session you own. **T-01 (2026-05-29):** `teacher` archetype added. |
 | `local/sentientia_live:join` | user+ | Join by code (anonymous joins gated on per-session `allow_anonymous`) |
 | `local/sentientia_live:respond` | user+ | Submit a response |
 | `local/sentientia_live:manage_all` | manager | Admin: see + manage every session across tenants |
@@ -145,6 +157,31 @@ ADR-004 has implementation notes for the SSE endpoint when we get to E.3.
 ---
 
 ## Change log
+
+### 2026-05-29 — T-01 / T-02 trainer-role access fix (QA Walk 2026-05-29)
+
+The BizLMS `trainer` role (archetype `teacher`) could neither create/run
+Live sessions (T-01) nor find the trainer dashboard (T-02).
+
+- `db/access.php` — `'teacher' => CAP_ALLOW` added to `:create` + `:run`.
+- `db/upgrade.php` — new step (savepoint `2026052900`) back-fills the new
+  default onto existing `archetype=teacher` roles via
+  `assign_capability(overwrite=false)`. Required because Moodle only applies
+  archetype defaults on a capability's *first* install (confirmed in
+  `lib/accesslib.php::update_capabilities`), never on a later upgrade that
+  adds an archetype to an existing cap.
+- `theme/airpayux/classes/sidebar_navigation.php` — new
+  `can_create_live_session()` gate (`live.enabled` flag AND `:create` cap,
+  both safe-failing) + a "Live Sessions" → `trainer/index.php` link in the
+  Manager **and** Learner shells.
+- `version.php` — `2026052504` / `0.2.1-alpha` → `2026052900` / `0.2.2-alpha`.
+
+Verified on local XAMPP (Moodle 5.1.3+): upgrade ran clean + purged caches;
+`has_capability(:create/:run, qa_trainer)` NO → **YES**; qa_trainer
+Manager-shell sidebar renders the link; qa_employee correctly does not.
+Code committed `0773c2e96` (local only — not yet deployed to production).
+Evidence: `docs/qa-walk-2026-05-29/trainer.md` §12 +
+`docs/visual-evidence/2026-05-29/README.md`.
 
 ### 2026-05-24 — a11y pass (P0 #8 from PLATFORM-VISUAL-AUDIT-2026-05-24)
 
