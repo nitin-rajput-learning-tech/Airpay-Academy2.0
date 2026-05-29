@@ -4,7 +4,14 @@
 
 /* ── Shell grid ────────────────────────────────── */
 .ap-shell {
-    min-height: 100vh;
+    /* App-shell scroll model (2026-05-29): lock the shell to the viewport so the
+       fixed sidebar + sticky topbar stay pinned and ONLY the content region scrolls.
+       Was `min-height: 100vh`, which let .ap-shell__main grow to full content height
+       and the whole DOCUMENT scroll (one root scrollbar) — the "whole page scrolls"
+       report. 100dvh keeps it correct under the mobile browser address bar. */
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
     /* No grid — sidebar is position:fixed, main uses margin-left */
 }
 
@@ -413,7 +420,12 @@ a.ap-sidebar__roleswitch-item:hover {
 .ap-shell__main {
     margin-left: var(--ap-sidebar-width);
     width: calc(100% - var(--ap-sidebar-width));
-    min-height: 100vh;
+    /* App-shell scroll: fixed viewport height + hidden overflow so the inner content
+       region (.ap-shell__content) is the scroller, not the document. (Was
+       min-height:100vh, which grew with content and let the page scroll as a whole.) */
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     background: var(--ap-color-bg-body);
@@ -520,8 +532,13 @@ a.ap-sidebar__roleswitch-item:hover {
 /* ── Content area ──────────────────────────────── */
 .ap-shell__content {
     flex: 1;
+    /* min-height:0 lets this flex child shrink below its content size so its own
+       overflow-y:auto scrolls — instead of pushing .ap-shell__main taller and making
+       the document scroll. This is the element that scrolls in the app-shell. */
+    min-height: 0;
     padding: var(--ap-space-6);
     width: 100%;
+    overflow-y: auto;
     overflow-x: hidden;
 }
 
