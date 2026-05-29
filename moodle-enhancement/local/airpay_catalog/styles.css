@@ -170,7 +170,37 @@
     font-size: var(--ap-text-xs);
     border-radius: var(--ap-radius-xs);
     text-transform: uppercase;
+    z-index: 2;
 }
+/* Netflix-style poster image. When a course has an uploaded overview image
+   the template emits this <img>; object-fit:cover crops it to the thumb
+   frame and hover gives a subtle zoom. Badges/type/difficulty sit above it
+   (z-index). When there is no image the template omits the <img> and the
+   --vN gradient variant below shows through with the course code centered. */
+.airpay-catalog__card-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    z-index: 0;
+    transition: transform var(--ap-transition-slow);
+}
+.airpay-catalog__card:hover .airpay-catalog__card-img {
+    transform: scale(1.06);
+}
+.airpay-catalog__card-thumb .airpay-catalog__badge,
+.airpay-catalog__card-thumb .airpay-catalog__card-ring,
+.airpay-catalog__card-thumb .airpay-catalog__card-difficulty { z-index: 2; }
+/* Per-course gradient fallback palette (course id % 6) — keeps an image-less
+   catalogue wall colourful and varied rather than a block of identical tiles. */
+.airpay-catalog__card-thumb--v0 { background: var(--ap-gradient-cta); }
+.airpay-catalog__card-thumb--v1 { background: linear-gradient(135deg, #0f7a73, #0aa3a3); }
+.airpay-catalog__card-thumb--v2 { background: linear-gradient(135deg, #6a3fb5, #b34db8); }
+.airpay-catalog__card-thumb--v3 { background: linear-gradient(135deg, #c2407e, #f0883e); }
+.airpay-catalog__card-thumb--v4 { background: linear-gradient(135deg, #1f6feb, #0f7a73); }
+.airpay-catalog__card-thumb--v5 { background: linear-gradient(135deg, #d97706, #e0b400); }
 .airpay-catalog__badge {
     position: absolute;
     top: var(--ap-space-2);

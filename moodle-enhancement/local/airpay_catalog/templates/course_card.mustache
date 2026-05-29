@@ -12,8 +12,13 @@
 <article class="airpay-catalog__card" aria-labelledby="course-{{id}}-title">
     <a href="{{detailurl}}" class="airpay-catalog__card-link"
        aria-label="View details for {{fullname}}">
-        <div class="airpay-catalog__card-thumb">
+        <div class="airpay-catalog__card-thumb airpay-catalog__card-thumb--v{{thumb_variant}}">
+            {{#has_image}}
+            <img class="airpay-catalog__card-img" src="{{imageurl}}" alt="" loading="lazy" aria-hidden="true">
+            {{/has_image}}
+            {{^has_image}}
             <span class="airpay-catalog__card-code" aria-hidden="true">{{shortname}}</span>
+            {{/has_image}}
             {{#is_new}}
             <span class="airpay-catalog__badge airpay-catalog__badge--new"
                   aria-label="New course">NEW</span>

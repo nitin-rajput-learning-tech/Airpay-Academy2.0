@@ -307,7 +307,7 @@ class catalog_manager {
      * Format a course record for Mustache template.
      */
     private static function format_course(\stdClass $course, int $userid): array {
-        global $DB, $CFG;
+        global $DB;
 
         // Check enrollment status.
         $enrolled = $DB->record_exists_sql(
@@ -388,10 +388,44 @@ class catalog_manager {
             // standard course view, same as viewurl.
             'viewurl'       => (new \moodle_url('/course/view.php', ['id' => $course->id]))->out(false),
             'detailurl'     => (new \moodle_url('/course/view.php', ['id' => $course->id]))->out(false),
-            // imageurl was pointing at theme/airpayux/pix_plugins/local_courses/courseimg
-            // which never existed (404). Use Moodle core's default course icon as fallback.
-            'imageurl'      => (new \moodle_url('/theme/image.php/airpayux/core/' .
-                               $CFG->themerev . '/i/course'))->out(false),
+            // Poster image (real overview image → gradient-tile fallback) is
+            // merged in below — Netflix-style card thumbnail.
+        ] + self::course_poster((int) $course->id);
+    }
+
+    /**
+     * Resolve a course's poster image for catalogue cards.
+     *
+     * Returns the course's uploaded overview image when one exists. When it
+     * does not, imageurl is empty and has_image is false, so the card template
+     * falls back to an on-brand gradient tile — one of six --vN variants keyed
+     * off the course id, so an image-less wall still looks varied (Netflix-style).
+     *
+     * @param int $courseid
+     * @return array{imageurl: string, has_image: bool, thumb_variant: int}
+     */
+    public static function course_poster(int $courseid): array {
+        $url = '';
+        try {
+            $context = \context_course::instance($courseid);
+            $fs = get_file_storage();
+            $files = $fs->get_area_files($context->id, 'course', 'overviewfiles',
+                false, 'sortorder', false);
+            foreach ($files as $file) {
+                if ($file->is_valid_image()) {
+                    $url = \moodle_url::make_pluginfile_url(
+                        $file->get_contextid(), $file->get_component(), $file->get_filearea(),
+                        null, $file->get_filepath(), $file->get_filename())->out(false);
+                    break;
+                }
+            }
+        } catch (\Throwable $e) {
+            $url = '';
+        }
+        return [
+            'imageurl'      => $url,
+            'has_image'     => ($url !== ''),
+            'thumb_variant' => $courseid % 6,
         ];
     }
 }

@@ -175,7 +175,14 @@ class featured_manager {
                 $snippet = mb_strlen($snippet) > 140
                     ? mb_substr($snippet, 0, 140) . '…' : $snippet;
             }
-            $courses[] = [
+            // Poster image — reuse the catalogue helper so the dashboard
+            // widget matches the catalogue look (real overview image, else a
+            // per-course gradient tile keyed off the course id). Guarded so the
+            // widget still works if the catalogue plugin is ever absent.
+            $poster = class_exists('\\local_airpay_catalog\\catalog_manager')
+                ? \local_airpay_catalog\catalog_manager::course_poster((int) $r->courseid)
+                : ['imageurl' => '', 'has_image' => false, 'thumb_variant' => ((int) $r->courseid) % 6];
+            $courses[] = array_merge([
                 'courseid'  => (int) $r->courseid,
                 'fullname'  => format_string($r->fullname),
                 'shortname' => format_string($r->shortname),
@@ -187,7 +194,7 @@ class featured_manager {
                     ['id' => $r->courseid]))->out(false),
                 'enrolurl'  => (new \moodle_url('/enrol/index.php',
                     ['id' => $r->courseid]))->out(false),
-            ];
+            ], $poster);
         }
         return [
             'has_courses' => !empty($courses),

@@ -23,8 +23,13 @@
             {{#in_progress}}
             <div class="airpay-catalog__card airpay-catalog__card--progress">
                 <a href="{{viewurl}}" class="airpay-catalog__card-link">
-                    <div class="airpay-catalog__card-thumb">
+                    <div class="airpay-catalog__card-thumb airpay-catalog__card-thumb--v{{thumb_variant}}">
+                        {{#has_image}}
+                        <img class="airpay-catalog__card-img" src="{{imageurl}}" alt="" loading="lazy" aria-hidden="true">
+                        {{/has_image}}
+                        {{^has_image}}
                         <span class="airpay-catalog__card-code">{{shortname}}</span>
+                        {{/has_image}}
                         {{#has_progress}}
                         <div class="airpay-catalog__card-ring">
                             <svg viewBox="0 0 36 36">

@@ -360,3 +360,116 @@ Dashboard · My Team · Compliance · Live Sessions · ──── · My Course
 - Sidebar labels follow the file's existing convention (hardcoded English nav strings,
   not `get_string`) — i18n is a separate all-labels pass, not introduced here.
 - Feature-flag respected: the link is gated on `live.enabled` (CLAUDE.md §13).
+
+## E-01 + E-03 — one-click free self-enrolment for internal tenants
+
+Fixes the employee-walk P1 (`../qa-walk-2026-05-29/BUG-LOG.md` E-01): an Airpay
+employee could not self-enrol in a "Free" course. The catalog "Enroll" button
+routed free courses to `course.php?action=addtocart` (session cart) and never
+enrolled; the cart's `enrollfree` path then called core `enrol_self()`, which
+**silently no-ops on key-gated courses** (course 71 has an `enrol.password` set)
+while falsely reporting success.
+
+**Plugin:** `local_airpay_catalog` `2026052901` → `2026052902`.
+
+### What changed
+| File | Change |
+|------|--------|
+| `classes/enrolment.php` *(new)* | `should_offer_oneclick()` policy (logged-in **internal-tenant** user + free course + flag) and `enrol_now()` mechanism — idempotent **manual** enrol that bypasses any self-enrol key, mirroring `cart_manager::enrol_user_in_course()`. |
+| `db/feature_flags.php` | New flag `sentientia.catalog.free_oneclick_enrol.enabled` (default **OFF** — OFF reproduces today's cart behaviour byte-for-byte). |
+| `course.php` | New `action=enrolnow` handler (require_sesskey → policy check → `enrol_now` → redirect into the course; safe fallback to cart) + a one-click CTA branch on the detail page. |
+| `public.php` | Catalog grid button (legacy + LXP paths) points internal-tenant viewers at `?action=enrolnow` for free courses; guests/Public keep `addtocart`. |
+| `cart.php` | `enrollfree` rerouted through `enrol_now()` — actually enrols (key bypassed) and reports truthfully (was the silent-success lie). |
+| `lang/{en,hi,kn,mr,sw}/…` | +4 strings × 5 languages (`enrol_now_free`, `enrolled_welcome`, `enrolled_count`, `enrolled_none`). |
+
+### Decisions (owner, 2026-05-29)
+- **Scope = internal tenants only.** Airpay /1 + ZEEA /177 (any non-Public tenant) get one-click; the Public /77 storefront keeps the cart so its B2C funnel is untouched. The policy is **user-centric** (the viewer's tenant), not course-centric.
+- **Key handling = bypass via manual enrol.** Catalog tenant-visibility is the access gate for internal staff.
+
+### Screenshots
+| File | What it shows |
+|------|---------------|
+| `enrol-fix-01-catalog-oneclick.png` | Catalog as logged-in **qa_employee** (Airpay /1) — Learner shell; free-course cards now carry the **"Enrol now — free"** CTA (→ `?action=enrolnow`, confirmed in the a11y snapshot) instead of "Enroll"→cart. |
+| `enrol-fix-02-mycourses-enrolled.png` | **My Courses = 2** ("Aptitude Test Advanced" #71 + "POSH Training" #403) after one-click enrol — directly contradicts the original symptom (this page showed *"No courses found"*). |
+| `enrol-fix-03-catalog-mobile.png` | Mobile (412 px) — single-column catalog, **"Enrol now — free"** button renders correctly; layout unaffected (no CSS change). |
+
+### Verification (local XAMPP, Moodle 5.1.3+)
+- **CLI** (`_verify-enrol.php`, read+write): policy correct (Airpay+free+flag → one-click; Public → cart; paid → cart); `enrol_now(71)` enrolled qa_employee **despite the key**; idempotent; exactly 1 enrolment row. **ALL PASS.**
+- **Browser** (real airpayux login as `qa_employee`): catalog button = "Enrol now — free" → `enrolnow`; clicked POSH (403) → enrolled; My Courses → 2 courses.
+- **PHPUnit** `tests/enrolment_test.php` (8 cases) written for CI — local box has no `vendor/bin/phpunit` (Composer dev-deps absent), so it runs in the CI `phpunit` job, not locally.
+- **HTTP smoke**: `public.php` + `course.php` return 200 with no PHP fatal for guests.
+
+### Notes
+- **Flag is enabled for tenant /1 on this local box** (set during verification, so the QA re-walk can exercise it in-browser). **Production must enable** `sentientia.catalog.free_oneclick_enrol.enabled` for the internal tenants (Airpay /1, ZEEA /177) via the Switchboard — until then, OFF preserves current cart behaviour.
+- `course.php` keeps the old `/enrol/index.php` path as the fallback for non-internal logged-in users (unchanged behaviour for the Public tenant).
+
+---
+
+## Course-card poster thumbnails (2026-05-29) — owner-requested
+
+Owner ask: *"course cards will have thumbnails for the courses, like movies on
+netflix has posters, current catalogues don't have images."* Every course-card
+surface showed an identical generic icon (member catalogue) or a flat
+text-only tile — no per-course imagery.
+
+**Mechanism.** New shared helper
+`local_airpay_catalog\catalog_manager::course_poster($courseid)` returns the
+course's uploaded **overview image** (`overviewfiles`) when present; otherwise
+`imageurl=''` + `has_image=false`, and always `thumb_variant = id % 6`. Each
+card renders a real `<img>` poster (`object-fit:cover`, reduced-motion-safe
+hover zoom) when `has_image`, else falls back to one of six on-brand gradient
+tiles (`--vN`) with the course code — so an image-less wall still looks varied,
+not a block of identical tiles. No new data requirement: real images appear the
+moment a course image is uploaded (Course settings → Course image).
+
+**Surfaces wired (every course-card surface):**
+
+| Surface | File(s) | Live by default? |
+|---------|---------|------------------|
+| Member catalogue grid + trending/new carousels | `templates/course_card.mustache` ← `catalog_manager::format_course()` | yes |
+| Member "Continue Learning" carousel | `templates/catalog.mustache` (image behind the progress ring) | yes |
+| Public guest storefront LXP cards | `public.php` `$render_card` ← `commerce::get_public_catalog()` | flag `sentientia.catalog.public_lxp.enabled` (default OFF) |
+| Dashboard "Featured for you" widget | `local_airpay_courses` `featured_widget.mustache` + `featured_manager` + new `styles.css` | yes (when curated) |
+| Guest frontpage "Featured Courses" | `theme/airpayux/layout/frontpage.php` | yes |
+
+**Method:** real Chrome (chrome-devtools MCP) against local Moodle. No
+production-import course on this box has an uploaded image (the import left
+`overviewfiles` rows whose files were never copied to `filedir`), so
+`tools/_poster_demo.php --seed=3` generated gradient posters onto 3 Public
+courses to prove the real-image path; the storefront flag was flipped ON only
+to capture the storefront, then reverted to default OFF (`tools/_c4_flag_off.php`,
+verified back OFF).
+
+### Screenshots
+
+| File | What it shows |
+|------|---------------|
+| `posters-01-storefront-real-and-fallback.png` | Guest storefront (flag ON), `?q=E000` — DOM-confirmed **3 real `<img>` posters** (600×340, `object-fit:cover`, all loaded OK) + 1 gradient-tile fallback, side by side. |
+| `posters-02-dashboard-featured-widget.png` | Dashboard "Featured for you" — 3 cards each with a gradient poster header (FO_HR001 / A0001 / A0002), "Featured demo" badge, Enrol/Preview. Previously flat text-only cards. |
+| `posters-03-guest-frontpage-featured.png` | Guest frontpage "Featured Courses" — `.ap-course` cards with 150px poster headers (COMPLIANCE / FINANCE / LEADERSHIP gradients). |
+
+### Findings
+
+- ✅ Member catalogue: all 12 grid cards carry a variant poster thumb
+  (`variant_thumbs:12`, spread `--v1…--v5`); gradient+code fallback renders for
+  image-less courses; zero broken images.
+- ✅ Storefront (flag ON): real `<img>` posters render `object-fit:cover` (no
+  distortion) next to gradient fallbacks; legacy grid byte-for-byte when OFF.
+- ✅ Featured widget + frontpage: poster headers render, no layout break;
+  overlay badges/type/ring/difficulty stay above the poster (z-index).
+- ✅ Reduced-motion-safe hover zoom (catalogue uses `var(--ap-transition-slow)`,
+  which collapses to 0ms under `prefers-reduced-motion`).
+
+### Verdict
+
+**SHIPPED.** Course cards now have poster thumbnails across every surface.
+Default behaviour preserved (image-less → on-brand gradient tile; real image
+appears automatically when uploaded). `theme_airpayux` 1.0.41-beta →
+1.0.42-beta.
+
+**Note on `public.php`:** its poster hunk is intentionally left in the working
+tree (uncommitted) to land with the owner's in-flight E-01 one-click-enrol
+commit — E-01 spans `public.php` + the untracked `enrolment.php`/`course.php`,
+so committing `public.php` alone would be a broken partial. The data layer
+(`commerce::get_public_catalog`) IS committed, and the storefront LXP path is
+flag-OFF by default, so committed default behaviour is unaffected.

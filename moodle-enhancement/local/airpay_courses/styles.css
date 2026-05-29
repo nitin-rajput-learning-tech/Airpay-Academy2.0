@@ -1,0 +1,46 @@
+/*
+ * local_airpay_courses — component styles.
+ *
+ * Featured-courses dashboard widget poster thumbnails (Netflix-style).
+ * The widget template (templates/featured_widget.mustache) emits an
+ * .ap-featured-widget__thumb per card: a real course overview image when the
+ * course has one, else a per-course gradient tile (--vN, keyed off course id)
+ * with the course code — so an image-less wall still looks varied.
+ */
+.ap-featured-widget__thumb {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 120px;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 12px;
+    position: relative;
+    text-decoration: none;
+}
+.ap-featured-widget__img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform var(--ap-transition-slow, 0.4s ease);
+}
+.ap-card:hover .ap-featured-widget__img {
+    transform: scale(1.05);
+}
+.ap-featured-widget__code {
+    color: rgba(255, 255, 255, 0.92);
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+/* Per-course gradient fallback palette (course id % 6). */
+.ap-featured-widget__thumb--v0 { background: var(--ap-gradient-cta, linear-gradient(135deg, #0066a7, #0f7a73)); }
+.ap-featured-widget__thumb--v1 { background: linear-gradient(135deg, #0f7a73, #0aa3a3); }
+.ap-featured-widget__thumb--v2 { background: linear-gradient(135deg, #6a3fb5, #b34db8); }
+.ap-featured-widget__thumb--v3 { background: linear-gradient(135deg, #c2407e, #f0883e); }
+.ap-featured-widget__thumb--v4 { background: linear-gradient(135deg, #1f6feb, #0f7a73); }
+.ap-featured-widget__thumb--v5 { background: linear-gradient(135deg, #d97706, #e0b400); }

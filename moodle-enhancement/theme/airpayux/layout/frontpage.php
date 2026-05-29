@@ -218,6 +218,10 @@ echo $OUTPUT->doctype();
     .ap-courses__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
     .ap-course { background: var(--ap-surface); border-radius: 16px; overflow: hidden; border: 1px solid var(--ap-border); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; }
     .ap-course:hover { transform: translateY(-4px); box-shadow: var(--ap-card-shadow-hover); }
+    .ap-course__poster { display: flex; align-items: center; justify-content: center; height: 150px; position: relative; overflow: hidden; }
+    .ap-course__poster-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+    .ap-course:hover .ap-course__poster-img { transform: scale(1.06); }
+    .ap-course__poster-code { color: #fff; font-weight: 800; font-size: 1.05rem; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.92; text-shadow: 0 1px 8px rgba(0,0,0,0.25); }
     .ap-course__header { padding: 20px 24px 16px; position: relative; }
     .ap-course__header::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; }
     .ap-course__badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; margin-bottom: 12px; }
@@ -470,10 +474,21 @@ echo $OUTPUT->doctype();
                 $url = new moodle_url('/local/search/coursedetails.php', ['id' => $course->id]);
                 $badge = $categorybadges[$i % count($categorybadges)];
                 $grad  = $gradients[$i % count($gradients)];
+                // Poster image — real course overview image, else the per-card
+                // gradient ($grad) shows through with the category badge text.
+                $poster = class_exists('\\local_airpay_catalog\\catalog_manager')
+                    ? \local_airpay_catalog\catalog_manager::course_poster((int) $course->id)
+                    : ['imageurl' => '', 'has_image' => false];
             ?>
             <div class="ap-course">
+                <a class="ap-course__poster" href="<?php echo $url->out(); ?>" style="background: <?php echo $grad; ?>;" aria-hidden="true" tabindex="-1">
+                    <?php if (!empty($poster['has_image'])): ?>
+                    <img class="ap-course__poster-img" src="<?php echo s($poster['imageurl']); ?>" alt="" loading="lazy">
+                    <?php else: ?>
+                    <span class="ap-course__poster-code"><?php echo s($badge); ?></span>
+                    <?php endif; ?>
+                </a>
                 <div class="ap-course__header">
-                    <div style="position:absolute;top:0;left:0;right:0;height:4px;background:<?php echo $grad; ?>;"></div>
                     <span class="ap-course__badge" style="background: var(--ap-primary-light); color: var(--ap-primary);"><?php echo s($badge); ?></span>
                     <h4 class="ap-course__title"><?php echo format_string($course->fullname); ?></h4>
                     <p class="ap-course__desc"><?php echo $summary; ?></p>

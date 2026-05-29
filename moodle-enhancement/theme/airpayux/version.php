@@ -313,7 +313,17 @@ defined('MOODLE_INTERNAL') || die();
 // .ap-shell, which grew to full content height and scrolled the document. Bump
 // invalidates the cached compiled CSS bundle + changes themerev so clients fetch the
 // new CSS without a manual hard refresh.
-$plugin->version   = 2026052901;
+//
+// Course-card poster thumbnails (2026-05-29) — Netflix-style course images
+// across every course-card surface: member catalogue (course_card partial +
+// continue-learning carousel), public storefront (public.php LXP cards),
+// dashboard "Featured for you" widget, and the guest frontpage "Featured
+// Courses". Real course overview image when one is uploaded, else a per-course
+// gradient tile (course id % 6) so an image-less wall still looks varied. Bump
+// invalidates the compiled CSS bundle + changes themerev so the new
+// local_airpay_catalog + local_airpay_courses styles.css aggregate (poster
+// rules) reaches clients without a manual hard refresh.
+$plugin->version   = 2026052902;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
@@ -332,7 +342,7 @@ $plugin->maturity  = MATURITY_BETA;
 // (83% reduction). Section 1 wrapped under body#page-login-index for
 // ID-specificity. Bundled bugfix: dark-mode selectors used descendant
 // combinator (never fired since #page-X IS body); now chained.
-$plugin->release   = '1.0.41-beta';  // …signup-flow UI fixes + app-shell scroll fix (content-only scroll: shell pinned, only the content region scrolls, footer pinned at bottom)
+$plugin->release   = '1.0.42-beta';  // …+ Netflix-style course-card poster thumbnails (catalogue + featured widget + guest frontpage)
 // P1 #10 chip-J (2026-05-24) — _surface-profile.scss (2,507 lines)
 // decomposed into 4 per-surface partials: _surface-user, _surface-badges,
 // _surface-grade-report, _surface-calendar. Admin fragments moved to

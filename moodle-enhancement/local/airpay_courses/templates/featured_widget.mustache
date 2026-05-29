@@ -4,7 +4,8 @@
    Context vars:
      has_courses    bool — false if no curated courses for this user
      courses[]      { courseid, fullname, shortname, snippet, has_snippet,
-                       label, has_label, viewurl, enrolurl }
+                       label, has_label, viewurl, enrolurl,
+                       imageurl, has_image, thumb_variant }
      more_url       string — link to full catalog
 }}
 {{# has_courses }}
@@ -22,6 +23,17 @@
     {{# courses }}
     <div class="col-md-6 col-lg-4">
       <div class="ap-card ap-card--inset h-100 d-flex flex-column">
+        {{! Netflix-style poster — real course image, else a per-course
+            gradient tile (thumb_variant) with the course code. }}
+        <a href="{{ viewurl }}" class="ap-featured-widget__thumb ap-featured-widget__thumb--v{{ thumb_variant }}"
+           tabindex="-1" aria-hidden="true">
+          {{# has_image }}
+          <img class="ap-featured-widget__img" src="{{ imageurl }}" alt="" loading="lazy">
+          {{/ has_image }}
+          {{^ has_image }}
+          <span class="ap-featured-widget__code">{{ shortname }}</span>
+          {{/ has_image }}
+        </a>
         {{# has_label }}
         {{! UAT a11y fix 2026-05-09: text-white explicit (Bootstrap 5's
             bg-primary doesn't auto-set text color → black on dark blue

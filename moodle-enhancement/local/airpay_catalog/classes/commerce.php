@@ -249,7 +249,7 @@ class commerce {
                 'summary_short' => $summary,
                 'enrolled_count' => (int)$c->enrolcount,
                 'detailurl' => (new \moodle_url('/local/airpay_catalog/course.php', ['id' => $c->id]))->out(false),
-            ]);
+            ], catalog_manager::course_poster((int)$c->id));
         }
 
         return [
