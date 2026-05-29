@@ -86,6 +86,18 @@ body.dark-mode {
     .text-dark {
         color: #e8eaed !important;  /* primary text in dark mode */
     }
+    /* Forward-looking (Moodle 5.2 / Bootstrap 5.3 — ADR-018 Wave 1): BS 5.3
+       deprecates .text-muted in favour of .text-body-secondary and adds
+       .text-body-tertiary; .text-secondary / .text-black* are likewise
+       dark-on-light by default. Cover the successor utilities now (same dark
+       values as .text-muted / .text-dark above) so the 5.2 cutover cannot
+       reintroduce dark-on-dark text. Additive — existing rules unchanged. */
+    .text-secondary, .text-body-secondary, .text-body-tertiary {
+        color: #9ca3b4 !important;  /* 5.1:1 on #0f1117 — matches .text-muted */
+    }
+    .text-black, .text-black-50 {
+        color: #e8eaed !important;  /* black→primary-light in dark mode */
+    }
     /* Bootstrap table cells inherit body color but our datatable
        rows have inline color: #1d2125 baked in. Force dark-mode text. */
     table tbody tr td,

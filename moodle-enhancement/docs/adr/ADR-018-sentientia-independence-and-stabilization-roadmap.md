@@ -97,3 +97,12 @@ docs only; never the Wave 2–6 human gates; never clobber the owner's concurren
   (no `[[login_submit]]`). Lang+template change → `purge_caches` (string + template caches) is the right
   tool here, NOT a version bump (no upgrade run — owner WIP in flight). Removes the last hard core-string
   dependency on the login surface.
+- **iter 3 — Wave 1 item 4 (Bootstrap text-* dark-mode coverage).** `theme/airpayux/scss/moodle/dark_mode.scss`:
+  the dark block handled `.text-muted`/`.text-dark` but not the BS5.3 successors. Added (additive)
+  `.text-secondary, .text-body-secondary, .text-body-tertiary → #9ca3b4` (7.47:1) and
+  `.text-black, .text-black-50 → #e8eaed` (15.66:1). Fixes a REAL failure — `.text-black-50` rendered raw
+  `rgba(0,0,0,.5)` = 1.06:1 on the dark bg (verified via synthetic node) — and future-proofs the Moodle 5.2
+  cutover (BS 5.3 deprecates `.text-muted` → `.text-body-secondary`). Verified live (synthetic spans, dark
+  mode). **Tooling note:** theme SCSS-partial changes (compiled at runtime via `lib.php`) need the FULL
+  `admin/cli/purge_caches.php` to clear the scssphp compiled-CSS localcache — `theme_reset_all_caches()`
+  bumps themerev but does NOT rebuild the compile.
