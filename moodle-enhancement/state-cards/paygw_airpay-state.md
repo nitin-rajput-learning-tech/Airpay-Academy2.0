@@ -4,7 +4,7 @@
 **Version:** `2024100700.10` / `1.0.1`
 **Maturity:** `MATURITY_STABLE`
 **Status:** Live payment gateway on airpay.academy
-**Last refreshed:** 2026-05-24 (P1 state-card pass)
+**Last refreshed:** 2026-05-29 (F-032 residual removal + served-tree hardening promotion; prior 2026-05-24 P1 state-card pass)
 
 ---
 
@@ -18,6 +18,24 @@ etc.) can charge via Airpay's payment APIs.
 A 2026-05-24 security follow-up landed (PROJECT-STATE: "Session
 2026-05-24 — paygw_airpay security follow-up") — see PROJECT-STATE.md
 for the audit findings + remediation history.
+
+A 2026-05-29 follow-up **CLOSED F-032's residual**: the orphaned
+top-level `checksum.php` (a dead `paygw_airpay\checksum\Checksum` class —
+MD5, `==`, unescaped `$_POST` echo, file-scope `require_login()`, never
+required or instantiated) was **deleted** from both trees after a fresh
+grep confirmed **zero** references to `paygw_airpay\checksum`. The same
+session also promoted the **full F-032 hardening** from the
+`moodle-enhancement/` workspace into the **served `payment/` tree**,
+which had drifted (served was still at `.09`, pre-hardening): hardened
+`classes/checksum.php` (SHA-256 + `hash_equals()` + `s()`), guard-first
+`classes/airpay_helper.php`, the `int`→`float` `db/upgrade.php` fix
+(the old `int` hint truncated the decimal version and would have thrown
+`downgrade_exception` on the `.09`→`.10` bump), version `.09`→`.10` /
+`1.0.1`, and the 4 PHPUnit test files. The live `\checksum`
+(`pay.php` → `airpay_helper.php` → `classes/checksum.php`) is now
+hardened in the served tree too. `purge_caches` + paid-course browser
+checkout deferred to the live env (no Moodle runtime in the cloud
+session). See PROJECT-STATE.md top H2.
 
 ## DB tables (3)
 
@@ -46,7 +64,6 @@ payment/gateway/airpay/
 ├── pay.php                                       Initiates payment flow
 ├── process.php                                   Server callback handler
 ├── process_old.php                               Legacy callback (kept for refund replay)
-├── checksum.php                                  Public checksum endpoint
 ├── callback.php (implied)                        Webhook from Airpay
 ├── error.php                                     User-facing error display
 ├── style.css + styles.css                        Gateway-specific CSS

@@ -74,11 +74,33 @@ only `require_login()`s then defines a class and exits with no output),
 but it is insecure dead code sitting in a financial gateway — the right
 move is to delete it.
 
-**Action: deferred to a `[CONFIRM]`-gated follow-up chip** (removal is
-both a delete and a payment-gateway change → escalation per CLAUDE.md
-§3/§12). Not removed in this pass. Once the file's deployed copy is also
-removed, re-run `grep -r "paygw_airpay\\checksum"` to confirm no
-straggler reference.
+**Action: ✅ RESOLVED 2026-05-29** (`[CONFIRM]`-gated chip; delete +
+payment-gateway change → confirmed by Nitin in chat per CLAUDE.md
+§3/§12). The orphaned top-level `checksum.php` was **deleted from both
+trees** (`moodle-enhancement/payment/gateway/airpay/` workspace +
+`payment/gateway/airpay/` served). A fresh pre-delete grep re-confirmed
+**zero** references to `paygw_airpay\checksum` / the `Checksum` class /
+the file path (workspace + served), and the post-delete gate
+`grep -r "paygw_airpay\checksum"` now returns **nothing** — clean
+removal. The live path (`pay.php:65 new \checksum` → `airpay_helper.php
+require_once classes/checksum.php`) is unaffected.
+
+While confirming the safety argument, a **deploy-drift finding** surfaced
+that this doc's earlier description didn't capture: the *served* tree's
+`classes/checksum.php` was still the **pre-F-032** version (MD5, `==`,
+unescaped echo, file-scope `require_login()`, version `.09`) — the F-032
+hardening had only ever landed in the `moodle-enhancement/` workspace.
+Per Nitin's `[CONFIRM]`, the **full F-032 hardening was promoted
+workspace → served** in the same chip: hardened `classes/checksum.php`
+(SHA-256 + `hash_equals()` + `s()`), guard-first `classes/airpay_helper.php`,
+the `int`→`float` `db/upgrade.php` fix (the old `int` hint truncated the
+decimal version and would have thrown `downgrade_exception` on the
+`.09`→`.10` bump), `version.php` `.09`→`.10`/`1.0.1`, and the 4 PHPUnit
+test files. The two gateway trees are now byte-identical; all 19 PHP
+files lint clean. **`purge_caches` + paid-course browser checkout were
+NOT runnable in the cloud session** (no `config.php`/DB/runtime) — those
+remain a manual Nitin step in the live Moodle env, as does removing the
+XAMPP-deployed copy at `C:\xampp\htdocs\moodle5\public\…`.
 
 ---
 

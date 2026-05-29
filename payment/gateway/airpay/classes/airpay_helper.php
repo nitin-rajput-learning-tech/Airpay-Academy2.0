@@ -24,11 +24,11 @@
 
 namespace paygw_airpay;
 
-use core_payment\helper;
-
-require $CFG->dirroot . "/payment/gateway/airpay/classes/checksum.php";
 defined('MOODLE_INTERNAL') || die();
 
+use core_payment\helper;
+
+require_once $CFG->dirroot . "/payment/gateway/airpay/classes/checksum.php";
 require_once $CFG->libdir . '/filelib.php';
 
 class airpay_helper
@@ -231,12 +231,21 @@ class airpay_helper
         return $order->timecreated . '_' . $order->id;
     }
 
-    protected static function get_url($config)
+    /**
+     * Return the Airpay payment-form URL for the configured environment.
+     *
+     * NOTE: Airpay's documented integration uses a single payment endpoint —
+     * sandbox vs live is determined by the merchant credentials (`mercid`),
+     * not by the URL. The `environment` setting therefore documents intent
+     * but does not alter the request URL today. Confirm with Airpay support
+     * before introducing a separate sandbox host.
+     *
+     * @param \stdClass $config Gateway config — `environment` is either
+     *                          'sandbox' or 'live'
+     * @return string Payment form URL
+     */
+    public static function get_url($config)
     {
-        if ($config->environment === 'sandbox') {
-            return "https://payments.airpay.co.in/pay/index.php";
-        } else {
-            return "https://payments.airpay.co.in/pay/index.php";
-        }
+        return "https://payments.airpay.co.in/pay/index.php";
     }
 }
