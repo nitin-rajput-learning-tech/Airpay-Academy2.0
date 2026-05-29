@@ -14,7 +14,14 @@ $PAGE->set_pagelayout('standard');
 
 echo $OUTPUT->header();
 
-// Reuse block content logic.
+// Reuse block content logic. Legacy block_<name> classes are NOT handled by
+// core_component's class autoloader (they load only via the block framework,
+// e.g. block_load_class()/block_instance()), so a bare `new block_airpay_trainer()`
+// fatals with "Class not found" (QA Walk 2026-05-29, T-04). Load block_base and
+// the block class explicitly before instantiating — block_base must be defined
+// first because the block class declaration `extends block_base`.
+require_once($CFG->dirroot . '/blocks/moodleblock.class.php');
+require_once(__DIR__ . '/block_airpay_trainer.php');
 $block = new block_airpay_trainer();
 $block->init();
 $content = $block->get_content();
