@@ -17,10 +17,15 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'block_sentientia_recommendations';
-$plugin->version   = 2026052500;
+// 2026052901 — Defensive tenant gate added in get_content(): drops any
+// rec row whose course sits outside the viewer's tenant subtree (resolved
+// via accesslib::get_tenant_category_id). Compensates for stale rec_log
+// rows persisted before the recommendation_engine cross-tenant fix
+// landed. Broader-sweep follow-up to db5242c9a.
+$plugin->version   = 2026052901;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;
-$plugin->release   = '0.1.0-alpha';
+$plugin->release   = '0.1.1-alpha';
 $plugin->dependencies = [
     'local_sentientia_recommendations' => 2026052500,
 ];

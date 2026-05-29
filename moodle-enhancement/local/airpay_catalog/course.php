@@ -21,6 +21,69 @@ $PAGE->set_url('/local/airpay_catalog/course.php', ['id' => $id]);
 $PAGE->set_pagelayout('standard');
 
 $course = $DB->get_record('course', ['id' => $id, 'visible' => 1], '*', MUST_EXIST);
+
+// Tenant scoping (2026-05-29 broader-sweep follow-up to db5242c9a) —
+// this page is reachable without login, so a guest could deep-link to
+// `course.php?id=N` for ANY visible course on the site (Airpay-internal,
+// ZEEA, etc.) and see name/summary/pricing. The catalog list (public.php)
+// is hard-scoped to the public tenant; gate the detail page the same way.
+//
+// Two viewer classes:
+//   - Guest / not-logged-in: ONLY Public-tenant courses, matching
+//     public.php's scoping. Anything else -> redirect to public catalog.
+//   - Logged-in learner: same tenant subtree as the rest of the catalog
+//     (build_catalog_filter_sql_v2 via accesslib) OR a course they're
+//     already enrolled in. The enrolment carve-out handles edge cases
+//     like a user moved between tenants but still holds an active
+//     enrolment in the original-tenant course.
+$_is_loggedin_for_scope = isloggedin() && !isguestuser();
+if (!$_is_loggedin_for_scope) {
+    // Guest path: Public tenant only.
+    $public_tid = (int) get_config('local_airpay_pages', 'public_tenant_id') ?: 77;
+    $public_root = '/' . $public_tid;
+    $course_path = $course->open_path ?? '';
+    $_in_public = ($course_path === $public_root)
+        || (strpos($course_path, $public_root . '/') === 0);
+    if (!$_in_public) {
+        redirect(new moodle_url('/local/airpay_catalog/public.php'),
+            get_string('coursehidden', 'moodle', $course->fullname ?? ''),
+            null, \core\output\notification::NOTIFY_ERROR);
+    }
+} else if (!is_siteadmin()) {
+    // Logged-in path: accesslib tenant subtree OR an existing enrolment.
+    $viewer_tenant_catid = \local_airpay_org\accesslib::get_tenant_category_id(
+        (string) ($USER->open_path ?? ''));
+    $viewer_tenant_catpath = $viewer_tenant_catid
+        ? (string) $DB->get_field('course_categories', 'path',
+            ['id' => $viewer_tenant_catid])
+        : '';
+    $_already_enrolled = is_enrolled(\context_course::instance($id), $USER);
+    $_in_tenant = false;
+    if ($viewer_tenant_catid && $viewer_tenant_catpath !== '') {
+        $course_cat_path = (string) $DB->get_field('course_categories',
+            'path', ['id' => $course->category]);
+        $_in_tenant = ($course->category === (int) $viewer_tenant_catid)
+            || ($course_cat_path !== ''
+                && strpos($course_cat_path, $viewer_tenant_catpath . '/') === 0);
+        // Borrowed-share carve-out (Sprint C/D parity with catalog v2).
+        if (!$_in_tenant) {
+            $parts = explode('/', trim((string) ($USER->open_path ?? ''), '/'));
+            $tenant_root = isset($parts[0]) && ctype_digit($parts[0])
+                ? (int) $parts[0] : 0;
+            if ($tenant_root > 0
+                    && \local_airpay_courses\sharing_manager::is_course_shared_to(
+                        $id, $tenant_root)) {
+                $_in_tenant = true;
+            }
+        }
+    }
+    if (!$_in_tenant && !$_already_enrolled) {
+        redirect(new moodle_url('/local/airpay_catalog/index.php'),
+            get_string('coursehidden', 'moodle', $course->fullname ?? ''),
+            null, \core\output\notification::NOTIFY_ERROR);
+    }
+}
+
 $PAGE->set_title(format_string($course->fullname));
 
 // Handle Add to Cart action.

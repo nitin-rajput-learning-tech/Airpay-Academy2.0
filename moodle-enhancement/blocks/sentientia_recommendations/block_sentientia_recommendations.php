@@ -87,14 +87,48 @@ class block_sentientia_recommendations extends block_base {
         }
 
         global $DB;
+
+        // Defensive tenant gate (2026-05-29 broader-sweep follow-up to
+        // db5242c9a). recommendation_engine::build_candidate_list was
+        // unscoped before this sweep, so {local_sentientia_rec_log} can
+        // hold stale cross-tenant courseids persisted prior to the fix
+        // landing. Resolve the viewer's tenant_catid via accesslib and
+        // skip any rec whose course sits outside that subtree, so the
+        // user-facing block can't surface a pre-hotfix leak even when
+        // the underlying log table hasn't been cleaned up.
+        $viewer_tenant_catid = \local_airpay_org\accesslib::get_tenant_category_id(
+            (string) ($USER->open_path ?? ''));
+        $viewer_tenant_catpath = '';
+        if ($viewer_tenant_catid) {
+            $viewer_tenant_catpath = (string) $DB->get_field('course_categories',
+                'path', ['id' => $viewer_tenant_catid]);
+        }
+        $can_check_tenant = ($viewer_tenant_catid && $viewer_tenant_catpath !== '');
+
         $items = [];
         $rank = 1;
         foreach ($recs as $r) {
             $course = $DB->get_record('course', ['id' => $r->courseid],
-                'id, fullname, shortname', IGNORE_MISSING);
+                'id, fullname, shortname, category', IGNORE_MISSING);
             if (!$course) {
                 continue;
             }
+
+            if ($can_check_tenant && !is_siteadmin()) {
+                $course_cat_path = (string) $DB->get_field('course_categories',
+                    'path', ['id' => $course->category]);
+                $in_tenant = ($course->category === (int) $viewer_tenant_catid)
+                    || ($course_cat_path !== ''
+                        && strpos($course_cat_path, $viewer_tenant_catpath . '/') === 0);
+                if (!$in_tenant) {
+                    // Stale cross-tenant rec row — skip silently. The
+                    // expected outcome after the recommendation_engine
+                    // hotfix is zero such rows; this guard exists for
+                    // log entries persisted BEFORE the fix.
+                    continue;
+                }
+            }
+
             $items[] = [
                 'rank'       => $rank++,
                 'recid'      => (int)$r->id,
