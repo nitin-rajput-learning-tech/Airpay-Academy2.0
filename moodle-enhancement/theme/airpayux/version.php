@@ -343,7 +343,14 @@ defined('MOODLE_INTERNAL') || die();
 //   2. local_airpay_catalog/styles.css: re-assert #fff on the catalogue
 //      Enrol/Continue anchor-buttons in dark mode (the global body.dark-mode a
 //      link rule was bleeding light-blue into them — pre-existing, now pinned).
-$plugin->version   = 2026052904;
+// ADR-018 Wave 1 (2026-05-29) — Sentientia independence + stabilization, safe-now set:
+//   (1) dark-mode AA: scoped `body.dark-mode a` to genuine links via
+//       :not([class*="btn"]):not([role="button"]) so anchor-buttons platform-wide
+//       stop painting ~2.4:1 light-blue on brand fills (generalises the catalogue fix);
+//   (2) white-label: configtitle/pluginname 'Epsilon' → 'Sentientia Academy UX' /
+//       'Airpay Academy UX (Sentientia)' across en/hi/kn/mr/sw (was a visible brand
+//       leak in Site Admin → Themes for non-English admins).
+$plugin->version   = 2026052905;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
@@ -362,7 +369,7 @@ $plugin->maturity  = MATURITY_BETA;
 // (83% reduction). Section 1 wrapped under body#page-login-index for
 // ID-specificity. Bundled bugfix: dark-mode selectors used descendant
 // combinator (never fired since #page-X IS body); now chained.
-$plugin->release   = '1.0.44-beta';  // …+ dark-mode regression-walk fixes (revert *-light tint flips so brand chips stay readable; catalogue button white-text)
+$plugin->release   = '1.0.45-beta';  // …+ ADR-018 Wave 1: white-label Epsilon→Sentientia lang fix + dark-mode anchor-button bleed scoped to genuine links
 // P1 #10 chip-J (2026-05-24) — _surface-profile.scss (2,507 lines)
 // decomposed into 4 per-surface partials: _surface-user, _surface-badges,
 // _surface-grade-report, _surface-calendar. Admin fragments moved to

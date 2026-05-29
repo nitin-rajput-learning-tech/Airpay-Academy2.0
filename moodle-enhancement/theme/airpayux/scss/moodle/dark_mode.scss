@@ -334,9 +334,13 @@ body.dark-mode {
         color: #9ca3b4;
     }
 
-    /* === Links === */
-    a { color: #60a5fa; }
-    a:hover { color: #93c5fd; }
+    /* === Links === (ADR-018 Wave 1, 2026-05-29: scope the link colour to GENUINE
+       links — exclude anchors styled as buttons. The bare `a` rule was painting
+       ~2.4:1 light-blue text on brand-fill anchor-buttons platform-wide; the
+       catalogue patched it locally, this generalises the fix so dashboard
+       quicknav, footer CTAs, etc. keep their own fill+text contrast.) */
+    a:not([class*="btn"]):not([role="button"]) { color: #60a5fa; }
+    a:not([class*="btn"]):not([role="button"]):hover { color: #93c5fd; }
 
     /* === Buttons === */
     .btn-primary {

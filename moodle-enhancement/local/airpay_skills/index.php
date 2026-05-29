@@ -56,7 +56,7 @@ if ($analysis['has_data'] && $analysis['summary']['gaps'] > 0) {
             'coursename'   => format_string($r->coursename),
             'skill_name'   => format_string($r->skill_name),
             'teaches_label' => $manager::LEVELS[$r->teaches_level] ?? '',
-            'detailurl'    => (new moodle_url('/local/search/coursedetails.php', ['id' => $r->courseid]))->out(false),
+            'detailurl'    => (new moodle_url('/course/view.php', ['id' => $r->courseid]))->out(false),
         ];
     }
 }

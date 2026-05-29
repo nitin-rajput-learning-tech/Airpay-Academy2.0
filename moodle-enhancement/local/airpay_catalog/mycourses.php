@@ -103,7 +103,7 @@ foreach ($enrolledcourses as $course) {
         'is_inprogress' => ($status === 'inprogress'),
         'is_notstarted' => ($status === 'notstarted'),
         'viewurl'      => (new moodle_url('/course/view.php', ['id' => $course->id]))->out(false),
-        'detailurl'    => (new moodle_url('/local/search/coursedetails.php', ['id' => $course->id]))->out(false),
+        'detailurl'    => (new moodle_url('/course/view.php', ['id' => $course->id]))->out(false),
         'lastaccess'   => $lastaccess ? userdate($lastaccess, '%d %b %Y') : 'Never',
     ];
 }

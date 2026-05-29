@@ -1,0 +1,74 @@
+# ADR-018 — Sentientia LMS Independence + 100%-Stabilization Roadmap
+
+**Status:** Accepted (roadmap) · Wave 1 in execution
+**Date:** 2026-05-29
+**Owner:** Nitin Rajput
+**Supersedes/extends:** ADR-001 (fork strategy + product pivot), ADR-002 (customer-level flags), ADR-008 (customer brand), ADR-017 (polymorphic user types)
+**Grounded by:** the `sentientia-independence-discovery` multi-agent codebase audit (5 maps: BizLMS coupling, white-label leaks, stabilization debt, rename/architecture, engine dependency), run 2026-05-29 against the live tree.
+
+---
+
+## Context
+
+The directive: *"100% stabilization of Sentientia LMS; move away from BizLMS and Moodle; Sentientia is independent."*
+
+The discovery confirmed, against the real code, that this is **two distinct programs collapsed under one slogan** — and that conflating them is the principal risk:
+
+1. **Sentientia independence from BizLMS / eAbyas** — stop the product depending on the BizLMS heritage (`open_path`, `open_supervisorid`, `local_costcenter`, the removed `epsilon` parent, eAbyas branding). This is **real but mostly-additive engineering**: insert abstraction seams (a `local_sentientia_core` tenant/identity layer) that read the legacy column today behind a default-ON flag, then migrate the data under them. ~6 weeks.
+
+2. **Independence from the Moodle *engine*** — replace enrolment, course-completion, gradebook, quiz, and SCORM. These are the **source of truth in `mdl_*` tables for 408 live courses / ~400 users across 3 tenants**. They cannot be abstracted mid-flight without a dual-source-of-truth data-drift hazard. This is a **24+ month re-platform**, not a rebrand.
+
+**Hard constraints (CLAUDE.md §13):** never break `airpay.academy` (live customer-zero); every new user-visible feature is flag-gated default-OFF; no prod DB migration / core change / >50-file op without a human gate.
+
+## Decision
+
+**Adopt "rebrand + abstraction" as the funded near-term goal. Treat the full engine re-platform as a SCOPED ADR + spike with a go/no-go gate — not a committed delivery.**
+
+Execution is sequenced into **6 waves** so nothing that can orphan a capability, drop a column, or break a mid-flight enrolment ever runs without a human gate. Only **Wave 1** is additive / flag-or-string-or-CSS scoped / zero-production-risk and is being executed autonomously now; **Waves 2–6 are `needs_human` and gated on Nitin.**
+
+### Replatform verdict
+
+> **REBRAND + ABSTRACTION NOW; full engine re-platform SCOPED-ONLY.** Keep `airpay.academy` on the Moodle engine for 12–18 months. Build standalone services behind REST/event seams, prove them on the lowest-risk tenant (**ZEEA, id=177**) first, then the public marketplace, then internal production last — staged rollback at each step. Harvest the already-decoupled-by-design surfaces (`sentientia_live`, `sentientia_aiquiz/translate/recommendations`, the per-customer `customer_brand` resolver, the custom `airpay_catalog` routes) as the post-Moodle reference patterns. **Verified ground truth:** `local_sentientia_core` does **not yet exist**, so every "split `airpay_core → sentientia_core`" item is greenfield infra creation that triggers DB/capability/version migration → categorically `needs_human`.
+
+---
+
+## The Waves
+
+| Wave | Theme | Risk | needs_human |
+|------|-------|------|:-----------:|
+| **1** | Safe-now stabilization + rebrand (dark-mode AA, branding/string overrides, dead-link fixes, BizLMS-decouple docs) | low | **no — executing now** |
+| **2** | Tenant-identity abstraction seam (Decoupling Phase 1): `local_sentientia_core` + `tenant_identity`/`course_resolver` services behind `use_open_path_legacy` flag (default ON); refactor ~24 read callsites + theme. No column drops. | medium | yes |
+| **3** | Org + hierarchy data migration (Phase 2): `local_costcenter → local_sentientia_org`, `open_supervisorid → local_sentientia_hierarchy` via guarded CLI; HRMS importer writes through services. | high | yes (prod DB) |
+| **4** | Multi-customer SaaS readiness (Phase 3): replace hardcoded `VALID_TENANTS=[1,77,177]` (tenant.php) with a `tenant_registry` table + admin UI + capability; dynamic signup context. All flag-gated default-OFF. | high | yes (DB + cap) |
+| **5** | Component rename `airpay_* → sentientia_*` via `class_alias` shims + staged capability migration (437+ flag refs, 150+ caps, 30+ version bumps, lang/theme cache invalidation). | high | yes (DB cap re-registration) |
+| **6** | **Engine re-platform — SCOPE ONLY, do not execute.** Design standalone enrol/completion/grade/quiz services + tenant-by-tenant migration; ZEEA pilot. Keep airpay.academy on Moodle 12–18 months. | high | yes (strategic spend / 24+ mo) |
+
+### Wave 1 — executing this session (additive, zero production risk)
+
+1. **Dark-mode AA — anchor-button bleed.** Narrow the global `body.dark-mode a {color:#60a5fa}` (`dark_mode.scss`) with `:not(.btn):not([class*="btn"]):not([role="button"])` so anchor-buttons stop painting light-blue (~2.4:1) on brand fills platform-wide (the catalogue-only override at the seed fix generalised). CSS-only, no class renames.
+2. **Dark-mode AA — badge contrast.** Catalogue category (`--ap-color-primary-light` long-token tint + brand text ~2.4:1) + difficulty chips on dark cards → readable AA via flipping semantic tokens. CSS-only.
+3. **Dark-mode AA — consolidate Bootstrap `text-*` overrides** into one audited `dark_mode.scss` block.
+4. **White-label — `Epsilon` leak.** `configtitle`/`pluginname` say "Epsilon" in `hi/kn/mr/sw` (and partly `en`) theme lang packs → the Sentientia value already used in `en`. Lang-string-only.
+5. **White-label — OTP login.** `otploginform.mustache` renders the core `{{#str}}login, moodle{{/str}}` button → add a theme-owned `login_submit` string in all 5 packs.
+6. **White-label — copyright/comment hygiene.** Residual `eAbyas` / `forked from epsilon` docblocks (~10 config/AMD/version files) → `2026 Airpay Payment Services`; strip 2 `(BizLMS)` navbar comments. Metadata only, non-user-visible.
+7. **Decouple docs + lint.** `ADMIN-UI-STYLING-CONTRACT.md` (`.ap-admin-*` hooks vs BizLMS `.costcenter_data`/`.content_right`), this ADR, `BIZLMS-MIGRATION-NARRATIVE.md`, deprecation comments on the 4 `_bizlms-*.scss` partials, stylelint guard rejecting bare BizLMS selectors in NEW scss.
+8. **Dead links.** 4 refs to the defunct `/local/search/coursedetails.php` (mycourses.php, onboarding.php, airpay_skills/index.php, catalog_manager comment) → `/course/view.php?id={id}`. Fixes silent 404s.
+9. **Visual evidence (desktop + 590px) + PROJECT-STATE update.**
+
+---
+
+## Key findings behind the plan (discovery summary)
+
+**Coupling.** `open_path` is THE tenant identifier — **HARD** coupling in 24+ files (access control, role detection, course scoping); 294 files touch it. `local_costcenter` (org hierarchy) + `open_supervisorid` (manager) are **SOFT** (already dual-targeted via `org_manager` fallback). `epsilon` theme parent already removed; `_bizlms-*.scss` selectors are cosmetic-only.
+
+**Branding.** ~90% Sentientia-clean. Footer/navbar/login render Sentientia. Pinpoint leaks: `Epsilon` in 4 non-EN lang packs (hard — visible in admin), `eAbyas` copyright in ~10 files (soft — metadata), OTP login uses core Moodle string (hard — visible button).
+
+**Stabilization debt.** 4 dark-mode AA items (anchor-button bleed = the systemic one; category/difficulty badges; Bootstrap `text-*` gaps; chart labels need runtime inspect) + 4 dead `coursedetails.php` links + a pre-existing high-contrast-mode correctness bug (separate P2/P3).
+
+**Engine.** Enrolment / completion / gradebook / quiz / SCORM = **re-platform-only**. Auth / capabilities / file storage / cron / WS / events / templates = **incrementally-replaceable** behind seams. Branding + `sentientia_live` + the AI features = **already abstracted** (the POC patterns).
+
+## Consequences
+
+- **Positive:** the product stops conflating two programs; the safe wins (a11y + white-label) ship immediately; the risky migrations are sequenced with human gates + clone-DB rehearsal + rollback; the engine question gets an honest spike instead of a reckless rip-out.
+- **Negative / accepted:** true "off Moodle" independence is a multi-quarter program — not a slogan. Near-term Sentientia *is* a white-label, BizLMS-decoupled Moodle distribution, which is the correct, fundable interim product.
+- **Escalations for Nitin (go/no-go):** Wave 2 (create `local_sentientia_core`), Wave 3 (`local_costcenter` data migration), Wave 5 (component rename + capability re-registration), Wave 6 (engine re-platform spend). Each warrants its own ADR before execution.

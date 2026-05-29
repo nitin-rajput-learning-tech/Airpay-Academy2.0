@@ -186,7 +186,7 @@ foreach ($recommended as $r) {
         'fullname' => format_string($r->fullname),
         'shortname' => format_string($r->shortname),
         'enrolled' => (int)$r->enrolcount,
-        'url'      => (new moodle_url('/local/search/coursedetails.php', ['id' => $r->id]))->out(false),
+        'url'      => (new moodle_url('/course/view.php', ['id' => $r->id]))->out(false),
     ];
 }
 

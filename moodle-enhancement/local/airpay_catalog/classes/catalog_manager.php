@@ -375,6 +375,7 @@ class catalog_manager {
             'categoryid'    => $course->category,
             'enrolled_count' => $course->enrolled_count ?? 0,
             'level'         => $level,
+            'level_class'   => strtolower($level),  // ADR-018 Wave 1: feed .airpay-catalog__card-difficulty--{beginner|intermediate|advanced} (was missing → unstyled badge).
             'has_level'     => !empty($level),
             'type'          => $type,
             'is_enrolled'   => $enrolled,
