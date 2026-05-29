@@ -4,7 +4,7 @@
 **Version:** `2026052900` / `1.0.1-beta`
 **Maturity:** `MATURITY_BETA`
 **Status:** Live on airpay.academy. Public + learner course catalog surface.
-**Last refreshed:** 2026-05-29 (C4 / F-004 — public storefront LXP restyle)
+**Last refreshed:** 2026-05-29 (course-card poster thumbnails — `catalog_manager::course_poster()` real-image/gradient-fallback fed into `format_course()`, `commerce::get_public_catalog()`, `course_card.mustache` + `catalog.mustache` + `styles.css`; dark-mode regression-walk fix — Enrol/Continue anchor-buttons re-pinned white)
 
 ---
 

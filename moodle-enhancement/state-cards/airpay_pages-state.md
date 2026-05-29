@@ -4,7 +4,7 @@
 **Status:** Live on airpay.academy — collection of standalone PHP pages
 **Maturity:** Mixed (per-page, no global version.php)
 **Version:** 2026052900 / 1.1
-**Last refreshed:** 2026-05-29 (C10 P1 / Gap 3)
+**Last refreshed:** 2026-05-29 (dark-mode — `templates/certificate_celebration.mustache` "paper" card name/meta text re-pinned dark so the theme's global dark-mode token flip doesn't invert it to light-on-white)
 
 ---
 

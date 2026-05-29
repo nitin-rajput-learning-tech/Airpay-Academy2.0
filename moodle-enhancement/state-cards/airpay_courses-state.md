@@ -4,7 +4,7 @@
 **Status:** STABLE — admin + learner flows shipped + tested
 **Depends on:** local_airpay_org (Phase 1)
 **Purpose:** Airpay-owned course management, progress tracking, open_* field ownership, **cross-tenant sharing (Sprint C) + pull/request workflow (Sprint D)**
-**Last refreshed:** 2026-05-24
+**Last refreshed:** 2026-05-29 (featured "Featured for you" dashboard widget gained Netflix-style poster thumbnails — `featured_manager::get_widget_for_user()` reuses `local_airpay_catalog\catalog_manager::course_poster()` (class_exists-guarded), rendered by `templates/featured_widget.mustache` + new `styles.css`)
 
 ---
 
