@@ -37,7 +37,22 @@ behaviour changed** — this was verification, not a build.
   not missing core. Plugin is ALPHA/unexercised (empty attempt tables on
   prod), so deferral is correct. No action.
 
-Closes Tasks #325–#329. Commit `__bucketf__` (filled on push).
+Closes Tasks #325–#329. Commit `5dc268cc5`.
+
+**F-033 build follow-on (Task #330, commit `__f033__`).** Per "continue
+remaining", built the persona E2E scaffold the verify pass had left
+PENDING NITIN. New `tests/playwright/`: `persona-helpers.ts` (shared
+env-var login + `assertAuthenticated`/`assertReachable`) + 4 specs —
+`learner` / `manager` / `compliance` / `author`. Each runs a real
+login → `/my/` dashboard smoke (the regression net previously missing
+for every non-admin persona — only `admin` was covered) and **skips
+cleanly when `PLAYWRIGHT_<PERSONA>_USER/PASS` are unset** (CI stays
+green until accounts are provisioned). Deeper mutating journeys (enrol,
+approve, compliance-sidebar reach, create-course) are staged as
+`test.fixme()` with intended steps in comments — they need run-to-green
+fixtures. Validated with `npx playwright test --list`: all 14 tests in
+9 files compile + discover. README updated with the persona env-var
+matrix.
 
 ---
 
