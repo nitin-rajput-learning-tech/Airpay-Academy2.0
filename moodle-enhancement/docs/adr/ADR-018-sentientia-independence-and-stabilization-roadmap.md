@@ -72,3 +72,21 @@ Execution is sequenced into **6 waves** so nothing that can orphan a capability,
 - **Positive:** the product stops conflating two programs; the safe wins (a11y + white-label) ship immediately; the risky migrations are sequenced with human gates + clone-DB rehearsal + rollback; the engine question gets an honest spike instead of a reckless rip-out.
 - **Negative / accepted:** true "off Moodle" independence is a multi-quarter program — not a slogan. Near-term Sentientia *is* a white-label, BizLMS-decoupled Moodle distribution, which is the correct, fundable interim product.
 - **Escalations for Nitin (go/no-go):** Wave 2 (create `local_sentientia_core`), Wave 3 (`local_costcenter` data migration), Wave 5 (component rename + capability re-registration), Wave 6 (engine re-platform spend). Each warrants its own ADR before execution.
+
+---
+
+## Wave 1 — overnight execution log (autonomous loop, 2026-05-29)
+
+Self-paced loop continuing the deferred Wave-1 backlog. Each entry = one shipped,
+verified, committed item. Hard rules held every iteration: additive / CSS / string /
+docs only; never the Wave 2–6 human gates; never clobber the owner's concurrent WIP.
+
+- **iter 1 — Wave 1 item 2 (catalogue badge contrast).** `local_airpay_catalog/styles.css`:
+  dark-mode override repaints the category chip text → `var(--ap-blue-300)` (**5.62:1** on
+  the `#172554` navy tint, was 2.42:1) and the level chip text → `#5eead4` (**6.41:1** on the
+  `#134e4a` teal tint, was 1.83:1). Root cause: the `--ap-color-primary/accent-light` semantic
+  tints flip to deep navy/teal in dark mode, but the brand-colour text stays dark. The raw
+  `--ap-blue/teal-*` scale does NOT flip, so it's a stable light source. Light mode untouched.
+  Verified live (dark mode, alpha-composited WCAG scan). **Tooling note:** plugin `styles.css`
+  changes need `theme_reset_all_caches()` to rebuild the theme CSS aggregate — `purge_caches`
+  alone does not re-bump themerev for plugin CSS.

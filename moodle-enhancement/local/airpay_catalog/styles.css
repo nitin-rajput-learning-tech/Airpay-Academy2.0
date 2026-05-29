@@ -718,6 +718,24 @@ body.dark-mode .airpay-catalog__category-icon {
     background: linear-gradient(135deg, var(--ap-blue-800), var(--ap-teal-800));
 }
 
+/* ── Dark-mode chip contrast (WCAG AA — ADR-018 Wave 1) ───────────────────
+   The category/level chips pair brand-colour TEXT with a *-light tint
+   BACKGROUND. In dark mode those semantic tints flip to deep navy/teal
+   (--ap-color-primary-light → #172554, --ap-color-accent-light → #134e4a)
+   but the brand-colour text stays dark (#0066A7 / #0f7a73), landing the
+   chips at ~2.4:1 — fails AA. Repaint the TEXT with a light tint of the
+   same hue from the fixed raw scale (raw --ap-blue/teal-* do NOT flip), so
+   the pairing clears AA. Measured on the dark navy/teal tints:
+   blue-300 → 5.6:1, light mint → 6.4:1. (teal-300 #48b8af only reaches
+   3.95:1, so the level chip uses a brighter mint.) Light mode is untouched. */
+body.dark-mode .airpay-catalog__card-category,
+body.dark-mode .ap-mycourses__card-category {
+    color: var(--ap-blue-300);
+}
+body.dark-mode .airpay-catalog__card-level {
+    color: #5eead4;
+}
+
 /* ═══ Mobile breakpoints (manifesto §3) ══════════════════════════════════ */
 @media (max-width: 768px) {
     .airpay-catalog__grid {
