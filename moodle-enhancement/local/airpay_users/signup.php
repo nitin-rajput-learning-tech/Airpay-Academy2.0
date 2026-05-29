@@ -42,11 +42,16 @@ if ($mform->is_cancelled()) {
 
 if ($success) {
     // Step-2 view: we just submitted successfully.
+    // Render a single, NON-dismissible success panel. $OUTPUT->notification()
+    // emits a dismissible alert whose close button rendered as a stray glyph
+    // on the dark card; a plain .alert (no .alert-dismissible, no button)
+    // avoids that and reads as an intentional confirmation, not a toast.
     echo $OUTPUT->header();
-    echo html_writer::start_div('container my-4');
-    echo $OUTPUT->notification(
+    echo html_writer::start_div('container my-4 text-center');
+    echo html_writer::div(
         get_string('signup_success_check_email', 'local_airpay_users'),
-        'success');
+        'alert alert-success border-0',
+        ['role' => 'status']);
     echo html_writer::tag('p',
         get_string('signup_success_help', 'local_airpay_users'),
         ['class' => 'text-muted small']);
@@ -63,12 +68,12 @@ if ($success) {
 if ($data = $mform->get_data()) {
     try {
         \local_airpay_users\signup_service::register($data);
+        // No flash message here — the success view below renders the
+        // confirmation panel. Passing a message to redirect() too would
+        // queue a SECOND copy (the duplicate the success page showed).
         redirect(
             new moodle_url('/local/airpay_users/signup.php',
-                ['success' => 1]),
-            get_string('signup_success_check_email', 'local_airpay_users'),
-            null,
-            \core\output\notification::NOTIFY_SUCCESS
+                ['success' => 1])
         );
     } catch (\moodle_exception $e) {
         // Re-render the form with the error.

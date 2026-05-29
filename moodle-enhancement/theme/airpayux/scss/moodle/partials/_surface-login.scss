@@ -436,6 +436,17 @@ body#page-login-index {
     background: radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%);
     pointer-events: none;
 }
+/* Signup card is TALL (7 fields + ToS + buttons). The shared rule above
+   vertically-centres it with align-items:center, which on a laptop viewport
+   shorter than the form pushes the card top ABOVE the scroll origin — the
+   classic flex-centring overflow trap (the top fields become unreachable
+   without zooming out). Top-align the signup wrapper so the whole card is
+   scrollable; forgot-password (short) keeps centring. Same (1,1,0)
+   specificity, declared later → wins the cascade. */
+#page-signup .airpay-login-wrapper {
+    align-items: flex-start;
+    padding: 40px 0;
+}
 /* Constrained card container — responsive widths */
 #page-login-forgot_password .airpay-login-page,
 #page-signup .airpay-login-page {
@@ -637,6 +648,92 @@ body#page-login-index {
     color: #94a3b8 !important;          /* preserved: fights Bootstrap .text-danger on abbr */
 }
 #page-login-forgot_password .felement { width: 100%; }
+
+/* ═══════════════════════════════════════════════════════════
+   LOGIN-LAYOUT NOTICE PAGES (e.g. "You need to confirm your account")
+
+   login/index.php renders non-form notices through the SAME login layout
+   (.airpay-login-wrapper > .airpay-login-page > .airpay-login-region) as the
+   split-screen login, but WITHOUT the .airpay-login split-screen markup.
+   Section 1 resets the region card to padding:0 on #page-login-index, so
+   those notices rendered flush-left + unstyled. Give them the same centred
+   branded card as signup/forgot-password, scoped via
+   :not(:has(.airpay-login)) so the real split-screen login page is untouched.
+   (:has degrades gracefully — if unsupported the rule simply does not apply,
+   i.e. no worse than today's flush-left.)
+   ═══════════════════════════════════════════════════════════ */
+body#page-login-index .airpay-login-wrapper:not(:has(.airpay-login)) {
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    background: linear-gradient(135deg, #003052 0%, #0a4a42 100%);
+    padding: 48px 16px;
+}
+body#page-login-index .airpay-login-wrapper:not(:has(.airpay-login)) .airpay-login-page {
+    width: 100%;
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 0;
+}
+body#page-login-index .airpay-login-wrapper:not(:has(.airpay-login)) .airpay-login-region {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+/* Padding alone needs the #region-main id to beat the core/override 2-id
+   `#page-X #region-main` padding reset. Kept SEPARATE from the bg/radius
+   rule above (which stays at 1-id) so the dark-mode bg override below still
+   wins by class-count — folding #region-main into the bg rule would make
+   the light card beat the dark override and render white in dark mode. */
+body#page-login-index .airpay-login-wrapper:not(:has(.airpay-login)) #region-main.airpay-login-region {
+    padding: 40px 44px;
+}
+body#page-login-index .airpay-login-wrapper:not(:has(.airpay-login)) #region-main h1,
+body#page-login-index .airpay-login-wrapper:not(:has(.airpay-login)) #region-main h2 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 16px;
+}
+body#page-login-index .airpay-login-wrapper:not(:has(.airpay-login)) #region-main p {
+    color: #475569;
+    line-height: 1.6;
+}
+body#page-login-index .airpay-login-wrapper:not(:has(.airpay-login)) .btn-primary,
+body#page-login-index .airpay-login-wrapper:not(:has(.airpay-login)) .btn-secondary,
+body#page-login-index .airpay-login-wrapper:not(:has(.airpay-login)) input[type="submit"] {
+    display: inline-block;
+    background: linear-gradient(135deg, #0066A7, #0a5c50);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    margin-top: 16px;
+}
+@media (max-width: 700px) {
+    body#page-login-index .airpay-login-wrapper:not(:has(.airpay-login)) #region-main.airpay-login-region {
+        padding: 28px 20px;
+    }
+}
+/* Dark-mode notice card — match the signup/forgot card dark treatment. */
+html.dark-mode body#page-login-index .airpay-login-wrapper:not(:has(.airpay-login)) .airpay-login-region,
+body.dark-mode#page-login-index .airpay-login-wrapper:not(:has(.airpay-login)) .airpay-login-region {
+    background: #1e293b;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+html.dark-mode body#page-login-index .airpay-login-wrapper:not(:has(.airpay-login)) #region-main h1,
+html.dark-mode body#page-login-index .airpay-login-wrapper:not(:has(.airpay-login)) #region-main h2,
+body.dark-mode#page-login-index .airpay-login-wrapper:not(:has(.airpay-login)) #region-main h1,
+body.dark-mode#page-login-index .airpay-login-wrapper:not(:has(.airpay-login)) #region-main h2 {
+    color: #f1f5f9;
+}
+html.dark-mode body#page-login-index .airpay-login-wrapper:not(:has(.airpay-login)) #region-main p,
+body.dark-mode#page-login-index .airpay-login-wrapper:not(:has(.airpay-login)) #region-main p {
+    color: #94a3b8;
+}
 
 /* ═══════════════════════════════════════════════════════════
    DARK MODE — Sections 3a (login-index) + 3b (forgot/signup)

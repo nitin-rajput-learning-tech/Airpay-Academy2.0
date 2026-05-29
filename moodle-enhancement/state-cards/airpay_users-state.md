@@ -1,10 +1,22 @@
 # State Card — local_airpay_users
 **Component:** `local_airpay_users`
-**Version:** 2.7.0 (2026052002)  — +P1 #59 reCAPTCHA on signup
+**Version:** 2.7.1 (2026052900)  — signup UX fixes (honeypot + success page)
 **Status:** STABLE — installed + live; HRMS importer + bulk + signup + welcome shipped
 **Depends on:** local_airpay_org (Phase 1)
 **Purpose:** Replaces BizLMS `local_users` — Airpay-owned user management, profile rendering, open_* field ownership, signup, HRMS sync
-**Last refreshed:** 2026-05-24 (P1 state-card pass)
+**Last refreshed:** 2026-05-29 (signup-flow UI fixes — owner-reported)
+
+> **2026-05-29 signup UX fixes (2.7.0→2.7.1):** (A) honeypot field was
+> rendering visible — the hide CSS targeted `.fitem_id_honeypot_url`
+> (class) but Moodle's wrapper is the ID `#fitem_id_honeypot_url`; fixed
+> the selector in `classes/form/signup_form.php`. (C+D) the success page
+> double-rendered the confirmation message (a `redirect()` flash + the
+> view's own notification) and the dismissible alert's close button
+> showed as a stray glyph; `signup.php` now drops the redirect message
+> and renders a single non-dismissible `role="status"` panel. Companion
+> theme fixes (tall-card scroll + login-index notice card) live in
+> `theme_airpayux` `_surface-login.scss` — see its state card. Evidence:
+> `docs/visual-evidence/2026-05-29/signup-*.png`.
 
 ---
 

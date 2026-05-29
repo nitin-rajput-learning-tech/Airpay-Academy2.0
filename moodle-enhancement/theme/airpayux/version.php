@@ -297,7 +297,16 @@ defined('MOODLE_INTERNAL') || die();
 // shared key), tightens with contextid/orgcatid only when present, and
 // falls back to role_detector (the dashboard's source of truth) so exactly
 // one option is always marked — agreeing with the rendered dashboard.
-$plugin->version   = 2026052409;
+//
+// Signup-flow UI fixes (2026-05-29) — _surface-login.scss: (1) top-align
+// the #page-signup card (align-items:flex-start + padding) so the tall
+// form is no longer clipped above the scroll origin — the flex-centring
+// overflow trap that forced users to zoom out to ~75%; (2) card-wrap
+// login/index.php NOTICE pages (e.g. "You need to confirm your account")
+// via :not(:has(.airpay-login)) so they get the branded centred card
+// instead of rendering flush-left + unstyled. The real split-screen login
+// page is excluded by the :has() guard. Light + dark variants both added.
+$plugin->version   = 2026052900;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
@@ -316,7 +325,7 @@ $plugin->maturity  = MATURITY_BETA;
 // (83% reduction). Section 1 wrapped under body#page-login-index for
 // ID-specificity. Bundled bugfix: dark-mode selectors used descendant
 // combinator (never fired since #page-X IS body); now chained.
-$plugin->release   = '1.0.39-beta';  // P0 #1+#2+#3+#4+#5+#6+#7+#9 + F-13 + P1 #10+#11+#12+#13+#14+#17 + P2 #18+#19+#20+#21+#23 + cart_badge audit + P1 #12 re-apply + kn/mr/sw 13-key parity restore + P0 cleanup A (conflict-marker hook + CI) + P2 #19 follow-up (inline-timing → tokens) + Wave A2 P0-cleanup (scssphp array-to-string warning fix) + sidebar role switcher (multi-role shell parity)
+$plugin->release   = '1.0.40-beta';  // P0 #1+#2+#3+#4+#5+#6+#7+#9 + F-13 + P1 #10+#11+#12+#13+#14+#17 + P2 #18+#19+#20+#21+#23 + cart_badge audit + P1 #12 re-apply + kn/mr/sw 13-key parity restore + P0 cleanup A (conflict-marker hook + CI) + P2 #19 follow-up (inline-timing → tokens) + Wave A2 P0-cleanup (scssphp array-to-string warning fix) + sidebar role switcher (multi-role shell parity) + signup-flow UI fixes (tall-card scroll + login-index notice card)
 // P1 #10 chip-J (2026-05-24) — _surface-profile.scss (2,507 lines)
 // decomposed into 4 per-surface partials: _surface-user, _surface-badges,
 // _surface-grade-report, _surface-calendar. Admin fragments moved to

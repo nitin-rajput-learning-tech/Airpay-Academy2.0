@@ -205,3 +205,48 @@ production behaviour**, so it is gated on Nitin's go/no-go (CLAUDE.md
 `sentientia.catalog.public_lxp.enabled` flips ON the bug is moot (the
 LXP path was already correct), so the fix matters only for the window
 before the flag flips.
+
+---
+
+## Signup-flow UI fixes (2026-05-29) — owner-reported
+
+Five defects Nitin reported live across the public self-registration
+flow (`local/airpay_users/signup.php` + the airpayux login layout).
+Real-browser verified at the reported laptop viewport (≈609px tall,
+dark mode).
+
+| # | Defect (reported) | Root cause | Fix |
+|---|-------------------|------------|-----|
+| A | Empty unlabeled text field between ToS checkbox and buttons | Honeypot hide CSS used `.fitem_id_honeypot_url` (class) but Moodle's wrapper is `id="fitem_id_honeypot_url"` → matched nothing → honeypot visible | `signup_form.php`: `.` → `#` selector |
+| B | Must zoom to 75% to see the whole card | Signup wrapper `align-items:center` + a form taller than the viewport → card top clipped 413px **above** the scroll origin (flex-centring overflow trap) | `_surface-login.scss`: `#page-signup` wrapper → `align-items:flex-start` + 40px padding |
+| C | Success message shown **twice** | `redirect()` queued the message as a flash AND the success view rendered it again | `signup.php`: drop the message arg from `redirect()` |
+| D | Stray `▬` glyph after the success text | `$OUTPUT->notification()` is a **dismissible** alert; its close button rendered as a tofu glyph on the dark card | `signup.php`: render a non-dismissible `.alert.alert-success` (`role="status"`) |
+| E | "You need to confirm your account" page flush-left + unstyled | `login/index.php` notices render through the login layout but `#page-login-index` resets the region card to `padding:0` (Section 1 expects the split-screen) | `_surface-login.scss`: `:not(:has(.airpay-login))` card rule (light + dark), scoped so the real split-screen login is untouched |
+
+### Screenshots
+
+| File | What it shows |
+|------|---------------|
+| `signup-form-fixed-abovefold.png` | Form at 609px viewport, 100% zoom — top fields (First/Last/Email/Password) now visible without zooming; **no stray empty field** (A + B) |
+| `signup-success-fixed.png` | Success page — **single** green message, clean em-dash, no close-button glyph, "Back to login" CTA (C + D) |
+| `signup-confirm-page-fixed.png` | "Confirm your account" now a branded dark card (gradient bg, #1e293b card, 16px radius, 40px 44px padding, legible white heading, gradient CTA) vs the original flush-left/unstyled page (E) |
+
+### Verification (measured in the live DOM)
+
+- **A**: honeypot wrapper `display:none`; ToS checkbox now directly precedes "Create account" (no field between).
+- **B**: `pageOffsetTop` −413px → **+40px**; "First name" reachable at scroll 0 / 100% zoom.
+- **C/D**: success view has exactly one `role="status"` message, no dismissible close button.
+- **E**: confirm card `background:#1e293b` (dark) / `#fff` (light), `padding:40px 44px`, heading `#f1f5f9` (dark) / `#0f172a` (light) — legible in both modes. **Split-screen login untouched** (`:has` guard): on the real login page the rule does not apply (region stays `padding:0`, split-screen bg).
+
+### Notes
+
+- The E fix surfaced (and resolved) a light/dark specificity interaction: the
+  card's padding needs a 2-id selector (`#region-main`) to beat a core
+  `#page-X #region-main` padding reset, but that id was kept OUT of the
+  bg/radius rule so the 1-id dark-mode override still wins by class-count
+  (otherwise the dark-mode card rendered white with an invisible light
+  heading — caught + fixed during verification).
+- No feature flags: these are corrective fixes to the existing
+  (already flag-gated) signup feature, not new features.
+- Versions: `local_airpay_users` 2.7.0→2.7.1; `theme_airpayux`
+  1.0.39-beta→1.0.40-beta.

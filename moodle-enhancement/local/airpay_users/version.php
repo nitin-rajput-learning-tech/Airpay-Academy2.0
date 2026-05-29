@@ -38,10 +38,14 @@ $plugin->component = 'local_airpay_users';
 // P1 #59 (2026-05-20) — defense-in-depth reCAPTCHA v2 on the public
 // signup form. Admin opts in via $CFG->recaptchapublickey/privatekey;
 // when unset (dev), only the honeypot guards remain.
-$plugin->version   = 2026052002;
+// 2026-05-29 — signup UX fixes: (1) hide the honeypot field (wrapper is an
+// ID #fitem_id_honeypot_url, not a class — the stray empty field is gone);
+// (2) success page no longer double-renders the confirmation message and
+// drops the dismissible-alert close glyph.
+$plugin->version   = 2026052900;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '2.7.0';  // +P1 #59 reCAPTCHA on signup
+$plugin->release   = '2.7.1';  // signup UX fixes (honeypot + success page)
 $plugin->dependencies = [
     'local_airpay_org' => 2026051501,
 ];

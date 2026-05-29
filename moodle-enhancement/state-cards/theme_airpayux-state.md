@@ -1,10 +1,23 @@
 # State Card — `theme_airpayux`
 
 **Component:** `theme_airpayux`
-**Version:** `2026052404` / `1.0.35-beta`
+**Version:** `2026052900` / `1.0.40-beta`
 **Maturity:** `MATURITY_BETA`
 **Status:** Live theme on airpay.academy. Standalone fork (`$THEME->parents = []`).
-**Last refreshed:** 2026-05-24 (P1 state-card pass)
+**Last refreshed:** 2026-05-29 (signup-flow login-surface fixes)
+
+> **2026-05-29 signup-flow `_surface-login.scss` fixes (→1.0.40-beta):**
+> (B) `#page-signup` wrapper switched to `align-items:flex-start` (+40px
+> padding) — the shared `align-items:center` clipped the tall signup
+> card's top above the scroll origin on laptop viewports (users had to
+> zoom to ~75%). (E) login/index.php NOTICE pages (e.g. "You need to
+> confirm your account") now get a branded centred card via
+> `:not(:has(.airpay-login))` — they previously rendered flush-left +
+> unstyled because Section 1 resets `#page-login-index` region padding to
+> 0 (it expects the split-screen login markup). Light + dark variants;
+> padding kept in a separate 2-id rule so the dark-mode bg override still
+> wins. The real split-screen login is excluded by the `:has()` guard
+> (verified untouched). Evidence: `docs/visual-evidence/2026-05-29/signup-*.png`.
 
 ---
 

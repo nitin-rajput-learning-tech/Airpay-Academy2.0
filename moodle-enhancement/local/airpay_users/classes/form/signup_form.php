@@ -78,12 +78,17 @@ class signup_form extends \moodleform {
         $mform->addElement('advcheckbox', 'agree_tos', '', $tos_label);
         $mform->setType('agree_tos', PARAM_INT);
 
-        // Honeypot field — bots fill all visible fields. CSS-hidden via
-        // form-row class; humans never see it.
+        // Honeypot field — bots fill all visible fields. CSS-hidden so
+        // humans never see it. Moodle wraps each mform element in a
+        // container whose ID is "fitem_" + the element id — here
+        // "fitem_id_honeypot_url" (an ID, NOT a class). The original
+        // ".fitem_id_honeypot_url" class selector matched nothing, so the
+        // honeypot rendered as a visible empty field between the ToS
+        // checkbox and the buttons. Target the ID instead.
         $mform->addElement('text', 'honeypot_url', '');
         $mform->setType('honeypot_url', PARAM_RAW_TRIMMED);
         $mform->addElement('html',
-            '<style>.fitem_id_honeypot_url { display: none !important; }</style>');
+            '<style>#fitem_id_honeypot_url { display: none !important; }</style>');
 
         // P1 #59 (2026-05-20) — defense-in-depth: Google reCAPTCHA v2,
         // shown only when the site admin has configured the keys in
