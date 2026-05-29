@@ -332,6 +332,17 @@
     background: var(--ap-color-accent-hover);
     color: var(--ap-color-text-inverse);
 }
+/* Dark mode — the theme's broad `body.dark-mode a { color:#60a5fa }` link rule
+   (specificity 0,1,1) bleeds into these anchor-buttons and beats their own
+   `color` (0,1,0), painting the label light-blue on the brand fill (~2.4:1).
+   Re-assert white (the buttons are always a solid brand colour, both modes).
+   `body.dark-mode .airpay-catalog__btn--*` is (0,2,0) → wins. WCAG AA. */
+body.dark-mode .airpay-catalog__btn--enroll,
+body.dark-mode .airpay-catalog__btn--enroll:hover,
+body.dark-mode .airpay-catalog__btn--continue,
+body.dark-mode .airpay-catalog__btn--continue:hover {
+    color: #fff;
+}
 
 /* ── Categories Grid ─────────────────────────────────────────────────── */
 .airpay-catalog__categories {

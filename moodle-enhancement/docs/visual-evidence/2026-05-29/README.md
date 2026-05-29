@@ -520,3 +520,46 @@ light-on-white.
 > the legacy-grid Details button exists in every `public.php` revision. A broad
 > per-persona dark-mode regression walk (authenticated dashboards, course
 > view, admin) is a recommended follow-up given the cascade's reach.
+
+---
+
+## Dark-mode regression walk (2026-05-29) — the recommended follow-up, executed
+
+Drove the platform in dark mode as **qa_siteadmin** with an automated WCAG
+contrast scan (alpha-composited effective backgrounds) on each surface to catch
+anything the global token flip broke.
+
+### Regressions from my flip — FIXED (theme 1.0.43 → 1.0.44-beta)
+| Regression | Cause | Fix |
+|------------|-------|-----|
+| Brand-tint **chips/badges/tags/icon-tiles** went dark-on-dark (~1.8–2.4:1) platform-wide (frontpage labels + pillar tags, manager action hover, leaderboard chips, FAQ open…) | The 2026052903 flip set `--ap-primary-light`/`--ap-accent-light` (tint BGs paired with brand-colour TEXT) to dark values | `dark_mode.scss`: **revert** those two — keep them light so each renders as a readable light chip on the dark card. The other 6 flipped tokens (text/border/surface) are correct + kept. |
+| Catalogue **"Enrol"/"Continue"** buttons showed light-blue label on the brand fill (~2.4:1) | Pre-existing global `body.dark-mode a { color:#60a5fa }` link rule bled into the anchor-buttons and beat their own colour by specificity | `local_airpay_catalog/styles.css`: `body.dark-mode .airpay-catalog__btn--enrol/--continue { color:#fff }` (0,2,0 wins) |
+
+**Verified:** member catalogue dark mode → `--ap-primary-light` resolves `#e8f2f9`
+again, Enrol button computed `rgb(255,255,255)`; cards render as clean poster
+tiles with readable chips + white CTAs (`posters-05-darkmode-catalogue-chips-button-fixed.png`).
+Storefront Details button still AAA (`posters-04`). Guest storefront + catalog
+course-detail scans: 0 sub-2:1 after the fixes.
+
+### Pre-existing dark-mode debt found (NOT from this work — logged, not yet fixed)
+These predate the poster/dark-mode work and are a separate **dark-mode AA audit**
+(some fixes touch the pre-existing baseline / are broad — deferred deliberately):
+1. **Dashboard charts** (`/my/`) — Chart.js axis/legend labels hardcoded `#1d2125`
+   (dark-on-dark on the elevated chart card). Fix = dark-mode-aware Chart.js
+   tick/legend/grid colours in the chart config. Self-contained JS task.
+2. **Catalogue category/tenant badge** (`.airpay-catalog__card-category`) — uses
+   the **long** `--ap-color-primary-light` token (#172554 dark in the pre-existing
+   dark mode) + brand text ≈ 2.4:1. Same tint-paired-with-brand-text antipattern
+   as the short tokens above, but on the long-token namespace (broader blast
+   radius → not reverted blindly).
+3. **Difficulty badge** (`.airpay-catalog__card-difficulty--`) renders with an
+   **empty modifier** — `format_course()` supplies `level`/`has_level` but not
+   `level_class`, so the colour rule (`--beginner/--intermediate/--advanced`)
+   never matches. Light + dark both affected; a small template-data bug.
+4. **Systemic:** the broad `body.dark-mode a { color:#60a5fa }` rule bleeds into
+   every anchor-styled-as-button platform-wide (fixed for the catalogue here;
+   other plugins' anchor-buttons remain).
+
+**Recommendation:** a dedicated dark-mode WCAG-AA audit (the scan harness used
+here, run across all persona surfaces) to clear items 1–4 + anything else. Can
+be run as a multi-agent workflow on request.

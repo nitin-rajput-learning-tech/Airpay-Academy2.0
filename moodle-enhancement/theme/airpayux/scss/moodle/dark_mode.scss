@@ -62,8 +62,16 @@ body.dark-mode {
     --ap-surface:        #1a1d27;
     --ap-surface-alt:    #232733;
     --ap-surface-2:      #232733;  /* defensive alias — some mockups/snippets use this name */
-    --ap-primary-light:  #172554;
-    --ap-accent-light:   #134e4a;
+    /* Regression-walk fix 2026-05-29 — do NOT flip --ap-primary-light /
+       --ap-accent-light. Unlike the text/border/surface tokens above, these
+       two are tint BACKGROUNDS always paired with brand-colour TEXT
+       (background: var(--ap-primary-light); color: var(--ap-primary)) on
+       badges / chips / tags / icon tiles platform-wide (frontpage labels +
+       pillar tags, catalogue category + level badges, manager action hover,
+       leaderboard chips, FAQ open state…). Flipping the bg to a dark tint
+       while the brand text stays dark dropped those to ~1.8–2.4:1 (sub-AA).
+       Left at their light _components.scss :root values so each renders as a
+       readable light chip on the dark card — the pre-flip, known-good look. */
 
     background-color: #0f1117;
     color: #e8eaed;

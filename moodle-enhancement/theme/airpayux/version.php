@@ -334,7 +334,16 @@ defined('MOODLE_INTERNAL') || die();
 // 655+ var() refs across 57 files corrected, public.php untouched. One white
 // island (certificate_celebration "paper" card) re-pinned dark so the flip
 // doesn't invert it. Bump forces a fresh themerev so the recompiled CSS ships.
-$plugin->version   = 2026052903;
+// Dark-mode regression-walk fixes (2026-05-29) — two follow-ups to the
+// 2026052903 token flip, found by walking authenticated surfaces in dark mode:
+//   1. REVERT the --ap-primary-light / --ap-accent-light flips. Those two are
+//      tint BACKGROUNDS paired with brand-colour TEXT on badges/chips/tags/
+//      icon-tiles platform-wide; flipping the bg dark while the text stayed
+//      brand-dark dropped them to ~1.8–2.4:1. Kept light → readable light chips.
+//   2. local_airpay_catalog/styles.css: re-assert #fff on the catalogue
+//      Enrol/Continue anchor-buttons in dark mode (the global body.dark-mode a
+//      link rule was bleeding light-blue into them — pre-existing, now pinned).
+$plugin->version   = 2026052904;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
@@ -353,7 +362,7 @@ $plugin->maturity  = MATURITY_BETA;
 // (83% reduction). Section 1 wrapped under body#page-login-index for
 // ID-specificity. Bundled bugfix: dark-mode selectors used descendant
 // combinator (never fired since #page-X IS body); now chained.
-$plugin->release   = '1.0.43-beta';  // …+ global dark-mode short-token flip (Details button + all var(--ap-text/border/surface) consumers visible in dark mode)
+$plugin->release   = '1.0.44-beta';  // …+ dark-mode regression-walk fixes (revert *-light tint flips so brand chips stay readable; catalogue button white-text)
 // P1 #10 chip-J (2026-05-24) — _surface-profile.scss (2,507 lines)
 // decomposed into 4 per-surface partials: _surface-user, _surface-badges,
 // _surface-grade-report, _surface-calendar. Admin fragments moved to
