@@ -259,9 +259,20 @@ class sidebar_navigation {
                     '/local/airpay_courses/my_requests.php', $currenturl);
             }
             // Cart for managers in cart-enabled tenants.
+            // P-01 (QA Walk 2026-05-29): point at the catalog's SESSION cart
+            // (commerce::add_to_cart, viewed at /local/airpay_catalog/cart.php) —
+            // the cart the catalog "Add to Cart" buttons actually fill. The DB
+            // cart at /local/airpay_cart/index.php is fed only by the add_item WS,
+            // never the catalog buttons, so it always rendered empty here.
             if ($this->is_cart_enabled_for_current_user()) {
                 $items[] = $this->item('My Cart', 'fa-shopping-cart',
-                    '/local/airpay_cart/index.php', $currenturl);
+                    '/local/airpay_catalog/cart.php', $currenturl);
+            }
+            // E-02 (QA Walk 2026-05-29): managers are learners too — give
+            // them their own Skills dashboard, same as the Learner shell.
+            if ($this->can_view_own_skills()) {
+                $items[] = $this->item('My Skills', 'fa-bullseye',
+                    '/local/airpay_skills/index.php', $currenturl);
             }
             $items[] = $this->item('Certificates', 'fa-certificate', '/local/airpay_pages/certificates.php', $currenturl);
             $items[] = $this->item('Profile', 'fa-user', '/local/airpay_users/profile.php', $currenturl);
@@ -279,9 +290,13 @@ class sidebar_navigation {
         // ── Cart (only for tenants where cart is enabled — Phase 1G) ──
         // Public/ZEEA tenants get a cart link; Airpay tenant employees
         // get their training free and don't see this link.
+        // P-01 (QA Walk 2026-05-29): point at the catalog's SESSION cart
+        // (/local/airpay_catalog/cart.php) — where the catalog "Add to Cart"
+        // buttons put items — not the DB cart /local/airpay_cart/index.php
+        // (fed only by the add_item WS), which always rendered empty here.
         if ($this->is_cart_enabled_for_current_user()) {
             $items[] = $this->item('My Cart', 'fa-shopping-cart',
-                '/local/airpay_cart/index.php', $currenturl);
+                '/local/airpay_catalog/cart.php', $currenturl);
         }
 
         // T-02 (QA Walk 2026-05-29): surface Sentientia Live for trainer-role
@@ -303,6 +318,15 @@ class sidebar_navigation {
         if ($this->iscomplianceuser) {
             $items[] = $this->item('Compliance', 'fa-shield',
                 '/local/airpay_compliance_report/index.php', $currenturl);
+        }
+
+        // E-02 (QA Walk 2026-05-29): surface the learner's own Skills
+        // dashboard (gap analysis + radar + self-rate). No userid param →
+        // index.php defaults to $USER. Cap-gated, no feature flag — same
+        // pattern as the iscomplianceuser Compliance link above.
+        if ($this->can_view_own_skills()) {
+            $items[] = $this->item('My Skills', 'fa-bullseye',
+                '/local/airpay_skills/index.php', $currenturl);
         }
 
         $items[] = $this->item('Certificates', 'fa-certificate', '/local/airpay_pages/certificates.php', $currenturl);
@@ -371,6 +395,30 @@ class sidebar_navigation {
                 return false;
             }
             return has_capability('local/sentientia_live:create', \context_system::instance());
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Can the current user reach their own Skills dashboard?
+     *
+     * E-02 (QA Walk 2026-05-29): the learner-facing skills dashboard
+     * (/local/airpay_skills/index.php — gap analysis, radar chart,
+     * recommended courses, self-rate) existed but had NO sidebar entry, so
+     * learners couldn't discover it (the siteadmin shell only links the
+     * admin page admin.php). Gate the "My Skills" link by the same
+     * capability the skills surface declares — local/airpay_skills:view,
+     * granted to the student archetype — so it shows for learners and
+     * disappears if an admin revokes the cap or the plugin isn't installed
+     * (a future Sentientia customer who didn't license Skills). No new
+     * feature flag: this mirrors the cap-only iscomplianceuser Compliance
+     * link (Bug #11) — a discoverability fix for an existing, live surface,
+     * not a new feature. Safe-fails to false.
+     */
+    private function can_view_own_skills(): bool {
+        try {
+            return has_capability('local/airpay_skills:view', \context_system::instance());
         } catch (\Throwable $e) {
             return false;
         }
