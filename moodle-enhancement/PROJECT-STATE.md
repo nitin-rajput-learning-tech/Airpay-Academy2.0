@@ -5,6 +5,42 @@
 
 ---
 
+## ✅ F-024 visual walk + C10 P1 certificate polish SHIPPED (2026-05-29)
+
+Resumed-session wave (model: Opus 4.8). User sequence "F-024 → C10 P1 → C4".
+
+**Commit `7328c6364` — F-024 (sentientia_live analytics visual walk).**
+Drove the trainer `run.php` result panels for seeded session 18 in a
+real Chrome (chrome-devtools MCP) — multichoice, quiz (bar chart +
+"2 of 3 correct (67%)" + "Correct answer: Paris" + leaderboard),
+word-cloud; desktop + 590px mobile; **zero JS console errors**.
+Evidence in `docs/visual-evidence/2026-05-29/`. Closed the last
+Bucket F "partial" item → Bucket F now 0 partials. Correction logged:
+there is no `sentientia_live/admin/analytics.php` (the audit referenced
+a non-existent page); "analytics" = run.php panels + export.php CSV.
+Byproduct finding: `mint_session.php` is broken on this box
+(dbsessions=0 → file sessions; serialize_handler=php → wrong payload
+format) — worked around with a throwaway QA siteadmin
+(`tools/f024_qa_account.php`, created + deleted).
+
+**Commit `6368f7617` — C10 P1 (certificate polish, both halves).**
+- *Gap 3 — tenant-scoped template browser (SHIPPED):*
+  `local/airpay_pages/certificate_templates.php` + feature_flags +
+  settings + 19 lang strings, version 1.0→1.1. Reads tool_certificate
+  READ-ONLY, filters by a JSON tenantid map, gated behind
+  `sentientia.certificate.tenant_scope.enabled` (default OFF). Zero
+  vendored mutation. Root cause: all 9 templates at SYSTEM context.
+- *Gap 4 — Hindi pack (STAGED, review-gated):* full 173-string Hindi
+  DRAFT at `docs/translations/tool_certificate-hi-DRAFT.php`, kept OUT
+  of the active lang dir (the enforceable gate — Moodle has no
+  per-plugin lang feature-flag). Activation steps +
+  core-mod record documented. Awaits L&D Hindi sign-off (CLAUDE.md §12).
+
+Next in sequence: **C4 (catalog Netflix-UX)** — design-led, flagged as
+needing layout/taste direction before building.
+
+---
+
 ## ✅ Stabilization Audit Buckets D + E + C15/C16 SHIPPED (2026-05-28)
 
 Three follow-on commits to the Stabilization Audit landed today across

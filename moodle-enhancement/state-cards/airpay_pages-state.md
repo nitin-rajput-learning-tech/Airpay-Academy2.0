@@ -3,7 +3,30 @@
 **Component:** `local_airpay_pages`
 **Status:** Live on airpay.academy — collection of standalone PHP pages
 **Maturity:** Mixed (per-page, no global version.php)
-**Last refreshed:** 2026-05-24 (P1 state-card pass)
+**Version:** 2026052900 / 1.1
+**Last refreshed:** 2026-05-29 (C10 P1 / Gap 3)
+
+---
+
+## 2026-05-29 — C10 P1 / Gap 3: tenant-scoped certificate template browser
+
+- New `certificate_templates.php` — tenant-aware browser over the
+  vendored `tool_certificate` templates (READ-ONLY). Filters by a
+  JSON map (`cert_template_tenant_map` admin setting): non-siteadmin
+  tenant admins see only global + their tenant's templates; siteadmins
+  see all with an assigned-tenant column.
+- New `db/feature_flags.php` — `sentientia.certificate.tenant_scope.enabled`
+  (default OFF = today's behaviour, all admins see all templates).
+- New `settings.php` — the JSON map textarea + an admin_externalpage
+  link to the browser. (First time this plugin has had settings.php.)
+- 19 new lang strings (cert_* keys).
+- Version bumped 2026040400 → 2026052900, release 1.0 → 1.1.
+- Zero mutation of the vendored tool_certificate plugin.
+- Audit ref: `docs/audits/C10-CERTIFICATE-STACK-INVESTIGATION-2026-05-28.md` Gap 3.
+
+(Sibling Gap 4 — tool_certificate Hindi pack — is STAGED for review at
+`docs/translations/tool_certificate-hi-DRAFT.php`, not part of this
+plugin.)
 
 ---
 
