@@ -145,6 +145,7 @@ $string['phonenumber'] = 'मोबाईल नंबर';
 $string['learnerlogin'] = 'मोबाईल नंबर टाका';
 $string['enterotp'] = 'OTP टाका';
 $string['resentotp'] = 'OTP पुन्हा पाठवा';
+$string['login_submit'] = 'लॉग इन करा';
 $string['entermobileotp'] = 'टाकलेला मोबाईल नंबर नोंदणीकृत नाही, कृपया तपासा';
 $string['privacy:metadata:preference:draweropenblock'] = 'ब्लॉक ड्रॉवर दाखवा/लपवा';
 $string['privacy:metadata:preference:draweropenindex'] = 'कोर्स इंडेक्स ड्रॉवर दाखवा/लपवा';

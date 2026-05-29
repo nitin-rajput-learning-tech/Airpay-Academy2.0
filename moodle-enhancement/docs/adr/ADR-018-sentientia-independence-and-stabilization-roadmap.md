@@ -90,3 +90,10 @@ docs only; never the Wave 2–6 human gates; never clobber the owner's concurren
   Verified live (dark mode, alpha-composited WCAG scan). **Tooling note:** plugin `styles.css`
   changes need `theme_reset_all_caches()` to rebuild the theme CSS aggregate — `purge_caches`
   alone does not re-bump themerev for plugin CSS.
+- **iter 2 — Wave 1 item 1 (OTP login button white-label).** `theme/airpayux/templates/core/otploginform.mustache`
+  line 108: the passwordless/OTP submit button rendered the core `{{#str}}login, moodle{{/str}}` →
+  now theme-owned `{{#str}}login_submit, theme_airpayux{{/str}}`, with `login_submit` added to all 5 packs
+  (en "Log in" — wording unchanged; hi/kn/mr/sw idiomatic imperatives). Verified all 5 locales resolve
+  (no `[[login_submit]]`). Lang+template change → `purge_caches` (string + template caches) is the right
+  tool here, NOT a version bump (no upgrade run — owner WIP in flight). Removes the last hard core-string
+  dependency on the login surface.

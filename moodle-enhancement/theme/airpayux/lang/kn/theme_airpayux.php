@@ -119,6 +119,7 @@ $string['phonenumber'] = 'ಮೊಬೈಲ್ ನಂಬರ್';
 $string['learnerlogin'] = 'ಮೊಬೈಲ್ ನಂಬರ್ ನಮೂದಿಸಿ';
 $string['enterotp'] = 'OTP ನಮೂದಿಸಿ';
 $string['resentotp'] = 'OTP ಮರುಕಳಿಸಿ';
+$string['login_submit'] = 'ಲಾಗಿನ್ ಮಾಡಿ';
 $string['entermobileotp'] = 'ನಮೂದಿಸಿದ ಮೊಬೈಲ್ ನಂಬರ್ ನೋಂದಾಯಿಸಿಲ್ಲ, ದಯವಿಟ್ಟು ಪರಿಶೀಲಿಸಿ';
 
 // P0 #7 (2026-05-24) — close 35-string parity gap vs en pack (audit said

@@ -133,6 +133,7 @@ $string['phonenumber'] = 'मोबाइल नंबर';
 $string['learnerlogin'] = 'मोबाइल नंबर डालें';
 $string['enterotp'] = 'OTP डालें';
 $string['resentotp'] = 'OTP दोबारा भेजें';
+$string['login_submit'] = 'लॉग इन करें';
 $string['entermobileotp'] = 'डाला गया मोबाइल नंबर रजिस्टर्ड नहीं है, कृपया चेक करें';
 
 // P0 #3 फ़ॉलो-अप (2026-05-24) — पहले से मिसिंग 21 keys।

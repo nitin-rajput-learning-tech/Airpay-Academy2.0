@@ -142,6 +142,7 @@ $string['phonenumber'] = 'Nambari ya Simu';
 $string['learnerlogin'] = 'Weka Nambari ya Simu';
 $string['enterotp'] = 'Weka OTP';
 $string['resentotp'] = 'Tuma OTP tena';
+$string['login_submit'] = 'Ingia';
 $string['entermobileotp'] = 'Nambari ya simu iliyowekwa haipo, tafadhali angalia';
 $string['privacy:metadata:preference:draweropenblock'] = 'Onyesha/Ficha droo ya vizuizi';
 $string['privacy:metadata:preference:draweropenindex'] = 'Onyesha/Ficha droo ya fahirisi';

@@ -223,6 +223,7 @@ $string['learnerlogin'] ='Enter Mobile Number';
 
 $string['enterotp'] = 'Enter OTP';
 $string['resentotp'] = 'Resend OTP';
+$string['login_submit'] = 'Log in';
 $string['entermobileotp'] = 'Entered mobile number is not exists, please check';
 
 // P0 borrow #14 (Moodle 5.2, 2026-05-23) — extra sort options on the
