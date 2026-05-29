@@ -323,7 +323,18 @@ defined('MOODLE_INTERNAL') || die();
 // invalidates the compiled CSS bundle + changes themerev so the new
 // local_airpay_catalog + local_airpay_courses styles.css aggregate (poster
 // rules) reaches clients without a manual hard refresh.
-$plugin->version   = 2026052902;
+// Dark-mode contrast — global short-token flip (2026-05-29). The legacy
+// short-form colour tokens (--ap-text, --ap-text-muted, --ap-border,
+// --ap-surface(-alt/-2), --ap-primary-light, --ap-accent-light) were defined
+// light-only in _components.scss :root; the body.dark-mode cascade flipped
+// only --ap-text-secondary, so every consumer of the others rendered
+// dark-on-dark on standard (non-shell) pagelayouts (seed: the catalogue
+// storefront "Details" button vanished in dark mode). dark_mode.scss now flips
+// the whole short set in lock-step with the --ap-color-* twins — one place,
+// 655+ var() refs across 57 files corrected, public.php untouched. One white
+// island (certificate_celebration "paper" card) re-pinned dark so the flip
+// doesn't invert it. Bump forces a fresh themerev so the recompiled CSS ships.
+$plugin->version   = 2026052903;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
@@ -342,7 +353,7 @@ $plugin->maturity  = MATURITY_BETA;
 // (83% reduction). Section 1 wrapped under body#page-login-index for
 // ID-specificity. Bundled bugfix: dark-mode selectors used descendant
 // combinator (never fired since #page-X IS body); now chained.
-$plugin->release   = '1.0.42-beta';  // …+ Netflix-style course-card poster thumbnails (catalogue + featured widget + guest frontpage)
+$plugin->release   = '1.0.43-beta';  // …+ global dark-mode short-token flip (Details button + all var(--ap-text/border/surface) consumers visible in dark mode)
 // P1 #10 chip-J (2026-05-24) — _surface-profile.scss (2,507 lines)
 // decomposed into 4 per-surface partials: _surface-user, _surface-badges,
 // _surface-grade-report, _surface-calendar. Admin fragments moved to

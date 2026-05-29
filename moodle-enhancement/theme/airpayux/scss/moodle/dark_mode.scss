@@ -37,6 +37,34 @@ body.dark-mode {
        3.00:1 on the #0f1117 dark bg. Override it here. */
     --ap-text-secondary:       #9ca3b4;
 
+    /* DARK-CONTRAST fix 2026-05-29 — _components.scss :root is the single
+       source of truth for the SHORT-form legacy tokens (--ap-text,
+       --ap-text-muted, --ap-border, --ap-surface, --ap-surface-alt,
+       --ap-primary-light, --ap-accent-light). Until now only
+       --ap-text-secondary was flipped here, so every element that reads
+       var(--ap-text)/var(--ap-border)/etc. on a standard (non-shell)
+       pagelayout kept its LIGHT value in dark mode and rendered
+       dark-on-dark (invisible) or sub-AA. Seed bug: the catalogue
+       storefront "Details" button (public.php legacy grid) pinned to
+       color:var(--ap-text,#1a1a2e). Flipping the tokens globally here
+       fixes that button AND every other consumer (655+ var() references
+       across 57 files) in one place — the true "fix globally". Values
+       match the dark palette already used throughout this file:
+         text       #e8eaed (≈15:1 on #1a1d27 — AAA)
+         text-muted #9ca3af (5.1:1 on #1a1d27 — AA; matches --ap-color-text-muted)
+         border     #2d3140 (matches --ap-color-border dark value)
+         surface    #1a1d27 / surface-alt #232733
+       The --ap-color-* twins above are kept; both namespaces now flip in
+       lock-step, so a component is correct whichever token family it uses. */
+    --ap-text:           #e8eaed;
+    --ap-text-muted:     #9ca3af;
+    --ap-border:         #2d3140;
+    --ap-surface:        #1a1d27;
+    --ap-surface-alt:    #232733;
+    --ap-surface-2:      #232733;  /* defensive alias — some mockups/snippets use this name */
+    --ap-primary-light:  #172554;
+    --ap-accent-light:   #134e4a;
+
     background-color: #0f1117;
     color: #e8eaed;
 

@@ -473,3 +473,50 @@ commit — E-01 spans `public.php` + the untracked `enrolment.php`/`course.php`,
 so committing `public.php` alone would be a broken partial. The data layer
 (`commerce::get_public_catalog`) IS committed, and the storefront LXP path is
 flag-OFF by default, so committed default behaviour is unaffected.
+
+---
+
+## Dark-mode contrast — global short-token flip (2026-05-29) — owner-reported
+
+Owner spotted (screenshot) that the catalogue card **"Details" button is invisible
+in dark mode** — an empty bordered box next to "Enrol now — free".
+
+**Root cause.** The theme runs two `--ap-*` token namespaces. The modern
+`--ap-color-*` set already flipped under `body.dark-mode`, but the legacy
+short-form set (`--ap-text`, `--ap-text-muted`, `--ap-border`, `--ap-surface`,
+`--ap-surface-alt/-2`, `--ap-primary-light`, `--ap-accent-light`) is defined
+light-only in `_components.scss :root`, and the dark-mode cascade flipped only
+`--ap-text-secondary`. So every element reading `var(--ap-text,#1a1a2e)` /
+`var(--ap-border)` on a standard (non-shell) pagelayout kept its LIGHT value in
+dark mode and rendered dark-on-dark (invisible) — the storefront "Details"
+button (`color:var(--ap-text,#1a1a2e)` on a dark card) being the seed.
+
+**Global fix.** `theme/airpayux/scss/moodle/dark_mode.scss` now flips the whole
+short set inside the `body.dark-mode` block, in lock-step with the
+`--ap-color-*` twins — one place, **655+ `var()` refs across 57 files**
+auto-corrected (the Details button + every sibling + future code).
+`public.php` was NOT touched. One deliberate white island — the certificate
+"paper" card (`certificate_celebration.mustache`, hardcoded `background:#fff`) —
+had its name/meta text re-pinned dark so the flip doesn't invert it to
+light-on-white.
+
+**Verified (real Chrome, dark mode).**
+- `--ap-text` resolves to `#e8eaed`, `--ap-border` `#2d3140`, `--ap-surface`
+  `#1a1d27` under `body.dark-mode` (were light before).
+- Storefront "Details" button: `rgb(232,234,237)` on `rgb(26,29,39)` ≈ **13:1
+  (AAA)** — clearly visible (`posters-04-darkmode-details-button-fixed.png`).
+- Catalog course-detail page (`course.php?id=71`): automated WCAG ratio scan →
+  **0 elements below 2:1** (no dark-on-dark / light-on-light regressions).
+
+| File | Change |
+|------|--------|
+| `theme/airpayux/scss/moodle/dark_mode.scss` | flip 8 legacy short tokens under `body.dark-mode` (cascade-level fix) |
+| `local/airpay_pages/templates/certificate_celebration.mustache` | re-pin cert paper-card text dark (white-island guard) |
+| `theme/airpayux/version.php` | 2026052902→2026052903 (1.0.42→1.0.43-beta) — themerev for fresh CSS |
+
+> Note: `public.php` was subsequently reverted to HEAD by the owner (their E-01
+> + the storefront-poster hunk both dropped from the working tree). The
+> Details-button fix is unaffected — it lives entirely in the token cascade, and
+> the legacy-grid Details button exists in every `public.php` revision. A broad
+> per-persona dark-mode regression walk (authenticated dashboards, course
+> view, admin) is a recommended follow-up given the cascade's reach.

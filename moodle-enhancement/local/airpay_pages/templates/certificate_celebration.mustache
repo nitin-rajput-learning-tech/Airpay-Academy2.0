@@ -202,6 +202,19 @@
 }
 .ap-cert-celebration__btn:hover { opacity: 0.85; }
 
+/* Dark mode — the certificate "paper" (.ap-cert-card__inner) is a
+   deliberate WHITE island (hardcoded #fff above) styled like a printed
+   certificate, so it must stay white in dark mode too. Its inner text uses
+   var(--ap-text)/var(--ap-text-muted), which now flip to light values
+   globally under body.dark-mode (dark_mode.scss, 2026-05-29). Without this
+   re-pin, the recipient name would render light-on-white = invisible. Pin
+   the paper text back to dark so it stays legible on the white card.
+   The page CHROME outside the card (header copy + Print/Dashboard buttons)
+   intentionally inherits the flipped tokens and is left untouched. */
+body.dark-mode .ap-cert-card__name { color: #1a1a2e; }
+body.dark-mode .ap-cert-card__preamble,
+body.dark-mode .ap-cert-card__meta { color: #6a7589; }
+
 /* Print */
 @media print {
     .ap-cert-confetti, .ap-cert-celebration__actions, .navbar, footer { display: none !important; }
