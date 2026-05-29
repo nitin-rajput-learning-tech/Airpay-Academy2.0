@@ -194,6 +194,30 @@ LMS product story:
 C10 is now triaged with concrete next-step ranking rather than a vague
 "already partial" label.
 
+### Update 2026-05-29 — Gap 3 + Gap 4 shipped (C10 P1)
+
+- **Gap 3 (tenant-scoped template filter): SHIPPED.** Implemented as a
+  Sentientia-native, upgrade-safe overlay — NOT a vendored-schema
+  change. New `local/airpay_pages/certificate_templates.php` reads the
+  `tool_certificate_*` tables READ-ONLY and filters by a JSON map
+  (`local_airpay_pages | cert_template_tenant_map`). Gated behind
+  `sentientia.certificate.tenant_scope.enabled` (default OFF = today's
+  behaviour: all admins see all templates). Root cause confirmed
+  during build: all 9 templates sit at SYSTEM context, so Moodle treats
+  them as global — the map is what introduces per-tenant scoping
+  without touching the vendored plugin.
+- **Gap 4 (Hindi pack): STAGED, review-gated.** Full 173-string Hindi
+  DRAFT at `docs/translations/tool_certificate-hi-DRAFT.php`, NOT in
+  the active lang dir (Moodle has no per-plugin lang feature-flag, so
+  the staging location IS the enforceable gate). Activation procedure +
+  core-mod record: `docs/translations/README.md` +
+  `docs/core-mods/2026-05-29-tool_certificate-hi-pack.md`. Awaits L&D
+  Hindi sign-off per CLAUDE.md §12.
+
+Remaining C10 gaps unshipped: Gap 1 (per-customer branding, P0-if-
+customer-signs), Gap 2 (bulk re-issue), Gap 5 (mobile PDF), Gap 6
+(JSON verify) — all still ranked in the table above.
+
 ---
 
 ## Cross-reference
