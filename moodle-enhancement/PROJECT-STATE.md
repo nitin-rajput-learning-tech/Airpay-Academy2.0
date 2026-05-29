@@ -5,6 +5,51 @@
 
 ---
 
+## 🐛 C4 follow-up — legacy (flag-OFF) catalog add-to-cart URL fix (2026-05-29 — staged, production-ship PENDING)
+
+Follow-up to the C4 storefront work below. The C4 session deliberately
+left the **legacy** (flag-OFF) grid's add-to-cart URL malformed for
+byte-for-byte production parity, fixing it only in the flag-gated LXP
+path (see the 🐛 note in `docs/visual-evidence/2026-05-29/README.md`).
+This change fixes the legacy path too.
+
+**Bug.** `local/airpay_catalog/public.php` legacy grid branch built the
+guest "Enroll" / "Add to Cart" link by string concatenation:
+`s($course['detailurl']) . '?action=addtocart&sesskey=' . sesskey()`.
+Since `detailurl` is already `course.php?id=N`, the result was the
+malformed `course.php?id=N?action=addtocart&sesskey=…` (**double `?`**).
+PHP folds `action` into the `id` value (`id="N?action=addtocart"`,
+PARAM_INT truncates to `N`) and `action` is never set — so guest
+add-to-cart on **paid** courses silently no-ops and just lands on the
+course detail page. Production runs the OFF path today, so this is live.
+
+**Fix.** One line — replaced the concatenation with the same
+`moodle_url('/local/airpay_catalog/course.php', ['id'=>$course['id'],
+'action'=>'addtocart', 'sesskey'=>sesskey()])->out(false)` the LXP path
+already uses → well-formed `?id=N&action=addtocart&sesskey=…`. Rest of
+the legacy branch untouched (diff: 1 insertion, 1 deletion).
+
+**Verified** by `php -l` (clean) + a standalone harness replicating
+`course.php`'s `parse_str`/PARAM_INT/PARAM_ALPHA/`require_sesskey`
+handling — BEFORE: `$_GET` has no `action` → no-op; AFTER:
+`action=addtocart` → fires. **Not** browser-verified: this remote
+container has no XAMPP/Moodle/browser. Real-browser click-through +
+screenshot + XAMPP deploy + cache purge remain TODO on the local box
+(commands in the visual-evidence README). Visual delta is nil (href-only
+change), so the existing `c4-public-storefront-legacy-OFF-desktop.png`
+still represents the page.
+
+**⚠ Production-ship PENDING owner decision.** This **changes default
+(flag-OFF) production behaviour**, so per CLAUDE.md §13 ("NEVER break
+Airpay Academy current production behaviour") it is **not** deployed or
+merged to production — it is pushed to feature branch
+`claude/friendly-hypatia-JQxh5` only, awaiting Nitin's go/no-go. The bug
+is moot once `sentientia.catalog.public_lxp.enabled` flips ON (that path
+is already correct), so it only matters in the window before the flag
+flips.
+
+---
+
 ## ✅ F-024 visual walk + C10 P1 certificate polish SHIPPED (2026-05-29)
 
 Resumed-session wave (model: Opus 4.8). User sequence "F-024 → C10 P1 → C4".

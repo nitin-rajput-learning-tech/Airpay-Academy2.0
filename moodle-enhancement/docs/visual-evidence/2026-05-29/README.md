@@ -133,9 +133,10 @@ before/after pair.
   (double `?`, so PHP swallows `action` into the `id` value and the
   cart action silently no-ops). The LXP path builds it correctly via
   `moodle_url('/local/airpay_catalog/course.php', ['id'=>…,
-  'action'=>'addtocart', 'sesskey'=>sesskey()])`. The legacy OFF path
-  keeps the quirk deliberately (byte-for-byte production parity); the
-  fix ships only in the flag-gated LXP path.
+  'action'=>'addtocart', 'sesskey'=>sesskey()])`. The C4 session kept
+  the legacy OFF path's quirk deliberately (byte-for-byte production
+  parity); a follow-up now fixes it there too — see "C4 follow-up —
+  legacy (flag-OFF) add-to-cart URL fix" below.
 
 ### Verdict
 
@@ -144,3 +145,63 @@ storefront now has an LXP/Netflix treatment matching the member
 catalog, behind `sentientia.catalog.public_lxp.enabled`. Default OFF
 preserves production exactly; flip ON per-customer/tenant when signed
 off. Ready for owner greenlight to enable.
+
+---
+
+## C4 follow-up — legacy (flag-OFF) add-to-cart URL fix
+
+The C4 session above deliberately left the legacy grid's malformed
+add-to-cart URL in place (the 🐛 bullet) to keep the flag-OFF path
+byte-for-byte with production. This follow-up fixes the legacy path
+too — because production runs the OFF path **today**, and the bug means
+guests cannot add **paid** courses to cart (the click silently no-ops
+and just lands on the course detail page).
+
+**Change:** `public.php` legacy branch, one line. The hand-concatenated
+`s($course['detailurl']) . '?action=addtocart&sesskey=' . sesskey()`
+(which yielded `course.php?id=71?action=addtocart…` — a double `?`) is
+replaced with the exact `moodle_url()` construction the LXP path already
+uses:
+
+```php
+s((new moodle_url('/local/airpay_catalog/course.php', [
+    'id' => $course['id'], 'action' => 'addtocart', 'sesskey' => sesskey(),
+]))->out(false))
+```
+
+**Visual delta:** none. The button, its label ("Enroll" / "Add to
+Cart"), position and styling are unchanged — only the `href` target.
+`c4-public-storefront-legacy-OFF-desktop.png` therefore still represents
+the page exactly; the meaningful evidence is the href value, below.
+
+**Verification.** This remote container has no XAMPP/Moodle/browser, so
+real-browser click-through could not run here. Instead:
+
+- `php -l public.php` → no syntax errors.
+- A standalone PHP harness replicating `course.php`'s param handling
+  (`parse_str` of the query PHP sees → PARAM_INT on `id` → PARAM_ALPHA
+  on `action` → `$action === 'addtocart'` gate + `require_sesskey()`):
+
+  | | `href` | `$_GET` PHP parses | add-to-cart |
+  |--|--------|--------------------|-------------|
+  | BEFORE | `course.php?id=71?action=addtocart&sesskey=…` | `id="71?action=addtocart"`, `sesskey="…"` — **no `action`** | ❌ silent no-op |
+  | AFTER  | `course.php?id=71&action=addtocart&sesskey=…` | `id="71"`, `action="addtocart"`, `sesskey="…"` | ✅ fires |
+
+**Still TODO on the local box (cannot run remotely):** deploy to XAMPP,
+purge caches, click "Enroll" on a paid course as a guest, confirm the
+cart pill increments + the resolved href is `?id=N&action=addtocart&…`,
+and drop a fresh `c4-legacy-OFF-addtocart-AFTER-desktop.png` here.
+
+```powershell
+Copy-Item "D:\Claude Local\airpay-ld-os\moodle-enhancement\local\airpay_catalog\public.php" `
+          "C:\xampp\htdocs\moodle5\public\local\airpay_catalog\public.php" -Force
+php "C:\xampp\htdocs\moodle5\admin\cli\purge_caches.php"
+# Then: guest-browse public.php → paid course → "Add to Cart" → cart count +1
+```
+
+**Production-ship status:** this **changes the default (flag-OFF)
+production behaviour**, so it is gated on Nitin's go/no-go (CLAUDE.md
+§13 — "NEVER break Airpay Academy current production behaviour"). Once
+`sentientia.catalog.public_lxp.enabled` flips ON the bug is moot (the
+LXP path was already correct), so the fix matters only for the window
+before the flag flips.

@@ -343,7 +343,7 @@ body.dark-mode .airpay-catalog__pubsearch input { background:#1a1d27; border-col
                            style="padding:6px 14px; border-radius:8px; font-size:13px; font-weight:600;
                                   border:1px solid var(--ap-border,#e3eaf3); color:var(--ap-text,#1a1a2e);
                                   text-decoration:none;">Details</a>
-                        <a href="<?php echo s($course['detailurl']); ?>?action=addtocart&sesskey=<?php echo sesskey(); ?>"
+                        <a href="<?php echo s((new moodle_url('/local/airpay_catalog/course.php', ['id' => $course['id'], 'action' => 'addtocart', 'sesskey' => sesskey()]))->out(false)); ?>"
                            style="padding:6px 14px; border-radius:8px; font-size:13px; font-weight:600;
                                   background:var(--ap-primary,#0066A7); color:#fff; text-decoration:none;">
                             <?php echo $course['is_free'] ? 'Enroll' : 'Add to Cart'; ?>
