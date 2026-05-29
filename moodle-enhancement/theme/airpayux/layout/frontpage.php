@@ -369,7 +369,7 @@ echo $OUTPUT->doctype();
         <a href="<?php echo $CFG->wwwroot; ?>/login/index.php" class="ap-nav__icon" title="Login to browse courses"><i class="fa fa-shopping-cart"></i></a>
         <button class="ap-nav__icon" id="ap-dark-toggle" title="Toggle dark mode"><i class="fa fa-moon-o"></i></button>
         <a href="<?php echo $CFG->wwwroot; ?>/login/index.php" class="ap-btn-login">Login</a>
-        <a href="<?php echo $CFG->wwwroot; ?>/local/users/signup.php" class="ap-btn-register">Register</a>
+        <a href="<?php echo $CFG->wwwroot; ?>/local/airpay_users/signup.php" class="ap-btn-register">Register</a>
     </div>
 </nav>
 

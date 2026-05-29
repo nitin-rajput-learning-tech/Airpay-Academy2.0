@@ -24,7 +24,12 @@
 defined('MOODLE_INTERNAL') || die();
 
 if ($ADMIN->fulltree) {
-    $settings = new theme_airpayux_admin_settingspage_tabs('themesettingepsilon', get_string('configtitle', 'theme_airpayux'));
+    // SENTIENTIA-CORE-MOD: section id was the leftover parent-theme name 'themesettingepsilon'
+    // (forked from epsilon). Moodle's theme-selector auto-links to 'themesetting<themename>'
+    // = 'themesettingairpayux', so the admin "Settings" link 404'd with sectionerror. Renamed to
+    // match the convention (Boost→themesettingboost, Classic→themesettingclassic). Stored settings
+    // are keyed by 'theme_airpayux/*' and are unaffected by this admin-tree node rename.
+    $settings = new theme_airpayux_admin_settingspage_tabs('themesettingairpayux', get_string('configtitle', 'theme_airpayux'));
     $page = new admin_settingpage('theme_airpayux_general', get_string('generalsettings', 'theme_airpayux'));
 
     // Unaddable blocks.
