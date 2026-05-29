@@ -168,12 +168,29 @@ class sidebar_navigation {
         // Order: course/user management, then reporting
         // ═══════════════════════════════════════════════════
         if ($this->isldadmin) {
+            // OA-GRAN fix (2026-05-29 QA walk, P1): gate each admin link by the
+            // SAME system-context capability its target page enforces
+            // (require_capability('local/airpay_*:view', context_system) in each
+            // index.php). role_detector grants the L&D shell to anyone with the
+            // `administrator` role at a CATEGORY context (e.g. compliance
+            // officers — see role_detector docblock / Bug #11), but those users
+            // may not hold every system cap. Before this gate, qa_compliance saw
+            // 5/8 dead links (Manage Users/Courses/Exams/Classrooms/Reports) that
+            // 403 on click. Siteadmins are unaffected (capability bypass); full
+            // L&D admins keep every link (they hold the caps). Compliance +
+            // Analytics stay ungated — Compliance must remain reachable for
+            // compliance officers (its page accepts moodle/site:viewreports).
+            $sys = \context_system::instance();
             $items[] = $this->item('Dashboard', 'fa-home', '/my/', $currenturl, null, ['/my/index.php']);
 
             // ── Content ──
             $items[] = $this->divider();
-            $items[] = $this->item('Manage Users', 'fa-users', '/local/airpay_users/index.php', $currenturl);
-            $items[] = $this->item('Manage Courses', 'fa-book', '/local/airpay_courses/index.php', $currenturl);
+            if (has_capability('local/airpay_users:view', $sys)) {
+                $items[] = $this->item('Manage Users', 'fa-users', '/local/airpay_users/index.php', $currenturl);
+            }
+            if (has_capability('local/airpay_courses:view', $sys)) {
+                $items[] = $this->item('Manage Courses', 'fa-book', '/local/airpay_courses/index.php', $currenturl);
+            }
             // Sprint D — non-Airpay L&D admins (Public/ZEEA) get the
             // Browse Airpay Library link to request specific courses
             // from the Airpay tenant's library.
@@ -185,13 +202,21 @@ class sidebar_navigation {
                 $items[] = $this->item('Browse Airpay Library', 'fa-handshake-o',
                     '/local/airpay_courses/browse_airpay.php', $currenturl);
             }
-            $items[] = $this->item('Online Exams', 'fa-pencil-square-o', '/local/airpay_exams/index.php', $currenturl);
-            $items[] = $this->item('Classrooms', 'fa-calendar', '/local/airpay_classroom/index.php', $currenturl);
-            $items[] = $this->item('Learning Paths', 'fa-road', '/local/airpay_learningpath/index.php', $currenturl);
+            if (has_capability('local/airpay_exams:view', $sys)) {
+                $items[] = $this->item('Online Exams', 'fa-pencil-square-o', '/local/airpay_exams/index.php', $currenturl);
+            }
+            if (has_capability('local/airpay_classroom:view', $sys)) {
+                $items[] = $this->item('Classrooms', 'fa-calendar', '/local/airpay_classroom/index.php', $currenturl);
+            }
+            if (has_capability('local/airpay_learningpath:view', $sys)) {
+                $items[] = $this->item('Learning Paths', 'fa-road', '/local/airpay_learningpath/index.php', $currenturl);
+            }
 
             // ── Insights ──
             $items[] = $this->divider();
-            $items[] = $this->item('Reports', 'fa-bar-chart', '/local/airpay_reports/index.php', $currenturl);
+            if (has_capability('local/airpay_reports:view', $sys)) {
+                $items[] = $this->item('Reports', 'fa-bar-chart', '/local/airpay_reports/index.php', $currenturl);
+            }
             $items[] = $this->item('Analytics', 'fa-line-chart', '/local/airpay_analytics/index.php', $currenturl);
             $items[] = $this->item('Compliance', 'fa-shield', '/local/airpay_compliance_report/index.php', $currenturl);
             return $items;

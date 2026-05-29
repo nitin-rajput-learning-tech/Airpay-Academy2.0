@@ -11,7 +11,25 @@ require_login();
 require_once($CFG->libdir . '/excellib.class.php');
 
 $systemcontext = context_system::instance();
-if (!is_siteadmin() && !has_capability('local/courses:manage', $systemcontext)) {
+// C-002 fix (2026-05-29 QA walk, P1): mirror index.php's access logic so anyone who
+// can VIEW the compliance report can also EXPORT it. The old check accepted only
+// siteadmin OR local/courses:manage, which locked out compliance officers / tenant
+// admins who reach the report via the BizLMS administrator role at a category context
+// or via moodle/site:viewreports — they saw an Export button that threw nopermission.
+$canaccess = is_siteadmin() || has_capability('local/courses:manage', $systemcontext);
+if (!$canaccess) {
+    // BizLMS administrator role at a category context (tenant admins / compliance officers).
+    $canaccess = $DB->record_exists_sql(
+        "SELECT 1 FROM {role_assignments} ra
+           JOIN {context} ctx ON ctx.id = ra.contextid
+          WHERE ra.userid = :uid AND ra.roleid = 9 AND ctx.contextlevel = 40",
+        ['uid' => $USER->id]);
+}
+if (!$canaccess) {
+    // Managers / HRBP / trainers with the report-view capability.
+    $canaccess = has_capability('moodle/site:viewreports', $systemcontext);
+}
+if (!$canaccess) {
     throw new moodle_exception('nopermission');
 }
 
