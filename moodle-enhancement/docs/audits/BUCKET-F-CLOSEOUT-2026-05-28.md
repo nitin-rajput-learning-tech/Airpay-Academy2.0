@@ -47,6 +47,25 @@ ranking + word-cloud types?
 session, capture screenshots in `docs/visual-evidence/YYYY-MM-DD/`.
 Not blocking.
 
+**Update (2026-05-29): RESOLVED.** Real-browser walk done — see
+`docs/visual-evidence/2026-05-29/README.md` + 4 screenshots. Drove the
+trainer `run.php` runner for seeded session 18 across multichoice,
+quiz (bar chart + "2 of 3 correct (67%)" + "Correct answer: Paris" +
+leaderboard), and word-cloud panels; desktop + 590px mobile; **zero JS
+console errors**. Correction to the note above: there is NO
+`local/sentientia_live/admin/analytics.php` — that path was never
+built. The "analytics" surface is the `run.php` per-slide result
+panels + the `export.php` CSV (E.7). Both verified. No standalone
+analytics dashboard is needed for v1.
+
+Byproduct finding: `local/airpay_core/cli/mint_session.php` is broken
+on this box (dbsessions=0 → file sessions, so its DB-row insert is
+never read; plus serialize_handler=php means its payload format is
+wrong). The walk used a throwaway QA siteadmin
+(`tools/f024_qa_account.php`, created + deleted) authenticating via the
+real login form instead. mint_session should either be fixed to write
+a file session OR documented as requiring `$CFG->dbsessions=1`.
+
 ### F-026 — `local_sentientia_translate` T.1 install verification
 
 **Verdict: RESOLVED.** Install ran clean.
@@ -290,6 +309,13 @@ state-card refresh for airpay_emails. Net: Bucket F shrinks from
 "10 investigate items" to "2 needs-work items + 1 partial UI walk".
 Audit closeout is substantially complete; remaining work is
 genuinely out-of-scope rather than postponed.
+
+**Updated 2026-05-29:** F-024 walked in a real browser →
+**RESOLVED** (see `docs/visual-evidence/2026-05-29/`). Bucket F now
+has **zero partial items**. Final tally: **9 RESOLVED**, 0 partial,
+2 deferred (F-028/F-029 = explicit v2 features), 2 needs-work
+(F-031 security cross-check, F-033 Cypress coverage inventory — both
+genuinely separate audits, neither blocking).
 
 ---
 
