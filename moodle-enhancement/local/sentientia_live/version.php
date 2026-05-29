@@ -35,10 +35,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_live';
-$plugin->version   = 2026052504;
+$plugin->version   = 2026052900;       // YYYYMMDDNN — T-01/T-02 trainer access fix (QA Walk 2026-05-29)
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;   // Phases E.4-E.9 — all 6 question types live + verified
-$plugin->release   = '0.2.1-alpha';
+$plugin->release   = '0.2.2-alpha';
 $plugin->dependencies = [
     'local_airpay_core' => 2026051401,  // feature_flags resolver
 ];
@@ -177,3 +177,17 @@ $plugin->dependencies = [
 //              assertSame string-vs-int). Residual local PHPUnit noise is
 //              the third-party block_learnerscript parse_url/REQUEST_URI
 //              deprecation — absent in the hermetic CI plugin set.
+// 0.2.2-alpha  T-01 / T-02 (QA Walk 2026-05-29) — trainer-role access fix.
+//              T-01: db/access.php now grants the `teacher` archetype on the
+//              create + run capabilities (the BizLMS `trainer` role is
+//              archetype=teacher, not editingteacher, so trainers could not
+//              reach trainer/index.php even though Phase E.1+ shipped fully).
+//              db/upgrade.php back-fills the new default onto existing
+//              teacher-archetype roles via assign_capability(overwrite=false)
+//              — Moodle only auto-applies archetype defaults on a capability's
+//              FIRST install, never when an upgrade merely adds an archetype.
+//              T-02: theme_airpayux\sidebar_navigation gains a "Live Sessions"
+//              link to /local/sentientia_live/trainer/index.php in the Manager
+//              AND Learner shells, gated by has_capability(
+//              'local/sentientia_live:create') AND the live.enabled flag, so
+//              the link only appears for users who can actually enter.

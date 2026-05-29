@@ -230,6 +230,14 @@ class sidebar_navigation {
             $items[] = $this->item('Dashboard', 'fa-home', '/my/', $currenturl, null, ['/my/index.php']);
             $items[] = $this->item('My Team', 'fa-users', '/local/airpay_manager/index.php', $currenturl);
             $items[] = $this->item('Compliance', 'fa-shield-alt', '/local/airpay_compliance_report/index.php', $currenturl);
+            // T-02 (QA Walk 2026-05-29): Sentientia Live trainer dashboard.
+            // Gated by can_create_live_session() so it only shows when the
+            // live.enabled flag is on AND the user holds live:create (true for
+            // the BizLMS trainer role after the T-01 access.php fix).
+            if ($this->can_create_live_session()) {
+                $items[] = $this->item('Live Sessions', 'fa-bolt',
+                    '/local/sentientia_live/trainer/index.php', $currenturl);
+            }
             $items[] = $this->divider();
             $items[] = $this->item('My Courses', 'fa-book', '/local/airpay_catalog/mycourses.php', $currenturl);
             $items[] = $this->item('Catalog', 'fa-compass', '/local/airpay_catalog/public.php', $currenturl);
@@ -274,6 +282,15 @@ class sidebar_navigation {
         if ($this->is_cart_enabled_for_current_user()) {
             $items[] = $this->item('My Cart', 'fa-shopping-cart',
                 '/local/airpay_cart/index.php', $currenturl);
+        }
+
+        // T-02 (QA Walk 2026-05-29): surface Sentientia Live for trainer-role
+        // users who land in the Learner shell (no viewreports cap, no direct
+        // reports, so role_detector returns islearner). Gated by the create
+        // cap — same defensive pattern as the iscomplianceuser link below.
+        if ($this->can_create_live_session()) {
+            $items[] = $this->item('Live Sessions', 'fa-bolt',
+                '/local/sentientia_live/trainer/index.php', $currenturl);
         }
 
         // Goal A audit Bug #11 (2026-05-22) — Compliance Officer / HR /
@@ -328,6 +345,35 @@ class sidebar_navigation {
         // Airpay tenant root = 1 (per project convention). Anything
         // else with a valid root is a "receiving" tenant.
         return $root > 0 && $root !== 1;
+    }
+
+    /**
+     * Can the current user create / run a Sentientia Live session?
+     *
+     * Gates the "Live Sessions" sidebar link so it only appears for users who
+     * can actually enter /local/sentientia_live/trainer/index.php (which
+     * enforces the same capability). True for the BizLMS `trainer` role (after
+     * the T-01 access.php fix), editingteachers, the manager archetype and
+     * siteadmins.
+     *
+     * Two gates, matching the conventions already in this file:
+     *   1. feature_flags::is_enabled('live.enabled') — the Live master flag
+     *      (same flag the trainer pages check; off = no feature, no link).
+     *   2. has_capability('local/sentientia_live:create', system).
+     *
+     * Safe-fails to false (no link, no crash) when the plugin, its capability
+     * or the flag resolver isn't installed — e.g. a future Sentientia customer
+     * who didn't license Live. Mirrors is_cart_enabled_for_current_user().
+     */
+    private function can_create_live_session(): bool {
+        try {
+            if (!\local_airpay_core\feature_flags::is_enabled('live.enabled')) {
+                return false;
+            }
+            return has_capability('local/sentientia_live:create', \context_system::instance());
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 
     /**
