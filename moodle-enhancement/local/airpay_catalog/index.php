@@ -45,9 +45,44 @@ foreach ($in_progress as &$ip) {
 unset($ip);
 
 // Resolve active category name for filter chip display.
+//
+// Tenant safety (2026-05-29 broader-sweep follow-up to db5242c9a): the
+// active category id arrives from the query string (?category=N) so a
+// learner could craft a request pointing at another tenant's category.
+// catalog_manager::get_courses() filters the result list by tenant
+// (build_catalog_filter_sql_v2), so the COURSE LIST never leaks --
+// but the chip label below would still leak the other tenant's
+// category name (e.g. "AIRPAY PAYMENT SERVICES PRIVATE LIMITED" shown
+// to a Public learner who typed ?category=2). Validate the category
+// sits inside the viewer's tenant subtree before rendering the chip.
 $active_category_name = '';
 if ($category) {
-    $catobj = $DB->get_record('course_categories', ['id' => $category], 'name');
+    $viewer_tenant_catid = \local_airpay_org\accesslib::get_tenant_category_id(
+        (string) ($USER->open_path ?? ''));
+    $viewer_tenant_catpath = $viewer_tenant_catid
+        ? (string) $DB->get_field('course_categories', 'path',
+            ['id' => $viewer_tenant_catid])
+        : '';
+
+    $cat_in_tenant_sql_extra = '';
+    $cat_in_tenant_params = ['id' => $category];
+    if (is_siteadmin()) {
+        // Admin sees every chip.
+        $cat_in_tenant_sql_extra = '';
+    } elseif ($viewer_tenant_catid && $viewer_tenant_catpath !== '') {
+        $cat_in_tenant_sql_extra =
+            " AND (id = :tcat OR " . $DB->sql_like('path', ':tpathwild') . ")";
+        $cat_in_tenant_params['tcat']      = $viewer_tenant_catid;
+        $cat_in_tenant_params['tpathwild'] = $viewer_tenant_catpath . '/%';
+    } else {
+        // Tenant unresolvable -> no chip name (matches catalog list's
+        // fail-closed result of zero courses).
+        $cat_in_tenant_sql_extra = ' AND 0 = 1';
+    }
+    $catobj = $DB->get_record_sql(
+        "SELECT id, name FROM {course_categories}
+          WHERE id = :id" . $cat_in_tenant_sql_extra,
+        $cat_in_tenant_params);
     $active_category_name = $catobj ? format_string($catobj->name) : '';
 }
 
