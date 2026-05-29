@@ -36,6 +36,15 @@ if ($PAGE->pagelayout === 'frontpage') {
 
 require_once($CFG->libdir . '/behat/lib.php');
 
+// P-02 (QA Walk 2026-05-29) — paint/refresh the navbar cart badge on the
+// 'standard' layout (columns2). The catalog pages (public.php / course.php /
+// cart.php) all use pagelayout='standard' → this file; before this, the
+// cart_badge AMD was only wired in course.php + dashboard.php layouts, so the
+// badge never updated after add-to-cart on the catalog confirmation page.
+// The module reads the hidden #ap-cart-count-data span injected by the cart
+// provider and no-ops gracefully when absent — safe to wire here.
+$PAGE->requires->js_call_amd('theme_airpayux/cart_badge', 'init');
+
 // Add block button in editing mode.
 $addblockbutton = $OUTPUT->addblockbutton();
 
