@@ -4,6 +4,15 @@
  * No login required. Shows all Public tenant courses with pricing.
  * Guest can browse, search, view details, and add to cart.
  *
+ * C4 (2026-05-29) — when the feature flag
+ * sentientia.catalog.public_lxp.enabled is ON, this page renders with
+ * the same LXP / Netflix card + carousel language as the logged-in
+ * member catalog (index.php): a "Popular picks" scroll-snap rail
+ * (hidden during search) above the searchable/sortable grid. When OFF
+ * (default) it renders the legacy plain inline-styled grid, byte-for-
+ * byte identical to production today. Commerce (pricing, add-to-cart,
+ * cart pill) is preserved in both modes.
+ *
  * @package    local_airpay_catalog
  * @copyright  2026 Airpay Payment Services
  */
@@ -16,8 +25,8 @@ global $DB, $CFG, $OUTPUT, $PAGE;
 
 $PAGE->set_context(context_system::instance());
 $PAGE->set_url('/local/airpay_catalog/public.php');
-$PAGE->set_title('Course Catalog — airpay academy');
-$PAGE->set_heading('Course Catalog');
+$PAGE->set_title(get_string('catalog', 'local_airpay_catalog') . ' — airpay academy');
+$PAGE->set_heading(get_string('catalog', 'local_airpay_catalog'));
 $PAGE->set_pagelayout('standard');
 
 $search = optional_param('q', '', PARAM_TEXT);
@@ -27,8 +36,220 @@ $page = optional_param('page', 0, PARAM_INT);
 $results = \local_airpay_catalog\commerce::get_public_catalog($search, $sort, $page, 12);
 $cart_count = \local_airpay_catalog\commerce::get_cart_count();
 
+// ── C4 feature flag ────────────────────────────────────────────────
+$lxp_on = false;
+if (class_exists('\\local_airpay_core\\feature_flags')) {
+    $lxp_on = \local_airpay_core\feature_flags::is_enabled(
+        'sentientia.catalog.public_lxp.enabled');
+}
+
+// Popular-picks rail data — only on the first, unsearched page.
+$rail = [];
+if ($lxp_on && $search === '' && $page === 0) {
+    $rail = \local_airpay_catalog\commerce::get_public_catalog('', 'popular', 0, 8)['courses'];
+}
+
+// Carousel arrow-nav: CSP-safe inline AMD (no build step). Native
+// horizontal scroll works without it; this just wires the arrows.
+if ($lxp_on && !empty($rail)) {
+    $PAGE->requires->js_amd_inline("
+        require([], function() {
+            document.querySelectorAll('[data-carousel]').forEach(function(sec) {
+                var track = sec.querySelector('[data-carousel-track]');
+                if (!track) { return; }
+                sec.querySelectorAll('[data-dir]').forEach(function(btn) {
+                    btn.addEventListener('click', function() {
+                        track.scrollBy({
+                            left: btn.getAttribute('data-dir') === 'left' ? -640 : 640,
+                            behavior: 'smooth'
+                        });
+                    });
+                });
+            });
+        });
+    ");
+}
+
 echo $OUTPUT->header();
-?>
+
+if ($lxp_on) {
+    // ════════════════════════════════════════════════════════════════
+    // LXP / Netflix storefront — matches the member catalog (index.php)
+    // by reusing the airpay-catalog__* BEM classes from styles.css.
+    // ════════════════════════════════════════════════════════════════
+    $carturl = (new moodle_url('/local/airpay_catalog/cart.php'))->out(false);
+    $baseurl = (new moodle_url('/local/airpay_catalog/public.php'))->out(false);
+
+    // Render one guest course card with a commerce footer, reusing the
+    // member catalog's card classes so the look is identical.
+    $render_card = function (array $course): string {
+        $detail = $course['detailurl'];
+        $addurl = (new moodle_url('/local/airpay_catalog/course.php', [
+            'id'      => $course['id'],
+            'action'  => 'addtocart',
+            'sesskey' => sesskey(),
+        ]))->out(false);
+        $isfree = !empty($course['is_free']);
+        $cta = $isfree
+            ? get_string('public_enrolfree', 'local_airpay_catalog')
+            : get_string('public_addtocart', 'local_airpay_catalog');
+        $pricecls = $isfree
+            ? 'airpay-catalog__pubprice airpay-catalog__pubprice--free'
+            : 'airpay-catalog__pubprice';
+
+        $h  = '<article class="airpay-catalog__card">';
+        $h .= '<a href="' . s($detail) . '" class="airpay-catalog__card-link" aria-label="'
+            . s($course['fullname']) . '">';
+        $h .= '<div class="airpay-catalog__card-thumb">';
+        $h .= '<span class="airpay-catalog__card-code" aria-hidden="true">'
+            . s($course['shortname'] ?? '') . '</span>';
+        if ($isfree) {
+            $h .= '<span class="airpay-catalog__badge airpay-catalog__badge--new">'
+                . s(get_string('public_free', 'local_airpay_catalog')) . '</span>';
+        }
+        $h .= '<span class="airpay-catalog__card-type" aria-hidden="true">'
+            . s(get_string('catalog', 'local_airpay_catalog')) . '</span>';
+        $h .= '</div></a>';
+        $h .= '<div class="airpay-catalog__card-body">';
+        $h .= '<h4 class="airpay-catalog__card-title"><a href="' . s($detail) . '">'
+            . format_string($course['fullname']) . '</a></h4>';
+        if (!empty($course['summary_short'])) {
+            $h .= '<p class="airpay-catalog__card-summary">' . s($course['summary_short']) . '</p>';
+        }
+        $h .= '<div class="airpay-catalog__card-meta">';
+        $h .= '<span class="airpay-catalog__card-category"><i class="fa fa-users" aria-hidden="true"></i> '
+            . (int) ($course['enrolled_count'] ?? 0) . '</span>';
+        $h .= '</div>';
+        $h .= '<div class="airpay-catalog__card-footer">';
+        $h .= '<span class="' . $pricecls . '">' . s($course['display'] ?? '') . '</span>';
+        $h .= '<a href="' . s($addurl) . '" class="airpay-catalog__btn airpay-catalog__btn--enroll">'
+            . s($cta) . '</a>';
+        $h .= '</div></div></article>';
+        return $h;
+    };
+
+    echo '<div class="airpay-catalog airpay-catalog--public">';
+
+    // ── Header ──────────────────────────────────────────────────────
+    echo '<div class="airpay-catalog__pubhead">';
+    echo '<div>';
+    echo '<h2 class="airpay-catalog__pubtitle">'
+        . '<i class="fa fa-th-large" aria-hidden="true"></i> '
+        . s(get_string('catalog', 'local_airpay_catalog')) . '</h2>';
+    echo '<p class="airpay-catalog__pubcount">'
+        . s(get_string('public_coursesavailable', 'local_airpay_catalog', $results['total']))
+        . '</p>';
+    echo '</div>';
+    if ($cart_count > 0) {
+        echo '<a class="airpay-catalog__pubcart" href="' . s($carturl) . '">'
+            . '<i class="fa fa-shopping-cart" aria-hidden="true"></i> '
+            . s(get_string('public_cart', 'local_airpay_catalog', $cart_count)) . '</a>';
+    }
+    echo '</div>';
+
+    // ── Search + sort ───────────────────────────────────────────────
+    echo '<div class="airpay-catalog__pubcontrols">';
+    echo '<form action="' . s($baseurl) . '" method="get" class="airpay-catalog__pubsearch" role="search">';
+    echo '<i class="fa fa-search" aria-hidden="true"></i>';
+    echo '<input type="text" name="q" value="' . s($search) . '" '
+        . 'placeholder="' . s(get_string('search', 'local_airpay_catalog')) . '" '
+        . 'aria-label="' . s(get_string('search', 'local_airpay_catalog')) . '">';
+    echo '</form>';
+    echo '<div class="airpay-catalog__pubsort">';
+    foreach ([
+        'popular' => 'public_sort_popular',
+        'newest'  => 'public_sort_newest',
+        'name'    => 'public_sort_name',
+    ] as $key => $strkey) {
+        $url = $baseurl . '?sort=' . $key . ($search !== '' ? '&q=' . urlencode($search) : '');
+        $active = $sort === $key ? ' airpay-catalog__pubsort-pill--active' : '';
+        echo '<a class="airpay-catalog__pubsort-pill' . $active . '" href="' . s($url) . '">'
+            . s(get_string($strkey, 'local_airpay_catalog')) . '</a>';
+    }
+    echo '</div>';
+    echo '</div>';
+
+    // ── Popular-picks rail (carousel) — hidden during search ────────
+    if (!empty($rail)) {
+        echo '<section class="airpay-catalog__section" data-carousel>';
+        echo '<h3 class="airpay-catalog__section-title"><i class="fa fa-fire" style="color:#d97706;" aria-hidden="true"></i> '
+            . s(get_string('public_popularpicks', 'local_airpay_catalog')) . '</h3>';
+        echo '<button class="airpay-catalog__carousel-nav airpay-catalog__carousel-nav--left" data-dir="left" '
+            . 'aria-label="' . s(get_string('public_scrollleft', 'local_airpay_catalog')) . '">'
+            . '<i class="fa fa-chevron-left" aria-hidden="true"></i></button>';
+        echo '<div class="airpay-catalog__carousel" data-carousel-track>';
+        foreach ($rail as $course) {
+            echo $render_card($course);
+        }
+        echo '</div>';
+        echo '<button class="airpay-catalog__carousel-nav airpay-catalog__carousel-nav--right" data-dir="right" '
+            . 'aria-label="' . s(get_string('public_scrollright', 'local_airpay_catalog')) . '">'
+            . '<i class="fa fa-chevron-right" aria-hidden="true"></i></button>';
+        echo '</section>';
+    }
+
+    // ── Main grid ───────────────────────────────────────────────────
+    if (!empty($results['courses'])) {
+        if (!empty($rail)) {
+            echo '<h3 class="airpay-catalog__section-title">'
+                . s(get_string('public_browseall', 'local_airpay_catalog')) . '</h3>';
+        }
+        echo '<div class="airpay-catalog__grid">';
+        foreach ($results['courses'] as $course) {
+            echo $render_card($course);
+        }
+        echo '</div>';
+
+        if (!empty($results['has_more'])) {
+            $nexturl = $baseurl . '?page=' . ($page + 1) . '&sort=' . s($sort)
+                . ($search !== '' ? '&q=' . urlencode($search) : '');
+            echo '<div class="airpay-catalog__pubpager">';
+            echo '<a class="airpay-catalog__btn airpay-catalog__btn--enroll" href="' . s($nexturl) . '">'
+                . get_string('next') . ' <i class="fa fa-arrow-right" aria-hidden="true"></i></a>';
+            echo '</div>';
+        }
+    } else {
+        echo '<div class="ap-empty-state" style="padding:48px;">';
+        echo '<i class="fa fa-search ap-empty-state__icon" aria-hidden="true"></i>';
+        echo '<h4 class="ap-empty-state__title">' . s(get_string('public_nocourses', 'local_airpay_catalog')) . '</h4>';
+        echo '<p class="ap-empty-state__message">' . s(get_string('public_nocourses_hint', 'local_airpay_catalog')) . '</p>';
+        if ($search !== '') {
+            echo '<a class="airpay-catalog__btn airpay-catalog__btn--enroll" href="' . s($baseurl) . '">'
+                . s(get_string('public_clearsearch', 'local_airpay_catalog')) . '</a>';
+        }
+        echo '</div>';
+    }
+
+    echo '</div>'; // .airpay-catalog
+
+    // Minimal additive styles for the public-only price + header bits.
+    // The card/carousel/grid look comes entirely from styles.css's
+    // airpay-catalog__* rules; this only adds the price pill + header
+    // chrome that the member catalog doesn't have.
+    echo '<style>
+.airpay-catalog__pubhead { display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:12px; margin-bottom:var(--ap-space-4,24px); }
+.airpay-catalog__pubtitle { margin:0; font-size:1.5rem; font-weight:800; color:var(--ap-text,#1a1a2e); }
+.airpay-catalog__pubcount { margin:4px 0 0; font-size:0.875rem; color:var(--ap-text-secondary,#607286); }
+.airpay-catalog__pubcart { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border-radius:var(--ap-radius-md,10px); background:var(--ap-primary,#0066A7); color:#fff; text-decoration:none; font-size:0.875rem; font-weight:600; }
+.airpay-catalog__pubcontrols { display:flex; gap:12px; margin-bottom:var(--ap-space-4,24px); flex-wrap:wrap; align-items:center; }
+.airpay-catalog__pubsearch { position:relative; flex:1; min-width:200px; }
+.airpay-catalog__pubsearch i { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:#9ca3af; }
+.airpay-catalog__pubsearch input { width:100%; padding:10px 14px 10px 40px; border:1px solid var(--ap-border,#e3eaf3); border-radius:var(--ap-radius-md,10px); font-size:0.875rem; font-family:inherit; }
+.airpay-catalog__pubsort { display:flex; gap:4px; flex-wrap:wrap; }
+.airpay-catalog__pubsort-pill { padding:8px 16px; border-radius:20px; font-size:0.8125rem; text-decoration:none; background:#f3f4f6; color:#5a6070; }
+.airpay-catalog__pubsort-pill--active { background:var(--ap-primary,#0066A7); color:#fff; }
+.airpay-catalog__pubprice { font-size:1.125rem; font-weight:800; color:var(--ap-primary,#0066A7); }
+.airpay-catalog__pubprice--free { color:#16a34a; }
+.airpay-catalog__pubpager { display:flex; justify-content:center; margin-top:var(--ap-space-4,24px); }
+body.dark-mode .airpay-catalog__pubsort-pill { background:#252a36; color:#9ca3b4; }
+body.dark-mode .airpay-catalog__pubsearch input { background:#1a1d27; border-color:#2d3140; color:#e8eaed; }
+</style>';
+
+} else {
+    // ════════════════════════════════════════════════════════════════
+    // LEGACY plain grid — preserved byte-for-byte (flag OFF = today).
+    // ════════════════════════════════════════════════════════════════
+    ?>
 
 <div class="ap-public-catalog" style="max-width:1200px; margin:0 auto; padding:0 20px;">
 
@@ -173,5 +394,7 @@ body.dark-mode .ap-public-card p { color: #9ca3b4 !important; }
 }
 </style>
 
-<?php
+    <?php
+}
+
 echo $OUTPUT->footer();
