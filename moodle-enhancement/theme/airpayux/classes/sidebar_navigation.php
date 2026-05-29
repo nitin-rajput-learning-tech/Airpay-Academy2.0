@@ -259,9 +259,14 @@ class sidebar_navigation {
                     '/local/airpay_courses/my_requests.php', $currenturl);
             }
             // Cart for managers in cart-enabled tenants.
+            // P-01 (QA Walk 2026-05-29): point at the catalog's SESSION cart
+            // (commerce::add_to_cart, viewed at /local/airpay_catalog/cart.php) —
+            // the cart the catalog "Add to Cart" buttons actually fill. The DB
+            // cart at /local/airpay_cart/index.php is fed only by the add_item WS,
+            // never the catalog buttons, so it always rendered empty here.
             if ($this->is_cart_enabled_for_current_user()) {
                 $items[] = $this->item('My Cart', 'fa-shopping-cart',
-                    '/local/airpay_cart/index.php', $currenturl);
+                    '/local/airpay_catalog/cart.php', $currenturl);
             }
             // E-02 (QA Walk 2026-05-29): managers are learners too — give
             // them their own Skills dashboard, same as the Learner shell.
@@ -285,9 +290,13 @@ class sidebar_navigation {
         // ── Cart (only for tenants where cart is enabled — Phase 1G) ──
         // Public/ZEEA tenants get a cart link; Airpay tenant employees
         // get their training free and don't see this link.
+        // P-01 (QA Walk 2026-05-29): point at the catalog's SESSION cart
+        // (/local/airpay_catalog/cart.php) — where the catalog "Add to Cart"
+        // buttons put items — not the DB cart /local/airpay_cart/index.php
+        // (fed only by the add_item WS), which always rendered empty here.
         if ($this->is_cart_enabled_for_current_user()) {
             $items[] = $this->item('My Cart', 'fa-shopping-cart',
-                '/local/airpay_cart/index.php', $currenturl);
+                '/local/airpay_catalog/cart.php', $currenturl);
         }
 
         // T-02 (QA Walk 2026-05-29): surface Sentientia Live for trainer-role
