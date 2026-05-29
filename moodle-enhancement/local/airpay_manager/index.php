@@ -31,10 +31,14 @@ if ($viewuserid !== $USER->id && !$isadmin) {
 $team = \local_airpay_manager\team_manager::get_team($viewuserid);
 $summary = \local_airpay_manager\team_manager::summarize_team($team);
 
-if (empty($summary) && !$isadmin) {
-    throw new moodle_exception('nopermission', 'error', '',
-        null, 'You have no direct reports. This dashboard is for managers with team members.');
-}
+// T-03 fix (2026-05-29 QA walk, P2): a Manager-shell user with the
+// moodle/site:viewreports cap but ZERO direct reports (e.g. a trainer / HRBP)
+// previously hit a raw `nopermission` EXCEPTION (HTTP 500) here. The dashboard
+// template already renders a graceful empty state via the `has_team` flag (admins
+// with no team-pick already fall through to it), so we let everyone fall through to
+// that instead of throwing. No data leak — the page only ever shows the viewer's own
+// team (empty here), and the "My Team" sidebar link is only surfaced to the Manager
+// shell in the first place.
 
 $team_data = [];
 $total_enrolled = 0;
