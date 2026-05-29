@@ -56,8 +56,10 @@ audited; clear leaks fixed, already-scoped surfaces documented.
 | 1c | `local/airpay_catalog/public.php` (`commerce::get_public_catalog`) | Hard-scoped to `public_tenant_id` (default `/77`) via `c.open_path = :pubexact OR LIKE :pubprefix`. | None — already scoped (and intentional: this is the public/guest homepage). | — |
 | 1d | `local/airpay_catalog/mycourses.php` | Uses `enrol_get_my_courses()` — enrolment-scoped naturally. | None — enrolment is the right boundary here (a user keeps their enrolled courses across tenant moves). | — |
 | 1e | `local/airpay_catalog/cart.php` | Session-based cart; no `{course}` / `{course_categories}` queries. | None. | — |
+| 1f | `local/airpay_catalog/course.php` (guest course-detail) | **Real leak (caught during closing review)**: guest-accessible deep-link `course.php?id=N` loaded ANY visible course (Airpay-internal, ZEEA, …) — guest could see name/summary/pricing for non-public courses by URL guess. `public.php` was scoped; `course.php` wasn't. | Two-class scope: guests → public_tenant only (matches public.php). Logged-in → accesslib tenant subtree + Sprint C/D share carve-out + existing-enrolment carve-out. Siteadmin unrestricted. | ✅ `9574141c` |
 | 2 | `theme/airpayux/layout/dashboard.php` lines ~958-996 "Recommended for You" | Naturally tenant-safe for the common case (categories derived from enrolled-course list, enrolments are tenant-scoped). Two failure modes: brand-new learners with zero enrolments saw empty block; cross-tenant SHARED enrolments (Sprint C/D) mixed lender's categories into the recommendation surface. | Resolve `tenant_catid` via accesslib; constrain candidate to `(cc.id = :catid OR cc.path LIKE :catpathwild)`. Cold-start fallback added: brand-new learners now see top-3 most-enrolled courses in their home tenant. Strict home-tenant scoping per Nitin's directive. Theme version `2026052409 → 2026052410`. | ✅ `4d940ba7` |
-| 3 | `local/sentientia_recommendations/classes/recommendation_engine.php::build_candidate_list` | **Real leak**: unscoped `SELECT * FROM {course} WHERE visible = 1 AND id > 1` fed Claude with cross-tenant course IDs. AI could (and would) recommend Airpay courses to a Public learner; cross-tenant rows ALSO persisted into `local_sentientia_rec_log` polluting audits. | Tenant-scope via accesslib (same `cc.id OR cc.path LIKE` pattern). Fail-closed on unresolvable tenant. `profile->tenant === 0` (siteadmin / test fixture) keeps legacy unscoped behaviour. 3 new PHPUnit cases. | ✅ `1db1599f` |
+| 3a | `local/sentientia_recommendations/classes/recommendation_engine.php::build_candidate_list` | **Real leak**: unscoped `SELECT * FROM {course} WHERE visible = 1 AND id > 1` fed Claude with cross-tenant course IDs. AI could (and would) recommend Airpay courses to a Public learner; cross-tenant rows ALSO persisted into `local_sentientia_rec_log` polluting audits. | Tenant-scope via accesslib (same `cc.id OR cc.path LIKE` pattern). Fail-closed on unresolvable tenant. `profile->tenant === 0` (siteadmin / test fixture) keeps legacy unscoped behaviour. 3 new PHPUnit cases. | ✅ `1db1599f` |
+| 3b | `blocks/sentientia_recommendations/block_sentientia_recommendations.php` | **Stale-data leak (caught during closing review)**: 3a fixed candidate generation, but the block renders directly from `local_sentientia_rec_log` and would re-surface any rec rows persisted BEFORE the hotfix (cross-tenant courseids). | Defensive gate in `get_content()` — resolve viewer's tenant via accesslib and silently skip recs whose course category sits outside the subtree. Block version `2026052500 → 2026052901`. | ✅ `9574141c` |
 | 4 | `local/search/{allcourses, ajax, coursedetails}.php` | `allcourses.php` delegates to `\local_courses\output\search::get_elearning_courselist_query()` which has built-in path-based tenant scoping (filters `c.open_path` against the user's `open_path` + ancestors). `ajax.php` is enrolment-scoped (joins `role_assignments WHERE userid = $USER->id`). `coursedetails.php` has a `$USER->open_costcenterid != $course->open_costcenterid` redirect guard — production works (BizLMS resolves `open_costcenterid` dynamically at runtime); local-dev is brittle (both fields null → `null != null` = false → no redirect) but local-dev doesn't ship `local/search` to learners (it's a BizLMS-era surface). | Documentation-only finding. The BizLMS-era plugin stays on its existing scoping mechanism; reconsider when Sentientia is deployed to a non-BizLMS customer (see Hardening backlog below). | — |
 | 5 | `local/airpay_courses/lib.php::local_airpay_courses_render_featured_widget` → `featured_manager::get_widget_for_user` | Tenant-scoped via `(f.costcenterid = 0 OR f.costcenterid = :ctid)` keyed off the user's `open_path` top-level segment. `costcenterid = 0` is the admin-curated "all tenants" feature; otherwise scoped to the user's tenant. | None — already scoped. | — |
 
@@ -74,13 +76,24 @@ audited; clear leaks fixed, already-scoped surfaces documented.
   needs the org id (not the category id) — different concept. Documented
   inline; centralising both resolvers into accesslib is a future refactor.
 
-**Action for production:** all four code commits land via the same hotfix
-window as `db5242c9a`. On production `local_costcenter` is installed →
-accesslib's resolution chain step 1 (BizLMS canonical) is taken; behaviour
-identical to local-dev verification. Plugin versions bumped so
-post-deploy `Admin → Notifications → purge caches` picks up the new
-`local_airpay_courses` (`1.11.2 → 1.11.3`) and `theme_airpayux`
-(`2026052409 → 2026052410`) plugin codes.
+**Action for production:** the broader-sweep code commits land via the
+same hotfix window as `db5242c9a`. On production `local_costcenter` is
+installed → accesslib's resolution chain step 1 (BizLMS canonical) is
+taken; behaviour identical to local-dev verification. Plugin versions
+bumped so post-deploy `Admin → Notifications → purge caches` picks up
+the new code:
+- `local_airpay_courses` `1.11.2 → 1.11.3` (catalog v2 filter)
+- `theme_airpayux` `2026052409 → 2026052410` (dashboard "Recommended")
+- `block_sentientia_recommendations` `2026052500 → 2026052901` (defensive gate)
+
+Optional post-deploy cleanup: a one-shot SQL to expire pre-hotfix rec
+rows whose course is outside the user's current tenant:
+```sql
+UPDATE {local_sentientia_rec_log} SET status = 'expired', timemodified = UNIX_TIMESTAMP()
+WHERE status = 'active' AND timecreated < UNIX_TIMESTAMP('2026-05-28');
+```
+The defensive block-side gate already prevents user-facing leaks from
+those rows; this cleanup is for audit-log hygiene only.
 
 ---
 
