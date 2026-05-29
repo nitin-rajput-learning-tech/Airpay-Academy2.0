@@ -1,5 +1,5 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-05-27 (**Sidebar role switcher** — surfaced BizLMS role switching in the airpayux shell sidebar for multi-role users; backend already worked but the shell discarded the switcher HTML. Verified Admin↔Learner round-trip for Nitin. See top H2. Prior 2026-05-25:) (**Goal C CLOSED** — four full per-persona user guides shipped under `docs/user-guides/` (Tenant Admin, Course Author, Compliance Officer, Learner), each ≥20 pages with login + full walkthrough + mobile + troubleshooting + v1.0.37-beta changelog; plus a README index with chooser flowchart and 4 screenshot manifests. See the "GOAL C CLOSED" H2 immediately below. Prior update 2026-05-24:) (Three parallel-chip MVPs shipped: **Tier 2.6 Calendar Sync** — `local_sentientia_calendar` with token-URL ICS feed, 4 feature flags, 28 PHPUnit assertions, ADR-013, Hindi 100%; **Tier 1 #4 AI Quiz Generation Phase G.0** — `local_sentientia_aiquiz` with 4-layer cost defence and mock-mode demoable pipeline, ~47 PHPUnit tests, ADR-012, Hindi 100%; **Tier 2 #7 Real-time Leaderboards Phase L.0** — `local_sentientia_leaderboard` + `block_sentientia_leaderboard` with SSE-driven live ranking across quiz/completion/skill board types, GDPR-compliant opt-out, ADR-014, Hindi 100%. **Platform Visual Audit v4.1.0** shipped from mobile-app session — 14 surfaces audited (9 P0 / 8 P1 / 6 P2 findings), CONDITIONAL PASS verdict; full report at `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md`. Earlier today the night-run autonomous batch shipped 16 items: Phase B.12 cutover-day mechanical fixes (A1-A8), plugin PHPUnit coverage (B1-B2), Goal C user guides for 6 personas (C1-C6); cutover-day TODO list is now mostly empty modulo NVDA verification + activity_header runtime test. **Paygw security follow-up shipped earlier this session** — MD5 deprecated, require_login() at file scope removed, sandbox/live URL clarified, 13 new PHPUnit tests added. Phase B Moodle 5.2 upgrade is code-complete; production stays on 5.1 until customer-driven cutover decision. ADR-001 records the strategic pivot from "patch Moodle deployment" to "build saleable enterprise LMS product" — Airpay Academy is customer-zero. See `docs/adr/ADR-001-fork-strategy-and-product-pivot.md`.
+**Updated:** 2026-05-29 (**Cross-tenant leak broader-sweep CLOSED** — followed up commit `db5242c9a` with audits of 7 learner-facing surfaces (catalog, dashboard "Recommended for You", AI recommendations, BizLMS search, featured widget). Two real leaks fixed (recommendation_engine candidate list fed Claude cross-tenant catalog; dashboard recommendations leaked through shared-course categories), one minor leak fixed (catalog filter-chip name), 4 surfaces verified already-scoped. Catalog `sharing_manager` gains `build_catalog_filter_sql_v2` that drives the BASE filter through accesslib while preserving Sprint C/D share-awareness. See "Tenant leak in onboarding wizard" H2 below for the audit results table. Prior 2026-05-27:) (**Sidebar role switcher** — surfaced BizLMS role switching in the airpayux shell sidebar for multi-role users; backend already worked but the shell discarded the switcher HTML. Verified Admin↔Learner round-trip for Nitin. See top H2. Prior 2026-05-25:) (**Goal C CLOSED** — four full per-persona user guides shipped under `docs/user-guides/` (Tenant Admin, Course Author, Compliance Officer, Learner), each ≥20 pages with login + full walkthrough + mobile + troubleshooting + v1.0.37-beta changelog; plus a README index with chooser flowchart and 4 screenshot manifests. See the "GOAL C CLOSED" H2 immediately below. Prior update 2026-05-24:) (Three parallel-chip MVPs shipped: **Tier 2.6 Calendar Sync** — `local_sentientia_calendar` with token-URL ICS feed, 4 feature flags, 28 PHPUnit assertions, ADR-013, Hindi 100%; **Tier 1 #4 AI Quiz Generation Phase G.0** — `local_sentientia_aiquiz` with 4-layer cost defence and mock-mode demoable pipeline, ~47 PHPUnit tests, ADR-012, Hindi 100%; **Tier 2 #7 Real-time Leaderboards Phase L.0** — `local_sentientia_leaderboard` + `block_sentientia_leaderboard` with SSE-driven live ranking across quiz/completion/skill board types, GDPR-compliant opt-out, ADR-014, Hindi 100%. **Platform Visual Audit v4.1.0** shipped from mobile-app session — 14 surfaces audited (9 P0 / 8 P1 / 6 P2 findings), CONDITIONAL PASS verdict; full report at `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md`. Earlier today the night-run autonomous batch shipped 16 items: Phase B.12 cutover-day mechanical fixes (A1-A8), plugin PHPUnit coverage (B1-B2), Goal C user guides for 6 personas (C1-C6); cutover-day TODO list is now mostly empty modulo NVDA verification + activity_header runtime test. **Paygw security follow-up shipped earlier this session** — MD5 deprecated, require_login() at file scope removed, sandbox/live URL clarified, 13 new PHPUnit tests added. Phase B Moodle 5.2 upgrade is code-complete; production stays on 5.1 until customer-driven cutover decision. ADR-001 records the strategic pivot from "patch Moodle deployment" to "build saleable enterprise LMS product" — Airpay Academy is customer-zero. See `docs/adr/ADR-001-fork-strategy-and-product-pivot.md`.
 
 **Historical context:** Wave 1 + Wave 2 audit entries archived at `docs/_archive/PROJECT-STATE-history.md`.
 
@@ -46,23 +46,41 @@ recommended courses) had **zero tenant scoping** — pulled all visible
 **Visual proof:** user 2997 re-ran onboarding step 2 after the fix → now
 shows exactly one "Public · 183 courses" tile, no AIRPAY/ZEEA leak.
 
-**Broader sweep needed (separate task):** other learner-facing surfaces
-that list courses/categories should be audited for the same anti-pattern:
-- `local/airpay_catalog/{index.php, public.php, mycourses.php}` via
-  `classes/catalog_manager.php` (browse / search)
-- `local/airpay_catalog/cart.php` (course details + checkout)
-- `theme/airpayux/layout/dashboard.php` learner "Recommended for You"
-  block (lines ~958-996 — naturally tenant-scoped by enrolment today, but
-  brittle for new learners)
-- `local/sentientia_recommendations/classes/recommendation_engine.php`
-  (AI-driven recommendations; ensure the prompt context is tenant-scoped)
-- `local/search/*` search results
-- featured-courses widget in `local/airpay_courses/lib.php`
+**Broader sweep — COMPLETE (2026-05-29):** seven learner-facing surfaces
+audited; clear leaks fixed, already-scoped surfaces documented.
 
-**Action for production:** the fix needs to be deployed to production
-(it's a real cross-tenant leak — recommend treating as a hotfix). On
-production `local_costcenter` is installed, so the canonical resolver
-path will be used; behaviour identical to local-dev verification above.
+| # | Surface | Audit outcome | Action | Commit |
+|---|---------|---------------|--------|--------|
+| 1a | `local/airpay_catalog/classes/catalog_manager.php` (`get_courses`, `get_trending`, `get_new`, `get_categories`) | Already tenant-scoped via `sharing_manager::build_catalog_filter_sql` (path-based, share-aware). | Refactored to drive scoping through `accesslib::get_tenant_category_id` via new `build_catalog_filter_sql_v2`; Sprint C/D share-awareness preserved (EXISTS union'd in); now fails closed when resolver returns null. | ✅ `0acb6963` |
+| 1b | `local/airpay_catalog/index.php` filter-chip name | **Minor leak**: `?category=N` rendered any category's name; result LIST was scoped, but chip label disclosed cross-tenant category names. | Validate `id` is in viewer's tenant subtree via accesslib before showing chip name; siteadmin unbounded. | ✅ `1f95f172` |
+| 1c | `local/airpay_catalog/public.php` (`commerce::get_public_catalog`) | Hard-scoped to `public_tenant_id` (default `/77`) via `c.open_path = :pubexact OR LIKE :pubprefix`. | None — already scoped (and intentional: this is the public/guest homepage). | — |
+| 1d | `local/airpay_catalog/mycourses.php` | Uses `enrol_get_my_courses()` — enrolment-scoped naturally. | None — enrolment is the right boundary here (a user keeps their enrolled courses across tenant moves). | — |
+| 1e | `local/airpay_catalog/cart.php` | Session-based cart; no `{course}` / `{course_categories}` queries. | None. | — |
+| 2 | `theme/airpayux/layout/dashboard.php` lines ~958-996 "Recommended for You" | Naturally tenant-safe for the common case (categories derived from enrolled-course list, enrolments are tenant-scoped). Two failure modes: brand-new learners with zero enrolments saw empty block; cross-tenant SHARED enrolments (Sprint C/D) mixed lender's categories into the recommendation surface. | Resolve `tenant_catid` via accesslib; constrain candidate to `(cc.id = :catid OR cc.path LIKE :catpathwild)`. Cold-start fallback added: brand-new learners now see top-3 most-enrolled courses in their home tenant. Strict home-tenant scoping per Nitin's directive. Theme version `2026052409 → 2026052410`. | ✅ `4d940ba7` |
+| 3 | `local/sentientia_recommendations/classes/recommendation_engine.php::build_candidate_list` | **Real leak**: unscoped `SELECT * FROM {course} WHERE visible = 1 AND id > 1` fed Claude with cross-tenant course IDs. AI could (and would) recommend Airpay courses to a Public learner; cross-tenant rows ALSO persisted into `local_sentientia_rec_log` polluting audits. | Tenant-scope via accesslib (same `cc.id OR cc.path LIKE` pattern). Fail-closed on unresolvable tenant. `profile->tenant === 0` (siteadmin / test fixture) keeps legacy unscoped behaviour. 3 new PHPUnit cases. | ✅ `1db1599f` |
+| 4 | `local/search/{allcourses, ajax, coursedetails}.php` | `allcourses.php` delegates to `\local_courses\output\search::get_elearning_courselist_query()` which has built-in path-based tenant scoping (filters `c.open_path` against the user's `open_path` + ancestors). `ajax.php` is enrolment-scoped (joins `role_assignments WHERE userid = $USER->id`). `coursedetails.php` has a `$USER->open_costcenterid != $course->open_costcenterid` redirect guard — production works (BizLMS resolves `open_costcenterid` dynamically at runtime); local-dev is brittle (both fields null → `null != null` = false → no redirect) but local-dev doesn't ship `local/search` to learners (it's a BizLMS-era surface). | Documentation-only finding. The BizLMS-era plugin stays on its existing scoping mechanism; reconsider when Sentientia is deployed to a non-BizLMS customer (see Hardening backlog below). | — |
+| 5 | `local/airpay_courses/lib.php::local_airpay_courses_render_featured_widget` → `featured_manager::get_widget_for_user` | Tenant-scoped via `(f.costcenterid = 0 OR f.costcenterid = :ctid)` keyed off the user's `open_path` top-level segment. `costcenterid = 0` is the admin-curated "all tenants" feature; otherwise scoped to the user's tenant. | None — already scoped. | — |
+
+**Hardening backlog (non-blocking):**
+
+- `local/search/coursedetails.php`'s `open_costcenterid` check could be made
+  resolver-robust by adding a defensive `open_path`-based guard. Punted
+  because (a) production works via BizLMS runtime resolution; (b) the file
+  lives outside `moodle-enhancement/` and modifying it is out of scope for
+  this audit; (c) Sentientia's roadmap is to deprecate this surface in
+  favour of `local_airpay_catalog`'s native course-detail page.
+- `catalog_manager::viewer_tenant_root()` parses `$USER->open_path` itself
+  rather than calling accesslib. Kept because the EXISTS share-table check
+  needs the org id (not the category id) — different concept. Documented
+  inline; centralising both resolvers into accesslib is a future refactor.
+
+**Action for production:** all four code commits land via the same hotfix
+window as `db5242c9a`. On production `local_costcenter` is installed →
+accesslib's resolution chain step 1 (BizLMS canonical) is taken; behaviour
+identical to local-dev verification. Plugin versions bumped so
+post-deploy `Admin → Notifications → purge caches` picks up the new
+`local_airpay_courses` (`1.11.2 → 1.11.3`) and `theme_airpayux`
+(`2026052409 → 2026052410`) plugin codes.
 
 ---
 
