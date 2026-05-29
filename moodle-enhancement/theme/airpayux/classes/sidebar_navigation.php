@@ -263,6 +263,12 @@ class sidebar_navigation {
                 $items[] = $this->item('My Cart', 'fa-shopping-cart',
                     '/local/airpay_cart/index.php', $currenturl);
             }
+            // E-02 (QA Walk 2026-05-29): managers are learners too — give
+            // them their own Skills dashboard, same as the Learner shell.
+            if ($this->can_view_own_skills()) {
+                $items[] = $this->item('My Skills', 'fa-bullseye',
+                    '/local/airpay_skills/index.php', $currenturl);
+            }
             $items[] = $this->item('Certificates', 'fa-certificate', '/local/airpay_pages/certificates.php', $currenturl);
             $items[] = $this->item('Profile', 'fa-user', '/local/airpay_users/profile.php', $currenturl);
             return $items;
@@ -303,6 +309,15 @@ class sidebar_navigation {
         if ($this->iscomplianceuser) {
             $items[] = $this->item('Compliance', 'fa-shield',
                 '/local/airpay_compliance_report/index.php', $currenturl);
+        }
+
+        // E-02 (QA Walk 2026-05-29): surface the learner's own Skills
+        // dashboard (gap analysis + radar + self-rate). No userid param →
+        // index.php defaults to $USER. Cap-gated, no feature flag — same
+        // pattern as the iscomplianceuser Compliance link above.
+        if ($this->can_view_own_skills()) {
+            $items[] = $this->item('My Skills', 'fa-bullseye',
+                '/local/airpay_skills/index.php', $currenturl);
         }
 
         $items[] = $this->item('Certificates', 'fa-certificate', '/local/airpay_pages/certificates.php', $currenturl);
@@ -371,6 +386,30 @@ class sidebar_navigation {
                 return false;
             }
             return has_capability('local/sentientia_live:create', \context_system::instance());
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Can the current user reach their own Skills dashboard?
+     *
+     * E-02 (QA Walk 2026-05-29): the learner-facing skills dashboard
+     * (/local/airpay_skills/index.php — gap analysis, radar chart,
+     * recommended courses, self-rate) existed but had NO sidebar entry, so
+     * learners couldn't discover it (the siteadmin shell only links the
+     * admin page admin.php). Gate the "My Skills" link by the same
+     * capability the skills surface declares — local/airpay_skills:view,
+     * granted to the student archetype — so it shows for learners and
+     * disappears if an admin revokes the cap or the plugin isn't installed
+     * (a future Sentientia customer who didn't license Skills). No new
+     * feature flag: this mirrors the cap-only iscomplianceuser Compliance
+     * link (Bug #11) — a discoverability fix for an existing, live surface,
+     * not a new feature. Safe-fails to false.
+     */
+    private function can_view_own_skills(): bool {
+        try {
+            return has_capability('local/airpay_skills:view', \context_system::instance());
         } catch (\Throwable $e) {
             return false;
         }
