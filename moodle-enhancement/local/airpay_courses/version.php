@@ -35,10 +35,16 @@ $plugin->component = 'local_airpay_courses';
 // Stream F / Wave E2 P4 (2026-05-25) — inline call to
 // \local_airpay_whatsapp\notification_bridge::send_course_due_soon
 // from course_reminder for the <48h urgent surface. No schema change.
-$plugin->version   = 2026052501;
+// Broader-sweep follow-up (2026-05-29) — sharing_manager gains
+// build_catalog_filter_sql_v2() that drives the BASE tenant filter
+// through \local_airpay_org\accesslib::get_tenant_category_id (the
+// same canonical resolver onboarding/dashboard/AI-recs use post
+// db5242c9a) while preserving Sprint C/D's EXISTS share-table union.
+// Catalog manager now routes through v2; v1 stays for backward compat.
+$plugin->version   = 2026052901;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.11.2';
+$plugin->release   = '1.11.3';
 $plugin->dependencies = [
     'local_airpay_org' => 2026041600,
 ];

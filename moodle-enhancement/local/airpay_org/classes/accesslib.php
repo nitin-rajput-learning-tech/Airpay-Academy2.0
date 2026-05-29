@@ -572,10 +572,14 @@ class accesslib {
         $top_id   = (int) $parts[0];
         $top_path = '/' . $top_id;
 
-        // Per-request memoisation.
-        static $cache = [];
-        if (array_key_exists($top_path, $cache)) {
-            return $cache[$top_path];
+        // Per-request memoisation. Use a static property (not a static
+        // local) so PHPUnit tests can drop the cache between cases via
+        // self::reset_tenant_category_cache() -- the resolver's DB lookup
+        // is sensitive to course_categories rows that get rolled back by
+        // resetAfterTest(), so cross-test cache pollution would otherwise
+        // make tests order-dependent.
+        if (array_key_exists($top_path, self::$tenant_category_cache)) {
+            return self::$tenant_category_cache[$top_path];
         }
 
         // (1) BizLMS canonical lookup.
@@ -584,7 +588,7 @@ class accesslib {
             try {
                 $catid = (int) $DB->get_field('local_costcenter', 'category', ['path' => $top_path]);
                 if ($catid > 0) {
-                    return $cache[$top_path] = $catid;
+                    return self::$tenant_category_cache[$top_path] = $catid;
                 }
             } catch (\Throwable $e) {
                 // Schema mismatch — fall through.
@@ -599,7 +603,7 @@ class accesslib {
                 $catid = (int) $DB->get_field('course_categories', 'id',
                     ['idnumber' => $shortname, 'depth' => 1]);
                 if ($catid > 0) {
-                    return $cache[$top_path] = $catid;
+                    return self::$tenant_category_cache[$top_path] = $catid;
                 }
             }
         } catch (\Throwable $e) {
@@ -607,7 +611,31 @@ class accesslib {
         }
 
         // (3) Defensive fail-closed.
-        return $cache[$top_path] = null;
+        return self::$tenant_category_cache[$top_path] = null;
+    }
+
+    /**
+     * Per-request memoisation cache for {@see get_tenant_category_id}.
+     *
+     * Public so PHPUnit tests + Moodle's `reset_all_data()` hook can drop
+     * the cache between test runs without us having to expose a separate
+     * setter for every cached lookup the class adds in future.
+     *
+     * @var array<string, int|null>  Keyed by '/TENANT' (top-level org path).
+     */
+    private static array $tenant_category_cache = [];
+
+    /**
+     * Drop the per-request tenant-category memoisation.
+     *
+     * Called from tests via setUp() so the resolver doesn't return a
+     * stale category-id from the previous test's (rolled-back) DB state.
+     * Production code never needs to call this -- the cache is naturally
+     * per-request, and each web request spawns a fresh PHP process with
+     * an empty $tenant_category_cache.
+     */
+    public static function reset_tenant_category_cache(): void {
+        self::$tenant_category_cache = [];
     }
 
     /**

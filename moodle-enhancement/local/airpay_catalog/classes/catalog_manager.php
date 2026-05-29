@@ -17,11 +17,20 @@ class catalog_manager {
      * Derive the viewer's top-level tenant root from $USER->open_path.
      *
      * Returns 0 for site admins (so every tenant-scoped query gets the
-     * "no filter" 1=1 from sharing_manager::build_catalog_filter_sql).
+     * "no filter" 1=1 from sharing_manager::build_catalog_filter_sql_v2).
      * Returns the integer tenant root for normal tenant-bound users.
      *
      * Sprint C addition — exposed as a single helper so all four
      * catalog query methods compute the tenant the same way.
+     *
+     * Note (2026-05-29 broader-sweep follow-up): this helper extracts
+     * the same top-level segment that
+     * \local_airpay_org\accesslib::get_tenant_category_id does. The
+     * org-id form is kept here because the EXISTS share-table check
+     * needs the org id (tenant_id column = '/1' → 1). The accesslib
+     * resolver is called downstream in build_catalog_filter_sql_v2 to
+     * derive the category-path filter from the same open_path. Both
+     * derivations agree on the tenant identity.
      *
      * @return int Tenant root (0 = unscoped / site admin)
      */
@@ -58,15 +67,18 @@ class catalog_manager {
         $conditions = ['c.visible = 1', 'c.id > 1'];
         $params = [];
 
-        // Sprint C: tenant scoping now also UNIONs in shared courses.
-        // The viewer sees:
-        //   (a) courses inside their tenant tree (the "owned" path), AND
-        //   (b) courses an Airpay admin has explicitly shared to their
-        //       tenant via local_airpay_courses_tenant_share.
-        // Site admins (viewer_tenant=0) get a 1=1 pass-through.
+        // Sprint C tenant scoping + 2026-05-29 broader-sweep migration to
+        // accesslib's canonical category-path resolver. The viewer sees:
+        //   (a) courses whose CATEGORY sits inside their tenant subtree
+        //       (resolved via \local_airpay_org\accesslib::get_tenant_category_id,
+        //       same helper used by onboarding/dashboard/AI-recs), AND
+        //   (b) courses an admin has explicitly shared to their tenant
+        //       via local_airpay_courses_tenant_share (Sprint C/D).
+        // Site admins (viewer_tenant=0) get a 1=1 pass-through; tenant
+        // users whose tenant can't be resolved get 0=1 (fail closed).
         $viewer_tenant = self::viewer_tenant_root();
         [$tenant_sql, $tenant_params] =
-            \local_airpay_courses\sharing_manager::build_catalog_filter_sql(
+            \local_airpay_courses\sharing_manager::build_catalog_filter_sql_v2(
                 'c', $viewer_tenant);
         $conditions[] = $tenant_sql;
         $params = array_merge($params, $tenant_params);
@@ -169,7 +181,7 @@ class catalog_manager {
 
         $params = ['since' => time() - (30 * 86400)];
         [$tenant_sql, $tenant_params] =
-            \local_airpay_courses\sharing_manager::build_catalog_filter_sql('c', $viewer_tenant);
+            \local_airpay_courses\sharing_manager::build_catalog_filter_sql_v2('c', $viewer_tenant);
         $params = array_merge($params, $tenant_params);
 
         $courses = $DB->get_records_sql(
@@ -207,7 +219,7 @@ class catalog_manager {
 
         $params = ['since' => time() - (30 * 86400)];
         [$tenant_sql, $tenant_params] =
-            \local_airpay_courses\sharing_manager::build_catalog_filter_sql('c', $viewer_tenant);
+            \local_airpay_courses\sharing_manager::build_catalog_filter_sql_v2('c', $viewer_tenant);
         $params = array_merge($params, $tenant_params);
 
         $courses = $DB->get_records_sql(
@@ -284,7 +296,7 @@ class catalog_manager {
         if ($cached !== false) { return $cached; }
 
         [$tenant_sql, $tenant_params] =
-            \local_airpay_courses\sharing_manager::build_catalog_filter_sql('c', $viewer_tenant);
+            \local_airpay_courses\sharing_manager::build_catalog_filter_sql_v2('c', $viewer_tenant);
 
         $result = array_values($DB->get_records_sql(
             "SELECT cc.id, cc.name,

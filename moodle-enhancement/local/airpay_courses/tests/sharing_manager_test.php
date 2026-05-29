@@ -226,4 +226,63 @@ class sharing_manager_test extends \advanced_testcase {
         $this->expectException(\moodle_exception::class);
         sharing_manager::share_course(999999, [77]);
     }
+
+    // -----------------------------------------------------------------
+    //  v2 builder — category-path-based filter via accesslib resolver
+    //  Broader-sweep follow-up to commit db5242c9a (2026-05-29).
+    // -----------------------------------------------------------------
+
+    public function test_build_catalog_filter_sql_v2_passthrough_for_admin(): void {
+        // viewer_tenant=0 means site admin or unscoped — should return 1=1
+        // identical to v1's behaviour.
+        [$sql, $params] = sharing_manager::build_catalog_filter_sql_v2('c', 0);
+        $this->assertSame('1=1', $sql);
+        $this->assertSame([], $params);
+    }
+
+    public function test_build_catalog_filter_sql_v2_fails_closed_for_unresolvable_tenant(): void {
+        $this->resetAfterTest(true);
+        // No local_airpay_org rows + no local_costcenter table -> accesslib
+        // resolves to null -> v2 returns ['0=1', []] so the catalog renders
+        // zero rows instead of falling back to "every visible course".
+        \local_airpay_org\accesslib::reset_tenant_category_cache();
+        [$sql, $params] = sharing_manager::build_catalog_filter_sql_v2('c', 77);
+        $this->assertSame('0=1', $sql);
+        $this->assertSame([], $params);
+    }
+
+    public function test_build_catalog_filter_sql_v2_resolves_via_org_to_category(): void {
+        global $DB;
+        $this->resetAfterTest(true);
+        \local_airpay_org\accesslib::reset_tenant_category_cache();
+
+        if (!$DB->get_manager()->table_exists('local_airpay_org')) {
+            $this->markTestSkipped('local_airpay_org not installed in test fixture');
+        }
+
+        // Set up the resolver chain: local_airpay_org id=77 ->
+        // shortname='t77'; course_categories idnumber='t77' -> the catid
+        // that v2's filter should bind to :share_v2_catid.
+        $cat = $this->getDataGenerator()->create_category([
+            'name'     => 'Tenant 77',
+            'idnumber' => 't77',
+        ]);
+        $DB->execute(
+            "INSERT INTO {local_airpay_org}
+               (id, fullname, shortname, parentid, path, depth, visible,
+                sortorder, timecreated, timemodified)
+             VALUES (:id, :fn, :sn, 0, :path, 1, 1, 0, :t, :t)",
+            ['id' => 77, 'fn' => 'Tenant 77', 'sn' => 't77', 'path' => '/77', 't' => time()]
+        );
+
+        [$sql, $params] = sharing_manager::build_catalog_filter_sql_v2('c', 77);
+
+        $this->assertStringContainsString('cc.id = :share_v2_catid', $sql);
+        $this->assertStringContainsString('cc.path', $sql);
+        $this->assertStringContainsString('local_airpay_courses_tenant_share', $sql,
+            'v2 must preserve Sprint C/D share-table EXISTS check');
+        $this->assertSame((int)$cat->id, (int)$params['share_v2_catid']);
+        $this->assertSame(77, $params['share_v2_tenant_id']);
+        $this->assertSame('active', $params['share_v2_status']);
+    }
 }

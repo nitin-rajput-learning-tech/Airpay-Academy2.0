@@ -269,6 +269,15 @@ class sharing_manager {
      * Site admins (passed `$viewer_tenant === 0`) get a permissive
      * '1=1' so they see every course regardless of share state.
      *
+     * **Deprecated (2026-05-29):** callers should prefer
+     * \local_airpay_courses\sharing_manager::build_catalog_filter_sql_v2()
+     * which uses the canonical category-path resolver
+     * (\local_airpay_org\accesslib::get_tenant_category_id) as the base
+     * filter and unions in the EXISTS share clause. This v1 method stays
+     * intact for backward compatibility with external callers and the
+     * existing PHPUnit suite (sharing_manager_test.php). Internal catalog
+     * code has migrated to v2 in commit following db5242c9a.
+     *
      * @param string $alias    Course table alias (e.g. 'c')
      * @param int    $viewer_tenant Tenant root for the viewer (0 = siteadmin / unscoped)
      * @return array{0: string, 1: array} sql fragment + named params
@@ -299,6 +308,88 @@ class sharing_manager {
             'share_orgprefix'  => $prefix_path,
             'share_tenant_id'  => $viewer_tenant,
             'share_status'     => self::STATUS_ACTIVE,
+        ];
+        return [$sql, $params];
+    }
+
+    /**
+     * Build a CATEGORY-PATH-based catalog tenant filter (broader-sweep
+     * follow-up to db5242c9a's onboarding fix, 2026-05-29).
+     *
+     * Drives the BASE tenant filter through the canonical resolver
+     * \local_airpay_org\accesslib::get_tenant_category_id, so onboarding,
+     * dashboard recommendations, AI recommendations AND the catalog all
+     * agree on what "this learner's tenant" means. Then UNIONs in the
+     * Sprint C/D EXISTS check so a borrowed Airpay course shared to
+     * tenant 77 still surfaces in Public's catalog.
+     *
+     * Returns SQL of the form:
+     *   ( cc.id = :share_v2_catid
+     *     OR cc.path LIKE :share_v2_catpathwild
+     *     OR EXISTS (SELECT 1 FROM {local_airpay_courses_tenant_share} csh2
+     *                 WHERE csh2.courseid = <alias>.id
+     *                   AND csh2.tenant_id = :share_v2_tenant_id
+     *                   AND csh2.status = 'active') )
+     *
+     * The caller MUST include a JOIN to {course_categories} cc on
+     * `<alias>.category = cc.id` in the same query — catalog_manager
+     * methods already do, so this is a zero-cost requirement.
+     *
+     * Failure modes:
+     *   - viewer_tenant=0 (siteadmin / unscoped) -> '1=1' passthrough.
+     *   - resolver returns null (tenant id given but accesslib chain
+     *     fails) -> '0=1' fail closed. The catalog renders nothing.
+     *     Previous v1 method silently returned '1=1' on tenant=0 even
+     *     for non-admins, which was the wrong default for the
+     *     onboarding-leak risk model.
+     *
+     * @param string $course_alias Course-table alias used in the calling
+     *                              query (e.g. 'c'). Used by the EXISTS
+     *                              subquery's join condition.
+     * @param int    $viewer_tenant Tenant root for the viewer (0 =
+     *                              siteadmin / unscoped). When > 0 the
+     *                              accesslib resolver is invoked using
+     *                              '/'.$viewer_tenant as the open_path.
+     * @return array{0: string, 1: array} SQL fragment + named params.
+     */
+    public static function build_catalog_filter_sql_v2(string $course_alias,
+                                                         int $viewer_tenant): array {
+        global $DB;
+
+        if ($viewer_tenant <= 0) {
+            return ['1=1', []];
+        }
+
+        $tenant_catid = \local_airpay_org\accesslib::get_tenant_category_id(
+            '/' . $viewer_tenant);
+        if ($tenant_catid === null) {
+            // Tenant ID provided but accesslib can't resolve it (no
+            // BizLMS row at /TENANT, no Sentientia-native idnumber match).
+            // Fail closed -- rendering zero courses is safer than
+            // rendering every course.
+            return ['0=1', []];
+        }
+        $tenant_catpath = (string) $DB->get_field('course_categories', 'path',
+            ['id' => $tenant_catid]);
+        if ($tenant_catpath === '') {
+            // Resolver returned a catid but the category record has no
+            // path (shouldn't happen on a healthy Moodle, but guard).
+            return ['0=1', []];
+        }
+
+        $col_id = $course_alias === '' ? 'id' : "$course_alias.id";
+        $sql = "(cc.id = :share_v2_catid
+                  OR " . $DB->sql_like('cc.path', ':share_v2_catpathwild') . "
+                  OR EXISTS (
+                       SELECT 1 FROM {local_airpay_courses_tenant_share} csh2
+                        WHERE csh2.courseid  = $col_id
+                          AND csh2.tenant_id = :share_v2_tenant_id
+                          AND csh2.status    = :share_v2_status))";
+        $params = [
+            'share_v2_catid'        => $tenant_catid,
+            'share_v2_catpathwild'  => $tenant_catpath . '/%',
+            'share_v2_tenant_id'    => $viewer_tenant,
+            'share_v2_status'       => self::STATUS_ACTIVE,
         ];
         return [$sql, $params];
     }

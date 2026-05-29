@@ -40,15 +40,92 @@ class catalog_manager_test extends \advanced_testcase {
     use \local_airpay_core\phpunit\open_path_fixture_trait;
 
     /**
+     * 2026-05-29 broader-sweep follow-up: drop the per-request tenant
+     * category cache on accesslib so each test gets a clean resolver
+     * lookup. Without this, the cache would hold a category id from
+     * test N that's invalid in test N+1 after resetAfterTest() rolls
+     * the categories table back.
+     */
+    public function setUp(): void {
+        parent::setUp();
+        \local_airpay_org\accesslib::reset_tenant_category_cache();
+    }
+
+    /**
+     * Prime the accesslib resolver chain for a given tenant root.
+     *
+     * Creates (idempotently):
+     *   - course_categories row at depth=1 with idnumber='t' . $tenant_root
+     *   - local_airpay_org row with id=$tenant_root, shortname matching
+     *     the category idnumber, depth=1
+     *
+     * Result: \local_airpay_org\accesslib::get_tenant_category_id('/N')
+     * resolves to the category id returned here. Required for the v2
+     * catalog tenant filter (2026-05-29) because v2 keys off
+     * course_categories.idnumber via the Sentientia-native fallback in
+     * the resolver chain (no BizLMS local_costcenter on PHPUnit fixture).
+     *
+     * @return int course_categories.id for this tenant
+     */
+    private function setup_tenant_topology(int $tenant_root): int {
+        global $DB;
+
+        $shortname = 't' . $tenant_root;
+
+        // (1) Category at depth=1 with the right idnumber.
+        $existing_cat_id = (int) $DB->get_field('course_categories', 'id',
+            ['idnumber' => $shortname]);
+        if ($existing_cat_id) {
+            $cat_id = $existing_cat_id;
+        } else {
+            $cat = $this->getDataGenerator()->create_category([
+                'name'     => 'Tenant ' . $tenant_root,
+                'idnumber' => $shortname,
+            ]);
+            $cat_id = (int) $cat->id;
+        }
+
+        // (2) local_airpay_org row with explicit id=$tenant_root. Raw SQL
+        // because Moodle's insert_record() honours the sequence=true on
+        // the id column and would auto-assign a different id, breaking
+        // the resolver's lookup-by-id contract.
+        if ($DB->get_manager()->table_exists('local_airpay_org')
+                && !$DB->record_exists('local_airpay_org', ['id' => $tenant_root])) {
+            $DB->execute(
+                "INSERT INTO {local_airpay_org}
+                   (id, fullname, shortname, parentid, path, depth, visible,
+                    sortorder, timecreated, timemodified)
+                 VALUES (:id, :fn, :sn, 0, :path, 1, 1, 0, :t, :t)",
+                [
+                    'id'   => $tenant_root,
+                    'fn'   => 'Tenant ' . $tenant_root,
+                    'sn'   => $shortname,
+                    'path' => '/' . $tenant_root,
+                    't'    => time(),
+                ]
+            );
+        }
+
+        return $cat_id;
+    }
+
+    /**
      * Helper: create a course owned by a specific tenant.
+     *
+     * Day-3 contract: also set c.open_path so v1 sharing_manager filter
+     * and format_course's is_borrowed/is_owned logic both still work.
+     * Broader-sweep contract (2026-05-29): place the course in the
+     * tenant's primed course_category so the v2 cc.path filter matches.
      */
     private function make_tenant_course(int $tenant_root, string $name): object {
         global $DB;
+        $cat_id = $this->setup_tenant_topology($tenant_root);
         $course = $this->getDataGenerator()->create_course([
             'fullname'  => $name,
             'shortname' => 'sc_' . strtolower(preg_replace('/[^a-z0-9]/i', '', $name))
                 . '_' . random_int(1000, 9999),
             'visible'   => 1,
+            'category'  => $cat_id,
         ]);
         $DB->set_field('course', 'open_path', '/' . $tenant_root,
             ['id' => $course->id]);
@@ -57,9 +134,14 @@ class catalog_manager_test extends \advanced_testcase {
 
     /**
      * Helper: create a user belonging to a specific tenant.
+     *
+     * Also primes the resolver chain so this user's tenant resolves to
+     * a real course_categories.id (used when this user becomes the
+     * `setUser` viewer in the test).
      */
     private function make_tenant_user(int $tenant_root): object {
         global $DB;
+        $this->setup_tenant_topology($tenant_root);
         $u = $this->getDataGenerator()->create_user();
         $DB->set_field('user', 'open_path', '/' . $tenant_root,
             ['id' => $u->id]);
@@ -194,8 +276,12 @@ class catalog_manager_test extends \advanced_testcase {
 
     public function test_subtenant_user_sees_root_tenant_courses(): void {
         // A user at /1/183/45 (deep inside Airpay's tree) should see
-        // all courses with open_path under /1 — the LIKE :prefix
-        // clause uses '/1/%' so this is automatic.
+        // every course under Airpay's tenant — the OR cc.path LIKE
+        // :catpathwild clause in v2 covers descendants of the tenant
+        // category root. Previously this test exercised c.open_path
+        // LIKE '/1/%'; v2 keys off course_categories.path instead, so
+        // the deep course is now placed in Airpay's tenant category
+        // (rather than the default Miscellaneous cat) to match.
         global $DB;
         $u = $this->make_tenant_user(1);
         // Override to deep path.
@@ -204,9 +290,10 @@ class catalog_manager_test extends \advanced_testcase {
         $this->setUser($u);
 
         $airpay_root  = $this->make_tenant_course(1,  'Airpay root course');
-        $airpay_deep  = $this->getDataGenerator()->create_course([
-            'fullname' => 'Course in a deeper Airpay subtree',
-        ]);
+        $airpay_deep  = $this->make_tenant_course(1,  'Course in a deeper Airpay subtree');
+        // Mark the deep course's open_path as a sub-org path so any v1
+        // consumer (format_course's is_owned check) still recognises it
+        // as Airpay-owned.
         $DB->set_field('course', 'open_path', '/1/183',
             ['id' => $airpay_deep->id]);
 
@@ -214,7 +301,7 @@ class catalog_manager_test extends \advanced_testcase {
         $ids = $this->ids($result);
 
         $this->assertContains((int) $airpay_root->id, $ids,
-            'Deep Airpay user should see root-level Airpay courses (LIKE prefix)');
+            'Deep Airpay user should see root-level Airpay courses');
         $this->assertContains((int) $airpay_deep->id, $ids,
             'Deep Airpay user should see intermediate-level Airpay courses');
     }
