@@ -250,3 +250,113 @@ dark mode).
   (already flag-gated) signup feature, not new features.
 - Versions: `local_airpay_users` 2.7.0→2.7.1; `theme_airpayux`
   1.0.39-beta→1.0.40-beta.
+
+---
+
+## C-002 v2 — Compliance Report export gate → dedicated capability
+
+Supersedes the inline C-002 fix (QA walk) with a dedicated capability, and
+**tightens scope** by owner decision: **admins + Compliance Officers may export;
+line managers may VIEW the dashboard but NOT bulk-export PII** (the inline v1 had
+let any dashboard-viewer export).
+
+**Plugin:** `local_airpay_compliance_report` `2026041200` → `2026052900`.
+
+### What changed
+| File | Change |
+|------|--------|
+| `db/access.php` *(new)* | Capability `local/airpay_compliance_report:export` (`captype=read`, `RISK_PERSONAL`, `CONTEXT_SYSTEM`, `manager` archetype). |
+| `classes/permission.php` *(new)* | `can_export()` — one gate for export.php + the button. Checks the cap at **system context** AND every **category context** where the user holds a role (so a cap granted via the category-assigned Compliance Officer / OrgAdmin shell resolves — a system-context `has_capability()` alone misses it). `grant_export_to_default_roles()` — idempotent install/upgrade grant to course-managers + role 9. |
+| `export.php` | Inline C-002 block → `if (!permission::can_export()) throw nopermission;`. Drops phantom `local/courses:manage`. |
+| `index.php` | Adds `can_export` to template context. |
+| `templates/dashboard.mustache` | Export button wrapped in `{{#can_export}}…{{/can_export}}`. |
+| `db/install.php`, `db/upgrade.php` | Grant on install / upgrade to `2026052900`. |
+| `lang/en`, `lang/hi` | Capability string (suite convention = en + hi). |
+| `tests/permission_test.php` *(new)* | 6 PHPUnit cases incl. the category-context cap + manager-exclusion. |
+
+### Verification (local XAMPP, Moodle 5.1.3+)
+**`permission::can_export()` per qa persona — matches the chosen policy:**
+
+| Persona | can_export | | Persona | can_export |
+|---------|:---:|---|---------|:---:|
+| qa_compliance (3423) | **YES** ✅ | | qa_manager (3420) | **no** ✅ |
+| qa_orgadmin (3418) | YES ✅ | | qa_employee (3421) | no ✅ |
+| qa_siteadmin (3417) | YES ✅ | | qa_trainer (3419) | no ✅ |
+| | | | qa_public (3422) | no ✅ |
+
+**End-to-end export as qa_compliance** (isolated authenticated HTTP session — the
+owner's acceptance test):
+```
+export.php → 200
+  Content-Type:        application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+  Content-Disposition: attachment; filename="Compliance_Report_2026-05-29.xlsx"
+  body: 22104 bytes   (no nopermission)
+```
+**Button visibility:** `index.php` (qa_compliance) → 200; rendered HTML contains
+the `airpay-compliance-rpt__export` "Export Excel" button → the `{{#can_export}}`
+gate shows it for the Compliance Officer (hidden for managers per the table).
+Saved artifact: [`compliance-report-qa_compliance.html`](./compliance-report-qa_compliance.html).
+
+DB sanity: cap `REGISTERED`; role 9 (`administrator` locally / Compliance Officer
+on prod) has the export rule `perm=1 @ system`.
+
+### Notes
+- **No live screenshot** — a user Chrome is connected, but logging it in as
+  `qa_compliance` would swap the `MoodleSession` cookie and disrupt the user's
+  own session. Used an isolated HTTP session instead (deterministic). A live
+  screenshot can be added on request.
+- Re-run: `php moodle-enhancement/tools/_verify_export_cap.php` (read-only,
+  localhost-guarded).
+- **Separate pre-existing bug — now also fixed (C-005):** `export.php?format=csv`
+  returned a themed 404 (CSV branch read the matrix with the wrong shape:
+  `$course['shortname']` on objects, row keys `empid`/`statuses` that don't
+  exist). Unrelated to permissions. Fixed by aligning the CSV branch with the
+  proven xlsx data shape (`->coursename`; `employee_id`/`fullname`/`designation`/
+  `courses`→`status_label`) + xlsx-parity summary block. Verified: qa_compliance
+  `?format=csv` → **200 + text/csv** (33 KB; header + per-course status columns +
+  summary). See `../qa-walk-2026-05-29/BUG-LOG.md` C-005.
+
+---
+
+## T-01 + T-02 — Sentientia Live reachable by the BizLMS trainer role
+
+Fixes the trainer-walk cluster blockers (`../qa-walk-2026-05-29/trainer.md` §5/§12):
+the `trainer` role (archetype `teacher`) could neither **enter** the live trainer
+dashboard (T-01, capability) nor **find** it (T-02, no sidebar link).
+
+**Plugins:** `local_sentientia_live` `2026052504` → `2026052900`;
+`theme_airpayux\sidebar_navigation` (no theme version bump — class-only change).
+
+### What changed
+| File | Change |
+|------|--------|
+| `local/sentientia_live/db/access.php` | `'teacher' => CAP_ALLOW` added to `:create` + `:run` archetypes. |
+| `local/sentientia_live/db/upgrade.php` *(step 2026052900)* | Back-fills the new default onto existing `archetype=teacher` roles via `assign_capability(overwrite=false)` — archetype defaults only auto-apply on a cap's first install (`lib/accesslib.php::update_capabilities`). |
+| `theme/airpayux/classes/sidebar_navigation.php` | New `can_create_live_session()` gate (`live.enabled` flag **+** `:create` cap, both safe-failing); "Live Sessions" → `trainer/index.php` link added to the Manager **and** Learner shells. |
+
+### Verification (local XAMPP, Moodle 5.1.3+)
+**T-01 — `has_capability` for qa_trainer (id 3419, role `trainer`/archetype `teacher`):**
+
+| Capability | Before | After |
+|------------|:------:|:-----:|
+| `local/sentientia_live:create` | NO | **YES** ✅ |
+| `local/sentientia_live:run` | NO | **YES** ✅ |
+
+Owner's exact one-liner → `YES`. Upgrade ran clean (`++ 2026052900: Success ++`, `purge_all_caches: Success`).
+
+**T-02 — rendered qa_trainer sidebar (Manager shell):**
+```
+Dashboard · My Team · Compliance · Live Sessions · ──── · My Courses · Catalog · Certificates · Profile
+                                   └─ /local/sentientia_live/trainer/index.php
+```
+
+### Notes
+- **No live screenshot** — same call as C-002 v2: the QA-walk `chrome-devtools` MCP
+  isn't connected this session, and logging the user's own Chrome in as `qa_trainer`
+  would swap the `MoodleSession` cookie and disrupt their session. Verification is
+  deterministic instead (`tools/_qa_t01_live_capcheck.php` + `tools/_qa_t02_navdump.php`,
+  both read-only / localhost-guarded). A live PNG can be added on request before the
+  production deploy.
+- Sidebar labels follow the file's existing convention (hardcoded English nav strings,
+  not `get_string`) — i18n is a separate all-labels pass, not introduced here.
+- Feature-flag respected: the link is gated on `live.enabled` (CLAUDE.md §13).
