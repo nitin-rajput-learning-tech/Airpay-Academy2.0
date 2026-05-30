@@ -350,7 +350,12 @@ defined('MOODLE_INTERNAL') || die();
 //   (2) white-label: configtitle/pluginname 'Epsilon' → 'Sentientia Academy UX' /
 //       'Airpay Academy UX (Sentientia)' across en/hi/kn/mr/sw (was a visible brand
 //       leak in Site Admin → Themes for non-English admins).
-$plugin->version   = 2026052905;
+// ADR-018 Wave 2 PR-2 (2026-05-30) — dashboard / sidebar_navigation /
+// core_renderer / hook_callbacks migrated off inline $USER->open_path parsing
+// onto the Sentientia seam local_sentientia_core\tenant_identity (root_for_user /
+// department_for_user / root_for_current_user / path_for_user). Behaviour-identical;
+// no SCSS change — bump invalidates the compiled-CSS cache + themerev defensively.
+$plugin->version   = 2026053000;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
@@ -369,7 +374,7 @@ $plugin->maturity  = MATURITY_BETA;
 // (83% reduction). Section 1 wrapped under body#page-login-index for
 // ID-specificity. Bundled bugfix: dark-mode selectors used descendant
 // combinator (never fired since #page-X IS body); now chained.
-$plugin->release   = '1.0.45-beta';  // …+ ADR-018 Wave 1: white-label Epsilon→Sentientia lang fix + dark-mode anchor-button bleed scoped to genuine links
+$plugin->release   = '1.0.46-beta';  // …+ ADR-018 W2: theme open_path callers (dashboard/sidebar/core_renderer/hook_callbacks) → tenant_identity seam
 // P1 #10 chip-J (2026-05-24) — _surface-profile.scss (2,507 lines)
 // decomposed into 4 per-surface partials: _surface-user, _surface-badges,
 // _surface-grade-report, _surface-calendar. Admin fragments moved to

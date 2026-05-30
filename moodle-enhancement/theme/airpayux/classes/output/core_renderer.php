@@ -1270,16 +1270,20 @@ JS;
             // Derive the user's costcenter and department from open_path
             // (open_costcenterid / open_departmentid columns do not exist
             // on production — open_path '/<cc>/<dept>/...' is canonical).
-            $user_path_parts = explode('/', trim($USER->open_path ?? '', '/'));
-            $user_cc   = (int)($user_path_parts[0] ?? 0);
-            $user_dept = (int)($user_path_parts[1] ?? 0);
+            // ADR-018 Wave 2: cc/dept via the Sentientia seam (was an inline
+            // explode). root_for_user / department_for_user accept any object
+            // carrying open_path, so the same calls serve the user and entities.
+            $user_cc   = \local_sentientia_core\tenant_identity::root_for_user($USER);
+            $user_dept = \local_sentientia_core\tenant_identity::department_for_user($USER);
 
             $derive_cc_dept = function ($obj) {
-                if (!$obj) return [0, 0];
-                $path = $obj->open_path ?? null;
-                if (empty($path)) return [0, 0];
-                $parts = explode('/', trim($path, '/'));
-                return [(int)($parts[0] ?? 0), (int)($parts[1] ?? 0)];
+                if (!$obj) {
+                    return [0, 0];
+                }
+                return [
+                    \local_sentientia_core\tenant_identity::root_for_user($obj),
+                    \local_sentientia_core\tenant_identity::department_for_user($obj),
+                ];
             };
 
             if($newpageurl == $CFG->wwwroot.'/course/completion.php' || $newpageurl == $CFG->wwwroot.'/backup/backup.php'){/*for course completion settings and backup page*/

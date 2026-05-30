@@ -336,12 +336,9 @@ class sidebar_navigation {
      */
     private function is_non_airpay_tenant_user(): bool {
         global $USER;
-        $path = $USER->open_path ?? '';
-        if ($path === '') {
-            return false;
-        }
-        $parts = explode('/', trim($path, '/'));
-        $root = isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
+        // ADR-018 Wave 2: tenant root via the Sentientia seam (was an inline
+        // explode). root_for_current_user() returns 0 when logged out / no path.
+        $root = \local_sentientia_core\tenant_identity::root_for_current_user();
         // Airpay tenant root = 1 (per project convention). Anything
         // else with a valid root is a "receiving" tenant.
         return $root > 0 && $root !== 1;

@@ -103,7 +103,7 @@ class hook_callbacks {
 
         // Tenant scope — BizLMS open_path. If column missing (test
         // fixture without local_costcenter), silently no-op.
-        $tenantpath = $USER->open_path ?? '';
+        $tenantpath = \local_sentientia_core\tenant_identity::path_for_user($USER);  // ADR-018 Wave 2 seam (was $USER->open_path)
         if (!$tenantpath) {
             return '';
         }

@@ -237,8 +237,9 @@ if (isloggedin() && !isguestuser()) {
             $tenantfilter_course = '';
             $tenantparams = [];
             if ($isldadmin && !empty($USER->open_path)) {
-                $parts = explode('/', $USER->open_path);
-                $toporg = '/' . ($parts[1] ?? '');
+                // ADR-018 Wave 2: tenant root via the Sentientia seam (was an
+                // inline explode). The LIKE-prefix filter below is kept as-is.
+                $toporg = '/' . \local_sentientia_core\tenant_identity::root_for_current_user();
                 $tenantfilter_user = " AND open_path LIKE :upath";
                 $tenantfilter_course = " AND open_path LIKE :cpath";
                 $tenantparams['upath'] = $toporg . '%';
