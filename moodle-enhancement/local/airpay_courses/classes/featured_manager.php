@@ -145,9 +145,10 @@ class featured_manager {
 
         $user = $DB->get_record('user', ['id' => $userid],
             'id, open_path', MUST_EXIST);
-        $parts = explode('/', trim((string) ($user->open_path ?? ''), '/'));
-        $tenant_top = isset($parts[0]) && ctype_digit($parts[0])
-            ? (int) $parts[0] : 0;
+        // ADR-018 Wave 2: tenant root via the Sentientia seam (was an inline
+        // explode of $user->open_path). Behaviour-identical — tenant_identity
+        // delegates to local_airpay_core\tenant behind the default-ON flag.
+        $tenant_top = \local_sentientia_core\tenant_identity::root_for_user($user);
 
         $rows = $DB->get_records_sql("
             SELECT f.id, f.courseid, f.label, f.sort_order,

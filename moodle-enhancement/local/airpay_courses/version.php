@@ -35,12 +35,18 @@ $plugin->component = 'local_airpay_courses';
 // Stream F / Wave E2 P4 (2026-05-25) — inline call to
 // \local_airpay_whatsapp\notification_bridge::send_course_due_soon
 // from course_reminder for the <48h urgent surface. No schema change.
-$plugin->version   = 2026052501;
+// ADR-018 Wave 2 PR-2 (2026-05-30) — featured_manager + request_manager
+// migrated off inline $USER->open_path parsing onto the Sentientia seam
+// local_sentientia_core\tenant_identity (root_for_user / path_root).
+// Behaviour-identical; declares the seam dependency so path_root() (new in
+// sentientia_core 2026053002) is present before this plugin upgrades.
+$plugin->version   = 2026053000;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.11.2';
+$plugin->release   = '1.11.3';
 $plugin->dependencies = [
     'local_airpay_org' => 2026041600,
+    'local_sentientia_core' => 2026053002,
 ];
 // Release history:
 // 1.6.0  Phase F.5 — native enrol modal (replaces deep-link)
