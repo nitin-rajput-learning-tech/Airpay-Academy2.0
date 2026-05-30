@@ -1,7 +1,147 @@
 # PROJECT STATE — Sentientia LMS (formerly Airpay Academy L&D OS)
-**Updated:** 2026-05-29 (**Trainer-walk T-01 + T-02 FIXED — Sentientia Live now reachable by the BizLMS `trainer` role: added `teacher` archetype to `:create`/`:run` in `access.php` + a `db/upgrade.php` back-fill onto existing teacher-archetype roles (Moodle only auto-applies archetype defaults on a cap's *first* install), and a capability + `live.enabled`-flag-gated "Live Sessions" sidebar link in the Manager + Learner shells. `local_sentientia_live` 2026052504→2026052900; verified qa_trainer `:create`/`:run` → YES + sidebar link rendered. Same session also fixed T-04 (block_airpay_trainer dashboard "Class not found") and decided T-05 by-design (trainers keep the richer /my/ shell, no forced redirect). Committed locally on production (0773c2e96 + c92fbdc2a + 18830886e); not pushed/deployed. See top H2.**; **C4 follow-up — fixed the legacy flag-OFF catalog add-to-cart double-question-mark URL bug + version bump; owner chose merge-now, landed via PR #3 → production (live file-copy + cache-purge still manual).**; **Resumed-session wave (Opus 4.8) — F-024 analytics visual walk + C10 P1 certificate polish + C4 public-storefront LXP restyle ALL SHIPPED, then a Bucket F verify close-out (F-030/F-031/F-032/F-033 — all verified-good, no code change; paygw security confirmed on the live path), then 5 owner-reported signup-flow UI fixes (honeypot field, tall-card zoom, duplicate success message, close-button glyph, unstyled confirm page) — all real-browser verified**; commits `7328c6364` / `6368f7617` / `76b5f9abc` / `ea00d36ab` + Bucket-F-verify + signup-fixes; C4 + C10-tenant-scope both feature-flagged default OFF; see top H2s. **Prior 2026-05-28:** **Stabilization Audit ALL 3 PHASES COMPLETE + 3 BLOCKERS FIXED** — `docs/audits/PLATFORM-STABILIZATION-AUDIT-2026-05-28.md` is the audit; `docs/adr/ADR-017-polymorphic-user-types.md` is the architectural drop. **Stream 1 (deploy-unblock fixes) shipped in commit `e32473e58`**: cap rename `local/courses:manage` → `local/airpay_courses:manage` in 5 files + drop `local/users:edit` fallback in user_manager (F-080/F-088, F-097); back-port 30 drift files across `local/airpay_pages` (17 incl. version.php + 11 CLI + EN lang + 3 HTML + qr_scan), `local/airpay_lifecycle` (6 incl. version.php + db/events + db/tasks + observer + compliance_check), `local/airpay_core` (2 CLI helpers), `theme/airpayux` (9 AMD files); deployed + cache purged + Apache log verified clean. **Stream 2 (ADR-017 polymorphic user-type)** drafted in Proposed status — schema (`local_airpay_user_type` + `local_airpay_employee_profile` + `local_airpay_consumer_profile`), `user_type_provider` interface (employee_provider + consumer_provider), 5-phase migration path, 7 open questions for Nitin to resolve. Closes F-001/F-003/F-004/F-005/F-006/F-007. **Stream 3 (Phase 3 consolidation)** organised 97 findings into 7 buckets: A (✅ shipped, 12 items) / B (Ship-small, 20) / C (Finish-large, 17) / D (Remove, 6) / E (Redesign, 4) / F (Investigate, 10) / §5 (v2 lock, 21). Estimated v1 close-out ~10-12 weeks. Prior on this same day:) (Stabilization Audit Phase 0 + Phase 1 COMPLETE — `docs/audits/PLATFORM-STABILIZATION-AUDIT-2026-05-28.md`. 97 findings logged (F-001–F-097). Phase 0 was desk-research across PROJECT-STATE, ADRs, state-cards, 4 prior audits, plugin maturity stamps, naming-transition. Phase 1 was runtime probing — Apache error log mining, DB capability + feature-flag inspection, workspace↔deployed file-count drift survey, plugin URL routing probes. **3 stop-the-bus 🔴 BLOCKING findings surfaced in Phase 1**: F-080/F-088 (caps `local/courses:manage` + `local/users:edit` referenced in 5 files but NOT registered — every page render logs Notice + silently locks L&D Admins out of course-management sidebar); F-091 (`local/airpay_pages` workspace missing 17 files including `version.php`, EN lang pack, 11 CLI scripts — IT deploy from workspace = broken plugin); F-092 (`local/airpay_lifecycle` workspace missing 6 files including the entire runtime: `version.php`, `db/events.php`, `db/tasks.php`, `classes/observer.php` — deploying from workspace = lifecycle observer + compliance cron stop firing). Phase 2 (ADR-017 polymorphic user-type) and Phase 3 (consolidate + triage) still to come. Prior 2026-05-27:) (**Sidebar role switcher** — surfaced BizLMS role switching in the airpayux shell sidebar for multi-role users; backend already worked but the shell discarded the switcher HTML. Verified Admin↔Learner round-trip for Nitin. See top H2. Prior 2026-05-25:) (**Goal C CLOSED** — four full per-persona user guides shipped under `docs/user-guides/` (Tenant Admin, Course Author, Compliance Officer, Learner), each ≥20 pages with login + full walkthrough + mobile + troubleshooting + v1.0.37-beta changelog; plus a README index with chooser flowchart and 4 screenshot manifests. See the "GOAL C CLOSED" H2 immediately below. Prior update 2026-05-24:) (Three parallel-chip MVPs shipped: **Tier 2.6 Calendar Sync** — `local_sentientia_calendar` with token-URL ICS feed, 4 feature flags, 28 PHPUnit assertions, ADR-013, Hindi 100%; **Tier 1 #4 AI Quiz Generation Phase G.0** — `local_sentientia_aiquiz` with 4-layer cost defence and mock-mode demoable pipeline, ~47 PHPUnit tests, ADR-012, Hindi 100%; **Tier 2 #7 Real-time Leaderboards Phase L.0** — `local_sentientia_leaderboard` + `block_sentientia_leaderboard` with SSE-driven live ranking across quiz/completion/skill board types, GDPR-compliant opt-out, ADR-014, Hindi 100%. **Platform Visual Audit v4.1.0** shipped from mobile-app session — 14 surfaces audited (9 P0 / 8 P1 / 6 P2 findings), CONDITIONAL PASS verdict; full report at `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md`. Earlier today the night-run autonomous batch shipped 16 items: Phase B.12 cutover-day mechanical fixes (A1-A8), plugin PHPUnit coverage (B1-B2), Goal C user guides for 6 personas (C1-C6); cutover-day TODO list is now mostly empty modulo NVDA verification + activity_header runtime test. **Paygw security follow-up shipped earlier this session** — MD5 deprecated, require_login() at file scope removed, sandbox/live URL clarified, 13 new PHPUnit tests added. Phase B Moodle 5.2 upgrade is code-complete; production stays on 5.1 until customer-driven cutover decision. ADR-001 records the strategic pivot from "patch Moodle deployment" to "build saleable enterprise LMS product" — Airpay Academy is customer-zero. See `docs/adr/ADR-001-fork-strategy-and-product-pivot.md`.
+**Updated:** 2026-05-29 (**QA-walk 2026-05-29 backlog FULLY CLOSED** — every actionable finding fixed or verified NOT-A-BUG. Closeout wave: **SA-04** (admin course-mgmt redirect now capability-gated → siteadmins reach native management), **P-01** (sidebar "My Cart" → the session cart that holds items), **P-02** (cart-badge AMD wired on the columns2/'standard' layout), **SA-05** ("Epsilon" → "Airpay Academy UX (Sentientia)" across 5 lang packs), **C-004** verified NOT-A-BUG (server-side filter re-aggregates KPIs + table). 5 branches pushed (e01 / e02[+P-01] / sa04 / sa05 / p02), **none merged or deployed to prod** — PR-merge + the E-01 flag-enable are the owner's calls. See top H2. Prior same-day: Employee-walk E-02 P2 FIXED — cap-gated "My Skills" sidebar link added to the Learner+Manager shells (`theme_airpayux\sidebar_navigation`) so learners can reach the existing `/local/airpay_skills/index.php` dashboard; the page itself was fine (transient QA repro, same shape as M-01). Theme class-only, no flag/version bump; branch `fix/qa-walk-e02-learner-skills-nav` pushed (not merged). M-01 P3 also verified NOT-A-BUG (team-KPI tile = `count($team_data)`, same source as the table; live tile = 1). Employee/manager QA-walk cluster now fully closed. See top H2. Prior same-day: Employee-walk E-01 P1 FIXED (+ E-03 P3) — one-click free self-enrolment for internal tenants. Root cause (verified, corrected the BUG-LOG's "no self-enrol/auto-enrol" guess): the catalog "Enroll" button routed free courses to `?action=addtocart` (never enrolled), and the cart's `enrollfree` called core `enrol_self()` which silently no-ops on key-gated courses (course 71 has an enrolment key) while falsely reporting success. Fix: new `local_airpay_catalog\enrolment` — `should_offer_oneclick()` policy (logged-in internal-tenant + free + flag; Public /77 + guests keep the cart) + `enrol_now()` mechanism (idempotent MANUAL enrol, bypasses the key, mirrors `cart_manager`); new `course.php?action=enrolnow`, grid/detail button routing, and a fix to the `cart.php` silent-success lie. Behind `sentientia.catalog.free_oneclick_enrol.enabled` (default OFF; enabled for /1 locally — PROD must enable per internal tenant). `local_airpay_catalog` 2026052901→2026052902; +8-case PHPUnit suite (CI) + 4 lang strings ×5 langs. Verified end-to-end: CLI (manual key bypass, idempotent) + real-browser (qa_employee one-click-enrolled 71+403, My Courses=2 — was the empty-page symptom) + 3 screenshots desktop/mobile. NOT pushed/deployed to prod. See top H2. Prior same-day: Trainer-walk T-01 + T-02 FIXED — Sentientia Live now reachable by the BizLMS `trainer` role: added `teacher` archetype to `:create`/`:run` in `access.php` + a `db/upgrade.php` back-fill onto existing teacher-archetype roles (Moodle only auto-applies archetype defaults on a cap's *first* install), and a capability + `live.enabled`-flag-gated "Live Sessions" sidebar link in the Manager + Learner shells. `local_sentientia_live` 2026052504→2026052900; verified qa_trainer `:create`/`:run` → YES + sidebar link rendered. Same session also fixed T-04 (block_airpay_trainer dashboard "Class not found") and decided T-05 by-design (trainers keep the richer /my/ shell, no forced redirect). Committed locally on production (0773c2e96 + c92fbdc2a + 18830886e); not pushed/deployed. See top H2.**; **C4 follow-up — fixed the legacy flag-OFF catalog add-to-cart double-question-mark URL bug + version bump; owner chose merge-now, landed via PR #3 → production (live file-copy + cache-purge still manual).**; **Resumed-session wave (Opus 4.8) — F-024 analytics visual walk + C10 P1 certificate polish + C4 public-storefront LXP restyle ALL SHIPPED, then a Bucket F verify close-out (F-030/F-031/F-032/F-033 — all verified-good, no code change; paygw security confirmed on the live path), then 5 owner-reported signup-flow UI fixes (honeypot field, tall-card zoom, duplicate success message, close-button glyph, unstyled confirm page) — all real-browser verified**; commits `7328c6364` / `6368f7617` / `76b5f9abc` / `ea00d36ab` + Bucket-F-verify + signup-fixes; C4 + C10-tenant-scope both feature-flagged default OFF; see top H2s. **Prior 2026-05-28:** **Stabilization Audit ALL 3 PHASES COMPLETE + 3 BLOCKERS FIXED** — `docs/audits/PLATFORM-STABILIZATION-AUDIT-2026-05-28.md` is the audit; `docs/adr/ADR-017-polymorphic-user-types.md` is the architectural drop. **Stream 1 (deploy-unblock fixes) shipped in commit `e32473e58`**: cap rename `local/courses:manage` → `local/airpay_courses:manage` in 5 files + drop `local/users:edit` fallback in user_manager (F-080/F-088, F-097); back-port 30 drift files across `local/airpay_pages` (17 incl. version.php + 11 CLI + EN lang + 3 HTML + qr_scan), `local/airpay_lifecycle` (6 incl. version.php + db/events + db/tasks + observer + compliance_check), `local/airpay_core` (2 CLI helpers), `theme/airpayux` (9 AMD files); deployed + cache purged + Apache log verified clean. **Stream 2 (ADR-017 polymorphic user-type)** drafted in Proposed status — schema (`local_airpay_user_type` + `local_airpay_employee_profile` + `local_airpay_consumer_profile`), `user_type_provider` interface (employee_provider + consumer_provider), 5-phase migration path, 7 open questions for Nitin to resolve. Closes F-001/F-003/F-004/F-005/F-006/F-007. **Stream 3 (Phase 3 consolidation)** organised 97 findings into 7 buckets: A (✅ shipped, 12 items) / B (Ship-small, 20) / C (Finish-large, 17) / D (Remove, 6) / E (Redesign, 4) / F (Investigate, 10) / §5 (v2 lock, 21). Estimated v1 close-out ~10-12 weeks. Prior on this same day:) (Stabilization Audit Phase 0 + Phase 1 COMPLETE — `docs/audits/PLATFORM-STABILIZATION-AUDIT-2026-05-28.md`. 97 findings logged (F-001–F-097). Phase 0 was desk-research across PROJECT-STATE, ADRs, state-cards, 4 prior audits, plugin maturity stamps, naming-transition. Phase 1 was runtime probing — Apache error log mining, DB capability + feature-flag inspection, workspace↔deployed file-count drift survey, plugin URL routing probes. **3 stop-the-bus 🔴 BLOCKING findings surfaced in Phase 1**: F-080/F-088 (caps `local/courses:manage` + `local/users:edit` referenced in 5 files but NOT registered — every page render logs Notice + silently locks L&D Admins out of course-management sidebar); F-091 (`local/airpay_pages` workspace missing 17 files including `version.php`, EN lang pack, 11 CLI scripts — IT deploy from workspace = broken plugin); F-092 (`local/airpay_lifecycle` workspace missing 6 files including the entire runtime: `version.php`, `db/events.php`, `db/tasks.php`, `classes/observer.php` — deploying from workspace = lifecycle observer + compliance cron stop firing). Phase 2 (ADR-017 polymorphic user-type) and Phase 3 (consolidate + triage) still to come. Prior 2026-05-27:) (**Sidebar role switcher** — surfaced BizLMS role switching in the airpayux shell sidebar for multi-role users; backend already worked but the shell discarded the switcher HTML. Verified Admin↔Learner round-trip for Nitin. See top H2. Prior 2026-05-25:) (**Goal C CLOSED** — four full per-persona user guides shipped under `docs/user-guides/` (Tenant Admin, Course Author, Compliance Officer, Learner), each ≥20 pages with login + full walkthrough + mobile + troubleshooting + v1.0.37-beta changelog; plus a README index with chooser flowchart and 4 screenshot manifests. See the "GOAL C CLOSED" H2 immediately below. Prior update 2026-05-24:) (Three parallel-chip MVPs shipped: **Tier 2.6 Calendar Sync** — `local_sentientia_calendar` with token-URL ICS feed, 4 feature flags, 28 PHPUnit assertions, ADR-013, Hindi 100%; **Tier 1 #4 AI Quiz Generation Phase G.0** — `local_sentientia_aiquiz` with 4-layer cost defence and mock-mode demoable pipeline, ~47 PHPUnit tests, ADR-012, Hindi 100%; **Tier 2 #7 Real-time Leaderboards Phase L.0** — `local_sentientia_leaderboard` + `block_sentientia_leaderboard` with SSE-driven live ranking across quiz/completion/skill board types, GDPR-compliant opt-out, ADR-014, Hindi 100%. **Platform Visual Audit v4.1.0** shipped from mobile-app session — 14 surfaces audited (9 P0 / 8 P1 / 6 P2 findings), CONDITIONAL PASS verdict; full report at `docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md`. Earlier today the night-run autonomous batch shipped 16 items: Phase B.12 cutover-day mechanical fixes (A1-A8), plugin PHPUnit coverage (B1-B2), Goal C user guides for 6 personas (C1-C6); cutover-day TODO list is now mostly empty modulo NVDA verification + activity_header runtime test. **Paygw security follow-up shipped earlier this session** — MD5 deprecated, require_login() at file scope removed, sandbox/live URL clarified, 13 new PHPUnit tests added. Phase B Moodle 5.2 upgrade is code-complete; production stays on 5.1 until customer-driven cutover decision. ADR-001 records the strategic pivot from "patch Moodle deployment" to "build saleable enterprise LMS product" — Airpay Academy is customer-zero. See `docs/adr/ADR-001-fork-strategy-and-product-pivot.md`.
 
 **Historical context:** Wave 1 + Wave 2 audit entries archived at `docs/_archive/PROJECT-STATE-history.md`.
+
+---
+
+## ✅ QA-walk backlog closeout — SA-04 / P-01 / SA-05 / P-02 fixed, C-004 NOT-A-BUG (2026-05-29)
+
+With the employee cluster (E-01/E-02/E-03/M-01) closed, this wave drove the
+remaining QA-walk items to fixed+shipped (owner gave blanket go-ahead). Each on
+its own branch; no PRs opened (no `gh`/token here — compare URLs handed over).
+
+- **SA-04 (P2) FIXED** — `theme_airpayux\core_renderer::custom_secured_redirection()`
+  UNCONDITIONALLY redirected `/course/management.php` + `/course/index.php` → the LXP
+  catalog, locking siteadmins/category-managers out of native course+category
+  management. Added `can_reach_native_course_admin()` (`is_siteadmin() ||
+  moodle/category:manage || moodle/course:create`) and gated both redirects.
+  Verified in-browser: qa_siteadmin → native "Course and category management".
+  Branch `fix/qa-walk-sa04-admin-course-management` (c1158b511). Side-note: the same
+  method's unconditional `/enrol/index.php → /my` (line 1240) is the real source of
+  E-01's reported "/my/ redirect" — left as-is (E-01 routes via `enrolnow`).
+- **P-01 (P2) FIXED** — sidebar "My Cart" pointed at the DB cart
+  `/local/airpay_cart/index.php` (fed only by the `add_item` WS), but the catalog
+  fills the SESSION cart (`commerce::add_to_cart` → `/local/airpay_catalog/cart.php`),
+  so the sidebar cart always showed empty. Repointed both Learner+Manager links to the
+  session cart. Verified via CLI sidebar render (qa_public). Shipped on the E-02 branch
+  (same file; d02c7412a).
+- **P-02 (P3) FIXED** — navbar cart badge didn't refresh on the catalog confirmation
+  page; the `cart_badge` AMD was wired only in the course.php+dashboard.php layouts,
+  not columns2 ('standard', which the catalog uses). Added the one-line AMD wire to
+  columns2.php. Branch `fix/qa-walk-p02-cart-badge` (9c3ff488a). Live badge-pixel
+  deferred to the QA re-walk; wiring + proven AMD/data-span contract verified.
+- **SA-05 (P3) FIXED** — leftover "Epsilon" branding: `configtitle` (en) +
+  `pluginname`/`privacy:metadata` (hi/mr/sw/kn) → "Airpay Academy UX (Sentientia)".
+  grep-confirmed zero "Epsilon" left; 5 packs lint clean. Branch
+  `fix/qa-walk-sa05-theme-branding` (de60ceebd).
+- **C-004 (P3) NOT-A-BUG** — the compliance KPI-vs-table-on-BU-filter concern doesn't
+  reproduce: the filter is server-side (`applyFilter` → full reload with `?bu=`), and
+  `get_summary_kpis($filterpath)` scopes every KPI count by the org path exactly like
+  the matrix, so both re-aggregate to the filtered BU. No code change.
+
+**The QA-walk 2026-05-29 backlog is now fully closed** — every actionable finding is
+FIXED or verified NOT-A-BUG; only G-2 (ENV-GAP: BizLMS not on local) and T-05 (WONTFIX
+by-design) remain by design. **5 branches pushed, none merged/deployed to prod**
+(`e01-free-self-enrol`, `e02-learner-skills-nav` [+P-01], `sa04-admin-course-management`,
+`sa05-theme-branding`, `p02-cart-badge`). A **combined branch
+`fix/qa-walk-2026-05-29-all`** (all 5 fixes, 29 files, built in an isolated
+worktree off production HEAD; E-01's state-card update kept over production's
+thumbnail-session edit on the one doc conflict) is also pushed for a single PR. Shared docs (BUG-LOG, PROJECT-STATE,
+visual-evidence) updated on the working tree for the next production batch.
+
+---
+
+## ✅ Employee-walk E-02 P2 FIXED — learner "My Skills" sidebar link (2026-05-29)
+
+Closes the employee-walk P2 (`docs/qa-walk-2026-05-29/BUG-LOG.md` E-02): the
+learner-facing skills dashboard (`/local/airpay_skills/index.php` — gap
+analysis, radar, self-rate) had no sidebar entry, so learners couldn't reach it
+(only the siteadmin shell linked the *admin* page `admin.php`).
+
+**Two findings.** (1) The page itself **works** — own-view needs only
+`require_login` (the manager/admin gate at `index.php:24-40` is skipped when
+`$userid === $USER->id`); data path clean (`get_gap_analysis`/`get_radar_data`/
+`get_gap_courses` all return; template exists), caps present. Browser-confirmed:
+renders the **Skill Readiness** dashboard (graceful "No skills data yet" empty
+state). The QA "404/nopermission" was a transient/pre-provisioning reading
+(same shape as M-01). (2) The real defect was **discoverability**.
+
+**Fix.** `theme_airpayux\sidebar_navigation`: new safe-failing
+`can_view_own_skills()` (gates on `local/airpay_skills:view`, granted to the
+student archetype) + a **"My Skills"** → `/local/airpay_skills/index.php` link in
+the **Learner and Manager** shells. **No new feature flag** — mirrors the
+cap-only Bug #11 Compliance-link pattern (discoverability fix for an existing
+live surface). Theme class-only change, **no theme version bump** (T-02
+precedent). +39 lines, one file.
+
+**Verified (local XAMPP, Moodle 5.1.3+).** Deployed + purged; logged in as
+qa_employee → "My Skills" appears in the Learner sidebar (bullseye icon, active)
+and the dashboard renders. Screenshot
+`docs/visual-evidence/2026-05-29/e02-skills-01-page-and-nav.png`.
+
+**Status.** Fixed + verified. **NOT merged/deployed to prod.** Branch
+`fix/qa-walk-e02-learner-skills-nav` pushed (open the PR; deploy = file-copy +
+purge — no flag, no DB change). With E-01/E-03 + M-01, the employee/manager
+QA-walk cluster is fully closed.
+
+---
+
+## ✅ Employee-walk E-01 P1 FIXED (+ E-03) — one-click free self-enrolment for internal tenants (2026-05-29)
+
+Closes the employee-walk P1 (`docs/qa-walk-2026-05-29/BUG-LOG.md` E-01): an
+Airpay employee could not self-enrol in a "Free" course.
+
+**Root cause (verified — corrects the original BUG-LOG guess of "no self-enrol
+method / auto-enrol intended").** Two layers, both confirmed against the live DB:
+1. The catalog "Enroll" button on free courses routes to
+   `course.php?action=addtocart` (a session cart) and **never enrols**.
+2. Course 71 *does* have an enabled self-enrol instance — but with an
+   **enrolment key** (`enrol.password` SET). The cart's `enrollfree` path called
+   core `enrol_self()`, which **silently returns on key-gated courses**
+   (`enrol/self/lib.php:171-175`) yet still incremented its counter → a false
+   "Enrolled in N course(s)!". DB confirmed qa_employee had **0 enrolments**.
+   Impersonation proved `can_self_enrol=TRUE`/form-shown and that **no
+   cross-tenant access hook exists**, so the reported "/my/ redirect" was the
+   post-addtocart bounce / key-form bail — not a core redirect.
+
+**Decisions (owner).** (1) Scope = **internal tenants only** — Airpay /1 + ZEEA
+/177 (any non-Public tenant) get one-click; Public /77 keeps the cart (B2C
+funnel). Policy is **user-centric** (viewer's tenant), not course-centric.
+(2) Key handling = **bypass via manual enrol** (catalog tenant-visibility is the
+gate for internal staff).
+
+**Fix.** New `local_airpay_catalog\enrolment`:
+- `should_offer_oneclick($user, $pricing)` — the policy: flag ON for the user's
+  tenant **and** logged-in non-guest **and** free **and** internal tenant
+  (`root > 0 && root !== public_tenant_id`).
+- `enrol_now($courseid, $userid)` — idempotent **manual** enrol (bypasses the
+  self-enrol key, self-provisions a manual instance if missing, refuses paid
+  courses), mirroring `local_airpay_cart\cart_manager::enrol_user_in_course()`.
+
+Wired into: `course.php` (new `action=enrolnow` handler + detail CTA branch),
+`public.php` (grid button routing, legacy + LXP paths), and `cart.php`
+(`enrollfree` rerouted through `enrol_now()` — fixes the silent-success lie).
+Gated by **`sentientia.catalog.free_oneclick_enrol.enabled`** (default OFF — OFF
+reproduces today's cart behaviour byte-for-byte). +4 lang strings × 5 languages
+(en/hi/kn/mr/sw). `local_airpay_catalog` `2026052901` → `2026052902`.
+
+**Verified (local XAMPP, Moodle 5.1.3+).** Upgrade clean (`++ 2026052902:
+Success ++`). CLI verification (`_verify-enrol.php`): policy correct across
+Airpay/Public/paid; `enrol_now(71)` enrolled qa_employee **despite the key**;
+idempotent; exactly 1 row — **ALL PASS**. Real-browser (logged in as
+`qa_employee` via the airpayux form): catalog shows **"Enrol now — free"** →
+`?action=enrolnow`; clicked POSH (#403) → enrolled; **My Courses = 2** (the very
+page that showed "No courses found" in the bug). 3 screenshots (desktop catalog,
+My Courses, mobile) + README at `docs/visual-evidence/2026-05-29/enrol-fix-*`.
+8-case PHPUnit suite `tests/enrolment_test.php` written for CI (local box has no
+`vendor/bin/phpunit`). E-03 (list button addtocart) folded in & FIXED.
+
+**Status.** Fix complete + verified locally. **NOT pushed / NOT deployed to
+prod.** Production rollout = file-copy + upgrade + purge, then **enable the flag
+per internal tenant** (Airpay /1, ZEEA /177) via the Switchboard. Throwaway
+diagnostics `_diag-enrol.php` + `_verify-enrol.php` left in `moodle-enhancement/`
+pending owner OK to delete (they hardcode the local XAMPP path — must not ship).
 
 ---
 
