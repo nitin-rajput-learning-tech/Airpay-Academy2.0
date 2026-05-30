@@ -106,3 +106,9 @@ docs only; never the Wave 2–6 human gates; never clobber the owner's concurren
   mode). **Tooling note:** theme SCSS-partial changes (compiled at runtime via `lib.php`) need the FULL
   `admin/cli/purge_caches.php` to clear the scssphp compiled-CSS localcache — `theme_reset_all_caches()`
   bumps themerev but does NOT rebuild the compile.
+- **iter 4 — Wave 1 item 2 slice (privacy:metadata white-label).** `theme/airpayux/lang/{hi,kn,mr,sw}/theme_airpayux.php`:
+  the `privacy:metadata` GDPR/data-registry string still read "Epsilon theme…" in the 4 non-EN packs (en
+  already clean). Swapped the brand token → "Airpay Academy UX (Sentientia)" (matching the Wave-1 pluginname),
+  preserving each localised sentence. Verified all 5 locales resolve with no "Epsilon" leak (php -r get_string
+  probe). User-visible in the privacy registry. (eAbyas copyright docblocks + the `deprecated.txt`
+  `theme_epsilon` mapping left as-is — non-user-visible / structural, out of the safe slice.)
