@@ -31,9 +31,8 @@ require_capability('local/airpay_courses:request_course', $context);
 global $DB, $OUTPUT, $USER;
 
 // Derive viewer tenant from open_path.
-$parts = explode('/', trim($USER->open_path ?? '', '/'));
-$viewer_tenant = isset($parts[0]) && ctype_digit($parts[0])
-    ? (int) $parts[0] : 0;
+// ADR-018 Wave 2: viewer tenant via the Sentientia seam (was an inline explode).
+$viewer_tenant = \local_sentientia_core\tenant_identity::root_for_current_user();
 if ($viewer_tenant === 0) {
     throw new \moodle_exception('invalidtenant', 'local_airpay_courses');
 }

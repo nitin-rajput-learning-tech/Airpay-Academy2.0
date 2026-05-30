@@ -74,8 +74,8 @@ class request_course extends external_api {
      * the post-action state without trusting the client.
      */
     private static function current_tenant_root(): int {
-        global $USER;
-        $parts = explode('/', trim($USER->open_path ?? '', '/'));
-        return isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
+        // ADR-018 Wave 2: delegate to the Sentientia seam (was a duplicated inline
+        // parse; root_for_current_user reads $USER itself).
+        return \local_sentientia_core\tenant_identity::root_for_current_user();
     }
 }

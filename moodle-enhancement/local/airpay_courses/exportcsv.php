@@ -52,8 +52,8 @@ $sqlparams = [];
 
 // Tenant scope: non-siteadmin only sees their org tree (+ legacy NULL paths).
 if (!is_siteadmin()) {
-    $parts = explode('/', trim($USER->open_path ?? '', '/'));
-    $top = isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
+    // ADR-018 Wave 2: tenant root via the Sentientia seam (LIKE filter kept).
+    $top = \local_sentientia_core\tenant_identity::root_for_current_user();
     if ($top > 0) {
         $where[] = '(c.open_path = :corgexact OR c.open_path LIKE :corgprefix OR c.open_path IS NULL)';
         $sqlparams['corgexact']  = '/' . $top;
