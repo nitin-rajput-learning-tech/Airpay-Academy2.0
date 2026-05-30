@@ -37,27 +37,33 @@ if ($action === 'clear') {
 }
 
 // Handle "enroll all free" for logged-in users.
+// QA-walk P1 (2026-05-29) — the old loop called core enrol_self() (which
+// silently no-ops on key-gated courses) yet incremented $enrolled anyway,
+// so it reported "Enrolled in N free course(s)!" while enrolling no one.
+// Now routed through enrolment::enrol_now() (manual enrol, bypasses the key)
+// which returns whether the enrolment actually happened — count only real
+// successes, keep failures in the cart, and report truthfully.
 if ($action === 'enrollfree' && isloggedin() && !isguestuser()) {
     require_sesskey();
     $cart = \local_airpay_catalog\commerce::get_cart();
     $enrolled = 0;
     foreach ($cart as $item) {
-        if ($item['is_free']) {
-            // Find self-enrol instance and enrol user.
-            $instances = enrol_get_instances($item['courseid'], true);
-            foreach ($instances as $instance) {
-                if ($instance->enrol === 'self') {
-                    $plugin = enrol_get_plugin('self');
-                    $plugin->enrol_self($instance);
-                    $enrolled++;
-                    break;
-                }
-            }
+        if (empty($item['is_free'])) {
+            continue;
+        }
+        if (\local_airpay_catalog\enrolment::enrol_now((int) $item['courseid'])) {
+            $enrolled++;
             \local_airpay_catalog\commerce::remove_from_cart($item['courseid']);
         }
     }
-    redirect(new moodle_url('/local/airpay_catalog/mycourses.php'),
-        "Enrolled in $enrolled free course(s)!", null, \core\output\notification::NOTIFY_SUCCESS);
+    if ($enrolled > 0) {
+        redirect(new moodle_url('/local/airpay_catalog/mycourses.php'),
+            get_string('enrolled_count', 'local_airpay_catalog', $enrolled), null,
+            \core\output\notification::NOTIFY_SUCCESS);
+    }
+    redirect(new moodle_url('/local/airpay_catalog/cart.php'),
+        get_string('enrolled_none', 'local_airpay_catalog'), null,
+        \core\output\notification::NOTIFY_ERROR);
 }
 
 $cart = \local_airpay_catalog\commerce::get_cart();

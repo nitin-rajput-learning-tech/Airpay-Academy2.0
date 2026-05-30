@@ -32,6 +32,26 @@ if ($action === 'addtocart') {
         'Added to cart!', null, \core\output\notification::NOTIFY_SUCCESS);
 }
 
+// Handle one-click immediate free enrolment (QA-walk P1, 2026-05-29).
+// Offered only to logged-in internal-tenant users on free courses when the
+// feature flag is ON (see classes/enrolment.php). Bypasses any self-enrol
+// key via the manual enrol plugin; paid/Public/guest fall back to the cart.
+if ($action === 'enrolnow') {
+    require_sesskey();
+    $pricing = \local_airpay_catalog\commerce::get_course_price($id);
+    if (\local_airpay_catalog\enrolment::should_offer_oneclick($USER, $pricing)
+            && \local_airpay_catalog\enrolment::enrol_now($id)) {
+        redirect(new moodle_url('/course/view.php', ['id' => $id]),
+            get_string('enrolled_welcome', 'local_airpay_catalog'), null,
+            \core\output\notification::NOTIFY_SUCCESS);
+    }
+    // Policy declined (not internal / flag off) or enrol failed → safe
+    // fallback to the cart so the click is never silently lost.
+    \local_airpay_catalog\commerce::add_to_cart($id);
+    redirect(new moodle_url('/local/airpay_catalog/course.php', ['id' => $id, 'added' => 1]),
+        'Added to cart!', null, \core\output\notification::NOTIFY_INFO);
+}
+
 $pricing = \local_airpay_catalog\commerce::get_course_price($id);
 $cart_count = \local_airpay_catalog\commerce::get_cart_count();
 $is_loggedin = isloggedin() && !isguestuser();
@@ -104,6 +124,16 @@ echo $OUTPUT->header();
                                   background:linear-gradient(135deg,#0066A7,#0f7a73); color:#fff; text-decoration:none;">
                             <i class="fa fa-play-circle"></i> Continue Learning
                         </a>
+                    <?php elseif ($pricing['is_free'] && $is_loggedin && \local_airpay_catalog\enrolment::should_offer_oneclick($USER, $pricing)): ?>
+                        <!-- One-click immediate enrol (internal tenant + flag ON). -->
+                        <form method="post" action="<?php echo (new moodle_url('/local/airpay_catalog/course.php', ['id' => $id]))->out(false); ?>" style="display:inline;">
+                            <input type="hidden" name="sesskey" value="<?php echo sesskey(); ?>">
+                            <input type="hidden" name="action" value="enrolnow">
+                            <button type="submit" style="padding:10px 24px; border-radius:10px; font-size:15px; font-weight:600;
+                                    background:linear-gradient(135deg,#0066A7,#0f7a73); color:#fff; border:none; cursor:pointer;">
+                                <i class="fa fa-sign-in"></i> <?php echo s(get_string('enrol_now_free', 'local_airpay_catalog')); ?>
+                            </button>
+                        </form>
                     <?php elseif ($pricing['is_free'] && $is_loggedin): ?>
                         <a href="<?php echo (new moodle_url('/enrol/index.php', ['id' => $id]))->out(); ?>"
                            style="padding:10px 24px; border-radius:10px; font-size:15px; font-weight:600;

@@ -10,7 +10,13 @@ $plugin->component = 'local_airpay_catalog';
 // legacy (flag-OFF) grid: a double '?' (course.php?id=N?action=...) meant
 // 'action' was never parsed and add-to-cart no-oped on paid courses; now
 // built via moodle_url() like the LXP path already does.
-$plugin->version   = 2026052901;
+// QA-walk P1 (2026-05-29) — one-click free self-enrolment for internal
+// tenants: new classes/enrolment.php (policy + manual-enrol key bypass),
+// feature flag sentientia.catalog.free_oneclick_enrol.enabled (default OFF),
+// course.php 'enrolnow' action, public.php grid button routing, and a fix to
+// cart.php's enrollfree silent-failure (enrol_self no-op on key-gated courses
+// reported false success). +4 lang strings ×5 languages.
+$plugin->version   = 2026052902;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_BETA;
 $plugin->release   = '1.0.2-beta';
