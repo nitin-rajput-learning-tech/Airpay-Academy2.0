@@ -126,3 +126,11 @@ docs only; never the Wave 2–6 human gates; never clobber the owner's concurren
   `.ap-admin-*` successor layer + "do not extend". Compile-safe (block comments); verified the theme CSS
   still rebuilds (13,283 rules at the fresh rev — no breakage). Marks the deprecation intent in-code where
   developers see it, complementing iter 5's schedule doc.
+- **iter 7 — Wave 1 item 6 (BIZLMS-MIGRATION-NARRATIVE.md).** Wrote `docs/BIZLMS-MIGRATION-NARRATIVE.md` —
+  the prose companion to this ADR (decision record) + DEPRECATION-SCHEDULE.md (asset table): fork lineage
+  (Moodle → eAbyas BizLMS → Airpay fork → Sentientia), the 7 coupling surfaces with HARD/SOFT/re-platform
+  hardness, the seam-not-rewrite strategy, and a prose Wave 2-6 summary anchored on "customer-zero never
+  regresses". Onboarding/handoff doc. Doc-only, no deploy. NOTE: the stylelint guard (item 6d) is deferred —
+  verifying it needs `npm install` + the portable Node 22 (Node-24 incompat), too heavy for an unattended
+  commit; dark-mode AA hunting is also blocked this session (chrome-devtools MCP disconnected on resume). The
+  safe + cleanly-verifiable backlog is thinning toward the stop condition.
