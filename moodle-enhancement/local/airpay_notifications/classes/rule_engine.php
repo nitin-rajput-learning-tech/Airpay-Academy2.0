@@ -862,8 +862,8 @@ class rule_engine {
             }
 
             // Notify users in the same tenant.
-            $parts = explode('/', trim($course->open_path, '/'));
-            $orgpath = '/' . ($parts[0] ?? '');
+            // ADR-018 Wave 2: tenant root via the Sentientia seam (was an inline explode).
+            $orgpath = '/' . \local_sentientia_core\tenant_identity::path_root((string) $course->open_path);
 
             $users = $DB->get_records_sql(
                 "SELECT id, firstname FROM {user}
