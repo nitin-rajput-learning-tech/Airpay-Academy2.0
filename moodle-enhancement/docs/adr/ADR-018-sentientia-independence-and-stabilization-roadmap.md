@@ -159,3 +159,12 @@ docs only; never the Wave 2–6 human gates; never clobber the owner's concurren
   delegating to `local_airpay_core\tenant`; additive, no DB, no callers migrated yet) — the foundation for
   retiring the `open_path` hard coupling. The ~24 caller migrations + the tenant registry stay staged /
   human-gated. Chrome-devtools MCP remains disconnected this session, so dark-mode AA hunting is still blocked.
+- **Wave 3 DESIGNED (2026-05-30) — ADR-020 (Proposed, gated).** `local_costcenter` → `local_sentientia_org`
+  org-hierarchy migration design: seam-first (default-ON `org_legacy` flag) → new additive schema →
+  dual-write → backfill CLI → dual-read parity gate → ZEEA-first per-tenant cutover (Airpay last) → instant
+  flag rollback, every step rehearsed on a production-DB clone first. **Design only — no schema/data touched;
+  execution awaits Nitin's go/no-go (DB gate).** Separately: the **motion-rule remediation** (35
+  `_surface-*.scss` inline-timing → `--ap-transition-*` token conversions, which would let the
+  `declaration-property-value-disallowed-list` rule graduate to a CI gate) is **DEFERRED pending browser
+  reconnect** — the conversions are mostly exact (`0.15s`→quick) but several need a judgement mapping +
+  visual confirmation of the animations, which the disconnected chrome-devtools MCP blocks.
