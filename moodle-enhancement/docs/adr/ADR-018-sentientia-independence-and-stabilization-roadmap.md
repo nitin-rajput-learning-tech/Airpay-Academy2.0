@@ -168,3 +168,9 @@ docs only; never the Wave 2–6 human gates; never clobber the owner's concurren
   `declaration-property-value-disallowed-list` rule graduate to a CI gate) is **DEFERRED pending browser
   reconnect** — the conversions are mostly exact (`0.15s`→quick) but several need a judgement mapping +
   visual confirmation of the animations, which the disconnected chrome-devtools MCP blocks.
+- **Wave 3.1 SHIPPED (2026-05-30) — org seam.** Added `local_sentientia_core\org::manager_id_of()` /
+  `manager_id_for_current_user()` behind a default-ON `org_legacy` flag (reads `open_supervisorid`; OFF safely
+  falls back to legacy until the Wave-3.2 schema). Additive, no DB, no callers migrated; 7 PHPUnit cases
+  (property-based → vanilla-Moodle-safe, CI-discovered). Bumped `local_sentientia_core` 2026053000→2026053001.
+  The schema / dual-write / per-tenant migration (Wave 3.2+) remain gated on the 5 ADR-020 questions +
+  clone-DB rehearsal + Nitin's explicit go.

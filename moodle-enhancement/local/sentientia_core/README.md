@@ -29,6 +29,23 @@ current production. When a future wave builds the Sentientia tenant registry,
 flipping the setting OFF switches the source — and until then the OFF path
 safely falls back to legacy, so it can never break authentication.
 
+### `org` — the manager/org seam (ADR-020 Wave 3.1)
+The sanctioned way to read a user's manager, instead of touching the BizLMS
+`$user->open_supervisorid` column directly (DEPRECATION-SCHEDULE row 8).
+
+```php
+use local_sentientia_core\org;
+
+$mgrid = org::manager_id_of($user);              // open_supervisorid, 0 if none
+$mgrid = org::manager_id_for_current_user();     // 0 if logged out
+```
+
+Behind the default-ON **`org_legacy`** setting it reads `open_supervisorid`, so
+behaviour matches production. The OFF path (the future `local_sentientia_org_*`
+model, gated on ADR-020 §2) safely falls back to legacy until that schema lands.
+Scope: only the manager-id accessor ships in 3.1 (property-based, so vanilla-Moodle
+testable); reverse lookups + unit-tree walks arrive in Wave 3.2 with the schema.
+
 ## Why a default-ON flag (not a hard cutover)
 ADR-018's governing rule: **customer-zero (Airpay) never sees a regression.**
 The seam ships additive + reversible; the legacy resolver is the default until a

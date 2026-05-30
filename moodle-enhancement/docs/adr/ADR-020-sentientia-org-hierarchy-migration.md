@@ -1,6 +1,6 @@
 # ADR-020 — `local_sentientia_org` + the org-hierarchy migration (Independence Wave 3)
 
-**Status:** Proposed — **needs Nitin's go/no-go** (DB migration gate) · **Owner:** Nitin Rajput
+**Status:** Wave 3.1 seam **SHIPPED** (2026-05-30, additive — `local_sentientia_core\org`); Wave 3.2+ (schema / dual-write / migration) **Proposed — needs Nitin's go/no-go** (DB migration gate) · **Owner:** Nitin Rajput
 **Parent:** ADR-018 (independence roadmap) Wave 3 · **Builds on:** ADR-019 (Wave 2, `tenant_identity` seam).
 **Pairs with:** `docs/DEPRECATION-SCHEDULE.md` (rows 5, 8), `docs/BIZLMS-MIGRATION-NARRATIVE.md`.
 
@@ -94,7 +94,9 @@ A `local_sentientia_core\org` (or `local_sentientia_org\hierarchy`) service:
    indefinitely (lower risk) or schedule removal (cleaner)?
 
 ## Next
-On approval: Wave 3.1 ships the seam + service (additive, like ADR-019's scaffold);
-3.2 the schema + dual-write; 3.3 the backfill + parity CLIs; 3.4 the ZEEA cutover —
-each its own commit + clone-DB rehearsal. The tenant **registry** (replacing
+Wave 3.1 (the org seam) is **SHIPPED** — `local_sentientia_core\org::manager_id_of()`
++ `manager_id_for_current_user()` behind the default-ON `org_legacy` flag (manager-id
+accessor only; reverse lookups + unit-tree walks arrive in 3.2 with the schema).
+On approval: 3.2 the schema + dual-write; 3.3 the backfill + parity CLIs; 3.4 the
+ZEEA cutover — each its own commit + clone-DB rehearsal. The tenant **registry** (replacing
 `VALID_TENANTS`) is the separate Wave 4 (ADR-021).

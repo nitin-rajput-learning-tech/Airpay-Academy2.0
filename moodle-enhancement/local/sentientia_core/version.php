@@ -5,7 +5,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_core';
-$plugin->version   = 2026053000;          // YYYYMMDDNN
+$plugin->version   = 2026053001;          // YYYYMMDDNN (+ ADR-020 Wave 3.1 org seam)
 $plugin->requires  = 2024100700;          // Moodle 4.5+
 $plugin->maturity  = MATURITY_ALPHA;      // ADR-019 Wave-2 scaffold; seam only, no callers migrated yet.
 $plugin->release   = '0.1.0-alpha';
