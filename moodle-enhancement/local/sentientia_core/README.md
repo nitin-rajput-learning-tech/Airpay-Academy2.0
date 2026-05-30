@@ -5,29 +5,49 @@ program (Wave 2). It owns Sentientia-level abstractions that sit *above* the
 BizLMS heritage, so the rest of the product can stop touching BizLMS internals
 directly.
 
-**Status:** `MATURITY_ALPHA`, `0.1.0-alpha`. Scaffold only — the seam exists;
-the ~24 existing `open_path` call sites are **not** migrated onto it yet (that's
-a separate, staged step). Design: `docs/adr/ADR-019-sentientia-core-tenant-identity.md`.
+**Status:** `MATURITY_ALPHA`, `0.2.0-alpha`. The `tenant_identity` seam now
+exposes the **full open_path surface** (root + department/sub-dept + path-access
++ query filters); the ~20 existing `$USER->open_path` call sites migrate onto it
+in staged, reviewed batches (ADR-018 Wave 2, PR-2+). Design:
+`docs/adr/ADR-019-sentientia-core-tenant-identity.md`.
 
 ## What's here
 
-### `tenant_identity` — the tenant-resolution seam
-The single place the rest of Sentientia should resolve a user's tenant, instead
-of reading `$USER->open_path` directly (the hard coupling in
-`docs/DEPRECATION-SCHEDULE.md` row 7).
+### `tenant_identity` — the tenant-resolution + tenant-path-access seam
+The single place the rest of Sentientia resolves a user's tenant and enforces
+tenant-path access, instead of reading `$USER->open_path` directly (the hard
+coupling in `docs/DEPRECATION-SCHEDULE.md` row 7).
 
 ```php
 use local_sentientia_core\tenant_identity;
 
-$root = tenant_identity::root_for_user($user);        // e.g. 77
-$root = tenant_identity::root_for_current_user();     // 0 if logged out
+// Decompose a user's open_path (replaces hand-rolled explode('/', trim(...))):
+$root  = tenant_identity::root_for_user($user);            // e.g. 77
+$root  = tenant_identity::root_for_current_user();         // 0 if logged out
+$dept  = tenant_identity::department_for_user($user);      // 2nd segment, 0 if none
+$sub   = tenant_identity::subdepartment_for_user($user);   // 3rd segment, 0 if none
+$parts = tenant_identity::segments_for_user($user);        // [root, dept, sub, …]
+$path  = tenant_identity::path_for_user($user);            // raw "/1/2/3"
+
+// Entity open_path (e.g. mdl_course.open_path) rather than a user record:
+$root  = tenant_identity::path_root($course->open_path);   // root of any path string
+$ok    = tenant_identity::can_access_path($course->open_path);  // boolean
+tenant_identity::require_path_access($course->open_path);  // throws if out-of-tenant
+
+// Tenant-scoping WHERE fragments for queries:
+[$sql, $params] = tenant_identity::sql_filter('h');        // h.costcenterid = :…
+[$sql, $params] = tenant_identity::path_filter('c');       // c.open_path =/LIKE …
 ```
 
-Behind the default-ON setting **`tenant_identity_legacy`** it delegates to the
-legacy BizLMS parser (`local_airpay_core\tenant`), so behaviour is identical to
-current production. When a future wave builds the Sentientia tenant registry,
-flipping the setting OFF switches the source — and until then the OFF path
-safely falls back to legacy, so it can never break authentication.
+Behind the default-ON setting **`tenant_identity_legacy`** the tenant resolver
+delegates to the legacy BizLMS parser (`local_airpay_core\tenant`); the
+access/filter helpers likewise delegate to the canonical legacy implementation —
+so behaviour is byte-identical to current production. When a future wave builds
+the Sentientia tenant registry, flipping the setting OFF switches the source, and
+until then the OFF path falls back to legacy so it can never break authentication.
+Every delegation is `class_exists()`-guarded with an inline fallback, so the seam
+carries **no hard dependency** on `local_airpay_core` (it can ship standalone for
+Enterprise N).
 
 ### `org` — the manager/org seam (ADR-020 Wave 3.1)
 The sanctioned way to read a user's manager, instead of touching the BizLMS
@@ -55,8 +75,10 @@ migration deliberately flips it, rehearsed on a clone DB first.
 Site administration → Plugins → Local plugins → **Sentientia Core** →
 *Resolve tenant from BizLMS open_path (legacy)* (default ON).
 
-## Not in this scaffold (later waves, human-gated)
-- Migrating the existing `open_path` callers onto `tenant_identity` (staged).
+## Not in this layer yet (later waves, human-gated)
+- **Wave 2 PR-2+**: the remaining `open_path` call-site migrations onto
+  `tenant_identity` (reviewed batches; `airpay_compliance_report` excluded while
+  it is active WIP, `_PATCHED` vendor files deferred to Wave 5).
 - The Sentientia tenant **registry** table + admin UI (Wave 4 — replaces the
   hardcoded `local_airpay_core\tenant::VALID_TENANTS`).
-- `local_costcenter` → `local_sentientia_org` org-hierarchy migration (Wave 3).
+- `local_costcenter` → `local_sentientia_org` org-hierarchy migration (Wave 3.2+).
