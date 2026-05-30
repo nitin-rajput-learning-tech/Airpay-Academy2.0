@@ -143,3 +143,11 @@ docs only; never the Wave 2–6 human gates; never clobber the owner's concurren
   eAbyas-authored `blocks/*_PATCHED.php` (their code), build artifacts (regenerated), and docs (correct
   references). Comment-only — php -l clean, no deploy. Last clean autonomous-safe item; remaining backlog is
   blocked-on-browser (AA), needs-build (Chart.js/stylelint), or human-gated (Waves 2-6) → loop stops here.
+- **iter 9 — Wave 1 item 6d (stylelint BizLMS-selector guard).** (User opted to continue; took the
+  self-contained option.) Added a `selector-disallowed-list` rule to `theme/airpayux/.stylelintrc.json`
+  banning `.costcenter_data` / `.content_right` in NEW scss, with the two legacy users (dark_mode.scss,
+  custom_media.scss) + `_bizlms-*.scss` grandfathered via an exemption override. Verified with stylelint 15
+  (npm-installed, runs fine on Node 24): legacy dark_mode.scss passes (exit 0, exempted); a
+  `.costcenter_data{}` selector is caught (exit 2, custom message). Mechanizes DEPRECATION-SCHEDULE row 5's
+  "don't couple new SCSS to BizLMS DOM" rule. NOTE: CI doesn't run stylelint, so this is a dev/local gate
+  (zero CI risk); wiring it into CI is a future option.
