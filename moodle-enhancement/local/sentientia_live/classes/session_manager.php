@@ -79,14 +79,9 @@ class session_manager {
         $userfields = isset($usercolumns['open_path']) ? 'id, open_path' : 'id';
         $user = $DB->get_record('user', ['id' => $ownerid],
             $userfields, MUST_EXIST);
-        $tenantid = 0;
-        $openpath = $user->open_path ?? '';
-        if ($openpath !== '') {
-            $parts = explode('/', trim($openpath, '/'));
-            if (!empty($parts[0]) && ctype_digit($parts[0])) {
-                $tenantid = (int) $parts[0];
-            }
-        }
+        // ADR-018 Wave 2: tenant root via the Sentientia seam (reads $user->open_path;
+        // the $userfields guard above still controls whether the column is fetched).
+        $tenantid = \local_sentientia_core\tenant_identity::root_for_user($user);
         $customerid = 1;
         if (class_exists('\\local_airpay_core\\customer')) {
             $customerid = \local_airpay_core\customer::current();

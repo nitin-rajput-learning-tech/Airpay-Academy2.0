@@ -40,10 +40,12 @@ $plugin->component = 'local_sentientia_translate';
 // 2026-05-28 C16 — Admin queue/landing dashboard (Bucket C of the
 // Stabilization Audit). New: admin/index.php + admin_externalpage
 // registration + ~30 lang strings (en).
-$plugin->version   = 2026052801;
+// ADR-018 Wave 2 (2026-05-30) — tenant_root_for() migrated onto
+// local_sentientia_core\tenant_identity::root_for_user. Behaviour-identical.
+$plugin->version   = 2026053000;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;     // MVP — needs prod sign-off before flag flips
-$plugin->release   = '0.2.0-alpha';
+$plugin->release   = '0.2.1-alpha';
 $plugin->dependencies = [
     'local_airpay_core' => 2026051401,   // feature_flags resolver + customer scope
 ];

@@ -58,9 +58,8 @@ if ($data = $form->get_data()) {
         } else {
             try {
                 // Default tenant: caller's costcenterid (top of open_path).
-                $parts = explode('/', trim($USER->open_path ?? '', '/'));
-                $costcenter = isset($parts[0]) && ctype_digit($parts[0])
-                    ? (int) $parts[0] : 0;
+                // ADR-018 Wave 2: tenant root via the Sentientia seam.
+                $costcenter = \local_sentientia_core\tenant_identity::root_for_current_user();
                 $result = \local_airpay_evaluation\evaluation_manager::import_template(
                     $payload, $costcenter);
                 \core\notification::success(

@@ -26,8 +26,9 @@ $action   = optional_param('action', '', PARAM_ALPHA);
 
 // Determine user's tenant if not specified.
 if ($tenantid === 0 && !is_siteadmin()) {
-    $parts = explode('/', trim($USER->open_path ?? '', '/'));
-    $tenantid = (int)($parts[0] ?? 1);
+    // ADR-018 Wave 2: tenant root via the Sentientia seam (the dead `?? 1`
+    // default never fired — explode always yields a [0] element).
+    $tenantid = \local_sentientia_core\tenant_identity::root_for_current_user();
 }
 
 // Handle actions (toggle rule, export CSV, CRUD rules).

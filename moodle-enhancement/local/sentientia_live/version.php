@@ -35,10 +35,12 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_live';
-$plugin->version   = 2026052900;       // YYYYMMDDNN — T-01/T-02 trainer access fix (QA Walk 2026-05-29)
+// ADR-018 Wave 2 (2026-05-30) — session_manager tenant derivation migrated onto
+// local_sentientia_core\tenant_identity::root_for_user. Behaviour-identical.
+$plugin->version   = 2026053000;       // YYYYMMDDNN
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;   // Phases E.4-E.9 — all 6 question types live + verified
-$plugin->release   = '0.2.2-alpha';
+$plugin->release   = '0.2.3-alpha';
 $plugin->dependencies = [
     'local_airpay_core' => 2026051401,  // feature_flags resolver
 ];

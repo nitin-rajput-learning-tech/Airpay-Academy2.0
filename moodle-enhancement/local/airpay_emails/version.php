@@ -4,10 +4,12 @@ defined('MOODLE_INTERNAL') || die();
 $plugin->component = 'local_airpay_emails';
 // P1 #49 (2026-05-20) — Hindi top-up: 25 strings covering privacy metadata,
 // ramping reminder + certificate settings, and cadence JSON errors.
-$plugin->version   = 2026052001;
+// ADR-018 Wave 2 (2026-05-30) — manage.php tenant derivation migrated onto
+// local_sentientia_core\tenant_identity::root_for_current_user. Behaviour-identical.
+$plugin->version   = 2026053000;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.1.2';  // +P1 #49 Hindi top-up
+$plugin->release   = '1.1.3';  // +ADR-018 W2 open_path → tenant_identity
 // 1.1   (Sprint B, 2026-05-13)
 //   + course_completed event observer + tool_certificate PDF attachment
 //   + course_incomplete rule type with ramping cadence + max-cap + completion auto-stop

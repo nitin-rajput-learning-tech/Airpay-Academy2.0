@@ -17,7 +17,9 @@ $plugin->component = 'local_airpay_evaluation';
 // P1 #42 (2026-05-20) — auto-expire overdue assignments cron.
 // P1 #43 (2026-05-20) — Hindi pack catch-up: 56 new strings translated
 //                       for P1 #30/#37/#38/#39/#40/#41/#42 additions.
-$plugin->version   = 2026052032;
+// ADR-018 Wave 2 (2026-05-30) — import_template.php tenant derivation migrated onto
+// local_sentientia_core\tenant_identity::root_for_current_user. Behaviour-identical.
+$plugin->version   = 2026053000;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.15.2';  // +P1 #43 Hindi top-up
+$plugin->release   = '1.15.3';  // +ADR-018 W2 open_path → tenant_identity
