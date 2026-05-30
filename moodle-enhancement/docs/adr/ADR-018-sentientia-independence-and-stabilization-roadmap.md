@@ -112,3 +112,11 @@ docs only; never the Wave 2–6 human gates; never clobber the owner's concurren
   preserving each localised sentence. Verified all 5 locales resolve with no "Epsilon" leak (php -r get_string
   probe). User-visible in the privacy registry. (eAbyas copyright docblocks + the `deprecated.txt`
   `theme_epsilon` mapping left as-is — non-user-visible / structural, out of the safe slice.)
+- **iter 5 — Wave 1 item 6 (DEPRECATION-SCHEDULE.md).** Wrote `docs/DEPRECATION-SCHEDULE.md` — a grounded
+  inventory of the 13 BizLMS/eAbyas/epsilon-coupled assets (the 4 `_bizlms-*.scss` partials, the
+  `costcenter_data`/`content_right` DOM coupling, the `epsilonnavbar` class, `open_path`, `local_costcenter`,
+  the `VALID_TENANTS` hardcode, the `airpay_*` namespace, the deprecated.txt + behat epsilon artefacts) each
+  mapped to its ADR-018 removal wave + a cosmetic-safe / needs-human / structural status, plus the 3 Wave-1
+  white-label retirements already done. Chose this over `ADMIN-UI-STYLING-CONTRACT.md` because the `.ap-admin-*`
+  hook layer doesn't exist yet (0 grep matches) — it's Wave 2+ work, so that contract would be speculative.
+  Doc-only, no deploy.
