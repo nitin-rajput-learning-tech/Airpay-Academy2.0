@@ -39,7 +39,7 @@ ones safe to action autonomously, and those are cosmetic/additive only.
 | 10 | `airpay_*` component namespace (437 refs, 150+ caps) | Legacy product name | `sentientia_*` via alias shims + capability re-registration | 5 | 🟠 needs-human (rename) |
 | 11 | `lang/en/deprecated.txt` `totop,theme_epsilon` mapping | Moodle deprecated-string mapping | leave — structural (removing breaks the deprecation map) | — | ⚪ structural |
 | 12 | `tests/behat/*` + `behat_theme_epsilon_*.php` (epsilon names) | Behat infra inherited from the epsilon fork | rename alongside the component rename | 5 | ⚪ structural |
-| 13 | eAbyas / "forked from epsilon" copyright docblocks (~10 files) | Provenance metadata (non-user-visible) | `© 2026 Airpay Payment Services` | 1–2 | 🟢 cosmetic-safe (low priority) |
+| 13 | eAbyas `@copyright` docblocks (8 theme source files) | Provenance metadata (non-user-visible) | **additive** — preserve the eAbyas GPL notice + append `2026 Airpay Payment Services` (a strip would violate GPL) | 1 | ✅ done (iter 8) |
 
 ---
 

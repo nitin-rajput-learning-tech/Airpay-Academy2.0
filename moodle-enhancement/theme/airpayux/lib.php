@@ -18,7 +18,7 @@
  * Theme functions.
  *
  * @package    theme_airpayux
- * @copyright  2018 eAbyas Info Solutons Pvt Ltd, India
+ * @copyright  2018 eAbyas Info Solutons Pvt Ltd, India; 2026 Airpay Payment Services (Sentientia white-label fork)
  * @author     eAbyas  <info@eAbyas.in>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */

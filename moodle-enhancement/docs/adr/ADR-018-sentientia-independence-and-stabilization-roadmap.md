@@ -134,3 +134,12 @@ docs only; never the Wave 2–6 human gates; never clobber the owner's concurren
   verifying it needs `npm install` + the portable Node 22 (Node-24 incompat), too heavy for an unattended
   commit; dark-mode AA hunting is also blocked this session (chrome-devtools MCP disconnected on resume). The
   safe + cleanly-verifiable backlog is thinning toward the stop condition.
+- **iter 8 — Wave 1 item 6 (eAbyas copyright hygiene, GPL-safe).** Appended `2026 Airpay Payment Services
+  (Sentientia white-label fork)` to the `@copyright 2018 eAbyas…` docblock in 8 theme SOURCE files
+  (config.php, settings.php, lib.php, layout/dashboard.php, amd/src/quickactions.js, templates/socialicons +
+  slider.mustache, lang/en/theme_airpayux.php). KEY DECISION: ADDITIVE, not a strip — epsilon/eAbyas is GPL, so
+  the original notice is PRESERVED (stripping a GPL copyright notice would violate the licence); Airpay is
+  added as the fork's copyright holder, matching the version.php precedent. Left untouched: the genuinely
+  eAbyas-authored `blocks/*_PATCHED.php` (their code), build artifacts (regenerated), and docs (correct
+  references). Comment-only — php -l clean, no deploy. Last clean autonomous-safe item; remaining backlog is
+  blocked-on-browser (AA), needs-build (Chart.js/stylelint), or human-gated (Waves 2-6) → loop stops here.
