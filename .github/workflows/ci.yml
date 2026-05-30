@@ -778,3 +778,39 @@ jobs:
         if: failure()
         run: |
           echo "::error::PHPUnit failed. Download the 'phpunit-5.2-results' artifact and grep the JUnit XML for <failure> or <error> blocks. See docs/ci/PHPUNIT-GATE.md for remediation steps."
+
+  stylelint-guard:
+    name: SCSS BizLMS-selector guard (stylelint)
+    runs-on: ubuntu-latest
+    # BLOCKING gate. Runs ONLY the BizLMS-DOM-selector guard
+    # (theme/airpayux/.stylelintrc.ci.json) — bans .costcenter_data /
+    # .content_right in NEW theme SCSS so the ADR-018 decoupling can't
+    # regress. Verified green across the active theme tree at wire-up
+    # (2026-05-30); the two legacy users (dark_mode.scss / custom_media.scss)
+    # + _bizlms-*.scss are grandfathered in the CI config.
+    #
+    # The FULL .stylelintrc.json (this guard + the prefers-reduced-motion
+    # `declaration-property-value-disallowed-list` motion rule) stays a LOCAL
+    # dev check only — the motion rule has ~35 pre-existing violations in
+    # _surface-*.scss, so wiring it here would red-fail every push. Remediate
+    # those, then point this job at .stylelintrc.json to graduate motion to
+    # blocking too. See docs/DEPRECATION-SCHEDULE.md row 5.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install stylelint + postcss-scss
+        run: npm install --no-save --no-audit --no-fund stylelint@^15.11.0 postcss-scss
+
+      - name: Run the BizLMS-selector guard
+        working-directory: moodle-enhancement/theme/airpayux
+        run: |
+          # npx resolves the stylelint binary from the repo-root node_modules
+          # installed in the step above (searches up from this working dir).
+          npx --no-install stylelint --config .stylelintrc.ci.json "scss/moodle/**/*.scss" --max-warnings 0
+          echo "::notice::BizLMS-selector guard passed — no new .costcenter_data/.content_right coupling."
