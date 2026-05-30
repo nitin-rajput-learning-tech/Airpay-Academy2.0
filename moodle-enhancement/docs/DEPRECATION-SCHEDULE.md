@@ -33,7 +33,7 @@ ones safe to action autonomously, and those are cosmetic/additive only.
 | 4 | `theme/airpayux/scss/moodle/partials/_bizlms-overrides.scss` | Catch-all BizLMS DOM overrides | `.ap-admin-*` hook layer | 2 | 🟢 cosmetic-safe |
 | 5 | `.costcenter_data` / `.content_right` selectors (in `dark_mode.scss`, `custom_media.scss`) | Theme styles against BizLMS-injected DOM class names | Sentientia-owned wrapper classes emitted by `core_renderer` — **NEW coupling now blocked by a stylelint guard (iter 9)**; legacy users grandfathered | 2 | 🟠 needs-human (renderer + markup); 🟢 guard shipped |
 | 6 | `theme/airpayux/classes/epsilonnavbar.php` (class `epsilonnavbar`) | epsilon-fork class name | `sentientia_navbar` (alias shim, then rename) | 5 | 🟠 needs-human (class rename) |
-| 7 | `$USER->open_path` tenant identifier (24+ files) | Hard BizLMS tenant coupling | `local_sentientia_core\tenant_identity` service (default-ON legacy flag) | 2 | 🟠 needs-human (greenfield infra) |
+| 7 | `$USER->open_path` tenant identifier (24+ files) | Hard BizLMS tenant coupling | `local_sentientia_core\tenant_identity` seam — **scaffold SHIPPED (ADR-019, default-ON legacy flag)**; ~24 callers not yet migrated | 2 | 🟢 seam shipped · 🟠 caller-migration needs-human |
 | 8 | `local_costcenter` org hierarchy + `open_supervisorid` | BizLMS org/manager model | `local_sentientia_org` + migration (ZEEA-first) | 3 | 🟠 needs-human (DB migration) |
 | 9 | `VALID_TENANTS = [1,77,177]` hardcode (`local_airpay_core\tenant`) | Hardcoded tenant allow-list | DB-backed `tenant_registry` | 4 | 🟠 needs-human (DB + capability) |
 | 10 | `airpay_*` component namespace (437 refs, 150+ caps) | Legacy product name | `sentientia_*` via alias shims + capability re-registration | 5 | 🟠 needs-human (rename) |

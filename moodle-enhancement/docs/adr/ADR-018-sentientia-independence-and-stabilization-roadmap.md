@@ -151,3 +151,11 @@ docs only; never the Wave 2–6 human gates; never clobber the owner's concurren
   `.costcenter_data{}` selector is caught (exit 2, custom message). Mechanizes DEPRECATION-SCHEDULE row 5's
   "don't couple new SCSS to BizLMS DOM" rule. NOTE: CI doesn't run stylelint, so this is a dev/local gate
   (zero CI risk); wiring it into CI is a future option.
+- **post-loop (2026-05-30, user-directed) — stylelint guard → CI + Wave 2 STARTED.** (a) Wired the
+  BizLMS-selector guard into CI as a blocking `stylelint-guard` job via a guard-only
+  `.stylelintrc.ci.json` (verified green; the full motion rule stays local — 35 pre-existing
+  `_surface-*.scss` motion violations surfaced, tracked separately) — commit `e1b9c86f0`. (b) **Wave 2
+  STARTED** (ADR-019): created `local_sentientia_core` + the `tenant_identity` seam (default-ON legacy flag
+  delegating to `local_airpay_core\tenant`; additive, no DB, no callers migrated yet) — the foundation for
+  retiring the `open_path` hard coupling. The ~24 caller migrations + the tenant registry stay staged /
+  human-gated. Chrome-devtools MCP remains disconnected this session, so dark-mode AA hunting is still blocked.
