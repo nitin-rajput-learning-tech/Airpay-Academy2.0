@@ -2,6 +2,12 @@
    DARK MODE — BizLMS Admin Pages (Manage Users, Courses, Company)
    Targets: card-paginate, userscontainer, costcenter cards, modals
    ═══════════════════════════════════════════════════════════ */
+/*
+ * DEPRECATED — ADR-018 Wave 2 (see docs/DEPRECATION-SCHEDULE.md, row 2).
+ * BizLMS-coupled styling inherited from the eAbyas/BizLMS distribution; to be
+ * superseded by the Sentientia .ap-admin-* hook layer. Do NOT extend this file —
+ * new admin/UI styling must target .ap-admin-* hooks, not BizLMS DOM classes.
+ */
 html.dark-mode,
 body.dark-mode {
     /* BizLMS user/course cards */

@@ -2,6 +2,12 @@
    SPRINT 7A — USER PROFILE (local/users/profile.php)
    ═══════════════════════════════════════════════════════════ */
 
+/*
+ * DEPRECATED — ADR-018 Wave 2 (see docs/DEPRECATION-SCHEDULE.md, row 4).
+ * BizLMS-coupled styling inherited from the eAbyas/BizLMS distribution; to be
+ * superseded by the Sentientia .ap-admin-* hook layer. Do NOT extend this file —
+ * new admin/UI styling must target .ap-admin-* hooks, not BizLMS DOM classes.
+ */
 /* === Profile Hero Banner === */
 .path-local-users .user_gen_info {
     background: linear-gradient(135deg, #0066A7 0%, #0f7a73 100%);

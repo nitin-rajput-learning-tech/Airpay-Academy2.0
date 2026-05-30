@@ -120,3 +120,9 @@ docs only; never the Wave 2–6 human gates; never clobber the owner's concurren
   white-label retirements already done. Chose this over `ADMIN-UI-STYLING-CONTRACT.md` because the `.ap-admin-*`
   hook layer doesn't exist yet (0 grep matches) — it's Wave 2+ work, so that contract would be speculative.
   Doc-only, no deploy.
+- **iter 6 — Wave 1 item 6b (_bizlms-*.scss deprecation headers).** Prepended a standalone
+  `/* DEPRECATED — ADR-018 Wave 2 (see DEPRECATION-SCHEDULE.md row N) */` banner to all 4
+  `theme/airpayux/scss/moodle/partials/_bizlms-{admin,dark,modern,overrides}.scss`, pointing devs to the
+  `.ap-admin-*` successor layer + "do not extend". Compile-safe (block comments); verified the theme CSS
+  still rebuilds (13,283 rules at the fresh rev — no breakage). Marks the deprecation intent in-code where
+  developers see it, complementing iter 5's schedule doc.

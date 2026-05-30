@@ -1,6 +1,12 @@
 /* PROTOTYPE MATCH — Login Stats Bar + Legal Links
    ═══════════════════════════════════════════════════════════ */
 
+/*
+ * DEPRECATED — ADR-018 Wave 2 (see docs/DEPRECATION-SCHEDULE.md, row 1).
+ * BizLMS-coupled styling inherited from the eAbyas/BizLMS distribution; to be
+ * superseded by the Sentientia .ap-admin-* hook layer. Do NOT extend this file —
+ * new admin/UI styling must target .ap-admin-* hooks, not BizLMS DOM classes.
+ */
 .airpay-login__hero-stats {
     display: flex;
     gap: 0;
