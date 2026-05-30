@@ -25,12 +25,10 @@ $program = $DB->get_record('local_airpay_programs', ['id' => $programid], '*', M
 
 // Tenant scope: non-siteadmin only sees programs in their org tree.
 if (!is_siteadmin()) {
-    $parts = explode('/', trim($USER->open_path ?? '', '/'));
-    $top = isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
+    // ADR-018 Wave 2: viewer + program tenant roots via the Sentientia seam.
+    $top = \local_sentientia_core\tenant_identity::root_for_current_user();
     if ($top > 0 && !empty($program->open_path)) {
-        $ppath = trim($program->open_path, '/');
-        $pparts = explode('/', $ppath);
-        $ptop = isset($pparts[0]) && ctype_digit($pparts[0]) ? (int) $pparts[0] : 0;
+        $ptop = \local_sentientia_core\tenant_identity::path_root((string) $program->open_path);
         if ($ptop !== $top) {
             throw new \moodle_exception('nopermissions', 'error', '',
                 get_string('view_program_title', 'local_airpay_programs', $program->name));

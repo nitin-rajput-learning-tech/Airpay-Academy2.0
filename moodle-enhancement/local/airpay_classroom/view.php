@@ -26,12 +26,10 @@ $classroom = $DB->get_record('local_airpay_classroom', ['id' => $classroomid], '
 
 // Tenant scope: non-siteadmin only sees classrooms in their org tree.
 if (!is_siteadmin()) {
-    $parts = explode('/', trim($USER->open_path ?? '', '/'));
-    $top = isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
+    // ADR-018 Wave 2: viewer + classroom tenant roots via the Sentientia seam.
+    $top = \local_sentientia_core\tenant_identity::root_for_current_user();
     if ($top > 0 && !empty($classroom->open_path)) {
-        $cpath = trim($classroom->open_path, '/');
-        $cparts = explode('/', $cpath);
-        $ctop = isset($cparts[0]) && ctype_digit($cparts[0]) ? (int) $cparts[0] : 0;
+        $ctop = \local_sentientia_core\tenant_identity::path_root((string) $classroom->open_path);
         if ($ctop !== $top) {
             throw new \moodle_exception('nopermissions', 'error', '',
                 get_string('view_classroom_title', 'local_airpay_classroom', $classroom->name));

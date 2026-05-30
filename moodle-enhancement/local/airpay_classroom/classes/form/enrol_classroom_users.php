@@ -43,8 +43,8 @@ class enrol_classroom_users extends \core_form\dynamic_form {
 
         // Tenant-scope: non-siteadmin only sees users in their tenant tree.
         if (!is_siteadmin()) {
-            $parts = explode('/', trim($USER->open_path ?? '', '/'));
-            $top = isset($parts[0]) && ctype_digit($parts[0]) ? (int) $parts[0] : 0;
+            // ADR-018 Wave 2: tenant root via the Sentientia seam (LIKE filter kept).
+            $top = \local_sentientia_core\tenant_identity::root_for_current_user();
             if ($top > 0) {
                 $where[] = '(u.open_path = :orgexact OR u.open_path LIKE :orgprefix)';
                 $params['orgexact']  = '/' . $top;
