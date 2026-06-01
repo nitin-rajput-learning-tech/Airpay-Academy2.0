@@ -22,3 +22,15 @@ $string['minimize_assistant'] = 'ಸಹಾಯಕ ಪ್ಯಾನೆಲ್ ಚಿ
 $string['send_message']      = 'ಸಂದೇಶ ಕಳುಹಿಸಿ';
 $string['type_question']     = 'ನಿಮ್ಮ ಪ್ರಶ್ನೆಯನ್ನು ಟೈಪ್ ಮಾಡಿ';
 $string['quick_questions']   = 'ತ್ವರಿತ ಪ್ರಶ್ನೆಗಳು';
+
+// Role-aware quick-action chips (2026-06-01) — keys added for parity; refine locally.
+$string['qa_learn']       = 'What to learn next?';
+$string['qa_learn_q']     = 'What should I learn next?';
+$string['qa_deadlines']   = 'My deadlines';
+$string['qa_deadlines_q'] = 'What are my deadlines?';
+$string['qa_quiz']        = 'Quiz me';
+$string['qa_quiz_q']      = 'Quiz me on my courses';
+$string['qa_team']        = 'Team status';
+$string['qa_team_q']      = 'How is my team doing?';
+$string['qa_certs']       = 'My certificates';
+$string['qa_certs_q']     = 'Show my certificates';

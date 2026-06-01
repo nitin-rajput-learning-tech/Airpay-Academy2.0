@@ -75,6 +75,7 @@ class hook_callbacks {
         $data = [
             'firstname'         => format_string($USER->firstname),
             'queries_remaining' => $remaining,
+            'quick_actions'     => self::quick_actions(),
         ];
 
         $hook->add_html($OUTPUT->render_from_template('local_airpay_assistant/chat_bubble', $data));
@@ -83,5 +84,70 @@ class hook_callbacks {
         // this the toggle/send/Cmd+K do nothing. Moodle's $PAGE->requires
         // is the standard way to register an AMD module from a hook.
         $PAGE->requires->js_call_amd('local_airpay_assistant/chat', 'init');
+    }
+
+    /**
+     * Build the role-appropriate quick-action chips for the current user.
+     *
+     * Refinement (2026-06-01): the chips used to be hardcoded in the template
+     * and shown to EVERYONE — so a Public/external self-paced learner saw
+     * "Team status" (they have no team) and "Quiz me on compliance" (they
+     * aren't compliance-bound). The chips are now derived from the canonical
+     * role tier (theme_airpayux\role_detector) + the tenant root
+     * (local_sentientia_core\tenant_identity), both class_exists-guarded so
+     * the assistant degrades to a safe learner set if the theme/seam is absent.
+     *
+     *   - Everyone           -> "What to learn next?", "Quiz me"
+     *   - Internal learner   -> + "My deadlines"
+     *   - Public/external    -> + "My certificates" (instead of deadlines)
+     *   - Manager / Admin    -> + "Team status"
+     *
+     * @return array<int, array{query: string, label: string}>
+     */
+    private static function quick_actions(): array {
+        $s = static function (string $key): string {
+            return get_string($key, 'local_airpay_assistant');
+        };
+
+        // Role tier — reuse the single source of truth when present.
+        if (class_exists('\\theme_airpayux\\role_detector')) {
+            $roles = \theme_airpayux\role_detector::detect();
+            $ismanagerish = !empty($roles['ismanager']) || !empty($roles['isadmin']);
+        } else {
+            // Theme absent (standalone / Enterprise N): fall back to the core
+            // reports capability as a conservative manager signal.
+            $ismanagerish = has_capability('moodle/site:viewreports',
+                \context_system::instance());
+        }
+
+        // Tenant — Public (root 77) learners are external + self-paced.
+        $tenantroot = 0;
+        if (class_exists('\\local_sentientia_core\\tenant_identity')) {
+            $tenantroot = \local_sentientia_core\tenant_identity::root_for_current_user();
+        }
+        $isexternal = ($tenantroot === 77);
+
+        // 1. Learning recommendation — everyone.
+        $actions = [
+            ['query' => $s('qa_learn_q'), 'label' => $s('qa_learn')],
+        ];
+
+        // 2. Deadlines (internal, assignment-driven) vs certificates (external,
+        //    self-paced). Managers/admins keep deadlines.
+        if ($isexternal && !$ismanagerish) {
+            $actions[] = ['query' => $s('qa_certs_q'), 'label' => $s('qa_certs')];
+        } else {
+            $actions[] = ['query' => $s('qa_deadlines_q'), 'label' => $s('qa_deadlines')];
+        }
+
+        // 3. Self-quiz — everyone (generic course framing, not compliance-only).
+        $actions[] = ['query' => $s('qa_quiz_q'), 'label' => $s('qa_quiz')];
+
+        // 4. Team status — only those who actually manage a team.
+        if ($ismanagerish) {
+            $actions[] = ['query' => $s('qa_team_q'), 'label' => $s('qa_team')];
+        }
+
+        return $actions;
     }
 }

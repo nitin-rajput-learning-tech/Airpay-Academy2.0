@@ -25,3 +25,15 @@ $string['quick_questions']   = 'त्वरित प्रश्न';
 $string['enabled']          = 'AI सहायक सक्षम करें';
 $string['enabled_desc']     = 'सभी पेज पर AI चैटबॉट बबल दिखाएँ। साइट-व्यापी रूप से चैटबॉट छिपाने के लिए अनचेक करें।';
 $string['privacy:metadata'] = 'AI सहायक यूज़र ID से लिंक्ड चैट लॉग संग्रहीत करता है।';
+
+// Role-aware quick-action chips (2026-06-01).
+$string['qa_learn']       = 'आगे क्या सीखें?';
+$string['qa_learn_q']     = 'मुझे आगे क्या सीखना चाहिए?';
+$string['qa_deadlines']   = 'मेरी समय-सीमाएँ';
+$string['qa_deadlines_q'] = 'मेरी समय-सीमाएँ क्या हैं?';
+$string['qa_quiz']        = 'मुझसे प्रश्न पूछें';
+$string['qa_quiz_q']      = 'मेरे कोर्स पर मुझसे प्रश्न पूछें';
+$string['qa_team']        = 'टीम की स्थिति';
+$string['qa_team_q']      = 'मेरी टीम कैसा प्रदर्शन कर रही है?';
+$string['qa_certs']       = 'मेरे प्रमाणपत्र';
+$string['qa_certs_q']     = 'मेरे प्रमाणपत्र दिखाएँ';

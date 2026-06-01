@@ -86,3 +86,12 @@ P1 backlog (see Open Items).
 Initial state card. Plugin is the user-facing half of the
 `ai.assistant.enabled` flag (registered in `local_airpay_core`).
 Created now as part of the P1 state-card pass.
+
+## Role-aware quick-action chips (2026-06-01)
+chat_bubble chips were hardcoded + shown to ALL users — a Public/external learner saw
+"Team status" (no team) + "Quiz me on compliance". `hook_callbacks::quick_actions()` now
+builds chips from `theme_airpayux\role_detector` (manager/admin → Team status) +
+`local_sentientia_core\tenant_identity` (Public root 77 → "My certificates" instead of
+deadlines/team), both class_exists-guarded; template loops them; labels/queries i18n'd
+(en+hi+kn+mr+sw). v1.1.2→1.1.3-alpha. Verified live: Public/non-manager session →
+[What to learn next?, My certificates, Quiz me] — no Team status.

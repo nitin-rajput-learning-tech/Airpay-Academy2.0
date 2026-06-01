@@ -54,11 +54,10 @@
              aria-atomic="false">
             <div class="airpay-assistant__msg airpay-assistant__msg--bot">
                 <p>Hi {{firstname}}! I'm your learning assistant. Ask me anything about your courses, deadlines, skills, or career path.</p>
-                <div class="airpay-assistant__quick-actions" role="group" aria-label="Quick questions">
-                    <button type="button" data-query="What should I learn next?">What to learn next?</button>
-                    <button type="button" data-query="What are my deadlines?">My deadlines</button>
-                    <button type="button" data-query="Quiz me on compliance">Quiz me</button>
-                    <button type="button" data-query="How is my team doing?">Team status</button>
+                <div class="airpay-assistant__quick-actions" role="group" aria-label="{{# str }}quick_questions, local_airpay_assistant{{/ str }}">
+                    {{# quick_actions }}
+                    <button type="button" data-query="{{ query }}">{{ label }}</button>
+                    {{/ quick_actions }}
                 </div>
             </div>
         </div>
