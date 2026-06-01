@@ -145,3 +145,9 @@ Every other `local_airpay_*` and `local_sentientia_*` plugin depends on:
 Initial state card. This plugin pre-dates the state-card convention
 but is foundational to everything else, so creating a card now lets
 parallel chips reference it without re-deriving the inventory.
+
+## ADR-021 Wave 4 — assert_valid → tenant_registry (2026-06-01)
+`tenant::assert_valid()` now delegates to `local_sentientia_core\tenant_registry::assert_valid`
+(class_exists-guarded, inline fallback). Behaviour-identical while `tenant_registry_legacy`
+is ON (default); routes through the DB-backed registry when flipped OFF. Code-only, no schema.
+v1.7.0→1.7.1 (2026060100). See ADR-021 + sentientia_core-state.md.

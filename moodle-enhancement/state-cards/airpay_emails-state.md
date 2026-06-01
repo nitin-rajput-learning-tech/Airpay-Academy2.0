@@ -269,3 +269,8 @@ onto the `local_sentientia_core\tenant_identity` seam (`root_for_user` /
 `path_root` / `path_for_user`). Behaviour-identical — the legacy BizLMS parse stays
 the default-ON source behind `tenant_identity_legacy`. Shipped via the
 feat/wave2-callers-* branches (merged to production 2026-05-30). DEPRECATION-SCHEDULE row 7.
+
+## ADR-021 Wave 4 — preview.php allow-list → tenant_registry (2026-06-01)
+`preview.php` tenant allow-list migrated off the hardcoded `[1,77,177]` onto
+`tenant_registry::valid_roots/is_valid`. Behaviour-identical while legacy ON.
+v1.1.3→1.1.4 (2026060100). See ADR-021.
