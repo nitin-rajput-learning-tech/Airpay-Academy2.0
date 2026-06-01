@@ -4,9 +4,9 @@
 |-------|-------|
 | **Component** | `local_sentientia_core` |
 | **Role** | The "Sentientia layer" — the product's tenancy/org abstraction seams that sit ABOVE the BizLMS (`local_airpay_core` / `local_costcenter`) heritage. The decoupling foundation for ADR-018 independence. |
-| **Version** | `2026060103` / `0.5.0-alpha` (MATURITY_ALPHA) |
+| **Version** | `2026060104` / `0.6.0-alpha` (MATURITY_ALPHA) |
 | **Owner** | Nitin Rajput |
-| **Status** | Seams shipped + default-legacy (dormant). Wave 4 registry + Wave 3.2a org model + Wave 3.2b dual-write reconciler built + locally rehearsed; live cutover + dual-write enable gated on Nitin's deploy. |
+| **Status** | Seams shipped + default-legacy (dormant). Wave 4 registry + Wave 3.2a org model + Wave 3.2b dual-write reconciler + Wave 3.3 backfill/parity CLIs built + locally rehearsed (2,883 users, **100% parity**); live cutover + dual-write enable gated on Nitin's deploy. |
 | **Standalone?** | Yes — every delegation to `local_airpay_core` is `class_exists()`-guarded with an inline fallback, so the plugin ships for Enterprise N with no airpay_core present. |
 
 ## Purpose
@@ -19,13 +19,13 @@ deliberately (and reversibly) flips the source.
 | Seam | Class | Replaces (BizLMS coupling) | ADR / Wave | Flag (default ON) |
 |------|-------|----------------------------|------------|-------------------|
 | Tenant identity | `tenant_identity` | `$USER->open_path` reads | ADR-019 / W2 | `tenant_identity_legacy` |
-| Org hierarchy | `org` | `local_costcenter` + `open_supervisorid` | ADR-020 / W3.1+3.2a/3.2b | `org_legacy` (+ `org_dualwrite_enabled`, default **OFF**) |
+| Org hierarchy | `org` | `local_costcenter` + `open_supervisorid` | ADR-020 / W3.1+3.2a/3.2b/3.3 | `org_legacy` (+ `org_dualwrite_enabled`, default **OFF**) |
 | Tenant registry | `tenant_registry` | `local_airpay_core\tenant::VALID_TENANTS=[1,77,177]` | ADR-021 / W4 | `tenant_registry_legacy` |
 
 ## File inventory
 
 ```
-version.php                         2026060103 / 0.5.0-alpha
+version.php                         2026060104 / 0.6.0-alpha
 settings.php                        3 default-ON legacy flags + 1 default-OFF org_dualwrite_enabled + managetenants admin_externalpage
 index.php                           admin signpost (library plugin, no learner UI)
 db/install.xml                      customer + tenant (W4) + org_unit + org_member (W3.2a)
@@ -37,6 +37,7 @@ classes/org.php                     W3.1+3.2a seam (manager_id_of + model read A
 classes/org_source.php              W3.2b — injectable source interface (users() + unit_name())
 classes/org_legacy_source.php       W3.2b — BizLMS-backed source (open_path/open_supervisorid + local_costcenter names)
 classes/org_reconciler.php          W3.2b — idempotent legacy→model upsert engine
+classes/org_parity.php              W3.3 — model-vs-legacy parity comparator (the cutover gate)
 classes/task/reconcile_org.php      W3.2b — scheduled task; no-ops unless org_dualwrite_enabled is ON
 classes/tenant_registry.php         W4 seam (valid_roots/is_valid/assert_valid/customer_of/roots_for_customer)
 classes/form/customer_form.php      W4 admin UI — add/edit customer (shortname-unique)
@@ -44,10 +45,13 @@ classes/form/tenant_form.php        W4 admin UI — add/edit tenant (rootid posi
 manage_tenants.php                  W4 admin UI — list + status-toggle + add (managetenants-gated)
 cli/seed_tenants.php                W4 — idempotent seed from legacy allow-list (--dry-run)
 cli/parity_check_tenants.php        W4 — registry == legacy parity gate (exit-coded)
+cli/backfill_org.php                W3.3 — run reconciler over all users (--dry-run default, --execute, --tenant=)
+cli/parity_check_org.php            W3.3 — org model == legacy parity gate (exit-coded; thin wrapper over org_parity)
 lang/en/local_sentientia_core.php   all strings (no learner-facing → en only for now)
 tests/tenant_identity_test.php      W2 seam tests
 tests/org_test.php                  W3.1+3.2a — 14 cases (flag + manager-id + OFF-uses-model + tree/membership/reverse)
 tests/org_reconciler_test.php       W3.2b — 8 cases (tree build, manager edge, idempotency, manager-change, tenant scope, bad-path skip, name fallback, flag default)
+tests/org_parity_test.php           W3.3 — 6 cases (full parity, manager drift, membership drift, unbackfilled, scope skip, empty-model)
 tests/tenant_registry_test.php      W4 — 11 cases (legacy + OFF-reads-table + parity + legacy-ignores-table)
 ```
 
@@ -68,28 +72,32 @@ Wave 3.2a (ship empty; seeded by 3.2b dual-write + 3.3 backfill):
   mirrors open_supervisorid; 0 = none), time*`; unique `(userid, unitid)`. The
   user↔unit membership. manager_via_model/direct_reports/is_manager read managerid.
 
-## Dual-write reconciler (W3.2b — ADR-020, default-OFF)
+## Dual-write + backfill + parity (W3.2b/3.3 — ADR-020, default-OFF)
 
-The cron that mirrors the legacy org graph into the (still-empty) `org_*` tables so the
-model stays warm ahead of a gated cutover. Resolves ADR-020 OQ#2 toward a **periodic
-reconciler** (not a DB observer). **Nothing runs until `org_dualwrite_enabled` is ON.**
+Mirror the legacy org graph into the (else-empty) `org_*` tables so the model stays
+warm ahead of a gated cutover. Resolves ADR-020 OQ#2 toward a **periodic reconciler**
+(not a DB observer). **Nothing runs automatically until `org_dualwrite_enabled` is ON.**
 
 - `org_source` (interface) → `org_legacy_source` (live BizLMS) or a synthetic test source.
-- `org_reconciler::reconcile(?array $allowedroots)` — idempotent upsert; returns counts
-  (units/members created+updated, users processed/skipped). Re-run = pure no-op.
-- Mapping: each `open_path` segment → one `org_unit` (idnumber = cost-center id,
-  tenantrootid = segment[0], parentid chained, path = cost-center prefix); each user →
-  one `org_member` in their LEAF unit with `managerid = open_supervisorid`.
+- `org_reconciler::reconcile(?array $allowedroots)` — idempotent upsert; re-run = no-op.
+  Mapping: each `open_path` segment → one `org_unit` (idnumber = cost-center id,
+  tenantrootid = segment[0], parent chained, path = cost-center prefix); each user →
+  one `org_member` in the leaf unit with `managerid = open_supervisorid`.
 - `task\reconcile_org` runs every 4h, tenant-scoped to `tenant_registry::valid_roots()`,
-  and no-ops while the flag is OFF.
+  no-ops while the flag is OFF.
+- **W3.3 CLIs:** `cli/backfill_org.php` (one-shot reconcile; `--dry-run` default via a
+  rolled-back transaction, `--execute`, `--tenant=`) and `cli/parity_check_org.php` —
+  a thin wrapper over `org_parity`, which for each in-scope user asserts
+  `org::manager_via_model` == legacy `open_supervisorid` AND the model unit idnumber ==
+  the open_path leaf, exiting non-zero on any mismatch. **100% parity is the cutover gate.**
 
 ## Activation / cutover (per ADR-021 + ADR-020 decisions 2026-06-01)
 
 1. Deploy plugin → run `admin/cli/upgrade.php` (creates the tables).
 2. `php local/sentientia_core/cli/seed_tenants.php --dry-run` then without `--dry-run`.
 3. `php local/sentientia_core/cli/parity_check_tenants.php` — MUST report 100% parity.
-4. (Org, W3.3+) enable `org_dualwrite_enabled` on a **clone of prod DB**, let
-   `reconcile_org` (or `cli/backfill_org.php`) populate the model, run
+4. (Org, W3.3+) enable `org_dualwrite_enabled` on a **clone of prod DB**, run
+   `cli/backfill_org.php --execute` (or let `reconcile_org` populate the model), then
    `cli/parity_check_org.php` — MUST report 100% parity — then flip `org_legacy` OFF
    ZEEA-first (reversible — flip back ON instantly on any anomaly).
 
@@ -109,6 +117,12 @@ customer-zero.
   9 (VALID_TENANTS).
 
 ## Changelog
+- **2026-06-02 (W3.3, ADR-020):** backfill + parity CLIs — `cli/backfill_org.php`
+  (--dry-run default / --execute / --tenant=) + `cli/parity_check_org.php` + the
+  extracted `org_parity` comparator (manager-edge + membership parity, exit-coded).
+  Rehearsed on the local prod-data DB (2,883 users): backfill → 160 units + 2,883
+  members; parity 100% (0/0); re-run + task idempotent; flag restored OFF. 6 PHPUnit
+  tests (org_parity_test). v2026060103→2026060104 / 0.6.0-alpha.
 - **2026-06-02 (W3.2b, ADR-020):** dual-write reconciler (default-OFF) — `org_source`
   interface + `org_legacy_source` + idempotent `org_reconciler` + `task\reconcile_org`
   (`db/tasks.php`, every 4h, self-gates on new `org_dualwrite_enabled` flag). Mirrors

@@ -154,3 +154,16 @@ ZEEA cutover — each its own commit + clone-DB rehearsal. The tenant **registry
   `local_sentientia_core` -> version 2026060103 / 0.5.0-alpha.
   Next: 3.3 backfill + parity CLIs (`cli/backfill_org.php`, `cli/parity_check_org.php`);
   3.4 ZEEA-first cutover (site-admin-gated flag flip; 100% parity required first).
+- **2026-06-02 — Wave 3.3 SHIPPED** (additive, default-OFF, dormant). The backfill +
+  parity CLIs that make the org cutover gateable. New: `cli/backfill_org.php`
+  (`--dry-run` default, `--execute`, `--tenant=`) runs the reconciler once over all
+  users; `cli/parity_check_org.php` (exit-coded) + the extracted `org_parity`
+  comparator — for every in-scope user it asserts `org::manager_via_model` == legacy
+  `open_supervisorid` AND the model unit idnumber == the open_path leaf. **Rehearsed on
+  the local prod-data DB (2,883 users):** backfill `--execute` → 160 units + 2,883
+  members; parity **100% (0 manager / 0 membership mismatches)**; re-run idempotent
+  (0/0); the `reconcile_org` task with `org_dualwrite_enabled` ON also idempotent
+  (0.48s / 3046 queries), flag restored OFF. 6 PHPUnit tests (`org_parity_test`).
+  version 2026060103 → 2026060104 / 0.6.0-alpha.
+  Next: 3.4 cutover PREP — migrate remaining direct `open_supervisorid` readers onto the
+  seam + author `docs/RUNBOOK-org-cutover.md`. The flip itself stays human-gated.
