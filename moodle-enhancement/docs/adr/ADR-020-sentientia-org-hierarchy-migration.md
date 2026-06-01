@@ -130,3 +130,11 @@ ZEEA cutover — each its own commit + clone-DB rehearsal. The tenant **registry
   them. `local_sentientia_core` → version 2026060101 / 0.4.0-alpha.
   Next: 3.2b dual-write reconciliation cron; 3.3 backfill + parity CLIs; 3.4
   ZEEA-first cutover (site-admin-gated flag flip).
+- **2026-06-01 — Wave 3.2a.1 (manager-edge correction).** Building 3.2b surfaced that
+  BizLMS keeps cost-center membership and the reporting line independent (two peers in one
+  unit can report to different managers), so the 3.2a unit-role manager was lossy. Per the
+  2026-06-01 modelling decision, the manager relationship is now the DIRECT EDGE: added
+  `org_member.managerid` (mirrors open_supervisorid); `manager_via_model`, `direct_reports`,
+  and `is_manager` read it; the unit `role` column is reserved for a future unit-lead
+  concept. Additive column on the empty table (savepoint 2026060102), 14 PHPUnit tests
+  green. version 2026060101 to 2026060102 / 0.4.1-alpha.

@@ -4,7 +4,7 @@
 |-------|-------|
 | **Component** | `local_sentientia_core` |
 | **Role** | The "Sentientia layer" — the product's tenancy/org abstraction seams that sit ABOVE the BizLMS (`local_airpay_core` / `local_costcenter`) heritage. The decoupling foundation for ADR-018 independence. |
-| **Version** | `2026060101` / `0.4.0-alpha` (MATURITY_ALPHA) |
+| **Version** | `2026060102` / `0.4.1-alpha` (MATURITY_ALPHA) |
 | **Owner** | Nitin Rajput |
 | **Status** | Seams shipped + default-legacy (dormant). Wave 4 registry + Wave 3.2a org model built + locally rehearsed; live cutover gated on Nitin's deploy. |
 | **Standalone?** | Yes — every delegation to `local_airpay_core` is `class_exists()`-guarded with an inline fallback, so the plugin ships for Enterprise N with no airpay_core present. |
@@ -58,7 +58,9 @@ Wave 3.2a (ship empty; seeded by 3.2b dual-write + 3.3 backfill):
 - **`local_sentientia_org_unit`** — `id, parentid, tenantrootid, name, idnumber (HRMS
   key), path (materialised), status, time*`. The org-tree node.
 - **`local_sentientia_org_member`** — `id, userid, unitid (fk→org_unit), role
-  (member|manager), time*`; unique `(userid, unitid)`. The user↔unit membership.
+  (member|manager — reserved for unit-lead), managerid (the direct-manager edge,
+  mirrors open_supervisorid; 0 = none), time*`; unique `(userid, unitid)`. The
+  user↔unit membership. manager_via_model/direct_reports/is_manager read managerid.
 
 ## Activation / cutover (per ADR-021 + ADR-020 decisions 2026-06-01)
 
@@ -84,6 +86,12 @@ customer-zero.
   9 (VALID_TENANTS).
 
 ## Changelog
+- **2026-06-01 (W3.2a.1, ADR-020):** manager relationship is now the DIRECT EDGE —
+  added `org_member.managerid` (mirrors open_supervisorid); `manager_via_model` /
+  `direct_reports` / `is_manager` rewired to it (the unit `role` is reserved for a
+  future 'unit lead'). Per the 2026-06-01 modelling decision: in BizLMS, cost-center
+  membership and the reporting line are independent. 14 PHPUnit tests still green.
+  v2026060101→2026060102 / 0.4.1-alpha.
 - **2026-06-01 (W3.2a, ADR-020):** additive org model — `local_sentientia_org_unit` +
   `local_sentientia_org_member` tables + the `org` read API (manager_via_model, tree walk,
   membership, reverse lookups), all `model_available()`-guarded; `manager_id_of` OFF-path

@@ -103,5 +103,21 @@ function xmldb_local_sentientia_core_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026060101, 'local', 'sentientia_core');
     }
 
+    // ADR-020 2026-06-01 modelling decision — the manager relationship is the
+    // direct edge (org_member.managerid, mirroring open_supervisorid), not the
+    // unit role. Additive column on the still-empty table.
+    if ($oldversion < 2026060102) {
+        $member = new xmldb_table('local_sentientia_org_member');
+        $field = new xmldb_field('managerid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'role');
+        if (!$dbman->field_exists($member, $field)) {
+            $dbman->add_field($member, $field);
+        }
+        $index = new xmldb_index('idx_managerid', XMLDB_INDEX_NOTUNIQUE, ['managerid']);
+        if (!$dbman->index_exists($member, $index)) {
+            $dbman->add_index($member, $index);
+        }
+        upgrade_plugin_savepoint(true, 2026060102, 'local', 'sentientia_core');
+    }
+
     return true;
 }

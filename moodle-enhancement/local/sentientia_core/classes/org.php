@@ -100,6 +100,13 @@ class org {
     // code relies on a legacy equivalent), so they query the model directly,
     // returning empty/0 when the model isn't installed or seeded yet (dormant
     // until Wave 3.2b dual-write + 3.3 backfill populate it).
+    //
+    // The manager relationship uses the DIRECT EDGE (org_member.managerid,
+    // mirroring BizLMS open_supervisorid) per the 2026-06-01 modelling decision
+    // — NOT the unit 'manager' role: in BizLMS, cost-center membership and the
+    // reporting line are independent (two peers in one unit can report to
+    // different managers). The 'role' column is retained for a future
+    // 'unit lead' concept, separate from the reporting line.
 
     /** Are the Sentientia org-model tables installed? (request-cached) */
     public static function model_available(): bool {
@@ -114,8 +121,8 @@ class org {
     }
 
     /**
-     * Manager user id for a user via the org model: the 'manager' member of any
-     * unit the user belongs to (excluding the user themselves).
+     * Manager user id for a user via the org model — the direct-manager edge
+     * (org_member.managerid, mirroring open_supervisorid).
      *
      * @param int $userid
      * @return int Manager user id, or self::NO_MANAGER (0).
@@ -125,12 +132,12 @@ class org {
         if ($userid <= 0 || !self::model_available()) {
             return self::NO_MANAGER;
         }
-        $sql = "SELECT om2.userid
-                  FROM {local_sentientia_org_member} om1
-                  JOIN {local_sentientia_org_member} om2
-                    ON om2.unitid = om1.unitid AND om2.role = :mgrrole
-                 WHERE om1.userid = :uid AND om2.userid <> om1.userid";
-        $mgr = $DB->get_field_sql($sql, ['uid' => $userid, 'mgrrole' => 'manager'], IGNORE_MULTIPLE);
+        $mgr = $DB->get_field_sql(
+            "SELECT managerid
+               FROM {local_sentientia_org_member}
+              WHERE userid = :uid AND managerid > 0
+           ORDER BY id ASC",
+            ['uid' => $userid], IGNORE_MULTIPLE);
         return $mgr ? (int) $mgr : self::NO_MANAGER;
     }
 
@@ -212,7 +219,7 @@ class org {
     }
 
     /**
-     * Is the user a manager of any unit?
+     * Does the user have any direct reports? (Is anyone's managerid edge.)
      *
      * @param int $userid
      * @return bool
@@ -223,12 +230,12 @@ class org {
             return false;
         }
         return $DB->record_exists('local_sentientia_org_member',
-            ['userid' => $userid, 'role' => 'manager']);
+            ['managerid' => $userid]);
     }
 
     /**
-     * Direct-report user ids of a manager: the (non-manager) members of every
-     * unit the user manages.
+     * Direct-report user ids of a manager — users whose managerid edge points at
+     * this user (mirrors the open_supervisorid reverse lookup).
      *
      * @param int $userid
      * @return int[]
@@ -238,12 +245,8 @@ class org {
         if ($userid <= 0 || !self::model_available()) {
             return [];
         }
-        $sql = "SELECT DISTINCT m.userid
-                  FROM {local_sentientia_org_member} mgr
-                  JOIN {local_sentientia_org_member} m
-                    ON m.unitid = mgr.unitid AND m.userid <> mgr.userid
-                 WHERE mgr.userid = :uid AND mgr.role = :mgrrole";
-        return array_map('intval',
-            array_keys($DB->get_records_sql($sql, ['uid' => $userid, 'mgrrole' => 'manager'])));
+        return array_values(array_unique(array_map('intval',
+            $DB->get_fieldset_select('local_sentientia_org_member', 'userid',
+                'managerid = :uid', ['uid' => $userid]))));
     }
 }

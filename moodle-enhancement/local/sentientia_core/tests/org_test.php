@@ -84,12 +84,13 @@ final class org_test extends \advanced_testcase {
     }
 
     /** Add a user to a unit with a role. */
-    private function add_member(int $userid, int $unitid, string $role = 'member'): void {
+    private function add_member(int $userid, int $unitid, string $role = 'member', int $managerid = 0): void {
         global $DB;
         $DB->insert_record('local_sentientia_org_member', (object) [
             'userid' => $userid,
             'unitid' => $unitid,
             'role' => $role,
+            'managerid' => $managerid,
             'timecreated' => 1,
             'timemodified' => 1,
         ]);
@@ -101,14 +102,14 @@ final class org_test extends \advanced_testcase {
             'install.xml ships the org tables, so they exist in the PHPUnit DB.');
     }
 
-    public function test_manager_via_model_resolves_unit_manager_excluding_self(): void {
+    public function test_manager_via_model_reads_the_direct_edge(): void {
         $this->resetAfterTest();
         $unit = $this->make_unit(0, 'Engineering');
-        $this->add_member(10, $unit, 'member');
-        $this->add_member(20, $unit, 'manager');
+        $this->add_member(10, $unit, 'member', 20);   // 10 reports to 20 (edge)
+        $this->add_member(20, $unit, 'member', 0);    // 20 has no manager set
 
-        $this->assertSame(20, org::manager_via_model(10), 'Member resolves to the unit manager.');
-        $this->assertSame(org::NO_MANAGER, org::manager_via_model(20), 'Manager is not their own manager.');
+        $this->assertSame(20, org::manager_via_model(10), 'Reads the managerid edge.');
+        $this->assertSame(org::NO_MANAGER, org::manager_via_model(20), 'No edge -> no manager.');
         $this->assertSame(org::NO_MANAGER, org::manager_via_model(999), 'Unmapped user has no manager.');
     }
 
@@ -116,10 +117,9 @@ final class org_test extends \advanced_testcase {
         $this->resetAfterTest();
         set_config('org_legacy', 0, 'local_sentientia_core');
         $unit = $this->make_unit(0, 'Risk');
-        $this->add_member(11, $unit, 'member');
-        $this->add_member(22, $unit, 'manager');
+        $this->add_member(11, $unit, 'member', 22);   // 11 reports to 22 (edge)
 
-        // The model wins over the legacy open_supervisorid value, no debugging.
+        // The model edge wins over the legacy open_supervisorid value, no debugging.
         $result = org::manager_id_of((object) ['id' => 11, 'open_supervisorid' => 999]);
         $this->assertSame(22, $result);
         $this->assertDebuggingNotCalled();
@@ -167,15 +167,16 @@ final class org_test extends \advanced_testcase {
     public function test_is_manager_and_direct_reports(): void {
         $this->resetAfterTest();
         $unit = $this->make_unit(0, 'Sales');
-        $this->add_member(40, $unit, 'manager');
-        $this->add_member(41, $unit, 'member');
-        $this->add_member(42, $unit, 'member');
+        // 41 and 42 report to 40 via the edge; 40 reports to nobody.
+        $this->add_member(40, $unit, 'member', 0);
+        $this->add_member(41, $unit, 'member', 40);
+        $this->add_member(42, $unit, 'member', 40);
 
         $this->assertTrue(org::is_manager(40));
         $this->assertFalse(org::is_manager(41));
         $this->assertFalse(org::is_manager(999));
         $this->assertEqualsCanonicalizing([41, 42], org::direct_reports(40),
-            'Direct reports are the unit members other than the manager.');
+            'Direct reports are users whose managerid edge points at 40.');
         $this->assertSame([], org::direct_reports(41), 'A non-manager has no reports.');
     }
 }

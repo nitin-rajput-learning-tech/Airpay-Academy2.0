@@ -100,7 +100,9 @@
         <FIELD NAME="unitid"       TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
                COMMENT="FK to local_sentientia_org_unit.id"/>
         <FIELD NAME="role"         TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="member"
-               COMMENT="member|manager — 'manager' drives manager_via_model() + direct_reports()"/>
+               COMMENT="member|manager — reserved for a future 'unit lead' concept; NOT the reporting line"/>
+        <FIELD NAME="managerid"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Direct line-manager user id (mirrors BizLMS open_supervisorid); 0 = none. The reporting-line edge — ADR-020 2026-06-01 decision."/>
         <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="timemodified" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
       </FIELDS>
@@ -116,8 +118,10 @@
                COMMENT="units_of() lookup"/>
         <INDEX NAME="idx_unitid"   UNIQUE="false" FIELDS="unitid"
                COMMENT="members_of() lookup"/>
-        <INDEX NAME="idx_role"     UNIQUE="false" FIELDS="role"
-               COMMENT="is_manager() scan"/>
+        <INDEX NAME="idx_role"      UNIQUE="false" FIELDS="role"
+               COMMENT="unit-lead scan (reserved)"/>
+        <INDEX NAME="idx_managerid" UNIQUE="false" FIELDS="managerid"
+               COMMENT="direct_reports() / is_manager() reverse lookup"/>
       </INDEXES>
     </TABLE>
   </TABLES>
