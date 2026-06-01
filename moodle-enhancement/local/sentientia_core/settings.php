@@ -39,6 +39,14 @@ if ($hassiteconfig) {
         1
     ));
 
+    // Default-OFF dual-write flag — the ADR-020 Wave-3.2b reconciler toggle.
+    $settings->add(new admin_setting_configcheckbox(
+        'local_sentientia_core/org_dualwrite_enabled',
+        get_string('setting_org_dualwrite', 'local_sentientia_core'),
+        get_string('setting_org_dualwrite_desc', 'local_sentientia_core'),
+        0
+    ));
+
     $settings->add(new admin_setting_heading(
         'local_sentientia_core/tenant_registry_heading',
         get_string('settings_tenant_registry', 'local_sentientia_core'),

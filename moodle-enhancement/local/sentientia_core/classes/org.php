@@ -47,6 +47,18 @@ class org {
     }
 
     /**
+     * Is the org dual-write reconciler active? (ADR-020 Wave 3.2b.)
+     *
+     * Default OFF: until an admin opts in, the reconcile_org scheduled task
+     * no-ops, the local_sentientia_org_* tables stay empty, and deploying the
+     * wave changes nothing. Independent of {@see use_legacy_costcenter()} —
+     * dual-write warms the model while reads still come from legacy.
+     */
+    public static function use_dualwrite(): bool {
+        return (bool) get_config('local_sentientia_core', 'org_dualwrite_enabled');
+    }
+
+    /**
      * Resolve a user's manager (line-manager) user id.
      *
      * @param \stdClass $user A user record carrying (at least) open_supervisorid.

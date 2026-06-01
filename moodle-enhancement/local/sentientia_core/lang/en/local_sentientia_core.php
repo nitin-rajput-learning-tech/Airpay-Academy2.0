@@ -16,6 +16,11 @@ $string['setting_legacy_openpath_desc'] = 'When enabled (the default), Sentienti
 $string['settings_org'] = 'Org hierarchy';
 $string['setting_org_legacy'] = 'Resolve manager / org from BizLMS (legacy)';
 $string['setting_org_legacy_desc'] = 'When enabled (the default), Sentientia resolves a user\'s manager from the legacy BizLMS <code>open_supervisorid</code> field — identical to current production behaviour. Turning this OFF is reserved for ADR-020 Wave 3.2+ once the Sentientia org model exists; until then the service safely falls back to <code>open_supervisorid</code> anyway. Leave ON in production.';
+$string['setting_org_dualwrite'] = 'Mirror the legacy org graph into the Sentientia org model (dual-write)';
+$string['setting_org_dualwrite_desc'] = 'When enabled, a scheduled task periodically mirrors the legacy BizLMS org graph (<code>open_path</code> cost-center tree + <code>open_supervisorid</code> manager links) into the Sentientia org model tables. The legacy graph stays the source of truth — this only keeps the new tables warm ahead of an eventual cutover. Default OFF (the task no-ops): turn ON only to populate the model for a parity check or rehearsal, then run <code>cli/parity_check_org.php</code> before considering a flip. Does NOT change manager resolution — that is still governed by the “Resolve manager / org from BizLMS (legacy)” flag above.';
+
+// Scheduled task (ADR-020 Wave 3.2b).
+$string['task_reconcile_org'] = 'Reconcile the Sentientia org model from the legacy graph';
 
 // Tenant-path access (ADR-018 Wave 2 — tenant_identity::require_path_access).
 $string['error_outoftenant'] = 'You do not have access to this resource — it belongs to a different tenant.';

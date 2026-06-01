@@ -138,3 +138,19 @@ ZEEA cutover — each its own commit + clone-DB rehearsal. The tenant **registry
   and `is_manager` read it; the unit `role` column is reserved for a future unit-lead
   concept. Additive column on the empty table (savepoint 2026060102), 14 PHPUnit tests
   green. version 2026060101 to 2026060102 / 0.4.1-alpha.
+- **2026-06-02 — Wave 3.2b SHIPPED** (additive, default-OFF, dormant). The dual-write
+  reconciliation cron that mirrors the legacy org graph into the (still-empty) `org_*`
+  tables — resolving OQ#2 toward a periodic reconciler (NOT a DB observer). New:
+  `org_source` interface + `org_legacy_source` (reads `user.open_path` /
+  `open_supervisorid` + `local_costcenter` names) + `org_reconciler` (idempotent upsert)
+  + `task\reconcile_org` (scheduled every 4h; self-gates on the new
+  `org_dualwrite_enabled` flag, default OFF — so deploying changes nothing). Mapping:
+  each open_path segment -> one `org_unit` (idnumber = cost-center id, tenantrootid =
+  segment[0], parentid chained, path = cost-center prefix); each user -> one `org_member`
+  in their LEAF unit with `managerid = open_supervisorid` (the direct edge). Tenant-scoped
+  to `tenant_registry::valid_roots()`. Unit-testable on a vanilla DB via an injectable
+  synthetic source: 8 PHPUnit tests (tree build, manager edge, idempotency, manager-change
+  update, tenant scope, unusable-path skip, name fallback, flag default).
+  `local_sentientia_core` -> version 2026060103 / 0.5.0-alpha.
+  Next: 3.3 backfill + parity CLIs (`cli/backfill_org.php`, `cli/parity_check_org.php`);
+  3.4 ZEEA-first cutover (site-admin-gated flag flip; 100% parity required first).
