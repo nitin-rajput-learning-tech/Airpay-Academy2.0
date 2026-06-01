@@ -38,4 +38,26 @@ if ($hassiteconfig) {
         get_string('setting_org_legacy_desc', 'local_sentientia_core'),
         1
     ));
+
+    $settings->add(new admin_setting_heading(
+        'local_sentientia_core/tenant_registry_heading',
+        get_string('settings_tenant_registry', 'local_sentientia_core'),
+        ''
+    ));
+
+    // Default-ON legacy flag — the ADR-021 Wave-4 tenant-registry toggle.
+    $settings->add(new admin_setting_configcheckbox(
+        'local_sentientia_core/tenant_registry_legacy',
+        get_string('setting_legacy_registry', 'local_sentientia_core'),
+        get_string('setting_legacy_registry_desc', 'local_sentientia_core'),
+        1
+    ));
+
+    // ADR-021 Wave 4 — tenant registry admin UI (gated by managetenants capability).
+    $ADMIN->add('localplugins', new admin_externalpage(
+        'local_sentientia_core_tenants',
+        get_string('managetenants', 'local_sentientia_core'),
+        $CFG->wwwroot . '/local/sentientia_core/manage_tenants.php',
+        'local/sentientia_core:managetenants'
+    ));
 }

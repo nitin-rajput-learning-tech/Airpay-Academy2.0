@@ -1,6 +1,6 @@
 # ADR-021 — `tenant_registry` + the multi-customer tenant table (Independence Wave 4)
 
-**Status:** **Proposed — needs Nitin's go/no-go** (DB migration + capability gate) · **Owner:** Nitin Rajput
+**Status:** **Accepted — executing** (2026-06-01, Nitin's "do not defer anything" go). Wave 4.1 (seam + schema + seed/parity CLIs + `:managetenants` admin UI) BUILT additive + default-legacy + locally rehearsed (PHPUnit). The live cutover (flipping `tenant_registry_legacy` OFF on production) remains gated on Nitin's deploy + clone-DB rehearsal. · **Owner:** Nitin Rajput
 **Parent:** ADR-018 (independence roadmap) Wave 4 · **Builds on:** ADR-019 (Wave 2, `tenant_identity` seam), ADR-020 (Wave 3, `local_sentientia_org`).
 **Pairs with:** `docs/DEPRECATION-SCHEDULE.md` (row 9), `docs/BIZLMS-MIGRATION-NARRATIVE.md` (Wave 4). **Relates to:** ADR-002 (customer-level feature flags), ADR-008 (customer brand schema).
 

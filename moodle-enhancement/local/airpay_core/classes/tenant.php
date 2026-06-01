@@ -21,7 +21,14 @@ defined('MOODLE_INTERNAL') || die();
  */
 class tenant {
 
-    /** Known tenant root IDs in production. */
+    /**
+     * Known tenant root IDs in production.
+     *
+     * ADR-021 Wave 4: this is now the registry's LEGACY FALLBACK source —
+     * local_sentientia_core\tenant_registry::valid_roots() returns this list
+     * while tenant_registry_legacy is ON. When that flag is OFF the registry
+     * reads the local_sentientia_tenant table instead.
+     */
     public const VALID_TENANTS = [1, 77, 177];
 
     /**
@@ -53,8 +60,18 @@ class tenant {
 
     /**
      * Validate a tenant id is one we recognise. Throws otherwise.
+     *
+     * ADR-021 Wave 4: delegates to the Sentientia tenant_registry when present
+     * (class_exists-guarded), so flipping tenant_registry_legacy OFF routes
+     * validation through the DB-backed registry. Default-ON legacy keeps this
+     * byte-identical to the VALID_TENANTS membership test. Falls back to the
+     * inline check if local_sentientia_core is absent (standalone airpay_core).
      */
     public static function assert_valid(int $tenantid): void {
+        if (class_exists('\local_sentientia_core\tenant_registry')) {
+            \local_sentientia_core\tenant_registry::assert_valid($tenantid);
+            return;
+        }
         if (!in_array($tenantid, self::VALID_TENANTS, true)) {
             throw new \moodle_exception('error_invalidtenant', 'local_airpay_core');
         }

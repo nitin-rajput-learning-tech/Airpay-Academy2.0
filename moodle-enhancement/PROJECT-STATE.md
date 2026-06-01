@@ -5,6 +5,43 @@
 
 ---
 
+## ✅ ADR-018 Wave 4 — tenant registry BUILT + locally rehearsed (2026-06-01)
+
+Per Nitin's "do not defer anything, 100% working and stable" directive, Wave 4 (ADR-021,
+the lower-risk registry — his safe-first **W2→W4→W3→W5** order) is BUILT, lint-clean, and
+PROVEN on the isolated PHPUnit test DB. Additive + **default-legacy**, so deploying it
+changes nothing until an operator flips the flag.
+
+- **Seam** `local_sentientia_core\tenant_registry` — `valid_roots / is_valid /
+  assert_valid / customer_of / roots_for_customer`, behind the default-ON
+  `tenant_registry_legacy` flag (returns the legacy `[1,77,177]` allow-list via a
+  `class_exists`-guarded delegation to `local_airpay_core\tenant` + inline fallback). OFF
+  reads the registry tables; empty/absent → legacy fallback + `DEBUG_DEVELOPER` note, so a
+  premature flip cannot lock anyone out.
+- **Schema (additive):** `local_sentientia_customer` + `local_sentientia_tenant`
+  (install.xml + upgrade.php; both carry `time*`; `tenant.rootid` unique, FK→customer).
+- **CLIs:** `cli/seed_tenants.php` (idempotent, `--dry-run`) seeds the 3 roots under
+  customer-zero (Airpay); `cli/parity_check_tenants.php` is the exit-coded cutover gate
+  (registry == legacy → 100% before any flip).
+- **Capability + admin UI:** `local/sentientia_core:managetenants` (site-admin v1) gates
+  `manage_tenants.php` (list / add / suspend customers + tenants; `admin_externalpage`).
+- **Delegation:** `local_airpay_core\tenant::assert_valid()` now routes through the
+  registry (behaviour-identical while legacy ON); the one stray hardcode
+  (`airpay_emails/preview.php`) migrated onto `tenant_registry::valid_roots/is_valid`.
+- **Proof:** PHPUnit **10/10** (legacy + OFF-reads-table + suspended-excluded + parity +
+  legacy-ignores-table) on the isolated test DB — zero risk to the prod-data DB.
+  sentientia_core 0.2→**0.3-alpha** (2026060100); airpay_core 1.7.0→1.7.1; airpay_emails
+  1.1.3→1.1.4.
+- **Decisions:** Nitin accepted all 5 ADR-020 W3 recommendations (recorded in ADR-020);
+  ADR-021 flipped to **Accepted — executing**.
+- **Gated (turnkey for Nitin's deploy):** live cutover = upgrade → seed → parity (100%) →
+  flip `tenant_registry_legacy` OFF, rehearsed on a prod-DB clone first per ADR-021. Code
+  shipped to the **production branch**; NOT deployed to live.
+
+Next: Wave 3.2+ (org-data migration) on the same build → rehearse → gated-cutover model.
+
+---
+
 ## ✅ ADR-018 Wave 2 — open_path caller migration COMPLETE (2026-05-30)
 
 The `tenant_identity` seam (ADR-019) was extended to the full open_path surface, and

@@ -65,10 +65,15 @@ $plugin->component = 'local_airpay_core';
 // operator). Schema-only at this version — classification CLI runs in
 // Phase 1, providers consume in Phase 2-5. Q1 immutability ruling
 // means no UPDATE path on user_type column — append-only by design.
-$plugin->version   = 2026052801;
+//
+// ADR-021 Wave 4 (2026-06-01) — tenant::assert_valid() now delegates to
+// local_sentientia_core\tenant_registry (class_exists-guarded). Behaviour-
+// identical while tenant_registry_legacy is ON (default); routes through the
+// DB-backed registry when flipped OFF. Code-only change, no schema.
+$plugin->version   = 2026060100;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.7.0';  // +ADR-017 Phase 0 user_type schema (5 tables)
+$plugin->release   = '1.7.1';  // +ADR-021 W4 assert_valid → tenant_registry delegation
 // Release history
 // 1.1.0  cron-health publisher + audit_log + structured_logger
 // 1.2.0  Phase A0 — feature flags + Switchboard infrastructure.

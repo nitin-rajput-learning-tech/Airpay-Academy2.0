@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/sentientia_core/db" VERSION="20260601"
+       COMMENT="Sentientia core — ADR-021 Wave-4 tenant registry tables">
+  <TABLES>
+    <TABLE NAME="local_sentientia_customer"
+           COMMENT="Top-level Sentientia customer. Airpay = customer-zero (id 1). One customer owns >=1 tenant root.">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"
+               COMMENT="Primary key"/>
+        <FIELD NAME="name"         TYPE="char" LENGTH="255" NOTNULL="true"
+               COMMENT="Display name, e.g. 'Airpay Payment Services'"/>
+        <FIELD NAME="shortname"    TYPE="char" LENGTH="100" NOTNULL="true"
+               COMMENT="Machine-friendly unique handle, e.g. 'airpay'"/>
+        <FIELD NAME="status"       TYPE="char" LENGTH="20"  NOTNULL="true" DEFAULT="active"
+               COMMENT="active|suspended|archived"/>
+        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="uq_shortname" UNIQUE="true"  FIELDS="shortname"
+               COMMENT="One row per customer handle"/>
+        <INDEX NAME="idx_status"   UNIQUE="false" FIELDS="status"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_sentientia_tenant"
+           COMMENT="Tenant registry — replaces the hardcoded VALID_TENANTS=[1,77,177]. rootid is today's BizLMS cost-center root.">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"
+               COMMENT="Primary key"/>
+        <FIELD NAME="rootid"       TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Tenant root id (today: BizLMS cost-center root, e.g. 1/77/177)"/>
+        <FIELD NAME="customerid"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="FK to local_sentientia_customer.id — the owning customer"/>
+        <FIELD NAME="name"         TYPE="char" LENGTH="255" NOTNULL="true"
+               COMMENT="Display name, e.g. 'Airpay', 'Public', 'ZEEA'"/>
+        <FIELD NAME="idnumber"     TYPE="char" LENGTH="255" NOTNULL="false"
+               COMMENT="Optional external key (e.g. HRMS) — join key for sync round-trip"/>
+        <FIELD NAME="status"       TYPE="char" LENGTH="20"  NOTNULL="true" DEFAULT="active"
+               COMMENT="active|suspended|archived — only active roots are in the allow-list"/>
+        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"     TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_customer" TYPE="foreign" FIELDS="customerid"
+             REFTABLE="local_sentientia_customer" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="uq_rootid"     UNIQUE="true"  FIELDS="rootid"
+               COMMENT="One registry row per tenant root"/>
+        <INDEX NAME="idx_customerid" UNIQUE="false" FIELDS="customerid"
+               COMMENT="roots_for_customer() lookup"/>
+        <INDEX NAME="idx_status"    UNIQUE="false" FIELDS="status"
+               COMMENT="active-only allow-list scan"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

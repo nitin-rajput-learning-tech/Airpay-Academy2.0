@@ -83,15 +83,28 @@ A `local_sentientia_core\org` (or `local_sentientia_org\hierarchy`) service:
   — hence clone-DB rehearsal + per-tenant cutover + instant flag rollback are
   non-negotiable.
 
-## Open questions for Nitin (resolve before execution)
-1. **Soak duration** per tenant before advancing (suggest: ZEEA 1wk → Public 1wk → Airpay)?
-2. **Dual-write trigger** — DB observer on `local_costcenter` writes, or a periodic
-   reconciliation cron (simpler, eventually-consistent)? Trade-off: latency vs complexity.
-3. **`idnumber` / external-HRMS keys** — does the org tree need to round-trip to the
-   HRMS sync (`local_airpay_users`), or is Sentientia the new source of truth post-cutover?
-4. **Who owns the cutover flag** — site admin only, or a per-tenant operator capability?
-5. **Decommission timeline** for `local_costcenter` — keep as a read-only shim
-   indefinitely (lower risk) or schedule removal (cleaner)?
+## Decisions (resolved 2026-06-01 — Nitin: "I agree all recommendations")
+1. **Soak duration** — **ZEEA 1 week → Public 1 week → Airpay 2 weeks.** Customer-zero
+   (Airpay /1) cuts over last and gets the longest watch; ZEEA /177 (smallest) first.
+2. **Dual-write trigger** — **periodic reconciliation cron (~15 min) for v1.** Legacy
+   stays source of truth until cutover, so eventual consistency is acceptable and the
+   dual-read parity check (not write latency) gates cutover. A DB observer is a later
+   optimisation only if a real-time need appears.
+3. **`idnumber` / external-HRMS keys** — **support both; default HRMS-authoritative for
+   customer-zero.** Airpay org changes originate in HR, so Sentientia mirrors the HRMS
+   feed; the model must also let a future customer WITHOUT an HRMS make Sentientia
+   authoritative. `idnumber` is the join key either way.
+4. **Cutover flag ownership** — **site-admin-only** for the `org_legacy` flip (one-time,
+   high-stakes). Day-to-day org admin uses the new capability; per-tenant operator
+   delegation is a later capability once the pattern is proven.
+5. **Decommission timeline** — **read-only shim for 1 full release** after all-tenant
+   cutover, **then schedule removal** in its own ADR. Catches any missed reader during
+   the soak, then completes the decouple.
+
+> Status note (2026-06-01): per Nitin's "do not defer anything" directive, Wave 4
+> (ADR-021, the lower-risk registry) is being BUILT first (additive, default-legacy,
+> locally rehearsed); Wave 3.2+ (this ADR's schema / dual-write / migration) executes
+> next on the same build → rehearse → gated-cutover model.
 
 ## Next
 Wave 3.1 (the org seam) is **SHIPPED** — `local_sentientia_core\org::manager_id_of()`

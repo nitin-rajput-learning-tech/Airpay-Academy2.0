@@ -6,10 +6,12 @@ $plugin->component = 'local_airpay_emails';
 // ramping reminder + certificate settings, and cadence JSON errors.
 // ADR-018 Wave 2 (2026-05-30) — manage.php tenant derivation migrated onto
 // local_sentientia_core\tenant_identity::root_for_current_user. Behaviour-identical.
-$plugin->version   = 2026053000;
+// ADR-021 Wave 4 (2026-06-01) — preview.php tenant allow-list migrated onto
+// local_sentientia_core\tenant_registry::valid_roots/is_valid. Behaviour-identical.
+$plugin->version   = 2026060100;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.1.3';  // +ADR-018 W2 open_path → tenant_identity
+$plugin->release   = '1.1.4';  // +ADR-021 W4 tenant allow-list → tenant_registry
 // 1.1   (Sprint B, 2026-05-13)
 //   + course_completed event observer + tool_certificate PDF attachment
 //   + course_incomplete rule type with ramping cadence + max-cap + completion auto-stop

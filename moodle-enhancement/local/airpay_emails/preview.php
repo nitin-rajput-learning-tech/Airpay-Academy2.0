@@ -29,15 +29,13 @@ if (empty($templatekey)) {
 $templatekey = str_replace(['..', '//'], '', $templatekey);
 
 // Tenant ID with access validation.
-// Audit fix 2026-05-15: previous code queried `mdl_local_costcenter` (the
-// legacy BizLMS table) which doesn't exist in the Airpay rebuild — the
-// replacement is `mdl_local_airpay_org`. But the tenant list is already
-// hardcoded in $tenants below (1 Airpay / 77 Public / 177 ZEEA), so we
-// align with that single source of truth instead of issuing a DB query.
+// ADR-021 Wave 4 (2026-06-01): the tenant allow-list is now sourced from the
+// Sentientia tenant_registry (single source of truth) rather than a hardcoded
+// array. Behaviour-identical while tenant_registry_legacy is ON (the default).
 $tenantid = optional_param('tenant', 1, PARAM_INT);
-$valid_tenants = [1, 77, 177];
-if (!in_array($tenantid, $valid_tenants, true)) {
-    $tenantid = $valid_tenants[0];
+$validroots = \local_sentientia_core\tenant_registry::valid_roots();
+if (!\local_sentientia_core\tenant_registry::is_valid($tenantid)) {
+    $tenantid = $validroots[0] ?? 1;
 }
 if (!is_siteadmin()) {
     // Non-siteadmins can only preview their own tenant.
