@@ -227,3 +227,19 @@ body.dark-mode .airpay-footer__product-attribution {
     border-top-color: #1f2937;
 }
 
+
+/* ── Footer clears the fixed sidebar on app-shell desktop (2026-06-01) ──
+   The footer band is a body-level sibling of .ap-shell, so it spans full width
+   UNDER the position:fixed .ap-sidebar — its left-aligned content (the
+   standard_footer_html footnote, e.g. the tenant tagline) tunnels beneath the
+   sidebar. Pad the footer content to start after the sidebar, mirroring
+   .ap-shell__main's margin-left (expanded + collapsed). Mobile (<=768px, where
+   the sidebar is an overlay) keeps the footer full-width. */
+@media (min-width: 769px) {
+    body:has(.ap-shell) #page-footer {
+        padding-left: var(--ap-sidebar-width);
+    }
+    body:has(.ap-sidebar[data-collapsed="true"]) #page-footer {
+        padding-left: var(--ap-sidebar-collapsed-width);
+    }
+}

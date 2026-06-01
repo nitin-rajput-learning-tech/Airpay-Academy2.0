@@ -173,3 +173,10 @@ crowding/clipping the 180+ card grid (reported overlap). Fixed sidebar + sticky 
 unaffected; higher-specificity selectors, no `!important`. Dashboard + other app-shell
 pages untouched. v1.0.46→1.0.47-beta (2026060100). Verified live in Chrome (cards whole,
 footer at content end).
+
+## Footer clears the fixed sidebar (2026-06-01)
+_surface-footer.scss: the full-width footer's left-aligned content (standard_footer_html
+footnote) tunneled under the position:fixed .ap-sidebar. Added padding-left =
+--ap-sidebar-width (260) / --ap-sidebar-collapsed-width (72) to #page-footer on
+body:has(.ap-shell) at >=769px, mirroring .ap-shell__main's margin-left; mobile keeps
+full-width. v1.0.47→1.0.48-beta. Verified: footer content clears the sidebar.
