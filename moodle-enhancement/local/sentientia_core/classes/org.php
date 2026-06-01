@@ -56,9 +56,17 @@ class org {
         if (self::use_legacy_costcenter()) {
             return self::legacy_manager_id($user);
         }
-        // Wave 3.2+: the Sentientia org model. Not built yet — fall back to
-        // legacy so the OFF state can be exercised without breaking manager UX.
-        debugging('local_sentientia_core: Sentientia org model not yet available; '
+        // org_legacy OFF (Wave 3.2) — resolve via the Sentientia org model.
+        $uid = (int) ($user->id ?? 0);
+        if ($uid > 0) {
+            $mgr = self::manager_via_model($uid);
+            if ($mgr !== self::NO_MANAGER) {
+                return $mgr;
+            }
+        }
+        // User not yet mapped into the org model (pre-backfill, or an external
+        // user with no unit) — fall back to legacy so OFF never breaks manager UX.
+        debugging('local_sentientia_core: user not in the Sentientia org model; '
             . 'falling back to legacy open_supervisorid.', DEBUG_DEVELOPER);
         return self::legacy_manager_id($user);
     }
@@ -84,5 +92,158 @@ class org {
      */
     private static function legacy_manager_id(\stdClass $user): int {
         return (int) ($user->open_supervisorid ?? self::NO_MANAGER);
+    }
+
+    // ── Sentientia org model (ADR-020 Wave 3.2) ──────────────────────────────
+    // These read the local_sentientia_org_unit / _member tables — the
+    // Sentientia-owned org hierarchy. They are NEW capabilities (no production
+    // code relies on a legacy equivalent), so they query the model directly,
+    // returning empty/0 when the model isn't installed or seeded yet (dormant
+    // until Wave 3.2b dual-write + 3.3 backfill populate it).
+
+    /** Are the Sentientia org-model tables installed? (request-cached) */
+    public static function model_available(): bool {
+        global $DB;
+        static $available = null;
+        if ($available === null) {
+            $dbman = $DB->get_manager();
+            $available = $dbman->table_exists('local_sentientia_org_unit')
+                && $dbman->table_exists('local_sentientia_org_member');
+        }
+        return $available;
+    }
+
+    /**
+     * Manager user id for a user via the org model: the 'manager' member of any
+     * unit the user belongs to (excluding the user themselves).
+     *
+     * @param int $userid
+     * @return int Manager user id, or self::NO_MANAGER (0).
+     */
+    public static function manager_via_model(int $userid): int {
+        global $DB;
+        if ($userid <= 0 || !self::model_available()) {
+            return self::NO_MANAGER;
+        }
+        $sql = "SELECT om2.userid
+                  FROM {local_sentientia_org_member} om1
+                  JOIN {local_sentientia_org_member} om2
+                    ON om2.unitid = om1.unitid AND om2.role = :mgrrole
+                 WHERE om1.userid = :uid AND om2.userid <> om1.userid";
+        $mgr = $DB->get_field_sql($sql, ['uid' => $userid, 'mgrrole' => 'manager'], IGNORE_MULTIPLE);
+        return $mgr ? (int) $mgr : self::NO_MANAGER;
+    }
+
+    /**
+     * Parent unit id of an org unit (0 = root / none).
+     *
+     * @param int $unitid
+     * @return int
+     */
+    public static function parent_of(int $unitid): int {
+        global $DB;
+        if ($unitid <= 0 || !self::model_available()) {
+            return 0;
+        }
+        return (int) ($DB->get_field('local_sentientia_org_unit', 'parentid', ['id' => $unitid]) ?: 0);
+    }
+
+    /**
+     * Ancestor unit ids, nearest-first (parent, grandparent, …). Cycle-guarded.
+     *
+     * @param int $unitid
+     * @return int[]
+     */
+    public static function ancestors(int $unitid): array {
+        $out = [];
+        $seen = [];
+        $cur = self::parent_of($unitid);
+        while ($cur > 0 && empty($seen[$cur])) {
+            $out[] = $cur;
+            $seen[$cur] = true;
+            $cur = self::parent_of($cur);
+        }
+        return $out;
+    }
+
+    /**
+     * Direct child unit ids of a unit.
+     *
+     * @param int $unitid
+     * @return int[]
+     */
+    public static function children(int $unitid): array {
+        global $DB;
+        if ($unitid < 0 || !self::model_available()) {
+            return [];
+        }
+        return array_map('intval',
+            $DB->get_fieldset_select('local_sentientia_org_unit', 'id', 'parentid = :p', ['p' => $unitid]));
+    }
+
+    /**
+     * The unit ids a user belongs to.
+     *
+     * @param int $userid
+     * @return int[]
+     */
+    public static function units_of(int $userid): array {
+        global $DB;
+        if ($userid <= 0 || !self::model_available()) {
+            return [];
+        }
+        return array_map('intval',
+            $DB->get_fieldset_select('local_sentientia_org_member', 'unitid', 'userid = :u', ['u' => $userid]));
+    }
+
+    /**
+     * The member user ids of a unit.
+     *
+     * @param int $unitid
+     * @return int[]
+     */
+    public static function members_of(int $unitid): array {
+        global $DB;
+        if ($unitid <= 0 || !self::model_available()) {
+            return [];
+        }
+        return array_map('intval',
+            $DB->get_fieldset_select('local_sentientia_org_member', 'userid', 'unitid = :u', ['u' => $unitid]));
+    }
+
+    /**
+     * Is the user a manager of any unit?
+     *
+     * @param int $userid
+     * @return bool
+     */
+    public static function is_manager(int $userid): bool {
+        global $DB;
+        if ($userid <= 0 || !self::model_available()) {
+            return false;
+        }
+        return $DB->record_exists('local_sentientia_org_member',
+            ['userid' => $userid, 'role' => 'manager']);
+    }
+
+    /**
+     * Direct-report user ids of a manager: the (non-manager) members of every
+     * unit the user manages.
+     *
+     * @param int $userid
+     * @return int[]
+     */
+    public static function direct_reports(int $userid): array {
+        global $DB;
+        if ($userid <= 0 || !self::model_available()) {
+            return [];
+        }
+        $sql = "SELECT DISTINCT m.userid
+                  FROM {local_sentientia_org_member} mgr
+                  JOIN {local_sentientia_org_member} m
+                    ON m.unitid = mgr.unitid AND m.userid <> mgr.userid
+                 WHERE mgr.userid = :uid AND mgr.role = :mgrrole";
+        return array_map('intval',
+            array_keys($DB->get_records_sql($sql, ['uid' => $userid, 'mgrrole' => 'manager'])));
     }
 }

@@ -113,3 +113,20 @@ accessor only; reverse lookups + unit-tree walks arrive in 3.2 with the schema).
 On approval: 3.2 the schema + dual-write; 3.3 the backfill + parity CLIs; 3.4 the
 ZEEA cutover — each its own commit + clone-DB rehearsal. The tenant **registry** (replacing
 `VALID_TENANTS`) is the separate Wave 4 (ADR-021).
+
+## Progress log
+
+- **2026-06-01 — Wave 3.2a SHIPPED** (additive, default-legacy, dormant).
+  Schema: `local_sentientia_org_unit` (id, parentid, tenantrootid, name, idnumber,
+  path, status, time*) + `local_sentientia_org_member` (id, userid, unitid, role,
+  time*; unique (userid,unitid)), created by an idempotent upgrade step. Org-model
+  read API added to `local_sentientia_core\org`: `model_available()`,
+  `manager_via_model()`, `parent_of()`, `ancestors()`, `children()`, `units_of()`,
+  `members_of()`, `is_manager()`, `direct_reports()`. The `org_legacy`-OFF path of
+  `manager_id_of()` now resolves via the model, falling back to legacy
+  `open_supervisorid` + `DEBUG` for any user not yet mapped — so a premature flip
+  cannot break manager resolution. 14 PHPUnit tests (7 legacy/flag + 7 model). The
+  tables ship empty; nothing reads them until 3.2b dual-write + 3.3 backfill seed
+  them. `local_sentientia_core` → version 2026060101 / 0.4.0-alpha.
+  Next: 3.2b dual-write reconciliation cron; 3.3 backfill + parity CLIs; 3.4
+  ZEEA-first cutover (site-admin-gated flag flip).

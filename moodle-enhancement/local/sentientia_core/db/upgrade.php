@@ -56,5 +56,52 @@ function xmldb_local_sentientia_core_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026060100, 'local', 'sentientia_core');
     }
 
+    // ADR-020 Wave 3.2a — Sentientia org-hierarchy model (additive, default-legacy,
+    // dormant until 3.2b dual-write + 3.3 backfill seed it).
+    if ($oldversion < 2026060101) {
+
+        // 1. local_sentientia_org_unit — define BEFORE the member table so the
+        //    fk_unit reference resolves.
+        $unit = new xmldb_table('local_sentientia_org_unit');
+        $unit->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+        $unit->add_field('parentid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $unit->add_field('tenantrootid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $unit->add_field('name', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL);
+        $unit->add_field('idnumber', XMLDB_TYPE_CHAR, '255', null, null);
+        $unit->add_field('path', XMLDB_TYPE_CHAR, '255', null, null);
+        $unit->add_field('status', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'active');
+        $unit->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $unit->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $unit->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $unit->add_index('idx_parentid', XMLDB_INDEX_NOTUNIQUE, ['parentid']);
+        $unit->add_index('idx_tenantrootid', XMLDB_INDEX_NOTUNIQUE, ['tenantrootid']);
+        $unit->add_index('idx_idnumber', XMLDB_INDEX_NOTUNIQUE, ['idnumber']);
+        $unit->add_index('idx_status', XMLDB_INDEX_NOTUNIQUE, ['status']);
+        if (!$dbman->table_exists($unit)) {
+            $dbman->create_table($unit);
+        }
+
+        // 2. local_sentientia_org_member.
+        $member = new xmldb_table('local_sentientia_org_member');
+        $member->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+        $member->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $member->add_field('unitid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $member->add_field('role', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'member');
+        $member->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $member->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $member->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $member->add_key('fk_unit', XMLDB_KEY_FOREIGN, ['unitid'],
+            'local_sentientia_org_unit', ['id']);
+        $member->add_index('uq_user_unit', XMLDB_INDEX_UNIQUE, ['userid', 'unitid']);
+        $member->add_index('idx_userid', XMLDB_INDEX_NOTUNIQUE, ['userid']);
+        $member->add_index('idx_unitid', XMLDB_INDEX_NOTUNIQUE, ['unitid']);
+        $member->add_index('idx_role', XMLDB_INDEX_NOTUNIQUE, ['role']);
+        if (!$dbman->table_exists($member)) {
+            $dbman->create_table($member);
+        }
+
+        upgrade_plugin_savepoint(true, 2026060101, 'local', 'sentientia_core');
+    }
+
     return true;
 }
