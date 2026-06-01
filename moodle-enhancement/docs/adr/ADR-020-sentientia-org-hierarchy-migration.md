@@ -167,3 +167,18 @@ ZEEA cutover — each its own commit + clone-DB rehearsal. The tenant **registry
   version 2026060103 → 2026060104 / 0.6.0-alpha.
   Next: 3.4 cutover PREP — migrate remaining direct `open_supervisorid` readers onto the
   seam + author `docs/RUNBOOK-org-cutover.md`. The flip itself stays human-gated.
+- **2026-06-02 — Wave 3.4 cutover PREP (runbook authored; NO flip).**
+  `docs/RUNBOOK-org-cutover.md` — the ZEEA-first checklist (clone-DB rehearsal → backfill →
+  100% parity → enable dual-write soak → flip `org_legacy` OFF → soak → next tenant →
+  decommission ADR) with instant `org_legacy`-ON rollback. The reader-migration grep
+  (155 hits / 53 files) found the surface is dominated by REVERSE lookups
+  (`team_manager::get_team`/`can_manage`, `role_detector`) and aggregate
+  `GROUP BY open_supervisorid` JOINs (`rule_engine` digests) — neither a clean drop-in for
+  the current `org::` API. Surfaced as gated decisions for Nitin (runbook §3): (1) `org_legacy`
+  is GLOBAL — a per-tenant override is needed for true ZEEA-first; (2) reverse readers need a
+  legacy fallback on `direct_reports`/`is_manager` (or post-cutover migration) — but the
+  `open_supervisorid` column stays live through cutover, so they keep working meanwhile;
+  (3) aggregate readers need a new team-aggregate seam method. Forward readers
+  (`manager_id_of`) are safe drop-ins, recommended as batch 1. No production reader migrated
+  in this autonomous pass (behaviour-neutral until flip + user-facing/security-sensitive →
+  reviewed batches per the runbook). Docs-only; no version change.
