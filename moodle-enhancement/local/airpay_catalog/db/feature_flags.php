@@ -17,7 +17,7 @@ defined('MOODLE_INTERNAL') || die();
 $flags = [
 
     'sentientia.catalog.public_lxp.enabled' => [
-        'default'     => false,
+        'default'     => true,
         'description' => 'Public guest storefront (public.php) LXP /
                           Netflix restyle (C4 / F-004). When OFF
                           (default) the guest catalog renders the legacy

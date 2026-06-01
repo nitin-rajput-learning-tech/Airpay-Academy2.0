@@ -16,7 +16,7 @@ $plugin->component = 'local_airpay_catalog';
 // course.php 'enrolnow' action, public.php grid button routing, and a fix to
 // cart.php's enrollfree silent-failure (enrol_self no-op on key-gated courses
 // reported false success). +4 lang strings ×5 languages.
-$plugin->version   = 2026052902;
+$plugin->version   = 2026060100;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.2-beta';
+$plugin->release   = '1.0.3-beta';

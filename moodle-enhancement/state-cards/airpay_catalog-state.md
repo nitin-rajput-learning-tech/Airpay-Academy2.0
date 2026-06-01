@@ -167,3 +167,9 @@ version 2026052901 → 2026052902, release 1.0.1-beta → 1.0.2-beta.
 
 **PROD rollout:** deploy files + upgrade + purge, then **enable the flag per
 internal tenant** (Airpay /1, ZEEA /177) via the Switchboard.
+
+## LXP storefront ON by default (2026-06-01)
+`db/feature_flags.php`: `sentientia.catalog.public_lxp.enabled` default false→true — the
+public guest storefront (public.php) now renders the LXP/Netflix card grid + "Popular picks"
+rail by DEFAULT (matching the dashboard "Featured for you" poster style), instead of the plain
+legacy grid. Reversible + per-tenant overridable via the Switchboard. v1.0.2→1.0.3-beta.
