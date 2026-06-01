@@ -42,10 +42,10 @@ $plugin->component = 'local_airpay_users';
 // ID #fitem_id_honeypot_url, not a class — the stray empty field is gone);
 // (2) success page no longer double-renders the confirmation message and
 // drops the dismissible-alert close glyph.
-$plugin->version   = 2026052900;
+$plugin->version   = 2026060100;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '2.7.1';  // signup UX fixes (honeypot + success page)
+$plugin->release   = '2.7.2';  // signup UX fixes (honeypot + success page)
 $plugin->dependencies = [
     'local_airpay_org' => 2026051501,
 ];

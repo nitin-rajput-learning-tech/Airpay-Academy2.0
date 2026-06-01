@@ -128,3 +128,11 @@ P1 state-card pass: bumped Current version `1.0.0 (2026041600)` →
   `bulk_import_processor`, `hrms_importer`, `welcome_mailer`.
 - **PHPUnit** — 8 classes, 70 methods.
 - **P1 #59 (2026-05-20)** — reCAPTCHA on signup (bumped to 2.7.0).
+
+## Profile account-actions bar (2026-06-01)
+profile.php/profile.mustache: the profile was read-only with no way to edit details,
+change password, or reach settings (the existing pencil/photo icons were gated behind
+moodle/user:update — edit-OTHERS only, so a learner on their own profile saw nothing).
+Added an account-actions bar (Edit Profile / Change password / Preferences) linking to
+Moodle's own Sentientia-styled pages, shown for the user's OWN profile or a site admin
+viewing another (ap_canmanage = isown || is_siteadmin). v2.7.1→2.7.2.

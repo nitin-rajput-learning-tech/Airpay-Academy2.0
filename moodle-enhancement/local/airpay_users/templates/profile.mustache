@@ -44,6 +44,23 @@
         </div>
     </div>
 
+    {{#ap_canmanage}}
+    {{! Account-management actions (2026-06-01) — edit own profile / change password / preferences. }}
+    <div class="ap-profile__account-actions d-flex flex-wrap gap-2 mt-3 mb-2">
+        <a href="{{{ap_editurl}}}" class="btn btn-primary">
+            <i class="fa fa-pencil" aria-hidden="true"></i> {{#str}}editprofile, local_airpay_users{{/str}}
+        </a>
+        {{#ap_isown}}
+        <a href="{{{ap_passwordurl}}}" class="btn btn-outline-secondary">
+            <i class="fa fa-key" aria-hidden="true"></i> {{#str}}changepassword{{/str}}
+        </a>
+        {{/ap_isown}}
+        <a href="{{{ap_prefsurl}}}" class="btn btn-outline-secondary">
+            <i class="fa fa-cog" aria-hidden="true"></i> {{#str}}preferences{{/str}}
+        </a>
+    </div>
+    {{/ap_canmanage}}
+
     {{! Gamification + Skills Summary Row }}
     <div class="ap-profile__enrichment">
         {{#ap_gamification}}

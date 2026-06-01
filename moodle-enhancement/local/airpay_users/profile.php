@@ -44,6 +44,21 @@ $PAGE->set_heading(fullname($user));
 // Build profile context via user_manager.
 $profilecontext = \local_airpay_users\user_manager::build_profile_context($id);
 
+// Account-management actions (2026-06-01) — the profile was read-only with no
+// way to edit details, change password, or reach settings. Surface links to
+// Moodle's own (Sentientia-styled) account pages. Shown for the user's OWN
+// profile, or to a site admin viewing another user.
+if (is_array($profilecontext)) {
+    $isown = ((int) $id === (int) $USER->id);
+    $profilecontext['ap_canmanage']   = $isown || is_siteadmin();
+    $profilecontext['ap_isown']       = $isown;
+    $profilecontext['ap_editurl']     = (new moodle_url('/user/edit.php',
+        ['id' => $id, 'course' => SITEID]))->out(false);
+    $profilecontext['ap_prefsurl']    = (new moodle_url('/user/preferences.php',
+        ['userid' => $id]))->out(false);
+    $profilecontext['ap_passwordurl'] = (new moodle_url('/login/change_password.php'))->out(false);
+}
+
 echo $OUTPUT->header();
 
 if (!empty($profilecontext)) {
