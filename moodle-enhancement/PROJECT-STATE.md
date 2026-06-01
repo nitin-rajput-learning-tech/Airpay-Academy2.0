@@ -5748,3 +5748,46 @@ container). No conflict markers.
   `question_type` classes directly — the existing switch-based renderer
   + recorder still drive runtime; the type classes are additive and the
   registry/tests pin the contract. Migration is a clean follow-up chip.
+
+---
+
+## 2026-06-02 — Sentientia Stability Marathon (independence Waves 3.2b → 5)
+
+Production branch advanced **99bfc8ba9 → e41877594** across 5 atomic, reversible,
+flag-gated ships. Every increment default-legacy/OFF + dormant, locally rehearsed;
+**live behaviour unchanged**; the owner's uncommitted WIP (`local_airpay_compliance_report/**`
++ scratch `tools/_*.php`) was untouched throughout (staged only explicit paths, never `-A`).
+
+| Block | Wave | Commit | Shipped |
+|-------|------|--------|---------|
+| A | W3.2b | `c43c8da2d` | **Org dual-write reconciler (default-OFF).** `org_source`/`org_legacy_source`/`org_reconciler` + `reconcile_org` task (`db/tasks.php`) + `org_dualwrite_enabled` flag + `org::use_dualwrite()`. 8 PHPUnit (synthetic source). v→`2026060103`/`0.5.0-alpha`. |
+| B | W3.3 | `ae7da0e04` | **Backfill + parity CLIs.** `cli/backfill_org.php` (`--dry-run` default/`--execute`/`--tenant=`) + `cli/parity_check_org.php` + `org_parity` comparator. Rehearsed on prod-data DB: **2,883 users → 160 units / 2,883 members, 100% parity (0/0), idempotent**; `reconcile_org` task with flag ON also idempotent, flag restored OFF. 6 PHPUnit. v→`2026060104`/`0.6.0-alpha`. |
+| C | W3.4-prep | `f995d7888` | **`docs/RUNBOOK-org-cutover.md`** — ZEEA-first flip checklist + reader-migration inventory + gated design forks. **No flip.** |
+| E | W5-prep | `e41877594` | **`ADR-022`** component-rename design (31 `local_airpay_*` plugins, 514+ refs). Codemod + per-plugin DB-migration strategy, leaf-first / `airpay_core` last. **No rename.** |
+
+**Block D (W6 de-brand UI filler) — deferred:** trim-able per plan contingency; UI items
+(dark-mode AA contrast, badges, OTP login string) need Chrome-MCP visual verification +
+carry theme-regression risk not warranted in an autonomous pass. Available safe backlog.
+
+### Org model — status
+End-to-end behind flags. `local_sentientia_org_*` is populated by the dual-write
+reconciler / backfill; the **100%-parity gate is proven on 2,883 real users**. The cutover
+(flip `org_legacy` OFF) is **human-gated** per `docs/RUNBOOK-org-cutover.md`. Rollback at any
+stage = flip the flag back ON (legacy `open_supervisorid` + `local_costcenter` untouched).
+
+### Gated decisions surfaced for Nitin (in the runbook + ADR-022)
+1. `org_legacy` is **global**, not per-tenant → a per-tenant override is needed for a true
+   ZEEA-first flip (else: verify all-tenant parity, then one global flip).
+2. **Reverse-lookup** readers (`team_manager::get_team`/`can_manage`, theme `role_detector`)
+   + **aggregate** `GROUP BY open_supervisorid` JOINs (`rule_engine` digests) are not clean
+   drop-ins for the current `org::` API. They keep working post-flip (the column stays live);
+   migrating them needs seam-API decisions (reverse legacy-fallback; a team-aggregate helper).
+3. **Component rename** (ADR-022): full `airpay_*`→`sentientia_*` rename vs **brand-the-surface
+   / defer** — component names are invisible to learners; rename is high-risk for low user
+   benefit. Recommended to weigh deferral first.
+
+### `local_sentientia_core` after the marathon
+v`2026060104` / `0.6.0-alpha`. Seams: `tenant_identity` (W2), `org` (W3: seam + model + read
+API + dual-write + backfill/parity), `tenant_registry` (W4) — all default-legacy/OFF. State
+card: `state-cards/sentientia_core-state.md`. ADR progress logs: ADR-020 (W3.2b/3.3/3.4-prep),
+ADR-022 (W5 rename, proposed).
