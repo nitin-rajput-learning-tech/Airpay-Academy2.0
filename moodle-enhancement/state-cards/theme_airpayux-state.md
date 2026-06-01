@@ -154,3 +154,12 @@ phases but had no state card; created as part of the P1 state-card
 pass after the merge wave. The platform-visual-audit-2026-05-24 work
 is the most recent body of changes; details documented inline above
 and cross-referenced in PROJECT-STATE.md.
+
+## ADR-018 Wave 2 — open_path → tenant_identity seam (2026-05-30)
+
+Direct `$USER->open_path` / entity `open_path` parsing in this plugin was migrated
+onto the `local_sentientia_core\tenant_identity` seam (`root_for_user` /
+`root_for_current_user` / `department_for_user` / `subdepartment_for_user` /
+`path_root` / `path_for_user`). Behaviour-identical — the legacy BizLMS parse stays
+the default-ON source behind `tenant_identity_legacy`. Shipped via the
+feat/wave2-callers-* branches (merged to production 2026-05-30). DEPRECATION-SCHEDULE row 7.

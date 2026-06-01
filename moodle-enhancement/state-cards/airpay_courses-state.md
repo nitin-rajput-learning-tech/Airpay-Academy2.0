@@ -247,3 +247,12 @@ tenant scoping rather than a global flag.
 - [ ] WS endpoints for `featured.php` (currently page-only)
 - [ ] Bulk-tenant-share dialog for the catalog admin (single course →
       N tenants in one click; currently one-by-one via `share.php`)
+
+## ADR-018 Wave 2 — open_path → tenant_identity seam (2026-05-30)
+
+Direct `$USER->open_path` / entity `open_path` parsing in this plugin was migrated
+onto the `local_sentientia_core\tenant_identity` seam (`root_for_user` /
+`root_for_current_user` / `department_for_user` / `subdepartment_for_user` /
+`path_root` / `path_for_user`). Behaviour-identical — the legacy BizLMS parse stays
+the default-ON source behind `tenant_identity_legacy`. Shipped via the
+feat/wave2-callers-* branches (merged to production 2026-05-30). DEPRECATION-SCHEDULE row 7.

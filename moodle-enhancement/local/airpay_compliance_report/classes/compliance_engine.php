@@ -64,9 +64,9 @@ class compliance_engine {
 
         // Build snapshot for each user × course.
         foreach ($users as $user) {
-            $parts = explode('/', trim($user->open_path ?? '', '/'));
-            $costcenterid = (int)($parts[0] ?? 0);
-            $dept_path = $user->open_path ?? '';
+            // ADR-018 Wave 2: tenant root + raw path via the Sentientia seam.
+            $costcenterid = \local_sentientia_core\tenant_identity::root_for_user($user);
+            $dept_path = \local_sentientia_core\tenant_identity::path_for_user($user);
 
             foreach ($mandatory as $mc) {
                 // Check tenant scope: 0 = all tenants, else specific costcenter.
@@ -426,7 +426,7 @@ class compliance_engine {
                 'email'        => $user->email,
                 'fullname'     => format_string($user->firstname . ' ' . $user->lastname),
                 'designation'  => format_string($user->open_designation ?? ''),
-                'department'   => $user->open_path ?? '',
+                'department'   => \local_sentientia_core\tenant_identity::path_for_user($user),
                 'courses'      => [],
                 'all_completed' => true,
             ];
