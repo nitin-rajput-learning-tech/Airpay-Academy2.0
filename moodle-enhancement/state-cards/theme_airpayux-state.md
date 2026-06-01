@@ -163,3 +163,13 @@ onto the `local_sentientia_core\tenant_identity` seam (`root_for_user` /
 `path_root` / `path_for_user`). Behaviour-identical — the legacy BizLMS parse stays
 the default-ON source behind `tenant_identity_legacy`. Shipped via the
 feat/wave2-callers-* branches (merged to production 2026-05-30). DEPRECATION-SCHEDULE row 7.
+
+## Catalog storefront footer-overlap fix (2026-06-01)
+`scss/moodle/partials/_layout-shell.scss`: scoped `body.path-local-airpay_catalog`
+OUT of the locked app-shell cockpit (body 100vh+overflow:hidden + internal
+`.ap-shell__content` scroller + footer pinned by `flex:0 0 auto`) so catalog pages
+document-scroll with the footer at the END of content. Fixes the pinned 3-row footer
+crowding/clipping the 180+ card grid (reported overlap). Fixed sidebar + sticky topbar
+unaffected; higher-specificity selectors, no `!important`. Dashboard + other app-shell
+pages untouched. v1.0.46→1.0.47-beta (2026060100). Verified live in Chrome (cards whole,
+footer at content end).

@@ -621,3 +621,40 @@ a.ap-sidebar__roleswitch-item:hover {
         padding: var(--ap-space-4);
     }
 }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Catalog storefront — document scroll (ADR-018 storefront fix, 2026-06-01)
+   ──────────────────────────────────────────────────────────────────────────
+   The app-shell above locks the page into a fixed-height "cockpit": body is
+   100vh + overflow:hidden, `.ap-shell__content` is an internal scroller, and the
+   footer is pinned by `flex:0 0 auto`. That's right for the dashboard, but on the
+   long course-catalog storefront (180+ cards) it traps the grid in a ~440px
+   window and the pinned 3-row footer (links + GPL attribution + footnote) crowds
+   and clips the last card row — reading as a "footer overlapping the cards" bug.
+
+   For the catalog plugin pages (public storefront + member catalog + cart), opt
+   OUT of the locked cockpit so the document scrolls naturally and the footer
+   falls at the END of the content. The fixed sidebar + sticky topbar are
+   unaffected (both viewport-anchored). These selectors out-specify the
+   `body:has(.ap-shell)` / `.ap-shell*` rules above, so no !important is needed.
+   Dashboard + other app-shell pages keep the cockpit model untouched.
+   ────────────────────────────────────────────────────────────────────────── */
+body.path-local-airpay_catalog:has(.ap-shell) {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+}
+body.path-local-airpay_catalog:has(.ap-shell) > #page-wrapper {
+    height: auto;
+    min-height: 0;
+}
+body.path-local-airpay_catalog .ap-shell,
+body.path-local-airpay_catalog .ap-shell__main {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+}
+body.path-local-airpay_catalog .ap-shell__content {
+    height: auto;
+    overflow: visible;
+}
