@@ -37,8 +37,15 @@ This must be answered before implementation, because it changes the data model a
 | **C. Per-course recurring** | Subscription → keep access to **one course** while paying | Minimal extension of the current per-course `enrol_fee` paradigm | Least-assuming; unusual UX (you rarely "subscribe" to a single course). |
 
 **Recommendation:** **A (all-access)** is the standard LMS subscription and the likely product
-intent, but it is the largest build. **Nitin to decide** — the rest of this ADR is written model-agnostic
-where possible and flags model-specific choices.
+intent, but it is the largest build.
+
+> **DECISION (Nitin, 2026-06-02): all of the above.** `enrol_sentientiasub` ships **one**
+> plugin with a per-instance **`scope`** setting — `allaccess` | `category` | `course` — so the
+> admin chooses the model per subscription product. The data model therefore carries
+> `scope` + a nullable `scopeid` (categoryid for `category`, courseid for `course`, null for
+> `allaccess`); the enrolment-grant step branches on `scope` (catalogue-wide cohort grant /
+> category-scoped grant / single-course grant). This unifies A/B/C rather than forking the
+> schema — the most flexible option and the one to build.
 
 ## Proposed architecture
 
@@ -124,7 +131,7 @@ behaviour is unchanged: the one-time `enrol_fee` path everyone sees today is unt
 
 ## Open decisions for Nitin
 
-1. Subscription model — **A (all-access)** / B (program) / C (per-course)?
+1. ~~Subscription model~~ — **RESOLVED 2026-06-02: all three via a per-instance `scope` setting** (see Decision above).
 2. Billing period + pricing model?
 3. Charge-failure: immediate suspend, or N-day grace?
 4. Tenants: Public (77) only first, or all?
