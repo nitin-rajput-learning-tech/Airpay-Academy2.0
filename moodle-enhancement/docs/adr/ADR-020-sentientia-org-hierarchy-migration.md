@@ -194,3 +194,14 @@ ZEEA cutover — each its own commit + clone-DB rehearsal. The tenant **registry
   PHPUnit; 30/30 org green (existing reverse tests pinned to the model path with org_legacy
   OFF). version 2026060104 → 2026060105 / 0.6.1-alpha. Next: migrate the raw reverse readers
   (team_manager::get_team/can_manage, rule_engine digests) onto the seam.
+- **2026-06-02 — Wave 3.4 reader migration: team_manager (batch 1).**
+  `local_airpay_manager\team_manager` — the central manager surface — routed through the org
+  seam: `get_team` → `org::direct_reports` (+ rich-record reload + deleted/suspended
+  re-filter + stable ordering), `can_manage` → `org::is_manager`, `can_view_member`
+  chain-walk → `org::manager_id_of`. Behaviour-identical under org_legacy ON (proven on prod
+  data: get_team ids == raw open_supervisorid ids, n=2; can_manage final-clause OLD==NEW for
+  sampled users 772/826/2/1); auto-switches to the model at cutover. New `team_manager_test`
+  (model path, vanilla-testable); 57/57 incl. airpay_manager + sentientia regression.
+  `local_airpay_manager` 2026052201 → 2026060200 / 1.3.3. The remaining reverse/aggregate
+  readers (rule_engine digests via reports_by_manager, role_detector, escalation crons)
+  follow the same pattern in subsequent batches (RUNBOOK-org-cutover §4).

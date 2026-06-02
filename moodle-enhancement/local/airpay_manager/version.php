@@ -9,7 +9,10 @@ $plugin->component = 'local_airpay_manager';
 // request/allocation workflow, errors, privacy metadata).
 // Goal A audit Bug #10 (2026-05-22) — align list_requests + list_allocations
 // WS with the shared theme_airpayux/datatable contract (accept `search`).
-$plugin->version   = 2026052201;
+// ADR-020 W3.4 (2026-06-02) — team_manager (get_team / can_manage /
+// can_view_member) routed through the local_sentientia_core\org seam:
+// behaviour-identical under org_legacy ON; auto-switches to the org model at cutover.
+$plugin->version   = 2026060200;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.3.2';  // +Goal A Bug #10 WS-contract alignment
+$plugin->release   = '1.3.3';  // +ADR-020 W3.4 org-seam migration of team_manager

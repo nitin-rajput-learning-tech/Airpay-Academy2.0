@@ -1,7 +1,7 @@
 # State Card — `local_airpay_manager`
 
 **Component:** `local_airpay_manager`
-**Version:** `2026052201` / `1.3.2`  (+Goal A Bug #10 WS-contract alignment)
+**Version:** `2026060200` / `1.3.3`  (+ADR-020 W3.4 org-seam migration of team_manager)
 **Maturity:** `MATURITY_STABLE`
 **Status:** Live on airpay.academy. Manager (line-manager) dashboard + team workflows.
 **Last refreshed:** 2026-05-29 (QA Walk T-03 — empty-state handling)
@@ -14,9 +14,10 @@ Manager dashboard surface — gives line managers a top-down view of
 their reporting line: who's overdue, who's about to certify, who
 needs an approval. Approval workflow + budget allocation engine.
 
-Manager identity comes from `mdl_user.profile_field_supervisorid`
-(the canonical Airpay supervisor field) — `local_airpay_users::user_manager`
-provides the resolver helpers.
+Manager identity is resolved through the `local_sentientia_core\org` seam
+(ADR-020 Wave 3.4): under the default `org_legacy` flag it reads the BizLMS
+`open_supervisorid` reporting line exactly as before; a future, gated cutover
+switches it to the Sentientia org model with no caller change.
 
 ## DB tables (2)
 
@@ -37,7 +38,7 @@ None registered.
 
 ```
 local/airpay_manager/
-├── version.php                                   2026052201 / 1.3.2
+├── version.php                                   2026060200 / 1.3.3
 ├── README.md
 ├── index.php                                      Manager landing page
 ├── member.php                                     Individual team-member detail
@@ -45,7 +46,7 @@ local/airpay_manager/
 ├── performance.php                                Team performance summary
 ├── exportcsv.php                                  CSV export
 ├── classes/
-│   ├── team_manager.php                           Reporting-line resolution
+│   ├── team_manager.php                           Reporting-line resolution (via local_sentientia_core\org seam — ADR-020 W3.4)
 │   ├── approval_manager.php                       Approval state machine
 │   ├── external/                                  WS endpoints
 │   ├── form/                                      Approval + allocation forms
@@ -61,12 +62,13 @@ local/airpay_manager/
 │   └── hi/local_airpay_manager.php                (100% parity)
 └── tests/
     ├── approval_manager_test.php                  20 methods
-    └── privacy/provider_test.php                  5 methods (25 total)
+    ├── team_manager_test.php                      3 methods (org-seam access checks, model path)
+    └── privacy/provider_test.php                  5 methods (28 total)
 ```
 
 ## Tests
 
-2 PHPUnit classes, 25 methods. `approval_manager_test` covers the
+3 PHPUnit classes, 28 methods. `approval_manager_test` covers the
 state machine in depth (pending → approved → revoked, escalation,
 re-routing on supervisor change).
 
@@ -79,8 +81,8 @@ re-routing on supervisor change).
 - [ ] WhatsApp approval inbox (Phase C.1 integration with
       `local_airpay_whatsapp`)
 - [ ] Configurable approval SLA + auto-escalation
-- [ ] PHPUnit coverage for `team_manager` (today: only approval_manager
-      is covered)
+- [x] PHPUnit coverage for `team_manager` — done 2026-06-02 (model-path access
+      checks; ADR-020 W3.4 org-seam migration)
 
 ## State card created — 2026-05-24
 
@@ -112,3 +114,18 @@ i18n: the `{{^has_team}}` strings are now lang strings — `emptyteam_title`
 and `emptyteam_message` in `lang/en` + `lang/hi` (100% parity), resolved via
 `{{#str}}` helpers in `templates/dashboard.mustache`. Replaces the earlier
 hardcoded English (resolved 2026-05-29).
+
+## 2026-06-02 — ADR-020 W3.4 org-seam migration (team_manager)
+
+`team_manager` now resolves the reporting line through the
+`local_sentientia_core\org` seam instead of querying `open_supervisorid`
+directly: `get_team` → `org::direct_reports` (+ rich-record reload +
+deleted/suspended re-filter + stable ordering), `can_manage` →
+`org::is_manager`, `can_view_member` chain-walk → `org::manager_id_of`.
+
+Behaviour-identical under the default `org_legacy` flag (proven on the local
+prod-data DB: `get_team` ids == raw `open_supervisorid` ids, n=2; `can_manage`
+final-clause OLD==NEW for sampled users 772/826/2/1); a future, gated cutover
+auto-switches the whole manager surface to the Sentientia org model with no
+caller change. New `team_manager_test` (3 methods, model path) closes the
+long-standing coverage gap. version 2026052201 → 2026060200 / 1.3.3.

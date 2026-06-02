@@ -20,14 +20,24 @@ class team_manager {
      */
     public static function get_team(int $managerid): array {
         global $DB;
+        // Resolve the direct reports through the org seam (ADR-020): org_legacy ON
+        // reads open_supervisorid exactly as before; OFF reads the Sentientia org
+        // model — so a cutover switches the team dashboard automatically. The rich
+        // record load (+ deleted/suspended re-filter, + the stable name ordering)
+        // is preserved below.
+        $reportids = \local_sentientia_core\org::direct_reports($managerid);
+        if (empty($reportids)) {
+            return [];
+        }
+        [$insql, $inparams] = $DB->get_in_or_equal($reportids, SQL_PARAMS_NAMED, 'uid');
         return $DB->get_records_sql(
             "SELECT u.id, u.firstname, u.lastname, u.email, u.lastlogin,
                     u.lastaccess, u.open_path, u.open_designation,
                     u.department, u.open_employeeid
                FROM {user} u
-              WHERE u.open_supervisorid = :mgr AND u.deleted = 0 AND u.suspended = 0
+              WHERE u.id {$insql} AND u.deleted = 0 AND u.suspended = 0
            ORDER BY u.lastname ASC, u.firstname ASC",
-            ['mgr' => $managerid]
+            $inparams
         );
     }
 
@@ -264,7 +274,7 @@ class team_manager {
      *      active, non-deleted user (= has direct reports).
      */
     public static function can_manage(int $viewerid = 0): bool {
-        global $DB, $USER;
+        global $USER;
         if (empty($viewerid)) {
             $viewerid = (int) ($USER->id ?? 0);
         }
@@ -274,9 +284,9 @@ class team_manager {
                 \context_system::instance(), $viewerid)) {
             return true;
         }
-        return $DB->record_exists_select('user',
-            'open_supervisorid = :uid AND deleted = 0 AND suspended = 0',
-            ['uid' => $viewerid]);
+        // Has direct reports? Routed through the org seam (ADR-020): org_legacy ON
+        // = the open_supervisorid reverse lookup as before; OFF = the org model.
+        return \local_sentientia_core\org::is_manager($viewerid);
     }
 
     /**
@@ -308,11 +318,14 @@ class team_manager {
         if (is_siteadmin($viewerid)) return true;
         if (has_capability('local/airpay_users:view', \context_system::instance(), $viewerid)) return true;
 
-        // Walk up the supervisor chain from target — if we hit viewer, allow.
+        // Walk up the supervisor chain from target via the org seam (ADR-020):
+        // org_legacy ON resolves each manager from open_supervisorid as before;
+        // OFF resolves from the org model — so the chain switches at cutover.
         $current = $targetid;
         $visited = [];
         for ($i = 0; $i < 5; $i++) { // depth limit
-            $sup = $DB->get_field('user', 'open_supervisorid', ['id' => $current]);
+            $u = $DB->get_record('user', ['id' => $current], '*');
+            $sup = $u ? \local_sentientia_core\org::manager_id_of($u) : 0;
             if (empty($sup) || isset($visited[$sup])) break;
             if ((int) $sup === $viewerid) return true;
             $visited[$sup] = true;
