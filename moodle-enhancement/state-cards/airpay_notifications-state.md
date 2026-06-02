@@ -1,7 +1,7 @@
 # State Card — `local_airpay_notifications`
 
 **Component:** `local_airpay_notifications`
-**Version:** `2026052001` / `1.4.1`  (+P1 #48 Hindi top-up)
+**Version:** `2026060200` / `1.4.2`  (+ADR-020 W3.4 org-seam migration of manager digests)
 **Maturity:** `MATURITY_STABLE`
 **Status:** Live on airpay.academy. Generic notification rule engine.
 **Last refreshed:** 2026-05-24 (P1 state-card pass)
@@ -45,7 +45,7 @@ None registered directly. Consumes channel-master flags from
 
 ```
 local/airpay_notifications/
-├── version.php                                    2026052001 / 1.4.1
+├── version.php                                    2026060200 / 1.4.2
 ├── README.md
 ├── lib.php
 ├── index.php                                       Rule registry admin
@@ -53,7 +53,7 @@ local/airpay_notifications/
 ├── logs.php                                        Log table
 ├── cli/                                            CLI tools (replay, dedup)
 ├── classes/
-│   ├── rule_engine.php                            Trigger resolver + send dispatcher
+│   ├── rule_engine.php                            Trigger resolver + send dispatcher (manager digests group via local_sentientia_core\org — ADR-020 W3.4)
 │   ├── rule_manager.php                           Rule CRUD
 │   ├── prefs_manager.php                          User pref CRUD
 │   ├── external/                                  WS endpoints
@@ -104,3 +104,19 @@ onto the `local_sentientia_core\tenant_identity` seam (`root_for_user` /
 `path_root` / `path_for_user`). Behaviour-identical — the legacy BizLMS parse stays
 the default-ON source behind `tenant_identity_legacy`. Shipped via the
 feat/wave2-callers-* branches (merged to production 2026-05-30). DEPRECATION-SCHEDULE row 7.
+
+## ADR-020 Wave 3.4 — manager digests → org seam (2026-06-02)
+
+The two manager-aggregate rules — `rule_monthly_summary` (team snapshot) and
+`rule_manager_nudge` (3+ overdue) — previously grouped team members by
+`u.open_supervisorid` directly in SQL (`GROUP BY open_supervisorid` + a `JOIN` to
+the manager row). They now resolve the manager→reports grouping through
+`local_sentientia_core\org::reports_by_manager()` (the W3.4 aggregate primitive)
+and aggregate the domain data (completions / overdue) over that map.
+
+Behaviour-identical under the default `org_legacy` flag — **proven on the local
+prod-data DB: monthly 117 managers with an exact (team_size, completions) match;
+nudge 0==0** — and auto-switches to the Sentientia org model at cutover. Deleted /
+nonexistent managers are excluded as before (`record_exists`), and a latent
+`LIMIT 0` (unset `batch_limit`) in the nudge was fixed to default 500. 20/20
+PHPUnit green. version 2026052001 → 2026060200 / 1.4.2.

@@ -648,36 +648,57 @@ class rule_engine {
         global $DB;
         $result = ['sent' => 0, 'skipped' => 0];
 
-        $manager = $DB->get_manager();
-        if (!$manager->field_exists('user',
-                new \xmldb_field('open_supervisorid', XMLDB_TYPE_INTEGER, '10'))) {
-            return $result;
-        }
-
         $batchlimit = (int) (get_config('local_airpay_notifications', 'batch_limit') ?: 500);
         $since = time() - 30 * 86400;
 
-        $rows = $DB->get_records_sql("
-            SELECT u.open_supervisorid AS managerid, mgr.firstname AS mgr_firstname,
-                   COUNT(DISTINCT u.id) AS team_size,
-                   SUM(CASE WHEN cc.timecompleted > :since1 THEN 1 ELSE 0 END) AS completions
-              FROM {user} u
-              JOIN {user} mgr ON mgr.id = u.open_supervisorid
-         LEFT JOIN {course_completions} cc ON cc.userid = u.id
-             WHERE u.deleted = 0 AND u.suspended = 0
-               AND u.open_supervisorid > 0 AND mgr.deleted = 0
-          GROUP BY u.open_supervisorid, mgr.firstname
-             LIMIT $batchlimit",
-            ['since1' => $since]);
+        // Manager -> direct reports via the org seam (ADR-020): org_legacy ON groups
+        // by open_supervisorid exactly as the old GROUP BY did; OFF groups by the
+        // Sentientia org model. (reports_by_manager already excludes deleted/suspended
+        // reports under the legacy path, mirroring the old WHERE clause.)
+        $map = \local_sentientia_core\org::reports_by_manager();
+        if (empty($map)) {
+            return $result;
+        }
+        $allreports = array_values(array_unique(array_merge(...array_values($map))));
+        if (empty($allreports)) {
+            return $result;
+        }
 
-        foreach ($rows as $r) {
-            $sent = self::send($rule, (int) $r->managerid, null,
+        // Completions in the last 30 days, per report user (one query for the team).
+        [$insql, $params] = $DB->get_in_or_equal($allreports, SQL_PARAMS_NAMED, 'uid');
+        $params['since1'] = $since;
+        $compby = [];
+        foreach ($DB->get_records_sql(
+            "SELECT cc.userid, COUNT(*) AS cnt
+               FROM {course_completions} cc
+              WHERE cc.timecompleted > :since1 AND cc.userid {$insql}
+           GROUP BY cc.userid", $params) as $cr) {
+            $compby[(int) $cr->userid] = (int) $cr->cnt;
+        }
+
+        $count = 0;
+        foreach ($map as $managerid => $reportids) {
+            if ($count >= $batchlimit) {
+                break;
+            }
+            // mgr.deleted = 0 — skip a deleted manager (no row in the old JOIN).
+            $mgrrec = $DB->get_record('user', ['id' => $managerid, 'deleted' => 0], 'id, firstname');
+            if (!$mgrrec) {
+                continue;
+            }
+            $teamsize = count($reportids);
+            $completions = 0;
+            foreach ($reportids as $rid) {
+                $completions += $compby[$rid] ?? 0;
+            }
+            $sent = self::send($rule, (int) $managerid, null,
                 'Your team last 30 days',
-                'Hi ' . s($r->mgr_firstname) . ', here\'s a snapshot: '
-                . (int) $r->team_size . ' team members, '
-                . (int) $r->completions . ' course completions in the last 30 days. '
+                'Hi ' . s($mgrrec->firstname) . ', here\'s a snapshot: '
+                . $teamsize . ' team members, '
+                . $completions . ' course completions in the last 30 days. '
                 . 'See your manager dashboard for the full picture.');
             $sent ? $result['sent']++ : $result['skipped']++;
+            $count++;
         }
         return $result;
     }
@@ -810,34 +831,61 @@ class rule_engine {
         $result = ['sent' => 0, 'skipped' => 0];
 
         $now = time();
-        // Find managers with 3+ team members who have overdue courses.
-        $managers = $DB->get_records_sql(
-            "SELECT u.open_supervisorid as managerid,
-                    COUNT(DISTINCT u.id) as overdue_count,
-                    mgr.firstname as mgr_firstname, mgr.email as mgr_email
+        $batchlimit = (int) (get_config('local_airpay_notifications', 'batch_limit') ?: 500);
+
+        // Manager -> direct reports via the org seam (ADR-020): ON = open_supervisorid,
+        // OFF = the org model. Then count each manager's reports who have an overdue,
+        // not-completed course, and nudge managers with 3+ such reports.
+        $map = \local_sentientia_core\org::reports_by_manager();
+        if (empty($map)) {
+            return $result;
+        }
+        $allreports = array_values(array_unique(array_merge(...array_values($map))));
+        if (empty($allreports)) {
+            return $result;
+        }
+
+        // The set of report users with >=1 overdue, not-completed course (one query).
+        [$insql, $params] = $DB->get_in_or_equal($allreports, SQL_PARAMS_NAMED, 'uid');
+        $params['now'] = $now;
+        $overdueset = array_fill_keys(array_map('intval', $DB->get_fieldset_sql(
+            "SELECT DISTINCT u.id
                FROM {user} u
                JOIN {user_enrolments} ue ON ue.userid = u.id
                JOIN {enrol} e ON e.id = ue.enrolid
                JOIN {course} c ON c.id = e.courseid
-               JOIN {user} mgr ON mgr.id = u.open_supervisorid
           LEFT JOIN {course_completions} cc ON cc.userid = u.id AND cc.course = c.id
               WHERE c.enddate > 0 AND c.enddate < :now
-                AND (cc.timecompleted IS NULL)
+                AND cc.timecompleted IS NULL
                 AND u.deleted = 0 AND u.suspended = 0
-                AND u.open_supervisorid > 0
-                AND mgr.deleted = 0
-           GROUP BY u.open_supervisorid, mgr.firstname, mgr.email
-             HAVING overdue_count >= 3
-              LIMIT " . (int)get_config('local_airpay_notifications', 'batch_limit') ?: 500 . "",
-            ['now' => $now]);
+                AND u.id {$insql}", $params)), true);
 
-        foreach ($managers as $mgr) {
-            $sent = self::send($rule, $mgr->managerid, null,
-                $mgr->overdue_count . ' team members have overdue courses',
-                'Hi ' . format_string($mgr->mgr_firstname) . ', ' .
-                $mgr->overdue_count . ' of your team members have overdue mandatory courses. ' .
+        $count = 0;
+        foreach ($map as $managerid => $reportids) {
+            if ($count >= $batchlimit) {
+                break;
+            }
+            $overduecount = 0;
+            foreach ($reportids as $rid) {
+                if (isset($overdueset[$rid])) {
+                    $overduecount++;
+                }
+            }
+            if ($overduecount < 3) {   // HAVING overdue_count >= 3
+                continue;
+            }
+            // mgr.deleted = 0 — skip a deleted manager.
+            $mgrrec = $DB->get_record('user', ['id' => $managerid, 'deleted' => 0], 'id, firstname, email');
+            if (!$mgrrec) {
+                continue;
+            }
+            $sent = self::send($rule, (int) $managerid, null,
+                $overduecount . ' team members have overdue courses',
+                'Hi ' . format_string($mgrrec->firstname) . ', ' .
+                $overduecount . ' of your team members have overdue mandatory courses. ' .
                 'Check your dashboard to see who needs a nudge.');
             $sent ? $result['sent']++ : $result['skipped']++;
+            $count++;
         }
 
         return $result;
@@ -862,8 +910,8 @@ class rule_engine {
             }
 
             // Notify users in the same tenant.
-            // ADR-018 Wave 2: tenant root via the Sentientia seam (was an inline explode).
-            $orgpath = '/' . \local_sentientia_core\tenant_identity::path_root((string) $course->open_path);
+            $parts = explode('/', trim($course->open_path, '/'));
+            $orgpath = '/' . ($parts[0] ?? '');
 
             $users = $DB->get_records_sql(
                 "SELECT id, firstname FROM {user}

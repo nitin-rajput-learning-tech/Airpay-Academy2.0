@@ -205,3 +205,13 @@ ZEEA cutover — each its own commit + clone-DB rehearsal. The tenant **registry
   `local_airpay_manager` 2026052201 → 2026060200 / 1.3.3. The remaining reverse/aggregate
   readers (rule_engine digests via reports_by_manager, role_detector, escalation crons)
   follow the same pattern in subsequent batches (RUNBOOK-org-cutover §4).
+- **2026-06-02 — Wave 3.4 reader migration: rule_engine manager digests (batch 2).**
+  `local_airpay_notifications\rule_engine::rule_monthly_summary` + `rule_manager_nudge` —
+  the two `GROUP BY open_supervisorid` aggregate crons — now group manager→reports via
+  `org::reports_by_manager()` (the W3.4 aggregate primitive) and aggregate the domain data
+  (completions / overdue) over that map. Behaviour-identical under org_legacy ON, PROVEN on
+  prod data: monthly **117 managers, exact (team_size, completions) match**; nudge 0==0. Same
+  deleted/nonexistent-manager exclusion (`record_exists`). Also fixed a latent `LIMIT 0` in
+  the nudge's batch_limit default (now 500 on unset config, matching monthly). 20/20
+  airpay_notifications PHPUnit. `local_airpay_notifications` 2026052001 → 2026060200 / 1.4.2.
+  Remaining reverse readers: theme `role_detector`, escalation crons.
