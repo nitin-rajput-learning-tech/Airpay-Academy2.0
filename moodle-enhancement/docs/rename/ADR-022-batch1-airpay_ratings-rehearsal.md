@@ -29,7 +29,15 @@ generalises to the other leaves.
 
 ## Track 1 — source codemod (A-list, deterministic)
 
-Rewrite, for `airpay_ratings` and its 2 cross-refs, all 53 occurrences:
+> **IMPLEMENTED + dry-run-verified (2026-06-02):** `tools/rename/codemod.php` (reusable across
+> leaf plugins, dry-run by default). Dry-run for this plugin: **15 files / 58 refs**, code-only
+> (13 own files incl. the built `rating_widget.min.js` + the 2 cross-refs below), repo docs
+> deliberately excluded (historical records). Run:
+> `php moodle-enhancement/tools/rename/codemod.php airpay_ratings sentientia_ratings` (preview)
+> then `--apply` on the rehearsal branch. Re-running finds 0 (idempotent). **Post-`--apply`,
+> rebuild AMD** (`grunt amd` in the renamed plugin) so the `.min.js` is regenerated from source.
+
+Rewrite, for `airpay_ratings` and its 2 cross-refs, all 58 occurrences:
 
 1. `git mv moodle-enhancement/local/airpay_ratings → .../local/sentientia_ratings` (13 files).
 2. `version.php`: `$plugin->component = 'local_sentientia_ratings';`.
