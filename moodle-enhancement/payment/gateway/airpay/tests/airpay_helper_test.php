@@ -126,4 +126,116 @@ final class airpay_helper_test extends \advanced_testcase {
             airpay_helper::get_url($config)
         );
     }
+
+    /**
+     * Build a $_POST array with a correctly-computed ap_SecureHash for the
+     * given credentials, replicating Airpay's documented v4 response formula.
+     * Used by the verify_secure_hash() tests to forge a *legitimate* response.
+     */
+    private function signed_post(string $mercid, string $username, array $overrides = []): array {
+        $post = array_merge([
+            'TRANSACTIONID'     => 'TXN123',
+            'APTRANSACTIONID'   => 'AP456',
+            'AMOUNT'            => '199.00',
+            'TRANSACTIONSTATUS' => '200',
+            'MESSAGE'           => 'success',
+        ], $overrides);
+        $parts = [
+            trim($post['TRANSACTIONID']),
+            trim($post['APTRANSACTIONID']),
+            trim($post['AMOUNT']),
+            trim($post['TRANSACTIONSTATUS']),
+            trim((string) ($post['MESSAGE'] ?? '')),
+            $mercid,
+            $username,
+        ];
+        if (($post['CHMOD'] ?? '') === 'upi' && isset($post['CUSTOMERVPA'])) {
+            $parts[] = trim($post['CUSTOMERVPA']);
+        }
+        $post['ap_SecureHash'] = sprintf('%u', crc32(implode(':', $parts)));
+        return $post;
+    }
+
+    /**
+     * A response whose ap_SecureHash recomputes correctly (and has all required
+     * fields, with mercid/username configured) must verify.
+     */
+    public function test_verify_secure_hash_accepts_valid_response(): void {
+        $this->resetAfterTest(true);
+        set_config('mercid', 'MERC001', 'paygw_airpay');
+        set_config('username', 'apuser', 'paygw_airpay');
+
+        $post = $this->signed_post('MERC001', 'apuser');
+
+        $this->assertTrue(airpay_helper::verify_secure_hash($post));
+    }
+
+    /**
+     * REGRESSION TEST for the payment-bypass (2026-06-02). A forged callback
+     * carrying TRANSACTIONSTATUS=200 but an attacker-supplied junk hash MUST NOT
+     * verify. Before the fix, process.php enrolled on status==200 alone because
+     * the guard was commented out; this asserts the verifier rejects the forgery.
+     */
+    public function test_verify_secure_hash_rejects_forged_success(): void {
+        $this->resetAfterTest(true);
+        set_config('mercid', 'MERC001', 'paygw_airpay');
+        set_config('username', 'apuser', 'paygw_airpay');
+
+        $forged = [
+            'TRANSACTIONID'     => 'TXN123',
+            'APTRANSACTIONID'   => 'AP456',
+            'AMOUNT'            => '199.00',
+            'TRANSACTIONSTATUS' => '200',
+            'MESSAGE'           => 'success',
+            'ap_SecureHash'     => '0000000000',  // attacker garbage
+        ];
+
+        $this->assertFalse(airpay_helper::verify_secure_hash($forged));
+    }
+
+    /**
+     * A response missing a required field (here APTRANSACTIONID) must reject —
+     * verify_secure_hash fails closed on absent fields.
+     */
+    public function test_verify_secure_hash_rejects_missing_field(): void {
+        $this->resetAfterTest(true);
+        set_config('mercid', 'MERC001', 'paygw_airpay');
+        set_config('username', 'apuser', 'paygw_airpay');
+
+        $post = $this->signed_post('MERC001', 'apuser');
+        unset($post['APTRANSACTIONID']);
+
+        $this->assertFalse(airpay_helper::verify_secure_hash($post));
+    }
+
+    /**
+     * UPI responses append CUSTOMERVPA to the hashed payload — a correctly
+     * signed UPI response must verify.
+     */
+    public function test_verify_secure_hash_accepts_valid_upi_response(): void {
+        $this->resetAfterTest(true);
+        set_config('mercid', 'MERC001', 'paygw_airpay');
+        set_config('username', 'apuser', 'paygw_airpay');
+
+        $post = $this->signed_post('MERC001', 'apuser', [
+            'CHMOD'       => 'upi',
+            'CUSTOMERVPA' => 'buyer@upi',
+        ]);
+
+        $this->assertTrue(airpay_helper::verify_secure_hash($post));
+    }
+
+    /**
+     * With no mercid/username configured the verifier cannot recompute the hash,
+     * so it must FAIL CLOSED (reject) rather than silently skip verification.
+     */
+    public function test_verify_secure_hash_fails_closed_without_config(): void {
+        $this->resetAfterTest(true);
+        set_config('mercid', '', 'paygw_airpay');
+        set_config('username', '', 'paygw_airpay');
+
+        $post = $this->signed_post('MERC001', 'apuser');
+
+        $this->assertFalse(airpay_helper::verify_secure_hash($post));
+    }
 }
