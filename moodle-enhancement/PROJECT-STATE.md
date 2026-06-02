@@ -65,7 +65,16 @@ extension-permission-blocked on localhost, so verified at the API/data layer (co
 is airpayux's own + untouched). **DEPLOY-COUPLED:** code + `UPDATE {files} SET component='theme_airpayux'
 WHERE component='theme_epsilon'` ship together (else prod logos 404). Remaining (non-blocking): cosmetic
 epsilon-comment cleanup (per-comment judgment; "forked from epsilon" stays), `theme/epsilon` dir removal
-(`[CONFIRM]`), Block D dark-mode visual pass. GPLv3 `@copyright` notices preserved throughout. The Airpay-team disclosure
+(`[CONFIRM]`), Block D dark-mode visual pass. GPLv3 `@copyright` notices preserved throughout.
+**UPDATE (2026-06-02, Nitin-authorized): eAbyas/epsilon independence COMPLETE locally.** (a) `theme/epsilon`
+**deleted** (deployed): 513 files + 73 dirs + 41 config_plugins rows removed; airpayux still loads, login
+page HTTP 200 — verified. (b) **Comment sweep done** (fix branch `7cc39e456`): 12 "epsilon theme" docblocks
+→ "airpayux theme", 2 stale `theme/epsilon/scss/.../prefixes.scss` paths repointed to `theme/airpayux/`, 2
+minor descriptive refs de-branded; historical (version.php changelog, "forked from epsilon") + GPLv3
+`@copyright` preserved; 15 files lint-clean. Remaining: behat file/class `behat_theme_epsilon_*` rename
+(identifier, follow-up); Block D dark-mode pass (needs a logged-in browser — automation tab is a separate
+session). **PROD runbook:** deploy `fix/theme-epsilon-decouple` + `UPDATE {files} SET
+component='theme_airpayux' WHERE component='theme_epsilon'` + remove `theme/epsilon` dir & config rows + purge. The Airpay-team disclosure
 `.docx` is a separate spawned session.
 
 ---
