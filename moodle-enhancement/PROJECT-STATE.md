@@ -52,8 +52,12 @@ Three deliverables; **nothing deployed to live**.
 remaining: the real maintenance-window `--apply` + served-DB migration (Nitin-gated, ADR-022); ~~(b) build `enrol_sentientiasub`
 increment 2~~ ✅ DONE (commit `bb241a275`); (c) the sandbox payment work — validate the fix → Verify-API
 → subscription increments 3-5 (mandate checkout + subscription-callback + category/allaccess grant); (d)
-the eAbyas-header sweep + `theme/epsilon` removal + Block D dark-mode visual pass. The Airpay-team
-disclosure `.docx` is a separate spawned session.
+eAbyas/epsilon independence — **AUDITED** (`docs/audits/EABYAS-EPSILON-INDEPENDENCE-AUDIT-2026-06-02.md`):
+`theme/epsilon` is gone from the repo, but airpayux still `theme_config::load('epsilon')`s in 3 sites
+(`lib.php:100` pluginfile file-serve, `settings.php:61` preset, `scss_test.php:39`) — decoupling +
+functional-identifier rename + `theme/epsilon` removal are **visual-gated** (browser session; GPLv3
+`@copyright` notices MUST be preserved). Plus Block D dark-mode visual pass. The Airpay-team disclosure
+`.docx` is a separate spawned session.
 
 ---
 
