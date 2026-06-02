@@ -110,15 +110,15 @@ trait page_helpers {
     }
 
     /**
-     * Renders the "breadcrumb" for all pages in epsilon.
+     * Renders the "breadcrumb" for all pages.
      *
-     * The custom epsilonnavbar class is a thin VO that the
+     * The custom airpayux_navbar class is a thin VO that the
      * `core/navbar` mustache template knows how to render.
      *
      * @return string the HTML for the navbar.
      */
     public function navbar(): string {
-        $newnav = new \theme_airpayux\epsilonnavbar($this->page);
+        $newnav = new \theme_airpayux\airpayux_navbar($this->page);
         return $this->render_from_template('core/navbar', $newnav);
     }
 

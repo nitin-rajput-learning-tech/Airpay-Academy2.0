@@ -15,10 +15,10 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Airpay Academy UX theme — forked from epsilon (BizLMS).
+ * Airpay Academy / Sentientia UX theme.
  *
  * @package    theme_airpayux
- * @copyright  2026 Airpay Payment Services (forked from eAbyas epsilon)
+ * @copyright  2026 Airpay Payment Services
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -350,12 +350,13 @@ defined('MOODLE_INTERNAL') || die();
 //   (2) white-label: configtitle/pluginname 'Epsilon' → 'Sentientia Academy UX' /
 //       'Airpay Academy UX (Sentientia)' across en/hi/kn/mr/sw (was a visible brand
 //       leak in Site Admin → Themes for non-English admins).
-// ADR-018 Wave 2 PR-2 (2026-05-30) — dashboard / sidebar_navigation /
-// core_renderer / hook_callbacks migrated off inline $USER->open_path parsing
-// onto the Sentientia seam local_sentientia_core\tenant_identity (root_for_user /
-// department_for_user / root_for_current_user / path_for_user). Behaviour-identical;
-// no SCSS change — bump invalidates the compiled-CSS cache + themerev defensively.
-$plugin->version   = 2026060101;
+// De-brand (2026-06-02) — Epsilon/eAbyas → Sentientia. Renamed the live
+// breadcrumb class epsilonnavbar → airpayux_navbar (+ its test + the
+// page_helpers instantiation); the class is Moodle-core boostnavbar-derived,
+// so Adrian Greeve's GPL copyright is RETAINED, only the identifier changed.
+// version.php header de-branded to the Airpay/Sentientia attribution. Broader
+// eAbyas-header sweep + dead theme/epsilon removal tracked as follow-up batches.
+$plugin->version   = 2026060200;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
@@ -374,7 +375,7 @@ $plugin->maturity  = MATURITY_BETA;
 // (83% reduction). Section 1 wrapped under body#page-login-index for
 // ID-specificity. Bundled bugfix: dark-mode selectors used descendant
 // combinator (never fired since #page-X IS body); now chained.
-$plugin->release   = '1.0.48-beta';  // …+ ADR-018 W2: theme open_path callers (dashboard/sidebar/core_renderer/hook_callbacks) → tenant_identity seam
+$plugin->release   = '1.0.46-beta';  // + de-brand: epsilonnavbar→airpayux_navbar (Moodle copyright retained) + version.php header de-branded to Sentientia
 // P1 #10 chip-J (2026-05-24) — _surface-profile.scss (2,507 lines)
 // decomposed into 4 per-surface partials: _surface-user, _surface-badges,
 // _surface-grade-report, _surface-calendar. Admin fragments moved to

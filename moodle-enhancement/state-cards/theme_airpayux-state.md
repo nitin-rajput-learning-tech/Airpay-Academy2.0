@@ -1,10 +1,10 @@
 # State Card — `theme_airpayux`
 
 **Component:** `theme_airpayux`
-**Version:** `2026052900` / `1.0.40-beta`
+**Version:** `2026060200` / `1.0.46-beta`
 **Maturity:** `MATURITY_BETA`
 **Status:** Live theme on airpay.academy. Standalone fork (`$THEME->parents = []`).
-**Last refreshed:** 2026-05-29 (signup-flow login-surface fixes)
+**Last refreshed:** 2026-06-02 (Epsilon/eAbyas de-brand — epsilonnavbar → airpayux_navbar)
 
 > **2026-05-29 signup-flow `_surface-login.scss` fixes (→1.0.40-beta):**
 > (B) `#page-signup` wrapper switched to `align-items:flex-start` (+40px
@@ -62,7 +62,7 @@ and gates the relevant render paths on the resolver state.
 
 ```
 theme/airpayux/
-├── version.php                                  2026052404 / 1.0.35-beta
+├── version.php                                  2026060200 / 1.0.46-beta
 ├── config.php                                   Theme config — $THEME->parents = []
 ├── lib.php                                       Theme callbacks
 ├── settings.php                                  Admin settings
@@ -76,7 +76,7 @@ theme/airpayux/
 │   ├── output/core_renderer_maintenance.php      Maintenance-mode renderer
 │   ├── admin_settingspage_tabs.php               Tabbed settings page builder
 │   ├── autoprefixer.php                          SCSS post-processor wiring
-│   ├── epsilonnavbar.php                         Legacy navbar (still loaded for some pages)
+│   ├── airpayux_navbar.php                       Breadcrumb navbar (Moodle boostnavbar-derived; de-branded 2026-06-02)
 │   ├── hook_callbacks.php                        Moodle 5.x hook callbacks
 │   ├── role_detector.php                         Learner/manager/trainer detection helper
 │   ├── sidebar_navigation.php                    Sidebar nav builder
@@ -111,7 +111,7 @@ theme/airpayux/
 ├── lang/                                         en + hi + kn + mr + sw
 └── tests/
     ├── scss_test.php                             1 method (SCSS compile sanity)
-    ├── epsilonnavbar_test.php                    3 methods
+    ├── airpayux_navbar_test.php                  3 methods
     ├── role_detector_test.php                    8 methods
     ├── ws_contract_test.php                      1 method (WS-contract drift)
     ├── behat/                                     Behat features (settings tabs, breadcrumb, tour filter)
@@ -180,3 +180,28 @@ footnote) tunneled under the position:fixed .ap-sidebar. Added padding-left =
 --ap-sidebar-width (260) / --ap-sidebar-collapsed-width (72) to #page-footer on
 body:has(.ap-shell) at >=769px, mirroring .ap-shell__main's margin-left; mobile keeps
 full-width. v1.0.47→1.0.48-beta. Verified: footer content clears the sidebar.
+
+## 2026-06-02 — Epsilon/eAbyas de-brand → Sentientia (chip: debrand-navbar)
+
+Per Nitin's "move away from Epsilon/eAbyas completely" directive (decisions:
+rebuild remaining eAbyas to 100% Sentientia; rename epsilon* identifiers; remove
+dead theme/epsilon).
+
+- **`epsilonnavbar` → `airpayux_navbar`** — the live breadcrumb class (instantiated by
+  `traits/page_helpers.php::navbar()`) renamed. The class + its 600-line test +
+  the instantiation were all repointed; zero `epsilonnavbar` refs remain. The class
+  is Moodle-core `boostnavbar`-derived (`@copyright 2021 Adrian Greeve`), so per GPL
+  the **core copyright is RETAINED** — only the identifier + the "epsilon" comments
+  were de-branded. (Falsely claiming Moodle's code as Sentientia would itself be a
+  GPL violation; the de-brand targets the eAbyas/epsilon *branding layer*, not the
+  Moodle-core layer underneath.)
+- **`version.php` header** de-branded to the Airpay/Sentientia attribution (dropped
+  the "forked from eAbyas epsilon" prose; the file's own copyright was already Airpay).
+- version `…/1.0.45-beta` → `2026060200 / 1.0.46-beta`.
+
+**Follow-up batches (tracked):** the broader eAbyas-copyright-header sweep across the
+remaining theme files (re-attribute airpayux-authored files to Sentientia; retain
+Moodle-core copyright on core-derived files), removal of the dead `theme/epsilon/`
+parent dir (airpayux is standalone — structurally safe per `config.php` `$THEME->parents=[]`),
+and behat/heritage-doc residue. Generated files (`*.min.js.map`, `style/moodle.css`)
+and `production-data/*.json` dumps are excluded (regenerated / data, not source).

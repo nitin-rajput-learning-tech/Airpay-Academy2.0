@@ -23,13 +23,17 @@ use action_link;
 use lang_string;
 
 /**
- * Creates a navbar for epsilon that allows easy control of the navbar items.
+ * Creates a breadcrumb navbar for theme_airpayux that allows easy control of the navbar items.
+ *
+ * Adapted from Moodle core's \theme_boost\boostnavbar for theme_airpayux. The core
+ * authorship/copyright is retained below per GPL; only the class identifier was
+ * renamed to match the theme component.
  *
  * @package    theme_airpayux
  * @copyright  2021 Adrian Greeve <adrian@moodle.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class epsilonnavbar implements \renderable {
+class airpayux_navbar implements \renderable {
 
     /** @var array The individual items of the navbar. */
     protected $items = [];
@@ -46,13 +50,13 @@ class epsilonnavbar implements \renderable {
         foreach ($this->page->navbar->get_items() as $item) {
             $this->items[] = $item;
         }
-        $this->prepare_nodes_for_epsilon();
+        $this->prepare_nodes_for_navbar();
     }
 
     /**
-     * Prepares the navigation nodes for use with epsilon.
+     * Prepares the navigation nodes for use with the airpayux navbar.
      */
-    protected function prepare_nodes_for_epsilon(): void {
+    protected function prepare_nodes_for_navbar(): void {
         global $PAGE;
 
         // Remove the navbar nodes that already exist in the primary navigation menu.
@@ -145,16 +149,16 @@ class epsilonnavbar implements \renderable {
     }
 
     /**
-     * Get all the epsilonnavbaritem elements.
+     * Get all the navbar item elements.
      *
-     * @return epsilonnavbaritem[] epsilon navbar items.
+     * @return array navbar items.
      */
     public function get_items(): array {
         return $this->items;
     }
 
     /**
-     * Removes all navigation items out of this epsilon navbar
+     * Removes all navigation items out of this navbar.
      */
     protected function clear_items(): void {
         $this->items = [];
@@ -185,10 +189,10 @@ class epsilonnavbar implements \renderable {
     }
 
     /**
-     * Remove a epsilonnavbaritem from the epsilon navbar.
+     * Remove an item from the navbar.
      *
-     * @param  string|int $itemkey An identifier for the epsilonnavbaritem
-     * @param  int|null $itemtype An additional type identifier for the epsilonnavbaritem (optional)
+     * @param  string|int $itemkey An identifier for the navbar item
+     * @param  int|null $itemtype An additional type identifier for the navbar item (optional)
      */
     protected function remove($itemkey, ?int $itemtype = null): void {
 
@@ -223,7 +227,7 @@ class epsilonnavbar implements \renderable {
     }
 
     /**
-     * Removes the action from the last item of the epsilonnavbaritem.
+     * Removes the action from the last item of the navbar.
      */
     protected function remove_last_item_action(): void {
         $item = end($this->items);

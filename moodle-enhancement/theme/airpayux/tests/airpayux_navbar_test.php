@@ -17,21 +17,21 @@
 namespace theme_airpayux;
 
 /**
- * Test the epsilonnavbar file
+ * Test the airpayux_navbar file
  *
  * @package    theme_airpayux
- * @covers     \theme_airpayux\epsilonnavbar
+ * @covers     \theme_airpayux\airpayux_navbar
  * @copyright  2021 Peter Dias
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class epsilonnavbar_test extends \advanced_testcase {
+class airpayux_navbar_test extends \advanced_testcase {
     /**
      * Provider for test_remove_no_link_items
      * The setup and expected arrays are defined as an array of 'nodekey' => $hasaction
      *
      * @return array
      */
-    public function remove_no_link_items_provider(): array {
+    public static function remove_no_link_items_provider(): array {
         return [
             'All nodes have links links including leaf node. Set to remove section nodes.' => [
                 [
@@ -202,23 +202,23 @@ class epsilonnavbar_test extends \advanced_testcase {
                 $value['issection'] ? \navigation_node::TYPE_SECTION : null);
         }
 
-        $epsilonnavbar = $this->getMockBuilder(epsilonnavbar::class)
+        $airpayux_navbar = $this->getMockBuilder(airpayux_navbar::class)
             ->disableOriginalConstructor()
             ->onlyMethods([])
             ->getMock();
 
-        $rc = new \ReflectionClass(epsilonnavbar::class);
+        $rc = new \ReflectionClass(airpayux_navbar::class);
         $rcp = $rc->getProperty('items');
         $rcp->setAccessible(true);
-        $rcp->setValue($epsilonnavbar, $page->navbar->get_items());
+        $rcp->setValue($airpayux_navbar, $page->navbar->get_items());
 
         // Make the call to the function.
         $rcm = $rc->getMethod('remove_no_link_items');
         $rcm->setAccessible(true);
-        $rcm->invoke($epsilonnavbar, $removesectionnodes);
+        $rcm->invoke($airpayux_navbar, $removesectionnodes);
 
         // Get the value for the class variable that the function modifies.
-        $values = $rcp->getValue($epsilonnavbar);
+        $values = $rcp->getValue($airpayux_navbar);
         $actual = [];
         foreach ($values as $value) {
             $actual[$value->text] = $value->has_action();
@@ -231,7 +231,7 @@ class epsilonnavbar_test extends \advanced_testcase {
      *
      * @return array
      */
-    public function remove_duplicate_items_provider(): array {
+    public static function remove_duplicate_items_provider(): array {
         global $CFG;
 
         return [
@@ -381,23 +381,23 @@ class epsilonnavbar_test extends \advanced_testcase {
             $page->navbar->add($node['text'], $node['action'], \navigation_node::TYPE_CUSTOM);
         }
 
-        $epsilonnavbar = $this->getMockBuilder(epsilonnavbar::class)
+        $airpayux_navbar = $this->getMockBuilder(airpayux_navbar::class)
             ->disableOriginalConstructor()
             ->onlyMethods([])
             ->getMock();
 
-        $rc = new \ReflectionClass(epsilonnavbar::class);
+        $rc = new \ReflectionClass(airpayux_navbar::class);
         $rcp = $rc->getProperty('items');
         $rcp->setAccessible(true);
-        $rcp->setValue($epsilonnavbar, $page->navbar->get_items());
+        $rcp->setValue($airpayux_navbar, $page->navbar->get_items());
 
         // Make the call to the function.
         $rcm = $rc->getMethod('remove_duplicate_items');
         $rcm->setAccessible(true);
-        $rcm->invoke($epsilonnavbar);
+        $rcm->invoke($airpayux_navbar);
 
         // Get the value for the class variable that the function modifies.
-        $values = $rcp->getValue($epsilonnavbar);
+        $values = $rcp->getValue($airpayux_navbar);
         $actual = [];
         foreach ($values as $value) {
             $actual[] = $value->text;
@@ -411,7 +411,7 @@ class epsilonnavbar_test extends \advanced_testcase {
      *
      * @return array
      */
-    public function remove_items_that_exist_in_navigation_provider(): array {
+    public static function remove_items_that_exist_in_navigation_provider(): array {
         global $CFG;
 
         return [
@@ -520,23 +520,23 @@ class epsilonnavbar_test extends \advanced_testcase {
             $page->navbar->add($text, $action, \navigation_node::TYPE_CUSTOM);
         }
 
-        $epsilonnavbar = $this->getMockBuilder(epsilonnavbar::class)
+        $airpayux_navbar = $this->getMockBuilder(airpayux_navbar::class)
             ->disableOriginalConstructor()
             ->onlyMethods([])
             ->getMock();
 
-        $rc = new \ReflectionClass(epsilonnavbar::class);
+        $rc = new \ReflectionClass(airpayux_navbar::class);
         $rcp = $rc->getProperty('items');
         $rcp->setAccessible(true);
-        $rcp->setValue($epsilonnavbar, $page->navbar->get_items());
+        $rcp->setValue($airpayux_navbar, $page->navbar->get_items());
 
         // Make the call to the function.
         $rcm = $rc->getMethod('remove_items_that_exist_in_navigation');
         $rcm->setAccessible(true);
-        $rcm->invoke($epsilonnavbar, $navigationmenu);
+        $rcm->invoke($airpayux_navbar, $navigationmenu);
 
         // Get the value for the class variable that the function modifies.
-        $values = $rcp->getValue($epsilonnavbar);
+        $values = $rcp->getValue($airpayux_navbar);
         $actual = [];
         foreach ($values as $value) {
             $actual[] = $value->text;
