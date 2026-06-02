@@ -20,10 +20,29 @@ phone form) because `auth_otp` is **not installed on this local env** (active au
 Production has `auth_otp` → the OTP login. Theme login templates were not changed (only a
 docblock comment). See the OTP explanation in the session log.
 
-## Block D (dark-mode AA-contrast pass) — DEFERRED
+## Block D (dark-mode AA-contrast pass) — AUDITED ✅ (remediation = follow-up)
 
-Not completed this session: the Claude Chrome extension lost host permission on
-`localhost:8080` mid-session (timeout → internal error → permission-lost in sequence) right
-after login, before the dark-mode toggle could be exercised. Re-run when the extension is
-stable: log in → click the sidebar **Dark Mode** toggle → screenshot desktop + 590px →
-check text/background AA contrast → save here.
+Ran a rigorous WCAG contrast audit in-browser (computed actual ratios for 80 text elements
+via JS: text colour vs effective background). **78 pass AA. 2 genuine failures**, both small
+muted text — and both reproduce in the **default** airpayux dark-navy theme (not just the
+toggled "Dark Mode"), so they are **base-theme** issues:
+
+| Element | Colour on bg | Ratio | AA req |
+|---------|--------------|-------|--------|
+| `.airpay-gamification__streak-day small` (Wed–Today streak labels) | `#6b7280` on `#1a1d27` | **3.48:1** | 4.5 |
+| `.airpay-gamification__leaderboard-name small` ("(You)") | `#0066A7` on `#0d1f3c` | **2.71:1** | 4.5 |
+
+**2 false positives** were flagged + dismissed: `"Dashboard"` (active nav) and `"Dark Mode"`
+reported `bg=#ffffff` — a background-detection artifact from overlay layers; both are visibly
+legible. The other ~76 elements pass.
+
+**Remediation (focused follow-up, NOT a dark-mode override):** lighten the two label colours at
+the **base** level to AA-passing tokens already used in the theme — `#6b7280 → #9ca3b4` (≈6.9:1)
+and `#0066A7 → #60a5fa` (≈6.8:1) — then re-verify in **both** the default and dark-mode-toggle
+states. The colour source is in the `dashboard.mustache` gamification widget (inherited / generic
+rule — `#6b7280` is not set inline or in `_surface-dashboard.scss` by class name; locate the
+emitting rule first). A `body.dark-mode`-scoped override is the WRONG layer (the failure is in
+the default theme) — this was attempted, found misaligned, and reverted (deployed left clean).
+
+**Also noted (out of scope for contrast):** the sidebar **Dark Mode** toggle does **not persist**
+across page reloads — it resets to the default theme. Separate UX item.

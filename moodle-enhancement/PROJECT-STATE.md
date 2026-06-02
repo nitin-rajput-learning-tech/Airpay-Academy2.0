@@ -75,9 +75,14 @@ minor descriptive refs de-branded; historical (version.php changelog, "forked fr
 "airpay academy" logo intact + no breakage — visual belt-and-suspenders on the file-API proof. Evidence:
 `docs/visual-evidence/2026-06-02/`. (Also confirmed the local login uses the standard user/pass form because
 `auth_otp` isn't installed locally; production has OTP — theme login templates unchanged.) Remaining: behat
-file/class `behat_theme_epsilon_*` rename (identifier, follow-up); **Block D dark-mode pass DEFERRED** — the
-Claude Chrome extension lost host permission on localhost mid-session (flaky), so the dark-mode toggle audit
-wasn't run; re-run when the extension is stable. **PROD runbook:** deploy `fix/theme-epsilon-decouple` + `UPDATE {files} SET
+file/class `behat_theme_epsilon_*` rename (identifier, follow-up); **Block D dark-mode pass AUDITED** (in-browser WCAG
+audit via JS, 80 text elements): 78 pass AA; **2 genuine failures** — gamification streak-day labels
+(`#6b7280` on `#1a1d27` = 3.48:1) + leaderboard "(You)" (`#0066A7` on `#0d1f3c` = 2.71:1), both
+**base-theme** (reproduce without the dark-mode toggle); 2 false positives dismissed. **Remediation =
+follow-up:** lighten the 2 base label colours to `#9ca3b4`/`#60a5fa` (source in `dashboard.mustache`
+gamification widget). A `body.dark-mode`-scoped fix was tried, found misaligned (failure is base-theme),
+and reverted (deployed clean). Dark Mode toggle doesn't persist across reloads (separate UX). Evidence:
+`docs/visual-evidence/2026-06-02/`. **PROD runbook:** deploy `fix/theme-epsilon-decouple` + `UPDATE {files} SET
 component='theme_airpayux' WHERE component='theme_epsilon'` + remove `theme/epsilon` dir & config rows + purge. The Airpay-team disclosure
 `.docx` is a separate spawned session.
 
