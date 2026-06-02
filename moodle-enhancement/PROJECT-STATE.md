@@ -54,9 +54,13 @@ increment 2~~ ✅ DONE (commit `bb241a275`); (c) the sandbox payment work — va
 → subscription increments 3-5 (mandate checkout + subscription-callback + category/allaccess grant); (d)
 eAbyas/epsilon independence — **AUDITED** (`docs/audits/EABYAS-EPSILON-INDEPENDENCE-AUDIT-2026-06-02.md`):
 `theme/epsilon` is gone from the repo, but airpayux still `theme_config::load('epsilon')`s in 3 sites
-(`lib.php:100` pluginfile file-serve, `settings.php:61` preset, `scss_test.php:39`) — decoupling +
-functional-identifier rename + `theme/epsilon` removal are **visual-gated** (browser session; GPLv3
-`@copyright` notices MUST be preserved). Plus Block D dark-mode visual pass. The Airpay-team disclosure
+(`lib.php:100` pluginfile file-serve, `settings.php:61` preset, `scss_test.php:39`). **RESOLVED**: the
+7 logo/slider files are under `theme_epsilon` (airpayux=0) → the `load('epsilon')` is load-bearing; the
+`theme_epsilon`→`theme_airpayux` file-migration is **rehearsed 6/6** (`tools/_theme_file_rehearsal.php`,
+blobs/contenthashes preserved, live untouched). The final code-flip + visual verify is **login-gated**
+(the live OTP login page emits 0 theme pluginfile URLs, so it can't exercise the files) — precise
+rehearsed runbook in the audit. functional-identifier rename + `theme/epsilon` removal also visual-gated;
+GPLv3 `@copyright` notices MUST be preserved. Plus Block D dark-mode visual pass. The Airpay-team disclosure
 `.docx` is a separate spawned session.
 
 ---

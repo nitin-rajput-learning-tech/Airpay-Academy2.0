@@ -23,6 +23,40 @@ logos/SCSS still render) and must **preserve GPLv3 copyright notices**. This doc
 > favicon, login logo, background), (b) the theme compiles + renders (desktop + 590px mobile),
 > (c) the SCSS test passes. Then `theme/epsilon` can be removed from deployed/prod.
 
+## RESOLVED + rehearsed (2026-06-02 follow-up)
+
+**File-area question — answered (read-only DB):** the 7 theme setting files live under component
+**`theme_epsilon`**; `theme_airpayux` has **0**:
+
+```
+theme_epsilon: loginlogo, logo, slider1, slider2, slider3, slider4, slider5  (7 files)
+theme_airpayux: 0 files
+```
+
+So coupling #1 (`lib.php` `load('epsilon')`) is **LOAD-BEARING, not a bug** — flipping it to
+`'airpayux'` blind would 404 every logo/slider. The decoupling **requires a file-component
+migration first**.
+
+**Migration rehearsed (6/6, `tools/_theme_file_rehearsal.php`, throwaway clone):** the move is a
+clean `UPDATE {files} SET component='theme_airpayux' WHERE component='theme_epsilon'` — all 7 files
+re-point, **contenthashes preserved** (the filedir blobs are content-addressed + shared, untouched),
+fileareas intact, live `mdl_files` verified unchanged.
+
+**Verification is login-gated (confirmed):** the live login page (`HTTP 200`) is the custom **OTP
+form** and emits **0** theme pluginfile URLs — it does **not** exercise the 7 setting files. So the
+post-change "do logos still serve?" check needs the **front page / a logged-in page**, i.e. a browser
++ login. That's why this is not executed here.
+
+### Precise runbook (browser + login session — ~minutes, both migrations pre-proven)
+1. `UPDATE {files} SET component='theme_airpayux' WHERE component='theme_epsilon'` (rehearsed 6/6).
+2. Flip the 3 sites: `lib.php:100`, `settings.php:61`, `tests/scss_test.php:39` → `'airpayux'`.
+3. `php admin/cli/purge_caches.php`.
+4. **Verify (browser, logged in):** logo, login logo, favicon, background + all 5 sliders render;
+   theme styled desktop + 590px; SCSS test green. Roll back (reverse the UPDATE + re-copy the 3
+   files) if anything 404s/unstyles.
+5. Functional `eabyas` identifier rename (the 14 files) — keeping **GPLv3 `@copyright` notices**.
+6. Remove `theme/epsilon` from deployed/prod (`[CONFIRM]` delete).
+
 ## eAbyas references — 14 theme files
 
 `config.php, lang/en/theme_airpayux.php, layout/dashboard.php, lib.php, settings.php, version.php,
