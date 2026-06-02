@@ -42,11 +42,14 @@ Three deliverables; **nothing deployed to live**.
    (codemod + guarded `db/upgrade.php` hand-over + parity-smoke checklist) at
    `docs/rename/ADR-022-batch1-airpay_ratings-rehearsal.md`. **Track-1 codemod BUILT + dry-run-proven**
    this session — `tools/rename/codemod.php` (reusable, dry-run-default, code-only, Windows-path-safe;
-   15 files / 58 refs for batch-1; commit `a3d93ef18`). The clone-DB migration `--apply` is the
-   highest-risk step (ADR-022) + would trip this env's ALTER/DROP auto-deny — deferred to a fresh session.
+   15 files / 58 refs for batch-1; commit `a3d93ef18`). **Track-2 DB hand-over PROVEN** on throwaway
+   clone tables (`tools/_rename_rehearsal.php`, 9/9 — the **7 role-cap assignments survive** the
+   re-point, table/config/cap migrate, live `mdl_*` verified untouched). **Batch-1 rehearsal COMPLETE
+   (both tracks).** The real maintenance-window `--apply` + DB migration on the served/prod DB remains
+   gated on Nitin per ADR-022 — rehearsal proves it safe; it does not perform it.
 
-**Fresh-session queue:** (a) execute the `airpay_ratings` rename rehearsal `--apply` on a clone DB
-(Track-1 codemod done; Track-2 DB hand-over + parity-smoke remain); ~~(b) build `enrol_sentientiasub`
+**Fresh-session queue:** ~~(a) rehearse the `airpay_ratings` rename~~ ✅ DONE (both tracks proven) —
+remaining: the real maintenance-window `--apply` + served-DB migration (Nitin-gated, ADR-022); ~~(b) build `enrol_sentientiasub`
 increment 2~~ ✅ DONE (commit `bb241a275`); (c) the sandbox payment work — validate the fix → Verify-API
 → subscription increments 3-5 (mandate checkout + subscription-callback + category/allaccess grant); (d)
 the eAbyas-header sweep + `theme/epsilon` removal + Block D dark-mode visual pass. The Airpay-team

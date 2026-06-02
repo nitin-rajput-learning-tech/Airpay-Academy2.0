@@ -1,9 +1,11 @@
 # ADR-022 batch-1 rename rehearsal — `local_airpay_ratings` → `local_sentientia_ratings`
 
-**Status:** REHEARSAL SCOPED (pre-state baseline captured 2026-06-02). **Execution deferred to a
-fresh session** — the clone-DB capability/table migration is the highest-risk step (ADR-022:
-"a botched capability migration silently strips access") and must not run at the tail of a long
-session. This doc is the executable handoff.
+**Status:** ✅ **REHEARSAL COMPLETE — both tracks proven 2026-06-02.** Track 1 (codemod) dry-run-proven
+(15 files / 58 refs); Track 2 (DB hand-over) proven on throwaway clone tables — the **7 role-capability
+assignments survive** the re-point (count preserved, no orphans), table/config/capability all migrate,
+and the live `mdl_*` tables were verified **untouched** (9/9 checks). The **real maintenance-window
+execution** (actual `--apply` + the real DB migration on the served/prod DB) remains **gated on Nitin's
+go** per ADR-022 — the rehearsal proves it is safe; it does not perform it.
 **Parent:** ADR-022 (component rename). **Target:** the smallest leaf plugin, chosen as the proof.
 
 ## Why this plugin first
