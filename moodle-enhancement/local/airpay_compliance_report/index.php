@@ -238,6 +238,9 @@ $data = [
     'has_manager_report' => !empty($manager_report),
     'is_scoped'         => !empty($orgpath),
     'is_siteadmin'      => is_siteadmin(),
+    // Same authority export.php enforces — keeps the button and the gate in
+    // lockstep so a manager who can view never sees a button that 403s.
+    'can_export'        => \local_airpay_compliance_report\permission::can_export(),
     'baseurl'           => (new moodle_url('/local/airpay_compliance_report/index.php'))->out(false),
     'exporturl'         => (new moodle_url('/local/airpay_compliance_report/export.php', $baseurl_params))->out(false),
     'sesskey'           => sesskey(),

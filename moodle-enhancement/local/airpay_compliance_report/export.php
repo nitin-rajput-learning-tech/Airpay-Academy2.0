@@ -10,26 +10,14 @@ require_once(__DIR__ . '/../../config.php');
 require_login();
 require_once($CFG->libdir . '/excellib.class.php');
 
-$systemcontext = context_system::instance();
-// C-002 fix (2026-05-29 QA walk, P1): mirror index.php's access logic so anyone who
-// can VIEW the compliance report can also EXPORT it. The old check accepted only
-// siteadmin OR local/courses:manage, which locked out compliance officers / tenant
-// admins who reach the report via the BizLMS administrator role at a category context
-// or via moodle/site:viewreports — they saw an Export button that threw nopermission.
-$canaccess = is_siteadmin() || has_capability('local/courses:manage', $systemcontext);
-if (!$canaccess) {
-    // BizLMS administrator role at a category context (tenant admins / compliance officers).
-    $canaccess = $DB->record_exists_sql(
-        "SELECT 1 FROM {role_assignments} ra
-           JOIN {context} ctx ON ctx.id = ra.contextid
-          WHERE ra.userid = :uid AND ra.roleid = 9 AND ctx.contextlevel = 40",
-        ['uid' => $USER->id]);
-}
-if (!$canaccess) {
-    // Managers / HRBP / trainers with the report-view capability.
-    $canaccess = has_capability('moodle/site:viewreports', $systemcontext);
-}
-if (!$canaccess) {
+// Gate on the dedicated export capability (see classes/permission.php). This
+// supersedes the earlier inline C-002 fix. It authorises site admins, course
+// managers, and the BizLMS Compliance Officer role (id 9, assigned at category
+// context) — but NOT line managers: bulk PII export is deliberately tighter
+// than the dashboard's view access, which managers still retain in index.php.
+// Using the capability also drops the phantom `local/courses:manage` reference
+// (that capability is only registered on the BizLMS production stack).
+if (!\local_airpay_compliance_report\permission::can_export()) {
     throw new moodle_exception('nopermission');
 }
 
@@ -52,40 +40,41 @@ if ($format === 'csv') {
     $output = fopen('php://output', 'w');
     fwrite($output, "\xEF\xBB\xBF"); // UTF-8 BOM.
 
-    // Header row.
-    $headers = ['Employee ID', 'Name', 'Email', 'Department'];
-    if (!empty($matrix['courses'])) {
-        foreach ($matrix['courses'] as $course) {
-            $headers[] = $course['shortname'] ?? $course['fullname'] ?? 'Course';
-        }
+    // Header row — mirror the xlsx Sheet 1 columns + one column per mandatory course.
+    $headers = ['Employee ID', 'Email', 'Full Name', 'Designation', 'Department'];
+    foreach ($matrix['courses'] as $mc) {
+        $headers[] = $mc->coursename;
     }
     fputcsv($output, $headers);
 
-    // Data rows.
-    if (!empty($matrix['rows'])) {
-        foreach ($matrix['rows'] as $row) {
-            $csvrow = [
-                $row['empid'] ?? '',
-                ($row['firstname'] ?? '') . ' ' . ($row['lastname'] ?? ''),
-                $row['email'] ?? '',
-                $row['department'] ?? '',
-            ];
-            if (!empty($row['statuses'])) {
-                foreach ($row['statuses'] as $status) {
-                    $csvrow[] = $status['label'] ?? $status['status'] ?? '';
-                }
-            }
-            fputcsv($output, $csvrow);
+    // Data rows — use the exact shape compliance_engine::get_compliance_matrix()
+    // returns ('courses' = objects with ->coursename; row keys employee_id /
+    // fullname / designation / courses, each course having status_label). C-005:
+    // the previous code read array keys (`empid`, `statuses`, `$course['shortname']`)
+    // that never existed and fatally errored on the object-as-array access.
+    foreach ($matrix['rows'] as $r) {
+        $csvrow = [
+            $r['employee_id'],
+            $r['email'],
+            $r['fullname'],
+            $r['designation'],
+            $r['department'],
+        ];
+        foreach ($r['courses'] as $cs) {
+            $csvrow[] = $cs['status_label'];
         }
+        fputcsv($output, $csvrow);
     }
 
-    // Summary.
+    // Summary — mirror the xlsx Summary sheet.
     fputcsv($output, []);
     fputcsv($output, ['=== SUMMARY ===']);
-    fputcsv($output, ['Compliance Rate', ($kpis['compliance_rate'] ?? 0) . '%']);
+    fputcsv($output, ['Total Items', $kpis['total'] ?? 0]);
     fputcsv($output, ['Completed', $kpis['completed'] ?? 0]);
     fputcsv($output, ['Overdue', $kpis['overdue'] ?? 0]);
     fputcsv($output, ['Not Enrolled', $kpis['not_enrolled'] ?? 0]);
+    fputcsv($output, ['Exempted', $kpis['exempted'] ?? 0]);
+    fputcsv($output, ['Compliance Rate', ($kpis['compliance_rate'] ?? 0) . '%']);
     fputcsv($output, ['Generated', date('d M Y H:i')]);
 
     fclose($output);

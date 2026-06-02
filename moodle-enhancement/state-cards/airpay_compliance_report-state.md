@@ -1,10 +1,10 @@
 # State Card — `local_airpay_compliance_report`
 
 **Component:** `local_airpay_compliance_report`
-**Version:** `2026041200` / `1.0.0`
+**Version:** `2026052900` / `1.0.0`
 **Maturity:** `MATURITY_STABLE`
 **Status:** Live on airpay.academy. Compliance training audit + escalation.
-**Last refreshed:** 2026-05-24 (P1 state-card pass)
+**Last refreshed:** 2026-06-02 (export gated on a capability — PII protection)
 
 ---
 
@@ -87,3 +87,21 @@ onto the `local_sentientia_core\tenant_identity` seam (`root_for_user` /
 `path_root` / `path_for_user`). Behaviour-identical — the legacy BizLMS parse stays
 the default-ON source behind `tenant_identity_legacy`. Shipped via the
 feat/wave2-callers-* branches (merged to production 2026-05-30). DEPRECATION-SCHEDULE row 7.
+
+## 2026-06-02 — Export gated on a capability (PII protection)
+
+The full-matrix export (every employee's compliance status + name/email/employeeid/
+department — bulk PII) is now gated on a dedicated capability
+`local/airpay_compliance_report:export` (RISK_PERSONAL) instead of the old
+`is_siteadmin() || has_capability('local/courses:manage')` inline check.
+
+- `classes/permission.php` — `can_export()` checks the cap at SYSTEM context AND every
+  `CONTEXT_COURSECAT` where the user holds a role (the BizLMS Compliance Officer / OrgAdmin
+  shell is assigned at category context, so a system-only check would miss it).
+  `grant_export_to_default_roles()` (idempotent; db/install.php + db/upgrade.php) preserves
+  the pre-capability access set (`local/courses:manage` holders + Compliance Officer role 9).
+- `db/access.php` — the capability (manager archetype default).
+- `export.php` server gate + `index.php` / `dashboard.mustache` button-visibility call the
+  SAME `can_export()`, so they cannot disagree. Line managers VIEW but are NOT granted export.
+- lang en + hi (100% parity). version 2026041200 → 2026052900. `tests/permission_test.php`
+  6/6 green.

@@ -2,6 +2,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['pluginname'] = 'Airpay Compliance Report';
+$string['airpay_compliance_report:export'] = 'Export the compliance report';
 $string['privacy:metadata'] = 'Stores compliance snapshot data linked to user IDs.';
 $string['taskrefresh'] = 'Refresh compliance snapshot';
 $string['messageprovider:compliance_alert'] = 'Compliance deadline alerts';

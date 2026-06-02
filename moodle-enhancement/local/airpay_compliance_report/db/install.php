@@ -7,6 +7,11 @@ defined('MOODLE_INTERNAL') || die();
 function xmldb_local_airpay_compliance_report_install() {
     global $DB;
 
+    // Grant the export capability to admins / course managers + the BizLMS
+    // Compliance Officer role. Runs before the early return below so it always
+    // applies on a fresh install.
+    \local_airpay_compliance_report\permission::grant_export_to_default_roles();
+
     if ($DB->count_records('local_compliance_courses') > 0) {
         return;
     }

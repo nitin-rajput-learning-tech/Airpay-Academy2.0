@@ -1,6 +1,7 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
 $string['pluginname'] = 'एयरपे अनुपालन रिपोर्ट';
+$string['airpay_compliance_report:export'] = 'अनुपालन रिपोर्ट निर्यात करें';
 $string['privacy:metadata'] = 'अनुपालन स्नैपशॉट डेटा संग्रहीत करता है जो उपयोगकर्ता आईडी से जुड़ा है।';
 $string['taskrefresh'] = 'अनुपालन स्नैपशॉट ताज़ा करें';
 $string['messageprovider:compliance_alert'] = 'अनुपालन समयसीमा अलर्ट';

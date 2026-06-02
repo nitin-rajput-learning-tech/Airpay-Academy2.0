@@ -74,7 +74,10 @@
         {{#is_siteadmin}}
         <a href="{{baseurl}}?tab=config" class="{{#tab_config}}active{{/tab_config}}"><i class="fa fa-cog"></i> Configure</a>
         {{/is_siteadmin}}
+        {{! Export button only for users who pass the same gate export.php enforces. }}
+        {{#can_export}}
         <a href="{{exporturl}}" class="airpay-compliance-rpt__export"><i class="fa fa-download"></i> Export Excel</a>
+        {{/can_export}}
     </div>
 
     {{! Tab Content: Compliance Matrix }}
