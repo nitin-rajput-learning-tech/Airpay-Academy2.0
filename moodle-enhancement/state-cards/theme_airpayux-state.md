@@ -205,3 +205,13 @@ Moodle-core copyright on core-derived files), removal of the dead `theme/epsilon
 parent dir (airpayux is standalone — structurally safe per `config.php` `$THEME->parents=[]`),
 and behat/heritage-doc residue. Generated files (`*.min.js.map`, `style/moodle.css`)
 and `production-data/*.json` dumps are excluded (regenerated / data, not source).
+
+## 2026-06-02 — Repo cleanup: dead artefacts removed
+
+Removed clearly-dead, unreferenced files (git history retains them; verified no SCSS
+`@import` / code reference before removal):
+- `_archive/custom_changes_MONOLITH_BACKUP.scss` (288K pre-decomposition monolith,
+  superseded by the 55-partial split) — the `_archive/` dir is now gone.
+- `scss/fontawesome4_OLD/` (15 files, 102K) — superseded by the FA6 iconsystem; not
+  imported by any top-level scss.
+- `pix/Biz_logo_OLD.png` — superseded logo, unreferenced.
