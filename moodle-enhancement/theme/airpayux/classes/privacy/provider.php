@@ -29,7 +29,7 @@ use \core_privacy\local\metadata\collection;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * The epsilon theme stores a user preference data.
+ * The airpayux theme stores a user preference data.
  *
  * @copyright  2018 Andrew Nicols <andrew@nicols.co.uk>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later

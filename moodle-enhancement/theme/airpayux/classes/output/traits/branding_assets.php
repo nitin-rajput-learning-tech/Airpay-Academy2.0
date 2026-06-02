@@ -25,7 +25,7 @@ defined('MOODLE_INTERNAL') || die();
  *   get_primarycolor():           string   — brand colour (#hex)
  *   get_secondarycolor():         string   — button colour (#hex)
  *   get_hovercolor():             string   — hover colour (#hex)
- *   getsitecolors_link():         string   — legacy epsilon-style link
+ *   getsitecolors_link():         string   — legacy-style link
  *                                            (returns '' post-fork; kept
  *                                            for template compatibility)
  *

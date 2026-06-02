@@ -23,7 +23,7 @@ use Behat\Mink\Exception\ElementNotFoundException as ElementNotFoundException;
 use Behat\Mink\Exception\ExpectationException as ExpectationException;
 
 /**
- * Step definitions related to the navigation in the epsilon theme.
+ * Step definitions related to the navigation in the airpayux theme.
  *
  * @package    theme_airpayux
  * @category   test

@@ -33,7 +33,7 @@ defined('MOODLE_INTERNAL') || die();
  */
 function theme_airpayux_css_tree_post_processor($tree, $theme) {
     error_log('theme_airpayux_css_tree_post_processor() is deprecated. Required' .
-        'prefixes for Bootstrap are now in theme/epsilon/scss/moodle/prefixes.scss');
+        'prefixes for Bootstrap are now in theme/airpayux/scss/moodle/prefixes.scss');
     $prefixer = new theme_airpayux\autoprefixer($tree);
     $prefixer->prefix();
 }

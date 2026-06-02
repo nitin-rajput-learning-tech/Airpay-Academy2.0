@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * A drawer based layout for the epsilon theme.
+ * A drawer based layout for the airpayux theme.
  *
  * @package   theme_airpayux
  * @copyright 2021 Bas Brands

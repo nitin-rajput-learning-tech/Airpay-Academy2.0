@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * A two dashboard layout for the epsilon theme.
+ * A two dashboard layout for the airpayux theme.
  *
  * @package   theme_airpayux
  * @copyright 2018 eAbyas Info Solutons Pvt Ltd, India; 2026 Airpay Payment Services (Sentientia white-label fork)

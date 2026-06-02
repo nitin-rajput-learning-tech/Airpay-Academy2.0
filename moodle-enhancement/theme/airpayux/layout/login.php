@@ -17,7 +17,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * A login page layout for the epsilon theme.
+ * A login page layout for the airpayux theme.
  *
  * @package   theme_airpayux
  * @copyright 2016 Damyon Wiese
