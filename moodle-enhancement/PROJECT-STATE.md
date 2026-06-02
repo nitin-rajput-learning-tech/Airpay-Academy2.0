@@ -71,9 +71,13 @@ epsilon-comment cleanup (per-comment judgment; "forked from epsilon" stays), `th
 page HTTP 200 — verified. (b) **Comment sweep done** (fix branch `7cc39e456`): 12 "epsilon theme" docblocks
 → "airpayux theme", 2 stale `theme/epsilon/scss/.../prefixes.scss` paths repointed to `theme/airpayux/`, 2
 minor descriptive refs de-branded; historical (version.php changelog, "forked from epsilon") + GPLv3
-`@copyright` preserved; 15 files lint-clean. Remaining: behat file/class `behat_theme_epsilon_*` rename
-(identifier, follow-up); Block D dark-mode pass (needs a logged-in browser — automation tab is a separate
-session). **PROD runbook:** deploy `fix/theme-epsilon-decouple` + `UPDATE {files} SET
+`@copyright` preserved; 15 files lint-clean. **Decoupling PIXEL-CONFIRMED** (2026-06-02): after login, the dashboard renders fully styled with the
+"airpay academy" logo intact + no breakage — visual belt-and-suspenders on the file-API proof. Evidence:
+`docs/visual-evidence/2026-06-02/`. (Also confirmed the local login uses the standard user/pass form because
+`auth_otp` isn't installed locally; production has OTP — theme login templates unchanged.) Remaining: behat
+file/class `behat_theme_epsilon_*` rename (identifier, follow-up); **Block D dark-mode pass DEFERRED** — the
+Claude Chrome extension lost host permission on localhost mid-session (flaky), so the dark-mode toggle audit
+wasn't run; re-run when the extension is stable. **PROD runbook:** deploy `fix/theme-epsilon-decouple` + `UPDATE {files} SET
 component='theme_airpayux' WHERE component='theme_epsilon'` + remove `theme/epsilon` dir & config rows + purge. The Airpay-team disclosure
 `.docx` is a separate spawned session.
 
