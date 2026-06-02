@@ -5791,3 +5791,39 @@ v`2026060104` / `0.6.0-alpha`. Seams: `tenant_identity` (W2), `org` (W3: seam + 
 API + dual-write + backfill/parity), `tenant_registry` (W4) — all default-legacy/OFF. State
 card: `state-cards/sentientia_core-state.md`. ADR progress logs: ADR-020 (W3.2b/3.3/3.4-prep),
 ADR-022 (W5 rename, proposed).
+
+### Continuation (2026-06-02, post-checkpoint) — Nitin's maximal-scope decisions
+
+After the A→F milestone, Nitin chose the **maximal** option on all four follow-up decisions
+(via AskUserQuestion). Delivered as atomic, prod-verified ships:
+
+| # | Wave | Commit | Shipped |
+|---|------|--------|---------|
+| G1 | W3.4 reverse seam | `396105143` | Flag-aware `org::is_manager` / `direct_reports` + new `reports_by_manager()` aggregate primitive (legacy fallback, `open_supervisorid` column-guarded). Prod-validated (mgr 772). `local_sentientia_core` → 2026060105 / 0.6.1-alpha. |
+| G2 | W3.4 reader: team_manager | `8041c8cca` | `local_airpay_manager\team_manager` (get_team / can_manage / can_view_member) routed onto the org seam. Prod-verified equivalence (get_team ids == raw; can_manage clause OLD==NEW); `team_manager_test` added. → 1.3.3. |
+| G3 | W3.4 reader: rule_engine | `6f677bf27` | `rule_monthly_summary` + `rule_manager_nudge` digest crons group via `reports_by_manager()`. **Prod-verified: 117 managers exact match.** → 1.4.2. |
+| — | W5 rename PREP | `bb29fa643` | `RUNBOOK-component-rename.md` — operational rename runbook + worked batch-1 (`airpay_ratings`) with the data hand-over code. **No execution** (human-gated). |
+
+**Decision outcomes:**
+- **D3 (build reverse seam + migrate readers):** seam built (G1) + the 2 highest-traffic readers
+  migrated + prod-verified (G2 manager dashboard, G3 manager digests). Remaining readers — theme
+  `role_detector` + escalation crons (`course_overdue`/`exam_overdue`/`compliance_check`) —
+  **deferred to reviewed batches**: they weave `open_supervisorid` into multi-channel notification
+  detection queries (recipient JOIN + WHERE filter + limit semantics), a risky restructure for
+  marginal benefit (the column stays live through cutover, so they keep working unmigrated).
+- **D2 (keep org_legacy global):** honored — no per-tenant flag. The all-tenant-parity-then-global
+  -flip path stands in `RUNBOOK-org-cutover.md`.
+- **D4 (start full rename):** rename EXECUTION is hard-guardrail-forbidden (capability
+  re-registration is human-gated), so the compliant "start" = ADR-022 (design) +
+  `RUNBOOK-component-rename.md` (operational how-to + worked batch-1). **No rename executed.**
+- **D1 (Block D UI, full + screenshots):** **BLOCKED in this environment.** `login_submit` was
+  already done (5 locales); the only Epsilon/eAbyas residue is GPL copyright headers (must be
+  RETAINED, not rewritten); the high-value dark-mode AA-contrast pass needs authenticated pages,
+  but (a) entering credentials is prohibited and (b) the connected Chrome extension is
+  permission-gated on localhost (javascript/screenshot blocked). **To proceed:** grant the
+  extension localhost permission with an active site-admin session → I can then do the dark-mode
+  pass with visual evidence.
+
+**Session total: 10 production-branch commits** (`99bfc8ba9 → bb29fa643`), every one
+flag-gated / reversible / tested, **live behaviour unchanged, owner WIP untouched throughout**.
+`local_sentientia_core` at 2026060105 / 0.6.1-alpha.
