@@ -182,3 +182,15 @@ ZEEA cutover — each its own commit + clone-DB rehearsal. The tenant **registry
   (`manager_id_of`) are safe drop-ins, recommended as batch 1. No production reader migrated
   in this autonomous pass (behaviour-neutral until flip + user-facing/security-sensitive →
   reviewed batches per the runbook). Docs-only; no version change.
+- **2026-06-02 — Wave 3.4 reverse seam SHIPPED** (additive contract extension; Nitin's
+  "build reverse seam too" decision). `org::is_manager` / `direct_reports` gained a
+  FLAG-AWARE legacy fallback (org_legacy ON → `open_supervisorid` reverse lookup, guarded on
+  the column's existence; OFF → model `managerid` edge with a legacy fallback for the
+  pre-backfill gap), plus a new `reports_by_manager()` aggregate primitive (manager→reports
+  map) for digest-style group-by-manager readers — symmetric with `manager_id_of()`, so all
+  three are correct drop-ins the cutover auto-switches. The unit-tree methods +
+  `manager_via_model` stay model-only (no legacy equivalent). Validated on prod data
+  (manager 772: is_manager=true, direct_reports==raw open_supervisorid count=2). 3 new/updated
+  PHPUnit; 30/30 org green (existing reverse tests pinned to the model path with org_legacy
+  OFF). version 2026060104 → 2026060105 / 0.6.1-alpha. Next: migrate the raw reverse readers
+  (team_manager::get_team/can_manage, rule_engine digests) onto the seam.

@@ -106,12 +106,22 @@ class org {
         return (int) ($user->open_supervisorid ?? self::NO_MANAGER);
     }
 
-    // ── Sentientia org model (ADR-020 Wave 3.2) ──────────────────────────────
+    // ── Sentientia org model (ADR-020 Wave 3.2 / 3.4) ────────────────────────
     // These read the local_sentientia_org_unit / _member tables — the
-    // Sentientia-owned org hierarchy. They are NEW capabilities (no production
-    // code relies on a legacy equivalent), so they query the model directly,
-    // returning empty/0 when the model isn't installed or seeded yet (dormant
-    // until Wave 3.2b dual-write + 3.3 backfill populate it).
+    // Sentientia-owned org hierarchy. Two categories:
+    //
+    //  - Unit-tree methods (parent_of / ancestors / children / units_of /
+    //    members_of) and manager_via_model are NEW capabilities with no legacy
+    //    equivalent; they query the model directly, returning empty/0 until it
+    //    is seeded (dormant until Wave 3.2b dual-write + 3.3 backfill populate it).
+    //
+    //  - Reverse-reporting methods (is_manager / direct_reports /
+    //    reports_by_manager) DO have a legacy equivalent (the open_supervisorid
+    //    reverse lookup), so — ADR-020 Wave 3.4 — they are FLAG-AWARE: org_legacy
+    //    ON reads legacy (guarded on the BizLMS open_supervisorid column), OFF
+    //    reads the model with a legacy fallback for any not-yet-backfilled user,
+    //    symmetric with manager_id_of(). This makes them correct drop-ins for the
+    //    raw open_supervisorid reverse readers, so a cutover auto-switches them.
     //
     // The manager relationship uses the DIRECT EDGE (org_member.managerid,
     // mirroring BizLMS open_supervisorid) per the 2026-06-01 modelling decision
@@ -231,34 +241,155 @@ class org {
     }
 
     /**
-     * Does the user have any direct reports? (Is anyone's managerid edge.)
+     * Does the user have any direct reports? Flag-aware (see the category note
+     * above): org_legacy ON reads open_supervisorid, OFF reads the managerid edge
+     * with a legacy fallback.
      *
      * @param int $userid
      * @return bool
      */
     public static function is_manager(int $userid): bool {
         global $DB;
-        if ($userid <= 0 || !self::model_available()) {
+        if ($userid <= 0) {
             return false;
         }
-        return $DB->record_exists('local_sentientia_org_member',
-            ['managerid' => $userid]);
+        if (self::use_legacy_costcenter()) {
+            return self::legacy_is_manager($userid);
+        }
+        // org_legacy OFF — model, with a legacy fallback for the pre-backfill gap.
+        if (self::model_available()
+                && $DB->record_exists('local_sentientia_org_member', ['managerid' => $userid])) {
+            return true;
+        }
+        return self::legacy_is_manager($userid);
     }
 
     /**
-     * Direct-report user ids of a manager — users whose managerid edge points at
-     * this user (mirrors the open_supervisorid reverse lookup).
+     * Direct-report user ids of a manager. Flag-aware: org_legacy ON reads the
+     * open_supervisorid reverse lookup, OFF reads the model managerid edge with a
+     * legacy fallback for a manager whose reports are not yet backfilled.
      *
      * @param int $userid
      * @return int[]
      */
     public static function direct_reports(int $userid): array {
         global $DB;
-        if ($userid <= 0 || !self::model_available()) {
+        if ($userid <= 0) {
             return [];
         }
-        return array_values(array_unique(array_map('intval',
-            $DB->get_fieldset_select('local_sentientia_org_member', 'userid',
-                'managerid = :uid', ['uid' => $userid]))));
+        if (self::use_legacy_costcenter()) {
+            return self::legacy_direct_reports($userid);
+        }
+        // org_legacy OFF — model, with a legacy fallback for the pre-backfill gap.
+        if (self::model_available()) {
+            $reports = array_values(array_unique(array_map('intval',
+                $DB->get_fieldset_select('local_sentientia_org_member', 'userid',
+                    'managerid = :uid', ['uid' => $userid]))));
+            if (!empty($reports)) {
+                return $reports;
+            }
+        }
+        return self::legacy_direct_reports($userid);
+    }
+
+    /**
+     * Map of manager user id => direct-report user ids — the aggregate primitive
+     * for "group users by their manager" readers (e.g. manager digest crons).
+     * Flag-aware: org_legacy ON groups by open_supervisorid, OFF groups by the
+     * model managerid edge (with a legacy fallback when the model is empty).
+     * ADR-020 Wave 3.4.
+     *
+     * @param int[]|null $managerids Restrict to these managers; null = all.
+     * @return array<int,int[]> manager user id => report user ids
+     */
+    public static function reports_by_manager(?array $managerids = null): array {
+        if ($managerids !== null) {
+            $managerids = array_values(array_filter(
+                array_map('intval', $managerids), static fn($id) => $id > 0));
+            if (empty($managerids)) {
+                return [];
+            }
+        }
+        if (!self::use_legacy_costcenter() && self::model_available()) {
+            $map = self::model_reports_by_manager($managerids);
+            if (!empty($map)) {
+                return $map;
+            }
+        }
+        return self::legacy_reports_by_manager($managerids);
+    }
+
+    // ── Legacy reverse-lookup helpers (BizLMS open_supervisorid) ──────────────
+    // Guarded on the column's existence so they degrade to empty on a vanilla /
+    // Enterprise-N DB that has no open_supervisorid (rather than erroring).
+
+    /** Is user.open_supervisorid queryable here? (request-cached.) */
+    private static function legacy_reverse_available(): bool {
+        global $DB;
+        static $ok = null;
+        if ($ok === null) {
+            $ok = array_key_exists('open_supervisorid', $DB->get_columns('user'));
+        }
+        return $ok;
+    }
+
+    /** Legacy reverse: does anyone report to $userid via open_supervisorid? */
+    private static function legacy_is_manager(int $userid): bool {
+        global $DB;
+        if (!self::legacy_reverse_available()) {
+            return false;
+        }
+        return $DB->record_exists_select('user',
+            'open_supervisorid = :uid AND deleted = 0 AND suspended = 0', ['uid' => $userid]);
+    }
+
+    /** Legacy reverse: user ids whose open_supervisorid points at $userid. */
+    private static function legacy_direct_reports(int $userid): array {
+        global $DB;
+        if (!self::legacy_reverse_available()) {
+            return [];
+        }
+        return array_values(array_map('intval', $DB->get_fieldset_select('user', 'id',
+            'open_supervisorid = :uid AND deleted = 0 AND suspended = 0', ['uid' => $userid])));
+    }
+
+    /** Model grouping: manager id => report ids, via the managerid edge. */
+    private static function model_reports_by_manager(?array $managerids): array {
+        global $DB;
+        $where = 'managerid > 0';
+        $params = [];
+        if ($managerids !== null) {
+            [$insql, $params] = $DB->get_in_or_equal($managerids, SQL_PARAMS_NAMED, 'mgr');
+            $where .= " AND managerid {$insql}";
+        }
+        $rs = $DB->get_recordset_select('local_sentientia_org_member', $where, $params, '',
+            'id, userid, managerid');
+        $map = [];
+        foreach ($rs as $r) {
+            $map[(int) $r->managerid][] = (int) $r->userid;
+        }
+        $rs->close();
+        return $map;
+    }
+
+    /** Legacy grouping: manager id => report ids, via open_supervisorid. */
+    private static function legacy_reports_by_manager(?array $managerids): array {
+        global $DB;
+        if (!self::legacy_reverse_available()) {
+            return [];
+        }
+        $where = 'open_supervisorid > 0 AND deleted = 0 AND suspended = 0';
+        $params = [];
+        if ($managerids !== null) {
+            [$insql, $params] = $DB->get_in_or_equal($managerids, SQL_PARAMS_NAMED, 'mgr');
+            $where .= " AND open_supervisorid {$insql}";
+        }
+        $rs = $DB->get_recordset_select('user', $where, $params, '', 'id, open_supervisorid');
+        $map = [];
+        foreach ($rs as $r) {
+            $map[(int) $r->open_supervisorid][] = (int) $r->id;
+        }
+        $rs->close();
+        return $map;
     }
 }

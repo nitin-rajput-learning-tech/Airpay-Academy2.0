@@ -4,7 +4,7 @@
 |-------|-------|
 | **Component** | `local_sentientia_core` |
 | **Role** | The "Sentientia layer" — the product's tenancy/org abstraction seams that sit ABOVE the BizLMS (`local_airpay_core` / `local_costcenter`) heritage. The decoupling foundation for ADR-018 independence. |
-| **Version** | `2026060104` / `0.6.0-alpha` (MATURITY_ALPHA) |
+| **Version** | `2026060105` / `0.6.1-alpha` (MATURITY_ALPHA) |
 | **Owner** | Nitin Rajput |
 | **Status** | Seams shipped + default-legacy (dormant). Wave 4 registry + Wave 3.2a org model + Wave 3.2b dual-write reconciler + Wave 3.3 backfill/parity CLIs built + locally rehearsed (2,883 users, **100% parity**); live cutover + dual-write enable gated on Nitin's deploy. |
 | **Standalone?** | Yes — every delegation to `local_airpay_core` is `class_exists()`-guarded with an inline fallback, so the plugin ships for Enterprise N with no airpay_core present. |
@@ -19,13 +19,13 @@ deliberately (and reversibly) flips the source.
 | Seam | Class | Replaces (BizLMS coupling) | ADR / Wave | Flag (default ON) |
 |------|-------|----------------------------|------------|-------------------|
 | Tenant identity | `tenant_identity` | `$USER->open_path` reads | ADR-019 / W2 | `tenant_identity_legacy` |
-| Org hierarchy | `org` | `local_costcenter` + `open_supervisorid` | ADR-020 / W3.1+3.2a/3.2b/3.3 | `org_legacy` (+ `org_dualwrite_enabled`, default **OFF**) |
+| Org hierarchy | `org` | `local_costcenter` + `open_supervisorid` | ADR-020 / W3.1+3.2a/3.2b/3.3/3.4 | `org_legacy` (+ `org_dualwrite_enabled`, default **OFF**) |
 | Tenant registry | `tenant_registry` | `local_airpay_core\tenant::VALID_TENANTS=[1,77,177]` | ADR-021 / W4 | `tenant_registry_legacy` |
 
 ## File inventory
 
 ```
-version.php                         2026060104 / 0.6.0-alpha
+version.php                         2026060105 / 0.6.1-alpha
 settings.php                        3 default-ON legacy flags + 1 default-OFF org_dualwrite_enabled + managetenants admin_externalpage
 index.php                           admin signpost (library plugin, no learner UI)
 db/install.xml                      customer + tenant (W4) + org_unit + org_member (W3.2a)
@@ -33,7 +33,7 @@ db/upgrade.php                      W4 savepoint 2026060100 + W3.2a savepoints 2
 db/access.php                       local/sentientia_core:managetenants (site-admin v1)
 db/tasks.php                        W3.2b — reconcile_org scheduled task (every 4h; self-gates on org_dualwrite_enabled)
 classes/tenant_identity.php         W2 seam (root/segments/dept/path/access/sql_filter)
-classes/org.php                     W3.1+3.2a seam (manager_id_of + model read API) + use_dualwrite() (W3.2b)
+classes/org.php                     W3.1+3.2a seam (manager_id_of + model read API) + use_dualwrite() (W3.2b) + flag-aware reverse seam: is_manager/direct_reports/reports_by_manager (W3.4)
 classes/org_source.php              W3.2b — injectable source interface (users() + unit_name())
 classes/org_legacy_source.php       W3.2b — BizLMS-backed source (open_path/open_supervisorid + local_costcenter names)
 classes/org_reconciler.php          W3.2b — idempotent legacy→model upsert engine
@@ -49,7 +49,7 @@ cli/backfill_org.php                W3.3 — run reconciler over all users (--dr
 cli/parity_check_org.php            W3.3 — org model == legacy parity gate (exit-coded; thin wrapper over org_parity)
 lang/en/local_sentientia_core.php   all strings (no learner-facing → en only for now)
 tests/tenant_identity_test.php      W2 seam tests
-tests/org_test.php                  W3.1+3.2a — 14 cases (flag + manager-id + OFF-uses-model + tree/membership/reverse)
+tests/org_test.php                  W3.1+3.2a/3.4 — 16 cases (flag + manager-id + tree/membership/reverse + reports_by_manager + legacy-path guard)
 tests/org_reconciler_test.php       W3.2b — 8 cases (tree build, manager edge, idempotency, manager-change, tenant scope, bad-path skip, name fallback, flag default)
 tests/org_parity_test.php           W3.3 — 6 cases (full parity, manager drift, membership drift, unbackfilled, scope skip, empty-model)
 tests/tenant_registry_test.php      W4 — 11 cases (legacy + OFF-reads-table + parity + legacy-ignores-table)
@@ -117,6 +117,12 @@ customer-zero.
   9 (VALID_TENANTS).
 
 ## Changelog
+- **2026-06-02 (W3.4, ADR-020):** flag-aware reverse seam — `is_manager` / `direct_reports`
+  gained a legacy fallback (org_legacy ON → open_supervisorid reverse, column-guarded; OFF →
+  model edge + fallback) + a new `reports_by_manager()` aggregate map, symmetric with
+  `manager_id_of()` so all three are correct drop-ins for the raw reverse readers. Validated
+  on prod data (manager 772: is_manager + direct_reports==raw count). 30/30 org PHPUnit.
+  v2026060104→2026060105 / 0.6.1-alpha.
 - **2026-06-02 (W3.3, ADR-020):** backfill + parity CLIs — `cli/backfill_org.php`
   (--dry-run default / --execute / --tenant=) + `cli/parity_check_org.php` + the
   extracted `org_parity` comparator (manager-edge + membership parity, exit-coded).

@@ -81,6 +81,8 @@ final class org_reconciler_test extends \advanced_testcase {
 
     public function test_manager_edge_mirrors_supervisor(): void {
         $this->resetAfterTest();
+        // is_manager/direct_reports are flag-aware (W3.4) — read the model with OFF.
+        set_config('org_legacy', 0, 'local_sentientia_core');
         $src = $this->source([
             [201, '/1/2', 0],     // Manager — no supervisor.
             [202, '/1/2', 201],   // Reports to 201.

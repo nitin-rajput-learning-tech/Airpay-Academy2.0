@@ -166,6 +166,8 @@ final class org_test extends \advanced_testcase {
 
     public function test_is_manager_and_direct_reports(): void {
         $this->resetAfterTest();
+        // Reverse lookups are flag-aware (W3.4); exercise the model path with OFF.
+        set_config('org_legacy', 0, 'local_sentientia_core');
         $unit = $this->make_unit(0, 'Sales');
         // 41 and 42 report to 40 via the edge; 40 reports to nobody.
         $this->add_member(40, $unit, 'member', 0);
@@ -178,5 +180,42 @@ final class org_test extends \advanced_testcase {
         $this->assertEqualsCanonicalizing([41, 42], org::direct_reports(40),
             'Direct reports are users whose managerid edge points at 40.');
         $this->assertSame([], org::direct_reports(41), 'A non-manager has no reports.');
+    }
+
+    public function test_reports_by_manager_model_path(): void {
+        $this->resetAfterTest();
+        set_config('org_legacy', 0, 'local_sentientia_core');
+        $unit = $this->make_unit(0, 'Ops');
+        $this->add_member(50, $unit, 'member', 0);
+        $this->add_member(51, $unit, 'member', 50);
+        $this->add_member(52, $unit, 'member', 50);
+        $this->add_member(53, $unit, 'member', 60);
+
+        $map = org::reports_by_manager();
+        $this->assertEqualsCanonicalizing([51, 52], $map[50] ?? []);
+        $this->assertEqualsCanonicalizing([53], $map[60] ?? []);
+        $this->assertArrayNotHasKey(0, $map, 'managerid 0 (no manager) is never a key.');
+
+        // Restricted to a manager subset.
+        $only = org::reports_by_manager([50]);
+        $this->assertSame([50], array_keys($only));
+        $this->assertEqualsCanonicalizing([51, 52], $only[50]);
+        $this->assertSame([], org::reports_by_manager([0]), 'No positive manager ids -> empty.');
+    }
+
+    public function test_reverse_lookups_legacy_path_without_bizlms_column(): void {
+        $this->resetAfterTest();
+        // Default flag = ON -> legacy reverse path. The vanilla PHPUnit user table
+        // has no BizLMS open_supervisorid column, so the guarded legacy lookups
+        // degrade to empty rather than erroring (Enterprise-N portability). The
+        // model rows below are deliberately ignored because the flag is ON.
+        set_config('org_legacy', 1, 'local_sentientia_core');
+        $unit = $this->make_unit(0, 'Legacy');
+        $this->add_member(70, $unit, 'member', 0);
+        $this->add_member(71, $unit, 'member', 70);
+
+        $this->assertFalse(org::is_manager(70), 'ON path uses legacy; column absent -> false.');
+        $this->assertSame([], org::direct_reports(70));
+        $this->assertSame([], org::reports_by_manager());
     }
 }
