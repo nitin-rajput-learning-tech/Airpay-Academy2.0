@@ -1,9 +1,21 @@
 # eAbyas / epsilon independence audit — 2026-06-02
 
-**Goal:** "move away from Epsilon/eAbyas completely." **Finding:** mostly done in the repo, but
-`theme_airpayux` still **imperatively loads epsilon at runtime** in 3 places — so epsilon cannot
-be removed yet. The remaining work is **visual-gated** (needs a logged-in browser to confirm
-logos/SCSS still render) and must **preserve GPLv3 copyright notices**. This doc is the handoff.
+**Goal:** "move away from Epsilon/eAbyas completely."
+
+> ## ✅ FILE-SERVE DECOUPLING DONE + VERIFIED (2026-06-02) — branch `fix/theme-epsilon-decouple`
+> The 3 functional epsilon couplings are flipped to `'airpayux'` and the 7 setting files migrated
+> `theme_epsilon`→`theme_airpayux`. **Verified locally via the Moodle file API** (the exact lookup
+> `setting_file_serve` does): all 7 fileareas resolve under `theme_airpayux`, `theme_epsilon` empty,
+> theme loads, SCSS compiles. (Browser was extension-permission-blocked on localhost, so verified at
+> the API/data layer instead — complete, since the SCSS path is airpayux's own and untouched.)
+> **DEPLOY-COUPLED:** the code + the `UPDATE {files} SET component='theme_airpayux' WHERE
+> component='theme_epsilon'` must ship together, or prod logos 404.
+> **Remaining (not blocking independence):** cosmetic epsilon-comment cleanup (per-comment judgment —
+> "forked from epsilon" stays as historical fact); removing the deployed `theme/epsilon` dir
+> (`[CONFIRM]`); Block D dark-mode visual pass.
+
+**Original finding (for context):** `theme_airpayux` still **imperatively loaded epsilon at runtime**
+in 3 places. Must **preserve GPLv3 copyright notices** throughout.
 
 ## State
 - `theme/epsilon` — **removed from the repo** ✅ (independence done there). Still present in the

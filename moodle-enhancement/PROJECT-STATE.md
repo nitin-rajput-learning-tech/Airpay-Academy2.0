@@ -57,10 +57,15 @@ eAbyas/epsilon independence — **AUDITED** (`docs/audits/EABYAS-EPSILON-INDEPEN
 (`lib.php:100` pluginfile file-serve, `settings.php:61` preset, `scss_test.php:39`). **RESOLVED**: the
 7 logo/slider files are under `theme_epsilon` (airpayux=0) → the `load('epsilon')` is load-bearing; the
 `theme_epsilon`→`theme_airpayux` file-migration is **rehearsed 6/6** (`tools/_theme_file_rehearsal.php`,
-blobs/contenthashes preserved, live untouched). The final code-flip + visual verify is **login-gated**
-(the live OTP login page emits 0 theme pluginfile URLs, so it can't exercise the files) — precise
-rehearsed runbook in the audit. functional-identifier rename + `theme/epsilon` removal also visual-gated;
-GPLv3 `@copyright` notices MUST be preserved. Plus Block D dark-mode visual pass. The Airpay-team disclosure
+blobs/contenthashes preserved, live untouched). **DECOUPLING DONE + VERIFIED** (branch
+`fix/theme-epsilon-decouple`): the 3 functional couplings flipped to `'airpayux'` + the 7 files
+migrated on the local DB; **verified via the Moodle file API** (the exact `setting_file_serve` lookup —
+all 7 fileareas resolve under `theme_airpayux`, theme loads, SCSS compiles). Browser was
+extension-permission-blocked on localhost, so verified at the API/data layer (complete — the SCSS path
+is airpayux's own + untouched). **DEPLOY-COUPLED:** code + `UPDATE {files} SET component='theme_airpayux'
+WHERE component='theme_epsilon'` ship together (else prod logos 404). Remaining (non-blocking): cosmetic
+epsilon-comment cleanup (per-comment judgment; "forked from epsilon" stays), `theme/epsilon` dir removal
+(`[CONFIRM]`), Block D dark-mode visual pass. GPLv3 `@copyright` notices preserved throughout. The Airpay-team disclosure
 `.docx` is a separate spawned session.
 
 ---
