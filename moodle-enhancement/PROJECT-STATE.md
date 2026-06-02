@@ -29,18 +29,26 @@ Three deliverables; **nothing deployed to live**.
    `allaccess|category|course` (Nitin's "all of the above" decision) + a recurring `paygw_airpay` path,
    feature-flagged OFF, gated on a product decision (period / pricing / failure-policy / tenants) + the
    sandbox + the payment fix merged (the callback inherits the verification lesson). On `production`.
+   **Increment-2 skeleton BUILT + validated this session** — `enrol/sentientiasub` (12 files: data
+   model + lifecycle state machine + flag OFF + 4 caps + settings + EN/HI lang 100% + GDPR provider +
+   PHPUnit). Installs cleanly via `admin/cli/upgrade.php`; **17/17** rolled-back-transaction smoke
+   (install artifacts + full state machine, zero pollution). Commit `bb241a275`. Increments 3-5
+   (Airpay mandate checkout + subscription-callback + category/allaccess grant) remain sandbox-gated.
 
 3. **ADR-022 batch-1 rename rehearsal SCOPED (execution deferred to a fresh session).** Read-only
    pre-state baseline for `local_airpay_ratings` → `local_sentientia_ratings`: 1 table, 1 config row,
    **1 capability `local/airpay_ratings:rate` with 7 role assignments (MUST survive)**, 0 files, 1 WS
    (back-compat alias needed), 13 plugin files + 2 cross-refs, 53 source refs. Full executable handoff
    (codemod + guarded `db/upgrade.php` hand-over + parity-smoke checklist) at
-   `docs/rename/ADR-022-batch1-airpay_ratings-rehearsal.md`. The clone-DB migration is the highest-risk
-   step (ADR-022) — deferred to a fresh session per the wrap decision.
+   `docs/rename/ADR-022-batch1-airpay_ratings-rehearsal.md`. **Track-1 codemod BUILT + dry-run-proven**
+   this session — `tools/rename/codemod.php` (reusable, dry-run-default, code-only, Windows-path-safe;
+   15 files / 58 refs for batch-1; commit `a3d93ef18`). The clone-DB migration `--apply` is the
+   highest-risk step (ADR-022) + would trip this env's ALTER/DROP auto-deny — deferred to a fresh session.
 
-**Fresh-session queue:** (a) execute the `airpay_ratings` rename rehearsal on a clone DB (handoff
-ready); (b) build `enrol_sentientiasub` increment 2 (no-sandbox skeleton, flag OFF) per ADR-023; (c)
-the sandbox payment work (validate the fix → build the Verify-API → the subscription mandate flow); (d)
+**Fresh-session queue:** (a) execute the `airpay_ratings` rename rehearsal `--apply` on a clone DB
+(Track-1 codemod done; Track-2 DB hand-over + parity-smoke remain); ~~(b) build `enrol_sentientiasub`
+increment 2~~ ✅ DONE (commit `bb241a275`); (c) the sandbox payment work — validate the fix → Verify-API
+→ subscription increments 3-5 (mandate checkout + subscription-callback + category/allaccess grant); (d)
 the eAbyas-header sweep + `theme/epsilon` removal + Block D dark-mode visual pass. The Airpay-team
 disclosure `.docx` is a separate spawned session.
 
