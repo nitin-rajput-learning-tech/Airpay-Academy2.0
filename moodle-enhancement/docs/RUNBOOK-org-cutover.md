@@ -158,3 +158,22 @@ php admin/cli/cfg.php --component=local_sentientia_core --name=org_legacy --set=
 # Rollback:
 php admin/cli/cfg.php --component=local_sentientia_core --name=org_legacy --set=1
 ```
+
+---
+
+## Rehearsal log — 2026-06-02 (local prod-data DB, org_legacy ON)
+
+`cli/parity_check_org.php` run per tenant on the local 2,883-user prod-data clone (model
+backfilled per W3.3, `org_legacy` still ON). **All tenants 100% parity — cutover is GO,
+ZEEA-first:**
+
+| Tenant | In-scope users | Manager mismatches | Membership mismatches | Result |
+|--------|---------------:|-------------------:|----------------------:|--------|
+| ZEEA (177)   | 6     | 0 | 0 | 100% (exit 0) |
+| Public (77)  | 682   | 0 | 0 | 100% (exit 0) |
+| Airpay (1)   | 2,195 | 0 | 0 | 100% (exit 0) |
+| **All**      | **2,883** | **0** | **0** | **100% (exit 0)** |
+
+The objective go/no-go gate. The live flip (`org_legacy` OFF) remains the human-gated step in a
+maintenance window; readiness is proven on the prod-data clone. Recommended order matches the
+table (ZEEA -> Public -> Airpay), smallest blast radius first.
