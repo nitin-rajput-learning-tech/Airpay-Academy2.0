@@ -1,7 +1,7 @@
 # State card — enrol_sentientiasub
 
 **Plugin:** `enrol_sentientiasub` (recurring-subscription enrolment)
-**ADR:** ADR-023 · **Status:** v0.1.0-alpha — **increment 2 (no-sandbox skeleton)** · **2026-06-02**
+**ADR:** ADR-023 · **Status:** v0.2.0-alpha — **increments 2 + 5 (skeleton + cohort grant)** · **2026-06-03**
 **Flag:** `sentientia.subscriptions.enabled` (default **OFF**) — platform unchanged until flipped.
 
 ## What it is
@@ -15,20 +15,19 @@ active, suspends on a failed charge, and revokes on cancellation. One plugin, pe
   costcenterid). Installs cleanly.
 - **Lifecycle state machine** (`classes/subscription_manager.php`): create → activate →
   suspend ↔ record_cycle → cancel; `is_active`, `get`, `get_by_user_enrol`. Enrolment
-  grant/revoke implemented for **scope=course**; category/allaccess record state + log a
-  TODO (increment 5).
+  grant/revoke for **scope=course** (direct enrol) AND **scope=category / allaccess**
+  (cohort-sync — increment 5 ✅ 2026-06-03). Suspend removes cohort membership; reactivate re-adds.
 - enrol_plugin contract (`lib.php`) gated on the flag (`can_add_instance` false when OFF).
-- Capabilities (4), settings (default role), feature flag, EN + HI lang (100% parity),
-  GDPR privacy provider.
-- **Tests:** `tests/subscription_manager_test.php` (8 cases incl. course-scope enrolment
-  side-effects) for CI; locally validated 17/17 via a rolled-back-transaction smoke
-  (install artifacts + state machine).
+- Capabilities (4), settings (default role + **all-access cohort**), feature flag, EN + HI
+  lang (100% parity), GDPR privacy provider.
+- **Tests:** `tests/subscription_manager_test.php` (10 cases — course-scope enrolment +
+  cohort-scope allaccess/category) for CI; locally validated via rolled-back-transaction
+  smokes (17/17 state machine + **7/7 cohort lifecycle**, zero pollution).
 
 ## NOT built (gated — increment 3+)
 - The Airpay **mandate / `sb_*` checkout** (`enrol_page_hook`) — increment 3, **sandbox**.
 - The **subscription-callback** handler + per-cycle Verify/status-check — increment 4,
   **sandbox** (inherits the 2026-06-02 payment-verification lesson).
-- **scope=category / allaccess** enrolment grant (cohort/category sync) — increment 5.
 - Standard add/edit instance form (`use_standard_editing_ui()` is false until increment 3).
 
 ## Validation

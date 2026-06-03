@@ -127,7 +127,11 @@ class subscription_manager {
         }
         $sub->status = self::STATUS_SUSPENDED;
         self::save($sub);
-        self::set_course_enrol_status($sub, ENROL_USER_SUSPENDED);
+        if ($sub->scope === self::SCOPE_COURSE) {
+            self::set_course_enrol_status($sub, ENROL_USER_SUSPENDED);
+        } else {
+            self::cohort_set_member($sub, false); // cohorts have no "suspended" state — remove access
+        }
     }
 
     /** Cancel (learner/admin): terminal, revoke access. */
@@ -158,9 +162,8 @@ class subscription_manager {
     private static function grant_access(\stdClass $sub): void {
         global $DB;
         if ($sub->scope !== self::SCOPE_COURSE) {
-            // Catalogue-/category-wide grant = increment 5 (cohort/category sync).
-            debugging('enrol_sentientiasub: grant for scope "' . $sub->scope
-                . '" not implemented yet (increment 5) — state recorded, no enrolment.', DEBUG_DEVELOPER);
+            // Catalogue-/category-wide grant (ADR-023 increment 5) — cohort-sync.
+            self::cohort_set_member($sub, true);
             return;
         }
         $instance = $DB->get_record('enrol', ['id' => $sub->enrolid], '*', MUST_EXIST);
@@ -175,8 +178,7 @@ class subscription_manager {
     private static function revoke_access(\stdClass $sub): void {
         global $DB;
         if ($sub->scope !== self::SCOPE_COURSE) {
-            debugging('enrol_sentientiasub: revoke for scope "' . $sub->scope
-                . '" not implemented yet (increment 5).', DEBUG_DEVELOPER);
+            self::cohort_set_member($sub, false);
             return;
         }
         $instance = $DB->get_record('enrol', ['id' => $sub->enrolid]);
@@ -195,6 +197,50 @@ class subscription_manager {
         $plugin = enrol_get_plugin('sentientiasub');
         if ($instance && $plugin) {
             $plugin->update_user_enrol($instance, (int) $sub->userid, $status);
+        }
+    }
+
+    /**
+     * Resolve the cohort backing a catalogue-/category-scope subscription (ADR-023 increment 5).
+     * allaccess → the configured `allaccess_cohortid`; category → a cohort whose idnumber is
+     * `sentientiasub_cat_<categoryid>` (an admin creates it + cohort-syncs it to that category).
+     *
+     * @return int|null cohort id, or null if not configured/found (membership then logged + skipped).
+     */
+    private static function resolve_cohort(\stdClass $sub): ?int {
+        global $DB;
+        if ($sub->scope === self::SCOPE_ALLACCESS) {
+            $cid = (int) get_config('enrol_sentientiasub', 'allaccess_cohortid');
+            return $cid > 0 ? $cid : null;
+        }
+        if ($sub->scope === self::SCOPE_CATEGORY && !empty($sub->scopeid)) {
+            $c = $DB->get_record('cohort', ['idnumber' => 'sentientiasub_cat_' . (int) $sub->scopeid]);
+            return $c ? (int) $c->id : null;
+        }
+        return null;
+    }
+
+    /**
+     * Add/remove the subscriber to/from the scope's cohort. The actual course access comes from
+     * Moodle's cohort-sync (enrol_cohort), configured by an admin on the catalogue/category — this
+     * only manages membership. Fails soft (logs) when no cohort is resolved.
+     */
+    private static function cohort_set_member(\stdClass $sub, bool $add): void {
+        global $CFG;
+        require_once($CFG->dirroot . '/cohort/lib.php');
+        $cohortid = self::resolve_cohort($sub);
+        if (!$cohortid) {
+            debugging('enrol_sentientiasub: no cohort resolved for scope "' . $sub->scope
+                . '" — set allaccess_cohortid, or create a cohort with idnumber '
+                . 'sentientiasub_cat_<categoryid>. Access ' . ($add ? 'grant' : 'revoke') . ' skipped.',
+                DEBUG_DEVELOPER);
+            return;
+        }
+        $uid = (int) $sub->userid;
+        if ($add && !cohort_is_member($cohortid, $uid)) {
+            cohort_add_member($cohortid, $uid);
+        } else if (!$add && cohort_is_member($cohortid, $uid)) {
+            cohort_remove_member($cohortid, $uid);
         }
     }
 }

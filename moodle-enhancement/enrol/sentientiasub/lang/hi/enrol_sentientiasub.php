@@ -22,6 +22,8 @@ $string['sentientiasub:unenrolself'] = 'अपनी सदस्यता र�
 // Settings.
 $string['defaultrole'] = 'डिफ़ॉल्ट भूमिका असाइनमेंट';
 $string['defaultrole_desc'] = 'सदस्यता सक्रिय रहने के दौरान सदस्य को सौंपी जाने वाली भूमिका (स्कोप = एकल पाठ्यक्रम)।';
+$string['allaccesscohort'] = 'ऑल-एक्सेस कोहोर्ट';
+$string['allaccesscohort_desc'] = 'सक्रियण पर ऑल-एक्सेस सदस्यों को इस कोहोर्ट में जोड़ा जाता है (निलंबन/रद्दीकरण पर हटाया जाता है)। सदस्यों को पाठ्यक्रम पहुँच देने के लिए इस कोहोर्ट से अपने कैटलॉग में Moodle कोहोर्ट-सिंक (enrol_cohort) कॉन्फ़िगर करें। श्रेणी-स्कोप सदस्यता के लिए, "sentientiasub_cat_<categoryid>" idnumber वाला कोहोर्ट बनाएँ और उसे उस श्रेणी में कोहोर्ट-सिंक करें।';
 
 // Subscription statuses.
 $string['status_pending'] = 'लंबित';

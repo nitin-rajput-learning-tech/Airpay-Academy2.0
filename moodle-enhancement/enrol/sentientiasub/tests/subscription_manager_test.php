@@ -136,4 +136,49 @@ final class subscription_manager_test extends \advanced_testcase {
         $this->assertFalse(is_enrolled($ctx, $user->id));
         $this->assertSame(subscription_manager::STATUS_CANCELLED, subscription_manager::get($subid)->status);
     }
+
+    /**
+     * Increment 5 — all-access scope grants via the configured cohort (not per-course enrol).
+     * Suspend removes membership (cohorts have no suspended state); reactivate re-adds; cancel removes.
+     */
+    public function test_allaccess_scope_uses_cohort(): void {
+        global $CFG;
+        require_once($CFG->dirroot . '/cohort/lib.php');
+        $this->resetAfterTest();
+        $user = $this->getDataGenerator()->create_user();
+        $cohortid = (int) $this->getDataGenerator()->create_cohort()->id;
+        set_config('allaccess_cohortid', $cohortid, 'enrol_sentientiasub');
+
+        $subid = subscription_manager::create(0, $user->id, subscription_manager::SCOPE_ALLACCESS,
+            null, 499.00, 'INR', 'monthly', 77);
+        subscription_manager::activate($subid, time() + 86400);
+        $this->assertTrue(cohort_is_member($cohortid, $user->id));   // granted
+        subscription_manager::suspend($subid);
+        $this->assertFalse(cohort_is_member($cohortid, $user->id));  // suspend removes
+        subscription_manager::record_cycle($subid, time() + 86400);
+        $this->assertTrue(cohort_is_member($cohortid, $user->id));   // reactivate re-adds
+        subscription_manager::cancel($subid);
+        $this->assertFalse(cohort_is_member($cohortid, $user->id));  // cancel removes
+    }
+
+    /**
+     * Increment 5 — category scope resolves a cohort by the idnumber convention
+     * `sentientiasub_cat_<categoryid>` and manages membership there.
+     */
+    public function test_category_scope_uses_idnumber_cohort(): void {
+        global $CFG;
+        require_once($CFG->dirroot . '/cohort/lib.php');
+        $this->resetAfterTest();
+        $user = $this->getDataGenerator()->create_user();
+        $cat = $this->getDataGenerator()->create_category();
+        $cohortid = (int) $this->getDataGenerator()->create_cohort(
+            ['idnumber' => 'sentientiasub_cat_' . $cat->id])->id;
+
+        $subid = subscription_manager::create(0, $user->id, subscription_manager::SCOPE_CATEGORY,
+            (int) $cat->id, 199.00, 'INR', 'monthly', 77);
+        subscription_manager::activate($subid, time() + 86400);
+        $this->assertTrue(cohort_is_member($cohortid, $user->id));
+        subscription_manager::cancel($subid);
+        $this->assertFalse(cohort_is_member($cohortid, $user->id));
+    }
 }

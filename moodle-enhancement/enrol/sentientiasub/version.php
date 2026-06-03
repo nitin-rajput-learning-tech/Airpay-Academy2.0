@@ -16,10 +16,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component   = 'enrol_sentientiasub';
-$plugin->version     = 2026060200;       // YYYYMMDDNN
+$plugin->version     = 2026060300;       // YYYYMMDDNN
 $plugin->requires    = 2024100700;       // Moodle 4.5+
-$plugin->maturity    = MATURITY_ALPHA;   // skeleton — payment integration pending
-$plugin->release     = '0.1.0-alpha';
+$plugin->maturity    = MATURITY_ALPHA;   // increment 5 (cohort grant for allaccess/category) added; payment (3-4) sandbox-pending
+$plugin->release     = '0.2.0-alpha';
 $plugin->dependencies = [
     'local_airpay_core' => ANY_VERSION,  // feature_flags registry
 ];

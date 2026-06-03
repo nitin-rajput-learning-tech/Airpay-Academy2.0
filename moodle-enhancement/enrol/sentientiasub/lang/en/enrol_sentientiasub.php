@@ -22,6 +22,8 @@ $string['sentientiasub:unenrolself'] = 'Cancel own subscription enrolment';
 // Settings.
 $string['defaultrole'] = 'Default role assignment';
 $string['defaultrole_desc'] = 'Role assigned to a subscriber while their subscription is active (scope = single course).';
+$string['allaccesscohort'] = 'All-access cohort';
+$string['allaccesscohort_desc'] = 'Cohort that all-access subscribers are added to on activation (and removed from on suspend/cancel). Configure Moodle cohort-sync (enrol_cohort) from this cohort into your catalogue so members get course access. For category-scope subscriptions, instead create a cohort with idnumber "sentientiasub_cat_<categoryid>" and cohort-sync it to that category.';
 
 // Subscription statuses.
 $string['status_pending'] = 'Pending';
