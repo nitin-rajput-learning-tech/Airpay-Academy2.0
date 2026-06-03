@@ -1,10 +1,10 @@
-# State Card — `local_airpay_ratings`
+# State Card — `local_sentientia_ratings`
 
-**Component:** `local_airpay_ratings`
-**Version:** `2026052001` / `1.1.1`  (+P1 #51 Hindi pack)
+**Component:** `local_sentientia_ratings`  (renamed from `local_airpay_ratings`, ADR-022 batch-1)
+**Version:** `2026060302` / `1.1.2`  (+ADR-022 rename)
 **Maturity:** `MATURITY_STABLE`
 **Status:** Live on airpay.academy. Per-course star ratings.
-**Last refreshed:** 2026-05-24 (P1 state-card pass)
+**Last refreshed:** 2026-06-03 (ADR-022 batch-1 rename)
 
 ---
 
@@ -19,11 +19,12 @@ activity-scoped); this plugin is course-scoped.
 
 | Table | Purpose |
 |-------|---------|
-| `local_airpay_ratings` | Individual user ratings — `(userid, courseid, stars, comment, timecreated)`; unique on `(userid, courseid)` (one rating per user per course; re-submit updates). |
+| `local_sentientia_ratings` | Individual user ratings — `(userid, courseid, stars, comment, timecreated)`; unique on `(userid, courseid)` (one rating per user per course; re-submit updates). |
 
 ## Capabilities (1)
 
-`local/airpay_ratings:rate` — granted to enrolled learners.
+`local/sentientia_ratings:rate` — granted to enrolled learners (7 role-capability
+grants preserved across the rename hand-over).
 
 ## Feature flags
 
@@ -32,28 +33,28 @@ None registered.
 ## Key files
 
 ```
-local/airpay_ratings/
-├── version.php                                  2026052001 / 1.1.1
+local/sentientia_ratings/
+├── version.php                                     2026060302 / 1.1.2
 ├── README.md
 ├── lib.php
 ├── classes/
-│   ├── rating_manager.php                       Rating CRUD + aggregate
-│   └── external/                                 WS endpoint (rate course)
+│   ├── rating_manager.php                          Rating CRUD + aggregate
+│   └── external/submit_rating.php                  WS endpoint (rate course)
 ├── db/
-│   ├── install.xml                              1 table
-│   ├── upgrade.php
-│   └── access.php                               1 capability
+│   ├── install.xml                                 1 table
+│   ├── upgrade.php                                  no-op; drives classmap rebuild + WS re-register
+│   ├── services.php                                 WS: local_sentientia_ratings_submit_rating
+│   └── access.php                                  1 capability
 ├── amd/
 ├── lang/
-│   ├── en/local_airpay_ratings.php
-│   └── hi/local_airpay_ratings.php              (100% parity post-P1 #51)
-└── tests/                                       1 PHPUnit class / 14 methods
+│   ├── en/local_sentientia_ratings.php             12 strings
+│   └── hi/local_sentientia_ratings.php             12 strings (100% parity)
+└── tests/submit_rating_test.php                    PHPUnit
 ```
 
 ## Tests
 
-1 PHPUnit class, 14 methods. Covers the rate/update/aggregate flow
-with multi-user fixtures.
+PHPUnit covering the rate/update/aggregate flow with multi-user fixtures.
 
 ## Open items
 
@@ -63,7 +64,16 @@ with multi-user fixtures.
 - [ ] Per-tenant minimum-rating-threshold to publish
 - [ ] Behat coverage of the rating widget
 
+## ADR-022 batch-1 rename — 2026-06-03
+
+Renamed `local_airpay_ratings` -> `local_sentientia_ratings` (first leaf plugin
+of the 30-plugin Sentientia rename program). Source via `tools/rename/codemod.php`;
+DB hand-over via `tools/rename/handover.php` (table, config_plugins, capability
+name + component, the 7 role-capability grants, files, web service). Verified
+12/12 on the local production-import: plugin recognized, table/capability/WS
+migrated, classes autoload, WS method executes, en+hi 12/12 strings, zero
+`airpay_ratings` residue. The production hand-over is a separate gated step.
+
 ## State card created — 2026-05-24
 
-Initial state card. Plugin has been live for many phases; created now
-as part of the P1 state-card pass.
+Initial state card (P1 state-card pass). Plugin live for many phases.
