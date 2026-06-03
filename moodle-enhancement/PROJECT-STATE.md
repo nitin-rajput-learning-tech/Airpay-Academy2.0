@@ -50,8 +50,10 @@ Three deliverables; **nothing deployed to live**.
 
 **Fresh-session queue:** ~~(a) rehearse the `airpay_ratings` rename~~ ✅ DONE (both tracks proven) —
 remaining: the real maintenance-window `--apply` + served-DB migration (Nitin-gated, ADR-022); ~~(b) build `enrol_sentientiasub`
-increment 2~~ ✅ DONE (commit `bb241a275`); (c) the sandbox payment work — validate the fix → Verify-API
-→ subscription increments 3-5 (mandate checkout + subscription-callback + category/allaccess grant); (d)
+increment 2~~ ✅ DONE (`bb241a275`); ~~increment 5 (category/allaccess cohort grant)~~ ✅ DONE 2026-06-03
+(`8c5d6aee2`, cohort-sync, verified 7/7); (c) the sandbox payment work — validate the fix → Verify-API
+→ subscription increments **3-4 only** (mandate checkout + subscription-callback; the Moodle-side enrolment
+for all 3 scopes is now complete); (d)
 eAbyas/epsilon independence — **AUDITED** (`docs/audits/EABYAS-EPSILON-INDEPENDENCE-AUDIT-2026-06-02.md`):
 `theme/epsilon` is gone from the repo, but airpayux still `theme_config::load('epsilon')`s in 3 sites
 (`lib.php:100` pluginfile file-serve, `settings.php:61` preset, `scss_test.php:39`). **RESOLVED**: the
