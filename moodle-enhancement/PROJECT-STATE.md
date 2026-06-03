@@ -87,7 +87,10 @@ and reverted (deployed clean). **FIXED 2026-06-03** in `_surface-dashboard.scss`
 `.airpay-gamification__streak-day small`→#9ca3af / `…__leaderboard-name small`→#60a5fa, both
 `!important` — required to beat a competing `#6b7280!important`); verified present + winning in the
 compiled CSS (browser re-audit blocked by the flaky extension, but the change is colour-only).
-Dark Mode toggle doesn't persist across reloads (separate UX). Evidence:
+Dark Mode toggle persistence **VERIFIED CORRECT** 2026-06-03 (sidebar `#ap-dark-toggle` writes
+`localStorage['airpay-theme']` @ `dashboard.mustache:841`; `head.mustache:31-37` restores it before
+CSS) — the earlier "doesn't persist" note was a **flaky-extension-click artifact** (the handler likely
+never fired), NOT a bug. Evidence:
 `docs/visual-evidence/2026-06-02/`. **PROD runbook:** deploy `fix/theme-epsilon-decouple` + `UPDATE {files} SET
 component='theme_airpayux' WHERE component='theme_epsilon'` + remove `theme/epsilon` dir & config rows + purge. The Airpay-team disclosure
 `.docx` is a separate spawned session.

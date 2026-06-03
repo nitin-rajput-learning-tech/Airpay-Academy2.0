@@ -54,5 +54,8 @@ required to win. Verified empirically via the **compiled CSS** (both rules prese
 change is colour-only with no layout impact). Theme-debt note: the stray `#6b7280!important` source
 rule should be retired in a future theme-token cleanup.
 
-**Also noted (out of scope for contrast):** the sidebar **Dark Mode** toggle does **not persist**
-across page reloads — it resets to the default theme. Separate UX item.
+**Toggle persistence — RE-CHECKED 2026-06-03: NOT A BUG.** The original "doesn't persist" note was a
+**flaky-extension-click artifact** (the toggle handler never reliably fired during the audit). Source
+review confirms persistence is correctly implemented: the sidebar toggle `#ap-dark-toggle` writes
+`localStorage['airpay-theme']` (`dashboard.mustache:841`), and `head.mustache:31-37` restores it before
+CSS on every load (with OS `prefers-color-scheme` fallback). A real toggle click persists across reloads.
