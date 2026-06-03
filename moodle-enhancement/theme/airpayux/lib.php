@@ -18,7 +18,7 @@
  * Theme functions.
  *
  * @package    theme_airpayux
- * @copyright  2018 eAbyas Info Solutons Pvt Ltd, India; 2026 Airpay Payment Services (Sentientia white-label fork)
+ * @copyright  2018 eAbyas Info Solutons Pvt Ltd, India
  * @author     eAbyas  <info@eAbyas.in>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -33,7 +33,7 @@ defined('MOODLE_INTERNAL') || die();
  */
 function theme_airpayux_css_tree_post_processor($tree, $theme) {
     error_log('theme_airpayux_css_tree_post_processor() is deprecated. Required' .
-        'prefixes for Bootstrap are now in theme/epsilon/scss/moodle/prefixes.scss');
+        'prefixes for Bootstrap are now in theme/airpayux/scss/moodle/prefixes.scss');
     $prefixer = new theme_airpayux\autoprefixer($tree);
     $prefixer->prefix();
 }
@@ -97,7 +97,9 @@ function theme_airpayux_pluginfile($course, $cm, $context, $filearea, $args, $fo
     if ($context->contextlevel == CONTEXT_SYSTEM && ($filearea === 'logo' || $filearea === 'backgroundimage'
          || $filearea === 'loginlogo' || $filearea === 'carousellogo' || $filearea === 'slider1' || $filearea === 'slider2' || $filearea === 'slider3'
          || $filearea === 'slider4' || $filearea === 'slider5') || $filearea === 'favicon') {
-        $theme = theme_config::load('epsilon');
+        // SENTIENTIA independence (eAbyas/epsilon audit 2026-06-02): serve airpayux's OWN
+        // setting files. The 7 setting files were migrated theme_epsilon -> theme_airpayux.
+        $theme = theme_config::load('airpayux');
         // By default, theme files must be cache-able by both browsers and proxies.
         if (!array_key_exists('cacheability', $options)) {
             $options['cacheability'] = 'public';

@@ -25,7 +25,7 @@ namespace theme_airpayux;
  */
 class scss_test extends \advanced_testcase {
     /**
-     * Test that epsilon can be compiled using SassC (the defacto implemention).
+     * Test that airpayux can be compiled using SassC (the defacto implemention).
      */
     public function test_scss_compilation_with_sassc() {
         if (!defined('PHPUNIT_PATH_TO_SASSC')) {
@@ -36,7 +36,7 @@ class scss_test extends \advanced_testcase {
         set_config('pathtosassc', PHPUNIT_PATH_TO_SASSC);
 
         $this->assertNotEmpty(
-            \theme_config::load('epsilon')->get_css_content_debug('scss', null, null)
+            \theme_config::load('airpayux')->get_css_content_debug('scss', null, null)
         );
     }
 }

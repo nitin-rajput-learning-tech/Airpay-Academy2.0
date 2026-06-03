@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * A maintenance layout for the epsilon theme.
+ * A maintenance layout for the airpayux theme.
  *
  * @package   theme_airpayux
  * @copyright 2016 Damyon Wiese
