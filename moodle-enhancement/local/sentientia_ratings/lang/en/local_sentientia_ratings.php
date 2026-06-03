@@ -7,7 +7,7 @@ $string['averagerating']     = 'Average rating';
 $string['noratings']         = 'No ratings yet';
 
 // W1-3 (2026-05-15) — write endpoint.
-$string['airpay_ratings:rate'] = 'Submit star ratings on courses, classrooms, programs and learning paths';
+$string['sentientia_ratings:rate'] = 'Submit star ratings on courses, classrooms, programs and learning paths';
 $string['invalidrating']       = 'Rating must be between 1 and 5 stars';
 $string['invalidratearea']     = 'Unknown rating area';
 $string['invaliditemid']       = 'Invalid item to rate';

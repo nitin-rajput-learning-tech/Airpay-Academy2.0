@@ -877,8 +877,8 @@ JS;
             $usercourseprogress = ['progress' => $progress_pct];
             // Ratings: prefer Airpay plugin, fall back to BizLMS.
             $display_ratings = null;
-            if (class_exists('\local_airpay_ratings\rating_manager')) {
-                $display_ratings = \local_airpay_ratings\rating_manager::render($courseid, 'local_airpay_courses');
+            if (class_exists('\local_sentientia_ratings\rating_manager')) {
+                $display_ratings = \local_sentientia_ratings\rating_manager::render($courseid, 'local_airpay_courses');
             } else {
                 $ratings_lib = $CFG->dirroot . '/local/ratings/lib.php';
                 if (file_exists($ratings_lib)) {
@@ -1604,8 +1604,8 @@ JS;
                 $percentage = progress::get_course_progress_percentage($course, $USER->id);
             }
         $display_ratings = null;
-        if (class_exists('\local_airpay_ratings\rating_manager')) {
-            $display_ratings = \local_airpay_ratings\rating_manager::render($COURSE->id, 'local_airpay_courses');
+        if (class_exists('\local_sentientia_ratings\rating_manager')) {
+            $display_ratings = \local_sentientia_ratings\rating_manager::render($COURSE->id, 'local_airpay_courses');
         } else {
             $ratings_lib = $CFG->dirroot . '/local/ratings/lib.php';
             if (file_exists($ratings_lib)) {

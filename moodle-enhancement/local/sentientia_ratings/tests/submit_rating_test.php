@@ -2,7 +2,7 @@
 // Copyright 2026 Airpay Payment Services
 // License http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 
-namespace local_airpay_ratings;
+namespace local_sentientia_ratings;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -19,7 +19,7 @@ defined('MOODLE_INTERNAL') || die();
  *   - get_average() reflects all submitted ratings after submit
  *   - UNIQUE constraint prevents duplicate (userid, itemid, ratearea) rows
  *
- * @package    local_airpay_ratings
+ * @package    local_sentientia_ratings
  * @category   test
  */
 final class submit_rating_test extends \advanced_testcase {
@@ -32,7 +32,7 @@ final class submit_rating_test extends \advanced_testcase {
         $id = rating_manager::submit_rating(42, 'local_airpay_courses', (int) $u->id, 5);
 
         $this->assertGreaterThan(0, $id);
-        $row = $DB->get_record('local_airpay_ratings', ['id' => $id], '*', MUST_EXIST);
+        $row = $DB->get_record('local_sentientia_ratings', ['id' => $id], '*', MUST_EXIST);
         $this->assertSame(42, (int) $row->itemid);
         $this->assertSame('local_airpay_courses', $row->ratearea);
         $this->assertSame((int) $u->id, (int) $row->userid);
@@ -47,14 +47,14 @@ final class submit_rating_test extends \advanced_testcase {
         $u = $this->getDataGenerator()->create_user();
 
         $id1 = rating_manager::submit_rating(42, 'local_airpay_courses', (int) $u->id, 3);
-        $first_time = (int) $DB->get_field('local_airpay_ratings', 'timecreated', ['id' => $id1]);
+        $first_time = (int) $DB->get_field('local_sentientia_ratings', 'timecreated', ['id' => $id1]);
         // Sleep 1 sec so timemodified is verifiably different.
         sleep(1);
         $id2 = rating_manager::submit_rating(42, 'local_airpay_courses', (int) $u->id, 4);
 
         $this->assertSame($id1, $id2,
             'submit_rating must return the existing row id, not create a duplicate');
-        $row = $DB->get_record('local_airpay_ratings', ['id' => $id2], '*', MUST_EXIST);
+        $row = $DB->get_record('local_sentientia_ratings', ['id' => $id2], '*', MUST_EXIST);
         $this->assertSame(4, (int) $row->rating);
         $this->assertSame($first_time, (int) $row->timecreated,
             'timecreated must be preserved on update');
@@ -162,7 +162,7 @@ final class submit_rating_test extends \advanced_testcase {
 
         // Direct INSERT attempt with the same key should throw.
         $this->expectException(\dml_write_exception::class);
-        $DB->insert_record('local_airpay_ratings', (object) [
+        $DB->insert_record('local_sentientia_ratings', (object) [
             'itemid'       => 42,
             'ratearea'     => 'local_airpay_courses',
             'userid'       => (int) $u->id,
@@ -182,7 +182,7 @@ final class submit_rating_test extends \advanced_testcase {
         rating_manager::submit_rating(42, 'local_airpay_courses', (int) $u->id, 5);
         rating_manager::submit_rating(42, 'local_airpay_classroom', (int) $u->id, 3);
 
-        $this->assertEquals(2, $DB->count_records('local_airpay_ratings', [
+        $this->assertEquals(2, $DB->count_records('local_sentientia_ratings', [
             'itemid' => 42, 'userid' => (int) $u->id,
         ]));
     }
