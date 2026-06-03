@@ -75,7 +75,9 @@ minor descriptive refs de-branded; historical (version.php changelog, "forked fr
 "airpay academy" logo intact + no breakage — visual belt-and-suspenders on the file-API proof. Evidence:
 `docs/visual-evidence/2026-06-02/`. (Also confirmed the local login uses the standard user/pass form because
 `auth_otp` isn't installed locally; production has OTP — theme login templates unchanged.) Remaining: behat
-file/class `behat_theme_epsilon_*` rename (identifier, follow-up); **Block D dark-mode pass AUDITED** (in-browser WCAG
+file/class `behat_theme_epsilon_*`→`behat_theme_airpayux_*` rename ✅ **DONE 2026-06-03** (class was
+already airpayux; `git mv`'d the file to match — fixed a filename≠classname mismatch + the last epsilon
+identifier; eAbyas/epsilon de-brand now 100% complete bar historical changelog + GPL notices); **Block D dark-mode pass AUDITED** (in-browser WCAG
 audit via JS, 80 text elements): 78 pass AA; **2 genuine failures** — gamification streak-day labels
 (`#6b7280` on `#1a1d27` = 3.48:1) + leaderboard "(You)" (`#0066A7` on `#0d1f3c` = 2.71:1), both
 **base-theme** (reproduce without the dark-mode toggle); 2 false positives dismissed. **Remediation =
