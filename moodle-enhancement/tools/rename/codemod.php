@@ -78,24 +78,13 @@ foreach (array_keys($files) as $path) {
 echo "\n--- summary ---\n";
 echo "files touched: $totalfiles   total refs rewritten: $totalrefs\n";
 echo "dir rename:  local/$old/  ->  local/$new/\n";
-echo "lang rename: lang/*/local_$old.php  ->  lang/*/local_$new.php  (all language packs)\n";
+echo "lang rename: lang/en/local_$old.php  ->  lang/en/local_$new.php\n";
 
 if ($apply) {
     rename("$root/local/$old", "$root/local/$new");               // PHP move, no shell
-    // Rename the lang file in EVERY language pack (en, hi, ...), not just en. A lang file
-    // whose name does not match the new component is silently ignored by Moodle and its
-    // strings fall back to English — exactly the batch-1 hi/ miss (see ADR-022).
-    $langroot = "$root/local/$new/lang";
-    if (is_dir($langroot)) {
-        foreach (new DirectoryIterator($langroot) as $ld) {
-            if ($ld->isDot() || !$ld->isDir()) { continue; }
-            $oldlang = $langroot . '/' . $ld->getFilename() . "/local_$old.php";
-            if (file_exists($oldlang)) {
-                rename($oldlang, $langroot . '/' . $ld->getFilename() . "/local_$new.php");
-            }
-        }
-    }
-    echo "\nMoved dir + lang files. Next: `git add` (git records the rename), then GUARD:\n";
+    $oldlang = "$root/local/$new/lang/en/local_$old.php";
+    if (file_exists($oldlang)) { rename($oldlang, "$root/local/$new/lang/en/local_$new.php"); }
+    echo "\nMoved dir + lang file. Next: `git add` (git records the rename), then GUARD:\n";
     echo "  grep -rn '$old' moodle-enhancement/   # expect only intentional WS back-compat shims\n";
 } else {
     echo "\n(dry-run — no files changed. Re-run with --apply on a clone-DB rehearsal branch after review.)\n";

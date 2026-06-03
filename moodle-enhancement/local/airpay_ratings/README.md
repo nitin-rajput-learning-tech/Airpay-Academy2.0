@@ -1,4 +1,4 @@
-# local_sentientia_ratings
+# local_airpay_ratings
 
 Course ratings (five-star with optional comment). Public-tenant gated —
 internal Airpay employees don't rate (workplace-training pressure
@@ -6,7 +6,7 @@ distorts the signal).
 
 | Field | Value |
 |---|---|
-| Component | `local_sentientia_ratings` |
+| Component | `local_airpay_ratings` |
 | Version | 1.0.0 |
 | Depends on | `local_airpay_org` |
 
@@ -19,7 +19,7 @@ distorts the signal).
 
 ## Tables
 
-`local_sentientia_ratings` — one row per user-course pair.
+`local_airpay_ratings` — one row per user-course pair.
 
 ## Privacy / GDPR
 

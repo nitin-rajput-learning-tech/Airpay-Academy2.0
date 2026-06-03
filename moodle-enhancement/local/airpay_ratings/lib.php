@@ -9,5 +9,5 @@ defined('MOODLE_INTERNAL') || die();
  * @return string HTML
  */
 function airpay_display_rating(int $itemid, string $ratearea): string {
-    return \local_sentientia_ratings\rating_manager::render($itemid, $ratearea);
+    return \local_airpay_ratings\rating_manager::render($itemid, $ratearea);
 }

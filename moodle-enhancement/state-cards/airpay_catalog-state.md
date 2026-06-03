@@ -173,9 +173,3 @@ internal tenant** (Airpay /1, ZEEA /177) via the Switchboard.
 public guest storefront (public.php) now renders the LXP/Netflix card grid + "Popular picks"
 rail by DEFAULT (matching the dashboard "Featured for you" poster style), instead of the plain
 legacy grid. Reversible + per-tenant overridable via the Switchboard. v1.0.2→1.0.3-beta.
-
-## ADR-022 batch-1 cross-ref update (2026-06-03)
-No behavioural change. A single comment reference in `classes/catalog_manager.php` was
-updated from `local_airpay_ratings` to `local_sentientia_ratings` as part of the ratings
-plugin rename (ADR-022 batch-1). The ratings join referenced in that comment remains
-deferred (unchanged). No version bump.

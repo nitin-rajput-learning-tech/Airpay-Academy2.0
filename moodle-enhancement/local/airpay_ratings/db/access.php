@@ -5,7 +5,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Capability definitions for local_sentientia_ratings.
+ * Capability definitions for local_airpay_ratings.
  *
  * W1-3 (2026-05-15) — added `:rate` for the write endpoint. Every
  * authenticated user (`user` archetype) plus learners, teachers, and
@@ -13,7 +13,7 @@ defined('MOODLE_INTERNAL') || die();
  */
 $capabilities = [
 
-    'local/sentientia_ratings:rate' => [
+    'local/airpay_ratings:rate' => [
         'riskbitmask'  => 0,
         'captype'      => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
