@@ -164,3 +164,40 @@ capability assignments + row counts match pre/post).
 4. **`local_airpay_core` rename** — accept it as a flag day, or keep `airpay_core` as the one
    permanent legacy name (everything already tolerates it via the `class_exists()`-guarded
    `local_sentientia_core` seams)?
+
+## Batch-1 execution (2026-06-03): `local_airpay_ratings` → `local_sentientia_ratings`
+
+First plugin renamed end-to-end (leaf-first), on the local production-import (2,871 users,
+411 courses, 3 tenants). Chosen first because it is a leaf with a small but representative
+footprint: a table, a capability with **real role-capability grants**, and a write web
+service consumed by the theme. Verified **12/12** (plugin recognized, old gone, table renamed,
+capability migrated, **capability component re-pointed**, **7 role-capability grants preserved**,
+WS migrated + old removed, both classes autoload, WS method executes, zero `airpay_ratings`
+residue in the classmap, version bumped). Tooling: `tools/rename/codemod.php` (source) +
+`tools/rename/handover.php` (DB) + a bumped `version.php` with a no-op `db/upgrade.php`.
+
+### Lessons (folded into `handover.php` and the procedure)
+
+1. **Re-point `capabilities.component`, not just `capabilities.name`.** If only `.name` is
+   re-pointed, the version-bump upgrade's `update_capabilities()` no longer recognises the cap
+   as belonging to the new component and tries to **INSERT** it again →
+   `dml_write_exception: Duplicate entry '<cap>' for key 'mdl_capa_nam_uix'`. Re-point both.
+
+2. **DELETE old `external_functions` / `external_services` rows; do not sweep their
+   component.** The upgrade re-registers the WS from the new `db/services.php`. Re-pointing the
+   old rows' component would keep the old classname and break the endpoint. The broad
+   `component`-column sweep therefore **excludes** the WS tables.
+
+3. **`core_component.php` (the bootstrap classmap cache) is not cleared by `purge_caches`.** It
+   is rebuilt on the `get_all_component_hash` step of a **version-bump upgrade** — hence the
+   no-op `db/upgrade.php` paired with a bumped `version.php`. A plain cache purge is not enough.
+
+4. **Order matters:** source codemod → deploy (bumped version + `db/upgrade.php`) → DB
+   hand-over → `admin/cli/upgrade.php`. The hand-over makes Moodle see the plugin as
+   already-installed (no fresh install, no uninstall); the upgrade then rebuilds the classmap
+   and re-registers the WS.
+
+5. **Verification gotcha (harness, not product):** PHP double-quoted strings interpret `\e`,
+   `\t`, `\n` as escapes — a probe like `class_exists("...\external\submit_rating")` silently
+   becomes `...<ESC>xternal...` and reports a **false** negative. Verify class names with
+   `::class` (compiler-resolved) or single-quoted strings, never double-quoted FQNs.

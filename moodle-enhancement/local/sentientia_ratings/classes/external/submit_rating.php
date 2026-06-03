@@ -2,7 +2,7 @@
 // Copyright 2026 Airpay Payment Services
 // License http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 
-namespace local_airpay_ratings\external;
+namespace local_sentientia_ratings\external;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -14,16 +14,16 @@ use core_external\external_value;
 /**
  * W1-3 (2026-05-15) — submit a star rating for an item.
  *
- * Wraps `\local_airpay_ratings\rating_manager::submit_rating()` with:
+ * Wraps `\local_sentientia_ratings\rating_manager::submit_rating()` with:
  *   - parameter validation
  *   - context check (system)
- *   - capability check (`local/airpay_ratings:rate`)
+ *   - capability check (`local/sentientia_ratings:rate`)
  *   - ratearea whitelist (prevents users from rating arbitrary table rows)
  *
  * Returns the new average + count so the client can refresh the display
  * without a follow-up roundtrip.
  *
- * @package    local_airpay_ratings
+ * @package    local_sentientia_ratings
  */
 class submit_rating extends external_api {
 
@@ -71,20 +71,20 @@ class submit_rating extends external_api {
 
         $context = \context_system::instance();
         self::validate_context($context);
-        require_capability('local/airpay_ratings:rate', $context);
+        require_capability('local/sentientia_ratings:rate', $context);
 
         // Range check (PARAM_INT enforces int but not 1..5).
         if ($params['rating'] < 1 || $params['rating'] > 5) {
-            throw new \moodle_exception('invalidrating', 'local_airpay_ratings');
+            throw new \moodle_exception('invalidrating', 'local_sentientia_ratings');
         }
 
         // Whitelist the ratearea — the column is unconstrained at the schema
         // level so we must enforce the membership here.
         if (!in_array($params['ratearea'], self::ALLOWED_RATEAREAS, true)) {
-            throw new \moodle_exception('invalidratearea', 'local_airpay_ratings');
+            throw new \moodle_exception('invalidratearea', 'local_sentientia_ratings');
         }
 
-        \local_airpay_ratings\rating_manager::submit_rating(
+        \local_sentientia_ratings\rating_manager::submit_rating(
             $params['itemid'],
             $params['ratearea'],
             (int) $USER->id,
@@ -92,7 +92,7 @@ class submit_rating extends external_api {
         );
 
         // Refresh average for client display — saves a second roundtrip.
-        $avg = \local_airpay_ratings\rating_manager::get_average(
+        $avg = \local_sentientia_ratings\rating_manager::get_average(
             $params['itemid'], $params['ratearea']);
 
         return [

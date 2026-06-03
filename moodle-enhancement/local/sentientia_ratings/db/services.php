@@ -5,7 +5,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Web service definitions for local_airpay_ratings.
+ * Web service definitions for local_sentientia_ratings.
  *
  * Registered on plugin upgrade — version bump in version.php triggers Moodle
  * to re-scan this file. After upgrade, services appear under
@@ -13,12 +13,12 @@ defined('MOODLE_INTERNAL') || die();
  */
 $functions = [
 
-    'local_airpay_ratings_submit_rating' => [
-        'classname'    => '\\local_airpay_ratings\\external\\submit_rating',
+    'local_sentientia_ratings_submit_rating' => [
+        'classname'    => '\\local_sentientia_ratings\\external\\submit_rating',
         'description'  => 'Submit (insert or update) a star rating for an item.',
         'type'         => 'write',
         'ajax'         => true,
-        'capabilities' => 'local/airpay_ratings:rate',
+        'capabilities' => 'local/sentientia_ratings:rate',
         'loginrequired' => true,
     ],
 

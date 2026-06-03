@@ -1,5 +1,5 @@
 <?php
-namespace local_airpay_ratings;
+namespace local_sentientia_ratings;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -9,13 +9,13 @@ defined('MOODLE_INTERNAL') || die();
  * Replaces BizLMS local_ratings with a clean implementation.
  * Falls back to BizLMS tables during transition.
  *
- * @package    local_airpay_ratings
+ * @package    local_sentientia_ratings
  * @copyright  2026 Airpay Payment Services
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class rating_manager {
 
-    private const TABLE = 'local_airpay_ratings';
+    private const TABLE = 'local_sentientia_ratings';
     private const LEGACY_TABLE = 'local_rating';
 
     /**
@@ -100,10 +100,10 @@ class rating_manager {
      * Render star rating HTML for a course/item.
      *
      * W1-3 (2026-05-15) — stars are now **interactive** buttons wired to the
-     * `local_airpay_ratings_submit_rating` web service via the `rating_widget`
+     * `local_sentientia_ratings_submit_rating` web service via the `rating_widget`
      * AMD module. Pages that want clickable ratings need to call:
      *
-     *     $PAGE->requires->js_call_amd('local_airpay_ratings/rating_widget', 'init');
+     *     $PAGE->requires->js_call_amd('local_sentientia_ratings/rating_widget', 'init');
      *
      * Pages that want read-only stars can pass $interactive=false; the markup
      * still renders but the AMD module won't pick it up because the
@@ -133,7 +133,7 @@ class rating_manager {
             $color   = $filled ? '#efce2e'   : '#9c9b97';
 
             if ($interactive) {
-                $aria = s(get_string('rateaccessibility', 'local_airpay_ratings', $i));
+                $aria = s(get_string('rateaccessibility', 'local_sentientia_ratings', $i));
                 $stars .= '<button type="button" class="airpay-rating__star btn btn-link p-0 m-0"'
                     . ' data-rating="' . $i . '" aria-label="' . $aria . '">'
                     . '<i class="' . $iconcls . '" style="color:' . $color . ';font-size:18px"></i>'
@@ -147,7 +147,7 @@ class rating_manager {
             ? '<span class="airpay-rating__count text-muted">(' . $avg->average
                 . ' / ' . $avg->count . ')</span>'
             : '<span class="airpay-rating__count text-muted">'
-                . s(get_string('noratings', 'local_airpay_ratings')) . '</span>';
+                . s(get_string('noratings', 'local_sentientia_ratings')) . '</span>';
 
         $extra = $interactive
             ? ' data-airpay-rating data-itemid="' . $itemid
@@ -179,16 +179,16 @@ class rating_manager {
         global $DB;
 
         if ($rating < 1 || $rating > 5) {
-            throw new \moodle_exception('invalidrating', 'local_airpay_ratings');
+            throw new \moodle_exception('invalidrating', 'local_sentientia_ratings');
         }
         if ($userid <= 1) {
-            throw new \moodle_exception('cannotrateasguest', 'local_airpay_ratings');
+            throw new \moodle_exception('cannotrateasguest', 'local_sentientia_ratings');
         }
         if ($itemid <= 0) {
-            throw new \moodle_exception('invaliditemid', 'local_airpay_ratings');
+            throw new \moodle_exception('invaliditemid', 'local_sentientia_ratings');
         }
         if (empty($ratearea) || strlen($ratearea) > 100) {
-            throw new \moodle_exception('invalidratearea', 'local_airpay_ratings');
+            throw new \moodle_exception('invalidratearea', 'local_sentientia_ratings');
         }
 
         $key = ['userid' => $userid, 'itemid' => $itemid, 'ratearea' => $ratearea];
