@@ -44,5 +44,15 @@ rule — `#6b7280` is not set inline or in `_surface-dashboard.scss` by class na
 emitting rule first). A `body.dark-mode`-scoped override is the WRONG layer (the failure is in
 the default theme) — this was attempted, found misaligned, and reverted (deployed left clean).
 
+**RESOLVED 2026-06-03:** fixed in `_surface-dashboard.scss` (co-located with the gamification
+component colours) — `.airpay-gamification__streak-day small { color: #9ca3af !important }` (~5.1:1)
++ `.airpay-gamification__leaderboard-name small { color: #60a5fa !important }` (~6.8:1), unscoped so
+it holds in both default + dark-mode. Root cause turned out to be a competing `#6b7280 !important`
+rule overriding the AA-safe base (the streak-day base is already `#9ca3af`), so `!important` is
+required to win. Verified empirically via the **compiled CSS** (both rules present + winning by
+`!important` + source order; browser re-audit was blocked by the flaky extension permission, but the
+change is colour-only with no layout impact). Theme-debt note: the stray `#6b7280!important` source
+rule should be retired in a future theme-token cleanup.
+
 **Also noted (out of scope for contrast):** the sidebar **Dark Mode** toggle does **not persist**
 across page reloads — it resets to the default theme. Separate UX item.

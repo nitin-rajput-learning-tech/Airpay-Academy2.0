@@ -81,7 +81,11 @@ audit via JS, 80 text elements): 78 pass AA; **2 genuine failures** — gamifica
 **base-theme** (reproduce without the dark-mode toggle); 2 false positives dismissed. **Remediation =
 follow-up:** lighten the 2 base label colours to `#9ca3b4`/`#60a5fa` (source in `dashboard.mustache`
 gamification widget). A `body.dark-mode`-scoped fix was tried, found misaligned (failure is base-theme),
-and reverted (deployed clean). Dark Mode toggle doesn't persist across reloads (separate UX). Evidence:
+and reverted (deployed clean). **FIXED 2026-06-03** in `_surface-dashboard.scss` (unscoped
+`.airpay-gamification__streak-day small`→#9ca3af / `…__leaderboard-name small`→#60a5fa, both
+`!important` — required to beat a competing `#6b7280!important`); verified present + winning in the
+compiled CSS (browser re-audit blocked by the flaky extension, but the change is colour-only).
+Dark Mode toggle doesn't persist across reloads (separate UX). Evidence:
 `docs/visual-evidence/2026-06-02/`. **PROD runbook:** deploy `fix/theme-epsilon-decouple` + `UPDATE {files} SET
 component='theme_airpayux' WHERE component='theme_epsilon'` + remove `theme/epsilon` dir & config rows + purge. The Airpay-team disclosure
 `.docx` is a separate spawned session.
