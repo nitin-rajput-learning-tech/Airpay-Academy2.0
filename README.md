@@ -1,48 +1,62 @@
-# Moodle
+# Sentientia LMS
 
-<p align="center"><a href="https://moodle.org" target="_blank" title="Moodle Website">
-  <img src="https://raw.githubusercontent.com/moodle/moodle/main/.github/moodlelogo.svg" alt="The Moodle Logo">
-</a></p>
+**Sentientia LMS** is a white-label, enterprise-grade Learning Management and
+Learning Experience platform (LMS / LXP). It is built on the Moodle open-source
+learning platform and hardened for multi-tenant enterprise scale.
 
-[Moodle][1] is the World's Open Source Learning Platform, widely used around the world by countless universities, schools, companies, and all manner of organisations and individuals.
+**Airpay Academy** (https://www.airpay.academy) is customer-zero: the first
+production deployment, used to harden every feature against real-world scale
+(3,500+ users, multi-tenant, multi-language) before the platform is offered to
+other enterprises.
 
-Moodle is designed to allow educators, administrators and learners to create personalised learning environments with a single robust, secure and integrated system.
+## What Sentientia adds on top of Moodle
+
+- **Multi-tenant / multi-customer architecture** — a `local_sentientia_core`
+  layer with flag-gated seams (tenant identity, org hierarchy, tenant registry)
+  that decouple the product from any single deployment. Every seam ships
+  default-legacy, so production behaviour is unchanged until an operator flips it.
+- **The Sentientia plugin suite** — 30+ `local_sentientia_*` / `local_airpay_*`
+  plugins covering catalog, learning paths, programs, classroom, skills,
+  evaluation, exams, gamification, compliance reporting, and more.
+- **airpayux theme** — a standalone design-system theme (the Sentientia design
+  system base).
+- **Additive feature workstreams** — live engagement, AI assistance, the
+  SOP-to-SCORM content pipeline, PWA + push, and WhatsApp notifications. Every
+  one sits behind a default-OFF feature flag.
+
+## Repository layout
+
+```
+moodle-enhancement/        Sentientia source of truth
+  local/                   local_* plugins
+  theme/airpayux/          the Sentientia theme
+  enrol/  blocks/          enrol + block plugins
+  docs/                    ADRs, runbooks, audits, cutover guides
+  state-cards/             per-plugin state cards
+  PROJECT-STATE.md         current phase + history
+packaging/                 distributable builds (per-plugin ZIPs + full bundle)
+```
 
 ## Documentation
 
-- Read our [User documentation][3]
-- Discover our [developer documentation][5]
-- Take a look at our [demo site][4]
+- Architecture decisions: `moodle-enhancement/docs/adr/`
+- Cutover + deployment: `moodle-enhancement/docs/cutover/SENTIENTIA-CUTOVER-MASTER.md`
+  and `moodle-enhancement/DEPLOYMENT-RUNBOOK.md`
+- Project state: `moodle-enhancement/PROJECT-STATE.md`
 
-## Community
+## Built on Moodle (license + attribution)
 
-[moodle.org][1] is the central hub for the Moodle Community, with spaces for educators, administrators and developers to meet and work together.
+Sentientia LMS is a derivative work of **Moodle** (https://moodle.org), the
+open-source learning platform, and is distributed under the **GNU General Public
+License v3 or later** — the same license as Moodle. Moodle is a registered
+trademark of Moodle Pty Ltd; the Moodle name and logo remain the property of
+Moodle Pty Ltd and are referenced here only to credit the upstream foundation.
 
-You may also be interested in:
-
-- attending a [Moodle Moot][6]
-- our regular series of [developer meetings][7]
-- the [Moodle User Association][8]
-
-## Installation and hosting
-
-Moodle is Free, and Open Source software. You can easily [download Moodle][9] and run it on your own web server, however you may prefer to work with one of our experienced [Moodle Partners][10].
-
-Moodle also offers hosting through both [MoodleCloud][11], and our [partner network][10].
+This repository retains all upstream Moodle copyright notices. The Sentientia
+product name and the airpayux design system are additive, GPL-compatible
+contributions of Airpay Payment Services.
 
 ## License
 
-Moodle is provided freely as open source software, under version 3 of the GNU General Public License. For more information on our license see
-
-[1]: https://moodle.org
-[2]: https://moodle.com
-[3]: https://docs.moodle.org/
-[4]: https://sandbox.moodledemo.net/
-[5]: https://moodledev.io
-[6]: https://moodle.com/events/mootglobal/
-[7]: https://moodledev.io/general/community/meetings
-[8]: https://moodleassociation.org/
-[9]: https://download.moodle.org
-[10]: https://moodle.com/partners
-[11]: https://moodle.com/cloud
-[12]: https://moodledev.io/general/license
+GNU GPL v3 or later. The base platform follows the upstream Moodle license; all
+Sentientia additions inherit the same license.

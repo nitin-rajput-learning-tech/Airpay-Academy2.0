@@ -110,3 +110,12 @@ moodle-enhancement/audit-2026-05-15/
 # Cutover smoke-test runtime output
 tests/junit/*.xml
 !tests/junit/.gitkeep
+
+# === Sentientia scratch / diagnostics (added 2026-06-04) ===
+tools/_*.php
+moodle-enhancement/tools/_*.php
+.playwright-mcp/
+content/voice/*.mp3
+content/scorm-output/
+*-advisory.docx
+*-disclosure.docx
