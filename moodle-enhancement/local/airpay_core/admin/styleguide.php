@@ -644,7 +644,7 @@ echo $OUTPUT->header();
     "size":     "md"
 }</pre>
 
-    <h3 style="margin-top: var(--ap-space-10);">AI Assistant chat bubble &mdash; <code>local_airpay_assistant/chat_bubble</code></h3>
+    <h3 style="margin-top: var(--ap-space-10);">AI Assistant chat bubble &mdash; <code>local_sentientia_assistant/chat_bubble</code></h3>
     <p class="ap-sg__section-desc">Floating learner-facing chat assistant. Injected on every page footer for logged-in users (except login / upgrade pages). Gated by Phase A0 feature flag <code>ai.assistant.enabled</code> &mdash; super admin toggles via the Switchboard, per-tenant override supported.</p>
 
     <h4 style="margin-top: var(--ap-space-6);">Bubble (closed state)</h4>
@@ -702,10 +702,10 @@ echo $OUTPUT->header();
 
     <h4 style="margin-top: var(--ap-space-6);">Architecture</h4>
     <ul style="font-size: var(--ap-text-sm); color: var(--ap-color-text-secondary); line-height: var(--ap-leading-relaxed);">
-        <li><strong>Inject point:</strong> <code>local_airpay_assistant\hook_callbacks::before_footer_html_generation</code> &mdash; Moodle 5.x footer hook</li>
-        <li><strong>Gating order:</strong> logged-in &amp; not guest &rarr; <code>feature_flags::is_enabled('ai.assistant.enabled')</code> &rarr; legacy <code>local_airpay_assistant/enabled</code> kill switch &rarr; not on login/upgrade pages</li>
+        <li><strong>Inject point:</strong> <code>local_sentientia_assistant\hook_callbacks::before_footer_html_generation</code> &mdash; Moodle 5.x footer hook</li>
+        <li><strong>Gating order:</strong> logged-in &amp; not guest &rarr; <code>feature_flags::is_enabled('ai.assistant.enabled')</code> &rarr; legacy <code>local_sentientia_assistant/enabled</code> kill switch &rarr; not on login/upgrade pages</li>
         <li><strong>Fallback:</strong> when the feature flag is off, <code>ai_client::ask()</code> returns a static "AI assistant temporarily disabled" response &mdash; zero cost, graceful degradation (Phase A0 §5.1)</li>
-        <li><strong>Rate limit:</strong> <code>local_airpay_assistant/rate_limit</code> queries per user per day (default 20). Counter shown in footer.</li>
+        <li><strong>Rate limit:</strong> <code>local_sentientia_assistant/rate_limit</code> queries per user per day (default 20). Counter shown in footer.</li>
     </ul>
 </section>
 

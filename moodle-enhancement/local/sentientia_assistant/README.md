@@ -1,4 +1,4 @@
-# local_airpay_assistant
+# local_sentientia_assistant
 
 AI chat-bot interface. Currently a thin shell that lets a learner ask
 questions about platform navigation. The bridge class `core_ai_bridge.php`
@@ -7,7 +7,7 @@ is dormant on Moodle 4.5.
 
 | Field | Value |
 |---|---|
-| Component | `local_airpay_assistant` |
+| Component | `local_sentientia_assistant` |
 | Version | beta 1.0.0 |
 | Depends on | `local_airpay_org` |
 
@@ -16,19 +16,19 @@ is dormant on Moodle 4.5.
 - Chat widget rendered in the sidebar.
 - Three actions registered with `\core_ai\manager` (Moodle 5):
   `generate_text`, `summarise`, `translate`.
-- Conversation log in `local_airpay_chat_log` with a per-user cache in
-  `local_airpay_chat_cache`.
+- Conversation log in `local_sentientia_chat_log` with a per-user cache in
+  `local_sentientia_chat_cache`.
 
 ## Tables
 
-- `local_airpay_chat_log` — every conversation turn (user + bot).
-- `local_airpay_chat_cache` — per-user context the bot uses for
+- `local_sentientia_chat_log` — every conversation turn (user + bot).
+- `local_sentientia_chat_cache` — per-user context the bot uses for
   follow-up turns.
 
 ## Verify after install
 
 ```php
-php -r "require '/path/to/moodle/config.php'; var_dump(class_exists('\local_airpay_assistant\core_ai_bridge'));"
+php -r "require '/path/to/moodle/config.php'; var_dump(class_exists('\local_sentientia_assistant\core_ai_bridge'));"
 # expected: bool(true)
 ```
 

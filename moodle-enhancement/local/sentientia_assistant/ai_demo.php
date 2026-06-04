@@ -5,14 +5,14 @@
 /**
  * AI bridge demo — Phase 6 F.6.
  *
- * Site admin can test the core_ai → airpay_assistant integration:
+ * Site admin can test the core_ai → sentientia_assistant integration:
  *   - course summarisation
  *   - quiz-question generation
  *   - text translation
  *
  * Provider is configured at /admin/settings.php?section=aiproviders.
  *
- * @package local_airpay_assistant
+ * @package local_sentientia_assistant
  */
 
 require_once(__DIR__ . '/../../config.php');
@@ -22,7 +22,7 @@ global $OUTPUT, $PAGE, $DB;
 
 $ctx = context_system::instance();
 $PAGE->set_context($ctx);
-$PAGE->set_url(new moodle_url('/local/airpay_assistant/ai_demo.php'));
+$PAGE->set_url(new moodle_url('/local/sentientia_assistant/ai_demo.php'));
 $PAGE->set_pagelayout('admin');
 $PAGE->set_title('AI bridge demo');
 $PAGE->set_heading('AI bridge demo (Phase 6 F.6)');
@@ -34,10 +34,10 @@ $result = null;
 if ($action === 'summarise') {
     $cid = required_param('courseid', PARAM_INT);
     $result = ['title' => "Course summary for #$cid",
-               'output' => \local_airpay_assistant\core_ai_bridge::summarise_course($cid)];
+               'output' => \local_sentientia_assistant\core_ai_bridge::summarise_course($cid)];
 } else if ($action === 'quiz') {
     $topic = required_param('topic', PARAM_TEXT);
-    $q = \local_airpay_assistant\core_ai_bridge::generate_quiz_question($topic);
+    $q = \local_sentientia_assistant\core_ai_bridge::generate_quiz_question($topic);
     $result = ['title' => "Quiz Q on '$topic'",
                'output' => "Q: $q->question\n\nA: "
                  . implode("\n   ", $q->options)
@@ -46,10 +46,10 @@ if ($action === 'summarise') {
     $text = required_param('text', PARAM_TEXT);
     $lang = required_param('lang', PARAM_TEXT);
     $result = ['title' => "Translation to $lang",
-               'output' => \local_airpay_assistant\core_ai_bridge::translate_text($text, $lang)];
+               'output' => \local_sentientia_assistant\core_ai_bridge::translate_text($text, $lang)];
 }
 
-$available = \local_airpay_assistant\core_ai_bridge::is_available();
+$available = \local_sentientia_assistant\core_ai_bridge::is_available();
 $courses = $DB->get_records_select('course', 'id > 1', null,
     'fullname ASC', 'id, shortname, fullname', 0, 20);
 
@@ -62,7 +62,7 @@ foreach ($courses as $c) {
 }
 
 echo $OUTPUT->header();
-echo $OUTPUT->render_from_template('local_airpay_assistant/ai_demo', [
+echo $OUTPUT->render_from_template('local_sentientia_assistant/ai_demo', [
     'available'    => $available,
     'courses'      => $course_opts,
     'has_result'   => $result !== null,

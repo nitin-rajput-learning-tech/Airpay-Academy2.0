@@ -2,21 +2,21 @@
 // Copyright 2026 Airpay Payment Services
 // License http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 
-namespace local_airpay_assistant;
+namespace local_sentientia_assistant;
 
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Bridge between airpay_assistant and Moodle 5's core_ai subsystem.
+ * Bridge between sentientia_assistant and Moodle 5's core_ai subsystem.
  *
  * Why a bridge: the existing ai_client.php in this plugin talks directly
  * to the Claude API with our key. The core_ai subsystem (Moodle 5) lets
  * admins pick from multiple providers (Anthropic / OpenAI / Azure /
  * Gemini) and handles user-policy acceptance + rate limiting centrally.
  *
- * This bridge wraps core_ai actions so airpay_assistant features can use
+ * This bridge wraps core_ai actions so sentientia_assistant features can use
  * either backend transparently. Admins control the choice via
- * /local/airpay_assistant/settings.php (provider toggle).
+ * /local/sentientia_assistant/settings.php (provider toggle).
  *
  * Three high-value actions implemented:
  *   - summarise_course(courseid)
@@ -25,7 +25,7 @@ defined('MOODLE_INTERNAL') || die();
  *
  * Phase 6 F.6 (2026-05-11).
  *
- * @package local_airpay_assistant
+ * @package local_sentientia_assistant
  */
 class core_ai_bridge {
 

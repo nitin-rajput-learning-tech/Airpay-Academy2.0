@@ -5,12 +5,12 @@
  * Uses Claude Haiku for simple queries (fast, cheap) and Sonnet for complex analysis.
  * Rate limited to 20 queries/user/day. Caches frequent responses.
  *
- * @package    local_airpay_assistant
+ * @package    local_sentientia_assistant
  * @copyright  2026 Airpay Payment Services
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace local_airpay_assistant;
+namespace local_sentientia_assistant;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -56,7 +56,7 @@ class ai_client {
 
         // Rate limit check.
         $today_start = strtotime('today');
-        $count = $DB->count_records_select('local_airpay_chat_log',
+        $count = $DB->count_records_select('local_sentientia_chat_log',
             "userid = :uid AND role = 'user' AND timecreated >= :today",
             ['uid' => $userid, 'today' => $today_start]);
 
@@ -73,12 +73,12 @@ class ai_client {
 
         // Check cache.
         $cache_key = hash('sha256', strtolower(trim($query)));
-        $cached = $DB->get_record_select('local_airpay_chat_cache',
+        $cached = $DB->get_record_select('local_sentientia_chat_cache',
             "cache_key = :key AND timeexpires > :now",
             ['key' => $cache_key, 'now' => time()]);
 
         if ($cached) {
-            $DB->set_field('local_airpay_chat_cache', 'hit_count', $cached->hit_count + 1,
+            $DB->set_field('local_sentientia_chat_cache', 'hit_count', $cached->hit_count + 1,
                 ['id' => $cached->id]);
 
             // Log the query.
@@ -101,7 +101,7 @@ class ai_client {
         $model = self::choose_model($query);
 
         // Call Claude API.
-        $api_key = get_config('local_airpay_assistant', 'api_key');
+        $api_key = get_config('local_sentientia_assistant', 'api_key');
         if (empty($api_key)) {
             return [
                 'response'  => "The AI assistant is not configured yet. Please ask your administrator to set up the API key in Site Admin > Plugins > Local plugins > Airpay AI Assistant.",
@@ -120,7 +120,7 @@ class ai_client {
 
         // Cache the response if it's a common query pattern.
         if (self::is_cacheable($query)) {
-            $DB->insert_record('local_airpay_chat_cache', (object)[
+            $DB->insert_record('local_sentientia_chat_cache', (object)[
                 'cache_key'   => $cache_key,
                 'query'       => $query,
                 'response'    => $result['response'],
@@ -312,7 +312,7 @@ class ai_client {
     private static function log_message(int $userid, string $role, string $message,
                                          string $model, int $tokens_in, int $tokens_out): void {
         global $DB;
-        $DB->insert_record('local_airpay_chat_log', (object)[
+        $DB->insert_record('local_sentientia_chat_log', (object)[
             'userid'      => $userid,
             'role'        => $role,
             'message'     => $message,
@@ -330,7 +330,7 @@ class ai_client {
         global $DB;
         return array_values($DB->get_records_sql(
             "SELECT id, role, message, model, timecreated
-               FROM {local_airpay_chat_log}
+               FROM {local_sentientia_chat_log}
               WHERE userid = :uid
            ORDER BY timecreated DESC",
             ['uid' => $userid], 0, $limit));
@@ -343,16 +343,16 @@ class ai_client {
         global $DB;
         $today = strtotime('today');
         return [
-            'queries_today' => $DB->count_records_select('local_airpay_chat_log',
+            'queries_today' => $DB->count_records_select('local_sentientia_chat_log',
                 "role = 'user' AND timecreated >= :today", ['today' => $today]),
             'unique_users_today' => $DB->count_records_sql(
-                "SELECT COUNT(DISTINCT userid) FROM {local_airpay_chat_log}
+                "SELECT COUNT(DISTINCT userid) FROM {local_sentientia_chat_log}
                   WHERE role = 'user' AND timecreated >= :today",
                 ['today' => $today]),
             'cache_hits' => $DB->get_field_sql(
-                "SELECT COALESCE(SUM(hit_count), 0) FROM {local_airpay_chat_cache}"),
+                "SELECT COALESCE(SUM(hit_count), 0) FROM {local_sentientia_chat_cache}"),
             'total_tokens' => $DB->get_field_sql(
-                "SELECT COALESCE(SUM(tokens_in + tokens_out), 0) FROM {local_airpay_chat_log}"),
+                "SELECT COALESCE(SUM(tokens_in + tokens_out), 0) FROM {local_sentientia_chat_log}"),
         ];
     }
 }

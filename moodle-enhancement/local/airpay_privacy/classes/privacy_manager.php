@@ -163,8 +163,8 @@ class privacy_manager {
             $DB->delete_records('local_airpay_streaks', ['userid' => $userid]);
         }
         // Chat log.
-        if ($DB->get_manager()->table_exists('local_airpay_chat_log')) {
-            $DB->delete_records('local_airpay_chat_log', ['userid' => $userid]);
+        if ($DB->get_manager()->table_exists('local_sentientia_chat_log')) {
+            $DB->delete_records('local_sentientia_chat_log', ['userid' => $userid]);
         }
         // Notification log.
         if ($DB->get_manager()->table_exists('local_airpay_notif_log')) {

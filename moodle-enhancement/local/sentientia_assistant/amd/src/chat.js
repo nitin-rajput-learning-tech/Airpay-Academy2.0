@@ -19,7 +19,7 @@
  * Wires the chat_bubble.mustache markup into an interactive assistant:
  *
  *  - Toggle button opens/closes the panel (auto-focuses the input on open)
- *  - Send button + Enter key submits to local_airpay_assistant_ask
+ *  - Send button + Enter key submits to local_sentientia_assistant_ask
  *  - Cmd+K / Ctrl+K opens the panel from anywhere (manifesto §4.1)
  *  - Escape closes the panel and returns focus to the toggle
  *  - Quick-action chips populate the input then submit
@@ -28,7 +28,7 @@
  *
  * Every motion respects prefers-reduced-motion via the CSS tokens.
  *
- * @module     local_airpay_assistant/chat
+ * @module     local_sentientia_assistant/chat
  * @copyright  2026 Airpay Payment Services
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -294,7 +294,7 @@ const submitMessage = async (overrideText) => {
 
     try {
         const result = await Ajax.call([{
-            methodname: 'local_airpay_assistant_ask',
+            methodname: 'local_sentientia_assistant_ask',
             args: { query: text },
         }])[0];
 

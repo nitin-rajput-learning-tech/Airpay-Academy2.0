@@ -29,7 +29,7 @@ $flags = [
         'default'     => true,
         'description' => 'Master switch for the AI chat assistant drawer. When off,
                           the floating assistant button is hidden everywhere and
-                          \\local_airpay_assistant\\ai_client::send_message() returns
+                          \\local_sentientia_assistant\\ai_client::send_message() returns
                           a polite "temporarily unavailable" response.',
     ],
     'ai.sentientia.enabled' => [

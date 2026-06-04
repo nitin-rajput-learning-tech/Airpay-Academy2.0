@@ -1,16 +1,16 @@
 <?php
 /**
- * Hook callbacks for local_airpay_assistant.
+ * Hook callbacks for local_sentientia_assistant.
  *
- * Replaces the deprecated `local_airpay_assistant_before_footer()` function
+ * Replaces the deprecated `local_sentientia_assistant_before_footer()` function
  * (Moodle pre-5.x callback pattern) with the Moodle 5.x hook system.
  *
- * @package    local_airpay_assistant
+ * @package    local_sentientia_assistant
  * @copyright  2026 Airpay Payment Services
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace local_airpay_assistant;
+namespace local_sentientia_assistant;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -29,7 +29,7 @@ class hook_callbacks {
      *   2. Phase A0 feature flag `ai.assistant.enabled` must be on for the
      *      user's tenant — super admin controls this via /local/airpay_core
      *      /admin/switchboard.php. Tenant-scoped override is supported.
-     *   3. Legacy `local_airpay_assistant/enabled` site config must be on
+     *   3. Legacy `local_sentientia_assistant/enabled` site config must be on
      *      (kept for backward compat — older deploys may still use it).
      *   4. Page must not be a login/upgrade page (chrome-less surfaces).
      */
@@ -52,7 +52,7 @@ class hook_callbacks {
 
         // Legacy site-wide kill switch — kept for backward compat with
         // any deployment that hasn't migrated to the Switchboard yet.
-        if (!get_config('local_airpay_assistant', 'enabled')) {
+        if (!get_config('local_sentientia_assistant', 'enabled')) {
             return;
         }
 
@@ -65,11 +65,11 @@ class hook_callbacks {
         // Calculate remaining queries today.
         $todaystart = strtotime('today');
         $used = $DB->count_records_select(
-            'local_airpay_chat_log',
+            'local_sentientia_chat_log',
             "userid = :uid AND role = 'user' AND timecreated >= :today",
             ['uid' => $USER->id, 'today' => $todaystart]
         );
-        $limit = get_config('local_airpay_assistant', 'rate_limit') ?: 20;
+        $limit = get_config('local_sentientia_assistant', 'rate_limit') ?: 20;
         $remaining = max(0, $limit - $used);
 
         $data = [
@@ -78,12 +78,12 @@ class hook_callbacks {
             'quick_actions'     => self::quick_actions(),
         ];
 
-        $hook->add_html($OUTPUT->render_from_template('local_airpay_assistant/chat_bubble', $data));
+        $hook->add_html($OUTPUT->render_from_template('local_sentientia_assistant/chat_bubble', $data));
 
         // Load the AMD module that actually wires up the bubble — without
         // this the toggle/send/Cmd+K do nothing. Moodle's $PAGE->requires
         // is the standard way to register an AMD module from a hook.
-        $PAGE->requires->js_call_amd('local_airpay_assistant/chat', 'init');
+        $PAGE->requires->js_call_amd('local_sentientia_assistant/chat', 'init');
     }
 
     /**
@@ -106,7 +106,7 @@ class hook_callbacks {
      */
     private static function quick_actions(): array {
         $s = static function (string $key): string {
-            return get_string($key, 'local_airpay_assistant');
+            return get_string($key, 'local_sentientia_assistant');
         };
 
         // Role tier — reuse the single source of truth when present.

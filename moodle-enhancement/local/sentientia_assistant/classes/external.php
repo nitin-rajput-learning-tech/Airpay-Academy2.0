@@ -2,12 +2,12 @@
 /**
  * External API for AI assistant — handles AJAX chat requests.
  *
- * @package    local_airpay_assistant
+ * @package    local_sentientia_assistant
  * @copyright  2026 Airpay Payment Services
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace local_airpay_assistant;
+namespace local_sentientia_assistant;
 
 defined('MOODLE_INTERNAL') || die();
 

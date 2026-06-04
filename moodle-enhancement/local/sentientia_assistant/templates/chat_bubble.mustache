@@ -1,5 +1,5 @@
 {{!
-    @template local_airpay_assistant/chat_bubble
+    @template local_sentientia_assistant/chat_bubble
 
     Floating chat bubble for the AI learning assistant.
     Appears on all pages for logged-in users (except login/upgrade pages).
@@ -17,7 +17,7 @@
     <button class="airpay-assistant__toggle"
             id="airpay-assistant-toggle"
             type="button"
-            aria-label="{{# str }}toggle_assistant, local_airpay_assistant{{/ str }}"
+            aria-label="{{# str }}toggle_assistant, local_sentientia_assistant{{/ str }}"
             aria-expanded="false"
             aria-controls="airpay-assistant-panel">
         <i class="fa fa-graduation-cap airpay-assistant__icon-open" aria-hidden="true"></i>
@@ -54,7 +54,7 @@
              aria-atomic="false">
             <div class="airpay-assistant__msg airpay-assistant__msg--bot">
                 <p>Hi {{firstname}}! I'm your learning assistant. Ask me anything about your courses, deadlines, skills, or career path.</p>
-                <div class="airpay-assistant__quick-actions" role="group" aria-label="{{# str }}quick_questions, local_airpay_assistant{{/ str }}">
+                <div class="airpay-assistant__quick-actions" role="group" aria-label="{{# str }}quick_questions, local_sentientia_assistant{{/ str }}">
                     {{# quick_actions }}
                     <button type="button" data-query="{{ query }}">{{ label }}</button>
                     {{/ quick_actions }}

@@ -18,7 +18,7 @@ $callbacks = [
     [
         'hook'     => \core\hook\output\before_footer_html_generation::class,
         'callback' => 'local_airpay_core\\hook_callbacks::inject_mobile_bottom_nav',
-        // Run AFTER local_airpay_assistant so the assistant fab can read
+        // Run AFTER local_sentientia_assistant so the assistant fab can read
         // the bottom-nav's height and position itself above it (CSS
         // already handles the offset via env(safe-area-inset-bottom)).
         'priority' => 100,

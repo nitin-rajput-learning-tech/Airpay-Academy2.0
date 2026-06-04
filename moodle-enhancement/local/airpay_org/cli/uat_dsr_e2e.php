@@ -149,7 +149,7 @@ $null_plugins = [
     'sentientia_integrations',
     'sentientia_lifecycle',
     'sentientia_analytics',
-    'airpay_assistant',
+    'sentientia_assistant',
 ];
 foreach ($null_plugins as $plugin) {
     $cls = "\\local_$plugin\\privacy\\provider";
