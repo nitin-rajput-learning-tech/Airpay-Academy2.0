@@ -15,11 +15,11 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * A two dashboard layout for the airpayux theme.
+ * A two dashboard layout for the epsilon theme.
  *
  * @package   theme_airpayux
- * @copyright 2018 eAbyas Info Solutons Pvt Ltd, India; 2026 Airpay Payment Services (Sentientia white-label fork)
- * @author    eAbyas  <info@eAbyas.in>
+ * @copyright 2026 Airpay Payment Services - Sentientia LMS
+ * @author    Sentientia LMS
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -237,9 +237,8 @@ if (isloggedin() && !isguestuser()) {
             $tenantfilter_course = '';
             $tenantparams = [];
             if ($isldadmin && !empty($USER->open_path)) {
-                // ADR-018 Wave 2: tenant root via the Sentientia seam (was an
-                // inline explode). The LIKE-prefix filter below is kept as-is.
-                $toporg = '/' . \local_sentientia_core\tenant_identity::root_for_current_user();
+                $parts = explode('/', $USER->open_path);
+                $toporg = '/' . ($parts[1] ?? '');
                 $tenantfilter_user = " AND open_path LIKE :upath";
                 $tenantfilter_course = " AND open_path LIKE :cpath";
                 $tenantparams['upath'] = $toporg . '%';

@@ -18,8 +18,8 @@
  * Epsilon config.
  *
  * @package   theme_airpayux
- * @copyright 2018 eAbyas Info Solutons Pvt Ltd, India; 2026 Airpay Payment Services (Sentientia white-label fork)
- * @author    eAbyas  <info@eAbyas.in>
+ * @copyright 2026 Airpay Payment Services - Sentientia LMS
+ * @author    Sentientia LMS
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -189,7 +189,7 @@ $THEME->addblockposition = BLOCK_ADDBLOCK_POSITION_FLATNAV;
 $THEME->iconsystem = \core\output\icon_system::FONTAWESOME;
 $THEME->haseditswitch = true;
 $THEME->usescourseindex = true;
-// By default, all airpayux theme do not need their titles displayed.
+// By default, all epsilon theme do not need their titles displayed.
 $THEME->activityheaderconfig = [
     'notitle' => true
 ];
