@@ -2,9 +2,9 @@
 /**
  * Analytics Dashboard Export — CSV download.
  *
- * Usage: /local/airpay_analytics/export.php?range=30d&format=csv
+ * Usage: /local/sentientia_analytics/export.php?range=30d&format=csv
  *
- * @package    local_airpay_analytics
+ * @package    local_sentientia_analytics
  * @copyright  2026 Airpay Payment Services
  */
 
@@ -25,7 +25,7 @@ if (!is_siteadmin()) {
     $orgpath = \local_airpay_org\tenant_manager::get_tenant_path();
 }
 
-$data = \local_airpay_analytics\analytics_manager::get_export_data($range, $orgpath);
+$data = \local_sentientia_analytics\analytics_manager::get_export_data($range, $orgpath);
 
 if ($format === 'csv') {
     $filename = 'Analytics_Report_' . date('Y-m-d') . '.csv';

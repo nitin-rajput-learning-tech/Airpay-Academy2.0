@@ -2,7 +2,7 @@
 /**
  * Airpay Advanced Analytics Dashboard.
  *
- * @package    local_airpay_analytics
+ * @package    local_sentientia_analytics
  * @copyright  2026 Airpay Payment Services
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -27,9 +27,9 @@ if (!$isadmin) {
     throw new moodle_exception('nopermission');
 }
 
-$PAGE->set_url(new moodle_url('/local/airpay_analytics/index.php'));
+$PAGE->set_url(new moodle_url('/local/sentientia_analytics/index.php'));
 $PAGE->set_context($systemcontext);
-$PAGE->set_title(get_string('analytics', 'local_airpay_analytics'));
+$PAGE->set_title(get_string('analytics', 'local_sentientia_analytics'));
 $PAGE->set_pagelayout('standard');
 
 $range = optional_param('range', '30d', PARAM_ALPHA);
@@ -61,7 +61,7 @@ if (is_siteadmin()) {
 }
 $PAGE->set_secondary_navigation(false);
 
-$manager = \local_airpay_analytics\analytics_manager::class;
+$manager = \local_sentientia_analytics\analytics_manager::class;
 
 $kpis       = $manager::get_kpis($range, $orgpath);
 $funnel     = $manager::get_funnel($orgpath);
@@ -69,7 +69,7 @@ $heatmap    = $manager::get_compliance_heatmap($orgpath);
 $top_courses = $manager::get_course_effectiveness(10, $orgpath);
 
 // Add drill-down URLs to heatmap departments.
-$drillbase = new moodle_url('/local/airpay_analytics/drilldown.php');
+$drillbase = new moodle_url('/local/sentientia_analytics/drilldown.php');
 foreach ($heatmap as $k => $dept) {
     $dept = (array) $dept;
     $dept['drilldown_url'] = $drillbase->out(false) . '?type=department&path=' . urlencode($dept['path'] ?? $orgpath);
@@ -102,11 +102,11 @@ $data = [
     'org_options'   => $org_options,
     'has_org_filter' => !empty($org_options),
     'org_label'     => $orgid > 0 ? ($org->fullname ?? 'Selected') : 'All Business Units',
-    'baseurl'       => (new moodle_url('/local/airpay_analytics/index.php'))->out(false),
-    'filterurl'     => (new moodle_url('/local/airpay_analytics/index.php'))->out(false),
-    'exporturl'     => (new moodle_url('/local/airpay_analytics/export.php', ['range' => $range, 'format' => 'csv', 'orgid' => $orgid]))->out(false),
+    'baseurl'       => (new moodle_url('/local/sentientia_analytics/index.php'))->out(false),
+    'filterurl'     => (new moodle_url('/local/sentientia_analytics/index.php'))->out(false),
+    'exporturl'     => (new moodle_url('/local/sentientia_analytics/export.php', ['range' => $range, 'format' => 'csv', 'orgid' => $orgid]))->out(false),
 ];
 
 echo $OUTPUT->header();
-echo $OUTPUT->render_from_template('local_airpay_analytics/dashboard', $data);
+echo $OUTPUT->render_from_template('local_sentientia_analytics/dashboard', $data);
 echo $OUTPUT->footer();

@@ -33,7 +33,7 @@ $airpay_plugins = [
     'airpay_classroom', 'airpay_programs', 'airpay_learningpath',
     'airpay_catalog', 'airpay_compliance_report', 'airpay_emails',
     'airpay_exams', 'airpay_integrations', 'airpay_lifecycle',
-    'airpay_notifications', 'airpay_analytics', 'airpay_assistant',
+    'airpay_notifications', 'sentientia_analytics', 'airpay_assistant',
     'airpay_roles', 'airpay_challenge', 'airpay_manager', 'airpay_skills',
 ];
 

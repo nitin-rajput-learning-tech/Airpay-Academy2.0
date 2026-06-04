@@ -2,12 +2,12 @@
 /**
  * Analytics Manager — interactive dashboard data with drill-down, time ranges, and funnels.
  *
- * @package    local_airpay_analytics
+ * @package    local_sentientia_analytics
  * @copyright  2026 Airpay Payment Services
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace local_airpay_analytics;
+namespace local_sentientia_analytics;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -24,7 +24,7 @@ class analytics_manager {
         global $DB;
 
         // Cache the 8-count KPI block; same range+org returns same result for 5 min.
-        $cache = \cache::make('local_airpay_analytics', 'kpis');
+        $cache = \cache::make('local_sentientia_analytics', 'kpis');
         $cachekey = 'kpis_' . md5($range . '|' . ($orgpath ?: 'all'));
         $cached = $cache->get($cachekey);
         if ($cached !== false) {
@@ -139,7 +139,7 @@ class analytics_manager {
     public static function get_funnel(string $orgpath = ''): array {
         global $DB;
 
-        $cache = \cache::make('local_airpay_analytics', 'funnel');
+        $cache = \cache::make('local_sentientia_analytics', 'funnel');
         $cachekey = 'funnel_' . md5($orgpath ?: 'all');
         $cached = $cache->get($cachekey);
         if ($cached !== false) {
@@ -192,7 +192,7 @@ class analytics_manager {
 
         // Cache: compliance_heatmap is heavy (was N+1 over departments) and changes
         // slowly enough that a 5-minute TTL is fine for executive dashboards.
-        $cache = \cache::make('local_airpay_analytics', 'compliance_heatmap');
+        $cache = \cache::make('local_sentientia_analytics', 'compliance_heatmap');
         $cachekey = 'heatmap_' . md5($orgpath ?: 'all');
         $cached = $cache->get($cachekey);
         if ($cached !== false) {
@@ -315,7 +315,7 @@ class analytics_manager {
 
         // Cache: complex JOIN+GROUP BY across {course}+{enrol}+{user_enrolments}+
         // {course_completions} for 411 courses + 3K users. Expensive on every render.
-        $cache = \cache::make('local_airpay_analytics', 'course_effectiveness');
+        $cache = \cache::make('local_sentientia_analytics', 'course_effectiveness');
         $cachekey = 'eff_' . md5($limit . '|' . ($orgpath ?: 'all'));
         $cached = $cache->get($cachekey);
         if ($cached !== false) {

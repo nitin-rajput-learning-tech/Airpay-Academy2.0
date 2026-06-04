@@ -148,7 +148,7 @@ $null_plugins = [
     'airpay_exams',
     'airpay_integrations',
     'airpay_lifecycle',
-    'airpay_analytics',
+    'sentientia_analytics',
     'airpay_assistant',
 ];
 foreach ($null_plugins as $plugin) {

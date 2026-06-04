@@ -1,12 +1,12 @@
 <?php
-// Cache definitions for local_airpay_analytics.
+// Cache definitions for local_sentientia_analytics.
 //
 // Each definition wraps an expensive aggregate query. TTL is 5 min — long
 // enough that repeated dashboard hits stay instant, short enough that data
 // is at most slightly stale during a busy session. Bust manually after a
-// large data load: `cache_helper::purge_by_definition('local_airpay_analytics', '<name>')`.
+// large data load: `cache_helper::purge_by_definition('local_sentientia_analytics', '<name>')`.
 //
-// @package    local_airpay_analytics
+// @package    local_sentientia_analytics
 // @copyright  2026 Airpay Payment Services
 // @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 

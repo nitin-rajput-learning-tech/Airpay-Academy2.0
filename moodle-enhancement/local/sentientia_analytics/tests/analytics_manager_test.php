@@ -2,7 +2,7 @@
 // Copyright 2026 Airpay Payment Services
 // License http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 
-namespace local_airpay_analytics;
+namespace local_sentientia_analytics;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -17,7 +17,7 @@ defined('MOODLE_INTERNAL') || die();
  * - get_compliance_heatmap N+1 → batched (commit 9e3512499): no per-
  *   department user/completion query.
  *
- * @package    local_airpay_analytics
+ * @package    local_sentientia_analytics
  * @category   test
  */
 final class analytics_manager_test extends \advanced_testcase {
@@ -61,7 +61,7 @@ final class analytics_manager_test extends \advanced_testcase {
         }
 
         // Pre-purge cache so KPIs run fresh.
-        \cache_helper::purge_by_definition('local_airpay_analytics', 'kpis');
+        \cache_helper::purge_by_definition('local_sentientia_analytics', 'kpis');
 
         $kpis_one = analytics_manager::get_kpis('30d', '/1');
         $active   = $kpis_one[0]['value']; // first KPI = Active Users
@@ -85,7 +85,7 @@ final class analytics_manager_test extends \advanced_testcase {
         global $DB;
         $DB->set_field('user', 'lastaccess', time() - 3600, ['id' => $u1->id]);
 
-        \cache_helper::purge_by_definition('local_airpay_analytics', 'kpis');
+        \cache_helper::purge_by_definition('local_sentientia_analytics', 'kpis');
 
         // First call — populates cache.
         $first = analytics_manager::get_kpis('30d', '/1');
@@ -121,7 +121,7 @@ final class analytics_manager_test extends \advanced_testcase {
             $DB->set_field('user', 'lastaccess', $hourago, ['id' => $u->id]);
         }
 
-        \cache_helper::purge_by_definition('local_airpay_analytics', 'kpis');
+        \cache_helper::purge_by_definition('local_sentientia_analytics', 'kpis');
 
         $tenant1  = analytics_manager::get_kpis('30d', '/1');
         $tenant77 = analytics_manager::get_kpis('30d', '/77');
@@ -138,7 +138,7 @@ final class analytics_manager_test extends \advanced_testcase {
         $this->resetAfterTest();
         $this->ensure_bizlms_schema();
 
-        \cache_helper::purge_by_definition('local_airpay_analytics', 'compliance_heatmap');
+        \cache_helper::purge_by_definition('local_sentientia_analytics', 'compliance_heatmap');
 
         // /9999 has no departments seeded — should return [].
         $result = analytics_manager::get_compliance_heatmap('/9999');

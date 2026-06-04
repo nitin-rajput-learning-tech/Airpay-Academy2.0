@@ -3,10 +3,10 @@
  * Analytics Drill-Down — view users in a department or learners in a course.
  *
  * Usage:
- *   /local/airpay_analytics/drilldown.php?type=department&path=/1/15
- *   /local/airpay_analytics/drilldown.php?type=course&courseid=42
+ *   /local/sentientia_analytics/drilldown.php?type=department&path=/1/15
+ *   /local/sentientia_analytics/drilldown.php?type=course&courseid=42
  *
- * @package    local_airpay_analytics
+ * @package    local_sentientia_analytics
  * @copyright  2026 Airpay Payment Services
  */
 
@@ -21,7 +21,7 @@ if (!is_siteadmin() && !has_capability('local/courses:manage', $context)) {
 $type = required_param('type', PARAM_ALPHA); // 'department' or 'course'
 
 $PAGE->set_context($context);
-$PAGE->set_url('/local/airpay_analytics/drilldown.php', ['type' => $type]);
+$PAGE->set_url('/local/sentientia_analytics/drilldown.php', ['type' => $type]);
 $PAGE->set_pagelayout('standard');
 
 global $DB, $OUTPUT;
@@ -42,13 +42,13 @@ if ($type === 'department') {
     $PAGE->set_title('Department Analytics: ' . $deptname);
     $PAGE->set_heading('Department Analytics: ' . $deptname);
 
-    $users = \local_airpay_analytics\analytics_manager::get_department_users($path);
+    $users = \local_sentientia_analytics\analytics_manager::get_department_users($path);
 
     echo $OUTPUT->header();
     echo '<div style="max-width:1200px; margin:0 auto;">';
     echo '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">';
     echo '<h2 style="margin:0;"><i class="fa fa-building" style="color:var(--ap-primary);"></i> ' . s($deptname) . '</h2>';
-    echo '<a href="' . (new moodle_url('/local/airpay_analytics/index.php'))->out() . '" style="font-size:13px; color:var(--ap-primary);">';
+    echo '<a href="' . (new moodle_url('/local/sentientia_analytics/index.php'))->out() . '" style="font-size:13px; color:var(--ap-primary);">';
     echo '<i class="fa fa-arrow-left"></i> Back to Analytics</a>';
     echo '</div>';
 
@@ -86,13 +86,13 @@ if ($type === 'department') {
     $PAGE->set_title('Course Analytics: ' . format_string($course->fullname));
     $PAGE->set_heading('Course Analytics: ' . format_string($course->fullname));
 
-    $learners = \local_airpay_analytics\analytics_manager::get_course_learners($courseid);
+    $learners = \local_sentientia_analytics\analytics_manager::get_course_learners($courseid);
 
     echo $OUTPUT->header();
     echo '<div style="max-width:1200px; margin:0 auto;">';
     echo '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">';
     echo '<h2 style="margin:0;"><i class="fa fa-book" style="color:var(--ap-primary);"></i> ' . format_string($course->fullname) . '</h2>';
-    echo '<a href="' . (new moodle_url('/local/airpay_analytics/index.php'))->out() . '" style="font-size:13px; color:var(--ap-primary);">';
+    echo '<a href="' . (new moodle_url('/local/sentientia_analytics/index.php'))->out() . '" style="font-size:13px; color:var(--ap-primary);">';
     echo '<i class="fa fa-arrow-left"></i> Back to Analytics</a>';
     echo '</div>';
 

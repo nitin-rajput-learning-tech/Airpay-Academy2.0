@@ -1,4 +1,4 @@
-# local_airpay_analytics
+# local_sentientia_analytics
 
 Operational analytics + KPI dashboard. Replacement for BizLMS reporting
 overlays. Read-side over `mdl_logstore_standard_log` plus the airpay
@@ -6,7 +6,7 @@ plugins' own telemetry.
 
 | Field | Value |
 |---|---|
-| Component | `local_airpay_analytics` |
+| Component | `local_sentientia_analytics` |
 | Version | beta 1.0.0 |
 | Depends on | `local_airpay_org` |
 
@@ -31,7 +31,7 @@ System-level read caps for the manager / siteadmin archetypes.
 
 ## Verify after install
 
-Navigate to `/local/airpay_analytics/index.php` as a manager — the
+Navigate to `/local/sentientia_analytics/index.php` as a manager — the
 dashboard should render four KPI cards within 2 seconds (the 5-min
 cache makes subsequent loads near-instant).
 
