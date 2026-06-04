@@ -378,7 +378,7 @@ body.dark-mode {
     .dropdown-item:hover { background: #232733; color: #93c5fd; }
 
     /* === Modals ===
-       _bizlms-dark.scss also targets .modal-content / .modal-header /
+       _legacy-dark.scss also targets .modal-content / .modal-header /
        .modal-footer with !important and slightly DIFFERENT slate values
        (#1e293b / #334155 / #f1f5f9). The deltas are aesthetic (1-2 hex
        steps darker/lighter) — both are valid dark-mode modal palettes.
@@ -411,7 +411,7 @@ body.dark-mode {
     .filter_section .icon-header { color: #e8eaed; }
 
     /* === Pagination ===
-       _bizlms-dark.scss also targets .pagination .page-link and the
+       _legacy-dark.scss also targets .pagination .page-link and the
        .active variant with !important and DIFFERENT colours.
          page-link (idle): bizlms #1e293b vs ours #1a1d27 — minor delta,
            drop our !important.
@@ -556,7 +556,7 @@ body.dark-mode {
     .popover-body { color: #c4cad8; }
 
     /* === Breadcrumbs ===
-       _bizlms-dark.scss line 75 groups `.breadcrumb-item a` with the
+       _legacy-dark.scss line 75 groups `.breadcrumb-item a` with the
        page-header heading rule and sets it to #f1f5f9 !important. Our
        brand blue #60a5fa must beat that — keep !important on just the
        link colour. The wrapper bg + active state have no such conflict. */
@@ -823,7 +823,7 @@ body.high-contrast {
 
     /* === BizLMS Modals (Create User / Course) ===
        This block is scoped to body.high-contrast, so it does NOT collide
-       with _bizlms-dark.scss (which is body.dark-mode scoped). The two
+       with _legacy-dark.scss (which is body.dark-mode scoped). The two
        modes are mutually exclusive. Drop !important. */
     .modal.local_users,
     .modal.local_courses,

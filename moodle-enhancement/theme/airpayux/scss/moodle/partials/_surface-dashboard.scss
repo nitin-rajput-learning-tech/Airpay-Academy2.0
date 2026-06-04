@@ -228,7 +228,7 @@
    Replaces 4 inline style attributes including 3 raw hex literals
    (#dc2626 / #16a34a / #16a34a) and an opacity-dim on inactive rows.
    The complementary table layout rules already live in
-   _bizlms-admin.scss and custom_media.scss. */
+   _legacy-admin.scss and custom_media.scss. */
 .airpay-dash__team-table__row--inactive {
     opacity: 0.65;
 }

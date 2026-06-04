@@ -224,7 +224,7 @@ defined('MOODLE_INTERNAL') || die();
 // P1 #12 re-apply (2026-05-24) — restore :focus-visible siblings lost
 // during chip-J + chip-K merges. Re-added 12 selectors across 3
 // surface partials (login, user, grade-report). 4 selectors in
-// _bizlms-admin.scss still on backlog. WCAG 2.1.1 + 2.4.7.
+// _legacy-admin.scss still on backlog. WCAG 2.1.1 + 2.4.7.
 //
 // P0 cleanup A (2026-05-24) — pre-commit + CI defence against stray
 // git conflict markers (CI #397 / #403 root cause). New CHECK 11 in
@@ -356,7 +356,7 @@ defined('MOODLE_INTERNAL') || die();
 // so Adrian Greeve's GPL copyright is RETAINED, only the identifier changed.
 // version.php header de-branded to the Airpay/Sentientia attribution. Broader
 // eAbyas-header sweep + dead theme/epsilon removal tracked as follow-up batches.
-$plugin->version   = 2026060200;
+$plugin->version   = 2026060400;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_airpayux';
 $plugin->maturity  = MATURITY_BETA;
@@ -379,7 +379,7 @@ $plugin->release   = '1.0.46-beta';  // + de-brand: epsilonnavbar→airpayux_nav
 // P1 #10 chip-J (2026-05-24) — _surface-profile.scss (2,507 lines)
 // decomposed into 4 per-surface partials: _surface-user, _surface-badges,
 // _surface-grade-report, _surface-calendar. Admin fragments moved to
-// _bizlms-admin.scss. Pure relocation refactor — no rule changes (F-16).
+// _legacy-admin.scss. Pure relocation refactor — no rule changes (F-16).
 // P2 #18 chip-O (2026-05-24) — _moodle-overrides.scss reduced from 136 to
 // 30 active !important declarations (-77.9%) via natural specificity wins.
 // Six logical commit buckets: nav-drawer scheme icons, A11Y warning + btn-group

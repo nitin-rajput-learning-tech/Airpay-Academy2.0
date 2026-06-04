@@ -29,10 +29,10 @@
 @import "partials/surface-message";       // B13 / F-069 stabilization (2026-05-28)   — /message/index.php Sentientia polish
 
 // 5. BizLMS plugin overrides (remove after BizLMS fully removed)
-@import "partials/bizlms-overrides";
-@import "partials/bizlms-dark";
-@import "partials/bizlms-admin";
-@import "partials/bizlms-modern";
+@import "partials/legacy-overrides";
+@import "partials/legacy-dark";
+@import "partials/legacy-admin";
+@import "partials/legacy-modern";
 
 // 6. Reusable components
 @import "partials/components";
