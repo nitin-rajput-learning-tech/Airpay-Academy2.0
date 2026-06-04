@@ -79,7 +79,7 @@ Set-Content -Path (Join-Path $OutRoot "MANIFEST.md") -Value $lines -Encoding utf
 Write-Output ("PLUGINS: {0} ZIPs -> {1}" -f $i, $pluginsOut)
 
 if (-not $SkipFull) {
-  $fullZip = Join-Path $fullOut ("sentientia-full-platform-{0}.zip" -f $stamp)
+  $fullZip = Join-Path $fullOut ("sentientia-full-platform-{0}.tar.gz" -f $stamp)
   if (Test-Path $fullZip) { Remove-Item $fullZip -Force }
   # Compress-Archive cannot read live, server-locked files. Stage a static copy
   # first with robocopy (tolerant of open/locked files), excluding config.php (DB
@@ -89,7 +89,9 @@ if (-not $SkipFull) {
   robocopy $PublicRoot $stage /E /R:1 /W:1 /XF "config.php" "config.php.*" /XD "cache" "localcache" "sessions" "temp" "node_modules" /NFL /NDL /NJH /NJS /NP | Out-Null
   if ($LASTEXITCODE -ge 8) { throw "robocopy staging failed (exit $LASTEXITCODE)" }
   $global:LASTEXITCODE = 0
-  Compress-Archive -Path (Join-Path $stage "*") -DestinationPath $fullZip -CompressionLevel Optimal
+  # tar (bsdtar) handles Moodle's deep paths that exceed Windows MAX_PATH; Compress-Archive does not.
+  tar -czf $fullZip -C $stage .
+  if ($LASTEXITCODE -ne 0) { throw "tar failed (exit $LASTEXITCODE)" }
   Remove-Item $stage -Recurse -Force
   Write-Output ("FULL: {0}  ({1} MB)" -f $fullZip, [int]((Get-Item $fullZip).Length / 1MB))
 }
