@@ -146,7 +146,7 @@ class sidebar_navigation {
 
             // ── Insights ──
             $items[] = $this->divider();
-            $items[] = $this->item('Reports', 'fa-chart-bar', '/local/airpay_reports/index.php', $currenturl);
+            $items[] = $this->item('Reports', 'fa-chart-bar', '/local/sentientia_reports/index.php', $currenturl);
             $items[] = $this->item('Analytics', 'fa-chart-line', '/local/sentientia_analytics/index.php', $currenturl);
             $items[] = $this->item('Compliance', 'fa-shield', '/local/airpay_compliance_report/index.php', $currenturl);
 
@@ -214,8 +214,8 @@ class sidebar_navigation {
 
             // ── Insights ──
             $items[] = $this->divider();
-            if (has_capability('local/airpay_reports:view', $sys)) {
-                $items[] = $this->item('Reports', 'fa-bar-chart', '/local/airpay_reports/index.php', $currenturl);
+            if (has_capability('local/sentientia_reports:view', $sys)) {
+                $items[] = $this->item('Reports', 'fa-bar-chart', '/local/sentientia_reports/index.php', $currenturl);
             }
             $items[] = $this->item('Analytics', 'fa-line-chart', '/local/sentientia_analytics/index.php', $currenturl);
             $items[] = $this->item('Compliance', 'fa-shield', '/local/airpay_compliance_report/index.php', $currenturl);

@@ -92,18 +92,29 @@ foreach ($targets as [$table, $col]) {
 }
 
 // ---- 3. Capabilities (optional; preserves role assignments) ---------------
+// Capability NAMES use Moodle's 'type/plugin:cap' form (e.g. local/airpay_X:view)
+// - a SLASH after the type, NOT the underscore frankenstyle component. So we must
+// NOT match/replace on $from (the underscore component). Match by the exact
+// {capabilities}.component column instead, then rename via the plugin-name substring
+// (airpay_X -> sentientia_X) so 'local/airpay_X:cap' -> 'local/sentientia_X:cap'.
+// (Placeholders use the literal letter X so this file's own driver sed never rewrites them.)
+// role_capabilities (role definitions AND context-level overrides, matched by the old
+// capability string) are repointed FIRST, before the {capabilities} row is renamed.
 if (!empty($options['migrate-caps'])) {
-    $caps = $DB->get_records_select('capabilities', "name LIKE ?", [$from . ':%']);
+    $needle = preg_replace('/^[a-z]+_/', '', $from);  // local_airpay_X -> airpay_X
+    $repl   = preg_replace('/^[a-z]+_/', '', $to);    // local_sentientia_X -> sentientia_X
+    $caps = $DB->get_records('capabilities', ['component' => $from]);
     foreach ($caps as $cap) {
-        $newname = str_replace($from . ':', $to . ':', $cap->name);
+        $newname = str_replace($needle, $repl, $cap->name);
         $rc = $DB->count_records('role_capabilities', ['capability' => $cap->name]);
         echo "  capability {$cap->name} -> {$newname} ({$rc} role_capabilities rows)\n";
         if ($run) {
+            $DB->set_field('role_capabilities', 'capability', $newname, ['capability' => $cap->name]);
             $DB->set_field('capabilities', 'name', $newname, ['id' => $cap->id]);
             $DB->set_field('capabilities', 'component', $to, ['id' => $cap->id]);
-            $DB->set_field('role_capabilities', 'capability', $newname, ['capability' => $cap->name]);
         }
     }
+    if (!$caps) { echo "  (no {capabilities} rows with component={$from} - check access.php loaded)\n"; }
 }
 
 echo $run ? "DONE. Run admin/cli/upgrade.php + purge_caches.php next.\n"

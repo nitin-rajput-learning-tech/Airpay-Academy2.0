@@ -397,7 +397,7 @@ echo $OUTPUT->header();
     "color":    "success",
     "trend":    "78% rate",
     "trenddir": "up",
-    "href":     "/local/airpay_reports/index.php"
+    "href":     "/local/sentientia_reports/index.php"
 }</pre>
 
     <h3 style="margin-top: var(--ap-space-10);">Course progress card &mdash; <code>theme_airpayux/components/course_progress_card</code></h3>

@@ -81,4 +81,24 @@ uninstall removed old (0 rows), new page 303 / old 404 / site 200. Clean.
 table `local_airpay_integration_log` renamed (data preserved), 28 config_plugins rows
 relabeled; `upgrade.php` ran with NO install / NO drop, old component 0 rows, site 200.
 The relabel CLI is the reusable Class-B workhorse (add `--migrate-caps` for caps plugins).
-Remaining Class B: 25 (next tables-no-caps: assistant, gamification, whatsapp, core).
+
+Then shipped via the `tools/rename_plugin.sh` driver: `assistant`, `gamification`,
+`whatsapp` (tables-no-caps; data preserved - gamification points_log 56/badges 10/
+user_badges 51/streaks 24, whatsapp audit 5/dlt_templates 15).
+
+### `--migrate-caps` path proven - 2026-06-04 (reports = first caps plugin)
+Dry-run FIRST caught a real bug: capability NAMES are `local/airpay_X:cap` (SLASH),
+but the CLI matched/replaced on the underscore component `local_airpay_X` -> caps
+would NOT migrate, orphaning role_capabilities (silent permission loss). Fixed: match
+by the `{capabilities}.component` column, rename via the `airpay_X -> sentientia_X`
+substring. No caps plugin had been renamed before this, so no harm. `reports` then
+applied on the clone with a before/after assertion: all **7 role_capabilities rows
+preserved** exactly (view roles 1/3/9, manage 1/9, export 1/9 - same roleid/permission/
+context, repointed to `local/sentientia_reports:*`); 3 caps moved, old residue 0|0|0|0,
+table `local_sentientia_reports` 5 rows preserved, 3 external_functions remapped, site 200.
+
+Class B done: integrations, assistant, gamification, whatsapp, reports (9/30 total
+incl. 4 Class A). **Remaining: ~20.** `airpay_core` is BLOCKED (target `sentientia_core`
+already exists - needs a distinct name decision). `compliance_report` is HELD (owner WIP).
+The caps-heavy tier (`courses` 10c, `users` 7c, `cart`/`proctoring` 5c, etc.) is each its
+own rehearsed migration + maintenance-window deploy per the ordering above.
