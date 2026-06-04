@@ -639,22 +639,22 @@ a.ap-sidebar__roleswitch-item:hover {
    `body:has(.ap-shell)` / `.ap-shell*` rules above, so no !important is needed.
    Dashboard + other app-shell pages keep the cockpit model untouched.
    ────────────────────────────────────────────────────────────────────────── */
-body.path-local-airpay_catalog:has(.ap-shell) {
+body.path-local-sentientia_catalog:has(.ap-shell) {
     height: auto;
     min-height: 100vh;
     overflow: visible;
 }
-body.path-local-airpay_catalog:has(.ap-shell) > #page-wrapper {
+body.path-local-sentientia_catalog:has(.ap-shell) > #page-wrapper {
     height: auto;
     min-height: 0;
 }
-body.path-local-airpay_catalog .ap-shell,
-body.path-local-airpay_catalog .ap-shell__main {
+body.path-local-sentientia_catalog .ap-shell,
+body.path-local-sentientia_catalog .ap-shell__main {
     height: auto;
     min-height: 0;
     overflow: visible;
 }
-body.path-local-airpay_catalog .ap-shell__content {
+body.path-local-sentientia_catalog .ap-shell__content {
     height: auto;
     overflow: visible;
 }

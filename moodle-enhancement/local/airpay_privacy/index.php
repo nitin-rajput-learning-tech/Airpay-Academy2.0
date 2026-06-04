@@ -179,7 +179,7 @@ if ($is_internal_employee && !is_siteadmin() && !\local_airpay_courses\course_ma
     echo '<h3><i class="fa fa-file-text"></i> DPDP Act 2023 Notice</h3>';
     echo '<p>Airpay Payment Services processes your personal data as a Data Fiduciary under the Digital Personal Data Protection Act, 2023. ';
     echo 'As an employee, data processing is based on your employment contract (lawful purpose under Section 4). ';
-    echo 'For the full privacy policy, see <a href="' . (new moodle_url('/local/airpay_pages/index.php', ['page' => 'privacy']))->out() . '">Privacy Policy</a>.</p>';
+    echo 'For the full privacy policy, see <a href="' . (new moodle_url('/local/sentientia_pages/index.php', ['page' => 'privacy']))->out() . '">Privacy Policy</a>.</p>';
     echo '</div>';
 
     echo '</div>';
@@ -201,7 +201,7 @@ if (!$is_dpdp_enabled && !is_siteadmin() && !\local_airpay_courses\course_manage
     echo '<h3><i class="fa fa-info-circle"></i> Data Privacy</h3>';
     echo '<p>Your data is managed in accordance with applicable data protection laws. ';
     echo 'For data access or correction requests, contact your administrator.</p>';
-    echo '<p>For the full privacy policy, see <a href="' . (new moodle_url('/local/airpay_pages/index.php', ['page' => 'privacy']))->out() . '">Privacy Policy</a>.</p>';
+    echo '<p>For the full privacy policy, see <a href="' . (new moodle_url('/local/sentientia_pages/index.php', ['page' => 'privacy']))->out() . '">Privacy Policy</a>.</p>';
     echo '</div>';
     echo '</div>';
     echo $OUTPUT->footer();

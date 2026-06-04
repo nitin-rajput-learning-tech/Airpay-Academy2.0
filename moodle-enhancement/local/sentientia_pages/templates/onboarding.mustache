@@ -1,0 +1,298 @@
+{{!
+    @template local_sentientia_pages/onboarding
+    Learner onboarding wizard — first-login experience.
+}}
+<div class="ap-onboard">
+    <div class="ap-onboard__card">
+        <img src="{{logourl}}" alt="Airpay Academy" class="ap-onboard__logo">
+
+        {{! Step 1: Welcome }}
+        <div class="ap-onboard__step ap-onboard__step--active" data-step="1">
+            <div class="ap-onboard__emoji">👋</div>
+            <h1 class="ap-onboard__title">Welcome, {{firstname}}!</h1>
+            <p class="ap-onboard__subtitle">Let's set up your learning experience in 30 seconds.</p>
+            <button class="ap-onboard__btn ap-onboard__btn--primary" onclick="nextStep(2)">
+                Let's Go <i class="fa fa-arrow-right"></i>
+            </button>
+            <form action="{{actionurl}}" method="post" style="margin-top:12px;">
+                <input type="hidden" name="sesskey" value="{{sesskey}}">
+                <input type="hidden" name="action" value="skip">
+                <button type="submit" class="ap-onboard__btn ap-onboard__btn--skip">Skip for now</button>
+            </form>
+        </div>
+
+        {{! Step 2: Pick Interests }}
+        <div class="ap-onboard__step" data-step="2" style="display:none;">
+            <h2 class="ap-onboard__title">What do you want to learn?</h2>
+            <p class="ap-onboard__subtitle">Pick topics that interest you. We'll personalize your experience.</p>
+            <div class="ap-onboard__interests" id="ap-interests">
+                {{#categories}}
+                <label class="ap-onboard__interest">
+                    <input type="checkbox" name="interests[]" value="{{id}}" class="ap-onboard__interest-check">
+                    <span class="ap-onboard__interest-label">
+                        <i class="fa {{icon}}"></i>
+                        <span>{{name}}</span>
+                        <small>{{count}} courses</small>
+                    </span>
+                </label>
+                {{/categories}}
+            </div>
+            <div class="ap-onboard__nav">
+                <button class="ap-onboard__btn ap-onboard__btn--secondary" onclick="nextStep(1)">
+                    <i class="fa fa-arrow-left"></i> Back
+                </button>
+                <button class="ap-onboard__btn ap-onboard__btn--primary" onclick="nextStep(3)">
+                    Continue <i class="fa fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+        {{! Step 3: Set Weekly Goal }}
+        <div class="ap-onboard__step" data-step="3" style="display:none;">
+            <h2 class="ap-onboard__title">Set your weekly goal</h2>
+            <p class="ap-onboard__subtitle">How many days per week do you want to learn?</p>
+            <div class="ap-onboard__goals">
+                <label class="ap-onboard__goal">
+                    <input type="radio" name="weekly_goal" value="2">
+                    <span>🌱 Casual<br><small>2 days/week</small></span>
+                </label>
+                <label class="ap-onboard__goal">
+                    <input type="radio" name="weekly_goal" value="3" checked>
+                    <span>📚 Regular<br><small>3 days/week</small></span>
+                </label>
+                <label class="ap-onboard__goal">
+                    <input type="radio" name="weekly_goal" value="5">
+                    <span>🔥 Committed<br><small>5 days/week</small></span>
+                </label>
+            </div>
+            <div class="ap-onboard__nav">
+                <button class="ap-onboard__btn ap-onboard__btn--secondary" onclick="nextStep(2)">
+                    <i class="fa fa-arrow-left"></i> Back
+                </button>
+                <button class="ap-onboard__btn ap-onboard__btn--primary" onclick="nextStep(4)">
+                    Continue <i class="fa fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+        {{! Step 4: Recommended Courses + Complete }}
+        <div class="ap-onboard__step" data-step="4" style="display:none;">
+            <h2 class="ap-onboard__title">Start with these popular courses</h2>
+            <p class="ap-onboard__subtitle">Recommended for you based on what others in your role are learning.</p>
+            {{#has_recommended}}
+            <div class="ap-onboard__recs">
+                {{#recommended}}
+                <a href="{{url}}" class="ap-onboard__rec" target="_blank">
+                    <div class="ap-onboard__rec-icon"><i class="fa fa-play-circle"></i></div>
+                    <div class="ap-onboard__rec-info">
+                        <strong>{{fullname}}</strong>
+                        <small><i class="fa fa-users"></i> {{enrolled}} enrolled</small>
+                    </div>
+                    <i class="fa fa-external-link ap-onboard__rec-arrow"></i>
+                </a>
+                {{/recommended}}
+            </div>
+            {{/has_recommended}}
+            <form action="{{actionurl}}" method="post" id="ap-onboard-form">
+                <input type="hidden" name="sesskey" value="{{sesskey}}">
+                <input type="hidden" name="action" value="complete">
+                <div id="ap-onboard-interests-hidden"></div>
+                <input type="hidden" name="weekly_goal" id="ap-onboard-goal" value="3">
+
+                {{!
+                    C1.5.b polymorphism (ADR-017 / F-002 follow-up,
+                    2026-05-28): consent capture for consumer learners.
+                    Per Nitin's Q6 ruling, all consent surfaces are
+                    explicit opt-IN by default for consumers (DPDP §7(a)
+                    requires consent for personal-data use without
+                    employment-context legitimate-interest basis).
+                    The POST handler in onboarding.php (C1.5) reads
+                    these checkboxes and writes to
+                    local_airpay_consumer_profile + invalidates the
+                    leaderboard opt-in cache.
+
+                    Wrapped in the is_consumer section (see below) so
+                    employees / partner staff / operators don't see
+                    consumer-only consents during their own onboarding
+                    flows. (Comment intentionally avoids the literal
+                    section-open syntax — the CI Mustache balance check
+                    is a count-only heuristic that would otherwise count
+                    a tag mentioned in prose as a real unclosed section.)
+                }}
+                {{#is_consumer}}
+                <div class="ap-onboard__consents">
+                    <h4 class="ap-onboard__consents__heading">Privacy choices</h4>
+                    <label class="ap-onboard__consent">
+                        <input type="checkbox" name="consent_marketing" value="1">
+                        <span>📧 Send me course recommendations + product updates by email</span>
+                    </label>
+                    <label class="ap-onboard__consent">
+                        <input type="checkbox" name="consent_leaderboard" value="1">
+                        <span>🏆 Show me on the public learner leaderboard (you can opt out anytime)</span>
+                    </label>
+                    <p class="ap-onboard__consents__hint">
+                        You can change these anytime in your profile.
+                        Neither is required to use Airpay Academy.
+                    </p>
+                </div>
+                {{/is_consumer}}
+
+                <button type="submit" class="ap-onboard__btn ap-onboard__btn--primary ap-onboard__btn--lg">
+                    <i class="fa fa-rocket"></i> Go to My Dashboard
+                </button>
+            </form>
+        </div>
+
+        {{! Progress Dots }}
+        <div class="ap-onboard__dots">
+            <span class="ap-onboard__dot ap-onboard__dot--active" data-dot="1"></span>
+            <span class="ap-onboard__dot" data-dot="2"></span>
+            <span class="ap-onboard__dot" data-dot="3"></span>
+            <span class="ap-onboard__dot" data-dot="4"></span>
+        </div>
+    </div>
+</div>
+
+<style>
+.ap-onboard {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #0066A7 0%, #0f7a73 50%, #004d7a 100%);
+    padding: 20px; font-family: 'Montserrat', sans-serif;
+}
+.ap-onboard__card {
+    background: #fff; border-radius: 24px; padding: 40px; max-width: 560px;
+    width: 100%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    position: relative;
+}
+.ap-onboard__logo { height: 40px; margin-bottom: 24px; }
+.ap-onboard__emoji { font-size: 48px; margin-bottom: 12px; }
+.ap-onboard__title { font-size: 24px; font-weight: 800; color: #1a1a2e; margin: 0 0 8px; }
+.ap-onboard__subtitle { font-size: 15px; color: #607286; margin: 0 0 24px; line-height: 1.5; }
+
+/* Buttons */
+.ap-onboard__btn { display: inline-flex; align-items: center; gap: 6px; padding: 12px 24px;
+    border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer;
+    border: none; font-family: inherit; transition: all 0.15s; }
+.ap-onboard__btn--primary { background: linear-gradient(135deg, #0066A7, #0f7a73); color: #fff; }
+.ap-onboard__btn--primary:hover { opacity: 0.9; transform: translateY(-1px); }
+.ap-onboard__btn--secondary { background: #f3f4f6; color: #607286; }
+.ap-onboard__btn--secondary:hover { background: #e5e7eb; }
+.ap-onboard__btn--skip { background: none; border: none; color: #9ca3af; font-size: 13px; cursor: pointer; }
+.ap-onboard__btn--skip:hover { color: #607286; }
+.ap-onboard__btn--lg { padding: 14px 32px; font-size: 16px; width: 100%; justify-content: center; }
+.ap-onboard__nav { display: flex; justify-content: space-between; margin-top: 20px; }
+
+/* Interests grid */
+.ap-onboard__interests { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; text-align: left; }
+.ap-onboard__interest { cursor: pointer; }
+.ap-onboard__interest-check { display: none; }
+.ap-onboard__interest-label {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 14px 8px; border: 2px solid #e3eaf3; border-radius: 12px;
+    text-align: center; transition: all 0.15s; font-size: 13px;
+}
+.ap-onboard__interest-label i { font-size: 20px; color: #0066A7; }
+.ap-onboard__interest-label small { font-size: 11px; color: #9ca3af; }
+.ap-onboard__interest-check:checked + .ap-onboard__interest-label {
+    border-color: #0066A7; background: #e8f2f9; }
+
+/* Weekly goals */
+.ap-onboard__goals { display: flex; gap: 12px; justify-content: center; margin-bottom: 16px; }
+.ap-onboard__goal { cursor: pointer; }
+.ap-onboard__goal input { display: none; }
+.ap-onboard__goal span {
+    display: block; padding: 16px 20px; border: 2px solid #e3eaf3; border-radius: 14px;
+    text-align: center; transition: all 0.15s; font-size: 15px; font-weight: 600;
+}
+.ap-onboard__goal span small { display: block; font-size: 12px; font-weight: 400; color: #607286; margin-top: 4px; }
+.ap-onboard__goal input:checked + span { border-color: #0066A7; background: #e8f2f9; }
+
+/* Recommendations */
+.ap-onboard__recs { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; text-align: left; }
+.ap-onboard__rec {
+    display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+    border: 1px solid #e3eaf3; border-radius: 12px; text-decoration: none;
+    color: #1a1a2e; transition: all 0.15s;
+}
+.ap-onboard__rec:hover { border-color: #0066A7; background: #f8f9fc; }
+.ap-onboard__rec-icon { width: 40px; height: 40px; border-radius: 10px;
+    background: linear-gradient(135deg, #0066A7, #0f7a73); display: flex;
+    align-items: center; justify-content: center; color: #fff; font-size: 16px; flex-shrink: 0; }
+.ap-onboard__rec-info { flex: 1; }
+.ap-onboard__rec-info strong { display: block; font-size: 14px; font-weight: 600; }
+.ap-onboard__rec-info small { font-size: 12px; color: #607286; }
+.ap-onboard__rec-arrow { color: #9ca3af; }
+
+/* Progress dots */
+.ap-onboard__dots { display: flex; gap: 8px; justify-content: center; margin-top: 24px; }
+.ap-onboard__dot { width: 8px; height: 8px; border-radius: 50%; background: #e3eaf3; transition: all 0.2s; }
+.ap-onboard__dot--active { background: #0066A7; width: 24px; border-radius: 4px; }
+
+/* Mobile */
+@media (max-width: 590px) {
+    .ap-onboard__card { padding: 24px 16px; border-radius: 16px; }
+    .ap-onboard__title { font-size: 20px; }
+    .ap-onboard__interests { grid-template-columns: repeat(2, 1fr); }
+    .ap-onboard__goals { flex-direction: column; }
+}
+/* C1.5.b — consumer consent checkboxes (ADR-017, 2026-05-28) */
+.ap-onboard__consents {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    margin: 16px 0;
+    text-align: left;
+}
+.ap-onboard__consents__heading {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin: 0 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.ap-onboard__consent {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 0;
+    cursor: pointer;
+    font-size: 14px;
+    color: #4a5568;
+}
+.ap-onboard__consent input[type="checkbox"] {
+    margin-top: 3px;
+    accent-color: #0066A7;
+    cursor: pointer;
+}
+.ap-onboard__consents__hint {
+    font-size: 12px;
+    color: #94a3b8;
+    margin: 8px 0 0;
+    line-height: 1.4;
+}
+</style>
+
+<script>
+function nextStep(step) {
+    document.querySelectorAll('.ap-onboard__step').forEach(function(el) { el.style.display = 'none'; });
+    document.querySelector('[data-step="' + step + '"]').style.display = 'block';
+    document.querySelectorAll('.ap-onboard__dot').forEach(function(d) { d.classList.remove('ap-onboard__dot--active'); });
+    document.querySelector('[data-dot="' + step + '"]').classList.add('ap-onboard__dot--active');
+
+    // On final step, collect selected interests and goal into hidden form fields.
+    if (step === 4) {
+        var container = document.getElementById('ap-onboard-interests-hidden');
+        container.innerHTML = '';
+        document.querySelectorAll('.ap-onboard__interest-check:checked').forEach(function(cb) {
+            var input = document.createElement('input');
+            input.type = 'hidden'; input.name = 'interests[]'; input.value = cb.value;
+            container.appendChild(input);
+        });
+        var goal = document.querySelector('.ap-onboard__goal input:checked');
+        if (goal) document.getElementById('ap-onboard-goal').value = goal.value;
+    }
+}
+</script>

@@ -53,16 +53,16 @@ class hook_callbacks {
         // active state on the matching nav item.
         $url = $PAGE->url ? $PAGE->url->out_as_local_url(false) : '';
         $is_home       = (strpos($url, '/my/') === 0);
-        $is_mylearning = (strpos($url, '/local/airpay_catalog/mycourses') !== false);
-        $is_search     = (strpos($url, '/local/airpay_catalog/index') !== false
-                          || strpos($url, '/local/airpay_catalog/index.php') !== false);
+        $is_mylearning = (strpos($url, '/local/sentientia_catalog/mycourses') !== false);
+        $is_search     = (strpos($url, '/local/sentientia_catalog/index') !== false
+                          || strpos($url, '/local/sentientia_catalog/index.php') !== false);
         $is_me         = (strpos($url, '/user/profile') !== false
                           || strpos($url, '/user/edit') !== false);
 
         $data = [
             'homeurl'       => (new \moodle_url('/my/dashboard.php'))->out(false),
-            'mycoursesurl'  => (new \moodle_url('/local/airpay_catalog/mycourses.php'))->out(false),
-            'searchurl'     => (new \moodle_url('/local/airpay_catalog/index.php'))->out(false),
+            'mycoursesurl'  => (new \moodle_url('/local/sentientia_catalog/mycourses.php'))->out(false),
+            'searchurl'     => (new \moodle_url('/local/sentientia_catalog/index.php'))->out(false),
             'profileurl'    => (new \moodle_url('/user/profile.php', ['id' => $USER->id]))->out(false),
             'is_home'       => $is_home,
             'is_mylearning' => $is_mylearning,

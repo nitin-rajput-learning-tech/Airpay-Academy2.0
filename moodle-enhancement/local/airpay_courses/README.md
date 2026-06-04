@@ -2,7 +2,7 @@
 
 Admin-side course management — replacement for BizLMS `local_courses`.
 This is the L&D-administrator interface; the learner-facing catalogue
-lives in `local_airpay_catalog`.
+lives in `local_sentientia_catalog`.
 
 | Field | Value |
 |---|---|

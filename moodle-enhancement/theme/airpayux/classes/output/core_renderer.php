@@ -877,8 +877,8 @@ JS;
             $usercourseprogress = ['progress' => $progress_pct];
             // Ratings: prefer Airpay plugin, fall back to BizLMS.
             $display_ratings = null;
-            if (class_exists('\local_airpay_ratings\rating_manager')) {
-                $display_ratings = \local_airpay_ratings\rating_manager::render($courseid, 'local_airpay_courses');
+            if (class_exists('\local_sentientia_ratings\rating_manager')) {
+                $display_ratings = \local_sentientia_ratings\rating_manager::render($courseid, 'local_airpay_courses');
             } else {
                 $ratings_lib = $CFG->dirroot . '/local/ratings/lib.php';
                 if (file_exists($ratings_lib)) {
@@ -1241,14 +1241,14 @@ JS;
             redirect($CFG->wwwroot.'/my');
         }
         if($newpageurl == $CFG->wwwroot.'/course/management.php'){
-            redirect($CFG->wwwroot.'/local/airpay_catalog/index.php');//Category page redirection
+            redirect($CFG->wwwroot.'/local/sentientia_catalog/index.php');//Category page redirection
         }
         if($newpageurl == $CFG->wwwroot.'/user/view.php' || $newpageurl == $CFG->wwwroot.'/user/profile.php'){
             $id = optional_param('id', $USER->id, PARAM_INT);
             redirect($CFG->wwwroot."/local/airpay_users/profile.php?id=$id");
         }
         if($newpageurl == $CFG->wwwroot.'/course/index.php' || $newpageurl == $CFG->wwwroot.'/course'){
-            redirect($CFG->wwwroot."/local/airpay_catalog/index.php");
+            redirect($CFG->wwwroot."/local/sentientia_catalog/index.php");
         }
         $systemcontext = \context_system::instance();
         if (
@@ -1291,9 +1291,9 @@ JS;
                 $course = get_course($courseid);
                 [$course_cc, $course_dept] = $derive_cc_dept($course);
                 if($is_oh && $user_cc != $course_cc){
-                    redirect($CFG->wwwroot.'/local/airpay_catalog/index.php');
+                    redirect($CFG->wwwroot.'/local/sentientia_catalog/index.php');
                 }else if($is_dh && $user_dept != $course_dept){
-                    redirect($CFG->wwwroot.'/local/airpay_catalog/index.php');
+                    redirect($CFG->wwwroot.'/local/sentientia_catalog/index.php');
                 }
             }else if($newpageurl == $CFG->wwwroot.'/mod/quiz/edit.php' || $newpageurl == $CFG->wwwroot.'/mod/quiz/report.php'){/*for edit quiz page and quiz default report page*/
                 if($COURSE->id == 1){
@@ -1604,8 +1604,8 @@ JS;
                 $percentage = progress::get_course_progress_percentage($course, $USER->id);
             }
         $display_ratings = null;
-        if (class_exists('\local_airpay_ratings\rating_manager')) {
-            $display_ratings = \local_airpay_ratings\rating_manager::render($COURSE->id, 'local_airpay_courses');
+        if (class_exists('\local_sentientia_ratings\rating_manager')) {
+            $display_ratings = \local_sentientia_ratings\rating_manager::render($COURSE->id, 'local_airpay_courses');
         } else {
             $ratings_lib = $CFG->dirroot . '/local/ratings/lib.php';
             if (file_exists($ratings_lib)) {

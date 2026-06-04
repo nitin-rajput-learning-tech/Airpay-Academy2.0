@@ -40,7 +40,7 @@ function xmldb_local_airpay_courses_upgrade(int $oldversion): bool {
     // Adds the local_airpay_courses_tenant_share many-to-many table that
     // lets an Airpay admin "lend" a course to one or more tenants
     // (Public, ZEEA, etc.) without duplicating the course. The catalog
-    // query in airpay_catalog/classes/catalog_manager.php is updated in
+    // query in sentientia_catalog/classes/catalog_manager.php is updated in
     // the same release to UNION shared courses into the per-tenant list.
     if ($oldversion < 2026051302) {
         $table = new xmldb_table('local_airpay_courses_tenant_share');

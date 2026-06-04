@@ -367,7 +367,7 @@ echo $OUTPUT->doctype();
         <a href="<?php echo $CFG->wwwroot; ?>/" class="ap-nav__link ap-nav__link--active">Home</a>
         <a href="#ap-courses" class="ap-nav__link">Courses</a>
         <a href="#ap-why" class="ap-nav__link">About</a>
-        <a href="<?php echo $CFG->wwwroot; ?>/local/airpay_pages/index.php?page=contact" class="ap-nav__link">Contact</a>
+        <a href="<?php echo $CFG->wwwroot; ?>/local/sentientia_pages/index.php?page=contact" class="ap-nav__link">Contact</a>
     </div>
     <div class="ap-nav__right">
         <a href="<?php echo $CFG->wwwroot; ?>/login/index.php" class="ap-nav__icon" title="Login to browse courses"><i class="fa fa-shopping-cart"></i></a>
@@ -476,8 +476,8 @@ echo $OUTPUT->doctype();
                 $grad  = $gradients[$i % count($gradients)];
                 // Poster image — real course overview image, else the per-card
                 // gradient ($grad) shows through with the category badge text.
-                $poster = class_exists('\\local_airpay_catalog\\catalog_manager')
-                    ? \local_airpay_catalog\catalog_manager::course_poster((int) $course->id)
+                $poster = class_exists('\\local_sentientia_catalog\\catalog_manager')
+                    ? \local_sentientia_catalog\catalog_manager::course_poster((int) $course->id)
                     : ['imageurl' => '', 'has_image' => false];
             ?>
             <div class="ap-course">
@@ -677,10 +677,10 @@ echo $OUTPUT->doctype();
                 <img src="<?php echo $CFG->wwwroot; ?>/theme/airpayux/pix/brand/academy-logo-350.png" alt="airpay academy">
             </a>
             <nav class="ap-footer__links">
-                <a href="<?php echo $CFG->wwwroot; ?>/local/airpay_pages/index.php?page=privacy">Privacy</a>
-                <a href="<?php echo $CFG->wwwroot; ?>/local/airpay_pages/index.php?page=terms">Terms</a>
-                <a href="<?php echo $CFG->wwwroot; ?>/local/airpay_pages/index.php?page=help">Help</a>
-                <a href="<?php echo $CFG->wwwroot; ?>/local/airpay_pages/index.php?page=contact">Contact</a>
+                <a href="<?php echo $CFG->wwwroot; ?>/local/sentientia_pages/index.php?page=privacy">Privacy</a>
+                <a href="<?php echo $CFG->wwwroot; ?>/local/sentientia_pages/index.php?page=terms">Terms</a>
+                <a href="<?php echo $CFG->wwwroot; ?>/local/sentientia_pages/index.php?page=help">Help</a>
+                <a href="<?php echo $CFG->wwwroot; ?>/local/sentientia_pages/index.php?page=contact">Contact</a>
             </nav>
             <span class="ap-footer__copy">&copy; <?php echo date('Y'); ?> airpay payment services pvt. ltd.</span>
             <img src="<?php echo $CFG->wwwroot; ?>/theme/airpayux/pix/brand/made-in-india.jpg" alt="Made in India" class="ap-footer__india-badge">

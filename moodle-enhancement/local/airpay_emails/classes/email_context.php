@@ -125,7 +125,7 @@ class email_context {
                 'subject'       => 'Welcome to Airpay Academy',
                 'username'      => 'priya.singh',
                 'login_url'     => $CFG->wwwroot . '/login/index.php',
-                'help_url'      => $CFG->wwwroot . '/local/airpay_pages/index.php?page=help',
+                'help_url'      => $CFG->wwwroot . '/local/sentientia_pages/index.php?page=help',
             ]),
             'enrollment/course_enrolled' => array_merge($base, [
                 'subject'       => 'You have been enrolled in: Anti Money Laundering',

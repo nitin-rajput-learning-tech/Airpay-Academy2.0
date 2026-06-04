@@ -46,7 +46,7 @@ defined('MOODLE_INTERNAL') || die();
  *   build_catalog_filter_sql($alias, $viewer_tenant)
  *     Returns [string $sql_fragment, array $params] suitable for use
  *     in the WHERE clause of catalog queries. Combines owned + borrowed
- *     paths into a single SQL fragment. See airpay_catalog/
+ *     paths into a single SQL fragment. See sentientia_catalog/
  *     classes/catalog_manager.php for usage.
  *
  *   is_course_shared_to($courseid, $tenant_id)

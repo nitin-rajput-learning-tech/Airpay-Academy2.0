@@ -53,7 +53,7 @@ $data = [
     'total_str'      => $symbol . number_format((float) $cart->total_amount, 2),
     'checkout_url'   => (new moodle_url('/local/airpay_cart/checkout.php'))->out(false),
     'history_url'    => (new moodle_url('/local/airpay_cart/history.php'))->out(false),
-    'catalog_url'    => (new moodle_url('/local/airpay_catalog/index.php'))->out(false),
+    'catalog_url'    => (new moodle_url('/local/sentientia_catalog/index.php'))->out(false),
 ];
 
 echo $OUTPUT->header();

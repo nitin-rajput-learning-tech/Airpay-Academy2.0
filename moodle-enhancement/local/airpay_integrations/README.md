@@ -8,14 +8,14 @@ integrations as they come online.
 |---|---|
 | Component | `local_airpay_integrations` |
 | Version | beta 1.1.0 |
-| Depends on | `local_airpay_org`, `local_airpay_lifecycle` |
+| Depends on | `local_airpay_org`, `local_sentientia_lifecycle` |
 
 ## What it does
 
 - Webhook receiver at `/local/airpay_integrations/keka_webhook.php` —
   accepts joiner/mover/leaver events from KeKa with bearer-token auth.
 - Event log table records every inbound event for replay + audit.
-- Forwards events to `local_airpay_lifecycle` which executes the
+- Forwards events to `local_sentientia_lifecycle` which executes the
   onboarding / move / offboarding workflow.
 - Outbound scheduled sync: nightly pull from KeKa for any users
   modified since the last run.

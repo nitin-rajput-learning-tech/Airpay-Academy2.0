@@ -145,10 +145,9 @@ class featured_manager {
 
         $user = $DB->get_record('user', ['id' => $userid],
             'id, open_path', MUST_EXIST);
-        // ADR-018 Wave 2: tenant root via the Sentientia seam (was an inline
-        // explode of $user->open_path). Behaviour-identical — tenant_identity
-        // delegates to local_airpay_core\tenant behind the default-ON flag.
-        $tenant_top = \local_sentientia_core\tenant_identity::root_for_user($user);
+        $parts = explode('/', trim((string) ($user->open_path ?? ''), '/'));
+        $tenant_top = isset($parts[0]) && ctype_digit($parts[0])
+            ? (int) $parts[0] : 0;
 
         $rows = $DB->get_records_sql("
             SELECT f.id, f.courseid, f.label, f.sort_order,
@@ -180,8 +179,8 @@ class featured_manager {
             // widget matches the catalogue look (real overview image, else a
             // per-course gradient tile keyed off the course id). Guarded so the
             // widget still works if the catalogue plugin is ever absent.
-            $poster = class_exists('\\local_airpay_catalog\\catalog_manager')
-                ? \local_airpay_catalog\catalog_manager::course_poster((int) $r->courseid)
+            $poster = class_exists('\\local_sentientia_catalog\\catalog_manager')
+                ? \local_sentientia_catalog\catalog_manager::course_poster((int) $r->courseid)
                 : ['imageurl' => '', 'has_image' => false, 'thumb_variant' => ((int) $r->courseid) % 6];
             $courses[] = array_merge([
                 'courseid'  => (int) $r->courseid,
@@ -201,7 +200,7 @@ class featured_manager {
             'has_courses' => !empty($courses),
             'courses'     => $courses,
             'more_url'    => (new \moodle_url(
-                '/local/airpay_catalog/index.php'))->out(false),
+                '/local/sentientia_catalog/index.php'))->out(false),
         ];
     }
 

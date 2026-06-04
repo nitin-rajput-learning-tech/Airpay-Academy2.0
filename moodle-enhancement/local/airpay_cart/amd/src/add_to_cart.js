@@ -6,7 +6,7 @@
  * may render. Pattern: any element with `data-action="add-to-cart"`
  * and `data-courseid="N"` is wired up automatically.
  *
- * Templates from airpay_catalog can opt into cart-button rendering by
+ * Templates from sentientia_catalog can opt into cart-button rendering by
  * including this module — keeps the cart plugin's footprint isolated.
  *
  * @module local_airpay_cart/add_to_cart

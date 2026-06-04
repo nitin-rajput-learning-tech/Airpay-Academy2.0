@@ -51,11 +51,11 @@ $plugins = [
     'local_classroom'       => 'Replaced by local_airpay_classroom',
     'local_onlineexams'     => 'Replaced by local_airpay_exams',
     'local_learningplan'    => 'Replaced by local_airpay_learningpath',
-    'local_search'          => 'Replaced by local_airpay_catalog',
-    'local_custom_category' => 'Replaced by category_manager in airpay_catalog',
+    'local_search'          => 'Replaced by local_sentientia_catalog',
+    'local_custom_category' => 'Replaced by category_manager in sentientia_catalog',
 
     // Already replaced (Phase 0 — pre-fork).
-    'local_biz_cart'        => 'Replaced by airpay_catalog commerce',
+    'local_biz_cart'        => 'Replaced by sentientia_catalog commerce',
     'local_notifications'   => 'Replaced by airpay_notifications',
     'local_myteam'          => 'Replaced by airpay_manager',
 

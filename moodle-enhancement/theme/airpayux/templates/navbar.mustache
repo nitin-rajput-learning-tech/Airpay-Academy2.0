@@ -80,9 +80,9 @@
         {{/isloggedin}}
         {{^output.is_siteadmin_only}}
         {{#isloggedin}}
-        <a href="{{{config.wwwroot}}}/local/airpay_catalog/mycourses.php" class="airpay-nav__pill airpay-nav__pill--courses">{{#str}}nav_courses, theme_airpayux{{/str}}</a>
+        <a href="{{{config.wwwroot}}}/local/sentientia_catalog/mycourses.php" class="airpay-nav__pill airpay-nav__pill--courses">{{#str}}nav_courses, theme_airpayux{{/str}}</a>
         {{/isloggedin}}
-        <a href="{{{config.wwwroot}}}/local/airpay_catalog/index.php" class="airpay-nav__pill airpay-nav__pill--catalog">{{#str}}nav_catalog, theme_airpayux{{/str}}</a>
+        <a href="{{{config.wwwroot}}}/local/sentientia_catalog/index.php" class="airpay-nav__pill airpay-nav__pill--catalog">{{#str}}nav_catalog, theme_airpayux{{/str}}</a>
         {{#isloggedin}}
         <a href="{{{config.wwwroot}}}/local/users/profile.php" class="airpay-nav__pill airpay-nav__pill--profile">{{#str}}nav_profile, theme_airpayux{{/str}}</a>
         {{/isloggedin}}
@@ -117,7 +117,7 @@
             audit follow-up 2026-05-24). The init call is wired from the layout
             PHP that renders this navbar partial.
         }}
-        <a href="{{{config.wwwroot}}}/local/airpay_catalog/cart.php" class="airpay-nav__cart" title="Shopping Cart" id="ap-cart-link">
+        <a href="{{{config.wwwroot}}}/local/sentientia_catalog/cart.php" class="airpay-nav__cart" title="Shopping Cart" id="ap-cart-link">
             <i class="fa fa-shopping-cart" aria-hidden="true"></i>
             <span class="airpay-nav__cart-badge" id="ap-cart-badge" hidden>0</span>
         </a>
@@ -144,11 +144,11 @@
         <span>{{#str}}nav_home, theme_airpayux{{/str}}</span>
     </a>
     {{^output.is_siteadmin_only}}
-    <a href="{{{config.wwwroot}}}/local/airpay_catalog/index.php" class="ap-mobile-nav__item" data-page="catalog">
+    <a href="{{{config.wwwroot}}}/local/sentientia_catalog/index.php" class="ap-mobile-nav__item" data-page="catalog">
         <i class="fa fa-search"></i>
         <span>Explore</span>
     </a>
-    <a href="{{{config.wwwroot}}}/local/airpay_catalog/mycourses.php" class="ap-mobile-nav__item" data-page="courses">
+    <a href="{{{config.wwwroot}}}/local/sentientia_catalog/mycourses.php" class="ap-mobile-nav__item" data-page="courses">
         <i class="fa fa-book"></i>
         <span>Learning</span>
     </a>

@@ -60,7 +60,7 @@ $data = [
             ['id' => $invoice->id]))->out(false)
         : '',
     'history_url'    => (new moodle_url('/local/airpay_cart/history.php'))->out(false),
-    'catalog_url'    => (new moodle_url('/local/airpay_catalog/index.php'))->out(false),
+    'catalog_url'    => (new moodle_url('/local/sentientia_catalog/index.php'))->out(false),
 ];
 
 echo $OUTPUT->header();

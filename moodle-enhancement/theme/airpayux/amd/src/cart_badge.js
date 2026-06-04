@@ -6,7 +6,7 @@
 //
 // Why an AMD pass and not server-side render?
 //   The cart count lives in PHP session state owned by
-//   local_airpay_catalog. A server-side render-time read would
+//   local_sentientia_catalog. A server-side render-time read would
 //   couple the theme to a specific cart-provider plugin. Instead,
 //   the cart provider injects a hidden
 //   `<span id="ap-cart-count-data">N</span>` into the page (this

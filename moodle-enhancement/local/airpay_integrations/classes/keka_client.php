@@ -234,7 +234,7 @@ class keka_client {
             $userid = $DB->insert_record('user', $newuser);
 
             // Trigger lifecycle auto-enrolment.
-            if (file_exists($CFG->dirroot . '/local/airpay_lifecycle/classes/observer.php')) {
+            if (file_exists($CFG->dirroot . '/local/sentientia_lifecycle/classes/observer.php')) {
                 $event = \core\event\user_created::create([
                     'objectid' => $userid,
                     'context'  => \context_system::instance(),

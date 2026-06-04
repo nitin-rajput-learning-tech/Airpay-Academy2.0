@@ -111,7 +111,7 @@ trait login_ui {
      * to the public API.
      */
     protected function get_public_tenant_path(): string {
-        $tid = (int) get_config('local_airpay_pages', 'public_tenant_id');
+        $tid = (int) get_config('local_sentientia_pages', 'public_tenant_id');
         if (!$tid) {
             $tid = 77;
         }

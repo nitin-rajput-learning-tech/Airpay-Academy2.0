@@ -640,7 +640,7 @@ echo $OUTPUT->header();
     "message":  "Browse the catalogue to find courses...",
     "ctalabel": "Browse Catalogue",
     "ctaicon":  "search",
-    "ctaurl":   "/local/airpay_catalog/index.php",
+    "ctaurl":   "/local/sentientia_catalog/index.php",
     "size":     "md"
 }</pre>
 

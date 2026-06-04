@@ -77,9 +77,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Bust catalog caches so the shared course appears immediately for
     // its new tenant audience (and stops appearing for unshared ones).
-    \cache_helper::purge_by_definition('local_airpay_catalog', 'trending');
-    \cache_helper::purge_by_definition('local_airpay_catalog', 'new_courses');
-    \cache_helper::purge_by_definition('local_airpay_catalog', 'categories');
+    \cache_helper::purge_by_definition('local_sentientia_catalog', 'trending');
+    \cache_helper::purge_by_definition('local_sentientia_catalog', 'new_courses');
+    \cache_helper::purge_by_definition('local_sentientia_catalog', 'categories');
 
     redirect(
         new moodle_url('/local/airpay_courses/share.php', ['id' => $courseid]),

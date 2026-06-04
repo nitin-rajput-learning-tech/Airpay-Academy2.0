@@ -239,8 +239,8 @@ class sidebar_navigation {
                     '/local/sentientia_live/trainer/index.php', $currenturl);
             }
             $items[] = $this->divider();
-            $items[] = $this->item('My Courses', 'fa-book', '/local/airpay_catalog/mycourses.php', $currenturl);
-            $items[] = $this->item('Catalog', 'fa-compass', '/local/airpay_catalog/public.php', $currenturl);
+            $items[] = $this->item('My Courses', 'fa-book', '/local/sentientia_catalog/mycourses.php', $currenturl);
+            $items[] = $this->item('Catalog', 'fa-compass', '/local/sentientia_catalog/public.php', $currenturl);
             // Sprint D — managers in non-Airpay tenants (Public/ZEEA)
             // get a "Browse Airpay Library" link so they can request
             // specific Airpay courses for their tenant's catalogue.
@@ -260,13 +260,13 @@ class sidebar_navigation {
             }
             // Cart for managers in cart-enabled tenants.
             // P-01 (QA Walk 2026-05-29): point at the catalog's SESSION cart
-            // (commerce::add_to_cart, viewed at /local/airpay_catalog/cart.php) —
+            // (commerce::add_to_cart, viewed at /local/sentientia_catalog/cart.php) —
             // the cart the catalog "Add to Cart" buttons actually fill. The DB
             // cart at /local/airpay_cart/index.php is fed only by the add_item WS,
             // never the catalog buttons, so it always rendered empty here.
             if ($this->is_cart_enabled_for_current_user()) {
                 $items[] = $this->item('My Cart', 'fa-shopping-cart',
-                    '/local/airpay_catalog/cart.php', $currenturl);
+                    '/local/sentientia_catalog/cart.php', $currenturl);
             }
             // E-02 (QA Walk 2026-05-29): managers are learners too — give
             // them their own Skills dashboard, same as the Learner shell.
@@ -274,7 +274,7 @@ class sidebar_navigation {
                 $items[] = $this->item('My Skills', 'fa-bullseye',
                     '/local/airpay_skills/index.php', $currenturl);
             }
-            $items[] = $this->item('Certificates', 'fa-certificate', '/local/airpay_pages/certificates.php', $currenturl);
+            $items[] = $this->item('Certificates', 'fa-certificate', '/local/sentientia_pages/certificates.php', $currenturl);
             $items[] = $this->item('Profile', 'fa-user', '/local/airpay_users/profile.php', $currenturl);
             return $items;
         }
@@ -284,19 +284,19 @@ class sidebar_navigation {
         // Order: learning activities first
         // ═══════════════════════════════════════════════════
         $items[] = $this->item('Dashboard', 'fa-home', '/my/', $currenturl, null, ['/my/index.php']);
-        $items[] = $this->item('My Courses', 'fa-book', '/local/airpay_catalog/mycourses.php', $currenturl);
-        $items[] = $this->item('Catalog', 'fa-compass', '/local/airpay_catalog/public.php', $currenturl);
+        $items[] = $this->item('My Courses', 'fa-book', '/local/sentientia_catalog/mycourses.php', $currenturl);
+        $items[] = $this->item('Catalog', 'fa-compass', '/local/sentientia_catalog/public.php', $currenturl);
 
         // ── Cart (only for tenants where cart is enabled — Phase 1G) ──
         // Public/ZEEA tenants get a cart link; Airpay tenant employees
         // get their training free and don't see this link.
         // P-01 (QA Walk 2026-05-29): point at the catalog's SESSION cart
-        // (/local/airpay_catalog/cart.php) — where the catalog "Add to Cart"
+        // (/local/sentientia_catalog/cart.php) — where the catalog "Add to Cart"
         // buttons put items — not the DB cart /local/airpay_cart/index.php
         // (fed only by the add_item WS), which always rendered empty here.
         if ($this->is_cart_enabled_for_current_user()) {
             $items[] = $this->item('My Cart', 'fa-shopping-cart',
-                '/local/airpay_catalog/cart.php', $currenturl);
+                '/local/sentientia_catalog/cart.php', $currenturl);
         }
 
         // T-02 (QA Walk 2026-05-29): surface Sentientia Live for trainer-role
@@ -329,7 +329,7 @@ class sidebar_navigation {
                 '/local/airpay_skills/index.php', $currenturl);
         }
 
-        $items[] = $this->item('Certificates', 'fa-certificate', '/local/airpay_pages/certificates.php', $currenturl);
+        $items[] = $this->item('Certificates', 'fa-certificate', '/local/sentientia_pages/certificates.php', $currenturl);
         $items[] = $this->item('Profile', 'fa-user', '/local/airpay_users/profile.php', $currenturl);
 
         return $items;

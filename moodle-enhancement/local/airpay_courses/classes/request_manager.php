@@ -69,9 +69,9 @@ class request_manager {
         if ($requester->deleted || $requester->suspended) {
             throw new \moodle_exception('invaliduser', 'local_airpay_courses');
         }
-        // ADR-018 Wave 2: requesting tenant via the Sentientia seam
-        // (was an inline explode of $requester->open_path). Behaviour-identical.
-        $requesting_tenant = \local_sentientia_core\tenant_identity::root_for_user($requester);
+        $parts = explode('/', trim($requester->open_path ?? '', '/'));
+        $requesting_tenant = isset($parts[0]) && ctype_digit($parts[0])
+            ? (int) $parts[0] : 0;
         if ($requesting_tenant <= 0) {
             throw new \moodle_exception('invalidtenant', 'local_airpay_courses');
         }
@@ -80,10 +80,9 @@ class request_manager {
         // their own tenant — they already have it.
         $course = $DB->get_record('course', ['id' => $courseid],
             'id, open_path', MUST_EXIST);
-        // ADR-018 Wave 2: entity tenant root via the Sentientia seam — path_root()
-        // parses an open_path STRING (vs root_for_user which takes a user record).
-        $course_owner = \local_sentientia_core\tenant_identity::path_root(
-            (string) ($course->open_path ?? ''));
+        $course_parts = explode('/', trim($course->open_path ?? '', '/'));
+        $course_owner = isset($course_parts[0]) && ctype_digit($course_parts[0])
+            ? (int) $course_parts[0] : 0;
         if ($course_owner === $requesting_tenant) {
             throw new \moodle_exception('cannotrequestowncourse',
                 'local_airpay_courses');
@@ -190,9 +189,9 @@ class request_manager {
         $event->trigger();
 
         // Bust catalog caches so the borrowed course appears immediately.
-        \cache_helper::purge_by_definition('local_airpay_catalog', 'trending');
-        \cache_helper::purge_by_definition('local_airpay_catalog', 'new_courses');
-        \cache_helper::purge_by_definition('local_airpay_catalog', 'categories');
+        \cache_helper::purge_by_definition('local_sentientia_catalog', 'trending');
+        \cache_helper::purge_by_definition('local_sentientia_catalog', 'new_courses');
+        \cache_helper::purge_by_definition('local_sentientia_catalog', 'categories');
 
         return true;
     }

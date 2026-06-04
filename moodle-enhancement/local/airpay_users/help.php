@@ -35,19 +35,19 @@ $links = [
         'icon' => 'fa-book',
         'title' => 'My courses',
         'desc'  => 'Resume learning from where you left off.',
-        'url'   => (new moodle_url('/local/airpay_catalog/mycourses.php'))->out(false),
+        'url'   => (new moodle_url('/local/sentientia_catalog/mycourses.php'))->out(false),
     ],
     [
         'icon' => 'fa-search',
         'title' => 'Course catalog',
         'desc'  => 'Browse all available courses.',
-        'url'   => (new moodle_url('/local/airpay_catalog/index.php'))->out(false),
+        'url'   => (new moodle_url('/local/sentientia_catalog/index.php'))->out(false),
     ],
     [
         'icon' => 'fa-certificate',
         'title' => 'My certificates',
         'desc'  => 'View and download your earned certificates.',
-        'url'   => (new moodle_url('/local/airpay_pages/certificates.php'))->out(false),
+        'url'   => (new moodle_url('/local/sentientia_pages/certificates.php'))->out(false),
     ],
     [
         'icon' => 'fa-user',

@@ -31,8 +31,8 @@ echo str_repeat('─', 60) . "\n";
 $airpay_plugins = [
     'airpay_users', 'airpay_org', 'airpay_courses', 'airpay_evaluation',
     'airpay_classroom', 'airpay_programs', 'airpay_learningpath',
-    'airpay_catalog', 'airpay_compliance_report', 'airpay_emails',
-    'airpay_exams', 'airpay_integrations', 'airpay_lifecycle',
+    'sentientia_catalog', 'airpay_compliance_report', 'airpay_emails',
+    'airpay_exams', 'airpay_integrations', 'sentientia_lifecycle',
     'airpay_notifications', 'sentientia_analytics', 'airpay_assistant',
     'airpay_roles', 'airpay_challenge', 'airpay_manager', 'airpay_skills',
 ];

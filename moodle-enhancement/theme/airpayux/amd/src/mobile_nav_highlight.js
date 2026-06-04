@@ -19,7 +19,7 @@
 const PAGE_PATTERNS = {
     dashboard: (path) => path.indexOf('/my/') !== -1
         || path.indexOf('/my/dashboard') !== -1,
-    catalog:   (path) => path.indexOf('airpay_catalog/index') !== -1,
+    catalog:   (path) => path.indexOf('sentientia_catalog/index') !== -1,
     courses:   (path) => path.indexOf('mycourses') !== -1,
     profile:   (path) => path.indexOf('profile') !== -1,
 };

@@ -321,7 +321,7 @@ defined('MOODLE_INTERNAL') || die();
 // Courses". Real course overview image when one is uploaded, else a per-course
 // gradient tile (course id % 6) so an image-less wall still looks varied. Bump
 // invalidates the compiled CSS bundle + changes themerev so the new
-// local_airpay_catalog + local_airpay_courses styles.css aggregate (poster
+// local_sentientia_catalog + local_airpay_courses styles.css aggregate (poster
 // rules) reaches clients without a manual hard refresh.
 // Dark-mode contrast — global short-token flip (2026-05-29). The legacy
 // short-form colour tokens (--ap-text, --ap-text-muted, --ap-border,
@@ -340,7 +340,7 @@ defined('MOODLE_INTERNAL') || die();
 //      tint BACKGROUNDS paired with brand-colour TEXT on badges/chips/tags/
 //      icon-tiles platform-wide; flipping the bg dark while the text stayed
 //      brand-dark dropped them to ~1.8–2.4:1. Kept light → readable light chips.
-//   2. local_airpay_catalog/styles.css: re-assert #fff on the catalogue
+//   2. local_sentientia_catalog/styles.css: re-assert #fff on the catalogue
 //      Enrol/Continue anchor-buttons in dark mode (the global body.dark-mode a
 //      link rule was bleeding light-blue into them — pre-existing, now pinned).
 // ADR-018 Wave 1 (2026-05-29) — Sentientia independence + stabilization, safe-now set:

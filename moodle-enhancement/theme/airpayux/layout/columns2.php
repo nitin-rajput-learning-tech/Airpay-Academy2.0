@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * A two column layout for the airpayux theme.
+ * A two column layout for the epsilon theme.
  *
  * @package   theme_airpayux
  * @copyright 2016 Damyon Wiese
@@ -30,11 +30,20 @@ if ($PAGE->pagelayout === 'frontpage') {
         redirect(new moodle_url('/my/'));
     } else {
         // Guests see the Airpay-branded, tenant-scoped homepage — not Moodle frontpage.
-        redirect(new moodle_url('/local/airpay_pages/homepage.php'));
+        redirect(new moodle_url('/local/sentientia_pages/homepage.php'));
     }
 }
 
 require_once($CFG->libdir . '/behat/lib.php');
+
+// P-02 (QA Walk 2026-05-29) — paint/refresh the navbar cart badge on the
+// 'standard' layout (columns2). The catalog pages (public.php / course.php /
+// cart.php) all use pagelayout='standard' → this file; before this, the
+// cart_badge AMD was only wired in course.php + dashboard.php layouts, so the
+// badge never updated after add-to-cart on the catalog confirmation page.
+// The module reads the hidden #ap-cart-count-data span injected by the cart
+// provider and no-ops gracefully when absent — safe to wire here.
+$PAGE->requires->js_call_amd('theme_airpayux/cart_badge', 'init');
 
 // Add block button in editing mode.
 $addblockbutton = $OUTPUT->addblockbutton();

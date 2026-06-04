@@ -1,0 +1,27 @@
+{{!
+    Catalogue filter chip — Phase B0 Catalogue iter 3 (2026-05-14)
+
+    Used when an active filter is in place. Tap the chip to remove the filter.
+    Designed to be iterated over for multi-filter setups.
+
+    Context (single chip):
+        href            (required) — URL that removes this filter
+        label           (required) — visible text
+        icon            (optional) — FA icon name (no fa- prefix)
+        remove_label    (optional) — aria-label override, defaults to
+                                     "Remove filter: {label}"
+
+    Usage examples:
+      Single inline:
+        {{> local_sentientia_catalog/partials/filter_chip }}
+      List:
+        {{#active_filters}}
+        {{> local_sentientia_catalog/partials/filter_chip }}
+        {{/active_filters}}
+}}
+<a href="{{href}}"
+   class="airpay-catalog__filter-chip airpay-catalog__filter-chip--active"
+   aria-label="{{#remove_label}}{{remove_label}}{{/remove_label}}{{^remove_label}}Remove filter: {{label}}{{/remove_label}}">
+    {{#icon}}<i class="fa fa-{{icon}}" aria-hidden="true"></i> {{/icon}}{{label}}
+    <i class="fa fa-times" aria-hidden="true"></i>
+</a>

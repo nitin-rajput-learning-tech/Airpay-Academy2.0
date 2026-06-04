@@ -62,7 +62,7 @@ $has_any_admin_role = is_siteadmin()
 if (!$has_any_admin_role && !$is_supervisor) {
     $onboarded = get_user_preferences('airpay_onboarding_complete', 0, $USER->id);
     if (!$onboarded) {
-        redirect(new moodle_url('/local/airpay_pages/onboarding.php'));
+        redirect(new moodle_url('/local/sentientia_pages/onboarding.php'));
     }
 }
 
@@ -715,7 +715,7 @@ if (isloggedin() && !isguestuser()) {
         'message'  => 'Browse the catalogue to find courses that match your interests and career goals.',
         'ctalabel' => 'Browse Catalogue',
         'ctaicon'  => 'search',
-        'ctaurl'   => (new moodle_url('/local/airpay_catalog/index.php'))->out(false),
+        'ctaurl'   => (new moodle_url('/local/sentientia_catalog/index.php'))->out(false),
     ]];
 
     // Phase B0 iter 2 (2026-05-14) — learner KPI tiles as a data array so
