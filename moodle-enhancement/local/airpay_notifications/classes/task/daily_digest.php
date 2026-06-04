@@ -129,7 +129,7 @@ class daily_digest extends \core\task\scheduled_task {
         }
 
         // 3. Streak status.
-        $streak = $DB->get_record('local_airpay_streaks', ['userid' => $userid]);
+        $streak = $DB->get_record('local_sentientia_streaks', ['userid' => $userid]);
         if ($streak && $streak->current_streak > 0) {
             $items[] = [
                 'icon' => '🔥',

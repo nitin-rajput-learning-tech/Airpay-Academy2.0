@@ -93,10 +93,10 @@ class team_manager {
 
         // 4) Streak/points (if table exists).
         $streak_map = [];
-        if ($dbman->table_exists('local_airpay_streaks')) {
+        if ($dbman->table_exists('local_sentientia_streaks')) {
             $rows = $DB->get_records_sql(
                 "SELECT userid, current_streak, total_points
-                   FROM {local_airpay_streaks}
+                   FROM {local_sentientia_streaks}
                   WHERE userid $insql",
                 $inparams);
             foreach ($rows as $r) {

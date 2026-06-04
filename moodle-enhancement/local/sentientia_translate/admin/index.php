@@ -15,7 +15,7 @@
  * unified queue: it lists every translation row the actor can see
  * (own-only, or all-customer if they hold manage_all), with status
  * filtering and the standard 4-card stats snapshot used by C14
- * (airpay_whatsapp/admin/index.php).
+ * (sentientia_whatsapp/admin/index.php).
  *
  * Layout:
  *   - Header + intro

@@ -230,8 +230,8 @@ class course_overdue extends \core\task\scheduled_task {
         // team_overdue template — slightly awkward wording for a single-
         // learner alert, but reuses an existing seeded DLT template so we
         // avoid adding a new approval-pending row at this stage.
-        if (class_exists('\\local_airpay_whatsapp\\notification_bridge')) {
-            \local_airpay_whatsapp\notification_bridge::also_send(
+        if (class_exists('\\local_sentientia_whatsapp\\notification_bridge')) {
+            \local_sentientia_whatsapp\notification_bridge::also_send(
                 $supervisor,
                 'engagement.whatsapp.overdue',
                 'team_overdue',

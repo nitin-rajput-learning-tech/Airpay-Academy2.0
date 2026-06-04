@@ -184,15 +184,15 @@ if (isloggedin() && !isguestuser()) {
     // ═══════════════════════════════════════════════════════════
     // Gamification data — all non-admin users see points, badges, streaks
     // ═══════════════════════════════════════════════════════════
-    if (!$isadmin && file_exists($CFG->dirroot . '/local/airpay_gamification/lib.php')) {
-        require_once($CFG->dirroot . '/local/airpay_gamification/lib.php');
+    if (!$isadmin && file_exists($CFG->dirroot . '/local/sentientia_gamification/lib.php')) {
+        require_once($CFG->dirroot . '/local/sentientia_gamification/lib.php');
         try {
-            $gamification = local_airpay_gamification_get_summary($USER->id);
+            $gamification = local_sentientia_gamification_get_summary($USER->id);
             $airpay_dashboard['gamification'] = $gamification;
             $airpay_dashboard['hasgamification'] = true;
 
             // Leaderboard data.
-            $leaderboard = \local_airpay_gamification\leaderboard::get_template_data($USER->id, 'department', 5);
+            $leaderboard = \local_sentientia_gamification\leaderboard::get_template_data($USER->id, 'department', 5);
             $airpay_dashboard['leaderboard'] = $leaderboard;
             $airpay_dashboard['hasleaderboard'] = $leaderboard['has_entries'] ?? false;
 
@@ -204,7 +204,7 @@ if (isloggedin() && !isguestuser()) {
                 // Check if user logged in on this date.
                 $daystart = strtotime($date);
                 $dayend = $daystart + 86400;
-                $active = $DB->record_exists_select('local_airpay_points_log',
+                $active = $DB->record_exists_select('local_sentientia_points_log',
                     "userid = :uid AND action = 'daily_login' AND timecreated >= :start AND timecreated < :end",
                     ['uid' => $USER->id, 'start' => $daystart, 'end' => $dayend]);
                 $streakdays[] = [
@@ -214,7 +214,7 @@ if (isloggedin() && !isguestuser()) {
                     'is_today' => ($i === 0),
                 ];
             }
-            $streak = $DB->get_record('local_airpay_streaks', ['userid' => $USER->id]);
+            $streak = $DB->get_record('local_sentientia_streaks', ['userid' => $USER->id]);
             $airpay_dashboard['streak_calendar'] = [
                 'days'           => $streakdays,
                 'current_streak' => $streak->current_streak ?? 0,

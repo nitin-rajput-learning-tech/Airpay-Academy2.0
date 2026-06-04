@@ -151,16 +151,16 @@ class privacy_manager {
 
         // Step 2: Delete personal data from extended tables.
         // Gamification points log.
-        if ($DB->get_manager()->table_exists('local_airpay_points_log')) {
-            $DB->delete_records('local_airpay_points_log', ['userid' => $userid]);
+        if ($DB->get_manager()->table_exists('local_sentientia_points_log')) {
+            $DB->delete_records('local_sentientia_points_log', ['userid' => $userid]);
         }
         // User badges.
-        if ($DB->get_manager()->table_exists('local_airpay_user_badges')) {
-            $DB->delete_records('local_airpay_user_badges', ['userid' => $userid]);
+        if ($DB->get_manager()->table_exists('local_sentientia_user_badges')) {
+            $DB->delete_records('local_sentientia_user_badges', ['userid' => $userid]);
         }
         // Streaks.
-        if ($DB->get_manager()->table_exists('local_airpay_streaks')) {
-            $DB->delete_records('local_airpay_streaks', ['userid' => $userid]);
+        if ($DB->get_manager()->table_exists('local_sentientia_streaks')) {
+            $DB->delete_records('local_sentientia_streaks', ['userid' => $userid]);
         }
         // Chat log.
         if ($DB->get_manager()->table_exists('local_sentientia_chat_log')) {
@@ -320,8 +320,8 @@ class privacy_manager {
         }
 
         // Gamification data.
-        if ($DB->get_manager()->table_exists('local_airpay_points_log')) {
-            $points = $DB->get_records('local_airpay_points_log', ['userid' => $userid], 'timecreated DESC', '*', 0, 100);
+        if ($DB->get_manager()->table_exists('local_sentientia_points_log')) {
+            $points = $DB->get_records('local_sentientia_points_log', ['userid' => $userid], 'timecreated DESC', '*', 0, 100);
             foreach ($points as $p) {
                 $data['gamification'][] = [
                     'action' => $p->action,

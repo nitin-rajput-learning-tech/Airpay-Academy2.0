@@ -1,13 +1,13 @@
 # local_airpay_challenge
 
-Gamification challenges. Sits alongside `local_airpay_gamification`
+Gamification challenges. Sits alongside `local_sentientia_gamification`
 (points + badges + streaks) but holds the workflow + leaderboard.
 
 | Field | Value |
 |---|---|
 | Component | `local_airpay_challenge` |
 | Version | beta 1.1.1 |
-| Depends on | `local_airpay_org`, `local_airpay_gamification` |
+| Depends on | `local_airpay_org`, `local_sentientia_gamification` |
 
 ## What it does
 
@@ -42,6 +42,6 @@ Recomputes the leaderboard hourly.
 
 - Streak challenges (login N days in a row).
 - Quiz-score challenges with anonymous peer comparison.
-- Badges (Moodle core badges integration via airpay_gamification).
+- Badges (Moodle core badges integration via sentientia_gamification).
 - Web push notifications.
 - Frontend dashboard widget.

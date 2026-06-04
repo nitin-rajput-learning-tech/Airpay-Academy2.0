@@ -212,9 +212,9 @@ class exam_reminder extends \core\task\scheduled_task {
         // Stream C / C.1.b — also WhatsApp/SMS. Reuses deadline_*
         // templates with examname mapped to {{coursename}} (template var
         // is generic enough; cleanly explains the reminder semantics).
-        if (class_exists('\\local_airpay_whatsapp\\notification_bridge')) {
-            $tpl_key = \local_airpay_whatsapp\notification_bridge::pick_deadline_template($days_remaining);
-            \local_airpay_whatsapp\notification_bridge::also_send(
+        if (class_exists('\\local_sentientia_whatsapp\\notification_bridge')) {
+            $tpl_key = \local_sentientia_whatsapp\notification_bridge::pick_deadline_template($days_remaining);
+            \local_sentientia_whatsapp\notification_bridge::also_send(
                 $user,
                 'engagement.whatsapp.reminders',
                 $tpl_key,

@@ -193,8 +193,8 @@ class exam_overdue extends \core\task\scheduled_task {
         }
 
         // Stream C / C.1.b — also WhatsApp/SMS to the supervisor.
-        if (class_exists('\\local_airpay_whatsapp\\notification_bridge')) {
-            \local_airpay_whatsapp\notification_bridge::also_send(
+        if (class_exists('\\local_sentientia_whatsapp\\notification_bridge')) {
+            \local_sentientia_whatsapp\notification_bridge::also_send(
                 $supervisor,
                 'engagement.whatsapp.overdue',
                 'team_overdue',

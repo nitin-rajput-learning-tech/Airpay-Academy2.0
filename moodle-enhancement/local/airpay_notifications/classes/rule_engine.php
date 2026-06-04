@@ -793,7 +793,7 @@ class rule_engine {
         global $DB;
         $result = ['sent' => 0, 'skipped' => 0];
 
-        if (!$DB->get_manager()->table_exists('local_airpay_streaks')) {
+        if (!$DB->get_manager()->table_exists('local_sentientia_streaks')) {
             return $result;
         }
 
@@ -803,7 +803,7 @@ class rule_engine {
         // Users whose last login was 2+ days ago but had a streak >= 3.
         $users = $DB->get_records_sql(
             "SELECT s.userid, s.current_streak, s.longest_streak, u.firstname
-               FROM {local_airpay_streaks} s
+               FROM {local_sentientia_streaks} s
                JOIN {user} u ON u.id = s.userid
               WHERE s.last_login_date <= :cutoff
                 AND s.current_streak >= 3

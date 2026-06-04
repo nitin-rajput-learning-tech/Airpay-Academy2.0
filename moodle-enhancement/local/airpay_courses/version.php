@@ -33,23 +33,14 @@ $plugin->component = 'local_airpay_courses';
 // P1 #29 (2026-05-20) — daily overdue manager-escalation cron.
 // P1 #35 (2026-05-20) — Hindi (hi) lang pack: 100 strings translated.
 // Stream F / Wave E2 P4 (2026-05-25) — inline call to
-// \local_airpay_whatsapp\notification_bridge::send_course_due_soon
+// \local_sentientia_whatsapp\notification_bridge::send_course_due_soon
 // from course_reminder for the <48h urgent surface. No schema change.
-// ADR-018 Wave 2 PR-2 (2026-05-30) — migrated off inline $USER->open_path parsing
-// onto the Sentientia seam local_sentientia_core\tenant_identity:
-//   batch 1: featured_manager (root_for_user) + request_manager (root_for_user /
-//            path_root).
-//   batch 3: my_requests, exportcsv, external/request_course, enrol_users_modal
-//            (root_for_current_user).
-// Behaviour-identical; declares the seam dependency so path_root() (new in
-// sentientia_core 2026053002) is present before this plugin upgrades.
-$plugin->version   = 2026053001;
+$plugin->version   = 2026052501;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.11.4';
+$plugin->release   = '1.11.2';
 $plugin->dependencies = [
     'local_airpay_org' => 2026041600,
-    'local_sentientia_core' => 2026053002,
 ];
 // Release history:
 // 1.6.0  Phase F.5 — native enrol modal (replaces deep-link)

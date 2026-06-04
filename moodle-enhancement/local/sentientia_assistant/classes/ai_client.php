@@ -199,9 +199,9 @@ class ai_client {
         }
 
         // Gamification (if available).
-        if ($DB->get_manager()->table_exists('local_airpay_points_log')) {
+        if ($DB->get_manager()->table_exists('local_sentientia_points_log')) {
             $points = $DB->get_field_sql(
-                "SELECT COALESCE(SUM(points), 0) FROM {local_airpay_points_log} WHERE userid = :uid",
+                "SELECT COALESCE(SUM(points), 0) FROM {local_sentientia_points_log} WHERE userid = :uid",
                 ['uid' => $userid]);
             $context .= "Gamification points: {$points}\n";
         }

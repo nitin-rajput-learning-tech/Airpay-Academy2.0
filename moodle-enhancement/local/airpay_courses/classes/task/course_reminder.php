@@ -229,13 +229,13 @@ class course_reminder extends \core\task\scheduled_task {
         }
 
         // Stream C / C.1.b (2026-05-21) — also fire WhatsApp/SMS via the
-        // airpay_whatsapp bridge. Picks template_key based on bucket
+        // sentientia_whatsapp bridge. Picks template_key based on bucket
         // (deadline_7d / _3d / _1d). Soft-coupled — no-op if plugin
         // missing, user not opted in, no mobile number, template not
         // DLT-approved, or master flag off.
-        if (class_exists('\\local_airpay_whatsapp\\notification_bridge')) {
-            $tpl_key = \local_airpay_whatsapp\notification_bridge::pick_deadline_template($days_remaining);
-            \local_airpay_whatsapp\notification_bridge::also_send(
+        if (class_exists('\\local_sentientia_whatsapp\\notification_bridge')) {
+            $tpl_key = \local_sentientia_whatsapp\notification_bridge::pick_deadline_template($days_remaining);
+            \local_sentientia_whatsapp\notification_bridge::also_send(
                 $user,
                 'engagement.whatsapp.reminders',
                 $tpl_key,
@@ -249,13 +249,13 @@ class course_reminder extends \core\task\scheduled_task {
 
             // Stream F / Wave E2 P4 (2026-05-25) — extra urgent "due
             // in <48h" surface, gated independently on
-            // airpay_whatsapp_content_notifications (default OFF) +
+            // sentientia_whatsapp_content_notifications (default OFF) +
             // its own 6h throttle. Fires from the same cron walk so
             // we don't need a second scheduled task.
             $secs_remaining_now = $deadline_ts - time();
             if ($secs_remaining_now > 0 && $secs_remaining_now < 48 * 3600) {
                 $hours_remaining = (int) ceil($secs_remaining_now / 3600);
-                \local_airpay_whatsapp\notification_bridge::send_course_due_soon(
+                \local_sentientia_whatsapp\notification_bridge::send_course_due_soon(
                     $userid, $courseid, $hours_remaining);
             }
         }

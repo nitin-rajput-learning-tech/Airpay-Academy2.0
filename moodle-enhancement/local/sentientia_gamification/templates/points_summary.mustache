@@ -1,0 +1,64 @@
+{{!
+    @template local_sentientia_gamification/points_summary
+
+    Points summary widget for the employee dashboard.
+    Shows level, points, streak, and badges earned.
+
+    Context variables:
+    - level_name, level_number, level_color, level_progress
+    - total_points, today_points, points_to_next
+    - current_streak, longest_streak, has_streak
+    - badge_count, rank
+}}
+<div class="airpay-gamification">
+    {{! Level + Points Row }}
+    <div class="airpay-gamification__header">
+        <div class="airpay-gamification__level" style="border-color: {{level_color}};">
+            <span class="airpay-gamification__level-badge" style="background: {{level_color}};">
+                Lv.{{level_number}}
+            </span>
+            <div class="airpay-gamification__level-info">
+                <strong>{{level_name}}</strong>
+                <small>{{total_points}} pts &middot; Rank #{{rank}}</small>
+            </div>
+        </div>
+        {{#has_streak}}
+        <div class="airpay-gamification__streak">
+            <i class="fa fa-fire" style="color: #f97316;"></i>
+            <strong>{{current_streak}}</strong>
+            <small>day streak</small>
+        </div>
+        {{/has_streak}}
+        {{^has_streak}}
+        <div class="airpay-gamification__streak airpay-gamification__streak--inactive">
+            <i class="fa fa-fire" style="color: #9ca3af;"></i>
+            <strong>0</strong>
+            <small>Login to start!</small>
+        </div>
+        {{/has_streak}}
+    </div>
+
+    {{! Progress Bar to Next Level }}
+    <div class="airpay-gamification__progress">
+        <div class="airpay-gamification__progress-bar" style="width: {{level_progress}}%; background: {{level_color}};"></div>
+    </div>
+    <small class="airpay-gamification__progress-label">{{points_to_next}} pts to next level</small>
+
+    {{! Badges Row }}
+    {{#has_badges}}
+    <div class="airpay-gamification__badges">
+        {{#badges}}
+        <div class="airpay-gamification__badge" title="{{name}} — {{description}}">
+            <i class="fa {{icon}}"></i>
+        </div>
+        {{/badges}}
+    </div>
+    {{/has_badges}}
+
+    {{! Today's Points }}
+    {{#today_points}}
+    <div class="airpay-gamification__today">
+        +{{today_points}} pts today
+    </div>
+    {{/today_points}}
+</div>

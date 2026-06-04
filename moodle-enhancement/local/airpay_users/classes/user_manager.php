@@ -240,10 +240,10 @@ class user_manager {
             : false;
 
         // Inject gamification data.
-        if (file_exists($CFG->dirroot . '/local/airpay_gamification/lib.php')) {
+        if (file_exists($CFG->dirroot . '/local/sentientia_gamification/lib.php')) {
             try {
-                require_once($CFG->dirroot . '/local/airpay_gamification/lib.php');
-                $context['ap_gamification'] = local_airpay_gamification_get_summary($userid);
+                require_once($CFG->dirroot . '/local/sentientia_gamification/lib.php');
+                $context['ap_gamification'] = local_sentientia_gamification_get_summary($userid);
             } catch (\Throwable $e) {
                 $context['ap_gamification'] = null;
             }
