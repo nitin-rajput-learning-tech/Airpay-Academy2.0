@@ -2,21 +2,21 @@
   "name": "Airpay Academy",
   "short_name": "Academy",
   "description": "Airpay Academy — L&D Operating System for employability, business training, and financial education.",
-  "start_url": "/moodle/my/",
-  "scope": "/moodle/",
+  "start_url": "/my/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#F2F4FB",
   "theme_color": "#0066A7",
   "orientation": "any",
   "icons": [
     {
-      "src": "/moodle/theme/airpayux/pix/brand/favicon_io/android-chrome-192x192.png",
+      "src": "/theme/airpayux/pix/brand/favicon_io/android-chrome-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/moodle/theme/airpayux/pix/brand/favicon_io/android-chrome-512x512.png",
+      "src": "/theme/airpayux/pix/brand/favicon_io/android-chrome-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
