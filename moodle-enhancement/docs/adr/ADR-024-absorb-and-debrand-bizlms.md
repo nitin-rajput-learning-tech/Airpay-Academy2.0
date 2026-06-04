@@ -75,3 +75,11 @@ de-branded code, in additive flag-gated waves (Wave 0-5 in the audit),
 
 Wave 0 (verify the 6 uncertain dispositions) + Wave 1 (cosmetic de-brand of
 our own code), both safe + additive, begin once Nitin confirms scope/sequence.
+
+### Progress log - 2026-06-04 (Wave 1 + Wave 2 increments)
+- Wave 1 de-brand: eAbyas authorship docblocks -> Airpay/Sentientia (9 theme
+  files); _bizlms-* SCSS partials renamed _legacy-* (R100, CSS byte-identical);
+  user-facing strings already clean.
+- Wave 2: local_sentientia_core now OWNS the open_* substrate first-party via
+  classes/substrate.php + an idempotent db/upgrade.php step (auto-creates on
+  install/upgrade; no-op on existing/production). See core-mods record.

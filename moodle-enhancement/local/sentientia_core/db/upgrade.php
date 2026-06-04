@@ -119,5 +119,16 @@ function xmldb_local_sentientia_core_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026060102, 'local', 'sentientia_core');
     }
 
+    // ADR-024 Wave 2 — own the BizLMS-compatible open_* substrate first-party.
+    // Idempotent + additive: adds the open_* columns to {user}/{course} if
+    // missing, so a from-scratch Sentientia install has a working multi-tenant
+    // substrate WITHOUT the external eAbyas plugins. No-op where they already
+    // exist (e.g. an Airpay production DB carried from the eAbyas distribution).
+    // See classes/substrate.php + docs/core-mods/2026-06-04-open-substrate-ownership.md + ADR-024.
+    if ($oldversion < 2026060400) {
+        \local_sentientia_core\substrate::ensure_all(false);
+        upgrade_plugin_savepoint(true, 2026060400, 'local', 'sentientia_core');
+    }
+
     return true;
 }

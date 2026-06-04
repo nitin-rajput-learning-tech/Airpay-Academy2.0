@@ -160,3 +160,11 @@ Added `cli/bootstrap_substrate.php`: idempotently creates the BizLMS-compatible
 from scratch on vanilla Moodle without the external eAbyas substrate. No schema
 change to the plugin's own tables; no version bump (CLI-only addition). Create
 + idempotent paths verified live 2026-06-04 (dropped+recreated `open_village`).
+
+## 2026-06-04 - ADR-024 Wave 2: own the open_* substrate first-party
+classes/substrate.php is now the single source of truth for the BizLMS-compatible
+open_* columns (37 user + 18 course). db/upgrade.php savepoint 2026060400 calls
+substrate::ensure_all() so install/upgrade auto-creates the substrate (idempotent,
+no-op where present). bootstrap_substrate.php CLI refactored onto the class.
+version 2026060105 -> 2026060400 / 0.7.0-alpha. Core-mod recorded in
+docs/core-mods/2026-06-04-open-substrate-ownership.md.
