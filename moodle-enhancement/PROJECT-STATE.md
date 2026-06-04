@@ -5955,3 +5955,19 @@ After the A→F milestone, Nitin chose the **maximal** option on all four follow
 **Session total: 10 production-branch commits** (`99bfc8ba9 → bb29fa643`), every one
 flag-gated / reversible / tested, **live behaviour unchanged, owner WIP untouched throughout**.
 `local_sentientia_core` at 2026060105 / 0.6.1-alpha.
+
+---
+## Session 2026-06-04 — local de-coupling + de-/moodle + self-contained install
+- **Local box**: wiped + fresh-installed Sentientia from scratch (proved the ~40
+  first-party plugins install clean on vanilla Moodle; the BizLMS `open_*` /
+  `local_costcenter` substrate is external eAbyas, not in-repo). Restored the
+  pre-wipe DB (2,888 users / 411 courses / 3 tenants) + `upgrade.php` (no-op,
+  already latest) — working box on latest code.
+- **De-/moodle**: Apache DocumentRoot -> `moodle5/public`, `wwwroot=http://localhost:8080`
+  (local env only; not committed). Site now at web root; old `/moodle/*` -> 404.
+- **Self-contained install (committed)**: `local_sentientia_core/cli/bootstrap_substrate.php`
+  (idempotent `open_*` column ensurer) + `docs/INSTALL-SENTIENTIA.md` turnkey
+  procedure + packaging full-bundle tar fix. Production branch: see commit
+  3354bd947.
+- ADR-018 endgame (migrate live read-path off `open_*` onto first-party
+  tenant/org tables) remains feature-flagged + human-gated.

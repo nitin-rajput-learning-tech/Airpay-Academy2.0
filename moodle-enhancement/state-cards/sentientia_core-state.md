@@ -153,3 +153,10 @@ customer-zero.
 - **2026-05-30 (W3.1, ADR-020):** `org` seam (manager-id accessor) behind `org_legacy`.
 - **2026-05-30 (W2, ADR-019):** `tenant_identity` seam + caller-migration surface behind
   `tenant_identity_legacy`; ~22 `open_path` call sites migrated across the plugin suite.
+
+## 2026-06-04 — cli/bootstrap_substrate.php (tenant-substrate ensurer)
+Added `cli/bootstrap_substrate.php`: idempotently creates the BizLMS-compatible
+`open_*` columns (37 on `mdl_user`, 18 on `mdl_course`) so Sentientia installs
+from scratch on vanilla Moodle without the external eAbyas substrate. No schema
+change to the plugin's own tables; no version bump (CLI-only addition). Create
++ idempotent paths verified live 2026-06-04 (dropped+recreated `open_village`).

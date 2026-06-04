@@ -174,3 +174,12 @@ docs only; never the Wave 2–6 human gates; never clobber the owner's concurren
   (property-based → vanilla-Moodle-safe, CI-discovered). Bumped `local_sentientia_core` 2026053000→2026053001.
   The schema / dual-write / per-tenant migration (Wave 3.2+) remain gated on the 5 ADR-020 questions +
   clone-DB rehearsal + Nitin's explicit go.
+
+### Progress log — 2026-06-04
+Shipped `local_sentientia_core/cli/bootstrap_substrate.php`: a first-party,
+idempotent ensurer for the BizLMS-compatible `open_*` columns. This closes the
+last from-scratch install gap — Sentientia now stands up end-to-end from this
+repo alone (install -> bootstrap_substrate -> seed), with the eAbyas substrate
+no longer required to boot. The deeper migration onto first-party
+tenant/org tables (retiring `open_*`) stays the flag-gated, human-gated endgame.
+See `docs/INSTALL-SENTIENTIA.md` + commit 3354bd947.
