@@ -2,7 +2,7 @@
 // Copyright 2026 Airpay Payment Services
 // License http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 
-namespace local_airpay_integrations;
+namespace local_sentientia_integrations;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -15,7 +15,7 @@ defined('MOODLE_INTERNAL') || die();
  * silently degrade to an empty result rather than throw, and the admin
  * settings page must surface a warning.
  *
- * @package    local_airpay_integrations
+ * @package    local_sentientia_integrations
  * @category   test
  */
 final class ai_recommender_test extends \advanced_testcase {
@@ -54,8 +54,8 @@ final class ai_recommender_test extends \advanced_testcase {
         $this->setAdminUser();
 
         // Enable AI features.
-        set_config('ai_enable', 1, 'local_airpay_integrations');
-        set_config('ai_recommendations_enable', 1, 'local_airpay_integrations');
+        set_config('ai_enable', 1, 'local_sentientia_integrations');
+        set_config('ai_recommendations_enable', 1, 'local_sentientia_integrations');
 
         // User with no enrolments → falls through to get_popular_courses().
         $u = $this->getDataGenerator()->create_user();

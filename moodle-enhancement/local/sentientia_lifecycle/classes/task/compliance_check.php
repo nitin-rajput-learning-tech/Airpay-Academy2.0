@@ -80,7 +80,7 @@ class compliance_check extends \core\task\scheduled_task {
         mtrace("Compliance check: sent $notified employee notifications, $managernotified manager alerts.");
 
         // Send Teams notification if enabled.
-        if (class_exists('\local_airpay_integrations\teams_notifier')) {
+        if (class_exists('\local_sentientia_integrations\teams_notifier')) {
             foreach ($atriskcourses as $course) {
                 $overduecount = $DB->count_records_sql(
                     "SELECT COUNT(u.id)
@@ -95,7 +95,7 @@ class compliance_check extends \core\task\scheduled_task {
                     ['cid' => $course->id, 'cid2' => $course->id]
                 );
                 if ($overduecount > 0) {
-                    \local_airpay_integrations\teams_notifier::notify_compliance_overdue(
+                    \local_sentientia_integrations\teams_notifier::notify_compliance_overdue(
                         format_string($course->fullname), $overduecount
                     );
                 }

@@ -8,11 +8,11 @@
  *
  * Only active when ai_enable = 1 AND ai_recommendations_enable = 1.
  *
- * @package    local_airpay_integrations
+ * @package    local_sentientia_integrations
  * @copyright  2026 Airpay Payment Services
  */
 
-namespace local_airpay_integrations;
+namespace local_sentientia_integrations;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -22,8 +22,8 @@ class ai_recommender {
      * Check if AI recommendations are enabled.
      */
     public static function is_enabled(): bool {
-        return !empty(get_config('local_airpay_integrations', 'ai_enable'))
-            && !empty(get_config('local_airpay_integrations', 'ai_recommendations_enable'));
+        return !empty(get_config('local_sentientia_integrations', 'ai_enable'))
+            && !empty(get_config('local_sentientia_integrations', 'ai_recommendations_enable'));
     }
 
     /**

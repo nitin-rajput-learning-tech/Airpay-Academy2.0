@@ -75,3 +75,10 @@ single migration CLI** so Moodle sees the new component as *already installed*:
 files+namespace+4 cache strings+page URLs rewritten; 3 external cross-refs
 (`airpay_org` DSR CLIs ×2, theme sidebar nav) updated; upgrade installed new,
 uninstall removed old (0 rows), new page 303 / old 404 / site 200. Clean.
+
+### Class B pilot proven - 2026-06-04
+`relabel_plugin.php` shipped + proven on `airpay_integrations -> sentientia_integrations`:
+table `local_airpay_integration_log` renamed (data preserved), 28 config_plugins rows
+relabeled; `upgrade.php` ran with NO install / NO drop, old component 0 rows, site 200.
+The relabel CLI is the reusable Class-B workhorse (add `--migrate-caps` for caps plugins).
+Remaining Class B: 25 (next tables-no-caps: assistant, gamification, whatsapp, core).

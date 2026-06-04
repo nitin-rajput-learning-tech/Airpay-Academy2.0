@@ -1,4 +1,4 @@
-# local_airpay_integrations
+# local_sentientia_integrations
 
 External-system integration adapter. Today: KeKa HRMS sync (user
 provisioning, joiner/mover/leaver events). Designed to host additional
@@ -6,13 +6,13 @@ integrations as they come online.
 
 | Field | Value |
 |---|---|
-| Component | `local_airpay_integrations` |
+| Component | `local_sentientia_integrations` |
 | Version | beta 1.1.0 |
 | Depends on | `local_airpay_org`, `local_sentientia_lifecycle` |
 
 ## What it does
 
-- Webhook receiver at `/local/airpay_integrations/keka_webhook.php` —
+- Webhook receiver at `/local/sentientia_integrations/keka_webhook.php` —
   accepts joiner/mover/leaver events from KeKa with bearer-token auth.
 - Event log table records every inbound event for replay + audit.
 - Forwards events to `local_sentientia_lifecycle` which executes the
@@ -22,12 +22,12 @@ integrations as they come online.
 
 ## Tables
 
-`local_airpay_integration_log` — append-only inbound + outbound event
+`local_sentientia_integration_log` — append-only inbound + outbound event
 log.
 
 ## Scheduled tasks
 
-`\local_airpay_integrations\task\sync_keka_users` — daily nightly pull.
+`\local_sentientia_integrations\task\sync_keka_users` — daily nightly pull.
 
 ## Step-0 cleanup
 

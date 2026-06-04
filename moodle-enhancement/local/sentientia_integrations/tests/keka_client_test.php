@@ -2,7 +2,7 @@
 // Copyright 2026 Airpay Payment Services
 // License http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 
-namespace local_airpay_integrations;
+namespace local_sentientia_integrations;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -15,7 +15,7 @@ defined('MOODLE_INTERNAL') || die();
  *     table is missing (Phase-0A migration locks in)
  *   - JML webhook dispatcher — handle_webhook routes events correctly
  *
- * @package    local_airpay_integrations
+ * @package    local_sentientia_integrations
  * @category   test
  */
 final class keka_client_test extends \advanced_testcase {

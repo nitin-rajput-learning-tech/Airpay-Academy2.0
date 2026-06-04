@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/airpay_integrations/db" VERSION="20260507"
+<XMLDB PATH="local/sentientia_integrations/db" VERSION="20260507"
        COMMENT="Airpay Integrations: webhook + sync event log">
   <TABLES>
-    <TABLE NAME="local_airpay_integration_log"
+    <TABLE NAME="local_sentientia_integration_log"
            COMMENT="Audit log of every inbound webhook + outbound sync event from KeKa, Teams, M365, and FCM. Append-only — read by the integrations admin dashboard.">
       <FIELDS>
         <FIELD NAME="id"          TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>

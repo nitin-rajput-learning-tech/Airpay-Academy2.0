@@ -146,7 +146,7 @@ $null_plugins = [
     'sentientia_catalog',
     'airpay_compliance_report',
     'airpay_exams',
-    'airpay_integrations',
+    'sentientia_integrations',
     'sentientia_lifecycle',
     'sentientia_analytics',
     'airpay_assistant',

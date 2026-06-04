@@ -1,13 +1,13 @@
 # local_sentientia_lifecycle
 
 Joiner / Mover / Leaver (JML) automation. Listens for HRMS events from
-`local_airpay_integrations` and executes the appropriate workflow.
+`local_sentientia_integrations` and executes the appropriate workflow.
 
 | Field | Value |
 |---|---|
 | Component | `local_sentientia_lifecycle` |
 | Version | beta |
-| Depends on | `local_airpay_org`, `local_airpay_integrations` |
+| Depends on | `local_airpay_org`, `local_sentientia_integrations` |
 
 ## What it does
 

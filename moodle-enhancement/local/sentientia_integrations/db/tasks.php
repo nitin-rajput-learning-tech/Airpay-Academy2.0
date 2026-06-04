@@ -3,7 +3,7 @@
 // License http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 
 /**
- * Scheduled tasks for local_airpay_integrations.
+ * Scheduled tasks for local_sentientia_integrations.
  *
  * The HRMS sync task that used to live here was a duplicate of
  * keka_client::sync_employees — different field shapes, different

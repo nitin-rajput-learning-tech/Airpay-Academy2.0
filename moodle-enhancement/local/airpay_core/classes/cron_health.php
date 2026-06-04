@@ -54,7 +54,7 @@ class cron_health {
         '\\local_airpay_request\\task\\auto_expire',
         '\\local_airpay_notifications\\task\\dispatcher',
         '\\local_airpay_compliance_report\\task\\refresh_aggregates',
-        '\\local_airpay_integrations\\task\\sync_keka_users',
+        '\\local_sentientia_integrations\\task\\sync_keka_users',
         '\\local_airpay_emails\\task\\dispatcher',
         '\\local_airpay_emails\\task\\cleanup',
     ];

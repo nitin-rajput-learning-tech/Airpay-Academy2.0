@@ -4,11 +4,11 @@
  * Sends adaptive card messages to a Teams channel via incoming webhook.
  * Only active when teams_enable = 1 and webhook URL is configured.
  *
- * @package    local_airpay_integrations
+ * @package    local_sentientia_integrations
  * @copyright  2026 Airpay Payment Services
  */
 
-namespace local_airpay_integrations;
+namespace local_sentientia_integrations;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -18,8 +18,8 @@ class teams_notifier {
      * Check if Teams notifications are enabled and configured.
      */
     public static function is_enabled(): bool {
-        $enabled = get_config('local_airpay_integrations', 'teams_enable');
-        $webhook = get_config('local_airpay_integrations', 'teams_webhook_url');
+        $enabled = get_config('local_sentientia_integrations', 'teams_enable');
+        $webhook = get_config('local_sentientia_integrations', 'teams_webhook_url');
         return !empty($enabled) && !empty($webhook);
     }
 
@@ -39,7 +39,7 @@ class teams_notifier {
             return false;
         }
 
-        $webhook = get_config('local_airpay_integrations', 'teams_webhook_url');
+        $webhook = get_config('local_sentientia_integrations', 'teams_webhook_url');
 
         // Build adaptive card payload.
         $card = [

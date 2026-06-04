@@ -2,7 +2,7 @@
 // Copyright 2026 Airpay Payment Services
 // License http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 //
-// P1 #53 (2026-05-20) — Hindi (hi) translations for local_airpay_integrations.
+// P1 #53 (2026-05-20) — Hindi (hi) translations for local_sentientia_integrations.
 // Scope: settings hub covering AI features, SENTIENTIA pipeline,
 // Microsoft 365 SSO, Teams notifications, HRMS sync, gamification.
 

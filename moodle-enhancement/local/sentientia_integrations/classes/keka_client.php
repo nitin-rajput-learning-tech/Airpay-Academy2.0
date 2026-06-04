@@ -6,12 +6,12 @@
  * Endpoints: Core HR (employees, departments, groups, exit).
  * Webhooks: employee.hired, employee.terminated, employee.transferred.
  *
- * @package    local_airpay_integrations
+ * @package    local_sentientia_integrations
  * @copyright  2026 Airpay Payment Services
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace local_airpay_integrations;
+namespace local_sentientia_integrations;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -24,16 +24,16 @@ class keka_client {
     private ?string $access_token = null;
 
     public function __construct() {
-        $this->base_url = get_config('local_airpay_integrations', 'keka_base_url') ?: 'https://api.keka.com';
+        $this->base_url = get_config('local_sentientia_integrations', 'keka_base_url') ?: 'https://api.keka.com';
     }
 
     /**
      * Authenticate with KeKa using API key → get access token.
      */
     public function authenticate(): bool {
-        $api_key = get_config('local_airpay_integrations', 'keka_api_key');
-        $client_id = get_config('local_airpay_integrations', 'keka_client_id');
-        $client_secret = get_config('local_airpay_integrations', 'keka_client_secret');
+        $api_key = get_config('local_sentientia_integrations', 'keka_api_key');
+        $client_id = get_config('local_sentientia_integrations', 'keka_client_id');
+        $client_secret = get_config('local_sentientia_integrations', 'keka_client_secret');
 
         if (empty($api_key) && empty($client_id)) {
             return false;

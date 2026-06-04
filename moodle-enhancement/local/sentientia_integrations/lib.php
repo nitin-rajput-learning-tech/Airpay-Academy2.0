@@ -3,7 +3,7 @@
  * Library functions for Airpay Integrations.
  * Provides hooks and helper functions for the integration features.
  *
- * @package    local_airpay_integrations
+ * @package    local_sentientia_integrations
  * @copyright  2026 Airpay Payment Services
  */
 
@@ -17,11 +17,11 @@ defined('MOODLE_INTERNAL') || die();
  * @param int $limit
  * @return array
  */
-function local_airpay_integrations_get_recommendations(int $userid, int $limit = 3): array {
-    if (!class_exists('\local_airpay_integrations\ai_recommender')) {
+function local_sentientia_integrations_get_recommendations(int $userid, int $limit = 3): array {
+    if (!class_exists('\local_sentientia_integrations\ai_recommender')) {
         return [];
     }
-    return \local_airpay_integrations\ai_recommender::get_recommendations($userid, $limit);
+    return \local_sentientia_integrations\ai_recommender::get_recommendations($userid, $limit);
 }
 
 /**
@@ -30,15 +30,15 @@ function local_airpay_integrations_get_recommendations(int $userid, int $limit =
  * @param string $feature Feature key (ai, sentientia, m365, teams, hrms)
  * @return bool
  */
-function local_airpay_integrations_is_enabled(string $feature): bool {
-    return !empty(get_config('local_airpay_integrations', $feature . '_enable'));
+function local_sentientia_integrations_is_enabled(string $feature): bool {
+    return !empty(get_config('local_sentientia_integrations', $feature . '_enable'));
 }
 
 /**
  * Get integration status for admin dashboard display.
  * Returns status of all configured integrations.
  */
-function local_airpay_integrations_get_status(): array {
+function local_sentientia_integrations_get_status(): array {
     $features = [
         'ai' => ['label' => 'AI Features', 'icon' => 'magic'],
         'sentientia' => ['label' => 'SENTIENTIA Pipeline', 'icon' => 'microphone'],
@@ -49,7 +49,7 @@ function local_airpay_integrations_get_status(): array {
 
     $status = [];
     foreach ($features as $key => $info) {
-        $enabled = local_airpay_integrations_is_enabled($key);
+        $enabled = local_sentientia_integrations_is_enabled($key);
         $status[] = [
             'key' => $key,
             'label' => $info['label'],

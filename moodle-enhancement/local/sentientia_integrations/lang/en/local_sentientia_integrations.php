@@ -66,4 +66,4 @@ $string['gamification_leaderboard_enable'] = 'Enable Department Leaderboards';
 $string['gamification_leaderboard_desc'] = 'Show leaderboards filtered by costcenter/department.';
 
 // Privacy.
-$string['privacy:metadata'] = 'The Airpay airpay_integrations plugin does not store personal data in plugin-owned tables; user state lives on core Sentientia LMS tables exported by their respective providers.';
+$string['privacy:metadata'] = 'The Airpay sentientia_integrations plugin does not store personal data in plugin-owned tables; user state lives on core Sentientia LMS tables exported by their respective providers.';

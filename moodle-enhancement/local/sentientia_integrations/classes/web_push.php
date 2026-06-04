@@ -6,11 +6,11 @@
  *
  * Configuration: Site Admin → Plugins → Airpay Integrations → Push Notifications
  *
- * @package    local_airpay_integrations
+ * @package    local_sentientia_integrations
  * @copyright  2026 Airpay Payment Services
  */
 
-namespace local_airpay_integrations;
+namespace local_sentientia_integrations;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -20,8 +20,8 @@ class web_push {
      * Check if web push is enabled and configured.
      */
     public static function is_enabled(): bool {
-        return !empty(get_config('local_airpay_integrations', 'webpush_enable'))
-            && !empty(get_config('local_airpay_integrations', 'fcm_server_key'));
+        return !empty(get_config('local_sentientia_integrations', 'webpush_enable'))
+            && !empty(get_config('local_sentientia_integrations', 'fcm_server_key'));
     }
 
     /**
@@ -40,7 +40,7 @@ class web_push {
             return false;
         }
 
-        $serverkey = get_config('local_airpay_integrations', 'fcm_server_key');
+        $serverkey = get_config('local_sentientia_integrations', 'fcm_server_key');
 
         $payload = [
             'to' => $token,

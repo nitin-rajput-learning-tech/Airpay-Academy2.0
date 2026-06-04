@@ -3,15 +3,15 @@
 // License http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 defined('MOODLE_INTERNAL') || die();
 
-function xmldb_local_airpay_integrations_upgrade(int $oldversion): bool {
+function xmldb_local_sentientia_integrations_upgrade(int $oldversion): bool {
     global $DB;
     $dbman = $DB->get_manager();
 
     // 2026050700 — first install.xml shipment. Closes the runtime bug
-    // where webhook.php inserts into local_airpay_integration_log but the
+    // where webhook.php inserts into local_sentientia_integration_log but the
     // table never existed (INTEGRATIONS-AUDIT.md §4.1).
     if ($oldversion < 2026050700) {
-        $tbl = new xmldb_table('local_airpay_integration_log');
+        $tbl = new xmldb_table('local_sentientia_integration_log');
         if (!$dbman->table_exists($tbl)) {
             $tbl->add_field('id',          XMLDB_TYPE_INTEGER, '10',  null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
             $tbl->add_field('source',      XMLDB_TYPE_CHAR,    '50',  null, XMLDB_NOTNULL);
@@ -25,7 +25,7 @@ function xmldb_local_airpay_integrations_upgrade(int $oldversion): bool {
             $tbl->add_index('idx_timecreated',   XMLDB_INDEX_NOTUNIQUE, ['timecreated']);
             $dbman->create_table($tbl);
         }
-        upgrade_plugin_savepoint(true, 2026050700, 'local', 'airpay_integrations');
+        upgrade_plugin_savepoint(true, 2026050700, 'local', 'sentientia_integrations');
     }
 
     return true;
