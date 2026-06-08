@@ -140,6 +140,22 @@ sed split, scope broadened to blocks/mod/payment, same-name rename guard.
 (email_log, lp_users, customers, ratings, marketplace) - refs only, no DB tables exist, so
 harmless; de-brand opportunistically. (b) junk dir `public/local$name/` in the LOCAL CLONE
 ONLY (not in git, not loaded by Moodle, stale airpay copies from an early unexpanded-`$name`
-script) - safe to delete with [CONFIRM].
+script) - safe to delete with [CONFIRM]. **DONE 2026-06-08** (purged - 2,514 untracked files,
+real `local/` intact, nothing in git).
+
+**(c) FUNCTIONAL follow-up - stale compiled AMD bundles (found 2026-06-08).** The rename `sed`
+rewrote `amd/src/*.js` + `db/services.php` to `local_sentientia_*` but **skipped the compiled
+`amd/build/*.min.js`** - which is what Moodle actually serves to the browser. Repo @ `6d550dd57`:
+**31 `.min.js` / 296 occ** of `local_airpay_*` under `moodle-enhancement/local/` (30 renamed
+`sentientia_*` plugins + `airpay_ratings`, the un-renamed reverted one). Every renamed plugin's
+`db/services.php` is alias-free, so those bundles call WS functions that no longer exist ->
+`invalid function` at runtime on the affected AJAX actions (challenge join/leave/delete, classroom
+status/attendance/unenrol/audience-preview, assistant ask, users filter, program/evaluation/exam/
+report/role/org/notification/skill actions). NOT cosmetic - it breaks those actions wherever the
+renamed plugins are served. **Fix:** rebuild with `grunt amd` (or re-`sed` the `build/` bundles)
+per affected plugin + redeploy, before serving the renamed plugins anywhere. **Driver gap to close:**
+add an "`amd/build/**` must be 0 `local_airpay_`" grep-gate to `tools/rename_plugin.sh` - the ADR-022
+batch-1 rehearsal doc already prescribed the `grunt amd` step, but it was not carried into the bulk
+driver.
 The caps-heavy tier (`courses` 10c, `users` 7c, `cart`/`proctoring` 5c, etc.) is each its
 own rehearsed migration + maintenance-window deploy per the ordering above.
