@@ -16,7 +16,7 @@ defined('MOODLE_INTERNAL') || die();
  *     contract — the block doesn't render at all unless the viewer
  *     is a site administrator)
  *   - get_content() returns null when local_airpay_email_log table
- *     is missing (defensive guard for when airpay_emails is
+ *     is missing (defensive guard for when sentientia_emails is
  *     uninstalled)
  *   - get_content() returns the rendered widget when a site admin
  *     is logged in

@@ -12,5 +12,5 @@ $plugin->release   = '1.0.0';
 $plugin->dependencies = [
     // Reads local_airpay_email_log for the certificate-delivery stats
     // surfaced in the widget.
-    'local_airpay_emails' => 2026051302,
+    'local_sentientia_emails' => 2026051302,
 ];

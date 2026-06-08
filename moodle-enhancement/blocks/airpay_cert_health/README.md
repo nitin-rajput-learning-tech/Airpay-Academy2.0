@@ -7,7 +7,7 @@ certificate-email delivery health at-a-glance.
 |---|---|
 | Component | `block_airpay_cert_health` |
 | Version | `2026051300` (1.0.0) |
-| Depends on | `local_airpay_emails` >= 2026051302 |
+| Depends on | `local_sentientia_emails` >= 2026051302 |
 | Maturity | STABLE |
 
 ## What it does
@@ -22,7 +22,7 @@ non-null) and presents three KPI cards over a 7-day rolling window:
 | **Failed sends (7d)** — Failed count | OK if zero; Critical at any non-zero value |
 | **Suppressed sends (7d)** — User-opt-out + noemailever count | OK if zero; Warning at non-zero (informational) |
 
-Footer link drills into `/local/airpay_emails/manage.php?tab=logs`
+Footer link drills into `/local/sentientia_emails/manage.php?tab=logs`
 for the full audit table.
 
 ## Accessibility
@@ -67,6 +67,6 @@ Also wired into pre_deploy_validate.sh Gate 6 alongside
 ## Defensive guards
 
 `get_content()` checks `local_airpay_email_log` table existence
-before querying. If the `local_airpay_emails` plugin is uninstalled
+before querying. If the `local_sentientia_emails` plugin is uninstalled
 or disabled, the block silently hides (returns null) rather than
 throwing.

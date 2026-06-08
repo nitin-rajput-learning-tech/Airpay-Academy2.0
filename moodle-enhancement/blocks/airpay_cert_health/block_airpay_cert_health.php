@@ -14,7 +14,7 @@ defined('MOODLE_INTERNAL') || die();
  *   - count of FAILED sends in the last 7 days
  *   - count of SUPPRESSED sends in the last 7 days
  *     (user-opt-out or local-dev $CFG->noemailever)
- *   - drill-down link to /local/airpay_emails/cli/cert_emails_report.php
+ *   - drill-down link to /local/sentientia_emails/cli/cert_emails_report.php
  *     via the manage.php logs tab, with the same since/tenant filter.
  *
  * Same design and a11y pattern as block_airpay_cron_health:
@@ -66,7 +66,7 @@ class block_airpay_cert_health extends block_base {
             return null;
         }
 
-        // The block depends on local_airpay_emails — bail gracefully
+        // The block depends on local_sentientia_emails — bail gracefully
         // if the table isn't present (e.g. plugin disabled during
         // operational triage).
         if (!$DB->get_manager()->table_exists('local_airpay_email_log')) {
@@ -134,7 +134,7 @@ class block_airpay_cert_health extends block_base {
         // Footer link → drills into the full logs tab.
         $html .= \html_writer::tag('div',
             \html_writer::link(
-                new \moodle_url('/local/airpay_emails/manage.php',
+                new \moodle_url('/local/sentientia_emails/manage.php',
                     ['tab' => 'logs']),
                 get_string('view_full_log', 'block_airpay_cert_health')),
             ['class' => 'airpay-cert-health__footer-link',

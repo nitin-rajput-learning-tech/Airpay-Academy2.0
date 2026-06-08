@@ -102,8 +102,8 @@ class block_test extends \advanced_testcase {
         // Seed one stuck Airpay task: nextruntime 12 hours in the past.
         $now = time();
         $DB->insert_record('task_scheduled', (object) [
-            'classname'    => '\\local_airpay_recompletion\\task\\run_rules',
-            'component'    => 'local_airpay_recompletion',
+            'classname'    => '\\local_sentientia_recompletion\\task\\run_rules',
+            'component'    => 'local_sentientia_recompletion',
             'lastruntime'  => $now - 86400,
             'nextruntime'  => $now - 43200,
             'blocking'     => 0,
