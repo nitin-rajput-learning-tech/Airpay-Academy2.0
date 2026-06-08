@@ -81,10 +81,10 @@ class team_manager {
         // 3) Overdue compliance items (if the table exists).
         $overdue_map = [];
         $dbman = $DB->get_manager();
-        if ($dbman->table_exists('local_airpay_compliance_snapshot')) {
+        if ($dbman->table_exists('local_sentientia_compliance_snapshot')) {
             $rows = $DB->get_records_sql(
                 "SELECT userid, COUNT(*) AS cnt
-                   FROM {local_airpay_compliance_snapshot}
+                   FROM {local_sentientia_compliance_snapshot}
                   WHERE status = 'overdue' AND userid $insql
                GROUP BY userid",
                 $inparams);

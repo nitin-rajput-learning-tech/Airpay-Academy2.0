@@ -108,10 +108,10 @@ class daily_digest extends \core\task\scheduled_task {
         }
 
         // 2. Compliance deadlines approaching (next 7 days).
-        if ($DB->get_manager()->table_exists('local_airpay_compliance_snapshot')) {
+        if ($DB->get_manager()->table_exists('local_sentientia_compliance_snapshot')) {
             $deadlines = $DB->get_records_sql(
                 "SELECT cs.courseid, c.fullname, cs.deadline
-                   FROM {local_airpay_compliance_snapshot} cs
+                   FROM {local_sentientia_compliance_snapshot} cs
                    JOIN {course} c ON c.id = cs.courseid
                   WHERE cs.userid = :uid AND cs.status IN ('not_started', 'in_progress')
                     AND cs.deadline > 0 AND cs.deadline < :soon
