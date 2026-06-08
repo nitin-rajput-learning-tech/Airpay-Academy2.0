@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/quiz/accessrule/airpay_proctoring/db" VERSION="20260512"
+<XMLDB PATH="mod/quiz/accessrule/sentientia_proctoring/db" VERSION="20260512"
        COMMENT="Airpay proctoring quiz access rule — per-quiz settings table">
   <TABLES>
-    <TABLE NAME="quizaccess_airpay_proctor"
+    <TABLE NAME="quizaccess_sentientia_proctor"
            COMMENT="Per-quiz proctoring settings. Replaces the get_config/set_config keyed-by-quizid pattern that polluted mdl_config_plugins at 1000+ quizzes scale (Phase 8 audit finding N7).">
       <FIELDS>
         <FIELD NAME="id"           TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>

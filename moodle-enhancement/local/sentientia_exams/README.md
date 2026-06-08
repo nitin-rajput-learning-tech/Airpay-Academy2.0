@@ -30,7 +30,7 @@ mastery score). Replacement for BizLMS `local_onlineexams`.
 ## Phase 8.1 dependency
 
 The proctoring toggle on the create-exam form drives the `quiz_X_enabled`
-flag in `quizaccess_airpay_proctoring`. Phase 9 N7 migrated that flag
+flag in `quizaccess_sentientia_proctoring`. Phase 9 N7 migrated that flag
 from `mdl_config_plugins` to a relational table — the integration
 remains transparent to this plugin.
 

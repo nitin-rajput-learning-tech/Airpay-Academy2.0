@@ -2,7 +2,7 @@
 
 Robust proctoring for hiring assessments + skill-evaluation quizzes.
 Three-layer architecture: identity verification + live recording + AI
-behaviour flagging. Pairs with the `quizaccess_airpay_proctoring`
+behaviour flagging. Pairs with the `quizaccess_sentientia_proctoring`
 sub-plugin that gates the quiz `attempt.php` lifecycle.
 
 | Field | Value |
