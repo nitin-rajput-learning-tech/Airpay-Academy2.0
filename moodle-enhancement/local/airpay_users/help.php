@@ -59,7 +59,7 @@ $links = [
         'icon' => 'fa-bell',
         'title' => 'Notification preferences',
         'desc'  => 'Choose how and when to be notified.',
-        'url'   => (new moodle_url('/local/airpay_notifications/prefs.php'))->out(false),
+        'url'   => (new moodle_url('/local/sentientia_notifications/prefs.php'))->out(false),
     ],
     [
         'icon' => 'fa-lock',

@@ -35,7 +35,7 @@ defined('MOODLE_INTERNAL') || die();
  * an actual architectural invariant: ANY future caller that needs role
  * tier should consume `role_detector::detect()` rather than reimplement.
  *
- * Detection rules (mirrors `local/airpay_compliance_report/index.php`
+ * Detection rules (mirrors `local/sentientia_compliance_report/index.php`
  * page-layer auth and `layout/dashboard.php` view selection):
  *
  *   issiteadmin = is_siteadmin($USER)

@@ -509,7 +509,7 @@ if (isloggedin() && !isguestuser()) {
                  'hasstats' => ($classroomcount > 0), 'stats' => [
                     ['statval' => $classroomcount, 'statlabel' => 'Total'],
                 ]],
-                ['label' => 'Compliance', 'icon' => 'shield', 'url' => (new moodle_url('/local/airpay_compliance_report/index.php'))->out(false), 'color' => '#16a34a',
+                ['label' => 'Compliance', 'icon' => 'shield', 'url' => (new moodle_url('/local/sentientia_compliance_report/index.php'))->out(false), 'color' => '#16a34a',
                  'hasstats' => true, 'stats' => (function() use ($DB) {
                     try {
                         $mandatory = $DB->count_records('local_airpay_compl_courses');

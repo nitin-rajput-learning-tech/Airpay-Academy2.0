@@ -10,7 +10,7 @@ defined('MOODLE_INTERNAL') || die();
  * `rank_change` is the only provider local_sentientia_leaderboard ships.
  * It's the channel through which {@see \local_sentientia_leaderboard\message_helper}
  * delivers "you moved up", "you dropped", and "you cracked the top 10"
- * notifications. Defaults follow the airpay_notifications pattern:
+ * notifications. Defaults follow the sentientia_notifications pattern:
  * permitted on every channel, popup + email enabled out of the box so
  * learners get the in-app toast even before they configure preferences.
  *

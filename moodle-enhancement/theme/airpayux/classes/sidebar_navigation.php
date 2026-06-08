@@ -41,7 +41,7 @@ class sidebar_navigation {
      * Goal A audit Bug #11 (2026-05-22) — Compliance Officer / HR / Trainer
      * tier. Hold `moodle/site:viewreports` system cap without being a higher-
      * tier role. Joseph Mandapati (Compliance Officer) hit this — he could
-     * load /local/airpay_compliance_report/ by URL but the sidebar didn't
+     * load /local/sentientia_compliance_report/ by URL but the sidebar didn't
      * surface it. The page-layer auth already accepts viewreports, so the
      * sidebar should reflect that.
      */
@@ -148,16 +148,16 @@ class sidebar_navigation {
             $items[] = $this->divider();
             $items[] = $this->item('Reports', 'fa-chart-bar', '/local/sentientia_reports/index.php', $currenturl);
             $items[] = $this->item('Analytics', 'fa-chart-line', '/local/sentientia_analytics/index.php', $currenturl);
-            $items[] = $this->item('Compliance', 'fa-shield', '/local/airpay_compliance_report/index.php', $currenturl);
+            $items[] = $this->item('Compliance', 'fa-shield', '/local/sentientia_compliance_report/index.php', $currenturl);
 
             // ── Platform ──
             $items[] = $this->divider();
             $items[] = $this->item('Organisation', 'fa-sitemap', '/local/airpay_org/admin.php', $currenturl);
             $items[] = $this->item('Skills', 'fa-bullseye', '/local/airpay_skills/admin.php', $currenturl);
-            $items[] = $this->item('Notifications', 'fa-bell', '/local/airpay_notifications/index.php', $currenturl);
-            $items[] = $this->item('Evaluations', 'fa-clipboard', '/local/airpay_evaluation/index.php', $currenturl);
+            $items[] = $this->item('Notifications', 'fa-bell', '/local/sentientia_notifications/index.php', $currenturl);
+            $items[] = $this->item('Evaluations', 'fa-clipboard', '/local/sentientia_evaluation/index.php', $currenturl);
             $items[] = $this->item('Certificates', 'fa-certificate', '/admin/tool/certificate/manage_templates.php', $currenturl);
-            $items[] = $this->item('Emails', 'fa-envelope', '/local/airpay_emails/manage.php', $currenturl);
+            $items[] = $this->item('Emails', 'fa-envelope', '/local/sentientia_emails/manage.php', $currenturl);
             $items[] = $this->item('Privacy', 'fa-lock', '/local/sentientia_privacy/index.php', $currenturl);
             $items[] = $this->item('Site Admin', 'fa-cog', '/admin/search.php', $currenturl);
             return $items;
@@ -218,7 +218,7 @@ class sidebar_navigation {
                 $items[] = $this->item('Reports', 'fa-bar-chart', '/local/sentientia_reports/index.php', $currenturl);
             }
             $items[] = $this->item('Analytics', 'fa-line-chart', '/local/sentientia_analytics/index.php', $currenturl);
-            $items[] = $this->item('Compliance', 'fa-shield', '/local/airpay_compliance_report/index.php', $currenturl);
+            $items[] = $this->item('Compliance', 'fa-shield', '/local/sentientia_compliance_report/index.php', $currenturl);
             return $items;
         }
 
@@ -229,7 +229,7 @@ class sidebar_navigation {
         if ($this->ismanager) {
             $items[] = $this->item('Dashboard', 'fa-home', '/my/', $currenturl, null, ['/my/index.php']);
             $items[] = $this->item('My Team', 'fa-users', '/local/sentientia_manager/index.php', $currenturl);
-            $items[] = $this->item('Compliance', 'fa-shield-alt', '/local/airpay_compliance_report/index.php', $currenturl);
+            $items[] = $this->item('Compliance', 'fa-shield-alt', '/local/sentientia_compliance_report/index.php', $currenturl);
             // T-02 (QA Walk 2026-05-29): Sentientia Live trainer dashboard.
             // Gated by can_create_live_session() so it only shows when the
             // live.enabled flag is on AND the user holds live:create (true for
@@ -311,13 +311,13 @@ class sidebar_navigation {
         // Goal A audit Bug #11 (2026-05-22) — Compliance Officer / HR /
         // Trainer can hold `moodle/site:viewreports` without being Site
         // Admin / L&D Admin / Manager. The page-layer auth already
-        // accepts this cap (see local/airpay_compliance_report/index.php
+        // accepts this cap (see local/sentientia_compliance_report/index.php
         // line ~34); the sidebar should mirror that so the link is
         // reachable without typing a URL. Inserted before Certificates
         // so it sits with the high-value workflow links.
         if ($this->iscomplianceuser) {
             $items[] = $this->item('Compliance', 'fa-shield',
-                '/local/airpay_compliance_report/index.php', $currenturl);
+                '/local/sentientia_compliance_report/index.php', $currenturl);
         }
 
         // E-02 (QA Walk 2026-05-29): surface the learner's own Skills
@@ -483,7 +483,7 @@ class sidebar_navigation {
      * `iscomplianceuser` stays as a sidebar-only concept: a learner-tier
      * user who still has report-view cap and should see a Compliance
      * link inserted in their otherwise-Learner sidebar. The page-layer
-     * (auth at /local/airpay_compliance_report/index.php) doesn't need
+     * (auth at /local/sentientia_compliance_report/index.php) doesn't need
      * this distinction; only the sidebar does.
      */
     private function detect_roles(): void {

@@ -167,7 +167,7 @@ if ($nfailures > 0) {
         }
         cli_writeln('');
     }
-    cli_writeln('Fix pattern: see local/airpay_request/classes/external/list_mine.php');
+    cli_writeln('Fix pattern: see local/sentientia_request/classes/external/list_mine.php');
     cli_writeln('for the canonical execute_parameters() shape.');
     cli_writeln('');
     exit(1);

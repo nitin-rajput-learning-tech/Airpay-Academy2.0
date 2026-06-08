@@ -10,7 +10,7 @@ defined('MOODLE_INTERNAL') || die();
  * W1-9 (2026-05-15) — fired when a user finishes all mandatory levels of a program.
  *
  * Listened to by:
- *   - `\local_airpay_evaluation\observer::program_completed` (W1-5) — queues
+ *   - `\local_sentientia_evaluation\observer::program_completed` (W1-5) — queues
  *     post-program evaluation forms with the configured `days_after` delay.
  *   - logstore_standard_log — SOX/SIEM audit trail.
  *

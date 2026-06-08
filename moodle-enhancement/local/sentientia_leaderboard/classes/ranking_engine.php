@@ -13,7 +13,7 @@ defined('MOODLE_INTERNAL') || die();
  * wholesale: delete every row for a board, recompute, insert. Idempotent.
  *
  * The competition-ranking algorithm (1, 2, 2, 4) mirrors
- * local_airpay_challenge\leaderboard_manager — ties take the same rank,
+ * local_sentientia_challenge\leaderboard_manager — ties take the same rank,
  * the next rank skips. This matches FIDE chess + most sports usage.
  *
  * @package local_sentientia_leaderboard

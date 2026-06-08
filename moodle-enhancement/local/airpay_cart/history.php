@@ -35,7 +35,7 @@ $data = [
     // already HTML-escapes once on render, the browser auto-unescapes
     // once on dataset read; the extra `s()` makes JSON.parse() choke at
     // position 2 ("Expected property name or '}'"). Same shape as the
-    // airpay_request fix in commit 89fb2e713.
+    // sentientia_request fix in commit 89fb2e713.
     'columns_json' => json_encode($columns),
     'is_admin'     => false,
     'back_url'     => (new moodle_url('/local/airpay_cart/index.php'))->out(false),

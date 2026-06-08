@@ -50,13 +50,13 @@ class cron_health {
         '\\local_sentientia_recompletion\\task\\run_rules',
         '\\local_airpay_org\\task\\sync_cohorts',
         '\\local_airpay_proctoring\\task\\purge_old_recordings',
-        '\\local_airpay_request\\task\\escalate_overdue',
-        '\\local_airpay_request\\task\\auto_expire',
-        '\\local_airpay_notifications\\task\\dispatcher',
-        '\\local_airpay_compliance_report\\task\\refresh_aggregates',
+        '\\local_sentientia_request\\task\\escalate_overdue',
+        '\\local_sentientia_request\\task\\auto_expire',
+        '\\local_sentientia_notifications\\task\\dispatcher',
+        '\\local_sentientia_compliance_report\\task\\refresh_aggregates',
         '\\local_sentientia_integrations\\task\\sync_keka_users',
-        '\\local_airpay_emails\\task\\dispatcher',
-        '\\local_airpay_emails\\task\\cleanup',
+        '\\local_sentientia_emails\\task\\dispatcher',
+        '\\local_sentientia_emails\\task\\cleanup',
     ];
 
     /**

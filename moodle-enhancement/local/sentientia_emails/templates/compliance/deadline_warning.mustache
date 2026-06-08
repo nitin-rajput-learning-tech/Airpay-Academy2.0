@@ -1,0 +1,45 @@
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+<tr><td style="font-family:'Montserrat',Arial,sans-serif; font-size:15px; line-height:24px; color:#1a1a2e;">
+
+    <p style="margin:0 0 16px;">Hi <strong>{{firstname}}</strong>,</p>
+
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 16px;">
+    <tr>
+        <td bgcolor="#fef3c7" style="background-color:#fef3c7; padding:14px 16px; border-radius:8px; border-left:4px solid #d97706;">
+            <span style="font-family:'Montserrat',Arial,sans-serif; font-size:20px; font-weight:700; color:#d97706;">
+                &#9888;&#65039; {{deadline_days}} Days Left
+            </span><br/>
+            <span style="font-family:'Montserrat',Arial,sans-serif; font-size:14px; color:#5a6070; line-height:22px;">
+                Your mandatory compliance course is due on <strong>{{deadline_date}}</strong>.
+                {{#progress}}Your current progress is <strong>{{progress}}%</strong>.{{/progress}}
+                {{^progress}}You have not started this course yet.{{/progress}}
+                Please complete it before the deadline to avoid escalation.
+            </span>
+        </td>
+    </tr>
+    </table>
+
+</td></tr>
+</table>
+
+{{> local_sentientia_emails/partials/course_info_box}}
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0;">
+<tr>
+    <td align="center" bgcolor="#d97706" style="background-color:#d97706; border-radius:8px;">
+        <a href="{{course_url}}" target="_blank" style="display:inline-block; padding:14px 32px; font-family:'Montserrat',Arial,sans-serif; font-size:15px; font-weight:600; color:#ffffff; text-decoration:none; line-height:20px;">
+            Complete Now
+        </a>
+    </td>
+</tr>
+</table>
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+<tr>
+    <td style="font-family:'Montserrat',Arial,sans-serif; font-size:12px; color:#8890a0; padding:8px 0;">
+        This is an automated compliance reminder. Non-completion after the deadline may result in escalation to your reporting manager.
+    </td>
+</tr>
+</table>
+
+{{> local_sentientia_emails/partials/footer_note}}

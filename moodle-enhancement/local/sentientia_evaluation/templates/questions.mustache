@@ -1,0 +1,186 @@
+{{!
+    Airpay Training Evaluations — question builder.
+    @template local_sentientia_evaluation/questions
+}}
+<style>
+    [data-region="airpay-eval-questions"] .dropdown-toggle.no-arrow::after { display: none !important; }
+    [data-region="airpay-eval-questions"] .dropdown-toggle.no-arrow { box-shadow: none; background: none; border: none; }
+    [data-region="airpay-eval-questions"] .dropdown-toggle.no-arrow:hover { color: var(--ap-color-primary, #0066A7) !important; }
+
+    [data-region="airpay-eval-questions"] .question-item {
+        background: var(--ap-color-bg-surface, #fff);
+        border: 1px solid var(--ap-color-border, #e2e6ef);
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        cursor: move;
+        transition: box-shadow 0.15s ease;
+    }
+    [data-region="airpay-eval-questions"] .question-item:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    [data-region="airpay-eval-questions"] .question-item.dragging {
+        opacity: 0.5;
+    }
+    [data-region="airpay-eval-questions"] .question-item.drag-over {
+        border-color: var(--ap-color-primary, #0066A7);
+        box-shadow: 0 0 0 2px rgba(0,102,167,0.2);
+    }
+    [data-region="airpay-eval-questions"] .question-handle {
+        color: #999;
+        cursor: grab;
+        padding: 4px;
+        font-size: 18px;
+    }
+    [data-region="airpay-eval-questions"] .question-position {
+        background: var(--ap-color-primary, #0066A7);
+        color: #fff;
+        width: 28px; height: 28px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+    [data-region="airpay-eval-questions"] .question-body {
+        flex: 1;
+    }
+    [data-region="airpay-eval-questions"] .question-meta {
+        font-size: 0.8rem;
+        color: #666;
+        margin-top: 4px;
+    }
+    [data-region="airpay-eval-questions"] .question-options {
+        margin-top: 8px;
+        padding-left: 20px;
+        font-size: 0.85rem;
+        color: #555;
+    }
+    [data-region="airpay-eval-questions"] .question-options li { margin-bottom: 2px; }
+    [data-region="airpay-eval-questions"] .badge-required {
+        background: #fee2e2; color: #b91c1c;
+        font-weight: 500;
+    }
+</style>
+
+<div data-region="airpay-eval-questions" data-evaluationid="{{evaluationid}}">
+
+<div class="ap-page-header d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <a href="{{{backurl}}}" class="text-muted small text-decoration-none">
+            <i class="fa fa-arrow-left fa-fw"></i> Back to Evaluations
+        </a>
+        <h2 class="mb-1 mt-2" style="font-weight: 700;">{{evalname}}</h2>
+        {{#evaldesc}}<p class="text-muted mb-0">{{.}}</p>{{/evaldesc}}
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{{ export_template_url }}}"
+           class="btn btn-outline-secondary btn-sm">
+            <i class="fa fa-download fa-fw"></i> Export template
+        </a>
+        <a href="#" class="btn btn-primary btn-sm" data-action="add-question">
+            <i class="fa fa-plus fa-fw"></i> Add Question
+        </a>
+    </div>
+</div>
+
+{{#status_banner_label}}
+<div class="alert {{status_banner_css}} d-flex align-items-center mb-4">
+    <i class="fa {{status_banner_icon}} fa-fw me-2"></i>
+    <div>{{.}}</div>
+</div>
+{{/status_banner_label}}
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
+            <div style="font-size: 1.75rem; font-weight: 800; color: var(--ap-color-primary, #0066A7);">{{qcount}}</div>
+            <div class="text-muted small text-uppercase">Questions</div>
+        </div></div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
+            <div style="font-size: 1.75rem; font-weight: 800; color: var(--ap-color-accent, #0f7a73);">{{rcount}}</div>
+            <div class="text-muted small text-uppercase">Submitted Responses</div>
+        </div></div>
+    </div>
+</div>
+
+{{#has_questions}}
+<div class="mb-3 d-flex justify-content-between align-items-center">
+    <p class="text-muted small mb-0">
+        <i class="fa fa-arrows-v fa-fw"></i> Drag questions to reorder. Changes save automatically.
+    </p>
+</div>
+<div id="airpay-question-list">
+    {{#questions}}
+    <div class="question-item" data-questionid="{{id}}" draggable="true">
+        <span class="question-handle" title="Drag to reorder">
+            <i class="fa fa-bars"></i>
+        </span>
+        <span class="question-position">{{position}}</span>
+        <div class="question-body">
+            <div class="fw-semibold">{{questiontext}}</div>
+            <div class="question-meta">
+                <span class="badge bg-light text-dark">{{typelabel}}</span>
+                {{#required}}<span class="badge badge-required ms-1">Required</span>{{/required}}
+                {{^required}}<span class="badge bg-light text-muted ms-1">Optional</span>{{/required}}
+                {{#is_anonymous}}
+                <span class="badge ms-1"
+                      style="background-color:#5a6070;color:#fff;"
+                      title="Responder identity hidden for this question">
+                    <i class="fa fa-user-secret me-1" aria-hidden="true"></i>Anonymous
+                </span>
+                {{/is_anonymous}}
+            </div>
+            {{#has_options}}
+            <ol class="question-options mb-0">
+                {{#options}}<li>{{.}}</li>{{/options}}
+            </ol>
+            {{/has_options}}
+        </div>
+        <div class="dropdown">
+            <button type="button" class="btn btn-sm btn-link text-muted p-0 dropdown-toggle no-arrow"
+                    data-toggle="dropdown" aria-expanded="false" aria-haspopup="true">
+                <i class="fa fa-ellipsis-v"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-right">
+                <li>
+                    <a class="dropdown-item" href="#"
+                       data-action="edit-question" data-questionid="{{id}}">
+                        <i class="fa fa-pencil fa-fw"></i> Edit
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a class="dropdown-item text-danger" href="#"
+                       data-action="delete-question" data-questionid="{{id}}">
+                        <i class="fa fa-trash fa-fw"></i> Delete
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    {{/questions}}
+</div>
+{{/has_questions}}
+
+{{^has_questions}}
+<div class="card border-0 shadow-sm"><div class="card-body text-center py-5">
+    <i class="fa fa-question-circle fa-3x text-muted mb-3 d-block"></i>
+    <h5 class="text-muted">No questions yet</h5>
+    <p class="text-muted mb-3">Add questions to define what learners will respond to. Choose from rating scales, NPS, multiple choice, yes/no, or free text.</p>
+    <a href="#" class="btn btn-primary btn-sm" data-action="add-question">
+        <i class="fa fa-plus fa-fw"></i> Add First Question
+    </a>
+</div></div>
+{{/has_questions}}
+
+</div>
+{{#js}}
+require(['local_sentientia_evaluation/question_actions'], function(QuestionActions) {
+    QuestionActions.init();
+});
+{{/js}}

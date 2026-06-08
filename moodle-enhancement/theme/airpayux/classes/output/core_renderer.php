@@ -1012,11 +1012,11 @@ JS;
         //     $gamificationpage = false;
         // }
         $challenge_element = false;
-        $challenge_dir = \core_component::get_plugin_directory('local', 'airpay_challenge')
+        $challenge_dir = \core_component::get_plugin_directory('local', 'sentientia_challenge')
                       ?: \core_component::get_plugin_directory('local', 'challenge');
         if (!empty($challenge_dir) && (int)get_config('', 'local_challenge_enable_challenge')) {
             try {
-                $render_class = $PAGE->get_renderer('local_airpay_challenge');
+                $render_class = $PAGE->get_renderer('local_sentientia_challenge');
                 $challenge_element = $render_class->render_challenge_object('local_airpay_courses', $courseid);
             } catch (\Throwable $e) {
                 $challenge_element = false;

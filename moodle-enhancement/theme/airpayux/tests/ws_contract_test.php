@@ -75,7 +75,7 @@ final class ws_contract_test extends \advanced_testcase {
                 . "WS it consumes. Each WS must declare all 6 with "
                 . "VALUE_DEFAULT. Failures:\n\n"
                 . implode("\n\n", $msgs)
-                . "\n\nCanonical shape: local/airpay_request/classes/external/list_mine.php"
+                . "\n\nCanonical shape: local/sentientia_request/classes/external/list_mine.php"
             );
         }
 

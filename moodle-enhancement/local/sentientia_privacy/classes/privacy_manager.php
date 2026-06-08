@@ -167,12 +167,12 @@ class privacy_manager {
             $DB->delete_records('local_sentientia_chat_log', ['userid' => $userid]);
         }
         // Notification log.
-        if ($DB->get_manager()->table_exists('local_airpay_notif_log')) {
-            $DB->delete_records('local_airpay_notif_log', ['userid' => $userid]);
+        if ($DB->get_manager()->table_exists('local_sentientia_notif_log')) {
+            $DB->delete_records('local_sentientia_notif_log', ['userid' => $userid]);
         }
         // Notification preferences.
-        if ($DB->get_manager()->table_exists('local_airpay_notif_prefs')) {
-            $DB->delete_records('local_airpay_notif_prefs', ['userid' => $userid]);
+        if ($DB->get_manager()->table_exists('local_sentientia_notif_prefs')) {
+            $DB->delete_records('local_sentientia_notif_prefs', ['userid' => $userid]);
         }
         // User skills.
         if ($DB->get_manager()->table_exists('local_airpay_user_skills')) {
@@ -388,10 +388,10 @@ class privacy_manager {
 
         // Render branded template.
         $html = '';
-        if (class_exists('\\local_airpay_emails\\email_renderer')) {
+        if (class_exists('\\local_sentientia_emails\\email_renderer')) {
             try {
-                $html = \local_airpay_emails\email_renderer::render(
-                    'local_airpay_emails/privacy/deletion_request_admin', [
+                $html = \local_sentientia_emails\email_renderer::render(
+                    'local_sentientia_emails/privacy/deletion_request_admin', [
                         'firstname'        => format_string($user->firstname),
                         'lastname'         => format_string($user->lastname),
                         'fullname'         => format_string($user->firstname . ' ' . $user->lastname),
@@ -442,10 +442,10 @@ class privacy_manager {
         // Render branded template for data export ready.
         $html = '';
         $user = $DB->get_record('user', ['id' => $userid], 'id, firstname');
-        if ($user && class_exists('\\local_airpay_emails\\email_renderer')) {
+        if ($user && class_exists('\\local_sentientia_emails\\email_renderer')) {
             try {
-                $html = \local_airpay_emails\email_renderer::render(
-                    'local_airpay_emails/privacy/data_export_ready', [
+                $html = \local_sentientia_emails\email_renderer::render(
+                    'local_sentientia_emails/privacy/data_export_ready', [
                         'firstname'        => format_string($user->firstname),
                         'download_url'     => (new \moodle_url('/local/sentientia_privacy/index.php'))->out(false),
                         'download_expiry'  => '72 hours',

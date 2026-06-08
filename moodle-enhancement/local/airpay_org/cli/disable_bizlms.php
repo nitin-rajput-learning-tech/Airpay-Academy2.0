@@ -56,7 +56,7 @@ $plugins = [
 
     // Already replaced (Phase 0 — pre-fork).
     'local_biz_cart'        => 'Replaced by sentientia_catalog commerce',
-    'local_notifications'   => 'Replaced by airpay_notifications',
+    'local_notifications'   => 'Replaced by sentientia_notifications',
     'local_myteam'          => 'Replaced by sentientia_manager',
 
     // Not used.

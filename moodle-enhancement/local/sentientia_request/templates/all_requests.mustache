@@ -1,0 +1,23 @@
+{{!
+    @template local_sentientia_request/all_requests
+}}
+<div class="container-fluid">
+    <h2 class="mb-3">{{#str}}allrequests, local_sentientia_request{{/str}}</h2>
+
+    <div data-region="datatable"
+         data-component="local_sentientia_request"
+         data-ws-name="local_sentientia_request_list_all"
+         data-columns="{{ columns_json }}"
+         data-default-sort="timecreated"
+         data-default-sortdir="desc"
+         data-extra-args='{}'>
+        <div class="text-center text-muted py-5">Loading...</div>
+    </div>
+</div>
+
+{{#js}}
+require(['theme_airpayux/datatable'],
+    function(Datatable) {
+        Datatable.init(document.querySelector('[data-region="datatable"]'));
+    });
+{{/js}}

@@ -1,0 +1,50 @@
+{{!
+    @template local_sentientia_notifications/notification_center
+
+    Notification dropdown for the navbar bell icon.
+    Groups notifications by type (Urgent, Learning, Achievement).
+
+    Context variables:
+    - notifications: array of {id, subject, message, channel, status, timecreated, timeago, type, is_unread, courseid}
+    - unread_count, has_notifications, has_unread
+}}
+<div class="airpay-notif" id="airpay-notification-center">
+    <div class="airpay-notif__header">
+        <strong>{{# str }}notifications, local_sentientia_notifications{{/ str }}</strong>
+        {{#has_unread}}
+        <a href="#" class="airpay-notif__markall" data-action="markallread">
+            {{# str }}markallread, local_sentientia_notifications{{/ str }}
+        </a>
+        {{/has_unread}}
+    </div>
+
+    {{#has_notifications}}
+    <div class="airpay-notif__list">
+        {{#notifications}}
+        <div class="airpay-notif__item {{#is_unread}}airpay-notif__item--unread{{/is_unread}}" data-notifid="{{id}}">
+            <div class="airpay-notif__icon airpay-notif__icon--{{type}}">
+                {{#is_urgent}}<i class="fa fa-exclamation-circle"></i>{{/is_urgent}}
+                {{#is_learning}}<i class="fa fa-book"></i>{{/is_learning}}
+                {{#is_achievement}}<i class="fa fa-trophy"></i>{{/is_achievement}}
+                {{#is_system}}<i class="fa fa-bell"></i>{{/is_system}}
+            </div>
+            <div class="airpay-notif__content">
+                <div class="airpay-notif__subject">{{subject}}</div>
+                <div class="airpay-notif__message">{{message}}</div>
+                <div class="airpay-notif__time">{{timeago}}</div>
+            </div>
+            {{#is_unread}}
+            <span class="airpay-notif__dot"></span>
+            {{/is_unread}}
+        </div>
+        {{/notifications}}
+    </div>
+    {{/has_notifications}}
+
+    {{^has_notifications}}
+    <div class="airpay-notif__empty">
+        <i class="fa fa-check-circle"></i>
+        <p>{{# str }}nonotifications, local_sentientia_notifications{{/ str }}</p>
+    </div>
+    {{/has_notifications}}
+</div>

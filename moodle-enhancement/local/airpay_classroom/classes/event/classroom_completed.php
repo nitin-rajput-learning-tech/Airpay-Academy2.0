@@ -10,7 +10,7 @@ defined('MOODLE_INTERNAL') || die();
  * W1-9 (2026-05-15) — fired when an admin closes a classroom (status → COMPLETED).
  *
  * Listened to by:
- *   - `\local_airpay_evaluation\observer::classroom_ended` (W1-5) — fans out
+ *   - `\local_sentientia_evaluation\observer::classroom_ended` (W1-5) — fans out
  *     post-classroom evaluation forms to all attendees.
  *   - logstore_standard_log — SOX/SIEM audit trail.
  *

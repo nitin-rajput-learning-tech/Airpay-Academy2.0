@@ -77,7 +77,7 @@ Site administration → Plugins → Local plugins → **Sentientia Core** →
 
 ## Not in this layer yet (later waves, human-gated)
 - **Wave 2 PR-2+**: the remaining `open_path` call-site migrations onto
-  `tenant_identity` (reviewed batches; `airpay_compliance_report` excluded while
+  `tenant_identity` (reviewed batches; `sentientia_compliance_report` excluded while
   it is active WIP, `_PATCHED` vendor files deferred to Wave 5).
 - The Sentientia tenant **registry** table + admin UI (Wave 4 — replaces the
   hardcoded `local_airpay_core\tenant::VALID_TENANTS`).

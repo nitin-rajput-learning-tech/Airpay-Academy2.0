@@ -1,6 +1,6 @@
 # local_sentientia_gamification
 
-Points + badges + streaks foundation. Consumed by `airpay_challenge`
+Points + badges + streaks foundation. Consumed by `sentientia_challenge`
 (workflow) and by every plugin that emits points-earning events.
 
 | Field | Value |
@@ -27,12 +27,12 @@ Points + badges + streaks foundation. Consumed by `airpay_challenge`
 ## Event observers
 
 Subscribes to Moodle core events `course_completed`, `quiz_attempt_submitted`,
-plus Airpay-specific events from `airpay_classroom` and `airpay_challenge`.
+plus Airpay-specific events from `airpay_classroom` and `sentientia_challenge`.
 
 ## Tier-1 work
 
 Built in commit `67a695cd8` (9 April 2026) as the Tier-1 gamification
-engine. Documented in `moodle-enhancement/state-cards/airpay_challenge-state.md`.
+engine. Documented in `moodle-enhancement/state-cards/sentientia_challenge-state.md`.
 
 ## Privacy / GDPR
 
@@ -43,7 +43,7 @@ rankings.
 
 ## Open backlog
 
-- Leaderboard widget integration with `airpay_challenge`.
+- Leaderboard widget integration with `sentientia_challenge`.
 - Badge issuance via Moodle core badges system (currently the badges
   are airpay-internal; Moodle's native `badge` subsystem is not yet
   wired up).

@@ -30,7 +30,7 @@ class channel_router {
      * each attempted channel in send_log.
      *
      * The email branch is currently a stub — in production, the
-     * existing local_airpay_emails cadence engine receives the call.
+     * existing local_sentientia_emails cadence engine receives the call.
      * For now we record a send_log row indicating the email handoff.
      *
      * @param int $userid
@@ -76,7 +76,7 @@ class channel_router {
         }
 
         // Terminal fallback — email. Iter 5 will wire this to the
-        // existing local_airpay_emails cadence engine; for now we
+        // existing local_sentientia_emails cadence engine; for now we
         // record a log row indicating handoff.
         $log_id = send_log::record([
             'userid'       => $userid,

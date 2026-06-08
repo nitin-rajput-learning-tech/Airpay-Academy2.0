@@ -15,7 +15,7 @@ use core_external\external_value;
 /**
  * Compliance report: per-day breakdown of clean / flagged / failed sessions.
  *
- * Used by airpay_compliance_report dashboard widget to show "proctoring
+ * Used by sentientia_compliance_report dashboard widget to show "proctoring
  * health" at-a-glance.
  */
 class compliance_report extends external_api {

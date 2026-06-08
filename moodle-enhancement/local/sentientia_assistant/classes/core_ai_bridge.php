@@ -122,7 +122,7 @@ class core_ai_bridge {
     /**
      * Translate text to a target language. Returns plain text.
      *
-     * Used by airpay_emails to send mailers to non-English-speaking learners
+     * Used by sentientia_emails to send mailers to non-English-speaking learners
      * in the Public tenant.
      */
     public static function translate_text(string $text, string $target_lang): string {

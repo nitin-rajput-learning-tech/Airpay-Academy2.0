@@ -1,0 +1,304 @@
+{{!
+    Admin response viewer with per-question aggregates.
+    @template local_sentientia_evaluation/responses
+}}
+<style>
+    [data-region="airpay-eval-responses"] .question-card {
+        background: var(--ap-color-bg-surface, #fff);
+        border: 1px solid var(--ap-color-border, #e2e6ef);
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 16px;
+    }
+    [data-region="airpay-eval-responses"] .question-position {
+        background: var(--ap-color-primary, #0066A7);
+        color: #fff;
+        width: 28px; height: 28px;
+        border-radius: 50%;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 0.85rem;
+        margin-right: 10px;
+    }
+    [data-region="airpay-eval-responses"] .question-text {
+        font-size: 1.05rem;
+        font-weight: 600;
+        margin-bottom: 16px;
+    }
+    [data-region="airpay-eval-responses"] .stat-bar-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+    }
+    [data-region="airpay-eval-responses"] .stat-bar-label {
+        flex: 0 0 100px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    [data-region="airpay-eval-responses"] .stat-bar-track {
+        flex: 1;
+        height: 24px;
+        background: var(--ap-color-border, #e2e6ef);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    [data-region="airpay-eval-responses"] .stat-bar-fill {
+        height: 100%;
+        background: var(--ap-color-primary, #0066A7);
+        transition: width 0.3s ease;
+    }
+    [data-region="airpay-eval-responses"] .stat-bar-fill.success { background: var(--ap-color-success, #16a34a); }
+    [data-region="airpay-eval-responses"] .stat-bar-fill.warning { background: var(--ap-color-warning, #d97706); }
+    [data-region="airpay-eval-responses"] .stat-bar-fill.danger  { background: var(--ap-color-danger,   #dc2626); }
+    [data-region="airpay-eval-responses"] .stat-bar-value {
+        flex: 0 0 100px;
+        text-align: right;
+        font-size: 0.9rem;
+        color: #555;
+    }
+    [data-region="airpay-eval-responses"] .nps-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+    [data-region="airpay-eval-responses"] .nps-cell {
+        text-align: center;
+        padding: 16px;
+        border-radius: 8px;
+    }
+    [data-region="airpay-eval-responses"] .nps-cell.detractor { background: rgba(220,38,38,0.08); }
+    [data-region="airpay-eval-responses"] .nps-cell.passive   { background: rgba(217,119,6,0.08); }
+    [data-region="airpay-eval-responses"] .nps-cell.promoter  { background: rgba(22,163,74,0.08); }
+    [data-region="airpay-eval-responses"] .nps-cell .nps-num {
+        font-size: 1.5rem;
+        font-weight: 800;
+    }
+    [data-region="airpay-eval-responses"] .nps-cell .nps-label {
+        font-size: 0.8rem;
+        color: #666;
+        margin-top: 4px;
+    }
+    [data-region="airpay-eval-responses"] .nps-score {
+        font-size: 3rem;
+        font-weight: 800;
+        text-align: center;
+        margin-bottom: 12px;
+    }
+    [data-region="airpay-eval-responses"] .text-sample {
+        background: rgba(0,102,167,0.04);
+        border-left: 3px solid var(--ap-color-primary, #0066A7);
+        padding: 12px 16px;
+        margin-bottom: 8px;
+        border-radius: 4px;
+        font-style: italic;
+        color: #444;
+    }
+    [data-region="airpay-eval-responses"] .no-data {
+        color: #999;
+        font-size: 0.9rem;
+        font-style: italic;
+        padding: 12px 0;
+    }
+</style>
+
+<div data-region="airpay-eval-responses">
+
+<div class="ap-page-header mb-4 d-flex justify-content-between align-items-start">
+    <div>
+        <a href="{{{backurl}}}" class="text-muted small text-decoration-none">
+            <i class="fa fa-arrow-left fa-fw"></i> Back to Evaluations
+        </a>
+        <h2 class="mb-1 mt-2" style="font-weight: 700;">{{name}}</h2>
+        <p class="text-muted mb-0">
+            Response analytics
+            {{#kirkpatrick_label}}
+            <span class="badge ms-2" style="background: #e8f2f9; color: #0066A7;">
+                <i class="fa fa-tag fa-fw"></i> {{kirkpatrick_label}}
+            </span>
+            {{/kirkpatrick_label}}
+            {{#is_anonymous}}<span class="badge ms-2" style="background: #fef3c7; color: #92400e;">
+                <i class="fa fa-user-secret fa-fw"></i> Anonymous responses
+            </span>{{/is_anonymous}}
+        </p>
+    </div>
+    <div class="d-flex gap-2 align-items-start">
+        <a href="{{{export_url}}}" class="btn btn-outline-primary btn-sm">
+            <i class="fa fa-download fa-fw"></i> Export CSV
+        </a>
+    </div>
+</div>
+
+{{! ── Filter form (G-05) ──────────────────────────────────────────── }}
+<form method="get" action="{{{filter_action_url}}}" class="card border-0 shadow-sm mb-3">
+    <div class="card-body">
+        <input type="hidden" name="id" value="{{evaluationid}}">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3 col-sm-6">
+                <label class="form-label small mb-1 fw-semibold">Submitted from</label>
+                <input type="date" class="form-control form-control-sm"
+                       name="date_from" value="{{filter_date_from}}">
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <label class="form-label small mb-1 fw-semibold">Submitted to</label>
+                <input type="date" class="form-control form-control-sm"
+                       name="date_to" value="{{filter_date_to}}">
+            </div>
+            <div class="col-md-2 col-sm-4">
+                <label class="form-label small mb-1 fw-semibold">Course ID</label>
+                <input type="number" class="form-control form-control-sm"
+                       name="courseid" value="{{filter_courseid}}" placeholder="—" min="0">
+            </div>
+            <div class="col-md-2 col-sm-4">
+                <label class="form-label small mb-1 fw-semibold">Program ID</label>
+                <input type="number" class="form-control form-control-sm"
+                       name="programid" value="{{filter_programid}}" placeholder="—" min="0">
+            </div>
+            <div class="col-md-2 col-sm-4">
+                <label class="form-label small mb-1 fw-semibold">Classroom ID</label>
+                <input type="number" class="form-control form-control-sm"
+                       name="classroomid" value="{{filter_classroomid}}" placeholder="—" min="0">
+            </div>
+        </div>
+        <div class="mt-3 d-flex gap-2">
+            <button type="submit" class="btn btn-primary btn-sm">
+                <i class="fa fa-filter fa-fw"></i> Apply filters
+            </button>
+            {{#has_filter}}
+            <a href="{{{reset_url}}}" class="btn btn-outline-secondary btn-sm">
+                <i class="fa fa-times fa-fw"></i> Clear
+            </a>
+            <span class="text-muted small ms-auto align-self-center">
+                <i class="fa fa-info-circle fa-fw"></i>
+                Stats below reflect the filtered subset
+            </span>
+            {{/has_filter}}
+        </div>
+    </div>
+</form>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
+            <div style="font-size: 2rem; font-weight: 800; color: var(--ap-color-primary, #0066A7);">{{total_responses}}</div>
+            <div class="text-muted small text-uppercase">Total Responses</div>
+        </div></div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm"><div class="card-body text-center py-3">
+            <div style="font-size: 2rem; font-weight: 800; color: var(--ap-color-accent, #0f7a73);">{{questions.length}}</div>
+            <div class="text-muted small text-uppercase">Questions</div>
+        </div></div>
+    </div>
+</div>
+
+{{^has_responses}}
+<div class="card border-0 shadow-sm"><div class="card-body text-center py-5">
+    <i class="fa fa-inbox fa-3x text-muted mb-3 d-block"></i>
+    <h5 class="text-muted">No responses yet</h5>
+    <p class="text-muted mb-0">Once learners submit this evaluation, their aggregated answers will appear here.</p>
+</div></div>
+{{/has_responses}}
+
+{{#has_responses}}
+{{#questions}}
+<div class="question-card">
+    <div class="question-text">
+        <span class="question-position">{{position}}</span>
+        {{questiontext}}
+        <span class="badge bg-light text-dark ms-2">{{response_count}} response{{^response_count}}s{{/response_count}}{{#response_count}}{{^single}}s{{/single}}{{/response_count}}</span>
+    </div>
+
+    {{#is_rating}}
+    {{#response_count}}
+    <div class="d-flex align-items-baseline mb-3">
+        <span style="font-size: 2rem; font-weight: 800; color: var(--ap-color-primary, #0066A7);">{{avg}}</span>
+        <span class="text-muted ms-2">/ 5 average</span>
+    </div>
+    {{#distribution}}
+    <div class="stat-bar-row">
+        <div class="stat-bar-label">{{level}} ★</div>
+        <div class="stat-bar-track">
+            <div class="stat-bar-fill" style="width: {{pct}}%;"></div>
+        </div>
+        <div class="stat-bar-value">{{pct_label}}</div>
+    </div>
+    {{/distribution}}
+    {{/response_count}}
+    {{^response_count}}<div class="no-data">No responses yet for this question.</div>{{/response_count}}
+    {{/is_rating}}
+
+    {{#is_nps}}
+    {{#response_count}}
+    <div class="nps-score {{nps_class}}">{{nps_score}}</div>
+    <p class="text-center text-muted small mb-3">NPS Score (avg: {{avg}}/10)</p>
+    <div class="nps-grid">
+        <div class="nps-cell detractor">
+            <div class="nps-num text-danger">{{detractors}}</div>
+            <div class="nps-label">Detractors (0-6)</div>
+            <div class="text-muted small">{{detractor_pct}}%</div>
+        </div>
+        <div class="nps-cell passive">
+            <div class="nps-num text-warning">{{passives}}</div>
+            <div class="nps-label">Passives (7-8)</div>
+            <div class="text-muted small">{{passive_pct}}%</div>
+        </div>
+        <div class="nps-cell promoter">
+            <div class="nps-num text-success">{{promoters}}</div>
+            <div class="nps-label">Promoters (9-10)</div>
+            <div class="text-muted small">{{promoter_pct}}%</div>
+        </div>
+    </div>
+    {{/response_count}}
+    {{^response_count}}<div class="no-data">No responses yet for this question.</div>{{/response_count}}
+    {{/is_nps}}
+
+    {{#is_yesno}}
+    {{#response_count}}
+    <div class="stat-bar-row">
+        <div class="stat-bar-label"><i class="fa fa-thumbs-up fa-fw text-success"></i> Yes</div>
+        <div class="stat-bar-track">
+            <div class="stat-bar-fill success" style="width: {{yes_pct}}%;"></div>
+        </div>
+        <div class="stat-bar-value">{{yes}} ({{yes_pct}}%)</div>
+    </div>
+    <div class="stat-bar-row">
+        <div class="stat-bar-label"><i class="fa fa-thumbs-down fa-fw text-danger"></i> No</div>
+        <div class="stat-bar-track">
+            <div class="stat-bar-fill danger" style="width: {{no_pct}}%;"></div>
+        </div>
+        <div class="stat-bar-value">{{no}} ({{no_pct}}%)</div>
+    </div>
+    {{/response_count}}
+    {{^response_count}}<div class="no-data">No responses yet for this question.</div>{{/response_count}}
+    {{/is_yesno}}
+
+    {{#is_multichoice}}
+    {{#response_count}}
+    {{#distribution}}
+    <div class="stat-bar-row">
+        <div class="stat-bar-label" style="flex-basis: 200px;">{{option}}</div>
+        <div class="stat-bar-track">
+            <div class="stat-bar-fill" style="width: {{pct}}%;"></div>
+        </div>
+        <div class="stat-bar-value">{{count}} ({{pct}}%)</div>
+    </div>
+    {{/distribution}}
+    {{/response_count}}
+    {{^response_count}}<div class="no-data">No responses yet for this question.</div>{{/response_count}}
+    {{/is_multichoice}}
+
+    {{#is_text}}
+    {{#has_samples}}
+    <p class="text-muted small mb-2">Recent responses (showing up to 5):</p>
+    {{#samples}}
+    <div class="text-sample">{{text}}</div>
+    {{/samples}}
+    {{/has_samples}}
+    {{^has_samples}}<div class="no-data">No text responses yet for this question.</div>{{/has_samples}}
+    {{/is_text}}
+</div>
+{{/questions}}
+{{/has_responses}}
+
+</div>

@@ -1,0 +1,23 @@
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+<tr><td style="font-family:'Montserrat',Arial,sans-serif; font-size:15px; line-height:24px; color:#1a1a2e;">
+    <p style="margin:0 0 16px;">Hi <strong>{{firstname}}</strong>,</p>
+    <p style="margin:0 0 16px;">
+        You were enrolled in <strong>{{course_name}}</strong> on {{enrolled_date}}
+        — that's <strong>{{days_since}} days ago</strong>, and you haven't started yet.
+    </p>
+    <p style="margin:0 0 16px; font-size:14px; color:#5a6070;">
+        The course is waiting for you. Even a few minutes of progress helps build momentum.
+    </p>
+</td></tr>
+</table>
+{{> local_sentientia_emails/partials/course_info_box}}
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0;">
+<tr>
+    <td align="center" bgcolor="#0066A7" style="background-color:#0066A7; border-radius:8px;">
+        <a href="{{course_url}}" target="_blank" style="display:inline-block; padding:14px 32px; font-family:'Montserrat',Arial,sans-serif; font-size:15px; font-weight:600; color:#ffffff; text-decoration:none; line-height:20px;">
+            Start Learning
+        </a>
+    </td>
+</tr>
+</table>
+{{> local_sentientia_emails/partials/footer_note}}

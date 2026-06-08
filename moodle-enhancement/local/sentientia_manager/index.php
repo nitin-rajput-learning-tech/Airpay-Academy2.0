@@ -54,7 +54,7 @@ foreach ($summary as $row) {
 
     $row['profile_url']  = (new moodle_url('/local/airpay_users/profile.php',     ['id' => $row['id']]))->out(false);
     $row['drilldown_url'] = (new moodle_url('/local/sentientia_manager/member.php',    ['id' => $row['id']]))->out(false);
-    $row['nudge_url']    = (new moodle_url('/local/airpay_notifications/nudge.php',['userid' => $row['id'], 'type' => 'general']))->out(false);
+    $row['nudge_url']    = (new moodle_url('/local/sentientia_notifications/nudge.php',['userid' => $row['id'], 'type' => 'general']))->out(false);
     $row['skills_url']   = (new moodle_url('/local/airpay_skills/index.php',       ['userid' => $row['id']]))->out(false);
     $team_data[] = $row;
 }

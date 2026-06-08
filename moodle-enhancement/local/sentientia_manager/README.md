@@ -13,12 +13,12 @@ direct-report performance view.
 
 - Manager-side dashboard showing the direct reports' learning progress.
 - Approval queue for items routed to the current manager (joins with
-  `local_airpay_request` and any future approval-required flows).
+  `local_sentientia_request` and any future approval-required flows).
 - Bulk-approval UI — checkbox + bulk-approve / bulk-reject.
 - Allocations — assigning training to a team member.
 - Direct-report performance view (completion rate, time-on-platform,
   exam scores).
-- Manager weekly summary message (rule wired via `airpay_notifications`).
+- Manager weekly summary message (rule wired via `sentientia_notifications`).
 
 ## Capabilities (3)
 
@@ -39,8 +39,8 @@ training status digest.
 
 ## Phase 8.1 dependency
 
-`airpay_request` shares the approval-routing patterns established in
-this plugin. The `route_approver()` helper in `airpay_request` was
+`sentientia_request` shares the approval-routing patterns established in
+this plugin. The `route_approver()` helper in `sentientia_request` was
 designed to be DRY against the request workflow here.
 
 ## Open backlog

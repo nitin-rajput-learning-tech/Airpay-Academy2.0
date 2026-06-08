@@ -7,7 +7,7 @@ trainer assignments. Replacement for BizLMS `local_classroom`.
 |---|---|
 | Component | `local_airpay_classroom` |
 | Version | `2026050900` (1.6.0) |
-| Depends on | `local_airpay_org`, `local_airpay_evaluation` |
+| Depends on | `local_airpay_org`, `local_sentientia_evaluation` |
 
 ## What it does
 
@@ -17,7 +17,7 @@ trainer assignments. Replacement for BizLMS `local_classroom`.
 - Per-session attendance marking.
 - Waiting list — auto-promote on cancellation.
 - Target audience tab (separate from enrolled-users tab).
-- Feedback collection via `airpay_evaluation` integration.
+- Feedback collection via `sentientia_evaluation` integration.
 - ICS calendar invite generation (`smoke_ics.php`).
 
 ## Capabilities (6)

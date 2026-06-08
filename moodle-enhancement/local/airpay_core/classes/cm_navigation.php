@@ -12,7 +12,7 @@ defined('MOODLE_INTERNAL') || die();
  * Moodle 5.2 ships a public `cm_info::get_navigation_url()` method that lets
  * a module override its activity-link target — so SCORM can jump straight
  * to the player with an attempt id, URL activities can link to the
- * external URL, and our `mod_airpay_evaluation` can land each learner on
+ * external URL, and our `mod_sentientia_evaluation` can land each learner on
  * their own attempt page rather than the generic /view.php.
  *
  * This class is the 5.1 backport. The API surface is identical to the

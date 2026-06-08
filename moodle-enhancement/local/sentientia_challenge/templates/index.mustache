@@ -1,0 +1,48 @@
+{{!
+   Airpay Gamification Challenges — admin index.
+   Renders the page chrome + filter form + datatable mount.
+   Rows come from local_sentientia_challenge_list_challenges WS.
+}}
+<div class="ap-card mb-3">
+  <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+    <h2 class="h4 m-0">{{# str }}heading_index, local_sentientia_challenge{{/ str }}</h2>
+    <div class="btn-group">
+      <a href="{{ leaderboardurl }}" class="btn btn-sm btn-outline-secondary">
+        <i class="fa fa-trophy me-1"></i>{{# str }}btn_leaderboard, local_sentientia_challenge{{/ str }}
+      </a>
+      {{# can_manage }}
+      <button type="button" class="btn btn-sm btn-primary" data-action="create-challenge">
+        <i class="fa fa-plus me-1"></i>{{# str }}btn_create, local_sentientia_challenge{{/ str }}
+      </button>
+      {{/ can_manage }}
+    </div>
+  </div>
+
+  <form id="airpay-challenge-filter" class="row g-2 mb-3">
+    <div class="col-md-5">
+      <label for="airpay-challenge-search" class="form-label small mb-1">
+        {{# str }}filter_search, local_sentientia_challenge{{/ str }}
+      </label>
+      <input type="search" id="airpay-challenge-search" class="form-control form-control-sm"
+             placeholder="{{# str }}filter_search_placeholder, local_sentientia_challenge{{/ str }}">
+    </div>
+    <div class="col-md-3">
+      <label for="airpay-challenge-status" class="form-label small mb-1">
+        {{# str }}filter_status, local_sentientia_challenge{{/ str }}
+      </label>
+      <select id="airpay-challenge-status" class="form-select form-select-sm">
+        <option value="all">{{# str }}filter_status_all, local_sentientia_challenge{{/ str }}</option>
+        <option value="active" selected>{{# str }}filter_status_active, local_sentientia_challenge{{/ str }}</option>
+        <option value="draft">{{# str }}filter_status_draft, local_sentientia_challenge{{/ str }}</option>
+        <option value="archived">{{# str }}filter_status_archived, local_sentientia_challenge{{/ str }}</option>
+      </select>
+    </div>
+  </form>
+
+  <div id="airpay-challenge-table"
+       data-region="airpay-datatable"
+       data-ws-name="local_sentientia_challenge_list_challenges"
+       data-page-size="25"
+       data-columns-json="{{ columns_json }}"
+       data-extra-args="{{ extra_args_json }}"></div>
+</div>
