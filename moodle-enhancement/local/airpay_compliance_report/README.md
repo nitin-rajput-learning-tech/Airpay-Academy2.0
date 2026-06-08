@@ -8,7 +8,7 @@ India / POSH committee / DPO consume for statutory reporting.
 |---|---|
 | Component | `local_airpay_compliance_report` |
 | Version | 1.0.0 |
-| Depends on | `local_airpay_org`, `local_airpay_recompletion` |
+| Depends on | `local_airpay_org`, `local_sentientia_recompletion` |
 
 ## What it does
 
@@ -43,7 +43,7 @@ php "C:/xampp/htdocs/moodle5/admin/cli/scheduled_task.php" \
 
 ## Phase 8.1 dependency
 
-Reads from `local_airpay_recompletion_history` for the audit trail of
+Reads from `local_sentientia_recompletion_history` for the audit trail of
 when a user moved from `completed_expired` back to `completed_current`.
 Phase 8.1 B6 made the recompletion engine tenant-aware; this dashboard
 inherits the correctness.

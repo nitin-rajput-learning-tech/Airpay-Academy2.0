@@ -4,7 +4,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-// Moodle 5 message-provider defaults (see airpay_recompletion/db/messages.php
+// Moodle 5 message-provider defaults (see sentientia_recompletion/db/messages.php
 // for the same rationale).
 $messageproviders = [
     'waitlist_promoted' => [

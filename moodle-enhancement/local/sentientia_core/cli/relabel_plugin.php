@@ -63,6 +63,7 @@ if ($options['tables'] !== '') {
         $parts = explode(':', trim($pair));
         if (count($parts) !== 2) { cli_error("bad --tables entry: {$pair}"); }
         list($oldt, $newt) = $parts;
+        if ($oldt === $newt) { echo "  table {$oldt}: same name (brand-neutral), skip\n"; continue; }
         $oldx = new xmldb_table($oldt);
         if ($dbman->table_exists($oldx)) {
             $rows = $DB->count_records($oldt);

@@ -139,7 +139,7 @@ class sidebar_navigation {
                 $items[] = $this->item('Course-share Requests', 'fa-inbox',
                     '/local/airpay_courses/manage_requests.php', $currenturl);
             }
-            $items[] = $this->item('Online Exams', 'fa-edit', '/local/airpay_exams/index.php', $currenturl);
+            $items[] = $this->item('Online Exams', 'fa-edit', '/local/sentientia_exams/index.php', $currenturl);
             $items[] = $this->item('Classrooms', 'fa-calendar', '/local/airpay_classroom/index.php', $currenturl);
             $items[] = $this->item('Learning Paths', 'fa-map-signs', '/local/airpay_learningpath/index.php', $currenturl);
             $items[] = $this->item('Programs', 'fa-trophy', '/local/airpay_programs/index.php', $currenturl);
@@ -158,7 +158,7 @@ class sidebar_navigation {
             $items[] = $this->item('Evaluations', 'fa-clipboard', '/local/airpay_evaluation/index.php', $currenturl);
             $items[] = $this->item('Certificates', 'fa-certificate', '/admin/tool/certificate/manage_templates.php', $currenturl);
             $items[] = $this->item('Emails', 'fa-envelope', '/local/airpay_emails/manage.php', $currenturl);
-            $items[] = $this->item('Privacy', 'fa-lock', '/local/airpay_privacy/index.php', $currenturl);
+            $items[] = $this->item('Privacy', 'fa-lock', '/local/sentientia_privacy/index.php', $currenturl);
             $items[] = $this->item('Site Admin', 'fa-cog', '/admin/search.php', $currenturl);
             return $items;
         }
@@ -202,8 +202,8 @@ class sidebar_navigation {
                 $items[] = $this->item('Browse Airpay Library', 'fa-handshake-o',
                     '/local/airpay_courses/browse_airpay.php', $currenturl);
             }
-            if (has_capability('local/airpay_exams:view', $sys)) {
-                $items[] = $this->item('Online Exams', 'fa-pencil-square-o', '/local/airpay_exams/index.php', $currenturl);
+            if (has_capability('local/sentientia_exams:view', $sys)) {
+                $items[] = $this->item('Online Exams', 'fa-pencil-square-o', '/local/sentientia_exams/index.php', $currenturl);
             }
             if (has_capability('local/airpay_classroom:view', $sys)) {
                 $items[] = $this->item('Classrooms', 'fa-calendar', '/local/airpay_classroom/index.php', $currenturl);
@@ -228,7 +228,7 @@ class sidebar_navigation {
         // ═══════════════════════════════════════════════════
         if ($this->ismanager) {
             $items[] = $this->item('Dashboard', 'fa-home', '/my/', $currenturl, null, ['/my/index.php']);
-            $items[] = $this->item('My Team', 'fa-users', '/local/airpay_manager/index.php', $currenturl);
+            $items[] = $this->item('My Team', 'fa-users', '/local/sentientia_manager/index.php', $currenturl);
             $items[] = $this->item('Compliance', 'fa-shield-alt', '/local/airpay_compliance_report/index.php', $currenturl);
             // T-02 (QA Walk 2026-05-29): Sentientia Live trainer dashboard.
             // Gated by can_create_live_session() so it only shows when the

@@ -177,7 +177,7 @@ This component meets WCAG 2.1 AA for table interaction:
 
 ## Plugins that use this component (10)
 
-`airpay_classroom`, `airpay_courses`, `airpay_evaluation`, `airpay_exams`,
+`airpay_classroom`, `airpay_courses`, `airpay_evaluation`, `sentientia_exams`,
 `airpay_learningpath`, `airpay_notifications`, `airpay_programs`, `sentientia_reports`,
 `airpay_skills`, `airpay_users`.
 

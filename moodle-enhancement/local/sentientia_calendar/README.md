@@ -156,7 +156,7 @@ Required:
 Optional (graceful degradation if missing — the relevant event category just disappears from the feed):
 - `local_airpay_courses` for COURSE-DEADLINE events
 - `local_airpay_classroom` for CLASSROOM-SESSION events
-- `local_airpay_exams` for EXAM-CLOSE events
+- `local_sentientia_exams` for EXAM-CLOSE events
 
 ## References
 

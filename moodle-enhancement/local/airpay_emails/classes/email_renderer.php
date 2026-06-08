@@ -44,7 +44,7 @@ class email_renderer {
         $context['site_url']       = $CFG->wwwroot;
         $context['site_name']      = format_string(get_config('moodle', 'fullname'));
         $context['current_year']   = date('Y');
-        $context['privacy_url']    = $CFG->wwwroot . '/local/airpay_privacy/index.php';
+        $context['privacy_url']    = $CFG->wwwroot . '/local/sentientia_privacy/index.php';
         $context['support_email']  = 'academy@airpay.co.in';
 
         // Check for DB override before using Mustache file.
@@ -95,7 +95,7 @@ class email_renderer {
         $context['site_url']       = $CFG->wwwroot;
         $context['site_name']      = format_string($SITE->fullname);
         $context['current_year']   = date('Y');
-        $context['privacy_url']    = $CFG->wwwroot . '/local/airpay_privacy/index.php';
+        $context['privacy_url']    = $CFG->wwwroot . '/local/sentientia_privacy/index.php';
         $context['support_email']  = 'academy@airpay.co.in';
 
         $renderer = $PAGE->get_renderer('core');

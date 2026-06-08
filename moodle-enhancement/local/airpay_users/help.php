@@ -65,7 +65,7 @@ $links = [
         'icon' => 'fa-lock',
         'title' => 'Privacy & data',
         'desc'  => 'Review consents and request your data.',
-        'url'   => (new moodle_url('/local/airpay_privacy/index.php'))->out(false),
+        'url'   => (new moodle_url('/local/sentientia_privacy/index.php'))->out(false),
     ],
 ];
 

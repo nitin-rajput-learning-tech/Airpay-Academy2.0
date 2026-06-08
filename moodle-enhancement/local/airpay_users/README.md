@@ -10,7 +10,7 @@ the photo upload pipeline.
 | Component | `local_airpay_users` |
 | Version | `2026050904` (1.8.0) |
 | Requires | Moodle 4.5+ |
-| Depends on | `local_airpay_org`, `local_airpay_privacy` |
+| Depends on | `local_airpay_org`, `local_sentientia_privacy` |
 
 ## What it does
 

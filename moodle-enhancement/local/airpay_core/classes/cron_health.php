@@ -47,7 +47,7 @@ class cron_health {
      * to fix.
      */
     public const AIRPAY_TASK_CLASSES = [
-        '\\local_airpay_recompletion\\task\\run_rules',
+        '\\local_sentientia_recompletion\\task\\run_rules',
         '\\local_airpay_org\\task\\sync_cohorts',
         '\\local_airpay_proctoring\\task\\purge_old_recordings',
         '\\local_airpay_request\\task\\escalate_overdue',

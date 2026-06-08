@@ -176,12 +176,12 @@ class email_context {
                 'request_type'  => 'Account Deletion',
                 'request_date'  => date('d F Y, h:i A'),
                 'request_reason' => 'No longer associated with the organization',
-                'admin_url'     => $CFG->wwwroot . '/local/airpay_privacy/admin.php',
+                'admin_url'     => $CFG->wwwroot . '/local/sentientia_privacy/admin.php',
                 'response_deadline' => date('d F Y', strtotime('+30 days')),
             ]),
             'privacy/data_export_ready' => array_merge($base, [
                 'subject'        => 'Your data download is ready',
-                'download_url'   => $CFG->wwwroot . '/local/airpay_privacy/download.php?token=SAMPLE',
+                'download_url'   => $CFG->wwwroot . '/local/sentientia_privacy/download.php?token=SAMPLE',
                 'download_expiry' => '72 hours',
                 'file_size'      => '2.4 MB',
                 'data_categories' => [

@@ -1162,12 +1162,12 @@ JS;
         $returnobject->navitems[] = $myprofile;
 
         // Links: My Privacy & Data (DPDP Act 2023 compliance).
-        if (file_exists($CFG->dirroot . '/local/airpay_privacy/version.php')) {
+        if (file_exists($CFG->dirroot . '/local/sentientia_privacy/version.php')) {
             $myprivacy = new stdClass();
             $myprivacy->itemtype = 'link';
-            $myprivacy->url = new moodle_url('/local/airpay_privacy/index.php');
-            $myprivacy->title = get_string('myprivacy', 'local_airpay_privacy');
-            $myprivacy->titleidentifier = 'myprivacy,local_airpay_privacy';
+            $myprivacy->url = new moodle_url('/local/sentientia_privacy/index.php');
+            $myprivacy->title = get_string('myprivacy', 'local_sentientia_privacy');
+            $myprivacy->titleidentifier = 'myprivacy,local_sentientia_privacy';
             $returnobject->navitems[] = $myprivacy;
         }
 
@@ -1301,14 +1301,14 @@ JS;
                         ? optional_param('cmid', 0, PARAM_INT)
                         : optional_param('id', 0, PARAM_INT);
 
-                    $onlinetest = $cmid ? \local_airpay_exams\exam_manager::get_by_course_module($cmid) : false;
+                    $onlinetest = $cmid ? \local_sentientia_exams\exam_manager::get_by_course_module($cmid) : false;
                     if($onlinetest){
                         $return->hideheader = TRUE;
                         [$ot_cc, $ot_dept] = $derive_cc_dept($onlinetest);
                         if($is_oh && $user_cc != $ot_cc){
-                            redirect($CFG->wwwroot.'/local/airpay_exams/index.php');
+                            redirect($CFG->wwwroot.'/local/sentientia_exams/index.php');
                         }else if($is_dh && $user_dept != $ot_dept){
-                            redirect($CFG->wwwroot.'/local/airpay_exams/index.php');
+                            redirect($CFG->wwwroot.'/local/sentientia_exams/index.php');
                         }
                     }else{
                         $return->hideheader = FALSE;
@@ -1317,14 +1317,14 @@ JS;
             }else if($newpageurl == $CFG->wwwroot.'/mod/quiz/review.php' /*|| $newpageurl == $CFG->wwwroot.'/mod/quiz/attempt.php'*/){/*for quiz reviewpage and quiz attempt page*/
                 if($COURSE->id == 1){
                     $attempt = optional_param('attempt', 0, PARAM_INT);
-                    $onlinetest = $attempt ? \local_airpay_exams\exam_manager::get_by_attempt($attempt) : false;
+                    $onlinetest = $attempt ? \local_sentientia_exams\exam_manager::get_by_attempt($attempt) : false;
                     if($onlinetest){
                         $return->hideheader = TRUE;
                         [$ot_cc, $ot_dept] = $derive_cc_dept($onlinetest);
                         if($is_oh && $user_cc != $ot_cc){
-                            redirect($CFG->wwwroot.'/local/airpay_exams/index.php');
+                            redirect($CFG->wwwroot.'/local/sentientia_exams/index.php');
                         }else if($is_dh && $user_dept != $ot_dept){
-                            redirect($CFG->wwwroot.'/local/airpay_exams/index.php');
+                            redirect($CFG->wwwroot.'/local/sentientia_exams/index.php');
                         }
                     }else{
                         $return->hideheader = FALSE;

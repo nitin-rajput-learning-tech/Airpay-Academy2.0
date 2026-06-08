@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/sentientia_privacy/db" VERSION="20260412"
+       COMMENT="DPDP compliance - data requests and deletion management">
+  <TABLES>
+
+    <TABLE NAME="local_privacy_requests"
+           COMMENT="User data access and deletion requests (DPDP Act 2023)">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"       TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="request_type" TYPE="char" LENGTH="20"  NOTNULL="true"
+               COMMENT="data_download|account_delete|data_correction"/>
+        <FIELD NAME="status"       TYPE="char" LENGTH="20"  NOTNULL="true" DEFAULT="pending"
+               COMMENT="pending|processing|completed|rejected|cancelled"/>
+        <FIELD NAME="reason"       TYPE="text" NOTNULL="false"
+               COMMENT="User-provided reason for deletion request"/>
+        <FIELD NAME="admin_notes"  TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="processed_by" TYPE="int"  LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="download_url" TYPE="text" NOTNULL="false"
+               COMMENT="Path to generated data export file"/>
+        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timeprocessed" TYPE="int" LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="timeexpires"  TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="When download link expires (72h after generation)"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_user" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_userid_type"  UNIQUE="false" FIELDS="userid, request_type"/>
+        <INDEX NAME="idx_status"       UNIQUE="false" FIELDS="status"/>
+        <INDEX NAME="idx_timecreated"  UNIQUE="false" FIELDS="timecreated"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_privacy_consent_log"
+           COMMENT="DPDP consent tracking - when users agreed to data processing">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"       TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="consent_type" TYPE="char" LENGTH="50"  NOTNULL="true"
+               COMMENT="registration|course_enrol|data_processing|marketing"/>
+        <FIELD NAME="consented"    TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="ip_address"   TYPE="char" LENGTH="45"  NOTNULL="false"/>
+        <FIELD NAME="user_agent"   TYPE="char" LENGTH="255" NOTNULL="false"/>
+        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_userid" UNIQUE="false" FIELDS="userid"/>
+      </INDEXES>
+    </TABLE>
+
+  </TABLES>
+</XMLDB>

@@ -1,0 +1,36 @@
+{{!
+   Manager — pending enrolment requests from direct reports.
+}}
+<div class="ap-card mb-3">
+  <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+    <h2 class="h4 m-0">Enrolment Requests</h2>
+    <div class="btn-group">
+      <a href="{{ index_url }}" class="btn btn-sm btn-outline-secondary">
+        <i class="fa fa-tachometer-alt me-1"></i>Team dashboard
+      </a>
+      <a href="{{ allocations_url }}" class="btn btn-sm btn-outline-secondary">
+        <i class="fa fa-tasks me-1"></i>Allocations
+      </a>
+    </div>
+  </div>
+
+  <form id="ap-mgr-requests-filter" class="row g-2 mb-3">
+    <div class="col-md-3">
+      <label for="ap-mgr-status" class="form-label small mb-1">Status</label>
+      <select id="ap-mgr-status" class="form-select form-select-sm">
+        <option value="pending" selected>Pending</option>
+        <option value="approved">Approved</option>
+        <option value="rejected">Rejected</option>
+        <option value="cancelled">Cancelled</option>
+        <option value="all">All</option>
+      </select>
+    </div>
+  </form>
+
+  <div id="ap-mgr-requests-table"
+       data-region="airpay-datatable"
+       data-ws-name="local_sentientia_manager_list_requests"
+       data-page-size="25"
+       data-columns-json="{{ columns_json }}"
+       data-extra-args="{{ extra_args_json }}"></div>
+</div>

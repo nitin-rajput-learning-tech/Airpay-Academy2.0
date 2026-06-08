@@ -32,9 +32,9 @@ $airpay_plugins = [
     'airpay_users', 'airpay_org', 'airpay_courses', 'airpay_evaluation',
     'airpay_classroom', 'airpay_programs', 'airpay_learningpath',
     'sentientia_catalog', 'airpay_compliance_report', 'airpay_emails',
-    'airpay_exams', 'sentientia_integrations', 'sentientia_lifecycle',
+    'sentientia_exams', 'sentientia_integrations', 'sentientia_lifecycle',
     'airpay_notifications', 'sentientia_analytics', 'sentientia_assistant',
-    'airpay_roles', 'airpay_challenge', 'airpay_manager', 'airpay_skills',
+    'airpay_roles', 'airpay_challenge', 'sentientia_manager', 'airpay_skills',
 ];
 
 $found_providers = 0;

@@ -60,7 +60,7 @@ $full_plugins = [
     'airpay_notifications',
     'airpay_roles',
     'airpay_challenge',
-    'airpay_manager',
+    'sentientia_manager',
     'airpay_skills',
 ];
 
@@ -145,7 +145,7 @@ $null_plugins = [
     'airpay_courses',
     'sentientia_catalog',
     'airpay_compliance_report',
-    'airpay_exams',
+    'sentientia_exams',
     'sentientia_integrations',
     'sentientia_lifecycle',
     'sentientia_analytics',

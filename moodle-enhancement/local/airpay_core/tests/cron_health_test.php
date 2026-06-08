@@ -58,7 +58,7 @@ class cron_health_test extends \advanced_testcase {
         $now = time();
         // Seed an Airpay task whose nextruntime is 12 hours in the past.
         $this->seed_task(
-            '\\local_airpay_recompletion\\task\\run_rules',
+            '\\local_sentientia_recompletion\\task\\run_rules',
             lastruntime: $now - 86400,
             nextruntime: $now - 43200,
         );
@@ -79,7 +79,7 @@ class cron_health_test extends \advanced_testcase {
 
         $now = time();
         $this->seed_task(
-            '\\local_airpay_recompletion\\task\\run_rules',
+            '\\local_sentientia_recompletion\\task\\run_rules',
             lastruntime: $now - 86400,
             nextruntime: $now - 43200,
             disabled: 1,
@@ -113,7 +113,7 @@ class cron_health_test extends \advanced_testcase {
 
         $now = time();
         $this->seed_task(
-            '\\local_airpay_recompletion\\task\\run_rules',
+            '\\local_sentientia_recompletion\\task\\run_rules',
             lastruntime: $now - 600,
             nextruntime: $now + 3600,        // not stuck yet
             faildelay: 1200,                  // but in backoff

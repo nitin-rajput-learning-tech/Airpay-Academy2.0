@@ -17,7 +17,7 @@
  *      enrolled in (local_airpay_classroom_users).
  *
  *   3. Exam close-dates — every quiz.timeclose > now for a course the
- *      user is enrolled in, exposed via local_airpay_exams.
+ *      user is enrolled in, exposed via local_sentientia_exams.
  *
  * Tenancy: all queries scope by userid only — the user authenticated via
  * the token. We surface only events the user themselves is associated
@@ -260,7 +260,7 @@ class ics_builder {
      * Collect upcoming exam close-dates for courses the user is enrolled in.
      *
      * Sourced from the join used by
-     * {@see local_airpay_exams\task\exam_reminder} — every quiz with
+     * {@see local_sentientia_exams\task\exam_reminder} — every quiz with
      * timeclose > 0 in a course the user is actively enrolled in and
      * has not yet finished.
      *
@@ -277,8 +277,8 @@ class ics_builder {
         if (!self::flag_on('sentientia.calendar_sync.events.exams', true)) {
             return [];
         }
-        // Skip silently if the airpay_exams plugin isn't installed yet.
-        if (!$DB->get_manager()->table_exists('local_airpay_exams')) {
+        // Skip silently if the sentientia_exams plugin isn't installed yet.
+        if (!$DB->get_manager()->table_exists('local_sentientia_exams')) {
             return [];
         }
 
@@ -290,7 +290,7 @@ class ics_builder {
                         q.timeclose,
                         c.id          AS courseid,
                         c.fullname    AS coursename
-                  FROM {local_airpay_exams} e
+                  FROM {local_sentientia_exams} e
                   JOIN {quiz} q              ON q.id = e.quizid
                                             AND q.timeclose > 0
                   JOIN {course} c            ON c.id = q.course

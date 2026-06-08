@@ -92,10 +92,10 @@ $results[] = migrate_table(
 );
 
 // ═══════════════════════════════════════════════════════
-// 3. local_onlinetests → local_airpay_exams
+// 3. local_onlinetests → local_sentientia_exams
 // ═══════════════════════════════════════════════════════
 $results[] = migrate_table(
-    'local_onlinetests', 'local_airpay_exams',
+    'local_onlinetests', 'local_sentientia_exams',
     [
         'id'           => 'id',
         'name'         => 'name',

@@ -41,6 +41,7 @@ sedargs=(-e "s/airpay_$X/sentientia_$X/g")
 map=""
 for t in $tables; do
     nt="${t/local_airpay_/local_sentientia_}"
+    [ "$nt" = "$t" ] && continue   # brand-neutral table (e.g. local_privacy_*): keep name, no rename
     sedargs+=(-e "s/${t}/${nt}/g")
     map="${map},${t}:${nt}"
 done

@@ -179,7 +179,7 @@ if (isloggedin() && !isguestuser()) {
     $airpay_dashboard['isldadmin'] = $isldadmin;      // L&D admin (admin dash without system health)
     $airpay_dashboard['ismanager'] = $ismanager;       // Team + learner
     $airpay_dashboard['islearner'] = !$isadmin;        // Managers + learners see learner sections
-    $airpay_dashboard['team_url'] = (new moodle_url('/local/airpay_manager/index.php'))->out(false);
+    $airpay_dashboard['team_url'] = (new moodle_url('/local/sentientia_manager/index.php'))->out(false);
 
     // ═══════════════════════════════════════════════════════════
     // Gamification data — all non-admin users see points, badges, streaks
@@ -520,7 +520,7 @@ if (isloggedin() && !isguestuser()) {
                         ];
                     } catch (Exception $e) { return []; }
                  })()],
-                ['label' => 'Privacy (DPDP)', 'icon' => 'lock', 'url' => (new moodle_url('/local/airpay_privacy/index.php'))->out(false), 'color' => '#7c3aed',
+                ['label' => 'Privacy (DPDP)', 'icon' => 'lock', 'url' => (new moodle_url('/local/sentientia_privacy/index.php'))->out(false), 'color' => '#7c3aed',
                  'hasstats' => true, 'stats' => (function() use ($DB) {
                     try {
                         $pending = $DB->count_records('local_privacy_requests', ['status' => 'pending']);
@@ -750,12 +750,12 @@ if (isloggedin() && !isguestuser()) {
     $airpay_dashboard['haslearnerkpis'] = !empty($airpay_dashboard['hasstats']);
 
     // --- Section: Manager Team Overview (only for managers) ---
-    // Uses local_airpay_manager\team_manager — batches 4 aggregate queries
+    // Uses local_sentientia_manager\team_manager — batches 4 aggregate queries
     // instead of running N+1 progress calculations per team member.
     if ($ismanager) {
         try {
-            $teammembers = \local_airpay_manager\team_manager::get_team((int) $USER->id);
-            $teamsummary = \local_airpay_manager\team_manager::summarize_team($teammembers);
+            $teammembers = \local_sentientia_manager\team_manager::get_team((int) $USER->id);
+            $teamsummary = \local_sentientia_manager\team_manager::summarize_team($teammembers);
 
             $teamcompliancelist = [];
             $teamenrolled = 0;
@@ -778,7 +778,7 @@ if (isloggedin() && !isguestuser()) {
                     'rate_class'   => $row['rate_class'],
                     'lastaccess'   => $row['lastlogin'],
                     'is_inactive'  => $row['is_inactive'],
-                    'drilldown_url' => (new moodle_url('/local/airpay_manager/member.php', ['id' => $row['id']]))->out(false),
+                    'drilldown_url' => (new moodle_url('/local/sentientia_manager/member.php', ['id' => $row['id']]))->out(false),
                 ];
             }
 

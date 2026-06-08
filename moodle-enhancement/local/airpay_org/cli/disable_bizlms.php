@@ -49,7 +49,7 @@ $plugins = [
     'local_users'           => 'Replaced by local_airpay_users',
     'local_courses'         => 'Replaced by local_airpay_courses',
     'local_classroom'       => 'Replaced by local_airpay_classroom',
-    'local_onlineexams'     => 'Replaced by local_airpay_exams',
+    'local_onlineexams'     => 'Replaced by local_sentientia_exams',
     'local_learningplan'    => 'Replaced by local_airpay_learningpath',
     'local_search'          => 'Replaced by local_sentientia_catalog',
     'local_custom_category' => 'Replaced by category_manager in sentientia_catalog',
@@ -57,7 +57,7 @@ $plugins = [
     // Already replaced (Phase 0 — pre-fork).
     'local_biz_cart'        => 'Replaced by sentientia_catalog commerce',
     'local_notifications'   => 'Replaced by airpay_notifications',
-    'local_myteam'          => 'Replaced by airpay_manager',
+    'local_myteam'          => 'Replaced by sentientia_manager',
 
     // Not used.
     'local_forum'           => 'Not used',
