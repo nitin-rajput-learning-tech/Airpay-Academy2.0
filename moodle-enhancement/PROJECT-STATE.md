@@ -5,6 +5,40 @@
 
 ---
 
+## ✅ From-scratch reinstall — de-brand validated from zero + vanilla-portability gap (2026-06-08, Opus 4.8)
+
+Capstone (Nitin-authorised): wiped + clean-reinstalled the local XAMPP instance **empty/pristine**.
+**3.3 GB DB backup taken first** at `D:\Claude Local\Moodle Backup\pre-scratch-wipe-2026-06-08\moodle-db.sql`
+(restore: `mysql -uroot moodle < moodle-db.sql`); `config.php` preserved (wwwroot/db/dataroot/VAPID key).
+
+**De-brand PROVEN from zero:** `admin/cli/install_database.php` on an empty DB succeeded — 505 plugins
+incl. 40 `local_sentientia_*` + 6 `block_sentientia_*` + `theme_sentientia` + `enrol_sentientiasub` +
+`quizaccess_sentientia_proctoring` + `paygw_airpay`; **`external_functions` 0 airpay / 162 sentientia**
+(built fresh from each `db/services.php` — strongest proof the WS de-brand is self-consistent from
+zero); 0 `airpay`/`airpayux` component anywhere except the kept `paygw_airpay`; admin created; `/` +
+`/login` 200.
+
+**Also shipped this session:** WS-reconcile fix — `relabel_plugin.php` only updated
+`external_functions.component`, leaving the WS `name` stale (155 funcs / 19 components) → "invalid
+function" at runtime; fixed via `external_update_descriptions()` (new `cli/rebuild_ws_descriptions.php`
++ relabel patch; 155→0; `e9c988c13`) and a PHPUnit rename-verification doc (215/227, **0
+component-resolution errors** — the 12 failures are pre-existing BizLMS-test-DB gaps, not the rename;
+`d5202e8d8`).
+
+**⚠ Finding (NOT a de-brand regression) — Sentientia is not yet vanilla-portable (ADR-018 gap):** the
+theme hard-queries BizLMS-injected `open_*` columns (`open_path` / `open_supervisorid` /
+`open_costcenterid`) that core Moodle's `install.xml` does not create → authenticated pages 500 on a
+non-BizLMS deployment. Front page FIXED (`field_exists` guard + site-wide fallback, local webroot);
+~30 sites across 8 theme files remain (incl. `core_renderer`/`role_detector`/`hook_callbacks` — every
+page) + likely plugin-level. **Zero impact on Airpay production** (its BizLMS schema has the columns;
+3,176 users served). Full scope + 3 fix options + the "theme rename is local-webroot+DB-only, **not in
+git** (git source = `theme/airpayux/`)" loose end → `docs/audits/SCRATCH-INSTALL-2026-06-08.md`.
+**Decision needed from Nitin** before the local instance is browsable: greenlight the ADR-018 Wave-2
+theme/plugin BizLMS-decouple (review-gated — `core_renderer` is every-page) / re-import the prod
+dataset / column-injection stopgap. Destructive wipe fully reversible from the dump above.
+
+---
+
 ## ✅ De-brand follow-up — `local$name` junk dir purged + a stale-AMD-bundle gap found (2026-06-08, Opus 4.8)
 
 Context: **ADR-025 is COMPLETE** (2026-06-08) — the full `airpay_* → sentientia_*` rename shipped
