@@ -252,9 +252,9 @@ class token_manager {
     }
 
     /**
-     * Resolve the tenant id for a user, via airpay_core::tenant if
+     * Resolve the tenant id for a user, via sentientia_platform::tenant if
      * available. Falls back to 0 when the helper is missing (early
-     * install on a host without airpay_core) so token creation still
+     * install on a host without sentientia_platform) so token creation still
      * succeeds.
      *
      * @param int $userid
@@ -262,14 +262,14 @@ class token_manager {
      */
     private static function resolve_tenant_for_user(int $userid): int {
         global $DB;
-        if (!class_exists('\\local_airpay_core\\tenant')) {
+        if (!class_exists('\\local_sentientia_platform\\tenant')) {
             return 0;
         }
         $user = $DB->get_record('user', ['id' => $userid], 'id, open_path');
         if ($user === false) {
             return 0;
         }
-        return \local_airpay_core\tenant::root_for_user($user);
+        return \local_sentientia_platform\tenant::root_for_user($user);
     }
 
     /**
@@ -280,14 +280,14 @@ class token_manager {
      * @return int
      */
     private static function resolve_customer_for_user(int $userid): int {
-        if (!class_exists('\\local_airpay_core\\customer')) {
+        if (!class_exists('\\local_sentientia_platform\\customer')) {
             return 0;
         }
         // customer::current() reads $USER, but we want this user. In
         // Phase 0/1 every user resolves to the same customer (AIRPAY),
         // so calling ::current() during token creation gives the right
         // answer; Phase 2 will swap this for a tenant->customer lookup.
-        return \local_airpay_core\customer::current();
+        return \local_sentientia_platform\customer::current();
     }
 
     /**

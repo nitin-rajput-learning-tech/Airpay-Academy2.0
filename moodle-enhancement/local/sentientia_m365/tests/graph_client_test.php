@@ -60,7 +60,7 @@ final class graph_client_test extends \advanced_testcase {
             'timecreated' => time(),
             'timemodified' => time(),
         ];
-        $columns = $DB->get_columns('local_airpay_feature_flags');
+        $columns = $DB->get_columns('local_sentientia_feature_flags');
         if (isset($columns['customer_id'])) {
             $row->customer_id = 0;
         }
@@ -68,8 +68,8 @@ final class graph_client_test extends \advanced_testcase {
         if (isset($columns['customer_id'])) {
             $where['customer_id'] = 0;
         }
-        $DB->delete_records('local_airpay_feature_flags', $where);
-        $DB->insert_record('local_airpay_feature_flags', $row);
+        $DB->delete_records('local_sentientia_feature_flags', $where);
+        $DB->insert_record('local_sentientia_feature_flags', $row);
 
         $user = $this->getDataGenerator()->create_user();
 

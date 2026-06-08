@@ -42,7 +42,7 @@ class compliance_report extends external_api {
         // ── B2 fix: tenant scoping on aggregate ──────────────────────────
         // Compliance dashboard for a tenant-bound reviewer must only sum
         // their own tenant's sessions. Site admin sees the global view.
-        [$tnsql, $tnargs] = \local_airpay_core\tenant::sql_filter('s');
+        [$tnsql, $tnargs] = \local_sentientia_platform\tenant::sql_filter('s');
         $rows = $DB->get_records_sql(
             "SELECT DATE(FROM_UNIXTIME(s.timecreated)) AS day,
                     COUNT(*) AS total,

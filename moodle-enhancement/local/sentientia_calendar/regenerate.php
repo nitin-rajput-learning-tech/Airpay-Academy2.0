@@ -29,8 +29,8 @@ require_capability('local/sentientia_calendar:subscribe', $context);
 
 // Master feature flag — refuse regeneration when off (otherwise an
 // attacker could spam-create rows even when the feature is disabled).
-if (class_exists('\\local_airpay_core\\feature_flags')) {
-    if (!\local_airpay_core\feature_flags::is_enabled('sentientia.calendar_sync.enabled')) {
+if (class_exists('\\local_sentientia_platform\\feature_flags')) {
+    if (!\local_sentientia_platform\feature_flags::is_enabled('sentientia.calendar_sync.enabled')) {
         throw new \moodle_exception('error_flag_off', 'local_sentientia_calendar');
     }
 }

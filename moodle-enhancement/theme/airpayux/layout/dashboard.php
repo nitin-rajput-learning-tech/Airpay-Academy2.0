@@ -1043,9 +1043,9 @@ $templatecontext = [
 // just exposes the type info so the template chooses which widgets to
 // render. C1.4-followup chip will refactor each widget into a
 // conditional block.
-if (class_exists('\\local_airpay_core\\user_type_factory')) {
+if (class_exists('\\local_sentientia_platform\\user_type_factory')) {
     try {
-        $type_provider = \local_airpay_core\user_type_factory::for_user((int) $USER->id);
+        $type_provider = \local_sentientia_platform\user_type_factory::for_user((int) $USER->id);
         $widget_keys = $type_provider->dashboard_widgets($USER);
 
         // Boolean flags for {{#dash_widget_<key>}}...{{/}} conditionals

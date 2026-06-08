@@ -45,8 +45,8 @@ global $CFG, $DB;
 $token = optional_param('token', '', PARAM_ALPHANUM);
 
 // Master feature flag — refuse to serve even with a valid token when off.
-if (class_exists('\\local_airpay_core\\feature_flags')) {
-    if (!\local_airpay_core\feature_flags::is_enabled('sentientia.calendar_sync.enabled')) {
+if (class_exists('\\local_sentientia_platform\\feature_flags')) {
+    if (!\local_sentientia_platform\feature_flags::is_enabled('sentientia.calendar_sync.enabled')) {
         send_404();
     }
 }

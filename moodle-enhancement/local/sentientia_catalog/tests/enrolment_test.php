@@ -26,7 +26,7 @@ defined('MOODLE_INTERNAL') || die();
  */
 final class enrolment_test extends \advanced_testcase {
 
-    use \local_airpay_core\phpunit\open_path_fixture_trait;
+    use \local_sentientia_platform\phpunit\open_path_fixture_trait;
 
     /**
      * Create a FREE course with a key-gated, enabled self-enrol instance —
@@ -58,8 +58,8 @@ final class enrolment_test extends \advanced_testcase {
 
     /** Turn the one-click flag ON for a given tenant root. */
     private function enable_flag(int $tenant_root): void {
-        \local_airpay_core\feature_flags::set(enrolment::FLAG, $tenant_root, true, null, 'phpunit');
-        \local_airpay_core\feature_flags::invalidate_caches();
+        \local_sentientia_platform\feature_flags::set(enrolment::FLAG, $tenant_root, true, null, 'phpunit');
+        \local_sentientia_platform\feature_flags::invalidate_caches();
     }
 
     private function free_pricing(): array {

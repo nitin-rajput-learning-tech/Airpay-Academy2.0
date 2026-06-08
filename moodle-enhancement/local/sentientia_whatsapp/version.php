@@ -22,7 +22,7 @@ $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;   // mock-mode only — [CONFIRM] required before live
 $plugin->release   = '0.4.0-alpha';    // Stream F / Wave E2 P4 — content notifications
 $plugin->dependencies = [
-    'local_airpay_core' => 2026051401,  // feature_flags resolver
+    'local_sentientia_platform' => 2026051401,  // feature_flags resolver
 ];
 // Release history
 // 0.1.0-alpha  Phase A1 iter 1: opt-in + preference UI

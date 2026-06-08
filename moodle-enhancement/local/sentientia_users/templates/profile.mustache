@@ -135,14 +135,14 @@
 
     {{#is_partner_employee}}
     <div class="ap-profile__detail-grid">
-        <div class="ap-profile__detail"><label>{{#str}}profile_field_customer_name, local_airpay_core{{/str}}</label><span>{{user_type_extras.customer_name}}</span></div>
-        <div class="ap-profile__detail"><label>{{#str}}profile_field_partner_department, local_airpay_core{{/str}}</label><span>{{user_type_extras.partner_department}}</span></div>
-        <div class="ap-profile__detail"><label>{{#str}}profile_field_partner_job_title, local_airpay_core{{/str}}</label><span>{{user_type_extras.partner_job_title}}</span></div>
-        <div class="ap-profile__detail"><label>{{#str}}profile_field_partner_manager, local_airpay_core{{/str}}</label><span>{{user_type_extras.partner_manager_name}}</span></div>
-        <div class="ap-profile__detail"><label>{{#str}}profile_field_partner_employee_id, local_airpay_core{{/str}}</label><span>{{user_type_extras.partner_employee_id}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}profile_field_customer_name, local_sentientia_platform{{/str}}</label><span>{{user_type_extras.customer_name}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}profile_field_partner_department, local_sentientia_platform{{/str}}</label><span>{{user_type_extras.partner_department}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}profile_field_partner_job_title, local_sentientia_platform{{/str}}</label><span>{{user_type_extras.partner_job_title}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}profile_field_partner_manager, local_sentientia_platform{{/str}}</label><span>{{user_type_extras.partner_manager_name}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}profile_field_partner_employee_id, local_sentientia_platform{{/str}}</label><span>{{user_type_extras.partner_employee_id}}</span></div>
         <div class="ap-profile__detail"><label>Location</label><span>{{location}}</span></div>
         <div class="ap-profile__detail"><label>Phone</label><span>{{phnumber}}</span></div>
-        <div class="ap-profile__detail"><label>{{#str}}profile_field_hire_date, local_airpay_core{{/str}}</label><span>{{user_type_extras.partner_hire_date_str}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}profile_field_hire_date, local_sentientia_platform{{/str}}</label><span>{{user_type_extras.partner_hire_date_str}}</span></div>
     </div>
     {{/is_partner_employee}}
 
@@ -150,33 +150,33 @@
     {{#is_consumer}}
     <div class="ap-profile__detail-grid">
         <div class="ap-profile__detail">
-            <label>{{#str}}profile_field_interests, local_airpay_core{{/str}}</label>
+            <label>{{#str}}profile_field_interests, local_sentientia_platform{{/str}}</label>
             <span>{{#user_type_extras.interests_csv}}{{user_type_extras.interests_csv}}{{/user_type_extras.interests_csv}}{{^user_type_extras.interests_csv}}—{{/user_type_extras.interests_csv}}</span>
         </div>
         <div class="ap-profile__detail">
-            <label>{{#str}}profile_field_weekly_goal_hours, local_airpay_core{{/str}}</label>
+            <label>{{#str}}profile_field_weekly_goal_hours, local_sentientia_platform{{/str}}</label>
             <span>{{#user_type_extras.weekly_goal_hours}}{{user_type_extras.weekly_goal_hours}}h/week{{/user_type_extras.weekly_goal_hours}}{{^user_type_extras.weekly_goal_hours}}—{{/user_type_extras.weekly_goal_hours}}</span>
         </div>
         <div class="ap-profile__detail">
-            <label>{{#str}}profile_field_courses_enrolled, local_airpay_core{{/str}}</label>
+            <label>{{#str}}profile_field_courses_enrolled, local_sentientia_platform{{/str}}</label>
             <span>{{user_type_extras.courses_enrolled}}</span>
         </div>
         <div class="ap-profile__detail">
             <label>Email</label><span>{{user_email}}</span>
         </div>
         <div class="ap-profile__detail">
-            <label>{{#str}}profile_field_consent_marketing, local_airpay_core{{/str}}</label>
+            <label>{{#str}}profile_field_consent_marketing, local_sentientia_platform{{/str}}</label>
             <span>{{#user_type_extras.consent_marketing}}<i class="fa fa-check text-success"></i> Yes{{/user_type_extras.consent_marketing}}{{^user_type_extras.consent_marketing}}<i class="fa fa-times text-muted"></i> No{{/user_type_extras.consent_marketing}}</span>
         </div>
         <div class="ap-profile__detail">
-            <label>{{#str}}profile_field_consent_leaderboard, local_airpay_core{{/str}}</label>
+            <label>{{#str}}profile_field_consent_leaderboard, local_sentientia_platform{{/str}}</label>
             <span>{{#user_type_extras.consent_leaderboard}}<i class="fa fa-check text-success"></i> Yes{{/user_type_extras.consent_leaderboard}}{{^user_type_extras.consent_leaderboard}}<i class="fa fa-times text-muted"></i> No{{/user_type_extras.consent_leaderboard}}</span>
         </div>
         <div class="ap-profile__detail">
             <label>Phone</label><span>{{phnumber}}</span>
         </div>
         <div class="ap-profile__detail">
-            <label>{{#str}}profile_field_hire_date, local_airpay_core{{/str}}</label><span>{{joindate}}</span>
+            <label>{{#str}}profile_field_hire_date, local_sentientia_platform{{/str}}</label><span>{{joindate}}</span>
         </div>
     </div>
     {{/is_consumer}}
@@ -184,9 +184,9 @@
     {{! ── Operator — platform staff shape ─────────────────────────────── }}
     {{#is_operator}}
     <div class="ap-profile__detail-grid">
-        <div class="ap-profile__detail"><label>{{#str}}profile_field_operator_role, local_airpay_core{{/str}}</label><span>{{user_type_extras.operator_role}}</span></div>
-        <div class="ap-profile__detail"><label>{{#str}}profile_field_contact_phone, local_airpay_core{{/str}}</label><span>{{user_type_extras.contact_phone}}</span></div>
-        <div class="ap-profile__detail"><label>{{#str}}profile_field_oncall_for, local_airpay_core{{/str}}</label><span>{{#user_type_extras.oncall_for}}{{user_type_extras.oncall_for}}{{/user_type_extras.oncall_for}}{{^user_type_extras.oncall_for}}—{{/user_type_extras.oncall_for}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}profile_field_operator_role, local_sentientia_platform{{/str}}</label><span>{{user_type_extras.operator_role}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}profile_field_contact_phone, local_sentientia_platform{{/str}}</label><span>{{user_type_extras.contact_phone}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}profile_field_oncall_for, local_sentientia_platform{{/str}}</label><span>{{#user_type_extras.oncall_for}}{{user_type_extras.oncall_for}}{{/user_type_extras.oncall_for}}{{^user_type_extras.oncall_for}}—{{/user_type_extras.oncall_for}}</span></div>
         <div class="ap-profile__detail"><label>Email</label><span>{{user_email}}</span></div>
         <div class="ap-profile__detail"><label>Location</label><span>{{location}}</span></div>
         <div class="ap-profile__detail"><label>Phone</label><span>{{phnumber}}</span></div>

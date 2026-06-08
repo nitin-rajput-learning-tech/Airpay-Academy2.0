@@ -11,7 +11,7 @@ disabled by setting). Built Phase 1 (2026-05-11), hardened Phase 8.1
 | Version | `2026051201` (1.0.1) |
 | Requires | Moodle 4.5+ (`2024042200`) |
 | Maturity | `MATURITY_STABLE` |
-| Depends on | `local_sentientia_org`, `local_sentientia_emails`, `local_airpay_core` |
+| Depends on | `local_sentientia_org`, `local_sentientia_emails`, `local_sentientia_platform` |
 
 ## What it does
 
@@ -89,7 +89,7 @@ messages.
 
 - **B4** (CVSS 9.1): `callback.php` compares `payload.amount` + `currency` to server-side `cart->total_amount/currency` BEFORE `mark_paid`.
 - **B11** (CVSS 5.4): Generic 500 (no PHP-error leak), optional `airpay_callback_iplist` allow-list with silent 404 on un-listed sources.
-- **B1** (CVSS 8.6): `cart_manager::get_order` + `refund_order` + `list_orders` + `daily_sums` all enforce tenant equality via `\local_airpay_core\tenant::require_access` / `::sql_filter`.
+- **B1** (CVSS 8.6): `cart_manager::get_order` + `refund_order` + `list_orders` + `daily_sums` all enforce tenant equality via `\local_sentientia_platform\tenant::require_access` / `::sql_filter`.
 - **B5** (CVSS 7.4): Invoice template addresses go through `html_writer::div(s($x), ['style' => 'white-space: pre-line'])` instead of the fragile `nl2br(s($x))+{{{ }}}` pattern.
 - **B9** (CVSS 7.1): `:manageprices` cap migrated `CONTEXT_SYSTEM → CONTEXT_COURSE`. Re-grant any custom-role assignments post-upgrade per `db/upgrade.php` comments.
 

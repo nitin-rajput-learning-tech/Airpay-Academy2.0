@@ -10,7 +10,7 @@
  * "NEVER ship a feature without a feature flag (default OFF)"). For a
  * demo, a QA pass, or the two-browser SSE acceptance test, an operator
  * needs the whole set ON at once. This wraps
- * {@see \local_airpay_core\feature_flags::set()} so the change is audited
+ * {@see \local_sentientia_platform\feature_flags::set()} so the change is audited
  * and caches are invalidated — exactly as the Switchboard does it.
  *
  * Scope is global (tenant_id=0, customer_id=0) — the "all customers /
@@ -100,7 +100,7 @@ $byuserid = $admin ? (int) $admin->id : 0;
 if ($options['status']) {
     cli_heading('Sentientia Live — feature flag status (global resolution)');
     foreach ($allflags as $flag) {
-        $state = \local_airpay_core\feature_flags::is_enabled($flag) ? 'ON ' : 'off';
+        $state = \local_sentientia_platform\feature_flags::is_enabled($flag) ? 'ON ' : 'off';
         cli_writeln(sprintf('  [%s]  %s', $state, $flag));
     }
     exit(0);
@@ -127,7 +127,7 @@ foreach ($allflags as $flag) {
     // override row and fall back to the registry default.
     $value = $enable ? true : null;
 
-    \local_airpay_core\feature_flags::set(
+    \local_sentientia_platform\feature_flags::set(
         $flag,      // key
         0,          // tenant_id — 0 = customer-wide
         $value,     // true | null(revert)
@@ -136,7 +136,7 @@ foreach ($allflags as $flag) {
         0           // customer_id — 0 = global
     );
 
-    $now = \local_airpay_core\feature_flags::is_enabled($flag) ? 'ON ' : 'off';
+    $now = \local_sentientia_platform\feature_flags::is_enabled($flag) ? 'ON ' : 'off';
     cli_writeln(sprintf('  [%s]  %s', $now, $flag));
 }
 

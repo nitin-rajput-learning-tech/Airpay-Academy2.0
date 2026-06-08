@@ -27,7 +27,7 @@ class hook_callbacks {
      * Gating order (any failure hides the bubble):
      *   1. User must be logged in and not guest
      *   2. Phase A0 feature flag `ai.assistant.enabled` must be on for the
-     *      user's tenant — super admin controls this via /local/airpay_core
+     *      user's tenant — super admin controls this via /local/sentientia_platform
      *      /admin/switchboard.php. Tenant-scoped override is supported.
      *   3. Legacy `local_sentientia_assistant/enabled` site config must be on
      *      (kept for backward compat — older deploys may still use it).
@@ -43,10 +43,10 @@ class hook_callbacks {
         }
 
         // Phase A0 feature flag — tenant-scoped switchboard gate.
-        // Returns false safely when the airpay_core plugin isn't installed
+        // Returns false safely when the sentientia_platform plugin isn't installed
         // (e.g. during initial install) so this never blocks the user.
-        if (class_exists('\\local_airpay_core\\feature_flags')
-                && !\local_airpay_core\feature_flags::is_enabled('ai.assistant.enabled')) {
+        if (class_exists('\\local_sentientia_platform\\feature_flags')
+                && !\local_sentientia_platform\feature_flags::is_enabled('ai.assistant.enabled')) {
             return;
         }
 

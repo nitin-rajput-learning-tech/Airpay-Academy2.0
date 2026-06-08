@@ -31,5 +31,5 @@ $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;   // Crypto audit non-blocking sweep: NB #7-#15
 $plugin->release   = '0.5.3-alpha';    // Phase B.3 hook migration
 $plugin->dependencies = [
-    'local_airpay_core' => 2026051200,  // feature_flags resolver
+    'local_sentientia_platform' => 2026051200,  // feature_flags resolver
 ];

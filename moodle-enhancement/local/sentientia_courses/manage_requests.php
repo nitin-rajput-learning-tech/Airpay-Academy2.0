@@ -25,8 +25,8 @@ $PAGE->set_context($context);
 require_capability('local/sentientia_courses:approve_request', $context);
 
 // Phase A0 (2026-05-14): Switchboard gate.
-if (!\local_airpay_core\feature_flags::is_enabled('commerce.crossTenantRequest.enabled')) {
-    throw new \moodle_exception('featuredisabled', 'local_airpay_core', '',
+if (!\local_sentientia_platform\feature_flags::is_enabled('commerce.crossTenantRequest.enabled')) {
+    throw new \moodle_exception('featuredisabled', 'local_sentientia_platform', '',
         'commerce.crossTenantRequest.enabled');
 }
 

@@ -26,8 +26,8 @@ if (!$board) {
 }
 
 // Master flag gate.
-if (class_exists('\\local_airpay_core\\feature_flags')) {
-    if (!\local_airpay_core\feature_flags::is_enabled(
+if (class_exists('\\local_sentientia_platform\\feature_flags')) {
+    if (!\local_sentientia_platform\feature_flags::is_enabled(
             'sentientia.leaderboards.enabled')) {
         throw new moodle_exception('feature_disabled',
             'local_sentientia_leaderboard');
@@ -37,7 +37,7 @@ if (class_exists('\\local_airpay_core\\feature_flags')) {
 // Tenant gate.
 $can_view_all = has_capability('local/sentientia_leaderboard:viewall', $context);
 if (!$can_view_all && (int) $board->tenantid > 0) {
-    $viewer_root = \local_airpay_core\tenant::root_for_current_user();
+    $viewer_root = \local_sentientia_platform\tenant::root_for_current_user();
     if ($viewer_root !== (int) $board->tenantid) {
         throw new moodle_exception('error_outoftenant',
             'local_sentientia_leaderboard');
@@ -78,8 +78,8 @@ echo $OUTPUT->header();
 echo $OUTPUT->render_from_template('local_sentientia_leaderboard/board_view', $data);
 
 // Enable real-time updates via AMD client when the realtime flag is on.
-$realtime_on = !class_exists('\\local_airpay_core\\feature_flags')
-    || \local_airpay_core\feature_flags::is_enabled(
+$realtime_on = !class_exists('\\local_sentientia_platform\\feature_flags')
+    || \local_sentientia_platform\feature_flags::is_enabled(
         'sentientia.leaderboards.realtime.enabled');
 
 $PAGE->requires->js_call_amd(

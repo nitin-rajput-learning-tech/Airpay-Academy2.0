@@ -178,7 +178,7 @@ class signup_service {
         //
         // Write the user_type row immediately so first-login dashboard /
         // sidebar / profile all see the right shape.
-        if (class_exists('\\local_airpay_core\\user_type_factory')) {
+        if (class_exists('\\local_sentientia_platform\\user_type_factory')) {
             try {
                 $now = time();
                 $DB->insert_record('local_airpay_user_type', (object) [

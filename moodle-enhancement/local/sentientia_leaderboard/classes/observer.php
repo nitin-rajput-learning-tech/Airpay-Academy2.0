@@ -33,12 +33,12 @@ class observer {
     public static function on_rankings_updated(
             \local_sentientia_leaderboard\event\rankings_updated $event): void {
         try {
-            // Gate on the L.1 master flag — default OFF. When airpay_core
+            // Gate on the L.1 master flag — default OFF. When sentientia_platform
             // isn't installed, treat as OFF (fail-safe).
-            if (!class_exists('\\local_airpay_core\\feature_flags')) {
+            if (!class_exists('\\local_sentientia_platform\\feature_flags')) {
                 return;
             }
-            if (!\local_airpay_core\feature_flags::is_enabled(
+            if (!\local_sentientia_platform\feature_flags::is_enabled(
                     message_helper::FLAG_KEY)) {
                 return;
             }

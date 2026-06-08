@@ -305,10 +305,10 @@ class notification_bridge_content_test extends \advanced_testcase {
      * feature_flags::set() public API so the resolver picks it up.
      */
     private function force_content_flag(bool $on): void {
-        if (!class_exists('\\local_airpay_core\\feature_flags')) {
+        if (!class_exists('\\local_sentientia_platform\\feature_flags')) {
             return;  // dev env without core flags — fail-open
         }
-        \local_airpay_core\feature_flags::set(
+        \local_sentientia_platform\feature_flags::set(
             notification_bridge::CONTENT_FLAG, 0, $on, null,
             'phpunit-test', 0);
     }

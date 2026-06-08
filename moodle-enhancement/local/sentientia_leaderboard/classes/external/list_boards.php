@@ -41,8 +41,8 @@ class list_boards extends external_api {
         self::validate_context($context);
         require_capability('local/sentientia_leaderboard:view', $context);
 
-        if (class_exists('\\local_airpay_core\\feature_flags')) {
-            if (!\local_airpay_core\feature_flags::is_enabled(
+        if (class_exists('\\local_sentientia_platform\\feature_flags')) {
+            if (!\local_sentientia_platform\feature_flags::is_enabled(
                     'sentientia.leaderboards.enabled')) {
                 return ['boards' => []];
             }
@@ -50,7 +50,7 @@ class list_boards extends external_api {
 
         $can_view_all = has_capability(
             'local/sentientia_leaderboard:viewall', $context);
-        $viewer_root = \local_airpay_core\tenant::root_for_current_user();
+        $viewer_root = \local_sentientia_platform\tenant::root_for_current_user();
 
         $filters = [];
         if ($type !== '' && in_array($type,
@@ -68,8 +68,8 @@ class list_boards extends external_api {
             'completion' => 'sentientia.leaderboards.type.completion',
             'skill'      => 'sentientia.leaderboards.type.skill',
         ];
-        $flags_class = class_exists('\\local_airpay_core\\feature_flags')
-            ? '\\local_airpay_core\\feature_flags' : null;
+        $flags_class = class_exists('\\local_sentientia_platform\\feature_flags')
+            ? '\\local_sentientia_platform\\feature_flags' : null;
 
         $out = [];
         foreach ($rows as $r) {

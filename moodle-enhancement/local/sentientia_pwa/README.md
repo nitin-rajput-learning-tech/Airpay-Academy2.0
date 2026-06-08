@@ -114,7 +114,7 @@ items become the **wrap-ready inventory**:
       click URL). Today: `/my/`, `/local/sentientia_live/audience/join.php`,
       `/local/sentientia_pwa/preferences.php`. Document in wrap repo.
 - [ ] **Splash + icon set.** 192 + 512 PNGs already shipped at
-      `local/airpay_core/pix/customer/1/icon-*.png`. Capacitor needs
+      `local/sentientia_platform/pix/customer/1/icon-*.png`. Capacitor needs
       additional sizes (1024×1024, splash adaptive). Generate from the
       same source SVG when wrap kicks off.
 - [ ] **App ID + bundle reservation.** `in.airpay.academy` (Android)
@@ -190,10 +190,10 @@ php local\sentientia_pwa\cli\run_push_e2e.php
 ### Toggle the install CTA
 ```php
 // CLI — turn ON on local for testing
-\local_airpay_core\feature_flags::set('sentientia.pwa.install.enabled', 0, true, 2, 'dev', 0);
+\local_sentientia_platform\feature_flags::set('sentientia.pwa.install.enabled', 0, true, 2, 'dev', 0);
 
 // CLI — turn OFF (default)
-\local_airpay_core\feature_flags::set('sentientia.pwa.install.enabled', 0, false, 2, 'dev', 0);
+\local_sentientia_platform\feature_flags::set('sentientia.pwa.install.enabled', 0, false, 2, 'dev', 0);
 ```
 
 ---

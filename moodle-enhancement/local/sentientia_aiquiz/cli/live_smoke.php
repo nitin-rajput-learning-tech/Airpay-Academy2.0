@@ -83,14 +83,14 @@ if (empty($apikey)) {
 
 // ── Prerequisite 3: feature flag enabled ────────────────────────────
 $flagon = false;
-if (class_exists('\\local_airpay_core\\feature_flags')) {
-    $flagon = \local_airpay_core\feature_flags::is_enabled(
+if (class_exists('\\local_sentientia_platform\\feature_flags')) {
+    $flagon = \local_sentientia_platform\feature_flags::is_enabled(
         'sentientia.aiquiz.live');
 }
 if (!$flagon) {
     cli_writeln('✗ Feature flag `sentientia.aiquiz.live` is OFF.');
     cli_writeln('  Enable it via Site Admin → Plugins → Local plugins → Switchboard');
-    cli_writeln('  OR via CLI flag-flip (see local_airpay_core/admin/switchboard.php).');
+    cli_writeln('  OR via CLI flag-flip (see local_sentientia_platform/admin/switchboard.php).');
     exit(2);
 }
 

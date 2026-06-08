@@ -40,13 +40,13 @@ tenant_identity::require_path_access($course->open_path);  // throws if out-of-t
 ```
 
 Behind the default-ON setting **`tenant_identity_legacy`** the tenant resolver
-delegates to the legacy BizLMS parser (`local_airpay_core\tenant`); the
+delegates to the legacy BizLMS parser (`local_sentientia_platform\tenant`); the
 access/filter helpers likewise delegate to the canonical legacy implementation —
 so behaviour is byte-identical to current production. When a future wave builds
 the Sentientia tenant registry, flipping the setting OFF switches the source, and
 until then the OFF path falls back to legacy so it can never break authentication.
 Every delegation is `class_exists()`-guarded with an inline fallback, so the seam
-carries **no hard dependency** on `local_airpay_core` (it can ship standalone for
+carries **no hard dependency** on `local_sentientia_platform` (it can ship standalone for
 Enterprise N).
 
 ### `org` — the manager/org seam (ADR-020 Wave 3.1)
@@ -80,5 +80,5 @@ Site administration → Plugins → Local plugins → **Sentientia Core** →
   `tenant_identity` (reviewed batches; `sentientia_compliance_report` excluded while
   it is active WIP, `_PATCHED` vendor files deferred to Wave 5).
 - The Sentientia tenant **registry** table + admin UI (Wave 4 — replaces the
-  hardcoded `local_airpay_core\tenant::VALID_TENANTS`).
+  hardcoded `local_sentientia_platform\tenant::VALID_TENANTS`).
 - `local_costcenter` → `local_sentientia_org` org-hierarchy migration (Wave 3.2+).

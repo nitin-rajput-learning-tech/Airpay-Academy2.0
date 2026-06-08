@@ -303,7 +303,7 @@ class request_manager {
             if (!$has_override) {
                 throw new \moodle_exception('error_outoftenant', 'local_sentientia_request');
             }
-            \local_airpay_core\tenant::require_access(
+            \local_sentientia_platform\tenant::require_access(
                 (int) $rec->costcenterid, $deciderid);
         }
 

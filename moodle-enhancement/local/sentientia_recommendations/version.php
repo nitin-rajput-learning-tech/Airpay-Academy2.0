@@ -41,7 +41,7 @@ $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;     // MVP — needs prod sign-off before flag flips
 $plugin->release   = '0.1.0-alpha';
 $plugin->dependencies = [
-    'local_airpay_core'    => 2026051401,   // feature_flags resolver + customer scope
+    'local_sentientia_platform'    => 2026051401,   // feature_flags resolver + customer scope
     'local_sentientia_courses' => 2026052003,   // course catalogue + completion
 ];
 

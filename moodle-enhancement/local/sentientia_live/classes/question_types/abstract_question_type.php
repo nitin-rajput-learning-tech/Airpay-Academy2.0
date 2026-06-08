@@ -84,7 +84,7 @@ abstract class abstract_question_type {
     public const SLUG = '';
 
     /**
-     * Per-type feature flag key (resolved through local_airpay_core
+     * Per-type feature flag key (resolved through local_sentientia_platform
      * feature_flags). Default OFF — every type gates on its own flag
      * to let customers enable a subset without enabling the lot.
      */
@@ -193,12 +193,12 @@ abstract class abstract_question_type {
             // with types that predate the flag layer.
             return true;
         }
-        if (!class_exists('\\local_airpay_core\\feature_flags')) {
+        if (!class_exists('\\local_sentientia_platform\\feature_flags')) {
             // Core feature-flag resolver missing — fail closed.
             return false;
         }
         try {
-            return \local_airpay_core\feature_flags::is_enabled(
+            return \local_sentientia_platform\feature_flags::is_enabled(
                 static::FEATURE_FLAG);
         } catch (\Throwable $e) {
             return false;

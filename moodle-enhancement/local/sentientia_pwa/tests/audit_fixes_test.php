@@ -161,7 +161,7 @@ class audit_fixes_test extends \advanced_testcase {
     }
 
     public function test_customer_helper_exposes_current_tenant(): void {
-        $ref = new \ReflectionClass(\local_airpay_core\customer::class);
+        $ref = new \ReflectionClass(\local_sentientia_platform\customer::class);
         $this->assertTrue($ref->hasMethod('current_tenant'),
             'customer::current_tenant() must exist for push_sender cross-tenant guard');
     }

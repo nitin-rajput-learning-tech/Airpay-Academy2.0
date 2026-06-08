@@ -29,7 +29,7 @@ $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_BETA;
 $plugin->release   = '1.2.0-beta';
 $plugin->dependencies = [
-    'local_airpay_core' => 2026051401,  // feature_flags resolver
+    'local_sentientia_platform' => 2026051401,  // feature_flags resolver
 ];
 
 // Release history.

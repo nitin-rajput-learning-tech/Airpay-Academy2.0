@@ -86,8 +86,8 @@ class sms_client {
         }
 
         // Gate 4: feature flag + config + dev-mode kill switch.
-        $flag_on = class_exists('\\local_airpay_core\\feature_flags')
-            && \local_airpay_core\feature_flags::is_enabled('engagement.sms.enabled');
+        $flag_on = class_exists('\\local_sentientia_platform\\feature_flags')
+            && \local_sentientia_platform\feature_flags::is_enabled('engagement.sms.enabled');
         $api_key = get_config('local_sentientia_whatsapp', 'msg91_api_key');
         $noever = !empty($GLOBALS['CFG']->noemailever);
         $is_mock = $force_mock || !$flag_on || empty($api_key) || $noever;

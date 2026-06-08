@@ -27,7 +27,7 @@ class flag_session extends external_api {
         $s = $DB->get_record('local_sentientia_proctor_sessions',
             ['id' => $params['sessionid']], '*', MUST_EXIST);
         // ── B2 fix: tenant equality before flagging ─────────────────────
-        \local_airpay_core\tenant::require_access((int) $s->costcenterid);
+        \local_sentientia_platform\tenant::require_access((int) $s->costcenterid);
 
         $s->status = 'flagged';
         $s->timemodified = time();

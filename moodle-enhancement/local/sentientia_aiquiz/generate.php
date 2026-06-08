@@ -45,8 +45,8 @@ require_login();
 $context = context_system::instance();
 
 // Gate 1 — feature flag.
-if (class_exists('\\local_airpay_core\\feature_flags')
-        && !\local_airpay_core\feature_flags::is_enabled('sentientia.aiquiz.enabled')) {
+if (class_exists('\\local_sentientia_platform\\feature_flags')
+        && !\local_sentientia_platform\feature_flags::is_enabled('sentientia.aiquiz.enabled')) {
     throw new moodle_exception('err_feature_off', 'local_sentientia_aiquiz');
 }
 
@@ -79,8 +79,8 @@ if ($defaultmodel === '') {
 
 // Resolve current customer (Phase 0/1 hardcoded Airpay). Used for both
 // the prompt-template lookup and the draft.customerid column.
-$currentcustomer = class_exists('\\local_airpay_core\\customer')
-    ? \local_airpay_core\customer::current()
+$currentcustomer = class_exists('\\local_sentientia_platform\\customer')
+    ? \local_sentientia_platform\customer::current()
     : 1;
 
 // Determine the trainer's UI locale — drives the default language picker
@@ -227,11 +227,11 @@ $previewlabel = prompt_builder::resolve_prompt_version(
 // Mode badge — which way will this submission be routed?
 // ──────────────────────────────────────────────────────────────────
 $badge = null;
-if (!class_exists('\\local_airpay_core\\feature_flags')) {
+if (!class_exists('\\local_sentientia_platform\\feature_flags')) {
     $badge = ['class' => 'alert-warning', 'text' => get_string('mode_disabled_badge', 'local_sentientia_aiquiz')];
-} else if (!\local_airpay_core\feature_flags::is_enabled('sentientia.aiquiz.enabled')) {
+} else if (!\local_sentientia_platform\feature_flags::is_enabled('sentientia.aiquiz.enabled')) {
     $badge = ['class' => 'alert-danger', 'text' => get_string('mode_disabled_badge', 'local_sentientia_aiquiz')];
-} else if (!\local_airpay_core\feature_flags::is_enabled('sentientia.aiquiz.live_api')) {
+} else if (!\local_sentientia_platform\feature_flags::is_enabled('sentientia.aiquiz.live_api')) {
     $badge = ['class' => 'alert-info', 'text' => get_string('mode_mock_badge', 'local_sentientia_aiquiz')];
 } else {
     $apikey = get_config('local_sentientia_aiquiz', 'api_key');
@@ -398,8 +398,8 @@ echo html_writer::start_tag('details', ['class' => 'mb-3 sentientia-aiquiz-promp
 $previewsummary = get_string('generate_prompt_preview_summary', 'local_sentientia_aiquiz',
     (object)[
         'version'    => $previewlabel,
-        'customer'   => class_exists('\\local_airpay_core\\customer')
-            ? \local_airpay_core\customer::label_for($currentcustomer)
+        'customer'   => class_exists('\\local_sentientia_platform\\customer')
+            ? \local_sentientia_platform\customer::label_for($currentcustomer)
             : 'Airpay Payment Services',
     ]);
 echo html_writer::tag('summary', s($previewsummary), ['class' => 'fw-bold']);

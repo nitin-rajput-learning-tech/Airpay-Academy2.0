@@ -33,7 +33,7 @@ php admin/cli/upgrade.php
 php admin/cli/purge_caches.php
 
 # 4. (Optional) Flip the master flag ON in the Switchboard:
-#    http://localhost:8080/moodle/local/airpay_core/admin/switchboard.php
+#    http://localhost:8080/moodle/local/sentientia_platform/admin/switchboard.php
 #    Toggle `sentientia.recommendations.enabled` to ON.
 #
 #    Leave `sentientia.recommendations.live_api` OFF for a money-free demo.

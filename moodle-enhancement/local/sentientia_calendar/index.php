@@ -30,8 +30,8 @@ require_capability('local/sentientia_calendar:subscribe', $context);
 // Master feature flag — page is 404 (via moodle_exception) when off, so
 // a curious user who knows the URL can't probe whether the feature
 // exists for other tenants.
-if (class_exists('\\local_airpay_core\\feature_flags')) {
-    if (!\local_airpay_core\feature_flags::is_enabled('sentientia.calendar_sync.enabled')) {
+if (class_exists('\\local_sentientia_platform\\feature_flags')) {
+    if (!\local_sentientia_platform\feature_flags::is_enabled('sentientia.calendar_sync.enabled')) {
         throw new \moodle_exception('error_flag_off', 'local_sentientia_calendar');
     }
 }

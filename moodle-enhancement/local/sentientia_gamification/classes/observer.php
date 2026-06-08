@@ -24,8 +24,8 @@ class observer {
     public static function course_completed(\core\event\course_completed $event) {
         global $DB;
 
-        if (class_exists('\\local_airpay_core\\feature_flags')
-                && !\local_airpay_core\feature_flags::is_enabled('engagement.gamification.enabled')) {
+        if (class_exists('\\local_sentientia_platform\\feature_flags')
+                && !\local_sentientia_platform\feature_flags::is_enabled('engagement.gamification.enabled')) {
             return;  // silent no-op — gamification disabled platform-wide
         }
 

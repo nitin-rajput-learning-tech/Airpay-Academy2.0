@@ -35,13 +35,13 @@ $boardid       = required_param('boardid', PARAM_INT);
 $last_event_id = optional_param('lastid', 0, PARAM_INT);
 
 // Master flag — fall through to polling-only if the realtime layer is off.
-if (class_exists('\\local_airpay_core\\feature_flags')) {
-    if (!\local_airpay_core\feature_flags::is_enabled(
+if (class_exists('\\local_sentientia_platform\\feature_flags')) {
+    if (!\local_sentientia_platform\feature_flags::is_enabled(
             'sentientia.leaderboards.enabled')) {
         http_response_code(403);
         exit('sentientia.leaderboards.enabled flag is off');
     }
-    if (!\local_airpay_core\feature_flags::is_enabled(
+    if (!\local_sentientia_platform\feature_flags::is_enabled(
             'sentientia.leaderboards.realtime.enabled')) {
         http_response_code(503);
         header('X-Realtime-Disabled: 1');
@@ -74,7 +74,7 @@ if ($board->status !== \local_sentientia_leaderboard\board_manager::STATUS_ACTIV
 // the board's tenant OR the board must be customer-wide (tenantid=0).
 $can_view_all = has_capability('local/sentientia_leaderboard:viewall', $context);
 if (!$can_view_all && (int) $board->tenantid > 0) {
-    $viewer_root = \local_airpay_core\tenant::root_for_current_user();
+    $viewer_root = \local_sentientia_platform\tenant::root_for_current_user();
     if ($viewer_root !== (int) $board->tenantid) {
         http_response_code(403);
         exit('out of tenant');

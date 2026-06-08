@@ -115,7 +115,7 @@ class graph_client {
      * unlocks the OAuth flow but explicitly NOT the Graph traffic.
      *
      * Phase C.2 replaces this with:
-     *   if (!\local_airpay_core\feature_flags::is_enabled('sentientia_m365_live_api')) {
+     *   if (!\local_sentientia_platform\feature_flags::is_enabled('sentientia_m365_live_api')) {
      *       throw new \moodle_exception('feature_off', 'local_sentientia_m365');
      *   }
      *

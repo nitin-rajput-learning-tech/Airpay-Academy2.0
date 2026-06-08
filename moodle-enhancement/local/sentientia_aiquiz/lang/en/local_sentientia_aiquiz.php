@@ -144,7 +144,7 @@ $string['setting_max_source_words_desc']  = 'Source text is rejected if it excee
 $string['settings_heading_customer_prompts']        = 'Per-customer prompt templates';
 $string['settings_heading_customer_prompts_desc']   = 'Optional override of the system prompt sent to Claude, per Sentientia LMS customer. When set, the textarea contents REPLACE the baseline v1 (English) or v2-hindi prompt body verbatim. Leave blank to use the in-code baseline. The user-message wrapper (begin/end markers + the "exactly N questions" instruction) always follows the language picker on the generate form.';
 $string['setting_customer_1_prompt_template']       = 'Airpay (customer 1) — custom prompt template';
-$string['setting_customer_1_prompt_template_desc']  = 'Paste a customer-specific system prompt for Airpay. Leave blank to use the v1/v2-hindi baseline. Stored under local_airpay_core/customer_1_aiquiz_prompt_template — read by \\local_airpay_core\\customer::get_customer_config(). Drafts generated while a custom template is active have their prompt_version recorded as "custom:v1" or "custom:v2-hindi".';
+$string['setting_customer_1_prompt_template_desc']  = 'Paste a customer-specific system prompt for Airpay. Leave blank to use the v1/v2-hindi baseline. Stored under local_sentientia_platform/customer_1_aiquiz_prompt_template — read by \\local_sentientia_platform\\customer::get_customer_config(). Drafts generated while a custom template is active have their prompt_version recorded as "custom:v1" or "custom:v2-hindi".';
 
 // ── Misc ───────────────────────────────────────────────────────────
 $string['source_word_count'] = 'Word count: {$a}';

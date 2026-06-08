@@ -15,5 +15,5 @@ $plugin->release   = '1.0.2';     // +P1 #57 Hindi pack
 $plugin->dependencies = [
     'local_sentientia_org'    => 2026040100,  // Tenant scoping engine
     'local_sentientia_emails' => 2026040100,  // Email templates for receipts
-    'local_airpay_core'   => 2026051200,  // Shared tenant helper
+    'local_sentientia_platform'   => 2026051200,  // Shared tenant helper
 ];

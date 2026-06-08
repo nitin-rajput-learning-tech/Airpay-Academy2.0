@@ -105,7 +105,7 @@ class enrolment {
         }
 
         // (1) Feature flag, resolved for THIS user's tenant.
-        return \local_airpay_core\feature_flags::is_enabled_for_tenant(self::FLAG, $root);
+        return \local_sentientia_platform\feature_flags::is_enabled_for_tenant(self::FLAG, $root);
     }
 
     /**

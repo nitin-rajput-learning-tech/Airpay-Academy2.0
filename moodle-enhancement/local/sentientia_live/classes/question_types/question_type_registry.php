@@ -19,7 +19,7 @@ defined('MOODLE_INTERNAL') || die();
  *   2. Add an entry to TYPES below.
  *   3. Add the lang strings (en + hi) for name + description.
  *   4. Register the type's feature flag in
- *      local_airpay_core/db/feature_flags.php (default OFF).
+ *      local_sentientia_platform/db/feature_flags.php (default OFF).
  *   5. Add the slug to slide_manager::VALID_TYPES + the schema's
  *      type column comment (purely documentary).
  *

@@ -93,11 +93,11 @@ class notification_bridge {
      * dev) OR the flag is explicitly ON.
      */
     private static function sub_channel_on(string $flag_key): bool {
-        if (!class_exists('\\local_airpay_core\\feature_flags')) {
+        if (!class_exists('\\local_sentientia_platform\\feature_flags')) {
             return true;  // dev environments without feature_flags installed
         }
         try {
-            return \local_airpay_core\feature_flags::is_enabled($flag_key);
+            return \local_sentientia_platform\feature_flags::is_enabled($flag_key);
         } catch (\Throwable $e) {
             return false;  // err on the side of NO push if the flag system errors
         }

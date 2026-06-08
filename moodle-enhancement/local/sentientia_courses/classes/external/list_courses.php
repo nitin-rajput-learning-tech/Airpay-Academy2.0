@@ -54,7 +54,7 @@ class list_courses extends external_api {
         // disappears from every row even for users who still hold the
         // capability. Capability + flag must BOTH be on to render.
         $can_share  = has_capability('local/sentientia_courses:share_to_tenant', $context)
-            && \local_airpay_core\feature_flags::is_enabled('commerce.crossTenantShare.enabled');
+            && \local_sentientia_platform\feature_flags::is_enabled('commerce.crossTenantShare.enabled');
 
         // Sort whitelist.
         $allowed_sort = ['fullname', 'shortname', 'timecreated', 'visible', 'category'];
@@ -103,7 +103,7 @@ class list_courses extends external_api {
                     $DB->sql_like_escape(rtrim($org->path, '/') . '/') . '%';
             }
         } else {
-            [$tnsql, $tnargs] = \local_airpay_core\tenant::path_filter('c',
+            [$tnsql, $tnargs] = \local_sentientia_platform\tenant::path_filter('c',
                 'open_path', true);
             $where[] = $tnsql;
             $sqlparams = array_merge($sqlparams, $tnargs);

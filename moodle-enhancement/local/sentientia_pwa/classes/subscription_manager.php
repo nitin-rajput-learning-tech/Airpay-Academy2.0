@@ -56,8 +56,8 @@ class subscription_manager {
             }
         }
         $customerid = 1;  // Phase 0/1: hardcoded Airpay
-        if (class_exists('\\local_airpay_core\\customer')) {
-            $customerid = \local_airpay_core\customer::current();
+        if (class_exists('\\local_sentientia_platform\\customer')) {
+            $customerid = \local_sentientia_platform\customer::current();
         }
 
         $existing = $DB->get_record('local_sentientia_push_subs', [

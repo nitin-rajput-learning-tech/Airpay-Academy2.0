@@ -17,7 +17,7 @@ function expect_true(bool $got, string $desc) {
 }
 
 // 1. Flag OFF — callback must return empty string.
-\local_airpay_core\feature_flags::set('sentientia.pwa.install.enabled',
+\local_sentientia_platform\feature_flags::set('sentientia.pwa.install.enabled',
     0, false, 2, 'verify_install_cta — start OFF', 0);
 // 2026-05-23 — call the canonical helper directly. The legacy
 // `local_sentientia_pwa_before_standard_top_of_body_html()` function
@@ -28,7 +28,7 @@ expect_true(strlen($html_off ?? '') === 0,
     'Flag OFF → callback returns empty string');
 
 // 2. Flip ON + simulate a dashboard page-layout.
-\local_airpay_core\feature_flags::set('sentientia.pwa.install.enabled',
+\local_sentientia_platform\feature_flags::set('sentientia.pwa.install.enabled',
     0, true, 2, 'verify_install_cta — verify', 0);
 
 global $PAGE, $OUTPUT;
@@ -54,9 +54,9 @@ expect_true(strlen($html_popup ?? '') === 0,
     'Flag ON on popup layout → no CTA (layout filter respected)');
 
 // 4. Cleanup — restore default OFF as per ADR-005.
-\local_airpay_core\feature_flags::set('sentientia.pwa.install.enabled',
+\local_sentientia_platform\feature_flags::set('sentientia.pwa.install.enabled',
     0, false, 2, 'verify_install_cta — restore OFF', 0);
-expect_true(!\local_airpay_core\feature_flags::is_enabled('sentientia.pwa.install.enabled'),
+expect_true(!\local_sentientia_platform\feature_flags::is_enabled('sentientia.pwa.install.enabled'),
     'Flag restored to OFF after verification');
 
 echo "\nSummary: $pass passed, $fail failed.\n";

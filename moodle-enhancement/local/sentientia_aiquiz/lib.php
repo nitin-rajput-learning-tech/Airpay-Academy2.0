@@ -31,8 +31,8 @@ function local_sentientia_aiquiz_extend_navigation(global_navigation $nav): void
         return;
     }
 
-    if (class_exists('\\local_airpay_core\\feature_flags')
-            && !\local_airpay_core\feature_flags::is_enabled('sentientia.aiquiz.enabled')) {
+    if (class_exists('\\local_sentientia_platform\\feature_flags')
+            && !\local_sentientia_platform\feature_flags::is_enabled('sentientia.aiquiz.enabled')) {
         return;
     }
 

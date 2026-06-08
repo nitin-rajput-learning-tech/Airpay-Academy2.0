@@ -6,7 +6,7 @@ namespace local_sentientia_leaderboard;
 
 defined('MOODLE_INTERNAL') || die();
 
-use local_airpay_core\feature_flags;
+use local_sentientia_platform\feature_flags;
 
 /**
  * Tests for the Phase L.1 rank-change notification pipeline.
@@ -46,7 +46,7 @@ final class message_helper_test extends \advanced_testcase {
     protected function setUp(): void {
         parent::setUp();
         // Clear feature_flags caches so a per-test override is honoured.
-        if (class_exists('\\local_airpay_core\\feature_flags')) {
+        if (class_exists('\\local_sentientia_platform\\feature_flags')) {
             feature_flags::invalidate_caches();
         }
     }

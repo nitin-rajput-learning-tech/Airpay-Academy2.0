@@ -20,8 +20,8 @@ require_login();
 $context = \context_system::instance();
 require_capability('local/sentientia_live:run', $context);
 
-if (class_exists('\\local_airpay_core\\feature_flags')) {
-    if (!\local_airpay_core\feature_flags::is_enabled('live.enabled')) {
+if (class_exists('\\local_sentientia_platform\\feature_flags')) {
+    if (!\local_sentientia_platform\feature_flags::is_enabled('live.enabled')) {
         throw new \moodle_exception('errorfeatureoff', 'local_sentientia_live');
     }
 }
@@ -67,9 +67,9 @@ $code_pretty = substr($sess->code, 0, 3) . ' ' . substr($sess->code, 3);
 // Phase E.3.c — Wire the trainer SSE client so audience-count and
 // response-count update in place without a full page reload.
 $realtime_on = true;
-if (class_exists('\\local_airpay_core\\feature_flags')) {
+if (class_exists('\\local_sentientia_platform\\feature_flags')) {
     try {
-        $realtime_on = \local_airpay_core\feature_flags::is_enabled(
+        $realtime_on = \local_sentientia_platform\feature_flags::is_enabled(
             'live.realtime.enabled');
     } catch (\Throwable $e) {
         $realtime_on = true;

@@ -32,8 +32,8 @@ require_login();
 $context = context_system::instance();
 
 // Gate — feature flag.
-if (class_exists('\\local_airpay_core\\feature_flags')
-        && !\local_airpay_core\feature_flags::is_enabled('sentientia.aiquiz.enabled')) {
+if (class_exists('\\local_sentientia_platform\\feature_flags')
+        && !\local_sentientia_platform\feature_flags::is_enabled('sentientia.aiquiz.enabled')) {
     throw new moodle_exception('err_feature_off', 'local_sentientia_aiquiz');
 }
 
@@ -188,8 +188,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'push') {
         // Gate behind sentientia.aiquiz.auto_push.
-        $autopush = class_exists('\\local_airpay_core\\feature_flags')
-            && \local_airpay_core\feature_flags::is_enabled('sentientia.aiquiz.auto_push');
+        $autopush = class_exists('\\local_sentientia_platform\\feature_flags')
+            && \local_sentientia_platform\feature_flags::is_enabled('sentientia.aiquiz.auto_push');
         if (!$autopush) {
             redirect($PAGE->url,
                 get_string('review_push_disabled', 'local_sentientia_aiquiz'),
@@ -303,8 +303,8 @@ if ($draft->status === draft_manager::STATUS_GENERATED && !empty($questions)) {
 }
 
 if ($draft->status === draft_manager::STATUS_APPROVED) {
-    $autopush = class_exists('\\local_airpay_core\\feature_flags')
-        && \local_airpay_core\feature_flags::is_enabled('sentientia.aiquiz.auto_push');
+    $autopush = class_exists('\\local_sentientia_platform\\feature_flags')
+        && \local_sentientia_platform\feature_flags::is_enabled('sentientia.aiquiz.auto_push');
     echo html_writer::start_tag('form', [
         'method' => 'post',
         'action' => $PAGE->url->out(false),

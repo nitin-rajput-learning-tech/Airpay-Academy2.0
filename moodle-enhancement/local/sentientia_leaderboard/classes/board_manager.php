@@ -258,7 +258,7 @@ class board_manager {
     /**
      * Derive the tenant root from an open_path string. Single source of
      * truth for the open_path → costcenterid parsing. Mirrors
-     * local_airpay_core\tenant::root_for_user but takes a string so we
+     * local_sentientia_platform\tenant::root_for_user but takes a string so we
      * can use it on freshly-loaded user records.
      *
      * "/1/2/3" → 1

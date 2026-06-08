@@ -238,10 +238,10 @@ class observer_test extends \advanced_testcase {
     }
 
     private function force_content_flag(bool $on): void {
-        if (!class_exists('\\local_airpay_core\\feature_flags')) {
+        if (!class_exists('\\local_sentientia_platform\\feature_flags')) {
             return;
         }
-        \local_airpay_core\feature_flags::set(
+        \local_sentientia_platform\feature_flags::set(
             notification_bridge::CONTENT_FLAG, 0, $on, null, 'phpunit-test', 0);
     }
 }

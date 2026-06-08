@@ -34,11 +34,11 @@ class toggle_visibility extends external_api {
             throw new \moodle_exception('orgnotfound', 'local_sentientia_org');
         }
 
-        // Tenant guard via the airpay_core helper. Site admins pass
+        // Tenant guard via the sentientia_platform helper. Site admins pass
         // through; tenant-bound managers can only flip visibility on
         // orgs inside their own top-level tree. Replaces the bespoke
         // inline pattern that had a silent-pass bug on empty open_path.
-        \local_airpay_core\tenant::require_path_access((string) $existing->path);
+        \local_sentientia_platform\tenant::require_path_access((string) $existing->path);
 
         $newstate = \local_sentientia_org\org_manager::toggle_visibility($params['orgid']);
         return [

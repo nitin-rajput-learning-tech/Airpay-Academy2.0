@@ -23,8 +23,8 @@
 
 require(__DIR__ . '/../../../config.php');
 
-if (class_exists('\\local_airpay_core\\feature_flags')) {
-    if (!\local_airpay_core\feature_flags::is_enabled('live.enabled')) {
+if (class_exists('\\local_sentientia_platform\\feature_flags')) {
+    if (!\local_sentientia_platform\feature_flags::is_enabled('live.enabled')) {
         throw new \moodle_exception('errorfeatureoff', 'local_sentientia_live');
     }
 }
@@ -92,9 +92,9 @@ $PAGE->set_heading(format_string($sess->title));
 // disabled OR the browser is missing EventSource OR the connection
 // closes cleanly.
 $realtime_on = true;
-if (class_exists('\\local_airpay_core\\feature_flags')) {
+if (class_exists('\\local_sentientia_platform\\feature_flags')) {
     try {
-        $realtime_on = \local_airpay_core\feature_flags::is_enabled(
+        $realtime_on = \local_sentientia_platform\feature_flags::is_enabled(
             'live.realtime.enabled');
     } catch (\Throwable $e) {
         $realtime_on = true;

@@ -62,8 +62,8 @@ class anthropic_client {
      * @return array {body: string, tokens_in: int, tokens_out: int, mode: 'mock'|'live'|'failed', error: ?string}
      */
     public static function generate(\stdClass $profile, array $candidates, int $numrequested, string $model = self::DEFAULT_MODEL): array {
-        $islive = class_exists('\\local_airpay_core\\feature_flags')
-            && \local_airpay_core\feature_flags::is_enabled('sentientia.recommendations.live_api');
+        $islive = class_exists('\\local_sentientia_platform\\feature_flags')
+            && \local_sentientia_platform\feature_flags::is_enabled('sentientia.recommendations.live_api');
 
         if (!$islive) {
             return self::call_mock($profile, $candidates, $numrequested);
@@ -246,13 +246,13 @@ class anthropic_client {
      * @return bool
      */
     public static function is_live_ready(): bool {
-        if (!class_exists('\\local_airpay_core\\feature_flags')) {
+        if (!class_exists('\\local_sentientia_platform\\feature_flags')) {
             return false;
         }
-        if (!\local_airpay_core\feature_flags::is_enabled('sentientia.recommendations.enabled')) {
+        if (!\local_sentientia_platform\feature_flags::is_enabled('sentientia.recommendations.enabled')) {
             return false;
         }
-        if (!\local_airpay_core\feature_flags::is_enabled('sentientia.recommendations.live_api')) {
+        if (!\local_sentientia_platform\feature_flags::is_enabled('sentientia.recommendations.live_api')) {
             return false;
         }
         $key = get_config('local_sentientia_recommendations', 'api_key');

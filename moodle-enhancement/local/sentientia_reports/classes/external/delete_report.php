@@ -47,7 +47,7 @@ class delete_report extends external_api {
         // Standard tenant guard for scoped reports. Site admins pass
         // through; tenant-bound managers can only delete reports inside
         // their own top-level tree.
-        \local_airpay_core\tenant::require_path_access((string) $existing->open_path);
+        \local_sentientia_platform\tenant::require_path_access((string) $existing->open_path);
 
         $success = \local_sentientia_reports\report_manager::delete($params['reportid']);
         return ['reportid' => $params['reportid'], 'success' => $success];

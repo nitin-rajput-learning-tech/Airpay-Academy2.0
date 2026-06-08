@@ -69,8 +69,8 @@ $is_admin = is_siteadmin();
 
 // ── Feature flag ───────────────────────────────────────────────────
 $scope_on = false;
-if (class_exists('\\local_airpay_core\\feature_flags')) {
-    $scope_on = \local_airpay_core\feature_flags::is_enabled(
+if (class_exists('\\local_sentientia_platform\\feature_flags')) {
+    $scope_on = \local_sentientia_platform\feature_flags::is_enabled(
         'sentientia.certificate.tenant_scope.enabled');
 }
 

@@ -27,8 +27,8 @@ require_login();
 $context = \context_system::instance();
 require_capability('local/sentientia_live:create', $context);
 
-if (class_exists('\\local_airpay_core\\feature_flags')) {
-    if (!\local_airpay_core\feature_flags::is_enabled('live.enabled')) {
+if (class_exists('\\local_sentientia_platform\\feature_flags')) {
+    if (!\local_sentientia_platform\feature_flags::is_enabled('live.enabled')) {
         throw new \moodle_exception('errorfeatureoff', 'local_sentientia_live');
     }
 }

@@ -51,8 +51,8 @@ function local_sentientia_pwa_extend_navigation_user_settings(
     }
 
     // Respect the parent PWA feature flag.
-    if (class_exists('\\local_airpay_core\\feature_flags')) {
-        if (!\local_airpay_core\feature_flags::is_enabled('sentientia.pwa.enabled')) {
+    if (class_exists('\\local_sentientia_platform\\feature_flags')) {
+        if (!\local_sentientia_platform\feature_flags::is_enabled('sentientia.pwa.enabled')) {
             return;
         }
     }

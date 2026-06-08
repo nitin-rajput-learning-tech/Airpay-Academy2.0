@@ -81,7 +81,7 @@ class push_sender {
 
         // Audit fix #4 (2026-05-21) — tenant-boundary gate.
         // Resolve the RECIPIENT's tenant from open_path. If a caller-
-        // level tenant scope is set (via local_airpay_core), refuse
+        // level tenant scope is set (via local_sentientia_platform), refuse
         // when the recipient lives in a different tenant. This closes
         // the cross-tenant push leak flagged in
         // `docs/audits/B25-CRYPTO-AUDIT-2026-05-21.md` finding #4.
@@ -96,12 +96,12 @@ class push_sender {
             }
         }
         $caller_tenant = null;
-        if (class_exists('\\local_airpay_core\\customer')
-            && method_exists('\\local_airpay_core\\customer', 'current_tenant')) {
+        if (class_exists('\\local_sentientia_platform\\customer')
+            && method_exists('\\local_sentientia_platform\\customer', 'current_tenant')) {
             try {
-                $caller_tenant = \local_airpay_core\customer::current_tenant();
+                $caller_tenant = \local_sentientia_platform\customer::current_tenant();
             } catch (\Throwable $e) {
-                // local_airpay_core not fully bootstrapped — fall back to no-scope
+                // local_sentientia_platform not fully bootstrapped — fall back to no-scope
                 // (the WS endpoint level cap check still applies).
                 $caller_tenant = null;
             }
@@ -171,11 +171,11 @@ class push_sender {
      * Is push delivery enabled (feature flag check)?
      */
     public static function is_enabled(): bool {
-        if (!class_exists('\\local_airpay_core\\feature_flags')) {
+        if (!class_exists('\\local_sentientia_platform\\feature_flags')) {
             return false;
         }
         try {
-            return \local_airpay_core\feature_flags::is_enabled(self::FLAG_KEY);
+            return \local_sentientia_platform\feature_flags::is_enabled(self::FLAG_KEY);
         } catch (\Throwable $e) {
             debugging('push_sender: feature flag lookup failed: '
                 . $e->getMessage(), DEBUG_DEVELOPER);

@@ -24,11 +24,11 @@ defined('MOODLE_INTERNAL') || die();
  */
 class sharing_manager_test extends \advanced_testcase {
 
-    // Day-3 (2026-05-14): pull in the airpay_core open_path fixture
+    // Day-3 (2026-05-14): pull in the sentientia_platform open_path fixture
     // trait. Adds `open_path` to {user} and {course} at
     // setUpBeforeClass time so tests that previously skipped on
     // vanilla PHPUnit fixture now actually run.
-    use \local_airpay_core\phpunit\open_path_fixture_trait;
+    use \local_sentientia_platform\phpunit\open_path_fixture_trait;
 
     /**
      * Helper — does the local_sentientia_org table exist in this PHPUnit fixture?

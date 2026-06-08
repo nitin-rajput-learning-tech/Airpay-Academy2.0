@@ -195,9 +195,9 @@ class user_manager {
         // employees, only show interests for consumers, etc.) lands in
         // the C1.3.b template-update chip; here we just expose the
         // polymorphic data so the template has it when ready.
-        if (class_exists('\\local_airpay_core\\user_type_factory')) {
+        if (class_exists('\\local_sentientia_platform\\user_type_factory')) {
             try {
-                $type_provider = \local_airpay_core\user_type_factory::for_user($userid);
+                $type_provider = \local_sentientia_platform\user_type_factory::for_user($userid);
                 $type_data     = $type_provider->profile_context($user);
 
                 $context['user_type']        = $type_provider::type_id();
@@ -218,7 +218,7 @@ class user_manager {
                 // defensive default.
                 $context['user_type']        = 'employee';
                 $context['user_type_label']  = get_string('usertype_employee_label',
-                    'local_airpay_core');
+                    'local_sentientia_platform');
                 $context['user_type_extras'] = [];
                 $context['is_employee']         = true;
                 $context['is_consumer']         = false;

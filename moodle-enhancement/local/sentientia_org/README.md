@@ -46,7 +46,7 @@ plus the per-tenant feature toggles for cart, proctoring, recompletion.
 
 ## Phase 8.1 dependency
 
-Phase 8.1's shared tenant helper (`\local_airpay_core\tenant`) builds
+Phase 8.1's shared tenant helper (`\local_sentientia_platform\tenant`) builds
 on the same `open_path` convention this plugin owns. The two are
 designed to coexist; long-term, the helper class may absorb the
 read-side of this plugin's accesslib.

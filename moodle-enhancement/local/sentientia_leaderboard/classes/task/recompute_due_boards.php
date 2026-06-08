@@ -27,8 +27,8 @@ class recompute_due_boards extends \core\task\scheduled_task {
 
     public function execute(): void {
         // Master flag check — skip the pass if globally disabled.
-        if (class_exists('\\local_airpay_core\\feature_flags')) {
-            if (!\local_airpay_core\feature_flags::is_enabled(
+        if (class_exists('\\local_sentientia_platform\\feature_flags')) {
+            if (!\local_sentientia_platform\feature_flags::is_enabled(
                     'sentientia.leaderboards.enabled')) {
                 mtrace('sentientia_leaderboard: master flag OFF — skipping recompute');
                 return;

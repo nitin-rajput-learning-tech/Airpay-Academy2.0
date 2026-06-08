@@ -79,12 +79,17 @@ class session_manager {
         $userfields = isset($usercolumns['open_path']) ? 'id, open_path' : 'id';
         $user = $DB->get_record('user', ['id' => $ownerid],
             $userfields, MUST_EXIST);
-        // ADR-018 Wave 2: tenant root via the Sentientia seam (reads $user->open_path;
-        // the $userfields guard above still controls whether the column is fetched).
-        $tenantid = \local_sentientia_core\tenant_identity::root_for_user($user);
+        $tenantid = 0;
+        $openpath = $user->open_path ?? '';
+        if ($openpath !== '') {
+            $parts = explode('/', trim($openpath, '/'));
+            if (!empty($parts[0]) && ctype_digit($parts[0])) {
+                $tenantid = (int) $parts[0];
+            }
+        }
         $customerid = 1;
-        if (class_exists('\\local_airpay_core\\customer')) {
-            $customerid = \local_airpay_core\customer::current();
+        if (class_exists('\\local_sentientia_platform\\customer')) {
+            $customerid = \local_sentientia_platform\customer::current();
         }
 
         $now = time();
@@ -320,9 +325,9 @@ class session_manager {
         // Anonymous joins, if both per-session AND global flag agree.
         $settings = self::parse_settings($sess);
         if (!empty($settings['allow_anonymous'])) {
-            if (class_exists('\\local_airpay_core\\feature_flags')) {
+            if (class_exists('\\local_sentientia_platform\\feature_flags')) {
                 try {
-                    return \local_airpay_core\feature_flags::is_enabled(
+                    return \local_sentientia_platform\feature_flags::is_enabled(
                         'live.allow_anonymous');
                 } catch (\Throwable $e) {
                     return false;

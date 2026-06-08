@@ -30,8 +30,8 @@ function local_sentientia_translate_extend_navigation(global_navigation $nav): v
         return;
     }
 
-    if (class_exists('\\local_airpay_core\\feature_flags')
-            && !\local_airpay_core\feature_flags::is_enabled('sentientia.translate.enabled')) {
+    if (class_exists('\\local_sentientia_platform\\feature_flags')
+            && !\local_sentientia_platform\feature_flags::is_enabled('sentientia.translate.enabled')) {
         return;
     }
 

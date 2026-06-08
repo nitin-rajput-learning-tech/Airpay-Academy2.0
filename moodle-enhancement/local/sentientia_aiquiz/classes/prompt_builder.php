@@ -36,7 +36,7 @@ defined('MOODLE_INTERNAL') || die();
  *   - 'v2-hindi' — full Hindi system prompt + Hindi few-shot examples
  *     in Devanagari script. Selected when the UI locale resolves to 'hi'.
  *   - Per-customer prompt-template override via
- *     {@see \local_airpay_core\customer::get_customer_config()} with key
+ *     {@see \local_sentientia_platform\customer::get_customer_config()} with key
  *     'aiquiz_prompt_template'. When set, the customer's pasted template
  *     replaces the system-prompt body verbatim; the user-message wrapper
  *     still follows the locale-derived version so source-text framing
@@ -125,8 +125,8 @@ class prompt_builder {
         $version = self::version_for_locale($locale);
         $template = null;
 
-        if ($customer_id > 0 && class_exists('\\local_airpay_core\\customer')) {
-            $candidate = \local_airpay_core\customer::get_customer_config(
+        if ($customer_id > 0 && class_exists('\\local_sentientia_platform\\customer')) {
+            $candidate = \local_sentientia_platform\customer::get_customer_config(
                 'aiquiz_prompt_template', $customer_id, null);
             if (is_string($candidate) && trim($candidate) !== '') {
                 $template = $candidate;

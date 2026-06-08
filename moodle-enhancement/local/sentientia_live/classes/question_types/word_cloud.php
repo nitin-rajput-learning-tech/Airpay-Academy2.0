@@ -54,7 +54,7 @@ defined('MOODLE_INTERNAL') || die();
  * Profanity filter
  * ----------------
  * Each tokenised word is checked against profanity_filter. Customer-
- * specific overrides come from local_airpay_core::get_customer_config
+ * specific overrides come from local_sentientia_platform::get_customer_config
  * (resolved inside profanity_filter::resolve_denylist). When a token
  * is denied we silently drop it — the audience UX shows their accepted
  * words; the denied ones never appear.

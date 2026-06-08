@@ -51,12 +51,12 @@ $token         = optional_param('token', '', PARAM_ALPHANUMEXT);
 $last_event_id = optional_param('lastid', 0, PARAM_INT);
 
 // Master flag — fall through to polling-only if SSE disabled.
-if (class_exists('\\local_airpay_core\\feature_flags')) {
-    if (!\local_airpay_core\feature_flags::is_enabled('live.enabled')) {
+if (class_exists('\\local_sentientia_platform\\feature_flags')) {
+    if (!\local_sentientia_platform\feature_flags::is_enabled('live.enabled')) {
         http_response_code(403);
         exit('live.enabled flag is off');
     }
-    if (!\local_airpay_core\feature_flags::is_enabled('live.realtime.enabled')) {
+    if (!\local_sentientia_platform\feature_flags::is_enabled('live.realtime.enabled')) {
         http_response_code(503);
         header('X-Realtime-Disabled: 1');
         exit('realtime SSE disabled by admin; clients should poll instead');

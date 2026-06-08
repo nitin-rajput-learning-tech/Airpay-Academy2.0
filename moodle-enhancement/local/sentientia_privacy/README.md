@@ -43,7 +43,7 @@ DSR submitted (to DPO), DSR completed (to user), consent recorded
 Every Phase 8.1 plugin (cart, proctoring, recompletion, request) ships
 a `classes/privacy/provider.php` whose `_export_user_data` and
 `_delete_data_for_user` methods are called through this plugin's DSR
-workflow. The audit log helper (`local_airpay_core\audit_log`) is the
+workflow. The audit log helper (`local_sentientia_platform\audit_log`) is the
 provenance source for the consent-trail view.
 
 ## Regulatory alignment

@@ -23,10 +23,10 @@ require(__DIR__ . '/../../../config.php');
 require_once($CFG->libdir . '/clilib.php');
 
 // Legacy allow-list — the set production currently validates against.
-if (class_exists('\local_airpay_core\tenant')
-        && defined('\local_airpay_core\tenant::VALID_TENANTS')) {
-    $legacy = \local_airpay_core\tenant::VALID_TENANTS;
-    $legacysrc = 'local_airpay_core\\tenant::VALID_TENANTS';
+if (class_exists('\local_sentientia_platform\tenant')
+        && defined('\local_sentientia_platform\tenant::VALID_TENANTS')) {
+    $legacy = \local_sentientia_platform\tenant::VALID_TENANTS;
+    $legacysrc = 'local_sentientia_platform\\tenant::VALID_TENANTS';
 } else {
     $legacy = [1, 77, 177];
     $legacysrc = 'inline fallback [1, 77, 177]';

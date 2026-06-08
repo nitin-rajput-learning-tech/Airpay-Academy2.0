@@ -75,17 +75,17 @@ class hook_callbacks {
     public static function build_install_cta_html(): string {
         global $PAGE, $OUTPUT, $USER;
 
-        // Parent feature flag class must exist (local_airpay_core).
-        if (!class_exists('\\local_airpay_core\\feature_flags')) {
+        // Parent feature flag class must exist (local_sentientia_platform).
+        if (!class_exists('\\local_sentientia_platform\\feature_flags')) {
             return '';
         }
         try {
-            if (!\local_airpay_core\feature_flags::is_enabled('sentientia.pwa.install.enabled')) {
+            if (!\local_sentientia_platform\feature_flags::is_enabled('sentientia.pwa.install.enabled')) {
                 return '';
             }
         } catch (\Throwable $e) {
             // Feature-flag table not migrated yet on a fresh install /
-            // PHPUnit fixture without local_airpay_core schema. Never
+            // PHPUnit fixture without local_sentientia_platform schema. Never
             // block the page on a flag-resolver hiccup.
             return '';
         }

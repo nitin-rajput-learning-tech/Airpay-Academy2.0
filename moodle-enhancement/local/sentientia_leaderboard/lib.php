@@ -71,12 +71,12 @@ function local_sentientia_leaderboard_extend_navigation_user_settings(
     }
 
     // Master flag — skip if leaderboards are off entirely.
-    if (class_exists('\\local_airpay_core\\feature_flags')) {
-        if (!\local_airpay_core\feature_flags::is_enabled(
+    if (class_exists('\\local_sentientia_platform\\feature_flags')) {
+        if (!\local_sentientia_platform\feature_flags::is_enabled(
                 'sentientia.leaderboards.enabled')) {
             return;
         }
-        if (!\local_airpay_core\feature_flags::is_enabled(
+        if (!\local_sentientia_platform\feature_flags::is_enabled(
                 'sentientia.leaderboards.optout.enabled')) {
             return;
         }

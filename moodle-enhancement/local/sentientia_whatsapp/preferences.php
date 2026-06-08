@@ -33,12 +33,12 @@ $PAGE->set_pagelayout('standard');
 
 // Resolve per-tenant feature flag state. Phase A0's feature_flags::
 // is_enabled() reads the user's open_path and applies the right
-// tenant override. Falls back to "always disabled" if airpay_core
+// tenant override. Falls back to "always disabled" if sentientia_platform
 // isn't installed (e.g. during initial setup).
-$whatsapp_enabled = class_exists('\\local_airpay_core\\feature_flags')
-    && \local_airpay_core\feature_flags::is_enabled('engagement.whatsapp.enabled');
-$sms_enabled = class_exists('\\local_airpay_core\\feature_flags')
-    && \local_airpay_core\feature_flags::is_enabled('engagement.sms.enabled');
+$whatsapp_enabled = class_exists('\\local_sentientia_platform\\feature_flags')
+    && \local_sentientia_platform\feature_flags::is_enabled('engagement.whatsapp.enabled');
+$sms_enabled = class_exists('\\local_sentientia_platform\\feature_flags')
+    && \local_sentientia_platform\feature_flags::is_enabled('engagement.sms.enabled');
 
 $prefs = \local_sentientia_whatsapp\preference_manager::get($USER->id);
 

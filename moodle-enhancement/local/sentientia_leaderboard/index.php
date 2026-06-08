@@ -23,8 +23,8 @@ $context = context_system::instance();
 require_capability('local/sentientia_leaderboard:view', $context);
 
 // Master flag gate.
-if (class_exists('\\local_airpay_core\\feature_flags')) {
-    if (!\local_airpay_core\feature_flags::is_enabled(
+if (class_exists('\\local_sentientia_platform\\feature_flags')) {
+    if (!\local_sentientia_platform\feature_flags::is_enabled(
             'sentientia.leaderboards.enabled')) {
         $PAGE->set_url('/local/sentientia_leaderboard/index.php');
         $PAGE->set_context($context);
@@ -46,7 +46,7 @@ $PAGE->set_title(get_string('heading_index', 'local_sentientia_leaderboard'));
 $PAGE->set_heading(get_string('heading_index', 'local_sentientia_leaderboard'));
 
 $can_view_all = has_capability('local/sentientia_leaderboard:viewall', $context);
-$viewer_root = \local_airpay_core\tenant::root_for_current_user();
+$viewer_root = \local_sentientia_platform\tenant::root_for_current_user();
 
 $boards = \local_sentientia_leaderboard\board_manager::list_visible(
     $viewer_root, $can_view_all);

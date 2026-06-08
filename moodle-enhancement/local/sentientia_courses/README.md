@@ -90,7 +90,7 @@ Sprint D (request workflow):
 
 All five Sprint C/D events are in `audit_log::SENSITIVE_EVENTS`, so
 they surface in the compliance dashboard at /admin/report/log/ AND
-the airpay_core audit_log helper:
+the sentientia_platform audit_log helper:
 
 - `course_share_created`
 - `course_share_withdrawn`

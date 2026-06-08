@@ -25,8 +25,8 @@ use local_sentientia_translate\brand_manager;
 require_login();
 $context = context_system::instance();
 
-if (class_exists('\\local_airpay_core\\feature_flags')
-        && !\local_airpay_core\feature_flags::is_enabled('sentientia.translate.enabled')) {
+if (class_exists('\\local_sentientia_platform\\feature_flags')
+        && !\local_sentientia_platform\feature_flags::is_enabled('sentientia.translate.enabled')) {
     throw new moodle_exception('err_feature_off', 'local_sentientia_translate');
 }
 

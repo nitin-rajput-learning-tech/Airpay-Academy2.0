@@ -294,9 +294,9 @@ class preference_manager {
         //   3. Mobile number is on file
         //   4. DLT consent was given
         $flag_on = false;
-        if (class_exists('\\local_airpay_core\\feature_flags')) {
+        if (class_exists('\\local_sentientia_platform\\feature_flags')) {
             $flag_key = 'engagement.' . $preferred . '.enabled';
-            $flag_on = \local_airpay_core\feature_flags::is_enabled($flag_key);
+            $flag_on = \local_sentientia_platform\feature_flags::is_enabled($flag_key);
         }
 
         $optin_field = $preferred . '_optin';

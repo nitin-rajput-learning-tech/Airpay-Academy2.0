@@ -142,7 +142,7 @@ final class word_cloud_test extends \advanced_testcase {
     public function test_customer_override_replaces_default_list(): void {
         // Customer 42 ships a denylist that includes "boring" but NOT
         // anything from the default. Inject directly into the cache;
-        // this skips the local_airpay_core round-trip.
+        // this skips the local_sentientia_platform round-trip.
         profanity_filter::override_for_tests(42, ['boring']);
 
         $this->assertTrue(profanity_filter::is_denied('boring', 42));

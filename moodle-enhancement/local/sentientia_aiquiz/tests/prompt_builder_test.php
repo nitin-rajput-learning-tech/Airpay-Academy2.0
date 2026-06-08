@@ -230,7 +230,7 @@ final class prompt_builder_test extends \advanced_testcase {
     public function test_resolve_for_english_no_override_returns_v1(): void {
         $this->resetAfterTest();
         // Ensure no custom template configured.
-        unset_config('customer_1_aiquiz_prompt_template', 'local_airpay_core');
+        unset_config('customer_1_aiquiz_prompt_template', 'local_sentientia_platform');
 
         $resolved = prompt_builder::resolve_for(1, 'en');
         $this->assertSame(prompt_builder::VERSION_V1, $resolved['version']);
@@ -239,7 +239,7 @@ final class prompt_builder_test extends \advanced_testcase {
 
     public function test_resolve_for_hindi_no_override_returns_v2hindi(): void {
         $this->resetAfterTest();
-        unset_config('customer_1_aiquiz_prompt_template', 'local_airpay_core');
+        unset_config('customer_1_aiquiz_prompt_template', 'local_sentientia_platform');
 
         $resolved = prompt_builder::resolve_for(1, 'hi');
         $this->assertSame(prompt_builder::VERSION_V2_HINDI, $resolved['version']);
@@ -249,7 +249,7 @@ final class prompt_builder_test extends \advanced_testcase {
     public function test_resolve_for_returns_customer_template_when_set(): void {
         $this->resetAfterTest();
         $custom = 'AIRPAY CUSTOM PROMPT BODY';
-        set_config('customer_1_aiquiz_prompt_template', $custom, 'local_airpay_core');
+        set_config('customer_1_aiquiz_prompt_template', $custom, 'local_sentientia_platform');
 
         // Version still derives from locale; template is the override body.
         $resolved = prompt_builder::resolve_for(1, 'hi');
@@ -263,7 +263,7 @@ final class prompt_builder_test extends \advanced_testcase {
 
     public function test_resolve_for_ignores_blank_customer_template(): void {
         $this->resetAfterTest();
-        set_config('customer_1_aiquiz_prompt_template', '   ', 'local_airpay_core');
+        set_config('customer_1_aiquiz_prompt_template', '   ', 'local_sentientia_platform');
 
         $resolved = prompt_builder::resolve_for(1, 'en');
         $this->assertNull($resolved['template']);
@@ -272,7 +272,7 @@ final class prompt_builder_test extends \advanced_testcase {
     public function test_resolve_for_other_customer_has_no_override(): void {
         $this->resetAfterTest();
         // Template set for customer 1 only.
-        set_config('customer_1_aiquiz_prompt_template', 'AIRPAY ONLY', 'local_airpay_core');
+        set_config('customer_1_aiquiz_prompt_template', 'AIRPAY ONLY', 'local_sentientia_platform');
 
         // A different customer id must NOT inherit customer 1's template.
         $resolved = prompt_builder::resolve_for(99, 'en');

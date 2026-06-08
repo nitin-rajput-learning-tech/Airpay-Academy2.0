@@ -38,7 +38,7 @@ $plugin->component = 'local_sentientia_aiquiz';
 // + review UI + mod_quiz push stub + Hindi pack + ADR-012.
 // 2026-05-25 G.1 — Hindi quiz generation (prompt_version 'v2-hindi',
 // full Devanagari system prompt + few-shot) + per-customer prompt
-// template override via local_airpay_core::get_customer_config +
+// template override via local_sentientia_platform::get_customer_config +
 // generate.php language picker + prompt preview + Devanagari-safe
 // response parser (mb_strlen/mb_substr). No live API in tests
 // (call_mock only). ADR-012 G.1 addendum. Hindi parity 125/125.
@@ -47,7 +47,7 @@ $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;     // MVP — needs prod sign-off before flag flips
 $plugin->release   = '0.2.0-alpha';
 $plugin->dependencies = [
-    'local_airpay_core' => 2026051401,   // feature_flags resolver + customer scope + get_customer_config
+    'local_sentientia_platform' => 2026051401,   // feature_flags resolver + customer scope + get_customer_config
 ];
 
 // Release history

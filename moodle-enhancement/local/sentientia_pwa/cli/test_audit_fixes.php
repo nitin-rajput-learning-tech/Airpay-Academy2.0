@@ -84,9 +84,9 @@ expect_true($params[2]->getName() === 'expected_tenantid',
 expect_true($params[1]->isOptional() && $params[2]->isOptional(),
     'Tenant scope params are optional (back-compat)');
 
-$cust_ref = new ReflectionClass(\local_airpay_core\customer::class);
+$cust_ref = new ReflectionClass(\local_sentientia_platform\customer::class);
 expect_true($cust_ref->hasMethod('current_tenant'),
-    'local_airpay_core\\customer::current_tenant() exists');
+    'local_sentientia_platform\\customer::current_tenant() exists');
 
 $send_src = file_get_contents(__DIR__ . '/../classes/push_sender.php');
 expect_true(str_contains($send_src, 'tenant_for_user'),

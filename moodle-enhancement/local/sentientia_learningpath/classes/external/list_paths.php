@@ -51,7 +51,7 @@ class list_paths extends external_api {
             $where[] = $cascadesql;
             $sqlparams = array_merge($sqlparams, $cascadeargs);
         } else {
-            [$tnsql, $tnargs] = \local_airpay_core\tenant::path_filter('lp');
+            [$tnsql, $tnargs] = \local_sentientia_platform\tenant::path_filter('lp');
             $where[] = $tnsql;
             $sqlparams = array_merge($sqlparams, $tnargs);
         }

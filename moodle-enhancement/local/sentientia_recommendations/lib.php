@@ -30,8 +30,8 @@ function local_sentientia_recommendations_extend_navigation(global_navigation $n
         return;
     }
 
-    if (class_exists('\\local_airpay_core\\feature_flags')
-            && !\local_airpay_core\feature_flags::is_enabled('sentientia.recommendations.enabled')) {
+    if (class_exists('\\local_sentientia_platform\\feature_flags')
+            && !\local_sentientia_platform\feature_flags::is_enabled('sentientia.recommendations.enabled')) {
         return;
     }
 

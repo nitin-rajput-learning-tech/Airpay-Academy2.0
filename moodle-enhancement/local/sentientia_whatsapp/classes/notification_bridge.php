@@ -132,15 +132,15 @@ class notification_bridge {
     /**
      * Check the master WhatsApp flag. Returns true if either:
      *   - feature_flags class isn't loaded (fail-open for dev environments
-     *     where local_airpay_core may not be installed)
+     *     where local_sentientia_platform may not be installed)
      *   - the flag is explicitly ON
      */
     private static function master_flag_on(): bool {
-        if (!class_exists('\\local_airpay_core\\feature_flags')) {
+        if (!class_exists('\\local_sentientia_platform\\feature_flags')) {
             return true;
         }
         try {
-            return \local_airpay_core\feature_flags::is_enabled(
+            return \local_sentientia_platform\feature_flags::is_enabled(
                 'engagement.whatsapp.enabled');
         } catch (\Throwable $e) {
             return false;
@@ -151,11 +151,11 @@ class notification_bridge {
      * Check a sub-channel feature flag (e.g. engagement.whatsapp.reminders).
      */
     private static function sub_channel_on(string $flag_key): bool {
-        if (!class_exists('\\local_airpay_core\\feature_flags')) {
+        if (!class_exists('\\local_sentientia_platform\\feature_flags')) {
             return true;  // dev fail-open
         }
         try {
-            return \local_airpay_core\feature_flags::is_enabled($flag_key);
+            return \local_sentientia_platform\feature_flags::is_enabled($flag_key);
         } catch (\Throwable $e) {
             return false;
         }
@@ -439,11 +439,11 @@ class notification_bridge {
      * circuit cheaply BEFORE doing expensive course/path lookups.
      */
     public static function content_flag_on(): bool {
-        if (!class_exists('\\local_airpay_core\\feature_flags')) {
+        if (!class_exists('\\local_sentientia_platform\\feature_flags')) {
             return true;  // dev fail-open mirrors master_flag_on()
         }
         try {
-            return \local_airpay_core\feature_flags::is_enabled(self::CONTENT_FLAG);
+            return \local_sentientia_platform\feature_flags::is_enabled(self::CONTENT_FLAG);
         } catch (\Throwable $e) {
             return false;
         }

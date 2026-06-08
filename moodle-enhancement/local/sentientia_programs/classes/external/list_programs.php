@@ -51,7 +51,7 @@ class list_programs extends external_api {
             $where[] = $cascadesql;
             $sqlparams = array_merge($sqlparams, $cascadeargs);
         } else {
-            [$tnsql, $tnargs] = \local_airpay_core\tenant::path_filter('p');
+            [$tnsql, $tnargs] = \local_sentientia_platform\tenant::path_filter('p');
             $where[] = $tnsql;
             $sqlparams = array_merge($sqlparams, $tnargs);
         }

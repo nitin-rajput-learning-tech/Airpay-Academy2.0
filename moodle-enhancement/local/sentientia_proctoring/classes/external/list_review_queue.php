@@ -43,7 +43,7 @@ class list_review_queue extends external_api {
         // a reviewer in one tenant could see + decide on sessions
         // belonging to candidates in another tenant — including
         // identity match scores and biometric provenance.
-        [$tnsql, $tnargs] = \local_airpay_core\tenant::sql_filter('s');
+        [$tnsql, $tnargs] = \local_sentientia_platform\tenant::sql_filter('s');
 
         $where = "s.status = 'flagged' AND $tnsql";
         $args  = $tnargs;

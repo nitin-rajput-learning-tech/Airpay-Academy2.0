@@ -42,7 +42,7 @@ class toggle_status extends external_api {
         }
 
         // Tenant guard for scoped reports.
-        \local_airpay_core\tenant::require_path_access((string) $existing->open_path);
+        \local_sentientia_platform\tenant::require_path_access((string) $existing->open_path);
 
         $newstate = \local_sentientia_reports\report_manager::toggle_status($params['reportid']);
         return [

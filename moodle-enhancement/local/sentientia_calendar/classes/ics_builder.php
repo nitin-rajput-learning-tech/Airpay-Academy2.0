@@ -481,12 +481,12 @@ class ics_builder {
 
     /**
      * Resolve a feature flag, falling back to $default when the
-     * airpay_core helper is unavailable.
+     * sentientia_platform helper is unavailable.
      */
     private static function flag_on(string $key, bool $default): bool {
-        if (!class_exists('\\local_airpay_core\\feature_flags')) {
+        if (!class_exists('\\local_sentientia_platform\\feature_flags')) {
             return $default;
         }
-        return \local_airpay_core\feature_flags::is_enabled($key);
+        return \local_sentientia_platform\feature_flags::is_enabled($key);
     }
 }

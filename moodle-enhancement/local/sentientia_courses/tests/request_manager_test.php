@@ -30,10 +30,10 @@ defined('MOODLE_INTERNAL') || die();
  */
 class request_manager_test extends \advanced_testcase {
 
-    // Day-3 (2026-05-14): pull in the airpay_core open_path fixture
+    // Day-3 (2026-05-14): pull in the sentientia_platform open_path fixture
     // trait. Replaces the old skip_if_no_open_path() guards — the
     // trait ensures the column exists on every test run.
-    use \local_airpay_core\phpunit\open_path_fixture_trait;
+    use \local_sentientia_platform\phpunit\open_path_fixture_trait;
 
     /**
      * Kept for backwards compatibility — now a no-op. The trait

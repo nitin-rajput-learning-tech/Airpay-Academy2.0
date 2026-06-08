@@ -30,7 +30,7 @@ class submit_review extends external_api {
         // ── B2 fix: tenant equality before reviewing ────────────────────
         $session_row = $DB->get_record('local_sentientia_proctor_sessions',
             ['id' => (int) $params['sessionid']], 'id, costcenterid', MUST_EXIST);
-        \local_airpay_core\tenant::require_access(
+        \local_sentientia_platform\tenant::require_access(
             (int) $session_row->costcenterid, (int) $USER->id);
 
         $s = \local_sentientia_proctoring\session_manager::submit_review(

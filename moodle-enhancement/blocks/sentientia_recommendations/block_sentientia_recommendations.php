@@ -61,8 +61,8 @@ class block_sentientia_recommendations extends block_base {
         }
 
         // Master flag gate — render nothing when OFF.
-        if (class_exists('\\local_airpay_core\\feature_flags')
-                && !\local_airpay_core\feature_flags::is_enabled('sentientia.recommendations.enabled')) {
+        if (class_exists('\\local_sentientia_platform\\feature_flags')
+                && !\local_sentientia_platform\feature_flags::is_enabled('sentientia.recommendations.enabled')) {
             return $this->content;
         }
 

@@ -33,8 +33,8 @@ use local_sentientia_translate\translate_engine;
 require_login();
 $context = context_system::instance();
 
-if (class_exists('\\local_airpay_core\\feature_flags')
-        && !\local_airpay_core\feature_flags::is_enabled('sentientia.translate.enabled')) {
+if (class_exists('\\local_sentientia_platform\\feature_flags')
+        && !\local_sentientia_platform\feature_flags::is_enabled('sentientia.translate.enabled')) {
     throw new moodle_exception('err_feature_off', 'local_sentientia_translate');
 }
 
@@ -233,11 +233,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $badge = null;
-if (!class_exists('\\local_airpay_core\\feature_flags')) {
+if (!class_exists('\\local_sentientia_platform\\feature_flags')) {
     $badge = ['class' => 'alert-warning', 'text' => get_string('mode_disabled_badge', 'local_sentientia_translate')];
-} else if (!\local_airpay_core\feature_flags::is_enabled('sentientia.translate.enabled')) {
+} else if (!\local_sentientia_platform\feature_flags::is_enabled('sentientia.translate.enabled')) {
     $badge = ['class' => 'alert-danger', 'text' => get_string('mode_disabled_badge', 'local_sentientia_translate')];
-} else if (!\local_airpay_core\feature_flags::is_enabled('sentientia.translate.live_api')) {
+} else if (!\local_sentientia_platform\feature_flags::is_enabled('sentientia.translate.live_api')) {
     $badge = ['class' => 'alert-info', 'text' => get_string('mode_mock_badge', 'local_sentientia_translate')];
 } else {
     $apikey = get_config('local_sentientia_translate', 'api_key');

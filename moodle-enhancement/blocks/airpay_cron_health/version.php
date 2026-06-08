@@ -10,5 +10,5 @@ $plugin->requires  = 2024042200;          // Moodle 4.5+
 $plugin->maturity  = MATURITY_STABLE;
 $plugin->release   = '1.0.0';
 $plugin->dependencies = [
-    'local_airpay_core' => 2026051200,
+    'local_sentientia_platform' => 2026051200,
 ];

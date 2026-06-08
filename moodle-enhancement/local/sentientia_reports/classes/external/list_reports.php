@@ -59,7 +59,7 @@ class list_reports extends external_api {
             // for siteadmin, which matches; tenant users get the path
             // filter without the IS-NULL clause so unscoped reports
             // are not visible to them — same contract as before).
-            [$tnsql, $tnargs] = \local_airpay_core\tenant::path_filter('r');
+            [$tnsql, $tnargs] = \local_sentientia_platform\tenant::path_filter('r');
             $where[] = $tnsql;
             $sqlparams = array_merge($sqlparams, $tnargs);
         }

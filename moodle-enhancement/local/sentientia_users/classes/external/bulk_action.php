@@ -78,12 +78,12 @@ class bulk_action extends external_api {
         // everything) but the bulk-action UX expects a hard error so the
         // caller knows their request was denied.
         if (!is_siteadmin()) {
-            if (\local_airpay_core\tenant::root_for_current_user() <= 0) {
+            if (\local_sentientia_platform\tenant::root_for_current_user() <= 0) {
                 throw new \moodle_exception('invalidtenant', 'local_sentientia_users');
             }
         }
 
-        [$tnsql, $tnargs] = \local_airpay_core\tenant::path_filter('', 'open_path');
+        [$tnsql, $tnargs] = \local_sentientia_platform\tenant::path_filter('', 'open_path');
         [$inscope_sql, $inscope_params] = $DB->get_in_or_equal(
             $clean_ids, SQL_PARAMS_NAMED, 'cuid');
         $in_scope = $DB->get_fieldset_sql(

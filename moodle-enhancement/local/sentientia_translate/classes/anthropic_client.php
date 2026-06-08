@@ -59,8 +59,8 @@ class anthropic_client {
      * @return array {body, tokens_in, tokens_out, mode, error}
      */
     public static function generate(string $sourcetext, string $targetlang, array $protectedterms = [], string $model = self::DEFAULT_MODEL): array {
-        $islive = class_exists('\\local_airpay_core\\feature_flags')
-            && \local_airpay_core\feature_flags::is_enabled('sentientia.translate.live_api');
+        $islive = class_exists('\\local_sentientia_platform\\feature_flags')
+            && \local_sentientia_platform\feature_flags::is_enabled('sentientia.translate.live_api');
 
         if (!$islive) {
             return self::call_mock($sourcetext, $targetlang);
@@ -219,13 +219,13 @@ class anthropic_client {
      * @return bool
      */
     public static function is_live_ready(): bool {
-        if (!class_exists('\\local_airpay_core\\feature_flags')) {
+        if (!class_exists('\\local_sentientia_platform\\feature_flags')) {
             return false;
         }
-        if (!\local_airpay_core\feature_flags::is_enabled('sentientia.translate.enabled')) {
+        if (!\local_sentientia_platform\feature_flags::is_enabled('sentientia.translate.enabled')) {
             return false;
         }
-        if (!\local_airpay_core\feature_flags::is_enabled('sentientia.translate.live_api')) {
+        if (!\local_sentientia_platform\feature_flags::is_enabled('sentientia.translate.live_api')) {
             return false;
         }
         $key = get_config('local_sentientia_translate', 'api_key');

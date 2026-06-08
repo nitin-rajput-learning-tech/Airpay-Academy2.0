@@ -16,7 +16,7 @@ defined('MOODLE_INTERNAL') || die();
  *      projector.
  *
  *   2. Per-customer override. The default English denylist is hardcoded
- *      here, but `local_airpay_core::get_customer_config('profanity_denylist')`
+ *      here, but `local_sentientia_platform::get_customer_config('profanity_denylist')`
  *      is consulted first if the helper exists. That lets a customer
  *      (e.g. Airpay vs Customer-N) ship a region-specific or industry-
  *      specific list without touching plugin code.
@@ -51,7 +51,7 @@ final class profanity_filter {
     /**
      * Default English denylist — intentionally short. Customers who need
      * exhaustive content moderation should ship their own list via
-     * `local_airpay_core::get_customer_config('profanity_denylist')`,
+     * `local_sentientia_platform::get_customer_config('profanity_denylist')`,
      * which overrides this default entirely.
      *
      * Entries are lowercased + matched case-insensitively. Sub-string
@@ -78,7 +78,7 @@ final class profanity_filter {
 
     /**
      * Cached resolved denylist per-customer. Avoids re-querying
-     * local_airpay_core inside a tight tokenisation loop.
+     * local_sentientia_platform inside a tight tokenisation loop.
      *
      * @var array<int, string[]>
      */
@@ -177,10 +177,10 @@ final class profanity_filter {
     }
 
     /**
-     * Try the per-customer denylist override hook in local_airpay_core.
+     * Try the per-customer denylist override hook in local_sentientia_platform.
      *
      * The chip spec names the API
-     * `local_airpay_core::get_customer_config('profanity_denylist')`.
+     * `local_sentientia_platform::get_customer_config('profanity_denylist')`.
      * That class/method does not exist in today's single-customer
      * deployment (it lands with the Phase 2 customer-config layer per
      * ADR-008). We probe the two most likely concrete shapes and
@@ -195,9 +195,9 @@ final class profanity_filter {
         $candidates = [
             // Literal reading of the spec: a static getter on the
             // customer class. get_customer_config($key, $customerid).
-            ['\\local_airpay_core\\customer', 'get_customer_config'],
+            ['\\local_sentientia_platform\\customer', 'get_customer_config'],
             // Alternative shape: a dedicated customer_config class.
-            ['\\local_airpay_core\\customer_config', 'get'],
+            ['\\local_sentientia_platform\\customer_config', 'get'],
         ];
         foreach ($candidates as [$class, $method]) {
             if (!class_exists($class) || !method_exists($class, $method)) {
@@ -230,7 +230,7 @@ final class profanity_filter {
      * Inject a denylist directly — PHPUnit helper, not for production
      * code. Caller is responsible for clearing afterwards via
      * reset_cache(). Useful when a test wants to assert the
-     * customer-override branch without spinning up local_airpay_core.
+     * customer-override branch without spinning up local_sentientia_platform.
      *
      * @param int      $customerid Customer scope key.
      * @param string[] $list       Words to deny.

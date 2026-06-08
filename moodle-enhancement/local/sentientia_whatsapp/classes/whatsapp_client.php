@@ -119,8 +119,8 @@ class whatsapp_client {
         }
 
         // Gate 4: feature flag ON for the tenant?
-        $flag_on = class_exists('\\local_airpay_core\\feature_flags')
-            && \local_airpay_core\feature_flags::is_enabled('engagement.whatsapp.enabled');
+        $flag_on = class_exists('\\local_sentientia_platform\\feature_flags')
+            && \local_sentientia_platform\feature_flags::is_enabled('engagement.whatsapp.enabled');
 
         // Determine mock vs live. We mock if EITHER:
         //  - caller explicitly passed force_mock=true (test code)

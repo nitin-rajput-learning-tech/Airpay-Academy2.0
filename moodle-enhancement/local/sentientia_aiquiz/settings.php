@@ -13,11 +13,11 @@
  *   - max_source_words   Per-draft source word cap
  *
  * Phase G.1 (2026-05-25) adds per-customer prompt template overrides.
- * The textarea fields write into the `local_airpay_core` config namespace
+ * The textarea fields write into the `local_sentientia_platform` config namespace
  * keyed as `customer_<id>_aiquiz_prompt_template` — the same key that
- * `\local_airpay_core\customer::get_customer_config()` reads on the
+ * `\local_sentientia_platform\customer::get_customer_config()` reads on the
  * generate-page request. Crossing namespaces is intentional: the
- * authoritative read side lives in airpay_core (so future plugins can
+ * authoritative read side lives in sentientia_platform (so future plugins can
  * share the same per-customer config registry) while the admin UI for
  * pasting the template lives next to the consumer plugin.
  *
@@ -89,7 +89,7 @@ if ($hassiteconfig) {
     // textarea today. When Phase 2 brings a real customer table in,
     // settings.php can loop over customer::known_customers() and render
     // one textarea per customer. The READ side
-    // (\local_airpay_core\customer::get_customer_config) already supports
+    // (\local_sentientia_platform\customer::get_customer_config) already supports
     // arbitrary customer ids — only the admin UI is single-customer today.
     $settings->add(new admin_setting_heading(
         'local_sentientia_aiquiz/heading_customer_prompts',
@@ -98,7 +98,7 @@ if ($hassiteconfig) {
     ));
 
     $settings->add(new admin_setting_configtextarea(
-        'local_airpay_core/customer_1_aiquiz_prompt_template',
+        'local_sentientia_platform/customer_1_aiquiz_prompt_template',
         get_string('setting_customer_1_prompt_template', 'local_sentientia_aiquiz'),
         get_string('setting_customer_1_prompt_template_desc', 'local_sentientia_aiquiz'),
         '',

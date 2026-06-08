@@ -10,7 +10,7 @@ defined('MOODLE_INTERNAL') || die();
  * Fired when an admin shares a course to a tenant.
  *
  * Sprint C (2026-05-13). The standard Moodle logstore records this
- * event automatically, which means `\local_airpay_core\audit_log`
+ * event automatically, which means `\local_sentientia_platform\audit_log`
  * surfaces it in the "sensitive actions" audit dashboard for free
  * (after we add the eventname to audit_log::SENSITIVE_EVENTS).
  *

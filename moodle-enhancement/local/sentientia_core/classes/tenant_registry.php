@@ -11,7 +11,7 @@ defined('MOODLE_INTERNAL') || die();
  *
  * The SINGLE abstraction the rest of Sentientia calls to answer "which tenant
  * roots exist?" and "which customer owns this root?", instead of reading the
- * hardcoded `local_airpay_core\tenant::VALID_TENANTS = [1, 77, 177]` allow-list
+ * hardcoded `local_sentientia_platform\tenant::VALID_TENANTS = [1, 77, 177]` allow-list
  * (the last BizLMS tenancy coupling — docs/DEPRECATION-SCHEDULE.md row 9).
  *
  * Surface:
@@ -21,7 +21,7 @@ defined('MOODLE_INTERNAL') || die();
  *  - roots_for_customer(int)  — the tenant roots a customer owns.
  *
  * Behind the default-ON `tenant_registry_legacy` flag every method returns the
- * hardcoded [1, 77, 177] allow-list (delegating to `local_airpay_core\tenant`
+ * hardcoded [1, 77, 177] allow-list (delegating to `local_sentientia_platform\tenant`
  * when present, class_exists()-guarded with an inline fallback), so behaviour is
  * byte-identical to current production. When the flag is OFF the methods read
  * the Sentientia-owned registry tables (local_sentientia_tenant / _customer).
@@ -29,7 +29,7 @@ defined('MOODLE_INTERNAL') || die();
  * with a DEBUG_DEVELOPER note — so a premature flag flip cannot reject a valid
  * tenant and lock anyone out.
  *
- * The seam carries NO hard dependency on local_airpay_core: the legacy
+ * The seam carries NO hard dependency on local_sentientia_platform: the legacy
  * delegation is class_exists()-guarded with an inline [1,77,177] fallback, so
  * local_sentientia_core can ship standalone for Enterprise N.
  *
@@ -51,7 +51,7 @@ class tenant_registry {
 
     /**
      * The legacy hardcoded tenant allow-list — the single fallback constant.
-     * Mirrors local_airpay_core\tenant::VALID_TENANTS for the standalone case.
+     * Mirrors local_sentientia_platform\tenant::VALID_TENANTS for the standalone case.
      */
     private const LEGACY_ROOTS = [1, 77, 177];
 
@@ -105,7 +105,7 @@ class tenant_registry {
 
     /**
      * Validate a tenant root, throwing on an unknown one. Mirrors the old
-     * local_airpay_core\tenant::assert_valid() contract for migrated callers.
+     * local_sentientia_platform\tenant::assert_valid() contract for migrated callers.
      *
      * @param int $root
      * @throws \moodle_exception
@@ -169,16 +169,16 @@ class tenant_registry {
     /**
      * The legacy hardcoded allow-list.
      *
-     * Delegates to `local_airpay_core\tenant::VALID_TENANTS` when present (single
+     * Delegates to `local_sentientia_platform\tenant::VALID_TENANTS` when present (single
      * source of truth); otherwise returns the inline constant so the seam carries
-     * no hard dependency on local_airpay_core.
+     * no hard dependency on local_sentientia_platform.
      *
      * @return int[]
      */
     private static function legacy_roots(): array {
-        if (class_exists('\local_airpay_core\tenant')
-                && defined('\local_airpay_core\tenant::VALID_TENANTS')) {
-            return \local_airpay_core\tenant::VALID_TENANTS;
+        if (class_exists('\local_sentientia_platform\tenant')
+                && defined('\local_sentientia_platform\tenant::VALID_TENANTS')) {
+            return \local_sentientia_platform\tenant::VALID_TENANTS;
         }
         return self::LEGACY_ROOTS;
     }

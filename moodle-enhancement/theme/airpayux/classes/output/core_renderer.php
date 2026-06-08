@@ -85,7 +85,7 @@ class core_renderer extends \core_renderer {
         // 1e4c9c1ea (#143) but never consumed by the theme. Wire it now
         // so Sentientia is genuinely white-labelable for Customer 2
         // tomorrow (Enterprise N) — when a new row lands in
-        // local_airpay_customer_brand with different theme_color +
+        // local_sentientia_customer_brand with different theme_color +
         // bg_color, the whole stack re-tints without any code change.
         //
         // For Phase 0/1 (Airpay-only), the bundle's theme_color +
@@ -99,9 +99,9 @@ class core_renderer extends \core_renderer {
         //   4. Per-page inline overrides (rare)
         // Later-in-document wins on equal specificity, so customer
         // injects FIRST and tenant can override per-tenant.
-        if (class_exists('\\local_airpay_core\\customer')) {
+        if (class_exists('\\local_sentientia_platform\\customer')) {
             try {
-                $brand = \local_airpay_core\customer::branding();
+                $brand = \local_sentientia_platform\customer::branding();
                 $themecolor = $brand['theme_color'] ?? '';
                 $bgcolor    = $brand['bg_color']    ?? '';
                 $css = '';
@@ -171,10 +171,10 @@ class core_renderer extends \core_renderer {
         // others. <head> emission means the CSS hits before body renders
         // (button never visually appears) and the JS forces light theme
         // before any paint.
-        if (class_exists('\\local_airpay_core\\feature_flags')) {
+        if (class_exists('\\local_sentientia_platform\\feature_flags')) {
             $darkmodeenabled = true;
             try {
-                $darkmodeenabled = \local_airpay_core\feature_flags::is_enabled('ux.darkMode.enabled');
+                $darkmodeenabled = \local_sentientia_platform\feature_flags::is_enabled('ux.darkMode.enabled');
             } catch (\Throwable $e) {
                 debugging('standard_head_html: ux.darkMode.enabled lookup failed: '
                     . $e->getMessage(), DEBUG_DEVELOPER);
@@ -373,9 +373,9 @@ class core_renderer extends \core_renderer {
         // Resolves the orphan-flag bug. See Switchboard "Sentientia Platform"
         // category (eventually) — for now the flag lives in the "UX" group.
         $darkmodeenabled = true;
-        if (class_exists('\\local_airpay_core\\feature_flags')) {
+        if (class_exists('\\local_sentientia_platform\\feature_flags')) {
             try {
-                $darkmodeenabled = \local_airpay_core\feature_flags::is_enabled('ux.darkMode.enabled');
+                $darkmodeenabled = \local_sentientia_platform\feature_flags::is_enabled('ux.darkMode.enabled');
             } catch (\Throwable $e) {
                 // Defensive: never break page render if the resolver hiccups.
                 debugging('airpay_shell_end: ux.darkMode.enabled lookup failed: '

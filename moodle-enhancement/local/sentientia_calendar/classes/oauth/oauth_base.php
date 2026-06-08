@@ -530,13 +530,13 @@ abstract class oauth_base {
 
     /**
      * Resolve the customer ID for the current request. Uses the
-     * `\local_airpay_core\customer::current()` helper when available,
+     * `\local_sentientia_platform\customer::current()` helper when available,
      * falls back to 1 (Airpay-customer-zero) when the resolver plugin
      * isn't installed.
      */
     private static function resolve_customerid(): int {
-        if (class_exists('\\local_airpay_core\\customer')) {
-            return (int) \local_airpay_core\customer::current();
+        if (class_exists('\\local_sentientia_platform\\customer')) {
+            return (int) \local_sentientia_platform\customer::current();
         }
         return 1;
     }
@@ -710,10 +710,10 @@ abstract class oauth_base {
      * the resolver plugin is missing (graceful degradation — treat as OFF).
      */
     public static function is_flag_enabled(): bool {
-        if (!class_exists('\\local_airpay_core\\feature_flags')) {
+        if (!class_exists('\\local_sentientia_platform\\feature_flags')) {
             return false;
         }
-        return \local_airpay_core\feature_flags::is_enabled(self::FEATURE_FLAG);
+        return \local_sentientia_platform\feature_flags::is_enabled(self::FEATURE_FLAG);
     }
 
     /**

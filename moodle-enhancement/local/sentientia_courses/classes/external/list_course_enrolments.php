@@ -48,13 +48,13 @@ class list_course_enrolments extends external_api {
 
         // Tenant scope: non-siteadmin can only inspect courses in their
         // tree. Phase 9.7 — back-ported to
-        // `\local_airpay_core\tenant::require_path_access()`. The helper
+        // `\local_sentientia_platform\tenant::require_path_access()`. The helper
         // throws `error_outoftenant` on mismatch, ignores rows with
         // empty open_path (legacy unscoped tolerance), and short-
         // circuits for siteadmins.
         $course = $DB->get_record('course', ['id' => $courseid], 'open_path');
         if ($course) {
-            \local_airpay_core\tenant::require_path_access(
+            \local_sentientia_platform\tenant::require_path_access(
                 (string) ($course->open_path ?? ''));
         }
 

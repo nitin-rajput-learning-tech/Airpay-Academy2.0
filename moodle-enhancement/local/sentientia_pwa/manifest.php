@@ -9,9 +9,9 @@
  * Manifest spec, so Chrome/Edge/Firefox/Safari can treat Sentientia
  * LMS as an installable Progressive Web App.
  *
- * Per-customer branding flows through `local_airpay_core\customer::branding()`
+ * Per-customer branding flows through `local_sentientia_platform\customer::branding()`
  * — Phase 0/1 returns the single Airpay bundle; Phase 2+ ADR-008 resolves
- * via the `local_airpay_customer_brand` table.
+ * via the `local_sentientia_customer_brand` table.
  *
  * Auth: deliberately public (NO_MOODLE_COOKIES). The browser fetches
  * `/local/sentientia_pwa/manifest.php` from a `<link rel="manifest">`
@@ -35,18 +35,18 @@ global $CFG, $OUTPUT, $PAGE;
 // Phase 0/1 — every user is Airpay customer. Phase 2+ will resolve via
 // host header or session.
 $customer_id = 1;
-if (class_exists('\\local_airpay_core\\customer')) {
+if (class_exists('\\local_sentientia_platform\\customer')) {
     try {
         // For unauthenticated requests this still returns AIRPAY (the
         // class is designed for that case).
-        $customer_id = \local_airpay_core\customer::current();
+        $customer_id = \local_sentientia_platform\customer::current();
     } catch (\Throwable $e) {
         $customer_id = 1;
     }
 }
 
-$brand = class_exists('\\local_airpay_core\\customer')
-    ? \local_airpay_core\customer::branding($customer_id)
+$brand = class_exists('\\local_sentientia_platform\\customer')
+    ? \local_sentientia_platform\customer::branding($customer_id)
     : [
         'name'         => 'Sentientia LMS',
         'short_name'   => 'Sentientia',

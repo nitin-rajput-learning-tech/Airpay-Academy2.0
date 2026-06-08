@@ -58,7 +58,7 @@ if ($action === 'flip' && confirm_sesskey()) {
     }
 
     // Upsert the override row.
-    $existing = $DB->get_record('local_airpay_feature_flags', [
+    $existing = $DB->get_record('local_sentientia_feature_flags', [
         'flag_key'    => $flag_key,
         'customer_id' => $customer_id,
         'tenant_id'   => $tenant_id,
@@ -69,9 +69,9 @@ if ($action === 'flip' && confirm_sesskey()) {
         $existing->is_enabled   = $new_value;
         $existing->modified_by  = $USER->id;
         $existing->timemodified = $now;
-        $DB->update_record('local_airpay_feature_flags', $existing);
+        $DB->update_record('local_sentientia_feature_flags', $existing);
     } else {
-        $DB->insert_record('local_airpay_feature_flags', (object) [
+        $DB->insert_record('local_sentientia_feature_flags', (object) [
             'flag_key'     => $flag_key,
             'customer_id'  => $customer_id,
             'tenant_id'    => $tenant_id,
@@ -83,8 +83,8 @@ if ($action === 'flip' && confirm_sesskey()) {
     }
 
     // Invalidate feature_flags cache so the change is visible immediately.
-    if (class_exists('\\local_airpay_core\\feature_flags')) {
-        \local_airpay_core\feature_flags::invalidate_cache();
+    if (class_exists('\\local_sentientia_platform\\feature_flags')) {
+        \local_sentientia_platform\feature_flags::invalidate_cache();
     }
 
     redirect($PAGE->url,
@@ -103,7 +103,7 @@ echo html_writer::tag('p',
 // ── Snapshot of current flag state ──────────────────────────────────
 $live_flags = $DB->get_records_sql(
     "SELECT id, flag_key, customer_id, tenant_id, is_enabled, timemodified
-       FROM {local_airpay_feature_flags}
+       FROM {local_sentientia_feature_flags}
       WHERE " . $DB->sql_like('flag_key', ':pat') . "
    ORDER BY flag_key, customer_id, tenant_id",
     ['pat' => 'live.%']);

@@ -44,8 +44,8 @@ $viewer_oneclick = \local_sentientia_catalog\enrolment::should_offer_oneclick($U
 
 // ── C4 feature flag ────────────────────────────────────────────────
 $lxp_on = false;
-if (class_exists('\\local_airpay_core\\feature_flags')) {
-    $lxp_on = \local_airpay_core\feature_flags::is_enabled(
+if (class_exists('\\local_sentientia_platform\\feature_flags')) {
+    $lxp_on = \local_sentientia_platform\feature_flags::is_enabled(
         'sentientia.catalog.public_lxp.enabled');
 }
 

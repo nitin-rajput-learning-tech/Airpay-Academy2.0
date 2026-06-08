@@ -42,8 +42,8 @@ class get_board extends external_api {
 
         // Master flag gate. UI should never reach this with the flag off,
         // but a malicious client could call the WS directly.
-        if (class_exists('\\local_airpay_core\\feature_flags')) {
-            if (!\local_airpay_core\feature_flags::is_enabled(
+        if (class_exists('\\local_sentientia_platform\\feature_flags')) {
+            if (!\local_sentientia_platform\feature_flags::is_enabled(
                     'sentientia.leaderboards.enabled')) {
                 throw new \moodle_exception('feature_disabled',
                     'local_sentientia_leaderboard');
@@ -62,7 +62,7 @@ class get_board extends external_api {
         // Tenant gate — site admin + :viewall pass; everyone else must be
         // in the board's tenant OR the board must be customer-wide.
         if (!$can_view_all && (int) $board->tenantid > 0) {
-            $viewer_root = \local_airpay_core\tenant::root_for_current_user();
+            $viewer_root = \local_sentientia_platform\tenant::root_for_current_user();
             if ($viewer_root !== (int) $board->tenantid) {
                 throw new \moodle_exception('error_outoftenant',
                     'local_sentientia_leaderboard');

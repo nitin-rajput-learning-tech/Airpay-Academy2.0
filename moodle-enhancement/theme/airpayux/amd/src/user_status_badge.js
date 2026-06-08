@@ -188,9 +188,9 @@ export const init = async () => {
     try {
         const Str = await import('core/str');
         const [suspended, deleted, aria] = await Str.get_strings([
-            {key: 'userstatus_suspended', component: 'local_airpay_core'},
-            {key: 'userstatus_deleted', component: 'local_airpay_core'},
-            {key: 'userstatus_badge_aria', component: 'local_airpay_core'},
+            {key: 'userstatus_suspended', component: 'local_sentientia_platform'},
+            {key: 'userstatus_deleted', component: 'local_sentientia_platform'},
+            {key: 'userstatus_badge_aria', component: 'local_sentientia_platform'},
         ]);
         labels = {suspended, deleted, aria};
     } catch (e) {

@@ -22,6 +22,6 @@ $plugin->release   = '1.2.2';  // +Goal A Bug #6 WS-contract alignment
 $plugin->dependencies = [
     'local_sentientia_org'         => 2026040100,
     'local_sentientia_manager'     => 2026040100,  // Approval workflow patterns reused
-    'local_airpay_core'        => 2026051200,  // Shared tenant helper
+    'local_sentientia_platform'        => 2026051200,  // Shared tenant helper
     'local_sentientia_learningpath' => 2026051600,  // P1 #6: path enrolment on approve
 ];

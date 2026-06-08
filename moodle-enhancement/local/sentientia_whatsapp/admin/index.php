@@ -60,8 +60,8 @@ $failures_24h = $DB->record_exists('local_sentientia_send_log', [])
     : 0;
 
 $wa_enabled = false;
-if (class_exists('\\local_airpay_core\\feature_flags')) {
-    $wa_enabled = \local_airpay_core\feature_flags::is_enabled(
+if (class_exists('\\local_sentientia_platform\\feature_flags')) {
+    $wa_enabled = \local_sentientia_platform\feature_flags::is_enabled(
         'channel.whatsapp.enabled');
 }
 

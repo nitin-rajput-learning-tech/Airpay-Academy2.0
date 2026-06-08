@@ -24,8 +24,8 @@ require_capability('local/sentientia_pwa:subscribe', $context);
 // widget itself displays a "currently disabled" notice instead of the
 // button, but we still let users LAND on this page so they understand
 // the feature exists.
-if (class_exists('\\local_airpay_core\\feature_flags')) {
-    if (!\local_airpay_core\feature_flags::is_enabled('sentientia.pwa.enabled')) {
+if (class_exists('\\local_sentientia_platform\\feature_flags')) {
+    if (!\local_sentientia_platform\feature_flags::is_enabled('sentientia.pwa.enabled')) {
         // Parent flag is off — the SW won't even be registered, so push
         // is unreachable. Redirect to user profile with a notice.
         redirect(

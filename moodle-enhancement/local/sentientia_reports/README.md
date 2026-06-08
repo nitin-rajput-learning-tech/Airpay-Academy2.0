@@ -36,7 +36,7 @@ the underlying block.
 
 The reports themselves contain PII by definition; permissions enforce
 that only authorised viewers can produce reports. Audit-log helper
-(Phase 9, `\local_airpay_core\audit_log`) captures report generation
+(Phase 9, `\local_sentientia_platform\audit_log`) captures report generation
 events for the sensitive-actions feed.
 
 ## Open backlog

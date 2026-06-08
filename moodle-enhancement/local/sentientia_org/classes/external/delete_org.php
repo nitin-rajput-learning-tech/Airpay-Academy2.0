@@ -42,7 +42,7 @@ class delete_org extends external_api {
         // open_path silently passed the cap check, because the inline
         // logic short-circuited on `empty($caller_top)` AFTER computing
         // it. The helper throws on empty viewer root, closing the bug.
-        \local_airpay_core\tenant::require_path_access((string) $existing->path);
+        \local_sentientia_platform\tenant::require_path_access((string) $existing->path);
 
         $success = \local_sentientia_org\org_manager::delete($params['orgid']);
         return ['orgid' => $params['orgid'], 'success' => $success];

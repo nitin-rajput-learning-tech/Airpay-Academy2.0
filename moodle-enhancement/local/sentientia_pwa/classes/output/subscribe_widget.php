@@ -46,10 +46,10 @@ class subscribe_widget implements \renderable, \templatable {
      * misleading "subscribed" status that won't actually deliver pushes.
      */
     private function is_push_flag_on(): bool {
-        if (!class_exists('\\local_airpay_core\\feature_flags')) {
+        if (!class_exists('\\local_sentientia_platform\\feature_flags')) {
             // No flag system available — fall open for dev environments.
             return true;
         }
-        return \local_airpay_core\feature_flags::is_enabled('sentientia.pwa.push.enabled');
+        return \local_sentientia_platform\feature_flags::is_enabled('sentientia.pwa.push.enabled');
     }
 }

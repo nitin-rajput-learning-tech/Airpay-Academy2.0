@@ -23,7 +23,7 @@ use local_sentientia_courses\sharing_manager;
  *
  * Audit: every NEW or REACTIVATED share fires
  * \local_sentientia_courses\event\course_share_created — picked up by
- * the standard Moodle logstore + airpay_core/audit_log dashboard.
+ * the standard Moodle logstore + sentientia_platform/audit_log dashboard.
  *
  * @package local_sentientia_courses
  */

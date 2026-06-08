@@ -37,7 +37,7 @@ class catalog_manager_test extends \advanced_testcase {
 
     // Day-3 trait — provisions {user}.open_path + {course}.open_path
     // on the test DB so this suite runs in vanilla PHPUnit.
-    use \local_airpay_core\phpunit\open_path_fixture_trait;
+    use \local_sentientia_platform\phpunit\open_path_fixture_trait;
 
     /**
      * Helper: create a course owned by a specific tenant.

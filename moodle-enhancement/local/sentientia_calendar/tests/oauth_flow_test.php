@@ -443,10 +443,10 @@ final class oauth_flow_test extends \advanced_testcase {
     // ─────────────────────────────────────────────────────────────────
 
     private function enable_oauth_flag(): void {
-        if (!class_exists('\\local_airpay_core\\feature_flags')) {
-            $this->markTestSkipped('local_airpay_core feature_flags resolver not installed in this fixture');
+        if (!class_exists('\\local_sentientia_platform\\feature_flags')) {
+            $this->markTestSkipped('local_sentientia_platform feature_flags resolver not installed in this fixture');
         }
-        \local_airpay_core\feature_flags::set(
+        \local_sentientia_platform\feature_flags::set(
             oauth_base::FEATURE_FLAG, 0, true, null,
             'PHPUnit oauth_flow_test.php — enabling OAuth for assertion'
         );

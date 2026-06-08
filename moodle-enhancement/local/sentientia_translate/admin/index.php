@@ -95,8 +95,8 @@ $failed_count  = $count_for_status('failed');
 
 // Feature flag state.
 $flag_on = false;
-if (class_exists('\\local_airpay_core\\feature_flags')) {
-    $flag_on = \local_airpay_core\feature_flags::is_enabled('sentientia.translate.enabled');
+if (class_exists('\\local_sentientia_platform\\feature_flags')) {
+    $flag_on = \local_sentientia_platform\feature_flags::is_enabled('sentientia.translate.enabled');
 }
 
 echo $OUTPUT->header();

@@ -15,7 +15,7 @@
  * validate_settings() pass and from word_cloud::persist_response when
  * the per-slide settings_json doesn't override the key. Customer-level
  * branding / profanity-denylist overrides go through
- * local_airpay_core::get_customer_config — those don't surface in this
+ * local_sentientia_platform::get_customer_config — those don't surface in this
  * UI (they live in the per-customer admin panel).
  *
  * @package local_sentientia_live

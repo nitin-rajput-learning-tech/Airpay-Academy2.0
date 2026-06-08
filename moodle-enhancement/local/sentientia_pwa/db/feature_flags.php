@@ -62,7 +62,7 @@ $flags = [
                           browser fires beforeinstallprompt. Default OFF
                           until the per-customer icon set + manifest
                           branding is fully wired through
-                          local_airpay_core::customer::branding(). The
+                          local_sentientia_platform::customer::branding(). The
                           manifest endpoint itself
                           (/local/sentientia_pwa/manifest.php) always
                           renders — this flag gates only the visible CTA.',

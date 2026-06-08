@@ -300,8 +300,8 @@ final class msal_client_test extends \advanced_testcase {
     /**
      * Helper — enable the sentientia_m365_enabled feature flag globally.
      *
-     * Writes directly to {local_airpay_feature_flags} via set_field so the
-     * test does not depend on the airpay_core admin Switchboard UI.
+     * Writes directly to {local_sentientia_feature_flags} via set_field so the
+     * test does not depend on the sentientia_platform admin Switchboard UI.
      */
     private function set_master_flag_on(): void {
         global $DB;
@@ -313,7 +313,7 @@ final class msal_client_test extends \advanced_testcase {
             'timemodified' => time(),
         ];
         // Some installs ship the customer_id column (Session 2 / ADR-002).
-        $columns = $DB->get_columns('local_airpay_feature_flags');
+        $columns = $DB->get_columns('local_sentientia_feature_flags');
         if (isset($columns['customer_id'])) {
             $row->customer_id = 0;
         }
@@ -322,7 +322,7 @@ final class msal_client_test extends \advanced_testcase {
         if (isset($columns['customer_id'])) {
             $where['customer_id'] = 0;
         }
-        $DB->delete_records('local_airpay_feature_flags', $where);
-        $DB->insert_record('local_airpay_feature_flags', $row);
+        $DB->delete_records('local_sentientia_feature_flags', $where);
+        $DB->insert_record('local_sentientia_feature_flags', $row);
     }
 }

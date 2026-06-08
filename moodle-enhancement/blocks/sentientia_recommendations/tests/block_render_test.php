@@ -96,12 +96,12 @@ final class block_render_test extends \advanced_testcase {
      * the feature-flag registry isn't available in this sandbox.
      */
     private function enable_flag(int $byuserid): void {
-        if (!class_exists('\\local_airpay_core\\feature_flags')) {
-            $this->markTestSkipped('local_airpay_core feature_flags not available');
+        if (!class_exists('\\local_sentientia_platform\\feature_flags')) {
+            $this->markTestSkipped('local_sentientia_platform feature_flags not available');
         }
         // Signature: set($key, $tenant_id, $value, $by_userid, $reason, $customer_id)
-        \local_airpay_core\feature_flags::set(
+        \local_sentientia_platform\feature_flags::set(
             'sentientia.recommendations.enabled', 0, true, $byuserid, 'phpunit', 0);
-        \local_airpay_core\feature_flags::invalidate_caches();
+        \local_sentientia_platform\feature_flags::invalidate_caches();
     }
 }

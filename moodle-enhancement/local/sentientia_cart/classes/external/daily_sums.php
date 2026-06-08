@@ -47,7 +47,7 @@ class daily_sums extends external_api {
         // history row does. JOIN through and apply the tenant filter.
         // Site admins see the global view; tenant-bound managers see
         // only their tenant's ledger.
-        [$tnsql, $tnargs] = \local_airpay_core\tenant::sql_filter('h');
+        [$tnsql, $tnargs] = \local_sentientia_platform\tenant::sql_filter('h');
         $rows = $DB->get_records_sql(
             "SELECT DATE(FROM_UNIXTIME(l.timecreated)) AS day,
                     l.gateway,

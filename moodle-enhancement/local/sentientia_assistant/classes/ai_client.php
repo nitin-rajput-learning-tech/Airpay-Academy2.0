@@ -42,8 +42,8 @@ class ai_client {
         // assistant returns a polite "temporarily unavailable" response
         // rather than calling Claude. The drawer UI hides itself
         // separately via the template's feature-flag helper.
-        if (class_exists('\\local_airpay_core\\feature_flags')
-                && !\local_airpay_core\feature_flags::is_enabled('ai.assistant.enabled')) {
+        if (class_exists('\\local_sentientia_platform\\feature_flags')
+                && !\local_sentientia_platform\feature_flags::is_enabled('ai.assistant.enabled')) {
             return [
                 'response'  => "The AI assistant is temporarily disabled by your site administrator. "
                              . "Please try again later, or contact your L&D team.",

@@ -78,10 +78,10 @@ class msal_client {
      * @return bool
      */
     public static function is_ready(): bool {
-        if (!class_exists('\\local_airpay_core\\feature_flags')) {
+        if (!class_exists('\\local_sentientia_platform\\feature_flags')) {
             return false;
         }
-        if (!\local_airpay_core\feature_flags::is_enabled('sentientia_m365_enabled')) {
+        if (!\local_sentientia_platform\feature_flags::is_enabled('sentientia_m365_enabled')) {
             return false;
         }
         $tenant   = get_config('local_sentientia_m365', 'azure_tenant_id');

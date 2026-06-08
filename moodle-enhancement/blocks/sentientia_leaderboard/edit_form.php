@@ -25,8 +25,8 @@ class block_sentientia_leaderboard_edit_form extends block_edit_form {
         $context = \context_system::instance();
         $can_view_all = has_capability(
             'local/sentientia_leaderboard:viewall', $context);
-        $viewer_root = class_exists('\\local_airpay_core\\tenant')
-            ? \local_airpay_core\tenant::root_for_current_user() : 0;
+        $viewer_root = class_exists('\\local_sentientia_platform\\tenant')
+            ? \local_sentientia_platform\tenant::root_for_current_user() : 0;
         $boards = \local_sentientia_leaderboard\board_manager::list_visible(
             $viewer_root, $can_view_all);
 

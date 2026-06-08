@@ -34,7 +34,7 @@ $string['settings_tenant_registry'] = 'Tenant registry';
 $string['setting_legacy_registry'] = 'Validate tenants from the hardcoded allow-list (legacy)';
 $string['setting_legacy_registry_desc'] = 'When enabled (the default), Sentientia validates tenant roots against the legacy hardcoded allow-list (<code>[1, 77, 177]</code>) — identical to current production behaviour. Turning this OFF reads the Sentientia tenant registry (the <em>Manage tenant registry</em> page below) instead. Only flip OFF after seeding the registry and confirming 100% parity with <code>cli/parity_check_tenants.php</code> (rehearse on a clone DB first). Leave ON in production until cutover.';
 
-// assert_valid() failure (mirrors local_airpay_core\tenant::assert_valid).
+// assert_valid() failure (mirrors local_sentientia_platform\tenant::assert_valid).
 $string['error_invalidtenant'] = 'Unknown tenant — this id is not in the tenant registry.';
 
 // Manage UI.

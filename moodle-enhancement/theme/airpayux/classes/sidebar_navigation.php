@@ -71,9 +71,9 @@ class sidebar_navigation {
         // future surfaces.
         $user_type = 'employee';
         $user_type_label = '';
-        if (class_exists('\\local_airpay_core\\user_type_factory')) {
+        if (class_exists('\\local_sentientia_platform\\user_type_factory')) {
             try {
-                $type_provider = \local_airpay_core\user_type_factory::for_user((int) $USER->id);
+                $type_provider = \local_sentientia_platform\user_type_factory::for_user((int) $USER->id);
                 $user_type = $type_provider::type_id();
                 $user_type_label = $type_provider::label();
             } catch (\Throwable $e) {
@@ -135,7 +135,7 @@ class sidebar_navigation {
             // `commerce.crossTenantRequest.enabled`. When off, this link
             // disappears AND /manage_requests.php returns a friendly
             // "feature disabled" page.
-            if (\local_airpay_core\feature_flags::is_enabled('commerce.crossTenantRequest.enabled')) {
+            if (\local_sentientia_platform\feature_flags::is_enabled('commerce.crossTenantRequest.enabled')) {
                 $items[] = $this->item('Course-share Requests', 'fa-inbox',
                     '/local/sentientia_courses/manage_requests.php', $currenturl);
             }
@@ -198,7 +198,7 @@ class sidebar_navigation {
             // Phase A0 (2026-05-14): also gated by the Switchboard flag
             // `commerce.crossTenantRequest.enabled`.
             if ($this->is_non_airpay_tenant_user()
-                    && \local_airpay_core\feature_flags::is_enabled('commerce.crossTenantRequest.enabled')) {
+                    && \local_sentientia_platform\feature_flags::is_enabled('commerce.crossTenantRequest.enabled')) {
                 $items[] = $this->item('Browse Airpay Library', 'fa-handshake-o',
                     '/local/sentientia_courses/browse_airpay.php', $currenturl);
             }
@@ -252,7 +252,7 @@ class sidebar_navigation {
             // Phase A0 (2026-05-14): also gated by the Switchboard flag
             // `commerce.crossTenantRequest.enabled`.
             if ($this->is_non_airpay_tenant_user()
-                    && \local_airpay_core\feature_flags::is_enabled('commerce.crossTenantRequest.enabled')) {
+                    && \local_sentientia_platform\feature_flags::is_enabled('commerce.crossTenantRequest.enabled')) {
                 $items[] = $this->item('Browse Airpay Library', 'fa-handshake-o',
                     '/local/sentientia_courses/browse_airpay.php', $currenturl);
                 $items[] = $this->item('My Requests', 'fa-clipboard-list',
@@ -391,7 +391,7 @@ class sidebar_navigation {
      */
     private function can_create_live_session(): bool {
         try {
-            if (!\local_airpay_core\feature_flags::is_enabled('live.enabled')) {
+            if (!\local_sentientia_platform\feature_flags::is_enabled('live.enabled')) {
                 return false;
             }
             return has_capability('local/sentientia_live:create', \context_system::instance());

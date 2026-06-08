@@ -151,7 +151,7 @@ vendor\bin\phpunit local/sentientia_calendar
 ## Dependencies
 
 Required:
-- `local_airpay_core` 2026051401+ — feature_flags resolver
+- `local_sentientia_platform` 2026051401+ — feature_flags resolver
 
 Optional (graceful degradation if missing — the relevant event category just disappears from the feed):
 - `local_sentientia_courses` for COURSE-DEADLINE events

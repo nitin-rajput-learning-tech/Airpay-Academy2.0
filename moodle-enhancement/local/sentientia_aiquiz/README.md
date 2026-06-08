@@ -32,7 +32,7 @@ php admin/cli/upgrade.php
 php admin/cli/purge_caches.php
 
 # 4. (Optional) Flip the master flag ON in the Switchboard:
-#    http://localhost:8080/moodle/local/airpay_core/admin/switchboard.php
+#    http://localhost:8080/moodle/local/sentientia_platform/admin/switchboard.php
 #    Toggle `sentientia.aiquiz.enabled` to ON.
 #
 #    Leave `sentientia.aiquiz.live_api` OFF for a money-free demo. The
@@ -103,7 +103,7 @@ vendor/bin/phpunit local/sentientia_aiquiz/tests/anthropic_client_test.php
 Expected: 4 test classes, 82 test methods (G.0 + G.1), 100% pass
 without an API key (everything uses `call_mock()`). The per-customer
 config registry is covered separately in
-`local/airpay_core/tests/customer_config_test.php` (11 methods).
+`local/sentientia_platform/tests/customer_config_test.php` (11 methods).
 
 ---
 
@@ -157,9 +157,9 @@ Admins can override the system prompt per Sentientia LMS customer at
 templates**. A non-empty template replaces the `v1`/`v2-hindi` system
 prompt body verbatim (the user-message wrapper still follows the
 language picker). The value is stored under
-`local_airpay_core/customer_<id>_aiquiz_prompt_template` and read on the
+`local_sentientia_platform/customer_<id>_aiquiz_prompt_template` and read on the
 generate request via
-`\local_airpay_core\customer::get_customer_config('aiquiz_prompt_template', $customerid)`.
+`\local_sentientia_platform\customer::get_customer_config('aiquiz_prompt_template', $customerid)`.
 The generate form's **prompt preview** panel shows the exact resolved
 system prompt before the trainer ticks [CONFIRM]. Drafts generated while
 a custom template is active record `prompt_version` as `custom:v1` /

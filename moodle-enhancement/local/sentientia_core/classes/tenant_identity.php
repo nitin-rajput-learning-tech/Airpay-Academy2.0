@@ -25,12 +25,12 @@ defined('MOODLE_INTERNAL') || die();
  *
  * Behind the default-ON `tenant_identity_legacy` flag the resolver + the
  * access/filter helpers delegate to the legacy BizLMS implementation
- * (`local_airpay_core\tenant`), so behaviour is byte-identical to current
+ * (`local_sentientia_platform\tenant`), so behaviour is byte-identical to current
  * production. When a future wave builds the Sentientia tenant registry,
  * flipping the flag OFF switches the source; until that registry exists
  * (ADR-018 Wave 3+), the OFF path falls back to legacy so nothing can break.
  *
- * The seam carries NO hard dependency on local_airpay_core: every delegation
+ * The seam carries NO hard dependency on local_sentientia_platform: every delegation
  * is class_exists()-guarded with an inline fallback that mirrors the legacy
  * algorithm, so local_sentientia_core can ship standalone for Enterprise N.
  *
@@ -178,18 +178,18 @@ class tenant_identity {
      *
      * Site admins pass; an empty resource path passes (legacy unscoped row);
      * otherwise the resource path must equal "/root" or descend from "/root/".
-     * Delegates to local_airpay_core\tenant when present (single source of
+     * Delegates to local_sentientia_platform\tenant when present (single source of
      * truth for the rule), else applies the identical inline check.
      *
      * @param string $entitypath
      * @param int|null $viewerid Defaults to the current $USER
      */
     public static function require_path_access(string $entitypath, ?int $viewerid = null): void {
-        if (class_exists('\local_airpay_core\tenant')) {
-            \local_airpay_core\tenant::require_path_access($entitypath, $viewerid);
+        if (class_exists('\local_sentientia_platform\tenant')) {
+            \local_sentientia_platform\tenant::require_path_access($entitypath, $viewerid);
             return;
         }
-        // Inline fallback — mirrors local_airpay_core\tenant::require_path_access().
+        // Inline fallback — mirrors local_sentientia_platform\tenant::require_path_access().
         if ($entitypath === '') {
             return;  // legacy unscoped row — same tolerance as the inline pattern
         }
@@ -219,17 +219,17 @@ class tenant_identity {
     /**
      * Tenant-scoping WHERE fragment for a costcenterid column.
      *
-     * Pass-through to local_airpay_core\tenant::sql_filter so migrated callers
+     * Pass-through to local_sentientia_platform\tenant::sql_filter so migrated callers
      * depend only on local_sentientia_core. Site admins get '1=1'.
      *
      * @param string $alias Table alias prefix (e.g. 'h' for h.costcenterid)
      * @return array{0: string, 1: array}
      */
     public static function sql_filter(string $alias = ''): array {
-        if (class_exists('\local_airpay_core\tenant')) {
-            return \local_airpay_core\tenant::sql_filter($alias);
+        if (class_exists('\local_sentientia_platform\tenant')) {
+            return \local_sentientia_platform\tenant::sql_filter($alias);
         }
-        // Inline fallback — mirrors local_airpay_core\tenant::sql_filter().
+        // Inline fallback — mirrors local_sentientia_platform\tenant::sql_filter().
         $col = $alias === '' ? 'costcenterid' : "{$alias}.costcenterid";
         if (is_siteadmin()) {
             return ['1=1', []];
@@ -240,7 +240,7 @@ class tenant_identity {
     /**
      * Tenant-scoping WHERE fragment for an open_path-style column.
      *
-     * Pass-through to local_airpay_core\tenant::path_filter so migrated callers
+     * Pass-through to local_sentientia_platform\tenant::path_filter so migrated callers
      * depend only on local_sentientia_core. Matches "/N" exactly OR "/N/…" as a
      * prefix where N is the caller's tenant root. Site admins get '1=1'; an
      * unknown tenant gets '1=0' (matches nothing — defensive).
@@ -252,10 +252,10 @@ class tenant_identity {
      */
     public static function path_filter(string $alias = '', string $column = 'open_path',
                                         bool $allow_null = false): array {
-        if (class_exists('\local_airpay_core\tenant')) {
-            return \local_airpay_core\tenant::path_filter($alias, $column, $allow_null);
+        if (class_exists('\local_sentientia_platform\tenant')) {
+            return \local_sentientia_platform\tenant::path_filter($alias, $column, $allow_null);
         }
-        // Inline fallback — mirrors local_airpay_core\tenant::path_filter().
+        // Inline fallback — mirrors local_sentientia_platform\tenant::path_filter().
         $col = $alias === '' ? $column : "{$alias}.{$column}";
         if (is_siteadmin()) {
             return ['1=1', []];
@@ -274,18 +274,18 @@ class tenant_identity {
     /**
      * Legacy resolver: derive the tenant root from the BizLMS open_path.
      *
-     * Delegates to `local_airpay_core\tenant` when present (single source of
+     * Delegates to `local_sentientia_platform\tenant` when present (single source of
      * truth); otherwise parses inline with the identical algorithm so the
-     * seam carries no hard dependency on local_airpay_core.
+     * seam carries no hard dependency on local_sentientia_platform.
      *
      * @param \stdClass $user
      * @return int
      */
     private static function legacy_root(\stdClass $user): int {
-        if (class_exists('\local_airpay_core\tenant')) {
-            return \local_airpay_core\tenant::root_for_user($user);
+        if (class_exists('\local_sentientia_platform\tenant')) {
+            return \local_sentientia_platform\tenant::root_for_user($user);
         }
-        // Inline fallback — mirrors local_airpay_core\tenant::root_for_user().
+        // Inline fallback — mirrors local_sentientia_platform\tenant::root_for_user().
         $parts = explode('/', trim($user->open_path ?? '', '/'));
         if (!isset($parts[0]) || !ctype_digit($parts[0])) {
             return self::NO_TENANT;

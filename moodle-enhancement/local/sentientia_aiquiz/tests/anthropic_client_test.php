@@ -84,7 +84,7 @@ final class anthropic_client_test extends \advanced_testcase {
         $this->resetAfterTest();
         // Even if both flags were on, missing api_key must return false.
         set_config('api_key', '', 'local_sentientia_aiquiz');
-        // (Cannot assert true-branch without local_airpay_core flag fixture
+        // (Cannot assert true-branch without local_sentientia_platform flag fixture
         // wired into the unit-test DB; tested by integration smoke instead.)
         $this->assertFalse(anthropic_client::is_live_ready());
     }

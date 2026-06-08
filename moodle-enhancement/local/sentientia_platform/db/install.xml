@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/sentientia_platform/db" VERSION="20260520"
+       COMMENT="Airpay Core — feature flags + audit + shared infrastructure tables">
+  <TABLES>
+
+    <TABLE NAME="local_sentientia_feature_flags"
+           COMMENT="Phase A0 (2026-05-14) — Feature flag overrides set via the
+                    Switchboard UI. A row exists only when an admin has
+                    overridden the registered default. Missing rows mean the
+                    flag falls through to its registered default in
+                    db/feature_flags.php.
+
+                    Session 2 / ADR-002 (2026-05-20) — added customer_id for
+                    multi-customer SaaS. Resolution precedence (most specific
+                    wins): (key, customer, tenant) > (key, customer, 0) >
+                    (key, 0, tenant) > (key, 0, 0) > registered default.
+                    Legacy rows pre-Session-2 have customer_id=0 and resolve
+                    identically to before.">
+      <FIELDS>
+        <FIELD NAME="id"          TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="flag_key"    TYPE="char" LENGTH="128" NOTNULL="true"
+               COMMENT="Three-level dotted key, e.g. ai.assistant.enabled"/>
+        <FIELD NAME="customer_id" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="ADR-002 (Session 2). 0 = applies to all customers; &gt;0 = scoped to that customer. Phase 0/1: only 0 and 1 (Airpay) are valid."/>
+        <FIELD NAME="tenant_id"   TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="0 = applies to all tenants (within the customer scope); &gt;0 = per-tenant root (1=Airpay, 77=Public, 177=ZEEA)"/>
+        <FIELD NAME="is_enabled"  TYPE="int"  LENGTH="1"  NOTNULL="true"
+               COMMENT="0|1 — the override value"/>
+        <FIELD NAME="modified_by" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="userid of the admin who last toggled this row"/>
+        <FIELD NAME="timecreated" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"            TYPE="primary" FIELDS="id"/>
+        <KEY NAME="uk_key_cust_tenant" TYPE="unique"  FIELDS="flag_key, customer_id, tenant_id"
+              COMMENT="One override per (flag, customer, tenant) triple. Toggling reuses the same row."/>
+        <KEY NAME="fk_modified_by"     TYPE="foreign" FIELDS="modified_by"
+              REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_cust_tenant_key" UNIQUE="false" FIELDS="customer_id, tenant_id, flag_key"
+               COMMENT="Lookup path for is_enabled_for() — customer + tenant first, then key"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_feature_flag_audit"
+           COMMENT="Phase A0 (2026-05-14) — Every toggle on the Switchboard creates
+                    a row here. Retains the full history for SOC2 / GDPR audit
+                    evidence (target retention: 7 years). The Switchboard
+                    'Flag history' page surfaces this as a timeline.
+
+                    Session 2 / ADR-002 (2026-05-20) — added customer_id so
+                    multi-customer audit feeds can filter by customer.">
+      <FIELDS>
+        <FIELD NAME="id"          TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="flag_key"    TYPE="char" LENGTH="128" NOTNULL="true"/>
+        <FIELD NAME="customer_id" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="ADR-002 (Session 2). 0 = all customers; &gt;0 = scoped to that customer."/>
+        <FIELD NAME="tenant_id"   TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="old_value"   TYPE="int"  LENGTH="1"  NOTNULL="false"
+               COMMENT="0|1 before the change; NULL means 'was using registered default (no override row)'"/>
+        <FIELD NAME="new_value"   TYPE="int"  LENGTH="1"  NOTNULL="false"
+               COMMENT="0|1 after the change; NULL means 'reverted to registered default (override row deleted)'"/>
+        <FIELD NAME="changed_by"  TYPE="int"  LENGTH="10" NOTNULL="true"
+               COMMENT="userid of the admin who toggled — never NULL (the Switchboard requires auth)"/>
+        <FIELD NAME="reason"      TYPE="char" LENGTH="255" NOTNULL="false"
+               COMMENT="Optional admin-entered note explaining why this change was made"/>
+        <FIELD NAME="timecreated" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"        TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_changed_by"  TYPE="foreign" FIELDS="changed_by"
+              REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_key_time"     UNIQUE="false" FIELDS="flag_key, timecreated"
+               COMMENT="Timeline lookup for a specific flag's history"/>
+        <INDEX NAME="idx_customer_time" UNIQUE="false" FIELDS="customer_id, timecreated"
+               COMMENT="Per-customer audit feed (added Session 2)"/>
+        <INDEX NAME="idx_tenant_time"  UNIQUE="false" FIELDS="tenant_id, timecreated"
+               COMMENT="Per-tenant audit feed"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_customer_brand"
+           COMMENT="Per-customer branding bundle (ADR-008, 2026-05-21).
+                    One row per customer id. Read on every page (manifest,
+                    theme renderer, login splash, audience navbar) so it
+                    is cached via local_sentientia_platform/customer_brand
+                    application cache.
+
+                    Phase 2: replaces the hard-wired switch in
+                    \local_sentientia_platform\customer::branding() with a SELECT
+                    from this table. The return shape is identical so all
+                    callsites are unchanged.
+
+                    Adding a new customer = 1 row insert + 2 icon files.
+                    No code deploy.">
+      <FIELDS>
+        <FIELD NAME="id"               TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="customerid"       TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="Unique customer identifier. Phase 0/1: only 1 (Airpay) exists. Phase 2+: 2..N for new customers."/>
+        <FIELD NAME="name"             TYPE="char" LENGTH="120" NOTNULL="true"
+               COMMENT="Full display name (Web App Manifest `name` field)"/>
+        <FIELD NAME="short_name"       TYPE="char" LENGTH="40"  NOTNULL="true"
+               COMMENT="Short name (max 12 chars recommended, Manifest `short_name`)"/>
+        <FIELD NAME="theme_color"      TYPE="char" LENGTH="7"   NOTNULL="true"
+               COMMENT="Hex color like #0066A7 — Manifest theme_color + browser-chrome tint"/>
+        <FIELD NAME="bg_color"         TYPE="char" LENGTH="7"   NOTNULL="true"
+               COMMENT="Hex color — PWA background_color while shell warms up"/>
+        <FIELD NAME="icon_192_url"     TYPE="char" LENGTH="500" NOTNULL="true"
+               COMMENT="Absolute or relative URL to 192x192 PNG (Android home-screen)"/>
+        <FIELD NAME="icon_512_url"     TYPE="char" LENGTH="500" NOTNULL="true"
+               COMMENT="Absolute or relative URL to 512x512 PNG (splash + adaptive)"/>
+        <FIELD NAME="start_url"        TYPE="char" LENGTH="500" NOTNULL="true"
+               COMMENT="Path relative to wwwroot (e.g. /my/dashboard.php?utm=pwa)"/>
+        <FIELD NAME="lang"             TYPE="char" LENGTH="10"  NOTNULL="true" DEFAULT="en"
+               COMMENT="BCP-47 language code (en, hi, en-IN, etc)"/>
+        <FIELD NAME="status_bar_style" TYPE="char" LENGTH="20"  NOTNULL="false"
+               COMMENT="iOS apple-mobile-web-app-status-bar-style — default|black|black-translucent"/>
+        <FIELD NAME="categories"       TYPE="char" LENGTH="200" NOTNULL="false"
+               COMMENT="Comma-separated W3C PWA categories (education,productivity,...)"/>
+        <FIELD NAME="timecreated"      TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"     TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"      TYPE="primary" FIELDS="id"/>
+        <KEY NAME="uk_customer"  TYPE="unique"  FIELDS="customerid"/>
+      </KEYS>
+    </TABLE>
+
+  </TABLES>
+</XMLDB>

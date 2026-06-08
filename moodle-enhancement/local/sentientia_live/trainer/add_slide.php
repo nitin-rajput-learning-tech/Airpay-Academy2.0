@@ -22,8 +22,8 @@ require_login();
 $context = \context_system::instance();
 require_capability('local/sentientia_live:create', $context);
 
-if (class_exists('\\local_airpay_core\\feature_flags')) {
-    if (!\local_airpay_core\feature_flags::is_enabled('live.enabled')) {
+if (class_exists('\\local_sentientia_platform\\feature_flags')) {
+    if (!\local_sentientia_platform\feature_flags::is_enabled('live.enabled')) {
         throw new \moodle_exception('errorfeatureoff', 'local_sentientia_live');
     }
 }
@@ -74,15 +74,15 @@ if ($type === '') {
     // D4). list_slugs() is guaranteed equal to slide_manager::VALID_TYPES
     // by question_type_registry_test::test_list_slugs_matches_slide_manager_valid_types.
     // Flag gating stays fail-open when the core resolver is absent (dev /
-    // CI without local_airpay_core) so every registered type still
+    // CI without local_sentientia_platform) so every registered type still
     // surfaces during local testing.
     $available = [];
     foreach (\local_sentientia_live\question_types\question_type_registry::list_slugs() as $t) {
         $flag = 'live.questiontype.' . $t;
         $is_on = true;
-        if (class_exists('\\local_airpay_core\\feature_flags')) {
+        if (class_exists('\\local_sentientia_platform\\feature_flags')) {
             try {
-                $is_on = \local_airpay_core\feature_flags::is_enabled($flag);
+                $is_on = \local_sentientia_platform\feature_flags::is_enabled($flag);
             } catch (\Throwable $e) {
                 $is_on = false;
             }

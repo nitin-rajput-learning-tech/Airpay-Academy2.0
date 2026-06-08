@@ -40,7 +40,7 @@ $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;   // Phases E.4-E.9 — all 6 question types live + verified
 $plugin->release   = '0.2.2-alpha';
 $plugin->dependencies = [
-    'local_airpay_core' => 2026051401,  // feature_flags resolver
+    'local_sentientia_platform' => 2026051401,  // feature_flags resolver
 ];
 
 // Release history
@@ -103,7 +103,7 @@ $plugin->dependencies = [
 //              min/max word length, locale). New
 //              classes/profanity_filter.php with default English
 //              denylist + per-customer override hook
-//              (local_airpay_core::customer_config). New settings.php
+//              (local_sentientia_platform::customer_config). New settings.php
 //              exposing default_min_word_length (int, 2) and
 //              default_max_responses (int, 3). New AMD modules:
 //              wordcloud_loader.js (CSS-bucket renderer, no external

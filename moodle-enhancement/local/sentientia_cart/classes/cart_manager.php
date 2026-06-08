@@ -428,7 +428,7 @@ class cart_manager {
                 throw new \moodle_exception('error_outoftenant', 'local_sentientia_cart');
             }
             // ── B1 fix: tenant-equality even when cap held ──────────────
-            \local_airpay_core\tenant::require_access(
+            \local_sentientia_platform\tenant::require_access(
                 (int) $cart->costcenterid, $viewerid);
         }
         return $cart;

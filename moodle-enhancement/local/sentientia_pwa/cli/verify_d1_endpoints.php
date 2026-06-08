@@ -127,7 +127,7 @@ expect_true(str_contains($r['body'], '@media (max-width: 590px)'),
 
 // ── 4. icon-192.png + icon-512.png ──
 echo "\n4. Per-customer icons\n";
-$r = http_fetch("$base/local/airpay_core/pix/customer/1/icon-192.png");
+$r = http_fetch("$base/local/sentientia_platform/pix/customer/1/icon-192.png");
 expect_true($r['status'] === 200,
     '192x192 icon HTTP 200');
 expect_true(str_starts_with($r['body'], "\x89PNG"),
@@ -135,7 +135,7 @@ expect_true(str_starts_with($r['body'], "\x89PNG"),
 expect_true(strlen($r['body']) > 500,
     '192x192 has reasonable file size (>500 bytes)');
 
-$r = http_fetch("$base/local/airpay_core/pix/customer/1/icon-512.png");
+$r = http_fetch("$base/local/sentientia_platform/pix/customer/1/icon-512.png");
 expect_true($r['status'] === 200,
     '512x512 icon HTTP 200');
 expect_true(str_starts_with($r['body'], "\x89PNG"),
@@ -148,7 +148,7 @@ echo "\n5. Install CTA server-side render (flag-gated)\n";
 require_once(__DIR__ . '/../lib.php');
 
 // Flag OFF → empty.
-\local_airpay_core\feature_flags::set('sentientia.pwa.install.enabled',
+\local_sentientia_platform\feature_flags::set('sentientia.pwa.install.enabled',
     0, false, 2, 'D.1 endpoint smoke', 0);
 // 2026-05-23 — call the canonical hook class helper. The legacy
 // function short-circuits to '' on Moodle 5.2 (the new hook fires
@@ -157,7 +157,7 @@ expect_true(strlen(\local_sentientia_pwa\hook_callbacks::build_install_cta_html(
     'Flag OFF → callback returns empty string');
 
 // Flag ON + dashboard layout → non-empty + has marker.
-\local_airpay_core\feature_flags::set('sentientia.pwa.install.enabled',
+\local_sentientia_platform\feature_flags::set('sentientia.pwa.install.enabled',
     0, true, 2, 'D.1 endpoint smoke', 0);
 global $PAGE;
 $PAGE->set_url('/my/dashboard.php');
@@ -168,7 +168,7 @@ expect_true(str_contains($html, 'sentientia-install-cta'),
     'Flag ON on dashboard → CTA HTML rendered');
 
 // Restore default OFF.
-\local_airpay_core\feature_flags::set('sentientia.pwa.install.enabled',
+\local_sentientia_platform\feature_flags::set('sentientia.pwa.install.enabled',
     0, false, 2, 'D.1 endpoint smoke — restore', 0);
 
 echo "\nSummary: $pass passed, $fail failed.\n";

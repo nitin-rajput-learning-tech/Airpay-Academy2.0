@@ -7,7 +7,7 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Cron-health widget for the site administration dashboard.
  *
- * Surfaces the output of `\local_airpay_core\cron_health::summary()` as
+ * Surfaces the output of `\local_sentientia_platform\cron_health::summary()` as
  * an at-a-glance widget. Three KPI cards (Airpay stuck / other stuck /
  * in backoff) with a green / amber / red colour by severity AND a
  * matching text severity badge for WCAG 1.4.1 (no information conveyed
@@ -76,9 +76,9 @@ class block_airpay_cron_health extends block_base {
             return null;
         }
 
-        $summary = \local_airpay_core\cron_health::summary();
-        $stuck   = \local_airpay_core\cron_health::get_stuck_airpay_tasks();
-        $backoff = \local_airpay_core\cron_health::get_tasks_in_failure_backoff();
+        $summary = \local_sentientia_platform\cron_health::summary();
+        $stuck   = \local_sentientia_platform\cron_health::get_stuck_airpay_tasks();
+        $backoff = \local_sentientia_platform\cron_health::get_tasks_in_failure_backoff();
 
         // Whole-block landmark — gives screen reader users a single
         // jump-target for the cron-health summary. The aria-label is
@@ -124,7 +124,7 @@ class block_airpay_cron_health extends block_base {
                 ['class' => 'airpay-cron-health__list',
                  'style' => 'margin:0;padding-left:18px;font-size:0.85em;']);
             foreach ($stuck as $t) {
-                $overdue = \local_airpay_core\cron_health::format_overdue(
+                $overdue = \local_sentientia_platform\cron_health::format_overdue(
                     (int) $t->overdue_seconds);
                 // Build aria-label so screen readers announce
                 // "<task name>, overdue by 5h 23m" as a single unit,

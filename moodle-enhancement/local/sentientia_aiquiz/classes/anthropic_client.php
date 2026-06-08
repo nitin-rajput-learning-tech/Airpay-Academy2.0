@@ -78,8 +78,8 @@ class anthropic_client {
     public static function generate(string $sourcetext, int $numrequested, string $model = self::DEFAULT_MODEL, ?array $promptctx = null): array {
         $promptctx = self::normalise_promptctx($promptctx);
 
-        $islive = class_exists('\\local_airpay_core\\feature_flags')
-            && \local_airpay_core\feature_flags::is_enabled('sentientia.aiquiz.live_api');
+        $islive = class_exists('\\local_sentientia_platform\\feature_flags')
+            && \local_sentientia_platform\feature_flags::is_enabled('sentientia.aiquiz.live_api');
 
         if (!$islive) {
             return self::call_mock($sourcetext, $numrequested, $promptctx);
@@ -318,13 +318,13 @@ class anthropic_client {
      * @return bool
      */
     public static function is_live_ready(): bool {
-        if (!class_exists('\\local_airpay_core\\feature_flags')) {
+        if (!class_exists('\\local_sentientia_platform\\feature_flags')) {
             return false;
         }
-        if (!\local_airpay_core\feature_flags::is_enabled('sentientia.aiquiz.enabled')) {
+        if (!\local_sentientia_platform\feature_flags::is_enabled('sentientia.aiquiz.enabled')) {
             return false;
         }
-        if (!\local_airpay_core\feature_flags::is_enabled('sentientia.aiquiz.live_api')) {
+        if (!\local_sentientia_platform\feature_flags::is_enabled('sentientia.aiquiz.live_api')) {
             return false;
         }
         $key = get_config('local_sentientia_aiquiz', 'api_key');

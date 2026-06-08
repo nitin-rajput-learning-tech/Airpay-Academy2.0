@@ -62,8 +62,8 @@ class block_sentientia_leaderboard extends block_base {
         $this->content->footer = '';
 
         // Master flag gate — render an info notice in the block when off.
-        if (class_exists('\\local_airpay_core\\feature_flags')) {
-            if (!\local_airpay_core\feature_flags::is_enabled(
+        if (class_exists('\\local_sentientia_platform\\feature_flags')) {
+            if (!\local_sentientia_platform\feature_flags::is_enabled(
                     'sentientia.leaderboards.enabled')) {
                 $this->content->text = $OUTPUT->notification(
                     get_string('feature_disabled',
@@ -86,8 +86,8 @@ class block_sentientia_leaderboard extends block_base {
 
         $can_view_all = has_capability(
             'local/sentientia_leaderboard:viewall', $context);
-        $viewer_root = class_exists('\\local_airpay_core\\tenant')
-            ? \local_airpay_core\tenant::root_for_current_user() : 0;
+        $viewer_root = class_exists('\\local_sentientia_platform\\tenant')
+            ? \local_sentientia_platform\tenant::root_for_current_user() : 0;
 
         if ($boardid <= 0) {
             $boards = \local_sentientia_leaderboard\board_manager::list_visible(
@@ -148,8 +148,8 @@ class block_sentientia_leaderboard extends block_base {
             ['class' => 'btn btn-link btn-sm']);
 
         // SSE / polling client.
-        $realtime_on = !class_exists('\\local_airpay_core\\feature_flags')
-            || \local_airpay_core\feature_flags::is_enabled(
+        $realtime_on = !class_exists('\\local_sentientia_platform\\feature_flags')
+            || \local_sentientia_platform\feature_flags::is_enabled(
                 'sentientia.leaderboards.realtime.enabled');
 
         $PAGE->requires->js_call_amd(

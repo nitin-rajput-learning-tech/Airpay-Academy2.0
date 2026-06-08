@@ -37,7 +37,7 @@ class refund_order extends external_api {
         // ZEEA orders. Fetch the order's tenant and gate by it.
         $order = $DB->get_record('local_sentientia_cart_history',
             ['id' => (int) $params['historyid']], 'id, costcenterid', MUST_EXIST);
-        \local_airpay_core\tenant::require_access(
+        \local_sentientia_platform\tenant::require_access(
             (int) $order->costcenterid, (int) $USER->id);
 
         $ok = \local_sentientia_cart\cart_manager::refund(

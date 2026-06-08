@@ -64,7 +64,7 @@ class list_orders extends external_api {
             // in their own tenant. Without this clause a Public-tenant
             // manager could list Airpay's order history. Site admins
             // pass through with `1=1`.
-            [$tnsql, $tnargs] = \local_airpay_core\tenant::sql_filter('');
+            [$tnsql, $tnargs] = \local_sentientia_platform\tenant::sql_filter('');
             $where[] = $tnsql;
             $sqlparams = array_merge($sqlparams, $tnargs);
         }

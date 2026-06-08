@@ -43,8 +43,8 @@ function local_sentientia_calendar_extend_navigation_user_settings(
     }
 
     // Respect the master feature flag.
-    if (class_exists('\\local_airpay_core\\feature_flags')) {
-        if (!\local_airpay_core\feature_flags::is_enabled('sentientia.calendar_sync.enabled')) {
+    if (class_exists('\\local_sentientia_platform\\feature_flags')) {
+        if (!\local_sentientia_platform\feature_flags::is_enabled('sentientia.calendar_sync.enabled')) {
             return;
         }
     }

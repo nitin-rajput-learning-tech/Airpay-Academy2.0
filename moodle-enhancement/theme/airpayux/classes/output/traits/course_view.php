@@ -118,7 +118,7 @@ trait course_view {
      * URL of the first activity in a single-activity-mode course, or
      * null (implicit) for any other course format.
      *
-     * Routed through {@see \local_airpay_core\cm_navigation::resolve_url()}
+     * Routed through {@see \local_sentientia_platform\cm_navigation::resolve_url()}
      * (P0 #9 borrow from Moodle 5.2) so a module that defines a custom
      * navigation URL — e.g. SCORM jumping straight to the player with an
      * attempt id — is honoured here too. Vanilla page/label modules with
@@ -135,7 +135,7 @@ trait course_view {
             // P0 #9 (Moodle 5.2) — go through resolver so a module callback
             // (mod_xxx_get_navigation_url) can override the launch target.
             // Falls back to $cm->url when no callback exists.
-            return \local_airpay_core\cm_navigation::resolve_url($cm);
+            return \local_sentientia_platform\cm_navigation::resolve_url($cm);
         }
         return null;
     }

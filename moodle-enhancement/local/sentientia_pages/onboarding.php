@@ -43,9 +43,9 @@ if ($action === 'complete' && confirm_sesskey()) {
     $consent_marketing   = optional_param('consent_marketing', 0, PARAM_INT) ? 1 : 0;
     $consent_leaderboard = optional_param('consent_leaderboard', 0, PARAM_INT) ? 1 : 0;
 
-    if (class_exists('\\local_airpay_core\\user_type_factory')) {
+    if (class_exists('\\local_sentientia_platform\\user_type_factory')) {
         try {
-            $type_provider = \local_airpay_core\user_type_factory::for_user((int) $USER->id);
+            $type_provider = \local_sentientia_platform\user_type_factory::for_user((int) $USER->id);
             if ($type_provider::type_id() === 'consumer') {
                 // Upsert the consumer profile row.
                 $now = time();
@@ -206,9 +206,9 @@ $data = [
 // consumer-only consent checkboxes (marketing + leaderboard opt-in).
 $data['is_consumer'] = false;
 $data['is_employee'] = true;
-if (class_exists('\\local_airpay_core\\user_type_factory')) {
+if (class_exists('\\local_sentientia_platform\\user_type_factory')) {
     try {
-        $type_provider = \local_airpay_core\user_type_factory::for_user((int) $USER->id);
+        $type_provider = \local_sentientia_platform\user_type_factory::for_user((int) $USER->id);
         $data['is_consumer']         = ($type_provider::type_id() === 'consumer');
         $data['is_employee']         = ($type_provider::type_id() === 'employee');
         $data['is_partner_employee'] = ($type_provider::type_id() === 'partner_employee');

@@ -254,8 +254,8 @@ final class ics_builder_test extends \advanced_testcase {
         if (!isset($columns['open_coursecompletiondays'])) {
             $this->markTestSkipped('open_coursecompletiondays column not present');
         }
-        if (!class_exists('\\local_airpay_core\\feature_flags')) {
-            $this->markTestSkipped('local_airpay_core not installed');
+        if (!class_exists('\\local_sentientia_platform\\feature_flags')) {
+            $this->markTestSkipped('local_sentientia_platform not installed');
         }
 
         $DB->set_field('course', 'open_coursecompletiondays', 30,
@@ -264,7 +264,7 @@ final class ics_builder_test extends \advanced_testcase {
 
         // The events.courses flag must be registered before set() will
         // accept it — skip if the registry hasn't loaded it yet.
-        $registry = \local_airpay_core\feature_flags::load_registry();
+        $registry = \local_sentientia_platform\feature_flags::load_registry();
         if (!isset($registry['sentientia.calendar_sync.events.courses'])) {
             $this->markTestSkipped(
                 'sentientia.calendar_sync.events.courses not in registry yet'
@@ -277,7 +277,7 @@ final class ics_builder_test extends \advanced_testcase {
 
         // Disable the courses sub-flag — global scope.
         // Signature: set($key, $tenant_id, $value, $by_userid, $reason, $customer_id)
-        \local_airpay_core\feature_flags::set(
+        \local_sentientia_platform\feature_flags::set(
             'sentientia.calendar_sync.events.courses',
             0,            // tenant_id (0 = global)
             false,        // value
@@ -285,7 +285,7 @@ final class ics_builder_test extends \advanced_testcase {
             'phpunit',
             0             // customer_id (0 = default scope)
         );
-        \local_airpay_core\feature_flags::invalidate_caches();
+        \local_sentientia_platform\feature_flags::invalidate_caches();
 
         $ics_off = ics_builder::build_for_user((int) $user->id);
         $this->assertStringNotContainsString('COURSE-DEADLINE', $ics_off,

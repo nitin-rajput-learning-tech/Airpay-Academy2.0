@@ -52,8 +52,8 @@ class list_evaluations extends external_api {
             $sqlparams = array_merge($sqlparams, $cascadeargs);
         } else {
             // Phase 9.6: back-ported from inline open_path pattern to the
-            // shared `\local_airpay_core\tenant::path_filter()` helper.
-            [$tnsql, $tnargs] = \local_airpay_core\tenant::path_filter('e');
+            // shared `\local_sentientia_platform\tenant::path_filter()` helper.
+            [$tnsql, $tnargs] = \local_sentientia_platform\tenant::path_filter('e');
             $where[] = $tnsql;
             $sqlparams = array_merge($sqlparams, $tnargs);
         }
