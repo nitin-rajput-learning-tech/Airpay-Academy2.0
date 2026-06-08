@@ -116,9 +116,16 @@ Verified end-to-end: `admin/cli/upgrade.php` completes successfully; **0** confi
 role-capability assignments + table data preserved (user_type 2879 rows, feature_flags 15,
 gamification points 56, etc.). Site 200 throughout. origin/production @ d5cd77c8e.
 
-**Kept by decision (Nitin, 2026-06-08):** `paygw_airpay` (+ `mdl_paygw_airpay`/`_errorlog`)
-- the external Airpay PAYMENT GATEWAY product (like paygw_paypal), not company branding;
-and theme `airpayux` - internal design-system codename.
+**Theme also renamed (Nitin follow-up, 2026-06-08):** `theme_airpayux -> theme_sentientia`
+(dir `theme/airpayux -> theme/sentientia`, 708 files, the ACTIVE standalone-fork design
+system). config.theme flipped airpayux->sentientia (0 per-entity overrides), 43
+config_plugins + 14 files.component rows relabeled, 0 theme tables. Verified: site 200,
+HTML serves CSS from `/theme/styles.php/sentientia/...`, upgrade.php clean, 0 `airpayux`
+anywhere. **36 components total de-branded** (30 local + 4 blocks + 1 quizaccess + theme).
+
+**ONLY remaining airpay name (kept by decision):** `paygw_airpay` (+ `mdl_paygw_airpay`/
+`_errorlog`) - the external Airpay PAYMENT GATEWAY product (like paygw_paypal), NOT company
+branding. The codebase is otherwise 100% Sentientia.
 
 **Scope-gaps the driver originally missed (local/+theme/ only) and how each was caught/fixed:**
 brand-neutral tables (privacy `local_privacy_*`); install.xml-stale tables added via

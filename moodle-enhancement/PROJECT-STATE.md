@@ -5986,3 +5986,11 @@ and hardened through 6 distinct failure modes — these are the artifacts to run
 the live airpay.academy maintenance-window cutover. Non-blocking follow-ups: a few
 refs to non-existent airpay-named tables (cosmetic) + a junk `public/local$name/`
 dir in the local clone only (delete with [CONFIRM]).
+
+### 2026-06-08 (later) — Theme de-brand COMPLETE
+`theme_airpayux → theme_sentientia` (the active standalone-fork design system, 708
+files). config.theme flipped, 43 config_plugins + 14 files rows relabeled, 0 theme
+tables, 0 per-entity overrides. Verified: site 200, CSS served from
+`/theme/styles.php/sentientia/...`, upgrade.php clean, **0 `airpayux` anywhere**.
+De-brand now 100% (36 components: 30 local + 4 blocks + 1 quizaccess + theme).
+Sole remaining airpay name = `paygw_airpay` (external payment gateway, kept). @3db762db1.
