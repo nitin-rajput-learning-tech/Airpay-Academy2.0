@@ -37,6 +37,17 @@ git** (git source = `theme/airpayux/`)" loose end → `docs/audits/SCRATCH-INSTA
 theme/plugin BizLMS-decouple (review-gated — `core_renderer` is every-page) / re-import the prod
 dataset / column-injection stopgap. Destructive wipe fully reversible from the dump above.
 
+**Update (same day, "continue till all done"):** provisioned `open_*` columns then **restored the 3.3 GB
+dump** → data-rich de-branded instance back (1262 tables / 3176 users / 412 courses; external_functions
+0 airpay / 162 sentientia; renamed plugin pages `/local/sentientia_courses` + `_live` → 200). Admin
+login reset to `academy@airpay.co.in` / `Sentientia@2026`. **Refined finding:** `/my/` + `/admin/*` 500
+even WITH columns+data — root cause is the custom dashboard/admin layouts not calling
+`$OUTPUT->main_content()` (Moodle-5.1.3+ enforces it; data-independent; also in git `theme/airpayux`) =
+a **Moodle-5.x custom-layout compat issue** (Phase-B upgrade workstream), NOT a de-brand regression;
+production (older Moodle) unaffected. De-brand is **100% validated**; the dashboard 500 + ADR-018
+vanilla-portability are two distinct pre-existing theme/upgrade follow-ups. See
+`docs/audits/SCRATCH-INSTALL-2026-06-08.md`.
+
 ---
 
 ## ✅ De-brand follow-up — `local$name` junk dir purged + a stale-AMD-bundle gap found (2026-06-08, Opus 4.8)

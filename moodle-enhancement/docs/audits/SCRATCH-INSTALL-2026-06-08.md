@@ -71,3 +71,32 @@ ADR-018 Wave-2 theme/plugin independence refactor in the **git theme** (and reco
 → theme_sentientia in git first); and/or (b) re-import the prod dataset for an Airpay-schema-usable
 local instance; and/or (c) the column-injection stopgap. The destructive wipe is fully reversible
 from the 3.3 GB dump above.
+
+## Update — data restored + authenticated-500 root cause REFINED (2026-06-08, later)
+
+Per "continue till all done", I (c) provisioned the `open_*` columns (resolved the column-level 500s)
+then (b) **restored the 3.3 GB dump** → the data-rich de-branded instance is back: **1262 tables,
+3176 users, 412 courses, external_functions 0 airpay / 162 sentientia**, `upgrade.php` "no upgrade
+needed", caches purged. Public + login pages 200; **renamed plugin pages render**
+(`/local/sentientia_courses` + `/local/sentientia_live` → 200) — de-brand confirmed working with real
+data. Admin login reset to **`academy@airpay.co.in` / `Sentientia@2026`** (siteadmin id 2).
+
+**REFINED root cause of `/my/` + `/admin/*` 500 — it is NOT (only) the BizLMS columns.** Even WITH all
+`open_*` columns + full production data, those pages still 500 with
+`coding_exception: page layout file … does not contain the main content placeholder`. Cause: the
+custom Sentientia **dashboard + admin layouts render via `render_from_template` and never call
+`$OUTPUT->main_content()`**, which **Moodle 5.1.3+ enforces** (this local instance is 5.1.3+).
+Confirmed **data-independent** (identical error on the empty install AND the restored data-rich one)
+and present in **git's `theme/airpayux` layouts too** (both lack `main_content`). This is a
+**Moodle-5.x custom-layout compatibility issue** (part of the Phase-B 5.2-upgrade layout-rebase
+workstream), **NOT a de-brand regression**. Production is unaffected (it runs an older Moodle that
+doesn't enforce the placeholder). The fix is theme-author work — add a `main_content()` / `{{{ main_content }}}`
+region to the custom dashboard + admin layouts without duplicating their bespoke UI — deliberately
+deferred (not a safe autonomous patch on every-page custom layouts).
+
+**Net:** the `airpay_*→sentientia_*` de-brand is **100% validated** (from-zero install + restored-data
+both confirm component / WS / theme naming is clean; 0 airpay except the kept `paygw_airpay`). The
+local instance is restored + usable for public + plugin surfaces. Two distinct, pre-existing,
+**non-de-brand** follow-ups remain for a fully-green dashboard: (1) the **Moodle-5.x `main_content`
+custom-layout compat** fix (above), and (2) the **ADR-018 vanilla-portability** decouple (theme/plugins
+hard-querying BizLMS `open_*` columns). Both are theme/upgrade workstreams, not naming defects.
