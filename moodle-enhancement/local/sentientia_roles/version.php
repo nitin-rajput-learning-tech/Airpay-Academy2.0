@@ -7,7 +7,7 @@ $plugin->component = 'local_sentientia_roles';
 // filters, table columns, view tabs, capability edit modal, audit log,
 // errors, privacy metadata.
 // Goal A audit Bug #10 (2026-05-22) — align list_audit WS with the shared
-// theme_airpayux/datatable contract (accept `search`, aliased to the
+// theme_sentientia/datatable contract (accept `search`, aliased to the
 // existing capability filter).
 $plugin->version   = 2026052201;
 $plugin->requires  = 2024100700;

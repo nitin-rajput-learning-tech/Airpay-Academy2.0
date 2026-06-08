@@ -20,7 +20,7 @@
  * handles the role axis. Call-sites compose:
  *
  *   $type = user_type_factory::for_user($userid);
- *   $role = \theme_airpayux\role_detector::detect();
+ *   $role = \theme_sentientia\role_detector::detect();
  *   if ($role['isldadmin'] && $type->feature_supported('manage_courses')) {
  *       // render admin shortcut
  *   }
@@ -94,7 +94,7 @@ interface user_type_provider {
     /**
      * Sidebar nav-item keys this user-type should see.
      *
-     * Recognised keys (subset of `theme_airpayux/sidebar_navigation` items):
+     * Recognised keys (subset of `theme_sentientia/sidebar_navigation` items):
      *   home, catalog, my_courses, profile, leaderboard,
      *   compliance, team, manage_users, manage_courses, switchboard
      *

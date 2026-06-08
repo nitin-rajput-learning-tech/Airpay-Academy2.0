@@ -10,8 +10,8 @@
  * + WS endpoint + DB table. Phase B.3 wires the push sender into the
  * existing notification pipeline.
  *
- * The PWA manifest (theme/airpayux/pix/brand/manifest.json) and install
- * banner (theme/airpayux/templates/footer.mustache) pre-existed Phase B.1.
+ * The PWA manifest (theme/sentientia/pix/brand/manifest.json) and install
+ * banner (theme/sentientia/templates/footer.mustache) pre-existed Phase B.1.
  * The service worker is the missing piece that makes Chrome treat the
  * site as an installable PWA — without an active SW, beforeinstallprompt
  * never fires.

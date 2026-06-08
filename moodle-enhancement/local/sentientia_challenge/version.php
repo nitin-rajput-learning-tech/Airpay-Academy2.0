@@ -8,7 +8,7 @@ $plugin->component = 'local_sentientia_challenge';
 // overview, leaderboard, notifications, errors, scheduled task, privacy
 // metadata for challenges/attempts/leaderboard tables.
 // Goal A audit Bug #10 (2026-05-22) — align get_leaderboard WS with the
-// shared theme_airpayux/datatable contract (accept `search`, currently
+// shared theme_sentientia/datatable contract (accept `search`, currently
 // reserved — leaderboard search semantics pending UX decision).
 // Stabilization Audit D4 / F-096 (2026-05-28) — downgraded BETA → ALPHA.
 // The plugin's `classes/challenge_renderer.php` self-describes as "stub

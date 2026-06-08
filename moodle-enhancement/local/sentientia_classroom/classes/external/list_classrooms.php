@@ -12,7 +12,7 @@ use core_external\external_single_structure;
 use core_external\external_value;
 
 /**
- * Server-side list classrooms for the shared theme_airpayux/datatable.
+ * Server-side list classrooms for the shared theme_sentientia/datatable.
  */
 class list_classrooms extends external_api {
 

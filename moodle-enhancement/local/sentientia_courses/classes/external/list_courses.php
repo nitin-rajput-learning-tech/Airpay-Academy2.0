@@ -14,7 +14,7 @@ use core_external\external_value;
 /**
  * List courses with server-side search, sort, pagination — for the shared datatable.
  *
- * Contract: matches theme_airpayux/datatable arg shape.
+ * Contract: matches theme_sentientia/datatable arg shape.
  * Returns: {total, rows[], page, perpage}
  */
 class list_courses extends external_api {

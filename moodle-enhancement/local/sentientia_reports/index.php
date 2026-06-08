@@ -19,7 +19,7 @@ $PAGE->set_pagelayout('standard');
 $PAGE->set_secondary_navigation(false);
 
 // W1-1: org cascade filter (5 cascading selects via list_children WS).
-$PAGE->requires->js_call_amd('theme_airpayux/org_cascade', 'init');
+$PAGE->requires->js_call_amd('theme_sentientia/org_cascade', 'init');
 
 $can_manage = is_siteadmin() || has_capability('local/sentientia_reports:manage', $context);
 

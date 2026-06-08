@@ -8,7 +8,7 @@ $plugin->component = 'local_sentientia_manager';
 // P1 #52 (2026-05-20) — Hindi pack: 33 strings (team dashboard, capabilities,
 // request/allocation workflow, errors, privacy metadata).
 // Goal A audit Bug #10 (2026-05-22) — align list_requests + list_allocations
-// WS with the shared theme_airpayux/datatable contract (accept `search`).
+// WS with the shared theme_sentientia/datatable contract (accept `search`).
 // ADR-020 W3.4 (2026-06-02) — team_manager (get_team / can_manage /
 // can_view_member) routed through the local_sentientia_core\org seam:
 // behaviour-identical under org_legacy ON; auto-switches to the org model at cutover.

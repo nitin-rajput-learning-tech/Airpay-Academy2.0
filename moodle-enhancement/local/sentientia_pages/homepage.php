@@ -76,7 +76,7 @@ if (empty($featured) && !empty($public_category_ids)) {
 echo '<div class="airpay-homepage">';
 
 // ═══ HERO SECTION ═══
-echo '<section class="airpay-homepage__hero" style="background-image: url(' . $CFG->wwwroot . '/theme/airpayux/pix/brand/bannerimg.png); background-size: cover; background-position: center;">
+echo '<section class="airpay-homepage__hero" style="background-image: url(' . $CFG->wwwroot . '/theme/sentientia/pix/brand/bannerimg.png); background-size: cover; background-position: center;">
     <div class="airpay-homepage__hero-content">
         <span class="airpay-homepage__hero-badge">airpay academy</span>
         <h1 class="airpay-homepage__hero-title">Build Skills That<br>Drive Your Career Forward</h1>

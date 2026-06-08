@@ -17,7 +17,7 @@ class list_requests extends external_api {
 
     public static function execute_parameters(): external_function_parameters {
         // Goal A audit Bug #10 (2026-05-22): added `search` to align with the
-        // shared theme_airpayux/datatable client contract — strict validator
+        // shared theme_sentientia/datatable client contract — strict validator
         // was rejecting the AJAX call with "Unexpected keys (search) detected"
         // → datatable stuck on Loading…
         return new external_function_parameters([

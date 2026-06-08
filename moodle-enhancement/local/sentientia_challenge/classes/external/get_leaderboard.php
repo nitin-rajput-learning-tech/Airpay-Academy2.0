@@ -18,7 +18,7 @@ class get_leaderboard extends external_api {
 
     public static function execute_parameters(): external_function_parameters {
         // Goal A audit Bug #10 (2026-05-22): align with the shared
-        // theme_airpayux/datatable client contract. `search` is currently
+        // theme_sentientia/datatable client contract. `search` is currently
         // accepted but not yet acted on for leaderboard (leaderboard rows
         // are bounded by perpage and search would skip the rank ordering
         // anyway — pending UX decision on what "search a leaderboard"

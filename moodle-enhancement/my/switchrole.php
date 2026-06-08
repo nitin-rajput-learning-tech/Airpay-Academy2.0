@@ -54,5 +54,5 @@ try {
 
 // Redirect back to dashboard.
 redirect(new moodle_url('/my/'),
-    get_string('switchroleas', 'theme_airpayux') . format_string($role->shortname),
+    get_string('switchroleas', 'theme_sentientia') . format_string($role->shortname),
     null, \core\output\notification::NOTIFY_INFO);

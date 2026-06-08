@@ -17,7 +17,7 @@ class list_allocations extends external_api {
 
     public static function execute_parameters(): external_function_parameters {
         // Goal A audit Bug #10 (2026-05-22): align with the shared
-        // theme_airpayux/datatable client contract — same as list_requests.
+        // theme_sentientia/datatable client contract — same as list_requests.
         return new external_function_parameters([
             'search'  => new external_value(PARAM_TEXT,     'Free-text search', VALUE_DEFAULT, ''),
             'status'  => new external_value(PARAM_ALPHAEXT, 'all|assigned|in_progress|completed|overdue|cancelled', VALUE_DEFAULT, 'all'),

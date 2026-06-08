@@ -12,11 +12,11 @@
 }}
 <div class="airpay-wa-analytics">
 
-    {{! KPI strip — reuses stat_card from theme_airpayux }}
+    {{! KPI strip — reuses stat_card from theme_sentientia }}
     {{#has_kpi_tiles}}
     <div class="airpay-stat-grid mb-4">
         {{#kpi_tiles}}
-        {{> theme_airpayux/components/stat_card }}
+        {{> theme_sentientia/components/stat_card }}
         {{/kpi_tiles}}
     </div>
     {{/has_kpi_tiles}}
@@ -38,7 +38,7 @@
         {{/channels}}
     </div>
 
-    {{! Recent activity feed — reuses activity_item from theme_airpayux }}
+    {{! Recent activity feed — reuses activity_item from theme_sentientia }}
     {{#has_activity_feed}}
     <div class="card mt-4">
         <div class="card-header">
@@ -47,7 +47,7 @@
         <div class="card-body p-0">
             <ul class="airpay-activity-list">
                 {{#activity_feed}}
-                {{> theme_airpayux/components/activity_item }}
+                {{> theme_sentientia/components/activity_item }}
                 {{/activity_feed}}
             </ul>
         </div>

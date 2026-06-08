@@ -25,7 +25,7 @@ require_capability('local/sentientia_users:view', $context);
 
 global $DB, $USER, $CFG;
 
-// Read URL params written by theme_airpayux/datatable's export click handler.
+// Read URL params written by theme_sentientia/datatable's export click handler.
 $search   = optional_param('search',  '', PARAM_TEXT);
 $sort     = optional_param('sort',    'lastname', PARAM_ALPHAEXT);
 $sortdir  = optional_param('sortdir', 'asc', PARAM_ALPHA);

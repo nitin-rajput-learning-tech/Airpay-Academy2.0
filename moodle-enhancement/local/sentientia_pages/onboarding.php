@@ -198,7 +198,7 @@ $data = [
     'has_recommended' => !empty($recdata),
     'sesskey'      => sesskey(),
     'actionurl'    => (new moodle_url('/local/sentientia_pages/onboarding.php'))->out(false),
-    'logourl'      => (new moodle_url('/theme/airpayux/pix/brand/academy-logo-350.png'))->out(false),
+    'logourl'      => (new moodle_url('/theme/sentientia/pix/brand/academy-logo-350.png'))->out(false),
 ];
 
 // ── ADR-017 / C1.5.b (2026-05-28) ───────────────────────────────────

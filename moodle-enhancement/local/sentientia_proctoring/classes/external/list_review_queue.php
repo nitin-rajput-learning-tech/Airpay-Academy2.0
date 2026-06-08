@@ -15,7 +15,7 @@ use core_external\external_value;
 class list_review_queue extends external_api {
     public static function execute_parameters(): external_function_parameters {
         // Goal A audit Bug #10 (2026-05-22): align with the shared
-        // theme_airpayux/datatable client contract — `search`, `sort`,
+        // theme_sentientia/datatable client contract — `search`, `sort`,
         // `sortdir`, `filters` are always sent by the client even when
         // the user hasn't typed anything. Strict validator rejects
         // unknown keys → datatable stuck on Loading…

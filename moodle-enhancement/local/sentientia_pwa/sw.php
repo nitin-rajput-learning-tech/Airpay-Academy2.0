@@ -93,9 +93,9 @@ const PRECACHE_URLS = [
     OFFLINE_URL,
     '{$wwwpath}/local/sentientia_pwa/manifest.php',
     '{$wwwpath}/my/',
-    '{$wwwpath}/theme/airpayux/pix/brand/academy-logo-350.png',
-    '{$wwwpath}/theme/airpayux/pix/brand/favicon_io/android-chrome-192x192.png',
-    '{$wwwpath}/theme/airpayux/pix/brand/favicon_io/android-chrome-512x512.png',
+    '{$wwwpath}/theme/sentientia/pix/brand/academy-logo-350.png',
+    '{$wwwpath}/theme/sentientia/pix/brand/favicon_io/android-chrome-192x192.png',
+    '{$wwwpath}/theme/sentientia/pix/brand/favicon_io/android-chrome-512x512.png',
 ];
 // Phase D.1.d — extensions we'll cache-first (static-ish assets). Anything
 // not in this list passes through to network on its own.
@@ -217,8 +217,8 @@ self.addEventListener('push', function(event) {
         const title = payload.title || 'Sentientia LMS';
         const options = {
             body: payload.body || '',
-            icon: payload.icon || WWW_PATH + '/theme/airpayux/pix/brand/favicon_io/android-chrome-192x192.png',
-            badge: WWW_PATH + '/theme/airpayux/pix/brand/favicon_io/android-chrome-192x192.png',
+            icon: payload.icon || WWW_PATH + '/theme/sentientia/pix/brand/favicon_io/android-chrome-192x192.png',
+            badge: WWW_PATH + '/theme/sentientia/pix/brand/favicon_io/android-chrome-192x192.png',
             data: { url: payload.url || WWW_PATH + '/my/' },
             tag: payload.tag || undefined,
             requireInteraction: !!payload.requireInteraction,

@@ -13,7 +13,7 @@ use core_external\external_value;
 
 /**
  * List users with server-side search, sort, and pagination.
- * Powers the shared datatable module (theme_airpayux/datatable).
+ * Powers the shared datatable module (theme_sentientia/datatable).
  *
  * Contract:
  * - args: {search, sort, sortdir, page, perpage, filters (JSON)}

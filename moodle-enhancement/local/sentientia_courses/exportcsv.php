@@ -28,7 +28,7 @@ require_capability('local/sentientia_courses:view', $context);
 
 global $DB, $USER;
 
-// Read URL params written by theme_airpayux/datatable's export click handler.
+// Read URL params written by theme_sentientia/datatable's export click handler.
 // Datatable passes a single JSON `filters` blob for non-trivial filters; we
 // also accept flat filter_* params for human-driven URL building (parity with
 // the users exporter).

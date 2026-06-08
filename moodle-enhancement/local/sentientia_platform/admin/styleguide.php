@@ -16,7 +16,7 @@
  * audit without full admin.
  *
  * Pairs with:
- *  - moodle-enhancement/theme/airpayux/scss/moodle/_tokens.scss (the source)
+ *  - moodle-enhancement/theme/sentientia/scss/moodle/_tokens.scss (the source)
  *  - docs/platform-review-2026-05-14/UI-UX-MANIFESTO.md (the spec)
  *
  * Every swatch / spacer / button on this page references the live CSS
@@ -87,7 +87,7 @@ echo $OUTPUT->header();
 
 <div class="ap-sg__intro">
     <p><strong>This is the canonical token reference for Airpay Academy.</strong> Every colour, spacing, radius, shadow, type, and motion value in the platform must reference a token from this page. New components that introduce hex literals or magic numbers will be flagged at PR review.</p>
-    <p>Source: <code>moodle-enhancement/theme/airpayux/scss/moodle/_tokens.scss</code> &middot; Spec: <code>docs/platform-review-2026-05-14/UI-UX-MANIFESTO.md</code></p>
+    <p>Source: <code>moodle-enhancement/theme/sentientia/scss/moodle/_tokens.scss</code> &middot; Spec: <code>docs/platform-review-2026-05-14/UI-UX-MANIFESTO.md</code></p>
 </div>
 
 <nav class="ap-sg__nav">
@@ -332,9 +332,9 @@ echo $OUTPUT->header();
 <!-- ─────────────────────────── COMPONENTS ─────────────────────────── -->
 <section class="ap-sg__section" id="components">
     <h2 class="ap-sg__section-title">Components</h2>
-    <p class="ap-sg__section-desc">Reusable components composed from the tokens above. Every component is available as a Mustache partial under <code>theme_airpayux/components/*</code>. Source SCSS lives in <code>scss/moodle/partials/_components-*.scss</code>.</p>
+    <p class="ap-sg__section-desc">Reusable components composed from the tokens above. Every component is available as a Mustache partial under <code>theme_sentientia/components/*</code>. Source SCSS lives in <code>scss/moodle/partials/_components-*.scss</code>.</p>
 
-    <h3>Stat card &mdash; <code>theme_airpayux/components/stat_card</code></h3>
+    <h3>Stat card &mdash; <code>theme_sentientia/components/stat_card</code></h3>
     <p class="ap-sg__section-desc">Canonical KPI/metric tile. Used on every dashboard, report, analytics, and admin landing page. Mobile-first: 4 columns desktop &rarr; 2 columns tablet &rarr; 1 column mobile via <code>.airpay-stat-grid</code>.</p>
 
     <h4 style="margin-top: var(--ap-space-6);">Six colour variants</h4>
@@ -389,7 +389,7 @@ echo $OUTPUT->header();
     </div>
 
     <h4 style="margin-top: var(--ap-space-6);">Mustache usage</h4>
-    <pre style="background: var(--ap-color-bg-surface-alt); padding: var(--ap-space-4); border-radius: var(--ap-radius-sm); font-size: var(--ap-text-xs); overflow-x: auto;">{{&gt; theme_airpayux/components/stat_card }}
+    <pre style="background: var(--ap-color-bg-surface-alt); padding: var(--ap-space-4); border-radius: var(--ap-radius-sm); font-size: var(--ap-text-xs); overflow-x: auto;">{{&gt; theme_sentientia/components/stat_card }}
 {
     "value":    "1,238",
     "label":    "Completions",
@@ -400,7 +400,7 @@ echo $OUTPUT->header();
     "href":     "/local/sentientia_reports/index.php"
 }</pre>
 
-    <h3 style="margin-top: var(--ap-space-10);">Course progress card &mdash; <code>theme_airpayux/components/course_progress_card</code></h3>
+    <h3 style="margin-top: var(--ap-space-10);">Course progress card &mdash; <code>theme_sentientia/components/course_progress_card</code></h3>
     <p class="ap-sg__section-desc">Canonical learner-facing course tile. Used on Dashboard "Continue Learning", My Learning, and Manager team drilldown. Mobile-first via <code>.airpay-course-grid</code> (3 &rarr; 2 &rarr; 1 cols).</p>
 
     <h4 style="margin-top: var(--ap-space-6);">Four status variants</h4>
@@ -436,7 +436,7 @@ echo $OUTPUT->header();
     </div>
 
     <h4 style="margin-top: var(--ap-space-6);">Mustache usage</h4>
-    <pre style="background: var(--ap-color-bg-surface-alt); padding: var(--ap-space-4); border-radius: var(--ap-radius-sm); font-size: var(--ap-text-xs); overflow-x: auto;">{{&gt; theme_airpayux/components/course_progress_card }}
+    <pre style="background: var(--ap-color-bg-surface-alt); padding: var(--ap-space-4); border-radius: var(--ap-radius-sm); font-size: var(--ap-text-xs); overflow-x: auto;">{{&gt; theme_sentientia/components/course_progress_card }}
 {
     "fullname":    "Anti-Money Laundering 2026",
     "shortname":   "AML-26",
@@ -448,7 +448,7 @@ echo $OUTPUT->header();
     "duration":    "45 min"
 }</pre>
 
-    <h3 style="margin-top: var(--ap-space-10);">Activity item &mdash; <code>theme_airpayux/components/activity_item</code></h3>
+    <h3 style="margin-top: var(--ap-space-10);">Activity item &mdash; <code>theme_sentientia/components/activity_item</code></h3>
     <p class="ap-sg__section-desc">Canonical row for any chronological-event list. Two layouts (<code>inline</code> default, <code>timeline</code> with dot+line) and seven semantic variants. Used on Dashboard "Recent Activity" (admin), "Activity Timeline" (learner), and the Manager team drilldown.</p>
 
     <h4 style="margin-top: var(--ap-space-6);">Inline layout &mdash; admin Recent Activity</h4>
@@ -503,7 +503,7 @@ echo $OUTPUT->header();
     </div>
 
     <h4 style="margin-top: var(--ap-space-6);">Mustache usage</h4>
-    <pre style="background: var(--ap-color-bg-surface-alt); padding: var(--ap-space-4); border-radius: var(--ap-radius-sm); font-size: var(--ap-text-xs); overflow-x: auto;">{{&gt; theme_airpayux/components/activity_item }}
+    <pre style="background: var(--ap-color-bg-surface-alt); padding: var(--ap-space-4); border-radius: var(--ap-radius-sm); font-size: var(--ap-text-xs); overflow-x: auto;">{{&gt; theme_sentientia/components/activity_item }}
 {
     "text":    "Sarah completed Anti-Money Laundering 2026",
     "subtext": "14 May, 10:32 AM",
@@ -513,7 +513,7 @@ echo $OUTPUT->header();
     "href":    "/course/view.php?id=42"
 }</pre>
 
-    <h3 style="margin-top: var(--ap-space-10);">Deadline tile &mdash; <code>theme_airpayux/components/deadline_tile</code></h3>
+    <h3 style="margin-top: var(--ap-space-10);">Deadline tile &mdash; <code>theme_sentientia/components/deadline_tile</code></h3>
     <p class="ap-sg__section-desc">Four urgency states. The "urgent" variant icon pulses on render to draw the eye; "overdue" gets a thick left border. Used on the dashboard's Upcoming Deadlines, manager team compliance, and notification email templates.</p>
 
     <div style="max-width: 640px; margin-bottom: var(--ap-space-8);">
@@ -540,7 +540,7 @@ echo $OUTPUT->header();
     </div>
 
     <h4 style="margin-top: var(--ap-space-6);">Mustache usage</h4>
-    <pre style="background: var(--ap-color-bg-surface-alt); padding: var(--ap-space-4); border-radius: var(--ap-radius-sm); font-size: var(--ap-text-xs); overflow-x: auto;">{{&gt; theme_airpayux/components/deadline_tile }}
+    <pre style="background: var(--ap-color-bg-surface-alt); padding: var(--ap-space-4); border-radius: var(--ap-radius-sm); font-size: var(--ap-text-xs); overflow-x: auto;">{{&gt; theme_sentientia/components/deadline_tile }}
 {
     "coursename": "KYC Customer Onboarding",
     "duedate":    "17 May 2026",
@@ -550,7 +550,7 @@ echo $OUTPUT->header();
     "viewurl":    "/course/view.php?id=42"
 }</pre>
 
-    <h3 style="margin-top: var(--ap-space-10);">Section header &mdash; <code>theme_airpayux/components/section_header</code></h3>
+    <h3 style="margin-top: var(--ap-space-10);">Section header &mdash; <code>theme_sentientia/components/section_header</code></h3>
     <p class="ap-sg__section-desc">Small but used everywhere. Three variations: bare title, title with icon, title with icon plus "View all &rarr;" affordance. Legacy <code>.airpay-dash__section-title</code> markup is aliased in the SCSS so existing inline <code>&lt;h3&gt;</code> elements inherit the new tokens automatically.</p>
 
     <div style="max-width: 760px; margin-bottom: var(--ap-space-8); display: flex; flex-direction: column; gap: var(--ap-space-6);">
@@ -586,7 +586,7 @@ echo $OUTPUT->header();
     </div>
 
     <h4 style="margin-top: var(--ap-space-6);">Mustache usage</h4>
-    <pre style="background: var(--ap-color-bg-surface-alt); padding: var(--ap-space-4); border-radius: var(--ap-radius-sm); font-size: var(--ap-text-xs); overflow-x: auto;">{{&gt; theme_airpayux/components/section_header }}
+    <pre style="background: var(--ap-color-bg-surface-alt); padding: var(--ap-space-4); border-radius: var(--ap-radius-sm); font-size: var(--ap-text-xs); overflow-x: auto;">{{&gt; theme_sentientia/components/section_header }}
 {
     "title":     "Continue Learning",
     "icon":      "book",
@@ -594,7 +594,7 @@ echo $OUTPUT->header();
     "linklabel": "View all"
 }</pre>
 
-    <h3 style="margin-top: var(--ap-space-10);">Empty state &mdash; <code>theme_airpayux/components/empty_state</code></h3>
+    <h3 style="margin-top: var(--ap-space-10);">Empty state &mdash; <code>theme_sentientia/components/empty_state</code></h3>
     <p class="ap-sg__section-desc">Manifesto §1.5: "empty states are scenes." Three size variants (<code>sm</code> / <code>md</code> / <code>lg</code>). The CTA button has a min-height of 44pt (WCAG 2.5.5). Replaces the broken legacy <code>.ap-empty-state</code> CSS that referenced non-existent tokens.</p>
 
     <h4 style="margin-top: var(--ap-space-6);">Medium (default) &mdash; section-level</h4>
@@ -633,7 +633,7 @@ echo $OUTPUT->header();
     </div>
 
     <h4 style="margin-top: var(--ap-space-6);">Mustache usage</h4>
-    <pre style="background: var(--ap-color-bg-surface-alt); padding: var(--ap-space-4); border-radius: var(--ap-radius-sm); font-size: var(--ap-text-xs); overflow-x: auto;">{{&gt; theme_airpayux/components/empty_state }}
+    <pre style="background: var(--ap-color-bg-surface-alt); padding: var(--ap-space-4); border-radius: var(--ap-radius-sm); font-size: var(--ap-text-xs); overflow-x: auto;">{{&gt; theme_sentientia/components/empty_state }}
 {
     "icon":     "graduation-cap",
     "title":    "No courses in progress",

@@ -12,7 +12,7 @@ $plugin->component = 'local_sentientia_request';
 // capabilities, actions, status, SLA, routing, notifications, errors,
 // settings, UI, privacy, events.
 // Goal A audit Bug #6 (2026-05-22) — align list_mine + list_pending WS
-// contracts with the shared theme_airpayux/datatable client (accept
+// contracts with the shared theme_sentientia/datatable client (accept
 // `search`, return status_badge + actions). Bumping version so Moodle
 // refreshes the cached external_function_parameters + return shape.
 $plugin->version   = 2026052201;

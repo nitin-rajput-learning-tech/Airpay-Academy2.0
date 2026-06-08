@@ -9,7 +9,7 @@ $plugin->component = 'local_sentientia_proctoring';
 // identity verification, live monitoring, behavioural events, review queue,
 // status, settings, notifications, errors, privacy metadata (incl. AWS).
 // Goal A audit Bug #10 (2026-05-22) — align list_review_queue WS with the
-// shared theme_airpayux/datatable contract (accept `search`, `sort`,
+// shared theme_sentientia/datatable contract (accept `search`, `sort`,
 // `sortdir`, `filters`).
 $plugin->version   = 2026052201;
 $plugin->requires  = 2024042200;

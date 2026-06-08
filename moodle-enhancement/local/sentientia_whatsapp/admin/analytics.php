@@ -6,7 +6,7 @@
  * Channel analytics dashboard — Phase A1 iter 5.
  *
  * Reads from local_sentientia_send_log + the analytics class to render:
- *   - KPI tiles (using the canonical stat_card from theme_airpayux)
+ *   - KPI tiles (using the canonical stat_card from theme_sentientia)
  *   - Cost summary
  *   - Recent activity feed (using activity_item partial)
  *

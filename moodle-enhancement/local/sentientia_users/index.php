@@ -126,7 +126,7 @@ $data = [
 // {{{output.standard_end_of_body_html}}} placement collides with
 // custom shell rendering — calling js_call_amd() here guarantees
 // the cascade JS loads.
-$PAGE->requires->js_call_amd('theme_airpayux/org_cascade', 'init');
+$PAGE->requires->js_call_amd('theme_sentientia/org_cascade', 'init');
 // P1 batch (2026-05-16) — populate chip-filter dropdowns
 // (designation/location/employmenttype/hrmsrole) from distinct user values.
 $PAGE->requires->js_call_amd('local_sentientia_users/chip_filters', 'init');

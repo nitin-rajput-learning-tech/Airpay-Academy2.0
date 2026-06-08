@@ -69,6 +69,6 @@ echo $OUTPUT->render_from_template('local_sentientia_roles/view', $data);
 $PAGE->requires->js_call_amd('local_sentientia_roles/role_actions', 'init',
     [['page' => 'view', 'tab' => $tab, 'roleid' => $roleid]]);
 if ($tab === 'capabilities' || $tab === 'audit') {
-    $PAGE->requires->js_call_amd('theme_airpayux/datatable', 'init', []);
+    $PAGE->requires->js_call_amd('theme_sentientia/datatable', 'init', []);
 }
 echo $OUTPUT->footer();

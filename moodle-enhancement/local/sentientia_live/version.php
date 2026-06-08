@@ -53,7 +53,7 @@ $plugin->dependencies = [
 //              P1 #15 / F-24 — Sentientia BEM tokens (airpay-badge/airpay-btn)
 //              layered over Bootstrap utility classes in trainer_dashboard
 //              / result_panel / result_bar_chart. Theme overrides in
-//              theme/airpayux/scss/moodle/partials/_legacy-modern.scss.
+//              theme/sentientia/scss/moodle/partials/_legacy-modern.scss.
 //              P2 #22 / F-25 — Trainer-dashboard table a11y: added
 //              <caption class="sr-only"> and scope="col" on every <th>.
 //              New lang key trainer_sessions_table_caption (EN + HI).
@@ -186,7 +186,7 @@ $plugin->dependencies = [
 //              teacher-archetype roles via assign_capability(overwrite=false)
 //              — Moodle only auto-applies archetype defaults on a capability's
 //              FIRST install, never when an upgrade merely adds an archetype.
-//              T-02: theme_airpayux\sidebar_navigation gains a "Live Sessions"
+//              T-02: theme_sentientia\sidebar_navigation gains a "Live Sessions"
 //              link to /local/sentientia_live/trainer/index.php in the Manager
 //              AND Learner shells, gated by has_capability(
 //              'local/sentientia_live:create') AND the live.enabled flag, so

@@ -75,6 +75,6 @@ class tenant_config {
     public static function get_logo_url(int $costcenterid = 0): string {
         global $CFG;
         $config = self::get($costcenterid);
-        return $CFG->wwwroot . '/theme/airpayux/pix/brand/' . $config['logo_filename'];
+        return $CFG->wwwroot . '/theme/sentientia/pix/brand/' . $config['logo_filename'];
     }
 }

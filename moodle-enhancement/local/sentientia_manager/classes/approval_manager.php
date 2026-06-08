@@ -101,7 +101,7 @@ class approval_manager {
      * Manager-side: list requests waiting for me, optionally filtered.
      *
      * Goal A audit Bug #10 (2026-05-22): added $search to align with the
-     * shared theme_airpayux/datatable client which always sends a `search`
+     * shared theme_sentientia/datatable client which always sends a `search`
      * parameter. When non-empty it filters across requester name/email,
      * course name, and the requester's free-text reason. Used by
      * external\list_requests::execute().
@@ -327,7 +327,7 @@ class approval_manager {
      * Manager-side: list course allocations I've created.
      *
      * Goal A audit Bug #10 (2026-05-22): added $search to align with the
-     * shared theme_airpayux/datatable client; filters across direct-report
+     * shared theme_sentientia/datatable client; filters across direct-report
      * name and course name (the note field is admin-private so excluded).
      */
     public static function list_allocations(int $managerid, string $status = 'all',

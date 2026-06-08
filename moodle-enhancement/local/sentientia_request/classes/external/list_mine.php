@@ -16,7 +16,7 @@ class list_mine extends external_api {
 
     public static function execute_parameters(): external_function_parameters {
         // Bug fix 2026-05-22 (Goal A audit Bug #6 final root-cause):
-        // theme_airpayux/datatable.js POSTs {search, sort, sortdir, page, perpage,
+        // theme_sentientia/datatable.js POSTs {search, sort, sortdir, page, perpage,
         // filters} to every endpoint it consumes. Moodle's external_api validator
         // is strict-by-default and rejects unknown keys with
         // invalid_parameter_exception ("Unexpected keys (search) detected"),

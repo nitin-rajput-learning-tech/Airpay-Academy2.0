@@ -16,7 +16,7 @@ class list_pending extends external_api {
 
     public static function execute_parameters(): external_function_parameters {
         // Bug fix 2026-05-22 (Goal A audit Bug #6 final root-cause):
-        // Match the shared theme_airpayux/datatable client contract — see
+        // Match the shared theme_sentientia/datatable client contract — see
         // sibling list_mine.php for the long-form explanation.
         return new external_function_parameters([
             'search'  => new external_value(PARAM_TEXT, '', VALUE_DEFAULT, ''),

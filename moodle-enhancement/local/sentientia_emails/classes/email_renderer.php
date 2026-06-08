@@ -38,7 +38,7 @@ class email_renderer {
             $tenant = tenant_config::get(tenant_config::AIRPAY);
         }
         $context['tenant_name']    = $tenant['name'];
-        $context['tenant_logo']    = $CFG->wwwroot . '/theme/airpayux/pix/brand/' . $tenant['logo_filename'];
+        $context['tenant_logo']    = $CFG->wwwroot . '/theme/sentientia/pix/brand/' . $tenant['logo_filename'];
         $context['primary_color']  = $tenant['primary_color'];
         $context['accent_color']   = $tenant['accent_color'];
         $context['site_url']       = $CFG->wwwroot;
@@ -89,7 +89,7 @@ class email_renderer {
         // Render the inner content body.
         $tenant = tenant_config::get($tenantid);
         $context['tenant_name']    = $tenant['name'];
-        $context['tenant_logo']    = $CFG->wwwroot . '/theme/airpayux/pix/brand/' . $tenant['logo_filename'];
+        $context['tenant_logo']    = $CFG->wwwroot . '/theme/sentientia/pix/brand/' . $tenant['logo_filename'];
         $context['primary_color']  = $tenant['primary_color'];
         $context['accent_color']   = $tenant['accent_color'];
         $context['site_url']       = $CFG->wwwroot;

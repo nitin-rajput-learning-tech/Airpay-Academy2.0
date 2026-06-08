@@ -18,7 +18,7 @@
 
     {{!
         Bug fix 2026-05-22 (Goal A audit Bug #12) — same shape as the
-        sibling history.mustache. theme_airpayux/datatable's selector
+        sibling history.mustache. theme_sentientia/datatable's selector
         is [data-airpay-table], [data-region="airpay-datatable"]; the
         old "datatable" value never matched so the admin orders table
         rendered as a permanent "Loading..." spinner. Init() takes no
@@ -36,7 +36,7 @@
 </div>
 
 {{#js}}
-require(['theme_airpayux/datatable', 'local_sentientia_cart/admin_orders'],
+require(['theme_sentientia/datatable', 'local_sentientia_cart/admin_orders'],
     function(Datatable, AdminOrders) {
         Datatable.init();
         AdminOrders.init();

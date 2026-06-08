@@ -31,14 +31,14 @@ $plugin->component = 'local_sentientia_platform';
 // P0 borrow #9 (Moodle 5.2, 2026-05-23) — cm_info::get_navigation_url()
 // resolver shim. Adds classes/cm_navigation.php + tests/cm_navigation_test.php.
 // Pure additive — no schema change, no behaviour change for callers that
-// keep using $cm->url. Wired into theme_airpayux course_view trait so a
+// keep using $cm->url. Wired into theme_sentientia course_view trait so a
 // module that registers mod_xxx_get_navigation_url($cm) can override the
 // launch URL. 5.2 migration: search-and-replace + delete cm_navigation.php.
 //
 // P0 borrow #10 (Moodle 5.2, 2026-05-23) — suspended-user status badge.
 // Adds classes/user_status.php — request-cached lookup of suspended/deleted
 // state. Lang strings userstatus_* in en + hi (4 each = 8 total). Consumed
-// by theme_airpayux/before_standard_top_of_body_html (server-rendered JSON)
+// by theme_sentientia/before_standard_top_of_body_html (server-rendered JSON)
 // + amd/user_status_badge.js (DOM decorator). PHPUnit covers cache, batch
 // lookup, defensive zero-id input, and badge HTML escaping.
 //
@@ -79,7 +79,7 @@ $plugin->release   = '1.7.0';  // +ADR-017 Phase 0 user_type schema (5 tables)
 //          + first 5 flags wired (assistant, gamification x2, share, request)
 // 1.2.1  Phase A0.5 — Style Guide + design-token expansion.
 //          + admin/styleguide.php — visual reference of every design token
-//          + theme/airpayux/scss/moodle/_tokens.scss extended with:
+//          + theme/sentientia/scss/moodle/_tokens.scss extended with:
 //              motion (durations + easings from manifesto §5),
 //              breakpoint SCSS vars from manifesto §3,
 //              touch-target + control-height tokens from manifesto §8/§9,

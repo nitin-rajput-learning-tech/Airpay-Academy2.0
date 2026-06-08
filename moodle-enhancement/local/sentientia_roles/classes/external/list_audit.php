@@ -20,7 +20,7 @@ class list_audit extends external_api {
 
     public static function execute_parameters(): external_function_parameters {
         // Goal A audit Bug #10 (2026-05-22): the shared
-        // theme_airpayux/datatable client always POSTs a `search` key, and
+        // theme_sentientia/datatable client always POSTs a `search` key, and
         // the strict external_api validator rejects unknown keys with
         // "Unexpected keys (search) detected" → datatable hangs on
         // Loading… `search` here aliases to the existing `capability`

@@ -47,7 +47,7 @@ class web_push {
             'notification' => [
                 'title' => $title,
                 'body' => $body,
-                'icon' => $icon ?: '/theme/airpayux/pix/brand/favicon_io/android-chrome-192x192.png',
+                'icon' => $icon ?: '/theme/sentientia/pix/brand/favicon_io/android-chrome-192x192.png',
                 'click_action' => $url,
             ],
             'data' => [

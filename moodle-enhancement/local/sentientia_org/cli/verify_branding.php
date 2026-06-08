@@ -73,11 +73,11 @@ if (stripos($shortname, 'moodle') === false) {
 }
 
 // ═══════════════════════════════════════════════════════
-// 4. Active theme is airpayux
+// 4. Active theme is sentientia
 // ═══════════════════════════════════════════════════════
 $theme = get_config('core', 'theme');
-$check = 'Active theme is airpayux';
-if ($theme === 'airpayux') {
+$check = 'Active theme is sentientia';
+if ($theme === 'sentientia') {
     cli_pass($check, $theme);
     $pass++;
 } else {
@@ -148,13 +148,13 @@ if ($airpay_caps > 0) {
 // 9. Favicon exists
 // ═══════════════════════════════════════════════════════
 $check = 'Custom favicon exists';
-$faviconpath = $CFG->dirroot . '/theme/airpayux/pix/favicon.ico';
+$faviconpath = $CFG->dirroot . '/theme/sentientia/pix/favicon.ico';
 if (file_exists($faviconpath)) {
     cli_pass($check, $faviconpath);
     $pass++;
 } else {
     // Check for PNG favicon.
-    $pngpath = $CFG->dirroot . '/theme/airpayux/pix/favicon.png';
+    $pngpath = $CFG->dirroot . '/theme/sentientia/pix/favicon.png';
     if (file_exists($pngpath)) {
         cli_pass($check, $pngpath);
         $pass++;
@@ -168,7 +168,7 @@ if (file_exists($faviconpath)) {
 // 10. Default logo exists
 // ═══════════════════════════════════════════════════════
 $check = 'Default logo exists';
-$logopath = $CFG->dirroot . '/theme/airpayux/pix/default_logo.png';
+$logopath = $CFG->dirroot . '/theme/sentientia/pix/default_logo.png';
 if (file_exists($logopath)) {
     cli_pass($check, $logopath);
     $pass++;

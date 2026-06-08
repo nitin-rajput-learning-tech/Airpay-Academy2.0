@@ -3,7 +3,7 @@
    Phase B0 Catalogue iter 1 (2026-05-14)
 
    Zero hex literals — every colour/spacing/radius value references
-   --ap-* tokens from theme/airpayux/scss/moodle/_tokens.scss.
+   --ap-* tokens from theme/sentientia/scss/moodle/_tokens.scss.
    Tokens auto-flip in dark mode via body.dark-mode (see dark_mode.scss
    in the theme); per-rule dark overrides removed — they were doing
    manually what the token system handles automatically.

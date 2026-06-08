@@ -93,7 +93,7 @@ class hook_callbacks {
      * and shown to EVERYONE — so a Public/external self-paced learner saw
      * "Team status" (they have no team) and "Quiz me on compliance" (they
      * aren't compliance-bound). The chips are now derived from the canonical
-     * role tier (theme_airpayux\role_detector) + the tenant root
+     * role tier (theme_sentientia\role_detector) + the tenant root
      * (local_sentientia_core\tenant_identity), both class_exists-guarded so
      * the assistant degrades to a safe learner set if the theme/seam is absent.
      *
@@ -110,8 +110,8 @@ class hook_callbacks {
         };
 
         // Role tier — reuse the single source of truth when present.
-        if (class_exists('\\theme_airpayux\\role_detector')) {
-            $roles = \theme_airpayux\role_detector::detect();
+        if (class_exists('\\theme_sentientia\\role_detector')) {
+            $roles = \theme_sentientia\role_detector::detect();
             $ismanagerish = !empty($roles['ismanager']) || !empty($roles['isadmin']);
         } else {
             // Theme absent (standalone / Enterprise N): fall back to the core

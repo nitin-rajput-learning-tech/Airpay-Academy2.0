@@ -91,7 +91,7 @@ $data = [
 ];
 
 // W1-1 BizLMS parity: explicit AMD bootstrap for the 5-level cascade.
-$PAGE->requires->js_call_amd('theme_airpayux/org_cascade', 'init');
+$PAGE->requires->js_call_amd('theme_sentientia/org_cascade', 'init');
 
 echo $OUTPUT->header();
 echo $OUTPUT->render_from_template('local_sentientia_courses/manage', $data);

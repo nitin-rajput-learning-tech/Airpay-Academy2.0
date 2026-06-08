@@ -71,7 +71,7 @@ class hook_callbacks {
         ];
 
         $hook->add_html(
-            $OUTPUT->render_from_template('theme_airpayux/mobile_bottom_nav', $data)
+            $OUTPUT->render_from_template('theme_sentientia/mobile_bottom_nav', $data)
         );
     }
 }

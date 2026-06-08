@@ -29,7 +29,7 @@
     {{#has_kpi_tiles}}
     <div class="airpay-stat-grid mb-4">
         {{#kpi_tiles}}
-        {{> theme_airpayux/components/stat_card }}
+        {{> theme_sentientia/components/stat_card }}
         {{/kpi_tiles}}
     </div>
     {{/has_kpi_tiles}}
@@ -46,7 +46,7 @@
 </div>
 
 {{#js}}
-require(['theme_airpayux/datatable', 'local_sentientia_courses/enrolledusers'],
+require(['theme_sentientia/datatable', 'local_sentientia_courses/enrolledusers'],
     function(Datatable, Mod) {
         Datatable.init(document.querySelector('[data-region="datatable"]'));
         Mod.init({{ courseid }}, '{{ course_name }}');
