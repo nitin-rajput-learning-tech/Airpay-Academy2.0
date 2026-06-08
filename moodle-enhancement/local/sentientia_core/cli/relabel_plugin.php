@@ -92,6 +92,22 @@ foreach ($targets as [$table, $col]) {
     }
 }
 
+// ---- 2b. Reconcile external WS descriptions (ADR-025 follow-up) ------------
+// The component-column UPDATE above repoints external_functions/services rows to the
+// new component, but their NAME column keeps the old airpay_* WS function name (e.g.
+// name='local_airpay_X_do' under component='local_sentientia_X'). Rebuilt AMD bundles
+// call the NEW name, so the stale registration causes "invalid function" at runtime.
+// external_update_descriptions() reconciles a component's WS rows against its on-disk
+// db/services.php: insert the new local_sentientia_* names, delete the orphaned
+// local_airpay_* ones (+ their external_services_functions joins). Idempotent.
+// (Standalone equivalent for already-relabeled instances: cli/rebuild_ws_descriptions.php.)
+$svcfile = core_component::get_component_directory($to) . '/db/services.php';
+if ($svcfile && file_exists($svcfile)) {
+    require_once($CFG->libdir . '/upgradelib.php');
+    echo "  external WS descriptions: reconciling {$to} from db/services.php\n";
+    if ($run) { external_update_descriptions($to); }
+}
+
 // ---- 3. Capabilities (optional; preserves role assignments) ---------------
 // Capability NAMES use Moodle's 'type/plugin:cap' form (e.g. local/airpay_X:view)
 // - a SLASH after the type, NOT the underscore frankenstyle component. So we must

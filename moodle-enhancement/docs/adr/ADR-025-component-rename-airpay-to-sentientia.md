@@ -157,5 +157,28 @@ per affected plugin + redeploy, before serving the renamed plugins anywhere. **D
 add an "`amd/build/**` must be 0 `local_airpay_`" grep-gate to `tools/rename_plugin.sh` - the ADR-022
 batch-1 rehearsal doc already prescribed the `grunt amd` step, but it was not carried into the bulk
 driver.
+**RESOLVED 2026-06-08** (@ `e574276f9`, "fix(amd): rebuild de-branded plugin bundles"): all 30
+renamed plugins' `amd/build/*.min.js` rebuilt to call `local_sentientia_*`; verified 0 `local_airpay_`
+in any `local/sentientia_*` build bundle (only the kept `local/airpay_ratings/` retains its own, which
+is correct), 0 stale cross-plugin `local_airpay_core` refs, and the deployed webroot bundles match.
+
+**(d) FUNCTIONAL follow-up - stale `external_functions`/`external_services` NAMES (found 2026-06-08).**
+`relabel_plugin.php` updates the WS tables by the **`component` column only** (its `$targets` list:
+`['external_functions','component'], ['external_services','component']`). The function **`name`**
+column is left at the old value - e.g. `name='local_airpay_courses_toggle_visibility'` under
+`component='local_sentientia_courses'`. A no-op `admin/cli/upgrade.php` (versions carried over by the
+relabel, so nothing to upgrade) never reconciles it. Result on the local clone: **155 stale
+airpay-named WS functions across 19 components**, while `db/services.php` + the rebuilt AMD bundles
+(follow-up c) both reference the new `local_sentientia_*` names -> `invalid function` at runtime, the
+**exact same break (c) appeared to fix, from the other side**. This would hit live users at in-place
+cutover. **Fix shipped:** (1) `relabel_plugin.php` now calls Moodle's `external_update_descriptions($to)`
+after the component-column updates (reconciles each component's WS rows against its on-disk
+`db/services.php` - inserts the new names, deletes the orphaned old ones + their
+`external_services_functions` joins; idempotent); (2) standalone
+`local/sentientia_core/cli/rebuild_ws_descriptions.php` does the same for already-relabeled instances
+(auto-discovers stale components, guards `paygw_airpay` + any component missing `db/services.php`) -
+this is the **live-cutover remediation step** to run after the rename batch + `upgrade.php`, before
+serving the renamed plugins. Local verified: 155 -> 0 stale, site 200.
+
 The caps-heavy tier (`courses` 10c, `users` 7c, `cart`/`proctoring` 5c, etc.) is each its
 own rehearsed migration + maintenance-window deploy per the ordering above.
