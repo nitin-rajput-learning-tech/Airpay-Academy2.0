@@ -5971,3 +5971,18 @@ flag-gated / reversible / tested, **live behaviour unchanged, owner WIP untouche
   3354bd947.
 - ADR-018 endgame (migrate live read-path off `open_*` onto first-party
   tenant/org tables) remains feature-flagged + human-gated.
+
+---
+## 2026-06-08 — Component de-brand COMPLETE (ADR-025)
+
+All 35 airpay-branded plugins renamed `airpay_* → sentientia_*` and pushed to
+`production` (@d5cd77c8e): 30 local (incl. `airpay_core → sentientia_platform`),
+4 blocks, 1 quizaccess. `admin/cli/upgrade.php` completes cleanly; 0 airpay
+components/capabilities/local-tables remain; all caps + table data preserved
+(user_type 2879 rows etc.); site 200. Kept by decision: `paygw_airpay` (external
+payment gateway) + theme `airpayux` (design-system codename). Reusable driver
+`tools/rename_plugin.sh` + `local_sentientia_core/cli/relabel_plugin.php` shipped
+and hardened through 6 distinct failure modes — these are the artifacts to run in
+the live airpay.academy maintenance-window cutover. Non-blocking follow-ups: a few
+refs to non-existent airpay-named tables (cosmetic) + a junk `public/local$name/`
+dir in the local clone only (delete with [CONFIRM]).

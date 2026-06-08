@@ -1,6 +1,6 @@
 # ADR-025 - Component rename: `local_airpay_* → local_sentientia_*`
 
-- **Status:** Accepted (2026-06-04) - pilot proven
+- **Status:** COMPLETE (2026-06-08) - all 35 plugins renamed; see OUTCOME below
 - **Owner:** Nitin Rajput
 - **Relates to:** ADR-018 (independence), ADR-024 (de-brand/absorb)
 - **Decision context:** Nitin: "make all plugins as Sentientia" + "rename now,
@@ -100,5 +100,39 @@ table `local_sentientia_reports` 5 rows preserved, 3 external_functions remapped
 Class B done: integrations, assistant, gamification, whatsapp, reports (9/30 total
 incl. 4 Class A). **Remaining: ~20.** `airpay_core` is BLOCKED (target `sentientia_core`
 already exists - needs a distinct name decision). `compliance_report` is HELD (owner WIP).
+
+## OUTCOME - COMPLETE (2026-06-08)
+
+The full de-brand shipped. **35 plugins renamed** `airpay_* -> sentientia_*`:
+- **30** `local_airpay_* -> local_sentientia_*` - incl. `airpay_core -> sentientia_platform`
+  (the suite core: feature flags, branding, audit, cron-health, PII masking), kept distinct
+  from the existing `local_sentientia_core` substrate/seam plugin per Nitin's decision.
+  `compliance_report` hold was lifted (its WIP was already committed @8ab957446).
+- **4** `block_airpay_* -> block_sentientia_*` (cert_health, compliance, cron_health, trainer).
+- **1** `quizaccess_airpay_proctoring -> quizaccess_sentientia_proctoring`.
+
+Verified end-to-end: `admin/cli/upgrade.php` completes successfully; **0** config_plugins,
+**0** capabilities, **0** `mdl_local_airpay_*` tables with airpay components remain; all
+role-capability assignments + table data preserved (user_type 2879 rows, feature_flags 15,
+gamification points 56, etc.). Site 200 throughout. origin/production @ d5cd77c8e.
+
+**Kept by decision (Nitin, 2026-06-08):** `paygw_airpay` (+ `mdl_paygw_airpay`/`_errorlog`)
+- the external Airpay PAYMENT GATEWAY product (like paygw_paypal), not company branding;
+and theme `airpayux` - internal design-system codename.
+
+**Scope-gaps the driver originally missed (local/+theme/ only) and how each was caught/fixed:**
+brand-neutral tables (privacy `local_privacy_*`); install.xml-stale tables added via
+upgrade.php (classroom `_waitlist`); abbreviated tables (proctor `_proctor_*`, learningpath
+`lp_users`); sibling-name collision (`quizaccess_airpay_proctoring` shielded via placeholder
+sed during the local `proctoring` rename); `enrol/` (sentientiasub dependency - was blocking
+upgrade.php) and `my/` (switchrole namespace) core-mods; 6 non-standard-named tables
+(user-type/profile + locations). Driver hardened: DB-based table discovery, qualified-vs-bare
+sed split, scope broadened to blocks/mod/payment, same-name rename guard.
+
+**Non-blocking follow-ups:** (a) a few code refs to *non-existent* airpay-named tables
+(email_log, lp_users, customers, ratings, marketplace) - refs only, no DB tables exist, so
+harmless; de-brand opportunistically. (b) junk dir `public/local$name/` in the LOCAL CLONE
+ONLY (not in git, not loaded by Moodle, stale airpay copies from an early unexpanded-`$name`
+script) - safe to delete with [CONFIRM].
 The caps-heavy tier (`courses` 10c, `users` 7c, `cart`/`proctoring` 5c, etc.) is each its
 own rehearsed migration + maintenance-window deploy per the ordering above.
