@@ -14,7 +14,7 @@
                     admin creates. Three types:
                       - quiz       : top scorers on a single mod_quiz instance
                       - completion : fastest learners to N% complete on a course
-                      - skill      : most skill points (local_airpay_skills) in
+                      - skill      : most skill points (local_sentientia_skills) in
                                      a date range
                     Scope: tenant-bound by default. Site admin can promote to
                     customer-wide by setting tenantid=0 (gated on

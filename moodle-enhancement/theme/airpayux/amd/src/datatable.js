@@ -7,7 +7,7 @@
 // -----
 // HTML:
 //   <div data-airpay-table
-//        data-endpoint="local_airpay_users_list"
+//        data-endpoint="local_sentientia_users_list"
 //        data-columns='[{"key":"fullname","label":"Name","sortable":true},...]'
 //        data-search-placeholder="Search users…"
 //        data-perpage="25">
@@ -54,7 +54,7 @@ class Datatable {
         this.actionsHtml = root.dataset.rowActions || '';
         this.selectable = root.dataset.selectable === '1';
         // Opt-in Export CSV button: plugins set data-export-url="..." to enable.
-        // The URL is plugin-specific (e.g. /local/airpay_users/exportcsv.php) and
+        // The URL is plugin-specific (e.g. /local/sentientia_users/exportcsv.php) and
         // the page on the other end is responsible for tenant scoping the CSV.
         this.exportUrl = root.dataset.exportUrl || '';
         this.exportLabel = root.dataset.exportLabel || 'Export CSV';

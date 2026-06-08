@@ -107,8 +107,8 @@ class tenant {
      *
      * Use after `require_capability()` and after fetching the resource:
      *
-     *     $cart = $DB->get_record('local_airpay_cart_history', ['id' => $id], '*', MUST_EXIST);
-     *     require_capability('local/airpay_cart:viewallorders', context_system::instance());
+     *     $cart = $DB->get_record('local_sentientia_cart_history', ['id' => $id], '*', MUST_EXIST);
+     *     require_capability('local/sentientia_cart:viewallorders', context_system::instance());
      *     \local_airpay_core\tenant::require_access((int)$cart->costcenterid);
      *     // ... safe to proceed
      */
@@ -180,7 +180,7 @@ class tenant {
      *
      *     [$tenantsql, $tenantargs] = \local_airpay_core\tenant::sql_filter('h');
      *     $rows = $DB->get_records_sql(
-     *         "SELECT * FROM {local_airpay_cart_history} h WHERE $tenantsql",
+     *         "SELECT * FROM {local_sentientia_cart_history} h WHERE $tenantsql",
      *         $tenantargs);
      *
      * Site admins get '1=1' (no filter). Tenant-bound users get
@@ -202,7 +202,7 @@ class tenant {
 
     /**
      * Build the WHERE-clause fragment for tenant-scoping on a path-based
-     * column (e.g. `mdl_course.open_path`, `mdl_local_airpay_classroom.open_path`).
+     * column (e.g. `mdl_course.open_path`, `mdl_local_sentientia_classroom.open_path`).
      *
      * The path-based pattern matches "/N" exactly OR "/N/..." as a prefix
      * where N is the caller's tenant root. Site admins always pass.

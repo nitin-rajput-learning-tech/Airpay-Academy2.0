@@ -28,7 +28,7 @@ tenant::require_access((int) $resource->costcenterid);
 // In a SQL query — get a WHERE-clause fragment:
 [$tnsql, $tnargs] = tenant::sql_filter('h');
 $rows = $DB->get_records_sql(
-    "SELECT * FROM {local_airpay_cart_history} h WHERE $tnsql",
+    "SELECT * FROM {local_sentientia_cart_history} h WHERE $tnsql",
     $tnargs);
 ```
 

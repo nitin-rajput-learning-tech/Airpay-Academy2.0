@@ -505,7 +505,7 @@ class approval_manager {
         self::guard_direct_report($managerid, $userid);
 
         // Classroom must exist + be active.
-        $classroom = $DB->get_record('local_airpay_classroom',
+        $classroom = $DB->get_record('local_sentientia_classroom',
             ['id' => $classroomid], 'id, name, status', MUST_EXIST);
 
         if (self::allocation_exists($userid, self::ITEM_CLASSROOM, $classroomid)) {
@@ -515,13 +515,13 @@ class approval_manager {
         $id = self::insert_allocation_row($managerid, $userid,
             self::ITEM_CLASSROOM, $classroomid, $due_date, $note);
 
-        // Enrol via airpay_classroom session_manager — that handles the
-        // local_airpay_classroom_users row insert + cancels duplicates.
-        if (class_exists('\\local_airpay_classroom\\session_manager')
-            && method_exists('\\local_airpay_classroom\\session_manager',
+        // Enrol via sentientia_classroom session_manager — that handles the
+        // local_sentientia_classroom_users row insert + cancels duplicates.
+        if (class_exists('\\local_sentientia_classroom\\session_manager')
+            && method_exists('\\local_sentientia_classroom\\session_manager',
                 'add_users_to_classroom')) {
             try {
-                \local_airpay_classroom\session_manager::add_users_to_classroom(
+                \local_sentientia_classroom\session_manager::add_users_to_classroom(
                     $classroomid, [$userid], $managerid);
             } catch (\Throwable $e) {
                 debugging('Classroom allocation ' . $id . ' enrol failed: '
@@ -547,7 +547,7 @@ class approval_manager {
 
         self::guard_direct_report($managerid, $userid);
 
-        $program = $DB->get_record('local_airpay_programs',
+        $program = $DB->get_record('local_sentientia_programs',
             ['id' => $programid], 'id, name, status', MUST_EXIST);
 
         if (self::allocation_exists($userid, self::ITEM_PROGRAM, $programid)) {
@@ -557,13 +557,13 @@ class approval_manager {
         $id = self::insert_allocation_row($managerid, $userid,
             self::ITEM_PROGRAM, $programid, $due_date, $note);
 
-        // Enrol into the program — inserts a local_airpay_programs_users row
+        // Enrol into the program — inserts a local_sentientia_programs_users row
         // and (when implemented in the plugin) enrols into level-1 courses.
-        if (class_exists('\\local_airpay_programs\\program_manager')
-            && method_exists('\\local_airpay_programs\\program_manager',
+        if (class_exists('\\local_sentientia_programs\\program_manager')
+            && method_exists('\\local_sentientia_programs\\program_manager',
                 'enrol_users')) {
             try {
-                \local_airpay_programs\program_manager::enrol_users(
+                \local_sentientia_programs\program_manager::enrol_users(
                     $programid, [$userid]);
             } catch (\Throwable $e) {
                 debugging('Program allocation ' . $id . ' enrol failed: '
@@ -581,7 +581,7 @@ class approval_manager {
     /**
      * Allocate a learning path to a direct report.
      *
-     * Uses `\local_airpay_learningpath\path_manager::enrol_users()` which (per
+     * Uses `\local_sentientia_learningpath\path_manager::enrol_users()` which (per
      * W1-2 fix) inserts the path-user row AND enrols the learner into every
      * course on the path via the manual enrol plugin.
      */
@@ -593,7 +593,7 @@ class approval_manager {
 
         self::guard_direct_report($managerid, $userid);
 
-        $path = $DB->get_record('local_airpay_learningpath',
+        $path = $DB->get_record('local_sentientia_learningpath',
             ['id' => $pathid], 'id, name, status', MUST_EXIST);
 
         if (self::allocation_exists($userid, self::ITEM_PATH, $pathid)) {
@@ -606,7 +606,7 @@ class approval_manager {
         // W1-2 (2026-05-15) — path_manager::enrol_users() also enrols the
         // user into every Moodle course on the path. Perfect for our needs.
         try {
-            \local_airpay_learningpath\path_manager::enrol_users($pathid, [$userid]);
+            \local_sentientia_learningpath\path_manager::enrol_users($pathid, [$userid]);
         } catch (\Throwable $e) {
             debugging('Path allocation ' . $id . ' enrol failed: '
                 . $e->getMessage(), DEBUG_DEVELOPER);
@@ -684,11 +684,11 @@ class approval_manager {
             }
             $url = match ($item_type) {
                 self::ITEM_CLASSROOM => new \moodle_url(
-                    '/local/airpay_classroom/view.php', ['id' => $itemid]),
+                    '/local/sentientia_classroom/view.php', ['id' => $itemid]),
                 self::ITEM_PROGRAM   => new \moodle_url(
-                    '/local/airpay_programs/view.php', ['id' => $itemid]),
+                    '/local/sentientia_programs/view.php', ['id' => $itemid]),
                 self::ITEM_PATH      => new \moodle_url(
-                    '/local/airpay_learningpath/view.php', ['id' => $itemid]),
+                    '/local/sentientia_learningpath/view.php', ['id' => $itemid]),
                 default              => new \moodle_url('/my/'),
             };
             $type_label = match ($item_type) {

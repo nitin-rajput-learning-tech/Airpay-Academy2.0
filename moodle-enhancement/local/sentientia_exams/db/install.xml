@@ -34,7 +34,7 @@
     </TABLE>
 
     <TABLE NAME="local_sentientia_exams_remind_sent"
-           COMMENT="P1 #33: tracks every deadline-reminder notification fired by the exam_reminder scheduled task. Schema mirrors P1 #28's local_airpay_courses_remind_sent but keyed on the exam id (which wraps a quiz) instead of a course id. Closes audit item #16 from parity-audit-2026-05-15/sentientia_exams.md.">
+           COMMENT="P1 #33: tracks every deadline-reminder notification fired by the exam_reminder scheduled task. Schema mirrors P1 #28's local_sentientia_courses_remind_sent but keyed on the exam id (which wraps a quiz) instead of a course id. Closes audit item #16 from parity-audit-2026-05-15/sentientia_exams.md.">
       <FIELDS>
         <FIELD NAME="id"          TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="userid"      TYPE="int" LENGTH="10" NOTNULL="true"

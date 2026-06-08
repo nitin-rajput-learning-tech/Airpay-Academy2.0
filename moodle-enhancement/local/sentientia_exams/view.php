@@ -131,7 +131,7 @@ switch ($tab) {
             ], $rows));
             $tab_data['has_roster'] = count($rows) > 0;
             $tab_data['enrolled_users_url'] = (new moodle_url(
-                '/local/airpay_courses/enrolledusers.php',
+                '/local/sentientia_courses/enrolledusers.php',
                 ['id' => $course->id]))->out(false);
         }
         break;

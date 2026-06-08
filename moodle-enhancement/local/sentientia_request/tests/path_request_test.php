@@ -26,7 +26,7 @@ final class path_request_test extends \advanced_testcase {
     private function seed_path_with_courses(int $course_count = 2): int {
         global $DB;
         $now = time();
-        $pid = (int) $DB->insert_record('local_airpay_learningpath', (object) [
+        $pid = (int) $DB->insert_record('local_sentientia_learningpath', (object) [
             'name'         => 'Path for request test ' . microtime(true),
             'description'  => '',
             'costcenterid' => 0,
@@ -41,7 +41,7 @@ final class path_request_test extends \advanced_testcase {
             $c = $this->getDataGenerator()->create_course();
             $courseids[] = (int) $c->id;
         }
-        \local_airpay_learningpath\path_manager::assign_courses($pid, $courseids);
+        \local_sentientia_learningpath\path_manager::assign_courses($pid, $courseids);
         return $pid;
     }
 
@@ -102,7 +102,7 @@ final class path_request_test extends \advanced_testcase {
         $u = $this->getDataGenerator()->create_user();
         $pid = $this->seed_path_with_courses(1);
         // Archive the path.
-        $DB->set_field('local_airpay_learningpath', 'status', 0, ['id' => $pid]);
+        $DB->set_field('local_sentientia_learningpath', 'status', 0, ['id' => $pid]);
 
         $this->expectException(\moodle_exception::class);
         request_manager::submit_path((int) $u->id, $pid,
@@ -129,12 +129,12 @@ final class path_request_test extends \advanced_testcase {
         $this->assertSame('approved', $approved->status);
 
         // path-user row written.
-        $this->assertTrue($DB->record_exists('local_airpay_learningpath_users',
+        $this->assertTrue($DB->record_exists('local_sentientia_learningpath_users',
             ['pathid' => $pid, 'userid' => $u->id]),
             'decide(approved) on a path request must enrol the user in the path');
 
         // W1-2 chained: user should also be in the path's courses now.
-        $courseids = $DB->get_fieldset_select('local_airpay_learningpath_courses',
+        $courseids = $DB->get_fieldset_select('local_sentientia_learningpath_courses',
             'courseid', 'pathid = :p', ['p' => $pid]);
         foreach ($courseids as $cid) {
             $context = \context_course::instance((int) $cid);

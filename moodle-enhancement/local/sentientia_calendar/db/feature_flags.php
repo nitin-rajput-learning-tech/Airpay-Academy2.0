@@ -45,7 +45,7 @@ $flags = [
         'default'     => true,
         'description' => 'Include classroom (instructor-led training)
                           sessions in the ICS feed. Each
-                          local_airpay_classroom_sessions row the user is
+                          local_sentientia_classroom_sessions row the user is
                           enrolled in generates one VEVENT with
                           starttime → endtime.
                           When OFF, classroom-session VEVENTs are omitted

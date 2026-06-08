@@ -30,7 +30,7 @@ defined('MOODLE_INTERNAL') || die();
  *     {
  *       "timestamp":   "2026-05-12T19:45:23.123Z",
  *       "level":       "info",
- *       "component":   "local_airpay_cart",
+ *       "component":   "local_sentientia_cart",
  *       "event":       "checkout_completed",
  *       "userid":      12345,
  *       "tenant":      77,

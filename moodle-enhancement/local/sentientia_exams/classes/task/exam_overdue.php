@@ -10,7 +10,7 @@ defined('MOODLE_INTERNAL') || die();
  * P1 #34 (2026-05-20) — daily exam overdue manager-escalation task.
  *
  * Sister of P1 #33's `exam_reminder`. Same architecture as P1 #29's
- * airpay_courses overdue task: positive buckets = pre-deadline
+ * sentientia_courses overdue task: positive buckets = pre-deadline
  * (reminder), negative buckets = post-deadline (escalation). Reuses
  * `local_sentientia_exams_remind_sent` table with the negative values.
  *

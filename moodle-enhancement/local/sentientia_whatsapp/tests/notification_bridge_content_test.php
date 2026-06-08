@@ -344,15 +344,15 @@ class notification_bridge_content_test extends \advanced_testcase {
     }
 
     /**
-     * Seed a local_airpay_learningpath row. Skips when the table doesn't
+     * Seed a local_sentientia_learningpath row. Skips when the table doesn't
      * exist (path plugin not installed in the test container).
      */
     private function seed_learningpath(string $name): int {
         global $DB;
-        if (!$DB->get_manager()->table_exists('local_airpay_learningpath')) {
-            $this->markTestSkipped('local_airpay_learningpath table not installed.');
+        if (!$DB->get_manager()->table_exists('local_sentientia_learningpath')) {
+            $this->markTestSkipped('local_sentientia_learningpath table not installed.');
         }
-        return (int) $DB->insert_record('local_airpay_learningpath', (object) [
+        return (int) $DB->insert_record('local_sentientia_learningpath', (object) [
             'name'              => $name,
             'description'       => '',
             'descriptionformat' => 1,

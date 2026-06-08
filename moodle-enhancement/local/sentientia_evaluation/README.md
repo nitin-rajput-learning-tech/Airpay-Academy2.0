@@ -1,7 +1,7 @@
 # local_sentientia_evaluation
 
 Feedback + evaluation forms. Replacement for BizLMS `local_evaluation`.
-Used by `local_airpay_classroom` for post-session feedback and by L&D
+Used by `local_sentientia_classroom` for post-session feedback and by L&D
 for course-level evaluation surveys.
 
 | Field | Value |

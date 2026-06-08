@@ -7,7 +7,7 @@
  *
  * Stream F / Wave E2 P4 (2026-05-25) — three observers for the
  * content-event WhatsApp triggers. The fourth trigger (course-due-soon)
- * is wired inline from \local_airpay_courses\task\course_reminder.
+ * is wired inline from \local_sentientia_courses\task\course_reminder.
  *
  * Every observer is non-blocking (internal=false) so it doesn't run
  * inside core transactions, and uses the lowest priority so other

@@ -83,7 +83,7 @@ $flags = [
         'default'     => false,
         'description' => 'WhatsApp deadline reminders to learners.
                           Fires alongside the existing email reminder from
-                          local_airpay_courses\\task\\course_reminder +
+                          local_sentientia_courses\\task\\course_reminder +
                           local_sentientia_exams\\task\\exam_reminder. Picks
                           DLT template by days-remaining bucket (deadline_7d
                           / deadline_3d / deadline_1d). Master flag
@@ -94,7 +94,7 @@ $flags = [
     'engagement.whatsapp.overdue' => [
         'default'     => false,
         'description' => 'WhatsApp overdue escalations to managers.
-                          Companion to local_airpay_courses\\task\\course_overdue
+                          Companion to local_sentientia_courses\\task\\course_overdue
                           + local_sentientia_exams\\task\\exam_overdue. Reuses the
                           team_overdue DLT template with overdue_count=1 for
                           per-learner alerts.',

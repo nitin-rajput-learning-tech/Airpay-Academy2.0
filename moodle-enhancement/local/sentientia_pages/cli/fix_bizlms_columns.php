@@ -113,8 +113,8 @@ echo "  ✓ Remaining users → Airpay/Technology\n";
 
 // ── Step 5: Summary ─────────────────────────────────────
 echo "\n=== Verification ===\n";
-$airpay_users = $DB->count_records_select('user', 'deleted = 0 AND open_costcenterid = ?', [$airpay_id]);
-echo "Users in Airpay org: $airpay_users\n";
+$sentientia_users = $DB->count_records_select('user', 'deleted = 0 AND open_costcenterid = ?', [$airpay_id]);
+echo "Users in Airpay org: $sentientia_users\n";
 
 $depts = $DB->get_records('local_costcenter', ['parentid' => $airpay_id], 'id ASC');
 foreach ($depts as $d) {

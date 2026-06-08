@@ -153,7 +153,7 @@ $is_internal_employee = ($user_tenant_id == 1); // Airpay internal = tenant 1.
 // INTERNAL EMPLOYEE VIEW — DPDP policy notice only (no self-service)
 // Employees are covered by employment data retention laws, not consumer DPDP rights.
 // ════════════════════════════════════════════════════════════════
-if ($is_internal_employee && !is_siteadmin() && !\local_airpay_courses\course_manager::can_manage()) {
+if ($is_internal_employee && !is_siteadmin() && !\local_sentientia_courses\course_manager::can_manage()) {
     $PAGE->set_heading(get_string('myprivacy', 'local_sentientia_privacy'));
     echo $OUTPUT->header();
     echo '<div class="airpay-privacy" style="max-width:800px; margin:0 auto;">';
@@ -167,7 +167,7 @@ if ($is_internal_employee && !is_siteadmin() && !\local_airpay_courses\course_ma
     echo '<ul>';
     echo '<li>Your employment data (name, email, department, designation) is maintained as per your employment contract.</li>';
     echo '<li>Your learning records (courses, completions, certificates) are retained for compliance and professional development purposes.</li>';
-    echo '<li>You can view your profile data at any time via your <a href="' . (new moodle_url('/local/airpay_users/profile.php'))->out() . '">Profile page</a>.</li>';
+    echo '<li>You can view your profile data at any time via your <a href="' . (new moodle_url('/local/sentientia_users/profile.php'))->out() . '">Profile page</a>.</li>';
     echo '<li>For data correction requests, contact your HR team or the Data Protection Officer.</li>';
     echo '</ul>';
     echo '<div class="airpay-privacy__notice">';
@@ -190,7 +190,7 @@ if ($is_internal_employee && !is_siteadmin() && !\local_airpay_courses\course_ma
 // ════════════════════════════════════════════════════════════════
 // NON-DPDP TENANT VIEW — policy notice only
 // ════════════════════════════════════════════════════════════════
-if (!$is_dpdp_enabled && !is_siteadmin() && !\local_airpay_courses\course_manager::can_manage()) {
+if (!$is_dpdp_enabled && !is_siteadmin() && !\local_sentientia_courses\course_manager::can_manage()) {
     $PAGE->set_heading(get_string('myprivacy', 'local_sentientia_privacy'));
     echo $OUTPUT->header();
     echo '<div class="airpay-privacy" style="max-width:800px; margin:0 auto;">';

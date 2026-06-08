@@ -12,7 +12,7 @@ defined('MOODLE_INTERNAL') || die();
  * Closes audit item #16 from
  * parity-audit-2026-05-15/sentientia_exams.md.
  *
- * Sister task to P1 #28's `local_airpay_courses\task\course_reminder`.
+ * Sister task to P1 #28's `local_sentientia_courses\task\course_reminder`.
  * Differences:
  *   • Subject is a `local_sentientia_exams` row (which wraps a Moodle
  *     `quiz`), not a `course` row.

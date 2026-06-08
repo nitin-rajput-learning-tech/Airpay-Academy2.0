@@ -40,7 +40,7 @@ class observer {
     }
 
     /**
-     * `\local_airpay_programs\event\program_completed` — Airpay-emitted (W1-9 dependency).
+     * `\local_sentientia_programs\event\program_completed` — Airpay-emitted (W1-9 dependency).
      *
      * Expected event shape:
      *   - relateduserid = the learner
@@ -63,7 +63,7 @@ class observer {
     }
 
     /**
-     * `\local_airpay_classroom\event\session_completed` — Airpay-emitted (W1-9 dependency).
+     * `\local_sentientia_classroom\event\session_completed` — Airpay-emitted (W1-9 dependency).
      *
      * Expected event shape:
      *   - other['classroomid'] = the classroom (parent of the session)

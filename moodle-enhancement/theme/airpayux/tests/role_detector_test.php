@@ -64,14 +64,14 @@ final class role_detector_test extends \advanced_testcase {
     }
 
     /**
-     * L&D Admin via the `local/airpay_courses:manage` capability at system context.
+     * L&D Admin via the `local/sentientia_courses:manage` capability at system context.
      */
     public function test_ldadmin_via_capability(): void {
         $this->resetAfterTest();
         $user = $this->getDataGenerator()->create_user();
         $context = \context_system::instance();
 
-        // Create a role that has local/airpay_courses:manage and assign it.
+        // Create a role that has local/sentientia_courses:manage and assign it.
         $roleid = $this->getDataGenerator()->create_role([
             'shortname' => 'ldadmintestrole',
             'name'      => 'L&D Admin Test Role',
@@ -79,8 +79,8 @@ final class role_detector_test extends \advanced_testcase {
         // Only assign the capability if it exists (it's plugin-provided
         // and may be unavailable in a stock Moodle test environment).
         $caps = get_all_capabilities();
-        if (!empty($caps['local/airpay_courses:manage'])) {
-            assign_capability('local/airpay_courses:manage', CAP_ALLOW, $roleid, $context);
+        if (!empty($caps['local/sentientia_courses:manage'])) {
+            assign_capability('local/sentientia_courses:manage', CAP_ALLOW, $roleid, $context);
             role_assign($roleid, $user->id, $context);
             $this->setUser($user);
 
@@ -88,12 +88,12 @@ final class role_detector_test extends \advanced_testcase {
 
             $this->assertFalse($r['issiteadmin']);
             $this->assertTrue($r['isldadmin'],
-                'User with local/airpay_courses:manage cap should be L&D Admin');
+                'User with local/sentientia_courses:manage cap should be L&D Admin');
             $this->assertTrue($r['isadmin']);
             $this->assertFalse($r['ismanager']);
         } else {
             $this->markTestSkipped(
-                'local/airpay_courses:manage capability not available — '
+                'local/sentientia_courses:manage capability not available — '
                 . 'requires BizLMS plugin local_courses');
         }
     }
@@ -265,11 +265,11 @@ final class role_detector_test extends \advanced_testcase {
         $user = $this->getDataGenerator()->create_user();
         $context = \context_system::instance();
         $caps = get_all_capabilities();
-        if (empty($caps['local/airpay_courses:manage'])) {
-            $this->markTestSkipped('local/airpay_courses:manage cap not available');
+        if (empty($caps['local/sentientia_courses:manage'])) {
+            $this->markTestSkipped('local/sentientia_courses:manage cap not available');
         }
         $roleid = $this->getDataGenerator()->create_role(['shortname' => 'switchtestrole']);
-        assign_capability('local/airpay_courses:manage', CAP_ALLOW, $roleid, $context);
+        assign_capability('local/sentientia_courses:manage', CAP_ALLOW, $roleid, $context);
         role_assign($roleid, $user->id, $context);
 
         $employeeroleid = (int) $DB->get_field('role', 'id',

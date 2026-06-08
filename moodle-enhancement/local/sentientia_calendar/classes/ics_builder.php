@@ -13,8 +13,8 @@
  *      for every active enrolment where the user hasn't yet completed.
  *
  *   2. Classroom (ILT) sessions — every row in
- *      local_airpay_classroom_sessions for a classroom the user is
- *      enrolled in (local_airpay_classroom_users).
+ *      local_sentientia_classroom_sessions for a classroom the user is
+ *      enrolled in (local_sentientia_classroom_users).
  *
  *   3. Exam close-dates — every quiz.timeclose > now for a course the
  *      user is enrolled in, exposed via local_sentientia_exams.
@@ -27,7 +27,7 @@
  * default; customer-configurable in Phase 1.x via a per-customer
  * setting once the customer-config layer is fleshed out).
  *
- * Companion to {@see local_airpay_classroom\ics_builder} which produces
+ * Companion to {@see local_sentientia_classroom\ics_builder} which produces
  * a single-session .ics download. This builder produces the full
  * subscription feed.
  *
@@ -93,7 +93,7 @@ class ics_builder {
      * Collect course completion deadline events for the user.
      *
      * Sourced from the same SQL shape as
-     * {@see local_airpay_courses\task\course_reminder} — every active
+     * {@see local_sentientia_courses\task\course_reminder} — every active
      * enrolment where the course has a non-zero
      * open_coursecompletiondays and the user has not yet completed.
      *
@@ -120,7 +120,7 @@ class ics_builder {
             return [];
         }
 
-        // Mirror the query used by airpay_courses\task\course_reminder
+        // Mirror the query used by sentientia_courses\task\course_reminder
         // but pivoted on the user (not the cron iteration over all users).
         $sql = "SELECT c.id          AS courseid,
                         c.fullname    AS coursename,
@@ -174,8 +174,8 @@ class ics_builder {
     /**
      * Collect classroom (ILT) sessions the user is enrolled in.
      *
-     * Sourced from local_airpay_classroom_sessions joined to
-     * local_airpay_classroom_users (the roster). Both past and future
+     * Sourced from local_sentientia_classroom_sessions joined to
+     * local_sentientia_classroom_users (the roster). Both past and future
      * sessions are included — past sessions are useful for the user's
      * own training history in their calendar app's archive view.
      *
@@ -189,8 +189,8 @@ class ics_builder {
         if (!self::flag_on('sentientia.calendar_sync.events.classroom', true)) {
             return [];
         }
-        // Skip silently if the airpay_classroom plugin isn't installed yet.
-        if (!$DB->get_manager()->table_exists('local_airpay_classroom_sessions')) {
+        // Skip silently if the sentientia_classroom plugin isn't installed yet.
+        if (!$DB->get_manager()->table_exists('local_sentientia_classroom_sessions')) {
             return [];
         }
 
@@ -204,9 +204,9 @@ class ics_builder {
                         s.meeting_url,
                         cl.name AS classroomname,
                         cl.location AS classroomlocation
-                  FROM {local_airpay_classroom_sessions} s
-                  JOIN {local_airpay_classroom} cl ON cl.id = s.classroomid
-                  JOIN {local_airpay_classroom_users} u ON u.classroomid = s.classroomid
+                  FROM {local_sentientia_classroom_sessions} s
+                  JOIN {local_sentientia_classroom} cl ON cl.id = s.classroomid
+                  JOIN {local_sentientia_classroom_users} u ON u.classroomid = s.classroomid
                  WHERE u.userid = :uid
                    AND cl.visible = 1
                    AND cl.status <> 0
@@ -233,7 +233,7 @@ class ics_builder {
                 $desc_parts[] = 'Join: ' . (string) $row->meeting_url;
             }
             $desc_parts[] = 'Details: ' . $CFG->wwwroot
-                . '/local/airpay_classroom/index.php?id=' . (int) $row->classroomid;
+                . '/local/sentientia_classroom/index.php?id=' . (int) $row->classroomid;
 
             // Defensive end-time: 60 minutes after start if end <= start.
             $end = max((int) $row->starttime + 60, (int) $row->endtime);
@@ -248,7 +248,7 @@ class ics_builder {
                 'all_day'     => false,
                 'location'    => $location,
                 'url'         => $CFG->wwwroot
-                    . '/local/airpay_classroom/index.php?id=' . (int) $row->classroomid,
+                    . '/local/sentientia_classroom/index.php?id=' . (int) $row->classroomid,
                 'category'    => 'CLASSROOM-SESSION',
             ];
         }

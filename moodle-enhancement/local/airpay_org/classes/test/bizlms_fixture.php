@@ -40,7 +40,7 @@ trait bizlms_fixture {
         global $DB;
         $dbman = $DB->get_manager();
 
-        // mdl_user — five BizLMS columns referenced by airpay_users / org / etc.
+        // mdl_user — five BizLMS columns referenced by sentientia_users / org / etc.
         $usertable = new \xmldb_table('user');
         $userfields = [
             ['open_path',         XMLDB_TYPE_CHAR,    '255', null, null,        null, null],

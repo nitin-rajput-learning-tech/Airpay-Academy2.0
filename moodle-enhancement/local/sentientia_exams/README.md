@@ -15,7 +15,7 @@ mastery score). Replacement for BizLMS `local_onlineexams`.
 - Exam list with filter / search / sort.
 - Exam-detail view with sub-tabs (Overview / Attempts / Roster / Analytics).
 - Create / edit / delete exam metadata on top of an underlying Moodle quiz.
-- Native enrol UI mirroring `airpay_courses` Phase F.5.
+- Native enrol UI mirroring `sentientia_courses` Phase F.5.
 - Integration with `local_airpay_proctoring` via the `:enrol` cap +
   proctoring toggle on the create-exam form.
 

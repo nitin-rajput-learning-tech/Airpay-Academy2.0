@@ -40,7 +40,7 @@ defined('MOODLE_INTERNAL') || die();
  *
  *   issiteadmin = is_siteadmin($USER)
  *   isldadmin   = !issiteadmin && !switched_to_employee && (
- *                   has_capability('local/airpay_courses:manage', system) ||
+ *                   has_capability('local/sentientia_courses:manage', system) ||
  *                   record_exists in {role_assignments} with
  *                     role.shortname = 'administrator' AND
  *                     context.contextlevel = 40 (category)
@@ -49,7 +49,7 @@ defined('MOODLE_INTERNAL') || die();
  * Cap-rename note (2026-05-28 stabilization audit F-080/F-088): we used to
  * also probe the non-namespaced `local/courses:manage` here — but the cap
  * was never registered in any db/access.php, so every call logged a debug
- * Notice. The fallback has been removed; the airpay_courses-namespaced
+ * Notice. The fallback has been removed; the sentientia_courses-namespaced
  * cap is the only one we need (it covers the L&D Admin and Operations
  * Administrator roles that grant manage on the org subtree).
  *   ismanager   = !isadmin && (
@@ -125,8 +125,8 @@ class role_detector {
             // `local/courses:manage` probe — cap was never registered, so it
             // logged a debug Notice every page render and silently locked
             // L&D Admins out of the course-management sidebar. The
-            // airpay_courses-namespaced cap is the canonical one.
-            $isldadmin = has_capability('local/airpay_courses:manage', $systemcontext, $userid);
+            // sentientia_courses-namespaced cap is the canonical one.
+            $isldadmin = has_capability('local/sentientia_courses:manage', $systemcontext, $userid);
             if (!$isldadmin) {
                 try {
                     // Note: no LIMIT clause — record_exists_sql adds it

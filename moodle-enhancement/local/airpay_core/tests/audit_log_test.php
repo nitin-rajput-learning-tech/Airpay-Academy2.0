@@ -38,7 +38,7 @@ class audit_log_test extends \advanced_testcase {
         $this->assertContains('\\core\\event\\user_created',
             audit_log::SENSITIVE_EVENTS);
 
-        // P1 #24 — closes audit item #13 from airpay_courses.md.
+        // P1 #24 — closes audit item #13 from sentientia_courses.md.
         // Course CRUD events (including the previously-missing
         // course_updated) and course_categories CRUD must all be
         // audited. Without these, compliance can't answer "what

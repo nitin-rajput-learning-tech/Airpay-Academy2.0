@@ -81,7 +81,7 @@ class evaluation_engine {
      *
      * Unlike course/program completion which fires per-user, a classroom
      * session ends for ALL attendees at once. The engine reads
-     * `local_airpay_classroom_users` to find the cohort.
+     * `local_sentientia_classroom_users` to find the cohort.
      *
      * @param int $classroomid
      * @param int $event_time
@@ -94,11 +94,11 @@ class evaluation_engine {
         }
 
         $dbman = $DB->get_manager();
-        if (!$dbman->table_exists('local_airpay_classroom_users')) {
-            return;  // airpay_classroom not installed — nothing to fan out to.
+        if (!$dbman->table_exists('local_sentientia_classroom_users')) {
+            return;  // sentientia_classroom not installed — nothing to fan out to.
         }
 
-        $userids = $DB->get_fieldset_select('local_airpay_classroom_users',
+        $userids = $DB->get_fieldset_select('local_sentientia_classroom_users',
             'userid', 'classroomid = :cid', ['cid' => $classroomid]);
 
         foreach ($userids as $uid) {

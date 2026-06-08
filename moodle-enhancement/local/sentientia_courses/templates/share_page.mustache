@@ -1,0 +1,129 @@
+{{!
+    Airpay Courses — cross-tenant sharing admin page.
+
+    @template local_sentientia_courses/share_page
+    @package  local_sentientia_courses
+    Sprint C (2026-05-13)
+
+    Context vars:
+      courseid      int     — the course being managed
+      coursename    string  — format_string'd display name
+      courseshort   string  — shortname (small caption under the title)
+      tenants       array   — one entry per known tenant:
+                                id, name, is_owner, is_active,
+                                has_history, history_label
+      sesskey       string  — CSRF token
+      back_url      string  — link back to course management index
+      save_url      string  — POST target (this page)
+}}
+<div class="airpay-courses-share">
+
+    <div class="ap-page-header d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <a href="{{{ back_url }}}" class="small text-muted text-decoration-none">
+                <i class="fa fa-angle-left fa-fw"></i> Back to course management
+            </a>
+            <h2 class="mb-1 mt-1" style="font-weight: 700;">
+                <i class="fa fa-handshake fa-fw text-primary"></i>
+                Share course
+            </h2>
+            <div class="small text-muted">
+                {{ coursename }} <span class="badge bg-light text-dark ms-1">{{ courseshort }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+
+            <p class="text-muted">
+                Tick the tenants that should have this course in their catalog.
+                Learners in each ticked tenant will see the course in their
+                catalogue with a "Provided by Airpay Academy" badge. Their
+                <strong>completion data stays segregated</strong> from yours
+                — Airpay sees only Airpay completions, Public sees only
+                Public completions.
+            </p>
+
+            <form method="POST" action="{{{ save_url }}}">
+                <input type="hidden" name="sesskey" value="{{ sesskey }}">
+
+                <div class="airpay-courses-share__tenants">
+                    {{# tenants }}
+                    <div class="airpay-courses-share__tenant {{# is_owner }}airpay-courses-share__tenant--owner{{/ is_owner }}">
+                        {{# is_owner }}
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input"
+                                   disabled checked
+                                   id="tenant_{{ id }}_owner">
+                            <label class="form-check-label" for="tenant_{{ id }}_owner">
+                                <strong>{{ name }}</strong>
+                                <span class="badge bg-primary ms-2">Owner</span>
+                                <div class="small text-muted">
+                                    This is the course's home tenant — it cannot be unshared from here.
+                                </div>
+                            </label>
+                        </div>
+                        {{/ is_owner }}
+                        {{^ is_owner }}
+                        <div class="form-check">
+                            <input type="checkbox"
+                                   class="form-check-input"
+                                   name="tenants[]"
+                                   id="tenant_{{ id }}"
+                                   value="{{ id }}"
+                                   {{# is_active }}checked{{/ is_active }}>
+                            <label class="form-check-label" for="tenant_{{ id }}">
+                                <strong>{{ name }}</strong>
+                                {{# is_active }}
+                                <span class="badge bg-success ms-2">Active share</span>
+                                {{/ is_active }}
+                                {{# has_history }}{{^ is_active }}
+                                <span class="badge bg-secondary ms-2">Withdrawn</span>
+                                {{/ is_active }}{{/ has_history }}
+                                {{# history_label }}
+                                <div class="small text-muted">{{ history_label }}</div>
+                                {{/ history_label }}
+                            </label>
+                        </div>
+                        {{/ is_owner }}
+                    </div>
+                    {{/ tenants }}
+                </div>
+
+                <hr class="my-4">
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{{{ back_url }}}" class="btn btn-light">Cancel</a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-check fa-fw"></i> Save shares
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+    <div class="alert alert-info mt-3" role="alert">
+        <i class="fa fa-info-circle fa-fw"></i>
+        Every share / unshare is recorded in the platform audit log as a
+        <code>course_share_created</code> or <code>course_share_withdrawn</code>
+        event. Review them via
+        <a href="{{{ ../../admin/report/log/index.php }}}">Site administration → Reports → Logs</a>.
+    </div>
+
+</div>
+
+<style>
+    .airpay-courses-share__tenant {
+        padding: 12px;
+        border: 1px solid #e2e6ef;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        background: #f8f9fc;
+    }
+    .airpay-courses-share__tenant--owner {
+        background: #e8f2f9;     /* tinted Airpay blue */
+        border-color: #0066A7;
+    }
+</style>

@@ -1,0 +1,91 @@
+{{!
+    Airpay Classroom Training — datatable-driven admin listing.
+    @template local_sentientia_classroom/manage
+}}
+<style>
+    [data-region="airpay-classroom"] .ap-filter-bar { background: var(--ap-color-bg-surface, #fff); border: 1px solid var(--ap-color-border, #e2e6ef); border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; }
+    [data-region="airpay-classroom"] .btn-group .btn.active { background: var(--ap-color-primary, #0066A7); color: #fff; border-color: var(--ap-color-primary, #0066A7); }
+</style>
+
+<div data-region="airpay-classroom">
+
+<div class="ap-page-header d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h2 class="mb-1" style="font-weight: 700;">Classroom Training</h2>
+        <p class="text-muted mb-0">Schedule and run instructor-led sessions across locations.</p>
+    </div>
+    {{#can_create}}
+    <a href="#" class="btn btn-primary btn-sm" data-action="create-classroom">
+        <i class="fa fa-plus fa-fw"></i> New Classroom
+    </a>
+    {{/can_create}}
+</div>
+
+{{! KPI Summary — Phase B0+: migrated to tokens-aware stat_card partial }}
+{{#has_kpi_tiles}}
+<div class="airpay-stat-grid mb-4">
+    {{#kpi_tiles}}
+    {{> theme_airpayux/components/stat_card }}
+    {{/kpi_tiles}}
+</div>
+{{/has_kpi_tiles}}
+
+<div class="ap-filter-bar">
+    {{! W1-1 BizLMS parity: 5-level org cascade + status pills. }}
+    <div class="d-flex flex-wrap align-items-end gap-3">
+        {{> theme_airpayux/components/org_cascade_filter }}
+        <div>
+            <label class="small text-muted mb-1 d-block">Status</label>
+            <div class="btn-group btn-group-sm" role="group" data-airpay-classroom-status>
+                <button type="button" class="btn btn-light active" data-status="all">All</button>
+                <button type="button" class="btn btn-light"        data-status="1">Active</button>
+                <button type="button" class="btn btn-light"        data-status="2">Completed</button>
+                <button type="button" class="btn btn-light"        data-status="0">Cancelled</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div data-airpay-table
+     data-endpoint="local_sentientia_classroom_list_classrooms"
+     data-columns="{{{columns_json}}}"
+     data-search-placeholder="Search classroom name or location…"
+     data-perpage="25">
+</div>
+
+</div>
+
+{{#js}}
+require([
+    'theme_airpayux/datatable',
+    'local_sentientia_classroom/classroom_actions'
+], function(Datatable, ClassroomActions) {
+    Datatable.init();
+    if (ClassroomActions && ClassroomActions.init) ClassroomActions.init();
+
+    var root = document.querySelector('[data-airpay-table]');
+    var dt = Datatable.getInstance(root);
+    if (!dt) return;
+
+    // W1-1: react to org cascade changes.
+    document.addEventListener('airpay:org-cascade:changed', function(e) {
+        if (!e.detail || e.detail.group !== 'classroom-filter') return;
+        var lv = e.detail.levels || {};
+        dt.setFilter('org_l1', lv.level1 || 0);
+        dt.setFilter('org_l2', lv.level2 || 0);
+        dt.setFilter('org_l3', lv.level3 || 0);
+        dt.setFilter('org_l4', lv.level4 || 0);
+        dt.setFilter('org_l5', lv.level5 || 0);
+    });
+
+    document.querySelectorAll('[data-airpay-classroom-status] [data-status]').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            var s = e.target.dataset.status;
+            document.querySelectorAll('[data-airpay-classroom-status] [data-status]').forEach(function(b) {
+                b.classList.toggle('active', b === e.target);
+            });
+            dt.setFilter('status', s);
+        });
+    });
+});
+{{/js}}

@@ -71,7 +71,7 @@ $data = [
     'department'    => format_string($user->department ?? '—'),
     'orgname'       => $orgname ?: '—',
     'last_active'   => $last_active_label,
-    'profile_url'   => (new moodle_url('/local/airpay_users/profile.php', ['id' => $user->id]))->out(false),
+    'profile_url'   => (new moodle_url('/local/sentientia_users/profile.php', ['id' => $user->id]))->out(false),
     'back_url'      => (new moodle_url('/local/sentientia_manager/index.php'))->out(false),
 
     // Stats.

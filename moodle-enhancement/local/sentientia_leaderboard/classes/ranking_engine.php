@@ -278,7 +278,7 @@ class ranking_engine {
 
     /**
      * Skill type: sum of skill-level changes that increase level, within
-     * the window. Reuses local_airpay_user_skill_hist (P1 #22) — each
+     * the window. Reuses local_sentientia_user_skill_hist (P1 #22) — each
      * level upgrade is one row there with (previous_level, new_level).
      * Points = SUM(new_level - previous_level) where new > previous.
      * Secondary = COUNT(distinct skillid).
@@ -288,11 +288,11 @@ class ranking_engine {
     private static function aggregate_skill(\stdClass $board): array {
         global $DB;
 
-        // Bail cleanly when local_airpay_skills isn't installed yet — the
+        // Bail cleanly when local_sentientia_skills isn't installed yet — the
         // skill board type is feature-flagged, so this path is only
         // reachable when the admin turned it on.
         $dbman = $DB->get_manager();
-        if (!$dbman->table_exists('local_airpay_user_skill_hist')) {
+        if (!$dbman->table_exists('local_sentientia_user_skill_hist')) {
             return [];
         }
 
@@ -328,7 +328,7 @@ class ranking_engine {
                        u.open_path AS open_path,
                        SUM(h.new_level - h.previous_level) AS points,
                        COUNT(DISTINCT h.skillid) AS skills_count
-                  FROM {local_airpay_user_skill_hist} h
+                  FROM {local_sentientia_user_skill_hist} h
                   JOIN {user} u ON u.id = h.userid
                  WHERE h.new_level > h.previous_level
                    AND u.deleted = 0

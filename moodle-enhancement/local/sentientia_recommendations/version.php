@@ -36,15 +36,13 @@ $plugin->component = 'local_sentientia_recommendations';
 // 2026-05-25 H.0 — MVP scaffold. Schema + feature flag + Anthropic
 // client (curl-based) + prompt builder + recommendation engine + mock
 // pipeline + dashboard block + Hindi pack + ADR-015.
-// ADR-018 Wave 2 (2026-05-30) — tenant_root_for() migrated onto
-// local_sentientia_core\tenant_identity::root_for_user. Behaviour-identical.
-$plugin->version   = 2026053000;
+$plugin->version   = 2026052500;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;     // MVP — needs prod sign-off before flag flips
-$plugin->release   = '0.1.1-alpha';
+$plugin->release   = '0.1.0-alpha';
 $plugin->dependencies = [
     'local_airpay_core'    => 2026051401,   // feature_flags resolver + customer scope
-    'local_airpay_courses' => 2026052003,   // course catalogue + completion
+    'local_sentientia_courses' => 2026052003,   // course catalogue + completion
 ];
 
 // Release history

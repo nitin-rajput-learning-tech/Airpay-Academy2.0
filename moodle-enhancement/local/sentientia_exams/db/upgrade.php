@@ -32,7 +32,7 @@ function xmldb_local_sentientia_exams_upgrade(int $oldversion): bool {
 
     // 2026052001 — P1 #33: exam deadline-reminder cron tracking table.
     //
-    // Mirrors P1 #28's local_airpay_courses_remind_sent shape but
+    // Mirrors P1 #28's local_sentientia_courses_remind_sent shape but
     // keyed on the EXAM id (which wraps a quiz) rather than a course.
     // The deadline source is quiz.timeclose, not enrolment + days.
     // Closes audit item #16 from parity-audit-2026-05-15/sentientia_exams.md.

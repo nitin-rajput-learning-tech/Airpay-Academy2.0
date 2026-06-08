@@ -62,11 +62,11 @@ class catalog_manager {
         // The viewer sees:
         //   (a) courses inside their tenant tree (the "owned" path), AND
         //   (b) courses an Airpay admin has explicitly shared to their
-        //       tenant via local_airpay_courses_tenant_share.
+        //       tenant via local_sentientia_courses_tenant_share.
         // Site admins (viewer_tenant=0) get a 1=1 pass-through.
         $viewer_tenant = self::viewer_tenant_root();
         [$tenant_sql, $tenant_params] =
-            \local_airpay_courses\sharing_manager::build_catalog_filter_sql(
+            \local_sentientia_courses\sharing_manager::build_catalog_filter_sql(
                 'c', $viewer_tenant);
         $conditions[] = $tenant_sql;
         $params = array_merge($params, $tenant_params);
@@ -173,7 +173,7 @@ class catalog_manager {
 
         $params = ['since' => time() - (30 * 86400)];
         [$tenant_sql, $tenant_params] =
-            \local_airpay_courses\sharing_manager::build_catalog_filter_sql('c', $viewer_tenant);
+            \local_sentientia_courses\sharing_manager::build_catalog_filter_sql('c', $viewer_tenant);
         $params = array_merge($params, $tenant_params);
 
         $courses = $DB->get_records_sql(
@@ -211,7 +211,7 @@ class catalog_manager {
 
         $params = ['since' => time() - (30 * 86400)];
         [$tenant_sql, $tenant_params] =
-            \local_airpay_courses\sharing_manager::build_catalog_filter_sql('c', $viewer_tenant);
+            \local_sentientia_courses\sharing_manager::build_catalog_filter_sql('c', $viewer_tenant);
         $params = array_merge($params, $tenant_params);
 
         $courses = $DB->get_records_sql(
@@ -288,7 +288,7 @@ class catalog_manager {
         if ($cached !== false) { return $cached; }
 
         [$tenant_sql, $tenant_params] =
-            \local_airpay_courses\sharing_manager::build_catalog_filter_sql('c', $viewer_tenant);
+            \local_sentientia_courses\sharing_manager::build_catalog_filter_sql('c', $viewer_tenant);
 
         $result = array_values($DB->get_records_sql(
             "SELECT cc.id, cc.name,
@@ -347,7 +347,7 @@ class catalog_manager {
                 || (strpos($course_path, $exact_path . '/') === 0);
             if (!$is_owned) {
                 // Must be present via an active share row.
-                if (\local_airpay_courses\sharing_manager::is_course_shared_to(
+                if (\local_sentientia_courses\sharing_manager::is_course_shared_to(
                         (int) $course->id, $viewer_tenant)) {
                     $is_borrowed = true;
                     // Resolve provider tenant from course's open_path
@@ -355,7 +355,7 @@ class catalog_manager {
                     $parts = explode('/', trim($course_path, '/'));
                     $provider_root = isset($parts[0]) && ctype_digit($parts[0])
                         ? (int) $parts[0] : 0;
-                    $known = \local_airpay_courses\sharing_manager::known_tenants();
+                    $known = \local_sentientia_courses\sharing_manager::known_tenants();
                     foreach ($known as $t) {
                         if ((int) $t->id === $provider_root) {
                             $provider_tenant_name = $t->name;

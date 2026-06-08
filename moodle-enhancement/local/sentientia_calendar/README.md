@@ -154,8 +154,8 @@ Required:
 - `local_airpay_core` 2026051401+ — feature_flags resolver
 
 Optional (graceful degradation if missing — the relevant event category just disappears from the feed):
-- `local_airpay_courses` for COURSE-DEADLINE events
-- `local_airpay_classroom` for CLASSROOM-SESSION events
+- `local_sentientia_courses` for COURSE-DEADLINE events
+- `local_sentientia_classroom` for CLASSROOM-SESSION events
 - `local_sentientia_exams` for EXAM-CLOSE events
 
 ## References

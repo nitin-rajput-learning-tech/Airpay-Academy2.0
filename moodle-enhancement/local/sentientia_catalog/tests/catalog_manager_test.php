@@ -110,7 +110,7 @@ class catalog_manager_test extends \advanced_testcase {
         $u = $this->make_tenant_user(77);
         // Site admin performs the share.
         $this->setAdminUser();
-        \local_airpay_courses\sharing_manager::share_course((int) $airpay->id, [77]);
+        \local_sentientia_courses\sharing_manager::share_course((int) $airpay->id, [77]);
 
         $this->setUser($u);
         $result = catalog_manager::get_courses((int) $u->id);
@@ -125,10 +125,10 @@ class catalog_manager_test extends \advanced_testcase {
 
         $u = $this->make_tenant_user(77);
         $this->setAdminUser();
-        \local_airpay_courses\sharing_manager::share_course((int) $airpay->id, [77]);
+        \local_sentientia_courses\sharing_manager::share_course((int) $airpay->id, [77]);
 
         // Now withdraw.
-        \local_airpay_courses\sharing_manager::unshare_course((int) $airpay->id, 77);
+        \local_sentientia_courses\sharing_manager::unshare_course((int) $airpay->id, 77);
 
         $this->setUser($u);
         $result = catalog_manager::get_courses((int) $u->id);
@@ -141,7 +141,7 @@ class catalog_manager_test extends \advanced_testcase {
 
         $u = $this->make_tenant_user(77);
         $this->setAdminUser();
-        \local_airpay_courses\sharing_manager::share_course((int) $airpay->id, [77]);
+        \local_sentientia_courses\sharing_manager::share_course((int) $airpay->id, [77]);
 
         $this->setUser($u);
         $result = catalog_manager::get_courses((int) $u->id);

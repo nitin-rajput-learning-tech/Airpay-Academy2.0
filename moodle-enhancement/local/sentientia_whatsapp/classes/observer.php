@@ -16,7 +16,7 @@ defined('MOODLE_INTERNAL') || die();
  *   \core\event\course_completed       → recompute learning-path progress + milestone
  *
  * The fourth trigger (course-due-soon, <48h) fires from the existing
- * \local_airpay_courses\task\course_reminder cron — wired inline there to
+ * \local_sentientia_courses\task\course_reminder cron — wired inline there to
  * stay alongside the other cron-based bridge calls.
  *
  * EVERY handler:
@@ -160,17 +160,17 @@ class observer {
             // Look up paths that contain this course. Soft-coupled —
             // skip if the learning-path table doesn't exist yet
             // (fresh install or path plugin disabled).
-            if (!$DB->get_manager()->table_exists('local_airpay_learningpath_courses')) {
+            if (!$DB->get_manager()->table_exists('local_sentientia_learningpath_courses')) {
                 return;
             }
-            if (!$DB->get_manager()->table_exists('local_airpay_learningpath_users')) {
+            if (!$DB->get_manager()->table_exists('local_sentientia_learningpath_users')) {
                 return;
             }
 
             // Paths the user is enrolled in AND that include this course.
             $sql = "SELECT DISTINCT lpc.pathid
-                      FROM {local_airpay_learningpath_courses} lpc
-                      JOIN {local_airpay_learningpath_users}   lpu
+                      FROM {local_sentientia_learningpath_courses} lpc
+                      JOIN {local_sentientia_learningpath_users}   lpu
                         ON lpu.pathid = lpc.pathid
                        AND lpu.userid = :uid
                      WHERE lpc.courseid = :cid";
@@ -212,7 +212,7 @@ class observer {
     private static function compute_milestone(int $pathid, int $userid): ?string {
         global $DB;
 
-        $total = (int) $DB->count_records('local_airpay_learningpath_courses',
+        $total = (int) $DB->count_records('local_sentientia_learningpath_courses',
             ['pathid' => $pathid]);
         if ($total <= 0) {
             return null;
@@ -220,7 +220,7 @@ class observer {
 
         $completed = (int) $DB->count_records_sql(
             "SELECT COUNT(DISTINCT lpc.courseid)
-               FROM {local_airpay_learningpath_courses} lpc
+               FROM {local_sentientia_learningpath_courses} lpc
                JOIN {course_completions} cc
                  ON cc.course = lpc.courseid
                 AND cc.userid = :uid

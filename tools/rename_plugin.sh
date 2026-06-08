@@ -15,14 +15,17 @@ set -uo pipefail
 
 X="${1:?usage: rename_plugin.sh <shortname>}"
 PUB="C:/xampp/htdocs/moodle5/public"; L="$PUB/local"; T="$PUB/theme/airpayux"
-PHP="/c/xampp/php/php.exe"
+PHP="/c/xampp/php/php.exe"; MYSQL="/c/xampp/mysql/bin/mysql.exe -uroot moodle"
 OLD="$L/airpay_$X"; NEW="$L/sentientia_$X"
 
 [ -d "$OLD" ] || { echo "ERR: $OLD not found"; exit 1; }
 [ -d "$NEW" ] && { echo "ERR: $NEW already exists - NAME COLLISION, resolve manually"; exit 2; }
 
-# Tables from install.xml (captured BEFORE the move).
-tables=$(grep -ohE 'TABLE NAME="[^"]+"' "$OLD/db/install.xml" 2>/dev/null | sed 's/TABLE NAME=//;s/"//g')
+# Tables: discover from the LIVE DB by prefix (authoritative). install.xml can be
+# stale or miss upgrade.php-added tables (e.g. classroom_waitlist) -> they'd be left
+# as mdl_local_airpay_* while code refs got rewritten. Names returned without mdl_.
+# Brand-neutral tables (local_privacy_*) correctly don't match and are left as-is.
+tables=$($MYSQL -N -e "SELECT table_name FROM information_schema.tables WHERE table_schema='moodle' AND (table_name='mdl_local_airpay_$X' OR table_name LIKE 'mdl_local_airpay_${X}\\_%') ORDER BY table_name;" 2>/dev/null | sed 's/^mdl_//')
 # Capabilities?
 caps=""
 if [ -f "$OLD/db/access.php" ] && grep -q "'local/" "$OLD/db/access.php" 2>/dev/null; then caps="--migrate-caps"; fi

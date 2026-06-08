@@ -1,0 +1,272 @@
+{{!
+    @template local_sentientia_skills/view
+
+    P1 #26 (2026-05-20) — self-rate panel + modal context vars (passed
+    in only when $can_self_rate is true):
+      can_self_rate            bool — gates panel + modal rendering
+      self_rate_has_current    bool — has the user previously rated?
+      self_rate_current_level  int  — 0 if never rated, else 1..max_level
+      self_rate_source         str  — 'course'|'self'|'manual'|'import'|''
+      self_rate_level_options  array of {value, label, selected}
+}}
+<div class="container" data-region="airpay-skills" data-skill-view-skillid="{{ skillid }}">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2 class="mb-0">{{ name }}</h2>
+            <div class="small text-muted">
+                <i class="fa fa-tag"></i> {{ category_name }}
+                · Max level: <strong>{{ max_level }}</strong>
+            </div>
+        </div>
+        <a href="{{{ back_url }}}" class="btn btn-link">
+            <i class="fa fa-arrow-left"></i> All skills
+        </a>
+    </div>
+
+    {{! ── P1 #26 — Self-rate panel ───────────────────────────────────── }}
+    {{# can_self_rate }}
+    <div class="card border-0 shadow-sm mb-3" data-region="airpay-self-rate-panel">
+        <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                {{# self_rate_has_current }}
+                <div class="small text-uppercase text-muted mb-1">
+                    {{# str }}self_rate_current, local_sentientia_skills, L{{ self_rate_current_level }}{{/ str }}
+                </div>
+                <div class="text-muted small">
+                    <i class="fa fa-info-circle fa-fw" aria-hidden="true"></i>
+                    Source: <code>{{ self_rate_source }}</code>
+                </div>
+                {{/ self_rate_has_current }}
+                {{^ self_rate_has_current }}
+                <div class="text-muted">
+                    <i class="fa fa-info-circle fa-fw" aria-hidden="true"></i>
+                    {{# str }}self_rate_not_yet, local_sentientia_skills{{/ str }}
+                </div>
+                {{/ self_rate_has_current }}
+            </div>
+            <button type="button" class="btn btn-outline-primary"
+                    data-action="open-self-rate"
+                    data-skillid="{{ skillid }}"
+                    data-skillname="{{ name }}">
+                <i class="fa fa-pencil fa-fw" aria-hidden="true"></i>
+                {{# str }}self_rate, local_sentientia_skills{{/ str }}
+            </button>
+        </div>
+    </div>
+    {{/ can_self_rate }}
+
+    <ul class="nav nav-tabs mb-3">
+        <li class="nav-item">
+            <a class="nav-link {{#tab_overview_active}}active{{/tab_overview_active}}"
+               href="{{{ tab_overview_url }}}">Overview</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {{#tab_levels_active}}active{{/tab_levels_active}}"
+               href="{{{ tab_levels_url }}}">
+                Levels <span class="badge bg-secondary ms-1">{{ count_levels }}</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {{#tab_designations_active}}active{{/tab_designations_active}}"
+               href="{{{ tab_designations_url }}}">
+                Designations <span class="badge bg-secondary ms-1">{{ count_designations }}</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {{#tab_courses_active}}active{{/tab_courses_active}}"
+               href="{{{ tab_courses_url }}}">
+                Courses <span class="badge bg-secondary ms-1">{{ count_courses }}</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {{#tab_learners_active}}active{{/tab_learners_active}}"
+               href="{{{ tab_learners_url }}}">
+                Learners <span class="badge bg-secondary ms-1">{{ count_learners }}</span>
+            </a>
+        </li>
+    </ul>
+
+    {{#tab_overview_active}}
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            {{#has_description}}
+            <h5>About this skill</h5>
+            {{{ description }}}
+            {{/has_description}}
+            {{^has_description}}
+            <p class="text-muted">No description set.</p>
+            {{/has_description}}
+        </div>
+    </div>
+    {{/tab_overview_active}}
+
+    {{#tab_levels_active}}
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="mb-0">Level definitions</h5>
+        <a href="{{{ edit_url }}}" class="btn btn-outline-primary btn-sm">
+            <i class="fa fa-pencil"></i> Edit definitions
+        </a>
+    </div>
+    {{#has_levels}}
+    <table class="table">
+        <thead><tr><th>Level</th><th>Name</th><th>Description</th></tr></thead>
+        <tbody>
+            {{#levels}}
+            <tr>
+                <td><span class="badge bg-primary">L{{ level_index }}</span></td>
+                <td><strong>{{ name }}</strong></td>
+                <td>{{{ description }}}</td>
+            </tr>
+            {{/levels}}
+        </tbody>
+    </table>
+    {{/has_levels}}
+    {{^has_levels}}
+    <div class="alert alert-warning">
+        No level definitions configured. Click "Edit definitions" to add the {{ max_level }} level entries for this skill.
+    </div>
+    {{/has_levels}}
+    {{/tab_levels_active}}
+
+    {{#tab_designations_active}}
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="mb-0">Designations expecting this skill</h5>
+        <a href="{{{ matrix_url }}}" class="btn btn-outline-primary btn-sm">
+            <i class="fa fa-th"></i> Designation matrix
+        </a>
+    </div>
+    {{#has_designations}}
+    <table class="table">
+        <thead><tr><th>Designation</th><th>Required level</th></tr></thead>
+        <tbody>
+            {{#designations}}
+            <tr>
+                <td>{{ designation }}</td>
+                <td><span class="badge bg-primary">L{{ required_level }}</span></td>
+            </tr>
+            {{/designations}}
+        </tbody>
+    </table>
+    {{/has_designations}}
+    {{^has_designations}}
+    <div class="alert alert-info">
+        No designations have this skill expected yet.
+        Use the <strong>Designation matrix</strong> to map this skill to roles.
+    </div>
+    {{/has_designations}}
+    {{/tab_designations_active}}
+
+    {{#tab_courses_active}}
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="mb-0">Courses developing this skill</h5>
+        <a href="{{{ map_url }}}" class="btn btn-outline-primary btn-sm">
+            <i class="fa fa-link"></i> Course mapping
+        </a>
+    </div>
+    {{#has_courses}}
+    <table class="table">
+        <thead><tr><th>Course</th><th>Short name</th><th>Visibility</th><th></th></tr></thead>
+        <tbody>
+            {{#courses}}
+            <tr>
+                <td><strong>{{ fullname }}</strong></td>
+                <td><code>{{ shortname }}</code></td>
+                <td>{{#visible}}<span class="badge bg-success">Visible</span>{{/visible}}
+                    {{^visible}}<span class="badge bg-secondary">Hidden</span>{{/visible}}
+                </td>
+                <td><a href="{{{ view_url }}}" class="btn btn-sm btn-link">
+                    <i class="fa fa-users"></i> Enrolments
+                </a></td>
+            </tr>
+            {{/courses}}
+        </tbody>
+    </table>
+    {{/has_courses}}
+    {{^has_courses}}
+    <div class="alert alert-info">
+        No courses mapped to this skill yet.
+        Use the <strong>Course mapping</strong> page to link courses that develop this skill.
+    </div>
+    {{/has_courses}}
+    {{/tab_courses_active}}
+
+    {{#tab_learners_active}}
+    <h5>Learners with this skill</h5>
+    {{#has_learners}}
+    <table class="table">
+        <thead><tr><th>Name</th><th>Email</th><th>Current level</th><th>Updated</th></tr></thead>
+        <tbody>
+            {{#learners}}
+            <tr>
+                <td>{{ fullname }}</td>
+                <td><code class="small">{{ email }}</code></td>
+                <td><span class="badge bg-primary">L{{ current_level }}</span></td>
+                <td class="small text-muted">{{ updated_on }}</td>
+            </tr>
+            {{/learners}}
+        </tbody>
+    </table>
+    {{/has_learners}}
+    {{^has_learners}}
+    <div class="alert alert-info">
+        No learners have this skill recorded yet.
+        Skills are added as users complete mapped courses or pass assessments.
+    </div>
+    {{/has_learners}}
+    {{/tab_learners_active}}
+
+    {{! ── P1 #26 — Self-rate modal (hidden until JS opens it) ────────── }}
+    {{# can_self_rate }}
+    <div class="modal fade" id="airpay-self-rate-modal" tabindex="-1"
+         aria-labelledby="airpay-self-rate-title" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="airpay-self-rate-title">
+                        {{# str }}self_rate_modal_title, local_sentientia_skills, {{ name }}{{/ str }}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <form id="airpay-self-rate-form" data-skillid="{{ skillid }}">
+                    <div class="modal-body">
+                        <p class="text-muted small">
+                            {{# str }}self_rate_intro, local_sentientia_skills{{/ str }}
+                        </p>
+                        <div class="mb-2">
+                            {{# self_rate_has_current }}
+                            <p class="small text-muted mb-3">
+                                <i class="fa fa-info-circle fa-fw" aria-hidden="true"></i>
+                                {{# str }}self_rate_current, local_sentientia_skills, L{{ self_rate_current_level }}{{/ str }}
+                            </p>
+                            {{/ self_rate_has_current }}
+                            <label for="airpay-self-rate-level" class="form-label fw-semibold">
+                                {{# str }}self_rate, local_sentientia_skills{{/ str }}
+                            </label>
+                            <select id="airpay-self-rate-level" name="level"
+                                    class="form-select" required>
+                                <option value="">— Pick a level —</option>
+                                {{# self_rate_level_options }}
+                                <option value="{{ value }}"
+                                    {{# selected }}selected{{/ selected }}>
+                                    L{{ value }} — {{ label }}
+                                </option>
+                                {{/ self_rate_level_options }}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link"
+                                data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary"
+                                data-action="submit-self-rate">
+                            <i class="fa fa-check fa-fw" aria-hidden="true"></i>
+                            {{# str }}self_rate_submit, local_sentientia_skills{{/ str }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {{/ can_self_rate }}
+</div>

@@ -23,5 +23,5 @@ $plugin->dependencies = [
     'local_airpay_org'         => 2026040100,
     'local_sentientia_manager'     => 2026040100,  // Approval workflow patterns reused
     'local_airpay_core'        => 2026051200,  // Shared tenant helper
-    'local_airpay_learningpath' => 2026051600,  // P1 #6: path enrolment on approve
+    'local_sentientia_learningpath' => 2026051600,  // P1 #6: path enrolment on approve
 ];

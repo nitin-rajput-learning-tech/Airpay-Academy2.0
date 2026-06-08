@@ -25,6 +25,6 @@ $functions = [
         'description'  => 'List child org nodes under a parent (cascade filter)',
         'type'         => 'read',
         'ajax'         => true,
-        'capabilities' => 'local/airpay_users:view',
+        'capabilities' => 'local/sentientia_users:view',
     ],
 ];

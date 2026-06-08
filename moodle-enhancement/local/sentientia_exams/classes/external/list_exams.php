@@ -110,7 +110,7 @@ class list_exams extends external_api {
             // core /enrol/users.php to airpay-native enrolledusers page,
             // giving full datatable + modal enrol/unenrol + completion %.
             if ($can_enrol && !empty($e->quiz_courseid)) {
-                $enrolurl = (new \moodle_url('/local/airpay_courses/enrolledusers.php',
+                $enrolurl = (new \moodle_url('/local/sentientia_courses/enrolledusers.php',
                     ['id' => (int) $e->quiz_courseid]))->out(false);
                 $actions[] = '<a href="' . s($enrolurl) . '" '
                     . 'class="btn btn-sm btn-link text-muted p-1" '

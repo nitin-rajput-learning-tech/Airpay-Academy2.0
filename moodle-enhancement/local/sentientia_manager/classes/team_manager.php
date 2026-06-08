@@ -316,7 +316,7 @@ class team_manager {
         global $DB;
         if ($viewerid === $targetid) return true;
         if (is_siteadmin($viewerid)) return true;
-        if (has_capability('local/airpay_users:view', \context_system::instance(), $viewerid)) return true;
+        if (has_capability('local/sentientia_users:view', \context_system::instance(), $viewerid)) return true;
 
         // Walk up the supervisor chain from target via the org seam (ADR-020):
         // org_legacy ON resolves each manager from open_supervisorid as before;

@@ -51,18 +51,18 @@ trait login_render {
     public function render_login(\core_auth\output\login $form) {
         global $CFG, $SITE, $OUTPUT;
 
-        // Check both new (airpay_users) and legacy (local_users) config.
+        // Check both new (sentientia_users) and legacy (local_users) config.
         // The legacy path is kept until every tenant migrates to the
         // new plugin's settings; see Phase 6B sprint plan.
-        $organization_shortname = get_config('local_airpay_users', 'organization_shortname')
+        $organization_shortname = get_config('local_sentientia_users', 'organization_shortname')
                                ?: get_config('local_users', 'organization_shortname');
-        $activeregistration = get_config('local_airpay_users', 'activeregistration')
+        $activeregistration = get_config('local_sentientia_users', 'activeregistration')
                            ?: get_config('local_users', 'activeregistration');
 
         $context = $form->export_for_template($this);
 
         if (trim($organization_shortname != "") && $activeregistration == 1) {
-            $context->signupurl_custom = new \moodle_url('/local/airpay_users/signup.php');
+            $context->signupurl_custom = new \moodle_url('/local/sentientia_users/signup.php');
         }
 
         // Override because rendering is not supported in template yet.

@@ -71,7 +71,7 @@ final class ics_builder_test extends \advanced_testcase {
 
         // Add the field if missing (some test DBs are barebones).
         // open_coursecompletiondays is an Airpay-specific column added
-        // by airpay_courses; if not present, skip the test.
+        // by sentientia_courses; if not present, skip the test.
         $columns = $DB->get_columns('course');
         if (!isset($columns['open_coursecompletiondays'])) {
             $this->markTestSkipped('open_coursecompletiondays column not present');
@@ -145,14 +145,14 @@ final class ics_builder_test extends \advanced_testcase {
 
     public function test_classroom_session_appears_for_enrolled_user(): void {
         global $DB;
-        if (!$DB->get_manager()->table_exists('local_airpay_classroom_sessions')) {
-            $this->markTestSkipped('local_airpay_classroom not installed');
+        if (!$DB->get_manager()->table_exists('local_sentientia_classroom_sessions')) {
+            $this->markTestSkipped('local_sentientia_classroom not installed');
         }
 
         $user = $this->getDataGenerator()->create_user();
 
         $now = time();
-        $classroomid = $DB->insert_record('local_airpay_classroom', (object) [
+        $classroomid = $DB->insert_record('local_sentientia_classroom', (object) [
             'name'         => 'Test Classroom',
             'description'  => '',
             'costcenterid' => 1,
@@ -164,7 +164,7 @@ final class ics_builder_test extends \advanced_testcase {
             'timemodified' => $now,
         ]);
 
-        $sessionid = $DB->insert_record('local_airpay_classroom_sessions', (object) [
+        $sessionid = $DB->insert_record('local_sentientia_classroom_sessions', (object) [
             'classroomid'  => $classroomid,
             'title'        => 'Day 1 — Onboarding',
             'sessiondate'  => $now + 86400,
@@ -175,7 +175,7 @@ final class ics_builder_test extends \advanced_testcase {
             'timemodified' => $now,
         ]);
 
-        $DB->insert_record('local_airpay_classroom_users', (object) [
+        $DB->insert_record('local_sentientia_classroom_users', (object) [
             'classroomid'  => $classroomid,
             'userid'       => $user->id,
             'timecreated'  => $now,
@@ -190,15 +190,15 @@ final class ics_builder_test extends \advanced_testcase {
 
     public function test_classroom_session_isolation(): void {
         global $DB;
-        if (!$DB->get_manager()->table_exists('local_airpay_classroom_sessions')) {
-            $this->markTestSkipped('local_airpay_classroom not installed');
+        if (!$DB->get_manager()->table_exists('local_sentientia_classroom_sessions')) {
+            $this->markTestSkipped('local_sentientia_classroom not installed');
         }
 
         $u1 = $this->getDataGenerator()->create_user();
         $u2 = $this->getDataGenerator()->create_user();
         $now = time();
 
-        $classroomid = $DB->insert_record('local_airpay_classroom', (object) [
+        $classroomid = $DB->insert_record('local_sentientia_classroom', (object) [
             'name'         => 'Confidential Training',
             'description'  => '',
             'costcenterid' => 1,
@@ -209,7 +209,7 @@ final class ics_builder_test extends \advanced_testcase {
             'timecreated'  => $now,
             'timemodified' => $now,
         ]);
-        $DB->insert_record('local_airpay_classroom_sessions', (object) [
+        $DB->insert_record('local_sentientia_classroom_sessions', (object) [
             'classroomid'  => $classroomid,
             'sessiondate'  => $now + 86400,
             'starttime'    => $now + 86400,
@@ -218,7 +218,7 @@ final class ics_builder_test extends \advanced_testcase {
             'timemodified' => $now,
         ]);
         // Only u1 on the roster.
-        $DB->insert_record('local_airpay_classroom_users', (object) [
+        $DB->insert_record('local_sentientia_classroom_users', (object) [
             'classroomid'  => $classroomid,
             'userid'       => $u1->id,
             'timecreated'  => $now,
@@ -318,12 +318,12 @@ final class ics_builder_test extends \advanced_testcase {
 
     public function test_url_property_included_for_classroom_session(): void {
         global $DB;
-        if (!$DB->get_manager()->table_exists('local_airpay_classroom_sessions')) {
-            $this->markTestSkipped('local_airpay_classroom not installed');
+        if (!$DB->get_manager()->table_exists('local_sentientia_classroom_sessions')) {
+            $this->markTestSkipped('local_sentientia_classroom not installed');
         }
         $user = $this->getDataGenerator()->create_user();
         $now = time();
-        $classroomid = $DB->insert_record('local_airpay_classroom', (object) [
+        $classroomid = $DB->insert_record('local_sentientia_classroom', (object) [
             'name'         => 'URL Test',
             'description'  => '',
             'costcenterid' => 1,
@@ -334,7 +334,7 @@ final class ics_builder_test extends \advanced_testcase {
             'timecreated'  => $now,
             'timemodified' => $now,
         ]);
-        $DB->insert_record('local_airpay_classroom_sessions', (object) [
+        $DB->insert_record('local_sentientia_classroom_sessions', (object) [
             'classroomid'  => $classroomid,
             'sessiondate'  => $now + 86400,
             'starttime'    => $now + 86400,
@@ -342,7 +342,7 @@ final class ics_builder_test extends \advanced_testcase {
             'timecreated'  => $now,
             'timemodified' => $now,
         ]);
-        $DB->insert_record('local_airpay_classroom_users', (object) [
+        $DB->insert_record('local_sentientia_classroom_users', (object) [
             'classroomid'  => $classroomid,
             'userid'       => $user->id,
             'timecreated'  => $now,
@@ -351,7 +351,7 @@ final class ics_builder_test extends \advanced_testcase {
 
         $ics = ics_builder::build_for_user((int) $user->id);
         $this->assertMatchesRegularExpression(
-            '/URL:.*local\/airpay_classroom\/index\.php\?id=' . $classroomid . '/',
+            '/URL:.*local\/sentientia_classroom\/index\.php\?id=' . $classroomid . '/',
             $ics
         );
     }

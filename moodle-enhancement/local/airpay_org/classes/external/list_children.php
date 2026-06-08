@@ -50,7 +50,7 @@ class list_children extends external_api {
 
         $context = \context_system::instance();
         self::validate_context($context);
-        require_capability('local/airpay_users:view', $context);
+        require_capability('local/sentientia_users:view', $context);
 
         $children = \local_airpay_org\org_manager::get_children(
             $params['parentid'], $params['visible_only']);

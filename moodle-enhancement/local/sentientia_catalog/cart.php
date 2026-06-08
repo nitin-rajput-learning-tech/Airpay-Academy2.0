@@ -142,7 +142,7 @@ echo $OUTPUT->header();
             <i class="fa fa-sign-in"></i> Login to Complete Enrollment
         </a>
         <p style="text-align:center; font-size:12px; color:var(--ap-text-muted); margin:8px 0 0;">
-            Don't have an account? <a href="<?php echo (new moodle_url('/local/airpay_users/signup.php'))->out(); ?>" style="color:var(--ap-primary);">Register here</a>
+            Don't have an account? <a href="<?php echo (new moodle_url('/local/sentientia_users/signup.php'))->out(); ?>" style="color:var(--ap-primary);">Register here</a>
         </p>
 
         <?php elseif ($totals['all_free']): ?>

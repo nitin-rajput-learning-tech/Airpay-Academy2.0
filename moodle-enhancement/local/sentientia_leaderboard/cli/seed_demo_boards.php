@@ -19,7 +19,7 @@
  *   1. Completion-type, tenant scope (Airpay tenant). Recompute walks
  *      mdl_course_completions and ranks users by completion count.
  *   2. Skill-type, customer scope (cross-tenant). Recompute walks
- *      mdl_local_airpay_skills_user_level if present, otherwise no-op.
+ *      mdl_local_sentientia_skills_user_level if present, otherwise no-op.
  *
  * Idempotency: every seeded board's `name` starts with `[DEMO]`.
  * Re-runs skip if boards present. `--purge` removes only `[DEMO]`-named

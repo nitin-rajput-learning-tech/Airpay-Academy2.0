@@ -237,7 +237,7 @@ class notification_bridge {
     /**
      * Fire a "course due in <48h" WhatsApp nudge.
      *
-     * Wired from local_airpay_courses\task\course_reminder::send_one_reminder()
+     * Wired from local_sentientia_courses\task\course_reminder::send_one_reminder()
      * when the computed days_remaining bucket evaluates to <48h.
      *
      * Variables substituted in the DLT template body:
@@ -377,7 +377,7 @@ class notification_bridge {
      *   {{firstname}}        user's first name
      *   {{path_name}}        format_string'd path name
      *   {{milestone_label}}  the milestone string, as passed in
-     *   {{path_url}}         absolute URL to /local/airpay_learningpath/view.php?id=$pathid
+     *   {{path_url}}         absolute URL to /local/sentientia_learningpath/view.php?id=$pathid
      *
      * @param int $userid
      * @param int $pathid
@@ -400,7 +400,7 @@ class notification_bridge {
             return 'no_user';
         }
 
-        $path = $DB->get_record('local_airpay_learningpath',
+        $path = $DB->get_record('local_sentientia_learningpath',
             ['id' => $pathid], 'id, name');
         if (!$path) {
             return 'no_record';
@@ -414,7 +414,7 @@ class notification_bridge {
             return 'throttled';
         }
 
-        $path_url = (new \moodle_url('/local/airpay_learningpath/view.php',
+        $path_url = (new \moodle_url('/local/sentientia_learningpath/view.php',
             ['id' => $pathid]))->out(false);
 
         return self::dispatch(

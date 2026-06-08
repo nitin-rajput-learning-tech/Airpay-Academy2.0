@@ -364,7 +364,7 @@ class accesslib {
      */
     public static function can_manage_classroom(?\context $context = null): bool {
         $context = $context ?? \context_system::instance();
-        return has_capability('local/airpay_classroom:manage', $context)
+        return has_capability('local/sentientia_classroom:manage', $context)
             || has_capability('local/classroom:manageclassroom', $context);
     }
 

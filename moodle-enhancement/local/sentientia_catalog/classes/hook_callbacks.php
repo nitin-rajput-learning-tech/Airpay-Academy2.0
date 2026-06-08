@@ -28,7 +28,7 @@ class hook_callbacks {
         \core\hook\output\before_footer_html_generation $hook
     ): void {
         global $SESSION;
-        $count = count($SESSION->airpay_cart ?? []);
+        $count = count($SESSION->sentientia_cart ?? []);
         $hook->add_html('<span id="ap-cart-count-data" style="display:none;">' . (int)$count . '</span>');
     }
 }

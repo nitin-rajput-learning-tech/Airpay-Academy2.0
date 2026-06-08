@@ -99,7 +99,7 @@ class sidebar_navigation {
             'userfullname'  => fullname($USER),
             'useravatar'    => $OUTPUT->user_picture($USER, ['size' => 36, 'link' => false]),
             'userinitials'  => $this->get_initials($USER),
-            'profileurl'    => (new \moodle_url('/local/airpay_users/profile.php'))->out(false),
+            'profileurl'    => (new \moodle_url('/local/sentientia_users/profile.php'))->out(false),
             'logouturl'     => (new \moodle_url('/login/logout.php', ['sesskey' => sesskey()]))->out(false),
         ];
     }
@@ -125,11 +125,11 @@ class sidebar_navigation {
 
             // ── People & Content ──
             $items[] = $this->divider();
-            $items[] = $this->item('Manage Users', 'fa-users', '/local/airpay_users/index.php', $currenturl);
-            $items[] = $this->item('Manage Courses', 'fa-book', '/local/airpay_courses/index.php', $currenturl);
+            $items[] = $this->item('Manage Users', 'fa-users', '/local/sentientia_users/index.php', $currenturl);
+            $items[] = $this->item('Manage Courses', 'fa-book', '/local/sentientia_courses/index.php', $currenturl);
             // Sprint D nav entry — Airpay admins see pending course-share
             // requests from other tenants here. The page itself enforces
-            // the local/airpay_courses:approve_request cap (siteadmin only).
+            // the local/sentientia_courses:approve_request cap (siteadmin only).
             //
             // Phase A0 (2026-05-14): also gated by the Switchboard flag
             // `commerce.crossTenantRequest.enabled`. When off, this link
@@ -137,12 +137,12 @@ class sidebar_navigation {
             // "feature disabled" page.
             if (\local_airpay_core\feature_flags::is_enabled('commerce.crossTenantRequest.enabled')) {
                 $items[] = $this->item('Course-share Requests', 'fa-inbox',
-                    '/local/airpay_courses/manage_requests.php', $currenturl);
+                    '/local/sentientia_courses/manage_requests.php', $currenturl);
             }
             $items[] = $this->item('Online Exams', 'fa-edit', '/local/sentientia_exams/index.php', $currenturl);
-            $items[] = $this->item('Classrooms', 'fa-calendar', '/local/airpay_classroom/index.php', $currenturl);
-            $items[] = $this->item('Learning Paths', 'fa-map-signs', '/local/airpay_learningpath/index.php', $currenturl);
-            $items[] = $this->item('Programs', 'fa-trophy', '/local/airpay_programs/index.php', $currenturl);
+            $items[] = $this->item('Classrooms', 'fa-calendar', '/local/sentientia_classroom/index.php', $currenturl);
+            $items[] = $this->item('Learning Paths', 'fa-map-signs', '/local/sentientia_learningpath/index.php', $currenturl);
+            $items[] = $this->item('Programs', 'fa-trophy', '/local/sentientia_programs/index.php', $currenturl);
 
             // ── Insights ──
             $items[] = $this->divider();
@@ -153,7 +153,7 @@ class sidebar_navigation {
             // ── Platform ──
             $items[] = $this->divider();
             $items[] = $this->item('Organisation', 'fa-sitemap', '/local/airpay_org/admin.php', $currenturl);
-            $items[] = $this->item('Skills', 'fa-bullseye', '/local/airpay_skills/admin.php', $currenturl);
+            $items[] = $this->item('Skills', 'fa-bullseye', '/local/sentientia_skills/admin.php', $currenturl);
             $items[] = $this->item('Notifications', 'fa-bell', '/local/sentientia_notifications/index.php', $currenturl);
             $items[] = $this->item('Evaluations', 'fa-clipboard', '/local/sentientia_evaluation/index.php', $currenturl);
             $items[] = $this->item('Certificates', 'fa-certificate', '/admin/tool/certificate/manage_templates.php', $currenturl);
@@ -185,11 +185,11 @@ class sidebar_navigation {
 
             // ── Content ──
             $items[] = $this->divider();
-            if (has_capability('local/airpay_users:view', $sys)) {
-                $items[] = $this->item('Manage Users', 'fa-users', '/local/airpay_users/index.php', $currenturl);
+            if (has_capability('local/sentientia_users:view', $sys)) {
+                $items[] = $this->item('Manage Users', 'fa-users', '/local/sentientia_users/index.php', $currenturl);
             }
-            if (has_capability('local/airpay_courses:view', $sys)) {
-                $items[] = $this->item('Manage Courses', 'fa-book', '/local/airpay_courses/index.php', $currenturl);
+            if (has_capability('local/sentientia_courses:view', $sys)) {
+                $items[] = $this->item('Manage Courses', 'fa-book', '/local/sentientia_courses/index.php', $currenturl);
             }
             // Sprint D — non-Airpay L&D admins (Public/ZEEA) get the
             // Browse Airpay Library link to request specific courses
@@ -200,16 +200,16 @@ class sidebar_navigation {
             if ($this->is_non_airpay_tenant_user()
                     && \local_airpay_core\feature_flags::is_enabled('commerce.crossTenantRequest.enabled')) {
                 $items[] = $this->item('Browse Airpay Library', 'fa-handshake-o',
-                    '/local/airpay_courses/browse_airpay.php', $currenturl);
+                    '/local/sentientia_courses/browse_airpay.php', $currenturl);
             }
             if (has_capability('local/sentientia_exams:view', $sys)) {
                 $items[] = $this->item('Online Exams', 'fa-pencil-square-o', '/local/sentientia_exams/index.php', $currenturl);
             }
-            if (has_capability('local/airpay_classroom:view', $sys)) {
-                $items[] = $this->item('Classrooms', 'fa-calendar', '/local/airpay_classroom/index.php', $currenturl);
+            if (has_capability('local/sentientia_classroom:view', $sys)) {
+                $items[] = $this->item('Classrooms', 'fa-calendar', '/local/sentientia_classroom/index.php', $currenturl);
             }
-            if (has_capability('local/airpay_learningpath:view', $sys)) {
-                $items[] = $this->item('Learning Paths', 'fa-road', '/local/airpay_learningpath/index.php', $currenturl);
+            if (has_capability('local/sentientia_learningpath:view', $sys)) {
+                $items[] = $this->item('Learning Paths', 'fa-road', '/local/sentientia_learningpath/index.php', $currenturl);
             }
 
             // ── Insights ──
@@ -254,15 +254,15 @@ class sidebar_navigation {
             if ($this->is_non_airpay_tenant_user()
                     && \local_airpay_core\feature_flags::is_enabled('commerce.crossTenantRequest.enabled')) {
                 $items[] = $this->item('Browse Airpay Library', 'fa-handshake-o',
-                    '/local/airpay_courses/browse_airpay.php', $currenturl);
+                    '/local/sentientia_courses/browse_airpay.php', $currenturl);
                 $items[] = $this->item('My Requests', 'fa-clipboard-list',
-                    '/local/airpay_courses/my_requests.php', $currenturl);
+                    '/local/sentientia_courses/my_requests.php', $currenturl);
             }
             // Cart for managers in cart-enabled tenants.
             // P-01 (QA Walk 2026-05-29): point at the catalog's SESSION cart
             // (commerce::add_to_cart, viewed at /local/sentientia_catalog/cart.php) —
             // the cart the catalog "Add to Cart" buttons actually fill. The DB
-            // cart at /local/airpay_cart/index.php is fed only by the add_item WS,
+            // cart at /local/sentientia_cart/index.php is fed only by the add_item WS,
             // never the catalog buttons, so it always rendered empty here.
             if ($this->is_cart_enabled_for_current_user()) {
                 $items[] = $this->item('My Cart', 'fa-shopping-cart',
@@ -272,10 +272,10 @@ class sidebar_navigation {
             // them their own Skills dashboard, same as the Learner shell.
             if ($this->can_view_own_skills()) {
                 $items[] = $this->item('My Skills', 'fa-bullseye',
-                    '/local/airpay_skills/index.php', $currenturl);
+                    '/local/sentientia_skills/index.php', $currenturl);
             }
             $items[] = $this->item('Certificates', 'fa-certificate', '/local/sentientia_pages/certificates.php', $currenturl);
-            $items[] = $this->item('Profile', 'fa-user', '/local/airpay_users/profile.php', $currenturl);
+            $items[] = $this->item('Profile', 'fa-user', '/local/sentientia_users/profile.php', $currenturl);
             return $items;
         }
 
@@ -292,7 +292,7 @@ class sidebar_navigation {
         // get their training free and don't see this link.
         // P-01 (QA Walk 2026-05-29): point at the catalog's SESSION cart
         // (/local/sentientia_catalog/cart.php) — where the catalog "Add to Cart"
-        // buttons put items — not the DB cart /local/airpay_cart/index.php
+        // buttons put items — not the DB cart /local/sentientia_cart/index.php
         // (fed only by the add_item WS), which always rendered empty here.
         if ($this->is_cart_enabled_for_current_user()) {
             $items[] = $this->item('My Cart', 'fa-shopping-cart',
@@ -326,26 +326,26 @@ class sidebar_navigation {
         // pattern as the iscomplianceuser Compliance link above.
         if ($this->can_view_own_skills()) {
             $items[] = $this->item('My Skills', 'fa-bullseye',
-                '/local/airpay_skills/index.php', $currenturl);
+                '/local/sentientia_skills/index.php', $currenturl);
         }
 
         $items[] = $this->item('Certificates', 'fa-certificate', '/local/sentientia_pages/certificates.php', $currenturl);
-        $items[] = $this->item('Profile', 'fa-user', '/local/airpay_users/profile.php', $currenturl);
+        $items[] = $this->item('Profile', 'fa-user', '/local/sentientia_users/profile.php', $currenturl);
 
         return $items;
     }
 
     /**
-     * Is the airpay_cart plugin enabled for the current user's tenant?
+     * Is the sentientia_cart plugin enabled for the current user's tenant?
      * Safe-fails if the plugin isn't installed.
      */
     private function is_cart_enabled_for_current_user(): bool {
         global $USER;
-        if (!class_exists('\\local_airpay_cart\\cart_manager')) {
+        if (!class_exists('\\local_sentientia_cart\\cart_manager')) {
             return false;
         }
         try {
-            return \local_airpay_cart\cart_manager::is_enabled_for_user($USER);
+            return \local_sentientia_cart\cart_manager::is_enabled_for_user($USER);
         } catch (\Throwable $e) {
             return false;
         }
@@ -404,11 +404,11 @@ class sidebar_navigation {
      * Can the current user reach their own Skills dashboard?
      *
      * E-02 (QA Walk 2026-05-29): the learner-facing skills dashboard
-     * (/local/airpay_skills/index.php — gap analysis, radar chart,
+     * (/local/sentientia_skills/index.php — gap analysis, radar chart,
      * recommended courses, self-rate) existed but had NO sidebar entry, so
      * learners couldn't discover it (the siteadmin shell only links the
      * admin page admin.php). Gate the "My Skills" link by the same
-     * capability the skills surface declares — local/airpay_skills:view,
+     * capability the skills surface declares — local/sentientia_skills:view,
      * granted to the student archetype — so it shows for learners and
      * disappears if an admin revokes the cap or the plugin isn't installed
      * (a future Sentientia customer who didn't license Skills). No new
@@ -418,7 +418,7 @@ class sidebar_navigation {
      */
     private function can_view_own_skills(): bool {
         try {
-            return has_capability('local/airpay_skills:view', \context_system::instance());
+            return has_capability('local/sentientia_skills:view', \context_system::instance());
         } catch (\Throwable $e) {
             return false;
         }

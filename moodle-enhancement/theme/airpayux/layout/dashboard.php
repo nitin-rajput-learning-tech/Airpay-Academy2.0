@@ -51,10 +51,10 @@ $is_supervisor = $DB->record_exists_select(
 // Cap-rename fix (F-080/F-088, 2026-05-28): `local/courses:manage` was
 // never registered — fires a debug Notice on every dashboard render and
 // also returns false for non-siteadmin L&D Admins. Replaced with the
-// canonical `local/airpay_courses:manage` cap that lives in
-// `local/airpay_courses/db/access.php`.
+// canonical `local/sentientia_courses:manage` cap that lives in
+// `local/sentientia_courses/db/access.php`.
 $has_any_admin_role = is_siteadmin()
-    || has_capability('local/airpay_courses:manage', context_system::instance())
+    || has_capability('local/sentientia_courses:manage', context_system::instance())
     || $DB->record_exists_sql(
         "SELECT 1 FROM {role_assignments} ra JOIN {context} ctx ON ctx.id = ra.contextid
          WHERE ra.userid = :uid AND ra.roleid = 9 AND ctx.contextlevel = 40",
@@ -1090,12 +1090,12 @@ $templatecontext['use_shell'] = true;
 // classes). Without the explicit require_once, function_exists() always
 // returned false and the widget never rendered. UAT caught it on day 2.
 $templatecontext['featured_widget_html'] = '';
-$airpay_courses_lib = $CFG->dirroot . '/local/airpay_courses/lib.php';
-if (file_exists($airpay_courses_lib)) {
-    require_once($airpay_courses_lib);
-    if (function_exists('local_airpay_courses_render_featured_widget')) {
+$sentientia_courses_lib = $CFG->dirroot . '/local/sentientia_courses/lib.php';
+if (file_exists($sentientia_courses_lib)) {
+    require_once($sentientia_courses_lib);
+    if (function_exists('local_sentientia_courses_render_featured_widget')) {
         $templatecontext['featured_widget_html'] =
-            local_airpay_courses_render_featured_widget((int) $USER->id, 6);
+            local_sentientia_courses_render_featured_widget((int) $USER->id, 6);
     }
 }
 

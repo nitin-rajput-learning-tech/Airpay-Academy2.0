@@ -433,19 +433,19 @@ class rule_engine {
     /**
      * Rule: ILT feedback pending.
      *
-     * Reads from local_airpay_classroom_users (the roster table that
+     * Reads from local_sentientia_classroom_users (the roster table that
      * G-02 introduced). Notifies users who attended a session that
      * ended N days ago AND whose user has no feedback row in
      * sentientia_evaluation linked to that session's classroom.
      *
-     * Defensive: skips if airpay_classroom tables aren't present.
+     * Defensive: skips if sentientia_classroom tables aren't present.
      */
     private static function rule_ilt_feedback_pending(\stdClass $rule): array {
         global $DB;
         $result = ['sent' => 0, 'skipped' => 0];
 
         $manager = $DB->get_manager();
-        if (!$manager->table_exists('local_airpay_classroom_sessions')) {
+        if (!$manager->table_exists('local_sentientia_classroom_sessions')) {
             return $result;
         }
 
@@ -456,10 +456,10 @@ class rule_engine {
         $rows = $DB->get_records_sql("
             SELECT cu.userid, u.firstname, s.id AS sessionid,
                    s.classroomid, c.name AS classroomname, s.title, s.endtime
-              FROM {local_airpay_classroom_sessions} s
-              JOIN {local_airpay_classroom_users} cu ON cu.classroomid = s.classroomid
+              FROM {local_sentientia_classroom_sessions} s
+              JOIN {local_sentientia_classroom_users} cu ON cu.classroomid = s.classroomid
               JOIN {user} u ON u.id = cu.userid
-              JOIN {local_airpay_classroom} c ON c.id = s.classroomid
+              JOIN {local_sentientia_classroom} c ON c.id = s.classroomid
              WHERE s.endtime > 0 AND s.endtime < :cutoff
                AND u.deleted = 0 AND u.suspended = 0
           ORDER BY s.endtime DESC
@@ -482,7 +482,7 @@ class rule_engine {
      *
      * Notifies a learner who joined a learning path and made no progress
      * in the last `trigger_days` days. Reads from local_airpay_lp_users
-     * (the airpay_learningpath user-assignments table).
+     * (the sentientia_learningpath user-assignments table).
      */
     private static function rule_learning_path_stalled(\stdClass $rule): array {
         global $DB;
@@ -500,7 +500,7 @@ class rule_engine {
             SELECT lu.userid, u.firstname, lp.id AS pathid, lp.name AS pathname
               FROM {local_airpay_lp_users} lu
               JOIN {user} u ON u.id = lu.userid
-              JOIN {local_airpay_learningpath} lp ON lp.id = lu.pathid
+              JOIN {local_sentientia_learningpath} lp ON lp.id = lu.pathid
              WHERE lu.timemodified < :cutoff
                AND lu.status IN ('enrolled', 'in_progress')
                AND u.deleted = 0 AND u.suspended = 0

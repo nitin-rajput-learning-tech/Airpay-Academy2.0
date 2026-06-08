@@ -52,10 +52,10 @@ foreach ($summary as $row) {
     $total_overdue   += $row['overdue'];
     if ($row['rate'] < 50 && $row['enrolled'] > 0) { $at_risk++; }
 
-    $row['profile_url']  = (new moodle_url('/local/airpay_users/profile.php',     ['id' => $row['id']]))->out(false);
+    $row['profile_url']  = (new moodle_url('/local/sentientia_users/profile.php',     ['id' => $row['id']]))->out(false);
     $row['drilldown_url'] = (new moodle_url('/local/sentientia_manager/member.php',    ['id' => $row['id']]))->out(false);
     $row['nudge_url']    = (new moodle_url('/local/sentientia_notifications/nudge.php',['userid' => $row['id'], 'type' => 'general']))->out(false);
-    $row['skills_url']   = (new moodle_url('/local/airpay_skills/index.php',       ['userid' => $row['id']]))->out(false);
+    $row['skills_url']   = (new moodle_url('/local/sentientia_skills/index.php',       ['userid' => $row['id']]))->out(false);
     $team_data[] = $row;
 }
 

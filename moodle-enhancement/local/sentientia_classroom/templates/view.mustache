@@ -1,0 +1,186 @@
+{{!
+    Airpay Classroom — detail view (Overview / Sessions / Users tabs).
+
+    @template local_sentientia_classroom/view
+    @package  local_sentientia_classroom
+
+    Context vars:
+      classroomid           int
+      name                  string  format_string'd
+      description           string  format_text'd HTML
+      has_description       bool
+      location              string  format_string'd
+      has_location          bool
+      capacity              int
+      trainer_name          string
+      has_trainer           bool
+      status_label, status_css       Badge text + Bootstrap class
+      session_count, enrolled_count  ints
+      created_human, modified_human  strings
+      back_url              URL back to /index.php
+      tab_*_active          bool — exactly one of overview/sessions/users true
+      tab_*_url             URL to switch tabs
+      can_update            bool — show "Add Session" + "Enrol Users" + remove buttons
+      can_attend            bool — attendance link in session rows
+      sessions_columns_json string  JSON for shared datatable
+      users_columns_json    string  JSON for shared datatable
+      extra_args_json       string  JSON {classroomid: N}
+}}
+<div data-region="airpay-classroom-view" data-classroomid="{{ classroomid }}">
+
+    <div class="ap-page-header d-flex justify-content-between align-items-start mb-3">
+        <div>
+            <a href="{{{ back_url }}}" class="small text-muted text-decoration-none">
+                <i class="fa fa-angle-left fa-fw"></i> {{# str }}back_to_classrooms, local_sentientia_classroom{{/ str }}
+            </a>
+            <h2 class="mb-1 mt-1" style="font-weight: 700;">{{ name }}</h2>
+            <div class="d-flex flex-wrap gap-2 align-items-center small text-muted">
+                <span class="badge {{ status_css }}">{{ status_label }}</span>
+                {{# has_location }}
+                <span>·</span>
+                <span><i class="fa fa-map-marker fa-fw"></i> {{ location }}</span>
+                {{/ has_location }}
+                <span>·</span>
+                <span>{{ session_count }} sessions</span>
+                <span>·</span>
+                <span>{{ enrolled_count }} enrolled</span>
+                <span>·</span>
+                <span>{{# str }}updated, local_sentientia_classroom{{/ str }} {{ modified_human }}</span>
+            </div>
+        </div>
+    </div>
+
+    {{! ── Tab nav ─────────────────────────────────────────────────────── }}
+    <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link {{# tab_overview_active }}active{{/ tab_overview_active }}"
+               href="{{{ tab_overview_url }}}" role="tab">
+                <i class="fa fa-info-circle fa-fw" aria-hidden="true"></i>
+                {{# str }}tab_overview, local_sentientia_classroom{{/ str }}
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {{# tab_sessions_active }}active{{/ tab_sessions_active }}"
+               href="{{{ tab_sessions_url }}}" role="tab">
+                <i class="fa fa-calendar fa-fw" aria-hidden="true"></i>
+                {{# str }}tab_sessions, local_sentientia_classroom{{/ str }}
+                <span class="badge bg-light text-dark ms-1">{{ session_count }}</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {{# tab_users_active }}active{{/ tab_users_active }}"
+               href="{{{ tab_users_url }}}" role="tab">
+                <i class="fa fa-users fa-fw" aria-hidden="true"></i>
+                {{# str }}tab_users, local_sentientia_classroom{{/ str }}
+                <span class="badge bg-light text-dark ms-1">{{ enrolled_count }}</span>
+            </a>
+        </li>
+    </ul>
+
+    {{! ── Overview tab ────────────────────────────────────────────────── }}
+    {{# tab_overview_active }}
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            {{# has_description }}
+            <h5 class="mb-2">Description</h5>
+            <div class="mb-4">{{{ description }}}</div>
+            {{/ has_description }}
+            {{^ has_description }}
+            <p class="text-muted fst-italic">{{# str }}no_description, local_sentientia_classroom{{/ str }}</p>
+            {{/ has_description }}
+
+            <div class="row mt-3">
+                <div class="col-md-3 mb-3">
+                    <div class="small text-uppercase text-muted">Capacity</div>
+                    <div style="font-size: 1.5rem; font-weight: 700;">{{ capacity }}</div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="small text-uppercase text-muted">Sessions</div>
+                    <div style="font-size: 1.5rem; font-weight: 700;">{{ session_count }}</div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="small text-uppercase text-muted">Enrolled</div>
+                    <div style="font-size: 1.5rem; font-weight: 700;">{{ enrolled_count }}</div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="small text-uppercase text-muted">Created</div>
+                    <div>{{ created_human }}</div>
+                </div>
+            </div>
+
+            {{# has_trainer }}
+            <hr class="my-3">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fa fa-user-circle fa-lg text-muted"></i>
+                <div>
+                    <div class="small text-uppercase text-muted">Primary trainer</div>
+                    <div>{{ trainer_name }}</div>
+                </div>
+            </div>
+            {{/ has_trainer }}
+        </div>
+    </div>
+    {{/ tab_overview_active }}
+
+    {{! ── Sessions tab ────────────────────────────────────────────────── }}
+    {{# tab_sessions_active }}
+    <div class="d-flex justify-content-end mb-3">
+        {{# can_update }}
+        <button type="button" class="btn btn-primary btn-sm" data-action="add-session">
+            <i class="fa fa-plus fa-fw" aria-hidden="true"></i>
+            {{# str }}add_session, local_sentientia_classroom{{/ str }}
+        </button>
+        {{/ can_update }}
+    </div>
+    <div data-airpay-table
+         data-airpay-table-name="classroom-sessions"
+         data-endpoint="local_sentientia_classroom_list_sessions"
+         data-columns="{{ sessions_columns_json }}"
+         data-search-placeholder="Search session title, location, notes…"
+         data-perpage="25"
+         data-extra-args='{{ extra_args_json }}'
+         data-row-actions="{{# can_update }}1{{/ can_update }}{{^ can_update }}0{{/ can_update }}">
+    </div>
+    {{/ tab_sessions_active }}
+
+    {{! ── Users tab ───────────────────────────────────────────────────── }}
+    {{# tab_users_active }}
+    <div class="d-flex justify-content-end mb-3 gap-2">
+        {{# can_update }}
+        {{! P1 #13 (2026-05-16) — bulk enrol by target audience }}
+        <button type="button" class="btn btn-outline-primary btn-sm"
+                data-action="bulk-enrol-audience"
+                title="Enrol all users matching a target audience">
+            <i class="fa fa-users fa-fw" aria-hidden="true"></i>
+            {{# str }}audience_modal_title, local_sentientia_classroom{{/ str }}
+        </button>
+        <button type="button" class="btn btn-primary btn-sm" data-action="enrol-users">
+            <i class="fa fa-user-plus fa-fw" aria-hidden="true"></i>
+            {{# str }}enrol_users, local_sentientia_classroom{{/ str }}
+        </button>
+        {{/ can_update }}
+    </div>
+    <div data-airpay-table
+         data-airpay-table-name="classroom-users"
+         data-endpoint="local_sentientia_classroom_list_users"
+         data-columns="{{ users_columns_json }}"
+         data-search-placeholder="Search by name or email…"
+         data-perpage="25"
+         data-extra-args='{{ extra_args_json }}'
+         data-row-actions="{{# can_update }}1{{/ can_update }}{{^ can_update }}0{{/ can_update }}">
+    </div>
+    {{/ tab_users_active }}
+
+</div>
+
+{{# js }}
+require([
+    'theme_airpayux/datatable',
+    'local_sentientia_classroom/classroom_actions',
+], function(Datatable, ClassroomActions) {
+    Datatable.init();
+    if (ClassroomActions && ClassroomActions.initView) {
+        ClassroomActions.initView({{ classroomid }});
+    }
+});
+{{/ js }}

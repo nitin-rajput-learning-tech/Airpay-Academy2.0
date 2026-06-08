@@ -17,7 +17,7 @@ If you need a tabular admin UI with search / sort / pagination / row-actions,
 
 ```mustache
 <div data-airpay-table
-     data-endpoint="local_airpay_users_list_users"
+     data-endpoint="local_sentientia_users_list_users"
      data-columns="{{{columns_json}}}"
      data-search-placeholder="Search by name, email, or employee ID…"
      data-perpage="25"
@@ -49,7 +49,7 @@ If you need a tabular admin UI with search / sort / pagination / row-actions,
 ```js
 require([
     'theme_airpayux/datatable',
-    'local_airpay_users/user_actions',
+    'local_sentientia_users/user_actions',
 ], function(Datatable, UserActions) {
     Datatable.init();
     UserActions.init();
@@ -84,7 +84,7 @@ function execute(string $search, string $sort, string $sortdir,
 ]
 ```
 
-See `local/airpay_users/classes/external/list_users.php` for a reference
+See `local/sentientia_users/classes/external/list_users.php` for a reference
 implementation including:
 - Cross-tenant `/`-bounded prefix scoping (`(open_path = :exact OR open_path LIKE :prefix)`)
 - Sort whitelist (rejects unknown sort keys → falls back to `name`)
@@ -177,10 +177,10 @@ This component meets WCAG 2.1 AA for table interaction:
 
 ## Plugins that use this component (10)
 
-`airpay_classroom`, `airpay_courses`, `sentientia_evaluation`, `sentientia_exams`,
-`airpay_learningpath`, `sentientia_notifications`, `airpay_programs`, `sentientia_reports`,
-`airpay_skills`, `airpay_users`.
+`sentientia_classroom`, `sentientia_courses`, `sentientia_evaluation`, `sentientia_exams`,
+`sentientia_learningpath`, `sentientia_notifications`, `sentientia_programs`, `sentientia_reports`,
+`sentientia_skills`, `sentientia_users`.
 
-If you're adding an 11th plugin, follow `airpay_users` as the cleanest
+If you're adding an 11th plugin, follow `sentientia_users` as the cleanest
 reference — it covers create/edit/delete via core_form/modalform, status toggle,
 bulk select, and export.

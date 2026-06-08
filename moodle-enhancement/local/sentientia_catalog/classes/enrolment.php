@@ -29,7 +29,7 @@ defined('MOODLE_INTERNAL') || die();
  *                    access gate for internal staff.
  *   - {@see enrol_now()} — the MECHANISM: idempotent manual enrolment in a
  *     FREE course, bypassing any self-enrol key. Mirrors the proven pattern
- *     in \local_airpay_cart\cart_manager::enrol_user_in_course().
+ *     in \local_sentientia_cart\cart_manager::enrol_user_in_course().
  *
  * The CTA routing is gated behind the {@see FLAG} feature flag (default
  * OFF per CLAUDE.md §13, so OFF reproduces today's production behaviour).

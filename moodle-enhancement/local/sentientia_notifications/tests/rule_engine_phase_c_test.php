@@ -63,7 +63,7 @@ final class rule_engine_phase_c_test extends \advanced_testcase {
     public function test_ilt_feedback_skips_when_classroom_table_missing(): void {
         $this->resetAfterTest();
         $rule = $this->seed_rule('ilt_feedback_pending', 3);
-        // local_airpay_classroom_sessions may not exist; defensive return.
+        // local_sentientia_classroom_sessions may not exist; defensive return.
         $result = rule_engine::process_rule($rule);
         $this->assertSame(0, $result['sent']);
         $this->assertSame(0, $result['skipped']);

@@ -1,0 +1,98 @@
+<?php
+// Airpay Course Management — admin (datatable-driven).
+//
+// @package    local_sentientia_courses
+// @copyright  2026 Airpay Payment Services
+// @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+
+require_once(__DIR__ . '/../../config.php');
+require_login();
+
+$context = context_system::instance();
+require_capability('local/sentientia_courses:view', $context);
+
+$PAGE->set_context($context);
+$PAGE->set_url(new moodle_url('/local/sentientia_courses/index.php'));
+$PAGE->set_title(get_string('pluginname', 'local_sentientia_courses'));
+$PAGE->set_heading(get_string('pluginname', 'local_sentientia_courses'));
+$PAGE->set_pagelayout('standard');
+$PAGE->set_secondary_navigation(false);
+
+$can_create = has_capability('local/sentientia_courses:create', $context);
+$can_manage = has_capability('local/sentientia_courses:manage', $context);
+$can_enrol  = has_capability('local/sentientia_courses:enrol', $context);
+
+// KPI counts.
+$total_count   = (int) $DB->count_records_select('course', 'id > 1');
+$visible_count = (int) $DB->count_records_select('course', 'id > 1 AND visible = 1');
+$hidden_count  = $total_count - $visible_count;
+
+// Category options.
+$categories = $DB->get_records('course_categories', null, 'sortorder ASC', 'id, name, depth');
+$cat_options = [];
+foreach ($categories as $c) {
+    $cat_options[] = [
+        'id'   => $c->id,
+        'name' => str_repeat('— ', max(0, $c->depth - 1)) . format_string($c->name),
+    ];
+}
+
+// Datatable columns.
+$columns = [
+    ['key' => 'fullname',    'label' => 'Course Name', 'sortable' => true,  'sortkey' => 'fullname',   'format' => 'html'],
+    ['key' => 'shortname',   'label' => 'Code',        'sortable' => true,  'sortkey' => 'shortname'],
+    ['key' => 'catname',     'label' => 'Category',    'sortable' => false],
+    ['key' => 'enrolled',    'label' => 'Enrolled',    'sortable' => false],
+    ['key' => 'created',     'label' => 'Created',     'sortable' => true,  'sortkey' => 'timecreated'],
+    ['key' => 'statuslabel', 'label' => 'Visibility',  'sortable' => true,  'sortkey' => 'visible', 'format' => 'badge'],
+];
+
+// Phase B0+ — stat_card-compatible tiles.
+$kpi_tiles = [
+    [
+        'label' => 'Total Courses',
+        'value' => number_format($total_count),
+        'icon'  => 'book',
+        'color' => 'primary',
+    ],
+    [
+        'label' => 'Visible',
+        'value' => number_format($visible_count),
+        'icon'  => 'eye',
+        'color' => 'success',
+    ],
+    [
+        'label' => 'Hidden',
+        'value' => number_format($hidden_count),
+        'icon'  => 'eye-slash',
+        'color' => 'info',
+    ],
+];
+
+$data = [
+    'total_count'    => number_format($total_count),
+    'visible_count'  => number_format($visible_count),
+    'hidden_count'   => number_format($hidden_count),
+    'kpi_tiles'      => $kpi_tiles,
+    'has_kpi_tiles'  => !empty($kpi_tiles),
+    'can_create'     => $can_create,
+    'can_manage'     => $can_manage,
+    'can_enrol'      => $can_enrol,
+    // UAT fix 2026-05-09: route URLs through moodle_url so they work on
+    // installs not rooted at / (this XAMPP runs at /moodle/).
+    'featured_url'   => (new moodle_url('/local/sentientia_courses/featured.php'))->out(false),
+    'enrol_csv_url'  => (new moodle_url('/local/sentientia_courses/enrol_csv.php'))->out(false),
+    'export_url'     => (new moodle_url('/local/sentientia_courses/exportcsv.php'))->out(false),
+    'cat_options'    => $cat_options,
+    'has_cat_options' => !empty($cat_options),
+    'columns_json'   => s(json_encode($columns)),
+    // W1-1 BizLMS parity: 5-level org hierarchy cascade.
+    'cascade_group'  => 'courses-filter',
+];
+
+// W1-1 BizLMS parity: explicit AMD bootstrap for the 5-level cascade.
+$PAGE->requires->js_call_amd('theme_airpayux/org_cascade', 'init');
+
+echo $OUTPUT->header();
+echo $OUTPUT->render_from_template('local_sentientia_courses/manage', $data);
+echo $OUTPUT->footer();

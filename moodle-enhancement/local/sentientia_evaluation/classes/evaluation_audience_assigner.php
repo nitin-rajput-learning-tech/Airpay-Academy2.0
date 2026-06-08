@@ -9,9 +9,9 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * P1 #39 (2026-05-20) — bulk-assign an evaluation by target audience.
  *
- * Parallel-port of `\local_airpay_classroom\classroom_audience_enroller`
- * (P1 #13), `\local_airpay_programs\program_audience_enroller` (P1 #9),
- * and `\local_airpay_learningpath\path_audience_enroller` (P1 #8).
+ * Parallel-port of `\local_sentientia_classroom\classroom_audience_enroller`
+ * (P1 #13), `\local_sentientia_programs\program_audience_enroller` (P1 #9),
+ * and `\local_sentientia_learningpath\path_audience_enroller` (P1 #8).
  * Same filter shape, same tenant-scope rules, same MAX_AUDIENCE_SIZE
  * cap, same cohort filter. Delegates to
  * `evaluation_manager::ensure_assignment()` (P1 #37) which is

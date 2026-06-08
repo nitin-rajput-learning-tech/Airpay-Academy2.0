@@ -17,7 +17,7 @@ defined('MOODLE_INTERNAL') || die();
  *
  * The program_completion + classroom_end observers are listed below as
  * placeholders. They become active once W1-9 (event emission) ships matching
- * `\core\event\base` subclasses in airpay_programs + airpay_classroom. Until
+ * `\core\event\base` subclasses in sentientia_programs + sentientia_classroom. Until
  * then, only the course_completion path is exercised.
  */
 $observers = [
@@ -33,23 +33,23 @@ $observers = [
     ],
 
     // ── program_completion (W1-9 dependency) ─────────────────────────────
-    // Activates once `\local_airpay_programs\event\program_completed::create()`
+    // Activates once `\local_sentientia_programs\event\program_completed::create()`
     // is emitted from the program completion path. Until then, this entry
     // is benign — Moodle simply never invokes it because the event isn't
     // emitted anywhere yet.
     [
-        'eventname' => '\\local_airpay_programs\\event\\program_completed',
+        'eventname' => '\\local_sentientia_programs\\event\\program_completed',
         'callback'  => '\\local_sentientia_evaluation\\observer::program_completed',
         'internal'  => true,
         'priority'  => 9000,
     ],
 
     // ── classroom_end (W1-9 wired) ────────────────────────────────────────
-    // W1-9 now emits `\local_airpay_classroom\event\classroom_completed`
+    // W1-9 now emits `\local_sentientia_classroom\event\classroom_completed`
     // from session_manager::change_status() when an admin transitions a
     // classroom into STATUS_COMPLETED.
     [
-        'eventname' => '\\local_airpay_classroom\\event\\classroom_completed',
+        'eventname' => '\\local_sentientia_classroom\\event\\classroom_completed',
         'callback'  => '\\local_sentientia_evaluation\\observer::classroom_ended',
         'internal'  => true,
         'priority'  => 9000,

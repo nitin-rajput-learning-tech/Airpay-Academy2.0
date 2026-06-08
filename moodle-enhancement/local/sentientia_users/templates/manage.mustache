@@ -1,0 +1,346 @@
+{{!
+    Airpay User Engine — admin user management (datatable-driven).
+
+    @template local_sentientia_users/manage
+    @package  local_sentientia_users
+}}
+<style>
+    [data-region="airpay-users"] .ap-filter-bar { background: var(--ap-color-bg-surface, #fff); border: 1px solid var(--ap-color-border, #e2e6ef); border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; }
+    [data-region="airpay-users"] .ap-filter-bar .form-select-sm,
+    [data-region="airpay-users"] .ap-filter-bar .btn-group-sm > .btn { font-size: 0.85rem; }
+    [data-region="airpay-users"] .ap-filter-bar .btn-group .btn { border-color: var(--ap-color-border, #e2e6ef); }
+    [data-region="airpay-users"] .ap-filter-bar .btn-group .btn.active { background: var(--ap-color-primary, #0066A7); color: #fff; border-color: var(--ap-color-primary, #0066A7); }
+</style>
+
+<div data-region="airpay-users">
+
+<div class="ap-page-header d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h2 class="mb-1" style="font-weight: 700;">User Management</h2>
+        <p class="text-muted mb-0">Manage employee accounts, roles, and access across your organisation.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{{export_url}}}" class="btn btn-outline-secondary btn-sm">
+            <i class="fa fa-download fa-fw"></i> Export CSV
+        </a>
+        {{#can_bulkstatus}}
+        <a href="{{{ bulk_csv_url }}}" class="btn btn-outline-secondary btn-sm">
+            <i class="fa fa-toggle-on fa-fw"></i> Bulk status
+        </a>
+        {{/can_bulkstatus}}
+        {{#can_create}}
+        <a href="{{{ bulk_import_url }}}" class="btn btn-outline-secondary btn-sm">
+            <i class="fa fa-upload fa-fw"></i> Import CSV
+        </a>
+        <a href="#" class="btn btn-primary btn-sm" data-action="create-user">
+            <i class="fa fa-plus fa-fw"></i> Add User
+        </a>
+        {{/can_create}}
+    </div>
+</div>
+
+{{! KPI Summary — Phase B0+: migrated to tokens-aware stat_card partial }}
+{{#has_kpi_tiles}}
+<div class="airpay-stat-grid mb-4">
+    {{#kpi_tiles}}
+    {{> theme_airpayux/components/stat_card }}
+    {{/kpi_tiles}}
+</div>
+{{/has_kpi_tiles}}
+
+<div class="ap-filter-bar">
+    {{!
+        Filter bar — BizLMS parity port (2026-05-15 audit).
+        Replaces the legacy single-tier "All Organisations" dropdown with
+        a 5-level hierarchy cascade (Org → Dept → Sub-Dept → L4 → L5) plus
+        Email-contains and Employee-ID-contains fields. The cascade selects
+        share `data-cascade-group="users-filter"` so the org_cascade AMD
+        module wires them together. Each level's children are fetched on
+        demand from local_airpay_org_list_children WS.
+    }}
+    <div class="d-flex flex-wrap align-items-end gap-3">
+
+        {{! ── Hierarchy cascade (5 levels) ── }}
+        <div>
+            <label for="airpay-users-org-l1" class="small text-muted mb-1 d-block">Organisation</label>
+            <select id="airpay-users-org-l1" class="form-select form-select-sm"
+                    data-airpay-org-cascade data-cascade-depth="1"
+                    data-cascade-parent="0" data-cascade-group="users-filter"
+                    style="min-width: 180px;" aria-label="Filter users by organisation">
+                <option value="0">All Organisations</option>
+            </select>
+        </div>
+        <div>
+            <label for="airpay-users-org-l2" class="small text-muted mb-1 d-block">Department</label>
+            <select id="airpay-users-org-l2" class="form-select form-select-sm"
+                    data-airpay-org-cascade data-cascade-depth="2"
+                    data-cascade-parent="0" data-cascade-group="users-filter"
+                    style="min-width: 160px;" disabled aria-label="Filter users by department">
+                <option value="0">All Departments</option>
+            </select>
+        </div>
+        <div>
+            <label for="airpay-users-org-l3" class="small text-muted mb-1 d-block">Sub-Department</label>
+            <select id="airpay-users-org-l3" class="form-select form-select-sm"
+                    data-airpay-org-cascade data-cascade-depth="3"
+                    data-cascade-parent="0" data-cascade-group="users-filter"
+                    style="min-width: 160px;" disabled aria-label="Filter users by sub-department">
+                <option value="0">All Sub-Departments</option>
+            </select>
+        </div>
+        <div>
+            <label for="airpay-users-org-l4" class="small text-muted mb-1 d-block">Level 4</label>
+            <select id="airpay-users-org-l4" class="form-select form-select-sm"
+                    data-airpay-org-cascade data-cascade-depth="4"
+                    data-cascade-parent="0" data-cascade-group="users-filter"
+                    style="min-width: 140px;" disabled aria-label="Filter users by level 4 unit">
+                <option value="0">All Level-4 Units</option>
+            </select>
+        </div>
+        <div>
+            <label for="airpay-users-org-l5" class="small text-muted mb-1 d-block">Level 5</label>
+            <select id="airpay-users-org-l5" class="form-select form-select-sm"
+                    data-airpay-org-cascade data-cascade-depth="5"
+                    data-cascade-parent="0" data-cascade-group="users-filter"
+                    style="min-width: 140px;" disabled aria-label="Filter users by level 5 unit">
+                <option value="0">All Level-5 Units</option>
+            </select>
+        </div>
+
+        {{! ── Email contains + Employee ID contains (BizLMS parity) ── }}
+        <div>
+            <label for="airpay-users-email" class="small text-muted mb-1 d-block">Email contains</label>
+            <input type="text" id="airpay-users-email" class="form-control form-control-sm"
+                   data-airpay-users-filter="email_contains" placeholder="@airpay.in"
+                   style="min-width: 160px;" autocomplete="off"
+                   aria-label="Filter users by email substring">
+        </div>
+        <div>
+            <label for="airpay-users-empid" class="small text-muted mb-1 d-block">Employee ID</label>
+            <input type="text" id="airpay-users-empid" class="form-control form-control-sm"
+                   data-airpay-users-filter="empid_contains" placeholder="AP-12345"
+                   style="min-width: 140px;" autocomplete="off"
+                   aria-label="Filter users by employee ID substring">
+        </div>
+
+        {{! ── P1 batch (2026-05-16) — HR-attribute chip filters. ── }}
+        {{!   Dropdowns are populated by local_sentientia_users_list_filter_options }}
+        {{!   on page load via the chip_filters AMD module. }}
+        <div>
+            <label for="airpay-users-designation" class="small text-muted mb-1 d-block">Designation</label>
+            <select id="airpay-users-designation" class="form-select form-select-sm"
+                    data-airpay-users-filter="designation"
+                    style="min-width: 160px;"
+                    aria-label="Filter users by designation">
+                <option value="">All designations</option>
+            </select>
+        </div>
+        <div>
+            <label for="airpay-users-location" class="small text-muted mb-1 d-block">Location</label>
+            <select id="airpay-users-location" class="form-select form-select-sm"
+                    data-airpay-users-filter="location"
+                    style="min-width: 140px;"
+                    aria-label="Filter users by location">
+                <option value="">All locations</option>
+            </select>
+        </div>
+        <div>
+            <label for="airpay-users-employmenttype" class="small text-muted mb-1 d-block">Employment</label>
+            <select id="airpay-users-employmenttype" class="form-select form-select-sm"
+                    data-airpay-users-filter="employmenttype"
+                    style="min-width: 130px;"
+                    aria-label="Filter users by employment type">
+                <option value="">All types</option>
+            </select>
+        </div>
+        <div>
+            <label for="airpay-users-hrmsrole" class="small text-muted mb-1 d-block">HRMS role</label>
+            <select id="airpay-users-hrmsrole" class="form-select form-select-sm"
+                    data-airpay-users-filter="hrmsrole"
+                    style="min-width: 140px;"
+                    aria-label="Filter users by HRMS role">
+                <option value="">All roles</option>
+            </select>
+        </div>
+
+        {{! ── Status pills ── }}
+        <div>
+            <label class="small text-muted mb-1 d-block">Status</label>
+            <div class="btn-group btn-group-sm" role="group" data-airpay-users-status>
+                <button type="button" class="btn btn-light active"      data-status="active">Active</button>
+                <button type="button" class="btn btn-light"             data-status="suspended">Suspended</button>
+                <button type="button" class="btn btn-light"             data-status="all">All</button>
+            </div>
+        </div>
+
+        {{! ── Reset all filters ── }}
+        <div>
+            <label class="small text-muted mb-1 d-block">&nbsp;</label>
+            <button type="button" class="btn btn-sm btn-link text-muted" data-airpay-users-reset
+                    aria-label="Reset all filters">
+                <i class="fa fa-times-circle fa-fw"></i> Clear
+            </button>
+        </div>
+    </div>
+</div>
+
+<div data-airpay-bulk-bar style="display: none;" class="alert alert-info py-2 px-3 mb-3 d-flex justify-content-between align-items-center">
+    <div>
+        <i class="fa fa-check-square fa-fw"></i>
+        <strong data-airpay-bulk-count>0</strong> selected
+    </div>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-sm btn-outline-warning" data-bulk-action="suspend">
+            <i class="fa fa-ban fa-fw"></i> Suspend
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-success" data-bulk-action="activate">
+            <i class="fa fa-undo fa-fw"></i> Activate
+        </button>
+        <button type="button" class="btn btn-sm btn-link text-muted" data-bulk-action="clear">
+            Cancel
+        </button>
+    </div>
+</div>
+
+<div data-airpay-table
+     data-endpoint="local_sentientia_users_list_users"
+     data-columns="{{{columns_json}}}"
+     data-search-placeholder="Search by name, email, or employee ID…"
+     data-perpage="25"
+     data-selectable="1">
+</div>
+
+</div>
+
+{{#js}}
+require([
+    'theme_airpayux/datatable',
+    'theme_airpayux/org_cascade',
+    'local_sentientia_users/user_actions',
+    'core/ajax',
+    'core/notification',
+    'core/str'
+], function(Datatable, OrgCascade, UserActions, Ajax, Notification, Str) {
+    Datatable.init();
+    OrgCascade.init(); // 2026-05-15 BizLMS parity: boot 5-level org cascade.
+    UserActions.init();
+
+    var root = document.querySelector('[data-airpay-table]');
+    var dt = Datatable.getInstance(root);
+    if (!dt) return;
+
+    dt.setFilter('status', 'active');
+
+    // ── Hierarchy cascade → datatable filter ─────────────────────────
+    // When any cascade level changes, push the new full set of
+    // {level1..level5} values into the datatable's filter object so the
+    // backend WS can scope by the deepest selected level.
+    document.addEventListener('airpay:org-cascade:changed', function(e) {
+        if (!e.detail || e.detail.group !== 'users-filter') return;
+        var lv = e.detail.levels || {};
+        dt.setFilter('org_l1', lv.level1 || 0);
+        dt.setFilter('org_l2', lv.level2 || 0);
+        dt.setFilter('org_l3', lv.level3 || 0);
+        dt.setFilter('org_l4', lv.level4 || 0);
+        dt.setFilter('org_l5', lv.level5 || 0);
+    });
+
+    // ── Text filters (email contains, employee ID contains) ─────────
+    // Debounced — fire 300 ms after the user stops typing.
+    function debounce(fn, ms) {
+        var t;
+        return function() {
+            var args = arguments, self = this;
+            clearTimeout(t);
+            t = setTimeout(function() { fn.apply(self, args); }, ms);
+        };
+    }
+    var pushText = debounce(function(key, val) { dt.setFilter(key, val); }, 300);
+    document.querySelectorAll('input[data-airpay-users-filter]').forEach(function(el) {
+        el.addEventListener('input', function(e) {
+            var key = e.target.dataset.airpayUsersFilter;
+            pushText(key, e.target.value);
+        });
+    });
+
+    document.querySelectorAll('[data-airpay-users-status] [data-status]').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            var status = e.target.dataset.status;
+            document.querySelectorAll('[data-airpay-users-status] [data-status]').forEach(function(b) {
+                b.classList.toggle('active', b === e.target);
+            });
+            dt.setFilter('status', status);
+        });
+    });
+
+    // ── Clear-all reset (BizLMS parity — was the "Reset" button in
+    // the legacy users_filters_form). Resets cascade selects, text
+    // filters, and status pill back to defaults, then refreshes the
+    // datatable in one go.
+    var resetBtn = document.querySelector('[data-airpay-users-reset]');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', function() {
+            document.querySelectorAll('select[data-airpay-org-cascade][data-cascade-group="users-filter"]').forEach(function(sel) {
+                sel.value = '0';
+                if (sel.dataset.cascadeDepth !== '1') { sel.disabled = true; }
+            });
+            document.querySelectorAll('input[data-airpay-users-filter]').forEach(function(el) {
+                el.value = '';
+            });
+            var allBtn = document.querySelector('[data-airpay-users-status] [data-status="all"]');
+            if (allBtn) { allBtn.click(); }
+            ['org_l1','org_l2','org_l3','org_l4','org_l5','email_contains','empid_contains'].forEach(function(k) {
+                dt.setFilter(k, k.indexOf('org_') === 0 ? 0 : '');
+            });
+        });
+    }
+
+    // ── Bulk action bar ──────────────────────────────────────────────
+    var bar = document.querySelector('[data-airpay-bulk-bar]');
+    var countEl = document.querySelector('[data-airpay-bulk-count]');
+    document.addEventListener('airpay:datatable:selection', function(e) {
+        var n = e.detail.selected.length;
+        countEl.textContent = n;
+        bar.style.display = n > 0 ? '' : 'none';
+    });
+
+    var runBulk = function(action) {
+        var ids = dt.getSelected();
+        if (!ids.length) return;
+        Str.get_string('confirm', 'core').then(function(confirmLabel) {
+            Notification.confirm(
+                'Bulk ' + action,
+                'Are you sure you want to ' + action + ' ' + ids.length + ' user(s)?',
+                confirmLabel, null,
+                function() {
+                    Ajax.call([{
+                        methodname: 'local_sentientia_users_bulk_action',
+                        args: {action: action, userids: ids}
+                    }])[0].then(function(res) {
+                        Notification.addNotification({
+                            message: 'Bulk ' + action + ': ' + res.count + ' user(s) updated'
+                                + (res.skipped ? ' (' + res.skipped + ' skipped)' : ''),
+                            type: 'success'
+                        });
+                        dt.clearSelection();
+                        dt.refresh();
+                        return null;
+                    }).catch(Notification.exception);
+                }
+            );
+            return null;
+        }).catch(Notification.exception);
+    };
+
+    document.querySelectorAll('[data-bulk-action]').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            var action = e.currentTarget.dataset.bulkAction;
+            if (action === 'clear') {
+                dt.clearSelection();
+                return;
+            }
+            runBulk(action);
+        });
+    });
+});
+{{/js}}

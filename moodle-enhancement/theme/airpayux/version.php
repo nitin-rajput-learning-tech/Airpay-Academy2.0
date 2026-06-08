@@ -321,7 +321,7 @@ defined('MOODLE_INTERNAL') || die();
 // Courses". Real course overview image when one is uploaded, else a per-course
 // gradient tile (course id % 6) so an image-less wall still looks varied. Bump
 // invalidates the compiled CSS bundle + changes themerev so the new
-// local_sentientia_catalog + local_airpay_courses styles.css aggregate (poster
+// local_sentientia_catalog + local_sentientia_courses styles.css aggregate (poster
 // rules) reaches clients without a manual hard refresh.
 // Dark-mode contrast — global short-token flip (2026-05-29). The legacy
 // short-form colour tokens (--ap-text, --ap-text-muted, --ap-border,

@@ -373,7 +373,7 @@ echo $OUTPUT->doctype();
         <a href="<?php echo $CFG->wwwroot; ?>/login/index.php" class="ap-nav__icon" title="Login to browse courses"><i class="fa fa-shopping-cart"></i></a>
         <button class="ap-nav__icon" id="ap-dark-toggle" title="Toggle dark mode"><i class="fa fa-moon-o"></i></button>
         <a href="<?php echo $CFG->wwwroot; ?>/login/index.php" class="ap-btn-login">Login</a>
-        <a href="<?php echo $CFG->wwwroot; ?>/local/airpay_users/signup.php" class="ap-btn-register">Register</a>
+        <a href="<?php echo $CFG->wwwroot; ?>/local/sentientia_users/signup.php" class="ap-btn-register">Register</a>
     </div>
 </nav>
 
@@ -659,7 +659,7 @@ echo $OUTPUT->doctype();
         <h2>Ready to transform your workforce training?</h2>
         <p>Join <?php echo number_format($usercount); ?>+ professionals across financial services who are already learning on airpay academy.</p>
         <div class="ap-cta__actions">
-            <a href="<?php echo $CFG->wwwroot; ?>/local/airpay_users/signup.php" class="ap-hero__btn-primary">Get Started Free <i class="fa fa-arrow-right"></i></a>
+            <a href="<?php echo $CFG->wwwroot; ?>/local/sentientia_users/signup.php" class="ap-hero__btn-primary">Get Started Free <i class="fa fa-arrow-right"></i></a>
             <a href="mailto:academy@airpay.co.in?subject=Enterprise%20Demo%20Request%20%E2%80%94%20airpay%20academy&amp;body=Hi%20Airpay%20Academy%20Team%2C%0A%0AI%27d%20like%20to%20request%20an%20enterprise%20demo%20of%20airpay%20academy.%0A%0AOrganisation%3A%20%0ANo.%20of%20employees%3A%20%0AIndustry%3A%20%0AKey%20requirements%3A%20%0A%0ALooking%20forward%20to%20hearing%20from%20you.%0A%0ARegards" class="ap-hero__btn-outline"><i class="fa fa-briefcase"></i> Request Enterprise Demo</a>
         </div>
     </div>

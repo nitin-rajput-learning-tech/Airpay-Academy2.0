@@ -125,7 +125,7 @@ class request_manager {
      * Mirrors `submit()` but persists `item_type='path'` + `itemid=$pathid`
      * (and leaves the legacy `courseid` column at 0). On approval, the
      * decide() flow detects the item type and enrols the user into the
-     * path via `\local_airpay_learningpath\path_manager::enrol_users()`,
+     * path via `\local_sentientia_learningpath\path_manager::enrol_users()`,
      * which (per W1-2) also enrols them into every Moodle course on the
      * path.
      *
@@ -143,14 +143,14 @@ class request_manager {
             : $DB->get_record('user', ['id' => $userid], '*', MUST_EXIST);
 
         // Path must exist + be active.
-        $path = $DB->get_record('local_airpay_learningpath',
+        $path = $DB->get_record('local_sentientia_learningpath',
             ['id' => $pathid], 'id, name, status', MUST_EXIST);
-        if ((int) $path->status !== \local_airpay_learningpath\path_manager::STATUS_ACTIVE) {
+        if ((int) $path->status !== \local_sentientia_learningpath\path_manager::STATUS_ACTIVE) {
             throw new \moodle_exception('error_path_inactive', 'local_sentientia_request');
         }
 
         // Already enrolled in the path?
-        if ($DB->record_exists('local_airpay_learningpath_users',
+        if ($DB->record_exists('local_sentientia_learningpath_users',
             ['pathid' => $pathid, 'userid' => $userid])) {
             throw new \moodle_exception('error_alreadyenrolled', 'local_sentientia_request');
         }
@@ -172,7 +172,7 @@ class request_manager {
 
         // Route: manager → courseowner-equivalent (path owner, if any) →
         // default approver. Path-owner detection isn't implemented yet
-        // (no `local_airpay_learningpath.owner_userid` column), so fall
+        // (no `local_sentientia_learningpath.owner_userid` column), so fall
         // through to manager-or-default.
         [$route, $approverid] = self::route_approver_for_path($user, $pathid);
 
@@ -227,7 +227,7 @@ class request_manager {
     /**
      * P1 batch (2026-05-16) — path-flavoured routing. Same fallback chain
      * as course requests but skips the course-owner step (no owner field
-     * on `local_airpay_learningpath` yet).
+     * on `local_sentientia_learningpath` yet).
      *
      * @return array{0:string, 1:int}  [route_label, approver_userid]
      */
@@ -348,7 +348,7 @@ class request_manager {
                     // path_manager::enrol_users() inserts the path-user
                     // row AND enrols the learner into every Moodle course
                     // on the path via manual enrol (W1-2).
-                    \local_airpay_learningpath\path_manager::enrol_users(
+                    \local_sentientia_learningpath\path_manager::enrol_users(
                         (int) $rec->itemid, [(int) $rec->userid]);
                 } else {
                     self::enrol_user($rec->userid, (int) $rec->courseid);

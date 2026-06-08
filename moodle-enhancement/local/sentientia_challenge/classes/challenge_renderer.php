@@ -18,7 +18,7 @@ class challenge_renderer extends \plugin_renderer_base {
     /**
      * Render challenge element for a course.
      *
-     * @param string $area   Plugin context (e.g. 'local_airpay_courses')
+     * @param string $area   Plugin context (e.g. 'local_sentientia_courses')
      * @param int    $itemid Course ID
      * @return string HTML (empty until implemented)
      */

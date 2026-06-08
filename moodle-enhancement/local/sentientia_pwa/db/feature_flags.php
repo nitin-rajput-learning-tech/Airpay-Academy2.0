@@ -42,7 +42,7 @@ $flags = [
         'default'     => false,
         'description' => 'Push deadline reminders to learners.
                           Fires alongside the existing email reminder
-                          from local_airpay_courses\\task\\course_reminder.
+                          from local_sentientia_courses\\task\\course_reminder.
                           Only fires for users who have a push subscription
                           AND sentientia.pwa.push.enabled is ON.',
     ],
@@ -50,7 +50,7 @@ $flags = [
         'default'     => false,
         'description' => 'Push overdue escalations to managers
                           when a learner misses a deadline. Companion to
-                          the existing local_airpay_courses\\task\\course_overdue
+                          the existing local_sentientia_courses\\task\\course_overdue
                           email escalation.',
     ],
 

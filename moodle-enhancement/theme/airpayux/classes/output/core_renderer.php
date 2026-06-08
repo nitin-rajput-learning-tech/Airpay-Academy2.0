@@ -873,18 +873,18 @@ JS;
 
             $show_course_header = true;
 
-            $progress_pct = \local_airpay_courses\course_manager::get_progress_percentage($courseid, $USER->id);
+            $progress_pct = \local_sentientia_courses\course_manager::get_progress_percentage($courseid, $USER->id);
             $usercourseprogress = ['progress' => $progress_pct];
             // Ratings: prefer Airpay plugin, fall back to BizLMS.
             $display_ratings = null;
             if (class_exists('\local_sentientia_ratings\rating_manager')) {
-                $display_ratings = \local_sentientia_ratings\rating_manager::render($courseid, 'local_airpay_courses');
+                $display_ratings = \local_sentientia_ratings\rating_manager::render($courseid, 'local_sentientia_courses');
             } else {
                 $ratings_lib = $CFG->dirroot . '/local/ratings/lib.php';
                 if (file_exists($ratings_lib)) {
                     require_once($ratings_lib);
                     if (function_exists('display_rating')) {
-                        $display_ratings = display_rating($courseid, 'local_airpay_courses');
+                        $display_ratings = display_rating($courseid, 'local_sentientia_courses');
                     }
                 }
             }
@@ -990,7 +990,7 @@ JS;
                 $editing_url = new moodle_url('/course/view.php', array('id' => $courseid, 'sesskey'=> $sesskey, 'edit'=>$useredit));
             }
             if((has_capability('moodle/course:create',$systemcontext) ||
-                \local_airpay_courses\course_manager::can_enrol($systemcontext)) && $manage) {
+                \local_sentientia_courses\course_manager::can_enrol($systemcontext)) && $manage) {
                 $is_courseedit_icon = true;
                 $course_reports =  true;
                 $course_complition = true;
@@ -1000,8 +1000,8 @@ JS;
                 $coursebackup = true;
             }
             $maincheckcontext = \local_airpay_org\accesslib::get_module_context();
-            if(\local_airpay_courses\course_manager::can_manage($maincheckcontext)
-                && \local_airpay_courses\course_manager::can_enrol($maincheckcontext)) {
+            if(\local_sentientia_courses\course_manager::can_manage($maincheckcontext)
+                && \local_sentientia_courses\course_manager::can_enrol($maincheckcontext)) {
                 $enrolid = $DB->get_field('enrol', 'id', array('courseid' => $courseid ,'enrol' => 'manual'));
                 $userenrollment = true;
             }
@@ -1017,7 +1017,7 @@ JS;
         if (!empty($challenge_dir) && (int)get_config('', 'local_challenge_enable_challenge')) {
             try {
                 $render_class = $PAGE->get_renderer('local_sentientia_challenge');
-                $challenge_element = $render_class->render_challenge_object('local_airpay_courses', $courseid);
+                $challenge_element = $render_class->render_challenge_object('local_sentientia_courses', $courseid);
             } catch (\Throwable $e) {
                 $challenge_element = false;
             }
@@ -1155,7 +1155,7 @@ JS;
         // Links: My Profile.
         $myprofile = new stdClass();
         $myprofile->itemtype = 'link';
-        $myprofile->url = new moodle_url('/local/airpay_users/profile.php', array('id' => $user->id));
+        $myprofile->url = new moodle_url('/local/sentientia_users/profile.php', array('id' => $user->id));
         $myprofile->title = get_string('profile');
         $myprofile->titleidentifier = 'profile,moodle';
         // $myprofile->pix = "i/user";
@@ -1245,7 +1245,7 @@ JS;
         }
         if($newpageurl == $CFG->wwwroot.'/user/view.php' || $newpageurl == $CFG->wwwroot.'/user/profile.php'){
             $id = optional_param('id', $USER->id, PARAM_INT);
-            redirect($CFG->wwwroot."/local/airpay_users/profile.php?id=$id");
+            redirect($CFG->wwwroot."/local/sentientia_users/profile.php?id=$id");
         }
         if($newpageurl == $CFG->wwwroot.'/course/index.php' || $newpageurl == $CFG->wwwroot.'/course'){
             redirect($CFG->wwwroot."/local/sentientia_catalog/index.php");
@@ -1605,13 +1605,13 @@ JS;
             }
         $display_ratings = null;
         if (class_exists('\local_sentientia_ratings\rating_manager')) {
-            $display_ratings = \local_sentientia_ratings\rating_manager::render($COURSE->id, 'local_airpay_courses');
+            $display_ratings = \local_sentientia_ratings\rating_manager::render($COURSE->id, 'local_sentientia_courses');
         } else {
             $ratings_lib = $CFG->dirroot . '/local/ratings/lib.php';
             if (file_exists($ratings_lib)) {
                 require_once($ratings_lib);
                 if (function_exists('display_rating')) {
-                    $display_ratings = display_rating($COURSE->id, 'local_airpay_courses');
+                    $display_ratings = display_rating($COURSE->id, 'local_sentientia_courses');
                 }
             }
         }

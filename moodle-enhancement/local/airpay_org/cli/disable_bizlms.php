@@ -46,11 +46,11 @@ cli_writeln('');
 $plugins = [
     // Replaced by Airpay (Phase 1-5).
     'local_costcenter'      => 'Replaced by local_airpay_org',
-    'local_users'           => 'Replaced by local_airpay_users',
-    'local_courses'         => 'Replaced by local_airpay_courses',
-    'local_classroom'       => 'Replaced by local_airpay_classroom',
+    'local_users'           => 'Replaced by local_sentientia_users',
+    'local_courses'         => 'Replaced by local_sentientia_courses',
+    'local_classroom'       => 'Replaced by local_sentientia_classroom',
     'local_onlineexams'     => 'Replaced by local_sentientia_exams',
-    'local_learningplan'    => 'Replaced by local_airpay_learningpath',
+    'local_learningplan'    => 'Replaced by local_sentientia_learningpath',
     'local_search'          => 'Replaced by local_sentientia_catalog',
     'local_custom_category' => 'Replaced by category_manager in sentientia_catalog',
 
@@ -67,7 +67,7 @@ $plugins = [
     // BizLMS support plugins.
     'local_ratings'         => 'Optional — guarded by file_exists()',
     'local_challenge'       => 'Optional — guarded by core_component check',
-    'local_skillrepository' => 'Merged into airpay_skills',
+    'local_skillrepository' => 'Merged into sentientia_skills',
     'local_evaluation'      => 'Not actively used',
     'local_assignroles'     => 'Not actively used',
     'local_program'         => 'Not actively used',

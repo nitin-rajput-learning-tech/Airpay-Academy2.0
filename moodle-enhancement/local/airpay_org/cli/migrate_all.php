@@ -69,10 +69,10 @@ $results[] = migrate_table(
 );
 
 // ═══════════════════════════════════════════════════════
-// 2. local_classroom → local_airpay_classroom
+// 2. local_classroom → local_sentientia_classroom
 // ═══════════════════════════════════════════════════════
 $results[] = migrate_table(
-    'local_classroom', 'local_airpay_classroom',
+    'local_classroom', 'local_sentientia_classroom',
     [
         'id'           => 'id',
         'name'         => 'name',
@@ -114,10 +114,10 @@ $results[] = migrate_table(
 );
 
 // ═══════════════════════════════════════════════════════
-// 4. local_learningplan → local_airpay_learningpath
+// 4. local_learningplan → local_sentientia_learningpath
 // ═══════════════════════════════════════════════════════
 $results[] = migrate_table(
-    'local_learningplan', 'local_airpay_learningpath',
+    'local_learningplan', 'local_sentientia_learningpath',
     [
         'id'           => 'id',
         'name'         => 'name',
@@ -144,11 +144,11 @@ $cap_map = [
     'local/costcenter:manage'                    => 'local/airpay_org:manage',
     'local/costcenter:manage_ownorganization'    => 'local/airpay_org:manage_ownorganization',
     'local/costcenter:manage_owndepartments'     => 'local/airpay_org:manage_owndepartments',
-    'local/courses:manage'                       => 'local/airpay_courses:manage',
-    'local/courses:enrol'                        => 'local/airpay_courses:enrol',
-    'local/classroom:manageclassroom'            => 'local/airpay_classroom:manage',
-    'local/users:edit'                           => 'local/airpay_users:edit',
-    'local/users:bulkstatuschange'               => 'local/airpay_users:bulkstatuschange',
+    'local/courses:manage'                       => 'local/sentientia_courses:manage',
+    'local/courses:enrol'                        => 'local/sentientia_courses:enrol',
+    'local/classroom:manageclassroom'            => 'local/sentientia_classroom:manage',
+    'local/users:edit'                           => 'local/sentientia_users:edit',
+    'local/users:bulkstatuschange'               => 'local/sentientia_users:bulkstatuschange',
 ];
 
 $cap_migrated = 0;

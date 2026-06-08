@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/sentientia_programs/db" VERSION="20260516"
+       COMMENT="Airpay Certification Programs — multi-level certification tracks">
+  <TABLES>
+    <TABLE NAME="local_sentientia_programs" COMMENT="Certification programs (replaces BizLMS local_program)">
+      <FIELDS>
+        <FIELD NAME="id"              TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="name"            TYPE="char" LENGTH="254" NOTNULL="true"/>
+        <FIELD NAME="description"     TYPE="text" NOTNULL="false"
+               COMMENT="P1 #9 (2026-05-16): now rendered via rich-text editor on edit form"/>
+        <FIELD NAME="descriptionformat" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="1"
+               COMMENT="P1 #9 (2026-05-16): FORMAT_HTML(1) | FORMAT_PLAIN(2) | FORMAT_MARKDOWN(4)"/>
+        <FIELD NAME="costcenterid"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Tenant org ID"/>
+        <FIELD NAME="open_path"       TYPE="char" LENGTH="254" NOTNULL="false"/>
+        <FIELD NAME="status"          TYPE="int"  LENGTH="2"  NOTNULL="true" DEFAULT="1"
+               COMMENT="0=draft, 1=active, 2=archived"/>
+        <FIELD NAME="visible"         TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="startdate"       TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="P1 #9 (2026-05-16): UNIX ts; program becomes enrollable from this date"/>
+        <FIELD NAME="enddate"         TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="P1 #9 (2026-05-16): UNIX ts; program closes for new enrolments after this date"/>
+        <FIELD NAME="completion_required"  TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1"
+               COMMENT="1=all levels required, 0=any level completes program"/>
+        <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_costcenter" UNIQUE="false" FIELDS="costcenterid"/>
+        <INDEX NAME="idx_status"     UNIQUE="false" FIELDS="status"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_programs_levels" COMMENT="Levels within a program (sequential certification tiers)">
+      <FIELDS>
+        <FIELD NAME="id"              TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="programid"       TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="name"            TYPE="char" LENGTH="254" NOTNULL="true"/>
+        <FIELD NAME="description"     TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="sortorder"       TYPE="int"  LENGTH="6"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="completion_required"  TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1"
+               COMMENT="1=must complete to proceed, 0=optional"/>
+        <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"     TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_program"  TYPE="foreign" FIELDS="programid" REFTABLE="local_sentientia_programs" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_program_sort" UNIQUE="false" FIELDS="programid, sortorder"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_programs_courses" COMMENT="Courses assigned to a level">
+      <FIELDS>
+        <FIELD NAME="id"              TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="levelid"         TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="courseid"        TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="sortorder"       TYPE="int"  LENGTH="6"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="mandatory"       TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"   TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_level"  TYPE="foreign" FIELDS="levelid" REFTABLE="local_sentientia_programs_levels" REFFIELDS="id"/>
+        <KEY NAME="fk_course" TYPE="foreign" FIELDS="courseid" REFTABLE="course" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_level_course" UNIQUE="true" FIELDS="levelid, courseid"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_programs_users" COMMENT="User enrolments in programs">
+      <FIELDS>
+        <FIELD NAME="id"              TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="programid"       TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="userid"          TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="currentlevelid" TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="Current level user is on (NULL = not started)"/>
+        <FIELD NAME="status"          TYPE="int"  LENGTH="2"  NOTNULL="true" DEFAULT="0"
+               COMMENT="0=enrolled, 1=in_progress, 2=completed"/>
+        <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timecompleted"   TYPE="int"  LENGTH="10" NOTNULL="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"     TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_program"  TYPE="foreign" FIELDS="programid" REFTABLE="local_sentientia_programs" REFFIELDS="id"/>
+        <KEY NAME="fk_user"     TYPE="foreign" FIELDS="userid"    REFTABLE="user"                   REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_program_user" UNIQUE="true"  FIELDS="programid, userid"/>
+        <INDEX NAME="idx_status"       UNIQUE="false" FIELDS="status"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

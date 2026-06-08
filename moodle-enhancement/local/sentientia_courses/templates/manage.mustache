@@ -1,0 +1,210 @@
+{{!
+    Airpay Course Management — datatable-driven admin listing.
+
+    @template local_sentientia_courses/manage
+    @package  local_sentientia_courses
+}}
+<style>
+    [data-region="airpay-courses"] .ap-filter-bar { background: var(--ap-color-bg-surface, #fff); border: 1px solid var(--ap-color-border, #e2e6ef); border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; }
+    [data-region="airpay-courses"] .btn-group .btn { border-color: var(--ap-color-border, #e2e6ef); }
+    [data-region="airpay-courses"] .btn-group .btn.active { background: var(--ap-color-primary, #0066A7); color: #fff; border-color: var(--ap-color-primary, #0066A7); }
+</style>
+
+<div data-region="airpay-courses">
+
+<div class="ap-page-header d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h2 class="mb-1" style="font-weight: 700;">Course Management</h2>
+        <p class="text-muted mb-0">Build, organise, and manage learning content across categories.</p>
+    </div>
+    <div class="d-flex gap-2">
+    {{#can_manage}}
+    <a href="{{{ featured_url }}}" class="btn btn-outline-secondary btn-sm">
+        <i class="fa fa-star fa-fw"></i> Featured
+    </a>
+    {{/can_manage}}
+    {{#can_enrol}}
+    <a href="{{{ enrol_csv_url }}}" class="btn btn-outline-secondary btn-sm">
+        <i class="fa fa-upload fa-fw"></i> Mass enrol
+    </a>
+    {{/can_enrol}}
+    <a href="{{{ export_url }}}" class="btn btn-outline-secondary btn-sm"
+       title="Download all matching courses as CSV (honours current filters + sort)">
+        <i class="fa fa-download fa-fw"></i> Export CSV
+    </a>
+    {{#can_create}}
+    <a href="#" class="btn btn-primary btn-sm" data-action="create-course">
+        <i class="fa fa-plus fa-fw"></i> New Course
+    </a>
+    {{/can_create}}
+    </div>
+</div>
+
+{{! KPI Summary — Phase B0+: migrated to tokens-aware stat_card partial }}
+{{#has_kpi_tiles}}
+<div class="airpay-stat-grid mb-4">
+    {{#kpi_tiles}}
+    {{> theme_airpayux/components/stat_card }}
+    {{/kpi_tiles}}
+</div>
+{{/has_kpi_tiles}}
+
+<div class="ap-filter-bar">
+    {{!
+        Filter bar — W1-1 BizLMS parity (2026-05-15).
+        Added 5-level org hierarchy cascade alongside the existing Category
+        and Visibility filters. Org and Category are independent dimensions
+        — a course belongs to ONE category (course taxonomy) and ONE org
+        path (tenant scope). The cascade uses the shared
+        theme_airpayux/org_cascade AMD module + the
+        local_airpay_org_list_children web service.
+    }}
+    <div class="d-flex flex-wrap align-items-end gap-3">
+
+        {{! ── 5-level org cascade ── }}
+        <div>
+            <label for="airpay-courses-org-l1" class="small text-muted mb-1 d-block">Organisation</label>
+            <select id="airpay-courses-org-l1" class="form-select form-select-sm"
+                    data-airpay-org-cascade data-cascade-depth="1"
+                    data-cascade-parent="0" data-cascade-group="courses-filter"
+                    style="min-width: 180px;" aria-label="Filter courses by organisation">
+                <option value="0">All Organisations</option>
+            </select>
+        </div>
+        <div>
+            <label for="airpay-courses-org-l2" class="small text-muted mb-1 d-block">Department</label>
+            <select id="airpay-courses-org-l2" class="form-select form-select-sm"
+                    data-airpay-org-cascade data-cascade-depth="2"
+                    data-cascade-parent="0" data-cascade-group="courses-filter"
+                    style="min-width: 160px;" disabled aria-label="Filter courses by department">
+                <option value="0">All Departments</option>
+            </select>
+        </div>
+        <div>
+            <label for="airpay-courses-org-l3" class="small text-muted mb-1 d-block">Sub-Department</label>
+            <select id="airpay-courses-org-l3" class="form-select form-select-sm"
+                    data-airpay-org-cascade data-cascade-depth="3"
+                    data-cascade-parent="0" data-cascade-group="courses-filter"
+                    style="min-width: 160px;" disabled aria-label="Filter courses by sub-department">
+                <option value="0">All Sub-Departments</option>
+            </select>
+        </div>
+        <div>
+            <label for="airpay-courses-org-l4" class="small text-muted mb-1 d-block">Level 4</label>
+            <select id="airpay-courses-org-l4" class="form-select form-select-sm"
+                    data-airpay-org-cascade data-cascade-depth="4"
+                    data-cascade-parent="0" data-cascade-group="courses-filter"
+                    style="min-width: 140px;" disabled aria-label="Filter courses by level 4 unit">
+                <option value="0">All Level-4 Units</option>
+            </select>
+        </div>
+        <div>
+            <label for="airpay-courses-org-l5" class="small text-muted mb-1 d-block">Level 5</label>
+            <select id="airpay-courses-org-l5" class="form-select form-select-sm"
+                    data-airpay-org-cascade data-cascade-depth="5"
+                    data-cascade-parent="0" data-cascade-group="courses-filter"
+                    style="min-width: 140px;" disabled aria-label="Filter courses by level 5 unit">
+                <option value="0">All Level-5 Units</option>
+            </select>
+        </div>
+
+        {{#has_cat_options}}
+        <div>
+            <label class="small text-muted mb-1 d-block">Category</label>
+            <select class="form-select form-select-sm" data-airpay-courses-filter="categoryid" style="min-width: 220px;">
+                <option value="0">All Categories</option>
+                {{#cat_options}}
+                <option value="{{id}}">{{name}}</option>
+                {{/cat_options}}
+            </select>
+        </div>
+        {{/has_cat_options}}
+
+        <div>
+            <label class="small text-muted mb-1 d-block">Visibility</label>
+            <div class="btn-group btn-group-sm" role="group" data-airpay-courses-visibility>
+                <button type="button" class="btn btn-light active"  data-visibility="all">All</button>
+                <button type="button" class="btn btn-light"         data-visibility="visible">Visible</button>
+                <button type="button" class="btn btn-light"         data-visibility="hidden">Hidden</button>
+            </div>
+        </div>
+
+        <div>
+            <label class="small text-muted mb-1 d-block">&nbsp;</label>
+            <button type="button" class="btn btn-sm btn-link text-muted" data-airpay-courses-reset
+                    aria-label="Reset all filters">
+                <i class="fa fa-times-circle fa-fw"></i> Clear
+            </button>
+        </div>
+    </div>
+</div>
+
+<div data-airpay-table
+     data-endpoint="local_sentientia_courses_list_courses"
+     data-columns="{{{columns_json}}}"
+     data-search-placeholder="Search course name, code, or ID number…"
+     data-perpage="25">
+</div>
+
+</div>
+
+{{#js}}
+require([
+    'theme_airpayux/datatable',
+    'local_sentientia_courses/course_actions'
+], function(Datatable, CourseActions) {
+    Datatable.init();
+    CourseActions.init();
+
+    var root = document.querySelector('[data-airpay-table]');
+    var dt = Datatable.getInstance(root);
+    if (!dt) return;
+
+    // W1-1: react to org cascade changes from theme_airpayux/org_cascade.
+    document.addEventListener('airpay:org-cascade:changed', function(e) {
+        if (!e.detail || e.detail.group !== 'courses-filter') return;
+        var lv = e.detail.levels || {};
+        dt.setFilter('org_l1', lv.level1 || 0);
+        dt.setFilter('org_l2', lv.level2 || 0);
+        dt.setFilter('org_l3', lv.level3 || 0);
+        dt.setFilter('org_l4', lv.level4 || 0);
+        dt.setFilter('org_l5', lv.level5 || 0);
+    });
+
+    document.querySelectorAll('[data-airpay-courses-filter]').forEach(function(el) {
+        el.addEventListener('change', function(e) {
+            var key = e.target.dataset.airpayCoursesFilter;
+            dt.setFilter(key, parseInt(e.target.value, 10) || 0);
+        });
+    });
+
+    document.querySelectorAll('[data-airpay-courses-visibility] [data-visibility]').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            var v = e.target.dataset.visibility;
+            document.querySelectorAll('[data-airpay-courses-visibility] [data-visibility]').forEach(function(b) {
+                b.classList.toggle('active', b === e.target);
+            });
+            dt.setFilter('visibility', v);
+        });
+    });
+
+    // W1-1: Clear-all reset.
+    var resetBtn = document.querySelector('[data-airpay-courses-reset]');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', function() {
+            document.querySelectorAll('select[data-airpay-org-cascade][data-cascade-group="courses-filter"]').forEach(function(sel) {
+                sel.value = '0';
+                if (sel.dataset.cascadeDepth !== '1') { sel.disabled = true; }
+            });
+            document.querySelectorAll('[data-airpay-courses-filter]').forEach(function(el) {
+                el.value = '0';
+            });
+            var allBtn = document.querySelector('[data-airpay-courses-visibility] [data-visibility="all"]');
+            if (allBtn) { allBtn.click(); }
+            ['org_l1','org_l2','org_l3','org_l4','org_l5','categoryid'].forEach(function(k) {
+                dt.setFilter(k, 0);
+            });
+        });
+    }
+});
+{{/js}}

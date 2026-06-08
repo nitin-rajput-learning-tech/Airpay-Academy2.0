@@ -63,9 +63,9 @@ class audit_log {
         '\core\event\course_deleted',
         '\core\event\course_visibility_updated',
         // P1 #24 (2026-05-16) — closes audit item #13 from
-        // parity-audit-2026-05-15/airpay_courses.md (BizLMS local_logs
+        // parity-audit-2026-05-15/sentientia_courses.md (BizLMS local_logs
         // parity). Moodle fires `course_updated` from `update_course()`
-        // on every persistence path — `airpay_courses\course_manager`
+        // on every persistence path — `sentientia_courses\course_manager`
         // routes ALL its create/update/toggle_visibility traffic through
         // that function, so adding the eventname here gives compliance
         // auditors a complete "what changed on this course and who did
@@ -81,8 +81,8 @@ class audit_log {
         '\core\event\users_bulk_imported',
 
         // Airpay cart financial.
-        '\local_airpay_cart\event\refund_processed',
-        '\local_airpay_cart\event\order_paid',
+        '\local_sentientia_cart\event\refund_processed',
+        '\local_sentientia_cart\event\order_paid',
 
         // Proctoring sensitive actions.
         '\local_airpay_proctoring\event\session_flagged',
@@ -93,11 +93,11 @@ class audit_log {
         // expanded a course's audience to another tenant and when —
         // the kind of action that needs answering "who and why" in
         // any GDPR / SOC2 review.
-        '\local_airpay_courses\event\course_share_created',
-        '\local_airpay_courses\event\course_share_withdrawn',
-        '\local_airpay_courses\event\course_share_requested',
-        '\local_airpay_courses\event\course_share_request_approved',
-        '\local_airpay_courses\event\course_share_request_rejected',
+        '\local_sentientia_courses\event\course_share_created',
+        '\local_sentientia_courses\event\course_share_withdrawn',
+        '\local_sentientia_courses\event\course_share_requested',
+        '\local_sentientia_courses\event\course_share_request_approved',
+        '\local_sentientia_courses\event\course_share_request_rejected',
     ];
 
     /**

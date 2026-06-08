@@ -7,7 +7,7 @@
  * + reload (so the table refreshes with the newly-assigned learners).
  *
  * Lazy-loads `audience_form_helper` after the modal renders so the
- * filter dropdowns populate from local_airpay_users_list_filter_options
+ * filter dropdowns populate from local_sentientia_users_list_filter_options
  * and the live preview wires up.
  *
  * @module local_sentientia_evaluation/non_respondents_actions

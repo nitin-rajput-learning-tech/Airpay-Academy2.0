@@ -33,7 +33,7 @@
  *              in as any user with a single shared password.
  *   mdl_logstore_standard_log — clear `ip` column (server logs leak
  *              real client IPs from production).
- *   mdl_local_airpay_cart_history — clear billing_phone, billing_address.
+ *   mdl_local_sentientia_cart_history — clear billing_phone, billing_address.
  *              Keep billing_email + billing_name (already masked via
  *              mdl_user.email + firstname/lastname).
  *   mdl_local_airpay_proctor_identity — clear all rows (identity
@@ -132,12 +132,12 @@ $DB->execute("UPDATE {logstore_standard_log} SET ip = '0.0.0.0'");
 fwrite(STDOUT, "  mdl_logstore_standard_log: ip column cleared\n");
 
 // ── Step 3: cart billing PII ───────────────────────────────────────
-if ($DB->get_manager()->table_exists('local_airpay_cart_history')) {
+if ($DB->get_manager()->table_exists('local_sentientia_cart_history')) {
     $DB->execute(
-        "UPDATE {local_airpay_cart_history}
+        "UPDATE {local_sentientia_cart_history}
             SET billing_phone   = '',
                 billing_address = ''");
-    fwrite(STDOUT, "  mdl_local_airpay_cart_history: phone/address cleared\n");
+    fwrite(STDOUT, "  mdl_local_sentientia_cart_history: phone/address cleared\n");
 }
 
 // ── Step 4: proctoring identity rows (defensive — should be empty) ─
@@ -153,12 +153,12 @@ if ($DB->get_manager()->table_exists('local_airpay_proctor_recordings')) {
 }
 
 // ── Step 6: email + notification logs may leak addresses ───────────
-if ($DB->get_manager()->table_exists('local_airpay_email_log')) {
+if ($DB->get_manager()->table_exists('local_sentientia_email_log')) {
     $DB->execute(
-        "UPDATE {local_airpay_email_log}
+        "UPDATE {local_sentientia_email_log}
             SET to_email = CONCAT('user', userid, '@dev.invalid')
           WHERE to_email IS NOT NULL");
-    fwrite(STDOUT, "  mdl_local_airpay_email_log: to_email masked\n");
+    fwrite(STDOUT, "  mdl_local_sentientia_email_log: to_email masked\n");
 }
 
 fwrite(STDOUT, "\n── Done. The database is now safe to use as a dev environment. ──\n");

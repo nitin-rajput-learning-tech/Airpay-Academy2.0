@@ -124,7 +124,7 @@ trait page_helpers {
 
     /**
      * True when the current user has the
-     * `local/airpay_courses:manage` capability at the system context.
+     * `local/sentientia_courses:manage` capability at the system context.
      * Used by layouts to switch between admin and learner navigation
      * shells.
      *
@@ -132,7 +132,7 @@ trait page_helpers {
      */
     public function is_admin_or_manager() {
         $context = \context_system::instance();
-        return \local_airpay_courses\course_manager::can_manage($context);
+        return \local_sentientia_courses\course_manager::can_manage($context);
     }
 
     /**

@@ -57,7 +57,7 @@ class commerce {
      */
     public static function get_cart(): array {
         global $SESSION;
-        return $SESSION->airpay_cart ?? [];
+        return $SESSION->sentientia_cart ?? [];
     }
 
     /**
@@ -66,12 +66,12 @@ class commerce {
     public static function add_to_cart(int $courseid): bool {
         global $SESSION, $DB;
 
-        if (!isset($SESSION->airpay_cart)) {
-            $SESSION->airpay_cart = [];
+        if (!isset($SESSION->sentientia_cart)) {
+            $SESSION->sentientia_cart = [];
         }
 
         // Check if already in cart.
-        foreach ($SESSION->airpay_cart as $item) {
+        foreach ($SESSION->sentientia_cart as $item) {
             if ($item['courseid'] === $courseid) {
                 return false; // Already in cart.
             }
@@ -84,7 +84,7 @@ class commerce {
 
         $pricing = self::get_course_price($courseid);
 
-        $SESSION->airpay_cart[] = [
+        $SESSION->sentientia_cart[] = [
             'courseid'  => $courseid,
             'fullname'  => format_string($course->fullname),
             'shortname' => format_string($course->shortname),
@@ -102,10 +102,10 @@ class commerce {
      */
     public static function remove_from_cart(int $courseid): void {
         global $SESSION;
-        if (!isset($SESSION->airpay_cart)) return;
+        if (!isset($SESSION->sentientia_cart)) return;
 
-        $SESSION->airpay_cart = array_values(array_filter(
-            $SESSION->airpay_cart,
+        $SESSION->sentientia_cart = array_values(array_filter(
+            $SESSION->sentientia_cart,
             fn($item) => $item['courseid'] !== $courseid
         ));
     }
@@ -115,7 +115,7 @@ class commerce {
      */
     public static function get_cart_count(): int {
         global $SESSION;
-        return count($SESSION->airpay_cart ?? []);
+        return count($SESSION->sentientia_cart ?? []);
     }
 
     /**
@@ -151,7 +151,7 @@ class commerce {
      */
     public static function clear_cart(): void {
         global $SESSION;
-        $SESSION->airpay_cart = [];
+        $SESSION->sentientia_cart = [];
     }
 
     /**

@@ -165,27 +165,27 @@ class observer_test extends \advanced_testcase {
     public function test_course_completed_fires_path_milestone_at_50pct(): void {
         global $DB;
 
-        if (!$DB->get_manager()->table_exists('local_airpay_learningpath_courses')) {
+        if (!$DB->get_manager()->table_exists('local_sentientia_learningpath_courses')) {
             $this->markTestSkipped('learning-path tables not installed.');
         }
 
         // 2-course path. Completing one course = 50%.
         $c1 = $this->getDataGenerator()->create_course();
         $c2 = $this->getDataGenerator()->create_course();
-        $pathid = (int) $DB->insert_record('local_airpay_learningpath', (object) [
+        $pathid = (int) $DB->insert_record('local_sentientia_learningpath', (object) [
             'name' => 'Two Step Path', 'description' => '',
             'descriptionformat' => 1, 'costcenterid' => 0, 'status' => 1,
             'visible' => 1, 'timecreated' => time(), 'timemodified' => time(),
         ]);
         foreach ([$c1, $c2] as $i => $c) {
-            $DB->insert_record('local_airpay_learningpath_courses', (object) [
+            $DB->insert_record('local_sentientia_learningpath_courses', (object) [
                 'pathid' => $pathid, 'courseid' => $c->id,
                 'sortorder' => $i, 'mandatory' => 1, 'timecreated' => time(),
             ]);
         }
 
         $user = $this->opted_in_user();
-        $DB->insert_record('local_airpay_learningpath_users', (object) [
+        $DB->insert_record('local_sentientia_learningpath_users', (object) [
             'pathid' => $pathid, 'userid' => $user->id, 'status' => 1,
             'timecreated' => time(),
         ]);

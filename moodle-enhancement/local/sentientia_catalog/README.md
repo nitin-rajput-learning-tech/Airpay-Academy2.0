@@ -18,7 +18,7 @@ for non-logged-in browsing.
   access to.
 - Public-tenant variant at `/local/sentientia_catalog/public.php` accessible
   unauthenticated (the marketing-facing entry point).
-- Featured carousel pulling from `local_airpay_courses`'s featured list.
+- Featured carousel pulling from `local_sentientia_courses`'s featured list.
 - Commerce overlay: courses with a price tag show a "Add to cart"
   button when viewed by a cart-enabled tenant.
 

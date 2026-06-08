@@ -27,7 +27,7 @@ Points + badges + streaks foundation. Consumed by `sentientia_challenge`
 ## Event observers
 
 Subscribes to Moodle core events `course_completed`, `quiz_attempt_submitted`,
-plus Airpay-specific events from `airpay_classroom` and `sentientia_challenge`.
+plus Airpay-specific events from `sentientia_classroom` and `sentientia_challenge`.
 
 ## Tier-1 work
 
