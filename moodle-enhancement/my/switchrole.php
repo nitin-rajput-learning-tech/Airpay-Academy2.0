@@ -47,7 +47,7 @@ $SESSION->airpay_switchrole->timeswitched = time();
 
 // Use Airpay org accesslib for role switching. Falls back to BizLMS if present.
 try {
-    \local_airpay_org\accesslib::set_user_role_switch($switchrole, $contextid);
+    \local_sentientia_org\accesslib::set_user_role_switch($switchrole, $contextid);
 } catch (\Throwable $e) {
     // Fallback — session data already set above.
 }

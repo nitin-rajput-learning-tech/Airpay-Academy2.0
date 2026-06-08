@@ -20,11 +20,11 @@ class enrol_sentientiasub_plugin extends enrol_plugin {
 
     /**
      * Master feature gate. Default OFF (CLAUDE.md §13). Guarded so the plugin
-     * degrades safely if local_airpay_core is somehow absent.
+     * degrades safely if local_sentientia_platform is somehow absent.
      */
     public function feature_enabled(): bool {
-        return class_exists('\local_airpay_core\feature_flags')
-            && \local_airpay_core\feature_flags::is_enabled('sentientia.subscriptions.enabled');
+        return class_exists('\local_sentientia_platform\feature_flags')
+            && \local_sentientia_platform\feature_flags::is_enabled('sentientia.subscriptions.enabled');
     }
 
     /**

@@ -21,5 +21,5 @@ $plugin->requires    = 2024100700;       // Moodle 4.5+
 $plugin->maturity    = MATURITY_ALPHA;   // increment 5 (cohort grant for allaccess/category) added; payment (3-4) sandbox-pending
 $plugin->release     = '0.2.0-alpha';
 $plugin->dependencies = [
-    'local_airpay_core' => ANY_VERSION,  // feature_flags registry
+    'local_sentientia_platform' => ANY_VERSION,  // feature_flags registry
 ];
