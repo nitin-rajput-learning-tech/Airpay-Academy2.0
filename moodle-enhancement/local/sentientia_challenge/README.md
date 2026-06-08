@@ -7,7 +7,7 @@ Gamification challenges. Sits alongside `local_sentientia_gamification`
 |---|---|
 | Component | `local_sentientia_challenge` |
 | Version | beta 1.1.1 |
-| Depends on | `local_airpay_org`, `local_sentientia_gamification` |
+| Depends on | `local_sentientia_org`, `local_sentientia_gamification` |
 
 ## What it does
 

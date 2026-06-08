@@ -21,7 +21,7 @@ defined('MOODLE_INTERNAL') || die();
  */
 final class list_evaluations_test extends \advanced_testcase {
 
-    use \local_airpay_org\test\bizlms_fixture;
+    use \local_sentientia_org\test\bizlms_fixture;
 
     /**
      * Insert an evaluation directly. Tenant scoping is via open_path.

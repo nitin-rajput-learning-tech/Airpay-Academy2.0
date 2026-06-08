@@ -67,7 +67,7 @@ if (!empty($profilecontext)) {
         $PAGE->requires->js_call_amd('local_sentientia_users/skill_radar', 'init', []);
     }
 } else {
-    echo $OUTPUT->notification(get_string('orgnotfound', 'local_airpay_org'), 'error');
+    echo $OUTPUT->notification(get_string('orgnotfound', 'local_sentientia_org'), 'error');
 }
 
 echo $OUTPUT->footer();

@@ -8,7 +8,7 @@ LearnerScript's report-builder.
 |---|---|
 | Component | `local_sentientia_reports` |
 | Version | 1.1.0 |
-| Depends on | `local_airpay_org` |
+| Depends on | `local_sentientia_org` |
 
 ## What it does
 

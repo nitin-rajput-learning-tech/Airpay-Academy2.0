@@ -55,7 +55,7 @@ class user_manager {
         $orgids = array_values(array_filter(explode('/', $path)));
 
         $names = array_map(function ($orgid) {
-            return \local_airpay_org\org_manager::get_name((int) $orgid);
+            return \local_sentientia_org\org_manager::get_name((int) $orgid);
         }, $orgids);
 
         return (object) [
@@ -100,7 +100,7 @@ class user_manager {
      * @return string  Comma-separated role names, or "Employee"
      */
     public static function get_role_names(int $userid): string {
-        $context = \local_airpay_org\accesslib::get_module_context();
+        $context = \local_sentientia_org\accesslib::get_module_context();
         $userroles = get_user_roles($context, $userid);
 
         if (!empty($userroles)) {
@@ -600,7 +600,7 @@ class user_manager {
 
         // Auto-derive open_path from open_costcenterid if path not set.
         if (!isset($update['open_path']) && !empty($update['open_costcenterid'])) {
-            $org = $DB->get_record('local_airpay_org', ['id' => $update['open_costcenterid']]);
+            $org = $DB->get_record('local_sentientia_org', ['id' => $update['open_costcenterid']]);
             if ($org) {
                 $update['open_path'] = $org->path;
             }

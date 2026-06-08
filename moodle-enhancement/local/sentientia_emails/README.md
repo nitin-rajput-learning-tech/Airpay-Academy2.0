@@ -7,7 +7,7 @@ languages (English, Hindi, Marathi, Kannada, Swahili).
 |---|---|
 | Component | `local_sentientia_emails` |
 | Version | `2026051302` (1.1.1 — Sprint B hotfix) |
-| Depends on | `local_airpay_org` |
+| Depends on | `local_sentientia_org` |
 
 ## What it does
 

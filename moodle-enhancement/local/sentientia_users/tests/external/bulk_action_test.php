@@ -24,7 +24,7 @@ defined('MOODLE_INTERNAL') || die();
  */
 final class bulk_action_test extends \advanced_testcase {
 
-    use \local_airpay_org\test\bizlms_fixture;
+    use \local_sentientia_org\test\bizlms_fixture;
 
     private function user_at_path(string $path, bool $suspended = false): \stdClass {
         global $DB;

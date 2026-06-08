@@ -39,8 +39,8 @@ $PAGE->navbar->add(fullname($user));
 // Resolve org name.
 $orgname = '';
 $dbman = $DB->get_manager();
-if (!empty($user->open_path) && $dbman->table_exists('local_airpay_org')) {
-    $org = $DB->get_record('local_airpay_org', ['path' => $user->open_path], 'fullname');
+if (!empty($user->open_path) && $dbman->table_exists('local_sentientia_org')) {
+    $org = $DB->get_record('local_sentientia_org', ['path' => $user->open_path], 'fullname');
     if ($org) {
         $orgname = format_string($org->fullname);
     } else {
@@ -48,7 +48,7 @@ if (!empty($user->open_path) && $dbman->table_exists('local_airpay_org')) {
         $parts = explode('/', trim($user->open_path, '/'));
         $top = $parts[0] ?? '';
         if (!empty($top)) {
-            $tenant = $DB->get_record('local_airpay_org', ['path' => '/' . $top], 'fullname');
+            $tenant = $DB->get_record('local_sentientia_org', ['path' => '/' . $top], 'fullname');
             if ($tenant) $orgname = format_string($tenant->fullname);
         }
     }

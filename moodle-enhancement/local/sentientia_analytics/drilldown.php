@@ -35,7 +35,7 @@ if ($type === 'department') {
     $parts = explode('/', trim($path, '/'));
     $deptid = (int)end($parts);
     if ($deptid) {
-        $dept = $DB->get_record('local_airpay_org', ['id' => $deptid], 'fullname');
+        $dept = $DB->get_record('local_sentientia_org', ['id' => $deptid], 'fullname');
         $deptname = $dept ? format_string($dept->fullname) : 'Department #' . $deptid;
     }
 

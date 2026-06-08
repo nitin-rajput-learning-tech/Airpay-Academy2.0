@@ -21,7 +21,7 @@ defined('MOODLE_INTERNAL') || die();
  */
 final class list_programs_test extends \advanced_testcase {
 
-    use \local_airpay_org\test\bizlms_fixture;
+    use \local_sentientia_org\test\bizlms_fixture;
 
     /**
      * Insert a program directly. costcenterid is left at 0; tenant

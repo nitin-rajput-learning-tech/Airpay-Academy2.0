@@ -47,5 +47,5 @@ $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
 $plugin->release   = '2.7.1';  // signup UX fixes (honeypot + success page)
 $plugin->dependencies = [
-    'local_airpay_org' => 2026051501,
+    'local_sentientia_org' => 2026051501,
 ];

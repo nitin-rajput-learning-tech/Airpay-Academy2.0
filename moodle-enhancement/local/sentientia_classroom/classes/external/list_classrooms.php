@@ -61,7 +61,7 @@ class list_classrooms extends external_api {
         // 1..5), filter to that subtree. Otherwise apply the default
         // path_filter (caller's own tenant tree).
         [$cascadesql, $cascadeargs] =
-            \local_airpay_org\org_manager::cascade_where_sql($client_filters, 'c');
+            \local_sentientia_org\org_manager::cascade_where_sql($client_filters, 'c');
         if ($cascadesql !== '') {
             $where[] = $cascadesql;
             $sqlparams = array_merge($sqlparams, $cascadeargs);

@@ -40,7 +40,7 @@ $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
 $plugin->release   = '1.11.2';
 $plugin->dependencies = [
-    'local_airpay_org' => 2026041600,
+    'local_sentientia_org' => 2026041600,
 ];
 // Release history:
 // 1.6.0  Phase F.5 — native enrol modal (replaces deep-link)

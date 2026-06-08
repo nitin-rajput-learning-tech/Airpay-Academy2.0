@@ -10,7 +10,7 @@ notifies the user so they can re-complete.
 | Version | `2026051201` (1.0.1) |
 | Requires | Moodle 4.5+ (`2024042200`) |
 | Maturity | `MATURITY_STABLE` |
-| Depends on | `local_airpay_org` |
+| Depends on | `local_sentientia_org` |
 
 ## What it does
 

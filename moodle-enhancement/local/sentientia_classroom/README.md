@@ -7,7 +7,7 @@ trainer assignments. Replacement for BizLMS `local_classroom`.
 |---|---|
 | Component | `local_sentientia_classroom` |
 | Version | `2026050900` (1.6.0) |
-| Depends on | `local_airpay_org`, `local_sentientia_evaluation` |
+| Depends on | `local_sentientia_org`, `local_sentientia_evaluation` |
 
 ## What it does
 

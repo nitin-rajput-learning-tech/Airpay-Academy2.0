@@ -11,5 +11,5 @@ $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
 $plugin->release   = '1.7.1';  // +P1 #46 Hindi top-up
 $plugin->dependencies = [
-    'local_airpay_org' => 2026041600,
+    'local_sentientia_org' => 2026041600,
 ];

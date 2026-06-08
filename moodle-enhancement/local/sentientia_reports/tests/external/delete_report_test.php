@@ -16,7 +16,7 @@ defined('MOODLE_INTERNAL') || die();
  */
 final class delete_report_test extends \advanced_testcase {
 
-    use \local_airpay_org\test\bizlms_fixture;
+    use \local_sentientia_org\test\bizlms_fixture;
 
     private function seed_report(?string $open_path, string $name = 'Test report'): int {
         global $DB;

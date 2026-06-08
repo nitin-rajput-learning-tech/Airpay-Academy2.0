@@ -133,7 +133,7 @@ $assert = function (string $label, string $expectsub) use ($output, &$failures) 
 
 // Resolve the ids we need to simulate switches.
 $empid = (int) $DB->get_field('role', 'id', ['shortname' => 'employee']);
-$catroles = \local_airpay_org\accesslib::get_user_roles_in_catgeorycontexts($userid);
+$catroles = \local_sentientia_org\accesslib::get_user_roles_in_catgeorycontexts($userid);
 if (!is_array($catroles) || count($catroles) === 0) {
     cli_error("User $userid has no category-context roles — not a multi-role user; nothing to verify.", 2);
 }
@@ -144,7 +144,7 @@ $firstcat = reset($catroles);
 $firstcatids = array_values(array_filter(explode('/', (string) $firstcat->path)));
 $firstcatname = '';
 if (!empty($firstcatids)) {
-    $firstcatname = (string) \local_airpay_org\accesslib::get_category_info(end($firstcatids), 'name');
+    $firstcatname = (string) \local_sentientia_org\accesslib::get_category_info(end($firstcatids), 'name');
 }
 $firstcatexpect = ($firstcatname !== '') ? $firstcatname : ' - '; // ' - ' = the "cat - role" separator, always present on a category option
 
@@ -155,14 +155,14 @@ $assert('A: fresh login (no switch) — expect highest category role active', $f
 
 // ── State B: switched to the employee/learner role. ──
 if ($empid) {
-    \local_airpay_org\accesslib::set_user_role_switch($empid, (int) SYSCONTEXTID);
+    \local_sentientia_org\accesslib::set_user_role_switch($empid, (int) SYSCONTEXTID);
     $assert('B: switched to Employee — expect Employee active',
         get_string('employee', 'theme_airpayux'));
 }
 
 // ── State C: switched to a category role (set_user_role_switch shape:
 //    roleid + contextid only — the case the old triple-match missed). ──
-\local_airpay_org\accesslib::set_user_role_switch((int) $firstcat->roleid, (int) $firstcat->contextid);
+\local_sentientia_org\accesslib::set_user_role_switch((int) $firstcat->roleid, (int) $firstcat->contextid);
 $assert('C: switched to category role — expect that category role active', $firstcatexpect);
 
 if ($failures > 0) {

@@ -495,7 +495,7 @@ class hrms_importer {
 
     /**
      * Cascade lookup: company_code → BU → dept → subdept against
-     * local_airpay_org.shortname under the right parentid.
+     * local_sentientia_org.shortname under the right parentid.
      *
      * Returns:
      *   ['costcenterid' => int, 'department' => int, 'subdepartment' => int,
@@ -519,7 +519,7 @@ class hrms_importer {
             return $result;
         }
         // Level 1 — company.
-        $org = $DB->get_record('local_airpay_org',
+        $org = $DB->get_record('local_sentientia_org',
             ['shortname' => trim($company_code), 'parentid' => 0]);
         if (!$org) {
             $errors_out[] = "company_code='$company_code' not found in org tree.";
@@ -539,7 +539,7 @@ class hrms_importer {
             if ($val === '') {
                 break;  // skip remaining levels if this one empty
             }
-            $child = $DB->get_record('local_airpay_org',
+            $child = $DB->get_record('local_sentientia_org',
                 ['shortname' => $val, 'parentid' => $current_parent]);
             if (!$child) {
                 $errors_out[] = "{$seg['col']}='$val' not found under parent org id $current_parent.";

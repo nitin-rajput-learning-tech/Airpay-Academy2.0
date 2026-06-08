@@ -7,7 +7,7 @@ self-assessment plus admin-facing skill-to-course mapping.
 |---|---|
 | Component | `local_sentientia_skills` |
 | Version | 1.4.0 |
-| Depends on | `local_airpay_org`, `local_sentientia_courses` |
+| Depends on | `local_sentientia_org`, `local_sentientia_courses` |
 
 ## What it does
 

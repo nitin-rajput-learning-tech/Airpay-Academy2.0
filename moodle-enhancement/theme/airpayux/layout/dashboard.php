@@ -291,7 +291,7 @@ if (isloggedin() && !isguestuser()) {
 
             // Show tenant scope label for L&D admins
             if ($isldadmin && !empty($toporg)) {
-                $tenantname = \local_airpay_org\org_manager::get_name_by_path($toporg);
+                $tenantname = \local_sentientia_org\org_manager::get_name_by_path($toporg);
                 $airpay_dashboard['tenant_scope'] = $tenantname ?: 'Your Organization';
             }
 

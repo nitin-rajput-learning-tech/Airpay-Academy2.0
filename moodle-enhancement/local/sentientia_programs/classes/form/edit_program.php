@@ -171,7 +171,7 @@ class edit_program extends \core_form\dynamic_form {
 
     private function get_org_options(): array {
         global $DB;
-        $orgs = $DB->get_records('local_airpay_org', ['visible' => 1],
+        $orgs = $DB->get_records('local_sentientia_org', ['visible' => 1],
             'depth ASC, fullname ASC', 'id, fullname, depth');
         $options = [0 => '— No specific organisation —'];
         foreach ($orgs as $o) {

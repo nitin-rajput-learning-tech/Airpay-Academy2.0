@@ -31,7 +31,7 @@ $templatekey = str_replace(['..', '//'], '', $templatekey);
 // Tenant ID with access validation.
 // Audit fix 2026-05-15: previous code queried `mdl_local_costcenter` (the
 // legacy BizLMS table) which doesn't exist in the Airpay rebuild — the
-// replacement is `mdl_local_airpay_org`. But the tenant list is already
+// replacement is `mdl_local_sentientia_org`. But the tenant list is already
 // hardcoded in $tenants below (1 Airpay / 77 Public / 177 ZEEA), so we
 // align with that single source of truth instead of issuing a DB query.
 $tenantid = optional_param('tenant', 1, PARAM_INT);
@@ -41,7 +41,7 @@ if (!in_array($tenantid, $valid_tenants, true)) {
 }
 if (!is_siteadmin()) {
     // Non-siteadmins can only preview their own tenant.
-    $tenantid = \local_airpay_org\tenant_manager::get_tenant_id();
+    $tenantid = \local_sentientia_org\tenant_manager::get_tenant_id();
 }
 $viewmode = optional_param('view', 'visual', PARAM_ALPHA);
 

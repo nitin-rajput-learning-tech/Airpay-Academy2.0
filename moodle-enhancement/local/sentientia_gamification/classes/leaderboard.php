@@ -23,7 +23,7 @@ class leaderboard {
         $orgfilter = '';
         $params = [];
         if (empty($orgpath)) {
-            $orgpath = \local_airpay_org\tenant_manager::get_tenant_path();
+            $orgpath = \local_sentientia_org\tenant_manager::get_tenant_path();
         }
         if (!empty($orgpath)) {
             $orgfilter = "AND u.open_path LIKE :orgpath";

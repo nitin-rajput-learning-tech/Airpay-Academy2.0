@@ -171,15 +171,15 @@ class keka_client {
             'open_employmenttype' => $emp['employmentType'] ?? '',
         ];
 
-        // Map department name to airpay_org tenant path.
+        // Map department name to sentientia_org tenant path.
         // Phase-0A migration: this lookup used to query {local_costcenter}
-        // (BizLMS legacy table) — replaced with {local_airpay_org} which
-        // is the airpay_org-owned table on production.
+        // (BizLMS legacy table) — replaced with {local_sentientia_org} which
+        // is the sentientia_org-owned table on production.
         $deptname = $emp['department'] ?? '';
         if (!empty($deptname)) {
-            // Defensive: airpay_org table may not exist on stock Moodle test
+            // Defensive: sentientia_org table may not exist on stock Moodle test
             // DBs. Skip the mapping rather than throw on missing table.
-            $orgtable = 'local_airpay_org';
+            $orgtable = 'local_sentientia_org';
             $manager = $DB->get_manager();
             if ($manager->table_exists($orgtable)) {
                 $org = $DB->get_record_select($orgtable,

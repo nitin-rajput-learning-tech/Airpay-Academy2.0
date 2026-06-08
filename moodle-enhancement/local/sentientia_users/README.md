@@ -10,7 +10,7 @@ the photo upload pipeline.
 | Component | `local_sentientia_users` |
 | Version | `2026050904` (1.8.0) |
 | Requires | Moodle 4.5+ |
-| Depends on | `local_airpay_org`, `local_sentientia_privacy` |
+| Depends on | `local_sentientia_org`, `local_sentientia_privacy` |
 
 ## What it does
 
@@ -57,5 +57,5 @@ preserved for audit, all PII fields nulled).
 - Photo upload doesn't yet pass through the sentientia_proctoring identity
   pipeline for hiring assessment use cases.
 - The custom user fields rely on the BizLMS schema extensions; FORK-PLAN
-  sequences in-housing of these columns through the airpay_org accesslib
+  sequences in-housing of these columns through the sentientia_org accesslib
   rather than direct column dependencies.

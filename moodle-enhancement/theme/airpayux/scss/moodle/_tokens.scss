@@ -6,7 +6,7 @@
    platform MUST reference a token from this file. No hex values elsewhere.
 
    Tenant branding overrides are injected at runtime via core_renderer
-   (reading from local_airpay_org.brand_color etc.) — NOT from static files.
+   (reading from local_sentientia_org.brand_color etc.) — NOT from static files.
 
    Dark mode overrides live in _tokens-dark.scss using [data-theme="dark"].
    ═══════════════════════════════════════════════════════════════════════ */

@@ -276,7 +276,7 @@ defined('MOODLE_INTERNAL') || die();
 // parity with live airpay.academy (top-right user-menu switch).
 //   - classes/output/traits/user_menu.php: new get_role_switch_options()
 //     data-builder (isolated sibling of user_menu(); reuses the same
-//     \local_airpay_org\accesslib source). Returns hasoptions/currentlabel/
+//     \local_sentientia_org\accesslib source). Returns hasoptions/currentlabel/
 //     options[]. class_exists-guarded for vanilla-Moodle Sentientia customers.
 //   - layout/dashboard.php: $templatecontext['roleswitch'].
 //   - templates/dashboard.mustache: {{#roleswitch.hasoptions}} sidebar

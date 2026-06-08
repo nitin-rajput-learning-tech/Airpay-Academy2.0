@@ -39,7 +39,7 @@ $active_count  = (int) $DB->count_records_select('user', "$base_where AND suspen
 $suspended_count = $total_count - $active_count;
 
 // ── Org dropdown options ──
-$orgs = $DB->get_records('local_airpay_org', ['depth' => 1, 'visible' => 1], 'fullname ASC',
+$orgs = $DB->get_records('local_sentientia_org', ['depth' => 1, 'visible' => 1], 'fullname ASC',
     'id, fullname');
 $org_options = [];
 foreach ($orgs as $o) {

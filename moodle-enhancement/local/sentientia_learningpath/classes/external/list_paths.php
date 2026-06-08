@@ -46,7 +46,7 @@ class list_paths extends external_api {
         // W1-1 BizLMS parity: 5-level org cascade overrides default
         // tenant scope.
         [$cascadesql, $cascadeargs] =
-            \local_airpay_org\org_manager::cascade_where_sql($f, 'lp');
+            \local_sentientia_org\org_manager::cascade_where_sql($f, 'lp');
         if ($cascadesql !== '') {
             $where[] = $cascadesql;
             $sqlparams = array_merge($sqlparams, $cascadeargs);

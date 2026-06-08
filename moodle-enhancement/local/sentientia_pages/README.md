@@ -7,7 +7,7 @@ onboarding-facing layer of the platform.
 |---|---|
 | Component | `local_sentientia_pages` |
 | Version | beta |
-| Depends on | `local_airpay_org` |
+| Depends on | `local_sentientia_org` |
 
 ## What it does
 

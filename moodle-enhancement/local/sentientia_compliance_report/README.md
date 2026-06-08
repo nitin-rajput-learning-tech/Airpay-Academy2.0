@@ -8,7 +8,7 @@ India / POSH committee / DPO consume for statutory reporting.
 |---|---|
 | Component | `local_sentientia_compliance_report` |
 | Version | 1.0.0 |
-| Depends on | `local_airpay_org`, `local_sentientia_recompletion` |
+| Depends on | `local_sentientia_org`, `local_sentientia_recompletion` |
 
 ## What it does
 

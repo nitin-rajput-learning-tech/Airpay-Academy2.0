@@ -20,7 +20,7 @@ defined('MOODLE_INTERNAL') || die();
  */
 final class enrol_deeplink_test extends \advanced_testcase {
 
-    use \local_airpay_org\test\bizlms_fixture;
+    use \local_sentientia_org\test\bizlms_fixture;
 
     public function test_enrol_link_present_for_capable_caller(): void {
         global $DB;

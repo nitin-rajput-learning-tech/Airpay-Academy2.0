@@ -46,7 +46,7 @@ $where = ['u.deleted = 0', 'u.id > 2'];
 $sqlparams = [];
 
 if ($orgid > 0) {
-    $org = $DB->get_record('local_airpay_org', ['id' => $orgid], 'path');
+    $org = $DB->get_record('local_sentientia_org', ['id' => $orgid], 'path');
     if ($org && !empty($org->path)) {
         // Same tenant boundary check as list_users — non-siteadmin can only
         // export from their own tenant tree.
@@ -105,7 +105,7 @@ $sql = "SELECT u.id, u.firstname, u.lastname, u.email,
                u.suspended, u.lastaccess, u.timecreated,
                o.name AS orgname
           FROM {user} u
-     LEFT JOIN {local_airpay_org} o ON o.path = u.open_path
+     LEFT JOIN {local_sentientia_org} o ON o.path = u.open_path
          WHERE {$wheresql}
       ORDER BY {$orderby}";
 

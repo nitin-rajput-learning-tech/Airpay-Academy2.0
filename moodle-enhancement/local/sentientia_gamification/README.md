@@ -7,7 +7,7 @@ Points + badges + streaks foundation. Consumed by `sentientia_challenge`
 |---|---|
 | Component | `local_sentientia_gamification` |
 | Version | beta 1.0.0 |
-| Depends on | `local_airpay_org` |
+| Depends on | `local_sentientia_org` |
 
 ## What it does
 

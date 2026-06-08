@@ -205,7 +205,7 @@ class analytics_manager {
 
         $departments = $DB->get_records_sql(
             "SELECT cc.id, cc.fullname, cc.path
-               FROM {local_airpay_org} cc
+               FROM {local_sentientia_org} cc
               WHERE cc.path LIKE :pathprefix AND cc.depth = 3
            ORDER BY cc.fullname",
             ['pathprefix' => $toporg . '/%']);

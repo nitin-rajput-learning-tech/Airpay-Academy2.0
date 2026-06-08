@@ -18,14 +18,14 @@ defined('MOODLE_INTERNAL') || die();
  * - Default tenant scope: caller without filters sees only own tenant.
  *
  * Tests use synthetic tenant IDs (8000+) to avoid collision with any
- * pre-seeded local_airpay_org rows.
+ * pre-seeded local_sentientia_org rows.
  *
  * @package    local_sentientia_users
  * @category   test
  */
 final class list_users_test extends \advanced_testcase {
 
-    use \local_airpay_org\test\bizlms_fixture;
+    use \local_sentientia_org\test\bizlms_fixture;
 
     /**
      * Insert a synthetic org row at the given path. The id is the last
@@ -33,8 +33,8 @@ final class list_users_test extends \advanced_testcase {
      */
     private function seed_org(string $path, int $parentid = 0, int $depth = 1): int {
         global $DB;
-        if (!$DB->get_manager()->table_exists('local_airpay_org')) {
-            $this->markTestSkipped('local_airpay_org table not present.');
+        if (!$DB->get_manager()->table_exists('local_sentientia_org')) {
+            $this->markTestSkipped('local_sentientia_org table not present.');
         }
         $id = (int) ltrim(strrchr($path, '/'), '/');
         $rec = (object)[
@@ -43,7 +43,7 @@ final class list_users_test extends \advanced_testcase {
             'visible' => 1, 'sortorder' => 0,
             'timecreated' => time(), 'timemodified' => time(),
         ];
-        $DB->insert_record_raw('local_airpay_org', $rec, false, false, true);
+        $DB->insert_record_raw('local_sentientia_org', $rec, false, false, true);
         return $id;
     }
 

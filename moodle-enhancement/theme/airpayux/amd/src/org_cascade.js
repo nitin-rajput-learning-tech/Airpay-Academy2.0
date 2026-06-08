@@ -11,7 +11,7 @@
  * Moodle's autocomplete form element with `ajax: 'local_costcenter/
  * form-options-selector'`. This version is plainer — vanilla `<select>`
  * elements bound by `[data-airpay-org-cascade]` markers, talking to the
- * `local_airpay_org_list_children` web service we just added.
+ * `local_sentientia_org_list_children` web service we just added.
  *
  * Markup contract (one per level):
  *   <select data-airpay-org-cascade
@@ -68,7 +68,7 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
     }
 
     /**
-     * Hit local_airpay_org_list_children and rebuild a select's options.
+     * Hit local_sentientia_org_list_children and rebuild a select's options.
      */
     function loadLevel(select, parentid) {
         var depth = parseInt(select.dataset.cascadeDepth || '1', 10);
@@ -77,7 +77,7 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
         select.disabled = true;
 
         var request = Ajax.call([{
-            methodname: 'local_airpay_org_list_children',
+            methodname: 'local_sentientia_org_list_children',
             args: { parentid: parentid, visible_only: true }
         }])[0];
 

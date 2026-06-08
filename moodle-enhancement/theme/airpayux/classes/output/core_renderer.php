@@ -72,7 +72,7 @@ class core_renderer extends \core_renderer {
     /**
      * Override standard_head_html to inject tenant favicon, custom CSS,
      * and brand colour overrides. Each per-tenant setting is pulled from
-     * local_airpay_org\tenant_settings — falls back gracefully if the
+     * local_sentientia_org\tenant_settings — falls back gracefully if the
      * org plugin or row doesn't exist yet.
      *
      * Added 2026-05-11 for Phase 1G (per-tenant settings).
@@ -122,8 +122,8 @@ class core_renderer extends \core_renderer {
                 // Customer favicon (icon_192_url) — only inject if no
                 // tenant-favicon override is about to kick in below.
                 // Sniff via the same class_exists guard.
-                if (!class_exists('\\local_airpay_org\\tenant_settings')
-                        || \local_airpay_org\tenant_settings::favicon_url() === '') {
+                if (!class_exists('\\local_sentientia_org\\tenant_settings')
+                        || \local_sentientia_org\tenant_settings::favicon_url() === '') {
                     $icon = $brand['icon_192_url'] ?? '';
                     if ($icon !== '' && filter_var($icon, FILTER_VALIDATE_URL)) {
                         $tag = '<link rel="icon" href="' . s($icon) . '">';
@@ -143,15 +143,15 @@ class core_renderer extends \core_renderer {
             }
         }
 
-        if (class_exists('\\local_airpay_org\\tenant_settings')) {
-            $brand_css  = \local_airpay_org\tenant_settings::brand_color_overrides();
-            $custom_css = \local_airpay_org\tenant_settings::custom_css();
+        if (class_exists('\\local_sentientia_org\\tenant_settings')) {
+            $brand_css  = \local_sentientia_org\tenant_settings::brand_color_overrides();
+            $custom_css = \local_sentientia_org\tenant_settings::custom_css();
             $inline = trim($brand_css . "\n" . $custom_css);
             if ($inline !== '') {
                 $output .= "\n<style id=\"airpay-tenant-css\">\n" . $inline . "\n</style>\n";
             }
 
-            $favicon_url = \local_airpay_org\tenant_settings::favicon_url();
+            $favicon_url = \local_sentientia_org\tenant_settings::favicon_url();
             if ($favicon_url !== '') {
                 $tag = '<link rel="icon" href="' . s($favicon_url) . '">';
                 if (preg_match('#<link[^>]+rel=["\']icon["\'][^>]*>#i', $output)) {
@@ -223,8 +223,8 @@ class core_renderer extends \core_renderer {
      */
     public function standard_footer_html() {
         $tenant_footer = '';
-        if (class_exists('\\local_airpay_org\\tenant_settings')) {
-            $tenant_footer = \local_airpay_org\tenant_settings::footer_html();
+        if (class_exists('\\local_sentientia_org\\tenant_settings')) {
+            $tenant_footer = \local_sentientia_org\tenant_settings::footer_html();
         }
         $standard = parent::standard_footer_html();
 
@@ -738,7 +738,7 @@ JS;
      * @return URL
      */
     function get_costcenter_scheme_css(){
-        return \local_airpay_org\branding_manager::get_org_theme_scheme();
+        return \local_sentientia_org\branding_manager::get_org_theme_scheme();
     }
      /**
          * returns the scheme names for theme and costcenter
@@ -753,7 +753,7 @@ JS;
         if(!empty($theme_schemename)){
             $return .= ' theme_'.$theme_schemename;
         }
-        $orgclass = \local_airpay_org\branding_manager::get_body_scheme_class();
+        $orgclass = \local_sentientia_org\branding_manager::get_body_scheme_class();
         if (!empty($orgclass)) {
             $return .= ' ' . $orgclass;
         }
@@ -999,7 +999,7 @@ JS;
             if((has_capability('moodle/backup:backupcourse',$systemcontext) || is_siteadmin()) && $manage) {
                 $coursebackup = true;
             }
-            $maincheckcontext = \local_airpay_org\accesslib::get_module_context();
+            $maincheckcontext = \local_sentientia_org\accesslib::get_module_context();
             if(\local_sentientia_courses\course_manager::can_manage($maincheckcontext)
                 && \local_sentientia_courses\course_manager::can_enrol($maincheckcontext)) {
                 $enrolid = $DB->get_field('enrol', 'id', array('courseid' => $courseid ,'enrol' => 'manual'));
@@ -1253,19 +1253,19 @@ JS;
         $systemcontext = \context_system::instance();
         if (
             !is_siteadmin()
-            && !\local_airpay_org\accesslib::can_manage_multi($systemcontext)
-            && !\local_airpay_org\accesslib::can_view($systemcontext)
-            && !\local_airpay_org\accesslib::can_manage($systemcontext)
-            && !\local_airpay_org\accesslib::can_manage_classroom($systemcontext)
+            && !\local_sentientia_org\accesslib::can_manage_multi($systemcontext)
+            && !\local_sentientia_org\accesslib::can_view($systemcontext)
+            && !\local_sentientia_org\accesslib::can_manage($systemcontext)
+            && !\local_sentientia_org\accesslib::can_manage_classroom($systemcontext)
             && (has_capability('block/airpay_trainer:viewtrainerslist', $systemcontext)
                 || has_capability('block/trainerdashboard:viewtrainerslist', $systemcontext))
             && $newpageurl == $CFG->wwwroot . '/my/dashboard.php'
         ) {
             redirect($CFG->wwwroot . '/blocks/airpay_trainer/dashboard.php');
         }
-        if(!(\local_airpay_org\accesslib::can_manage_multi($systemcontext))){
-            $is_oh = \local_airpay_org\accesslib::is_org_head($systemcontext);
-            $is_dh = \local_airpay_org\accesslib::is_dept_head($systemcontext);
+        if(!(\local_sentientia_org\accesslib::can_manage_multi($systemcontext))){
+            $is_oh = \local_sentientia_org\accesslib::is_org_head($systemcontext);
+            $is_dh = \local_sentientia_org\accesslib::is_dept_head($systemcontext);
 
             // Derive the user's costcenter and department from open_path
             // (open_costcenterid / open_departmentid columns do not exist
@@ -1384,10 +1384,10 @@ JS;
         // }
 
 
-        $costcenterpath = \local_airpay_org\accesslib::get_costcenterpath_context($context);
+        $costcenterpath = \local_sentientia_org\accesslib::get_costcenterpath_context($context);
 
         $USER->useraccess['currentroleinfo']['roleid'] = $roleid;
-        $categorypath = \local_airpay_org\accesslib::get_category_info($context->instanceid, 'path');
+        $categorypath = \local_sentientia_org\accesslib::get_category_info($context->instanceid, 'path');
         $categoryids = array_values(array_filter((explode('/', $categorypath))));
         $USER->useraccess['currentroleinfo']['orgcatid'] = $categoryids[0];
         $USER->useraccess['currentroleinfo']['depth'] = $context->depth;
@@ -1411,14 +1411,14 @@ JS;
         // $assignedcontexts = array_map(function($cxtpath){
         //     return end(explode('/', $cxtpath));
         // }, array_unique(array_keys($USER->access['ra'])));
-        $assignedroles = \local_airpay_org\accesslib::get_user_roles_in_catgeorycontexts($USER->id);
+        $assignedroles = \local_sentientia_org\accesslib::get_user_roles_in_catgeorycontexts($USER->id);
         $contextdepth = $context->__get('depth');
         foreach($assignedroles AS $assignedrole){
             if($assignedrole->contextid != $context->id && $assignedrole->contextid != 1){
                 $othercontext = \context::instance_by_id($assignedrole->contextid);
                 // considering only category level role switches.
                 if($othercontext->__get('contextlevel') == CONTEXT_COURSECAT){
-                    $othercategorypath = \local_airpay_org\accesslib::get_category_info($othercontext->instanceid, 'path');
+                    $othercategorypath = \local_sentientia_org\accesslib::get_category_info($othercontext->instanceid, 'path');
                     $othercategoryids = array_values(array_filter((explode('/', $othercategorypath))));
 
                     if($contextdepth == $othercontext->__get('depth') && $othercategoryids[0] == $USER->useraccess['currentroleinfo']['orgcatid'] && $roleid == $assignedrole->roleid){//in_array($roleid, $USER->access['ra'][$othercontext->path])
@@ -1427,7 +1427,7 @@ JS;
                         // strpos(haystack, needle)
                         if($this->role_capability_assignments($roleid, $othercontext, $accessdata)){
                             $USER->access['rsw'][$othercontext->path] = $roleid;
-                            $othercostcenterpath = \local_airpay_org\accesslib::get_costcenterpath_context($othercontext);
+                            $othercostcenterpath = \local_sentientia_org\accesslib::get_costcenterpath_context($othercontext);
                             $USER->useraccess['currentroleinfo']['contextinfo'][] = ['context' => $othercontext,'costcenterpath' => $othercostcenterpath];
                         }
                     }else {//if($context->path != '/1')if user is assigned at system context we unset the rsw variable.

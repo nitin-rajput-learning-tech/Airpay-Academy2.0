@@ -29,7 +29,7 @@ final class hrms_importer_test extends \advanced_testcase {
     private function seed_org_tree(): array {
         global $DB;
         $now = time();
-        $airpay_id = $DB->insert_record('local_airpay_org', (object) [
+        $airpay_id = $DB->insert_record('local_sentientia_org', (object) [
             'name'         => 'Airpay',
             'shortname'    => 'AIRPAY',
             'parentid'     => 0,
@@ -40,7 +40,7 @@ final class hrms_importer_test extends \advanced_testcase {
             'timecreated'  => $now,
             'timemodified' => $now,
         ]);
-        $tech_id = $DB->insert_record('local_airpay_org', (object) [
+        $tech_id = $DB->insert_record('local_sentientia_org', (object) [
             'name'         => 'Tech',
             'shortname'    => 'TECH',
             'parentid'     => $airpay_id,
@@ -51,7 +51,7 @@ final class hrms_importer_test extends \advanced_testcase {
             'timecreated'  => $now,
             'timemodified' => $now,
         ]);
-        $backend_id = $DB->insert_record('local_airpay_org', (object) [
+        $backend_id = $DB->insert_record('local_sentientia_org', (object) [
             'name'         => 'Backend',
             'shortname'    => 'BACKEND',
             'parentid'     => $tech_id,

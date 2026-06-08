@@ -7,7 +7,7 @@ enforcement. Replacement for BizLMS `local_learningplan`.
 |---|---|
 | Component | `local_sentientia_learningpath` |
 | Version | 1.3.0 |
-| Depends on | `local_airpay_org`, `local_sentientia_courses` |
+| Depends on | `local_sentientia_org`, `local_sentientia_courses` |
 
 ## What it does
 

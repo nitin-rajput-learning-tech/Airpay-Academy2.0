@@ -11,7 +11,7 @@ disabled by setting). Built Phase 1 (2026-05-11), hardened Phase 8.1
 | Version | `2026051201` (1.0.1) |
 | Requires | Moodle 4.5+ (`2024042200`) |
 | Maturity | `MATURITY_STABLE` |
-| Depends on | `local_airpay_org`, `local_sentientia_emails`, `local_airpay_core` |
+| Depends on | `local_sentientia_org`, `local_sentientia_emails`, `local_airpay_core` |
 
 ## What it does
 

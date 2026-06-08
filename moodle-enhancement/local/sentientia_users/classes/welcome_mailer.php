@@ -164,7 +164,7 @@ TEMPLATE;
     }
 
     /**
-     * Look up the tenant's display name from local_airpay_org. Falls back
+     * Look up the tenant's display name from local_sentientia_org. Falls back
      * to "Airpay Academy" if the tenant is unknown or the org plugin
      * isn't installed.
      */
@@ -174,7 +174,7 @@ TEMPLATE;
         }
         global $DB;
         try {
-            $name = (string) $DB->get_field('local_airpay_org', 'name',
+            $name = (string) $DB->get_field('local_sentientia_org', 'name',
                 ['id' => $tenantid]);
             return $name !== '' ? $name : 'Airpay Academy';
         } catch (\Throwable $e) {

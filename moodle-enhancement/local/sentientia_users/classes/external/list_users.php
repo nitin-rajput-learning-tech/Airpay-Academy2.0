@@ -113,7 +113,7 @@ class list_users extends external_api {
         // LIKE pattern is /<id>/% (slash-bounded + escaped) so '/1' never
         // matches '/10' or '/177' (C2 hardening from earlier audit).
         if ($deepest_orgid > 0) {
-            $org = $DB->get_record('local_airpay_org', ['id' => $deepest_orgid], 'path');
+            $org = $DB->get_record('local_sentientia_org', ['id' => $deepest_orgid], 'path');
             if ($org && !empty($org->path)) {
                 if (!is_siteadmin()) {
                     $caller_parts = explode('/', trim($USER->open_path ?? '', '/'));
@@ -237,7 +237,7 @@ class list_users extends external_api {
         }
 
         // ── Org name lookup ──
-        $orgs = $DB->get_records('local_airpay_org', ['depth' => 1], '', 'id, path, fullname');
+        $orgs = $DB->get_records('local_sentientia_org', ['depth' => 1], '', 'id, path, fullname');
         $orgmap = [];
         foreach ($orgs as $o) {
             $orgmap[$o->path] = format_string($o->fullname);

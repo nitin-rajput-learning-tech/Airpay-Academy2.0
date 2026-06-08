@@ -56,7 +56,7 @@ defined('MOODLE_INTERNAL') || die();
  *     Returns the list of tenant roots this Moodle knows about
  *     ({1=Airpay, 77=Public, 177=ZEEA}) so the share form can render
  *     them as checkboxes. Sourced from the `local_costcenter` /
- *     `local_airpay_org` table at depth 1 (top-level orgs).
+ *     `local_sentientia_org` table at depth 1 (top-level orgs).
  *
  * @package local_sentientia_courses
  */
@@ -306,7 +306,7 @@ class sharing_manager {
     /**
      * Return the list of known top-level tenants for this Moodle.
      *
-     * Sources from `local_airpay_org` if available (Airpay's tenant
+     * Sources from `local_sentientia_org` if available (Airpay's tenant
      * registry); falls back to a hard-coded {1, 77, 177} list for
      * environments where the org plugin isn't installed (the master
      * tenants this codebase has shipped against).
@@ -320,11 +320,11 @@ class sharing_manager {
         // The org table column is `fullname` (not `name` — that's the
         // bizlms-era costcenter column name we don't carry). Sprint C
         // hotfix: corrected after PHPUnit caught the bad column name.
-        if ($DB->get_manager()->table_exists('local_airpay_org')) {
+        if ($DB->get_manager()->table_exists('local_sentientia_org')) {
             // Depth 1 = top-level orgs (tenants). path is something
             // like '/1' for Airpay's root org.
             $rows = $DB->get_records_sql(
-                "SELECT id, fullname FROM {local_airpay_org}
+                "SELECT id, fullname FROM {local_sentientia_org}
                   WHERE depth = 1
                     AND visible = 1
                   ORDER BY id ASC");

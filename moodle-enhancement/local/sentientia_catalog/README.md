@@ -8,7 +8,7 @@ for non-logged-in browsing.
 |---|---|
 | Component | `local_sentientia_catalog` |
 | Version | beta 1.0.0 |
-| Depends on | `local_airpay_org` |
+| Depends on | `local_sentientia_org` |
 
 ## What it does
 

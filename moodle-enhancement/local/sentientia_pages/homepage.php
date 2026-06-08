@@ -25,9 +25,9 @@ echo $OUTPUT->header();
 
 // Get live stats for the hero — PUBLIC TENANT ONLY (external-facing).
 // Public tenant ID is configurable (default: 77). NO FALLBACK to all-tenant data.
-$public_costcenter_id = \local_airpay_org\tenant_manager::get_public_tenant_id();
+$public_costcenter_id = \local_sentientia_org\tenant_manager::get_public_tenant_id();
 $publicpath = '/' . $public_costcenter_id . '%';
-$public_descendants = \local_airpay_org\org_manager::get_descendants('/' . $public_costcenter_id);
+$public_descendants = \local_sentientia_org\org_manager::get_descendants('/' . $public_costcenter_id);
 $public_category_ids = array_map(function($o) { return (int)$o->id; }, $public_descendants);
 $public_category_ids[] = $public_costcenter_id;
 

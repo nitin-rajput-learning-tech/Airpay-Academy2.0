@@ -38,7 +38,7 @@ $orgid = optional_param('orgid', 0, PARAM_INT);
 // Determine org scope — siteadmin can pick any org via dropdown.
 $orgpath = '';
 if ($orgid > 0) {
-    $org = $DB->get_record('local_airpay_org', ['id' => $orgid]);
+    $org = $DB->get_record('local_sentientia_org', ['id' => $orgid]);
     if ($org) {
         $orgpath = $org->path;
     }
@@ -50,7 +50,7 @@ if ($orgid > 0) {
 // Build org filter options for siteadmin.
 $org_options = [];
 if (is_siteadmin()) {
-    $orgs = $DB->get_records('local_airpay_org', ['depth' => 1, 'visible' => 1], 'fullname ASC');
+    $orgs = $DB->get_records('local_sentientia_org', ['depth' => 1, 'visible' => 1], 'fullname ASC');
     foreach ($orgs as $o) {
         $org_options[] = [
             'id' => $o->id,

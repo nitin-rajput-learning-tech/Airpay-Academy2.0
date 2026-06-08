@@ -8,7 +8,7 @@ in order. Replacement for BizLMS `local_program`.
 |---|---|
 | Component | `local_sentientia_programs` |
 | Version | 1.4.0 |
-| Depends on | `local_airpay_org`, `local_sentientia_courses` |
+| Depends on | `local_sentientia_org`, `local_sentientia_courses` |
 
 ## What it does
 

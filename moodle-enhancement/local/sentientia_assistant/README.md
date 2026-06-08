@@ -9,7 +9,7 @@ is dormant on Moodle 4.5.
 |---|---|
 | Component | `local_sentientia_assistant` |
 | Version | beta 1.0.0 |
-| Depends on | `local_airpay_org` |
+| Depends on | `local_sentientia_org` |
 
 ## What it does (current scope)
 

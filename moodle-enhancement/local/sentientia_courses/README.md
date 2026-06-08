@@ -8,7 +8,7 @@ lives in `local_sentientia_catalog`.
 |---|---|
 | Component | `local_sentientia_courses` |
 | Version | `2026051303` (1.8.0 — Sprint D) |
-| Depends on | `local_airpay_org` |
+| Depends on | `local_sentientia_org` |
 
 ## What it does
 

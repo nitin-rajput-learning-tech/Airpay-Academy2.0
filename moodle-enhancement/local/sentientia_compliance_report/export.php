@@ -23,7 +23,7 @@ if (!\local_sentientia_compliance_report\permission::can_export()) {
 
 $orgpath = '';
 if (!is_siteadmin()) {
-    $orgpath = \local_airpay_org\tenant_manager::get_tenant_path();
+    $orgpath = \local_sentientia_org\tenant_manager::get_tenant_path();
 }
 
 $format = optional_param('format', 'xlsx', PARAM_ALPHA);

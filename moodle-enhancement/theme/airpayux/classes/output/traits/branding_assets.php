@@ -12,7 +12,7 @@ defined('MOODLE_INTERNAL') || die();
  *
  * Extracted from `core_renderer.php` in Phase 9.5 engineering item 14
  * (decomposition pass 3). All methods consult either
- * `\local_airpay_org\branding_manager` (the canonical per-tenant
+ * `\local_sentientia_org\branding_manager` (the canonical per-tenant
  * branding source) or the theme's own settings.
  *
  * Methods provided:
@@ -25,7 +25,7 @@ defined('MOODLE_INTERNAL') || die();
  *   get_primarycolor():           string   — brand colour (#hex)
  *   get_secondarycolor():         string   — button colour (#hex)
  *   get_hovercolor():             string   — hover colour (#hex)
- *   getsitecolors_link():         string   — legacy-style link
+ *   getsitecolors_link():         string   — legacy epsilon-style link
  *                                            (returns '' post-fork; kept
  *                                            for template compatibility)
  *
@@ -37,7 +37,7 @@ trait branding_assets {
      * True when the navbar should render a logo (i.e. one is configured).
      */
     public function should_display_navbar_logo(): bool {
-        $logopath = \local_airpay_org\branding_manager::get_tenant_logo();
+        $logopath = \local_sentientia_org\branding_manager::get_tenant_logo();
         if (empty($logopath)) {
             $logopath = $this->get_compact_logo_url();
             if (empty($logopath)) {
@@ -49,12 +49,12 @@ trait branding_assets {
 
     /**
      * Tenant-specific logo URL with a three-step fallback:
-     *   1. local_airpay_org branding_manager
+     *   1. local_sentientia_org branding_manager
      *   2. Moodle compact-logo setting
      *   3. theme_airpayux default_logo image
      */
     public function get_custom_logo(): string {
-        $logopath = \local_airpay_org\branding_manager::get_tenant_logo();
+        $logopath = \local_sentientia_org\branding_manager::get_tenant_logo();
         if (empty($logopath)) {
             $logopath = $this->get_compact_logo_url();
             if (empty($logopath)) {
@@ -113,11 +113,11 @@ trait branding_assets {
 
     /**
      * Primary brand colour (#hex). Sourced from tenant-specific
-     * `\local_airpay_org\branding_manager::get_brand_colors()` so the
+     * `\local_sentientia_org\branding_manager::get_brand_colors()` so the
      * Public tenant gets purple, Airpay tenant gets blue, etc.
      */
     public function get_primarycolor(): string {
-        $colors = \local_airpay_org\branding_manager::get_brand_colors();
+        $colors = \local_sentientia_org\branding_manager::get_brand_colors();
         return $colors->brand_color;
     }
 
@@ -125,7 +125,7 @@ trait branding_assets {
      * Secondary / button colour.
      */
     public function get_secondarycolor(): string {
-        $colors = \local_airpay_org\branding_manager::get_brand_colors();
+        $colors = \local_sentientia_org\branding_manager::get_brand_colors();
         return $colors->button_color;
     }
 
@@ -133,7 +133,7 @@ trait branding_assets {
      * Hover state colour.
      */
     public function get_hovercolor(): string {
-        $colors = \local_airpay_org\branding_manager::get_brand_colors();
+        $colors = \local_sentientia_org\branding_manager::get_brand_colors();
         return $colors->hover_color;
     }
 

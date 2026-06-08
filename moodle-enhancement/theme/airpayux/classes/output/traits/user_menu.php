@@ -31,7 +31,7 @@ defined('MOODLE_INTERNAL') || die();
  *       - the not-logged-in / login-page / guest-user fallbacks,
  *       - the role-switcher (employee + manager-level roles from
  *         the BizLMS cost-center hierarchy via
- *         \local_airpay_org\accesslib),
+ *         \local_sentientia_org\accesslib),
  *       - the logout link,
  *       - the "viewing as" + MNet + login-failures metadata
  *         decorations on the avatar,
@@ -148,7 +148,7 @@ trait user_menu {
 
         /*Start of the role Switch */
         $systemcontext = context_system::instance();
-        $roles = \local_airpay_org\accesslib::get_user_roles_in_catgeorycontexts($USER->id);
+        $roles = \local_sentientia_org\accesslib::get_user_roles_in_catgeorycontexts($USER->id);
 
         if (is_array($roles) && (count($roles) > 0)) {
 
@@ -169,7 +169,7 @@ trait user_menu {
 
                             $categoryids = array_values(array_filter((explode('/', $role->path))));
                             $pathname=end($categoryids);
-                            $category = \local_airpay_org\accesslib::get_category_info($pathname, 'name');
+                            $category = \local_sentientia_org\accesslib::get_category_info($pathname, 'name');
                                 if(!in_array($role->depth.'_'.$categoryids[0], $depths['depth'])){
                                     $depths['depth'][] = $role->depth.'_'.$categoryids[0];
                                     $role->categoryname = $category;
@@ -421,7 +421,7 @@ trait user_menu {
      * user_menu() was never surfaced (it sat unused in the topbar context).
      * Multi-role users (e.g. an L&D admin who is also a learner) therefore
      * had no visible way to switch roles in the shell, even though
-     * /my/switchrole.php + \local_airpay_org\accesslib work fine.
+     * /my/switchrole.php + \local_sentientia_org\accesslib work fine.
      *
      * This method returns just the switch *data* (no action_menu, no avatar,
      * no logout) so the sidebar can paint a native airpayux control. It is a
@@ -451,11 +451,11 @@ trait user_menu {
         // BizLMS-only capability. On a vanilla Moodle (a future non-BizLMS
         // Sentientia customer) the resolver is absent — fail closed, render
         // nothing. Mirrors the defensive open_path read in session_manager.
-        if (!class_exists('\\local_airpay_org\\accesslib')) {
+        if (!class_exists('\\local_sentientia_org\\accesslib')) {
             return $result;
         }
 
-        $roles = \local_airpay_org\accesslib::get_user_roles_in_catgeorycontexts($USER->id);
+        $roles = \local_sentientia_org\accesslib::get_user_roles_in_catgeorycontexts($USER->id);
         if (!is_array($roles) || count($roles) === 0) {
             return $result;
         }
@@ -476,7 +476,7 @@ trait user_menu {
                 return null;
             }
             $pathname = end($categoryids);
-            $category = \local_airpay_org\accesslib::get_category_info($pathname, 'name');
+            $category = \local_sentientia_org\accesslib::get_category_info($pathname, 'name');
             $key = $role->depth . '_' . $categoryids[0];
             if (!in_array($key, $depths, true)) {
                 $depths[] = $key;

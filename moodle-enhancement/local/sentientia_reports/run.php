@@ -35,8 +35,8 @@ $result = \local_sentientia_reports\report_manager::run_report($reportid);
 // Resolve org name for display.
 $orgname = '';
 $dbman = $DB->get_manager();
-if ($report->costcenterid > 0 && $dbman->table_exists('local_airpay_org')) {
-    $org = $DB->get_record('local_airpay_org', ['id' => $report->costcenterid], 'fullname');
+if ($report->costcenterid > 0 && $dbman->table_exists('local_sentientia_org')) {
+    $org = $DB->get_record('local_sentientia_org', ['id' => $report->costcenterid], 'fullname');
     if ($org) {
         $orgname = format_string($org->fullname);
     }

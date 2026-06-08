@@ -22,7 +22,7 @@ $format = optional_param('format', 'csv', PARAM_ALPHA);
 // Tenant scoping.
 $orgpath = '';
 if (!is_siteadmin()) {
-    $orgpath = \local_airpay_org\tenant_manager::get_tenant_path();
+    $orgpath = \local_sentientia_org\tenant_manager::get_tenant_path();
 }
 
 $data = \local_sentientia_analytics\analytics_manager::get_export_data($range, $orgpath);

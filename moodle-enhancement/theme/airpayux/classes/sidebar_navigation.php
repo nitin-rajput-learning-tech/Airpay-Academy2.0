@@ -152,7 +152,7 @@ class sidebar_navigation {
 
             // ── Platform ──
             $items[] = $this->divider();
-            $items[] = $this->item('Organisation', 'fa-sitemap', '/local/airpay_org/admin.php', $currenturl);
+            $items[] = $this->item('Organisation', 'fa-sitemap', '/local/sentientia_org/admin.php', $currenturl);
             $items[] = $this->item('Skills', 'fa-bullseye', '/local/sentientia_skills/admin.php', $currenturl);
             $items[] = $this->item('Notifications', 'fa-bell', '/local/sentientia_notifications/index.php', $currenturl);
             $items[] = $this->item('Evaluations', 'fa-clipboard', '/local/sentientia_evaluation/index.php', $currenturl);
@@ -509,8 +509,8 @@ class sidebar_navigation {
         global $CFG;
 
         // Try tenant-specific logo from branding_manager.
-        if (class_exists('\local_airpay_org\branding_manager')) {
-            $logo = \local_airpay_org\branding_manager::get_tenant_logo();
+        if (class_exists('\local_sentientia_org\branding_manager')) {
+            $logo = \local_sentientia_org\branding_manager::get_tenant_logo();
             if (!empty($logo)) {
                 return $logo;
             }

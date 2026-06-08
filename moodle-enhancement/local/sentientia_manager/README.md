@@ -7,7 +7,7 @@ direct-report performance view.
 |---|---|
 | Component | `local_sentientia_manager` |
 | Version | `2026050800` (1.2.1) |
-| Depends on | `local_airpay_org`, `local_sentientia_users` |
+| Depends on | `local_sentientia_org`, `local_sentientia_users` |
 
 ## What it does
 

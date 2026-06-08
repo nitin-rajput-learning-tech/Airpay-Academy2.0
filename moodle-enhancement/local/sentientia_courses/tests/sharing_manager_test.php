@@ -31,12 +31,12 @@ class sharing_manager_test extends \advanced_testcase {
     use \local_airpay_core\phpunit\open_path_fixture_trait;
 
     /**
-     * Helper — does the local_airpay_org table exist in this PHPUnit fixture?
+     * Helper — does the local_sentientia_org table exist in this PHPUnit fixture?
      * Some tests depend on it for known_tenants(); skip if absent.
      */
     private static function org_table_exists(): bool {
         global $DB;
-        return $DB->get_manager()->table_exists('local_airpay_org');
+        return $DB->get_manager()->table_exists('local_sentientia_org');
     }
 
     public function test_share_course_inserts_a_row(): void {
@@ -201,7 +201,7 @@ class sharing_manager_test extends \advanced_testcase {
     }
 
     public function test_known_tenants_returns_fallback_list_when_no_org_table(): void {
-        // If the local_airpay_org table doesn't exist in this PHPUnit
+        // If the local_sentientia_org table doesn't exist in this PHPUnit
         // fixture, the helper falls back to the hard-coded {1, 77, 177}.
         // (If it DOES exist, we just assert the structure is sensible.)
         $list = sharing_manager::known_tenants();

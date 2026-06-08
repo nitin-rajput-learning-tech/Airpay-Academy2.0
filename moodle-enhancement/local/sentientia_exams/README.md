@@ -8,7 +8,7 @@ mastery score). Replacement for BizLMS `local_onlineexams`.
 |---|---|
 | Component | `local_sentientia_exams` |
 | Version | 1.3.0 |
-| Depends on | `local_airpay_org` |
+| Depends on | `local_sentientia_org` |
 
 ## What it does
 

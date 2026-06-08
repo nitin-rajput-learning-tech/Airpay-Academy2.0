@@ -95,7 +95,7 @@ class list_courses extends external_api {
         if ($deepest_orgid > 0) {
             // Cascade-filter overrides the implicit tenant scope: scope to
             // the selected org's full subtree.
-            $org = $DB->get_record('local_airpay_org', ['id' => $deepest_orgid], 'path');
+            $org = $DB->get_record('local_sentientia_org', ['id' => $deepest_orgid], 'path');
             if ($org && !empty($org->path)) {
                 $where[] = '(c.open_path = :ocascadeexact OR c.open_path LIKE :ocascadeprefix)';
                 $sqlparams['ocascadeexact']  = rtrim($org->path, '/');

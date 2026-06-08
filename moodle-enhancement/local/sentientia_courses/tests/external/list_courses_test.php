@@ -19,7 +19,7 @@ defined('MOODLE_INTERNAL') || die();
  */
 final class list_courses_test extends \advanced_testcase {
 
-    use \local_airpay_org\test\bizlms_fixture;
+    use \local_sentientia_org\test\bizlms_fixture;
 
     private function course_at_path(string $path): \stdClass {
         global $DB;

@@ -8,7 +8,7 @@ which appear in the navbar bell + the message drawer.
 |---|---|
 | Component | `local_sentientia_notifications` |
 | Version | `2026050900` (1.4.0) |
-| Depends on | `local_airpay_org` |
+| Depends on | `local_sentientia_org` |
 
 ## What it does
 

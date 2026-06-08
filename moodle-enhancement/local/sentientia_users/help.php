@@ -22,12 +22,12 @@ $PAGE->set_pagelayout('standard');
 $PAGE->set_title('Help & support');
 $PAGE->set_heading('Help & support');
 
-// Pull per-tenant help URL + support email from airpay_org/tenant_settings.
+// Pull per-tenant help URL + support email from sentientia_org/tenant_settings.
 $support_email = '';
 $help_url = '';
-if (class_exists('\\local_airpay_org\\tenant_settings')) {
-    $support_email = \local_airpay_org\tenant_settings::support_email();
-    $help_url      = \local_airpay_org\tenant_settings::help_url();
+if (class_exists('\\local_sentientia_org\\tenant_settings')) {
+    $support_email = \local_sentientia_org\tenant_settings::support_email();
+    $help_url      = \local_sentientia_org\tenant_settings::help_url();
 }
 
 $links = [

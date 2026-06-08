@@ -16,7 +16,7 @@ $plugin->requires  = 2024042200;
 $plugin->maturity  = MATURITY_STABLE;
 $plugin->release   = '1.0.3';     // +Goal A Bug #10 WS-contract alignment
 $plugin->dependencies = [
-    'local_airpay_org'     => 2026040100,
+    'local_sentientia_org'     => 2026040100,
     'local_sentientia_privacy' => 2026040100,  // DSR pipeline integration
     'local_airpay_core'    => 2026051200,  // Shared tenant helper
 ];

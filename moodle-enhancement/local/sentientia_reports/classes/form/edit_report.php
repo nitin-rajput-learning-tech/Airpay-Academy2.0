@@ -133,16 +133,16 @@ class edit_report extends \core_form\dynamic_form {
     }
 
     /**
-     * Build hierarchical org dropdown using local_airpay_org.
+     * Build hierarchical org dropdown using local_sentientia_org.
      */
     private function get_org_options(): array {
         global $DB;
         $options = [0 => '— All organisations —'];
         $dbman = $DB->get_manager();
-        if (!$dbman->table_exists('local_airpay_org')) {
+        if (!$dbman->table_exists('local_sentientia_org')) {
             return $options;
         }
-        $orgs = $DB->get_records('local_airpay_org', ['visible' => 1],
+        $orgs = $DB->get_records('local_sentientia_org', ['visible' => 1],
             'depth ASC, fullname ASC', 'id, fullname, depth');
         foreach ($orgs as $o) {
             $indent = str_repeat('— ', max(0, $o->depth - 1));

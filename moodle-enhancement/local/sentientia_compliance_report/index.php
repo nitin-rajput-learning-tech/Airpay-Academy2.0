@@ -104,7 +104,7 @@ if ($action && confirm_sesskey()) {
 // Tenant scoping.
 $orgpath = '';
 if (!is_siteadmin()) {
-    $orgpath = \local_airpay_org\tenant_manager::get_tenant_path();
+    $orgpath = \local_sentientia_org\tenant_manager::get_tenant_path();
 }
 
 // Build filter path from BU/Dept/SubDept dropdowns.

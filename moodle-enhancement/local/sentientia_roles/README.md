@@ -8,7 +8,7 @@ import/export, and a role-assignment dashboard.
 |---|---|
 | Component | `local_sentientia_roles` |
 | Version | beta 1.1.1 |
-| Depends on | `local_airpay_org` |
+| Depends on | `local_sentientia_org` |
 
 ## What it does
 

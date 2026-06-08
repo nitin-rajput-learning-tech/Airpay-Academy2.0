@@ -204,7 +204,7 @@ class edit_course extends \core_form\dynamic_form {
         // not exist on production — open_path is canonical).
         $orgid = 0;
         if (!empty($course->open_path)) {
-            $org = $DB->get_record('local_airpay_org', ['path' => $course->open_path], 'id');
+            $org = $DB->get_record('local_sentientia_org', ['path' => $course->open_path], 'id');
             if ($org) {
                 $orgid = (int) $org->id;
             }
@@ -279,7 +279,7 @@ class edit_course extends \core_form\dynamic_form {
 
     private function get_org_options(): array {
         global $DB;
-        $orgs = $DB->get_records('local_airpay_org', ['visible' => 1],
+        $orgs = $DB->get_records('local_sentientia_org', ['visible' => 1],
             'depth ASC, fullname ASC', 'id, fullname, depth');
 
         $options = [0 => '— No specific organisation —'];

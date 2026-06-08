@@ -484,7 +484,7 @@ class compliance_engine {
         $parts = explode('/', trim($orgpath ?: '/1', '/'));
         $toporg = '/' . ($parts[0] ?? '1');
 
-        $all_descendants = \local_airpay_org\org_manager::get_descendants($toporg);
+        $all_descendants = \local_sentientia_org\org_manager::get_descendants($toporg);
         $departments = array_filter($all_descendants, function($cc) {
             return in_array(($cc->depth ?? 0), [2, 3]);
         });
@@ -690,7 +690,7 @@ class compliance_engine {
         // Resolve names from org hierarchy.
         $result = [];
         foreach ($records as $r) {
-            $name = \local_airpay_org\org_manager::get_name((int)$r->id);
+            $name = \local_sentientia_org\org_manager::get_name((int)$r->id);
             if ($name) {
                 $result[] = [
                     'id'         => (int)$r->id,
@@ -712,7 +712,7 @@ class compliance_engine {
     public static function get_org_hierarchy_children(int $parentid): array {
         global $DB;
 
-        $children = \local_airpay_org\org_manager::get_children((int)$parentid);
+        $children = \local_sentientia_org\org_manager::get_children((int)$parentid);
         $result = [];
         foreach ($children as $c) {
             $usercount = $DB->count_records_select('user',
@@ -784,7 +784,7 @@ class compliance_engine {
         foreach ($courses as $c) {
             $entityname = 'All Entities';
             if ($c->costcenterid > 0) {
-                $entityname = \local_airpay_org\org_manager::get_name((int)$c->costcenterid) ?: 'Unknown';
+                $entityname = \local_sentientia_org\org_manager::get_name((int)$c->costcenterid) ?: 'Unknown';
             }
             $result[] = [
                 'id'            => $c->id,

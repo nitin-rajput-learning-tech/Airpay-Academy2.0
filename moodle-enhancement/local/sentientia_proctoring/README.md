@@ -11,7 +11,7 @@ sub-plugin that gates the quiz `attempt.php` lifecycle.
 | Version | `2026051201` (1.0.1) |
 | Requires | Moodle 4.5+ (`2024042200`) |
 | Maturity | `MATURITY_STABLE` |
-| Depends on | `local_airpay_org`, `local_sentientia_privacy`, `local_airpay_core` |
+| Depends on | `local_sentientia_org`, `local_sentientia_privacy`, `local_airpay_core` |
 
 ## What it does
 

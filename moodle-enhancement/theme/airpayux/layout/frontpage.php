@@ -24,7 +24,7 @@ global $DB, $CFG, $OUTPUT, $PAGE;
 
 // ── Live stats — PUBLIC TENANT ONLY ─────────────────────────
 // Guest-facing page must ONLY show Public tenant data. No all-tenant fallback.
-$public_id = \local_airpay_org\tenant_manager::get_public_tenant_id();
+$public_id = \local_sentientia_org\tenant_manager::get_public_tenant_id();
 $pubpath = '/' . $public_id . '%';
 
 $coursecount = (int)$DB->count_records_sql(

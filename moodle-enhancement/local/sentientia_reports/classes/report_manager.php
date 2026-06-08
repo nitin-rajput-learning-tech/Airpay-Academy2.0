@@ -90,7 +90,7 @@ class report_manager {
         ];
 
         if ($record->costcenterid > 0) {
-            $org = $DB->get_record('local_airpay_org', ['id' => $record->costcenterid]);
+            $org = $DB->get_record('local_sentientia_org', ['id' => $record->costcenterid]);
             if ($org) {
                 $record->open_path = $org->path;
             }
@@ -125,7 +125,7 @@ class report_manager {
         if (isset($data->status))       $record->status = (int) $data->status;
 
         if (isset($record->costcenterid) && $record->costcenterid != $existing->costcenterid) {
-            $org = $DB->get_record('local_airpay_org', ['id' => $record->costcenterid]);
+            $org = $DB->get_record('local_sentientia_org', ['id' => $record->costcenterid]);
             $record->open_path = $org ? $org->path : '';
         }
 

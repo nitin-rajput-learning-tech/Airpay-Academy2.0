@@ -108,7 +108,7 @@ $PAGE->set_pagelayout('embedded'); // Minimal layout — no navbar clutter.
 // subsidiaries in their interest picker — a real cross-tenant leak we
 // shipped to local on 2026-05-28).
 //
-// Resolution chain (in local_airpay_org\accesslib::get_tenant_category_id):
+// Resolution chain (in local_sentientia_org\accesslib::get_tenant_category_id):
 //   1. BizLMS canonical via local_costcenter.category by path (prod)
 //   2. Sentientia-native via org.shortname ↔ category.idnumber (works on
 //      vanilla Moodle Sentientia deployments without BizLMS)
@@ -118,7 +118,7 @@ $PAGE->set_pagelayout('embedded'); // Minimal layout — no navbar clutter.
 // scoped to whichever tenant their open_path indicates — admins are
 // already redirected away from onboarding in layout/dashboard.php, so
 // this branch is for learners and managers only.
-$tenant_catid = \local_airpay_org\accesslib::get_tenant_category_id(
+$tenant_catid = \local_sentientia_org\accesslib::get_tenant_category_id(
     (string) ($USER->open_path ?? ''));
 $tenant_catpath = '';
 if ($tenant_catid) {

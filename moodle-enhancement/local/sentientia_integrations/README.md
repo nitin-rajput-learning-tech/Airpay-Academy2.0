@@ -8,7 +8,7 @@ integrations as they come online.
 |---|---|
 | Component | `local_sentientia_integrations` |
 | Version | beta 1.1.0 |
-| Depends on | `local_airpay_org`, `local_sentientia_lifecycle` |
+| Depends on | `local_sentientia_org`, `local_sentientia_lifecycle` |
 
 ## What it does
 

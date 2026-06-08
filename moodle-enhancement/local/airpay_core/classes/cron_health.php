@@ -48,7 +48,7 @@ class cron_health {
      */
     public const AIRPAY_TASK_CLASSES = [
         '\\local_sentientia_recompletion\\task\\run_rules',
-        '\\local_airpay_org\\task\\sync_cohorts',
+        '\\local_sentientia_org\\task\\sync_cohorts',
         '\\local_sentientia_proctoring\\task\\purge_old_recordings',
         '\\local_sentientia_request\\task\\escalate_overdue',
         '\\local_sentientia_request\\task\\auto_expire',

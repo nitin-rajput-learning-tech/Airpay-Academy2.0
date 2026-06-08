@@ -22,7 +22,7 @@ defined('MOODLE_INTERNAL') || die();
  */
 final class analytics_manager_test extends \advanced_testcase {
 
-    use \local_airpay_org\test\bizlms_fixture;
+    use \local_sentientia_org\test\bizlms_fixture;
 
     /**
      * Place a user at a specific open_path.
