@@ -62,7 +62,7 @@ pwsh /var/www/moodle-enhancement/tools/overlay-airpay-customs.ps1 \
 ```
 Reference: `moodle-enhancement/tools/overlay-airpay-customs.ps1` — Phase
 B.12 hotfix added `payment/gateway/airpay` and
-`mod/quiz/accessrule/airpay_proctoring` to the copy list, so the
+`mod/quiz/accessrule/sentientia_proctoring` to the copy list, so the
 overlay now catches everything.
 
 ### Step 3 — Symlink config.php (T+5)
@@ -78,8 +78,8 @@ cd /var/www/moodle
 php admin/cli/upgrade.php --non-interactive
 ```
 **Expected output:** `Upgrade completed successfully.` Multiple plugin
-upgrades will fire — paygw_airpay, quizaccess_airpay_proctoring,
-theme_airpayux, local_sentientia_pwa, all 30 `local_airpay_*` plugins.
+upgrades will fire — paygw_airpay, quizaccess_sentientia_proctoring,
+theme_sentientia, local_sentientia_pwa, all 30 `local_sentientia_*` plugins.
 **Watch for:** any `downgrade_exception` (the Phase B.12 hotfix at
 commit `f8f25e171` resolved the one known case in
 `paygw_airpay/db/upgrade.php` — the `int $oldversion` → `float` fix).
@@ -136,20 +136,20 @@ Walk through the four cutover-day code paths manually:
    (5.2 partial) instead of the 5.1 `core/url_select`. Visual: the
    "Activities" / "Resources" dropdown should display correctly.
 2. **4 AMD modal_factory → core/modal sites** — exercise each:
-   - `/local/airpay_courses/enrolledusers.php?id=275` → click "Enrol user"
+   - `/local/sentientia_courses/enrolledusers.php?id=275` → click "Enrol user"
      → modal opens.
-   - `/local/airpay_request/myrequests.php` → click "Request access" on a
+   - `/local/sentientia_request/myrequests.php` → click "Request access" on a
      course card → modal opens.
-   - `/local/airpay_request/approvals.php` → click "Approve"/"Reject" on
+   - `/local/sentientia_request/approvals.php` → click "Approve"/"Reject" on
      a pending row → modal opens.
-   - `/local/airpay_cart/admin_orders.php` → click "Refund" on an
+   - `/local/sentientia_cart/admin_orders.php` → click "Refund" on an
      order → modal opens.
 3. **paygw_airpay real payment** — purchase a paid Public course with a
    real INR card. Verify the redirect to Airpay, the return, and the
    enrolment landing successful.
-4. **quizaccess_airpay_proctoring upgrade** — verify the
-   `quizaccess_airpay_proctor` table exists (`mysql> SHOW TABLES LIKE
-   'mdl_quizaccess_airpay_proctor';`) and that existing config-row data
+4. **quizaccess_sentientia_proctoring upgrade** — verify the
+   `quizaccess_sentientia_proctor` table exists (`mysql> SHOW TABLES LIKE
+   'mdl_quizaccess_sentientia_proctor';`) and that existing config-row data
    was migrated (the `< 2026051300` savepoint with defensive
    `create_table` is the path).
 
@@ -196,7 +196,7 @@ These items are NOT cutover-blocking. Schedule for the day after.
    this AMD shim pending real-NVDA verification on 5.2 substrate.
    Spin up NVDA 2023, call `core/toast.add('Saved', {visuallyHidden: true})`
    twice quickly, verify both announcements fire. If yes → `git rm
-   moodle-enhancement/theme/airpayux/amd/src/announcement.js`. See
+   moodle-enhancement/theme/sentientia/amd/src/announcement.js`. See
    `docs/5.2-merge/PHASE-B3F-AMD-CLEANUP.md`.
 2. **secure.mustache activity_header runtime test** — verify the
    `{{#headercontent}}` block we backported in Phase B.12 actually
@@ -208,7 +208,7 @@ These items are NOT cutover-blocking. Schedule for the day after.
    BS5, do the wholesale swap.
 4. **Re-run Hindi parity audit:**
    ```bash
-   php /var/www/moodle/local/airpay_core/hindi_audit.php
+   php /var/www/moodle/local/sentientia_core/hindi_audit.php
    ```
    100% parity expected.
 5. **Update `CLAUDE.md`** to reflect new production version:
@@ -234,7 +234,7 @@ These items are NOT cutover-blocking. Schedule for the day after.
 | Smoke §1 (tertiary nav) | `docs/5.2-merge/PHASE-B3C-TOP-TEMPLATES-REBASE.md` |
 | Smoke §2 (modals) | `docs/5.2-merge/PHASE-B4-LIB-ADMIN-CONFLICTS.md` |
 | Smoke §3 (paygw_airpay) | `state-cards/paygw_airpay-state.md` (if exists), commit `275f45c84` |
-| Smoke §4 (quizaccess) | `mod/quiz/accessrule/airpay_proctoring/db/upgrade.php` + commit `114fed155` |
+| Smoke §4 (quizaccess) | `mod/quiz/accessrule/sentientia_proctoring/db/upgrade.php` + commit `114fed155` |
 | Rollback | `docs/operations/disaster-recovery.md` (FUTURE — write before next cutover) |
 
 ---

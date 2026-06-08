@@ -15,7 +15,7 @@
 # Usage:
 #   tools/check_workspace_sync.sh                 # report
 #   tools/check_workspace_sync.sh --strict        # exit 1 on drift
-#   tools/check_workspace_sync.sh --component theme/airpayux  # limit scope
+#   tools/check_workspace_sync.sh --component theme/sentientia  # limit scope
 #
 # Configuration via env (or override on cmdline):
 #   WORKSPACE_ROOT   default: parent of this script's dir
@@ -61,13 +61,13 @@ if [[ -n "$COMPONENT" ]]; then
     COMPONENTS=("$COMPONENT")
 else
     COMPONENTS=(
-        "theme/airpayux"
+        "theme/sentientia"
     )
     # Note: blocks/learnerscript is vendored 3rd-party — we override ONE
     # file (classes/observer.php for the CLI guard, see F-077). The other
     # 883 files are upstream. Excluded from this check; if we ever add
     # more overrides, list them explicitly via the targeted-files approach.
-    # Auto-discover local/airpay_* + local/sentientia_* dirs.
+    # Auto-discover local/sentientia_* + local/sentientia_* dirs.
     for d in "$WORKSPACE_ROOT/local"/{airpay,sentientia}_*; do
         [[ -d "$d" ]] || continue
         rel="${d#$WORKSPACE_ROOT/}"
@@ -156,7 +156,7 @@ echo "    cp -r \$DEPLOYED_ROOT/<component>/<path> \$WORKSPACE_ROOT/<component>/
 echo "    git add moodle-enhancement/<component>/<path>"
 echo ""
 echo "Why this matters: DEPLOYMENT-RUNBOOK §1-§4 instructs IT to deploy"
-echo "from the workspace ('Source: theme/airpayux/' etc.). Drift means"
+echo "from the workspace ('Source: theme/sentientia/' etc.). Drift means"
 echo "a fresh deploy ships a broken plugin (missing version.php / lang /"
 echo "runtime classes). See audit doc F-091, F-092 for the case study."
 

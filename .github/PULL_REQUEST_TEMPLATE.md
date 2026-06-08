@@ -24,10 +24,10 @@
 <!-- Tick every box that applies. Each unticked box is a question for
      the reviewer to confirm. -->
 
-- [ ] Plugin code (`local/airpay_*`, `theme/airpayux`, etc.)
+- [ ] Plugin code (`local/sentientia_*`, `theme/sentientia`, etc.)
 - [ ] Core Moodle file modified (requires ADR + entry in `docs/core-mods/`)
 - [ ] DB schema change (`db/install.xml` or `db/upgrade.php`)
-- [ ] New feature flag in `local_airpay_core/feature_flags`
+- [ ] New feature flag in `local_sentientia_core/feature_flags`
 - [ ] New web-service endpoint
 - [ ] UI / SCSS / Mustache change
 
@@ -46,14 +46,14 @@
 - [ ] Tested as the relevant user role (NOT as Site Admin — admin
       bypasses capability checks and hides real bugs)
 - [ ] Tested at mobile breakpoint (590px viewport) if UI changed
-- [ ] PHPUnit (if applicable) — see `theme/airpayux/tests/README.md`
+- [ ] PHPUnit (if applicable) — see `theme/sentientia/tests/README.md`
       for the runbook
 - [ ] No new console errors in browser DevTools
 
 ## Web-service consumers (if this PR touches `data-region=
 "airpay-datatable"` or any `db/services.php`)
 
-<!-- Per ADR-009 — the shared theme_airpayux/datatable client always
+<!-- Per ADR-009 — the shared theme_sentientia/datatable client always
      POSTs {search, sort, sortdir, page, perpage, filters}. Every WS
      it consumes MUST declare all 6 with VALUE_DEFAULT. Bug #6 + #10
      + #12 + #13 were all this drift class.
@@ -65,21 +65,21 @@
       locally
 - [ ] If a new WS endpoint feeds a datatable, its
       `execute_parameters()` matches the canonical shape in
-      `local/airpay_request/classes/external/list_mine.php`
+      `local/sentientia_request/classes/external/list_mine.php`
 
 ## Role detection (if this PR touches anything role-aware)
 
 <!-- Per ADR-009 — never re-implement is_siteadmin / has_capability
      checks. Always consume the shared helper:
 
-       $r = \theme_airpayux\role_detector::detect();
+       $r = \theme_sentientia\role_detector::detect();
        // $r['issiteadmin'], $r['isldadmin'], $r['isadmin'],
        // $r['ismanager'], $r['islearner'], $r['switched_to_employee']
 
      Bug #11 happened because layout/dashboard.php and
      classes/sidebar_navigation.php had drifted to disagree. -->
 
-- [ ] Role-aware code consumes `\theme_airpayux\role_detector::detect()`
+- [ ] Role-aware code consumes `\theme_sentientia\role_detector::detect()`
 - [ ] PHPUnit `role_detector_test` still passes locally
 
 ## Visual evidence (mandatory for UI changes)

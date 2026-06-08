@@ -43,10 +43,10 @@ runs `upgrade.php --non-interactive` + `purge_caches.php`:
 
 | Source (under `moodle-enhancement/`)            | Target (under the resolved XAMPP `\public\` dir)  |
 |-------------------------------------------------|---------------------------------------------------|
-| `theme/airpayux/`                               | `theme/airpayux/`                                 |
+| `theme/sentientia/`                               | `theme/sentientia/`                                 |
 | `local/*/`                                      | `local/*/`                                        |
 | `blocks/sentientia_*/`                          | `blocks/sentientia_*/`                            |
-| `mod/quiz/accessrule/airpay_proctoring/`        | `mod/quiz/accessrule/airpay_proctoring/`          |
+| `mod/quiz/accessrule/sentientia_proctoring/`        | `mod/quiz/accessrule/sentientia_proctoring/`          |
 | `payment/gateway/airpay/`                       | `payment/gateway/airpay/`                         |
 
 ### Named targets
@@ -234,7 +234,7 @@ Hit these 5 URLs after every deploy. As **Learner role**, not Site Admin
 |---|------|-----|
 | 1 | `/`                                          | Frontpage renders, footer + header brand correct. |
 | 2 | `/my/dashboard.php`                          | Sentientia dashboard renders; no JS console errors. |
-| 3 | `/local/airpay_courses/`                     | Course catalog list loads; 10+ tiles visible. |
+| 3 | `/local/sentientia_courses/`                     | Course catalog list loads; 10+ tiles visible. |
 | 4 | `/course/view.php?id=<one-known-course>`     | Course content + tertiary nav render (5.2 tertiary_navigation_selector path). |
 | 5 | `/login/index.php` (after logging out)       | Login form renders; tenant logo matches BizLMS costcenter. |
 

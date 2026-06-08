@@ -7,8 +7,8 @@
 #   - Our 5.1.3+ tree exists at $src (default C:\xampp\htdocs\moodle5\)
 #
 # What this script does:
-#   - Copy our theme/airpayux into the 5.2 tree
-#   - Copy all local/airpay_* + local/sentientia_* plugins
+#   - Copy our theme/sentientia into the 5.2 tree
+#   - Copy all local/sentientia_* + local/sentientia_* plugins
 #   - Copy our airpay_* + patched vendor blocks
 #   - Copy admin/tool/certificate (vendor plugin we ship)
 #   - Copy root utility files (airpay-audit-loginas.php)
@@ -91,10 +91,10 @@ function Copy-File {
 
 Log ""
 Log "=== Theme ==="
-Copy-Tree 'theme' 'theme\airpayux'
+Copy-Tree 'theme' 'theme\sentientia'
 
 Log ""
-Log "=== local/airpay_* (30 plugins) ==="
+Log "=== local/sentientia_* (30 plugins) ==="
 $localPlugins = Get-ChildItem (Join-Path $Source 'local') -Directory -Filter 'airpay_*'
 foreach ($p in $localPlugins) {
     Copy-Tree 'local' "local\$($p.Name)"
@@ -108,8 +108,8 @@ foreach ($p in $sentientia) {
 }
 
 Log ""
-Log "=== blocks/airpay_* ==="
-$blocks = Get-ChildItem (Join-Path $Source 'blocks') -Directory -Filter 'airpay_*' -ErrorAction SilentlyContinue
+Log "=== blocks/sentientia_* (+ any legacy airpay_*) ==="
+$blocks = Get-ChildItem (Join-Path $Source 'blocks') -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -like 'sentientia_*' -or $_.Name -like 'airpay_*' }
 foreach ($b in $blocks) {
     Copy-Tree 'block' "blocks\$($b.Name)"
 }
@@ -137,12 +137,12 @@ Log "=== payment/gateway/airpay (live payment gateway plugin) ==="
 Copy-Tree 'paygw' 'payment\gateway\airpay'
 
 Log ""
-Log "=== mod/quiz/accessrule/airpay_proctoring (quiz access proctoring) ==="
+Log "=== mod/quiz/accessrule/sentientia_proctoring (quiz access proctoring) ==="
 # Added 2026-05-23 — Phase B.12 hotfix. Was tracked in repo but the overlay
 # script's copy list was incomplete. Source-of-truth is the repo version
 # (2026051300, has db/install.xml + db/upgrade.php) which is newer than
 # what production XAMPP 5.1 has (2026051120, no DB schema).
-Copy-Tree 'quizaccess' 'mod\quiz\accessrule\airpay_proctoring'
+Copy-Tree 'quizaccess' 'mod\quiz\accessrule\sentientia_proctoring'
 
 Log ""
 Log "=== Root utility ==="

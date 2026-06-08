@@ -14,7 +14,7 @@ name: CI — Airpay Academy
 #   5. version-bump-check    — warns when plugin code changed without
 #                              a version.php bump (PR-only, non-blocking)
 #   6. playwright-linux      — Linux E2E + visual smoke against a
-#                              containerised Moodle 5.x + airpayux
+#                              containerised Moodle 5.x + sentientia
 #                              theme. Advisory gate (continue-on-error)
 #                              during P2 cutover-prep — transitions to
 #                              blocking once visual baselines are
@@ -33,15 +33,15 @@ name: CI — Airpay Academy
 #   cd C:\xampp\htdocs\moodle5
 #   php public/admin/tool/phpunit/cli/init.php
 #   vendor/bin/phpunit.bat --group ws_contract,role_detector \
-#     public/theme/airpayux/tests/
-# See theme/airpayux/tests/README.md for the full PHPUnit runbook.
+#     public/theme/sentientia/tests/
+# See theme/sentientia/tests/README.md for the full PHPUnit runbook.
 
 on:
   pull_request:
     paths:
       - 'moodle-enhancement/**'
-      - 'local/airpay_**'
-      - 'theme/airpayux/**'
+      - 'local/sentientia_**'
+      - 'theme/sentientia/**'
       - 'tests/playwright/**'
       - 'scripts/agents/**'
       - 'tests/agents/**'
@@ -52,8 +52,8 @@ on:
       - production
     paths:
       - 'moodle-enhancement/**'
-      - 'local/airpay_**'
-      - 'theme/airpayux/**'
+      - 'local/sentientia_**'
+      - 'theme/sentientia/**'
       - 'tests/playwright/**'
       - 'scripts/agents/**'
       - 'tests/agents/**'
@@ -78,7 +78,7 @@ jobs:
       - name: Lint all airpay PHP files
         run: |
           set -e
-          # Find every PHP file under moodle-enhancement/, local/airpay_*/, theme/airpayux/.
+          # Find every PHP file under moodle-enhancement/, local/sentientia_*/, theme/sentientia/.
           # `php -l` checks syntax without running.
           find moodle-enhancement -name '*.php' \
                -not -path '*/node_modules/*' \
@@ -94,8 +94,8 @@ jobs:
           fi
 
           # Theme files
-          if [ -d theme/airpayux ]; then
-            find theme/airpayux -name '*.php' \
+          if [ -d theme/sentientia ]; then
+            find theme/sentientia -name '*.php' \
               | xargs -n 1 php -l >> /tmp/lint.log 2>&1 || true
           fi
 
@@ -124,7 +124,7 @@ jobs:
               echo "::error file=$f::Invalid JSON"
               FAILS=$((FAILS + 1))
             fi
-          done < <(find moodle-enhancement local/airpay_* theme/airpayux \
+          done < <(find moodle-enhancement local/sentientia_* theme/sentientia \
                      -name '*.json' \
                      -not -path '*/node_modules/*' \
                      -not -name '*.min.json.map' \
@@ -161,7 +161,7 @@ jobs:
               echo "::error file=$f::Unbalanced Mustache tags ($OPENS opens vs $CLOSES closes; #=$REGULAR ^=$INVERTED \$=$BLOCK <=$PARENT)"
               FAILS=$((FAILS + 1))
             fi
-          done < <(find moodle-enhancement local/airpay_* theme/airpayux \
+          done < <(find moodle-enhancement local/sentientia_* theme/sentientia \
                      -name '*.mustache' 2>/dev/null || true)
           if [ $FAILS -gt 0 ]; then exit 1; fi
           echo "::notice::Mustache balance check passed"
@@ -197,7 +197,7 @@ jobs:
           #   1  One or more failures (specific keys missing)
           #   2  Zero consumers found (scanner regex broken / config)
           #
-          # See ADR-009 + theme/airpayux/tests/ws_contract_test.php for
+          # See ADR-009 + theme/sentientia/tests/ws_contract_test.php for
           # the Moodle-aware version that runs locally with PHPUnit.
           # This standalone variant runs without Moodle bootstrap so
           # CI doesn't need to install Moodle on every PR (which would
@@ -243,7 +243,7 @@ jobs:
             --include='*.md' \
             --include='*.yml' \
             moodle-enhancement/ \
-            theme/airpayux/ \
+            theme/sentientia/ \
             local/ \
             .github/ \
             .claude/ 2>/dev/null)
@@ -277,7 +277,7 @@ jobs:
 
           # For every airpay plugin that has any change, version.php must also have changed.
           CHANGED_DIRS=$(git diff --name-only "$BASE" "$HEAD" \
-            | grep -oE '(moodle-enhancement/local/airpay_[a-z_]+|local/airpay_[a-z_]+)' \
+            | grep -oE '(moodle-enhancement/local/sentientia_[a-z_]+|local/sentientia_[a-z_]+)' \
             | sort -u || true)
 
           MISSING=0
@@ -588,7 +588,7 @@ jobs:
           # local/* plugins (airpay_* + sentientia_*) — only dirs with
           # version.php count; airpay_lifecycle/airpay_pages are partial
           # plugins-in-progress and don't install.
-          for d in "$PLUGINS_SRC"/local/airpay_* "$PLUGINS_SRC"/local/sentientia_*; do
+          for d in "$PLUGINS_SRC"/local/sentientia_* "$PLUGINS_SRC"/local/sentientia_*; do
             [ -d "$d" ] && [ -f "$d/version.php" ] || continue
             name=$(basename "$d")
             rm -rf "$MOODLE_DIR/local/$name"
@@ -619,13 +619,13 @@ jobs:
             done
           fi
 
-          # airpayux theme — needed so theme/airpayux/tests/ run with the
+          # sentientia theme — needed so theme/sentientia/tests/ run with the
           # rest of the suite (ws_contract, role_detector, etc.).
-          if [ -d "$PLUGINS_SRC/theme/airpayux" ]; then
-            rm -rf "$MOODLE_DIR/theme/airpayux"
-            cp -r "$PLUGINS_SRC/theme/airpayux" "$MOODLE_DIR/theme/airpayux"
+          if [ -d "$PLUGINS_SRC/theme/sentientia" ]; then
+            rm -rf "$MOODLE_DIR/theme/sentientia"
+            cp -r "$PLUGINS_SRC/theme/sentientia" "$MOODLE_DIR/theme/sentientia"
             copied=$((copied + 1))
-            echo "  theme/airpayux"
+            echo "  theme/sentientia"
           fi
 
           # paygw/airpay payment plugin (has tests/)
@@ -724,7 +724,7 @@ jobs:
           }
 
           echo "Discovered airpay testsuites:"
-          for d in local/airpay_* local/sentientia_*; do
+          for d in local/sentientia_* local/sentientia_*; do
             [ -d "$d" ] && [ -f "$d/version.php" ] || continue
             add_suite "local_$(basename "$d")" "$d"
           done
@@ -736,8 +736,8 @@ jobs:
             [ -d "$d" ] && [ -f "$d/version.php" ] || continue
             add_suite "quizaccess_$(basename "$d")" "$d"
           done
-          if [ -d theme/airpayux/tests ]; then
-            add_suite "theme_airpayux" "theme/airpayux"
+          if [ -d theme/sentientia/tests ]; then
+            add_suite "theme_sentientia" "theme/sentientia"
           fi
           if [ -d payment/gateway/airpay/tests ]; then
             add_suite "paygw_airpay" "payment/gateway/airpay"
@@ -783,7 +783,7 @@ jobs:
     name: SCSS BizLMS-selector guard (stylelint)
     runs-on: ubuntu-latest
     # BLOCKING gate. Runs ONLY the BizLMS-DOM-selector guard
-    # (theme/airpayux/.stylelintrc.ci.json) — bans .costcenter_data /
+    # (theme/sentientia/.stylelintrc.ci.json) — bans .costcenter_data /
     # .content_right in NEW theme SCSS so the ADR-018 decoupling can't
     # regress. Verified green across the active theme tree at wire-up
     # (2026-05-30); the two legacy users (dark_mode.scss / custom_media.scss)
@@ -808,7 +808,7 @@ jobs:
         run: npm install --no-save --no-audit --no-fund stylelint@^15.11.0 postcss-scss
 
       - name: Run the BizLMS-selector guard
-        working-directory: moodle-enhancement/theme/airpayux
+        working-directory: moodle-enhancement/theme/sentientia
         run: |
           # npx resolves the stylelint binary from the repo-root node_modules
           # installed in the step above (searches up from this working dir).
