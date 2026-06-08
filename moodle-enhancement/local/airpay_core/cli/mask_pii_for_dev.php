@@ -36,9 +36,9 @@
  *   mdl_local_sentientia_cart_history — clear billing_phone, billing_address.
  *              Keep billing_email + billing_name (already masked via
  *              mdl_user.email + firstname/lastname).
- *   mdl_local_airpay_proctor_identity — clear all rows (identity
+ *   mdl_local_sentientia_proctor_identity — clear all rows (identity
  *              photos were never persisted; only match scores).
- *   mdl_local_airpay_proctor_recordings — clear s3_key (we don't want
+ *   mdl_local_sentientia_proctor_recordings — clear s3_key (we don't want
  *              dev to accidentally hit prod S3 objects).
  *
  * WHAT IT DOES NOT MASK:
@@ -141,15 +141,15 @@ if ($DB->get_manager()->table_exists('local_sentientia_cart_history')) {
 }
 
 // ── Step 4: proctoring identity rows (defensive — should be empty) ─
-if ($DB->get_manager()->table_exists('local_airpay_proctor_identity')) {
-    $DB->execute("DELETE FROM {local_airpay_proctor_identity}");
-    fwrite(STDOUT, "  mdl_local_airpay_proctor_identity: rows deleted\n");
+if ($DB->get_manager()->table_exists('local_sentientia_proctor_identity')) {
+    $DB->execute("DELETE FROM {local_sentientia_proctor_identity}");
+    fwrite(STDOUT, "  mdl_local_sentientia_proctor_identity: rows deleted\n");
 }
 
 // ── Step 5: proctoring recording S3 keys ───────────────────────────
-if ($DB->get_manager()->table_exists('local_airpay_proctor_recordings')) {
-    $DB->execute("UPDATE {local_airpay_proctor_recordings} SET s3_key = ''");
-    fwrite(STDOUT, "  mdl_local_airpay_proctor_recordings: s3_key cleared\n");
+if ($DB->get_manager()->table_exists('local_sentientia_proctor_recordings')) {
+    $DB->execute("UPDATE {local_sentientia_proctor_recordings} SET s3_key = ''");
+    fwrite(STDOUT, "  mdl_local_sentientia_proctor_recordings: s3_key cleared\n");
 }
 
 // ── Step 6: email + notification logs may leak addresses ───────────

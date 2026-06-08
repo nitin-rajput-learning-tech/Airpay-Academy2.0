@@ -54,7 +54,7 @@ preserved for audit, all PII fields nulled).
 
 ## Open backlog
 
-- Photo upload doesn't yet pass through the airpay_proctoring identity
+- Photo upload doesn't yet pass through the sentientia_proctoring identity
   pipeline for hiring assessment use cases.
 - The custom user fields rely on the BizLMS schema extensions; FORK-PLAN
   sequences in-housing of these columns through the airpay_org accesslib

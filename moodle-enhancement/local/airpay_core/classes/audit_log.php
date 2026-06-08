@@ -85,8 +85,8 @@ class audit_log {
         '\local_sentientia_cart\event\order_paid',
 
         // Proctoring sensitive actions.
-        '\local_airpay_proctoring\event\session_flagged',
-        '\local_airpay_proctoring\event\review_submitted',
+        '\local_sentientia_proctoring\event\session_flagged',
+        '\local_sentientia_proctoring\event\review_submitted',
 
         // Sprint C+D (2026-05-13): cross-tenant course sharing audit.
         // These five events tell the compliance auditor exactly who
