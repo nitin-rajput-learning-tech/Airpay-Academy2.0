@@ -123,7 +123,7 @@ function xmldb_local_sentientia_classroom_upgrade(int $oldversion): bool {
     // Replaces the dropped BizLMS local_location plugin. Locations are
     // a property of classroom sessions, not a top-level concept.
     if ($oldversion < 2026051160) {
-        $table = new \xmldb_table('local_airpay_locations');
+        $table = new \xmldb_table('local_sentientia_locations');
         $table->add_field('id',          XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
         $table->add_field('name',        XMLDB_TYPE_CHAR,    '200', null, XMLDB_NOTNULL);
         $table->add_field('city',        XMLDB_TYPE_CHAR,    '100', null, null, null, '');

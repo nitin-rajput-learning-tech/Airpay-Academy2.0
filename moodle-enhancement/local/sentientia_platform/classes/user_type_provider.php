@@ -8,7 +8,7 @@
  * ADR-017 Phase 2 (C1.2). Each user_type — employee, consumer,
  * partner_employee, operator — has one provider class implementing
  * this interface. The factory (`user_type_factory::for_user`) reads
- * `local_airpay_user_type.user_type` for a given userid and returns
+ * `local_sentientia_user_type.user_type` for a given userid and returns
  * the matching provider.
  *
  * Call-sites consume the provider's methods rather than branching on
@@ -38,7 +38,7 @@ interface user_type_provider {
 
     /**
      * Stable identifier for this user-type.
-     * Matches a value of `local_airpay_user_type.user_type`.
+     * Matches a value of `local_sentientia_user_type.user_type`.
      *
      * @return string One of: employee | consumer | partner_employee | operator
      */

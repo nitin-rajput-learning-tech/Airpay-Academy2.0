@@ -233,8 +233,8 @@ function xmldb_local_sentientia_platform_upgrade(int $oldversion): bool {
     // creates a new mdl_user account, not a row update.
     if ($oldversion < 2026052801) {
 
-        // ── local_airpay_user_type — the classification row, 1:1 with mdl_user
-        $table = new xmldb_table('local_airpay_user_type');
+        // ── local_sentientia_user_type — the classification row, 1:1 with mdl_user
+        $table = new xmldb_table('local_sentientia_user_type');
         if (!$dbman->table_exists($table)) {
             $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null,
                 XMLDB_NOTNULL, XMLDB_SEQUENCE);
@@ -260,8 +260,8 @@ function xmldb_local_sentientia_platform_upgrade(int $oldversion): bool {
             $dbman->create_table($table);
         }
 
-        // ── local_airpay_employee_profile — Airpay-customer staff
-        $table = new xmldb_table('local_airpay_employee_profile');
+        // ── local_sentientia_employee_profile — Airpay-customer staff
+        $table = new xmldb_table('local_sentientia_employee_profile');
         if (!$dbman->table_exists($table)) {
             $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null,
                 XMLDB_NOTNULL, XMLDB_SEQUENCE);
@@ -297,8 +297,8 @@ function xmldb_local_sentientia_platform_upgrade(int $oldversion): bool {
             $dbman->create_table($table);
         }
 
-        // ── local_airpay_consumer_profile — public-signup learners
-        $table = new xmldb_table('local_airpay_consumer_profile');
+        // ── local_sentientia_consumer_profile — public-signup learners
+        $table = new xmldb_table('local_sentientia_consumer_profile');
         if (!$dbman->table_exists($table)) {
             $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null,
                 XMLDB_NOTNULL, XMLDB_SEQUENCE);
@@ -329,8 +329,8 @@ function xmldb_local_sentientia_platform_upgrade(int $oldversion): bool {
             $dbman->create_table($table);
         }
 
-        // ── local_airpay_partner_employee_profile — B2B partner-org staff
-        $table = new xmldb_table('local_airpay_partner_employee_profile');
+        // ── local_sentientia_partner_employee_profile — B2B partner-org staff
+        $table = new xmldb_table('local_sentientia_partner_employee_profile');
         if (!$dbman->table_exists($table)) {
             $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null,
                 XMLDB_NOTNULL, XMLDB_SEQUENCE);
@@ -368,8 +368,8 @@ function xmldb_local_sentientia_platform_upgrade(int $oldversion): bool {
             $dbman->create_table($table);
         }
 
-        // ── local_airpay_operator_profile — platform operators / Site Admins
-        $table = new xmldb_table('local_airpay_operator_profile');
+        // ── local_sentientia_operator_profile — platform operators / Site Admins
+        $table = new xmldb_table('local_sentientia_operator_profile');
         if (!$dbman->table_exists($table)) {
             $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null,
                 XMLDB_NOTNULL, XMLDB_SEQUENCE);

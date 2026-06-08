@@ -36,7 +36,7 @@ if ($action === 'complete' && confirm_sesskey()) {
 
     // ── ADR-017 / C1.5 (2026-05-28) ─────────────────────────────────
     // For consumer learners, also persist these choices to the
-    // local_airpay_consumer_profile table so they survive cross-device
+    // local_sentientia_consumer_profile table so they survive cross-device
     // and feed into the provider's profile_context() / dashboard widgets.
     // The user_preference rows are kept for backward compat with widgets
     // that still read them.
@@ -49,7 +49,7 @@ if ($action === 'complete' && confirm_sesskey()) {
             if ($type_provider::type_id() === 'consumer') {
                 // Upsert the consumer profile row.
                 $now = time();
-                $existing = $DB->get_record('local_airpay_consumer_profile',
+                $existing = $DB->get_record('local_sentientia_consumer_profile',
                     ['userid' => $USER->id]);
                 $row = (object) [
                     'userid'              => $USER->id,
@@ -65,10 +65,10 @@ if ($action === 'complete' && confirm_sesskey()) {
                 ];
                 if ($existing) {
                     $row->id = $existing->id;
-                    $DB->update_record('local_airpay_consumer_profile', $row);
+                    $DB->update_record('local_sentientia_consumer_profile', $row);
                 } else {
                     $row->timecreated = $now;
-                    $DB->insert_record('local_airpay_consumer_profile', $row);
+                    $DB->insert_record('local_sentientia_consumer_profile', $row);
                 }
 
                 // Honour leaderboard consent through optout_manager so

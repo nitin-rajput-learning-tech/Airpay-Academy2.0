@@ -36,7 +36,7 @@ class partner_employee_provider implements user_type_provider {
     public function profile_context(\stdClass $user): array {
         global $DB;
 
-        $profile = $DB->get_record('local_airpay_partner_employee_profile',
+        $profile = $DB->get_record('local_sentientia_partner_employee_profile',
             ['userid' => $user->id]) ?: new \stdClass();
 
         // Resolve customer display name via the sentientia_platform customer registry.

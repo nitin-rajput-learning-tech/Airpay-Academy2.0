@@ -3,7 +3,7 @@
 // License http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 
 /**
- * Backfill `mdl_local_airpay_user_type` from existing user state.
+ * Backfill `mdl_local_sentientia_user_type` from existing user state.
  *
  * ADR-017 Phase 1 / C1.1. Schema landed in Phase 0 (C1.0) — this CLI
  * walks every user and writes a row classifying them as one of:
@@ -34,7 +34,7 @@
  *   php local/sentientia_platform/cli/classify_existing_users.php --commit --reclassify --confirm
  *
  * Idempotency: skips users that already have a row in
- * `local_airpay_user_type` unless --reclassify is passed.
+ * `local_sentientia_user_type` unless --reclassify is passed.
  *
  * @package    local_sentientia_platform
  * @subpackage cli
@@ -78,10 +78,10 @@ if ($reclassify && !$options['confirm']) {
 
 if ($reclassify) {
     if ($dryrun) {
-        cli_writeln('(dry-run) Would TRUNCATE local_airpay_user_type before re-write.');
+        cli_writeln('(dry-run) Would TRUNCATE local_sentientia_user_type before re-write.');
     } else {
-        $count = $DB->count_records('local_airpay_user_type');
-        $DB->delete_records('local_airpay_user_type');
+        $count = $DB->count_records('local_sentientia_user_type');
+        $DB->delete_records('local_sentientia_user_type');
         cli_writeln("Deleted $count existing rows.");
     }
 }
@@ -130,7 +130,7 @@ foreach ($users as $u) {
 
     // Skip already-classified unless --reclassify
     if (!$reclassify
-        && $DB->record_exists('local_airpay_user_type', ['userid' => $u->id])) {
+        && $DB->record_exists('local_sentientia_user_type', ['userid' => $u->id])) {
         $counts['skipped_existing']++;
         if ($verbose) {
             cli_writeln(sprintf('%d,%s,(skip),already_classified,%d,%d',
@@ -191,7 +191,7 @@ foreach ($users as $u) {
     // Commit
     if (!$dryrun) {
         try {
-            $DB->insert_record('local_airpay_user_type', (object) [
+            $DB->insert_record('local_sentientia_user_type', (object) [
                 'userid'              => $u->id,
                 'user_type'           => $type,
                 'provisioning_source' => 'backfill_cli',

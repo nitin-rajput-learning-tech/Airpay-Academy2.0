@@ -5,7 +5,7 @@
 /**
  * Resolve a userid to its `user_type_provider` instance.
  *
- * ADR-017 Phase 2 (C1.2). Reads `local_airpay_user_type.user_type` for
+ * ADR-017 Phase 2 (C1.2). Reads `local_sentientia_user_type.user_type` for
  * the given userid, instantiates the matching provider, caches per-
  * request for performance.
  *
@@ -27,7 +27,7 @@ class user_type_factory {
      * Get the provider for a given userid. Caches per-request so
      * repeated lookups in the same render don't re-query.
      *
-     * For users without a row in `local_airpay_user_type` (legacy
+     * For users without a row in `local_sentientia_user_type` (legacy
      * pre-backfill or freshly-created), returns the employee provider
      * as the defensive default — matches the §Resolution rule.
      *
@@ -40,7 +40,7 @@ class user_type_factory {
         }
 
         global $DB;
-        $row = $DB->get_record('local_airpay_user_type',
+        $row = $DB->get_record('local_sentientia_user_type',
             ['userid' => $userid], 'user_type');
         $type = $row ? $row->user_type : 'employee';
 

@@ -60,7 +60,7 @@ $plugin->component = 'local_sentientia_platform';
 // PHPUnit in tests/customer_config_test.php (12 methods).
 //
 // ADR-017 Phase 0 (2026-05-28) — polymorphic user_type schema. Adds 5
-// tables: local_airpay_user_type (the type classification, 1:1 with
+// tables: local_sentientia_user_type (the type classification, 1:1 with
 // user) + 4 profile shells (employee, consumer, partner_employee,
 // operator). Schema-only at this version — classification CLI runs in
 // Phase 1, providers consume in Phase 2-5. Q1 immutability ruling

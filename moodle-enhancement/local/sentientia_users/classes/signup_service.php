@@ -181,7 +181,7 @@ class signup_service {
         if (class_exists('\\local_sentientia_platform\\user_type_factory')) {
             try {
                 $now = time();
-                $DB->insert_record('local_airpay_user_type', (object) [
+                $DB->insert_record('local_sentientia_user_type', (object) [
                     'userid'              => (int) $userid,
                     'user_type'           => 'consumer',
                     'provisioning_source' => 'signup_public',
@@ -193,7 +193,7 @@ class signup_service {
                 // Seed an empty consumer_profile row. Onboarding (C1.5
                 // change) populates interests + weekly_goal + consents
                 // on first login.
-                $DB->insert_record('local_airpay_consumer_profile', (object) [
+                $DB->insert_record('local_sentientia_consumer_profile', (object) [
                     'userid'              => (int) $userid,
                     'interests_json'      => null,
                     'weekly_goal'         => null,

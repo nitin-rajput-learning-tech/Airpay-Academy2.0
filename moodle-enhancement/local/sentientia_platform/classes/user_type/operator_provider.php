@@ -34,7 +34,7 @@ class operator_provider implements user_type_provider {
     public function profile_context(\stdClass $user): array {
         global $DB;
 
-        $profile = $DB->get_record('local_airpay_operator_profile',
+        $profile = $DB->get_record('local_sentientia_operator_profile',
             ['userid' => $user->id]) ?: new \stdClass();
 
         $oncall_for_name = '';

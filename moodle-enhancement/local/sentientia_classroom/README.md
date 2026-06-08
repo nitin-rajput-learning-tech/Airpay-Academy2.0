@@ -49,5 +49,5 @@ php "C:/xampp/htdocs/moodle5/public/local/sentientia_classroom/cli/smoke_ics.php
 ## Open backlog
 
 - Location records currently live in this plugin (embedded per
-  `ENTERPRISE-GRADE-PLAN.md` A.5). A standalone `local_airpay_locations`
+  `ENTERPRISE-GRADE-PLAN.md` A.5). A standalone `local_sentientia_locations`
   is not planned.

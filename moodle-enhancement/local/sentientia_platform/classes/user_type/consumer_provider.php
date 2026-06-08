@@ -33,7 +33,7 @@ class consumer_provider implements user_type_provider {
     public function profile_context(\stdClass $user): array {
         global $DB;
 
-        $profile = $DB->get_record('local_airpay_consumer_profile',
+        $profile = $DB->get_record('local_sentientia_consumer_profile',
             ['userid' => $user->id]) ?: new \stdClass();
 
         // Count enrolments (proxy for "courses completed" pending a

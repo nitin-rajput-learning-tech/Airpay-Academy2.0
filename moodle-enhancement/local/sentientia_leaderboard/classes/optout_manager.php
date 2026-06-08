@@ -54,7 +54,7 @@ class optout_manager {
      * Is the given user a consumer (no employment context)?
      *
      * Interim resolution (F-002 fix, 2026-05-28) — once
-     * `local_airpay_user_type` table lands per ADR-017, this method
+     * `local_sentientia_user_type` table lands per ADR-017, this method
      * becomes a one-line lookup against that table and the open_path
      * check is the migration backfill rule, not the runtime rule.
      *
