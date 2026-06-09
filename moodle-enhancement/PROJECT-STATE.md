@@ -6076,3 +6076,24 @@ tables, 0 per-entity overrides. Verified: site 200, CSS served from
 `/theme/styles.php/sentientia/...`, upgrade.php clean, **0 `airpayux` anywhere**.
 De-brand now 100% (36 components: 30 local + 4 blocks + 1 quizaccess + theme).
 Sole remaining airpay name = `paygw_airpay` (external payment gateway, kept). @3db762db1.
+
+### 2026-06-09 — Authenticated-500 root cause found + FIXED (prior diagnosis was wrong)
+`/my/` + `/admin/*` 500 on the local 5.1.3+ instance was **NOT** the `main_content`
+layout-compat issue the 2026-06-08 audit guessed — every layout template (webroot AND git)
+already emits `{{{ output.main_content }}}`. Real cause: a **de-brand half-rename** — the theme
+rename changed the breadcrumb **class** `epsilonnavbar → sentientia_navbar` but left two **files**
+mis-named, so Moodle's autoloader couldn't resolve `\theme_sentientia\sentientia_navbar`
+(`Class … not found`, thrown at `theme/sentientia/classes/output/traits/page_helpers.php:121`
+inside `$OUTPUT->navbar()` — which runs *before* `header()`'s `main_content` token check, which is
+why the symptom was misread). Fix (webroot `theme/sentientia/`, local only): rename
+`classes/airpayux_navbar.php → sentientia_navbar.php` and
+`tests/airpayux_navbar_test.php → sentientia_navbar_test.php` (no content edits — both already
+declared the `sentientia_navbar` identifiers; only filenames lagged). `php -l` clean; purge_caches
+rebuilt `core_component`. **Verified 200 logged-in for admin** (`/my/`, `/admin/search.php`,
+`/admin/user.php`, `/my/courses.php`) **and learner** (onboarded learner dashboard renders fully,
+0 token leak; non-onboarded learner → onboarding gate 200). git `theme/airpayux` is internally
+consistent (`epsilonnavbar.php`↔`epsilonnavbar`, `core_renderer.php:114`) → **no git code change**
+(a redundant `main_content` would split the page at the first token and break it). Local
+`theme/sentientia/` is not tracked in git; the durable fix belongs in the de-brand class-rename pass
+(rename `*navbar*` files too, or add a class↔filename lint). Full write-up:
+`docs/audits/SCRATCH-INSTALL-2026-06-08.md` (2026-06-09 update). **NOT deployed to live.**

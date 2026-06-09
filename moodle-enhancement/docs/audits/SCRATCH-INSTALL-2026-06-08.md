@@ -100,3 +100,73 @@ local instance is restored + usable for public + plugin surfaces. Two distinct, 
 **non-de-brand** follow-ups remain for a fully-green dashboard: (1) the **Moodle-5.x `main_content`
 custom-layout compat** fix (above), and (2) the **ADR-018 vanilla-portability** decouple (theme/plugins
 hard-querying BizLMS `open_*` columns). Both are theme/upgrade workstreams, not naming defects.
+
+## Update — authenticated-500 ACTUAL root cause found + FIXED (2026-06-09)
+
+The "Moodle-5.x `main_content` custom-layout compat" diagnosis above is **WITHDRAWN — it was wrong.**
+Every layout template on **both** sides already emits the placeholder:
+`theme/sentientia/templates/dashboard.mustache:782` + `drawers.mustache:72`, and git
+`theme/airpayux/templates/dashboard.mustache:480` + `drawers.mustache:158`. The placeholder was never
+the blocker.
+
+**The real, reproduced cause** of the `/my/` + `/admin/*` 500 (captured with a curl cookie-jar login as
+`academy@airpay.co.in`, `disablelogintoken=on`):
+
+```
+Exception - Class "theme_sentientia\sentientia_navbar" not found
+  theme/sentientia/classes/output/traits/page_helpers.php:121  (new \theme_sentientia\sentientia_navbar)
+  ← theme/sentientia/layout/dashboard.php:1105  $OUTPUT->navbar()
+  ← lib/classes/output/core_renderer.php:875     render_page_layout()
+  ← my/index.php:185                             $OUTPUT->header()
+```
+
+This is a **de-brand half-rename regression**, NOT a Moodle-5.x compat issue. The theme de-brand renamed
+the breadcrumb **class** `epsilonnavbar → sentientia_navbar` (see `theme/sentientia/version.php:354`)
+but left the **file** named `classes/airpayux_navbar.php` (and its test `tests/airpayux_navbar_test.php`).
+Moodle's autoloader maps `\theme_sentientia\sentientia_navbar` → `classes/sentientia_navbar.php`, which
+did not exist → fatal `class not found`. Because `$OUTPUT->navbar()` runs *inside* `render_page_layout()`,
+it throws **before** `header()` ever reaches the `main_content` token check — which is exactly why the
+earlier session mis-attributed the symptom (and why the placeholder edits it made never resolved it).
+
+The `"0 airpayux anywhere"` claim from the theme de-brand (PROJECT-STATE 2026-06-08) was scoped to
+config / DB rows / served CSS — it did **not** catch class **filenames** under `classes/`.
+
+**Fix (webroot `C:\xampp\htdocs\moodle5\public\theme\sentientia\`, local instance only):**
+- `classes/airpayux_navbar.php` → `classes/sentientia_navbar.php`
+- `tests/airpayux_navbar_test.php` → `tests/sentientia_navbar_test.php`
+
+No content edits needed — both files already declared the `sentientia_navbar` / `sentientia_navbar_test`
+identifiers and reference `\theme_sentientia\sentientia_navbar` correctly; only the filenames lagged the
+rename. `php -l` clean on both; `admin/cli/purge_caches.php` run to rebuild `core_component`'s class map.
+
+**Verification (post-fix, curl cookie-jar):**
+
+| Page | Admin (`academy@…`, siteadmin) | Learner (loginas) |
+|------|-------------------------------|-------------------|
+| `/my/` | **200** | onboarded learner (Rasika 3113): **200**, full `airpay-dash` + `ap-shell__content` render, 57 KB, 0 token leak |
+| `/admin/search.php` | **200** | — |
+| `/admin/user.php` | **200** | — |
+| `/my/courses.php` | **200** | **200** |
+| `/local/sentientia_pages/onboarding.php` | — | non-onboarded learner (Beatrice 2058) `/my/`→**303**→onboarding **200** (correct gating, not an error) |
+
+Dashboard renders correctly for both roles — no duplicated/broken content, no visible
+`[MAIN CONTENT GOES HERE …]` token leak.
+
+**git side — no change required, and a redundant `main_content` edit would be HARMFUL.** git
+`theme/airpayux/` is fully internally consistent: `classes/epsilonnavbar.php` ↔ `class epsilonnavbar`,
+`core_renderer.php:114` → `\theme_airpayux\epsilonnavbar`, `tests/epsilonnavbar_test.php` matches — so it
+carries **no navbar-autoload bug**. Its templates already contain `{{{ output.main_content }}}`
+(dashboard.mustache:480, drawers.mustache:158); adding a second placeholder would split the page at the
+*first* token and dump the literal second token into the body. The bug lives **only** in the local
+webroot `theme/sentientia/` rename, which is **not tracked in git** (confirmed). The durable git-side
+fix belongs in whatever process produces `theme/sentientia` from `theme/airpayux` (the de-brand
+class-rename pass): it must rename `*navbar*` source **files**, not just in-file identifiers. The overlay
+script `moodle-enhancement/tools/overlay-airpay-customs.ps1` only *copies* `theme → theme/sentientia`;
+the class-rename pass that introduced the half-rename is upstream of it and should grow a filename-rename
+step (or a class↔filename consistency lint) so a re-generated `theme/sentientia` is correct from the
+start.
+
+**Net:** authenticated pages (admin + learner) are **green** on the local instance. The de-brand remains
+validated; this was the last naming-completeness gap (a filename the rename pass missed), now closed
+locally. Remaining open item is unchanged: the **ADR-018 vanilla-portability** `open_*`-column decouple
+(architectural, human-gated).
