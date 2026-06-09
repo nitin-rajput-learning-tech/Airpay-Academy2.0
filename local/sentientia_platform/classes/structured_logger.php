@@ -91,7 +91,7 @@ class structured_logger {
         $row = [
             'timestamp' => self::timestamp(),
             'level'     => $level,
-            'component' => 'local_airpay_' . $plugin,
+            'component' => 'local_sentientia_' . $plugin,
             'event'     => $event,
             'userid'    => isset($USER->id) ? (int) $USER->id : 0,
             'tenant'    => empty($USER->id) ? 0 : tenant::root_for_current_user(),

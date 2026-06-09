@@ -481,7 +481,7 @@ class rule_engine {
      * Rule: Learning path stalled.
      *
      * Notifies a learner who joined a learning path and made no progress
-     * in the last `trigger_days` days. Reads from local_airpay_lp_users
+     * in the last `trigger_days` days. Reads from local_sentientia_learningpath_users
      * (the sentientia_learningpath user-assignments table).
      */
     private static function rule_learning_path_stalled(\stdClass $rule): array {
@@ -489,7 +489,7 @@ class rule_engine {
         $result = ['sent' => 0, 'skipped' => 0];
 
         $manager = $DB->get_manager();
-        if (!$manager->table_exists('local_airpay_lp_users')) {
+        if (!$manager->table_exists('local_sentientia_learningpath_users')) {
             return $result;
         }
 
@@ -498,13 +498,13 @@ class rule_engine {
 
         $rows = $DB->get_records_sql("
             SELECT lu.userid, u.firstname, lp.id AS pathid, lp.name AS pathname
-              FROM {local_airpay_lp_users} lu
+              FROM {local_sentientia_learningpath_users} lu
               JOIN {user} u ON u.id = lu.userid
               JOIN {local_sentientia_learningpath} lp ON lp.id = lu.pathid
-             WHERE lu.timemodified < :cutoff
+             WHERE lu.timecreated < :cutoff
                AND lu.status IN ('enrolled', 'in_progress')
                AND u.deleted = 0 AND u.suspended = 0
-          ORDER BY lu.timemodified ASC
+          ORDER BY lu.timecreated ASC
              LIMIT $batchlimit",
             ['cutoff' => $cutoff]);
 

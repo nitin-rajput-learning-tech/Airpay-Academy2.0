@@ -96,4 +96,4 @@ $string['privacy:metadata:lp:pathid'] = 'Learning path ID.';
 $string['privacy:metadata:lp:userid'] = 'Assigned user ID.';
 $string['privacy:metadata:lp:status'] = 'Assignment status.';
 $string['privacy:metadata:lp:timecreated'] = 'Assignment timestamp.';
-$string['privacy:metadata:lp:timemodified'] = 'Last update timestamp.';
+$string['privacy:metadata:lp:timecompleted'] = 'Completion timestamp.';
