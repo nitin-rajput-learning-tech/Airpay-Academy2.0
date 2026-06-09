@@ -4,7 +4,16 @@
 **Version:** 0.2.2-alpha (`2026052900`)  
 **Status:** Trainer + audience UI live; 6 question types fully implemented; feature flags default OFF; a11y pass complete; per-tenant kill switch admin UI available; **the BizLMS `trainer` role can now create/run sessions and reach the trainer dashboard from the sidebar (T-01/T-02 fixed 2026-05-29)**.  
 **Owner:** Nitin Rajput (PM) + Claude (engineering)  
-**Last updated:** 2026-05-29 (T-01/T-02 — trainer-role access fix)
+**Last updated:** 2026-06-09 (entry-router fix — see note below)
+
+> **Entry-router fix (2026-06-09):** `index.php` was still the Phase-E.0
+> "coming soon" placeholder, served over a now fully-built feature. Replaced
+> with a role-aware router: holders of `local/sentientia_live:create` → the
+> trainer dashboard (`trainer/index.php`); everyone else → the audience join
+> page (`audience/join.php`). Each target self-gates, and the `live.enabled`
+> master flag still gates the whole plugin. Entry-point only — no schema or
+> version change. Landed on branch `fix/loading-reconcile-2026-06-09`; full
+> rationale in `docs/audits/AMD-LOADING-FIXES-2026-06-09.md` §5 + §6.
 
 > **T-01 / T-02 (2026-05-29) — trainer-role access fix:** The BizLMS
 > `trainer` role (archetype `teacher`) was excluded from `:create`/`:run`

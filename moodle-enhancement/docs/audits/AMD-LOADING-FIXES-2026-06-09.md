@@ -186,26 +186,44 @@ on `/my/`: 1 → **0**.
 
 ---
 
-## 6. Git reconciliation (OPEN — for Nitin)
+## 6. Git reconciliation
 
-These edits exist **only** in the webroot `theme/sentientia/`, which is not in
-git. To preserve them:
+> **Status: RECONCILED to canonical git — 2026-06-09, branch
+> `fix/loading-reconcile-2026-06-09`** (pushed for Nitin's review/merge).
 
-1. Decide the canonical home for the de-branded theme source (it is currently
-   untracked — the long-standing "documented divergence").
-2. Files hand-edited this session (mirror these exactly):
-   - `templates/dashboard.mustache` (end-of-body output + pref API + comment)
-   - `templates/shell.mustache` (pref API)
-   - `templates/head.mustache` (PWA meta pair)
-   - `classes/output/core_renderer.php` (pref API)
-   - `lib.php` (new `theme_sentientia_user_preferences()`)
-3. The 34 `amd/build/*.js` renames are reproducible verbatim via the PowerShell
-   one-liner in §2 — no need to copy each file.
-4. **Bonus:** the older git-tracked `theme_airpayux` likely shares bug §1
-   (missing `standard_end_of_body_html` on its dashboard layout) and bug §3
-   (legacy `setuserpref.php`). If `theme_airpayux` is ever revived, apply the
-   same two fixes there (its AMD names are already self-consistent, so §2 does
-   NOT apply to it).
+### 6.0 The canonical tree is `theme_airpayux`, not the webroot `theme_sentientia`
+
+Investigating the reconciliation surfaced the structural reality: the
+git-tracked theme at repo-root `theme/airpayux/` is the **Boost-like, 522-line,
+post-`role_detector`-refactor** source. The webroot `theme_sentientia` carries
+an **app-shell variant** (sidebar, role-aware `dashboard.mustache`,
+`shell.mustache`) that is **NOT in canonical git** — the de-brand
+airpayux→sentientia rename happens at deploy via
+`moodle-enhancement/tools/overlay-airpay-customs.ps1`. So the five webroot fixes
+do **not** map 1:1 onto git; each had to be classified:
+
+| Fix | Canonical-git disposition | Why |
+|-----|---------------------------|-----|
+| **§1** end-of-body on dashboard | **N/A** | `theme/airpayux/templates/dashboard.mustache` boots AMD via its `{{> theme_airpayux/footer }}` partial, which emits `standard_end_of_body_html` (count = 2). Only the webroot app-shell `{{#use_shell}}` branch had regressed. |
+| **§2** AMD `define()` rename | **Deferred to the overlay** | The stale `theme_airpayux/*` define names live in **built** `amd/build/*.js`. `overlay-airpay-customs.ps1` `Copy-Tree`s the theme without rewriting module names; this is the **theme-side sibling of ADR-025 follow-up (c)** (the plugin stale-bundle gap). The durable fix belongs in the deploy/rebuild pipeline (grunt amd, or a rename step in the overlay), not a source edit — see §7. |
+| **§3** `setuserpref` → `core_user/repository` | **N/A** | Canonical git has no app-shell sidebar-collapse handler, no `shell.mustache`, and no `theme_airpayux_user_preferences()`. Nothing in `theme/airpayux` calls the removed endpoint. |
+| **§4** PWA `mobile-web-app-capable` meta | **✅ APPLIED** | `theme/airpayux/templates/head.mustache` had only the Apple variant. Added the standard meta + explanatory comment (mirrors webroot). |
+| **§5** Live entry router | **✅ APPLIED** | `moodle-enhancement/local/sentientia_live/index.php` was still the Phase-E.0 "coming soon" stub. Replaced with the role-aware router; verified `trainer/index.php` + `audience/join.php` + capability `local/sentientia_live:create` all exist in git. `php -l` clean. |
+
+This **corrects** the earlier "Bonus" hypothesis (that `theme_airpayux` shared
+bugs §1 and §3): on inspection it shares **neither** — the footer partial
+already emits end-of-body, and the legacy pref-write path simply doesn't exist
+in the canonical tree.
+
+### 6.1 Webroot edits NOT yet in git (still the documented divergence)
+
+The app-shell-specific edits (§1 dashboard `{{#use_shell}}` end-of-body; §3
+pref-API in `shell.mustache` / `core_renderer.php` / `lib.php`) live **only** in
+webroot `theme_sentientia` and remain un-tracked, because the app-shell theme
+source itself is un-tracked. Preserving them is the same long-standing decision:
+choose a canonical home for the de-branded app-shell theme. Until then, the §2
+PowerShell one-liner reproduces the build renames verbatim and these edits are
+recorded in this document.
 
 ---
 
