@@ -48,6 +48,20 @@ production (older Moodle) unaffected. De-brand is **100% validated**; the dashbo
 vanilla-portability are two distinct pre-existing theme/upgrade follow-ups. See
 `docs/audits/SCRATCH-INSTALL-2026-06-08.md`.
 
+**RESOLVED (2026-06-09) — actual cause was a de-brand half-rename, now fixed; `main_content` diagnosis
+WITHDRAWN.** The scheduled dashboard session (+ a live session that independently confirmed it) found
+the real cause of the `/my/` + `/admin/*` 500: the theme de-brand renamed the breadcrumb CLASS
+`epsilonnavbar → sentientia_navbar` but left the FILE `classes/airpayux_navbar.php` → autoloader fatal
+`class theme_sentientia\sentientia_navbar not found` inside `$OUTPUT->navbar()` (dashboard.php:1105),
+thrown before the `main_content` check (hence the misleading mask). Fixed by renaming the 2 webroot
+files (`*navbar*.php` + its test) to match the class — no content edits. Verified admin + learner:
+`/my/`, `/admin/{search,user}.php`, `/my/courses.php` all 200, 0 token leak (3-pass stable). **Local
+instance now FULLY green** (public + plugin + authenticated). git `theme/airpayux` is internally
+consistent (`epsilonnavbar.php` ↔ class) — NO git change needed/safe. **Durable follow-up:** the
+de-brand class-rename pass + `overlay-airpay-customs.ps1` must rename class *files* (not just in-file
+identifiers) — add a class↔filename consistency lint. Only open item now: **ADR-018 vanilla-portability**
+(`open_*` decouple, architectural/human-gated). Full writeup: `docs/audits/SCRATCH-INSTALL-2026-06-08.md`.
+
 ---
 
 ## ✅ De-brand follow-up — `local$name` junk dir purged + a stale-AMD-bundle gap found (2026-06-08, Opus 4.8)
