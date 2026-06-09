@@ -108,6 +108,15 @@ jobs:
           PASS=$(grep -c "No syntax errors detected" /tmp/lint.log || true)
           echo "::notice::PHP lint passed: $PASS files"
 
+      - name: Mustache comment-leak scan (ADR-027 Gate 0)
+        run: |
+          # A {{! }} comment whose body embeds {{ or }} leaks onto the page
+          # (the course/view.php regression, 2026-06-09). Same detector the
+          # pre-commit hook runs on staged files — here across whole trees.
+          # Exits non-zero on any leak, failing the job.
+          php moodle-enhancement/tools/scan_mustache_comment_leaks.php \
+            theme/sentientia theme/airpayux moodle-enhancement
+
   static-checks:
     name: Mustache + JSON syntax
     runs-on: ubuntu-latest

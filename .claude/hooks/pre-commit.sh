@@ -54,7 +54,7 @@ STAGED_CONFLICT=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null \
 # CHECK 1: PHP SYNTAX
 # ============================================================
 echo ""
-echo "→ [1/12] PHP syntax check..."
+echo "→ [1/13] PHP syntax check..."
 if [ -n "$STAGED_PHP" ]; then
     PHP_ERRORS=0
     while IFS= read -r file; do
@@ -74,7 +74,7 @@ fi
 # ============================================================
 # CHECK 2: MOODLE_INTERNAL GUARD
 # ============================================================
-echo "→ [2/12] MOODLE_INTERNAL guard..."
+echo "→ [2/13] MOODLE_INTERNAL guard..."
 GUARD_ISSUES=0
 while IFS= read -r file; do
     [ -f "$file" ] || continue
@@ -91,7 +91,7 @@ done <<< "$STAGED_PHP"
 # ============================================================
 # CHECK 3: RAW SUPERGLOBAL ACCESS
 # ============================================================
-echo "→ [3/12] Superglobal access (\$_GET/\$_POST)..."
+echo "→ [3/13] Superglobal access (\$_GET/\$_POST)..."
 SUPER_ISSUES=0
 while IFS= read -r file; do
     [ -f "$file" ] || continue
@@ -110,7 +110,7 @@ done <<< "$STAGED_PHP"
 # ============================================================
 # CHECK 4: CREDENTIAL PATTERNS
 # ============================================================
-echo "→ [4/12] Credential leak detection..."
+echo "→ [4/13] Credential leak detection..."
 CRED_ISSUES=0
 CRED_PATTERNS=(
     "(api_key|apikey|api_secret|secret_key)\s*=\s*['\"][a-zA-Z0-9_\-]{10,}"
@@ -136,7 +136,7 @@ done <<< "$STAGED_ALL"
 # ============================================================
 # CHECK 5: .env FILE PROTECTION
 # ============================================================
-echo "→ [5/12] .env file protection..."
+echo "→ [5/13] .env file protection..."
 if echo "$STAGED_ALL" | grep -qE '^\.env$|/\.env$'; then
     err ".env file staged — NEVER commit credentials"
     ERRORS=$((ERRORS+1))
@@ -147,7 +147,7 @@ fi
 # ============================================================
 # CHECK 6: MOODLE CORE FILE PROTECTION
 # ============================================================
-echo "→ [6/12] Moodle core file protection..."
+echo "→ [6/13] Moodle core file protection..."
 CORE_ISSUES=0
 CORE_PATTERNS=(
     "moodle/lib/"
@@ -170,7 +170,7 @@ done
 # ============================================================
 # CHECK 7: CONTENT/SOPS PROTECTION
 # ============================================================
-echo "→ [7/12] SOP file protection..."
+echo "→ [7/13] SOP file protection..."
 if git diff --cached --name-only --diff-filter=D 2>/dev/null | grep -q 'content/sops/'; then
     err "content/sops/ file DELETED — NEVER delete SOP source files"
 elif git diff --cached --name-only --diff-filter=M 2>/dev/null | grep -q 'content/sops/'; then
@@ -182,7 +182,7 @@ fi
 # ============================================================
 # CHECK 8: SCORM ZIP VALIDATION
 # ============================================================
-echo "→ [8/12] SCORM ZIP structure..."
+echo "→ [8/13] SCORM ZIP structure..."
 if [ -n "$STAGED_ZIP" ]; then
     while IFS= read -r zipfile; do
         [ -f "$zipfile" ] || continue
@@ -219,7 +219,7 @@ fi
 # ============================================================
 # CHECK 9: version.php FORMAT
 # ============================================================
-echo "→ [9/12] version.php format..."
+echo "→ [9/13] version.php format..."
 VERSION_ISSUES=0
 while IFS= read -r file; do
     [ -f "$file" ] || continue
@@ -252,7 +252,7 @@ done <<< "$STAGED_PHP"
 # ============================================================
 # CHECK 10: UNCOMMITTED [CONFIRM] PLACEHOLDERS
 # ============================================================
-echo "→ [10/12] Uncommitted CONFIRM placeholders..."
+echo "→ [10/13] Uncommitted CONFIRM placeholders..."
 CONFIRM_ISSUES=0
 while IFS= read -r file; do
     [ -f "$file" ] || continue
@@ -280,7 +280,7 @@ done <<< "$STAGED_ALL"
 #   - {{<base/columns}}  Mustache parent-template inheritance
 #   - `// =====`         SCSS section comment dividers
 #   - `================`  setext-style heredoc CLI help banners
-echo "→ [11/12] Git conflict-marker scan..."
+echo "→ [11/13] Git conflict-marker scan..."
 CONFLICT_ISSUES=0
 if [ -n "$STAGED_CONFLICT" ]; then
     while IFS= read -r file; do
@@ -307,7 +307,7 @@ fi
 # This check runs in --mode=staged: looks at staged plugin changes
 # and warns if the matching state card is NOT also staged. Soft
 # warning (does not block — author may be splitting commits).
-echo "→ [12/12] State-card freshness check..."
+echo "→ [12/13] State-card freshness check..."
 FRESHNESS_SCRIPT="tools/check_state_card_freshness.sh"
 if [ -f "$FRESHNESS_SCRIPT" ]; then
     # NOTE: Use grep -c + sed instead of `... | while; warn`. A pipe
@@ -324,6 +324,33 @@ if [ -f "$FRESHNESS_SCRIPT" ]; then
     fi
 else
     ok "Freshness gate not installed — skip"
+fi
+
+# ============================================================
+# CHECK 13: MUSTACHE COMMENT LEAK (2026-06-09)
+# ============================================================
+# A {{! ... }} comment closes at the FIRST }} after {{!. If the body
+# embeds a {{ }} / {{{ }}} / {{> }} example, Mustache leaks everything
+# after that point onto the page as literal text. Bit us live on
+# course/view.php (course_full_header.mustache) + 13 sibling templates
+# on 2026-06-09. scan_mustache_comment_leaks.php is the single source
+# of truth for the detection (CI runs the same script over whole trees).
+echo "→ [13/13] Mustache comment-leak scan..."
+STAGED_MUSTACHE=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep '\.mustache$' || true)
+LEAK_SCANNER="moodle-enhancement/tools/scan_mustache_comment_leaks.php"
+if [ -z "$STAGED_MUSTACHE" ]; then
+    ok "No .mustache files staged"
+elif [ ! -f "$LEAK_SCANNER" ]; then
+    ok "Leak scanner not present — skip"
+else
+    LEAK_OUT=$(echo "$STAGED_MUSTACHE" | xargs php "$LEAK_SCANNER" 2>/dev/null || true)
+    if [ -n "$LEAK_OUT" ]; then
+        err "Mustache comment leak — comment body embeds {{ or }} and will render onto the page"
+        echo "$LEAK_OUT" | sed 's/^/       /' | head -20
+        echo "       Fix: reword the comment so it contains no {{ or }} (describe braces in words)."
+    else
+        ok "No Mustache comment leaks in staged templates"
+    fi
 fi
 
 # ============================================================
