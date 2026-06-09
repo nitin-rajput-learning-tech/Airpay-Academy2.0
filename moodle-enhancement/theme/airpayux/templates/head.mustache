@@ -130,6 +130,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0066A7">
+    {{! Standard PWA capability meta (Chrome/Edge/Android). Apple's variant is
+        kept below for older iOS Safari. Emitting only the apple one logs a
+        deprecation warning on every page; pairing them clears it. }}
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="manifest" href="{{{config.wwwroot}}}/theme/airpayux/pix/brand/manifest.json">
