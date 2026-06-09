@@ -267,6 +267,12 @@ class core_renderer extends \core_renderer {
         $sidebarnav = new \theme_sentientia\sidebar_navigation($this->page);
         $context = $sidebarnav->get_context();
 
+        // Role switcher — surface the BizLMS multi-role switch on EVERY app-shell
+        // page, not just the dashboard. The user_menu trait builds the same
+        // options the dashboard sidebar uses; single-/no-extra-role users get
+        // hasoptions=false so the block renders nothing (sidebar unchanged).
+        $context['roleswitch'] = $this->get_role_switch_options();
+
         // Render the sidebar partial.
         $sidebarhtml = $this->render_from_template('theme_sentientia/sidebar', $context);
 
