@@ -229,11 +229,13 @@ That a single codebase serves the employee's gamified learning journey, the mana
 team-compliance cockpit, and the admin's platform console — each with its own
 navigation, widgets, and data scope — is the product's core UX thesis.
 
-> **Finding F-MGR-01 (verify, not a render bug).** The manager dashboard shows *9 Team
-> Members* for Binay, while the persona note records *34 direct reports*. Likely a
-> difference between the dashboard's `open_supervisorid`-based count and the org-chart
-> `managerid` relationship (or active/tenant-scoped filtering). Worth confirming the
-> intended "team" definition; the surface itself renders correctly.
+> **Finding F-MGR-01 — RESOLVED, by-design (not a bug).** The manager dashboard shows
+> *9 Team Members* for Binay; the persona note said *34*. Root cause confirmed by DB
+> count: Binay has **36 total** reports via `open_supervisorid`, but only **9 are
+> active** (26 suspended + 2 deleted). `team_manager::get_team()` filters
+> `WHERE deleted = 0 AND suspended = 0` — the correct semantic for a team-compliance
+> KPI (a manager's "team" should not include suspended/deleted ex-employees). The
+> "34" note was the raw total on the prior data snapshot. No fix needed.
 
 ### 6.6 Multi-tenant isolation — proven live (the resale thesis)
 
