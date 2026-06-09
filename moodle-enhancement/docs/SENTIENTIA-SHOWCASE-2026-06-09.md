@@ -201,8 +201,12 @@ live-audience badge, Created, and per-row **Run / End / Export / delete** action
 | Learner / Employee (internal, B2B) | Dashboard, catalog, certificates, PWA | ✅✅ | ☐ | ☐ |
 | External Public Learner (B2C) | Cart-based dashboard (Public /77) | ✅ | ☐ | ☐ |
 
-**All 8 personas captured at desktop; Guest also at mobile + dark.** 0 console
-errors on every authenticated surface.
+**8×3 grid COMPLETE.** All 8 personas captured at desktop; Guest + all five
+authenticated personas (Learner, Manager, Tenant Admin, Course Author, Compliance)
+also captured at **mobile (414px)** and **dark mode**. Every cell renders in the
+Sentientia design system with 0 console errors — the shared app-shell collapses to a
+hamburger drawer on mobile and flips to dark navy with preserved contrast across all
+roles. Evidence: `docs/visual-evidence/2026-06-09/<persona>/` (NN-…-mobile.jpg / …-dark.jpg).
 
 ### 6.5 The polymorphic role-aware dashboard (one platform, three experiences)
 
