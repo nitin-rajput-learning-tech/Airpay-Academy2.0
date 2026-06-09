@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/sentientia_integrations/db" VERSION="20260507"
+       COMMENT="Airpay Integrations: webhook + sync event log">
+  <TABLES>
+    <TABLE NAME="local_sentientia_integration_log"
+           COMMENT="Audit log of every inbound webhook + outbound sync event from KeKa, Teams, M365, and FCM. Append-only — read by the integrations admin dashboard.">
+      <FIELDS>
+        <FIELD NAME="id"          TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="source"      TYPE="char" LENGTH="50"  NOTNULL="true"
+               COMMENT="keka_webhook | hrms_cron | teams_alert | fcm_push | m365_sso"/>
+        <FIELD NAME="event_type"  TYPE="char" LENGTH="100" NOTNULL="false"
+               COMMENT="Event type from the inbound payload (e.g. joiner|leaver|mover for KeKa)"/>
+        <FIELD NAME="payload"     TYPE="text" NOTNULL="false"
+               COMMENT="Raw inbound JSON payload — useful for replaying / debugging failures"/>
+        <FIELD NAME="status"      TYPE="char" LENGTH="20"  NOTNULL="true" DEFAULT="received"
+               COMMENT="received | processed | failed | ignored"/>
+        <FIELD NAME="errormsg"    TYPE="text" NOTNULL="false"
+               COMMENT="Populated when status = failed"/>
+        <FIELD NAME="timecreated" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_source_status" UNIQUE="false" FIELDS="source, status"
+               COMMENT="Find failures per source for the admin dashboard"/>
+        <INDEX NAME="idx_timecreated"   UNIQUE="false" FIELDS="timecreated"
+               COMMENT="ORDER BY timecreated DESC default"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

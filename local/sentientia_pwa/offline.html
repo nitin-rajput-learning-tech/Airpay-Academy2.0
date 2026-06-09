@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="theme-color" content="#0066A7">
+  <title>Offline · Sentientia LMS</title>
+  <style>
+    *,
+    *::before,
+    *::after { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      font-family: Montserrat, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(135deg, #F2F4FB 0%, #ffffff 50%, #e8f2f9 100%);
+      color: #1a1a2e;
+    }
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      width: 100%;
+      max-width: 480px;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+      padding: 48px 32px;
+      text-align: center;
+    }
+    .icon {
+      width: 96px;
+      height: 96px;
+      margin: 0 auto 24px;
+      color: #0066A7;
+    }
+    h1 {
+      margin: 0 0 12px;
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #1a1a2e;
+    }
+    p {
+      margin: 0 0 24px;
+      color: #5a6070;
+      line-height: 1.5;
+    }
+    .btn {
+      display: inline-block;
+      padding: 12px 32px;
+      border-radius: 8px;
+      background: #0066A7;
+      color: #ffffff;
+      text-decoration: none;
+      font-weight: 600;
+      transition: background-color 0.2s ease;
+    }
+    .btn:hover,
+    .btn:focus {
+      background: #004d80;
+      color: #ffffff;
+    }
+    .footer {
+      margin-top: 32px;
+      font-size: 0.75rem;
+      color: #a0a9b8;
+    }
+    @media (max-width: 590px) {
+      .card { padding: 32px 20px; border-radius: 12px; }
+      .icon { width: 72px; height: 72px; }
+      h1 { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <main class="card" role="main">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+         aria-hidden="true">
+      <path d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10"></path>
+      <line x1="3" y1="3" x2="21" y2="21"></line>
+    </svg>
+    <h1>You&rsquo;re offline</h1>
+    <p>
+      Sentientia LMS needs an internet connection to load fresh course
+      content, sync your progress, and deliver notifications. Some
+      previously-visited pages may still work offline.
+    </p>
+    <a href="/" class="btn" id="retry-btn">Try again</a>
+    <p class="footer">
+      Sentientia LMS &middot; Powered by Airpay Payment Services
+    </p>
+  </main>
+  <script>
+    // Auto-retry once connection is restored — small UX nicety.
+    window.addEventListener('online', function() {
+      window.location.reload();
+    });
+    document.getElementById('retry-btn').addEventListener('click', function(ev) {
+      ev.preventDefault();
+      window.location.reload();
+    });
+  </script>
+</body>
+</html>

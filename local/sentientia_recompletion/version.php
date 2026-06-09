@@ -1,0 +1,20 @@
+<?php
+// Copyright 2026 Airpay Payment Services
+// License http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+
+defined('MOODLE_INTERNAL') || die();
+
+$plugin->component = 'local_sentientia_recompletion';
+// P1 #20 (2026-05-16) — `completion_reset` event class so observers
+// (notifications, analytics, SIEM via logstore_standard_log) can
+// listen for resets. Closes audit item #19 from
+// parity-audit-2026-05-15/sentientia_recompletion.md.
+// P1 #53 (2026-05-20) — Hindi pack: 40 strings covering navigation,
+// capabilities, settings, rule form, messages, event labels, privacy.
+$plugin->version   = 2026052001;
+$plugin->requires  = 2024042200;
+$plugin->maturity  = MATURITY_STABLE;
+$plugin->release   = '1.1.1';     // +P1 #53 Hindi pack
+$plugin->dependencies = [
+    'local_sentientia_org' => 2026040100,
+];

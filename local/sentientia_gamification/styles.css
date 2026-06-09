@@ -1,0 +1,408 @@
+/* ═══════════════════════════════════════════════
+   Airpay Gamification — Component Styles
+   ═══════════════════════════════════════════════ */
+
+/* Points Summary Widget */
+.airpay-gamification {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px 20px;
+    border: 1px solid #e2e6ef;
+}
+.airpay-gamification__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+.airpay-gamification__level {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-left: 3px solid;
+    padding-left: 10px;
+}
+.airpay-gamification__level-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.75rem;
+}
+.airpay-gamification__level-info strong {
+    display: block;
+    font-size: 0.95rem;
+    color: #1a1a2e;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.airpay-gamification__level-info small {
+    color: #5a6070;
+    font-size: 0.8rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+}
+.airpay-gamification__streak {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff7ed;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+}
+.airpay-gamification__streak strong {
+    font-size: 1.1rem;
+    color: #f97316;
+}
+.airpay-gamification__streak small {
+    color: #9a3412;
+}
+.airpay-gamification__streak--inactive {
+    background: #f3f4f6;
+}
+.airpay-gamification__streak--inactive strong {
+    color: #9ca3af;
+}
+.airpay-gamification__streak--inactive small {
+    color: #9ca3af;
+}
+
+/* Progress Bar */
+.airpay-gamification__progress {
+    height: 6px;
+    background: #e5e7eb;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 4px;
+}
+.airpay-gamification__progress-bar {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+.airpay-gamification__progress-label {
+    color: #9ca3af;
+    font-size: 0.75rem;
+}
+
+/* Badges Row */
+.airpay-gamification__badges {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+.airpay-gamification__badge {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0066A7 0%, #0f7a73 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+.airpay-gamification__badge:hover {
+    transform: scale(1.15);
+}
+
+/* Today's Points */
+.airpay-gamification__today {
+    margin-top: 8px;
+    padding: 4px 10px;
+    background: #ecfdf5;
+    color: #065f46;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
+/* ═══ Leaderboard ═══ */
+.airpay-gamification__leaderboard {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px 20px;
+    border: 1px solid #e2e6ef;
+}
+.airpay-gamification__leaderboard-header {
+    margin-bottom: 12px;
+}
+.airpay-gamification__leaderboard-header h4 {
+    margin: 0 0 2px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+.airpay-gamification__leaderboard-header small {
+    color: #5a6070;
+}
+.airpay-gamification__leaderboard-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.airpay-gamification__leaderboard-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+.airpay-gamification__leaderboard-row:hover {
+    background: #f8f9fc;
+}
+.airpay-gamification__leaderboard-row--you {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+}
+.airpay-gamification__leaderboard-rank {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #374151;
+    flex-shrink: 0;
+}
+.airpay-gamification__leaderboard-rank--top {
+    background: #fef3c7;
+    color: #92400e;
+}
+.airpay-gamification__leaderboard-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+.airpay-gamification__leaderboard-name {
+    flex: 1;
+    font-size: 0.85rem;
+    color: #1a1a2e;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+.airpay-gamification__leaderboard-name small {
+    color: #0066A7;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.airpay-gamification__leaderboard-points {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #5a6070;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.airpay-gamification__leaderboard-your-rank {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #e5e7eb;
+    font-size: 0.8rem;
+    color: #0066A7;
+    font-weight: 600;
+}
+
+/* ═══ Streak Calendar ═══ */
+.airpay-gamification__streak-calendar {
+    background: #fff;
+    border-radius: 12px;
+    padding: 12px 16px;
+    border: 1px solid #e2e6ef;
+}
+.airpay-gamification__streak-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.airpay-gamification__streak-header span {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #1a1a2e;
+}
+.airpay-gamification__streak-header small {
+    color: #9ca3af;
+    font-size: 0.75rem;
+}
+.airpay-gamification__streak-days {
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+}
+.airpay-gamification__streak-day {
+    flex: 1;
+    text-align: center;
+}
+.airpay-gamification__streak-day small {
+    display: block;
+    font-size: 0.65rem;
+    color: #9ca3af;
+    margin-bottom: 4px;
+}
+.airpay-gamification__streak-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    background: #e5e7eb;
+    margin: 0 auto;
+}
+.airpay-gamification__streak-day--active .airpay-gamification__streak-dot {
+    background: #16a34a;
+}
+.airpay-gamification__streak-day--today .airpay-gamification__streak-dot {
+    border: 2px solid #0066A7;
+}
+
+/* ═══ Dark Mode ═══ */
+body.dark-mode .airpay-gamification,
+body.dark-mode .airpay-gamification__leaderboard,
+body.dark-mode .airpay-gamification__streak-calendar {
+    background: #1a1d27 !important;
+    border-color: #2d3140 !important;
+}
+body.dark-mode .airpay-gamification__level-info strong,
+body.dark-mode .airpay-gamification__leaderboard-header h4,
+body.dark-mode .airpay-gamification__streak-header span,
+body.dark-mode .airpay-gamification__leaderboard-name {
+    color: #e8eaed !important;
+}
+body.dark-mode .airpay-gamification__level-info small,
+body.dark-mode .airpay-gamification__leaderboard-header small,
+body.dark-mode .airpay-gamification__leaderboard-points,
+body.dark-mode .airpay-gamification__progress-label {
+    color: #9ca3b4 !important;
+}
+body.dark-mode .airpay-gamification__progress {
+    background: #2d3140 !important;
+}
+body.dark-mode .airpay-gamification__streak {
+    background: #2a1f0e !important;
+}
+body.dark-mode .airpay-gamification__streak small {
+    color: #f97316 !important;
+}
+body.dark-mode .airpay-gamification__today {
+    background: #0a2e1a !important;
+    color: #34d399 !important;
+}
+body.dark-mode .airpay-gamification__leaderboard-row:hover {
+    background: #232733 !important;
+}
+body.dark-mode .airpay-gamification__leaderboard-row--you {
+    background: #0d1f3c !important;
+    border-color: #1e40af !important;
+}
+body.dark-mode .airpay-gamification__leaderboard-rank {
+    background: #2d3140 !important;
+    color: #c4cad8 !important;
+}
+body.dark-mode .airpay-gamification__streak-dot {
+    background: #2d3140 !important;
+}
+body.dark-mode .airpay-gamification__streak-day--active .airpay-gamification__streak-dot {
+    background: #16a34a !important;
+}
+body.dark-mode .airpay-gamification__streak-day small {
+    color: #6b7280 !important;
+}
+
+/* ═══ Mobile ═══ */
+@media (max-width: 590px) {
+    .airpay-gamification__header {
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+    }
+    .airpay-gamification__badges {
+        gap: 6px;
+    }
+    .airpay-gamification__badge {
+        width: 28px;
+        height: 28px;
+        font-size: 0.75rem;
+    }
+    .airpay-gamification__leaderboard-row {
+        gap: 6px;
+    }
+    .airpay-gamification__leaderboard-name {
+        font-size: 0.8rem;
+    }
+    .airpay-gamification__streak-days {
+        gap: 2px;
+    }
+    .airpay-gamification__streak-dot {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+/* ═══ Dark Mode ═══ */
+body.dark-mode .airpay-gamification__header { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .airpay-gamification__level-name { color: #e8eaed; }
+body.dark-mode .airpay-gamification__level-points { color: #9ca3b4; }
+body.dark-mode .airpay-gamification__progress { background: #2d3140; }
+body.dark-mode .airpay-gamification__streak { background: #22252f; }
+body.dark-mode .airpay-gamification__streak-number { color: #e8eaed; }
+body.dark-mode .airpay-gamification__streak--inactive .airpay-gamification__streak-number { color: #6b7280; }
+body.dark-mode .airpay-gamification__today { background: #052e16; color: #34d399; }
+body.dark-mode .airpay-gamification__badges { background: transparent; }
+body.dark-mode .airpay-gamification__badge { background: linear-gradient(135deg, #0d4880, #0a5c56); }
+body.dark-mode .airpay-gamification__badge:hover { box-shadow: 0 4px 12px rgba(0,102,167,0.3); }
+body.dark-mode .airpay-gamification__leaderboard { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .airpay-gamification__leaderboard-title { color: #e8eaed; }
+body.dark-mode .airpay-gamification__leaderboard-row { border-color: #232733; }
+body.dark-mode .airpay-gamification__leaderboard-row:hover { background: #22252f; }
+body.dark-mode .airpay-gamification__leaderboard-row--you { background: #0d2540; border-color: #0066A7; }
+body.dark-mode .airpay-gamification__leaderboard-name { color: #e8eaed; }
+body.dark-mode .airpay-gamification__leaderboard-points { color: #9ca3b4; }
+body.dark-mode .airpay-gamification__streak-calendar { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .airpay-gamification__streak-calendar-title { color: #e8eaed; }
+body.dark-mode .airpay-gamification__streak-dot { background: #2d3140; }
+body.dark-mode .airpay-gamification__streak-dot--active { background: #0f7a73; }
+body.dark-mode .airpay-gamification__streak-dot--today { background: #0066A7; box-shadow: 0 0 0 2px #0d4880; }
+body.dark-mode .airpay-gamification__streak-stats { color: #9ca3b4; }
+
+/* ═══ Badge Unlock Animation ═══ */
+@keyframes ap-badge-pop {
+    0% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.3); }
+    70% { transform: scale(0.9); }
+    100% { transform: scale(1); opacity: 1; }
+}
+.airpay-gamification__badge--new {
+    animation: ap-badge-pop 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+}
+
+/* Level-up animation */
+@keyframes ap-level-glow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(0,102,167,0.3); }
+    50% { box-shadow: 0 0 0 8px rgba(0,102,167,0); }
+}
+.airpay-gamification__level-badge--pulse {
+    animation: ap-level-glow 1.5s ease-in-out 3;
+}

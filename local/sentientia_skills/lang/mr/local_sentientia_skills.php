@@ -1,0 +1,22 @@
+<?php
+defined('MOODLE_INTERNAL') || die();
+$string['pluginname'] = 'एअरपे कौशल्य मॅट्रिक्स';
+$string['privacy:metadata'] = 'कौशल्य प्लगइन वापरकर्ता आयडीशी जोडलेला कौशल्य स्तर डेटा संग्रहित करते.';
+$string['skills'] = 'कौशल्ये';
+$string['skillmatrix'] = 'कौशल्य मॅट्रिक्स';
+$string['gapanalysis'] = 'गॅप विश्लेषण';
+$string['yourskills'] = 'तुमची कौशल्ये';
+$string['requiredskills'] = 'तुमच्या भूमिकेसाठी आवश्यक';
+$string['currentlevel'] = 'सध्याचा स्तर';
+$string['requiredlevel'] = 'आवश्यक स्तर';
+$string['gap'] = 'गॅप';
+$string['met'] = 'पूर्ण';
+$string['partial'] = 'प्रगतीत';
+$string['missing'] = 'सुरू नाही';
+$string['skillsgap'] = '{$a->total} पैकी {$a->gaps} कौशल्य गॅप';
+$string['skillsmet'] = '{$a->met}/{$a->total} कौशल्ये आवश्यक स्तरावर ({$a->percentage}%)';
+$string['recommendedcourses'] = 'गॅप भरण्यासाठी शिफारस केलेले';
+$string['nodesignation'] = 'कोणतीही भूमिका/पदनाम सेट नाही. तुमचे प्रोफाइल अपडेट करण्यासाठी तुमच्या व्यवस्थापकाशी संपर्क साधा.';
+$string['noskillsmapped'] = 'तुमच्या भूमिकेसाठी अजून कौशल्ये मॅप केली नाहीत. लवकरच तपासा.';
+$string['teamheatmap'] = 'टीम कौशल्य हीट मॅप';
+$string['careerpath'] = 'करिअर मार्ग';

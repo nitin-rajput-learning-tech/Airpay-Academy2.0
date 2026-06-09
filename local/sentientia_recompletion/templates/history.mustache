@@ -1,0 +1,51 @@
+{{!
+    @template local_sentientia_recompletion/history
+}}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Recompletion history <span class="badge bg-secondary">{{ total }}</span></h2>
+        <a href="{{{ rules_url }}}" class="btn btn-link">
+            <i class="fa fa-arrow-left"></i> Back to rules
+        </a>
+    </div>
+
+    {{#has_rows}}
+    <table class="table table-sm">
+        <thead><tr>
+            <th>When</th>
+            <th>User</th>
+            <th>Course</th>
+            <th>Reason</th>
+            <th>Previous completion</th>
+            <th>Grades reset?</th>
+            <th>Attempts reset?</th>
+            <th></th>
+        </tr></thead>
+        <tbody>
+            {{#rows}}
+            <tr {{#dryrun}}class="table-secondary"{{/dryrun}}>
+                <td class="small">{{ reset_at }}</td>
+                <td>{{ user_name }}{{#user_email}}<br><code class="small">{{ user_email }}</code>{{/user_email}}</td>
+                <td>{{ course_name }}</td>
+                <td><span class="badge bg-light text-dark">{{ reason }}</span></td>
+                <td class="small">{{ previous }}</td>
+                <td>{{#grades}}<i class="fa fa-check text-success"></i>{{/grades}}
+                    {{^grades}}<i class="fa fa-times text-muted"></i>{{/grades}}</td>
+                <td>{{#attempts}}<i class="fa fa-check text-success"></i>{{/attempts}}
+                    {{^attempts}}<i class="fa fa-times text-muted"></i>{{/attempts}}</td>
+                <td>{{#dryrun}}<span class="badge bg-info">dry-run</span>{{/dryrun}}</td>
+            </tr>
+            {{/rows}}
+        </tbody>
+    </table>
+    {{/has_rows}}
+    {{^has_rows}}
+    <div class="alert alert-info">{{#str}}history_empty, local_sentientia_recompletion{{/str}}</div>
+    {{/has_rows}}
+
+    <nav class="d-flex justify-content-between mt-3">
+        {{#has_prev}}<a href="{{{ prev_url }}}" class="btn btn-link">← Prev</a>{{/has_prev}}
+        {{^has_prev}}<span></span>{{/has_prev}}
+        {{#has_next}}<a href="{{{ next_url }}}" class="btn btn-link">Next →</a>{{/has_next}}
+    </nav>
+</div>

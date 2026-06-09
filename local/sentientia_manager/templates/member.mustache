@@ -1,0 +1,227 @@
+{{!
+    Manager view — single team member learning detail.
+    @template local_sentientia_manager/member
+}}
+<style>
+    [data-region="airpay-manager-member"] .ap-section {
+        background: var(--ap-color-bg-surface, #fff);
+        border: 1px solid var(--ap-color-border, #e2e6ef);
+        border-radius: 12px;
+        padding: 20px 22px;
+        margin-bottom: 18px;
+    }
+    [data-region="airpay-manager-member"] .ap-section-title {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--ap-color-text-secondary, #5a6070);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin: 0 0 14px 0;
+    }
+    [data-region="airpay-manager-member"] .ap-member-header {
+        display: flex; align-items: center; gap: 18px;
+        padding-bottom: 18px;
+        margin-bottom: 18px;
+        border-bottom: 1px solid var(--ap-color-border, #e2e6ef);
+    }
+    [data-region="airpay-manager-member"] .ap-member-avatar {
+        width: 72px; height: 72px;
+        border-radius: 50%;
+        background: var(--ap-color-primary, #0066A7);
+        color: #fff;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.6rem; font-weight: 800;
+    }
+    [data-region="airpay-manager-member"] .ap-fact-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 14px;
+        font-size: 0.85rem;
+    }
+    [data-region="airpay-manager-member"] .ap-fact-grid .label {
+        color: var(--ap-color-text-secondary, #5a6070);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-weight: 600;
+    }
+    [data-region="airpay-manager-member"] .ap-fact-grid .value {
+        color: var(--ap-color-text-primary, #1a1a2e);
+        margin-top: 2px;
+        font-weight: 500;
+    }
+    [data-region="airpay-manager-member"] .stats-row {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+    [data-region="airpay-manager-member"] .stat-card {
+        background: var(--ap-color-bg-surface, #fff);
+        border: 1px solid var(--ap-color-border, #e2e6ef);
+        border-radius: 10px;
+        padding: 14px;
+        text-align: center;
+    }
+    [data-region="airpay-manager-member"] .stat-card .stat-value {
+        font-size: 1.4rem; font-weight: 800;
+    }
+    [data-region="airpay-manager-member"] .stat-card .stat-label {
+        font-size: 0.7rem; color: #777; text-transform: uppercase;
+        letter-spacing: 0.04em; margin-top: 2px;
+    }
+    [data-region="airpay-manager-member"] .progress-bar-track {
+        flex: 1;
+        background: rgba(0,102,167,0.10);
+        height: 8px;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+    [data-region="airpay-manager-member"] .progress-bar-fill {
+        background: var(--ap-color-primary, #0066A7);
+        height: 100%;
+        transition: width 0.25s ease;
+    }
+    [data-region="airpay-manager-member"] .progress-bar-fill.success { background: #16a34a; }
+    [data-region="airpay-manager-member"] .progress-bar-fill.warning { background: #d97706; }
+    [data-region="airpay-manager-member"] .progress-bar-fill.muted   { background: #9ca3af; }
+    [data-region="airpay-manager-member"] .stats-row { margin-bottom: 18px; }
+    @media (max-width: 768px) {
+        [data-region="airpay-manager-member"] .stats-row { grid-template-columns: repeat(2, 1fr); }
+    }
+</style>
+
+<div data-region="airpay-manager-member">
+
+<div class="ap-page-header mb-3">
+    <a href="{{{back_url}}}" class="text-muted small text-decoration-none">
+        <i class="fa fa-arrow-left fa-fw"></i> Back to My Team
+    </a>
+</div>
+
+<div class="ap-section">
+    <div class="ap-member-header">
+        <div class="ap-member-avatar">{{#fullname}}{{#first_letter}}{{first_letter}}{{/first_letter}}{{^first_letter}}<i class="fa fa-user"></i>{{/first_letter}}{{/fullname}}{{^fullname}}<i class="fa fa-user"></i>{{/fullname}}</div>
+        <div style="flex: 1;">
+            <h3 class="mb-1" style="font-weight: 700;">{{fullname}}</h3>
+            <div class="text-muted small">{{designation}}</div>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{{profile_url}}}" class="btn btn-outline-primary btn-sm">
+                <i class="fa fa-user fa-fw"></i> Full Profile
+            </a>
+        </div>
+    </div>
+
+    <div class="ap-fact-grid">
+        <div><div class="label">Email</div><div class="value">{{email}}</div></div>
+        <div><div class="label">Employee ID</div><div class="value">{{employeeid}}</div></div>
+        <div><div class="label">Department</div><div class="value">{{department}}</div></div>
+        <div><div class="label">Organisation</div><div class="value">{{orgname}}</div></div>
+        <div><div class="label">Last Active</div><div class="value">{{last_active}}</div></div>
+    </div>
+</div>
+
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-value" style="color: var(--ap-color-primary, #0066A7);">{{total_enrolled}}</div>
+        <div class="stat-label">Total Enrolments</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" style="color: var(--ap-color-success, #16a34a);">{{total_completed}}</div>
+        <div class="stat-label">Completed</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" style="color: var(--ap-color-warning, #d97706);">{{in_progress}}</div>
+        <div class="stat-label">In Progress</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" style="color: var(--ap-color-text-secondary, #5a6070);">{{not_started}}</div>
+        <div class="stat-label">Not Started</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value text-{{rate_class}}">{{completion_rate}}%</div>
+        <div class="stat-label">Completion Rate</div>
+    </div>
+</div>
+
+<div class="ap-section">
+    <h4 class="ap-section-title"><i class="fa fa-book fa-fw"></i> Course Progress</h4>
+
+    {{#has_courses}}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead style="background: rgba(0,102,167,0.05);">
+                <tr>
+                    <th class="ps-3" style="font-size: 0.8rem;">Course</th>
+                    <th style="font-size: 0.8rem;">Category</th>
+                    <th style="font-size: 0.8rem; width: 240px;">Progress</th>
+                    <th style="font-size: 0.8rem;">Started</th>
+                    <th style="font-size: 0.8rem;">Completed</th>
+                    <th style="font-size: 0.8rem;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#courses}}
+                <tr>
+                    <td class="ps-3">
+                        <a href="{{{course_url}}}" class="text-reset fw-semibold text-decoration-none">{{fullname}}</a>
+                        {{#shortname}}<div class="small text-muted">{{.}}</div>{{/shortname}}
+                    </td>
+                    <td class="small">{{category}}</td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="progress-bar-track">
+                                <div class="progress-bar-fill {{#status_completed}}success{{/status_completed}}{{#status_in_progress}}warning{{/status_in_progress}}{{#status_not_started}}muted{{/status_not_started}}"
+                                     style="width: {{progress_pct}}%;"></div>
+                            </div>
+                            <div class="small text-muted" style="min-width: 64px; text-align: right;">{{progress_text}}</div>
+                        </div>
+                    </td>
+                    <td class="small text-muted">{{started}}</td>
+                    <td class="small text-muted">{{completed}}</td>
+                    <td><span class="badge {{status_css}}">{{status_label}}</span></td>
+                </tr>
+                {{/courses}}
+            </tbody>
+        </table>
+    </div>
+    {{/has_courses}}
+
+    {{^has_courses}}
+    <div class="text-center py-4 text-muted">
+        <i class="fa fa-inbox fa-2x d-block mb-2"></i>
+        No course enrolments yet.
+    </div>
+    {{/has_courses}}
+</div>
+
+{{#has_certificates}}
+<div class="ap-section">
+    <h4 class="ap-section-title"><i class="fa fa-certificate fa-fw"></i> Certificates Earned ({{cert_count}})</h4>
+    <div class="table-responsive">
+        <table class="table table-sm mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th class="ps-3" style="font-size: 0.8rem;">Template</th>
+                    <th style="font-size: 0.8rem;">Code</th>
+                    <th style="font-size: 0.8rem;">Issued</th>
+                    <th style="font-size: 0.8rem; width: 140px;">Verify</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#certificates}}
+                <tr>
+                    <td class="ps-3">{{name}}</td>
+                    <td class="small text-muted"><code>{{code}}</code></td>
+                    <td class="small text-muted">{{date}}</td>
+                    <td><a href="{{{verify_url}}}" class="btn btn-sm btn-outline-secondary">Verify</a></td>
+                </tr>
+                {{/certificates}}
+            </tbody>
+        </table>
+    </div>
+</div>
+{{/has_certificates}}
+
+</div>

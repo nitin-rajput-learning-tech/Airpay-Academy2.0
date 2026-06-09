@@ -1,0 +1,30 @@
+{{!
+    @template local_sentientia_users/help
+}}
+<div class="container">
+    <h2 class="mb-3">Help &amp; support</h2>
+    <p class="text-muted mb-4">Quick links to the most common things.</p>
+
+    <div class="row">
+        {{#links}}
+        <div class="col-md-6 col-lg-4 mb-3">
+            <a href="{{{ url }}}" class="card border-0 shadow-sm h-100 text-decoration-none text-reset">
+                <div class="card-body">
+                    <i class="fa {{ icon }} fa-2x mb-2" style="color: var(--ap-color-primary, #0066A7);"></i>
+                    <h5 class="mb-1">{{ title }}</h5>
+                    <div class="small text-muted">{{ desc }}</div>
+                </div>
+            </a>
+        </div>
+        {{/links}}
+    </div>
+
+    {{#has_support_email}}
+    <hr class="my-4"/>
+    <div class="alert alert-info">
+        <strong>Need more help?</strong>
+        Email <a href="mailto:{{ support_email }}">{{ support_email }}</a>
+        {{#has_help_url}}or visit the <a href="{{ help_url }}" target="_blank">help centre</a>{{/has_help_url}}.
+    </div>
+    {{/has_support_email}}
+</div>

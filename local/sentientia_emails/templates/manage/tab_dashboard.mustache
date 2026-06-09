@@ -1,0 +1,44 @@
+{{!
+    Dashboard tab — stats cards + recent activity + system status.
+    Context: tabdata {template_count, rule_total, rule_enabled, log_total, log_sent_today,
+             log_sent_week, log_failed, log_suppressed, bizlms_total, noemailever}
+}}
+{{#tabdata.noemailever}}
+<div class="ap-manage-warning">
+    <i class="fa fa-shield" aria-hidden="true"></i>
+    <strong>Local Development Mode</strong> — Email sending is disabled (<code>$CFG->noemailever = true</code>).
+    All email deliveries will be logged as "suppressed". Preview and template editing work normally.
+</div>
+{{/tabdata.noemailever}}
+
+{{! KPI Summary — Phase B0+: migrated to tokens-aware stat_card partial }}
+{{#tabdata.has_kpi_tiles}}
+<div class="airpay-stat-grid" style="margin-bottom: 16px;">
+    {{#tabdata.kpi_tiles}}
+    {{> theme_sentientia/components/stat_card }}
+    {{/tabdata.kpi_tiles}}
+</div>
+{{/tabdata.has_kpi_tiles}}
+
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+    <div class="ap-manage-card">
+        <div class="ap-manage-card__title">
+            <i class="fa fa-bolt" aria-hidden="true"></i> Notification Rules
+        </div>
+        <table class="ap-manage-table" style="margin-top:12px;">
+            <tr><td>Total rules</td><td style="text-align:right;font-weight:600;">{{tabdata.rule_total}}</td></tr>
+            <tr><td>Enabled</td><td style="text-align:right;font-weight:600;color:#16a34a;">{{tabdata.rule_enabled}}</td></tr>
+            <tr><td>Disabled</td><td style="text-align:right;font-weight:600;color:#8890a0;">{{tabdata.rule_disabled}}</td></tr>
+        </table>
+    </div>
+    <div class="ap-manage-card">
+        <div class="ap-manage-card__title">
+            <i class="fa fa-database" aria-hidden="true"></i> Legacy queue
+        </div>
+        <table class="ap-manage-table" style="margin-top:12px;">
+            <tr><td>Total emails logged</td><td style="text-align:right;font-weight:600;">{{tabdata.bizlms_total}}</td></tr>
+            <tr><td>Sent</td><td style="text-align:right;font-weight:600;color:#16a34a;">{{tabdata.bizlms_sent}}</td></tr>
+            <tr><td>Pending in queue</td><td style="text-align:right;font-weight:600;color:#d97706;">{{tabdata.bizlms_pending}}</td></tr>
+        </table>
+    </div>
+</div>

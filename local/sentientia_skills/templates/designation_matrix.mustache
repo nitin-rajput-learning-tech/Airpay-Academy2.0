@@ -1,0 +1,96 @@
+{{!
+   Designation-skill matrix admin.
+}}
+<div class="ap-card mb-3">
+  <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+    <div>
+      <a href="{{ admin_url }}" class="text-muted text-decoration-none small">
+        <i class="fa fa-chevron-left me-1"></i>Skills Management
+      </a>
+      <h2 class="h4 m-0 mt-1">Designation-Skill Matrix</h2>
+      <p class="text-muted small mb-0">
+        Define the required skills + minimum levels for each designation
+        in the org. Drives readiness gap analysis.
+      </p>
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <label for="ap-skills-designation" class="form-label small mb-1">Designation</label>
+      <select id="ap-skills-designation" class="form-select form-select-sm">
+        <option value="">— Select a designation —</option>
+        {{# designation_options }}
+          <option value="{{ value }}" {{# selected }}selected{{/ selected }}>{{ label }}</option>
+        {{/ designation_options }}
+      </select>
+    </div>
+    <div class="col-md-6 d-flex align-items-end gap-2">
+      <button type="button" class="btn btn-sm btn-primary"
+              data-action="add-designation-skill"
+              data-designation="{{ current_designation }}"
+              {{^ current_designation }}disabled{{/ current_designation }}>
+        <i class="fa fa-plus me-1"></i>Add required skill
+      </button>
+      <button type="button" class="btn btn-sm btn-outline-secondary"
+              data-action="copy-designation"
+              data-from="{{ current_designation }}"
+              {{^ current_designation }}disabled{{/ current_designation }}>
+        <i class="fa fa-copy me-1"></i>Copy to another designation
+      </button>
+    </div>
+  </div>
+
+  {{# current_designation }}
+    <h4 class="h5">Required skills for: <code>{{ current_designation }}</code></h4>
+    {{# has_rows }}
+      <table class="table table-bordered align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Category</th>
+            <th>Skill</th>
+            <th>Required level</th>
+            <th style="width:120px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{# rows }}
+          <tr>
+            <td>
+              {{# category_name }}<span class="badge" style="background-color: {{ category_color }}; color:#fff;">{{ category_name }}</span>{{/ category_name }}
+              {{^ category_name }}<em class="text-muted">No category</em>{{/ category_name }}
+            </td>
+            <td>{{ skill_name }}</td>
+            <td><strong>L{{ required_level }}</strong> / {{ max_level }}</td>
+            <td>
+              <button type="button" class="btn btn-sm btn-link text-muted p-1"
+                      data-action="edit-designation-skill"
+                      data-rowid="{{ id }}"
+                      data-designation="{{ current_designation }}">
+                <i class="fa fa-pencil"></i>
+              </button>
+              <button type="button" class="btn btn-sm btn-link text-danger p-1"
+                      data-action="delete-designation-skill"
+                      data-rowid="{{ id }}"
+                      data-skill="{{ skill_name }}">
+                <i class="fa fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+          {{/ rows }}
+        </tbody>
+      </table>
+    {{/ has_rows }}
+    {{^ has_rows }}
+      <div class="alert alert-secondary">
+        No required skills defined for this designation yet. Click <em>Add required skill</em> above.
+      </div>
+    {{/ has_rows }}
+  {{/ current_designation }}
+
+  {{^ current_designation }}
+    <div class="alert alert-secondary">
+      Select a designation above to view or edit its required skills.
+    </div>
+  {{/ current_designation }}
+</div>

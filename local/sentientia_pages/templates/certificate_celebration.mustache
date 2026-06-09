@@ -1,0 +1,230 @@
+<div class="ap-cert-celebration">
+    <!-- Confetti -->
+    <div class="ap-cert-confetti">
+        <div class="ap-cert-confetti__piece" style="--x:-20px; --color:#0066A7; --delay:0s; --dur:3.5s;"></div>
+        <div class="ap-cert-confetti__piece" style="--x:40px; --color:#0f7a73; --delay:0.2s; --dur:4s;"></div>
+        <div class="ap-cert-confetti__piece" style="--x:-60px; --color:#f0c040; --delay:0.4s; --dur:3.8s;"></div>
+        <div class="ap-cert-confetti__piece" style="--x:20px; --color:#e85d75; --delay:0.1s; --dur:4.2s;"></div>
+        <div class="ap-cert-confetti__piece" style="--x:-40px; --color:#7c3aed; --delay:0.6s; --dur:3.6s;"></div>
+        <div class="ap-cert-confetti__piece" style="--x:60px; --color:#0066A7; --delay:0.3s; --dur:4.4s;"></div>
+        <div class="ap-cert-confetti__piece" style="--x:-10px; --color:#10b981; --delay:0.5s; --dur:3.4s;"></div>
+        <div class="ap-cert-confetti__piece" style="--x:50px; --color:#f59e0b; --delay:0.7s; --dur:4.1s;"></div>
+    </div>
+
+    <!-- Congratulations -->
+    <div class="ap-cert-celebration__header">
+        <h1>Congratulations, {{firstname}}!</h1>
+        <p>You have successfully completed <strong>{{coursename}}</strong></p>
+    </div>
+
+    <!-- Certificate Card -->
+    <div class="ap-cert-card">
+        <div class="ap-cert-card__border">
+            <div class="ap-cert-card__inner">
+                <!-- Corner ornaments -->
+                <div class="ap-cert-card__corner ap-cert-card__corner--tl"></div>
+                <div class="ap-cert-card__corner ap-cert-card__corner--tr"></div>
+                <div class="ap-cert-card__corner ap-cert-card__corner--bl"></div>
+                <div class="ap-cert-card__corner ap-cert-card__corner--br"></div>
+
+                <div class="ap-cert-card__header">
+                    <img src="{{{logourl}}}" alt="Airpay Academy" style="height:40px;">
+                    <h2>Certificate of Completion</h2>
+                    <div class="ap-cert-card__divider"></div>
+                </div>
+
+                <div class="ap-cert-card__body">
+                    <p class="ap-cert-card__preamble">This is to certify that</p>
+                    <h3 class="ap-cert-card__name">{{fullname}}</h3>
+                    <p class="ap-cert-card__preamble">has successfully completed</p>
+                    <h4 class="ap-cert-card__course">{{coursename}}</h4>
+
+                    {{#has_score}}
+                    <div class="ap-cert-card__score-ring">
+                        <svg width="80" height="80" viewBox="0 0 80 80">
+                            <circle class="ap-progress-ring__track" cx="40" cy="40" r="34" style="stroke-width:5;"/>
+                            <circle class="ap-progress-ring__fill ap-progress-ring__fill--success" cx="40" cy="40" r="34"
+                                    style="stroke-width:5; stroke-dasharray:213.63; stroke-dashoffset:{{score_offset}};"/>
+                        </svg>
+                        <span class="ap-progress-ring__label" style="font-size:1rem;">{{score}}%</span>
+                    </div>
+                    {{/has_score}}
+
+                    <div class="ap-cert-card__meta">
+                        <span><i class="fa fa-calendar"></i> {{completion_date}}</span>
+                        <span><i class="fa fa-hashtag"></i> {{cert_code}}</span>
+                    </div>
+                </div>
+
+                <div class="ap-cert-card__seal">
+                    <i class="fa fa-shield"></i>
+                    <small>Verified</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="ap-cert-celebration__actions">
+        {{#download_url}}
+        <a href="{{download_url}}" class="ap-btn-gradient" target="_blank">
+            <i class="fa fa-download"></i> Download PDF
+        </a>
+        {{/download_url}}
+        <a href="https://www.linkedin.com/sharing/share-offsite/?url={{share_url}}" target="_blank"
+           class="ap-cert-celebration__btn" style="background:#0077B5; color:#fff;">
+            <i class="fa fa-linkedin"></i> Share on LinkedIn
+        </a>
+        <button onclick="window.print();" class="ap-cert-celebration__btn" style="background:var(--ap-surface); color:var(--ap-text); border:1px solid var(--ap-border);">
+            <i class="fa fa-print"></i> Print
+        </button>
+        <a href="{{{dashboardurl}}}" class="ap-cert-celebration__btn" style="background:var(--ap-surface-alt, #f8f9fc); color:var(--ap-text-secondary);">
+            <i class="fa fa-arrow-left"></i> Dashboard
+        </a>
+    </div>
+</div>
+
+<style>
+/* Certificate Celebration Page */
+.ap-cert-celebration {
+    max-width: 900px; margin: 0 auto; padding: 40px 20px;
+    font-family: var(--ap-font);
+    text-align: center;
+}
+
+/* Confetti */
+.ap-cert-confetti {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none; z-index: 0; overflow: hidden;
+}
+@keyframes ap-confetti-fall {
+    0% { transform: translateY(-10vh) translateX(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) translateX(var(--x)) rotate(720deg); opacity: 0; }
+}
+.ap-cert-confetti__piece {
+    position: absolute;
+    width: 8px; height: 8px;
+    background: var(--color);
+    border-radius: 2px;
+    left: calc(10% + random() * 80%);
+    animation: ap-confetti-fall var(--dur) ease-out var(--delay) forwards;
+}
+.ap-cert-confetti__piece:nth-child(odd) { border-radius: 50%; width: 6px; height: 6px; }
+.ap-cert-confetti__piece:nth-child(1) { left: 10%; }
+.ap-cert-confetti__piece:nth-child(2) { left: 25%; }
+.ap-cert-confetti__piece:nth-child(3) { left: 40%; }
+.ap-cert-confetti__piece:nth-child(4) { left: 55%; }
+.ap-cert-confetti__piece:nth-child(5) { left: 70%; }
+.ap-cert-confetti__piece:nth-child(6) { left: 85%; }
+.ap-cert-confetti__piece:nth-child(7) { left: 15%; }
+.ap-cert-confetti__piece:nth-child(8) { left: 60%; }
+
+.ap-cert-celebration__header {
+    margin-bottom: 32px; position: relative; z-index: 1;
+}
+.ap-cert-celebration__header h1 {
+    font-size: 28px; font-weight: 800; color: var(--ap-primary);
+    margin: 0 0 8px; animation: ap-counter-fadein 0.6s ease-out;
+}
+.ap-cert-celebration__header p {
+    font-size: 16px; color: var(--ap-text-secondary); margin: 0;
+}
+
+/* Certificate Card */
+.ap-cert-card { position: relative; z-index: 1; margin-bottom: 32px; }
+.ap-cert-card__border {
+    background: var(--ap-gradient); padding: 4px;
+    border-radius: var(--ap-radius-lg); display: inline-block;
+    box-shadow: var(--ap-shadow-hover);
+}
+.ap-cert-card__inner {
+    background: #fff; border-radius: calc(var(--ap-radius-lg) - 4px);
+    padding: 48px 40px; position: relative; min-width: 600px;
+}
+
+/* Corner ornaments */
+.ap-cert-card__corner {
+    position: absolute; width: 32px; height: 32px;
+    border: 2px solid var(--ap-primary); opacity: 0.3;
+}
+.ap-cert-card__corner--tl { top: 16px; left: 16px; border-right: none; border-bottom: none; }
+.ap-cert-card__corner--tr { top: 16px; right: 16px; border-left: none; border-bottom: none; }
+.ap-cert-card__corner--bl { bottom: 16px; left: 16px; border-right: none; border-top: none; }
+.ap-cert-card__corner--br { bottom: 16px; right: 16px; border-left: none; border-top: none; }
+
+.ap-cert-card__header { margin-bottom: 24px; }
+.ap-cert-card__header h2 {
+    font-size: 22px; font-weight: 700; color: var(--ap-primary);
+    margin: 12px 0 0; letter-spacing: 1px;
+}
+.ap-cert-card__divider {
+    width: 60px; height: 3px; background: var(--ap-gradient);
+    margin: 12px auto; border-radius: 2px;
+}
+.ap-cert-card__preamble { font-size: 14px; color: var(--ap-text-muted); font-style: italic; margin: 4px 0; }
+.ap-cert-card__name {
+    font-size: 32px; font-weight: 700; color: var(--ap-text);
+    margin: 8px 0; font-family: 'Playfair Display', Georgia, serif;
+}
+.ap-cert-card__course {
+    font-size: 18px; font-weight: 600; color: var(--ap-accent);
+    margin: 8px 0 20px;
+}
+.ap-cert-card__score-ring { display: inline-block; position: relative; margin: 16px 0; }
+.ap-cert-card__meta {
+    display: flex; justify-content: center; gap: 20px;
+    font-size: 13px; color: var(--ap-text-muted); margin-top: 16px;
+}
+.ap-cert-card__meta i { margin-right: 4px; color: var(--ap-primary); }
+
+/* Seal */
+.ap-cert-card__seal {
+    position: absolute; bottom: 24px; right: 32px;
+    width: 64px; height: 64px;
+    background: var(--ap-gradient); border-radius: 50%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: #fff; box-shadow: 0 4px 12px rgba(0,102,167,0.3);
+}
+.ap-cert-card__seal i { font-size: 20px; }
+.ap-cert-card__seal small { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* Actions */
+.ap-cert-celebration__actions {
+    display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;
+    position: relative; z-index: 1;
+}
+.ap-cert-celebration__btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 10px 18px; border-radius: var(--ap-radius-sm);
+    font-size: 14px; font-weight: 500; text-decoration: none;
+    cursor: pointer; transition: opacity 0.15s; border: none;
+    font-family: var(--ap-font);
+}
+.ap-cert-celebration__btn:hover { opacity: 0.85; }
+
+/* Dark mode — the certificate "paper" (.ap-cert-card__inner) is a
+   deliberate WHITE island (hardcoded #fff above) styled like a printed
+   certificate, so it must stay white in dark mode too. Its inner text uses
+   var(--ap-text)/var(--ap-text-muted), which now flip to light values
+   globally under body.dark-mode (dark_mode.scss, 2026-05-29). Without this
+   re-pin, the recipient name would render light-on-white = invisible. Pin
+   the paper text back to dark so it stays legible on the white card.
+   The page CHROME outside the card (header copy + Print/Dashboard buttons)
+   intentionally inherits the flipped tokens and is left untouched. */
+body.dark-mode .ap-cert-card__name { color: #1a1a2e; }
+body.dark-mode .ap-cert-card__preamble,
+body.dark-mode .ap-cert-card__meta { color: #6a7589; }
+
+/* Print */
+@media print {
+    .ap-cert-confetti, .ap-cert-celebration__actions, .navbar, footer { display: none !important; }
+    .ap-cert-card__inner { box-shadow: none; border: 1px solid #ddd; }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .ap-cert-card__inner { min-width: auto; padding: 32px 20px; }
+    .ap-cert-card__name { font-size: 24px; }
+    .ap-cert-celebration__actions { flex-direction: column; align-items: center; }
+}
+</style>

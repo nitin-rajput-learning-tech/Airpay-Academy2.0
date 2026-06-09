@@ -1,0 +1,99 @@
+{{!
+    @template local_sentientia_leaderboard/board_view
+
+    Single-board view rendered in view.php and (in a shorter form) by the
+    block widget. The AMD client (leaderboard_client.js) refreshes the
+    .airpay-lb__rows table body on every leaderboard.recomputed SSE event.
+
+    Context:
+      boardid           — int
+      name              — string (already format_string'd)
+      type              — alpha
+      type_label        — localized type label
+      last_recomputed_str — string (userdate'd) or '-'
+      rows              — array<{rank, userid, fullname, points, secondary}>
+      has_rows          — bool
+      total             — int
+      optout_total      — int
+      my_rank           — int (0 = not ranked)
+      my_points         — int
+      my_optout         — int (0|1)
+      show_my_rank      — bool
+      preferences_url   — string
+
+    Example context:
+    {
+      "boardid": 1,
+      "name": "Q2 Compliance Quiz",
+      "type": "quiz",
+      "type_label": "Quiz top scorers",
+      "last_recomputed_str": "24 May 2026 10:15",
+      "rows": [{"rank":1,"userid":7,"fullname":"Aisha Khan","points":9500,"secondary":120}],
+      "has_rows": true,
+      "total": 1,
+      "optout_total": 0,
+      "my_rank": 1,
+      "my_points": 9500,
+      "my_optout": 0,
+      "show_my_rank": true,
+      "preferences_url": "/local/sentientia_leaderboard/preferences.php"
+    }
+}}
+<div class="airpay-lb" data-boardid="{{boardid}}" data-type="{{type}}">
+
+  <div class="airpay-lb__header">
+    <h3 class="airpay-lb__title">{{name}}</h3>
+    <div class="airpay-lb__meta">
+      <span class="airpay-lb__type-badge">{{type_label}}</span>
+      <span class="airpay-lb__updated"
+            data-last-recomputed>{{# str }}last_recomputed_at, local_sentientia_leaderboard, {{last_recomputed_str}}{{/ str }}</span>
+      <span class="airpay-lb__indicator airpay-lb__indicator--live"
+            data-live-on style="display:none;">●&nbsp;{{# str }}live_indicator, local_sentientia_leaderboard{{/ str }}</span>
+      <span class="airpay-lb__indicator airpay-lb__indicator--poll"
+            data-live-off>↻&nbsp;{{# str }}polling_fallback, local_sentientia_leaderboard{{/ str }}</span>
+    </div>
+  </div>
+
+  {{# show_my_rank }}
+  <div class="airpay-lb__my-rank" data-my-rank>
+    {{# str }}your_rank, local_sentientia_leaderboard, {{my_rank}}{{/ str }}
+    &nbsp;&middot;&nbsp;
+    {{# str }}col_points, local_sentientia_leaderboard{{/ str }}: {{my_points}}
+  </div>
+  {{/ show_my_rank }}
+
+  {{# my_optout }}
+  <div class="airpay-lb__optout-notice">
+    {{# str }}no_rank_optout, local_sentientia_leaderboard{{/ str }}
+    &nbsp;<a href="{{preferences_url}}">{{# str }}label_optout, local_sentientia_leaderboard{{/ str }}</a>
+  </div>
+  {{/ my_optout }}
+
+  {{# has_rows }}
+  <table class="airpay-lb__table generaltable" data-rows-table>
+    <thead>
+      <tr>
+        <th>{{# str }}col_rank, local_sentientia_leaderboard{{/ str }}</th>
+        <th>{{# str }}col_user, local_sentientia_leaderboard{{/ str }}</th>
+        <th class="text-end">{{# str }}col_points, local_sentientia_leaderboard{{/ str }}</th>
+      </tr>
+    </thead>
+    <tbody data-rows-body>
+      {{# rows }}
+      <tr class="airpay-lb__row" data-userid="{{userid}}">
+        <td class="airpay-lb__rank">{{rank}}</td>
+        <td class="airpay-lb__user">{{fullname}}</td>
+        <td class="airpay-lb__points text-end">{{points}}</td>
+      </tr>
+      {{/ rows }}
+    </tbody>
+  </table>
+  {{/ has_rows }}
+
+  {{^ has_rows }}
+  <div class="airpay-lb__empty" data-empty-state>
+    {{# str }}no_entries, local_sentientia_leaderboard{{/ str }}
+  </div>
+  {{/ has_rows }}
+
+</div>

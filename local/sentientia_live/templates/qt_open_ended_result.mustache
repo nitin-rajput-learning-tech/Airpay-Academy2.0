@@ -1,0 +1,149 @@
+{{!
+    @template local_sentientia_live/qt_open_ended_result
+
+    Trainer (and optionally audience) result view for an open-ended
+    slide (Phase E.6 / D4). Paginated list of responses with a
+    moderation toggle that lets the trainer hide individual entries
+    without deleting them.
+
+    Context:
+      slideid           int      — slide ID.
+      sessionid         int      — parent session ID.
+      total_responses   int      — total count for the badge.
+      has_responses     bool     — controls empty-state block.
+      responses[]                — page slice from open_ended::paginate():
+        id              int      — response row ID (used by mod toggle).
+        text            string   — escaped HTML-safe text (autoescape).
+        display_name    string   — participant display name.
+        timeformat      string   — pre-formatted HH:MM.
+        is_hidden       bool     — moderated flag (renders different style).
+      page              int      — 1-based current page.
+      total_pages       int      — total page count.
+      has_pagination    bool     — true when total_pages > 1.
+      has_prev          bool     — show ← button.
+      has_next          bool     — show → button.
+      prev_url          string   — URL for previous page.
+      next_url          string   — URL for next page.
+      page_links[]               — explicit numeric links:
+        label           string   — "1", "2", ...
+        url             string   — anchor href.
+        is_active       bool     — highlight current.
+      can_moderate      bool     — true when viewer holds the
+                                    sentientia_live:run capability for
+                                    the session.
+      moderation_enabled bool    — initial toggle state.
+
+    a11y: aria-label on the outer region. Each item carries
+    aria-label="Response from X" so SR users get context. List uses
+    <ul role="list"> so empty / partial pagination doesn't break
+    semantic navigation.
+}}
+<div class="sentientia-qt-openended-result"
+     data-slideid="{{slideid}}"
+     data-sessionid="{{sessionid}}"
+     data-qt-type="openended"
+     role="region"
+     aria-label="{{#str}}qt_openended_result_a11y_label, local_sentientia_live{{/str}}">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="h5 mb-0">
+      {{#str}}qt_openended_result_heading, local_sentientia_live{{/str}}
+    </h4>
+    <span class="airpay-badge airpay-badge--secondary badge bg-secondary">
+      <span class="sentientia-qt-openended-total">{{total_responses}}</span>
+      {{#str}}live_results_total_suffix, local_sentientia_live{{/str}}
+    </span>
+  </div>
+
+  {{#can_moderate}}
+    <div class="form-check form-switch mb-3 sentientia-qt-openended-mod-row">
+      <input type="checkbox"
+             class="form-check-input sentientia-qt-openended-mod-toggle"
+             id="qt-openended-mod-{{slideid}}"
+             data-slideid="{{slideid}}"
+             {{#moderation_enabled}}checked{{/moderation_enabled}}>
+      <label class="form-check-label small"
+             for="qt-openended-mod-{{slideid}}">
+        {{#str}}qt_openended_moderation_label, local_sentientia_live{{/str}}
+      </label>
+    </div>
+  {{/can_moderate}}
+
+  {{^has_responses}}
+    <p class="text-muted text-center py-4">
+      <em>{{#str}}live_results_empty, local_sentientia_live{{/str}}</em>
+    </p>
+  {{/has_responses}}
+
+  {{#has_responses}}
+    <ul class="list-unstyled sentientia-qt-openended-list mb-3"
+        role="list"
+        style="max-height: 480px; overflow-y: auto;"
+        aria-live="polite"
+        aria-atomic="false">
+      {{#responses}}
+        <li class="card mb-2 sentientia-qt-openended-item{{#is_hidden}} sentientia-qt-openended-item--hidden text-muted{{/is_hidden}}"
+            style="border-left: 4px solid #0066A7;"
+            data-response-id="{{id}}"
+            aria-label="{{#str}}qt_openended_item_aria_prefix, local_sentientia_live{{/str}} {{display_name}}">
+          <div class="card-body py-2 px-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <strong class="small sentientia-qt-openended-name">{{display_name}}</strong>
+              <small class="text-muted">{{timeformat}}</small>
+              {{#can_moderate}}
+                <button type="button"
+                        class="btn btn-sm btn-link text-muted sentientia-qt-openended-hide"
+                        data-response-id="{{id}}"
+                        data-is-hidden="{{#is_hidden}}1{{/is_hidden}}{{^is_hidden}}0{{/is_hidden}}"
+                        aria-label="{{#str}}qt_openended_moderate_aria, local_sentientia_live{{/str}}">
+                  {{#is_hidden}}{{#str}}qt_openended_show, local_sentientia_live{{/str}}{{/is_hidden}}
+                  {{^is_hidden}}{{#str}}qt_openended_hide, local_sentientia_live{{/str}}{{/is_hidden}}
+                </button>
+              {{/can_moderate}}
+            </div>
+            <div class="sentientia-qt-openended-text"
+                 style="white-space: pre-wrap;">{{text}}</div>
+          </div>
+        </li>
+      {{/responses}}
+    </ul>
+
+    {{#has_pagination}}
+      <nav aria-label="{{#str}}qt_openended_pagination_aria, local_sentientia_live{{/str}}">
+        <ul class="pagination pagination-sm justify-content-center">
+          {{#has_prev}}
+            <li class="page-item">
+              <a class="page-link sentientia-qt-openended-page-prev"
+                 href="{{prev_url}}"
+                 aria-label="{{#str}}qt_openended_page_prev, local_sentientia_live{{/str}}">
+                &laquo;
+              </a>
+            </li>
+          {{/has_prev}}
+          {{#page_links}}
+            <li class="page-item{{#is_active}} active{{/is_active}}">
+              <a class="page-link"
+                 href="{{url}}"
+                 {{#is_active}}aria-current="page"{{/is_active}}>{{label}}</a>
+            </li>
+          {{/page_links}}
+          {{#has_next}}
+            <li class="page-item">
+              <a class="page-link sentientia-qt-openended-page-next"
+                 href="{{next_url}}"
+                 aria-label="{{#str}}qt_openended_page_next, local_sentientia_live{{/str}}">
+                &raquo;
+              </a>
+            </li>
+          {{/has_next}}
+        </ul>
+        <p class="text-center text-muted small">
+          {{#str}}qt_openended_page_of, local_sentientia_live{{/str}}
+          <span class="sentientia-qt-openended-page">{{page}}</span>
+          /
+          <span class="sentientia-qt-openended-pagetotal">{{total_pages}}</span>
+        </p>
+      </nav>
+    {{/has_pagination}}
+  {{/has_responses}}
+</div>

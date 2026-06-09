@@ -1,0 +1,84 @@
+{{!
+    @template local_sentientia_assistant/chat_bubble
+
+    Floating chat bubble for the AI learning assistant.
+    Appears on all pages for logged-in users (except login/upgrade pages).
+
+    Phase B0 a11y improvements (2026-05-14):
+      - Toggle button has aria-label + aria-expanded + aria-controls
+      - Chat panel is role="dialog" with aria-labelledby
+      - Quick-action buttons are real <button> with descriptive labels
+      - Input has an explicit <label> (visually hidden)
+      - Tokens-aware styling — see styles.css (0 hex literals)
+}}
+<div id="airpay-assistant" class="airpay-assistant">
+
+    {{! Toggle button — opens the panel. Receives keyboard focus. }}
+    <button class="airpay-assistant__toggle"
+            id="airpay-assistant-toggle"
+            type="button"
+            aria-label="{{# str }}toggle_assistant, local_sentientia_assistant{{/ str }}"
+            aria-expanded="false"
+            aria-controls="airpay-assistant-panel">
+        <i class="fa fa-graduation-cap airpay-assistant__icon-open" aria-hidden="true"></i>
+        <i class="fa fa-times airpay-assistant__icon-close" aria-hidden="true" style="display:none;"></i>
+    </button>
+
+    {{! Chat panel. role=dialog + aria-labelledby for screen readers.
+        Initially hidden via the --hidden modifier (CSS) and display:none
+        (JS toggles both for the slide-up animation to fire on open). }}
+    <div class="airpay-assistant__panel airpay-assistant__panel--hidden"
+         id="airpay-assistant-panel"
+         role="dialog"
+         aria-labelledby="airpay-assistant-title"
+         aria-modal="false"
+         style="display:none;">
+
+        <div class="airpay-assistant__header">
+            <div class="airpay-assistant__header-info">
+                <strong id="airpay-assistant-title">Airpay Learning Assistant</strong>
+                <small>Powered by AI</small>
+            </div>
+            <button class="airpay-assistant__minimize"
+                    id="airpay-assistant-minimize"
+                    type="button"
+                    aria-label="Minimise assistant">
+                <i class="fa fa-chevron-down" aria-hidden="true"></i>
+            </button>
+        </div>
+
+        <div class="airpay-assistant__messages"
+             id="airpay-assistant-messages"
+             role="log"
+             aria-live="polite"
+             aria-atomic="false">
+            <div class="airpay-assistant__msg airpay-assistant__msg--bot">
+                <p>Hi {{firstname}}! I'm your learning assistant. Ask me anything about your courses, deadlines, skills, or career path.</p>
+                <div class="airpay-assistant__quick-actions" role="group" aria-label="{{# str }}quick_questions, local_sentientia_assistant{{/ str }}">
+                    {{# quick_actions }}
+                    <button type="button" data-query="{{ query }}">{{ label }}</button>
+                    {{/ quick_actions }}
+                </div>
+            </div>
+        </div>
+
+        <div class="airpay-assistant__input-area">
+            <label for="airpay-assistant-input" class="sr-only">Type your question</label>
+            <input type="text"
+                   id="airpay-assistant-input"
+                   placeholder="Ask me anything..."
+                   autocomplete="off"
+                   maxlength="500">
+            <button id="airpay-assistant-send"
+                    type="button"
+                    disabled
+                    aria-label="Send message">
+                <i class="fa fa-paper-plane" aria-hidden="true"></i>
+            </button>
+        </div>
+
+        <div class="airpay-assistant__footer">
+            <small>{{queries_remaining}} questions remaining today</small>
+        </div>
+    </div>
+</div>

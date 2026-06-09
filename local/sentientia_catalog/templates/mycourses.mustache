@@ -1,0 +1,116 @@
+<div class="ap-mycourses">
+
+    <div class="ap-mycourses__stats" role="group" aria-label="Filter your courses">
+        <a href="{{baseurl}}?filter=all"
+           class="ap-mycourses__stat {{#filter_all}}ap-mycourses__stat--active{{/filter_all}}"
+           aria-pressed="{{#filter_all}}true{{/filter_all}}{{^filter_all}}false{{/filter_all}}">
+            <span class="ap-mycourses__stat-num">{{total}}</span>
+            <span class="ap-mycourses__stat-label">All Courses</span>
+        </a>
+        <a href="{{baseurl}}?filter=inprogress"
+           class="ap-mycourses__stat {{#filter_inprogress}}ap-mycourses__stat--active{{/filter_inprogress}}"
+           aria-pressed="{{#filter_inprogress}}true{{/filter_inprogress}}{{^filter_inprogress}}false{{/filter_inprogress}}">
+            <span class="ap-mycourses__stat-num ap-mycourses__stat-num--accent">{{inprogress}}</span>
+            <span class="ap-mycourses__stat-label">In Progress</span>
+        </a>
+        <a href="{{baseurl}}?filter=completed"
+           class="ap-mycourses__stat {{#filter_completed}}ap-mycourses__stat--active{{/filter_completed}}"
+           aria-pressed="{{#filter_completed}}true{{/filter_completed}}{{^filter_completed}}false{{/filter_completed}}">
+            <span class="ap-mycourses__stat-num ap-mycourses__stat-num--success">{{completed}}</span>
+            <span class="ap-mycourses__stat-label">Completed</span>
+        </a>
+        <a href="{{baseurl}}?filter=notstarted"
+           class="ap-mycourses__stat {{#filter_notstarted}}ap-mycourses__stat--active{{/filter_notstarted}}"
+           aria-pressed="{{#filter_notstarted}}true{{/filter_notstarted}}{{^filter_notstarted}}false{{/filter_notstarted}}">
+            <span class="ap-mycourses__stat-num ap-mycourses__stat-num--muted">{{notstarted}}</span>
+            <span class="ap-mycourses__stat-label">Not Started</span>
+        </a>
+    </div>
+
+    {{#has_courses}}
+    <div class="ap-mycourses__grid">
+        {{#courses}}
+        <div class="ap-mycourses__card">
+            <a href="{{viewurl}}" class="ap-mycourses__card-image-link">
+                {{#has_image}}
+                <div class="ap-mycourses__card-image" style="background-image:url('{{imageurl}}');"></div>
+                {{/has_image}}
+                {{^has_image}}
+                <div class="ap-mycourses__card-image ap-mycourses__card-image--fallback">
+                    <span>{{shortname}}</span>
+                </div>
+                {{/has_image}}
+                {{#is_completed}}
+                <div class="ap-mycourses__card-badge ap-mycourses__card-badge--done"><i class="fa fa-check"></i> Done</div>
+                {{/is_completed}}
+                {{#is_inprogress}}
+                <div class="ap-mycourses__card-progress-ring"
+                     role="progressbar"
+                     aria-valuenow="{{progress}}" aria-valuemin="0" aria-valuemax="100"
+                     aria-label="{{progress}}% complete">
+                    <svg width="36" height="36" viewBox="0 0 36 36">
+                        <circle class="ap-mycourses__card-progress-ring-track"
+                                cx="18" cy="18" r="15" fill="none" stroke-width="3"/>
+                        <circle class="ap-mycourses__card-progress-ring-fill"
+                                cx="18" cy="18" r="15" fill="none" stroke-width="3" stroke-linecap="round"
+                                stroke-dasharray="94.25" stroke-dashoffset="{{progress_offset}}"/>
+                    </svg>
+                    <span aria-hidden="true">{{progress}}%</span>
+                </div>
+                {{/is_inprogress}}
+            </a>
+            <div class="ap-mycourses__card-body">
+                <span class="ap-mycourses__card-category">{{categoryname}}</span>
+                <h4 class="ap-mycourses__card-title">
+                    <a href="{{viewurl}}">{{fullname}}</a>
+                </h4>
+                {{#has_progress}}
+                <div class="ap-mycourses__card-progressbar">
+                    <div class="ap-mycourses__card-progressbar-fill" style="width:{{progress}}%;"></div>
+                </div>
+                <span class="ap-mycourses__card-progresstext">{{progress}}% complete</span>
+                {{/has_progress}}
+                <div class="ap-mycourses__card-footer">
+                    <span class="ap-mycourses__card-access"><i class="fa fa-clock"></i> {{lastaccess}}</span>
+                    <a href="{{viewurl}}" class="ap-mycourses__card-cta">
+                        {{#is_completed}}Review{{/is_completed}}
+                        {{#is_inprogress}}Continue{{/is_inprogress}}
+                        {{#is_notstarted}}Start{{/is_notstarted}}
+                        <i class="fa fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {{/courses}}
+    </div>
+
+    {{#has_pagination}}
+    <nav class="ap-mycourses__pagination" aria-label="My courses pagination">
+        <span class="ap-mycourses__pagination-summary">Showing {{showing_from}}-{{showing_to}} of {{total_filtered}}</span>
+        <div class="ap-mycourses__pagination-pages">
+            {{#pages}}
+            <a href="{{url}}"
+               class="ap-mycourses__pagination-page {{#active}}ap-mycourses__pagination-page--active{{/active}}"
+               aria-current="{{#active}}page{{/active}}{{^active}}false{{/active}}">
+                {{label}}
+            </a>
+            {{/pages}}
+        </div>
+    </nav>
+    {{/has_pagination}}
+    {{/has_courses}}
+
+    {{^has_courses}}
+    <div class="ap-empty-state">
+        <i class="fa fa-graduation-cap ap-empty-state__icon"></i>
+        <h4 class="ap-empty-state__title">No courses found</h4>
+        <p class="ap-empty-state__message">Browse the catalog to discover courses.</p>
+        <a href="{{{config.wwwroot}}}/local/sentientia_catalog/index.php" class="ap-empty-state__cta">
+            <i class="fa fa-search"></i> Browse Catalog
+        </a>
+    </div>
+    {{/has_courses}}
+</div>
+
+{{! Inline <style> block extracted to styles.css in Phase B0 Catalogue iter 2.
+    See: local/sentientia_catalog/styles.css — .ap-mycourses__* selectors at end. }}

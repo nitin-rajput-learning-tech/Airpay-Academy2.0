@@ -1,0 +1,91 @@
+{{!
+    @template local_sentientia_roles/compare
+}}
+<div class="container-fluid">
+    <h2 class="mb-3">Compare roles</h2>
+
+    <form method="get" class="row g-2 mb-4 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label">Role A</label>
+            <select name="left" class="form-select">
+                {{#role_options}}
+                <option value="{{ value }}">{{ label }}</option>
+                {{/role_options}}
+            </select>
+        </div>
+        <div class="col-md-1 text-center pb-1">
+            <i class="fa fa-exchange fs-4"></i>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Role B</label>
+            <select name="right" class="form-select">
+                {{#role_options}}
+                <option value="{{ value }}">{{ label }}</option>
+                {{/role_options}}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary">Compare</button>
+        </div>
+    </form>
+
+    {{#has_compare}}
+    <div class="row mb-3">
+        <div class="col-md-3"><div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-2">
+                <div style="font-size:1.5rem;font-weight:800;color:var(--ap-color-success,#16a34a);">
+                    {{ compare.stats.both_allow }}</div>
+                <div class="text-muted small">Both allow</div>
+            </div></div></div>
+        <div class="col-md-3"><div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-2">
+                <div style="font-size:1.5rem;font-weight:800;">{{ compare.stats.both_block }}</div>
+                <div class="text-muted small">Both block / inherit</div>
+            </div></div></div>
+        <div class="col-md-3"><div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-2">
+                <div style="font-size:1.5rem;font-weight:800;color:var(--ap-color-warning,#d97706);">
+                    {{ compare.stats.only_left }}</div>
+                <div class="text-muted small">Only A allows</div>
+            </div></div></div>
+        <div class="col-md-3"><div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-2">
+                <div style="font-size:1.5rem;font-weight:800;color:var(--ap-color-warning,#d97706);">
+                    {{ compare.stats.only_right }}</div>
+                <div class="text-muted small">Only B allows</div>
+            </div></div></div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h4 class="mb-0">{{ compare.left_name }} vs {{ compare.right_name }}
+            <small class="text-muted">({{ compare.total_caps }} capabilities)</small>
+        </h4>
+        <a href="{{{ export_url }}}" class="btn btn-outline-secondary btn-sm">
+            <i class="fa fa-download"></i> Export YAML diff
+        </a>
+    </div>
+
+    <div class="table-responsive">
+    <table class="table table-sm">
+        <thead><tr>
+            <th>Capability</th>
+            <th>{{ compare.left_name }}</th>
+            <th>{{ compare.right_name }}</th>
+        </tr></thead>
+        <tbody>
+            {{#compare.rows}}
+            <tr {{#is_diff}}class="table-warning"{{/is_diff}}>
+                <td><code class="small">{{ capability }}</code></td>
+                <td><span class="badge {{ left_css }}">{{ left_label }}</span></td>
+                <td><span class="badge {{ right_css }}">{{ right_label }}</span></td>
+            </tr>
+            {{/compare.rows}}
+        </tbody>
+    </table>
+    </div>
+    {{/has_compare}}
+
+    {{^has_compare}}
+    <div class="alert alert-info">Pick two roles to compare their capability assignments.</div>
+    {{/has_compare}}
+</div>

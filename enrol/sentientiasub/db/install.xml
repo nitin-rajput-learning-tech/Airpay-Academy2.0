@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="enrol/sentientiasub/db" VERSION="20260602" COMMENT="Recurring-subscription enrolment (ADR-023) — subscription state table">
+  <TABLES>
+    <TABLE NAME="enrol_sentientiasub_subscription" COMMENT="One row per user subscription against an enrol instance. Lifecycle state machine + Airpay mandate handles.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" COMMENT="Primary key"/>
+        <FIELD NAME="enrolid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="FK to mdl_enrol.id (the enrol_sentientiasub instance)"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="FK to mdl_user.id (the subscriber)"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="pending" COMMENT="pending|active|suspended|cancelled"/>
+        <FIELD NAME="scope" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="course" COMMENT="allaccess|category|course (ADR-023 per-instance model)"/>
+        <FIELD NAME="scopeid" TYPE="int" LENGTH="10" NOTNULL="false" COMMENT="courseid (scope=course) or categoryid (scope=category); NULL for allaccess"/>
+        <FIELD NAME="billingperiod" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="monthly" COMMENT="monthly|annual|custom"/>
+        <FIELD NAME="amount" TYPE="number" LENGTH="10" DECIMALS="2" NOTNULL="false" COMMENT="Recurring charge amount"/>
+        <FIELD NAME="currency" TYPE="char" LENGTH="3" NOTNULL="true" DEFAULT="INR" COMMENT="ISO 4217"/>
+        <FIELD NAME="ap_mandate_id" TYPE="char" LENGTH="255" NOTNULL="false" COMMENT="Airpay mandate id (set at increment 4)"/>
+        <FIELD NAME="ap_subscription_id" TYPE="char" LENGTH="255" NOTNULL="false" COMMENT="Airpay subscription id (set at increment 4)"/>
+        <FIELD NAME="nextchargets" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="Unix ts of the next scheduled charge"/>
+        <FIELD NAME="lastchargets" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="Unix ts of the last successful charge"/>
+        <FIELD NAME="startedts" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="Unix ts of activation"/>
+        <FIELD NAME="cancelledts" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="Unix ts of cancellation"/>
+        <FIELD NAME="costcenterid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="BizLMS tenant: 1=Airpay, 77=Public, 177=ZEEA"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_enrol" TYPE="foreign" FIELDS="enrolid" REFTABLE="enrol" REFFIELDS="id"/>
+        <KEY NAME="fk_user" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_costcenter" UNIQUE="false" FIELDS="costcenterid" COMMENT="Tenant filtering"/>
+        <INDEX NAME="idx_user_status" UNIQUE="false" FIELDS="userid, status" COMMENT="A user's active subscriptions"/>
+        <INDEX NAME="idx_status" UNIQUE="false" FIELDS="status" COMMENT="Status dashboards"/>
+        <INDEX NAME="idx_nextcharge" UNIQUE="false" FIELDS="nextchargets" COMMENT="Reconciliation cron — find due charges"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

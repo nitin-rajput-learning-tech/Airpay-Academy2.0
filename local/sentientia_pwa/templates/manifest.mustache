@@ -1,0 +1,56 @@
+{{!
+    @template local_sentientia_pwa/manifest
+
+    Web App Manifest body — see W3C Web App Manifest spec.
+    https://www.w3.org/TR/appmanifest/
+
+    Context (set by manifest.php):
+      name         Display name (full)
+      short_name   <= 12 chars
+      theme_color  Hex
+      bg_color     Hex
+      icon_192_url Absolute URL to 192x192 PNG
+      icon_512_url Absolute URL to 512x512 PNG
+      start_url    Absolute URL the PWA launches to
+      scope        Absolute URL scope (typically wwwroot/)
+      lang         BCP-47 language code
+
+    NOTE: Output is application/manifest+json. Mustache auto-escapes
+    double-brace tags for HTML which JSON does not need but tolerates
+    (HTML entities become regular ASCII in JSON). Triple-brace is only
+    needed where unescaped JSON is required (none in this template).
+}}
+{
+  "name": "{{name}}",
+  "short_name": "{{short_name}}",
+  "description": "{{name}} — learning and development platform",
+  "start_url": "{{start_url}}",
+  "scope": "{{scope}}",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "{{theme_color}}",
+  "background_color": "{{bg_color}}",
+  "lang": "{{lang}}",
+  "dir": "ltr",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "{{icon_192_url}}",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "{{icon_512_url}}",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "{{icon_512_url}}",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

@@ -1,0 +1,123 @@
+{{!
+    @template local_sentientia_live/qt_multiple_choice_audience
+
+    Audience-facing form for a multiple-choice slide — Phase E.4.
+
+    Renders either a radio-group or a button-group of N options
+    (controlled by is_radio / is_buttons flags). Posts back to
+    action_url with sesskey + slideid + option_index. The bar-chart
+    result panel lives in qt_multiple_choice_result; this template
+    only collects the response.
+
+    Context (see classes/question_types/multiple_choice.php):
+      slideid        int
+      sessionid      int
+      question       string  (slide title, escaped server-side already)
+      aria_id_prefix string  (id-prefix for the form fields)
+      action_url     string
+      sesskey        string
+      has_token      bool
+      token          string  (only when has_token)
+      options[]      = { index, label, input_id, is_correct }
+      is_radio       bool
+      is_buttons     bool
+      show_correct   bool    (reveal correct answer after trainer reveals)
+
+    Accessibility:
+      - role="radiogroup" on the option container wraps the radios.
+      - aria-labelledby points at the question heading id.
+      - Each option label is associated with its input via `for`.
+      - When show_correct is true, the correct option carries a visible
+        + sr-only badge so SR users hear "correct answer" too.
+}}
+<div class="sentientia-mc-audience"
+     data-slideid="{{slideid}}"
+     data-sessionid="{{sessionid}}"
+     data-question-type="multichoice">
+
+  <form method="post" action="{{action_url}}"
+        class="sentientia-mc-audience__form">
+    <input type="hidden" name="sesskey"  value="{{sesskey}}">
+    <input type="hidden" name="slideid"  value="{{slideid}}">
+    {{#has_token}}
+      <input type="hidden" name="token" value="{{token}}">
+    {{/has_token}}
+    {{!
+        Audience controller (audience/play.php) reads value_int —
+        we send the same field name so the existing dispatch in
+        play.php's POST branch picks it up without code change.
+    }}
+
+    {{#is_radio}}
+      <div class="sentientia-mc-audience__options d-flex flex-column gap-2"
+           role="radiogroup"
+           aria-label="{{question}}">
+        {{#options}}
+          <label for="{{input_id}}"
+                 class="sentientia-mc-audience__option airpay-card form-check d-flex align-items-center gap-2 p-3 border rounded mb-0
+                        {{#is_correct}}sentientia-mc-audience__option--correct border-success bg-success-subtle{{/is_correct}}"
+                 style="cursor: pointer;">
+            <input type="radio"
+                   id="{{input_id}}"
+                   name="value_int"
+                   value="{{index}}"
+                   class="form-check-input m-0"
+                   required="required">
+            <span class="form-check-label fs-5 flex-grow-1">{{label}}</span>
+            {{#is_correct}}
+              <span class="airpay-badge airpay-badge--success badge bg-success ms-2"
+                    aria-label="{{#str}}a11y_mc_correct_revealed, local_sentientia_live{{/str}}">
+                <i class="fa fa-check me-1" aria-hidden="true"></i>
+                {{#str}}live_results_correct_label, local_sentientia_live{{/str}}
+              </span>
+            {{/is_correct}}
+          </label>
+        {{/options}}
+      </div>
+    {{/is_radio}}
+
+    {{#is_buttons}}
+      <div class="sentientia-mc-audience__options d-grid gap-2"
+           role="radiogroup"
+           aria-label="{{question}}">
+        {{#options}}
+          <input type="radio"
+                 id="{{input_id}}"
+                 name="value_int"
+                 value="{{index}}"
+                 class="btn-check"
+                 required="required">
+          <label for="{{input_id}}"
+                 class="sentientia-mc-audience__button airpay-btn btn btn-outline-primary btn-lg py-3
+                        {{#is_correct}}sentientia-mc-audience__button--correct btn-outline-success{{/is_correct}}">
+            <span class="fs-5">{{label}}</span>
+            {{#is_correct}}
+              <span class="airpay-badge airpay-badge--success badge bg-success ms-2"
+                    aria-label="{{#str}}a11y_mc_correct_revealed, local_sentientia_live{{/str}}">
+                <i class="fa fa-check me-1" aria-hidden="true"></i>
+                {{#str}}live_results_correct_label, local_sentientia_live{{/str}}
+              </span>
+            {{/is_correct}}
+          </label>
+        {{/options}}
+      </div>
+    {{/is_buttons}}
+
+    <button type="submit"
+            class="airpay-btn btn btn-primary btn-lg w-100 mt-3">
+      {{#str}}audience_submit_response, local_sentientia_live{{/str}}
+    </button>
+  </form>
+
+  {{! Mobile responsive overrides — scoped to this widget so we don't
+      pollute the rest of the page. Targets the 590px primary mobile
+      breakpoint (per .claude/rules/frontend.md). }}
+  <style>
+    @media (max-width: 590px) {
+      .sentientia-mc-audience__option { padding: 0.75rem !important; }
+      .sentientia-mc-audience__option .fs-5 { font-size: 1rem !important; }
+      .sentientia-mc-audience__button { padding: 0.75rem !important; }
+      .sentientia-mc-audience__button .fs-5 { font-size: 1rem !important; }
+    }
+  </style>
+</div>

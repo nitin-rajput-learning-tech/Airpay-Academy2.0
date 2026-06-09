@@ -1,0 +1,41 @@
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+<tr><td style="font-family:'Montserrat',Arial,sans-serif; font-size:15px; line-height:24px; color:#1a1a2e;">
+
+    <p style="margin:0 0 16px;">Hi <strong>{{firstname}}</strong>,</p>
+
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 16px;">
+    <tr>
+        <td bgcolor="#fef2f2" style="background-color:#fef2f2; padding:14px 16px; border-radius:8px; border-left:4px solid #dc2626;">
+            <span style="font-family:'Montserrat',Arial,sans-serif; font-size:20px; font-weight:700; color:#dc2626;">
+                &#128308; OVERDUE — {{days_overdue}} Days
+            </span><br/>
+            <span style="font-family:'Montserrat',Arial,sans-serif; font-size:14px; color:#5a6070; line-height:22px;">
+                Your mandatory compliance course was due on <strong>{{deadline_date}}</strong>
+                and is now <strong>{{days_overdue}} days overdue</strong>.
+                {{#progress}}Progress: <strong>{{progress}}%</strong>.{{/progress}}
+            </span>
+        </td>
+    </tr>
+    </table>
+
+    <p style="margin:0 0 16px; font-size:14px; color:#5a6070;">
+        <strong>Please complete this immediately.</strong> If this course remains incomplete,
+        it will be escalated to your reporting manager as part of the weekly compliance review.
+    </p>
+
+</td></tr>
+</table>
+
+{{> local_sentientia_emails/partials/course_info_box}}
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0;">
+<tr>
+    <td align="center" bgcolor="#dc2626" style="background-color:#dc2626; border-radius:8px;">
+        <a href="{{course_url}}" target="_blank" style="display:inline-block; padding:14px 32px; font-family:'Montserrat',Arial,sans-serif; font-size:15px; font-weight:600; color:#ffffff; text-decoration:none; line-height:20px;">
+            Complete Immediately
+        </a>
+    </td>
+</tr>
+</table>
+
+{{> local_sentientia_emails/partials/footer_note}}

@@ -1,0 +1,283 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Airpay WhatsApp + SMS — Communication Preferences page
+   Phase A1 iter 1 (2026-05-15). Tokens-only, zero hex literals.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.airpay-channel-prefs {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: var(--ap-space-4);
+    font-family: var(--ap-font-family);
+    color: var(--ap-color-text-primary);
+}
+
+.airpay-channel-prefs__intro {
+    font-size: var(--ap-text-base);
+    color: var(--ap-color-text-secondary);
+    line-height: var(--ap-leading-relaxed);
+    margin: 0 0 var(--ap-space-6);
+}
+
+.airpay-channel-prefs__form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ap-space-5);
+}
+
+/* ── Field groups ───────────────────────────────────────────────────── */
+.airpay-channel-prefs__field,
+.airpay-channel-prefs__channel,
+.airpay-channel-prefs__consent {
+    background: var(--ap-color-bg-surface);
+    border: 1px solid var(--ap-color-border);
+    border-radius: var(--ap-radius-md);
+    padding: var(--ap-space-4);
+    margin: 0;
+    transition: border-color var(--ap-transition-quick);
+}
+
+.airpay-channel-prefs__field:focus-within,
+.airpay-channel-prefs__channel:focus-within {
+    border-color: var(--ap-color-primary);
+}
+
+.airpay-channel-prefs__label {
+    display: block;
+    font-size: var(--ap-text-sm);
+    font-weight: var(--ap-weight-semibold);
+    color: var(--ap-color-text-primary);
+    margin: 0 0 var(--ap-space-2);
+}
+
+.airpay-channel-prefs__input {
+    width: 100%;
+    max-width: 320px;
+    padding: var(--ap-space-2) var(--ap-space-3);
+    border: 1px solid var(--ap-color-border-strong);
+    border-radius: var(--ap-radius-sm);
+    font-size: var(--ap-text-base);
+    background: var(--ap-color-bg-surface);
+    color: var(--ap-color-text-primary);
+    min-height: var(--ap-control-height-md);
+    transition: border-color var(--ap-transition-quick);
+    font-family: inherit;
+}
+
+.airpay-channel-prefs__input:focus {
+    outline: none;
+    border-color: var(--ap-color-primary);
+}
+
+.airpay-channel-prefs__input:invalid:not(:placeholder-shown) {
+    border-color: var(--ap-color-danger);
+}
+
+.airpay-channel-prefs__hint {
+    font-size: var(--ap-text-xs);
+    color: var(--ap-color-text-muted);
+    margin: var(--ap-space-2) 0 0;
+    line-height: var(--ap-leading-normal);
+}
+
+/* ── Channel section (WhatsApp, SMS, Email) ──────────────────────────── */
+.airpay-channel-prefs__channel-label {
+    display: flex;
+    align-items: center;
+    gap: var(--ap-space-2);
+    font-size: var(--ap-text-lg);
+    font-weight: var(--ap-weight-bold);
+    color: var(--ap-color-text-primary);
+    margin: 0 0 var(--ap-space-2);
+    padding: 0;
+}
+
+.airpay-channel-prefs__channel-label i {
+    color: var(--ap-color-primary);
+    font-size: var(--ap-text-xl);
+}
+
+.airpay-channel-prefs__channel-desc {
+    font-size: var(--ap-text-sm);
+    color: var(--ap-color-text-secondary);
+    margin: 0 0 var(--ap-space-3);
+    line-height: var(--ap-leading-normal);
+}
+
+/* Disabled-by-tenant channel — muted styling but still visible so
+   learners know the option exists. */
+.airpay-channel-prefs__channel--disabled {
+    background: var(--ap-color-bg-surface-alt);
+    opacity: 0.65;
+}
+
+.airpay-channel-prefs__channel--disabled .airpay-channel-prefs__channel-label i {
+    color: var(--ap-color-text-muted);
+}
+
+.airpay-channel-prefs__channel-disabled-msg {
+    font-size: var(--ap-text-sm);
+    font-style: italic;
+    color: var(--ap-color-text-muted);
+    margin: 0;
+    padding: var(--ap-space-2) var(--ap-space-3);
+    background: var(--ap-color-bg-body);
+    border-radius: var(--ap-radius-sm);
+}
+
+/* Always-on (email) — soft success tint */
+.airpay-channel-prefs__channel--always-on {
+    border-left: 4px solid var(--ap-color-success);
+    background: var(--ap-color-success-light);
+}
+
+/* ── Toggle + radio inputs ──────────────────────────────────────────── */
+.airpay-channel-prefs__toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ap-space-2);
+    padding: var(--ap-space-2) var(--ap-space-3);
+    border-radius: var(--ap-radius-sm);
+    cursor: pointer;
+    min-height: var(--ap-tap-target-min);
+    font-size: var(--ap-text-sm);
+    color: var(--ap-color-text-primary);
+    transition: background var(--ap-transition-quick);
+}
+
+.airpay-channel-prefs__toggle:hover {
+    background: var(--ap-color-primary-light);
+}
+
+.airpay-channel-prefs__toggle input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--ap-color-primary);
+    cursor: pointer;
+}
+
+.airpay-channel-prefs__radio-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ap-space-2);
+    margin-top: var(--ap-space-2);
+}
+
+.airpay-channel-prefs__radio {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ap-space-2);
+    padding: var(--ap-space-2) var(--ap-space-4);
+    border: 1px solid var(--ap-color-border);
+    border-radius: var(--ap-radius-pill);
+    cursor: pointer;
+    min-height: var(--ap-tap-target-min);
+    font-size: var(--ap-text-sm);
+    color: var(--ap-color-text-secondary);
+    background: var(--ap-color-bg-surface);
+    transition: background var(--ap-transition-quick),
+                border-color var(--ap-transition-quick),
+                color var(--ap-transition-quick);
+}
+
+.airpay-channel-prefs__radio:hover {
+    border-color: var(--ap-color-primary);
+}
+
+.airpay-channel-prefs__radio:has(input:checked) {
+    background: var(--ap-color-primary-light);
+    border-color: var(--ap-color-primary);
+    color: var(--ap-color-primary);
+    font-weight: var(--ap-weight-semibold);
+}
+
+.airpay-channel-prefs__radio input[type="radio"] {
+    accent-color: var(--ap-color-primary);
+    cursor: pointer;
+}
+
+/* ── DLT consent ─────────────────────────────────────────────────────── */
+.airpay-channel-prefs__consent {
+    border-left: 4px solid var(--ap-color-warning);
+    background: var(--ap-color-warning-light);
+}
+
+.airpay-channel-prefs__consent-body {
+    font-size: var(--ap-text-sm);
+    color: var(--ap-color-text-primary);
+    margin: 0 0 var(--ap-space-3);
+    line-height: var(--ap-leading-relaxed);
+}
+
+.airpay-channel-prefs__consent-logged {
+    font-size: var(--ap-text-sm);
+    color: var(--ap-color-success);
+    margin: var(--ap-space-3) 0;
+    padding: var(--ap-space-2) var(--ap-space-3);
+    background: var(--ap-color-success-light);
+    border-radius: var(--ap-radius-sm);
+}
+
+/* ── Submit ──────────────────────────────────────────────────────────── */
+.airpay-channel-prefs__actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: var(--ap-space-3);
+}
+
+.airpay-channel-prefs__submit {
+    padding: var(--ap-space-3) var(--ap-space-6);
+    background: var(--ap-color-primary);
+    color: var(--ap-color-text-inverse);
+    border: none;
+    border-radius: var(--ap-radius-md);
+    font-size: var(--ap-text-base);
+    font-weight: var(--ap-weight-semibold);
+    cursor: pointer;
+    min-height: var(--ap-control-height-lg);
+    transition: background var(--ap-transition-quick),
+                transform var(--ap-transition-quick),
+                box-shadow var(--ap-transition-quick);
+}
+
+.airpay-channel-prefs__submit:hover {
+    background: var(--ap-color-primary-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--ap-shadow-md);
+}
+
+.airpay-channel-prefs__submit:focus-visible {
+    box-shadow: var(--ap-shadow-md);
+}
+
+.airpay-channel-prefs__submit:active {
+    transform: translateY(0);
+}
+
+/* ── Mobile ──────────────────────────────────────────────────────────── */
+@media (max-width: 590px) {
+    .airpay-channel-prefs {
+        padding: var(--ap-space-3);
+    }
+
+    .airpay-channel-prefs__form {
+        gap: var(--ap-space-4);
+    }
+
+    .airpay-channel-prefs__field,
+    .airpay-channel-prefs__channel,
+    .airpay-channel-prefs__consent {
+        padding: var(--ap-space-3);
+    }
+
+    .airpay-channel-prefs__input {
+        max-width: 100%;
+    }
+
+    .airpay-channel-prefs__actions {
+        justify-content: stretch;
+    }
+
+    .airpay-channel-prefs__submit {
+        width: 100%;
+    }
+}

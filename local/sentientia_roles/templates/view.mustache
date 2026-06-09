@@ -1,0 +1,150 @@
+{{!
+   Airpay Role Management — per-role detail with 3 tabs.
+
+   Context:
+     role             { id, name, shortname, archetype, archetype_label, ... }
+     tab              'overview' | 'capabilities' | 'audit'
+     show_overview    bool
+     show_capabilities bool
+     show_audit       bool
+     can_manage       bool
+     caps_columns_json
+     caps_extra_args_json
+     audit_columns_json
+     audit_extra_args_json
+     overview_url, caps_url, audit_url    tab nav URLs
+     index_url      back link
+}}
+<div class="ap-card mb-3">
+  <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+    <div>
+      <a href="{{ index_url }}" class="text-muted text-decoration-none small">
+        <i class="fa fa-chevron-left me-1"></i>{{# str }}heading_index, local_sentientia_roles{{/ str }}
+      </a>
+      <h2 class="h4 m-0 mt-1">
+        {{ role.name }} <code class="text-muted ms-2 fs-6">{{ role.shortname }}</code>
+      </h2>
+    </div>
+    <div class="text-end">
+      <span class="badge bg-light text-dark border">
+        {{# role.archetype }}{{ role.archetype }}{{/ role.archetype }}
+        {{^ role.archetype }}{{# str }}ov_archetype_custom, local_sentientia_roles{{/ str }}{{/ role.archetype }}
+      </span>
+    </div>
+  </div>
+
+  <ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item" role="presentation">
+      <a class="nav-link {{# show_overview }}active{{/ show_overview }}"
+         href="{{ overview_url }}" role="tab"
+         aria-selected="{{# show_overview }}true{{/ show_overview }}{{^ show_overview }}false{{/ show_overview }}">
+        {{# str }}tab_overview, local_sentientia_roles{{/ str }}
+      </a>
+    </li>
+    <li class="nav-item" role="presentation">
+      <a class="nav-link {{# show_capabilities }}active{{/ show_capabilities }}"
+         href="{{ caps_url }}" role="tab"
+         aria-selected="{{# show_capabilities }}true{{/ show_capabilities }}{{^ show_capabilities }}false{{/ show_capabilities }}">
+        {{# str }}tab_capabilities, local_sentientia_roles{{/ str }}
+        <span class="badge bg-secondary ms-1">{{ role.caps_total }}</span>
+      </a>
+    </li>
+    <li class="nav-item" role="presentation">
+      <a class="nav-link {{# show_audit }}active{{/ show_audit }}"
+         href="{{ audit_url }}" role="tab"
+         aria-selected="{{# show_audit }}true{{/ show_audit }}{{^ show_audit }}false{{/ show_audit }}">
+        {{# str }}tab_audit, local_sentientia_roles{{/ str }}
+        <span class="badge bg-secondary ms-1">{{ role.auditcount }}</span>
+      </a>
+    </li>
+  </ul>
+
+  {{# show_overview }}
+  <div class="row g-3">
+    <div class="col-md-3">
+      <div class="ap-stat">
+        <div class="ap-stat__label">{{# str }}ov_caps_total, local_sentientia_roles{{/ str }}</div>
+        <div class="ap-stat__value">{{ role.caps_total }}</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="ap-stat">
+        <div class="ap-stat__label">{{# str }}ov_caps_allow, local_sentientia_roles{{/ str }}</div>
+        <div class="ap-stat__value text-success">{{ role.caps_allow }}</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="ap-stat">
+        <div class="ap-stat__label">{{# str }}ov_caps_prevent, local_sentientia_roles{{/ str }}</div>
+        <div class="ap-stat__value text-warning">{{ role.caps_prevent }}</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="ap-stat">
+        <div class="ap-stat__label">{{# str }}ov_caps_prohibit, local_sentientia_roles{{/ str }}</div>
+        <div class="ap-stat__value text-danger">{{ role.caps_prohibit }}</div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="ap-stat">
+        <div class="ap-stat__label">{{# str }}ov_assignments, local_sentientia_roles{{/ str }}</div>
+        <div class="ap-stat__value">{{ role.assigncount }}</div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="ap-stat">
+        <div class="ap-stat__label">{{# str }}ov_audit_entries, local_sentientia_roles{{/ str }}</div>
+        <div class="ap-stat__value">{{ role.auditcount }}</div>
+      </div>
+    </div>
+    {{# role.description }}
+    <div class="col-12">
+      <div class="ap-stat">
+        <div class="ap-stat__label">{{# str }}ov_description, local_sentientia_roles{{/ str }}</div>
+        <div class="mt-2">{{{ role.description }}}</div>
+      </div>
+    </div>
+    {{/ role.description }}
+  </div>
+  {{/ show_overview }}
+
+  {{# show_capabilities }}
+  <form id="airpay-roles-caps-filter" class="row g-2 mb-3">
+    <div class="col-md-5">
+      <label for="airpay-roles-cap-search" class="form-label small mb-1">
+        {{# str }}cap_filter_search, local_sentientia_roles{{/ str }}
+      </label>
+      <input type="search" id="airpay-roles-cap-search" class="form-control form-control-sm"
+             placeholder="capabilityname or component">
+    </div>
+    <div class="col-md-3">
+      <label for="airpay-roles-cap-perm" class="form-label small mb-1">
+        {{# str }}cap_filter_perm, local_sentientia_roles{{/ str }}
+      </label>
+      <select id="airpay-roles-cap-perm" class="form-select form-select-sm">
+        <option value="all">{{# str }}cap_filter_perm_all, local_sentientia_roles{{/ str }}</option>
+        <option value="inherit">{{# str }}cap_perm_inherit, local_sentientia_roles{{/ str }}</option>
+        <option value="allow">{{# str }}cap_perm_allow, local_sentientia_roles{{/ str }}</option>
+        <option value="prevent">{{# str }}cap_perm_prevent, local_sentientia_roles{{/ str }}</option>
+        <option value="prohibit">{{# str }}cap_perm_prohibit, local_sentientia_roles{{/ str }}</option>
+      </select>
+    </div>
+  </form>
+
+  <div id="airpay-roles-caps-table"
+       data-region="airpay-datatable"
+       data-ws-name="local_sentientia_roles_get_role_caps"
+       data-page-size="50"
+       data-columns-json="{{ caps_columns_json }}"
+       data-extra-args="{{ caps_extra_args_json }}"></div>
+  {{/ show_capabilities }}
+
+  {{# show_audit }}
+  <div id="airpay-roles-audit-table"
+       data-region="airpay-datatable"
+       data-ws-name="local_sentientia_roles_list_audit"
+       data-page-size="50"
+       data-columns-json="{{ audit_columns_json }}"
+       data-extra-args="{{ audit_extra_args_json }}"></div>
+  {{/ show_audit }}
+</div>

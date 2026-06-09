@@ -1,0 +1,44 @@
+{{!
+    @template local_sentientia_cart/admin_orders
+
+    Admin orders dashboard — full table with filters + refund modal.
+}}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">{{#str}}allorders, local_sentientia_cart{{/str}}</h2>
+        <div class="d-flex gap-2">
+            <a href="{{{ set_price_url }}}" class="btn btn-outline-secondary btn-sm">
+                <i class="fa fa-tag"></i> Set prices
+            </a>
+            <a href="{{{ daily_sums_url }}}" class="btn btn-outline-secondary btn-sm">
+                <i class="fa fa-chart-line"></i> Daily sums
+            </a>
+        </div>
+    </div>
+
+    {{!
+        Bug fix 2026-05-22 (Goal A audit Bug #12) — same shape as the
+        sibling history.mustache. theme_sentientia/datatable's selector
+        is [data-airpay-table], [data-region="airpay-datatable"]; the
+        old "datatable" value never matched so the admin orders table
+        rendered as a permanent "Loading..." spinner. Init() takes no
+        args; passing the wrong element is also a silent no-op.
+    }}
+    <div data-region="airpay-datatable"
+         data-component="local_sentientia_cart"
+         data-ws-name="local_sentientia_cart_list_orders"
+         data-columns="{{ columns_json }}"
+         data-default-sort="timecreated"
+         data-default-sortdir="desc"
+         data-extra-args='{}'>
+        <div class="text-center text-muted py-5">Loading...</div>
+    </div>
+</div>
+
+{{#js}}
+require(['theme_sentientia/datatable', 'local_sentientia_cart/admin_orders'],
+    function(Datatable, AdminOrders) {
+        Datatable.init();
+        AdminOrders.init();
+    });
+{{/js}}

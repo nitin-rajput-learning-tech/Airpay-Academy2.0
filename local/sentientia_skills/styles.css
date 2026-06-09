@@ -1,0 +1,220 @@
+/* ═══ Skills Dashboard ═══ */
+.ap-skills { max-width: 900px; margin: 0 auto; }
+
+/* Summary KPI */
+.ap-skills__summary {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 24px;
+    background: var(--ap-surface, #fff);
+    border: 1px solid var(--ap-border, #e3eaf3);
+    border-radius: 16px;
+    margin-bottom: 20px;
+}
+.ap-skills__summary-ring {
+    position: relative;
+    width: 90px;
+    height: 90px;
+    flex-shrink: 0;
+}
+.ap-skills__summary-ring svg { display: block; }
+.ap-skills__summary-pct {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--ap-primary, #0066A7);
+}
+.ap-skills__summary-text h3 {
+    margin: 0 0 4px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ap-text, #1a1a2e);
+}
+.ap-skills__summary-text p {
+    margin: 0 0 6px;
+    font-size: 14px;
+    color: var(--ap-text-secondary, #607286);
+}
+.ap-skills__summary-gaps {
+    font-size: 13px;
+    font-weight: 600;
+    color: #d97706;
+}
+.ap-skills__summary-gaps i { margin-right: 4px; }
+.ap-skills__summary-complete {
+    font-size: 13px;
+    font-weight: 600;
+    color: #16a34a;
+}
+.ap-skills__summary-complete i { margin-right: 4px; }
+
+/* Section */
+.ap-skills__section {
+    background: var(--ap-surface, #fff);
+    border: 1px solid var(--ap-border, #e3eaf3);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+}
+.ap-skills__section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ap-text, #1a1a2e);
+    margin: 0 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.ap-skills__section-title i { color: var(--ap-primary, #0066A7); }
+
+/* Radar chart */
+.ap-skills__radar-wrap {
+    display: flex;
+    justify-content: center;
+    padding: 10px 0;
+}
+.ap-skills__radar-wrap canvas {
+    max-width: 360px;
+    width: 100%;
+    height: auto;
+}
+
+/* Gap Analysis List */
+.ap-skills__gap-list { display: flex; flex-direction: column; gap: 8px; }
+.ap-skills__gap-item {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr auto;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--ap-border, #e3eaf3);
+    transition: background 0.15s;
+}
+.ap-skills__gap-item:hover { background: var(--ap-bg, #F2F4FB); }
+.ap-skills__gap-item--met { border-left: 3px solid #16a34a; }
+.ap-skills__gap-item--partial { border-left: 3px solid #d97706; }
+.ap-skills__gap-item--missing { border-left: 3px solid #dc2626; }
+
+.ap-skills__gap-info { min-width: 0; }
+.ap-skills__gap-name {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ap-text, #1a1a2e);
+    margin-bottom: 2px;
+}
+.ap-skills__gap-category {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 1px 8px;
+    border-radius: 10px;
+    background: var(--ap-primary-light, #e8f2f9);
+    color: var(--ap-primary, #0066A7);
+}
+
+.ap-skills__gap-levels {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--ap-text-secondary, #607286);
+}
+.ap-skills__gap-bar-wrap {
+    width: 60px;
+    height: 6px;
+    background: var(--ap-border, #e3eaf3);
+    border-radius: 3px;
+    overflow: hidden;
+}
+.ap-skills__gap-bar {
+    height: 100%;
+    background: var(--ap-gradient, linear-gradient(135deg, #0066A7, #0f7a73));
+    border-radius: 3px;
+    transition: width 0.5s;
+}
+.ap-skills__gap-current { font-weight: 600; color: var(--ap-accent, #0f7a73); }
+.ap-skills__gap-arrow { color: var(--ap-text-muted, #8896a6); }
+.ap-skills__gap-required { font-weight: 600; color: var(--ap-primary, #0066A7); }
+
+.ap-skills__gap-status {
+    text-align: right;
+    white-space: nowrap;
+}
+
+/* Recommended Courses */
+.ap-skills__recs { display: flex; flex-direction: column; gap: 8px; }
+.ap-skills__rec-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    border: 1px solid var(--ap-border, #e3eaf3);
+    border-radius: 10px;
+    text-decoration: none;
+    transition: all 0.15s;
+}
+.ap-skills__rec-card:hover {
+    border-color: var(--ap-primary, #0066A7);
+    background: var(--ap-bg, #F2F4FB);
+    transform: translateX(4px);
+}
+.ap-skills__rec-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--ap-primary-light, #e8f2f9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ap-primary, #0066A7);
+    font-size: 16px;
+    flex-shrink: 0;
+}
+.ap-skills__rec-info { flex: 1; min-width: 0; }
+.ap-skills__rec-info h5 {
+    margin: 0 0 2px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ap-text, #1a1a2e);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.ap-skills__rec-info span {
+    font-size: 12px;
+    color: var(--ap-text-secondary, #607286);
+}
+.ap-skills__rec-arrow {
+    color: var(--ap-text-muted, #8896a6);
+    flex-shrink: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .ap-skills__gap-item { grid-template-columns: 1fr; gap: 8px; }
+    .ap-skills__gap-status { text-align: left; }
+}
+@media (max-width: 590px) {
+    .ap-skills__summary { flex-direction: column; text-align: center; }
+    .ap-skills__section { padding: 16px; }
+}
+
+/* Dark mode */
+body.dark-mode .ap-skills__summary { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .ap-skills__summary-text h3 { color: #e8eaed; }
+body.dark-mode .ap-skills__summary-text p { color: #9ca3b4; }
+body.dark-mode .ap-skills__section { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .ap-skills__section-title { color: #e8eaed; }
+body.dark-mode .ap-skills__gap-item { border-color: #2d3140; }
+body.dark-mode .ap-skills__gap-item:hover { background: #22252f; }
+body.dark-mode .ap-skills__gap-name { color: #e8eaed; }
+body.dark-mode .ap-skills__gap-bar-wrap { background: #2d3140; }
+body.dark-mode .ap-skills__rec-card { border-color: #2d3140; }
+body.dark-mode .ap-skills__rec-card:hover { background: #22252f; }
+body.dark-mode .ap-skills__rec-info h5 { color: #e8eaed; }

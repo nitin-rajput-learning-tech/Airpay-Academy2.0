@@ -1,0 +1,45 @@
+{{!
+    @template local_sentientia_pwa/install_cta
+
+    Install CTA banner — Phase D.1.b (per ADR-005).
+
+    Hidden by default; revealed by amd/install_prompt.js when the
+    browser fires beforeinstallprompt. CSS classes:
+      - hidden        — accessible-hidden until the AMD module removes
+      - d-none        — Bootstrap-hidden as well, double-belt
+      - sentientia-install-cta — selector the AMD module hooks
+}}
+<div class="sentientia-install-cta-wrap" data-region="install-cta">
+  <div class="alert alert-primary d-flex justify-content-between align-items-center mb-3 sentientia-install-cta d-none"
+       hidden
+       role="region"
+       aria-label="{{#str}}install_cta_aria_label, local_sentientia_pwa{{/str}}">
+    <div class="d-flex align-items-center gap-3">
+      <i class="fa fa-mobile-alt fa-2x" aria-hidden="true"></i>
+      <div>
+        <strong class="d-block">{{#str}}install_cta_title, local_sentientia_pwa{{/str}}</strong>
+        <span class="small text-muted">
+          {{#str}}install_cta_body, local_sentientia_pwa{{/str}}
+        </span>
+      </div>
+    </div>
+    <div class="d-flex gap-2">
+      {{! Buttons carry the button-specific class so closest() in
+          install_prompt.js never resolves to the wrapper alert.
+          The wrapper has .sentientia-install-cta for show/hide;
+          buttons have .sentientia-install-cta-action for clicks. }}
+      <button type="button"
+              class="btn btn-primary sentientia-install-cta-action"
+              data-action="install">
+        <i class="fa fa-download me-1" aria-hidden="true"></i>
+        {{#str}}install_cta_install_btn, local_sentientia_pwa{{/str}}
+      </button>
+      <button type="button"
+              class="btn btn-link text-muted sentientia-install-cta-action"
+              data-action="dismiss"
+              aria-label="{{#str}}install_cta_dismiss_aria, local_sentientia_pwa{{/str}}">
+        {{#str}}install_cta_dismiss, local_sentientia_pwa{{/str}}
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,41 @@
+<?php
+// Copyright 2026 Airpay Payment Services
+// License http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+
+require_once(__DIR__ . '/../../config.php');
+
+require_login();
+$context = context_system::instance();
+// Bug fix 2026-05-22 (Goal A audit): require_capability rejected
+// supervisors-via-open_supervisorid who don't hold the Moodle manager
+// archetype. See \local_sentientia_manager\team_manager::can_manage().
+\local_sentientia_manager\team_manager::require_manage();
+
+$PAGE->set_url('/local/sentientia_manager/requests.php');
+$PAGE->set_context($context);
+$PAGE->set_pagelayout('standard');
+$PAGE->set_title('Enrolment Requests');
+$PAGE->set_heading('Enrolment Requests');
+
+$columns = [
+    ['key' => 'when',       'label' => 'When',     'sortable' => false],
+    ['key' => 'username',   'label' => 'Requester','sortable' => false],
+    ['key' => 'coursename', 'label' => 'Course',   'sortable' => false],
+    ['key' => 'reason',     'label' => 'Reason',   'sortable' => false],
+    ['key' => 'status',     'label' => 'Status',   'sortable' => false],
+    ['key' => 'actions',    'label' => '',         'sortable' => false, 'format' => 'html'],
+];
+
+$data = [
+    'columns_json'    => json_encode($columns),
+    'extra_args_json' => json_encode(['status' => 'pending']),
+    'index_url'       => (new moodle_url('/local/sentientia_manager/index.php'))->out(false),
+    'allocations_url' => (new moodle_url('/local/sentientia_manager/allocations.php'))->out(false),
+];
+
+echo $OUTPUT->header();
+echo $OUTPUT->render_from_template('local_sentientia_manager/requests', $data);
+$PAGE->requires->js_call_amd('local_sentientia_manager/manager_actions', 'init',
+    [['page' => 'requests']]);
+$PAGE->requires->js_call_amd('theme_sentientia/datatable', 'init', []);
+echo $OUTPUT->footer();

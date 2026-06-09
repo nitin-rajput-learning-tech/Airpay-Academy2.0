@@ -1,0 +1,121 @@
+{{!
+    Airpay Skills Management — admin view (datatable for skills).
+    @template local_sentientia_skills/manage
+}}
+<style>
+    [data-region="airpay-skills"] .ap-filter-bar { background: var(--ap-color-bg-surface, #fff); border: 1px solid var(--ap-color-border, #e2e6ef); border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; }
+    [data-region="airpay-skills"] .cat-card { background: var(--ap-color-bg-surface, #fff); border: 1px solid var(--ap-color-border, #e2e6ef); border-radius: 10px; padding: 14px 16px; }
+    [data-region="airpay-skills"] .cat-icon {
+        width: 36px; height: 36px;
+        border-radius: 8px;
+        display: inline-flex; align-items: center; justify-content: center;
+        color: #fff;
+    }
+</style>
+
+<div data-region="airpay-skills">
+
+<div class="ap-page-header d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h2 class="mb-1" style="font-weight: 700;">Skills Management</h2>
+        <p class="text-muted mb-0">Define skills, group them into categories, and map to roles.</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="{{{ designation_matrix_url }}}" class="btn btn-outline-secondary btn-sm">
+            <i class="fa fa-table fa-fw"></i> Designation matrix
+        </a>
+        <a href="{{{ course_mapping_url }}}" class="btn btn-outline-secondary btn-sm">
+            <i class="fa fa-link fa-fw"></i> Course mappings
+        </a>
+        <a href="#" class="btn btn-outline-primary btn-sm" data-action="create-category">
+            <i class="fa fa-folder-open fa-fw"></i> New Category
+        </a>
+        <a href="#" class="btn btn-primary btn-sm" data-action="create-skill">
+            <i class="fa fa-plus fa-fw"></i> New Skill
+        </a>
+    </div>
+</div>
+
+{{! KPI Summary — Phase B0+: migrated to tokens-aware stat_card partial }}
+{{#has_kpi_tiles}}
+<div class="airpay-stat-grid mb-4">
+    {{#kpi_tiles}}
+    {{> theme_sentientia/components/stat_card }}
+    {{/kpi_tiles}}
+</div>
+{{/has_kpi_tiles}}
+
+{{! ─── Categories: small dataset, render server-side ─── }}
+{{#has_categories}}
+<h5 class="mb-3" style="font-weight: 700;">Categories</h5>
+<div class="row mb-4">
+    {{#categories}}
+    <div class="col-md-4 mb-3">
+        <div class="cat-card d-flex align-items-center gap-3">
+            <div class="cat-icon" style="background: {{color}};"><i class="fa {{icon}}"></i></div>
+            <div style="flex: 1;">
+                <div class="fw-semibold">{{name}}</div>
+                <div class="small text-muted">{{skillcount}} skills</div>
+            </div>
+            <div>
+                <a href="#" class="btn btn-sm btn-link text-muted p-1" data-action="edit-category" data-categoryid="{{id}}" data-name="{{name}}" title="Edit"><i class="fa fa-pencil"></i></a>
+                <a href="#" class="btn btn-sm btn-link text-muted p-1" data-action="delete-category" data-categoryid="{{id}}" data-name="{{name}}" title="Delete"><i class="fa fa-trash text-danger"></i></a>
+            </div>
+        </div>
+    </div>
+    {{/categories}}
+</div>
+{{/has_categories}}
+
+{{! ─── Skills: datatable ─── }}
+<h5 class="mb-3" style="font-weight: 700;">Skills</h5>
+
+<div class="ap-filter-bar">
+    <div class="d-flex flex-wrap align-items-end gap-3">
+        {{#has_cat_options}}
+        <div>
+            <label class="small text-muted mb-1 d-block" for="ap-skills-cat-filter">Category</label>
+            <select id="ap-skills-cat-filter"
+                    class="form-select form-select-sm"
+                    data-airpay-skills-filter="categoryid"
+                    aria-label="Filter skills by category"
+                    style="min-width: 220px;">
+                <option value="0">All categories</option>
+                {{#cat_options}}
+                <option value="{{id}}">{{name}}</option>
+                {{/cat_options}}
+            </select>
+        </div>
+        {{/has_cat_options}}
+    </div>
+</div>
+
+<div data-airpay-table
+     data-endpoint="local_sentientia_skills_list_skills"
+     data-columns="{{{columns_json}}}"
+     data-search-placeholder="Search skill name or description…"
+     data-perpage="25">
+</div>
+
+</div>
+
+{{#js}}
+require([
+    'theme_sentientia/datatable',
+    'local_sentientia_skills/skill_actions'
+], function(Datatable, SkillActions) {
+    Datatable.init();
+    if (SkillActions && SkillActions.init) SkillActions.init();
+
+    var root = document.querySelector('[data-airpay-table]');
+    var dt = Datatable.getInstance(root);
+    if (!dt) return;
+
+    document.querySelectorAll('[data-airpay-skills-filter]').forEach(function(el) {
+        el.addEventListener('change', function(e) {
+            var key = e.target.dataset.airpaySkillsFilter;
+            dt.setFilter(key, parseInt(e.target.value, 10) || 0);
+        });
+    });
+});
+{{/js}}

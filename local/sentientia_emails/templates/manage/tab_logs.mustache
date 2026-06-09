@@ -1,0 +1,71 @@
+{{!
+    Logs tab — filterable delivery log with pagination.
+    Context: tabdata {logs [{id, date, user_name, user_email, channel, subject,
+             template_key, status, status_sent, status_failed, status_suppressed, error}],
+             total, page, perpage, haspages, pages [{page, label, active}]}
+}}
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+    <span style="font-size:14px; color:#5a6070;">{{tabdata.total}} delivery log entries</span>
+    <a href="{{manage_url}}?tab=logs&tenant={{tenant_id}}&action=export&sesskey={{sesskey}}"
+       class="ap-manage-btn ap-manage-btn--outline ap-manage-btn--sm">
+        <i class="fa fa-download"></i> Export CSV
+    </a>
+</div>
+
+<div class="ap-manage-card">
+    <table class="ap-manage-table">
+        <thead>
+            <tr>
+                <th style="width:12%;">Date</th>
+                <th style="width:18%;">Recipient</th>
+                <th style="width:8%;">Channel</th>
+                <th style="width:30%;">Subject</th>
+                <th style="width:12%;">Template</th>
+                <th style="width:8%;">Status</th>
+                <th style="width:12%;">Error</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#tabdata.logs}}
+            <tr>
+                <td style="font-size:12px;">{{date}}</td>
+                <td>
+                    <strong style="font-size:12px;">{{user_name}}</strong><br/>
+                    <span style="font-size:11px; color:#8890a0;">{{user_email}}</span>
+                </td>
+                <td><span style="font-size:12px;">{{channel}}</span></td>
+                <td style="font-size:12px;">{{subject}}</td>
+                <td>
+                    {{#template_key}}
+                    <code style="font-size:10px;">{{template_key}}</code>
+                    {{/template_key}}
+                </td>
+                <td>
+                    {{#status_sent}}<span class="ap-manage-badge ap-manage-badge--sent">sent</span>{{/status_sent}}
+                    {{#status_failed}}<span class="ap-manage-badge ap-manage-badge--failed">failed</span>{{/status_failed}}
+                    {{#status_suppressed}}<span class="ap-manage-badge ap-manage-badge--suppressed">suppressed</span>{{/status_suppressed}}
+                </td>
+                <td style="font-size:11px; color:#dc2626;">{{error}}</td>
+            </tr>
+            {{/tabdata.logs}}
+        </tbody>
+    </table>
+</div>
+
+{{^tabdata.logs}}
+<div class="ap-manage-empty">
+    <i class="fa fa-list-alt"></i>
+    No delivery logs yet. Logs appear after notifications are processed.
+</div>
+{{/tabdata.logs}}
+
+{{#tabdata.haspages}}
+<div style="display:flex; justify-content:center; gap:4px; margin-top:16px;">
+    {{#tabdata.pages}}
+    <a href="{{manage_url}}?tab=logs&tenant={{tenant_id}}&page={{page}}"
+       class="ap-manage-btn {{#active}}ap-manage-btn--primary{{/active}}{{^active}}ap-manage-btn--outline{{/active}} ap-manage-btn--sm">
+        {{label}}
+    </a>
+    {{/tabdata.pages}}
+</div>
+{{/tabdata.haspages}}

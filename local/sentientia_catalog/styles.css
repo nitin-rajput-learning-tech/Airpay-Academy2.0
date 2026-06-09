@@ -1,0 +1,1141 @@
+/* ═══════════════════════════════════════════════════════════
+   Airpay LXP Catalog — Netflix-Style Design (tokens migration)
+   Phase B0 Catalogue iter 1 (2026-05-14)
+
+   Zero hex literals — every colour/spacing/radius value references
+   --ap-* tokens from theme/sentientia/scss/moodle/_tokens.scss.
+   Tokens auto-flip in dark mode via body.dark-mode (see dark_mode.scss
+   in the theme); per-rule dark overrides removed — they were doing
+   manually what the token system handles automatically.
+   ═══════════════════════════════════════════════════════════ */
+
+.airpay-catalog {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 var(--ap-space-5);
+}
+
+/* ── Search ──────────────────────────────────────────────────────────── */
+.airpay-catalog__search-section { margin-bottom: var(--ap-space-8); }
+.airpay-catalog__search-form {
+    position: relative;
+    max-width: 600px;
+    margin: 0 auto;
+}
+.airpay-catalog__search-icon {
+    position: absolute;
+    left: var(--ap-space-4);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--ap-color-text-muted);
+    font-size: var(--ap-text-base);
+}
+.airpay-catalog__search-input {
+    width: 100%;
+    padding: var(--ap-space-3) var(--ap-space-4) var(--ap-space-3) 44px;
+    border: 2px solid var(--ap-color-border);
+    border-radius: var(--ap-radius-md);
+    font-size: var(--ap-text-base);
+    background: var(--ap-color-bg-surface);
+    color: var(--ap-color-text-primary);
+    transition: border-color var(--ap-transition-quick);
+    min-height: var(--ap-control-height-lg);
+}
+.airpay-catalog__search-input:focus {
+    outline: none;
+    border-color: var(--ap-color-primary);
+}
+.airpay-catalog__search-clear {
+    position: absolute;
+    right: var(--ap-space-3);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--ap-color-text-muted);
+    font-size: var(--ap-text-sm);
+}
+
+/* ── Sections ────────────────────────────────────────────────────────── */
+.airpay-catalog__section { margin-bottom: var(--ap-space-10); position: relative; }
+.airpay-catalog__section-title {
+    font-size: var(--ap-text-lg);
+    font-weight: var(--ap-weight-bold);
+    color: var(--ap-color-text-primary);
+    margin: 0 0 var(--ap-space-4);
+    display: flex;
+    align-items: center;
+    gap: var(--ap-space-2);
+}
+.airpay-catalog__section-title i { color: var(--ap-color-primary); }
+.airpay-catalog__section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--ap-space-4);
+}
+
+/* ── Sort tabs ───────────────────────────────────────────────────────── */
+.airpay-catalog__sort { display: flex; gap: 4px; }
+.airpay-catalog__sort a {
+    padding: var(--ap-space-2) var(--ap-space-4);
+    border-radius: var(--ap-radius-pill);
+    font-size: var(--ap-text-sm);
+    text-decoration: none;
+    color: var(--ap-color-text-secondary);
+    background: var(--ap-color-bg-surface-alt);
+    transition: background var(--ap-transition-quick),
+                color var(--ap-transition-quick);
+    min-height: 32px;
+    display: inline-flex;
+    align-items: center;
+}
+.airpay-catalog__sort a.active,
+.airpay-catalog__sort a:hover {
+    background: var(--ap-color-primary);
+    color: var(--ap-color-text-inverse);
+}
+
+/* ── Carousel (horizontal scroll) ────────────────────────────────────── */
+.airpay-catalog__carousel {
+    display: flex;
+    gap: var(--ap-space-4);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: var(--ap-space-2);
+    scrollbar-width: thin;
+}
+.airpay-catalog__carousel::-webkit-scrollbar { height: 4px; }
+.airpay-catalog__carousel::-webkit-scrollbar-thumb {
+    background: var(--ap-color-border-strong);
+    border-radius: var(--ap-radius-xs);
+}
+.airpay-catalog__carousel > * {
+    scroll-snap-align: start;
+    flex: 0 0 280px;
+    min-width: 280px;
+}
+
+/* ── Grid ────────────────────────────────────────────────────────────── */
+.airpay-catalog__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--ap-space-5);
+}
+
+/* ── Course Card ─────────────────────────────────────────────────────── */
+.airpay-catalog__card {
+    background: var(--ap-color-bg-surface);
+    border-radius: var(--ap-radius-md);
+    overflow: hidden;
+    border: 1px solid var(--ap-color-border);
+    transition: transform var(--ap-transition-quick),
+                box-shadow var(--ap-transition-quick);
+    position: relative;
+}
+.airpay-catalog__card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--ap-shadow-hover);
+}
+.airpay-catalog__card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+.airpay-catalog__card-thumb {
+    position: relative;
+    overflow: hidden;
+    height: 160px;
+    background: var(--ap-gradient-cta);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.airpay-catalog__card--progress .airpay-catalog__card-thumb {
+    height: 140px;
+}
+.airpay-catalog__card-code {
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: var(--ap-weight-bold);
+    font-size: var(--ap-text-base);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.airpay-catalog__card-type {
+    position: absolute;
+    top: var(--ap-space-2);
+    left: var(--ap-space-2);
+    padding: 2px var(--ap-space-2);
+    background: rgba(0, 0, 0, 0.55);
+    color: var(--ap-color-text-inverse);
+    font-size: var(--ap-text-xs);
+    border-radius: var(--ap-radius-xs);
+    text-transform: uppercase;
+    z-index: 2;
+}
+/* Netflix-style poster image. When a course has an uploaded overview image
+   the template emits this <img>; object-fit:cover crops it to the thumb
+   frame and hover gives a subtle zoom. Badges/type/difficulty sit above it
+   (z-index). When there is no image the template omits the <img> and the
+   --vN gradient variant below shows through with the course code centered. */
+.airpay-catalog__card-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    z-index: 0;
+    transition: transform var(--ap-transition-slow);
+}
+.airpay-catalog__card:hover .airpay-catalog__card-img {
+    transform: scale(1.06);
+}
+.airpay-catalog__card-thumb .airpay-catalog__badge,
+.airpay-catalog__card-thumb .airpay-catalog__card-ring,
+.airpay-catalog__card-thumb .airpay-catalog__card-difficulty { z-index: 2; }
+/* Per-course gradient fallback palette (course id % 6) — keeps an image-less
+   catalogue wall colourful and varied rather than a block of identical tiles. */
+.airpay-catalog__card-thumb--v0 { background: var(--ap-gradient-cta); }
+.airpay-catalog__card-thumb--v1 { background: linear-gradient(135deg, #0f7a73, #0aa3a3); }
+.airpay-catalog__card-thumb--v2 { background: linear-gradient(135deg, #6a3fb5, #b34db8); }
+.airpay-catalog__card-thumb--v3 { background: linear-gradient(135deg, #c2407e, #f0883e); }
+.airpay-catalog__card-thumb--v4 { background: linear-gradient(135deg, #1f6feb, #0f7a73); }
+.airpay-catalog__card-thumb--v5 { background: linear-gradient(135deg, #d97706, #e0b400); }
+.airpay-catalog__badge {
+    position: absolute;
+    top: var(--ap-space-2);
+    right: var(--ap-space-2);
+    padding: 2px var(--ap-space-2);
+    border-radius: var(--ap-radius-pill);
+    font-size: var(--ap-text-xs);
+    font-weight: var(--ap-weight-bold);
+}
+.airpay-catalog__badge--new {
+    background: var(--ap-color-warning-light);
+    color: var(--ap-color-warning);
+}
+.airpay-catalog__badge--done {
+    background: var(--ap-color-success);
+    color: var(--ap-color-text-inverse);
+}
+
+.airpay-catalog__card-body { padding: var(--ap-space-3) var(--ap-space-4) var(--ap-space-4); }
+.airpay-catalog__card-title {
+    font-size: var(--ap-text-sm);
+    font-weight: var(--ap-weight-semibold);
+    color: var(--ap-color-text-primary);
+    margin: 0 0 var(--ap-space-2);
+    line-height: var(--ap-leading-tight);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.airpay-catalog__card-summary {
+    font-size: var(--ap-text-xs);
+    color: var(--ap-color-text-secondary);
+    margin: 0 0 var(--ap-space-3);
+    line-height: var(--ap-leading-normal);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.airpay-catalog__card-meta {
+    display: flex;
+    gap: var(--ap-space-2);
+    margin-bottom: var(--ap-space-3);
+    flex-wrap: wrap;
+}
+.airpay-catalog__card-category {
+    font-size: var(--ap-text-xs);
+    color: var(--ap-color-primary);
+    background: var(--ap-color-primary-light);
+    padding: 2px var(--ap-space-2);
+    border-radius: var(--ap-radius-pill);
+    font-weight: var(--ap-weight-medium);
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+}
+.airpay-catalog__card-level {
+    font-size: var(--ap-text-xs);
+    color: var(--ap-color-accent);
+    background: var(--ap-color-accent-light);
+    padding: 2px var(--ap-space-2);
+    border-radius: var(--ap-radius-pill);
+    font-weight: var(--ap-weight-medium);
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+}
+.airpay-catalog__card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    overflow: hidden;
+}
+.airpay-catalog__card-enrolled {
+    font-size: var(--ap-text-xs);
+    color: var(--ap-color-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+.airpay-catalog__card-enrolled i { margin-right: 4px; }
+
+/* ── Progress bar (in-progress cards) ────────────────────────────────── */
+.airpay-catalog__progress {
+    height: 4px;
+    background: var(--ap-color-border);
+    border-radius: var(--ap-radius-xs);
+    margin: 4px 0;
+}
+.airpay-catalog__progress-bar {
+    height: 100%;
+    background: var(--ap-color-primary);
+    border-radius: var(--ap-radius-xs);
+    transition: width var(--ap-transition-slow);
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────── */
+.airpay-catalog__btn {
+    display: inline-block;
+    padding: var(--ap-space-2) var(--ap-space-4);
+    border-radius: var(--ap-radius-sm);
+    font-size: var(--ap-text-sm);
+    font-weight: var(--ap-weight-semibold);
+    cursor: pointer;
+    transition: background var(--ap-transition-quick),
+                color var(--ap-transition-quick);
+    text-decoration: none;
+    min-height: 32px;
+}
+.airpay-catalog__btn--enroll {
+    background: var(--ap-color-primary);
+    color: var(--ap-color-text-inverse);
+}
+.airpay-catalog__btn--enroll:hover {
+    background: var(--ap-color-primary-hover);
+    color: var(--ap-color-text-inverse);
+}
+.airpay-catalog__btn--continue {
+    background: var(--ap-color-accent);
+    color: var(--ap-color-text-inverse);
+}
+.airpay-catalog__btn--continue:hover {
+    background: var(--ap-color-accent-hover);
+    color: var(--ap-color-text-inverse);
+}
+/* Dark mode — the theme's broad `body.dark-mode a { color:#60a5fa }` link rule
+   (specificity 0,1,1) bleeds into these anchor-buttons and beats their own
+   `color` (0,1,0), painting the label light-blue on the brand fill (~2.4:1).
+   Re-assert white (the buttons are always a solid brand colour, both modes).
+   `body.dark-mode .airpay-catalog__btn--*` is (0,2,0) → wins. WCAG AA. */
+body.dark-mode .airpay-catalog__btn--enroll,
+body.dark-mode .airpay-catalog__btn--enroll:hover,
+body.dark-mode .airpay-catalog__btn--continue,
+body.dark-mode .airpay-catalog__btn--continue:hover {
+    color: #fff;
+}
+
+/* ── Categories Grid ─────────────────────────────────────────────────── */
+.airpay-catalog__categories {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--ap-space-3);
+}
+.airpay-catalog__category-card {
+    padding: var(--ap-space-4);
+    background: var(--ap-color-bg-surface-alt);
+    border-radius: var(--ap-radius-md);
+    border: 1px solid var(--ap-color-border);
+    text-decoration: none;
+    transition: background var(--ap-transition-quick),
+                border-color var(--ap-transition-quick);
+    display: flex;
+    flex-direction: column;
+}
+.airpay-catalog__category-card:hover {
+    border-color: var(--ap-color-primary);
+    background: var(--ap-color-primary-light);
+}
+.airpay-catalog__category-card strong {
+    color: var(--ap-color-text-primary);
+    font-size: var(--ap-text-sm);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+}
+.airpay-catalog__category-card span {
+    color: var(--ap-color-text-secondary);
+    font-size: var(--ap-text-xs);
+    margin-top: 2px;
+    white-space: nowrap;
+}
+
+/* ── Pagination ──────────────────────────────────────────────────────── */
+.airpay-catalog__pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--ap-space-4);
+    margin-top: var(--ap-space-6);
+    padding-top: var(--ap-space-4);
+    border-top: 1px solid var(--ap-color-border);
+}
+/* A11Y-7: was #9ca3af (~2.8:1) → secondary (~6.4:1). */
+.airpay-catalog__pagination span {
+    color: var(--ap-color-text-secondary);
+    font-size: var(--ap-text-sm);
+}
+
+/* Empty-state CSS removed in Phase B0 Catalogue iter 6.
+   The catalog now uses the canonical .airpay-empty-state from
+   _components-empty-state.scss via the empty_state Mustache partial. */
+
+/* ═══ Netflix Enhancements (Sprint 2) ═══════════════════════════════════ */
+
+/* Card hover overlay — REMOVED in Phase B0 Catalogue iter 5.
+   The overlay duplicated content (summary + CTA) that was already in the
+   card body, and was invisible on touch devices — mobile users got LESS
+   than desktop users. Summary now lives in the body persistently via
+   the existing .airpay-catalog__card-summary class above; the body CTA
+   was never going anywhere. The hover-lift effect on
+   .airpay-catalog__card stays. */
+
+/* Bookmark / save-for-later heart */
+.airpay-catalog__bookmark {
+    position: absolute;
+    top: var(--ap-space-2);
+    right: var(--ap-space-2);
+    width: 30px;
+    height: 30px;
+    border-radius: var(--ap-radius-full);
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 2;
+    transition: background var(--ap-transition-quick),
+                transform var(--ap-transition-quick);
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: var(--ap-text-sm);
+}
+.airpay-catalog__bookmark:hover {
+    background: rgba(0, 0, 0, 0.6);
+    transform: scale(1.1);
+}
+.airpay-catalog__bookmark--saved {
+    color: var(--ap-color-danger);
+    background: var(--ap-color-danger-light);
+}
+.airpay-catalog__bookmark--saved:hover {
+    background: var(--ap-color-danger-light);
+}
+
+/* Animated "NEW" badge */
+@keyframes ap-catalog-badge-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.4); }
+    50%      { box-shadow: 0 0 0 6px rgba(217, 119, 6, 0); }
+}
+.airpay-catalog__badge--new {
+    animation: ap-catalog-badge-pulse 2s ease-in-out infinite;
+}
+
+/* Difficulty badge colors */
+.airpay-catalog__card-difficulty {
+    position: absolute;
+    bottom: var(--ap-space-2);
+    left: var(--ap-space-2);
+    padding: 2px var(--ap-space-2);
+    border-radius: var(--ap-radius-pill);
+    font-size: var(--ap-text-xs);
+    font-weight: var(--ap-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.airpay-catalog__card-difficulty--beginner {
+    background: var(--ap-color-success-light);
+    color: var(--ap-color-success);
+}
+.airpay-catalog__card-difficulty--intermediate {
+    background: var(--ap-color-warning-light);
+    color: var(--ap-color-warning);
+}
+.airpay-catalog__card-difficulty--advanced {
+    background: var(--ap-color-danger-light);
+    color: var(--ap-color-danger);
+}
+
+/* Carousel scroll navigation arrows */
+.airpay-catalog__carousel-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    border-radius: var(--ap-radius-full);
+    background: var(--ap-color-bg-surface);
+    box-shadow: var(--ap-shadow-md);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    opacity: 0;
+    transition: opacity var(--ap-transition-quick),
+                background var(--ap-transition-quick);
+    font-size: var(--ap-text-base);
+    color: var(--ap-color-text-primary);
+}
+.airpay-catalog__section:hover .airpay-catalog__carousel-nav { opacity: 1; }
+.airpay-catalog__carousel-nav:hover {
+    background: var(--ap-color-bg-surface);
+    box-shadow: var(--ap-shadow-hover);
+}
+.airpay-catalog__carousel-nav--left { left: -4px; }
+.airpay-catalog__carousel-nav--right { right: -4px; }
+
+/* Enrollment count + social proof */
+.airpay-catalog__card-proof {
+    display: flex;
+    align-items: center;
+    gap: var(--ap-space-2);
+    font-size: var(--ap-text-xs);
+    color: var(--ap-color-text-muted);
+    margin-top: 4px;
+}
+.airpay-catalog__card-proof i { color: var(--ap-color-warning); }
+
+/* Progress ring on continue-learning cards */
+.airpay-catalog__card-ring {
+    position: absolute;
+    bottom: var(--ap-space-2);
+    right: var(--ap-space-2);
+}
+.airpay-catalog__card-ring svg {
+    transform: rotate(-90deg);
+    width: 32px;
+    height: 32px;
+}
+.airpay-catalog__card-ring-track {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.3);
+    stroke-width: 3;
+}
+.airpay-catalog__card-ring-fill {
+    fill: none;
+    stroke: var(--ap-color-success);
+    stroke-width: 3;
+    stroke-linecap: round;
+    transition: stroke-dashoffset var(--ap-transition-slow);
+}
+.airpay-catalog__card-ring-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 8px;
+    font-weight: var(--ap-weight-bold);
+    color: var(--ap-color-text-inverse);
+}
+
+/* ═══ Autocomplete Suggestions ═══════════════════════════════════════════ */
+.airpay-catalog__search-suggest {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--ap-color-bg-surface);
+    border: 1px solid var(--ap-color-border);
+    border-top: none;
+    border-radius: 0 0 var(--ap-radius-md) var(--ap-radius-md);
+    box-shadow: var(--ap-shadow-md);
+    z-index: var(--ap-z-dropdown);
+    max-height: 280px;
+    overflow-y: auto;
+}
+.airpay-catalog__suggest-item {
+    display: flex;
+    align-items: center;
+    gap: var(--ap-space-2);
+    padding: var(--ap-space-2) var(--ap-space-4);
+    color: var(--ap-color-text-primary);
+    text-decoration: none;
+    font-size: var(--ap-text-sm);
+    transition: background var(--ap-transition-quick);
+}
+.airpay-catalog__suggest-item:hover {
+    background: var(--ap-color-bg-surface-alt);
+    color: var(--ap-color-primary);
+}
+.airpay-catalog__suggest-item i {
+    color: var(--ap-color-text-muted);
+    font-size: var(--ap-text-xs);
+}
+
+/* ═══ Filter Disclosure + Mobile Bottom Sheet ═══════════════════════════
+   Phase B0 Catalogue iter 4 (2026-05-14).
+
+   Native <details>/<summary> pattern: on desktop the disclosure stays
+   always-open (summary hidden); on mobile <590px the summary becomes
+   a tap target that toggles the filters as a bottom sheet.
+
+   Native <details> is keyboard-accessible (Enter/Space to toggle) and
+   screen readers announce expand/collapse — no JS needed, no
+   aria-expanded juggling. */
+.airpay-catalog__filter-details {
+    /* Desktop default — behave as a flex container, summary hidden. */
+    display: contents;
+}
+.airpay-catalog__filter-summary {
+    /* Desktop default — hide the summary, the disclosure is open and
+       the contained filters appear inline next to the section header. */
+    display: none;
+}
+.airpay-catalog__filter-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 var(--ap-space-1);
+    border-radius: var(--ap-radius-pill);
+    background: var(--ap-color-primary);
+    color: var(--ap-color-text-inverse);
+    font-size: var(--ap-text-xs);
+    font-weight: var(--ap-weight-bold);
+    margin-left: var(--ap-space-2);
+}
+
+/* ═══ Filter Chips ═══════════════════════════════════════════════════════ */
+.airpay-catalog__filters {
+    display: flex;
+    align-items: center;
+    gap: var(--ap-space-2);
+    flex-wrap: wrap;
+}
+.airpay-catalog__filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ap-space-1);
+    padding: 5px var(--ap-space-3);
+    border-radius: var(--ap-radius-pill);
+    font-size: var(--ap-text-sm);
+    font-weight: var(--ap-weight-medium);
+    text-decoration: none;
+    background: var(--ap-color-primary-light);
+    color: var(--ap-color-primary);
+    transition: background var(--ap-transition-quick),
+                color var(--ap-transition-quick);
+}
+.airpay-catalog__filter-chip:hover {
+    background: var(--ap-color-primary);
+    color: var(--ap-color-text-inverse);
+}
+.airpay-catalog__filter-chip .fa-times {
+    font-size: var(--ap-text-xs);
+    opacity: 0.7;
+}
+
+/* ═══ Category Icon ══════════════════════════════════════════════════════ */
+.airpay-catalog__category-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--ap-radius-md);
+    background: var(--ap-gradient-cta);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ap-color-text-inverse);
+    font-size: var(--ap-text-sm);
+    margin-bottom: var(--ap-space-2);
+}
+
+/* ═══ Cards — always visible (Goal A audit, 2026-05-22) ════════════════════
+ * The previous version defaulted cards to opacity:0 and relied on an
+ * IntersectionObserver to add `--visible`. Two failure modes were
+ * shipped in production:
+ *   1. If a JS error broke the <script> block at the bottom of
+ *      catalog.mustache, no card ever got `--visible` → permanent
+ *      invisible grid.
+ *   2. Even with the script running, the observer only fires when a
+ *      card *enters* the viewport. Cards already at the top of the
+ *      grid that the user never scrolled past stayed invisible too.
+ *
+ * 12 cards per page = negligible render cost. The fade-in animation
+ * has been removed entirely. If we want it back later, ship it as a
+ * scroll-triggered enhancement that does NOT gate visibility.
+ */
+.airpay-catalog__grid .airpay-catalog__card {
+    opacity: 1;
+    transform: none;
+}
+
+/* ═══ Load More Button Enhanced ══════════════════════════════════════════ */
+.airpay-catalog__btn--load-more {
+    background: var(--ap-color-bg-surface-alt);
+    color: var(--ap-color-text-secondary);
+    padding: var(--ap-space-3) var(--ap-space-6);
+    border-radius: var(--ap-radius-md);
+    font-weight: var(--ap-weight-semibold);
+}
+.airpay-catalog__btn--load-more:hover {
+    background: var(--ap-color-primary);
+    color: var(--ap-color-text-inverse);
+}
+.airpay-catalog__btn--load-more i { margin-left: var(--ap-space-2); }
+
+/* Enhanced empty-state block also removed in iter 6 — both versions
+   replaced by the canonical .airpay-empty-state. */
+
+/* ═══ Progress text in carousel cards ═══════════════════════════════════
+   A11Y-7: was #9ca3af (~2.8:1 on white) — failed AA. Now uses the
+   tokens-aware text-secondary (~6.4:1 — AA pass). */
+.airpay-catalog__card-progresstext {
+    font-size: var(--ap-text-xs);
+    color: var(--ap-color-text-secondary);
+}
+
+/* ═══ Dark mode — gradient overrides only ════════════════════════════════
+   Token-based rules auto-flip via body.dark-mode in dark_mode.scss.
+   Only rules that use gradient/literal-rgb mixes need an explicit
+   override here. Everything else inherits dark colours automatically. */
+body.dark-mode .airpay-catalog__category-icon {
+    /* Use slightly muted brand colours in dark mode so the gradient
+       doesn't burn out against the dark surface. */
+    background: linear-gradient(135deg, var(--ap-blue-800), var(--ap-teal-800));
+}
+
+/* ── Dark-mode chip contrast (WCAG AA — ADR-018 Wave 1) ───────────────────
+   The category/level chips pair brand-colour TEXT with a *-light tint
+   BACKGROUND. In dark mode those semantic tints flip to deep navy/teal
+   (--ap-color-primary-light → #172554, --ap-color-accent-light → #134e4a)
+   but the brand-colour text stays dark (#0066A7 / #0f7a73), landing the
+   chips at ~2.4:1 — fails AA. Repaint the TEXT with a light tint of the
+   same hue from the fixed raw scale (raw --ap-blue/teal-* do NOT flip), so
+   the pairing clears AA. Measured on the dark navy/teal tints:
+   blue-300 → 5.6:1, light mint → 6.4:1. (teal-300 #48b8af only reaches
+   3.95:1, so the level chip uses a brighter mint.) Light mode is untouched. */
+body.dark-mode .airpay-catalog__card-category,
+body.dark-mode .ap-mycourses__card-category {
+    color: var(--ap-blue-300);
+}
+body.dark-mode .airpay-catalog__card-level {
+    color: #5eead4;
+}
+
+/* ═══ Mobile breakpoints (manifesto §3) ══════════════════════════════════ */
+@media (max-width: 768px) {
+    .airpay-catalog__grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--ap-space-3);
+    }
+    .airpay-catalog__carousel > * {
+        flex: 0 0 240px;
+        min-width: 240px;
+    }
+    .airpay-catalog__categories {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .airpay-catalog__carousel-nav { display: none; }
+}
+@media (max-width: 590px) {
+    .airpay-catalog { padding: 0 var(--ap-space-3); }
+    .airpay-catalog__grid { grid-template-columns: 1fr; }
+    .airpay-catalog__carousel > * {
+        flex: 0 0 85vw;
+        min-width: 85vw;
+    }
+    .airpay-catalog__categories { grid-template-columns: 1fr; }
+    .airpay-catalog__section-header {
+        flex-direction: column;
+        gap: var(--ap-space-2);
+        align-items: flex-start;
+    }
+    .airpay-catalog__card-thumb { height: 100px; }
+
+    /* ── Filter bottom sheet on mobile ────────────────────────────────
+       Native <details> takes over here. Summary becomes a tap target
+       that opens the filters as a slide-up sheet from the bottom. */
+    .airpay-catalog__filter-details {
+        display: block;
+        /* When OPEN, the sheet covers the bottom of the viewport. */
+    }
+    .airpay-catalog__filter-summary {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--ap-space-2);
+        padding: var(--ap-space-2) var(--ap-space-4);
+        background: var(--ap-color-bg-surface);
+        border: 1px solid var(--ap-color-border);
+        border-radius: var(--ap-radius-pill);
+        font-size: var(--ap-text-sm);
+        font-weight: var(--ap-weight-semibold);
+        color: var(--ap-color-text-primary);
+        cursor: pointer;
+        list-style: none;
+        min-height: var(--ap-tap-target-min);
+        user-select: none;
+    }
+    /* Hide the default disclosure triangle in Webkit + modern browsers. */
+    .airpay-catalog__filter-summary::-webkit-details-marker { display: none; }
+    .airpay-catalog__filter-summary::marker { display: none; }
+    .airpay-catalog__filter-summary:focus-visible {
+        background: var(--ap-color-primary-light);
+        border-color: var(--ap-color-primary);
+    }
+    /* When the disclosure is open: filters slide up as a bottom sheet. */
+    .airpay-catalog__filter-details[open] .airpay-catalog__filters {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: var(--ap-z-offcanvas);
+        background: var(--ap-color-bg-surface);
+        border-top: 1px solid var(--ap-color-border);
+        border-radius: var(--ap-radius-lg) var(--ap-radius-lg) 0 0;
+        box-shadow: var(--ap-shadow-lg);
+        padding: var(--ap-space-5) var(--ap-space-4) var(--ap-space-6);
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--ap-space-3);
+        max-height: 75vh;
+        overflow-y: auto;
+        animation: airpay-catalog-sheet-slide var(--ap-duration-default) var(--ap-ease-out);
+    }
+    /* Subtle drag-handle visual hint at the top of the open sheet. */
+    .airpay-catalog__filter-details[open] .airpay-catalog__filters::before {
+        content: '';
+        display: block;
+        width: 36px;
+        height: 4px;
+        background: var(--ap-color-border-strong);
+        border-radius: var(--ap-radius-pill);
+        margin: 0 auto var(--ap-space-3);
+    }
+    .airpay-catalog__filter-details[open]::backdrop {
+        background: rgba(0, 0, 0, 0.4);
+    }
+}
+
+@keyframes airpay-catalog-sheet-slide {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   My Learning (/local/sentientia_catalog/mycourses.php)
+   Phase B0 Catalogue iter 2 (2026-05-14)
+
+   Extracted from a 110-line inline <style> block in mycourses.mustache.
+   Tokens-migrated — 30 hex literals → 0. Same .ap-mycourses__ class
+   names as the legacy template (no rename in this iter; that's iter 3
+   scope for BEM consistency).
+   ═══════════════════════════════════════════════════════════ */
+
+.ap-mycourses {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* ── Filter stats strip ──────────────────────────────────────────────── */
+.ap-mycourses__stats {
+    display: flex;
+    gap: var(--ap-space-3);
+    margin-bottom: var(--ap-space-6);
+    flex-wrap: wrap;
+}
+.ap-mycourses__stat {
+    flex: 1;
+    min-width: 120px;
+    text-align: center;
+    padding: var(--ap-space-4) var(--ap-space-3);
+    background: var(--ap-color-bg-surface);
+    border: 2px solid var(--ap-color-border);
+    border-radius: var(--ap-radius-md);
+    text-decoration: none;
+    transition: border-color var(--ap-transition-quick),
+                background var(--ap-transition-quick),
+                transform var(--ap-transition-quick);
+    cursor: pointer;
+    min-height: var(--ap-tap-target-min);
+}
+.ap-mycourses__stat:hover {
+    border-color: var(--ap-color-primary);
+    transform: translateY(-2px);
+}
+.ap-mycourses__stat:focus-visible {
+    border-color: var(--ap-color-primary);
+}
+.ap-mycourses__stat--active {
+    border-color: var(--ap-color-primary);
+    background: var(--ap-color-primary-light);
+}
+.ap-mycourses__stat-num {
+    display: block;
+    font-size: var(--ap-text-2xl);
+    font-weight: var(--ap-weight-extrabold);
+    color: var(--ap-color-text-primary);
+}
+/* Variant tints — In Progress / Completed / Not Started.
+   Replaces inline style="color:#..." in mycourses.mustache. */
+.ap-mycourses__stat-num--accent  { color: var(--ap-color-accent); }
+.ap-mycourses__stat-num--success { color: var(--ap-color-success); }
+.ap-mycourses__stat-num--muted   { color: var(--ap-color-text-muted); }
+.ap-mycourses__stat-label {
+    display: block;
+    font-size: var(--ap-text-xs);
+    color: var(--ap-color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: var(--ap-weight-medium);
+    margin-top: 2px;
+}
+
+/* ── Grid ────────────────────────────────────────────────────────────── */
+.ap-mycourses__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--ap-space-5);
+}
+
+/* ── Card ────────────────────────────────────────────────────────────── */
+.ap-mycourses__card {
+    background: var(--ap-color-bg-surface);
+    border: 1px solid var(--ap-color-border);
+    border-radius: var(--ap-radius-md);
+    overflow: hidden;
+    transition: transform var(--ap-transition-quick),
+                box-shadow var(--ap-transition-quick);
+    display: flex;
+    flex-direction: column;
+}
+.ap-mycourses__card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--ap-shadow-hover);
+}
+
+/* ── Image ───────────────────────────────────────────────────────────── */
+.ap-mycourses__card-image-link {
+    display: block;
+    position: relative;
+    text-decoration: none;
+}
+.ap-mycourses__card-image {
+    height: 140px;
+    background-size: cover;
+    background-position: center;
+    background-color: var(--ap-color-primary-light);
+}
+.ap-mycourses__card-image--fallback {
+    background: var(--ap-gradient-cta);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: var(--ap-text-lg);
+    font-weight: var(--ap-weight-bold);
+    letter-spacing: 0.05em;
+}
+.ap-mycourses__card-badge {
+    position: absolute;
+    top: var(--ap-space-2);
+    right: var(--ap-space-2);
+    padding: 3px var(--ap-space-2);
+    border-radius: var(--ap-radius-pill);
+    font-size: var(--ap-text-xs);
+    font-weight: var(--ap-weight-bold);
+}
+.ap-mycourses__card-badge--done {
+    background: var(--ap-color-success);
+    color: var(--ap-color-text-inverse);
+}
+
+/* ── Progress ring (continue-learning cards) ─────────────────────────── */
+.ap-mycourses__card-progress-ring {
+    position: absolute;
+    bottom: var(--ap-space-2);
+    right: var(--ap-space-2);
+}
+.ap-mycourses__card-progress-ring svg { display: block; }
+/* Inner SVG circles — stroke comes from CSS instead of attribute, so
+   colour-token swaps + dark mode propagate without inline SVG attrs. */
+.ap-mycourses__card-progress-ring-track {
+    stroke: rgba(255, 255, 255, 0.3);
+}
+.ap-mycourses__card-progress-ring-fill {
+    stroke: var(--ap-color-success);
+    transform: rotate(-90deg);
+    transform-origin: center;
+    transition: stroke-dashoffset var(--ap-transition-slow);
+}
+.ap-mycourses__card-progress-ring span {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 9px;
+    font-weight: var(--ap-weight-bold);
+    color: var(--ap-color-text-inverse);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Body ────────────────────────────────────────────────────────────── */
+.ap-mycourses__card-body {
+    padding: var(--ap-space-3) var(--ap-space-4);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+.ap-mycourses__card-category {
+    font-size: var(--ap-text-xs);
+    color: var(--ap-color-primary);
+    font-weight: var(--ap-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
+}
+.ap-mycourses__card-title {
+    margin: 0 0 var(--ap-space-2);
+    font-size: var(--ap-text-base);
+    font-weight: var(--ap-weight-bold);
+    line-height: var(--ap-leading-tight);
+}
+.ap-mycourses__card-title a {
+    color: var(--ap-color-text-primary);
+    text-decoration: none;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.ap-mycourses__card-title a:hover {
+    color: var(--ap-color-primary);
+}
+
+/* ── Progress bar (in-progress cards) ────────────────────────────────── */
+.ap-mycourses__card-progressbar {
+    height: 6px;
+    background: var(--ap-color-border);
+    border-radius: var(--ap-radius-xs);
+    margin-bottom: 4px;
+    overflow: hidden;
+}
+.ap-mycourses__card-progressbar-fill {
+    height: 100%;
+    background: var(--ap-gradient-cta);
+    border-radius: var(--ap-radius-xs);
+    transition: width var(--ap-transition-slow);
+}
+.ap-mycourses__card-progresstext {
+    font-size: var(--ap-text-xs);
+    color: var(--ap-color-text-secondary);
+    margin-bottom: var(--ap-space-2);
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────── */
+.ap-mycourses__card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+}
+.ap-mycourses__card-access {
+    font-size: var(--ap-text-xs);
+    color: var(--ap-color-text-muted);
+}
+.ap-mycourses__card-access i { margin-right: 3px; }
+.ap-mycourses__card-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: var(--ap-space-2) var(--ap-space-3);
+    border-radius: var(--ap-radius-sm);
+    font-size: var(--ap-text-sm);
+    font-weight: var(--ap-weight-semibold);
+    background: var(--ap-gradient-cta);
+    color: var(--ap-color-text-inverse);
+    text-decoration: none;
+    transition: opacity var(--ap-transition-quick);
+    min-height: 32px;
+}
+.ap-mycourses__card-cta:hover {
+    opacity: 0.9;
+    color: var(--ap-color-text-inverse);
+}
+
+/* ── Pagination (mycourses) ──────────────────────────────────────────── */
+.ap-mycourses__pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--ap-space-3);
+    margin-top: var(--ap-space-6);
+    padding-top: var(--ap-space-4);
+    border-top: 1px solid var(--ap-color-border);
+    flex-wrap: wrap;
+}
+.ap-mycourses__pagination-summary {
+    font-size: var(--ap-text-sm);
+    color: var(--ap-color-text-muted);
+}
+.ap-mycourses__pagination-pages {
+    display: flex;
+    gap: 4px;
+}
+.ap-mycourses__pagination-page {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    min-height: 32px;
+    border-radius: var(--ap-radius-sm);
+    font-size: var(--ap-text-sm);
+    font-weight: var(--ap-weight-semibold);
+    text-decoration: none;
+    background: var(--ap-color-bg-surface);
+    color: var(--ap-color-text-secondary);
+    border: 1px solid var(--ap-color-border);
+    transition: background var(--ap-transition-quick),
+                color var(--ap-transition-quick),
+                border-color var(--ap-transition-quick);
+}
+.ap-mycourses__pagination-page:hover {
+    background: var(--ap-color-primary-light);
+    color: var(--ap-color-primary);
+    border-color: var(--ap-color-primary);
+    text-decoration: none;
+}
+.ap-mycourses__pagination-page--active {
+    background: var(--ap-color-primary);
+    color: var(--ap-color-text-inverse);
+    border-color: var(--ap-color-primary);
+}
+.ap-mycourses__pagination-page--active:hover {
+    background: var(--ap-color-primary-hover);
+    color: var(--ap-color-text-inverse);
+    border-color: var(--ap-color-primary-hover);
+}
+
+/* ── Mobile ──────────────────────────────────────────────────────────── */
+@media (max-width: 590px) {
+    .ap-mycourses__grid { grid-template-columns: 1fr; }
+    .ap-mycourses__stats { flex-direction: row; }
+    .ap-mycourses__stat {
+        min-width: 0;
+        padding: var(--ap-space-3) var(--ap-space-2);
+    }
+    .ap-mycourses__stat-num { font-size: var(--ap-text-xl); }
+}

@@ -1,0 +1,53 @@
+{{!
+    Catalogue search bar — Phase B0 Catalogue iter 3 (2026-05-14)
+
+    Extracted from catalog.mustache for reuse across:
+      - /local/sentientia_catalog/index.php
+      - /local/sentientia_catalog/mycourses.php (when search comes to it)
+      - any future search-enabled surface
+
+    Context:
+        searchurl       (required) — form action URL
+        baseurl         (required) — URL without query — used for autocomplete + clear
+        search_query    (optional) — current value
+        has_search      (optional) — bool, controls visibility of Clear
+        placeholder_str (optional) — string key in local_sentientia_catalog,
+                                     defaults to "search"
+        suggest_id      (optional) — autocomplete element id, defaults to
+                                     "ap-catalog-suggest"
+
+    A11y:
+      role="search" landmark + aria-label
+      Hidden <label> for the input (was placeholder-only)
+      aria-autocomplete + aria-controls on the input
+      role="listbox" + aria-label on the suggestions panel
+}}
+<div class="airpay-catalog__search-section">
+    <form action="{{searchurl}}" method="get"
+          class="airpay-catalog__search-form"
+          role="search"
+          aria-label="Course catalogue search">
+        <i class="fa fa-search airpay-catalog__search-icon" aria-hidden="true"></i>
+        {{! Audit fix C1 (2026-05-15) — wrap the conditional OUTSIDE the }}
+        {{! str helper. When placeholder_str is empty, the previous shape  }}
+        {{! collapsed to a leading comma plus component name, which the    }}
+        {{! string helper read as an empty identifier and threw.           }}
+        <label for="ap-catalog-search" class="sr-only">{{#placeholder_str}}{{# str }}{{placeholder_str}}, local_sentientia_catalog{{/ str }}{{/placeholder_str}}{{^placeholder_str}}{{# str }}search, local_sentientia_catalog{{/ str }}{{/placeholder_str}}</label>
+        <input type="text" name="q" value="{{search_query}}"
+               placeholder="{{#placeholder_str}}{{# str }}{{placeholder_str}}, local_sentientia_catalog{{/ str }}{{/placeholder_str}}{{^placeholder_str}}{{# str }}search, local_sentientia_catalog{{/ str }}{{/placeholder_str}}"
+               class="airpay-catalog__search-input" autocomplete="off"
+               id="ap-catalog-search" data-baseurl="{{baseurl}}"
+               aria-autocomplete="list"
+               aria-controls="{{#suggest_id}}{{suggest_id}}{{/suggest_id}}{{^suggest_id}}ap-catalog-suggest{{/suggest_id}}">
+        {{#has_search}}
+        <a href="{{baseurl}}" class="airpay-catalog__search-clear" aria-label="Clear search">
+            <i class="fa fa-times" aria-hidden="true"></i>
+        </a>
+        {{/has_search}}
+    </form>
+    <div class="airpay-catalog__search-suggest"
+         id="{{#suggest_id}}{{suggest_id}}{{/suggest_id}}{{^suggest_id}}ap-catalog-suggest{{/suggest_id}}"
+         role="listbox"
+         aria-label="Search suggestions"
+         style="display:none;"></div>
+</div>

@@ -1,0 +1,71 @@
+{{!
+   Mass-enrol summary table.
+   Context vars:
+     has_summary       bool
+     total             int
+     succeeded[]       { email, course, role }
+     skipped[]         { email, course, reason }
+     failed[]          { email, course, error }
+}}
+{{# has_summary }}
+<div class="ap-card mt-3" data-region="ap-enrol-csv-summary">
+  <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+    <h2 class="h5 m-0">Result</h2>
+    <div class="d-flex gap-2 small">
+      <span class="badge bg-success">{{ succeeded_count }} enrolled</span>
+      <span class="badge"
+            style="background-color:#5a6070;color:#fff;">{{ skipped_count }} skipped</span>
+      <span class="badge bg-danger">{{ failed_count }} failed</span>
+      <span class="text-muted">of {{ total }}</span>
+    </div>
+  </div>
+
+  {{# has_succeeded }}
+  <h3 class="h6 text-success">Enrolled</h3>
+  <table class="table table-sm align-middle mb-3">
+    <thead><tr><th>Email</th><th>Course</th><th>Role</th></tr></thead>
+    <tbody>
+      {{# succeeded }}
+      <tr>
+        <td>{{ email }}</td>
+        <td><code>{{ course }}</code></td>
+        <td><span class="badge bg-primary">{{ role }}</span></td>
+      </tr>
+      {{/ succeeded }}
+    </tbody>
+  </table>
+  {{/ has_succeeded }}
+
+  {{# has_skipped }}
+  <h3 class="h6 mt-3" style="color:#5a6070;">Skipped</h3>
+  <table class="table table-sm align-middle mb-3">
+    <thead><tr><th>Email</th><th>Course</th><th>Reason</th></tr></thead>
+    <tbody>
+      {{# skipped }}
+      <tr>
+        <td>{{ email }}</td>
+        <td><code>{{ course }}</code></td>
+        <td class="small">{{ reason }}</td>
+      </tr>
+      {{/ skipped }}
+    </tbody>
+  </table>
+  {{/ has_skipped }}
+
+  {{# has_failed }}
+  <h3 class="h6 text-danger mt-3">Failed</h3>
+  <table class="table table-sm align-middle mb-0">
+    <thead><tr><th>Email</th><th>Course</th><th>Error</th></tr></thead>
+    <tbody>
+      {{# failed }}
+      <tr>
+        <td>{{ email }}</td>
+        <td><code>{{ course }}</code></td>
+        <td class="small text-danger">{{ error }}</td>
+      </tr>
+      {{/ failed }}
+    </tbody>
+  </table>
+  {{/ has_failed }}
+</div>
+{{/ has_summary }}

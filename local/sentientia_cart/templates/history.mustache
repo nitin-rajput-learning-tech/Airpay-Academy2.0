@@ -1,0 +1,40 @@
+{{!
+    @template local_sentientia_cart/history
+
+    Order history — datatable.
+}}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">{{#str}}orderhistory, local_sentientia_cart{{/str}}</h2>
+        <a href="{{{ back_url }}}" class="btn btn-link"><i class="fa fa-arrow-left"></i> Back to cart</a>
+    </div>
+
+    {{!
+        Bug fix 2026-05-22 (Goal A audit Bug #12):
+        - data-region was "datatable"; theme_sentientia/datatable's init()
+          looks for [data-airpay-table], [data-region="airpay-datatable"].
+          Renamed so the selector matches and the table renders.
+        - Datatable.init() takes no args — removed the bogus argument;
+          init() walks the DOM itself.
+        Same shape of fix that landed on local_sentientia_request templates
+        in Bug #6 (commit 89fb2e713). The cart templates were missed
+        because Bug #6's audit walk didn't reach the cart page.
+    }}
+    <div data-region="airpay-datatable"
+         data-component="local_sentientia_cart"
+         data-ws-name="local_sentientia_cart_list_orders"
+         data-columns="{{ columns_json }}"
+         data-default-sort="timecreated"
+         data-default-sortdir="desc"
+         data-extra-args='{}'>
+        <div class="text-center text-muted py-5">Loading...</div>
+    </div>
+</div>
+
+{{#js}}
+require(['theme_sentientia/datatable', 'local_sentientia_cart/history'],
+    function(Datatable, History) {
+        Datatable.init();
+        History.init();
+    });
+{{/js}}

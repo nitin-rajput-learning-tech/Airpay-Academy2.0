@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/sentientia_core/db" VERSION="20260602"
+       COMMENT="Sentientia core — ADR-021 Wave-4 tenant registry + ADR-020 Wave-3.2 org model">
+  <TABLES>
+    <TABLE NAME="local_sentientia_customer"
+           COMMENT="Top-level Sentientia customer. Airpay = customer-zero (id 1). One customer owns >=1 tenant root.">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"
+               COMMENT="Primary key"/>
+        <FIELD NAME="name"         TYPE="char" LENGTH="255" NOTNULL="true"
+               COMMENT="Display name, e.g. 'Airpay Payment Services'"/>
+        <FIELD NAME="shortname"    TYPE="char" LENGTH="100" NOTNULL="true"
+               COMMENT="Machine-friendly unique handle, e.g. 'airpay'"/>
+        <FIELD NAME="status"       TYPE="char" LENGTH="20"  NOTNULL="true" DEFAULT="active"
+               COMMENT="active|suspended|archived"/>
+        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="uq_shortname" UNIQUE="true"  FIELDS="shortname"
+               COMMENT="One row per customer handle"/>
+        <INDEX NAME="idx_status"   UNIQUE="false" FIELDS="status"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_sentientia_tenant"
+           COMMENT="Tenant registry — replaces the hardcoded VALID_TENANTS=[1,77,177]. rootid is today's BizLMS cost-center root.">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"
+               COMMENT="Primary key"/>
+        <FIELD NAME="rootid"       TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Tenant root id (today: BizLMS cost-center root, e.g. 1/77/177)"/>
+        <FIELD NAME="customerid"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="FK to local_sentientia_customer.id — the owning customer"/>
+        <FIELD NAME="name"         TYPE="char" LENGTH="255" NOTNULL="true"
+               COMMENT="Display name, e.g. 'Airpay', 'Public', 'ZEEA'"/>
+        <FIELD NAME="idnumber"     TYPE="char" LENGTH="255" NOTNULL="false"
+               COMMENT="Optional external key (e.g. HRMS) — join key for sync round-trip"/>
+        <FIELD NAME="status"       TYPE="char" LENGTH="20"  NOTNULL="true" DEFAULT="active"
+               COMMENT="active|suspended|archived — only active roots are in the allow-list"/>
+        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"     TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_customer" TYPE="foreign" FIELDS="customerid"
+             REFTABLE="local_sentientia_customer" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="uq_rootid"     UNIQUE="true"  FIELDS="rootid"
+               COMMENT="One registry row per tenant root"/>
+        <INDEX NAME="idx_customerid" UNIQUE="false" FIELDS="customerid"
+               COMMENT="roots_for_customer() lookup"/>
+        <INDEX NAME="idx_status"    UNIQUE="false" FIELDS="status"
+               COMMENT="active-only allow-list scan"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_sentientia_org_unit"
+           COMMENT="Sentientia org-hierarchy node (ADR-020 Wave 3.2). Replaces direct BizLMS cost-center reads. Dormant until 3.2b dual-write / 3.3 backfill seed it.">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"
+               COMMENT="Primary key"/>
+        <FIELD NAME="parentid"     TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Parent unit id; 0 = tenant root"/>
+        <FIELD NAME="tenantrootid" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Tenant scope — the local_sentientia_tenant.rootid this unit belongs to"/>
+        <FIELD NAME="name"         TYPE="char" LENGTH="255" NOTNULL="true"
+               COMMENT="Unit display name, e.g. 'Engineering', 'Risk &amp; Compliance'"/>
+        <FIELD NAME="idnumber"     TYPE="char" LENGTH="255" NOTNULL="false"
+               COMMENT="Optional external key (HRMS dept code) — sync round-trip join key"/>
+        <FIELD NAME="path"         TYPE="char" LENGTH="255" NOTNULL="false"
+               COMMENT="Materialised ancestor path, e.g. '/1/5/12' — fast subtree queries"/>
+        <FIELD NAME="status"       TYPE="char" LENGTH="20"  NOTNULL="true" DEFAULT="active"
+               COMMENT="active|archived"/>
+        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_parentid"     UNIQUE="false" FIELDS="parentid"
+               COMMENT="children() lookup + tree walk"/>
+        <INDEX NAME="idx_tenantrootid" UNIQUE="false" FIELDS="tenantrootid"
+               COMMENT="tenant-scoped unit scan"/>
+        <INDEX NAME="idx_idnumber"     UNIQUE="false" FIELDS="idnumber"
+               COMMENT="HRMS sync join"/>
+        <INDEX NAME="idx_status"       UNIQUE="false" FIELDS="status"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_sentientia_org_member"
+           COMMENT="User-to-org-unit membership with role (ADR-020 Wave 3.2). One row per (userid, unitid).">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"
+               COMMENT="Primary key"/>
+        <FIELD NAME="userid"       TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="FK to mdl_user.id"/>
+        <FIELD NAME="unitid"       TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="FK to local_sentientia_org_unit.id"/>
+        <FIELD NAME="role"         TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="member"
+               COMMENT="member|manager — reserved for a future 'unit lead' concept; NOT the reporting line"/>
+        <FIELD NAME="managerid"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Direct line-manager user id (mirrors BizLMS open_supervisorid); 0 = none. The reporting-line edge — ADR-020 2026-06-01 decision."/>
+        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_unit" TYPE="foreign" FIELDS="unitid"
+             REFTABLE="local_sentientia_org_unit" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="uq_user_unit" UNIQUE="true"  FIELDS="userid, unitid"
+               COMMENT="One membership row per user per unit"/>
+        <INDEX NAME="idx_userid"   UNIQUE="false" FIELDS="userid"
+               COMMENT="units_of() lookup"/>
+        <INDEX NAME="idx_unitid"   UNIQUE="false" FIELDS="unitid"
+               COMMENT="members_of() lookup"/>
+        <INDEX NAME="idx_role"      UNIQUE="false" FIELDS="role"
+               COMMENT="unit-lead scan (reserved)"/>
+        <INDEX NAME="idx_managerid" UNIQUE="false" FIELDS="managerid"
+               COMMENT="direct_reports() / is_manager() reverse lookup"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

@@ -1,0 +1,347 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Airpay AI Learning Assistant — Chat Bubble
+   ═══════════════════════════════════════════════════════════════════════
+   Migrated to design tokens (Phase B0 Assistant iteration, 2026-05-14).
+   Zero hex literals. Every colour, spacing, radius, motion value comes
+   from --ap-* tokens in _tokens.scss. Dark mode auto-flips via the same
+   tokens — no [data-theme="dark"] block needed for new code.
+
+   Floating button bottom-right on every logged-in page (injected by
+   hook_callbacks::before_footer_html_generation). When clicked, opens
+   a chat panel with quick-action chips and a typing input.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.airpay-assistant {
+    position: fixed;
+    bottom: var(--ap-space-6);
+    right: var(--ap-space-6);
+    z-index: var(--ap-z-fixed);
+    font-family: var(--ap-font-family);
+}
+
+/* ── Toggle button (fab) ─────────────────────────────────────────────── */
+.airpay-assistant__toggle {
+    width: 56px;
+    height: 56px;
+    min-width: var(--ap-tap-target-min);
+    min-height: var(--ap-tap-target-min);
+    border-radius: var(--ap-radius-full);
+    background: var(--ap-gradient-cta);
+    border: none;
+    color: var(--ap-color-text-inverse);
+    font-size: var(--ap-text-xl);
+    cursor: pointer;
+    box-shadow: var(--ap-shadow-lg);
+    transition: transform var(--ap-transition-quick),
+                box-shadow var(--ap-transition-quick);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.airpay-assistant__toggle:hover {
+    transform: scale(1.08);
+    box-shadow: var(--ap-shadow-hover);
+}
+.airpay-assistant__toggle:focus-visible {
+    box-shadow: var(--ap-shadow-hover);
+    /* Global :focus-visible rule adds the 3px ring on top. */
+}
+.airpay-assistant__toggle:active {
+    transform: scale(0.96);
+}
+
+/* ── Chat panel ──────────────────────────────────────────────────────── */
+.airpay-assistant__panel {
+    position: absolute;
+    bottom: 72px;
+    right: 0;
+    width: 380px;
+    max-height: 520px;
+    background: var(--ap-color-bg-surface);
+    border: 1px solid var(--ap-color-border);
+    border-radius: var(--ap-radius-lg);
+    box-shadow: var(--ap-shadow-lg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    /* Slide-up animation on open uses motion tokens — auto-respects
+       prefers-reduced-motion. */
+    transition: opacity var(--ap-transition-default),
+                transform var(--ap-transition-emphatic);
+}
+.airpay-assistant__panel--hidden {
+    opacity: 0;
+    transform: translateY(16px) scale(0.95);
+    pointer-events: none;
+}
+.airpay-assistant__panel--visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+/* ── Header (gradient bar with title + minimize) ─────────────────────── */
+.airpay-assistant__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--ap-space-3) var(--ap-space-4);
+    background: var(--ap-gradient-cta);
+    color: var(--ap-color-text-inverse);
+}
+.airpay-assistant__header-info strong {
+    font-size: var(--ap-text-sm);
+    font-weight: var(--ap-weight-semibold);
+    display: block;
+}
+.airpay-assistant__header-info small {
+    opacity: 0.85;
+    font-size: var(--ap-text-xs);
+}
+.airpay-assistant__minimize {
+    background: none;
+    border: none;
+    color: var(--ap-color-text-inverse);
+    cursor: pointer;
+    font-size: var(--ap-text-base);
+    padding: var(--ap-space-1);
+    min-width: 32px;
+    min-height: 32px;
+    border-radius: var(--ap-radius-sm);
+    transition: background var(--ap-transition-quick);
+}
+.airpay-assistant__minimize:hover,
+.airpay-assistant__minimize:focus-visible {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* ── Message list ────────────────────────────────────────────────────── */
+.airpay-assistant__messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--ap-space-3) var(--ap-space-4);
+    max-height: 340px;
+    scroll-behavior: smooth;
+}
+.airpay-assistant__msg {
+    margin-bottom: var(--ap-space-3);
+    max-width: 85%;
+}
+.airpay-assistant__msg--user {
+    margin-left: auto;
+    background: var(--ap-color-primary);
+    color: var(--ap-color-text-inverse);
+    padding: var(--ap-space-2) var(--ap-space-3);
+    border-radius: var(--ap-radius-lg) var(--ap-radius-lg) var(--ap-radius-xs) var(--ap-radius-lg);
+    font-size: var(--ap-text-sm);
+    line-height: var(--ap-leading-normal);
+}
+.airpay-assistant__msg--bot {
+    background: var(--ap-color-bg-surface-alt);
+    color: var(--ap-color-text-primary);
+    padding: var(--ap-space-3) var(--ap-space-3);
+    border-radius: var(--ap-radius-lg) var(--ap-radius-lg) var(--ap-radius-lg) var(--ap-radius-xs);
+    font-size: var(--ap-text-sm);
+    line-height: var(--ap-leading-normal);
+}
+.airpay-assistant__msg--bot p {
+    margin: 0 0 var(--ap-space-1);
+}
+.airpay-assistant__msg--bot ul,
+.airpay-assistant__msg--bot ol {
+    margin: var(--ap-space-1) 0;
+    padding-left: var(--ap-space-4);
+}
+
+/* ── Typing indicator ────────────────────────────────────────────────── */
+.airpay-assistant__msg--typing {
+    background: var(--ap-color-bg-surface-alt);
+    padding: var(--ap-space-3) var(--ap-space-3);
+    border-radius: var(--ap-radius-lg);
+    display: inline-flex;
+    gap: var(--ap-space-1);
+}
+.airpay-assistant__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: var(--ap-radius-full);
+    background: var(--ap-color-text-muted);
+    animation: airpay-assistant-typing 1.2s ease-in-out infinite;
+}
+.airpay-assistant__dot:nth-child(2) { animation-delay: 0.2s; }
+.airpay-assistant__dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes airpay-assistant-typing {
+    0%, 100% { opacity: 0.3; transform: scale(0.8); }
+    50%      { opacity: 1;   transform: scale(1); }
+}
+
+/* ── Quick-action chips ──────────────────────────────────────────────── */
+.airpay-assistant__quick-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ap-space-2);
+    margin-top: var(--ap-space-2);
+}
+.airpay-assistant__quick-actions button {
+    background: var(--ap-color-bg-surface);
+    border: 1px solid var(--ap-color-primary);
+    color: var(--ap-color-primary);
+    padding: var(--ap-space-1) var(--ap-space-3);
+    border-radius: var(--ap-radius-pill);
+    font-size: var(--ap-text-xs);
+    font-weight: var(--ap-weight-medium);
+    min-height: 28px;
+    cursor: pointer;
+    transition: background var(--ap-transition-quick),
+                color var(--ap-transition-quick),
+                border-color var(--ap-transition-quick);
+    font-family: inherit;
+}
+.airpay-assistant__quick-actions button:hover,
+.airpay-assistant__quick-actions button:focus-visible {
+    background: var(--ap-color-primary);
+    color: var(--ap-color-text-inverse);
+}
+
+/* ── Input area ──────────────────────────────────────────────────────── */
+.airpay-assistant__input-area {
+    display: flex;
+    gap: var(--ap-space-2);
+    padding: var(--ap-space-3);
+    border-top: 1px solid var(--ap-color-border);
+    align-items: center;
+}
+.airpay-assistant__input-area input {
+    flex: 1;
+    padding: var(--ap-space-2) var(--ap-space-3);
+    border: 1px solid var(--ap-color-border-strong);
+    border-radius: var(--ap-radius-pill);
+    font-size: var(--ap-text-sm);
+    outline: none;
+    background: var(--ap-color-bg-surface);
+    color: var(--ap-color-text-primary);
+    min-height: 36px;
+    transition: border-color var(--ap-transition-quick);
+}
+.airpay-assistant__input-area input:focus {
+    border-color: var(--ap-color-primary);
+}
+.airpay-assistant__input-area button {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: var(--ap-radius-full);
+    background: var(--ap-color-primary);
+    color: var(--ap-color-text-inverse);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--ap-transition-quick);
+}
+.airpay-assistant__input-area button:hover:not(:disabled) {
+    background: var(--ap-color-primary-hover);
+}
+.airpay-assistant__input-area button:disabled {
+    background: var(--ap-color-border-strong);
+    cursor: not-allowed;
+}
+
+/* ── Footer (queries remaining counter) ──────────────────────────────── */
+.airpay-assistant__footer {
+    padding: var(--ap-space-1) var(--ap-space-3) var(--ap-space-2);
+    text-align: center;
+}
+.airpay-assistant__footer small {
+    color: var(--ap-color-text-muted);
+    font-size: var(--ap-text-xs);
+}
+
+/* ── Feedback buttons (thumbs up/down per bot message) ──────────────── */
+.airpay-assistant__feedback {
+    display: flex;
+    gap: var(--ap-space-1);
+    margin-top: var(--ap-space-1);
+}
+.airpay-assistant__feedback-btn {
+    background: none;
+    border: 1px solid transparent;
+    border-radius: var(--ap-radius-sm);
+    padding: 2px var(--ap-space-2);
+    font-size: var(--ap-text-xs);
+    color: var(--ap-color-text-muted);
+    cursor: pointer;
+    transition: background var(--ap-transition-quick),
+                border-color var(--ap-transition-quick),
+                color var(--ap-transition-quick);
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-family: inherit;
+    min-height: 24px;
+}
+.airpay-assistant__feedback-btn:hover,
+.airpay-assistant__feedback-btn:focus-visible {
+    background: var(--ap-color-bg-body);
+    border-color: var(--ap-color-border);
+    color: var(--ap-color-text-secondary);
+}
+.airpay-assistant__feedback-btn--up.active {
+    background: var(--ap-color-success-light);
+    border-color: var(--ap-color-success);
+    color: var(--ap-color-success);
+}
+.airpay-assistant__feedback-btn--down.active {
+    background: var(--ap-color-danger-light);
+    border-color: var(--ap-color-danger);
+    color: var(--ap-color-danger);
+}
+
+/* ── Loading skeleton (shown while AI thinks) ───────────────────────── */
+.airpay-assistant__skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: var(--ap-space-3) var(--ap-space-3);
+    background: var(--ap-color-bg-surface-alt);
+    border-radius: var(--ap-radius-lg) var(--ap-radius-lg) var(--ap-radius-lg) var(--ap-radius-xs);
+    max-width: 80%;
+}
+.airpay-assistant__skeleton-line {
+    height: 10px;
+    background: linear-gradient(90deg,
+        var(--ap-color-border) 25%,
+        var(--ap-color-bg-surface-alt) 50%,
+        var(--ap-color-border) 75%);
+    background-size: 200% 100%;
+    animation: airpay-assistant-shimmer 1.5s ease-in-out infinite;
+    border-radius: var(--ap-radius-xs);
+}
+.airpay-assistant__skeleton-line:nth-child(1) { width: 90%; }
+.airpay-assistant__skeleton-line:nth-child(2) { width: 70%; }
+.airpay-assistant__skeleton-line:nth-child(3) { width: 50%; }
+
+@keyframes airpay-assistant-shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position:  200% 0; }
+}
+
+/* ── Mobile (manifesto $ap-bp-mobile = 590px) ───────────────────────── */
+@media (max-width: 590px) {
+    .airpay-assistant {
+        bottom: var(--ap-space-4);
+        right: var(--ap-space-4);
+    }
+    .airpay-assistant__panel {
+        width: calc(100vw - 32px);
+        right: -8px;
+        bottom: 64px;
+        max-height: 70vh;
+    }
+    .airpay-assistant__toggle {
+        width: 48px;
+        height: 48px;
+        font-size: var(--ap-text-lg);
+    }
+}

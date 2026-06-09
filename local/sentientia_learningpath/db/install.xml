@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/sentientia_learningpath/db" VERSION="20260516"
+       COMMENT="Airpay Learning Paths — replaces BizLMS local_learningplan">
+  <TABLES>
+    <TABLE NAME="local_sentientia_learningpath" COMMENT="Learning paths (fork of local_learningplan)">
+      <FIELDS>
+        <FIELD NAME="id"              TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="name"            TYPE="char" LENGTH="254" NOTNULL="true"/>
+        <FIELD NAME="description"     TYPE="text" NOTNULL="false"
+               COMMENT="P1 batch (2026-05-16): now rendered via the rich-text editor in edit_path form"/>
+        <FIELD NAME="descriptionformat" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="1"
+               COMMENT="P1 batch (2026-05-16): FORMAT_HTML(1) | FORMAT_PLAIN(2) | FORMAT_MARKDOWN(4)"/>
+        <FIELD NAME="costcenterid"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="departmentid"    TYPE="int"  LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="open_path"       TYPE="char" LENGTH="254" NOTNULL="false"/>
+        <FIELD NAME="status"          TYPE="int"  LENGTH="2"  NOTNULL="true" DEFAULT="1"
+               COMMENT="1=active, 0=archived"/>
+        <FIELD NAME="visible"         TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="startdate"       TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="P1 batch (2026-05-16): UNIX ts — path becomes enrollable from this date"/>
+        <FIELD NAME="enddate"         TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="P1 batch (2026-05-16): UNIX ts — path closes for new enrolments on this date"/>
+        <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_costcenter" UNIQUE="false" FIELDS="costcenterid"/>
+        <INDEX NAME="idx_status"     UNIQUE="false" FIELDS="status"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_learningpath_courses" COMMENT="Courses within a learning path (ordered)">
+      <FIELDS>
+        <FIELD NAME="id"              TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="pathid"          TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="courseid"        TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="sortorder"       TYPE="int"  LENGTH="6"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="mandatory"       TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_path"   TYPE="foreign" FIELDS="pathid" REFTABLE="local_sentientia_learningpath" REFFIELDS="id"/>
+        <KEY NAME="fk_course" TYPE="foreign" FIELDS="courseid" REFTABLE="course" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_path_course" UNIQUE="true" FIELDS="pathid, courseid"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_learningpath_users" COMMENT="User enrolments in learning paths">
+      <FIELDS>
+        <FIELD NAME="id"              TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="pathid"          TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="userid"          TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="status"          TYPE="int"  LENGTH="2"  NOTNULL="true" DEFAULT="0"
+               COMMENT="0=enrolled, 1=in_progress, 2=completed"/>
+        <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timecompleted"   TYPE="int"  LENGTH="10" NOTNULL="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_path" TYPE="foreign" FIELDS="pathid" REFTABLE="local_sentientia_learningpath" REFFIELDS="id"/>
+        <KEY NAME="fk_user" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_path_user" UNIQUE="true" FIELDS="pathid, userid"/>
+        <INDEX NAME="idx_status"    UNIQUE="false" FIELDS="status"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

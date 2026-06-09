@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/sentientia_org/db" VERSION="20260416"
+       COMMENT="Airpay Organization Engine — replaces BizLMS local_costcenter">
+  <TABLES>
+    <TABLE NAME="local_sentientia_org" COMMENT="Organization hierarchy (fork of local_costcenter)">
+      <FIELDS>
+        <FIELD NAME="id"              TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"
+               COMMENT="Primary key — matches original costcenter IDs after migration"/>
+        <FIELD NAME="fullname"        TYPE="char" LENGTH="254" NOTNULL="true"
+               COMMENT="Organization display name"/>
+        <FIELD NAME="shortname"       TYPE="char" LENGTH="100" NOTNULL="false"
+               COMMENT="Machine-friendly identifier (e.g. airpay, external, zeea)"/>
+        <FIELD NAME="description"     TYPE="text" NOTNULL="false"
+               COMMENT="Organization description"/>
+        <FIELD NAME="parentid"        TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Parent org ID (0 for root tenants)"/>
+        <FIELD NAME="path"            TYPE="char" LENGTH="254" NOTNULL="false"
+               COMMENT="Hierarchical path e.g. /1/2/3 — matches user.open_path segments"/>
+        <FIELD NAME="depth"           TYPE="int"  LENGTH="4"  NOTNULL="true" DEFAULT="1"
+               COMMENT="Hierarchy depth (1=tenant, 2=division, 3=department)"/>
+        <FIELD NAME="visible"         TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="1"
+               COMMENT="1=visible, 0=hidden"/>
+        <FIELD NAME="org_logo"        TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="File item ID for org logo (replaces costcenter_logo)"/>
+        <FIELD NAME="brand_color"     TYPE="char" LENGTH="20" NOTNULL="false"
+               COMMENT="Primary brand colour hex for this org"/>
+        <FIELD NAME="button_color"    TYPE="char" LENGTH="20" NOTNULL="false"
+               COMMENT="Button/CTA colour hex"/>
+        <FIELD NAME="hover_color"     TYPE="char" LENGTH="20" NOTNULL="false"
+               COMMENT="Hover state colour hex"/>
+        <FIELD NAME="theme_scheme"    TYPE="char" LENGTH="50" NOTNULL="false"
+               COMMENT="Theme scheme identifier"/>
+        <FIELD NAME="sortorder"       TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Display sort order"/>
+        <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_parentid"  UNIQUE="false" FIELDS="parentid"
+               COMMENT="Parent lookups for tree traversal"/>
+        <INDEX NAME="idx_path"      UNIQUE="false" FIELDS="path"
+               COMMENT="Hierarchy path queries — LIKE searches"/>
+        <INDEX NAME="idx_shortname" UNIQUE="false" FIELDS="shortname"
+               COMMENT="Lookup by identifier"/>
+        <INDEX NAME="idx_visible"   UNIQUE="false" FIELDS="visible"
+               COMMENT="Filter active orgs"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

@@ -1,0 +1,144 @@
+{{!
+    @template local_sentientia_exams/view
+}}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2 class="mb-0">{{ name }}</h2>
+            <div class="small text-muted">
+                <span class="badge bg-secondary">{{ status_label }}</span>
+                {{#duration}} · Duration: <strong>{{ duration }} min</strong>{{/duration}}
+                · Pass: <strong>{{ passinggrade }}%</strong>
+            </div>
+        </div>
+        <a href="{{{ back_url }}}" class="btn btn-link">
+            <i class="fa fa-arrow-left"></i> All exams
+        </a>
+    </div>
+
+    <ul class="nav nav-tabs mb-3">
+        <li class="nav-item"><a class="nav-link {{#tab_overview_active}}active{{/tab_overview_active}}"
+            href="{{{ tab_overview_url }}}">Overview</a></li>
+        <li class="nav-item"><a class="nav-link {{#tab_attempts_active}}active{{/tab_attempts_active}}"
+            href="{{{ tab_attempts_url }}}">Attempts <span class="badge bg-secondary ms-1">{{ count_attempts }}</span></a></li>
+        <li class="nav-item"><a class="nav-link {{#tab_roster_active}}active{{/tab_roster_active}}"
+            href="{{{ tab_roster_url }}}">Roster <span class="badge bg-secondary ms-1">{{ count_enrolled }}</span></a></li>
+        <li class="nav-item"><a class="nav-link {{#tab_analytics_active}}active{{/tab_analytics_active}}"
+            href="{{{ tab_analytics_url }}}">Analytics</a></li>
+    </ul>
+
+    {{#tab_overview_active}}
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h5>Configuration</h5>
+                    <dl>
+                        <dt>Status</dt><dd>{{ status_label }}</dd>
+                        <dt>Duration</dt><dd>{{ duration }} minutes</dd>
+                        <dt>Passing grade</dt><dd>{{ passinggrade }}%</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h5>Linked content</h5>
+                    {{#has_quiz}}
+                    <p>Quiz: <a href="{{{ quiz_url }}}" target="_blank"><strong>{{ quiz_name }}</strong></a></p>
+                    {{/has_quiz}}
+                    {{^has_quiz}}<p class="text-muted">No quiz linked.</p>{{/has_quiz}}
+                    {{#has_course}}
+                    <p>Course: <a href="{{{ course_url }}}" target="_blank"><strong>{{ course_name }}</strong></a></p>
+                    {{/has_course}}
+                </div>
+            </div>
+        </div>
+    </div>
+    {{/tab_overview_active}}
+
+    {{#tab_attempts_active}}
+    <h5>Attempts</h5>
+    {{#has_attempts}}
+    <div class="table-responsive">
+    <table class="table table-sm">
+        <thead><tr><th>#</th><th>Candidate</th><th>State</th>
+            <th>Score</th><th>Started</th><th>Finished</th><th>Duration</th></tr></thead>
+        <tbody>
+            {{#attempts}}
+            <tr>
+                <td><span class="badge bg-secondary">#{{ attempt }}</span></td>
+                <td><strong>{{ fullname }}</strong><br><code class="small">{{ email }}</code></td>
+                <td>{{ state }}</td>
+                <td><strong>{{ score }}</strong></td>
+                <td class="small">{{ started }}</td>
+                <td class="small">{{ finished }}</td>
+                <td class="small">{{ duration }}</td>
+            </tr>
+            {{/attempts}}
+        </tbody>
+    </table>
+    </div>
+    {{/has_attempts}}
+    {{^has_attempts}}
+    <div class="alert alert-info">No attempts on this exam yet.</div>
+    {{/has_attempts}}
+    {{/tab_attempts_active}}
+
+    {{#tab_roster_active}}
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="mb-0">Enrolled users (eligible to attempt)</h5>
+        {{#enrolled_users_url}}
+        <a href="{{{ enrolled_users_url }}}" class="btn btn-outline-primary btn-sm">
+            <i class="fa fa-users"></i> Manage enrolment
+        </a>
+        {{/enrolled_users_url}}
+    </div>
+    {{#has_roster}}
+    <div class="table-responsive">
+    <table class="table table-sm">
+        <thead><tr><th>Name</th><th>Email</th><th>Emp ID</th>
+            <th>Status</th><th>Last access</th></tr></thead>
+        <tbody>
+            {{#roster}}
+            <tr>
+                <td><strong>{{ fullname }}</strong></td>
+                <td><code class="small">{{ email }}</code></td>
+                <td>{{ employee_id }}</td>
+                <td>{{ status }}</td>
+                <td class="small">{{ last_access }}</td>
+            </tr>
+            {{/roster}}
+        </tbody>
+    </table>
+    </div>
+    {{/has_roster}}
+    {{^has_roster}}
+    <div class="alert alert-info">No users enrolled in the wrapping course.</div>
+    {{/has_roster}}
+    {{/tab_roster_active}}
+
+    {{#tab_analytics_active}}
+    {{#has_analytics}}
+    {{! KPI Summary — Phase B0+: migrated to tokens-aware stat_card partial }}
+    {{#has_kpi_tiles}}
+    <div class="airpay-stat-grid mb-4">
+        {{#kpi_tiles}}
+        {{> theme_sentientia/components/stat_card }}
+        {{/kpi_tiles}}
+    </div>
+    {{/has_kpi_tiles}}
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <h6 class="mb-2">Score range</h6>
+            <p>Min: <strong>{{ min_score }}</strong> · Max: <strong>{{ max_score }}</strong>
+                · Threshold: <strong>{{ pass_threshold }}%</strong></p>
+        </div>
+    </div>
+    {{/has_analytics}}
+    {{^has_analytics}}
+    <div class="alert alert-info">Analytics will appear once at least one attempt is finished.</div>
+    {{/has_analytics}}
+    {{/tab_analytics_active}}
+</div>

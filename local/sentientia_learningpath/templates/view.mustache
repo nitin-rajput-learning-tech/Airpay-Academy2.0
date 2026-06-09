@@ -1,0 +1,159 @@
+{{!
+    Airpay Learning Path — detail view (Overview / Courses / Users tabs).
+
+    @template local_sentientia_learningpath/view
+    @package  local_sentientia_learningpath
+
+    Context vars:
+      pathid                 int      Path ID
+      name                   string   Path name (already format_string'd)
+      description            string   format_text'd HTML
+      has_description        bool     Whether to render the description block
+      status_label, status_css        Badge text + Bootstrap class
+      created_human                   Date string
+      modified_human                  Date string
+      course_count                    int
+      user_count                      int
+      back_url                        Link back to /index.php
+      tab_*_active                    bool — exactly one of overview/courses/users true
+      tab_*_url                       URL to switch tabs
+      can_update                      bool — show "Add Courses" + remove course buttons
+      can_enrol                       bool — show "Enrol Users" + unenrol buttons
+      courses_columns_json            JSON for shared datatable
+      users_columns_json              JSON for shared datatable
+}}
+<div data-region="airpay-path-view" data-pathid="{{ pathid }}">
+
+    <div class="ap-page-header d-flex justify-content-between align-items-start mb-3">
+        <div>
+            <a href="{{{ back_url }}}" class="small text-muted text-decoration-none">
+                <i class="fa fa-angle-left fa-fw"></i> Back to learning paths
+            </a>
+            <h2 class="mb-1 mt-1" style="font-weight: 700;">{{ name }}</h2>
+            <div class="d-flex gap-2 align-items-center small text-muted">
+                <span class="badge {{ status_css }}">{{ status_label }}</span>
+                <span>·</span>
+                <span>{{ course_count }} course{{# course_count }}{{/ course_count }}{{^ course_count }}s{{/ course_count }}{{# course_count }}{{# course_count }}{{/ course_count }}{{/ course_count }}</span>
+                <span>·</span>
+                <span>{{ user_count }} user{{^ user_count }}s{{/ user_count }}{{# user_count }}{{# user_count }}{{/ user_count }}{{/ user_count }} enrolled</span>
+                <span>·</span>
+                <span>Updated {{ modified_human }}</span>
+            </div>
+        </div>
+    </div>
+
+    {{! ── Tab nav ───────────────────────────────────────────────── }}
+    <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link {{# tab_overview_active }}active{{/ tab_overview_active }}"
+               href="{{{ tab_overview_url }}}" role="tab">
+                <i class="fa fa-info-circle fa-fw" aria-hidden="true"></i> Overview
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {{# tab_courses_active }}active{{/ tab_courses_active }}"
+               href="{{{ tab_courses_url }}}" role="tab">
+                <i class="fa fa-book fa-fw" aria-hidden="true"></i> Courses
+                <span class="badge bg-light text-dark ms-1">{{ course_count }}</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {{# tab_users_active }}active{{/ tab_users_active }}"
+               href="{{{ tab_users_url }}}" role="tab">
+                <i class="fa fa-users fa-fw" aria-hidden="true"></i> Users
+                <span class="badge bg-light text-dark ms-1">{{ user_count }}</span>
+            </a>
+        </li>
+    </ul>
+
+    {{! ── Overview tab ──────────────────────────────────────────── }}
+    {{# tab_overview_active }}
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            {{# has_description }}
+            <h5 class="mb-2">Description</h5>
+            <div class="mb-4">{{{ description }}}</div>
+            {{/ has_description }}
+            {{^ has_description }}
+            <p class="text-muted fst-italic">No description set.</p>
+            {{/ has_description }}
+
+            <div class="row mt-3">
+                <div class="col-md-3">
+                    <div class="small text-uppercase text-muted">Courses</div>
+                    <div style="font-size: 1.5rem; font-weight: 700;">{{ course_count }}</div>
+                </div>
+                <div class="col-md-3">
+                    <div class="small text-uppercase text-muted">Users enrolled</div>
+                    <div style="font-size: 1.5rem; font-weight: 700;">{{ user_count }}</div>
+                </div>
+                <div class="col-md-3">
+                    <div class="small text-uppercase text-muted">Created</div>
+                    <div>{{ created_human }}</div>
+                </div>
+                <div class="col-md-3">
+                    <div class="small text-uppercase text-muted">Last modified</div>
+                    <div>{{ modified_human }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{/ tab_overview_active }}
+
+    {{! ── Courses tab ───────────────────────────────────────────── }}
+    {{# tab_courses_active }}
+    <div class="d-flex justify-content-end mb-3">
+        {{# can_update }}
+        <button type="button" class="btn btn-primary btn-sm" data-action="add-courses">
+            <i class="fa fa-plus fa-fw" aria-hidden="true"></i> Add Courses
+        </button>
+        {{/ can_update }}
+    </div>
+    <div data-airpay-table
+         data-airpay-table-name="path-courses"
+         data-endpoint="local_sentientia_learningpath_list_path_courses"
+         data-columns="{{ courses_columns_json }}"
+         data-search-placeholder="Search courses on this path…"
+         data-perpage="25"
+         data-extra-args='{{ extra_args_json }}'
+         data-row-actions="{{# can_update }}1{{/ can_update }}{{^ can_update }}0{{/ can_update }}">
+    </div>
+    {{/ tab_courses_active }}
+
+    {{! ── Users tab ─────────────────────────────────────────────── }}
+    {{# tab_users_active }}
+    <div class="d-flex justify-content-end mb-3 gap-2">
+        {{# can_enrol }}
+        {{! P1 #11 (2026-05-16) — bulk enrol by target audience }}
+        <button type="button" class="btn btn-outline-primary btn-sm"
+                data-action="bulk-enrol-audience"
+                title="Enrol all users matching a target audience">
+            <i class="fa fa-users fa-fw" aria-hidden="true"></i> Bulk Enrol by Audience
+        </button>
+        <button type="button" class="btn btn-primary btn-sm" data-action="enrol-users">
+            <i class="fa fa-user-plus fa-fw" aria-hidden="true"></i> Enrol Users
+        </button>
+        {{/ can_enrol }}
+    </div>
+    <div data-airpay-table
+         data-airpay-table-name="path-users"
+         data-endpoint="local_sentientia_learningpath_list_path_users"
+         data-columns="{{ users_columns_json }}"
+         data-search-placeholder="Search enrolled users by name or email…"
+         data-perpage="25"
+         data-extra-args='{{ extra_args_json }}'
+         data-row-actions="{{# can_enrol }}1{{/ can_enrol }}{{^ can_enrol }}0{{/ can_enrol }}">
+    </div>
+    {{/ tab_users_active }}
+
+</div>
+
+{{# js }}
+require([
+    'theme_sentientia/datatable',
+    'local_sentientia_learningpath/path_actions',
+], function(Datatable, PathActions) {
+    Datatable.init();
+    PathActions.initView({{ pathid }});
+});
+{{/ js }}

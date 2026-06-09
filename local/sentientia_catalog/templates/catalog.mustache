@@ -1,0 +1,276 @@
+{{!
+    @template local_sentientia_catalog/catalog
+
+    LXP-style course catalog — Netflix carousels, autocomplete search,
+    bookmark hearts, lazy loading, arrow navigation.
+}}
+<div class="airpay-catalog">
+
+    {{! Search Bar — Phase B0 Catalogue iter 3: extracted to partial }}
+    {{> local_sentientia_catalog/partials/search_bar }}
+
+    {{^has_search}}
+    {{! ═══ Continue Learning Carousel ═══ }}
+    {{#has_in_progress}}
+    <section class="airpay-catalog__section" data-carousel>
+        <h3 class="airpay-catalog__section-title">
+            <i class="fa fa-play-circle"></i> {{#str}}continuelearning, local_sentientia_catalog{{/str}}
+        </h3>
+        <button class="airpay-catalog__carousel-nav airpay-catalog__carousel-nav--left" data-dir="left" aria-label="Scroll left">
+            <i class="fa fa-chevron-left"></i>
+        </button>
+        <div class="airpay-catalog__carousel" data-carousel-track>
+            {{#in_progress}}
+            <div class="airpay-catalog__card airpay-catalog__card--progress">
+                <a href="{{viewurl}}" class="airpay-catalog__card-link">
+                    <div class="airpay-catalog__card-thumb airpay-catalog__card-thumb--v{{thumb_variant}}">
+                        {{#has_image}}
+                        <img class="airpay-catalog__card-img" src="{{imageurl}}" alt="" loading="lazy" aria-hidden="true">
+                        {{/has_image}}
+                        {{^has_image}}
+                        <span class="airpay-catalog__card-code">{{shortname}}</span>
+                        {{/has_image}}
+                        {{#has_progress}}
+                        <div class="airpay-catalog__card-ring">
+                            <svg viewBox="0 0 36 36">
+                                <circle class="airpay-catalog__card-ring-track" cx="18" cy="18" r="15"/>
+                                <circle class="airpay-catalog__card-ring-fill" cx="18" cy="18" r="15"
+                                        stroke-dasharray="94.25"
+                                        stroke-dashoffset="{{progress_offset}}"/>
+                            </svg>
+                            <span class="airpay-catalog__card-ring-label">{{progress}}%</span>
+                        </div>
+                        {{/has_progress}}
+                    </div>
+                    <div class="airpay-catalog__card-body">
+                        <h4 class="airpay-catalog__card-title">{{fullname}}</h4>
+                        {{#has_progress}}
+                        <div class="airpay-catalog__progress">
+                            <div class="airpay-catalog__progress-bar" style="width: {{progress}}%;"></div>
+                        </div>
+                        <small class="airpay-catalog__card-progresstext">{{progress}}% complete</small>
+                        {{/has_progress}}
+                    </div>
+                </a>
+            </div>
+            {{/in_progress}}
+        </div>
+        <button class="airpay-catalog__carousel-nav airpay-catalog__carousel-nav--right" data-dir="right" aria-label="Scroll right">
+            <i class="fa fa-chevron-right"></i>
+        </button>
+    </section>
+    {{/has_in_progress}}
+
+    {{! ═══ Trending in Your Department ═══ }}
+    {{#has_trending}}
+    <section class="airpay-catalog__section" data-carousel>
+        <h3 class="airpay-catalog__section-title">
+            <i class="fa fa-fire" style="color:#d97706;"></i> {{#str}}trending, local_sentientia_catalog{{/str}}
+        </h3>
+        <button class="airpay-catalog__carousel-nav airpay-catalog__carousel-nav--left" data-dir="left" aria-label="Scroll left">
+            <i class="fa fa-chevron-left"></i>
+        </button>
+        <div class="airpay-catalog__carousel" data-carousel-track>
+            {{#trending}}
+            {{> local_sentientia_catalog/course_card }}
+            {{/trending}}
+        </div>
+        <button class="airpay-catalog__carousel-nav airpay-catalog__carousel-nav--right" data-dir="right" aria-label="Scroll right">
+            <i class="fa fa-chevron-right"></i>
+        </button>
+    </section>
+    {{/has_trending}}
+
+    {{! ═══ New This Month ═══ }}
+    {{#has_new_courses}}
+    <section class="airpay-catalog__section" data-carousel>
+        <h3 class="airpay-catalog__section-title">
+            <i class="fa fa-star" style="color:#fbbf24;"></i> {{#str}}newthismonth, local_sentientia_catalog{{/str}}
+        </h3>
+        <button class="airpay-catalog__carousel-nav airpay-catalog__carousel-nav--left" data-dir="left" aria-label="Scroll left">
+            <i class="fa fa-chevron-left"></i>
+        </button>
+        <div class="airpay-catalog__carousel" data-carousel-track>
+            {{#new_courses}}
+            {{> local_sentientia_catalog/course_card }}
+            {{/new_courses}}
+        </div>
+        <button class="airpay-catalog__carousel-nav airpay-catalog__carousel-nav--right" data-dir="right" aria-label="Scroll right">
+            <i class="fa fa-chevron-right"></i>
+        </button>
+    </section>
+    {{/has_new_courses}}
+
+    {{! ═══ Browse by Category ═══ }}
+    {{#has_categories}}
+    <section class="airpay-catalog__section">
+        <h3 class="airpay-catalog__section-title">
+            <i class="fa fa-th-large"></i> {{#str}}browsecategory, local_sentientia_catalog{{/str}}
+        </h3>
+        <div class="airpay-catalog__categories">
+            {{#categories}}
+            <a href="{{baseurl}}?category={{id}}" class="airpay-catalog__category-card">
+                <div class="airpay-catalog__category-icon">
+                    <i class="fa fa-folder-open"></i>
+                </div>
+                <strong>{{name}}</strong>
+                <span>{{course_count}} {{#str}}allcourses, local_sentientia_catalog{{/str}}</span>
+            </a>
+            {{/categories}}
+        </div>
+    </section>
+    {{/has_categories}}
+    {{/has_search}}
+
+    {{! ═══ All Courses Grid ═══ }}
+    <section class="airpay-catalog__section">
+        <div class="airpay-catalog__section-header">
+            <h3 class="airpay-catalog__section-title">
+                {{#has_search}}
+                Results for "{{search_query}}" ({{total}})
+                {{/has_search}}
+                {{^has_search}}
+                {{#str}}allcourses, local_sentientia_catalog{{/str}} ({{total}})
+                {{/has_search}}
+            </h3>
+            {{! Filters + sort — Phase B0 Catalogue iter 3 (partials) + iter 4
+                (mobile bottom sheet via native <details>). On desktop the
+                disclosure is always open (CSS); on mobile <590px the
+                summary becomes a tap target that toggles the sheet.
+                Native <details> is keyboard-accessible (Enter to toggle)
+                and screen-reader-friendly (announces expand/collapse). }}
+            <details class="airpay-catalog__filter-details" open>
+                <summary class="airpay-catalog__filter-summary">
+                    <i class="fa fa-sliders-h" aria-hidden="true"></i>
+                    <span>Filters &amp; Sort</span>
+                    {{#has_active_filters_badge}}
+                    <span class="airpay-catalog__filter-badge" aria-label="{{filter_count}} active">{{filter_count}}</span>
+                    {{/has_active_filters_badge}}
+                </summary>
+                <div class="airpay-catalog__filters" role="group" aria-label="Active filters and sort">
+                    {{#active_filters}}
+                    {{> local_sentientia_catalog/partials/filter_chip }}
+                    {{/active_filters}}
+                    {{> local_sentientia_catalog/partials/sort_tabs }}
+                </div>
+            </details>
+        </div>
+
+        {{#has_courses}}
+        <div class="airpay-catalog__grid" id="ap-catalog-grid">
+            {{#courses}}
+            {{> local_sentientia_catalog/course_card }}
+            {{/courses}}
+        </div>
+
+        {{#has_more}}
+        <div class="airpay-catalog__pagination">
+            <span>Showing {{showing_from}}-{{showing_to}} of {{total}}</span>
+            <a href="{{baseurl}}?page={{current_page}}&sort={{sort}}{{#has_search}}&q={{search_query}}{{/has_search}}{{#has_active_category}}&category={{active_category_id}}{{/has_active_category}}"
+               class="airpay-catalog__btn airpay-catalog__btn--load-more">
+                {{#str}}loadmore, local_sentientia_catalog{{/str}} <i class="fa fa-chevron-down"></i>
+            </a>
+        </div>
+        {{/has_more}}
+        {{/has_courses}}
+
+        {{! Empty state — Phase B0 Catalogue iter 6: migrated to tokens-aware
+            empty_state partial with context-aware copy (search-no-results /
+            empty-category / truly-empty catalogue) built in index.php. }}
+        {{^has_courses}}
+        {{#empty_state}}
+        {{> theme_sentientia/components/empty_state }}
+        {{/empty_state}}
+        {{/has_courses}}
+    </section>
+</div>
+
+{{! ═══ Catalog JavaScript: Carousel Nav + Autocomplete + Bookmarks ═══ }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // ─── Carousel Arrow Navigation ───
+    document.querySelectorAll('[data-carousel]').forEach(function(section) {
+        var track = section.querySelector('[data-carousel-track]');
+        if (!track) return;
+        var cardWidth = 296; // 280px card + 16px gap
+        section.querySelectorAll('.airpay-catalog__carousel-nav').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                var dir = this.getAttribute('data-dir');
+                var scrollAmount = dir === 'left' ? -cardWidth * 2 : cardWidth * 2;
+                track.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+            });
+        });
+        // Hide arrows when at scroll boundaries.
+        function updateArrows() {
+            var leftBtn = section.querySelector('.airpay-catalog__carousel-nav--left');
+            var rightBtn = section.querySelector('.airpay-catalog__carousel-nav--right');
+            if (leftBtn) leftBtn.style.visibility = track.scrollLeft <= 10 ? 'hidden' : 'visible';
+            if (rightBtn) rightBtn.style.visibility =
+                (track.scrollLeft + track.clientWidth >= track.scrollWidth - 10) ? 'hidden' : 'visible';
+        }
+        track.addEventListener('scroll', updateArrows);
+        setTimeout(updateArrows, 100);
+    });
+
+    // ─── Search Autocomplete (debounced) ───
+    var searchInput = document.getElementById('ap-catalog-search');
+    var suggestBox = document.getElementById('ap-catalog-suggest');
+    var debounceTimer = null;
+    if (searchInput && suggestBox) {
+        searchInput.addEventListener('input', function() {
+            var query = this.value.trim();
+            clearTimeout(debounceTimer);
+            if (query.length < 2) { suggestBox.style.display = 'none'; return; }
+            debounceTimer = setTimeout(function() {
+                // Client-side filter from existing courses on page
+                var allCards = document.querySelectorAll('.airpay-catalog__card-title');
+                var matches = [];
+                allCards.forEach(function(el) {
+                    var txt = el.textContent.trim();
+                    if (txt.toLowerCase().indexOf(query.toLowerCase()) !== -1 && matches.length < 5) {
+                        var link = el.closest('a');
+                        matches.push({name: txt, url: link ? link.href : '#'});
+                    }
+                });
+                if (matches.length > 0) {
+                    suggestBox.innerHTML = matches.map(function(m) {
+                        return '<a href="' + m.url + '" class="airpay-catalog__suggest-item">' +
+                               '<i class="fa fa-search"></i> ' + m.name + '</a>';
+                    }).join('');
+                    suggestBox.style.display = 'block';
+                } else {
+                    suggestBox.style.display = 'none';
+                }
+            }, 250);
+        });
+        // Close suggestions on click outside.
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !suggestBox.contains(e.target)) {
+                suggestBox.style.display = 'none';
+            }
+        });
+    }
+
+    // ─── Bookmark / Save-for-Later (localStorage) ───
+    var saved = JSON.parse(localStorage.getItem('ap_bookmarks') || '[]');
+    document.querySelectorAll('.airpay-catalog__bookmark').forEach(function(btn) {
+        var cid = btn.getAttribute('data-courseid');
+        if (saved.indexOf(cid) !== -1) btn.classList.add('airpay-catalog__bookmark--saved');
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var idx = saved.indexOf(cid);
+            if (idx === -1) { saved.push(cid); this.classList.add('airpay-catalog__bookmark--saved'); }
+            else { saved.splice(idx, 1); this.classList.remove('airpay-catalog__bookmark--saved'); }
+            localStorage.setItem('ap_bookmarks', JSON.stringify(saved));
+        });
+    });
+
+    // Lazy-load fade-in removed 2026-05-22 (Goal A audit): the
+    // IntersectionObserver pattern silently hid cards that were already
+    // in viewport at page load. Cards are now visible by default via
+    // CSS (see styles.css). If we want fade-in back, add it as a
+    // scroll-triggered enhancement that does NOT gate visibility.
+});
+</script>

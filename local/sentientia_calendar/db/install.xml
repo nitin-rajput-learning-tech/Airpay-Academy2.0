@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/sentientia_calendar/db" VERSION="20260524"
+       COMMENT="Sentientia LMS Calendar Sync — Phase 1 (outbound ICS feed token storage) + Phase 2 (OAuth scaffolding for Microsoft 365 + Google Calendar). The Phase 2 table is additive; the Phase 1 table is unchanged.">
+  <TABLES>
+
+    <TABLE NAME="local_sentientia_calendar_token"
+           COMMENT="Tier 2.6 Phase 1 (2026-05-24) — One row per user per active
+                    ICS subscription token. The token is a 64-character random
+                    string embedded in the subscription URL the user pastes
+                    into Outlook / Google / Apple Calendar. The token is the
+                    authentication mechanism — calendar clients fetch the
+                    feed without browser cookies, so cookie-based session auth
+                    is not available.
+
+                    A user may have at most one ACTIVE (revoked=0) token at a
+                    time; regenerate revokes the old one and creates a new
+                    one. Revoked rows are kept for audit (we can answer
+                    'who used a leaked token, when?'). Periodic cleanup
+                    deletes revoked rows older than 90 days via the
+                    purge_old_tokens scheduled task.
+
+                    Multi-customer scope: each row carries customerid +
+                    tenantid so future per-customer reporting can answer
+                    'how many users in Customer N have subscribed?'.
+
+                    GDPR / privacy: the token alone does not identify the
+                    user to an outside party. last_used_at + last_used_ip
+                    are useful for abuse forensics; both purge with the row
+                    after 90-day retention.">
+      <FIELDS>
+        <FIELD NAME="id"            TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"        TYPE="int"  LENGTH="10" NOTNULL="true"
+               COMMENT="FK to mdl_user.id — the user whose calendar this token unlocks"/>
+        <FIELD NAME="customerid"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="1"
+               COMMENT="Sentientia LMS customer scope. Phase 1: hardcoded 1 (Airpay) per customer::current()."/>
+        <FIELD NAME="tenantid"      TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="BizLMS tenant root (1=Airpay, 77=Public, 177=ZEEA). Derived from user open_path at insert time."/>
+        <FIELD NAME="token"         TYPE="char" LENGTH="64" NOTNULL="true"
+               COMMENT="64-char URL-safe random token (alphanumeric). Used as the URL query parameter that authenticates the request."/>
+        <FIELD NAME="revoked"       TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="0"
+               COMMENT="0 = active, 1 = revoked (user regenerated). Revoked tokens never authenticate again."/>
+        <FIELD NAME="last_used_at"  TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="Unix ts of last successful feed fetch (NULL = never used)"/>
+        <FIELD NAME="last_used_ip"  TYPE="char" LENGTH="45" NOTNULL="false"
+               COMMENT="IPv4 / IPv6 of the last fetch. Diagnostic only."/>
+        <FIELD NAME="use_count"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Total successful fetch count. Helps identify abandoned subscriptions."/>
+        <FIELD NAME="timecreated"   TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"  TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"  TYPE="primary" FIELDS="id"/>
+        <KEY NAME="uk_token" TYPE="unique"  FIELDS="token"
+              COMMENT="Token alone authenticates — must be globally unique"/>
+        <KEY NAME="fk_user"  TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_user_revoked"    UNIQUE="false" FIELDS="userid, revoked"
+               COMMENT="Lookup current active token for a user"/>
+        <INDEX NAME="idx_customer_tenant" UNIQUE="false" FIELDS="customerid, tenantid"
+               COMMENT="Per-customer / per-tenant subscriber counts"/>
+        <INDEX NAME="idx_timemodified"    UNIQUE="false" FIELDS="timemodified"
+               COMMENT="Purge query for revoked rows older than retention window"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_calendar_oauth"
+           COMMENT="Tier 2.6 Phase 2 (2026-05-24) — Encrypted-at-rest OAuth 2.0
+                    token storage for Microsoft 365 (Microsoft Graph) and
+                    Google Calendar. One row per (user, provider) pair —
+                    a user may have one m365 row AND one google row at
+                    the same time, but not two m365 rows.
+
+                    access_token_enc and refresh_token_enc are emitted by
+                    \core\encryption::encrypt() (Sodium AES-via-secretbox
+                    under the hood). Plaintext tokens NEVER appear in
+                    the column. Recovering a token requires both this DB
+                    row AND $CFG->dataroot/secret/key/sodium.key (chmod
+                    0400 by Moodle). The encryption is reversible only
+                    on the same Moodle instance that created it — moving
+                    a DB dump to a different Moodle (without copying the
+                    key file) leaves the tokens unrecoverable.
+
+                    expires is the unix timestamp at which the
+                    access_token expires. Callers compare against time()
+                    to decide whether to call the refresh flow before
+                    using the access_token.
+
+                    scopes is the space-separated scope string the
+                    provider granted at consent time. Comparing this
+                    against the scopes you NEED at call time lets you
+                    detect downgrade (the user denied a scope on a
+                    re-consent) and re-prompt before failing the API call.
+
+                    GDPR / DPDP: every column on this row is PII (a
+                    refresh_token implicitly authenticates the user to
+                    the provider for months). Privacy provider exports
+                    METADATA only (provider name, expires, scopes,
+                    timestamps) — the encrypted tokens themselves are
+                    never written into the user's export archive.
+
+                    SCAFFOLDING note (Phase 2): the surfaces that would
+                    populate this table — oauth_connect.php +
+                    oauth_callback.php — are NOT shipped in this chip.
+                    The schema is in place; Phase 2.1 wires up the live
+                    HTTP exchange that produces real rows here.">
+      <FIELDS>
+        <FIELD NAME="id"                TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"            TYPE="int"  LENGTH="10" NOTNULL="true"
+               COMMENT="FK to mdl_user.id — the user whose calendar this token authorises us to touch"/>
+        <FIELD NAME="customerid"        TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="1"
+               COMMENT="Sentientia LMS customer scope. Phase 1: hardcoded 1 (Airpay) per customer::current()."/>
+        <FIELD NAME="provider"          TYPE="char" LENGTH="20" NOTNULL="true"
+               COMMENT="Provider identifier — currently 'm365' (Microsoft Graph) or 'google' (Google Calendar). Matches oauth_base subclass PROVIDER constant."/>
+        <FIELD NAME="access_token_enc"  TYPE="text" NOTNULL="true"
+               COMMENT="Encrypted (Sodium secretbox via \\core\\encryption::encrypt) access_token. Typical plaintext is ~1-2 KB JWT; encrypted ciphertext is base64 + IV + tag overhead."/>
+        <FIELD NAME="refresh_token_enc" TYPE="text" NOTNULL="false"
+               COMMENT="Encrypted refresh_token. NULL or empty-string-encrypted when the provider didn't mint one (e.g. Google without prompt=consent). Long-lived (months); the high-value secret."/>
+        <FIELD NAME="expires"           TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Unix ts when the access_token expires. 0 = unknown / not set."/>
+        <FIELD NAME="scopes"            TYPE="text" NOTNULL="false"
+               COMMENT="Space-separated scope string the provider GRANTED at consent (may differ from what we requested)."/>
+        <FIELD NAME="timecreated"       TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"      TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"          TYPE="primary" FIELDS="id"/>
+        <KEY NAME="uk_user_provider" TYPE="unique"  FIELDS="userid, provider"
+              COMMENT="One row per (user, provider). Re-connecting UPDATEs the existing row in place."/>
+        <KEY NAME="fk_user_oauth"    TYPE="foreign" FIELDS="userid"
+              REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_provider_expires" UNIQUE="false" FIELDS="provider, expires"
+               COMMENT="Background refresh job query — find tokens expiring soon, per provider"/>
+        <INDEX NAME="idx_customer_provider" UNIQUE="false" FIELDS="customerid, provider"
+               COMMENT="Per-customer subscription stats (e.g. 'how many m365 connections in customer 1?')"/>
+      </INDEXES>
+    </TABLE>
+
+  </TABLES>
+</XMLDB>

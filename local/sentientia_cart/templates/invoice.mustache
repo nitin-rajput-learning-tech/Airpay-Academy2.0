@@ -1,0 +1,88 @@
+{{!
+    @template local_sentientia_cart/invoice
+
+    GST-compliant invoice (HTML — browser Print → Save as PDF).
+
+    Phase 8.1 B5 hardening:
+      - escaped double-brace output for plain-text fields — Mustache auto-escapes.
+      - raw triple-brace output ONLY for pre-built HTML wrapper from PHP
+        (`company_address` and `billing_address` are <div> wrappers
+        whose inner text is already s()-escaped in invoicer.php).
+      - Never pass raw user input into a raw triple-brace field directly.
+}}
+<style>
+.airpay-invoice { max-width: 800px; margin: 2rem auto; padding: 2rem;
+    border: 1px solid #ccc; background: #fff; font-family: sans-serif; }
+.airpay-invoice h1 { color: #0066A7; }
+.airpay-invoice .right { text-align: right; }
+.airpay-invoice table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
+.airpay-invoice th, .airpay-invoice td { padding: 8px 12px; border: 1px solid #e2e6ef; }
+.airpay-invoice th { background: #f8f9fc; text-align: left; }
+.airpay-invoice .totals { margin-left: auto; width: 50%; }
+@media print { .no-print { display: none !important; } }
+</style>
+
+<div class="airpay-invoice">
+    <div class="d-flex justify-content-between">
+        <div>
+            <h1>{{ company_name }}</h1>
+            <div>{{{ company_address }}}</div>
+            {{#company_gstn}}<div>GSTN: <strong>{{ company_gstn }}</strong></div>{{/company_gstn}}
+        </div>
+        <div class="right">
+            <h2 style="margin:0;">INVOICE</h2>
+            <div><strong>{{ invoice_number }}</strong></div>
+            <div>{{ invoice_date }}</div>
+        </div>
+    </div>
+
+    <hr/>
+
+    <div class="d-flex justify-content-between">
+        <div>
+            <strong>BILL TO</strong><br/>
+            {{ billing_name }}<br/>
+            {{ billing_email }}<br/>
+            {{{ billing_address }}}<br/>
+            {{#billing_gstn}}GSTN: <strong>{{ billing_gstn }}</strong>{{/billing_gstn}}
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr><th>Item</th><th class="right">Price</th></tr>
+        </thead>
+        <tbody>
+            {{#items}}
+            <tr>
+                <td>{{ name }}</td>
+                <td class="right">{{ currency_symbol }}{{ price }}</td>
+            </tr>
+            {{/items}}
+        </tbody>
+    </table>
+
+    <table class="totals">
+        <tr><td>Subtotal</td><td class="right">{{ currency_symbol }}{{ subtotal }}</td></tr>
+        {{#has_cgst_sgst}}
+        <tr><td>CGST (9%)</td><td class="right">{{ currency_symbol }}{{ cgst }}</td></tr>
+        <tr><td>SGST (9%)</td><td class="right">{{ currency_symbol }}{{ sgst }}</td></tr>
+        {{/has_cgst_sgst}}
+        {{#has_igst}}
+        <tr><td>IGST (18%)</td><td class="right">{{ currency_symbol }}{{ igst }}</td></tr>
+        {{/has_igst}}
+        <tr><th>Total</th><th class="right">{{ currency_symbol }}{{ total }}</th></tr>
+    </table>
+
+    <hr/>
+    <p style="font-size: 0.85em; color: #5a6070;">
+        This is a system-generated invoice. No signature required.
+        For queries contact: support@airpay.academy
+    </p>
+
+    <div class="no-print text-center mt-3">
+        <button onclick="window.print();" class="btn btn-primary">
+            <i class="fa fa-print"></i> Print / Save as PDF
+        </button>
+    </div>
+</div>

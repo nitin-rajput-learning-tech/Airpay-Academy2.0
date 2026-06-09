@@ -1,0 +1,114 @@
+{{!
+    @template local_sentientia_analytics/dashboard
+
+    Advanced analytics dashboard with KPIs, funnel, heatmap, course effectiveness.
+}}
+<div class="airpay-analytics">
+    <div class="airpay-analytics__header">
+        <h2><i class="fa fa-line-chart"></i> Analytics Dashboard</h2>
+        <div style="display:flex; align-items:center; gap:12px; flex-wrap: wrap;">
+            {{! Business Unit Filter }}
+            {{#has_org_filter}}
+            <form method="get" action="{{{filterurl}}}" style="display:flex; align-items:center; gap:8px;">
+                <input type="hidden" name="range" value="{{range}}">
+                <label class="small text-muted mb-0">Business Unit:</label>
+                <select name="orgid" class="form-select form-select-sm" style="width: auto; min-width: 180px;" onchange="this.form.submit()">
+                    <option value="0">All Business Units</option>
+                    {{#org_options}}
+                    <option value="{{id}}" {{#selected}}selected{{/selected}}>{{name}}</option>
+                    {{/org_options}}
+                </select>
+            </form>
+            {{/has_org_filter}}
+
+            <div class="airpay-analytics__range">
+                <a href="{{baseurl}}?range=7d&orgid={{orgid}}" class="{{#range_7d}}active{{/range_7d}}">7 days</a>
+                <a href="{{baseurl}}?range=30d&orgid={{orgid}}" class="{{#range_30d}}active{{/range_30d}}">30 days</a>
+                <a href="{{baseurl}}?range=90d&orgid={{orgid}}" class="{{#range_90d}}active{{/range_90d}}">90 days</a>
+                <a href="{{baseurl}}?range=ytd&orgid={{orgid}}" class="{{#range_ytd}}active{{/range_ytd}}">YTD</a>
+            </div>
+            <a href="{{exporturl}}" class="airpay-analytics__export" title="Download as CSV">
+                <i class="fa fa-download"></i> Export CSV
+            </a>
+        </div>
+    </div>
+
+    {{! KPI Cards — Phase B0 iter X: migrated to tokens-aware stat_card partial }}
+    {{#has_kpis}}
+    <div class="airpay-stat-grid">
+        {{#kpis}}
+        {{> theme_sentientia/components/stat_card }}
+        {{/kpis}}
+    </div>
+    {{/has_kpis}}
+
+    <div class="airpay-analytics__grid">
+        {{! Engagement Funnel }}
+        {{#has_funnel}}
+        <div class="airpay-analytics__card">
+            <h3><i class="fa fa-filter"></i> Engagement Funnel</h3>
+            <div class="airpay-analytics__funnel">
+                {{#funnel}}
+                <div class="airpay-analytics__funnel-stage">
+                    <span class="airpay-analytics__funnel-label">{{stage}}</span>
+                    <div class="airpay-analytics__funnel-bar-wrap">
+                        <div class="airpay-analytics__funnel-bar" style="width: {{width}}%;"></div>
+                    </div>
+                    <span class="airpay-analytics__funnel-count">{{count}} ({{pct}}%)</span>
+                </div>
+                {{/funnel}}
+            </div>
+        </div>
+        {{/has_funnel}}
+        {{^has_funnel}}
+        <div class="airpay-analytics__card">
+            <h3><i class="fa fa-filter"></i> Engagement Funnel</h3>
+            <div class="ap-empty-state" style="padding:24px;">
+                <i class="fa fa-bar-chart" style="font-size:2rem; color:#d1d5db; display:block; margin-bottom:8px;"></i>
+                <p style="color:#9ca3af; font-size:13px; margin:0;">No enrollment data available for this period.</p>
+            </div>
+        </div>
+        {{/has_funnel}}
+
+        {{! Compliance Heat Map }}
+        {{#has_heatmap}}
+        <div class="airpay-analytics__card">
+            <h3><i class="fa fa-th"></i> Compliance by Department</h3>
+            <div class="airpay-analytics__heatmap">
+                {{#heatmap}}
+                <div class="airpay-analytics__heat-row">
+                    <a href="{{drilldown_url}}" class="airpay-analytics__heat-dept" style="text-decoration:none; color:inherit;" title="Click to view users">{{department}} <i class="fa fa-external-link" style="font-size:10px; opacity:0.5;"></i></a>
+                    <span class="airpay-analytics__heat-users">{{users}} users</span>
+                    <div class="airpay-analytics__heat-bar-wrap">
+                        <div class="airpay-analytics__heat-bar airpay-analytics__heat-bar--{{rag}}" style="width: {{rate}}%;"></div>
+                    </div>
+                    <span class="airpay-analytics__heat-pct {{#is_red}}text-danger{{/is_red}} {{#is_amber}}text-warning{{/is_amber}} {{#is_green}}text-success{{/is_green}}">{{rate}}%</span>
+                </div>
+                {{/heatmap}}
+            </div>
+        </div>
+        {{/has_heatmap}}
+    </div>
+
+    {{! Course Effectiveness }}
+    {{#has_courses}}
+    <div class="airpay-analytics__card">
+        <h3><i class="fa fa-bar-chart"></i> Course Effectiveness (Top 10)</h3>
+        <table class="airpay-analytics__table">
+            <thead>
+                <tr><th>Course</th><th>Enrolled</th><th>Completed</th><th>Rate</th></tr>
+            </thead>
+            <tbody>
+                {{#top_courses}}
+                <tr>
+                    <td title="{{fullname}}"><a href="{{course_drilldown_url}}" style="color:inherit; text-decoration:none;">{{shortname}} <i class="fa fa-external-link" style="font-size:10px; opacity:0.4;"></i></a></td>
+                    <td>{{enrolled}}</td>
+                    <td>{{completed}}</td>
+                    <td><strong>{{completion_rate}}%</strong></td>
+                </tr>
+                {{/top_courses}}
+            </tbody>
+        </table>
+    </div>
+    {{/has_courses}}
+</div>

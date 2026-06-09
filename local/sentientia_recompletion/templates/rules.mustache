@@ -1,0 +1,70 @@
+{{!
+    @template local_sentientia_recompletion/rules
+}}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2 class="mb-0">{{#str}}pluginname, local_sentientia_recompletion{{/str}}</h2>
+            <div class="small text-muted">{{ rule_count }} rules</div>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{{ history_url }}}" class="btn btn-outline-secondary btn-sm">
+                <i class="fa fa-history"></i> History
+            </a>
+            <a href="{{{ bulk_reset_url }}}" class="btn btn-outline-warning btn-sm">
+                <i class="fa fa-undo"></i> Bulk reset
+            </a>
+            {{#can_manage}}
+            <a href="{{{ new_url }}}" class="btn btn-primary btn-sm">
+                <i class="fa fa-plus"></i> New rule
+            </a>
+            {{/can_manage}}
+        </div>
+    </div>
+
+    {{#has_rules}}
+    <table class="table">
+        <thead><tr>
+            <th>Name</th>
+            <th>Course</th>
+            <th>Period</th>
+            <th>Trigger</th>
+            <th>Last run</th>
+            <th>Last reset count</th>
+            <th>Status</th>
+            <th></th>
+        </tr></thead>
+        <tbody>
+        {{#rules}}
+        <tr>
+            <td><strong>{{ name }}</strong></td>
+            <td>{{ course }}</td>
+            <td><span class="badge bg-secondary">{{ period_days }}d</span></td>
+            <td><code class="small">{{ trigger }}</code></td>
+            <td class="small">{{ last_run_at }}</td>
+            <td>{{ last_run_resets }}</td>
+            <td>
+                {{#enabled}}<span class="badge bg-success">Enabled</span>{{/enabled}}
+                {{^enabled}}<span class="badge bg-secondary">Disabled</span>{{/enabled}}
+            </td>
+            <td>
+                {{#edit_url}}
+                <a href="{{{ edit_url }}}" class="btn btn-sm btn-link">
+                    <i class="fa fa-pencil"></i>
+                </a>
+                {{/edit_url}}
+            </td>
+        </tr>
+        {{/rules}}
+        </tbody>
+    </table>
+    {{/has_rules}}
+    {{^has_rules}}
+    <div class="alert alert-info">
+        {{#str}}rules_empty, local_sentientia_recompletion{{/str}}
+        {{#can_manage}}
+        <a href="{{{ new_url }}}" class="alert-link">Create the first one →</a>
+        {{/can_manage}}
+    </div>
+    {{/has_rules}}
+</div>

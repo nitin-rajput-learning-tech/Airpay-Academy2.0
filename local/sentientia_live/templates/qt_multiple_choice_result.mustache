@@ -1,0 +1,89 @@
+{{!
+    @template local_sentientia_live/qt_multiple_choice_result
+
+    Trainer-facing live bar chart for a multiple-choice slide —
+    Phase E.4. Same DOM shape as result_bar_chart so the existing
+    chart_updater AMD module finds .sentientia-bar-row[data-option-index]
+    and mutates style.width + textContent on each SSE response_added
+    event — no page reload required.
+
+    Context (built by classes/question_types/multiple_choice.php::tally
+    + the caller that adapts it to bar widths):
+      slideid          int
+      sessionid        int
+      total_responses  int
+      has_responses    bool
+      show_correct     bool  (reveal correct row highlight to audience)
+      options[]        = { index, label, count, percent, bar_percent,
+                            is_correct, show_correct_badge }
+
+    P0 #8 — outer container is role="region" + an sr-only
+    aria-live="polite" tally summary that chart_updater rewrites on
+    each event (matches result_panel.mustache contract).
+}}
+<div class="sentientia-results-panel sentientia-mc-result my-3"
+     data-slideid="{{slideid}}"
+     data-sessionid="{{sessionid}}"
+     data-type="multichoice"
+     data-refresh-on-response="1"
+     data-a11y-tally-suffix="{{#str}}live_results_total_suffix, local_sentientia_live{{/str}}"
+     role="region"
+     aria-label="{{#str}}a11y_results_region_label, local_sentientia_live{{/str}}">
+
+  {{! sr-only aria-live region — chart_updater.js writes the
+      "<count> responses" string here on each response_added event. }}
+  <span class="sr-only"
+        aria-live="polite"
+        aria-atomic="true"
+        data-live-tally-summary></span>
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="h5 mb-0">
+      {{#str}}live_results_heading, local_sentientia_live{{/str}}
+    </h4>
+    <span class="airpay-badge airpay-badge--secondary badge bg-secondary">
+      <span class="sentientia-results-total">{{total_responses}}</span>
+      {{#str}}live_results_total_suffix, local_sentientia_live{{/str}}
+    </span>
+  </div>
+
+  {{^has_responses}}
+    <p class="text-muted text-center py-4">
+      <em>{{#str}}live_results_empty, local_sentientia_live{{/str}}</em>
+    </p>
+  {{/has_responses}}
+
+  {{#has_responses}}
+    <div class="d-flex flex-column gap-2"
+         role="img"
+         aria-label="{{#str}}a11y_results_bar_chart_label, local_sentientia_live{{/str}}">
+      {{#options}}
+        <div class="sentientia-bar-row d-flex align-items-center gap-2{{#show_correct_badge}} border border-success rounded p-2{{/show_correct_badge}}"
+             data-option-index="{{index}}">
+          <div class="flex-grow-1">
+            <div class="d-flex justify-content-between">
+              <span class="fw-bold">
+                {{label}}
+                {{#show_correct_badge}}
+                  <span class="airpay-badge airpay-badge--success badge bg-success ms-2">
+                    <i class="fa fa-check me-1" aria-hidden="true"></i>
+                    {{#str}}live_results_correct_label, local_sentientia_live{{/str}}
+                  </span>
+                {{/show_correct_badge}}
+              </span>
+              <span class="text-muted">
+                <span class="sentientia-bar-count">{{count}}</span>
+                (<span class="sentientia-bar-percent">{{percent}}</span>%)
+              </span>
+            </div>
+            <div class="bg-light rounded mt-1" style="height: 12px;">
+              <div class="sentientia-bar {{#show_correct_badge}}bg-success{{/show_correct_badge}}{{^show_correct_badge}}bg-primary{{/show_correct_badge}} rounded"
+                   style="width: {{bar_percent}}%; height: 100%; transition: width 0.3s ease;">
+              </div>
+            </div>
+          </div>
+        </div>
+      {{/options}}
+    </div>
+  {{/has_responses}}
+</div>

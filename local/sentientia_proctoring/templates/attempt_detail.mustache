@@ -1,0 +1,105 @@
+{{!
+    @template local_sentientia_proctoring/attempt_detail
+}}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Attempt #{{ sessionid }}</h2>
+        <span class="badge bg-secondary">{{ status }}</span>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small text-uppercase mb-1">Candidate</div>
+                    <div class="fw-semibold">{{ user_name }}</div>
+                    <div class="small text-muted">{{ user_email }}</div>
+                    <hr/>
+                    <div class="text-muted small text-uppercase mb-1">Quiz</div>
+                    <div class="fw-semibold">{{ quiz_name }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small text-uppercase mb-1">Risk score</div>
+                    <div style="font-size: 2.5rem; font-weight: 800;">{{ risk_score }}</div>
+                    <div>AI verdict: <strong>{{ auto_decision }}</strong></div>
+                    <div>Human verdict: <strong>{{ human_decision }}</strong></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small text-uppercase mb-1">Timing</div>
+                    <div>Started: <strong>{{ started_at }}</strong></div>
+                    <div>Finished: <strong>{{ finished_at }}</strong></div>
+                    <div class="mt-2">Events: <strong>{{ events_count }}</strong></div>
+                    <div>Recordings: <strong>{{ recordings_count }}</strong> chunks</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{#identity_done}}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent"><strong>Identity verification</strong></div>
+        <div class="card-body">
+            Provider: <strong>{{ identity.provider }}</strong> ·
+            Score: <strong>{{ identity.match_score }}%</strong> ·
+            {{#identity.passed}}<span class="badge bg-success">Passed</span>{{/identity.passed}}
+            {{^identity.passed}}<span class="badge bg-danger">Failed</span>{{/identity.passed}}
+        </div>
+    </div>
+    {{/identity_done}}
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent"><strong>Event timeline ({{ events_count }})</strong></div>
+        <div class="card-body p-0">
+            <table class="table table-sm mb-0">
+                <thead>
+                    <tr>
+                        <th style="width:10%;">Time</th>
+                        <th style="width:60%;">Event</th>
+                        <th>Severity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {{#events}}
+                <tr>
+                    <td><code>{{ time }}</code></td>
+                    <td>{{ event_type }}</td>
+                    <td><span class="{{ severity_class }}">{{ severity }}</span></td>
+                </tr>
+                {{/events}}
+                {{^events}}
+                <tr><td colspan="3" class="text-muted text-center py-3">No events captured.</td></tr>
+                {{/events}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {{#can_review}}
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-success" data-action="review-decision"
+                data-sessionid="{{ sessionid }}" data-decision="clean">
+            <i class="fa fa-check"></i> Mark clean
+        </button>
+        <button class="btn btn-outline-warning" data-action="review-decision"
+                data-sessionid="{{ sessionid }}" data-decision="warn">
+            <i class="fa fa-exclamation"></i> Warning only
+        </button>
+        <button class="btn btn-outline-danger" data-action="review-decision"
+                data-sessionid="{{ sessionid }}" data-decision="fail">
+            <i class="fa fa-times"></i> Fail attempt
+        </button>
+    </div>
+    {{/can_review}}
+</div>
+
+{{#js}}
+require(['local_sentientia_proctoring/review'], function(R) { R.init(); });
+{{/js}}

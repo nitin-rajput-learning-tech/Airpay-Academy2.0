@@ -1,0 +1,109 @@
+/* ═══════════════════════════════════════════════════════
+   Airpay Email Templates — Management Panel Styles
+   Applied globally when the plugin is installed.
+   ═══════════════════════════════════════════════════════ */
+
+/* Template editor split view */
+.ap-editor-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    min-height: 500px;
+}
+.ap-editor-left { display: flex; flex-direction: column; }
+.ap-editor-right {
+    background: #e2e6ef;
+    border-radius: 12px;
+    padding: 16px;
+    overflow: auto;
+}
+.ap-editor-left textarea {
+    flex: 1;
+    min-height: 300px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 20px;
+    padding: 12px;
+    border: 1px solid #e2e6ef;
+    border-radius: 8px;
+    resize: vertical;
+}
+.ap-editor-left input[type="text"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #e2e6ef;
+    border-radius: 8px;
+    font-family: 'Montserrat', Arial, sans-serif;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+.ap-editor-preview-frame {
+    width: 100%;
+    border: none;
+    min-height: 500px;
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Placeholder toolbar */
+.ap-placeholder-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 8px 0;
+    margin-bottom: 8px;
+}
+.ap-placeholder-btn {
+    display: inline-block;
+    padding: 3px 8px;
+    font-size: 11px;
+    font-family: 'Courier New', monospace;
+    background: #f0f2f7;
+    border: 1px solid #e2e6ef;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #5a6070;
+    transition: all 0.15s;
+}
+.ap-placeholder-btn:hover {
+    background: #e8f2f9;
+    border-color: #0066A7;
+    color: #0066A7;
+}
+
+/* Editor toolbar */
+.ap-editor-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #e2e6ef;
+    margin-bottom: 12px;
+}
+
+/* Responsive: stack editor on mobile */
+@media (max-width: 992px) {
+    .ap-editor-split {
+        grid-template-columns: 1fr;
+    }
+    .ap-editor-right {
+        min-height: 400px;
+        max-height: 300px; /* B11: Prevent iframe overflow on mobile */
+    }
+}
+
+/* ═══ Dark Mode ═══ */
+body.dark-mode .ap-email-manage { background: #14161e; }
+body.dark-mode .ap-email-manage__tabs .nav-link { color: #9ca3b4; background: #1a1d27; }
+body.dark-mode .ap-email-manage__tabs .nav-link.active { background: #0066A7; color: #fff; }
+body.dark-mode .ap-email-manage__content { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .ap-editor-panel { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .ap-editor-sidebar { background: #14161e; border-color: #2d3140; }
+body.dark-mode .ap-editor-sidebar .list-group-item { background: #1a1d27; border-color: #2d3140; color: #e8eaed; }
+body.dark-mode .ap-editor-sidebar .list-group-item:hover { background: #22252f; }
+body.dark-mode .ap-editor-sidebar .list-group-item.active { background: #0d2540; color: #60a5fa; }
+body.dark-mode .ap-preview-header { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .ap-preview-header select { background: #22252f; border-color: #2d3140; color: #e8eaed; }
+body.dark-mode .ap-email-log-table th { background: #14161e; color: #9ca3b4; border-color: #2d3140; }
+body.dark-mode .ap-email-log-table td { color: #c4cad8; border-color: #232733; }

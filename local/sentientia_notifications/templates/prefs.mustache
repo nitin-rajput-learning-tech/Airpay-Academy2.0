@@ -1,0 +1,126 @@
+{{!
+   User-facing notification preferences page.
+
+   Context vars:
+     sesskey            string
+     channel_inapp      bool
+     channel_email      bool
+     channel_push       bool
+     digest_options[]   { value, label, selected }
+     ruletype_options[] { key, label, disabled }
+     hour_options[]     { value, label, selected_start, selected_end }
+     has_quiet_hours    bool
+}}
+<div class="ap-card mb-3" data-region="airpay-prefs">
+  <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+    <div>
+      <h2 class="h4 m-0">Notification preferences</h2>
+      <p class="text-muted small mb-0">Control how Airpay Academy reaches you.</p>
+    </div>
+  </div>
+
+  <form id="ap-notif-prefs-form" class="ap-prefs-form">
+
+    <fieldset class="mb-4">
+      <legend class="h6 text-uppercase text-muted mb-2">Channels</legend>
+      <div class="form-check form-switch mb-1">
+        <input class="form-check-input" type="checkbox"
+               id="ap-pref-inapp" name="channel_inapp"
+               {{# channel_inapp }}checked{{/ channel_inapp }}>
+        <label class="form-check-label" for="ap-pref-inapp">
+          In-app messages
+        </label>
+      </div>
+      <div class="form-check form-switch mb-1">
+        <input class="form-check-input" type="checkbox"
+               id="ap-pref-email" name="channel_email"
+               {{# channel_email }}checked{{/ channel_email }}>
+        <label class="form-check-label" for="ap-pref-email">
+          Email messages
+        </label>
+      </div>
+      <div class="form-check form-switch mb-1">
+        <input class="form-check-input" type="checkbox"
+               id="ap-pref-push" name="channel_push"
+               {{# channel_push }}checked{{/ channel_push }}>
+        <label class="form-check-label" for="ap-pref-push">
+          Push notifications
+        </label>
+      </div>
+    </fieldset>
+
+    <fieldset class="mb-4">
+      <legend class="h6 text-uppercase text-muted mb-2">Digest</legend>
+      <label for="ap-pref-digest" class="form-label small mb-1">Frequency</label>
+      <select id="ap-pref-digest" name="digest_frequency"
+              class="form-select form-select-sm" style="max-width:240px;">
+        {{# digest_options }}
+          <option value="{{ value }}" {{# selected }}selected{{/ selected }}>
+            {{ label }}
+          </option>
+        {{/ digest_options }}
+      </select>
+    </fieldset>
+
+    <fieldset class="mb-4">
+      <legend class="h6 text-uppercase text-muted mb-2">Quiet hours</legend>
+      <p class="small text-muted mb-2">
+        Optionally pause notifications during a daily window
+        (e.g. 22:00–07:00).
+      </p>
+      <div class="row g-2 align-items-center">
+        <div class="col-auto">
+          <label for="ap-pref-quiet-start" class="form-label small mb-1">From</label>
+          <select id="ap-pref-quiet-start" name="quiet_hours_start"
+                  class="form-select form-select-sm">
+            {{# hour_options }}
+              <option value="{{ value }}" {{# selected_start }}selected{{/ selected_start }}>
+                {{ label }}
+              </option>
+            {{/ hour_options }}
+          </select>
+        </div>
+        <div class="col-auto">
+          <label for="ap-pref-quiet-end" class="form-label small mb-1">To</label>
+          <select id="ap-pref-quiet-end" name="quiet_hours_end"
+                  class="form-select form-select-sm">
+            {{# hour_options }}
+              <option value="{{ value }}" {{# selected_end }}selected{{/ selected_end }}>
+                {{ label }}
+              </option>
+            {{/ hour_options }}
+          </select>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="mb-4">
+      <legend class="h6 text-uppercase text-muted mb-2">Notification types</legend>
+      <p class="small text-muted mb-2">
+        Tick a box to silence a specific notification category.
+      </p>
+      <div class="row g-2">
+        {{# ruletype_options }}
+          <div class="col-md-6">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox"
+                     id="ap-rt-{{ key }}"
+                     data-region="ap-prefs-ruletype"
+                     value="{{ key }}"
+                     {{# disabled }}checked{{/ disabled }}>
+              <label class="form-check-label" for="ap-rt-{{ key }}">
+                Silence: {{ label }}
+              </label>
+            </div>
+          </div>
+        {{/ ruletype_options }}
+      </div>
+    </fieldset>
+
+    <div class="mt-3">
+      <button type="submit" class="btn btn-primary">
+        <i class="fa fa-save me-1"></i>Save preferences
+      </button>
+    </div>
+  </form>
+</div>

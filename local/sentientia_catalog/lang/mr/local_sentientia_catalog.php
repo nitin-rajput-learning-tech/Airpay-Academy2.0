@@ -1,0 +1,29 @@
+<?php
+defined('MOODLE_INTERNAL') || die();
+
+$string['pluginname'] = 'एअरपे कोर्स कॅटलॉग';
+$string['catalog'] = 'कोर्स कॅटलॉग';
+$string['privacy:metadata'] = 'कॅटलॉग प्लगइन वैयक्तिक डेटा संग्रहित करत नाही.';
+$string['search'] = 'कोर्स, विषय, कौशल्ये शोधा...';
+$string['continuelearning'] = 'शिकणे सुरू ठेवा';
+$string['trending'] = 'तुमच्या विभागात ट्रेंडिंग';
+$string['newthismonth'] = 'या महिन्यात नवीन';
+$string['browsecategory'] = 'श्रेणीनुसार ब्राउझ करा';
+$string['allcourses'] = 'सर्व कोर्स';
+$string['newest'] = 'नवीनतम';
+$string['popular'] = 'लोकप्रिय';
+$string['atoz'] = 'अ-ज्ञ';
+$string['nocourses'] = 'कोणतेही कोर्स सापडले नाहीत.';
+$string['loadmore'] = 'अधिक लोड करा';
+$string['viewdetails'] = 'तपशील पहा';
+$string['enroll'] = 'नोंदणी करा';
+$string['continue'] = 'सुरू ठेवा';
+
+// Sprint C (2026-05-13) — cross-tenant provenance badge.
+$string['provenance_provided_by'] = '{$a} द्वारे प्रदान केले';
+
+// QA-walk P1 (2026-05-29) — अंतर्गत टेनंटसाठी एक-क्लिक विनामूल्य नोंदणी.
+$string['enrol_now_free'] = 'आता नोंदणी करा — विनामूल्य';
+$string['enrolled_welcome'] = 'तुमची नोंदणी झाली — अभ्यासक्रमात स्वागत आहे!';
+$string['enrolled_count'] = '{$a} विनामूल्य अभ्यासक्रम(ांमध्ये) नोंदणी झाली!';
+$string['enrolled_none'] = 'आम्ही तुमची विनामूल्य नोंदणी पूर्ण करू शकलो नाही. कृपया पुन्हा प्रयत्न करा किंवा तुमच्या प्रशासकाशी संपर्क साधा.';

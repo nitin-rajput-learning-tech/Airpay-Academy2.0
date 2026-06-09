@@ -1,0 +1,202 @@
+// Copyright 2026 Airpay Payment Services
+// License http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+
+/**
+ * iOS install hint — Phase B.3.d (ES6 source for grunt).
+ *
+ * See amd/build/ios_install_hint.min.js for the bundled ES5 named-define
+ * version (which is what Moodle actually serves until grunt is wired up).
+ *
+ * Built with createElement + textContent only — never innerHTML — so the
+ * passed-in labels are treated as plain text and cannot inject markup.
+ *
+ * @module     local_sentientia_pwa/ios_install_hint
+ * @copyright  2026 Airpay Payment Services
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+const DISMISS_KEY = 'sentientia_pwa_ios_hint_dismissed';
+const BANNER_ID = 'sentientia-pwa-ios-hint';
+
+const isIosSafari = () => {
+    const ua = window.navigator.userAgent || '';
+    const isIos = /iPhone|iPad|iPod/i.test(ua) ||
+        (/Macintosh/i.test(ua) && 'ontouchend' in document);
+    if (!isIos) {
+        return false;
+    }
+    if (/CriOS|FxiOS|EdgiOS|OPiOS/i.test(ua)) {
+        return false;
+    }
+    return /Safari/i.test(ua);
+};
+
+const isStandalone = () =>
+    (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+    || window.navigator.standalone === true;
+
+const wasDismissed = () => {
+    try {
+        return window.localStorage.getItem(DISMISS_KEY) === '1';
+    } catch {
+        return false;
+    }
+};
+
+const markDismissed = () => {
+    try {
+        window.localStorage.setItem(DISMISS_KEY, '1');
+    } catch {
+        // localStorage disabled in private mode — silent fail
+    }
+};
+
+const createTextNode = (tag, text, className = null) => {
+    const el = document.createElement(tag);
+    el.textContent = text;  // SAFE — never use innerHTML
+    if (className) {
+        el.className = className;
+    }
+    return el;
+};
+
+/**
+ * Phase D.1.c upgrade — guided 3-step modal layout with an inline
+ * Share-icon SVG so iOS users immediately recognise where to tap.
+ * Still pure DOM API (createElement + textContent + .appendChild) —
+ * no innerHTML anywhere. The SVG is built with the SVG-namespace
+ * createElementNS so user-supplied labels never become markup.
+ */
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+const buildShareIcon = () => {
+    // Inline iOS share-icon glyph — drawn as SVG paths so it scales
+    // without needing a separate asset. Path data is the standard
+    // outline-arrow-up-from-box shape iOS Safari uses.
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('width', '20');
+    svg.setAttribute('height', '20');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '2');
+    svg.setAttribute('stroke-linecap', 'round');
+    svg.setAttribute('stroke-linejoin', 'round');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.style.verticalAlign = 'text-bottom';
+    svg.style.marginRight = '0.25em';
+    [
+        ['path', 'M12 16V3'],
+        ['path', 'M7 8l5-5 5 5'],
+        ['path', 'M5 14v6a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-6'],
+    ].forEach(([tag, d]) => {
+        const p = document.createElementNS(SVG_NS, tag);
+        p.setAttribute('d', d);
+        svg.appendChild(p);
+    });
+    return svg;
+};
+
+const buildStepRow = (n, text) => {
+    const row = document.createElement('li');
+    row.className = 'sentientia-ios-step d-flex align-items-start gap-2 mb-2';
+
+    const num = document.createElement('span');
+    num.className = 'badge bg-primary rounded-circle d-inline-flex align-items-center justify-content-center';
+    num.style.minWidth = '1.6em';
+    num.style.height = '1.6em';
+    num.style.fontSize = '0.85em';
+    num.textContent = String(n);
+
+    const txt = document.createElement('span');
+    txt.className = 'flex-grow-1';
+    txt.textContent = text;
+
+    row.appendChild(num);
+    row.appendChild(txt);
+
+    // Decorative share-icon on step 1 to anchor the visual.
+    if (n === 1) {
+        const hint = document.createElement('span');
+        hint.className = 'text-muted small ms-1';
+        hint.appendChild(buildShareIcon());
+        const inline = document.createElement('em');
+        inline.textContent = ' (share icon)';
+        hint.appendChild(inline);
+        row.appendChild(hint);
+    }
+    return row;
+};
+
+const buildBanner = (labels) => {
+    const div = document.createElement('div');
+    div.id = BANNER_ID;
+    div.className = 'card border-info shadow-sm mb-3 sentientia-ios-hint';
+    div.setAttribute('role', 'region');
+    div.setAttribute('aria-label', labels.title);
+
+    const header = document.createElement('div');
+    header.className = 'card-header bg-info bg-opacity-10 d-flex justify-content-between align-items-center';
+    const title = document.createElement('strong');
+    title.appendChild(buildShareIcon());
+    title.appendChild(document.createTextNode(labels.title));
+    header.appendChild(title);
+
+    const dismissBtn = document.createElement('button');
+    dismissBtn.type = 'button';
+    dismissBtn.className = 'btn-close';
+    dismissBtn.setAttribute('aria-label', labels.dismiss || 'Dismiss');
+    dismissBtn.addEventListener('click', () => {
+        markDismissed();
+        div.remove();
+    });
+    header.appendChild(dismissBtn);
+    div.appendChild(header);
+
+    const body = document.createElement('div');
+    body.className = 'card-body py-3';
+    body.appendChild(createTextNode('p', labels.body, 'mb-3 text-muted small'));
+
+    const ol = document.createElement('ol');
+    ol.className = 'list-unstyled mb-3';
+    ol.appendChild(buildStepRow(1, labels.step1));
+    ol.appendChild(buildStepRow(2, labels.step2));
+    ol.appendChild(buildStepRow(3, labels.step3));
+    body.appendChild(ol);
+
+    // "Got it — I'll install" CTA — same dismiss action, but clearer UX.
+    const gotItBtn = document.createElement('button');
+    gotItBtn.type = 'button';
+    gotItBtn.className = 'btn btn-primary btn-sm';
+    gotItBtn.textContent = labels.gotit || 'Got it';
+    gotItBtn.addEventListener('click', () => {
+        markDismissed();
+        div.remove();
+    });
+    body.appendChild(gotItBtn);
+
+    div.appendChild(body);
+    return div;
+};
+
+export const init = (labels = null) => {
+    if (!isIosSafari() || isStandalone() || wasDismissed()) {
+        return;
+    }
+    labels = labels || {
+        title: 'Install Sentientia LMS to enable push notifications',
+        body: 'On iOS Safari, push notifications only work when this site is added to your home screen:',
+        step1: 'Tap the Share button at the bottom of the screen.',
+        step2: 'Scroll down and choose "Add to Home Screen".',
+        step3: 'Open Sentientia LMS from your home screen and try Enable notifications again.',
+        dismiss: 'Dismiss',
+    };
+    const anchor = document.querySelector('.sentientia-pwa-subscribe')
+        || document.querySelector('#region-main')
+        || document.querySelector('main')
+        || document.body;
+    if (!anchor) {
+        return;
+    }
+    anchor.parentNode.insertBefore(buildBanner(labels), anchor);
+};

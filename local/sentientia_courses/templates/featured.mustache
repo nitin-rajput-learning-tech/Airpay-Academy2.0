@@ -1,0 +1,111 @@
+{{!
+   Featured courses admin curation page.
+
+   Context vars:
+     sesskey
+     tenant_options[]  { value, label, selected }
+     course_options[]  { id, fullname, shortname }
+     has_courses       bool
+     rows[]            { id, courseid, costcenterid, sort_order, label,
+                          fullname, shortname, visible }
+     has_rows          bool
+     manage_url        string
+}}
+<div class="ap-card mb-3" data-region="ap-featured-admin">
+  <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+    <div>
+      <a href="{{ manage_url }}" class="text-muted text-decoration-none small">
+        <i class="fa fa-chevron-left me-1"></i>Manage courses
+      </a>
+      <h2 class="h4 m-0 mt-1">Featured courses</h2>
+      <p class="text-muted small mb-0">
+        Pin courses to the learner dashboard. Empty list = no widget shown.
+      </p>
+    </div>
+  </div>
+
+  <form id="ap-featured-add" class="row g-2 align-items-end mb-4">
+    <div class="col-md-5">
+      <label for="ap-featured-course" class="form-label small mb-1">Course</label>
+      <select id="ap-featured-course" class="form-select form-select-sm">
+        <option value="">— Select a course —</option>
+        {{# course_options }}
+          <option value="{{ id }}">{{ fullname }} ({{ shortname }})</option>
+        {{/ course_options }}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label for="ap-featured-tenant" class="form-label small mb-1">Tenant</label>
+      <select id="ap-featured-tenant" class="form-select form-select-sm">
+        {{# tenant_options }}
+          <option value="{{ value }}" {{# selected }}selected{{/ selected }}>{{ label }}</option>
+        {{/ tenant_options }}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label for="ap-featured-label" class="form-label small mb-1">Label (optional)</label>
+      <input type="text" id="ap-featured-label" class="form-control form-control-sm"
+             maxlength="100" placeholder="e.g. New this month">
+    </div>
+    <div class="col-md-1 d-grid">
+      <button type="submit" class="btn btn-sm btn-primary"
+              data-action="add-featured"
+              aria-label="Add featured course mapping">
+        <i class="fa fa-plus" aria-hidden="true"></i>
+      </button>
+    </div>
+  </form>
+
+  <div data-region="ap-featured-rows">
+    {{# has_rows }}
+    <table class="table table-sm align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th style="width:60px;">Order</th>
+          <th>Course</th>
+          <th style="width:140px;">Tenant</th>
+          <th>Label</th>
+          <th style="width:80px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody data-region="ap-featured-tbody">
+        {{# rows }}
+        <tr data-rowid="{{ id }}">
+          <td>{{ sort_order }}</td>
+          <td>
+            <div class="fw-semibold">{{ fullname }}</div>
+            <code class="small text-muted">{{ shortname }}</code>
+            {{^ visible }}
+            <span class="badge"
+                  style="background-color:#5a6070;color:#fff;">hidden</span>
+            {{/ visible }}
+          </td>
+          <td>
+            {{# costcenterid }}<code>tenant {{ costcenterid }}</code>{{/ costcenterid }}
+            {{^ costcenterid }}<em class="small text-muted">all tenants</em>{{/ costcenterid }}
+          </td>
+          <td>
+            {{# label }}<span class="badge bg-secondary">{{ label }}</span>{{/ label }}
+            {{^ label }}<span class="text-muted small">—</span>{{/ label }}
+          </td>
+          <td>
+            <button type="button" class="btn btn-sm btn-link text-danger p-1"
+                    data-action="remove-featured"
+                    data-rowid="{{ id }}"
+                    data-course="{{ fullname }}"
+                    aria-label="Remove {{ fullname }} from featured">
+              <i class="fa fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+        {{/ rows }}
+      </tbody>
+    </table>
+    {{/ has_rows }}
+    {{^ has_rows }}
+    <div class="alert alert-secondary mb-0">
+      No featured courses pinned yet. Use the form above to add one.
+    </div>
+    {{/ has_rows }}
+  </div>
+</div>

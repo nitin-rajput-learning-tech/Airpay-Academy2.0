@@ -1,0 +1,408 @@
+<div class="ap-profile">
+    <div class="ap-profile__header">
+        <div class="ap-profile__avatar-section">
+            <div class="ap-profile__avatar">{{{userimage}}}</div>
+            <div class="ap-profile__actions">
+                {{#capabilityedit}}
+                <a href="{{{ photo_url }}}"
+                   class="ap-profile__edit-btn" title="Change photo">
+                    <i class="fa fa-camera"></i>
+                </a>
+                <a href="{{{editprofile}}}" class="ap-profile__edit-btn" title="{{#str}}editprofile, local_sentientia_users{{/str}}">
+                    <i class="fa fa-pencil"></i>
+                </a>
+                {{/capabilityedit}}
+                {{#loginasurl}}
+                <a href="{{{loginasurl}}}" class="ap-profile__edit-btn" title="{{#str}}loginas{{/str}}">
+                    <i class="fa fa-sign-in"></i>
+                </a>
+                {{/loginasurl}}
+            </div>
+        </div>
+        <div class="ap-profile__info">
+            <h1 class="ap-profile__name">{{prefix}}{{username}}</h1>
+            <p class="ap-profile__email"><i class="fa fa-envelope"></i> {{user_email}}</p>
+            {{! ADR-017 Q4 — user_type badge (read-only, profile-page only). }}
+            {{#user_type_label}}
+            <p class="ap-profile__user-type-badge">
+                {{#is_employee}}<i class="fa fa-id-card"></i>{{/is_employee}}
+                {{#is_consumer}}<i class="fa fa-graduation-cap"></i>{{/is_consumer}}
+                {{#is_partner_employee}}<i class="fa fa-handshake-o"></i>{{/is_partner_employee}}
+                {{#is_operator}}<i class="fa fa-shield"></i>{{/is_operator}}
+                <span class="ap-profile__user-type-label">{{user_type_label}}</span>
+            </p>
+            {{/user_type_label}}
+            {{#designation}}<p class="ap-profile__role"><i class="fa fa-briefcase"></i> {{designation}}</p>{{/designation}}
+        </div>
+        <div class="ap-profile__stats">
+            {{#existingplugin}}
+            <div class="ap-profile__stat">
+                <span class="ap-profile__stat-num">{{userenrolledcount}}</span>
+                <span class="ap-profile__stat-label">{{string}}</span>
+            </div>
+            {{/existingplugin}}
+        </div>
+    </div>
+
+    {{#ap_canmanage}}
+    {{! Account-management actions (2026-06-01) — edit own profile / change password / preferences. }}
+    <div class="ap-profile__account-actions d-flex flex-wrap gap-2 mt-3 mb-2">
+        <a href="{{{ap_editurl}}}" class="btn btn-primary">
+            <i class="fa fa-pencil" aria-hidden="true"></i> {{#str}}editprofile, local_sentientia_users{{/str}}
+        </a>
+        {{#ap_isown}}
+        <a href="{{{ap_passwordurl}}}" class="btn btn-outline-secondary">
+            <i class="fa fa-key" aria-hidden="true"></i> {{#str}}changepassword{{/str}}
+        </a>
+        {{/ap_isown}}
+        <a href="{{{ap_prefsurl}}}" class="btn btn-outline-secondary">
+            <i class="fa fa-cog" aria-hidden="true"></i> {{#str}}preferences{{/str}}
+        </a>
+    </div>
+    {{/ap_canmanage}}
+
+    {{! Gamification + Skills Summary Row }}
+    <div class="ap-profile__enrichment">
+        {{#ap_gamification}}
+        <div class="ap-profile__enrich-card">
+            <div class="ap-profile__enrich-icon" style="background: {{level_color}}20; color: {{level_color}};">
+                <i class="fa fa-trophy"></i>
+            </div>
+            <div class="ap-profile__enrich-data">
+                <strong>{{total_points}} pts</strong>
+                <small>{{level_name}} · Rank #{{rank}}</small>
+            </div>
+        </div>
+        <div class="ap-profile__enrich-card">
+            <div class="ap-profile__enrich-icon" style="background: #fef3c720; color: #d97706;">
+                <i class="fa fa-certificate"></i>
+            </div>
+            <div class="ap-profile__enrich-data">
+                <strong>{{badge_count}} badges</strong>
+                <small>{{#has_streak}}{{current_streak}} day streak{{/has_streak}}{{^has_streak}}Start a streak!{{/has_streak}}</small>
+            </div>
+        </div>
+        {{/ap_gamification}}
+        {{#ap_skills_summary}}
+        <div class="ap-profile__enrich-card">
+            <div class="ap-profile__enrich-icon" style="background: #e8f2f920; color: #0066A7;">
+                <i class="fa fa-line-chart"></i>
+            </div>
+            <div class="ap-profile__enrich-data">
+                <strong>{{percentage}}% skill readiness</strong>
+                <small>{{met}}/{{total}} skills met</small>
+            </div>
+        </div>
+        {{/ap_skills_summary}}
+    </div>
+
+    {{! Earned Badges Row }}
+    {{#ap_gamification}}{{#has_badges}}
+    <div class="ap-profile__badges">
+        {{#badges}}
+        <div class="ap-profile__badge" title="{{name}}: {{description}}">
+            <i class="fa {{icon}}"></i>
+        </div>
+        {{/badges}}
+    </div>
+    {{/has_badges}}{{/ap_gamification}}
+</div>
+
+{{!
+    Profile detail grid — C1.3.b polymorphism (2026-05-28). Renders the
+    right shape per user_type:
+      - employee + partner_employee: org + department + manager + employee ID
+      - consumer: interests + weekly goal + courses enrolled + consents
+      - operator: operator role + contact + on-call rotation
+    All sections share location/phone/join-date so the lower row stays
+    consistent across types.
+}}
+<div class="ap-profile__details">
+
+    {{! ── Employee / partner_employee — org-tree shape ───────────────── }}
+    {{#is_employee}}
+    <div class="ap-profile__detail-grid">
+        <div class="ap-profile__detail"><label>Organisation</label><span>{{organisation}}</span></div>
+        <div class="ap-profile__detail"><label>Department</label><span>{{department}}</span></div>
+        <div class="ap-profile__detail"><label>Sub-department</label><span>{{subdepartment}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}reportingto, local_sentientia_users{{/str}}</label><span>{{supervisorname}}</span></div>
+        <div class="ap-profile__detail"><label>Employee ID</label><span>{{empid}}</span></div>
+        <div class="ap-profile__detail"><label>Location</label><span>{{location}}</span></div>
+        <div class="ap-profile__detail"><label>Phone</label><span>{{phnumber}}</span></div>
+        <div class="ap-profile__detail"><label>Join Date</label><span>{{joindate}}</span></div>
+    </div>
+    {{/is_employee}}
+
+    {{#is_partner_employee}}
+    <div class="ap-profile__detail-grid">
+        <div class="ap-profile__detail"><label>{{#str}}profile_field_customer_name, local_sentientia_platform{{/str}}</label><span>{{user_type_extras.customer_name}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}profile_field_partner_department, local_sentientia_platform{{/str}}</label><span>{{user_type_extras.partner_department}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}profile_field_partner_job_title, local_sentientia_platform{{/str}}</label><span>{{user_type_extras.partner_job_title}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}profile_field_partner_manager, local_sentientia_platform{{/str}}</label><span>{{user_type_extras.partner_manager_name}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}profile_field_partner_employee_id, local_sentientia_platform{{/str}}</label><span>{{user_type_extras.partner_employee_id}}</span></div>
+        <div class="ap-profile__detail"><label>Location</label><span>{{location}}</span></div>
+        <div class="ap-profile__detail"><label>Phone</label><span>{{phnumber}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}profile_field_hire_date, local_sentientia_platform{{/str}}</label><span>{{user_type_extras.partner_hire_date_str}}</span></div>
+    </div>
+    {{/is_partner_employee}}
+
+    {{! ── Consumer — self-directed learner shape ──────────────────────── }}
+    {{#is_consumer}}
+    <div class="ap-profile__detail-grid">
+        <div class="ap-profile__detail">
+            <label>{{#str}}profile_field_interests, local_sentientia_platform{{/str}}</label>
+            <span>{{#user_type_extras.interests_csv}}{{user_type_extras.interests_csv}}{{/user_type_extras.interests_csv}}{{^user_type_extras.interests_csv}}—{{/user_type_extras.interests_csv}}</span>
+        </div>
+        <div class="ap-profile__detail">
+            <label>{{#str}}profile_field_weekly_goal_hours, local_sentientia_platform{{/str}}</label>
+            <span>{{#user_type_extras.weekly_goal_hours}}{{user_type_extras.weekly_goal_hours}}h/week{{/user_type_extras.weekly_goal_hours}}{{^user_type_extras.weekly_goal_hours}}—{{/user_type_extras.weekly_goal_hours}}</span>
+        </div>
+        <div class="ap-profile__detail">
+            <label>{{#str}}profile_field_courses_enrolled, local_sentientia_platform{{/str}}</label>
+            <span>{{user_type_extras.courses_enrolled}}</span>
+        </div>
+        <div class="ap-profile__detail">
+            <label>Email</label><span>{{user_email}}</span>
+        </div>
+        <div class="ap-profile__detail">
+            <label>{{#str}}profile_field_consent_marketing, local_sentientia_platform{{/str}}</label>
+            <span>{{#user_type_extras.consent_marketing}}<i class="fa fa-check text-success"></i> Yes{{/user_type_extras.consent_marketing}}{{^user_type_extras.consent_marketing}}<i class="fa fa-times text-muted"></i> No{{/user_type_extras.consent_marketing}}</span>
+        </div>
+        <div class="ap-profile__detail">
+            <label>{{#str}}profile_field_consent_leaderboard, local_sentientia_platform{{/str}}</label>
+            <span>{{#user_type_extras.consent_leaderboard}}<i class="fa fa-check text-success"></i> Yes{{/user_type_extras.consent_leaderboard}}{{^user_type_extras.consent_leaderboard}}<i class="fa fa-times text-muted"></i> No{{/user_type_extras.consent_leaderboard}}</span>
+        </div>
+        <div class="ap-profile__detail">
+            <label>Phone</label><span>{{phnumber}}</span>
+        </div>
+        <div class="ap-profile__detail">
+            <label>{{#str}}profile_field_hire_date, local_sentientia_platform{{/str}}</label><span>{{joindate}}</span>
+        </div>
+    </div>
+    {{/is_consumer}}
+
+    {{! ── Operator — platform staff shape ─────────────────────────────── }}
+    {{#is_operator}}
+    <div class="ap-profile__detail-grid">
+        <div class="ap-profile__detail"><label>{{#str}}profile_field_operator_role, local_sentientia_platform{{/str}}</label><span>{{user_type_extras.operator_role}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}profile_field_contact_phone, local_sentientia_platform{{/str}}</label><span>{{user_type_extras.contact_phone}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}profile_field_oncall_for, local_sentientia_platform{{/str}}</label><span>{{#user_type_extras.oncall_for}}{{user_type_extras.oncall_for}}{{/user_type_extras.oncall_for}}{{^user_type_extras.oncall_for}}—{{/user_type_extras.oncall_for}}</span></div>
+        <div class="ap-profile__detail"><label>Email</label><span>{{user_email}}</span></div>
+        <div class="ap-profile__detail"><label>Location</label><span>{{location}}</span></div>
+        <div class="ap-profile__detail"><label>Phone</label><span>{{phnumber}}</span></div>
+        <div class="ap-profile__detail"><label>Join Date</label><span>{{joindate}}</span></div>
+    </div>
+    {{/is_operator}}
+
+    {{! Fallback — if no user_type was set yet (pre-C1.0 user), render the original employee grid. }}
+    {{^user_type}}
+    <div class="ap-profile__detail-grid">
+        <div class="ap-profile__detail"><label>Organisation</label><span>{{organisation}}</span></div>
+        <div class="ap-profile__detail"><label>Department</label><span>{{department}}</span></div>
+        <div class="ap-profile__detail"><label>Sub-department</label><span>{{subdepartment}}</span></div>
+        <div class="ap-profile__detail"><label>{{#str}}reportingto, local_sentientia_users{{/str}}</label><span>{{supervisorname}}</span></div>
+        <div class="ap-profile__detail"><label>Employee ID</label><span>{{empid}}</span></div>
+        <div class="ap-profile__detail"><label>Location</label><span>{{location}}</span></div>
+        <div class="ap-profile__detail"><label>Phone</label><span>{{phnumber}}</span></div>
+        <div class="ap-profile__detail"><label>Join Date</label><span>{{joindate}}</span></div>
+    </div>
+    {{/user_type}}
+</div>
+
+{{! Skills tab — full readiness panel + radar (Phase E.1) }}
+{{#ap_has_skills}}
+<div class="ap-profile__skills mt-4" data-region="ap-profile-skills">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <h2 class="h5 m-0">
+            <i class="fa fa-line-chart text-primary me-2"></i>Skill readiness
+        </h2>
+        {{#ap_skills_designation}}
+        <span class="text-muted small">
+            for designation <code>{{.}}</code>
+        </span>
+        {{/ap_skills_designation}}
+    </div>
+
+    <div class="row g-3 align-items-stretch">
+        {{#ap_has_radar}}
+        <div class="col-md-5">
+            <div class="ap-card ap-card--inset h-100">
+                <canvas id="ap-skills-radar-canvas" height="280"
+                        data-radar-labels="{{ap_skills_radar.radar_labels}}"
+                        data-radar-current="{{ap_skills_radar.radar_current}}"
+                        data-radar-required="{{ap_skills_radar.radar_required}}"
+                        aria-label="Radar chart of current vs required skill levels">
+                </canvas>
+                <p class="small text-muted mt-2 mb-0">
+                    Solid line = your current level. Dashed = target.
+                </p>
+            </div>
+        </div>
+        {{/ap_has_radar}}
+        <div class="col-md-{{#ap_has_radar}}7{{/ap_has_radar}}{{^ap_has_radar}}12{{/ap_has_radar}}">
+            <div class="ap-card ap-card--inset h-100">
+                <table class="table table-sm align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Skill</th>
+                            <th style="width:120px;">Current</th>
+                            <th style="width:120px;">Target</th>
+                            <th style="width:90px;">Gap</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#ap_skills_rows}}
+                        <tr>
+                            <td>
+                                {{#category_name}}<span class="badge me-2"
+                                    style="background-color:{{category_color}}; color:#fff;">{{category_name}}</span>{{/category_name}}
+                                {{skill_name}}
+                            </td>
+                            <td>
+                                <span class="text-{{#is_met}}success{{/is_met}}{{#is_partial}}warning{{/is_partial}}{{#is_missing}}danger{{/is_missing}}">
+                                    L{{current_level}} {{current_label}}
+                                </span>
+                            </td>
+                            <td>L{{required_level}} {{required_label}}</td>
+                            <td>
+                                {{#is_met}}<span class="badge bg-success">Met</span>{{/is_met}}
+                                {{#is_partial}}<span class="badge bg-warning text-dark">{{gap}} levels</span>{{/is_partial}}
+                                {{#is_missing}}<span class="badge bg-danger">{{gap}} levels</span>{{/is_missing}}
+                            </td>
+                        </tr>
+                        {{/ap_skills_rows}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {{#ap_has_gap_courses}}
+    <div class="mt-3">
+        <h3 class="h6 text-uppercase text-muted mb-2">Suggested next courses</h3>
+        <div class="row g-2">
+            {{#ap_skills_gap_courses}}
+            <div class="col-md-6 col-lg-4">
+                <a href="{{viewurl}}" class="ap-card ap-card--inset d-block h-100 text-decoration-none">
+                    <div class="fw-semibold">{{fullname}}</div>
+                    <div class="small text-muted">
+                        Targets <strong>{{skill_name}}</strong>
+                        ({{gap_level}} level{{#gap_level}}{{^.}}{{/.}}{{/gap_level}} gap)
+                    </div>
+                </a>
+            </div>
+            {{/ap_skills_gap_courses}}
+        </div>
+    </div>
+    {{/ap_has_gap_courses}}
+</div>
+{{/ap_has_skills}}
+
+{{! Grades widget — recent completions + average grade (Phase E.2) }}
+{{#ap_has_grades}}
+<div class="ap-profile__grades mt-4" data-region="ap-profile-grades">
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
+        <h2 class="h5 m-0">
+            <i class="fa fa-graduation-cap text-primary me-2"></i>Recent grades
+        </h2>
+        <div class="d-flex gap-3 small text-muted">
+            <span><strong>{{ap_grades_summary.completed}}</strong> completed</span>
+            {{#ap_grades_summary.average_pct}}
+            <span><strong>{{.}}%</strong> average</span>
+            {{/ap_grades_summary.average_pct}}
+        </div>
+    </div>
+
+    <div class="row g-2">
+        {{#ap_grades_recent}}
+        <div class="col-md-6 col-lg-4">
+            <a href="{{viewurl}}" class="ap-card ap-card--inset d-block h-100 text-decoration-none">
+                <div class="d-flex align-items-start justify-content-between">
+                    <div class="flex-grow-1 me-2">
+                        <div class="fw-semibold">{{fullname}}</div>
+                        <div class="small text-muted">{{shortname}}</div>
+                        <div class="small text-muted mt-1">
+                            <i class="fa fa-check-circle text-success me-1"></i>{{completed_label}}
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        {{#has_grade}}
+                        <div class="badge {{#grade_pct}}bg-primary{{/grade_pct}}{{^grade_pct}}bg-secondary{{/grade_pct}}"
+                             style="font-size:0.875rem;">
+                            {{grade_pct}}%
+                        </div>
+                        {{/has_grade}}
+                        {{^has_grade}}
+                        <span class="badge bg-secondary">No grade</span>
+                        {{/has_grade}}
+                    </div>
+                </div>
+            </a>
+        </div>
+        {{/ap_grades_recent}}
+    </div>
+</div>
+{{/ap_has_grades}}
+
+{{! Plugin content tabs }}
+{{#usercontent}}
+<div class="ap-profile__plugin-tab" id="plugin_tab_{{sequence}}">
+    {{{html}}}
+</div>
+{{/usercontent}}
+
+<style>
+.ap-profile__enrichment {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    max-width: 900px; margin: -8px auto 16px; padding: 0;
+}
+.ap-profile__enrich-card {
+    flex: 1; min-width: 180px;
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px;
+    background: var(--ap-surface, #fff);
+    border: 1px solid var(--ap-border, #e3eaf3);
+    border-radius: 12px;
+}
+.ap-profile__enrich-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+}
+.ap-profile__enrich-data strong { display: block; font-size: 15px; font-weight: 700; color: var(--ap-text, #1a1a2e); }
+.ap-profile__enrich-data small { font-size: 12px; color: var(--ap-text-muted, #8896a6); }
+.ap-profile__role { font-size: 13px; color: var(--ap-text-secondary, #607286); margin: 2px 0 0; }
+.ap-profile__role i { margin-right: 4px; }
+.ap-profile__badges {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    max-width: 900px; margin: 0 auto 16px;
+}
+.ap-profile__badge {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, #0066A7, #0f7a73);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 14px; cursor: help;
+    transition: transform 0.15s;
+}
+.ap-profile__badge:hover { transform: scale(1.15); }
+.ap-profile__details { max-width: 900px; margin: 0 auto 24px; }
+.ap-profile__detail-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px; padding: 20px;
+    background: var(--ap-surface, #fff);
+    border: 1px solid var(--ap-border, #e3eaf3);
+    border-radius: 12px;
+}
+.ap-profile__detail label { display: block; font-size: 12px; color: var(--ap-text-muted, #8896a6); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+.ap-profile__detail span { font-size: 14px; color: var(--ap-text, #1a1a2e); }
+body.dark-mode .ap-profile__enrich-card,
+body.dark-mode .ap-profile__detail-grid { background: #1a1d27 !important; border-color: #2d3140 !important; }
+body.dark-mode .ap-profile__enrich-data strong,
+body.dark-mode .ap-profile__detail span { color: #e8eaed !important; }
+body.dark-mode .ap-profile__badge { background: linear-gradient(135deg, #0d4880, #0a5c56); }
+@media (max-width: 590px) {
+    .ap-profile__enrichment { flex-direction: column; }
+    .ap-profile__detail-grid { grid-template-columns: 1fr 1fr; }
+    .ap-profile__badges { justify-content: center; }
+}
+</style>

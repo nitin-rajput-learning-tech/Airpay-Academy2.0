@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/sentientia_m365/db" VERSION="20260524"
+       COMMENT="Sentientia LMS — Microsoft 365 Knowledge Automation (Workstream C),
+                Phase C.1 (scaffold). One table: local_sentientia_m365_tokens —
+                one row per (userid, customerid) holding the encrypted OAuth
+                tokens + their lifecycle metadata.
+
+                Encryption: access_token_enc and refresh_token_enc columns
+                store the output of \core\encryption::encrypt() — the Sodium
+                ciphertext is prefixed with the cipher method tag and
+                base64-encoded, so the column is plain ASCII even though it
+                holds ciphertext. Decrypt path goes through
+                \local_sentientia_m365\msal_client::decrypt_token() which
+                wraps the core decrypt and translates any sodium failure
+                into a generic moodle_exception (never leaks why).
+
+                Tokens are scoped (userid, customerid) — a single Moodle
+                user under a multi-customer Sentientia deployment may have
+                two distinct Microsoft tenants linked (one per customer)
+                without colliding rows.">
+  <TABLES>
+
+    <!-- ─── TOKENS ─── -->
+    <TABLE NAME="local_sentientia_m365_tokens"
+           COMMENT="Phase C.1 (2026-05-24) — One row per
+                    (userid, customerid). Holds the encrypted access +
+                    refresh tokens returned by the Microsoft identity
+                    platform after a successful OAuth2 Authorization
+                    Code grant.
+
+                    Columns access_token_enc + refresh_token_enc are
+                    Sodium-encrypted ciphertext (base64, with method
+                    prefix as per \core\encryption::encrypt()). NEVER
+                    log the decrypted plaintext. NEVER expose either
+                    column through a webservice without going through
+                    msal_client::decrypt_token().
+
+                    expires is the absolute Unix timestamp at which the
+                    access token expires. Refresh is required at or
+                    before this value.
+
+                    scopes is a space-separated list of OAuth scopes
+                    the user consented to (e.g. 'openid profile
+                    offline_access User.Read Sites.Read.All'). Used to
+                    decide whether a given Graph call is permitted by
+                    the user's current grant — if not, the UI must
+                    re-prompt for consent rather than failing silently.">
+      <FIELDS>
+        <FIELD NAME="id"                TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"            TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="FK to user.id — the Moodle user who granted consent."/>
+        <FIELD NAME="customerid"        TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="1"
+               COMMENT="Sentientia LMS customer scope (1 = Airpay customer-zero). Allows a single Moodle user under a multi-customer deployment to hold two distinct Microsoft tenant links."/>
+        <FIELD NAME="access_token_enc"  TYPE="text" NOTNULL="true"
+               COMMENT="Sodium-encrypted OAuth access token (via \core\encryption::encrypt()). Plaintext is short-lived; encrypt-at-rest still required because logs sometimes capture DB rows."/>
+        <FIELD NAME="refresh_token_enc" TYPE="text" NOTNULL="true"
+               COMMENT="Sodium-encrypted OAuth refresh token. Long-lived (up to 90 days). Compromise = ability to mint new access tokens against the user's Microsoft identity until revoked — MUST encrypt at rest."/>
+        <FIELD NAME="expires"           TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Unix timestamp when access_token expires. msal_client::needs_refresh() returns true within 60 s of this value."/>
+        <FIELD NAME="scopes"            TYPE="text" NOTNULL="true"
+               COMMENT="Space-separated list of OAuth scopes granted (e.g. 'openid profile offline_access User.Read Sites.Read.All'). Read by graph_client::ensure_scope() before each call."/>
+        <FIELD NAME="timecreated"       TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"      TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"    TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_userid"  TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="uniq_user_customer" UNIQUE="true"  FIELDS="userid, customerid"
+               COMMENT="At most one token row per (user, customer) pair. New auth replaces old via upsert."/>
+        <INDEX NAME="idx_expires"        UNIQUE="false" FIELDS="expires"
+               COMMENT="Periodic refresh job scans for rows where expires is in the past or near future."/>
+        <INDEX NAME="idx_customerid"     UNIQUE="false" FIELDS="customerid"
+               COMMENT="Per-customer cleanup + analytics."/>
+      </INDEXES>
+    </TABLE>
+
+  </TABLES>
+</XMLDB>

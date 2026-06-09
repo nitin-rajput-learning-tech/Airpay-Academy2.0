@@ -1,0 +1,59 @@
+{{!
+    Channel analytics dashboard — Phase A1 iter 5.
+
+    Composes Phase B0 reusable components: stat_card for KPI tiles,
+    activity_item for the recent log feed.
+
+    Context:
+      kpi_tiles, has_kpi_tiles
+      channels[] — {name, icon, sent, mocked, failed, opted_out}
+      activity_feed, has_activity_feed
+      since_days
+}}
+<div class="airpay-wa-analytics">
+
+    {{! KPI strip — reuses stat_card from theme_sentientia }}
+    {{#has_kpi_tiles}}
+    <div class="airpay-stat-grid mb-4">
+        {{#kpi_tiles}}
+        {{> theme_sentientia/components/stat_card }}
+        {{/kpi_tiles}}
+    </div>
+    {{/has_kpi_tiles}}
+
+    {{! Per-channel breakdown }}
+    <div class="airpay-stat-grid mb-4">
+        {{#channels}}
+        <div class="airpay-stat-card airpay-stat-card--primary" role="group" aria-label="{{name}} breakdown">
+            <div class="airpay-stat-card__icon" aria-hidden="true">
+                <i class="fa fa-{{icon}}"></i>
+            </div>
+            <div class="airpay-stat-card__body">
+                <span class="airpay-stat-card__value">{{name}}</span>
+                <span class="airpay-stat-card__label">
+                    Sent {{sent}} · Mocked {{mocked}} · Failed {{failed}}
+                </span>
+            </div>
+        </div>
+        {{/channels}}
+    </div>
+
+    {{! Recent activity feed — reuses activity_item from theme_sentientia }}
+    {{#has_activity_feed}}
+    <div class="card mt-4">
+        <div class="card-header">
+            <strong>Recent activity (last 20)</strong>
+        </div>
+        <div class="card-body p-0">
+            <ul class="airpay-activity-list">
+                {{#activity_feed}}
+                {{> theme_sentientia/components/activity_item }}
+                {{/activity_feed}}
+            </ul>
+        </div>
+    </div>
+    {{/has_activity_feed}}
+    {{^has_activity_feed}}
+    <p class="text-muted text-center mt-4">No activity yet in the selected window.</p>
+    {{/has_activity_feed}}
+</div>
