@@ -8,6 +8,9 @@
 #
 # What this script does:
 #   - Copy our theme/sentientia into the 5.2 tree
+#   - Repair stale theme_airpayux -> theme_sentientia AMD module names baked into
+#     the copied theme/sentientia/amd/build bundles (idempotent; durable fix for
+#     the F-LOAD-02 / ADR-025 follow-up (c) theme-side stale-bundle gap)
 #   - Copy all local/sentientia_* + local/sentientia_* plugins
 #   - Copy our airpay_* + patched vendor blocks
 #   - Copy admin/tool/certificate (vendor plugin we ship)
@@ -89,9 +92,76 @@ function Copy-File {
     Copy-Item $s $t -Force
 }
 
+function Repair-AmdModuleNames {
+    # SENTIENTIA de-brand AMD fix (durable pipeline form of the 2026-06-09 hot-fix).
+    #
+    # The git-tracked theme is theme_airpayux; the deployed webroot theme is
+    # theme_sentientia. The hand-minified amd/build/*.js bundles bake the OLD
+    # module name into their define("theme_airpayux/X", ...) call. RequireJS maps
+    # a requested module to a FILE BY PATH (theme_sentientia/X ->
+    # theme/sentientia/amd/build/X.min.js) but each file registers itself under
+    # theme_airpayux/X, so the requested name never gets a matching define and the
+    # factory never runs -> every AMD feature silently no-ops (dashboard charts
+    # blank, cart badge dead, datatable/quickactions/loader/drawer inert).
+    #
+    # Theme-side sibling of ADR-025 follow-up (c) (the plugin-side stale-bundle
+    # gap). Recorded as F-LOAD-02; hot-fixed live on 2026-06-09 (see
+    # docs/audits/AMD-LOADING-FIXES-2026-06-09.md sections 2 / 6 / 7). This step
+    # is the durable fix so a clean redeploy-from-git survives it.
+    #
+    # IDEMPOTENT: the .Contains guard skips files that are already clean, so on a
+    # webroot->webroot overlay (source already de-branded) this is a no-op; on a
+    # clean-from-git deploy (source carries theme_airpayux) it self-corrects.
+    # Relative './X' deps and the dev-only *.min.js.map sourcemaps are untouched
+    # (the *.js filter excludes .map; maps are never executed).
+    #
+    # SCOPE: deliberately limited to the THEME's amd/build tree. Do NOT broaden
+    # this to local/ or blocks/: airpay_ratings (and paygw_airpay) are
+    # legitimately NOT renamed per ADR-025, and a blanket airpay->sentientia
+    # rewrite would corrupt them. (The literal token here, theme_airpayux, cannot
+    # match those plugins anyway - but keep the path scope narrow regardless.)
+    param(
+        [string]$BuildDir = (Join-Path $Target 'theme\sentientia\amd\build')
+    )
+    $old = 'theme_airpayux'
+    $new = 'theme_sentientia'
+    if (-not (Test-Path $BuildDir)) {
+        Log "[amd-rename] SKIP (no theme build dir): $BuildDir"
+        return
+    }
+    # UTF-8 with NO BOM - a BOM before the leading define(...) would break the
+    # module registration that this fix exists to repair.
+    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    $changed = 0
+    Get-ChildItem -Path $BuildDir -Recurse -Filter '*.js' -File | ForEach-Object {
+        $content = [System.IO.File]::ReadAllText($_.FullName)
+        if ($content.Contains($old)) {
+            [System.IO.File]::WriteAllText($_.FullName, $content.Replace($old, $new), $utf8NoBom)
+            $changed++
+        }
+    }
+    Log "[amd-rename]   -> $changed build file(s) rewritten ${old} -> ${new}"
+
+    # Post-condition grep-gate (house style; mirrors ADR-025 follow-up (c)'s
+    # "guard: grep -rl ... == 0"). A surviving token means the deploy would serve
+    # dead JS, so FAIL LOUD rather than ship a silently-broken platform. To soften
+    # to warn-and-continue, replace the throw with a Log line.
+    $survivors = Get-ChildItem -Path $BuildDir -Recurse -Filter '*.js' -File |
+        Where-Object { ([System.IO.File]::ReadAllText($_.FullName)).Contains($old) }
+    if ($survivors) {
+        $names = ($survivors | ForEach-Object { $_.Name }) -join ', '
+        Log "[amd-rename] FAIL: '$old' still present in $($survivors.Count) build file(s): $names"
+        throw "AMD module-name rename incomplete: '$old' survives in theme/sentientia/amd/build ($names). Aborting deploy."
+    }
+    Log "[amd-rename]   OK: 0 '${old}' tokens remain in theme/sentientia/amd/build"
+}
+
 Log ""
 Log "=== Theme ==="
 Copy-Tree 'theme' 'theme\sentientia'
+# Durable form of the 2026-06-09 hot-fix - rewrite stale theme_airpayux module
+# names in the copied build bundles (idempotent; see Repair-AmdModuleNames).
+Repair-AmdModuleNames -BuildDir (Join-Path $Target 'theme\sentientia\amd\build')
 
 Log ""
 Log "=== local/sentientia_* (30 plugins) ==="
