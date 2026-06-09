@@ -1,7 +1,9 @@
 # ADR-026 — Theme cutover & canonicalization (`theme_airpayux` → `theme_sentientia`)
 
-- **Status:** Proposed — gated (decision + production execution are Nitin's; the
-  production *active-theme switch* is gated on the Moodle 5.2 cutover, ADR-011)
+- **Status:** **Accepted** — 4 gating decisions recorded 2026-06-09 (see *Decisions*
+  below). Move 1 (canonicalize in git) is ready to execute now; Move 2
+  (active-theme switch) is gated on the Moodle 5.2 cutover (ADR-011), which Nitin
+  set as near-term.
 - **Date:** 2026-06-09
 - **Decision-makers:** Nitin Rajput
 - **Implementer:** Claude (engineering) on Nitin's go
@@ -164,11 +166,25 @@ near-term, else revisit C.** Move 1 is safe, reversible, and closes the real ris
   `fix/loading-reconcile-52-2026-06-09` (merged → `5.2-merge-baseline` `a57d93e67`)
   — the double-applied loading fixes that exposed the two-track theme reality.
 
-## Open questions for Nitin
+## Decisions (2026-06-09 — Nitin)
 
-1. **5.2 cutover timing** — near-term or deferred? (Drives Move 2's path.)
-2. **Canonical git path** for the tracked theme — deployed-layout `theme/sentientia/`
-   or working-source `moodle-enhancement/theme/sentientia/`?
-3. **Overlay source** — flip `$Source` to a git checkout now (git-as-source), or
-   keep webroot-sourced until the 5.2 cutover?
-4. Should `theme_airpayux` be **kept** as a fallback theme post-cutover, or retired?
+The four gating questions are resolved:
+
+1. **5.2 cutover timing → NEAR-TERM (≤ weeks).** Move 2 rides the ADR-011 5.2
+   cutover; no separate 5.1 backport. The cost of maintaining two theme trees ends
+   at cutover.
+2. **Canonical git path → `theme/sentientia/`** (repo-root, deployed-layout mirror).
+   Matches where `theme_airpayux` is already tracked and is 1:1 with the webroot.
+3. **Overlay source → flip to git-as-source now, with verify.** The overlay's theme
+   source becomes a git checkout; the webroot theme becomes a regenerable artifact.
+   Gated behind a byte-for-byte "from-git deploy reproduces the live theme" check
+   plus the existing `Repair-AmdModuleNames` AMD gate.
+4. **`theme_airpayux` → RETIRE at cutover** (not kept as a fallback). ⚠ **Consequence:**
+   post-cutover rollback is **no longer a one-line `config.theme` flip** — it requires
+   re-adding `theme_airpayux` from git history. **Mitigation:** the Move-2 rehearsal
+   on restored-prod data is the rollback gate, and the pre-cutover commit SHA is kept
+   handy for a fast restore. (The ADR recommended keeping it through a soak; Nitin
+   chose a clean retire — recorded as the accepted tradeoff.)
+
+These convert Move 1 from *proposed* to *ready to execute*; Move 2 remains gated on
+the 5.2 cutover.
