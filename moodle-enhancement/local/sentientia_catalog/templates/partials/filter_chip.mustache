@@ -11,13 +11,12 @@
         remove_label    (optional) — aria-label override, defaults to
                                      "Remove filter: {label}"
 
-    Usage examples:
-      Single inline:
-        {{> local_sentientia_catalog/partials/filter_chip }}
-      List:
-        {{#active_filters}}
-        {{> local_sentientia_catalog/partials/filter_chip }}
-        {{/active_filters}}
+    Usage examples (partial names only; brace tags omitted so this
+    comment cannot self-close):
+      Single inline: include the partial
+        local_sentientia_catalog/partials/filter_chip
+      List: iterate the active_filters section, including that same
+        partial once per item.
 }}
 <a href="{{href}}"
    class="airpay-catalog__filter-chip airpay-catalog__filter-chip--active"

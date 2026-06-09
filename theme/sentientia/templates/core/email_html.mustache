@@ -1,16 +1,17 @@
 {{!
     Airpay Academy — Branded Email HTML Wrapper
-    Overrides core/email_html.mustache (which is just {{{body}}})
-    Applied to ALL emails sent via email_to_user()
+    Overrides core/email_html.mustache (which is just the raw body output).
+    Applied to ALL emails sent via email_to_user().
 
-    Context variables from lib/moodlelib.php email_to_user():
-    - {{{body}}}          — email content (HTML, unescaped)
-    - {{subject}}         — email subject
-    - {{sitefullname}}    — site full name
-    - {{siteshortname}}   — site short name
-    - {{sitewwwroot}}     — site URL (e.g. https://www.airpay.academy)
-    - {{toname}}          — recipient display name
-    - {{fromname}}        — sender display name
+    Context variables from lib/moodlelib.php email_to_user() — names only;
+    literal braces are omitted so this comment cannot self-close:
+    - body          — email content (HTML, unescaped / raw triple-brace)
+    - subject       — email subject
+    - sitefullname  — site full name
+    - siteshortname — site short name
+    - sitewwwroot   — site URL (e.g. https://www.airpay.academy)
+    - toname        — recipient display name
+    - fromname      — sender display name
 }}
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">

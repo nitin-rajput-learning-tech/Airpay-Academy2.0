@@ -72,10 +72,10 @@
             (lib/classes/url.php:298-323) likewise calls rawurlencode() on
             every value before assembling the URL — same protection.
 
-            Defense in depth: the {{ }} double-brace below adds
+            Defense in depth: the escaped double-brace output below adds
             HTML-escaping on top of the URL-encoding (covers the
-            HTML-attribute context too). DO NOT migrate to {{{ }}}
-            triple-brace here.
+            HTML-attribute context too). DO NOT migrate to the raw
+            triple-brace output here.
 
             Verified 2026-05-24 / Wave-3 chip Q. See:
               - docs/audits/PLATFORM-VISUAL-AUDIT-2026-05-24.md (F-20)

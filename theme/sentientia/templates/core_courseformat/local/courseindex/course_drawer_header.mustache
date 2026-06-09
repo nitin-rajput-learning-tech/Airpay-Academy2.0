@@ -3,8 +3,8 @@
     Same justification as theme/sentientia/templates/course_full_header.mustache:
     `coursebannerimage` is generated server-side from
     `moodle_url::make_pluginfile_url()` → an already-percent-encoded
-    /pluginfile.php URL OR the empty string. Mustache double-brace
-    `{{coursebannerimage}}` HTML-escapes the value. The combination
+    /pluginfile.php URL OR the empty string. The escaped double-brace
+    output of coursebannerimage HTML-escapes the value. The combination
     means no user-controlled CSS can be injected via this attribute:
     - if user uploads malicious filename → make_pluginfile_url escapes it
     - if the file area is empty → blank string renders as `url('')` (no-op)

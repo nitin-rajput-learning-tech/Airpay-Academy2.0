@@ -1,7 +1,7 @@
 {{!
     Airpay Badge Component
     Context: { text, type (primary|accent|success|warning|danger|info), icon, size (sm|md) }
-    Usage: {{> theme_airpayux/components/badge }}
+    Usage: include the theme_airpayux/components/badge partial
 }}
 <span class="airpay-badge airpay-badge--{{#type}}{{type}}{{/type}}{{^type}}primary{{/type}} {{#size}}airpay-badge--{{size}}{{/size}}">
     {{#icon}}<i class="fa fa-{{icon}}" aria-hidden="true"></i> {{/icon}}{{text}}

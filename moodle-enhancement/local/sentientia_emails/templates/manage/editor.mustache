@@ -121,7 +121,7 @@
                     {{!
                         Audit fix 2026-05-15 — the placeholder attribute used to
                         read: Email subject with [[placeholders]]...
-                        Mustache parsed the inner {{placeholders}} as a variable
+                        Mustache parsed the inner double-brace placeholders token as a variable
                         interpolation. `placeholders` is the top-level array of
                         placeholder groups, and calling s() on an array throws a
                         TypeError. Escape the curly braces with HTML entities so
