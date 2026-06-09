@@ -43,13 +43,26 @@ export function personaCreds(persona: Persona): Creds {
  * the post-login redirect to a logged-in area.
  */
 export async function login(page: Page, creds: Creds): Promise<void> {
-    await page.goto('/login/index.php');
-    await page.locator('input[name="username"]').fill(creds.user);
-    await page.locator('input[name="password"]').fill(creds.pass);
-    await Promise.all([
-        page.waitForURL(/\/(my|admin|user|course)/i, { timeout: 30_000 }).catch(() => undefined),
-        page.locator('button[type="submit"], input[type="submit"]').first().click(),
-    ]);
+    // Retry once. Under DB/PHP-session contention Moodle can reject the first
+    // POST with a transient "Your session has timed out" (login-token/session
+    // race); a fresh GET + resubmit clears it. Success = the login form is gone.
+    for (let attempt = 1; attempt <= 2; attempt++) {
+        await page.goto('/login/index.php', { waitUntil: 'domcontentloaded' });
+        // Scope to the main login form's unique ids. The airpayux/sentientia login
+        // page ALSO renders a hidden guest-login form (`#guestlogin`, with its own
+        // `name="username"`), so a bare `input[name="username"]` selector matches
+        // two elements and trips Playwright strict mode. `#username`/`#password`/
+        // `#loginbtn` (form#login) are unique and stable.
+        await page.locator('#username').fill(creds.user);
+        await page.locator('#password').fill(creds.pass);
+        // Generous click timeout: the post-login navigation can be slow on a cold
+        // hit (runtime SCSS compile, cold DB/caches); 10s actionTimeout is too tight.
+        await page.locator('#loginbtn').click({ timeout: 45_000 });
+        await page.waitForURL(/\/(my|admin|user|course)/i, { timeout: 45_000 }).catch(() => undefined);
+        if ((await page.locator('#username').count()) === 0) {
+            return; // login form gone → authenticated
+        }
+    }
 }
 
 /**
