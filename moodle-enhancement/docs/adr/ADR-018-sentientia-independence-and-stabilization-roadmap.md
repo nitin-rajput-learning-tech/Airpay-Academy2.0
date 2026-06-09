@@ -183,3 +183,44 @@ repo alone (install -> bootstrap_substrate -> seed), with the eAbyas substrate
 no longer required to boot. The deeper migration onto first-party
 tenant/org tables (retiring `open_*`) stays the flag-gated, human-gated endgame.
 See `docs/INSTALL-SENTIENTIA.md` + commit 3354bd947.
+
+### Progress log — 2026-06-09 (Wave-2 theme code-resilience — executed live)
+Closed the **theme half** of the vanilla-portability gap by hardening the
+`open_*` dependency in the canonical theme (`theme/airpayux`) rather than relying
+on the substrate-ensurer. Nitin's four decisions for this pass:
+
+1. **Code-resilience** (guard in code) — not column-provisioning — is the product fix.
+2. **Single implicit tenant** on a vanilla / non-Airpay install (no tenant tree assumed).
+3. **Moodle-native roles** drive manager detection (no HRMS column required).
+4. **`field_exists` auto-detect, no feature flag** — behaviour switches on schema, not config.
+
+**Audit result (whole tracked `theme/airpayux` tree):** exactly **one** `open_*`
+*SQL* query existed — `layout/dashboard.php` Manager-Team-Overview `$teammembers`
+(`WHERE u.open_supervisorid = :mgrid`). Everything else that names an `open_*`
+column in the theme is an **object-property read/comparison** (`$USER->open_path`,
+`$COURSE->open_coursecompletiondays`, `$USER->open_costcenterid != …`), each
+`!empty()`/`isset()`-guarded or null-coalesced → `null` on vanilla, **no DB hit,
+no `dml_read_exception`**. Manager *detection* (`$ismanager`) already uses the
+native `moodle/site:viewreports` capability (decision #3) — no schema dependency.
+
+**Fix:** wrapped the one query in a `field_exists` guard (same pattern as
+`classes/role_detector.php`): `$ismanager && field_exists(user, open_supervisorid)`.
+On Airpay (column present) the query and behaviour are **unchanged**; on a vanilla
+install the team-overview degrades to empty (no native "who-reports-to-me" exists)
+instead of throwing into the broad `catch (Exception)` and logging a DB error every
+manager page-load. **The theme now renders end-to-end on a column-less Moodle**
+with code-resilience alone — the `bootstrap_substrate` ensurer becomes optional,
+not required, for the theme layer.
+
+**Verification:** `php -l` clean; authenticated `/my/` returns **200** (admin,
+data-rich Airpay schema → `field_exists` true → identical query → provably
+zero-regression), **0** exception/debug markers, **0** token leak.
+
+**Finding (flagged, not a blocker):** the *live local webroot* theme
+(`theme/sentientia`, 1059-line `layout/dashboard.php`) is a **stale, pre-
+`role_detector`-refactor deploy artifact** that exists on **no git branch** —
+the canonical git theme (522-line, post-extraction `fcd150c0a`) is the current
+one. No work is lost (role-switch/`user_type_provider`/role-detection are all
+committed, just refactored out of the inline dashboard). Recommend a `git →
+webroot` redeploy to bring the local instance in line (and pick up this guard).
+Committed on `debrand/bizlms-eabyas`.

@@ -318,7 +318,20 @@ if (isloggedin() && !isguestuser()) {
     }
 
     // --- Section: Manager Team Overview (only for managers) ---
-    if ($ismanager) {
+    // SENTIENTIA ADR-018 (2026-06-09): the direct-reports lookup uses the BizLMS-injected
+    // open_supervisorid column, which is absent on a vanilla / non-Airpay install. Guard it
+    // with field_exists (same pattern as classes/role_detector). There is no native Moodle
+    // equivalent for "who reports to me", so when the column is missing the team overview
+    // stays empty rather than throwing a dml_read_exception — which the catch below would
+    // otherwise swallow, logging a DB error on every manager page-load. Manager *detection*
+    // itself (\$ismanager above) already uses the native moodle/site:viewreports capability,
+    // so this is the only Airpay-schema dependency in the section. On Airpay (column present)
+    // the query and behaviour are unchanged.
+    $airpay_dashboard['hasmanagerkpis'] = false;
+    $airpay_dashboard['hasteamcompliance'] = false;
+    $hassupervisorcol = $DB->get_manager()->field_exists(
+        new \xmldb_table('user'), new \xmldb_field('open_supervisorid'));
+    if ($ismanager && $hassupervisorcol) {
         try {
             $teammembers = $DB->get_records_sql(
                 "SELECT u.id, u.firstname, u.lastname, u.lastaccess
