@@ -95,6 +95,11 @@ echo "→ [3/13] Superglobal access (\$_GET/\$_POST)..."
 SUPER_ISSUES=0
 while IFS= read -r file; do
     [ -f "$file" ] || continue
+    # Skip test + CLI code: PHPUnit tests set $_POST['sesskey'] to exercise
+    # external_api functions, and CLI harnesses simulate requests — both are
+    # legitimate, established Moodle patterns (core does the same), not
+    # web-request security risks.
+    case "$file" in */tests/*|*/cli/*) continue ;; esac
     if grep -qE '\$_GET\[|\$_POST\[|\$_REQUEST\[|\$_SERVER\[.HTTP' "$file" 2>/dev/null; then
         # Allow $_SERVER['DOCUMENT_ROOT'] type accesses (not user input)
         user_input=$(grep -nE '\$_GET\[|\$_POST\[|\$_REQUEST\[' "$file" 2>/dev/null || true)
