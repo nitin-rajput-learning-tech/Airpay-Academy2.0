@@ -106,6 +106,44 @@ identifiers) — add a class↔filename consistency lint. Only open item now: **
 
 ---
 
+## ✅ Platform loading hardening + Sentientia showcase audit (2026-06-09, Opus 4.8 — autonomous /loop)
+
+Local-only (XAMPP `moodle5`); **nothing deployed to live.** Two deliverables.
+
+**1. Loading bugs — 5 fixed + verified live in Chrome (0 console errors/warnings across 19 surfaces).**
+Driven by Nitin's "check what's in the code AND what's visible AND whether it's loading as expected —
+not just screenshots". Common root cause: the airpayux→sentientia fork-rename skipped compiled bundles.
+  - **F-LOAD-01** `dashboard.mustache` omitted `{{{ output.standard_end_of_body_html }}}` → RequireJS/AMD
+    never booted on `/my/` → blank Enrolment-Trend + Course-Distribution charts. Added it.
+  - **F-LOAD-02** 34 `theme/sentientia/amd/build/*.min.js` still declared `define("theme_airpayux/X")` →
+    every theme AMD module (charts, cart_badge, datatable, drawer, loader…) failed to resolve
+    platform-wide. Renamed to `theme_sentientia/X`. (Theme-side sibling of ADR-025 follow-up (c); the
+    plugin-side `local/*/amd/build` bundles are CLEAN on the live webroot — clean reinstall.)
+  - **F-LOAD-03** sidebar-collapse pref hit removed `/lib/ajax/setuserpref.php` (404 in 5.1) in 3 sites →
+    replaced with `core_user/repository` + a NEW `theme_sentientia_user_preferences()` in lib.php
+    (mirrors Boost). 200-OK write→store→read round-trip verified.
+  - **F-LOAD-04** `apple-mobile-web-app-capable` deprecation on every page → paired with standard
+    `mobile-web-app-capable` in head.mustache.
+  - **F-LIVE-01** `/local/sentientia_live/index.php` was a stale "Phase E.0 coming soon" stub over the
+    fully-built trainer+audience UIs → replaced with a role-aware router. Charts verified painted
+    (23,279 / 12,498 px). Engineering record: `docs/audits/AMD-LOADING-FIXES-2026-06-09.md` (incl. the
+    git-reconciliation spec — `theme_sentientia` is webroot-only, NOT git-tracked; these fixes live only
+    in the webroot until reconciled).
+
+**2. C-suite showcase + exhaustive 8-persona visual audit.** `docs/SENTIENTIA-SHOWCASE-2026-06-09.md`
+(narrative + 40-plugin capability catalogue + engineering-rigor story + findings log) +
+`docs/visual-evidence/2026-06-09/` (Guest desktop/mobile/dark, Site Admin, Trainer/Live, Learner
+dashboard+catalog, Manager, Tenant Admin, Course Author, External Public Learner, Compliance). Live
+proof points: role-aware polymorphic dashboards (learner gamification / manager team-compliance / admin
+KPIs); **multi-tenant isolation** (Public /77 = 671 users / 183 courses vs Airpay 1,424 / 407, same DB);
+**B2B + B2C** (internal org-enrolled vs external cart-purchase); LXP catalog; responsive + dark mode.
+0 console errors on all 8 personas.
+
+**Local audit housekeeping:** re-applied the documented `AcademyAudit2026!` password (had drifted on
+academyexadmin/asif/joseph/vimal — restores the creds-file invariant; local-only, rollback = DB
+re-import). **OPEN for Nitin:** reconcile the webroot `theme_sentientia` loading fixes into git (the
+long-standing untracked-theme divergence — fixes are spec'd in AMD-LOADING-FIXES-2026-06-09.md §6).
+
 ## ✅ De-brand follow-up — `local$name` junk dir purged + a stale-AMD-bundle gap found (2026-06-08, Opus 4.8)
 
 Context: **ADR-025 is COMPLETE** (2026-06-08) — the full `airpay_* → sentientia_*` rename shipped
