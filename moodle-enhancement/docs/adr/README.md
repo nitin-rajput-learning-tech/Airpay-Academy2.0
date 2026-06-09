@@ -14,6 +14,7 @@ accepted; superseded decisions get a new ADR that references the old one.
 | [ADR-021](ADR-021-sentientia-tenant-registry.md) | `tenant_registry` + multi-customer tenant table (Wave 4) | Proposed — gated | 2026-06-01 |
 | [ADR-022](ADR-022-component-rename.md) | `local_airpay_*` → `local_sentientia_*` component rename (Wave 5) | Proposed — gated | 2026-06-02 |
 | [ADR-026](ADR-026-theme-cutover-and-canonicalization.md) | Theme cutover & canonicalization (`theme_airpayux → theme_sentientia`) | Accepted — Move 1 ready · Move 2 gated on 5.2 | 2026-06-09 |
+| [ADR-027](ADR-027-quality-gate-system.md) | Quality-gate system (stop auditing, start gating) + surface-upgrade workstream | Accepted — Gate 0 shipped · Gates 1–3 staged | 2026-06-09 |
 
 > The index above tracks ADR-001 + the active **independence cluster (018–022)**.
 > ADRs 002–017 (feature-area decisions: flags, push crypto, realtime, PWA, brand
