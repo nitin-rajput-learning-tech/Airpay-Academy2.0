@@ -1,0 +1,206 @@
+<?php
+// Swahili translations for theme_sentientia — conversational tone for ZEEA Tanzania.
+defined('MOODLE_INTERNAL') || die();
+
+$string['advancedsettings'] = 'Mipangilio ya juu';
+$string['colorsettings'] = 'Mipangilio ya rangi';
+$string['backgroundimage'] = 'Picha ya mandhari';
+$string['backgroundimage_desc'] = 'Picha ya kuonyeshwa kama mandhari ya tovuti.';
+$string['brandcolor'] = 'Rangi ya chapa';
+$string['brandcolor_desc'] = 'Rangi ya msisitizo.';
+$string['primarycolor'] = 'Rangi kuu';
+$string['primarycolor_desc'] = 'Chagua rangi kuu kwa vifungo, aikoni na tabo';
+$string['secondarycolor'] = 'Rangi ya pili';
+$string['secondarycolor_desc'] = 'Chagua rangi ya pili';
+$string['hovercolor'] = 'Rangi ya hover';
+$string['hovercolor_desc'] = 'Chagua rangi ya hover';
+$string['bootswatch'] = 'Bootswatch';
+$string['bootswatch_desc'] = 'Seti ya vigeu vya Bootstrap na CSS';
+$string['choosereadme'] = 'Airpay Academy UX — muundo kamili wenye chapa ya Airpay, msaada wa wapangaji wengi, na uzoefu wa simu.';
+$string['currentinparentheses'] = '(sasa hivi)';
+$string['configtitle'] = 'Sentientia Academy UX';
+$string['fontsize'] = 'Ukubwa wa fonti';
+$string['fontsize_desc'] = 'Weka ukubwa wa fonti katika %';
+$string['generalsettings'] = 'Mipangilio ya jumla';
+$string['loginbackgroundimage'] = 'Picha ya mandhari ya kuingia';
+$string['loginbackgroundimage_desc'] = 'Picha ya mandhari kwa ukurasa wa kuingia.';
+$string['nobootswatch'] = 'Hakuna';
+$string['customsettings'] = 'Mipangilio maalum';
+$string['pluginname'] = 'Airpay Academy UX (Sentientia)';
+$string['presetfiles'] = 'Faili za ziada za mipangilio';
+$string['presetfiles_desc'] = 'Faili za mipangilio zinaweza kubadilisha muonekano wa mandhari.';
+$string['preset'] = 'Mipangilio ya mandhari';
+$string['preset_desc'] = 'Chagua mipangilio kubadilisha muonekano wa mandhari.';
+$string['privacy:metadata'] = 'Mandhari ya Airpay Academy UX (Sentientia) haihifadhi data binafsi ya mtumiaji yeyote.';
+$string['rawscss'] = 'SCSS safi';
+$string['rawscss_desc'] = 'Msimbo wa SCSS au CSS utakaowekwa mwishoni mwa laha ya mtindo.';
+$string['rawscsspre'] = 'SCSS ya awali';
+$string['rawscsspre_desc'] = 'Msimbo wa SCSS wa kuanzisha, utawekwa kabla ya kila kitu kingine.';
+$string['region-side-pre'] = 'Kulia';
+$string['bodybgcolor'] = 'Rangi ya mandhari ya mwili';
+$string['bodybgcolor_desc'] = 'Rangi ya mandhari ya mwili';
+$string['showfooter'] = 'Onyesha kijachini';
+$string['unaddableblocks'] = 'Vizuizi visivyohitajika';
+$string['unaddableblocks_desc'] = 'Vizuizi ambavyo havihitajiki kwa mandhari hii.';
+$string['customscss'] = 'SCSS maalum';
+$string['welcometext'] = 'Karibu';
+$string['welcometext_desc'] = 'Maandishi ya kukaribisha kwenye ukurasa wa kuingia';
+$string['logocaption'] = 'Maandishi ya nembo';
+$string['logocaptiondesc'] = 'Maandishi ya kuonyeshwa karibu na nembo';
+$string['logo'] = 'Nembo ya kichwa';
+$string['logodesc'] = 'Nembo itakayoonyeshwa kwenye kichwa.';
+$string['loginorder'] = 'Mpangilio wa fomu ya kuingia';
+$string['loginorder_desc'] = 'Weka fomu upande wa kushoto/kulia';
+$string['carousellogo'] = 'Nembo ya ukurasa wa kuingia (kulia)';
+$string['carousellogo_desc'] = 'Nembo kwenye upande wa kulia wa ukurasa wa kuingia.';
+$string['loginlogo'] = 'Nembo ya ukurasa wa kuingia (kushoto)';
+$string['loginlogo_desc'] = 'Nembo kwenye upande wa kushoto wa ukurasa wa kuingia.';
+$string['logindesc'] = 'Maelezo ya kuingia';
+$string['logindesc_desc'] = 'Maandishi yanayoonyeshwa kwenye sehemu ya slider ya ukurasa wa kuingia.';
+$string['helpdesc'] = 'Maelezo ya msaada';
+$string['helpdesc_desc'] = 'Maandishi yanayoonyeshwa unapobonyeza kitufe cha Msaada.';
+$string['contact'] = 'Wasiliana nasi';
+$string['contact_desc'] = 'Maandishi yanayoonyeshwa unapobonyeza kitufe cha Wasiliana nasi.';
+$string['aboutus'] = 'Kuhusu sisi';
+$string['aboutus_desc'] = 'Maandishi yanayoonyeshwa unapobonyeza kitufe cha Kuhusu sisi.';
+$string['slider1'] = 'Picha ya slider 1';
+$string['slider1desc'] = 'Picha ya kwanza ya slider kwa ukurasa wa kuingia';
+$string['slider2'] = 'Picha ya slider 2';
+$string['slider2desc'] = 'Picha ya pili ya slider kwa ukurasa wa kuingia';
+$string['slider3'] = 'Picha ya slider 3';
+$string['slider3desc'] = 'Picha ya tatu ya slider kwa ukurasa wa kuingia';
+$string['slider4'] = 'Picha ya slider 4';
+$string['slider4desc'] = 'Picha ya nne ya slider kwa ukurasa wa kuingia';
+$string['slider5'] = 'Picha ya slider 5';
+$string['slider5desc'] = 'Picha ya tano ya slider kwa ukurasa wa kuingia';
+$string['favicon'] = 'Favicon';
+$string['favicondesc'] = 'Pakia favicon ya tovuti yako hapa.';
+$string['font'] = 'Fonti';
+$string['font_desc'] = 'Fonti iliyochaguliwa itatumika katika LMS yote.';
+$string['leftmenu_dashboard'] = 'Dashibodi';
+$string['leftmenu_adminstration'] = 'Usimamizi';
+$string['leftmenu_tm_dashboard'] = 'Timu Yangu';
+$string['showhideblocks'] = 'Onyesha/Ficha vizuizi';
+$string['leftmenu_gmleaderboard'] = 'Ubao wa Viongozi';
+$string['region-layerone_full'] = 'Safu ya kwanza upana kamili';
+$string['region-layerone_one'] = 'Safu moja-moja';
+$string['region-layerone_two'] = 'Safu moja-mbili';
+$string['region-layertwo_one'] = 'Safu mbili-moja';
+$string['region-layertwo_two'] = 'Safu mbili-mbili';
+$string['region-layertwo_three'] = 'Safu mbili-tatu';
+$string['region-layertwo_four'] = 'Safu mbili-nne';
+$string['region-teamoverview'] = 'Muhtasari wa Timu';
+$string['region-teamdetail_one'] = 'Maelezo ya Timu moja';
+$string['region-teamdetail_two'] = 'Maelezo ya Timu mbili';
+$string['region-layerthree_one'] = 'Safu tatu-moja';
+$string['region-layerthree_two'] = 'Safu tatu-mbili';
+$string['switchroleto'] = 'Badilisha nafasi kuwa:';
+$string['switchroleas'] = 'Badilisha nafasi kama ';
+$string['show_more_less'] = 'Onyesha zaidi/kidogo';
+$string['theme_scheme'] = 'Mpango wa mandhari';
+$string['theme_scheme_desc'] = 'Badilisha mpango wa mandhari kubadilisha rangi za tovuti';
+$string['scheme_1'] = 'Mpango 1';
+$string['scheme_2'] = 'Mpango 2';
+$string['scheme_3'] = 'Mpango 3';
+$string['scheme_4'] = 'Mpango 4';
+$string['scheme_5'] = 'Mpango 5';
+$string['scheme_6'] = 'Mpango 6';
+$string['square'] = 'Mraba';
+$string['rounded'] = 'Mviringo';
+$string['rounded-square'] = 'Mraba-mviringo';
+$string['customscheme'] = 'Tumia mpango maalum';
+$string['left_menu_requests'] = 'Simamia Maombi';
+$string['facebook'] = 'URL ya Facebook';
+$string['facebookdesc'] = 'URL ya ukurasa wako wa Facebook';
+$string['twitter'] = 'URL ya Twitter';
+$string['twitterdesc'] = 'URL ya ukurasa wako wa Twitter';
+$string['linkedin'] = 'LinkedIn';
+$string['linkedindesc'] = 'URL ya ukurasa wako wa LinkedIn';
+$string['youtube'] = 'URL ya Youtube';
+$string['youtubedesc'] = 'URL ya kituo chako cha Youtube';
+$string['instagram'] = 'URL ya Instagram';
+$string['instagramdesc'] = 'URL ya ukurasa wako wa Instagram';
+$string['footerbgcolor'] = 'Rangi ya mandhari ya kijachini';
+$string['footerbg_desc'] = 'Rangi ya mandhari ya kijachini';
+$string['copyright'] = 'Hakimiliki';
+$string['copyrightdesc'] = 'Maandishi ya hakimiliki yatakayoonyeshwa kwenye kijachini.';
+$string['employee'] = 'Mfanyakazi';
+$string['quickinfo'] = 'Taarifa za Haraka';
+$string['quickinfodesc'] = 'Taarifa za haraka';
+$string['quickinfo1'] = 'Taarifa ya Haraka 1';
+$string['quickinfo2'] = 'Taarifa ya Haraka 2';
+$string['quickinfo3'] = 'Taarifa ya Haraka 3';
+$string['quickinfo4'] = 'Taarifa ya Haraka 4';
+$string['quickinfo5'] = 'Taarifa ya Haraka 5';
+$string['disable'] = 'Zima';
+$string['enable'] = 'Washa';
+$string['region-course-pre'] = 'Kabla ya Kozi';
+$string['quickaccess'] = 'Ufikiaji wa Haraka';
+$string['home'] = 'Dashibodi';
+$string['colorschemes'] = 'Mipango ya Rangi';
+$string['phonenumber'] = 'Nambari ya Simu';
+$string['learnerlogin'] = 'Weka Nambari ya Simu';
+$string['enterotp'] = 'Weka OTP';
+$string['resentotp'] = 'Tuma OTP tena';
+$string['login_submit'] = 'Ingia';
+$string['entermobileotp'] = 'Nambari ya simu iliyowekwa haipo, tafadhali angalia';
+$string['privacy:metadata:preference:draweropenblock'] = 'Onyesha/Ficha droo ya vizuizi';
+$string['privacy:metadata:preference:draweropenindex'] = 'Onyesha/Ficha droo ya fahirisi';
+$string['privacy:metadata:preference:draweropennav'] = 'Onyesha/Ficha droo ya urambazaji';
+$string['privacy:drawerindexclosed'] = 'Droo ya fahirisi imefungwa.';
+$string['privacy:drawerindexopen'] = 'Droo ya fahirisi imefunguliwa.';
+$string['privacy:drawerblockclosed'] = 'Droo ya vizuizi imefungwa.';
+$string['privacy:drawerblockopen'] = 'Droo ya vizuizi imefunguliwa.';
+$string['privacy:drawernavclosed'] = 'Droo ya urambazaji imefungwa.';
+$string['privacy:drawernavopen'] = 'Droo ya urambazaji imefunguliwa.';
+
+// P0 #7 (2026-05-24) — close 3-string parity gap vs en pack.
+// P0 borrow #5 (Moodle 5.2) — OAuth2 button text. Used by
+// templates/core/loginform.mustache identity-provider list.
+$string['signinwithidentityprovider'] = 'au ingia kwa';
+
+// P0 borrow #14 (Moodle 5.2) — extra sort options on block_myoverview
+// "My Courses" dropdown.
+$string['sortbystartdate'] = 'Tarehe ya kuanza kozi';
+$string['sortbyenddate']   = 'Tarehe ya kumalizika kozi';
+
+// P0 #3 follow-up (2026-05-24, chip-B) — upau wa juu wa urambazaji i18n.
+$string['nav_dashboard']  = 'Dashibodi';
+$string['nav_courses']    = 'Kozi Zangu';
+$string['nav_catalog']    = 'Katalogi';
+$string['nav_profile']    = 'Wasifu';
+$string['nav_home']       = 'Nyumbani';
+$string['a11y_search']    = 'Tafuta kozi, watu, maudhui';
+$string['a11y_usermenu']  = 'Menyu ya mtumiaji';
+$string['a11y_mobilemenu'] = 'Menyu ya simu';
+
+// P0 #4 follow-up (2026-05-24, chip-B) — utepe wa chini i18n.
+$string['footer_privacy']   = 'Faragha';
+$string['footer_terms']     = 'Masharti';
+$string['footer_help']      = 'Msaada';
+$string['footer_contact']   = 'Mawasiliano';
+$string['footer_copyright'] = '&copy; 2026 airpay payment services pvt. ltd.';
+$string['footer_logo_alt'] = 'airpay academy';
+
+// F-13 (Platform Visual Audit 2026-05-24, chip-G) — Banner ya karibu ya
+// dashibodi, vichwa vya chati na lebo za KPI za utii. {$a} = jina la kwanza.
+$string['welcome_back_admin']      = 'Karibu tena, {$a}';
+$string['subtitle_admin']          = 'Muhtasari wa jukwaa na hali ya mfumo';
+$string['welcome_manager']         = 'Karibu, {$a}';
+$string['subtitle_manager']        = 'Muhtasari wa timu na hali ya utii';
+$string['welcome_learner']         = 'Karibu tena, {$a}!';
+$string['subtitle_learner']        = 'Endelea kutoka pale ulipoacha na uendeleze ujuzi wako';
+$string['chart_enrolment_trend']   = 'Mwelekeo wa Usajili';
+$string['chart_course_distribution'] = 'Mgawanyo wa Kozi';
+$string['kpi_mandatory_courses']   = 'Kozi za Lazima';
+$string['kpi_compliance_rate']     = 'Kiwango cha Utii';
+$string['kpi_overdue']             = 'Zilizochelewa';
+$string['kpi_total_assigned']      = 'Jumla Zilizoteuliwa';
+
+// B10/F-065 dash i18n (2026-05-28)
+$string['dash_dark_mode_label']    = 'Hali ya Giza';
+$string['dash_profile_settings']   = 'Wasifu na Mipangilio';
+$string['dash_overall_completion'] = 'Ukamilifu wa Jumla';
+$string['dash_continue_learning']  = 'Endelea Kujifunza';
+$string['dash_view_all']           = 'Tazama zote';
+$string['dash_explore']            = 'Chunguza';

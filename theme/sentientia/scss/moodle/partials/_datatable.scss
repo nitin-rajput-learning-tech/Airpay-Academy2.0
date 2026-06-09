@@ -1,0 +1,142 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   DATATABLE — Shared admin table component (theme_sentientia/datatable)
+   ═══════════════════════════════════════════════════════════════════════
+   Used by sentientia_users, sentientia_courses, etc. Inline styles in the AMD
+   module set the structural CSS; this partial owns dark-mode + mobile
+   polish only — never restyles the light-mode appearance. */
+
+/* ── A11Y-1: Keyboard focus indication on sortable headers ────────
+   The sortable <th> has tabindex="0" + click/keydown handlers so
+   keyboard users can Tab to it and press Enter/Space to sort.
+   We keep the implicit role="columnheader" (don't override to button)
+   because aria-sort is only valid on columnheader per WAI-ARIA.
+   Default browser focus rings are hidden by Bootstrap on <th> in
+   many themes, so we add an explicit, high-contrast outline for
+   :focus-visible only (mouse clicks don't show the ring). */
+.airpay-datatable th[data-airpay-table-sort]:focus-visible {
+    outline: 2px solid #ffd400;       /* high-contrast against blue header */
+    outline-offset: -2px;             /* sits inside the cell border */
+    box-shadow: inset 0 0 0 2px rgba(255, 212, 0, 0.4);
+}
+body.dark-mode .airpay-datatable th[data-airpay-table-sort]:focus-visible,
+html.dark-mode .airpay-datatable th[data-airpay-table-sort]:focus-visible {
+    outline-color: #ffe44d;
+}
+
+/* ── Mobile (590px primary breakpoint per design system) ─────────── */
+@media (max-width: 590px) {
+    .airpay-datatable .airpay-datatable__toolbar {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 8px !important;
+    }
+    .airpay-datatable .airpay-datatable__search {
+        max-width: none !important;
+        width: 100%;
+    }
+    .airpay-datatable .airpay-datatable__meta {
+        text-align: center;
+    }
+    .airpay-datatable [data-airpay-table-pager] {
+        flex-direction: column;
+        gap: 8px;
+        align-items: center !important;
+    }
+    .airpay-datatable [data-airpay-table-pager-buttons] .btn {
+        padding-left: 8px;
+        padding-right: 8px;
+        font-size: 0.75rem;
+    }
+    .airpay-datatable table th,
+    .airpay-datatable table td {
+        font-size: 0.8rem;
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+    }
+}
+
+/* ── Dark mode ──────────────────────────────────────────────────────
+   Each rule explicitly scoped to body.dark-mode / html.dark-mode so
+   light mode is never affected. */
+
+body.dark-mode .airpay-datatable thead,
+html.dark-mode .airpay-datatable thead {
+    background: var(--ap-blue-800, #004570) !important;
+}
+
+body.dark-mode .airpay-datatable .table-active,
+html.dark-mode .airpay-datatable .table-active {
+    background: rgba(96, 165, 250, 0.10) !important;
+}
+
+body.dark-mode .airpay-datatable tbody tr:hover,
+html.dark-mode .airpay-datatable tbody tr:hover {
+    background: rgba(96, 165, 250, 0.06) !important;
+}
+
+body.dark-mode .airpay-datatable .form-control,
+body.dark-mode .airpay-datatable input[type="search"],
+html.dark-mode .airpay-datatable .form-control,
+html.dark-mode .airpay-datatable input[type="search"] {
+    background: var(--ap-color-bg-surface, #1a1d27);
+    color: var(--ap-color-text-primary, #e8eaed);
+    border-color: var(--ap-color-border, #2d3140);
+}
+body.dark-mode .airpay-datatable .form-control::placeholder,
+body.dark-mode .airpay-datatable input[type="search"]::placeholder,
+html.dark-mode .airpay-datatable .form-control::placeholder,
+html.dark-mode .airpay-datatable input[type="search"]::placeholder {
+    color: var(--ap-color-text-muted, #6b7280);
+}
+
+body.dark-mode .airpay-datatable .badge-secondary,
+html.dark-mode .airpay-datatable .badge-secondary {
+    background: #4b5563;
+    color: #e5e7eb;
+}
+
+body.dark-mode .airpay-datatable .btn-outline-secondary,
+html.dark-mode .airpay-datatable .btn-outline-secondary {
+    color: #c4cad8;
+    border-color: #3d4254;
+}
+body.dark-mode .airpay-datatable .btn-outline-secondary:hover,
+html.dark-mode .airpay-datatable .btn-outline-secondary:hover {
+    background: #2d3140;
+    color: #fff;
+}
+
+/* Bulk action bar shared dark mode */
+body.dark-mode [data-airpay-bulk-bar],
+html.dark-mode [data-airpay-bulk-bar] {
+    background: rgba(96, 165, 250, 0.12) !important;
+    color: #c4cad8 !important;
+    border-color: rgba(96, 165, 250, 0.25) !important;
+}
+
+/* ── Filter bars across plugins use .ap-filter-bar ──────────────── */
+body.dark-mode .ap-filter-bar,
+html.dark-mode .ap-filter-bar {
+    background: var(--ap-color-bg-surface, #1a1d27) !important;
+    border-color: var(--ap-color-border, #2d3140) !important;
+}
+body.dark-mode .ap-filter-bar .form-select,
+body.dark-mode .ap-filter-bar .form-control,
+html.dark-mode .ap-filter-bar .form-select,
+html.dark-mode .ap-filter-bar .form-control {
+    background: var(--ap-color-bg-surface-alt, #232733);
+    color: var(--ap-color-text-primary, #e8eaed);
+    border-color: var(--ap-color-border, #2d3140);
+}
+body.dark-mode .ap-filter-bar .btn-light,
+html.dark-mode .ap-filter-bar .btn-light {
+    background: var(--ap-color-bg-surface-alt, #232733);
+    color: var(--ap-color-text-secondary, #9ca3b4);
+    border-color: var(--ap-color-border, #2d3140);
+}
+body.dark-mode .ap-filter-bar .btn-light.active,
+html.dark-mode .ap-filter-bar .btn-light.active {
+    background: var(--ap-color-primary, #0066A7) !important;
+    color: #fff !important;
+    border-color: var(--ap-color-primary, #0066A7) !important;
+}

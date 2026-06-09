@@ -1,0 +1,204 @@
+{{!
+    Airpay Academy — Branded Email HTML Wrapper
+    Overrides core/email_html.mustache (which is just {{{body}}})
+    Applied to ALL emails sent via email_to_user()
+
+    Context variables from lib/moodlelib.php email_to_user():
+    - {{{body}}}          — email content (HTML, unescaped)
+    - {{subject}}         — email subject
+    - {{sitefullname}}    — site full name
+    - {{siteshortname}}   — site short name
+    - {{sitewwwroot}}     — site URL (e.g. https://www.airpay.academy)
+    - {{toname}}          — recipient display name
+    - {{fromname}}        — sender display name
+}}
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="x-apple-disable-message-reformatting" />
+    <title>{{subject}}</title>
+    <!--[if mso]>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
+    <style type="text/css">
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+        /* Reset */
+        body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+        table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+        img { -ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none; }
+        body { margin: 0; padding: 0; width: 100% !important; }
+        /* Responsive */
+        @media only screen and (max-width: 620px) {
+            .email-container { width: 100% !important; max-width: 100% !important; }
+            .email-body-cell { padding: 24px 16px !important; }
+            .email-header-cell { padding: 16px !important; }
+            .email-footer-signature { padding: 20px 16px !important; }
+            .footer-social-icon { width: 28px !important; height: 28px !important; }
+            .footer-service-strip { display: none !important; }
+            .footer-tagline-cell { font-size: 11px !important; padding: 10px 16px !important; }
+        }
+    </style>
+</head>
+<body style="margin:0; padding:0; background-color:#F2F4FB; font-family:'Montserrat',Arial,Helvetica,sans-serif;">
+
+<!-- Outer container — full-width background -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#F2F4FB;">
+<tr><td align="center" style="padding:24px 8px;">
+
+    <!-- Email container — 600px max -->
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="email-container" style="max-width:600px; width:100%; background-color:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+
+        <!-- ═══ HEADER BAR ═══ -->
+        <tr>
+            <td class="email-header-cell" align="center" bgcolor="#0066A7" style="background-color:#0066A7; padding:20px 32px;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                    <td align="left" valign="middle">
+                        <img src="{{sitewwwroot}}/theme/sentientia/pix/brand/academy-logo-350.png"
+                             alt="airpay academy"
+                             width="180"
+                             style="display:block; max-width:180px; height:auto;" />
+                    </td>
+                    <td align="right" valign="middle" style="color:#ffffff; font-family:'Montserrat',Arial,sans-serif; font-size:11px; letter-spacing:0.5px;">
+                        Learning &amp; Development
+                    </td>
+                </tr>
+                </table>
+            </td>
+        </tr>
+
+        <!-- ═══ BODY CONTENT ═══ -->
+        <tr>
+            <td class="email-body-cell" style="padding:32px; font-family:'Montserrat',Arial,Helvetica,sans-serif; font-size:15px; line-height:24px; color:#1a1a2e;">
+                {{{body}}}
+            </td>
+        </tr>
+
+        <!-- ═══ FOOTER — SIGNATURE (light mode, matches Airpay corporate signature) ═══ -->
+        <tr>
+            <td style="border-top:3px solid #0066A7;"></td>
+        </tr>
+        <tr>
+            <td class="email-footer-signature" bgcolor="#ffffff" style="background-color:#ffffff; padding:24px 32px;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                    <!-- Left: Team name -->
+                    <td align="left" valign="top" style="font-family:'Montserrat',Arial,sans-serif; color:#0066A7; font-size:17px; font-weight:700; line-height:22px; padding-bottom:14px;">
+                        airpay<br/>
+                        <span style="font-size:13px; font-weight:500; color:#5a6070;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;academy team</span>
+                    </td>
+                    <!-- Right: Airpay logo + social -->
+                    <td align="right" valign="top">
+                        <span style="font-family:'Montserrat',Arial,sans-serif; font-size:28px; font-weight:700; color:#0066A7; letter-spacing:-0.5px;">airpay</span>
+                        <br/>
+                        <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="right" style="margin-top:6px;">
+                        <tr>
+                            <td style="padding:0 2px;">
+                                <a href="https://www.facebook.com/airaborapay" style="text-decoration:none;">
+                                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                                    <tr><td bgcolor="#3b5998" width="26" height="26" align="center" style="background-color:#3b5998; border-radius:4px; font-family:Arial,sans-serif; font-size:14px; font-weight:700; color:#ffffff; line-height:26px;">f</td></tr>
+                                    </table>
+                                </a>
+                            </td>
+                            <td style="padding:0 2px;">
+                                <a href="https://www.youtube.com/@airpay" style="text-decoration:none;">
+                                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                                    <tr><td bgcolor="#FF0000" width="26" height="26" align="center" style="background-color:#FF0000; border-radius:4px; font-family:Arial,sans-serif; font-size:12px; font-weight:700; color:#ffffff; line-height:26px;">&#9654;</td></tr>
+                                    </table>
+                                </a>
+                            </td>
+                            <td style="padding:0 2px;">
+                                <a href="https://www.linkedin.com/company/airpay-payment-services/" style="text-decoration:none;">
+                                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                                    <tr><td bgcolor="#0077B5" width="26" height="26" align="center" style="background-color:#0077B5; border-radius:4px; font-family:Arial,sans-serif; font-size:14px; font-weight:700; color:#ffffff; line-height:26px;">in</td></tr>
+                                    </table>
+                                </a>
+                            </td>
+                            <td style="padding:0 2px;">
+                                <a href="https://www.instagram.com/airpayindia/" style="text-decoration:none;">
+                                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                                    <tr><td bgcolor="#E4405F" width="26" height="26" align="center" style="background-color:#E4405F; border-radius:4px; font-family:Arial,sans-serif; font-size:14px; color:#ffffff; line-height:26px;">&#9675;</td></tr>
+                                    </table>
+                                </a>
+                            </td>
+                        </tr>
+                        </table>
+                    </td>
+                </tr>
+                <!-- Website + locations -->
+                <tr>
+                    <td colspan="2" style="padding-top:12px; border-top:1px solid #e2e6ef;">
+                        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                        <tr>
+                            <td style="padding:6px 0 4px; font-family:'Montserrat',Arial,sans-serif; font-size:13px; color:#0066A7;">
+                                &#127760;&nbsp;
+                                <a href="https://www.airpay.co.in" style="color:#0066A7; text-decoration:underline; font-weight:500;">www.airpay.co.in</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding:4px 0 0; font-family:'Montserrat',Arial,sans-serif; font-size:13px; color:#0f7a73;">
+                                <span style="color:#e74c3c;">&#128205;</span>&nbsp;
+                                <span style="color:#0f7a73; font-weight:500;">India - UAE - Tanzania - Zanzibar - Zambia</span>
+                            </td>
+                        </tr>
+                        </table>
+                    </td>
+                </tr>
+                </table>
+            </td>
+        </tr>
+
+        <!-- ═══ TAGLINE BAR (cream/beige background per reference) ═══ -->
+        <tr>
+            <td class="footer-tagline-cell" bgcolor="#f5f0e0" style="background-color:#f5f0e0; padding:12px 32px; text-align:center;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px solid #d4cdb5; border-radius:4px; background-color:#f5f0e0;">
+                <tr>
+                    <td style="padding:10px 16px; font-family:'Montserrat',Arial,sans-serif; font-size:12px; color:#1a1a2e; text-align:center; line-height:18px; font-weight:600;">
+                        airpay is India's first integrated omnichannel financial services platform
+                    </td>
+                </tr>
+                </table>
+            </td>
+        </tr>
+
+        <!-- ═══ INDIAN FLAG ACCENT BAR ═══ -->
+        <tr>
+            <td style="height:6px; background: linear-gradient(to right, #FF9933 33%, #ffffff 33%, #ffffff 66%, #138808 66%);">
+                <!--[if mso]>
+                <v:rect style="width:600px;height:6px;" strokecolor="none" fillcolor="#FF9933">
+                    <v:fill type="gradient" color="#FF9933" color2="#138808" angle="90"/>
+                </v:rect>
+                <![endif]-->
+            </td>
+        </tr>
+
+    </table>
+    <!-- /email-container -->
+
+    <!-- Legal fine print below the card -->
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="email-container" style="max-width:600px; width:100%;">
+    <tr>
+        <td style="padding:16px 8px; font-family:'Montserrat',Arial,sans-serif; font-size:11px; color:#8890a0; text-align:center; line-height:16px;">
+            Airpay Payment Services Pvt. Ltd.<br/>
+            This email was sent from <a href="{{sitewwwroot}}" style="color:#0066A7; text-decoration:none;">{{sitefullname}}</a>.
+            If you believe you received this in error, please contact
+            <a href="mailto:academy@airpay.co.in" style="color:#0066A7; text-decoration:none;">academy@airpay.co.in</a>.<br/>
+            <a href="{{sitewwwroot}}/local/sentientia_privacy/index.php" style="color:#0066A7; text-decoration:none;">Privacy &amp; Data Rights</a>
+        </td>
+    </tr>
+    </table>
+
+</td></tr>
+</table>
+<!-- /outer -->
+
+</body>
+</html>

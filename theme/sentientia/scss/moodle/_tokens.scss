@@ -1,0 +1,286 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   AIRPAY DESIGN TOKENS — Single Source of Truth
+   ═══════════════════════════════════════════════════════════════════════
+
+   Every colour, spacing, radius, shadow, and typography value in the
+   platform MUST reference a token from this file. No hex values elsewhere.
+
+   Tenant branding overrides are injected at runtime via core_renderer
+   (reading from local_sentientia_org.brand_color etc.) — NOT from static files.
+
+   Dark mode overrides live in _tokens-dark.scss using [data-theme="dark"].
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── SCSS Breakpoints (compile-time, used in @media queries) ────────────
+   CSS custom properties can't appear inside @media rules, so the six
+   responsive breakpoints from UI-UX-MANIFESTO §3 live here as Sass vars.
+   Every new partial that needs a media query MUST use these — never
+   inline px literals.
+
+   Usage:
+       @media (max-width: $ap-bp-mobile)  { ... }   // < 590px
+       @media (min-width: $ap-bp-tablet)  { ... }   // ≥ 992px
+
+   Device-class mapping (manifesto §3):
+       mobile-s   < 380px   Galaxy S, iPhone SE
+       mobile     < 590px   iPhone Pro, Pixel
+       tablet-s   < 768px   iPad mini portrait, foldable inner
+       tablet     < 992px   iPad portrait, iPad Air landscape
+       laptop     < 1280px  13" laptops at 100%/125% zoom
+       desktop    < 1600px  external monitors, 14-16" at 100%
+       wide       ≥ 1600px  ultrawide, 4K (content caps at 1440px)
+   ──────────────────────────────────────────────────────────────────── */
+$ap-bp-mobile-s: 380px;
+$ap-bp-mobile:   590px;
+$ap-bp-tablet-s: 768px;
+$ap-bp-tablet:   992px;
+$ap-bp-laptop:   1280px;
+$ap-bp-desktop:  1600px;
+
+:root {
+    /* ── Colour Primitives (brand palette) ───────────────────────── */
+    --ap-blue-50:  #e8f4fd;
+    --ap-blue-100: #c5e3f7;
+    --ap-blue-200: #8ec8ef;
+    --ap-blue-300: #4da8e4;
+    --ap-blue-400: #1a8cd8;
+    --ap-blue-500: #0077bf;
+    --ap-blue-600: #0066A7;  /* Primary — Airpay brand */
+    --ap-blue-700: #005590;
+    --ap-blue-800: #004570;
+    --ap-blue-900: #003050;
+
+    --ap-teal-50:  #e5f4f3;
+    --ap-teal-100: #b8e3df;
+    --ap-teal-200: #80cec7;
+    --ap-teal-300: #48b8af;
+    --ap-teal-400: #1fa69c;
+    --ap-teal-500: #0f7a73;  /* Accent — Airpay teal */
+    --ap-teal-600: #0d6b65;
+    --ap-teal-700: #0a5c56;
+    --ap-teal-800: #074d48;
+    --ap-teal-900: #043e3a;
+
+    --ap-neutral-0:   #ffffff;
+    --ap-neutral-25:  #fafbfc;
+    --ap-neutral-50:  #f2f4fb;
+    --ap-neutral-100: #e8ebf0;
+    --ap-neutral-200: #d1d5de;
+    --ap-neutral-300: #b0b7c3;
+    --ap-neutral-400: #8896a6;
+    --ap-neutral-500: #607286;
+    --ap-neutral-600: #475569;
+    --ap-neutral-700: #334155;
+    --ap-neutral-800: #1e293b;
+    --ap-neutral-900: #0f172a;
+    --ap-neutral-950: #0f1117;
+
+    /* ── Semantic Colour Tokens ──────────────────────────────────── */
+    /* These reference primitives. Tenant branding overrides ONLY these. */
+
+    --ap-color-primary:        var(--ap-blue-600);
+    --ap-color-primary-hover:  var(--ap-blue-700);
+    --ap-color-primary-light:  var(--ap-blue-50);
+    --ap-color-primary-dark:   var(--ap-blue-800);
+
+    --ap-color-accent:         var(--ap-teal-500);
+    --ap-color-accent-hover:   var(--ap-teal-600);
+    --ap-color-accent-light:   var(--ap-teal-50);
+
+    --ap-color-bg-body:        var(--ap-neutral-50);
+    --ap-color-bg-surface:     var(--ap-neutral-0);
+    --ap-color-bg-surface-alt: var(--ap-neutral-25);
+    --ap-color-bg-elevated:    var(--ap-neutral-0);
+
+    --ap-color-text-primary:   var(--ap-neutral-900);
+    /* A11Y-7 (WCAG 2.1 AA, 4.5:1 normal text on white):
+       text-secondary was neutral-500 (#607286) → ~3.7:1 on white — FAILED.
+       Bumped to neutral-600 (#475569) → ~6.4:1 — PASS.
+       text-muted was neutral-400 (#8896a6) → ~2.7:1 — FAILED.
+       Bumped to neutral-500 (#607286) → ~3.7:1 — still borderline; the
+       audit findings only flagged text-muted on link contexts, where the
+       new neutral-500 hits the 3:1 large-text bar. For body-copy AA we
+       use text-secondary (neutral-600) instead. */
+    --ap-color-text-secondary: var(--ap-neutral-600);
+    --ap-color-text-muted:     var(--ap-neutral-500);
+    --ap-color-text-inverse:   var(--ap-neutral-0);
+
+    --ap-color-border:         var(--ap-neutral-100);
+    --ap-color-border-strong:  var(--ap-neutral-200);
+    --ap-color-divider:        var(--ap-neutral-100);
+
+    /* Status colours
+       A11Y-7 contrast bumps:
+       - success: #16a34a (~3.5:1 on white) → #15803d (~4.5:1) — PASS
+       - warning: #d97706 (~3.4:1) → #b45309 (~4.5:1) — PASS for outline
+                  buttons + stat-trend text. Hover/dark-mode unchanged
+                  because they sit on dark backgrounds where contrast is
+                  inverted. */
+    --ap-color-success:        #15803d;
+    --ap-color-success-light:  #dcfce7;
+    --ap-color-warning:        #b45309;
+    --ap-color-warning-light:  #fef3c7;
+    --ap-color-danger:         #dc2626;
+    --ap-color-danger-light:   #fee2e2;
+    --ap-color-info:           var(--ap-color-primary);
+    --ap-color-info-light:     var(--ap-color-primary-light);
+
+    /* Chart series palette — extends primary/accent/warning/danger
+       with neutral mid-tones for 5+ series doughnut/pie. Used by
+       dashboard chart code (F-066 fix) so dark-mode flip + future
+       per-customer brand overrides flow into chart fills without
+       touching the JS.
+    */
+    --ap-color-chart-series-3: #7c3aed;  /* purple — 3rd series after primary+accent */
+    --ap-color-chart-series-4: var(--ap-color-warning); /* warning amber */
+    --ap-color-chart-series-5: var(--ap-color-danger);  /* danger red */
+
+    /* Gradients */
+    --ap-gradient-hero:        linear-gradient(160deg, var(--ap-blue-900), var(--ap-blue-600), var(--ap-teal-500));
+    --ap-gradient-cta:         linear-gradient(135deg, var(--ap-color-primary), var(--ap-color-accent));
+    --ap-gradient-sidebar:     linear-gradient(180deg, var(--ap-neutral-900), var(--ap-neutral-800));
+
+    /* ── Elevation (Shadows) ─────────────────────────────────────── */
+    --ap-shadow-xs:    0 1px 2px rgba(0, 0, 0, 0.04);
+    --ap-shadow-sm:    0 4px 12px rgba(0, 51, 102, 0.06);
+    --ap-shadow-md:    0 8px 24px rgba(0, 51, 102, 0.08);
+    --ap-shadow-lg:    0 16px 48px rgba(0, 51, 102, 0.12);
+    --ap-shadow-hover: 0 20px 40px rgba(0, 51, 102, 0.10);
+    --ap-shadow-focus: 0 0 0 3px rgba(0, 102, 167, 0.25);
+
+    /* ── Spacing (8px base grid) ─────────────────────────────────── */
+    --ap-space-0:  0;
+    --ap-space-1:  4px;
+    --ap-space-2:  8px;
+    --ap-space-3:  12px;
+    --ap-space-4:  16px;
+    --ap-space-5:  20px;
+    --ap-space-6:  24px;
+    --ap-space-8:  32px;
+    --ap-space-10: 40px;
+    --ap-space-12: 48px;
+    --ap-space-16: 64px;
+    --ap-space-20: 80px;
+
+    /* ── Border Radius ───────────────────────────────────────────── */
+    --ap-radius-xs:   4px;
+    --ap-radius-sm:   8px;
+    --ap-radius-md:   12px;
+    --ap-radius-lg:   16px;
+    --ap-radius-xl:   20px;
+    --ap-radius-pill:  999px;
+    --ap-radius-full:  50%;
+
+    /* ── Typography ──────────────────────────────────────────────── */
+    --ap-font-family:      'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --ap-font-family-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+
+    --ap-text-xs:   0.75rem;    /* 12px */
+    --ap-text-sm:   0.875rem;   /* 14px */
+    --ap-text-base: 1rem;       /* 16px */
+    --ap-text-lg:   1.125rem;   /* 18px */
+    --ap-text-xl:   1.25rem;    /* 20px */
+    --ap-text-2xl:  1.5rem;     /* 24px */
+    --ap-text-3xl:  1.875rem;   /* 30px */
+    --ap-text-4xl:  2.25rem;    /* 36px */
+
+    --ap-weight-normal:   400;
+    --ap-weight-medium:   500;
+    --ap-weight-semibold: 600;
+    --ap-weight-bold:     700;
+    --ap-weight-extrabold: 800;
+
+    --ap-leading-tight:   1.25;
+    --ap-leading-normal:  1.5;
+    --ap-leading-relaxed: 1.75;
+
+    /* ── Layout ──────────────────────────────────────────────────── */
+    --ap-sidebar-width:           260px;
+    --ap-sidebar-collapsed-width: 72px;
+    --ap-topbar-height:           64px;
+    --ap-content-max-width:       1400px;
+    --ap-mobile-bottom-bar:       64px;
+
+    /* ── Motion — Durations (UI-UX-MANIFESTO §5.1) ───────────────── */
+    /* Manifesto-locked durations. Use the named token, not the literal. */
+    --ap-duration-instant:    0ms;        /* button press, checkbox tick */
+    --ap-duration-quick:    150ms;        /* small state changes */
+    --ap-duration-default:  250ms;        /* most transitions */
+    --ap-duration-slow:     400ms;        /* layout-affecting transitions */
+    --ap-duration-deliberate: 700ms;      /* celebration moments only */
+
+    /* ── Motion — Easing curves (UI-UX-MANIFESTO §5.2) ───────────── */
+    /* Use ease-out for entrance, ease-in for exit, ease-in-out for both. */
+    --ap-ease-out:     cubic-bezier(0.16, 1, 0.3, 1);     /* incoming */
+    --ap-ease-in:      cubic-bezier(0.7, 0, 0.84, 0);     /* outgoing */
+    --ap-ease-in-out:  cubic-bezier(0.5, 0, 0.5, 1);      /* bidirectional */
+    --ap-ease-spring:  cubic-bezier(0.34, 1.56, 0.64, 1); /* emphatic */
+
+    /* Composite shortcuts — pair the right duration with the right ease.
+       New components should reach for these by default. */
+    --ap-transition-quick:   var(--ap-duration-quick) var(--ap-ease-out);
+    --ap-transition-default: var(--ap-duration-default) var(--ap-ease-out);
+    --ap-transition-slow:    var(--ap-duration-slow) var(--ap-ease-in-out);
+    --ap-transition-emphatic: var(--ap-duration-default) var(--ap-ease-spring);
+
+    /* Legacy aliases — keep until every partial migrates off these.
+       DO NOT add new usages. */
+    --ap-transition-fast:    var(--ap-transition-quick);
+    --ap-transition-normal:  var(--ap-transition-default);
+
+    /* ── Touch & Focus (WCAG 2.2 AA + iPad commitment) ───────────── */
+    /* Manifesto §9: 44×44pt minimum tap target.
+       Manifesto §8: iPad as first-class device. */
+    --ap-tap-target-min:   44px;          /* WCAG 2.5.5 */
+    --ap-tap-target-cozy:  40px;          /* dense UIs (admin tables) only */
+
+    /* Focus-ring contract — every interactive element gets this on :focus-visible.
+       3px width hits the 3:1 visibility ratio at 1× and 2× DPR. */
+    --ap-focus-ring-width:  3px;
+    --ap-focus-ring-offset: 2px;
+    --ap-focus-ring-color:  var(--ap-color-primary);
+
+    /* ── Component sizing (vertical rhythm) ──────────────────────── */
+    /* Standardised heights so buttons, inputs, and badges line up across
+       every form and toolbar without bespoke padding everywhere. */
+    --ap-control-height-sm: 32px;         /* table-row controls, badges */
+    --ap-control-height-md: 40px;         /* default buttons + inputs */
+    --ap-control-height-lg: 48px;         /* primary CTAs, mobile inputs */
+    --ap-control-height-xl: 56px;         /* hero CTAs, single-field forms */
+
+    /* ── Z-index scale ───────────────────────────────────────────── */
+    --ap-z-dropdown:    1000;
+    --ap-z-sticky:      1020;
+    --ap-z-fixed:       1030;
+    --ap-z-offcanvas:   1045;
+    --ap-z-modal:       1055;
+    --ap-z-toast:       1090;
+}
+
+/* ── Reduced motion (UI-UX-MANIFESTO §5.4) ─────────────────────────────
+   When the OS reports a reduced-motion preference, collapse every
+   manifesto duration to "instant" so animations don't trigger vestibular
+   discomfort. Components using --ap-duration-* automatically respect this
+   — no per-component opt-in required.
+
+   Essential state feedback (button-pressed, checkbox-tick) remains
+   visible because the colour/shape change is instantaneous anyway. */
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --ap-duration-quick:      0ms;
+        --ap-duration-default:    0ms;
+        --ap-duration-slow:       0ms;
+        --ap-duration-deliberate: 0ms;
+    }
+}
+
+/* ── Universal focus-visible (WCAG 2.4.11) ─────────────────────────────
+   Every interactive element gets a visible focus ring on keyboard nav.
+   :focus-visible targets keyboard focus only — mouse clicks don't show
+   a ring. Theme adapters / dark mode override --ap-focus-ring-color via
+   _tokens-dark.scss. */
+:focus-visible {
+    outline: var(--ap-focus-ring-width) solid var(--ap-focus-ring-color);
+    outline-offset: var(--ap-focus-ring-offset);
+    border-radius: var(--ap-radius-xs);
+}

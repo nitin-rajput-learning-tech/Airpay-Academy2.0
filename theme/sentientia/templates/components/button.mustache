@@ -1,0 +1,13 @@
+{{!
+    Airpay Button Component
+    Context: { label, url, type (primary|outline|ghost), size (sm|md|lg), icon, id, disabled }
+    Usage: include the partial "theme_sentientia/components/button".
+    Audit fix H1 (2026-05-15) — see stat_card.mustache for the rationale.
+}}
+<a {{#url}}href="{{url}}"{{/url}}
+   {{#id}}id="{{id}}"{{/id}}
+   class="airpay-btn airpay-btn--{{#type}}{{type}}{{/type}}{{^type}}primary{{/type}} airpay-btn--{{#size}}{{size}}{{/size}}{{^size}}md{{/size}} {{#disabled}}airpay-btn--disabled{{/disabled}}"
+   {{#disabled}}aria-disabled="true" tabindex="-1"{{/disabled}}
+   role="button">
+    {{#icon}}<i class="fa fa-{{icon}}" aria-hidden="true"></i> {{/icon}}{{label}}
+</a>

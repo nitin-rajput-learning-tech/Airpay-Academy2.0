@@ -1,0 +1,21 @@
+{
+    "customSyntax": "postcss-scss",
+    "rules": {},
+    "overrides": [
+        {
+            "files": ["scss/moodle/partials/_surface-*.scss"],
+            "rules": {
+                "declaration-property-value-disallowed-list": [
+                    {
+                        "transition-duration": ["/^(?!var\\().*$/"],
+                        "transition": ["/[0-9]+(\\.[0-9]+)?(s|ms)/"]
+                    },
+                    {
+                        "message": "Motion timing must reference an --ap-duration-* / --ap-transition-* token so prefers-reduced-motion can collapse it. Use var(--ap-transition-quick|default|slow|emphatic) instead of inline 0.15s/0.2s/0.3s values. See .claude/rules/frontend.md → Motion & prefers-reduced-motion. Audit ref: PLATFORM-VISUAL-AUDIT-2026-05-24.md §2.7 / P2 #19. To opt out for an unavoidable inline value, prepend the declaration with: // stylelint-disable-next-line declaration-property-value-disallowed-list",
+                        "severity": "error"
+                    }
+                ]
+            }
+        }
+    ]
+}

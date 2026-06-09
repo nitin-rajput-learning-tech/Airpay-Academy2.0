@@ -1,0 +1,159 @@
+/* ══════════════════════════════════════════════════════
+   BOOTSTRAP 5 COMPATIBILITY LAYER
+   Maps deprecated BS4 classes to BS5 equivalents.
+   Safe to remove after full BS5 migration (Moodle 6.0).
+   ══════════════════════════════════════════════════════ */
+
+/* BS4 .form-group → BS5 uses .mb-3. Keep for existing selectors. */
+.form-group { margin-bottom: 1rem; }
+
+/* BS4 custom form controls — direct CSS (no @extend to avoid compile errors) */
+.custom-select { display: block; width: 100%; padding: .375rem 2.25rem .375rem .75rem; font-size: 1rem; border: 1px solid #ced4da; border-radius: .375rem; appearance: none; }
+.custom-control { position: relative; display: block; min-height: 1.5rem; padding-left: 1.5em; }
+.custom-switch { padding-left: 2.5em; }
+
+/* BS4 float utilities → BS5 (directional) */
+.float-left { float: left !important; }
+.float-right { float: right !important; }
+
+/* BS4 spacing utilities → BS5 (directional) */
+.ml-auto { margin-left: auto !important; }
+.mr-auto { margin-right: auto !important; }
+.ml-1 { margin-left: 0.25rem !important; }
+.ml-2 { margin-left: 0.5rem !important; }
+.ml-3 { margin-left: 1rem !important; }
+.mr-1 { margin-right: 0.25rem !important; }
+.mr-2 { margin-right: 0.5rem !important; }
+.mr-3 { margin-right: 1rem !important; }
+.pl-0 { padding-left: 0 !important; }
+.pr-0 { padding-right: 0 !important; }
+
+/* BS4 text alignment → BS5 (directional) */
+.text-left { text-align: left !important; }
+.text-right { text-align: right !important; }
+
+/* BS4 .no-gutters → BS5 .g-0 */
+.no-gutters { --bs-gutter-x: 0; --bs-gutter-y: 0; }
+
+/* BS4 badge colors → BS5 uses .bg-* */
+.badge-primary { background-color: var(--bs-primary, #0066A7) !important; color: #fff !important; }
+.badge-success { background-color: var(--bs-success, #16a34a) !important; color: #fff !important; }
+.badge-warning { background-color: var(--bs-warning, #d97706) !important; color: #212529 !important; }
+.badge-danger  { background-color: var(--bs-danger, #dc2626) !important; color: #fff !important; }
+.badge-info    { background-color: var(--bs-info, #0066A7) !important; color: #fff !important; }
+.badge-pill    { border-radius: 50rem !important; }
+
+/* BS4 .close → direct CSS */
+.close { box-sizing: content-box; width: 1em; height: 1em; padding: .25em; background: transparent url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414z'/%3e%3c/svg%3e") center/1em auto no-repeat; border: 0; border-radius: .375rem; opacity: .5; }
+
+/* BS4 font-weight utilities → BS5 fw-* */
+.font-weight-bold { font-weight: 700 !important; }
+.font-weight-normal { font-weight: 400 !important; }
+.font-weight-light { font-weight: 300 !important; }
+.font-italic { font-style: italic !important; }
+
+/* FA4 → FA6 icon name mapping (icons with -o suffix are now regular weight) */
+.fa-moon-o::before { content: "\f186"; } /* fa-moon */
+.fa-sun-o::before { content: "\f185"; } /* fa-sun */
+.fa-clock-o::before { content: "\f017"; } /* fa-clock */
+.fa-star-half-o::before { content: "\f5c0"; } /* fa-star-half-stroke */
+.fa-bar-chart::before { content: "\f080"; } /* fa-chart-bar (alias) */
+.fa-moon-o, .fa-sun-o, .fa-clock-o, .fa-star-half-o {
+    font-family: 'Font Awesome 6 Free' !important;
+    font-weight: 400 !important; /* regular weight for -o variants */
+}
+
+/* Skip to main content — must be visually hidden */
+.sr-only, a.sr-only-focusable:not(:focus):not(:focus-within) {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+/* BS5 visually-hidden (standalone theme doesn't inherit from Boost) */
+.visually-hidden,
+.visually-hidden-focusable:not(:focus):not(:focus-within) {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+/* a11y: A11Y-5 — skip-link must be visually distinct when focused, not
+   just "no longer hidden". Default browser outlines on <a> are often
+   suppressed by Bootstrap, so we add an explicit, high-contrast pill
+   that pops into view at the top-left when keyboard focused. */
+.visually-hidden-focusable:focus,
+.visually-hidden-focusable:focus-within {
+    position: fixed !important;
+    top: 12px !important;
+    left: 12px !important;
+    z-index: 10000 !important;
+    padding: 10px 18px !important;
+    background: #0066A7 !important;
+    color: #fff !important;
+    text-decoration: none !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25), 0 0 0 3px #ffd400 !important;
+    outline: none !important;
+}
+
+/* a11y: A11Y-5 — global :focus-visible fallback for elements stripped of
+   their default focus ring elsewhere (.aabtn:focus { box-shadow: none } in
+   _moodle-overrides.scss removes it from a long list of selectors). This
+   rule re-adds a high-contrast outline ONLY for keyboard focus, so mouse
+   clicks still don't show the ring.
+
+   Scope: links and buttons in the nav/topbar/sidebar areas where the
+   global override applies. Other components (datatable headers, form
+   inputs, signup/login forms) have their own :focus-visible rules already.
+
+   The 2px solid + 2px offset gives 4px total visible border around the
+   focused element, comfortably exceeding WCAG 2.4.7 contrast for focus. */
+.airpay-nav a:focus-visible,
+.airpay-nav button:focus-visible,
+.airpay-topbar a:focus-visible,
+.airpay-topbar button:focus-visible,
+.ap-shell a:focus-visible,
+.ap-shell button:focus-visible,
+a.aabtn:focus-visible,
+a.navbar-brand:focus-visible {
+    outline: 2px solid #ffd400 !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 0 2px rgba(255, 212, 0, 0.30) !important;
+    border-radius: 4px;
+}
+body.dark-mode .airpay-nav a:focus-visible,
+body.dark-mode .airpay-nav button:focus-visible,
+body.dark-mode .airpay-topbar a:focus-visible,
+body.dark-mode .airpay-topbar button:focus-visible,
+body.dark-mode .ap-shell a:focus-visible,
+body.dark-mode .ap-shell button:focus-visible,
+html.dark-mode .airpay-nav a:focus-visible,
+html.dark-mode .airpay-nav button:focus-visible,
+html.dark-mode .airpay-topbar a:focus-visible,
+html.dark-mode .airpay-topbar button:focus-visible,
+html.dark-mode .ap-shell a:focus-visible,
+html.dark-mode .ap-shell button:focus-visible {
+    outline-color: #ffe44d !important;
+}
+
+/* Hide BizLMS cart popup — replaced by Airpay cart in navbar */
+.popover-region-biz_carts,
+#nav-biz_cart-popover-container {
+    display: none !important;
+}
+
+/* ══════════════════════════════════════════════════════ */

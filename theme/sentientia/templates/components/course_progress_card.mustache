@@ -1,0 +1,70 @@
+{{!
+    Airpay Course Progress Card — Phase B0 iter 3 (2026-05-14)
+
+    The canonical learner-facing course tile. Used on the dashboard's
+    "Continue Learning" section, in My Learning, and in the manager
+    drilldown showing per-team-member progress.
+
+    Context:
+        viewurl       (required) — link to the course view page
+        fullname      (required) — course title (escaped)
+        progress      (required) — completion percentage 0-100
+        shortname     (optional) — used inside the thumb when no image
+        thumburl      (optional) — real thumbnail URL; falls back to
+                                   brand gradient with shortname text
+        subtitle      (optional) — line under the title (category /
+                                   duration / instructor / etc.)
+        status        (optional) — "not_started" | "in_progress" |
+                                   "completed" | "overdue" — controls
+                                   the badge colour + label
+        statuslabel   (optional) — overrides the auto-built status text
+        duration      (optional) — e.g. "45 min" — shown next to progress
+
+    Behaviour:
+        - Whole card is a single click target with :focus-visible support.
+        - Hover lifts 4px with shadow upgrade (respects reduced motion via
+          --ap-duration-quick token).
+        - Progress bar has role="progressbar" with aria-valuenow.
+        - aria-label on the link auto-composes title + progress so screen
+          reader users get the headline metric immediately.
+
+    Usage:
+        Include the partial named "theme_sentientia/components/course_progress_card".
+
+    Audit fix H1 (2026-05-15): keep this comment free of close-brace pairs.
+    See stat_card.mustache for the rationale and a longer explanation.
+}}
+<a class="airpay-course-card {{#status}}airpay-course-card--{{status}}{{/status}}"
+   href="{{viewurl}}"
+   aria-label="{{fullname}}, {{progress}}% complete{{#duration}}, {{duration}}{{/duration}}">
+    <div class="airpay-course-card__thumb"
+         {{#thumburl}}style="background-image: url('{{thumburl}}');"{{/thumburl}}>
+        {{^thumburl}}
+        <span class="airpay-course-card__initial" aria-hidden="true">{{#shortname}}{{shortname}}{{/shortname}}{{^shortname}}{{fullname}}{{/shortname}}</span>
+        {{/thumburl}}
+        {{#status}}
+        <span class="airpay-course-card__badge airpay-course-card__badge--{{status}}">
+            {{#statuslabel}}{{statuslabel}}{{/statuslabel}}{{^statuslabel}}{{#str_for_status}}{{/str_for_status}}{{/statuslabel}}
+        </span>
+        {{/status}}
+    </div>
+    <div class="airpay-course-card__body">
+        <h4 class="airpay-course-card__title">{{fullname}}</h4>
+        {{#subtitle}}
+        <p class="airpay-course-card__subtitle">{{subtitle}}</p>
+        {{/subtitle}}
+        <div class="airpay-course-card__progress">
+            <div class="airpay-course-card__track"
+                 role="progressbar"
+                 aria-valuenow="{{progress}}"
+                 aria-valuemin="0"
+                 aria-valuemax="100">
+                <div class="airpay-course-card__fill" style="width: {{progress}}%;"></div>
+            </div>
+            <span class="airpay-course-card__progress-text">{{progress}}%</span>
+        </div>
+        {{#duration}}
+        <span class="airpay-course-card__duration"><i class="fa fa-clock" aria-hidden="true"></i> {{duration}}</span>
+        {{/duration}}
+    </div>
+</a>

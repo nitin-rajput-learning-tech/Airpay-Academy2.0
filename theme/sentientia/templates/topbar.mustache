@@ -1,0 +1,51 @@
+{{!
+    Topbar — slim top bar replacing full navbar.
+
+    Context:
+    * wwwroot - site root
+    * searchurl - search action URL
+    * breadcrumbs - Moodle navbar breadcrumbs
+    * usermenu - user dropdown HTML
+    * darkmodetoggle - bool show dark mode
+    * notificationhtml - notification bell HTML
+    * sesskey - CSRF token
+}}
+<header class="ap-topbar" id="ap-topbar">
+    <div class="ap-topbar__left">
+        {{! Mobile hamburger }}
+        <button class="ap-topbar__hamburger d-lg-none" id="ap-sidebar-mobile-toggle" aria-label="Open menu">
+            <i class="fa fa-bars"></i>
+        </button>
+
+        {{! Breadcrumb }}
+        <nav class="ap-topbar__breadcrumb d-none d-md-flex" aria-label="Breadcrumb">
+            {{{breadcrumbs}}}
+        </nav>
+    </div>
+
+    <div class="ap-topbar__center">
+        {{! Global search }}
+        <form action="{{{wwwroot}}}/search/index.php" method="get" class="ap-topbar__search">
+            <i class="fa fa-search ap-topbar__search-icon"></i>
+            <input type="text" name="q" class="ap-topbar__search-input"
+                   placeholder="Search courses, people, content..." autocomplete="off">
+        </form>
+    </div>
+
+    <div class="ap-topbar__right">
+        {{! Dark mode toggle }}
+        <button class="ap-topbar__icon-btn" id="ap-dark-toggle" title="Toggle dark mode">
+            <i class="fa fa-moon ap-topbar__dark-icon"></i>
+        </button>
+
+        {{! Notifications }}
+        <div class="ap-topbar__notifications">
+            {{{notificationhtml}}}
+        </div>
+
+        {{! User menu }}
+        <div class="ap-topbar__usermenu">
+            {{{usermenu}}}
+        </div>
+    </div>
+</header>

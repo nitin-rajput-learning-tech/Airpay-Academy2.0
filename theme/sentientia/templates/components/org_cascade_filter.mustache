@@ -1,0 +1,49 @@
+{{! Reusable org hierarchy cascade filter — 5 cascading selects from }}
+{{! tenant root down to level-5 unit. W1-1 BizLMS parity (2026-05-15). }}
+{{! See WAVE-1-PLAN.md and stat_card.mustache for documentation. The }}
+{{! parent template MUST pass cascade_group in its render data array. }}
+<div>
+    <label for="ap-org-cascade-l1-{{cascade_group}}" class="small text-muted mb-1 d-block">Organisation</label>
+    <select id="ap-org-cascade-l1-{{cascade_group}}" class="form-select form-select-sm"
+            data-airpay-org-cascade data-cascade-depth="1"
+            data-cascade-parent="0" data-cascade-group="{{cascade_group}}"
+            style="min-width: 180px;" aria-label="Filter by organisation">
+        <option value="0">All Organisations</option>
+    </select>
+</div>
+<div>
+    <label for="ap-org-cascade-l2-{{cascade_group}}" class="small text-muted mb-1 d-block">Department</label>
+    <select id="ap-org-cascade-l2-{{cascade_group}}" class="form-select form-select-sm"
+            data-airpay-org-cascade data-cascade-depth="2"
+            data-cascade-parent="0" data-cascade-group="{{cascade_group}}"
+            style="min-width: 160px;" disabled aria-label="Filter by department">
+        <option value="0">All Departments</option>
+    </select>
+</div>
+<div>
+    <label for="ap-org-cascade-l3-{{cascade_group}}" class="small text-muted mb-1 d-block">Sub-Department</label>
+    <select id="ap-org-cascade-l3-{{cascade_group}}" class="form-select form-select-sm"
+            data-airpay-org-cascade data-cascade-depth="3"
+            data-cascade-parent="0" data-cascade-group="{{cascade_group}}"
+            style="min-width: 160px;" disabled aria-label="Filter by sub-department">
+        <option value="0">All Sub-Departments</option>
+    </select>
+</div>
+<div>
+    <label for="ap-org-cascade-l4-{{cascade_group}}" class="small text-muted mb-1 d-block">Level 4</label>
+    <select id="ap-org-cascade-l4-{{cascade_group}}" class="form-select form-select-sm"
+            data-airpay-org-cascade data-cascade-depth="4"
+            data-cascade-parent="0" data-cascade-group="{{cascade_group}}"
+            style="min-width: 140px;" disabled aria-label="Filter by level 4 unit">
+        <option value="0">All Level-4 Units</option>
+    </select>
+</div>
+<div>
+    <label for="ap-org-cascade-l5-{{cascade_group}}" class="small text-muted mb-1 d-block">Level 5</label>
+    <select id="ap-org-cascade-l5-{{cascade_group}}" class="form-select form-select-sm"
+            data-airpay-org-cascade data-cascade-depth="5"
+            data-cascade-parent="0" data-cascade-group="{{cascade_group}}"
+            style="min-width: 140px;" disabled aria-label="Filter by level 5 unit">
+        <option value="0">All Level-5 Units</option>
+    </select>
+</div>

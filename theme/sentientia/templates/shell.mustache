@@ -1,0 +1,94 @@
+{{!
+    Shell — the app layout wrapper.
+
+    Wraps sidebar + topbar + content area.
+    Used by all layout PHP files when sidebar nav is enabled.
+
+    Context:
+    * sidebar - sidebar context (from sidebar_navigation)
+    * topbar - topbar context
+    * content - main page content HTML
+    * bodyattributes - body HTML attributes
+    * output - Moodle output object
+}}
+{{{ output.standard_top_of_body_html }}}
+
+<div class="ap-shell" id="ap-shell">
+    {{! Sidebar }}
+    {{> theme_sentientia/sidebar }}
+
+    {{! Mobile overlay backdrop }}
+    <div class="ap-shell__overlay" id="ap-shell-overlay"></div>
+
+    {{! Main content area }}
+    <div class="ap-shell__main">
+        {{! Topbar }}
+        {{> theme_sentientia/topbar }}
+
+        {{! Page content }}
+        <main class="ap-shell__content" id="ap-shell-content">
+            {{{ content }}}
+        </main>
+    </div>
+</div>
+
+{{! Dark mode + sidebar JS }}
+<script>
+(function() {
+    // Sidebar toggle
+    var sidebar = document.getElementById('ap-sidebar');
+    var toggle = document.getElementById('ap-sidebar-toggle');
+    var mobileToggle = document.getElementById('ap-sidebar-mobile-toggle');
+    var overlay = document.getElementById('ap-shell-overlay');
+
+    if (toggle && sidebar) {
+        toggle.addEventListener('click', function() {
+            var isCollapsed = sidebar.getAttribute('data-collapsed') === 'true';
+            sidebar.setAttribute('data-collapsed', isCollapsed ? 'false' : 'true');
+            toggle.querySelector('.ap-sidebar__toggle-icon').style.transform =
+                isCollapsed ? '' : 'rotate(180deg)';
+            // Persist preference via the Moodle 5.x core_user/repository API
+            // (legacy /lib/ajax/setuserpref.php was removed in 5.1).
+            if (typeof require !== 'undefined') {
+                require(['core_user/repository'], function(UserRepo) {
+                    UserRepo.setUserPreference('theme_sentientia_sidebar_collapsed', isCollapsed ? '0' : '1');
+                });
+            }
+        });
+    }
+
+    // Mobile toggle
+    if (mobileToggle && sidebar) {
+        mobileToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('ap-sidebar--mobile-open');
+            overlay.classList.toggle('ap-shell__overlay--visible');
+        });
+    }
+    if (overlay) {
+        overlay.addEventListener('click', function() {
+            sidebar.classList.remove('ap-sidebar--mobile-open');
+            overlay.classList.remove('ap-shell__overlay--visible');
+        });
+    }
+
+    // Dark mode toggle
+    var darkToggle = document.getElementById('ap-dark-toggle');
+    if (darkToggle) {
+        var html = document.documentElement;
+        // Sync icon on load
+        var isDark = html.getAttribute('data-theme') === 'dark';
+        darkToggle.querySelector('i').className = isDark ? 'fa fa-sun ap-topbar__dark-icon' : 'fa fa-moon ap-topbar__dark-icon';
+
+        darkToggle.addEventListener('click', function() {
+            var nowDark = html.getAttribute('data-theme') === 'dark';
+            html.setAttribute('data-theme', nowDark ? 'light' : 'dark');
+            localStorage.setItem('airpay-theme', nowDark ? 'light' : 'dark');
+            darkToggle.querySelector('i').className = nowDark
+                ? 'fa fa-moon ap-topbar__dark-icon'
+                : 'fa fa-sun ap-topbar__dark-icon';
+        });
+    }
+})();
+</script>
+
+{{{ output.standard_end_of_body_html }}}

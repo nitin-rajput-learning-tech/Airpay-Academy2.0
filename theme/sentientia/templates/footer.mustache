@@ -1,0 +1,48 @@
+{{!
+    @template theme_sentientia/footer
+
+    Compact single-row footer — consistent across all pages and roles.
+    Matches the homepage footer design from frontpage.php.
+
+    Example context (json):
+    {
+        "output": {
+            "standard_footer_html": "",
+            "standard_end_of_body_html": ""
+        }
+    }
+}}
+
+<footer id="page-footer" class="airpay-footer">
+    {{! Moodle required: course footer + tour reset }}
+    <div id="course-footer" class="d-none">{{{ output.course_footer }}}</div>
+    <div class="tool_usertours-resettourcontainer"></div>
+
+    {{! ── Compact footer row ────────────────────────── }}
+    <div class="airpay-footer__compact">
+        <a href="{{{config.wwwroot}}}/" class="airpay-footer__logo">
+            <img src="{{{config.wwwroot}}}/theme/sentientia/pix/brand/academy-logo-350.png" alt="{{#str}}footer_logo_alt, theme_sentientia{{/str}}">
+        </a>
+        <nav class="airpay-footer__links">
+            <a href="{{{config.wwwroot}}}/local/sentientia_pages/index.php?page=privacy">{{#str}}footer_privacy, theme_sentientia{{/str}}</a>
+            <a href="{{{config.wwwroot}}}/local/sentientia_pages/index.php?page=terms">{{#str}}footer_terms, theme_sentientia{{/str}}</a>
+            <a href="{{{config.wwwroot}}}/local/sentientia_pages/index.php?page=help">{{#str}}footer_help, theme_sentientia{{/str}}</a>
+            <a href="{{{config.wwwroot}}}/local/sentientia_pages/index.php?page=contact">{{#str}}footer_contact, theme_sentientia{{/str}}</a>
+        </nav>
+        <span class="airpay-footer__copy">{{#str}}footer_copyright, theme_sentientia{{/str}}</span>
+    </div>
+
+    {{! Product attribution + GPL licence per ADR-001 §Trademark cleanup. }}
+    <div class="airpay-footer__product-attribution">
+        <span class="airpay-footer__product-attribution-brand">Sentientia LMS</span>
+        <span class="airpay-footer__product-attribution-sep" aria-hidden="true">·</span>
+        <span class="airpay-footer__product-attribution-licence">Licensed under GPL v3</span>
+    </div>
+
+    {{! Standard footer/end-of-body output — MUST be before </body> }}
+    {{{ output.standard_footer_html }}}
+    {{{ output.standard_end_of_body_html }}}
+    {{{ output.debug_footer_html }}}
+</footer>
+
+{{! PWA install banner moved to local_sentientia_pwa/install_prompt AMD (Phase D.1.b). }}

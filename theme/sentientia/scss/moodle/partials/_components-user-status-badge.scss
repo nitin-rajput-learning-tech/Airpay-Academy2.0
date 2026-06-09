@@ -1,0 +1,102 @@
+// =============================================================
+// User Status Badge — P0 borrow #10 from Moodle 5.2
+// =============================================================
+// Inline pill shown next to a user's name in:
+//   - /user/index.php       (course participants)
+//   - /grade/report/grader  (gradebook)
+//   - /grade/report/overview (admin-side gradebook)
+//   - /report/log/index.php (activity logs)
+//   - Anywhere our theme calls $OUTPUT->user_picture()
+//
+// Two variants:
+//   --suspended : amber-tinted neutral. User can't log in.
+//   --deleted   : red-tinted. User account is gone.
+//
+// Renders dim enough to read as "metadata" not "alert". Don't grow
+// taller than the surrounding text — pill must not push table rows.
+// =============================================================
+
+.airpay-user-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+
+    margin-left: 6px;
+    padding: 1px 8px;
+
+    font-family: var(--ap-font-family, 'Montserrat', sans-serif);
+    font-size: 0.7rem;        // 11.2px — small enough to feel ancillary
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+
+    border-radius: 999px;
+    border: 1px solid transparent;
+
+    // Don't break table-cell layout: keep on the same baseline as the
+    // adjacent text, never wrap mid-pill.
+    white-space: nowrap;
+    vertical-align: baseline;
+
+    // Accessibility — the badge text is also exposed via title/aria so
+    // screen readers don't depend on the visual style. (Done in PHP.)
+
+    &--suspended {
+        background-color: rgba(217, 119, 6, 0.08);   // amber 8%
+        color: #b45309;                              // amber-700
+        border-color: rgba(217, 119, 6, 0.25);
+    }
+
+    &--deleted {
+        background-color: rgba(220, 38, 38, 0.06);   // red 6%
+        color: #b91c1c;                              // red-700
+        border-color: rgba(220, 38, 38, 0.25);
+        text-decoration: line-through;
+    }
+
+    // Dark-mode adjust — flip surface tint, keep accent readable.
+    body.airpay-theme-dark &--suspended {
+        background-color: rgba(217, 119, 6, 0.18);
+        color: #fbbf24;
+        border-color: rgba(251, 191, 36, 0.35);
+    }
+    body.airpay-theme-dark &--deleted {
+        background-color: rgba(220, 38, 38, 0.18);
+        color: #fca5a5;
+        border-color: rgba(252, 165, 165, 0.35);
+    }
+}
+
+// When the badge sits inside a tight table cell (e.g. gradebook header
+// rotated user names), it can collide with adjacent column borders. Bump
+// the badge down a step to keep things readable in narrow grids.
+.gradereport-grader,
+.path-grade-report {
+    .airpay-user-status-badge {
+        font-size: 0.65rem;
+        padding: 0 6px;
+        margin-left: 4px;
+    }
+}
+
+// Mobile (≤590px) — the badge is the most space-hungry per-row addition.
+// Drop the text + keep the dot-coloured pill to preserve the signal.
+@media (max-width: 590px) {
+    .airpay-user-status-badge {
+        font-size: 0; // hide text
+        padding: 0;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-left: 6px;
+        // Keep the title attribute readable for touch+hold on mobile.
+        &::before {
+            content: "";
+            display: block;
+            width: 100%;
+            height: 100%;
+            border-radius: inherit;
+        }
+    }
+}

@@ -1,0 +1,971 @@
+/*var(--primarycolor): #000 !default;
+
+var(--secondarycolor): #ccc !default;
+
+var(--hovercolor): #eee !default;*/
+
+#nav-drawer .btn-secondary {
+    background-color: var(--primarycolor) !important;
+    color: #fff;
+}
+[data-region="drawer"] {
+    background-image: linear-gradient(45deg,var(--secondarycolor),var(--secondarycolor)) !important;
+}
+
+.btn-outline-secondary:not(:disabled):not(.disabled):active, 
+.btn-outline-secondary:not(:disabled):not(.disabled).active, 
+.show>.btn-outline-secondary.dropdown-toggle{
+    color: #fff;
+    background-color: var(--hovercolor);
+    border-color: var(--hovercolor);
+}
+.btn-outline-secondary:hover{
+    color: #fff;
+    background-color: var(--hovercolor)!important;
+    border-color: var(--hovercolor)!important;
+}
+.popover-region-content .quickpop_over_ul li a, 
+#quickaccess-popover-container .popover-region-header-text{
+    color: var(--primarycolor);
+}
+
+
+/*
+ * scheme scss for different plugins
+ * Please copy the set of css for the respective plugin from block listed below
+ * 
+*/
+body::-webkit-scrollbar {
+    width: 10px;
+}
+body::-webkit-scrollbar-track {
+    box-shadow: inset 0 0 6px rgba(0,0,0,0.5);
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.5);
+}
+body::-webkit-scrollbar-thumb {
+  background-color: var(--sitehighlight);
+  outline: none;
+}
+.bg-sitehighlight{
+    background-color: var(--sitehighlight);
+}
+.text-sitehighlight{
+    color: var(--sitehighlight);
+}
+[data-region="drawer"] {
+    background-image: linear-gradient(45deg, var(--sidebarbgstartcolor), var(--sidebarbgendcolor));
+}
+#nav-drawer .btn-secondary {
+    background-color: var(--iconbgcolor);
+    color: #fff;
+}
+.progress-bar {
+    background-color: var(--secondarycolor);
+}
+a, .btn-link {
+     color: var(--linkcolor);
+}
+a:hover, .btn-link:hover {
+    color: var(--linkhovercolor);
+}
+a:focus, .btn-link:focus {
+    color: var(--linkhovercolor);
+}
+a.dropdown-item{color: inherit;}
+
+table thead,
+table.dataTable.no-footer > thead/* th*/, 
+table.generaltable thead/* th*/,
+.path-grade-report-grader .gradeparent tr.heading/* th.cell*/{
+    background-image: linear-gradient(to left, var(--tblhdstartbg), var(--tblhdendbg));
+}
+table thead > tr > th, 
+table.dataTable.no-footer > thead > tr > th,
+table.generaltable thead > tr > th,
+.path-grade-report-grader .gradeparent tr.heading th.cell,
+.path-grade-report-grader .gradeparent tr.heading th.cell > a,
+.path-grade-report-grader .gradeparent tr.heading th.cell > a > i.fa, 
+table thead > tr > th a,
+table.dataTable.no-footer > thead > tr > th a,
+table.generaltable thead > tr > th a{
+    color: var(--tbltextcolor);
+    background-color: inherit;
+}
+
+/*.icon{color: var(--linkcolor);}*/
+#page-login-index .form-control {
+     box-shadow: 0 0 5px var(--lightbuttonbgcolor) inset;
+     border: 1px solid var(--lightbuttonbgcolor) inset;
+}
+#page-login-index .form-control:focus {
+     box-shadow: 0 0 5px var(--buttonbgcolor) inset;
+     border: 1px solid var(--buttonbgcolor) inset;
+}
+#page-login-index .form-control {
+    box-shadow: 0 0 5px 0 #0000001f;;
+}
+.block_userdashboard .view_more_container {
+     background-color: var(--buttonbgcolor);
+}
+ .block_userdashboard .view_more_container:hover, .block_userdashboard .view_more_container:focus, .block_userdashboard .view_more_container:active {
+     background-color: var(--btnhoverbgcolor);
+}
+ .block_userdashboard .view_more_container .viewbtn {
+     color: var(--btntextcolor);
+}
+ .block_userdashboard .view_more_container .viewbtn:hover, .block_userdashboard .view_more_container .viewbtn:focus, .block_userdashboard .view_more_container .viewbtn:active {
+     color: var(--btnhovertextcolor);
+}
+body button, html [type="button"], body [type="reset"], body [type="submit"], body [type="cancel"], body .btn-primary, body .btn, .cat_btn {
+     background-color: var(--buttonbgcolor);
+     color: var(--btntextcolor);
+     border-color: var(--btnbordercolor);
+     border-radius: 0.25rem;
+}
+ body button:hover, html [type="button"]:hover,
+ body [type="reset"]:hover, body [type="submit"]:hover,
+ body [type="cancel"]:hover, body .btn-primary:hover, 
+ body .btn:hover, .cat_btn:hover, body button:focus,
+ html [type="button"]:focus, body [type="reset"]:focus,
+ body [type="submit"]:focus, body [type="cancel"]:focus, 
+ body .btn-primary:focus, body .btn:focus, .cat_btn:focus, 
+ body button:active, html [type="button"]:active, 
+ body [type="reset"]:active, body [type="submit"]:active, 
+ body [type="cancel"]:active, 
+ body .btn-primary:active, 
+ .btn-primary:not(:disabled):not(.disabled):active, .btn-primary:not(:disabled):not(.disabled).active, .show > .btn-primary.dropdown-toggle,
+ body .btn:active, .cat_btn:active {
+     background-color: var(--btnhoverbgcolor);
+     color: var(--btnhovertextcolor);
+     border-color: var(--btnhoverbgcolor);
+}
+body .btn-link {
+     background-color: transparent !important;
+     border-color: transparent !important;
+     color: var(--linkcolor);
+}
+ body .btn-link:hover, body .btn-link:focus, body .btn-link:active, body .btn-link:visited {
+     color: var(--linkhovercolor);
+}
+div#continue button > a, body button > a {
+     color: var(--btntextcolor);
+}
+ div#continue button > a:hover, body button > a:hover, div#continue button > a:focus, body button > a:focus, div#continue button > a:active, body button > a:active {
+     color: var(--btnhovertextcolor);
+     text-decoration: none;
+}
+.btn-secondary.disabled:hover,
+.fp-viewbar.disabled a:hover,
+.btn-default.disabled:hover,
+.btn-secondary:disabled:hover,
+.btn-default:disabled:hover {
+    background-color: var(--btnhoverbgcolor);
+    color: var(--btnhovertextcolor);
+}
+/* .pagination .page-link,
+.pagination .ng-scope .ng-binding
+{
+     background-color: var(--buttonbgcolor);
+     color: var(--btntextcolor);
+     border-color: var(--btnbordercolor);
+     border:1px solid  var(--btnbordercolor);
+}
+
+ .pagination .page-link:hover, .pagination .page-link:focus, .pagination .page-link:active {
+     background-color: var(--btntextcolor);
+     color: var(--buttonbgcolor);
+     border-color: var(--btnbordercolor);
+} */
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,.dataTables_wrapper .dataTables_paginate .paginate_button:focus,
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover,
+.pagination .ng-scope.active>a,
+.pagination .page-item.active .page-link, .page-item.active .page-link:focus, .page-item.active .page-link:hover {
+    background-color: var(--buttonbgcolor) !important;
+    color:var(--btntextcolor) !important;
+    border-color: transparent !important;
+    background: none;
+}
+/*
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled{
+    color: var(--buttonbgcolor) !important;
+}
+.pagination .page-item.disabled,
+.page-item.disabled .page-link,
+.page-item:last-child .page-link,
+.pagination .ng-scope:last-child>a {
+    color: var(--buttonbgcolor);
+} */
+.initialbar .letter {
+     color: var(--sitehighlight);
+     background-color: var(--btntextcolor);
+}
+ .initialbar .letter.active {
+     color: var(--btntextcolor);
+     background-color: var(--buttonbgcolor);
+}
+/* body .dataTables_wrapper .dataTables_paginate .paginate_button {
+     background-color: var(--buttonbgcolor) !important;
+     color: var(--btntextcolor) !important;
+}*/
+/* .dataTables_wrapper .dataTables_paginate .paginate_button.next,
+.pagination .page-item.disabled, .page-item.disabled .page-link,
+.page-item:first-child .page-link, .page-item:last-child .page-link, 
+.pagination .ng-scope.disabled>a{
+     color: var(--buttonbgcolor) !important;
+}
+ body .dataTables_wrapper .dataTables_paginate .paginate_button:hover,
+ .pagination .ng-scope .ng-binding:hover, 
+ body .dataTables_wrapper .dataTables_paginate .paginate_button:focus, 
+ body .dataTables_wrapper .dataTables_paginate .paginate_button:active {
+     background-color: var(--btntextcolor) !important;
+     color: var(--buttonbgcolor) !important;
+     border-color: var(--btnbordercolor);
+}
+.pagination .ng-scope.active>a,
+.dataTables_wrapper .dataTables_paginate .paginate_button.active,
+.dataTables_wrapper .dataTables_paginate .paginate_button:active,
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover,
+.dataTables_wrapper .dataTables_paginate .paginate_button:focus{
+    background-color: var(--btntextcolor) !important;
+    color:  var(--buttonbgcolor)!important;
+    border-color: var(--btnbordercolor) !important;
+    background-image: none;
+}
+body .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+body .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover,
+body .dataTables_wrapper .dataTables_paginate .paginate_button.current:focus {
+    background-color: var(--btntextcolor) !important;
+    color: var(--buttonbgcolor) !important;
+    border-color: var(--btnbordercolor) !important;
+    background-image: none;
+}
+body .dataTables_wrapper .dataTables_paginate .paginate_button a, 
+body .dataTables_wrapper .dataTables_paginate .paginate_button:hover a {
+    color: var(--btntextcolor) !important;
+}
+body .dataTables_wrapper .dataTables_paginate .paginate_button.active a,
+body .dataTables_wrapper .dataTables_paginate .paginate_button:hover a {
+    color: var(--buttonbgcolor) !important;
+} */
+body .form-filemanager a.btn, .alert a.btn {
+     background-color: inherit;
+     color: inherit;
+     border-color: transparent;
+}
+ body .form-filemanager a.btn:hover, .alert a.btn:hover, body .form-filemanager a.btn:focus, .alert a.btn:focus, body .form-filemanager a.btn:active, .alert a.btn:active {
+     background-color: inherit;
+     color: inherit;
+}
+.navbar .popover-region-header-actions .icon,
+.navbar .popover-region-toggle .icon {
+    color: var(--iconbgcolor);
+}
+.navbar-light {
+    background-color: var(--headerbgcolor);
+}
+body, #page {
+    background-color: var(--bodybgcolor);
+}
+.block-region .block .card-body .card-title {
+    background: linear-gradient(to left, var(--blockheaderstartbg), var(--blockheaderendbg));
+    color: var(--gradientcolor);
+}
+/* Styling Checkbox Starts */
+.trend-checkbox-label .trend-checkbox-custom{border: 2px solid var(--blockheaderstartbg);}
+.trend-checkbox-label input:checked ~ .trend-checkbox-custom {background: linear-gradient(to left, var(--blockheaderstartbg), var(--blockheaderendbg));border: 2px solid var(--blockheaderstartbg);}
+.trend-checkbox-label input:checked ~ .trend-checkbox-custom::after{border-color: var(--gradientcolor);}
+.trend-checkbox-label .trend-checkbox-custom::before {border: 2px solid var(--blockheaderstartbg);}
+.trending_modal_popup .modal-content {background: linear-gradient(-45deg, var(--lightblockheaderend),1%, var(--lightblockhdrstart));}
+/* Styling Checkbox ends */
+/*modal popup css starts*/
+.modal .modal-header .close,
+div.editor_atto_toolbar button,
+div.editor_atto_toolbar button:hover,
+div.editor_atto_toolbar button:focus,.alert button.close {
+    background-color: inherit;
+    color: inherit;
+}
+.filemanager a.btn,
+.filemanager a.btn:hover,
+.filemanager a.btn:focus {
+    background-color: inherit;
+    color: inherit;
+    border: inherit;
+}
+.modal.openLMStransition .form_label a.btn,
+a[data-toggle="popover"].btn.btn-link.p-a-0{
+    background-color: inherit;
+    border: none;
+}
+
+#page-local-certification-view .course_extended_menu_list li button {
+    color: var(--iconbgcolor);
+}
+.course_extended_menu_itemlink .icon,
+.course_extended_menu_list .dropdown-toggle .icon{
+    color: #000;
+}
+.openLMStransition .form_status .form_status_listitem.active .form_status_listitem_link {
+    background-color: var(--iconbgcolor);
+    cursor: pointer;
+}
+
+.page-context-header .page-header-headings h3:after {
+    border-bottom: 3px solid var(--iconbgcolor);
+}
+.page-context-header .page-header-headings h1:after {
+    border-bottom: 3px solid var(--iconbgcolor);
+}
+.openLMStransition .form_status .form_status_listitem.active .form_status_listitem_link:after{
+    border-left: 20px solid var(--iconbgcolor);
+}
+.openLMStransition .form_status .form_status_listitem.active .form_status_listitem_link:before{
+    border-top: 20px solid var(--iconbgcolor);
+    border-right: 20px solid var(--iconbgcolor);
+    border-bottom: 20px solid var(--iconbgcolor);
+}
+#nav-drawer.closed .user_navigation_link:hover{
+    background-color: var(--usernavhvrbg);
+    color: var(--usernavhvrlink);
+}
+#nav-drawer.closed .user_navigation_link:hover .user_navigation_link_text {
+    background-color: var(--usernavhvrbg);
+    color: var(--usernavhvrlink);
+}
+#nav-drawer .leftmenu_navigator{
+    background: var(--sitehighlight);
+    color: var(--btntextcolor);
+}
+#sidepreopen-control{background-color: var(--sitehighlight);color: var(--btntextcolor);}
+#sidepre-blocks{background-color: var(--sitehighlight);}
+/*scss for the quick action links starts*/
+.showoptions{background: var(--buttonbgcolor);color: var(--btntextcolor);}
+.actionicons.opened .options_container{background-color: var(--buttonbgcolor);}
+.actionicons .options_container:after{border-top-color: var(--buttonbgcolor);}
+.options_container:hover{background-color: var(--buttonbgcolor);}
+.options_container li:hover{
+    background-color: var(--hovercolor);
+    color: var(--btntextcolor);
+}
+/*scss for the quick action links ends*/
+#demo.jplist .course-author {background-color: var(--sitehighlight);}
+
+/*
+ * @plugin type format
+ * @plugin sub-type tabtopics ====> starts here
+ * 
+*/
+/*body#page-course-view-tabtopics .course_page_info_progress{background-color: var(--sitehighlight);}
+body#page-course-view-tabtopics .course_progress_stats{border-color: var(--btntextcolor);}
+body#page-course-view-tabtopics .course_stat_label{color: var(--btntextcolor);}*/
+
+/*
+ * @plugin sub-type tabtopics <==== ends here
+ * 
+*/
+
+/*
+ * @plugin type block
+ * @plugin sub-type userdashboard ====> starts here
+ * 
+*/
+
+.block_userdashboard .view_more_data_card .center_elemet {background-color: var(--sitehighlight);}
+.block_userdashboard .center_elemet:after {background: linear-gradient(45deg, var(--sidebarbgstartcolor), var(--sidebarbgendcolor));}
+.block.block_userdashboard .block_dashboard_tabslist , .block.block_userdashboard .menulinks_container {
+    background: linear-gradient(45deg, var(--sidebarbgstartcolor), var(--sidebarbgendcolor));
+    color: var(--gradientcolor);
+}
+.block.block_userdashboard .block_dashboard_tabslist .dashboard-stat.active_main_tab {
+    background-color: var(--hovercolor);
+    border-right: 1px solid var(--hovercolor);
+}
+.block.block_userdashboard .block_dashboard_tabslist .dashboard-stat.active_main_tab:after{
+    border-left: 25px solid var(--hovercolor);
+}
+.block.block_userdashboard .course_container, 
+#page-blocks-userdashboard-userdashboard_courses .course_container{
+    background-color: #fff;
+    border: 1px solid #fff;
+}
+.block.block_userdashboard .block_dashboard_tabslist .dashboard-stat.active_main_tab:after{
+    right: 40% !important;
+    border-top: 25px solid var(--sitehighlight)!important;
+}
+.block.block_userdashboard .progress-chart-container .progress-doughnut, 
+#page-blocks-userdashboard-userdashboard_courses .progress-chart-container .progress-doughnut{
+    border: 5px solid #eceeef; 
+}
+.block.block_userdashboard .progress-chart-container .progress-doughnut .progress-indicator svg .circle, 
+ #page-blocks-userdashboard-userdashboard_courses .progress-chart-container .progress-doughnut .progress-indicator svg .circle{
+    stroke: var(--sitehighlight);
+}
+.block.block_userdashboard .progress-chart-container .progress-doughnut .progress-text.has-percent, 
+#page-blocks-userdashboard-userdashboard_courses .progress-chart-container .progress-doughnut .progress-text.has-percent{
+    color: var(--sitehighlight);
+}
+.block.block_userdashboard .block_dashboard_tabslist .dashboard-stat.active_main_tab:after{border-left-color: transparent;}
+/*.block.block_userdashboard .portlet.light.shadow{border-color: var(--buttonbgcolor);}*/
+/* .block.block_userdashboard .userdashboard_module_content {border-color: var(--buttonbgcolor);border: none;} */
+.block.block_userdashboard .titleinfo .count_info_container{background-color: var(--buttonbgcolor);color: var(--btntextcolor);}
+.block.block_userdashboard .titleinfo .count_info_container .count_string{color: #fff;}
+.userdashboard_content .lp_container{border-color: var(--sitehighlight);}
+.userdashboard_content .learning_plan_view .lpicon{color: var(--sitehighlight);}
+.userdashboard_content .evalicon{color: var(--sitehighlight);}
+.userdashboard_content .evalactions{background: var(--sitehighlight);}
+
+.userdashboard_content .evalactions {background: linear-gradient(45deg, var(--sidebarbgstartcolor), var(--sidebarbgendcolor));}
+.userdashboard_content .program_container .programicon{color: var(--sitehighlight);}
+.userdashboard_content .program_view_more_container{background: var(--sitehighlight);}
+.userdashboard_content .program_container .data_progress .progress-chart-container .progress-doughnut .progress-indicator svg .circle{stroke: var(--sitehighlight);}
+.ont_container:hover .startquiz_btn{background: linear-gradient(45deg, var(--sidebarbgstartcolor), var(--sidebarbgendcolor));}
+.userdashboard_content .program_container .certicon{color: var(--sitehighlight);}
+.block.block_userdashboard .course-next{color: var(--sitehighlight);}
+.block.block_userdashboard .course-prev{color: var(--sitehighlight);}
+.userdashboard_content .programicon_container {background-color: var(--sitehighlight);}
+#page-local-program-index #status_tabs .program_container .programname_status .class_name{color:var(--linkhovercolor);}
+.userdashboard_content .bootcampicon_container{background-color: var(--sitehighlight);border: 1px solid var(--sitehighlight);}
+/*
+ * @plugin sub-type userdashboard <==== ends here
+ * 
+*/
+
+/*
+ * @plugin type block
+ * @plugin sub-type achievements ====> starts here
+ * 
+*/
+.block_achievements #achievements li.achievements_tabs > a{
+    color: var(--gradientcolor);
+    /*font-weight: 100;*/
+}
+.block_achievements #achievements > .nav-tabs{
+    background: linear-gradient(to left, var(--blockheaderstartbg), var(--blockheaderendbg));
+}
+.block.block_achievements .ui-tabs .ui-tabs-active{
+    border-bottom: 5px solid var(--sitehighlight) !important;
+}
+/*
+ * @plugin sub-type achievements <==== ends here
+ * 
+*/
+
+/*
+ * @plugin type block
+ * @plugin sub-type quick_navigation ====> starts here
+ * 
+*/
+.block.block_quick_navigation .quick_nav .quick_nav_list {
+   background: linear-gradient(to top, var(--blockheaderstartbg), var(--blockheaderendbg));
+}
+.block.block_quick_navigation .quick_nav .quick_nav_list .anch_span{
+    background-color: transparent;
+}
+.quick_nav .quick_nav_list .anch_span i.fa{
+    color: var(--sitehighlight);
+}
+.quick_nav .quick_nav_list .anch_span i.fa{color: var(--btntextcolor);opacity: 0.3;}
+.quick_nav_list .progress-chart-container .progress-doughnut .progress-indicator svg .circle{stroke: var(--sitehighlight);}
+.quick_nav .quick_nav_list .span_str{background: transparent;text-shadow: none;color: #fff;}
+.quick_nav_list .dashboard_count_list .dashbaord_count_item .dashboard_count_string,
+.block.block_quick_navigation .quick_nav .quick_nav_list,
+.block.block_quick_navigation .quick_navigation_detail a, .block.block_quick_navigation .quick_nav .quick_nav_list .span_createlink a{color: #fff;}
+/*
+ * @plugin sub-type quick_navigation <==== ends here
+ * 
+*/
+
+/*
+ * @plugin type block
+ * @plugin sub-type my_event_calender ====> starts here
+ * 
+*/
+.block_my_event_calendar .fc-today .fc-day-number {
+    background-color: var(--sitehighlight);
+    color: var(--btntextcolor);
+}
+.block_my_event_calendar .fc-day-number.active_day {
+    background-color: var(--buttonbgcolor);
+    color: var(--btntextcolor);
+}
+/*
+ * @plugin sub-type my_event_calender <==== ends here
+ * 
+*/
+
+/*
+ * @plugin type block
+ * @plugin sub-type training_calender ====> starts here
+ * 
+*/
+
+body#page-blocks-training_calendar-view #calendar table thead.fc-head{
+    background: linear-gradient(to left, var(--sidebarbgstartcolor), var(--sidebarbgendcolor));
+}
+/*
+ * @plugin sub-type training_calender <==== ends here
+ * 
+*/
+
+/*
+ * @plugin type local
+ * @plugin sub-type costcenter ====> starts here
+ * 
+*/
+.costcenter_container .orgimg_container .content_left,
+.dept_container .dept_topcontent{
+    background-image: linear-gradient(45deg, var(--sidebarbgstartcolor), var(--sidebarbgendcolor));
+}
+.costcenter_container .details_content .org_icon_container{
+    background-color: var(--buttonbgcolor);
+}
+.course_extended_menu_list .createiconchild{    
+    color: #000;
+}
+body#page-local-costcenter-costcenterview .costcenter_container:before,
+body#page-local-costcenter-costcenterview .costcenter_container:after,
+.evendepts .dept_content .sideline,
+.odddepts .dept_content .sideline,
+.dept_container .evendepts .dept_content .connent_line,
+.dept_container .odddepts .dept_content .connent_line {
+    border-color: var(--sitehighlight) !important;
+}
+.dept_container .dept_content:before{
+    background-color: var(--sitehighlight);
+}
+/*
+ * @plugin sub-type courses <==== ends here
+ * 
+*/
+
+/*
+ * @plugin type local
+ * @plugin sub-type users ====> starts here
+ * 
+*/
+body#page-local-users-index #manage_users1 .userscontainer .userpic{border-color: var(--sitehighlight);}
+#page-local-users-team .team_learningtype_dropdown {color: var(--linkhovercolor);}
+#page-local-users-profile .general_info_container, #page-local-users-skillprofile .userprfltabs_container {background: linear-gradient(45deg, var(--sidebarbgstartcolor), var(--sidebarbgendcolor));}
+#page-local-users-profile .fontfa{color: var(--sitehighlight);}
+.path-local-users .dashbaord_count_item .dashboard_count_value{color: var(--sitehighlight);}
+
+/*
+ * @plugin sub-type users <==== ends here
+ * 
+*/
+
+/*
+ * @plugin type local
+ * @plugin sub-type courses ====> starts here
+ * 
+*/
+/* #page-local-courses-courses .course_container{
+    background-color: var(--coursecontainerbg);
+} */
+.crname_head:after{
+    border-bottom: 3px solid var(--iconbgcolor);
+}
+.course_extended_menu_list .catcreateicon{
+    color: var(--sitehighlight);
+}
+body#page-local-courses-index .catlist_container .cattop_content .catname:after{border-color: var(--sitehighlight);}
+.bootstrap-duallistbox-container {background-color: var(--coursecontainerbg);}
+.bootstrap-duallistbox-container select[multiple]::-webkit-scrollbar-thumb{background-color: var(--buttonbgcolor);}
+.bootstrap-duallistbox-container .buttons .btn-default:hover{
+    background-color: var(--buttonbgcolor);
+    color: var(--btntextcolor);
+}
+.bootstrap-duallistbox-container .buttons .btn-default:disabled:hover{
+    background-color: var(--buttonbgcolor);
+    color: var(--btntextcolor);
+}
+/*
+ * @plugin sub-type courses <==== ends here
+ * 
+*/
+
+/*
+ * @plugin type local
+ * @plugin sub-type classrooms ====> starts here
+ * 
+*/
+#page-local-classroom-view .course_extended_menu_list li button{
+    color: var(--iconbgcolor);
+}
+#page-local-classroom-view .createpopicon{
+    color: var(--iconbgcolor);
+}
+
+#page-local-groups-index div.card-title {
+    
+    background: linear-gradient(to left, var(--blockheaderstartbg), var(--blockheaderendbg));
+}
+
+#page-local-classroom-index #status_tabs .classroom_container .classroomname_status{background: var(--sitehighlight);}
+#page-local-classroom-index #status_tabs .classroom_container .classroomname_status {
+    background: linear-gradient(to left, var(--blockheaderstartbg), var(--blockheaderendbg));
+}
+#page-local-classroom-index .crstatus_tabs_list{
+    background-color: var(--coursecontainerbg);
+}
+#evaluationlist .eval_container .evalactions{
+    background: linear-gradient(to left, var(--blockheaderstartbg), var(--blockheaderendbg));
+}
+
+#page-local-classroom-view .ribbon {
+    background: var(--blockheaderstartbg);
+    background: -webkit-gradient(linear, left top, left bottom, from(var(--blockheaderstartbg)), to(var(--blockheaderendbg)));
+    background: -webkit-linear-gradient(top, var(--blockheaderstartbg), var(--blockheaderendbg));
+    background: -moz-linear-gradient(top, var(--blockheaderstartbg), var(--blockheaderendbg));
+    background: -ms-linear-gradient(top, var(--blockheaderstartbg), var(--blockheaderendbg));
+    background: -o-linear-gradient(top, var(--blockheaderstartbg), var(--blockheaderendbg));
+    background-image: -ms-linear-gradient(top, var(--blockheaderstartbg) 0%, var(--blockheaderendbg) 100%);
+}
+#page-local-classroom-view .custom_header {
+    background: repeating-linear-gradient( 45deg, #606dbc, #606dbc 10px, #465298 10px, #465298 20px );
+}
+#page-local-classroom-view .nav-tabs .nav-link.active{border-color: var(--sitehighlight);}
+
+/*
+ * @plugin sub-type classrooms <==== ends here
+ * 
+*/
+
+/*
+ * @plugin type local
+ * @plugin sub-type program ====> starts here
+ * 
+*/
+.path-local-program #status_tabs{
+    background-color: var(--coursecontainerbg);
+}
+#page-local-program-index .program_container{
+    border-color: var(--sitehighlight);
+}
+#page-local-program-index .program_view_more_container{
+    background-color: var(--sitehighlight);
+}
+#page-local-program-index .programicon{
+    color: var(--sitehighlight);
+}
+
+#page-local-program-view .createpopicon{
+    color: var(--sitehighlight);
+}
+#page-local-program-view .nav-tabs .nav-link.active{
+    border-color: var(--sitehighlight);
+}
+.path-local-program .program_progress_wrap{
+    background-color: var(--sitehighlight);
+}
+.path-local-program .program_progress_stats{
+    border-color: var(--btntextcolor);
+}
+.path-local-program .program_stat_label{
+    color: var(--btntextcolor);
+}
+.path-local-program .program_coursename:after{
+    border-color: var(--sitehighlight);
+}
+#page-local-program-index .crstatus_tabs_list{background-color: var(--coursecontainerbg);}
+.popupstringicon{color: var(--sitehighlight);}
+#page-local-program-index .data_progress .progress-chart-container .progress-doughnut .progress-indicator svg .circle {stroke: var(--sitehighlight);}
+#page-local-program-index .programicon_container{
+    background-color: var(--sitehighlight);
+}
+/*
+ * @plugin sub-type program <==== ends here
+ * 
+*/
+
+/*
+ * @plugin type local
+ * @plugin sub-type certification ====> starts here
+ * 
+*/
+.path-local-certification .certification_progress_wrap{background-color: var(--sitehighlight);}
+.path-local-certification .certification_progress_stats{border-color: var(--btntextcolor);}
+.path-local-certification .certification_stat_label{color: var(--btntextcolor);}
+.path-local-certification .certification_coursename:after{border-color: var(--sitehighlight);}
+#page-local-certification-index .certification_view_more_container{background-color: var(--sitehighlight);}
+#page-local-certification-index .certification_container{border-color: var(--sitehighlight);}
+#page-local-certification-index .certificationicon{color: var(--sitehighlight);}
+#page-local-certification-view .nav-tabs .nav-link.active{border-color: var(--sitehighlight);}
+#page-local-certification-index .crstatus_tabs_list{background-color: var(--coursecontainerbg);}
+#page-local-certification-view .createpopicon{color: var(--sitehighlight);}
+#page-local-certification-index .data_progress .progress-chart-container .progress-doughnut .progress-indicator svg .circle {stroke: var(--sitehighlight);}
+
+/*
+ * @plugin sub-type certification <==== ends here
+ * 
+*/
+
+/*
+ * @plugin type local
+ * @plugin sub-type learningplan ====> starts here
+ * 
+*/
+#page-local-learningplan-index table#all_learning_plans .lp_container{border-color: var(--sitehighlight);}
+body#page-local-learningplan-index table#all_learning_plans .learning_plan_view .lpicon{color: var(--sitehighlight);}
+body.path-local-learningplan ul.nav.nav-tabs li>a.nav-link.active{border-color: var(--sitehighlight);}
+#page-local-learningplan-plan_view .switch-label{background: var(--buttonbgcolor);color: var(--btntextcolor);}
+.path-local-learningplan .lpcourses{border-color: var(--sitehighlight);}
+.path-local-learningplan .lpcourse_progress.progress-chart-container{background-color: var(--sitehighlight);}
+.path-local-learningplan .summary_container{border-color: var(--sitehighlight);}
+.path-local-learningplan .summary_container:after{border-left-color: var(--sitehighlight);}
+/*
+ * @plugin sub-type learningplan <==== ends here
+ * 
+*/
+
+/*
+ * @plugin type local
+ * @plugin sub-type evaluation ====> starts here
+ * 
+*/
+#evaluationlist .eval_container .evalactions{background: linear-gradient(to left, var(--blockheaderstartbg), var(--blockheaderendbg));}
+#evaluationlist .eval_container .evalicon{color: var(--sitehighlight);}
+.eval_schedule_label {color: var(--sitehighlight);}
+/*
+ * @plugin sub-type evaluation <==== ends here
+ * 
+*/
+
+/*
+ * @plugin type local
+ * @plugin sub-type forum ====> starts here
+ * 
+*/
+body#page-local-forum-index #forumtable .forumdata_container .bottom_container{background: var(--coursecontainerbg);}
+body#page-local-forum-index #forumtable .forumdata_container .bottom_content .subscribe button:after{color: var(--btntextcolor);}
+/*
+ * @plugin sub-type forum <==== ends here
+ * 
+*/
+
+/*
+ * @plugin type local
+ * @plugin sub-type catalog ====> starts here
+ * 
+*/
+body#page-local-catalog-allcourses .cattbas_container{background-color: var(--coursecontainerbg);}
+body#page-local-catalog-allcourses .spotlight-group{color: var(--btntextcolor);background-color: var(--buttonbgcolor);}
+.catalog_popup .spotlight-group{color: var(--btntextcolor);background-color: var(--buttonbgcolor);}
+/*
+ * @plugin sub-type catalog <==== ends here
+ * 
+*/
+
+/*
+ * @plugin type local
+ * @plugin sub-type onlinetests ====> starts here
+ * 
+*/
+#page-local-onlinetests-index #onlinetestlist tr td:nth-of-type(odd) .ot_icon,
+#page-local-onlinetests-index #onlinetestlist tr td:nth-of-type(even) .ot_icon{color: var(--sitehighlight);}
+#page-local-onlinetests-index .ont_container:hover .startquiz_btn{background-color: var(--buttonbgcolor);}
+/*
+ * @plugin sub-type onlinetests <==== ends here
+ * 
+*/
+/*
+ * @plugin type local
+ * @plugin sub-type requests ====> starts here
+ * 
+*/
+.requests_container .req_component_icon, .component_icon{color: var(--sitehighlight);}
+/*
+ * @plugin sub-type requests <==== ends here
+ * 
+*/
+
+/*
+ * @plugin type block
+ * @plugin sub-type training_calendar ====> starts here
+ * 
+*/
+body#page-blocks-training_calendar-trainingcalender #calendar table thead.fc-head {
+    background: linear-gradient(to left, var(--blockheaderstartbg), var(--blockheaderendbg));
+}
+/*
+ * @plugin sub-type training_calendar <==== ends here
+ * 
+*/
+
+/*
+ * @plugin type block
+ * @plugin sub-type gamification ====> starts here
+ * 
+*/
+body#page-blocks-gamification-index .badgeheader{background: linear-gradient(to left,var(--blockheaderstartbg), var(--blockheaderendbg));}
+/*
+ * @plugin sub-type gamification <==== ends here
+ * 
+*/
+
+/*
+ * @plugin type local
+ * @plugin sub-type gamification ====> starts here
+ * 
+*/
+body#page-local-gamification-viewallbadges .heading{background: linear-gradient(to left,var(--blockheaderstartbg), var(--blockheaderendbg));}
+/*
+ * @plugin sub-type gamification <==== ends here
+ * 
+*/
+
+#back2Top {background-color: var(--buttonbgcolor); color: var(--btntextcolor) !important;}
+.que h3.no, .que .qtext {
+    background: linear-gradient(to left, var(--blockheaderstartbg), var(--blockheaderendbg));
+    color: var(--gradientcolor);    
+}
+
+body#page-local-courses-index .catlisticon i,
+body#page-local-courses-index .catlisticons i {
+    color: var(--sitehighlight);
+}
+.navbar.fixed-top .usermenu .dropdown .dropdown-toggle, 
+.navbar.fixed-top .langmenu .dropdown .dropdown-toggle {
+    background: transparent;
+    border: none;
+}
+.navbar.fixed-top .usermenu .dropdown .dropdown-toggle::after, 
+.navbar.fixed-top .langmenu .dropdown .dropdown-toggle::after{
+    color: var(--primarycolor);
+}
+#page-footer .btn.btn-icon .fa-question{
+    color: var(--primarycolor);
+}
+.user_navigation_ul .user_nav_div .user_navigation_link{
+    color: #fff ;
+}
+#page-local-onlinetests-index .testsicon{
+    color: var(--primarycolor);
+}
+.local_program .modal-header .fa{
+    color: var(--primarycolor);
+}
+.userloggedinas .usermenu .usertext .meta, 
+.userswitchedrole .usermenu .usertext .meta, 
+.loginfailures .usermenu .usertext .meta {
+    color: var(--primarycolor);
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button.active, 
+.dataTables_wrapper .dataTables_paginate .paginate_button:active, 
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover, 
+.dataTables_wrapper .dataTables_paginate .paginate_button:focus {
+    background: var(--hovercolor) !important;
+    border: 1px solid var(--hovercolor);
+}
+.popover-region-content .quickpop_over_ul li:hover a{
+    color: var(--hovercolor)!important;
+}
+.dropdown-menu .dropdown-item.user_role.active_role{background: var(--primarycolor);}
+.bootstrap-duallistbox-container .buttons .btn-default:disabled:hover{
+    background-color:var(--hovercolor);
+}
+.actionicons.opened .options_container,
+.actionicons  .options_container:after,
+.options_container:hover{
+    background-color: var(--hovercolor);
+}
+.options_container li:hover {
+    background-color: var(--primarycolor);
+}
+#page-mod-scorm-player #page-navbar .breadcrumb-button a{
+    background-color: var(--primarycolor);
+    border-color: var(--primarycolor);
+}
+#page-mod-choice-view form.horizontal a{
+    background-color: var(--primarycolor);
+    border: 1px solid var(--primarycolor);
+    border-color: var(--primarycolor);
+}
+.toolbar-info.tool-top .arrow{
+    border-color:  var(--primarycolor) transparent transparent !important;
+}
+.popover-region-toggle::before{
+    border-bottom: 10px solid var(--primarycolor);
+}
+
+.drawer-toggles .drawer-toggler .btn{
+    background-color: var(--primarycolor);
+}
+.btn.btn-icon:hover, .btn.btn-icon:focus{
+    background-color: var(--sitehighlight);
+}
+.block.block_userdashboard .launch_btn, .block.block_userdashboard .launch_btn:active, .block.block_userdashboard .launch_btn:hover{
+    background-color: var(--buttonbgcolor);
+    border-color:  var(--buttonbgcolor);
+}
+.block.block_userdashboard .ctype_elearning:hover .course_progress_container {
+    background-color:var(--secondarycolor);
+}
+.dropdown-item:active, .dropdown-item:hover, .dropdown-item:focus, .dropdown-item:focus-within {
+    outline: 0;
+    background-color:var(--sitehighlight);
+    color: #fff;
+}
+
+/* learner script ui colors */
+body.path-blocks-reportdashboard table.dataTable tr th.header {
+    background-color: var(--sitehighlight) !important;
+}
+.action_menu_dropdown .dropdown-menu::before {
+    background-color: var(--secondarycolor);
+    opacity: 25%;
+}
+#page-local-courses-courses .courseimg_container .enrolment_info,
+#page-local-onlineexams-index .courseimg_container .info_container.enrolment_info,
+#page-local-evaluation-index .eval_container .enroll_strip{
+    background-color: var(--primarycolor);
+    border-color: var(--primarycolor);
+}
+#page-local-courses-courses .courseimg_container .course_type{
+    background-color: var(--secondarycolor);
+}
+#filters_form{
+    background-color: #e7ebfa;
+}
+#page-local-search-allcourses #allcourses_section .CstripCnt{
+    background-color: var(--secondarycolor);
+}
+.block.block_userdashboard .userdashboardcontent_container{
+    background-color: #25467a2b;
+}
+
+
+.block_reporttiles div.reporttile_title{
+    background-color: var(--primarycolor);
+    color: #fff;
+}
+
+/* Quick Access popover fix — aria-expanded toggle */
+#quickaccess-popover-container:has([aria-expanded="true"]) .popover-region-container {
+    opacity: 1 !important;
+    visibility: visible !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+#quickaccess-popover-container.ap-popover-open .popover-region-container {
+    opacity: 1 !important;
+    visibility: visible !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+
+/* Profile dark mode fixes */
+body.dark-mode .userprfltabs_container { background: transparent !important; }
+body.dark-mode .userprfltabs_container .nav-tabs { background: #1a1d27 !important; border-color: #2d3140 !important; }
+body.dark-mode .userprfltabs_container .nav-tabs .nav-link { color: #9ca3b4 !important; }
+body.dark-mode .userprfltabs_container .nav-tabs .nav-link.active { color: #60a5fa !important; border-color: #0066A7 !important; }
+body.dark-mode .tab-content { background: #14161e !important; }
+body.dark-mode #profile_tab { background: transparent !important; }
+body.dark-mode #display_modulesdata { background: transparent !important; }
+body.dark-mode .skillprfltabs_container { background: transparent !important; }
+body.dark-mode .profile_data_content { background: #1a1d27 !important; border-color: #2d3140 !important; }
+body.dark-mode .u_info .u_info_key { color: #8896a6 !important; }
+body.dark-mode .u_info .u_info_value { color: #e8eaed !important; }
+body.dark-mode .ap-profile__enrich-card { background: #1a1d27 !important; border-color: #2d3140 !important; }
+body.dark-mode .ap-profile__enrich-data strong { color: #e8eaed !important; }
+

@@ -1,0 +1,1959 @@
+/* PROTOTYPE MATCH — Login Stats Bar + Legal Links
+   ═══════════════════════════════════════════════════════════ */
+
+/*
+ * DEPRECATED — ADR-018 Wave 2 (see docs/DEPRECATION-SCHEDULE.md, row 1).
+ * BizLMS-coupled styling inherited from the eAbyas/BizLMS distribution; to be
+ * superseded by the Sentientia .ap-admin-* hook layer. Do NOT extend this file —
+ * new admin/UI styling must target .ap-admin-* hooks, not BizLMS DOM classes.
+ */
+.airpay-login__hero-stats {
+    display: flex;
+    gap: 0;
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.15);
+    padding: 16px;
+    margin-top: 20px;
+    backdrop-filter: blur(4px);
+}
+.airpay-login__hero-stat {
+    flex: 1;
+    text-align: center;
+    padding: 0 12px;
+    border-right: 1px solid rgba(255,255,255,0.15);
+    &:last-child { border-right: none; }
+    strong {
+        display: block;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #fff;
+        line-height: 1.2;
+    }
+    span {
+        font-size: 0.7rem;
+        color: rgba(255,255,255,0.7);
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+}
+.airpay-login__legal {
+    text-align: center;
+    padding-top: 16px;
+    margin-top: 16px;
+    border-top: 1px solid #e2e6ef;
+    font-size: 0.8rem;
+    color: #9ca3af;
+    a { color: #5a6070; text-decoration: none; }
+    a:hover { color: #0066A7; }
+    span { margin: 0 8px; }
+}
+@media (max-width: 590px) {
+    .airpay-login__hero-stats { display: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   STATIC PAGES (local/sentientia_pages)
+   ═══════════════════════════════════════════════════════════ */
+.airpay-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 24px 0;
+}
+.airpay-page__title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 3px solid #0066A7;
+    display: inline-block;
+}
+.airpay-page__content {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: #374151;
+}
+.airpay-page__content h3 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: #1a1a2e;
+    margin-top: 28px;
+    margin-bottom: 12px;
+}
+.airpay-page__content h5 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+    color: #1a1a2e;
+}
+.airpay-page__content ul {
+    padding-left: 20px;
+}
+.airpay-page__content li {
+    margin-bottom: 8px;
+}
+.airpay-page__content .card {
+    border-radius: 12px;
+    border: 1px solid #e2e6ef;
+}
+.airpay-page__content .card i {
+    color: #0066A7;
+    margin-right: 6px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ADMIN DASHBOARD — Quick Nav + Activity Feed
+   ═══════════════════════════════════════════════════════════ */
+
+/* Quick Navigation Grid */
+.airpay-dash__quicknav {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+}
+.airpay-dash__quicknav-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 20px 12px;
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e2e6ef;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    text-align: center;
+    overflow: hidden;
+    min-width: 0;
+}
+.airpay-dash__quicknav-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,51,102,0.12);
+    text-decoration: none;
+}
+.airpay-dash__quicknav-card i {
+    font-size: 1.5rem;
+}
+.airpay-dash__quicknav-card span {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+/* Activity Feed */
+.airpay-dash__activity-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+    padding-left: 20px;
+}
+.airpay-dash__activity-feed::before {
+    content: '';
+    position: absolute;
+    left: 5px; top: 8px; bottom: 8px;
+    width: 2px;
+    background: #e2e6ef;
+}
+.airpay-dash__activity-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    position: relative;
+}
+.airpay-dash__activity-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #0066A7;
+    position: absolute;
+    left: -20px; top: 14px;
+    z-index: 1;
+    border: 2px solid #fff;
+}
+.airpay-dash__activity-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    width: 100%;
+    gap: 12px;
+}
+.airpay-dash__activity-label {
+    font-size: 0.875rem;
+    color: #374151;
+}
+.airpay-dash__activity-time {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    white-space: nowrap;
+}
+
+/* Chart canvases */
+#airpay-chart-enrolments,
+#airpay-chart-distribution {
+    max-height: 220px;
+}
+
+/* Admin stat trend badge */
+.airpay-dash__stat-trend {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #16a34a;
+    display: block;
+    margin-top: 2px;
+}
+
+@media (max-width: 768px) {
+    .airpay-dash__quicknav {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Hide 0-count notification badges — BizLMS overrides .hidden display */
+.count-container.hidden {
+    display: none !important;
+}
+
+/* Quick nav cards with stats */
+.airpay-dash__quicknav-stats {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: 0.7rem;
+    color: #5a6070;
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+    overflow: hidden;
+}
+.airpay-dash__quicknav-stat {
+    text-align: center;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+.airpay-dash__quicknav-stat strong {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* System Health */
+.airpay-dash__health-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.airpay-dash__health-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    background: #f8f9fc;
+    border-radius: 10px;
+    border: 1px solid #e2e6ef;
+}
+.airpay-dash__health-icon {
+    font-size: 1.1rem;
+    width: 36px;
+    text-align: center;
+    flex-shrink: 0;
+}
+.airpay-dash__health-icon--ok { color: #16a34a; }
+.airpay-dash__health-icon--warning { color: #d97706; }
+.airpay-dash__health-icon--error { color: #dc2626; }
+.airpay-dash__health-info {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    align-items: center;
+}
+.airpay-dash__health-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+}
+.airpay-dash__health-value {
+    font-size: 0.85rem;
+    color: #5a6070;
+    font-family: 'Courier New', monospace;
+}
+
+/* User Analytics Grid */
+.airpay-dash__analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+}
+.airpay-dash__analytics-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px;
+    background: #f8f9fc;
+    border-radius: 10px;
+    border: 1px solid #e2e6ef;
+}
+.airpay-dash__analytics-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+.airpay-dash__analytics-data {
+    display: flex;
+    flex-direction: column;
+}
+.airpay-dash__analytics-value {
+    font-size: 1.25rem;
+    font-weight: 800;
+    line-height: 1.2;
+}
+.airpay-dash__analytics-label {
+    font-size: 0.7rem;
+    color: #5a6070;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   NAVBAR ICON NORMALIZATION
+   All action icons → consistent 40x40 circles
+   ═══════════════════════════════════════════════════════════ */
+
+#usernavigation {
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+/* Normalize ALL nav action icon containers */
+#usernavigation .popover-region-toggle,
+#usernavigation .nav-link.icon-no-margin,
+#usernavigation .nav-link {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    background: #f3f4f6;
+    border: 1px solid #e2e6ef;
+    transition: all 0.2s ease;
+    position: relative;
+}
+#usernavigation .popover-region-toggle:hover,
+#usernavigation .nav-link:hover {
+    background: #e8f2f9;
+    border-color: #0066A7;
+}
+/* Icon inside */
+#usernavigation .popover-region-toggle .icon,
+#usernavigation .nav-link .icon {
+    margin: 0 !important;
+    font-size: 1rem;
+    color: #374151;
+}
+
+/* Cart button (different structure) */
+#usernavigation .btn.btn-link {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    background: #f3f4f6;
+    border: 1px solid #e2e6ef !important;
+}
+
+/* User menu — fix the dropdown trigger */
+#usernavigation .usermenu-container {
+    height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+#usernavigation .usermenu-container .usermenu {
+    display: flex;
+    align-items: center;
+}
+#usernavigation .usermenu-container .menubar {
+    display: flex !important;
+    align-items: center !important;
+}
+/* User avatar circle */
+#usernavigation .userinitials {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 0.85rem !important;
+    font-weight: 700;
+    background: #0066A7 !important;
+    color: #fff !important;
+    cursor: pointer;
+}
+/* Dropdown chevron */
+#usernavigation .usermenu .dropdown-toggle::after,
+#usernavigation .usermenu-container .action-menu .toggle-display {
+    display: inline-flex !important;
+    align-items: center;
+    margin-left: 4px;
+    color: #5a6070;
+}
+/* Make the entire user area clickable */
+#usernavigation .usermenu-container .action-menu {
+    display: flex !important;
+    align-items: center !important;
+    cursor: pointer;
+}
+
+/* Dark mode toggle — already styled, just ensure consistent size */
+.airpay-nav__theme-toggle {
+    width: 40px !important;
+    height: 40px !important;
+}
+
+/* Search bar — don't let it eat the nav space */
+.airpay-nav__search {
+    max-width: 220px;
+}
+
+/* Logo fix handled at line 3766 with filter: brightness(0) invert(1) */
+/* Footer logo brightness handled by filter: brightness(10) in template */
+
+/* ═══════════════════════════════════════════════════════════
+   STATIC PAGES (Help, Contact, Privacy, Terms)
+   Dark-mode-aware via CSS variables
+   ═══════════════════════════════════════════════════════════ */
+/* Page navigation bar */
+.ap-static-page-nav {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 20px;
+    padding: 4px;
+    background: var(--ap-surface, #fff);
+    border: 1px solid var(--ap-border, #e3eaf3);
+    border-radius: 12px;
+    flex-wrap: wrap;
+}
+.ap-static-page-nav__link {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ap-text-secondary, #607286);
+    text-decoration: none;
+    transition: all 0.15s;
+}
+.ap-static-page-nav__link:hover {
+    background: var(--ap-bg, #F2F4FB);
+    color: var(--ap-text, #1a1a2e);
+}
+.ap-static-page-nav__link:focus-visible {
+    outline: 2px solid var(--ap-color-primary, #0066A7);
+    outline-offset: 2px;
+    border-radius: var(--ap-radius-sm, 8px);
+}
+.ap-static-page-nav__link--active {
+    background: var(--ap-primary-light, #e8f2f9) !important;
+    color: var(--ap-primary, #0066A7) !important;
+    font-weight: 600;
+}
+
+/* Page footer */
+.ap-static-page__footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 32px;
+    padding-top: 16px;
+    border-top: 1px solid var(--ap-border, #e3eaf3);
+}
+.ap-static-page__updated {
+    font-size: 12px;
+    color: var(--ap-text-muted, #8896a6);
+}
+.ap-static-page__updated i { margin-right: 4px; }
+.ap-static-page__back-top {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ap-primary, #0066A7);
+    text-decoration: none;
+}
+.ap-static-page__back-top:hover { text-decoration: underline; }
+
+/* Dark mode */
+body.dark-mode .ap-static-page-nav { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .ap-static-page-nav__link { color: #9ca3b4; }
+body.dark-mode .ap-static-page-nav__link:hover { background: #22252f; color: #e8eaed; }
+body.dark-mode .ap-static-page-nav__link--active { background: #0d2540 !important; color: #60a5fa !important; }
+body.dark-mode .ap-static-page__footer { border-color: #2d3140; }
+
+@media (max-width: 590px) {
+    .ap-static-page-nav { flex-direction: column; }
+    .ap-static-page__footer { flex-direction: column; gap: 8px; text-align: center; }
+}
+
+.ap-static-page {
+    font-family: 'Montserrat', -apple-system, sans-serif;
+}
+.ap-static-page__subtitle {
+    color: var(--ap-text-secondary, #475569);
+    font-size: 0.95rem;
+    margin-bottom: 32px;
+}
+.ap-static-page__badge {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 24px;
+}
+.ap-static-page__badge--blue {
+    background: var(--ap-primary-light, #e8f4fd);
+    color: var(--ap-primary, #0066A7);
+}
+.ap-static-page__badge--teal {
+    background: var(--ap-accent-light, #e5f4f3);
+    color: var(--ap-accent, #0f7a73);
+}
+/* Card grid */
+.ap-sp-grid { display: grid; gap: 20px; }
+.ap-sp-grid--2 { grid-template-columns: repeat(2, 1fr); }
+.ap-sp-grid--stack { grid-template-columns: 1fr; }
+@media (max-width: 768px) {
+    .ap-sp-grid--2 { grid-template-columns: 1fr; }
+}
+/* Cards */
+.ap-sp-card {
+    background: var(--ap-surface-alt, #f8fafc);
+    border: 1px solid var(--ap-border, #e2e8f0);
+    border-radius: 12px;
+    padding: 24px;
+}
+.ap-sp-card--highlight-blue {
+    background: var(--ap-primary-light, #e8f4fd);
+    border-color: #bfdbfe;
+    text-align: center;
+}
+.ap-sp-card--highlight-teal {
+    background: var(--ap-accent-light, #e5f4f3);
+    border-color: #99d5cf;
+    text-align: center;
+}
+.ap-sp-card__icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    margin-bottom: 14px;
+}
+.ap-sp-card__icon--blue { background: var(--ap-primary-light, #e8f4fd); color: #0066A7; }
+.ap-sp-card__icon--teal { background: var(--ap-accent-light, #e5f4f3); color: #0f7a73; }
+.ap-sp-card__icon--amber { background: #fef3c7; color: #d97706; }
+.ap-sp-card__icon--purple { background: #ede9fe; color: #7c3aed; }
+.ap-sp-card__icon--red { background: #fee2e2; color: #dc2626; }
+.ap-sp-card h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--ap-text, #0f172a);
+    margin: 0 0 8px;
+}
+.ap-sp-card p, .ap-sp-card ul {
+    font-size: 0.875rem;
+    color: var(--ap-text-secondary, #475569);
+    line-height: 1.65;
+    margin: 0;
+}
+.ap-sp-card ul { padding-left: 20px; line-height: 1.8; }
+.ap-sp-card a { color: var(--ap-primary, #0066A7); font-weight: 600; }
+/* Section heading */
+.ap-sp-heading {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--ap-text, #0f172a);
+    margin: 0 0 20px;
+}
+/* FAQ item */
+.ap-sp-faq {
+    background: var(--ap-surface-alt, #f8fafc);
+    border: 1px solid var(--ap-border, #e2e8f0);
+    border-radius: 10px;
+    padding: 18px 20px;
+}
+.ap-sp-faq strong {
+    color: var(--ap-text, #0f172a);
+    font-size: 0.9rem;
+}
+.ap-sp-faq p {
+    color: var(--ap-text-secondary, #475569);
+    font-size: 0.85rem;
+    line-height: 1.6;
+    margin: 8px 0 0;
+}
+/* Quick link row */
+.ap-sp-qlink {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 18px;
+    background: var(--ap-surface-alt, #f8fafc);
+    border: 1px solid var(--ap-border, #e2e8f0);
+    border-radius: 10px;
+    color: var(--ap-text, #0f172a);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: border-color 0.2s;
+}
+.ap-sp-qlink:hover {
+    border-color: var(--ap-primary, #0066A7);
+    color: var(--ap-primary, #0066A7);
+    text-decoration: none;
+}
+.ap-sp-qlink:focus-visible {
+    outline: 2px solid var(--ap-color-primary, #0066A7);
+    outline-offset: 2px;
+    border-radius: var(--ap-radius-sm, 8px);
+}
+.ap-sp-qlink__icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+/* Highlight note */
+.ap-sp-note {
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    font-size: 0.85rem;
+    margin: 0;
+}
+.ap-sp-note--blue {
+    background: var(--ap-primary-light, #e8f4fd);
+    border: 1px solid #bfdbfe;
+    color: var(--ap-primary, #0066A7);
+}
+.ap-sp-note--teal {
+    background: var(--ap-accent-light, #e5f4f3);
+    border: 1px solid #99d5cf;
+    color: var(--ap-accent, #0f7a73);
+}
+/* Dark mode overrides for static pages */
+html.dark-mode .ap-sp-card,
+body.dark-mode .ap-sp-card {
+    background: var(--ap-surface, #1e293b);
+    border-color: var(--ap-border, #334155);
+}
+html.dark-mode .ap-sp-faq,
+body.dark-mode .ap-sp-faq {
+    background: var(--ap-surface, #1e293b);
+    border-color: var(--ap-border, #334155);
+}
+html.dark-mode .ap-sp-qlink,
+body.dark-mode .ap-sp-qlink {
+    background: var(--ap-surface, #1e293b);
+    border-color: var(--ap-border, #334155);
+    color: var(--ap-text, #f1f5f9);
+}
+html.dark-mode .ap-sp-note--blue,
+body.dark-mode .ap-sp-note--blue {
+    background: #172554;
+    border-color: #1e3a5f;
+    color: #93c5fd;
+}
+html.dark-mode .ap-sp-note--teal,
+body.dark-mode .ap-sp-note--teal {
+    background: #134e4a;
+    border-color: #1a6b64;
+    color: #5eead4;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PUBLIC HOMEPAGE (local/sentientia_pages/homepage.php)
+   ═══════════════════════════════════════════════════════════ */
+
+.airpay-homepage {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* Hero */
+.airpay-homepage__hero {
+    background: linear-gradient(135deg, #0066A7 0%, #0f7a73 100%);
+    padding: 80px 32px 60px;
+    text-align: center;
+    color: #fff;
+    position: relative;
+}
+.airpay-homepage__hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.03);
+    pointer-events: none;
+}
+.airpay-homepage__hero-content {
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+}
+.airpay-homepage__hero-badge {
+    display: inline-block;
+    padding: 6px 16px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    backdrop-filter: blur(4px);
+}
+.airpay-homepage__hero-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 16px;
+}
+.airpay-homepage__hero-subtitle {
+    font-size: 1.05rem;
+    opacity: 0.9;
+    line-height: 1.6;
+    margin-bottom: 28px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.airpay-homepage__hero-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+}
+.airpay-homepage__hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+}
+.airpay-homepage__hero-stat {
+    text-align: center;
+    strong { display: block; font-size: 1.5rem; font-weight: 800; }
+    span { font-size: 0.8rem; opacity: 0.8; }
+}
+
+/* Trust Bar */
+.airpay-homepage__trust {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    padding: 20px 32px;
+    background: #fff;
+    border-bottom: 1px solid #e2e6ef;
+    flex-wrap: wrap;
+}
+.airpay-homepage__trust-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #374151;
+    i { color: #0066A7; }
+}
+
+/* Learning Pillars */
+.airpay-homepage__pillars {
+    padding: 60px 32px;
+    text-align: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    h2 { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1.75rem; margin-bottom: 32px; color: #1a1a2e; }
+}
+.airpay-homepage__pillars-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+}
+.airpay-homepage__pillar {
+    background: #fff;
+    border-radius: 12px;
+    padding: 32px 24px;
+    text-align: left;
+    border: 1px solid #e2e6ef;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    h3 { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1.1rem; margin: 12px 0 8px; color: #1a1a2e; }
+    p { font-size: 0.9rem; color: #5a6070; line-height: 1.5; }
+}
+.airpay-homepage__pillar:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,51,102,0.1);
+}
+.airpay-homepage__pillar-icon {
+    font-size: 1.8rem;
+}
+
+/* Featured Courses */
+.airpay-homepage__courses {
+    padding: 60px 32px;
+    background: #f8f9fc;
+    h2 { text-align: center; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1.75rem; margin-bottom: 32px; color: #1a1a2e; }
+}
+.airpay-homepage__courses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+.airpay-homepage__course-card {
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #e2e6ef;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.airpay-homepage__course-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,51,102,0.12);
+}
+.airpay-homepage__course-header {
+    height: 120px;
+    background: linear-gradient(135deg, #0066A7 0%, #0f7a73 100%);
+}
+.airpay-homepage__course-card:nth-child(2) .airpay-homepage__course-header { background: linear-gradient(135deg, #0f7a73 0%, #059669 100%); }
+.airpay-homepage__course-card:nth-child(3) .airpay-homepage__course-header { background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%); }
+.airpay-homepage__course-card:nth-child(4) .airpay-homepage__course-header { background: linear-gradient(135deg, #d97706 0%, #dc2626 100%); }
+.airpay-homepage__course-card:nth-child(5) .airpay-homepage__course-header { background: linear-gradient(135deg, #059669 0%, #0066A7 100%); }
+.airpay-homepage__course-card:nth-child(6) .airpay-homepage__course-header { background: linear-gradient(135deg, #7c3aed 0%, #dc2626 100%); }
+.airpay-homepage__course-body {
+    padding: 16px;
+    h4 { font-family: 'Montserrat', sans-serif; font-weight: 600; font-size: 1rem; color: #1a1a2e; margin: 0 0 8px; }
+    p { font-size: 0.85rem; color: #5a6070; margin: 0 0 12px; line-height: 1.4; }
+}
+.airpay-homepage__course-meta {
+    font-size: 0.8rem;
+    color: #9ca3af;
+    margin-bottom: 12px;
+    i { margin-right: 4px; }
+}
+
+/* CTA Section */
+.airpay-homepage__cta {
+    padding: 60px 32px;
+    text-align: center;
+    background: linear-gradient(135deg, #0066A7 0%, #0f7a73 100%);
+    color: #fff;
+    h2 { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1.75rem; margin-bottom: 12px; }
+    p { font-size: 1rem; opacity: 0.9; margin-bottom: 24px; }
+}
+
+/* Homepage Responsive */
+@media (max-width: 768px) {
+    .airpay-homepage__hero { padding: 48px 20px 40px; }
+    .airpay-homepage__hero-title { font-size: 1.75rem; }
+    .airpay-homepage__hero-stats { gap: 20px; }
+    .airpay-homepage__trust { gap: 16px; }
+    .airpay-homepage__pillars { padding: 40px 20px; }
+    .airpay-homepage__courses { padding: 40px 20px; }
+    .airpay-homepage__cta { padding: 40px 20px; }
+}
+
+/* A10: Hide Moodle debug/admin links from footer for non-admin */
+.airpay-footer .tool_usertours-resettourcontainer,
+.airpay-footer a[href*="dataprivacy"],
+.airpay-footer a[href*="purgecaches"],
+.airpay-footer [class*="reactive-instances"],
+.airpay-footer .footer-content-debugging {
+    display: none !important;
+}
+
+/* A5: User menu click area expansion */
+#usernavigation .usermenu-container .action-menu .menubar {
+    min-width: 60px;
+    min-height: 40px;
+    cursor: pointer;
+    display: flex !important;
+    align-items: center !important;
+}
+#usernavigation .usermenu-container .action-menu .menubar > * {
+    cursor: pointer;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CERTIFICATE GALLERY (local/sentientia_pages/certificates.php)
+   ═══════════════════════════════════════════════════════════ */
+
+.airpay-cert-gallery__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+.airpay-cert-gallery__title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    i { color: #0066A7; margin-right: 8px; }
+}
+.airpay-cert-gallery__count {
+    font-size: 0.9rem;
+    color: #5a6070;
+    background: #e8f2f9;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-weight: 600;
+}
+.airpay-cert-gallery__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+.airpay-cert-gallery__card {
+    border: 1px solid #e2e6ef;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.airpay-cert-gallery__card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,51,102,0.12);
+}
+.airpay-cert-gallery__card-header {
+    height: 80px;
+    background: linear-gradient(135deg, #0066A7 0%, #0f7a73 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    i { font-size: 2rem; color: rgba(255,255,255,0.3); }
+}
+.airpay-cert-gallery__card:nth-child(2) .airpay-cert-gallery__card-header { background: linear-gradient(135deg, #0f7a73 0%, #059669 100%); }
+.airpay-cert-gallery__card:nth-child(3) .airpay-cert-gallery__card-header { background: linear-gradient(135deg, #7c3aed 0%, #1e40af 100%); }
+.airpay-cert-gallery__card-body {
+    padding: 16px;
+}
+.airpay-cert-gallery__card-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin: 0 0 8px;
+}
+.airpay-cert-gallery__card-date,
+.airpay-cert-gallery__card-code {
+    font-size: 0.8rem;
+    color: #5a6070;
+    margin: 0 0 4px;
+    i { margin-right: 6px; color: #9ca3af; }
+}
+.airpay-cert-gallery__card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #f3f4f6;
+}
+
+/* ═══════════════════════════════════════════════
+   Phase 16 UI/UX Audit Fixes (2026-04-08)
+   ═══════════════════════════════════════════════ */
+
+/* Fix 1: Hide Moodle reactive debug panel below footer */
+[id$="-reactive-debugpanel"],
+[id*="reactive-debugpanel"] {
+    display: none !important;
+}
+
+/* Fix 2: Tuck "Policies" link inside footer styling */
+#page-footer a[href*="tool/policy/viewall"] {
+    display: none !important;  /* Policies link hidden — accessible via footer Privacy link */
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Overflow Protection — Founder Demo Audit Fixes
+   Prevents dynamic production data from spilling outside containers
+   ═══════════════════════════════════════════════════════════ */
+
+/* KPI stat numbers (e.g., 39,220) */
+.airpay-dash__stat-num {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Deadline course names */
+.airpay-dash__deadline-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+/* Recommended course titles + summaries */
+.airpay-dash__rec-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.airpay-dash__rec-summary {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Achievement titles/descriptions */
+.airpay-dash__achievement-title,
+.airpay-dash__achievement-desc {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+/* Course name in cards */
+.airpay-dash__course-name {
+    word-break: break-word;
+    hyphens: auto;
+}
+
+/* System health values */
+.airpay-dash__health-value {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* User analytics grid values */
+.airpay-dash__analytics-value {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Team compliance table — constrain name column */
+.airpay-dash__team-table td:first-child {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Quick nav label text */
+.airpay-dash__quicknav-card span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+    max-width: 100%;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   APPENDED 2026-05-24 (P1 #10, F-16) — Relocated from _surface-profile.scss
+   ───────────────────────────────────────────────────────────────────────
+   Admin-interior fragments + global utility components that historically
+   lived in _surface-profile.scss but are not gated by body.path-user /
+   body.path-badges / body.path-grade-report / body.path-calendar.
+
+   Includes (placement-decision documented in commit message):
+     • body.path-admin  (primary admin interior — Goal A.x)
+     • body.path-course-view  (course-view scoped — _surface-course.scss
+       was out-of-scope for the P1 #10 decomposition)
+     • #page-my-courses / .block_myoverview  (My Courses dashboard view —
+       _surface-dashboard.scss was out-of-scope)
+     • Global utility components (.ap-faq-item, .ap-static-toc,
+       .ap-back-to-top, .ap-scroll-animate, .ap-notif-badge,
+       .ap-heatmap-cell, .ap-sparkline, Sprint 10 mobile bottom nav,
+       gamification leaderboard row) — not scoped to a single surface.
+   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══ Sprint 7 — Admin Dashboard Sparklines + Compliance Heatmap ═══ */
+
+/* Compliance heatmap cells */
+.ap-heatmap-cell {
+    width: 24px; height: 24px;
+    border-radius: 4px;
+    display: inline-block;
+    margin: 1px;
+}
+.ap-heatmap-cell--green { background: #dcfce7; }
+.ap-heatmap-cell--amber { background: #fef3c7; }
+.ap-heatmap-cell--red { background: #fef2f2; }
+.ap-heatmap-cell--empty { background: #f0f2f7; }
+
+/* Sparkline mini chart (inline SVG) */
+.ap-sparkline {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 8px;
+}
+.ap-sparkline svg { height: 20px; width: 60px; }
+.ap-sparkline-line { fill: none; stroke: var(--ap-primary); stroke-width: 1.5; }
+.ap-sparkline-line--up { stroke: var(--ap-success); }
+.ap-sparkline-line--down { stroke: var(--ap-danger); }
+
+/* ═══ Sprint 8 — Gamification Polish ═══ */
+
+/* Leaderboard rank highlight */
+.airpay-gamification__leaderboard-row--me {
+    background: var(--ap-primary-light) !important;
+    border-left: 3px solid var(--ap-primary) !important;
+    font-weight: 600;
+}
+
+/* ═══ Sprint 8 — Notification Bell Badge ═══ */
+.ap-notif-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    background: var(--ap-danger);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    border: 2px solid var(--ap-surface);
+    animation: ap-counter-fadein 0.3s ease-out;
+}
+
+/* ═══ Sprint 9 — Static Pages Polish ═══ */
+
+/* FAQ accordion */
+.ap-faq-item {
+    border: 1px solid var(--ap-border);
+    border-radius: var(--ap-radius-sm);
+    margin-bottom: 8px;
+    overflow: hidden;
+}
+.ap-faq-item__question {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    font-weight: 600;
+    color: var(--ap-text);
+    cursor: pointer;
+    transition: background 0.15s;
+    font-size: 14px;
+}
+.ap-faq-item__question:hover { background: var(--ap-surface-alt, #f8f9fc); }
+.ap-faq-item__question i { transition: transform 0.2s; color: var(--ap-text-muted); }
+.ap-faq-item--open .ap-faq-item__question i { transform: rotate(180deg); }
+.ap-faq-item__answer {
+    display: none;
+    padding: 0 16px 14px;
+    font-size: 14px;
+    color: var(--ap-text-secondary);
+    line-height: 1.6;
+}
+.ap-faq-item--open .ap-faq-item__answer { display: block; }
+
+/* Static page TOC sidebar */
+.ap-static-toc {
+    position: sticky;
+    top: 80px;
+    padding: 16px;
+    background: var(--ap-surface);
+    border: 1px solid var(--ap-border);
+    border-radius: var(--ap-radius-sm);
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+}
+.ap-static-toc__title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ap-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 12px;
+}
+.ap-static-toc__link {
+    display: block;
+    padding: 6px 10px;
+    font-size: 13px;
+    color: var(--ap-text-secondary);
+    text-decoration: none;
+    border-radius: 6px;
+    transition: all 0.15s;
+}
+.ap-static-toc__link:hover,
+.ap-static-toc__link--active {
+    background: var(--ap-primary-light);
+    color: var(--ap-primary);
+}
+.ap-static-toc__link:focus-visible {
+    outline: 2px solid var(--ap-color-primary, #0066A7);
+    outline-offset: 2px;
+    border-radius: var(--ap-radius-sm, 8px);
+}
+
+/* Back to top button */
+.ap-back-to-top {
+    position: fixed;
+    bottom: 24px;
+    right: 80px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--ap-primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: var(--ap-shadow-md);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.3s, transform 0.3s;
+    z-index: 99;
+    border: none;
+    font-size: 16px;
+}
+.ap-back-to-top--visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ═══ Sprint 10 — Mobile Bottom Nav ═══ */
+@media (max-width: 590px) {
+    .ap-mobile-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 1050;
+        background: var(--ap-surface);
+        border-top: 1px solid var(--ap-border);
+        display: flex;
+        justify-content: space-around;
+        padding: 6px 0 env(safe-area-inset-bottom, 0);
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.06);
+    }
+    .ap-mobile-nav__item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 6px 12px;
+        font-size: 10px;
+        color: var(--ap-text-muted);
+        text-decoration: none;
+        transition: color 0.15s;
+    }
+    .ap-mobile-nav__item i { font-size: 18px; margin-bottom: 2px; }
+    .ap-mobile-nav__item--active { color: var(--ap-primary); font-weight: 600; }
+    .ap-mobile-nav__item:hover { color: var(--ap-primary); }
+
+    /* Add bottom padding to body so content doesn't hide behind nav */
+    body { padding-bottom: 56px !important; }
+
+    /* Dark mode */
+    body.dark-mode .ap-mobile-nav {
+        background: #1a1d27;
+        border-color: #2d3140;
+    }
+}
+
+/* Hide mobile nav on desktop */
+@media (min-width: 591px) {
+    .ap-mobile-nav { display: none !important; }
+}
+
+/* ═══ Sprint 10 — Homepage Scroll Animations ═══ */
+@keyframes ap-fade-in-up {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.ap-scroll-animate {
+    opacity: 0;
+    transform: translateY(24px);
+}
+.ap-scroll-animate--visible {
+    animation: ap-fade-in-up 0.6s ease-out forwards;
+}
+.ap-scroll-animate--delay-1 { animation-delay: 0.1s; }
+.ap-scroll-animate--delay-2 { animation-delay: 0.2s; }
+.ap-scroll-animate--delay-3 { animation-delay: 0.3s; }
+
+/* ═══ My Courses (/my/courses.php) — Moodle core block_myoverview ═══ */
+/* Learners see this when clicking "My Courses" in navbar. Core Moodle block. */
+
+/* Page title */
+#page-my-courses h2 {
+    font-size: 22px !important;
+    font-weight: 800 !important;
+    color: var(--ap-text) !important;
+}
+
+/* Remove heavy blue banner header on Course overview block */
+.block_myoverview > .card > .card-header,
+#page-my-courses .card-header {
+    background: var(--ap-primary) !important;
+    border-radius: var(--ap-radius-sm) var(--ap-radius-sm) 0 0 !important;
+    padding: 10px 16px !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+}
+
+/* Course cards */
+.block_myoverview .course-card,
+#page-my-courses .course-card {
+    border: 1px solid var(--ap-border, #e3eaf3) !important;
+    border-radius: var(--ap-radius-sm, 12px) !important;
+    transition: transform 0.2s, box-shadow 0.2s !important;
+    overflow: hidden !important;
+    background: var(--ap-surface, #fff) !important;
+}
+.block_myoverview .course-card:hover,
+#page-my-courses .course-card:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: var(--ap-shadow-md) !important;
+}
+
+/* Course name */
+.block_myoverview .coursename a,
+.block_myoverview .course-info-container a.aalink {
+    font-weight: 700 !important;
+    color: var(--ap-primary, #0066A7) !important;
+    text-decoration: none !important;
+    font-size: 14px !important;
+}
+.block_myoverview .coursename a:hover,
+.block_myoverview .course-info-container a.aalink:hover {
+    color: var(--ap-primary-dark, #004d7a) !important;
+}
+
+/* Category */
+.block_myoverview .course-card .text-muted {
+    font-size: 12px !important;
+    color: var(--ap-text-secondary) !important;
+}
+
+/* Progress bar */
+.block_myoverview .course-card .progress,
+#page-my-courses .course-card .progress {
+    height: 6px !important;
+    border-radius: 3px !important;
+    background: var(--ap-border) !important;
+}
+.block_myoverview .course-card .progress-bar,
+#page-my-courses .course-card .progress-bar {
+    background: var(--ap-gradient) !important;
+    border-radius: 3px !important;
+}
+
+/* Progress text */
+.block_myoverview .course-card .small,
+.block_myoverview .course-card small {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: var(--ap-text-secondary) !important;
+}
+
+/* 3-dot dropdown */
+.block_myoverview .course-card .dropdown-menu {
+    border-radius: 10px !important;
+    box-shadow: var(--ap-shadow-md) !important;
+    border: 1px solid var(--ap-border) !important;
+    padding: 6px !important;
+}
+.block_myoverview .course-card .dropdown-item {
+    border-radius: 6px !important;
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+}
+.block_myoverview .course-card .dropdown-item:hover {
+    background: var(--ap-primary-light, #e8f2f9) !important;
+}
+
+/* Filter bar */
+#page-my-courses [data-region="filter"] .dropdown-toggle,
+.block_myoverview .btn.dropdown-toggle {
+    border-radius: 8px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+}
+
+/* Card grid spacing */
+#page-my-courses .card-deck { gap: 12px !important; }
+
+/* Dark mode */
+body.dark-mode .block_myoverview .course-card,
+body.dark-mode #page-my-courses .course-card {
+    background: #1a1d27 !important;
+    border-color: #2d3140 !important;
+}
+body.dark-mode .block_myoverview .coursename a,
+body.dark-mode .block_myoverview .course-info-container a.aalink {
+    color: #60a5fa !important;
+}
+body.dark-mode .block_myoverview .course-card .text-muted {
+    color: #9ca3b4 !important;
+}
+body.dark-mode .block_myoverview > .card > .card-header,
+body.dark-mode #page-my-courses .card-header {
+    background: #004d7a !important;
+}
+
+/* B16: Mobile landscape orientation — prevent content overflow */
+@media (max-width: 900px) and (orientation: landscape) {
+    .ap-mobile-nav { display: none !important; }
+    .ap-course-sidebar { height: calc(100vh - 56px); }
+    .ap-course-progress-bar { position: relative; top: 0; }
+    .airpay-homepage__hero { min-height: 50vh; padding: 20px 20px 16px; }
+    .ap-onboard__card { max-height: 90vh; overflow-y: auto; }
+    .airpay-qr__code { width: 40vmin; height: 40vmin; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Goal A.x (2026-05-22) — Sentientia design on /admin/* interior
+   ───────────────────────────────────────────────────────────────────────
+   Site Administrators land here from the search bar in topbar or by URL.
+   The branded chrome (sidebar / header / footer) was correct but the
+   interior was bare Moodle Boost: vanilla h4 col-sm-3 grid of link lists,
+   tabs without padding, form inputs without our brand styling.
+
+   Body classes: `path-admin admin pagelayout-admin`. Scoping ALL rules
+   under body.path-admin keeps everything else untouched.
+   ═══════════════════════════════════════════════════════════════════════ */
+body.path-admin {
+
+    /* Container */
+    #region-main {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 16px 0 32px;
+    }
+
+    /* Tab nav (when present) — pill tabs with brand active state */
+    #region-main .nav-tabs {
+        border-bottom: 1px solid var(--ap-color-border, #e5e7eb);
+        gap: 4px;
+        margin-bottom: 16px;
+    }
+    #region-main .nav-tabs .nav-link {
+        border: none !important;
+        background: transparent !important;
+        color: var(--ap-color-text-secondary, #5a6070) !important;
+        font-size: 14px;
+        font-weight: 500;
+        padding: 10px 16px;
+        border-radius: 8px 8px 0 0;
+        margin: 0;
+        transition: all 0.15s ease;
+    }
+    #region-main .nav-tabs .nav-link:hover {
+        background: var(--ap-color-bg-surface-alt, #f8f9fc) !important;
+        color: var(--ap-color-text-primary, #1a1a2e) !important;
+    }
+    #region-main .nav-tabs .nav-link:focus-visible {
+        outline: 2px solid var(--ap-color-primary, #0066A7);
+        outline-offset: 2px;
+        border-radius: var(--ap-radius-sm, 8px);
+    }
+    #region-main .nav-tabs .nav-link.active {
+        color: var(--ap-color-primary, #0066A7) !important;
+        background: var(--ap-color-bg-surface, #ffffff) !important;
+        border-bottom: 2px solid var(--ap-color-primary, #0066A7) !important;
+        font-weight: 600;
+    }
+
+    /* The tab-content rows organised as a 4-col grid of category cards */
+    #region-main .tab-pane.active .row > [class*="col-"] {
+        margin-bottom: 20px;
+    }
+
+    /* Each category card (col-sm-3 wrapping a section of admin links) */
+    #region-main .tab-pane.active .col-sm-3,
+    #region-main .tab-pane.active .col-sm-6 {
+        position: relative;
+    }
+    #region-main .tab-pane.active .col-sm-3 > h4,
+    #region-main .tab-pane.active .col-sm-6 > h4 {
+        /* Tighten the title styling — uppercase letter-spaced "AI", "Badges", etc. */
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: var(--ap-color-text-secondary, #5a6070);
+        margin: 0 0 12px;
+        padding: 16px 18px 10px;
+        background: var(--ap-color-bg-surface, #ffffff);
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        border-bottom: none;
+        border-radius: 12px 12px 0 0;
+        position: relative;
+    }
+    #region-main .tab-pane.active .col-sm-3 > h4::after,
+    #region-main .tab-pane.active .col-sm-6 > h4::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 18px;
+        width: 28px;
+        height: 2px;
+        background: var(--ap-color-primary, #0066A7);
+        border-radius: 2px;
+    }
+
+    /* The UL inside each category card */
+    #region-main .tab-pane.active .col-sm-3 > ul,
+    #region-main .tab-pane.active .col-sm-6 > ul,
+    #region-main .tab-pane.active .col-sm-3 > h4 + div ul,
+    #region-main .tab-pane.active .col-sm-6 > h4 + div ul {
+        list-style: none;
+        padding: 4px 14px 14px;
+        margin: 0;
+        background: var(--ap-color-bg-surface, #ffffff);
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        border-top: none;
+        border-radius: 0 0 12px 12px;
+        min-height: 120px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+    }
+    #region-main .tab-pane.active .col-sm-3 ul li,
+    #region-main .tab-pane.active .col-sm-6 ul li {
+        padding: 4px 0;
+    }
+    #region-main .tab-pane.active .col-sm-3 ul a,
+    #region-main .tab-pane.active .col-sm-6 ul a {
+        color: var(--ap-color-text-primary, #1a1a2e);
+        text-decoration: none;
+        font-size: 13.5px;
+        font-weight: 500;
+        display: block;
+        padding: 4px 8px;
+        margin: 0 -8px;
+        border-radius: 6px;
+        transition: all 0.15s ease;
+    }
+    #region-main .tab-pane.active .col-sm-3 ul a:hover,
+    #region-main .tab-pane.active .col-sm-6 ul a:hover {
+        background: var(--ap-color-primary-light, #e8f2f9);
+        color: var(--ap-color-primary, #0066A7);
+        padding-left: 12px;
+    }
+    #region-main .tab-pane.active .col-sm-3 ul a:focus-visible,
+    #region-main .tab-pane.active .col-sm-6 ul a:focus-visible {
+        outline: 2px solid var(--ap-color-primary, #0066A7);
+        outline-offset: 2px;
+        border-radius: var(--ap-radius-sm, 8px);
+    }
+
+    /* Admin settings form pages (admin/settings.php style) — form rows */
+    #region-main .form-group,
+    #region-main .fitem,
+    #region-main .form-item {
+        margin-bottom: 16px;
+    }
+    #region-main .form-control,
+    #region-main input[type="text"],
+    #region-main input[type="email"],
+    #region-main input[type="url"],
+    #region-main input[type="number"],
+    #region-main textarea,
+    #region-main select {
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 14px;
+        background: var(--ap-color-bg-surface, #ffffff);
+        color: var(--ap-color-text-primary, #1a1a2e);
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    #region-main .form-control:focus,
+    #region-main input:focus,
+    #region-main textarea:focus,
+    #region-main select:focus {
+        border-color: var(--ap-color-primary, #0066A7);
+        box-shadow: 0 0 0 3px rgba(0, 102, 167, 0.1);
+        outline: none;
+    }
+    #region-main .form-control:focus-visible,
+    #region-main input:focus-visible,
+    #region-main textarea:focus-visible,
+    #region-main select:focus-visible {
+        border-color: var(--ap-color-primary, #0066A7);
+        box-shadow: 0 0 0 3px rgba(0, 102, 167, 0.1);
+        outline: none;
+    }
+
+    /* Admin "Settings" headings inside admin pages */
+    #region-main h2,
+    #region-main h3 {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--ap-color-text-primary, #1a1a2e);
+        margin: 24px 0 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--ap-color-border, #e5e7eb);
+        position: relative;
+    }
+    #region-main h2::after,
+    #region-main h3::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        width: 36px;
+        height: 2px;
+        background: var(--ap-color-primary, #0066A7);
+        border-radius: 2px;
+    }
+
+    /* Primary submit buttons on admin forms — brand color */
+    #region-main button.btn-primary,
+    #region-main input[type="submit"].btn-primary,
+    #region-main .btn-primary {
+        background: var(--ap-color-primary, #0066A7);
+        border-color: var(--ap-color-primary, #0066A7);
+        color: #fff;
+        font-weight: 600;
+        padding: 8px 18px;
+        border-radius: 10px;
+        transition: all 0.15s ease;
+    }
+    #region-main button.btn-primary:hover,
+    #region-main input[type="submit"].btn-primary:hover,
+    #region-main .btn-primary:hover {
+        background: var(--ap-color-primary-dark, #004d80);
+        border-color: var(--ap-color-primary-dark, #004d80);
+        transform: translateY(-1px);
+    }
+    #region-main button.btn-primary:focus-visible,
+    #region-main input[type="submit"].btn-primary:focus-visible,
+    #region-main .btn-primary:focus-visible {
+        outline: 2px solid var(--ap-color-primary, #0066A7);
+        outline-offset: 2px;
+        border-radius: var(--ap-radius-sm, 8px);
+    }
+
+    /* Mobile — collapse to single column + tighten */
+    @media (max-width: 768px) {
+        #region-main .tab-pane.active .col-sm-3,
+        #region-main .tab-pane.active .col-sm-6 {
+            width: 100%;
+            max-width: 100%;
+            flex: 0 0 100%;
+        }
+        #region-main .nav-tabs .nav-link {
+            padding: 8px 12px;
+            font-size: 13px;
+        }
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Goal A.x (2026-05-22) — Sentientia design on /course/view.php
+   ───────────────────────────────────────────────────────────────────────
+   Every course click in the LMS hits this page. Branded chrome was fine
+   but section/activity layout was bare Moodle Boost: no card boundaries,
+   plain section headings, default activity rows.
+
+   MINIMAL polish: brand the section as a card and the section heading,
+   leave activity internals untouched (Moodle's modtype-specific styling
+   handles those — adding more there risks regression).
+
+   Scope: body.path-course-view (covers all formats: topics, weeks, single).
+   ═══════════════════════════════════════════════════════════════════════ */
+body.path-course-view {
+
+    /* Course content container */
+    #region-main {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 16px 0 32px;
+    }
+
+    /* Each section card */
+    .course-content ul.section-list > li.section.course-section,
+    .course-content ul.topics > li.section.course-section,
+    .course-content ul.section-list > li.course-section,
+    .course-content ul.topics > li.course-section {
+        background: var(--ap-color-bg-surface, #ffffff);
+        border: 1px solid var(--ap-color-border, #e5e7eb);
+        border-radius: 16px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+        padding: 0;
+        margin: 0 0 16px;
+        list-style: none;
+        overflow: hidden;
+        transition: box-shadow 0.2s ease;
+    }
+    .course-content ul.section-list > li.section.course-section:hover,
+    .course-content ul.topics > li.section.course-section:hover {
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+    }
+
+    /* Section header — title bar */
+    .course-section .course-section-header,
+    .course-section .section-item > .course-section-header {
+        padding: 16px 24px 12px;
+        border-bottom: 1px solid var(--ap-color-border, #e5e7eb);
+        background: var(--ap-color-bg-surface-alt, #f8f9fc);
+        position: relative;
+    }
+    .course-section .course-section-header h3,
+    .course-section .course-section-header h2,
+    .course-section .course-section-header .sectionname {
+        font-size: 16px !important;
+        font-weight: 700;
+        color: var(--ap-color-text-primary, #1a1a2e);
+        margin: 0;
+        padding: 0;
+        border: none;
+    }
+    /* Brand accent bar at start of section header */
+    .course-section .course-section-header::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 16px;
+        bottom: 12px;
+        width: 3px;
+        background: var(--ap-color-primary, #0066A7);
+        border-radius: 0 3px 3px 0;
+    }
+
+    /* Section body — activity list area */
+    .course-section .section-item > div:not(.course-section-header),
+    .course-section .content {
+        padding: 12px 24px 18px;
+    }
+
+    /* Course title at top — STICKY (Moodle 5.2 borrow P0 #13)
+       Pin the course name + tab nav to the top of the viewport
+       during long-page scroll so learners always know which
+       course they're in. Useful when course-view scrolls past
+       multiple sections + activities. Lift off the content
+       beneath with backdrop blur + soft shadow when stuck. */
+    #region-main > .course-header,
+    .page-header-headings,
+    #region-main > h1 {
+        margin-bottom: 20px;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--ap-color-border, #e5e7eb);
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border-radius: 0 0 12px 12px;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    }
+
+    /* Activity rows — subtle hover only (don't override modtype internals) */
+    .course-section li.activity:hover,
+    .course-section .activity:hover {
+        background: var(--ap-color-bg-surface-alt, #f8f9fc);
+        border-radius: 8px;
+    }
+
+    /* ─── Moodle 5.2 borrow P0 #3: anchor-link highlight ─────────────
+       When a learner clicks a section/activity anchor link (or
+       follows a deep-link from email/notification), the targeted
+       element flashes brand-light briefly so the eye lands. CSS-
+       only — no JS. Uses :target with a 2s ease-out animation. */
+    .course-section:target,
+    .course-section li.activity:target,
+    .course-section li.activity .activity-item:target {
+        animation: ap-anchor-flash 2s ease-out 1;
+    }
+    @keyframes ap-anchor-flash {
+          0% { background: var(--ap-color-primary-light, #e8f2f9); }
+         30% { background: var(--ap-color-primary-light, #e8f2f9); }
+        100% { background: transparent; }
+    }
+
+    /* ─── Moodle 5.2 borrow P0 #4: availability conditions visible ──
+       In stock Moodle 5.1 the `.availabilityinfo` block (which
+       contains "Available from <date>", "Not available unless you
+       complete X", etc.) is muted-grey + visually de-emphasised.
+       Moodle 5.2 promotes it to a clearly-visible chip so learners
+       can SEE the unlock condition, not just bounce off the
+       "Restricted" label.
+
+       Borrow as a styled chip: amber-warning tint background,
+       small lock icon space-reserved, brand-secondary text. Sits
+       below the activity title (or below the section title for
+       section-level restrictions). */
+    .course-section .availabilityinfo,
+    .course-section li.activity .availabilityinfo,
+    .course-section .course-section-header .availabilityinfo {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(217, 119, 6, 0.10);       /* amber-warning 10% */
+        color: rgb(146, 64, 14);                    /* amber-warning dark */
+        border: 1px solid rgba(217, 119, 6, 0.25);
+        border-radius: 10px;
+        padding: 6px 12px;
+        font-size: 12px;
+        font-weight: 500;
+        margin: 8px 0 4px;
+        max-width: 100%;
+    }
+    /* Lock-icon prefix (CSS-only — no template change) */
+    .course-section .availabilityinfo::before,
+    .course-section li.activity .availabilityinfo::before {
+        content: '🔒';
+        font-size: 11px;
+        flex-shrink: 0;
+        opacity: 0.7;
+    }
+    /* Hide vanilla Moodle's separate lock icon — our pseudo replaces it */
+    .course-section .availabilityinfo .fa-lock,
+    .course-section .availabilityinfo .icon[title*="ock"] {
+        display: none;
+    }
+    /* If multiple availability lines (compound restrictions), stack */
+    .course-section .availabilityinfo + .availabilityinfo {
+        display: flex;
+        margin-top: 4px;
+    }
+
+    /* ─── Moodle 5.2 borrow P0 #2: activity header with completion labels ──
+       Moodle 5.2 ships an `activityinfoinheader` layout option that
+       moves the per-activity completion dropdown + due-date chip INTO
+       the activity header next to the title (was: a separate row
+       beneath the title). On 5.1.3+ we don't have the layout option
+       but we can replicate the visual via CSS — push the
+       [data-region="activity-information"] block up next to the
+       activity title, style its dropdown as a brand-light pill chip,
+       and tighten the spacing.
+
+       Net UX win: completion + dates are inline with the activity
+       name instead of a separate row. Course pages feel ~25% denser
+       without losing readability. */
+    .course-section li.activity .activity-item {
+        position: relative;
+    }
+    .course-section li.activity [data-region="activity-information"] {
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        margin: 0;
+        padding: 0;
+        z-index: 2;
+    }
+    .course-section li.activity [data-region="activity-information"]
+                                [data-region="completion-info"] {
+        margin: 0;
+    }
+    /* Completion dropdown chip — pill with brand-light bg */
+    .course-section li.activity .completion-dropdown > a,
+    .course-section li.activity .completion-dropdown > button,
+    .course-section li.activity .completion-dropdown .btn {
+        background: var(--ap-color-primary-light, #e8f2f9) !important;
+        color: var(--ap-color-primary-dark, #004d80) !important;
+        border: 1px solid transparent !important;
+        border-radius: 12px !important;
+        padding: 4px 12px !important;
+        font-size: 11px !important;
+        font-weight: 600 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+    .course-section li.activity .completion-dropdown > a:hover,
+    .course-section li.activity .completion-dropdown > button:hover {
+        background: var(--ap-color-primary, #0066A7) !important;
+        color: #ffffff !important;
+        border-color: var(--ap-color-primary, #0066A7) !important;
+    }
+    /* "Done" / completed state — green pill */
+    .course-section li.activity .completion-dropdown[data-state="complete"] > a,
+    .course-section li.activity [data-region="completion-info"]
+                                [data-completion-state="complete"] > a,
+    .course-section li.activity .btn-success.completion-dropdown {
+        background: rgba(22, 163, 74, 0.12) !important;
+        color: rgb(22, 163, 74) !important;
+    }
+    /* Activity-dates chip — neutral surface-alt */
+    .course-section li.activity .activity-dates,
+    .course-section li.activity [data-region="activity-dates"] {
+        background: var(--ap-color-bg-surface-alt, #f8f9fc);
+        color: var(--ap-color-text-secondary, #5a6070);
+        border-radius: 10px;
+        padding: 3px 10px;
+        font-size: 11px;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-right: 8px;
+    }
+
+    /* Push the activity title to leave room for the inline info */
+    .course-section li.activity .activity-item .activity-name-area,
+    .course-section li.activity .activity-item .activitytitle {
+        padding-right: 200px;
+    }
+
+    /* Mobile — restore stacked layout (the absolute positioning
+       crams the title on small screens) */
+    @media (max-width: 768px) {
+        .course-section li.activity [data-region="activity-information"] {
+            position: static;
+            transform: none;
+            margin-top: 8px;
+            text-align: right;
+        }
+        .course-section li.activity .activity-item .activity-name-area,
+        .course-section li.activity .activity-item .activitytitle {
+            padding-right: 0;
+        }
+    }
+
+    /* Mobile — tighter padding */
+    @media (max-width: 768px) {
+        .course-content ul > li.course-section {
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+        .course-section .course-section-header {
+            padding: 14px 18px 10px;
+        }
+        .course-section .course-section-header::before {
+            top: 14px;
+            bottom: 10px;
+        }
+        .course-section .section-item > div:not(.course-section-header),
+        .course-section .content {
+            padding: 10px 18px 14px;
+        }
+    }
+}
+
+
