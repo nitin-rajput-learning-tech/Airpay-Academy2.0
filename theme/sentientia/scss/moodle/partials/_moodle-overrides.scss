@@ -2969,14 +2969,19 @@ body .que .info>div {
     color: #000;
 }
 .courseheader::before{
-    background-color: #305D94;
+    // De-brand (2026-06-10): BizLMS blue (#305D94) -> Sentientia brand gradient
+    // (primary -> primary-dark -> accent). Tokens fall back to hex if --ap-* absent.
+    background: linear-gradient(135deg,
+        var(--ap-primary, #0066A7) 0%,
+        var(--ap-primary-dark, #004d80) 55%,
+        var(--ap-accent, #0f7a73) 100%);
     content:"";
     top:0;
     position: absolute;
     width: 100%;
     height: 100%;
     right: 0;
-    opacity: 0.9;
+    opacity: 0.92;
 }
 .courseheader .course_header_container{
     padding:20px ;

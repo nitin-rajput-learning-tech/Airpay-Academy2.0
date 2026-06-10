@@ -104,7 +104,7 @@
                             <i class="fa fa-shopping-cart"></i>
                         </div>
                         <div class="enroll_details d-flex">
-                            <span class="details_content text-nowrap">User Enrollements :</span>
+                            <span class="details_content text-nowrap">{{#str}}course_userenrolments, theme_sentientia{{/str}}</span>
                             <span class="enroll_number">{{enrolledusercount}}</span>
                         </div>
                     </div>
@@ -113,7 +113,7 @@
                             <i class="fa fa-users"></i>
                         </div>
                         <div class="enroll_details d-flex">
-                            <span class="details_content text-nowrap">User Completion :</span>
+                            <span class="details_content text-nowrap">{{#str}}course_usercompletion, theme_sentientia{{/str}}</span>
                             <span class="enroll_number">{{completedusercount}}/{{enrolledusercount}}</span>
                         </div>
                     </div>
@@ -125,7 +125,7 @@
                         {{#activityurl}}
                             <div class="context-header-settings-menu">
                                 <a href="{{activityurl}}" title="Start" class='btn start_btn mb-3 btn-block btn-secondary'>
-                                        Start
+                                        {{#str}}course_start, theme_sentientia{{/str}}
                                 </a>
                             </div>
                         {{/activityurl}}
@@ -151,7 +151,7 @@
         </div>
         {{#course_summary_data}}
         <div class="px-3">
-            <h3 class="mt-2">Description</h3>
+            <h3 class="mt-2">{{#str}}description, moodle{{/str}}</h3>
             {{{course_summary_data}}}
         </div>
         {{/course_summary_data}}
