@@ -27,10 +27,15 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Upgrade the plugin.
  *
- * @param int $oldversion the version we are upgrading from
+ * @param float $oldversion the version we are upgrading from. MUST be float
+ *   — paygw_airpay uses decimal versions (2024100700.02 .. 2024100700.10).
+ *   The previous `int` type-hint truncated the decimal and made every
+ *   `if ($oldversion < 2024100700.0X)` block fire incorrectly on any
+ *   already-upgraded DB, triggering downgrade_exception via the savepoint
+ *   call. Fixed 2026-05-24.
  * @return bool always true
  */
-function xmldb_paygw_airpay_upgrade(int $oldversion): bool
+function xmldb_paygw_airpay_upgrade(float $oldversion): bool
 {
     global $DB;
 

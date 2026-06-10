@@ -37,22 +37,29 @@ global $DB;
 // The name of the page should be as per you have configured in airpay system
 // All columns are mandatory
 
-$transactionid = trim($_POST['TRANSACTIONID']);
-$aptransactionid  = trim($_POST['APTRANSACTIONID']);
-$amount  = trim($_POST['AMOUNT']);
-$transactionstatus  = trim($_POST['TRANSACTIONSTATUS']);
-$message  = trim($_POST['MESSAGE']);
-$ap_SecureHash = trim($_POST['ap_SecureHash']);
-$chmod = "";
-if (isset($_POST['CHMOD'])){
-	$chmod = trim($_POST['CHMOD']);
-}
-if (isset($_POST['CUSTOMVAR'])){
-	$customvar = trim($_POST['CUSTOMVAR']);	
-}
-else{
-	$customvar = "";
-}
+// SECURITY 2026-06-02 — read response fields via Moodle's param API. PARAM_RAW
+// preserves the EXACT gateway values (any cleaning would alter the hashed inputs
+// and break verification). $response is the canonical array we both inspect below
+// and hand to airpay_helper::verify_secure_hash().
+$response = [
+	'TRANSACTIONID'     => optional_param('TRANSACTIONID', '', PARAM_RAW),
+	'APTRANSACTIONID'   => optional_param('APTRANSACTIONID', '', PARAM_RAW),
+	'AMOUNT'            => optional_param('AMOUNT', '', PARAM_RAW),
+	'TRANSACTIONSTATUS' => optional_param('TRANSACTIONSTATUS', '', PARAM_RAW),
+	'MESSAGE'           => optional_param('MESSAGE', '', PARAM_RAW),
+	'ap_SecureHash'     => optional_param('ap_SecureHash', '', PARAM_RAW),
+	'CHMOD'             => optional_param('CHMOD', '', PARAM_RAW),
+	'CUSTOMERVPA'       => optional_param('CUSTOMERVPA', '', PARAM_RAW),
+	'CUSTOMVAR'         => optional_param('CUSTOMVAR', '', PARAM_RAW),
+];
+$transactionid     = trim($response['TRANSACTIONID']);
+$aptransactionid   = trim($response['APTRANSACTIONID']);
+$amount            = trim($response['AMOUNT']);
+$transactionstatus = trim($response['TRANSACTIONSTATUS']);
+$message           = trim($response['MESSAGE']);
+$ap_SecureHash     = trim($response['ap_SecureHash']);
+$chmod             = trim($response['CHMOD']);
+$customvar         = trim($response['CUSTOMVAR']);
 
 $error_msg = '';
 if(empty($transactionid) || empty($aptransactionid) || empty($amount) || empty($transactionstatus) || empty($ap_SecureHash)){
@@ -75,26 +82,29 @@ if(empty($transactionid) || empty($aptransactionid) || empty($amount) || empty($
 	$error_msg .= '<tr><td>Variable(s) '. $error_msg.' is/are empty.</td></tr>';
 }
 
-// Generating Secure Hash
-// $mercid = 	Merchant Id, $username = username
-// You will find above two keys on the settings page, which we have defined here in config.php
-$username = get_config('paygw_airpay','username');
-$mercid = get_config('paygw_airpay','mercid');
-$Hash_data = $transactionid.':'.$aptransactionid.':'.$amount.':'.$transactionstatus.':'.$message.':'.$mercid.':'.$username;
-if($chmod == "upi"){
-	$Hash_data = $Hash_data.':'.trim($_POST["CUSTOMERVPA"]);
-}
-$merchant_secure_hash = sprintf("%u", crc32 ($Hash_data));
-
-//comparing Secure Hash with Hash sent by Airpay
-if($ap_SecureHash != $merchant_secure_hash){
-	// Reponse has been compromised. So treat this transaction as failed.
-	$error_msg .= '<tr><td><font color="red">Secure Hash mismatch.</font></td></tr>';
+// Verify the response secure hash via the gateway helper (SECURITY FIX 2026-06-02).
+// The previous inline check was COMPUTED but never ENFORCED — the guard below
+// (`if ($error_msg)`) was commented out, so a forged POST carrying
+// TRANSACTIONSTATUS=200 (with any/blank hash) was enrolled regardless. We now verify
+// via airpay_helper::verify_secure_hash() (which fails closed: missing field or missing
+// config => false) AND enforce the guard before any enrolment.
+if (!\paygw_airpay\airpay_helper::verify_secure_hash($response)) {
+	// Response failed integrity verification — treat as a failed/compromised transaction.
+	$error_msg .= '<tr><td><font color="red">Secure Hash verification failed.</font></td></tr>';
 }
 
-//if($error_msg)
 $order = $DB->get_record('paygw_airpay', ['ap_orderid' => $transactionid]);
-if($transactionstatus == 200){
+
+// SECURITY FIX 2026-06-02 — ENFORCE the verification guard before fulfilment.
+// Enrol ONLY when: the secure-hash + required-field check passed (empty $error_msg),
+// AND Airpay reports success (200), AND a matching pending order exists. Previously
+// this read `if($transactionstatus == 200)` with the guard commented out, so a forged
+// callback granted free, unpaid enrolment.
+// HARDENING TODO (robust control, requires Airpay sandbox): add a server-side Order
+// Confirmation (Verify API) call here and require it to independently confirm
+// status==200 for this orderid/amount before enrolling — the CRC32 above carries no
+// secret and is forgeable by design. See docs.airpay.co.in/v4/payments/order-confirmation/.
+if (empty($error_msg) && (int) $transactionstatus === 200 && $order) {
 	// Process Successfull transaction
 	// Updating order after successfull transaction.
 	$order->paymentid = $aptransactionid;
@@ -199,7 +209,7 @@ if($transactionstatus == 200){
 	            $error->timecreated = time();
 	            $DB->insert_record('paygw_airpay_errorlog', $error);
             }
-			echo $OUTPUT->render_from_template('local_biz_cart/checkout_success', $request);		
+			echo $OUTPUT->render_from_template('local_biz_cart/checkout_success', []);
 	}
 }else{
 	// Update payment status after failed payment.
@@ -212,13 +222,13 @@ if($transactionstatus == 200){
 	if($error_msg){
 		$error = new stdClass();
 		$error->error = $error_msg;
-		$error->airpay_id = $order->id ? $order->id : -1;
+		$error->airpay_id = $order ? $order->id : -1;
 		$error->timecreated = time();
 		$DB->insert_record('paygw_airpay_errorlog', $error);
 	}
 
 	// Redirection after failed payment.
-	echo $OUTPUT->render_from_template('local_biz_cart/checkout_failed', $request);
+	echo $OUTPUT->render_from_template('local_biz_cart/checkout_failed', []);
 
 }
 echo $OUTPUT->footer();

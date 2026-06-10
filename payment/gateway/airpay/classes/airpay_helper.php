@@ -24,11 +24,11 @@
 
 namespace paygw_airpay;
 
-use core_payment\helper;
-
-require $CFG->dirroot . "/payment/gateway/airpay/classes/checksum.php";
 defined('MOODLE_INTERNAL') || die();
 
+use core_payment\helper;
+
+require_once $CFG->dirroot . "/payment/gateway/airpay/classes/checksum.php";
 require_once $CFG->libdir . '/filelib.php';
 
 class airpay_helper
@@ -231,12 +231,67 @@ class airpay_helper
         return $order->timecreated . '_' . $order->id;
     }
 
-    protected static function get_url($config)
-    {
-        if ($config->environment === 'sandbox') {
-            return "https://payments.airpay.co.in/pay/index.php";
-        } else {
-            return "https://payments.airpay.co.in/pay/index.php";
+    /**
+     * Verify the Airpay payment-RESPONSE secure hash (security fix 2026-06-02).
+     *
+     * Airpay v4 returns `ap_SecureHash` =
+     *   sprintf('%u', crc32(TRANSACTIONID : APTRANSACTIONID : AMOUNT : TRANSACTIONSTATUS
+     *           : MESSAGE : MID : USERNAME [: CUSTOMERVPA when CHMOD=upi]))
+     * (https://docs.airpay.co.in/v4/payments/simple-transaction/). This recomputes it and
+     * compares with hash_equals(). Fails CLOSED: any missing field or missing config → false.
+     *
+     * SECURITY NOTE: this CRC32 carries no secret, so it is an integrity check, NOT a strong
+     * authenticity control — it stops the trivial forgery (the previously-DISABLED guard let
+     * a bare `TRANSACTIONSTATUS=200` POST through), but a determined attacker who knows the
+     * field values can still forge a matching CRC32. The robust control is the server-side
+     * Order Confirmation (Verify) API; see process.php. MUST be validated against an Airpay
+     * sandbox before production (exact AMOUNT formatting + the UPI CUSTOMERVPA variant).
+     *
+     * @param array $post Raw $_POST from Airpay's response callback.
+     * @return bool True only when required fields are present AND the recomputed CRC32 matches.
+     */
+    public static function verify_secure_hash(array $post): bool {
+        foreach (['TRANSACTIONID', 'APTRANSACTIONID', 'AMOUNT', 'TRANSACTIONSTATUS', 'ap_SecureHash'] as $field) {
+            if (!isset($post[$field]) || trim((string) $post[$field]) === '') {
+                return false;
+            }
         }
+        $mercid = (string) get_config('paygw_airpay', 'mercid');
+        $username = (string) get_config('paygw_airpay', 'username');
+        if ($mercid === '' || $username === '') {
+            return false; // Misconfigured — fail closed rather than skip verification.
+        }
+        $parts = [
+            trim((string) $post['TRANSACTIONID']),
+            trim((string) $post['APTRANSACTIONID']),
+            trim((string) $post['AMOUNT']),
+            trim((string) $post['TRANSACTIONSTATUS']),
+            trim((string) ($post['MESSAGE'] ?? '')),
+            $mercid,
+            $username,
+        ];
+        if (($post['CHMOD'] ?? '') === 'upi' && isset($post['CUSTOMERVPA'])) {
+            $parts[] = trim((string) $post['CUSTOMERVPA']);
+        }
+        $expected = sprintf('%u', crc32(implode(':', $parts)));
+        return hash_equals($expected, trim((string) $post['ap_SecureHash']));
+    }
+
+    /**
+     * Return the Airpay payment-form URL for the configured environment.
+     *
+     * NOTE: Airpay's documented integration uses a single payment endpoint —
+     * sandbox vs live is determined by the merchant credentials (`mercid`),
+     * not by the URL. The `environment` setting therefore documents intent
+     * but does not alter the request URL today. Confirm with Airpay support
+     * before introducing a separate sandbox host.
+     *
+     * @param \stdClass $config Gateway config — `environment` is either
+     *                          'sandbox' or 'live'
+     * @return string Payment form URL
+     */
+    public static function get_url($config)
+    {
+        return "https://payments.airpay.co.in/pay/index.php";
     }
 }

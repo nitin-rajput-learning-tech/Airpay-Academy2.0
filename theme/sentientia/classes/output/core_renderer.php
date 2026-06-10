@@ -1227,6 +1227,23 @@ JS;
         return $returnobject;
     }
     // user_menu() moved to theme_sentientia.output.traits.user_menu in Engineering 32.
+
+    /**
+     * SA-04 (QA Walk 2026-05-29): may the current user reach Moodle's NATIVE
+     * course/category management hub? The theme redirects /course/management.php
+     * and /course/index.php to the LXP catalog; before this gate the redirect
+     * was UNCONDITIONAL, so siteadmins / category managers lost native course +
+     * category management, bulk ops and restore-to-category (only deep-links
+     * like /course/edit.php survived). True for siteadmins and holders of
+     * moodle/category:manage or moodle/course:create at system context.
+     */
+    private function can_reach_native_course_admin(): bool {
+        $ctx = \context_system::instance();
+        return is_siteadmin()
+            || has_capability('moodle/category:manage', $ctx)
+            || has_capability('moodle/course:create', $ctx);
+    }
+
     public function custom_secured_redirection(){
         global $USER, $CFG, $DB, $COURSE;
         $return = new stdClass();
@@ -1246,14 +1263,23 @@ JS;
             redirect($CFG->wwwroot.'/my');
         }
         if($newpageurl == $CFG->wwwroot.'/course/management.php'){
-            redirect($CFG->wwwroot.'/local/sentientia_catalog/index.php');//Category page redirection
+            // SA-04 (QA Walk 2026-05-29): gate the catalog redirect by capability
+            // so course/category managers reach Moodle's native management hub
+            // (bulk ops, restore-to-category). Learners/guests still get the LXP
+            // catalog. Mirrors the capability-gated trainer redirect below.
+            if (!$this->can_reach_native_course_admin()) {
+                redirect($CFG->wwwroot.'/local/sentientia_catalog/index.php');//Category page redirection
+            }
         }
         if($newpageurl == $CFG->wwwroot.'/user/view.php' || $newpageurl == $CFG->wwwroot.'/user/profile.php'){
             $id = optional_param('id', $USER->id, PARAM_INT);
             redirect($CFG->wwwroot."/local/sentientia_users/profile.php?id=$id");
         }
         if($newpageurl == $CFG->wwwroot.'/course/index.php' || $newpageurl == $CFG->wwwroot.'/course'){
-            redirect($CFG->wwwroot."/local/sentientia_catalog/index.php");
+            // SA-04: same capability gate as /course/management.php above.
+            if (!$this->can_reach_native_course_admin()) {
+                redirect($CFG->wwwroot."/local/sentientia_catalog/index.php");
+            }
         }
         $systemcontext = \context_system::instance();
         if (
