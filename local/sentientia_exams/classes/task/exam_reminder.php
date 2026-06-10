@@ -180,6 +180,7 @@ class exam_reminder extends \core\task\scheduled_task {
         $msg->name        = 'exam_reminder';
         $msg->userfrom    = \core_user::get_noreply_user();
         $msg->userto      = $user;
+        $a->sitename = format_string(get_site()->fullname); // white-label: email signature
         $msg->subject     = get_string('reminder_subject',
             'local_sentientia_exams', $a);
         $msg->fullmessage = get_string('reminder_body_plain',

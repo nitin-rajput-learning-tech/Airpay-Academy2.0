@@ -87,8 +87,8 @@ This is a reminder that the exam "{$a->examname}" (course: {$a->coursename}) clo
 
 Sit the exam here: {$a->exam_url}
 
-— Airpay Academy';
-$string['reminder_body_html']    = '<p>Hi,</p><p>This is a reminder that the exam <strong>{$a->examname}</strong> (course: {$a->coursename}) closes on <strong>{$a->deadline}</strong> — {$a->days_remaining} day(s) from now.</p><p><a href="{$a->exam_url}">Sit the exam</a></p><p style="color:#777;">— Airpay Academy</p>';
+— {$a->sitename}';
+$string['reminder_body_html']    = '<p>Hi,</p><p>This is a reminder that the exam <strong>{$a->examname}</strong> (course: {$a->coursename}) closes on <strong>{$a->deadline}</strong> — {$a->days_remaining} day(s) from now.</p><p><a href="{$a->exam_url}">Sit the exam</a></p><p style="color:#777;">— {$a->sitename}</p>';
 
 // P1 #34 (2026-05-20) — overdue manager-escalation cron. Closes audit
 // item #17 (the sibling of #16 in parity-audit-2026-05-15/sentientia_exams.md).
@@ -123,5 +123,5 @@ View learner: {$a->learner_profile_url}
 
 Please follow up with them.
 
-— Airpay Academy';
-$string['overdue_body_html']    = '<p>Hi,</p><p>Your team member <strong>{$a->learner_name}</strong> missed the deadline for exam <strong>{$a->exam_name}</strong> (course: {$a->coursename}).</p><p>Deadline: <strong>{$a->deadline}</strong> ({$a->days_past} day(s) ago).</p><ul><li><a href="{$a->exam_url}">View exam</a></li><li><a href="{$a->learner_profile_url}">View learner profile</a></li></ul><p>Please follow up with them.</p><p style="color:#777;">— Airpay Academy</p>';
+— {$a->sitename}';
+$string['overdue_body_html']    = '<p>Hi,</p><p>Your team member <strong>{$a->learner_name}</strong> missed the deadline for exam <strong>{$a->exam_name}</strong> (course: {$a->coursename}).</p><p>Deadline: <strong>{$a->deadline}</strong> ({$a->days_past} day(s) ago).</p><ul><li><a href="{$a->exam_url}">View exam</a></li><li><a href="{$a->learner_profile_url}">View learner profile</a></li></ul><p>Please follow up with them.</p><p style="color:#777;">— {$a->sitename}</p>';

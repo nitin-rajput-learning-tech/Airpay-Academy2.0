@@ -138,8 +138,8 @@ This is a reminder that your course "{$a->fullname}" is due to be completed by {
 
 Pick it up here: {$a->course_url}
 
-— Airpay Academy';
-$string['reminder_body_html']    = '<p>Hi,</p><p>This is a reminder that your course <strong>{$a->fullname}</strong> is due to be completed by <strong>{$a->deadline}</strong> ({$a->days_remaining} day(s) from now).</p><p><a href="{$a->course_url}">Continue the course</a></p><p style="color:#777;">— Airpay Academy</p>';
+— {$a->sitename}';
+$string['reminder_body_html']    = '<p>Hi,</p><p>This is a reminder that your course <strong>{$a->fullname}</strong> is due to be completed by <strong>{$a->deadline}</strong> ({$a->days_remaining} day(s) from now).</p><p><a href="{$a->course_url}">Continue the course</a></p><p style="color:#777;">— {$a->sitename}</p>';
 
 // Phase B.3.a (2026-05-21) — push notification version of the reminder.
 // Push title ~ <= 50 chars, body <= 120 chars to render cleanly on
@@ -181,5 +181,5 @@ View learner:   {$a->learner_profile_url}
 
 Please follow up with them so they can complete the course as soon as possible.
 
-— Airpay Academy';
-$string['overdue_body_html']    = '<p>Hi,</p><p>Your team member <strong>{$a->learner_name}</strong> missed the deadline for the course <strong>{$a->course_name}</strong>.</p><p>Deadline: <strong>{$a->deadline}</strong> ({$a->days_past} day(s) ago).</p><ul><li><a href="{$a->course_url}">View course</a></li><li><a href="{$a->learner_profile_url}">View learner profile</a></li></ul><p>Please follow up with them so they can complete the course as soon as possible.</p><p style="color:#777;">— Airpay Academy</p>';
+— {$a->sitename}';
+$string['overdue_body_html']    = '<p>Hi,</p><p>Your team member <strong>{$a->learner_name}</strong> missed the deadline for the course <strong>{$a->course_name}</strong>.</p><p>Deadline: <strong>{$a->deadline}</strong> ({$a->days_past} day(s) ago).</p><ul><li><a href="{$a->course_url}">View course</a></li><li><a href="{$a->learner_profile_url}">View learner profile</a></li></ul><p>Please follow up with them so they can complete the course as soon as possible.</p><p style="color:#777;">— {$a->sitename}</p>';

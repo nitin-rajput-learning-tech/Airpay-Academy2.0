@@ -5,7 +5,7 @@ $string['pluginname'] = 'Sentientia Integrations Hub';
 
 // Settings page
 $string['settings_heading'] = 'Airpay Integrations Configuration';
-$string['settings_desc'] = 'Configure external integrations for Airpay Academy. Each feature is disabled by default — enable and configure individually.';
+$string['settings_desc'] = 'Configure external integrations for this platform. Each feature is disabled by default — enable and configure individually.';
 
 // AI features
 $string['ai_heading'] = 'AI Features';
