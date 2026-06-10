@@ -126,6 +126,7 @@ qa_public` (pw in `tools/_qa_provision.php`, local-only).
 |---|---|---|
 | 2026-06-10 | SW-4 smoke (G2 + storefront) | ✅ login 200/12 markers, storefront 200, 0 fatals |
 | 2026-06-10 | Batch 1: QA personas provisioned on 5.2 (7 accounts, role-detection verified: orgadmin→L&D, employee→Learner, public→Learner /77); persistent php-S 8081 up; L1 login spot-checks (admin /my/ 200/35 markers, employee /my/ 200/23); S1 SA-04 both halves | ✅ S1 pass (after WF-001 fix) |
+| 2026-06-10 | Batch 2 (CLI exercisers on 5.2): **S4** smoke_hrms ✅ + smoke_bulk_csv ✅ ALL OK · **O3** recompletion ✅ 13/13 · **A9** course-share ✅ 23/23 · **L9** whatsapp e2e (qa_employee) ✅ ALL PASS ("pipeline ready; flip live_mode when DLT creds land") · **S2** parity_org ✅ 100% (2,883 users) + parity_tenants ✅ 100% (registry was empty on the clone — idempotent seed_tenants ran, 3 created, DORMANT per Gate B) · **S3** oneclick flag ✅ tenants 1+177 ON (state survived clone+5.2 upgrade) · **A8** translate mock ✅ PASS · **A6** aiquiz = mock covered by its PHPUnit suite; the live smoke deliberately refuses without ANTHROPIC_API_KEY + --confirm-live-anthropic-call (budget ask C) · **S9** cron_health: 0 Sentientia tasks stuck ✅; 27 stuck CORE tasks = cold clone (cron never run there) — clears with one cron pass, noted | ✅ 9 pass · 2 qualified (A6 key-gated, S9 cold-clone) |
 
 ## Known issues found by this campaign
 
