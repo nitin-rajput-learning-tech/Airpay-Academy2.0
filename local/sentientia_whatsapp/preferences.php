@@ -19,7 +19,7 @@ require_once($CFG->libdir . '/formslib.php');
 
 require_login();
 
-global $USER, $DB, $OUTPUT, $PAGE;
+global $USER, $DB, $OUTPUT, $PAGE, $SITE;
 
 // Per the plan, this is a self-service page — only the user themselves
 // can edit their preferences. No admin-on-behalf-of in iter 1.
@@ -28,7 +28,7 @@ $context = context_user::instance($USER->id);
 $PAGE->set_url(new moodle_url('/local/sentientia_whatsapp/preferences.php'));
 $PAGE->set_context($context);
 $PAGE->set_title(get_string('preferences_pagetitle', 'local_sentientia_whatsapp'));
-$PAGE->set_heading(get_string('preferences_heading', 'local_sentientia_whatsapp'));
+$PAGE->set_heading(get_string('preferences_heading', 'local_sentientia_whatsapp', format_string($SITE->fullname)));
 $PAGE->set_pagelayout('standard');
 
 // Resolve per-tenant feature flag state. Phase A0's feature_flags::
@@ -90,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // we preserve the exact wording the user agreed to.
     if (($whatsapp || $sms) && $consent_box && empty($prefs->dlt_consent_at)) {
         $values['dlt_consent_text'] = get_string('dlt_consent_body',
-            'local_sentientia_whatsapp');
+            'local_sentientia_whatsapp', format_string($SITE->fullname));
         // dlt_consent_at is auto-stamped by preference_manager::set when
         // dlt_consent_text is being set for the first time.
     }

@@ -9,8 +9,8 @@ $string['pluginname'] = 'Sentientia WhatsApp & SMS';
 // Page chrome
 $string['preferences_pagetitle']   = 'Communication preferences';
 $string['preferences_nav']         = 'Communication preferences';
-$string['preferences_heading']     = 'How would you like Airpay Academy to reach you?';
-$string['preferences_intro']       = 'Choose the channels Airpay Academy can use to send you course nudges, deadline reminders, and certificate alerts. Email is always on — it\'s the fallback that catches anything the other channels can\'t deliver.';
+$string['preferences_heading']     = 'How would you like {$a} to reach you?';
+$string['preferences_intro']       = 'Choose the channels we can use to send you course nudges, deadline reminders, and certificate alerts. Email is always on — it\'s the fallback that catches anything the other channels can\'t deliver.';
 
 // Channel labels
 $string['channel_email']           = 'Email';
@@ -31,7 +31,7 @@ $string['prefer_hint']             = 'When more than one channel is available, t
 
 // DLT consent
 $string['dlt_consent_heading']     = 'Consent (required for WhatsApp/SMS in India)';
-$string['dlt_consent_body']        = 'By opting in, I agree to receive transactional and service messages from Airpay Academy on the channels selected above, in accordance with the Telecom Commercial Communications Customer Preference Regulations 2018 (TCCCPR) and the Digital Personal Data Protection Act 2023 (DPDP). I understand I can withdraw consent at any time by editing this page.';
+$string['dlt_consent_body']        = 'By opting in, I agree to receive transactional and service messages from {$a} on the channels selected above, in accordance with the Telecom Commercial Communications Customer Preference Regulations 2018 (TCCCPR) and the Digital Personal Data Protection Act 2023 (DPDP). I understand I can withdraw consent at any time by editing this page.';
 $string['dlt_consent_required']    = 'You must accept the consent statement to enable WhatsApp or SMS delivery.';
 $string['dlt_consent_logged_at']   = 'Consent recorded: {$a}';
 
