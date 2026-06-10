@@ -243,7 +243,11 @@ if ($courseid > 1 && isloggedin() && !is_siteadmin()) {
         $templatecontext['ap_sidebar_sections'] = $ap_sidebar_sections;
         $templatecontext['ap_has_sidebar'] = !empty($ap_sidebar_sections);
     } catch (Exception $e) {
-        // Non-fatal — layout renders without enhancements.
+        // Non-fatal — layout renders without enhancements, but surface the cause to
+        // developers (P1-6 / G-C-4): a silently-swallowed exception here was masking
+        // the course-player progress bar + module-tree sidebar disappearing.
+        debugging('theme_sentientia course-player enhancements skipped: ' . $e->getMessage(),
+            DEBUG_DEVELOPER);
     }
 }
 
