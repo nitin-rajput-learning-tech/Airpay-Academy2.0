@@ -76,28 +76,27 @@ progress bar / module-tree sidebar is now visible in dev-debug, inert in product
 
 > **Safe-autonomous backlog is now EXHAUSTED.** Everything below needs a decision or an unblock.
 
-**Wave-2 (post-decision, 2026-06-10) — Nitin answered the 4 owner-gated questions:**
-1. **De-brand scope → WHITE-LABEL via branding_manager.** Customer name resolves at runtime (product
-   ships customer-neutral; "Airpay Academy" becomes the configured value). **W-A NOT YET STARTED** — it's a
-   refactor to surface the customer name as a template var in login/email/maintenance + `{$a}` placeholders
-   in `sentientia_users`/`sentientia_whatsapp` lang. Design findings: `branding_manager` (sentientia_org)
-   has logos/colours but **no name method**; `core_renderer.php:104` already consumes
-   `\local_sentientia_platform\customer::branding()` (per-customer hook); login is pre-auth so the canonical
-   name source is the site fullname. **Not started blind — verification routed through the Chrome grant (#4).**
-2. **State-card rename → DONE (W-C).** 34 cards `airpay_*`→`sentientia_*` (commit `c57254d2a`); `paygw_airpay`
-   + `quizaccess_airpay_proctoring` correctly kept; freshness tool needed no edit (handles both prefixes).
-   **Micro-confirm pending:** `airpay_core-state.md` is a stale duplicate of the newer canonical
-   `sentientia_core-state.md` — left for a confirm-to-`git rm`.
-3. **Gate 2 → a11y half DONE, visual pending (Q2 'build now').** `tests/playwright/a11y-smoke.spec.ts`
-   (axe-core, serious/critical, WCAG A+AA; `@axe-core/playwright` added to the playwright pkg+lock) runs per
-   persona×surface in CI (commit `d84f9ac3d`; 15 tests collect via `--list`). Screenshot-diff half
-   **deliberately deferred until after W-A** — baselines captured before the white-label change would be
-   instantly stale; seed via `npm run test:update-snapshots` on CI afterward.
-4. **Screenshots → Q3 = grant Chrome `localhost:8080` access.** ⏳ **PENDING NITIN'S ACTION.** Unblocks
-   W-A visual verification + W-D screenshot capture + the Gate-2 screenshot-baseline seed (all gated on it).
+**Wave-2 (post-decision, 2026-06-10) — Nitin's 4 answers EXECUTED:**
+1. **De-brand → WHITE-LABEL → ✅ W-A DONE** (commit `1ee106d8c`). Customer-name literals in the rendered
+   chrome now resolve at runtime: login hero + logo alts → `{{sitename}}`; email logo alt → `{{sitefullname}}`;
+   maintenance alt + footer → `{{#str}}customername{{/str}}` (new overridable theme string, en+hi, DB-down safe).
+   Verified: curl of `/login/index.php` renders the hero as `$SITE->fullname` ('airpay academy') with **no `{{ }}`
+   leak**; CLI confirms `$SITE->fullname`='airpay academy' → var resolves. A new customer sets their Site name
+   and it follows. Evidence: `docs/visual-evidence/2026-06-10/W-A-whitelabel.md`. **Follow-up (optional):** the
+   `sentientia_users`/`sentientia_whatsapp` signup/copy lang strings with "Airpay Academy" (caller-`{$a}` work).
+2. **State-card rename → ✅ DONE (W-C)** (commits `c57254d2a` + `5faae82a2`). 34 cards `airpay_*`→`sentientia_*`;
+   `paygw_airpay` + `quizaccess_airpay_proctoring` kept; stale `airpay_core-state.md` **removed** (Nitin-confirmed).
+3. **Gate 2 → a11y DONE, visual = CI-seed follow-up** (commit `d84f9ac3d`). `a11y-smoke.spec.ts` (axe-core) runs
+   per persona×surface in CI. Screenshot-diff half: now that W-A has landed the UI is stable for baselines —
+   add `toHaveScreenshot()` + seed via `npm run test:update-snapshots` on a CI run, then commit the baseline PNGs
+   (can't seed locally — Playwright unreliable on this XAMPP box).
+4. **Screenshots → Q3 Chrome grant → ✅ GRANTED + used.** Captured the authenticated `/my/` dashboard (renders
+   healthy post-deploy/purge — no regression). The login hero is a logged-out surface (would end Nitin's session)
+   so it's curl-verified rather than screenshotted; a logged-out capture is available on request.
 
-> **Critical path next:** Nitin grants Chrome access → execute W-A (white-label) with screenshot verification
-> → seed Gate-2 visual baselines against the finalized UI. Plus the one micro-confirm: remove `airpay_core-state.md`.
+> **All 4 decisions executed.** Remaining (both optional / CI-coordinated): the Gate-2 **visual** baseline seed
+> (needs a CI `--update-snapshots` run + baseline commit) and the **signup/WhatsApp lang-string** de-brand
+> (`{$a}` + caller). Neither blocks; both are logged here for a clean pickup.
 
 ---
 
