@@ -22,8 +22,8 @@ ledger of what those gates (and the manual passes) actually reach.
 |-----|------|----------------|-----------|------------|
 | **Static** | Gate 0 | Template can't ship a known static defect (comment leak, stale `theme_airpayux` AMD name, missing `standard_end_of_body_html`) | `moodle-enhancement/tools/scan_*.php` → pre-commit hook (15 CHECKS) + CI | ✅ yes |
 | **Render** | Gate 1 | Page boots: AMD up (`window.require` is a fn), no leaked `{{ }}`, a landmark is visible, **0** non-benign console errors | `tests/playwright/render-smoke.spec.ts` (CI Linux authoritative) | ✅ yes |
-| **Visual** | Gate 2 | Pixels match an approved baseline (no layout regression) | Playwright screenshot diff | ❌ **not built** (P2-6) |
-| **A11y** | Gate 2 | No axe-core violations (contrast, landmarks, labels) | axe in the Playwright job | ❌ **not built** (P2-6) |
+| **Visual** | Gate 2 | Pixels match an approved baseline (no layout regression) | Playwright `toHaveScreenshot` diff | ◑ **pending** — seed baselines after white-label |
+| **A11y** | Gate 2 | No serious/critical axe violations (WCAG 2.0/2.1 A+AA) | `a11y-smoke.spec.ts` (axe-core) in CI | ✅ **built** |
 | **Styled** | manual | Sentientia design system applied (not raw Moodle/Boost) | Goal-A persona walks + visual evidence | ◑ manual, per-surface |
 
 Legend in the tables: **✓** covered · **◑** partial / indirect · **✗** not yet · **—** N/A.
@@ -99,8 +99,10 @@ recorded here or in the dated visual-evidence README — never silently.
 
 ## D. Known gaps (honest ledger — do not read blank cells as "fine")
 
-1. **Gate 2 not built (P2-6).** No automated visual-diff or axe a11y pass exists yet. Every
-   "Visual" column is ✗. Manual visual-evidence READMEs are the current substitute.
+1. **Gate 2 — a11y built, visual pending.** `tests/playwright/a11y-smoke.spec.ts` (axe-core,
+   serious/critical, WCAG 2.0/2.1 A+AA) runs per persona×surface in CI. The screenshot-diff half is
+   deferred until the white-label UI change lands — baselines captured before it would be instantly
+   stale. Seed them via `npm run test:update-snapshots` on CI, then commit the baseline PNGs.
 2. **Render-smoke surface set is small by design** (3–4 surfaces). It is the *correct* core, not
    the *complete* set — skills, team reports, authoring, compliance reports, admin interiors, and
    the public/pre-auth flows are not yet walked. Expand `SURFACES` in `render-smoke.spec.ts` as the
