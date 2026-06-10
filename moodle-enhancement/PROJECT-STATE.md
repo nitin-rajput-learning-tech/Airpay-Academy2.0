@@ -1045,7 +1045,7 @@ closeout + state-card cleanup landed:
 
 - `0b92d5d35` — Bucket F closeout doc + new `tools/audit_table_inventory.php`. 10 investigate findings triaged: ✅ 6 RESOLVED (F-026/F-027/F-030/F-087/F-090/F-041+F-042), 🟡 1 PARTIALLY (F-024 UI walk pending), ⏸ 2 DEFERRED (F-028/F-029 v2 features), 🔍 3 NEEDS-WORK at that point (F-031/F-033/F-053–F-056)
 - `351ce50f8` — F-053..F-056 closeout. 6 `local_sentientia_*-state.md` cards renamed to `sentientia_*-state.md` to match the freshness gate's glob; new `sentientia_m365-state.md` created (the only plugin without a card). Freshness gate now sees 39 cards (up from 32).
-- `f43a16493` — F-039 closeout + Bucket F status refresh. `airpay_emails-state.md` updated with the runtime DB row snapshot. F-039 + F-053..F-056 now fully RESOLVED. Bucket F rollup: ✅ 8 RESOLVED, 🟡 1 partial, ⏸ 2 deferred, 🔍 2 needs-work (F-031 security + F-033 Cypress — both out of today's scope).
+- `f43a16493` — F-039 closeout + Bucket F status refresh. `sentientia_emails-state.md` updated with the runtime DB row snapshot. F-039 + F-053..F-056 now fully RESOLVED. Bucket F rollup: ✅ 8 RESOLVED, 🟡 1 partial, ⏸ 2 deferred, 🔍 2 needs-work (F-031 security + F-033 Cypress — both out of today's scope).
 
 Today's **seven** commits to production: `d7dbd7885`, `cadd25191`, `3df780c76`, `c16064946`, `0b92d5d35`, `351ce50f8`, `f43a16493`. Audit progress: **4 of 6 buckets substantially shipped (D, E, C admin landings, F)**.
 
