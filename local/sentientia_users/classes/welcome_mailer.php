@@ -50,7 +50,7 @@ Password:  [employee_password]
 
 Please log in at the link below and change your password on first use.
 
-Need help? Email academy@airpay.co.in.
+Need help? Email [support_email].
 
 — The [employee_organization] team
 TEMPLATE;
@@ -80,6 +80,10 @@ TEMPLATE;
                 'employee_username'     => (string) $user->username,
                 'employee_password'     => $plain_password,
                 'employee_organization' => $org_name,
+                // White-label (D3): support contact is config-backed; the
+                // customer-zero address remains the default.
+                'support_email'         => (string) (get_config('local_sentientia_users',
+                    'support_email') ?: 'academy@airpay.co.in'),
             ];
 
             [$subject_template, $body_template] = self::load_templates($tenantid);

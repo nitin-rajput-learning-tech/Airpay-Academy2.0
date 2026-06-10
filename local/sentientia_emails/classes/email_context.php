@@ -122,7 +122,7 @@ class email_context {
 
             // ── ENROLLMENT ──
             'enrollment/welcome_new_user' => array_merge($base, [
-                'subject'       => 'Welcome to Airpay Academy',
+                'subject'       => 'Welcome to ' . format_string(get_site()->fullname),
                 'username'      => 'priya.singh',
                 'login_url'     => $CFG->wwwroot . '/login/index.php',
                 'help_url'      => $CFG->wwwroot . '/local/sentientia_pages/index.php?page=help',

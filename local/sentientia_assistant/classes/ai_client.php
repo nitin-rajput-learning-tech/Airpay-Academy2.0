@@ -235,7 +235,10 @@ class ai_client {
      * Call Claude API.
      */
     private static function call_claude(string $api_key, string $model, string $context, string $query): array {
-        $system_prompt = "You are the Airpay Academy learning assistant. You help employees with their learning journey at Airpay Payment Services, a fintech company in India.\n\n" .
+        // White-label (D4): default prompt carries the configured site name; a
+        // per-customer prompt override (Wave C3) replaces this wholesale.
+        $sitename = format_string(get_site()->fullname);
+        $system_prompt = "You are the {$sitename} learning assistant. You help learners with their learning journey on {$sitename}.\n\n" .
             "You know about the user's courses, progress, deadlines, and organization. Be helpful, concise, and encouraging.\n\n" .
             "For course recommendations, suggest courses from the user's catalog that match their role and skill gaps.\n" .
             "For compliance questions, check their mandatory course deadlines.\n" .
