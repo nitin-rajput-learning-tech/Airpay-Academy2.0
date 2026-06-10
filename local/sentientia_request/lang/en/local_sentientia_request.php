@@ -4,7 +4,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Airpay Course Requests';
+$string['pluginname'] = 'Sentientia Course Requests';
 
 // Navigation.
 $string['myrequests']      = 'My course requests';

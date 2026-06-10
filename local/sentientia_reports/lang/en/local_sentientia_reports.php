@@ -1,7 +1,7 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Airpay Reports';
+$string['pluginname'] = 'Sentientia Reports';
 
 // Capabilities.
 $string['sentientia_reports:view']   = 'View saved reports';

@@ -24,7 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Airpay User Engine';
+$string['pluginname'] = 'Sentientia User Engine';
 
 // Capabilities.
 $string['sentientia_users:edit'] = 'Edit users';

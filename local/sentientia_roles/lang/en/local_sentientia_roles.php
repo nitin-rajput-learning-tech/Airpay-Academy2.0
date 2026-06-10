@@ -3,7 +3,7 @@
 // License http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Airpay Role Management';
+$string['pluginname'] = 'Sentientia Role Management';
 
 // Capabilities (must match db/access.php keys).
 $string['sentientia_roles:view']   = 'View role-management UI';

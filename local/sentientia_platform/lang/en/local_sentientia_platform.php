@@ -4,7 +4,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Airpay Core (shared infrastructure)';
+$string['pluginname'] = 'Sentientia Core (shared infrastructure)';
 $string['error_outoftenant'] = 'You do not have access to this tenant.';
 $string['error_invalidtenant'] = 'Invalid tenant identifier.';
 

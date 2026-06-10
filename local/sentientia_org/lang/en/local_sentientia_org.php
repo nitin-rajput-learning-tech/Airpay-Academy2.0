@@ -25,7 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 // Plugin identity.
-$string['pluginname'] = 'Airpay Organization Engine';
+$string['pluginname'] = 'Sentientia Organization Engine';
 
 // Capabilities.
 $string['sentientia_org:manage'] = 'Manage organizations';

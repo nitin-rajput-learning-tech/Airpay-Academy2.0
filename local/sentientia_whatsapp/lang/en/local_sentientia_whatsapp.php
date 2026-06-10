@@ -4,7 +4,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Airpay WhatsApp & SMS';
+$string['pluginname'] = 'Sentientia WhatsApp & SMS';
 
 // Page chrome
 $string['preferences_pagetitle']   = 'Communication preferences';

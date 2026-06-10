@@ -1,6 +1,6 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
-$string['pluginname']        = 'Airpay Ratings';
+$string['pluginname']        = 'Sentientia Ratings';
 $string['rate']              = 'Rate';
 $string['yourrating']        = 'Your rating';
 $string['averagerating']     = 'Average rating';

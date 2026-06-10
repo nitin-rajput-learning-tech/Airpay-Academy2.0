@@ -3,7 +3,7 @@
 // License http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Airpay Gamification Challenges';
+$string['pluginname'] = 'Sentientia Gamification Challenges';
 
 // Capabilities.
 $string['sentientia_challenge:view']        = 'View challenges and leaderboards';

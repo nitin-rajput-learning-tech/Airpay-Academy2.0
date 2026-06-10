@@ -4,7 +4,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Airpay Proctoring';
+$string['pluginname'] = 'Sentientia Proctoring';
 
 // Navigation.
 $string['adminhome']      = 'Proctoring admin';

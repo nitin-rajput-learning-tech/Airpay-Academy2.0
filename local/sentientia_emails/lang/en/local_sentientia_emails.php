@@ -1,7 +1,7 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Airpay Email Templates';
+$string['pluginname'] = 'Sentientia Email Templates';
 $string['emailpreview'] = 'Email Template Preview';
 $string['emailpreview_desc'] = 'Preview all branded email templates before deployment.';
 $string['selecttemplate'] = 'Select a template';
