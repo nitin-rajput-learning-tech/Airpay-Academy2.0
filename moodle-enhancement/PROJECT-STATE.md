@@ -58,12 +58,16 @@ it by construction. Evidence: `docs/visual-evidence/2026-06-10/README.md`.
 `debugging(..., DEBUG_DEVELOPER)` instead of swallowing silently — a regression that blanks the
 progress bar / module-tree sidebar is now visible in dev-debug, inert in production.
 
-**Remaining safe backlog (next session, no decision needed):**
-- **P2-4** — rewrite the 6 stale `.min.js.map` source-maps + extend the overlay's `Repair-AmdModuleNames`
-  to `.map` (size S, tooling-only).
-- **P2-5** — publish the Gate-3 coverage matrix doc (route × persona × [static/render/visual/a11y/styled]);
-  becomes the merge definition-of-done.
-- **P3-5** — doc hygiene: rename `state-cards/airpay_*` → `sentientia_*`; backfill `docs/adr/README.md`.
+**Remaining safe backlog:**
+- ✅ **P2-4 DONE** — de-branded the 6 stale `.min.js.map` sourcesContent; **active `theme/sentientia`
+  is now 0 `theme_airpayux` refs**. (The overlay `.map` extension was moot — `theme/sentientia` is
+  directly git-tracked now, not generated from `theme/airpayux` on deploy; `grunt amd` regen is the
+  long-term path.)
+- ✅ **P2-5 DONE** — `docs/COVERAGE-MATRIX.md` published (ADR-027 Gate 3): layout-chrome table +
+  persona×surface table + definition-of-done + honest gaps ledger, grounded in the real render-smoke
+  coverage (5 personas × 3–4 surfaces).
+- **P3-5** (low priority) — doc hygiene: rename `state-cards/airpay_*` → `sentientia_*`; backfill
+  `docs/adr/README.md`. Last remaining safe backlog item.
 - Two audit-suggested Gate-0 scanners (hardcoded-English-in-mustache, unescaped `{{{ }}}` on user data)
   were **deliberately deferred** — both are high-false-positive and aren't in the recurring-bug set; the
   three recurring classes are already gated.
