@@ -11,8 +11,8 @@ $string['pluginname'] = 'Airpay WhatsApp na SMS';
 // Page chrome
 $string['preferences_pagetitle']   = 'Mapendeleo ya mawasiliano';
 $string['preferences_nav']         = 'Mapendeleo ya mawasiliano';
-$string['preferences_heading']     = 'Airpay Academy ikufikie vipi?';
-$string['preferences_intro']       = 'Chagua njia ambazo Airpay Academy inaweza kutuma vikumbusho vya kozi, ukumbusho wa muda na arifa za vyeti. Barua pepe daima imewashwa.';
+$string['preferences_heading']     = '{$a} ikufikie vipi?';
+$string['preferences_intro']       = 'Chagua njia ambazo tunaweza kutuma vikumbusho vya kozi, ukumbusho wa muda na arifa za vyeti. Barua pepe daima imewashwa.';
 
 // Channels
 $string['channel_email']           = 'Barua pepe';
@@ -33,7 +33,7 @@ $string['prefer_hint']             = 'Wakati njia zaidi ya moja zinapatikana, hi
 
 // Consent
 $string['dlt_consent_heading']     = 'Idhini (inahitajika kwa WhatsApp/SMS nchini India)';
-$string['dlt_consent_body']        = 'Kwa kuchagua, ninakubali kupokea ujumbe wa biashara na huduma kutoka Airpay Academy kwenye njia zilizochaguliwa hapo juu, kulingana na TCCCPR 2018 na Sheria ya DPDP 2023.';
+$string['dlt_consent_body']        = 'Kwa kuchagua, ninakubali kupokea ujumbe wa biashara na huduma kutoka {$a} kwenye njia zilizochaguliwa hapo juu, kulingana na TCCCPR 2018 na Sheria ya DPDP 2023.';
 $string['dlt_consent_required']    = 'Lazima ukubali kauli ya idhini ili kuwezesha utoaji wa WhatsApp au SMS.';
 $string['dlt_consent_logged_at']   = 'Idhini imerekodiwa: {$a}';
 

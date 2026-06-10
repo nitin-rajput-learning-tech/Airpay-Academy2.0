@@ -11,8 +11,8 @@ $string['pluginname'] = 'एअरपे WhatsApp आणि SMS';
 // Page chrome
 $string['preferences_pagetitle']   = 'संप्रेषण प्राधान्ये';
 $string['preferences_nav']         = 'संप्रेषण प्राधान्ये';
-$string['preferences_heading']     = 'एअरपे अकॅडमी तुमच्यापर्यंत कशी पोहोचावी?';
-$string['preferences_intro']       = 'एअरपे अकॅडमी तुम्हाला कोणत्या चॅनेलद्वारे कोर्स अपडेट, मुदत स्मरणपत्रे आणि प्रमाणपत्र सूचना पाठवू शकते ते निवडा. ईमेल नेहमी सुरू असतो.';
+$string['preferences_heading']     = '{$a} तुमच्यापर्यंत कशी पोहोचावी?';
+$string['preferences_intro']       = 'तुम्हाला कोणत्या चॅनेलद्वारे कोर्स अपडेट, मुदत स्मरणपत्रे आणि प्रमाणपत्र सूचना पाठवाव्यात ते निवडा. ईमेल नेहमी सुरू असतो.';
 
 // Channels
 $string['channel_email']           = 'ईमेल';
@@ -33,7 +33,7 @@ $string['prefer_hint']             = 'एकापेक्षा जास्�
 
 // Consent
 $string['dlt_consent_heading']     = 'संमती (भारतात WhatsApp/SMS साठी आवश्यक)';
-$string['dlt_consent_body']        = 'ऑप्ट-इन करून, मी TCCCPR 2018 आणि DPDP कायदा 2023 नुसार वर निवडलेल्या चॅनेलवर एअरपे अकॅडमीकडून व्यवहार आणि सेवा संदेश प्राप्त करण्यास सहमत आहे.';
+$string['dlt_consent_body']        = 'ऑप्ट-इन करून, मी TCCCPR 2018 आणि DPDP कायदा 2023 नुसार वर निवडलेल्या चॅनेलवर {$a}कडून व्यवहार आणि सेवा संदेश प्राप्त करण्यास सहमत आहे.';
 $string['dlt_consent_required']    = 'WhatsApp किंवा SMS वितरण सक्षम करण्यासाठी तुम्हाला संमती विधान स्वीकारणे आवश्यक आहे.';
 $string['dlt_consent_logged_at']   = 'संमती नोंदवली: {$a}';
 

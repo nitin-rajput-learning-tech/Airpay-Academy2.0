@@ -58,10 +58,17 @@ class ics_builder {
         // ─── Build VEVENT ────────────────────────────────────────────
         // RFC 5545 line-folding @ 75 chars is needed for long lines.
         $uid = 'airpay-classroom-session-' . (int) $session->id . '@airpay.academy';
+
+        // White-label: ORGANIZER common-name is the configured site name,
+        // RFC 5545-quoted (DQUOTE-wrap; strip any embedded DQUOTE — RFC 5545
+        // provides no escape for it inside a quoted param value). PRODID
+        // identifies the generating product (Sentientia), not the customer.
+        $organizer_cn = '"' . str_replace('"', '', (string) get_site()->fullname) . '"';
+
         $lines = [
             'BEGIN:VCALENDAR',
             'VERSION:2.0',
-            'PRODID:-//Airpay Academy//Airpay Classroom//EN',
+            'PRODID:-//Sentientia LMS//Sentientia Classroom//EN',
             'CALSCALE:GREGORIAN',
             'METHOD:PUBLISH',
             'BEGIN:VEVENT',
@@ -75,7 +82,7 @@ class ics_builder {
         if ($loc !== '') {
             $lines[] = 'LOCATION:' . self::escape_text($loc);
         }
-        $lines[] = 'ORGANIZER;CN=Airpay Academy:mailto:' . $organizer_email;
+        $lines[] = 'ORGANIZER;CN=' . $organizer_cn . ':mailto:' . $organizer_email;
         $lines[] = 'STATUS:CONFIRMED';
         $lines[] = 'END:VEVENT';
         $lines[] = 'END:VCALENDAR';

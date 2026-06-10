@@ -42,7 +42,7 @@ class welcome_mailer {
     public const DEFAULT_BODY = <<<TEMPLATE
 Hi [employee_name],
 
-Welcome to [employee_organization]. Your Airpay Academy account has been created.
+Welcome to [employee_organization]. Your account has been created.
 
 Username:  [employee_username]
 Email:     [employee_email]
@@ -52,7 +52,7 @@ Please log in at the link below and change your password on first use.
 
 Need help? Email academy@airpay.co.in.
 
-— Airpay Academy team
+— The [employee_organization] team
 TEMPLATE;
 
     /**

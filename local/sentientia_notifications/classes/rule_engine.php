@@ -582,7 +582,7 @@ class rule_engine {
 
         foreach ($rows as $r) {
             $sent = self::send($rule, (int) $r->userid, null,
-                'We miss you on Airpay Academy',
+                'We miss you on ' . format_string(get_site()->fullname),
                 'Hi ' . s($r->firstname) . ", it's been a while. New courses and updates are waiting for you. "
                 . 'Sign in to see what\'s new.');
             $sent ? $result['sent']++ : $result['skipped']++;

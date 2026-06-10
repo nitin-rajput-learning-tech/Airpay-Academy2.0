@@ -86,7 +86,8 @@ if ($action === 'complete' && confirm_sesskey()) {
         }
     }
 
-    redirect(new moodle_url('/my/'), 'Welcome to Airpay Academy! Your dashboard is ready.', null,
+    redirect(new moodle_url('/my/'),
+        'Welcome to ' . format_string(get_site()->fullname) . '! Your dashboard is ready.', null,
         \core\output\notification::NOTIFY_SUCCESS);
 }
 
@@ -98,7 +99,7 @@ if ($action === 'skip' && confirm_sesskey()) {
 
 $PAGE->set_context(context_system::instance());
 $PAGE->set_url('/local/sentientia_pages/onboarding.php');
-$PAGE->set_title('Welcome to Airpay Academy');
+$PAGE->set_title('Welcome to ' . format_string(get_site()->fullname));
 $PAGE->set_pagelayout('embedded'); // Minimal layout — no navbar clutter.
 
 // ─── Tenant isolation (2026-05-28) ─────────────────────────────────────
