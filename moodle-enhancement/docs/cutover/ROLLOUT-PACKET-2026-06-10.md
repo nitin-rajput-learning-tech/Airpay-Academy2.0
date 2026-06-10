@@ -1,11 +1,22 @@
 # Production Rollout Packet — Nitin's 2026-06-10 switch decisions
 
-**Owner:** Nitin Rajput · **Status:** steps 1–3 ready now; step 5 (Moodle 5.2) pending local execution
-**Context:** Nitin approved all four queued switches on 2026-06-10: (1) one-click enrol ON for internal
-tenants, (2) merge the QA-fix branches, (3) deploy the paygw security fix ("we test later"),
-(4) Moodle 5.2 cutover = now. Everything executable from the engineering workstation is DONE and on
-the `production` branch; this packet is the exact, ordered remainder that must run **on the live
-server** (file access is manual/IT).
+**Owner:** Nitin Rajput · **Status:** engineering side of SW-1/2/3 done; SW-4 (5.2) pending local execution
+
+> ## ⛔ ROLLOUT GATE (Nitin, 2026-06-10 — overrides any "deploy window" language below)
+>
+> **Production deploy on live airpay.academy happens ONLY on Nitin's explicit go.** The path there:
+>
+> 1. **Phase 1 — Foolproof:** test each and every workflow on local staging (full persona × workflow
+>    matrix; automated where possible, scripted-manual otherwise; evidence recorded).
+> 2. **Phase 2 — Ninja sandbox:** deploy Sentientia to the ninja sandbox server, then **rehearse the
+>    migration of a LIVE airpay.academy backup onto it** — restore DB + moodledata, run upgrades,
+>    verify user/enrolment/completion/certificate data intact (parity counts before vs after).
+> 3. **Phase 3 — Replacement (Nitin-gated):** only after Phase 2 succeeds, replace live
+>    airpay.academy with Sentientia LMS, existing Academy users' data intact.
+>
+> The "IT deploy-window steps" below therefore describe the **Phase-3 procedure** (and double as the
+> Phase-2 ninja-sandbox procedure, pointed at the sandbox). They are NOT scheduled — they execute
+> per phase, on Nitin's word.
 
 ---
 
