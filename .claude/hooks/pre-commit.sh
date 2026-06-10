@@ -54,7 +54,7 @@ STAGED_CONFLICT=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null \
 # CHECK 1: PHP SYNTAX
 # ============================================================
 echo ""
-echo "→ [1/13] PHP syntax check..."
+echo "→ [1/14] PHP syntax check..."
 if [ -n "$STAGED_PHP" ]; then
     PHP_ERRORS=0
     while IFS= read -r file; do
@@ -74,7 +74,7 @@ fi
 # ============================================================
 # CHECK 2: MOODLE_INTERNAL GUARD
 # ============================================================
-echo "→ [2/13] MOODLE_INTERNAL guard..."
+echo "→ [2/14] MOODLE_INTERNAL guard..."
 GUARD_ISSUES=0
 while IFS= read -r file; do
     [ -f "$file" ] || continue
@@ -91,7 +91,7 @@ done <<< "$STAGED_PHP"
 # ============================================================
 # CHECK 3: RAW SUPERGLOBAL ACCESS
 # ============================================================
-echo "→ [3/13] Superglobal access (\$_GET/\$_POST)..."
+echo "→ [3/14] Superglobal access (\$_GET/\$_POST)..."
 SUPER_ISSUES=0
 while IFS= read -r file; do
     [ -f "$file" ] || continue
@@ -115,7 +115,7 @@ done <<< "$STAGED_PHP"
 # ============================================================
 # CHECK 4: CREDENTIAL PATTERNS
 # ============================================================
-echo "→ [4/13] Credential leak detection..."
+echo "→ [4/14] Credential leak detection..."
 CRED_ISSUES=0
 CRED_PATTERNS=(
     "(api_key|apikey|api_secret|secret_key)\s*=\s*['\"][a-zA-Z0-9_\-]{10,}"
@@ -141,7 +141,7 @@ done <<< "$STAGED_ALL"
 # ============================================================
 # CHECK 5: .env FILE PROTECTION
 # ============================================================
-echo "→ [5/13] .env file protection..."
+echo "→ [5/14] .env file protection..."
 if echo "$STAGED_ALL" | grep -qE '^\.env$|/\.env$'; then
     err ".env file staged — NEVER commit credentials"
     ERRORS=$((ERRORS+1))
@@ -152,7 +152,7 @@ fi
 # ============================================================
 # CHECK 6: MOODLE CORE FILE PROTECTION
 # ============================================================
-echo "→ [6/13] Moodle core file protection..."
+echo "→ [6/14] Moodle core file protection..."
 CORE_ISSUES=0
 CORE_PATTERNS=(
     "moodle/lib/"
@@ -175,7 +175,7 @@ done
 # ============================================================
 # CHECK 7: CONTENT/SOPS PROTECTION
 # ============================================================
-echo "→ [7/13] SOP file protection..."
+echo "→ [7/14] SOP file protection..."
 if git diff --cached --name-only --diff-filter=D 2>/dev/null | grep -q 'content/sops/'; then
     err "content/sops/ file DELETED — NEVER delete SOP source files"
 elif git diff --cached --name-only --diff-filter=M 2>/dev/null | grep -q 'content/sops/'; then
@@ -187,7 +187,7 @@ fi
 # ============================================================
 # CHECK 8: SCORM ZIP VALIDATION
 # ============================================================
-echo "→ [8/13] SCORM ZIP structure..."
+echo "→ [8/14] SCORM ZIP structure..."
 if [ -n "$STAGED_ZIP" ]; then
     while IFS= read -r zipfile; do
         [ -f "$zipfile" ] || continue
@@ -224,7 +224,7 @@ fi
 # ============================================================
 # CHECK 9: version.php FORMAT
 # ============================================================
-echo "→ [9/13] version.php format..."
+echo "→ [9/14] version.php format..."
 VERSION_ISSUES=0
 while IFS= read -r file; do
     [ -f "$file" ] || continue
@@ -257,7 +257,7 @@ done <<< "$STAGED_PHP"
 # ============================================================
 # CHECK 10: UNCOMMITTED [CONFIRM] PLACEHOLDERS
 # ============================================================
-echo "→ [10/13] Uncommitted CONFIRM placeholders..."
+echo "→ [10/14] Uncommitted CONFIRM placeholders..."
 CONFIRM_ISSUES=0
 while IFS= read -r file; do
     [ -f "$file" ] || continue
@@ -285,7 +285,7 @@ done <<< "$STAGED_ALL"
 #   - {{<base/columns}}  Mustache parent-template inheritance
 #   - `// =====`         SCSS section comment dividers
 #   - `================`  setext-style heredoc CLI help banners
-echo "→ [11/13] Git conflict-marker scan..."
+echo "→ [11/14] Git conflict-marker scan..."
 CONFLICT_ISSUES=0
 if [ -n "$STAGED_CONFLICT" ]; then
     while IFS= read -r file; do
@@ -312,7 +312,7 @@ fi
 # This check runs in --mode=staged: looks at staged plugin changes
 # and warns if the matching state card is NOT also staged. Soft
 # warning (does not block — author may be splitting commits).
-echo "→ [12/13] State-card freshness check..."
+echo "→ [12/14] State-card freshness check..."
 FRESHNESS_SCRIPT="tools/check_state_card_freshness.sh"
 if [ -f "$FRESHNESS_SCRIPT" ]; then
     # NOTE: Use grep -c + sed instead of `... | while; warn`. A pipe
@@ -340,7 +340,7 @@ fi
 # course/view.php (course_full_header.mustache) + 13 sibling templates
 # on 2026-06-09. scan_mustache_comment_leaks.php is the single source
 # of truth for the detection (CI runs the same script over whole trees).
-echo "→ [13/13] Mustache comment-leak scan..."
+echo "→ [13/14] Mustache comment-leak scan..."
 STAGED_MUSTACHE=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep '\.mustache$' || true)
 LEAK_SCANNER="moodle-enhancement/tools/scan_mustache_comment_leaks.php"
 if [ -z "$STAGED_MUSTACHE" ]; then
@@ -355,6 +355,32 @@ else
         echo "       Fix: reword the comment so it contains no {{ or }} (describe braces in words)."
     else
         ok "No Mustache comment leaks in staged templates"
+    fi
+fi
+
+# ============================================================
+# CHECK 14: STALE theme_airpayux REFERENCES (2026-06-09)
+# ============================================================
+# After the theme_airpayux -> theme_sentientia de-brand, a QUOTED AMD module
+# name or component string still pointing at theme_airpayux/* silently NO-OPs
+# (window.require still exists, so the Gate-1 render-smoke cannot see it).
+# scan_stale_theme_refs.php flags only quoted refs (real deps), excluding the
+# legacy theme dir + tooling/docs. CI runs the same script over whole trees.
+echo "→ [14/14] Stale theme_airpayux reference scan..."
+STAGED_REFS=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '\.(php|js|mustache|scss|json)$' || true)
+REF_SCANNER="moodle-enhancement/tools/scan_stale_theme_refs.php"
+if [ -z "$STAGED_REFS" ]; then
+    ok "No scan-eligible files staged"
+elif [ ! -f "$REF_SCANNER" ]; then
+    ok "Stale-theme-ref scanner not present — skip"
+else
+    REF_OUT=$(echo "$STAGED_REFS" | xargs php "$REF_SCANNER" 2>/dev/null || true)
+    if [ -n "$REF_OUT" ]; then
+        err "Stale theme_airpayux reference — quoted AMD/component ref silently no-ops post-rename"
+        echo "$REF_OUT" | sed 's/^/       /' | head -20
+        echo "       Fix: rename to theme_sentientia (or add 'stale-theme-ref-allow' on the line if intentional)."
+    else
+        ok "No stale theme_airpayux references in staged files"
     fi
 fi
 

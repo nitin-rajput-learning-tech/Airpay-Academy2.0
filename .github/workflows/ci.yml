@@ -117,6 +117,15 @@ jobs:
           php moodle-enhancement/tools/scan_mustache_comment_leaks.php \
             theme/sentientia theme/airpayux moodle-enhancement
 
+      - name: Stale theme_airpayux reference scan (ADR-027 Gate 0)
+        run: |
+          # A QUOTED AMD module name / component string still pointing at
+          # theme_airpayux/* silently no-ops after the de-brand (window.require
+          # still exists, so the Gate-1 render-smoke can't see it). Same detector
+          # the pre-commit hook runs on staged files — here across whole trees.
+          php moodle-enhancement/tools/scan_stale_theme_refs.php \
+            theme/sentientia local blocks enrol mod
+
   static-checks:
     name: Mustache + JSON syntax
     runs-on: ubuntu-latest
