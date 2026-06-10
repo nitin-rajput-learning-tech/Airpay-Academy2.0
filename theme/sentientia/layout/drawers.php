@@ -24,6 +24,12 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+// WF-001 (FOOLPROOF 2026-06-10): re-wire the theme URL redirect policy (LXP
+// catalog for learners, SA-04 capability gate for course managers, profile +
+// trainer redirects). custom_secured_redirection() lost its caller in the
+// trait-decomposition refactor and was dead code — the workflow matrix caught it.
+$OUTPUT->custom_secured_redirection();
+
 require_once($CFG->libdir . '/behat/lib.php');
 require_once($CFG->dirroot . '/course/lib.php');
 
