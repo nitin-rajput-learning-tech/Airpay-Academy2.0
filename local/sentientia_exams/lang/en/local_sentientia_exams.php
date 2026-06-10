@@ -56,7 +56,7 @@ $string['examstatuschanged'] = 'Exam status updated.';
 $string['noexams_subtitle'] = 'Register existing Sentientia LMS quizzes as enterprise exams to add tenant scoping, custom passing grades, and dashboard reporting.';
 
 // Privacy.
-$string['privacy:metadata'] = 'The Airpay sentientia_exams plugin does not store personal data in plugin-owned tables.';
+$string['privacy:metadata'] = 'The sentientia_exams plugin does not store personal data in plugin-owned tables.';
 
 // P1 #33 (2026-05-20) — deadline-reminder cron. Closes audit item #16
 // from parity-audit-2026-05-15/sentientia_exams.md.

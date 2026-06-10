@@ -99,4 +99,4 @@ $string['orgdeleted']            = 'Organisation deleted.';
 $string['orgvisibilitychanged']  = 'Organisation visibility updated.';
 
 // Privacy.
-$string['privacy:metadata'] = 'The Airpay sentientia_org plugin does not store personal data in plugin-owned tables; user state lives on core Sentientia LMS tables exported by their respective providers.';
+$string['privacy:metadata'] = 'The sentientia_org plugin does not store personal data in plugin-owned tables; user state lives on core Sentientia LMS tables exported by their respective providers.';

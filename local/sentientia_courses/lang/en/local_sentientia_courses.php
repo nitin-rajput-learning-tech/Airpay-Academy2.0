@@ -89,21 +89,21 @@ $string['coursehidden'] = 'Course hidden.';
 $string['courseshown'] = 'Course visible.';
 
 // Privacy.
-$string['privacy:metadata'] = 'The Airpay sentientia_courses plugin does not store personal data in plugin-owned tables; user state lives on core Sentientia LMS tables exported by their respective providers.';
+$string['privacy:metadata'] = 'The sentientia_courses plugin does not store personal data in plugin-owned tables; user state lives on core Sentientia LMS tables exported by their respective providers.';
 
 // Sprint C (2026-05-13) — cross-tenant sharing.
 $string['sentientia_courses:share_to_tenant'] = 'Share a course to other tenants';
-$string['event_course_share_created'] = 'Airpay: course shared to tenant';
-$string['event_course_share_withdrawn'] = 'Airpay: course share withdrawn from tenant';
+$string['event_course_share_created'] = 'Sentientia: course shared to tenant';
+$string['event_course_share_withdrawn'] = 'Sentientia: course share withdrawn from tenant';
 $string['share_saved'] = 'Share settings saved. The catalog will refresh for affected tenants within a few seconds.';
 $string['invalidparameter'] = 'One or more parameters is invalid.';
 
 // Sprint D (2026-05-13) — pull/request workflow.
 $string['sentientia_courses:request_course'] = 'Request a course be shared to my tenant';
 $string['sentientia_courses:approve_request'] = 'Approve / reject share-requests from other tenants';
-$string['event_course_share_requested'] = 'Airpay: course-share requested';
-$string['event_course_share_request_approved'] = 'Airpay: course-share request approved';
-$string['event_course_share_request_rejected'] = 'Airpay: course-share request rejected';
+$string['event_course_share_requested'] = 'Sentientia: course-share requested';
+$string['event_course_share_request_approved'] = 'Sentientia: course-share request approved';
+$string['event_course_share_request_rejected'] = 'Sentientia: course-share request rejected';
 $string['request_filed'] = 'Your request has been filed. An Airpay administrator will review it shortly.';
 $string['request_approved'] = 'Request approved. The course is now in the requesting tenant\'s catalogue.';
 $string['request_rejected'] = 'Request rejected. The requester will see the decision in their outbox.';
