@@ -126,6 +126,16 @@ jobs:
           php moodle-enhancement/tools/scan_stale_theme_refs.php \
             theme/sentientia local blocks enrol mod
 
+      - name: Missing standard_end_of_body_html scan (ADR-027 Gate 0)
+        run: |
+          # A full-page (</body>) layout template that forgets to flush
+          # standard_end_of_body_html ships ZERO working JS — RequireJS/AMD never
+          # boots, so charts/drawers/cart are inert (the dashboard regression,
+          # task #382). Same detector the pre-commit hook runs on staged files —
+          # here across the whole theme template tree.
+          php moodle-enhancement/tools/scan_missing_end_of_body.php \
+            theme/sentientia
+
   static-checks:
     name: Mustache + JSON syntax
     runs-on: ubuntu-latest

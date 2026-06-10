@@ -12,6 +12,12 @@
     - sitewwwroot   — site URL (e.g. https://www.airpay.academy)
     - toname        — recipient display name
     - fromname      — sender display name
+
+    NOTE (ADR-027 Gate 0 / scan_missing_end_of_body.php): this template closes a
+    </body> but DELIBERATELY does not emit standard_end_of_body_html. An email body
+    must never carry the RequireJS/AMD <script> bootstrap — email clients run no JS
+    and the script tags would be stripped or rendered as noise. This is the one
+    sanctioned exception to the dead-AMD static gate: end-of-body-allow
 }}
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
