@@ -53,10 +53,30 @@
 
 ## Step 7 — Moodle 5.2 cutover (SW-4, "now")
 
-Being executed on local staging first (rehearsed runbook); this packet will be extended with the
-exact live 5.2 steps (core file swap + upgrade + theme rebuild) once the local execution passes the
-cutover smoke test. **Sequencing note for IT:** product layer (steps 1–5) ships on Moodle 5.1
+**✅ EXECUTED ON LOCAL STAGING 2026-06-10** (full log: `SW4-52-LOCAL-EXECUTION.md`): 5.1.3+ → 5.2+
+(Build 20260519) completed successfully on a fresh clone of the production-shaped DB; data intact
+(3,176 users / 412 courses / 22,523 enrolments / 32,248 completions); login + storefront smoke green.
+
+**Proven 5.2 procedure (sandbox first, then live — each on Nitin's go):**
+1. Pre-checks (HARD): server PHP ≥ 8.3 (CLI **and** web SAPI) with mysqli/intl/mbstring/curl/zip/gd/
+   soap/openssl/sodium/exif/fileinfo + `max_input_vars ≥ 5000`. DB + moodledata backup taken.
+2. Maintenance mode ON.
+3. Swap core to the 5.2 tree (Build 20260519 lineage) + overlay the current product layer
+   (theme/sentientia, local/sentientia_*, blocks, payment/gateway/airpay, enrol/sentientiasub,
+   quiz accessrule) — the same compose verified locally.
+4. `php admin/cli/upgrade.php --non-interactive` (ran 2,057 steps locally, zero errors).
+5. Purge caches; maintenance OFF; smoke (login 200, dashboard, catalog, one admin page).
+6. Rollback = restore backup + previous file tree (local fallback proven: the 5.1 instance was
+   never modified).
+
+**Sequencing note for IT:** product layer (steps 1–5 above in the main sequence) ships on Moodle 5.1
 first; 5.2 follows as its own window — do not combine unless Nitin explicitly collapses them.
+
+> ⚠ **HARD PRECONDITION (found in the local run, 2026-06-10):** Moodle 5.2's environment gate
+> requires **PHP ≥ 8.3.0** — the upgrade CLI refuses to start below it (clean abort, exit 1).
+> Before the sandbox/live 5.2 window, IT must verify/upgrade the server PHP (both CLI **and**
+> the web SAPI) to 8.3+ with extensions: mysqli, intl, mbstring, curl, zip, gd, soap, openssl,
+> sodium, exif, fileinfo, opcache. The local run used PHP 8.4.21.
 
 ---
 
