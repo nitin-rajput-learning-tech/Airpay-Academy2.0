@@ -10,13 +10,13 @@
 
 require_once(__DIR__ . '/../../config.php');
 
-global $CFG, $OUTPUT, $PAGE;
+global $CFG, $OUTPUT, $PAGE, $SITE;
 
 $PAGE->set_url(new moodle_url('/local/sentientia_users/termscondition.php'));
 $PAGE->set_context(\context_system::instance());
 $PAGE->set_pagelayout('login');
-$PAGE->set_title(get_string('tos_pagetitle', 'local_sentientia_users'));
-$PAGE->set_heading(format_string($CFG->fullname ?? 'Airpay Academy'));
+$PAGE->set_title(get_string('tos_pagetitle', 'local_sentientia_users', format_string($SITE->fullname)));
+$PAGE->set_heading(format_string($SITE->fullname));
 
 $custom = (string) get_config('local_sentientia_users', 'custom_tos_html');
 
@@ -30,13 +30,13 @@ if (trim($custom) !== '') {
         get_string('tos_heading', 'local_sentientia_users'),
         ['class' => 'mb-3']);
 
-    echo '<p>Welcome to Airpay Academy. Please read these Terms of Use carefully before accessing or using our learning platform. By creating an account and clicking the "I agree" checkbox on the signup form, you agree to be bound by these terms.</p>';
+    echo '<p>Welcome to ' . format_string($SITE->fullname) . '. Please read these Terms of Use carefully before accessing or using our learning platform. By creating an account and clicking the "I agree" checkbox on the signup form, you agree to be bound by these terms.</p>';
 
     echo '<h3 class="mt-4">1. Eligibility</h3>';
-    echo '<p>You must be at least 18 years old to create an Airpay Academy account on your own behalf. By signing up you confirm you meet this requirement.</p>';
+    echo '<p>You must be at least 18 years old to create an ' . format_string($SITE->fullname) . ' account on your own behalf. By signing up you confirm you meet this requirement.</p>';
 
     echo '<h3 class="mt-4">2. Use of the platform</h3>';
-    echo '<p>Airpay Academy is intended for personal learning and professional development. You may not use the platform:</p>';
+    echo '<p>' . format_string($SITE->fullname) . ' is intended for personal learning and professional development. You may not use the platform:</p>';
     echo '<ul>';
     echo '<li>for any unlawful purpose, or in a way that breaches any applicable law or regulation;</li>';
     echo '<li>to harvest user data, scrape content, or run automated agents;</li>';
@@ -53,7 +53,7 @@ if (trim($custom) !== '') {
     echo '<p>Your personal data is handled in line with our <a href="' . s(new \moodle_url('/local/sentientia_users/privacypolicy.php')) . '">Privacy Policy</a>. By using the platform you also agree to that policy.</p>';
 
     echo '<h3 class="mt-4">6. Limitation of liability</h3>';
-    echo '<p>Airpay Academy is provided "as is". We do not warrant that the platform will be uninterrupted or error-free. To the maximum extent permitted by law, Airpay Payment Services Private Limited will not be liable for indirect, incidental, or consequential damages arising from your use of the platform. This limitation does not apply to wilful misconduct or gross negligence on our part.</p>';
+    echo '<p>' . format_string($SITE->fullname) . ' is provided "as is". We do not warrant that the platform will be uninterrupted or error-free. To the maximum extent permitted by law, Airpay Payment Services Private Limited will not be liable for indirect, incidental, or consequential damages arising from your use of the platform. This limitation does not apply to wilful misconduct or gross negligence on our part.</p>';
 
     echo '<h3 class="mt-4">7. Termination</h3>';
     echo '<p>We may suspend or terminate your account if you breach these terms, or if doing so is required to comply with law. You can close your account at any time by emailing <a href="mailto:academy@airpay.co.in">academy@airpay.co.in</a>.</p>';

@@ -9,14 +9,14 @@
 
 require_once(__DIR__ . '/../../config.php');
 
-global $CFG, $OUTPUT, $PAGE, $USER;
+global $CFG, $OUTPUT, $PAGE, $USER, $SITE;
 
 $PAGE->set_url(new moodle_url('/local/sentientia_users/signup.php'));
 $PAGE->set_context(\context_system::instance());
 $PAGE->set_pagelayout('login');
 $PAGE->set_pagetype('signup');
-$PAGE->set_title(get_string('signup_pagetitle', 'local_sentientia_users'));
-$PAGE->set_heading(format_string($CFG->fullname ?? 'Airpay Academy'));
+$PAGE->set_title(get_string('signup_pagetitle', 'local_sentientia_users', format_string($SITE->fullname)));
+$PAGE->set_heading(format_string($SITE->fullname));
 
 // Already logged in? Send them home.
 if (isloggedin() && !isguestuser()) {
@@ -88,7 +88,7 @@ if ($data = $mform->get_data()) {
 echo $OUTPUT->header();
 echo html_writer::start_div('container my-4');
 echo html_writer::tag('p',
-    get_string('signup_intro', 'local_sentientia_users'),
+    get_string('signup_intro', 'local_sentientia_users', format_string($SITE->fullname)),
     ['class' => 'text-muted']);
 $mform->display();
 echo html_writer::end_div();

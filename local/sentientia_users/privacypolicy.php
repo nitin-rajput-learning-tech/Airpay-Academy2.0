@@ -12,13 +12,13 @@
 
 require_once(__DIR__ . '/../../config.php');
 
-global $CFG, $OUTPUT, $PAGE;
+global $CFG, $OUTPUT, $PAGE, $SITE;
 
 $PAGE->set_url(new moodle_url('/local/sentientia_users/privacypolicy.php'));
 $PAGE->set_context(\context_system::instance());
 $PAGE->set_pagelayout('login');  // no nav clutter
-$PAGE->set_title(get_string('privacy_pagetitle', 'local_sentientia_users'));
-$PAGE->set_heading(format_string($CFG->fullname ?? 'Airpay Academy'));
+$PAGE->set_title(get_string('privacy_pagetitle', 'local_sentientia_users', format_string($SITE->fullname)));
+$PAGE->set_heading(format_string($SITE->fullname));
 
 // Admin override wins. Trust it (it goes through Moodle's HTML editor +
 // format_text on render).
@@ -35,10 +35,10 @@ if (trim($custom) !== '') {
     echo html_writer::tag('h2',
         get_string('privacy_heading', 'local_sentientia_users'),
         ['class' => 'mb-3']);
-    echo '<p>At <strong>Airpay Academy</strong>, we take the privacy of our learners very seriously. This policy outlines the personal data we collect, how we use it, and the rights you have under applicable privacy regulations including the EU GDPR and India\'s DPDP Act.</p>';
+    echo '<p>At <strong>' . format_string($SITE->fullname) . '</strong>, we take the privacy of our learners very seriously. This policy outlines the personal data we collect, how we use it, and the rights you have under applicable privacy regulations including the EU GDPR and India\'s DPDP Act.</p>';
 
     echo '<h3 class="mt-4">1. Data we collect</h3>';
-    echo '<p>When you self-register on Airpay Academy, we collect the following <strong>mandatory</strong> data:</p>';
+    echo '<p>When you self-register on ' . format_string($SITE->fullname) . ', we collect the following <strong>mandatory</strong> data:</p>';
     echo '<ul>';
     echo '<li>First and last name</li>';
     echo '<li>Email address</li>';
@@ -69,7 +69,7 @@ if (trim($custom) !== '') {
     echo '</ul>';
 
     echo '<h3 class="mt-4">5. Data protection</h3>';
-    echo '<p>We host Airpay Academy on infrastructure that enforces TLS in transit and encryption at rest. Access to personal data is limited to staff on a need-to-know basis and is logged. We carry out periodic audits and vulnerability scans.</p>';
+    echo '<p>We host ' . format_string($SITE->fullname) . ' on infrastructure that enforces TLS in transit and encryption at rest. Access to personal data is limited to staff on a need-to-know basis and is logged. We carry out periodic audits and vulnerability scans.</p>';
 
     echo '<h3 class="mt-4">6. Changes to this policy</h3>';
     echo '<p>We may update this policy from time to time. Material changes will be communicated by email, and continued use of the service after the change date constitutes acceptance of the revised terms.</p>';
