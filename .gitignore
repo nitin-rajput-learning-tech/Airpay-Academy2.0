@@ -119,3 +119,6 @@ content/voice/*.mp3
 content/scorm-output/
 *-advisory.docx
 *-disclosure.docx
+
+# Local doc-generation build dir (node_modules + throwaway scripts)
+.tools/docgen/

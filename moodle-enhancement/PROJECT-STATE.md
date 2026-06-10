@@ -123,6 +123,20 @@ customer-name strings — NOT literal-zero, which would delete the white-label *
   tokenization, D6 email-preview fixtures, D7 frontpage marketing copy, D8 logo *asset* via branding_manager).
   Re-audit one-liner in the ledger. All batches deployed to local XAMPP + purged; **nothing deployed to live**.
 
+### ✅ Sentientia Product Guide for founder/C-suite (2026-06-10, same session)
+
+Nitin requested the executive-facing product document. Shipped **two artifacts** sourced from the live
+engineering record (PROJECT-STATE, ADR-001/027, capability audit, white-label ledger):
+- **`docs/SENTIENTIA-PRODUCT-GUIDE.md`** — canonical, version-controlled (11 sections: exec summary,
+  why-a-product, customer-zero value, product-in-numbers, capability tour by pillar, white-label moat
+  incl. honest GPL/business-model note, quality/security posture, shipped-vs-staged-vs-designed status,
+  what's-remaining + the asks (deploy window / flag decisions / API-key + ElevenLabs budgets / GTM),
+  roadmap, doc references).
+- **`docs/SENTIENTIA-PRODUCT-GUIDE.docx`** — boardroom-consumable Word version (A4, Arial, brand-accented
+  tables, page-numbered footer), generated via docx-js (`.tools/docgen/`, gitignored) and verified
+  (zip integrity + well-formed UTF-8 XML, 135 ¶ / 5 tables; the skill validator's "errors" were its own
+  cp1252 console reads, not document defects).
+
 ---
 
 ## ✅ Durable deploy-pipeline fix — theme AMD de-brand survives redeploy-from-git (2026-06-09, Opus 4.8)
