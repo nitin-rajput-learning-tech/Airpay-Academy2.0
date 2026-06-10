@@ -20,10 +20,10 @@
         <div>
             <h2 class="mb-1 mt-1" style="font-weight: 700;">
                 <i class="fa fa-handshake fa-fw text-primary"></i>
-                Browse Airpay Academy catalogue
+                Browse {{#str}}customername, theme_sentientia{{/str}} catalogue
             </h2>
             <div class="small text-muted">
-                Browse courses owned by Airpay Academy. Request access for any
+                Browse courses owned by {{#str}}customername, theme_sentientia{{/str}}. Request access for any
                 course you'd like to add to your tenant ({{ viewer_tenant_name }})
                 catalogue. Once an Airpay administrator approves, the course
                 appears in your learners' catalog — completions stay segregated
@@ -88,7 +88,7 @@
     <div class="alert alert-info mt-3" role="alert">
         <i class="fa fa-shield fa-fw"></i>
         Your tenant's learners will see borrowed courses with a
-        <strong>"Provided by Airpay Academy"</strong> badge. Completion data
+        <strong>"Provided by {{#str}}customername, theme_sentientia{{/str}}"</strong> badge. Completion data
         stays inside your tenant — Airpay sees only Airpay completions,
         and your reports show only {{ viewer_tenant_name }} learners.
     </div>

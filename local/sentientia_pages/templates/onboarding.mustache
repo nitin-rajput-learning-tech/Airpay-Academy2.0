@@ -4,7 +4,7 @@
 }}
 <div class="ap-onboard">
     <div class="ap-onboard__card">
-        <img src="{{logourl}}" alt="Airpay Academy" class="ap-onboard__logo">
+        <img src="{{logourl}}" alt="{{#str}}customername, theme_sentientia{{/str}}" class="ap-onboard__logo">
 
         {{! Step 1: Welcome }}
         <div class="ap-onboard__step ap-onboard__step--active" data-step="1">
@@ -132,7 +132,7 @@
                     </label>
                     <p class="ap-onboard__consents__hint">
                         You can change these anytime in your profile.
-                        Neither is required to use Airpay Academy.
+                        Neither is required to use {{#str}}customername, theme_sentientia{{/str}}.
                     </p>
                 </div>
                 {{/is_consumer}}
