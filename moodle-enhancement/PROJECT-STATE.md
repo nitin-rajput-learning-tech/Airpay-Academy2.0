@@ -66,11 +66,15 @@ progress bar / module-tree sidebar is now visible in dev-debug, inert in product
 - ✅ **P2-5 DONE** — `docs/COVERAGE-MATRIX.md` published (ADR-027 Gate 3): layout-chrome table +
   persona×surface table + definition-of-done + honest gaps ledger, grounded in the real render-smoke
   coverage (5 personas × 3–4 surfaces).
-- **P3-5** (low priority) — doc hygiene: rename `state-cards/airpay_*` → `sentientia_*`; backfill
-  `docs/adr/README.md`. Last remaining safe backlog item.
+- ◑ **P3-5 split** — ✅ ADR-index backfill DONE (`docs/adr/README.md` now indexes all 25 ADRs;
+  ADR-022 marked superseded-by-025). The other half — rename `state-cards/airpay_*` → `sentientia_*` —
+  is **moved to owner-gated** below (37-file rename, ripples into the freshness tool + 5 docs, needs a
+  per-component pass since `paygw_airpay`/`theme_airpayux`/`block_airpay_*` don't map uniformly).
 - Two audit-suggested Gate-0 scanners (hardcoded-English-in-mustache, unescaped `{{{ }}}` on user data)
   were **deliberately deferred** — both are high-false-positive and aren't in the recurring-bug set; the
   three recurring classes are already gated.
+
+> **Safe-autonomous backlog is now EXHAUSTED.** Everything below needs a decision or an unblock.
 
 **Owner-gated / deferred** (need a decision or an unblock):
 1. **Broad lang-string de-brand scope.** Beyond the unambiguous product labels above, the remaining
@@ -80,7 +84,12 @@ progress bar / module-tree sidebar is now visible in dev-debug, inert in product
    the customer deployment is ever renamed).
 2. **Fresh in-course screenshots** — blocked by the local screenshot-tooling limit (slow XAMPP +
    post-purge SCSS recompile, ≥90s loads) and the Chrome-extension `localhost:8080` permission grant.
-3. **Gate 2 (visual-diff/a11y)** — designed in ADR-027 (P2-6), not yet built.
+3. **Gate 2 (visual-diff/a11y)** — designed in ADR-027 (P2-6), not yet built (needs the visual/screenshot
+   tooling that is unreliable on this XAMPP box; CI Linux is the target env).
+4. **State-card rename** (`state-cards/airpay_*` → `sentientia_*`, P3-5 second half) — 37 files, ripples
+   into `tools/check_state_card_freshness.sh` + 5 docs, and needs a per-component pass (gateway / theme /
+   block names differ). Worth doing once the de-brand scope (#1) is settled, since both share the
+   "which names are product vs customer/gateway" judgment.
 
 ---
 
