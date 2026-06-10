@@ -41,12 +41,18 @@
 2. **Upgrade** — `php admin/cli/upgrade.php --non-interactive` (applies `paygw_airpay` v…0.10 +
    any pending plugin bumps).
 3. **Purge caches** — `php admin/cli/purge_caches.php`.
-4. **Flag flip (SW-1)** — `php local/sentientia_catalog/cli/enable_oneclick_enrol.php`
+4. **Task-registration repair (WF-004 — MANDATORY)** —
+   `php local/sentientia_platform/cli/repair_task_registrations.php --apply`
+   (re-registers the 19 renamed plugins' scheduled tasks + purges 17 orphan
+   `\local_airpay_*` rows whose classes no longer exist; without this, reminder/
+   escalation/digest/recompletion crons stay silently dead post-rename. Run
+   dry-run first to review; verified on local 5.1 + 5.2: sentientia=23/stale=0).
+5. **Flag flip (SW-1)** — `php local/sentientia_catalog/cli/enable_oneclick_enrol.php`
    (idempotent; enables tenants 1 + 177; add `--tenants=` to change scope; `--dry-run` to preview).
-5. **Smoke test** — run the cutover smoke checklist (login, /my/ dashboard, catalog, one course page,
+6. **Smoke test** — run the cutover smoke checklist (login, /my/ dashboard, catalog, one course page,
    one admin page; zero console errors). As siteadmin, confirm `/course/management.php` now reaches
    the NATIVE management hub (SA-04) while a learner still gets the catalog redirect.
-6. **Paygw sandbox transaction (Nitin-deferred)** — per Nitin's call, the deploy does NOT wait for
+7. **Paygw sandbox transaction (Nitin-deferred)** — per Nitin's call, the deploy does NOT wait for
    this; run one sandbox payment at first convenience after deploy and confirm the fail-closed
    verifier accepts a good hash + rejects a tampered one. Reference:
    `moodle-enhancement/docs/security/2026-06-02-airpay-payment-verification-fix.md`.
