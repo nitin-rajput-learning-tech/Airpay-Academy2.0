@@ -5,6 +5,47 @@
 
 ---
 
+## 🔄 FOOLPROOF campaign + SW-1..4 switches EXECUTED (2026-06-10 evening→overnight, Opus 4.8 loop)
+
+**Nitin's rollout gate (standing):** live airpay.academy deploys ONLY on his explicit go — path is
+foolproof workflow testing → ninja-sandbox live-backup migration rehearsal → replacement with data
+intact (`docs/cutover/ROLLOUT-PACKET-2026-06-10.md` gate banner; memory saved).
+
+**All four of Nitin's switches executed** (`4dd2dc335`, `f1c38e815`):
+- **SW-1** one-click enrol ON (tenants 1+177 local; idempotent audited CLI ships for prod window).
+- **SW-2** QA branches resolved by analysis — 4 already contained/superseded; **SA-04 genuinely
+  ported** (capability-gated native course-management redirect).
+- **SW-3** paygw fail-closed verifier ported into the CANONICAL gateway (preservation regression —
+  canonical tree still had the bypass+md5; now v…0.10 everywhere; sandbox txn = Nitin-deferred).
+- **SW-4** Moodle **5.2 cutover EXECUTED on local**: parallel instance promoted non-destructively
+  (NEW DB `moodle52_cut1` from a fresh 3.3 GB clone; 5.1 untouched on :8080). Upgrade "completed
+  successfully", **data intact: 3,176 users / 412 courses / 22,523 enrolments / 32,248 completions**.
+  Two HARD env gates found → packet pre-checks: PHP ≥ 8.3 (local: WinGet 8.4.21 + `.tools/php84/php.ini`)
+  and `max_input_vars ≥ 5000`.
+
+**FOOLPROOF campaign (#401) — `docs/testing/WORKFLOW-TEST-MATRIX.md`, batches 1–5 on the 5.2 stack:**
+~35 workflows verified green (signup E2E over HTTP, one-click enrol, reminder + manager-escalation
+crons with seeded deadlines, HRMS import, WhatsApp pipeline, recompletion 13/13, course-share 23/23,
+org parity 100% (2,883 users), tenant parity 100% (seeded, dormant), push crypto, Live session seed,
+guest+learner HTTP sweeps, eval/programs/skills smokes, brand resolver 20/20). **Five real issues
+found, four FIXED + verified, all would have shipped silently:**
+- **WF-001 (critical):** the theme's whole URL redirect policy (`custom_secured_redirection` — LXP
+  catalog, SA-04 gate, profile/trainer redirects) had NO caller since the trait refactor → re-wired
+  in the 5 standard layouts; learner→catalog + admin→native verified live.
+- **WF-004 (critical):** `{task_scheduled}` still held 17 orphan `\local_airpay_*` classnames — every
+  renamed plugin's cron silently dead since ADR-025 → NEW `local/sentientia_platform/cli/
+  repair_task_registrations.php` (reconcile 19 components + purge orphans), applied BOTH instances
+  (23/0), **mandatory deploy-packet step**.
+- **WF-005:** `customer_brand` DB row stored pre-rename `/local/airpay_core/` icon/start URLs (rename
+  fixed code, not data) → repair CLI gained a brand-path section; both DBs fixed; resolver 20/20.
+- **WF-003:** vendor learnerscript observer CLI-context warnings → guarded, 0 warnings.
+- **WF-002:** qa-provisioner stale theme class (local tool) → fixed.
+**Playwright UNBLOCKED on this box** (browsers launch; render-smoke needs `PLAYWRIGHT_*_USER/_PASS`
+env — first credentialed run in flight vs :8081). Remaining matrix tiers: PW browser suite results,
+L4/L7 (completion/cert HTTP), manager/trainer HTTP walks, MAN items for Nitin's browser pass.
+
+---
+
 ## ✅ Sentientia quality-gate + de-brand + audit-action wave (2026-06-10, Opus 4.8 standing-loop)
 
 Continued the standing `/loop` autonomous wave against the post-import audit
