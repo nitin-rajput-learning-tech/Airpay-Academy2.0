@@ -135,12 +135,18 @@ seeded (session + slides + join code issued) · **G1/G3/C5/C2 ✅** guest sweep 
 entry, privacy, storefront — all 200, 0 fatals, sentientia markers) · **L2/L14 ✅** authenticated
 catalog + dashboard (200, 0 fatals; assistant quick-action markers present).
 
+**Batch 5a verdicts (5.2):** **A4 ✅×2** evaluation (anonymous-question + template I/O ALL OK) ·
+**A3 ✅×2** programs (cohort enrol + prerequisites ALL OK) · **L12 ✅×2** skills (course mapping +
+observer ALL OK) · **S6 ◑** brand resolver 18/20 — the 2 fails are `icon_192_url`/`icon_512_url`
+path checks on the 5.2 instance (PWA icon asset paths; logged as WF-005, open).
+
 ## Known issues found by this campaign
 
 | # | Workflow | Issue | Status |
 |---|---|---|---|
 | WF-001 | S1 (+ the whole theme redirect policy) | `core_renderer::custom_secured_redirection()` — the LXP-catalog/profile/trainer redirect policy incl. the SA-04 gate — **lost its caller in the trait-decomposition refactor and was dead code on every page** (verified: no caller in either instance; learner browsed native /course/index.php). | ✅ FIXED — invoked from the 5 standard layouts (columns1/2, course, dashboard, drawers; URL-conditional so no-op elsewhere); deployed to both instances; learner→catalog + admin→native verified live |
 | WF-002 | (tooling) | `tools/_qa_provision.php` referenced pre-rename `theme_airpayux\role_detector` — broke provisioning | ✅ FIXED in the local tool (gitignored) |
+| WF-005 | S6/L10 | PWA icon URL checks fail on the 5.2 instance (icon_192/512 path) — manifest install icons may 404 there; resolver-vs-asset path mismatch to diagnose | ⏳ OPEN (medium-low) |
 | WF-003 | (CLI hygiene) | `blocks/learnerscript/classes/observer.php:153,163` assumes web context — "Undefined array key REQUEST_URI" + deprecated `parse_url(null)` on every CLI that fires enrolment events (PHP 8.4) | ⏳ OPEN (low) — vendor block; defensive `?? ''` fix queued |
 | WF-004 | L5/L6/M3 + every renamed plugin's cron | **{task_scheduled} still held pre-rename `\local_airpay_*` classnames** (17 orphans; only 6 sentientia rows vs 19 plugins shipping db/tasks.php) — those crons were **silently dead on BOTH instances since ADR-025** (reminders, escalations, digests, leaderboard recompute, recompletion rules, proctoring purge, cohort sync…). Root cause: the rename handover re-pointed capabilities + WS but not tasks, and Moodle only reconciles tasks on version change. | ✅ FIXED — NEW `local/sentientia_platform/cli/repair_task_registrations.php` (dry-run default, `--apply`; reconciles 19 components + purges class-gone orphans + reports other component residue). Applied on 5.2 AND 5.1: both now sentientia=23 / stale=0. **Added to the deploy packet — must run on sandbox + live post-deploy.** |
 
