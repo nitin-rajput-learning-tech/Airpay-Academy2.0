@@ -150,7 +150,9 @@ class block_learnerscript_observer {
              unset($_COOKIE['time_timeme']);
         } else {
             $_COOKIE['time_timeme'] = 0;
-            $_SESSION['pageurl_timeme'] = parse_url($_SERVER['REQUEST_URI'])['path'];
+            // WF-003: REQUEST_URI is absent under CLI (cron/upgrade) — guard both
+            // the missing key and a parse_url() result without a 'path' element.
+            $_SESSION['pageurl_timeme'] = parse_url($_SERVER['REQUEST_URI'] ?? '')['path'] ?? '';
             $_SESSION['time_timeme'] = round($_COOKIE['time_timeme'], 0);
 
         }
@@ -160,7 +162,8 @@ class block_learnerscript_observer {
             $instance = $cm->instance;
         }
         $_SESSION['courseid'] = $COURSE->id;
-        $_SESSION['pageurl_timeme'] = parse_url($_SERVER['REQUEST_URI'])['path'];
+        // WF-003: same CLI guard as above.
+        $_SESSION['pageurl_timeme'] = parse_url($_SERVER['REQUEST_URI'] ?? '')['path'] ?? '';
         $_SESSION['instanceid'] = $instance;
         $_SESSION['activityid'] = $PAGE->context->instanceid;
         $PAGE->requires->js_call_amd('block_learnerscript/track', 'timeme');

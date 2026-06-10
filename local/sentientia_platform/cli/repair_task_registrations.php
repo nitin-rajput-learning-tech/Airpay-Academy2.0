@@ -76,6 +76,37 @@ foreach ($orphans as $o) {
 }
 cli_writeln('Orphan airpay task rows: ' . count($orphans));
 
+// ── 2b. WF-005: customer_brand rows storing pre-rename URL paths ──
+// The rename codemod rewrote code, not DB data: icon/start URLs saved as
+// '/local/airpay_core/...' point at a component that no longer exists, so
+// PWA manifest icons 404. Rewrite to the renamed plugin path.
+$brandfixes = 0;
+if ($DB->get_manager()->table_exists('local_sentientia_customer_brand')) {
+    foreach ($DB->get_records('local_sentientia_customer_brand') as $row) {
+        $dirty = false;
+        foreach (['icon_192_url', 'icon_512_url', 'start_url'] as $f) {
+            if (isset($row->$f) && str_contains($row->$f, '/local/airpay_core/')) {
+                $row->$f = str_replace('/local/airpay_core/', '/local/sentientia_platform/', $row->$f);
+                $dirty = true;
+            }
+        }
+        if ($dirty) {
+            if ($apply) {
+                $row->timemodified = time();
+                $DB->update_record('local_sentientia_customer_brand', $row);
+            }
+            cli_writeln(($apply ? '  fixed brand paths ' : '  would fix brand paths ')
+                . "customer {$row->customerid}");
+            $brandfixes++;
+        }
+    }
+    if ($apply && $brandfixes > 0 && class_exists('\\local_sentientia_platform\\customer')) {
+        // Invalidate the brand cache so the manifest re-renders fresh.
+        \cache_helper::purge_by_definition('local_sentientia_platform', 'customer_brand');
+    }
+}
+cli_writeln("Brand rows with stale paths: $brandfixes");
+
 // ── 3. Report-only: other component-bound residue ──
 foreach (['message_providers' => 'component', 'event' => 'component'] as $table => $col) {
     try {
