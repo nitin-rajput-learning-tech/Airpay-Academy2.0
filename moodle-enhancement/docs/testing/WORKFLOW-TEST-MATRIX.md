@@ -112,7 +112,7 @@ qa_public` (pw in `tools/_qa_provision.php`, local-only).
 
 | Gate | Mechanism | 5.2 status |
 |---|---|---|
-| Render-smoke (persona × surface: AMD boot, no `{{ }}` leak, landmark, 0 console errors) | PW render-smoke.spec | ⏳ (needs vhost or php -S router for PW) |
+| Render-smoke (persona × surface: AMD boot, no `{{ }}` leak, landmark, 0 console errors) | PW render-smoke.spec | ◑ **PW UNBLOCKED on this box** (chromium/firefox/webkit all launch). Run vs the 5.2 php -S: COMPLIANCE persona **passed full surface walk**; the other 4 fail only on `page.goto` 30s timeouts — Windows `php -S` is single-threaded (`PHP_CLI_SERVER_WORKERS` is POSIX-only) and cannot serve a browser's parallel asset requests. Surfaces themselves proven healthy via HTTP probes (all 200, 0 fatals). **Full PW pass needs an Apache vhost for :8081 (Nitin-confirm) or CI.** |
 | Accessibility WCAG A+AA serious/critical | PW a11y-smoke.spec | ⏳ |
 | Dark mode + mobile 590px | PW dark-mode.spec + mobile-590.spec | ⏳ |
 | Hindi + 4-locale rendering | lang-parity tooling (static ✅) + MAN spot pass | ⏳ |
@@ -139,6 +139,12 @@ catalog + dashboard (200, 0 fatals; assistant quick-action markers present).
 **A3 ✅×2** programs (cohort enrol + prerequisites ALL OK) · **L12 ✅×2** skills (course mapping +
 observer ALL OK) · **S6 ◑** brand resolver 18/20 — the 2 fails are `icon_192_url`/`icon_512_url`
 path checks on the 5.2 instance (PWA icon asset paths; logged as WF-005, open).
+
+
+**Sandbox kit (#402) shipped + locally rehearsed:** `migration_parity_check.php` (--baseline/--compare)
+proven at single-row sensitivity (5.1-source baseline vs migrated 5.2 clone: all metrics MATCH except 4,
+each attributable to this campaign's own test writes); `MIGRATION-REHEARSAL-RUNBOOK.md` = turnkey Phase-2
+procedure with mandatory post-restore repairs.
 
 ## Known issues found by this campaign
 
