@@ -76,20 +76,28 @@ progress bar / module-tree sidebar is now visible in dev-debug, inert in product
 
 > **Safe-autonomous backlog is now EXHAUSTED.** Everything below needs a decision or an unblock.
 
-**Owner-gated / deferred** (need a decision or an unblock):
-1. **Broad lang-string de-brand scope.** Beyond the unambiguous product labels above, the remaining
-   "Airpay" refs in settings/task strings mix product labels with gateway refs ("Airpay Gateway",
-   "Airpay Payment Services API URL") and the customer ref ("Airpay Academy") — a blind sweep on a
-   live-customer product is unsafe. Needs Nitin's keep-vs-change call (esp. whether "Airpay Academy"
-   the customer deployment is ever renamed).
-2. **Fresh in-course screenshots** — blocked by the local screenshot-tooling limit (slow XAMPP +
-   post-purge SCSS recompile, ≥90s loads) and the Chrome-extension `localhost:8080` permission grant.
-3. **Gate 2 (visual-diff/a11y)** — designed in ADR-027 (P2-6), not yet built (needs the visual/screenshot
-   tooling that is unreliable on this XAMPP box; CI Linux is the target env).
-4. **State-card rename** (`state-cards/airpay_*` → `sentientia_*`, P3-5 second half) — 37 files, ripples
-   into `tools/check_state_card_freshness.sh` + 5 docs, and needs a per-component pass (gateway / theme /
-   block names differ). Worth doing once the de-brand scope (#1) is settled, since both share the
-   "which names are product vs customer/gateway" judgment.
+**Wave-2 (post-decision, 2026-06-10) — Nitin answered the 4 owner-gated questions:**
+1. **De-brand scope → WHITE-LABEL via branding_manager.** Customer name resolves at runtime (product
+   ships customer-neutral; "Airpay Academy" becomes the configured value). **W-A NOT YET STARTED** — it's a
+   refactor to surface the customer name as a template var in login/email/maintenance + `{$a}` placeholders
+   in `sentientia_users`/`sentientia_whatsapp` lang. Design findings: `branding_manager` (sentientia_org)
+   has logos/colours but **no name method**; `core_renderer.php:104` already consumes
+   `\local_sentientia_platform\customer::branding()` (per-customer hook); login is pre-auth so the canonical
+   name source is the site fullname. **Not started blind — verification routed through the Chrome grant (#4).**
+2. **State-card rename → DONE (W-C).** 34 cards `airpay_*`→`sentientia_*` (commit `c57254d2a`); `paygw_airpay`
+   + `quizaccess_airpay_proctoring` correctly kept; freshness tool needed no edit (handles both prefixes).
+   **Micro-confirm pending:** `airpay_core-state.md` is a stale duplicate of the newer canonical
+   `sentientia_core-state.md` — left for a confirm-to-`git rm`.
+3. **Gate 2 → a11y half DONE, visual pending (Q2 'build now').** `tests/playwright/a11y-smoke.spec.ts`
+   (axe-core, serious/critical, WCAG A+AA; `@axe-core/playwright` added to the playwright pkg+lock) runs per
+   persona×surface in CI (commit `d84f9ac3d`; 15 tests collect via `--list`). Screenshot-diff half
+   **deliberately deferred until after W-A** — baselines captured before the white-label change would be
+   instantly stale; seed via `npm run test:update-snapshots` on CI afterward.
+4. **Screenshots → Q3 = grant Chrome `localhost:8080` access.** ⏳ **PENDING NITIN'S ACTION.** Unblocks
+   W-A visual verification + W-D screenshot capture + the Gate-2 screenshot-baseline seed (all gated on it).
+
+> **Critical path next:** Nitin grants Chrome access → execute W-A (white-label) with screenshot verification
+> → seed Gate-2 visual baselines against the finalized UI. Plus the one micro-confirm: remove `airpay_core-state.md`.
 
 ---
 
