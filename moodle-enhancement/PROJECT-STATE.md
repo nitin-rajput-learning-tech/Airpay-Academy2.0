@@ -94,9 +94,13 @@ progress bar / module-tree sidebar is now visible in dev-debug, inert in product
    healthy post-deploy/purge — no regression). The login hero is a logged-out surface (would end Nitin's session)
    so it's curl-verified rather than screenshotted; a logged-out capture is available on request.
 
-> **All 4 decisions executed.** Remaining (both optional / CI-coordinated): the Gate-2 **visual** baseline seed
-> (needs a CI `--update-snapshots` run + baseline commit) and the **signup/WhatsApp lang-string** de-brand
-> (`{$a}` + caller). Neither blocks; both are logged here for a clean pickup.
+> **All 4 decisions executed + both follow-ups done.** ✅ **signup/WhatsApp lang de-brand** — sentientia_users
+> (signup/privacy/ToS titles+intros+headings+legal-body → site name via `{$a}`/`format_string($SITE->fullname)`;
+> also fixed a `$CFG->fullname` heading bug; commit `dd6caa69b`) + sentientia_whatsapp (heading/dlt `{$a}`, intro
+> reworded; en+hi; `d4abf7c74`). **Runtime-verified**: signup page renders the site name, 0 `{$a}`/`[[a]]` leak.
+> ✅ **Gate-2 visual** — `tests/playwright/visual.spec.ts` scaffolded (gated `PLAYWRIGHT_VISUAL`; `3abce5ea1`).
+> **Only remaining (CI-coordinated, can't trigger from here):** seed the Gate-2 visual baselines (`--update-snapshots`
+> on CI + commit PNGs + flip `PLAYWRIGHT_VISUAL=1`) and, if wanted, the sw/mr/kn whatsapp transliterations (low-traffic).
 
 ---
 
