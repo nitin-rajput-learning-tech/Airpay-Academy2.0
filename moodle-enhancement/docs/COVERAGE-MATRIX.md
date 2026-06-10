@@ -22,7 +22,7 @@ ledger of what those gates (and the manual passes) actually reach.
 |-----|------|----------------|-----------|------------|
 | **Static** | Gate 0 | Template can't ship a known static defect (comment leak, stale `theme_airpayux` AMD name, missing `standard_end_of_body_html`) | `moodle-enhancement/tools/scan_*.php` → pre-commit hook (15 CHECKS) + CI | ✅ yes |
 | **Render** | Gate 1 | Page boots: AMD up (`window.require` is a fn), no leaked `{{ }}`, a landmark is visible, **0** non-benign console errors | `tests/playwright/render-smoke.spec.ts` (CI Linux authoritative) | ✅ yes |
-| **Visual** | Gate 2 | Pixels match an approved baseline (no layout regression) | Playwright `toHaveScreenshot` diff | ◑ **pending** — seed baselines after white-label |
+| **Visual** | Gate 2 | Pixels match an approved baseline (no layout regression) | Playwright `toHaveScreenshot` diff | ◑ **pending** — seed on CI (visual.spec.ts scaffolded, gated PLAYWRIGHT_VISUAL) |
 | **A11y** | Gate 2 | No serious/critical axe violations (WCAG 2.0/2.1 A+AA) | `a11y-smoke.spec.ts` (axe-core) in CI | ✅ **built** |
 | **Styled** | manual | Sentientia design system applied (not raw Moodle/Boost) | Goal-A persona walks + visual evidence | ◑ manual, per-surface |
 
