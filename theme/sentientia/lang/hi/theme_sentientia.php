@@ -4,6 +4,8 @@ defined('MOODLE_INTERNAL') || die();
 
 $string['advancedsettings'] = 'एडवांस्ड सेटिंग्स';
 $string['colorsettings'] = 'रंग सेटिंग्स';
+// White-label customer brand name — kept untranslated (brand). See en pack for usage.
+$string['customername'] = 'Airpay Academy';
 
 // P0 borrow #5 (Moodle 5.2) — OAuth2 बटन का लोकलाइज़्ड टेक्स्ट।
 $string['signinwithidentityprovider'] = 'या इससे साइन इन करें';

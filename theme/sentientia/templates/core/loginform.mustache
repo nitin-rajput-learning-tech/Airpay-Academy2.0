@@ -34,10 +34,10 @@
         <div class="airpay-login__hero-content">
             {{! Logo — use theme pix if no admin-uploaded logo }}
             <div class="airpay-login__hero-logo">
-                <img src="{{{config.wwwroot}}}/theme/sentientia/pix/brand/academy-logo-350.png" alt="airpay academy">
+                <img src="{{{config.wwwroot}}}/theme/sentientia/pix/brand/academy-logo-350.png" alt="{{sitename}}">
             </div>
 
-            <h1 class="airpay-login__hero-title">airpay academy</h1>
+            <h1 class="airpay-login__hero-title">{{sitename}}</h1>
             <p class="airpay-login__hero-subtitle">Upskill. Get certified. Get hired.</p>
 
             {{!
@@ -100,7 +100,7 @@
             {{! Mobile-only logo }}
             <div class="airpay-login__mobile-logo d-lg-none">
                 {{^logourl}}
-                    <img src="{{output.loginlogo}}" alt="airpay academy">
+                    <img src="{{output.loginlogo}}" alt="{{sitename}}">
                 {{/logourl}}
                 {{#logourl}}
                     <img src="{{logourl}}" alt="{{sitename}}">

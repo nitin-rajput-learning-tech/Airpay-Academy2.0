@@ -28,6 +28,14 @@ defined('MOODLE_INTERNAL') || die();
 $string['advancedsettings'] = 'Advanced settings';
 $string['colorsettings'] = 'Color settings';
 
+// White-label customer brand name. Used on the maintenance/error page, which renders
+// with minimal context (during DB-down maintenance) where {{sitename}} is unavailable.
+// Login + email source the name from the live site name ({{sitename}} / {{sitefullname}})
+// so they white-label for free when a customer sets their site name; this string is the
+// override point for surfaces that can't reach the site config. A new customer overrides
+// it via Site admin → Language → Language customisation. (ADR-027 / Q1 white-label.)
+$string['customername'] = 'Airpay Academy';
+
 // P0 borrow #5 (Moodle 5.2) — OAuth2 button text localisable.
 // Used by templates/core/loginform.mustache and identity-provider
 // listings. Customer admins can override via Site Admin → Language
