@@ -5,6 +5,8 @@ defined('MOODLE_INTERNAL') || die();
 // Admin settings (kept simple since admin stays English, but available if needed)
 $string['advancedsettings'] = 'प्रगत सेटिंग्ज';
 $string['colorsettings'] = 'रंग सेटिंग्ज';
+// White-label customer brand name — kept untranslated (brand). See en pack for usage.
+$string['customername'] = 'Airpay Academy';
 $string['backgroundimage'] = 'पार्श्वभूमी चित्र';
 $string['backgroundimage_desc'] = 'साइटच्या पार्श्वभूमीसाठी दाखवण्यासाठी चित्र.';
 $string['brandcolor'] = 'ब्रँड रंग';
@@ -17,7 +19,7 @@ $string['hovercolor'] = 'होव्हर रंग';
 $string['hovercolor_desc'] = 'होव्हर रंग निवडा';
 $string['bootswatch'] = 'बूटस्वॉच';
 $string['bootswatch_desc'] = 'Bootstrap स्टाइल करण्यासाठी व्हेरिएबल्स आणि CSS चा संच';
-$string['choosereadme'] = 'एअरपे अकॅडमी UX — एअरपेचे स्वतःचे थीम, पूर्ण डिझाइन सिस्टम, मल्टी-टेनंट ब्रँडिंग आणि मोबाइल अनुभव.';
+$string['choosereadme'] = 'Sentientia UX — स्टँडअलोन थीम, पूर्ण डिझाइन सिस्टम, मल्टी-टेनंट ब्रँडिंग आणि मोबाइल अनुभव.';
 $string['currentinparentheses'] = '(सध्याचे)';
 $string['configtitle'] = 'Sentientia Academy UX';
 $string['fontsize'] = 'थीम फॉन्ट आकार';
@@ -27,12 +29,12 @@ $string['loginbackgroundimage'] = 'लॉगिन पेज पार्श्�
 $string['loginbackgroundimage_desc'] = 'लॉगिन पेजसाठी पार्श्वभूमी चित्र.';
 $string['nobootswatch'] = 'काहीही नाही';
 $string['customsettings'] = 'कस्टम सेटिंग्ज';
-$string['pluginname'] = 'Airpay Academy UX (Sentientia)';
+$string['pluginname'] = 'Sentientia UX';
 $string['presetfiles'] = 'अतिरिक्त थीम प्रीसेट फाइल्स';
 $string['presetfiles_desc'] = 'थीमचे स्वरूप बदलण्यासाठी प्रीसेट फाइल्स वापरता येतात.';
 $string['preset'] = 'थीम प्रीसेट';
 $string['preset_desc'] = 'थीमचे स्वरूप बदलण्यासाठी प्रीसेट निवडा.';
-$string['privacy:metadata'] = 'Airpay Academy UX (Sentientia) थीम कोणत्याही वापरकर्त्याबद्दल वैयक्तिक डेटा संग्रहित करत नाही.';
+$string['privacy:metadata'] = 'Sentientia UX थीम कोणत्याही वापरकर्त्याबद्दल वैयक्तिक डेटा संग्रहित करत नाही.';
 $string['rawscss'] = 'रॉ SCSS';
 $string['rawscss_desc'] = 'स्टाइलशीटच्या शेवटी इंजेक्ट होणारा SCSS किंवा CSS कोड.';
 $string['rawscsspre'] = 'प्रारंभिक रॉ SCSS';
@@ -183,7 +185,6 @@ $string['footer_terms']     = 'अटी आणि नियम';
 $string['footer_help']      = 'मदत';
 $string['footer_contact']   = 'संपर्क';
 $string['footer_copyright'] = '&copy; 2026 एअरपे पेमेंट सर्व्हिसेस प्रा. लि.';
-$string['footer_logo_alt'] = 'एअरपे अकॅडमी';
 
 // F-13 (Platform Visual Audit 2026-05-24, chip-G) — डॅशबोर्ड वेलकम बॅनर,
 // चार्ट हेडिंग आणि कंप्लायन्स KPI लेबल्स. {$a} = वापरकर्त्याचे पहिले नाव.

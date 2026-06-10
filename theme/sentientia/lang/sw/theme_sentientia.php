@@ -4,6 +4,8 @@ defined('MOODLE_INTERNAL') || die();
 
 $string['advancedsettings'] = 'Mipangilio ya juu';
 $string['colorsettings'] = 'Mipangilio ya rangi';
+// White-label customer brand name — kept untranslated (brand). See en pack for usage.
+$string['customername'] = 'Airpay Academy';
 $string['backgroundimage'] = 'Picha ya mandhari';
 $string['backgroundimage_desc'] = 'Picha ya kuonyeshwa kama mandhari ya tovuti.';
 $string['brandcolor'] = 'Rangi ya chapa';
@@ -16,7 +18,7 @@ $string['hovercolor'] = 'Rangi ya hover';
 $string['hovercolor_desc'] = 'Chagua rangi ya hover';
 $string['bootswatch'] = 'Bootswatch';
 $string['bootswatch_desc'] = 'Seti ya vigeu vya Bootstrap na CSS';
-$string['choosereadme'] = 'Airpay Academy UX — muundo kamili wenye chapa ya Airpay, msaada wa wapangaji wengi, na uzoefu wa simu.';
+$string['choosereadme'] = 'Sentientia UX — mandhari huru yenye mfumo kamili wa usanifu, chapa kwa kila mteja, na uzoefu wa simu.';
 $string['currentinparentheses'] = '(sasa hivi)';
 $string['configtitle'] = 'Sentientia Academy UX';
 $string['fontsize'] = 'Ukubwa wa fonti';
@@ -26,12 +28,12 @@ $string['loginbackgroundimage'] = 'Picha ya mandhari ya kuingia';
 $string['loginbackgroundimage_desc'] = 'Picha ya mandhari kwa ukurasa wa kuingia.';
 $string['nobootswatch'] = 'Hakuna';
 $string['customsettings'] = 'Mipangilio maalum';
-$string['pluginname'] = 'Airpay Academy UX (Sentientia)';
+$string['pluginname'] = 'Sentientia UX';
 $string['presetfiles'] = 'Faili za ziada za mipangilio';
 $string['presetfiles_desc'] = 'Faili za mipangilio zinaweza kubadilisha muonekano wa mandhari.';
 $string['preset'] = 'Mipangilio ya mandhari';
 $string['preset_desc'] = 'Chagua mipangilio kubadilisha muonekano wa mandhari.';
-$string['privacy:metadata'] = 'Mandhari ya Airpay Academy UX (Sentientia) haihifadhi data binafsi ya mtumiaji yeyote.';
+$string['privacy:metadata'] = 'Mandhari ya Sentientia UX haihifadhi data binafsi ya mtumiaji yeyote.';
 $string['rawscss'] = 'SCSS safi';
 $string['rawscss_desc'] = 'Msimbo wa SCSS au CSS utakaowekwa mwishoni mwa laha ya mtindo.';
 $string['rawscsspre'] = 'SCSS ya awali';
@@ -180,7 +182,6 @@ $string['footer_terms']     = 'Masharti';
 $string['footer_help']      = 'Msaada';
 $string['footer_contact']   = 'Mawasiliano';
 $string['footer_copyright'] = '&copy; 2026 airpay payment services pvt. ltd.';
-$string['footer_logo_alt'] = 'airpay academy';
 
 // F-13 (Platform Visual Audit 2026-05-24, chip-G) — Banner ya karibu ya
 // dashibodi, vichwa vya chati na lebo za KPI za utii. {$a} = jina la kwanza.

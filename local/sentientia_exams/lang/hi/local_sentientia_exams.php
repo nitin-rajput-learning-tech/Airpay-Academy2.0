@@ -89,8 +89,8 @@ $string['reminder_body_plain']   = 'नमस्ते,
 
 परीक्षा यहाँ दें: {$a->exam_url}
 
-— एयरपे एकेडमी';
-$string['reminder_body_html']    = '<p>नमस्ते,</p><p>यह एक रिमाइंडर है कि परीक्षा <strong>{$a->examname}</strong> (कोर्स: {$a->coursename}) <strong>{$a->deadline}</strong> को बंद हो रही है — अब से {$a->days_remaining} दिन।</p><p><a href="{$a->exam_url}">परीक्षा दें</a></p><p style="color:#777;">— एयरपे एकेडमी</p>';
+— {$a->sitename}';
+$string['reminder_body_html']    = '<p>नमस्ते,</p><p>यह एक रिमाइंडर है कि परीक्षा <strong>{$a->examname}</strong> (कोर्स: {$a->coursename}) <strong>{$a->deadline}</strong> को बंद हो रही है — अब से {$a->days_remaining} दिन।</p><p><a href="{$a->exam_url}">परीक्षा दें</a></p><p style="color:#777;">— {$a->sitename}</p>';
 
 // P1 #34 — overdue manager-escalation cron.
 $string['task_exam_overdue']                       = 'परीक्षा अतिदेय — प्रबंधक एस्केलेशन';
@@ -124,5 +124,5 @@ $string['overdue_body_plain']   = 'नमस्ते,
 
 कृपया उनसे फॉलो-अप करें।
 
-— एयरपे एकेडमी';
-$string['overdue_body_html']    = '<p>नमस्ते,</p><p>आपके टीम सदस्य <strong>{$a->learner_name}</strong> ने परीक्षा <strong>{$a->exam_name}</strong> (कोर्स: {$a->coursename}) की समय-सीमा चूक दी है।</p><p>समय-सीमा: <strong>{$a->deadline}</strong> ({$a->days_past} दिन पहले)।</p><ul><li><a href="{$a->exam_url}">परीक्षा देखें</a></li><li><a href="{$a->learner_profile_url}">सीखने वाले की प्रोफ़ाइल देखें</a></li></ul><p>कृपया उनसे फॉलो-अप करें।</p><p style="color:#777;">— एयरपे एकेडमी</p>';
+— {$a->sitename}';
+$string['overdue_body_html']    = '<p>नमस्ते,</p><p>आपके टीम सदस्य <strong>{$a->learner_name}</strong> ने परीक्षा <strong>{$a->exam_name}</strong> (कोर्स: {$a->coursename}) की समय-सीमा चूक दी है।</p><p>समय-सीमा: <strong>{$a->deadline}</strong> ({$a->days_past} दिन पहले)।</p><ul><li><a href="{$a->exam_url}">परीक्षा देखें</a></li><li><a href="{$a->learner_profile_url}">सीखने वाले की प्रोफ़ाइल देखें</a></li></ul><p>कृपया उनसे फॉलो-अप करें।</p><p style="color:#777;">— {$a->sitename}</p>';

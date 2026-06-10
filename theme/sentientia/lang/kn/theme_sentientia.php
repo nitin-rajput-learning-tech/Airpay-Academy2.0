@@ -4,6 +4,8 @@ defined('MOODLE_INTERNAL') || die();
 
 $string['advancedsettings'] = 'ಸುಧಾರಿತ ಸೆಟ್ಟಿಂಗ್‌ಗಳು';
 $string['colorsettings'] = 'ಬಣ್ಣ ಸೆಟ್ಟಿಂಗ್‌ಗಳು';
+// White-label customer brand name — kept untranslated (brand). See en pack for usage.
+$string['customername'] = 'Airpay Academy';
 $string['backgroundimage'] = 'ಹಿನ್ನೆಲೆ ಚಿತ್ರ';
 $string['backgroundimage_desc'] = 'ಸೈಟ್‌ನ ಹಿನ್ನೆಲೆಯಾಗಿ ತೋರಿಸಲು ಚಿತ್ರ.';
 $string['brandcolor'] = 'ಬ್ರ್ಯಾಂಡ್ ಬಣ್ಣ';
@@ -16,7 +18,7 @@ $string['hovercolor'] = 'ಹೋವರ್ ಬಣ್ಣ';
 $string['hovercolor_desc'] = 'ಹೋವರ್ ಬಣ್ಣ ಆಯ್ಕೆ ಮಾಡಿ';
 $string['bootswatch'] = 'ಬೂಟ್‌ಸ್ವಾಚ್';
 $string['bootswatch_desc'] = 'Bootstrap ಸ್ಟೈಲ್ ಮಾಡಲು ವೇರಿಯೇಬಲ್‌ಗಳು ಮತ್ತು CSS ನ ಸೆಟ್';
-$string['choosereadme'] = 'ಏರ್‌ಪೇ ಅಕಾಡೆಮಿ UX — ಪೂರ್ಣ ಡಿಸೈನ್ ಸಿಸ್ಟಮ್, ಬಹು-ಹಂಚಿಕೆದಾರ ಬೆಂಬಲ, ಮೊಬೈಲ್ ಅನುಭವ.';
+$string['choosereadme'] = 'Sentientia UX — ಪೂರ್ಣ ಡಿಸೈನ್ ಸಿಸ್ಟಮ್, ಬಹು-ಹಂಚಿಕೆದಾರ ಬೆಂಬಲ, ಮೊಬೈಲ್ ಅನುಭವ.';
 $string['currentinparentheses'] = '(ಪ್ರಸ್ತುತ)';
 $string['configtitle'] = 'Sentientia Academy UX';
 $string['fontsize'] = 'ಫಾಂಟ್ ಗಾತ್ರ';
@@ -26,12 +28,12 @@ $string['loginbackgroundimage'] = 'ಲಾಗಿನ್ ಪುಟ ಹಿನ್ನ�
 $string['loginbackgroundimage_desc'] = 'ಲಾಗಿನ್ ಪುಟಕ್ಕೆ ಹಿನ್ನೆಲೆ ಚಿತ್ರ.';
 $string['nobootswatch'] = 'ಯಾವುದೂ ಇಲ್ಲ';
 $string['customsettings'] = 'ಕಸ್ಟಮ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳು';
-$string['pluginname'] = 'Airpay Academy UX (Sentientia)';
+$string['pluginname'] = 'Sentientia UX';
 $string['presetfiles'] = 'ಹೆಚ್ಚುವರಿ ಥೀಮ್ ಪ್ರೀಸೆಟ್ ಫೈಲ್‌ಗಳು';
 $string['presetfiles_desc'] = 'ಥೀಮ್ ನೋಟ ಬದಲಾಯಿಸಲು ಪ್ರೀಸೆಟ್ ಫೈಲ್‌ಗಳನ್ನು ಬಳಸಬಹುದು.';
 $string['preset'] = 'ಥೀಮ್ ಪ್ರೀಸೆಟ್';
 $string['preset_desc'] = 'ಥೀಮ್ ನೋಟ ಬದಲಾಯಿಸಲು ಪ್ರೀಸೆಟ್ ಆಯ್ಕೆ ಮಾಡಿ.';
-$string['privacy:metadata'] = 'Airpay Academy UX (Sentientia) ಥೀಮ್ ಯಾವುದೇ ಬಳಕೆದಾರರ ವೈಯಕ್ತಿಕ ಡೇಟಾವನ್ನು ಸಂಗ್ರಹಿಸುವುದಿಲ್ಲ.';
+$string['privacy:metadata'] = 'Sentientia UX ಥೀಮ್ ಯಾವುದೇ ಬಳಕೆದಾರರ ವೈಯಕ್ತಿಕ ಡೇಟಾವನ್ನು ಸಂಗ್ರಹಿಸುವುದಿಲ್ಲ.';
 $string['rawscss'] = 'ರಾ SCSS';
 $string['rawscss_desc'] = 'ಸ್ಟೈಲ್‌ಶೀಟ್ ಕೊನೆಯಲ್ಲಿ ಇಂಜೆಕ್ಟ್ ಆಗುವ SCSS ಅಥವಾ CSS ಕೋಡ್.';
 $string['rawscsspre'] = 'ಆರಂಭಿಕ ರಾ SCSS';
@@ -191,7 +193,6 @@ $string['footer_terms']     = 'ನಿಯಮಗಳು';
 $string['footer_help']      = 'ಸಹಾಯ';
 $string['footer_contact']   = 'ಸಂಪರ್ಕಿಸಿ';
 $string['footer_copyright'] = '&copy; 2026 ಏರ್‌ಪೇ ಪೇಮೆಂಟ್ ಸರ್ವಿಸಸ್ ಪ್ರೈ. ಲಿ.';
-$string['footer_logo_alt'] = 'ಏರ್‌ಪೇ ಅಕಾಡೆಮಿ';
 
 // F-13 (Platform Visual Audit 2026-05-24, chip-G) — ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ಸ್ವಾಗತ ಬ್ಯಾನರ್,
 // ಚಾರ್ಟ್ ಶೀರ್ಷಿಕೆಗಳು ಮತ್ತು ಕಂಪ್ಲಯನ್ಸ್ KPI ಲೇಬಲ್‌ಗಳು. {$a} = ಬಳಕೆದಾರನ ಮೊದಲ ಹೆಸರು.

@@ -122,8 +122,8 @@ $string['reminder_body_plain']   = 'नमस्ते,
 
 इसे यहाँ से उठाएँ: {$a->course_url}
 
-— एयरपे एकेडमी';
-$string['reminder_body_html']    = '<p>नमस्ते,</p><p>यह एक रिमाइंडर है कि आपका कोर्स <strong>{$a->fullname}</strong> को <strong>{$a->deadline}</strong> तक पूरा किया जाना है (अब से {$a->days_remaining} दिन)।</p><p><a href="{$a->course_url}">कोर्स जारी रखें</a></p><p style="color:#777;">— एयरपे एकेडमी</p>';
+— {$a->sitename}';
+$string['reminder_body_html']    = '<p>नमस्ते,</p><p>यह एक रिमाइंडर है कि आपका कोर्स <strong>{$a->fullname}</strong> को <strong>{$a->deadline}</strong> तक पूरा किया जाना है (अब से {$a->days_remaining} दिन)।</p><p><a href="{$a->course_url}">कोर्स जारी रखें</a></p><p style="color:#777;">— {$a->sitename}</p>';
 
 // P1 #29 — overdue manager-escalation cron.
 $string['task_course_overdue']                       = 'कोर्स अतिदेय — प्रबंधक एस्केलेशन';
@@ -157,5 +157,5 @@ $string['overdue_body_plain']   = 'नमस्ते,
 
 कृपया उनसे फॉलो-अप करें ताकि वे जल्द से जल्द कोर्स पूरा कर सकें।
 
-— एयरपे एकेडमी';
-$string['overdue_body_html']    = '<p>नमस्ते,</p><p>आपके टीम सदस्य <strong>{$a->learner_name}</strong> ने कोर्स <strong>{$a->course_name}</strong> की समय-सीमा चूक दी है।</p><p>समय-सीमा: <strong>{$a->deadline}</strong> ({$a->days_past} दिन पहले)।</p><ul><li><a href="{$a->course_url}">कोर्स देखें</a></li><li><a href="{$a->learner_profile_url}">सीखने वाले की प्रोफ़ाइल देखें</a></li></ul><p>कृपया उनसे फॉलो-अप करें ताकि वे जल्द से जल्द कोर्स पूरा कर सकें।</p><p style="color:#777;">— एयरपे एकेडमी</p>';
+— {$a->sitename}';
+$string['overdue_body_html']    = '<p>नमस्ते,</p><p>आपके टीम सदस्य <strong>{$a->learner_name}</strong> ने कोर्स <strong>{$a->course_name}</strong> की समय-सीमा चूक दी है।</p><p>समय-सीमा: <strong>{$a->deadline}</strong> ({$a->days_past} दिन पहले)।</p><ul><li><a href="{$a->course_url}">कोर्स देखें</a></li><li><a href="{$a->learner_profile_url}">सीखने वाले की प्रोफ़ाइल देखें</a></li></ul><p>कृपया उनसे फॉलो-अप करें ताकि वे जल्द से जल्द कोर्स पूरा कर सकें।</p><p style="color:#777;">— {$a->sitename}</p>';

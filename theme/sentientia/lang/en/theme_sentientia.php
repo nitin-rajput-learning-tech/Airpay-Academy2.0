@@ -57,7 +57,7 @@ $string['hovercolor_desc'] = 'Pick your site hover colour';
 
 $string['bootswatch'] = 'Bootswatch';
 $string['bootswatch_desc'] = 'A bootswatch is a set of Bootstrap variables and css to style Bootstrap';
-$string['choosereadme'] = 'airpay academy UX — Airpay-owned theme with full design system, multi-tenant branding, and responsive mobile experience.';
+$string['choosereadme'] = 'Sentientia UX — standalone theme with full design system, per-customer branding, and responsive mobile experience.';
 $string['currentinparentheses'] = '(current)';
 $string['configtitle'] = 'Sentientia Academy UX';
 $string['fontsize'] = 'Theme base fontsize';
@@ -67,12 +67,12 @@ $string['loginbackgroundimage'] = 'Login page background image';
 $string['loginbackgroundimage_desc'] = 'The image to display as a background for the login page.';
 $string['nobootswatch'] = 'None';
 $string['customsettings'] = 'Custom settings';
-$string['pluginname'] = 'Airpay Academy UX (Sentientia)';
+$string['pluginname'] = 'Sentientia UX';
 $string['presetfiles'] = 'Additional theme preset files';
 $string['presetfiles_desc'] = 'Preset files can be used to dramatically alter the appearance of the theme. See <a href="#">Sentientia presets</a> for information on creating and sharing your own preset files, and see the <a href="#">Presets repository</a> for presets that others have shared.';
 $string['preset'] = 'Theme preset';
 $string['preset_desc'] = 'Pick a preset to broadly change the look of the theme.';
-$string['privacy:metadata'] = 'The Airpay Academy UX (Sentientia) theme does not store any personal data about any user.';
+$string['privacy:metadata'] = 'The Sentientia UX theme does not store any personal data about any user.';
 $string['rawscss'] = 'Raw SCSS';
 $string['rawscss_desc'] = 'Use this field to provide SCSS or CSS code which will be injected at the end of the style sheet.';
 $string['rawscsspre'] = 'Raw initial SCSS';
@@ -257,8 +257,6 @@ $string['footer_terms']     = 'Terms';
 $string['footer_help']      = 'Help';
 $string['footer_contact']   = 'Contact';
 $string['footer_copyright'] = '&copy; 2026 airpay payment services pvt. ltd.';
-// B8/F-070 stabilization fix (2026-05-28) — i18n the brand-logo alt text.
-$string['footer_logo_alt']  = 'airpay academy';
 // B10/F-065 stabilization fix (2026-05-28) — i18n the 6 hardcoded English
 // secondary labels the F-13 sweep missed on dashboard.mustache.
 $string['dash_dark_mode_label']        = 'Dark Mode';

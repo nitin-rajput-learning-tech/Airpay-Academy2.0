@@ -100,7 +100,28 @@ progress bar / module-tree sidebar is now visible in dev-debug, inert in product
 > reworded; en+hi; `d4abf7c74`). **Runtime-verified**: signup page renders the site name, 0 `{$a}`/`[[a]]` leak.
 > ✅ **Gate-2 visual** — `tests/playwright/visual.spec.ts` scaffolded (gated `PLAYWRIGHT_VISUAL`; `3abce5ea1`).
 > **Only remaining (CI-coordinated, can't trigger from here):** seed the Gate-2 visual baselines (`--update-snapshots`
-> on CI + commit PNGs + flip `PLAYWRIGHT_VISUAL=1`) and, if wanted, the sw/mr/kn whatsapp transliterations (low-traffic).
+> on CI + commit PNGs + flip `PLAYWRIGHT_VISUAL=1`).
+
+### ✅ "Till 100%" de-brand sweep COMPLETE (2026-06-10, batches 1–4)
+
+The continued `/loop … till 100%` directive is **done** — the rendered customer-name de-brand is complete and
+the residual is fully classified in the new authoritative ledger:
+**`docs/WHITELABEL-DEBRAND-LEDGER.md`** (defines "100%" = zero rendered, customer-facing, non-config-driven
+customer-name strings — NOT literal-zero, which would delete the white-label *defaults* themselves).
+
+- **Batch 1** (`85ef29aea`): 6 rendered templates → `{{#str}}customername{{/str}}`.
+- **Batch 2** (`e05347aa8`): 4 reminder/overdue cron email signatures → `{$a->sitename}` (en) + integrations desc.
+- **Batch 3** (`c784fb59e`): welcome_mailer DEFAULT_BODY, ics_builder ORGANIZER;CN→site name / PRODID→"Sentientia
+  LMS", whatsapp sw/mr/kn `{$a}` parity (all 5 locales), onboarding redirect+title, rule_engine re-engagement subject.
+- **Batch 4** (this commit): theme product labels ×5 locales (`pluginname` → **"Sentientia UX"**, privacy:metadata,
+  choosereadme — caught a lowercase "airpay academy" via case-INSENSITIVE sweep); `customername` added to kn/mr/sw
+  (5-locale parity); `footer.mustache` logo alt → `customername` + 5 orphaned `footer_logo_alt` keys removed;
+  **hi email signatures ×8** (courses+exams reminder/overdue plain+html "— एयरपे एकेडमी" → `{$a->sitename}`).
+- **Verified at zero**: hi-signature grep, footer_logo_alt refs, transliteration sweep, whatsapp-lang Latin grep.
+  77 literal occurrences remain — every one classified KEEP (copyright / white-label defaults / comments / test
+  fixtures / DLT seed / build artifacts) or DEFER (D1 dpdp legal page, D3 support-email token, D4 AI-prompt
+  tokenization, D6 email-preview fixtures, D7 frontpage marketing copy, D8 logo *asset* via branding_manager).
+  Re-audit one-liner in the ledger. All batches deployed to local XAMPP + purged; **nothing deployed to live**.
 
 ---
 
