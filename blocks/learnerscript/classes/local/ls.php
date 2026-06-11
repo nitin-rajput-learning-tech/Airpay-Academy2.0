@@ -1406,6 +1406,14 @@ class ls {
 		$task = \core\task\manager::get_scheduled_task($taskname);
 		$crontime = $task->get_last_run_time();
 
+    	// SENTIENTIA WF-009 guard: {scorm_scoes_track} was removed in Moodle 4.3
+    	// (split into {scorm_attempt} + {scorm_element_value}). On 4.3+ schemas
+    	// this vendor task crashed every cron run. Porting the query is vendor
+    	// feature surgery; until then, no-op cleanly on modern schemas.
+    	if (!$DB->get_manager()->table_exists('scorm_scoes_track')) {
+    		mtrace('learnerscript userscormtimespent: {scorm_scoes_track} absent on Moodle 4.3+ — skipping (WF-009)');
+    		return true;
+    	}
     	$moduleid = $DB->get_field('modules', 'id', array('name' => 'scorm'));
     	$scormdetails = $DB->get_records_sql("SELECT st.id, st.userid, st.scormid, TIME_TO_SEC(st.value) AS time FROM {scorm_scoes_track} st JOIN {scorm_scoes_track} st1 ON st1.userid = st.userid AND st1.scormid = st.scormid AND st1.scoid = st.scoid AND st1.attempt = st.attempt WHERE st1.element LIKE 'cmi.core.lesson_status' AND st1.value IN ('passed','completed', 'failed') AND st.element LIKE 'cmi.core.total_time' AND st1.timemodified > $crontime AND st1.userid > 2");
 	    if (empty($scormdetails)) {
@@ -1494,7 +1502,11 @@ class ls {
         	$insertdata->departmentid = isset($companyinfo->departmentid) ? $companyinfo->departmentid : 0;
 	        $insertdata->instanceid = $quizdetail->quiz;
 	        $insertdata->timespent = $quizdetail->time;
-	        $insertdata->contextinstanceid = $coursemoduleid;
+	        // SENTIENTIA WF-007b: {block_ls_modtimestats}.activityid is NOT NULL
+	        // with no default; this path set contextinstanceid (not a column —
+	        // silently stripped) so the lookup below compared NULL and the
+	        // insert crashed. The scorm path sets activityid — align with it.
+	        $insertdata->activityid = $coursemoduleid;
 	        $insertdata->timecreated = time();
 	        $insertdata->timemodified = 0;
 	        $insertdata1 = new stdClass();
@@ -1523,7 +1535,7 @@ class ls {
 	        $records = $DB->get_records('block_ls_modtimestats',
 	                    array('courseid' => $insertdata->courseid,
 	                        // 'contextinstanceid' => $insertdata->contextinstanceid,
-	                        'activityid' => $insertdata->contextinstanceid,
+	                        'activityid' => $insertdata->activityid,
 	                        'instanceid' => $insertdata->instanceid,
 	                        'userid' => $insertdata->userid));
 		    if ($insertdata->instanceid != 0) {

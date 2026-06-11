@@ -5,6 +5,35 @@
 
 ---
 
+## 🌙 OVERNIGHT LOOP 2026-06-11 (Nitin offline) — cron gauntlet: 4 more crashers fixed; D-prod business pack; probes
+
+**Morning TLDR for Nitin — read `git log c53ccf8fe..` for the commit-by-commit story:**
+
+1. **D-prod #399 business pack shipped** (`fe4fe1087`): `docs/business/PRICING-PACKAGING-DRAFT.md`
+   (3 tiers mapped to built pillars, every ₹ a PLACEHOLDER), `TRADEMARK-CHECKLIST.md` (classes
+   9/41/42, knock-out search steps, Moodle® nominative-use note, ADR-001 entity question),
+   `SUPPORT-SLA-MODEL.md` (P1–P4, anchors, escalation) — all decision-ready DRAFTs awaiting your calls.
+2. **THE CRON GAUNTLET** (`cf6bccaa8` + follow-up): ran the FIRST-EVER full cron passes on the
+   production-scale 5.2 clone. Found and FIXED 4 more silent crashers the matrix campaign existed to
+   catch — **WF-006** (learnerscript legacy-migration crash — failing on live today),
+   **WF-007/007b** (learnerscript quiz-timespent: `open_costcenterid` schema mismatch + wrong
+   property vs NOT-NULL `activityid`), **WF-008** (our compliance snapshot drowned by **15 stale
+   pre-rename capability strings in `{message_providers}`** — repair CLI gained §2c/§2d, applied
+   both DBs; a live backup carries the same 15 → runbook auto-covers), **WF-009** (learnerscript
+   scorm-timespent queries a table Moodle 4.3 deleted). End state: **cron 103 executed / 0 failed /
+   0 warnings**; local MariaDB `max_allowed_packet` 1M→64M (+ runbook env gate ≥64M).
+3. **Matrix batch 6** — L7 ✅ (11,415 cert issues; latest PDF stored 625KB; report CLI clean),
+   S9 ✅ (cron_health green), T1/M1/M4 ✅ (HTTP probes as qa_trainer/qa_manager: authenticated
+   dashboards with team/KPI markers, Live trainer dashboard, compliance + manager reports — no
+   access-denied). 8081 dev server restarted (old one died).
+4. Earlier overnight: **#402 sandbox kit COMPLETE** (parity CLI + runbook, locally rehearsed,
+   single-row drift sensitivity proven) and **white-label defers D3/D4/D6 closed** (`9f292bc99`).
+
+**Nothing touched live. Decisions waiting on you:** business-pack blanks; Apache vhost for :8081
+(one config block) to unlock the full 5-persona Playwright pass; ADR-017 next phase scope.
+
+---
+
 ## 🔄 FOOLPROOF campaign + SW-1..4 switches EXECUTED (2026-06-10 evening→overnight, Opus 4.8 loop)
 
 **Nitin's rollout gate (standing):** live airpay.academy deploys ONLY on his explicit go — path is

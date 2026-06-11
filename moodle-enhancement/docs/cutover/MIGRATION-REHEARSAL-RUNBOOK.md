@@ -12,7 +12,8 @@ ninja sandbox when Nitin provides server access + a fresh live backup. **Nothing
 
 1. Ninja sandbox server (SSH/RDP), PHP **≥ 8.3** (CLI + web SAPI) with extensions
    mysqli/intl/mbstring/curl/zip/gd/soap/openssl/sodium/exif/fileinfo, `max_input_vars ≥ 5000`,
-   MySQL 8 / MariaDB ≥ 10.6, web server.
+   MySQL 8 / MariaDB ≥ 10.6 with **`max_allowed_packet ≥ 64M`** (2026-06-11 cron gauntlet: 1M
+   drops the connection mid-cron — "MySQL server has gone away"), web server.
 2. Fresh LIVE backup: full DB dump + `moodledata` archive (+ the live `config.php` for reference).
 3. The `production` branch checkout (or release archive) — carries the entire product layer.
 
@@ -34,8 +35,11 @@ ninja sandbox when Nitin provides server access + a fresh live backup. **Nothing
    5.2 jump confirm the PHP pre-checks first).
 4. **Post-restore repairs (MANDATORY, in order — all idempotent, dry-run first):**
    a. `php local/sentientia_platform/cli/repair_task_registrations.php --apply`
-      (re-registers renamed plugins' crons, purges orphan task rows, fixes stale brand-row URL paths
-      — WF-004/WF-005; verified counts: sentientia=23 / stale=0; brand resolver 20/20).
+      (re-registers renamed plugins' crons, purges orphan task rows, fixes stale brand-row URL paths,
+      purges orphan message_providers rows AND rewrites stale pre-rename capability strings on
+      provider rows — WF-004/WF-005/WF-008a; verified counts: sentientia=23 / stale=0; brand
+      resolver 20/20; 15 capability strings rewritten on both local instances — a live backup
+      carries the same 15).
    b. `php local/sentientia_core/cli/seed_tenants.php` then
       `php local/sentientia_core/cli/parity_check_tenants.php` (expect **100% PARITY**; registry
       stays DORMANT).

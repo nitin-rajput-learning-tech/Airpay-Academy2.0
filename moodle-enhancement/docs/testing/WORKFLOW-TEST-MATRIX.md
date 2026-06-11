@@ -25,7 +25,7 @@ qa_public` (pw in `tools/_qa_provision.php`, local-only).
 | L4 | Open course → app-shell course player → activity completion records | PW learner.spec; HTTP + CLI completion mark | ⏳ |
 | L5 | Deadline reminder (7/3/1) lands as notification | CLI: seed deadline + run course_reminder task; assert _remind_sent + message | ⏳ |
 | L6 | Exam attempt → grade; exam reminder cron | CLI: exam_reminder task (same harness as L5) | ⏳ |
-| L7 | Certificate issued on completion → file exists | CLI cert smoke (tool_certificate) + cert_emails_report | ⏳ |
+| L7 | Certificate issued on completion → file exists | CLI cert smoke (tool_certificate) + cert_emails_report | ✅ (b6: 11,415 issues / 9 templates on the clone; latest issue 11551 has its PDF stored — 3205758150AU.pdf, 625KB; cert_emails_report CLI runs clean) |
 | L8 | Gamification points/badges/streak + leaderboard row (opt-out respected) | CLI seed_badges + leaderboard e2e (Wave C5) | ⏳ |
 | L9 | Communication prefs page: WhatsApp/SMS consent (DLT) saves + audits | CLI run_whatsapp_e2e (dry); HTTP prefs page | ⏳ |
 | L10 | PWA: manifest + install CTA + push subscribe + real push received | CLI run_push_e2e + verify_d1_endpoints + test_crypto | ⏳ |
@@ -48,17 +48,17 @@ qa_public` (pw in `tools/_qa_provision.php`, local-only).
 
 | # | Workflow | Coverage | 5.2 status |
 |---|---|---|---|
-| M1 | Manager dashboard (team widgets, team KPI = table source) | PW manager.spec; HTTP | ⏳ |
+| M1 | Manager dashboard (team widgets, team KPI = table source) | PW manager.spec; HTTP | ✅ (b6: qa_manager HTTP login → /my/dashboard.php 200, 70KB authenticated render, team/KPI markers present) |
 | M2 | Team overdue view | PW manager.spec | ⏳ |
 | M3 | Overdue escalation to supervisor (1/7/14 post-deadline, negative buckets) | CLI course_overdue + exam_overdue tasks with seeded data | ⏳ |
-| M4 | Completion analytics / reports render | HTTP; PW manager.spec | ⏳ |
+| M4 | Completion analytics / reports render | HTTP; PW manager.spec | ✅ (b6: qa_manager → compliance_report/index.php 200/86KB + sentientia_manager/index.php 200/50KB, no access-denied) |
 | M5 | Tenant-scoped supervisor autocomplete | PHPUnit (tenant isolation tests) | ⏳ |
 
 ## P4 — Trainer
 
 | # | Workflow | Coverage | 5.2 status |
 |---|---|---|---|
-| T1 | Trainer dashboard reachable (teacher archetype caps) | HTTP as qa_trainer | ⏳ |
+| T1 | Trainer dashboard reachable (teacher archetype caps) | HTTP as qa_trainer | ✅ (b6: qa_trainer login → /my/dashboard.php 200/66KB authenticated; /local/sentientia_live/index.php 200/43KB with session UI, not a login redirect) |
 | T2 | Live full cycle: create → 6 slide types → run → SSE results → CSV export | CLI live_smoke + session PHPUnit; MAN projector two-browser | ⏳ |
 | T3 | Classroom session + ICS invite | CLI smoke + ics PHPUnit | ⏳ |
 
@@ -97,7 +97,7 @@ qa_public` (pw in `tools/_qa_provision.php`, local-only).
 | S6 | Branding: customer_brand resolver + per-customer manifest | PHPUnit customer_brand_test + verify_brand_resolver CLI | ⏳ |
 | S7 | Push ops: VAPID keys, delivery log, master-key encrypt | CLI test_push + verify_signed_with_encrypted_pem | ⏳ |
 | S8 | Role switcher (admin↔learner round-trip) | HTTP; MAN visual (done on 5.1) | ⏳ |
-| S9 | Cert-health + cron-health blocks report green | CLI cron_health + cert_emails_report | ⏳ |
+| S9 | Cert-health + cron-health blocks report green | CLI cron_health + cert_emails_report | ✅ (b6: after WF-006..009 fixes, full cron pass = **103 executed / 0 failed / 0 capability warnings**; cron_health: 0 sentientia stuck; residual vendor faildelay cleared; cert_emails_report runs clean) |
 
 ## P8 — Guest
 
@@ -141,6 +141,17 @@ observer ALL OK) · **S6 ◑** brand resolver 18/20 — the 2 fails are `icon_19
 path checks on the 5.2 instance (PWA icon asset paths; logged as WF-005, open).
 
 
+**Batch 6 verdicts (2026-06-11 overnight, 5.2):** **CRON GAUNTLET** — first-ever FULL cron passes on the
+production-scale clone. Run 1 (19 tasks) crashed 3 ways → WF-006/007/008 found + fixed → run 2: 84
+executed / 1 failed (→ WF-009 found + fixed) → run 3: **103 executed / 0 failed / 0 stale-capability
+warnings**. `timepsent` one-time-migration flag now set; 2 vendor tasks' residual faildelay cleared after
+direct re-validation. **S9 ✅** cron_health: 0 sentientia stuck · **L7 ✅** 11,415 cert issues, latest PDF
+stored (625KB), cert report CLI clean · **T1/M1/M4 ✅** HTTP probes as qa_trainer/qa_manager (authenticated
+dashboards 66-70KB w/ team+KPI markers; Live trainer dashboard 200/43KB; compliance report 200/86KB +
+manager page 200/50KB, no access-denied). Local env hardened: MariaDB `max_allowed_packet` 1M→64M
+(live + my.ini). Note: learnerscript timespent aggregation is non-idempotent by vendor design (+= on
+re-run after partial failure) — affects only LS report stats on this clone, not parity metrics.
+
 **Sandbox kit (#402) shipped + locally rehearsed:** `migration_parity_check.php` (--baseline/--compare)
 proven at single-row sensitivity (5.1-source baseline vs migrated 5.2 clone: all metrics MATCH except 4,
 each attributable to this campaign's own test writes); `MIGRATION-REHEARSAL-RUNBOOK.md` = turnkey Phase-2
@@ -155,6 +166,11 @@ procedure with mandatory post-restore repairs.
 | WF-005 | S6/L10 | customer_brand DB row stored PRE-RENAME icon/start URLs (`/local/airpay_core/...`) — the rename codemod fixed code, not data; PWA manifest icons would 404 | ✅ FIXED — repair CLI extended with a brand-path section (rewrites to `/local/sentientia_platform/`, purges brand cache); applied BOTH DBs; verify_brand_resolver now **20/20** on 5.2 |
 | WF-003 | (CLI hygiene) | `blocks/learnerscript/classes/observer.php:153,163` assumed web context — "Undefined array key REQUEST_URI" + deprecated `parse_url(null)` on every CLI firing enrolment events (PHP 8.4) | ✅ FIXED — defensive `?? ''` on both sites (git-tracked vendor block); deployed both instances; warnings now 0 |
 | WF-004 | L5/L6/M3 + every renamed plugin's cron | **{task_scheduled} still held pre-rename `\local_airpay_*` classnames** (17 orphans; only 6 sentientia rows vs 19 plugins shipping db/tasks.php) — those crons were **silently dead on BOTH instances since ADR-025** (reminders, escalations, digests, leaderboard recompute, recompletion rules, proctoring purge, cohort sync…). Root cause: the rename handover re-pointed capabilities + WS but not tasks, and Moodle only reconciles tasks on version change. | ✅ FIXED — NEW `local/sentientia_platform/cli/repair_task_registrations.php` (dry-run default, `--apply`; reconciles 19 components + purges class-gone orphans + reports other component residue). Applied on 5.2 AND 5.1: both now sentientia=23 / stale=0. **Added to the deploy packet — must run on sandbox + live post-deploy.** |
+
+| WF-006 | S9 (vendor cron) | `block_learnerscript` `coursetimepsent` — one-time legacy migration queries `{block_ls_timestats}` (exists only on pre-2019 LS installs); crashed EVERY cron run forever, done-flag unreachable. Failing on live production today (faildelay loop). | ✅ FIXED — table_exists guard → set done-flag + return; validated direct + via full cron; both trees |
+| WF-007 | S9 (vendor cron) | `userquiztimespent` — (a) per-row lookup queries `u.open_costcenterid` (doesn't exist on production schema; open_path is the convention) → task crashed; (b) **WF-007b**: quiz path set `contextinstanceid` (not a column — silently stripped) while `{block_ls_modtimestats}.activityid` is NOT NULL no-default → insert crashed once (a) was fixed; lookup compared NULL. SCORM path was correct — vendor inconsistency. | ✅ FIXED — field_exists guard (companyid/deptid fall back 0) + activityid property aligned with the scorm path; both trees |
+| WF-008 | S9 + every message-sending flow | `refresh_snapshot` cold-run blow-up (539MB, MySQL gone away): (a) **15 `{message_providers}` rows carried stale pre-rename capability strings** (`local/airpay_*`) — every `message_send()` fired a debugging backtrace per stale row; (b) `deadline_date` PHP 8 undefined-property warning per escalation; (c) local `max_allowed_packet` was 1M. **A live-backup migration inherits (a) identically.** | ✅ FIXED — repair CLI §2c (purge orphan-component provider rows) + §2d (rewrite stale capability → renamed target when it exists) applied BOTH DBs; engine property guarded; packet 64M + runbook env gate. Follow-up (recorded): queue/chunk the inline per-overdue message_send for scale |
+| WF-009 | S9 (vendor cron) | `userscormtimespent` queries `{scorm_scoes_track}` — table REMOVED in Moodle 4.3 (split into scorm_attempt/scorm_element_value). Crashed every cron on 4.3+ schemas incl. live. LS SCORM-time reports can't update on modern schemas until the vendor query is ported. | ✅ FIXED (guard) — table_exists → mtrace skip + return true; vendor port = recorded follow-up |
 
 **Batch 3 verdicts (5.2, seeded):** **L3 ✅** enrol_now (free-only check, enrols, idempotent — args are
 `(courseid, userid)`); **L5 ✅** reminder cron fired bucket +1 → remind_sent row + employee notification;
