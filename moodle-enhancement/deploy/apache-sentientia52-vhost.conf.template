@@ -15,18 +15,35 @@
 #   LoadModule proxy_fcgi_module modules/mod_proxy_fcgi.so
 #   Listen 8081
 #
-# --- config.php companion fix (WF-015) ---------------------------------------
+# --- config.php companion fix (WF-015, part 1 of 2) ---------------------------
 #   Moodle 5.2's minimal-bootstrap asset scripts (javascript.php /
 #   yui_combo.php / styles.php) fatal-500 at shutdown under php-cgi:
 #   core\shutdown_manager calls ini_get_bool(), defined only in
 #   lib/setuplib.php which ABORT_AFTER_CONFIG bootstraps never load.
 #   Add to the instance config.php BEFORE the lib/setup.php require:
-#     if (!function_exists('ini_get_bool')) {
+#     // CONDITIONAL on ABORT_AFTER_CONFIG: core setuplib declares the fn
+#     // UNGUARDED, so an unconditional polyfill fatals every full bootstrap
+#     // with a redeclare error. Minimal scripts define ABORT_AFTER_CONFIG
+#     // before requiring config.php; full pages never do.
+#     if (defined('ABORT_AFTER_CONFIG') && !function_exists('ini_get_bool')) {
 #         function ini_get_bool($ini_get_arg) {
 #             $temp = ini_get($ini_get_arg);
 #             return ($temp == '1' or strtolower($temp) == 'on');
 #         }
 #     }
+#
+# --- core-mod companion fix (WF-015, part 2 of 2 — REQUIRED) ------------------
+#   r.php (5.2 ESM loader) and theme/font.php define ABORT_AFTER_CONFIG (so
+#   the polyfill above fires) but on cache miss they CANCEL the abort
+#   (ABORT_AFTER_CONFIG_CANCEL) and re-enter full setup → lib/setuplib.php's
+#   unguarded ini_get_bool() declaration collides with the polyfill →
+#   "Cannot redeclare" fatal → fonts + React autoinit 500 on every page.
+#   Fix: wrap the declaration in lib/setuplib.php (~line 530) in
+#   `if (!function_exists('ini_get_bool')) { ... }` tagged SENTIENTIA-CORE-MOD.
+#   Full record + before/after:
+#   moodle-enhancement/docs/core-mods/2026-06-11-setuplib-ini-get-bool-guard.md
+#   BOTH parts are required: polyfill alone breaks r.php/font.php; guard
+#   alone leaves javascript.php/styles.php fataling at shutdown.
 #
 # --- PHP backend (start before Apache; keep running) -------------------------
 #   Set PHP_FCGI_MAX_REQUESTS=0 in the process env (php-cgi exits after 500

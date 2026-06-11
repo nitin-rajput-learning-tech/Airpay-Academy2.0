@@ -21,12 +21,15 @@ const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:8000';
 const navTimeout = process.env.PLAYWRIGHT_NAV_TIMEOUT
     ? Number(process.env.PLAYWRIGHT_NAV_TIMEOUT)
     : 30_000;
+const actionTimeout = process.env.PLAYWRIGHT_ACTION_TIMEOUT
+    ? Number(process.env.PLAYWRIGHT_ACTION_TIMEOUT)
+    : 10_000;
 
 export default defineConfig({
     testDir: '.',
     testMatch: '*.spec.ts',
     timeout: 60_000,
-    expect: { timeout: 10_000 },
+    expect: { timeout: actionTimeout },
     fullyParallel: false,
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 2 : 0,
@@ -42,7 +45,7 @@ export default defineConfig({
         video: 'retain-on-failure',
         ignoreHTTPSErrors: true,
         navigationTimeout: navTimeout,
-        actionTimeout: 10_000,
+        actionTimeout: actionTimeout,
     },
     projects: [
         {

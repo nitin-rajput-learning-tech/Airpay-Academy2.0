@@ -125,7 +125,7 @@ test.describe('render-smoke · ADMIN', () => {
     const pass = process.env.PLAYWRIGHT_ADMIN_PASS ?? '';
     test.skip(!(user && pass), 'ADMIN creds not set (PLAYWRIGHT_ADMIN_USER/_PASS)');
     test('ADMIN: curated surfaces render clean', async ({ page }) => {
-        test.setTimeout(120_000); // multi-surface walk + cold-cache first loads
+        test.setTimeout(240_000); // multi-surface walk + cold-cache first loads; admin pages are the slowest on the single-process local FCGI backend (CI Linux is much faster)
         await login(page, { user, pass, present: true });
         await assertAuthenticated(page);
         await smokeSurfaces(page, 'ADMIN');

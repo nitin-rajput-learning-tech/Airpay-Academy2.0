@@ -48,6 +48,57 @@ as drafts); ADR-017 next phase scope; ninja sandbox + fresh live backup (Phase 2
 
 ---
 
+## 🔬 FINISH-PENDING SWEEP 2026-06-11 (post-"all approved") — browser tier peels 3 layered fatals; PHPUnit rows green; ADR-017 fresh-install parity
+
+The real-browser tier against the Apache/FCGI vhost did exactly what it exists for — each fix
+exposed the next masked layer on the SAME surface (learner course-view): 500-asset → PHP fatal →
+JS fatal. **WF-015/016/017 all fixed + verified; matrix updated; chromium full-pass pending v7.**
+
+1. **WF-015 CLOSED (two parts, BOTH required) — Moodle 5.2 core bug under php-cgi, upstream-report
+   candidate.** Part 1 (known): conditional `ABORT_AFTER_CONFIG` polyfill in instance config.php for
+   shutdown's `ini_get_bool()`. Part 2 (NEW): `r.php` (ESM loader) + `theme/font.php` CANCEL the
+   abort and re-enter full setup → core's unguarded declaration collides → redeclare fatal → fonts +
+   React autoinit 500 on every page. Fix: `function_exists` guard in `lib/setuplib.php` tagged
+   SENTIENTIA-CORE-MOD; full record `docs/core-mods/2026-06-11-setuplib-ini-get-bool-guard.md`;
+   vhost template carries both recipes. All 4 URL classes verified 200.
+2. **WF-016 CLOSED — `local_costcenter` residue, cutover-relevant.** Kept vendor blocks
+   (learnerscript/userdashboard/reportdashboard/achievements/my_event_calendar/masterinfo/
+   quick_navigation) reference the retired BizLMS plugin at 50+ sites; first render-blocking hit:
+   learner course-view 500 via `block_learnerscript_leftmenunode()`. Fix: anti-corruption alias shim
+   in `local_sentientia_org` **1.5.0** — `after_config` hook class_aliases the old namespace onto
+   `local_sentientia_org\accesslib` (the designed namespace-change-only fork) + new
+   `compat\bizlms_lib` (`get_userdate` port from the BizLMS source backup). Zero vendor-file edits;
+   verified both instances (CLI + learner course-view 200). Follow-up recorded:
+   `local_costcenter_get_costcenter_path()` (2 LS AJAX filter sites) needs retired session machinery.
+3. **WF-017 CLOSED — theme drawer modules called removed `M.util.set_user_preference`** (JS
+   TypeError on course-view once WF-016 stopped masking it; LEARNER + ADMIN both hit it). Fix:
+   `drawers.js`/`drawer.js` src migrated to `core_user/repository` `setUserPreference` (upstream
+   Boost's own migration) + min bundles patched via the documented re-sed practice (grunt's eslint
+   gate chokes on tree-wide CRLF); node --check clean; deployed both trees.
+4. **PHPUnit matrix rows GREEN:** **M5 ✅ 7/7** (suite self-provisions the BizLMS user columns it
+   protects via `setUpBeforeClass` DDL; real WS capability is `local/sentientia_users:view`, granted
+   pre-`setUser` — WF-012 verdict corrected) · **O4 ✅ 9/9** (WF-013 canonicalisation). **WF-014 +
+   WF-015 + WF-016 rows added to the matrix** (they'd never landed).
+5. **ADR-017 next phase EXECUTED (fit the ≤1-plugin-additive mandate): fresh-install parity.** The 5
+   ADR-017 tables (user_type + 4 profiles) were upgrade-path-only — clean installs (ninja sandbox
+   option-B, customer-N, PHPUnit) lacked them and `user_type_factory` would throw. Mirrored into
+   `local_sentientia_platform/db/install.xml`; **verified by a clean PHPUnit init creating all 5**.
+   ADR-017 acceptance list refreshed to reality: only Phase 3 (profile page consumes provider, C1.3)
+   remains — deferred with note (M effort). Clone classification confirmed: 2,880 rows
+   (682 consumer / 2,196 employee / 2 operator).
+6. **D-prod #399:** `docs/business/DEMO-TENANT-PLAN.md` shipped (DRAFT, doc-only) — Option-A
+   demo-tenant-on-product-instance recommendation (the demo IS the multi-tenancy proof), bill of
+   materials (registry row + brand row + flags + synthetic `@demo.invalid` users + seeds + reset
+   CLI), 15-min demo script, May-email-incident hard rules. Decisions left to Nitin marked.
+7. Playwright ops: ADMIN render-smoke timeout aligned to the persona 240s (its v5 failure was pure
+   single-php-cgi pacing); chromium v5 3/5 → v6 3/5 (WF-016 fixed LEARNER's 500; WF-017 surfaced) →
+   **v7 in flight expecting 5/5**, then firefox/webkit.
+
+**Nothing touched live.** New waiting-on-Nitin items: DEMO-TENANT-PLAN Option A/B + demo brand
+name + host; (unchanged) business-pack ₹ blanks, ninja sandbox + fresh backup, manual pass.
+
+---
+
 ## 🔄 FOOLPROOF campaign + SW-1..4 switches EXECUTED (2026-06-10 evening→overnight, Opus 4.8 loop)
 
 **Nitin's rollout gate (standing):** live airpay.academy deploys ONLY on his explicit go — path is

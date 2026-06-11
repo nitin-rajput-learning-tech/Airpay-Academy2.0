@@ -485,10 +485,11 @@ Summary table at top of this ADR; full text of each below.
 
 - [x] Nitin reviewed all 7 open questions (2026-05-28).
 - [x] ADR status flipped Proposed → Accepted (this commit).
-- [ ] Phase 0 (schema migration with 3 profile tables + user_type table) lands on local — IN BUCKET C, ready to start.
-- [ ] Phase 1 (CLI classification) runs against local DB and produces a clean 2,871-row CSV.
-- [ ] Phase 2 (profile-page refactor) lands and all 4 user-types render their correct profile shape with visual evidence.
-- [ ] Locale parity: 150 new lang strings × 5 locales merged before any provider call-site cuts over.
+- [x] Phase 0 (schema: user_type + 4 profile tables) landed via `local_sentientia_platform` upgrade savepoint 2026052801. **Fresh-install parity added 2026-06-11 (D-prod):** the 5 tables were upgrade-path-only, so clean installs (sandbox, customer-N, PHPUnit) lacked them and `user_type_factory` threw — now mirrored into `db/install.xml`; verified by a clean PHPUnit init creating all 5 `phpu_` tables.
+- [x] Phase 1 (CLI classification) — `classify_existing_users.php` run on the 5.2 clone: 2,880 rows (682 consumer / 2,196 employee / 2 operator).
+- [x] Phases 2 (providers C1.2), 4 (dashboard C1.4), 5 (sidebar/onboarding/leaderboard C1.5), 6 (signup C1.6) shipped — see task ledger.
+- [ ] **Phase 3 (profile-page refactor, C1.3) — the remaining open phase.** `/user/profile.php` does not yet consume `profile_context()`; all 4 user-types rendering their correct profile shape with visual evidence is the exit gate. Deferred (M effort, > the ≤1-plugin-additive window of 2026-06-11); next D-prod engineering-tail slot.
+- [ ] Locale parity: new profile-shape strings × 5 locales merged before the C1.3 call-site cuts over.
 
 ---
 

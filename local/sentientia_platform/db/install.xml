@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/sentientia_platform/db" VERSION="20260520"
-       COMMENT="Airpay Core — feature flags + audit + shared infrastructure tables">
+<XMLDB PATH="local/sentientia_platform/db" VERSION="20260611"
+       COMMENT="Sentientia Platform — feature flags + audit + customer brand + ADR-017 user-type/profile tables">
   <TABLES>
 
     <TABLE NAME="local_sentientia_feature_flags"
@@ -127,6 +127,142 @@
       <KEYS>
         <KEY NAME="primary"      TYPE="primary" FIELDS="id"/>
         <KEY NAME="uk_customer"  TYPE="unique"  FIELDS="customerid"/>
+      </KEYS>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_user_type"
+           COMMENT="ADR-017 — polymorphic user-type classification, 1:1 with
+                    mdl_user. Written once at provisioning (immutable per Q1
+                    ruling 2026-05-28); user_type_factory reads it on every
+                    type-aware surface. Fresh-install parity added 2026-06-11
+                    (D-prod): previously created only by the 2026052801
+                    upgrade step, so clean installs (sandbox, customer-N,
+                    PHPUnit) lacked it and the factory threw. Definitions
+                    mirror db/upgrade.php exactly; the upgrade step's
+                    table_exists guards make the two paths converge.">
+      <FIELDS>
+        <FIELD NAME="id"                  TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"              TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="user_type"           TYPE="char" LENGTH="20" NOTNULL="true"
+               COMMENT="employee | consumer | partner_employee | operator"/>
+        <FIELD NAME="provisioning_source" TYPE="char" LENGTH="40" NOTNULL="true" DEFAULT="unknown"
+               COMMENT="signup_public | hrms_sync | manual_admin | invite_paid | backfill_cli"/>
+        <FIELD NAME="provisioned_at"      TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timecreated"         TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"        TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"   TYPE="primary" FIELDS="id"/>
+        <KEY NAME="uk_userid" TYPE="unique"  FIELDS="userid"/>
+        <KEY NAME="fk_userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_type" UNIQUE="false" FIELDS="user_type"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_employee_profile"
+           COMMENT="ADR-017 — employee-only profile shape (Airpay-customer
+                    staff). Fresh-install parity 2026-06-11; mirrors
+                    db/upgrade.php 2026052801.">
+      <FIELDS>
+        <FIELD NAME="id"               TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"           TYPE="int"  LENGTH="10"  NOTNULL="true"/>
+        <FIELD NAME="employee_id"      TYPE="char" LENGTH="40"  NOTNULL="false"/>
+        <FIELD NAME="department"       TYPE="char" LENGTH="80"  NOTNULL="false"/>
+        <FIELD NAME="job_title"        TYPE="char" LENGTH="80"  NOTNULL="false"/>
+        <FIELD NAME="manager_userid"   TYPE="int"  LENGTH="10"  NOTNULL="false"
+               COMMENT="FK to mdl_user.id — the supervisor"/>
+        <FIELD NAME="hire_date"        TYPE="int"  LENGTH="10"  NOTNULL="false"/>
+        <FIELD NAME="cost_center_path" TYPE="char" LENGTH="255" NOTNULL="false"
+               COMMENT="cached snapshot of mdl_user.open_path at provisioning"/>
+        <FIELD NAME="timecreated"      TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"     TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"    TYPE="primary" FIELDS="id"/>
+        <KEY NAME="uk_userid"  TYPE="unique"  FIELDS="userid"/>
+        <KEY NAME="fk_userid"  TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="fk_manager" TYPE="foreign" FIELDS="manager_userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_dept" UNIQUE="false" FIELDS="department"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_consumer_profile"
+           COMMENT="ADR-017 — consumer-only profile shape (public-signup
+                    learners). consent_leaderboard defaults OFF (DPDP).
+                    Fresh-install parity 2026-06-11; mirrors db/upgrade.php
+                    2026052801.">
+      <FIELDS>
+        <FIELD NAME="id"                  TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"              TYPE="int"  LENGTH="10"  NOTNULL="true"/>
+        <FIELD NAME="interests_json"      TYPE="text"              NOTNULL="false"/>
+        <FIELD NAME="weekly_goal"         TYPE="int"  LENGTH="2"   NOTNULL="false"/>
+        <FIELD NAME="referral_source"     TYPE="char" LENGTH="40"  NOTNULL="false"/>
+        <FIELD NAME="consent_marketing"   TYPE="int"  LENGTH="1"   NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="consent_leaderboard" TYPE="int"  LENGTH="1"   NOTNULL="true" DEFAULT="0"
+               COMMENT="opt-in to leaderboard visibility; defaults OFF (DPDP)"/>
+        <FIELD NAME="payment_history_url" TYPE="char" LENGTH="255" NOTNULL="false"/>
+        <FIELD NAME="timecreated"         TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"        TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"   TYPE="primary" FIELDS="id"/>
+        <KEY NAME="uk_userid" TYPE="unique"  FIELDS="userid"/>
+        <KEY NAME="fk_userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_partner_employee_profile"
+           COMMENT="ADR-017 — B2B partner-organisation staff profile shape.
+                    Fresh-install parity 2026-06-11; mirrors db/upgrade.php
+                    2026052801.">
+      <FIELDS>
+        <FIELD NAME="id"                     TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"                 TYPE="int"  LENGTH="10"  NOTNULL="true"/>
+        <FIELD NAME="customer_id"            TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="partner-org id in the customer registry"/>
+        <FIELD NAME="partner_employee_id"    TYPE="char" LENGTH="40"  NOTNULL="false"/>
+        <FIELD NAME="partner_department"     TYPE="char" LENGTH="80"  NOTNULL="false"/>
+        <FIELD NAME="partner_job_title"      TYPE="char" LENGTH="80"  NOTNULL="false"/>
+        <FIELD NAME="partner_manager_userid" TYPE="int"  LENGTH="10"  NOTNULL="false"/>
+        <FIELD NAME="partner_hire_date"      TYPE="int"  LENGTH="10"  NOTNULL="false"/>
+        <FIELD NAME="cost_center_path"       TYPE="char" LENGTH="255" NOTNULL="false"/>
+        <FIELD NAME="timecreated"            TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"           TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"    TYPE="primary" FIELDS="id"/>
+        <KEY NAME="uk_userid"  TYPE="unique"  FIELDS="userid"/>
+        <KEY NAME="fk_userid"  TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="fk_manager" TYPE="foreign" FIELDS="partner_manager_userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_customer" UNIQUE="false" FIELDS="customer_id"
+               COMMENT="every partner-scoped query hits this"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_operator_profile"
+           COMMENT="ADR-017 — platform-operator profile shape (Site Admins,
+                    Sentientia-side staff). Fresh-install parity 2026-06-11;
+                    mirrors db/upgrade.php 2026052801.">
+      <FIELDS>
+        <FIELD NAME="id"                     TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"                 TYPE="int"  LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="operator_role"          TYPE="char" LENGTH="40" NOTNULL="false"
+               COMMENT="siteadmin | support | sentientia_staff | dpdp_dpo"/>
+        <FIELD NAME="contact_phone"          TYPE="char" LENGTH="40" NOTNULL="false"/>
+        <FIELD NAME="oncall_for_customer_id" TYPE="int"  LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="timecreated"            TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"           TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"   TYPE="primary" FIELDS="id"/>
+        <KEY NAME="uk_userid" TYPE="unique"  FIELDS="userid"/>
+        <KEY NAME="fk_userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
       </KEYS>
     </TABLE>
 

@@ -26,6 +26,9 @@ import * as Aria from 'core/aria';
 import {dispatchEvent} from 'core/event_dispatcher';
 import {debounce} from 'core/utils';
 import Pending from 'core/pending';
+// WF-017: M.util.set_user_preference was removed from core — use the AMD
+// repository (the same call upstream Boost drawers.js migrated to).
+import {setUserPreference} from 'core_user/repository';
 // The jQuery module is only used for interacting with epsilonrap 4. It can we removed when MDL-71979 is integrated.
 import jQuery from 'jquery';
 
@@ -443,7 +446,7 @@ export default class Drawers {
 
         const preference = this.drawerNode.dataset.preference;
         if (preference && !isSmall() && (this.drawerNode.dataset.forceopen != 1)) {
-            M.util.set_user_preference(preference, true);
+            setUserPreference(preference, true);
         }
 
         const state = this.drawerNode.dataset.state;
@@ -506,7 +509,7 @@ export default class Drawers {
 
         const preference = this.drawerNode.dataset.preference;
         if (preference && updatePreferences && !isSmall()) {
-            M.util.set_user_preference(preference, false);
+            setUserPreference(preference, false);
         }
 
         const state = this.drawerNode.dataset.state;

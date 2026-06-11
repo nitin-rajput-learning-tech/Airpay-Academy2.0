@@ -30,7 +30,7 @@ defined('MOODLE_INTERNAL') || die();
 $plugin->component = 'local_sentientia_org';
 // P1 #54 (2026-05-20) — Hindi pack: 55 strings covering capabilities,
 // settings, CRUD form, hierarchy, branding, errors, confirmations.
-$plugin->version   = 2026052001;
+$plugin->version   = 2026061100;
 $plugin->requires  = 2022041900; // Moodle 4.0+
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.4.1'; // +P1 #54 Hindi pack
+$plugin->release   = '1.5.0'; // +WF-016 BizLMS local_costcenter compat aliases (after_config hook)

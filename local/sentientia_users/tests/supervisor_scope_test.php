@@ -23,6 +23,35 @@ defined('MOODLE_INTERNAL') || die();
  */
 final class supervisor_scope_test extends \advanced_testcase {
 
+    /**
+     * The suite exercises the BizLMS tenant columns, which a vanilla PHPUnit
+     * site doesn't have — self-provision them (DDL persists for the run;
+     * matches the production schema this suite exists to protect).
+     */
+    public static function setUpBeforeClass(): void {
+        global $DB;
+        parent::setUpBeforeClass();
+        $dbman = $DB->get_manager();
+        $table = new \xmldb_table('user');
+        $path = new \xmldb_field('open_path', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+        if (!$dbman->field_exists($table, $path)) {
+            $dbman->add_field($table, $path);
+        }
+        $sup = new \xmldb_field('open_supervisorid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        if (!$dbman->field_exists($table, $sup)) {
+            $dbman->add_field($table, $sup);
+        }
+        // The search WS SELECTs these for display in the autocomplete rows.
+        $emp = new \xmldb_field('open_employeeid', XMLDB_TYPE_CHAR, '100', null, null, null, null);
+        if (!$dbman->field_exists($table, $emp)) {
+            $dbman->add_field($table, $emp);
+        }
+        $des = new \xmldb_field('open_designation', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+        if (!$dbman->field_exists($table, $des)) {
+            $dbman->add_field($table, $des);
+        }
+    }
+
     /** Helper: create a user with a specific open_path. */
     private function seed_user(string $name, string $open_path): \stdClass {
         global $DB;
@@ -62,17 +91,19 @@ final class supervisor_scope_test extends \advanced_testcase {
         global $DB;
 
         $airpay_admin = $this->seed_user('Bravo', '/1');
-        // Move admin into tenant /1, log them in.
+        // Move admin into tenant /1.
         $DB->set_field('user', 'open_path', '/1', ['id' => $airpay_admin->id]);
-        $this->setUser($airpay_admin);
 
-        // The WS requires moodle/user:viewdetails (Bug-9b hardening) — grant
-        // it like a real L&D-admin role would, WITHOUT siteadmin, so this
-        // test still proves tenant scoping for non-siteadmins.
+        // The WS requires local/sentientia_users:view — grant it like a real
+        // L&D-admin role would, WITHOUT siteadmin, so this test still proves
+        // tenant scoping for non-siteadmins. Grant BEFORE setUser(): access
+        // data is cached per-user at login time.
         $roleid = $this->getDataGenerator()->create_role(['shortname' => 'supsearch']);
-        assign_capability('moodle/user:viewdetails', CAP_ALLOW, $roleid,
+        assign_capability('local/sentientia_users:view', CAP_ALLOW, $roleid,
             \context_system::instance());
         role_assign($roleid, $airpay_admin->id, \context_system::instance()->id);
+        accesslib_clear_all_caches_for_unit_testing();
+        $this->setUser($airpay_admin);
 
         // Seed: 2 users in /1, 2 in /77.
         $this->seed_user('Bravo-A', '/1');
