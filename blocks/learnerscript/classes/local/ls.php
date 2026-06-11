@@ -21,6 +21,9 @@
  * @date: 2017
  */
 namespace block_learnerscript\local;
+
+defined('MOODLE_INTERNAL') || die();
+
 require_once($CFG->dirroot . '/lib/evalmath/evalmath.class.php');
 require_once($CFG->dirroot . "/course/lib.php");
 use stdclass;
@@ -1472,10 +1475,18 @@ class ls {
 	    if (empty($quizdetails)) {
 	    	return true;
 	    }
+    	// SENTIENTIA WF-007 guard: user.open_costcenterid does not exist on the
+    	// production schema (tenant detection uses open_path). Without this
+    	// check the per-row lookup below crashed the whole task. When the
+    	// columns are absent, companyid/departmentid fall back to 0 via the
+    	// existing isset() guards.
+    	$dbman = $DB->get_manager();
+    	$hascompanycols = $dbman->field_exists('user', 'open_costcenterid')
+    		&& $dbman->field_exists('course', 'open_costcenterid');
     	foreach ($quizdetails as $quizdetail) {
     		$coursemoduleid = $DB->get_field('course_modules', 'id', array('module' => $moduleid, 'instance' => $quizdetail->quiz));
     		// $companyinfo = $DB->get_record_sql('SELECT cu.companyid, cu.departmentid  FROM {company_users} cu JOIN  {company_course} cc ON cc.companyid = cu.companyid WHERE cu.userid = "' . $quizdetail->userid . '" AND cc.courseid = "' . $quizdetail->courseid . '"');
-    		$companyinfo = $DB->get_record_sql('SELECT u.open_costcenterid AS companyid, u.open_departmentid AS departmentid FROM {user} u JOIN  {course} cc ON cc.open_costcenterid = u.open_costcenterid WHERE u.id = "' . $quizdetail->userid . '" AND cc.id = "' . $quizdetail->courseid . '"');
+    		$companyinfo = $hascompanycols ? $DB->get_record_sql('SELECT u.open_costcenterid AS companyid, u.open_departmentid AS departmentid FROM {user} u JOIN  {course} cc ON cc.open_costcenterid = u.open_costcenterid WHERE u.id = "' . $quizdetail->userid . '" AND cc.id = "' . $quizdetail->courseid . '"') : false;
     		$insertdata = new stdClass();
 	        $insertdata->userid = $quizdetail->userid;
 	        $insertdata->courseid = $quizdetail->courseid;
@@ -1536,6 +1547,14 @@ class ls {
     	$scormrecord = get_config('block_learnerscript', 'timepsent');
 
     	if (empty($scormrecord)) {
+    		// SENTIENTIA WF-006 guard: the legacy {block_ls_timestats} table only
+    		// exists on pre-2019 LearnerScript installs. Without it this one-time
+    		// migration crashed on every cron run (and the done-flag below was
+    		// never reached). Nothing to migrate — mark done and exit.
+    		if (!$DB->get_manager()->table_exists('block_ls_timestats')) {
+    			set_config('timepsent', true, 'block_learnerscript');
+    			return true;
+    		}
 	    	$timespentdetails = $DB->get_records_sql("SELECT * FROM {block_ls_timestats}");
 		    if (empty($timespentdetails)) {
 		    	return true;

@@ -333,7 +333,7 @@ class compliance_engine {
             'fullname'      => format_string($user->firstname . ' ' . $user->lastname),
             'course_name'   => format_string($mc->coursename),
             'course_url'    => (new \moodle_url('/course/view.php', ['id' => $mc->courseid]))->out(false),
-            'deadline_date' => $mc->deadline_date ? userdate($mc->deadline_date, '%d %B %Y') : '',
+            'deadline_date' => !empty($mc->deadline_date) ? userdate($mc->deadline_date, '%d %B %Y') : '',
             'deadline_days' => $mc->deadline_days ?? 30,
             'subject'       => $subjects[$type] ?? 'Compliance: ' . $mc->coursename,
         ];

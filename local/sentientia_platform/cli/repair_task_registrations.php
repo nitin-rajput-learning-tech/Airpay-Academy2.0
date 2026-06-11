@@ -107,8 +107,71 @@ if ($DB->get_manager()->table_exists('local_sentientia_customer_brand')) {
 }
 cli_writeln("Brand rows with stale paths: $brandfixes");
 
+// ── 2c. WF-008a: orphan {message_providers} rows from pre-rename components ──
+// Every message_send() walks ALL provider rows; rows whose component no longer
+// exists carry stale capability strings (e.g. local/airpay_cart:view) and fire
+// a debugging() backtrace PER MESSAGE PER ORPHAN — the compliance snapshot
+// cron drowned in thousands of these. Purge providers whose component
+// directory is gone (double-checked, same discipline as the §2 task purge).
+$providerpurged = 0;
+if ($DB->get_manager()->table_exists('message_providers')) {
+    $orphanproviders = $DB->get_records_select('message_providers',
+        $DB->sql_like('component', ':c'), ['c' => 'local_airpay%']);
+    foreach ($orphanproviders as $prov) {
+        if (\core_component::get_component_directory($prov->component) !== null) {
+            cli_writeln("  SKIP provider {$prov->component}/{$prov->name} — component still installed");
+            continue;
+        }
+        cli_writeln(($apply ? '  purged provider ' : '  would purge provider ')
+            . "{$prov->component}/{$prov->name} (id {$prov->id})");
+        if ($apply) {
+            // Clean dependent preference rows first, then the provider row.
+            $DB->delete_records_select('user_preferences',
+                $DB->sql_like('name', ':p'), ['p' => 'message_provider_' . $prov->component . '_' . $prov->name . '%']);
+            $DB->delete_records('config_plugins', ['plugin' => 'message',
+                'name' => 'message_provider_' . $prov->component . '_' . $prov->name . '_enabled']);
+            $DB->delete_records('message_providers', ['id' => $prov->id]);
+        }
+        $providerpurged++;
+    }
+    if ($apply && $providerpurged > 0) {
+        \cache_helper::purge_all();  // provider map is cached aggressively
+    }
+}
+cli_writeln("Orphan message_providers rows: $providerpurged");
+
+// ── 2d. WF-008a: provider rows with stale pre-rename CAPABILITY strings ──
+// The component column was renamed by the upgrade, but rows installed before
+// the capability-string fix still say e.g. 'local/airpay_cart:view'. Every
+// message_send() then calls has_capability() on a capability that no longer
+// exists → debugging() backtrace per message per stale row. Rewrite to the
+// renamed capability, but ONLY when the target exists in {capabilities}.
+$capfixed = 0;
+if ($DB->get_manager()->table_exists('message_providers')) {
+    $stalecaps = $DB->get_records_select('message_providers',
+        $DB->sql_like('capability', ':c'), ['c' => 'local/airpay\_%']);
+    foreach ($stalecaps as $prov) {
+        $newcap = preg_replace('~^local/airpay_~', 'local/sentientia_', $prov->capability);
+        if (!$DB->record_exists('capabilities', ['name' => $newcap])) {
+            cli_writeln("  REPORT: {$prov->component}/{$prov->name} capability "
+                . "'{$prov->capability}' stale but target '$newcap' not defined — left as-is");
+            continue;
+        }
+        cli_writeln(($apply ? '  rewrote capability ' : '  would rewrite capability ')
+            . "{$prov->component}/{$prov->name}: {$prov->capability} -> $newcap");
+        if ($apply) {
+            $DB->set_field('message_providers', 'capability', $newcap, ['id' => $prov->id]);
+        }
+        $capfixed++;
+    }
+    if ($apply && $capfixed > 0) {
+        \cache_helper::purge_all();
+    }
+}
+cli_writeln("Provider rows with stale capability strings: $capfixed");
+
 // ── 3. Report-only: other component-bound residue ──
-foreach (['message_providers' => 'component', 'event' => 'component'] as $table => $col) {
+foreach (['event' => 'component'] as $table => $col) {
     try {
         if (!$DB->get_manager()->table_exists($table)) {
             continue;
