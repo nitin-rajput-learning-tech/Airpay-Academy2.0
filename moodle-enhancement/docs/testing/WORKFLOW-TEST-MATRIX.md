@@ -22,7 +22,7 @@ qa_public` (pw in `tools/_qa_provision.php`, local-only).
 | L1 | Login → role-aware dashboard renders (widgets, sidebar, 0 console errors) | PW render-smoke + dashboard.spec; HTTP | ⏳ |
 | L2 | Browse catalog → course detail → posters render | PW learner.spec; HTTP | ⏳ |
 | L3 | One-click free enrol (flag ON, tenant 1/177) → My Courses | CLI enrolment::enrol_now + PHPUnit (8 cases); HTTP | ⏳ |
-| L4 | Open course → app-shell course player → activity completion records | PW learner.spec; HTTP + CLI completion mark | ⏳ |
+| L4 | Open course → app-shell course player → activity completion records | PW learner.spec; HTTP + CLI completion mark | ◑ (b7: HTTP half ✅ — qa_employee opens enrolled course 71: 200/86KB, app-shell markers, activity links, 0 `{{ }}` leak. Completion-records half rests on the 32,248 imported completion rows + L5/M3 cron writes; a fresh API-write demo is PW-tier) |
 | L5 | Deadline reminder (7/3/1) lands as notification | CLI: seed deadline + run course_reminder task; assert _remind_sent + message | ⏳ |
 | L6 | Exam attempt → grade; exam reminder cron | CLI: exam_reminder task (same harness as L5) | ⏳ |
 | L7 | Certificate issued on completion → file exists | CLI cert smoke (tool_certificate) + cert_emails_report | ✅ (b6: 11,415 issues / 9 templates on the clone; latest issue 11551 has its PDF stored — 3205758150AU.pdf, 625KB; cert_emails_report CLI runs clean) |
@@ -93,10 +93,10 @@ qa_public` (pw in `tools/_qa_provision.php`, local-only).
 | S2 | Tenant registry manage UI + parity CLI 100% | CLI parity_check_tenants + parity_check_org | ⏳ |
 | S3 | Feature flags: set/resolve/audit (5-level) | CLI enable_oneclick_enrol --dry-run + PHPUnit | ⏳ |
 | S4 | HRMS importer: 24-col CSV dry-run + apply + cron sync | CLI smoke_hrms + smoke_bulk_csv | ⏳ |
-| S5 | Lifecycle: joiner welcome email (tenant template) / leaver deactivation | CLI smoke_bulk_import + lifecycle observer smoke | ⏳ |
+| S5 | Lifecycle: joiner welcome email (tenant template) / leaver deactivation | CLI smoke_bulk_import + lifecycle observer smoke | ✅ (b7: smoke_bulk_import ALL OK — create/skip/fail counts, designation token, idempotent re-run, cleanup; PHP 8.4 str_getcsv deprecation noise fixed in bulk_import_processor) |
 | S6 | Branding: customer_brand resolver + per-customer manifest | PHPUnit customer_brand_test + verify_brand_resolver CLI | ⏳ |
 | S7 | Push ops: VAPID keys, delivery log, master-key encrypt | CLI test_push + verify_signed_with_encrypted_pem | ⏳ |
-| S8 | Role switcher (admin↔learner round-trip) | HTTP; MAN visual (done on 5.1) | ⏳ |
+| S8 | Role switcher (admin↔learner round-trip) | HTTP; MAN visual (done on 5.1) | ✅ (b7: full HTTP round-trip as qa_orgadmin — switch→Employee (active marker + ✓ + aria-current flips), switch-back→Administrator. **Found WF-010 doing it:** the endpoint was missing from the 5.2 tree) |
 | S9 | Cert-health + cron-health blocks report green | CLI cron_health + cert_emails_report | ✅ (b6: after WF-006..009 fixes, full cron pass = **103 executed / 0 failed / 0 capability warnings**; cron_health: 0 sentientia stuck; residual vendor faildelay cleared; cert_emails_report runs clean) |
 
 ## P8 — Guest
@@ -152,6 +152,14 @@ manager page 200/50KB, no access-denied). Local env hardened: MariaDB `max_allow
 (live + my.ini). Note: learnerscript timespent aggregation is non-idempotent by vendor design (+= on
 re-run after partial failure) — affects only LS report stats on this clone, not parity metrics.
 
+**Batch 7 verdicts (2026-06-11 early morning, 5.2):** **S5 ✅** bulk-import lifecycle smoke ALL OK
+(+ PHP 8.4 str_getcsv deprecation fixed) · **L4 ◑** HTTP half — enrolled-course app-shell 200/86KB,
+0 leak · **S8 ✅** role-switch HTTP round-trip — and it flushed out **WF-010 (cutover-blocking)**:
+BizLMS core-adjacent files missing from the 5.2 tree, masked by php -S path-fallback (see
+known-issues). WF-007 backlog reprocess clean (0 warnings/0 errors). **Testing-method lesson
+recorded:** php -S serves the nearest index.php for missing files — HTTP 200 from php -S does NOT
+prove the file exists; the Apache-vhost/CI tier (or a file-existence check) does.
+
 **Sandbox kit (#402) shipped + locally rehearsed:** `migration_parity_check.php` (--baseline/--compare)
 proven at single-row sensitivity (5.1-source baseline vs migrated 5.2 clone: all metrics MATCH except 4,
 each attributable to this campaign's own test writes); `MIGRATION-REHEARSAL-RUNBOOK.md` = turnkey Phase-2
@@ -168,9 +176,11 @@ procedure with mandatory post-restore repairs.
 | WF-004 | L5/L6/M3 + every renamed plugin's cron | **{task_scheduled} still held pre-rename `\local_airpay_*` classnames** (17 orphans; only 6 sentientia rows vs 19 plugins shipping db/tasks.php) — those crons were **silently dead on BOTH instances since ADR-025** (reminders, escalations, digests, leaderboard recompute, recompletion rules, proctoring purge, cohort sync…). Root cause: the rename handover re-pointed capabilities + WS but not tasks, and Moodle only reconciles tasks on version change. | ✅ FIXED — NEW `local/sentientia_platform/cli/repair_task_registrations.php` (dry-run default, `--apply`; reconciles 19 components + purges class-gone orphans + reports other component residue). Applied on 5.2 AND 5.1: both now sentientia=23 / stale=0. **Added to the deploy packet — must run on sandbox + live post-deploy.** |
 
 | WF-006 | S9 (vendor cron) | `block_learnerscript` `coursetimepsent` — one-time legacy migration queries `{block_ls_timestats}` (exists only on pre-2019 LS installs); crashed EVERY cron run forever, done-flag unreachable. Failing on live production today (faildelay loop). | ✅ FIXED — table_exists guard → set done-flag + return; validated direct + via full cron; both trees |
-| WF-007 | S9 (vendor cron) | `userquiztimespent` — (a) per-row lookup queries `u.open_costcenterid` (doesn't exist on production schema; open_path is the convention) → task crashed; (b) **WF-007b**: quiz path set `contextinstanceid` (not a column — silently stripped) while `{block_ls_modtimestats}.activityid` is NOT NULL no-default → insert crashed once (a) was fixed; lookup compared NULL. SCORM path was correct — vendor inconsistency. | ✅ FIXED — field_exists guard (companyid/deptid fall back 0) + activityid property aligned with the scorm path; both trees |
+| WF-007 | S9 (vendor cron) | `userquiztimespent` — (a) per-row lookup queries `u.open_costcenterid` (doesn't exist on production schema; open_path is the convention) → task crashed; (b) **WF-007b**: quiz path set `contextinstanceid` (not a column — silently stripped) while `{block_ls_modtimestats}.activityid` is NOT NULL no-default → insert crashed once (a) was fixed; lookup compared NULL. SCORM path was correct — vendor inconsistency. | ✅ FIXED — field_exists guard (companyid/deptid fall back 0) + activityid property aligned with the scorm path; both trees. Full quiz-attempt backlog reprocessed clean post-fix (0 warnings / 0 errors) |
 | WF-008 | S9 + every message-sending flow | `refresh_snapshot` cold-run blow-up (539MB, MySQL gone away): (a) **15 `{message_providers}` rows carried stale pre-rename capability strings** (`local/airpay_*`) — every `message_send()` fired a debugging backtrace per stale row; (b) `deadline_date` PHP 8 undefined-property warning per escalation; (c) local `max_allowed_packet` was 1M. **A live-backup migration inherits (a) identically.** | ✅ FIXED — repair CLI §2c (purge orphan-component provider rows) + §2d (rewrite stale capability → renamed target when it exists) applied BOTH DBs; engine property guarded; packet 64M + runbook env gate. Follow-up (recorded): queue/chunk the inline per-overdue message_send for scale |
 | WF-009 | S9 (vendor cron) | `userscormtimespent` queries `{scorm_scoes_track}` — table REMOVED in Moodle 4.3 (split into scorm_attempt/scorm_element_value). Crashed every cron on 4.3+ schemas incl. live. LS SCORM-time reports can't update on modern schemas until the vendor query is ported. | ✅ FIXED (guard) — table_exists → mtrace skip + return true; vendor port = recorded follow-up |
+
+| WF-010 | S8 + every BizLMS link to /my/dashboard.php | **CUTOVER-BLOCKING.** The SW-4 5.2 overlay covered plugins/theme but missed **BizLMS files inside CORE dirs**: `/my/dashboard.php` (redirect shim — the canonical BizLMS dashboard URL), `/my/switchrole.php` (role-switch endpoint, which was ALSO never canonicalised into git — webroot-only, same class as P0-1), `/my/templates/dropdown.mustache`, root `.htaccess` (branded error pages). **php -S masked it**: its path-fallback serves `/my/index.php` for ANY missing file under /my/ (garbage URLs proved it — all 200/68KB), so every probe "passed"; production Apache would hard-404. Tree-sweep found no further product files missing (residue: `blocks$name` junk dir on 5.1, `.rnd`, core-evolution diffs). | ✅ FIXED — switchrole.php canonicalised into git `my/`; all 4 files deployed to the 5.2 tree (+ shim harmonised on 5.1); `overlay-airpay-customs.ps1` gained a core-adjacent section so redeploys carry them; S8 round-trip then passed live |
 
 **Batch 3 verdicts (5.2, seeded):** **L3 ✅** enrol_now (free-only check, enrols, idempotent — args are
 `(courseid, userid)`); **L5 ✅** reminder cron fired bucket +1 → remind_sent row + employee notification;

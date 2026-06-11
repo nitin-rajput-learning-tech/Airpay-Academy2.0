@@ -219,6 +219,20 @@ Log "=== Root utility ==="
 Copy-File 'root' 'airpay-audit-loginas.php'
 
 Log ""
+Log "=== Core-adjacent BizLMS files (WF-010, 2026-06-11) ==="
+# Found by the foolproof campaign: the original overlay covered plugins +
+# theme but NOT BizLMS files that live inside CORE directories. On the 5.2
+# tree these were silently missing — php -S masked it (its path-fallback
+# serves /my/index.php for ANY missing file under /my/), but on production
+# Apache every BizLMS link to /my/dashboard.php would hard-404 and role
+# switching (/my/switchrole.php) would be dead.
+Copy-File 'core-adjacent' 'my\dashboard.php'      # redirect shim — BizLMS nav links use /my/dashboard.php
+Copy-File 'core-adjacent' 'my\switchrole.php'     # BizLMS role-switch handler (sidebar switcher endpoint)
+Copy-File 'core-adjacent' 'my\templates\dropdown.mustache'
+Copy-File 'core-adjacent' '.htaccess'             # branded error pages + ServerSignature Off (Bug #7);
+                                                  # repo source: moodle-enhancement/deploy/moodle-htaccess.template
+
+Log ""
 Log "=== Summary ==="
 $dstCount = (Get-ChildItem $Target -Recurse -File).Count
 $dstSize = [Math]::Round((Get-ChildItem $Target -Recurse | Measure-Object -Property Length -Sum).Sum / 1MB, 2)
