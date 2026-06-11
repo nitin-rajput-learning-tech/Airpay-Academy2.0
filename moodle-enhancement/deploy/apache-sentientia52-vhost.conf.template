@@ -15,6 +15,19 @@
 #   LoadModule proxy_fcgi_module modules/mod_proxy_fcgi.so
 #   Listen 8081
 #
+# --- config.php companion fix (WF-015) ---------------------------------------
+#   Moodle 5.2's minimal-bootstrap asset scripts (javascript.php /
+#   yui_combo.php / styles.php) fatal-500 at shutdown under php-cgi:
+#   core\shutdown_manager calls ini_get_bool(), defined only in
+#   lib/setuplib.php which ABORT_AFTER_CONFIG bootstraps never load.
+#   Add to the instance config.php BEFORE the lib/setup.php require:
+#     if (!function_exists('ini_get_bool')) {
+#         function ini_get_bool($ini_get_arg) {
+#             $temp = ini_get($ini_get_arg);
+#             return ($temp == '1' or strtolower($temp) == 'on');
+#         }
+#     }
+#
 # --- PHP backend (start before Apache; keep running) -------------------------
 #   Set PHP_FCGI_MAX_REQUESTS=0 in the process env (php-cgi exits after 500
 #   requests otherwise) and launch:
