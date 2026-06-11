@@ -15,6 +15,13 @@ import { defineConfig, devices } from '@playwright/test';
  */
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:8000';
 
+// Local single-process PHP backends (php-cgi behind Apache proxy_fcgi)
+// serialize PHP-served assets, so page loads run slow without being broken.
+// Override per-run, e.g. PLAYWRIGHT_NAV_TIMEOUT=120000 for local gates.
+const navTimeout = process.env.PLAYWRIGHT_NAV_TIMEOUT
+    ? Number(process.env.PLAYWRIGHT_NAV_TIMEOUT)
+    : 30_000;
+
 export default defineConfig({
     testDir: '.',
     testMatch: '*.spec.ts',
@@ -34,7 +41,7 @@ export default defineConfig({
         screenshot: 'only-on-failure',
         video: 'retain-on-failure',
         ignoreHTTPSErrors: true,
-        navigationTimeout: 30_000,
+        navigationTimeout: navTimeout,
         actionTimeout: 10_000,
     },
     projects: [

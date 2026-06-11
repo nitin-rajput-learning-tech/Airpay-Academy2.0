@@ -1,0 +1,62 @@
+# ============================================================================
+# Apache vhost template — Sentientia LMS Moodle 5.2 instance behind PHP 8.4
+# FastCGI (Windows/XAMPP local; the same shape works on any Apache 2.4.26+).
+#
+# Built + verified 2026-06-11 (Nitin-approved). Why it exists:
+#   - Moodle 5.2 requires PHP >= 8.3; XAMPP's mod_php is 8.2 and must keep
+#     serving the 5.1 instance on :8080 untouched. So :8081 proxies PHP to a
+#     separate php-cgi 8.4 process while Apache serves static files.
+#   - This replaced `php -S` (single-threaded AND masks missing-file 404s via
+#     path-fallback — the WF-010 lesson). Under this vhost a missing .php is a
+#     REAL 404 because Apache resolves the file before proxying (SetHandler).
+#
+# --- httpd.conf prerequisites (uncomment these LoadModule lines) -------------
+#   LoadModule proxy_module modules/mod_proxy.so
+#   LoadModule proxy_fcgi_module modules/mod_proxy_fcgi.so
+#   Listen 8081
+#
+# --- PHP backend (start before Apache; keep running) -------------------------
+#   Set PHP_FCGI_MAX_REQUESTS=0 in the process env (php-cgi exits after 500
+#   requests otherwise) and launch:
+#     php-cgi.exe -b 127.0.0.1:9084 -c <php.ini with all Moodle extensions>
+#   NOTE: Windows php-cgi is single-process (PHP_FCGI_CHILDREN is POSIX-only),
+#   so PHP requests serialize (~1.3s each under load). Static assets are
+#   served by Apache in parallel. For browser-based test suites set
+#   PLAYWRIGHT_NAV_TIMEOUT=120000. A balancer over multiple php-cgi ports was
+#   attempted and abandoned — mod_proxy_fcgi's balancer path mangles
+#   SCRIPT_FILENAME on Windows ("No input file specified"); the direct
+#   single-backend form below is the proven configuration.
+# ============================================================================
+
+<VirtualHost *:8081>
+    ServerName localhost
+    DocumentRoot "C:/xampp/htdocs/moodle5.2/public"
+    DirectoryIndex index.php
+
+    # Moodle slasharguments URLs (/pluginfile.php/1/...) need PATH_INFO.
+    AcceptPathInfo On
+
+    # SetHandler form: Apache resolves the file itself (404s missing files
+    # BEFORE proxying — no php -S-style masking) and hands proxy_fcgi the
+    # real SCRIPT_FILENAME. The trailing slash on the backend URL is REQUIRED
+    # on Windows (without it the drive letter concatenates onto the port).
+    <FilesMatch "\.php$">
+        SetHandler "proxy:fcgi://127.0.0.1:9084/"
+    </FilesMatch>
+
+    # Windows: proxy_fcgi hands php-cgi "proxy:fcgi://host:port/C:/path" as
+    # SCRIPT_FILENAME — strip everything up to the real path.
+    ProxyFCGISetEnvIf "reqenv('SCRIPT_FILENAME') =~ m|^proxy:[a-z]+://[^/]+/(.*)$|" SCRIPT_FILENAME "$1"
+
+    <Directory "C:/xampp/htdocs/moodle5.2/public">
+        Options FollowSymLinks
+        AllowOverride All
+        Require all granted
+        # Pass Authorization to FastCGI — Apache strips it by default, which
+        # silently breaks Moodle WS-token auth and VAPID push (the L10 finding).
+        CGIPassAuth On
+    </Directory>
+
+    ErrorLog "logs/sentientia52-error.log"
+    CustomLog "logs/sentientia52-access.log" common
+</VirtualHost>

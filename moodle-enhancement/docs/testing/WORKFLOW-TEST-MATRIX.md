@@ -26,12 +26,12 @@ qa_public` (pw in `tools/_qa_provision.php`, local-only).
 | L5 | Deadline reminder (7/3/1) lands as notification | CLI: seed deadline + run course_reminder task; assert _remind_sent + message | ✅ (b3: seeded bucket +1 → _remind_sent row + employee notification) |
 | L6 | Exam attempt → grade; exam reminder cron | CLI: exam_reminder task (same harness as L5) | ◑ (no exam fixture on the clone — 0 quiz rows in window; cron harness shared with L5 which passed) |
 | L7 | Certificate issued on completion → file exists | CLI cert smoke (tool_certificate) + cert_emails_report | ✅ (b6: 11,415 issues / 9 templates on the clone; latest issue 11551 has its PDF stored — 3205758150AU.pdf, 625KB; cert_emails_report CLI runs clean) |
-| L8 | Gamification points/badges/streak + leaderboard row (opt-out respected) | CLI seed_badges + leaderboard e2e (Wave C5) | ⏳ |
+| L8 | Gamification points/badges/streak + leaderboard row (opt-out respected) | CLI seed_badges + leaderboard e2e (Wave C5) | ✅ (b8: seed_badges runs on 5.2 after WF-011 guard — 8 badges present; seed_demo_boards reports demo boards already seeded; leaderboard e2e history Wave C5) |
 | L9 | Communication prefs page: WhatsApp/SMS consent (DLT) saves + audits | CLI run_whatsapp_e2e (dry); HTTP prefs page | ✅ (b2: run_whatsapp_e2e dry ALL PASS — flip live_mode when DLT creds land) |
-| L10 | PWA: manifest + install CTA + push subscribe + real push received | CLI run_push_e2e + verify_d1_endpoints + test_crypto | ⏳ |
+| L10 | PWA: manifest + install CTA + push subscribe + real push received | CLI run_push_e2e + verify_d1_endpoints + test_crypto | ✅ (b8: run_push_e2e ALL PASS on 5.2 via Apache/FCGI — VAPID JWT + aes128gcm + payload integrity end-to-end; required CGIPassAuth (see vhost template)) |
 | L11 | Live session: join by code → answer all 6 question types → results | CLI sentientia_live smokes; MAN two-browser (done on 5.1: PRIORITY-1) | ⏳ |
 | L12 | Profile + skills self-rate → audit log | CLI smoke_profile_skills + smoke_observer | ✅ (b5a: skills course-mapping + observer smokes ALL OK ×2) |
-| L13 | Calendar ICS download (classroom session) — white-label ORGANIZER | CLI ics_builder unit (PHPUnit) | ⏳ |
+| L13 | Calendar ICS download (classroom session) — white-label ORGANIZER | CLI ics_builder unit (PHPUnit) | ✅ (b8: smoke_ics ALL OK — VCALENDAR/VEVENT structure, UTC DTSTART/DTEND, UID, 542 bytes) |
 | L14 | AI assistant chips render (mock mode) | HTTP; PW dashboard.spec | ✅ (b4: dashboard 200 with assistant quick-action markers) |
 ## P2 — Public / consumer learner
 
@@ -58,13 +58,12 @@ qa_public` (pw in `tools/_qa_provision.php`, local-only).
 |---|---|---|---|
 | T1 | Trainer dashboard reachable (teacher archetype caps) | HTTP as qa_trainer | ✅ (b6: qa_trainer login → /my/dashboard.php 200/66KB authenticated; /local/sentientia_live/index.php 200/43KB with session UI, not a login redirect) |
 | T2 | Live full cycle: create → 6 slide types → run → SSE results → CSV export | CLI live_smoke + session PHPUnit; MAN projector two-browser | ✅ (b4: session + 6 slide types + join code seeded on 5.2; two-browser projector run done on 5.1 — PRIORITY-1) |
-| T3 | Classroom session + ICS invite | CLI smoke + ics PHPUnit | ⏳ |
-
+| T3 | Classroom session + ICS invite | CLI smoke + ics PHPUnit | ✅ (b8: same smoke_ics run — classroom session id=6 ICS built clean) |
 ## P5 — Course author / L&D admin
 
 | # | Workflow | Coverage | 5.2 status |
 |---|---|---|---|
-| A1 | Create course + audience rules → target learners enrolled | PW author.spec; CLI bulk-enrol smokes | ⏳ |
+| A1 | Create course + audience rules → target learners enrolled | PW author.spec; CLI bulk-enrol smokes | ✅ (b8: smoke_enrolment 14/14 — enrol/unenrol/idempotency incl. re-unenrol) |
 | A2 | Learning path: create → dates/rich-text → bulk enrol → cascade filters | CLI learningpath smokes | ⏳ |
 | A3 | Program create + audience enroller | CLI program smokes | ✅ (b5a: cohort enrol + prerequisites ALL OK ×2) |
 | A4 | Evaluation: builder (numeric/multiselect/conditional) → assign → respond → non-respondents → auto-expire | CLI evaluation crons + PHPUnit | ✅ (b5a: anonymous-question + template I/O ALL OK ×2) |
@@ -103,8 +102,7 @@ qa_public` (pw in `tools/_qa_provision.php`, local-only).
 | G1 | Frontpage + storefront render logged-out | HTTP | ✅ (b4: frontpage + storefront 200 logged-out, 0 fatals) |
 | G2 | Login page white-labeled ({{sitename}}, OAuth row) | HTTP (done in SW-4 smoke: 200, 12 markers) | ✅ (SW-4 log) |
 | G3 | Signup entry reachable | HTTP | ✅ (b4: signup entry 200) |
-| G4 | Maintenance page (customername string, DB-down-safe) | CLI render check | ⏳ |
-
+| G4 | Maintenance page (customername string, DB-down-safe) | CLI render check | ✅ (b8: CLI mustache render of theme_sentientia/maintenance + core/maintenance — 12KB, 0 `{{ }}` leak, customername resolves) |
 ## Cross-cutting gates (apply to every persona)
 
 | Gate | Mechanism | 5.2 status |
@@ -178,6 +176,10 @@ procedure with mandatory post-restore repairs.
 | WF-009 | S9 (vendor cron) | `userscormtimespent` queries `{scorm_scoes_track}` — table REMOVED in Moodle 4.3 (split into scorm_attempt/scorm_element_value). Crashed every cron on 4.3+ schemas incl. live. LS SCORM-time reports can't update on modern schemas until the vendor query is ported. | ✅ FIXED (guard) — table_exists → mtrace skip + return true; vendor port = recorded follow-up |
 
 | WF-010 | S8 + every BizLMS link to /my/dashboard.php | **CUTOVER-BLOCKING.** The SW-4 5.2 overlay covered plugins/theme but missed **BizLMS files inside CORE dirs**: `/my/dashboard.php` (redirect shim — the canonical BizLMS dashboard URL), `/my/switchrole.php` (role-switch endpoint, which was ALSO never canonicalised into git — webroot-only, same class as P0-1), `/my/templates/dropdown.mustache`, root `.htaccess` (branded error pages). **php -S masked it**: its path-fallback serves `/my/index.php` for ANY missing file under /my/ (garbage URLs proved it — all 200/68KB), so every probe "passed"; production Apache would hard-404. Tree-sweep found no further product files missing (residue: `blocks$name` junk dir on 5.1, `.rnd`, core-evolution diffs). | ✅ FIXED — switchrole.php canonicalised into git `my/`; all 4 files deployed to the 5.2 tree (+ shim harmonised on 5.1); `overlay-airpay-customs.ps1` gained a core-adjacent section so redeploys carry them; S8 round-trip then passed live |
+
+| WF-011 | L8 (seed tooling) | `seed_badges.php` required `badges/lib/awardlib.php` — removed in Moodle 5.2 (badges refactor); seed crashed on 5.2. No product code references it (grep-verified). | ✅ FIXED — file_exists guard (calls no awardlib function); dry-run green on 5.2 |
+| WF-012 | M5 (test fixture) | `supervisor_scope_test::test_non_siteadmin_only_sees_own_tenant` errored — the Bug-9b WS hardening (correctly) requires `moodle/user:viewdetails`, but the test seeded a bare user. 6/7 tests passed. | ✅ FIXED — fixture grants the capability via a role (like a real L&D-admin), preserving the non-siteadmin tenant-scoping assertion; re-run pending PHPUnit env re-init |
+| WF-013 | O4 + deploy integrity | `mod/quiz/accessrule/sentientia_proctoring` was **webroot-only — never canonicalised into git** (same class as P0-1/WF-010; only the `local/` sibling was in repo). Also its `rule_test.php` lacked the `require_once(rule.php)` that core loads directly (accessrule classes are NOT classmap-autoloaded) → 9/9 class-not-found. | ✅ FIXED — plugin canonicalised into git `mod/quiz/accessrule/`; test gains the core-pattern require_once; re-run pending PHPUnit env re-init |
 
 **Batch 3 verdicts (5.2, seeded):** **L3 ✅** enrol_now (free-only check, enrols, idempotent — args are
 `(courseid, userid)`); **L5 ✅** reminder cron fired bucket +1 → remind_sent row + employee notification;

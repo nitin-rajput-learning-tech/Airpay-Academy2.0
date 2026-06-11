@@ -66,6 +66,14 @@ final class supervisor_scope_test extends \advanced_testcase {
         $DB->set_field('user', 'open_path', '/1', ['id' => $airpay_admin->id]);
         $this->setUser($airpay_admin);
 
+        // The WS requires moodle/user:viewdetails (Bug-9b hardening) — grant
+        // it like a real L&D-admin role would, WITHOUT siteadmin, so this
+        // test still proves tenant scoping for non-siteadmins.
+        $roleid = $this->getDataGenerator()->create_role(['shortname' => 'supsearch']);
+        assign_capability('moodle/user:viewdetails', CAP_ALLOW, $roleid,
+            \context_system::instance());
+        role_assign($roleid, $airpay_admin->id, \context_system::instance()->id);
+
         // Seed: 2 users in /1, 2 in /77.
         $this->seed_user('Bravo-A', '/1');
         $this->seed_user('Bravo-B', '/1');
