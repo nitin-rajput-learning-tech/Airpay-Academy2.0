@@ -28,9 +28,23 @@
    access-denied). 8081 dev server restarted (old one died).
 4. Earlier overnight: **#402 sandbox kit COMPLETE** (parity CLI + runbook, locally rehearsed,
    single-row drift sensitivity proven) and **white-label defers D3/D4/D6 closed** (`9f292bc99`).
+5. **Batch 7 (`8c4782e48`) — WF-010, CUTOVER-BLOCKING:** the S8 role-switch probe exposed that the
+   5.2 overlay missed **BizLMS files inside core dirs** (`/my/dashboard.php` shim, `/my/switchrole.php`
+   — which was also webroot-only, never in git — `/my/templates/`, root `.htaccess`), and that
+   **php -S masks missing-file 404s** (its path-fallback serves `/my/index.php` for anything under
+   /my/ — every HTTP probe false-passed; Apache would hard-404). Fixed: files canonicalised +
+   deployed, overlay script gained a core-adjacent section, rollout packet step 1 updated, S8
+   round-trip then passed. Also batch 7: S5 ✅ (+PHP 8.4 str_getcsv fix), L4 HTTP half ✅,
+   WF-007 backlog reprocess clean.
+6. **Morning (Nitin: "all approved, finish pending"):** Apache vhost for the 5.2 instance built
+   on :8081 — PHP 8.4 via FastCGI (php-cgi pool; SetHandler + ProxyFCGISetEnvIf Windows
+   SCRIPT_FILENAME fix), `max_allowed_packet` already 64M; garbage-URL probe now properly 404s
+   (masking eliminated at the infrastructure level). Full 5-persona Playwright tier running
+   against it.
 
-**Nothing touched live. Decisions waiting on you:** business-pack blanks; Apache vhost for :8081
-(one config block) to unlock the full 5-persona Playwright pass; ADR-017 next phase scope.
+**Nothing touched live. Still waiting on Nitin:** business-pack ₹/target blanks (drafts approved
+as drafts); ADR-017 next phase scope; ninja sandbox + fresh live backup (Phase 2);
+~30-min manual pass (Hindi spot, Live projector walk).
 
 ---
 

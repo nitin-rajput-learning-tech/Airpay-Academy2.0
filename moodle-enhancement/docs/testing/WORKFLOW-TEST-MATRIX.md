@@ -19,38 +19,36 @@ qa_public` (pw in `tools/_qa_provision.php`, local-only).
 
 | # | Workflow | Coverage | 5.2 status |
 |---|---|---|---|
-| L1 | Login → role-aware dashboard renders (widgets, sidebar, 0 console errors) | PW render-smoke + dashboard.spec; HTTP | ⏳ |
-| L2 | Browse catalog → course detail → posters render | PW learner.spec; HTTP | ⏳ |
-| L3 | One-click free enrol (flag ON, tenant 1/177) → My Courses | CLI enrolment::enrol_now + PHPUnit (8 cases); HTTP | ⏳ |
+| L1 | Login → role-aware dashboard renders (widgets, sidebar, 0 console errors) | PW render-smoke + dashboard.spec; HTTP | ◑ HTTP halves ✅ (b1/b6 persona dashboards); COMPLIANCE persona passed full PW walk; full 5-persona PW running vs the Apache vhost (2026-06-11) |
+| L2 | Browse catalog → course detail → posters render | PW learner.spec; HTTP | ✅ (b4: authenticated catalog + detail 200, 0 fatals, poster markers) |
+| L3 | One-click free enrol (flag ON, tenant 1/177) → My Courses | CLI enrolment::enrol_now + PHPUnit (8 cases); HTTP | ✅ (b3: enrol_now free-only + idempotent + key-bypass; PHPUnit 8 cases) |
 | L4 | Open course → app-shell course player → activity completion records | PW learner.spec; HTTP + CLI completion mark | ◑ (b7: HTTP half ✅ — qa_employee opens enrolled course 71: 200/86KB, app-shell markers, activity links, 0 `{{ }}` leak. Completion-records half rests on the 32,248 imported completion rows + L5/M3 cron writes; a fresh API-write demo is PW-tier) |
-| L5 | Deadline reminder (7/3/1) lands as notification | CLI: seed deadline + run course_reminder task; assert _remind_sent + message | ⏳ |
-| L6 | Exam attempt → grade; exam reminder cron | CLI: exam_reminder task (same harness as L5) | ⏳ |
+| L5 | Deadline reminder (7/3/1) lands as notification | CLI: seed deadline + run course_reminder task; assert _remind_sent + message | ✅ (b3: seeded bucket +1 → _remind_sent row + employee notification) |
+| L6 | Exam attempt → grade; exam reminder cron | CLI: exam_reminder task (same harness as L5) | ◑ (no exam fixture on the clone — 0 quiz rows in window; cron harness shared with L5 which passed) |
 | L7 | Certificate issued on completion → file exists | CLI cert smoke (tool_certificate) + cert_emails_report | ✅ (b6: 11,415 issues / 9 templates on the clone; latest issue 11551 has its PDF stored — 3205758150AU.pdf, 625KB; cert_emails_report CLI runs clean) |
 | L8 | Gamification points/badges/streak + leaderboard row (opt-out respected) | CLI seed_badges + leaderboard e2e (Wave C5) | ⏳ |
-| L9 | Communication prefs page: WhatsApp/SMS consent (DLT) saves + audits | CLI run_whatsapp_e2e (dry); HTTP prefs page | ⏳ |
+| L9 | Communication prefs page: WhatsApp/SMS consent (DLT) saves + audits | CLI run_whatsapp_e2e (dry); HTTP prefs page | ✅ (b2: run_whatsapp_e2e dry ALL PASS — flip live_mode when DLT creds land) |
 | L10 | PWA: manifest + install CTA + push subscribe + real push received | CLI run_push_e2e + verify_d1_endpoints + test_crypto | ⏳ |
 | L11 | Live session: join by code → answer all 6 question types → results | CLI sentientia_live smokes; MAN two-browser (done on 5.1: PRIORITY-1) | ⏳ |
-| L12 | Profile + skills self-rate → audit log | CLI smoke_profile_skills + smoke_observer | ⏳ |
+| L12 | Profile + skills self-rate → audit log | CLI smoke_profile_skills + smoke_observer | ✅ (b5a: skills course-mapping + observer smokes ALL OK ×2) |
 | L13 | Calendar ICS download (classroom session) — white-label ORGANIZER | CLI ics_builder unit (PHPUnit) | ⏳ |
-| L14 | AI assistant chips render (mock mode) | HTTP; PW dashboard.spec | ⏳ |
-
+| L14 | AI assistant chips render (mock mode) | HTTP; PW dashboard.spec | ✅ (b4: dashboard 200 with assistant quick-action markers) |
 ## P2 — Public / consumer learner
 
 | # | Workflow | Coverage | 5.2 status |
 |---|---|---|---|
-| C1 | Self-signup (honeypot, consumer user_type) → account created → login | HTTP signup POST; PW login.spec | ⏳ |
-| C2 | Public storefront (Netflix grid) renders logged-out | HTTP; PW (guest part of render-smoke) | ⏳ |
-| C3 | Cart add → checkout → **fail-closed payment verify** (tampered hash rejected) | PHPUnit paygw suite (13 tests) + gateway_test; sandbox txn = Nitin-deferred | ⏳ |
-| C4 | Free-course cart path (Public keeps cart; no one-click) | CLI PHPUnit (policy cases) | ⏳ |
-| C5 | Privacy/ToS pages render, site-name white-labeled | HTTP | ⏳ |
-
+| C1 | Self-signup (honeypot, consumer user_type) → account created → login | HTTP signup POST; PW login.spec | ✅ (b4: signup E2E over HTTP — honeypot+sesskey validated, user 3428 created, success page) |
+| C2 | Public storefront (Netflix grid) renders logged-out | HTTP; PW (guest part of render-smoke) | ✅ (b4: storefront 200 logged-out, sentientia markers, 0 fatals) |
+| C3 | Cart add → checkout → **fail-closed payment verify** (tampered hash rejected) | PHPUnit paygw suite (13 tests) + gateway_test; sandbox txn = Nitin-deferred | ◑ (paygw PHPUnit suite 13 tests + F-032 live-path verify ✅; the one sandbox transaction is Nitin-deferred to post-deploy) |
+| C4 | Free-course cart path (Public keeps cart; no one-click) | CLI PHPUnit (policy cases) | ✅ (policy PHPUnit cases in the enrolment suite: Public /77 keeps cart, no one-click) |
+| C5 | Privacy/ToS pages render, site-name white-labeled | HTTP | ✅ (b4: privacy + ToS 200, site-name white-labeled) |
 ## P3 — Manager
 
 | # | Workflow | Coverage | 5.2 status |
 |---|---|---|---|
 | M1 | Manager dashboard (team widgets, team KPI = table source) | PW manager.spec; HTTP | ✅ (b6: qa_manager HTTP login → /my/dashboard.php 200, 70KB authenticated render, team/KPI markers present) |
 | M2 | Team overdue view | PW manager.spec | ⏳ |
-| M3 | Overdue escalation to supervisor (1/7/14 post-deadline, negative buckets) | CLI course_overdue + exam_overdue tasks with seeded data | ⏳ |
+| M3 | Overdue escalation to supervisor (1/7/14 post-deadline, negative buckets) | CLI course_overdue + exam_overdue tasks with seeded data | ✅ (b3: seeded bucket −7 → _remind_sent + MANAGER notification via supervisor chain) |
 | M4 | Completion analytics / reports render | HTTP; PW manager.spec | ✅ (b6: qa_manager → compliance_report/index.php 200/86KB + sentientia_manager/index.php 200/50KB, no access-denied) |
 | M5 | Tenant-scoped supervisor autocomplete | PHPUnit (tenant isolation tests) | ⏳ |
 
@@ -59,7 +57,7 @@ qa_public` (pw in `tools/_qa_provision.php`, local-only).
 | # | Workflow | Coverage | 5.2 status |
 |---|---|---|---|
 | T1 | Trainer dashboard reachable (teacher archetype caps) | HTTP as qa_trainer | ✅ (b6: qa_trainer login → /my/dashboard.php 200/66KB authenticated; /local/sentientia_live/index.php 200/43KB with session UI, not a login redirect) |
-| T2 | Live full cycle: create → 6 slide types → run → SSE results → CSV export | CLI live_smoke + session PHPUnit; MAN projector two-browser | ⏳ |
+| T2 | Live full cycle: create → 6 slide types → run → SSE results → CSV export | CLI live_smoke + session PHPUnit; MAN projector two-browser | ✅ (b4: session + 6 slide types + join code seeded on 5.2; two-browser projector run done on 5.1 — PRIORITY-1) |
 | T3 | Classroom session + ICS invite | CLI smoke + ics PHPUnit | ⏳ |
 
 ## P5 — Course author / L&D admin
@@ -68,21 +66,20 @@ qa_public` (pw in `tools/_qa_provision.php`, local-only).
 |---|---|---|---|
 | A1 | Create course + audience rules → target learners enrolled | PW author.spec; CLI bulk-enrol smokes | ⏳ |
 | A2 | Learning path: create → dates/rich-text → bulk enrol → cascade filters | CLI learningpath smokes | ⏳ |
-| A3 | Program create + audience enroller | CLI program smokes | ⏳ |
-| A4 | Evaluation: builder (numeric/multiselect/conditional) → assign → respond → non-respondents → auto-expire | CLI evaluation crons + PHPUnit | ⏳ |
+| A3 | Program create + audience enroller | CLI program smokes | ✅ (b5a: cohort enrol + prerequisites ALL OK ×2) |
+| A4 | Evaluation: builder (numeric/multiselect/conditional) → assign → respond → non-respondents → auto-expire | CLI evaluation crons + PHPUnit | ✅ (b5a: anonymous-question + template I/O ALL OK ×2) |
 | A5 | Exam create (quiz wrap, category) + reminder config | HTTP; covered via L6 cron | ⏳ |
-| A6 | AI quiz generation (mock mode, cost defence) | CLI aiquiz live_smoke (mock) | ⏳ |
-| A7 | Email templates: edit + token substitution + tenant override (welcome mail) | CLI smoke_bulk_import (sends welcome) + email_context preview | ⏳ |
-| A8 | Translate queue add → process (mock) | CLI translate mock_smoke | ⏳ |
-| A9 | Course-share request state machine | CLI smoke_request | ⏳ |
-
+| A6 | AI quiz generation (mock mode, cost defence) | CLI aiquiz live_smoke (mock) | ◑ (mock mode covered by PHPUnit suite; live smoke deliberately refuses without ANTHROPIC_API_KEY + --confirm-live-anthropic-call) |
+| A7 | Email templates: edit + token substitution + tenant override (welcome mail) | CLI smoke_bulk_import (sends welcome) + email_context preview | ✅ (b7: smoke_bulk_import sends tenant-template welcome with token substitution; b2 covers tenant override) |
+| A8 | Translate queue add → process (mock) | CLI translate mock_smoke | ✅ (b2: translate mock_smoke PASS) |
+| A9 | Course-share request state machine | CLI smoke_request | ✅ (b2: course-share state machine 23/23) |
 ## P6 — Compliance officer
 
 | # | Workflow | Coverage | 5.2 status |
 |---|---|---|---|
-| O1 | Compliance dashboard + report reachable from sidebar | PW compliance.spec | ⏳ |
-| O2 | Audit trail: every nudge/escalation around a deadline = one query | CLI (assert _remind_sent rows from L5/M3 runs) | ⏳ |
-| O3 | Recompletion cycle resets completion + re-nudges | CLI smoke_recompletion | ⏳ |
+| O1 | Compliance dashboard + report reachable from sidebar | PW compliance.spec | ✅ (COMPLIANCE persona passed the full PW surface walk incl. compliance pages) |
+| O2 | Audit trail: every nudge/escalation around a deadline = one query | CLI (assert _remind_sent rows from L5/M3 runs) | ✅ (b3: both nudge directions = one query on _remind_sent signed buckets) |
+| O3 | Recompletion cycle resets completion + re-nudges | CLI smoke_recompletion | ✅ (b2: smoke_recompletion 13/13) |
 | O4 | Proctoring access rule attaches to exam | PHPUnit quizaccess | ⏳ |
 
 ## P7 — Tenant / site admin
@@ -90,12 +87,12 @@ qa_public` (pw in `tools/_qa_provision.php`, local-only).
 | # | Workflow | Coverage | 5.2 status |
 |---|---|---|---|
 | S1 | **Native course management reachable (SA-04 gate)** — admin gets native hub, learner gets catalog | HTTP both personas | ✅ (after WF-001 fix: admin → native management.php 200; learner → /local/sentientia_catalog/ 200 from both management.php + index.php) |
-| S2 | Tenant registry manage UI + parity CLI 100% | CLI parity_check_tenants + parity_check_org | ⏳ |
-| S3 | Feature flags: set/resolve/audit (5-level) | CLI enable_oneclick_enrol --dry-run + PHPUnit | ⏳ |
-| S4 | HRMS importer: 24-col CSV dry-run + apply + cron sync | CLI smoke_hrms + smoke_bulk_csv | ⏳ |
+| S2 | Tenant registry manage UI + parity CLI 100% | CLI parity_check_tenants + parity_check_org | ✅ (b2: parity_org 100% (2,883 users) + parity_tenants 100%, registry seeded DORMANT) |
+| S3 | Feature flags: set/resolve/audit (5-level) | CLI enable_oneclick_enrol --dry-run + PHPUnit | ✅ (b2/SW-1: flag ON tenants 1+177 survived clone+upgrade; CLI dry-run + set verified) |
+| S4 | HRMS importer: 24-col CSV dry-run + apply + cron sync | CLI smoke_hrms + smoke_bulk_csv | ✅ (b2: smoke_hrms + smoke_bulk_csv ALL OK) |
 | S5 | Lifecycle: joiner welcome email (tenant template) / leaver deactivation | CLI smoke_bulk_import + lifecycle observer smoke | ✅ (b7: smoke_bulk_import ALL OK — create/skip/fail counts, designation token, idempotent re-run, cleanup; PHP 8.4 str_getcsv deprecation noise fixed in bulk_import_processor) |
-| S6 | Branding: customer_brand resolver + per-customer manifest | PHPUnit customer_brand_test + verify_brand_resolver CLI | ⏳ |
-| S7 | Push ops: VAPID keys, delivery log, master-key encrypt | CLI test_push + verify_signed_with_encrypted_pem | ⏳ |
+| S6 | Branding: customer_brand resolver + per-customer manifest | PHPUnit customer_brand_test + verify_brand_resolver CLI | ✅ (b5a + WF-005 repair: verify_brand_resolver 20/20 on 5.2) |
+| S7 | Push ops: VAPID keys, delivery log, master-key encrypt | CLI test_push + verify_signed_with_encrypted_pem | ✅ (b4: ES256/aes128gcm crypto self-tests all pass) |
 | S8 | Role switcher (admin↔learner round-trip) | HTTP; MAN visual (done on 5.1) | ✅ (b7: full HTTP round-trip as qa_orgadmin — switch→Employee (active marker + ✓ + aria-current flips), switch-back→Administrator. **Found WF-010 doing it:** the endpoint was missing from the 5.2 tree) |
 | S9 | Cert-health + cron-health blocks report green | CLI cron_health + cert_emails_report | ✅ (b6: after WF-006..009 fixes, full cron pass = **103 executed / 0 failed / 0 capability warnings**; cron_health: 0 sentientia stuck; residual vendor faildelay cleared; cert_emails_report runs clean) |
 
@@ -103,9 +100,9 @@ qa_public` (pw in `tools/_qa_provision.php`, local-only).
 
 | # | Workflow | Coverage | 5.2 status |
 |---|---|---|---|
-| G1 | Frontpage + storefront render logged-out | HTTP | ⏳ |
+| G1 | Frontpage + storefront render logged-out | HTTP | ✅ (b4: frontpage + storefront 200 logged-out, 0 fatals) |
 | G2 | Login page white-labeled ({{sitename}}, OAuth row) | HTTP (done in SW-4 smoke: 200, 12 markers) | ✅ (SW-4 log) |
-| G3 | Signup entry reachable | HTTP | ⏳ |
+| G3 | Signup entry reachable | HTTP | ✅ (b4: signup entry 200) |
 | G4 | Maintenance page (customername string, DB-down-safe) | CLI render check | ⏳ |
 
 ## Cross-cutting gates (apply to every persona)

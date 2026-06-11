@@ -38,6 +38,13 @@
    deploy procedure (`theme/sentientia/`, `local/`, `payment/gateway/airpay/`, `blocks/`, etc.).
    This single step carries the entire 2026-Q2 product layer **including the paygw security fix
    and the SA-04 admin redirect gate**.
+   **⚠ WF-010 (2026-06-11): the deploy MUST ALSO carry the core-adjacent BizLMS files** —
+   `my/dashboard.php` (redirect shim; every BizLMS nav link uses this URL), `my/switchrole.php`
+   (role-switch endpoint), `my/templates/dropdown.mustache`, and the root `.htaccess`
+   (from `moodle-enhancement/deploy/moodle-htaccess.template`). The 5.2 overlay originally
+   missed these; on Apache their absence = hard 404s (dead dashboard links + dead role switch).
+   `tools` overlay script (`moodle-enhancement/tools/overlay-airpay-customs.ps1`) now includes
+   them in its core-adjacent section.
 2. **Upgrade** — `php admin/cli/upgrade.php --non-interactive` (applies `paygw_airpay` v…0.10 +
    any pending plugin bumps).
 3. **Purge caches** — `php admin/cli/purge_caches.php`.
