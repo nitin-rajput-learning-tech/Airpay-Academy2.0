@@ -40,14 +40,28 @@ trait bizlms_fixture {
         global $DB;
         $dbman = $DB->get_manager();
 
-        // mdl_user — five BizLMS columns referenced by sentientia_users / org / etc.
+        // mdl_user — the BizLMS columns referenced by sentientia_users / org /
+        // learningpath audience filters etc. Mirrors the production user
+        // table's open_* surface (user_manager's allowed-field list).
         $usertable = new \xmldb_table('user');
         $userfields = [
-            ['open_path',         XMLDB_TYPE_CHAR,    '255', null, null,        null, null],
-            ['open_employeeid',   XMLDB_TYPE_CHAR,    '255', null, null,        null, null],
-            ['open_designation',  XMLDB_TYPE_CHAR,    '255', null, null,        null, null],
-            ['open_supervisorid', XMLDB_TYPE_INTEGER, '20',  null, null,        null, null],
-            ['open_location',     XMLDB_TYPE_CHAR,    '200', null, null,        null, null],
+            ['open_path',           XMLDB_TYPE_CHAR,    '255', null, null, null, null],
+            ['open_employeeid',     XMLDB_TYPE_CHAR,    '255', null, null, null, null],
+            ['open_designation',    XMLDB_TYPE_CHAR,    '255', null, null, null, null],
+            ['open_supervisorid',   XMLDB_TYPE_INTEGER, '20',  null, null, null, null],
+            ['open_location',       XMLDB_TYPE_CHAR,    '200', null, null, null, null],
+            ['open_costcenterid',   XMLDB_TYPE_INTEGER, '20',  null, null, null, null],
+            ['open_departmentid',   XMLDB_TYPE_INTEGER, '20',  null, null, null, null],
+            ['open_client',         XMLDB_TYPE_CHAR,    '255', null, null, null, null],
+            ['open_team',           XMLDB_TYPE_CHAR,    '255', null, null, null, null],
+            ['open_grade',          XMLDB_TYPE_CHAR,    '100', null, null, null, null],
+            ['open_hrmsrole',       XMLDB_TYPE_CHAR,    '255', null, null, null, null],
+            ['open_zone',           XMLDB_TYPE_CHAR,    '100', null, null, null, null],
+            ['open_region',         XMLDB_TYPE_CHAR,    '100', null, null, null, null],
+            ['open_employmenttype', XMLDB_TYPE_CHAR,    '100', null, null, null, null],
+            ['open_prefix',         XMLDB_TYPE_CHAR,    '30',  null, null, null, null],
+            ['open_joindate',       XMLDB_TYPE_INTEGER, '20',  null, null, null, null],
+            ['open_dateofbirth',    XMLDB_TYPE_INTEGER, '20',  null, null, null, null],
         ];
         foreach ($userfields as [$name, $type, $length, $unsigned, $notnull, $sequence, $default]) {
             $field = new \xmldb_field($name, $type, $length, $unsigned, $notnull, $sequence, $default);

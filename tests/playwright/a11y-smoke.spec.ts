@@ -101,7 +101,7 @@ test.describe('a11y · ADMIN', () => {
     const pass = process.env.PLAYWRIGHT_ADMIN_PASS ?? '';
     test.skip(!(user && pass), 'ADMIN creds not set (PLAYWRIGHT_ADMIN_USER/_PASS)');
     test('ADMIN: curated surfaces have no serious/critical a11y violations', async ({ page }) => {
-        test.setTimeout(120_000);
+        test.setTimeout(240_000); // align with the persona tests; admin surfaces are the slowest on single-process local FCGI
         await login(page, { user, pass, present: true });
         await assertAuthenticated(page);
         await axeSurfaces(page, 'ADMIN');

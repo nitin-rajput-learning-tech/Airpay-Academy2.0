@@ -23,33 +23,14 @@ defined('MOODLE_INTERNAL') || die();
  */
 final class supervisor_scope_test extends \advanced_testcase {
 
-    /**
-     * The suite exercises the BizLMS tenant columns, which a vanilla PHPUnit
-     * site doesn't have — self-provision them (DDL persists for the run;
-     * matches the production schema this suite exists to protect).
-     */
-    public static function setUpBeforeClass(): void {
-        global $DB;
-        parent::setUpBeforeClass();
-        $dbman = $DB->get_manager();
-        $table = new \xmldb_table('user');
-        $path = new \xmldb_field('open_path', XMLDB_TYPE_CHAR, '255', null, null, null, null);
-        if (!$dbman->field_exists($table, $path)) {
-            $dbman->add_field($table, $path);
-        }
-        $sup = new \xmldb_field('open_supervisorid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
-        if (!$dbman->field_exists($table, $sup)) {
-            $dbman->add_field($table, $sup);
-        }
-        // The search WS SELECTs these for display in the autocomplete rows.
-        $emp = new \xmldb_field('open_employeeid', XMLDB_TYPE_CHAR, '100', null, null, null, null);
-        if (!$dbman->field_exists($table, $emp)) {
-            $dbman->add_field($table, $emp);
-        }
-        $des = new \xmldb_field('open_designation', XMLDB_TYPE_CHAR, '255', null, null, null, null);
-        if (!$dbman->field_exists($table, $des)) {
-            $dbman->add_field($table, $des);
-        }
+    // The suite exercises the BizLMS tenant columns, which a vanilla PHPUnit
+    // site doesn't have — provision them via the shared org fixture (matches
+    // the production schema this suite exists to protect).
+    use \local_sentientia_org\test\bizlms_fixture;
+
+    protected function setUp(): void {
+        parent::setUp();
+        $this->ensure_bizlms_schema();
     }
 
     /** Helper: create a user with a specific open_path. */

@@ -57,8 +57,8 @@ export async function login(page: Page, creds: Creds): Promise<void> {
         await page.locator('#password').fill(creds.pass);
         // Generous click timeout: the post-login navigation can be slow on a cold
         // hit (runtime SCSS compile, cold DB/caches); 10s actionTimeout is too tight.
-        await page.locator('#loginbtn').click({ timeout: 45_000 });
-        await page.waitForURL(/\/(my|admin|user|course)/i, { timeout: 45_000 }).catch(() => undefined);
+        await page.locator('#loginbtn').click({ timeout: 90_000 }); // first login POST of a run can exceed 45s on the single-process local FCGI backend
+        await page.waitForURL(/\/(my|admin|user|course)/i, { timeout: 90_000 }).catch(() => undefined);
         if ((await page.locator('#username').count()) === 0) {
             return; // login form gone → authenticated
         }

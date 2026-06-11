@@ -22,6 +22,15 @@ defined('MOODLE_INTERNAL') || die();
  */
 final class enrolment_window_test extends \advanced_testcase {
 
+    // Vanilla PHPUnit sites lack the BizLMS user/course columns this plugin
+    // queries (open_path etc.) - provision them per-test via the shared trait.
+    use \local_sentientia_org\test\bizlms_fixture;
+
+    protected function setUp(): void {
+        parent::setUp();
+        $this->ensure_bizlms_schema();
+    }
+
     public function test_create_persists_dates(): void {
         $this->resetAfterTest();
         $this->setAdminUser();
@@ -40,7 +49,7 @@ final class enrolment_window_test extends \advanced_testcase {
         $row = $DB->get_record('local_sentientia_learningpath', ['id' => $pid], '*', MUST_EXIST);
         $this->assertSame($start, (int) $row->startdate);
         $this->assertSame($end,   (int) $row->enddate);
-        $this->assertSame(FORMAT_HTML, (int) $row->descriptionformat);
+        $this->assertSame((int) FORMAT_HTML, (int) $row->descriptionformat); // FORMAT_HTML is string '1' in core
         $this->assertStringContainsString('<strong>content</strong>', $row->description);
     }
 
@@ -114,7 +123,7 @@ final class enrolment_window_test extends \advanced_testcase {
         ]);
 
         $row = $DB->get_record('local_sentientia_learningpath', ['id' => $pid], '*', MUST_EXIST);
-        $this->assertSame(FORMAT_HTML, (int) $row->descriptionformat);
+        $this->assertSame((int) FORMAT_HTML, (int) $row->descriptionformat); // FORMAT_HTML is string '1' in core
     }
 
     public function test_form_validation_rejects_end_before_start(): void {

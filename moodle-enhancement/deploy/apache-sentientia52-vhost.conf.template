@@ -56,6 +56,18 @@
 #   attempted and abandoned — mod_proxy_fcgi's balancer path mangles
 #   SCRIPT_FILENAME on Windows ("No input file specified"); the direct
 #   single-backend form below is the proven configuration.
+#
+#   OPS NOTE (2026-06-11): with PHP_FCGI_MAX_REQUESTS=0 the worker NEVER
+#   recycles - after a day of heavy traffic it degrades (logins crawling past
+#   90s). Recycle it periodically: Stop-Process php-cgi, then relaunch.
+#   PowerShell 5.1 gotcha when relaunching: -ArgumentList does NOT quote
+#   arguments containing spaces - the php.ini path must carry embedded
+#   quotes or php-cgi silently loads NO ini (and so no mysqli):
+#     Start-Process -FilePath $phpcgi -WorkingDirectory $phpdir `
+#       -ArgumentList '-b','127.0.0.1:9084','-c','"D:\path with spaces\php.ini"' `
+#       -WindowStyle Hidden
+#   Symptom of the unquoted form: every page 500s with 'database driver
+#   problem detected / MySQLi extension'.
 # ============================================================================
 
 <VirtualHost *:8081>

@@ -11,7 +11,7 @@
         <span class="airpay-progress__value">{{percent}}%</span>
     </div>
     {{/showlabel}}
-    <div class="airpay-progress__track" role="progressbar" aria-valuenow="{{percent}}" aria-valuemin="0" aria-valuemax="100">
+    <div class="airpay-progress__track" role="progressbar" aria-label="{{#label}}{{label}}{{/label}}{{^label}}{{#str}} progress, core {{/str}}{{/label}}" aria-valuenow="{{percent}}" aria-valuemin="0" aria-valuemax="100">
         <div class="airpay-progress__fill" style="width: {{percent}}%"></div>
     </div>
 </div>

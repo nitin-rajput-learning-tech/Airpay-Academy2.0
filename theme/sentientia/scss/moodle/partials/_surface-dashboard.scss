@@ -309,15 +309,19 @@
 .airpay-dash__streak-icon  { color: #f97316; }
 .airpay-dash__trophy-icon  { color: #d97706; }
 
-/* Block D AA fix (2026-06-03): two gamification labels failed WCAG AA on the dashboard's dark
-   surface — the streak-day day labels (a competing `#6b7280 !important` rule was overriding the
-   AA-safe base, giving 3.48:1 on #1a1d27) and the leaderboard "(You)" (#0066A7 = 2.71:1). Re-assert
-   AA-safe colours: #9ca3af (~5.1:1) and #60a5fa (~6.8:1). Unscoped — the surface is dark in BOTH the
-   default + dark-mode states. `!important` is required (the streak-day culprit is itself !important,
-   which specificity can't beat); verified present + winning in the compiled CSS. Retiring the stray
-   `#6b7280!important` at source is a separate theme-debt item. */
-.airpay-gamification__streak-day small { color: #9ca3af !important; }        /* ~5.1:1 on #1a1d27 */
-.airpay-gamification__leaderboard-name small { color: #60a5fa !important; }  /* "(You)" ~6.8:1 */
+/* a11y Gate-2 fix (2026-06-11, supersedes the 2026-06-03 Block-D rule): axe measured the
+   gamification labels against a WHITE card in light mode (#9ca3af on #ffffff = 2.53:1 — the
+   2026-06-03 "surface is dark in BOTH states" assumption no longer holds post-restyle). Use the
+   semantic token: light resolves to --ap-neutral-600 #475569 (~7.5:1 on white); body.dark-mode
+   remaps --ap-color-text-secondary to #9ca3b4 (~5.1:1 on the dark card) so both modes stay AA.
+   `!important` retained — the original streak-day culprit (#6b7280 !important) still needs beating;
+   retiring it at source remains a theme-debt item. */
+.airpay-gamification__streak-day small,
+.airpay-gamification__streak-header small,
+.airpay-gamification__progress-label {
+    color: var(--ap-color-text-secondary, #475569) !important;
+}
+.airpay-gamification__leaderboard-name small { color: #60a5fa !important; }  /* "(You)" ~6.8:1 on dark */
 
 /* Course progress cards — removed Phase B0 iter 3. Continue Learning
    tiles now use the tokens-aware .airpay-course-card component from

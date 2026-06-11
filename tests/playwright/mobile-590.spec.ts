@@ -14,7 +14,8 @@ test.describe('Mobile 590px layout', () => {
     test.use({ viewport: { width: 590, height: 900 } });
 
     test('login renders without horizontal overflow at 590px', async ({ page }) => {
-        await page.goto('/login/index.php');
+        test.setTimeout(240_000); // single-process local FCGI serializes PHP; align with render-smoke's local pacing (CI is much faster)
+        await page.goto('/login/index.php', { waitUntil: 'domcontentloaded' }); // NEVER default-'load' here: serialized local PHP makes full-subresource waits flood the queue (render-smoke's documented pattern)
 
         await expect(page.locator('body')).toBeVisible();
 
@@ -33,7 +34,7 @@ test.describe('Mobile 590px layout', () => {
             expect(box!.height).toBeLessThanOrEqual(120);
         }
 
-        const username = page.locator('input[name="username"]');
+        const username = page.locator('#username'); // NOT [name=username]: Moodle's guest-access form carries a hidden username=guest input on the same page
         await expect(username).toBeVisible();
         const userBox = await username.boundingBox();
         expect(userBox).not.toBeNull();

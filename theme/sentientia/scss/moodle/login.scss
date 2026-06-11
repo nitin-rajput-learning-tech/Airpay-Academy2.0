@@ -266,14 +266,23 @@ body#page-login-index .login_nav_btns .btn_ctu {
 body#page-login-index div.login_popup_container {
     color: #fff;
     width: 50%;
-    position: absolute;
+    /* fixed, not absolute: offscreen-parked panels must not extend the
+       document's scrollable overflow (885px scrollWidth at the 590px gate) -
+       fixed positioning is viewport-relative and contributes none. */
+    position: fixed;
     right: -50%;
     top: 0px;
-    transition: 1s;
+    /* a11y Gate-2 2026-06-11: closed popups were merely parked offscreen-right,
+       extending body scrollWidth to 885px at the 590px viewport (horizontal
+       scrollbar) and leaving them in the accessibility tree / tab order.
+       visibility flips after the slide-out completes; the slide-in shows it
+       immediately. */
+    visibility: hidden;
+    transition: right 1s, visibility 0s 1s;
     height: 100%;
     background-color: #fff;
 }
-body#page-login-index div.login_popup_container.open{right: 0px;top: 0px;color: #000;z-index: 1;}
+body#page-login-index div.login_popup_container.open{right: 0px;top: 0px;color: #000;z-index: 1;visibility: visible;transition: right 1s, visibility 0s;}
 body#page-login-index div.login_popup_container .div_close {
     cursor: pointer;
     color: #333;
@@ -667,3 +676,8 @@ body#page-login-index .row.completeform {
     padding-left: 15px;
 }
 
+
+
+/* a11y Gate-2 2026-06-11: the login page is a single-viewport design - never
+   show a horizontal scrollbar from offscreen-parked animation elements. */
+body#page-login-index { overflow-x: hidden; }

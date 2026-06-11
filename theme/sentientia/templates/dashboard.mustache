@@ -500,7 +500,8 @@
                 <h3 class="airpay-dash__section-title"><i class="fa fa-clock" aria-hidden="true"></i> Recent Activity</h3>
                 <ul class="airpay-activity-list">
                     {{#recentactivity}}
-                    {{> theme_sentientia/components/activity_item }}
+                    {{! a11y Gate-2: the partial's root is a div/a by design (reused outside lists) - the li wrapper keeps this ul valid }}
+                    <li>{{> theme_sentientia/components/activity_item }}</li>
                     {{/recentactivity}}
                 </ul>
             </div>
@@ -721,7 +722,7 @@
                     <h3 class="airpay-dash__section-title"><i class="fa fa-history" aria-hidden="true"></i> Activity Timeline</h3>
                     <ul class="airpay-activity-list">
                         {{#timeline}}
-                        {{> theme_sentientia/components/activity_item }}
+                        <li>{{> theme_sentientia/components/activity_item }}</li>
                         {{/timeline}}
                     </ul>
                 </div>
