@@ -15,6 +15,31 @@ qa_public` (pw in `tools/_qa_provision.php`, local-only).
 
 ---
 
+## Browser re-verification pass — 2026-06-15 (post-WF-025, WF-025 lens)
+
+WF-025 proved that CLI/HTTP-tier probes can MASK a real web-session capability
+bug (a CLI `has_capability` grant that the browser denies because of an active
+role switch in the session). So every persona's key surface was re-driven in a
+**real authenticated browser session** on 5.2, not just via CLI/HTTP:
+
+| Persona (web session) | Surfaces re-confirmed | Result |
+|---|---|---|
+| qa_orgadmin (AUTHOR, multi-role) | dashboard, A5 quiz-create mform (`course/modedit.php?add=quiz`) | **P0 found + fixed** (WF-025/025b); now renders, full org-admin nav, `rsw` empty |
+| qa_manager | dashboard + full management nav | ✅ clean, not demoted |
+| qa_trainer | dashboard + Sentientia Live trainer dashboard (T1) | ✅ clean |
+| qa_compliance (multi-role) | dashboard + Compliance Report (O1) | ✅ clean, not demoted |
+| qa_employee (LEARNER) | dashboard (L1), course view (L4), Catalog (L2), profile+skills (L12) | ✅ clean |
+| qa_public (tenant /77) | storefront/dashboard/my-courses/course-view (2026-06-15 audit) | ✅ clean (SCORM 404 = filedir artifact, C6) |
+
+**Only finding across the whole pass: WF-025** — the role-switcher force-pin
+demoting multi-role users to student site-wide (fixed + decoupled, WF-025/025b,
+held for Phase-2). Every other persona×surface renders clean in the web session
+(0 PHP fatals, no Mustache leak, correct role-appropriate nav, no silent
+capability reduction). The high-risk class the browser tier uniquely catches —
+multi-role capability demotion — is confirmed resolved across all personas.
+
+---
+
 ## P1 — Learner (employee)
 
 | # | Workflow | Coverage | 5.2 status |
