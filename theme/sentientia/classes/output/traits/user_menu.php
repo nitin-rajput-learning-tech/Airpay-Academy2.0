@@ -158,9 +158,18 @@ trait user_menu {
                                     FROM {role}
                                     WHERE shortname = 'employee' AND archetype = 'student' ";
             $learnerroleid = $DB->get_record_sql($learner_record_sql);
-            if(!empty($USER->access['rsw'])){
-                $USER->access['rsw']['/1'] = $learnerroleid->id;
-            }
+            // WF-025 (2026-06-15, foolproof A5) — REMOVED an unconditional force-pin
+            // that set $USER->access['rsw']['/1'] = <employee/student role id> on EVERY
+            // render whenever ANY role-switch entry already existed. Because '/1' (the
+            // system context) is an ancestor of every context, core's bottom-up rsw walk
+            // (accesslib has_capability) hit it first and silently demoted any multi-role
+            // user — an org-admin/manager who is ALSO a course editingteacher — to the
+            // student role SITE-WIDE. That stripped moodle/course:manageactivities, so
+            // course/modedit.php (add activity / quiz) threw required_capability_exception
+            // with NO in-course "return to my normal role" banner (is_role_switched() is
+            // false because the switch lived at parent /1, not the course path). The
+            // switcher menu below and the explicit /my/switchrole.php click path are
+            // untouched. See WORKFLOW-TEST-MATRIX A5 + docs/audits for the full trace.
             $rolename = get_string('employee','theme_sentientia');
 
             $depths = [];

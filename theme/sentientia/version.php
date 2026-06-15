@@ -356,7 +356,13 @@ defined('MOODLE_INTERNAL') || die();
 // so Adrian Greeve's GPL copyright is RETAINED, only the identifier changed.
 // version.php header de-branded to the Airpay/Sentientia attribution. Broader
 // eAbyas-header sweep + dead theme/epsilon removal tracked as follow-up batches.
-$plugin->version   = 2026060400;
+// WF-025 (2026-06-15, foolproof A5) — removed the unconditional role-switch
+// force-pin in classes/output/traits/user_menu.php (set $USER->access['rsw']['/1']
+// = employee/student on every render whenever any rsw existed) that silently
+// demoted multi-role users (org-admin + course editingteacher) to student
+// site-wide, blocking course/modedit.php (add activity) with no escape banner.
+// Version bump so the changed renderer trait is picked up (class cache reset).
+$plugin->version   = 2026061500;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_sentientia';
 $plugin->maturity  = MATURITY_BETA;

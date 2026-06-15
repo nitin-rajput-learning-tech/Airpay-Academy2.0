@@ -215,3 +215,22 @@ Removed clearly-dead, unreferenced files (git history retains them; verified no 
 - `scss/fontawesome4_OLD/` (15 files, 102K) — superseded by the FA6 iconsystem; not
   imported by any top-level scss.
 - `pix/Biz_logo_OLD.png` — superseded logo, unreferenced.
+
+## WF-025 (2026-06-15, foolproof A5) — role-switch force-pin removed (P0)
+
+`classes/output/traits/user_menu.php:161-163` unconditionally force-pinned
+`$USER->access['rsw']['/1'] = <employee/student role id>` on EVERY render
+whenever any role-switch entry already existed. Because `/1` (system) is an
+ancestor of every context, core's bottom-up rsw walk demoted any multi-role
+user (an org-admin/manager who is ALSO a course editingteacher) to the student
+role SITE-WIDE — stripping `moodle/course:manageactivities` so
+`course/modedit.php` (add activity/quiz) threw `required_capability_exception`,
+with no in-course "return to my normal role" banner (the switch lived at the
+parent `/1`, so `is_role_switched(course)` is false). A CLI `has_capability`
+probe granted the cap (no session → no rsw), which masked it from non-browser
+tests. Removed the force-pin (the switcher menu + explicit `/my/switchrole.php`
+click path are untouched). Verified: after a fresh login qa_orgadmin
+(editingteacher) reaches the quiz-create mform and sees the full org-admin nav.
+Version 2026060400 → 2026061500. Deeper redesign (auto-switch-on-page-load +
+a working return-to-normal escape hatch) flagged for Nitin — see the workflow
+synthesis + WORKFLOW-TEST-MATRIX A5.
