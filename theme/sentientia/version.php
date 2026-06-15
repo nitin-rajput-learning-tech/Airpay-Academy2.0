@@ -362,7 +362,12 @@ defined('MOODLE_INTERNAL') || die();
 // demoted multi-role users (org-admin + course editingteacher) to student
 // site-wide, blocking course/modedit.php (add activity) with no escape banner.
 // Version bump so the changed renderer trait is picked up (class cache reset).
-$plugin->version   = 2026061500;
+// WF-025b (2026-06-15) — decouple the role-VIEW scoping context from the
+// capability switch: roleswitch()/role_switch_basedon_userroles() gained an
+// $applyrsw flag; the first-visit auto-call (user_menu.php) now passes false so
+// it sets currentroleinfo (org-scoping) WITHOUT writing $USER->access['rsw'].
+// Role-switching capabilities now change ONLY on an explicit user action.
+$plugin->version   = 2026061501;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_sentientia';
 $plugin->maturity  = MATURITY_BETA;

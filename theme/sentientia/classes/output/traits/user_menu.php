@@ -242,7 +242,12 @@ trait user_menu {
             if($highest_roleinfo->roleid){
                 $highest_roleid = $highest_roleinfo->roleid;
                 $contextid = $highest_roleinfo->contextid;
-                $this->role_switch_basedon_userroles($highest_roleid, false, $contextid);
+                // WF-025b (2026-06-15): pass $applyrsw=FALSE — establish the role-view
+                // scoping context (currentroleinfo, consumed by org-scoped reports)
+                // on first visit WITHOUT writing $USER->access['rsw'], so navigating to
+                // the dashboard never silently reduces a multi-role user's capabilities.
+                // A real capability switch happens only on an explicit user action.
+                $this->role_switch_basedon_userroles($highest_roleid, false, $contextid, false);
                  redirect(new moodle_url('/'));
 
             }

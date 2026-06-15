@@ -1372,7 +1372,7 @@ JS;
      * @param stdClass $context usually site context.
      * @return string HTML.
      */
-    function role_switch_basedon_userroles($roleid, $purge, $contextid = 1){
+    function role_switch_basedon_userroles($roleid, $purge, $contextid = 1, $applyrsw = true){
         global $DB, $CFG, $USER;
 
         if(is_siteadmin($USER->id) || ($roleid <= 0) || $purge){
@@ -1392,7 +1392,7 @@ JS;
         // }
 
         $accessdata = get_empty_accessdata();
-        if($this->roleswitch($roleid, $context, $accessdata)){
+        if($this->roleswitch($roleid, $context, $accessdata, $applyrsw)){
             return true;
         }else{
             return false;
@@ -1405,13 +1405,24 @@ JS;
      * @param stdClass $context usually site context.
      * @return string HTML.
      */
-    function roleswitch($roleid, $context, &$accessdata){
+    function roleswitch($roleid, $context, &$accessdata, $applyrsw = true){
 
         global $DB, $ACCESSLIB_PRIVATE, $USER;
+        // WF-025b (2026-06-15) — $applyrsw=false establishes the role-VIEW scoping
+        // context ($USER->useraccess['currentroleinfo'], consumed by the org-scoped
+        // reports/blocks) WITHOUT writing $USER->access['rsw'] (the array core
+        // has_capability() consults to REPLACE effective caps). The first-visit
+        // auto-call (user_menu.php) now passes false, so merely navigating to the
+        // dashboard never silently reduces a multi-role user's capabilities — a real
+        // capability switch only ever happens on an explicit user action. Report
+        // org-scoping is unchanged by construction (currentroleinfo is still set
+        // below regardless of $applyrsw). See WF-025 + WORKFLOW-TEST-MATRIX A5.
         // if($context->path == '/1'){
         //     $USER->access['rsw'] = [];
         // }else{
-            $USER->access['rsw'][$context->path] = $roleid;
+            if($applyrsw){
+                $USER->access['rsw'][$context->path] = $roleid;
+            }
         // }
 
 
@@ -1457,17 +1468,21 @@ JS;
 
                         // strpos(haystack, needle)
                         if($this->role_capability_assignments($roleid, $othercontext, $accessdata)){
-                            $USER->access['rsw'][$othercontext->path] = $roleid;
+                            if($applyrsw){
+                                $USER->access['rsw'][$othercontext->path] = $roleid;
+                            }
                             $othercostcenterpath = \local_sentientia_org\accesslib::get_costcenterpath_context($othercontext);
                             $USER->useraccess['currentroleinfo']['contextinfo'][] = ['context' => $othercontext,'costcenterpath' => $othercostcenterpath];
                         }
                     }else {//if($context->path != '/1')if user is assigned at system context we unset the rsw variable.
 
-                        if(strpos($othercontext->path.'/', $context->path.'/') === 0 && $context->path != '/1'){
-                            unset($USER->access['rsw'][$othercontext->path]);
-                        }else{
-                            if($this->role_capability_assignments($userroleid, $othercontext, $accessdata))
-                                $USER->access['rsw'][$othercontext->path] = $userroleid;
+                        if($applyrsw){
+                            if(strpos($othercontext->path.'/', $context->path.'/') === 0 && $context->path != '/1'){
+                                unset($USER->access['rsw'][$othercontext->path]);
+                            }else{
+                                if($this->role_capability_assignments($userroleid, $othercontext, $accessdata))
+                                    $USER->access['rsw'][$othercontext->path] = $userroleid;
+                            }
                         }
                     }
                 }

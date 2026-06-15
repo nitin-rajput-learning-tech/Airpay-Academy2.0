@@ -234,3 +234,22 @@ click path are untouched). Verified: after a fresh login qa_orgadmin
 Version 2026060400 → 2026061500. Deeper redesign (auto-switch-on-page-load +
 a working return-to-normal escape hatch) flagged for Nitin — see the workflow
 synthesis + WORKFLOW-TEST-MATRIX A5.
+
+## WF-025b (2026-06-15) — decouple role-view scoping from the capability switch
+
+Follow-up to WF-025 (Nitin: "fix the auto-switch-on-load — switch only on
+explicit click"). `roleswitch()` / `role_switch_basedon_userroles()` gained an
+`$applyrsw` flag; the first-visit auto-call (`user_menu.php`) now passes `false`,
+so it establishes the role-view scoping context (`$USER->useraccess['currentroleinfo']`,
+consumed by the org-scoped learnerscript reports + dashboards) WITHOUT writing
+`$USER->access['rsw']` (which replaces effective capabilities). Net: navigating to
+the dashboard never reduces a multi-role user's capabilities; a real capability
+switch happens only on an explicit user action. **Verified** on 5.2 (fresh
+qa_orgadmin login): `rsw = []` (was `{"/1/3":9}`), `currentroleinfo` + scoping
+paths `["/1"]` UNCHANGED (so report org-scoping is byte-identical — no
+tenant-isolation regression), `has_capability(manageactivities)`=YES, and the
+quiz-create mform renders. Version 2026061500 → 2026061501. Held for the
+Phase-2 sandbox cutover (no live deploy). Follow-up to verify in the sandbox
+(real multi-org data): an org-head's learnerscript reports still scope to their
+own org. Remaining design option NOT taken (Nitin's call): a working
+return-to-normal escape hatch / replacing the fork with core role_switch().
