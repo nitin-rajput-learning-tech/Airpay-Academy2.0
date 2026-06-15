@@ -38,6 +38,24 @@ held for Phase-2). Every other persona×surface renders clean in the web session
 capability reduction). The high-risk class the browser tier uniquely catches —
 multi-role capability demotion — is confirmed resolved across all personas.
 
+**Author create/builder entries (A1–A4 + classroom), 2026-06-15** — re-driven as
+qa_orgadmin in-browser now that WF-025 unblocked authoring: learning-path
+(`local/sentientia_learningpath` — list + "New Path" create modal opens, 19
+fields), programs (`/sentientia_programs` — "New Program"), evaluation
+(`/sentientia_evaluation` — Kirkpatrick builder), classroom
+(`/sentientia_classroom` — "New Classroom"). All render with their create CTA,
+0 PHP fatals, no permission denial. (Form internals remain PHPUnit-covered —
+A2 = 48 tests; this pass confirms the author can *reach + render* the authoring
+surfaces, the capability dimension WF-025 had broken.)
+
+**Locally-achievable FOOLPROOF browser scope is now exhausted.** Every persona
+dashboard, every persona's key workflow surface, and every author create entry
+renders clean in a real web session; the only defect found was WF-025 (fixed).
+The remaining path to a true 100% gate is **not local**: it needs the Phase-2
+ninja-sandbox (real multi-org data, live-backup migration — Nitin-gated) and the
+CI tier (multi-worker Playwright for webkit/firefox, SSE two-browser, visual-diff
+masking, multi-step mform submit). Those are tracked in their rows above.
+
 ---
 
 ## P1 — Learner (employee)
