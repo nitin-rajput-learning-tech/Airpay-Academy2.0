@@ -26,7 +26,16 @@ ninja sandbox when Nitin provides server access + a fresh live backup. **Nothing
    pre-migration data.
 1. **Restore** the DB dump into a fresh database + unpack moodledata; point a sandbox `config.php`
    at them (`noemailever = true` MANDATORY — the dump holds real user emails; see the May email
-   incident). Verify: user count query matches expectations.
+   incident). Verify: user count query matches expectations **AND filedir parity holds** — the
+   `moodledata/filedir` tree must carry the actual file *content*, not just the DB `{files}` rows.
+   Assert both: `SELECT COUNT(*), SUM(filesize) FROM {files} WHERE filesize > 0` (DB view) vs the
+   restored `filedir` file-count + on-disk byte total (`find moodledata/filedir -type f | wc -l` +
+   `du -sb moodledata/filedir`) — they must be in the same order of magnitude (GB-scale, not a
+   handful of files). **Why this gate exists (2026-06-15):** the local `moodle52_cut1` clone imported
+   the prod DB rows but NOT the package binaries — its `filedir` held 21 files / ~0 MB — so SCORM
+   players rendered their chrome + started the API but 404'd on the content asset
+   (`pluginfile.php/.../mod_scorm/content/.../index_lms.html`). A DB-only-shaped restore looks
+   broken even when the product is fine; this check catches it before the smoke tier does.
 2. **Deploy the Sentientia tree** (production branch) over the sandbox webroot per
    `ROLLOUT-PACKET-2026-06-10.md` step 1 (theme/sentientia, local/, payment, blocks, enrol,
    quizaccess).
@@ -54,6 +63,13 @@ ninja sandbox when Nitin provides server access + a fresh live backup. **Nothing
    SA-04 both personas, signup POST, reminder cron with a seeded deadline, whatsapp e2e dry,
    `verify_brand_resolver` (20/20). Browser tier: run `tests/playwright` render-smoke + a11y with
    `PLAYWRIGHT_BASE_URL=<sandbox>` + `PLAYWRIGHT_*_USER/_PASS` (browsers proven to launch).
+   **File-content gate (do NOT skip — added 2026-06-15):** open ONE SCORM activity as an enrolled
+   learner and assert the player's content frame actually loads — i.e. the
+   `pluginfile.php/.../mod_scorm/content/.../index_lms.html` (or the package's launch file) returns
+   **HTTP 200, not 404**. The render-smoke alone passes on chrome-only surfaces (dashboard, catalog,
+   course-view, quiz, forum, Page) that carry their content in the DB and need no filedir; only a
+   file-backed activity exercises the restored `filedir`. If this 404s while everything else is
+   green, the filedir restore (step 1) was incomplete — go back, do not proceed to Phase 3.
 7. **Report to Nitin:** parity output + smoke results + any deviations. **Replacement (Phase 3)
    remains Nitin-gated.**
 
