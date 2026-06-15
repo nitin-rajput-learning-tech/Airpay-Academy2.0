@@ -84,3 +84,20 @@ local/airpay_exams/
 
 Initial state card. Plugin has been live for many phases; created now
 as part of the P1 state-card pass.
+
+## QA-only tooling added — 2026-06-15 (no runtime state change)
+
+Two QA-only CLI seeders live under `cli/`, used by the FOOLPROOF campaign.
+They are guarded to refuse to run unless the `qa_*` accounts exist, never
+ship to production, and do not touch the plugin's schema or runtime
+behaviour:
+
+- `seed_qa_teacher_enrolment.php` — enrols `qa_orgadmin` as editingteacher
+  in the probe course so the A5 exam-create form can be driven (CI browser
+  tier).
+- `seed_qa_content_path_proof.php` — seeds a file-free `mod_page` into a
+  course to prove the activity content path renders end-to-end, isolating
+  the public-learner SCORM 404s as a missing-`filedir` data artifact (see
+  `docs/visual-evidence/2026-06-15/` and WORKFLOW-TEST-MATRIX C6).
+
+No plugin version bump — these are test fixtures, not plugin features.
