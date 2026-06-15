@@ -33,7 +33,11 @@ export default defineConfig({
     fullyParallel: false,
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 2 : 0,
-    workers: process.env.CI ? 1 : undefined,
+    // ALWAYS 1: multi-spec invocations otherwise get one worker per file,
+    // and two browsers starve the single-process PHP backend (local php-cgi
+    // AND the CI docker stack) — every test times out at goto. Single-file
+    // runs were never affected (gate-2 lesson, 2026-06-11).
+    workers: 1,
     reporter: process.env.CI
         ? [['list'], ['github'], ['html', { open: 'never', outputFolder: 'playwright-report' }], ['junit', { outputFile: 'test-results/junit.xml' }]]
         : [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]],
@@ -51,6 +55,14 @@ export default defineConfig({
         {
             name: 'chromium',
             use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 900 } },
+        },
+        {
+            // Branded Google Chrome via the system install (channel) — used for
+            // local cross-browser coverage where Playwright's bundled firefox
+            // cannot run (its build needs a VC++ runtime absent on no-admin
+            // Windows boxes: "side-by-side configuration is incorrect").
+            name: 'chrome',
+            use: { ...devices['Desktop Chrome'], channel: 'chrome', viewport: { width: 1280, height: 900 } },
         },
         {
             name: 'firefox',

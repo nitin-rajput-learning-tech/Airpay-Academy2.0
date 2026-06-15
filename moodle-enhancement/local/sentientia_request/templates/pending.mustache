@@ -12,7 +12,15 @@
         {{/has_viewall_cap}}
     </div>
 
-    <div data-region="datatable"
+    {{!
+        WF-022: data-region must be "airpay-datatable" (not "datatable") —
+        theme_sentientia/datatable's init() scans for
+        `[data-airpay-table], [data-region="airpay-datatable"]`. With the wrong
+        region the table never instantiated and hung on the static "Loading..."
+        placeholder forever. Bug #12 fixed this on my_requests.mustache but
+        missed pending + all_requests. Datatable.init() also takes no args.
+    }}
+    <div data-region="airpay-datatable"
          data-component="local_sentientia_request"
          data-ws-name="local_sentientia_request_list_pending"
          data-columns="{{ columns_json }}"
@@ -26,7 +34,7 @@
 {{#js}}
 require(['theme_sentientia/datatable', 'local_sentientia_request/decide'],
     function(Datatable, Decide) {
-        Datatable.init(document.querySelector('[data-region="datatable"]'));
+        Datatable.init();
         Decide.init();
     });
 {{/js}}

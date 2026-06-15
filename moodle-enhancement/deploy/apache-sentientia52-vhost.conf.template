@@ -78,6 +78,14 @@
     # Moodle slasharguments URLs (/pluginfile.php/1/...) need PATH_INFO.
     AcceptPathInfo On
 
+    # libcurl-based clients (Playwright webkit on Windows) race Apache's default
+    # 5s keep-alive close on the serialized single-PHP backend - reused
+    # connections die mid-request (trace shows status -1, then a successful
+    # retry) and the dead first attempt fails the 0-console-errors gate.
+    # 60s removes the race window.
+    KeepAliveTimeout 60
+    MaxKeepAliveRequests 500
+
     # SetHandler form: Apache resolves the file itself (404s missing files
     # BEFORE proxying — no php -S-style masking) and hands proxy_fcgi the
     # real SCRIPT_FILENAME. The trailing slash on the backend URL is REQUIRED

@@ -119,7 +119,12 @@ class list_mine extends external_api {
             'courseid'           => new external_value(PARAM_INT, ''),
             'status'             => new external_value(PARAM_ALPHANUMEXT, ''),
             'status_badge'       => new external_value(PARAM_TEXT, ''),
-            'status_badge_class' => new external_value(PARAM_ALPHANUMEXT, ''),
+            // WF-021: PARAM_TEXT not PARAM_ALPHANUMEXT — the pending badge
+            // class is 'bg-warning text-dark' (a SPACE-separated class list);
+            // PARAM_ALPHANUMEXT forbids spaces, so any pending row failed
+            // return validation ("Invalid response value detected"). Only ever
+            // surfaced on the approvals inbox, which lists pending-only rows.
+            'status_badge_class' => new external_value(PARAM_TEXT, ''),
             'route'              => new external_value(PARAM_ALPHANUMEXT, ''),
             'reason'             => new external_value(PARAM_TEXT, ''),
             'decision_note'      => new external_value(PARAM_TEXT, ''),

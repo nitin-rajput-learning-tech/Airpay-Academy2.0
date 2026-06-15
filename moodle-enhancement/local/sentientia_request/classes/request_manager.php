@@ -232,18 +232,41 @@ class request_manager {
      * @return array{0:string, 1:int}  [route_label, approver_userid]
      */
     public static function route_approver_for_path(\stdClass $user, int $pathid): array {
-        // 1. Direct manager.
-        if (!empty($user->open_managerid)) {
-            global $DB;
-            $manager = $DB->get_record('user',
-                ['id' => $user->open_managerid, 'deleted' => 0, 'suspended' => 0]);
-            if ($manager) {
-                return ['manager', (int) $manager->id];
-            }
+        // 1. Direct supervisor.
+        $supervisorid = self::resolve_supervisor($user);
+        if ($supervisorid > 0) {
+            return ['manager', $supervisorid];
         }
         // 2. Default approver.
         $default = (int) (get_config('local_sentientia_request', 'default_approver') ?: 2);
         return ['admin', $default];
+    }
+
+    /**
+     * Resolve the requester's direct supervisor (BizLMS convention).
+     *
+     * WF-018 (2026-06-11): the production mdl_user schema carries
+     * open_supervisorid — open_managerid does NOT exist on BizLMS, so the
+     * original lookup never matched and every request silently fell through
+     * to the course-owner / default-approver routes. open_supervisorid is
+     * authoritative; open_managerid stays as a secondary lookup for
+     * deployments that add that column.
+     *
+     * @return int approver userid, or 0 when no live supervisor is set.
+     */
+    private static function resolve_supervisor(\stdClass $user): int {
+        global $DB;
+        foreach (['open_supervisorid', 'open_managerid'] as $field) {
+            if (empty($user->{$field})) {
+                continue;
+            }
+            $supervisor = $DB->get_record('user',
+                ['id' => $user->{$field}, 'deleted' => 0, 'suspended' => 0]);
+            if ($supervisor) {
+                return (int) $supervisor->id;
+            }
+        }
+        return 0;
     }
 
     /**
@@ -254,13 +277,10 @@ class request_manager {
     public static function route_approver(\stdClass $user, int $courseid): array {
         global $DB;
 
-        // 1. Direct manager via open_managerid (BizLMS convention).
-        if (!empty($user->open_managerid)) {
-            $manager = $DB->get_record('user',
-                ['id' => $user->open_managerid, 'deleted' => 0, 'suspended' => 0]);
-            if ($manager) {
-                return ['manager', (int) $manager->id];
-            }
+        // 1. Direct supervisor via open_supervisorid (BizLMS convention).
+        $supervisorid = self::resolve_supervisor($user);
+        if ($supervisorid > 0) {
+            return ['manager', $supervisorid];
         }
 
         // 2. Course owner — custom field `course_owner_userid`.

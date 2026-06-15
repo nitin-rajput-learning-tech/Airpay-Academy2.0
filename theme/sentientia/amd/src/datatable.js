@@ -74,6 +74,13 @@ class Datatable {
             }
         }
 
+        // WF-023: when the columns config already declares an `actions`
+        // column, the per-column renderer paints row.actions itself; the
+        // trailing auto action-cell (see renderBody) must then be suppressed
+        // or the buttons render TWICE (the approvals inbox showed a duplicate
+        // Approve/Reject pair). Compute once here.
+        this.hasActionsColumn = this.columns.some(c => c.key === 'actions');
+
         const firstSortable = this.columns.find(c => c.sortable);
         this.state = {
             search: '',
@@ -358,8 +365,12 @@ class Datatable {
                 return `<td class="ps-3">${val}</td>`;
             }).join('');
 
+            // WF-023: skip the auto action-cell when an `actions` column is
+            // already in the config (it rendered row.actions above). Without
+            // this guard, tables that declare an actions column AND return
+            // row.actions paint the buttons twice.
             let actionCell = '';
-            if (this.actionsHtml || row.actions) {
+            if (!this.hasActionsColumn && (this.actionsHtml || row.actions)) {
                 const html = row.actions || this.actionsHtml.replace(/\{\{(\w+)\}\}/g,
                     (m, key) => escapeHtml(row[key] ?? ''));
                 actionCell = `<td class="text-end pe-3">${html}</td>`;

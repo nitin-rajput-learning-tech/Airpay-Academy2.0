@@ -76,7 +76,7 @@ for (const persona of PERSONAS) {
         test.skip(!VISUAL_ON, 'visual gate off — set PLAYWRIGHT_VISUAL=1 after seeding baselines');
         test.skip(!creds.present, `${persona} creds not set (PLAYWRIGHT_${persona}_USER/_PASS)`);
         test(`${persona}: curated surfaces match baseline`, async ({ page }) => {
-            test.setTimeout(240_000);
+            test.setTimeout(300_000); // local single-process FCGI pacing: 4 surfaces × settle waits ran 3.4–4.1m healthy; 240s clipped LEARNER (heaviest dashboard)
             await login(page, creds);
             await assertAuthenticated(page);
             await shotSurfaces(page, persona);
@@ -91,7 +91,7 @@ test.describe('visual · ADMIN', () => {
     test.skip(!VISUAL_ON, 'visual gate off — set PLAYWRIGHT_VISUAL=1 after seeding baselines');
     test.skip(!(user && pass), 'ADMIN creds not set (PLAYWRIGHT_ADMIN_USER/_PASS)');
     test('ADMIN: curated surfaces match baseline', async ({ page }) => {
-        test.setTimeout(120_000);
+        test.setTimeout(240_000); // align with render-smoke's ADMIN local pacing (was 120s — clipped on the serialized backend)
         await login(page, { user, pass, present: true });
         await assertAuthenticated(page);
         await shotSurfaces(page, 'ADMIN');

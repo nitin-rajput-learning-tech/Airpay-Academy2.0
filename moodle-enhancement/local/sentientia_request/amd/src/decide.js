@@ -21,23 +21,32 @@ import ModalEvents from 'core/modal_events';
  * @return {Promise<object>}
  */
 const createSaveCancelModal = (spec) => new Promise((resolve, reject) => {
-    require(['core/modal'], (Modal) => {
-        if (Modal && typeof Modal.create === 'function') {
-            Modal.create({modalType: 'SAVE_CANCEL', title: spec.title, body: spec.body})
+    // WF-024: Moodle 5.2's SAVE_CANCEL modal is core/modal_save_cancel.
+    // The previous `core/modal` Modal.create({modalType:'SAVE_CANCEL'}) is NOT
+    // a valid 5.2 API — it silently built a BASE modal with an empty footer
+    // (no Save/Cancel buttons), so a decision could never be submitted.
+    const viaFactory = () => require(['core/modal_factory'], (ModalFactory) => {
+        ModalFactory.create({type: ModalFactory.types.SAVE_CANCEL, title: spec.title, body: spec.body})
+            .then(resolve).catch(reject);
+    }, reject);
+    require(['core/modal_save_cancel'], (ModalSaveCancel) => {
+        if (ModalSaveCancel && typeof ModalSaveCancel.create === 'function') {
+            ModalSaveCancel.create({title: spec.title, body: spec.body})
                 .then(resolve).catch(reject);
             return;
         }
-        require(['core/modal_factory'], (ModalFactory) => {
-            ModalFactory.create({type: ModalFactory.types.SAVE_CANCEL, title: spec.title, body: spec.body})
-                .then(resolve).catch(reject);
-        }, reject);
-    }, () => {
-        require(['core/modal_factory'], (ModalFactory) => {
-            ModalFactory.create({type: ModalFactory.types.SAVE_CANCEL, title: spec.title, body: spec.body})
-                .then(resolve).catch(reject);
-        }, reject);
-    });
+        viaFactory();
+    }, viaFactory);
 });
+
+/**
+ * Escape a dataset-sourced string for interpolation into modal HTML.
+ * Requester/course names are user-controlled data (WF-019 hardening).
+ * @param {string} s
+ * @return {string}
+ */
+const esc = (s) => String(s).replace(/[&<>"']/g,
+    (c) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 
 export const init = () => {
     document.addEventListener('click', async (e) => {
@@ -46,8 +55,8 @@ export const init = () => {
         e.preventDefault();
         const requestid = parseInt(btn.dataset.requestid, 10);
         const decision  = btn.dataset.decision;  // 'approved' | 'rejected'
-        const requester = btn.dataset.requester || 'this user';
-        const course    = btn.dataset.course || 'this course';
+        const requester = esc(btn.dataset.requester || 'this user');
+        const course    = esc(btn.dataset.course || 'this course');
         if (!requestid || !['approved', 'rejected'].includes(decision)) return;
 
         const isApprove = decision === 'approved';

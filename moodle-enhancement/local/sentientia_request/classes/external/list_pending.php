@@ -97,11 +97,39 @@ class list_pending extends external_api {
                 $shape['requester_name']  = trim(($r->req_firstname ?? '') . ' '
                                                   . ($r->req_lastname ?? ''));
                 $shape['requester_email'] = (string) ($r->req_email ?? '');
+                // WF-020 (2026-06-11): list_mine::shape() builds the
+                // REQUESTER's Cancel button — wrong surface here. The
+                // approvals inbox needs Approve/Reject wired to the
+                // decide.js contract; before this override nothing on the
+                // platform ever rendered [data-action="decide-request"].
+                $shape['actions'] = self::approver_actions($r, $shape['requester_name']);
                 $rows[] = $shape;
             }
         }
         return ['total' => $total, 'rows' => $rows,
                 'page' => $params['page'], 'perpage' => $params['perpage']];
+    }
+
+    /**
+     * Approve / Reject buttons for the approvals inbox (decide.js contract).
+     *
+     * @param \stdClass $r joined request record (needs id, status, course_name)
+     * @param string $requestername already-trimmed requester display name
+     * @return string action-cell HTML ('' for non-pending rows)
+     */
+    private static function approver_actions(\stdClass $r, string $requestername): string {
+        if (($r->status ?? '') !== 'pending') {
+            return '';
+        }
+        $common = 'data-action="decide-request" data-requestid="' . (int) $r->id . '" '
+            . 'data-requester="' . s($requestername) . '" '
+            . 'data-course="' . s(format_string($r->course_name ?? '')) . '"';
+        return '<button type="button" class="btn btn-success btn-sm me-1" '
+            . $common . ' data-decision="approved">'
+            . s(get_string('approve', 'local_sentientia_request')) . '</button>'
+            . '<button type="button" class="btn btn-outline-danger btn-sm" '
+            . $common . ' data-decision="rejected">'
+            . s(get_string('reject', 'local_sentientia_request')) . '</button>';
     }
 
     public static function execute_returns(): external_single_structure {
@@ -116,7 +144,12 @@ class list_pending extends external_api {
                 'courseid'           => new external_value(PARAM_INT, ''),
                 'status'             => new external_value(PARAM_ALPHANUMEXT, ''),
                 'status_badge'       => new external_value(PARAM_TEXT, ''),
-                'status_badge_class' => new external_value(PARAM_ALPHANUMEXT, ''),
+                // WF-021: PARAM_TEXT not PARAM_ALPHANUMEXT — the pending badge
+                // class is 'bg-warning text-dark' (SPACE-separated); the
+                // approvals inbox is pending-only, so EVERY row failed return
+                // validation ("Invalid response value detected") → datatable
+                // hung on "Loading...". See list_mine.php for the full note.
+                'status_badge_class' => new external_value(PARAM_TEXT, ''),
                 'route'              => new external_value(PARAM_ALPHANUMEXT, ''),
                 'reason'             => new external_value(PARAM_TEXT, ''),
                 'decision_note'      => new external_value(PARAM_TEXT, ''),
