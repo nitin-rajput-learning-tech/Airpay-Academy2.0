@@ -1,0 +1,59 @@
+# Sentientia LMS native wrapper — .gitignore
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# TypeScript build output
+dist/
+*.js.map
+
+# Environment variables / credentials
+.env
+.env.local
+.env.*.local
+
+# Android
+android/app/release/
+android/app/debug/
+android/.gradle/
+android/build/
+android/app/build/
+android/app/google-services.json
+android/keystore.properties
+android/local.properties
+*.jks
+*.keystore
+
+# iOS
+ios/App/Pods/
+ios/App/App.xcworkspace/xcuserdata/
+ios/App/App.xcodeproj/xcuserdata/
+ios/App/DerivedData/
+ios/build/
+*.ipa
+*.xcarchive
+
+# Apple signing credentials
+*.p12
+*.mobileprovision
+*.p8
+*.certSigningRequest
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Airpay Academy</title>
+  <meta name="description" content="Sentientia LMS — Airpay Academy">
+  <!--
+    LOCAL BUNDLE MODE ONLY
+    This file is used only in LOCAL BUNDLE mode (webDir: 'www').
+    In REMOTE URL mode (production), this file is NOT served — Capacitor loads
+    the remote URL (https://www.airpay.academy) directly into the WebView.
+    See BUILD.md §Remote URL vs Local Bundle for details.
+  -->
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Montserrat', -apple-system, sans-serif;
+      background-color: #F2F4FB;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      min-height: 100dvh;
+    }
+    .loading-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      padding: 32px;
+    }
+    .loading-logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 16px;
+      background-color: #0066A7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .loading-logo svg { width: 48px; height: 48px; fill: #ffffff; }
+    .loading-text { color: #1a1a2e; font-size: 1.125rem; font-weight: 600; text-align: center; }
+    .loading-spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid #e2e6ef;
+      border-top-color: #0066A7;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-error { display: none; color: #dc2626; font-size: 0.875rem; text-align: center; max-width: 280px; }
+  </style>
+</head>
+<body>
+  <div class="loading-screen" id="loadingScreen">
+    <div class="loading-logo" aria-hidden="true">
+      <!-- Placeholder icon — replace with actual Airpay/Sentientia logo SVG -->
+      <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+        <path d="M24 4C12.95 4 4 12.95 4 24s8.95 20 20 20 20-8.95 20-20S35.05 4 24 4zm-2 30v-8h-6l10-16v8h6L22 34z"/>
+      </svg>
+    </div>
+    <div class="loading-text">Airpay Academy</div>
+    <div class="loading-spinner" role="status" aria-label="Loading"></div>
+    <p class="loading-error" id="loadingError">
+      Could not connect to Airpay Academy. Please check your internet connection and try again.
+    </p>
+  </div>
+
+  <!-- Capacitor bridge — required for native plugin APIs in local bundle mode -->
+  <script src="capacitor.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      var PRODUCTION_URL = document.documentElement.dataset.sentientiaUrl
+        || 'https://www.airpay.academy';
+      function onReady() {
+        setTimeout(function () { window.location.href = PRODUCTION_URL; }, 800);
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', onReady);
+      } else {
+        onReady();
+      }
+      setTimeout(function () {
+        var errorEl = document.getElementById('loadingError');
+        if (errorEl && window.location.href.indexOf('airpay.academy') === -1) {
+          errorEl.style.display = 'block';
+        }
+      }, 10000);
+    })();
+  </script>
+</body>
+</html>
