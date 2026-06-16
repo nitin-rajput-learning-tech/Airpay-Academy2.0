@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/sentientia_skillsai/db" VERSION="20260616"
+       COMMENT="Sentientia LMS Skills Intelligence (AI) — Gap P0.1 MVP schema.
+                Five tables:
+                  job        — one row per AI skill-extraction request
+                  candidate  — one row per AI-proposed skill (FK to job),
+                               carries the human-review status (the gate)
+                  taxonomy   — per-tenant CANONICAL skill taxonomy node,
+                               only created from an APPROVED candidate
+                  impact     — skill -> business-impact mapping surface
+                  gapfeed    — per-user role-vs-held gap feed rows
+                All tenant-scoped tables carry customerid + costcenterid +
+                timecreated + timemodified per CLAUDE.md multi-tenant rules.">
+  <TABLES>
+
+    <!-- ─── EXTRACTION JOBS ─── -->
+    <TABLE NAME="local_sentientia_skai_job"
+           COMMENT="P0.1.0 (2026-06-16) — One row per AI skill-extraction
+                    request. Lifecycle: pending (created, call in flight) →
+                    extracted (Claude returned, candidates persisted,
+                    awaiting human review) → reviewed (every candidate has
+                    a review verdict) → failed (API/parser error).
+
+                    `sourcekind` records WHERE the source text came from
+                    (scorm | narration | sop | manual) for audit. The
+                    verbatim `sourcetext` is kept so a re-extraction with a
+                    newer prompt is reproducible. PII screening is enforced
+                    at paste time by prompt_builder::validate_source().
+
+                    `prompt_version` ties the job to a versioned system
+                    prompt for safe A/B prompt-quality testing.">
+      <FIELDS>
+        <FIELD NAME="id"             TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="courseid"       TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="FK to course.id the source belongs to. 0 = not bound to a course."/>
+        <FIELD NAME="ownerid"        TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="FK to user.id — L and D author who requested extraction."/>
+        <FIELD NAME="customerid"     TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="1"
+               COMMENT="Sentientia LMS customer scope. Phase 1: hardcoded 1 (Airpay)."/>
+        <FIELD NAME="costcenterid"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="BizLMS tenant root (1=Airpay, 77=Public, 177=ZEEA). Derived from owner open_path."/>
+        <FIELD NAME="title"          TYPE="char" LENGTH="200" NOTNULL="true"
+               COMMENT="Author-supplied title for the extraction review queue."/>
+        <FIELD NAME="sourcekind"     TYPE="char" LENGTH="20"  NOTNULL="true" DEFAULT="manual"
+               COMMENT="scorm | narration | sop | manual — provenance of sourcetext."/>
+        <FIELD NAME="sourcetext"     TYPE="text" NOTNULL="true"
+               COMMENT="Verbatim transcript/SOP/narration text sent to Claude."/>
+        <FIELD NAME="model"          TYPE="char" LENGTH="64"  NOTNULL="true" DEFAULT="claude-sonnet-4-6"
+               COMMENT="Anthropic model identifier used. Recorded for audit."/>
+        <FIELD NAME="prompt_version" TYPE="char" LENGTH="32"  NOTNULL="true" DEFAULT="v1"
+               COMMENT="System-prompt revision tag (e.g. v1, v2-hindi, custom:v1)."/>
+        <FIELD NAME="num_extracted"  TYPE="int"  LENGTH="4"   NOTNULL="true" DEFAULT="0"
+               COMMENT="How many candidate skills Claude returned (parser-validated)."/>
+        <FIELD NAME="tokens_in"      TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Anthropic input_tokens for cost tracking."/>
+        <FIELD NAME="tokens_out"     TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Anthropic output_tokens for cost tracking."/>
+        <FIELD NAME="status"         TYPE="char" LENGTH="16"  NOTNULL="true" DEFAULT="pending"
+               COMMENT="pending | extracted | reviewed | failed"/>
+        <FIELD NAME="error_detail"   TYPE="text" NOTNULL="false"
+               COMMENT="On status=failed: short error tag + HTTP code. NEVER includes the API key."/>
+        <FIELD NAME="reviewed_by"    TYPE="int"  LENGTH="10"  NOTNULL="false"
+               COMMENT="FK to user.id who completed the review. NULL until reviewed."/>
+        <FIELD NAME="reviewed_at"    TYPE="int"  LENGTH="10"  NOTNULL="false"
+               COMMENT="Unix timestamp when review completed."/>
+        <FIELD NAME="extracted_at"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Unix timestamp of extraction completion (or attempt on failure)."/>
+        <FIELD NAME="timecreated"    TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"     TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_ownerid"  TYPE="foreign" FIELDS="ownerid"  REFTABLE="user"   REFFIELDS="id"/>
+        <KEY NAME="fk_courseid" TYPE="foreign" FIELDS="courseid" REFTABLE="course" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_owner_status"    UNIQUE="false" FIELDS="ownerid, status"
+               COMMENT="Author review queue: 'my extractions awaiting review'"/>
+        <INDEX NAME="idx_status_created"  UNIQUE="false" FIELDS="status, timecreated"
+               COMMENT="Admin queue across all authors"/>
+        <INDEX NAME="idx_customer_tenant" UNIQUE="false" FIELDS="customerid, costcenterid"
+               COMMENT="Per-customer / per-tenant cost analytics + tenant scoping"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- ─── SKILL CANDIDATES (the human-review gate) ─── -->
+    <TABLE NAME="local_sentientia_skai_cand"
+           COMMENT="P0.1.0 (2026-06-16) — One row per AI-proposed candidate
+                    skill. Cascade with parent job. This is the human-review
+                    GATE: a candidate is NEVER canonical taxonomy until a
+                    reviewer flips its status to approved/edited AND it has
+                    been promoted into local_sentientia_skai_taxonomy.
+
+                    `status` lifecycle: proposed → approved | edited |
+                    rejected. Only approved/edited rows are promotable.
+                    `taxonomyid` is set on promotion (FK to taxonomy.id),
+                    NULL until then.
+
+                    `suggested_category` / `suggested_level` are Claude's
+                    suggestions; a reviewer may override before promotion.">
+      <FIELDS>
+        <FIELD NAME="id"                 TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="jobid"              TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="FK to local_sentientia_skai_job.id"/>
+        <FIELD NAME="costcenterid"       TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Denormalised tenant root (copied from parent job) for fast tenant-scoped review queries."/>
+        <FIELD NAME="skillname"          TYPE="char" LENGTH="200" NOTNULL="true"
+               COMMENT="Candidate skill name as proposed by Claude (or edited by reviewer)."/>
+        <FIELD NAME="skilldescription"   TYPE="text" NOTNULL="false"
+               COMMENT="Candidate skill description / what it demonstrates."/>
+        <FIELD NAME="suggested_category" TYPE="char" LENGTH="100" NOTNULL="true" DEFAULT=""
+               COMMENT="Claude-suggested category bucket (Compliance, Technical, ...)."/>
+        <FIELD NAME="suggested_level"    TYPE="int"  LENGTH="2"   NOTNULL="true" DEFAULT="1"
+               COMMENT="Claude-suggested teach-to level 1-5 (Awareness..Expert)."/>
+        <FIELD NAME="confidence"         TYPE="number" LENGTH="5" DECIMALS="2" NOTNULL="true" DEFAULT="0"
+               COMMENT="Claude-reported confidence 0.00-1.00 the skill is genuinely taught by the source."/>
+        <FIELD NAME="evidence"           TYPE="text" NOTNULL="false"
+               COMMENT="Short verbatim snippet from the source that justifies the skill (grounding)."/>
+        <FIELD NAME="status"             TYPE="char" LENGTH="16"  NOTNULL="true" DEFAULT="proposed"
+               COMMENT="proposed | approved | edited | rejected"/>
+        <FIELD NAME="reviewer_note"      TYPE="text" NOTNULL="false"
+               COMMENT="Optional reviewer comment. Visible in audit history."/>
+        <FIELD NAME="taxonomyid"         TYPE="int"  LENGTH="10"  NOTNULL="false"
+               COMMENT="FK to local_sentientia_skai_taxonomy.id once promoted. NULL until then."/>
+        <FIELD NAME="sortorder"          TYPE="int"  LENGTH="6"   NOTNULL="true" DEFAULT="0"
+               COMMENT="Display order within the job (1, 2, 3, ...)."/>
+        <FIELD NAME="timecreated"        TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"       TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_jobid" TYPE="foreign" FIELDS="jobid"
+                             REFTABLE="local_sentientia_skai_job" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_job_sort"     UNIQUE="false" FIELDS="jobid, sortorder"
+               COMMENT="Render candidates in display order for a job"/>
+        <INDEX NAME="idx_status"       UNIQUE="false" FIELDS="status"
+               COMMENT="Promotion query: select where status IN ('approved','edited')"/>
+        <INDEX NAME="idx_costcenter"   UNIQUE="false" FIELDS="costcenterid"
+               COMMENT="Tenant-scoped candidate review queries"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- ─── CANONICAL TAXONOMY (per-tenant, human-approved) ─── -->
+    <TABLE NAME="local_sentientia_skai_taxonomy"
+           COMMENT="P0.1.0 (2026-06-16) — Per-tenant CANONICAL skills
+                    taxonomy node. A row exists here ONLY after a human
+                    reviewer approved (or edited) the originating candidate
+                    and promoted it. This is the audited bridge between
+                    AI-proposed candidates and the production skill schema
+                    in local_sentientia_skills.
+
+                    `linked_skillid` is set when the taxonomy node has been
+                    materialised into a local_sentientia_skills row (the
+                    production competency framework that the gap engine and
+                    sentientia_recommendations read). NULL = taxonomy-only
+                    (not yet wired into the production matrix).">
+      <FIELDS>
+        <FIELD NAME="id"             TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="customerid"     TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="1"
+               COMMENT="Sentientia LMS customer scope."/>
+        <FIELD NAME="costcenterid"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="BizLMS tenant root — the taxonomy is per-tenant."/>
+        <FIELD NAME="name"           TYPE="char" LENGTH="200" NOTNULL="true"
+               COMMENT="Canonical skill name."/>
+        <FIELD NAME="description"    TYPE="text" NOTNULL="false"
+               COMMENT="Canonical skill description."/>
+        <FIELD NAME="category"       TYPE="char" LENGTH="100" NOTNULL="true" DEFAULT=""
+               COMMENT="Category bucket (Compliance, Technical, Leadership, ...)."/>
+        <FIELD NAME="max_level"      TYPE="int"  LENGTH="2"   NOTNULL="true" DEFAULT="5"
+               COMMENT="Top of the 1-5 proficiency scale for this skill."/>
+        <FIELD NAME="origin_candidateid" TYPE="int" LENGTH="10" NOTNULL="false"
+               COMMENT="FK to the candidate that was promoted to create this node. NULL for manually-seeded nodes."/>
+        <FIELD NAME="approved_by"    TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="FK to user.id who approved this node into the taxonomy."/>
+        <FIELD NAME="linked_skillid" TYPE="int"  LENGTH="10"  NOTNULL="false"
+               COMMENT="FK to local_sentientia_skills.id once materialised into the production matrix. NULL = taxonomy-only."/>
+        <FIELD NAME="status"         TYPE="char" LENGTH="16"  NOTNULL="true" DEFAULT="active"
+               COMMENT="active | retired — retired nodes are kept for audit but excluded from gap analysis."/>
+        <FIELD NAME="timecreated"    TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"      TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_approved"  TYPE="foreign" FIELDS="approved_by" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_tenant_status" UNIQUE="false" FIELDS="costcenterid, status"
+               COMMENT="List active taxonomy nodes for a tenant"/>
+        <INDEX NAME="idx_tenant_name"   UNIQUE="true"  FIELDS="costcenterid, name"
+               COMMENT="One canonical node per (tenant, skill name) — prevents duplicate promotion"/>
+        <INDEX NAME="idx_linked_skill"  UNIQUE="false" FIELDS="linked_skillid"
+               COMMENT="Reverse lookup from a production skill to its taxonomy node"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- ─── SKILL -> BUSINESS IMPACT MAPPING ─── -->
+    <TABLE NAME="local_sentientia_skai_impact"
+           COMMENT="P0.1.0 (2026-06-16) — Skills -> business-impact mapping
+                    surface. One row per (taxonomy node, business metric)
+                    pairing so L and D can express WHY a skill matters: which
+                    measurable business outcome a gap in this skill puts at
+                    risk, and the relative weight of that link.
+
+                    Example: skill 'KYC Verification' -> metric
+                    'Onboarding compliance pass rate', weight 5 (critical).
+                    The impact surface lets the gap feed be sorted by
+                    business priority, not just raw level deficit.">
+      <FIELDS>
+        <FIELD NAME="id"             TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="customerid"     TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="1"
+               COMMENT="Sentientia LMS customer scope."/>
+        <FIELD NAME="costcenterid"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="BizLMS tenant root."/>
+        <FIELD NAME="taxonomyid"     TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="FK to local_sentientia_skai_taxonomy.id — the skill this impact links."/>
+        <FIELD NAME="metric_name"    TYPE="char" LENGTH="200" NOTNULL="true"
+               COMMENT="Business metric / outcome name (e.g. 'Chargeback rate', 'NPS')."/>
+        <FIELD NAME="metric_detail"  TYPE="text" NOTNULL="false"
+               COMMENT="How the skill influences the metric — narrative for the impact surface."/>
+        <FIELD NAME="weight"         TYPE="int"  LENGTH="2"   NOTNULL="true" DEFAULT="3"
+               COMMENT="Relative business priority 1 (minor) .. 5 (critical)."/>
+        <FIELD NAME="createdby"      TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="FK to user.id who authored this mapping."/>
+        <FIELD NAME="timecreated"    TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"     TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_taxonomy" TYPE="foreign" FIELDS="taxonomyid"
+                                REFTABLE="local_sentientia_skai_taxonomy" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_tenant"        UNIQUE="false" FIELDS="costcenterid"
+               COMMENT="Tenant-scoped impact listings"/>
+        <INDEX NAME="idx_taxonomy"      UNIQUE="false" FIELDS="taxonomyid"
+               COMMENT="All impacts for a given skill"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- ─── GAP FEED (role-required vs learner-held) ─── -->
+    <TABLE NAME="local_sentientia_skai_gap"
+           COMMENT="P0.1.0 (2026-06-16) — Per-user skills-gap feed. One row
+                    per (user, skill) where the user's held level is below
+                    the level their role/designation requires. Rebuilt by
+                    gap_engine::rebuild_for_user() and consumed by the gap
+                    UI + sentientia_recommendations (which ranks remedial
+                    courses against the open gaps).
+
+                    `required_level` comes from local_sentientia_role_skills
+                    (joined on the user's open_designation), `held_level`
+                    from local_sentientia_user_skills. `gap_size` =
+                    required - held (always > 0 for rows that exist here).
+                    `impact_weight` is the max business weight across the
+                    skill's impact mappings, used to sort the feed by
+                    business priority. `batchid` groups one rebuild run.">
+      <FIELDS>
+        <FIELD NAME="id"             TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"         TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="FK to user.id whose gap this is."/>
+        <FIELD NAME="customerid"     TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="1"
+               COMMENT="Sentientia LMS customer scope."/>
+        <FIELD NAME="costcenterid"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="BizLMS tenant root derived from the user's open_path."/>
+        <FIELD NAME="skillid"        TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="FK to local_sentientia_skills.id — the production skill the gap is on."/>
+        <FIELD NAME="taxonomyid"     TYPE="int"  LENGTH="10"  NOTNULL="false"
+               COMMENT="FK to local_sentientia_skai_taxonomy.id when the skill maps to a taxonomy node. NULL otherwise."/>
+        <FIELD NAME="designation"    TYPE="char" LENGTH="200" NOTNULL="true" DEFAULT=""
+               COMMENT="The user's designation the requirement came from."/>
+        <FIELD NAME="required_level" TYPE="int"  LENGTH="2"   NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="held_level"     TYPE="int"  LENGTH="2"   NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="gap_size"       TYPE="int"  LENGTH="2"   NOTNULL="true" DEFAULT="0"
+               COMMENT="required_level - held_level (positive)."/>
+        <FIELD NAME="impact_weight"  TYPE="int"  LENGTH="2"   NOTNULL="true" DEFAULT="0"
+               COMMENT="Max business-impact weight across the skill's impact mappings (0 = none)."/>
+        <FIELD NAME="batchid"        TYPE="char" LENGTH="32"  NOTNULL="true" DEFAULT=""
+               COMMENT="Groups all gap rows from one rebuild run."/>
+        <FIELD NAME="timecreated"    TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"  TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_user"  TYPE="foreign" FIELDS="userid"  REFTABLE="user"  REFFIELDS="id"/>
+        <KEY NAME="fk_skill" TYPE="foreign" FIELDS="skillid" REFTABLE="local_sentientia_skills" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_user_skill"    UNIQUE="true"  FIELDS="userid, skillid"
+               COMMENT="One current gap row per (user, skill)"/>
+        <INDEX NAME="idx_tenant_weight" UNIQUE="false" FIELDS="costcenterid, impact_weight"
+               COMMENT="Tenant gap feed sorted by business priority"/>
+      </INDEXES>
+    </TABLE>
+
+  </TABLES>
+</XMLDB>
