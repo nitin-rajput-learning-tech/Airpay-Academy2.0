@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/sentientia_assistant/db" VERSION="20260411"
-       COMMENT="Airpay AI Learning Assistant - conversation log and rate limits">
+<XMLDB PATH="local/sentientia_assistant/db" VERSION="20260616"
+       COMMENT="Airpay AI Learning Assistant - conversation log, rate limits, and agentic copilot audit (P1.3)">
   <TABLES>
 
     <TABLE NAME="local_sentientia_chat_log"
@@ -39,6 +39,38 @@
       <INDEXES>
         <INDEX NAME="idx_cache_key" UNIQUE="true" FIELDS="cache_key"/>
         <INDEX NAME="idx_expires"   UNIQUE="false" FIELDS="timeexpires"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_agent_audit"
+           COMMENT="P1.3 agentic copilot - immutable audit of every tool proposal, authorisation outcome and execution result">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"       TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="FK to mdl_user.id - the acting user whose learning the tool touched"/>
+        <FIELD NAME="costcenterid" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="BizLMS tenant root: 1=Airpay, 77=Public, 177=ZEEA"/>
+        <FIELD NAME="tool"         TYPE="char" LENGTH="64"  NOTNULL="true" DEFAULT=""
+               COMMENT="Tool name the LLM proposed e.g. enrol_course"/>
+        <FIELD NAME="args_json"    TYPE="text" NOTNULL="false"
+               COMMENT="JSON-encoded proposed arguments - untrusted LLM output validated before exec"/>
+        <FIELD NAME="proposed_by"  TYPE="char" LENGTH="20"  NOTNULL="true" DEFAULT="llm"
+               COMMENT="llm or mock - who proposed the call"/>
+        <FIELD NAME="outcome"      TYPE="char" LENGTH="32"  NOTNULL="true" DEFAULT="proposed"
+               COMMENT="proposed|denied_capability|denied_tenant|denied_invalid|executed|noop|failed"/>
+        <FIELD NAME="detail"       TYPE="text" NOTNULL="false"
+               COMMENT="Human-readable outcome detail - never contains secrets"/>
+        <FIELD NAME="idempotency_key" TYPE="char" LENGTH="64" NOTNULL="false"
+               COMMENT="SHA256 of userid|tool|canonical-args - dedupes repeat executions"/>
+        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS><KEY NAME="primary" TYPE="primary" FIELDS="id"/></KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_userid_time"  UNIQUE="false" FIELDS="userid, timecreated"/>
+        <INDEX NAME="idx_costcenter"   UNIQUE="false" FIELDS="costcenterid"
+               COMMENT="Tenant filtering for manager audit view"/>
+        <INDEX NAME="idx_idempotency"  UNIQUE="false" FIELDS="idempotency_key"
+               COMMENT="Idempotency lookup - has this exact action already executed"/>
       </INDEXES>
     </TABLE>
 

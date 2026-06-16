@@ -1,0 +1,59 @@
+{{!
+    Copyright 2026 Airpay Payment Services
+    License http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+
+    Agentic Copilot panel (P1.3).
+
+    Context variables:
+      * sesskey    — CSRF token
+      * livemode   — bool, true when live API path is ready
+      * modelabel  — localised "Mock mode" / "Live mode" badge text
+
+    The conversation runs over the agent_turn / agent_confirm web services
+    (loaded by amd/src/agent.js). Write actions surface a confirm button —
+    the LLM proposes, the learner confirms, the platform authorises + runs.
+}}
+<div class="airpay-copilot" role="region"
+     aria-label="{{#str}}agent_title, local_sentientia_assistant{{/str}}"
+     data-sesskey="{{sesskey}}">
+
+    <div class="airpay-copilot__header">
+        <h2 class="airpay-copilot__title">{{#str}}agent_title, local_sentientia_assistant{{/str}}</h2>
+        <span class="airpay-copilot__mode badge {{#livemode}}badge-success{{/livemode}}{{^livemode}}badge-secondary{{/livemode}}">
+            {{modelabel}}
+        </span>
+    </div>
+
+    <p class="airpay-copilot__intro">{{#str}}agent_intro, local_sentientia_assistant{{/str}}</p>
+
+    <div class="airpay-copilot__log" id="copilot-log" aria-live="polite" aria-atomic="false"></div>
+
+    {{! Proposal / confirm region — hidden until the agent proposes a write action. }}
+    <div class="airpay-copilot__proposal" id="copilot-proposal" hidden>
+        <p class="airpay-copilot__proposal-text" id="copilot-proposal-text"></p>
+        <button type="button" class="btn btn-primary" id="copilot-confirm">
+            {{#str}}agent_confirm_btn, local_sentientia_assistant{{/str}}
+        </button>
+        <button type="button" class="btn btn-outline-secondary" id="copilot-cancel">
+            {{#str}}agent_cancel_btn, local_sentientia_assistant{{/str}}
+        </button>
+    </div>
+
+    <form class="airpay-copilot__form" id="copilot-form" autocomplete="off">
+        <label class="sr-only" for="copilot-input">
+            {{#str}}agent_input_label, local_sentientia_assistant{{/str}}
+        </label>
+        <input type="text" class="form-control airpay-copilot__input" id="copilot-input"
+               placeholder="{{#str}}agent_input_placeholder, local_sentientia_assistant{{/str}}"
+               maxlength="500" required>
+        <button type="submit" class="btn btn-primary airpay-copilot__send">
+            {{#str}}send_message, local_sentientia_assistant{{/str}}
+        </button>
+    </form>
+</div>
+
+{{#js}}
+require(['local_sentientia_assistant/agent'], function(Agent) {
+    Agent.init();
+});
+{{/js}}
