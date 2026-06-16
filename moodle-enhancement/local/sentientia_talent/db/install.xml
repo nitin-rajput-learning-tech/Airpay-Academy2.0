@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/sentientia_talent/db" VERSION="20260616"
+       COMMENT="Sentientia Talent Mobility — career paths, succession plans, internal opportunities. HR-sensitive; every table is tenant-scoped via costcenterid.">
+  <TABLES>
+
+    <TABLE NAME="local_sentientia_talent_path"
+           COMMENT="Career-path definition: a named role-to-role progression (e.g. 'Support Agent → Team Lead → Manager'). Roles are designation strings (mirrors local_sentientia_skills.designation / user.open_designation).">
+      <FIELDS>
+        <FIELD NAME="id"            TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"
+               COMMENT="Primary key"/>
+        <FIELD NAME="costcenterid" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="BizLMS tenant: 1=Airpay, 77=Public, 177=ZEEA"/>
+        <FIELD NAME="name"          TYPE="char" LENGTH="200" NOTNULL="true"
+               COMMENT="Human-readable path name"/>
+        <FIELD NAME="description"   TYPE="text" NOTNULL="false"
+               COMMENT="Optional path description"/>
+        <FIELD NAME="from_designation" TYPE="char" LENGTH="200" NOTNULL="true"
+               COMMENT="Source role designation"/>
+        <FIELD NAME="to_designation"   TYPE="char" LENGTH="200" NOTNULL="true"
+               COMMENT="Target role designation"/>
+        <FIELD NAME="sort_order"    TYPE="int"  LENGTH="4"   NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="active"        TYPE="int"  LENGTH="1"   NOTNULL="true" DEFAULT="1"
+               COMMENT="1=published, 0=archived"/>
+        <FIELD NAME="usermodified" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="FK to mdl_user.id of last editor"/>
+        <FIELD NAME="timecreated"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_costcenter"  UNIQUE="false" FIELDS="costcenterid"
+               COMMENT="Tenant filtering — every tenant-scoped query hits this"/>
+        <INDEX NAME="idx_from_desig"  UNIQUE="false" FIELDS="from_designation"
+               COMMENT="'what paths start from my role?'"/>
+        <INDEX NAME="idx_to_desig"    UNIQUE="false" FIELDS="to_designation"
+               COMMENT="'what feeds into this role?'"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_talent_succ"
+           COMMENT="Succession plan: nominates a candidate user as a successor for a key designation, with readiness rating. HR-sensitive — capability gated to managers/HR only.">
+      <FIELDS>
+        <FIELD NAME="id"            TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"
+               COMMENT="Primary key"/>
+        <FIELD NAME="costcenterid" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="BizLMS tenant"/>
+        <FIELD NAME="designation"   TYPE="char" LENGTH="200" NOTNULL="true"
+               COMMENT="The key role being succession-planned"/>
+        <FIELD NAME="incumbentid"   TYPE="int"  LENGTH="10"  NOTNULL="false"
+               COMMENT="FK to mdl_user.id — current holder of the role (optional)"/>
+        <FIELD NAME="candidateid"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="FK to mdl_user.id — the nominated successor"/>
+        <FIELD NAME="readiness"     TYPE="char" LENGTH="20"  NOTNULL="true" DEFAULT="developing"
+               COMMENT="ready_now|ready_1y|ready_2y|developing"/>
+        <FIELD NAME="notes"         TYPE="text" NOTNULL="false"
+               COMMENT="HR notes (sensitive)"/>
+        <FIELD NAME="usermodified" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="FK to mdl_user.id of the planner who last edited"/>
+        <FIELD NAME="timecreated"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"        TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_candidate"   TYPE="foreign" FIELDS="candidateid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_costcenter"      UNIQUE="false" FIELDS="costcenterid"
+               COMMENT="Tenant filtering"/>
+        <INDEX NAME="idx_designation"     UNIQUE="false" FIELDS="designation"
+               COMMENT="'who are the successors for this role?'"/>
+        <INDEX NAME="idx_desig_candidate" UNIQUE="true"  FIELDS="costcenterid, designation, candidateid"
+               COMMENT="One nomination per (tenant, role, candidate)"/>
+        <INDEX NAME="idx_incumbent"       UNIQUE="false" FIELDS="incumbentid"
+               COMMENT="'what roles is this person being succeeded out of?'"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_talent_opp"
+           COMMENT="Internal mobility opportunity: an open internal role/gig surfaced to employees. Skills-matched against the taxonomy. Visible to learners (read-only); managed by HR.">
+      <FIELDS>
+        <FIELD NAME="id"            TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"
+               COMMENT="Primary key"/>
+        <FIELD NAME="costcenterid" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="BizLMS tenant"/>
+        <FIELD NAME="title"         TYPE="char" LENGTH="255" NOTNULL="true"
+               COMMENT="Opportunity title"/>
+        <FIELD NAME="description"   TYPE="text" NOTNULL="false"
+               COMMENT="Opportunity detail"/>
+        <FIELD NAME="designation"   TYPE="char" LENGTH="200" NOTNULL="false"
+               COMMENT="Target designation this opportunity maps to (drives skill matching)"/>
+        <FIELD NAME="department"    TYPE="char" LENGTH="200" NOTNULL="false"
+               COMMENT="Hiring department/team"/>
+        <FIELD NAME="postedby"      TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="FK to mdl_user.id — the HR/manager who posted"/>
+        <FIELD NAME="status"        TYPE="char" LENGTH="20"  NOTNULL="true" DEFAULT="open"
+               COMMENT="open|closed|filled"/>
+        <FIELD NAME="closes"        TYPE="int"  LENGTH="10"  NOTNULL="false"
+               COMMENT="Optional application-close timestamp"/>
+        <FIELD NAME="usermodified" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timecreated"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_costcenter"  UNIQUE="false" FIELDS="costcenterid"
+               COMMENT="Tenant filtering"/>
+        <INDEX NAME="idx_status"      UNIQUE="false" FIELDS="status"
+               COMMENT="Filter open opportunities"/>
+        <INDEX NAME="idx_designation" UNIQUE="false" FIELDS="designation"
+               COMMENT="Skill-match grouping by target role"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_talent_int"
+           COMMENT="Expression of interest: an employee registers interest in an internal opportunity. Read/write for the owning learner; visible to HR for the opportunity's tenant.">
+      <FIELDS>
+        <FIELD NAME="id"            TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"
+               COMMENT="Primary key"/>
+        <FIELD NAME="costcenterid" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="BizLMS tenant"/>
+        <FIELD NAME="opportunityid" TYPE="int" LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="FK to local_sentientia_talent_opp.id"/>
+        <FIELD NAME="userid"        TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="FK to mdl_user.id — the interested employee"/>
+        <FIELD NAME="message"       TYPE="text" NOTNULL="false"
+               COMMENT="Optional note from the applicant"/>
+        <FIELD NAME="matchpct"      TYPE="int"  LENGTH="4"   NOTNULL="true" DEFAULT="0"
+               COMMENT="Skill-match percentage snapshot at time of interest (0-100)"/>
+        <FIELD NAME="timecreated"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"  TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_user"  TYPE="foreign" FIELDS="userid"        REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="fk_opp"   TYPE="foreign" FIELDS="opportunityid" REFTABLE="local_sentientia_talent_opp" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_costcenter"  UNIQUE="false" FIELDS="costcenterid"
+               COMMENT="Tenant filtering"/>
+        <INDEX NAME="idx_opp_user"    UNIQUE="true"  FIELDS="opportunityid, userid"
+               COMMENT="One expression of interest per (opportunity, user)"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_talent_audit"
+           COMMENT="Append-only audit trail of every HR-sensitive talent mutation (succession nominations, opportunity changes, path edits). Compliance trail for GDPR/SOC2.">
+      <FIELDS>
+        <FIELD NAME="id"            TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"
+               COMMENT="Primary key"/>
+        <FIELD NAME="costcenterid" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="BizLMS tenant of the affected resource"/>
+        <FIELD NAME="action"        TYPE="char" LENGTH="50"  NOTNULL="true"
+               COMMENT="path_saved|path_deleted|succession_saved|succession_deleted|opp_saved|opp_deleted|interest_registered|interest_withdrawn"/>
+        <FIELD NAME="objecttable"   TYPE="char" LENGTH="80"  NOTNULL="true"
+               COMMENT="Affected table name (denormalised — survives row delete)"/>
+        <FIELD NAME="objectid"      TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Affected row id (may now be deleted)"/>
+        <FIELD NAME="targetuserid"  TYPE="int"  LENGTH="10"  NOTNULL="false"
+               COMMENT="Subject user (candidate / applicant) when relevant"/>
+        <FIELD NAME="detail"        TYPE="text" NOTNULL="false"
+               COMMENT="JSON snapshot of the change (no raw PII names — ids only)"/>
+        <FIELD NAME="changedby"     TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="FK to mdl_user.id of the actor"/>
+        <FIELD NAME="timecreated"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"       TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_changedby"  TYPE="foreign" FIELDS="changedby" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_costcenter"  UNIQUE="false" FIELDS="costcenterid"
+               COMMENT="Tenant-scoped audit lookup"/>
+        <INDEX NAME="idx_action"      UNIQUE="false" FIELDS="action"
+               COMMENT="Filter by event type"/>
+        <INDEX NAME="idx_timecreated" UNIQUE="false" FIELDS="timecreated"
+               COMMENT="Default ORDER BY timecreated DESC"/>
+      </INDEXES>
+    </TABLE>
+
+  </TABLES>
+</XMLDB>
