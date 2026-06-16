@@ -178,6 +178,12 @@ echo $OUTPUT->doctype();
     .ap-hero { background: linear-gradient(135deg, var(--ap-hero-start) 0%, var(--ap-hero-end) 100%); padding: 88px 0 72px; color: #fff; position: relative; overflow: hidden; }
     .ap-hero::before { content: ''; position: absolute; top: -50%; right: -20%; width: 700px; height: 700px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,0.04) 0%, transparent 70%); pointer-events: none; }
     .ap-hero::after { content: ''; position: absolute; bottom: -30%; left: -10%; width: 500px; height: 500px; border-radius: 50%; background: radial-gradient(circle, rgba(25, 133, 221,0.15) 0%, transparent 70%); pointer-events: none; }
+    /* Brand Book 2026-06: faint "a" monogram watermark (bottom-right), matching the
+       login hero anchor. Sits behind .ap-hero__inner (z-index 1). */
+    .ap-hero__monogram { position: absolute; right: -0.12em; bottom: -0.4em; font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 30rem; line-height: 1; color: rgba(255,255,255,0.05); pointer-events: none; z-index: 0; user-select: none; }
+    /* Brand Book 2026-06: single sparing brand-orange accent bar under the hero
+       title — the book's "occasional warm pop", used once (matches login). */
+    .ap-hero__title::after { content: ''; display: block; width: 56px; height: 4px; margin-top: 22px; border-radius: 2px; background: var(--ap-orange-500, #ed692b); }
     .ap-hero__inner { max-width: 1200px; margin: 0 auto; padding: 0 40px; position: relative; z-index: 1; }
     .ap-hero__badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 20px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 24px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 28px; backdrop-filter: blur(8px); }
     .ap-hero__title { font-size: 3.25rem; font-weight: 800; line-height: 1.12; margin: 0 0 20px; max-width: 680px; letter-spacing: -0.02em; }
@@ -394,6 +400,7 @@ echo $OUTPUT->doctype();
      2. HERO
      ═══════════════════════════════════════════════════════════════ -->
 <section class="ap-hero">
+    <div class="ap-hero__monogram" aria-hidden="true">a</div>
     <div class="ap-hero__inner">
         <div class="ap-hero__badge"><i class="fa fa-graduation-cap"></i> ENTERPRISE LEARNING PLATFORM</div>
         <h1 class="ap-hero__title">Build a skilled, compliant<br>workforce at scale</h1>

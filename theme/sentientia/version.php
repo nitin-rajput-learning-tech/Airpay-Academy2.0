@@ -374,7 +374,10 @@ defined('MOODLE_INTERNAL') || die();
 // See docs/audits/brand-revamp-2026-06/REVISED-BRAND-BOOK-2026-06.md.
 // 2026061601 — Phase 1 teal-gap closure (rgba/dark-teal forms) + Phase 2 login
 // hero elevation: faint "a" monogram watermark + sparing brand-orange accent bar.
-$plugin->version   = 2026061601;
+// 2026061602 — Phase 2 cont'd: frontpage/storefront hero elevation ("a" monogram
+// watermark + sparing orange title accent) + card-thumb variety palette remapped
+// to brand secondaries (blue-dominant, sparing purple/orange — no cyan/magenta/gold).
+$plugin->version   = 2026061602;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_sentientia';
 $plugin->maturity  = MATURITY_BETA;

@@ -196,11 +196,11 @@
 /* Per-course gradient fallback palette (course id % 6) — keeps an image-less
    catalogue wall colourful and varied rather than a block of identical tiles. */
 .airpay-catalog__card-thumb--v0 { background: var(--ap-gradient-cta); }
-.airpay-catalog__card-thumb--v1 { background: linear-gradient(135deg, #1985DD, #0aa3a3); }
-.airpay-catalog__card-thumb--v2 { background: linear-gradient(135deg, #6a3fb5, #b34db8); }
-.airpay-catalog__card-thumb--v3 { background: linear-gradient(135deg, #c2407e, #f0883e); }
-.airpay-catalog__card-thumb--v4 { background: linear-gradient(135deg, #1f6feb, #0d5da1); }
-.airpay-catalog__card-thumb--v5 { background: linear-gradient(135deg, #d97706, #e0b400); }
+.airpay-catalog__card-thumb--v1 { background: linear-gradient(135deg, #1985DD, #9cdbf4); }
+.airpay-catalog__card-thumb--v2 { background: linear-gradient(135deg, #6d58a5, #9b86c9); }
+.airpay-catalog__card-thumb--v3 { background: linear-gradient(135deg, #ed692b, #f7a072); }
+.airpay-catalog__card-thumb--v4 { background: linear-gradient(135deg, #003d66, #0066A7); }
+.airpay-catalog__card-thumb--v5 { background: linear-gradient(135deg, #0d5da1, #1985DD); }
 .airpay-catalog__badge {
     position: absolute;
     top: var(--ap-space-2);

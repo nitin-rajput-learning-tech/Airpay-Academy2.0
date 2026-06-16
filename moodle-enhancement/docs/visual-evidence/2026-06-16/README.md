@@ -53,5 +53,18 @@ brochure's signature elements on top of the blue→deep gradient:
 - Otherwise blue-dominant + white space, per the book's philosophy.
 
 This is the **design anchor** for the full Phase-2 redesign; the same language
-(monogram device + sparing orange + blue gradients) is to be applied next to the
-frontpage/storefront + the card-thumb variety palette, pending review of this anchor.
+(monogram device + sparing orange + blue gradients) is applied to the surfaces below.
+
+## Phase 2 — frontpage + storefront (`04-frontpage-hero-desktop.png`, `05-catalog-cardthumbs-desktop.png`)
+
+Applied the login anchor language across the rest of the landing (theme v2026061602),
+Chrome-verified on local XAMPP:
+- **Frontpage hero** (`04`): blue→deep gradient, the **orange accent bar under the title**
+  (matches login), the faint **"a" monogram** watermark bottom-right, badge + CTAs blue.
+- **Catalog storefront** (`05`): the course-card **thumbnail variety palette** is remapped
+  from the off-brand cyan/magenta/pink/gold set to **blue-dominant + ONE sparing orange +
+  ONE sparing purple** variant — per the book's "blue-dominant, sparing orange/purple".
+  The cyan `#0aa3a3` / green / pink / gold are gone.
+
+Together with the login anchor, this is the **full landing + login brand-forward redesign**
+(your Phase-2 choice). Live deploy remains Nitin-gated.
