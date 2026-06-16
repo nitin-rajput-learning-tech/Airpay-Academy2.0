@@ -119,7 +119,7 @@ echo $OUTPUT->doctype();
         --ap-text-secondary: #475569;
         --ap-text-muted: #94a3b8;
         --ap-hero-start: #003052;
-        --ap-hero-end: #0a4a42;
+        --ap-hero-end: #0d5da1;
         --ap-footer-bg: #0f172a;
         --ap-footer-text: #94a3b8;
         --ap-card-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
@@ -177,7 +177,7 @@ echo $OUTPUT->doctype();
        ================================================================ */
     .ap-hero { background: linear-gradient(135deg, var(--ap-hero-start) 0%, var(--ap-hero-end) 100%); padding: 88px 0 72px; color: #fff; position: relative; overflow: hidden; }
     .ap-hero::before { content: ''; position: absolute; top: -50%; right: -20%; width: 700px; height: 700px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,0.04) 0%, transparent 70%); pointer-events: none; }
-    .ap-hero::after { content: ''; position: absolute; bottom: -30%; left: -10%; width: 500px; height: 500px; border-radius: 50%; background: radial-gradient(circle, rgba(15,122,115,0.15) 0%, transparent 70%); pointer-events: none; }
+    .ap-hero::after { content: ''; position: absolute; bottom: -30%; left: -10%; width: 500px; height: 500px; border-radius: 50%; background: radial-gradient(circle, rgba(25, 133, 221,0.15) 0%, transparent 70%); pointer-events: none; }
     .ap-hero__inner { max-width: 1200px; margin: 0 auto; padding: 0 40px; position: relative; z-index: 1; }
     .ap-hero__badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 20px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 24px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 28px; backdrop-filter: blur(8px); }
     .ap-hero__title { font-size: 3.25rem; font-weight: 800; line-height: 1.12; margin: 0 0 20px; max-width: 680px; letter-spacing: -0.02em; }
