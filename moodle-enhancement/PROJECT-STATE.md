@@ -5,6 +5,43 @@
 
 ---
 
+## 🏗️ COMPETITIVE GAP BUILD 2026-06-16 — 11 parallel sessions → 11 feature-flagged builds merged to `claude/gap-integration`
+
+**Outcome:** All 11 competitive-roadmap gaps built as feature-flagged (default OFF), mock-mode
+(zero AI spend) plugins/changes across 11 isolated worktree sessions, each pushed to its own
+`claude/gap-*` branch, then merged into **`claude/gap-integration`** (252 files, clean — disjoint
+paths, 0 conflicts). **Nothing deployed to live; nothing deployed to XAMPP yet** (Nitin's pass).
+
+**Builds (model used):** P0.1 skills intelligence `local_sentientia_skillsai` NEW (opus) · P0.2
+adaptive journeys `local_sentientia_learningpath` v1.8.0 EXTEND (sonnet) · P0.3 GenAI authoring
+studio `local_sentientia_authoring` NEW (opus) · P1.1 content marketplace `local_sentientia_content_market`
+NEW (sonnet) · P1.2 predictive analytics+ROI `local_sentientia_analytics` v1.1.0 EXTEND (sonnet) ·
+P1.3 agentic copilot `local_sentientia_assistant` v1.2.0 EXTEND (opus) · P1.4 xAPI/cmi5 LRS
+`local_sentientia_xapi` NEW (sonnet) · P1.5 enterprise trust track `docs/security/*` 5 docs (haiku) ·
+P2.1 talent mobility `local_sentientia_talent` NEW (opus) · P2.2 native mobile Capacitor scaffold
+`mobile/sentientia-app/` (sonnet) · P2.3 public API+LTI 1.3 `local_sentientia_api` NEW (opus).
+
+**Static verification (cloud container, PHP 8.4, no DB):** 204 PHP files lint-clean · all
+install.xml well-formed · 0 conflict markers (CI gate) · en/hi lang parity exact on all 9 plugins
+(skillsai 149, authoring 181, learningpath 96, content_market 67, analytics 44, assistant 59,
+xapi 80, talent 85, api 49).
+
+**Process note (important):** the first attempt used `isolation: remote` cloud sessions — they
+were NOT given isolated environments and collided in one shared working tree (HEAD thrashing across
+branches, 63 intermingled untracked files, nothing pushed). Stopped + cleaned (no data lost — nothing
+had committed/pushed), then relaunched with `isolation: worktree` (true per-agent isolation), which
+worked. 3 branches (analytics/content-market/xapi) committed onto generic `worktree-agent-*` branches
+instead of `claude/gap-*` and were FF-recovered to the right branch names on origin. `.claude/worktrees/`
+added to `.gitignore`.
+
+**Pending (XAMPP pass — see `docs/competitive/GAP-BUILD-XAMPP-TEST-RUNBOOK-2026-06-16.md`):** install/
+upgrade on Moodle 5.1 + run PHPUnit suites + per-flag smoke test. **Pre-deploy fixes flagged by agents:**
+(1) `sentientia_assistant` agentic audit table needs a real privacy provider (currently null_provider) —
+DPDP blocker; (2) authoring live TTS + publish→SCORM deferred; (3) api LTI JWKS fetch + user provisioning
+are extension points; (4) mobile needs backend push extensions before any native build.
+
+---
+
 ## 📊 COMPETITIVE GAP ANALYSIS 2026-06-16 — Sentientia vs Invince (UpsideLMS) & the AI-native LXP market
 
 **Deliverable:** `docs/competitive/GAP-ANALYSIS-INVINCE-LXP-2026-06-16.md` (NEW
