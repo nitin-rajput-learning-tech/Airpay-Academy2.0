@@ -75,8 +75,8 @@ try {
 // ── Course category badges ──────────────────────────────────
 $categorybadges = ['Compliance', 'Finance', 'Leadership', 'Technology', 'Business', 'Digital'];
 $gradients = [
-    'linear-gradient(135deg, #0066A7, #0f7a73)',
-    'linear-gradient(135deg, #0f7a73, #059669)',
+    'linear-gradient(135deg, #0066A7, #0d5da1)',
+    'linear-gradient(135deg, #1985DD, #059669)',
     'linear-gradient(135deg, #1e40af, #0066A7)',
     'linear-gradient(135deg, #7c3aed, #4f46e5)',
     'linear-gradient(135deg, #d97706, #ea580c)',
@@ -109,7 +109,7 @@ echo $OUTPUT->doctype();
         --ap-primary: #0066A7;
         --ap-primary-dark: #004d80;
         --ap-primary-light: #e8f4fd;
-        --ap-accent: #0f7a73;
+        --ap-accent: #1985DD;
         --ap-accent-light: #e5f4f3;
         --ap-bg: #F2F4FB;
         --ap-surface: #ffffff;
@@ -137,7 +137,7 @@ echo $OUTPUT->doctype();
         --ap-text-secondary: #cbd5e1;
         --ap-text-muted: #64748b;
         --ap-primary-light: #172554;
-        --ap-accent-light: #134e4a;
+        --ap-accent-light: #0d3a5c;
         --ap-card-shadow: 0 1px 3px rgba(0,0,0,0.3);
         --ap-card-shadow-hover: 0 20px 40px rgba(0,0,0,0.4);
     }
@@ -585,7 +585,7 @@ echo $OUTPUT->doctype();
                 <div class="ap-testimonial__stars"><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i></div>
                 <p class="ap-testimonial__quote">The compliance training modules helped me understand RBI regulations in a practical way. The dashboard makes it easy to track my progress across all mandatory courses.</p>
                 <div class="ap-testimonial__author">
-                    <div class="ap-testimonial__avatar" style="background: linear-gradient(135deg, #0066A7, #0f7a73);">PR</div>
+                    <div class="ap-testimonial__avatar" style="background: linear-gradient(135deg, #0066A7, #0d5da1);">PR</div>
                     <div class="ap-testimonial__info">
                         <strong>Priya Sharma</strong>
                         <span>Operations Analyst, Airpay</span>
@@ -596,7 +596,7 @@ echo $OUTPUT->doctype();
                 <div class="ap-testimonial__stars"><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i></div>
                 <p class="ap-testimonial__quote">As a team manager, the team analytics dashboard gives me complete visibility into my team's learning progress. The compliance alerts ensure nobody misses a deadline.</p>
                 <div class="ap-testimonial__author">
-                    <div class="ap-testimonial__avatar" style="background: linear-gradient(135deg, #0f7a73, #059669);">RK</div>
+                    <div class="ap-testimonial__avatar" style="background: linear-gradient(135deg, #1985DD, #059669);">RK</div>
                     <div class="ap-testimonial__info">
                         <strong>Rahul Khanna</strong>
                         <span>Regional Manager, Airpay</span>

@@ -130,7 +130,7 @@
 .airpay-badge--sm { padding: 2px 8px; font-size: 0.65rem; }
 .airpay-badge--md, .airpay-badge:not([class*="--sm"]) { padding: 4px 12px; font-size: 0.75rem; }
 .airpay-badge--primary { background: #e8f2f9; color: #0066A7; }
-.airpay-badge--accent { background: #e5f4f3; color: #0f7a73; }
+.airpay-badge--accent { background: #e8f4fd; color: #1985DD; }
 .airpay-badge--success { background: #ecfdf5; color: #16a34a; }
 .airpay-badge--warning { background: #fffbeb; color: #d97706; }
 .airpay-badge--danger { background: #fef2f2; color: #dc2626; }
@@ -165,7 +165,7 @@
 .airpay-progress--lg .airpay-progress__track { height: 12px; }
 .airpay-progress__fill {
     height: 100%;
-    background: linear-gradient(90deg, #0066A7, #0f7a73);
+    background: linear-gradient(90deg, #0066A7, #0d5da1);
     border-radius: 4px;
     transition: width 0.5s ease;
 }

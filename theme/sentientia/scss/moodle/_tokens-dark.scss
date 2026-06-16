@@ -32,7 +32,8 @@
 
     /* ── Primary (slightly brighter for dark bg contrast) ───── */
     --ap-color-primary-light:  #172554;
-    --ap-color-accent-light:   #134e4a;
+    /* Brand Book 2026-06: dark accent tint is now blue (was teal #134e4a). */
+    --ap-color-accent-light:   #0d3a5c;
 
     /* ── Status (desaturated for dark bg) ────────────────────── */
     --ap-color-success-light:  #052e16;

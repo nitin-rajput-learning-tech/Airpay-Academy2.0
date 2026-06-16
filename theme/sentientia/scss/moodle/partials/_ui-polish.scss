@@ -22,7 +22,7 @@
 .airpay-nav {
     border-bottom: 2px solid transparent;
     background-image: linear-gradient(#fff, #fff),
-                      linear-gradient(90deg, #0066A7 0%, #0f7a73 50%, #0066A7 100%);
+                      linear-gradient(90deg, #0066A7 0%, #1985DD 50%, #0066A7 100%);
     background-origin: border-box;
     background-clip: padding-box, border-box;
 }
@@ -39,7 +39,7 @@
     width: 48px;
     height: 3px;
     border-radius: 2px;
-    background: linear-gradient(90deg, #0066A7, #0f7a73);
+    background: linear-gradient(90deg, #0066A7, #0d5da1);
 }
 
 /* ── 3. Custom Scrollbar (Webkit + Firefox) ── */
@@ -116,13 +116,13 @@
 }
 .ap-progress-ring__fill {
     fill: none;
-    stroke: #0f7a73;
+    stroke: #1985DD;
     stroke-width: 4;
     stroke-linecap: round;
     transition: stroke-dashoffset 1s ease-out;
 }
 .ap-progress-ring__fill--primary { stroke: #0066A7; }
-.ap-progress-ring__fill--accent  { stroke: #0f7a73; }
+.ap-progress-ring__fill--accent  { stroke: #1985DD; }
 .ap-progress-ring__fill--success { stroke: #16a34a; }
 .ap-progress-ring__fill--warning { stroke: #d97706; }
 .ap-progress-ring__fill--danger  { stroke: #dc2626; }
@@ -138,7 +138,7 @@
 .airpay-nav .usermenu img.userpicture {
     border: 2px solid transparent;
     background-image: linear-gradient(#fff, #fff),
-                      linear-gradient(135deg, #0066A7, #0f7a73);
+                      linear-gradient(135deg, #0066A7, #0d5da1);
     background-origin: border-box;
     background-clip: content-box, border-box;
     border-radius: 50%;

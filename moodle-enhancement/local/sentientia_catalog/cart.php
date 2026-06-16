@@ -98,7 +98,7 @@ echo $OUTPUT->header();
         <?php foreach ($cart as $item): ?>
         <div style="display:flex; align-items:center; gap:16px; padding:16px 20px;
                     background:var(--ap-surface,#fff); border:1px solid var(--ap-border,#e3eaf3); border-radius:12px;">
-            <div style="width:48px; height:48px; border-radius:10px; background:linear-gradient(135deg,#0066A7,#0f7a73);
+            <div style="width:48px; height:48px; border-radius:10px; background:linear-gradient(135deg,#0066a7,#0d5da1);
                         display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; font-weight:700; flex-shrink:0;">
                 <?php echo s(substr($item['shortname'], 0, 3)); ?>
             </div>
@@ -138,7 +138,7 @@ echo $OUTPUT->header();
         <a href="<?php echo (new moodle_url('/login/index.php', ['wantsurl' => $CFG->wwwroot . '/local/sentientia_catalog/cart.php']))->out(); ?>"
            style="display:flex; align-items:center; justify-content:center; gap:8px;
                   padding:12px 24px; border-radius:10px; font-size:16px; font-weight:700;
-                  background:linear-gradient(135deg,#0066A7,#0f7a73); color:#fff; text-decoration:none; width:100%;">
+                  background:linear-gradient(135deg,#0066a7,#0d5da1); color:#fff; text-decoration:none; width:100%;">
             <i class="fa fa-sign-in"></i> Login to Complete Enrollment
         </a>
         <p style="text-align:center; font-size:12px; color:var(--ap-text-muted); margin:8px 0 0;">
@@ -152,7 +152,7 @@ echo $OUTPUT->header();
             <input type="hidden" name="action" value="enrollfree">
             <button type="submit" style="display:flex; align-items:center; justify-content:center; gap:8px;
                     padding:12px 24px; border-radius:10px; font-size:16px; font-weight:700;
-                    background:linear-gradient(135deg,#16a34a,#0f7a73); color:#fff; border:none; cursor:pointer; width:100%;">
+                    background:linear-gradient(135deg,#16a34a,#1985DD); color:#fff; border:none; cursor:pointer; width:100%;">
                 <i class="fa fa-check-circle"></i> Enroll in All (Free)
             </button>
         </form>

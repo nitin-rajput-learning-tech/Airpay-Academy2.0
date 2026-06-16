@@ -16,7 +16,7 @@ function xmldb_local_sentientia_skills_install() {
     // Skill categories.
     $categories = [
         ['name' => 'Compliance & Risk',    'icon' => 'fa-shield',         'color' => '#dc2626', 'sort_order' => 1],
-        ['name' => 'Financial Literacy',   'icon' => 'fa-inr',            'color' => '#0f7a73', 'sort_order' => 2],
+        ['name' => 'Financial Literacy',   'icon' => 'fa-inr',            'color' => '#1985DD', 'sort_order' => 2],
         ['name' => 'Technical',            'icon' => 'fa-code',           'color' => '#7c3aed', 'sort_order' => 3],
         ['name' => 'Sales & Business',     'icon' => 'fa-briefcase',      'color' => '#d97706', 'sort_order' => 4],
         ['name' => 'Leadership',           'icon' => 'fa-users',          'color' => '#0066A7', 'sort_order' => 5],

@@ -30,19 +30,19 @@ class tenant_config {
                 'name'          => 'Airpay Academy',
                 'logo_filename' => 'academy-logo-350.png',
                 'primary_color' => '#0066A7',
-                'accent_color'  => '#0f7a73',
+                'accent_color'  => '#0066A7',
             ],
             self::PUBLIC_TENANT => [
                 'name'          => 'Airpay Learning',
                 'logo_filename' => 'academy-logo-350.png',
                 'primary_color' => '#0066A7',
-                'accent_color'  => '#0f7a73',
+                'accent_color'  => '#0066A7',
             ],
             self::ZEEA => [
                 'name'          => 'ZEEA Mafunzo',
                 'logo_filename' => 'academy-logo-350.png',
                 'primary_color' => '#0066A7',
-                'accent_color'  => '#0f7a73',
+                'accent_color'  => '#0066A7',
             ],
         ];
         return $tenants[$costcenterid] ?? $tenants[self::AIRPAY];

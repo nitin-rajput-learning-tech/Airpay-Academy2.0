@@ -10,7 +10,7 @@
   --md-primary-fg-color:           #0066A7;  /* Airpay blue */
   --md-primary-fg-color--light:    #e8f2f9;
   --md-primary-fg-color--dark:     #004d80;
-  --md-accent-fg-color:            #0f7a73;  /* Teal */
+  --md-accent-fg-color:            #1985DD;  /* Teal */
   --md-accent-fg-color--transparent: rgba(15, 122, 115, 0.1);
   --md-default-bg-color:           #F2F4FB;
   --md-typeset-a-color:            #0066A7;
@@ -18,7 +18,7 @@
 
 [data-md-color-scheme="slate"] {
   --md-primary-fg-color:           #0066A7;
-  --md-accent-fg-color:            #0f7a73;
+  --md-accent-fg-color:            #1985DD;
   --md-default-bg-color:           #1a1a2e;
 }
 

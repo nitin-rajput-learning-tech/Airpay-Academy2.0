@@ -114,7 +114,7 @@ echo $OUTPUT->header();
 }
 .airpay-qr__btn:hover { border-color: var(--ap-primary); color: var(--ap-primary); }
 .airpay-qr__btn--refresh {
-    background: var(--ap-gradient, linear-gradient(135deg, #0066A7, #0f7a73));
+    background: var(--ap-gradient, linear-gradient(135deg, #0066A7, #0d5da1));
     color: #fff; border-color: transparent;
 }
 .airpay-qr__btn--refresh:hover { opacity: 0.9; color: #fff; }

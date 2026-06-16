@@ -106,7 +106,7 @@ class points_manager {
         $levels = [
             ['level' => 1, 'name' => 'Beginner',    'min' => 0,     'max' => 499,   'color' => '#6b7280'],
             ['level' => 2, 'name' => 'Learner',     'min' => 500,   'max' => 1499,  'color' => '#0066A7'],
-            ['level' => 3, 'name' => 'Achiever',    'min' => 1500,  'max' => 3999,  'color' => '#0f7a73'],
+            ['level' => 3, 'name' => 'Achiever',    'min' => 1500,  'max' => 3999,  'color' => '#1985DD'],
             ['level' => 4, 'name' => 'Expert',      'min' => 4000,  'max' => 9999,  'color' => '#7c3aed'],
             ['level' => 5, 'name' => 'Master',      'min' => 10000, 'max' => 999999,'color' => '#d97706'],
         ];

@@ -8,8 +8,8 @@
     --ap-primary: #0066A7;
     --ap-primary-dark: #004d7a;
     --ap-primary-light: #e8f2f9;
-    --ap-accent: #0f7a73;
-    --ap-accent-light: #e6f5f3;
+    --ap-accent: #1985DD;
+    --ap-accent-light: #e8f4fd;
     --ap-bg: #F2F4FB;
     --ap-surface: #ffffff;
     --ap-surface-alt: #f8f9fc;
@@ -27,7 +27,7 @@
     --ap-radius-md: 16px;
     --ap-radius-lg: 20px;
     --ap-radius-pill: 999px;
-    --ap-gradient: linear-gradient(135deg, #0066A7, #0f7a73);
+    --ap-gradient: linear-gradient(135deg, #0066A7, #0d5da1);
     --ap-font: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
@@ -254,7 +254,7 @@
 .ap-badge--warning { background: #fef3c7; color: #d97706; }
 .ap-badge--danger { background: #fef2f2; color: #dc2626; }
 .ap-badge--info { background: #e8f2f9; color: #0066A7; }
-.ap-badge--accent { background: #e6f5f3; color: #0f7a73; }
+.ap-badge--accent { background: #e8f4fd; color: #1985DD; }
 .ap-badge--muted { background: #f0f2f7; color: #8896a6; }
 .ap-badge--new {
     background: var(--ap-gradient);

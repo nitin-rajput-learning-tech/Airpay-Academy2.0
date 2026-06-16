@@ -4,7 +4,24 @@
 **Version:** `2026060200` / `1.0.46-beta`
 **Maturity:** `MATURITY_BETA`
 **Status:** Live theme on airpay.academy. Standalone fork (`$THEME->parents = []`).
-**Last refreshed:** 2026-06-02 (Epsilon/eAbyas de-brand — epsilonnavbar → airpayux_navbar)
+**Last refreshed:** 2026-06-16 (Revised Brand Book 2026-06 — teal retirement, Phase 1)
+
+> **2026-06-16 Revised airpay Brand Book adoption — Phase 1 (theme version
+> →2026061600):** Official brand book (`BB-revamp-noweb.pdf`) has NO teal —
+> primary `#0066A7` + Montserrat already matched, so the one real correction was
+> retiring the teal accent (`#0f7a73`). Done in `_tokens.scss`: added brand
+> secondaries (`--ap-blue-bright #1985DD`, `-sky #9cdbf4`, `-deep #0d5da1`,
+> `--ap-orange-500 #ed692b`, `--ap-purple-500 #6d58a5`) + gradient tokens;
+> re-pointed `--ap-color-accent` → bright-blue; **aliased the whole `--ap-teal-*`
+> ramp onto the blue ramp** (revert-safe). Swept **59** hardcoded teal hexes from
+> theme SCSS/PHP/mustache + **203** from plugin styles.css/templates/JS/email-PHP
+> (both `local/` trees + deployed) — Moodle aggregates plugin styles.css into the
+> served theme CSS. Verified: compiled `styles.php` CSS = **0 teal**, brand blues
+> present, no PHP errors. Email body text → primary `#0066A7` (AA-safe). Deploy to
+> live Nitin-gated. Spec + sweep scripts: `docs/audits/brand-revamp-2026-06/`.
+> **Phase 2 (open, needs Nitin):** brand-forward landing/login redesign + align
+> storefront card-thumb variety palette (cyan `#0aa3a3`/green `#059669`) to brand
+> secondaries.
 
 > **2026-05-29 signup-flow `_surface-login.scss` fixes (→1.0.40-beta):**
 > (B) `#page-signup` wrapper switched to `align-items:flex-start` (+40px

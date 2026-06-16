@@ -320,7 +320,7 @@ body.dark-mode .airpay-catalog__pubsearch input { background:#1a1d27; border-col
              border-radius:12px; overflow:hidden; transition:transform 0.2s, box-shadow 0.2s;">
 
             <!-- Card header with gradient -->
-            <div style="height:8px; background:linear-gradient(90deg, #0066A7, #0f7a73);"></div>
+            <div style="height:8px; background:linear-gradient(90deg, #0066A7, #0d5da1);"></div>
 
             <div style="padding:20px;">
                 <!-- Category badge -->

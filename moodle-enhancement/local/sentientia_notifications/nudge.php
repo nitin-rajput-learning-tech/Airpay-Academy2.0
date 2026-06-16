@@ -151,7 +151,7 @@ echo $OUTPUT->header();
                     Cancel
                 </a>
                 <button type="submit" style="padding:10px 24px; border-radius:10px; font-size:14px; font-weight:600;
-                        background:linear-gradient(135deg,#0066A7,#0f7a73); color:#fff; border:none; cursor:pointer;">
+                        background:linear-gradient(135deg,#0066a7,#0d5da1); color:#fff; border:none; cursor:pointer;">
                     <i class="fa fa-paper-plane"></i> Send Nudge
                 </button>
             </div>

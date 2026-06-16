@@ -517,7 +517,7 @@ if (isloggedin() && !isguestuser()) {
                     ['statval' => $activeusers, 'statlabel' => 'Active'],
                     ['statval' => $inactiveusers, 'statlabel' => 'Inactive'],
                 ]],
-                ['label' => 'Manage Courses', 'icon' => 'book', 'url' => (new moodle_url('/local/courses/courses.php'))->out(false), 'color' => '#0f7a73',
+                ['label' => 'Manage Courses', 'icon' => 'book', 'url' => (new moodle_url('/local/courses/courses.php'))->out(false), 'color' => '#1985DD',
                  'hasstats' => true, 'stats' => [
                     ['statval' => $totalcourses, 'statlabel' => 'Total'],
                     ['statval' => number_format($totalenrolments), 'statlabel' => 'Enrolments'],

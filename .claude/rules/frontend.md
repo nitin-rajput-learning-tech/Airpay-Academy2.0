@@ -30,8 +30,11 @@ Visual target: D:\Claude Local\Moodle Backup\03-prototypes\preview\ (22 approved
 $ap-primary:        #0066A7;  // Airpay blue — CTAs, links, active nav
 $ap-primary-light:  #e8f2f9;  // Hover backgrounds, tinted sections
 $ap-primary-dark:   #004d80;  // Pressed states, hover on primary
-$ap-accent:         #0f7a73;  // Teal — secondary actions, tags, success
-$ap-accent-light:   #e5f4f3;  // Teal bg tint
+$ap-accent:         #1985DD;  // Brand bright-blue ("for decks") — secondary actions, tags, active. (Revised Brand Book 2026-06: teal #0f7a73 RETIRED — no teal in the book.)
+$ap-accent-light:   #e8f4fd;  // Light blue bg tint (was teal #e5f4f3)
+$ap-accent-deep:    #0d5da1;  // Deep blue — gradient ends / pressed
+$ap-highlight:      #ed692b;  // Brand orange — sparing CTA/emphasis only
+$ap-tertiary:       #6d58a5;  // Brand purple — sparing tertiary
 $ap-bg:             #F2F4FB;  // Page background (every page)
 $ap-surface:        #ffffff;  // Card/panel backgrounds
 $ap-surface-2:      #f8f9fc;  // Nested card backgrounds, zebra rows
