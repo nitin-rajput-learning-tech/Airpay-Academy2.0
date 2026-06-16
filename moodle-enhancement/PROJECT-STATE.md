@@ -5,6 +5,35 @@
 
 ---
 
+## 📊 COMPETITIVE GAP ANALYSIS 2026-06-16 — Sentientia vs Invince (UpsideLMS) & the AI-native LXP market
+
+**Deliverable:** `docs/competitive/GAP-ANALYSIS-INVINCE-LXP-2026-06-16.md` (NEW
+`docs/competitive/` folder) + a board-ready Gamma deck for C-suite review.
+Branch `claude/sententia-gap-analysis-2n6ylw`. Research only — **no code/plugin
+changes, nothing deployed**.
+
+**TLDR:** Benchmarked Sentientia against Invince (formerly UpsideLMS; 400+ orgs,
+~3M users, HDFC 200k case study; 4 layers — LXP/LMS/Craft GenAI authoring/Plethora
+80k-course library; ISO 27001:2022 + SOC 2 Type II + CERT-In VAPT) and the market
+direction (Bersin Feb-2026: LMS/LXP/microlearning/EXP collapsing into one AI-native,
+skills-intelligence + agentic platform). **Finding:** we are at/ahead on the
+*foundations* the market is converging toward (built-in Claude AI via `aiquiz`/
+`recommendations`/`translate`, multi-tenant + white-label from Day 0, DPDP/RBI/POSH
+depth, SSE real-time engagement, open-source/on-prem zero-marginal-cost AI). Six
+gap clusters to surpass, each mapped to a feature-flagged plugin in the doc:
+**(P0)** skills intelligence → NEW `local_sentientia_skillsai`; adaptive journeys →
+extend `learningpath`+`recommendations`; GenAI authoring studio (Craft competitor) →
+NEW `local_sentientia_authoring` (compounds `aiquiz`+`translate`+Workstream-B TTS);
+**(P1)** content marketplace `content_market`, predictive analytics, agentic copilot
+(upgrade `assistant`), xAPI `xapi`, and an **enterprise-trust track** (ISO/SOC 2/VAPT
++ scale proof — the hard RFP blocker); **(P2)** talent mobility, native mobile
+(Capacitor over `pwa`), public API/LTI. **Surpass via** India-first compliance,
+zero-per-seat-AI cost, true white-label + on-prem, Claude-native quality. 6 open
+questions for Nitin (sequencing vs v1.0; build-vs-partner content; cert funding;
+TTS vendor; native-mobile timing; BFSI-first vs global). See §9 of the doc.
+
+---
+
 ## 🌙 OVERNIGHT LOOP 2026-06-11 (Nitin offline) — cron gauntlet: 4 more crashers fixed; D-prod business pack; probes
 
 **Morning TLDR for Nitin — read `git log c53ccf8fe..` for the commit-by-commit story:**
