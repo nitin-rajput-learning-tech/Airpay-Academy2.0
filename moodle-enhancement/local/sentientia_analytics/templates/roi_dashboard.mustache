@@ -1,0 +1,127 @@
+{{!
+    @template local_sentientia_analytics/roi_dashboard
+
+    Training ROI surface.
+    Rendered only when sentientia.analytics.roi.enabled is ON.
+
+    Context variables:
+        roi_pct              - int  (ROI as a percentage, can be negative)
+        roi_positive         - bool
+        roi_negative         - bool
+        total_benefit        - float
+        total_cost           - float
+        net_benefit          - float
+        currency_symbol      - string (e.g. '₹')
+        summary_sentence     - string (plain-language summary)
+        components.benefits[]
+          .name              - string
+          .value             - float
+          .formula           - string (plain-language derivation)
+        components.costs[]
+          .name              - string
+          .value             - float
+          .formula           - string
+        assumptions[]
+          .assumption_label  - string
+          .assumption_value  - string
+        roi_empty            - bool (true when insufficient data)
+        roi_description      - string
+}}
+<div class="airpay-analytics__card airpay-analytics__card--roi">
+    <div class="airpay-analytics__card-header">
+        <h3>
+            <i class="fa fa-line-chart" aria-hidden="true"></i>
+            {{# str }}roi_heading, local_sentientia_analytics{{/ str }}
+        </h3>
+    </div>
+    <p class="airpay-analytics__card-desc">{{roi_description}}</p>
+
+    {{#roi_empty}}
+    <div class="ap-empty-state" style="padding:24px; text-align:center;">
+        <i class="fa fa-info-circle" style="font-size:2rem; color:#d1d5db; display:block; margin-bottom:8px;" aria-hidden="true"></i>
+        <p style="color:#9ca3af; font-size:13px; margin:0;">{{# str }}roi_empty, local_sentientia_analytics{{/ str }}</p>
+    </div>
+    {{/roi_empty}}
+
+    {{^roi_empty}}
+    {{! Hero ROI number }}
+    <div class="airpay-analytics__roi-hero">
+        <div class="airpay-analytics__roi-score {{#roi_positive}}airpay-analytics__roi-score--positive{{/roi_positive}}{{#roi_negative}}airpay-analytics__roi-score--negative{{/roi_negative}}">
+            {{#roi_positive}}<i class="fa fa-arrow-up" aria-hidden="true"></i>{{/roi_positive}}
+            {{#roi_negative}}<i class="fa fa-arrow-down" aria-hidden="true"></i>{{/roi_negative}}
+            {{roi_pct}}%
+        </div>
+        <div class="airpay-analytics__roi-summary">{{summary_sentence}}</div>
+    </div>
+
+    <div class="airpay-analytics__roi-grid">
+
+        {{! Benefit breakdown }}
+        <div class="airpay-analytics__roi-panel">
+            <h4>{{# str }}roi_benefits_heading, local_sentientia_analytics{{/ str }}</h4>
+            <div class="airpay-analytics__roi-total airpay-analytics__roi-total--benefit">
+                {{currency_symbol}}{{total_benefit}}
+            </div>
+            <table class="airpay-analytics__table airpay-analytics__table--roi">
+                <tbody>
+                    {{#components}}
+                    {{#benefits}}
+                    <tr>
+                        <td>{{name}}</td>
+                        <td class="text-end"><strong>{{currency_symbol}}{{value}}</strong></td>
+                    </tr>
+                    <tr class="airpay-analytics__roi-formula">
+                        <td colspan="2"><small class="text-muted">{{formula}}</small></td>
+                    </tr>
+                    {{/benefits}}
+                    {{/components}}
+                </tbody>
+            </table>
+        </div>
+
+        {{! Cost breakdown }}
+        <div class="airpay-analytics__roi-panel">
+            <h4>{{# str }}roi_costs_heading, local_sentientia_analytics{{/ str }}</h4>
+            <div class="airpay-analytics__roi-total airpay-analytics__roi-total--cost">
+                {{currency_symbol}}{{total_cost}}
+            </div>
+            <table class="airpay-analytics__table airpay-analytics__table--roi">
+                <tbody>
+                    {{#components}}
+                    {{#costs}}
+                    <tr>
+                        <td>{{name}}</td>
+                        <td class="text-end"><strong>{{currency_symbol}}{{value}}</strong></td>
+                    </tr>
+                    <tr class="airpay-analytics__roi-formula">
+                        <td colspan="2"><small class="text-muted">{{formula}}</small></td>
+                    </tr>
+                    {{/costs}}
+                    {{/components}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {{! Assumptions transparency panel }}
+    <details class="airpay-analytics__assumptions">
+        <summary>
+            <i class="fa fa-info-circle" aria-hidden="true"></i>
+            {{# str }}roi_assumptions_heading, local_sentientia_analytics{{/ str }}
+        </summary>
+        <p class="airpay-analytics__assumptions-note">
+            {{# str }}roi_assumptions_note, local_sentientia_analytics{{/ str }}
+        </p>
+        <table class="airpay-analytics__table airpay-analytics__table--assumptions">
+            <tbody>
+                {{#assumptions}}
+                <tr>
+                    <td>{{assumption_label}}</td>
+                    <td><strong>{{assumption_value}}</strong></td>
+                </tr>
+                {{/assumptions}}
+            </tbody>
+        </table>
+    </details>
+    {{/roi_empty}}
+</div>

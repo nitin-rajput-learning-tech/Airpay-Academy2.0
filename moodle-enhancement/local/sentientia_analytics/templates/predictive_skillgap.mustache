@@ -1,0 +1,77 @@
+{{!
+    @template local_sentientia_analytics/predictive_skillgap
+
+    Team skill-gap projection panel.
+    Rendered only when sentientia.analytics.predictive.enabled is ON.
+
+    Context variables:
+        skillgaps[]              - array of team skill gap rows
+          .team_name             - string (already format_string'd)
+          .team_path             - string
+          .required_skills       - int (distinct skill domains required)
+          .covered_skills        - int (domains with at least one completion)
+          .gap_pct               - int 0–100 (percentage of required not covered)
+          .gap_band              - string: high | medium | low
+          .gap_high              - bool
+          .gap_med               - bool
+          .gap_low               - bool
+          .skill_gaps[]          - array of uncovered skill rows
+            .skill_name          - string
+        has_skillgaps            - bool
+        skillgap_description     - string
+}}
+<div class="airpay-analytics__card airpay-analytics__card--skillgap">
+    <div class="airpay-analytics__card-header">
+        <h3>
+            <i class="fa fa-puzzle-piece" aria-hidden="true"></i>
+            {{# str }}skillgap_heading, local_sentientia_analytics{{/ str }}
+        </h3>
+        <span class="airpay-analytics__badge airpay-analytics__badge--info">
+            {{# str }}predictive_heading, local_sentientia_analytics{{/ str }}
+        </span>
+    </div>
+    <p class="airpay-analytics__card-desc">{{skillgap_description}}</p>
+
+    {{#has_skillgaps}}
+    <div class="airpay-analytics__skillgap-list">
+        {{#skillgaps}}
+        <div class="airpay-analytics__skillgap-row airpay-analytics__skillgap-row--{{gap_band}}">
+            <div class="airpay-analytics__skillgap-header">
+                <span class="airpay-analytics__skillgap-team">{{team_name}}</span>
+                <span class="airpay-analytics__skillgap-meta">
+                    {{# str }}covered_skills, local_sentientia_analytics{{/ str }}: {{covered_skills}} /
+                    {{# str }}required_skills, local_sentientia_analytics{{/ str }}: {{required_skills}}
+                </span>
+                <span class="airpay-analytics__gap-badge airpay-analytics__gap-badge--{{gap_band}}">
+                    {{# str }}gap_pct, local_sentientia_analytics{{/ str }}: {{gap_pct}}%
+                </span>
+            </div>
+            <div class="airpay-analytics__skillgap-bar-wrap">
+                <div class="airpay-analytics__skillgap-bar airpay-analytics__skillgap-bar--{{gap_band}}"
+                     style="width: {{gap_pct}}%;"
+                     role="progressbar"
+                     aria-valuenow="{{gap_pct}}"
+                     aria-valuemin="0"
+                     aria-valuemax="100"
+                     aria-label="Skill gap {{gap_pct}}%"></div>
+            </div>
+            {{#skill_gaps}}
+            <div class="airpay-analytics__skillgap-tags">
+                {{# str }}uncovered_skills, local_sentientia_analytics{{/ str }}:
+                {{#skill_gaps}}
+                <span class="airpay-analytics__skill-tag">{{skill_name}}</span>
+                {{/skill_gaps}}
+            </div>
+            {{/skill_gaps}}
+        </div>
+        {{/skillgaps}}
+    </div>
+    {{/has_skillgaps}}
+
+    {{^has_skillgaps}}
+    <div class="ap-empty-state" style="padding:24px; text-align:center;">
+        <i class="fa fa-info-circle" style="font-size:2rem; color:#d1d5db; display:block; margin-bottom:8px;" aria-hidden="true"></i>
+        <p style="color:#9ca3af; font-size:13px; margin:0;">{{# str }}skillgap_empty, local_sentientia_analytics{{/ str }}</p>
+    </div>
+    {{/has_skillgaps}}
+</div>

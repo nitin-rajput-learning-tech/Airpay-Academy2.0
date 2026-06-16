@@ -107,6 +107,49 @@ $data = [
     'exporturl'     => (new moodle_url('/local/sentientia_analytics/export.php', ['range' => $range, 'format' => 'csv', 'orgid' => $orgid]))->out(false),
 ];
 
+// ── P1.2 Predictive surfaces — feature-flagged, DEFAULT OFF ───────────
+// The existing dashboard data above is always computed; predictive data
+// is computed ONLY when the flag is ON, so there is zero performance
+// impact when the flag is OFF (the Airpay Academy default).
+$show_predictive = class_exists('\local_sentientia_platform\feature_flags')
+    && \local_sentientia_platform\feature_flags::is_enabled('sentientia.analytics.predictive.enabled');
+
+$show_roi = class_exists('\local_sentientia_platform\feature_flags')
+    && \local_sentientia_platform\feature_flags::is_enabled('sentientia.analytics.roi.enabled');
+
+$data['show_predictive'] = $show_predictive;
+$data['show_roi']        = $show_roi;
+
+if ($show_predictive) {
+    $engine     = \local_sentientia_analytics\predictive_engine::class;
+    $atrisk     = $engine::get_at_risk_users($orgpath, 50);
+    $skillgaps  = $engine::get_skill_gap_projection($orgpath);
+
+    $data['atrisk']               = $atrisk;
+    $data['has_atrisk']           = !empty($atrisk);
+    $data['atrisk_description']   = get_string('atrisk_description', 'local_sentientia_analytics');
+    $data['skillgaps']            = $skillgaps;
+    $data['has_skillgaps']        = !empty($skillgaps);
+    $data['skillgap_description'] = get_string('skillgap_description', 'local_sentientia_analytics');
+}
+
+if ($show_roi) {
+    $roi = \local_sentientia_analytics\roi_calculator::compute($range, $orgpath);
+    $data['roi']             = $roi;
+    $data['roi_empty']       = empty($roi['completions'] ?? $roi['raw_metrics']['completions'] ?? false);
+    $data['roi_description'] = get_string('roi_description', 'local_sentientia_analytics');
+    // Flatten ROI into data for template convenience.
+    if (!empty($roi)) {
+        foreach ($roi as $k => $v) {
+            if (!is_array($v)) {
+                $data['roi_' . $k] = $v;
+            }
+        }
+        $data['roi_components']   = $roi['components']   ?? [];
+        $data['roi_assumptions']  = $roi['assumptions']  ?? [];
+    }
+}
+
 echo $OUTPUT->header();
 echo $OUTPUT->render_from_template('local_sentientia_analytics/dashboard', $data);
 echo $OUTPUT->footer();

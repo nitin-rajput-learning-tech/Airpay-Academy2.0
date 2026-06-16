@@ -1,0 +1,85 @@
+{{!
+    @template local_sentientia_analytics/predictive_atrisk
+
+    At-risk learner forecasting panel.
+    Rendered only when sentientia.analytics.predictive.enabled is ON.
+
+    Context variables:
+        atrisk[]              - array of at-risk user rows
+          .userid             - int
+          .firstname          - string (already format_string'd)
+          .lastname           - string
+          .email              - string (admin context — not shown to learners)
+          .risk_score         - int 0–100
+          .band               - string: high | medium | low
+          .band_high          - bool
+          .band_med           - bool
+          .band_low           - bool
+          .signals[]          - array of signal rows
+            .signal_name      - string
+            .signal_value     - string
+            .weight_pct       - int (percentage weight of this signal)
+        has_atrisk            - bool
+        atrisk_description    - string
+}}
+<div class="airpay-analytics__card airpay-analytics__card--predictive">
+    <div class="airpay-analytics__card-header">
+        <h3>
+            <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
+            {{# str }}atrisk_heading, local_sentientia_analytics{{/ str }}
+        </h3>
+        <span class="airpay-analytics__badge airpay-analytics__badge--info">
+            {{# str }}predictive_heading, local_sentientia_analytics{{/ str }}
+        </span>
+    </div>
+    <p class="airpay-analytics__card-desc">{{atrisk_description}}</p>
+
+    {{#has_atrisk}}
+    <div class="airpay-analytics__atrisk-table-wrap">
+        <table class="airpay-analytics__table airpay-analytics__table--atrisk">
+            <thead>
+                <tr>
+                    <th>{{# str }}fullnamedisplay, core{{/ str }}</th>
+                    <th>{{# str }}risk_score, local_sentientia_analytics{{/ str }}</th>
+                    <th>{{# str }}signals_heading, local_sentientia_analytics{{/ str }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#atrisk}}
+                <tr class="airpay-analytics__atrisk-row airpay-analytics__atrisk-row--{{band}}">
+                    <td>
+                        <span class="airpay-analytics__user-name">{{firstname}} {{lastname}}</span>
+                    </td>
+                    <td>
+                        <span class="airpay-analytics__risk-badge airpay-analytics__risk-badge--{{band}}">
+                            {{risk_score}}
+                            {{#band_high}}/ {{# str }}risk_band_high, local_sentientia_analytics{{/ str }}{{/band_high}}
+                            {{#band_med}}/ {{# str }}risk_band_medium, local_sentientia_analytics{{/ str }}{{/band_med}}
+                            {{#band_low}}/ {{# str }}risk_band_low, local_sentientia_analytics{{/ str }}{{/band_low}}
+                        </span>
+                    </td>
+                    <td>
+                        <ul class="airpay-analytics__signals">
+                            {{#signals}}
+                            <li class="airpay-analytics__signal">
+                                <span class="airpay-analytics__signal-name">{{signal_name}}</span>
+                                <span class="airpay-analytics__signal-value">{{signal_value}}</span>
+                                <span class="airpay-analytics__signal-weight">({{weight_pct}}%)</span>
+                            </li>
+                            {{/signals}}
+                        </ul>
+                    </td>
+                </tr>
+                {{/atrisk}}
+            </tbody>
+        </table>
+    </div>
+    {{/has_atrisk}}
+
+    {{^has_atrisk}}
+    <div class="ap-empty-state" style="padding:24px; text-align:center;">
+        <i class="fa fa-check-circle" style="font-size:2rem; color:#16a34a; display:block; margin-bottom:8px;" aria-hidden="true"></i>
+        <p style="color:#5a6070; font-size:13px; margin:0;">{{# str }}atrisk_empty, local_sentientia_analytics{{/ str }}</p>
+    </div>
+    {{/has_atrisk}}
+</div>
