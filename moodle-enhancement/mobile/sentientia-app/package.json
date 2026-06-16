@@ -4,7 +4,8 @@
   "description": "Capacitor native wrapper for Sentientia LMS — wraps the local_sentientia_pwa PWA for iOS and Android store distribution",
   "private": true,
   "scripts": {
-    "build": "echo 'No local bundle build configured — this project uses remote URL mode. See BUILD.md §Remote URL vs Local Bundle.'",
+    "build": "tsc --project tsconfig.json",
+    "build:check": "tsc --noEmit",
     "sync": "npx cap sync",
     "copy": "npx cap copy",
     "update": "npx cap update",
