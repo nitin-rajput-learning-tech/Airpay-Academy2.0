@@ -1,0 +1,83 @@
+{{!
+    Copyright 2026 Airpay Payment Services
+    License http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+
+    Talent Mobility — learner-facing internal opportunity board.
+
+    Context variables:
+    * has_opportunities bool
+    * opportunities array [{id, title, description, designation, department,
+                            matchpct, has_skilldata, registered, canregister, sesskey}]
+    * has_paths bool
+    * paths array [{name, to}]
+    * mydesignation string
+}}
+<div class="airpay-talent-board">
+
+    {{#has_paths}}
+    <section class="airpay-talent-board__paths mb-4">
+        <h3>{{#str}}heading_mypath, local_sentientia_talent{{/str}}</h3>
+        <p class="text-muted">{{#str}}mypath_intro, local_sentientia_talent, {{mydesignation}}{{/str}}</p>
+        <ul class="list-group">
+            {{#paths}}
+            <li class="list-group-item">{{name}} <span class="text-muted">&rarr; {{to}}</span></li>
+            {{/paths}}
+        </ul>
+    </section>
+    {{/has_paths}}
+
+    <section class="airpay-talent-board__opps">
+        <h3>{{#str}}heading_opportunities, local_sentientia_talent{{/str}}</h3>
+        {{^has_opportunities}}
+        <p class="text-muted">{{#str}}empty_opportunities, local_sentientia_talent{{/str}}</p>
+        {{/has_opportunities}}
+        {{#has_opportunities}}
+        <div class="airpay-talent-board__grid d-flex flex-column gap-3">
+            {{#opportunities}}
+            <div class="airpay-talent-board__card card p-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <h4 class="airpay-talent-board__title mb-1">{{title}}</h4>
+                    {{#has_skilldata}}
+                    <span class="airpay-talent-board__match badge badge-info" title="{{#str}}match_help, local_sentientia_talent{{/str}}">
+                        {{matchpct}}% {{#str}}match_label, local_sentientia_talent{{/str}}
+                    </span>
+                    {{/has_skilldata}}
+                </div>
+                {{#department}}<div class="text-muted small mb-1">{{department}}</div>{{/department}}
+                <p class="airpay-talent-board__desc">{{description}}</p>
+
+                {{#canregister}}
+                {{^registered}}
+                <form method="post" action="opportunities.php" class="airpay-talent-board__form">
+                    <input type="hidden" name="action" value="register">
+                    <input type="hidden" name="oppid" value="{{id}}">
+                    <input type="hidden" name="sesskey" value="{{sesskey}}">
+                    <div class="form-group">
+                        <label for="msg-{{id}}" class="small">{{#str}}interest_message, local_sentientia_talent{{/str}}</label>
+                        <textarea class="form-control" id="msg-{{id}}" name="message" rows="2"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm mt-2">
+                        {{#str}}btn_register, local_sentientia_talent{{/str}}
+                    </button>
+                </form>
+                {{/registered}}
+                {{#registered}}
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge badge-success">{{#str}}interest_registered_badge, local_sentientia_talent{{/str}}</span>
+                    <form method="post" action="opportunities.php" class="m-0">
+                        <input type="hidden" name="action" value="withdraw">
+                        <input type="hidden" name="oppid" value="{{id}}">
+                        <input type="hidden" name="sesskey" value="{{sesskey}}">
+                        <button type="submit" class="btn btn-link btn-sm p-0">
+                            {{#str}}btn_withdraw, local_sentientia_talent{{/str}}
+                        </button>
+                    </form>
+                </div>
+                {{/registered}}
+                {{/canregister}}
+            </div>
+            {{/opportunities}}
+        </div>
+        {{/has_opportunities}}
+    </section>
+</div>

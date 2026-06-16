@@ -1,0 +1,130 @@
+{{!
+    Copyright 2026 Airpay Payment Services
+    License http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+
+    Talent Mobility — HR / manager console.
+
+    Context variables:
+    * count_paths int
+    * count_successions int
+    * count_opportunities int
+    * can_paths bool
+    * can_succession bool
+    * can_opps bool
+    * has_paths bool
+    * paths array [{name, from, to, active}]
+    * has_successions bool
+    * successions array [{designation, candidatename, incumbentname, readiness_label, matchpct}]
+    * has_opportunities bool
+    * opportunities array [{id, title, status, designation}]
+    * skillsource string
+}}
+<div class="airpay-talent">
+    <div class="airpay-talent__kpis d-flex flex-wrap gap-3 mb-4">
+        <div class="airpay-talent__kpi card p-3">
+            <div class="airpay-talent__kpi-num h2 mb-0">{{count_paths}}</div>
+            <div class="airpay-talent__kpi-label text-muted">{{#str}}kpi_paths, local_sentientia_talent{{/str}}</div>
+        </div>
+        {{#can_succession}}
+        <div class="airpay-talent__kpi card p-3">
+            <div class="airpay-talent__kpi-num h2 mb-0">{{count_successions}}</div>
+            <div class="airpay-talent__kpi-label text-muted">{{#str}}kpi_successions, local_sentientia_talent{{/str}}</div>
+        </div>
+        {{/can_succession}}
+        <div class="airpay-talent__kpi card p-3">
+            <div class="airpay-talent__kpi-num h2 mb-0">{{count_opportunities}}</div>
+            <div class="airpay-talent__kpi-label text-muted">{{#str}}kpi_opportunities, local_sentientia_talent{{/str}}</div>
+        </div>
+    </div>
+
+    <p class="text-muted small">
+        {{#str}}skillsource_active, local_sentientia_talent, {{skillsource}}{{/str}}
+    </p>
+
+    {{#can_paths}}
+    <section class="airpay-talent__section mb-4">
+        <h3>{{#str}}heading_paths, local_sentientia_talent{{/str}}</h3>
+        {{#has_paths}}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>{{#str}}col_path, local_sentientia_talent{{/str}}</th>
+                    <th>{{#str}}col_from, local_sentientia_talent{{/str}}</th>
+                    <th>{{#str}}col_to, local_sentientia_talent{{/str}}</th>
+                    <th>{{#str}}col_status, local_sentientia_talent{{/str}}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#paths}}
+                <tr>
+                    <td>{{name}}</td>
+                    <td>{{from}}</td>
+                    <td>{{to}}</td>
+                    <td>{{#active}}<span class="badge badge-success">{{#str}}status_active, local_sentientia_talent{{/str}}</span>{{/active}}{{^active}}<span class="badge badge-secondary">{{#str}}status_archived, local_sentientia_talent{{/str}}</span>{{/active}}</td>
+                </tr>
+                {{/paths}}
+            </tbody>
+        </table>
+        {{/has_paths}}
+        {{^has_paths}}<p class="text-muted">{{#str}}empty_paths, local_sentientia_talent{{/str}}</p>{{/has_paths}}
+    </section>
+    {{/can_paths}}
+
+    {{#can_succession}}
+    <section class="airpay-talent__section mb-4">
+        <h3>{{#str}}heading_succession, local_sentientia_talent{{/str}}</h3>
+        {{#has_successions}}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>{{#str}}col_role, local_sentientia_talent{{/str}}</th>
+                    <th>{{#str}}col_candidate, local_sentientia_talent{{/str}}</th>
+                    <th>{{#str}}col_incumbent, local_sentientia_talent{{/str}}</th>
+                    <th>{{#str}}col_readiness, local_sentientia_talent{{/str}}</th>
+                    <th>{{#str}}col_match, local_sentientia_talent{{/str}}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#successions}}
+                <tr>
+                    <td>{{designation}}</td>
+                    <td>{{candidatename}}</td>
+                    <td>{{incumbentname}}</td>
+                    <td>{{readiness_label}}</td>
+                    <td>{{matchpct}}%</td>
+                </tr>
+                {{/successions}}
+            </tbody>
+        </table>
+        {{/has_successions}}
+        {{^has_successions}}<p class="text-muted">{{#str}}empty_succession, local_sentientia_talent{{/str}}</p>{{/has_successions}}
+    </section>
+    {{/can_succession}}
+
+    {{#can_opps}}
+    <section class="airpay-talent__section mb-4">
+        <h3>{{#str}}heading_opportunities, local_sentientia_talent{{/str}}</h3>
+        {{#has_opportunities}}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>{{#str}}col_title, local_sentientia_talent{{/str}}</th>
+                    <th>{{#str}}col_role, local_sentientia_talent{{/str}}</th>
+                    <th>{{#str}}col_status, local_sentientia_talent{{/str}}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#opportunities}}
+                <tr>
+                    <td>{{title}}</td>
+                    <td>{{designation}}</td>
+                    <td>{{status}}</td>
+                </tr>
+                {{/opportunities}}
+            </tbody>
+        </table>
+        {{/has_opportunities}}
+        {{^has_opportunities}}<p class="text-muted">{{#str}}empty_opportunities, local_sentientia_talent{{/str}}</p>{{/has_opportunities}}
+    </section>
+    {{/can_opps}}
+</div>
