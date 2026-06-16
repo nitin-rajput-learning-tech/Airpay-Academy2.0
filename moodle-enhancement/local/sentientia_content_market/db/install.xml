@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/sentientia_content_market/db" VERSION="20260616"
+       COMMENT="Sentientia Content Marketplace — provider catalog + skills mapping tables">
+  <TABLES>
+
+    <TABLE NAME="local_sentientia_cm_item"
+           COMMENT="Normalised catalog item imported from any third-party provider (Go1, Udemy Business, Coursera, Skillsoft). One row per unique external course.">
+      <FIELDS>
+        <FIELD NAME="id"              TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="provider"        TYPE="char" LENGTH="50" NOTNULL="true"
+               COMMENT="go1 | udemy_business | coursera | skillsoft | mock"/>
+        <FIELD NAME="external_id"     TYPE="char" LENGTH="255" NOTNULL="true"
+               COMMENT="Provider-assigned unique identifier for the course"/>
+        <FIELD NAME="costcenterid"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="BizLMS tenant: 1=Airpay, 77=Public, 177=ZEEA. 0=global (all tenants)."/>
+        <FIELD NAME="title"           TYPE="char" LENGTH="500" NOTNULL="true" DEFAULT=""/>
+        <FIELD NAME="description"     TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="thumbnail_url"   TYPE="char" LENGTH="1024" NOTNULL="false"/>
+        <FIELD NAME="provider_url"    TYPE="char" LENGTH="1024" NOTNULL="false"
+               COMMENT="Deep-link URL to launch the course on the provider platform"/>
+        <FIELD NAME="duration_mins"   TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="Total course duration in minutes"/>
+        <FIELD NAME="language"        TYPE="char" LENGTH="10" NOTNULL="true" DEFAULT="en"/>
+        <FIELD NAME="level"           TYPE="char" LENGTH="20" NOTNULL="false"
+               COMMENT="beginner | intermediate | advanced"/>
+        <FIELD NAME="content_type"    TYPE="char" LENGTH="50" NOTNULL="false"
+               COMMENT="video | course | microlearning | podcast | article"/>
+        <FIELD NAME="price_usd"       TYPE="number" LENGTH="10" DECIMALS="2" NOTNULL="false"
+               COMMENT="Unit price in USD; NULL = included in subscription / free"/>
+        <FIELD NAME="raw_payload"     TYPE="text" NOTNULL="false"
+               COMMENT="Full normalised JSON from the adapter — stored for re-processing"/>
+        <FIELD NAME="status"          TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="active"
+               COMMENT="active | retired | pending_review"/>
+        <FIELD NAME="last_synced"     TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="Unix timestamp of last successful sync from provider"/>
+        <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_provider_ext"   UNIQUE="true"  FIELDS="provider, external_id"
+               COMMENT="Natural unique key — prevent duplicate imports"/>
+        <INDEX NAME="idx_costcenter"     UNIQUE="false" FIELDS="costcenterid"
+               COMMENT="Tenant-scoped listing — every query hits this"/>
+        <INDEX NAME="idx_provider"       UNIQUE="false" FIELDS="provider"/>
+        <INDEX NAME="idx_status"         UNIQUE="false" FIELDS="status"/>
+        <INDEX NAME="idx_last_synced"    UNIQUE="false" FIELDS="last_synced"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_cm_skill_map"
+           COMMENT="Many-to-many mapping between content market items and skills taxonomy terms from local_sentientia_skillsai. Falls back gracefully when that plugin is absent.">
+      <FIELDS>
+        <FIELD NAME="id"          TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="item_id"     TYPE="int"  LENGTH="10" NOTNULL="true"
+               COMMENT="FK to local_sentientia_cm_item.id"/>
+        <FIELD NAME="skill_id"    TYPE="int"  LENGTH="10" NOTNULL="true"
+               COMMENT="FK to local_sentientia_skillsai skill term (gracefully absent)"/>
+        <FIELD NAME="skill_name"  TYPE="char" LENGTH="255" NOTNULL="true"
+               COMMENT="Denormalised skill name — survives even if skillsai is absent"/>
+        <FIELD NAME="source"      TYPE="char" LENGTH="30" NOTNULL="true" DEFAULT="provider"
+               COMMENT="provider = came from API response; admin = manually mapped; ai = AI-inferred"/>
+        <FIELD NAME="confidence"  TYPE="number" LENGTH="5" DECIMALS="2" NOTNULL="false"
+               COMMENT="0.00-1.00; NULL when source=admin (manual mappings are definitive)"/>
+        <FIELD NAME="timecreated" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"     TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_item"     TYPE="foreign" FIELDS="item_id"
+             REFTABLE="local_sentientia_cm_item" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_item_skill"  UNIQUE="true"  FIELDS="item_id, skill_id"
+               COMMENT="One mapping row per (item, skill) pair"/>
+        <INDEX NAME="idx_skill_id"    UNIQUE="false" FIELDS="skill_id"
+               COMMENT="Reverse lookup: which items teach this skill?"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_cm_sync_log"
+           COMMENT="Append-only audit log of every provider sync run. One row per provider per run.">
+      <FIELDS>
+        <FIELD NAME="id"            TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="provider"      TYPE="char" LENGTH="50" NOTNULL="true"/>
+        <FIELD NAME="costcenterid"  TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="items_fetched" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="items_created" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="items_updated" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="items_retired" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="status"        TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="ok"
+               COMMENT="ok | partial | failed | disabled"/>
+        <FIELD NAME="errormsg"      TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="timecreated"   TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_provider_time"  UNIQUE="false" FIELDS="provider, timecreated"
+               COMMENT="Show recent syncs per provider"/>
+        <INDEX NAME="idx_costcenter"     UNIQUE="false" FIELDS="costcenterid"/>
+        <INDEX NAME="idx_status"         UNIQUE="false" FIELDS="status"/>
+      </INDEXES>
+    </TABLE>
+
+  </TABLES>
+</XMLDB>
