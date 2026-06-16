@@ -13,6 +13,7 @@ temp/
 *.bak
 course_extract.txt
 .claude/settings.local.json
+.claude/worktrees/
 __pycache__/
 *.pyc
 .pytest_cache/
