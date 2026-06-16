@@ -41,4 +41,32 @@ $definitions = [
         'simpledata'         => true,
         'staticacceleration' => true,
     ],
+
+    // ── P1.2 Predictive Analytics caches ────────────────────────────
+    // at-risk + skill-gap are expensive (3 queries × 3,500+ users).
+    // TTL = 600s (10 min); also pre-warmed hourly by the scheduled task
+    // so dashboard hits always serve warm data.
+    // simpledata=false: each entry is a deeply nested array.
+    'predictive_atrisk' => [
+        'mode'       => cache_store::MODE_APPLICATION,
+        'ttl'        => 600,
+        'simplekeys' => true,
+        'simpledata' => false,
+    ],
+    'predictive_skillgap' => [
+        'mode'       => cache_store::MODE_APPLICATION,
+        'ttl'        => 600,
+        'simplekeys' => true,
+        'simpledata' => false,
+    ],
+
+    // ── P1.2 Training ROI cache ──────────────────────────────────────
+    // ROI involves multiple aggregate queries; 10 min TTL; pre-warmed
+    // by the same hourly scheduled task.
+    'roi' => [
+        'mode'       => cache_store::MODE_APPLICATION,
+        'ttl'        => 600,
+        'simplekeys' => true,
+        'simpledata' => false,
+    ],
 ];

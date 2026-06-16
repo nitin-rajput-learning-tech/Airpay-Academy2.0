@@ -111,4 +111,21 @@
         </table>
     </div>
     {{/has_courses}}
+
+    {{! ── P1.2 Predictive surfaces — rendered only when flag ON ─────── }}
+    {{#show_predictive}}
+    <div class="airpay-analytics__predictive-section">
+        <div class="airpay-analytics__predictive-grid">
+            {{> local_sentientia_analytics/predictive_atrisk }}
+            {{> local_sentientia_analytics/predictive_skillgap }}
+        </div>
+    </div>
+    {{/show_predictive}}
+
+    {{! ── P1.2 Training ROI — rendered only when flag ON ─────────────── }}
+    {{#show_roi}}
+    <div class="airpay-analytics__roi-section">
+        {{> local_sentientia_analytics/roi_dashboard }}
+    </div>
+    {{/show_roi}}
 </div>
