@@ -39,6 +39,22 @@ body#page-login-index {
         color: #fff;
     }
 
+    /* Brand Book 2026-06: faint circular "a" monogram watermark, bottom-right —
+       echoes the brand's circular "a" device (p07). Clipped by hero overflow,
+       sits beneath the content (z-index 1 < content's 2). */
+    .airpay-login__hero::after {
+        content: 'a';
+        position: absolute;
+        right: -0.16em; bottom: -0.46em;
+        font-family: 'Montserrat', -apple-system, sans-serif;
+        font-weight: 800;
+        font-size: 30rem;
+        line-height: 1;
+        color: rgba(255, 255, 255, 0.05);
+        pointer-events: none;
+        z-index: 1;
+    }
+
     .airpay-login__hero-bg {
         position: absolute; inset: 0;
         background:
@@ -60,7 +76,7 @@ body#page-login-index {
         background: rgba(255,255,255,0.04);
     }
     .airpay-login__hero-circle--1 { width: 300px; height: 300px; top: -80px; left: -100px; }
-    .airpay-login__hero-circle--2 { width: 200px; height: 200px; bottom: -60px; right: -40px; }
+    .airpay-login__hero-circle--2 { width: 380px; height: 380px; bottom: -120px; right: -110px; background: rgba(255,255,255,0.05); } /* Brand Book 2026-06: soft halo behind the "a" monogram */
     .airpay-login__hero-circle--3 {
         width: 120px; height: 120px; top: 40%; right: 10%;
         border: 2px solid rgba(255,255,255,0.06); background: transparent;
@@ -82,6 +98,17 @@ body#page-login-index {
         font-weight: 800;
         letter-spacing: -0.02em;
         margin-bottom: 4px;
+    }
+
+    /* Brand Book 2026-06: single sparing brand-orange accent bar under the
+       title — the book's "occasional warm pop", used once on the hero. */
+    .airpay-login__hero-title::after {
+        content: '';
+        display: block;
+        width: 44px; height: 3px;
+        margin: 14px auto 0;
+        border-radius: 2px;
+        background: var(--ap-orange-500, #ed692b);
     }
 
     .airpay-login__hero-subtitle {

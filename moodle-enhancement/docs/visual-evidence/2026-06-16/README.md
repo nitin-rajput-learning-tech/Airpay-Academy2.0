@@ -41,3 +41,17 @@ The functional CSS grep above remains the authoritative "teal is gone" proof; th
 screenshots confirm the on-brand blue renders correctly on the two public surfaces.
 Authenticated surfaces (dashboard, skills, profile) inherit the same token cascade
 + swept plugin styles — verified teal-free in the compiled CSS that serves them.
+
+## Phase 2 — login redesign anchor (`03-login-redesign-desktop.png`)
+
+First brand-forward surface (theme v2026061601). The login hero now carries the
+brochure's signature elements on top of the blue→deep gradient:
+- **Faint "a" monogram watermark** bottom-right (a giant low-opacity Montserrat
+  "a" + soft halo disc) — echoes the brand's circular "a" device (brand book p07).
+- **Sparing brand-orange accent bar** (`--ap-orange-500 #ed692b`) under the title —
+  the book's one allowed "occasional warm pop", used exactly once on the hero.
+- Otherwise blue-dominant + white space, per the book's philosophy.
+
+This is the **design anchor** for the full Phase-2 redesign; the same language
+(monogram device + sparing orange + blue gradients) is to be applied next to the
+frontpage/storefront + the card-thumb variety palette, pending review of this anchor.

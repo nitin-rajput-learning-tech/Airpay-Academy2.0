@@ -372,7 +372,9 @@ defined('MOODLE_INTERNAL') || die();
 // add brand secondaries (#1985DD/#9cdbf4/#0d5da1/#ed692b/#6d58a5) + brand
 // gradient tokens. Primary #0066A7 + Montserrat already matched the book.
 // See docs/audits/brand-revamp-2026-06/REVISED-BRAND-BOOK-2026-06.md.
-$plugin->version   = 2026061600;
+// 2026061601 — Phase 1 teal-gap closure (rgba/dark-teal forms) + Phase 2 login
+// hero elevation: faint "a" monogram watermark + sparing brand-orange accent bar.
+$plugin->version   = 2026061601;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_sentientia';
 $plugin->maturity  = MATURITY_BETA;
