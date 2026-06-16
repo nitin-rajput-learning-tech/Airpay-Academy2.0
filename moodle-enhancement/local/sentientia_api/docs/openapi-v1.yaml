@@ -1,0 +1,252 @@
+openapi: 3.0.3
+info:
+  title: Sentientia Public API
+  description: >
+    Versioned public REST surface for the Sentientia LMS, exposing safe,
+    documented, tenant-scoped read access to courses, enrolments, completions
+    and skills, plus a guarded write endpoint for enrolment creation.
+
+    Transport: all functions are exposed through Moodle's web-service REST
+    server. Call `POST {wwwroot}/webservice/rest/server.php` with the query/body
+    parameters `wstoken`, `wsfunction` (the operationId below), and
+    `moodlewsrestformat=json`. Authentication is by web-service token; the
+    token's owning user must hold the documented capability AND belong to the
+    tenant whose data is being requested.
+
+    Feature flags: the entire surface is gated by `sentientia.api.enabled`
+    (default OFF). Write functions additionally require
+    `sentientia.api.write.enabled` (default OFF). When a flag is OFF the
+    function returns an `api_disabled` / `api_write_disabled` exception.
+
+    Rate limiting: a fixed-window per-user budget is enforced; exceeding it
+    returns a `ratelimited` exception (logical 429).
+  version: '1.0.0'
+  license:
+    name: GNU GPL v3 or later
+    url: http://www.gnu.org/copyleft/gpl.html
+
+servers:
+  - url: '{wwwroot}/webservice/rest/server.php'
+    description: Moodle REST web-service server
+    variables:
+      wwwroot:
+        default: https://www.airpay.academy
+
+security:
+  - wstoken: []
+
+components:
+  securitySchemes:
+    wstoken:
+      type: apiKey
+      in: query
+      name: wstoken
+      description: Moodle web-service token bound to a user with local/sentientia_api:* capabilities.
+  parameters:
+    wsformat:
+      name: moodlewsrestformat
+      in: query
+      required: true
+      schema: { type: string, enum: [json], default: json }
+  schemas:
+    Course:
+      type: object
+      properties:
+        id:        { type: integer }
+        fullname:  { type: string }
+        shortname: { type: string }
+        summary:   { type: string }
+        startdate: { type: integer, description: epoch seconds }
+        enddate:   { type: integer, description: epoch seconds, 0 if none }
+        visible:   { type: boolean }
+    Enrolment:
+      type: object
+      properties:
+        userid:    { type: integer }
+        fullname:  { type: string }
+        email:     { type: string, description: Populated only for site admins; empty for tenant managers }
+        timestart: { type: integer, description: epoch seconds }
+        active:    { type: boolean }
+    Completion:
+      type: object
+      properties:
+        userid:        { type: integer }
+        fullname:      { type: string }
+        completed:     { type: boolean }
+        timecompleted: { type: integer, description: epoch seconds, 0 if not completed }
+    Skill:
+      type: object
+      properties:
+        id:        { type: integer }
+        name:      { type: string }
+        max_level: { type: integer }
+    Error:
+      type: object
+      properties:
+        exception: { type: string }
+        errorcode: { type: string, enum: [api_disabled, api_write_disabled, ratelimited, error_notenant, nopermissions] }
+        message:   { type: string }
+
+paths:
+  /:
+    description: >
+      All operations share this single REST endpoint. Select the operation
+      via the `wsfunction` query parameter set to the operationId.
+    get:
+      summary: REST dispatch (set wsfunction to the operationId)
+      responses:
+        '200': { description: OK }
+
+  '#local_sentientia_api_v1_list_courses':
+    get:
+      operationId: local_sentientia_api_v1_list_courses
+      summary: List courses in the caller's tenant
+      description: Capability local/sentientia_api:read. Tenant-scoped by course open_path.
+      parameters:
+        - { name: search,  in: query, schema: { type: string } }
+        - { name: page,    in: query, schema: { type: integer, default: 0 } }
+        - { name: perpage, in: query, schema: { type: integer, default: 25, maximum: 100 } }
+      responses:
+        '200':
+          description: Paged course list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:   { type: integer }
+                  page:    { type: integer }
+                  perpage: { type: integer }
+                  courses: { type: array, items: { $ref: '#/components/schemas/Course' } }
+        default:
+          description: Error
+          content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+
+  '#local_sentientia_api_v1_get_course':
+    get:
+      operationId: local_sentientia_api_v1_get_course
+      summary: Get one course by id
+      description: Capability local/sentientia_api:read. 403 if the course is outside the caller's tenant.
+      parameters:
+        - { name: id, in: query, required: true, schema: { type: integer } }
+      responses:
+        '200':
+          description: One course
+          content: { application/json: { schema: { $ref: '#/components/schemas/Course' } } }
+        default:
+          description: Error
+          content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+
+  '#local_sentientia_api_v1_list_enrolments':
+    get:
+      operationId: local_sentientia_api_v1_list_enrolments
+      summary: List active enrolments in a course
+      description: Capability local/sentientia_api:read. Users scoped to the caller's tenant; email only for admins.
+      parameters:
+        - { name: courseid, in: query, required: true, schema: { type: integer } }
+        - { name: page,     in: query, schema: { type: integer, default: 0 } }
+        - { name: perpage,  in: query, schema: { type: integer, default: 50, maximum: 200 } }
+      responses:
+        '200':
+          description: Enrolment list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  courseid:   { type: integer }
+                  enrolments: { type: array, items: { $ref: '#/components/schemas/Enrolment' } }
+        default:
+          description: Error
+          content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+
+  '#local_sentientia_api_v1_list_completions':
+    get:
+      operationId: local_sentientia_api_v1_list_completions
+      summary: List course completions
+      description: Capability local/sentientia_api:read. Tenant-scoped.
+      parameters:
+        - { name: courseid, in: query, required: true, schema: { type: integer } }
+        - { name: page,     in: query, schema: { type: integer, default: 0 } }
+        - { name: perpage,  in: query, schema: { type: integer, default: 50, maximum: 200 } }
+      responses:
+        '200':
+          description: Completion list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  courseid:    { type: integer }
+                  completions: { type: array, items: { $ref: '#/components/schemas/Completion' } }
+        default:
+          description: Error
+          content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+
+  '#local_sentientia_api_v1_list_skills':
+    get:
+      operationId: local_sentientia_api_v1_list_skills
+      summary: List the skill catalogue
+      description: Capability local/sentientia_api:read. Global skill definitions.
+      parameters:
+        - { name: search,  in: query, schema: { type: string } }
+        - { name: page,    in: query, schema: { type: integer, default: 0 } }
+        - { name: perpage, in: query, schema: { type: integer, default: 50, maximum: 200 } }
+      responses:
+        '200':
+          description: Skill list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:  { type: integer }
+                  skills: { type: array, items: { $ref: '#/components/schemas/Skill' } }
+        default:
+          description: Error
+          content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+
+  '#local_sentientia_api_v1_create_enrolment':
+    post:
+      operationId: local_sentientia_api_v1_create_enrolment
+      summary: Enrol a user into a course (WRITE)
+      description: >
+        Capability local/sentientia_api:write AND feature flags
+        sentientia.api.enabled + sentientia.api.write.enabled (both default OFF).
+        Both course and target user must be in the caller's tenant.
+      parameters:
+        - { name: courseid, in: query, required: true, schema: { type: integer } }
+        - { name: userid,   in: query, required: true, schema: { type: integer } }
+        - { name: roleid,   in: query, schema: { type: integer, default: 0, description: 0 = course default student role } }
+      responses:
+        '200':
+          description: Enrolment result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  courseid: { type: integer }
+                  userid:   { type: integer }
+                  roleid:   { type: integer }
+                  status:   { type: string, enum: [enrolled] }
+        default:
+          description: Error
+          content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+
+  '#local_sentientia_api_v1_openapi':
+    get:
+      operationId: local_sentientia_api_v1_openapi
+      summary: Return this OpenAPI document
+      description: Capability local/sentientia_api:read.
+      responses:
+        '200':
+          description: The OpenAPI spec
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  version: { type: string }
+                  format:  { type: string, enum: [yaml] }
+                  spec:    { type: string }
