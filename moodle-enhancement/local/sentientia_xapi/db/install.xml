@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/sentientia_xapi/db" VERSION="20260616"
+       COMMENT="Sentientia xAPI / LRS — statement store and cmi5 session tables.
+                P1.4 from GAP-ANALYSIS-INVINCE-LXP-2026-06-16.md.">
+  <TABLES>
+
+    <!-- ─── xAPI statement store ──────────────────────────────────────── -->
+    <TABLE NAME="local_sentientia_xapi_stmts"
+           COMMENT="xAPI 1.0.3 statement store. One row per statement.
+                    Indexed for actor / verb / object / tenant lookups.
+                    Statements are immutable once stored (xAPI spec §2.5).
+                    Rows are purged by the cleanup task after retention_days.">
+      <FIELDS>
+        <FIELD NAME="id"            TYPE="int"    LENGTH="10"  NOTNULL="true"  SEQUENCE="true"
+               COMMENT="Surrogate primary key (LRS-internal)"/>
+        <FIELD NAME="statementid"   TYPE="char"   LENGTH="36"  NOTNULL="true"
+               COMMENT="xAPI statement UUID (client-supplied or LRS-generated). Unique per tenant."/>
+        <FIELD NAME="costcenterid"  TYPE="int"    LENGTH="10"  NOTNULL="true"  DEFAULT="0"
+               COMMENT="BizLMS tenant root: 1=Airpay, 77=Public, 177=ZEEA. 0=platform-level (internal emitter)."/>
+        <FIELD NAME="actorid"       TYPE="int"    LENGTH="10"  NOTNULL="false"
+               COMMENT="Resolved Moodle userid. NULL when the actor could not be resolved to a local user (external xAPI client)."/>
+        <FIELD NAME="actor"         TYPE="text"   NOTNULL="true"
+               COMMENT="JSON-encoded xAPI actor object (Agent or Group). Contains IFI — may include email."/>
+        <FIELD NAME="verb"          TYPE="char"   LENGTH="255" NOTNULL="true"
+               COMMENT="Verb IRI (e.g. http://adlnet.gov/expapi/verbs/completed). Stored flat for index efficiency."/>
+        <FIELD NAME="verbdisplay"   TYPE="char"   LENGTH="128" NOTNULL="false"
+               COMMENT="Verb display value in en-US (denormalised for UI rendering without JSON parse)."/>
+        <FIELD NAME="object"        TYPE="text"   NOTNULL="true"
+               COMMENT="JSON-encoded xAPI object (Activity, Agent, SubStatement, StatementRef)."/>
+        <FIELD NAME="objectid"      TYPE="char"   LENGTH="2048" NOTNULL="false"
+               COMMENT="Object IRI (denormalised for index). Truncated at 2048 per IRI length limits."/>
+        <FIELD NAME="result"        TYPE="text"   NOTNULL="false"
+               COMMENT="JSON-encoded xAPI result (score, success, completion, response, duration)."/>
+        <FIELD NAME="score_scaled"  TYPE="number" LENGTH="5" DECIMALS="4" NOTNULL="false"
+               COMMENT="Denormalised result.score.scaled (-1.0 to 1.0) for aggregate queries without JSON parse."/>
+        <FIELD NAME="score_raw"     TYPE="number" LENGTH="10" DECIMALS="2" NOTNULL="false"
+               COMMENT="Denormalised result.score.raw for aggregate queries."/>
+        <FIELD NAME="success"       TYPE="int"    LENGTH="1"  NOTNULL="false"
+               COMMENT="Denormalised result.success (0/1/NULL). NULL = not provided."/>
+        <FIELD NAME="completion"    TYPE="int"    LENGTH="1"  NOTNULL="false"
+               COMMENT="Denormalised result.completion (0/1/NULL)."/>
+        <FIELD NAME="context"       TYPE="text"   NOTNULL="false"
+               COMMENT="JSON-encoded xAPI context (registration, contextActivities, extensions)."/>
+        <FIELD NAME="registration"  TYPE="char"   LENGTH="36" NOTNULL="false"
+               COMMENT="Denormalised context.registration UUID (cmi5 session UUID). Indexed for cmi5 queries."/>
+        <FIELD NAME="authority"     TYPE="text"   NOTNULL="false"
+               COMMENT="JSON-encoded authority (LRS-assigned or forwarded from upstream LRS)."/>
+        <FIELD NAME="timestamp"     TYPE="int"    LENGTH="10" NOTNULL="false"
+               COMMENT="Unix timestamp from the statement timestamp field (may differ from stored)."/>
+        <FIELD NAME="stored"        TYPE="int"    LENGTH="10" NOTNULL="true"  DEFAULT="0"
+               COMMENT="Unix timestamp when the LRS stored the statement. Set by the LRS, never by client."/>
+        <FIELD NAME="source"        TYPE="char"   LENGTH="32" NOTNULL="true"  DEFAULT="moodle"
+               COMMENT="Origin of the statement: moodle (event observer) | lrs (external POST to endpoint) | import."/>
+        <FIELD NAME="voided"        TYPE="int"    LENGTH="1"  NOTNULL="true"  DEFAULT="0"
+               COMMENT="1 = statement has been voided by a VoidedStatement (xAPI spec §4.2.2). Not deleted — kept for audit."/>
+        <FIELD NAME="timecreated"   TYPE="int"    LENGTH="10" NOTNULL="true"  DEFAULT="0"/>
+        <FIELD NAME="timemodified"  TYPE="int"    LENGTH="10" NOTNULL="true"  DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"           TYPE="primary" FIELDS="id"/>
+        <KEY NAME="uk_stmt_tenant"    TYPE="unique"  FIELDS="statementid, costcenterid"
+             COMMENT="xAPI spec: statement IDs must be unique within an LRS. We scope to tenant."/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_costcenter"      UNIQUE="false" FIELDS="costcenterid"
+               COMMENT="Tenant filter — all admin queries start here"/>
+        <INDEX NAME="idx_actorid"         UNIQUE="false" FIELDS="actorid"
+               COMMENT="Per-user statement history (privacy export, LRS viewer)"/>
+        <INDEX NAME="idx_verb"            UNIQUE="false" FIELDS="verb"
+               COMMENT="Filter by verb IRI (e.g. all completed statements)"/>
+        <INDEX NAME="idx_stored"          UNIQUE="false" FIELDS="stored"
+               COMMENT="Chronological ordering and retention purge (WHERE stored &lt; cutoff)"/>
+        <INDEX NAME="idx_registration"    UNIQUE="false" FIELDS="registration"
+               COMMENT="cmi5 session lookup by registration UUID"/>
+        <INDEX NAME="idx_cid_actor_verb"  UNIQUE="false" FIELDS="costcenterid, actorid, verb"
+               COMMENT="Compound for per-user per-verb aggregates (completion rates, pass rates)"/>
+        <INDEX NAME="idx_voided"          UNIQUE="false" FIELDS="voided"
+               COMMENT="Exclude voided statements from most queries"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- ─── cmi5 session tracking ─────────────────────────────────────── -->
+    <TABLE NAME="local_sentientia_xapi_cmi5"
+           COMMENT="cmi5 Assignable Unit (AU) session records.
+                    Tracks the lifecycle of a cmi5 launch: initialized →
+                    [pass|fail|complete] → terminated (or suspended/resumed).
+                    One row per (userid, courseid, registration) triple.
+                    The registration UUID links back to xAPI statements.">
+      <FIELDS>
+        <FIELD NAME="id"             TYPE="int"    LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid"         TYPE="int"    LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="FK to mdl_user.id"/>
+        <FIELD NAME="costcenterid"   TYPE="int"    LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="BizLMS tenant root"/>
+        <FIELD NAME="courseid"       TYPE="int"    LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="FK to mdl_course.id (the course the AU belongs to)"/>
+        <FIELD NAME="cmid"           TYPE="int"    LENGTH="10" NOTNULL="false"
+               COMMENT="FK to mdl_course_modules.id (the SCORM/activity cm, nullable for external AU)"/>
+        <FIELD NAME="registration"   TYPE="char"   LENGTH="36" NOTNULL="true"
+               COMMENT="cmi5 registration UUID — links this session to xAPI statements via context.registration"/>
+        <FIELD NAME="activityid"     TYPE="char"   LENGTH="2048" NOTNULL="false"
+               COMMENT="cmi5 AU activity IRI (launchURL activity id)"/>
+        <FIELD NAME="sessionid"      TYPE="char"   LENGTH="36" NOTNULL="false"
+               COMMENT="cmi5 sessionId (per-launch UUID, supplied by the LRS at launch)"/>
+        <FIELD NAME="launchtoken"    TYPE="char"   LENGTH="64" NOTNULL="false"
+               COMMENT="One-time fetch token provided at launch (cmi5 spec §8.2). Cleared after first use."/>
+        <FIELD NAME="launchmode"     TYPE="char"   LENGTH="16" NOTNULL="false"
+               COMMENT="cmi5 launchMode: Normal | Browse | Review"/>
+        <FIELD NAME="status"         TYPE="char"   LENGTH="16" NOTNULL="true"  DEFAULT="initialized"
+               COMMENT="Session status: initialized | passed | failed | completed | terminated | suspended | abandoned"/>
+        <FIELD NAME="score_scaled"   TYPE="number" LENGTH="5" DECIMALS="4" NOTNULL="false"
+               COMMENT="Final score scaled (-1.0 to 1.0) when terminated"/>
+        <FIELD NAME="success"        TYPE="int"    LENGTH="1"  NOTNULL="false"
+               COMMENT="0=failed, 1=passed, NULL=not yet determined"/>
+        <FIELD NAME="duration"       TYPE="char"   LENGTH="32" NOTNULL="false"
+               COMMENT="ISO 8601 duration (e.g. PT5M30S) from terminated statement"/>
+        <FIELD NAME="timeinitialized" TYPE="int"   LENGTH="10" NOTNULL="false"
+               COMMENT="Unix timestamp of initialized statement"/>
+        <FIELD NAME="timeterminated"  TYPE="int"   LENGTH="10" NOTNULL="false"
+               COMMENT="Unix timestamp of terminated statement"/>
+        <FIELD NAME="timecreated"    TYPE="int"    LENGTH="10" NOTNULL="true"  DEFAULT="0"/>
+        <FIELD NAME="timemodified"   TYPE="int"    LENGTH="10" NOTNULL="true"  DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"         TYPE="primary" FIELDS="id"/>
+        <KEY NAME="uk_registration" TYPE="unique"  FIELDS="registration"
+             COMMENT="Each cmi5 session has a unique registration UUID"/>
+        <KEY NAME="fk_user"         TYPE="foreign" FIELDS="userid"   REFTABLE="user"   REFFIELDS="id"/>
+        <KEY NAME="fk_course"       TYPE="foreign" FIELDS="courseid" REFTABLE="course" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_costcenter"      UNIQUE="false" FIELDS="costcenterid"
+               COMMENT="Tenant filter"/>
+        <INDEX NAME="idx_userid_course"   UNIQUE="false" FIELDS="userid, courseid"
+               COMMENT="Per-user per-course session history"/>
+        <INDEX NAME="idx_status"          UNIQUE="false" FIELDS="status"
+               COMMENT="Filter active / completed sessions"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- ─── LRS client credentials ────────────────────────────────────── -->
+    <TABLE NAME="local_sentientia_xapi_clients"
+           COMMENT="Registered xAPI client credentials (per-tenant).
+                    Supports Bearer token and HTTP Basic auth patterns.
+                    Each client can be scoped to a tenant and optionally
+                    restricted by IP CIDR allowlist.">
+      <FIELDS>
+        <FIELD NAME="id"             TYPE="int"    LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="costcenterid"   TYPE="int"    LENGTH="10" NOTNULL="true" DEFAULT="0"
+               COMMENT="Tenant scope: 0=platform-wide, >0=tenant-specific"/>
+        <FIELD NAME="name"           TYPE="char"   LENGTH="128" NOTNULL="true"
+               COMMENT="Human-readable client name (e.g. 'SCORM content player', 'Partner LMS')"/>
+        <FIELD NAME="token_hash"     TYPE="char"   LENGTH="64"  NOTNULL="false"
+               COMMENT="SHA-256 hash of the Bearer token. NULL when basic-auth only."/>
+        <FIELD NAME="basic_user"     TYPE="char"   LENGTH="128" NOTNULL="false"
+               COMMENT="HTTP Basic auth username. NULL when token-only."/>
+        <FIELD NAME="basic_pass_hash" TYPE="char"  LENGTH="64"  NOTNULL="false"
+               COMMENT="SHA-256 hash of the Basic auth password."/>
+        <FIELD NAME="ip_allowlist"   TYPE="text"   NOTNULL="false"
+               COMMENT="Comma-separated CIDR ranges. NULL = any IP allowed."/>
+        <FIELD NAME="enabled"        TYPE="int"    LENGTH="1"  NOTNULL="true"  DEFAULT="1"
+               COMMENT="0 = credential revoked but row kept for audit"/>
+        <FIELD NAME="timecreated"    TYPE="int"    LENGTH="10" NOTNULL="true"  DEFAULT="0"/>
+        <FIELD NAME="timemodified"   TYPE="int"    LENGTH="10" NOTNULL="true"  DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_costcenter" UNIQUE="false" FIELDS="costcenterid"/>
+        <INDEX NAME="idx_token"      UNIQUE="false" FIELDS="token_hash"/>
+        <INDEX NAME="idx_basic_user" UNIQUE="false" FIELDS="basic_user"/>
+      </INDEXES>
+    </TABLE>
+
+  </TABLES>
+</XMLDB>
