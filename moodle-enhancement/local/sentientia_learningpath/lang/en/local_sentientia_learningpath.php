@@ -90,6 +90,34 @@ $string['confirm_unenrol_user'] = 'Unenrol {$a} from this learning path?';
 $string['no_courses_assigned'] = 'No courses assigned yet. Click "Add Courses" to get started.';
 $string['no_users_enrolled'] = 'No users enrolled yet. Click "Enrol Users" to add learners.';
 
+// P0.2 (2026-06-16) — Adaptive Learning Journeys.
+$string['task_adaptive_sweep']          = 'Adaptive journey velocity sweep';
+$string['adaptive_mode']                = 'Adaptive mode';
+$string['adaptive_mode_help']           = 'When enabled, this path dynamically branches, accelerates, or remediates based on quiz scores, completion velocity, and skills-gap signals.';
+$string['adaptive_mode_off']            = 'Static (sequential)';
+$string['adaptive_mode_on']             = 'Adaptive (performance-pivoting)';
+$string['score_threshold_low']          = 'Remediation threshold (%)';
+$string['score_threshold_low_help']     = 'Quiz scores at or below this percentage trigger the remediation branch. Leave empty to use the system default (50%).';
+$string['score_threshold_high']         = 'Acceleration threshold (%)';
+$string['score_threshold_high_help']    = 'Quiz scores at or above this percentage, combined with high completion velocity, trigger the acceleration branch. Leave empty to use the system default (80%).';
+$string['pivot_remediate']              = 'Remediated';
+$string['pivot_accelerate']             = 'Accelerated';
+$string['pivot_branch']                 = 'Branched';
+$string['pivot_no_action']              = 'No action';
+$string['trigger_quiz_score']           = 'Quiz score';
+$string['trigger_velocity']             = 'Completion velocity';
+$string['trigger_skills_gap']           = 'Skills gap';
+$string['trigger_combined']             = 'Combined signals';
+$string['adaptive_log_empty']           = 'No adaptive decisions recorded yet for this path.';
+$string['adaptive_log_title']           = 'Adaptive decision log';
+$string['adaptive_feature_flag_off']    = 'The adaptive learning journeys feature is currently disabled. Enable the flag "sentientia.learningpath.adaptive.enabled" in the Switchboard to activate it.';
+$string['privacy:metadata:lp_adaptive_log']              = 'Adaptive journey decision log for learning paths.';
+$string['privacy:metadata:lp_adaptive_log:userid']       = 'The user whose path was pivoted.';
+$string['privacy:metadata:lp_adaptive_log:pathid']       = 'The learning path on which the decision was made.';
+$string['privacy:metadata:lp_adaptive_log:pivot_type']   = 'The type of pivot applied.';
+$string['privacy:metadata:lp_adaptive_log:quiz_score']   = 'The quiz score that triggered the pivot (if applicable).';
+$string['privacy:metadata:lp_adaptive_log:timecreated']  = 'When the adaptive decision was recorded.';
+
 // Privacy strings (Phase Z.1).
 $string['privacy:metadata:lp'] = 'Per-learning-path user assignments.';
 $string['privacy:metadata:lp:pathid'] = 'Learning path ID.';
