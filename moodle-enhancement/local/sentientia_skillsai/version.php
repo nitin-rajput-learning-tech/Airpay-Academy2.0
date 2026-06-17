@@ -47,7 +47,7 @@ $plugin->component = 'local_sentientia_skillsai';
 // response parser + taxonomy_manager (human-review gate) + gap_engine +
 // impact_manager + extract/review/gap/impact UIs + EN/HI lang packs +
 // PHPUnit (security, tenant isolation, taxonomy CRUD, gap engine, mock AI).
-$plugin->version   = 2026061600;
+$plugin->version   = 2026061700;
 $plugin->requires  = 2022041900;        // Moodle 4.5+ (matches sibling plugins).
 $plugin->maturity  = MATURITY_ALPHA;    // MVP — needs prod sign-off before flag flips.
 $plugin->release   = '0.1.0-alpha';

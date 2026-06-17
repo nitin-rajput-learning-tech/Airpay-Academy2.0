@@ -39,7 +39,31 @@ function xmldb_local_sentientia_authoring_upgrade(int $oldversion): bool {
     //     upgrade_plugin_savepoint(true, 2026XXXXXX, 'local', 'sentientia_authoring');
     // }
 
-    unset($dbman); // Silence "unused" until the first real upgrade step lands.
+    // 2026061700 — role back-fill (T-01 pattern). The author caps
+    // (generate/review/managetemplates) gained the 'teacher' archetype so the
+    // airpay `trainer` role (teacher archetype = the SME/author role) can use
+    // the GenAI Authoring Studio. Moodle's update_capabilities() only seeds
+    // archetype defaults for NEWLY-added caps, so grant explicitly onto the
+    // already-existing teacher-archetype roles. Idempotent —
+    // assign_capability(overwrite=false) leaves any role that already has an
+    // explicit setting untouched.
+    if ($oldversion < 2026061700) {
+        $context = \context_system::instance();
+        $caps = [
+            'local/sentientia_authoring:generate',
+            'local/sentientia_authoring:review',
+            'local/sentientia_authoring:managetemplates',
+        ];
+        foreach ($DB->get_records('role', ['archetype' => 'teacher']) as $role) {
+            foreach ($caps as $cap) {
+                assign_capability($cap, CAP_ALLOW, $role->id, $context->id, false);
+            }
+        }
+        $context->mark_dirty();
+        upgrade_plugin_savepoint(true, 2026061700, 'local', 'sentientia_authoring');
+    }
+
+    unset($dbman);
 
     return true;
 }

@@ -46,7 +46,7 @@ $plugin->component = 'local_sentientia_authoring';
 // localizer (translate routing) + studio/template/review/voiceover UI +
 // Hindi pack at 100% parity + PHPUnit suite (security, tenant isolation,
 // generation pipeline, question-type validation, template CRUD).
-$plugin->version   = 2026061600;
+$plugin->version   = 2026061700;
 $plugin->requires  = 2022041900;          // Moodle 4.5+
 $plugin->maturity  = MATURITY_ALPHA;      // MVP — prod sign-off before any flag flips
 $plugin->release   = '0.1.0-alpha';
