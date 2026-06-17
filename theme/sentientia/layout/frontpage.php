@@ -76,10 +76,10 @@ try {
 $categorybadges = ['Compliance', 'Finance', 'Leadership', 'Technology', 'Business', 'Digital'];
 $gradients = [
     'linear-gradient(135deg, #0066A7, #0d5da1)',
-    'linear-gradient(135deg, #1985DD, #059669)',
+    'linear-gradient(135deg, #1985DD, #0d5da1)',
     'linear-gradient(135deg, #1e40af, #0066A7)',
-    'linear-gradient(135deg, #7c3aed, #4f46e5)',
-    'linear-gradient(135deg, #d97706, #ea580c)',
+    'linear-gradient(135deg, #6d58a5, #0d5da1)',
+    'linear-gradient(135deg, #ed692b, #0066A7)',
     'linear-gradient(135deg, #0066A7, #1e40af)',
 ];
 
@@ -231,7 +231,7 @@ echo $OUTPUT->doctype();
        ================================================================ */
     .ap-courses { padding: 88px 0; background: var(--ap-bg); }
     .ap-courses__header { text-align: center; margin-bottom: 48px; }
-    .ap-courses__label { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--ap-accent); background: var(--ap-accent-light); margin-bottom: 16px; }
+    .ap-courses__label { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--ap-primary); background: var(--ap-accent-light); margin-bottom: 16px; }
     .ap-courses__header h2 { font-size: 2.25rem; font-weight: 800; color: var(--ap-text); margin: 0 0 12px; }
     .ap-courses__header p { font-size: 1.05rem; color: var(--ap-text-secondary); max-width: 560px; margin: 0 auto; }
     .ap-courses__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
@@ -249,7 +249,7 @@ echo $OUTPUT->doctype();
     .ap-course__meta { padding: 0 24px; display: flex; align-items: center; gap: 16px; font-size: 0.8rem; color: var(--ap-text-muted); }
     .ap-course__meta i { margin-right: 4px; }
     .ap-course__footer { margin-top: auto; padding: 16px 24px; border-top: 1px solid var(--ap-border); display: flex; align-items: center; justify-content: space-between; }
-    .ap-course__price { font-size: 1.1rem; font-weight: 800; color: var(--ap-accent); }
+    .ap-course__price { font-size: 1.1rem; font-weight: 800; color: var(--ap-primary); }
     .ap-course__actions { display: flex; gap: 8px; }
     .ap-course__btn { padding: 8px 18px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px; }
     .ap-course__btn--outline { border: 1.5px solid var(--ap-border); color: var(--ap-text-secondary); background: var(--ap-surface); }
@@ -459,17 +459,17 @@ echo $OUTPUT->doctype();
                 <p>RBI-mandated training with automated tracking, deadline escalation, and audit-ready export for financial services.</p>
             </div>
             <div class="ap-why__card">
-                <div class="ap-why__card-icon" style="background: var(--ap-accent-light); color: var(--ap-accent);"><i class="fa fa-sitemap"></i></div>
+                <div class="ap-why__card-icon" style="background: var(--ap-accent-light); color: var(--ap-primary);"><i class="fa fa-sitemap"></i></div>
                 <h3>Multi-Tenant</h3>
                 <p>Isolated environments for each business unit with white-label branding, separate user pools, and independent reporting.</p>
             </div>
             <div class="ap-why__card">
-                <div class="ap-why__card-icon" style="background: #fef3c7; color: #d97706;"><i class="fa fa-mobile"></i></div>
+                <div class="ap-why__card-icon" style="background: #fdeee6; color: #ed692b;"><i class="fa fa-mobile"></i></div>
                 <h3>Mobile-Ready</h3>
                 <p>Progressive web app with offline support, responsive dashboards, and SCORM content that works on any device.</p>
             </div>
             <div class="ap-why__card">
-                <div class="ap-why__card-icon" style="background: #ede9fe; color: #7c3aed;"><i class="fa fa-bar-chart"></i></div>
+                <div class="ap-why__card-icon" style="background: #e8e2f2; color: #6d58a5;"><i class="fa fa-bar-chart"></i></div>
                 <h3>Data-Driven</h3>
                 <p>Role-based analytics, manager team views, compliance RAG matrices, and real-time completion tracking dashboards.</p>
             </div>
@@ -553,25 +553,25 @@ echo $OUTPUT->doctype();
                 </div>
             </div>
             <div class="ap-pillar" style="border-top: 3px solid var(--ap-accent);">
-                <div class="ap-pillar__icon" style="background: var(--ap-accent-light); color: var(--ap-accent);"><i class="fa fa-line-chart"></i></div>
+                <div class="ap-pillar__icon" style="background: var(--ap-accent-light); color: var(--ap-primary);"><i class="fa fa-line-chart"></i></div>
                 <h3>Business Acumen</h3>
                 <p>Business correspondence, sales fundamentals, leadership essentials, and customer service excellence.</p>
                 <div class="ap-pillar__tags">
-                    <span class="ap-pillar__tag" style="background: var(--ap-accent-light); color: var(--ap-accent);">Sales</span>
-                    <span class="ap-pillar__tag" style="background: var(--ap-accent-light); color: var(--ap-accent);">Leadership</span>
-                    <span class="ap-pillar__tag" style="background: var(--ap-accent-light); color: var(--ap-accent);">CX</span>
-                    <span class="ap-pillar__tag" style="background: var(--ap-accent-light); color: var(--ap-accent);">Strategy</span>
+                    <span class="ap-pillar__tag" style="background: var(--ap-accent-light); color: var(--ap-primary);">Sales</span>
+                    <span class="ap-pillar__tag" style="background: var(--ap-accent-light); color: var(--ap-primary);">Leadership</span>
+                    <span class="ap-pillar__tag" style="background: var(--ap-accent-light); color: var(--ap-primary);">CX</span>
+                    <span class="ap-pillar__tag" style="background: var(--ap-accent-light); color: var(--ap-primary);">Strategy</span>
                 </div>
             </div>
-            <div class="ap-pillar" style="border-top: 3px solid #7c3aed;">
-                <div class="ap-pillar__icon" style="background: #ede9fe; color: #7c3aed;"><i class="fa fa-university"></i></div>
+            <div class="ap-pillar" style="border-top: 3px solid #6d58a5;">
+                <div class="ap-pillar__icon" style="background: #e8e2f2; color: #6d58a5;"><i class="fa fa-university"></i></div>
                 <h3>Financial Education</h3>
                 <p>Digital payments, anti-money laundering, POSH compliance, and financial wellness for fintech.</p>
                 <div class="ap-pillar__tags">
-                    <span class="ap-pillar__tag" style="background: #ede9fe; color: #7c3aed;">AML/KYC</span>
-                    <span class="ap-pillar__tag" style="background: #ede9fe; color: #7c3aed;">POSH</span>
-                    <span class="ap-pillar__tag" style="background: #ede9fe; color: #7c3aed;">UPI</span>
-                    <span class="ap-pillar__tag" style="background: #ede9fe; color: #7c3aed;">Compliance</span>
+                    <span class="ap-pillar__tag" style="background: #e8e2f2; color: #6d58a5;">AML/KYC</span>
+                    <span class="ap-pillar__tag" style="background: #e8e2f2; color: #6d58a5;">POSH</span>
+                    <span class="ap-pillar__tag" style="background: #e8e2f2; color: #6d58a5;">UPI</span>
+                    <span class="ap-pillar__tag" style="background: #e8e2f2; color: #6d58a5;">Compliance</span>
                 </div>
             </div>
         </div>
@@ -603,7 +603,7 @@ echo $OUTPUT->doctype();
                 <div class="ap-testimonial__stars"><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i></div>
                 <p class="ap-testimonial__quote">As a team manager, the team analytics dashboard gives me complete visibility into my team's learning progress. The compliance alerts ensure nobody misses a deadline.</p>
                 <div class="ap-testimonial__author">
-                    <div class="ap-testimonial__avatar" style="background: linear-gradient(135deg, #1985DD, #059669);">RK</div>
+                    <div class="ap-testimonial__avatar" style="background: linear-gradient(135deg, #1985DD, #0d5da1);">RK</div>
                     <div class="ap-testimonial__info">
                         <strong>Rahul Khanna</strong>
                         <span>Regional Manager, Airpay</span>
@@ -614,7 +614,7 @@ echo $OUTPUT->doctype();
                 <div class="ap-testimonial__stars"><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star"></i><i class="fa fa-star-half-o"></i></div>
                 <p class="ap-testimonial__quote">The financial education courses on digital payments and AML were exactly what I needed for my role. The certificates are recognized and I could share them on LinkedIn instantly.</p>
                 <div class="ap-testimonial__author">
-                    <div class="ap-testimonial__avatar" style="background: linear-gradient(135deg, #7c3aed, #4f46e5);">AM</div>
+                    <div class="ap-testimonial__avatar" style="background: linear-gradient(135deg, #6d58a5, #6d58a5);">AM</div>
                     <div class="ap-testimonial__info">
                         <strong>Anita Mehta</strong>
                         <span>Compliance Officer, ZEEA</span>

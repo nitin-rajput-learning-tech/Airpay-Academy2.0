@@ -41,8 +41,10 @@ $red:     #dc3545 !default;
 $orange:  #fd7e14 !default;
 $yellow:  #ffc107 !default;
 $green:   #28a745 !default;
-$teal:    #20c997 !default;
-$cyan:    #17a2b8 !default;
+// Brand Book 2026-06: alias teal/cyan to brand bright-blue so core $info
+// (alert-info/badge-info/text-info) + the $colors map render brand blue, not cyan.
+$teal:    #1985DD !default;
+$cyan:    #1985DD !default;
 
 $colors: () !default;
 $colors: map-merge(

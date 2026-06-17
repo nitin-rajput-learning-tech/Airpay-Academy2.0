@@ -196,7 +196,7 @@ body.dark-mode {
 
     /* === Welcome banner — keep gradient, mute slightly === */
     .airpay-dash__welcome, .user_gen_info {
-        background: linear-gradient(135deg, #0c3d66 0%, #0a4a44 100%);
+        background: linear-gradient(135deg, #0c3d66 0%, #0d5da1 100%);
         border-color: #2d3140;
     }
 
@@ -209,9 +209,9 @@ body.dark-mode {
         opacity: 0.9;
     }
     .airpay-dash__stat--primary .airpay-dash__stat-icon { background: rgba(59,130,246,0.15); color: #60a5fa; }
-    .airpay-dash__stat--accent .airpay-dash__stat-icon { background: rgba(16,185,129,0.15); color: #34d399; }
+    .airpay-dash__stat--accent .airpay-dash__stat-icon { background: rgba(25,133,221,0.15); color: #1985DD; } /* Brand Book 2026-06: accent is brand blue, not emerald */
     .airpay-dash__stat--success .airpay-dash__stat-icon { background: rgba(52,211,153,0.15); color: #34d399; }
-    .airpay-dash__stat--gold .airpay-dash__stat-icon { background: rgba(251,191,36,0.15); color: #fbbf24; }
+    .airpay-dash__stat--gold .airpay-dash__stat-icon { background: rgba(251,191,36,0.15); color: #ed692b; }
     .airpay-dash__stat-num { color: #e8eaed; }
     .airpay-dash__stat-label { color: #9ca3b4; }
 
@@ -277,7 +277,7 @@ body.dark-mode {
 
     /* === Profile hero === */
     .path-local-users .user_gen_info {
-        background: linear-gradient(135deg, #0c3d66 0%, #0a4a44 100%);
+        background: linear-gradient(135deg, #0c3d66 0%, #0d5da1 100%);
     }
     .path-local-users .nav-tabs {
         background: #1a1d27;

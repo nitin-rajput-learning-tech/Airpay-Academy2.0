@@ -377,7 +377,9 @@ defined('MOODLE_INTERNAL') || die();
 // 2026061602 — Phase 2 cont'd: frontpage/storefront hero elevation ("a" monogram
 // watermark + sparing orange title accent) + card-thumb variety palette remapped
 // to brand secondaries (blue-dominant, sparing purple/orange — no cyan/magenta/gold).
-$plugin->version   = 2026061602;
+// 2026061603 — brand-verify closure: Bootstrap $info cyan->blue, dark-mode emerald
+// accent->blue, decorative emerald/amber/red->brand, violet->purple, gold->orange, a11y.
+$plugin->version   = 2026061603;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_sentientia';
 $plugin->maturity  = MATURITY_BETA;

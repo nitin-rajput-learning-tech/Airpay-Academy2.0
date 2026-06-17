@@ -17,11 +17,11 @@ function xmldb_local_sentientia_skills_install() {
     $categories = [
         ['name' => 'Compliance & Risk',    'icon' => 'fa-shield',         'color' => '#dc2626', 'sort_order' => 1],
         ['name' => 'Financial Literacy',   'icon' => 'fa-inr',            'color' => '#1985DD', 'sort_order' => 2],
-        ['name' => 'Technical',            'icon' => 'fa-code',           'color' => '#7c3aed', 'sort_order' => 3],
+        ['name' => 'Technical',            'icon' => 'fa-code',           'color' => '#6d58a5', 'sort_order' => 3],
         ['name' => 'Sales & Business',     'icon' => 'fa-briefcase',      'color' => '#d97706', 'sort_order' => 4],
         ['name' => 'Leadership',           'icon' => 'fa-users',          'color' => '#0066A7', 'sort_order' => 5],
         ['name' => 'Communication',        'icon' => 'fa-comments',       'color' => '#16a34a', 'sort_order' => 6],
-        ['name' => 'Product Knowledge',    'icon' => 'fa-cube',           'color' => '#ea580c', 'sort_order' => 7],
+        ['name' => 'Product Knowledge',    'icon' => 'fa-cube',           'color' => '#ed692b', 'sort_order' => 7],
         ['name' => 'Operations',           'icon' => 'fa-cog',            'color' => '#6b7280', 'sort_order' => 8],
     ];
 

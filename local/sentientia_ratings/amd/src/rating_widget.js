@@ -22,7 +22,7 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
 
     var STAR_FILLED  = 'fa fa-star';
     var STAR_HOLLOW  = 'fa fa-star-o';
-    var COLOR_FILLED = '#efce2e';
+    var COLOR_FILLED = '#ed692b';
     var COLOR_HOLLOW = '#9c9b97';
 
     /**

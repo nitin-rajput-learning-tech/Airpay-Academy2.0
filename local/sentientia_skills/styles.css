@@ -138,7 +138,7 @@
     border-radius: 3px;
     transition: width 0.5s;
 }
-.ap-skills__gap-current { font-weight: 600; color: var(--ap-accent, #1985DD); }
+.ap-skills__gap-current { font-weight: 600; color: var(--ap-primary, #0066A7); }
 .ap-skills__gap-arrow { color: var(--ap-text-muted, #8896a6); }
 .ap-skills__gap-required { font-weight: 600; color: var(--ap-primary, #0066A7); }
 

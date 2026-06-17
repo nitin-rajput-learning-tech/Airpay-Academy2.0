@@ -262,7 +262,7 @@
 }
 .airpay-catalog__card-level {
     font-size: var(--ap-text-xs);
-    color: var(--ap-color-accent);
+    color: var(--ap-color-primary);
     background: var(--ap-color-accent-light);
     padding: 2px var(--ap-space-2);
     border-radius: var(--ap-radius-pill);
@@ -733,7 +733,7 @@ body.dark-mode .ap-mycourses__card-category {
     color: var(--ap-blue-300);
 }
 body.dark-mode .airpay-catalog__card-level {
-    color: #5eead4;
+    color: #4da8e4;
 }
 
 /* ═══ Mobile breakpoints (manifesto §3) ══════════════════════════════════ */
@@ -891,7 +891,7 @@ body.dark-mode .airpay-catalog__card-level {
 }
 /* Variant tints — In Progress / Completed / Not Started.
    Replaces inline style="color:#..." in mycourses.mustache. */
-.ap-mycourses__stat-num--accent  { color: var(--ap-color-accent); }
+.ap-mycourses__stat-num--accent  { color: var(--ap-color-primary); }
 .ap-mycourses__stat-num--success { color: var(--ap-color-success); }
 .ap-mycourses__stat-num--muted   { color: var(--ap-color-text-muted); }
 .ap-mycourses__stat-label {
