@@ -108,8 +108,8 @@ echo '<section class="airpay-homepage__pillars ap-scroll-animate">
 
 $pillars = [
     ['icon' => 'briefcase', 'title' => 'Employability Skills', 'desc' => 'Digital literacy, communication, aptitude, and professional development to prepare you for the modern workplace.', 'color' => '#0066A7'],
-    ['icon' => 'line-chart', 'title' => 'Business Acumen', 'desc' => 'Business correspondence, sales fundamentals, leadership essentials, and customer service excellence.', 'color' => '#0f7a73'],
-    ['icon' => 'university', 'title' => 'Financial Education', 'desc' => 'Digital payments, anti-money laundering, POSH compliance, and financial wellness for the fintech industry.', 'color' => '#7c3aed'],
+    ['icon' => 'line-chart', 'title' => 'Business Acumen', 'desc' => 'Business correspondence, sales fundamentals, leadership essentials, and customer service excellence.', 'color' => '#1985DD'],
+    ['icon' => 'university', 'title' => 'Financial Education', 'desc' => 'Digital payments, anti-money laundering, POSH compliance, and financial wellness for the fintech industry.', 'color' => '#6d58a5'],
 ];
 
 foreach ($pillars as $p) {

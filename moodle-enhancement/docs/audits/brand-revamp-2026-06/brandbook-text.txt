@@ -1,0 +1,822 @@
+
+===== PAGE 1 =====
+Brand
+Guideline
+
+===== PAGE 2 =====
+content
+in this section, we outline the building 
+blocks of the airpay brand, including what 
+we stand for, what sets us apart, why we 
+choose the words we use, and how we’ve 
+decided to show up in the world.   
+our brand
+mission and vision
+our logos
+dos and don’ts with logo
+the fonts
+our colour theory
+branding protocols
+business collaterals
+Employee ID-card
+Social media
+ofﬁcial signature
+03
+04
+05
+07
+08
+12
+15
+16
+20
+21
+22
+
+===== PAGE 3 =====
+who we are
+in this section, we outline the building blocks 
+of the airpay brand, including what we stand 
+for, what sets us apart, why we choose the 
+words we use, and how we’ve decided to 
+show up in the world.   
+ourbrand
+brand
+why is our communication
+style a lower case? 
+in sync with the style of the 
+logo, we tried keeping the 
+entire brand guide in 
+lower-case. reflective of our 
+ethos of making payments 
+easy, free-flowing, without any 
+divide- a lower case also 
+symbolises familiarity, 
+honesty, transparency in a 
+stream-of-consciousness 
+style.
+The language of the 
+guidebook too is crafted 
+keeping in mind the quality 
+of relatability & freedom 
+that our services have to 
+offer, imitating the flow of 
+free speech without an iota 
+of intimidation.          
+we like to think of ourselves as money movement 
+magicians. We give our customers the freedom 
+to move beyond the Why’s, and see the “Why 
+Not’s”.
+we ease their way and empower them to take 
+their ideas and business beyond any hurdles and 
+make more happen.  
+
+===== PAGE 4 =====
+our visi    n
+our miss   on
+our vision is to make payments simple-transparent & effortless. here, 
+providing a platform that is universally accessible, the idea is to enable 
+people and enterprises- giving them the power to realise all their dreams 
+and ambitions, no matter how big or small. 
+our mission is to be a dependable ﬁnancial partner. one who is ready to 
+uplift our customers' ﬁnancial experience using innovation and technology. 
+with an aim to enrich people's lives we are ready with services that help all 
+attain ﬁnancial freedom in every form.
+
+===== PAGE 5 =====
+formation and concept
+our logos
+
+===== PAGE 6 =====
+Consistency in applications plays a major 
+part in building a solid brand. An 
+underlying system provides flexibility and 
+variety but at the same time holds 
+everything together and helps to create 
+ownable visual signatures over a course of 
+time through a consistent look and feel.
+All the elements like the logo, bounding 
+shapes, typography, lock-ups, etc. are ﬁxed 
+to the grid. This approach provides a clear 
+starting point by leading with the logo and 
+in turn generating proportions for the 
+different elements making it easy to create 
+layouts.
+Y
+X
+primary logo lockup
+
+===== PAGE 7 =====
+secondary logo lockup
+the height of the "a" in the airpay 
+logo is depicted by x and is 
+followed universally. the width 
+proportion of it, however, can 
+change as per the need of the 
+secondary logo.
+Y
+Y
+X
+Y
+Y
+Y
+Y
+X
+Y
+Y
+Y
+X
+Y
+
+===== PAGE 8 =====
+do not crop the logo
+do not distort the logo
+do not change the
+transparency of the logo
+do not re-create using any
+other typeface
+do not use different colors
+do not outline logotype
+do not change the size or position 
+of the logotype and secondary logo
+do not rotate any part of
+the logo
+do not use any effects
+do not use drop shadows
+airpay
+do’s and don’ts with the logo
+
+===== PAGE 9 =====
+the fonts
+typography
+
+===== PAGE 10 =====
+fonts we prefer:
+websites    |    web-pages    |    social media    |    print media    |    presentations    |    others
+Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll 
+Mm Nn Oo Pp Qq Rr Ss Tt Uu Vv 
+Ww Xx Yy Zz 0123456789
+Regular  
+Brick quiz whangs jumpy veldt fox.
+impact
+Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll 
+Mm Nn Oo Pp Qq Rr Ss Tt Uu Vv 
+Ww Xx Yy Zz 0123456789
+Thin 
+Nymphs blitz quick vex dwarf jog.
+Thin Italic 
+DJs ﬂock by when MTV ax quiz prog.
+Extralight 
+Brick quiz whangs jumpy veldt fox. 
+Extralight Italic 
+Quick wafting zephyrs vex bold Jim. 
+Light 
+Typograﬁe Maamerkkinä.
+Light Italic 
+Saturation Pracovitějším.
+Regular 
+Brick quiz whangs jumpy veldt fox.
+Regular Italic 
+Glib jocks quiz nymph to vex dwarf.
+Medium 
+Požiadavkou Motorického.
+Medium Italic 
+Bright vixens jump; dozy fowl quack.
+Semibold 
+OŻywiona Matemático.
+Bold Italic 
+Quick wafting zephyrs vex bold Jim.
+Bold 
+OŻywiona Matemático.
+Bold Italic 
+Quick wafting zephyrs vex bold Jim.
+Extrabold 
+Architekten Zwitserland.
+Extrabold Italic 
+Praktischer Revolutions.
+Black 
+Brick quiz whangs jumpy veldt fox.
+Black Italic 
+Glib jocks quiz nymph to vex dwarf.
+montserrat
+Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll 
+Mm Nn Oo Pp Qq Rr Ss Tt Uu Vv 
+Ww Xx Yy Zz 0123456789
+Thin
+ 
+Nymphs blitz quick vex dwarf jog.
+Thin Italic 
+DJs ﬂock by when MTV ax quiz prog.
+light 
+Brick quiz whangs jumpy veldt fox. 
+light Italic 
+Quick wafting zephyrs vex bold Jim. 
+Regular
+ 
+Typograﬁe Maamerkkinä.
+Italic
+ 
+Saturation Pracovitějším.
+Medium
+ 
+Brick quiz whangs jumpy veldt fox.
+Medium Italic  
+Glib jocks quiz nymph to vex dwarf.
+Bold
+ 
+Požiadavkou Motorického.
+Bold Italic
+ 
+Bright vixens jump; dozy fowl quack.
+Condensed light
+ 
+OŻywiona Matemático.
+Condensed light Italic
+ 
+Quick wafting zephyrs vex bold Jim.
+Condensed regular
+OŻywiona Matemático.
+Condensed Italic
+ 
+Quick wafting zephyrs vex bold Jim.
+Condensed bold
+ 
+Architekten Zwitserland.
+Condensed bold Italic 
+Praktischer Revolutions.
+Roboto
+
+===== PAGE 11 =====
+Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll 
+Mm Nn Oo Pp Qq Rr Ss Tt Uu Vv 
+Ww Xx Yy Zz 0123456789
+Light 
+Nymphs blitz quick vex dwarf jog.
+Light Italic 
+DJs ﬂock by when MTV ax quiz prog.
+Regular
+Brick quiz whangs jumpy veldt fox. 
+Italic 
+Quick wafting zephyrs vex bold Jim. 
+Light  
+Typograﬁe Maamerkkinä.
+Light Italic  
+Saturation Pracovitějším.
+Calibri
+Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll 
+Mm Nn Oo Pp Qq Rr Ss Tt Uu Vv 
+Ww Xx Yy Zz 0123456789
+Thin 
+Nymphs blitz quick vex dwarf jog.
+Thin Italic 
+DJs ﬂock by when MTV ax quiz prog.
+Extralight 
+Brick quiz whangs jumpy veldt fox. 
+Extralight Italic 
+Quick wafting zephyrs vex bold Jim. 
+Light  
+Typograﬁe Maamerkkinä.
+Light Italic  
+Saturation Pracovitějším.
+Medium 
+Brick quiz whangs jumpy veldt fox.
+Medium Italic 
+Glib jocks quiz nymph to vex dwarf.
+Semibold 
+Požiadavkou Motorického.
+Semibold Italic 
+Bright vixens jump; dozy fowl quack.
+Bold
+ 
+OŻywiona Matemático.
+Bold Italic 
+Quick wafting zephyrs vex bold Jim.
+Extrabold
+OŻywiona Matemático.
+Extrabold Italic
+ 
+Quick wafting zephyrs vex bold Jim.
+Black
+ 
+Architekten Zwitserland.
+Black Italic
+ 
+Praktischer Revolutions.
+Inter
+Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll 
+Mm Nn Oo Pp Qq Rr Ss Tt Uu Vv 
+Ww Xx Yy Zz 0123456789
+Anton
+Regular
+Brick quiz whangs jumpy veldt fox.
+Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll 
+Mm Nn Oo Pp Qq Rr Ss Tt Uu Vv 
+Ww Xx Yy Zz 0123456789
+Nohemi
+Extra Light
+ 
+Nymphs blitz quick vex dwarf jog.
+Regular
+DJs ﬂock by when MTV ax quiz prog.
+Medium
+Brick quiz whangs jumpy veldt fox. 
+Semi Bold
+Quick wafting zephyrs vex bold Jim. 
+Extra Bold
+ 
+Typograﬁe Maamerkkinä.
+Black
+ 
+Saturation Pracovitějším.
+
+===== PAGE 12 =====
+Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll 
+Mm Nn Oo Pp Qq Rr Ss Tt Uu Vv 
+Ww Xx Yy Zz 0123456789
+Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll 
+Mm Nn Oo Pp Qq Rr Ss Tt Uu Vv 
+Ww Xx Yy Zz 0123456789
+AvantGarde Bk BT
+AvantGarde Demi
+Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll 
+Mm Nn Oo Pp Qq Rr Ss Tt Uu Vv 
+Ww Xx Yy Zz 0123456789
+AvantGardeC regular
+Social Media Exceptions:
+When we talk about social media creatives we have 
+a wider range of fonts and that cannot be penned 
+down as we change or use fonts according to the to-
+nality or concepts or language of the social media 
+post contents.
+But there are some protocols on using the font 
+styles of a creative posted on social media, below 
+are the rules and protocols
+maintained -
+Headlines: Straight, Bold fonts can be serif or 
+san-serif or
+cursive font styles.
+Body: san-serif clean fonts not bold, unless required.
+CTA: Bold san-serif fonts used for body text.
+
+===== PAGE 13 =====
+our colour theory
+colours for digital and print spaces
+
+===== PAGE 14 =====
+Colour theory Exceptions:
+we prefer to keep a wider reach when we talk about colours and here at airpay we chose to keep it subtle and classy, as mentioned above the “airpay blue” is what we 
+chose as a primary colour but we do have options of mixing primary colour with the secondary ones in a gradient format and tweak the colours to a shade-plus and a 
+shade-minus when it calls for. Too much shade changes are not aprreciated as we do have our style signatures. Tints of blue and white are preffered with subtle
+gradients of other colours mentioned above.  
+Our customers recognise us by the colours 
+that signify our company and ideologies.
+Blue is the primary colour which portrays 
+conﬁdence, stability, creativity, and 
+inspiration. White is the primary colour 
+representing the brand's core values which 
+portrays innovation, success, and freedom. 
+The white colour is recommended for usage 
+in a smaller proportion than airpay blue.
+primary colours
+secondary colours
+Airpay
+Blue
+Blue
+(for
+decks)
+C : 93  M : 60  Y :7  K :1
+R : 0  G : 102  B : 167
+#0066A7
+C : 78  M : 43  Y :0  K :0
+R : 25  G : 133  B : 221
+#1985DD
+C : 35  M : 0  Y :1  K :0
+R : 156  G : 219  B : 244
+#9cdbf4
+C : 95  M : 68  Y :7  K :0
+R : 13  G : 93  B : 161
+#0d5da1
+C : 2  M : 73  Y :94  K :0
+R : 237  G : 105  B : 43
+#ed692b
+C : 27  M : 22  Y :22  K :0
+R : 186  G : 186  B : 186
+#bababa
+C : 0  M : 0  Y :0  K :0
+R : 255  G : 255  B : 255
+#ffffff
+C : 67  M : 75  Y :0  K :0
+R : 109  G : 88  B : 165
+#6d58a5
+
+===== PAGE 15 =====
+The mockups on the right side 
+are examples of the colours 
+used.
+the colours are a mix of the ones 
+mentioned in the previous page. 
+Mockups to
+show the
+practical demo
+3-fold brochure
+ofﬁcial decks
+standee
+social media
+emailer
+
+===== PAGE 16 =====
+branding protocols
+the rules and guide
+
+===== PAGE 17 =====
+Business
+Collaterals
+indivisual name:
+Montserrat Bold - 10pt.
+company website:
+Montserrat regular - 8pt.
+designation:
+Montserrat regular - 8pt.
+department:
+Montserrat Regular - 8pt.
+contact details:
+Montserrat Regular - 8pt.
+visiting card
+(landscape)
+Size: 9cm X 5.5cm (W x H)
+www.airpay.in
+2.47 cm
+Ms./Mr. Name Surname
+Designation
+Department
+Mob : +91 0000 0000
+Email : abc.xyz@gmail.com
+1 cm
+1 cm
+
+===== PAGE 18 =====
+Business
+Collaterals
+Letterhead
+Size: A4
+Company name:
+Montserrat SemiBold - 10pt.
+Company website:
+Montserrat regular - 10pt.
+address:
+Montserrat Regular - 8pt.
+mobile:
+Montserrat Regular - 8pt.
+email:
+Montserrat Regular - 8pt.
+1 cm
+3.5 cm
+1 cm
+1 cm
+www.airpay.in
+CIN: U65100MH2012PTC229364
+104, Sir Vithaldas Chambers, 16 Mumbai Samachar Marg, Fort, Mumbai - 400023
+
+===== PAGE 19 =====
+Business
+Collaterals
+Envelope
+Size: 31cm x 14cm (W x H) 
+Address:
+Montserrat Regular - 8pt.
+contact details:
+Montserrat Regular - 8pt.
+Registered Ofﬁce:
+104, Sir Vithaldas Chambers, 16 Mumbai Samachar Marg, Fort, Mumbai - 400023
+www.airpay.in
+
+===== PAGE 20 =====
+Ofﬁcial diary/ note
+book
+Size: A4 
+map:
+Montserrat Regular - 18 pt.
+Watermark/engrave/emboss:
+airpay logo
+vertical placement
+height : 28cm 
+Business
+Collaterals
+india     uae
+tanzania     zanzibar     zambia
+12.6cm
+2cm
+3.6cm
+
+===== PAGE 21 =====
+I-Cards
+Employee cards
+EVENT
+EVENT
+EVENT
+EVENT
+Name Surname
+designation:
+xxxxxxxx xxxxxxx
+xx xxxxx xxxxx
+xxxxx
+AB -ve
+emergency no.:
+e-code:
+blood group:
+Name Surname
+designation:
+xxxxxxxx xxxxxxx
+xx xxxxx xxxxx
+xxxxx
+AB -ve
+emergency no.:
+e-code:
+blood group:
+
+===== PAGE 22 =====
+ofﬁcial
+signatures
+indivisual name:
+Montserrat Bold - 18pt.
+designation:
+Montserrat regular - 11pt.
+contact details:
+Montserrat Regular - 11pt.
+hashtag(#tag)
+Montserrat bold - 13pt.
+CTA:
+Roboto regular - 12pt.
+Size: 600px X 200px (W x H)
+email signature
+name surname
+designation xxxx xxxx
++xx xxxxxxxxxx
+www.airpay.in
+i
+n
+d
+i
+a
+ 
+ 
+ 
+ 
+u
+a
+e
+ 
+ 
+ 
+ 
+t
+a
+n
+z
+a
+n
+i
+a
+ 
+ 
+ 
+ 
+z
+a
+n
+z
+i
+b
+a
+r
+ 
+ 
+ 
+ 
+z
+a
+m
+b
+i
+a
+#LocaltoGlobal
+request a demo
+2 cm
+3 cm
+1.5 cm
+1.7 cm
+1.7 cm
+1.8 cm
+1.5 cm
+name surname
+designation xxxx xxxx
+www.airpay.in
+i
+n
+d
+i
+a
+ 
+ 
+ 
+ 
+u
+a
+e
+ 
+ 
+ 
+ 
+t
+a
+n
+z
+a
+n
+i
+a
+ 
+ 
+ 
+ 
+z
+a
+n
+z
+i
+b
+a
+r
+ 
+ 
+ 
+ 
+z
+a
+m
+b
+i
+a
+#LocaltoGlobal
+request a demo
+2 cm
+3 cm
+1.5 cm
+1.7 cm
+1.7 cm
+1.8 cm
+1.5 cm
+name surname
+designation xxxx xxxx
++xx xxxxxxxxxx
+www.airpay.in
+i
+n
+d
+i
+a
+ 
+ 
+ 
+ 
+u
+a
+e
+ 
+ 
+ 
+ 
+t
+a
+n
+z
+a
+n
+i
+a
+ 
+ 
+ 
+ 
+z
+a
+n
+z
+i
+b
+a
+r
+ 
+ 
+ 
+ 
+z
+a
+m
+b
+i
+a
+#LocaltoGlobal
+request a demo
+To
+Subject
+
+===== PAGE 23 =====
+1080px x 1350px
+1080px x 1080px
+1080px x 1350px
+1080px x 1080px
+2 cm
+7cm
+2 cm
+2 cm
+7 cm
+2 cm
+1080px x 1350px
+1080px x 1080px
+1080px x 1350px
+1080px x 1080px
+0.7cm
+2.6cm
+0.7cm
+0.7cm
+2.6cm
+0.7cm
+0.7cm
+2cm
+0.7cm
+0.7cm
+2cm
+0.7cm
+Creatives with dark coloured
+backgrounds
+your
+artwork
+Creatives with dark coloured
+backgrounds
+your
+artwork
+Creatives with dark coloured
+backgrounds
+your
+artwork
+Creatives with dark coloured
+backgrounds
+your
+artwork
+Creatives with dark coloured
+backgrounds
+your
+artwork
+Creatives with dark coloured
+backgrounds
+your
+artwork
+Creatives with dark coloured
+backgrounds
+your
+artwork
+Creatives with dark coloured
+backgrounds
+your
+artwork
+2 cm
+7cm
+2 cm
+2 cm
+7cm
+2 cm
+6 cm
+6 cm
+6 cm
+6 cm
+6 cm
+6 cm
+6 cm
+6 cm
+In social media there are total 8 
+adaptives which includes the 
+colour variations of logo according 
+to the background colour and the 
+sizes of the creatives with which 
+the colours of the logo differs and 
+also the positions of the logo
+In social media there is addition 
+of another set of logo called 
+“made in india” logo set 
+Social
+Media
+Creatives
+
+===== PAGE 24 =====
+Social
+Media
+Mockup
+1
+2
+3
+4
+
+===== PAGE 25 =====
+Thank you.
+get in touch, in case of confusion or query

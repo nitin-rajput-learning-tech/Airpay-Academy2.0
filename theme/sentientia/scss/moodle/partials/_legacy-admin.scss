@@ -524,8 +524,8 @@ body.dark-mode .ap-static-page__footer { border-color: #2d3140; }
     color: var(--ap-primary, #0066A7);
 }
 .ap-static-page__badge--teal {
-    background: var(--ap-accent-light, #e5f4f3);
-    color: var(--ap-accent, #0f7a73);
+    background: var(--ap-accent-light, #e8f4fd);
+    color: var(--ap-primary, #0066A7);
 }
 /* Card grid */
 .ap-sp-grid { display: grid; gap: 20px; }
@@ -547,7 +547,7 @@ body.dark-mode .ap-static-page__footer { border-color: #2d3140; }
     text-align: center;
 }
 .ap-sp-card--highlight-teal {
-    background: var(--ap-accent-light, #e5f4f3);
+    background: var(--ap-accent-light, #e8f4fd);
     border-color: #99d5cf;
     text-align: center;
 }
@@ -562,9 +562,9 @@ body.dark-mode .ap-static-page__footer { border-color: #2d3140; }
     margin-bottom: 14px;
 }
 .ap-sp-card__icon--blue { background: var(--ap-primary-light, #e8f4fd); color: #0066A7; }
-.ap-sp-card__icon--teal { background: var(--ap-accent-light, #e5f4f3); color: #0f7a73; }
+.ap-sp-card__icon--teal { background: var(--ap-accent-light, #e8f4fd); color: #0066A7; }
 .ap-sp-card__icon--amber { background: #fef3c7; color: #d97706; }
-.ap-sp-card__icon--purple { background: #ede9fe; color: #7c3aed; }
+.ap-sp-card__icon--purple { background: #e8e2f2; color: #6d58a5; }
 .ap-sp-card__icon--red { background: #fee2e2; color: #dc2626; }
 .ap-sp-card h4 {
     font-size: 1rem;
@@ -652,9 +652,9 @@ body.dark-mode .ap-static-page__footer { border-color: #2d3140; }
     color: var(--ap-primary, #0066A7);
 }
 .ap-sp-note--teal {
-    background: var(--ap-accent-light, #e5f4f3);
+    background: var(--ap-accent-light, #e8f4fd);
     border: 1px solid #99d5cf;
-    color: var(--ap-accent, #0f7a73);
+    color: var(--ap-primary, #0066A7);
 }
 /* Dark mode overrides for static pages */
 html.dark-mode .ap-sp-card,
@@ -681,9 +681,9 @@ body.dark-mode .ap-sp-note--blue {
 }
 html.dark-mode .ap-sp-note--teal,
 body.dark-mode .ap-sp-note--teal {
-    background: #134e4a;
+    background: #0d3a5c;
     border-color: #1a6b64;
-    color: #5eead4;
+    color: #4da8e4;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -697,7 +697,7 @@ body.dark-mode .ap-sp-note--teal {
 
 /* Hero */
 .airpay-homepage__hero {
-    background: linear-gradient(135deg, #0066A7 0%, #0f7a73 100%);
+    background: linear-gradient(135deg, #0066A7 0%, #0d5da1 100%);
     padding: 80px 32px 60px;
     text-align: center;
     color: #fff;
@@ -841,13 +841,13 @@ body.dark-mode .ap-sp-note--teal {
 }
 .airpay-homepage__course-header {
     height: 120px;
-    background: linear-gradient(135deg, #0066A7 0%, #0f7a73 100%);
+    background: linear-gradient(135deg, #0066A7 0%, #0d5da1 100%);
 }
-.airpay-homepage__course-card:nth-child(2) .airpay-homepage__course-header { background: linear-gradient(135deg, #0f7a73 0%, #059669 100%); }
-.airpay-homepage__course-card:nth-child(3) .airpay-homepage__course-header { background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%); }
-.airpay-homepage__course-card:nth-child(4) .airpay-homepage__course-header { background: linear-gradient(135deg, #d97706 0%, #dc2626 100%); }
-.airpay-homepage__course-card:nth-child(5) .airpay-homepage__course-header { background: linear-gradient(135deg, #059669 0%, #0066A7 100%); }
-.airpay-homepage__course-card:nth-child(6) .airpay-homepage__course-header { background: linear-gradient(135deg, #7c3aed 0%, #dc2626 100%); }
+.airpay-homepage__course-card:nth-child(2) .airpay-homepage__course-header { background: linear-gradient(135deg, #1985DD 0%, #0d5da1 100%); }
+.airpay-homepage__course-card:nth-child(3) .airpay-homepage__course-header { background: linear-gradient(135deg, #1e40af 0%, #6d58a5 100%); }
+.airpay-homepage__course-card:nth-child(4) .airpay-homepage__course-header { background: linear-gradient(135deg, #ed692b 0%, #0066A7 100%); }
+.airpay-homepage__course-card:nth-child(5) .airpay-homepage__course-header { background: linear-gradient(135deg, #0d5da1 0%, #0066A7 100%); }
+.airpay-homepage__course-card:nth-child(6) .airpay-homepage__course-header { background: linear-gradient(135deg, #6d58a5 0%, #0d5da1 100%); }
 .airpay-homepage__course-body {
     padding: 16px;
     h4 { font-family: 'Montserrat', sans-serif; font-weight: 600; font-size: 1rem; color: #1a1a2e; margin: 0 0 8px; }
@@ -864,7 +864,7 @@ body.dark-mode .ap-sp-note--teal {
 .airpay-homepage__cta {
     padding: 60px 32px;
     text-align: center;
-    background: linear-gradient(135deg, #0066A7 0%, #0f7a73 100%);
+    background: linear-gradient(135deg, #0066A7 0%, #0d5da1 100%);
     color: #fff;
     h2 { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1.75rem; margin-bottom: 12px; }
     p { font-size: 1rem; opacity: 0.9; margin-bottom: 24px; }
@@ -945,14 +945,14 @@ body.dark-mode .ap-sp-note--teal {
 }
 .airpay-cert-gallery__card-header {
     height: 80px;
-    background: linear-gradient(135deg, #0066A7 0%, #0f7a73 100%);
+    background: linear-gradient(135deg, #0066A7 0%, #0d5da1 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     i { font-size: 2rem; color: rgba(255,255,255,0.3); }
 }
-.airpay-cert-gallery__card:nth-child(2) .airpay-cert-gallery__card-header { background: linear-gradient(135deg, #0f7a73 0%, #059669 100%); }
-.airpay-cert-gallery__card:nth-child(3) .airpay-cert-gallery__card-header { background: linear-gradient(135deg, #7c3aed 0%, #1e40af 100%); }
+.airpay-cert-gallery__card:nth-child(2) .airpay-cert-gallery__card-header { background: linear-gradient(135deg, #1985DD 0%, #0d5da1 100%); }
+.airpay-cert-gallery__card:nth-child(3) .airpay-cert-gallery__card-header { background: linear-gradient(135deg, #6d58a5 0%, #1e40af 100%); }
 .airpay-cert-gallery__card-body {
     padding: 16px;
 }

@@ -19,8 +19,9 @@ $red:     #ca3120 !default;
 $orange:  #f0ad4e !default;
 $yellow:  #ff7518 !default;
 $green:   #357a32 !default;
-$teal:    #20c997 !default;
-$cyan:    #008196 !default;
+// Brand Book 2026-06: alias teal/cyan to brand bright-blue (active preset $info -> blue).
+$teal:    #1985DD !default;
+$cyan:    #1985DD !default;
 
 $primary:       #0066A7 !default;  // Airpay blue (was $blue)
 $success:       $green !default;
@@ -122,8 +123,8 @@ $spacers: (
 
 // Airpay Academy Design System — SCSS tokens
 $primarycolor: #0066A7 !default;   // Was #25467a
-$secondarycolor: #0f7a73 !default; // Teal accent (was #006699)
-$hovercolor: #004d7a !default;     // Darker blue (was #006699)
+$secondarycolor: #1985DD !default; // Brand bright-blue accent — Brand Book 2026-06 (label was 'teal')
+$hovercolor: #004d7a !default;     // Darker blue (was #0066A7)
 
 body {
     -webkit-font-smoothing: antialiased;

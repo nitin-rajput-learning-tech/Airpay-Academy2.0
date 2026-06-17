@@ -27,7 +27,7 @@
 .airpay-analytics__funnel-stage { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
 .airpay-analytics__funnel-label { max-width: 80px; font-size: 0.85rem; color: #5a6070; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .airpay-analytics__funnel-bar-wrap { flex: 1; height: 24px; background: #e5e7eb; border-radius: 4px; overflow: hidden; }
-.airpay-analytics__funnel-bar { height: 100%; background: linear-gradient(90deg, #0066A7, #0f7a73); border-radius: 4px; transition: width 0.5s; }
+.airpay-analytics__funnel-bar { height: 100%; background: linear-gradient(90deg, #0066A7, #0d5da1); border-radius: 4px; transition: width 0.5s; }
 .airpay-analytics__funnel-count { width: 100px; font-size: 0.8rem; color: #374151; font-weight: 600; text-align: right; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Heatmap */

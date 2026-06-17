@@ -15,7 +15,7 @@
 .airpay-compliance-rpt__tabs a { padding: 8px 16px; border-radius: 8px 8px 0 0; font-size: 0.85rem; text-decoration: none; color: #5a6070; background: #f3f4f6; transition: all 0.2s; }
 .airpay-compliance-rpt__tabs a.active { background: #0066A7; color: #fff; }
 .airpay-compliance-rpt__tabs a:hover { background: #e8f2f9; }
-.airpay-compliance-rpt__export { margin-left: auto; background: #0f7a73 !important; color: #fff !important; border-radius: 8px !important; }
+.airpay-compliance-rpt__export { margin-left: auto; background: #1985DD !important; color: #fff !important; border-radius: 8px !important; }
 
 /* Table */
 .airpay-compliance-rpt__table-wrap { overflow-x: auto; }

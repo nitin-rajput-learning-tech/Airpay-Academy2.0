@@ -164,8 +164,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Draw current (solid line).
     ctx.setLineDash([]);
-    ctx.fillStyle = 'rgba(15,122,115,0.2)';
-    ctx.strokeStyle = '#0f7a73';
+    ctx.fillStyle = 'rgba(25, 133, 221,0.2)';
+    ctx.strokeStyle = '#1985DD';
     ctx.lineWidth = 2.5;
     ctx.beginPath();
     for (var i = 0; i < n; i++) {
@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var p = getPoint(i, current[i]);
         ctx.beginPath();
         ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
-        ctx.fillStyle = '#0f7a73';
+        ctx.fillStyle = '#1985DD';
         ctx.fill();
     }
 

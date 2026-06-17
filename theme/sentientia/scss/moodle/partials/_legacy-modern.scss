@@ -167,7 +167,7 @@ body.dark-mode .custom_header {
     background-color: #e8f2f9;
 }
 .ap-dash-exam-card__image--fallback {
-    background: linear-gradient(135deg, #0066A7, #0f7a73);
+    background: linear-gradient(135deg, #0066A7, #0d5da1);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -239,7 +239,7 @@ body.dark-mode .custom_header {
 }
 .ap-dash-exam-card__progress-bar {
     height: 100%;
-    background: var(--ap-gradient, linear-gradient(135deg, #0066A7, #0f7a73));
+    background: var(--ap-gradient, linear-gradient(135deg, #0066A7, #0d5da1));
     border-radius: 3px;
     transition: width 0.5s;
 }
@@ -285,7 +285,7 @@ body.dark-mode .custom_header {
     border-radius: 8px;
     font-size: 13px;
     font-weight: 600;
-    background: var(--ap-gradient, linear-gradient(135deg, #0066A7, #0f7a73));
+    background: var(--ap-gradient, linear-gradient(135deg, #0066A7, #0d5da1));
     color: #fff;
     text-decoration: none;
     transition: opacity 0.15s;

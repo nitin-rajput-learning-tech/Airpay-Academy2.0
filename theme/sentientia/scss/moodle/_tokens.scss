@@ -50,16 +50,34 @@ $ap-bp-desktop:  1600px;
     --ap-blue-800: #004570;
     --ap-blue-900: #003050;
 
-    --ap-teal-50:  #e5f4f3;
-    --ap-teal-100: #b8e3df;
-    --ap-teal-200: #80cec7;
-    --ap-teal-300: #48b8af;
-    --ap-teal-400: #1fa69c;
-    --ap-teal-500: #0f7a73;  /* Accent — Airpay teal */
-    --ap-teal-600: #0d6b65;
-    --ap-teal-700: #0a5c56;
-    --ap-teal-800: #074d48;
-    --ap-teal-900: #043e3a;
+    /* ── Teal ramp RETIRED per Revised Brand Book 2026-06 (no teal in the
+       book). Each stop is now an ALIAS onto the brand blue ramp so every
+       legacy/stray `--ap-teal-*` consumer renders brand blue without a
+       per-file sweep. Original teal hex kept inline for trivial revert
+       (or `git show <pre-2026061600>:.../_tokens.scss`). The accent stop
+       (-500) maps to brand bright-blue #1985DD to stay distinct from the
+       #0066A7 primary. See REVISED-BRAND-BOOK-2026-06.md §5. */
+    --ap-teal-50:  var(--ap-blue-50);     /* was #e5f4f3 */
+    --ap-teal-100: var(--ap-blue-100);    /* was #b8e3df */
+    --ap-teal-200: var(--ap-blue-200);    /* was #80cec7 */
+    --ap-teal-300: var(--ap-blue-300);    /* was #48b8af */
+    --ap-teal-400: var(--ap-blue-400);    /* was #1fa69c */
+    --ap-teal-500: var(--ap-blue-bright); /* was #0f7a73 — accent → #1985DD */
+    --ap-teal-600: var(--ap-blue-600);    /* was #0d6b65 */
+    --ap-teal-700: var(--ap-blue-deep);   /* was #0a5c56 */
+    --ap-teal-800: var(--ap-blue-700);    /* was #074d48 */
+    --ap-teal-900: var(--ap-blue-900);    /* was #043e3a */
+
+    /* ── Revised Brand Book 2026-06 secondaries (BB-revamp-noweb.pdf p14)
+       Exact brand values. Teal above is RETAINED for revert/stragglers but is
+       no longer referenced by --ap-color-accent (teal is off-brand per the book). */
+    --ap-blue-bright: #1985DD;  /* secondary "blue for decks" */
+    --ap-blue-sky:    #9cdbf4;  /* sky tint — light fills */
+    --ap-blue-deep:   #0d5da1;  /* deep blue — gradient end / pressed */
+    --ap-orange-500:  #ed692b;  /* brand warm accent — SPARING (CTA/badge) */
+    --ap-orange-light:#fdeee6;
+    --ap-orange-dark: #c9551d;
+    --ap-purple-500:  #6d58a5;  /* brand tertiary — sparing */
 
     --ap-neutral-0:   #ffffff;
     --ap-neutral-25:  #fafbfc;
@@ -83,9 +101,24 @@ $ap-bp-desktop:  1600px;
     --ap-color-primary-light:  var(--ap-blue-50);
     --ap-color-primary-dark:   var(--ap-blue-800);
 
-    --ap-color-accent:         var(--ap-teal-500);
-    --ap-color-accent-hover:   var(--ap-teal-600);
-    --ap-color-accent-light:   var(--ap-teal-50);
+    /* Revised Brand Book 2026-06: accent is brand BLUE, not teal. The book is
+       blue-dominant with NO teal; the bright "blue for decks" (#1985DD) is the
+       secondary used for accents/active states. (Was var(--ap-teal-500).) */
+    --ap-color-accent:         var(--ap-blue-bright);
+    --ap-color-accent-hover:   var(--ap-blue-deep);
+    --ap-color-accent-light:   var(--ap-blue-50);
+
+    /* Warm + tertiary pops — used SPARINGLY per the book (CTA emphasis, badges).
+       Never broad UI fills. */
+    --ap-color-highlight:        var(--ap-orange-500);
+    --ap-color-highlight-hover:  var(--ap-orange-dark);
+    --ap-color-highlight-light:  var(--ap-orange-light);
+    --ap-color-tertiary:         var(--ap-purple-500);
+
+    /* Brand gradients (book §colour-theory: "mix primary with secondary in a
+       gradient format … subtle"). For hero/CTA blocks on landing + login. */
+    --ap-gradient-brand:         linear-gradient(135deg, var(--ap-blue-600) 0%, var(--ap-blue-deep) 100%);
+    --ap-gradient-brand-bright:  linear-gradient(135deg, var(--ap-blue-bright) 0%, var(--ap-blue-600) 100%);
 
     --ap-color-bg-body:        var(--ap-neutral-50);
     --ap-color-bg-surface:     var(--ap-neutral-0);
@@ -131,12 +164,14 @@ $ap-bp-desktop:  1600px;
        per-customer brand overrides flow into chart fills without
        touching the JS.
     */
-    --ap-color-chart-series-3: #7c3aed;  /* purple — 3rd series after primary+accent */
+    --ap-color-chart-series-3: #6d58a5;  /* purple — 3rd series after primary+accent */
     --ap-color-chart-series-4: var(--ap-color-warning); /* warning amber */
     --ap-color-chart-series-5: var(--ap-color-danger);  /* danger red */
 
     /* Gradients */
-    --ap-gradient-hero:        linear-gradient(160deg, var(--ap-blue-900), var(--ap-blue-600), var(--ap-teal-500));
+    /* Brand Book 2026-06: hero is now an all-blue triad (dark navy → primary
+       → deep), per "subtle blue→deep-blue gradients". Was …, var(--ap-teal-500). */
+    --ap-gradient-hero:        linear-gradient(160deg, var(--ap-blue-900), var(--ap-blue-600), var(--ap-blue-deep));
     --ap-gradient-cta:         linear-gradient(135deg, var(--ap-color-primary), var(--ap-color-accent));
     --ap-gradient-sidebar:     linear-gradient(180deg, var(--ap-neutral-900), var(--ap-neutral-800));
 

@@ -32,10 +32,10 @@ body.dark-mode .ap-mobile-nav__item:hover { color: #e8eaed !important; }
 body.dark-mode .ap-badge { opacity: 0.9; }
 body.dark-mode .ap-badge--info { background: #0d2540 !important; color: #60a5fa !important; }
 body.dark-mode .ap-badge--success { background: #052e16 !important; color: #34d399 !important; }
-body.dark-mode .ap-badge--warning { background: #451a03 !important; color: #fbbf24 !important; }
+body.dark-mode .ap-badge--warning { background: #451a03 !important; color: #ed692b !important; }
 body.dark-mode .ap-badge--danger { background: #450a0a !important; color: #f87171 !important; }
 body.dark-mode .ap-badge--muted { background: #232733 !important; color: #6b7280 !important; }
-body.dark-mode .ap-badge--accent { background: #0a2e1a !important; color: #34d399 !important; }
+body.dark-mode .ap-badge--accent { background: #0d2540 !important; color: #60a5fa !important; } /* Brand Book 2026-06: accent badge brand blue, not emerald */
 
 /* ─── Empty States ─── */
 body.dark-mode .ap-empty-state { color: #6b7280; }
@@ -66,7 +66,7 @@ body.dark-mode .ap-filter-bar__select { background: #22252f !important; border-c
 
 /* ─── Heatmap / Streak Calendar ─── */
 body.dark-mode .ap-heatmap-cell { background: #2d3140 !important; }
-body.dark-mode .ap-heatmap-cell--active { background: #0f7a73 !important; }
+body.dark-mode .ap-heatmap-cell--active { background: #1985DD !important; }
 body.dark-mode .ap-streak-heatmap { background: #1a1d27 !important; border-color: #2d3140 !important; }
 body.dark-mode .ap-streak-heatmap__label { color: #9ca3b4 !important; }
 
@@ -99,7 +99,7 @@ body.dark-mode .airpay-homepage__cta h2 { color: #e8eaed !important; }
 body.dark-mode .airpay-homepage__cta p { color: #9ca3b4 !important; }
 
 /* ─── Onboarding Wizard ─── */
-body.dark-mode .ap-onboard { background: linear-gradient(135deg, #0d2540, #0a2e1a, #0d1b36) !important; }
+body.dark-mode .ap-onboard { background: linear-gradient(135deg, #0d2540, #0a3d6b, #0d1b36) !important; } /* Brand Book 2026-06: blue-navy mid-stop (was green) */
 body.dark-mode .ap-onboard__card { background: #1a1d27 !important; box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important; }
 body.dark-mode .ap-onboard__title { color: #e8eaed !important; }
 body.dark-mode .ap-onboard__subtitle { color: #9ca3b4 !important; }

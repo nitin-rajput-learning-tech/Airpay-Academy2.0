@@ -104,7 +104,7 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #0066A7 0%, #0f7a73 100%);
+    background: linear-gradient(135deg, #0066A7 0%, #0d5da1 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -307,8 +307,8 @@ body.dark-mode .airpay-gamification__streak small {
     color: #f97316 !important;
 }
 body.dark-mode .airpay-gamification__today {
-    background: #0a2e1a !important;
-    color: #34d399 !important;
+    background: #0d2540 !important;
+    color: #60a5fa !important;
 }
 body.dark-mode .airpay-gamification__leaderboard-row:hover {
     background: #232733 !important;
@@ -371,7 +371,7 @@ body.dark-mode .airpay-gamification__streak-number { color: #e8eaed; }
 body.dark-mode .airpay-gamification__streak--inactive .airpay-gamification__streak-number { color: #6b7280; }
 body.dark-mode .airpay-gamification__today { background: #052e16; color: #34d399; }
 body.dark-mode .airpay-gamification__badges { background: transparent; }
-body.dark-mode .airpay-gamification__badge { background: linear-gradient(135deg, #0d4880, #0a5c56); }
+body.dark-mode .airpay-gamification__badge { background: linear-gradient(135deg, #0d4880, #0d5da1); }
 body.dark-mode .airpay-gamification__badge:hover { box-shadow: 0 4px 12px rgba(0,102,167,0.3); }
 body.dark-mode .airpay-gamification__leaderboard { background: #1a1d27; border-color: #2d3140; }
 body.dark-mode .airpay-gamification__leaderboard-title { color: #e8eaed; }
@@ -383,7 +383,7 @@ body.dark-mode .airpay-gamification__leaderboard-points { color: #9ca3b4; }
 body.dark-mode .airpay-gamification__streak-calendar { background: #1a1d27; border-color: #2d3140; }
 body.dark-mode .airpay-gamification__streak-calendar-title { color: #e8eaed; }
 body.dark-mode .airpay-gamification__streak-dot { background: #2d3140; }
-body.dark-mode .airpay-gamification__streak-dot--active { background: #0f7a73; }
+body.dark-mode .airpay-gamification__streak-dot--active { background: #1985DD; }
 body.dark-mode .airpay-gamification__streak-dot--today { background: #0066A7; box-shadow: 0 0 0 2px #0d4880; }
 body.dark-mode .airpay-gamification__streak-stats { color: #9ca3b4; }
 

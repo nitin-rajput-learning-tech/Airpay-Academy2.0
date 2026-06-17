@@ -134,11 +134,11 @@
 }
 .ap-skills__gap-bar {
     height: 100%;
-    background: var(--ap-gradient, linear-gradient(135deg, #0066A7, #0f7a73));
+    background: var(--ap-gradient, linear-gradient(135deg, #0066A7, #0d5da1));
     border-radius: 3px;
     transition: width 0.5s;
 }
-.ap-skills__gap-current { font-weight: 600; color: var(--ap-accent, #0f7a73); }
+.ap-skills__gap-current { font-weight: 600; color: var(--ap-primary, #0066A7); }
 .ap-skills__gap-arrow { color: var(--ap-text-muted, #8896a6); }
 .ap-skills__gap-required { font-weight: 600; color: var(--ap-primary, #0066A7); }
 

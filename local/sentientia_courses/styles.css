@@ -38,9 +38,9 @@
     text-transform: uppercase;
 }
 /* Per-course gradient fallback palette (course id % 6). */
-.ap-featured-widget__thumb--v0 { background: var(--ap-gradient-cta, linear-gradient(135deg, #0066a7, #0f7a73)); }
-.ap-featured-widget__thumb--v1 { background: linear-gradient(135deg, #0f7a73, #0aa3a3); }
-.ap-featured-widget__thumb--v2 { background: linear-gradient(135deg, #6a3fb5, #b34db8); }
-.ap-featured-widget__thumb--v3 { background: linear-gradient(135deg, #c2407e, #f0883e); }
-.ap-featured-widget__thumb--v4 { background: linear-gradient(135deg, #1f6feb, #0f7a73); }
-.ap-featured-widget__thumb--v5 { background: linear-gradient(135deg, #d97706, #e0b400); }
+.ap-featured-widget__thumb--v0 { background: var(--ap-gradient-cta, linear-gradient(135deg, #0066A7, #0d5da1)); }
+.ap-featured-widget__thumb--v1 { background: linear-gradient(135deg, #1985DD, #9cdbf4); }
+.ap-featured-widget__thumb--v2 { background: linear-gradient(135deg, #6d58a5, #9b86c9); }
+.ap-featured-widget__thumb--v3 { background: linear-gradient(135deg, #ed692b, #f7a072); }
+.ap-featured-widget__thumb--v4 { background: linear-gradient(135deg, #003d66, #0066A7); }
+.ap-featured-widget__thumb--v5 { background: linear-gradient(135deg, #0d5da1, #1985DD); }

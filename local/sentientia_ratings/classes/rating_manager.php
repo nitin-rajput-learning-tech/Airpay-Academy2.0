@@ -130,7 +130,7 @@ class rating_manager {
             // rounded average so a never-rated user still sees the consensus.
             $filled = ($myrating > 0) ? ($i <= $myrating) : ($i <= round($avg->average));
             $iconcls = $filled ? 'fa fa-star' : 'fa fa-star-o';
-            $color   = $filled ? '#efce2e'   : '#9c9b97';
+            $color   = $filled ? '#ed692b'   : '#9c9b97';
 
             if ($interactive) {
                 $aria = s(get_string('rateaccessibility', 'local_sentientia_ratings', $i));

@@ -367,7 +367,19 @@ defined('MOODLE_INTERNAL') || die();
 // $applyrsw flag; the first-visit auto-call (user_menu.php) now passes false so
 // it sets currentroleinfo (org-scoping) WITHOUT writing $USER->access['rsw'].
 // Role-switching capabilities now change ONLY on an explicit user action.
-$plugin->version   = 2026061501;
+// Revised Brand Book 2026-06 (BB-revamp-noweb.pdf) — Phase 1 token foundation:
+// retire off-brand teal from --ap-color-accent (→ brand bright-blue #1985DD),
+// add brand secondaries (#1985DD/#9cdbf4/#0d5da1/#ed692b/#6d58a5) + brand
+// gradient tokens. Primary #0066A7 + Montserrat already matched the book.
+// See docs/audits/brand-revamp-2026-06/REVISED-BRAND-BOOK-2026-06.md.
+// 2026061601 — Phase 1 teal-gap closure (rgba/dark-teal forms) + Phase 2 login
+// hero elevation: faint "a" monogram watermark + sparing brand-orange accent bar.
+// 2026061602 — Phase 2 cont'd: frontpage/storefront hero elevation ("a" monogram
+// watermark + sparing orange title accent) + card-thumb variety palette remapped
+// to brand secondaries (blue-dominant, sparing purple/orange — no cyan/magenta/gold).
+// 2026061603 — brand-verify closure: Bootstrap $info cyan->blue, dark-mode emerald
+// accent->blue, decorative emerald/amber/red->brand, violet->purple, gold->orange, a11y.
+$plugin->version   = 2026061603;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_sentientia';
 $plugin->maturity  = MATURITY_BETA;

@@ -32,7 +32,8 @@
 
     /* ── Primary (slightly brighter for dark bg contrast) ───── */
     --ap-color-primary-light:  #172554;
-    --ap-color-accent-light:   #134e4a;
+    /* Brand Book 2026-06: dark accent tint is now blue (was teal #134e4a). */
+    --ap-color-accent-light:   #0d3a5c;
 
     /* ── Status (desaturated for dark bg) ────────────────────── */
     --ap-color-success-light:  #052e16;
@@ -45,7 +46,7 @@
        are too dark to read on #1a1d27. Switched to Tailwind 400-series
        which give ≥4.5:1 on dark surfaces. */
     --ap-color-success:        #4ade80;  /* was #15803d (3.35) → 4.5+ */
-    --ap-color-warning:        #fbbf24;  /* was #a16207 → 4.5+ */
+    --ap-color-warning:        #ed692b;  /* was #a16207 → 4.5+ */
     --ap-color-danger:         #f87171;  /* was #dc2626 → 4.5+ */
 
     /* ── Elevation (stronger shadows on dark) ────────────────── */

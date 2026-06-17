@@ -415,7 +415,7 @@ if ($ADMIN->fulltree) {
     $name = 'theme_sentientia/secondarycolor';
     $title = get_string('secondarycolor', 'theme_sentientia');
     $description = get_string('secondarycolor_desc', 'theme_sentientia');
-    $setting = new admin_setting_configcolourpicker($name, $title, $description, '#006699');
+    $setting = new admin_setting_configcolourpicker($name, $title, $description, '#0066A7');
     $setting->set_updatedcallback('theme_reset_all_caches');
     $page->add($setting);
 
@@ -425,7 +425,7 @@ if ($ADMIN->fulltree) {
     $name = 'theme_sentientia/hovercolor';
     $title = get_string('hovercolor', 'theme_sentientia');
     $description = get_string('hovercolor_desc', 'theme_sentientia');
-    $setting = new admin_setting_configcolourpicker($name, $title, $description, '#006699');
+    $setting = new admin_setting_configcolourpicker($name, $title, $description, '#0066A7');
     $setting->set_updatedcallback('theme_reset_all_caches');
     $page->add($setting);
 

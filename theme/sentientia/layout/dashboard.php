@@ -517,13 +517,13 @@ if (isloggedin() && !isguestuser()) {
                     ['statval' => $activeusers, 'statlabel' => 'Active'],
                     ['statval' => $inactiveusers, 'statlabel' => 'Inactive'],
                 ]],
-                ['label' => 'Manage Courses', 'icon' => 'book', 'url' => (new moodle_url('/local/courses/courses.php'))->out(false), 'color' => '#0f7a73',
+                ['label' => 'Manage Courses', 'icon' => 'book', 'url' => (new moodle_url('/local/courses/courses.php'))->out(false), 'color' => '#1985DD',
                  'hasstats' => true, 'stats' => [
                     ['statval' => $totalcourses, 'statlabel' => 'Total'],
                     ['statval' => number_format($totalenrolments), 'statlabel' => 'Enrolments'],
                     ['statval' => number_format($totalcompleted), 'statlabel' => 'Completions'],
                 ]],
-                ['label' => 'Reports', 'icon' => 'bar-chart', 'url' => (new moodle_url('/blocks/learnerscript/managereport.php'))->out(false), 'color' => '#7c3aed'],
+                ['label' => 'Reports', 'icon' => 'bar-chart', 'url' => (new moodle_url('/blocks/learnerscript/managereport.php'))->out(false), 'color' => '#6d58a5'],
                 ['label' => 'Online Exams', 'icon' => 'pencil-square-o', 'url' => (new moodle_url('/local/onlineexams/index.php'))->out(false), 'color' => '#d97706'],
                 ['label' => 'Classrooms', 'icon' => 'calendar', 'url' => (new moodle_url('/local/classroom/index.php'))->out(false), 'color' => '#dc2626',
                  'hasstats' => ($classroomcount > 0), 'stats' => [
@@ -540,7 +540,7 @@ if (isloggedin() && !isguestuser()) {
                         ];
                     } catch (Exception $e) { return []; }
                  })()],
-                ['label' => 'Privacy (DPDP)', 'icon' => 'lock', 'url' => (new moodle_url('/local/sentientia_privacy/index.php'))->out(false), 'color' => '#7c3aed',
+                ['label' => 'Privacy (DPDP)', 'icon' => 'lock', 'url' => (new moodle_url('/local/sentientia_privacy/index.php'))->out(false), 'color' => '#6d58a5',
                  'hasstats' => true, 'stats' => (function() use ($DB) {
                     try {
                         $pending = $DB->count_records('local_privacy_requests', ['status' => 'pending']);

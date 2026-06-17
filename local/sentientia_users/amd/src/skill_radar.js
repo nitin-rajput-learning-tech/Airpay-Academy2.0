@@ -101,7 +101,7 @@ const renderRadar = (canvas) => {
     const reqPoly = document.createElementNS(ns, 'polygon');
     reqPoly.setAttribute('points', requiredPoints);
     reqPoly.setAttribute('fill', 'none');
-    reqPoly.setAttribute('stroke', '#0f7a73');
+    reqPoly.setAttribute('stroke', '#1985DD');
     reqPoly.setAttribute('stroke-width', '1.5');
     reqPoly.setAttribute('stroke-dasharray', '4 3');
     svg.appendChild(reqPoly);

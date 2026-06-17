@@ -93,7 +93,7 @@ echo $OUTPUT->header();
     <div style="background:var(--ap-surface,#fff); border:1px solid var(--ap-border,#e3eaf3); border-radius:16px; overflow:hidden; margin-bottom:20px;">
 
         <!-- Hero -->
-        <div style="background:linear-gradient(135deg,#0066A7 0%,#0f7a73 100%); padding:40px 32px; color:#fff;">
+        <div style="background:linear-gradient(135deg,#0066A7 0%,#0d5da1 100%); padding:40px 32px; color:#fff;">
             <?php if ($categoryname): ?>
             <span style="background:rgba(255,255,255,0.2); padding:3px 12px; border-radius:20px; font-size:12px; font-weight:600;"><?php echo s($categoryname); ?></span>
             <?php endif; ?>
@@ -121,7 +121,7 @@ echo $OUTPUT->header();
                     <?php if ($is_enrolled): ?>
                         <a href="<?php echo (new moodle_url('/course/view.php', ['id' => $id]))->out(); ?>"
                            style="padding:10px 24px; border-radius:10px; font-size:15px; font-weight:600;
-                                  background:linear-gradient(135deg,#0066A7,#0f7a73); color:#fff; text-decoration:none;">
+                                  background:linear-gradient(135deg,#0066a7,#0d5da1); color:#fff; text-decoration:none;">
                             <i class="fa fa-play-circle"></i> Continue Learning
                         </a>
                     <?php elseif ($pricing['is_free'] && $is_loggedin && \local_sentientia_catalog\enrolment::should_offer_oneclick($USER, $pricing)): ?>
@@ -130,14 +130,14 @@ echo $OUTPUT->header();
                             <input type="hidden" name="sesskey" value="<?php echo sesskey(); ?>">
                             <input type="hidden" name="action" value="enrolnow">
                             <button type="submit" style="padding:10px 24px; border-radius:10px; font-size:15px; font-weight:600;
-                                    background:linear-gradient(135deg,#0066A7,#0f7a73); color:#fff; border:none; cursor:pointer;">
+                                    background:linear-gradient(135deg,#0066a7,#0d5da1); color:#fff; border:none; cursor:pointer;">
                                 <i class="fa fa-sign-in"></i> <?php echo s(get_string('enrol_now_free', 'local_sentientia_catalog')); ?>
                             </button>
                         </form>
                     <?php elseif ($pricing['is_free'] && $is_loggedin): ?>
                         <a href="<?php echo (new moodle_url('/enrol/index.php', ['id' => $id]))->out(); ?>"
                            style="padding:10px 24px; border-radius:10px; font-size:15px; font-weight:600;
-                                  background:linear-gradient(135deg,#0066A7,#0f7a73); color:#fff; text-decoration:none;">
+                                  background:linear-gradient(135deg,#0066a7,#0d5da1); color:#fff; text-decoration:none;">
                             <i class="fa fa-sign-in"></i> Enroll Now — Free
                         </a>
                     <?php elseif (!$is_loggedin): ?>
@@ -145,7 +145,7 @@ echo $OUTPUT->header();
                             <input type="hidden" name="sesskey" value="<?php echo sesskey(); ?>">
                             <input type="hidden" name="action" value="addtocart">
                             <button type="submit" style="padding:10px 24px; border-radius:10px; font-size:15px; font-weight:600;
-                                    background:linear-gradient(135deg,#0066A7,#0f7a73); color:#fff; border:none; cursor:pointer;">
+                                    background:linear-gradient(135deg,#0066a7,#0d5da1); color:#fff; border:none; cursor:pointer;">
                                 <i class="fa fa-cart-plus"></i> Add to Cart
                             </button>
                         </form>
@@ -160,7 +160,7 @@ echo $OUTPUT->header();
                             <input type="hidden" name="sesskey" value="<?php echo sesskey(); ?>">
                             <input type="hidden" name="action" value="addtocart">
                             <button type="submit" style="padding:10px 24px; border-radius:10px; font-size:15px; font-weight:600;
-                                    background:linear-gradient(135deg,#0066A7,#0f7a73); color:#fff; border:none; cursor:pointer;">
+                                    background:linear-gradient(135deg,#0066a7,#0d5da1); color:#fff; border:none; cursor:pointer;">
                                 <i class="fa fa-cart-plus"></i> Add to Cart — <?php echo $pricing['display']; ?>
                             </button>
                         </form>
