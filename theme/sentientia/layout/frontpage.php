@@ -491,7 +491,7 @@ echo $OUTPUT->doctype();
         <div class="ap-courses__grid">
             <?php $i = 0; foreach ($featured as $course):
                 $summary = shorten_text(strip_tags(format_string($course->summary)), 100);
-                $url = new moodle_url('/local/search/coursedetails.php', ['id' => $course->id]);
+                $url = new moodle_url('/course/view.php', ['id' => $course->id]);
                 $badge = $categorybadges[$i % count($categorybadges)];
                 $grad  = $gradients[$i % count($gradients)];
                 // Poster image — real course overview image, else the per-card
