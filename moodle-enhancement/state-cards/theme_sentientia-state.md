@@ -4,7 +4,24 @@
 **Version:** `2026060200` / `1.0.46-beta`
 **Maturity:** `MATURITY_BETA`
 **Status:** Live theme on airpay.academy. Standalone fork (`$THEME->parents = []`).
-**Last refreshed:** 2026-06-16 (Revised Brand Book 2026-06 — teal retirement, Phase 1)
+**Last refreshed:** 2026-06-16 (Revised Brand Book 2026-06 — Phase 1 + Phase 2 + brand-verify closure COMPLETE)
+
+> **2026-06-16 Revised Brand Book — Phase 2 + brand-verify closure (theme
+> →2026061603, commit `357db7b7`):** Full landing+login brand-forward redesign
+> (login + frontpage heroes: faint "a" monogram watermark + single sparing orange
+> accent bar; card-thumb variety palette → blue-dominant + sparing purple/orange).
+> A 5-lens adversarial brand-verify workflow then caught four off-brand families the
+> teal sweeps missed — **Bootstrap `$info: $cyan`** (core Moodle alerts rendered cyan
+> site-wide), decorative **emerald/green**, Tailwind **violet `#7c3aed`**, **gold**
+> stars — plus 5 WCAG-AA accent-as-text fails + 2 unswept `.html` pages. All closed.
+> **Served compiled CSS = 0 off-brand colour in every representation** (hex/rgba),
+> verified by grep; semantic success/warning/danger retained. Brand adoption is
+> genuinely 100%. Scripts: `docs/audits/brand-revamp-2026-06/sweep_*.py` +
+> `apply_targeted_closure.py`. NOTE: all brand work lives on the **`production`**
+> branch (origin/production = `357db7b7`); the `claude/gap-integration` branch
+> predates it and still shows old palette until production is merged in. Follow-up
+> (data, not CSS): migrate existing `sentientia_skills` seeded category-colour rows
+> in live tenant DBs. Live deploy still Nitin-gated.
 
 > **2026-06-16 Revised airpay Brand Book adoption — Phase 1 (theme version
 > →2026061600):** Official brand book (`BB-revamp-noweb.pdf`) has NO teal —
