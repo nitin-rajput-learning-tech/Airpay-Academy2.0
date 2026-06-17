@@ -46,7 +46,14 @@ $plugin->component = 'local_sentientia_authoring';
 // localizer (translate routing) + studio/template/review/voiceover UI +
 // Hindi pack at 100% parity + PHPUnit suite (security, tenant isolation,
 // generation pipeline, question-type validation, template CRUD).
-$plugin->version   = 2026061700;
+// 2026-06-17 — db/upgrade.php gains two role steps: (2026061700) back-fills
+// the author/SME caps onto existing teacher-archetype roles (the airpay
+// `trainer` role) so SMEs reach the GenAI Authoring Studio + Skills
+// Intelligence, and (2026061701) ships a dedicated, scoped "Sentientia Author"
+// system-context role (shortname `sentientiaauthor`) carrying ONLY those five
+// author/SME caps — the clean production way to provision SME content authors
+// without granting the broad teacher/manager archetype.
+$plugin->version   = 2026061701;
 $plugin->requires  = 2022041900;          // Moodle 4.5+
 $plugin->maturity  = MATURITY_ALPHA;      // MVP — prod sign-off before any flag flips
 $plugin->release   = '0.1.0-alpha';

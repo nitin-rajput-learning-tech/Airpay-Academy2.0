@@ -92,11 +92,32 @@ The author/SME cap gap above is **fixed in code** (commits `f2242e9a1` + state-c
   (`permission=1`), and a **system-context** trainer (`qa_trainer`, uid 3419)
   resolves `has_capability(:generate / :extract) = YES` — the exact page gate.
 
-**Still open (PROVISIONING, per-deployment — NOT code):** these tools check at
-CONTEXT_SYSTEM, but airpay assigns the `trainer` role at CATEGORY context, so a
-category-scoped SME (e.g. asif.ansari) still resolves NO at system. To let SME
-authors use these system-wide AI tools, assign them the trainer role (now
-cap-carrying) — or a dedicated system-context "Author" role — at SYSTEM context.
-The manager surfaces (analytics/learningpath/talent) are the same story: caps are
-already on the `manager` role; org-position managers need that role at system ctx.
-Both belong in the rollout-gate provisioning checklist.
+**Provisioning answer — dedicated "Sentientia Author" role shipped (2026-06-17).**
+The tools check at CONTEXT_SYSTEM, but airpay assigns the `trainer` role at
+CATEGORY context, so a category-scoped SME (e.g. asif.ansari) resolved NO at
+system. Rather than over-grant the broad `trainer` role site-wide, the product now
+ships a dedicated, scoped role:
+
+- **Role:** `Sentientia Author` (shortname `sentientiaauthor`), assignable at
+  **SYSTEM context only**, carrying exactly the five author/SME caps
+  (`authoring:generate|review|managetemplates` + `skillsai:extract|review`) and
+  **nothing else** — no teacher/manager archetype breadth.
+- **Shipped in code** via `local_sentientia_authoring/db/upgrade.php` step
+  **2026061701** (idempotent: created only when the shortname is free; caps
+  re-synced each run; caps whose plugin isn't installed are skipped). So it
+  auto-creates on every deployment — Airpay and future customers — with no manual
+  step. Verified locally: role id=11, SYSTEM-only, all 5 caps `ALLOW`.
+- **Provisioning helper:** `assign_author_role.php` (this folder) — idempotent
+  CLI that assigns named SMEs to the role at system context and verifies
+  `has_capability` resolves YES at the page gate. Run once per deployment as part
+  of the rollout gate (`UNASSIGN=1` to revoke). Dry-run (no args) audits the role.
+- **End-to-end verified:** assigned `asif.ansari@airpay.co.in` (uid 2304, the
+  Course Author persona) → `has_capability` = **YES** for all five caps at system
+  context. The asif gap (row 4 of the persona table above) is **closed**.
+
+**Still open (PROVISIONING, per-deployment — NOT code) for the MANAGER surfaces:**
+`analytics`/`learningpath`/`talent` admin caps are already on the `manager` role,
+but org-position managers hold no system-context `manager` role. Provision them
+the same way (assign the `manager` role — or a future scoped "Sentientia Analyst"
+role — at system context). Belongs in the rollout-gate provisioning checklist
+alongside the author-role assignment above.

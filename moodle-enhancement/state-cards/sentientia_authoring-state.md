@@ -118,3 +118,20 @@ to those three caps in `db/access.php` + an idempotent `db/upgrade.php` step
 `has_capability(:generate)`=YES. **Last mile = provisioning:** airpay assigns
 `trainer` at CATEGORY context, so SME authors need that role (or a dedicated
 Author role) at SYSTEM context to use this CONTEXT_SYSTEM tool — per-deployment.
+
+## Update 2026-06-17 — dedicated "Sentientia Author" system-context role
+Closes the provisioning last-mile above without over-granting the broad `trainer`
+role. `db/upgrade.php` step **2026061701** ships a scoped role:
+`Sentientia Author` (shortname `sentientiaauthor`), **assignable at SYSTEM context
+only**, granting exactly the five author/SME caps —
+`authoring:generate|review|managetemplates` + `skillsai:extract|review` — and
+nothing else (no archetype, so no teacher/manager breadth). Idempotent: created
+only when the shortname is free; caps re-synced each run; caps whose owning plugin
+isn't installed are skipped. Auto-creates on every deployment (Airpay + future
+customers) — no manual step. Version 2026061700 → 2026061701.
+Provisioning helper: `docs/audits/brand-revamp-2026-06/assign_author_role.php`
+(idempotent — assigns named SMEs at system context + verifies `has_capability`;
+`UNASSIGN=1` to revoke; dry-run audits the role). **Verified end-to-end:** role
+id=11 SYSTEM-only with all 5 caps ALLOW; assigning `asif.ansari@airpay.co.in`
+(uid 2304, Course Author persona) → `has_capability`=YES for all five at system
+context.

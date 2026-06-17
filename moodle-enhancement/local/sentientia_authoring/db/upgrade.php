@@ -63,6 +63,46 @@ function xmldb_local_sentientia_authoring_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026061700, 'local', 'sentientia_authoring');
     }
 
+    // 2026061701 — ship a dedicated, scoped "Sentientia Author" role. SME content
+    // authors get ONLY the GenAI author/SME caps (authoring + skillsai) at system
+    // context — NOT the broad teacher/manager archetype caps. The new tools gate
+    // at CONTEXT_SYSTEM, so this role is assignable at the System level only.
+    // Idempotent: created only when the shortname is free; caps re-synced every
+    // run; caps whose owning plugin isn't installed are skipped (no orphan rows).
+    if ($oldversion < 2026061701) {
+        $shortname = 'sentientiaauthor';
+        $existing = $DB->get_field('role', 'id', ['shortname' => $shortname]);
+        if ($existing) {
+            $roleid = (int) $existing;
+        } else {
+            $roleid = create_role(
+                'Sentientia Author',
+                $shortname,
+                'Content author / SME. Grants the GenAI Authoring Studio and Skills '
+                    . 'Intelligence capabilities at system context, without broader '
+                    . 'teacher/manager permissions. Assign at the System level to staff '
+                    . 'who create learning content.',
+                '' // Custom role — no archetype, so it inherits no broad caps.
+            );
+        }
+        set_role_contextlevels($roleid, [CONTEXT_SYSTEM]);
+        $syscontext = \context_system::instance();
+        $authorcaps = [
+            'local/sentientia_authoring:generate',
+            'local/sentientia_authoring:review',
+            'local/sentientia_authoring:managetemplates',
+            'local/sentientia_skillsai:extract',
+            'local/sentientia_skillsai:review',
+        ];
+        foreach ($authorcaps as $cap) {
+            if ($DB->record_exists('capabilities', ['name' => $cap])) {
+                assign_capability($cap, CAP_ALLOW, $roleid, $syscontext->id, true);
+            }
+        }
+        $syscontext->mark_dirty();
+        upgrade_plugin_savepoint(true, 2026061701, 'local', 'sentientia_authoring');
+    }
+
     unset($dbman);
 
     return true;
