@@ -15,7 +15,12 @@ $plugin->component = 'local_sentientia_skills';
 //                       translated, covering all P1 #22/#25 additions
 //                       plus the previously-missing admin CRUD + privacy
 //                       metadata. Was at 19/80; now 80/80.
-$plugin->version   = 2026052003;
+// Brand   (2026-06-17) — Revised airpay Brand Book 2026-06: db/upgrade.php
+//                       migrates existing seeded category-colour rows
+//                       (#0f7a73/#7c3aed/#ea580c -> brand blue/purple/orange).
+//                       Fixes off-brand skill-matrix badges on tenants seeded
+//                       before the revamp; source install.php already correct.
+$plugin->version   = 2026061700;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.6.2'; // + P1 #32 full Hindi pack
+$plugin->release   = '1.6.3'; // + 2026-06 brand-colour data migration

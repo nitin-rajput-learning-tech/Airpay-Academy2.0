@@ -27,8 +27,8 @@
                COMMENT="Verb display value in en-US (denormalised for UI rendering without JSON parse)."/>
         <FIELD NAME="object"        TYPE="text"   NOTNULL="true"
                COMMENT="JSON-encoded xAPI object (Activity, Agent, SubStatement, StatementRef)."/>
-        <FIELD NAME="objectid"      TYPE="char"   LENGTH="2048" NOTNULL="false"
-               COMMENT="Object IRI (denormalised for index). Truncated at 2048 per IRI length limits."/>
+        <FIELD NAME="objectid"      TYPE="char"   LENGTH="1333" NOTNULL="false"
+               COMMENT="Object IRI (denormalised for lookup). Capped at 1333 — Moodle's VARCHAR max; the full IRI is always present in the `object` JSON column, so no data is lost for the rare IRI &gt; 1333 chars."/>
         <FIELD NAME="result"        TYPE="text"   NOTNULL="false"
                COMMENT="JSON-encoded xAPI result (score, success, completion, response, duration)."/>
         <FIELD NAME="score_scaled"  TYPE="number" LENGTH="5" DECIMALS="4" NOTNULL="false"
@@ -98,8 +98,8 @@
                COMMENT="FK to mdl_course_modules.id (the SCORM/activity cm, nullable for external AU)"/>
         <FIELD NAME="registration"   TYPE="char"   LENGTH="36" NOTNULL="true"
                COMMENT="cmi5 registration UUID — links this session to xAPI statements via context.registration"/>
-        <FIELD NAME="activityid"     TYPE="char"   LENGTH="2048" NOTNULL="false"
-               COMMENT="cmi5 AU activity IRI (launchURL activity id)"/>
+        <FIELD NAME="activityid"     TYPE="char"   LENGTH="1333" NOTNULL="false"
+               COMMENT="cmi5 AU activity IRI (launchURL activity id). Capped at 1333 — Moodle's VARCHAR max."/>
         <FIELD NAME="sessionid"      TYPE="char"   LENGTH="36" NOTNULL="false"
                COMMENT="cmi5 sessionId (per-launch UUID, supplied by the LRS at launch)"/>
         <FIELD NAME="launchtoken"    TYPE="char"   LENGTH="64" NOTNULL="false"

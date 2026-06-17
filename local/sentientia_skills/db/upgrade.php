@@ -70,5 +70,36 @@ function xmldb_local_sentientia_skills_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026051901, 'local', 'sentientia_skills');
     }
 
+    // 2026061700 — Revised airpay Brand Book 2026-06: repaint seeded category
+    // colours that pre-date the brand revamp.
+    //
+    // install.php seeds eight category `color` values. Three were off-brand
+    // before the 2026-06 revamp and were corrected at SOURCE (install.php), but
+    // that only fixes FRESH installs. Tenants seeded earlier still carry the old
+    // hex in local_sentientia_skill_cats.color, so their skill-matrix category
+    // badges/headers render off-brand. This step migrates those existing rows.
+    //
+    // Surgical + idempotent: each set_field matches ONE retired hex that no
+    // brand-correct install ever produces, so it cannot clobber a colour an
+    // admin legitimately chose, and re-running matches nothing.
+    //   #0f7a73 retired teal        -> #1985DD brand bright-blue (Financial Literacy)
+    //   #7c3aed Tailwind violet     -> #6d58a5 brand purple      (Technical)
+    //   #ea580c Tailwind orange-600 -> #ed692b brand orange      (Product Knowledge)
+    if ($oldversion < 2026061700) {
+        $repaint = [
+            '#0f7a73' => '#1985DD',
+            '#7c3aed' => '#6d58a5',
+            '#ea580c' => '#ed692b',
+        ];
+        foreach ($repaint as $old => $new) {
+            $n = $DB->count_records('local_sentientia_skill_cats', ['color' => $old]);
+            if ($n > 0) {
+                $DB->set_field('local_sentientia_skill_cats', 'color', $new, ['color' => $old]);
+                mtrace("  sentientia_skills: repainted {$n} category colour(s) {$old} -> {$new}");
+            }
+        }
+        upgrade_plugin_savepoint(true, 2026061700, 'local', 'sentientia_skills');
+    }
+
     return true;
 }

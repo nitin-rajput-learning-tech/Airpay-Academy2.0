@@ -68,8 +68,14 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="idx_costcenter"   UNIQUE="false" FIELDS="costcenterid"/>
-        <INDEX NAME="idx_issuer_client" UNIQUE="false" FIELDS="issuer, clientid"
-               COMMENT="Resolve a registration from an incoming launch's iss+client_id"/>
+        <!-- No composite index on (issuer, clientid): both are char(255), so on
+             utf8mb4 the combined index key (~2040 bytes) exceeds the DB limit
+             (999 bytes / ~249 chars) and Moodle's XMLDB rejects it at install.
+             It was only a non-unique lookup hint (not a constraint), and this
+             registrations table holds a handful of rows per tenant, so the
+             iss+client_id resolution scans a tiny table within the tenant scope
+             (idx_costcenter) — no measurable cost. If selectivity ever matters,
+             add a char(64) sha256(issuer."\n".clientid) column and index that. -->
       </INDEXES>
     </TABLE>
 
