@@ -43,5 +43,47 @@ function xmldb_local_sentientia_org_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026051100, 'local', 'sentientia_org');
     }
 
+    // ── 2026061700: Revised airpay Brand Book 2026-06 — repaint retired
+    // Tailwind violet out of per-tenant brand config. The Public ("external")
+    // tenant carried #7c3aed (brand_color/button_color), #5b21b6 (hover) and a
+    // violet navbar-shadow rgba(124,58,237) in custom_css — all pre-date the
+    // brand revamp and render off-brand on every Public-tenant surface. The
+    // install/defaults() are already #0066A7, so this only touches rows that
+    // still hold the EXACT retired hexes; it cannot clobber a colour an admin
+    // legitimately chose, and re-running matches nothing (idempotent).
+    if ($oldversion < 2026061700) {
+        $colmap = [
+            'brand_color'  => ['#7c3aed' => '#0066A7'],
+            'button_color' => ['#7c3aed' => '#0066A7'],
+            'hover_color'  => ['#5b21b6' => '#004d80'],
+        ];
+        foreach ($colmap as $col => $map) {
+            foreach ($map as $old => $new) {
+                $n = $DB->count_records('local_sentientia_org', [$col => $old]);
+                if ($n > 0) {
+                    $DB->set_field('local_sentientia_org', $col, $new, [$col => $old]);
+                    mtrace("  sentientia_org: repainted {$n} {$col} {$old} -> {$new}");
+                }
+            }
+        }
+        // custom_css is admin free-text: swap only the retired violet
+        // navbar-shadow rgba (both comma-spacing variants), preserving the rest.
+        $like = $DB->sql_like('custom_css', ':v', false);
+        $rows = $DB->get_records_select('local_sentientia_org', $like,
+            ['v' => '%124%58%237%'], '', 'id, custom_css');
+        foreach ($rows as $r) {
+            $fixed = str_replace(
+                ['rgba(124,58,237', 'rgba(124, 58, 237'],
+                'rgba(0,102,167',
+                $r->custom_css
+            );
+            if ($fixed !== $r->custom_css) {
+                $DB->set_field('local_sentientia_org', 'custom_css', $fixed, ['id' => $r->id]);
+                mtrace("  sentientia_org: de-violeted navbar-shadow in custom_css on row {$r->id}");
+            }
+        }
+        upgrade_plugin_savepoint(true, 2026061700, 'local', 'sentientia_org');
+    }
+
     return true;
 }

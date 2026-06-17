@@ -30,7 +30,12 @@ defined('MOODLE_INTERNAL') || die();
 $plugin->component = 'local_sentientia_org';
 // P1 #54 (2026-05-20) — Hindi pack: 55 strings covering capabilities,
 // settings, CRUD form, hierarchy, branding, errors, confirmations.
-$plugin->version   = 2026061100;
+// Brand   (2026-06-17) — db/upgrade.php repaints retired Tailwind violet
+//                       (#7c3aed/#5b21b6 + rgba(124,58,237) navbar shadow)
+//                       out of per-tenant brand config → brand blue. Fixes
+//                       the Public tenant's off-brand identity on existing
+//                       installs; defaults() already brand-correct.
+$plugin->version   = 2026061700;
 $plugin->requires  = 2022041900; // Moodle 4.0+
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.5.0'; // +WF-016 BizLMS local_costcenter compat aliases (after_config hook)
+$plugin->release   = '1.5.1'; // +2026-06 per-tenant brand-colour data migration
