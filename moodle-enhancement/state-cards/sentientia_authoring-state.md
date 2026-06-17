@@ -106,3 +106,15 @@ Localized output routes through `local_sentientia_translate` (class_exists-guard
 2. Per-customer prompt-template overrides via `customer::get_customer_config` (mirror aiquiz G.1).
 3. Expand `localizer` language targets toward Invince's 150+ (incremental).
 4. Staging enablement run with `live_api` ON under [CONFIRM] + visual evidence.
+
+## Update 2026-06-17 — teacher-archetype capability back-fill (T-01 class)
+Persona feature-check found the airpay `trainer` role (teacher archetype = the
+SME/author role) excluded from the Authoring Studio — `generate`/`review`/
+`managetemplates` were `editingteacher`+`manager` only. Added `teacher => CAP_ALLOW`
+to those three caps in `db/access.php` + an idempotent `db/upgrade.php` step
+(2026061700) back-filling them onto existing teacher-archetype roles via
+`assign_capability(overwrite=false)`. `manage_all` stays manager-only. Version
+2026061600 → 2026061700. Verified: a system-context trainer (qa_trainer) resolves
+`has_capability(:generate)`=YES. **Last mile = provisioning:** airpay assigns
+`trainer` at CATEGORY context, so SME authors need that role (or a dedicated
+Author role) at SYSTEM context to use this CONTEXT_SYSTEM tool — per-deployment.

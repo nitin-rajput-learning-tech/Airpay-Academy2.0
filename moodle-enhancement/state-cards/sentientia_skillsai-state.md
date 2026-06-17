@@ -144,3 +144,13 @@ Complete atomic plugin · flags default OFF · multi-tenant scoping via
 `get_in_or_equal` · `defined('MOODLE_INTERNAL') || die()` · `required_param`/
 `optional_param` + `require_sesskey` + `s()`/`format_string()` · EN/HI 100% parity ·
 PHPUnit security/tenant/CRUD/gap/mock coverage · NO core edits · NOT deployed · NO PR.
+
+## Update 2026-06-17 — teacher-archetype capability back-fill (T-01 class)
+Persona feature-check found the airpay `trainer` role (teacher archetype) excluded
+from Skills Intelligence — `extract`/`review` were `editingteacher`+`manager`
+only. Added `teacher => CAP_ALLOW` to those two caps in `db/access.php` + an
+idempotent `db/upgrade.php` step (2026061700) back-filling them onto existing
+teacher-archetype roles. `manage_taxonomy`/`viewgaps`/`manage_all` stay
+manager-only. Version 2026061600 → 2026061700. Verified: system-context trainer
+resolves `has_capability(:extract)`=YES. Last mile = provisioning (SME authors
+need a SYSTEM-context role; airpay assigns `trainer` at category) — per-deployment.
