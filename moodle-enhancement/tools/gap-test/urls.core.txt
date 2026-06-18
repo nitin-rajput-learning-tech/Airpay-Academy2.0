@@ -1,0 +1,117 @@
+# Curated end-user-facing URL inventory for the link stress-test.
+# Format:  <path><TAB><scope>      scope: G=guest-ok  A=any-authenticated  P=privileged(staff/manager/admin)
+# Real IDs sourced from the live local DB (visible courses 5/22/9/25; cmids scorm=51 quiz=53 forum=2 url=747; cat=4).
+# Param-required deep pages are intentionally probed too — triage classifies "needs-param" vs real breakage.
+#
+# ---- Guest / public (no login) ----
+/	G
+/login/index.php	G
+/login/signup.php	G
+/login/forgot_password.php	G
+/local/sentientia_catalog/public.php	G
+/local/sentientia_users/signup.php	G
+/local/sentientia_users/privacypolicy.php	G
+/local/sentientia_users/termscondition.php	G
+#
+# ---- Core authenticated surfaces ----
+/my/	A
+/my/dashboard.php	A
+/user/profile.php	A
+/user/preferences.php	A
+/user/edit.php	A
+/calendar/view.php	A
+/message/index.php	A
+/grade/report/overview/index.php	A
+/badges/mybadges.php	A
+/course/index.php	A
+/course/index.php?categoryid=4	A
+/course/view.php?id=5	A
+/course/view.php?id=22	A
+/course/view.php?id=9	A
+/mod/scorm/view.php?id=51	A
+/mod/quiz/view.php?id=53	A
+/mod/forum/view.php?id=2	A
+/mod/url/view.php?id=747	A
+/tag/index.php	A
+#
+# ---- Sentientia plugin entry points (hubs + key sub-pages) ----
+/local/sentientia_analytics/index.php	P
+/local/sentientia_api/index.php	P
+/local/sentientia_assistant/agent.php	A
+/local/sentientia_assistant/ai_demo.php	A
+/local/sentientia_authoring/index.php	P
+/local/sentientia_authoring/studio.php	P
+/local/sentientia_authoring/templates.php	P
+/local/sentientia_authoring/review.php	P
+/local/sentientia_authoring/voiceover.php	P
+/local/sentientia_calendar/index.php	A
+/local/sentientia_cart/index.php	A
+/local/sentientia_cart/history.php	A
+/local/sentientia_catalog/index.php	A
+/local/sentientia_catalog/mycourses.php	A
+/local/sentientia_catalog/cart.php	A
+/local/sentientia_challenge/index.php	A
+/local/sentientia_challenge/leaderboard.php	A
+/local/sentientia_classroom/index.php	A
+/local/sentientia_compliance_report/index.php	P
+/local/sentientia_content_market/index.php	A
+/local/sentientia_core/index.php	P
+/local/sentientia_core/manage_tenants.php	P
+/local/sentientia_courses/index.php	A
+/local/sentientia_courses/browse_airpay.php	A
+/local/sentientia_courses/featured.php	A
+/local/sentientia_courses/my_requests.php	A
+/local/sentientia_courses/manage_requests.php	P
+/local/sentientia_emails/manage.php	P
+/local/sentientia_evaluation/index.php	A
+/local/sentientia_exams/index.php	A
+/local/sentientia_leaderboard/index.php	A
+/local/sentientia_leaderboard/preferences.php	A
+/local/sentientia_learningpath/index.php	A
+/local/sentientia_live/index.php	A
+/local/sentientia_manager/index.php	P
+/local/sentientia_manager/allocations.php	P
+/local/sentientia_manager/requests.php	P
+/local/sentientia_notifications/index.php	A
+/local/sentientia_notifications/prefs.php	A
+/local/sentientia_notifications/logs.php	P
+/local/sentientia_org/index.php	P
+/local/sentientia_org/admin.php	P
+/local/sentientia_org/tenant_settings.php	P
+/local/sentientia_pages/index.php?page=privacy	G
+/local/sentientia_pages/homepage.php	A
+/local/sentientia_pages/onboarding.php	A
+/local/sentientia_pages/certificates.php	A
+/local/sentientia_privacy/index.php	A
+/local/sentientia_proctoring/index.php	P
+/local/sentientia_proctoring/admin.php	P
+/local/sentientia_programs/index.php	A
+/local/sentientia_pwa/preferences.php	A
+/local/sentientia_pwa/manifest.php	G
+/local/sentientia_recompletion/index.php	P
+/local/sentientia_recompletion/history.php	A
+/local/sentientia_reports/index.php	P
+/local/sentientia_request/index.php	A
+/local/sentientia_request/all.php	P
+/local/sentientia_request/approvals.php	P
+/local/sentientia_roles/index.php	P
+/local/sentientia_roles/audit.php	P
+/local/sentientia_skills/index.php	A
+/local/sentientia_skills/admin.php	P
+/local/sentientia_skills/designation_matrix.php	P
+/local/sentientia_skills/level_definitions.php	P
+/local/sentientia_skillsai/index.php	P
+/local/sentientia_skillsai/extract.php	P
+/local/sentientia_skillsai/gaps.php	P
+/local/sentientia_skillsai/review.php	P
+/local/sentientia_skillsai/taxonomy.php	P
+/local/sentientia_talent/index.php	A
+/local/sentientia_talent/opportunities.php	A
+/local/sentientia_translate/translate.php	P
+/local/sentientia_translate/brands.php	P
+/local/sentientia_users/index.php	P
+/local/sentientia_users/help.php	A
+/local/sentientia_users/profile.php	A
+/local/sentientia_whatsapp/preferences.php	A
+/local/sentientia_xapi/index.php	P
+/local/sentientia_compliance_report/export.php	P
