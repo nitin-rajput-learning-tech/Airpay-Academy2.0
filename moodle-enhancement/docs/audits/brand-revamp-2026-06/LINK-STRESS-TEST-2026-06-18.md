@@ -190,3 +190,26 @@ rollout gate after each deploy (on a complete-data environment, OPcache tuned).
 - **Everything else across ~107 URLs × personas: working as designed** (capability gating,
   feature-flags-off, messaging-off, intentional redirects). The probe harness in
   `tools/gap-test/` is a reusable rollout-gate regression check.
+
+## Close-out 2026-06-18 (milestone prep)
+- **F3 — FIXED in the Sentientia product code.** Added a behaviour-preserving
+  `local_sentientia_org\accesslib::legacy_cap()` guard (skips `has_capability` for an
+  unregistered legacy cap → no notice, identical return) and routed the 6 org/classroom
+  legacy fallbacks + the theme `core_renderer` `block/trainerdashboard` fallback through it.
+  **Verified by CLI**: `has_capability('local/costcenter:view')` EMITS the notice;
+  `accesslib::legacy_cap(...)` and `can_view()` are **silent**. Residual "Capability not
+  found" notices remaining at runtime originate **only** from legacy BizLMS vendor blocks
+  (`block_reportdashboard` / `block_learnerscript`) that call the old caps directly — these
+  are DEVELOPER-debug-level only (zero production impact; production runs debug=NORMAL) and
+  belong to the BizLMS-decouple track, not the Sentientia product. **Not a deploy blocker.**
+- **F4 — deferred cosmetic.** `get_string('enrolledusers','local_courses')` is a
+  DEVELOPER-debug-level notice (invisible at production debug) and is **not present in any
+  shipping product file** (no `local/courses` plugin; not in `sentientia_*` plugins, theme,
+  or lang/nav hooks) — so it has no impact on the ninja/production deploy. Origin likely a
+  dynamically-composed component; flagged for a runtime trace if it recurs. **Not a blocker.**
+- **F5 — re-verified: instance-specific clone-data artifact, NOT a code defect.** `quiz
+  cmid=53` + `forum cmid=2` still return empty-500 (no PHP fatal logged) while other quiz/
+  forum instances (cmid 55 / 4) render 200 — the local clone's `filedir` is incomplete (the
+  known [[project_clone_filedir_artifact]]; `getimagesize … No such file or directory`
+  warnings on those activities). Re-verify on the complete-data ninja sandbox. **Not a
+  deploy blocker for the product code.**

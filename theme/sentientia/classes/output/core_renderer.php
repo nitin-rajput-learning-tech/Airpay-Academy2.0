@@ -1289,7 +1289,9 @@ JS;
             && !\local_sentientia_org\accesslib::can_manage($systemcontext)
             && !\local_sentientia_org\accesslib::can_manage_classroom($systemcontext)
             && (has_capability('block/sentientia_trainer:viewtrainerslist', $systemcontext)
-                || has_capability('block/trainerdashboard:viewtrainerslist', $systemcontext))
+                // F3 (2026-06-18): guard the legacy block/trainerdashboard cap so an
+                // unregistered (renamed-away) cap no longer emits a debug notice per render.
+                || \local_sentientia_org\accesslib::legacy_cap('block/trainerdashboard:viewtrainerslist', $systemcontext))
             && $newpageurl == $CFG->wwwroot . '/my/dashboard.php'
         ) {
             redirect($CFG->wwwroot . '/blocks/sentientia_trainer/dashboard.php');

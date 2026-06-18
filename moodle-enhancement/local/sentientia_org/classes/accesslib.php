@@ -295,8 +295,33 @@ class accesslib {
     }
 
     /**
+     * has_capability() for a LEGACY BizLMS cap that may no longer be registered.
+     *
+     * F3 (2026-06-18, link stress-test): the org/classroom checks below kept a
+     * backward-compat fallback to the pre-rename local/costcenter:* and
+     * local/classroom:* caps. Those caps were renamed to local/sentientia_org:* /
+     * local/sentientia_classroom:* (see cli/migrate_all.php) and no longer exist on a
+     * migrated site, so has_capability() on them emitted a "Capability \"x\" was not
+     * found!" debug notice on EVERY nav render. This guard returns false (no notice)
+     * when the cap row is absent, and is otherwise identical to has_capability() — so
+     * a site still carrying the legacy caps keeps the exact same behaviour. Public so
+     * theme/core_renderer can reuse it for its own legacy-cap fallback.
+     *
+     * @param string $capability
+     * @param \context $context
+     * @return bool
+     */
+    public static function legacy_cap(string $capability, \context $context): bool {
+        static $known = [];
+        if (!array_key_exists($capability, $known)) {
+            $known[$capability] = (bool) \get_capability_info($capability);
+        }
+        return $known[$capability] && has_capability($capability, $context);
+    }
+
+    /**
      * Check if user can manage multiple organizations (siteadmin-tier).
-     * Checks both old (local/costcenter:*) and new (local/sentientia_org:*) caps.
+     * Checks the new local/sentientia_org:* cap, with a guarded legacy fallback.
      *
      * @param \context|null $context
      * @return bool
@@ -305,7 +330,7 @@ class accesslib {
         $context = $context ?? \context_system::instance();
         return is_siteadmin()
             || has_capability('local/sentientia_org:manage_multiorganizations', $context)
-            || has_capability('local/costcenter:manage_multiorganizations', $context);
+            || self::legacy_cap('local/costcenter:manage_multiorganizations', $context);
     }
 
     /**
@@ -317,7 +342,7 @@ class accesslib {
     public static function can_view(?\context $context = null): bool {
         $context = $context ?? \context_system::instance();
         return has_capability('local/sentientia_org:view', $context)
-            || has_capability('local/costcenter:view', $context);
+            || self::legacy_cap('local/costcenter:view', $context);
     }
 
     /**
@@ -329,7 +354,7 @@ class accesslib {
     public static function can_manage(?\context $context = null): bool {
         $context = $context ?? \context_system::instance();
         return has_capability('local/sentientia_org:manage', $context)
-            || has_capability('local/costcenter:manage', $context);
+            || self::legacy_cap('local/costcenter:manage', $context);
     }
 
     /**
@@ -341,7 +366,7 @@ class accesslib {
     public static function is_org_head(?\context $context = null): bool {
         $context = $context ?? \context_system::instance();
         return has_capability('local/sentientia_org:manage_ownorganization', $context)
-            || has_capability('local/costcenter:manage_ownorganization', $context);
+            || self::legacy_cap('local/costcenter:manage_ownorganization', $context);
     }
 
     /**
@@ -353,7 +378,7 @@ class accesslib {
     public static function is_dept_head(?\context $context = null): bool {
         $context = $context ?? \context_system::instance();
         return has_capability('local/sentientia_org:manage_owndepartments', $context)
-            || has_capability('local/costcenter:manage_owndepartments', $context);
+            || self::legacy_cap('local/costcenter:manage_owndepartments', $context);
     }
 
     /**
@@ -365,7 +390,7 @@ class accesslib {
     public static function can_manage_classroom(?\context $context = null): bool {
         $context = $context ?? \context_system::instance();
         return has_capability('local/sentientia_classroom:manage', $context)
-            || has_capability('local/classroom:manageclassroom', $context);
+            || self::legacy_cap('local/classroom:manageclassroom', $context);
     }
 
     /**
