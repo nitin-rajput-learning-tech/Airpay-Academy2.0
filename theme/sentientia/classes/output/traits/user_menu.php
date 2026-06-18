@@ -237,18 +237,31 @@ trait user_menu {
                 $opts->navitems[] = $switchrole;
             }
         }
+        global $SESSION;
         $highest_roleid = '';
-        if((count($roles) > 0) && (!isset($USER->useraccess['currentroleinfo']) || empty($USER->useraccess['currentroleinfo'])) ){
+        // F7 (2026-06-18, link stress-test): one-shot guard on $SESSION — which IS
+        // reliably session-persisted — so the first-visit auto role-VIEW scoping +
+        // redirect fires ONCE per login. Previously the only guard was
+        // $USER->useraccess['currentroleinfo'] (retired BizLMS session machinery, see
+        // local_sentientia_org\hook_callbacks docblock); it is not re-populated across
+        // the redirect for org-position users, so the redirect re-fired on EVERY render
+        // -> /my/ -> / -> / infinite loop -> home page unreachable for course-author /
+        // compliance / tenant-admin (and any user assigned a system-context role such as
+        // "Sentientia Author"). Flag set BEFORE the call so a throwing scope-call can never
+        // re-loop. $SESSION is cleared on logout, so a fresh login re-scopes once.
+        if((count($roles) > 0) && empty($SESSION->sentientia_autoroleswitched)
+            && (!isset($USER->useraccess['currentroleinfo']) || empty($USER->useraccess['currentroleinfo'])) ){
             if($highest_roleinfo->roleid){
                 $highest_roleid = $highest_roleinfo->roleid;
                 $contextid = $highest_roleinfo->contextid;
+                $SESSION->sentientia_autoroleswitched = true;
                 // WF-025b (2026-06-15): pass $applyrsw=FALSE — establish the role-view
                 // scoping context (currentroleinfo, consumed by org-scoped reports)
                 // on first visit WITHOUT writing $USER->access['rsw'], so navigating to
                 // the dashboard never silently reduces a multi-role user's capabilities.
                 // A real capability switch happens only on an explicit user action.
                 $this->role_switch_basedon_userroles($highest_roleid, false, $contextid, false);
-                 redirect(new moodle_url('/'));
+                 redirect(new moodle_url('/my/'));
 
             }
         }
