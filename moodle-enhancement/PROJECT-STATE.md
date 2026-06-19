@@ -7,8 +7,13 @@
 
 ## 🚢 MILESTONE 2026-06-18 — `claude/gap-integration` packaged + tagged for IT (ninja Phase-2)
 
-**Tag `sentientia-milestone-2026-06-18`** on `claude/gap-integration` is the deploy candidate
-for the **ninja-sandbox rehearsal (rollout-gate Phase 2)**. IT packet:
+**Tag `sentientia-milestone-2026-06-19`** (supersedes `-2026-06-18`) on `claude/gap-integration` is
+the deploy candidate for the **ninja-sandbox rehearsal (rollout-gate Phase 2)**. **2026-06-19:** fresh
+local dry-run on :8080 passed (deploy→upgrade→purge→smoke all green; F1/F3/F7 confirmed at runtime; the
+9 new gap plugins install clean). Follow-up fix `d42ff9f16` repointed 9 stale post-rename theme nav
+links (navbar Profile pill — every logged-in user — + 4 dashboard quicknav tiles + 3 course-context
+icons → `local/sentientia_*`; also fixed F4 str → `core_enrol`); F5 reclassified as a clone-`filedir`
+artifact (not a package bug). Both folded into the `-06-19` tag. IT packet:
 `docs/cutover/MILESTONE-2026-06-18-NINJA.md` (delta on top of `ROLLOUT-PACKET-2026-06-10` +
 `SENTIENTIA-CUTOVER-MASTER`) — full 46-plugin + theme + blocks manifest, deploy steps, post-deploy
 verification (run the `tools/gap-test/` link gate), reconciled task ledger, OPcache note (the F2

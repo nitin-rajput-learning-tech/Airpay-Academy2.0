@@ -1,6 +1,6 @@
 # Sentientia LMS — Milestone deploy packet for IT (Ninja sandbox)
 
-**Milestone tag:** `sentientia-milestone-2026-06-18`  ·  **Branch:** `claude/gap-integration`
+**Milestone tag:** `sentientia-milestone-2026-06-19` — supersedes `sentientia-milestone-2026-06-18` (adds the post-dry-run rename-miss link fix `d42ff9f16`)  ·  **Branch:** `claude/gap-integration`
 **Owner:** Nitin Rajput  ·  **Date:** 2026-06-18  ·  **Target:** ninja-sandbox (rollout-gate **Phase 2**)
 
 > ## ⛔ ROLLOUT GATE (unchanged — Nitin-gated)
@@ -85,8 +85,8 @@ in this milestone and what to verify.
 Run `ROLLOUT-PACKET-2026-06-10` §"IT deploy-window steps" **pointed at the ninja sandbox**, with
 these milestone notes:
 
-1. **File deploy** the `sentientia-milestone-2026-06-18` tag (or `claude/gap-integration` HEAD) per
-   the standard overlay (`tools/overlay-airpay-customs.ps1`).
+1. **File deploy** the `sentientia-milestone-2026-06-19` tag (= `claude/gap-integration` HEAD; this is
+   the tag that includes the rename-miss link fix) per the standard overlay (`tools/overlay-airpay-customs.ps1`).
 2. **`php admin/cli/upgrade.php --non-interactive`** — installs the 9 new gap plugins (fresh) + applies
    the authoring 2026061701 role step + brand seed migrations. The XMLDB DDL is fixed → no install error.
 3. **`php admin/cli/purge_caches.php`**.
@@ -127,8 +127,9 @@ Do NOT carry the local `opcache.enable=0` workaround to the server.
 
 ## 6. Known / deferred (not deploy blockers)
 
-> **Post-tag fix (2026-06-19, commit `d42ff9f16` — on `claude/gap-integration` HEAD, 1 ahead of the
-> tag):** deploy **branch HEAD** (not the frozen tag) to include it. Fixed a theme-wide rename-miss
+> **Rename-miss fix (2026-06-19, commit `d42ff9f16`)** — folded into the
+> **`sentientia-milestone-2026-06-19`** tag (the current deploy candidate; the `-06-18` tag predates it).
+> Fixed a theme-wide rename-miss
 > — `theme/sentientia` still linked to the pre-rename `/local/courses|users|onlineexams|classroom/`
 > paths (gone → 404) in the navbar **Profile pill** (every logged-in user), 4 dashboard quicknav
 > tiles (Manage Users/Courses, Online Exams, Classrooms), and the 3 course-context-menu icons.
