@@ -1,2 +1,4 @@
-# Build artifacts (deploy ZIPs) — do not commit; the canonical package is the git tag.
+# Build artifacts (deploy ZIP + generated Word doc) — do not commit.
+# Canonical sources: the git tag (package) and NINJA-DEPLOY-GUIDE-2026-06-19.md (guide).
 *.zip
+*.docx
