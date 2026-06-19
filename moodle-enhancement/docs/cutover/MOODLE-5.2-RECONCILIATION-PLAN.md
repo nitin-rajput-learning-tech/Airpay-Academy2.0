@@ -100,7 +100,27 @@ biggest user-visible one is #2 (badge colours).
 - ✅ **#6 my/ overlays** recorded in `docs/core-mods/2026-06-19-my-overlays-5.2.md` (cutover re-verify gate).
 - ⤴ **#4 AMD build** (`enrolledusers.min.js` missing) **spawned** — needs the grunt/Node build toolchain.
 
-**Net:** the 5.2 reconciliation backlog is closed except two scoped follow-ups (AMD build; CSV
-sesskey/dataformat). The candidate remains **0-blocker** for build. Next phase (P2/P6): build + package
-the 5.2 candidate tree (5.2 core + this reconciled Sentientia layer); runtime validation still gated on
-local PHP 8.3 + prod MySQL 8.4.
+**Net:** the 5.2 reconciliation backlog is closed (incl. **#5 CSV** — `export.php` now has
+`require_sesskey()` + `\core\dataformat::download_data()` + a sesskey'd UI button, committed `f9ef2485b`).
+The candidate remains **0-blocker** for build.
+
+### P2 + P6 — 5.2 candidate tree built + packaged (2026-06-19)
+
+Built the complete 5.2 standalone via the **overlay** approach (not a 641-commit merge):
+
+1. **Overlay** the current Sentientia layer onto the local 5.2 staging tree —
+   `tools/overlay-airpay-customs.ps1 -Source moodle5/public -Target moodle5.2/public`
+   (refreshed 40 → **46** plugins + theme + 6 blocks + paygw + proctoring + cert tool + core-adjacent
+   `my/*`; ran the `theme_airpayux→theme_sentientia` AMD-bundle repair + its fail-loud grep gate — passed).
+2. **Patch** the committed-but-undeployed HEAD reconciliation fixes on top (the dev webroot was behind
+   HEAD): `_bs5-compat.scss` (+badge-secondary), `login_render.php` (otplogin), `sentientia_compliance`
+   `export.php` + `block_*.php` (CSR­F/dataformat), assistant `external.php`/`external_agent.php` +
+   paygw `get_form.php` (`core_external\`). All `php -l` clean; verified present in the 5.2 tree.
+3. **Package** `moodle5.2/` (public-split root) → `docs/cutover/dist/Sentientia-LMS-5.2-Complete-Standalone-2026-06-19.zip`
+   (excludes secret `config.php`, `node_modules`, logs, dev/quarantine dirs). Carries a 5.2-specific
+   `DEPLOY-README.txt` with the **PHP 8.3 + MySQL 8.4** hard prereqs front-and-centre.
+
+**Status: code-complete 5.2 candidate, NOT validated.** Static checks pass (php -l, overlay AMD gate,
+fixes present). **Runtime validation (P5) is still blocked** on local PHP 8.3, and the package **cannot
+deploy** until prod RDS → MySQL 8.4 + PHP 8.3 (open IT change requests). Until then this artifact is for
+code review + staging prep only.
