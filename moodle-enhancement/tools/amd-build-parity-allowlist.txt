@@ -1,0 +1,42 @@
+# amd-build-parity-allowlist.txt
+#
+# Grandfathered pre-existing AMD src/build gaps for scan_amd_build_parity.php.
+# Each line is a repo-relative amd/src/*.js path that is KNOWN to lack its
+# amd/build/*.min.js and is tolerated by the gate until someone builds it.
+#
+# This is a DRAIN, not a dumping ground:
+#   * To clear a line: cd <moodle-dirroot> && npx grunt amd --root=public/<plugin>,
+#     copy the produced amd/build/*.min.js + .map back into the repo plugin dir,
+#     commit BOTH, then delete the corresponding line(s) here.
+#   * Do NOT add NEW src files to this list — the pre-commit hook (CHECK 16) and
+#     the CI amd-build-parity job exist precisely to stop new debt landing.
+#
+# Baseline captured 2026-06-19 (Moodle 5.2 compat audit). The audit's own
+# trigger case — moodle-enhancement/local/sentientia_courses/amd/src/enrolledusers.js
+# — was BUILT in the same change and is deliberately NOT listed here.
+#
+# '#' comments and blank lines are ignored. Lines normalise on '/' separators.
+
+local/sentientia_cart/amd/src/add_to_cart.js
+local/sentientia_cart/amd/src/admin_orders.js
+local/sentientia_cart/amd/src/cart.js
+local/sentientia_cart/amd/src/history.js
+local/sentientia_cart/amd/src/set_price.js
+local/sentientia_courses/amd/src/enrolledusers.js
+local/sentientia_emails/amd/src/delivery_log.js
+local/sentientia_emails/amd/src/rule_manager.js
+local/sentientia_emails/amd/src/template_editor.js
+local/sentientia_proctoring/amd/src/consent.js
+local/sentientia_proctoring/amd/src/proctor.js
+local/sentientia_request/amd/src/decide.js
+local/sentientia_request/amd/src/request_button.js
+moodle-enhancement/local/sentientia_cart/amd/src/add_to_cart.js
+moodle-enhancement/local/sentientia_cart/amd/src/admin_orders.js
+moodle-enhancement/local/sentientia_cart/amd/src/cart.js
+moodle-enhancement/local/sentientia_cart/amd/src/history.js
+moodle-enhancement/local/sentientia_cart/amd/src/set_price.js
+moodle-enhancement/local/sentientia_emails/amd/src/delivery_log.js
+moodle-enhancement/local/sentientia_emails/amd/src/rule_manager.js
+moodle-enhancement/local/sentientia_emails/amd/src/template_editor.js
+moodle-enhancement/local/sentientia_proctoring/amd/src/consent.js
+moodle-enhancement/local/sentientia_proctoring/amd/src/proctor.js

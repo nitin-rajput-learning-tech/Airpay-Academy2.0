@@ -54,7 +54,7 @@ STAGED_CONFLICT=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null \
 # CHECK 1: PHP SYNTAX
 # ============================================================
 echo ""
-echo "→ [1/15] PHP syntax check..."
+echo "→ [1/16] PHP syntax check..."
 if [ -n "$STAGED_PHP" ]; then
     PHP_ERRORS=0
     while IFS= read -r file; do
@@ -74,7 +74,7 @@ fi
 # ============================================================
 # CHECK 2: MOODLE_INTERNAL GUARD
 # ============================================================
-echo "→ [2/15] MOODLE_INTERNAL guard..."
+echo "→ [2/16] MOODLE_INTERNAL guard..."
 GUARD_ISSUES=0
 while IFS= read -r file; do
     [ -f "$file" ] || continue
@@ -91,7 +91,7 @@ done <<< "$STAGED_PHP"
 # ============================================================
 # CHECK 3: RAW SUPERGLOBAL ACCESS
 # ============================================================
-echo "→ [3/15] Superglobal access (\$_GET/\$_POST)..."
+echo "→ [3/16] Superglobal access (\$_GET/\$_POST)..."
 SUPER_ISSUES=0
 while IFS= read -r file; do
     [ -f "$file" ] || continue
@@ -115,7 +115,7 @@ done <<< "$STAGED_PHP"
 # ============================================================
 # CHECK 4: CREDENTIAL PATTERNS
 # ============================================================
-echo "→ [4/15] Credential leak detection..."
+echo "→ [4/16] Credential leak detection..."
 CRED_ISSUES=0
 CRED_PATTERNS=(
     "(api_key|apikey|api_secret|secret_key)\s*=\s*['\"][a-zA-Z0-9_\-]{10,}"
@@ -141,7 +141,7 @@ done <<< "$STAGED_ALL"
 # ============================================================
 # CHECK 5: .env FILE PROTECTION
 # ============================================================
-echo "→ [5/15] .env file protection..."
+echo "→ [5/16] .env file protection..."
 if echo "$STAGED_ALL" | grep -qE '^\.env$|/\.env$'; then
     err ".env file staged — NEVER commit credentials"
     ERRORS=$((ERRORS+1))
@@ -152,7 +152,7 @@ fi
 # ============================================================
 # CHECK 6: MOODLE CORE FILE PROTECTION
 # ============================================================
-echo "→ [6/15] Moodle core file protection..."
+echo "→ [6/16] Moodle core file protection..."
 CORE_ISSUES=0
 CORE_PATTERNS=(
     "moodle/lib/"
@@ -175,7 +175,7 @@ done
 # ============================================================
 # CHECK 7: CONTENT/SOPS PROTECTION
 # ============================================================
-echo "→ [7/15] SOP file protection..."
+echo "→ [7/16] SOP file protection..."
 if git diff --cached --name-only --diff-filter=D 2>/dev/null | grep -q 'content/sops/'; then
     err "content/sops/ file DELETED — NEVER delete SOP source files"
 elif git diff --cached --name-only --diff-filter=M 2>/dev/null | grep -q 'content/sops/'; then
@@ -187,7 +187,7 @@ fi
 # ============================================================
 # CHECK 8: SCORM ZIP VALIDATION
 # ============================================================
-echo "→ [8/15] SCORM ZIP structure..."
+echo "→ [8/16] SCORM ZIP structure..."
 if [ -n "$STAGED_ZIP" ]; then
     while IFS= read -r zipfile; do
         [ -f "$zipfile" ] || continue
@@ -224,7 +224,7 @@ fi
 # ============================================================
 # CHECK 9: version.php FORMAT
 # ============================================================
-echo "→ [9/15] version.php format..."
+echo "→ [9/16] version.php format..."
 VERSION_ISSUES=0
 while IFS= read -r file; do
     [ -f "$file" ] || continue
@@ -257,7 +257,7 @@ done <<< "$STAGED_PHP"
 # ============================================================
 # CHECK 10: UNCOMMITTED [CONFIRM] PLACEHOLDERS
 # ============================================================
-echo "→ [10/15] Uncommitted CONFIRM placeholders..."
+echo "→ [10/16] Uncommitted CONFIRM placeholders..."
 CONFIRM_ISSUES=0
 while IFS= read -r file; do
     [ -f "$file" ] || continue
@@ -285,7 +285,7 @@ done <<< "$STAGED_ALL"
 #   - {{<base/columns}}  Mustache parent-template inheritance
 #   - `// =====`         SCSS section comment dividers
 #   - `================`  setext-style heredoc CLI help banners
-echo "→ [11/15] Git conflict-marker scan..."
+echo "→ [11/16] Git conflict-marker scan..."
 CONFLICT_ISSUES=0
 if [ -n "$STAGED_CONFLICT" ]; then
     while IFS= read -r file; do
@@ -312,7 +312,7 @@ fi
 # This check runs in --mode=staged: looks at staged plugin changes
 # and warns if the matching state card is NOT also staged. Soft
 # warning (does not block — author may be splitting commits).
-echo "→ [12/15] State-card freshness check..."
+echo "→ [12/16] State-card freshness check..."
 FRESHNESS_SCRIPT="tools/check_state_card_freshness.sh"
 if [ -f "$FRESHNESS_SCRIPT" ]; then
     # NOTE: Use grep -c + sed instead of `... | while; warn`. A pipe
@@ -340,7 +340,7 @@ fi
 # course/view.php (course_full_header.mustache) + 13 sibling templates
 # on 2026-06-09. scan_mustache_comment_leaks.php is the single source
 # of truth for the detection (CI runs the same script over whole trees).
-echo "→ [13/15] Mustache comment-leak scan..."
+echo "→ [13/16] Mustache comment-leak scan..."
 STAGED_MUSTACHE=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep '\.mustache$' || true)
 LEAK_SCANNER="moodle-enhancement/tools/scan_mustache_comment_leaks.php"
 if [ -z "$STAGED_MUSTACHE" ]; then
@@ -366,7 +366,7 @@ fi
 # (window.require still exists, so the Gate-1 render-smoke cannot see it).
 # scan_stale_theme_refs.php flags only quoted refs (real deps), excluding the
 # legacy theme dir + tooling/docs. CI runs the same script over whole trees.
-echo "→ [14/15] Stale theme_airpayux reference scan..."
+echo "→ [14/16] Stale theme_airpayux reference scan..."
 STAGED_REFS=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '\.(php|js|mustache|scss|json)$' || true)
 REF_SCANNER="moodle-enhancement/tools/scan_stale_theme_refs.php"
 if [ -z "$STAGED_REFS" ]; then
@@ -392,7 +392,7 @@ fi
 # render-smoke catches it at runtime; this is the cheaper static net. The detector
 # strips {{! }} comments and resolves footer/shell partials, and honours an
 # 'end-of-body-allow' marker for deliberate non-JS docs (e.g. the email wrapper).
-echo "→ [15/15] Missing standard_end_of_body_html scan..."
+echo "→ [15/16] Missing standard_end_of_body_html scan..."
 STAGED_MUSTACHE=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '\.mustache$' || true)
 EOB_SCANNER="moodle-enhancement/tools/scan_missing_end_of_body.php"
 if [ -z "$STAGED_MUSTACHE" ]; then
@@ -408,6 +408,47 @@ else
         echo "       Deliberate non-JS doc (e.g. email body)? add 'end-of-body-allow' to the file."
     else
         ok "All full-page templates flush standard_end_of_body_html"
+    fi
+fi
+
+# ============================================================
+# CHECK 16: AMD src/build PARITY (2026-06-19, Moodle 5.2 audit)
+# ============================================================
+# Moodle serves the MINIFIED amd/build/<name>.min.js in PRODUCTION mode (the
+# default on a real install). Staging an amd/src/*.js without its built
+# amd/build/*.min.js ships a module that 404s at runtime — whatever loads it
+# via AMD dies silently. That is exactly how local_sentientia_courses/
+# enrolledusers shipped a dead enrol-user modal (surfaced by the 2026-06-19
+# Moodle 5.2 compat audit as a RECURRING gap). scan_amd_build_parity.php is the
+# single source of truth (CI's amd-build-parity job runs the same script over
+# whole trees); pre-existing gaps are grandfathered in
+# tools/amd-build-parity-allowlist.txt, opt-out marker `amd-build-parity-allow`.
+echo "→ [16/16] AMD src/build parity..."
+STAGED_AMD_SRC=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '/amd/src/.*\.js$' || true)
+AMD_SCANNER="moodle-enhancement/tools/scan_amd_build_parity.php"
+if [ -z "$STAGED_AMD_SRC" ]; then
+    ok "No amd/src JS staged"
+elif [ ! -f "$AMD_SCANNER" ]; then
+    ok "AMD parity scanner not present — skip"
+else
+    AMD_OUT=$(echo "$STAGED_AMD_SRC" | xargs php "$AMD_SCANNER" 2>/dev/null || true)
+    if [ -n "$AMD_OUT" ]; then
+        err "amd/src module staged without a built amd/build/*.min.js — AMD 404s in PRODUCTION mode"
+        echo "$AMD_OUT" | sed 's/^/       /' | head -20
+        echo "       Fix: cd <moodle-dirroot> && npx grunt amd --root=public/<plugin> (or --files=<one src>),"
+        echo "            then stage the produced amd/build/*.min.js (+ .map)."
+    else
+        ok "All staged amd/src modules have a built amd/build/*.min.js"
+        # Built file exists on disk but isn't staged? The commit would omit it
+        # and CI (amd-build-parity, which sees only the committed tree) would
+        # then fail — warn so it gets staged in the same commit.
+        while IFS= read -r src; do
+            [ -n "$src" ] || continue
+            build="${src/\/amd\/src\//\/amd\/build\/}"; build="${build%.js}.min.js"
+            if [ -f "$build" ] && ! git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -qxF "$build"; then
+                warn "Built $build exists but is NOT staged — 'git add' it (CI checks the committed tree)"
+            fi
+        done <<< "$STAGED_AMD_SRC"
     fi
 fi
 

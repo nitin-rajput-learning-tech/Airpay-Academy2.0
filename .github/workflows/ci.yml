@@ -28,6 +28,14 @@ name: CI — Airpay Academy
 #                              See docs/ci/PHPUNIT-GATE.md §3 + the
 #                              first-run triage protocol §3.2 once it
 #                              lands.
+#   8. amd-build-parity      — every amd/src/*.js must have a built
+#                              amd/build/*.min.js. PRODUCTION mode serves the
+#                              minified file; a missing build 404s and the
+#                              feature that require()s it dies silently (the
+#                              enrolledusers enrol-modal regression, 2026-06-19
+#                              Moodle 5.2 audit). Shared detector with the
+#                              pre-commit hook CHECK 16; pre-existing gaps are
+#                              grandfathered in tools/amd-build-parity-allowlist.txt.
 #
 # Local PHPUnit invocation (same suite, faster):
 #   cd C:\xampp\htdocs\moodle5
@@ -286,6 +294,51 @@ jobs:
             exit 1
           fi
           echo "::notice::No conflict markers found"
+
+  amd-build-parity:
+    name: AMD src/build parity
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+          tools: none
+
+      - name: Lint the parity scanner
+        run: |
+          php -l moodle-enhancement/tools/scan_amd_build_parity.php
+
+      - name: Scan amd/src for a matching amd/build/*.min.js
+        run: |
+          # Moodle serves amd/build/<name>.min.js in PRODUCTION mode (the
+          # default on a real install — only debug mode serves amd/src/). A
+          # module under amd/src/ with no built counterpart 404s at runtime and
+          # whatever loads it via AMD dies silently — exactly how
+          # local_sentientia_courses/enrolledusers shipped a dead enrol-user
+          # modal (surfaced by the 2026-06-19 Moodle 5.2 compat audit, which
+          # flagged it as a RECURRING gap).
+          #
+          # Same standalone detector the pre-commit hook CHECK 11/16 runs on
+          # staged files — here across the whole committed tree. Pre-existing
+          # gaps are grandfathered in tools/amd-build-parity-allowlist.txt (a
+          # drain, not a dumping ground); the gate fails the moment a NEW
+          # amd/src/*.js lands without its build. Per-file opt-out for a
+          # deliberately-unbuilt module: `amd-build-parity-allow` in the src.
+          #
+          # Exit codes (block merge on 1 or 2):
+          #   0  Every amd/src module has a build (or is allowlisted)
+          #   1  One or more new src modules missing a build
+          #   2  Bad args (no paths)
+          php moodle-enhancement/tools/scan_amd_build_parity.php \
+            moodle-enhancement \
+            local \
+            theme/sentientia
+          echo "::notice::AMD src/build parity OK — no un-allowlisted gaps."
 
   version-bump-check:
     name: version.php bump on plugin changes
