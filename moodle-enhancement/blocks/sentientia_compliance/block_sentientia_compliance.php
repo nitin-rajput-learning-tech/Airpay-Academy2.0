@@ -240,6 +240,20 @@ class block_sentientia_compliance extends block_base {
         }
 
         $html .= '</tbody></table>';
+
+        // Auditor CSV export. Only render the link for users who actually hold the
+        // export capability (export.php enforces the same gate) so it never 403s on click.
+        // The sesskey makes the GET download CSRF-safe — export.php calls require_sesskey().
+        if (has_capability('local/sentientia_courses:manage', \context_system::instance())) {
+            $exporturl = new \moodle_url('/blocks/sentientia_compliance/export.php', ['sesskey' => sesskey()]);
+            $html .= '<div class="airpay-compliance-admin__actions">';
+            $html .= '<a class="btn btn-outline-secondary btn-sm" role="button" download href="'
+                . $exporturl->out() . '">'
+                . s(get_string('export_csv', 'block_sentientia_compliance'))
+                . '</a>';
+            $html .= '</div>';
+        }
+
         $html .= '</div>';
 
         return $html;
