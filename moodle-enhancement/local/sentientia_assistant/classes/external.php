@@ -11,16 +11,20 @@ namespace local_sentientia_assistant;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->libdir . '/externallib.php');
+use core_external\external_api;
+use core_external\external_function_parameters;
+use core_external\external_value;
+use core_external\external_single_structure;
+use core_external\external_multiple_structure;
 
-class external extends \external_api {
+class external extends external_api {
 
     /**
      * Ask the AI assistant a question.
      */
-    public static function ask_parameters(): \external_function_parameters {
-        return new \external_function_parameters([
-            'query' => new \external_value(PARAM_TEXT, 'User question'),
+    public static function ask_parameters(): external_function_parameters {
+        return new external_function_parameters([
+            'query' => new external_value(PARAM_TEXT, 'User question'),
         ]);
     }
 
@@ -43,20 +47,20 @@ class external extends \external_api {
         ];
     }
 
-    public static function ask_returns(): \external_single_structure {
-        return new \external_single_structure([
-            'response' => new \external_value(PARAM_RAW, 'AI response (HTML)'),
-            'model'    => new \external_value(PARAM_TEXT, 'Model used'),
-            'cached'   => new \external_value(PARAM_BOOL, 'Whether response was cached'),
+    public static function ask_returns(): external_single_structure {
+        return new external_single_structure([
+            'response' => new external_value(PARAM_RAW, 'AI response (HTML)'),
+            'model'    => new external_value(PARAM_TEXT, 'Model used'),
+            'cached'   => new external_value(PARAM_BOOL, 'Whether response was cached'),
         ]);
     }
 
     /**
      * Get chat history.
      */
-    public static function get_history_parameters(): \external_function_parameters {
-        return new \external_function_parameters([
-            'limit' => new \external_value(PARAM_INT, 'Max messages', VALUE_DEFAULT, 20),
+    public static function get_history_parameters(): external_function_parameters {
+        return new external_function_parameters([
+            'limit' => new external_value(PARAM_INT, 'Max messages', VALUE_DEFAULT, 20),
         ]);
     }
 
@@ -66,15 +70,15 @@ class external extends \external_api {
         return ['messages' => array_reverse($messages)];
     }
 
-    public static function get_history_returns(): \external_single_structure {
-        return new \external_single_structure([
-            'messages' => new \external_multiple_structure(
-                new \external_single_structure([
-                    'id'          => new \external_value(PARAM_INT, 'Message ID'),
-                    'role'        => new \external_value(PARAM_TEXT, 'user or assistant'),
-                    'message'     => new \external_value(PARAM_RAW, 'Message text'),
-                    'model'       => new \external_value(PARAM_TEXT, 'Model used'),
-                    'timecreated' => new \external_value(PARAM_INT, 'Timestamp'),
+    public static function get_history_returns(): external_single_structure {
+        return new external_single_structure([
+            'messages' => new external_multiple_structure(
+                new external_single_structure([
+                    'id'          => new external_value(PARAM_INT, 'Message ID'),
+                    'role'        => new external_value(PARAM_TEXT, 'user or assistant'),
+                    'message'     => new external_value(PARAM_RAW, 'Message text'),
+                    'model'       => new external_value(PARAM_TEXT, 'Model used'),
+                    'timecreated' => new external_value(PARAM_INT, 'Timestamp'),
                 ])
             ),
         ]);

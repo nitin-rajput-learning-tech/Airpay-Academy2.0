@@ -85,3 +85,22 @@ polish/debt/visual, none blocking. Reconciliation backlog (P3):
 
 **No item blocks building/running the 5.2 candidate** (all medium, shim-compatible or cosmetic). The
 biggest user-visible one is #2 (badge colours).
+
+### P3 progress — 2026-06-19 (committed)
+- ✅ **#1 otplogin** type-hint relaxed (commit `5d2185ce9`).
+- ✅ **#2 badges** — root cause was a *one-line gap*, not 26 files: the theme already ships a BS5
+  compat shim (`scss/.../_bs5-compat.scss`) defining badge-primary/success/warning/danger/info; it was
+  only missing **`.badge-secondary`** (the 28× token). Added it → all 26 files covered. No sweep.
+- ✅ **#3 external_\*** → `core_external\` migrated in all 3 files (assistant `external.php` +
+  `external_agent.php`, paygw `get_form.php`); `require_once externallib.php` dropped; `php -l` clean.
+- ◑ **#5 (partial)** — `blocks/sentientia_compliance/export.php` gated on the **non-existent**
+  `local/courses:manage` (pre-rename) → fixed to `local/sentientia_courses:manage` (was a latent
+  403/“capability not found”). The sesskey/CSRF + `\core\dataformat` hardening is **spawned** as a
+  follow-up (read-only endpoint, no current caller link — needs a sesskey'd UI button to not break it).
+- ✅ **#6 my/ overlays** recorded in `docs/core-mods/2026-06-19-my-overlays-5.2.md` (cutover re-verify gate).
+- ⤴ **#4 AMD build** (`enrolledusers.min.js` missing) **spawned** — needs the grunt/Node build toolchain.
+
+**Net:** the 5.2 reconciliation backlog is closed except two scoped follow-ups (AMD build; CSV
+sesskey/dataformat). The candidate remains **0-blocker** for build. Next phase (P2/P6): build + package
+the 5.2 candidate tree (5.2 core + this reconciled Sentientia layer); runtime validation still gated on
+local PHP 8.3 + prod MySQL 8.4.

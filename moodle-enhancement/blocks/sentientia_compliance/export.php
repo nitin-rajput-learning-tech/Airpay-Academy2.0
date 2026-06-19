@@ -12,7 +12,7 @@ require_once(__DIR__ . '/../../config.php');
 require_login();
 
 $context = context_system::instance();
-require_capability('local/courses:manage', $context);
+require_capability('local/sentientia_courses:manage', $context);
 
 $format = optional_param('format', 'csv', PARAM_ALPHA);
 $now = time();

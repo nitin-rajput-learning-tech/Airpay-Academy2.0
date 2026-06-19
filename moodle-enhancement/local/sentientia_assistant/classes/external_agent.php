@@ -25,17 +25,21 @@ namespace local_sentientia_assistant;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->libdir . '/externallib.php');
+use core_external\external_api;
+use core_external\external_function_parameters;
+use core_external\external_value;
+use core_external\external_single_structure;
+use core_external\external_multiple_structure;
 
 use local_sentientia_assistant\agent\agent_loop;
 
-class external_agent extends \external_api {
+class external_agent extends external_api {
 
     // ─── agent_turn ──────────────────────────────────────────────────
 
-    public static function agent_turn_parameters(): \external_function_parameters {
-        return new \external_function_parameters([
-            'query' => new \external_value(PARAM_TEXT, 'Learner message (untrusted)'),
+    public static function agent_turn_parameters(): external_function_parameters {
+        return new external_function_parameters([
+            'query' => new external_value(PARAM_TEXT, 'Learner message (untrusted)'),
         ]);
     }
 
@@ -55,16 +59,16 @@ class external_agent extends \external_api {
         return self::shape($turn);
     }
 
-    public static function agent_turn_returns(): \external_single_structure {
+    public static function agent_turn_returns(): external_single_structure {
         return self::returns_structure();
     }
 
     // ─── agent_confirm ───────────────────────────────────────────────
 
-    public static function agent_confirm_parameters(): \external_function_parameters {
-        return new \external_function_parameters([
-            'query'  => new \external_value(PARAM_TEXT, 'The original learner message that produced the proposal'),
-            'tool'   => new \external_value(PARAM_ALPHANUMEXT, 'The proposed tool name to confirm'),
+    public static function agent_confirm_parameters(): external_function_parameters {
+        return new external_function_parameters([
+            'query'  => new external_value(PARAM_TEXT, 'The original learner message that produced the proposal'),
+            'tool'   => new external_value(PARAM_ALPHANUMEXT, 'The proposed tool name to confirm'),
         ]);
     }
 
@@ -90,7 +94,7 @@ class external_agent extends \external_api {
         return self::shape($turn);
     }
 
-    public static function agent_confirm_returns(): \external_single_structure {
+    public static function agent_confirm_returns(): external_single_structure {
         return self::returns_structure();
     }
 
@@ -131,16 +135,16 @@ class external_agent extends \external_api {
         ];
     }
 
-    private static function returns_structure(): \external_single_structure {
-        return new \external_single_structure([
-            'enabled'       => new \external_value(PARAM_BOOL, 'Whether the agentic copilot is enabled'),
-            'message'       => new \external_value(PARAM_RAW, 'Assistant reply (sanitised HTML)'),
-            'mode'          => new \external_value(PARAM_ALPHA, 'mock|live|failed|disabled'),
-            'hasproposal'   => new \external_value(PARAM_BOOL, 'A write action awaits learner confirmation'),
-            'proposaltool'  => new \external_value(PARAM_ALPHANUMEXT, 'Proposed tool name (if any)'),
-            'proposallabel' => new \external_value(PARAM_TEXT, 'Localised proposal label (if any)'),
-            'outcome'       => new \external_value(PARAM_ALPHANUMEXT, 'Tool outcome if something ran'),
-            'statechanged'  => new \external_value(PARAM_BOOL, 'Whether persistent state changed'),
+    private static function returns_structure(): external_single_structure {
+        return new external_single_structure([
+            'enabled'       => new external_value(PARAM_BOOL, 'Whether the agentic copilot is enabled'),
+            'message'       => new external_value(PARAM_RAW, 'Assistant reply (sanitised HTML)'),
+            'mode'          => new external_value(PARAM_ALPHA, 'mock|live|failed|disabled'),
+            'hasproposal'   => new external_value(PARAM_BOOL, 'A write action awaits learner confirmation'),
+            'proposaltool'  => new external_value(PARAM_ALPHANUMEXT, 'Proposed tool name (if any)'),
+            'proposallabel' => new external_value(PARAM_TEXT, 'Localised proposal label (if any)'),
+            'outcome'       => new external_value(PARAM_ALPHANUMEXT, 'Tool outcome if something ran'),
+            'statechanged'  => new external_value(PARAM_BOOL, 'Whether persistent state changed'),
         ]);
     }
 }
