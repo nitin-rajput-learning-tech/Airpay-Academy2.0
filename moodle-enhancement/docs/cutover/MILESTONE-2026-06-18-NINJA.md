@@ -127,8 +127,24 @@ Do NOT carry the local `opcache.enable=0` workaround to the server.
 
 ## 6. Known / deferred (not deploy blockers)
 
-- **F4** stale `get_string('enrolledusers','local_courses')` — DEVELOPER-debug-only notice, not in
-  any shipping product file; invisible at production debug. Fix when the call site surfaces.
+> **Post-tag fix (2026-06-19, commit `d42ff9f16` — on `claude/gap-integration` HEAD, 1 ahead of the
+> tag):** deploy **branch HEAD** (not the frozen tag) to include it. Fixed a theme-wide rename-miss
+> — `theme/sentientia` still linked to the pre-rename `/local/courses|users|onlineexams|classroom/`
+> paths (gone → 404) in the navbar **Profile pill** (every logged-in user), 4 dashboard quicknav
+> tiles (Manage Users/Courses, Online Exams, Classrooms), and the 3 course-context-menu icons.
+> All 9 repointed to the live `local/sentientia_*` entry points (verified 303→login on local).
+> This also resolved **F4**: the `{{#str}}enrolledusers, local_courses{{/str}}` component (no such
+> string → debug notice on every course-page render) is now `core_enrol` (string lives in
+> `lang/en/enrol.php`).
+
+- **F5** quiz53/forum2 500 — **classified as a clone-data artifact, not a package bug**: both cmids
+  are valid + visible; authed probes return 303 (redirect), not 500, and no fatal is logged. The
+  prior 500 was the incomplete-`filedir` clone (per the link-stress-test). Re-verify on the
+  complete-`filedir` ninja env (see §4) — expected to render.
+- **scssphp `Array to string` warning** during SCSS recompile — benign: it fires inside the
+  vendored `lib/scssphp` `@extend` selector-matcher (`Compiler.php:927`), the compile **succeeds**,
+  CSS is valid, and it's suppressed at production debug level. Cosmetic CLI/dev-debug noise only
+  (ref task #275); not a deploy blocker.
 - **F3 residual** — `block_reportdashboard` / `block_learnerscript` (legacy BizLMS vendor blocks)
   still call old caps directly → debug-only notices; folded into the BizLMS-decouple track.
 - **Gap pre-deploy fixes** (from PROJECT-STATE GAP-BUILD note, before any flag flips):
