@@ -17,26 +17,3 @@
 #
 # '#' comments and blank lines are ignored. Lines normalise on '/' separators.
 
-local/sentientia_cart/amd/src/add_to_cart.js
-local/sentientia_cart/amd/src/admin_orders.js
-local/sentientia_cart/amd/src/cart.js
-local/sentientia_cart/amd/src/history.js
-local/sentientia_cart/amd/src/set_price.js
-local/sentientia_courses/amd/src/enrolledusers.js
-local/sentientia_emails/amd/src/delivery_log.js
-local/sentientia_emails/amd/src/rule_manager.js
-local/sentientia_emails/amd/src/template_editor.js
-local/sentientia_proctoring/amd/src/consent.js
-local/sentientia_proctoring/amd/src/proctor.js
-local/sentientia_request/amd/src/decide.js
-local/sentientia_request/amd/src/request_button.js
-moodle-enhancement/local/sentientia_cart/amd/src/add_to_cart.js
-moodle-enhancement/local/sentientia_cart/amd/src/admin_orders.js
-moodle-enhancement/local/sentientia_cart/amd/src/cart.js
-moodle-enhancement/local/sentientia_cart/amd/src/history.js
-moodle-enhancement/local/sentientia_cart/amd/src/set_price.js
-moodle-enhancement/local/sentientia_emails/amd/src/delivery_log.js
-moodle-enhancement/local/sentientia_emails/amd/src/rule_manager.js
-moodle-enhancement/local/sentientia_emails/amd/src/template_editor.js
-moodle-enhancement/local/sentientia_proctoring/amd/src/consent.js
-moodle-enhancement/local/sentientia_proctoring/amd/src/proctor.js
