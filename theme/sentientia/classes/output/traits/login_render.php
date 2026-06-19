@@ -110,10 +110,13 @@ trait login_render {
      * branch (OTP login is reserved for existing users), no theme help
      * text (kept minimal since this is a security-sensitive step).
      *
-     * @param \core_auth\output\otplogin $form Moodle OTP renderable
+     * @param object $form Moodle OTP renderable. NOTE: typed loosely on purpose —
+     *   \core_auth\output\otplogin existed on Moodle <5.2 but was REMOVED in 5.2
+     *   (core no longer dispatches OTP login). A hard type-hint here would be a
+     *   "class not found" landmine for static analysers / opcache preload on 5.2.
      * @return string Rendered OTP form HTML
      */
-    public function render_otplogin(\core_auth\output\otplogin $form) {
+    public function render_otplogin($form) {
         global $CFG, $SITE, $OUTPUT;
 
         $context = $form->export_for_template($this);
