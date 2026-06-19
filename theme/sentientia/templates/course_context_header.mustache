@@ -22,17 +22,17 @@
 		{{# userenrollment }}
             <li>
             	<div class="coursebackup course_extended_menu_itemcontainer">
-                	<a title="Bulk Enrolments" class="course_extended_menu_itemlink" href="{{config.wwwroot}}/local/courses/mass_enroll.php?id={{courseid}}"><i class="icon fa fa-users fa-fw " aria-hidden="true"></i></a>
+                	<a title="Bulk Enrolments" class="course_extended_menu_itemlink" href="{{config.wwwroot}}/local/sentientia_courses/enrol_csv.php"><i class="icon fa fa-users fa-fw " aria-hidden="true"></i></a>
                 </div>
             </li>
             <li>
                 <div class="coursebackup course_extended_menu_itemcontainer">
-                    <a title="User enrolments" class="course_extended_menu_itemlink" href="{{config.wwwroot}}/local/courses/courseenrol.php?id={{courseid}}&enrolid={{enrolid}}"><i class="icon fa fa-user-plus fa-fw " aria-hidden="true"></i></a>
+                    <a title="User enrolments" class="course_extended_menu_itemlink" href="{{config.wwwroot}}/local/sentientia_courses/enrolledusers.php?id={{courseid}}"><i class="icon fa fa-user-plus fa-fw " aria-hidden="true"></i></a>
                 </div>
             </li>
             <li>
                 <div class="coursebackup course_extended_menu_itemcontainer">
-                    <a title="{{# str }}enrolledusers, local_courses {{/ str }}" class="course_extended_menu_itemlink" href="{{config.wwwroot}}/local/courses/enrolledusers.php?id={{courseid}}"><i class="icon fa fa-user" aria-hidden="true"></i></a>
+                    <a title="{{# str }}enrolledusers, core_enrol {{/ str }}" class="course_extended_menu_itemlink" href="{{config.wwwroot}}/local/sentientia_courses/enrolledusers.php?id={{courseid}}"><i class="icon fa fa-user" aria-hidden="true"></i></a>
                 </div>
             </li>
 		{{/ userenrollment }}

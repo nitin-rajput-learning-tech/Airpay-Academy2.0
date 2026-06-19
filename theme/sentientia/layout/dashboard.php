@@ -511,21 +511,21 @@ if (isloggedin() && !isguestuser()) {
             try { $examcount = $DB->count_records('local_onlineexams'); } catch (Exception $e) {}
 
             $airpay_dashboard['admin_quicknav'] = [
-                ['label' => 'Manage Users', 'icon' => 'users', 'url' => (new moodle_url('/local/users/index.php'))->out(false), 'color' => '#0066A7',
+                ['label' => 'Manage Users', 'icon' => 'users', 'url' => (new moodle_url('/local/sentientia_users/index.php'))->out(false), 'color' => '#0066A7',
                  'hasstats' => true, 'stats' => [
                     ['statval' => $totalusers, 'statlabel' => 'Total'],
                     ['statval' => $activeusers, 'statlabel' => 'Active'],
                     ['statval' => $inactiveusers, 'statlabel' => 'Inactive'],
                 ]],
-                ['label' => 'Manage Courses', 'icon' => 'book', 'url' => (new moodle_url('/local/courses/courses.php'))->out(false), 'color' => '#1985DD',
+                ['label' => 'Manage Courses', 'icon' => 'book', 'url' => (new moodle_url('/local/sentientia_courses/index.php'))->out(false), 'color' => '#1985DD',
                  'hasstats' => true, 'stats' => [
                     ['statval' => $totalcourses, 'statlabel' => 'Total'],
                     ['statval' => number_format($totalenrolments), 'statlabel' => 'Enrolments'],
                     ['statval' => number_format($totalcompleted), 'statlabel' => 'Completions'],
                 ]],
                 ['label' => 'Reports', 'icon' => 'bar-chart', 'url' => (new moodle_url('/blocks/learnerscript/managereport.php'))->out(false), 'color' => '#6d58a5'],
-                ['label' => 'Online Exams', 'icon' => 'pencil-square-o', 'url' => (new moodle_url('/local/onlineexams/index.php'))->out(false), 'color' => '#d97706'],
-                ['label' => 'Classrooms', 'icon' => 'calendar', 'url' => (new moodle_url('/local/classroom/index.php'))->out(false), 'color' => '#dc2626',
+                ['label' => 'Online Exams', 'icon' => 'pencil-square-o', 'url' => (new moodle_url('/local/sentientia_exams/index.php'))->out(false), 'color' => '#d97706'],
+                ['label' => 'Classrooms', 'icon' => 'calendar', 'url' => (new moodle_url('/local/sentientia_classroom/index.php'))->out(false), 'color' => '#dc2626',
                  'hasstats' => ($classroomcount > 0), 'stats' => [
                     ['statval' => $classroomcount, 'statlabel' => 'Total'],
                 ]],

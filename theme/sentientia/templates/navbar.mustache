@@ -84,7 +84,7 @@
         {{/isloggedin}}
         <a href="{{{config.wwwroot}}}/local/sentientia_catalog/index.php" class="airpay-nav__pill airpay-nav__pill--catalog">{{#str}}nav_catalog, theme_sentientia{{/str}}</a>
         {{#isloggedin}}
-        <a href="{{{config.wwwroot}}}/local/users/profile.php" class="airpay-nav__pill airpay-nav__pill--profile">{{#str}}nav_profile, theme_sentientia{{/str}}</a>
+        <a href="{{{config.wwwroot}}}/local/sentientia_users/profile.php" class="airpay-nav__pill airpay-nav__pill--profile">{{#str}}nav_profile, theme_sentientia{{/str}}</a>
         {{/isloggedin}}
         {{/output.is_siteadmin_only}}
     </div>
@@ -157,7 +157,7 @@
         <i class="fa fa-bell"></i>
         <span>Alerts</span>
     </a>
-    <a href="{{{config.wwwroot}}}/local/users/profile.php" class="ap-mobile-nav__item" data-page="profile">
+    <a href="{{{config.wwwroot}}}/local/sentientia_users/profile.php" class="ap-mobile-nav__item" data-page="profile">
         <i class="fa fa-user-circle" aria-hidden="true"></i>
         <span>{{#str}}nav_profile, theme_sentientia{{/str}}</span>
     </a>
