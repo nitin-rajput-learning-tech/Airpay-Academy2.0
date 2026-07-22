@@ -11,7 +11,11 @@
    refactored separately in subsequent commits.
    ═══════════════════════════════════════════════════════════ */
 
-body#page-login-index {
+/* Section 1 scope: #page-signup added 2026-07-22 — the signup page renders
+   the same .airpay-login split-panel markup (local_sentientia_users/
+   signup_page template) so it inherits this entire design system. */
+body#page-login-index,
+body#page-signup {
     background: #F2F4FB;
 
     /* Page-level resets */
@@ -533,6 +537,89 @@ body#page-login-index {
     width: 100%;
     max-width: 100%;
 }
+/* ── Signup split-panel (2026-07-22) ──
+   The signup page now emits the same .airpay-login split markup as the
+   login page (local_sentientia_users/signup_page template), inheriting
+   section 1 wholesale via its widened body scope. Neutralise this
+   section's centred-card chrome whenever the split panel is present —
+   the same :has() pattern used for #page-login-index below. The card
+   styles carry `important` defensively, so the neutralisers must too. */
+#page-signup .airpay-login-wrapper:has(.airpay-login) {
+    display: block;
+    padding: 0;
+    background: none;
+}
+#page-signup .airpay-login-wrapper:has(.airpay-login)::before { display: none; }
+#page-signup .airpay-login-wrapper:has(.airpay-login) .airpay-login-page {
+    max-width: 100%;
+    padding: 0;
+}
+#page-signup .airpay-login-region:has(.airpay-login) {
+    background: transparent !important;  /* preserved: beats the carded !important above */
+    border-radius: 0 !important;         /* preserved: beats the carded !important above */
+    padding: 0 !important;               /* preserved: beats the carded !important above */
+    box-shadow: none !important;         /* preserved: beats the carded !important above */
+}
+/* Tall form: top-align the panel and let the page scroll */
+#page-signup .airpay-login__form-panel {
+    align-items: flex-start;
+    padding-top: 56px;
+    padding-bottom: 56px;
+}
+#page-signup .airpay-login__form-container { max-width: 420px; }
+/* Left-align the panel header like the login's "Welcome back" — an older
+   signup heading rule centres h2 at equal specificity, so pin it here. */
+#page-signup .airpay-login__form-container .airpay-login__form-title,
+#page-signup .airpay-login__form-container .airpay-login__form-subtitle {
+    text-align: left;
+}
+/* mform harmonisation inside the panel */
+#page-signup .airpay-login__form-container .col-form-label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    padding-bottom: 2px;
+}
+/* Action buttons: full-width primary CTA like the login's "Log in",
+   with Cancel as a quiet block link beneath. */
+#page-signup .airpay-login__form-container [data-groupname="buttonar"] .felement {
+    display: block;
+}
+#page-signup .airpay-login__form-container #id_submitbutton {
+    display: block;
+    width: 100%;
+}
+#page-signup .airpay-login__form-container #id_cancel {
+    display: block;
+    width: 100%;
+    margin: 8px 0 0;
+    border: none;
+    background: transparent;
+    text-align: center;
+}
+#page-signup .airpay-signup__loginlink {
+    margin-top: 16px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #607286;
+}
+#page-signup .airpay-signup__loginlink a {
+    font-weight: 600;
+    margin-left: 4px;
+}
+/* Success view (confirmation panel inside the same shell) */
+#page-signup .airpay-signup__success { text-align: center; }
+#page-signup .airpay-signup__success-icon {
+    font-size: 3rem;
+    color: #16a34a;
+    margin-bottom: 16px;
+}
+#page-signup a.airpay-signup__success-btn {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    line-height: 48px;
+    margin-top: 24px;
+}
 /* White card — preserved: Moodle wraps the card in <section id="region-main">
    and may apply body#page-X #region-main padding at (2,0,0), beating our
    (1,1,0) selector. The 6 declarations below carry `important` defensively. */
@@ -897,6 +984,28 @@ body.dark-mode#page-signup select {
 html.dark-mode #page-signup #id_cancel,
 body.dark-mode#page-signup #id_cancel {
     border-color: #334155; color: #93c5fd;
+}
+/* Signup split-panel dark mode (2026-07-22) — mirrors the 3a login-index
+   form-panel treatment for the panel the signup page now shares. */
+html.dark-mode #page-signup .airpay-login__form-panel,
+body.dark-mode#page-signup .airpay-login__form-panel {
+    background: #1a1d27;
+}
+html.dark-mode #page-signup .airpay-login__form-title,
+body.dark-mode#page-signup .airpay-login__form-title {
+    color: #f1f5f9;
+}
+html.dark-mode #page-signup .airpay-login__form-subtitle,
+html.dark-mode #page-signup .airpay-signup__loginlink,
+body.dark-mode#page-signup .airpay-login__form-subtitle,
+body.dark-mode#page-signup .airpay-signup__loginlink {
+    color: #94a3b8;
+}
+html.dark-mode #page-signup .airpay-login__legal a,
+html.dark-mode #page-signup .airpay-signup__loginlink a,
+body.dark-mode#page-signup .airpay-login__legal a,
+body.dark-mode#page-signup .airpay-signup__loginlink a {
+    color: #60a5fa;
 }
 /* Chrome/Edge autofill paints its own white field background, which on the
    dark card renders one glaring white input among dark ones. UA autofill

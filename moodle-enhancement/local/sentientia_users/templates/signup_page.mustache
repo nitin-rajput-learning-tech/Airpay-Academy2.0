@@ -1,0 +1,135 @@
+{{!
+    @template local_sentientia_users/signup_page
+
+    Signup page in the corporate split-screen design — mirrors
+    theme_sentientia/core/loginform (gradient hero left, form right)
+    so /login/index.php and signup.php read as one product surface.
+    The hero markup + copy is kept in lockstep with loginform.mustache;
+    if the login hero changes, update this hero too.
+
+    Context variables required for this template:
+    * output      - core_renderer (login_stat_* methods + loginlogo)
+    * sitename    - formatted site shortname
+    * loginurl    - URL of the login page
+    * formhtml    - rendered signup moodleform (only when success is false)
+    * success     - bool, show the confirmation panel instead of the form
+    * errorhtml   - optional rendered notification (registration exception)
+
+    Example context (json):
+    {
+        "sitename": "airpay academy",
+        "loginurl": "https://example.com/login/index.php",
+        "formhtml": "<form class=\"mform\">...</form>",
+        "success": false,
+        "errorhtml": ""
+    }
+}}
+<div class="airpay-login">
+    {{! ═══ LEFT: Gradient Hero Panel (lockstep copy of core/loginform) ═══ }}
+    <div class="airpay-login__hero">
+        <div class="airpay-login__hero-bg"></div>
+        <div class="airpay-login__hero-pattern"></div>
+        <div class="airpay-login__hero-circle airpay-login__hero-circle--1"></div>
+        <div class="airpay-login__hero-circle airpay-login__hero-circle--2"></div>
+        <div class="airpay-login__hero-circle airpay-login__hero-circle--3"></div>
+
+        <div class="airpay-login__hero-content">
+            <div class="airpay-login__hero-logo">
+                <img src="{{{config.wwwroot}}}/theme/sentientia/pix/brand/academy-logo-350.png" alt="{{sitename}}">
+            </div>
+
+            <h1 class="airpay-login__hero-title">{{sitename}}</h1>
+            <p class="airpay-login__hero-subtitle">Upskill. Get certified. Get hired.</p>
+
+            <div class="airpay-login__hero-features">
+                <div class="airpay-login__hero-feature">
+                    <div class="airpay-login__hero-feature-icon"><i class="fa fa-rocket"></i></div>
+                    <div>
+                        <strong>Upskill on demand</strong>
+                        <span>Job-ready courses in finance, payments, tech &amp; business &mdash; built by the people running real platforms.</span>
+                    </div>
+                </div>
+                <div class="airpay-login__hero-feature">
+                    <div class="airpay-login__hero-feature-icon"><i class="fa fa-briefcase"></i></div>
+                    <div>
+                        <strong>Hiring assessments</strong>
+                        <span>Take employer-graded tests. Pass once, get shortlisted by hiring partners across the industry.</span>
+                    </div>
+                </div>
+                <div class="airpay-login__hero-feature">
+                    <div class="airpay-login__hero-feature-icon"><i class="fa fa-certificate"></i></div>
+                    <div>
+                        <strong>Verified certificates</strong>
+                        <span>Every completion ships with a tamper-proof certificate you can share on LinkedIn or attach to a CV.</span>
+                    </div>
+                </div>
+            </div>
+
+            {{! Stats bar — live data from DB via core_renderer methods }}
+            <div class="airpay-login__hero-stats">
+                <div class="airpay-login__hero-stat">
+                    <strong>{{output.login_stat_users}}</strong>
+                    <span>Learners upskilling</span>
+                </div>
+                <div class="airpay-login__hero-stat">
+                    <strong>{{output.login_stat_courses}}</strong>
+                    <span>Courses available</span>
+                </div>
+                <div class="airpay-login__hero-stat">
+                    <strong>{{output.login_stat_certs}}</strong>
+                    <span>Certificates earned</span>
+                </div>
+            </div>
+
+            <div class="airpay-login__hero-social">
+                {{{ output.footer_social_icons }}}
+            </div>
+        </div>
+    </div>
+
+    {{! ═══ RIGHT: Signup Form Panel ═══ }}
+    <div class="airpay-login__form-panel">
+        <div class="airpay-login__form-container">
+            {{! Mobile-only logo (hero hidden < 992px). Uses the theme brand
+                asset directly — output.loginlogo falls back to the BizLMS
+                vendor logo on pages outside the login renderer context. }}
+            <div class="airpay-login__mobile-logo d-lg-none">
+                <img src="{{{config.wwwroot}}}/theme/sentientia/pix/brand/academy-logo-350.png" alt="{{sitename}}">
+            </div>
+
+            {{^success}}
+                <h2 class="airpay-login__form-title">{{#str}}signup_heading, local_sentientia_users{{/str}}</h2>
+                <p class="airpay-login__form-subtitle">{{#str}}signup_intro, local_sentientia_users{{/str}}</p>
+
+                {{#errorhtml}}
+                    <div class="airpay-login__error">{{{errorhtml}}}</div>
+                {{/errorhtml}}
+
+                {{{formhtml}}}
+
+                <div class="airpay-login__links airpay-signup__loginlink">
+                    {{#str}}signup_have_account, local_sentientia_users{{/str}}
+                    <a href="{{loginurl}}">{{#str}}login{{/str}}</a>
+                </div>
+            {{/success}}
+
+            {{#success}}
+                <div class="airpay-signup__success" role="status">
+                    <div class="airpay-signup__success-icon"><i class="fa fa-envelope-circle-check"></i></div>
+                    <h2 class="airpay-login__form-title">{{#str}}signup_success_check_email, local_sentientia_users{{/str}}</h2>
+                    <p class="airpay-login__form-subtitle">{{#str}}signup_success_help, local_sentientia_users{{/str}}</p>
+                    <a href="{{loginurl}}" class="airpay-login__submit airpay-signup__success-btn">
+                        {{#str}}signup_back_to_login, local_sentientia_users{{/str}}
+                    </a>
+                </div>
+            {{/success}}
+
+            {{! Privacy + Terms links — same destinations as the login page }}
+            <div class="airpay-login__legal">
+                <a href="{{{config.wwwroot}}}/local/sentientia_users/privacypolicy.php">Privacy Policy</a>
+                <span>&middot;</span>
+                <a href="{{{config.wwwroot}}}/local/sentientia_users/termscondition.php">Terms of Use</a>
+            </div>
+        </div>
+    </div>
+</div>

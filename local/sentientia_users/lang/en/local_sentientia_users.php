@@ -24,7 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Sentientia User Engine';
+$string['pluginname'] = 'Airpay User Engine';
 
 // Capabilities.
 $string['sentientia_users:edit'] = 'Edit users';
@@ -144,9 +144,9 @@ $string['hrms_col_missing']   = 'Missing mandatory';
 $string['error_csv_header_missing'] = 'Required header column(s) missing: {$a}';
 
 // W1-8 (2026-05-16) — Public-tenant signup + privacy + ToS.
-$string['signup_pagetitle']       = 'Create your {$a} account';
+$string['signup_pagetitle']       = 'Create your Airpay Academy account';
 $string['signup_heading']         = 'Create an account';
-$string['signup_intro']           = 'Sign up for free to access {$a}\'s public courses, certifications, and learning paths.';
+$string['signup_intro']           = 'Sign up for free to access Airpay Academy\'s public courses, certifications, and learning paths.';
 $string['signup_password']        = 'Password';
 $string['signup_password_help']   = 'Pick a strong password — at least 8 characters with a mix of letters, digits, and symbols.';
 $string['signup_password_confirm'] = 'Confirm password';
@@ -158,6 +158,7 @@ $string['signup_disabled_notice'] = 'Self-registration is currently disabled by 
 $string['signup_success_check_email'] = 'Account created. We have sent a confirmation link to your email — please click it to activate your account.';
 $string['signup_success_help']    = 'If you do not see the email within a few minutes, check your spam folder or contact academy@airpay.co.in for help.';
 $string['signup_back_to_login']   = 'Back to login';
+$string['signup_have_account']    = 'Already have an account?';
 $string['signup_generic_error']   = 'We could not process your registration. Please try again.';
 $string['signup_validation_failed'] = 'Sign-up validation failed: {$a}';
 
@@ -176,9 +177,9 @@ $string['custom_tos_html']         = 'Terms of Use HTML (override)';
 $string['custom_tos_html_help']    = 'Leave blank to use the built-in default. Set this to override with company-approved legal text.';
 
 // Privacy + ToS pages.
-$string['privacy_pagetitle'] = 'Privacy Policy — {$a}';
+$string['privacy_pagetitle'] = 'Privacy Policy — Airpay Academy';
 $string['privacy_heading']   = 'Privacy Policy';
-$string['tos_pagetitle']     = 'Terms of Use — {$a}';
+$string['tos_pagetitle']     = 'Terms of Use — Airpay Academy';
 $string['tos_heading']       = 'Terms of Use';
 
 // P1 batch (2026-05-16) — tenant-scoped supervisor autocomplete.

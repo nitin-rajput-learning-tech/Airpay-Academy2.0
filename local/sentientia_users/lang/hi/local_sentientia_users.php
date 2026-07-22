@@ -15,9 +15,9 @@ defined('MOODLE_INTERNAL') || die();
 $string['pluginname'] = 'एयरपे यूज़र इंजन';
 
 // W1-8 (2026-05-16) — Public-tenant self-registration.
-$string['signup_pagetitle']           = 'अपना {$a} अकाउंट बनाएँ';
+$string['signup_pagetitle']           = 'अपना एयरपे अकैडमी अकाउंट बनाएँ';
 $string['signup_heading']             = 'अकाउंट बनाएँ';
-$string['signup_intro']               = '{$a} के सार्वजनिक कोर्स, सर्टिफिकेशन और लर्निंग पाथ का उपयोग करने के लिए मुफ्त में साइन अप करें।';
+$string['signup_intro']               = 'एयरपे अकैडमी के सार्वजनिक कोर्स, सर्टिफिकेशन और लर्निंग पाथ का उपयोग करने के लिए मुफ्त में साइन अप करें।';
 $string['signup_password']            = 'पासवर्ड';
 $string['signup_password_help']       = 'एक मज़बूत पासवर्ड चुनें — कम से कम 8 अक्षर, अक्षरों, अंकों और चिह्नों का मिश्रण।';
 $string['signup_password_confirm']    = 'पासवर्ड पुष्टि करें';
@@ -29,13 +29,14 @@ $string['signup_disabled_notice']     = 'सेल्फ़-रजिस्ट�
 $string['signup_success_check_email'] = 'अकाउंट बन गया है। हमने आपके ईमेल पर एक पुष्टिकरण लिंक भेजा है — अकाउंट सक्रिय करने के लिए कृपया उस पर क्लिक करें।';
 $string['signup_success_help']        = 'अगर कुछ मिनटों में ईमेल नहीं दिखता है, तो अपना स्पैम फ़ोल्डर देखें या मदद के लिए academy@airpay.co.in पर संपर्क करें।';
 $string['signup_back_to_login']       = 'लॉग-इन पर वापस जाएँ';
+$string['signup_have_account']        = 'क्या आपके पास पहले से अकाउंट है?';
 $string['signup_generic_error']       = 'हम आपका रजिस्ट्रेशन प्रोसेस नहीं कर सके। कृपया फिर से कोशिश करें।';
 $string['signup_validation_failed']   = 'साइन-अप सत्यापन विफल: {$a}';
 
 // Privacy + ToS pages.
-$string['privacy_pagetitle'] = 'गोपनीयता नीति — {$a}';
+$string['privacy_pagetitle'] = 'गोपनीयता नीति — एयरपे अकैडमी';
 $string['privacy_heading']   = 'गोपनीयता नीति';
-$string['tos_pagetitle']     = 'उपयोग की शर्तें — {$a}';
+$string['tos_pagetitle']     = 'उपयोग की शर्तें — एयरपे अकैडमी';
 $string['tos_heading']       = 'उपयोग की शर्तें';
 
 // P1 #5 (2026-05-16) — DOB + DOJ.

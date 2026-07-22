@@ -1,4 +1,40 @@
-# Visual evidence — 2026-07-22 — Signup page UI repair
+# Visual evidence — 2026-07-22 — Signup page UI repair + split-panel redesign
+
+## Part 2 (same day): signup redesigned to the corporate login design
+
+After the repair below, the signup page was redesigned to match
+`/login/index.php` — the corporate split-screen: gradient hero left (logo,
+orange accent bar, tagline, 3 feature bullets, live stats bar), white form
+panel right (left-aligned title + subtitle, labeled fields, full-width blue
+CTA, quiet Cancel, "Already have an account? Log in", legal links).
+
+**How:** new plugin template `local_sentientia_users/signup_page.mustache`
+emits the same `.airpay-login` BEM markup as the theme's
+`core/loginform.mustache` (hero kept in lockstep); `signup.php` renders all
+three views (form / success / error) through it; `_surface-login.scss`
+section-1 scope widened to `body#page-signup` so the whole design system is
+inherited, with `:has(.airpay-login)` neutralisers retiring the old centred
+card (the same pattern login-index uses). Hero stats come live from the
+`login_stat_*` renderer methods. Dark-mode panel treatment mirrors 3a.
+Mobile (<992px) hides the hero and shows the brand logo — identical to the
+login page's mobile behaviour (`login-reference-desktop-1440.png` is the
+reference; the mobile logo uses the theme brand asset directly because
+`output.loginlogo` falls back to the BizLMS vendor logo outside the login
+renderer context).
+
+| File | What |
+|------|------|
+| `login-reference-desktop-1440.png` | The login page the design matches |
+| `signup-v2-desktop-1440-light.png` / `-dark.png` | Redesigned signup, desktop |
+| `signup-v2-mobile-590-light.png` / `-dark.png` | Redesigned signup, 590px |
+
+Versions: `local_sentientia_users` 2026072201 / 2.7.3, `theme_sentientia`
+2026072201 / 1.0.48-beta. New string `signup_have_account` (en + hi).
+Console: 0 errors. `signup-fixed-*` below = Part 1 (pre-redesign repair).
+
+---
+
+# Part 1 — Signup page UI repair
 
 **Page:** `/local/sentientia_users/signup.php` (public self-registration)
 **Reported:** labels wrapping mid-word ("First / name"), required markers rendering as a

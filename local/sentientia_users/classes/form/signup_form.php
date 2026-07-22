@@ -35,8 +35,9 @@ class signup_form extends \moodleform {
         // (chevron toggle on "Create an account") reads as broken UI here.
         $mform->setDisableShortforms(true);
 
-        $mform->addElement('header', 'signupheader',
-            get_string('signup_heading', 'local_sentientia_users'));
+        // No 'header' element: the split-screen signup_page template renders
+        // the panel title ("Create an account") itself, mirroring the login
+        // page's form panel — an mform header here would duplicate it.
 
         // Identity block.
         $mform->addElement('text', 'firstname',

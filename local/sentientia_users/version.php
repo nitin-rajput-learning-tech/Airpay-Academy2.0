@@ -42,10 +42,10 @@ $plugin->component = 'local_sentientia_users';
 // ID #fitem_id_honeypot_url, not a class — the stray empty field is gone);
 // (2) success page no longer double-renders the confirmation message and
 // drops the dismissible-alert close glyph.
-$plugin->version   = 2026072200;
+$plugin->version   = 2026072201;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '2.7.2';  // signup UI fix: stacked layout wired, password (not unmask), autocomplete, no shortforms
+$plugin->release   = '2.7.3';  // signup redesigned to the corporate split-panel login design
 $plugin->dependencies = [
     'local_sentientia_org' => 2026051501,
 ];

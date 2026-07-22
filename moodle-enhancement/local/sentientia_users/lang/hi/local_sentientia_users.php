@@ -29,6 +29,7 @@ $string['signup_disabled_notice']     = 'सेल्फ़-रजिस्ट�
 $string['signup_success_check_email'] = 'अकाउंट बन गया है। हमने आपके ईमेल पर एक पुष्टिकरण लिंक भेजा है — अकाउंट सक्रिय करने के लिए कृपया उस पर क्लिक करें।';
 $string['signup_success_help']        = 'अगर कुछ मिनटों में ईमेल नहीं दिखता है, तो अपना स्पैम फ़ोल्डर देखें या मदद के लिए academy@airpay.co.in पर संपर्क करें।';
 $string['signup_back_to_login']       = 'लॉग-इन पर वापस जाएँ';
+$string['signup_have_account']        = 'क्या आपके पास पहले से अकाउंट है?';
 $string['signup_generic_error']       = 'हम आपका रजिस्ट्रेशन प्रोसेस नहीं कर सके। कृपया फिर से कोशिश करें।';
 $string['signup_validation_failed']   = 'साइन-अप सत्यापन विफल: {$a}';
 

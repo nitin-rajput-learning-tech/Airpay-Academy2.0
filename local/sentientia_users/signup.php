@@ -9,14 +9,14 @@
 
 require_once(__DIR__ . '/../../config.php');
 
-global $CFG, $OUTPUT, $PAGE, $USER, $SITE;
+global $CFG, $OUTPUT, $PAGE, $USER;
 
 $PAGE->set_url(new moodle_url('/local/sentientia_users/signup.php'));
 $PAGE->set_context(\context_system::instance());
 $PAGE->set_pagelayout('login');
 $PAGE->set_pagetype('signup');
-$PAGE->set_title(get_string('signup_pagetitle', 'local_sentientia_users', format_string($SITE->fullname)));
-$PAGE->set_heading(format_string($SITE->fullname));
+$PAGE->set_title(get_string('signup_pagetitle', 'local_sentientia_users'));
+$PAGE->set_heading(format_string($CFG->fullname ?? 'Airpay Academy'));
 
 // Already logged in? Send them home.
 if (isloggedin() && !isguestuser()) {
@@ -40,27 +40,27 @@ if ($mform->is_cancelled()) {
     redirect(get_login_url());
 }
 
+// All three views (form / success / registration-error) render through the
+// split-screen template that mirrors the corporate login page design
+// (theme_sentientia core/loginform): gradient hero left, form panel right.
+// 'output' must be passed explicitly so the template can call the
+// core_renderer login_stat_* methods for the live hero stats bar.
+$templatecontext = [
+    'output'    => $OUTPUT,
+    'sitename'  => format_string($SITE->fullname ?? 'airpay academy', true,
+        ['context' => \context_course::instance(SITEID), 'escape' => false]),
+    'loginurl'  => get_login_url(),
+    'success'   => (bool) $success,
+    'formhtml'  => '',
+    'errorhtml' => '',
+];
+
 if ($success) {
-    // Step-2 view: we just submitted successfully.
-    // Render a single, NON-dismissible success panel. $OUTPUT->notification()
-    // emits a dismissible alert whose close button rendered as a stray glyph
-    // on the dark card; a plain .alert (no .alert-dismissible, no button)
-    // avoids that and reads as an intentional confirmation, not a toast.
+    // Step-2 view: we just submitted successfully — confirmation panel
+    // inside the same split-screen shell (non-dismissible, role=status).
     echo $OUTPUT->header();
-    echo html_writer::start_div('container my-4 text-center');
-    echo html_writer::div(
-        get_string('signup_success_check_email', 'local_sentientia_users'),
-        'alert alert-success border-0',
-        ['role' => 'status']);
-    echo html_writer::tag('p',
-        get_string('signup_success_help', 'local_sentientia_users'),
-        ['class' => 'text-muted small']);
-    echo html_writer::tag('div',
-        html_writer::link(get_login_url(),
-            get_string('signup_back_to_login', 'local_sentientia_users'),
-            ['class' => 'btn btn-primary']),
-        ['class' => 'mt-3']);
-    echo html_writer::end_div();
+    echo $OUTPUT->render_from_template(
+        'local_sentientia_users/signup_page', $templatecontext);
     echo $OUTPUT->footer();
     exit;
 }
@@ -76,20 +76,20 @@ if ($data = $mform->get_data()) {
                 ['success' => 1])
         );
     } catch (\moodle_exception $e) {
-        // Re-render the form with the error.
+        // Re-render the form with the error inside the panel.
+        $templatecontext['errorhtml'] =
+            $OUTPUT->notification($e->getMessage(), 'error');
+        $templatecontext['formhtml'] = $mform->render();
         echo $OUTPUT->header();
-        echo $OUTPUT->notification($e->getMessage(), 'error');
-        $mform->display();
+        echo $OUTPUT->render_from_template(
+            'local_sentientia_users/signup_page', $templatecontext);
         echo $OUTPUT->footer();
         exit;
     }
 }
 
+$templatecontext['formhtml'] = $mform->render();
 echo $OUTPUT->header();
-echo html_writer::start_div('container my-4');
-echo html_writer::tag('p',
-    get_string('signup_intro', 'local_sentientia_users', format_string($SITE->fullname)),
-    ['class' => 'text-muted']);
-$mform->display();
-echo html_writer::end_div();
+echo $OUTPUT->render_from_template(
+    'local_sentientia_users/signup_page', $templatecontext);
 echo $OUTPUT->footer();

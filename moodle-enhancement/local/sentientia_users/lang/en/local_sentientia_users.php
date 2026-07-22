@@ -158,6 +158,7 @@ $string['signup_disabled_notice'] = 'Self-registration is currently disabled by 
 $string['signup_success_check_email'] = 'Account created. We have sent a confirmation link to your email — please click it to activate your account.';
 $string['signup_success_help']    = 'If you do not see the email within a few minutes, check your spam folder or contact academy@airpay.co.in for help.';
 $string['signup_back_to_login']   = 'Back to login';
+$string['signup_have_account']    = 'Already have an account?';
 $string['signup_generic_error']   = 'We could not process your registration. Please try again.';
 $string['signup_validation_failed'] = 'Sign-up validation failed: {$a}';
 
