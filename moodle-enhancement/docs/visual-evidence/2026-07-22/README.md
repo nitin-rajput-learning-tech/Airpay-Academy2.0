@@ -32,6 +32,19 @@ Versions: `local_sentientia_users` 2026072201 / 2.7.3, `theme_sentientia`
 2026072201 / 1.0.48-beta. New string `signup_have_account` (en + hi).
 Console: 0 errors. `signup-fixed-*` below = Part 1 (pre-redesign repair).
 
+**Functional walk (browser-verified end-to-end):**
+`signup-v2-walk-1-client-validation.png` — empty submit → client-side
+"You must supply a value here" under every required field, layout intact.
+`signup-v2-walk-2-server-validation.png` — mismatched passwords + unticked
+ToS → server round-trip renders "These passwords do not match" + the ToS
+gate message in place, form state preserved.
+`signup-v2-walk-3-success.png` — valid submit → redirect to `?success=1`,
+confirmation panel inside the same split shell ("Back to login" verified to
+land on /login/index.php). The hero stats bar ticked 671+→672+ learners —
+live-DB stats confirmed. QA account `qa_signup_ui_20260722@example.com`
+(id 3424, unconfirmed) left on local; `noemailever=1` so no mail was sent.
+Console across the whole walk: 0 errors.
+
 ---
 
 # Part 1 — Signup page UI repair
