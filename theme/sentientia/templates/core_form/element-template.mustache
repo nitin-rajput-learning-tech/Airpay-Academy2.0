@@ -43,7 +43,7 @@
     }
 }}
 <div id="{{element.wrapperid}}" class="form-group row {{#error}}has-danger{{/error}} {{element.type}} fitem {{#element.emptylabel}}femptylabel{{/element.emptylabel}} {{#advanced}}advanced{{/advanced}} {{{element.extraclasses}}}" {{#element.groupname}}data-groupname="{{.}}"{{/element.groupname}}>
-    <div class="col-md-3  {{label}}" id="{{label}}">
+    <div class="col-md-3">
         {{^element.staticlabel}}
         {{#label}}
         <label class="col-form-label d-inline {{#element.hiddenlabel}}sr-only{{/element.hiddenlabel}}" for="{{element.id}}">
@@ -56,8 +56,8 @@
             {{{label}}}
         </span>
         {{/element.staticlabel}}
-        <span class="float-sm-rights text-nowrap">
-            {{#required}}<abbr class="initialism text-danger" title="{{#str}}required{{/str}}">{{#pix}}new_req, core, {{#str}}required{{/str}}{{/pix}}</abbr>{{/required}}
+        <span class="float-sm-right text-nowrap">
+            {{#required}}<abbr class="initialism text-danger" title="{{#str}}required{{/str}}">{{#pix}}req, core, {{#str}}required{{/str}}{{/pix}}</abbr>{{/required}}
             {{#advanced}}<abbr class="initialism text-info" title="{{#str}}advanced{{/str}}">!</abbr>{{/advanced}}
             {{{helpbutton}}}
         </span>

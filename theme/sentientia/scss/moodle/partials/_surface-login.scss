@@ -524,6 +524,15 @@ body#page-login-index {
     flex: none;
     padding: 0;
 }
+/* Uniform full-width fields: text inputs honour their size="25" attribute
+   (~200px) while password fields stretch, leaving ragged widths in the
+   576-767px band where .form-inline hasn't collapsed yet. */
+#page-signup .signup_form--simple .felement input[type="text"],
+#page-signup .signup_form--simple .felement input[type="password"],
+#page-signup .signup_form--simple .felement select {
+    width: 100%;
+    max-width: 100%;
+}
 /* White card — preserved: Moodle wraps the card in <section id="region-main">
    and may apply body#page-X #region-main padding at (2,0,0), beating our
    (1,1,0) selector. The 6 declarations below carry `important` defensively. */
@@ -874,15 +883,31 @@ body.dark-mode#page-login-forgot_password #region-main > p {
 html.dark-mode #page-login-forgot_password .form-control,
 html.dark-mode #page-login-forgot_password input[type="text"],
 body.dark-mode#page-login-forgot_password .form-control,
+body.dark-mode#page-login-forgot_password input[type="text"],
 html.dark-mode #page-signup .form-control,
 html.dark-mode #page-signup input[type="text"],
 html.dark-mode #page-signup input[type="password"],
 html.dark-mode #page-signup select,
-body.dark-mode#page-signup .form-control {
+body.dark-mode#page-signup .form-control,
+body.dark-mode#page-signup input[type="text"],
+body.dark-mode#page-signup input[type="password"],
+body.dark-mode#page-signup select {
     background: #0f172a; border-color: #334155; color: #f1f5f9;
 }
 html.dark-mode #page-signup #id_cancel,
 body.dark-mode#page-signup #id_cancel {
     border-color: #334155; color: #93c5fd;
+}
+/* Chrome/Edge autofill paints its own white field background, which on the
+   dark card renders one glaring white input among dark ones. UA autofill
+   styles can't be overridden by `background` — repaint via the inset
+   box-shadow trick with the same colors as the dark inputs above. */
+html.dark-mode #page-login-forgot_password input:-webkit-autofill,
+body.dark-mode#page-login-forgot_password input:-webkit-autofill,
+html.dark-mode #page-signup input:-webkit-autofill,
+body.dark-mode#page-signup input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 1000px #0f172a inset !important;  /* preserved: only way to beat the UA autofill bg */
+    -webkit-text-fill-color: #f1f5f9 !important;                /* preserved: pairs with the shadow repaint */
+    caret-color: #f1f5f9;
 }
 

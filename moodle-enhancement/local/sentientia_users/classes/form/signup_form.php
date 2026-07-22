@@ -23,35 +23,54 @@ class signup_form extends \moodleform {
         global $CFG;
         $mform = $this->_form;
 
+        // Single-column stacked layout: _surface-login.scss ships the
+        // "#page-signup .signup_form--simple" ruleset (labels above fields),
+        // keyed on this class. Without it the narrow 640px login card keeps
+        // Moodle's desktop col-md-3/9 split and every label wraps mid-word.
+        $mform->updateAttributes([
+            'class' => $mform->getAttribute('class') . ' signup_form--simple',
+        ]);
+
+        // Public-facing one-section form — the collapsible-header chrome
+        // (chevron toggle on "Create an account") reads as broken UI here.
+        $mform->setDisableShortforms(true);
+
         $mform->addElement('header', 'signupheader',
             get_string('signup_heading', 'local_sentientia_users'));
 
         // Identity block.
         $mform->addElement('text', 'firstname',
-            get_string('firstname'), ['size' => 25, 'maxlength' => 100]);
+            get_string('firstname'),
+            ['size' => 25, 'maxlength' => 100, 'autocomplete' => 'given-name']);
         $mform->setType('firstname', PARAM_TEXT);
         $mform->addRule('firstname', null, 'required', null, 'client');
 
         $mform->addElement('text', 'lastname',
-            get_string('lastname'), ['size' => 25, 'maxlength' => 100]);
+            get_string('lastname'),
+            ['size' => 25, 'maxlength' => 100, 'autocomplete' => 'family-name']);
         $mform->setType('lastname', PARAM_TEXT);
         $mform->addRule('lastname', null, 'required', null, 'client');
 
         $mform->addElement('text', 'email',
-            get_string('email'), ['size' => 40, 'maxlength' => 100]);
+            get_string('email'),
+            ['size' => 40, 'maxlength' => 100, 'autocomplete' => 'email']);
         $mform->setType('email', PARAM_RAW_TRIMMED);  // PARAM_EMAIL strips chars; we validate via validate_email() in service
         $mform->addRule('email', null, 'required', null, 'client');
 
-        // Password block.
-        $mform->addElement('passwordunmask', 'password',
-            get_string('password'), ['size' => 25, 'maxlength' => 50]);
+        // Password block. Plain 'password' inputs: the 'passwordunmask'
+        // element is the admin-settings widget and renders as a
+        // "Click to enter text" edit-pencil control — broken-looking and
+        // unusable on a public signup form.
+        $mform->addElement('password', 'password',
+            get_string('password'),
+            ['size' => 25, 'maxlength' => 50, 'autocomplete' => 'new-password']);
         $mform->setType('password', PARAM_RAW);
         $mform->addRule('password', null, 'required', null, 'client');
         $mform->addHelpButton('password', 'signup_password', 'local_sentientia_users');
 
-        $mform->addElement('passwordunmask', 'password2',
+        $mform->addElement('password', 'password2',
             get_string('signup_password_confirm', 'local_sentientia_users'),
-            ['size' => 25, 'maxlength' => 50]);
+            ['size' => 25, 'maxlength' => 50, 'autocomplete' => 'new-password']);
         $mform->setType('password2', PARAM_RAW);
         $mform->addRule('password2', null, 'required', null, 'client');
 

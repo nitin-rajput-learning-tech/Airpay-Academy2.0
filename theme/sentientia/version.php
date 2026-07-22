@@ -379,7 +379,10 @@ defined('MOODLE_INTERNAL') || die();
 // to brand secondaries (blue-dominant, sparing purple/orange — no cyan/magenta/gold).
 // 2026061603 — brand-verify closure: Bootstrap $info cyan->blue, dark-mode emerald
 // accent->blue, decorative emerald/amber/red->brand, violet->purple, gold->orange, a11y.
-$plugin->version   = 2026061603;
+// 2026072200 — mform element-template repair: label-text leak out of class/id attrs,
+// float-sm-right(s) typo, new_req GIF -> core req FontAwesome icon; dark-mode
+// autofill repaint on signup/forgot (see _surface-login.scss section 3b).
+$plugin->version   = 2026072200;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_sentientia';
 $plugin->maturity  = MATURITY_BETA;
@@ -398,7 +401,7 @@ $plugin->maturity  = MATURITY_BETA;
 // (83% reduction). Section 1 wrapped under body#page-login-index for
 // ID-specificity. Bundled bugfix: dark-mode selectors used descendant
 // combinator (never fired since #page-X IS body); now chained.
-$plugin->release   = '1.0.46-beta';  // + de-brand: epsilonnavbar→sentientia_navbar (Moodle copyright retained) + version.php header de-branded to Sentientia
+$plugin->release   = '1.0.47-beta';  // + mform element-template repair (req icon, label-class leak) + dark autofill
 // P1 #10 chip-J (2026-05-24) — _surface-profile.scss (2,507 lines)
 // decomposed into 4 per-surface partials: _surface-user, _surface-badges,
 // _surface-grade-report, _surface-calendar. Admin fragments moved to
