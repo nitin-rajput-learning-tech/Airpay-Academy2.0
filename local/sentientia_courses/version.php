@@ -35,10 +35,10 @@ $plugin->component = 'local_sentientia_courses';
 // Stream F / Wave E2 P4 (2026-05-25) — inline call to
 // \local_sentientia_whatsapp\notification_bridge::send_course_due_soon
 // from course_reminder for the <48h urgent surface. No schema change.
-$plugin->version   = 2026052501;
+$plugin->version   = 2026072200;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.11.2';
+$plugin->release   = '1.11.3';  // featured widget gated to curators (hidden from user roles)
 $plugin->dependencies = [
     'local_sentientia_org' => 2026041600,
 ];

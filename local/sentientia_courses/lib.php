@@ -40,6 +40,15 @@ function local_sentientia_courses_render_featured_widget(?int $userid = null,
     if ($uid <= 0) {
         return '';
     }
+    // 2026-07-22 (owner request) — the widget is an admin-curated promotion
+    // rail, not personalisation; hidden from user roles (employee / manager /
+    // trainer / public learner). Only curators (site admins + holders of the
+    // manage capability, i.e. the people who maintain the featured list)
+    // still see it on their dashboard to verify curation.
+    if (!has_capability('local/sentientia_courses:manage',
+            \context_system::instance(), $uid)) {
+        return '';
+    }
     try {
         $ctx = \local_sentientia_courses\featured_manager::get_widget_for_user(
             $uid, max(1, min(24, $limit)));
