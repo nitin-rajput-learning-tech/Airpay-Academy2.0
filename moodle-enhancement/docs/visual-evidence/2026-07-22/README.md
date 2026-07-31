@@ -1,4 +1,37 @@
-# Visual evidence — 2026-07-22 — Signup page UI repair + split-panel redesign
+# Visual evidence — 2026-07-22 — Signup page UI repair + split-panel redesign + course-player fixes
+
+## Part 3 (same day): course-page UI repair (POSH Training report)
+
+Reported on `/course/view.php?id=403` + its quiz: sticky progress bar
+floating mid-air over content, "progress slider" reading as a broken pill,
+course page burying content ~630px below legacy header chrome.
+
+**Diagnosed live (in-app browser, DOM measurements, dark mode, qa_employee):**
+
+| Metric | Before | After |
+|---|---|---|
+| Bar stuck position (quiz page) | y=134 viewport (63px air-gap below navbar; content scrolled through the gap) | y=70 — flush under the navbar (`flush: true`) |
+| Bar stuck position (course page) | 64px offset in wrong reference frame | flush (`stuckFlush: true`) |
+| `#page-header` height (course view) | 643px (empty "No ratings yet / User enrolments: / User completion: /" row + full Description repeat) | 193px (banner + title + Start/Resume CTA kept) |
+| Progress bar natural position | y=633 | y=263; course content y=358 |
+| Track | 6px, border-token (invisible-ish on dark card at 0%) | 4px, `--ap-color-border-strong` in dark (`rgb(61,66,84)`) |
+
+**Root causes:** (1) sticky offset `top: var(--ap-topbar-height)` assumed the
+Sentientia-shell geometry, but course/incourse pages scroll inside
+`#page.drawers` which already starts below the fixed navbar → the offset was
+a pure air gap; correct is `top: 0`. (2) legacy BizLMS banner meta cells
+(carrying Bootstrap `.d-flex !important`, hence the `!important` counters)
+plus the repeated Description block. All fixes CSS-only in
+`_course-player.scss`, scoped `body.pagelayout-course:not(.editing)` — edit
+mode unchanged. Quiz "instructions overlap" was collateral of (1): the
+activity-header description is legitimate content and reads correctly once
+the bar pins properly.
+
+No screenshots for part 3 — the Browser pane wasn't displayable for
+compositing this session; evidence is the measured DOM geometry above
+(before/after captured live on both page types). Theme 2026072202 / 1.0.49-beta.
+
+---
 
 ## Part 2 (same day): signup redesigned to the corporate login design
 

@@ -19,9 +19,14 @@
     border-radius: var(--ap-radius-md);
     padding: var(--ap-space-2) var(--ap-space-4);
     margin-bottom: var(--ap-space-4);
-    /* Stays below navbar on scroll. */
+    /* Sticky offset fix (2026-07-22): course/incourse pages scroll inside
+       #page.drawers, which already starts BELOW the fixed navbar
+       (margin-top = navbar height). A --ap-topbar-height offset here is
+       therefore a pure air gap — the bar pinned 64px below the navbar and
+       content scrolled visibly through the gap (reported on the POSH quiz
+       page). Within this scroll container, flush-under-the-navbar is 0. */
     position: sticky;
-    top: var(--ap-topbar-height);
+    top: 0;
     z-index: var(--ap-z-sticky);
 }
 .ap-course-progress-bar__info {
@@ -65,7 +70,7 @@
     flex-shrink: 0;
 }
 .ap-course-progress-bar__track {
-    height: 6px;
+    height: 4px;
     background: var(--ap-color-border);
     border-radius: var(--ap-radius-xs);
     overflow: hidden;
@@ -75,6 +80,12 @@
     background: var(--ap-gradient-cta);
     border-radius: var(--ap-radius-xs);
     transition: width var(--ap-transition-slow);
+}
+/* Dark mode: the border token barely separates from the card surface,
+   leaving the 0%-progress track looking like a broken grey slab. Use the
+   stronger border token so the empty track reads as an intentional line. */
+body.dark-mode .ap-course-progress-bar__track {
+    background: var(--ap-color-border-strong, #3d4358);
 }
 
 /* ── Next-activity CTA ───────────────────────────────────────────────── */
@@ -101,6 +112,36 @@
 .pagelayout-course #page-content,
 .pagelayout-incourse #page-content {
     overflow: visible !important;
+}
+
+/* ── Course-view header compaction (2026-07-22, learner views) ─────────
+   The legacy BizLMS course banner stacked ~630px of chrome above the
+   player: a metrics row that renders EMPTY for learners ("No ratings
+   yet", "User enrolments:", "User completion: /") plus the full course
+   Description repeated from the course-detail page. Content ended up
+   below the fold and the page read nothing like the rest of the
+   platform. Hide the noise for non-editing views only — the banner,
+   course title, and the Start/Resume CTA (the .user_enrollment variant
+   WITH .flex-column) survive, and edit mode keeps everything. */
+body.pagelayout-course:not(.editing) #page-header .rating_container,
+body.pagelayout-course:not(.editing) #page-header .user_enrollment:not(.flex-column),
+body.pagelayout-course:not(.editing) #page-header .user_completion {
+    display: none !important;  /* preserved: cells carry Bootstrap .d-flex (display:flex !important) */
+}
+/* The repeated course Description block (sibling of .courseheader inside
+   the full_header wrapper). Learners already read it on the course-detail
+   page; inside the course, the module list is the content. */
+body.pagelayout-course:not(.editing) #page-header .courseheader ~ .px-3 {
+    display: none;
+}
+/* With the meta row emptied the banner keeps its tall flex height — let it
+   shrink to the title instead of holding a 240px slab. */
+body.pagelayout-course:not(.editing) #page-header .courseheader {
+    min-height: 0;
+    height: auto;
+}
+body.pagelayout-course:not(.editing) #page-header .courseheader .course_heading {
+    height: auto !important;  /* template hardcodes h-100 utility */
 }
 
 /* ── Progress-bar toggle (collapse sidebar) ──────────────────────────── */

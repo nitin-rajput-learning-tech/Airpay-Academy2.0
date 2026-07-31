@@ -382,7 +382,7 @@ defined('MOODLE_INTERNAL') || die();
 // 2026072200 — mform element-template repair: label-text leak out of class/id attrs,
 // float-sm-right(s) typo, new_req GIF -> core req FontAwesome icon; dark-mode
 // autofill repaint on signup/forgot (see _surface-login.scss section 3b).
-$plugin->version   = 2026072201;
+$plugin->version   = 2026072202;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_sentientia';
 $plugin->maturity  = MATURITY_BETA;
@@ -401,7 +401,7 @@ $plugin->maturity  = MATURITY_BETA;
 // (83% reduction). Section 1 wrapped under body#page-login-index for
 // ID-specificity. Bundled bugfix: dark-mode selectors used descendant
 // combinator (never fired since #page-X IS body); now chained.
-$plugin->release   = '1.0.48-beta';  // + signup split-panel: section-1 scope widened to #page-signup, :has() card neutralisers, dark panel
+$plugin->release   = '1.0.49-beta';  // + course-player sticky-offset fix + track polish + learner header compaction
 // P1 #10 chip-J (2026-05-24) — _surface-profile.scss (2,507 lines)
 // decomposed into 4 per-surface partials: _surface-user, _surface-badges,
 // _surface-grade-report, _surface-calendar. Admin fragments moved to
