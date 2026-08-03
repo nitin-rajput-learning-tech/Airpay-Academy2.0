@@ -846,8 +846,8 @@ a:hover {
     border-color: #0066A7;
 }
 body.dark-mode .airpay-nav__theme-toggle {
-    background: #232733;
-    border-color: #3d4254;
+    background: var(--ap-color-bg-surface-alt);
+    border-color: var(--ap-color-border-strong);
     color: #fcd34d;
 }
 

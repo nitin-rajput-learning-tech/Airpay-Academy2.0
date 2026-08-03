@@ -682,3 +682,61 @@ body.path-local-sentientia_catalog .ap-shell__content {
     height: auto;
     overflow: visible;
 }
+
+/* ── Phase B (UI-NAV-AUDIT-2026-08-03, N-03): shell breadcrumb strip ──
+   Rendered by airpay_shell_start() on nested pages (suppressed on the
+   dashboard and single-item trails). Token-based so dark mode flips free. */
+.ap-shell__breadcrumbs {
+    margin: 0 0 var(--ap-space-3);
+    font-size: var(--ap-text-xs);
+}
+.ap-shell__breadcrumbs .breadcrumb {
+    background: transparent;
+    padding: 0;
+    margin: 0;
+}
+.ap-shell__breadcrumbs .breadcrumb-item a {
+    color: var(--ap-color-text-muted);
+    text-decoration: none;
+    transition: color var(--ap-transition-quick);
+}
+.ap-shell__breadcrumbs .breadcrumb-item a:hover,
+.ap-shell__breadcrumbs .breadcrumb-item a:focus-visible {
+    color: var(--ap-color-primary);
+}
+.ap-shell__breadcrumbs .breadcrumb-item.active,
+.ap-shell__breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
+    color: var(--ap-color-text-muted);
+}
+/* Course-shell pages moved the scroller padding onto #page; give the
+   breadcrumb strip its own top offset there so it doesn't kiss the topbar. */
+body.ap-course-shell .ap-shell__breadcrumbs {
+    padding: var(--ap-space-3) 0 0;
+    margin-bottom: 0;
+}
+
+/* ── Phase D2 (N-06): topbar notification/message icon links ── */
+.ap-topbar__right {
+    display: flex;
+    align-items: center;
+    gap: var(--ap-space-1);
+}
+.ap-topbar__iconlink {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--ap-radius-full);
+    color: var(--ap-color-text-secondary);
+    font-size: var(--ap-text-md);
+    text-decoration: none;
+    transition: background var(--ap-transition-quick),
+                color var(--ap-transition-quick);
+}
+.ap-topbar__iconlink:hover,
+.ap-topbar__iconlink:focus-visible {
+    background: var(--ap-color-bg-body);
+    color: var(--ap-color-primary);
+    text-decoration: none;
+}

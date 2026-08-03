@@ -121,12 +121,12 @@
 body.dark-mode .classroom_container,
 body.dark-mode .exam_container,
 body.dark-mode .onlineexam_container {
-    background: #1a1d27 !important;
-    border-color: #2d3140 !important;
+    background: var(--ap-color-bg-surface) !important;
+    border-color: var(--ap-color-border) !important;
 }
 body.dark-mode .classroom_name_info .class_name,
 body.dark-mode .examname_status a {
-    color: #e8eaed !important;
+    color: var(--ap-color-text-primary) !important;
 }
 body.dark-mode .custom_header {
     background: linear-gradient(135deg, #004d7a, #065a54) !important;
@@ -294,11 +294,11 @@ body.dark-mode .custom_header {
 .ap-dash-exam-card__cta:hover { opacity: 0.9; color: #fff; }
 
 /* Dark mode */
-body.dark-mode .ap-dash-exam-card { background: #1a1d27; border-color: #2d3140; }
+body.dark-mode .ap-dash-exam-card { background: var(--ap-color-bg-surface); border-color: var(--ap-color-border); }
 body.dark-mode .ap-dash-exam-card:hover { box-shadow: 0 12px 32px rgba(0,0,0,0.3); }
-body.dark-mode .ap-dash-exam-card__title a { color: #e8eaed; }
-body.dark-mode .ap-dash-exam-card__desc { color: #9ca3b4; }
-body.dark-mode .ap-dash-exam-card__progress { background: #2d3140; }
+body.dark-mode .ap-dash-exam-card__title a { color: var(--ap-color-text-primary); }
+body.dark-mode .ap-dash-exam-card__desc { color: var(--ap-color-text-secondary); }
+body.dark-mode .ap-dash-exam-card__progress { background: var(--ap-color-border); }
 body.dark-mode .ap-dash-exam-card__access { color: #6b7280; }
 
 /* ═══════════════════════════════════════════════════════════
@@ -451,7 +451,7 @@ body.path-local-sentientia_live {
    dark backgrounds. The base badge/btn tokens already use
    CSS custom properties so they follow the page palette. */
 body.dark-mode.path-local-sentientia_live .airpay-badge--light {
-    background: #2d3140 !important;
-    color: #e8eaed !important;
-    border-color: #3a4151 !important;
+    background: var(--ap-color-border) !important;
+    color: var(--ap-color-text-primary) !important;
+    border-color: var(--ap-color-border-strong) !important;
 }

@@ -12,6 +12,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['pluginname'] = 'एयरपे कौशल मैट्रिक्स';
+$string['myskills_title'] = 'मेरे कौशल';
 $string['privacy:metadata'] = 'कौशल प्लगइन उपयोगकर्ता ID से जुड़े कौशल स्तर डेटा संग्रहीत करता है।';
 
 // Capabilities.

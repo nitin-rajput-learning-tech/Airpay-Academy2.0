@@ -25,6 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['pluginname'] = 'Airpay User Engine';
+$string['manageusers_title'] = 'Manage Users';
 
 // Capabilities.
 $string['sentientia_users:edit'] = 'Edit users';

@@ -181,7 +181,7 @@
 /* Dark mode footer */
 html.dark-mode .airpay-footer,
 body.dark-mode .airpay-footer {
-    background: #0f172a;
+    background: var(--ap-color-bg-body);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -223,7 +223,7 @@ body.dark-mode .airpay-footer {
 html.dark-mode .airpay-footer__product-attribution,
 body.dark-mode .airpay-footer__product-attribution {
     background: #111827;
-    color: #94a3b8;
+    color: var(--ap-color-text-muted);
     border-top-color: #1f2937;
 }
 

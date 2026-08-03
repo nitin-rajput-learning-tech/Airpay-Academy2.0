@@ -14,8 +14,10 @@ global $DB, $USER, $OUTPUT, $PAGE, $CFG;
 
 $PAGE->set_context(context_system::instance());
 $PAGE->set_url('/local/sentientia_skills/index.php');
-$PAGE->set_title(get_string('pluginname', 'local_sentientia_skills'));
-$PAGE->set_heading(get_string('pluginname', 'local_sentientia_skills'));
+// Phase E (UI-NAV-AUDIT N-08): learner-facing title matching the sidebar
+// label ("My Skills"), not the internal product name.
+$PAGE->set_title(get_string('myskills_title', 'local_sentientia_skills'));
+$PAGE->set_heading(get_string('myskills_title', 'local_sentientia_skills'));
 $PAGE->set_pagelayout('standard');
 
 $userid = optional_param('userid', $USER->id, PARAM_INT);

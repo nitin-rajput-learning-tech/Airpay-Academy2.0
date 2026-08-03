@@ -229,15 +229,15 @@ html.dark-mode body#page-badges-mybadges #region-main > #issued-badge-table.gene
 html.dark-mode body#page-badges-mybadges #region-main > .generalbox,
 body.dark-mode#page-badges-mybadges #region-main > #issued-badge-table.generalbox,
 body.dark-mode#page-badges-mybadges #region-main > .generalbox {
-    background: #1a1d27;
-    border-color: #2d3140;
+    background: var(--ap-color-bg-surface);
+    border-color: var(--ap-color-border);
 }
 html.dark-mode body#page-badges-mybadges #region-main > .generalbox > h2,
 html.dark-mode body#page-badges-mybadges #region-main > #issued-badge-table > h2,
 body.dark-mode#page-badges-mybadges #region-main > .generalbox > h2,
 body.dark-mode#page-badges-mybadges #region-main > #issued-badge-table > h2 {
-    color: #e5e7eb;
-    border-bottom-color: #2d3140;
+    color: var(--ap-color-text-primary);
+    border-bottom-color: var(--ap-color-border);
 }
 
 

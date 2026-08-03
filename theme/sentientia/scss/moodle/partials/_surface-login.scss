@@ -844,18 +844,18 @@ body#page-login-index .airpay-login-wrapper:not(:has(.airpay-login)) input[type=
 /* Dark-mode notice card — match the signup/forgot card dark treatment. */
 html.dark-mode body#page-login-index .airpay-login-wrapper:not(:has(.airpay-login)) .airpay-login-region,
 body.dark-mode#page-login-index .airpay-login-wrapper:not(:has(.airpay-login)) .airpay-login-region {
-    background: #1e293b;
+    background: var(--ap-color-bg-surface);
     box-shadow: 0 20px 60px rgba(0,0,0,0.5);
 }
 html.dark-mode body#page-login-index .airpay-login-wrapper:not(:has(.airpay-login)) #region-main h1,
 html.dark-mode body#page-login-index .airpay-login-wrapper:not(:has(.airpay-login)) #region-main h2,
 body.dark-mode#page-login-index .airpay-login-wrapper:not(:has(.airpay-login)) #region-main h1,
 body.dark-mode#page-login-index .airpay-login-wrapper:not(:has(.airpay-login)) #region-main h2 {
-    color: #f1f5f9;
+    color: var(--ap-color-text-primary);
 }
 html.dark-mode body#page-login-index .airpay-login-wrapper:not(:has(.airpay-login)) #region-main p,
 body.dark-mode#page-login-index .airpay-login-wrapper:not(:has(.airpay-login)) #region-main p {
-    color: #94a3b8;
+    color: var(--ap-color-text-muted);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -879,64 +879,64 @@ body.dark-mode#page-login-index .airpay-login-wrapper:not(:has(.airpay-login)) #
    body.dark-mode#page-login-index (1,2,1) to win by class count. */
 html.dark-mode body#page-login-index .airpay-login__form-panel,
 body.dark-mode#page-login-index .airpay-login__form-panel {
-    background: #1a1d27;
+    background: var(--ap-color-bg-surface);
 }
 html.dark-mode body#page-login-index .airpay-login__form-title,
 body.dark-mode#page-login-index .airpay-login__form-title {
-    color: #f1f5f9;
+    color: var(--ap-color-text-primary);
 }
 html.dark-mode body#page-login-index .airpay-login__form-subtitle,
 html.dark-mode body#page-login-index .airpay-login__label,
 body.dark-mode#page-login-index .airpay-login__form-subtitle,
 body.dark-mode#page-login-index .airpay-login__label {
-    color: #94a3b8;
+    color: var(--ap-color-text-muted);
 }
 html.dark-mode body#page-login-index .airpay-login__input,
 body.dark-mode#page-login-index .airpay-login__input {
-    background: #0f172a;
-    border-color: #334155;
-    color: #f1f5f9;
+    background: var(--ap-color-bg-body);
+    border-color: var(--ap-color-border);
+    color: var(--ap-color-text-primary);
 }
 html.dark-mode body#page-login-index .airpay-login__input::placeholder,
 body.dark-mode#page-login-index .airpay-login__input::placeholder {
-    color: #64748b;
+    color: var(--ap-color-text-muted);
 }
 html.dark-mode body#page-login-index .airpay-login__input-icon,
 body.dark-mode#page-login-index .airpay-login__input-icon {
-    color: #64748b;
+    color: var(--ap-color-text-muted);
 }
 html.dark-mode body#page-login-index .airpay-login__eye,
 body.dark-mode#page-login-index .airpay-login__eye {
-    color: #64748b;
+    color: var(--ap-color-text-muted);
 }
 html.dark-mode body#page-login-index .airpay-login__links a,
 html.dark-mode body#page-login-index .airpay-login__legal a,
 body.dark-mode#page-login-index .airpay-login__links a,
 body.dark-mode#page-login-index .airpay-login__legal a {
-    color: #60a5fa;
+    color: var(--ap-blue-300);
 }
 html.dark-mode body#page-login-index .airpay-login__links-sep,
 html.dark-mode body#page-login-index .airpay-login__legal span,
 body.dark-mode#page-login-index .airpay-login__links-sep,
 body.dark-mode#page-login-index .airpay-login__legal span {
-    color: #475569;
+    color: var(--ap-color-border-strong);
 }
 html.dark-mode body#page-login-index .airpay-login__divider span,
 body.dark-mode#page-login-index .airpay-login__divider span {
-    background: #1a1d27;
-    color: #64748b;
+    background: var(--ap-color-bg-surface);
+    color: var(--ap-color-text-muted);
 }
 html.dark-mode body#page-login-index .airpay-login__divider::before,
 html.dark-mode body#page-login-index .airpay-login__divider::after,
 body.dark-mode#page-login-index .airpay-login__divider::before,
 body.dark-mode#page-login-index .airpay-login__divider::after {
-    background: #334155;
+    background: var(--ap-color-border);
 }
 html.dark-mode body#page-login-index .airpay-login__guest-btn,
 body.dark-mode#page-login-index .airpay-login__guest-btn {
-    background: #0f172a;
-    border-color: #334155;
-    color: #f1f5f9;
+    background: var(--ap-color-bg-body);
+    border-color: var(--ap-color-border);
+    color: var(--ap-color-text-primary);
 }
 
 /* ── 3b. Dark mode for forgot-password + signup ──
@@ -949,7 +949,7 @@ html.dark-mode #page-login-forgot_password .airpay-login-region,
 body.dark-mode#page-login-forgot_password .airpay-login-region,
 html.dark-mode #page-signup .airpay-login-region,
 body.dark-mode#page-signup .airpay-login-region {
-    background: #1e293b !important;             /* preserved: matches preserved light-mode flag on card bg */
+    background: var(--ap-color-bg-surface) !important;             /* preserved: matches preserved light-mode flag on card bg */
     box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important;  /* preserved: matches preserved light-mode flag on card shadow */
 }
 html.dark-mode #page-login-forgot_password .forgotpasswordheader,
@@ -961,11 +961,11 @@ body.dark-mode#page-login-forgot_password label,
 html.dark-mode #page-signup h2,
 html.dark-mode #page-signup label,
 body.dark-mode#page-signup label {
-    color: #f1f5f9;
+    color: var(--ap-color-text-primary);
 }
 html.dark-mode #page-login-forgot_password #region-main > p,
 body.dark-mode#page-login-forgot_password #region-main > p {
-    color: #94a3b8;
+    color: var(--ap-color-text-muted);
 }
 html.dark-mode #page-login-forgot_password .form-control,
 html.dark-mode #page-login-forgot_password input[type="text"],
@@ -979,33 +979,33 @@ body.dark-mode#page-signup .form-control,
 body.dark-mode#page-signup input[type="text"],
 body.dark-mode#page-signup input[type="password"],
 body.dark-mode#page-signup select {
-    background: #0f172a; border-color: #334155; color: #f1f5f9;
+    background: var(--ap-color-bg-body); border-color: var(--ap-color-border); color: var(--ap-color-text-primary);
 }
 html.dark-mode #page-signup #id_cancel,
 body.dark-mode#page-signup #id_cancel {
-    border-color: #334155; color: #93c5fd;
+    border-color: var(--ap-color-border); color: var(--ap-blue-300);
 }
 /* Signup split-panel dark mode (2026-07-22) — mirrors the 3a login-index
    form-panel treatment for the panel the signup page now shares. */
 html.dark-mode #page-signup .airpay-login__form-panel,
 body.dark-mode#page-signup .airpay-login__form-panel {
-    background: #1a1d27;
+    background: var(--ap-color-bg-surface);
 }
 html.dark-mode #page-signup .airpay-login__form-title,
 body.dark-mode#page-signup .airpay-login__form-title {
-    color: #f1f5f9;
+    color: var(--ap-color-text-primary);
 }
 html.dark-mode #page-signup .airpay-login__form-subtitle,
 html.dark-mode #page-signup .airpay-signup__loginlink,
 body.dark-mode#page-signup .airpay-login__form-subtitle,
 body.dark-mode#page-signup .airpay-signup__loginlink {
-    color: #94a3b8;
+    color: var(--ap-color-text-muted);
 }
 html.dark-mode #page-signup .airpay-login__legal a,
 html.dark-mode #page-signup .airpay-signup__loginlink a,
 body.dark-mode#page-signup .airpay-login__legal a,
 body.dark-mode#page-signup .airpay-signup__loginlink a {
-    color: #60a5fa;
+    color: var(--ap-blue-300);
 }
 /* Chrome/Edge autofill paints its own white field background, which on the
    dark card renders one glaring white input among dark ones. UA autofill
@@ -1015,8 +1015,8 @@ html.dark-mode #page-login-forgot_password input:-webkit-autofill,
 body.dark-mode#page-login-forgot_password input:-webkit-autofill,
 html.dark-mode #page-signup input:-webkit-autofill,
 body.dark-mode#page-signup input:-webkit-autofill {
-    -webkit-box-shadow: 0 0 0 1000px #0f172a inset !important;  /* preserved: only way to beat the UA autofill bg */
-    -webkit-text-fill-color: #f1f5f9 !important;                /* preserved: pairs with the shadow repaint */
-    caret-color: #f1f5f9;
+    -webkit-box-shadow: 0 0 0 1000px var(--ap-color-bg-body) inset !important;  /* preserved: only way to beat the UA autofill bg */
+    -webkit-text-fill-color: var(--ap-color-text-primary) !important;                /* preserved: pairs with the shadow repaint */
+    caret-color: var(--ap-color-text-primary);
 }
 

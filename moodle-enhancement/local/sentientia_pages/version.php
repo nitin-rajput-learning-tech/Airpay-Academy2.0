@@ -6,7 +6,7 @@ $plugin->component = 'local_sentientia_pages';
 // certificate_templates.php + 19 lang strings. Reads tool_certificate
 // READ-ONLY; gated behind sentientia.certificate.tenant_scope.enabled
 // (default OFF = today's behaviour).
-$plugin->version   = 2026052900;
+$plugin->version   = 2026080300;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
 $plugin->release   = '1.1';

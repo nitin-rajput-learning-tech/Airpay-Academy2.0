@@ -15,7 +15,11 @@ global $DB, $USER, $OUTPUT, $PAGE, $CFG;
 
 $PAGE->set_context(context_system::instance());
 $PAGE->set_url('/local/sentientia_pages/certificates.php');
-$PAGE->set_title('My Certificates | ' . get_config('moodle', 'shortname'));
+// Phase E (UI-NAV-AUDIT N-08): get_config('moodle','shortname') is not a real
+// config key (site shortname lives on $SITE) — it returned empty and produced
+// the "My Certificates | | airpay" double-separator title. Moodle appends the
+// site name itself; pass only the page title.
+$PAGE->set_title('My Certificates');
 $PAGE->set_heading('My Certificates');
 $PAGE->set_pagelayout('standard');
 $PAGE->navbar->add('My Certificates');

@@ -15,23 +15,23 @@ body.dark-mode {
     .userscontainer,
     .coursecontainer,
     .card-paginate_wrap {
-        background: #1e293b !important;
-        border-color: #334155 !important;
-        color: #e2e8f0 !important;
+        background: var(--ap-color-bg-surface) !important;
+        border-color: var(--ap-color-border) !important;
+        color: var(--ap-color-text-primary) !important;
     }
     .userscontainer .userprofile_details td,
     .userscontainer .courseprofile_details td,
     .coursecontainer td {
         color: #cbd5e1 !important;
-        border-color: #334155 !important;
+        border-color: var(--ap-color-border) !important;
     }
     .userscontainer a,
     .coursecontainer a {
-        color: #60a5fa !important;
+        color: var(--ap-blue-300) !important;
     }
     .userscontainer .badge-success,
     .coursecontainer .badge-success {
-        background: #0d5da1 !important;
+        background: var(--ap-blue-deep) !important;
     }
     .userscontainer .badge-danger,
     .coursecontainer .badge-danger {
@@ -43,21 +43,21 @@ body.dark-mode {
     .costcenterview_panel,
     [class*="costcenter_card"],
     .local_costcenter .card {
-        color: #e2e8f0 !important;
+        color: var(--ap-color-text-primary) !important;
     }
     /* Costcenter dashboard stat tiles */
     .local_costcenter .card-body,
     .pluginnav_card {
-        background: #1e293b !important;
-        color: #e2e8f0 !important;
-        border-color: #334155 !important;
+        background: var(--ap-color-bg-surface) !important;
+        color: var(--ap-color-text-primary) !important;
+        border-color: var(--ap-color-border) !important;
     }
     .pluginnav_card .card_count,
     .pluginnav_card .count-value {
-        color: #f1f5f9 !important;
+        color: var(--ap-color-text-primary) !important;
     }
     .pluginnav_card .count-label {
-        color: #94a3b8 !important;
+        color: var(--ap-color-text-muted) !important;
     }
     /* BizLMS search/filter bars */
     .card-paginate_wrap input[type="text"],
@@ -66,9 +66,9 @@ body.dark-mode {
     #page-local-users-index input,
     #page-local-courses-courses input,
     #page-local-search-allcourses input {
-        background: #0f172a !important;
-        border-color: #334155 !important;
-        color: #e2e8f0 !important;
+        background: var(--ap-color-bg-body) !important;
+        border-color: var(--ap-color-border) !important;
+        color: var(--ap-color-text-primary) !important;
     }
     /* BizLMS course card images overlay */
     .coursecontainer .course_image_wrap,
@@ -79,105 +79,105 @@ body.dark-mode {
     #page-header h1,
     .page-header-headings h1,
     .breadcrumb-item a {
-        color: #f1f5f9 !important;
+        color: var(--ap-color-text-primary) !important;
     }
     /* Pagination */
     .pagination .page-item .page-link {
-        background: #1e293b !important;
-        border-color: #334155 !important;
-        color: #e2e8f0 !important;
+        background: var(--ap-color-bg-surface) !important;
+        border-color: var(--ap-color-border) !important;
+        color: var(--ap-color-text-primary) !important;
     }
     .pagination .page-item.active .page-link {
-        background: #0066A7 !important;
-        border-color: #0066A7 !important;
-        color: #fff !important;
+        background: var(--ap-color-primary) !important;
+        border-color: var(--ap-color-primary) !important;
+        color: var(--ap-color-text-inverse) !important;
     }
     /* BizLMS custom count/stats bar */
     .customcount,
     .dashboard_count_list {
-        color: #94a3b8 !important;
+        color: var(--ap-color-text-muted) !important;
     }
     .dashboard_count_value {
-        color: #f1f5f9 !important;
+        color: var(--ap-color-text-primary) !important;
     }
     /* BizLMS DataTables */
     table.dataTable,
     .dataTables_wrapper {
-        color: #e2e8f0 !important;
+        color: var(--ap-color-text-primary) !important;
     }
     table.dataTable thead th,
     table.dataTable thead td {
-        background: #1e293b !important;
-        color: #e2e8f0 !important;
-        border-color: #334155 !important;
+        background: var(--ap-color-bg-surface) !important;
+        color: var(--ap-color-text-primary) !important;
+        border-color: var(--ap-color-border) !important;
     }
     table.dataTable tbody tr {
-        background: #0f172a !important;
+        background: var(--ap-color-bg-body) !important;
         color: #cbd5e1 !important;
     }
     table.dataTable tbody tr:nth-child(even) {
-        background: #1e293b !important;
+        background: var(--ap-color-bg-surface) !important;
     }
     table.dataTable tbody td {
-        border-color: #334155 !important;
+        border-color: var(--ap-color-border) !important;
     }
     /* BizLMS modal dialogs */
     .modal-content {
-        background: #1e293b !important;
-        border-color: #334155 !important;
-        color: #e2e8f0 !important;
+        background: var(--ap-color-bg-surface) !important;
+        border-color: var(--ap-color-border) !important;
+        color: var(--ap-color-text-primary) !important;
     }
     .modal-header {
-        border-color: #334155 !important;
+        border-color: var(--ap-color-border) !important;
     }
     .modal-header .modal-title {
-        color: #f1f5f9 !important;
+        color: var(--ap-color-text-primary) !important;
     }
     .modal-footer {
-        border-color: #334155 !important;
+        border-color: var(--ap-color-border) !important;
     }
     /* BizLMS filter panel */
     .filter-panel,
     .filters-panel,
     .sidebar-filter {
-        background: #1e293b !important;
-        border-color: #334155 !important;
-        color: #e2e8f0 !important;
+        background: var(--ap-color-bg-surface) !important;
+        border-color: var(--ap-color-border) !important;
+        color: var(--ap-color-text-primary) !important;
     }
     /* Catalog search page */
     .elearning_card .card {
-        background: #1e293b !important;
-        border-color: #334155 !important;
-        color: #e2e8f0 !important;
+        background: var(--ap-color-bg-surface) !important;
+        border-color: var(--ap-color-border) !important;
+        color: var(--ap-color-text-primary) !important;
     }
     .elearning_card .card a {
-        color: #60a5fa !important;
+        color: var(--ap-blue-300) !important;
     }
     .elearning_card .card h4,
     .elearning_card .card h5 {
-        color: #f1f5f9 !important;
+        color: var(--ap-color-text-primary) !important;
     }
     .elearning_card .card .text-muted {
-        color: #94a3b8 !important;
+        color: var(--ap-color-text-muted) !important;
     }
     /* Catalog sidebar filters */
     .local_search .card,
     #page-local-search-allcourses .card {
-        background: #1e293b !important;
-        border-color: #334155 !important;
-        color: #e2e8f0 !important;
+        background: var(--ap-color-bg-surface) !important;
+        border-color: var(--ap-color-border) !important;
+        color: var(--ap-color-text-primary) !important;
     }
     #page-local-search-allcourses .card label {
         color: #cbd5e1 !important;
     }
     /* BizLMS list view buttons */
     .btn-outline-primary {
-        border-color: #334155 !important;
-        color: #60a5fa !important;
+        border-color: var(--ap-color-border) !important;
+        color: var(--ap-blue-300) !important;
     }
     .btn-outline-primary:hover {
-        background: #0066A7 !important;
-        color: #fff !important;
+        background: var(--ap-color-primary) !important;
+        color: var(--ap-color-text-inverse) !important;
     }
 }
 

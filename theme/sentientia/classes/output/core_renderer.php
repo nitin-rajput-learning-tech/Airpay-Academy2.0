@@ -300,15 +300,45 @@ class core_renderer extends \core_renderer {
                 . ' placeholder="' . s($defaultplaceholder) . '" autocomplete="off">'
                 . '</form>'
                 . '</div>'
-                . '<div class="ap-topbar__right"></div>'
+                // Phase D2 (UI-NAV-AUDIT-2026-08-03, N-06): notifications +
+                // messages entries in the shell topbar — previously these were
+                // reachable only from the (now retired for viewing) boost
+                // course navbar. Plain links, deliberately not the popover AMD
+                // (that expects boost's navbar output region).
+                . '<div class="ap-topbar__right">'
+                . '<a class="ap-topbar__iconlink" href="' . s($CFG->wwwroot . '/message/output/popup/notifications.php') . '"'
+                . ' title="' . s(get_string('notifications')) . '" aria-label="' . s(get_string('notifications')) . '">'
+                . '<i class="fa fa-bell" aria-hidden="true"></i></a>'
+                . '<a class="ap-topbar__iconlink" href="' . s($CFG->wwwroot . '/message/index.php') . '"'
+                . ' title="' . s(get_string('messages', 'message')) . '" aria-label="' . s(get_string('messages', 'message')) . '">'
+                . '<i class="fa fa-comment-o" aria-hidden="true"></i></a>'
+                . '</div>'
                 . '</header>';
+
+        // Phase B (UI-NAV-AUDIT-2026-08-03, N-03): breadcrumb strip for nested
+        // pages. Rendered inside the shell content region, suppressed on the
+        // dashboard/home (single-item trails add noise, not wayfinding).
+        $breadcrumbs = '';
+        if ($this->page->pagelayout !== 'mydashboard') {
+            $navbarhtml = $this->navbar();
+            // Only show when the trail has real depth (more than bare "Home"/
+            // "Dashboard") — a lone root crumb is noise.
+            if ($navbarhtml && count($this->page->navbar->get_items()) > 1) {
+                $breadcrumbs = '<nav class="ap-shell__breadcrumbs" aria-label="'
+                    . s(get_string('breadcrumb', 'access')) . '">'
+                    . $navbarhtml . '</nav>';
+            }
+        }
 
         // A11Y-8: inject a visually-hidden <h1> with the current page title
         // so every page has a top-level heading for screen readers, regardless
         // of whether the plugin template renders an h1 or h2 for the visible
         // title. The .sr-only class hides it visually but keeps it in the
         // accessibility tree.
-        $page_title = $this->page->title ?: format_string($this->page->heading);
+        // Phase E (UI-NAV-AUDIT N-08): prefer the clean page HEADING — the
+        // title carries the "| sitename" suffix, so screen readers were
+        // hearing "My Skills | airpay" as the page's h1.
+        $page_title = format_string($this->page->heading) ?: $this->page->title;
         $h1 = '<h1 class="sr-only">' . s($page_title) . '</h1>';
 
         // A11Y-9: keep ONE main landmark. The outer ap-shell__content is
@@ -357,6 +387,7 @@ class core_renderer extends \core_renderer {
              . $topbar
              . $tabcss
              . '<main class="ap-shell__content" id="ap-shell-content">'
+             . $breadcrumbs
              . $h1;
     }
 

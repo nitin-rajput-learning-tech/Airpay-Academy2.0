@@ -92,18 +92,18 @@ html.dark-mode .airpay-datatable input[type="search"]::placeholder {
 body.dark-mode .airpay-datatable .badge-secondary,
 html.dark-mode .airpay-datatable .badge-secondary {
     background: #4b5563;
-    color: #e5e7eb;
+    color: var(--ap-color-text-primary);
 }
 
 body.dark-mode .airpay-datatable .btn-outline-secondary,
 html.dark-mode .airpay-datatable .btn-outline-secondary {
     color: #c4cad8;
-    border-color: #3d4254;
+    border-color: var(--ap-color-border-strong);
 }
 body.dark-mode .airpay-datatable .btn-outline-secondary:hover,
 html.dark-mode .airpay-datatable .btn-outline-secondary:hover {
-    background: #2d3140;
-    color: #fff;
+    background: var(--ap-color-border);
+    color: var(--ap-color-text-inverse);
 }
 
 /* Bulk action bar shared dark mode */
@@ -137,6 +137,6 @@ html.dark-mode .ap-filter-bar .btn-light {
 body.dark-mode .ap-filter-bar .btn-light.active,
 html.dark-mode .ap-filter-bar .btn-light.active {
     background: var(--ap-color-primary, #0066A7) !important;
-    color: #fff !important;
+    color: var(--ap-color-text-inverse) !important;
     border-color: var(--ap-color-primary, #0066A7) !important;
 }

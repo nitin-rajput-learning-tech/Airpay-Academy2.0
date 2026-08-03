@@ -13,6 +13,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['pluginname'] = 'एयरपे यूज़र इंजन';
+$string['manageusers_title'] = 'यूज़र प्रबंधन';
 
 // W1-8 (2026-05-16) — Public-tenant self-registration.
 $string['signup_pagetitle']           = 'अपना एयरपे अकैडमी अकाउंट बनाएँ';

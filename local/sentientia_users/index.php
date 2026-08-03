@@ -13,8 +13,10 @@ require_capability('local/sentientia_users:view', $context);
 
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/local/sentientia_users/index.php'));
-$PAGE->set_title(get_string('pluginname', 'local_sentientia_users'));
-$PAGE->set_heading(get_string('pluginname', 'local_sentientia_users'));
+// Phase E (UI-NAV-AUDIT N-08): user-facing page title, not the internal
+// product name ("Airpay User Engine") — matches the sidebar label.
+$PAGE->set_title(get_string('manageusers_title', 'local_sentientia_users'));
+$PAGE->set_heading(get_string('manageusers_title', 'local_sentientia_users'));
 $PAGE->set_pagelayout('standard');
 $PAGE->set_secondary_navigation(false);
 
