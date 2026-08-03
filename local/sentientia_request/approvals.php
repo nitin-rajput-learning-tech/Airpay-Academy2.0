@@ -30,7 +30,11 @@ $columns = [
 ];
 
 $data = [
-    'columns_json' => s(json_encode($columns)),
+    // WF-022: json_encode WITHOUT s() — the template's `{{ columns_json }}`
+    // (double-stache) HTML-escapes it for the attribute. s() here double-escaped
+    // (&quot; → &amp;quot;), so the browser handed JSON.parse literal `&quot;`
+    // text and the datatable threw. Same Bug #6 fix already on my_requests.
+    'columns_json' => json_encode($columns),
     'allrequests_url' => has_capability('local/sentientia_request:viewall', $ctx)
         ? (new moodle_url('/local/sentientia_request/all.php'))->out(false) : '',
     'has_viewall_cap' => has_capability('local/sentientia_request:viewall', $ctx),

@@ -4,7 +4,12 @@
 <div class="container-fluid">
     <h2 class="mb-3">{{#str}}allrequests, local_sentientia_request{{/str}}</h2>
 
-    <div data-region="datatable"
+    {{!
+        WF-022: data-region must be "airpay-datatable" (not "datatable") to
+        match theme_sentientia/datatable's init() selector; Datatable.init()
+        takes no args. Same Bug #12 fix that landed on my_requests.mustache.
+    }}
+    <div data-region="airpay-datatable"
          data-component="local_sentientia_request"
          data-ws-name="local_sentientia_request_list_all"
          data-columns="{{ columns_json }}"
@@ -18,6 +23,6 @@
 {{#js}}
 require(['theme_sentientia/datatable'],
     function(Datatable) {
-        Datatable.init(document.querySelector('[data-region="datatable"]'));
+        Datatable.init();
     });
 {{/js}}

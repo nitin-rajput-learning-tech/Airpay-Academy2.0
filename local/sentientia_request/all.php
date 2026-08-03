@@ -30,7 +30,9 @@ $columns = [
     ['key' => 'decided_on',     'label' => 'Decided',   'sortable' => true, 'sortkey' => 'timedecided'],
 ];
 
-$data = [ 'columns_json' => s(json_encode($columns)) ];
+// WF-022: json_encode WITHOUT s() — `{{ columns_json }}` HTML-escapes for the
+// attribute; s() here double-escaped and broke JSON.parse. (See my_requests.)
+$data = [ 'columns_json' => json_encode($columns) ];
 
 echo $OUTPUT->header();
 echo $OUTPUT->render_from_template('local_sentientia_request/all_requests', $data);
