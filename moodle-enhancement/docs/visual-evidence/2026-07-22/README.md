@@ -27,9 +27,12 @@ mode unchanged. Quiz "instructions overlap" was collateral of (1): the
 activity-header description is legitimate content and reads correctly once
 the bar pins properly.
 
-No screenshots for part 3 — the Browser pane wasn't displayable for
-compositing this session; evidence is the measured DOM geometry above
-(before/after captured live on both page types). Theme 2026072202 / 1.0.49-beta.
+Theme 2026072202 / 1.0.49-beta. Screenshots captured 2026-08-03 once
+browser tooling returned (dark mode, scrolled to engage the sticky bar,
+qa_employee): `course-player-fixed-scrolled-dark.png` (course view — bar
+flush under the platform navbar, content scrolling beneath) and
+`quiz-player-fixed-scrolled-dark.png` (the exact reported quiz scenario —
+Test Guidelines scroll cleanly under the pinned bar, no mid-air float).
 
 ---
 
