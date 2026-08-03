@@ -124,3 +124,19 @@ Built the complete 5.2 standalone via the **overlay** approach (not a 641-commit
 fixes present). **Runtime validation (P5) is still blocked** on local PHP 8.3, and the package **cannot
 deploy** until prod RDS → MySQL 8.4 + PHP 8.3 (open IT change requests). Until then this artifact is for
 code review + staging prep only.
+
+### Package refresh — 2026-08-03 (ninja handover build)
+
+Rebuilt for the DevOps ninja request with everything shipped since 2026-06-19: signup split-panel
+redesign + sitewide mform element-template repair, course-player sticky/header fixes, featured-rail
+curator gating, `sentientia_request` 1.3.3 drift-sync, and the June gap-test-pass fixes (xapi /
+content_market / learningpath). Overlay re-run from the current webroot (AMD gate: 0 stale tokens; all
+7 post-June fixes spot-verified in the 5.2 tree before packaging).
+
+- **`dist/Sentientia-LMS-5.2-Complete-Standalone-2026-08-03.zip`** — 65,372 files · 155 MB
+  (161,905,271 bytes) · SHA-256 `bd4b16ef37514b95bb442a75564f3799d30bd3cfe183073d640be61063612cd7` ·
+  secret `config.php` + nested-dupe + stale dirs excluded.
+- **`dist/Sentientia-LMS-5.2-Ninja-RDS-Deployment-Guidebook.pdf`** regenerated with the new
+  name/size/hash (11 pp, validated). The 2026-06-19 zip is renamed `.superseded` on disk — share only
+  the 2026-08-03 pair. P5 gates unchanged (no local PHP 8.3 — `.tools/php84` is a stub; prod MySQL 8.4
+  + PHP 8.3 with IT).
