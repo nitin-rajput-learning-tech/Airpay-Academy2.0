@@ -166,12 +166,17 @@ final class predictive_engine_test extends \advanced_testcase {
 
         $atrisk = predictive_engine::get_at_risk_users('/1', 50, true);
 
+        // get_at_risk_users() casts userid to (int) (predictive_engine.php),
+        // so the result column is int. $u->id from the data generator is a
+        // string (Moodle $DB returns ids as strings). assertContains is
+        // strict (===), so cast the expected ids to int to match the
+        // production int contract.
         $user_ids_in_result = array_column($atrisk, 'userid');
-        $this->assertContains($u1a->id, $user_ids_in_result,
+        $this->assertContains((int) $u1a->id, $user_ids_in_result,
             'u1a (/1) should appear in at-risk list for /1');
-        $this->assertContains($u1b->id, $user_ids_in_result,
+        $this->assertContains((int) $u1b->id, $user_ids_in_result,
             'u1b (/1/2) should appear in at-risk list for /1');
-        $this->assertNotContains($u177->id, $user_ids_in_result,
+        $this->assertNotContains((int) $u177->id, $user_ids_in_result,
             '/177 user must NOT appear in at-risk list for /1');
     }
 

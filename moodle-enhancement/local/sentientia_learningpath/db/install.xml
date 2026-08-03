@@ -20,6 +20,12 @@
                COMMENT="P1 batch (2026-05-16): UNIX ts — path becomes enrollable from this date"/>
         <FIELD NAME="enddate"         TYPE="int"  LENGTH="10" NOTNULL="false"
                COMMENT="P1 batch (2026-05-16): UNIX ts — path closes for new enrolments on this date"/>
+        <FIELD NAME="adaptive_mode"   TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="0"
+               COMMENT="P0.2 (2026-06-16): 1=adaptive journey engine active for this path"/>
+        <FIELD NAME="score_threshold_low"  TYPE="number" LENGTH="5" DECIMALS="2" NOTNULL="false"
+               COMMENT="P0.2 (2026-06-16): below this quiz percent the engine remediates"/>
+        <FIELD NAME="score_threshold_high" TYPE="number" LENGTH="5" DECIMALS="2" NOTNULL="false"
+               COMMENT="P0.2 (2026-06-16): above this quiz percent the engine accelerates"/>
         <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="timemodified"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
       </FIELDS>
@@ -39,6 +45,12 @@
         <FIELD NAME="courseid"        TYPE="int"  LENGTH="10" NOTNULL="true"/>
         <FIELD NAME="sortorder"       TYPE="int"  LENGTH="6"  NOTNULL="true" DEFAULT="0"/>
         <FIELD NAME="mandatory"       TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="is_remedial"     TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="0"
+               COMMENT="P0.2 (2026-06-16): 1=remedial node injected by the adaptive engine"/>
+        <FIELD NAME="is_accelerator"  TYPE="int"  LENGTH="1"  NOTNULL="true" DEFAULT="0"
+               COMMENT="P0.2 (2026-06-16): 1=accelerator/branch node"/>
+        <FIELD NAME="remedial_for_courseid" TYPE="int" LENGTH="10" NOTNULL="false"
+               COMMENT="P0.2 (2026-06-16): main course this remedial node supports"/>
         <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
       </FIELDS>
       <KEYS>
@@ -69,6 +81,36 @@
       <INDEXES>
         <INDEX NAME="idx_path_user" UNIQUE="true" FIELDS="pathid, userid"/>
         <INDEX NAME="idx_status"    UNIQUE="false" FIELDS="status"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_lp_adaptive_log" COMMENT="P0.2 (2026-06-16): adaptive journey pivot-decision log">
+      <FIELDS>
+        <FIELD NAME="id"              TYPE="int"  LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="pathid"          TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="userid"          TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="costcenterid"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="pivot_type"      TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="no_action"
+               COMMENT="branch|accelerate|remediate|no_action"/>
+        <FIELD NAME="trigger_type"    TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="quiz_score"
+               COMMENT="quiz_score|velocity|skills_gap|combined"/>
+        <FIELD NAME="source_courseid" TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="target_courseid" TYPE="int"  LENGTH="10" NOTNULL="false" DEFAULT="0"/>
+        <FIELD NAME="quiz_score"      TYPE="number" LENGTH="6" DECIMALS="0" NOTNULL="false"/>
+        <FIELD NAME="velocity_score"  TYPE="number" LENGTH="6" DECIMALS="0" NOTNULL="false"/>
+        <FIELD NAME="skills_gap_json" TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="decision_notes"  TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"    TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_path_user"   UNIQUE="false" FIELDS="pathid, userid"/>
+        <INDEX NAME="idx_costcenter"  UNIQUE="false" FIELDS="costcenterid"/>
+        <INDEX NAME="idx_pivot_type"  UNIQUE="false" FIELDS="pivot_type"/>
+        <INDEX NAME="idx_timecreated" UNIQUE="false" FIELDS="timecreated"/>
       </INDEXES>
     </TABLE>
   </TABLES>

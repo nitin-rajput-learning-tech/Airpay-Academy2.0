@@ -23,6 +23,16 @@ defined('MOODLE_INTERNAL') || die();
  */
 final class audience_enroller_test extends \advanced_testcase {
 
+    // Vanilla PHPUnit sites lack the BizLMS user/course columns this plugin
+    // queries (open_path, open_designation, open_region, etc.) - provision
+    // them per-test via the shared trait so the resolve_audience SQL compiles.
+    use \local_sentientia_org\test\bizlms_fixture;
+
+    protected function setUp(): void {
+        parent::setUp();
+        $this->ensure_bizlms_schema();
+    }
+
     /** Helper: create a user with specific open_* values + open_path. */
     private function seed(array $attrs, string $open_path = '/1'): int {
         global $DB;

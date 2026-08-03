@@ -43,11 +43,18 @@ trait bizlms_fixture {
         // mdl_user — five BizLMS columns referenced by sentientia_users / org / etc.
         $usertable = new \xmldb_table('user');
         $userfields = [
-            ['open_path',         XMLDB_TYPE_CHAR,    '255', null, null,        null, null],
-            ['open_employeeid',   XMLDB_TYPE_CHAR,    '255', null, null,        null, null],
-            ['open_designation',  XMLDB_TYPE_CHAR,    '255', null, null,        null, null],
-            ['open_supervisorid', XMLDB_TYPE_INTEGER, '20',  null, null,        null, null],
-            ['open_location',     XMLDB_TYPE_CHAR,    '200', null, null,        null, null],
+            ['open_path',           XMLDB_TYPE_CHAR,    '255', null, null,        null, null],
+            ['open_employeeid',     XMLDB_TYPE_CHAR,    '255', null, null,        null, null],
+            ['open_designation',    XMLDB_TYPE_CHAR,    '255', null, null,        null, null],
+            ['open_supervisorid',   XMLDB_TYPE_INTEGER, '20',  null, null,        null, null],
+            ['open_location',       XMLDB_TYPE_CHAR,    '200', null, null,        null, null],
+            // Audience-filter columns queried by the *_audience_enroller /
+            // _assigner classes (learningpath, programs, classroom, evaluation).
+            // Defs mirror local_sentientia_core\substrate::user_fields().
+            ['open_region',         XMLDB_TYPE_CHAR,    '200', null, null,        null, null],
+            ['open_employmenttype', XMLDB_TYPE_CHAR,    '512', null, null,        null, null],
+            ['open_grade',          XMLDB_TYPE_CHAR,    '200', null, null,        null, null],
+            ['open_hrmsrole',       XMLDB_TYPE_CHAR,    '200', null, null,        null, null],
         ];
         foreach ($userfields as [$name, $type, $length, $unsigned, $notnull, $sequence, $default]) {
             $field = new \xmldb_field($name, $type, $length, $unsigned, $notnull, $sequence, $default);

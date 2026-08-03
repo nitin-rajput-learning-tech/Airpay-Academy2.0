@@ -123,3 +123,4 @@ content/scorm-output/
 
 # Local doc-generation build dir (node_modules + throwaway scripts)
 .tools/docgen/
+moodle-enhancement/tools/gap-test/reports/

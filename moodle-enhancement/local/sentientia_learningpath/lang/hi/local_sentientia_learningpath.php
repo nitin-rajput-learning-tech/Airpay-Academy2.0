@@ -104,6 +104,7 @@ $string['privacy:metadata:lp:pathid']       = 'लर्निंग पाथ I
 $string['privacy:metadata:lp:userid']       = 'असाइन किए गए उपयोगकर्ता की ID।';
 $string['privacy:metadata:lp:status']       = 'असाइनमेंट स्थिति।';
 $string['privacy:metadata:lp:timecreated']  = 'असाइनमेंट टाइमस्टैम्प।';
+$string['privacy:metadata:lp:timecompleted'] = 'असाइनमेंट पूर्णता टाइमस्टैम्प।';
 $string['privacy:metadata:lp:timemodified'] = 'अंतिम अपडेट टाइमस्टैम्प।';
 
 // P0.2 (2026-06-16) — अनुकूली लर्निंग जर्नी स्ट्रिंग्स।

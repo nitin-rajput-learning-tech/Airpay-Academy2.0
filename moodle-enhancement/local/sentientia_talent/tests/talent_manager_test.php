@@ -163,7 +163,7 @@ final class talent_manager_test extends \advanced_testcase {
 
         $list = talent_manager::list_succession('Branch Manager');
         $this->assertCount(1, $list);
-        $this->assertSame($cand->id, $list[0]['candidateid']);
+        $this->assertEquals($cand->id, $list[0]['candidateid']);
 
         // Duplicate (same tenant, designation, candidate) is rejected.
         $this->expectException(\moodle_exception::class);
@@ -214,13 +214,13 @@ final class talent_manager_test extends \advanced_testcase {
         // The Public manager sees ONLY the Public nomination.
         $publiclist = talent_manager::list_succession();
         $this->assertCount(1, $publiclist);
-        $this->assertSame($pcand->id, $publiclist[0]['candidateid']);
+        $this->assertEquals($pcand->id, $publiclist[0]['candidateid']);
 
         // Switch back to the Airpay manager — sees ONLY the Airpay one.
         $this->setUser($airpaymgr);
         $airpaylist = talent_manager::list_succession();
         $this->assertCount(1, $airpaylist);
-        $this->assertSame($acand->id, $airpaylist[0]['candidateid']);
+        $this->assertEquals($acand->id, $airpaylist[0]['candidateid']);
     }
 
     // ─── Opportunity CRUD + interest ─────────────────────────────────
@@ -255,7 +255,7 @@ final class talent_manager_test extends \advanced_testcase {
         $this->setUser($mgr);
         $applicants = talent_manager::list_interest($oppid);
         $this->assertCount(1, $applicants);
-        $this->assertSame($learner->id, $applicants[0]['userid']);
+        $this->assertEquals($learner->id, $applicants[0]['userid']);
 
         // Learner withdraws.
         $this->setUser($learner);

@@ -119,9 +119,11 @@ $string['privacy:metadata:lp_adaptive_log:quiz_score']   = 'The quiz score that 
 $string['privacy:metadata:lp_adaptive_log:timecreated']  = 'When the adaptive decision was recorded.';
 
 // Privacy strings (Phase Z.1).
+$string['privacy:metadata'] = 'The Airpay Learning Paths plugin stores user path-level enrolments, progress, and adaptive-journey decisions.';
 $string['privacy:metadata:lp'] = 'Per-learning-path user assignments.';
 $string['privacy:metadata:lp:pathid'] = 'Learning path ID.';
 $string['privacy:metadata:lp:userid'] = 'Assigned user ID.';
 $string['privacy:metadata:lp:status'] = 'Assignment status.';
 $string['privacy:metadata:lp:timecreated'] = 'Assignment timestamp.';
+$string['privacy:metadata:lp:timecompleted'] = 'Assignment completion timestamp.';
 $string['privacy:metadata:lp:timemodified'] = 'Last update timestamp.';

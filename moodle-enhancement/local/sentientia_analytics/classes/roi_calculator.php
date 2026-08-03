@@ -126,11 +126,22 @@ class roi_calculator {
                 AND c.enddate > 0 AND cc.timecompleted <= c.enddate $orgfilter",
             array_merge($orgparams, ['apts' => $current_start, 'apte' => $current_end]));
 
-        // Active visible courses in scope.
+        // Active visible courses in scope — tenant-scoped to match every sibling query in
+        // this method. course.open_path is the BizLMS tenant path (used the same way in
+        // analytics_manager::get_course_effectiveness). Distinct param names (corg*) avoid
+        // colliding with the user-based aporg* binds above. Empty $orgpath => site-wide,
+        // identical to the prior behaviour, so empty-scope callers/tests are unaffected.
+        $coursefilter = '';
+        $courseparams = [];
+        if (!empty($orgpath)) {
+            $coursefilter = "AND (c.open_path = :corgexact OR c.open_path LIKE :corgprefix)";
+            $courseparams['corgexact']  = $orgpath;
+            $courseparams['corgprefix'] = $DB->sql_like_escape($orgpath) . '/%';
+        }
         $active_courses = (int) $DB->count_records_sql(
             "SELECT COUNT(DISTINCT c.id) FROM {course} c
-              WHERE c.visible = 1 AND c.id > 1",
-            []);
+              WHERE c.visible = 1 AND c.id > 1 $coursefilter",
+            $courseparams);
 
         // Unique learners with at least one enrolment in the period.
         $active_learners = (int) $DB->count_records_sql(

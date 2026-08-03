@@ -40,8 +40,8 @@
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
       </KEYS>
       <INDEXES>
-        <INDEX NAME="idx_provider_ext"   UNIQUE="true"  FIELDS="provider, external_id"
-               COMMENT="Natural unique key — prevent duplicate imports"/>
+        <INDEX NAME="idx_provider_ext"   UNIQUE="true"  FIELDS="provider, external_id, costcenterid"
+               COMMENT="Natural unique key per tenant - same external course may exist across tenants"/>
         <INDEX NAME="idx_costcenter"     UNIQUE="false" FIELDS="costcenterid"
                COMMENT="Tenant-scoped listing — every query hits this"/>
         <INDEX NAME="idx_provider"       UNIQUE="false" FIELDS="provider"/>

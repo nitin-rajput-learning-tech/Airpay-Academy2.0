@@ -40,6 +40,15 @@ if (!is_siteadmin()) {
     if (class_exists('\local_sentientia_platform\tenant')) {
         $costcenterid = \local_sentientia_platform\tenant::root_for_current_user();
     }
+    // Fail closed: a non-admin viewer whose tenant cannot be resolved to a valid positive
+    // root must NOT fall through to get_statements(0, ...), which omits the costcenterid
+    // filter and returns ALL tenants' statements (cross-tenant actor-PII leak). This also
+    // covers the case where the platform plugin is absent (so the flag gate above was
+    // skipped entirely) — the viewer stays reachable but cannot leak other tenants' data.
+    if ($costcenterid <= 0) {
+        notice(get_string('error_lrs_tenant', 'local_sentientia_xapi'),
+            new moodle_url('/admin/index.php'));
+    }
 }
 
 // Pagination params.

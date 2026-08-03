@@ -89,8 +89,8 @@ class velocity_calculator {
             $expected = ($elapsed_days / 30) * self::DEFAULT_PACE_PER_MONTH;
         }
 
-        if ($expected < 0.5) {
-            // Expected rounds to zero — not yet meaningful.
+        if ($expected <= 0) {
+            // No expected progress yet (zero-width window) — avoid div-by-zero.
             return null;
         }
 

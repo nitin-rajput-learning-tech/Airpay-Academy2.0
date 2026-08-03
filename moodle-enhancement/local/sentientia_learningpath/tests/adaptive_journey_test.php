@@ -269,10 +269,17 @@ final class adaptive_journey_test extends \advanced_testcase {
     // ──────────────────────────────────────────────────────────────────
 
     public function test_skills_gap_feed_returns_empty_when_skillsai_absent(): void {
-        // skillsai plugin is not installed in this environment.
+        // Graceful-degradation precondition: skillsai's feed must be inert.
+        // In the integration build skillsai IS installed, so we cannot assert
+        // the class is absent. The production contract that drives the empty
+        // return is Guard 2 in skills_gap_feed::get_user_gap(): the
+        // 'sentientia.skillsai.enabled' master flag is OFF by default
+        // (CLAUDE.md §13 — feature flags default OFF). Assert that flag is OFF
+        // so the rest of this test exercises the real degradation path whether
+        // or not the sibling plugin happens to be present.
         $this->assertFalse(
-            class_exists('\local_sentientia_skillsai\gap_engine'),
-            'Precondition: skillsai must not be installed in the test environment'
+            \local_sentientia_platform\feature_flags::is_enabled('sentientia.skillsai.enabled'),
+            'Precondition: skillsai master flag must default OFF in the test environment'
         );
 
         $gaps = skills_gap_feed::get_user_gap(1);

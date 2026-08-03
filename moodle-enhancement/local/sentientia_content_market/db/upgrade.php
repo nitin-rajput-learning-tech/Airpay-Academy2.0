@@ -13,17 +13,26 @@ function xmldb_local_sentientia_content_market_upgrade(int $oldversion): bool {
     global $DB;
     $dbman = $DB->get_manager();
 
-    // Initial install handled by install.xml — no upgrade steps yet.
-    // Future schema changes go here following the pattern:
-    //
-    //   if ($oldversion < 2026061601) {
-    //       $table = new xmldb_table('local_sentientia_cm_item');
-    //       $field = new xmldb_field('new_col', XMLDB_TYPE_CHAR, '100', null, null, null, null, 'status');
-    //       if (!$dbman->field_exists($table, $field)) {
-    //           $dbman->add_field($table, $field);
-    //       }
-    //       upgrade_plugin_savepoint(true, 2026061601, 'local', 'sentientia_content_market');
-    //   }
+    // 2026061601 - make idx_provider_ext per-tenant. The original unique index on
+    // (provider, external_id) prevented the same external course from coexisting across
+    // tenants and made upsert_item() collide cross-tenant. Widen it to include costcenterid.
+    if ($oldversion < 2026061601) {
+        $table = new xmldb_table('local_sentientia_cm_item');
+
+        $oldindex = new xmldb_index('idx_provider_ext', XMLDB_INDEX_UNIQUE,
+            ['provider', 'external_id']);
+        if ($dbman->index_exists($table, $oldindex)) {
+            $dbman->drop_index($table, $oldindex);
+        }
+
+        $newindex = new xmldb_index('idx_provider_ext', XMLDB_INDEX_UNIQUE,
+            ['provider', 'external_id', 'costcenterid']);
+        if (!$dbman->index_exists($table, $newindex)) {
+            $dbman->add_index($table, $newindex);
+        }
+
+        upgrade_plugin_savepoint(true, 2026061601, 'local', 'sentientia_content_market');
+    }
 
     return true;
 }

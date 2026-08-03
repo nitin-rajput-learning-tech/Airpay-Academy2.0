@@ -130,9 +130,12 @@ class market_aggregator {
     private function upsert_item(catalog_item $item, int $costcenterid): array {
         global $DB;
 
+        // Match within the tenant: the same external course may legitimately exist in more
+        // than one tenant, so costcenterid is part of the uniqueness key (see idx_provider_ext).
         $existing = $DB->get_record('local_sentientia_cm_item', [
-            'provider'    => $item->provider,
-            'external_id' => $item->external_id,
+            'provider'     => $item->provider,
+            'external_id'  => $item->external_id,
+            'costcenterid' => $costcenterid,
         ]);
 
         $now = time();

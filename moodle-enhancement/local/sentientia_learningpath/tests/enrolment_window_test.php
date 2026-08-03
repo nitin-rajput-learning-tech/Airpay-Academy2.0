@@ -40,7 +40,7 @@ final class enrolment_window_test extends \advanced_testcase {
         $row = $DB->get_record('local_sentientia_learningpath', ['id' => $pid], '*', MUST_EXIST);
         $this->assertSame($start, (int) $row->startdate);
         $this->assertSame($end,   (int) $row->enddate);
-        $this->assertSame(FORMAT_HTML, (int) $row->descriptionformat);
+        $this->assertEquals(FORMAT_HTML, $row->descriptionformat);
         $this->assertStringContainsString('<strong>content</strong>', $row->description);
     }
 
@@ -114,7 +114,7 @@ final class enrolment_window_test extends \advanced_testcase {
         ]);
 
         $row = $DB->get_record('local_sentientia_learningpath', ['id' => $pid], '*', MUST_EXIST);
-        $this->assertSame(FORMAT_HTML, (int) $row->descriptionformat);
+        $this->assertEquals(FORMAT_HTML, $row->descriptionformat);
     }
 
     public function test_form_validation_rejects_end_before_start(): void {
