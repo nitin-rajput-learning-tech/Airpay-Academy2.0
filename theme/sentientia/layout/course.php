@@ -57,8 +57,14 @@ if (defined('BEHAT_SITE_RUNNING')) {
     $blockdraweropen = true;
 }
 
-$extraclasses = ['uses-drawers'];
-if ($courseindexopen) {
+// Phase A (UI-NAV-AUDIT-2026-08-03, N-01/N-02): the VIEWING experience renders
+// inside the Sentientia app shell (persona sidebar + ap-topbar) like every
+// other surface; EDIT MODE keeps the boost-drawers chrome that Moodle's
+// course-editing tooling expects (course-index drawer, block drawer).
+$apcourseediting = $PAGE->user_is_editing();
+
+$extraclasses = $apcourseediting ? ['uses-drawers'] : ['ap-course-shell'];
+if ($apcourseediting && $courseindexopen) {
     $extraclasses[] = 'drawer-open-index';
 }
 
@@ -67,7 +73,11 @@ $hasblocks = (strpos($blockshtml, 'data-block=') !== false || !empty($addblockbu
 if (!$hasblocks) {
     $blockdraweropen = false;
 }
-$courseindex = core_course_drawer();
+// Phase A: only build the boost course-index drawer in EDIT mode — the shell
+// template doesn't render it, and core_course_drawer() queues the
+// courseindex/placeholder AMD init whose DOM would be missing (console
+// errors "Reactive components needs a main DOM element").
+$courseindex = $apcourseediting ? core_course_drawer() : '';
 if (!$courseindex) {
     $courseindexopen = false;
 }
@@ -115,6 +125,18 @@ $regionmainsettingsmenu = $buildregionmainsettings ? $OUTPUT->region_main_settin
 $header = $PAGE->activityheader;
 $headercontent = $header->export_for_template($renderer);
 
+// Phase A: the boost navbar carried the "Edit mode" switch; the shell view
+// removed that navbar, so surface core's edit switch explicitly for users
+// with editing capabilities (renders empty for everyone else).
+$editswitch = '';
+if (method_exists($OUTPUT, 'edit_switch')) {
+    $editswitch = $OUTPUT->edit_switch();
+    if (is_object($editswitch)) {
+        // Some cores return a renderable; normalise to HTML.
+        $editswitch = $OUTPUT->render($editswitch);
+    }
+}
+
 $templatecontext = [
     'sitename' => format_string($SITE->shortname, true, ['context' => context_course::instance(SITEID), "escape" => false]),
     'output' => $OUTPUT,
@@ -136,6 +158,7 @@ $templatecontext = [
     'headercontent' => $headercontent,
     'addblockbutton' => $addblockbutton,
     'isloggedin' => isloggedin(),
+    'editswitch' => $editswitch,
 ];
 
 // ═══ AIRPAY COURSE PLAYER ENHANCEMENTS ═══
@@ -198,9 +221,12 @@ if ($courseid > 1 && isloggedin() && !is_siteadmin()) {
         $templatecontext['ap_has_progress'] = ($totalactivities > 0);
 
         // ─── Build sidebar module tree for course player ───
+        // Phase A (N-02): include section 0 ("General") — it was skipped, so
+        // courses keeping all activities in the top section rendered NO TOC;
+        // tolerable while the boost course-index drawer existed, but the
+        // player sidebar is now the ONE in-course TOC.
         $ap_sidebar_sections = [];
         foreach ($modinfo->get_section_info_all() as $section) {
-            if ($section->section == 0) continue;
             $sectionactivities = [];
             if (!empty($modinfo->sections[$section->section])) {
                 foreach ($modinfo->sections[$section->section] as $modnumber) {
@@ -257,4 +283,8 @@ if ($courseid > 1 && isloggedin() && !is_siteadmin()) {
     }
 }
 
-echo $OUTPUT->render_from_template('theme_sentientia/course', $templatecontext);
+// Phase A template switch: shell for viewing, boost-drawers for editing
+// (course_editing.mustache preserves the previous markup byte-for-byte).
+echo $OUTPUT->render_from_template(
+    $apcourseediting ? 'theme_sentientia/course_editing' : 'theme_sentientia/course',
+    $templatecontext);

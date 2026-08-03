@@ -29,6 +29,18 @@
     top: 0;
     z-index: var(--ap-z-sticky);
 }
+/* Phase A (2026-08-03): in the APP-SHELL course view the scroller is
+   .ap-shell__content, which carries 24px padding-top — with sticky top:0
+   the bar pinned 24px down and content scrolled visibly through the band.
+   Move that padding out of the scrollport (onto #page in normal flow) so
+   the bar pins truly flush under the shell topbar; initial layout is
+   unchanged because #page re-adds the same 24px in flow. */
+body.ap-course-shell .ap-shell__content {
+    padding-top: 0;
+}
+body.ap-course-shell .ap-shell__content > #page {
+    padding-top: var(--ap-space-4, 24px);
+}
 .ap-course-progress-bar__info {
     display: flex;
     align-items: center;
