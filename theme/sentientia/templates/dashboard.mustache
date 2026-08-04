@@ -68,7 +68,7 @@
                     <span class="ap-sidebar__brand-mark"><i class="fa fa-graduation-cap"></i></span>
                     <span class="ap-sidebar__brand-text">{{sitename}}</span>
                 </a>
-                <button class="ap-sidebar__collapse" id="ap-sidebar-toggle" aria-label="Toggle sidebar">
+                <button class="ap-sidebar__collapse" id="ap-sidebar-toggle" aria-label="{{#str}}a11y_togglesidebar, theme_sentientia{{/str}}">
                     <i class="fa fa-chevron-left ap-sidebar__toggle-icon"></i>
                 </button>
             </div>
@@ -148,10 +148,10 @@
             {{! Topbar }}
             <header class="ap-topbar" id="ap-topbar">
                 <div class="ap-topbar__left">
-                    <button class="ap-topbar__hamburger d-lg-none" id="ap-sidebar-mobile-toggle" aria-label="Open menu">
+                    <button class="ap-topbar__hamburger d-lg-none" id="ap-sidebar-mobile-toggle" aria-label="{{#str}}a11y_openmenu, theme_sentientia{{/str}}">
                         <i class="fa fa-bars"></i>
                     </button>
-                    <nav class="ap-topbar__breadcrumb d-none d-md-flex" aria-label="Breadcrumb">
+                    <nav class="ap-topbar__breadcrumb d-none d-md-flex" aria-label="{{#str}}breadcrumb, access{{/str}}">
                         {{{ output.navbar }}}
                     </nav>
                 </div>
@@ -167,11 +167,11 @@
                     <form action="{{{config.wwwroot}}}/search/index.php" method="get"
                           class="ap-topbar__search" id="ap-topbar-search-form"
                           data-default-action="{{{config.wwwroot}}}/search/index.php"
-                          data-default-placeholder="Search courses, people, content...">
+                          data-default-placeholder="{{#str}}searchplaceholder, theme_sentientia{{/str}}">
                         <i class="fa fa-search ap-topbar__search-icon"></i>
                         <input type="text" name="q" class="ap-topbar__search-input"
                                id="ap-topbar-search-input"
-                               placeholder="Search courses, people, content..."
+                               placeholder="{{#str}}searchplaceholder, theme_sentientia{{/str}}"
                                autocomplete="off">
                     </form>
                 </div>

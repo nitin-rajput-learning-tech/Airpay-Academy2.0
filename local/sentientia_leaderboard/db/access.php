@@ -37,6 +37,11 @@ $capabilities = [
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes'   => [
             'editingteacher' => CAP_ALLOW,
+            // T-01 back-fill (2026-08-04): the BizLMS `trainer` role is
+            // archetype=teacher — trainers run cohort boards (:view already
+            // includes teacher; manageboard missed it). Existing installs
+            // are back-filled in db/upgrade.php.
+            'teacher'        => CAP_ALLOW,
             'manager'        => CAP_ALLOW,
         ],
     ],

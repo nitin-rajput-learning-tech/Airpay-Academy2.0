@@ -121,12 +121,12 @@ class sidebar_navigation {
         // ═══════════════════════════════════════════════════
         if ($this->issiteadmin) {
             // ── Overview ──
-            $items[] = $this->item('Dashboard', 'fa-home', '/my/', $currenturl, null, ['/my/index.php']);
+            $items[] = $this->item(get_string('myhome'), 'fa-home', '/my/', $currenturl, null, ['/my/index.php']);
 
             // ── People & Content ──
             $items[] = $this->divider();
-            $items[] = $this->item('Manage Users', 'fa-users', '/local/sentientia_users/index.php', $currenturl);
-            $items[] = $this->item('Manage Courses', 'fa-book', '/local/sentientia_courses/index.php', $currenturl);
+            $items[] = $this->item(get_string('nav_manageusers', 'theme_sentientia'), 'fa-users', '/local/sentientia_users/index.php', $currenturl);
+            $items[] = $this->item(get_string('nav_managecourses', 'theme_sentientia'), 'fa-book', '/local/sentientia_courses/index.php', $currenturl);
             // Sprint D nav entry — Airpay admins see pending course-share
             // requests from other tenants here. The page itself enforces
             // the local/sentientia_courses:approve_request cap (siteadmin only).
@@ -136,30 +136,30 @@ class sidebar_navigation {
             // disappears AND /manage_requests.php returns a friendly
             // "feature disabled" page.
             if (\local_sentientia_platform\feature_flags::is_enabled('commerce.crossTenantRequest.enabled')) {
-                $items[] = $this->item('Course-share Requests', 'fa-inbox',
+                $items[] = $this->item(get_string('nav_coursesharerequests', 'theme_sentientia'), 'fa-inbox',
                     '/local/sentientia_courses/manage_requests.php', $currenturl);
             }
-            $items[] = $this->item('Online Exams', 'fa-edit', '/local/sentientia_exams/index.php', $currenturl);
-            $items[] = $this->item('Classrooms', 'fa-calendar', '/local/sentientia_classroom/index.php', $currenturl);
-            $items[] = $this->item('Learning Paths', 'fa-map-signs', '/local/sentientia_learningpath/index.php', $currenturl);
-            $items[] = $this->item('Programs', 'fa-trophy', '/local/sentientia_programs/index.php', $currenturl);
+            $items[] = $this->item(get_string('nav_onlineexams', 'theme_sentientia'), 'fa-edit', '/local/sentientia_exams/index.php', $currenturl);
+            $items[] = $this->item(get_string('nav_classrooms', 'theme_sentientia'), 'fa-calendar', '/local/sentientia_classroom/index.php', $currenturl);
+            $items[] = $this->item(get_string('nav_learningpaths', 'theme_sentientia'), 'fa-map-signs', '/local/sentientia_learningpath/index.php', $currenturl);
+            $items[] = $this->item(get_string('nav_programs', 'theme_sentientia'), 'fa-trophy', '/local/sentientia_programs/index.php', $currenturl);
 
             // ── Insights ──
             $items[] = $this->divider();
-            $items[] = $this->item('Reports', 'fa-chart-bar', '/local/sentientia_reports/index.php', $currenturl);
-            $items[] = $this->item('Analytics', 'fa-chart-line', '/local/sentientia_analytics/index.php', $currenturl);
-            $items[] = $this->item('Compliance', 'fa-shield', '/local/sentientia_compliance_report/index.php', $currenturl);
+            $items[] = $this->item(get_string('reports'), 'fa-chart-bar', '/local/sentientia_reports/index.php', $currenturl);
+            $items[] = $this->item(get_string('nav_analytics', 'theme_sentientia'), 'fa-chart-line', '/local/sentientia_analytics/index.php', $currenturl);
+            $items[] = $this->item(get_string('nav_compliance', 'theme_sentientia'), 'fa-shield', '/local/sentientia_compliance_report/index.php', $currenturl);
 
             // ── Platform ──
             $items[] = $this->divider();
-            $items[] = $this->item('Organisation', 'fa-sitemap', '/local/sentientia_org/admin.php', $currenturl);
-            $items[] = $this->item('Skills', 'fa-bullseye', '/local/sentientia_skills/admin.php', $currenturl);
-            $items[] = $this->item('Notifications', 'fa-bell', '/local/sentientia_notifications/index.php', $currenturl);
-            $items[] = $this->item('Evaluations', 'fa-clipboard', '/local/sentientia_evaluation/index.php', $currenturl);
-            $items[] = $this->item('Certificates', 'fa-certificate', '/admin/tool/certificate/manage_templates.php', $currenturl);
-            $items[] = $this->item('Emails', 'fa-envelope', '/local/sentientia_emails/manage.php', $currenturl);
-            $items[] = $this->item('Privacy', 'fa-lock', '/local/sentientia_privacy/index.php', $currenturl);
-            $items[] = $this->item('Site Admin', 'fa-cog', '/admin/search.php', $currenturl);
+            $items[] = $this->item(get_string('nav_organisation', 'theme_sentientia'), 'fa-sitemap', '/local/sentientia_org/admin.php', $currenturl);
+            $items[] = $this->item(get_string('nav_skills', 'theme_sentientia'), 'fa-bullseye', '/local/sentientia_skills/admin.php', $currenturl);
+            $items[] = $this->item(get_string('notifications'), 'fa-bell', '/local/sentientia_notifications/index.php', $currenturl);
+            $items[] = $this->item(get_string('nav_evaluations', 'theme_sentientia'), 'fa-clipboard', '/local/sentientia_evaluation/index.php', $currenturl);
+            $items[] = $this->item(get_string('nav_certificates', 'theme_sentientia'), 'fa-certificate', '/admin/tool/certificate/manage_templates.php', $currenturl);
+            $items[] = $this->item(get_string('nav_emails', 'theme_sentientia'), 'fa-envelope', '/local/sentientia_emails/manage.php', $currenturl);
+            $items[] = $this->item(get_string('nav_privacy', 'theme_sentientia'), 'fa-lock', '/local/sentientia_privacy/index.php', $currenturl);
+            $items[] = $this->item(get_string('nav_siteadmin', 'theme_sentientia'), 'fa-cog', '/admin/search.php', $currenturl);
             return $items;
         }
 
@@ -181,15 +181,15 @@ class sidebar_navigation {
             // Analytics stay ungated — Compliance must remain reachable for
             // compliance officers (its page accepts moodle/site:viewreports).
             $sys = \context_system::instance();
-            $items[] = $this->item('Dashboard', 'fa-home', '/my/', $currenturl, null, ['/my/index.php']);
+            $items[] = $this->item(get_string('myhome'), 'fa-home', '/my/', $currenturl, null, ['/my/index.php']);
 
             // ── Content ──
             $items[] = $this->divider();
             if (has_capability('local/sentientia_users:view', $sys)) {
-                $items[] = $this->item('Manage Users', 'fa-users', '/local/sentientia_users/index.php', $currenturl);
+                $items[] = $this->item(get_string('nav_manageusers', 'theme_sentientia'), 'fa-users', '/local/sentientia_users/index.php', $currenturl);
             }
             if (has_capability('local/sentientia_courses:view', $sys)) {
-                $items[] = $this->item('Manage Courses', 'fa-book', '/local/sentientia_courses/index.php', $currenturl);
+                $items[] = $this->item(get_string('nav_managecourses', 'theme_sentientia'), 'fa-book', '/local/sentientia_courses/index.php', $currenturl);
             }
             // Sprint D — non-Airpay L&D admins (Public/ZEEA) get the
             // Browse Airpay Library link to request specific courses
@@ -199,26 +199,26 @@ class sidebar_navigation {
             // `commerce.crossTenantRequest.enabled`.
             if ($this->is_non_airpay_tenant_user()
                     && \local_sentientia_platform\feature_flags::is_enabled('commerce.crossTenantRequest.enabled')) {
-                $items[] = $this->item('Browse Airpay Library', 'fa-handshake-o',
+                $items[] = $this->item(get_string('nav_browseairpaylibrary', 'theme_sentientia'), 'fa-handshake-o',
                     '/local/sentientia_courses/browse_airpay.php', $currenturl);
             }
             if (has_capability('local/sentientia_exams:view', $sys)) {
-                $items[] = $this->item('Online Exams', 'fa-pencil-square-o', '/local/sentientia_exams/index.php', $currenturl);
+                $items[] = $this->item(get_string('nav_onlineexams', 'theme_sentientia'), 'fa-pencil-square-o', '/local/sentientia_exams/index.php', $currenturl);
             }
             if (has_capability('local/sentientia_classroom:view', $sys)) {
-                $items[] = $this->item('Classrooms', 'fa-calendar', '/local/sentientia_classroom/index.php', $currenturl);
+                $items[] = $this->item(get_string('nav_classrooms', 'theme_sentientia'), 'fa-calendar', '/local/sentientia_classroom/index.php', $currenturl);
             }
             if (has_capability('local/sentientia_learningpath:view', $sys)) {
-                $items[] = $this->item('Learning Paths', 'fa-road', '/local/sentientia_learningpath/index.php', $currenturl);
+                $items[] = $this->item(get_string('nav_learningpaths', 'theme_sentientia'), 'fa-road', '/local/sentientia_learningpath/index.php', $currenturl);
             }
 
             // ── Insights ──
             $items[] = $this->divider();
             if (has_capability('local/sentientia_reports:view', $sys)) {
-                $items[] = $this->item('Reports', 'fa-bar-chart', '/local/sentientia_reports/index.php', $currenturl);
+                $items[] = $this->item(get_string('reports'), 'fa-bar-chart', '/local/sentientia_reports/index.php', $currenturl);
             }
-            $items[] = $this->item('Analytics', 'fa-line-chart', '/local/sentientia_analytics/index.php', $currenturl);
-            $items[] = $this->item('Compliance', 'fa-shield', '/local/sentientia_compliance_report/index.php', $currenturl);
+            $items[] = $this->item(get_string('nav_analytics', 'theme_sentientia'), 'fa-line-chart', '/local/sentientia_analytics/index.php', $currenturl);
+            $items[] = $this->item(get_string('nav_compliance', 'theme_sentientia'), 'fa-shield', '/local/sentientia_compliance_report/index.php', $currenturl);
             return $items;
         }
 
@@ -227,20 +227,20 @@ class sidebar_navigation {
         // Order: team management first, then own learning
         // ═══════════════════════════════════════════════════
         if ($this->ismanager) {
-            $items[] = $this->item('Dashboard', 'fa-home', '/my/', $currenturl, null, ['/my/index.php']);
-            $items[] = $this->item('My Team', 'fa-users', '/local/sentientia_manager/index.php', $currenturl);
-            $items[] = $this->item('Compliance', 'fa-shield-alt', '/local/sentientia_compliance_report/index.php', $currenturl);
+            $items[] = $this->item(get_string('myhome'), 'fa-home', '/my/', $currenturl, null, ['/my/index.php']);
+            $items[] = $this->item(get_string('leftmenu_tm_dashboard', 'theme_sentientia'), 'fa-users', '/local/sentientia_manager/index.php', $currenturl);
+            $items[] = $this->item(get_string('nav_compliance', 'theme_sentientia'), 'fa-shield-alt', '/local/sentientia_compliance_report/index.php', $currenturl);
             // T-02 (QA Walk 2026-05-29): Sentientia Live trainer dashboard.
             // Gated by can_create_live_session() so it only shows when the
             // live.enabled flag is on AND the user holds live:create (true for
             // the BizLMS trainer role after the T-01 access.php fix).
             if ($this->can_create_live_session()) {
-                $items[] = $this->item('Live Sessions', 'fa-bolt',
+                $items[] = $this->item(get_string('nav_livesessions', 'theme_sentientia'), 'fa-bolt',
                     '/local/sentientia_live/trainer/index.php', $currenturl);
             }
             $items[] = $this->divider();
-            $items[] = $this->item('My Courses', 'fa-book', '/local/sentientia_catalog/mycourses.php', $currenturl);
-            $items[] = $this->item('Catalog', 'fa-compass', '/local/sentientia_catalog/public.php', $currenturl);
+            $items[] = $this->item(get_string('nav_courses', 'theme_sentientia'), 'fa-book', '/local/sentientia_catalog/mycourses.php', $currenturl);
+            $items[] = $this->item(get_string('nav_catalog', 'theme_sentientia'), 'fa-compass', '/local/sentientia_catalog/public.php', $currenturl);
             // Sprint D — managers in non-Airpay tenants (Public/ZEEA)
             // get a "Browse Airpay Library" link so they can request
             // specific Airpay courses for their tenant's catalogue.
@@ -253,9 +253,9 @@ class sidebar_navigation {
             // `commerce.crossTenantRequest.enabled`.
             if ($this->is_non_airpay_tenant_user()
                     && \local_sentientia_platform\feature_flags::is_enabled('commerce.crossTenantRequest.enabled')) {
-                $items[] = $this->item('Browse Airpay Library', 'fa-handshake-o',
+                $items[] = $this->item(get_string('nav_browseairpaylibrary', 'theme_sentientia'), 'fa-handshake-o',
                     '/local/sentientia_courses/browse_airpay.php', $currenturl);
-                $items[] = $this->item('My Requests', 'fa-clipboard-list',
+                $items[] = $this->item(get_string('nav_myrequests', 'theme_sentientia'), 'fa-clipboard-list',
                     '/local/sentientia_courses/my_requests.php', $currenturl);
             }
             // Cart for managers in cart-enabled tenants.
@@ -265,17 +265,17 @@ class sidebar_navigation {
             // cart at /local/sentientia_cart/index.php is fed only by the add_item WS,
             // never the catalog buttons, so it always rendered empty here.
             if ($this->is_cart_enabled_for_current_user()) {
-                $items[] = $this->item('My Cart', 'fa-shopping-cart',
+                $items[] = $this->item(get_string('nav_mycart', 'theme_sentientia'), 'fa-shopping-cart',
                     '/local/sentientia_catalog/cart.php', $currenturl);
             }
             // E-02 (QA Walk 2026-05-29): managers are learners too — give
             // them their own Skills dashboard, same as the Learner shell.
             if ($this->can_view_own_skills()) {
-                $items[] = $this->item('My Skills', 'fa-bullseye',
+                $items[] = $this->item(get_string('nav_myskills', 'theme_sentientia'), 'fa-bullseye',
                     '/local/sentientia_skills/index.php', $currenturl);
             }
-            $items[] = $this->item('Certificates', 'fa-certificate', '/local/sentientia_pages/certificates.php', $currenturl);
-            $items[] = $this->item('Profile', 'fa-user', '/local/sentientia_users/profile.php', $currenturl);
+            $items[] = $this->item(get_string('nav_certificates', 'theme_sentientia'), 'fa-certificate', '/local/sentientia_pages/certificates.php', $currenturl);
+            $items[] = $this->item(get_string('profile'), 'fa-user', '/local/sentientia_users/profile.php', $currenturl);
             return $items;
         }
 
@@ -283,9 +283,9 @@ class sidebar_navigation {
         // LEARNER (employee / external) — default
         // Order: learning activities first
         // ═══════════════════════════════════════════════════
-        $items[] = $this->item('Dashboard', 'fa-home', '/my/', $currenturl, null, ['/my/index.php']);
-        $items[] = $this->item('My Courses', 'fa-book', '/local/sentientia_catalog/mycourses.php', $currenturl);
-        $items[] = $this->item('Catalog', 'fa-compass', '/local/sentientia_catalog/public.php', $currenturl);
+        $items[] = $this->item(get_string('myhome'), 'fa-home', '/my/', $currenturl, null, ['/my/index.php']);
+        $items[] = $this->item(get_string('nav_courses', 'theme_sentientia'), 'fa-book', '/local/sentientia_catalog/mycourses.php', $currenturl);
+        $items[] = $this->item(get_string('nav_catalog', 'theme_sentientia'), 'fa-compass', '/local/sentientia_catalog/public.php', $currenturl);
 
         // ── Cart (only for tenants where cart is enabled — Phase 1G) ──
         // Public/ZEEA tenants get a cart link; Airpay tenant employees
@@ -295,7 +295,7 @@ class sidebar_navigation {
         // buttons put items — not the DB cart /local/sentientia_cart/index.php
         // (fed only by the add_item WS), which always rendered empty here.
         if ($this->is_cart_enabled_for_current_user()) {
-            $items[] = $this->item('My Cart', 'fa-shopping-cart',
+            $items[] = $this->item(get_string('nav_mycart', 'theme_sentientia'), 'fa-shopping-cart',
                 '/local/sentientia_catalog/cart.php', $currenturl);
         }
 
@@ -304,7 +304,7 @@ class sidebar_navigation {
         // reports, so role_detector returns islearner). Gated by the create
         // cap — same defensive pattern as the iscomplianceuser link below.
         if ($this->can_create_live_session()) {
-            $items[] = $this->item('Live Sessions', 'fa-bolt',
+            $items[] = $this->item(get_string('nav_livesessions', 'theme_sentientia'), 'fa-bolt',
                 '/local/sentientia_live/trainer/index.php', $currenturl);
         }
 
@@ -316,7 +316,7 @@ class sidebar_navigation {
         // reachable without typing a URL. Inserted before Certificates
         // so it sits with the high-value workflow links.
         if ($this->iscomplianceuser) {
-            $items[] = $this->item('Compliance', 'fa-shield',
+            $items[] = $this->item(get_string('nav_compliance', 'theme_sentientia'), 'fa-shield',
                 '/local/sentientia_compliance_report/index.php', $currenturl);
         }
 
@@ -325,12 +325,12 @@ class sidebar_navigation {
         // index.php defaults to $USER. Cap-gated, no feature flag — same
         // pattern as the iscomplianceuser Compliance link above.
         if ($this->can_view_own_skills()) {
-            $items[] = $this->item('My Skills', 'fa-bullseye',
+            $items[] = $this->item(get_string('nav_myskills', 'theme_sentientia'), 'fa-bullseye',
                 '/local/sentientia_skills/index.php', $currenturl);
         }
 
-        $items[] = $this->item('Certificates', 'fa-certificate', '/local/sentientia_pages/certificates.php', $currenturl);
-        $items[] = $this->item('Profile', 'fa-user', '/local/sentientia_users/profile.php', $currenturl);
+        $items[] = $this->item(get_string('nav_certificates', 'theme_sentientia'), 'fa-certificate', '/local/sentientia_pages/certificates.php', $currenturl);
+        $items[] = $this->item(get_string('profile'), 'fa-user', '/local/sentientia_users/profile.php', $currenturl);
 
         return $items;
     }

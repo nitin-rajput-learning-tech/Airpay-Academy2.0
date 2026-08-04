@@ -42,10 +42,10 @@ $plugin->component = 'local_sentientia_aiquiz';
 // generate.php language picker + prompt preview + Devanagari-safe
 // response parser (mb_strlen/mb_substr). No live API in tests
 // (call_mock only). ADR-012 G.1 addendum. Hindi parity 125/125.
-$plugin->version   = 2026052500;
+$plugin->version   = 2026080400;  // T-01 cap back-fill: teacher archetype (+sentientiaauthor) on generate/review
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;     // MVP — needs prod sign-off before flag flips
-$plugin->release   = '0.2.0-alpha';
+$plugin->release   = '0.2.1-alpha';
 $plugin->dependencies = [
     'local_sentientia_platform' => 2026051401,   // feature_flags resolver + customer scope + get_customer_config
 ];

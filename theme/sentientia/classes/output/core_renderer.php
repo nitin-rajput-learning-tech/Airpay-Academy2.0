@@ -284,10 +284,11 @@ class core_renderer extends \core_renderer {
         // [data-airpay-table]). The form/input carry id + data-default-*
         // attributes the JS needs to find and reset them.
         $searchurl = $CFG->wwwroot . '/search/index.php';
-        $defaultplaceholder = 'Search courses, people, content...';
+        $defaultplaceholder = get_string('searchplaceholder', 'theme_sentientia');
         $topbar = '<header class="ap-topbar" id="ap-topbar">'
                 . '<div class="ap-topbar__left">'
-                . '<button class="ap-topbar__hamburger d-lg-none" id="ap-sidebar-mobile-toggle" aria-label="Open menu"><i class="fa fa-bars"></i></button>'
+                . '<button class="ap-topbar__hamburger d-lg-none" id="ap-sidebar-mobile-toggle" aria-label="'
+                . s(get_string('a11y_openmenu', 'theme_sentientia')) . '"><i class="fa fa-bars"></i></button>'
                 . '</div>'
                 . '<div class="ap-topbar__center">'
                 . '<form action="' . s($searchurl) . '" method="get"'

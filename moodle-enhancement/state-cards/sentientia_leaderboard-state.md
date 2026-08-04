@@ -297,3 +297,13 @@ admin index, preferences). Companion block plugin
 `block_sentientia_leaderboard` shipped same wave — see its own state
 card. Master flag `sentientia.leaderboards.enabled` still default OFF;
 plugin renders nothing on a vanilla install.
+
+## 2026-08-04 — T-01 capability back-fill (ADR-028 Phase 1.5, v2026080400 / 0.2.1-alpha)
+
+`:manageboard` archetypes missed `teacher` (`:view` already had it) — the
+BizLMS `trainer` role (archetype=teacher) could see boards but not create
+them for its cohorts. `db/access.php` adds `'teacher' => CAP_ALLOW`;
+`db/upgrade.php` gains a 2026080400 step back-filling teacher-archetype
+roles (overwrite=false). Verified on local prod-import: manageboard now
+grants editingteacher, manager, administrator, teacher, trainer. Deployed
+local + mirrored to top-level local/.

@@ -6,7 +6,12 @@
  * Capabilities for Sentientia LMS AI Quiz Generation (Phase G.0 MVP).
  *
  *   generate   — paste source text + call Claude to produce a draft.
- *                Editingteacher+, manager. Cost-sensitive — never user.
+ *                Teacher archetypes + manager. Cost-sensitive — never user.
+ *                T-01 back-fill (2026-08-04): 'teacher' added because the
+ *                BizLMS `trainer` role is archetype=teacher, not
+ *                editingteacher — real trainers were locked out. The
+ *                custom `sentientiaauthor` role (no archetype) is granted
+ *                via db/upgrade.php.
  *   review     — open the review UI, approve/edit/reject questions,
  *                push approved questions to mod_quiz. Same archetypes
  *                as :generate; in practice the generator IS the reviewer
@@ -26,6 +31,7 @@ $capabilities = [
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes'   => [
             'editingteacher' => CAP_ALLOW,
+            'teacher'        => CAP_ALLOW,
             'manager'        => CAP_ALLOW,
         ],
     ],
@@ -35,6 +41,7 @@ $capabilities = [
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes'   => [
             'editingteacher' => CAP_ALLOW,
+            'teacher'        => CAP_ALLOW,
             'manager'        => CAP_ALLOW,
         ],
     ],

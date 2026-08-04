@@ -27,10 +27,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_leaderboard';
-$plugin->version   = 2026052500;
+$plugin->version   = 2026080400;  // T-01 cap back-fill: teacher archetype on manageboard
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;
-$plugin->release   = '0.2.0-alpha';
+$plugin->release   = '0.2.1-alpha';
 $plugin->dependencies = [
     'local_sentientia_platform' => 2026051401,
 ];

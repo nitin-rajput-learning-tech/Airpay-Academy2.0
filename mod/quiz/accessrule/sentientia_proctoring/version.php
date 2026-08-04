@@ -5,7 +5,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'quizaccess_sentientia_proctoring';
-$plugin->version   = 2026052401;     // Phase B.12 hotfix — defensive table_exists() in upgrade.php
+$plugin->version   = 2026080400;  // 2026-08-04 privacy null-provider (GDPR registry closure)     // Phase B.12 hotfix — defensive table_exists() in upgrade.php
 $plugin->requires  = 2024042200;
 $plugin->maturity  = MATURITY_STABLE;
 $plugin->release   = '1.1.1';

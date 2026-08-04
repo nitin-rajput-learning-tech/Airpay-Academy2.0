@@ -56,3 +56,40 @@ $string['privacy:metadata:tokens:timemodified']      = 'जब tokens को स
 $string['privacy:metadata:microsoft_graph']        = 'Microsoft Graph हर बार उपयोगकर्ता का access token प्राप्त करता है जब कोई Sentientia LMS सुविधा उपयोगकर्ता की ओर से M365 डेटा पढ़ती है। उपयोगकर्ता का पहचान दावा बाहर की ओर प्रवाहित होता है; Microsoft Graph से प्रतिक्रियाएँ (प्रोफ़ाइल फ़ील्ड्स, कैलेंडर इवेंट्स, SharePoint मेटाडेटा) LMS में वापस प्रवाहित होती हैं।';
 $string['privacy:metadata:microsoft_graph:userid'] = 'जिस Moodle उपयोगकर्ता की ओर से कॉल किया जा रहा है (एन्क्रिप्टेड token देखने के लिए उपयोग किया जाता है)।';
 $string['privacy:metadata:microsoft_graph:scopes'] = 'OAuth स्कोप जिनके लिए access token को अनुमति दी गई थी — परिभाषित करते हैं कि कौन से Graph एंडपॉइंट कॉल किए जा सकते हैं।';
+
+// ── C15 एडमिन OAuth लैंडिंग डैशबोर्ड (Bucket C / 2026-05-28) — 2026-08-04 parity closure ──
+$string['admin_index_title']     = 'Microsoft 365';
+$string['admin_index_intro']     = 'Microsoft 365 tenant से Sentientia LMS कनेक्शन को कॉन्फ़िगर और मॉनिटर करें। Phase C.1 में OAuth स्कैफ़ोल्ड शामिल है; लाइव Graph कॉल Phase C.2 में आएँगी।';
+$string['admin_index_flag_off_notice'] = 'Microsoft 365 फ़ीचर फ़्लैग (sentientia_m365_enabled) वर्तमान में बंद है। OAuth स्कैफ़ोल्ड मौजूद है लेकिन कोई Graph एंडपॉइंट पहुँच योग्य नहीं है।';
+$string['admin_index_phase_c1_notice'] = 'Phase C.1 confirm-required मोड में आता है। graph_client में हर कॉल moodle_exception("confirm_required") फेंकती है — यह जानबूझकर है। Phase C.2 में स्टब्स की जगह प्रति-कॉल [CONFIRM] गेट के पीछे वास्तविक Graph कॉल आएँगी।';
+$string['admin_index_readiness'] = 'MSAL क्लाइंट तत्परता';
+$string['admin_index_ready_yes'] = 'msal_client READY रिपोर्ट करता है — Azure tenant + client + रीडायरेक्ट URI कॉन्फ़िगर और पार्स योग्य हैं।';
+$string['admin_index_ready_no']  = 'msal_client NOT READY रिपोर्ट करता है — Azure tenant ID, क्लाइंट ID या रीडायरेक्ट URI में से कम से कम एक अनसेट या पार्स न होने योग्य है। कॉन्फ़िगरेशन पूरा करने के लिए सेटिंग्स पर जाएँ।';
+$string['admin_index_roadmap']   = 'रोडमैप';
+$string['admin_index_quicknav']  = 'त्वरित नेविगेशन';
+$string['admin_index_link_settings']       = 'Azure और OAuth सेटिंग्स';
+$string['admin_index_link_settings_desc']  = 'Azure tenant ID, ऐप्लिकेशन क्लाइंट ID, रीडायरेक्ट URI और वैकल्पिक-स्कोप multiselect।';
+$string['admin_index_link_privacy']        = 'गोपनीयता और डेटा विषय अधिकार';
+$string['admin_index_link_privacy_desc']   = 'Moodle साइट प्रशासन → गोपनीयता और नीतियाँ। M365 tokens मानक डेटा निर्यात और मिटाने की प्रक्रियाओं में शामिल हैं।';
+$string['admin_index_footnote'] = 'यह पेज कॉन्फ़िगरेशन मान पढ़ता है और एन्क्रिप्टेड-token पंक्तियाँ गिनता है। यह Microsoft Graph को कॉल नहीं करता और रनटाइम पर किसी token को डिक्रिप्ट नहीं करता।';
+
+$string['stats_configured']    = 'कॉन्फ़िगर किया गया';
+$string['stats_unconfigured']  = 'सेट नहीं';
+$string['stats_tenant_id']     = 'Azure tenant ID';
+$string['stats_client_id']     = 'Azure क्लाइंट ID';
+$string['stats_flag_label']    = 'फ़ीचर फ़्लैग';
+$string['stats_flag_on']       = 'सक्षम';
+$string['stats_flag_off']      = 'अक्षम';
+$string['stats_connected_users'] = 'कनेक्टेड उपयोगकर्ता';
+
+$string['roadmap_col_phase']   = 'चरण';
+$string['roadmap_col_what']    = 'क्या आता है';
+$string['roadmap_col_status']  = 'स्थिति';
+$string['roadmap_done']        = 'पूर्ण';
+$string['roadmap_planned']     = 'नियोजित';
+$string['roadmap_c1'] = 'C.1 — OAuth स्कैफ़ोल्ड, Graph स्टब्स, एन्क्रिप्टेड-token संग्रहण, गोपनीयता प्रोवाइडर।';
+$string['roadmap_c2'] = 'C.2 — confirm_required स्टब्स की जगह प्रति-कॉल [CONFIRM] के पीछे वास्तविक Graph कॉल। get_me, list_sites, कैलेंडर बेसलाइन।';
+$string['roadmap_c3'] = 'C.3 — SENTIENTIA SOP parser पाइपलाइन में SharePoint दस्तावेज़ अंतर्ग्रहण।';
+$string['roadmap_c4'] = 'C.4 — Outlook मीटिंग → LMS क्लासरूम इवेंट सिंक।';
+$string['roadmap_c5'] = 'C.5 — Teams उपस्थिति अंतर्ग्रहण → पूर्णता रिकॉर्ड।';
+$string['roadmap_c6'] = 'C.6 — प्रति-ग्राहक prompt + स्कोप ओवरराइड + हिंदी सहमति UI।';

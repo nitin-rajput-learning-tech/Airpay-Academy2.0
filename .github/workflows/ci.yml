@@ -295,6 +295,32 @@ jobs:
           fi
           echo "::notice::No conflict markers found"
 
+  lang-parity-check:
+    name: en/hi lang-pack parity
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+          tools: none
+
+      - name: Check en/hi key parity
+        run: |
+          # CLAUDE.md mandates 100% Hindi parity; until 2026-08-04 this
+          # was convention-only and regressed silently (UI-NAV shell
+          # chrome shipped hardcoded English — ADR-028 Phase 1.5).
+          # FAILs when a component's existing lang/hi pack drifts from
+          # lang/en (missing/extra keys); WARNs on en-only components
+          # (known coverage backlog — flips to FAIL when closed; see
+          # $failonmissingpack in the script). Local twin: pre-commit
+          # CHECK 17.
+          php tools/check-lang-parity.php --quiet
+
   amd-build-parity:
     name: AMD src/build parity
     runs-on: ubuntu-latest

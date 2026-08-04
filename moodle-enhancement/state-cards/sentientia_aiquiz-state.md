@@ -224,3 +224,15 @@ to api.anthropic.com in this chip.**
 **Still deferred (unchanged):** real `mod_quiz` push (G.4), PDF upload
 (G.2), cost dashboard (G.3), live-API budget approval, per-draft snapshot
 of custom-template body.
+
+## 2026-08-04 — T-01 capability back-fill (ADR-028 Phase 1.5, v2026080400 / 0.2.1-alpha)
+
+`:generate` + `:review` archetypes were editingteacher+manager only — the
+BizLMS `trainer` role (archetype=teacher) and the custom `sentientiaauthor`
+role (no archetype) could not reach the first feature scheduled to go live
+under the signed Addendum-A AI budget. `db/access.php` now adds
+`'teacher' => CAP_ALLOW`; NEW `db/upgrade.php` back-fills teacher-archetype
+roles + `sentientiaauthor` (guarded, overwrite=false) because Moodle applies
+archetype defaults only at first cap install. Verified on local prod-import:
+both caps now grant editingteacher, manager, administrator, teacher,
+trainer, sentientiaauthor. Deployed local + mirrored to top-level local/.

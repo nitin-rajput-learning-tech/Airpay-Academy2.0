@@ -1,7 +1,7 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Sentientia Classroom Training';
+$string['pluginname'] = 'Airpay Classroom Training';
 
 // Capabilities.
 $string['sentientia_classroom:manage'] = 'Manage classroom sessions';
@@ -10,6 +10,8 @@ $string['sentientia_classroom:attendance'] = 'Manage attendance';
 $string['sentientia_classroom:create'] = 'Create classroom sessions';
 $string['sentientia_classroom:update'] = 'Edit classroom sessions';
 $string['sentientia_classroom:delete'] = 'Delete classroom sessions';
+// 2026-08-04 parity closure — capability existed (db/services.php, bulk enrol WS) but the en string was missing.
+$string['sentientia_classroom:enrol'] = 'Enrol users into classrooms';
 
 // CRUD form strings.
 $string['addclassroom'] = 'Add Classroom';
@@ -146,6 +148,8 @@ $string['toomanymarks']              = 'Too many attendance records in one reque
 // Refactor that test to check $e->errorcode before adding the translation.
 
 // Privacy strings (Phase Z.1).
+// 2026-08-04 parity closure — top-level summary string existed in hi only.
+$string['privacy:metadata'] = 'The Airpay Classroom Training plugin stores classroom roster enrolments and per-session attendance records.';
 $string['privacy:metadata:roster'] = 'Per-classroom user roster (who is enrolled in which classroom).';
 $string['privacy:metadata:roster:classroomid'] = 'Classroom ID.';
 $string['privacy:metadata:roster:userid'] = 'Enrolled user ID.';

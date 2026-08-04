@@ -60,5 +60,29 @@ function xmldb_local_sentientia_leaderboard_upgrade(int $oldversion): bool {
             'sentientia_leaderboard');
     }
 
+    // ── T-01 back-fill (2026-08-04, ADR-028 Phase 1.5): grant manageboard to
+    // the teacher archetype ── db/access.php now declares 'teacher' =>
+    // CAP_ALLOW (the BizLMS `trainer` role is archetype=teacher, not
+    // editingteacher — trainers could :view boards but not create them for
+    // their cohorts). Moodle applies archetype defaults only when a capability
+    // is FIRST installed, so existing deployments need this explicit
+    // back-fill, mirroring what a fresh install would now do.
+    if ($oldversion < 2026080400) {
+        $systemcontext = \context_system::instance();
+
+        $teacherroles = $DB->get_records('role', ['archetype' => 'teacher'], '', 'id');
+        foreach ($teacherroles as $role) {
+            // overwrite=false: an admin who deliberately set CAP_PREVENT is
+            // respected and left untouched.
+            assign_capability('local/sentientia_leaderboard:manageboard',
+                CAP_ALLOW, $role->id, $systemcontext->id, false);
+        }
+
+        \context_system::instance()->mark_dirty();
+
+        upgrade_plugin_savepoint(true, 2026080400, 'local',
+            'sentientia_leaderboard');
+    }
+
     return true;
 }

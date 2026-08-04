@@ -13,12 +13,12 @@
 <header class="ap-topbar" id="ap-topbar">
     <div class="ap-topbar__left">
         {{! Mobile hamburger }}
-        <button class="ap-topbar__hamburger d-lg-none" id="ap-sidebar-mobile-toggle" aria-label="Open menu">
+        <button class="ap-topbar__hamburger d-lg-none" id="ap-sidebar-mobile-toggle" aria-label="{{#str}}a11y_openmenu, theme_sentientia{{/str}}">
             <i class="fa fa-bars"></i>
         </button>
 
         {{! Breadcrumb }}
-        <nav class="ap-topbar__breadcrumb d-none d-md-flex" aria-label="Breadcrumb">
+        <nav class="ap-topbar__breadcrumb d-none d-md-flex" aria-label="{{#str}}breadcrumb, access{{/str}}">
             {{{breadcrumbs}}}
         </nav>
     </div>
@@ -28,7 +28,7 @@
         <form action="{{{wwwroot}}}/search/index.php" method="get" class="ap-topbar__search">
             <i class="fa fa-search ap-topbar__search-icon"></i>
             <input type="text" name="q" class="ap-topbar__search-input"
-                   placeholder="Search courses, people, content..." autocomplete="off">
+                   placeholder="{{#str}}searchplaceholder, theme_sentientia{{/str}}" autocomplete="off">
         </form>
     </div>
 

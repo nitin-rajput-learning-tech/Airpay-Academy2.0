@@ -208,3 +208,45 @@ $string['dash_overall_completion'] = 'कुल पूर्णता';
 $string['dash_continue_learning']  = 'सीखना जारी रखें';
 $string['dash_view_all']           = 'सभी देखें';
 $string['dash_explore']            = 'एक्सप्लोर करें';
+
+// ऐप-शेल क्रोम i18n (2026-08-04) — पर्सोना साइडबार लेबल्स
+// (classes/sidebar_navigation.php), शेल कोर्स प्लेयर
+// (templates/course.mustache) और टॉपबार क्रोम
+// (core_renderer::airpay_shell_start)। core strings (myhome, reports,
+// notifications, profile) Moodle लैंगपैक से ही अनुवादित होती हैं।
+// a11y_* keys सिर्फ़ aria-label/title के लिए हैं।
+$string['a11y_activitiescompleted'] = '{$a->total} में से {$a->completed} एक्टिविटी पूरी, {$a->percent}%';
+$string['a11y_backtocourse'] = '{$a} पर वापस जाएं';
+$string['a11y_courseprogressbar'] = 'कोर्स पूर्णता प्रगति';
+$string['a11y_courseprogressnav'] = 'कोर्स प्रगति और नेविगेशन';
+$string['a11y_openmenu'] = 'मेनू खोलें';
+$string['a11y_togglecoursesidebar'] = 'कोर्स साइडबार टॉगल करें';
+$string['a11y_togglesidebar'] = 'साइडबार टॉगल करें';
+$string['course_content'] = 'कोर्स सामग्री';
+$string['course_next'] = 'अगला: {$a}';
+$string['course_start'] = 'शुरू करें';
+$string['course_usercompletion'] = 'यूज़र पूर्णता:';
+$string['course_userenrolments'] = 'यूज़र नामांकन:';
+$string['course_percentcomplete'] = '{$a}% पूर्ण';
+$string['nav_analytics'] = 'एनालिटिक्स';
+$string['nav_browseairpaylibrary'] = 'Airpay लाइब्रेरी ब्राउज़ करें';
+$string['nav_certificates'] = 'सर्टिफ़िकेट';
+$string['nav_classrooms'] = 'क्लासरूम';
+$string['nav_compliance'] = 'कम्प्लायंस';
+$string['nav_coursesharerequests'] = 'कोर्स-शेयर रिक्वेस्ट';
+$string['nav_emails'] = 'ईमेल';
+$string['nav_evaluations'] = 'इवैल्युएशन';
+$string['nav_learningpaths'] = 'लर्निंग पाथ';
+$string['nav_livesessions'] = 'लाइव सेशन';
+$string['nav_managecourses'] = 'कोर्स मैनेज करें';
+$string['nav_manageusers'] = 'यूज़र मैनेज करें';
+$string['nav_mycart'] = 'मेरा कार्ट';
+$string['nav_myrequests'] = 'मेरी रिक्वेस्ट';
+$string['nav_myskills'] = 'मेरी स्किल्स';
+$string['nav_onlineexams'] = 'ऑनलाइन एग्ज़ाम';
+$string['nav_organisation'] = 'ऑर्गनाइज़ेशन';
+$string['nav_privacy'] = 'प्राइवेसी';
+$string['nav_programs'] = 'प्रोग्राम';
+$string['nav_siteadmin'] = 'साइट एडमिन';
+$string['nav_skills'] = 'स्किल्स';
+$string['searchplaceholder'] = 'कोर्स, लोग, कंटेंट खोजें...';

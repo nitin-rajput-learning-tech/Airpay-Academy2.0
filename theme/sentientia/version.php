@@ -390,7 +390,13 @@ defined('MOODLE_INTERNAL') || die();
 // + high-contrast section deliberately untouched — the latter has no token
 // remap of its own, see inline comments). Bump ships the new themerev for
 // the SVG + recompiled CSS.
-$plugin->version   = 2026080301;
+// 2026080302 — UI-NAV i18n closure: shell chrome internationalized (31 new
+// en+hi string pairs). sidebar_navigation.php nav labels (40 call-sites,
+// core strings reused where exact: myhome/reports/notifications/profile),
+// course.mustache player strings + aria-labels ({$a} param forms), topbar
+// "Open menu" + search placeholder. Restores the 100%-Hindi-parity policy
+// in the flagship chrome; the new lang-parity CI gate prevents recurrence.
+$plugin->version   = 2026080302;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_sentientia';
 $plugin->maturity  = MATURITY_BETA;

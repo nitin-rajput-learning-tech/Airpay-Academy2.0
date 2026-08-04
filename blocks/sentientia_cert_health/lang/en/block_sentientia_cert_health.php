@@ -28,3 +28,6 @@ $string['kpi_aria_label'] = '{$a->value} {$a->label}, severity {$a->severity}';
 $string['region_label']   = 'Airpay certificate-email health summary';
 
 $string['view_full_log'] = 'View full email delivery log →';
+
+// Privacy API (null provider).
+$string['privacy:metadata'] = 'The Certificate Health block does not store any personal data. It displays aggregate delivery counts from the email log owned by local_sentientia_emails.';

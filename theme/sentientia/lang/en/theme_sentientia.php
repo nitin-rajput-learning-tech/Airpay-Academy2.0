@@ -283,3 +283,42 @@ $string['kpi_mandatory_courses']   = 'Mandatory Courses';
 $string['kpi_compliance_rate']     = 'Compliance Rate';
 $string['kpi_overdue']             = 'Overdue';
 $string['kpi_total_assigned']      = 'Total Assigned';
+
+// App-shell chrome i18n (2026-08-04) — persona sidebar labels
+// (classes/sidebar_navigation.php), shell course player
+// (templates/course.mustache) and topbar chrome
+// (core_renderer::airpay_shell_start). Core strings are reused where an
+// exact match exists (myhome=Dashboard, reports, notifications, profile);
+// the keys below cover the rest. a11y_* keys are aria-labels/titles only.
+$string['a11y_activitiescompleted'] = '{$a->completed} of {$a->total} activities completed, {$a->percent}%';
+$string['a11y_backtocourse'] = 'Back to {$a}';
+$string['a11y_courseprogressbar'] = 'Course completion progress';
+$string['a11y_courseprogressnav'] = 'Course progress and navigation';
+$string['a11y_openmenu'] = 'Open menu';
+$string['a11y_togglecoursesidebar'] = 'Toggle course sidebar';
+$string['a11y_togglesidebar'] = 'Toggle sidebar';
+$string['course_content'] = 'Course Content';
+$string['course_next'] = 'Next: {$a}';
+$string['course_percentcomplete'] = '{$a}% complete';
+$string['nav_analytics'] = 'Analytics';
+$string['nav_browseairpaylibrary'] = 'Browse Airpay Library';
+$string['nav_certificates'] = 'Certificates';
+$string['nav_classrooms'] = 'Classrooms';
+$string['nav_compliance'] = 'Compliance';
+$string['nav_coursesharerequests'] = 'Course-share Requests';
+$string['nav_emails'] = 'Emails';
+$string['nav_evaluations'] = 'Evaluations';
+$string['nav_learningpaths'] = 'Learning Paths';
+$string['nav_livesessions'] = 'Live Sessions';
+$string['nav_managecourses'] = 'Manage Courses';
+$string['nav_manageusers'] = 'Manage Users';
+$string['nav_mycart'] = 'My Cart';
+$string['nav_myrequests'] = 'My Requests';
+$string['nav_myskills'] = 'My Skills';
+$string['nav_onlineexams'] = 'Online Exams';
+$string['nav_organisation'] = 'Organisation';
+$string['nav_privacy'] = 'Privacy';
+$string['nav_programs'] = 'Programs';
+$string['nav_siteadmin'] = 'Site Admin';
+$string['nav_skills'] = 'Skills';
+$string['searchplaceholder'] = 'Search courses, people, content...';

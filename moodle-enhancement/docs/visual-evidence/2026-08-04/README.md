@@ -67,6 +67,49 @@ a screenshot can't prove "identical", the computed values can):
    (Bootstrap extend chains) — this change altered declaration *values* only,
    no selectors, no `@extend`.
 
+## 2b. ADR-028 Phase 1.5 quick-win batch (afternoon wave, theme 2026080302)
+
+**Shell-chrome i18n** — 31+4 new en+hi string pairs (sidebar 40 call-sites, course
+player + aria-labels, topbar). Browser-verified as `qa_employee`:
+
+- en dashboard: sidebar `Dashboard / My Courses / Catalog / My Skills / Certificates`,
+  search placeholder byte-identical, 0 `[[key]]` placeholders.
+- hi dashboard (`?lang=hi`): `डैशबोर्ड / मेरे कोर्स / कैटलॉग / मेरी स्किल्स / सर्टिफ़िकेट`,
+  placeholder `कोर्स, लोग, कंटेंट खोजें...`, aria-labels `मेनू खोलें` / `साइडबार टॉगल करें`,
+  0 placeholders. (First pass caught 2 additional emit sites the class-level fix
+  missed — `dashboard.mustache` + `topbar.mustache` build their own topbars; fixed
+  + 5 sibling hardcoded aria-labels.)
+- Course player (course 403): `Course Content` sidebar title + `0/2 · 0%` progress
+  render via the new keys.
+
+**Lang-parity gate** (`tools/check-lang-parity.php` + CI job `lang-parity-check` +
+pre-commit CHECK 17): first run caught 6 pre-existing FAILs beyond today's work —
+81 missing hi strings (catalog 16 / m365 33 / translate 30 / theme 3, wait — theme 3
++ 79 agent) and **2 genuine en bugs** (classroom capability + privacy:metadata,
+programs privacy:metadata rendered raw keys in English). All closed: final gate
+`56 en files checked, 0 failure(s), 8 warning(s)` (warnings = the known en-only
+pack backlog, tracked in the gate's `$failonmissingpack` flip).
+
+**T-01 capability back-fill** (aiquiz 0.2.1-alpha, leaderboard 0.2.1-alpha) —
+verified post-upgrade on the local prod-import DB:
+
+```
+local/sentientia_aiquiz:generate  -> editingteacher, manager, administrator, teacher, trainer, sentientiaauthor
+local/sentientia_aiquiz:review    -> (same six)
+local/sentientia_leaderboard:manageboard -> editingteacher, manager, administrator, teacher, trainer
+```
+
+Evidence-based non-fixes: `translate:translate` manager-only is BY DESIGN
+(cost-sensitive, per its access.php docblock); `xapi:managelrs/deletestatements`
++ `learningpath:delete` deliberately site-admin-only (RISK_DATALOSS / "site admin
+only" comments). reCAPTCHA "gap" reclassified: signup already implements
+honeypot + reCAPTCHA v2 (P1 #59) — the gap is unset production keys (config item,
+see docs/security/ENTERPRISE-IDENTITY-PACK.md).
+
+**Privacy registry** — 8 null providers added (evidence-checked safe); 8 plugins
+flagged needing REAL providers (spawned as follow-up task); upgraded all 9
+touched components to 2026080400.
+
 ## 3. Ninja package rebuilt to carry the UI-NAV wave
 
 Overlay re-run (65,349 files at the 5.2 target, AMD-rename gate: 0 stale

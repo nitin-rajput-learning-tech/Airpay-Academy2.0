@@ -127,3 +127,39 @@ $string['setting_prompt_template_note_desc']   = 'वर्तमान प्�
 // ── Misc ───────────────────────────────────────────────────────────
 $string['source_word_count'] = 'शब्द-गणना: {$a}';
 $string['tokens_used_today'] = 'आज उपयोग किए टोकन (कस्टमर-व्यापी): {$a->used} / {$a->cap}';
+
+// ── C16 admin landing/queue UI (Bucket C / 2026-05-28) — 2026-08-04 parity closure ──
+$string['admin_index_title']     = 'AI अनुवाद';
+$string['admin_index_intro']     = 'AI-संचालित सामग्री अनुवाद प्रबंधित करें। नए अनुवाद कार्य सबमिट करें, लम्बित diff की समीक्षा करें, और पिछली गतिविधि का ऑडिट करें।';
+$string['admin_index_flag_off_notice'] = 'AI अनुवाद फ़ीचर फ़्लैग (sentientia.translate.enabled) वर्तमान में बंद है। अनुवादों की समीक्षा अभी भी की जा सकती है, लेकिन कोई नई Anthropic कॉल नहीं चलेगी।';
+$string['admin_index_queue']     = 'हाल के अनुवाद';
+$string['admin_index_empty']     = 'वर्तमान फ़िल्टर से मेल खाता कोई अनुवाद नहीं।';
+$string['admin_index_truncated'] = 'सबसे हाल की 25 पंक्तियाँ दिखाई जा रही हैं। और सीमित करने हेतु फ़िल्टर परिष्कृत करें।';
+$string['admin_index_quicknav']  = 'त्वरित नेविगेशन';
+$string['admin_index_link_translate']      = 'नया अनुवाद';
+$string['admin_index_link_translate_desc'] = 'अंग्रेज़ी स्रोत-सामग्री पेस्ट करें और हिन्दी, मराठी, कन्नड़ या स्वाहिली में अनुवाद कार्य चलाएँ।';
+$string['admin_index_link_brands']         = 'ब्रांड ओवरराइड मैप';
+$string['admin_index_link_brands_desc']    = 'प्रति-कस्टमर ब्रांड-नाम प्रतिस्थापन प्रबंधित करें (उदाहरण: "Airpay" यथावत संरक्षित या लक्षित लिपि में प्रदर्शित)।';
+$string['admin_index_link_settings']       = 'अनुवाद सेटिंग्स';
+$string['admin_index_link_settings_desc']  = 'Anthropic API कुंजी, डिफ़ॉल्ट मॉडल, प्रति-कस्टमर दैनिक टोकन सीमा और स्रोत-शब्द सीमाएँ।';
+
+$string['stats_total']   = 'कुल अनुवाद';
+$string['stats_pending'] = 'लम्बित / समीक्षा प्रतीक्षित';
+$string['stats_saved']   = 'सहेजे गए (स्वीकृत)';
+$string['stats_failed']  = 'विफल';
+
+$string['filter_status'] = 'स्थिति:';
+$string['filter_lang']   = 'लक्षित भाषा:';
+$string['filter_all']    = 'सभी';
+$string['filter_apply']  = 'लागू करें';
+$string['filter_reset']  = 'रीसेट करें';
+
+$string['col_title']   = 'शीर्षक';
+$string['col_lang']    = 'लक्ष्य';
+$string['col_status']  = 'स्थिति';
+$string['col_tokens']  = 'टोकन (इनपुट + आउटपुट)';
+$string['col_created'] = 'बनाया गया';
+$string['col_actions'] = 'क्रियाएँ';
+
+$string['action_review'] = 'diff की समीक्षा करें';
+$string['action_open']   = 'खोलें';

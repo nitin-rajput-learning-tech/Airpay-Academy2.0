@@ -5,7 +5,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'block_sentientia_cert_health';
-$plugin->version   = 2026051300;
+$plugin->version   = 2026080400;  // 2026-08-04 privacy null-provider (GDPR registry closure)
 $plugin->requires  = 2024042200;        // Moodle 4.5+
 $plugin->maturity  = MATURITY_STABLE;
 $plugin->release   = '1.0.0';

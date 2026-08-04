@@ -12,3 +12,4 @@ $string['completed'] = 'Completed';
 $string['notstarted'] = 'Not Started';
 $string['compliance_status'] = 'Compliance Status';
 $string['export_csv'] = 'Export CSV';
+$string['privacy:metadata'] = 'The Compliance Dashboard block does not store any personal data. It displays course completion data owned by core Moodle.';

@@ -29,3 +29,6 @@ $string['severity_critical']  = 'Critical';
 $string['kpi_aria_label']     = '{$a->value} {$a->label}, severity {$a->severity}';
 $string['region_label']       = 'Airpay cron health summary';
 $string['overdue_label']      = 'overdue by {$a}';
+
+// Privacy API (null provider).
+$string['privacy:metadata'] = 'The Cron Health block does not store any personal data. It reads scheduled task state from core Moodle tables.';

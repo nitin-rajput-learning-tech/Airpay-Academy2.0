@@ -1,7 +1,7 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Sentientia Certification Programs';
+$string['pluginname'] = 'Airpay Certification Programs';
 
 // Capabilities.
 $string['sentientia_programs:view']   = 'View certification programs';
@@ -126,6 +126,8 @@ $string['users_enrolled_success'] = '{$a} user(s) enrolled.';
 $string['toomanyusers']          = 'Too many users in one request (limit 500).';
 
 // Privacy strings (Phase Z.1).
+// 2026-08-04 parity closure — top-level summary string existed in hi only.
+$string['privacy:metadata'] = 'The Airpay Certification Programs plugin stores per-program user enrolments and each learner\'s current level progress.';
 $string['privacy:metadata:enrol'] = 'Per-program user enrolment records.';
 $string['privacy:metadata:enrol:programid'] = 'Program ID.';
 $string['privacy:metadata:enrol:userid'] = 'Enrolled user ID.';

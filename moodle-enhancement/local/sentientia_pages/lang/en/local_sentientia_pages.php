@@ -25,3 +25,6 @@ $string['cert_action_edit'] = 'Edit';
 $string['cert_map_edit_hint'] = 'Template → tenant assignments are edited in the plugin settings.';
 $string['cert_map_edit_link'] = 'Edit the tenant map';
 $string['cert_hidden_count'] = '{$a} template(s) hidden by your tenant scope.';
+
+// Privacy API (null provider).
+$string['privacy:metadata'] = 'The Sentientia pages plugin does not store any personal data. QR attendance scans are recorded in the classroom plugin\'s tables and are described by that plugin\'s privacy provider.';
