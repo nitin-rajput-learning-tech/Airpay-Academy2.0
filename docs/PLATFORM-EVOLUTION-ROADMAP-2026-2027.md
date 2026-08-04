@@ -2,7 +2,11 @@
 
 **Author:** Head of L&D + AI partner
 **Date:** 2026-05-14
-**Status:** STRATEGIC REVIEW — directional, not committed plan
+**Status:** ⛔ **SUPERSEDED as roadmap (2026-08-04) by
+[ADR-028](../moodle-enhancement/docs/adr/ADR-028-reconciled-product-roadmap.md)** —
+retained as the historical pre-pivot benchmark only. This document predates the
+Day-0 product pivot (ADR-001, 2026-05-20); several rows are factually stale.
+Previously: STRATEGIC REVIEW — directional, not committed plan
 **Source:** Six parallel cluster reviews in `docs/platform-review-2026-05-14/`
 
 ---

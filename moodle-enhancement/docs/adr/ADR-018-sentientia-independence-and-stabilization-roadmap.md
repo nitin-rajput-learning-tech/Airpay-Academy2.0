@@ -1,6 +1,10 @@
 # ADR-018 — Sentientia LMS Independence + 100%-Stabilization Roadmap
 
-**Status:** Accepted (roadmap) · Wave 1 in execution
+**Status:** Accepted (decision) · Wave 1 in execution.
+Note (2026-08-04): the independence **decision** and wave gating discipline stand
+untouched; the wave list no longer doubles as the overall product roadmap — the
+operative sequencing above it is
+[ADR-028](ADR-028-reconciled-product-roadmap.md).
 **Date:** 2026-05-29
 **Owner:** Nitin Rajput
 **Supersedes/extends:** ADR-001 (fork strategy + product pivot), ADR-002 (customer-level flags), ADR-008 (customer brand), ADR-017 (polymorphic user types)

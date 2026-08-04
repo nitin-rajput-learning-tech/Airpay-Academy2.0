@@ -2,7 +2,14 @@
 
 **Author:** L&D OS standing-loop (for Nitin Rajput, Head of L&D, Airpay)
 **Date:** 2026-06-16
-**Status:** Strategy draft — decision-ready
+**Status:** Strategy draft — decision-ready.
+> ⚠️ **Partially superseded (2026-08-04):** §1–7 (market analysis, moats) remain the
+> competitive reference. **§8 execution sequencing is superseded by
+> [ADR-028](../adr/ADR-028-reconciled-product-roadmap.md)** (the gap cohort now
+> exists as flag-OFF scaffolds; the operative question is promotion, not
+> construction). The §9 open questions are packaged for decision in
+> [`docs/business/DECISION-MEMO-2026-08-04.md`](../business/DECISION-MEMO-2026-08-04.md).
+
 **Scope:** Benchmark Sentientia LMS against Invince.ai and the broader AI-native
 LXP market; identify gaps; define a feature-flagged, plugin-level roadmap to
 **surpass** the field.

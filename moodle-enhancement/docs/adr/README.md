@@ -32,6 +32,7 @@ accepted; superseded decisions get a new ADR that references the old one.
 | [ADR-025](ADR-025-component-rename-airpay-to-sentientia.md) | Component rename `local_airpay_*` → `local_sentientia_*` (executes ADR-022) | **COMPLETE** — 35 plugins renamed | 2026-06-08 |
 | [ADR-026](ADR-026-theme-cutover-and-canonicalization.md) | Theme cutover & canonicalization (`theme_airpayux → theme_sentientia`) | Accepted — Move 1 ready · Move 2 gated on 5.2 | 2026-06-09 |
 | [ADR-027](ADR-027-quality-gate-system.md) | Quality-gate system (stop auditing, start gating) + surface-upgrade workstream | Accepted — Gate 0 shipped · Gates 1–3 staged | 2026-06-09 |
+| [ADR-028](ADR-028-reconciled-product-roadmap.md) | Reconciled product roadmap: ship-and-prove before build (supersedes the 3 coexisting strategy docs as roadmap) | Proposed — awaiting the DECISION-MEMO-2026-08-04 sign-off | 2026-08-04 |
 
 > Complete index — every ADR on disk is listed (ADR-006/007 were never assigned;
 > the numbering gap is intentional). ADR-022's component-rename plan was executed by
