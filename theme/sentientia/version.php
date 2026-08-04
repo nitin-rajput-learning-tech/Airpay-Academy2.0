@@ -382,7 +382,15 @@ defined('MOODLE_INTERNAL') || die();
 // 2026072200 — mform element-template repair: label-text leak out of class/id attrs,
 // float-sm-right(s) typo, new_req GIF -> core req FontAwesome icon; dark-mode
 // autofill repaint on signup/forgot (see _surface-login.scss section 3b).
-$plugin->version   = 2026080300;
+// 2026080301 — UI-NAV residue closure: (1) NEW pix/course_default.svg — the
+// course_bannerimage() fallback (course_view.php) referenced a pix asset that
+// was never shipped, 404ing on every course without an overview image; now a
+// branded gradient banner. (2) dark_mode.scss component rules tokenized
+// (104 hexes -> --ap-color-* vars, computed-value-identical; core remap block
+// + high-contrast section deliberately untouched — the latter has no token
+// remap of its own, see inline comments). Bump ships the new themerev for
+// the SVG + recompiled CSS.
+$plugin->version   = 2026080301;
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_sentientia';
 $plugin->maturity  = MATURITY_BETA;

@@ -73,18 +73,18 @@ body.dark-mode {
        Left at their light _components.scss :root values so each renders as a
        readable light chip on the dark card — the pre-flip, known-good look. */
 
-    background-color: #0f1117;
-    color: #e8eaed;
+    background-color: var(--ap-color-bg-body);
+    color: var(--ap-color-text-primary);
 
     /* UAT-L5 fix 2026-05-10 — Bootstrap utility classes need
        dark-mode overrides. Light mode uses dark-on-light hex values
        baked into Bootstrap CSS; on dark bg they all fail WCAG AA.
        Featured admin page, photo page, prefs page surfaced these. */
     .text-muted, span.text-muted, .small.text-muted {
-        color: #9ca3b4 !important;  /* 5.1:1 on #0f1117 */
+        color: var(--ap-color-text-secondary) !important;  /* 5.1:1 on #0f1117 */
     }
     .text-dark {
-        color: #e8eaed !important;  /* primary text in dark mode */
+        color: var(--ap-color-text-primary) !important;  /* primary text in dark mode */
     }
     /* Forward-looking (Moodle 5.2 / Bootstrap 5.3 — ADR-018 Wave 1): BS 5.3
        deprecates .text-muted in favour of .text-body-secondary and adds
@@ -93,10 +93,10 @@ body.dark-mode {
        values as .text-muted / .text-dark above) so the 5.2 cutover cannot
        reintroduce dark-on-dark text. Additive — existing rules unchanged. */
     .text-secondary, .text-body-secondary, .text-body-tertiary {
-        color: #9ca3b4 !important;  /* 5.1:1 on #0f1117 — matches .text-muted */
+        color: var(--ap-color-text-secondary) !important;  /* 5.1:1 on #0f1117 — matches .text-muted */
     }
     .text-black, .text-black-50 {
-        color: #e8eaed !important;  /* black→primary-light in dark mode */
+        color: var(--ap-color-text-primary) !important;  /* black→primary-light in dark mode */
     }
     /* Bootstrap table cells inherit body color but our datatable
        rows have inline color: #1d2125 baked in. Force dark-mode text. */
@@ -104,7 +104,7 @@ body.dark-mode {
     table tbody tr td .fw-semibold,
     table tbody tr td code,
     .table tbody tr td {
-        color: #e8eaed !important;
+        color: var(--ap-color-text-primary) !important;
     }
     /* alert-info: light-mode #0a3d62 on #172554 dark navy = 1.29:1.
        Lighten the alert text + bg for dark mode.
@@ -118,7 +118,7 @@ body.dark-mode {
         border-color: #1e3a8a;
     }
     .alert-info strong {
-        color: #e8eaed;
+        color: var(--ap-color-text-primary);
     }
     /* Inline <code style="color:#0a3d62"> in the bulk-CSV/import/enrol
        help blocks was readable in light mode but unreadable on the
@@ -129,25 +129,25 @@ body.dark-mode {
         background: transparent !important;  // preserved: overrides inline `style` background
     }
     .alert-secondary {
-        background-color: #232733;
+        background-color: var(--ap-color-bg-surface-alt);
         color: #c4cad8;
-        border-color: #2d3140;
+        border-color: var(--ap-color-border);
     }
-    .alert-secondary strong { color: #e8eaed; }
+    .alert-secondary strong { color: var(--ap-color-text-primary); }
     /* Bootstrap text-decoration-none links (used in widget back-buttons)
        fall back to a muted #6a737b at 3.9:1. */
     .text-decoration-none {
-        color: #9ca3b4 !important;
+        color: var(--ap-color-text-secondary) !important;
     }
     .text-decoration-none:hover {
-        color: #e8eaed !important;
+        color: var(--ap-color-text-primary) !important;
     }
     /* Bootstrap's bg-secondary defaults to light grey in dark mode,
        which combined with my universal table-cell text-color override
        (#e8eaed) produced 1.23:1. Force dark slate bg + keep light text. */
     .badge.bg-secondary {
-        background-color: #3d4254 !important;
-        color: #e8eaed !important;
+        background-color: var(--ap-color-border-strong) !important;
+        color: var(--ap-color-text-primary) !important;
     }
 
     /* === Page backgrounds === */
@@ -160,23 +160,23 @@ body.dark-mode {
     #page, #page-wrapper, .pagelayout-standard,
     .pagelayout-mydashboard, .pagelayout-admin,
     #region-main, #region-main-box, #page-content {
-        background-color: #0f1117;
+        background-color: var(--ap-color-bg-body);
     }
 
     /* === Navbar === */
     nav.navbar, .airpay-nav, .fixed-top {
         background: #161820;
-        border-bottom: 1px solid #2d3140;
+        border-bottom: 1px solid var(--ap-color-border);
     }
     .navbar a, .navbar .nav-link {
         color: #c4cad8;
     }
     .airpay-nav__pill {
-        color: #9ca3b4;
+        color: var(--ap-color-text-secondary);
     }
     .airpay-nav__pill:hover {
-        background: #232733;
-        color: #e8eaed;
+        background: var(--ap-color-bg-surface-alt);
+        color: var(--ap-color-text-primary);
     }
     /* Keep active pill blue */
     .pagelayout-mydashboard .airpay-nav__pill--dashboard,
@@ -187,41 +187,41 @@ body.dark-mode {
         color: #93c5fd;
     }
     .airpay-nav__search-input {
-        background: #232733;
-        border-color: #3d4254;
-        color: #e8eaed;
+        background: var(--ap-color-bg-surface-alt);
+        border-color: var(--ap-color-border-strong);
+        color: var(--ap-color-text-primary);
         &::placeholder { color: #6b7280; }
     }
     .airpay-nav__brand { color: #93c5fd; }
 
     /* === Welcome banner — keep gradient, mute slightly === */
     .airpay-dash__welcome, .user_gen_info {
-        background: linear-gradient(135deg, #0c3d66 0%, #0d5da1 100%);
-        border-color: #2d3140;
+        background: linear-gradient(135deg, #0c3d66 0%, var(--ap-blue-deep) 100%);
+        border-color: var(--ap-color-border);
     }
 
     /* === Stat cards === */
     .airpay-dash__stat {
-        background: #1a1d27;
-        border: 1px solid #2d3140;
+        background: var(--ap-color-bg-surface);
+        border: 1px solid var(--ap-color-border);
     }
     .airpay-dash__stat-icon {
         opacity: 0.9;
     }
     .airpay-dash__stat--primary .airpay-dash__stat-icon { background: rgba(59,130,246,0.15); color: #60a5fa; }
-    .airpay-dash__stat--accent .airpay-dash__stat-icon { background: rgba(25,133,221,0.15); color: #1985DD; } /* Brand Book 2026-06: accent is brand blue, not emerald */
+    .airpay-dash__stat--accent .airpay-dash__stat-icon { background: rgba(25,133,221,0.15); color: var(--ap-color-accent); } /* Brand Book 2026-06: accent is brand blue, not emerald */
     .airpay-dash__stat--success .airpay-dash__stat-icon { background: rgba(52,211,153,0.15); color: #34d399; }
     .airpay-dash__stat--gold .airpay-dash__stat-icon { background: rgba(251,191,36,0.15); color: #ed692b; }
-    .airpay-dash__stat-num { color: #e8eaed; }
-    .airpay-dash__stat-label { color: #9ca3b4; }
+    .airpay-dash__stat-num { color: var(--ap-color-text-primary); }
+    .airpay-dash__stat-label { color: var(--ap-color-text-secondary); }
 
     /* === Moodle blocks (Timeline, Calendar, Recently accessed) === */
     .block .card {
-        background: #1a1d27;
-        border-color: #2d3140;
+        background: var(--ap-color-bg-surface);
+        border-color: var(--ap-color-border);
     }
     .block .card-body {
-        background: #1a1d27;
+        background: var(--ap-color-bg-surface);
         color: #c4cad8;
     }
     /* Block headers — muted blue instead of bright */
@@ -236,10 +236,10 @@ body.dark-mode {
 
     /* Calendar specific */
     .calendarwrapper, .calendar-controls, .calendartable {
-        background: #1a1d27;
+        background: var(--ap-color-bg-surface);
         color: #c4cad8;
     }
-    .calendartable td { border-color: #2d3140; color: #c4cad8; }
+    .calendartable td { border-color: var(--ap-color-border); color: #c4cad8; }
     .calendartable th { color: #93c5fd; }
     .day .day-number-circle { background: #1e3a5f; color: #ffffff; }
     /* A4: BizLMS buttons in dark mode — catch remaining bright ones */
@@ -247,8 +247,8 @@ body.dark-mode {
     .btn-info,
     .course_extended_menu_itemlink .btn,
     .block .btn-clear {
-        background: #232733;
-        border-color: #3d4254;
+        background: var(--ap-color-bg-surface-alt);
+        border-color: var(--ap-color-border-strong);
         color: #93c5fd;
     }
 
@@ -262,13 +262,13 @@ body.dark-mode {
     .card, .coursecard_container, .airpay-dash__section,
     .airpay-dash__deadline-item, .airpay-dash__achievement,
     .airpay-dash__rec-card, .airpay-card {
-        background: #1a1d27;
-        border-color: #2d3140;
+        background: var(--ap-color-bg-surface);
+        border-color: var(--ap-color-border);
     }
     // preserved: beats _dark-mode-global.scss `.airpay-dash__deadline-item { background: #1a1d27 !important; }`
     .airpay-dash__deadline-item { background: #1e2130 !important; }
     .airpay-dash__deadline-item--urgent { background: #2a1215; border-color: #5c2020; }
-    .airpay-dash__rec-body { background: #1a1d27; }
+    .airpay-dash__rec-body { background: var(--ap-color-bg-surface); }
 
     /* === Page header === */
     #page-header, .header-maxwidth {
@@ -277,14 +277,14 @@ body.dark-mode {
 
     /* === Profile hero === */
     .path-local-users .user_gen_info {
-        background: linear-gradient(135deg, #0c3d66 0%, #0d5da1 100%);
+        background: linear-gradient(135deg, #0c3d66 0%, var(--ap-blue-deep) 100%);
     }
     .path-local-users .nav-tabs {
-        background: #1a1d27;
-        border-bottom-color: #2d3140;
+        background: var(--ap-color-bg-surface);
+        border-bottom-color: var(--ap-color-border);
     }
     .path-local-users .nav-tabs .nav-link {
-        color: #9ca3b4;
+        color: var(--ap-color-text-secondary);
     }
     .path-local-users .nav-tabs .nav-link.active {
         color: #93c5fd;
@@ -294,19 +294,19 @@ body.dark-mode {
        tab-content keeps !important because _surface-profile.scss line 479 sets it to
        #14161e !important; without our !important, our path-scoped #1a1d27 loses. */
     .path-local-users .profile_data_content {
-        background: #1a1d27;
-        border-color: #2d3140;
+        background: var(--ap-color-bg-surface);
+        border-color: var(--ap-color-border);
     }
     .path-local-users .tab-content {
-        background: #1a1d27 !important;  // preserved: beats _surface-profile.scss `body.dark-mode .tab-content { background: #14161e !important; }`
-        border-color: #2d3140;
+        background: var(--ap-color-bg-surface) !important;  // preserved: beats _surface-profile.scss `body.dark-mode .tab-content { background: #14161e !important; }`
+        border-color: var(--ap-color-border);
     }
 
     /* === Inputs === */
     input, textarea, select, .form-control, .custom-select {
-        background: #232733;
-        border-color: #3d4254;
-        color: #e8eaed;
+        background: var(--ap-color-bg-surface-alt);
+        border-color: var(--ap-color-border-strong);
+        color: var(--ap-color-text-primary);
     }
     input:focus, textarea:focus, select:focus, .form-control:focus {
         border-color: #3b82f6;
@@ -316,8 +316,8 @@ body.dark-mode {
 
     /* === Tables === */
     .generaltable {
-        background: #1a1d27;
-        border-color: #2d3140;
+        background: var(--ap-color-bg-surface);
+        border-color: var(--ap-color-border);
     }
     .generaltable thead th {
         background: #1e2d42;
@@ -325,11 +325,11 @@ body.dark-mode {
     }
     .generaltable thead th a { color: #93c5fd; }
     .generaltable tbody td {
-        border-bottom-color: #2d3140;
+        border-bottom-color: var(--ap-color-border);
         // preserved: beats the broader `table tbody tr td { color: #e8eaed !important; }` rule above (inline-style override) so generaltable cells stay #c4cad8
         color: #c4cad8 !important;
     }
-    .generaltable tbody tr:hover { background: #232733; }
+    .generaltable tbody tr:hover { background: var(--ap-color-bg-surface-alt); }
     .generaltable tbody tr:nth-child(even) { background: #1e2130; }
 
     /* === Text === */
@@ -337,13 +337,13 @@ body.dark-mode {
     .course_name, .airpay-dash__stat-num, .totalcounts,
     .airpay-dash__section-title, .airpay-dash__deadline-name,
     .airpay-dash__achievement-title, .airpay-dash__rec-title {
-        color: #e8eaed;
+        color: var(--ap-color-text-primary);
     }
     p, .card-text, .course-desc, .userinfo-content,
     .airpay-dash__stat-label, .counts_data,
     .airpay-dash__deadline-date, .airpay-dash__achievement-desc,
     .airpay-dash__rec-summary, .airpay-dash__timeline-label {
-        color: #9ca3b4;
+        color: var(--ap-color-text-secondary);
     }
 
     /* === Links === (ADR-018 Wave 1, 2026-05-29: scope the link colour to GENUINE
@@ -364,18 +364,18 @@ body.dark-mode {
         background: #1e40af;
     }
     .btn-secondary, .btn-outline-secondary {
-        background: #232733;
-        border-color: #3d4254;
+        background: var(--ap-color-bg-surface-alt);
+        border-color: var(--ap-color-border-strong);
         color: #c4cad8;
     }
 
     /* === Dropdowns === */
     .dropdown-menu {
-        background: #1a1d27;
-        border-color: #2d3140;
+        background: var(--ap-color-bg-surface);
+        border-color: var(--ap-color-border);
     }
     .dropdown-item { color: #c4cad8; }
-    .dropdown-item:hover { background: #232733; color: #93c5fd; }
+    .dropdown-item:hover { background: var(--ap-color-bg-surface-alt); color: #93c5fd; }
 
     /* === Modals ===
        _legacy-dark.scss also targets .modal-content / .modal-header /
@@ -386,14 +386,14 @@ body.dark-mode {
        parity is effectively preserved. Audit follow-up: harmonise both
        partials to a single token in _tokens-dark.scss. */
     .modal-content {
-        background: #1a1d27;
-        border-color: #2d3140;
+        background: var(--ap-color-bg-surface);
+        border-color: var(--ap-color-border);
     }
     .modal-header, .modal-footer {
-        border-color: #2d3140;
+        border-color: var(--ap-color-border);
     }
     .modal-title {
-        color: #e8eaed;
+        color: var(--ap-color-text-primary);
     }
 
     /* === Alerts === */
@@ -404,11 +404,11 @@ body.dark-mode {
 
     /* === Filter sidebar (catalog) === */
     .filter_section {
-        background: #1a1d27;
-        border-right-color: #2d3140;
+        background: var(--ap-color-bg-surface);
+        border-right-color: var(--ap-color-border);
     }
     .filter_section .checkbox-item label { color: #c4cad8; }
-    .filter_section .icon-header { color: #e8eaed; }
+    .filter_section .icon-header { color: var(--ap-color-text-primary); }
 
     /* === Pagination ===
        _legacy-dark.scss also targets .pagination .page-link and the
@@ -420,8 +420,8 @@ body.dark-mode {
            the Sentientia preference; we keep !important so the dark-mode
            shell wins. Audit follow-up: harmonise. */
     .pagination .page-link {
-        background: #1a1d27;
-        border-color: #2d3140;
+        background: var(--ap-color-bg-surface);
+        border-color: var(--ap-color-border);
         color: #c4cad8;
     }
     .pagination .page-item.active .page-link {
@@ -433,70 +433,70 @@ body.dark-mode {
     /* === Moodle block filter buttons (Timeline "Next 7 days" etc) === */
     .block .btn-outline-secondary,
     .block .btn-secondary {
-        background: #232733;
-        border-color: #3d4254;
+        background: var(--ap-color-bg-surface-alt);
+        border-color: var(--ap-color-border-strong);
         color: #93c5fd;
     }
     .block .btn-outline-secondary:hover,
     .block .btn-secondary:hover {
-        background: #2d3140;
+        background: var(--ap-color-border);
         color: #bfdbfe;
     }
 
     /* === Moodle block list items + loading skeletons === */
     .list-group-item {
-        background: #1a1d27;
-        border-color: #2d3140;
+        background: var(--ap-color-bg-surface);
+        border-color: var(--ap-color-border);
         color: #c4cad8;
     }
     .bg-pulse-grey {
-        background: #2d3140;
+        background: var(--ap-color-border);
     }
     .block .form-control,
     .block input[type="text"] {
-        background: #232733;
-        border-color: #3d4254;
-        color: #e8eaed;
+        background: var(--ap-color-bg-surface-alt);
+        border-color: var(--ap-color-border-strong);
+        color: var(--ap-color-text-primary);
     }
 
     /* === Quicknav cards in dark mode === */
     .airpay-dash__quicknav-card {
-        background: #1a1d27;
-        border-color: #2d3140;
+        background: var(--ap-color-bg-surface);
+        border-color: var(--ap-color-border);
     }
     .airpay-dash__quicknav-card span { color: #c4cad8; }
     .airpay-dash__quicknav-card .airpay-dash__quicknav-stat-value,
     .airpay-dash__quicknav-card strong,
     .airpay-dash__quicknav-card b {
-        color: #e8eaed;  /* Brighter for stat numbers */
+        color: var(--ap-color-text-primary);  /* Brighter for stat numbers */
         font-weight: 700;
     }
     .airpay-dash__quicknav-card .airpay-dash__quicknav-stat-label {
-        color: #9ca3b4;  /* Labels stay muted */
+        color: var(--ap-color-text-secondary);  /* Labels stay muted */
     }
     .airpay-dash__quicknav-card:hover {
-        background: #232733;
+        background: var(--ap-color-bg-surface-alt);
     }
 
     /* === Activity feed in dark mode === */
-    .airpay-dash__activity-feed::before { background: #2d3140; }
+    .airpay-dash__activity-feed::before { background: var(--ap-color-border); }
     .airpay-dash__activity-label { color: #c4cad8; }
 
     /* === BizLMS admin toolbar === */
     .course_extended_menu_itemlink {
-        background: #232733;
-        border-color: #3d4254;
+        background: var(--ap-color-bg-surface-alt);
+        border-color: var(--ap-color-border-strong);
         color: #c4cad8;
     }
     .course_extended_menu_itemlink:hover {
-        background: #2d3140;
+        background: var(--ap-color-border);
         color: #93c5fd;
     }
 
     /* === BizLMS Manage Company — costcenter stat cards === */
     .content_right,
     .costcenter_content {
-        background: #1a1d27;
+        background: var(--ap-color-bg-surface);
     }
     .details_content,
     .details_content.org_users,
@@ -505,14 +505,14 @@ body.dark-mode {
     .details_content.org_classrooms,
     .details_content.org_programs,
     .details_content.org_onlineexams {
-        background: #232733;
-        border-color: #2d3140;
+        background: var(--ap-color-bg-surface-alt);
+        border-color: var(--ap-color-border);
         color: #c4cad8;
     }
     .details_content .counts_data,
     .details_content .totalcounts,
     .details_content .total_count_val {
-        color: #e8eaed;
+        color: var(--ap-color-text-primary);
     }
     .details_content .sub_count_data,
     .details_content .active_data,
@@ -520,10 +520,10 @@ body.dark-mode {
     .details_content .new_data,
     .details_content .completed_data,
     .details_content .hold_data {
-        color: #9ca3b4;
+        color: var(--ap-color-text-secondary);
     }
     .org_detail {
-        border-color: #2d3140;
+        border-color: var(--ap-color-border);
     }
     /* BizLMS org sidebar card (blue) — slightly darken in dark mode */
     .costcenter_data {
@@ -540,19 +540,19 @@ body.dark-mode {
     }
 
     /* === Footer (already dark by default — adjust border) === */
-    .airpay-footer { border-top: 1px solid #2d3140; }
+    .airpay-footer { border-top: 1px solid var(--ap-color-border); }
 
     /* === Scrollbar === */
-    ::-webkit-scrollbar-track { background: #1a1d27; }
-    ::-webkit-scrollbar-thumb { background: #3d4254; }
+    ::-webkit-scrollbar-track { background: var(--ap-color-bg-surface); }
+    ::-webkit-scrollbar-thumb { background: var(--ap-color-border-strong); }
     ::-webkit-scrollbar-thumb:hover { background: #5a6070; }
 
     /* === Selection === */
     ::selection { background: rgba(59,130,246,0.3); }
 
     /* === Popover (Quick Access etc) === */
-    .popover { background: #1a1d27; border-color: #2d3140; }
-    .popover-header { background: #232733; border-color: #2d3140; color: #e8eaed; }
+    .popover { background: var(--ap-color-bg-surface); border-color: var(--ap-color-border); }
+    .popover-header { background: var(--ap-color-bg-surface-alt); border-color: var(--ap-color-border); color: var(--ap-color-text-primary); }
     .popover-body { color: #c4cad8; }
 
     /* === Breadcrumbs ===
@@ -562,7 +562,7 @@ body.dark-mode {
        link colour. The wrapper bg + active state have no such conflict. */
     .breadcrumb { background: transparent; }
     .breadcrumb-item a { color: #60a5fa !important; }  // preserved: bizlms-dark conflict
-    .breadcrumb-item.active { color: #9ca3b4; }
+    .breadcrumb-item.active { color: var(--ap-color-text-secondary); }
 
     /* === Misc text that might still be black === */
     .course-content, .activity-header, .page-context-header,
