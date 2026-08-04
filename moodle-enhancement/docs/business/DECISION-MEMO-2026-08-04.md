@@ -3,10 +3,12 @@
 **To:** Nitin Rajput (Head of L&D, Airpay — Sentientia LMS owner)
 **From:** Engineering (Claude)
 **Date:** 2026-08-04
-**Status:** ⏳ **AWAITING DECISIONS** — nothing below is decided until the DECISION line is filled and dated.
+**Status:** ✅ **SIGNED — all eight decisions recorded 2026-08-04** (from Nitin's direct
+in-session response). Open follow-up items: Addendum A monthly cap amount + API key
+provisioning; Q3 exact funding envelope confirmation.
 **Companion:** [ADR-028 (reconciled product roadmap)](../adr/ADR-028-reconciled-product-roadmap.md) —
-Proposed, flips to Accepted when this memo returns signed. Recommendations below are
-ADR-028's defaults; overriding any of them amends the ADR, it doesn't break it.
+now **Accepted**, amended per the decisions below (Q1/Q3/Q5/Q6/A/B override the proposed
+defaults — see ADR-028 §0 for the effect of each).
 
 **Why this memo exists:** questions 1–6 were posed verbatim in
 `docs/competitive/GAP-ANALYSIS-INVINCE-LXP-2026-06-16.md` §9 on 2026-06-16 and have
@@ -43,8 +45,12 @@ is now about *promotion*, not construction.
 while production users see the old shell and no trust evidence exists.
 
 ```
-DECISION: ____________________________________________
-Decided by: ____________  Date: ____________
+DECISION: (a) — Promote the AI cohort NOW, in parallel with everything else.
+          The recommended one-quarter freeze is REJECTED; trust sprint and
+          product/AI promotion run as parallel tracks. Engineering gates are
+          retained (T-01 cap fix, AI gateway before live flips, last-mile
+          stubs closed before flag flips).
+Decided by: Nitin Rajput  Date: 2026-08-04
 ```
 
 ---
@@ -72,8 +78,12 @@ pricing handling are unproven. Only the mock provider is tested.
 competitive bake-off vs Invince/Docebo.
 
 ```
-DECISION: ____________________________________________
-Decided by: ____________  Date: ____________
+DECISION: (a) AND (b) — dual track. Open the partner/resell conversation
+          (Go1 as the natural aggregator) AND build + certify one connector
+          now (Coursera — most adapter code already exists). Partner catalog
+          becomes sales collateral; the certified connector becomes the
+          in-platform entitlement proof.
+Decided by: Nitin Rajput  Date: 2026-08-04
 ```
 
 ---
@@ -104,9 +114,12 @@ management and backup procedures among the open gaps.
 first real RFP dies at the security questionnaire.
 
 ```
-DECISION: ____________________________________________
-Funding envelope approved: ₹ ____________
-Decided by: ____________  Date: ____________
+DECISION: (b) — Fund the FULL trust-track roadmap as written (₹80–120L
+          envelope: VAPT + ISO gap closure + ISO 27001 certification track +
+          SOC 2 Type II + load-test tiers). Exact envelope figure to be
+          confirmed; milestones to be re-dated from 2026-08 baseline.
+Funding envelope approved: ₹ 80–120L (as written; exact figure TBC)
+Decided by: Nitin Rajput  Date: 2026-08-04
 ```
 
 ---
@@ -130,8 +143,11 @@ run live, this is not a blocker for anything in ADR-028 Phase 1.
 - **(c)** Drop voiceover from the near-term authoring scope entirely.
 
 ```
-DECISION: ____________________________________________
-Decided by: ____________  Date: ____________
+DECISION: (b) AND (a) — run the TTS vendor evaluation NOW (Sarvam/Indic TTS,
+          Azure TTS, on-prem options — cost + Indic voice quality +
+          data-residency fit), while ElevenLabs remains the incumbent pilot
+          vendor for the authoring studio until the evaluation concludes.
+Decided by: Nitin Rajput  Date: 2026-08-04
 ```
 
 ---
@@ -155,8 +171,12 @@ Path B. The mobile-WS governance audit (22 MOBILE-READY endpoints) is done.
 - **(b)** Fund the native app now as a differentiator.
 
 ```
-DECISION: ____________________________________________
-Decided by: ____________  Date: ____________
+DECISION: (b) AND (a) — fund the native (Capacitor) app NOW as an active
+          workstream, AND harden the PWA in parallel. Sequencing per
+          ADR-028: the native app is the first true headless client and
+          rides on the exercised REST v1 + the 22 audited MOBILE-READY WS
+          functions — API activation is its prerequisite.
+Decided by: Nitin Rajput  Date: 2026-08-04
 ```
 
 ---
@@ -181,8 +201,13 @@ ADR-028 Phase 1's shape.
   certification track fits, collateral fragments).
 
 ```
-DECISION: ____________________________________________
-Decided by: ____________  Date: ____________
+DECISION: (a) AND (b) — India BFSI/regulated mid-market is the BEACHHEAD
+          (first references, CERT-In VAPT + ISO track, ₹ pricing), with
+          global enterprise pursued in parallel rather than deferred —
+          consistent with Q3(b): the funded full trust roadmap includes the
+          SOC 2 Type II track, so both certification lanes run concurrently.
+          Collateral ships in ₹ and $.
+Decided by: Nitin Rajput  Date: 2026-08-04
 ```
 
 ---
@@ -206,9 +231,16 @@ budget / (c) defer — AI stays a mock-mode roadmap item and the sales narrative
 adjusted accordingly.
 
 ```
-DECISION: ____________________________________________
-Monthly cap: ₹/$ ____________
-Decided by: ____________  Date: ____________
+DECISION: (b) — approve a BROADER multi-feature live-API budget (not the
+          single-feature aiquiz pilot). Engineering gates retained: the
+          local_sentientia_ai gateway (central keys, spend ledger, per-
+          customer/tenant quotas, eval harness) ships BEFORE any live_api
+          flag flips, and each feature's last-mile integration must be
+          closed before its flag flips (aiquiz→mod_quiz publisher,
+          authoring→course builder).
+Monthly cap: ₹/$ TBD — ⚠ OPEN FOLLOW-UP: Nitin to set the cap figure and
+          provision the Anthropic API key (.env ANTHROPIC_API_KEY).
+Decided by: Nitin Rajput  Date: 2026-08-04
 ```
 
 ---
@@ -230,9 +262,16 @@ a finished product aging in a zip file.
 indefinitely / (c) go 5.1.3-first immediately, 5.2 later.
 
 ```
-DECISION: ____________________________________________
-Drop-dead date for IT gates: ____________
-Decided by: ____________  Date: ____________
+DECISION: "5.2 NOW" — the Moodle 5.2 candidate is the single go-live path,
+          executed as soon as the dependency chain clears: Matt/Priyanka
+          ninja approval → Amul provisions the ninja server → rehearsal on
+          the 2026-08-04 package → Nitin-gated live cutover. No 5.1.3
+          interim cutover. Consequence: the IT change requests (prod RDS
+          MySQL 8.4 + PHP 8.3) become the critical path and need committed
+          dates — escalate with IT rather than falling back.
+Drop-dead date for IT gates: none set — IT dates to be pinned in the
+          escalation (revisit if slippage exceeds ~8 weeks).
+Decided by: Nitin Rajput  Date: 2026-08-04
 ```
 
 ---
