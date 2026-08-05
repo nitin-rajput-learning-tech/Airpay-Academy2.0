@@ -66,9 +66,12 @@ Prompt/response text is never stored in the ledger — only accounting.
    treat `'denied'` like `'failed'` (persist, surface, don't retry-loop).
 4. Bump the plugin version; note the migration in its state card.
 
-Remaining consumers to migrate (tracked follow-up): skillsai,
-recommendations, translate, authoring, assistant (+ its core_ai bridge
-stays as an alternative backend behind its provider toggle).
+All six consumers are migrated (2026-08-05): aiquiz (reference,
+2026080402), skillsai, recommendations, translate, authoring, assistant —
+each at 2026080500. The assistant's core_ai bridge stays as an alternative
+backend behind its provider toggle. Caveat: authoring's legacy key setting
+is `anthropic_api_key`, which the `legacy_component` fallback (reads
+`api_key`) does not cover — the central key applies on its gateway path.
 
 ## Eval harness
 

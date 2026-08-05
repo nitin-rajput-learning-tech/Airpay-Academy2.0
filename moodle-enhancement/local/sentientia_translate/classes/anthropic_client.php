@@ -62,6 +62,77 @@ class anthropic_client {
         $islive = class_exists('\\local_sentientia_platform\\feature_flags')
             && \local_sentientia_platform\feature_flags::is_enabled('sentientia.translate.live_api');
 
+        // ── Gateway delegation (ADR-028 Phase 2.3, 2026-08-05) ──────────
+        // OPT-IN via sentientia.ai.gateway.enabled (the routing switch):
+        // while OFF — the default — this plugin behaves byte- AND
+        // side-effect-identically to the pre-gateway build (local mock, no
+        // ledger writes; its own tests and any deployment without the
+        // gateway are unaffected). When ON, routing goes through the
+        // gateway: central key + spend ledger + fail-closed quotas become
+        // layer 0 underneath this plugin's own gates
+        // (sentientia.translate.enabled / .live_api / per-call [CONFIRM] —
+        // all still enforced here or in the UI). Our mock is passed down
+        // as a callable so mock fidelity (the "[MOCK <lang>]" banner the
+        // brand-override post-processing relies on) stays byte-identical.
+        // The translate live_api flag above remains authoritative for THIS
+        // plugin's live intent.
+        $routegateway = class_exists('\\local_sentientia_ai\\client')
+            && class_exists('\\local_sentientia_platform\\feature_flags')
+            && \local_sentientia_platform\feature_flags::is_enabled(
+                \local_sentientia_ai\gateway::FLAG_GATEWAY);
+        if ($routegateway) {
+            $mockfn = function (array $req) use ($sourcetext, $targetlang): string {
+                return self::call_mock($sourcetext, $targetlang)['body'];
+            };
+            if (!$islive) {
+                // Explicit mock intent — reuse our mock directly but still
+                // ledger the call for the org-wide usage picture.
+                $result = \local_sentientia_ai\client::complete([
+                    'component'        => 'local_sentientia_translate',
+                    'purpose'          => 'content_translation',
+                    'usertext'         => '[mock-intent] ' . mb_substr($sourcetext, 0, 200),
+                    'mock'             => $mockfn,
+                    'legacy_component' => 'local_sentientia_translate',
+                ]);
+                // Force mock semantics regardless of gateway flags: this
+                // plugin's live gate said no.
+                if ($result['mode'] !== 'mock') {
+                    return self::call_mock($sourcetext, $targetlang);
+                }
+                return [
+                    'body'       => $result['body'],
+                    'tokens_in'  => 0,
+                    'tokens_out' => 0,
+                    'mode'       => 'mock',
+                    'error'      => null,
+                ];
+            }
+            $system = prompt_builder::build_system_prompt($targetlang, $protectedterms);
+            $user   = prompt_builder::build_user_message($sourcetext, $targetlang);
+            $result = \local_sentientia_ai\client::complete([
+                'component'        => 'local_sentientia_translate',
+                'purpose'          => 'content_translation',
+                'system'           => $system,
+                'usertext'         => $user,
+                'model'            => $model,
+                'max_tokens'       => self::MAX_OUTPUT_TOKENS,
+                'mock'             => $mockfn,
+                'legacy_component' => 'local_sentientia_translate',
+            ]);
+            // 'denied' (gateway quota) surfaces exactly like a failure so
+            // the UI persists a retriable failed translation. 'mock' here
+            // means the gateway's live flags are still OFF (Addendum-A
+            // gating) — honest mock output, zero spend.
+            return [
+                'body'       => $result['body'],
+                'tokens_in'  => $result['tokens_in'],
+                'tokens_out' => $result['tokens_out'],
+                'mode'       => $result['mode'] === 'denied' ? 'failed' : $result['mode'],
+                'error'      => $result['error'],
+            ];
+        }
+        // ── Standalone fallback (gateway not installed) ─────────────────
+
         if (!$islive) {
             return self::call_mock($sourcetext, $targetlang);
         }

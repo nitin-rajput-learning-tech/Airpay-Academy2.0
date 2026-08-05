@@ -56,3 +56,27 @@ regression suite result recorded in PROJECT-STATE.
 
 Ledger is user-attributed → full metadata/export/delete provider (not null),
 incl. the Anthropic external-location declaration.
+
+## 2026-08-05 — consumer fleet complete (all six consumers routed)
+
+The five remaining consumers migrated per the README recipe (reference:
+aiquiz 2026080402), all with the same OPT-IN discipline — delegation only
+when the gateway class exists AND `sentientia.ai.gateway.enabled` is ON;
+default OFF keeps every plugin byte- and side-effect-identical to its
+pre-gateway build (no ledger writes in non-reset test contexts):
+
+| Consumer | Version | Purpose slug(s) | Mock passed down |
+|----------|---------|-----------------|------------------|
+| aiquiz (reference, 2026-08-04) | 2026080402 | `quiz_generation` | v1/v2-hindi question mock |
+| skillsai | 2026080500 | `skill_extraction` | v1/v2-hindi skills mock |
+| recommendations | 2026080500 | `course_recommendations` | candidate-aware rec mock |
+| translate | 2026080500 | `content_translation` | `[MOCK <lang>]` banner mock |
+| authoring | 2026080500 | `course_generation` | full-module cards+questions mock |
+| assistant | 2026080500 | `assistant_chat`, `agent_reasoning` | chat: none (gateway generic); agent: keyword proposal mock |
+
+All map gateway `denied` → the plugin's `failed` semantics. Key fallback via
+`legacy_component` everywhere; **caveat:** authoring's legacy key lives under
+`anthropic_api_key`, outside the `api_key` fallback — central key required on
+its gateway path. assistant's `core_ai_bridge` remains an alternative backend
+(provider toggle), untouched. Live flags remain OFF (Addendum-A cap + key
+still pending). tts_client (ElevenLabs) out of scope by design.

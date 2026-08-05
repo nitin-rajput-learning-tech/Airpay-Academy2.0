@@ -100,6 +100,76 @@ class ai_client {
         // Choose model based on query complexity.
         $model = self::choose_model($query);
 
+        // ── Gateway delegation (ADR-028 Phase 2.3, 2026-08-05) ──────────
+        // OPT-IN via sentientia.ai.gateway.enabled (the routing switch):
+        // while OFF — the default — this client behaves byte- AND
+        // side-effect-identically to the pre-gateway build (direct call
+        // with the plugin's own key, no ledger writes). When ON, the
+        // gateway owns key management + the spend ledger + fail-closed
+        // quotas; this plugin's own api_key stays reachable through the
+        // gateway's legacy_component fallback. The chat has no live_api
+        // flag of its own — its gates (ai.assistant.enabled, the rate
+        // limit, the response cache above) all remain enforced in this
+        // method. core_ai_bridge is the separate, untouched alternative
+        // backend behind the provider toggle. This client has no local
+        // mock, so when the gateway's live flags are OFF learners see the
+        // gateway's clearly-marked generic mock — honest, zero spend.
+        $routegateway = class_exists('\\local_sentientia_ai\\client')
+            && class_exists('\\local_sentientia_platform\\feature_flags')
+            && \local_sentientia_platform\feature_flags::is_enabled(
+                \local_sentientia_ai\gateway::FLAG_GATEWAY);
+        if ($routegateway) {
+            $gw = \local_sentientia_ai\client::complete([
+                'component'        => 'local_sentientia_assistant',
+                'purpose'          => 'assistant_chat',
+                'system'           => self::build_system_prompt($context),
+                'usertext'         => $query,
+                'model'            => $model,
+                'max_tokens'       => 1024,
+                'legacy_component' => 'local_sentientia_assistant',
+                'userid'           => $userid,
+            ]);
+            if ($gw['mode'] === 'live' || $gw['mode'] === 'mock') {
+                $result = [
+                    'response'   => $gw['body'],
+                    'model'      => $gw['mode'] === 'mock' ? 'gateway_mock' : $model,
+                    'cached'     => false,
+                    'tokens_in'  => $gw['tokens_in'],
+                    'tokens_out' => $gw['tokens_out'],
+                ];
+            } else {
+                // 'failed' and 'denied' (gateway quota) read the same to
+                // the learner — retriable trouble, never fake content.
+                $result = [
+                    'response'   => "I'm having trouble connecting right now. Please try again in a moment.",
+                    'model'      => $model,
+                    'cached'     => false,
+                    'tokens_in'  => 0,
+                    'tokens_out' => 0,
+                ];
+            }
+
+            // Log messages (same shape as the legacy path).
+            self::log_message($userid, 'user', $query, $result['model'], $result['tokens_in'], 0);
+            self::log_message($userid, 'assistant', $result['response'], $result['model'], 0, $result['tokens_out']);
+
+            // Cache only real generations — mock/failed text must not
+            // linger in the response cache across a later flag flip.
+            if ($gw['mode'] === 'live' && self::is_cacheable($query)) {
+                $DB->insert_record('local_sentientia_chat_cache', (object)[
+                    'cache_key'   => $cache_key,
+                    'query'       => $query,
+                    'response'    => $result['response'],
+                    'hit_count'   => 0,
+                    'timecreated' => time(),
+                    'timeexpires' => time() + self::CACHE_TTL,
+                ]);
+            }
+
+            return $result;
+        }
+        // ── Standalone fallback (gateway not installed / routing OFF) ───
+
         // Call Claude API.
         $api_key = get_config('local_sentientia_assistant', 'api_key');
         if (empty($api_key)) {
@@ -232,18 +302,24 @@ class ai_client {
     }
 
     /**
-     * Call Claude API.
+     * System prompt shared byte-for-byte by the direct (legacy) path and
+     * the gateway path, so routing choice never changes what the model
+     * is told.
      */
-    private static function call_claude(string $api_key, string $model, string $context, string $query): array {
-        // White-label (D4): default prompt carries the configured site name; a
-        // per-customer prompt override (Wave C3) replaces this wholesale.
-        $sitename = format_string(get_site()->fullname);
-        $system_prompt = "You are the {$sitename} learning assistant. You help learners with their learning journey on {$sitename}.\n\n" .
+    private static function build_system_prompt(string $context): string {
+        return "You are the Airpay Academy learning assistant. You help employees with their learning journey at Airpay Payment Services, a fintech company in India.\n\n" .
             "You know about the user's courses, progress, deadlines, and organization. Be helpful, concise, and encouraging.\n\n" .
             "For course recommendations, suggest courses from the user's catalog that match their role and skill gaps.\n" .
             "For compliance questions, check their mandatory course deadlines.\n" .
             "For quiz requests, generate 3-5 multiple choice questions from the course topic.\n\n" .
             "USER CONTEXT:\n{$context}";
+    }
+
+    /**
+     * Call Claude API.
+     */
+    private static function call_claude(string $api_key, string $model, string $context, string $query): array {
+        $system_prompt = self::build_system_prompt($context);
 
         $payload = [
             'model'      => $model,

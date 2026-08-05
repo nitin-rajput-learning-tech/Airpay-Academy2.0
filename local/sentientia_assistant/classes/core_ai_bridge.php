@@ -73,8 +73,7 @@ class core_ai_bridge {
         // Bound input to keep tokens reasonable.
         $text = substr($text, 0, 8000);
         return self::run_generate_text(
-            'Summarise the following ' . format_string(get_site()->fullname)
-            . " course in 3-5 plain "
+            "Summarise the following Airpay Academy course in 3-5 plain "
             . "English sentences for a learner deciding whether to enrol. "
             . "Focus on what they will learn and who it's for. "
             . "Don't repeat the course title.\n\n" . $text);

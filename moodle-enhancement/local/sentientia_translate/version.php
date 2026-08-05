@@ -40,10 +40,14 @@ $plugin->component = 'local_sentientia_translate';
 // 2026-05-28 C16 — Admin queue/landing dashboard (Bucket C of the
 // Stabilization Audit). New: admin/index.php + admin_externalpage
 // registration + ~30 lang strings (en).
-$plugin->version   = 2026052801;
+// 2026-08-05 — OPT-IN local_sentientia_ai gateway delegation in
+// anthropic_client::generate() (ADR-028 Phase 2.3; routing switch
+// sentientia.ai.gateway.enabled default OFF = byte- and side-effect-
+// identical legacy path; mock passed down as callable; 'denied'→'failed').
+$plugin->version   = 2026080500;
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;     // MVP — needs prod sign-off before flag flips
-$plugin->release   = '0.2.0-alpha';
+$plugin->release   = '0.2.1-alpha';
 $plugin->dependencies = [
     'local_sentientia_platform' => 2026051401,   // feature_flags resolver + customer scope
 ];
@@ -51,3 +55,5 @@ $plugin->dependencies = [
 // Release history
 // 0.1.0-alpha  Phase T.0: MVP scaffold. Feature flag default OFF.
 //              No live API calls without explicit per-call [CONFIRM].
+// 0.2.1-alpha  Sentientia AI gateway migration (opt-in, dormant by default).
+//              All plugin-level gates unchanged.

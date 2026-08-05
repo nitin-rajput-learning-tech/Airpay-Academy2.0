@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/sentientia_authoring/db" VERSION="20260616"
+       COMMENT="Sentientia LMS GenAI Authoring Studio — P0.3 (MVP) schema.
+                Five tables: template (instructional-design templates),
+                draft (one course-generation request), card (interactive
+                lesson cards within a draft), question (MCQ/MRQ/match items
+                with AI feedback), voiceover (TTS jobs, mock by default).
+                Every table carries customerid + costcenterid + timecreated
+                + timemodified per the multi-tenant scope convention.">
+  <TABLES>
+
+    <!-- ─── TEMPLATES ─── -->
+    <TABLE NAME="local_sentientia_auth_template"
+           COMMENT="P0.3 (2026-06-16) — Editable instructional-design
+                    templates. A template defines the structure + tone the
+                    course generator should follow (e.g. 'Compliance
+                    micro-module: hook → 3 concept cards → scenario → 5-Q
+                    quiz'). Trainers CRUD these; the generator references one
+                    by id at generation time. `is_builtin` marks the seeded
+                    starter templates that ship with the plugin (editable but
+                    not deletable). `body` is the template prompt scaffold sent
+                    to Claude; `structure_json` is an optional machine-readable
+                    outline (card count, question mix). Tenant-scoped via
+                    customerid + costcenterid.">
+      <FIELDS>
+        <FIELD NAME="id"             TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="ownerid"        TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="FK to user.id — author of the template. 0 = system/built-in."/>
+        <FIELD NAME="customerid"     TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="1"
+               COMMENT="Sentientia LMS customer scope. Phase 1: hardcoded 1 (Airpay)."/>
+        <FIELD NAME="costcenterid"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="BizLMS tenant root (1=Airpay, 77=Public, 177=ZEEA). 0 = shared/built-in."/>
+        <FIELD NAME="name"           TYPE="char" LENGTH="200" NOTNULL="true"
+               COMMENT="Display name shown in the template picker."/>
+        <FIELD NAME="description"    TYPE="text" NOTNULL="false"
+               COMMENT="Trainer-facing description of when to use this template."/>
+        <FIELD NAME="body"           TYPE="text" NOTNULL="true"
+               COMMENT="The instructional-design prompt scaffold injected into the system prompt at generation time."/>
+        <FIELD NAME="structure_json" TYPE="text" NOTNULL="false"
+               COMMENT="Optional JSON outline: {num_cards, question_mix:{multichoice,mrq,match}, mastery_score}."/>
+        <FIELD NAME="is_builtin"     TYPE="int"  LENGTH="1"   NOTNULL="true" DEFAULT="0"
+               COMMENT="1 = ships with the plugin (editable, not deletable). 0 = trainer-created."/>
+        <FIELD NAME="archived"       TYPE="int"  LENGTH="1"   NOTNULL="true" DEFAULT="0"
+               COMMENT="Soft-delete flag. 1 = hidden from the picker but kept for audit."/>
+        <FIELD NAME="timecreated"    TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"    TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_ownerid" TYPE="foreign" FIELDS="ownerid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_customer_tenant" UNIQUE="false" FIELDS="customerid, costcenterid"
+               COMMENT="Per-customer / per-tenant template picker query"/>
+        <INDEX NAME="idx_owner_archived"  UNIQUE="false" FIELDS="ownerid, archived"
+               COMMENT="'My templates (active)' query"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- ─── DRAFTS ─── -->
+    <TABLE NAME="local_sentientia_auth_draft"
+           COMMENT="P0.3 (2026-06-16) — One row per course-generation request.
+                    Lifecycle: pending (created, AI call in flight) →
+                    generated (Claude/mock returned, cards+questions persisted,
+                    awaiting review) → approved (reviewer approved ≥1 card) →
+                    published (course built / handed to SOP→SCORM packager) →
+                    rejected (reviewer dismissed) → failed (API error).
+
+                    `sourcetext` carries the verbatim prompt / Doc text / PDF
+                    extract sent to Claude. `sourcetype` records whether it
+                    came from a free prompt, a pasted Doc, or PDF-extracted
+                    text. `templateid` (nullable) ties the draft to the
+                    instructional-design template used. `targetlang` records
+                    the requested output language; localized output is routed
+                    through local_sentientia_translate when present.
+
+                    customerid + costcenterid follow the standard multi-tenant
+                    scope convention; prompt_version supports A/B prompt
+                    testing without losing the audit trail.">
+      <FIELDS>
+        <FIELD NAME="id"             TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="ownerid"        TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="FK to user.id — Course Author who created the draft."/>
+        <FIELD NAME="customerid"     TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="1"
+               COMMENT="Sentientia LMS customer scope. Phase 1: hardcoded 1 (Airpay)."/>
+        <FIELD NAME="costcenterid"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="BizLMS tenant root (1=Airpay, 77=Public, 177=ZEEA). Derived from creator open_path at draft time."/>
+        <FIELD NAME="templateid"     TYPE="int"  LENGTH="10"  NOTNULL="false"
+               COMMENT="FK to local_sentientia_auth_template.id. NULL = freeform (no template)."/>
+        <FIELD NAME="title"          TYPE="char" LENGTH="200" NOTNULL="true"
+               COMMENT="Trainer-supplied course title for the review queue list."/>
+        <FIELD NAME="sourcetype"     TYPE="char" LENGTH="16"  NOTNULL="true" DEFAULT="prompt"
+               COMMENT="prompt | doc | pdf — provenance of sourcetext."/>
+        <FIELD NAME="sourcetext"     TYPE="text" NOTNULL="true"
+               COMMENT="Verbatim prompt / Doc text / PDF extract sent to Claude. PII screening is the trainer's responsibility (UI warns at paste time)."/>
+        <FIELD NAME="targetlang"     TYPE="char" LENGTH="16"  NOTNULL="true" DEFAULT="en"
+               COMMENT="Requested output language code (en, hi, ...). Localized output routed via local_sentientia_translate when present."/>
+        <FIELD NAME="model"          TYPE="char" LENGTH="64"  NOTNULL="true" DEFAULT="claude-sonnet-4-6"
+               COMMENT="Anthropic model identifier used for the generation. Recorded for audit."/>
+        <FIELD NAME="prompt_version" TYPE="char" LENGTH="32"  NOTNULL="true" DEFAULT="v1"
+               COMMENT="System-prompt revision tag. Allows safe A/B prompt-quality testing."/>
+        <FIELD NAME="mastery_score"  TYPE="int"  LENGTH="4"   NOTNULL="true" DEFAULT="70"
+               COMMENT="Mastery / pass threshold for the generated assessment (CLAUDE.md §8 default 70; configurable per customer)."/>
+        <FIELD NAME="num_cards"      TYPE="int"  LENGTH="4"   NOTNULL="true" DEFAULT="0"
+               COMMENT="How many interactive cards Claude returned (parser-validated)."/>
+        <FIELD NAME="num_questions"  TYPE="int"  LENGTH="4"   NOTNULL="true" DEFAULT="0"
+               COMMENT="How many questions Claude returned (parser-validated)."/>
+        <FIELD NAME="tokens_in"      TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Anthropic input_tokens reported by API for cost tracking."/>
+        <FIELD NAME="tokens_out"     TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Anthropic output_tokens reported by API for cost tracking."/>
+        <FIELD NAME="status"         TYPE="char" LENGTH="16"  NOTNULL="true" DEFAULT="pending"
+               COMMENT="pending | generated | approved | published | rejected | failed"/>
+        <FIELD NAME="error_detail"   TYPE="text" NOTNULL="false"
+               COMMENT="On status=failed: short error tag + HTTP code. NEVER include API key text."/>
+        <FIELD NAME="reviewed_by"    TYPE="int"  LENGTH="10"  NOTNULL="false"
+               COMMENT="FK to user.id of the reviewer who finalised the review (NULL until reviewed)."/>
+        <FIELD NAME="reviewed_at"    TYPE="int"  LENGTH="10"  NOTNULL="false"
+               COMMENT="Unix timestamp when review completed."/>
+        <FIELD NAME="published_courseid" TYPE="int" LENGTH="10" NOTNULL="false"
+               COMMENT="FK to course.id once status=published. NULL until then."/>
+        <FIELD NAME="generated_at"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Unix timestamp of generation completion (or attempt timestamp on failure)."/>
+        <FIELD NAME="timecreated"    TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"      TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_ownerid"   TYPE="foreign" FIELDS="ownerid" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="fk_templateid" TYPE="foreign" FIELDS="templateid" REFTABLE="local_sentientia_auth_template" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_owner_status"    UNIQUE="false" FIELDS="ownerid, status"
+               COMMENT="Trainer review queue: 'my drafts awaiting review'"/>
+        <INDEX NAME="idx_status_created"  UNIQUE="false" FIELDS="status, timecreated"
+               COMMENT="Admin queue across all trainers"/>
+        <INDEX NAME="idx_customer_tenant" UNIQUE="false" FIELDS="customerid, costcenterid"
+               COMMENT="Per-customer / per-tenant cost analytics + tenant scoping"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- ─── CARDS ─── -->
+    <TABLE NAME="local_sentientia_auth_card"
+           COMMENT="P0.3 (2026-06-16) — One row per interactive lesson card
+                    within a draft. Cascade-delete with parent draft. A card is
+                    a micro-unit of content (concept, example, scenario, flip
+                    card). `cardtype` drives the front-end rendering; `body` is
+                    the card content; `flip_back` holds the reverse face for
+                    flip cards. `status` lifecycle: generated → approved |
+                    edited | rejected. Only approved/edited cards are published.">
+      <FIELDS>
+        <FIELD NAME="id"            TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="draftid"      TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="FK to local_sentientia_auth_draft.id"/>
+        <FIELD NAME="cardtype"     TYPE="char" LENGTH="20"  NOTNULL="true" DEFAULT="concept"
+               COMMENT="concept | example | scenario | flip — front-end render hint."/>
+        <FIELD NAME="heading"      TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT=""
+               COMMENT="Card heading / title."/>
+        <FIELD NAME="body"         TYPE="text" NOTNULL="true"
+               COMMENT="Card body content (front face for flip cards)."/>
+        <FIELD NAME="flip_back"    TYPE="text" NOTNULL="false"
+               COMMENT="Reverse face content for cardtype=flip. NULL otherwise."/>
+        <FIELD NAME="narration"    TYPE="text" NOTNULL="false"
+               COMMENT="Optional narration script for this card — the source text a TTS voiceover job reads."/>
+        <FIELD NAME="sortorder"    TYPE="int"  LENGTH="6"   NOTNULL="true" DEFAULT="0"
+               COMMENT="Display order within the draft (1, 2, 3, ...). Lower = first."/>
+        <FIELD NAME="status"       TYPE="char" LENGTH="16"  NOTNULL="true" DEFAULT="generated"
+               COMMENT="generated | approved | edited | rejected"/>
+        <FIELD NAME="reviewer_note" TYPE="text" NOTNULL="false"
+               COMMENT="Optional reviewer comment. Visible in audit history."/>
+        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"    TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_draftid" TYPE="foreign" FIELDS="draftid"
+                               REFTABLE="local_sentientia_auth_draft" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_draft_sort" UNIQUE="false" FIELDS="draftid, sortorder"
+               COMMENT="Render cards in display order for a draft"/>
+        <INDEX NAME="idx_status"     UNIQUE="false" FIELDS="status"
+               COMMENT="Publish query: select where status IN ('approved','edited')"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- ─── QUESTIONS ─── -->
+    <TABLE NAME="local_sentientia_auth_question"
+           COMMENT="P0.3 (2026-06-16) — One row per generated question.
+                    Cascade-delete with parent draft. Expands beyond MCQ:
+
+                      qtype = 'multichoice' — 4 options, exactly ONE correct.
+                      qtype = 'mrq'         — multi-response: N options,
+                                               1+ correct (qanswer is a JSON
+                                               array of correct indices).
+                      qtype = 'match'       — match-the-following: qoptions_json
+                                               holds the left-hand stems,
+                                               qanswer holds the JSON map of
+                                               left-index → right-value pairs.
+
+                    `qoptions_json` semantics depend on qtype:
+                      multichoice/mrq → JSON array of option strings
+                      match           → JSON array of {left, right} pairs
+                    `qanswer` semantics depend on qtype:
+                      multichoice → '0'..'3' (single index)
+                      mrq         → JSON array of correct indices e.g. '[0,2]'
+                      match       → JSON map of correct pairings
+
+                    `qfeedback_correct` / `qfeedback_incorrect` carry the AI
+                    contextual feedback shown to the learner. `points` weights
+                    the question toward the mastery score. `status` lifecycle:
+                    generated → approved | edited | rejected.">
+      <FIELDS>
+        <FIELD NAME="id"                  TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="draftid"             TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="FK to local_sentientia_auth_draft.id"/>
+        <FIELD NAME="qtype"               TYPE="char" LENGTH="20"  NOTNULL="true" DEFAULT="multichoice"
+               COMMENT="multichoice | mrq | match"/>
+        <FIELD NAME="qtext"               TYPE="text" NOTNULL="true"
+               COMMENT="Question stem as produced by Claude (or edited by reviewer)."/>
+        <FIELD NAME="qoptions_json"       TYPE="text" NOTNULL="false"
+               COMMENT="JSON. multichoice/mrq: array of option strings. match: array of {left,right} pairs."/>
+        <FIELD NAME="qanswer"             TYPE="text" NOTNULL="true"
+               COMMENT="JSON/string. multichoice: '0'..'3'. mrq: JSON array of indices. match: JSON map of pairings."/>
+        <FIELD NAME="qfeedback_correct"   TYPE="text" NOTNULL="false"
+               COMMENT="AI contextual feedback shown when the learner answers correctly."/>
+        <FIELD NAME="qfeedback_incorrect" TYPE="text" NOTNULL="false"
+               COMMENT="AI contextual feedback shown when the learner answers incorrectly."/>
+        <FIELD NAME="qexplanation"        TYPE="text" NOTNULL="false"
+               COMMENT="Optional rationale explaining the correct answer. Shown in the review UI."/>
+        <FIELD NAME="points"              TYPE="int"  LENGTH="6"   NOTNULL="true" DEFAULT="1"
+               COMMENT="Weight of this question toward the mastery score. Default 1."/>
+        <FIELD NAME="sortorder"           TYPE="int"  LENGTH="6"   NOTNULL="true" DEFAULT="0"
+               COMMENT="Display order within the draft (1, 2, 3, ...). Lower = first."/>
+        <FIELD NAME="status"              TYPE="char" LENGTH="16"  NOTNULL="true" DEFAULT="generated"
+               COMMENT="generated | approved | edited | rejected"/>
+        <FIELD NAME="reviewer_note"       TYPE="text" NOTNULL="false"
+               COMMENT="Optional reviewer comment. Visible in audit history."/>
+        <FIELD NAME="timecreated"         TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified"        TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"    TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_draftid" TYPE="foreign" FIELDS="draftid"
+                               REFTABLE="local_sentientia_auth_draft" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_draft_sort" UNIQUE="false" FIELDS="draftid, sortorder"
+               COMMENT="Render questions in display order for a draft"/>
+        <INDEX NAME="idx_status"     UNIQUE="false" FIELDS="status"
+               COMMENT="Publish query: select where status IN ('approved','edited')"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- ─── VOICEOVERS ─── -->
+    <TABLE NAME="local_sentientia_auth_voiceover"
+           COMMENT="P0.3 (2026-06-16) — One row per TTS voiceover job for a
+                    card's narration. MOCK by default (no live ElevenLabs
+                    spend): when sentientia.authoring.live_api is OFF, the
+                    tts_client writes a deterministic placeholder marker into
+                    audio_ref and records mode='mock'. When live, audio_ref
+                    points at the stored mp3 file (Moodle file API) and mode is
+                    'live'. `status` lifecycle: pending → ready | failed. Audio
+                    is review-gated like every other generated artefact — a
+                    voiceover is not 'published' until the parent draft is.">
+      <FIELDS>
+        <FIELD NAME="id"            TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="draftid"      TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="FK to local_sentientia_auth_draft.id"/>
+        <FIELD NAME="cardid"       TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="FK to local_sentientia_auth_card.id — the card whose narration is voiced."/>
+        <FIELD NAME="customerid"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="1"
+               COMMENT="Sentientia LMS customer scope."/>
+        <FIELD NAME="costcenterid" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="BizLMS tenant root. Derived from requester open_path."/>
+        <FIELD NAME="voice_id"     TYPE="char" LENGTH="64"  NOTNULL="true" DEFAULT="mock"
+               COMMENT="TTS voice identifier. 'mock' for mock-mode jobs; ElevenLabs voice id when live."/>
+        <FIELD NAME="lang"         TYPE="char" LENGTH="16"  NOTNULL="true" DEFAULT="en"
+               COMMENT="Language code of the narration text voiced."/>
+        <FIELD NAME="charcount"    TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Character count of the narration — drives cost estimate + soft cap."/>
+        <FIELD NAME="audio_ref"    TYPE="char" LENGTH="255" NOTNULL="false"
+               COMMENT="Reference to the generated audio: mock marker (mock mode) or stored file path (live)."/>
+        <FIELD NAME="mode"         TYPE="char" LENGTH="8"   NOTNULL="true" DEFAULT="mock"
+               COMMENT="mock | live — which path produced this job."/>
+        <FIELD NAME="status"       TYPE="char" LENGTH="16"  NOTNULL="true" DEFAULT="pending"
+               COMMENT="pending | ready | failed"/>
+        <FIELD NAME="error_detail" TYPE="text" NOTNULL="false"
+               COMMENT="On status=failed: short error tag. NEVER include API key text."/>
+        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"    TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_draftid" TYPE="foreign" FIELDS="draftid"
+                               REFTABLE="local_sentientia_auth_draft" REFFIELDS="id"/>
+        <KEY NAME="fk_cardid"  TYPE="foreign" FIELDS="cardid"
+                               REFTABLE="local_sentientia_auth_card" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_draft_status"    UNIQUE="false" FIELDS="draftid, status"
+               COMMENT="Voiceover jobs for a draft, by status"/>
+        <INDEX NAME="idx_customer_tenant" UNIQUE="false" FIELDS="customerid, costcenterid"
+               COMMENT="Per-customer / per-tenant TTS cost analytics"/>
+      </INDEXES>
+    </TABLE>
+
+  </TABLES>
+</XMLDB>

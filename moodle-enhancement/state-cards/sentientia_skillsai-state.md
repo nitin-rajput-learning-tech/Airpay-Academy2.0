@@ -154,3 +154,21 @@ teacher-archetype roles. `manage_taxonomy`/`viewgaps`/`manage_all` stay
 manager-only. Version 2026061600 → 2026061700. Verified: system-context trainer
 resolves `has_capability(:extract)`=YES. Last mile = provisioning (SME authors
 need a SYSTEM-context role; airpay assigns `trainer` at category) — per-deployment.
+
+## 2026-08-05 — Sentientia AI gateway opt-in migration (v2026080500 / 0.1.1-alpha)
+
+Consumer migration onto `local_sentientia_ai` (ADR-028 Phase 2.3, README
+recipe; reference: aiquiz 2026080402). `anthropic_client::extract()` now
+delegates to `\local_sentientia_ai\client::complete()` ONLY when the gateway
+class exists AND the `sentientia.ai.gateway.enabled` routing switch is ON.
+Default OFF → byte- and side-effect-identical to the pre-gateway build
+(local mock, NO ledger writes) — the aiquiz lesson (unconditional delegation
+broke 17 tests by writing DB rows in non-reset test contexts) applied from
+the start. Our mock passes down as the `'mock'` callable (v2-hindi fidelity
+preserved); `'legacy_component'` exposes this plugin's `api_key` as the
+gateway's key fallback; gateway `denied` (quota) maps to this plugin's
+`failed` semantics (persist a retriable job, never retry-loop). All
+plugin-level gates unchanged (enabled/live_api flags, per-call [CONFIRM],
+human-review gate). Purpose slug: `skill_extraction`. Standalone fallback
+kept for gateway-less deployments. Mirrored to top-level local/ (plugin was
+MISSING there — full dir seeded) + deployed to XAMPP webroot.

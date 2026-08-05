@@ -135,3 +135,22 @@ Provisioning helper: `docs/audits/brand-revamp-2026-06/assign_author_role.php`
 id=11 SYSTEM-only with all 5 caps ALLOW; assigning `asif.ansari@airpay.co.in`
 (uid 2304, Course Author persona) → `has_capability`=YES for all five at system
 context.
+
+## 2026-08-05 — Sentientia AI gateway opt-in migration (v2026080500 / 0.1.1-alpha)
+
+Consumer migration onto `local_sentientia_ai` (ADR-028 Phase 2.3, README
+recipe; reference: aiquiz 2026080402). `course_generator::generate()` now
+delegates to `\local_sentientia_ai\client::complete()` ONLY when the gateway
+class exists AND `sentientia.ai.gateway.enabled` is ON. Default OFF → byte-
+and side-effect-identical legacy path (local mock, NO ledger writes). The
+full-module mock (v2-hindi Devanagari cards + multichoice/mrq/match) passes
+down as the `'mock'` callable; gateway `denied` maps to `failed` (studio
+persists a retriable draft). Plugin gates unchanged (enabled/live_api flags
++ studio.php [CONFIRM] + human-review gate). Purpose slug:
+`course_generation`. **Ops caveat:** this plugin's legacy key setting is
+`anthropic_api_key`, which the gateway's `legacy_component` bridge (reads
+`api_key`) does NOT pick up — on the gateway path only the CENTRAL
+`local_sentientia_ai | api_key` applies. **Scope:** Anthropic generation
+only; `tts_client` (ElevenLabs) is outside the gateway and unchanged.
+Standalone fallback kept. Mirrored to top-level local/ (plugin was MISSING
+there — full dir seeded) + deployed to XAMPP webroot.

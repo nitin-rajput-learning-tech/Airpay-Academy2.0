@@ -173,3 +173,20 @@ onto the `local_sentientia_core\tenant_identity` seam (`root_for_user` /
 `path_root` / `path_for_user`). Behaviour-identical — the legacy BizLMS parse stays
 the default-ON source behind `tenant_identity_legacy`. Shipped via the
 feat/wave2-callers-* branches (merged to production 2026-05-30). DEPRECATION-SCHEDULE row 7.
+
+## 2026-08-05 — Sentientia AI gateway opt-in migration (v2026080500 / 0.2.1-alpha)
+
+Consumer migration onto `local_sentientia_ai` (ADR-028 Phase 2.3, README
+recipe; reference: aiquiz 2026080402). `anthropic_client::generate()` now
+delegates to `\local_sentientia_ai\client::complete()` ONLY when the gateway
+class exists AND `sentientia.ai.gateway.enabled` is ON. Default OFF → byte-
+and side-effect-identical legacy path (local mock, NO ledger writes). The
+`[MOCK <lang>]`-banner mock passes down as the `'mock'` callable — the
+brand-override post-processing in translate_engine keeps acting on identical
+mock output; `'legacy_component'` key fallback wired; gateway `denied` maps
+to `failed` (UI persists a retriable translation). Plugin gates unchanged
+(enabled/live_api flags + per-call [CONFIRM] + side-by-side diff review).
+Purpose slug: `content_translation`. Standalone fallback kept. Mirrored to
+top-level local/ + webroot; also closed pre-existing top-level drift on
+`translate_engine.php` (ME's ADR-018 tenant_identity seam version is
+canonical → copied over the stale open_path parse).

@@ -65,6 +65,77 @@ class anthropic_client {
         $islive = class_exists('\\local_sentientia_platform\\feature_flags')
             && \local_sentientia_platform\feature_flags::is_enabled('sentientia.recommendations.live_api');
 
+        // ── Gateway delegation (ADR-028 Phase 2.3, 2026-08-05) ──────────
+        // OPT-IN via sentientia.ai.gateway.enabled (the routing switch):
+        // while OFF — the default — this plugin behaves byte- AND
+        // side-effect-identically to the pre-gateway build (local mock, no
+        // ledger writes; its own tests and any deployment without the
+        // gateway are unaffected). When ON, routing goes through the
+        // gateway: central key + spend ledger + fail-closed quotas become
+        // layer 0 underneath this plugin's own gates
+        // (sentientia.recommendations.enabled / .live_api / the cron+UI
+        // [CONFIRM] gates — all still enforced by the callers). Our mock is
+        // passed down as a callable so mock fidelity (candidate-aware,
+        // completed-course-skipping output) stays byte-identical. The
+        // recommendations live_api flag above remains authoritative for
+        // THIS plugin's live intent.
+        $routegateway = class_exists('\\local_sentientia_ai\\client')
+            && class_exists('\\local_sentientia_platform\\feature_flags')
+            && \local_sentientia_platform\feature_flags::is_enabled(
+                \local_sentientia_ai\gateway::FLAG_GATEWAY);
+        if ($routegateway) {
+            $mockfn = function (array $req) use ($profile, $candidates, $numrequested): string {
+                return self::call_mock($profile, $candidates, $numrequested)['body'];
+            };
+            if (!$islive) {
+                // Explicit mock intent — reuse our mock directly but still
+                // ledger the call for the org-wide usage picture.
+                $result = \local_sentientia_ai\client::complete([
+                    'component'        => 'local_sentientia_recommendations',
+                    'purpose'          => 'course_recommendations',
+                    'usertext'         => '[mock-intent] ' . count($candidates) . ' candidate courses',
+                    'mock'             => $mockfn,
+                    'legacy_component' => 'local_sentientia_recommendations',
+                ]);
+                // Force mock semantics regardless of gateway flags: this
+                // plugin's live gate said no.
+                if ($result['mode'] !== 'mock') {
+                    return self::call_mock($profile, $candidates, $numrequested);
+                }
+                return [
+                    'body'       => $result['body'],
+                    'tokens_in'  => 0,
+                    'tokens_out' => 0,
+                    'mode'       => 'mock',
+                    'error'      => null,
+                ];
+            }
+            $system = prompt_builder::build_system_prompt();
+            $user   = prompt_builder::build_user_message($profile, $candidates, $numrequested);
+            $result = \local_sentientia_ai\client::complete([
+                'component'        => 'local_sentientia_recommendations',
+                'purpose'          => 'course_recommendations',
+                'system'           => $system,
+                'usertext'         => $user,
+                'model'            => $model,
+                'max_tokens'       => self::MAX_OUTPUT_TOKENS,
+                'mock'             => $mockfn,
+                'legacy_component' => 'local_sentientia_recommendations',
+            ]);
+            // 'denied' (gateway quota) surfaces exactly like a failure so
+            // the caller persists a retriable failed batch. 'mock' here
+            // means the gateway's live flags are still OFF (Addendum-A
+            // gating) — honest mock output, zero spend.
+            return [
+                'body'       => $result['body'],
+                'tokens_in'  => $result['tokens_in'],
+                'tokens_out' => $result['tokens_out'],
+                'mode'       => $result['mode'] === 'denied' ? 'failed' : $result['mode'],
+                'error'      => $result['error'],
+            ];
+        }
+        // ── Standalone fallback (gateway not installed) ─────────────────
+
         if (!$islive) {
             return self::call_mock($profile, $candidates, $numrequested);
         }

@@ -45,9 +45,8 @@ class translate_engine {
     public static function tenant_root_for(?\stdClass $user = null): int {
         global $USER;
         $u = $user ?? $USER;
-        $path = isset($u->open_path) ? (string)$u->open_path : '';
-        $parts = explode('/', trim($path, '/'));
-        return (int)($parts[0] ?? 0);
+        // ADR-018 Wave 2: tenant root via the Sentientia seam.
+        return \local_sentientia_core\tenant_identity::root_for_user($u);
     }
 
     /**

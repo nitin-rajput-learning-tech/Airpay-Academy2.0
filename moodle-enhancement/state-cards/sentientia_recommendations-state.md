@@ -152,3 +152,19 @@ onto the `local_sentientia_core\tenant_identity` seam (`root_for_user` /
 `path_root` / `path_for_user`). Behaviour-identical — the legacy BizLMS parse stays
 the default-ON source behind `tenant_identity_legacy`. Shipped via the
 feat/wave2-callers-* branches (merged to production 2026-05-30). DEPRECATION-SCHEDULE row 7.
+
+## 2026-08-05 — Sentientia AI gateway opt-in migration (v2026080500 / 0.1.1-alpha)
+
+Consumer migration onto `local_sentientia_ai` (ADR-028 Phase 2.3, README
+recipe; reference: aiquiz 2026080402). `anthropic_client::generate()` now
+delegates to `\local_sentientia_ai\client::complete()` ONLY when the gateway
+class exists AND `sentientia.ai.gateway.enabled` is ON. Default OFF → byte-
+and side-effect-identical legacy path (local mock, NO ledger writes). The
+candidate-aware, completed-course-skipping mock passes down as the `'mock'`
+callable; `'legacy_component'` key fallback wired; gateway `denied` maps to
+`failed` (caller persists a retriable batch). Plugin gates unchanged
+(enabled/live_api flags + the cron/UI [CONFIRM]). Purpose slug:
+`course_recommendations`. Standalone fallback kept. Mirrored to top-level
+local/ + webroot; also closed pre-existing top-level drift on
+`recommendation_engine.php` (ME's ADR-018 tenant_identity seam version is
+canonical → copied over the stale open_path parse).
