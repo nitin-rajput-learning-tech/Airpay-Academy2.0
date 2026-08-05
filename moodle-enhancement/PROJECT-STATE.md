@@ -5,6 +5,30 @@
 
 ---
 
+## 🛠 LOCAL OPS 2026-08-05 — XAMPP auto-recovery watchdog (Apache silent-death fix); service install blocked by no-admin
+
+Local-dev only; nothing touches production or the ninja target. Console-mode `httpd.exe` (:8080)
+died silently ≥3 times across 2026-08-04/05 (no error.log entries; opcache OFF so the June crash
+class is ruled out), breaking browser verification mid-session. The intended fix — Windows service
+with SCM failure-recovery — is **blocked**: `httpd -k install` → `(OS 5) Access is denied / AH00369`
+because `airpaycom\nitin.rajput` has no local-admin membership (Win11 `sudo` can't help either).
+**Shipped instead:** user-level Task Scheduler watchdog `XAMPP Watchdog (Apache+MariaDB)` —
+logon + 1-min triggers, internal 12s-cadence check loop, silent VBS launcher (no console flash),
+mutex single-instance; restarts Apache (kills half-dead parent/child pair first) and MariaDB
+(never force-kills mysqld — InnoDB safety); logs every action to
+`D:\Claude Local\xampp-watchdog\watchdog.log` (silence = healthy — and the log now timestamps
+every future silent death for root-cause correlation, which remains OPEN). **Verified end-to-end:**
+baseline `/` + `/moodle/` 200 → `Stop-Process -Force` both httpd PIDs → port dead → auto-recovered
+in **12s** → HTTP 200; log recorded death+recovery. MariaDB confirmed same-exposure (console-mode
+`--standalone`, no service) and covered by the same watchdog. Canonical source
+`moodle-enhancement/tools/xampp-watchdog/` (runtime copy at `D:\Claude Local\xampp-watchdog\` —
+stable path outside worktrees); runbook **`docs/operations/LOCAL-XAMPP-SERVICES.md`** including
+ready-to-run elevated commands for IT (proper `Apache2.4`/`mysql` services + `sc failure`
+restart/5000 ×3 policy) and the uninstall-watchdog step for that day. Gotcha recorded: disable the
+task before intentionally stopping XAMPP, or it restarts them within a minute.
+
+---
+
 ## 🌙 OVERNIGHT LOOP 2026-06-11 (Nitin offline) — cron gauntlet: 4 more crashers fixed; D-prod business pack; probes
 
 **Morning TLDR for Nitin — read `git log c53ccf8fe..` for the commit-by-commit story:**
