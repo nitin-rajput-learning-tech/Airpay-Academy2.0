@@ -60,10 +60,10 @@ $plugin->component = 'local_sentientia_authoring';
 // NOTE: legacy key here is `anthropic_api_key` — outside the gateway's
 // `api_key` legacy fallback; central key applies on the gateway path.
 // tts_client (ElevenLabs) unchanged — outside the Anthropic gateway.
-$plugin->version   = 2026080500;
+$plugin->version   = 2026080501;  // gate #3 closure: real course builder (book + mastery quiz) behind publish flag
 $plugin->requires  = 2022041900;          // Moodle 4.5+
 $plugin->maturity  = MATURITY_ALPHA;      // MVP — prod sign-off before any flag flips
-$plugin->release   = '0.1.1-alpha';
+$plugin->release   = '0.2.0-alpha';
 $plugin->dependencies = [
     'local_sentientia_platform' => 2026051401,   // feature_flags resolver + tenant + customer scope
 ];

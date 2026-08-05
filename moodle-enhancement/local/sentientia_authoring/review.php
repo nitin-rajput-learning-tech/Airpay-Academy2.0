@@ -108,6 +108,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             : get_string('review_finalised_rejected', 'local_sentientia_authoring');
         redirect(new moodle_url('/local/sentientia_authoring/review.php', ['draftid' => $draftid]), $msg);
     }
+
+    if ($action === 'publish') {
+        // Gate #3 closure (2026-08-05): the REAL course builder — an
+        // approved draft becomes a hidden course (book of approved cards +
+        // mastery quiz with gradepass from mastery_score). Gated on the
+        // authoring publish flag; default OFF until ninja verification.
+        $canpublish = class_exists('\\local_sentientia_platform\\feature_flags')
+            && \local_sentientia_platform\feature_flags::is_enabled(
+                'sentientia.authoring.publish.enabled');
+        if (!$canpublish) {
+            redirect(new moodle_url('/local/sentientia_authoring/review.php', ['draftid' => $draftid]),
+                get_string('publish_disabled', 'local_sentientia_authoring'),
+                null, \core\output\notification::NOTIFY_WARNING);
+        }
+        $categoryid = optional_param('categoryid', 0, PARAM_INT);
+        try {
+            $result = course_builder::build($draftid, $USER, $manageall, $categoryid);
+            redirect(new moodle_url('/course/view.php', ['id' => $result->courseid]),
+                get_string('publish_success', 'local_sentientia_authoring', (object) [
+                    'shortname'     => $result->shortname,
+                    'cardcount'     => $result->cardcount,
+                    'questioncount' => $result->questioncount,
+                ]),
+                null, \core\output\notification::NOTIFY_SUCCESS);
+        } catch (\moodle_exception $e) {
+            redirect(new moodle_url('/local/sentientia_authoring/review.php', ['draftid' => $draftid]),
+                get_string('publish_failed', 'local_sentientia_authoring', $e->getMessage()),
+                null, \core\output\notification::NOTIFY_ERROR);
+        }
+    }
 }
 
 $draft = $bundle->draft;
@@ -229,6 +259,34 @@ echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'action', 'v
 echo html_writer::tag('button', get_string('review_finalise', 'local_sentientia_authoring'),
     ['type' => 'submit', 'class' => 'btn btn-success']);
 echo html_writer::end_tag('form');
+
+// ── Publish (gate #3 course builder; approved drafts only) ─────────
+if ($draft->status === draft_manager::STATUS_APPROVED) {
+    $canpublish = class_exists('\\local_sentientia_platform\\feature_flags')
+        && \local_sentientia_platform\feature_flags::is_enabled(
+            'sentientia.authoring.publish.enabled');
+    echo html_writer::start_tag('form', ['method' => 'post',
+        'action' => $PAGE->url->out(false), 'class' => 'mt-3']);
+    echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
+    echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'action', 'value' => 'publish']);
+    $categories = core_course_category::make_categories_list('moodle/course:create');
+    echo html_writer::label(get_string('publish_selectcategory', 'local_sentientia_authoring'),
+        'authoring-pubcat', true, ['class' => 'me-2']);
+    echo html_writer::select($categories, 'categoryid', '', ['' => 'choosedots'],
+        ['id' => 'authoring-pubcat', 'class' => 'me-2']);
+    $attrs = ['type' => 'submit', 'class' => 'btn btn-primary'];
+    if (!$canpublish) {
+        $attrs['disabled'] = 'disabled';
+        $attrs['title'] = get_string('publish_disabled', 'local_sentientia_authoring');
+    }
+    echo html_writer::tag('button',
+        get_string('publish_to_course', 'local_sentientia_authoring'), $attrs);
+    echo html_writer::end_tag('form');
+    if (!$canpublish) {
+        echo html_writer::div(get_string('publish_disabled', 'local_sentientia_authoring'),
+            'form-text text-muted mt-2');
+    }
+}
 
 echo $OUTPUT->footer();
 

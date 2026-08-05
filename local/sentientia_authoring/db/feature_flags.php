@@ -67,6 +67,23 @@ $flags = [
                           opt-in and starts in mock mode.',
     ],
 
+    'sentientia.authoring.publish.enabled' => [
+        'default'     => false,
+        'description' => 'Course-builder publish (ADR-028 gate #3 closure,
+                          2026-08-05). When ON, an APPROVED authoring draft
+                          can be published from the review page: a HIDDEN
+                          topics course is created (book of approved cards
+                          in section 1; mastery quiz in section 2 with
+                          gradepass from the draft\'s mastery_score, its
+                          questions GIFT-imported into the course\'s
+                          default shared question bank, per-answer
+                          feedback + points preserved) — all in one
+                          transaction, draft records the real course id.
+                          When OFF the Publish button is disabled. Default
+                          OFF until the publisher is verified on the
+                          ninja/staging rehearsal.',
+    ],
+
     'sentientia.authoring.live_api' => [
         'default'     => false,
         'description' => 'Live external-API gate. When OFF, EVERY generation

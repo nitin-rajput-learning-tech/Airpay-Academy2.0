@@ -154,3 +154,25 @@ persists a retriable draft). Plugin gates unchanged (enabled/live_api flags
 only; `tts_client` (ElevenLabs) is outside the gateway and unchanged.
 Standalone fallback kept. Mirrored to top-level local/ (plugin was MISSING
 there — full dir seeded) + deployed to XAMPP webroot.
+
+## 2026-08-05 — gate #3 closure: REAL course builder (v2026080501 / 0.2.0-alpha)
+
+`mark_published()` finally has a production caller. NEW `classes/course_builder.php`:
+an APPROVED draft becomes a real HIDDEN topics course — Section 1 = one mod_book
+"Course content" with a chapter per approved/edited card (heading → title; body
+paragraphised + flip-back as an alert-info callout + narration as a <details>
+transcript; direct {book_chapters} inserts per the mod_book generator's own
+pattern + revision bump); Section 2 = a mastery quiz (skipped cleanly when no
+approved questions): GIFT-imported into the course's default shared question
+bank (5.x question_bank_helper — same proven pattern as aiquiz G.4, kept
+plugin-local since shapes differ: per-answer feedback via GIFT `#`, per-question
+points as slot maxmark, gradepass = QUIZ_GRADE × mastery_score%). One delegated
+transaction; draft records the real course id. review.php gains the publish
+action + button (approved drafts only) with a course-category selector
+(make_categories_list('moodle/course:create')). NEW flag
+`sentientia.authoring.publish.enabled` default OFF (ninja verification flips it).
+Capability gates: moodle/course:create (category) + moodle/question:add (bank).
+20 en+hi string pairs (parity green). NEW tests/course_builder_test.php
+(6 tests: happy path incl. gradepass 8.0@80% + bank entries + published id,
+rejected-item exclusion, quiz-less build, status gate, transactional capability
+denial, card HTML composition incl. escaping).

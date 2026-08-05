@@ -220,3 +220,24 @@ $string['privacy:metadata:anthropic:sourcetext'] = 'जनरेशन हेत
 $string['privacy:metadata:anthropic:model'] = 'अनुरोध द्वारा लक्षित model।';
 $string['privacy:metadata:elevenlabs'] = 'Narration पाठ voiceover हेतु ElevenLabs को भेजा जा सकता है, परन्तु केवल तब जब live_api feature flag चालू हो (यह डिफ़ॉल्ट रूप से OFF है)।';
 $string['privacy:metadata:elevenlabs:narration'] = 'संश्लेषण हेतु भेजा गया narration पाठ।';
+
+// ── कोर्स builder — gate #3 समापन (2026-08-05) ──────────────────────
+$string['publish_to_course']       = 'कोर्स के रूप में प्रकाशित करें';
+$string['publish_selectcategory']  = 'कोर्स श्रेणी';
+$string['publish_disabled']        = 'कोर्स प्रकाशन अक्षम है (flag sentientia.authoring.publish.enabled OFF है) — ninja/staging सत्यापन के बाद चालू होगा।';
+$string['publish_success']         = 'कोर्स "{$a->shortname}" बनाया गया (छिपा हुआ), {$a->cardcount} कंटेंट कार्ड और {$a->questioncount} क्विज़ प्रश्न के साथ। समीक्षा करके दृश्य करें।';
+$string['publish_failed']          = 'प्रकाशन विफल: {$a}';
+$string['publish_course_summary']  = 'Sentientia authoring studio द्वारा ड्राफ्ट #{$a->draftid} (मॉडल: {$a->model}) से जनित और प्रकाशन से पहले मानव-समीक्षित।';
+$string['publish_book_name']       = 'कोर्स सामग्री';
+$string['publish_card_untitled']   = 'कार्ड {$a}';
+$string['publish_card_keypoint']   = 'मुख्य बिंदु:';
+$string['publish_card_transcript'] = 'नैरेशन ट्रांसक्रिप्ट';
+$string['publish_quiz_name']       = 'Mastery जाँच (पास हेतु {$a}%)';
+$string['publish_quiz_intro']      = 'नीचे दिए प्रश्नों के उत्तर दें। इस कोर्स को पास करने के लिए {$a}% चाहिए।';
+$string['err_publish_nocards']     = 'प्रकाशित करने के लिए कोई approved या edited कार्ड नहीं।';
+$string['err_publish_nobank']      = 'कोर्स का प्रश्न बैंक नहीं मिला।';
+$string['err_publish_importcount'] = 'प्रश्न import बेमेल: अपेक्षित {$a->expected}, import हुए {$a->actual}। कुछ भी प्रकाशित नहीं हुआ।';
+$string['err_publish_badoptions']  = 'प्रश्न {$a} में दो से कम उत्तर विकल्प हैं।';
+$string['err_publish_badanswer']   = 'प्रश्न {$a} का सही-उत्तर index विकल्पों से बाहर है।';
+$string['err_publish_tempfile']    = 'Import कार्य-फ़ाइल नहीं लिखी जा सकी।';
+$string['err_publish_import']      = 'प्रश्न import विफल रहा। कुछ भी प्रकाशित नहीं हुआ।';
