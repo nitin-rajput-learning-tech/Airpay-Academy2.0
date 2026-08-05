@@ -251,3 +251,26 @@ live_api flags + [CONFIRM] + caps all still enforced here). Our mock passes down
 as a callable — v2-hindi Devanagari mock output verified byte-faithful through
 the gateway. Gateway 'denied' (quota) maps to 'failed' so the UI persists a
 retriable draft. Live still unreachable until Addendum-A cap + key land.
+
+## 2026-08-05 — Phase G.4: REAL mod_quiz publisher (v2026080500 / 0.3.0-alpha) — gate #3 closed
+
+The "quiz id 0" stub (review.php, Phase G.0) is replaced by
+`classes/quiz_publisher.php`: approved/edited questions from an APPROVED
+draft are imported into the target course's default shared question bank
+(Moodle 5.x `question_bank_helper::get_default_open_instance_system_type()`
++ `question_get_default_category()`) via the battle-tested **GIFT import
+pipeline** (qformat_gift; control chars escaped), then a REAL quiz activity
+is created **hidden** via `add_moduleinfo()` (defaults mirroring the core
+quiz generator) and populated with `quiz_add_quiz_question()` +
+`quiz_update_sumgrades()`. Whole publish runs in one delegated transaction
+(no half-published quizzes). Draft marked pushed with the ACTUAL quiz id.
+review.php gains a target-course selector for drafts generated without a
+course context (manageactivities-scoped, 100-course cap). Capability gates:
+`moodle/course:manageactivities` (course) + `moodle/question:add` (bank
+context). 15 en+hi string pairs added (parity gate green). New
+`tests/quiz_publisher_test.php` (5 tests: happy path incl. hidden cm +
+slots + bank entries + pushed_quizid, rejected-question exclusion,
+status gate, capability gate w/ transactional rollback, GIFT escaping).
+`sentientia.aiquiz.auto_push` stays default OFF pending ninja verification.
+NOTE: developed while parallel sessions owned the shared DB/webroot —
+phpunit run + local deploy + commit deferred to their completion.

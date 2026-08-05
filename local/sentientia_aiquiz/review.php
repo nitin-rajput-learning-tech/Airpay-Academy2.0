@@ -196,23 +196,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 null,
                 \core\output\notification::NOTIFY_WARNING);
         }
-        // Phase G.0: stub — leaves a structured log entry, marks the draft as
-        // pushed pointing to quiz id 0 (no real quiz yet). Real mod_quiz
-        // creation lands in Phase G.4.
-        $approved = 0;
-        foreach ($questions as $q) {
-            if ($q->status === draft_manager::Q_STATUS_APPROVED
-                || $q->status === draft_manager::Q_STATUS_EDITED) {
-                $approved++;
-            }
+        // Phase G.4 (2026-08-05): the REAL mod_quiz publisher — approved/
+        // edited questions land in the course's default shared question
+        // bank via the GIFT import pipeline, a real (hidden) quiz activity
+        // is created and populated, and the draft records the actual quiz
+        // id. Replaces the G.0 "quiz id 0" stub (ADR-028 engineering
+        // gate #3 for the aiquiz first-live path).
+        $pushcourseid = (int) $draft->courseid > 0
+            ? (int) $draft->courseid
+            : optional_param('pushcourseid', 0, PARAM_INT);
+        if ($pushcourseid <= 0) {
+            redirect($PAGE->url,
+                get_string('push_err_nocourse', 'local_sentientia_aiquiz'),
+                null,
+                \core\output\notification::NOTIFY_WARNING);
         }
-        draft_manager::mark_pushed($draftid, 0);
-        redirect($PAGE->url,
-            get_string('review_push_success', 'local_sentientia_aiquiz', (object)[
-                'quizid' => 0, 'count' => $approved,
-            ]),
-            null,
-            \core\output\notification::NOTIFY_SUCCESS);
+        try {
+            $result = quiz_publisher::publish($draftid, $pushcourseid, $USER, $manageall);
+            redirect($PAGE->url,
+                get_string('push_success_real', 'local_sentientia_aiquiz', (object) [
+                    'quizname' => format_string($result->quizname),
+                    'quizid'   => $result->quizid,
+                    'count'    => $result->count,
+                ]),
+                null,
+                \core\output\notification::NOTIFY_SUCCESS);
+        } catch (\moodle_exception $e) {
+            redirect($PAGE->url,
+                get_string('push_err_failed', 'local_sentientia_aiquiz',
+                    $e->getMessage()),
+                null,
+                \core\output\notification::NOTIFY_ERROR);
+        }
     }
 }
 
@@ -312,6 +327,24 @@ if ($draft->status === draft_manager::STATUS_APPROVED) {
     ]);
     echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
     echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'action', 'value' => 'push']);
+    // Phase G.4: drafts generated without a course context need a target —
+    // offer the courses this reviewer can manage activities in. Drafts
+    // that carry a courseid keep it (no selector).
+    if ((int) $draft->courseid === 0) {
+        $targets = get_user_capability_course('moodle/course:manageactivities',
+            $USER->id, false, 'fullname', 'fullname ASC', 100);
+        $options = [];
+        foreach ($targets as $t) {
+            if ((int) $t->id === SITEID) {
+                continue;
+            }
+            $options[(int) $t->id] = format_string($t->fullname);
+        }
+        echo html_writer::label(get_string('push_selectcourse', 'local_sentientia_aiquiz'),
+            'aiquiz-pushcourse', true, ['class' => 'me-2']);
+        echo html_writer::select($options, 'pushcourseid', '', // No default.
+            ['' => 'choosedots'], ['id' => 'aiquiz-pushcourse', 'class' => 'me-2']);
+    }
     $pushattrs = ['type' => 'submit', 'class' => 'btn btn-success'];
     if (!$autopush) {
         $pushattrs['disabled'] = 'disabled';

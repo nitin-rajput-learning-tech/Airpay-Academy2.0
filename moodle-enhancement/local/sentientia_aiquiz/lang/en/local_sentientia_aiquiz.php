@@ -151,3 +151,20 @@ $string['source_word_count'] = 'Word count: {$a}';
 $string['tokens_used_today'] = 'Tokens used today: {$a->used} / {$a->cap}';
 $string['back_to_drafts']    = 'Back to drafts list';
 $string['drafts_list_title'] = 'Your AI quiz drafts';
+
+// ── Phase G.4 — real mod_quiz publisher (2026-08-05) ────────────────
+$string['push_selectcourse']     = 'Target course';
+$string['push_default_quizname'] = 'AI generated quiz (draft {$a})';
+$string['push_quiz_intro']       = 'Generated from AI quiz draft #{$a->draftid} (model: {$a->model}) and human-reviewed before publishing. Created hidden — review placement and settings, then make it visible.';
+$string['push_success_real']     = 'Quiz "{$a->quizname}" created (id {$a->quizid}) with {$a->count} question(s). It is hidden — review it in the course, then make it visible.';
+$string['push_err_nocourse']     = 'Choose a target course before pushing — this draft was generated without a course context.';
+$string['push_err_notapproved']  = 'Only a finalised (approved) draft can be pushed. Finalise the review first.';
+$string['push_err_noquestions']  = 'No approved or edited questions to push.';
+$string['push_err_nobank']       = 'Could not resolve the course question bank.';
+$string['push_err_importcount']  = 'Question import mismatch: expected {$a->expected}, imported {$a->actual}. Nothing was published.';
+$string['push_err_badoptions']   = 'Question {$a} has fewer than two answer options.';
+$string['push_err_badanswer']    = 'Question {$a} has a correct-answer index outside its options.';
+$string['push_err_tempfile']     = 'Could not write the import work file.';
+$string['push_err_import']       = 'The question import failed. Nothing was published.';
+$string['push_err_failed']       = 'Push failed: {$a}';
+$string['review_notfound']       = 'Draft not found, or you do not have access to it.';

@@ -151,3 +151,20 @@ $string['source_word_count'] = 'शब्द-गणना: {$a}';
 $string['tokens_used_today'] = 'आज उपयोग किए टोकन: {$a->used} / {$a->cap}';
 $string['back_to_drafts']    = 'ड्राफ्ट सूची पर वापस';
 $string['drafts_list_title'] = 'आपके AI क्विज़ ड्राफ्ट';
+
+// ── Phase G.4 — वास्तविक mod_quiz publisher (2026-08-05) ─────────────
+$string['push_selectcourse']     = 'लक्षित कोर्स';
+$string['push_default_quizname'] = 'AI जनित क्विज़ (ड्राफ्ट {$a})';
+$string['push_quiz_intro']       = 'AI क्विज़ ड्राफ्ट #{$a->draftid} (मॉडल: {$a->model}) से जनित और प्रकाशन से पहले मानव-समीक्षित। छिपा हुआ बनाया गया — स्थान और सेटिंग्स की समीक्षा करें, फिर दृश्य करें।';
+$string['push_success_real']     = 'क्विज़ "{$a->quizname}" बनाई गई (id {$a->quizid}), {$a->count} प्रश्न के साथ। यह छिपी हुई है — कोर्स में समीक्षा करके दृश्य करें।';
+$string['push_err_nocourse']     = 'Push से पहले लक्षित कोर्स चुनें — यह ड्राफ्ट बिना कोर्स संदर्भ के जनित हुआ था।';
+$string['push_err_notapproved']  = 'केवल अंतिम (approved) ड्राफ्ट push हो सकता है। पहले समीक्षा को अंतिम रूप दें।';
+$string['push_err_noquestions']  = 'Push करने के लिए कोई approved या edited प्रश्न नहीं।';
+$string['push_err_nobank']       = 'कोर्स का प्रश्न बैंक नहीं मिला।';
+$string['push_err_importcount']  = 'प्रश्न import बेमेल: अपेक्षित {$a->expected}, import हुए {$a->actual}। कुछ भी प्रकाशित नहीं हुआ।';
+$string['push_err_badoptions']   = 'प्रश्न {$a} में दो से कम उत्तर विकल्प हैं।';
+$string['push_err_badanswer']    = 'प्रश्न {$a} का सही-उत्तर index विकल्पों से बाहर है।';
+$string['push_err_tempfile']     = 'Import कार्य-फ़ाइल नहीं लिखी जा सकी।';
+$string['push_err_import']       = 'प्रश्न import विफल रहा। कुछ भी प्रकाशित नहीं हुआ।';
+$string['push_err_failed']       = 'Push विफल: {$a}';
+$string['review_notfound']       = 'ड्राफ्ट नहीं मिला, या आपके पास इसकी पहुँच नहीं है।';

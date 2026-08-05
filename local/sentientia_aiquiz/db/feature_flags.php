@@ -63,13 +63,18 @@ $flags = [
 
     'sentientia.aiquiz.auto_push' => [
         'default'     => false,
-        'description' => 'Push-to-mod_quiz workflow. When OFF, the "Push
-                          approved to course quiz" button on the review
-                          page is hidden — the trainer can still mark
-                          questions approved/edited/rejected, but the
-                          downstream mod_quiz creation step is gated until
-                          the push pipeline has been verified end-to-end
-                          on staging. Default OFF in Phase G.0.',
+        'description' => 'Push-to-mod_quiz workflow. Phase G.4 (2026-08-05)
+                          replaced the G.0 "quiz id 0" stub with the REAL
+                          publisher: approved/edited questions are imported
+                          into the course\'s default shared question bank
+                          (GIFT pipeline) and a real, HIDDEN quiz activity
+                          is created and populated; the draft records the
+                          actual quiz id. When OFF the push button is
+                          disabled — reviewers can still approve/edit/
+                          reject. Default stays OFF until the publisher is
+                          verified end-to-end on the ninja/staging
+                          rehearsal (ADR-028 engineering gate #3
+                          discipline).',
     ],
 
 ];

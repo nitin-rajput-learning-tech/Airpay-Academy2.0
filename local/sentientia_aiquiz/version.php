@@ -42,10 +42,10 @@ $plugin->component = 'local_sentientia_aiquiz';
 // generate.php language picker + prompt preview + Devanagari-safe
 // response parser (mb_strlen/mb_substr). No live API in tests
 // (call_mock only). ADR-012 G.1 addendum. Hindi parity 125/125.
-$plugin->version   = 2026080402;  // gateway routing made OPT-IN via sentientia.ai.gateway.enabled (dormant while OFF)
+$plugin->version   = 2026080500;  // Phase G.4: real mod_quiz publisher (gate #3) - quiz id 0 stub closed
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;     // MVP — needs prod sign-off before flag flips
-$plugin->release   = '0.2.2-alpha';
+$plugin->release   = '0.3.0-alpha';
 $plugin->dependencies = [
     'local_sentientia_platform' => 2026051401,   // feature_flags resolver + customer scope + get_customer_config
 ];
