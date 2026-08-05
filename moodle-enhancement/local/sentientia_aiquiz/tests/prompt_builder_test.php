@@ -102,8 +102,11 @@ final class prompt_builder_test extends \advanced_testcase {
     public function test_word_count_counts_devanagari_words(): void {
         // Three Devanagari words separated by spaces.
         $this->assertSame(3, prompt_builder::word_count('अनुपालन प्रशिक्षण सामग्री'));
-        // Mixed Latin + Devanagari.
-        $this->assertSame(4, prompt_builder::word_count('SCORM ट्रांसक्रिप्ट से quiz बनाएँ'));
+        // Mixed Latin + Devanagari — five whitespace-separated tokens:
+        // SCORM / ट्रांसक्रिप्ट / से / quiz / बनाएँ. (The original expectation
+        // of 4 was an authoring miscount, corrected 2026-08-04; the
+        // implementation was always right.)
+        $this->assertSame(5, prompt_builder::word_count('SCORM ट्रांसक्रिप्ट से quiz बनाएँ'));
     }
 
     // ════════════════════════════════════════════════════════════════

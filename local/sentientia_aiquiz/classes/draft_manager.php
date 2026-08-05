@@ -89,7 +89,14 @@ class draft_manager {
     ): int {
         global $DB;
 
-        $owner = $DB->get_record('user', ['id' => $ownerid], 'id, open_path', MUST_EXIST);
+        // Schema-portable owner read (2026-08-04): the BizLMS `open_path`
+        // column exists on Airpay production but NOT on a vanilla Moodle /
+        // Customer-N schema — naming it in the field list made this method
+        // (and 17 of this plugin's tests on a fresh phpunit install) fatal
+        // with "Unknown column". SELECT * carries open_path when present;
+        // tenant_root_for() already isset()-guards its absence (tenant 0 =
+        // unscoped, the ADR-018 single-implicit-tenant convention).
+        $owner = $DB->get_record('user', ['id' => $ownerid], '*', MUST_EXIST);
         $now = time();
 
         // Defensive: never persist an empty or oversize prompt_version
@@ -327,8 +334,14 @@ class draft_manager {
 
         $actorroot = self::tenant_root_for($actor);
         if (!$manageall) {
-            if ($draft->ownerid !== (int)$actor->id
-                && $draft->costcenterid !== $actorroot) {
+            // Cast the DB side too (2026-08-04): Moodle DML returns integer
+            // columns as STRINGS, so the original strict compares
+            // ('5' !== 5) were always true — every non-manage_all actor,
+            // including the draft's own owner, was denied. Masked in QA by
+            // admin accounts holding :manage_all; surfaced the first time
+            // this test ran past the (also fixed) open_path fatal.
+            if ((int)$draft->ownerid !== (int)$actor->id
+                && (int)$draft->costcenterid !== $actorroot) {
                 return null;
             }
         }

@@ -110,6 +110,50 @@ see docs/security/ENTERPRISE-IDENTITY-PACK.md).
 flagged needing REAL providers (spawned as follow-up task); upgraded all 9
 touched components to 2026080400.
 
+## 2c. AI Gateway shipped (`local_sentientia_ai` 0.1.0-alpha) — ADR-028 Phase 2.3
+
+The precondition for the entire signed Addendum-A budget: one gateway replacing
+six duplicated per-plugin Anthropic clients. Central key, spend ledger
+(`local_sentientia_ai_ledger`), fail-closed quotas (0/empty cap = live BLOCKED),
+mock-first routing, REAL privacy provider (ledger is user-attributed; prompt
+text never stored). Both flags default OFF.
+
+Verification (local):
+- Fresh install clean: table + 5 settings + 2 caps + 2 registry-discovered flags.
+- CLI smoke: generic mock ledgered (row 1); **aiquiz migrated dispatcher**
+  (0.2.2-alpha, first consumer) returns byte-faithful mocks through the gateway
+  incl. v2-hindi Devanagari (rows 2–3); quota aggregates exclude mock/denied.
+- Ledger admin page (`/local/sentientia_ai/index.php`, qa_siteadmin): headline
+  aggregates + 30-day per-feature roll-up + recent calls render, 0 broken keys;
+  anonymous → 303 to login (no bootstrap fatal).
+- PHPUnit (full story, all defects fixed same-day):
+  1. Gateway suite 11/11 GREEN (35 assertions). Its first run exposed two real
+     defects, both fixed: tests could reach the REAL Anthropic API
+     (install-applied setting defaults gave the quota check headroom; a fake
+     key was actually POSTed once) → structural PHPUNIT/BEHAT no-spend guard
+     now inside `gateway::call_live()`; and the platform flag resolver's PHP
+     statics leak across test classes → `setUp()` invalidation.
+  2. First-cut aiquiz delegation broke 17 of its own tests (unconditional
+     routing wrote ledger rows in non-reset test contexts) → routing made
+     OPT-IN via `sentientia.ai.gateway.enabled` (default OFF = byte- and
+     side-effect-identical legacy path; aiquiz 2026080402).
+  3. The combined run then exposed two PRE-EXISTING aiquiz bugs (both
+     date from Phase G.1, 2026-05-27, unrelated to today): `draft_manager`
+     named the BizLMS `open_path` column in a SELECT → fatal on any
+     vanilla/Customer-N schema (fixed: schema-portable `SELECT *`; the
+     tenant resolver already isset()-guarded absence), and a
+     `prompt_builder` test expecting 4 words in a 5-token string (test
+     authoring miscount; implementation was right).
+  Final combined result recorded in PROJECT-STATE.
+- Ops note: local Apache died silently mid-verification (console-mode
+  fragility, no crash log; opcache confirmed OFF for web) — restarted via
+  `httpd.exe`, site healthy after.
+
+One-click enrol (item 2): flag confirmed ON for tenant /1 locally (May-29
+enable survived; audit-logged re-affirm), OFF for Public /77 by policy; the
+production flip already rides the ninja cutover packet (step 5) + package
+DEPLOY-README (step 10). No further action.
+
 ## 3. Ninja package rebuilt to carry the UI-NAV wave
 
 Overlay re-run (65,349 files at the 5.2 target, AMD-rename gate: 0 stale

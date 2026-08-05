@@ -236,3 +236,18 @@ roles + `sentientiaauthor` (guarded, overwrite=false) because Moodle applies
 archetype defaults only at first cap install. Verified on local prod-import:
 both caps now grant editingteacher, manager, administrator, teacher,
 trainer, sentientiaauthor. Deployed local + mirrored to top-level local/.
+
+## 2026-08-04 (later) — gateway reference migration (v2026080402 / 0.2.2-alpha)
+
+First consumer of the NEW `local_sentientia_ai` gateway (ADR-028 Phase 2.3).
+`anthropic_client::generate()` delegates to
+`\local_sentientia_ai\client::complete()` ONLY when the gateway exists AND the
+`sentientia.ai.gateway.enabled` routing switch is ON (default OFF -> the plugin
+is byte- and side-effect-identical to its pre-gateway build; local mock, no
+ledger writes — first-cut unconditional delegation broke 17 of its own tests
+by writing ledger rows in non-reset test contexts, corrected same day): central key + spend ledger + fail-closed
+quotas become layer 0 under this plugin's own ADR-012 layers (its enabled/
+live_api flags + [CONFIRM] + caps all still enforced here). Our mock passes down
+as a callable — v2-hindi Devanagari mock output verified byte-faithful through
+the gateway. Gateway 'denied' (quota) maps to 'failed' so the UI persists a
+retriable draft. Live still unreachable until Addendum-A cap + key land.

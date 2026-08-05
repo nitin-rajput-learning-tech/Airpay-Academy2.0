@@ -1,0 +1,9 @@
+{
+    "name": "Input snippet truncates at 80 chars, whitespace collapsed",
+    "request": {
+        "component": "local_sentientia_translate",
+        "purpose": "content_translation",
+        "usertext": "This    is a deliberately   very long input   string with irregular whitespace that keeps going well past the eighty character snippet boundary to prove truncation is stable."
+    },
+    "expected_body": "[MOCK sentientia_ai] Deterministic gateway mock for local_sentientia_translate/content_translation — live flags OFF, zero spend. Input: \"This is a deliberately very long input string with irregular whitespace that kee\""
+}

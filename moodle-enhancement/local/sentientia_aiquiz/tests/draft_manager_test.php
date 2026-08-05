@@ -17,6 +17,19 @@ defined('MOODLE_INTERNAL') || die();
  */
 final class draft_manager_test extends \advanced_testcase {
 
+    // A vanilla phpunit install lacks the BizLMS user columns
+    // (open_path etc.) that the tenant assertions here depend on —
+    // update_user_open_path() used to silently no-op without them,
+    // making the costcenterid/load_for_actor expectations unreachable.
+    // Provision them per-test via the shared trait, exactly like the
+    // 2026-06-17 gap-test pass did for learningpath/analytics.
+    use \local_sentientia_org\test\bizlms_fixture;
+
+    protected function setUp(): void {
+        parent::setUp();
+        $this->ensure_bizlms_schema();
+    }
+
     public function test_create_pending_inserts_row_with_defaults(): void {
         $this->resetAfterTest();
         $user = $this->getDataGenerator()->create_user();

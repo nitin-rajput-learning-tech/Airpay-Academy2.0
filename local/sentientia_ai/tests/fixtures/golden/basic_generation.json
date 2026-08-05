@@ -1,0 +1,9 @@
+{
+    "name": "Generic gateway mock — no component mock supplied",
+    "request": {
+        "component": "local_sentientia_skillsai",
+        "purpose": "gap_narrative",
+        "usertext": "Summarise the skill gaps for the payments-operations role."
+    },
+    "expected_body": "[MOCK sentientia_ai] Deterministic gateway mock for local_sentientia_skillsai/gap_narrative — live flags OFF, zero spend. Input: \"Summarise the skill gaps for the payments-operations role.\""
+}
