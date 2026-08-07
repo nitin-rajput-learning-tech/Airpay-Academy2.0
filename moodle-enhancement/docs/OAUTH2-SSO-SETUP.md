@@ -5,6 +5,13 @@
 via Moodle's bundled `auth_oauth2` plugin. Each tenant (Airpay, Public, ZEEA)
 can wire up its own OAuth2 provider independently.
 
+> **Related runbook — outbound mail:** OAuth2 (XOAUTH2) **SMTP** via
+> Microsoft 365 is covered separately in
+> [`operations/OAUTH2-SMTP-M365-RUNBOOK.md`](operations/OAUTH2-SMTP-M365-RUNBOOK.md)
+> — the mailer may use a **separate** Entra app registration (delegated
+> `SMTP.Send`) from the SSO app below, and its issuer uses the
+> "SMTP with XOAUTH2 only" usage mode so it never appears on the login page.
+
 ---
 
 ## 1. Why per-tenant OAuth2?
