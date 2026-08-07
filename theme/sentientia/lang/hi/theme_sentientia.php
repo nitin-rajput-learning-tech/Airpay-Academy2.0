@@ -222,6 +222,7 @@ $string['a11y_courseprogressnav'] = 'कोर्स प्रगति और �
 $string['a11y_openmenu'] = 'मेनू खोलें';
 $string['a11y_togglecoursesidebar'] = 'कोर्स साइडबार टॉगल करें';
 $string['a11y_togglesidebar'] = 'साइडबार टॉगल करें';
+$string['recommend_closesgap'] = 'आपकी {$a} स्किल गैप भरता है';
 $string['course_content'] = 'कोर्स सामग्री';
 $string['course_next'] = 'अगला: {$a}';
 $string['course_start'] = 'शुरू करें';

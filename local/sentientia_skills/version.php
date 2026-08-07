@@ -15,7 +15,7 @@ $plugin->component = 'local_sentientia_skills';
 //                       translated, covering all P1 #22/#25 additions
 //                       plus the previously-missing admin CRUD + privacy
 //                       metadata. Was at 19/80; now 80/80.
-$plugin->version   = 2026080300;
+$plugin->version   = 2026080500;  // +feature_flags registry (dashboard skillsrecs flag)
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.6.2'; // + P1 #32 full Hindi pack
+$plugin->release   = '1.6.3'; // skillid gap-rec fix + flags registry

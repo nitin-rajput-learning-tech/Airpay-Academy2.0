@@ -396,7 +396,7 @@ defined('MOODLE_INTERNAL') || die();
 // course.mustache player strings + aria-labels ({$a} param forms), topbar
 // "Open menu" + search placeholder. Restores the 100%-Hindi-parity policy
 // in the flagship chrome; the new lang-parity CI gate prevents recurrence.
-$plugin->version   = 2026080302;
+$plugin->version   = 2026080303;  // skills-first dashboard recs (ADR-028 P2.2, flag-gated)
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_sentientia';
 $plugin->maturity  = MATURITY_BETA;

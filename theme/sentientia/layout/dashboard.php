@@ -983,8 +983,34 @@ if (isloggedin() && !isguestuser()) {
     // --- Section: Recommended for You ---
     try {
         $recommendations = [];
+
+        // ADR-028 Phase 2.2 (2026-08-05): skills-first personalization.
+        // When the flag is ON, recommendations come from the STABLE skills
+        // gap engine (local_sentientia_skills\skills_manager::get_gap_courses:
+        // unmet role skills → courses teaching them at the required level,
+        // completed courses excluded) — real personalization, zero AI spend.
+        // Falls through to the legacy same-category-newest heuristic when
+        // the flag is OFF, the plugin is absent, or the learner has no gap
+        // data yet (new joiner, unmapped designation).
+        $skillsrecs = class_exists('\\local_sentientia_platform\\feature_flags')
+            && class_exists('\\local_sentientia_skills\\skills_manager')
+            && \local_sentientia_platform\feature_flags::is_enabled(
+                'sentientia.dashboard.skillsrecs.enabled');
+        if ($skillsrecs) {
+            foreach (\local_sentientia_skills\skills_manager::get_gap_courses((int)$USER->id, 3) as $rec) {
+                $recommendations[] = [
+                    'id' => $rec['courseid'],
+                    'fullname' => $rec['fullname'],
+                    'summary' => get_string('recommend_closesgap', 'theme_sentientia',
+                        $rec['skill_name']),
+                    'category' => $rec['skill_name'],
+                    'viewurl' => $rec['viewurl'],
+                ];
+            }
+        }
+
         $enrolledids = array_keys($enrolledcourses ?? []);
-        if (!empty($enrolledids)) {
+        if (empty($recommendations) && !empty($enrolledids)) {
             // Get categories of enrolled courses
             $categories = $DB->get_fieldset_sql(
                 "SELECT DISTINCT category FROM {course} WHERE id IN (" .

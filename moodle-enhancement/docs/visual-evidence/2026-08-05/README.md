@@ -39,3 +39,20 @@ Local console-mode Apache died silently twice in ~14h (no crash log, opcache
 off) — restarted via `httpd.exe` both times. Recommend installing Apache as a
 Windows service (`httpd.exe -k install`) to end the fragility; does not affect
 the Linux ninja target.
+
+## 4. Skills-first dashboard recommendations (ADR-028 Phase 2.2)
+
+Flag `sentientia.dashboard.skillsrecs.enabled` (NEW, in the skills plugin's new
+flags registry, default OFF; ON for tenant /1 locally). The dashboard rail now
+consults `skills_manager::get_gap_courses()` first, legacy heuristic as
+fallback. **Latent production bug found + fixed en route**: `get_gap_analysis()`
+omitted `skillid` from its rows → `get_gap_courses()` always queried skillid=0
+→ the gap-closing course recommendations (My Skills page included) have been
+silently empty since 1.0. Verified end-to-end via authenticated fetch of
+/my/index.php as qa_employee: rail renders both seeded gap recs with reason
+copy — "Closes your Anti-Money Laundering (AML/KYC) skill gap" (course 71),
+"Closes your Prevention of Sexual Harassment (POSH) skill gap" (POSH Training).
+Local seed for the test: qa_employee designation=Manager + 2 course_skills
+mappings. ⚠ Production prerequisite before flipping the flag there: real
+course→skill tagging (local_sentientia_course_skills is EMPTY on prod-import)
++ role_skills beyond the seeded Manager designation — content/L&D work.

@@ -67,6 +67,11 @@ class skills_manager {
             $status = ($gap === 0) ? 'met' : (($currentlvl > 0) ? 'partial' : 'missing');
 
             $skills[] = [
+                // skillid was missing until 2026-08-05 — get_gap_courses()
+                // reads $gap['skillid'] and silently fell back to 0, so the
+                // gap-closing course recommendations (skills page + the new
+                // dashboard rail) never matched a course. Latent since 1.0.
+                'skillid'        => (int) $r->skillid,
                 'skill_name'     => format_string($r->skill_name),
                 'category_name'  => format_string($r->category_name),
                 'category_color' => $r->category_color,
