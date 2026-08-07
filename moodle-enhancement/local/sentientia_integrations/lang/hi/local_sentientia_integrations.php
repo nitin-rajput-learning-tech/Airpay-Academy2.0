@@ -63,6 +63,23 @@ $string['hrms_api_key_desc']     = 'HRMS API के लिए प्रमाण
 $string['hrms_sync_interval']    = 'सिंक अंतराल (घंटे)';
 $string['hrms_sync_interval_desc'] = 'कर्मचारी अपडेट कितनी बार खींचना है। डिफ़ॉल्ट: 4 घंटे।';
 
+// KeKa HRMS (2026-08-07 JML hardening).
+$string['keka_heading']            = 'KeKa HRMS इंटीग्रेशन';
+$string['keka_heading_desc']       = 'KeKa REST API + वेबहुक के माध्यम से जॉइनर-मूवर-लीवर ऑटोमेशन। वेबहुक एंडपॉइंट और रीकंसिलिएशन टास्क अतिरिक्त रूप से sentientia.hrms.* फ़ीचर फ़्लैग (डिफ़ॉल्ट: बंद) और ऊपर दिए गए "HRMS सिंक सक्षम करें" टॉगल से गेटेड हैं।';
+$string['keka_base_url']           = 'KeKa API बेस URL';
+$string['keka_base_url_desc']      = 'जैसे, https://airpay.keka.com';
+$string['keka_api_key']            = 'KeKa API कुंजी';
+$string['keka_api_key_desc']       = 'KeKa एडमिन > इंटीग्रेशंस से जनरेट करें।';
+$string['keka_client_id']          = 'KeKa OAuth क्लाइंट ID';
+$string['keka_client_id_desc']     = 'API कुंजी का विकल्प।';
+$string['keka_client_secret']      = 'KeKa OAuth क्लाइंट सीक्रेट';
+$string['keka_client_secret_desc'] = 'जब API कुंजी सेट न हो तो OAuth क्लाइंट ID के साथ उपयोग होता है।';
+$string['webhook_secret']          = 'वेबहुक सीक्रेट';
+$string['webhook_secret_desc']     = 'KeKa वेबहुक कॉन्फ़िगरेशन में यही मान सेट करें। KeKa को इसे X-Webhook-Secret HTTP हेडर में भेजना होगा — ?secret= क्वेरी पैरामीटर स्वीकार नहीं किया जाता (यह एक्सेस लॉग में लीक हो जाता)। एंडपॉइंट: /local/sentientia_integrations/webhook.php';
+$string['keka_default_orgpath']    = 'नए यूज़र्स के लिए डिफ़ॉल्ट org पथ';
+$string['keka_default_orgpath_desc'] = 'वह org पथ (जैसे /1) जिसके अंतर्गत वेबहुक-निर्मित यूज़र रखे जाते हैं जब उनका KeKa विभाग किसी संगठन से मैप नहीं हो पाता। पथ org ट्री के विरुद्ध सत्यापित होता है; अमान्य मान /1 पर लौट जाते हैं।';
+$string['task_keka_reconcile']     = 'KeKa HRMS रीकंसिलिएशन पुल';
+
 // Gamification.
 $string['gamification_heading']                = 'गेमिफ़िकेशन ';
 $string['gamification_enable']                 = 'गेमिफ़िकेशन सक्षम करें';

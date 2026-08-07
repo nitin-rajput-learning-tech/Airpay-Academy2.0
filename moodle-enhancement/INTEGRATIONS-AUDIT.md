@@ -411,3 +411,36 @@ extended to Public/ZEEA.
 
 The 6-hour pre-cutover window is the minimum that lets us **leave the plugin enabled
 without it crashing**. Steps 2–4 can be rolled out post-cutover behind feature flags.
+
+---
+
+## 9. Addendum — 2026-08-07 KeKa JML hardening (ADR-029)
+
+The 2026-08-05 investigation items landed on `claude/gap-integration`
+(`local_sentientia_integrations` 1.2.0-beta). Deltas against this audit:
+
+- **§3.2 / §4.4 (duplicate-sync risk):** a scheduled reconciliation pull is
+  REINSTATED as `task\keka_reconcile` — but it is a thin wrapper around
+  `keka_client::sync_employees()` → `upsert_employee()`, the **same** code
+  path the webhook uses. The duplicate-implementation hazard that forced
+  the 2026-05-07 task deletion cannot recur (one implementation, and
+  identity matching is `open_employeeid`-first so webhook- and cron-touched
+  records converge). Triple opt-in: flag `sentientia.hrms.reconcile.enabled`
+  (default OFF) + `hrms_enable` setting + task registered disabled.
+- **§2.1 (webhook):** endpoint now gated by `sentientia.hrms.webhook.enabled`
+  + `hrms_enable` (previously live the moment `webhook_secret` was set);
+  `hash_equals` on the `X-Webhook-Secret` header only — the `?secret=`
+  GET path (access-log leak) is removed.
+- **§3.4 (no capability check on webhook.php):** mitigated — the endpoint
+  is machine-to-machine by design; auth = flag gate + constant-time shared
+  secret; recommend a reverse-proxy IP allowlist once KeKa egress IPs are
+  known (still OPEN, external).
+- **User writes** now go through `user_create_user`/`user_update_user`
+  (real events); leavers get session destruction; joiners get validated
+  default tenant placement (`keka_default_orgpath`, default `/1`) and
+  `reportsTo` → `open_supervisorid` manager sync.
+- **Tests:** `keka_client_test.php` grew from 2 → 11 methods (JML paths);
+  `local_sentientia_lifecycle/tests/observer_test.php` added (5 methods).
+- **STILL OPEN (external):** live KeKa contract verification — event names,
+  payload shapes, `get_employee` envelope, egress IPs. Assumptions are
+  marked `ASSUMPTION` in `keka_client.php` and listed in the plugin README.

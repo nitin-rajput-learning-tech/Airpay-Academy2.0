@@ -74,38 +74,44 @@ if ($hassiteconfig) {
 
     // ═══ KEKA HRMS (Tier 3) ═══
     $settings->add(new admin_setting_heading('keka_heading',
-        'KeKa HRMS Integration',
-        'Joiner-Mover-Leaver automation via KeKa REST API + webhooks.'));
+        get_string('keka_heading', 'local_sentientia_integrations'),
+        get_string('keka_heading_desc', 'local_sentientia_integrations')));
 
     $settings->add(new admin_setting_configtext(
         'local_sentientia_integrations/keka_base_url',
-        'KeKa API Base URL',
-        'e.g., https://airpay.keka.com',
+        get_string('keka_base_url', 'local_sentientia_integrations'),
+        get_string('keka_base_url_desc', 'local_sentientia_integrations'),
         '', PARAM_URL));
 
     $settings->add(new admin_setting_configpasswordunmask(
         'local_sentientia_integrations/keka_api_key',
-        'KeKa API Key',
-        'Generate from KeKa Admin > Integrations.',
+        get_string('keka_api_key', 'local_sentientia_integrations'),
+        get_string('keka_api_key_desc', 'local_sentientia_integrations'),
         ''));
 
     $settings->add(new admin_setting_configtext(
         'local_sentientia_integrations/keka_client_id',
-        'KeKa OAuth Client ID',
-        'Alternative to API key.',
+        get_string('keka_client_id', 'local_sentientia_integrations'),
+        get_string('keka_client_id_desc', 'local_sentientia_integrations'),
         '', PARAM_TEXT));
 
     $settings->add(new admin_setting_configpasswordunmask(
         'local_sentientia_integrations/keka_client_secret',
-        'KeKa OAuth Client Secret',
-        '',
+        get_string('keka_client_secret', 'local_sentientia_integrations'),
+        get_string('keka_client_secret_desc', 'local_sentientia_integrations'),
         ''));
 
     $settings->add(new admin_setting_configpasswordunmask(
         'local_sentientia_integrations/webhook_secret',
-        'Webhook Secret',
-        'Set same value in KeKa webhook config. Endpoint: /local/sentientia_integrations/webhook.php',
+        get_string('webhook_secret', 'local_sentientia_integrations'),
+        get_string('webhook_secret_desc', 'local_sentientia_integrations'),
         ''));
+
+    $settings->add(new admin_setting_configtext(
+        'local_sentientia_integrations/keka_default_orgpath',
+        get_string('keka_default_orgpath', 'local_sentientia_integrations'),
+        get_string('keka_default_orgpath_desc', 'local_sentientia_integrations'),
+        '/1', PARAM_TEXT));
 
     // ═══ MICROSOFT 365 (Phase 10) ═══
     $settings->add(new admin_setting_heading('m365_heading',
