@@ -1,95 +1,71 @@
-# State Card — `local_airpay_lifecycle`
+# State Card — `local_sentientia_lifecycle`
 
-**Component:** `local_airpay_lifecycle`
-**Status:** Live observer + compliance-check cron — not just a skeleton
-**Maturity:** BETA (no formal stamp yet — see version.php)
-**Last refreshed:** 2026-05-28 (B20 stabilization sweep — F-073/F-092 closure)
+**Component:** `local_sentientia_lifecycle`
+**Version:** `2026080700` / `1.1.0-beta`
+**Maturity:** `MATURITY_BETA`
+**Status:** Live observer + compliance-check cron. Joiner auto-enrol
+flag-gated (default OFF) as of 2026-08-07.
+**Last refreshed:** 2026-08-07 (KeKa JML hardening — ADR-029)
+
+> **Card history:** the 2026-05-24 initial card described this plugin as a
+> skeleton; the 2026-05-28 F-092 back-port then prepended the "live
+> observer" description WITHOUT deleting the skeleton text, leaving the
+> card self-contradictory for ten weeks. This 2026-08-07 rewrite is the
+> single coherent source: the plugin is **live**, not a skeleton.
 
 ---
 
 ## Mission
 
-Course-lifecycle automation plugin. Observes events on courses,
-enrolments, and completions; runs a daily compliance-check cron task
-that flags overdue mandatory training; emits notification messages
-via the Moodle messages API.
-
-Earlier state cards described this plugin as a skeleton. **It is
-not** — the runtime (db/events.php + db/tasks.php + db/messages.php
-+ classes/observer.php + classes/task/compliance_check.php) all exist
-in deployed xampp. They were missing from the workspace mirror until
-the F-092 back-port on 2026-05-28 (commit `e32473e58`).
+Employee/course lifecycle automation. Observes user + enrolment events,
+auto-enrols joiners into mandatory courses (flag-gated), and runs a daily
+compliance-check cron that notifies employees + managers of approaching
+mandatory-training deadlines (messages API + optional Teams alert).
 
 ## DB tables
 
-None — the plugin uses Moodle's standard event + scheduled-task
-infrastructure (no plugin-owned tables).
+None — uses core event + scheduled-task + tag infrastructure.
 
-## Capabilities
+## Feature flags (`db/feature_flags.php`, added 2026-08-07)
 
-None directly. Compliance-check reads `local/airpay_compliance:view`
-indirectly via the airpay_compliance_report dependency.
+| Flag | Default | Gates |
+|---|---|---|
+| `sentientia.lifecycle.autoenrol.enabled` | OFF | Joiner auto-enrolment in `observer::user_created` |
+
+## Mandatory-course definition (ADR-029)
+
+Visible course carrying the tag configured in
+`local_sentientia_lifecycle/mandatory_tag` (default `mandatory`),
+tenant-scoped: a course whose `open_path` roots in a different tenant than
+the joiner is never touched; pathless tagged courses are platform-wide.
+**The pre-2026-08-07 heuristic (enrol every joiner into every visible
+course with a future enddate, platform-wide) is retired unconditionally.**
 
 ## Wired surfaces
 
-- `db/events.php` — subscribes to:
-  - `\core\event\course_completed`
-  - `\core\event\user_enrolment_created`
-  - `\core\event\user_enrolment_deleted`
-- `db/tasks.php` — registers `\local_airpay_lifecycle\task\compliance_check`
-  to run daily at 02:00 IST.
-- `db/messages.php` — declares the `compliance_overdue` and
-  `compliance_due_soon` message providers.
-- `classes/observer.php` — handles the 3 subscribed events.
-- `classes/task/compliance_check.php` — runs the daily compliance scan.
-- `classes/privacy/provider.php` — privacy provider (already in workspace).
-
-## Stabilization notes
-
-- F-092 (workspace drift) — RESOLVED 2026-05-28 by back-porting
-  `version.php`, `db/`, `classes/observer.php`,
-  `classes/task/compliance_check.php` from deployed.
-- F-073 (state-card stale) — RESOLVED 2026-05-28 by this refresh.
-
-## Open follow-ups
-
-- Add explicit `MATURITY_BETA` stamp in `version.php`.
-- Add PHPUnit tests for observer + task (no test file present today).
-- Document the lifecycle event flow in an ADR (currently implicit).
-
-## Feature flags
-
-None registered.
-
-## Key files
-
-```
-local/airpay_lifecycle/
-├── README.md
-├── classes/
-│   └── privacy/                                   GDPR / DPDP stub (empty provider)
-└── lang/                                          (en stub)
-```
-
-No `version.php`, no `db/`, no `tests/`. Treated as a reserved
-directory for future scope.
+- `db/events.php` — `\core\event\user_created` → joiner auto-enrol
+  (flag-gated); `\core\event\user_updated` → placeholder (department-change
+  re-evaluation still unimplemented).
+- `db/tasks.php` — `task\compliance_check`, weekdays 07:00.
+- `db/messages.php` — `compliance_deadline` message provider.
+- `settings.php` (new 2026-08-07) — `mandatory_tag` setting.
+- `classes/observer.php` — joiner auto-enrol (rewritten 2026-08-07).
+- `classes/task/compliance_check.php` — daily deadline scan
+  (still uses `enddate` to define a *deadline*, which is correct for
+  notification purposes; enrolment no longer keys off it).
+- `classes/privacy/provider.php` — null provider.
 
 ## Tests
 
-None.
+`tests/observer_test.php` (new 2026-08-07, 5 methods, uses
+`bizlms_fixture`): flag-off no-op, tagged-only enrolment, tenant scoping
+via `open_path`, custom tag setting, suspended-user skip.
 
-## Open items
+## Open follow-ups
 
-- [ ] **Design decision:** is this plugin still in scope? If so, design
-      schema + state machine. If not, delete the directory.
-- [ ] If kept: minimum viable scope — auto-archive courses with
-      no enrolment activity for N months
-- [ ] If kept: hook into `local_airpay_emails` for archive-warning
-      emails (N days before archive)
-- [ ] If kept: per-tenant archive policy (today: no policy at all)
-
-## State card created — 2026-05-24
-
-Initial state card. Plugin is a skeleton placeholder — surfaced in
-the P1 audit so the design decision (keep or delete) is on the
-backlog.
+- [ ] `user_updated` department-change re-evaluation (observer placeholder).
+- [ ] Compliance-check task: consider aligning its course universe with the
+      mandatory-tag definition (today it scans all dated courses).
+- [ ] v2 mandatory definition: course custom field (checkbox) once the
+      customfield provisioning story is settled — see ADR-029 table.
+- [ ] PHPUnit for `task\compliance_check` (still none).
