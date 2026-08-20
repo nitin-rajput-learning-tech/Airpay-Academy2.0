@@ -21,3 +21,12 @@ $string['invaliditemid']       = 'अमान्य आइटम जिसक�
 $string['cannotrateasguest']   = 'रेटिंग सबमिट करने के लिए आपको लॉग-इन करना होगा';
 $string['ratingsaved']         = 'आपकी रेटिंग सहेज ली गई है';
 $string['rateaccessibility']   = '{$a} को 5 में से रेट करें';
+
+// Privacy provider (2026-08-04) — real metadata + export + delete.
+$string['privacy:metadata:ratings']              = 'उपयोगकर्ता द्वारा दी गई स्टार रेटिंग';
+$string['privacy:metadata:ratings:userid']       = 'जिस उपयोगकर्ता ने रेटिंग दी';
+$string['privacy:metadata:ratings:itemid']       = 'जिस आइटम की रेटिंग की गई';
+$string['privacy:metadata:ratings:ratearea']     = 'किस प्रकार के आइटम की रेटिंग की गई (कोर्स, क्लासरूम, प्रोग्राम, पाथ)';
+$string['privacy:metadata:ratings:rating']       = 'दिया गया 1-5 स्टार मान';
+$string['privacy:metadata:ratings:timecreated']  = 'रेटिंग पहली बार कब दी गई';
+$string['privacy:metadata:ratings:timemodified'] = 'रेटिंग अंतिम बार कब बदली गई';

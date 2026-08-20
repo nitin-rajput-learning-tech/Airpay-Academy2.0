@@ -43,3 +43,22 @@ $string['badge_team_player_desc'] = 'टॉप 10 लीडरबोर्ड �
 
 // P1 #50 (2026-05-20) — Hindi top-up: 1 string (privacy).
 $string['privacy:metadata'] = 'गेमिफ़िकेशन प्लगइन यूज़र ID से लिंक्ड अंक और बैज डेटा संग्रहीत करता है।';
+
+// Privacy provider (2026-08-04) — real metadata + export + delete.
+$string['privacy:metadata:points_log']              = 'प्रति कार्रवाई उपयोगकर्ता को दिए गए अंकों का लॉग';
+$string['privacy:metadata:points_log:userid']       = 'जिस उपयोगकर्ता को अंक दिए गए';
+$string['privacy:metadata:points_log:action']       = 'जिस कार्रवाई से अंक अर्जित हुए';
+$string['privacy:metadata:points_log:points']       = 'कितने अंक दिए गए';
+$string['privacy:metadata:points_log:courseid']     = 'जिस कोर्स में कार्रवाई हुई, यदि कोई हो';
+$string['privacy:metadata:points_log:description']  = 'पुरस्कार का संक्षिप्त विवरण';
+$string['privacy:metadata:points_log:timecreated']  = 'अंक कब दिए गए';
+$string['privacy:metadata:user_badges']             = 'उपयोगकर्ता द्वारा अर्जित बैज';
+$string['privacy:metadata:user_badges:userid']      = 'जिस उपयोगकर्ता ने बैज अर्जित किया';
+$string['privacy:metadata:user_badges:badgeid']     = 'जो बैज अर्जित किया गया';
+$string['privacy:metadata:user_badges:timeearned']  = 'बैज कब अर्जित किया गया';
+$string['privacy:metadata:streaks']                 = 'उपयोगकर्ता के लॉगिन-स्ट्रीक काउंटर';
+$string['privacy:metadata:streaks:userid']          = 'जिस उपयोगकर्ता की स्ट्रीक है';
+$string['privacy:metadata:streaks:current_streak']  = 'वर्तमान लगातार-दिन लॉगिन स्ट्रीक';
+$string['privacy:metadata:streaks:longest_streak']  = 'उपयोगकर्ता की अब तक की सबसे लंबी स्ट्रीक';
+$string['privacy:metadata:streaks:last_login_date'] = 'उपयोगकर्ता के अंतिम गिने गए लॉगिन की तारीख';
+$string['privacy:metadata:streaks:total_points']    = 'उपयोगकर्ता का कुल आजीवन अंक';

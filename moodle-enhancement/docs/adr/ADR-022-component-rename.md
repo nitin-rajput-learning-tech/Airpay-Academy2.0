@@ -164,3 +164,44 @@ capability assignments + row counts match pre/post).
 4. **`local_airpay_core` rename** — accept it as a flag day, or keep `airpay_core` as the one
    permanent legacy name (everything already tolerates it via the `class_exists()`-guarded
    `local_sentientia_core` seams)?
+
+## Addendum 2026-08-04 — batch-1 revert residue: `local_sentientia_ratings` (decision: remove)
+
+The 2026-06-03 revert of the premature batch-1 merge (`f9ffcd242`) left
+`local_sentientia_ratings` residue in the working tree:
+
+- `moodle-enhancement/local/sentientia_ratings/` — 4 orphan files (README,
+  `classes/external/submit_rating.php`, `db/install.xml`, one test). Not an
+  installable plugin: no `version.php`, no `lang/`.
+- `local/sentientia_ratings/` (top-level duplicate tree) — the COMPLETE renamed
+  plugin (version 2026060302), which the revert never cleaned because the revert
+  commit only touched the canonical tree's paths that the merge had touched.
+
+Nothing references the plugin at runtime — the only code reference is a comment in
+`sentientia_catalog/classes/catalog_manager.php` (the `rating`-sort case was removed
+in B6\F-072 until the join is wired). `local_airpay_ratings` remains the canonical,
+installed, production plugin and as of today ships a real `\core_privacy` provider
+(metadata + export + delete; string keys use the table-agnostic `privacy:metadata:ratings:*`
+aliases, so the batch-1 codemod carries them over unchanged when the rename re-lands).
+
+**Decision (2026-08-04 privacy-provider session):** do NOT complete the residue as a
+plugin — completing it would re-apply the rename that the revert explicitly re-gated
+to Nitin. Instead REMOVE the residue from both trees. The full batch-1 work stays
+intact on branch `rename/airpay_ratings-batch1` for the gated rollout (remember: the
+revert must itself be reverted before that branch can re-merge).
+
+**Execution status:** decision recorded; physical `git rm` of the two residue
+directories is delete-gated ([CONFIRM]) and awaits Nitin's go.
+
+**Collision evidence (found during the 2026-08-04 deploy):** local XAMPP still has
+the batch-1 rehearsal's renamed plugin INSTALLED (`local/sentientia_ratings`, its
+table carrying the renamed data), and `local_airpay_ratings` is consequently absent
+from local. The two plugins cannot coexist: both `lib.php` files declare the same
+global function `airpay_display_rating()` (the batch-1 codemod renamed the component
+but not this unprefixed function — a codemod gap to fix before any re-run). Deploying
+canonical `airpay_ratings` alongside it fataled Moodle CLI immediately; the deploy was
+reverted. Consequences: (a) `local_airpay_ratings`'s new privacy provider is
+syntax-checked but cannot be install-verified locally until the residue is uninstalled
+(`admin/cli/uninstall_plugins.php --plugins=local_sentientia_ratings` — destructive to
+the local rehearsal table, so Nitin-gated); (b) add "rename unprefixed lib functions"
+to the batch-1 codemod checklist.

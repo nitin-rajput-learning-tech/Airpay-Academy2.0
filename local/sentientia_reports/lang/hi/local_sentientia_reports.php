@@ -58,3 +58,11 @@ $string['reportstatuschanged']  = 'रिपोर्ट की स्थित�
 
 // Privacy.
 $string['privacy:metadata'] = 'एयरपे रिपोर्ट्स प्लगइन सहेजी गई रिपोर्ट परिभाषाएँ संग्रहीत करता है, लेकिन सीधे यूज़र डेटा निर्यात नहीं करता। उत्पन्न रिपोर्ट्स मौजूदा कोर Sentientia LMS तालिकाओं से यूज़र गतिविधि को एकत्रित कर सकती हैं।';
+
+// Privacy provider (2026-08-04) — real metadata + export; deletion
+// anonymises created_by (report definitions are shared org assets).
+$string['privacy:metadata:reports']              = 'सहेजी गई रिपोर्ट परिभाषाएँ; दर्ज करता है कि प्रत्येक रिपोर्ट किस उपयोगकर्ता ने बनाई';
+$string['privacy:metadata:reports:created_by']   = 'जिस उपयोगकर्ता ने रिपोर्ट बनाई';
+$string['privacy:metadata:reports:name']         = 'रिपोर्ट का नाम';
+$string['privacy:metadata:reports:report_type']  = 'रिपोर्ट का प्रकार';
+$string['privacy:metadata:reports:timecreated']  = 'रिपोर्ट कब बनाई गई';

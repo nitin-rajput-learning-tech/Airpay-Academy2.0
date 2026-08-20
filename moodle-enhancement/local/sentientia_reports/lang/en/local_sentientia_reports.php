@@ -51,3 +51,11 @@ $string['reportstatuschanged'] = 'Report status updated.';
 
 // Privacy.
 $string['privacy:metadata'] = 'The Airpay Reports plugin stores saved report definitions, but does not export user data directly. Generated reports may aggregate user activity from existing core Sentientia LMS tables.';
+
+// Privacy provider (2026-08-04) — real metadata + export; deletion
+// anonymises created_by (report definitions are shared org assets).
+$string['privacy:metadata:reports']              = 'Saved report definitions; records which user authored each report';
+$string['privacy:metadata:reports:created_by']   = 'The user who created the report';
+$string['privacy:metadata:reports:name']         = 'The report name';
+$string['privacy:metadata:reports:report_type']  = 'The type of report';
+$string['privacy:metadata:reports:timecreated']  = 'When the report was created';

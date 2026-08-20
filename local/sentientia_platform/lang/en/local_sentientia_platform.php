@@ -108,3 +108,17 @@ $string['onboarding_step_manager_intro']    = 'Meet your manager';
 $string['onboarding_step_compliance_walkthrough'] = 'Mandatory training';
 $string['onboarding_step_consent_capture']  = 'Privacy choices';
 $string['onboarding_step_finish']           = 'You\'re all set';
+
+// Privacy provider (2026-08-04) — real metadata + export; deletion
+// anonymises the author columns (flag config + audit rows are retained).
+$string['privacy:metadata:feature_flags']               = 'Feature-flag configuration; records which admin last modified each flag';
+$string['privacy:metadata:feature_flags:modified_by']   = 'The admin who last changed the flag';
+$string['privacy:metadata:feature_flags:flag_key']      = 'The flag that was changed';
+$string['privacy:metadata:feature_flags:timemodified']  = 'When the flag was last changed';
+$string['privacy:metadata:flag_audit']                  = 'Audit trail of feature-flag changes; records which admin made each change';
+$string['privacy:metadata:flag_audit:changed_by']       = 'The admin who made the change';
+$string['privacy:metadata:flag_audit:flag_key']         = 'The flag that was changed';
+$string['privacy:metadata:flag_audit:old_value']        = 'The flag value before the change';
+$string['privacy:metadata:flag_audit:new_value']        = 'The flag value after the change';
+$string['privacy:metadata:flag_audit:reason']           = 'The reason recorded for the change';
+$string['privacy:metadata:flag_audit:timecreated']      = 'When the change was made';

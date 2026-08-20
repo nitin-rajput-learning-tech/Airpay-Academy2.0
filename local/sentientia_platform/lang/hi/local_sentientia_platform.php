@@ -102,3 +102,17 @@ $string['onboarding_step_manager_intro']    = 'अपने प्रबंध�
 $string['onboarding_step_compliance_walkthrough'] = 'अनिवार्य प्रशिक्षण';
 $string['onboarding_step_consent_capture']  = 'गोपनीयता विकल्प';
 $string['onboarding_step_finish']           = 'सब तैयार है';
+
+// Privacy provider (2026-08-04) — real metadata + export; deletion
+// anonymises the author columns (flag config + audit rows are retained).
+$string['privacy:metadata:feature_flags']               = 'फ़ीचर-फ़्लैग कॉन्फ़िगरेशन; दर्ज करता है कि प्रत्येक फ़्लैग को अंतिम बार किस व्यवस्थापक ने बदला';
+$string['privacy:metadata:feature_flags:modified_by']   = 'जिस व्यवस्थापक ने फ़्लैग अंतिम बार बदला';
+$string['privacy:metadata:feature_flags:flag_key']      = 'जो फ़्लैग बदला गया';
+$string['privacy:metadata:feature_flags:timemodified']  = 'फ़्लैग अंतिम बार कब बदला गया';
+$string['privacy:metadata:flag_audit']                  = 'फ़ीचर-फ़्लैग परिवर्तनों का ऑडिट ट्रेल; दर्ज करता है कि प्रत्येक परिवर्तन किस व्यवस्थापक ने किया';
+$string['privacy:metadata:flag_audit:changed_by']       = 'जिस व्यवस्थापक ने परिवर्तन किया';
+$string['privacy:metadata:flag_audit:flag_key']         = 'जो फ़्लैग बदला गया';
+$string['privacy:metadata:flag_audit:old_value']        = 'परिवर्तन से पहले फ़्लैग का मान';
+$string['privacy:metadata:flag_audit:new_value']        = 'परिवर्तन के बाद फ़्लैग का मान';
+$string['privacy:metadata:flag_audit:reason']           = 'परिवर्तन के लिए दर्ज कारण';
+$string['privacy:metadata:flag_audit:timecreated']      = 'परिवर्तन कब किया गया';

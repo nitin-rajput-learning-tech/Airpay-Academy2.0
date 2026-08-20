@@ -5,7 +5,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['pluginname'] = 'Sentientia Core';
-$string['privacy:metadata'] = 'The Sentientia Core plugin stores no personal data. It provides a tenant-identity abstraction over existing user fields and a tenant registry (customer + tenant configuration: names, root ids, status), none of which is personal user data.';
+$string['privacy:metadata'] = 'The Sentientia Core plugin stores org-unit membership rows (user, unit, role, direct manager) in local_sentientia_org_member. The tenant registry itself (customer + tenant configuration: names, root ids, status) carries no personal data.';
 
 // Tenant identity settings.
 $string['settings_tenant_identity'] = 'Tenant identity';
@@ -78,3 +78,11 @@ $string['field_idnumber_help'] = 'An optional external key (for example an HRMS 
 $string['err_shortname_taken'] = 'That short name is already used by another customer.';
 $string['err_rootid_positive'] = 'The tenant root id must be a positive integer.';
 $string['err_rootid_taken'] = 'That tenant root id is already registered.';
+
+// Privacy provider (2026-08-04) — real metadata + export + delete.
+$string['privacy:metadata:org_member']             = 'A user\'s org-unit membership: unit, role and direct manager';
+$string['privacy:metadata:org_member:userid']      = 'The member';
+$string['privacy:metadata:org_member:unitid']      = 'The org unit the user belongs to';
+$string['privacy:metadata:org_member:role']        = 'The user\'s role inside the unit';
+$string['privacy:metadata:org_member:managerid']   = 'The user\'s direct manager';
+$string['privacy:metadata:org_member:timecreated'] = 'When the membership was recorded';

@@ -50,3 +50,22 @@ $string['level_achiever'] = 'Achiever';
 $string['level_expert'] = 'Expert';
 $string['level_master'] = 'Master';
 $string['pointstonext'] = '{$a} points to next level';
+
+// Privacy provider (2026-08-04) — real metadata + export + delete.
+$string['privacy:metadata:points_log']              = 'Log of points awarded to a user per action';
+$string['privacy:metadata:points_log:userid']       = 'The user the points were awarded to';
+$string['privacy:metadata:points_log:action']       = 'The action that earned the points';
+$string['privacy:metadata:points_log:points']       = 'How many points were awarded';
+$string['privacy:metadata:points_log:courseid']     = 'The course the action happened in, if any';
+$string['privacy:metadata:points_log:description']  = 'A short description of the award';
+$string['privacy:metadata:points_log:timecreated']  = 'When the points were awarded';
+$string['privacy:metadata:user_badges']             = 'Badges a user has earned';
+$string['privacy:metadata:user_badges:userid']      = 'The user who earned the badge';
+$string['privacy:metadata:user_badges:badgeid']     = 'The badge that was earned';
+$string['privacy:metadata:user_badges:timeearned']  = 'When the badge was earned';
+$string['privacy:metadata:streaks']                 = 'The user\'s login-streak counters';
+$string['privacy:metadata:streaks:userid']          = 'The user the streak belongs to';
+$string['privacy:metadata:streaks:current_streak']  = 'The current consecutive-day login streak';
+$string['privacy:metadata:streaks:longest_streak']  = 'The longest streak the user has achieved';
+$string['privacy:metadata:streaks:last_login_date'] = 'The date of the user\'s last counted login';
+$string['privacy:metadata:streaks:total_points']    = 'The user\'s lifetime points total';

@@ -133,3 +133,21 @@ $string['install_cta_dismiss']      = 'Not now';
 $string['install_cta_dismiss_aria'] = 'Dismiss the install prompt';
 $string['install_cta_aria_label']   = 'Install Sentientia LMS app';
 $string['install_cta_gotit']        = 'Got it';
+
+// ── Privacy provider 2026-08-04 — real metadata + export + delete ──
+$string['privacy:metadata:push_subs']                = 'Web-push subscriptions registered by the user\'s browsers';
+$string['privacy:metadata:push_subs:userid']         = 'The user the subscription belongs to';
+$string['privacy:metadata:push_subs:endpoint']       = 'The push-service endpoint URL for the user\'s browser';
+$string['privacy:metadata:push_subs:p256dh']         = 'The browser-generated public encryption key for this subscription';
+$string['privacy:metadata:push_subs:auth_secret']    = 'The browser-generated authentication secret for this subscription';
+$string['privacy:metadata:push_subs:user_agent']     = 'The browser user agent that registered the subscription';
+$string['privacy:metadata:push_subs:last_seen']      = 'When the subscription last checked in';
+$string['privacy:metadata:push_subs:timecreated']    = 'When the subscription was registered';
+$string['privacy:metadata:push_log']                 = 'Log of push notifications sent to the user';
+$string['privacy:metadata:push_log:userid']          = 'The user the notification was sent to';
+$string['privacy:metadata:push_log:endpoint_host']   = 'The push-service host the notification was delivered through';
+$string['privacy:metadata:push_log:title']           = 'The notification title';
+$string['privacy:metadata:push_log:body_truncated']  = 'A truncated excerpt of the notification body';
+$string['privacy:metadata:push_log:url']             = 'The link the notification pointed to';
+$string['privacy:metadata:push_log:result']          = 'Whether delivery succeeded or failed';
+$string['privacy:metadata:push_log:sent_at']         = 'When the notification was sent';

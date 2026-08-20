@@ -133,3 +133,21 @@ $string['install_cta_dismiss']      = 'अभी नहीं';
 $string['install_cta_dismiss_aria'] = 'इंस्टॉल प्रॉम्प्ट खारिज करें';
 $string['install_cta_aria_label']   = 'Sentientia LMS ऐप इंस्टॉल करें';
 $string['install_cta_gotit']        = 'समझ गया';
+
+// ── Privacy provider 2026-08-04 — real metadata + export + delete ──
+$string['privacy:metadata:push_subs']                = 'उपयोगकर्ता के ब्राउज़र द्वारा पंजीकृत वेब-पुश सब्सक्रिप्शन';
+$string['privacy:metadata:push_subs:userid']         = 'जिस उपयोगकर्ता का सब्सक्रिप्शन है';
+$string['privacy:metadata:push_subs:endpoint']       = 'उपयोगकर्ता के ब्राउज़र के लिए पुश-सेवा एंडपॉइंट URL';
+$string['privacy:metadata:push_subs:p256dh']         = 'इस सब्सक्रिप्शन के लिए ब्राउज़र-जनित सार्वजनिक एन्क्रिप्शन कुंजी';
+$string['privacy:metadata:push_subs:auth_secret']    = 'इस सब्सक्रिप्शन के लिए ब्राउज़र-जनित प्रमाणीकरण सीक्रेट';
+$string['privacy:metadata:push_subs:user_agent']     = 'सब्सक्रिप्शन पंजीकृत करने वाला ब्राउज़र यूज़र एजेंट';
+$string['privacy:metadata:push_subs:last_seen']      = 'सब्सक्रिप्शन ने अंतिम बार कब चेक-इन किया';
+$string['privacy:metadata:push_subs:timecreated']    = 'सब्सक्रिप्शन कब पंजीकृत किया गया';
+$string['privacy:metadata:push_log']                 = 'उपयोगकर्ता को भेजी गई पुश सूचनाओं का लॉग';
+$string['privacy:metadata:push_log:userid']          = 'जिस उपयोगकर्ता को सूचना भेजी गई';
+$string['privacy:metadata:push_log:endpoint_host']   = 'जिस पुश-सेवा होस्ट से सूचना पहुँचाई गई';
+$string['privacy:metadata:push_log:title']           = 'सूचना का शीर्षक';
+$string['privacy:metadata:push_log:body_truncated']  = 'सूचना के मुख्य भाग का संक्षिप्त अंश';
+$string['privacy:metadata:push_log:url']             = 'सूचना जिस लिंक की ओर इशारा करती थी';
+$string['privacy:metadata:push_log:result']          = 'डिलीवरी सफल हुई या विफल';
+$string['privacy:metadata:push_log:sent_at']         = 'सूचना कब भेजी गई';
