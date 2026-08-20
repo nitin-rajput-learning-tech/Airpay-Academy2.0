@@ -1,6 +1,6 @@
 # ADR-024 - Absorb & de-brand the purchased BizLMS suite into Sentientia
 
-- **Status:** Proposed (2026-06-04)
+- **Status:** Proposed (2026-06-04) — **substantially EXECUTED as of 2026-08** (bootstrap_substrate.php clean-install path shipped; INSTALL-SENTIENTIA.md validated; de-brand waves landed via ADR-025 + 2026-06-10 P2 sweep; status corrected 2026-08-20 after the 2026-08-04 maturity audit flagged the stale 'Proposed')
 - **Owner:** Nitin Rajput
 - **Relates to:** ADR-018 (independence roadmap), ADR-020 (org model),
   ADR-021 (tenant registry)

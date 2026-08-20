@@ -2,8 +2,26 @@
 
 **Index & navigation guide for decision-makers, compliance officers, security teams**
 
-**Date:** 2026-06-16  
+**Date:** 2026-06-16 · **Milestones re-baselined 2026-08-20** (see banner below)  
 **Status:** Complete enterprise-trust package, decision-ready for RFP preparation  
+
+> **⚠ Milestone re-baseline (2026-08-20).** The original 2026-06-30 / Q3 dates
+> lapsed without execution while funding was undecided. The full trust-track
+> envelope (₹80–120L) was **approved in principle on 2026-08-04** (signed
+> decision memo Q3=b, ADR-028 §0) — exact figure pending. Re-baselined plan,
+> anchored on the now-provisioned UAT environment (Cloud.in HS-20260819-79876):
+>
+> | New target | Deliverable | Depends on |
+> |---|---|---|
+> | 2026-09-15 | Incident-response plan finalised + 2 named ISO gaps closed (key mgmt, backup procedures — one evidenced restore test) | internal effort only |
+> | 2026-09-30 | VAPT vendor selected (CERT-In empanelled) + scope signed; UAT in scope | exact Q3 funding figure from Nitin |
+> | 2026-10-31 | VAPT baseline executed on UAT + criticals remediated + re-test letter | vendor engagement |
+> | 2026-11-30 | Tier-1 load test (25k) on UAT-class infra + scale evidence doc | instance resize |
+> | 2027-Q1 | ISO 27001 Stage 1 engagement | gap-closure evidence above |
+>
+> Owner for every date: Nitin (funding + vendor sign-off) / engineering (evidence).
+> Downstream dates in the body of this document and the four sub-documents are
+> superseded by this table until each doc's next revision.
 **Owner:** Nitin Rajput (Product Owner)  
 **Audience:** C-suite (CFO, CISO), enterprise buyers, regulatory stakeholders, internal engineering
 

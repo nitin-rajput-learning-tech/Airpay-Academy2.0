@@ -38,12 +38,12 @@ Mission: Build Sentientia LMS, with Airpay Academy as customer-zero.
 |------------|-------------|--------|
 | **0 — Sentientia LMS Foundation** | Fork + branding + design system + multi-customer architecture | **ACTIVE (Day 0, 2026-05-20)** |
 | A — Plugin Suite | 30 `local_airpay_*` plugins (now `local_sentientia_*` over time) | Active, refactoring toward product |
-| B — SENTIENTIA Content Pipeline | SOP → SCORM automation — becomes a SELLABLE FEATURE of the product, not a sibling workstream | Planned |
+| B — SENTIENTIA Content Pipeline | SOP → SCORM automation — becomes a SELLABLE FEATURE of the product, not a sibling workstream | Built (6-agent CLI, mock-default; validated on 1 SOP; productization pending) |
 | C — Knowledge Automation | Microsoft 365 integration — becomes a sellable feature | Planned |
-| D — Mobile (PWA + native wrapper) | Phase X.1/X.2 WS surface, PWA, Cordova/Capacitor wrappers | Planned |
-| E — Live engagement (Mentimeter clone) | `local_sentientia_live` plugin — real-time polls, quizzes, Q&A | Planned |
+| D — Mobile (PWA + native wrapper) | Phase X.1/X.2 WS surface, PWA, Cordova/Capacitor wrappers | PWA alpha shipped (flag OFF); native Capacitor FUNDED per signed memo Q5 (2026-08-04), scaffold only |
+| E — Live engagement (Mentimeter clone) | `local_sentientia_live` plugin — real-time polls, quizzes, Q&A | Built (alpha, SSE, 6 question types verified; flag `live.enabled` OFF) |
 | F — WhatsApp deepening | `local_airpay_whatsapp` extended for course-content notifications | Planned |
-| G — AI features | Course recommendations, quiz generation, content translation | Planned (requires Anthropic API key) |
+| G — AI features | Course recommendations, quiz generation, content translation | Built mock-mode behind `local_sentientia_ai` gateway (all 6 consumers routed; live blocked on Addendum-A cap + ANTHROPIC_API_KEY) |
 
 ---
 ## 2. ENVIRONMENT
