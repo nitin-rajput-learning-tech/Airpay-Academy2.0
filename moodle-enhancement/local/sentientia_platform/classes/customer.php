@@ -64,7 +64,26 @@ class customer {
      * global default.
      */
     public static function current(): int {
-        // Phase 0/1: every user is in Airpay. No mapping table to consult.
+        // Phase 2.1 de-hardwire (ADR-028, 2026-08-20): when the tenant
+        // REGISTRY is live (the same single switch that governs tenant
+        // validation — local_sentientia_core/tenant_registry_legacy OFF),
+        // the customer is resolved from the caller's tenant root via
+        // tenant_registry::customer_of(). While the registry is dormant —
+        // the default, and every production deployment today — behaviour
+        // is byte-identical to Phase 0: AIRPAY. Site admins and callers
+        // without a tenant scope (current_tenant() null) also stay AIRPAY,
+        // matching the Switchboard convention documented above.
+        if (class_exists('\\local_sentientia_core\\tenant_registry')
+                && !\local_sentientia_core\tenant_registry::use_legacy_registry()) {
+            $tenant = self::current_tenant();
+            if ($tenant !== null) {
+                $customerid = \local_sentientia_core\tenant_registry::customer_of($tenant);
+                if ($customerid > 0) {
+                    return $customerid;
+                }
+            }
+        }
+        // Phase 0/1 / registry-dormant / unscoped callers: customer-zero.
         return self::AIRPAY;
     }
 

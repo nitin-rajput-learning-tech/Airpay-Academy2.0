@@ -168,3 +168,19 @@ substrate::ensure_all() so install/upgrade auto-creates the substrate (idempoten
 no-op where present). bootstrap_substrate.php CLI refactored onto the class.
 version 2026060105 -> 2026060400 / 0.7.0-alpha. Core-mod recorded in
 docs/core-mods/2026-06-04-open-substrate-ownership.md.
+
+## 2026-08-20 — ADR-021 Gate B executed locally (Customer-N demonstrated)
+
+Registry seeded via `cli/seed_tenants.php` (customer `airpay` id 1 + tenants
+1/77/177; `parity_check_tenants.php` = 100% parity), then
+`tenant_registry_legacy` flipped OFF (LOCAL ONLY — production stays legacy).
+Second customer registered per DEMO-TENANT-PLAN §3: `[DEMO] Meridian Financial
+Services` (id 2) owning tenant root 500 ("Meridian HQ"). Companion change in
+`local_sentientia_platform` 2026082000: `customer::current()` de-hardwired —
+resolves via `tenant_registry::customer_of()` when the registry is live,
+Phase-0-identical (AIRPAY) while dormant. Verified end-to-end incl.
+per-customer feature-flag resolution (ADR-002 customer layer exercised for the
+first time: same flag true for Airpay, false for Meridian). New
+`customer_resolution_test.php` in the platform plugin (4 tests: dormant
+identity, live resolution, unscoped fallback, suspended-tenant fallback).
+Evidence: docs/visual-evidence/2026-08-20/.
