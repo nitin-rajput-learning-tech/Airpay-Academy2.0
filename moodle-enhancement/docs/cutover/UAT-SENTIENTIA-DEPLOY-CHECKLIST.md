@@ -25,9 +25,18 @@ by Jitesh Divekar after Matt/Priyanka sign-off). This checklist binds the generi
       `sentientia-uat.airpay.academy`, CNAME → the LB), issue the TLS cert via ACM
       on the LB. NOTE: `$CFG->wwwroot` is baked into a Moodle install — **fix the
       domain BEFORE the install step**, or plan a wwwroot change + purge.
-- [ ] **SSH user list** — Cloud.in cannot read Uat-LMS-Private's users (SSM agent
-      disabled on the Academy account). Send the named list (suggested: ganesh.satpute,
-      nitin.rajput, one break-glass devops account; key-based only, via Jump).
+- [x] **SSH user list** — DONE 2026-08-20: `nitin.rajput` created on UAT-Jump
+      (.pem + TOTP 2FA) and on UAT-Sentientia-LMS. ⚠ Deviations to raise with
+      Cloud.in: (a) the LMS-server account was issued a PASSWORD (we asked
+      key-based only) — change on first login, request key-based; (b) all
+      credentials incl. the DB superuser password arrived in PLAINTEXT EMAIL
+      despite the secure-channel request — rotate the DB password and the LMS
+      password after first login. Ganesh's account status: confirm with him.
+- [x] **DB credentials** — received 2026-08-20 (superuser `db_user` on
+      lms-sentientia-uat-db). ⚠ Plaintext-email delivery → rotate at first
+      connect; before Stage B create an app-scoped user (no SUPER) for the
+      Moodle config.php and keep superuser for admin tasks only. Credentials
+      live in Nitin's vault — NEVER in this repo or on the ticket.
 
 ## 1. Sizing caveats to acknowledge (UAT-smoke OK; rehearsal may need resize)
 
