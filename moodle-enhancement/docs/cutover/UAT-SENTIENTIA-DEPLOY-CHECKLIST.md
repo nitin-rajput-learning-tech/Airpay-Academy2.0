@@ -20,11 +20,17 @@ by Jitesh Divekar after Matt/Priyanka sign-off). This checklist binds the generi
 
 ## 0. Blockers Cloud.in is waiting on US for
 
-- [ ] **LB domain** — `lms-uat-academy` LB can't be configured without a hostname.
-      Decide + create DNS (suggestion: `uat.airpay.academy` or
-      `sentientia-uat.airpay.academy`, CNAME → the LB), issue the TLS cert via ACM
-      on the LB. NOTE: `$CFG->wwwroot` is baked into a Moodle install — **fix the
-      domain BEFORE the install step**, or plan a wwwroot change + purge.
+- [x] **LB domain** — DONE 2026-08-26: **`academy2.airpay.ninja`** → CNAME
+      `lms-uat-academy-763009784.ap-south-1.elb.amazonaws.com` (internet-facing,
+      2 public IPs). Verified from outside: HTTP→HTTPS 301 at the LB, HTTPS 200
+      (Apache 2.4.58 Ubuntu default page — Moodle not yet installed), valid ACM
+      cert `*.airpay.ninja` (Amazon RSA 2048 M04, expires 2026-12-13).
+      **`$CFG->wwwroot = https://academy2.airpay.ninja`** — set at install time
+      (wwwroot is baked into a Moodle install).
+      ⚠ **Public exposure:** the LB answered from the open internet (no IP
+      allowlist observed). Fine for Stage A (fresh install, no real data);
+      **before Stage B restores the live backup (real employee PII), request an
+      office-IP allowlist on the LB security group** or equivalent restriction.
 - [x] **SSH user list** — DONE 2026-08-20: `nitin.rajput` created on UAT-Jump
       (.pem + TOTP 2FA) and on UAT-Sentientia-LMS. ⚠ Deviations to raise with
       Cloud.in: (a) the LMS-server account was issued a PASSWORD (we asked
@@ -56,6 +62,8 @@ by Jitesh Divekar after Matt/Priyanka sign-off). This checklist binds the generi
 ## 2. Server preparation (DevOps, per guidebook §Server requirements)
 
 - [ ] Web server (Apache or Nginx+FPM) with docroot → `/var/www/sentientia/moodle5.2/public`
+      (Apache 2.4.58 confirmed live 2026-08-26 behind the LB, still serving the
+      Ubuntu default page — docroot switch pending)
 - [ ] PHP 8.3 extensions: `intl mbstring curl zip gd xml soap mysqli opcache sodium exif`
       + `max_input_vars = 5000`, `memory_limit ≥ 512M`, `post_max_size`/`upload_max_filesize ≥ 100M`
 - [ ] OPcache ON (Linux is unaffected by the Windows-local instability note)
@@ -73,7 +81,7 @@ Follow guidebook §Deploy 1–11 with these bindings:
 2. `moodledata` at `/var/sentientiadata` (outside docroot, `www-data`, 0770)
 3. `cp public/config-dist.php ../config.php` → set
    `dbhost = lms-sentientia-uat-db.crpst4qn6rtu.ap-south-1.rds.amazonaws.com`,
-   dbname/dbuser/dbpass from Cloud.in, `wwwroot = https://<the UAT domain>`,
+   dbname/dbuser/dbpass from Cloud.in, `wwwroot = https://academy2.airpay.ninja`,
    `dataroot = /var/sentientiadata`
 4. `php admin/cli/install_database.php` (fresh install) — **this is the first-ever
    5.2 runtime validation**; capture any errors verbatim
@@ -108,7 +116,7 @@ rehearsal that must pass before any live cutover conversation.
 
 ## 6. Recorded asks back to DevOps/Cloud.in (copy into the ticket)
 
-1. Domain + cert for `lms-uat-academy` LB (blocker, ours to provide)
+1. ~~Domain + cert for `lms-uat-academy` LB~~ DONE 2026-08-26 (`academy2.airpay.ninja`, ACM cert live)
 2. SSH user list (ours to provide)
 3. Confirm db.t3.small RAM expectation (2 GB actual vs "4 GB" in ticket)
 4. DB credentials via secure channel

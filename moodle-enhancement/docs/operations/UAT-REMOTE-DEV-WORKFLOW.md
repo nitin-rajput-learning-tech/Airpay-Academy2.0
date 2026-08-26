@@ -42,7 +42,8 @@ This single session forwards, for as long as it stays open:
 ssh uat-lms "hostname && php -v"                                  # remote commands
 scp -P 2222 file.php nitin.rajput@localhost:/tmp/                 # file transfer
 C:\xampp\mysql\bin\mysql.exe -h 127.0.0.1 -P 3307 -u <appuser> -p # RDS queries
-curl.exe -s -H "Host: uat.airpay.academy" http://localhost:8081/login/index.php
+curl.exe -s https://academy2.airpay.ninja/login/index.php   # LB is public - direct works
+curl.exe -s -H "Host: academy2.airpay.ninja" http://localhost:8081/login/index.php  # tunnel fallback
 ```
 
 The host aliases live in `~/.ssh/config` (`uat-tunnel`, `uat-lms`); the only edit
@@ -95,7 +96,7 @@ like local rules.
 | Claude edits in `D:\Claude Local\airpay-ld-os` | identical — the repo stays the single source of truth |
 | `Copy-Item` → `C:\xampp\htdocs\moodle5\public\...` | `tools/uat/deploy-to-uat.ps1 <path-in-repo>` (scp the changed files to `/var/www/sentientia/moodle5.2/public/...`) |
 | `php admin\cli\purge_caches.php` | `tools/uat/uat-purge.ps1` (`ssh uat-lms "php …/admin/cli/purge_caches.php"`) |
-| Ctrl+Shift+R on `localhost:8080` | browser on `https://uat.airpay.academy` (once the LB/DNS exist — see §6.3), or `curl` via port 8081 for Claude's own verification |
+| Ctrl+Shift+R on `localhost:8080` | browser on **`https://academy2.airpay.ninja`** (LIVE 2026-08-26 — LB is internet-facing, valid ACM cert; Claude's in-app browser can open it too), or `curl` for Claude's own verification |
 | mysql on localhost | mysql via `127.0.0.1:3307` |
 
 Helper scripts live in `tools/uat/` (this repo). Claude uses them like it uses the
@@ -133,11 +134,13 @@ Revisit only if the tunnel loop proves too slow in practice.
 2. **sudo for `nitin.rajput` on UAT-Sentientia-LMS** (or confirmation that server
    prep + service restarts stay with Ganesh) — decides how much of Stage A we can
    drive ourselves.
-3. **LB exposure decision:** internet-facing with an office-IP allowlist
-   (recommended — enables real-browser testing of `https://uat.airpay.academy`
-   from our machines, including Claude's in-app browser) **or** internal-only
-   (browser testing then needs the tunnel + Host-header tricks; workable for curl,
-   painful for humans; note we have no local admin to edit the Windows hosts file).
+3. ~~LB exposure decision~~ **ANSWERED 2026-08-26:** the LB is internet-facing at
+   `https://academy2.airpay.ninja` (CNAME → `lms-uat-academy-763009784…elb…`,
+   valid ACM `*.airpay.ninja` cert, HTTP→HTTPS 301). Real-browser testing works
+   from our desks with zero tunnel setup. **New ask instead:** an office-IP
+   allowlist on the LB security group **before Stage B** puts real employee PII
+   (the live-backup restore) on this box — open-internet is acceptable only while
+   the data is a fresh install.
 4. **Outbound internet from the LMS box?** (github.com for git pulls, later
    Anthropic/Ollama pulls). If none, everything travels by scp — fine, just slower
    for the 154 MB package.
