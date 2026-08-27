@@ -4,3 +4,4 @@ lib/dml/oci_native_moodle_package.sql text eol=lf
 **.js.map -diff
 **-min.js -diff
 **.min.js -diff
+tools/uat/*.sh text eol=lf
