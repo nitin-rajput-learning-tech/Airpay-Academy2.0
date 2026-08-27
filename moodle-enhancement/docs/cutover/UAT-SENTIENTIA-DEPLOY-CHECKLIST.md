@@ -11,6 +11,7 @@ by Jitesh Divekar after Matt/Priyanka sign-off). This checklist binds the generi
 |---|---|
 | EC2 | `UAT-Sentientia-LMS` (`i-0d265daacb7cc8836`), VPC `vpc-0cdee62bc0e83b2d7` (academy-UAT) |
 | Private IP | `10.0.135.185` (no public IP; access via Jump `i-08c35003a50876511` UAT-Jump) |
+| Jump public IP | `35.154.8.154` (received 2026-08-27). ⚠ ssh:22 + :2222 + ping all FILTERED from our egress `117.253.226.211` — SG source-IP allowlist suspected. ASK: add our egress IP to the UAT-Jump SG (port 22) + confirm the SSH port. Local `~/.ssh/config` (`uat-jump`/`uat-tunnel`) already points at this IP. |
 | SG | `sg-09f4c248ad84d603f` (UAT-Sentientia-LMS_SG) |
 | Instance | t3a.small (2 vCPU / 2 GB RAM), Ubuntu 24.04 LTS, 40 GB encrypted disk, IST |
 | PHP | 8.3.6 ✅ (meets the Moodle 5.2 hard gate) |
@@ -61,9 +62,15 @@ by Jitesh Divekar after Matt/Priyanka sign-off). This checklist binds the generi
 
 ## 2. Server preparation (DevOps, per guidebook §Server requirements)
 
-- [ ] Web server (Apache or Nginx+FPM) with docroot → `/var/www/sentientia/moodle5.2/public`
-      (Apache 2.4.58 confirmed live 2026-08-26 behind the LB, still serving the
-      Ubuntu default page — docroot switch pending)
+- [x] Web server (Apache or Nginx+FPM) with docroot → `/var/www/sentientia/moodle5.2/public`
+      — DONE by 2026-08-27: package extracted + docroot switched (the Moodle
+      install wizard renders at `https://academy2.airpay.ninja/install.php`).
+      ⚠ **SECURITY — open installer:** an unauthenticated install wizard is
+      internet-reachable. Do NOT complete it via the web wizard. Close the window
+      fast: run the CLI install (§3 below — creating `config.php` disables the
+      wizard), or interim-protect with an Apache `Require ip` / LB rule until the
+      install runs. If EC2 has outbound egress, an attacker completing the wizard
+      against their own DB = site takeover.
 - [ ] PHP 8.3 extensions: `intl mbstring curl zip gd xml soap mysqli opcache sodium exif`
       + `max_input_vars = 5000`, `memory_limit ≥ 512M`, `post_max_size`/`upload_max_filesize ≥ 100M`
 - [ ] OPcache ON (Linux is unaffected by the Windows-local instability note)
