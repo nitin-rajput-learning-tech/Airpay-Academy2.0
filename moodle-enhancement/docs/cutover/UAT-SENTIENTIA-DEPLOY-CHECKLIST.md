@@ -11,7 +11,7 @@ by Jitesh Divekar after Matt/Priyanka sign-off). This checklist binds the generi
 |---|---|
 | EC2 | `UAT-Sentientia-LMS` (`i-0d265daacb7cc8836`), VPC `vpc-0cdee62bc0e83b2d7` (academy-UAT) |
 | Private IP | `10.0.135.185` (no public IP; access via Jump `i-08c35003a50876511` UAT-Jump) |
-| Jump public IP | `35.154.8.154` (received 2026-08-27). ⚠ ssh:22 + :2222 + ping all FILTERED from `117.253.226.211` — **Nitin's WFH/home ISP IP, likely dynamic** — SG source-IP allowlist suspected. ASK: allowlist BOTH the office egress IP/range (get from IT) AND Nitin's current home IP (re-add if it rotates; check `curl api.ipify.org` each session); long-term = office VPN so egress is stable. Confirm the SSH port. Local `~/.ssh/config` (`uat-jump`/`uat-tunnel`) already points at this IP. |
+| Jump public IP | `35.154.8.154` (received 2026-08-27). ⚠ ssh 22/443/2222/8022 all FILTERED — from home IP `117.253.226.211` AND from the corporate-VPN egress `114.143.225.62` (VPN tested 2026-08-28: client routes 10.0.135.185 into the tunnel but the office network has NO route into the AWS UAT VPC — private IPs dead; Matt approved VPN 08-27). **FASTEST FIX: allowlist the stable VPN/office egress `114.143.225.62` on the UAT-Jump SG, port 22** — then the jump+tunnel workflow works as designed. Local `~/.ssh/config` (`uat-jump`/`uat-tunnel`) ready. |
 | SG | `sg-09f4c248ad84d603f` (UAT-Sentientia-LMS_SG) |
 | Instance | t3a.small (2 vCPU / 2 GB RAM), Ubuntu 24.04 LTS, 40 GB encrypted disk, IST |
 | PHP | 8.3.6 ✅ (meets the Moodle 5.2 hard gate) |
