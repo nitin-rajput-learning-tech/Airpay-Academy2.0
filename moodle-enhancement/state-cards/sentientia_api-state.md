@@ -53,6 +53,8 @@
 - **Tests:** `tests/scim_groups_test.php` — 5 cases (tenant-scoped list/get with members, read-only
   501s + ResourceTypes, PATCH add/remove moves + attestation + cross-tenant 400, full user lifecycle
   attestation sequence `created→updated→deactivated→reactivated→deactivated` + CSV shape, prune).
+- **Final verification (2026-09-02):** full `local_sentientia_api_testsuite` on a fresh phpunit DB =
+  **60/60 OK, 198 assertions** (8 skips = pre-existing LTI harness skips; deprecations = @covers metadata).
 
 ## ADR-030 Wave B — SCIM 2.0 Users (2026-08-29, version 2026082900 / 1.2.0)
 
