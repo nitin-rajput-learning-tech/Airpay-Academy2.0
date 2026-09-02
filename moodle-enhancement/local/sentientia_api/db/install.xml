@@ -100,5 +100,58 @@
       </INDEXES>
     </TABLE>
 
+    <TABLE NAME="local_sentientia_api_whsub"
+           COMMENT="Outbound webhook subscriptions (ADR-030 Wave A). One HMAC secret per subscription; tenant-scoped (costcenterid 0 = all tenants of the customer).">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int"  LENGTH="10"   NOTNULL="true" SEQUENCE="true" COMMENT="Primary key"/>
+        <FIELD NAME="customerid"   TYPE="int"  LENGTH="10"   NOTNULL="true" DEFAULT="0" COMMENT="Sentientia customer (ADR-021); 0 = default customer"/>
+        <FIELD NAME="costcenterid" TYPE="int"  LENGTH="10"   NOTNULL="true" DEFAULT="0" COMMENT="Tenant root the subscription listens to; 0 = every tenant"/>
+        <FIELD NAME="name"         TYPE="char" LENGTH="255"  NOTNULL="true" DEFAULT="" COMMENT="Human label"/>
+        <FIELD NAME="url"          TYPE="char" LENGTH="1333" NOTNULL="true" DEFAULT="" COMMENT="https endpoint that receives POSTed events"/>
+        <FIELD NAME="secret"       TYPE="char" LENGTH="128"  NOTNULL="true" DEFAULT="" COMMENT="Per-subscription HMAC-SHA256 signing secret (needed in clear to sign; never logged)"/>
+        <FIELD NAME="events"       TYPE="char" LENGTH="255"  NOTNULL="true" DEFAULT="" COMMENT="Comma-separated subscribed event keys, e.g. course.completed,enrolment.created"/>
+        <FIELD NAME="enabled"      TYPE="int"  LENGTH="1"    NOTNULL="true" DEFAULT="1" COMMENT="0=paused, 1=active"/>
+        <FIELD NAME="lastsuccess"  TYPE="int"  LENGTH="10"   NOTNULL="true" DEFAULT="0" COMMENT="Unix time of last 2xx delivery"/>
+        <FIELD NAME="lastfailure"  TYPE="int"  LENGTH="10"   NOTNULL="true" DEFAULT="0" COMMENT="Unix time of last failed attempt"/>
+        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10"   NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int"  LENGTH="10"   NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_costcenter" UNIQUE="false" FIELDS="costcenterid"/>
+        <INDEX NAME="idx_enabled"    UNIQUE="false" FIELDS="enabled"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_api_whdel"
+           COMMENT="Outbound webhook delivery queue + audit (ADR-030 Wave A). Retried with exponential backoff; dead-lettered after the attempt cap.">
+      <FIELDS>
+        <FIELD NAME="id"          TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true" COMMENT="Primary key"/>
+        <FIELD NAME="subid"       TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0" COMMENT="FK to local_sentientia_api_whsub.id"/>
+        <FIELD NAME="userid"      TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0" COMMENT="Affected user (for privacy export/delete); 0 if none"/>
+        <FIELD NAME="eventkey"    TYPE="char" LENGTH="64"  NOTNULL="true" DEFAULT="" COMMENT="Event key, e.g. course.completed"/>
+        <FIELD NAME="payload"     TYPE="text" NOTNULL="false" COMMENT="JSON body as sent (minimal: ids + timestamps, no names/emails)"/>
+        <FIELD NAME="status"      TYPE="char" LENGTH="12"  NOTNULL="true" DEFAULT="queued" COMMENT="queued|sent|failed|dead"/>
+        <FIELD NAME="attempts"    TYPE="int"  LENGTH="4"   NOTNULL="true" DEFAULT="0" COMMENT="Delivery attempts made so far"/>
+        <FIELD NAME="nextattempt" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0" COMMENT="Unix time the drain task may next try this row"/>
+        <FIELD NAME="httpstatus"  TYPE="int"  LENGTH="4"   NOTNULL="true" DEFAULT="0" COMMENT="Last HTTP status received (0 = transport error)"/>
+        <FIELD NAME="lasterror"   TYPE="char" LENGTH="255" NOTNULL="false" COMMENT="Last failure summary (no payload echo)"/>
+        <FIELD NAME="timecreated" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timeupdated" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_sub"  TYPE="foreign" FIELDS="subid" REFTABLE="local_sentientia_api_whsub" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_status_next" UNIQUE="false" FIELDS="status, nextattempt"
+               COMMENT="Drain task: WHERE status IN (queued,failed) AND nextattempt at or before now"/>
+        <INDEX NAME="idx_sub_time"    UNIQUE="false" FIELDS="subid, timecreated"/>
+        <INDEX NAME="idx_userid"      UNIQUE="false" FIELDS="userid"/>
+      </INDEXES>
+    </TABLE>
+
   </TABLES>
 </XMLDB>

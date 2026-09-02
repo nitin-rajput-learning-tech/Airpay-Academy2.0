@@ -46,5 +46,16 @@ $flags = [
                           Default OFF — write endpoints are the highest-risk
                           surface and follow the CLAUDE.md [CONFIRM] discipline.',
     ],
+    'sentientia.api.webhooks.enabled' => [
+        'default'     => false,
+        'description' => 'Sub-switch for OUTBOUND webhooks (ADR-030 Wave A): course
+                          completion, enrolment and certificate events are queued and
+                          POSTed to customer-registered https endpoints with an
+                          HMAC-SHA256 signature and exponential-backoff retry.
+                          Requires sentientia.api.enabled as well. When OFF the
+                          observers are complete no-ops (nothing is queued). Default
+                          OFF — outbound calls to customer infrastructure must be an
+                          explicit per-customer decision.',
+    ],
 
 ];

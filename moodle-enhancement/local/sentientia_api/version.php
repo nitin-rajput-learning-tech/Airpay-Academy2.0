@@ -23,10 +23,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_api';
-$plugin->version   = 2026061600;  // YYYYMMDDNN
+$plugin->version   = 2026082800;  // YYYYMMDDNN — ADR-030 Wave A: outbound webhooks
 $plugin->requires  = 2024100700;  // Moodle 4.5+
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.0.0';
+$plugin->release   = '1.1.0';
 $plugin->dependencies = [
     'local_sentientia_platform' => ANY_VERSION,  // feature_flags + tenant helpers
 ];

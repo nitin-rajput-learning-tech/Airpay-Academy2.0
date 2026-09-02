@@ -58,4 +58,16 @@ $capabilities = [
             'manager' => CAP_ALLOW,
         ],
     ],
+
+    // Manage outbound webhook subscriptions + view/retry the delivery log
+    // (ADR-030 Wave A). RISK_CONFIG: a subscription points platform events at
+    // an external URL — misconfiguration leaks event metadata off-platform.
+    'local/sentientia_api:webhooks_manage' => [
+        'riskbitmask'  => RISK_CONFIG,
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => [
+            'manager' => CAP_ALLOW,
+        ],
+    ],
 ];

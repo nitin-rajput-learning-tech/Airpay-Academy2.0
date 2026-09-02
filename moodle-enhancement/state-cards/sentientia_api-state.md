@@ -4,9 +4,36 @@
 **Roadmap gap:** P2.3 — Public API + LTI (GAP-ANALYSIS-INVINCE-LXP-2026-06-16 §6)
 **Branch:** `claude/gap-api-lti`
 **Created:** 2026-06-16
-**Status:** Initial atomic build complete — feature-flagged OFF, awaiting deploy + smoke.
-**Version:** 2026061600 (1.0.0)
+**Status:** 1.1.0 — ADR-030 Wave A (outbound webhooks) built 2026-08-28, feature-flagged OFF.
+**Version:** 2026082800 (1.1.0)
 **Depends on:** `local_sentientia_platform` (feature_flags + tenant helpers)
+
+---
+
+## ADR-030 Wave A — outbound webhooks (2026-08-28)
+
+- **Flag:** `sentientia.api.webhooks.enabled` (sub-flag; requires `sentientia.api.enabled`). Both
+  resolved per (customer, tenant) with server-to-server semantics via
+  `webhooks\dispatcher::enabled_for()`; observers are complete no-ops when OFF.
+- **Capability:** `local/sentientia_api:webhooks_manage` (RISK_CONFIG) → admin page
+  `webhooks.php` (registered as admin_externalpage `local_sentientia_api_webhooks`).
+- **Tables:** `local_sentientia_api_whsub` (subscriptions, per-row HMAC secret) +
+  `local_sentientia_api_whdel` (delivery queue/audit: status queued|sent|failed|dead,
+  attempts, nextattempt, userid for privacy). Upgrade step 2026082800.
+- **Events (v1 vocabulary):** `course.completed`, `enrolment.created`, `certificate.issued`
+  (observers in `db/events.php`, internal=false, fail-safe; payloads are ids+timestamps only).
+- **Delivery:** `task\webhook_drain` every minute, registered DISABLED (triple opt-in);
+  `webhooks\queue::drain()` → `sender::deliver()` via `\core\http_client` (curl security
+  policy enforced at send time, redirects not followed) with `X-Sentientia-Signature:
+  t=<ts>,v1=<hmac_sha256("t.body")>`; backoff 60s→300s→1800s→7200s, dead after 5 attempts;
+  disabled subscription or flag-OFF tenant ⇒ dead-lettered without sending.
+- **URL policy:** https-only + `curl_security_helper::url_is_blocked()` at save time.
+- **Privacy:** provider declares `whdel` + external location; export/delete wired.
+- **Tests:** `tests/webhooks_test.php` — 14 cases (signature roundtrip/tamper/replay, https +
+  blocked-host validation, events normalisation, flag gating, per-sub fan-out, signed send,
+  backoff→dead, disabled-sub + flag-off dead-letter, retry+prune, course_completed observer,
+  observer no-op OFF, privacy delete). `sender::$transport` injects a fake transport.
+- **Next (ADR-030):** Wave B SCIM Users router, Wave C Groups + attestation report.
 
 ---
 

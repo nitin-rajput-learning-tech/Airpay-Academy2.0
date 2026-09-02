@@ -22,6 +22,7 @@ class cleanup extends \core\task\scheduled_task {
         $rates  = \local_sentientia_api\rate_limiter::prune();
         $nonces = \local_sentientia_api\lti\registration::prune_nonces();
         $logs   = \local_sentientia_api\request_log::prune();
-        mtrace("local_sentientia_api cleanup: pruned $rates rate rows, $nonces nonces, $logs log rows.");
+        $dels   = \local_sentientia_api\webhooks\queue::prune();
+        mtrace("local_sentientia_api cleanup: pruned $rates rate rows, $nonces nonces, $logs log rows, $dels webhook deliveries.");
     }
 }

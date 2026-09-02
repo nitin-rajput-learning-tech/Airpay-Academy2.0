@@ -53,4 +53,12 @@ if ($hassiteconfig) {
     ));
 
     $ADMIN->add('localplugins', $settings);
+
+    // ADR-030 Wave A — outbound webhooks admin page (subscriptions + delivery log).
+    $ADMIN->add('localplugins', new admin_externalpage(
+        'local_sentientia_api_webhooks',
+        get_string('webhooks_title', 'local_sentientia_api'),
+        new moodle_url('/local/sentientia_api/webhooks.php'),
+        'local/sentientia_api:webhooks_manage'
+    ));
 }
