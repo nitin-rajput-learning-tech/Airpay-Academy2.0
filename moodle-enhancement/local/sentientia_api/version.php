@@ -23,10 +23,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_api';
-$plugin->version   = 2026082900;  // YYYYMMDDNN — ADR-030 Wave B: SCIM 2.0 Users (Wave A webhooks = 2026082800)
+$plugin->version   = 2026090200;  // YYYYMMDDNN — ADR-030 Wave C: SCIM Groups + attestation (B = 2026082900, A = 2026082800)
 $plugin->requires  = 2024100700;  // Moodle 4.5+
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.2.0';
+$plugin->release   = '1.3.0';
 $plugin->dependencies = [
     'local_sentientia_platform' => ANY_VERSION,  // feature_flags + tenant helpers
 ];

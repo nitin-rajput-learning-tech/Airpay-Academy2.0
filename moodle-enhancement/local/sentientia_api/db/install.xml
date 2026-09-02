@@ -201,5 +201,26 @@
       </INDEXES>
     </TABLE>
 
+    <TABLE NAME="local_sentientia_api_scimevt"
+           COMMENT="SCIM provisioning attestation log (ADR-030 Wave C): every IdP-initiated create / reactivate / deactivate / update / group move, per client. The deprovisioning evidence buyers audit.">
+      <FIELDS>
+        <FIELD NAME="id"          TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true" COMMENT="Primary key"/>
+        <FIELD NAME="cliid"       TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0" COMMENT="FK to local_sentientia_api_scimcli.id (0 if the client was later deleted)"/>
+        <FIELD NAME="userid"      TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0" COMMENT="Affected Moodle user"/>
+        <FIELD NAME="action"      TYPE="char" LENGTH="16"  NOTNULL="true" COMMENT="created|reactivated|deactivated|updated|moved"/>
+        <FIELD NAME="externalid"  TYPE="char" LENGTH="191" NOTNULL="false" COMMENT="IdP identifier at the time of the event"/>
+        <FIELD NAME="detail"      TYPE="char" LENGTH="255" NOTNULL="false" COMMENT="Short context, e.g. target org path (no PII)"/>
+        <FIELD NAME="timecreated" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_user" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_cli_time"    UNIQUE="false" FIELDS="cliid, timecreated"/>
+        <INDEX NAME="idx_action_time" UNIQUE="false" FIELDS="action, timecreated"/>
+      </INDEXES>
+    </TABLE>
+
   </TABLES>
 </XMLDB>

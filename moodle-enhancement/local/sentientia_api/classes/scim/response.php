@@ -15,6 +15,7 @@ defined('MOODLE_INTERNAL') || die();
 class response {
 
     public const SCHEMA_USER  = 'urn:ietf:params:scim:schemas:core:2.0:User';
+    public const SCHEMA_GROUP = 'urn:ietf:params:scim:schemas:core:2.0:Group';
     public const SCHEMA_LIST  = 'urn:ietf:params:scim:api:messages:2.0:ListResponse';
     public const SCHEMA_ERROR = 'urn:ietf:params:scim:api:messages:2.0:Error';
     public const SCHEMA_PATCH = 'urn:ietf:params:scim:api:messages:2.0:PatchOp';
@@ -118,7 +119,14 @@ class response {
             'endpoint' => '/Users',
             'schema'   => self::SCHEMA_USER,
             'meta'     => ['resourceType' => 'ResourceType', 'location' => $baseurl . '/ResourceTypes/User'],
-        ]], 1, 1, 1);
+        ], [
+            'schemas'  => [self::SCHEMA_RT],
+            'id'       => 'Group',
+            'name'     => 'Group',
+            'endpoint' => '/Groups',
+            'schema'   => self::SCHEMA_GROUP,
+            'meta'     => ['resourceType' => 'ResourceType', 'location' => $baseurl . '/ResourceTypes/Group'],
+        ]], 2, 1, 2);
     }
 
     /**
@@ -148,6 +156,20 @@ class response {
                  'subAttributes' => [$attr('value', 'string'), $attr('type', 'string'), $attr('primary', 'boolean')]],
             ],
             'meta' => ['resourceType' => 'Schema', 'location' => $baseurl . '/Schemas/' . self::SCHEMA_USER],
-        ]], 1, 1, 1);
+        ], [
+            'schemas'     => [self::SCHEMA_SCHEMA],
+            'id'          => self::SCHEMA_GROUP,
+            'name'        => 'Group',
+            'description' => 'Organisation node (read-only structure; membership writable)',
+            'attributes'  => [
+                $attr('displayName', 'string', true, false, 'readOnly'),
+                $attr('externalId', 'string', false, false, 'readOnly'),
+                ['name' => 'members', 'type' => 'complex', 'multiValued' => true, 'required' => false,
+                 'mutability' => 'readWrite', 'returned' => 'default',
+                 'subAttributes' => [$attr('value', 'string'), $attr('display', 'string', false, false, 'readOnly'),
+                                     $attr('$ref', 'reference', false, false, 'readOnly')]],
+            ],
+            'meta' => ['resourceType' => 'Schema', 'location' => $baseurl . '/Schemas/' . self::SCHEMA_GROUP],
+        ]], 2, 1, 2);
     }
 }

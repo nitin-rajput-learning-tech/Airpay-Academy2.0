@@ -109,6 +109,9 @@ class handler {
         if ($method === 'GET' && $res === 'schemas') {
             return response::schemas($this->baseurl);
         }
+        if ($res === 'groups') {
+            return $this->groups($client, $method, $id, $query, $rawbody);
+        }
         if ($res !== 'users') {
             throw new scim_exception(404, get_string('scim_notfound', 'local_sentientia_api'));
         }
@@ -138,6 +141,101 @@ class handler {
                 return $this->deactivate_user($client, $user);
         }
         throw new scim_exception(405, 'Method not allowed.');
+    }
+
+    // ── Groups (ADR-030 Wave C) ─────────────────────────────────────────
+
+    /**
+     * /Groups — read-only structure (org tree), writable membership.
+     *
+     * @param \stdClass   $client
+     * @param string      $method
+     * @param string|null $id
+     * @param array       $query
+     * @param string|null $rawbody
+     * @return array
+     */
+    private function groups(\stdClass $client, string $method, ?string $id, array $query, ?string $rawbody): array {
+        $tenant = (int) $client->costcenterid;
+        if ($id === null) {
+            if ($method === 'GET') {
+                $start = max(1, (int) ($query['startIndex'] ?? 1));
+                $count = (int) ($query['count'] ?? 100);
+                $count = $count <= 0 ? 100 : min($count, self::MAX_COUNT);
+                if (filter::parse((string) ($query['filter'] ?? '')) !== null) {
+                    throw new scim_exception(400, 'Filtering Groups is not supported.', 'invalidFilter');
+                }
+                [$orgs, $total] = group_resource::list($tenant, $start - 1, $count);
+                $resources = array_map(fn($o) => group_resource::to_scim($o, $this->baseurl, false), $orgs);
+                return response::list($resources, $total, $start, count($resources));
+            }
+            if ($method === 'POST') {
+                throw new scim_exception(501, get_string('scim_groups_readonly', 'local_sentientia_api'), 'mutability');
+            }
+            throw new scim_exception(405, 'Method not allowed.');
+        }
+
+        $org = group_resource::find($tenant, (int) $id);
+        if (!$org) {
+            throw new scim_exception(404, get_string('scim_notfound', 'local_sentientia_api'));
+        }
+        switch ($method) {
+            case 'GET':
+                return response::ok(200, group_resource::to_scim($org, $this->baseurl));
+            case 'PATCH':
+                return $this->patch_group($client, $org, $this->json($rawbody));
+            case 'PUT':
+            case 'DELETE':
+                throw new scim_exception(501, get_string('scim_groups_readonly', 'local_sentientia_api'), 'mutability');
+        }
+        throw new scim_exception(405, 'Method not allowed.');
+    }
+
+    /**
+     * PATCH members: add = place user in this org, remove = return to tenant root.
+     *
+     * @param \stdClass $client
+     * @param \stdClass $org
+     * @param array     $body
+     * @return array
+     */
+    private function patch_group(\stdClass $client, \stdClass $org, array $body): array {
+        global $DB;
+        $ops = $body['Operations'] ?? null;
+        if (!is_array($ops) || !$ops) {
+            throw new scim_exception(400, 'PatchOp requires a non-empty Operations array.', 'invalidSyntax');
+        }
+        $changes = group_resource::parse_member_ops($ops);
+        if (($changes['add'] || $changes['remove']) && !self::has_open_path()) {
+            throw new scim_exception(501, get_string('scim_groups_unavailable', 'local_sentientia_api'), 'mutability');
+        }
+
+        foreach ($changes['add'] as $uid) {
+            $user = $this->find_user($client, $uid);
+            if (!$user) {
+                throw new scim_exception(400, get_string('scim_member_outside_scope', 'local_sentientia_api'), 'invalidValue');
+            }
+            if ((string) $user->open_path !== (string) $org->path) {
+                user_manager::update((int) $user->id, (object) ['open_path' => (string) $org->path, 'open_costcenterid' => (int) $org->id]);
+                attestation::record((int) $client->id, (int) $user->id, attestation::MOVED,
+                    mapper::externalid_for((int) $client->id, (int) $user->id), 'to ' . $org->path);
+            }
+        }
+
+        if ($changes['remove']) {
+            $rootpath = group_resource::root_path((string) $org->path);
+            $rootid = (int) $DB->get_field(group_resource::ORG_TABLE, 'id', ['path' => $rootpath]);
+            foreach ($changes['remove'] as $uid) {
+                $user = $this->find_user($client, $uid);
+                if (!$user || (string) $user->open_path !== (string) $org->path || $rootpath === '' || $rootpath === (string) $org->path) {
+                    continue;   // Not a direct member (or already at the root) — nothing to do.
+                }
+                user_manager::update((int) $user->id, (object) ['open_path' => $rootpath, 'open_costcenterid' => $rootid]);
+                attestation::record((int) $client->id, (int) $user->id, attestation::MOVED,
+                    mapper::externalid_for((int) $client->id, (int) $user->id), 'to ' . $rootpath);
+            }
+        }
+        return response::ok(200, group_resource::to_scim($org, $this->baseurl));
     }
 
     // ── Operations ──────────────────────────────────────────────────────
@@ -243,6 +341,8 @@ class handler {
         if ($in['externalid'] !== null && $in['externalid'] !== '') {
             mapper::set((int) $client->id, $userid, $in['externalid']);
         }
+        attestation::record((int) $client->id, $userid, attestation::CREATED, $in['externalid'],
+            $in['active'] === false ? 'created inactive' : null);
         $resp = $this->resource_response(201, $client, $this->reload($userid));
         $resp['headers']['Location'] = $this->baseurl . '/Users/' . $userid;
         return $resp;
@@ -285,8 +385,10 @@ class handler {
      * @return array
      */
     private function deactivate_user(\stdClass $client, \stdClass $user): array {
+        $externalid = mapper::externalid_for((int) $client->id, (int) $user->id);
         user_manager::suspend((int) $user->id, true);
         mapper::unmap_user((int) $client->id, (int) $user->id);
+        attestation::record((int) $client->id, (int) $user->id, attestation::DEACTIVATED, $externalid, 'SCIM DELETE');
         return response::ok(204, null);
     }
 
@@ -302,6 +404,7 @@ class handler {
         global $DB, $CFG;
         require_once($CFG->dirroot . '/user/lib.php');
 
+        $changed = false;
         $upd = new \stdClass();
         foreach (['email', 'firstname', 'lastname'] as $f) {
             if (isset($in[$f]) && $in[$f] !== '' && (string) $in[$f] !== (string) $user->$f) {
@@ -310,6 +413,7 @@ class handler {
         }
         if (count((array) $upd)) {
             user_manager::update((int) $user->id, $upd);
+            $changed = true;
         }
 
         if (isset($in['username']) && $in['username'] !== '') {
@@ -320,18 +424,33 @@ class handler {
                     throw new scim_exception(409, get_string('scim_conflict_username', 'local_sentientia_api'), 'uniqueness');
                 }
                 user_update_user((object) ['id' => (int) $user->id, 'username' => $new], false, true);
+                $changed = true;
             }
         }
+
+        if (isset($in['externalid'])) {
+            $before = mapper::externalid_for((int) $client->id, (int) $user->id);
+            mapper::set((int) $client->id, (int) $user->id, (string) $in['externalid']);
+            if ((string) $before !== (string) $in['externalid']) {
+                $changed = true;
+            }
+        }
+        $externalid = mapper::externalid_for((int) $client->id, (int) $user->id);
 
         if (isset($in['active'])) {
             $wantsuspended = !$in['active'];
             if ((bool) $user->suspended !== $wantsuspended) {
                 user_manager::suspend((int) $user->id, $wantsuspended);
+                attestation::record((int) $client->id, (int) $user->id,
+                    $wantsuspended ? attestation::DEACTIVATED : attestation::REACTIVATED, $externalid, 'active=' . ($wantsuspended ? 'false' : 'true'));
+                $changed = false;   // The state change is the record; don't double-log as "updated".
+                if (!count((array) $upd) && !isset($in['username'])) {
+                    return;
+                }
             }
         }
-
-        if (isset($in['externalid'])) {
-            mapper::set((int) $client->id, (int) $user->id, (string) $in['externalid']);
+        if ($changed) {
+            attestation::record((int) $client->id, (int) $user->id, attestation::UPDATED, $externalid, null);
         }
     }
 

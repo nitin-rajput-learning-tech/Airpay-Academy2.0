@@ -107,5 +107,26 @@ function xmldb_local_sentientia_api_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026082900, 'local', 'sentientia_api');
     }
 
+    if ($oldversion < 2026090200) {
+        // ADR-030 Wave C — SCIM provisioning attestation log.
+        $table = new xmldb_table('local_sentientia_api_scimevt');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
+        $table->add_field('cliid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('action', XMLDB_TYPE_CHAR, '16', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('externalid', XMLDB_TYPE_CHAR, '191', null, null, null, null);
+        $table->add_field('detail', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('fk_user', XMLDB_KEY_FOREIGN, ['userid'], 'user', ['id']);
+        $table->add_index('idx_cli_time', XMLDB_INDEX_NOTUNIQUE, ['cliid', 'timecreated']);
+        $table->add_index('idx_action_time', XMLDB_INDEX_NOTUNIQUE, ['action', 'timecreated']);
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026090200, 'local', 'sentientia_api');
+    }
+
     return true;
 }

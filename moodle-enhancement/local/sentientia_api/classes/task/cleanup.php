@@ -23,6 +23,7 @@ class cleanup extends \core\task\scheduled_task {
         $nonces = \local_sentientia_api\lti\registration::prune_nonces();
         $logs   = \local_sentientia_api\request_log::prune();
         $dels   = \local_sentientia_api\webhooks\queue::prune();
-        mtrace("local_sentientia_api cleanup: pruned $rates rate rows, $nonces nonces, $logs log rows, $dels webhook deliveries.");
+        $evts   = \local_sentientia_api\scim\attestation::prune();
+        mtrace("local_sentientia_api cleanup: pruned $rates rate rows, $nonces nonces, $logs log rows, $dels webhook deliveries, $evts SCIM attestation events.");
     }
 }

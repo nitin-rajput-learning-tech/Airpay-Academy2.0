@@ -1,6 +1,6 @@
 # ADR-030: SCIM 2.0 provisioning + outbound webhooks (ADR-028 Phase 2.4)
 
-**Status:** Proposed · **Date:** 2026-08-28 · **Owner:** Nitin Rajput
+**Status:** Implemented (Wave A 2026-08-29 · Wave B 2026-08-29 · Wave C 2026-09-02; all flag-OFF, local PHPUnit green) · **Date:** 2026-08-28 · **Owner:** Nitin Rajput
 **Parent:** ADR-028 §Phase 2.4 ("SCIM 2.0 shim on `base::open_v1()` enforcement +
 generic outbound webhook subscription: completion/enrolment/certificate events,
 HMAC + retry"). Grounded in the 2026-08-28 architectural recon of

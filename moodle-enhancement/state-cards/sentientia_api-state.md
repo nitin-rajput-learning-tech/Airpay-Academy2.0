@@ -33,7 +33,26 @@
   blocked-host validation, events normalisation, flag gating, per-sub fan-out, signed send,
   backoff→dead, disabled-sub + flag-off dead-letter, retry+prune, course_completed observer,
   observer no-op OFF, privacy delete). `sender::$transport` injects a fake transport.
-- **Next (ADR-030):** Wave C Groups + deprovisioning-attestation report (Wave B shipped below).
+- **ADR-030 complete:** Waves A (webhooks), B (SCIM Users) and C (SCIM Groups + attestation) all shipped, flag-OFF.
+
+## ADR-030 Wave C — SCIM Groups + attestation (2026-09-02, version 2026090200 / 1.3.0)
+
+- **Groups = organisation tree** (`classes/scim/group_resource.php`): `Group.id` = `local_sentientia_org.id`,
+  `displayName` = fullname, `externalId` = shortname, `members` = users whose `open_path` equals the org
+  path (direct placement). Structure is READ-ONLY via SCIM (POST/PUT/DELETE → 501 `mutability`);
+  membership PATCH is writable: `add` places the user in the org (`open_path`/`open_costcenterid`
+  via `user_manager::update`), `remove` (incl. `members[value eq "id"]`) returns them to the tenant
+  root. Everything tenant-scoped through the client's root; foreign users → 400, foreign orgs → 404.
+  Without the BizLMS columns membership ops answer 501 (`scim_groups_unavailable`).
+- **Attestation log** `local_sentientia_api_scimevt` (`classes/scim/attestation.php`): created /
+  reactivated / deactivated / updated / moved per client + user + externalId (+ short non-PII detail);
+  written by the handler on every provisioning change; admin table on `scim.php` (last 100) +
+  sesskey-guarded CSV export (`?export=csv`); pruned by the nightly cleanup after log retention;
+  privacy provider declares/export/deletes it. This is the deprovisioning evidence ADR-028 asked for.
+- Discovery: `/ResourceTypes` and `/Schemas` now include Group.
+- **Tests:** `tests/scim_groups_test.php` — 5 cases (tenant-scoped list/get with members, read-only
+  501s + ResourceTypes, PATCH add/remove moves + attestation + cross-tenant 400, full user lifecycle
+  attestation sequence `created→updated→deactivated→reactivated→deactivated` + CSV shape, prune).
 
 ## ADR-030 Wave B — SCIM 2.0 Users (2026-08-29, version 2026082900 / 1.2.0)
 

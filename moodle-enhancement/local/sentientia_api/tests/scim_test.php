@@ -133,7 +133,8 @@ final class scim_test extends \advanced_testcase {
         $this->assertSame('/Users', $rt['body']['Resources'][0]['endpoint']);
         $sc = $this->call('GET', '/Schemas', $auth);
         $this->assertSame(response::SCHEMA_USER, $sc['body']['Resources'][0]['id']);
-        $this->assertSame(404, $this->call('GET', '/Groups', $auth)['status']);
+        $this->assertSame(200, $this->call('GET', '/Groups', $auth)['status'], 'Groups exist since Wave C');
+        $this->assertSame(404, $this->call('GET', '/Bulk', $auth)['status']);
     }
 
     // ── Create / read ───────────────────────────────────────────────────

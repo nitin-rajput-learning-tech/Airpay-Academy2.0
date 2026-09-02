@@ -11,6 +11,7 @@
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
 
+use local_sentientia_api\scim\attestation;
 use local_sentientia_api\scim\client;
 use local_sentientia_api\scim\handler;
 use local_sentientia_api\scim\mapper;
@@ -22,7 +23,19 @@ require_capability('local/sentientia_api:scim_manage', $context);
 
 $action  = optional_param('action', '', PARAM_ALPHA);
 $id      = optional_param('id', 0, PARAM_INT);
+$export  = optional_param('export', '', PARAM_ALPHA);
 $pageurl = new moodle_url('/local/sentientia_api/scim.php');
+
+// Attestation CSV export (sesskey-guarded, admin-only).
+if ($export === 'csv') {
+    require_sesskey();
+    $csv = attestation::to_csv();
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="sentientia-scim-attestation-' . gmdate('Ymd-His') . '.csv"');
+    header('Cache-Control: private, must-revalidate');
+    echo $csv;
+    exit;
+}
 
 if ($action !== '' && $id > 0) {
     require_sesskey();
@@ -117,4 +130,37 @@ if (!$clients) {
 
 echo $OUTPUT->heading(get_string('scim_client_add', 'local_sentientia_api'), 3);
 $form->display();
+
+// Attestation log (ADR-030 Wave C).
+echo $OUTPUT->heading(get_string('scim_events', 'local_sentientia_api'), 3);
+echo html_writer::tag('p', get_string('scim_events_intro', 'local_sentientia_api'));
+$events = attestation::recent(100);
+if (!$events) {
+    echo html_writer::tag('p', get_string('scim_events_none', 'local_sentientia_api'));
+} else {
+    echo html_writer::tag('p', html_writer::link(new moodle_url($pageurl, ['export' => 'csv', 'sesskey' => sesskey()]),
+        get_string('scim_export_csv', 'local_sentientia_api'), ['class' => 'btn btn-secondary btn-sm']));
+    $t = new html_table();
+    $t->head = [
+        get_string('scim_event_time', 'local_sentientia_api'),
+        get_string('scim_event_action', 'local_sentientia_api'),
+        get_string('scim_event_client', 'local_sentientia_api'),
+        get_string('scim_event_user', 'local_sentientia_api'),
+        get_string('scim_event_external', 'local_sentientia_api'),
+        get_string('scim_event_detail', 'local_sentientia_api'),
+    ];
+    foreach ($events as $e) {
+        $user = $e->username ? s($e->username) . ' (' . (int) $e->userid . ')' : (int) $e->userid;
+        $t->data[] = [
+            gmdate('Y-m-d H:i:s', (int) $e->timecreated),
+            get_string('scim_action_' . $e->action, 'local_sentientia_api'),
+            format_string((string) ($e->clientname ?? '')),
+            $user,
+            s((string) ($e->externalid ?? '')),
+            s((string) ($e->detail ?? '')),
+        ];
+    }
+    echo html_writer::table($t);
+}
+
 echo $OUTPUT->footer();

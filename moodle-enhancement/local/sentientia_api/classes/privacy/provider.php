@@ -61,6 +61,14 @@ class provider implements
             'timecreated' => 'privacy:metadata:scimmap:timecreated',
         ], 'privacy:metadata:scimmap');
 
+        // ADR-030 Wave C — attestation log of IdP-initiated account changes.
+        $collection->add_database_table('local_sentientia_api_scimevt', [
+            'userid'      => 'privacy:metadata:scimevt:userid',
+            'action'      => 'privacy:metadata:scimevt:action',
+            'externalid'  => 'privacy:metadata:scimevt:externalid',
+            'timecreated' => 'privacy:metadata:scimevt:timecreated',
+        ], 'privacy:metadata:scimevt');
+
         return $collection;
     }
 
@@ -80,6 +88,7 @@ class provider implements
         $userlist->add_from_sql('userid', "SELECT userid FROM {local_sentientia_api_rate}", []);
         $userlist->add_from_sql('userid', "SELECT userid FROM {local_sentientia_api_whdel} WHERE userid > 0", []);
         $userlist->add_from_sql('userid', "SELECT userid FROM {local_sentientia_api_scimmap}", []);
+        $userlist->add_from_sql('userid', "SELECT userid FROM {local_sentientia_api_scimevt} WHERE userid > 0", []);
     }
 
     public static function export_user_data(approved_contextlist $contextlist): void {
@@ -111,6 +120,14 @@ class provider implements
                     (object) ['identities' => array_values((array) $maps)]
                 );
             }
+            $evts = $DB->get_records('local_sentientia_api_scimevt', ['userid' => $user->id], 'timecreated ASC',
+                'id, cliid, action, externalid, detail, timecreated');
+            if ($evts) {
+                writer::with_context($context)->export_data(
+                    [get_string('pluginname', 'local_sentientia_api'), get_string('scim_events', 'local_sentientia_api')],
+                    (object) ['events' => array_values((array) $evts)]
+                );
+            }
         }
     }
 
@@ -123,6 +140,7 @@ class provider implements
         $DB->delete_records('local_sentientia_api_rate');
         $DB->delete_records_select('local_sentientia_api_whdel', 'userid > 0');
         $DB->delete_records('local_sentientia_api_scimmap');
+        $DB->delete_records_select('local_sentientia_api_scimevt', 'userid > 0');
     }
 
     public static function delete_data_for_user(approved_contextlist $contextlist): void {
@@ -134,6 +152,7 @@ class provider implements
                 $DB->delete_records('local_sentientia_api_rate', ['userid' => $userid]);
                 $DB->delete_records('local_sentientia_api_whdel', ['userid' => $userid]);
                 $DB->delete_records('local_sentientia_api_scimmap', ['userid' => $userid]);
+                $DB->delete_records('local_sentientia_api_scimevt', ['userid' => $userid]);
             }
         }
     }
@@ -149,5 +168,6 @@ class provider implements
         $DB->delete_records_select('local_sentientia_api_rate', "userid $insql", $params);
         $DB->delete_records_select('local_sentientia_api_whdel', "userid $insql", $params);
         $DB->delete_records_select('local_sentientia_api_scimmap', "userid $insql", $params);
+        $DB->delete_records_select('local_sentientia_api_scimevt', "userid $insql", $params);
     }
 }
