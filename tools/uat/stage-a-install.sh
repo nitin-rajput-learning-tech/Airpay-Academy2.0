@@ -16,7 +16,7 @@ DBNAME="${DBNAME:-sentientia_uat}"
 DBUSER="${DBUSER:-db_user}"
 WWWROOT="${WWWROOT:-https://academy2.airpay.ninja}"
 DATAROOT="${DATAROOT:-/var/sentientiadata}"
-DOCROOT="${DOCROOT:-/var/www/sentientia/moodle5.2/public}"
+DOCROOT="${DOCROOT:-/var/www/html/moodle5.2/public}"
 DIRROOT="$(dirname "$DOCROOT")"                       # /var/www/sentientia/moodle5.2
 ADMINEMAIL="${ADMINEMAIL:-nitin.rajput@airpay.co.in}"
 LOG="$HOME/stage-a-$(date +%Y%m%d-%H%M%S).log"
@@ -74,7 +74,7 @@ global \$CFG;
 // UAT: keep outbound email OFF until OAuth2 SMTP is configured deliberately (151-email incident rule).
 \$CFG->noemailever = true;
 \$CFG->sslproxy = true;   // TLS terminates at the LB; Apache serves :80 behind it.
-require_once(__DIR__ . '/public/lib/setup.php');
+require_once(__DIR__ . '/lib/setup.php');
 PHPEOF
     if [ -w "$DIRROOT" ]; then cp /tmp/sentientia-config.php "$CONF";
     else $SUDO cp /tmp/sentientia-config.php "$CONF" || fail "cannot write $CONF (need sudo)"; fi
@@ -111,15 +111,15 @@ export DBHOST DBUSER DBPASS DBNAME
 if php -r 'define("CLI_SCRIPT",1); require getenv("DR")."/config.php"; exit(empty($CFG->version)?1:0);' DR="$DIRROOT" 2>/dev/null; then
     echo "Moodle tables already installed - skipping install_database.php"
 else
-    php "$DOCROOT/admin/cli/install_database.php" --agree-license \
+    php "$DIRROOT/admin/cli/install_database.php" --agree-license \
         --fullname="Sentientia LMS (UAT)" --shortname="SENTIENTIA-UAT" \
         --adminuser=admin --adminpass="$ADMINPASS" --adminemail="$ADMINEMAIL" \
         || fail "install_database.php failed - THIS OUTPUT IS THE P5 EVIDENCE, send the log"
 fi
 
 # ---------- 5. Upgrade + caches + post-install CLIs (guidebook steps 9-10) ----------
-php "$DOCROOT/admin/cli/upgrade.php" --non-interactive --allow-unstable || fail "upgrade.php failed"
-php "$DOCROOT/admin/cli/purge_caches.php" || fail "purge_caches failed"
+php "$DIRROOT/admin/cli/upgrade.php" --non-interactive --allow-unstable || fail "upgrade.php failed"
+php "$DIRROOT/admin/cli/purge_caches.php" || fail "purge_caches failed"
 for cli in repair_task_registrations.php enable_oneclick_enrol.php; do
     found=$(find "$DOCROOT/local" -maxdepth 3 -name "$cli" 2>/dev/null | head -1)
     if [ -n "$found" ]; then php "$found" --apply 2>/dev/null || php "$found" || echo "WARN: $cli nonzero exit"; \
