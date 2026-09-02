@@ -77,16 +77,12 @@ class badge_manager {
 
             case 'compliance_complete':
                 // All mandatory courses for user's tenant are completed.
-                $userobj = $DB->get_record('user', ['id' => $userid], 'open_path');
+                $org = self::get_user_tenant($userid);
                 $orgfilter = '';
                 $orgparams = [];
-                if ($userobj && !empty($userobj->open_path)) {
-                    $parts = explode('/', $userobj->open_path);
-                    $org = $parts[1] ?? '';
-                    if (!empty($org)) {
-                        $orgfilter = ' AND open_path LIKE :orgpath';
-                        $orgparams['orgpath'] = '/' . $org . '%';
-                    }
+                if ($org !== '' && self::has_tenant_column('course')) {
+                    $orgfilter = ' AND open_path LIKE :orgpath';
+                    $orgparams['orgpath'] = '/' . $org . '%';
                 }
                 $mandatory = $DB->count_records_sql(
                     "SELECT COUNT(*) FROM {course}
@@ -106,16 +102,12 @@ class badge_manager {
 
             case 'leaderboard_top10':
                 // Check if user is in top 10 by total points (within own tenant).
-                $userobj2 = $DB->get_record('user', ['id' => $userid], 'open_path');
+                $org = self::get_user_tenant($userid);
                 $tenantfilter = '';
                 $tenantparams = ['uid' => $userid];
-                if ($userobj2 && !empty($userobj2->open_path)) {
-                    $parts = explode('/', $userobj2->open_path);
-                    $org = $parts[1] ?? '';
-                    if (!empty($org)) {
-                        $tenantfilter = "AND s2.userid IN (SELECT id FROM {user} WHERE open_path LIKE :orgp AND deleted = 0)";
-                        $tenantparams['orgp'] = '/' . $org . '%';
-                    }
+                if ($org !== '') {
+                    $tenantfilter = "AND s2.userid IN (SELECT id FROM {user} WHERE open_path LIKE :orgp AND deleted = 0)";
+                    $tenantparams['orgp'] = '/' . $org . '%';
                 }
                 $rank = $DB->count_records_sql(
                     "SELECT COUNT(*) FROM {local_sentientia_streaks} s2
@@ -127,6 +119,42 @@ class badge_manager {
             default:
                 return false;
         }
+    }
+
+    /**
+     * Whether a table carries the BizLMS-injected `open_path` tenant column.
+     *
+     * BizLMS (the legacy costcenter plugin) adds `open_path` to {user} and
+     * {course} outside any install.xml we own, so a vanilla Moodle schema —
+     * the PHPUnit test DB, or a Sentientia customer without BizLMS — has no
+     * such column. Selecting it there throws dml_read_exception out of the
+     * course_completed observer; core\event\manager turns that into an
+     * "Unexpected debugging() call" notice and the whole award chain aborts
+     * (no badge check, no first_course bonus). Probe the schema instead —
+     * the DDL manager answers from cached column metadata.
+     */
+    private static function has_tenant_column(string $table): bool {
+        global $DB;
+        return $DB->get_manager()->field_exists($table, 'open_path');
+    }
+
+    /**
+     * BizLMS tenant (costcenter) segment of a user's open_path — '/1/2/3'
+     * yields '1' — or '' when the schema or the user carries no tenant.
+     * Callers drop the tenant filter (site-wide scope) on ''.
+     */
+    private static function get_user_tenant(int $userid): string {
+        global $DB;
+        if (!self::has_tenant_column('user')) {
+            return '';
+        }
+        $path = $DB->get_field('user', 'open_path', ['id' => $userid]);
+        if (empty($path)) {
+            return '';
+        }
+        $parts = explode('/', (string) $path);
+        $org = $parts[1] ?? '';
+        return empty($org) ? '' : (string) $org;
     }
 
     /**
