@@ -106,10 +106,10 @@
         <FIELD NAME="id"           TYPE="int"  LENGTH="10"   NOTNULL="true" SEQUENCE="true" COMMENT="Primary key"/>
         <FIELD NAME="customerid"   TYPE="int"  LENGTH="10"   NOTNULL="true" DEFAULT="0" COMMENT="Sentientia customer (ADR-021); 0 = default customer"/>
         <FIELD NAME="costcenterid" TYPE="int"  LENGTH="10"   NOTNULL="true" DEFAULT="0" COMMENT="Tenant root the subscription listens to; 0 = every tenant"/>
-        <FIELD NAME="name"         TYPE="char" LENGTH="255"  NOTNULL="true" DEFAULT="" COMMENT="Human label"/>
-        <FIELD NAME="url"          TYPE="char" LENGTH="1333" NOTNULL="true" DEFAULT="" COMMENT="https endpoint that receives POSTed events"/>
-        <FIELD NAME="secret"       TYPE="char" LENGTH="128"  NOTNULL="true" DEFAULT="" COMMENT="Per-subscription HMAC-SHA256 signing secret (needed in clear to sign; never logged)"/>
-        <FIELD NAME="events"       TYPE="char" LENGTH="255"  NOTNULL="true" DEFAULT="" COMMENT="Comma-separated subscribed event keys, e.g. course.completed,enrolment.created"/>
+        <FIELD NAME="name"         TYPE="char" LENGTH="255"  NOTNULL="true" COMMENT="Human label"/>
+        <FIELD NAME="url"          TYPE="char" LENGTH="1333" NOTNULL="true" COMMENT="https endpoint that receives POSTed events"/>
+        <FIELD NAME="secret"       TYPE="char" LENGTH="128"  NOTNULL="true" COMMENT="Per-subscription HMAC-SHA256 signing secret (needed in clear to sign; never logged)"/>
+        <FIELD NAME="events"       TYPE="char" LENGTH="255"  NOTNULL="true" COMMENT="Comma-separated subscribed event keys, e.g. course.completed,enrolment.created"/>
         <FIELD NAME="enabled"      TYPE="int"  LENGTH="1"    NOTNULL="true" DEFAULT="1" COMMENT="0=paused, 1=active"/>
         <FIELD NAME="lastsuccess"  TYPE="int"  LENGTH="10"   NOTNULL="true" DEFAULT="0" COMMENT="Unix time of last 2xx delivery"/>
         <FIELD NAME="lastfailure"  TYPE="int"  LENGTH="10"   NOTNULL="true" DEFAULT="0" COMMENT="Unix time of last failed attempt"/>
@@ -131,7 +131,7 @@
         <FIELD NAME="id"          TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true" COMMENT="Primary key"/>
         <FIELD NAME="subid"       TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0" COMMENT="FK to local_sentientia_api_whsub.id"/>
         <FIELD NAME="userid"      TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0" COMMENT="Affected user (for privacy export/delete); 0 if none"/>
-        <FIELD NAME="eventkey"    TYPE="char" LENGTH="64"  NOTNULL="true" DEFAULT="" COMMENT="Event key, e.g. course.completed"/>
+        <FIELD NAME="eventkey"    TYPE="char" LENGTH="64"  NOTNULL="true" COMMENT="Event key, e.g. course.completed"/>
         <FIELD NAME="payload"     TYPE="text" NOTNULL="false" COMMENT="JSON body as sent (minimal: ids + timestamps, no names/emails)"/>
         <FIELD NAME="status"      TYPE="char" LENGTH="12"  NOTNULL="true" DEFAULT="queued" COMMENT="queued|sent|failed|dead"/>
         <FIELD NAME="attempts"    TYPE="int"  LENGTH="4"   NOTNULL="true" DEFAULT="0" COMMENT="Delivery attempts made so far"/>
@@ -150,6 +150,54 @@
                COMMENT="Drain task: WHERE status IN (queued,failed) AND nextattempt at or before now"/>
         <INDEX NAME="idx_sub_time"    UNIQUE="false" FIELDS="subid, timecreated"/>
         <INDEX NAME="idx_userid"      UNIQUE="false" FIELDS="userid"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_api_scimcli"
+           COMMENT="SCIM 2.0 provisioning clients (ADR-030 Wave B): one bearer token per IdP integration, hashed at rest, tenant-bound.">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true" COMMENT="Primary key"/>
+        <FIELD NAME="customerid"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0" COMMENT="Sentientia customer (ADR-021); 0 = default"/>
+        <FIELD NAME="costcenterid" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0" COMMENT="Tenant root this client may provision into; 0 = all tenants (site-level client)"/>
+        <FIELD NAME="name"         TYPE="char" LENGTH="255" NOTNULL="true" COMMENT="Human label, e.g. Entra ID - Meridian"/>
+        <FIELD NAME="tokenhash"    TYPE="char" LENGTH="64"  NOTNULL="true" COMMENT="sha256 of the bearer token; plaintext never stored"/>
+        <FIELD NAME="auth"         TYPE="char" LENGTH="20"  NOTNULL="true" DEFAULT="oauth2" COMMENT="Moodle auth plugin assigned to users this client creates"/>
+        <FIELD NAME="enabled"      TYPE="int"  LENGTH="1"   NOTNULL="true" DEFAULT="1" COMMENT="0=disabled, 1=enabled"/>
+        <FIELD NAME="ratelimit"    TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0" COMMENT="Per-window request budget; 0 = plugin default"/>
+        <FIELD NAME="ratehits"     TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0" COMMENT="Hits in the current fixed window"/>
+        <FIELD NAME="ratewindow"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0" COMMENT="Start of the current fixed window (unix)"/>
+        <FIELD NAME="lastseen"     TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0" COMMENT="Unix time of last authenticated request"/>
+        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="uniq_tokenhash" UNIQUE="true"  FIELDS="tokenhash"/>
+        <INDEX NAME="idx_costcenter" UNIQUE="false" FIELDS="costcenterid"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_sentientia_api_scimmap"
+           COMMENT="SCIM externalId to Moodle user mapping, per client (ADR-030 Wave B). externalid kept at 191 chars so the composite unique index stays inside the utf8mb4 key limit.">
+      <FIELDS>
+        <FIELD NAME="id"           TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true" COMMENT="Primary key"/>
+        <FIELD NAME="cliid"        TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0" COMMENT="FK to local_sentientia_api_scimcli.id"/>
+        <FIELD NAME="externalid"   TYPE="char" LENGTH="191" NOTNULL="true" COMMENT="IdP-side identifier (SCIM externalId)"/>
+        <FIELD NAME="userid"       TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0" COMMENT="FK to mdl_user.id"/>
+        <FIELD NAME="timecreated"  TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_cli"  TYPE="foreign" FIELDS="cliid"  REFTABLE="local_sentientia_api_scimcli" REFFIELDS="id"/>
+        <KEY NAME="fk_user" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="uniq_cli_ext" UNIQUE="true"  FIELDS="cliid, externalid"/>
+        <!-- No separate index on userid: the fk_user foreign key already
+             creates one, and XMLDB rejects a key/index pair on identical fields. -->
       </INDEXES>
     </TABLE>
 

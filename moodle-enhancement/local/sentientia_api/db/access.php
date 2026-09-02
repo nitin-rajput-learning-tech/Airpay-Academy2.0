@@ -70,4 +70,16 @@ $capabilities = [
             'manager' => CAP_ALLOW,
         ],
     ],
+
+    // Manage SCIM provisioning clients (ADR-030 Wave B). RISK_CONFIG +
+    // RISK_PERSONAL: a client token lets an external IdP create/suspend users
+    // in its tenant.
+    'local/sentientia_api:scim_manage' => [
+        'riskbitmask'  => RISK_CONFIG | RISK_PERSONAL,
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => [
+            'manager' => CAP_ALLOW,
+        ],
+    ],
 ];

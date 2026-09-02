@@ -1,6 +1,6 @@
 # State Card — local_airpay_users
 **Component:** `local_airpay_users`
-**Version:** 2.7.1 (2026052900)  — signup UX fixes (honeypot + success page)
+**Version:** 2.7.5 (2026082900)  — `user_manager::suspend()` uses `destroy_user_sessions()` (4.5 deprecation of `kill_user_sessions` surfaced once the ADR-030 SCIM endpoint became a regular caller); 2.7.1 = signup UX fixes (honeypot + success page)
 **Status:** STABLE — installed + live; HRMS importer + bulk + signup + welcome shipped
 **Depends on:** local_airpay_org (Phase 1)
 **Purpose:** Replaces BizLMS `local_users` — Airpay-owned user management, profile rendering, open_* field ownership, signup, HRMS sync

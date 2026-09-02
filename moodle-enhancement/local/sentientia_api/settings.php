@@ -61,4 +61,12 @@ if ($hassiteconfig) {
         new moodle_url('/local/sentientia_api/webhooks.php'),
         'local/sentientia_api:webhooks_manage'
     ));
+
+    // ADR-030 Wave B — SCIM 2.0 provisioning clients.
+    $ADMIN->add('localplugins', new admin_externalpage(
+        'local_sentientia_api_scim',
+        get_string('scim_title', 'local_sentientia_api'),
+        new moodle_url('/local/sentientia_api/scim.php'),
+        'local/sentientia_api:scim_manage'
+    ));
 }

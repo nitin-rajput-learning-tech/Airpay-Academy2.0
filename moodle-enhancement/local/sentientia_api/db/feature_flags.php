@@ -57,5 +57,15 @@ $flags = [
                           OFF — outbound calls to customer infrastructure must be an
                           explicit per-customer decision.',
     ],
+    'sentientia.api.scim.enabled' => [
+        'default'     => false,
+        'description' => 'Sub-switch for the SCIM 2.0 provisioning endpoint
+                          (/local/sentientia_api/scim/v2.php — Users resource) used by
+                          enterprise IdPs (Entra ID, Okta) to create, update and
+                          deactivate accounts. Requires sentientia.api.enabled as well.
+                          When OFF the endpoint answers 503 to every request. Default
+                          OFF — an IdP writing into the user table is an explicit
+                          per-customer decision with a registered, tenant-bound client.',
+    ],
 
 ];

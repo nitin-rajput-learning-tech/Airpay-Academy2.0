@@ -33,7 +33,42 @@
   blocked-host validation, events normalisation, flag gating, per-sub fan-out, signed send,
   backoff→dead, disabled-sub + flag-off dead-letter, retry+prune, course_completed observer,
   observer no-op OFF, privacy delete). `sender::$transport` injects a fake transport.
-- **Next (ADR-030):** Wave B SCIM Users router, Wave C Groups + attestation report.
+- **Next (ADR-030):** Wave C Groups + deprovisioning-attestation report (Wave B shipped below).
+
+## ADR-030 Wave B — SCIM 2.0 Users (2026-08-29, version 2026082900 / 1.2.0)
+
+- **Endpoint:** `scim/v2.php` — raw-HTTP router (NO_MOODLE_COOKIES + AJAX_SCRIPT, the xAPI-LRS
+  pattern) because core web services cannot return real HTTP status codes. PATH_INFO routing
+  with a `?path=` fallback. IdP Tenant URL = `https://<site>/local/sentientia_api/scim/v2.php`.
+- **Handler:** `classes/scim/handler.php` is transport-neutral (`handle($method,$path,$query,
+  $body,$authheader)` → `{status, body, headers}`) so the protocol is unit-tested without HTTP.
+  Gate order: bearer client → flags `sentientia.api.enabled` + `sentientia.api.scim.enabled`
+  resolved per (customer, tenant) → per-client rate window → route.
+- **Resources:** `/ServiceProviderConfig`, `/ResourceTypes`, `/Schemas`, `/Users` (GET list with
+  `filter` userName|externalId|id|emails.value `eq`, 1-based `startIndex`/`count`≤200; POST),
+  `/Users/{id}` (GET/PUT/PATCH/DELETE). SCIM `id` = Moodle user id; `externalId` via
+  `local_sentientia_api_scimmap` (per-client, 191-char, unique (cliid, externalid)).
+- **Clients:** `local_sentientia_api_scimcli` — sha256 token hash (unique), tenant root
+  (0 = site-level), auth plugin for created users (oauth2|oidc|saml2|ldap|manual|nologin),
+  self-contained fixed-window rate counter on the row. Admin page `scim.php` (cap
+  `:scim_manage`, RISK_CONFIG|RISK_PERSONAL) issues/rotates tokens (shown once).
+- **Writes** delegate to `local_sentientia_users\user_manager` (create/update/suspend) — events
+  fire, open_* discipline holds; tenant-bound clients place users at `open_path = /<root>`
+  (only when the BizLMS column exists — vanilla schema stays clean). `active:false` / DELETE =
+  suspend + session destroy (soft; history retained); re-POST of a deactivated externalId
+  reactivates (200) instead of 409. Username/email collisions → 409 `uniqueness`.
+- **Tenant scoping** rebuilt without `$USER` (`tenant_where()`), users outside scope are 404.
+- **Privacy:** `scimmap` declared; export + delete wired. Requests logged to `request_log`
+  as `apiversion='scim2'` with ids masked (`METHOD /Users/{id}`), no bodies.
+- **Tests:** `tests/scim_test.php` — 16 cases / 76 assertions (401/503/disabled-client/429,
+  discovery, 201 create + mapping + auth plugin, 409, inactive→reprovision 200, 400 JSON/required,
+  list+filter+pagination, filter parser edge cases, PATCH active/name/email/userName + ignored
+  paths, PUT, DELETE 204 soft, 404/405, tenant isolation [skips without bizlms_fixture]).
+  Full plugin suite 55/55 green. Lessons: `fk_user` key + separate `idx_user` on the same field
+  collides in XMLDB; CHAR NOT NULL fields must not carry `DEFAULT=""`; flag statics leak across
+  test classes → invalidate in tearDown too.
+- **Side fix:** `sentientia_users` 2.7.5 — `user_manager::suspend()` now calls
+  `destroy_user_sessions()` (4.5 deprecation surfaced by SCIM usage).
 
 ---
 

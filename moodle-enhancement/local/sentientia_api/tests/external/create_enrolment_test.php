@@ -17,12 +17,18 @@ defined('MOODLE_INTERNAL') || die();
  * @covers     \local_sentientia_api\external\v1\create_enrolment
  */
 final class create_enrolment_test extends \advanced_testcase {
+    use \local_sentientia_org\test\bizlms_fixture;
 
     private function set_flag(string $key, bool $on): void {
         if (!class_exists('\local_sentientia_platform\feature_flags')) {
             $this->markTestSkipped('local_sentientia_platform not installed.');
         }
+        // These tests scope by open_path — provision the BizLMS columns on the
+        // phpunit schema (the fixture's DDL persists until the next init; without
+        // this call the tests only pass if some earlier test happened to run it).
+        $this->ensure_bizlms_schema();
         \local_sentientia_platform\feature_flags::set($key, 0, $on, null, 'phpunit', 0);
+        \local_sentientia_platform\feature_flags::invalidate_caches(); // Statics survive resetAfterTest.
     }
 
     private function user_with_write(): \stdClass {

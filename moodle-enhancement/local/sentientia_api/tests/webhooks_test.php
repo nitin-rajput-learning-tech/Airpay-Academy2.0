@@ -41,6 +41,10 @@ final class webhooks_test extends \advanced_testcase {
 
     protected function tearDown(): void {
         sender::$transport = null;
+        // Flag statics survive resetAfterTest — never leak our ON flags into later test classes.
+        if (class_exists('\local_sentientia_platform\feature_flags')) {
+            \local_sentientia_platform\feature_flags::invalidate_caches();
+        }
         parent::tearDown();
     }
 
