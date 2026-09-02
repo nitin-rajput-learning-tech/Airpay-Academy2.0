@@ -39,11 +39,16 @@ by Jitesh Divekar after Matt/Priyanka sign-off). This checklist binds the generi
       credentials incl. the DB superuser password arrived in PLAINTEXT EMAIL
       despite the secure-channel request — rotate the DB password and the LMS
       password after first login. Ganesh's account status: confirm with him.
-- [x] **DB credentials** — received 2026-08-20 (superuser `db_user` on
-      lms-sentientia-uat-db). ⚠ Plaintext-email delivery → rotate at first
-      connect; before Stage B create an app-scoped user (no SUPER) for the
-      Moodle config.php and keep superuser for admin tasks only. Credentials
-      live in Nitin's vault — NEVER in this repo or on the ticket.
+- [ ] **DB credentials** — received 2026-08-20 (superuser `db_user`) but **DEAD
+      ON ARRIVAL**: tested 2026-08-28 from the LMS box (delivery byte-verified via
+      hex) — `Access denied` for BOTH `db_user` and `admin` with the emailed
+      password; no successful RDS connection exists in any shell/mysql history on
+      the box (Ganesh's `-u admin -p` attempts included). **ASK Cloud.in: reset
+      the `db_user` password on `lms-sentientia-uat-db` (or supply the correct
+      master username) via secure channel — a temporary value is fine, we rotate
+      immediately at first login.** Before Stage B create an app-scoped user (no
+      SUPER) for config.php. Credentials live in Nitin's vault — NEVER in this
+      repo or on the ticket.
 
 ## 1. Sizing caveats to acknowledge (UAT-smoke OK; rehearsal may need resize)
 
