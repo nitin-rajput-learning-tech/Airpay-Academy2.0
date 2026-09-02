@@ -4,8 +4,8 @@
 **Roadmap gap:** P2.3 — Public API + LTI (GAP-ANALYSIS-INVINCE-LXP-2026-06-16 §6)
 **Branch:** `claude/gap-api-lti`
 **Created:** 2026-06-16
-**Status:** 1.1.0 — ADR-030 Wave A (outbound webhooks) built 2026-08-28, feature-flagged OFF.
-**Version:** 2026082800 (1.1.0)
+**Status:** 1.3.0 — ADR-030 complete: Wave A outbound webhooks (2026-08-29), Wave B SCIM 2.0 Users (2026-08-29), Wave C SCIM Groups + attestation (2026-09-02); all feature-flagged OFF; full suite 60/60 on a fresh phpunit DB.
+**Version:** 2026090200 (1.3.0)
 **Depends on:** `local_sentientia_platform` (feature_flags + tenant helpers)
 
 ---
