@@ -16,7 +16,13 @@ $plugin->component = 'local_sentientia_catalog';
 // course.php 'enrolnow' action, public.php grid button routing, and a fix to
 // cart.php's enrollfree silent-failure (enrol_self no-op on key-gated courses
 // reported false success). +4 lang strings ×5 languages.
-$plugin->version   = 2026052902;
+// C2 fix (2026-09-03) — UAT-SECURITY-POSTURE-2026-09-03.md Critical finding
+// C2 (cross-tenant self-enrolment): new catalog_manager::assert_course_
+// visible_to_viewer() tenant-visibility guard, called from course.php's
+// course lookup, commerce::add_to_cart(), and enrolment::enrol_now() before
+// any enrolment write. Degrades to visible=1-only when course.open_path is
+// absent (vanilla schema). No new lang strings (uses core 'nopermissions').
+$plugin->version   = 2026090302;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.2-beta';
+$plugin->release   = '1.0.3-beta';

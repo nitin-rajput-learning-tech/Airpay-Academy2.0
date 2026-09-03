@@ -40,6 +40,121 @@ class catalog_manager {
     }
 
     /**
+     * Same tenant-root derivation as {@see viewer_tenant_root()}, but for
+     * an arbitrary user id rather than the current $USER.
+     *
+     * Needed by {@see assert_course_visible_to_viewer()} because
+     * `enrolment::enrol_now()` accepts an explicit target `$userid` that
+     * can differ from the acting session user (PHPUnit tests call it
+     * directly with a specific user id; a future admin-initiated
+     * enrolment could too). Falls back to 0 (unscoped) when the
+     * `user.open_path` column doesn't exist — same vanilla-schema
+     * degrade as the rest of this guard.
+     *
+     * @param int $userid
+     * @return int Tenant root (0 = unscoped)
+     */
+    private static function tenant_root_for_user(int $userid): int {
+        global $DB;
+        if ($userid <= 0 || !$DB->get_manager()->field_exists('user', 'open_path')) {
+            return 0;
+        }
+        $path = (string) ($DB->get_field('user', 'open_path', ['id' => $userid]) ?: '');
+        if ($path === '') {
+            return 0;
+        }
+        $parts = explode('/', trim($path, '/'));
+        $first = $parts[0] ?? '';
+        return ctype_digit($first) ? (int) $first : 0;
+    }
+
+    /**
+     * C2 fix (2026-09-03, docs/security/UAT-SECURITY-POSTURE-2026-09-03.md)
+     * — the single tenant-visibility gate for every guest/member commerce
+     * entry point that resolves a course by id.
+     *
+     * Before this fix, `course.php`, `commerce::add_to_cart()`, and
+     * `enrolment::enrol_now()` each resolved a course with only
+     * `['id' => $id, 'visible' => 1]` — no tenant scoping — while every
+     * catalog BROWSE query in this class already goes through
+     * `sharing_manager::build_catalog_filter_sql()`. That let a
+     * self-registered Public-tenant (/77) learner browse straight to an
+     * Airpay (/1) or ZEEA (/177) internal course id (guessable — sequential)
+     * and self-enrol, completely bypassing the tenant-sharing model.
+     *
+     * This mirrors the ownership + share check already inline in
+     * {@see format_course()} (`is_owned` / `sharing_manager::is_course_
+     * shared_to()`), lifted into a reusable guard so every write/enrol
+     * path enforces the exact same rule the browse queries do.
+     *
+     * Rules (in order):
+     *   1. Course must exist and be `visible = 1` (unchanged from before
+     *      this fix — this guard does not relax visibility for anyone,
+     *      admins included).
+     *   2. If `course.open_path` doesn't exist (vanilla, non-BizLMS
+     *      schema) — degrade to rule 1 only. There is no tenant column to
+     *      gate on, so behave exactly as this code did before the fix.
+     *   3. Site admins, and any viewer/user with no real tenant root
+     *      (tenant root <= 0 — e.g. an unauthenticated guest browsing the
+     *      public catalog with no `open_path`) pass with no further
+     *      check. This matches the "no filter" pass-through
+     *      `sharing_manager::build_catalog_filter_sql()` already applies
+     *      for `viewer_tenant <= 0` on every browse query in this class.
+     *   4. Otherwise the course must be owned by the viewer's tenant tree
+     *      (`open_path` equal to or nested under `/<tenant>`) OR have an
+     *      active `local_sentientia_courses_tenant_share` row for that
+     *      tenant.
+     *
+     * @param int $courseid
+     * @param int|null $userid Defaults to the current $USER. Pass
+     *        explicitly when gating an enrolment for a user other than
+     *        the current session user (e.g.
+     *        {@see \local_sentientia_catalog\enrolment::enrol_now()}'s
+     *        optional `$userid` parameter) — the guard then resolves
+     *        *that* user's tenant, not the acting session user's.
+     * @return \stdClass The full course record, once permitted.
+     * @throws \moodle_exception If the course doesn't exist, isn't
+     *         visible, or isn't owned-by/shared-to the viewer's tenant.
+     *         Deliberately the SAME exception for "doesn't exist" and
+     *         "not permitted" so a cross-tenant probe can't distinguish
+     *         a missing course id from one that exists in another tenant.
+     */
+    public static function assert_course_visible_to_viewer(int $courseid, ?int $userid = null): \stdClass {
+        global $DB, $USER;
+
+        $userid = $userid ?? (int) ($USER->id ?? 0);
+
+        $course = $DB->get_record('course', ['id' => $courseid, 'visible' => 1], '*', IGNORE_MISSING);
+        if (!$course) {
+            throw new \moodle_exception('nopermissions', 'error', '', 'view this course');
+        }
+
+        // Vanilla (non-BizLMS) schema has no open_path column to gate on —
+        // degrade to the pre-fix behaviour (visible courses only) rather
+        // than breaking every non-BizLMS install.
+        if (!$DB->get_manager()->field_exists('course', 'open_path')) {
+            return $course;
+        }
+
+        $viewer_tenant = ($userid === (int) ($USER->id ?? 0))
+            ? self::viewer_tenant_root()
+            : self::tenant_root_for_user($userid);
+
+        if ($viewer_tenant <= 0) {
+            return $course;
+        }
+
+        $course_path = $course->open_path ?? '';
+        $exact_path  = '/' . $viewer_tenant;
+        $is_owned = ($course_path === $exact_path) || (strpos($course_path, $exact_path . '/') === 0);
+        if ($is_owned || \local_sentientia_courses\sharing_manager::is_course_shared_to($courseid, $viewer_tenant)) {
+            return $course;
+        }
+
+        throw new \moodle_exception('nopermissions', 'error', '', 'view this course');
+    }
+
+    /**
      * Get courses for the catalog with filters and pagination.
      *
      * @param int    $userid      Current user ID

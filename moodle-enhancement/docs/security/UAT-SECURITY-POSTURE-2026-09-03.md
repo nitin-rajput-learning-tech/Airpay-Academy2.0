@@ -208,3 +208,13 @@ capable of attempting TLS 1.0/1.1, to get an authoritative answer.
 6. **M1 / M2 / M5 / L1** — next sprint, no urgency for UAT continuation.
 7. Run the **MFA configuration sequence** (identity pack §2) on the ninja environment as planned — this audit did not find anything that would make the sequence unsafe to run now.
 8. Re-run this audit's C1/C2 sections specifically (not a full re-audit) once fixes land, before Phase 4 (Stage B rehearsal) and before any production deploy.
+
+---
+
+## Remediation status (2026-09-03, same day)
+
+| ID | Status | Where |
+|----|--------|-------|
+| C2 cross-tenant self-enrol | **FIXED** - `catalog_manager::assert_course_visible_to_viewer()` gates `course.php`, `commerce::add_to_cart()` and `enrolment::enrol_now()` (owned-or-shared tenant, site admin pass-through, vanilla-schema degrade); `tests/tenant_gate_test.php`; catalog suite 18/18 green; regression on UAT: a /77 learner gets 404 on /1 and /177 courses, same-tenant unchanged | `local_sentientia_catalog` 2026090302 |
+| C1 forgeable payment hash | **OPEN - Nitin-gated**: the June fix (`fix/airpay-payment-verification`, fail-closed verifier, 5/5 proven) is not merged; merge + sandbox verification before any production promotion | branch |
+| H1-H4, M1-M5 | Open; H2 (CAPTCHA) closes with the IT reCAPTCHA keys; H1/H3/H4 need code changes | see Phase 1 fix list |

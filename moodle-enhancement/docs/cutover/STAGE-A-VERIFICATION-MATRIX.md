@@ -63,7 +63,7 @@ Fill Result with ✅ / ❌ / ⚠ and attach evidence per row. Any ❌ → §F tr
 | E2 | Directory listing | try `/theme/`, `/local/` | 403 or redirect — no index listing | ✅ `/theme/` 303, `/local/` 403 |
 | E3 | Headers | `curl -I` on login page | HSTS present (LB or Apache); no server version oversharing (note-only) | ⚠ `X-Frame-Options: sameorigin` present; **no HSTS** at the LB; `Server:` discloses the Apache version (notes N-1, N-2) |
 | E4 | Admin password | — | strong password vaulted; forced-change not pending | ✅ set by `finish_install.php`; in the session scratchpad `uat/secrets.env` → Nitin's vault; no forced-change pending |
-| E5 | Emailed credentials rotated | LMS + db_user passwords changed at first login | done + vault updated | ⚠ LMS (`nitin` SSH/sudo) password rotated 2026-08-29 ✅; **DB password NOT rotated — Nitin: "let's go through install first"**; still Cloud.in's `db_user` (rds_superuser) in config.php (note N-4) |
+| E5 | Emailed credentials rotated | LMS + db_user passwords changed at first login | done + vault updated | ✅ LMS (`nitin` SSH/sudo) password rotated 2026-08-29; **DB hygiene done 2026-09-03 (Phase 0.4):** `config.php` now uses the app-scoped `sentientia_app` user (schema-only grants, no SUPER), the emailed `db_user` superuser password is rotated (old one rejected); both new values in the session scratchpad → Nitin's vault (N-4 closed) |
 
 ## F. Triage protocol (any ❌) — findings log
 

@@ -20,7 +20,13 @@ $PAGE->set_context(context_system::instance());
 $PAGE->set_url('/local/sentientia_catalog/course.php', ['id' => $id]);
 $PAGE->set_pagelayout('standard');
 
-$course = $DB->get_record('course', ['id' => $id, 'visible' => 1], '*', MUST_EXIST);
+// C2 fix (2026-09-03, docs/security/UAT-SECURITY-POSTURE-2026-09-03.md):
+// this used to be $DB->get_record('course', ['id' => $id, 'visible' => 1],
+// '*', MUST_EXIST) — visibility only, no tenant scoping — which let a
+// Public-tenant (/77) learner open an Airpay/ZEEA internal course by id
+// straight from the URL. assert_course_visible_to_viewer() adds the same
+// owned-or-shared tenant gate the catalog browse queries already enforce.
+$course = \local_sentientia_catalog\catalog_manager::assert_course_visible_to_viewer($id);
 $PAGE->set_title(format_string($course->fullname));
 
 // Handle Add to Cart action.

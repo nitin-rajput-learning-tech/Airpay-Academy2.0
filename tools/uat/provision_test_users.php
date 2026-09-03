@@ -85,7 +85,7 @@ $TENANTCAT = [1 => 'AirPay', 77 => 'external', 177 => 'ZEEA01'];
 $ROLES = [ // shortname => [name, archetype, contextlevels, extra caps]
     'administrator' => ['Administrator', 'manager', [CONTEXT_SYSTEM, CONTEXT_COURSECAT, CONTEXT_COURSE], []],
     'trainer' => ['Trainer', 'teacher', [CONTEXT_SYSTEM, CONTEXT_COURSECAT, CONTEXT_COURSE],
-        ['local/sentientia_classroom:view', 'local/sentientia_classroom:attendance', 'local/sentientia_evaluation:manage']],
+        ['local/sentientia_classroom:view', 'local/sentientia_classroom:attendance', 'local/sentientia_evaluation:manage', 'local/sentientia_exams:view']],
     'sentientiaauthor' => ['Sentientia Author', '', [CONTEXT_SYSTEM],
         ['local/sentientia_authoring:generate', 'local/sentientia_authoring:review', 'local/sentientia_authoring:managetemplates',
          'local/sentientia_skillsai:extract', 'local/sentientia_skillsai:review',

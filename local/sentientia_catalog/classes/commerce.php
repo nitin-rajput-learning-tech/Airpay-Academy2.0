@@ -64,7 +64,7 @@ class commerce {
      * Add a course to cart.
      */
     public static function add_to_cart(int $courseid): bool {
-        global $SESSION, $DB;
+        global $SESSION;
 
         if (!isset($SESSION->sentientia_cart)) {
             $SESSION->sentientia_cart = [];
@@ -77,8 +77,17 @@ class commerce {
             }
         }
 
-        $course = $DB->get_record('course', ['id' => $courseid, 'visible' => 1], 'id, fullname, shortname');
-        if (!$course) {
+        // C2 fix (2026-09-03, docs/security/UAT-SECURITY-POSTURE-2026-09-03.md):
+        // this used to be $DB->get_record('course', ['id' => $courseid,
+        // 'visible' => 1], ...) — no tenant scoping — which let a
+        // Public-tenant (/77) learner queue an Airpay/ZEEA internal course
+        // into their cart by id. Reuses the same gate as course.php and
+        // enrolment::enrol_now(). Fail closed: any denial (including a
+        // non-existent course) just refuses the add, same as the old
+        // "not found" behaviour.
+        try {
+            $course = catalog_manager::assert_course_visible_to_viewer($courseid);
+        } catch (\moodle_exception $e) {
             return false;
         }
 

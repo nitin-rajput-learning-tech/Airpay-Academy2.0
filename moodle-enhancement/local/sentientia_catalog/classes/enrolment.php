@@ -132,10 +132,18 @@ class enrolment {
             return false;
         }
 
-        // Course must exist and be visible.
-        $course = $DB->get_record('course', ['id' => $courseid, 'visible' => 1],
-            'id, fullname, shortname', IGNORE_MISSING);
-        if (!$course) {
+        // C2 fix (2026-09-03, docs/security/UAT-SECURITY-POSTURE-2026-09-03.md):
+        // this used to be $DB->get_record('course', ['id' => $courseid,
+        // 'visible' => 1], ...) — no tenant scoping. This is the LAST line
+        // of defence against cross-tenant self-enrolment even if a
+        // cross-tenant course id reached here directly (e.g. a forged POST
+        // to cart.php's "enrol all free" action, bypassing course.php's own
+        // guard entirely). Gates on $userid (the user being enrolled), not
+        // necessarily the current session $USER — callers may enrol a
+        // specific target user.
+        try {
+            catalog_manager::assert_course_visible_to_viewer($courseid, $userid);
+        } catch (\moodle_exception $e) {
             return false;
         }
 
