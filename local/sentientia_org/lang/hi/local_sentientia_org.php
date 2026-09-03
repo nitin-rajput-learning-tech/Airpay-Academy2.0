@@ -56,7 +56,7 @@ $string['brand_color']      = 'ब्रांड रंग (hex)';
 $string['button_color']     = 'बटन रंग (hex)';
 $string['hover_color']      = 'हॉवर रंग (hex)';
 $string['theme_scheme']     = 'थीम स्कीम';
-$string['branding_help']    = 'sentientia थीम के लिए प्रति-टेनेंट ओवरराइड। साइट डिफ़ॉल्ट इस्तेमाल करने के लिए खाली छोड़ें। Hex प्रारूप जैसे #0066A7।';
+$string['branding_help']    = 'airpayux थीम के लिए प्रति-टेनेंट ओवरराइड। साइट डिफ़ॉल्ट इस्तेमाल करने के लिए खाली छोड़ें। Hex प्रारूप जैसे #0066A7।';
 $string['visible']          = 'दृश्यता';
 $string['visible_yes']      = 'सक्रिय (यूज़र्स को दिखाई देता है)';
 $string['visible_no']       = 'छिपा (केवल एडमिन)';
@@ -84,3 +84,4 @@ $string['orgvisibilitychanged'] = 'संगठन दृश्यता अप�
 
 // Privacy.
 $string['privacy:metadata'] = 'एयरपे संगठन प्लगइन प्लगइन-स्वामित्व वाली तालिकाओं में व्यक्तिगत डेटा संग्रहीत नहीं करता है; यूज़र स्थिति संबंधित प्रदाताओं द्वारा निर्यात की गई कोर Sentientia LMS तालिकाओं पर रहती है।';
+$string['org_logo'] = 'संगठन का लोगो';

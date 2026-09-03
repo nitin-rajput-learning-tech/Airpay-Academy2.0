@@ -25,7 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 // Plugin identity.
-$string['pluginname'] = 'Sentientia Organization Engine';
+$string['pluginname'] = 'Airpay Organization Engine';
 
 // Capabilities.
 $string['sentientia_org:manage'] = 'Manage organizations';
@@ -72,7 +72,7 @@ $string['brand_color']       = 'Brand colour (hex)';
 $string['button_color']      = 'Button colour (hex)';
 $string['hover_color']       = 'Hover colour (hex)';
 $string['theme_scheme']      = 'Theme scheme';
-$string['branding_help']     = 'Per-tenant overrides for the sentientia theme. Leave blank to use site defaults. Hex format e.g. #0066A7.';
+$string['branding_help']     = 'Per-tenant overrides for the airpayux theme. Leave blank to use site defaults. Hex format e.g. #0066A7.';
 $string['visible']           = 'Visibility';
 $string['visible_yes']       = 'Active (visible to users)';
 $string['visible_no']        = 'Hidden (admin-only)';
@@ -99,4 +99,5 @@ $string['orgdeleted']            = 'Organisation deleted.';
 $string['orgvisibilitychanged']  = 'Organisation visibility updated.';
 
 // Privacy.
-$string['privacy:metadata'] = 'The sentientia_org plugin does not store personal data in plugin-owned tables; user state lives on core Sentientia LMS tables exported by their respective providers.';
+$string['privacy:metadata'] = 'The Airpay sentientia_org plugin does not store personal data in plugin-owned tables; user state lives on core Sentientia LMS tables exported by their respective providers.';
+$string['org_logo'] = 'Organisation logo';
