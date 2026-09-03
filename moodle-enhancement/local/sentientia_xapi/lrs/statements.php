@@ -101,7 +101,7 @@ if ($method === 'GET') {
             'result'    => $row->result ? json_decode($row->result, true) : null,
             'context'   => $row->context ? json_decode($row->context, true) : null,
             'timestamp' => $row->timestamp ? date('c', $row->timestamp) : null,
-            'stored'    => date('c', $row->stored),
+            'stored'    => date('c', $row->timestored),   // xAPI JSON key stays 'stored'; DB column is timestored.
         ]);
     }
 
@@ -116,7 +116,7 @@ if ($method === 'GET') {
             'id'        => $row->statementid,
             'verb'      => $row->verb,
             'objectId'  => $row->objectid,
-            'stored'    => date('c', $row->stored),
+            'stored'    => date('c', $row->timestored),   // xAPI JSON key stays 'stored'; DB column is timestored.
             'voided'    => (bool) $row->voided,
         ];
     }

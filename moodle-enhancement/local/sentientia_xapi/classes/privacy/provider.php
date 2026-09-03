@@ -39,7 +39,7 @@ class provider implements
                 'object'     => 'privacy:metadata:local_sentientia_xapi_statements:object',
                 'result'     => 'privacy:metadata:local_sentientia_xapi_statements:result',
                 'context'    => 'privacy:metadata:local_sentientia_xapi_statements:context',
-                'stored'     => 'privacy:metadata:local_sentientia_xapi_statements:stored',
+                'timestored' => 'privacy:metadata:local_sentientia_xapi_statements:timestored',
             ],
             'privacy:metadata:local_sentientia_xapi_statements'
         );
@@ -84,8 +84,8 @@ class provider implements
             'local_sentientia_xapi_stmts',
             'actorid = :uid',
             ['uid' => $userid],
-            'stored DESC',
-            'statementid, verb, objectid, score_scaled, success, completion, stored'
+            'timestored DESC',
+            'statementid, verb, objectid, score_scaled, success, completion, timestored'
         );
 
         writer::with_context(\context_system::instance())->export_data(

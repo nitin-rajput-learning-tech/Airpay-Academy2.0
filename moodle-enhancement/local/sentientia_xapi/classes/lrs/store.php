@@ -133,7 +133,7 @@ class store {
             ? (string) $data['context']['registration'] : null;
         $record->authority    = isset($data['authority']) ? json_encode($data['authority'], JSON_UNESCAPED_SLASHES) : null;
         $record->timestamp    = $ts;
-        $record->stored       = $now;
+        $record->timestored   = $now;
         $record->source       = substr($source, 0, 32);
         $record->voided       = 0;
         $record->timecreated  = $now;
@@ -203,7 +203,7 @@ class store {
         $sql = "SELECT s.*
                   FROM {local_sentientia_xapi_stmts} s
                  WHERE " . implode(' AND ', $where) . "
-              ORDER BY s.stored DESC";
+              ORDER BY s.timestored DESC";
 
         return array_values($DB->get_records_sql($sql, $params, $offset, $limit));
     }
@@ -247,9 +247,9 @@ class store {
         }
 
         $cutoff = time() - ($retention_days * DAYSECS);
-        return $DB->count_records_select('local_sentientia_xapi_stmts', 'stored < :cutoff',
+        return $DB->count_records_select('local_sentientia_xapi_stmts', 'timestored < :cutoff',
             ['cutoff' => $cutoff])
-            + ($DB->delete_records_select('local_sentientia_xapi_stmts', 'stored < :cutoff',
+            + ($DB->delete_records_select('local_sentientia_xapi_stmts', 'timestored < :cutoff',
                 ['cutoff' => $cutoff]) ? 0 : 0);
     }
 

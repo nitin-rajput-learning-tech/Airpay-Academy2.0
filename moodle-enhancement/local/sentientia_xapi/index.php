@@ -102,7 +102,7 @@ if (empty($statements)) {
         $success_label = $row->success !== null ? ($row->success ? '✓' : '✗') : '–';
 
         $table->data[] = [
-            userdate($row->stored),
+            userdate($row->timestored),
             $actor_label,
             $verb_label,
             $object_label,

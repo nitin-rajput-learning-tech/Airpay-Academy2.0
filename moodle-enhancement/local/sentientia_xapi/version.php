@@ -28,7 +28,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_xapi';
-$plugin->version   = 2026061600;  // YYYYMMDDNN
+$plugin->version   = 2026090300;  // YYYYMMDDNN — 'stored' column renamed 'timestored' (MySQL 8 reserved word; UAT Stage A finding)
 $plugin->requires  = 2024100700;  // Moodle 4.5+
 $plugin->maturity  = MATURITY_ALPHA;
-$plugin->release   = '1.0.0';
+$plugin->release   = '1.0.1';

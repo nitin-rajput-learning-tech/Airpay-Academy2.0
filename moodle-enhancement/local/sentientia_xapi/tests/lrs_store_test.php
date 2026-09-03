@@ -193,7 +193,7 @@ class lrs_store_test extends \advanced_testcase {
         $uuid = $lrs->put($stmt, 1);
 
         // Back-date the stored timestamp to 60 days ago.
-        $DB->set_field('local_sentientia_xapi_stmts', 'stored',
+        $DB->set_field('local_sentientia_xapi_stmts', 'timestored',
             time() - (60 * DAYSECS),
             ['statementid' => $uuid, 'costcenterid' => 1]);
 
@@ -226,7 +226,7 @@ class lrs_store_test extends \advanced_testcase {
         $uuid = $lrs->put($stmt, 1);
 
         // Back-date.
-        $DB->set_field('local_sentientia_xapi_stmts', 'stored',
+        $DB->set_field('local_sentientia_xapi_stmts', 'timestored',
             time() - (3650 * DAYSECS), ['statementid' => $uuid, 'costcenterid' => 1]);
 
         $lrs->purge_old_statements();

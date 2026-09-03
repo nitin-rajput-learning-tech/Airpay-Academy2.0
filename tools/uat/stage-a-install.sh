@@ -30,6 +30,8 @@ echo "docroot=$DOCROOT  wwwroot=$WWWROOT  dataroot=$DATAROOT  db=$DBNAME@$DBHOST
 
 fail() { echo "FAIL: $*"; echo "Log: $LOG"; exit 1; }
 
+cd "$DIRROOT" 2>/dev/null || cd /   # www-data cannot read our home dir; avoid setup.php chdir() warnings.
+
 # ---------- 0. Pre-flight ----------
 [ -f "$DOCROOT/version.php" ] || fail "no Moodle at $DOCROOT (package not extracted?)"
 PHPV=$(php -r 'echo PHP_VERSION;') || fail "php CLI not found"
@@ -45,7 +47,8 @@ MIV=$(php -r 'echo (int)ini_get("max_input_vars");')
 [ "$MIV" -ge 5000 ] || echo "WARN: max_input_vars=$MIV (<5000) - fix php.ini before heavy admin forms"
 
 SUDO=""
-if sudo -n true 2>/dev/null; then SUDO="sudo"; else
+PHPW="php"   # How to run Moodle CLI scripts: as www-data when we can, so dataroot files get the web user's ownership.
+if sudo -n true 2>/dev/null; then SUDO="sudo"; PHPW="sudo -u www-data php"; else
     echo "WARN: no passwordless sudo - dataroot/config ownership steps may fail"
 fi
 
@@ -83,7 +86,7 @@ PHPEOF
     $SUDO chmod 640 "$CONF" 2>/dev/null || true
     echo "config.php written - the public install wizard is now DISABLED"
 fi
-php -l "$DIRROOT/config.php" >/dev/null || fail "config.php syntax error"
+$PHPW -l "$DIRROOT/config.php" >/dev/null || fail "config.php syntax error"
 
 # ---------- 2. dataroot ----------
 if [ ! -d "$DATAROOT" ]; then
@@ -94,7 +97,9 @@ $SUDO chmod 0770 "$DATAROOT" 2>/dev/null || true
 echo "dataroot ready: $(ls -ld "$DATAROOT")"
 
 # ---------- 3. Database reachability + existence ----------
+export DBHOST DBUSER DBPASS DBNAME   # the probe below reads these via getenv()
 php -r '
+    mysqli_report(MYSQLI_REPORT_OFF);
     $h=getenv("DBHOST"); $u=getenv("DBUSER"); $p=getenv("DBPASS"); $d=getenv("DBNAME");
     $m=@mysqli_connect($h,$u,$p,null,3306);
     if(!$m){fwrite(STDERR,"DB connect FAILED: ".mysqli_connect_error()."\n");exit(1);}
@@ -108,21 +113,21 @@ php -r '
 export DBHOST DBUSER DBPASS DBNAME
 
 # ---------- 4. Install (the first 5.2 runtime validation - capture verbatim) ----------
-if php -r 'define("CLI_SCRIPT",1); require getenv("DR")."/config.php"; exit(empty($CFG->version)?1:0);' DR="$DIRROOT" 2>/dev/null; then
+if $PHPW -r "define('CLI_SCRIPT',1); require '$DIRROOT/config.php'; exit(empty(\$CFG->version)?1:0);" 2>/dev/null; then
     echo "Moodle tables already installed - skipping install_database.php"
 else
-    php "$DIRROOT/admin/cli/install_database.php" --agree-license \
+    $PHPW "$DIRROOT/admin/cli/install_database.php" --agree-license \
         --fullname="Sentientia LMS (UAT)" --shortname="SENTIENTIA-UAT" \
         --adminuser=admin --adminpass="$ADMINPASS" --adminemail="$ADMINEMAIL" \
         || fail "install_database.php failed - THIS OUTPUT IS THE P5 EVIDENCE, send the log"
 fi
 
 # ---------- 5. Upgrade + caches + post-install CLIs (guidebook steps 9-10) ----------
-php "$DIRROOT/admin/cli/upgrade.php" --non-interactive --allow-unstable || fail "upgrade.php failed"
-php "$DIRROOT/admin/cli/purge_caches.php" || fail "purge_caches failed"
+$PHPW "$DIRROOT/admin/cli/upgrade.php" --non-interactive --allow-unstable || fail "upgrade.php failed"
+$PHPW "$DIRROOT/admin/cli/purge_caches.php" || fail "purge_caches failed"
 for cli in repair_task_registrations.php enable_oneclick_enrol.php; do
     found=$(find "$DOCROOT/local" -maxdepth 3 -name "$cli" 2>/dev/null | head -1)
-    if [ -n "$found" ]; then php "$found" --apply 2>/dev/null || php "$found" || echo "WARN: $cli nonzero exit"; \
+    if [ -n "$found" ]; then $PHPW "$found" --apply 2>/dev/null || $PHPW "$found" || echo "WARN: $cli nonzero exit"; \
     else echo "WARN: $cli not found under local/ - run manually per guidebook"; fi
 done
 

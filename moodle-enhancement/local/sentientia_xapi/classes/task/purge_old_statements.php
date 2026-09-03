@@ -43,7 +43,7 @@ class purge_old_statements extends \core\task\scheduled_task {
 
         $count = $DB->count_records_select(
             'local_sentientia_xapi_stmts',
-            'stored < :cutoff',
+            'timestored < :cutoff',
             ['cutoff' => $cutoff]
         );
 
@@ -54,7 +54,7 @@ class purge_old_statements extends \core\task\scheduled_task {
 
         $DB->delete_records_select(
             'local_sentientia_xapi_stmts',
-            'stored < :cutoff',
+            'timestored < :cutoff',
             ['cutoff' => $cutoff]
         );
 

@@ -47,8 +47,8 @@
                COMMENT="JSON-encoded authority (LRS-assigned or forwarded from upstream LRS)."/>
         <FIELD NAME="timestamp"     TYPE="int"    LENGTH="10" NOTNULL="false"
                COMMENT="Unix timestamp from the statement timestamp field (may differ from stored)."/>
-        <FIELD NAME="stored"        TYPE="int"    LENGTH="10" NOTNULL="true"  DEFAULT="0"
-               COMMENT="Unix timestamp when the LRS stored the statement. Set by the LRS, never by client."/>
+        <FIELD NAME="timestored"    TYPE="int"    LENGTH="10" NOTNULL="true"  DEFAULT="0"
+               COMMENT="Unix timestamp when the LRS stored the statement. Set by the LRS, never by client. (Renamed from 'stored' 2026-09-03: STORED is a reserved word in MySQL 8 - install failed on UAT MySQL 8.4; MariaDB accepted it.)"/>
         <FIELD NAME="source"        TYPE="char"   LENGTH="32" NOTNULL="true"  DEFAULT="moodle"
                COMMENT="Origin of the statement: moodle (event observer) | lrs (external POST to endpoint) | import."/>
         <FIELD NAME="voided"        TYPE="int"    LENGTH="1"  NOTNULL="true"  DEFAULT="0"
@@ -68,8 +68,8 @@
                COMMENT="Per-user statement history (privacy export, LRS viewer)"/>
         <INDEX NAME="idx_verb"            UNIQUE="false" FIELDS="verb"
                COMMENT="Filter by verb IRI (e.g. all completed statements)"/>
-        <INDEX NAME="idx_stored"          UNIQUE="false" FIELDS="stored"
-               COMMENT="Chronological ordering and retention purge (WHERE stored &lt; cutoff)"/>
+        <INDEX NAME="idx_timestored"      UNIQUE="false" FIELDS="timestored"
+               COMMENT="Chronological ordering and retention purge (WHERE timestored &lt; cutoff)"/>
         <INDEX NAME="idx_registration"    UNIQUE="false" FIELDS="registration"
                COMMENT="cmi5 session lookup by registration UUID"/>
         <INDEX NAME="idx_cid_actor_verb"  UNIQUE="false" FIELDS="costcenterid, actorid, verb"
