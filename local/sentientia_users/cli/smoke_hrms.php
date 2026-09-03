@@ -30,10 +30,10 @@ cli_writeln("Running as: {$admin->email} (id={$caller_userid})");
 
 // Discover a real top-level tenant org to use for company_code.
 $tenant = $DB->get_record_sql(
-    "SELECT id, shortname FROM {local_sentientia_org} WHERE parentid = 0 ORDER BY id ASC",
+    "SELECT id, shortname FROM {local_airpay_org} WHERE parentid = 0 ORDER BY id ASC",
     [], IGNORE_MULTIPLE);
 if (!$tenant) {
-    cli_error('No top-level org found in local_sentientia_org. Seed at least one.');
+    cli_error('No top-level org found in local_airpay_org. Seed at least one.');
 }
 $company_code = $tenant->shortname;
 cli_writeln("Using company_code: $company_code (org id={$tenant->id})");

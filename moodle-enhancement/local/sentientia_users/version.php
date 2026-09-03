@@ -46,10 +46,14 @@ $plugin->component = 'local_sentientia_users';
 // core\session\manager::destroy_user_sessions() (kill_user_sessions was
 // deprecated in 4.5 and surfaced as a notice once the SCIM endpoint —
 // ADR-030 Wave B — became a regular caller).
-$plugin->version   = 2026082900;
+// 2026-09-03 — H1 fix (UAT-SECURITY-POSTURE-2026-09-03): signup_service
+// no longer surfaces an "email already registered" validation error
+// (user-enumeration oracle, CWE-203); register() against an existing
+// email now silently notifies the existing address and returns its id.
+$plugin->version   = 2026090302;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '2.7.5';
+$plugin->release   = '2.7.6';
 $plugin->dependencies = [
     'local_sentientia_org' => 2026051501,
 ];

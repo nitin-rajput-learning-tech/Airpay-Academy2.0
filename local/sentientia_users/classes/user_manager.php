@@ -695,9 +695,10 @@ class user_manager {
         $update = (object) ['id' => $userid, 'suspended' => $newstate ? 1 : 0];
         user_update_user($update, false, true);
 
-        // Kill active sessions if suspending.
+        // End active sessions if suspending. destroy_user_sessions() replaced
+        // kill_user_sessions() in 4.5 (the old name emits a deprecation notice).
         if ($newstate) {
-            \core\session\manager::kill_user_sessions($userid);
+            \core\session\manager::destroy_user_sessions($userid);
         }
 
         return $newstate;

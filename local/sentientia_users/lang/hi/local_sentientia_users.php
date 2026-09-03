@@ -34,6 +34,10 @@ $string['signup_have_account']        = 'क्या आपके पास प
 $string['signup_generic_error']       = 'हम आपका रजिस्ट्रेशन प्रोसेस नहीं कर सके। कृपया फिर से कोशिश करें।';
 $string['signup_validation_failed']   = 'साइन-अप सत्यापन विफल: {$a}';
 
+// H1 fix (UAT-SECURITY-POSTURE-2026-09-03) — existing-account notice.
+$string['signup_existing_account_subject'] = 'किसी ने एयरपे अकैडमी पर आपकी ईमेल से साइन अप करने की कोशिश की';
+$string['signup_existing_account_body']    = 'हमें एयरपे अकैडमी पर इस ईमेल पते से एक नया अकाउंट बनाने का अनुरोध मिला है। आपका यहाँ पहले से एक अकाउंट मौजूद है — अगर यह आपने किया था, तो आप {$a->loginurl} पर लॉग-इन कर सकते हैं, या पासवर्ड भूल जाने पर {$a->forgotpasswordurl} पर उसे रीसेट कर सकते हैं। अगर आपने यह अनुरोध नहीं किया, तो आप इस ईमेल को अनदेखा कर सकते हैं।';
+
 // Privacy + ToS pages.
 $string['privacy_pagetitle'] = 'गोपनीयता नीति — एयरपे अकैडमी';
 $string['privacy_heading']   = 'गोपनीयता नीति';

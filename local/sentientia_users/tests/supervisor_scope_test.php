@@ -23,16 +23,6 @@ defined('MOODLE_INTERNAL') || die();
  */
 final class supervisor_scope_test extends \advanced_testcase {
 
-    // The suite exercises the BizLMS tenant columns, which a vanilla PHPUnit
-    // site doesn't have — provision them via the shared org fixture (matches
-    // the production schema this suite exists to protect).
-    use \local_sentientia_org\test\bizlms_fixture;
-
-    protected function setUp(): void {
-        parent::setUp();
-        $this->ensure_bizlms_schema();
-    }
-
     /** Helper: create a user with a specific open_path. */
     private function seed_user(string $name, string $open_path): \stdClass {
         global $DB;
@@ -72,18 +62,8 @@ final class supervisor_scope_test extends \advanced_testcase {
         global $DB;
 
         $airpay_admin = $this->seed_user('Bravo', '/1');
-        // Move admin into tenant /1.
+        // Move admin into tenant /1, log them in.
         $DB->set_field('user', 'open_path', '/1', ['id' => $airpay_admin->id]);
-
-        // The WS requires local/sentientia_users:view — grant it like a real
-        // L&D-admin role would, WITHOUT siteadmin, so this test still proves
-        // tenant scoping for non-siteadmins. Grant BEFORE setUser(): access
-        // data is cached per-user at login time.
-        $roleid = $this->getDataGenerator()->create_role(['shortname' => 'supsearch']);
-        assign_capability('local/sentientia_users:view', CAP_ALLOW, $roleid,
-            \context_system::instance());
-        role_assign($roleid, $airpay_admin->id, \context_system::instance()->id);
-        accesslib_clear_all_caches_for_unit_testing();
         $this->setUser($airpay_admin);
 
         // Seed: 2 users in /1, 2 in /77.

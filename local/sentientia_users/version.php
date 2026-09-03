@@ -42,10 +42,18 @@ $plugin->component = 'local_sentientia_users';
 // ID #fitem_id_honeypot_url, not a class — the stray empty field is gone);
 // (2) success page no longer double-renders the confirmation message and
 // drops the dismissible-alert close glyph.
-$plugin->version   = 2026080300;
+// 2026-08-29 — user_manager::suspend() ends sessions via
+// core\session\manager::destroy_user_sessions() (kill_user_sessions was
+// deprecated in 4.5 and surfaced as a notice once the SCIM endpoint —
+// ADR-030 Wave B — became a regular caller).
+// 2026-09-03 — H1 fix (UAT-SECURITY-POSTURE-2026-09-03): signup_service
+// no longer surfaces an "email already registered" validation error
+// (user-enumeration oracle, CWE-203); register() against an existing
+// email now silently notifies the existing address and returns its id.
+$plugin->version   = 2026090302;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '2.7.4';  // Manage Users page title (N-08)
+$plugin->release   = '2.7.6';
 $plugin->dependencies = [
     'local_sentientia_org' => 2026051501,
 ];

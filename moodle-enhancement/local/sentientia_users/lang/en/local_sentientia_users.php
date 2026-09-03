@@ -163,6 +163,13 @@ $string['signup_have_account']    = 'Already have an account?';
 $string['signup_generic_error']   = 'We could not process your registration. Please try again.';
 $string['signup_validation_failed'] = 'Sign-up validation failed: {$a}';
 
+// H1 fix (UAT-SECURITY-POSTURE-2026-09-03) — existing-account notice.
+// Sent to the ALREADY-REGISTERED address when someone submits the public
+// signup form with that email; the submitter sees the same generic
+// "check your inbox" outcome as a fresh signup (no enumeration signal).
+$string['signup_existing_account_subject'] = 'Someone tried to sign up with your email at Airpay Academy';
+$string['signup_existing_account_body'] = 'We received a new account request at Airpay Academy using this email address. You already have an account here — if this was you, you can log in at {$a->loginurl}, or reset your password at {$a->forgotpasswordurl} if you have forgotten it. If you did not request this, you can safely ignore this email.';
+
 // Settings page.
 $string['settings_heading']        = 'Airpay Users — settings';
 $string['organization_shortname']  = 'Default organisation shortname';

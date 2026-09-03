@@ -15,10 +15,15 @@ defined('MOODLE_INTERNAL') || die();
  *   - validate() rejects malformed email
  *   - validate() rejects mismatched passwords
  *   - validate() rejects unticked ToS checkbox
- *   - validate() rejects email collision with existing non-deleted user
+ *   - validate() does NOT flag an email collision (H1 fix,
+ *     UAT-SECURITY-POSTURE-2026-09-03 — that was a user-enumeration
+ *     oracle on the public signup endpoint)
  *   - register() creates a user with auth='email' + confirmed=0
  *   - register() pins the new user to the configured tenant path
  *   - register() refuses when feature flag is OFF
+ *   - register() against an already-registered email is idempotent:
+ *     no duplicate user row, no exception, same return shape, and the
+ *     outcome does not depend on $CFG->noemailever (H1 fix)
  *   - confirm() flips confirmed=1 when the secret matches
  *   - confirm() rejects a tampered secret
  *
@@ -76,14 +81,19 @@ final class signup_service_test extends \advanced_testcase {
         $this->assertArrayHasKey('agree_tos', $errors);
     }
 
-    public function test_validate_rejects_email_collision(): void {
+    public function test_validate_does_not_flag_email_collision(): void {
+        // H1 fix (UAT-SECURITY-POSTURE-2026-09-03): a distinct "email
+        // already registered" validation error on this public,
+        // unauthenticated form is a user-enumeration oracle (CWE-203).
+        // validate() must pass a well-formed payload through cleanly
+        // even when the email already belongs to another account —
+        // register() resolves the collision silently instead.
         $this->resetAfterTest();
-        $existing = $this->getDataGenerator()->create_user([
-            'email' => 'taken@example.org',
-        ]);
+        $this->getDataGenerator()->create_user(['email' => 'taken@example.org']);
         $errors = signup_service::validate(
             $this->valid_payload(['email' => 'taken@example.org']));
-        $this->assertArrayHasKey('email', $errors);
+        $this->assertArrayNotHasKey('email', $errors);
+        $this->assertSame([], $errors);
     }
 
     public function test_register_refuses_when_disabled(): void {
@@ -176,9 +186,7 @@ final class signup_service_test extends \advanced_testcase {
 
     public function test_username_collision_appends_suffix(): void {
         // First signup with alice@example.org → username 'alice@example.org'
-        // (Moodle allows @ in usernames). Second signup with same email
-        // should be rejected at the email-uniqueness check, not produce a
-        // username clash.
+        // (Moodle allows @ in usernames).
         $this->resetAfterTest();
         set_config('activeregistration', 1, 'local_sentientia_users');
         global $DB;
@@ -190,8 +198,42 @@ final class signup_service_test extends \advanced_testcase {
         // Username should be derivable from email.
         $this->assertSame(strtolower($email), $first->username);
 
-        // Now try to register the SAME email again — should fail at validate().
-        $this->expectException(\moodle_exception::class);
-        signup_service::register($this->valid_payload(['email' => $email]));
+        // H1 fix: registering the SAME email again must succeed silently
+        // (same id back, no exception, no second row) rather than error
+        // out — an exception here would itself leak "this email exists".
+        $secondid = signup_service::register($this->valid_payload(['email' => $email]));
+        $this->assertSame($newid, $secondid);
+        $this->assertSame(1, $DB->count_records_select('user',
+            'LOWER(email) = :email AND deleted = 0', ['email' => strtolower($email)]));
+    }
+
+    public function test_register_existing_email_is_idempotent_and_enumeration_safe(): void {
+        // H1 fix (UAT-SECURITY-POSTURE-2026-09-03): the public signup
+        // endpoint must respond identically for a brand-new email and an
+        // already-registered one. This locks in that register() against
+        // an existing email:
+        //   - does not throw
+        //   - does not create a second user row
+        //   - returns the same id every time (same outward shape as a
+        //     fresh registration returning a new id)
+        //   - behaves the same whether or not mail is actually sendable,
+        //     since noemailever may be on in this environment.
+        $this->resetAfterTest();
+        set_config('activeregistration', 1, 'local_sentientia_users');
+        global $DB, $CFG;
+        $CFG->noemailever = true;
+
+        $email = 'dup_' . uniqid('', true) . '@example.org';
+        $firstid = signup_service::register($this->valid_payload(['email' => $email]));
+
+        $secondid = signup_service::register($this->valid_payload(['email' => $email]));
+        $thirdid  = signup_service::register($this->valid_payload(['email' => strtoupper($email)]));
+
+        $this->assertSame($firstid, $secondid);
+        $this->assertSame($firstid, $thirdid,
+            'Email comparison must stay case-insensitive for the existing-account branch too');
+        $this->assertSame(1, $DB->count_records_select('user',
+            'LOWER(email) = :email AND deleted = 0', ['email' => strtolower($email)]),
+            'No duplicate account should be created for a repeat signup');
     }
 }

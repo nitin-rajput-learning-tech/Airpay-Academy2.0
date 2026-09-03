@@ -42,7 +42,7 @@ class welcome_mailer {
     public const DEFAULT_BODY = <<<TEMPLATE
 Hi [employee_name],
 
-Welcome to [employee_organization]. Your account has been created.
+Welcome to [employee_organization]. Your Airpay Academy account has been created.
 
 Username:  [employee_username]
 Email:     [employee_email]
@@ -50,9 +50,9 @@ Password:  [employee_password]
 
 Please log in at the link below and change your password on first use.
 
-Need help? Email [support_email].
+Need help? Email academy@airpay.co.in.
 
-— The [employee_organization] team
+— Airpay Academy team
 TEMPLATE;
 
     /**
@@ -80,10 +80,6 @@ TEMPLATE;
                 'employee_username'     => (string) $user->username,
                 'employee_password'     => $plain_password,
                 'employee_organization' => $org_name,
-                // White-label (D3): support contact is config-backed; the
-                // customer-zero address remains the default.
-                'support_email'         => (string) (get_config('local_sentientia_users',
-                    'support_email') ?: 'academy@airpay.co.in'),
             ];
 
             [$subject_template, $body_template] = self::load_templates($tenantid);

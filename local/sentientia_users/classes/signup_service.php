@@ -49,7 +49,6 @@ class signup_service {
      *                       password, password2, country, lang, agree_tos)
      */
     public static function validate(object $data): array {
-        global $DB, $CFG;
         $errors = [];
 
         // Required fields.
@@ -69,20 +68,14 @@ class signup_service {
             return $errors;
         }
 
-        // Email uniqueness — check against any non-deleted user.
-        if ($DB->record_exists_select('user',
-            'LOWER(email) = :email AND deleted = 0',
-            ['email' => $email])) {
-            $errors['email'] = get_string('emailexists');
-        }
-
-        // Derived username from email — also must be unique.
-        $username = self::derive_username($email);
-        if ($DB->record_exists_select('user',
-            'LOWER(username) = :u AND mnethostid = :h',
-            ['u' => $username, 'h' => $CFG->mnet_localhost_id])) {
-            $errors['email'] = get_string('emailexists');
-        }
+        // ── H1 fix (UAT-SECURITY-POSTURE-2026-09-03) ────────────────────
+        // Deliberately NOT checking email/derived-username uniqueness
+        // here. Surfacing a distinct "this email is already registered"
+        // error on a public, unauthenticated endpoint is a user-
+        // enumeration oracle (CWE-203). Uniqueness is resolved silently
+        // inside register(), which returns the same outward result
+        // (a userid, no exception) whether the account is new or already
+        // exists — see register()'s "existing account" branch.
 
         // Password match.
         if ($data->password !== $data->password2) {
@@ -106,12 +99,14 @@ class signup_service {
     }
 
     /**
-     * Create the user + dispatch the confirmation email. Returns the new
-     * userid on success. Throws \moodle_exception on validation failure or
-     * DB write failure.
+     * Create the user + dispatch the confirmation email. Returns a userid
+     * on success — either the newly-created account, or (H1 fix, see
+     * below) the id of an already-existing account. Throws
+     * \moodle_exception on validation failure or DB write failure.
      *
      * @param object $data  Validated form data (call validate() first).
-     * @return int  New user.id
+     * @return int  user.id — new or pre-existing (never distinguishable
+     *              to the caller; see the "existing account" branch)
      */
     public static function register(object $data): int {
         global $DB, $CFG;
@@ -123,7 +118,9 @@ class signup_service {
         }
 
         // Re-validate inside the service so the WS/API path is safe even
-        // when callers skip the form layer.
+        // when callers skip the form layer. NOTE: as of the H1 fix
+        // (UAT-SECURITY-POSTURE-2026-09-03), validate() never flags an
+        // "email already exists" state — see the comment in validate().
         $errors = self::validate($data);
         if (!empty($errors)) {
             throw new \moodle_exception('signup_validation_failed',
@@ -131,6 +128,23 @@ class signup_service {
         }
 
         $email = strtolower(trim($data->email));
+
+        // ── H1 fix (UAT-SECURITY-POSTURE-2026-09-03) ────────────────────
+        // An account with this email already exists. To avoid confirming
+        // or denying account existence to whoever submitted the form, do
+        // NOT throw and do NOT take a visibly different code path here:
+        // notify the EXISTING address instead (a safe no-op under
+        // $CFG->noemailever — see notify_existing_account()) and return
+        // its id exactly as a fresh registration would return a new one.
+        // signup.php always redirects to the same "check your inbox"
+        // success view regardless of which branch ran.
+        $existing = $DB->get_record_select('user',
+            'LOWER(email) = :email AND deleted = 0', ['email' => $email]);
+        if ($existing) {
+            self::notify_existing_account($existing);
+            return (int) $existing->id;
+        }
+
         $username = self::derive_username($email);
 
         $tenant_path = self::get_tenant_path();
@@ -344,5 +358,42 @@ class signup_service {
         //   - subject + body strings (auth_emailconfirmation)
         //   - fall through to email_to_user() with the noreply user
         return send_confirmation_email($user);
+    }
+
+    /**
+     * H1 fix (UAT-SECURITY-POSTURE-2026-09-03) — someone submitted the
+     * public signup form using an email that already has an account.
+     * Rather than tell THEM (a user-enumeration oracle), tell the
+     * account owner, using core email_to_user() directly.
+     *
+     * email_to_user() already no-ops safely (returns true without
+     * sending) whenever $CFG->noemailever is set, so this call can
+     * never make register()'s caller-visible outcome depend on whether
+     * mail is actually delivered — it is wrapped in a try/catch as a
+     * second line of defence for the same reason.
+     */
+    private static function notify_existing_account(\stdClass $user): bool {
+        global $CFG;
+        require_once($CFG->dirroot . '/lib/moodlelib.php');
+
+        try {
+            $noreply = \core_user::get_noreply_user();
+            $subject = get_string('signup_existing_account_subject',
+                'local_sentientia_users');
+            $body = get_string('signup_existing_account_body',
+                'local_sentientia_users', (object) [
+                    'loginurl'          => (new \moodle_url('/login/index.php'))->out(false),
+                    'forgotpasswordurl' => (new \moodle_url('/login/forgot_password.php'))->out(false),
+                ]);
+            return (bool) email_to_user($user, $noreply, $subject, $body);
+        } catch (\Throwable $e) {
+            // Defensive, same posture as the user_type write in
+            // register(): a mail failure here must never surface to the
+            // caller — that would itself be an observable difference
+            // from the fresh-signup path.
+            debugging('Signup: existing-account notice failed for userid='
+                . $user->id . ': ' . $e->getMessage(), DEBUG_DEVELOPER);
+            return false;
+        }
     }
 }
