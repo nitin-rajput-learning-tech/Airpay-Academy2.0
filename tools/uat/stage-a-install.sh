@@ -124,6 +124,22 @@ fi
 
 # ---------- 5. Upgrade + caches + post-install CLIs (guidebook steps 9-10) ----------
 $PHPW "$DIRROOT/admin/cli/upgrade.php" --non-interactive --allow-unstable || fail "upgrade.php failed"
+
+# ---------- 5b. Finish the install if install_database.php's tail never ran ----------
+# (Happens when a plugin's schema aborted the first run and we resumed via upgrade.php:
+#  rolesactive stays 0 and the admin password is the literal placeholder -> every page
+#  303s to admin/index.php and dies with "Installation must be finished from the original IP".)
+if $PHPW -r "define('CLI_SCRIPT',1); require '$DIRROOT/config.php'; exit((empty(\$CFG->rolesactive) || \$DB->get_field('user','password',['username'=>'admin']) === 'adminsetuppending') ? 0 : 1);" 2>/dev/null; then
+    echo "install tail missing (rolesactive=0 or admin placeholder) - running finish_install.php"
+    FIN="$(dirname "$0")/finish_install.php"
+    [ -f "$FIN" ] || fail "finish_install.php not found next to this script"
+    $SUDO cp "$FIN" /tmp/finish_install.php && $SUDO chmod 644 /tmp/finish_install.php
+    ${SUDO:+$SUDO -u www-data} env ADMINPASS="$ADMINPASS" ADMINEMAIL="$ADMINEMAIL" \
+        FULLNAME="Sentientia LMS (UAT)" SHORTNAME="SENTIENTIA-UAT" MOODLE_CONFIG="$DIRROOT/config.php" \
+        php /tmp/finish_install.php || fail "finish_install.php failed"
+    $SUDO rm -f /tmp/finish_install.php
+fi
+
 $PHPW "$DIRROOT/admin/cli/purge_caches.php" || fail "purge_caches failed"
 for cli in repair_task_registrations.php enable_oneclick_enrol.php; do
     found=$(find "$DOCROOT/local" -maxdepth 3 -name "$cli" 2>/dev/null | head -1)
