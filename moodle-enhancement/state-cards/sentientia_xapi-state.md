@@ -6,6 +6,14 @@
 **Author:** Claude (Sonnet 4.6)
 **Status:** COMPLETE — ready for Nitin review
 
+> **2026-09-03 — 1.0.1 (2026090300), UAT Stage A finding:** the `local_sentientia_xapi_stmts.stored`
+> column broke the fresh install on UAT (MySQL 8.4): `STORED` is a MySQL 8 reserved word (generated
+> columns), MariaDB accepted it unquoted so local + the P4 static pass never saw it. Renamed to
+> `timestored` (field + index `idx_timestored`, store/statements/index/privacy/purge task/tests, en+hi
+> lang key); upgrade step renames the field on existing installs (verified on local XAMPP). The xAPI
+> JSON response key `stored` is unchanged. Repo-wide scan of all 49 `install.xml` files against the
+> MySQL 8.4 reserved-word list found no other hits.
+
 ---
 
 ## What was built
