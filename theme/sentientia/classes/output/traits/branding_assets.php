@@ -83,7 +83,11 @@ trait branding_assets {
         $loginlogo = $this->page->theme->setting_file_url(
             'loginlogo', 'loginlogo');
         if (empty($loginlogo)) {
-            $loginlogo = $this->image_url('login_logo', 'theme_sentientia');
+            // SENTIENTIA (UAT Stage A, 2026-09-03): the historical fallback pix/login_logo.png is
+            // the stock "moodle BizLMS" vendor mark, which surfaced on the mobile-width login
+            // page of every site without an uploaded login logo. Fall back to the brand asset
+            // the desktop hero already uses; the upload setting still wins when present.
+            $loginlogo = $this->image_url('brand/academy-logo-350', 'theme_sentientia');
         }
         return $loginlogo;
     }

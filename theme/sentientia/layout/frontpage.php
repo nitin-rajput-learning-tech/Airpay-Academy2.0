@@ -256,6 +256,11 @@ echo $OUTPUT->doctype();
     .ap-course__btn--outline:hover { border-color: var(--ap-primary); color: var(--ap-primary); }
     .ap-course__btn--fill { border: 1.5px solid var(--ap-primary); color: #fff; background: var(--ap-primary); }
     .ap-course__btn--fill:hover { background: var(--ap-primary-dark); color: #fff; }
+    /* Empty state (no featured courses yet) — keeps #ap-courses a live anchor. */
+    .ap-courses__empty { max-width: 560px; margin: 0 auto; text-align: center; background: var(--ap-surface); border: 1px dashed var(--ap-border); border-radius: 16px; padding: 40px 32px; }
+    .ap-courses__empty-icon { width: 56px; height: 56px; border-radius: 14px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; background: var(--ap-primary-light); color: var(--ap-primary); }
+    .ap-courses__empty h3 { font-size: 1.15rem; font-weight: 700; color: var(--ap-text); margin: 0 0 8px; }
+    .ap-courses__empty p { font-size: 0.9rem; color: var(--ap-text-secondary); line-height: 1.6; margin: 0 0 20px; }
 
     /* ================================================================
        6. LEARNING PILLARS
@@ -480,7 +485,13 @@ echo $OUTPUT->doctype();
 <!-- ═══════════════════════════════════════════════════════════════
      5. FEATURED COURSES
      ═══════════════════════════════════════════════════════════════ -->
-<?php if (!empty($featured)): ?>
+<?php
+// SENTIENTIA (UAT Stage A, 2026-09-03): the section always renders so the navbar "Courses"
+// link and the hero "Explore Courses" button (#ap-courses) have a target on a site with
+// no featured courses yet (fresh install / new tenant); an empty state points at the
+// guest-visible public catalog instead of a dead anchor.
+$catalogurl = new moodle_url('/local/sentientia_catalog/public.php');
+?>
 <section class="ap-courses ap-reveal" id="ap-courses">
     <div class="ap-section-wrap">
         <div class="ap-courses__header">
@@ -488,6 +499,14 @@ echo $OUTPUT->doctype();
             <h2>Featured Courses</h2>
             <p>Expert-led programs designed for real-world impact in financial services.</p>
         </div>
+        <?php if (empty($featured)): ?>
+        <div class="ap-courses__empty">
+            <div class="ap-courses__empty-icon"><i class="fa fa-book"></i></div>
+            <h3>The catalog is being curated</h3>
+            <p>Featured courses appear here as soon as learners start enrolling. Browse everything that is open to you in the meantime.</p>
+            <a href="<?php echo $catalogurl->out(); ?>" class="ap-course__btn ap-course__btn--fill">Browse the course catalog <i class="fa fa-arrow-right"></i></a>
+        </div>
+        <?php else: ?>
         <div class="ap-courses__grid">
             <?php $i = 0; foreach ($featured as $course):
                 $summary = shorten_text(strip_tags(format_string($course->summary)), 100);
@@ -527,9 +546,9 @@ echo $OUTPUT->doctype();
             </div>
             <?php $i++; endforeach; ?>
         </div>
+        <?php endif; ?>
     </div>
 </section>
-<?php endif; ?>
 
 <!-- ═══════════════════════════════════════════════════════════════
      6. LEARNING PILLARS

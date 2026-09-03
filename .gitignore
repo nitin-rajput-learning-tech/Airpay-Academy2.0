@@ -124,3 +124,6 @@ content/scorm-output/
 # Local doc-generation build dir (node_modules + throwaway scripts)
 .tools/docgen/
 moodle-enhancement/tools/gap-test/reports/
+
+# UAT shared test-account credentials (never commit) - 2026-09-03
+moodle-enhancement/docs/cutover/uat-credentials/

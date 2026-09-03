@@ -154,7 +154,11 @@ $PHPW -r "define('CLI_SCRIPT',1); require '$DIRROOT/config.php';
     set_config('enablemyhome', 1);
     set_config('frontpage', '');
     set_config('frontpageloggedin', '');
-    echo 'posture: theme=sentientia forcelogin=0 enablemyhome=1 frontpage=\"\"', PHP_EOL;" || fail "posture step failed"
+    // Footer: airpay.academy hides Moodle's generic 'Get the mobile app' + 'Data retention
+    // summary' links (fresh-install defaults show both; Nitin flagged them on UAT 2026-09-03).
+    set_config('setuplink', '', 'tool_mobile');
+    set_config('showdataretentionsummary', 0, 'tool_dataprivacy');
+    echo 'posture: theme=sentientia forcelogin=0 enablemyhome=1 frontpage=\"\" footer-links=off', PHP_EOL;" || fail "posture step failed"
 # Tenant substrate (open_* columns on {user}/{course}): local_sentientia_core ships a
 # db/install.php since 2026090301; packages built before that only add them on UPGRADE.
 # The CLI is idempotent - belt and braces for older packages.
