@@ -4,7 +4,7 @@
 |-------|-------|
 | **Component** | `local_sentientia_core` |
 | **Role** | The "Sentientia layer" — the product's tenancy/org abstraction seams that sit ABOVE the BizLMS (`local_airpay_core` / `local_costcenter`) heritage. The decoupling foundation for ADR-018 independence. |
-| **Version** | `2026060105` / `0.6.1-alpha` (MATURITY_ALPHA) |
+| **Version** | `2026090301` / `0.7.0-alpha` (MATURITY_ALPHA) — 2026-09-03: NEW `db/install.php` provisions the open_* substrate on FRESH installs (was upgrade-only since 2026060400 → UAT Stage A came up without the 55 columns; see `docs/core-mods/2026-06-04-open-substrate-ownership.md` addendum) |
 | **Owner** | Nitin Rajput |
 | **Status** | Seams shipped + default-legacy (dormant). Wave 4 registry + Wave 3.2a org model + Wave 3.2b dual-write reconciler + Wave 3.3 backfill/parity CLIs built + locally rehearsed (2,883 users, **100% parity**); live cutover + dual-write enable gated on Nitin's deploy. |
 | **Standalone?** | Yes — every delegation to `local_airpay_core` is `class_exists()`-guarded with an inline fallback, so the plugin ships for Enterprise N with no airpay_core present. |

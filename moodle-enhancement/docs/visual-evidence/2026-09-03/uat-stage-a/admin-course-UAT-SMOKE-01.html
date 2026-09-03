@@ -1,0 +1,1313 @@
+<!DOCTYPE html>
+
+<html  dir="ltr" lang="en" xml:lang="en">
+<head>
+    <title>Course: UAT Smoke 01 | SENTIENTIA-UAT</title>
+    <link rel="shortcut icon" href="https://academy2.airpay.ninja/theme/image.php/sentientia/theme/1788403724/favicon" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="keywords" content="moodle, Course: UAT Smoke 01 | SENTIENTIA-UAT" />
+<link rel="stylesheet" type="text/css" href="https://academy2.airpay.ninja/theme/yui_combo.php?rollup/3.18.1/yui-moodlesimple-min.css" /><script id="firstthemesheet" type="text/css">/** Required in order to fix style inclusion problems in IE with YUI **/</script><link rel="stylesheet" type="text/css" href="https://academy2.airpay.ninja/theme/styles.php/sentientia/1788403724_1788401508/all" />
+<script>
+//<![CDATA[
+var M = {}; M.yui = {};
+M.pageloadstarttime = new Date();
+M.cfg = {"wwwroot":"https:\/\/academy2.airpay.ninja","apibase":"https:\/\/academy2.airpay.ninja\/api","homeurl":{},"sesskey":"REDACTED","sessiontimeout":"28800","sessiontimeoutwarning":"1200","themerev":"1788403724","slasharguments":1,"theme":"sentientia","iconsystemmodule":"core\/icon_system_fontawesome","jsrev":"1788403724","admin":"admin","svgicons":true,"usertimezone":"Europe\/London","language":"en","courseId":2,"courseContextId":16,"contextid":16,"contextInstanceId":2,"langrev":1788403724,"templaterev":"1788403724","siteId":1,"userId":2,"deprecationignorelist":[],"traceId":null};var yui1ConfigFn = function(me) {if(/-skin|reset|fonts|grids|base/.test(me.name)){me.type='css';me.path=me.path.replace(/\.js/,'.css');me.path=me.path.replace(/\/yui2-skin/,'/assets/skins/sam/yui2-skin')}};
+var yui2ConfigFn = function(me) {var parts=me.name.replace(/^moodle-/,'').split('-'),component=parts.shift(),module=parts[0],min='-min';if(/-(skin|core)$/.test(me.name)){parts.pop();me.type='css';min=''}
+if(module){var filename=parts.join('-');me.path=component+'/'+module+'/'+filename+min+'.'+me.type}else{me.path=component+'/'+component+'.'+me.type}};
+YUI_config = {"debug":false,"base":"https:\/\/academy2.airpay.ninja\/lib\/yuilib\/3.18.1\/","comboBase":"https:\/\/academy2.airpay.ninja\/theme\/yui_combo.php?","combine":true,"filter":null,"insertBefore":"firstthemesheet","groups":{"yui2":{"base":"https:\/\/academy2.airpay.ninja\/lib\/yuilib\/2in3\/2.9.0\/build\/","comboBase":"https:\/\/academy2.airpay.ninja\/theme\/yui_combo.php?","combine":true,"ext":false,"root":"2in3\/2.9.0\/build\/","patterns":{"yui2-":{"group":"yui2","configFn":yui1ConfigFn}}},"moodle":{"name":"moodle","base":"https:\/\/academy2.airpay.ninja\/theme\/yui_combo.php?m\/1788403724\/","combine":true,"comboBase":"https:\/\/academy2.airpay.ninja\/theme\/yui_combo.php?","ext":false,"root":"m\/1788403724\/","patterns":{"moodle-":{"group":"moodle","configFn":yui2ConfigFn}},"filter":null,"modules":{"moodle-core-chooserdialogue":{"requires":["base","panel","moodle-core-notification"]},"moodle-core-actionmenu":{"requires":["base","event","node-event-simulate"]},"moodle-core-lockscroll":{"requires":["plugin","base-build"]},"moodle-core-maintenancemodetimer":{"requires":["base","node"]},"moodle-core-notification":{"requires":["moodle-core-notification-dialogue","moodle-core-notification-alert","moodle-core-notification-exception","moodle-core-notification-ajaxexception"]},"moodle-core-notification-dialogue":{"requires":["base","node","panel","escape","event-key","dd-plugin","moodle-core-widget-focusafterclose","moodle-core-lockscroll"]},"moodle-core-notification-alert":{"requires":["moodle-core-notification-dialogue"]},"moodle-core-notification-exception":{"requires":["moodle-core-notification-dialogue"]},"moodle-core-notification-ajaxexception":{"requires":["moodle-core-notification-dialogue"]},"moodle-core-blocks":{"requires":["base","node","io","dom","dd","dd-scroll","moodle-core-dragdrop","moodle-core-notification"]},"moodle-core-dragdrop":{"requires":["base","node","io","dom","dd","event-key","event-focus","moodle-core-notification"]},"moodle-core-event":{"requires":["event-custom"]},"moodle-core-handlebars":{"condition":{"trigger":"handlebars","when":"after"}},"moodle-core_availability-form":{"requires":["base","node","event","event-delegate","panel","moodle-core-notification-dialogue","json"]},"moodle-course-categoryexpander":{"requires":["node","event-key"]},"moodle-course-util":{"requires":["node"],"use":["moodle-course-util-base"],"submodules":{"moodle-course-util-base":{},"moodle-course-util-section":{"requires":["node","moodle-course-util-base"]},"moodle-course-util-cm":{"requires":["node","moodle-course-util-base"]}}},"moodle-course-management":{"requires":["base","node","io-base","moodle-core-notification-exception","json-parse","dd-constrain","dd-proxy","dd-drop","dd-delegate","node-event-delegate"]},"moodle-course-dragdrop":{"requires":["base","node","io","dom","dd","dd-scroll","moodle-core-dragdrop","moodle-core-notification","moodle-course-coursebase","moodle-course-util"]},"moodle-form-shortforms":{"requires":["node","base","selector-css3","moodle-core-event"]},"moodle-form-dateselector":{"requires":["base","node","overlay","calendar"]},"moodle-question-searchform":{"requires":["base","node"]},"moodle-availability_completion-form":{"requires":["base","node","event","moodle-core_availability-form"]},"moodle-availability_date-form":{"requires":["base","node","event","io","moodle-core_availability-form"]},"moodle-availability_grade-form":{"requires":["base","node","event","moodle-core_availability-form"]},"moodle-availability_group-form":{"requires":["base","node","event","moodle-core_availability-form"]},"moodle-availability_grouping-form":{"requires":["base","node","event","moodle-core_availability-form"]},"moodle-availability_profile-form":{"requires":["base","node","event","moodle-core_availability-form"]},"moodle-mod_assign-history":{"requires":["node","transition"]},"moodle-mod_quiz-toolboxes":{"requires":["base","node","event","event-key","io","moodle-mod_quiz-quizbase","moodle-mod_quiz-util-slot","moodle-core-notification-ajaxexception"]},"moodle-mod_quiz-util":{"requires":["node","moodle-core-actionmenu"],"use":["moodle-mod_quiz-util-base"],"submodules":{"moodle-mod_quiz-util-base":{},"moodle-mod_quiz-util-slot":{"requires":["node","moodle-mod_quiz-util-base"]},"moodle-mod_quiz-util-page":{"requires":["node","moodle-mod_quiz-util-base"]}}},"moodle-mod_quiz-modform":{"requires":["base","node","event"]},"moodle-mod_quiz-dragdrop":{"requires":["base","node","io","dom","dd","dd-scroll","moodle-core-dragdrop","moodle-core-notification","moodle-mod_quiz-quizbase","moodle-mod_quiz-util-base","moodle-mod_quiz-util-page","moodle-mod_quiz-util-slot","moodle-course-util"]},"moodle-mod_quiz-autosave":{"requires":["base","node","event","event-valuechange","node-event-delegate","io-form","datatype-date-format"]},"moodle-mod_quiz-quizbase":{"requires":["base","node"]},"moodle-mod_quiz-questionchooser":{"requires":["moodle-core-chooserdialogue","moodle-mod_quiz-util","querystring-parse"]},"moodle-message_airnotifier-toolboxes":{"requires":["base","node","io"]},"moodle-report_eventlist-eventfilter":{"requires":["base","event","node","node-event-delegate","datatable","autocomplete","autocomplete-filters"]},"moodle-report_loglive-fetchlogs":{"requires":["base","event","node","io","node-event-delegate"]},"moodle-gradereport_history-userselector":{"requires":["escape","event-delegate","event-key","handlebars","io-base","json-parse","moodle-core-notification-dialogue"]},"moodle-qbank_editquestion-chooser":{"requires":["moodle-core-chooserdialogue"]},"moodle-tool_lp-dragdrop-reorder":{"requires":["moodle-core-dragdrop"]},"moodle-assignfeedback_editpdf-editor":{"requires":["base","event","node","io","graphics","json","event-move","event-resize","transition","querystring-stringify-simple","moodle-core-notification-dialog","moodle-core-notification-alert","moodle-core-notification-warning","moodle-core-notification-exception","moodle-core-notification-ajaxexception"]}}},"gallery":{"name":"gallery","base":"https:\/\/academy2.airpay.ninja\/lib\/yuilib\/gallery\/","combine":true,"comboBase":"https:\/\/academy2.airpay.ninja\/theme\/yui_combo.php?","ext":false,"root":"gallery\/1788403724\/","patterns":{"gallery-":{"group":"gallery"}}}},"modules":{"core_filepicker":{"name":"core_filepicker","fullpath":"https:\/\/academy2.airpay.ninja\/lib\/javascript.php\/1788403724\/repository\/filepicker.js","requires":["base","node","node-event-simulate","json","async-queue","io-base","io-upload-iframe","io-form","yui2-treeview","panel","cookie","datatable","datatable-sort","resize-plugin","dd-plugin","escape","moodle-core_filepicker","moodle-core-notification-dialogue"]},"core_comment":{"name":"core_comment","fullpath":"https:\/\/academy2.airpay.ninja\/lib\/javascript.php\/1788403724\/comment\/comment.js","requires":["base","io-base","node","json","yui2-animation","overlay","escape"]}},"logInclude":[],"logExclude":[],"logLevel":null};
+M.yui.loader = {modules: {}};
+
+//]]>
+</script>
+<script type="importmap">{
+    "imports": {
+        "@moodle/lms/": "https://academy2.airpay.ninja/core/esm/1788403724/@moodle/lms/",
+        "@moodlehq/design-system": "https://academy2.airpay.ninja/core/esm/1788403724/@moodlehq/design-system",
+        "react": "https://academy2.airpay.ninja/core/esm/1788403724/react",
+        "react/": "https://academy2.airpay.ninja/core/esm/1788403724/react/",
+        "react-dom": "https://academy2.airpay.ninja/core/esm/1788403724/react-dom",
+        "react-dom/": "https://academy2.airpay.ninja/core/esm/1788403724/react-dom/"
+    }
+}</script>
+<style id="sentientia-customer-brand">
+:root { --ap-color-primary: #0066A7; }
+:root { --ap-color-bg: #F2F4FB; }
+</style>
+
+<link rel="icon" href="https://academy2.airpay.ninja/local/sentientia_platform/pix/customer/1/icon-192.png">
+
+<style id="airpay-tenant-css">
+:root {--ap-color-primary: #0066A7;--ap-color-button: #0066A7;--ap-color-primary-dark: #004d80;}
+</style>
+
+
+    <script>
+    (function() {
+        var saved = localStorage.getItem('airpay-theme');
+        var isDark = saved === 'dark' || (!saved && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        // Apply IMMEDIATELY to <html> to prevent flash.
+        // Set BOTH class (legacy) and data-attribute (token system).
+        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        if (isDark) {
+            document.documentElement.classList.add('dark-mode');
+        } else {
+            document.documentElement.classList.remove('dark-mode');
+        }
+        // Sync to <body> once available + set up listeners.
+        document.addEventListener('DOMContentLoaded', function() {
+            // Force-sync body to match html (handles any leftover state).
+            if (isDark) {
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+            // Update toggle icon to match current state.
+            var toggleBtn = document.querySelector('.airpay-nav__theme-toggle i');
+            if (toggleBtn) {
+                toggleBtn.className = isDark ? 'fa fa-sun' : 'fa fa-moon';
+            }
+            // Listen for OS theme changes (only if user hasn't set manual preference).
+            if (window.matchMedia) {
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+                    if (!localStorage.getItem('airpay-theme')) {
+                        document.documentElement.classList.toggle('dark-mode', e.matches);
+                        document.body.classList.toggle('dark-mode', e.matches);
+                        var btn = document.querySelector('.airpay-nav__theme-toggle i');
+                        if (btn) { btn.className = e.matches ? 'fa fa-sun' : 'fa fa-moon'; }
+                    }
+                });
+            }
+        });
+    })();
+    </script>
+
+    <style media="screen">
+        :root {
+            /* Airpay Academy Design System — Phase 6B */
+            --primarycolor: #0066A7;
+            --secondarycolor: #1985DD;
+            --hovercolor: #004d7a;
+
+            /* Derived from primary */
+            --sitehighlight: var(--primarycolor);
+            --buttonbgcolor: var(--primarycolor);
+            --btntextcolor: #ffffff;
+            --btnhoverbgcolor: var(--hovercolor);
+            --btnhovertextcolor: #ffffff;
+            --btnbordercolor: var(--primarycolor);
+            --linkcolor: var(--primarycolor);
+            --linkhovercolor: var(--hovercolor);
+
+            /* Sidebar & blocks */
+            --sidebarbgstartcolor: var(--primarycolor);
+            --sidebarbgendcolor: var(--primarycolor);
+            --blockheaderstartbg: var(--primarycolor);
+            --blockheaderendbg: var(--primarycolor);
+            --blocktextcolor: #1a1a2e;
+
+            /* Page backgrounds */
+            --headerbgcolor: #F2F4FB;
+            --bodybgcolor: #F2F4FB;
+
+            /* Tables */
+            --tblhdstartbg: var(--primarycolor);
+            --tblhdendbg: var(--primarycolor);
+            --tbltextcolor: #fff;
+
+            /* Other surfaces */
+            --gradientcolor: #fff;
+            --coursecontainerbg: #e6f0f7;
+            --usernavhvrbg: #ffffff;
+            --usernavhvrlink: var(--primarycolor);
+            --iconbgcolor: var(--sitehighlight);
+
+            /* Airpay extended tokens */
+            --airpay-primary: #0066A7;
+            --airpay-primary-dk: #004d7a;
+            --airpay-accent: #1985DD;
+            --airpay-accent-lt: #e6f5f3;
+            --airpay-text: #1a1a2e;
+            --airpay-text-sec: #607286;
+            --airpay-text-muted: #8896a6;
+            --airpay-border: #e3eaf3;
+            --airpay-bg-body: #F2F4FB;
+            --airpay-bg-surface: #FFFFFF;
+            --airpay-shadow-sm: 0 4px 20px rgba(0,51,102,0.06);
+            --airpay-shadow-md: 0 8px 32px rgba(0,51,102,0.08);
+            --airpay-radius-sm: 8px;
+            --airpay-radius-md: 12px;
+            --airpay-radius-lg: 16px;
+        }
+    </style>
+    <link rel="stylesheet" href="" >
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0066A7">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="https://academy2.airpay.ninja/theme/sentientia/pix/brand/manifest.json">
+    <link rel="apple-touch-icon" href="https://academy2.airpay.ninja/theme/sentientia/pix/brand/favicon_io/apple-touch-icon.png">
+    <script src="https://academy2.airpay.ninja/local/sentientia_pwa/register.js" defer></script>
+    <style>
+        html,body{
+            font-family:"Montserrat", sans-serif;
+        }
+    </style>
+    <script>
+    // Dark mode persistence — runs before body renders to prevent flash
+    (function() {
+        var theme = localStorage.getItem('airpay-theme');
+        if (theme === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+        // Also apply to body once it exists
+        document.addEventListener('DOMContentLoaded', function() {
+            var t = localStorage.getItem('airpay-theme');
+            if (t === 'dark') {
+                document.body.classList.add('dark-mode');
+            }
+            // Update toggle icon state
+            var toggle = document.querySelector('.airpay-nav__theme-toggle i');
+            if (toggle && t === 'dark') {
+                toggle.className = 'fa fa-sun';
+            }
+        });
+    })();
+    </script>
+    <script>
+    // A1 Fix: jQuery $ shim for BizLMS. Uses jQuery.noConflict pattern.
+    // This runs early but jQuery may not be loaded yet.
+    // The real fix is applied after DOMContentLoaded when jQuery is available.
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof window.jQuery !== 'undefined' && typeof window.$ === 'undefined') {
+            window.$ = window.jQuery;
+        }
+    });
+    </script>
+</head>
+
+<body  id="page-course-view-topics" class="format-topics limitedwidth  path-course path-course-view dir-ltr lang-en yui-skin-sam yui3-skin-sam academy2-airpay-ninja pagelayout-course course-2 context-16 category-1 theme ap-course-shell">
+<div class="toast-wrapper mx-auto py-0 fixed-top" role="status" aria-live="polite"></div>
+
+<div id="page-wrapper" class="d-print-block">
+    <div>
+    <a class="visually-hidden-focusable" href="#maincontent">Skip to main content</a>
+</div><script src="https://academy2.airpay.ninja/lib/javascript.php/1788403724/lib/polyfills/polyfill.js"></script>
+<script src="https://academy2.airpay.ninja/theme/yui_combo.php?rollup/3.18.1/yui-moodlesimple-min.js"></script><script src="https://academy2.airpay.ninja/lib/javascript.php/1788403724/lib/javascript-static.js"></script>
+<script type="module" src="https://academy2.airpay.ninja/core/esm/1788403724/@moodle/lms/core/react_autoinit"></script>
+<script>
+//<![CDATA[
+document.body.className += ' jsenabled';
+//]]>
+</script>
+
+
+
+    <div class="ap-shell" id="ap-shell"><aside class="ap-sidebar" id="ap-sidebar" data-collapsed="false">
+    <div class="ap-sidebar__header">
+        <a href="https://academy2.airpay.ninja/my/" class="ap-sidebar__brand">
+            <span class="ap-sidebar__brand-mark"><i class="fa fa-graduation-cap"></i></span>
+            <span class="ap-sidebar__brand-text">airpay academy</span>
+        </a>
+        <button class="ap-sidebar__collapse" id="ap-sidebar-toggle" aria-label="Toggle sidebar">
+            <i class="fa fa-chevron-left ap-sidebar__toggle-icon"></i>
+        </button>
+    </div>
+    <nav class="ap-sidebar__nav">
+        
+        <a href="https://academy2.airpay.ninja/my/" class="ap-sidebar__link ">
+            <span class="ap-sidebar__link-icon"><i class="fa fa-home"></i></span>
+            <span class="ap-sidebar__link-text">Dashboard</span>
+        </a>
+        <div class="ap-sidebar__divider"></div>
+        
+        <a href="https://academy2.airpay.ninja/local/sentientia_users/index.php" class="ap-sidebar__link ">
+            <span class="ap-sidebar__link-icon"><i class="fa fa-users"></i></span>
+            <span class="ap-sidebar__link-text">Manage Users</span>
+        </a>
+        
+        <a href="https://academy2.airpay.ninja/local/sentientia_courses/index.php" class="ap-sidebar__link ">
+            <span class="ap-sidebar__link-icon"><i class="fa fa-book"></i></span>
+            <span class="ap-sidebar__link-text">Manage Courses</span>
+        </a>
+        
+        <a href="https://academy2.airpay.ninja/local/sentientia_courses/manage_requests.php" class="ap-sidebar__link ">
+            <span class="ap-sidebar__link-icon"><i class="fa fa-inbox"></i></span>
+            <span class="ap-sidebar__link-text">Course-share Requests</span>
+        </a>
+        
+        <a href="https://academy2.airpay.ninja/local/sentientia_exams/index.php" class="ap-sidebar__link ">
+            <span class="ap-sidebar__link-icon"><i class="fa fa-edit"></i></span>
+            <span class="ap-sidebar__link-text">Online Exams</span>
+        </a>
+        
+        <a href="https://academy2.airpay.ninja/local/sentientia_classroom/index.php" class="ap-sidebar__link ">
+            <span class="ap-sidebar__link-icon"><i class="fa fa-calendar"></i></span>
+            <span class="ap-sidebar__link-text">Classrooms</span>
+        </a>
+        
+        <a href="https://academy2.airpay.ninja/local/sentientia_learningpath/index.php" class="ap-sidebar__link ">
+            <span class="ap-sidebar__link-icon"><i class="fa fa-map-signs"></i></span>
+            <span class="ap-sidebar__link-text">Learning Paths</span>
+        </a>
+        
+        <a href="https://academy2.airpay.ninja/local/sentientia_programs/index.php" class="ap-sidebar__link ">
+            <span class="ap-sidebar__link-icon"><i class="fa fa-trophy"></i></span>
+            <span class="ap-sidebar__link-text">Programs</span>
+        </a>
+        <div class="ap-sidebar__divider"></div>
+        
+        <a href="https://academy2.airpay.ninja/local/sentientia_reports/index.php" class="ap-sidebar__link ">
+            <span class="ap-sidebar__link-icon"><i class="fa fa-chart-bar"></i></span>
+            <span class="ap-sidebar__link-text">Reports</span>
+        </a>
+        
+        <a href="https://academy2.airpay.ninja/local/sentientia_analytics/index.php" class="ap-sidebar__link ">
+            <span class="ap-sidebar__link-icon"><i class="fa fa-chart-line"></i></span>
+            <span class="ap-sidebar__link-text">Analytics</span>
+        </a>
+        
+        <a href="https://academy2.airpay.ninja/local/sentientia_compliance_report/index.php" class="ap-sidebar__link ">
+            <span class="ap-sidebar__link-icon"><i class="fa fa-shield"></i></span>
+            <span class="ap-sidebar__link-text">Compliance</span>
+        </a>
+        <div class="ap-sidebar__divider"></div>
+        
+        <a href="https://academy2.airpay.ninja/local/sentientia_org/admin.php" class="ap-sidebar__link ">
+            <span class="ap-sidebar__link-icon"><i class="fa fa-sitemap"></i></span>
+            <span class="ap-sidebar__link-text">Organisation</span>
+        </a>
+        
+        <a href="https://academy2.airpay.ninja/local/sentientia_skills/admin.php" class="ap-sidebar__link ">
+            <span class="ap-sidebar__link-icon"><i class="fa fa-bullseye"></i></span>
+            <span class="ap-sidebar__link-text">Skills</span>
+        </a>
+        
+        <a href="https://academy2.airpay.ninja/local/sentientia_notifications/index.php" class="ap-sidebar__link ">
+            <span class="ap-sidebar__link-icon"><i class="fa fa-bell"></i></span>
+            <span class="ap-sidebar__link-text">Notifications</span>
+        </a>
+        
+        <a href="https://academy2.airpay.ninja/local/sentientia_evaluation/index.php" class="ap-sidebar__link ">
+            <span class="ap-sidebar__link-icon"><i class="fa fa-clipboard"></i></span>
+            <span class="ap-sidebar__link-text">Evaluations</span>
+        </a>
+        
+        <a href="https://academy2.airpay.ninja/admin/tool/certificate/manage_templates.php" class="ap-sidebar__link ">
+            <span class="ap-sidebar__link-icon"><i class="fa fa-certificate"></i></span>
+            <span class="ap-sidebar__link-text">Certificates</span>
+        </a>
+        
+        <a href="https://academy2.airpay.ninja/local/sentientia_emails/manage.php" class="ap-sidebar__link ">
+            <span class="ap-sidebar__link-icon"><i class="fa fa-envelope"></i></span>
+            <span class="ap-sidebar__link-text">Emails</span>
+        </a>
+        
+        <a href="https://academy2.airpay.ninja/local/sentientia_privacy/index.php" class="ap-sidebar__link ">
+            <span class="ap-sidebar__link-icon"><i class="fa fa-lock"></i></span>
+            <span class="ap-sidebar__link-text">Privacy</span>
+        </a>
+        
+        <a href="https://academy2.airpay.ninja/admin/search.php" class="ap-sidebar__link ">
+            <span class="ap-sidebar__link-icon"><i class="fa fa-cog"></i></span>
+            <span class="ap-sidebar__link-text">Site Admin</span>
+        </a>
+    </nav>
+    <div class="ap-sidebar__footer-actions">
+        <button class="ap-sidebar__theme-btn" id="ap-dark-toggle" title="Toggle theme">
+            <i class="fa fa-moon"></i>
+            <span class="ap-sidebar__theme-label">Dark Mode</span>
+        </button>
+    </div>
+    <div class="ap-sidebar__user">
+        <a href="https://academy2.airpay.ninja/local/sentientia_users/profile.php" class="ap-sidebar__user-link">
+            <div class="ap-sidebar__user-avatar"><span class="userinitials size-36" title="Admin User" aria-label="Admin User" role="img">AU</span></div>
+            <div class="ap-sidebar__user-info">
+                <span class="ap-sidebar__user-name">Admin User</span>
+                <span class="ap-sidebar__user-action">Profile &amp; Settings</span>
+            </div>
+        </a>
+        <a href="https://academy2.airpay.ninja/login/logout.php?sesskey=REDACTED" class="ap-sidebar__signout" title="Log out"><i class="fa fa-sign-out" aria-hidden="true"></i><span class="ap-sidebar__signout-label">Log out</span></a>
+    </div>
+</aside><div class="ap-shell__overlay" id="ap-shell-overlay"></div><div class="ap-shell__main"><header class="ap-topbar" id="ap-topbar"><div class="ap-topbar__left"><button class="ap-topbar__hamburger d-lg-none" id="ap-sidebar-mobile-toggle" aria-label="Open menu"><i class="fa fa-bars"></i></button></div><div class="ap-topbar__center"><form action="https://academy2.airpay.ninja/search/index.php" method="get" class="ap-topbar__search" id="ap-topbar-search-form" data-default-action="https://academy2.airpay.ninja/search/index.php" data-default-placeholder="Search courses, people, content..."><i class="fa fa-search ap-topbar__search-icon"></i><input type="text" name="q" class="ap-topbar__search-input" id="ap-topbar-search-input" placeholder="Search courses, people, content..." autocomplete="off"></form></div><div class="ap-topbar__right"><a class="ap-topbar__iconlink" href="https://academy2.airpay.ninja/message/output/popup/notifications.php" title="Notifications" aria-label="Notifications"><i class="fa fa-bell" aria-hidden="true"></i></a><a class="ap-topbar__iconlink" href="https://academy2.airpay.ninja/message/index.php" title="Messages" aria-label="Messages"><i class="fa fa-comment-o" aria-hidden="true"></i></a></div></header><style>.tab-content > .tab-pane{display:none !important}.tab-content > .tab-pane.active{display:block !important}.nav-tabs{position:static !important;width:auto !important;background-color:transparent !important;box-shadow:none !important;padding-top:0 !important}</style><main class="ap-shell__content" id="ap-shell-content"><h1 class="sr-only">UAT Smoke 01</h1>
+
+    <div id="page" class="d-print-block">
+        <div class="ap-course-editswitch d-flex justify-content-end d-print-none">
+            <form action="https://academy2.airpay.ninja/editmode.php" method="post" class="d-flex align-items-center editmode-switch-form ms-2">
+    <div class="input-group">
+        <label class="me-2 mb-0 form-check-label " for="6a98e30b075106a98e30b075121-editingswitch">
+            Edit mode
+        </label>
+        <div class="form-check form-switch">
+            <input type="checkbox" name="setmode" class="form-check-input" id="6a98e30b075106a98e30b075121-editingswitch" data-context="16" data-pageurl="https://academy2.airpay.ninja/course/view.php?id=2">
+            <span class="form-check-label">&nbsp;</span>
+        </div>
+    </div>
+    <input type="hidden" name="sesskey" value="40cFVoL1NN">
+    <input type="hidden" name="pageurl" value="https://academy2.airpay.ninja/course/view.php?id=2">
+    <input type="hidden" name="context" value="16">
+    <noscript>
+        <input type="submit" value="Set mode">
+    </noscript>
+</form>
+        </div>
+        <header id="page-header" class="d-print-none">
+    <div class="w-100">
+        <div class="d-flex justify-content-end">
+                    <div id="page-navbar">
+                        
+                    </div>
+        </div>
+        <div class="courseheader" style="background-image: url('https://academy2.airpay.ninja/theme/image.php/sentientia/theme_sentientia/1788403724/course_default');">
+            
+            <div class="d-flex flex-column  course_heading h-100">
+              
+                <div class="heading" >
+                    <div class="page-context-header"><div class="page-header-headings"><h1 class="h2">UAT Smoke 01</h1></div></div>
+                </div>
+                <div class="row mt-auto pb-4">
+                    <div class="col-md-3 rating_container d-flex align-items-center">
+                        <div class="airpay-rating" data-airpay-rating data-itemid="2" data-ratearea="local_sentientia_courses" data-my-rating="0"><button type="button" class="airpay-rating__star btn btn-link p-0 m-0" data-rating="1" aria-label="Rate 1 out of 5"><i class="fa fa-star-o" style="color:#9c9b97;font-size:18px"></i></button><button type="button" class="airpay-rating__star btn btn-link p-0 m-0" data-rating="2" aria-label="Rate 2 out of 5"><i class="fa fa-star-o" style="color:#9c9b97;font-size:18px"></i></button><button type="button" class="airpay-rating__star btn btn-link p-0 m-0" data-rating="3" aria-label="Rate 3 out of 5"><i class="fa fa-star-o" style="color:#9c9b97;font-size:18px"></i></button><button type="button" class="airpay-rating__star btn btn-link p-0 m-0" data-rating="4" aria-label="Rate 4 out of 5"><i class="fa fa-star-o" style="color:#9c9b97;font-size:18px"></i></button><button type="button" class="airpay-rating__star btn btn-link p-0 m-0" data-rating="5" aria-label="Rate 5 out of 5"><i class="fa fa-star-o" style="color:#9c9b97;font-size:18px"></i></button> <span class="airpay-rating__count text-muted">No ratings yet</span></div>
+                    </div>      
+                                  
+                                           
+                    
+                    <div class="col-md-3 user_enrollment d-flex">
+                        <div class="seats_icon">
+                            <i class="fa fa-shopping-cart"></i>
+                        </div>
+                        <div class="enroll_details d-flex">
+                            <span class="details_content text-nowrap">User enrolments:</span>
+                            <span class="enroll_number"></span>
+                        </div>
+                    </div>
+                    <div class=" user_completion col-md-3 d-flex">
+                        <div class="user_icon">
+                            <i class="fa fa-users"></i>
+                        </div>
+                        <div class="enroll_details d-flex">
+                            <span class="details_content text-nowrap">User completion:</span>
+                            <span class="enroll_number">/</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                <div class="context-header-settings-menu">
+                    <div class="course_contextmenu_extended">
+	<ul class="course_extended_menu_list">
+    			<li>
+    					<div class="admin_default_menu"><div class="action-menu moodle-actionmenu" id="action-menu-1" data-enhance="moodle-core-actionmenu">
+
+        <div class="menubar d-flex " id="action-menu-1-menubar">
+
+            
+
+
+                <div class="action-menu-trigger">
+                    <div class="dropdown">
+                        <a
+                            href="#"
+                            tabindex="0"
+                            class=" dropdown-toggle icon-no-margin"
+                            id="action-menu-toggle-1"
+                            aria-label="Actions menu"
+                            data-bs-toggle="dropdown"
+                            role="button"
+                            aria-haspopup="true"
+                            aria-expanded="false"
+                            aria-controls="action-menu-1-menu"
+                        >
+                            
+                            
+<i class="icon fa fa-ellipsis-vertical fa-fw " aria-hidden="true" ></i>                                
+                        </a>
+                            <div class="dropdown-menu menu dropdown-menu-end" id="action-menu-1-menu" data-rel="menu-content" aria-labelledby="action-menu-toggle-1" role="menu">
+                                        <div class="dropdown-item">
+
+    <a href="https://academy2.airpay.ninja/course/edit.php?id=2" id="action_link6a98e30b075123" class=""  role="menuitem"  tabindex="-1" ><i class="icon fa fa-gear fa-fw " aria-hidden="true" ></i>Settings</a>
+
+
+
+</div>
+                                        <div class="dropdown-item">
+
+    <a href="https://academy2.airpay.ninja/filter/manage.php?contextid=16" id="action_link6a98e30b075124" class=""  role="menuitem"  tabindex="-1" ><i class="icon fa fa-filter fa-fw " aria-hidden="true" ></i>Filters</a>
+
+
+
+</div>
+                                        <div class="dropdown-item">
+
+    <a href="https://academy2.airpay.ninja/grade/edit/tree/index.php?id=2" id="action_link6a98e30b075125" class=""  role="menuitem"  tabindex="-1" ><i class="icon fa fa-gear fa-fw " aria-hidden="true" ></i>Gradebook setup</a>
+
+
+
+</div>
+                                        <div class="dropdown-item">
+
+    <a href="https://academy2.airpay.ninja/question/banks.php?courseid=2" id="action_link6a98e30b075126" class=""  role="menuitem"  tabindex="-1" ><i class="icon fa fa-fw fa-fw " aria-hidden="true" ></i>Question banks</a>
+
+
+
+</div>
+                                        <div class="dropdown-item">
+
+    <a href="https://academy2.airpay.ninja/mod/lti/coursetools.php?id=2" id="action_link6a98e30b075127" class=""  role="menuitem"  tabindex="-1" ><i class="icon fa fa-gear fa-fw " aria-hidden="true" ></i>LTI External tools</a>
+
+
+
+</div>
+                                        <div class="dropdown-item">
+
+    <a href="https://academy2.airpay.ninja/admin/tool/brickfield/index.php?courseid=2" id="action_link6a98e30b075128" class=""  role="menuitem"  tabindex="-1" ><i class="icon fa fa-chart-column fa-fw " aria-hidden="true" ></i>Accessibility toolkit</a>
+
+
+
+</div>
+                                        <div class="dropdown-item">
+
+    <a href="https://academy2.airpay.ninja/course/2/manage" id="action_link6a98e30b075129" class=""  role="menuitem"  tabindex="-1" ><i class="icon fa fa-pen fa-fw "  title="More..." role="img" aria-label="More..."></i>More...</a>
+
+
+
+</div>
+                            </div>
+                    </div>
+                </div>
+
+        </div>
+
+</div></div>
+    			</li>
+            <li>
+            	<div class="coursebackup course_extended_menu_itemcontainer">
+                	<a title="Bulk Enrolments" class="course_extended_menu_itemlink" href="https://academy2.airpay.ninja/local/sentientia_courses/enrol_csv.php"><i class="icon fa fa-users fa-fw " aria-hidden="true"></i></a>
+                </div>
+            </li>
+            <li>
+                <div class="coursebackup course_extended_menu_itemcontainer">
+                    <a title="User enrolments" class="course_extended_menu_itemlink" href="https://academy2.airpay.ninja/local/sentientia_courses/enrolledusers.php?id=2"><i class="icon fa fa-user-plus fa-fw " aria-hidden="true"></i></a>
+                </div>
+            </li>
+            <li>
+                <div class="coursebackup course_extended_menu_itemcontainer">
+                    <a title="Enrolled users" class="course_extended_menu_itemlink" href="https://academy2.airpay.ninja/local/sentientia_courses/enrolledusers.php?id=2"><i class="icon fa fa-user" aria-hidden="true"></i></a>
+                </div>
+            </li>
+            <li>
+            	<div class="coursebackup course_extended_menu_itemcontainer">
+                	<a title="Course backup" class="course_extended_menu_itemlink" href="https://academy2.airpay.ninja/backup/backup.php?id=2"><i class="icon fa fa-download" aria-hidden="true"></i></a>
+                </div>
+            </li>
+                <li>
+                	<div class="editingon course_extended_menu_itemcontainer">
+                        <a title="Course completion" class="course_extended_menu_itemlink" href="https://academy2.airpay.ninja/course/completion.php?id=2"><i class="icon fa fa-tags fa-fw" aria-hidden="true"></i></a>
+                    </div>
+                </li>
+                <li>
+                	<div class="editingon course_extended_menu_itemcontainer">
+                        <a title="Reports" class="course_extended_menu_itemlink" href="https://academy2.airpay.ninja/grade/report/grader/index.php?id=2"><i class="icon fa fa-bar-chart" aria-hidden="true"></i></a>
+                    </div>
+                </li>
+                <li>
+                	<div class="courseedit course_extended_menu_itemcontainer">
+                        <a title="Edit course settings" class="course_extended_menu_itemlink createcoursemodal courseactions" data-action = "createcoursemodal" data-value = 2 href="javascript:void(0)" onclick="(function(e){ require('local_courses/courseAjaxform').init({contextid:3, component: 'local_courses', callback:'custom_course_form', form_status:0, plugintype:'local', pluginname:'courses', courseid: 2 }) })(event)"><i class="icon fa fa-pencil" aria-hidden="true"></i></a>
+                    </div>
+                </li>
+                <li>
+                	<div class="editingon course_extended_menu_itemcontainer text-xs-center">
+                        <a title="Turn edit on" class="course_extended_menu_itemlink" href="https://academy2.airpay.ninja/course/view.php?id=2&amp;sesskey=REDACTED&amp;edit=on"><i class="icon fa fa-power-off" aria-hidden="true" aria-label=""></i></a>
+                    </div>
+                </li>
+        
+	</ul>
+</div>
+                </div>
+        </div>
+        <div class="px-3">
+            <h3 class="mt-2">Description</h3>
+            Stage A functional micro-pass course.
+        </div>
+        
+    </div>
+    
+</header>
+
+
+        <div id="page-content" class="pb-3 d-print-block">
+            <div class="ap-course-player ">
+
+
+                <div id="region-main-box" class="ap-course-player__main">
+                    <section id="region-main" aria-label="Content" >
+                        <span class="notifications" id="user-notifications"></span>
+                        <div role="main"><span id="maincontent"></span><div class="course-content"><div id="course-format-6a98e30b2aad26a98e30b0751212">
+    <h2 class="accesshide">Section outline</h2>
+    
+    <ul class="topics section-list" data-for="course_sectionlist">
+                <li id="section-0"
+                    class="section course-section main  clearfix
+                             
+                            "
+                    data-sectionid="0"
+                    data-sectionreturnnum=""
+                    data-for="section"
+                    data-id="1"
+                    data-number="0"
+                    data-sectionname="General"
+                    
+                >
+                    <div class="section-item">
+                            <div class="course-section-header d-flex"
+                                 data-for="section_title"
+                                 data-id="1"
+                                 data-number="0"
+                            >
+                                            <div class="bulkselect align-self-center d-none" data-for="sectionBulkSelect">
+                                                <input
+                                                    id="sectionCheckbox1"
+                                                    type="checkbox"
+                                                    data-id="1"
+                                                    data-action="toggleSelectionSection"
+                                                    data-bulkcheckbox="1"
+                                                >
+                                                <label class="visually-hidden" for="sectionCheckbox1">
+                                                     Select section General 
+                                                </label>
+                                            </div>
+                                                    <div class="d-flex align-items-center position-relative">
+                                                        <a role="button"
+                                                            data-bs-toggle="collapse"
+                                                            data-for="sectiontoggler"
+                                                            href="#coursecontentcollapseid1"
+                                                            id="collapsesectionid1"
+                                                            aria-expanded="true"
+                                                            aria-controls="coursecontentcollapseid1"
+                                                            class="btn btn-icon me-3 icons-collapse-expand
+                                                                "
+                                                            aria-label="General">
+                                                        <span class="expanded-icon icon-no-margin p-2" title="Collapse">
+                                                            <i class="icon fa fa-chevron-down fa-fw " aria-hidden="true" ></i>
+                                                            <span class="visually-hidden">Collapse</span>
+                                                        </span>
+                                                        <span class="collapsed-icon icon-no-margin p-2" title="Expand">
+                                                            <span class="dir-rtl-hide"><i class="icon fa fa-chevron-right fa-fw " aria-hidden="true" ></i></span>
+                                                            <span class="dir-ltr-hide"><i class="icon fa fa-chevron-left fa-fw " aria-hidden="true" ></i></span>
+                                                            <span class="visually-hidden">Expand</span>
+                                                        </span>
+                                                        </a>
+                                                        <h3 class="h4 sectionname course-content-item d-flex align-self-stretch align-items-center mb-0"
+                                                            id="sectionid-1-title" data-for="section_title" data-id="1" data-number="0">
+                                                            <a href="https://academy2.airpay.ninja/course/section.php?id=1">General</a>
+                                                        </h3>
+                                                    </div>
+                                <div data-region="sectionbadges" class="sectionbadges d-flex align-items-center">
+                                </div>
+                                        <div class="flex-fill d-flex justify-content-end me-2 align-self-start mt-2">
+                                            <a id="collapsesections"
+                                               class="section-collapsemenu"
+                                               href="#"
+                                               aria-expanded="true"
+                                               role="button"
+                                               data-toggle="toggleall"
+                                            >
+                                                <span class="collapseall text-nowrap">Collapse all</span>
+                                                <span class="expandall text-nowrap">Expand all</span>
+                                            </a>
+                                        </div>
+                            </div>
+                            <div id="coursecontentcollapseid1"
+                                 class="content course-content-item-content collapse show">
+                                <div class="" data-for="sectioninfo">
+                                            <div class="section_availability">
+                                            </div>
+                                </div>
+                                        <ul class="section m-0 p-0 img-text  d-block " data-for="cmlist">
+                                                    <li
+                                                        class="activity forum modtype_forum  hasinfo "
+                                                        id="module-1"
+                                                        data-for="cmitem"
+                                                        data-id="1"
+                                                    >
+                                                            <div class="activity-item focus-control " data-activityname="Announcements" data-region="activity-card">
+                                                                        <div class="bulkselect d-none" data-for="cmBulkSelect">
+                                                                            <input
+                                                                                id="cmCheckbox1"
+                                                                                type="checkbox"
+                                                                                data-id="1"
+                                                                                data-action="toggleSelectionCm"
+                                                                                data-bulkcheckbox="1"
+                                                                            >
+                                                                            <label class="visually-hidden" for="cmCheckbox1">
+                                                                                Select activity Announcements
+                                                                            </label>
+                                                                        </div>
+
+                                                                    <div class="activity-grid ">
+                                                                    
+                                                                                                <div class="activity-icon activityiconcontainer smaller collaboration  courseicon align-self-start me-2">
+                                                                                                    <img
+                                                                                                        src="https://academy2.airpay.ninja/theme/image.php/sentientia/forum/1788403724/monologo?filtericon=1"
+                                                                                                        class="activityicon "
+                                                                                                        data-region="activity-icon"
+                                                                                                        data-id="1"
+                                                                                                        alt=""
+                                                                                                        
+                                                                                                    >
+                                                                                                </div>
+                                                                                    
+                                                                                        <div class="activity-name-area activity-instance d-flex flex-column me-2">
+                                                                                            <div class="activitytitle  modtype_forum position-relative align-self-start">
+                                                                                                <div class="activityname">
+                                                                                                                <a href="https://academy2.airpay.ninja/mod/forum/view.php?id=1" class=" aalink stretched-link" onclick="">        <span class="instancename">Announcements <span class="accesshide " > Forum</span></span>    </a>
+                                                                                                            
+                                                                                                            <span
+                                                                                                                
+                                                                                                                class="ms-1"
+                                                                                                                
+                                                                                                            >
+                                                                                                                <span class="activitybadge badge rounded-pill ">
+                                                                                                                        
+                                                                                                                </span>
+                                                                                                            </span>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    
+                                                                    
+                                                                    
+                                                                    
+                                                                    
+                                                                    
+                                                                    
+                                                                    
+                                                                    
+                                                                    </div>
+                                                            </div>
+                                                    </li>
+                                            </ul>
+                                
+                            </div>
+                    </div>
+                
+                </li>
+                <li id="section-1"
+                    class="section course-section main  clearfix
+                             
+                            "
+                    data-sectionid="1"
+                    data-sectionreturnnum=""
+                    data-for="section"
+                    data-id="2"
+                    data-number="1"
+                    data-sectionname="New section"
+                    
+                >
+                    <div class="section-item">
+                            <div class="course-section-header d-flex"
+                                 data-for="section_title"
+                                 data-id="2"
+                                 data-number="1"
+                            >
+                                            <div class="bulkselect align-self-center d-none" data-for="sectionBulkSelect">
+                                                <input
+                                                    id="sectionCheckbox2"
+                                                    type="checkbox"
+                                                    data-id="2"
+                                                    data-action="toggleSelectionSection"
+                                                    data-bulkcheckbox="1"
+                                                >
+                                                <label class="visually-hidden" for="sectionCheckbox2">
+                                                     Select section New section 
+                                                </label>
+                                            </div>
+                                                    <div class="d-flex align-items-center position-relative">
+                                                        <a role="button"
+                                                            data-bs-toggle="collapse"
+                                                            data-for="sectiontoggler"
+                                                            href="#coursecontentcollapseid2"
+                                                            id="collapsesectionid2"
+                                                            aria-expanded="true"
+                                                            aria-controls="coursecontentcollapseid2"
+                                                            class="btn btn-icon me-3 icons-collapse-expand
+                                                                "
+                                                            aria-label="New section">
+                                                        <span class="expanded-icon icon-no-margin p-2" title="Collapse">
+                                                            <i class="icon fa fa-chevron-down fa-fw " aria-hidden="true" ></i>
+                                                            <span class="visually-hidden">Collapse</span>
+                                                        </span>
+                                                        <span class="collapsed-icon icon-no-margin p-2" title="Expand">
+                                                            <span class="dir-rtl-hide"><i class="icon fa fa-chevron-right fa-fw " aria-hidden="true" ></i></span>
+                                                            <span class="dir-ltr-hide"><i class="icon fa fa-chevron-left fa-fw " aria-hidden="true" ></i></span>
+                                                            <span class="visually-hidden">Expand</span>
+                                                        </span>
+                                                        </a>
+                                                        <h3 class="h4 sectionname course-content-item d-flex align-self-stretch align-items-center mb-0"
+                                                            id="sectionid-2-title" data-for="section_title" data-id="2" data-number="1">
+                                                            <a href="https://academy2.airpay.ninja/course/section.php?id=2">New section</a>
+                                                        </h3>
+                                                    </div>
+                                <div data-region="sectionbadges" class="sectionbadges d-flex align-items-center">
+                                </div>
+                            </div>
+                            <div id="coursecontentcollapseid2"
+                                 class="content course-content-item-content collapse show">
+                                <div class="" data-for="sectioninfo">
+                                            <div class="section_availability">
+                                            </div>
+                                </div>
+                                        <ul class="section m-0 p-0 img-text  d-block " data-for="cmlist">
+                                                    <li
+                                                        class="activity page modtype_page  hasinfo "
+                                                        id="module-2"
+                                                        data-for="cmitem"
+                                                        data-id="2"
+                                                    >
+                                                            <div class="activity-item focus-control " data-activityname="UAT smoke page" data-region="activity-card">
+                                                                        <div class="bulkselect d-none" data-for="cmBulkSelect">
+                                                                            <input
+                                                                                id="cmCheckbox2"
+                                                                                type="checkbox"
+                                                                                data-id="2"
+                                                                                data-action="toggleSelectionCm"
+                                                                                data-bulkcheckbox="1"
+                                                                            >
+                                                                            <label class="visually-hidden" for="cmCheckbox2">
+                                                                                Select activity UAT smoke page
+                                                                            </label>
+                                                                        </div>
+
+                                                                    <div class="activity-grid ">
+                                                                    
+                                                                                                <div class="activity-icon activityiconcontainer smaller content  courseicon align-self-start me-2">
+                                                                                                    <img
+                                                                                                        src="https://academy2.airpay.ninja/theme/image.php/sentientia/page/1788403724/monologo?filtericon=1"
+                                                                                                        class="activityicon "
+                                                                                                        data-region="activity-icon"
+                                                                                                        data-id="2"
+                                                                                                        alt=""
+                                                                                                        
+                                                                                                    >
+                                                                                                </div>
+                                                                                    
+                                                                                        <div class="activity-name-area activity-instance d-flex flex-column me-2">
+                                                                                            <div class="activitytitle  modtype_page position-relative align-self-start">
+                                                                                                <div class="activityname">
+                                                                                                                <a href="https://academy2.airpay.ninja/mod/page/view.php?id=2" class=" aalink stretched-link" onclick="">        <span class="instancename">UAT smoke page </span>    </a>
+                                                                                                            
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    
+                                                                    
+                                                                    
+                                                                    
+                                                                    
+                                                                    
+                                                                    
+                                                                    
+                                                                    
+                                                                    </div>
+                                                            </div>
+                                                    </li>
+                                            </ul>
+                                
+                            </div>
+                    </div>
+                
+                </li>
+                <li id="section-2"
+                    class="section course-section main  clearfix
+                             
+                            "
+                    data-sectionid="2"
+                    data-sectionreturnnum=""
+                    data-for="section"
+                    data-id="3"
+                    data-number="2"
+                    data-sectionname="New section"
+                    
+                >
+                    <div class="section-item">
+                            <div class="course-section-header d-flex"
+                                 data-for="section_title"
+                                 data-id="3"
+                                 data-number="2"
+                            >
+                                            <div class="bulkselect align-self-center d-none" data-for="sectionBulkSelect">
+                                                <input
+                                                    id="sectionCheckbox3"
+                                                    type="checkbox"
+                                                    data-id="3"
+                                                    data-action="toggleSelectionSection"
+                                                    data-bulkcheckbox="1"
+                                                >
+                                                <label class="visually-hidden" for="sectionCheckbox3">
+                                                     Select section New section 
+                                                </label>
+                                            </div>
+                                                    <div class="d-flex align-items-center position-relative">
+                                                        <a role="button"
+                                                            data-bs-toggle="collapse"
+                                                            data-for="sectiontoggler"
+                                                            href="#coursecontentcollapseid3"
+                                                            id="collapsesectionid3"
+                                                            aria-expanded="true"
+                                                            aria-controls="coursecontentcollapseid3"
+                                                            class="btn btn-icon me-3 icons-collapse-expand
+                                                                "
+                                                            aria-label="New section">
+                                                        <span class="expanded-icon icon-no-margin p-2" title="Collapse">
+                                                            <i class="icon fa fa-chevron-down fa-fw " aria-hidden="true" ></i>
+                                                            <span class="visually-hidden">Collapse</span>
+                                                        </span>
+                                                        <span class="collapsed-icon icon-no-margin p-2" title="Expand">
+                                                            <span class="dir-rtl-hide"><i class="icon fa fa-chevron-right fa-fw " aria-hidden="true" ></i></span>
+                                                            <span class="dir-ltr-hide"><i class="icon fa fa-chevron-left fa-fw " aria-hidden="true" ></i></span>
+                                                            <span class="visually-hidden">Expand</span>
+                                                        </span>
+                                                        </a>
+                                                        <h3 class="h4 sectionname course-content-item d-flex align-self-stretch align-items-center mb-0"
+                                                            id="sectionid-3-title" data-for="section_title" data-id="3" data-number="2">
+                                                            <a href="https://academy2.airpay.ninja/course/section.php?id=3">New section</a>
+                                                        </h3>
+                                                    </div>
+                                <div data-region="sectionbadges" class="sectionbadges d-flex align-items-center">
+                                </div>
+                            </div>
+                            <div id="coursecontentcollapseid3"
+                                 class="content course-content-item-content collapse show">
+                                <div class="" data-for="sectioninfo">
+                                            <div class="section_availability">
+                                            </div>
+                                </div>
+                                        <ul class="section m-0 p-0 img-text " data-for="cmlist">
+                                            </ul>
+                                
+                            </div>
+                    </div>
+                
+                </li>
+    </ul>
+</div></div><nav class="airpay-mobile-nav" aria-label="Primary mobile navigation">
+    <a href="https://academy2.airpay.ninja/my/dashboard.php"
+       class="airpay-mobile-nav__item"
+       >
+        <i class="fa fa-home airpay-mobile-nav__icon" aria-hidden="true"></i>
+        <span class="airpay-mobile-nav__label">Home</span>
+    </a>
+    <a href="https://academy2.airpay.ninja/local/sentientia_catalog/mycourses.php"
+       class="airpay-mobile-nav__item"
+       >
+        <i class="fa fa-graduation-cap airpay-mobile-nav__icon" aria-hidden="true"></i>
+        <span class="airpay-mobile-nav__label">My Learning</span>
+    </a>
+    <a href="https://academy2.airpay.ninja/local/sentientia_catalog/index.php"
+       class="airpay-mobile-nav__item"
+       >
+        <i class="fa fa-search airpay-mobile-nav__icon" aria-hidden="true"></i>
+        <span class="airpay-mobile-nav__label">Search</span>
+    </a>
+    <a href="https://academy2.airpay.ninja/user/profile.php?id=2"
+       class="airpay-mobile-nav__item"
+       >
+        <i class="fa fa-user-circle airpay-mobile-nav__icon" aria-hidden="true"></i>
+        <span class="airpay-mobile-nav__label">Me</span>
+    </a>
+</nav><span id="ap-cart-count-data" style="display:none;">0</span><div id="airpay-assistant" class="airpay-assistant">
+
+    <button class="airpay-assistant__toggle"
+            id="airpay-assistant-toggle"
+            type="button"
+            aria-label="Open AI learning assistant"
+            aria-expanded="false"
+            aria-controls="airpay-assistant-panel">
+        <i class="fa fa-graduation-cap airpay-assistant__icon-open" aria-hidden="true"></i>
+        <i class="fa fa-times airpay-assistant__icon-close" aria-hidden="true" style="display:none;"></i>
+    </button>
+
+    <div class="airpay-assistant__panel airpay-assistant__panel--hidden"
+         id="airpay-assistant-panel"
+         role="dialog"
+         aria-labelledby="airpay-assistant-title"
+         aria-modal="false"
+         style="display:none;">
+
+        <div class="airpay-assistant__header">
+            <div class="airpay-assistant__header-info">
+                <strong id="airpay-assistant-title">Airpay Learning Assistant</strong>
+                <small>Powered by AI</small>
+            </div>
+            <button class="airpay-assistant__minimize"
+                    id="airpay-assistant-minimize"
+                    type="button"
+                    aria-label="Minimise assistant">
+                <i class="fa fa-chevron-down" aria-hidden="true"></i>
+            </button>
+        </div>
+
+        <div class="airpay-assistant__messages"
+             id="airpay-assistant-messages"
+             role="log"
+             aria-live="polite"
+             aria-atomic="false">
+            <div class="airpay-assistant__msg airpay-assistant__msg--bot">
+                <p>Hi Admin! I'm your learning assistant. Ask me anything about your courses, deadlines, skills, or career path.</p>
+                <div class="airpay-assistant__quick-actions" role="group" aria-label="Quick questions">
+                    <button type="button" data-query="What should I learn next?">What to learn next?</button>
+                    <button type="button" data-query="What are my deadlines?">My deadlines</button>
+                    <button type="button" data-query="Quiz me on my courses">Quiz me</button>
+                    <button type="button" data-query="How is my team doing?">Team status</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="airpay-assistant__input-area">
+            <label for="airpay-assistant-input" class="sr-only">Type your question</label>
+            <input type="text"
+                   id="airpay-assistant-input"
+                   placeholder="Ask me anything..."
+                   autocomplete="off"
+                   maxlength="500">
+            <button id="airpay-assistant-send"
+                    type="button"
+                    disabled
+                    aria-label="Send message">
+                <i class="fa fa-paper-plane" aria-hidden="true"></i>
+            </button>
+        </div>
+
+        <div class="airpay-assistant__footer">
+            <small>20 questions remaining today</small>
+        </div>
+    </div>
+</div></div>
+                        
+                        
+
+                    </section>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div></div></div><script>
+(function() {
+    var sidebar = document.getElementById('ap-sidebar');
+    var toggle = document.getElementById('ap-sidebar-toggle');
+    var mobileToggle = document.getElementById('ap-sidebar-mobile-toggle');
+    var overlay = document.getElementById('ap-shell-overlay');
+    var darkToggle = document.getElementById('ap-dark-toggle');
+    if (toggle && sidebar) {
+        toggle.addEventListener('click', function() {
+            var collapsed = sidebar.getAttribute('data-collapsed') === 'true';
+            sidebar.setAttribute('data-collapsed', collapsed ? 'false' : 'true');
+            toggle.querySelector('.ap-sidebar__toggle-icon').style.transform = collapsed ? '' : 'rotate(180deg)';
+            if (typeof require !== 'undefined') {
+                require(['core_user/repository'], function(UserRepo) {
+                    UserRepo.setUserPreference('theme_sentientia_sidebar_collapsed', collapsed ? '0' : '1');
+                });
+            }
+        });
+    }
+    if (mobileToggle && sidebar) {
+        mobileToggle.addEventListener('click', function() { sidebar.classList.toggle('ap-sidebar--mobile-open'); if (overlay) overlay.classList.toggle('ap-shell__overlay--visible'); });
+    }
+    if (overlay) { overlay.addEventListener('click', function() { if (sidebar) sidebar.classList.remove('ap-sidebar--mobile-open'); overlay.classList.remove('ap-shell__overlay--visible'); }); }
+    if (darkToggle) {
+        var html = document.documentElement;
+        var isDark = html.getAttribute('data-theme') === 'dark' || html.classList.contains('dark-mode');
+        darkToggle.querySelector('i').className = isDark ? 'fa fa-sun' : 'fa fa-moon';
+        var label = darkToggle.querySelector('.ap-sidebar__theme-label');
+        if (label) label.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+        darkToggle.addEventListener('click', function() {
+            var nowDark = html.getAttribute('data-theme') === 'dark' || html.classList.contains('dark-mode');
+            html.setAttribute('data-theme', nowDark ? 'light' : 'dark');
+            html.classList.toggle('dark-mode', !nowDark);
+            document.body.classList.toggle('dark-mode', !nowDark);
+            localStorage.setItem('airpay-theme', nowDark ? 'light' : 'dark');
+            darkToggle.querySelector('i').className = nowDark ? 'fa fa-moon' : 'fa fa-sun';
+            if (label) label.textContent = nowDark ? 'Dark Mode' : 'Light Mode';
+        });
+    }
+
+    // ── Audit fix 2026-05-15 — Context-aware topbar search ──
+    // Many pages (catalog, every admin list table) ALSO render their own
+    // search bar, producing two visually identical search boxes that
+    // serve different purposes. This block detects what kind of scoped
+    // search the current page exposes and rewires the topbar to drive it
+    // — then hides the redundant scoped UI so only one input is visible.
+    //
+    // Detection order:
+    //   1. Catalog form-based search (.airpay-catalog__search-form). The
+    //      topbar form action is repointed to the catalog URL so submit
+    //      navigates with ?q=... and the catalog index reads it.
+    //   2. Datatable JS-driven search ([data-airpay-table] root). The
+    //      topbar drives the datatable's internal input via input events,
+    //      reusing the existing debounce + AJAX path in datatable.js
+    //      unchanged. The datatable's own search box is hidden once it
+    //      renders (MutationObserver — the datatable JS may not have run
+    //      when this script first executes).
+    //   3. Nothing scoped — default behaviour (Moodle global search).
+    var topbarForm = document.getElementById('ap-topbar-search-form');
+    var topbarInput = document.getElementById('ap-topbar-search-input');
+    if (topbarForm && topbarInput) {
+        var catalogForm = document.querySelector('.airpay-catalog__search-form');
+        var tableRoot = document.querySelector('[data-airpay-table]');
+        if (catalogForm) {
+            var action = catalogForm.getAttribute('action');
+            if (action) { topbarForm.setAttribute('action', action); }
+            var catalogInput = catalogForm.querySelector('input[name="q"]');
+            if (catalogInput) {
+                if (catalogInput.getAttribute('placeholder')) {
+                    topbarInput.setAttribute('placeholder', catalogInput.getAttribute('placeholder'));
+                }
+                if (catalogInput.value) { topbarInput.value = catalogInput.value; }
+            }
+            var scopedSection = document.querySelector('.airpay-catalog__search-section');
+            if (scopedSection) { scopedSection.style.display = 'none'; }
+        } else if (tableRoot) {
+            var customPlaceholder = tableRoot.dataset.searchPlaceholder;
+            if (customPlaceholder) { topbarInput.setAttribute('placeholder', customPlaceholder); }
+            var driveTableSearch = function(value) {
+                var s = tableRoot.querySelector('[data-airpay-table-search]');
+                if (s) { s.value = value; s.dispatchEvent(new Event('input', { bubbles: true })); }
+            };
+            var hideScopedSearchBox = function() {
+                var s = tableRoot.querySelector('[data-airpay-table-search]');
+                if (s) {
+                    var wrapper = s.closest('.airpay-datatable__search');
+                    if (wrapper) { wrapper.style.display = 'none'; }
+                    return true;
+                }
+                return false;
+            };
+            if (!hideScopedSearchBox()) {
+                var mo = new MutationObserver(function() { if (hideScopedSearchBox()) { mo.disconnect(); } });
+                mo.observe(tableRoot, { childList: true, subtree: true });
+            }
+            topbarInput.addEventListener('input', function() { driveTableSearch(topbarInput.value); });
+            topbarForm.addEventListener('submit', function(e) { e.preventDefault(); driveTableSearch(topbarInput.value); });
+        }
+        // Pattern 3 (default Moodle global search): no rewire.
+    }
+
+    // ── Audit fix 2026-05-15 — Bootstrap tab-pane shim ──
+    // Moodle 5.x admin pages (e.g. /admin/search.php) emit Bootstrap 5
+    // tab markup: <a href="#linkXXX" data-bs-toggle="tab"> + sibling
+    // <div class="tab-pane">. Our standalone sentientia theme ships its
+    // own Bootstrap 4.6 fork which only recognises BS4's `data-toggle`
+    // attribute (no `bs` prefix), so BS5 tabs only partially work: the
+    // active-state underline updates on click, but the tab-pane content
+    // never switches — every pane stays visible at once.
+    //
+    // This vanilla-JS shim wires up `[data-bs-toggle="tab"]` links to
+    // do what Bootstrap 5's Tab.show() would: toggle .active + .show on
+    // the target pane and clear those classes from siblings. Idempotent
+    // — if a real BS5 ever ships and beats us to the click handler, we
+    // simply do the same DOM mutation a second time.
+    document.querySelectorAll('a[data-bs-toggle="tab"]').forEach(function(link) {
+        if (link.dataset.airpayTabShim === '1') { return; }
+        link.dataset.airpayTabShim = '1';
+        link.addEventListener('click', function(e) {
+            var href = this.getAttribute('href') || '';
+            if (href.charAt(0) !== '#' || href.length < 2) { return; }
+            var target = document.querySelector(href);
+            if (!target || !target.classList.contains('tab-pane')) { return; }
+            // Hide every sibling pane.
+            var container = target.parentElement;
+            if (container) {
+                container.querySelectorAll(':scope > .tab-pane').forEach(function(p) {
+                    p.classList.remove('active', 'show');
+                });
+            }
+            // Show the target.
+            target.classList.add('active', 'show');
+            // Update active state on the tablist links.
+            var tablist = this.closest('[role="tablist"]') || (this.parentElement && this.parentElement.parentElement);
+            if (tablist) {
+                tablist.querySelectorAll('a[data-bs-toggle="tab"]').forEach(function(t) {
+                    t.classList.remove('active');
+                    t.setAttribute('aria-selected', 'false');
+                });
+            }
+            this.classList.add('active');
+            this.setAttribute('aria-selected', 'true');
+            e.preventDefault();
+        });
+    });
+    // On initial page load, honour the URL hash if it matches a tab.
+    if (window.location.hash) {
+        var initial = document.querySelector('a[data-bs-toggle="tab"][href="' + window.location.hash + '"]');
+        if (initial) { initial.click(); }
+    }
+})();
+</script>
+
+</div>
+
+
+<footer id="page-footer" class="airpay-footer">
+    <div id="course-footer" class="d-none"></div>
+    <div class="tool_usertours-resettourcontainer"></div>
+
+    <div class="airpay-footer__compact">
+        <a href="https://academy2.airpay.ninja/" class="airpay-footer__logo">
+            <img src="https://academy2.airpay.ninja/theme/sentientia/pix/brand/academy-logo-350.png" alt="Airpay Academy">
+        </a>
+        <nav class="airpay-footer__links">
+            <a href="https://academy2.airpay.ninja/local/sentientia_pages/index.php?page=privacy">Privacy</a>
+            <a href="https://academy2.airpay.ninja/local/sentientia_pages/index.php?page=terms">Terms</a>
+            <a href="https://academy2.airpay.ninja/local/sentientia_pages/index.php?page=help">Help</a>
+            <a href="https://academy2.airpay.ninja/local/sentientia_pages/index.php?page=contact">Contact</a>
+        </nav>
+        <span class="airpay-footer__copy">&copy; 2026 airpay payment services pvt. ltd.</span>
+    </div>
+
+    <div class="airpay-footer__product-attribution">
+        <span class="airpay-footer__product-attribution-brand">Sentientia LMS</span>
+        <span class="airpay-footer__product-attribution-sep" aria-hidden="true">·</span>
+        <span class="airpay-footer__product-attribution-licence">Licensed under GPL v3</span>
+    </div>
+
+    <div class="tool_dataprivacy"><a href="https://academy2.airpay.ninja/admin/tool/dataprivacy/summary.php">Data retention summary</a></div><div><a class="mobilelink" href="https://download.moodle.org/mobile?version=2026042000.04&amp;lang=en&amp;iosappid=633359593&amp;androidappid=com.moodle.moodlemobile">Get the mobile app</a></div>
+    <script>
+//<![CDATA[
+var require = {
+    baseUrl : 'https://academy2.airpay.ninja/lib/requirejs.php/1788403724/',
+    // We only support AMD modules with an explicit define() statement.
+    enforceDefine: true,
+    skipDataMain: true,
+    waitSeconds : 0,
+
+    paths: {
+        jquery: 'https://academy2.airpay.ninja/lib/javascript.php/1788403724/lib/jquery/jquery-3.7.1.min',
+        jqueryui: 'https://academy2.airpay.ninja/lib/javascript.php/1788403724/lib/jquery/ui-1.14.1/jquery-ui.min',
+        jqueryprivate: 'https://academy2.airpay.ninja/lib/javascript.php/1788403724/lib/requirejs/jquery-private'
+    },
+
+    // Custom jquery config map.
+    map: {
+      // '*' means all modules will get 'jqueryprivate'
+      // for their 'jquery' dependency.
+      '*': { jquery: 'jqueryprivate' },
+
+      // 'jquery-private' wants the real jQuery module
+      // though. If this line was not here, there would
+      // be an unresolvable cyclic dependency.
+      jqueryprivate: { jquery: 'jquery' }
+    }
+};
+
+//]]>
+</script>
+<script src="https://academy2.airpay.ninja/lib/javascript.php/1788403724/lib/requirejs/require.min.js"></script>
+<script>
+//<![CDATA[
+M.util.js_pending("core/first");
+require(['core/first'], function() {
+require(['core/prefetch'])
+;
+M.util.js_pending('filter_mathjaxloader/loader'); require(['filter_mathjaxloader/loader'], function(amd) {amd.configure({"mathjaxurl":"https:\/\/cdn.jsdelivr.net\/npm\/mathjax@4.0.0\/tex-mml-chtml.js","mathjaxconfig":"","lang":"en"}); M.util.js_complete('filter_mathjaxloader/loader');});;
+require(["media_videojs/loader"], function(loader) {
+    loader.setUp('en');
+});;
+M.util.js_pending('core_courseformat/courseeditor'); require(['core_courseformat/courseeditor'], function(amd) {amd.setViewFormat("2", {"editing":false,"supportscomponents":true,"statekey":"1788404438_1788404490","overriddenStrings":[]}); M.util.js_complete('core_courseformat/courseeditor');});;
+M.util.js_pending('theme_sentientia/cart_badge'); require(['theme_sentientia/cart_badge'], function(amd) {amd.init(); M.util.js_complete('theme_sentientia/cart_badge');});;
+
+require(['core/edit_switch'], function(editSwitch) {
+    editSwitch.init('6a98e30b075106a98e30b075121-editingswitch');
+});
+;
+
+M.util.js_pending('theme_sentientia/loader');
+require(['theme_sentientia/loader'], function(Loader) {
+    M.util.js_complete('theme_sentientia/loader');
+});
+;
+M.util.js_pending('format_topics/mutations'); require(['format_topics/mutations'], function(amd) {amd.init(); M.util.js_complete('format_topics/mutations');});;
+M.util.js_pending('format_topics/section'); require(['format_topics/section'], function(amd) {amd.init(); M.util.js_complete('format_topics/section');});;
+
+require(['core_courseformat/local/content'], function(component) {
+    component.init(
+        '#page', {}, null, null
+    );
+});
+;
+M.util.js_pending('local_sentientia_assistant/chat'); require(['local_sentientia_assistant/chat'], function(amd) {amd.init(); M.util.js_complete('local_sentientia_assistant/chat');});;
+M.util.js_pending('core/notification'); require(['core/notification'], function(amd) {amd.init(16, []); M.util.js_complete('core/notification');});;
+M.util.js_pending('core/log'); require(['core/log'], function(amd) {amd.setConfig({"level":"warn"}); M.util.js_complete('core/log');});;
+M.util.js_pending('core/page_global'); require(['core/page_global'], function(amd) {amd.init(); M.util.js_complete('core/page_global');});;
+M.util.js_pending('core/utility'); require(['core/utility'], function(amd) {M.util.js_complete('core/utility');});;
+M.util.js_pending('core/storage_validation'); require(['core/storage_validation'], function(amd) {amd.init(1788402299); M.util.js_complete('core/storage_validation');});
+    M.util.js_complete("core/first");
+});
+//]]>
+</script>
+<script>
+//<![CDATA[
+M.str = {"moodle":{"lastmodified":"Last modified","name":"Name","error":"Error","info":"Information","yes":"Yes","no":"No","cancel":"Cancel","confirm":"Confirm","areyousure":"Are you sure?","closebuttontitle":"Close","unknownerror":"Unknown error","file":"File","url":"URL","collapseall":"Collapse all","expandall":"Expand all"},"repository":{"type":"Type","size":"Size","invalidjson":"Invalid JSON string","nofilesattached":"No files attached","filepicker":"File picker","logout":"Logout","nofilesavailable":"No files available","norepositoriesavailable":"Sorry, none of your current repositories can return files in the required format.","fileexistsdialogheader":"File exists","fileexistsdialog_editor":"A file with that name has already been attached to the text you are editing.","fileexistsdialog_filemanager":"A file with that name has already been attached","renameto":"Rename to \"{$a}\"","referencesexist":"There are {$a} links to this file","select":"Select","invalidfiletypetitle":"File type not accepted"},"admin":{"confirmdeletecomments":"Are you sure you want to delete the selected comment(s)?","confirmation":"Confirmation"},"debug":{"debuginfo":"Debug info","line":"Line","stacktrace":"Stack trace"},"langconfig":{"labelsep":": "}};
+//]]>
+</script>
+<script>
+//<![CDATA[
+(function() {M.util.help_popups.setup(Y);
+ M.util.js_pending('random6a98e30b0751213'); Y.on('domready', function() { M.util.js_complete("init");  M.util.js_complete('random6a98e30b0751213'); });
+})();
+//]]>
+</script>
+
+    
+</footer>
+
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var sidebar = document.getElementById('ap-course-sidebar');
+    var toggleBtn = document.getElementById('ap-sidebar-toggle');
+    if (!sidebar || !toggleBtn) return;
+
+    // Restore saved state.
+    var savedState = localStorage.getItem('ap_sidebar_open');
+    if (savedState === 'false') {
+        sidebar.classList.add('ap-course-sidebar--collapsed');
+    }
+
+    // Toggle sidebar.
+    toggleBtn.addEventListener('click', function() {
+        sidebar.classList.toggle('ap-course-sidebar--collapsed');
+        localStorage.setItem('ap_sidebar_open',
+            !sidebar.classList.contains('ap-course-sidebar--collapsed'));
+    });
+
+    // Scroll current activity into view.
+    var currentItem = sidebar.querySelector('.ap-course-sidebar__item--current');
+    if (currentItem) {
+        setTimeout(function() {
+            currentItem.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }, 300);
+    }
+
+    // Keyboard shortcuts.
+    document.addEventListener('keydown', function(e) {
+        // Don't trigger in input fields.
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+        // [B] Toggle sidebar.
+        if (e.key === 'b' && !e.ctrlKey && !e.metaKey) {
+            sidebar.classList.toggle('ap-course-sidebar--collapsed');
+            localStorage.setItem('ap_sidebar_open',
+                !sidebar.classList.contains('ap-course-sidebar--collapsed'));
+        }
+        // [N] Next activity.
+        if (e.key === 'n' && !e.ctrlKey && !e.metaKey) {
+            var nextBtn = document.querySelector('.ap-course-next__btn');
+            if (nextBtn) window.location.href = nextBtn.href;
+        }
+    });
+});
+</script>

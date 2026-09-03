@@ -39,6 +39,23 @@ Sentientia's own").
   If Moodle ever ships a colliding `open_*` column name (unlikely — the prefix
   is eAbyas-specific), `field_exists` guards make the add a no-op.
 
+## Addendum 2026-09-03 — fresh-install gap closed (UAT Stage A finding)
+
+The 2026-06-04 wiring lived in `db/upgrade.php` only. Moodle runs `upgrade.php`
+solely when an already-installed plugin's version is bumped, and `db/install.php`
+solely on a from-scratch install — so every site that had the plugin got the
+columns, and the first genuinely fresh Sentientia install (UAT-Sentientia-LMS,
+Moodle 5.2 / MySQL 8.4, 2026-09-03) came up **without** them. Symptoms: the
+`refresh_predictive_cache` task failing with `Unknown column 'open_path'`, the
+theme's guest landing page falling back to site-wide counts, org tree / audience
+enrolment / lifecycle queries all broken. Fix: `local/sentientia_core/db/install.php`
+(`xmldb_local_sentientia_core_install()` → `substrate::ensure_all(false)`),
+version `2026090301`; UAT itself was repaired with the existing
+`cli/bootstrap_substrate.php` (55 columns added, dry-run first). The same
+install-vs-upgrade trap hit the adaptive learning-path tables in June —
+PHPUnit `init.php` on a dropped test DB is the fresh-install gate that catches
+both.
+
 ## Endgame
 
 ADR-024 Waves 4–5 migrate the live read-path off `open_*` onto the first-party

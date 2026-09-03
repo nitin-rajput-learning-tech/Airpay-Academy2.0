@@ -77,6 +77,9 @@ global \$CFG;
 // UAT: keep outbound email OFF until OAuth2 SMTP is configured deliberately (151-email incident rule).
 \$CFG->noemailever = true;
 \$CFG->sslproxy = true;   // TLS terminates at the LB; Apache serves :80 behind it.
+// Moodle 5.x router: public/.htaccess (deploy/moodle-htaccess.template) rewrites
+// non-file paths to r.php; this flag makes the Environment page self-test it.
+\$CFG->routerconfigured = true;
 require_once(__DIR__ . '/lib/setup.php');
 PHPEOF
     if [ -w "$DIRROOT" ]; then cp /tmp/sentientia-config.php "$CONF";
@@ -139,6 +142,28 @@ if $PHPW -r "define('CLI_SCRIPT',1); require '$DIRROOT/config.php'; exit((empty(
         php /tmp/finish_install.php || fail "finish_install.php failed"
     $SUDO rm -f /tmp/finish_install.php
 fi
+
+# ---------- 5c. Sentientia fresh-install posture (UAT Stage A findings, 2026-09-03) ----------
+# Moodle 5.2 changed its FRESH-INSTALL defaults: forcelogin=1 and enablemyhome=0
+# ("Enable site home" - the guest landing page). Upgraded sites keep their old
+# values, a from-scratch site sends every guest straight to /login. Mirror what
+# airpay.academy / local run today so the theme's frontpage layout renders at /.
+$PHPW -r "define('CLI_SCRIPT',1); require '$DIRROOT/config.php';
+    set_config('theme', 'sentientia');
+    set_config('forcelogin', 0);
+    set_config('enablemyhome', 1);
+    set_config('frontpage', '');
+    set_config('frontpageloggedin', '');
+    echo 'posture: theme=sentientia forcelogin=0 enablemyhome=1 frontpage=\"\"', PHP_EOL;" || fail "posture step failed"
+# Tenant substrate (open_* columns on {user}/{course}): local_sentientia_core ships a
+# db/install.php since 2026090301; packages built before that only add them on UPGRADE.
+# The CLI is idempotent - belt and braces for older packages.
+SUB="$DOCROOT/local/sentientia_core/cli/bootstrap_substrate.php"
+[ -f "$SUB" ] && { $PHPW "$SUB" | tail -2 || echo "WARN: bootstrap_substrate nonzero exit"; }
+# Core Hindi pack (plugin lang/hi packs ship in the tree; the core pack is downloaded).
+$PHPW -r "define('CLI_SCRIPT',1); require '$DIRROOT/config.php'; require_once(\$CFG->libdir.'/adminlib.php');
+    \$c = new \tool_langimport\controller(); \$ok = \$c->install_languagepacks('hi');
+    echo 'langpack hi: ', (\$ok ? 'installed' : 'FAILED - '.implode('; ', \$c->errors)), PHP_EOL;" || echo "WARN: hi langpack step failed (needs outbound HTTPS to download.moodle.org)"
 
 $PHPW "$DIRROOT/admin/cli/purge_caches.php" || fail "purge_caches failed"
 for cli in repair_task_registrations.php enable_oneclick_enrol.php; do

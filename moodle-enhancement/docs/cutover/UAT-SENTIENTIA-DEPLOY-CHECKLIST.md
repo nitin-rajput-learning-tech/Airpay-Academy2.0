@@ -104,6 +104,30 @@ Follow guidebook §Deploy 1–11 with these bindings:
    `tools/gap-test/` link gate if time permits
 8. Report result → this validates or falsifies the P4 static PASS at runtime
 
+### Stage A EXECUTED 2026-09-03 — **PASS-WITH-NOTES** (P4 static PASS validated at runtime)
+
+Run by Claude over the VPN → jump → UAT chain with `tools/uat/stage-a-install.sh`
+(+ `finish_install.php`), row-by-row record in `STAGE-A-VERIFICATION-MATRIX.md` §G,
+artefacts in `docs/visual-evidence/2026-09-03/uat-stage-a/`. Site is up at
+https://academy2.airpay.ninja (landing page at `/`, Sentientia theme, admin set, cron in
+`www-data` crontab, Hindi pack installed, router configured). Actual bindings differ from
+the plan above: dirroot `/var/www/html/moodle5.2` (docroot `…/public`), dataroot
+`/var/sentientiadata`, all Moodle CLIs run as `sudo -u www-data php`.
+
+Six runtime findings, all fixed on UAT the same day and committed (none were visible to
+the P4 static pass): (1) MySQL 8 reserved word `stored` in `local_sentientia_xapi`
+install.xml → `timestored`; (2) an aborted `install_database.php` resumed via
+`upgrade.php` never runs the install tail (admin placeholder / `rolesactive=0`) →
+`finish_install.php`; (3) the `open_*` tenant substrate was provisioned on upgrade only →
+`local_sentientia_core/db/install.php`; (4) Moodle 5.2 fresh-install defaults
+`forcelogin=1` + `enablemyhome=0` hide the landing page → installer posture step;
+(5) router unconfigured → `deploy/moodle-htaccess.template` rewrite block +
+`$CFG->routerconfigured`; (6) no core `hi` pack on a fresh install → langimport step.
+Notes carried to Stage B: `db_user` is `rds_superuser` (app-scoped user + rotation
+first — Nitin deferred rotation until after install), `Server:` header + no HSTS at the
+LB, no `vendor/` in the package (dev deps only; Environment warning), stray
+`/var/www/html/moodledata` (777, unused).
+
 ## 4. Stage B — live-backup migration rehearsal (rollout-gate Phase 2, Nitin-gated)
 
 Only after Stage A is green: restore the live airpay.academy DB dump into RDS +

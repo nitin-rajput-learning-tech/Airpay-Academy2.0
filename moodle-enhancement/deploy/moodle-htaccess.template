@@ -44,7 +44,26 @@ ErrorDocument 503 /moodle/error/index.php
 ServerSignature Off
 
 # -----------------------------------------------------------------------------
-# 3. (Existing Moodle defaults you may want — uncomment as needed)
+# 3. Moodle 5.x router (UAT Stage A finding 2026-09-03)
+# -----------------------------------------------------------------------------
+# Moodle 5.0+ serves routed URLs (/api/rest/v2/..., /core/check/...) through
+# public/r.php. Without a rewrite every routed URL 404s at Apache and
+# Site admin > Server > Environment reports "The router is not configured".
+# The two -f/-d conditions keep every real file/dir (all classic *.php pages,
+# theme assets) untouched; only paths that do not exist on disk reach the
+# router. Pair with `$CFG->routerconfigured = true;` in config.php - Moodle
+# then self-tests 5 URLs on the Environment page. Harmless on a Moodle 4.5
+# tree (no r.php): a missing file still ends in the branded 404 above.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_URI} !^/r\.php
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ r.php/$1 [L,QSA]
+</IfModule>
+
+# -----------------------------------------------------------------------------
+# 4. (Existing Moodle defaults you may want — uncomment as needed)
 # -----------------------------------------------------------------------------
 # Force HTTPS in production (DON'T enable on local XAMPP — it's HTTP only):
 # RewriteEngine On

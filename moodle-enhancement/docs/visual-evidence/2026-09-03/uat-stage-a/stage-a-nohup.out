@@ -1,0 +1,982 @@
+=== Sentientia Stage A install 2026-09-03T07:21:39+05:30 ===
+docroot=/var/www/html/moodle5.2/public  wwwroot=https://academy2.airpay.ninja  dataroot=/var/sentientiadata  db=sentientia_uat@lms-sentientia-uat-db.crpst4qn6rtu.ap-south-1.rds.amazonaws.com
+php: 8.3.6
+config.php already exists - leaving it (inspect manually if bindings differ)
+dataroot ready: drwxrwx--- 4 www-data www-data 4096 Sep  3 07:19 /var/sentientiadata
+database sentientia_uat CREATED (utf8mb4/utf8mb4_unicode_ci)
+-------------------------------------------------------------------------------
+== Setting up database ==
+-->System
+++ install.xml: Success (11.03 seconds) ++
+++ xmldb_main_install: Success (5.66 seconds) ++
+++ external_update_descriptions: Success (1.62 seconds) ++
+++ admin_apply_default_settings: Success (21.47 seconds) ++
+++ Success (41.01 seconds) ++
+-->aiplacement_courseassist
+++ Success (0.10 seconds) ++
+-->aiplacement_editor
+++ Success (0.10 seconds) ++
+-->aiprovider_awsbedrock
+++ Success (0.06 seconds) ++
+-->aiprovider_azureai
+++ Success (0.05 seconds) ++
+-->aiprovider_deepseek
+++ Success (0.05 seconds) ++
+-->aiprovider_gemini
+++ Success (0.06 seconds) ++
+-->aiprovider_ollama
+++ Success (0.06 seconds) ++
+-->aiprovider_openai
+++ Success (0.06 seconds) ++
+-->antivirus_clamav
+++ Success (0.05 seconds) ++
+-->availability_completion
+++ Success (0.05 seconds) ++
+-->availability_date
+++ Success (0.06 seconds) ++
+-->availability_grade
+++ Success (0.06 seconds) ++
+-->availability_group
+++ Success (0.06 seconds) ++
+-->availability_grouping
+++ Success (0.05 seconds) ++
+-->availability_profile
+++ Success (0.05 seconds) ++
+-->qtype_calculated
+++ Success (0.26 seconds) ++
+-->qtype_calculatedmulti
+++ Success (0.05 seconds) ++
+-->qtype_calculatedsimple
+++ Success (0.06 seconds) ++
+-->qtype_ddimageortext
+++ Success (0.19 seconds) ++
+-->qtype_ddmarker
+++ Success (0.19 seconds) ++
+-->qtype_ddwtos
+++ Success (0.11 seconds) ++
+-->qtype_description
+++ Success (0.05 seconds) ++
+-->qtype_essay
+++ Success (0.10 seconds) ++
+-->qtype_gapselect
+++ Success (0.10 seconds) ++
+-->qtype_match
+++ Success (0.14 seconds) ++
+-->qtype_missingtype
+++ Success (0.06 seconds) ++
+-->qtype_multianswer
+++ Success (0.10 seconds) ++
+-->qtype_multichoice
+++ Success (0.10 seconds) ++
+-->qtype_numerical
+++ Success (0.20 seconds) ++
+-->qtype_ordering
+++ Success (0.11 seconds) ++
+-->qtype_randomsamatch
+++ Success (0.10 seconds) ++
+-->qtype_shortanswer
+++ Success (0.11 seconds) ++
+-->qtype_truefalse
+++ Success (0.10 seconds) ++
+-->mod_assign
+++ Success (0.86 seconds) ++
+-->mod_bigbluebuttonbn
+++ Success (0.49 seconds) ++
+-->mod_book
+++ Success (0.29 seconds) ++
+-->mod_choice
+++ Success (0.30 seconds) ++
+-->mod_data
+++ Success (0.58 seconds) ++
+-->mod_feedback
+++ Success (0.64 seconds) ++
+-->mod_folder
+++ Success (0.16 seconds) ++
+-->mod_forum
+++ Success (1.30 seconds) ++
+-->mod_glossary
+++ Success (0.65 seconds) ++
+-->mod_h5pactivity
+++ Success (0.30 seconds) ++
+-->mod_imscp
+++ Success (0.15 seconds) ++
+-->mod_label
+++ Success (0.14 seconds) ++
+-->mod_lesson
+++ Success (0.54 seconds) ++
+-->mod_lti
+++ Success (1.28 seconds) ++
+-->mod_page
+++ Success (0.15 seconds) ++
+-->mod_qbank
+++ Success (0.23 seconds) ++
+-->mod_quiz
+++ Success (0.78 seconds) ++
+-->mod_resource
+++ Success (0.19 seconds) ++
+-->mod_scorm
+++ Success (0.72 seconds) ++
+-->mod_subsection
+++ Success (0.13 seconds) ++
+-->mod_url
+++ Success (0.16 seconds) ++
+-->mod_wiki
+++ Success (0.59 seconds) ++
+-->mod_workshop
+++ Success (0.79 seconds) ++
+-->auth_db
+++ Success (0.07 seconds) ++
+-->auth_email
+++ Success (0.06 seconds) ++
+-->auth_ldap
+++ Success (0.07 seconds) ++
+-->auth_lti
+++ Success (0.11 seconds) ++
+-->auth_manual
+++ Success (0.05 seconds) ++
+-->auth_nologin
+++ Success (0.06 seconds) ++
+-->auth_none
+++ Success (0.06 seconds) ++
+-->auth_oauth2
+++ Success (0.15 seconds) ++
+-->auth_shibboleth
+++ Success (0.06 seconds) ++
+-->auth_webservice
+++ Success (0.05 seconds) ++
+-->calendartype_gregorian
+++ Success (0.05 seconds) ++
+-->communication_customlink
+++ Success (0.10 seconds) ++
+-->communication_matrix
+++ Success (0.13 seconds) ++
+-->customfield_checkbox
+++ Success (0.05 seconds) ++
+-->customfield_date
+++ Success (0.05 seconds) ++
+-->customfield_number
+++ Success (0.06 seconds) ++
+-->customfield_select
+++ Success (0.06 seconds) ++
+-->customfield_text
+++ Success (0.06 seconds) ++
+-->customfield_textarea
+++ Success (0.06 seconds) ++
+-->enrol_category
+++ Success (0.08 seconds) ++
+-->enrol_cohort
+++ Success (0.08 seconds) ++
+-->enrol_database
+++ Success (0.09 seconds) ++
+-->enrol_fee
+++ Success (0.09 seconds) ++
+-->enrol_flatfile
+++ Success (0.17 seconds) ++
+-->enrol_guest
+++ Success (0.08 seconds) ++
+-->enrol_imsenterprise
+++ Success (0.08 seconds) ++
+-->enrol_ldap
+++ Success (0.07 seconds) ++
+-->enrol_lti
+++ Success (1.39 seconds) ++
+-->enrol_manual
+++ Success (0.12 seconds) ++
+-->enrol_meta
+++ Success (0.10 seconds) ++
+-->enrol_paypal
+++ Success (0.17 seconds) ++
+-->enrol_self
+++ Success (0.13 seconds) ++
+-->enrol_sentientiasub
+++ Success (0.16 seconds) ++
+-->message_airnotifier
+++ Success (0.30 seconds) ++
+-->message_email
+++ Success (0.41 seconds) ++
+-->message_popup
+++ Success (0.37 seconds) ++
+-->message_sms
+++ Success (0.25 seconds) ++
+-->block_accessreview
+++ Success (0.09 seconds) ++
+-->block_activity_results
+++ Success (0.08 seconds) ++
+-->block_admin_bookmarks
+++ Success (0.09 seconds) ++
+-->block_badges
+++ Success (0.07 seconds) ++
+-->block_blog_menu
+++ Success (0.07 seconds) ++
+-->block_blog_recent
+++ Success (0.07 seconds) ++
+-->block_blog_tags
+++ Success (0.07 seconds) ++
+-->block_calendar_month
+++ Success (0.08 seconds) ++
+-->block_calendar_upcoming
+++ Success (0.08 seconds) ++
+-->block_comments
+++ Success (0.08 seconds) ++
+-->block_completionstatus
+++ Success (0.07 seconds) ++
+-->block_course_list
+++ Success (0.08 seconds) ++
+-->block_course_summary
+++ Success (0.08 seconds) ++
+-->block_feedback
+++ Success (0.08 seconds) ++
+-->block_globalsearch
+++ Success (0.07 seconds) ++
+-->block_glossary_random
+++ Success (0.07 seconds) ++
+-->block_html
+++ Success (0.07 seconds) ++
+-->block_learnerscript
+++ Success (0.46 seconds) ++
+-->block_login
+++ Success (0.07 seconds) ++
+-->block_lp
+++ Success (0.07 seconds) ++
+-->block_mentees
+++ Success (0.08 seconds) ++
+-->block_myoverview
+++ Success (0.06 seconds) ++
+-->block_myprofile
+++ Success (0.07 seconds) ++
+-->block_navigation
+++ Success (0.07 seconds) ++
+-->block_news_items
+++ Success (0.07 seconds) ++
+-->block_online_users
+++ Success (0.10 seconds) ++
+-->block_private_files
+++ Success (0.07 seconds) ++
+-->block_recent_activity
+++ Success (0.13 seconds) ++
+-->block_recentlyaccessedcourses
+++ Success (0.08 seconds) ++
+-->block_recentlyaccesseditems
+++ Success (0.14 seconds) ++
+-->block_reportdashboard
+++ Success (0.11 seconds) ++
+-->block_reporttiles
+++ Success (0.09 seconds) ++
+-->block_rss_client
+++ Success (0.16 seconds) ++
+-->block_search_forums
+++ Success (0.07 seconds) ++
+-->block_selfcompletion
+++ Success (0.08 seconds) ++
+-->block_sentientia_cert_health
+++ Success (0.07 seconds) ++
+-->block_sentientia_compliance
+++ Success (0.07 seconds) ++
+-->block_sentientia_cron_health
+++ Success (0.08 seconds) ++
+-->block_sentientia_leaderboard
+++ Success (0.08 seconds) ++
+-->block_sentientia_recommendations
+++ Success (0.08 seconds) ++
+-->block_sentientia_trainer
+++ Success (0.09 seconds) ++
+-->block_settings
+++ Success (0.07 seconds) ++
+-->block_site_main_menu
+++ Success (0.07 seconds) ++
+-->block_social_activities
+++ Success (0.07 seconds) ++
+-->block_starredcourses
+++ Success (0.07 seconds) ++
+-->block_tag_flickr
+++ Success (0.07 seconds) ++
+-->block_tag_youtube
+++ Success (0.08 seconds) ++
+-->block_tags
+++ Success (0.07 seconds) ++
+-->block_timeline
+++ Success (0.07 seconds) ++
+-->media_html5audio
+++ Success (0.06 seconds) ++
+-->media_html5video
+++ Success (0.06 seconds) ++
+-->media_videojs
+++ Success (0.05 seconds) ++
+-->media_vimeo
+++ Success (0.06 seconds) ++
+-->media_youtube
+++ Success (0.06 seconds) ++
+-->filter_activitynames
+++ Success (0.08 seconds) ++
+-->filter_algebra
+++ Success (0.05 seconds) ++
+-->filter_codehighlighter
+++ Success (0.06 seconds) ++
+-->filter_data
+++ Success (0.06 seconds) ++
+-->filter_displayh5p
+++ Success (0.08 seconds) ++
+-->filter_emailprotect
+++ Success (0.06 seconds) ++
+-->filter_emoticon
+++ Success (0.06 seconds) ++
+-->filter_glossary
+++ Success (0.06 seconds) ++
+-->filter_mathjaxloader
+++ Success (0.07 seconds) ++
+-->filter_mediaplugin
+++ Success (0.07 seconds) ++
+-->filter_multilang
+++ Success (0.06 seconds) ++
+-->filter_tex
+++ Success (0.07 seconds) ++
+-->filter_urltolink
+++ Success (0.07 seconds) ++
+-->editor_textarea
+++ Success (0.06 seconds) ++
+-->editor_tiny
+++ Success (0.06 seconds) ++
+-->format_singleactivity
+++ Success (0.05 seconds) ++
+-->format_social
+++ Success (0.09 seconds) ++
+-->format_topics
+++ Success (0.06 seconds) ++
+-->format_weeks
+++ Success (0.06 seconds) ++
+-->dataformat_csv
+++ Success (0.06 seconds) ++
+-->dataformat_excel
+++ Success (0.06 seconds) ++
+-->dataformat_html
+++ Success (0.05 seconds) ++
+-->dataformat_json
+++ Success (0.06 seconds) ++
+-->dataformat_ods
+++ Success (0.06 seconds) ++
+-->dataformat_pdf
+++ Success (0.06 seconds) ++
+-->profilefield_checkbox
+++ Success (0.07 seconds) ++
+-->profilefield_datetime
+++ Success (0.06 seconds) ++
+-->profilefield_menu
+++ Success (0.06 seconds) ++
+-->profilefield_social
+++ Success (0.06 seconds) ++
+-->profilefield_text
+++ Success (0.06 seconds) ++
+-->profilefield_textarea
+++ Success (0.06 seconds) ++
+-->report_backups
+++ Success (0.06 seconds) ++
+-->report_competency
+++ Success (0.06 seconds) ++
+-->report_completion
+++ Success (0.08 seconds) ++
+-->report_configlog
+++ Success (0.06 seconds) ++
+-->report_courseoverview
+++ Success (0.08 seconds) ++
+-->report_eventlist
+++ Success (0.07 seconds) ++
+-->report_infectedfiles
+++ Success (0.06 seconds) ++
+-->report_insights
+++ Success (0.06 seconds) ++
+-->report_log
+++ Success (0.11 seconds) ++
+-->report_loglive
+++ Success (0.08 seconds) ++
+-->report_outline
+++ Success (0.11 seconds) ++
+-->report_participation
+++ Success (0.08 seconds) ++
+-->report_performance
+++ Success (0.07 seconds) ++
+-->report_progress
+++ Success (0.08 seconds) ++
+-->report_questioninstances
+++ Success (0.06 seconds) ++
+-->report_security
+++ Success (0.07 seconds) ++
+-->report_stats
+++ Success (0.10 seconds) ++
+-->report_status
+++ Success (0.12 seconds) ++
+-->report_themeusage
+++ Success (0.07 seconds) ++
+-->report_usersessions
+++ Success (0.09 seconds) ++
+-->gradeexport_ods
+++ Success (0.08 seconds) ++
+-->gradeexport_txt
+++ Success (0.08 seconds) ++
+-->gradeexport_xls
+++ Success (0.09 seconds) ++
+-->gradeexport_xml
+++ Success (0.08 seconds) ++
+-->gradeimport_csv
+++ Success (0.07 seconds) ++
+-->gradeimport_direct
+++ Success (0.07 seconds) ++
+-->gradeimport_xml
+++ Success (0.07 seconds) ++
+-->gradepenalty_duedate
+++ Success (0.14 seconds) ++
+-->gradereport_grader
+++ Success (0.07 seconds) ++
+-->gradereport_history
+++ Success (0.08 seconds) ++
+-->gradereport_outcomes
+++ Success (0.08 seconds) ++
+-->gradereport_overview
+++ Success (0.07 seconds) ++
+-->gradereport_singleview
+++ Success (0.07 seconds) ++
+-->gradereport_summary
+++ Success (0.08 seconds) ++
+-->gradereport_user
+++ Success (0.10 seconds) ++
+-->gradingform_guide
+++ Success (0.19 seconds) ++
+-->gradingform_rubric
+++ Success (0.20 seconds) ++
+-->mlbackend_python
+++ Success (0.06 seconds) ++
+-->webservice_rest
+++ Success (0.06 seconds) ++
+-->webservice_soap
+++ Success (0.06 seconds) ++
+-->repository_areafiles
+++ Success (0.13 seconds) ++
+-->repository_contentbank
+++ Success (0.17 seconds) ++
+-->repository_coursefiles
+++ Success (0.08 seconds) ++
+-->repository_dropbox
+++ Success (0.07 seconds) ++
+-->repository_equella
+++ Success (0.06 seconds) ++
+-->repository_filesystem
+++ Success (0.08 seconds) ++
+-->repository_flickr
+++ Success (0.06 seconds) ++
+-->repository_flickr_public
+++ Success (0.07 seconds) ++
+-->repository_googledocs
+++ Success (0.07 seconds) ++
+-->repository_local
+++ Success (0.12 seconds) ++
+-->repository_merlot
+++ Success (0.06 seconds) ++
+-->repository_nextcloud
+++ Success (0.06 seconds) ++
+-->repository_onedrive
+++ Success (0.13 seconds) ++
+-->repository_recent
+++ Success (0.14 seconds) ++
+-->repository_s3
+++ Success (0.06 seconds) ++
+-->repository_upload
+++ Success (0.11 seconds) ++
+-->repository_url
+++ Success (0.11 seconds) ++
+-->repository_user
+++ Success (0.12 seconds) ++
+-->repository_webdav
+++ Success (0.08 seconds) ++
+-->repository_wikimedia
+++ Success (0.12 seconds) ++
+-->repository_youtube
+++ Success (0.06 seconds) ++
+-->portfolio_download
+++ Success (0.05 seconds) ++
+-->portfolio_flickr
+++ Success (0.06 seconds) ++
+-->portfolio_googledocs
+++ Success (0.06 seconds) ++
+-->search_simpledb
+++ Success (0.43 seconds) ++
+-->search_solr
+++ Success (0.06 seconds) ++
+-->qbank_bulkmove
+++ Success (0.06 seconds) ++
+-->qbank_columnsortorder
+++ Success (0.07 seconds) ++
+-->qbank_comment
+++ Success (0.08 seconds) ++
+-->qbank_customfields
+++ Success (0.08 seconds) ++
+-->qbank_deletequestion
+++ Success (0.21 seconds) ++
+-->qbank_editquestion
+++ Success (0.09 seconds) ++
+-->qbank_exportquestions
+++ Success (0.08 seconds) ++
+-->qbank_exporttoxml
+++ Success (0.07 seconds) ++
+-->qbank_history
+++ Success (0.06 seconds) ++
+-->qbank_importquestions
+++ Success (0.06 seconds) ++
+-->qbank_managecategories
+++ Success (0.06 seconds) ++
+-->qbank_previewquestion
+++ Success (0.05 seconds) ++
+-->qbank_statistics
+++ Success (0.06 seconds) ++
+-->qbank_tagquestion
+++ Success (0.06 seconds) ++
+-->qbank_usage
+++ Success (0.05 seconds) ++
+-->qbank_viewcreator
+++ Success (0.06 seconds) ++
+-->qbank_viewquestionname
+++ Success (0.07 seconds) ++
+-->qbank_viewquestiontext
+++ Success (0.07 seconds) ++
+-->qbank_viewquestiontype
+++ Success (0.06 seconds) ++
+-->qbehaviour_adaptive
+++ Success (0.07 seconds) ++
+-->qbehaviour_adaptivenopenalty
+++ Success (0.06 seconds) ++
+-->qbehaviour_deferredcbm
+++ Success (0.06 seconds) ++
+-->qbehaviour_deferredfeedback
+++ Success (0.07 seconds) ++
+-->qbehaviour_immediatecbm
+++ Success (0.07 seconds) ++
+-->qbehaviour_immediatefeedback
+++ Success (0.10 seconds) ++
+-->qbehaviour_informationitem
+++ Success (0.08 seconds) ++
+-->qbehaviour_interactive
+++ Success (0.09 seconds) ++
+-->qbehaviour_interactivecountback
+++ Success (0.08 seconds) ++
+-->qbehaviour_manualgraded
+++ Success (0.10 seconds) ++
+-->qbehaviour_missing
+++ Success (0.06 seconds) ++
+-->qformat_aiken
+++ Success (0.07 seconds) ++
+-->qformat_blackboard_six
+++ Success (0.06 seconds) ++
+-->qformat_gift
+++ Success (0.06 seconds) ++
+-->qformat_missingword
+++ Success (0.06 seconds) ++
+-->qformat_multianswer
+++ Success (0.06 seconds) ++
+-->qformat_xhtml
+++ Success (0.06 seconds) ++
+-->qformat_xml
+++ Success (0.06 seconds) ++
+-->tool_admin_presets
+++ Success (0.06 seconds) ++
+-->tool_analytics
+++ Success (0.07 seconds) ++
+-->tool_availabilityconditions
+++ Success (0.06 seconds) ++
+-->tool_behat
+++ Success (0.06 seconds) ++
+-->tool_brickfield
+++ Success (0.67 seconds) ++
+-->tool_capability
+++ Success (0.06 seconds) ++
+-->tool_certificate
+++ Success (0.59 seconds) ++
+-->tool_cohortroles
+++ Success (0.12 seconds) ++
+-->tool_componentlibrary
+++ Success (0.06 seconds) ++
+-->tool_customlang
+++ Success (0.19 seconds) ++
+-->tool_dataprivacy
+++ Success (0.60 seconds) ++
+-->tool_dbtransfer
+++ Success (0.06 seconds) ++
+-->tool_filetypes
+++ Success (0.06 seconds) ++
+-->tool_generator
+++ Success (0.06 seconds) ++
+-->tool_httpsreplace
+++ Success (0.06 seconds) ++
+-->tool_installaddon
+++ Success (0.12 seconds) ++
+-->tool_langimport
+++ Success (0.06 seconds) ++
+-->tool_licensemanager
+++ Success (0.06 seconds) ++
+-->tool_log
+++ Success (0.07 seconds) ++
+-->tool_lp
+++ Success (0.11 seconds) ++
+-->tool_lpimportcsv
+++ Success (0.05 seconds) ++
+-->tool_lpmigrate
+++ Success (0.07 seconds) ++
+-->tool_messageinbound
+++ Success (0.11 seconds) ++
+-->tool_mfa
+++ Success (0.22 seconds) ++
+-->tool_mobile
+++ Success (0.10 seconds) ++
+-->tool_monitor
+++ Success (0.34 seconds) ++
+-->tool_multilangupgrade
+++ Success (0.06 seconds) ++
+-->tool_oauth2
+++ Success (0.06 seconds) ++
+-->tool_phpunit
+++ Success (0.06 seconds) ++
+-->tool_policy
+++ Success (0.24 seconds) ++
+-->tool_profiling
+++ Success (0.06 seconds) ++
+-->tool_recyclebin
+++ Success (0.20 seconds) ++
+-->tool_replace
+++ Success (0.06 seconds) ++
+-->tool_spamcleaner
+++ Success (0.06 seconds) ++
+-->tool_task
+++ Success (0.06 seconds) ++
+-->tool_templatelibrary
+++ Success (0.06 seconds) ++
+-->tool_unsuproles
+++ Success (0.07 seconds) ++
+-->tool_uploadcourse
+++ Success (0.07 seconds) ++
+-->tool_uploaduser
+++ Success (0.07 seconds) ++
+-->tool_usertours
+++ Success (0.74 seconds) ++
+-->tool_xmldb
+++ Success (0.06 seconds) ++
+-->cachestore_apcu
+++ Success (0.06 seconds) ++
+-->cachestore_file
+++ Success (0.06 seconds) ++
+-->cachestore_redis
+++ Success (0.06 seconds) ++
+-->cachestore_session
+++ Success (0.06 seconds) ++
+-->cachestore_static
+++ Success (0.06 seconds) ++
+-->cachelock_file
+++ Success (0.06 seconds) ++
+-->fileconverter_googledrive
+++ Success (0.06 seconds) ++
+-->fileconverter_unoconv
+++ Success (0.07 seconds) ++
+-->contenttype_h5p
+++ Success (0.12 seconds) ++
+-->theme_boost
+++ Success (0.08 seconds) ++
+-->theme_classic
+++ Success (0.10 seconds) ++
+-->theme_sentientia
+++ Success (0.06 seconds) ++
+-->local_sentientia_ai
+++ Success (0.16 seconds) ++
+-->local_sentientia_aiquiz
+++ Success (0.23 seconds) ++
+-->local_sentientia_analytics
+++ Success (0.06 seconds) ++
+-->local_sentientia_api
+++ Success (0.33 seconds) ++
+-->local_sentientia_assistant
+++ Success (0.33 seconds) ++
+-->local_sentientia_authoring
+++ Success (0.45 seconds) ++
+-->local_sentientia_calendar
+++ Success (0.21 seconds) ++
+-->local_sentientia_cart
+++ Success (0.56 seconds) ++
+-->local_sentientia_catalog
+++ Success (0.06 seconds) ++
+-->local_sentientia_challenge
+++ Success (0.34 seconds) ++
+-->local_sentientia_classroom
+++ Success (0.35 seconds) ++
+-->local_sentientia_compliance_report
+++ Success (0.32 seconds) ++
+-->local_sentientia_content_market
+++ Success (0.27 seconds) ++
+-->local_sentientia_core
+++ Success (0.28 seconds) ++
+-->local_sentientia_courses
+++ Success (0.46 seconds) ++
+-->local_sentientia_emails
+++ Success (0.33 seconds) ++
+-->local_sentientia_evaluation
+++ Success (0.44 seconds) ++
+-->local_sentientia_exams
+++ Success (0.26 seconds) ++
+-->local_sentientia_gamification
+++ Success (0.29 seconds) ++
+-->local_sentientia_integrations
+++ Success (0.12 seconds) ++
+-->local_sentientia_leaderboard
+++ Success (0.45 seconds) ++
+-->local_sentientia_learningpath
+++ Success (0.35 seconds) ++
+-->local_sentientia_lifecycle
+++ Success (0.08 seconds) ++
+-->local_sentientia_live
+++ Success (0.41 seconds) ++
+-->local_sentientia_m365
+++ Success (0.14 seconds) ++
+-->local_sentientia_manager
+++ Success (0.29 seconds) ++
+-->local_sentientia_notifications
+++ Success (0.30 seconds) ++
+-->local_sentientia_org
+++ Success (0.16 seconds) ++
+-->local_sentientia_pages
+++ Success (0.06 seconds) ++
+-->local_sentientia_platform
+++ Success (0.23 seconds) ++
+-->local_sentientia_privacy
+++ Success (0.19 seconds) ++
+-->local_sentientia_proctoring
+++ Success (0.47 seconds) ++
+-->local_sentientia_programs
+++ Success (0.32 seconds) ++
+-->local_sentientia_pwa
+++ Success (0.23 seconds) ++
+-->local_sentientia_ratings
+++ Success (0.15 seconds) ++
+-->local_sentientia_recommendations
+++ Success (0.20 seconds) ++
+-->local_sentientia_recompletion
+++ Success (0.28 seconds) ++
+-->local_sentientia_reports
+++ Success (0.17 seconds) ++
+-->local_sentientia_request
+++ Success (0.31 seconds) ++
+-->local_sentientia_roles
+++ Success (0.19 seconds) ++
+-->local_sentientia_skills
+++ Success (0.63 seconds) ++
+-->local_sentientia_skillsai
+++ Success (0.40 seconds) ++
+-->local_sentientia_talent
+++ Success (0.43 seconds) ++
+-->local_sentientia_translate
+++ Success (0.20 seconds) ++
+-->local_sentientia_users
+++ Success (0.26 seconds) ++
+-->local_sentientia_whatsapp
+++ Success (0.37 seconds) ++
+-->local_sentientia_xapi
+Default exception handler: DDL sql execution error Debug: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'stored BIGINT(10) NOT NULL DEFAULT 0,
+    source VARCHAR(32) COLLATE utf8mb4_uni' at line 20
+CREATE TABLE mdl_local_sentientia_xapi_stmts (
+    id BIGINT(10) NOT NULL auto_increment,
+    statementid VARCHAR(36) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+    costcenterid BIGINT(10) NOT NULL DEFAULT 0,
+    actorid BIGINT(10),
+    actor LONGTEXT COLLATE utf8mb4_unicode_ci NOT NULL,
+    verb VARCHAR(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+    verbdisplay VARCHAR(128) COLLATE utf8mb4_unicode_ci,
+    object LONGTEXT COLLATE utf8mb4_unicode_ci NOT NULL,
+    objectid VARCHAR(1333) COLLATE utf8mb4_unicode_ci,
+    result LONGTEXT COLLATE utf8mb4_unicode_ci,
+    score_scaled NUMERIC(5,4),
+    score_raw NUMERIC(10,2),
+    success TINYINT(1),
+    completion TINYINT(1),
+    context LONGTEXT COLLATE utf8mb4_unicode_ci,
+    registration VARCHAR(36) COLLATE utf8mb4_unicode_ci,
+    authority LONGTEXT COLLATE utf8mb4_unicode_ci,
+    timestamp BIGINT(10),
+    stored BIGINT(10) NOT NULL DEFAULT 0,
+    source VARCHAR(32) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'moodle',
+    voided TINYINT(1) NOT NULL DEFAULT 0,
+    timecreated BIGINT(10) NOT NULL DEFAULT 0,
+    timemodified BIGINT(10) NOT NULL DEFAULT 0,
+CONSTRAINT  PRIMARY KEY (id)
+, KEY mdl_locasentxapistmt_cos_ix (costcenterid)
+, KEY mdl_locasentxapistmt_act_ix (actorid)
+, KEY mdl_locasentxapistmt_ver_ix (verb)
+, KEY mdl_locasentxapistmt_sto_ix (stored)
+, KEY mdl_locasentxapistmt_reg_ix (registration)
+, KEY mdl_locasentxapistmt_cosact_ix (costcenterid, actorid, verb)
+, KEY mdl_locasentxapistmt_voi_ix (voided)
+, UNIQUE KEY mdl_locasentxapistmt_staco_uix (statementid, costcenterid)
+)
+ ENGINE = InnoDB
+ DEFAULT COLLATE = utf8mb4_unicode_ci ROW_FORMAT=Compressed
+ COMMENT='xAPI 1.0.3 statement store. One row per statement.          '
+;
+CREATE TABLE mdl_local_sentientia_xapi_cmi5 (
+    id BIGINT(10) NOT NULL auto_increment,
+    userid BIGINT(10) NOT NULL DEFAULT 0,
+    costcenterid BIGINT(10) NOT NULL DEFAULT 0,
+    courseid BIGINT(10) NOT NULL DEFAULT 0,
+    cmid BIGINT(10),
+    registration VARCHAR(36) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+    activityid VARCHAR(1333) COLLATE utf8mb4_unicode_ci,
+    sessionid VARCHAR(36) COLLATE utf8mb4_unicode_ci,
+    launchtoken VARCHAR(64) COLLATE utf8mb4_unicode_ci,
+    launchmode VARCHAR(16) COLLATE utf8mb4_unicode_ci,
+    status VARCHAR(16) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'initialized',
+    score_scaled NUMERIC(5,4),
+    success TINYINT(1),
+    duration VARCHAR(32) COLLATE utf8mb4_unicode_ci,
+    timeinitialized BIGINT(10),
+    timeterminated BIGINT(10),
+    timecreated BIGINT(10) NOT NULL DEFAULT 0,
+    timemodified BIGINT(10) NOT NULL DEFAULT 0,
+CONSTRAINT  PRIMARY KEY (id)
+, KEY mdl_locasentxapicmi5_cos_ix (costcenterid)
+, KEY mdl_locasentxapicmi5_usecou_ix (userid, courseid)
+, KEY mdl_locasentxapicmi5_sta_ix (status)
+, UNIQUE KEY mdl_locasentxapicmi5_reg_uix (registration)
+, KEY mdl_locasentxapicmi5_use_ix (userid)
+, KEY mdl_locasentxapicmi5_cou_ix (courseid)
+)
+ ENGINE = InnoDB
+ DEFAULT COLLATE = utf8mb4_unicode_ci ROW_FORMAT=Compressed
+ COMMENT='cmi5 Assignable Unit (AU) session records.                  '
+;
+CREATE TABLE mdl_local_sentientia_xapi_clients (
+    id BIGINT(10) NOT NULL auto_increment,
+    costcenterid BIGINT(10) NOT NULL DEFAULT 0,
+    name VARCHAR(128) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+    token_hash VARCHAR(64) COLLATE utf8mb4_unicode_ci,
+    basic_user VARCHAR(128) COLLATE utf8mb4_unicode_ci,
+    basic_pass_hash VARCHAR(64) COLLATE utf8mb4_unicode_ci,
+    ip_allowlist LONGTEXT COLLATE utf8mb4_unicode_ci,
+    enabled TINYINT(1) NOT NULL DEFAULT 1,
+    timecreated BIGINT(10) NOT NULL DEFAULT 0,
+    timemodified BIGINT(10) NOT NULL DEFAULT 0,
+CONSTRAINT  PRIMARY KEY (id)
+, KEY mdl_locasentxapiclie_cos_ix (costcenterid)
+, KEY mdl_locasentxapiclie_tok_ix (token_hash)
+, KEY mdl_locasentxapiclie_bas_ix (basic_user)
+)
+ ENGINE = InnoDB
+ DEFAULT COLLATE = utf8mb4_unicode_ci ROW_FORMAT=Compressed
+ COMMENT='Registered xAPI client credentials (per-tenant).            '
+Error code: ddlexecuteerror
+* line 502 of /public/lib/dml/moodle_database.php: ddl_change_structure_exception thrown
+* line 377 of /public/lib/dml/moodle_read_replica_trait.php: call to moodle_database->query_end()
+* line 1189 of /public/lib/dml/mysqli_native_moodle_database.php: call to mysqli_native_moodle_database->query_end()
+* line 77 of /public/lib/ddl/database_manager.php: call to mysqli_native_moodle_database->change_database_structure()
+* line 427 of /public/lib/ddl/database_manager.php: call to database_manager->execute_sql_arr()
+* line 372 of /public/lib/ddl/database_manager.php: call to database_manager->install_from_xmldb_structure()
+* line 747 of /public/lib/upgradelib.php: call to database_manager->install_from_xmldb_file()
+* line 1955 of /public/lib/upgradelib.php: call to upgrade_plugins()
+* line 451 of /public/lib/installlib.php: call to upgrade_noncore()
+* line 205 of /admin/cli/install_database.php: call to install_cli_database()
+
+!!! DDL sql execution error !!!
+!! You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'stored BIGINT(10) NOT NULL DEFAULT 0,
+    source VARCHAR(32) COLLATE utf8mb4_uni' at line 20
+CREATE TABLE mdl_local_sentientia_xapi_stmts (
+    id BIGINT(10) NOT NULL auto_increment,
+    statementid VARCHAR(36) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+    costcenterid BIGINT(10) NOT NULL DEFAULT 0,
+    actorid BIGINT(10),
+    actor LONGTEXT COLLATE utf8mb4_unicode_ci NOT NULL,
+    verb VARCHAR(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+    verbdisplay VARCHAR(128) COLLATE utf8mb4_unicode_ci,
+    object LONGTEXT COLLATE utf8mb4_unicode_ci NOT NULL,
+    objectid VARCHAR(1333) COLLATE utf8mb4_unicode_ci,
+    result LONGTEXT COLLATE utf8mb4_unicode_ci,
+    score_scaled NUMERIC(5,4),
+    score_raw NUMERIC(10,2),
+    success TINYINT(1),
+    completion TINYINT(1),
+    context LONGTEXT COLLATE utf8mb4_unicode_ci,
+    registration VARCHAR(36) COLLATE utf8mb4_unicode_ci,
+    authority LONGTEXT COLLATE utf8mb4_unicode_ci,
+    timestamp BIGINT(10),
+    stored BIGINT(10) NOT NULL DEFAULT 0,
+    source VARCHAR(32) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'moodle',
+    voided TINYINT(1) NOT NULL DEFAULT 0,
+    timecreated BIGINT(10) NOT NULL DEFAULT 0,
+    timemodified BIGINT(10) NOT NULL DEFAULT 0,
+CONSTRAINT  PRIMARY KEY (id)
+, KEY mdl_locasentxapistmt_cos_ix (costcenterid)
+, KEY mdl_locasentxapistmt_act_ix (actorid)
+, KEY mdl_locasentxapistmt_ver_ix (verb)
+, KEY mdl_locasentxapistmt_sto_ix (stored)
+, KEY mdl_locasentxapistmt_reg_ix (registration)
+, KEY mdl_locasentxapistmt_cosact_ix (costcenterid, actorid, verb)
+, KEY mdl_locasentxapistmt_voi_ix (voided)
+, UNIQUE KEY mdl_locasentxapistmt_staco_uix (statementid, costcenterid)
+)
+ ENGINE = InnoDB
+ DEFAULT COLLATE = utf8mb4_unicode_ci ROW_FORMAT=Compressed
+ COMMENT='xAPI 1.0.3 statement store. One row per statement.          '
+;
+CREATE TABLE mdl_local_sentientia_xapi_cmi5 (
+    id BIGINT(10) NOT NULL auto_increment,
+    userid BIGINT(10) NOT NULL DEFAULT 0,
+    costcenterid BIGINT(10) NOT NULL DEFAULT 0,
+    courseid BIGINT(10) NOT NULL DEFAULT 0,
+    cmid BIGINT(10),
+    registration VARCHAR(36) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+    activityid VARCHAR(1333) COLLATE utf8mb4_unicode_ci,
+    sessionid VARCHAR(36) COLLATE utf8mb4_unicode_ci,
+    launchtoken VARCHAR(64) COLLATE utf8mb4_unicode_ci,
+    launchmode VARCHAR(16) COLLATE utf8mb4_unicode_ci,
+    status VARCHAR(16) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'initialized',
+    score_scaled NUMERIC(5,4),
+    success TINYINT(1),
+    duration VARCHAR(32) COLLATE utf8mb4_unicode_ci,
+    timeinitialized BIGINT(10),
+    timeterminated BIGINT(10),
+    timecreated BIGINT(10) NOT NULL DEFAULT 0,
+    timemodified BIGINT(10) NOT NULL DEFAULT 0,
+CONSTRAINT  PRIMARY KEY (id)
+, KEY mdl_locasentxapicmi5_cos_ix (costcenterid)
+, KEY mdl_locasentxapicmi5_usecou_ix (userid, courseid)
+, KEY mdl_locasentxapicmi5_sta_ix (status)
+, UNIQUE KEY mdl_locasentxapicmi5_reg_uix (registration)
+, KEY mdl_locasentxapicmi5_use_ix (userid)
+, KEY mdl_locasentxapicmi5_cou_ix (courseid)
+)
+ ENGINE = InnoDB
+ DEFAULT COLLATE = utf8mb4_unicode_ci ROW_FORMAT=Compressed
+ COMMENT='cmi5 Assignable Unit (AU) session records.                  '
+;
+CREATE TABLE mdl_local_sentientia_xapi_clients (
+    id BIGINT(10) NOT NULL auto_increment,
+    costcenterid BIGINT(10) NOT NULL DEFAULT 0,
+    name VARCHAR(128) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+    token_hash VARCHAR(64) COLLATE utf8mb4_unicode_ci,
+    basic_user VARCHAR(128) COLLATE utf8mb4_unicode_ci,
+    basic_pass_hash VARCHAR(64) COLLATE utf8mb4_unicode_ci,
+    ip_allowlist LONGTEXT COLLATE utf8mb4_unicode_ci,
+    enabled TINYINT(1) NOT NULL DEFAULT 1,
+    timecreated BIGINT(10) NOT NULL DEFAULT 0,
+    timemodified BIGINT(10) NOT NULL DEFAULT 0,
+CONSTRAINT  PRIMARY KEY (id)
+, KEY mdl_locasentxapiclie_cos_ix (costcenterid)
+, KEY mdl_locasentxapiclie_tok_ix (token_hash)
+, KEY mdl_locasentxapiclie_bas_ix (basic_user)
+)
+ ENGINE = InnoDB
+ DEFAULT COLLATE = utf8mb4_unicode_ci ROW_FORMAT=Compressed
+ COMMENT='Registered xAPI client credentials (per-tenant).            '
+Error code: ddlexecuteerror !!
+!! Stack trace: * line 502 of /public/lib/dml/moodle_database.php: ddl_change_structure_exception thrown
+* line 377 of /public/lib/dml/moodle_read_replica_trait.php: call to moodle_database-&gt;query_end()
+* line 1189 of /public/lib/dml/mysqli_native_moodle_database.php: call to mysqli_native_moodle_database-&gt;query_end()
+* line 77 of /public/lib/ddl/database_manager.php: call to mysqli_native_moodle_database-&gt;change_database_structure()
+* line 427 of /public/lib/ddl/database_manager.php: call to database_manager-&gt;execute_sql_arr()
+* line 372 of /public/lib/ddl/database_manager.php: call to database_manager-&gt;install_from_xmldb_structure()
+* line 747 of /public/lib/upgradelib.php: call to database_manager-&gt;install_from_xmldb_file()
+* line 1955 of /public/lib/upgradelib.php: call to upgrade_plugins()
+* line 451 of /public/lib/installlib.php: call to upgrade_noncore()
+* line 205 of /admin/cli/install_database.php: call to install_cli_database()
+ !!
+FAIL: install_database.php failed - THIS OUTPUT IS THE P5 EVIDENCE, send the log
+Log: /home/nitin.rajput/stage-a-20260903-072139.log

@@ -1,0 +1,12 @@
+=== Sentientia Stage A install 2026-09-03T07:20:32+05:30 ===
+docroot=/var/www/html/moodle5.2/public  wwwroot=https://academy2.airpay.ninja  dataroot=/var/sentientiadata  db=sentientia_uat@lms-sentientia-uat-db.crpst4qn6rtu.ap-south-1.rds.amazonaws.com
+php: 8.3.6
+config.php already exists - leaving it (inspect manually if bindings differ)
+dataroot ready: drwxrwx--- 4 www-data www-data 4096 Sep  3 07:19 /var/sentientiadata
+PHP Fatal error:  Uncaught mysqli_sql_exception: No such file or directory in Command line code:3
+Stack trace:
+#0 Command line code(3): mysqli_connect()
+#1 {main}
+  thrown in Command line code on line 3
+FAIL: database step failed
+Log: /home/nitin.rajput/stage-a-20260903-072032.log

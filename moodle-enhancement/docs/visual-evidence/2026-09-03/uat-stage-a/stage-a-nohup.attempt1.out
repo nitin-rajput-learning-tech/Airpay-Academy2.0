@@ -1,0 +1,7 @@
+=== Sentientia Stage A install 2026-09-03T07:18:36+05:30 ===
+docroot=/var/www/html/moodle5.2/public  wwwroot=https://academy2.airpay.ninja  dataroot=/var/sentientiadata  db=sentientia_uat@lms-sentientia-uat-db.crpst4qn6rtu.ap-south-1.rds.amazonaws.com
+php: 8.3.6
+config.php written - the public install wizard is now DISABLED
+Could not open input file: /var/www/html/moodle5.2/config.php
+FAIL: config.php syntax error
+Log: /home/nitin.rajput/stage-a-20260903-071836.log
