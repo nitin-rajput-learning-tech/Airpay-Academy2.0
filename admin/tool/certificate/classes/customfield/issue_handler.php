@@ -23,6 +23,7 @@
  */
 
 namespace tool_certificate\customfield;
+defined('MOODLE_INTERNAL') || die();
 
 use core_customfield\field_controller;
 use core_customfield\handler;
@@ -285,7 +286,7 @@ class issue_handler extends handler {
     /**
      * For use in unittests
      */
-    public static function reset_caches() {
+    public static function reset_caches(): void { // SENTIENTIA-CORE-MOD: Moodle 5.2 core_customfield handler::reset_caches() declares : void
         self::$singleton = null;
     }
 }
