@@ -103,6 +103,26 @@ Gate to Phase 5: parity 100%, persona walk green, rollback rehearsed (drop the r
 - Go/no-go memo with the cutover plan: maintenance window, file deploy + upgrade, rollback = keep the 5.1 stack live until the swap is verified, comms to users, hypercare roster.
 - Live deploy remains Nitin's call (rollout gate: ninja/UAT first → rehearsal → replacement with data intact).
 
+## Progress log
+
+### 2026-09-03 (day 0) — Phase 0 complete, Phase 1/2 started
+
+| Item | Result |
+|------|--------|
+| 0.1 code refresh | UAT on current git (api 1.3.0, core 2026090301, gamification, platform, users, catalog 2026090302 + today's fixes) |
+| 0.2 personas + content | `tools/uat/provision_test_users.php`: 10 accounts, 6 roles, 14 courses, plugin objects; every persona verified in its role tier and via form login |
+| 0.3 credentials doc | `docs/cutover/uat-credentials/UAT-TEST-ACCOUNTS.filled.md` + `.docx` (gitignored) — handed to Nitin |
+| 0.4 DB hygiene | `config.php` on app-scoped `sentientia_app`; `db_user` rotated; values in the session scratchpad → vault |
+| 0.5 Nitin's browser pass | pending |
+| 1.x link gate (depth-1 crawl from each dashboard, 10 personas, ~170 links) | 1 real defect: course page 500 for learners with a certificate (F-10, fixed same day); 1 transient timeout |
+| 2.1 tasks | 0 failing after the substrate fix (5 earlier failures were the analytics task); 48 h watch continues via the daily scan |
+| 2.2 backup + restore drill | dump 8 s (1 MB, 650 tables) · data tar <1 s (2.1 MB) · restore into a scratch DB 36 s · **RTO 44 s at UAT volume**; artefacts in `/var/backups/sentientia-uat/drill-*`; Stage B volumes will be 100–1000× larger — re-time then |
+| 2.3 capacity baseline | 20 virtual users × 120 s (guest + learner/manager/admin pages): 13.4 req/s, **0 errors**, p50 250–640 ms, p95 400–1020 ms (dashboard slowest), memory flat ~0.8/1.9 GB, load 0.65 → t3a.small is fine for team testing; resize decision waits for Stage B data volume |
+| 2.4 security posture | `docs/security/UAT-SECURITY-POSTURE-2026-09-03.md`: C2 fixed (catalog tenant gate), C1 open (unmerged June fix, Nitin-gated), H1/H3 fixes in flight, H2 waits on reCAPTCHA keys, H4 + mediums open |
+| 2.5 logs / observability | daily `sentientia-logscan.sh` (root cron 06:15) → `/var/log/sentientia-uat/logscan-*.txt` (PHP errors, 5xx, task failures, resources); first scan clean; CloudWatch alarms still with Cloud.in |
+| 2.6 environment | 0 errors (router fixed; composer note only) |
+| 3.x integrations | ask messages drafted (`UAT-ASKS-2026-09-03.md`), waiting on IT/Cloud.in |
+
 ## Suggested calendar (assumes IT items land within the fortnight)
 
 | When | What |

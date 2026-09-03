@@ -1110,7 +1110,22 @@ JS;
                         $completed = $DB->record_exists_sql($sql, array('courseid'=>$COURSE->id, 'userid'=>$USER->id));
                         if($completed){
 
-                $certcode = $DB->get_field('tool_certificate_issues', 'code', array('moduleid'=>$COURSE->id,'userid'=>$USER->id,'moduletype'=>'course'));
+                // SENTIENTIA (UAT Stage A F-10, 2026-09-03): production runs a BizLMS-customised
+                // tool_certificate whose issues table carries moduletype/moduleid; the stock tool
+                // shipped in the 5.2 package does not (courseid/component only), and querying the
+                // missing columns 500'd every completed course page for the learner. Use the BizLMS
+                // columns when they exist (production stays byte-identical), else the stock ones.
+                if ($DB->get_manager()->field_exists('tool_certificate_issues', 'moduleid')) {
+                    $certcode = $DB->get_field('tool_certificate_issues', 'code',
+                        array('moduleid' => $COURSE->id, 'userid' => $USER->id, 'moduletype' => 'course'));
+                } else {
+                    $certissues = $DB->get_records_sql(
+                        "SELECT id, code FROM {tool_certificate_issues}
+                          WHERE courseid = :courseid AND userid = :userid AND archived = 0
+                       ORDER BY id DESC",
+                        array('courseid' => $COURSE->id, 'userid' => $USER->id), 0, 1);
+                    $certcode = $certissues ? reset($certissues)->code : 0;
+                }
                             if($certcode == 0){
                                 $course_context['certificate_exists'] = false;
                             }
