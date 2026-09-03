@@ -37,13 +37,13 @@ Fill Result with ✅ / ❌ / ⚠ and attach evidence per row. Any ❌ → §F tr
 
 | # | Check | How | Expected | Result |
 |---|-------|-----|----------|--------|
-| C1 | Admin login | login as `admin` | dashboard renders in app shell, zero console errors | ✅ (curl session) login 303 → `/my/` 200 `Dashboard \| SENTIENTIA-UAT`; console check pending Nitin's browser pass |
+| C1 | Admin login | login as `admin` | dashboard renders in app shell, zero console errors | ✅ (curl session) login 303 → `/my/` 200 `Dashboard \| SENTIENTIA-UAT`; browser console on the guest pages (landing, login) = zero errors; logged-in console pending Nitin's browser pass |
 | C2 | Environment page | Site admin → Server → Environment | all rows OK/green (PHP 8.3, MySQL 8.4, extensions) — screenshot | ✅ 64 OK / 0 error; 2 warnings at first: router (fixed, F-5: 6/6 self-tests OK) + composer classmap (note N-3) — `admin-environment.html` |
 | C3 | Plugins overview | Site admin → Plugins → Plugins overview | all `local_sentientia_*` / theme / blocks present + up-to-date; count matches package manifest | ✅ 480 plugins / 70 additional, nothing requiring attention — `admin-plugins-overview.html` (package = 08-19 build, so `local_sentientia_api` is 2026061600 here, not the 1.3.0 in git) |
 | C4 | Scheduled tasks | Server → Scheduled tasks | no task in fail state after first cron | ✅ 157 tasks, 0 with fail-delay after F-3; 15 disabled = Moodle defaults — `admin-scheduled-tasks.html` |
 | C5 | Feature-flag audit | the flags admin page | every gap/AI flag OFF (default posture); record any exception | ✅ flags table has 2 rows only: `sentientia.catalog.free_oneclick_enrol.enabled` ON for tenants /1 and /177 — written by the guidebook post-install CLI `enable_oneclick_enrol.php` (intended) |
 | C6 | Outbound mail OFF | Server → Email or config check | `noemailever` active — no mail can leave UAT (151-email rule) | ✅ `$CFG->noemailever = true` in config.php |
-| C7 | Theme + dark mode | toggle dark mode on dashboard | tokens resolve, no white-on-white; screenshot both modes | ⚠ needs a browser — pending Nitin (landing page dark toggle present; not exercised) |
+| C7 | Theme + dark mode | toggle dark mode on dashboard | tokens resolve, no white-on-white; screenshot both modes | ✅ guest surface: landing page light + dark captured (`uat-landing-fullpage-desktop.png`, `uat-landing-dark-desktop.png`), tokens resolve; ⚠ logged-in dashboard dark mode still Nitin's browser pass. Note N-8: the dark toggle's active icon (`fa-sun-o`, FA4 name) renders as a generic glyph under Moodle 5.2's FontAwesome 6 |
 
 ## D. Functional micro-pass (5–10 min)
 
@@ -52,7 +52,7 @@ Fill Result with ✅ / ❌ / ⚠ and attach evidence per row. Any ❌ → §F tr
 | D1 | Create test course | admin → new course "UAT-SMOKE-01" (hidden) | creates + renders in course shell | ✅ course id 2 (hidden) via `create_course()`; admin view 200 `Course: UAT Smoke 01` — `admin-course-UAT-SMOKE-01.html` |
 | D2 | Add one activity | add a Page/quiz to the course | saves + displays in the in-course player | ✅ Page cmid 2 via `add_moduleinfo()`; renders 200 with content — `admin-page-activity.html` |
 | D3 | EN ⇄ HI toggle | switch language on dashboard + course | full UI switches, no missing-string placeholders | ✅ learner `/my/?lang=hi` → `lang="hi"`, 161 Devanagari chars, 0 `[[placeholder]]` — `learner-dashboard-hi.html`. Note N-5: the onboarding page title is hard-coded English |
-| D4 | Mobile viewport | devtools 590px on dashboard + course | responsive shell, no horizontal scroll; screenshot | ⚠ needs a browser — pending Nitin |
+| D4 | Mobile viewport | devtools 590px on dashboard + course | responsive shell, no horizontal scroll; screenshot | ✅ guest surface at 390px: landing + login (`uat-landing-mobile-390.png`, `uat-login-mobile-390.png`); ⚠ logged-in dashboard/course at 590px still Nitin's browser pass |
 | D5 | Second account | create one manual test user, log in | learner shell renders (non-admin path proves capability defaults) | ✅ `uat_smoke_learner` (manual auth, enrolled as student); login 303 → first-login onboarding `Welcome to Airpay Academy` 200; hidden course correctly refused ("This course is currently unavailable to students") — `learner-dashboard.html`, `learner-course-UAT-SMOKE-01.html` |
 
 ## E. Security posture quick pass (from outside)
@@ -84,7 +84,10 @@ Notes carried forward (not blockers): **N-1** no HSTS header at the LB (ask Clou
 
 ```
 Date executed: 2026-09-03  Executed by: Claude (VPN → uat-tunnel → uat-lms), Nitin's browser pass pending
-A: 6/6   B: 4/4   C: 6/7 (C7 ⚠ browser)   D: 4/5 (D4 ⚠ browser)   E: 3/5 (E3 ⚠ notes, E5 ⚠ DB rotation deferred by Nitin)
+A: 6/6   B: 4/4   C: 7/7 (C7 dark mode proven on guest pages; logged-in dark mode = Nitin's browser pass)
+D: 5/5 (D4 proven at 390px on guest pages; logged-in 590px = Nitin's browser pass)   E: 3/5 (E3 ⚠ notes, E5 ⚠ DB rotation deferred by Nitin)
+Post-walk first-look fixes (Nitin, same day): BizLMS mobile-login logo → brand logo; #ap-courses dead anchor → empty state;
+Moodle footer links → off (config + installer). Commit e30f61973, deployed UAT + local, screenshots in the evidence folder.
 Blockers found: 3 (F-1 reserved word, F-2 install tail, F-3 substrate on fresh install) — ALL FIXED same day + committed
 Notes logged:  7 (N-1 … N-7) + F-4/F-5/F-6 fixed
 VERDICT: STAGE A PASS-WITH-NOTES

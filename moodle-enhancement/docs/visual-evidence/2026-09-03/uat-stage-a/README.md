@@ -15,9 +15,31 @@ Verdict and the row-by-row record: `docs/cutover/STAGE-A-VERIFICATION-MATRIX.md`
 | `admin-plugins-overview.html` | Plugins overview: 480 plugins / 70 additional, nothing "requires attention" |
 | `admin-scheduled-tasks.html` | Scheduled tasks page after first cron (157 tasks; the one failing task was fixed — see matrix F) |
 
-Screenshots (desktop + 590px) are still to be taken by Nitin in a browser — the in-app
-browser tool timed out against the UAT LB during this session, so the HTML snapshots
-above are the machine-verifiable evidence for now.
+### Screenshots (Playwright against the public URL, after Nitin's first-look fixes)
+
+| File | Viewport | Shows |
+|------|----------|-------|
+| `uat-landing-fullpage-desktop.png` | 1366 wide, full page | Landing page end-to-end incl. the new Featured-Courses empty state and the footer with only Privacy / Terms / Help / Contact (Moodle's "Get the mobile app" + "Data retention summary" gone) |
+| `uat-landing-ap-courses-anchor-desktop.png` | 1366×900 | `https://academy2.airpay.ninja/#ap-courses` now lands on a real target (empty-state card → public catalog) |
+| `uat-landing-dark-desktop.png` | 1366×900 | Dark-mode toggle on the landing page: tokens resolve, no white-on-white (matrix C7, guest surface) |
+| `uat-landing-mobile-390.png` | 390×844 | Landing page at phone width (matrix D4, guest surface) |
+| `uat-login-mobile-390.png` | 390×844 | Mobile-width login shows the airpay academy logo (was the stock "moodle BizLMS" fallback `pix/login_logo.png`) |
+
+Console during these captures: zero errors (only Moodle's "Starting Moodle session timeout
+warning" log line). Logged-in surfaces (dashboard console, dark mode, 590px course view) still
+need Nitin's browser pass — passwords are not typed into a browser by the assistant.
+
+### Nitin's first-look fixes (2026-09-03, commit `e30f61973`, deployed to UAT + local)
+
+1. **"Why Moodle BizLMS?"** — the mobile-width login used `theme/sentientia/pix/login_logo.png`
+   (the vendor mark) whenever no login logo is uploaded in theme settings, which is also the
+   production state. `branding_assets::loginlogo()` now falls back to `pix/brand/academy-logo-350`.
+2. **`/#ap-courses` dead** — the Featured Courses section only rendered when featured courses
+   existed. It now always renders; with none it shows an empty-state card linking to the
+   guest-visible public catalog (`/local/sentientia_catalog/public.php`).
+3. **Footer "Data retention summary" / "Get the mobile app"** — Moodle 5.2 fresh-install defaults
+   (`tool_dataprivacy/showdataretentionsummary=1`, `tool_mobile/setuplink` = download.moodle.org).
+   airpay.academy has both off; set the same on UAT and added to the installer posture step 5c.
 
 ## Findings recorded (all fixed on UAT the same day, fixes committed)
 
