@@ -30,6 +30,24 @@
                COMMENT="Hover state colour hex"/>
         <FIELD NAME="theme_scheme"    TYPE="char" LENGTH="50" NOTNULL="false"
                COMMENT="Theme scheme identifier"/>
+        <FIELD NAME="favicon"         TYPE="int"  LENGTH="10" NOTNULL="false"
+               COMMENT="File item ID for the tenant favicon (upgrade 2026051100; in install.xml since 2026-09-03 so fresh installs match)"/>
+        <FIELD NAME="footer_text"     TYPE="text" NOTNULL="false"
+               COMMENT="Tenant footer text"/>
+        <FIELD NAME="email_from_name" TYPE="char" LENGTH="200" NOTNULL="false"
+               COMMENT="Tenant email From name"/>
+        <FIELD NAME="email_from_addr" TYPE="char" LENGTH="200" NOTNULL="false"
+               COMMENT="Tenant email From address"/>
+        <FIELD NAME="support_email"   TYPE="char" LENGTH="200" NOTNULL="false"
+               COMMENT="Tenant support contact email"/>
+        <FIELD NAME="help_url"        TYPE="char" LENGTH="255" NOTNULL="false"
+               COMMENT="Tenant help URL"/>
+        <FIELD NAME="hero_title"      TYPE="char" LENGTH="255" NOTNULL="false"
+               COMMENT="Landing-page hero title for the tenant"/>
+        <FIELD NAME="hero_subtitle"   TYPE="text" NOTNULL="false"
+               COMMENT="Landing-page hero subtitle for the tenant"/>
+        <FIELD NAME="custom_css"      TYPE="text" NOTNULL="false"
+               COMMENT="Tenant custom CSS"/>
         <FIELD NAME="sortorder"       TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"
                COMMENT="Display sort order"/>
         <FIELD NAME="timecreated"     TYPE="int"  LENGTH="10" NOTNULL="true" DEFAULT="0"/>

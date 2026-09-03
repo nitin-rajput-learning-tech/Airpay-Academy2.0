@@ -1,49 +1,34 @@
 <?php
-// Copyright 2026 Airpay Payment Services
-// License http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+// This file is part of Sentientia LMS.
+//
+// Sentientia LMS is free software: you can redistribute it and/or modify it
+// under the terms of the GNU General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option)
+// any later version. Distributed WITHOUT ANY WARRANTY. See the GNU GPL for
+// more details. <http://www.gnu.org/licenses/>.
 
 /**
- * Post-install hook for local_sentientia_platform.
+ * Fresh-install hook for local_sentientia_platform.
  *
- * Runs once on fresh install (NOT on upgrade — upgrade.php handles
- * existing installs). Seeds the Airpay customer-zero row in
- * `local_sentientia_customer_brand` so the per-customer branding resolver
- * has a row to read instead of always falling through to the hard-coded
- * default.
+ * db/install.xml carries feature_flags / feature_flag_audit / customer_brand only; the ADR-017
+ * user-type tables were created in db/upgrade.php step 2026052801 and therefore never existed on a
+ * from-scratch install (UAT Stage A finding, 2026-09-03). This hook creates them on install so
+ * fresh and upgraded sites share one schema. See classes/schema/user_type_tables.php.
  *
- * The same seed lives in `db/upgrade.php` savepoint 2026052201 for
- * existing installs that predate the customer_brand table. The two
- * paths produce identical rows — keep them in sync if you change either.
- *
- * @package local_sentientia_platform
+ * @package    local_sentientia_platform
+ * @copyright  2026 Airpay Payment Services / Sentientia LMS
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
+/**
+ * Create the user-type tables on a fresh install.
+ *
+ * @return bool
+ */
 function xmldb_local_sentientia_platform_install(): bool {
     global $DB;
-
-    // Idempotent — uk_customer blocks duplicates anyway, but skip the
-    // insert when a row already exists (e.g. a re-install after a
-    // partial drop where the table survived).
-    if (!$DB->record_exists('local_sentientia_customer_brand', ['customerid' => 1])) {
-        $now = time();
-        $DB->insert_record('local_sentientia_customer_brand', (object) [
-            'customerid'       => 1,
-            'name'             => 'Airpay Academy',
-            'short_name'       => 'Academy',
-            'theme_color'      => '#0066A7',
-            'bg_color'         => '#F2F4FB',
-            'icon_192_url'     => '/local/sentientia_platform/pix/customer/1/icon-192.png',
-            'icon_512_url'     => '/local/sentientia_platform/pix/customer/1/icon-512.png',
-            'start_url'        => '/my/dashboard.php?utm_source=pwa_install',
-            'lang'             => 'en',
-            'status_bar_style' => 'default',
-            'categories'       => 'education,productivity',
-            'timecreated'      => $now,
-            'timemodified'     => $now,
-        ]);
-    }
-
+    \local_sentientia_platform\schema\user_type_tables::ensure($DB->get_manager());
     return true;
 }

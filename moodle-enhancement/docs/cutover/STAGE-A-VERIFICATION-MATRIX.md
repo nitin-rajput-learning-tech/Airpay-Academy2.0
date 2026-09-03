@@ -78,6 +78,14 @@ No ❌ remained after same-day fixes. Six runtime findings (none visible to the 
 | F-5 | Environment: "The router is not configured" — no rewrite to `r.php` | Note → fixed | rewrite block in `deploy/moodle-htaccess.template` + `$CFG->routerconfigured = true` (installer config template); 6/6 self-tests OK |
 | F-6 | No core Hindi pack on a fresh install (only plugin `lang/hi` packs ship in the tree); 5.x has no langimport CLI | Note → fixed | `tool_langimport\controller::install_languagepacks('hi')` via `php -r`; installer step 5c |
 
+Found later the same day while provisioning the shared test accounts (Phase 0.2):
+
+| # | Finding | Class | Fix |
+|---|---------|-------|-----|
+| F-7 | `tool_certificate` (vendor plugin in the package) fatals on Moodle 5.2: `issue_handler::reset_caches()` lacks the `: void` return type core now declares → every certificate issue died silently (exit 255), admin template pages too | Blocker (5.2 compat) → fixed | `admin/tool/certificate/classes/customfield/issue_handler.php` patched (repo, local, UAT); record `docs/core-mods/2026-09-03-tool-certificate-5.2-reset-caches.md` |
+| F-8 | Two more install-vs-upgrade gaps: `local_sentientia_platform` user-type tables (5) and `local_sentientia_org` branding columns (9) existed only in `upgrade.php` → every UAT account rendered as `employee`, tenant branding never saved | Product gap → fixed | `sentientia_platform/db/install.php` + `classes/schema/user_type_tables.php`; 9 fields added to `sentientia_org/db/install.xml`; UAT repaired by the seed's schema stage |
+| F-9 | Production's custom roles (`administrator` id 9, `trainer`, `sentientiaauthor`, `employee`) are created by no plugin on a fresh install; three pages hard-code role id 9 | Product gap → mitigated | `tools/uat/provision_test_users.php --only=roles` recreates them (administrator forced to id 9); a proper first-party role installer is a follow-up |
+
 Notes carried forward (not blockers): **N-1** no HSTS header at the LB (ask Cloud.in / add at Apache); **N-2** `Server:` header discloses the Apache version (`ServerTokens Prod` in httpd.conf); **N-3** no `vendor/` in the package — Moodle's composer deps are dev/test only, Environment warning only; **N-4** `db_user` is `rds_superuser` and still Cloud.in's password — app-scoped user + rotation before Stage B (Nitin-gated); **N-5** `local_sentientia_pages/onboarding.php` page title hard-coded English; **N-6** stray `/var/www/html/moodledata` (777, unused) from provisioning; **N-7** package on UAT is the 2026-08-19 build — ADR-030 (`local_sentientia_api` 1.3.0) and today's fixes reach UAT only via a refreshed package / file deploy.
 
 ## G. Result summary
