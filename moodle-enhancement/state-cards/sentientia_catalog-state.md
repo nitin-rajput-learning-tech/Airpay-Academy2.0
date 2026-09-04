@@ -173,3 +173,23 @@ internal tenant** (Airpay /1, ZEEA /177) via the Switchboard.
 public guest storefront (public.php) now renders the LXP/Netflix card grid + "Popular picks"
 rail by DEFAULT (matching the dashboard "Featured for you" poster style), instead of the plain
 legacy grid. Reversible + per-tenant overridable via the Switchboard. v1.0.2→1.0.3-beta.
+
+## F-12 double-HTML-escaping fixed (2026-09-04)
+Course/activity titles containing `& < > ' "` rendered with the entity shown
+literally ("AML & KYC Essentials" → "AML &amp; KYC Essentials"). Root cause: a
+`format_string()`-produced (already entity-safe) value fed into a Mustache `{{ }}`
+auto-escaping field or a PHP `s()`, escaping twice. Found live on the UAT UI/UX pass.
+
+Fixed in the catalog: `templates/mycourses.mustache` (card title/shortname/category
+→ `{{{ }}}`), `templates/course_card.mustache` + `templates/catalog.mustache`
+(index-view visible title/shortname/summary/category → `{{{ }}}`; aria-labels left
+as `{{ }}` — attribute-safe), and `cart.php` (dropped redundant `s()` on
+`commerce.php`'s `format_string()`'d values). Companion theme fixes shipped in the
+same commit (`theme/sentientia` course-player header/drawer + str-helper params).
+`public.php` was already correct (PHP echo, single escape) and is untouched.
+
+Both duplicate catalog trees (`local/` + `moodle-enhancement/local/`) fixed
+identically. v1.0.3-beta → **1.0.4-beta / 2026090400**. No XSS (every `{{{ }}}` value
+is `format_string()`/`strip_tags` output). Commit 1f8dc0eaf. Deploy alongside the
+queued dark-mode opt-in + btn-close fixes. **Not yet visually re-verified on UAT**
+(pending deploy).
