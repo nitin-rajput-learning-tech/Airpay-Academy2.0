@@ -129,7 +129,7 @@ Gate to Phase 5: parity 100%, persona walk green, rollback rehearsed (drop the r
 |------|--------|
 | Overnight | Log scan 06:15 clean (0 PHP errors, 0 5xx, 0 failing tasks); memory 0.8/1.9 GB; no tester logins yet |
 | Link gate re-run | Clean except one legacy string (`download_certificate` asked `local_courses`) → theme string en+hi, deployed (b2284d921) |
-| Security | H4 (SSE concurrency/lifetime cap) implementation in progress; C1 still Nitin-gated; H2 waits on reCAPTCHA keys |
+| Security | **H4 FIXED** — SSE connection registry (global cap 8, per-actor 2, 60 s lifetime, 503 + Retry-After), 137/137 tests, live check on UAT (2nd stream refused at cap 1); C1 still Nitin-gated; H2 waits on reCAPTCHA keys; M1–M5 open |
 | Blocked | Plan-page artifact republish (claude.ai artifact service unreachable since 03 Sep evening); UAT SSH needs Nitin's tunnel login each day |
 
 ## Suggested calendar (assumes IT items land within the fortnight)
