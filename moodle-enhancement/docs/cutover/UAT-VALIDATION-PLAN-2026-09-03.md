@@ -123,6 +123,15 @@ Gate to Phase 5: parity 100%, persona walk green, rollback rehearsed (drop the r
 | 2.6 environment | 0 errors (router fixed; composer note only) |
 | 3.x integrations | ask messages drafted (`UAT-ASKS-2026-09-03.md`), waiting on IT/Cloud.in |
 
+### 2026-09-04 (day 1)
+
+| Item | Result |
+|------|--------|
+| Overnight | Log scan 06:15 clean (0 PHP errors, 0 5xx, 0 failing tasks); memory 0.8/1.9 GB; no tester logins yet |
+| Link gate re-run | Clean except one legacy string (`download_certificate` asked `local_courses`) → theme string en+hi, deployed (b2284d921) |
+| Security | H4 (SSE concurrency/lifetime cap) implementation in progress; C1 still Nitin-gated; H2 waits on reCAPTCHA keys |
+| Blocked | Plan-page artifact republish (claude.ai artifact service unreachable since 03 Sep evening); UAT SSH needs Nitin's tunnel login each day |
+
 ## Suggested calendar (assumes IT items land within the fortnight)
 
 | When | What |
