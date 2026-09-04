@@ -44,6 +44,24 @@ ErrorDocument 503 /moodle/error/index.php
 ServerSignature Off
 
 # -----------------------------------------------------------------------------
+# 2b. Hardening (UAT security posture 2026-09-03, findings M3 + M4)
+# -----------------------------------------------------------------------------
+# M3: version fingerprint files that Moodle ships inside the docroot.
+<FilesMatch "^(upgrade\.txt|environment\.xml|UPGRADING\.md|CHANGES\.md|composer\.(json|lock)|package\.json)$">
+    Require all denied
+</FilesMatch>
+# M4: response headers the LB does not add. CSP is deliberately NOT set here
+# (Moodle's inline scripts need a nonce strategy first). HSTS only when the
+# request arrived over TLS at the LB (SetEnvIf X-Forwarded-Proto https HTTPS=on
+# lives in the vhost); one year, subdomains included.
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(self), microphone=(self), geolocation=(), payment=()"
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
+</IfModule>
+
+# -----------------------------------------------------------------------------
 # 3. Moodle 5.x router (UAT Stage A finding 2026-09-03)
 # -----------------------------------------------------------------------------
 # Moodle 5.0+ serves routed URLs (/api/rest/v2/..., /core/check/...) through

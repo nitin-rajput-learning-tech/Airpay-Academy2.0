@@ -164,7 +164,9 @@ class keka_client {
      * Get single employee by ID.
      */
     public function get_employee(string $employee_id): ?array {
-        return $this->http_get("/v1/hris/employees/{$employee_id}");
+        // M1 (UAT security posture 2026-09-03): the id can originate from a webhook payload,
+        // so it is URL-encoded before it becomes a path segment of the outbound request.
+        return $this->http_get('/v1/hris/employees/' . rawurlencode((string) $employee_id));
     }
 
     /**

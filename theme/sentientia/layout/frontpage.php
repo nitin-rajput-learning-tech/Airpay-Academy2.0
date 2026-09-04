@@ -22,8 +22,11 @@ if (isloggedin() && !isguestuser()) {
 
 global $DB, $CFG, $OUTPUT, $PAGE;
 
-// ── Live stats — PUBLIC TENANT ONLY ─────────────────────────
-// Guest-facing page must ONLY show Public tenant data. No all-tenant fallback.
+// ── Live stats — PUBLIC TENANT ONLY where tenants exist ─────
+// On a multi-tenant (BizLMS-schema) site the guest page shows Public-tenant data only.
+// On a vanilla single-tenant install (no open_path columns) there is exactly one tenant,
+// so site-wide counts ARE that tenant's counts; the fallback below is that case, not a
+// leak (security posture M2, 2026-09-04).
 $public_id = \local_sentientia_org\tenant_manager::get_public_tenant_id();
 $pubpath = '/' . $public_id . '%';
 
