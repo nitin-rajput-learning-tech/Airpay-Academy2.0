@@ -22,7 +22,7 @@ $plugin->component = 'local_sentientia_catalog';
 // course lookup, commerce::add_to_cart(), and enrolment::enrol_now() before
 // any enrolment write. Degrades to visible=1-only when course.open_path is
 // absent (vanilla schema). No new lang strings (uses core 'nopermissions').
-$plugin->version   = 2026090302;
+$plugin->version   = 2026090400;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '1.0.3-beta';
+$plugin->release   = '1.0.4-beta';

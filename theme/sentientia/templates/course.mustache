@@ -87,7 +87,7 @@
             <div class="ap-course-progress-bar__info">
                 <a href="{{ap_course_url}}"
                    class="ap-course-progress-bar__back"
-                   aria-label="{{#str}}a11y_backtocourse, theme_sentientia, {{ap_course_name}}{{/str}}">
+                   aria-label="{{#str}}a11y_backtocourse, theme_sentientia, {{ap_course_name_raw}}{{/str}}">
                     <i class="fa fa-arrow-left" aria-hidden="true"></i>
                 </a>
                 {{#ap_has_sidebar}}
@@ -99,7 +99,7 @@
                     <i class="fa fa-bars" aria-hidden="true"></i>
                 </button>
                 {{/ap_has_sidebar}}
-                <span class="ap-course-progress-bar__name">{{ap_course_name}}</span>
+                <span class="ap-course-progress-bar__name">{{{ap_course_name}}}</span>
                 <span class="ap-course-progress-bar__stats"
                       aria-label="{{#str}}a11y_activitiescompleted, theme_sentientia, { "completed": "{{ap_course_completed}}", "total": "{{ap_course_total}}", "percent": "{{ap_course_progress}}" }{{/str}}">
                     {{ap_course_completed}}/{{ap_course_total}} &middot; {{ap_course_progress}}%
@@ -133,7 +133,7 @@
                         {{#ap_sidebar_sections}}
                         <div class="ap-course-sidebar__section">
                             <div class="ap-course-sidebar__section-header">
-                                <span class="ap-course-sidebar__section-name">{{name}}</span>
+                                <span class="ap-course-sidebar__section-name">{{{name}}}</span>
                                 <span class="ap-course-sidebar__section-count">{{count}}</span>
                             </div>
                             <ul class="ap-course-sidebar__list">
@@ -149,7 +149,7 @@
                                         {{#is_todo}}
                                         <i class="fa {{icon}} ap-course-sidebar__icon"></i>
                                         {{/is_todo}}
-                                        <span class="ap-course-sidebar__item-name">{{name}}</span>
+                                        <span class="ap-course-sidebar__item-name">{{{name}}}</span>
                                     </a>
                                 </li>
                                 {{/activities}}

@@ -199,7 +199,7 @@ if ($courseid > 1 && isloggedin() && !is_siteadmin()) {
                 if (!$cminfo->visible || !$cminfo->uservisible) continue;
                 if ($foundcurrent && $cminfo->url) {
                     $nextactivity = [
-                        'name' => format_string($cminfo->name),
+                        'name' => $cminfo->name, // F-12: raw for the {#str}course_next param (str helper HTML-escapes once).
                         'url'  => $cminfo->url->out(false),
                     ];
                     break;
@@ -214,6 +214,8 @@ if ($courseid > 1 && isloggedin() && !is_siteadmin()) {
         $templatecontext['ap_course_total'] = $totalactivities;
         $templatecontext['ap_course_completed'] = $completedactivities;
         $templatecontext['ap_course_name'] = format_string($courseobj->fullname);
+        // F-12: raw copy for str-helper params (aria-labels) which HTML-escape their arg themselves.
+        $templatecontext['ap_course_name_raw'] = $courseobj->fullname;
         $templatecontext['ap_course_url'] = (new moodle_url('/course/view.php', ['id' => $courseid]))->out(false);
         $templatecontext['ap_has_next'] = !empty($nextactivity);
         $templatecontext['ap_next_name'] = $nextactivity['name'] ?? '';

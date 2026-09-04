@@ -28,7 +28,7 @@
                         <img class="airpay-catalog__card-img" src="{{imageurl}}" alt="" loading="lazy" aria-hidden="true">
                         {{/has_image}}
                         {{^has_image}}
-                        <span class="airpay-catalog__card-code">{{shortname}}</span>
+                        <span class="airpay-catalog__card-code">{{{shortname}}}</span>
                         {{/has_image}}
                         {{#has_progress}}
                         <div class="airpay-catalog__card-ring">
@@ -43,7 +43,7 @@
                         {{/has_progress}}
                     </div>
                     <div class="airpay-catalog__card-body">
-                        <h4 class="airpay-catalog__card-title">{{fullname}}</h4>
+                        <h4 class="airpay-catalog__card-title">{{{fullname}}}</h4>
                         {{#has_progress}}
                         <div class="airpay-catalog__progress">
                             <div class="airpay-catalog__progress-bar" style="width: {{progress}}%;"></div>

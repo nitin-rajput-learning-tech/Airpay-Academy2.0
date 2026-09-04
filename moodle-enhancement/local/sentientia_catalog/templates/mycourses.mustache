@@ -37,7 +37,7 @@
                 {{/has_image}}
                 {{^has_image}}
                 <div class="ap-mycourses__card-image ap-mycourses__card-image--fallback">
-                    <span>{{shortname}}</span>
+                    <span>{{{shortname}}}</span>
                 </div>
                 {{/has_image}}
                 {{#is_completed}}
@@ -60,9 +60,9 @@
                 {{/is_inprogress}}
             </a>
             <div class="ap-mycourses__card-body">
-                <span class="ap-mycourses__card-category">{{categoryname}}</span>
+                <span class="ap-mycourses__card-category">{{{categoryname}}}</span>
                 <h4 class="ap-mycourses__card-title">
-                    <a href="{{viewurl}}">{{fullname}}</a>
+                    <a href="{{viewurl}}">{{{fullname}}}</a>
                 </h4>
                 {{#has_progress}}
                 <div class="ap-mycourses__card-progressbar">

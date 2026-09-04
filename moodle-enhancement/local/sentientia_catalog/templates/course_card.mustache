@@ -17,7 +17,7 @@
             <img class="airpay-catalog__card-img" src="{{imageurl}}" alt="" loading="lazy" aria-hidden="true">
             {{/has_image}}
             {{^has_image}}
-            <span class="airpay-catalog__card-code" aria-hidden="true">{{shortname}}</span>
+            <span class="airpay-catalog__card-code" aria-hidden="true">{{{shortname}}}</span>
             {{/has_image}}
             {{#is_new}}
             <span class="airpay-catalog__badge airpay-catalog__badge--new"
@@ -49,17 +49,17 @@
 
     <div class="airpay-catalog__card-body">
         <h4 class="airpay-catalog__card-title" id="course-{{id}}-title">
-            <a href="{{detailurl}}">{{fullname}}</a>
+            <a href="{{detailurl}}">{{{fullname}}}</a>
         </h4>
 
         {{! Iter 5 — summary now persistent (was hover-overlay only).
             The CSS clamps to 2 lines so card heights stay aligned. }}
         {{#summary}}
-        <p class="airpay-catalog__card-summary">{{summary}}</p>
+        <p class="airpay-catalog__card-summary">{{{summary}}}</p>
         {{/summary}}
 
         <div class="airpay-catalog__card-meta">
-            <span class="airpay-catalog__card-category">{{categoryname}}</span>
+            <span class="airpay-catalog__card-category">{{{categoryname}}}</span>
             {{#has_level}}
             <span class="airpay-catalog__card-level">{{level}}</span>
             {{/has_level}}

@@ -396,7 +396,7 @@ defined('MOODLE_INTERNAL') || die();
 // course.mustache player strings + aria-labels ({$a} param forms), topbar
 // "Open menu" + search placeholder. Restores the 100%-Hindi-parity policy
 // in the flagship chrome; the new lang-parity CI gate prevents recurrence.
-$plugin->version   = 2026080303;  // skills-first dashboard recs (ADR-028 P2.2, flag-gated)
+$plugin->version   = 2026090400;  // skills-first dashboard recs (ADR-028 P2.2, flag-gated)
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_sentientia';
 $plugin->maturity  = MATURITY_BETA;
@@ -415,7 +415,7 @@ $plugin->maturity  = MATURITY_BETA;
 // (83% reduction). Section 1 wrapped under body#page-login-index for
 // ID-specificity. Bundled bugfix: dark-mode selectors used descendant
 // combinator (never fired since #page-X IS body); now chained.
-$plugin->release   = '1.0.50-beta';  // course re-shell + breadcrumbs + topbar notifications + dark tokenization
+$plugin->release   = '1.0.51-beta';  // course re-shell + breadcrumbs + topbar notifications + dark tokenization
 // P1 #10 chip-J (2026-05-24) — _surface-profile.scss (2,507 lines)
 // decomposed into 4 per-surface partials: _surface-user, _surface-badges,
 // _surface-grade-report, _surface-calendar. Admin fragments moved to

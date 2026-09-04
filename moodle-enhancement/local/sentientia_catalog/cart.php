@@ -100,12 +100,12 @@ echo $OUTPUT->header();
                     background:var(--ap-surface,#fff); border:1px solid var(--ap-border,#e3eaf3); border-radius:12px;">
             <div style="width:48px; height:48px; border-radius:10px; background:linear-gradient(135deg,#0066a7,#0d5da1);
                         display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; font-weight:700; flex-shrink:0;">
-                <?php echo s(substr($item['shortname'], 0, 3)); ?>
+                <?php echo substr($item['shortname'], 0, 3); ?>
             </div>
             <div style="flex:1; min-width:0;">
                 <h4 style="margin:0 0 2px; font-size:15px; font-weight:600; color:var(--ap-text,#1a1a2e);
                            overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                    <?php echo s($item['fullname']); ?>
+                    <?php echo $item['fullname']; ?>
                 </h4>
                 <small style="color:var(--ap-text-muted,#8896a6);">Added <?php echo userdate($item['added'], '%d %b %Y'); ?></small>
             </div>

@@ -147,7 +147,7 @@
                 <div class="ap-course-progress-bar__info">
                     <a href="{{ap_course_url}}"
                        class="ap-course-progress-bar__back"
-                       aria-label="Back to {{ap_course_name}}">
+                       aria-label="Back to {{ap_course_name_raw}}">
                         <i class="fa fa-arrow-left" aria-hidden="true"></i>
                     </a>
                     {{#ap_has_sidebar}}
@@ -159,7 +159,7 @@
                         <i class="fa fa-bars" aria-hidden="true"></i>
                     </button>
                     {{/ap_has_sidebar}}
-                    <span class="ap-course-progress-bar__name">{{ap_course_name}}</span>
+                    <span class="ap-course-progress-bar__name">{{{ap_course_name}}}</span>
                     <span class="ap-course-progress-bar__stats"
                           aria-label="{{ap_course_completed}} of {{ap_course_total}} activities completed, {{ap_course_progress}}%">
                         {{ap_course_completed}}/{{ap_course_total}} &middot; {{ap_course_progress}}%
