@@ -166,12 +166,14 @@
                     {{! visible per page.                                   }}
                     <form action="{{{config.wwwroot}}}/search/index.php" method="get"
                           class="ap-topbar__search" id="ap-topbar-search-form"
+                          role="search" aria-label="{{#str}}a11y_search, theme_sentientia{{/str}}"
                           data-default-action="{{{config.wwwroot}}}/search/index.php"
                           data-default-placeholder="{{#str}}searchplaceholder, theme_sentientia{{/str}}">
                         <i class="fa fa-search ap-topbar__search-icon"></i>
                         <input type="text" name="q" class="ap-topbar__search-input"
                                id="ap-topbar-search-input"
                                placeholder="{{#str}}searchplaceholder, theme_sentientia{{/str}}"
+                               aria-label="{{#str}}a11y_search, theme_sentientia{{/str}}"
                                autocomplete="off">
                     </form>
                 </div>

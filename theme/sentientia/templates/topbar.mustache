@@ -25,10 +25,11 @@
 
     <div class="ap-topbar__center">
         {{! Global search }}
-        <form action="{{{wwwroot}}}/search/index.php" method="get" class="ap-topbar__search">
-            <i class="fa fa-search ap-topbar__search-icon"></i>
+        <form action="{{{wwwroot}}}/search/index.php" method="get" class="ap-topbar__search" role="search" aria-label="{{#str}}a11y_search, theme_sentientia{{/str}}">
+            <i class="fa fa-search ap-topbar__search-icon" aria-hidden="true"></i>
             <input type="text" name="q" class="ap-topbar__search-input"
-                   placeholder="{{#str}}searchplaceholder, theme_sentientia{{/str}}" autocomplete="off">
+                   placeholder="{{#str}}searchplaceholder, theme_sentientia{{/str}}"
+                   aria-label="{{#str}}a11y_search, theme_sentientia{{/str}}" autocomplete="off">
         </form>
     </div>
 
