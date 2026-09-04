@@ -324,3 +324,4 @@ $string['nav_siteadmin'] = 'Site Admin';
 $string['nav_skills'] = 'Skills';
 $string['searchplaceholder'] = 'Search courses, people, content...';
 $string['unableto_download_msg'] = 'Certificate download is available after you complete the course.';
+$string['download_certificate'] = 'Download certificate';

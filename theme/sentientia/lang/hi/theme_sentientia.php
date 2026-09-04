@@ -252,3 +252,4 @@ $string['nav_siteadmin'] = 'साइट एडमिन';
 $string['nav_skills'] = 'स्किल्स';
 $string['searchplaceholder'] = 'कोर्स, लोग, कंटेंट खोजें...';
 $string['unableto_download_msg'] = 'पाठ्यक्रम पूरा करने के बाद प्रमाणपत्र डाउनलोड उपलब्ध होगा।';
+$string['download_certificate'] = 'प्रमाणपत्र डाउनलोड करें';
