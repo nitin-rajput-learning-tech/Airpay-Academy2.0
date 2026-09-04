@@ -138,6 +138,19 @@ Gate to Phase 5: parity 100%, persona walk green, rollback rehearsed (drop the r
 | Phase 1 SCORM player | PASS - uploaded a real SCORM 1.2 package (`content/scorm-output/SAMPLE-SOP-scorm.zip`) into Airpay Product Suite via `tools/uat/add_scorm_activity.php`: 2 SCOs parsed, view.php + player.php load 200 for a learner, and all 4 packaged files (imsmanifest, index.html, scormdriver.js, narration.mp3) serve via pluginfile with correct content types - proves filedir works on 5.2 (UAT started with an empty filedir). Credentials doc updated with a SCORM step |
 | Blocked | Plan-page artifact republish (claude.ai artifact service unreachable since 03 Sep evening); UAT SSH needs Nitin's tunnel login each day |
 
+### 2026-09-04 (day 1, afternoon) — UI/UX pass, fixes deployed, extra hardening
+
+| Item | Result |
+|------|--------|
+| UI/UX pass (real Chrome) | Guest + L&D admin (5 surfaces) + trainer (Live Sessions) + manager (My Team) + full learner journey via loginas (My Courses/Certificates/Catalog/course page/course content/My Skills). All render; F-10 re-confirmed live (course page loads for a cert-holder). loginas gotcha logged: theme fully logs out on loginas-exit (no revert control). |
+| **F-12 found + fixed + deployed** | Double-HTML-escaping of course/activity titles ("AML **&amp;** KYC") on My-courses card, course-player header, course-index drawer, catalog index cards, cart. Root: `format_string()` value re-escaped by Mustache `{{ }}` / PHP `s()`. Fixed to one escape (`{{{ }}}` / raw str-param / drop `s()`); no XSS. Commit `1f8dc0eaf`, catalog 1.0.4-beta + theme 1.0.51-beta. |
+| **Dark mode disabled** | head.mustache made opt-in-only (no `prefers-color-scheme`) + `ux.darkMode.enabled` default OFF (`d3e67abf2`). Deployed; served init now `saved === 'dark'` only, 0 `prefers-color-scheme`; flag resolves **false** for tenants 0/1/77/177 (no override rows) → toggle hidden, light forced. |
+| **btn-close glyph** | BS5 `.btn-close` dismiss button was unstyled (broken box) in this BS4 theme → `_bs5-close.scss` draws a real × (`56a41ac66`). Deployed; live theme CSS serves `.btn-close::before{content:"×"}`. |
+| 0.1 deploy | Surgical 13-file deploy (UAT is a plain file copy, not a git checkout): tar→scp→sudo extract into `public/`→chown www-data→**sha256 all OK**→`admin/cli/upgrade.php` (theme+catalog 2026090400 Success)→purge. Backup `/tmp/uat-predeploy-backup-20260904-153726.tgz`. HEAD `3229dd9da`. |
+| 2.4 extra hardening | **ServerTokens Prod** + **ServerSignature Off** (Server header now `Apache`, no version/OS) via configtest-gated graceful reload; **stray world-writable `/var/www/html/moodledata` (0777)** moved aside (unused leftover; real dataroot `/var/sentientiadata`). HSTS/XFO/nosniff/Referrer-Policy already live; config.php 640, dataroot 770, debug/debugdisplay 0, noemailever 1. |
+| 2.1/2.5/2.6 re-confirm (post-deploy) | 0 failing scheduled tasks, adhoc queue 0, cron current; OPcache **On** in FPM; Apache log clean. Note: PHP-FPM logged one `pm.max_children=5` warning under the earlier browser walk (capacity → resize + raise for Stage B). Schema check flags F-8 tables (`local_sentientia_user_type`, `..._partner_employee_profile`) as "not expected" — pre-existing/by-design (created via `install.php` not XMLDB); recommend declaring in `install.xml` before go-live for a clean schema check + upgrade path. |
+| Pending browser reconnect | F-12 on-screen re-confirm + ZEEA tenant-isolation visual (claude-in-chrome dropped on session resume). |
+
 ## Suggested calendar (assumes IT items land within the fortnight)
 
 | When | What |
