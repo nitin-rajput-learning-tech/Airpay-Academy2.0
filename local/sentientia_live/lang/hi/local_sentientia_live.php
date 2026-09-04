@@ -364,6 +364,14 @@ $string['setting_default_min_word_length_desc'] = 'इस अक्षर सं
 $string['setting_default_max_responses']        = 'डिफ़ॉल्ट प्रति learner अधिकतम प्रतिक्रियाएं';
 $string['setting_default_max_responses_desc']   = 'एक ऑडियंस सदस्य एक वर्ड क्लाउड स्लाइड में कितने शब्द योगदान कर सकता है, इस पर हार्ड कैप। डिफ़ॉल्ट 3 — Mentimeter के मानक से मिलान।';
 
+// H4 remediation (UAT-SECURITY-POSTURE-2026-09-03, 2026-09-04) — SSE stream limits.
+$string['settings_sse_heading']                 = 'SSE स्ट्रीम सीमाएं';
+$string['settings_sse_heading_desc']            = 'Server-Sent-Events स्ट्रीम (stream.php) पर सीमाएं, जिन्हें अन्यथा कनेक्शनों की एक बड़ी संख्या Apache worker pool को खाली करने के लिए इस्तेमाल कर सकती थी — खासकर जब anonymous audience join सक्षम हो।';
+$string['setting_sse_max_seconds']              = 'अधिकतम SSE स्ट्रीम जीवनकाल (सेकंड)';
+$string['setting_sse_max_seconds_desc']         = 'एक Server-Sent-Events कनेक्शन कितनी देर खुला रहता है इससे पहले कि सर्वर इसे बंद करे और ब्राउज़र अपने आप फिर से जुड़ जाए। डिफ़ॉल्ट 60। यदि किसी बड़े सेशन के दौरान Apache workers अभी भी दबाव में हैं तो इसे और कम करें।';
+$string['setting_sse_max_connections']          = 'अधिकतम समवर्ती SSE कनेक्शन';
+$string['setting_sse_max_connections_desc']     = 'पूरी साइट पर एक साथ कितनी Server-Sent-Events स्ट्रीम खुली रह सकती हैं, इस पर हार्ड कैप। सीमा पूरी होने पर, नए कनेक्शन प्रयासों को स्ट्रीम के बजाय तुरंत HTTP 503 और Retry-After मिलता है। डिफ़ॉल्ट 8 — इसे अपने Apache MaxRequestWorkers के अनुसार तय करें, सामान्य पेज अनुरोधों के लिए जगह छोड़ते हुए। प्रति ट्रेनर या प्रति ऑडियंस participant 2 समवर्ती स्ट्रीम की एक निश्चित सीमा भी लागू होती है और यह यहां कॉन्फ़िगर करने योग्य नहीं है।';
+
 // Word-cloud slide-editor form fields (per-slide overrides).
 $string['wc_min_word_length_label']      = 'न्यूनतम शब्द लंबाई';
 $string['wc_max_responses_label']        = 'प्रति learner अधिकतम शब्द';

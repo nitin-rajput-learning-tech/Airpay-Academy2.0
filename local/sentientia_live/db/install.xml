@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/sentientia_live/db" VERSION="20260521"
-       COMMENT="Sentientia LMS Live engagement (Mentimeter clone) — Phase E.0 schema.
-                5 tables: sessions, slides, responses, participants, events.
+<XMLDB PATH="local/sentientia_live/db" VERSION="20260904"
+       COMMENT="Sentientia LMS Live engagement (Mentimeter clone) — Phase E.0 schema
+                plus the H4 SSE-concurrency-cap table added 2026-09-04.
+                6 tables: sessions, slides, responses, participants, events, sse.
                 Tables prefixed local_sentientia_live_ for global uniqueness.">
   <TABLES>
 
@@ -238,6 +239,58 @@
                         ORDER BY id ASC. This index is the hot path."/>
         <INDEX NAME="idx_created"           UNIQUE="false" FIELDS="timecreated"
                COMMENT="Retention purge query"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- ─── SSE (open connection registry, H4 remediation 2026-09-04) ─── -->
+    <TABLE NAME="local_sentientia_live_sse"
+           COMMENT="Open Server-Sent-Events connection registry. See
+                    UAT-SECURITY-POSTURE-2026-09-03.md finding H4: stream.php
+                    held an Apache worker open for up to 300s per connection
+                    with no concurrency cap, a trivial volumetric DoS once
+                    anonymous audience join is enabled. One row per currently
+                    open stream.php connection; used to enforce a global
+                    concurrency cap (setting sse_max_connections) and a fixed
+                    per-actor cap of 2 concurrent streams.
+
+                    sid is NOT the PHP/Moodle session id — stream.php calls
+                    session_write_close() before this table is ever touched,
+                    precisely so a stream never holds the session lock. sid is
+                    the per-actor identity used for the concurrency cap:
+                    u:USERID for a trainer stream, p:PARTICIPANTID for an
+                    audience stream (already scoped per anonymous join_token
+                    via the participants table), or ip:ADDRESS as a
+                    documented last-resort fallback. See
+                    classes/sse_connection_registry.php for the full design.
+
+                    Rows are deleted on clean disconnect (release()); a
+                    prune() sweep removes rows whose timeheartbeat is older
+                    than 2x the ~15s ping interval as a backstop for Apache
+                    workers killed without running their PHP shutdown path.">
+      <FIELDS>
+        <FIELD NAME="id"            TYPE="int"  LENGTH="10"  NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="sessionid"     TYPE="int"  LENGTH="10"  NOTNULL="true"
+               COMMENT="FK to local_sentientia_live_sessions.id"/>
+        <FIELD NAME="userid"        TYPE="int"  LENGTH="10"  NOTNULL="false"
+               COMMENT="FK to user.id — NULL for an anonymous audience connection"/>
+        <FIELD NAME="sid"           TYPE="char" LENGTH="100" NOTNULL="true"
+               COMMENT="Per-actor identity key for the concurrency cap — see TABLE comment"/>
+        <FIELD NAME="timecreated"   TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timeheartbeat" TYPE="int"  LENGTH="10"  NOTNULL="true" DEFAULT="0"
+               COMMENT="Refreshed every ping interval (~15s) while the stream is
+                        open; prune() reaps rows older than 2x this interval"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary"      TYPE="primary" FIELDS="id"/>
+        <KEY NAME="fk_sessionid" TYPE="foreign" FIELDS="sessionid"
+             REFTABLE="local_sentientia_live_sessions" REFFIELDS="id"/>
+        <KEY NAME="fk_userid"    TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_sid"       UNIQUE="false" FIELDS="sid"
+               COMMENT="Per-actor concurrency-cap count query"/>
+        <INDEX NAME="idx_heartbeat" UNIQUE="false" FIELDS="timeheartbeat"
+               COMMENT="prune() staleness-sweep query"/>
       </INDEXES>
     </TABLE>
 

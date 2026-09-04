@@ -7,8 +7,21 @@
  * Subscribes to stream.php with role=trainer and updates the live
  * runner DOM in place. textContent only — no innerHTML.
  *
+ * H4 remediation (2026-09-04): stream.php can now respond with a plain
+ * HTTP 503 (Retry-After) when the server-side SSE concurrency cap is
+ * reached (see classes/sse_connection_registry.php). EventSource treats
+ * a non-2xx response as a fatal error — readyState goes CLOSED and the
+ * browser does NOT retry on its own. Previously this module's 'error'
+ * handler was a no-op, so a trainer whose connection hit that cap (most
+ * plausible exactly during the volumetric-flood scenario H4 mitigates)
+ * silently lost all realtime updates for the rest of the session. Mirror
+ * audience_sse.js's fallback: on a fatal close, reload the page after a
+ * short delay so the trainer re-attempts the stream from a fresh request.
+ *
  * @module local_sentientia_live/trainer_sse
  */
+
+const RETRY_RELOAD_MS = 10000;
 
 const init = (opts = {}) => {
     const sessionid = opts.sessionid;
@@ -41,7 +54,16 @@ const init = (opts = {}) => {
         }
     };
 
-    es.addEventListener('error', () => {});
+    es.addEventListener('error', () => {
+        // Non-fatal errors (a normal network hiccup, or our own
+        // intentional wall-clock rotation closing the connection)
+        // leave the browser in CONNECTING state and it retries on its
+        // own — nothing to do here. Only a fatal close (CLOSED — e.g.
+        // the H4 503 concurrency-cap response) needs a manual retry.
+        if (es.readyState === EventSource.CLOSED) {
+            setTimeout(() => window.location.reload(), RETRY_RELOAD_MS);
+        }
+    });
 
     es.addEventListener('participant_joined', (ev) => {
         try {

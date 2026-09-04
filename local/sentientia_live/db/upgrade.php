@@ -52,5 +52,42 @@ function xmldb_local_sentientia_live_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026052900, 'local', 'sentientia_live');
     }
 
+    // ── H4 remediation (UAT-SECURITY-POSTURE-2026-09-03, 2026-09-04) ──
+    // New local_sentientia_live_sse table backing the SSE concurrency-cap
+    // registry (classes/sse_connection_registry.php). See db/install.xml
+    // for the full column/index documentation.
+    if ($oldversion < 2026090302) {
+        $dbman = $DB->get_manager(); // The earlier step scopes its own $dbman; define ours.
+        $table = new xmldb_table('local_sentientia_live_sse');
+
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL, XMLDB_SEQUENCE);
+            $table->add_field('sessionid', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL, null, null);
+            $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null,
+                null, null, null);
+            $table->add_field('sid', XMLDB_TYPE_CHAR, '100', null,
+                XMLDB_NOTNULL, null, null);
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL, null, '0');
+            $table->add_field('timeheartbeat', XMLDB_TYPE_INTEGER, '10', null,
+                XMLDB_NOTNULL, null, '0');
+
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_key('fk_sessionid', XMLDB_KEY_FOREIGN, ['sessionid'],
+                'local_sentientia_live_sessions', ['id']);
+            $table->add_key('fk_userid', XMLDB_KEY_FOREIGN, ['userid'],
+                'user', ['id']);
+
+            $table->add_index('idx_sid', XMLDB_INDEX_NOTUNIQUE, ['sid']);
+            $table->add_index('idx_heartbeat', XMLDB_INDEX_NOTUNIQUE, ['timeheartbeat']);
+
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026090302, 'local', 'sentientia_live');
+    }
+
     return true;
 }

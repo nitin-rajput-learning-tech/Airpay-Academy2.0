@@ -33,6 +33,18 @@
  * request from the same browser session would block until the SSE
  * connection times out (60 s default).
  *
+ * H4 remediation (UAT-SECURITY-POSTURE-2026-09-03, 2026-09-04): a stream
+ * held open for up to 300 s per connection with no concurrency cap was a
+ * trivial volumetric DoS once anonymous audience join is enabled (Apache
+ * prefork: ~15 workers on UAT). Two admin settings now bound the blast
+ * radius — sse_max_seconds (default 60) caps how long any one connection
+ * is held before the client is told to reconnect, and sse_max_connections
+ * (default 8) caps total concurrently-open streams; a fixed cap of 2
+ * concurrent streams per trainer/participant also applies. Both caps are
+ * enforced by \local_sentientia_live\sse_connection_registry BEFORE any
+ * SSE bytes are sent — a capacity-exceeded request gets a plain 503 with
+ * Retry-After instead of a stream. See that class for the full design.
+ *
  * @package local_sentientia_live
  */
 
@@ -113,6 +125,55 @@ if ($role === 'trainer') {
     $participantid = (int) $participant->id;
 }
 
+// ── H4 remediation: SSE concurrency caps ──
+// Enforced BEFORE any SSE header/byte is sent so a capacity-exceeded
+// client gets a plain 503 (EventSource treats a non-2xx response as a
+// fatal error and stops auto-reconnecting; audience_sse.js and
+// trainer_sse.js both fall back to a delayed page reload in that case —
+// see those modules) instead of a stream that opens then closes at once.
+$ping_interval_seconds = 15;
+$sse_max_connections = (int) (get_config('local_sentientia_live', 'sse_max_connections') ?: 0);
+
+// Per-actor identity for the concurrency cap. A trainer stream is always
+// authenticated (checked above); an audience stream always resolves to a
+// participants row (also checked above, via token OR logged-in userid) —
+// which already scopes an anonymous audience member by their per-browser
+// join_token. The ip: fallback is defensive/documented only — the access
+// control above means it should be unreachable in practice.
+if ($role === 'trainer') {
+    $sse_actor_key = 'u:' . (int) $USER->id;
+    $sse_registry_userid = (int) $USER->id;
+} else if ($participantid !== null) {
+    $sse_actor_key = 'p:' . $participantid;
+    $sse_registry_userid = (isloggedin() && !isguestuser()) ? (int) $USER->id : null;
+} else {
+    $sse_actor_key = 'ip:' . (getremoteaddr() ?: 'unknown');
+    $sse_registry_userid = null;
+}
+
+$sse_connection = \local_sentientia_live\sse_connection_registry::acquire(
+    $sessionid, $sse_registry_userid, $sse_actor_key,
+    $sse_max_connections, $ping_interval_seconds);
+
+if (!$sse_connection->ok) {
+    http_response_code(503);
+    header('Retry-After: 5');
+    exit($sse_connection->reason === 'peractor'
+        ? 'too many concurrent streams for this participant/trainer; retry shortly'
+        : 'sse capacity reached; client should retry shortly or fall back to polling');
+}
+$sse_connection_id = $sse_connection->id;
+
+// Release the slot on the way out, whatever the exit path — clean
+// disconnect, wall-clock rotation, session end, or an uncaught error.
+// The loop's connection_aborted() check breaks immediately on abort, so
+// this fires (and frees the slot) within the same ~1 s poll tick.
+// sse_connection_registry::prune() is the backstop for the abnormal case
+// where a shutdown function never runs (an Apache worker killed outright).
+register_shutdown_function(static function () use ($sse_connection_id): void {
+    \local_sentientia_live\sse_connection_registry::release($sse_connection_id);
+});
+
 // ── SSE headers ──
 header('Content-Type: text/event-stream; charset=utf-8');
 header('Cache-Control: no-cache, no-store, must-revalidate');
@@ -153,14 +214,19 @@ echo "data: " . json_encode($payload) . "\n\n";
 @flush();
 
 // Max wall-clock duration we'll hold this connection open before
-// asking the client to reconnect. Apache MPM workers shouldn't sit
-// idle for hours — 5 minutes is a sane upper bound. Browsers auto-
-// reconnect via EventSource.
-$max_duration_seconds = 300;
+// asking the client to reconnect. H4 remediation: this used to be a
+// hardcoded 300 s (5 min); it's now the sse_max_seconds admin setting
+// (default 60 s) so an operator can tighten it further without a code
+// change. Browsers auto-reconnect via EventSource (retry: line above).
+$max_duration_seconds = (int) (get_config('local_sentientia_live', 'sse_max_seconds') ?: 0);
+if ($max_duration_seconds <= 0) {
+    $max_duration_seconds = 60;
+}
 $started = time();
 
 // Ping interval — line we emit so intermediaries don't kill idle.
-$ping_interval_seconds = 15;
+// $ping_interval_seconds is declared earlier (H4 concurrency-cap block)
+// so it can also size the registry's staleness window.
 $last_ping = time();
 
 // Track if we've already emitted a session_ended event so we don't
@@ -216,10 +282,14 @@ while (true) {
     }
 
     // Comment-line ping so idle connections aren't killed by middle boxes.
+    // Also refresh this connection's registry heartbeat on the same
+    // cadence — cheap enough at ~15s and keeps prune()'s staleness
+    // window accurate without a write on every 1s loop tick.
     if (time() - $last_ping >= $ping_interval_seconds) {
         echo ": ping " . time() . "\n\n";
         @flush();
         $last_ping = time();
+        \local_sentientia_live\sse_connection_registry::heartbeat($sse_connection_id);
     }
 
     // Sleep 1 s between polls. Sub-second responsiveness isn't worth

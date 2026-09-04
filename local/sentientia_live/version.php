@@ -35,10 +35,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_live';
-$plugin->version   = 2026052900;       // YYYYMMDDNN — T-01/T-02 trainer access fix (QA Walk 2026-05-29)
+$plugin->version   = 2026090302;       // YYYYMMDDNN — H4 SSE concurrency-cap remediation (UAT-SECURITY-POSTURE-2026-09-03)
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;   // Phases E.4-E.9 — all 6 question types live + verified
-$plugin->release   = '0.2.2-alpha';
+$plugin->release   = '0.2.3-alpha';
 $plugin->dependencies = [
     'local_sentientia_platform' => 2026051401,  // feature_flags resolver
 ];
@@ -191,3 +191,33 @@ $plugin->dependencies = [
 //              AND Learner shells, gated by has_capability(
 //              'local/sentientia_live:create') AND the live.enabled flag, so
 //              the link only appears for users who can actually enter.
+// 0.2.3-alpha  H4 remediation (UAT-SECURITY-POSTURE-2026-09-03) — stream.php
+//              held an Apache worker open for up to 300s per SSE connection
+//              with no per-user or global concurrency cap; a trivial
+//              volumetric DoS once anonymous audience join is enabled
+//              (Apache prefork: ~15 workers on UAT). New setting
+//              sse_max_seconds (default 60, was hardcoded 300) caps stream
+//              lifetime — client reconnects automatically via EventSource
+//              (retry: line was already sent). New setting
+//              sse_max_connections (default 8) caps total concurrently-open
+//              streams; a fixed cap of 2 concurrent streams per trainer/
+//              audience-participant also applies (keyed by userid for the
+//              trainer role, by participantid — i.e. the anonymous
+//              join_token — for audience). Both enforced by new class
+//              classes/sse_connection_registry.php against new table
+//              local_sentientia_live_sse (db/install.xml + db/upgrade.php),
+//              BEFORE any SSE bytes are sent — a capacity-exceeded request
+//              gets a plain 503 + Retry-After instead of a stream.
+//              connection_aborted() was already checked every ~1s loop
+//              tick and session_write_close() was already called before
+//              the loop — both verified still correct, no change needed.
+//              prune() sweeps rows whose heartbeat is older than 2x the
+//              ~15s ping interval as a backstop for workers killed
+//              outright. amd/src/trainer_sse.js gains the same delayed-
+//              reload retry on a fatal SSE error that audience_sse.js
+//              already had (a trainer hitting the 503 cap during an
+//              attack previously had no retry path at all). +6 string
+//              pairs en+hi (Hindi parity maintained) for the two new
+//              settings. +1 PHPUnit test class (sse_connection_registry_
+//              test) covering acquire/heartbeat/release/global cap/
+//              per-actor cap/prune.

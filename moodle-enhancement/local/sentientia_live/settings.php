@@ -63,6 +63,42 @@ if ($hassiteconfig) {
         4
     ));
 
+    // ── H4 remediation (UAT-SECURITY-POSTURE-2026-09-03, 2026-09-04) ──
+    // SSE stream limits — caps that bound the Apache worker pool a
+    // volumetric DoS via stream.php can consume. See
+    // classes/sse_connection_registry.php for the enforcement logic.
+    $settings->add(new admin_setting_heading(
+        'local_sentientia_live/sse_limits_heading',
+        get_string('settings_sse_heading', 'local_sentientia_live'),
+        get_string('settings_sse_heading_desc', 'local_sentientia_live')
+    ));
+
+    // Maximum wall-clock lifetime of one SSE connection before the
+    // server tells the client to reconnect. Was hardcoded to 300s;
+    // default lowered to 60s so a flood of connections rotates (and is
+    // re-evaluated against the caps below) far more often.
+    $settings->add(new admin_setting_configtext(
+        'local_sentientia_live/sse_max_seconds',
+        get_string('setting_sse_max_seconds', 'local_sentientia_live'),
+        get_string('setting_sse_max_seconds_desc', 'local_sentientia_live'),
+        60,
+        PARAM_INT,
+        5
+    ));
+
+    // Global cap on concurrently-open SSE connections across all
+    // sessions. Default 8 is sized for a prefork Apache host with a
+    // small worker pool (UAT: ~15 workers) — leaves headroom for normal
+    // page requests alongside open streams.
+    $settings->add(new admin_setting_configtext(
+        'local_sentientia_live/sse_max_connections',
+        get_string('setting_sse_max_connections', 'local_sentientia_live'),
+        get_string('setting_sse_max_connections_desc', 'local_sentientia_live'),
+        8,
+        PARAM_INT,
+        4
+    ));
+
     $ADMIN->add('localplugins', $settings);
 
     // ── B18 / F-089 stabilization (2026-05-28) ──────────────────────

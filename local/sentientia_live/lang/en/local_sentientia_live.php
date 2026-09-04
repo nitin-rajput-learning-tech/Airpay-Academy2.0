@@ -365,6 +365,14 @@ $string['setting_default_min_word_length_desc'] = 'Tokens shorter than this many
 $string['setting_default_max_responses']        = 'Default maximum responses per learner';
 $string['setting_default_max_responses_desc']   = 'Hard cap on how many words a single audience member can contribute to one word-cloud slide. Default 3 — mirrors Mentimeter\'s standard.';
 
+// H4 remediation (UAT-SECURITY-POSTURE-2026-09-03, 2026-09-04) — SSE stream limits.
+$string['settings_sse_heading']                 = 'SSE stream limits';
+$string['settings_sse_heading_desc']            = 'Bounds on the Server-Sent-Events stream (stream.php) that a volumetric flood of connections could otherwise use to exhaust the Apache worker pool, especially when anonymous audience join is enabled.';
+$string['setting_sse_max_seconds']              = 'Maximum SSE stream lifetime (seconds)';
+$string['setting_sse_max_seconds_desc']         = 'How long one Server-Sent-Events connection is held open before the server closes it and the browser reconnects automatically. Default 60. Lower this if Apache workers are still under pressure during a large session.';
+$string['setting_sse_max_connections']          = 'Maximum concurrent SSE connections';
+$string['setting_sse_max_connections_desc']     = 'Hard cap on how many Server-Sent-Events streams may be open at once across the whole site. Once reached, new connection attempts get an immediate HTTP 503 with Retry-After instead of a stream. Default 8 — size this against your Apache MaxRequestWorkers, leaving headroom for ordinary page requests. A fixed cap of 2 concurrent streams per trainer or per audience participant also applies and is not configurable here.';
+
 // B18/F-089 stabilization (2026-05-28) — per-tenant Sentientia Live kill switch admin page.
 $string['tenant_switches_title']      = 'Sentientia Live tenant switches';
 $string['tenant_switches_intro']      = 'Toggle Sentientia Live features per tenant. Global flags apply to all tenants unless overridden; per-tenant rows shadow the global value for that (customer, tenant) pair. Use this to roll back Live to a single tenant if something goes wrong, or to dark-launch a new question type to one customer.';

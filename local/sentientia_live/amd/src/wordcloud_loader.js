@@ -6,7 +6,7 @@
  *
  * Why this module exists
  * ----------------------
- * Mirrors the sentientia/chart_loader.js pattern (chip-N, audit finding
+ * Mirrors the airpayux/chart_loader.js pattern (chip-N, audit finding
  * F-14): one dedicated AMD module owns the "render word cloud into a
  * DOM container" dependency, so callers can rely on a stable API
  * regardless of which underlying library does the layout.

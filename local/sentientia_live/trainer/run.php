@@ -97,7 +97,7 @@ echo $OUTPUT->header();
 // Phase E.11 — Mobile responsive overrides for the trainer run page.
 // Scoped to .sentientia-trainer-runner so it doesn't pollute the rest
 // of the page. Tightens display-2 + alert paddings + counter font on
-// the 590px breakpoint (sentientia primary mobile bp per frontend.md).
+// the 590px breakpoint (airpayux primary mobile bp per frontend.md).
 echo '<style>
 @media (max-width: 590px) {
   .sentientia-trainer-runner .display-2 { font-size: 3rem !important; letter-spacing: 0.05em !important; }
