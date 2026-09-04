@@ -137,10 +137,12 @@ $flags = [
                           Hidden when off; users still navigate via the sidebar.',
     ],
     'ux.darkMode.enabled' => [
-        'default'     => true,
-        'description' => 'Dark mode toggle availability. When off, the
-                          appearance toggle in user-menu is hidden and every
-                          user sees the light theme.',
+        'default'     => false,
+        'description' => 'Dark mode availability (super-admin switch). Default OFF:
+                          dark mode is a feature the administrator turns on. When ON,
+                          the appearance toggle appears and each user opts in; dark
+                          never auto-follows the browser/OS theme. When OFF, the
+                          toggle is hidden and everyone sees the light theme.',
     ],
 
     // ─── Sentientia (product-level) category ───────────────────────

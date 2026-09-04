@@ -24,12 +24,17 @@
     <link rel="shortcut icon" href="{{{ output.favicon }}}" />
     {{{ output.standard_head_html }}}
 
-    {{! Dark mode init — runs BEFORE CSS to prevent flash of light mode.
-        Priority: 1) localStorage preference, 2) OS system preference, 3) default light }}
+    {{! Dark mode init — runs BEFORE CSS to prevent flash.
+        Dark mode is OPT-IN ONLY: it applies solely when the user has explicitly
+        chosen it (localStorage 'airpay-theme' === 'dark'). It NEVER follows the
+        browser/OS prefers-color-scheme (2026-09-04: an OS dark setting must not
+        force the app dark). Whether the feature is offered at all is the
+        super-admin's ux.darkMode.enabled switch, gated in standard_head_html().
+        Default is light. }}
     <script>
     (function() {
         var saved = localStorage.getItem('airpay-theme');
-        var isDark = saved === 'dark' || (!saved && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        var isDark = saved === 'dark';
         // Apply IMMEDIATELY to <html> to prevent flash.
         // Set BOTH class (legacy) and data-attribute (token system).
         document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
@@ -51,17 +56,7 @@
             if (toggleBtn) {
                 toggleBtn.className = isDark ? 'fa fa-sun' : 'fa fa-moon';
             }
-            // Listen for OS theme changes (only if user hasn't set manual preference).
-            if (window.matchMedia) {
-                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
-                    if (!localStorage.getItem('airpay-theme')) {
-                        document.documentElement.classList.toggle('dark-mode', e.matches);
-                        document.body.classList.toggle('dark-mode', e.matches);
-                        var btn = document.querySelector('.airpay-nav__theme-toggle i');
-                        if (btn) { btn.className = e.matches ? 'fa fa-sun' : 'fa fa-moon'; }
-                    }
-                });
-            }
+            // Dark mode is opt-in only; it does NOT follow OS/browser theme changes.
         });
     })();
     </script>
