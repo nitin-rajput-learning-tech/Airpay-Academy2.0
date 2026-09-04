@@ -130,6 +130,8 @@ Gate to Phase 5: parity 100%, persona walk green, rollback rehearsed (drop the r
 | Overnight | Log scan 06:15 clean (0 PHP errors, 0 5xx, 0 failing tasks); memory 0.8/1.9 GB; no tester logins yet |
 | Link gate re-run | Clean except one legacy string (`download_certificate` asked `local_courses`) → theme string en+hi, deployed (b2284d921) |
 | Security | **H4 FIXED** — SSE connection registry (global cap 8, per-actor 2, 60 s lifetime, 503 + Retry-After), 137/137 tests, live check on UAT (2nd stream refused at cap 1); C1 still Nitin-gated; H2 waits on reCAPTCHA keys; M1–M5 open |
+| Realtime (F-11) | While verifying H4: UAT's Apache + PHP-FPM buffered every response until script end, so Sentientia Live's SSE stream never delivered events in real time (first byte only at stream end). Fixed in the vhost with `ProxySet flushpackets=on` on the FCGI worker (first byte 0.05 s); documented in the deploy checklist as a production requirement. Also found PHP-FPM `pm.max_children = 5` → SSE cap set to 3 on UAT, plugin default lowered to 4 |
+| Logs | The vhost writes `academy2_access.log`/`academy2_error.log`; yesterday's error-log checks and the log-scan cron read the default pair — scan fixed to cover both |
 | Blocked | Plan-page artifact republish (claude.ai artifact service unreachable since 03 Sep evening); UAT SSH needs Nitin's tunnel login each day |
 
 ## Suggested calendar (assumes IT items land within the fortnight)

@@ -94,7 +94,7 @@ if ($hassiteconfig) {
         'local_sentientia_live/sse_max_connections',
         get_string('setting_sse_max_connections', 'local_sentientia_live'),
         get_string('setting_sse_max_connections_desc', 'local_sentientia_live'),
-        8,
+        4,
         PARAM_INT,
         4
     ));

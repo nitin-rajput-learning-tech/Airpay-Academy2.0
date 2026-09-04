@@ -79,6 +79,14 @@ by Jitesh Divekar after Matt/Priyanka sign-off). This checklist binds the generi
 - [ ] PHP 8.3 extensions: `intl mbstring curl zip gd xml soap mysqli opcache sodium exif`
       + `max_input_vars = 5000`, `memory_limit ≥ 512M`, `post_max_size`/`upload_max_filesize ≥ 100M`
 - [ ] OPcache ON (Linux is unaffected by the Windows-local instability note)
+- [x] **PHP-FPM behind Apache (UAT finding 2026-09-04):** `mod_proxy_fcgi` buffers each response
+      until the script ends unless the FCGI worker has `flushpackets=on`, which silently breaks
+      Server-Sent Events (`local/sentientia_live/stream.php` — the trainer/audience realtime
+      channel). Added to the UAT vhost:
+      `<Proxy "unix:/run/php/php8.3-fpm.sock|fcgi://localhost/"> ProxySet flushpackets=on flushwait=10 </Proxy>`.
+      Same block is REQUIRED on any FPM-based production host. Also size the SSE cap below the FPM
+      pool: UAT `pm.max_children = 5` → `local_sentientia_live/sse_max_connections = 3` (plugin
+      default 4). Vhost logs are `academy2_access.log` / `academy2_error.log`, not the default pair.
 - [ ] Outbound 443 from EC2 SG → (a) nothing required for the smoke;
       (b) for OAuth2 SMTP tests later: login.microsoftonline.com + smtp.office365.com:587
 - [ ] SG rule: EC2 → RDS 3306 within the VPC (Cloud.in said "connected" — verify with

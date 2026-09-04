@@ -62,7 +62,7 @@ class sse_connection_registry {
 
     /** Global concurrency cap used when the sse_max_connections admin
      *  setting is unset or invalid. Matches settings.php default. */
-    public const DEFAULT_MAX_CONNECTIONS = 8;
+    public const DEFAULT_MAX_CONNECTIONS = 4;
 
     /** Per-actor (per trainer / per audience participant) concurrent
      *  stream cap. Fixed — not exposed as an admin setting. */

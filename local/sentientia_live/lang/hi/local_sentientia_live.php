@@ -370,7 +370,7 @@ $string['settings_sse_heading_desc']            = 'Server-Sent-Events स्ट�
 $string['setting_sse_max_seconds']              = 'अधिकतम SSE स्ट्रीम जीवनकाल (सेकंड)';
 $string['setting_sse_max_seconds_desc']         = 'एक Server-Sent-Events कनेक्शन कितनी देर खुला रहता है इससे पहले कि सर्वर इसे बंद करे और ब्राउज़र अपने आप फिर से जुड़ जाए। डिफ़ॉल्ट 60। यदि किसी बड़े सेशन के दौरान Apache workers अभी भी दबाव में हैं तो इसे और कम करें।';
 $string['setting_sse_max_connections']          = 'अधिकतम समवर्ती SSE कनेक्शन';
-$string['setting_sse_max_connections_desc']     = 'पूरी साइट पर एक साथ कितनी Server-Sent-Events स्ट्रीम खुली रह सकती हैं, इस पर हार्ड कैप। सीमा पूरी होने पर, नए कनेक्शन प्रयासों को स्ट्रीम के बजाय तुरंत HTTP 503 और Retry-After मिलता है। डिफ़ॉल्ट 8 — इसे अपने Apache MaxRequestWorkers के अनुसार तय करें, सामान्य पेज अनुरोधों के लिए जगह छोड़ते हुए। प्रति ट्रेनर या प्रति ऑडियंस participant 2 समवर्ती स्ट्रीम की एक निश्चित सीमा भी लागू होती है और यह यहां कॉन्फ़िगर करने योग्य नहीं है।';
+$string['setting_sse_max_connections_desc']     = 'पूरी साइट पर एक साथ खुली रह सकने वाली Server-Sent-Events स्ट्रीम की अधिकतम संख्या। सीमा पूरी होने पर नए कनेक्शन को स्ट्रीम के बजाय तुरंत HTTP 503 और Retry-After मिलता है। डिफ़ॉल्ट 4। हर खुली स्ट्रीम पूरे समय एक PHP वर्कर रोके रखती है, इसलिए इसे PHP-FPM पूल आकार (pm.max_children) या Apache MaxRequestWorkers से कम रखें ताकि सामान्य पेज अनुरोधों के लिए जगह बचे (UAT: pm.max_children = 5, सीमा = 3)। प्रति प्रशिक्षक या प्रति श्रोता 2 समवर्ती स्ट्रीम की एक निश्चित सीमा भी लागू होती है, जो यहाँ बदली नहीं जा सकती।';
 
 // Word-cloud slide-editor form fields (per-slide overrides).
 $string['wc_min_word_length_label']      = 'न्यूनतम शब्द लंबाई';
