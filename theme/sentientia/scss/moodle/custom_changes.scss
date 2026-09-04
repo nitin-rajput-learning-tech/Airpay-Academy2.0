@@ -49,5 +49,9 @@
 @import "partials/ui-polish";
 @import "partials/datatable";
 
+// Bootstrap 5 dismiss-button (.btn-close) shim — core 5.2 emits BS5 close markup
+// this BS4-based theme did not style (2026-09-04 UI/UX pass).
+@import "partials/bs5-close";
+
 // 7. Dark mode (global catch-all — migrate to per-component [data-theme="dark"])
 @import "partials/dark-mode-global";

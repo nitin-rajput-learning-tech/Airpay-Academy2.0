@@ -1,0 +1,50 @@
+// ─────────────────────────────────────────────────────────────────────────
+// Bootstrap 5 dismiss button (.btn-close) — compatibility shim
+// ─────────────────────────────────────────────────────────────────────────
+// theme_sentientia is a Bootstrap-4-based standalone fork (it styles the BS4
+// `.close` button). Moodle 5.2 core, however, emits Bootstrap 5 dismiss markup
+// for every dismissible notification/alert: `<button class="btn-close"
+// data-bs-dismiss="alert">`. BS5 draws its × from a CSS background SVG that this
+// theme never imports, so `.btn-close` rendered as a small empty box — the
+// "broken glyph" seen after error/notification text (404 page, disabled-signup
+// message, and any dismissible alert). (UAT UI/UX pass, 2026-09-04.)
+//
+// Fix: draw a real "×" with the `content` property (the U+00D7 multiplication
+// sign — font-independent, no FontAwesome/SVG dependency) and keep it legible on
+// both light and dark alert backgrounds.
+
+.btn-close {
+    box-sizing: content-box;
+    width: 1em;
+    height: 1em;
+    padding: 0.25em;
+    background: none;
+    border: 0;
+    border-radius: 0.25rem;
+    line-height: 1;
+    color: inherit;               // take the alert's own text colour
+    opacity: 0.6;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    &::before {
+        content: "\00d7";         // × multiplication sign
+        font-size: 1.4em;
+        font-weight: 700;
+        line-height: 0.6;
+    }
+
+    &:hover { opacity: 1; }
+    &:focus-visible {
+        outline: 2px solid var(--ap-color-primary, #0066A7);
+        outline-offset: 2px;
+    }
+}
+
+// Keep the × readable on dark alert backgrounds (dark mode, dark error banners).
+.dark-mode .btn-close,
+[data-theme="dark"] .btn-close {
+    color: #fff;
+}
