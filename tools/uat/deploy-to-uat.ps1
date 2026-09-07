@@ -1,4 +1,13 @@
 # deploy-to-uat.ps1 - mirror of the local XAMPP copy step, aimed at UAT.
+#
+# ⚠ SUPERSEDED (2026-09-07) by tools/uat/deploy_to_uat.sh — use that instead.
+#   This script scp's directly as the SSH user into the www-data-owned docroot with
+#   no sudo (fails: permission denied), no backup, no checksum verify, and no
+#   admin/cli/upgrade.php step (so version.php bumps never register). Its docroot
+#   constant was also stale. The .sh deployer does stage→tar→scp→backup→sudo
+#   extract→chown www-data→sha256 verify→upgrade→purge, dry-run by default.
+#   Kept only as a reference; the docroot below is corrected to the real path.
+#
 # Prereq: the tunnel session is up in another window (`ssh uat-tunnel`).
 #
 # Usage:
@@ -17,7 +26,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
-$remoteDocroot = '/var/www/sentientia/moodle5.2/public'
+$remoteDocroot = '/var/www/html/moodle5.2/public'   # corrected 2026-09-07 (was /var/www/sentientia/…)
 $sshHost = 'uat-lms'   # localhost:2222 via the tunnel (see ~/.ssh/config)
 
 $full = Join-Path $repoRoot $RepoPath
