@@ -245,8 +245,11 @@ while IFS= read -r file; do
     if [ -n "$component" ]; then
         dir=$(dirname "$file" | xargs basename)
         component_clean=$(echo "$component" | tr -d "'")
-        # component should end with the directory name: local_airhub → airhub
-        plugin_dir="${component_clean##*_}"
+        # The directory must equal the component minus its type prefix
+        # (local_airhub → airhub, local_sentientia_courses → sentientia_courses).
+        # Fixed 2026-09-08: the old `##*_` stripped up to the LAST underscore, so
+        # every multi-word plugin (sentientia_*) warned on each commit.
+        plugin_dir="${component_clean#*_}"
         if [ "$plugin_dir" != "$dir" ] && [ "$component_clean" != "$dir" ]; then
             warn "version.php component '$component_clean' may not match directory '$dir'"
         fi
