@@ -38,7 +38,7 @@ No `[[missing-string]]` placeholders, no permission errors, no PHP notices on an
 
 - **Flags:** the three master flags (`sentientia.authoring.enabled`, `sentientia.aiquiz.enabled`, `sentientia.skillsai.enabled`) were already ON globally on UAT from the 3 Sept provisioning. Nitin decided 2026-09-08 to leave them on for the demo. Live generation stays off (mock banners above).
 - **Log in as worked from the L&D admin account**, not only from `admin` — useful for future persona walks (the browser's password manager currently offers `uat_ldadmin_airpay` first on the login page).
-- A **PWA "Install / Not now" banner** appeared briefly at the top of the author dashboard (screen 2). The PWA is documented as flag-OFF in CLAUDE.md; worth checking the `pwa` flag state on UAT alongside the other pre-existing overrides. Not touched.
+- A **PWA "Install / Not now" banner** appeared briefly at the top of the author dashboard (screen 2). Checked on the box the same day: `sentientia.pwa.install.enabled` is ON globally, set in the same 3 Sept 12:44 provisioning batch as the other 31 global mock-mode flags (`tools/uat/provision_test_users.php`, `$FLAGS_GLOBAL`). Expected on UAT; the CLAUDE.md "flag OFF" statement describes the shipped default, not UAT. Not touched.
 - **Screenshots were viewed live, not saved:** the Chrome extension's `save_to_disk` option returned no file path on this extension build, so this README is the record (screen IDs in the session transcript: ss_3089x62aa, ss_3375zs5se, ss_95755ghak, ss_4350eeua5, ss_58852rrhz). Playwright/PDF capture was not available on the box this session.
 
 ## Verdict
