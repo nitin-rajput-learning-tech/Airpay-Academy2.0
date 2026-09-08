@@ -35,10 +35,12 @@ $plugin->component = 'local_sentientia_courses';
 // Stream F / Wave E2 P4 (2026-05-25) — inline call to
 // \local_sentientia_whatsapp\notification_bridge::send_course_due_soon
 // from course_reminder for the <48h urgent surface. No schema change.
-$plugin->version   = 2026072200;
+// UAT #3/#4 (2026-09-08) — Manage Courses KPI tiles + category filter now
+// tenant-scoped to the datatable's row set (course_manager::manage_*).
+$plugin->version   = 2026090800;
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.11.3';  // featured widget gated to curators (hidden from user roles)
+$plugin->release   = '1.11.4';  // tenant-scoped Manage Courses KPI + category filter
 $plugin->dependencies = [
     'local_sentientia_org' => 2026041600,
 ];

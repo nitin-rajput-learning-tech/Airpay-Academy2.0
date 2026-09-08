@@ -120,6 +120,92 @@ class course_manager {
     }
 
     /**
+     * Tenant scope fragment for the Manage Courses admin page.
+     *
+     * Returns exactly the scope external\list_courses applies to its rows
+     * (the datatable), so any KPI tile or filter that reuses it can never
+     * contradict the table's "N of N" footer:
+     *   - site admins   → no filter (1=1), i.e. every course;
+     *   - tenant admins → their own open_path tree, PLUS legacy
+     *                     NULL-open_path courses, which stay visible until
+     *                     the data migration completes. See
+     *                     external\list_courses (path_filter allow_null),
+     *                     list_courses_test::test_null_open_path_courses_remain_visible,
+     *                     and the 2 production rows CTI002 / BC001_1.
+     *
+     * @param string $alias Table alias for {course} (e.g. 'c'); '' = none.
+     * @return array{0:string, 1:array}  [$sqlfragment, $params]
+     */
+    public static function manage_scope_sql(string $alias = ''): array {
+        return \local_sentientia_platform\tenant::path_filter($alias, 'open_path', true);
+    }
+
+    /**
+     * KPI tile counts for the Manage Courses page, scoped to the SAME row
+     * set the datatable lists.
+     *
+     * Fixes the UAT finding where a tenant admin saw a global "15 Total"
+     * above a tenant-scoped "1-5 of 5" table. Site admins keep the global
+     * count (manage_scope_sql returns 1=1 for them).
+     *
+     * @return array{total:int, visible:int, hidden:int}
+     */
+    public static function manage_kpi_counts(): array {
+        global $DB;
+
+        [$scopesql, $params] = self::manage_scope_sql('');
+        $base = "id > 1 AND {$scopesql}";
+
+        $total   = (int) $DB->count_records_select('course', $base, $params);
+        $visible = (int) $DB->count_records_select('course', "{$base} AND visible = 1", $params);
+
+        return [
+            'total'   => $total,
+            'visible' => $visible,
+            'hidden'  => max(0, $total - $visible),
+        ];
+    }
+
+    /**
+     * Category-filter options for the Manage Courses page.
+     *
+     * Site admins keep every category (unchanged behaviour). Tenant admins
+     * get only categories that hold at least one course in their own row
+     * set, so one tenant's admin never sees another tenant's category names
+     * in the dropdown (UAT ZEEA finding). Shape matches the manage template:
+     * [{id, name}] with depth-indented names.
+     *
+     * @return array<int, array{id:int, name:string}>
+     */
+    public static function manage_category_options(): array {
+        global $DB;
+
+        if (is_siteadmin()) {
+            $categories = $DB->get_records('course_categories', null, 'sortorder ASC',
+                'id, name, depth');
+        } else {
+            [$scopesql, $params] = self::manage_scope_sql('c');
+            $categories = $DB->get_records_sql(
+                "SELECT DISTINCT cat.id, cat.name, cat.depth, cat.sortorder
+                   FROM {course_categories} cat
+                   JOIN {course} c ON c.category = cat.id
+                  WHERE c.id > 1 AND {$scopesql}
+               ORDER BY cat.sortorder ASC",
+                $params);
+        }
+
+        $options = [];
+        foreach ($categories as $cat) {
+            $options[] = [
+                'id'   => (int) $cat->id,
+                'name' => str_repeat('— ', max(0, ((int) $cat->depth) - 1))
+                        . format_string($cat->name),
+            ];
+        }
+        return $options;
+    }
+
+    /**
      * Check if user has course management capability (L&D admin detection).
      *
      * Checks BOTH old (local/courses:manage) and new (local/sentientia_courses:manage)

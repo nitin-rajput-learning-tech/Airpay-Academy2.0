@@ -1,10 +1,61 @@
 # State Card — local_airpay_courses
 **Component:** `local_airpay_courses`
-**Version:** 1.11.1 (2026052003)  — Sprint D + Hindi top-ups
+**Version:** 1.11.4 (2026090800)  — tenant-scoped Manage Courses KPI + category filter
 **Status:** STABLE — admin + learner flows shipped + tested
 **Depends on:** local_airpay_org (Phase 1)
 **Purpose:** Airpay-owned course management, progress tracking, open_* field ownership, **cross-tenant sharing (Sprint C) + pull/request workflow (Sprint D)**
-**Last refreshed:** 2026-05-29 (featured "Featured for you" dashboard widget gained Netflix-style poster thumbnails — `featured_manager::get_widget_for_user()` reuses `local_airpay_catalog\catalog_manager::course_poster()` (class_exists-guarded), rendered by `templates/featured_widget.mustache` + new `styles.css`)
+**Last refreshed:** 2026-09-08 (UAT ZEEA findings #3/#4 — Manage Courses KPI tiles + category filter now tenant-scoped to the datatable's row set)
+
+---
+
+## UAT ZEEA findings #3 + #4 — tenant-scoped KPI + category filter (2026-09-08)
+
+**Context:** UAT visual walk on academy2.airpay.ninja as the ZEEA admin
+(`uat_admin_zeea`, /177) surfaced four Manage Courses issues. Two were
+handed to other sessions; two were fixed here.
+
+**Fixed here (this session):**
+
+- **#4 KPI tiles global vs table tenant-scoped.** `index.php` computed
+  `Total/Visible/Hidden` with a global `count_records_select('course','id > 1')`
+  while the datatable is tenant-scoped — a ZEEA admin saw "15 Total" above
+  a "1-5 of 5" table. KPI now uses `course_manager::manage_kpi_counts()`,
+  which reuses the **same** scope the datatable applies
+  (`tenant::path_filter('','open_path', allow_null=true)` + `id > 1`).
+  Airpay admin → 7, ZEEA → 5, site admin → global.
+- **#3 Category filter leaked all tenants' categories.** The dropdown
+  listed every `course_categories` row (AIRPAY…, Public, ZEEA, Category 1).
+  Now `course_manager::manage_category_options()` returns only categories
+  that hold a course in the caller's row set; site admins keep all
+  categories (incl. empty ones) unchanged.
+
+**New testable helpers on `\local_sentientia_courses\course_manager`:**
+`manage_scope_sql()`, `manage_kpi_counts()`, `manage_category_options()`.
+Covered by `tests/course_manager_scope_test.php` (Airpay / sibling-tenant /
+site-admin KPI + category cases).
+
+**Deliberately NOT changed here (owned by the main UAT session):**
+
+- **#1 `invalidrecordunknown` error modal.** NOT in `list_courses` (which
+  already uses a tolerant `LEFT JOIN` + `'—'` fallback and no per-course
+  `MUST_EXIST`). Root cause is the compiled bundle
+  `theme/sentientia/amd/build/org_cascade.min.js` still calling the
+  pre-rename WS `local_airpay_org_list_children` (src is correct;
+  `.catch → Notification.exception` shows the modal). Main session rebuilds
+  the bundle. **No try/catch or new error strings added here.**
+- **#2 un-orged course leak.** `path_filter(..., allow_null=true)` and
+  `list_courses_test::test_null_open_path_courses_remain_visible` are left
+  **as-is by policy**: production has 2 legit NULL-open_path courses
+  (id 43 CTI002, id 48 BC001_1) that must stay visible to tenant admins.
+  The UAT `UAT-SMOKE-01` leak is a UAT **data** fix (main session), not a
+  code/policy change. KPI/category deliberately mirror this — they count
+  the NULL courses too, so the tiles never contradict the table.
+
+**Scope discipline:** changes confined to `local_sentientia_courses` (both
+`local/` and `moodle-enhancement/local/` trees, byte-identical). No theme,
+no authoring/skillsai, no flag flips. `php -l` clean; PHPUnit written and
+EXECUTED 2026-09-08 on local XAMPP after a fresh phpunit init: course_manager_scope_test
+5/5 OK (13 assertions). Integrated onto `claude/gap-integration` and deployed to UAT the same day (UAT-SMOKE-01 also moved to open_path /1 by data fix).
 
 ---
 

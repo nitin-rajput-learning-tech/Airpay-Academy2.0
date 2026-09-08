@@ -22,20 +22,16 @@ $can_create = has_capability('local/sentientia_courses:create', $context);
 $can_manage = has_capability('local/sentientia_courses:manage', $context);
 $can_enrol  = has_capability('local/sentientia_courses:enrol', $context);
 
-// KPI counts.
-$total_count   = (int) $DB->count_records_select('course', 'id > 1');
-$visible_count = (int) $DB->count_records_select('course', 'id > 1 AND visible = 1');
-$hidden_count  = $total_count - $visible_count;
+// KPI counts + category options — tenant-scoped to the SAME row set the
+// datatable lists, so a tenant admin is never shown a global total above a
+// tenant-scoped table (UAT ZEEA findings #3 + #4). Site admins keep global
+// counts + all categories; course_manager owns the site-vs-tenant split.
+$kpi = \local_sentientia_courses\course_manager::manage_kpi_counts();
+$total_count   = $kpi['total'];
+$visible_count = $kpi['visible'];
+$hidden_count  = $kpi['hidden'];
 
-// Category options.
-$categories = $DB->get_records('course_categories', null, 'sortorder ASC', 'id, name, depth');
-$cat_options = [];
-foreach ($categories as $c) {
-    $cat_options[] = [
-        'id'   => $c->id,
-        'name' => str_repeat('— ', max(0, $c->depth - 1)) . format_string($c->name),
-    ];
-}
+$cat_options = \local_sentientia_courses\course_manager::manage_category_options();
 
 // Datatable columns.
 $columns = [
