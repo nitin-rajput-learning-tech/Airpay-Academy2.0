@@ -136,3 +136,11 @@ moodle/user:update — edit-OTHERS only, so a learner on their own profile saw n
 Added an account-actions bar (Edit Profile / Change password / Preferences) linking to
 Moodle's own Sentientia-styled pages, shown for the user's OWN profile or a site admin
 viewing another (ap_canmanage = isown || is_siteadmin). v2.7.1→2.7.2.
+
+## 2026-09-08 — Manage page org-cascade filter localised (template only, no version bump)
+
+The inline 5-level cascade in `templates/manage.mustache` (labels, "All …"
+options, aria-labels) now uses `local_sentientia_org` `cascade_*` strings and
+carries `data-cascade-all-label` for `theme_sentientia/org_cascade` to rebuild
+child selects in the user's language. Both trees byte-identical. Template-only
+change: caches purge on deploy, so no version bump. Deploy pending.

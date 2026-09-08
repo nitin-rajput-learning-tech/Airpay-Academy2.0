@@ -101,3 +101,15 @@ $string['orgvisibilitychanged']  = 'Organisation visibility updated.';
 // Privacy.
 $string['privacy:metadata'] = 'The Airpay sentientia_org plugin does not store personal data in plugin-owned tables; user state lives on core Sentientia LMS tables exported by their respective providers.';
 $string['org_logo'] = 'Organisation logo';
+
+// 2026-09-08 — 5-level org cascade filter (theme component + Manage Users / Manage Courses).
+$string['cascade_l1'] = 'Organisation';
+$string['cascade_l2'] = 'Department';
+$string['cascade_l3'] = 'Sub-Department';
+$string['cascade_l4'] = 'Level 4';
+$string['cascade_l5'] = 'Level 5';
+$string['cascade_all_l1'] = 'All Organisations';
+$string['cascade_all_l2'] = 'All Departments';
+$string['cascade_all_l3'] = 'All Sub-Departments';
+$string['cascade_all_l4'] = 'All Level-4 Units';
+$string['cascade_all_l5'] = 'All Level-5 Units';

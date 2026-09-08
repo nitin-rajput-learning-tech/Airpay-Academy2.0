@@ -72,7 +72,7 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
      */
     function loadLevel(select, parentid) {
         var depth = parseInt(select.dataset.cascadeDepth || '1', 10);
-        var defaultLabel = LABEL_FOR_DEPTH[depth] || 'All';
+        var defaultLabel = select.dataset.cascadeAllLabel || LABEL_FOR_DEPTH[depth] || 'All';
         select.setAttribute('aria-busy', 'true');
         select.disabled = true;
 
@@ -137,7 +137,7 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
             var d = parseInt(sel.dataset.cascadeDepth || '1', 10);
             if (d > changedDepth) {
                 clearOptions(sel);
-                sel.appendChild(buildOption(0, LABEL_FOR_DEPTH[d] || 'All'));
+                sel.appendChild(buildOption(0, sel.dataset.cascadeAllLabel || LABEL_FOR_DEPTH[d] || 'All'));
                 sel.disabled = (newParentId === 0);
                 sel.dataset.cascadeParent = String(newParentId);
             }

@@ -85,3 +85,15 @@ $string['orgvisibilitychanged'] = 'संगठन दृश्यता अप�
 // Privacy.
 $string['privacy:metadata'] = 'एयरपे संगठन प्लगइन प्लगइन-स्वामित्व वाली तालिकाओं में व्यक्तिगत डेटा संग्रहीत नहीं करता है; यूज़र स्थिति संबंधित प्रदाताओं द्वारा निर्यात की गई कोर Sentientia LMS तालिकाओं पर रहती है।';
 $string['org_logo'] = 'संगठन का लोगो';
+
+// 2026-09-08 — 5-level org cascade filter (theme component + Manage Users / Manage Courses).
+$string['cascade_l1'] = 'संगठन';
+$string['cascade_l2'] = 'विभाग';
+$string['cascade_l3'] = 'उप-विभाग';
+$string['cascade_l4'] = 'स्तर 4';
+$string['cascade_l5'] = 'स्तर 5';
+$string['cascade_all_l1'] = 'सभी संगठन';
+$string['cascade_all_l2'] = 'सभी विभाग';
+$string['cascade_all_l3'] = 'सभी उप-विभाग';
+$string['cascade_all_l4'] = 'सभी स्तर-4 इकाइयाँ';
+$string['cascade_all_l5'] = 'सभी स्तर-5 इकाइयाँ';

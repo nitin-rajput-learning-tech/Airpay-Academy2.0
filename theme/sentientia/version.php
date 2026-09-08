@@ -412,7 +412,7 @@ defined('MOODLE_INTERNAL') || die();
 // ?lang=hi. All now route through get_string(): 54 new en+hi pairs
 // (parity 281/281), 5 quick-action tiles reuse nav_*, kpi_overdue reused.
 // No layout / markup / data-shape change. Bump refreshes the string cache.
-$plugin->version   = 2026090801;  // F-12 residue in dashboard templates ({{{ }}} for format_string values) + last template-level English fragments (en+hi)
+$plugin->version   = 2026090802;  // org-cascade filter i18n (component + JS reads data-cascade-all-label) — labels via local_sentientia_org strings
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_sentientia';
 $plugin->maturity  = MATURITY_BETA;

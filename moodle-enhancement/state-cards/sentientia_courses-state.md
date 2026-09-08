@@ -307,3 +307,11 @@ onto the `local_sentientia_core\tenant_identity` seam (`root_for_user` /
 `path_root` / `path_for_user`). Behaviour-identical — the legacy BizLMS parse stays
 the default-ON source behind `tenant_identity_legacy`. Shipped via the
 feat/wave2-callers-* branches (merged to production 2026-05-30). DEPRECATION-SCHEDULE row 7.
+
+## 2026-09-08 — Manage page org-cascade filter localised (template only, no version bump)
+
+The inline 5-level cascade in `templates/manage.mustache` (labels, "All …"
+options, aria-labels) now uses `local_sentientia_org` `cascade_*` strings and
+carries `data-cascade-all-label` for `theme_sentientia/org_cascade` to rebuild
+child selects in the user's language. Both trees byte-identical. Template-only
+change: caches purge on deploy, so no version bump. Deploy pending.

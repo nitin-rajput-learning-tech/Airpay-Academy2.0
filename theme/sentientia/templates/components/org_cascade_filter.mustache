@@ -3,47 +3,47 @@
 {{! See WAVE-1-PLAN.md and stat_card.mustache for documentation. The }}
 {{! parent template MUST pass cascade_group in its render data array. }}
 <div>
-    <label for="ap-org-cascade-l1-{{cascade_group}}" class="small text-muted mb-1 d-block">Organisation</label>
+    <label for="ap-org-cascade-l1-{{cascade_group}}" class="small text-muted mb-1 d-block">{{#str}}cascade_l1, local_sentientia_org{{/str}}</label>
     <select id="ap-org-cascade-l1-{{cascade_group}}" class="form-select form-select-sm"
-            data-airpay-org-cascade data-cascade-depth="1"
+            data-airpay-org-cascade data-cascade-depth="1" data-cascade-all-label="{{#str}}cascade_all_l1, local_sentientia_org{{/str}}"
             data-cascade-parent="0" data-cascade-group="{{cascade_group}}"
-            style="min-width: 180px;" aria-label="Filter by organisation">
-        <option value="0">All Organisations</option>
+            style="min-width: 180px;" aria-label="{{#str}}cascade_l1, local_sentientia_org{{/str}}">
+        <option value="0">{{#str}}cascade_all_l1, local_sentientia_org{{/str}}</option>
     </select>
 </div>
 <div>
-    <label for="ap-org-cascade-l2-{{cascade_group}}" class="small text-muted mb-1 d-block">Department</label>
+    <label for="ap-org-cascade-l2-{{cascade_group}}" class="small text-muted mb-1 d-block">{{#str}}cascade_l2, local_sentientia_org{{/str}}</label>
     <select id="ap-org-cascade-l2-{{cascade_group}}" class="form-select form-select-sm"
-            data-airpay-org-cascade data-cascade-depth="2"
+            data-airpay-org-cascade data-cascade-depth="2" data-cascade-all-label="{{#str}}cascade_all_l2, local_sentientia_org{{/str}}"
             data-cascade-parent="0" data-cascade-group="{{cascade_group}}"
-            style="min-width: 160px;" disabled aria-label="Filter by department">
-        <option value="0">All Departments</option>
+            style="min-width: 160px;" disabled aria-label="{{#str}}cascade_l2, local_sentientia_org{{/str}}">
+        <option value="0">{{#str}}cascade_all_l2, local_sentientia_org{{/str}}</option>
     </select>
 </div>
 <div>
-    <label for="ap-org-cascade-l3-{{cascade_group}}" class="small text-muted mb-1 d-block">Sub-Department</label>
+    <label for="ap-org-cascade-l3-{{cascade_group}}" class="small text-muted mb-1 d-block">{{#str}}cascade_l3, local_sentientia_org{{/str}}</label>
     <select id="ap-org-cascade-l3-{{cascade_group}}" class="form-select form-select-sm"
-            data-airpay-org-cascade data-cascade-depth="3"
+            data-airpay-org-cascade data-cascade-depth="3" data-cascade-all-label="{{#str}}cascade_all_l3, local_sentientia_org{{/str}}"
             data-cascade-parent="0" data-cascade-group="{{cascade_group}}"
-            style="min-width: 160px;" disabled aria-label="Filter by sub-department">
-        <option value="0">All Sub-Departments</option>
+            style="min-width: 160px;" disabled aria-label="{{#str}}cascade_l3, local_sentientia_org{{/str}}">
+        <option value="0">{{#str}}cascade_all_l3, local_sentientia_org{{/str}}</option>
     </select>
 </div>
 <div>
-    <label for="ap-org-cascade-l4-{{cascade_group}}" class="small text-muted mb-1 d-block">Level 4</label>
+    <label for="ap-org-cascade-l4-{{cascade_group}}" class="small text-muted mb-1 d-block">{{#str}}cascade_l4, local_sentientia_org{{/str}}</label>
     <select id="ap-org-cascade-l4-{{cascade_group}}" class="form-select form-select-sm"
-            data-airpay-org-cascade data-cascade-depth="4"
+            data-airpay-org-cascade data-cascade-depth="4" data-cascade-all-label="{{#str}}cascade_all_l4, local_sentientia_org{{/str}}"
             data-cascade-parent="0" data-cascade-group="{{cascade_group}}"
-            style="min-width: 140px;" disabled aria-label="Filter by level 4 unit">
-        <option value="0">All Level-4 Units</option>
+            style="min-width: 140px;" disabled aria-label="{{#str}}cascade_l4, local_sentientia_org{{/str}}">
+        <option value="0">{{#str}}cascade_all_l4, local_sentientia_org{{/str}}</option>
     </select>
 </div>
 <div>
-    <label for="ap-org-cascade-l5-{{cascade_group}}" class="small text-muted mb-1 d-block">Level 5</label>
+    <label for="ap-org-cascade-l5-{{cascade_group}}" class="small text-muted mb-1 d-block">{{#str}}cascade_l5, local_sentientia_org{{/str}}</label>
     <select id="ap-org-cascade-l5-{{cascade_group}}" class="form-select form-select-sm"
-            data-airpay-org-cascade data-cascade-depth="5"
+            data-airpay-org-cascade data-cascade-depth="5" data-cascade-all-label="{{#str}}cascade_all_l5, local_sentientia_org{{/str}}"
             data-cascade-parent="0" data-cascade-group="{{cascade_group}}"
-            style="min-width: 140px;" disabled aria-label="Filter by level 5 unit">
-        <option value="0">All Level-5 Units</option>
+            style="min-width: 140px;" disabled aria-label="{{#str}}cascade_l5, local_sentientia_org{{/str}}">
+        <option value="0">{{#str}}cascade_all_l5, local_sentientia_org{{/str}}</option>
     </select>
 </div>

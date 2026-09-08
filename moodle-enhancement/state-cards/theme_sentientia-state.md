@@ -1,7 +1,7 @@
 # State Card — `theme_airpayux`
 
 **Component:** `theme_airpayux`
-**Version:** `2026090801` / `1.0.52-beta`
+**Version:** `2026090802` / `1.0.52-beta`
 **Maturity:** `MATURITY_BETA`
 **Status:** Live theme on airpay.academy. Standalone fork (`$THEME->parents = []`).
 **Last refreshed:** 2026-09-08 (P3 i18n parity — dashboard body strings via get_string, en+hi 281/281 — integrated onto gap-integration; stale AMD bundles rebuilt the same day)
@@ -399,3 +399,17 @@ aria-label. 20 new en+hi keys (`dash_top_courses`, `dash_n_enrolled`,
 `dash_you`, `dash_n_pts`, `dash_percent_complete`, `dash_due_on`, `dash_n_of_m_completed`, `dash_level_short`, `dash_rank_n`, `dash_pts_to_next_level`, `dash_n_day_streak`, `dash_best_n_days`); parity 301/301.
 Remaining English on the dashboard: chart axis month abbreviations (chart
 library). No PHP change, no flag. Deploy to UAT pending the next tunnel window.
+
+## 2026-09-08 — Org-cascade filter localised (theme v2026090802)
+
+`components/org_cascade_filter.mustache` labels, "All …" options and aria-labels
+now come from `local_sentientia_org` strings (`cascade_l1..l5`,
+`cascade_all_l1..l5` — the org plugin owns the hierarchy vocabulary and already
+serves the cascade's web service). Each `<select>` carries
+`data-cascade-all-label` so `amd/src/org_cascade.js` rebuilds child selects with
+the localised default (`select.dataset.cascadeAllLabel || LABEL_FOR_DEPTH[…]`);
+bundle rebuilt. The same literals in `local_sentientia_users` /
+`local_sentientia_courses` `manage.mustache` (inline copies of the component)
+were switched to the same strings. Verified by CLI render in en + hi. Deploy
+pending. Still English: the compliance report's legacy "All Business Units /
+All Entities" filter (different widget).

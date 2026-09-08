@@ -35,7 +35,7 @@ $plugin->component = 'local_sentientia_org';
 //                       out of per-tenant brand config → brand blue. Fixes
 //                       the Public tenant's off-brand identity on existing
 //                       installs; defaults() already brand-correct.
-$plugin->version   = 2026061700;
+$plugin->version   = 2026090800;
 $plugin->requires  = 2022041900; // Moodle 4.0+
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.5.1'; // +2026-06 per-tenant brand-colour data migration
+$plugin->release   = '1.5.2'; // +2026-09-08 cascade_* strings (org cascade filter i18n, en+hi)

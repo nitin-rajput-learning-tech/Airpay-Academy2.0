@@ -154,3 +154,15 @@ P1 state-card pass: bumped Current version `1.0.0 (2026041600)` →
 - PHPUnit shipped: 2 classes, 14 methods.
 
 No DB schema drift (still 1 table). No feature flags registered.
+
+## 2026-09-08 — cascade_* strings for the 5-level org filter (top-level 1.5.2 / 2026090800)
+
+Added `cascade_l1..l5` (Organisation / Department / Sub-Department / Level 4 /
+Level 5) and `cascade_all_l1..l5` ("All …" defaults) to lang/en + lang/hi in BOTH
+trees so the theme component `org_cascade_filter`, its AMD module and the
+Manage Users / Manage Courses filter bars render the hierarchy vocabulary in the
+user's language (Hindi parity for the admin filter bars). Parity 66/66. Version
+bumped in the top-level tree only (2026061700 → 2026090800); the
+`moodle-enhancement/` copy is still the stale 1.4.1/2026052001 tree (no hooks.php,
+compat/, hook_callbacks.php) — the deployer uses the top-level file. No schema, no
+capability, no flag.
