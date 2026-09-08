@@ -402,3 +402,25 @@ $string['dash_activity_recorded'] = 'Activity recorded';
 $string['dash_today'] = 'Today';
 $string['dash_learner'] = 'Learner';
 $string['dash_your_organisation'] = 'Your Organization';
+
+// 2026-09-08 — dashboard template fragments (P3 i18n follow-up; F-12 residue pass).
+$string['dash_top_courses'] = 'Top Courses';
+$string['dash_n_enrolled'] = '{$a} enrolled';
+$string['dash_n_completed'] = '{$a} completed';
+$string['dash_recent_activity'] = 'Recent Activity';
+$string['dash_team_member'] = 'Team Member';
+$string['dash_rate'] = 'Rate';
+$string['dash_last_active'] = 'Last Active';
+$string['dash_day_streak'] = 'day streak';
+$string['dash_leaderboard'] = 'Leaderboard';
+$string['dash_your_department'] = 'Your department';
+$string['dash_you'] = '(You)';
+$string['dash_n_pts'] = '{$a} pts';
+$string['dash_percent_complete'] = '{$a}% complete';
+$string['dash_due_on'] = 'Due: {$a}';
+$string['dash_n_of_m_completed'] = '{$a->done} of {$a->total} courses completed';
+$string['dash_level_short'] = 'Lv.{$a}';
+$string['dash_rank_n'] = 'Rank #{$a}';
+$string['dash_pts_to_next_level'] = '{$a} pts to next level';
+$string['dash_n_day_streak'] = '{$a} day streak';
+$string['dash_best_n_days'] = 'Best: {$a} days';

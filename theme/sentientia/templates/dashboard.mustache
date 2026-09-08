@@ -480,14 +480,14 @@
 
                 {{#hastopcourses}}
                 <div class="airpay-dash__section">
-                    <h3 class="airpay-dash__section-title"><i class="fa fa-trophy"></i> Top Courses</h3>
+                    <h3 class="airpay-dash__section-title"><i class="fa fa-trophy" aria-hidden="true"></i> {{#str}}dash_top_courses, theme_sentientia{{/str}}</h3>
                     <div class="airpay-dash__top-courses">
                         {{#topcourses}}
                         <a href="{{{url}}}" class="airpay-dash__top-courses__row">
-                            <span class="airpay-dash__top-courses__name">{{name}}</span>
+                            <span class="airpay-dash__top-courses__name">{{{name}}}</span>
                             <span class="airpay-dash__top-courses__stats">
-                                <span>{{enrolled}} enrolled</span>
-                                <span>{{completions}} completed</span>
+                                <span>{{#str}}dash_n_enrolled, theme_sentientia, {{enrolled}}{{/str}}</span>
+                                <span>{{#str}}dash_n_completed, theme_sentientia, {{completions}}{{/str}}</span>
                             </span>
                         </a>
                         {{/topcourses}}
@@ -499,7 +499,7 @@
             {{! Recent Activity — Phase B0 iter 4: migrated to activity_item partial }}
             {{#hasrecentactivity}}
             <div class="airpay-dash__section airpay-dash__section--top-spacing">
-                <h3 class="airpay-dash__section-title"><i class="fa fa-clock" aria-hidden="true"></i> Recent Activity</h3>
+                <h3 class="airpay-dash__section-title"><i class="fa fa-clock" aria-hidden="true"></i> {{#str}}dash_recent_activity, theme_sentientia{{/str}}</h3>
                 <ul class="airpay-activity-list">
                     {{#recentactivity}}
                     {{! a11y Gate-2: the partial's root is a div/a by design (reused outside lists) - the li wrapper keeps this ul valid }}
@@ -534,20 +534,20 @@
                 <table class="generaltable airpay-dash__team-table">
                     <thead>
                         <tr>
-                            <th>Team Member</th>
-                            <th>Enrolled</th>
-                            <th>Completed</th>
-                            <th>Rate</th>
-                            <th>Pending</th>
-                            <th>Overdue</th>
-                            <th>Last Active</th>
+                            <th>{{#str}}dash_team_member, theme_sentientia{{/str}}</th>
+                            <th>{{#str}}kpi_enrolled, theme_sentientia{{/str}}</th>
+                            <th>{{#str}}kpi_completed, theme_sentientia{{/str}}</th>
+                            <th>{{#str}}dash_rate, theme_sentientia{{/str}}</th>
+                            <th>{{#str}}kpi_pending, theme_sentientia{{/str}}</th>
+                            <th>{{#str}}kpi_overdue, theme_sentientia{{/str}}</th>
+                            <th>{{#str}}dash_last_active, theme_sentientia{{/str}}</th>
                             <th></th>
                         </tr>
                     </thead>
                     <tbody>
                         {{#teamcompliance}}
                         <tr class="{{#is_inactive}}airpay-dash__team-table__row--inactive{{/is_inactive}}">
-                            <td><strong>{{name}}</strong></td>
+                            <td><strong>{{{name}}}</strong></td>
                             <td>{{enrolled}}</td>
                             <td>{{completed}}</td>
                             <td><span class="badge badge-{{rate_class}}">{{rate}}%</span></td>
@@ -593,7 +593,7 @@
                 <div class="airpay-dash__progress-summary__text">
                     <strong class="airpay-dash__progress-summary__title">{{#str}}dash_overall_completion, theme_sentientia{{/str}}</strong><br>
                     <span class="airpay-dash__progress-summary__meta">
-                        {{stats.completed}} of {{stats.enrolled}} courses completed
+                        {{#str}}dash_n_of_m_completed, theme_sentientia, { "done": {{stats.completed}}, "total": {{stats.enrolled}} }{{/str}}
                     </span>
                 </div>
             </div>
@@ -613,25 +613,25 @@
                         <div class="airpay-gamification__header">
                             <div class="airpay-gamification__level" style="--level-color: {{gamification.level_color}};">
                                 <span class="airpay-gamification__level-badge">
-                                    Lv.{{gamification.level_number}}
+                                    {{#str}}dash_level_short, theme_sentientia, {{gamification.level_number}}{{/str}}
                                 </span>
                                 <div class="airpay-gamification__level-info">
                                     <strong>{{gamification.level_name}}</strong>
-                                    <small>{{gamification.total_points}} pts &middot; Rank #{{gamification.rank}}</small>
+                                    <small>{{#str}}dash_n_pts, theme_sentientia, {{gamification.total_points}}{{/str}} &middot; {{#str}}dash_rank_n, theme_sentientia, {{gamification.rank}}{{/str}}</small>
                                 </div>
                             </div>
                             {{#gamification.has_streak}}
                             <div class="airpay-gamification__streak">
                                 <i class="fa fa-fire airpay-dash__streak-icon"></i>
                                 <strong>{{gamification.current_streak}}</strong>
-                                <small>day streak</small>
+                                <small>{{#str}}dash_day_streak, theme_sentientia{{/str}}</small>
                             </div>
                             {{/gamification.has_streak}}
                         </div>
                         <div class="airpay-gamification__progress">
                             <div class="airpay-gamification__progress-bar" style="--level-progress: {{gamification.level_progress}}%; --level-color: {{gamification.level_color}};"></div>
                         </div>
-                        <small class="airpay-gamification__progress-label">{{gamification.points_to_next}} pts to next level</small>
+                        <small class="airpay-gamification__progress-label">{{#str}}dash_pts_to_next_level, theme_sentientia, {{gamification.points_to_next}}{{/str}}</small>
                     </div>
 
                     {{! Streak Calendar + Leaderboard }}
@@ -639,8 +639,8 @@
                     <div>
                         <div class="airpay-gamification__streak-calendar">
                             <div class="airpay-gamification__streak-header">
-                                <span><i class="fa fa-fire airpay-dash__streak-icon"></i> {{streak_calendar.current_streak}} day streak</span>
-                                <small>Best: {{streak_calendar.longest_streak}} days</small>
+                                <span><i class="fa fa-fire airpay-dash__streak-icon"></i> {{#str}}dash_n_day_streak, theme_sentientia, {{streak_calendar.current_streak}}{{/str}}</span>
+                                <small>{{#str}}dash_best_n_days, theme_sentientia, {{streak_calendar.longest_streak}}{{/str}}</small>
                             </div>
                             <div class="airpay-gamification__streak-days">
                                 {{#streak_calendar.days}}
@@ -656,8 +656,8 @@
                         {{#hasleaderboard}}
                         <div class="airpay-gamification__leaderboard airpay-gamification__leaderboard--spaced">
                             <div class="airpay-gamification__leaderboard-header">
-                                <h4><i class="fa fa-trophy airpay-dash__trophy-icon"></i> Leaderboard</h4>
-                                <small>Your department</small>
+                                <h4><i class="fa fa-trophy airpay-dash__trophy-icon"></i> {{#str}}dash_leaderboard, theme_sentientia{{/str}}</h4>
+                                <small>{{#str}}dash_your_department, theme_sentientia{{/str}}</small>
                             </div>
                             {{#leaderboard.has_entries}}
                             <div class="airpay-gamification__leaderboard-list">
@@ -665,8 +665,8 @@
                                 <div class="airpay-gamification__leaderboard-row {{#is_current_user}}airpay-gamification__leaderboard-row--you{{/is_current_user}}">
                                     <span class="airpay-gamification__leaderboard-rank {{#is_top3}}airpay-gamification__leaderboard-rank--top{{/is_top3}}">{{rank}}</span>
                                     <span class="airpay-gamification__leaderboard-avatar" style="--level-color: {{level_color}};">{{initials}}</span>
-                                    <span class="airpay-gamification__leaderboard-name">{{firstname}} {{lastname}} {{#is_current_user}}<small>(You)</small>{{/is_current_user}}</span>
-                                    <span class="airpay-gamification__leaderboard-points">{{points}} pts</span>
+                                    <span class="airpay-gamification__leaderboard-name">{{firstname}} {{lastname}} {{#is_current_user}}<small>{{#str}}dash_you, theme_sentientia{{/str}}</small>{{/is_current_user}}</span>
+                                    <span class="airpay-gamification__leaderboard-points">{{#str}}dash_n_pts, theme_sentientia, {{points}}{{/str}}</span>
                                 </div>
                                 {{/leaderboard.entries}}
                             </div>
@@ -742,7 +742,7 @@
                             <i class="fa fa-{{icon}}" aria-hidden="true"></i>
                         </div>
                         <div class="airpay-dash__achievement-info">
-                            <span class="airpay-dash__achievement-title">{{title}}</span>
+                            <span class="airpay-dash__achievement-title">{{{title}}}</span>
                             <span class="airpay-dash__achievement-desc">{{description}}</span>
                         </div>
                         <span class="airpay-dash__achievement-date">{{date}}</span>
@@ -763,7 +763,7 @@
                             <span class="airpay-dash__rec-category">{{category}}</span>
                         </div>
                         <div class="airpay-dash__rec-body">
-                            <h4 class="airpay-dash__rec-title">{{fullname}}</h4>
+                            <h4 class="airpay-dash__rec-title">{{{fullname}}}</h4>
                             <p class="airpay-dash__rec-summary">{{summary}}</p>
                             <span class="airpay-dash__rec-action">{{#str}}dash_explore, theme_sentientia{{/str}} <i class="fa fa-arrow-right" aria-hidden="true"></i></span>
                         </div>

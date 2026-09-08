@@ -36,11 +36,11 @@
 }}
 <a class="airpay-course-card {{#status}}airpay-course-card--{{status}}{{/status}}"
    href="{{viewurl}}"
-   aria-label="{{fullname}}, {{progress}}% complete{{#duration}}, {{duration}}{{/duration}}">
+   aria-label="{{{fullname}}}, {{#str}}dash_percent_complete, theme_sentientia, {{progress}}{{/str}}{{#duration}}, {{duration}}{{/duration}}">
     <div class="airpay-course-card__thumb"
          {{#thumburl}}style="background-image: url('{{thumburl}}');"{{/thumburl}}>
         {{^thumburl}}
-        <span class="airpay-course-card__initial" aria-hidden="true">{{#shortname}}{{shortname}}{{/shortname}}{{^shortname}}{{fullname}}{{/shortname}}</span>
+        <span class="airpay-course-card__initial" aria-hidden="true">{{#shortname}}{{shortname}}{{/shortname}}{{^shortname}}{{{fullname}}}{{/shortname}}</span>
         {{/thumburl}}
         {{#status}}
         <span class="airpay-course-card__badge airpay-course-card__badge--{{status}}">
@@ -49,14 +49,14 @@
         {{/status}}
     </div>
     <div class="airpay-course-card__body">
-        <h4 class="airpay-course-card__title">{{fullname}}</h4>
+        <h4 class="airpay-course-card__title">{{{fullname}}}</h4>
         {{#subtitle}}
         <p class="airpay-course-card__subtitle">{{subtitle}}</p>
         {{/subtitle}}
         <div class="airpay-course-card__progress">
             <div class="airpay-course-card__track"
                  role="progressbar"
-                 aria-label="{{#str}} progress, core {{/str}}: {{fullname}}"
+                 aria-label="{{#str}} progress, core {{/str}}: {{{fullname}}}"
                  aria-valuenow="{{progress}}"
                  aria-valuemin="0"
                  aria-valuemax="100">

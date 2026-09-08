@@ -328,3 +328,25 @@ $string['dash_activity_recorded'] = 'एक्टिविटी रिकॉर
 $string['dash_today'] = 'आज';
 $string['dash_learner'] = 'लर्नर';
 $string['dash_your_organisation'] = 'आपका ऑर्गनाइज़ेशन';
+
+// 2026-09-08 — dashboard template fragments (P3 i18n follow-up; F-12 residue pass).
+$string['dash_top_courses'] = 'टॉप कोर्स';
+$string['dash_n_enrolled'] = '{$a} एनरोल्ड';
+$string['dash_n_completed'] = '{$a} पूर्ण';
+$string['dash_recent_activity'] = 'हाल की गतिविधि';
+$string['dash_team_member'] = 'टीम सदस्य';
+$string['dash_rate'] = 'दर';
+$string['dash_last_active'] = 'आख़िरी बार एक्टिव';
+$string['dash_day_streak'] = 'दिन की स्ट्रीक';
+$string['dash_leaderboard'] = 'लीडरबोर्ड';
+$string['dash_your_department'] = 'आपका विभाग';
+$string['dash_you'] = '(आप)';
+$string['dash_n_pts'] = '{$a} अंक';
+$string['dash_percent_complete'] = '{$a}% पूर्ण';
+$string['dash_due_on'] = 'नियत: {$a}';
+$string['dash_n_of_m_completed'] = '{$a->total} में से {$a->done} कोर्स पूर्ण';
+$string['dash_level_short'] = 'स्तर {$a}';
+$string['dash_rank_n'] = 'रैंक #{$a}';
+$string['dash_pts_to_next_level'] = 'अगले स्तर के लिए {$a} अंक';
+$string['dash_n_day_streak'] = '{$a} दिन की स्ट्रीक';
+$string['dash_best_n_days'] = 'सर्वश्रेष्ठ: {$a} दिन';

@@ -39,15 +39,15 @@
         <i class="fa fa-{{#icon}}{{icon}}{{/icon}}{{^icon}}calendar{{/icon}}"></i>
     </div>
     <div class="airpay-deadline__body">
-        <span class="airpay-deadline__name">{{coursename}}</span>
+        <span class="airpay-deadline__name">{{{coursename}}}</span>
         <span class="airpay-deadline__date">
-            {{#relative}}{{relative}}{{/relative}}{{^relative}}Due: {{duedate}}{{/relative}}
+            {{#relative}}{{relative}}{{/relative}}{{^relative}}{{#str}}dash_due_on, theme_sentientia, {{duedate}}{{/str}}{{/relative}}
         </span>
     </div>
     {{#viewurl}}
     <a href="{{viewurl}}"
        class="airpay-deadline__action airpay-btn airpay-btn--outline airpay-btn--sm"
-       aria-label="View {{coursename}}, due {{#relative}}{{relative}}{{/relative}}{{^relative}}{{duedate}}{{/relative}}">
+       aria-label="{{#str}}view, core{{/str}}: {{{coursename}}}, {{#relative}}{{relative}}{{/relative}}{{^relative}}{{#str}}dash_due_on, theme_sentientia, {{duedate}}{{/str}}{{/relative}}">
         {{# str }}view, core{{/ str }}
     </a>
     {{/viewurl}}

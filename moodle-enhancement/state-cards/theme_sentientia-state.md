@@ -1,7 +1,7 @@
 # State Card — `theme_airpayux`
 
 **Component:** `theme_airpayux`
-**Version:** `2026090800` / `1.0.51-beta`
+**Version:** `2026090801` / `1.0.52-beta`
 **Maturity:** `MATURITY_BETA`
 **Status:** Live theme on airpay.academy. Standalone fork (`$THEME->parents = []`).
 **Last refreshed:** 2026-09-08 (P3 i18n parity — dashboard body strings via get_string, en+hi 281/281 — integrated onto gap-integration; stale AMD bundles rebuilt the same day)
@@ -372,3 +372,30 @@ all {{title}}" aria fallback. Version 2026090701 → 2026090800.
 UAT the same day, no feature flag touched. In-browser `?lang=hi` render NOT verified at integration
 session (no local/UAT deploy) — verify on UAT after merge and drop the P3
 paragraph in UAT-DEMO-READINESS-2026-09-04.md when it lands.
+
+## 2026-09-08 — F-12 residue in dashboard templates + last template-level English (theme v2026090801 / 1.0.52-beta)
+
+Found during the on-screen Hindi re-check of the admin dashboard on UAT: the
+*Top Courses* widget rendered "AML **&amp;** KYC Essentials" (4 `&amp;amp;` in the
+page DOM) — the F-12 class again: `format_string()` output rendered through
+`{{ }}`. Audit of every `{{name}}` / `{{fullname}}` / `{{title}}` /
+`{{coursename}}` in the theme against its PHP producer found the same pattern in
+`dashboard.mustache` (top-courses name, team-compliance member name from
+`team_manager::summarize_team` [format_string], achievement title, recommendation
+title), `components/course_progress_card.mustache` (title, initial fallback,
+both aria-labels), `components/deadline_tile.mustache` (name + aria-label; PHP
+`'coursename' => format_string(...)`) and `course_editing.mustache` (section +
+item names, both format_string'd in `layout/course.php`). All switched to
+`{{{ }}}` — safe because every producer is `format_string()` (HTML-escaped, quotes
+included) or `get_string()`; no raw user input reaches these slots.
+Also localised the template-level English the P3 pass had listed as out of scope
+plus what the audit surfaced: Top Courses, "N enrolled / N completed", Recent
+Activity, the team table headers (reusing kpi_enrolled/kpi_completed/kpi_pending/
+kpi_overdue), "day streak", Leaderboard, "Your department", "(You)", "N pts",
+"Due: …", the course-card "N% complete" aria-label and the deadline tile's
+aria-label. 20 new en+hi keys (`dash_top_courses`, `dash_n_enrolled`,
+`dash_n_completed`, `dash_recent_activity`, `dash_team_member`, `dash_rate`,
+`dash_last_active`, `dash_day_streak`, `dash_leaderboard`, `dash_your_department`,
+`dash_you`, `dash_n_pts`, `dash_percent_complete`, `dash_due_on`, `dash_n_of_m_completed`, `dash_level_short`, `dash_rank_n`, `dash_pts_to_next_level`, `dash_n_day_streak`, `dash_best_n_days`); parity 301/301.
+Remaining English on the dashboard: chart axis month abbreviations (chart
+library). No PHP change, no flag. Deploy to UAT pending the next tunnel window.
