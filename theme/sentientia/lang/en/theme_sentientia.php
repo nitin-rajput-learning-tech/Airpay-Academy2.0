@@ -328,3 +328,77 @@ $string['nav_skillsai'] = 'Skills AI';
 $string['searchplaceholder'] = 'Search courses, people, content...';
 $string['unableto_download_msg'] = 'Certificate download is available after you complete the course.';
 $string['download_certificate'] = 'Download certificate';
+
+// P3 i18n-parity debt (UAT-DEMO-READINESS-2026-09-04 "Final persona visuals",
+// closed 2026-09-08) — dashboard BODY copy that layout/dashboard.php used to
+// pass to the template as hardcoded English data, bypassing {{#str}} (so it
+// stayed English under ?lang=hi). kpi_* = stat-tile / statlabel text, dash_* =
+// other dashboard copy; {$a} carries the number / course name that the old
+// string concatenation appended. Quick-action tiles reuse nav_manageusers,
+// nav_managecourses, nav_onlineexams, nav_classrooms, nav_compliance where the
+// English is byte-identical, and kpi_overdue (F-13) is reused for every
+// "Overdue" chip. English text is unchanged from what shipped.
+// -- Admin KPI tiles + trend lines (admin_kpis). {$a} = formatted count / rate.
+$string['kpi_active_users'] = 'Active Users';
+$string['kpi_courses'] = 'Courses';
+$string['kpi_completions'] = 'Completions';
+$string['kpi_enrolments'] = 'Enrolments';
+$string['kpi_trend_total'] = '{$a} total';
+$string['kpi_trend_enrolments_week'] = '+{$a} enrolments this week';
+$string['kpi_trend_completion_rate'] = '{$a}% completion rate';
+$string['kpi_trend_new_users_month'] = '+{$a} new users this month';
+// -- Admin quick-action tiles (admin_quicknav) — labels not already covered by nav_*, plus statlabels.
+$string['dash_qa_reports'] = 'Reports';
+$string['dash_qa_privacy_dpdp'] = 'Privacy (DPDP)';
+$string['dash_qa_site_settings'] = 'Site Settings';
+$string['kpi_total'] = 'Total';
+$string['kpi_active'] = 'Active';
+$string['kpi_inactive'] = 'Inactive';
+$string['kpi_mandatory'] = 'Mandatory';
+$string['kpi_pending'] = 'Pending';
+// -- System health tiles (systemhealth). {$a} = disk percentage.
+$string['dash_sys_cron_last_run'] = 'Cron Last Run';
+$string['dash_sys_lms_version'] = 'Sentientia LMS Version';
+$string['dash_sys_disk_usage'] = 'Disk Usage';
+$string['dash_sys_disk_used'] = '{$a}% used';
+$string['dash_sys_php_version'] = 'PHP Version';
+$string['dash_never'] = 'Never';
+$string['dash_unknown'] = 'Unknown';
+// -- Login-analytics tiles (useranalytics).
+$string['kpi_logins_today'] = 'Logins Today';
+$string['kpi_logins_week'] = 'Logins This Week';
+$string['kpi_new_users_7d'] = 'New Users (7d)';
+$string['kpi_never_logged_in'] = 'Never Logged In';
+$string['kpi_inactive_30d'] = 'Inactive (30d+)';
+// -- Learner KPI tiles (learner_kpis).
+$string['kpi_enrolled'] = 'Enrolled';
+$string['kpi_in_progress'] = 'In Progress';
+$string['kpi_completed'] = 'Completed';
+$string['kpi_certificates'] = 'Certificates';
+// -- Manager KPI tiles (manager_kpis).
+$string['kpi_team_members'] = 'Team Members';
+$string['kpi_team_enrolments'] = 'Team Enrolments';
+$string['kpi_completion_rate'] = 'Completion Rate';
+// -- Continue-learning course status chips + deadline tiles. {$a} = days until due.
+$string['dash_status_in_progress'] = 'In progress';
+$string['dash_status_not_started'] = 'Not started';
+$string['dash_due_today'] = 'Due today';
+$string['dash_due_tomorrow'] = 'Due tomorrow';
+$string['dash_due_in_day'] = 'Due in {$a} day';
+$string['dash_due_in_days'] = 'Due in {$a} days';
+// -- Continue-learning empty state.
+$string['dash_empty_continue_title'] = 'No courses in progress';
+$string['dash_empty_continue_message'] = 'Browse the catalogue to find courses that match your interests and career goals.';
+$string['dash_empty_continue_cta'] = 'Browse Catalogue';
+// -- Recent achievements + activity timeline. {$a} = certificate code / course name.
+$string['dash_certificate'] = 'Certificate';
+$string['dash_certificate_earned'] = 'Certificate earned — Code: {$a}';
+$string['dash_activity_completed'] = 'Completed {$a}';
+$string['dash_activity_enrolled'] = 'Enrolled in {$a}';
+$string['dash_activity_badge'] = 'Earned a badge';
+$string['dash_activity_quiz'] = 'Submitted quiz in {$a}';
+$string['dash_activity_recorded'] = 'Activity recorded';
+// -- Misc dashboard fallbacks: streak-calendar 'Today', welcome-banner first-name fallback, tenant-scope fallback.
+$string['dash_today'] = 'Today';
+$string['dash_learner'] = 'Learner';
+$string['dash_your_organisation'] = 'Your Organization';

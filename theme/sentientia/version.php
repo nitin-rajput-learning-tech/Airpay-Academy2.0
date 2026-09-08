@@ -404,7 +404,15 @@ defined('MOODLE_INTERNAL') || die();
 // helpers, each gated on the plugin's feature flag AND system capability
 // (mirrors can_create_live_session). 3 en+hi nav string pairs. No item
 // shows until BOTH the plugin flag is ON and the user holds the cap.
-$plugin->version   = 2026090701;  // T-01 course-author authoring nav group (cap + flag gated)
+// P3 i18n-parity debt closed (2026-09-08) — layout/dashboard.php passed
+// ~50 English literals to the template as DATA (admin KPI tiles + trend
+// lines, quick-action labels + statlabels, system-health + login-analytics
+// tiles, course-status chips, deadline tiles, achievements, activity
+// timeline, empty state, streak 'Today'), so they stayed English under
+// ?lang=hi. All now route through get_string(): 54 new en+hi pairs
+// (parity 281/281), 5 quick-action tiles reuse nav_*, kpi_overdue reused.
+// No layout / markup / data-shape change. Bump refreshes the string cache.
+$plugin->version   = 2026090800;  // P3 i18n — dashboard body strings via get_string (en+hi)
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_sentientia';
 $plugin->maturity  = MATURITY_BETA;

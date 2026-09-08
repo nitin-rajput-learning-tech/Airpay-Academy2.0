@@ -172,7 +172,7 @@ if (isloggedin() && !isguestuser()) {
     global $DB, $USER;
 
     // Get user's first name for greeting.
-    $airpay_dashboard['firstname'] = $USER->firstname ?? 'Learner';
+    $airpay_dashboard['firstname'] = $USER->firstname ?? get_string('dash_learner', 'theme_sentientia');
 
     // --- Role detection (4 tiers) ---
     // Single source of truth: \theme_sentientia\role_detector. The same
@@ -220,7 +220,7 @@ if (isloggedin() && !isguestuser()) {
             $streakdays = [];
             for ($i = 6; $i >= 0; $i--) {
                 $date = date('Y-m-d', strtotime("-$i days"));
-                $label = ($i === 0) ? 'Today' : date('D', strtotime("-$i days"));
+                $label = ($i === 0) ? get_string('dash_today', 'theme_sentientia') : userdate(strtotime("-$i days"), '%a', core_date::get_server_timezone());
                 // Check if user logged in on this date.
                 $daystart = strtotime($date);
                 $dayend = $daystart + 86400;
@@ -312,15 +312,15 @@ if (isloggedin() && !isguestuser()) {
             // Show tenant scope label for L&D admins
             if ($isldadmin && !empty($toporg)) {
                 $tenantname = \local_sentientia_org\org_manager::get_name_by_path($toporg);
-                $airpay_dashboard['tenant_scope'] = $tenantname ?: 'Your Organization';
+                $airpay_dashboard['tenant_scope'] = $tenantname ?: get_string('dash_your_organisation', 'theme_sentientia');
             }
 
             // Better KPIs — active users instead of total, overdue instead of completion %
             $airpay_dashboard['admin_kpis'] = [
-                ['label' => 'Active Users', 'value' => number_format($activeusers), 'trend' => number_format($totalusers) . ' total', 'icon' => 'users', 'color' => 'primary'],
-                ['label' => 'Courses', 'value' => number_format($totalcourses), 'trend' => '+' . $newenrolmentsthisweek . ' enrolments this week', 'icon' => 'book', 'color' => 'accent'],
-                ['label' => 'Completions', 'value' => number_format($totalcompleted), 'trend' => $completionrate . '% completion rate', 'icon' => 'check-circle', 'color' => 'success'],
-                ['label' => 'Enrolments', 'value' => number_format($totalenrolments), 'trend' => '+' . $newusersthismonth . ' new users this month', 'icon' => 'line-chart', 'color' => 'gold'],
+                ['label' => get_string('kpi_active_users', 'theme_sentientia'), 'value' => number_format($activeusers), 'trend' => get_string('kpi_trend_total', 'theme_sentientia', number_format($totalusers)), 'icon' => 'users', 'color' => 'primary'],
+                ['label' => get_string('kpi_courses', 'theme_sentientia'), 'value' => number_format($totalcourses), 'trend' => get_string('kpi_trend_enrolments_week', 'theme_sentientia', $newenrolmentsthisweek), 'icon' => 'book', 'color' => 'accent'],
+                ['label' => get_string('kpi_completions', 'theme_sentientia'), 'value' => number_format($totalcompleted), 'trend' => get_string('kpi_trend_completion_rate', 'theme_sentientia', $completionrate), 'icon' => 'check-circle', 'color' => 'success'],
+                ['label' => get_string('kpi_enrolments', 'theme_sentientia'), 'value' => number_format($totalenrolments), 'trend' => get_string('kpi_trend_new_users_month', 'theme_sentientia', $newusersthismonth), 'icon' => 'line-chart', 'color' => 'gold'],
             ];
             $airpay_dashboard['hasadminkpis'] = true;
 
@@ -511,43 +511,43 @@ if (isloggedin() && !isguestuser()) {
             try { $examcount = $DB->count_records('local_onlineexams'); } catch (Exception $e) {}
 
             $airpay_dashboard['admin_quicknav'] = [
-                ['label' => 'Manage Users', 'icon' => 'users', 'url' => (new moodle_url('/local/sentientia_users/index.php'))->out(false), 'color' => '#0066A7',
+                ['label' => get_string('nav_manageusers', 'theme_sentientia'), 'icon' => 'users', 'url' => (new moodle_url('/local/sentientia_users/index.php'))->out(false), 'color' => '#0066A7',
                  'hasstats' => true, 'stats' => [
-                    ['statval' => $totalusers, 'statlabel' => 'Total'],
-                    ['statval' => $activeusers, 'statlabel' => 'Active'],
-                    ['statval' => $inactiveusers, 'statlabel' => 'Inactive'],
+                    ['statval' => $totalusers, 'statlabel' => get_string('kpi_total', 'theme_sentientia')],
+                    ['statval' => $activeusers, 'statlabel' => get_string('kpi_active', 'theme_sentientia')],
+                    ['statval' => $inactiveusers, 'statlabel' => get_string('kpi_inactive', 'theme_sentientia')],
                 ]],
-                ['label' => 'Manage Courses', 'icon' => 'book', 'url' => (new moodle_url('/local/sentientia_courses/index.php'))->out(false), 'color' => '#1985DD',
+                ['label' => get_string('nav_managecourses', 'theme_sentientia'), 'icon' => 'book', 'url' => (new moodle_url('/local/sentientia_courses/index.php'))->out(false), 'color' => '#1985DD',
                  'hasstats' => true, 'stats' => [
-                    ['statval' => $totalcourses, 'statlabel' => 'Total'],
-                    ['statval' => number_format($totalenrolments), 'statlabel' => 'Enrolments'],
-                    ['statval' => number_format($totalcompleted), 'statlabel' => 'Completions'],
+                    ['statval' => $totalcourses, 'statlabel' => get_string('kpi_total', 'theme_sentientia')],
+                    ['statval' => number_format($totalenrolments), 'statlabel' => get_string('kpi_enrolments', 'theme_sentientia')],
+                    ['statval' => number_format($totalcompleted), 'statlabel' => get_string('kpi_completions', 'theme_sentientia')],
                 ]],
-                ['label' => 'Reports', 'icon' => 'bar-chart', 'url' => (new moodle_url('/blocks/learnerscript/managereport.php'))->out(false), 'color' => '#6d58a5'],
-                ['label' => 'Online Exams', 'icon' => 'pencil-square-o', 'url' => (new moodle_url('/local/sentientia_exams/index.php'))->out(false), 'color' => '#d97706'],
-                ['label' => 'Classrooms', 'icon' => 'calendar', 'url' => (new moodle_url('/local/sentientia_classroom/index.php'))->out(false), 'color' => '#dc2626',
+                ['label' => get_string('dash_qa_reports', 'theme_sentientia'), 'icon' => 'bar-chart', 'url' => (new moodle_url('/blocks/learnerscript/managereport.php'))->out(false), 'color' => '#6d58a5'],
+                ['label' => get_string('nav_onlineexams', 'theme_sentientia'), 'icon' => 'pencil-square-o', 'url' => (new moodle_url('/local/sentientia_exams/index.php'))->out(false), 'color' => '#d97706'],
+                ['label' => get_string('nav_classrooms', 'theme_sentientia'), 'icon' => 'calendar', 'url' => (new moodle_url('/local/sentientia_classroom/index.php'))->out(false), 'color' => '#dc2626',
                  'hasstats' => ($classroomcount > 0), 'stats' => [
-                    ['statval' => $classroomcount, 'statlabel' => 'Total'],
+                    ['statval' => $classroomcount, 'statlabel' => get_string('kpi_total', 'theme_sentientia')],
                 ]],
-                ['label' => 'Compliance', 'icon' => 'shield', 'url' => (new moodle_url('/local/sentientia_compliance_report/index.php'))->out(false), 'color' => '#16a34a',
+                ['label' => get_string('nav_compliance', 'theme_sentientia'), 'icon' => 'shield', 'url' => (new moodle_url('/local/sentientia_compliance_report/index.php'))->out(false), 'color' => '#16a34a',
                  'hasstats' => true, 'stats' => (function() use ($DB) {
                     try {
                         $mandatory = $DB->count_records('local_sentientia_compl_courses');
                         $overdue = $DB->count_records_select('local_sentientia_compl_snapshot', "status IN ('overdue','critical','escalated')");
                         return [
-                            ['statval' => $mandatory, 'statlabel' => 'Mandatory'],
-                            ['statval' => $overdue, 'statlabel' => 'Overdue'],
+                            ['statval' => $mandatory, 'statlabel' => get_string('kpi_mandatory', 'theme_sentientia')],
+                            ['statval' => $overdue, 'statlabel' => get_string('kpi_overdue', 'theme_sentientia')],
                         ];
                     } catch (Exception $e) { return []; }
                  })()],
-                ['label' => 'Privacy (DPDP)', 'icon' => 'lock', 'url' => (new moodle_url('/local/sentientia_privacy/index.php'))->out(false), 'color' => '#6d58a5',
+                ['label' => get_string('dash_qa_privacy_dpdp', 'theme_sentientia'), 'icon' => 'lock', 'url' => (new moodle_url('/local/sentientia_privacy/index.php'))->out(false), 'color' => '#6d58a5',
                  'hasstats' => true, 'stats' => (function() use ($DB) {
                     try {
                         $pending = $DB->count_records('local_privacy_requests', ['status' => 'pending']);
-                        return [['statval' => $pending, 'statlabel' => 'Pending']];
+                        return [['statval' => $pending, 'statlabel' => get_string('kpi_pending', 'theme_sentientia')]];
                     } catch (Exception $e) { return []; }
                  })()],
-                ['label' => 'Site Settings', 'icon' => 'cog', 'url' => (new moodle_url('/admin/index.php'))->out(false), 'color' => '#6b7280'],
+                ['label' => get_string('dash_qa_site_settings', 'theme_sentientia'), 'icon' => 'cog', 'url' => (new moodle_url('/admin/index.php'))->out(false), 'color' => '#6b7280'],
             ];
             $airpay_dashboard['hasquicknav'] = true;
 
@@ -560,13 +560,13 @@ if (isloggedin() && !isguestuser()) {
             $diskpercent = ($disktotal > 0) ? round((1 - $diskfree / $disktotal) * 100) : 0;
 
             $airpay_dashboard['systemhealth'] = [
-                ['label' => 'Cron Last Run', 'value' => $cronlast ? userdate($cronlast, '%d %b, %I:%M %p') : 'Never',
+                ['label' => get_string('dash_sys_cron_last_run', 'theme_sentientia'), 'value' => $cronlast ? userdate($cronlast, '%d %b, %I:%M %p') : get_string('dash_never', 'theme_sentientia'),
                  'icon' => 'clock-o', 'status' => ($cronlast && (time() - $cronlast) < 3600) ? 'ok' : 'warning'],
-                ['label' => 'Sentientia LMS Version', 'value' => $CFG->release ?? 'Unknown',
+                ['label' => get_string('dash_sys_lms_version', 'theme_sentientia'), 'value' => $CFG->release ?? get_string('dash_unknown', 'theme_sentientia'),
                  'icon' => 'info-circle', 'status' => 'ok'],
-                ['label' => 'Disk Usage', 'value' => $diskpercent . '% used',
+                ['label' => get_string('dash_sys_disk_usage', 'theme_sentientia'), 'value' => get_string('dash_sys_disk_used', 'theme_sentientia', $diskpercent),
                  'icon' => 'database', 'status' => ($diskpercent < 80) ? 'ok' : 'warning'],
-                ['label' => 'PHP Version', 'value' => phpversion(),
+                ['label' => get_string('dash_sys_php_version', 'theme_sentientia'), 'value' => phpversion(),
                  'icon' => 'code', 'status' => 'ok'],
             ];
             $airpay_dashboard['hassystemhealth'] = true;
@@ -592,25 +592,25 @@ if (isloggedin() && !isguestuser()) {
             // = primary-blue muted) when the metric is zero.
             $airpay_dashboard['useranalytics'] = [
                 [
-                    'label' => 'Logins Today',
+                    'label' => get_string('kpi_logins_today', 'theme_sentientia'),
                     'value' => $loginstoday,
                     'icon'  => 'sign-in',
                     'color' => 'primary',
                 ],
                 [
-                    'label' => 'Logins This Week',
+                    'label' => get_string('kpi_logins_week', 'theme_sentientia'),
                     'value' => $loginsweek,
                     'icon'  => 'calendar-check-o',
                     'color' => 'accent',
                 ],
                 [
-                    'label' => 'New Users (7d)',
+                    'label' => get_string('kpi_new_users_7d', 'theme_sentientia'),
                     'value' => $newusersweek,
                     'icon'  => 'user-plus',
                     'color' => 'success',
                 ],
                 [
-                    'label' => 'Never Logged In',
+                    'label' => get_string('kpi_never_logged_in', 'theme_sentientia'),
                     'value' => $neverloggedin,
                     'icon'  => 'user-times',
                     // Warning when there are unregistered users — primary
@@ -618,7 +618,7 @@ if (isloggedin() && !isguestuser()) {
                     'color' => ($neverloggedin > 0) ? 'warning' : 'primary',
                 ],
                 [
-                    'label' => 'Inactive (30d+)',
+                    'label' => get_string('kpi_inactive_30d', 'theme_sentientia'),
                     'value' => $inactive30,
                     'icon'  => 'hourglass-end',
                     // Danger when learners have gone dark; primary when
@@ -667,7 +667,7 @@ if (isloggedin() && !isguestuser()) {
                     'progress' => round($progress),
                     'viewurl' => (new moodle_url('/course/view.php', ['id' => $course->id]))->out(false),
                     'status' => $is_overdue ? 'overdue' : 'in_progress',
-                    'statuslabel' => $is_overdue ? 'Overdue' : 'In progress',
+                    'statuslabel' => $is_overdue ? get_string('kpi_overdue', 'theme_sentientia') : get_string('dash_status_in_progress', 'theme_sentientia'),
                 ];
             } else {
                 $notstarted++;
@@ -680,7 +680,7 @@ if (isloggedin() && !isguestuser()) {
                         'progress' => 0,
                         'viewurl' => (new moodle_url('/course/view.php', ['id' => $course->id]))->out(false),
                         'status' => 'not_started',
-                        'statuslabel' => 'Not started',
+                        'statuslabel' => get_string('dash_status_not_started', 'theme_sentientia'),
                     ];
                 }
             }
@@ -731,9 +731,9 @@ if (isloggedin() && !isguestuser()) {
     // include the empty_state partial via {{#empty_X}}{{> ... }}{{/empty_X}}.
     $airpay_dashboard['empty_continue'] = [[
         'icon'     => 'graduation-cap',
-        'title'    => 'No courses in progress',
-        'message'  => 'Browse the catalogue to find courses that match your interests and career goals.',
-        'ctalabel' => 'Browse Catalogue',
+        'title'    => get_string('dash_empty_continue_title', 'theme_sentientia'),
+        'message'  => get_string('dash_empty_continue_message', 'theme_sentientia'),
+        'ctalabel' => get_string('dash_empty_continue_cta', 'theme_sentientia'),
         'ctaicon'  => 'search',
         'ctaurl'   => (new moodle_url('/local/sentientia_catalog/index.php'))->out(false),
     ]];
@@ -743,25 +743,25 @@ if (isloggedin() && !isguestuser()) {
     // inlining four near-identical <div> blocks. Mirrors admin_kpis shape.
     $airpay_dashboard['learner_kpis'] = [
         [
-            'label' => 'Enrolled',
+            'label' => get_string('kpi_enrolled', 'theme_sentientia'),
             'value' => (int) ($airpay_dashboard['stats']['enrolled'] ?? 0),
             'icon'  => 'book',
             'color' => 'primary',
         ],
         [
-            'label' => 'In Progress',
+            'label' => get_string('kpi_in_progress', 'theme_sentientia'),
             'value' => (int) ($airpay_dashboard['stats']['inprogress'] ?? 0),
             'icon'  => 'spinner',
             'color' => 'accent',
         ],
         [
-            'label' => 'Completed',
+            'label' => get_string('kpi_completed', 'theme_sentientia'),
             'value' => (int) ($airpay_dashboard['stats']['completed'] ?? 0),
             'icon'  => 'check-circle',
             'color' => 'success',
         ],
         [
-            'label' => 'Certificates',
+            'label' => get_string('kpi_certificates', 'theme_sentientia'),
             'value' => (int) ($airpay_dashboard['stats']['certificates'] ?? 0),
             'icon'  => 'certificate',
             'color' => 'warning',
@@ -804,10 +804,10 @@ if (isloggedin() && !isguestuser()) {
 
             $teamrate = ($teamenrolled > 0) ? min(100, round(($teamcompleted / $teamenrolled) * 100, 1)) : 0;
             $airpay_dashboard['manager_kpis'] = [
-                ['label' => 'Team Members',    'value' => count($teammembers), 'icon' => 'users', 'color' => 'primary'],
-                ['label' => 'Team Enrolments', 'value' => $teamenrolled,        'icon' => 'book', 'color' => 'accent'],
-                ['label' => 'Completions',     'value' => $teamcompleted,       'icon' => 'check-circle', 'color' => 'success'],
-                ['label' => 'Completion Rate', 'value' => $teamrate . '%',      'icon' => 'line-chart', 'color' => 'gold'],
+                ['label' => get_string('kpi_team_members', 'theme_sentientia'), 'value' => count($teammembers), 'icon' => 'users', 'color' => 'primary'],
+                ['label' => get_string('kpi_team_enrolments', 'theme_sentientia'), 'value' => $teamenrolled, 'icon' => 'book', 'color' => 'accent'],
+                ['label' => get_string('kpi_completions', 'theme_sentientia'), 'value' => $teamcompleted, 'icon' => 'check-circle', 'color' => 'success'],
+                ['label' => get_string('kpi_completion_rate', 'theme_sentientia'), 'value' => $teamrate . '%', 'icon' => 'line-chart', 'color' => 'gold'],
             ];
             $airpay_dashboard['team_overdue']  = $teamoverdue;
             $airpay_dashboard['hasmanagerkpis']  = count($teammembers) > 0;
@@ -850,15 +850,15 @@ if (isloggedin() && !isguestuser()) {
                 if ($secs_to_due <= 0) {
                     $urgency = 'overdue';
                     $icon    = 'exclamation-triangle';
-                    $rel     = 'Overdue';
+                    $rel     = get_string('kpi_overdue', 'theme_sentientia');
                 } else if ($secs_to_due < 86400) {
                     $urgency = 'urgent';
                     $icon    = 'exclamation-circle';
-                    $rel     = ($days_to_due === 0) ? 'Due today' : 'Due tomorrow';
+                    $rel     = ($days_to_due === 0) ? get_string('dash_due_today', 'theme_sentientia') : get_string('dash_due_tomorrow', 'theme_sentientia');
                 } else if ($secs_to_due < (7 * 86400)) {
                     $urgency = 'soon';
                     $icon    = 'clock-o';
-                    $rel     = 'Due in ' . $days_to_due . ' day' . ($days_to_due === 1 ? '' : 's');
+                    $rel     = get_string(($days_to_due === 1) ? 'dash_due_in_day' : 'dash_due_in_days', 'theme_sentientia', $days_to_due);
                 } else {
                     $urgency = 'normal';
                     $icon    = 'calendar';
@@ -899,8 +899,8 @@ if (isloggedin() && !isguestuser()) {
         );
         foreach ($certs as $cert) {
             $achievements[] = [
-                'title' => format_string($cert->coursename ?? $cert->templatename ?? 'Certificate'),
-                'description' => 'Certificate earned — Code: ' . s($cert->code),
+                'title' => format_string($cert->coursename ?? $cert->templatename ?? get_string('dash_certificate', 'theme_sentientia')),
+                'description' => get_string('dash_certificate_earned', 'theme_sentientia', s($cert->code)),
                 'date' => userdate($cert->timecreated, '%d %B %Y'),
                 'timestamp' => $cert->timecreated,
                 'type' => 'certificate',
@@ -943,23 +943,23 @@ if (isloggedin() && !isguestuser()) {
             $variant = 'default';
             switch ($log->eventname) {
                 case '\\core\\event\\course_completed':
-                    $label = 'Completed ' . format_string($coursename);
+                    $label = get_string('dash_activity_completed', 'theme_sentientia', format_string($coursename));
                     $variant = 'completion';
                     break;
                 case '\\core\\event\\user_enrolment_created':
-                    $label = 'Enrolled in ' . format_string($coursename);
+                    $label = get_string('dash_activity_enrolled', 'theme_sentientia', format_string($coursename));
                     $variant = 'enrolment';
                     break;
                 case '\\core\\event\\badge_awarded':
-                    $label = 'Earned a badge';
+                    $label = get_string('dash_activity_badge', 'theme_sentientia');
                     $variant = 'badge';
                     break;
                 case '\\mod_quiz\\event\\attempt_submitted':
-                    $label = 'Submitted quiz in ' . format_string($coursename);
+                    $label = get_string('dash_activity_quiz', 'theme_sentientia', format_string($coursename));
                     $variant = 'submission';
                     break;
                 default:
-                    $label = 'Activity recorded';
+                    $label = get_string('dash_activity_recorded', 'theme_sentientia');
             }
             $timeline[] = [
                 // Canonical partial fields:

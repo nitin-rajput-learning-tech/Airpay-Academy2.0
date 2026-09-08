@@ -1,10 +1,10 @@
 # State Card — `theme_airpayux`
 
 **Component:** `theme_airpayux`
-**Version:** `2026060200` / `1.0.46-beta`
+**Version:** `2026090800` / `1.0.51-beta`
 **Maturity:** `MATURITY_BETA`
 **Status:** Live theme on airpay.academy. Standalone fork (`$THEME->parents = []`).
-**Last refreshed:** 2026-06-16 (Revised Brand Book 2026-06 — Phase 1 + Phase 2 + brand-verify closure COMPLETE)
+**Last refreshed:** 2026-09-08 (P3 i18n parity — dashboard body strings via get_string, en+hi 281/281 — integrated onto gap-integration; stale AMD bundles rebuilt the same day)
 
 > **2026-06-16 Revised Brand Book — Phase 2 + brand-verify closure (theme
 > →2026061603, commit `357db7b7`):** Full landing+login brand-forward redesign
@@ -332,3 +332,43 @@ no strings, no version bump (jsrev purge is enough on deploy). Audit: no other
 theme bundle references a retired `local_airpay_*` name. Deploy to UAT pending.
 Remaining ZEEA Manage Courses findings (#2 NULL-open_path row, #3 category
 filter, #4 global KPI) are `local_sentientia_courses` work — separate task.
+
+
+## 2026-09-08 — P3 i18n parity: dashboard body strings via get_string (theme v2026090800)
+
+UAT-DEMO-READINESS-2026-09-04 ("Final persona visuals", P3 i18n-parity debt):
+under `?lang=hi` the dashboard chrome was Hindi but the BODY stayed English,
+because `layout/dashboard.php` passed its labels to the template as string
+literals inside the data arrays (bypassing `{{#str}}`). The sweep found ~50
+literals in 11 clusters — more than the ~35 estimated: admin KPI tiles + their
+trend lines, admin quick-action labels + statlabels, system-health +
+login-analytics tiles, continue-learning status chips, deadline relative labels,
+achievement title/description, activity-timeline text, the continue-learning
+empty state, the streak-calendar "Today", the welcome first-name fallback and
+the tenant-scope fallback. Every one now goes through `get_string()` (58
+calls): 54 NEW en+hi pairs (`kpi_*` = stat-tile / statlabel text, `dash_*` =
+other dashboard copy; `{$a}` carries the count / rate / course name the old
+concatenation appended); the 5 quick-action tiles whose English is
+byte-identical to a sidebar item reuse `nav_manageusers` / `nav_managecourses`
+/ `nav_onlineexams` / `nav_classrooms` / `nav_compliance`; every "Overdue" chip
+reuses F-13's `kpi_overdue`. English output is byte-identical to before. ONE
+edit goes beyond quoted literals: the streak-calendar weekday abbreviation moved
+from `date('D')` (always English) to `userdate(..., '%a',
+core_date::get_server_timezone())` so it localises while staying on the same
+server-day as the DB lookup window. Gates: `tools/check-lang-parity.php` 0
+failures (theme 281/281), `{$a}` placeholder sets match en<->hi, `php -l` clean
+on all 4 files. Hindi follows the pack's own register ("conversational,
+day-to-day Hindi" per its header) and existing term choices (कोर्स, यूज़र,
+एनरोलमेंट, ओवरड्यू, पूर्णता, प्रगति, सर्टिफ़िकेट); the one judgement call is
+"Completions" → `पूर्णताएँ` / "Completion Rate" → `पूर्णता दर`, following the
+`पूर्णता` precedent over the transliterated `कम्प्लीशन` (swap if preferred).
+kn / mr / sw packs (186 keys) NOT extended — they fall back to en for the new
+keys exactly as they already do for 41 others. Residual template-level English,
+out of scope and NOT touched: `components/deadline_tile.mustache` "Due:
+{{duedate}}" fallback + aria-label, `components/section_header.mustache` "View
+all {{title}}" aria fallback. Version 2026090701 → 2026090800.
+`classes/role_detector.php` / `classes/sidebar_navigation.php` untouched (T-01).
+**Integrated** onto `claude/gap-integration` 2026-09-08 (reviewed working-tree hand-back); deployed to
+UAT the same day, no feature flag touched. In-browser `?lang=hi` render NOT verified at integration
+session (no local/UAT deploy) — verify on UAT after merge and drop the P3
+paragraph in UAT-DEMO-READINESS-2026-09-04.md when it lands.

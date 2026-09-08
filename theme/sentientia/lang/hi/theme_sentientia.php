@@ -256,3 +256,75 @@ $string['nav_skillsai'] = 'स्किल्स AI';
 $string['searchplaceholder'] = 'कोर्स, लोग, कंटेंट खोजें...';
 $string['unableto_download_msg'] = 'पाठ्यक्रम पूरा करने के बाद प्रमाणपत्र डाउनलोड उपलब्ध होगा।';
 $string['download_certificate'] = 'प्रमाणपत्र डाउनलोड करें';
+
+// P3 i18n-parity debt (UAT-DEMO-READINESS-2026-09-04, 2026-09-08 को बंद) —
+// डैशबोर्ड BODY की वे स्ट्रिंग्स जो layout/dashboard.php टेम्पलेट को हार्डकोडेड
+// इंग्लिश डेटा के रूप में भेजता था ({{#str}} बायपास, इसलिए ?lang=hi में भी
+// इंग्लिश दिखती थीं)। kpi_* = स्टैट-टाइल / statlabel, dash_* = बाक़ी डैशबोर्ड
+// कॉपी; {$a} = संख्या / कोर्स का नाम। क्विक-एक्शन टाइल्स nav_* की मौजूदा
+// स्ट्रिंग्स (nav_manageusers, nav_managecourses, nav_onlineexams,
+// nav_classrooms, nav_compliance) और kpi_overdue को दोबारा इस्तेमाल करती हैं।
+// -- Admin KPI tiles + trend lines (admin_kpis). {$a} = formatted count / rate.
+$string['kpi_active_users'] = 'एक्टिव यूज़र';
+$string['kpi_courses'] = 'कोर्स';
+$string['kpi_completions'] = 'पूर्णताएँ';
+$string['kpi_enrolments'] = 'एनरोलमेंट';
+$string['kpi_trend_total'] = 'कुल {$a}';
+$string['kpi_trend_enrolments_week'] = 'इस हफ़्ते +{$a} एनरोलमेंट';
+$string['kpi_trend_completion_rate'] = '{$a}% पूर्णता दर';
+$string['kpi_trend_new_users_month'] = 'इस महीने +{$a} नए यूज़र';
+// -- Admin quick-action tiles (admin_quicknav) — labels not already covered by nav_*, plus statlabels.
+$string['dash_qa_reports'] = 'रिपोर्ट्स';
+$string['dash_qa_privacy_dpdp'] = 'प्राइवेसी (DPDP)';
+$string['dash_qa_site_settings'] = 'साइट सेटिंग्स';
+$string['kpi_total'] = 'कुल';
+$string['kpi_active'] = 'एक्टिव';
+$string['kpi_inactive'] = 'इनएक्टिव';
+$string['kpi_mandatory'] = 'अनिवार्य';
+$string['kpi_pending'] = 'पेंडिंग';
+// -- System health tiles (systemhealth). {$a} = disk percentage.
+$string['dash_sys_cron_last_run'] = 'क्रॉन आख़िरी बार चला';
+$string['dash_sys_lms_version'] = 'Sentientia LMS वर्ज़न';
+$string['dash_sys_disk_usage'] = 'डिस्क उपयोग';
+$string['dash_sys_disk_used'] = '{$a}% उपयोग में';
+$string['dash_sys_php_version'] = 'PHP वर्ज़न';
+$string['dash_never'] = 'कभी नहीं';
+$string['dash_unknown'] = 'अज्ञात';
+// -- Login-analytics tiles (useranalytics).
+$string['kpi_logins_today'] = 'आज के लॉगिन';
+$string['kpi_logins_week'] = 'इस हफ़्ते के लॉगिन';
+$string['kpi_new_users_7d'] = 'नए यूज़र (7 दिन)';
+$string['kpi_never_logged_in'] = 'कभी लॉगिन नहीं किया';
+$string['kpi_inactive_30d'] = 'इनएक्टिव (30+ दिन)';
+// -- Learner KPI tiles (learner_kpis).
+$string['kpi_enrolled'] = 'एनरोल्ड';
+$string['kpi_in_progress'] = 'प्रगति में';
+$string['kpi_completed'] = 'पूर्ण';
+$string['kpi_certificates'] = 'सर्टिफ़िकेट';
+// -- Manager KPI tiles (manager_kpis).
+$string['kpi_team_members'] = 'टीम मेंबर';
+$string['kpi_team_enrolments'] = 'टीम एनरोलमेंट';
+$string['kpi_completion_rate'] = 'पूर्णता दर';
+// -- Continue-learning course status chips + deadline tiles. {$a} = days until due.
+$string['dash_status_in_progress'] = 'प्रगति में';
+$string['dash_status_not_started'] = 'शुरू नहीं किया';
+$string['dash_due_today'] = 'आज ड्यू';
+$string['dash_due_tomorrow'] = 'कल ड्यू';
+$string['dash_due_in_day'] = '{$a} दिन में ड्यू';
+$string['dash_due_in_days'] = '{$a} दिन में ड्यू';
+// -- Continue-learning empty state.
+$string['dash_empty_continue_title'] = 'कोई कोर्स प्रगति में नहीं';
+$string['dash_empty_continue_message'] = 'अपनी रुचि और करियर लक्ष्यों से मेल खाते कोर्स ढूँढने के लिए कैटलॉग ब्राउज़ करें।';
+$string['dash_empty_continue_cta'] = 'कैटलॉग ब्राउज़ करें';
+// -- Recent achievements + activity timeline. {$a} = certificate code / course name.
+$string['dash_certificate'] = 'सर्टिफ़िकेट';
+$string['dash_certificate_earned'] = 'सर्टिफ़िकेट प्राप्त — कोड: {$a}';
+$string['dash_activity_completed'] = '{$a} पूरा किया';
+$string['dash_activity_enrolled'] = '{$a} में एनरोल हुए';
+$string['dash_activity_badge'] = 'एक बैज हासिल किया';
+$string['dash_activity_quiz'] = '{$a} में क्विज़ सबमिट किया';
+$string['dash_activity_recorded'] = 'एक्टिविटी रिकॉर्ड हुई';
+// -- Misc dashboard fallbacks: streak-calendar 'Today', welcome-banner first-name fallback, tenant-scope fallback.
+$string['dash_today'] = 'आज';
+$string['dash_learner'] = 'लर्नर';
+$string['dash_your_organisation'] = 'आपका ऑर्गनाइज़ेशन';
