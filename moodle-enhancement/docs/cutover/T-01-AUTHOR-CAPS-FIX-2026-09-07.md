@@ -125,11 +125,18 @@ the demo-readiness "mock mode" story.
   `sidebar_navigation.php`, existing tests) all read by key name — the added
   `isauthor` key is additive and safe; the tier-invariant test is unaffected.
 - Conflict-marker guard (git-marker regex, CLAUDE.md CHECK 11 / CI gate): clean.
-- **PHPUnit written but NOT executed** — `role_detector_test` (2 new) +
-  `author_role_test` (3 new). Not run to avoid `phpunit init` / DB mutation on
-  the shared XAMPP test DB while a parallel session (`task_17fc05d8`) may hold
-  it. Run after coordinating:
-  `vendor/bin/phpunit --filter author_role_test` and `--filter role_detector_test`.
+- **PHPUnit EXECUTED 2026-09-08** on local XAMPP (Moodle 5.1.3+, PHP 8.2.12,
+  MariaDB 10.11.16; theme + authoring + skillsai copied to `public/`, site
+  `upgrade.php` run, fresh `phpunit init` — no other php process was holding the
+  test DB):
+  - `local/sentientia_authoring/tests/author_role_test.php` — **3/3 OK**, 18 assertions.
+  - `theme/sentientia/tests/role_detector_test.php` — **10 run, 8 OK, 2 skipped**.
+    Both new tests (`test_author_detected_via_authoring_cap`,
+    `test_plain_user_not_author`) **pass**. The 2 skips are the pre-existing
+    BizLMS-schema guards (`administrator role not present`, `employee role not
+    present`), expected on a vanilla PHPUnit install and unrelated to T-01.
+  - "1 PHPUnit deprecation" in each run = the known `@covers` doc-comment
+    metadata notice, not a test problem.
 
 ## 7. Not done / out of scope
 
