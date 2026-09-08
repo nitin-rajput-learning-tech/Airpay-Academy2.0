@@ -312,3 +312,23 @@ assertion breakage confirmed. Version 2026090400 → 2026090701. Single theme tr
 ON per-tenant — `sentientia.authoring.enabled`, `sentientia.aiquiz.enabled`,
 `sentientia.skillsai.enabled` (all default OFF) — a separate config action
 (Switchboard / feature_flags::set), by design (CLAUDE.md §13).
+
+## 2026-09-08 — Stale AMD bundles: org_cascade + user_status_badge rebuilt (no version bump)
+
+Root cause of the UAT "invalidrecordunknown" modal on Manage Courses (logged
+2026-09-07 as a ZEEA-scoping P1): NOT tenant scoping. The compiled
+`amd/build/org_cascade.min.js` still called the pre-rename web service
+`local_airpay_org_list_children` (3 hits, 0 of `local_sentientia_org_list_children`)
+while `amd/src/org_cascade.js` was already correct, so the org cascade's
+`.catch → Notification.exception` fired for EVERY admin on EVERY cascade page
+(reproduced in the browser as the Airpay L&D admin; the served UAT file was
+byte-identical to the repo build). `user_status_badge.min.js` had the same
+drift (`local_airpay_core_*` vs src `local_sentientia_platform_*`). Both bundles
+had not been rebuilt since the theme was canonicalised (fcd594201, 2026-06-09);
+the AMD parity gate is existence-only, so it cannot catch a stale build.
+Rebuilt with Moodle's grunt (`grunt amd --files=... --force`, LF-normalised src,
+lint = jsdoc-only warnings); rebuilt `.min.js` + `.map` copied back. No PHP,
+no strings, no version bump (jsrev purge is enough on deploy). Audit: no other
+theme bundle references a retired `local_airpay_*` name. Deploy to UAT pending.
+Remaining ZEEA Manage Courses findings (#2 NULL-open_path row, #3 category
+filter, #4 global KPI) are `local_sentientia_courses` work — separate task.
