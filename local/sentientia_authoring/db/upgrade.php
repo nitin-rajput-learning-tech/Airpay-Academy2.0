@@ -103,6 +103,20 @@ function xmldb_local_sentientia_authoring_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026061701, 'local', 'sentientia_authoring');
     }
 
+    // 2026090700 — T-01 fresh-install + upgrade parity (UAT persona walk
+    // 2026-09-07). Consolidate the author-role seed into the shared, idempotent
+    // author_role::ensure() and route BOTH install.php and this upgrade step
+    // through it, so existing installs and fresh installs provision the same
+    // role + caps. Also reconciles the aiquiz caps (generate/review) onto the
+    // author role as part of the canonical author cap set (previously granted
+    // only by the aiquiz 2026080400 step), and re-pins the role to
+    // CONTEXT_SYSTEM. Idempotent — the role and its ALLOW grants are left as-is
+    // where already correct.
+    if ($oldversion < 2026090700) {
+        \local_sentientia_authoring\author_role::ensure();
+        upgrade_plugin_savepoint(true, 2026090700, 'local', 'sentientia_authoring');
+    }
+
     unset($dbman);
 
     return true;

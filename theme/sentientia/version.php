@@ -396,7 +396,15 @@ defined('MOODLE_INTERNAL') || die();
 // course.mustache player strings + aria-labels ({$a} param forms), topbar
 // "Open menu" + search placeholder. Restores the 100%-Hindi-parity policy
 // in the flagship chrome; the new lang-parity CI gate prevents recurrence.
-$plugin->version   = 2026090400;  // skills-first dashboard recs (ADR-028 P2.2, flag-gated)
+// 2026090701 — T-01 Course Author nav (UAT persona walk 2026-09-07): the
+// sidebar surfaces an "AI-assisted authoring" group (Authoring Studio, AI
+// Quiz, Skills AI) for Course Authors / trainers who land in the Learner
+// shell. role_detector gains an informational capability-based `isauthor`
+// tier; sidebar_navigation adds add_authoring_nav() + three can_use_*()
+// helpers, each gated on the plugin's feature flag AND system capability
+// (mirrors can_create_live_session). 3 en+hi nav string pairs. No item
+// shows until BOTH the plugin flag is ON and the user holds the cap.
+$plugin->version   = 2026090701;  // T-01 course-author authoring nav group (cap + flag gated)
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_sentientia';
 $plugin->maturity  = MATURITY_BETA;

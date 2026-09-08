@@ -51,10 +51,16 @@ $plugin->component = 'local_sentientia_skillsai';
 // anthropic_client::extract() (ADR-028 Phase 2.3; routing switch
 // sentientia.ai.gateway.enabled default OFF = byte- and side-effect-
 // identical legacy path; mock passed down as callable; 'denied'→'failed').
-$plugin->version   = 2026080500;
+// 2026090700 — T-01 fresh-install parity (UAT persona walk 2026-09-07). New
+// db/install.php re-runs local_sentientia_authoring\author_role::ensure() so
+// this plugin's :extract/:review caps land on the Sentientia Author role on a
+// FRESH install (authoring installs alphabetically before skillsai and skips
+// these caps at its own install time). No-op on existing installs (authoring's
+// 2026090700 upgrade step already reconciles them). No schema/flag change.
+$plugin->version   = 2026090700;
 $plugin->requires  = 2022041900;        // Moodle 4.5+ (matches sibling plugins).
 $plugin->maturity  = MATURITY_ALPHA;    // MVP — needs prod sign-off before flag flips.
-$plugin->release   = '0.1.1-alpha';
+$plugin->release   = '0.1.2-alpha';
 $plugin->dependencies = [
     // Tenant helper + 5-level feature_flags resolver + per-customer config.
     'local_sentientia_platform' => 2026051401,

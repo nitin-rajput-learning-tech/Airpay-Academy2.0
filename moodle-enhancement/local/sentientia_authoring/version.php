@@ -60,10 +60,18 @@ $plugin->component = 'local_sentientia_authoring';
 // NOTE: legacy key here is `anthropic_api_key` — outside the gateway's
 // `api_key` legacy fallback; central key applies on the gateway path.
 // tts_client (ElevenLabs) unchanged — outside the Anthropic gateway.
-$plugin->version   = 2026080501;  // gate #3 closure: real course builder (book + mastery quiz) behind publish flag
+// 2026090700 — T-01 author-role fresh-install parity (UAT persona walk
+// 2026-09-07). The `sentientiaauthor` role + its author caps were seeded only
+// from db/upgrade.php (never runs on a fresh install) + the UAT CLI, so a new
+// customer got no author role. New classes/author_role.php::ensure() is the
+// single idempotent seeder, called from db/install.php (fresh) AND a new
+// db/upgrade.php step 2026090700 (existing). Canonical author cap set now also
+// includes aiquiz:generate/review. Role stays archetype-less, CONTEXT_SYSTEM
+// only, no admin/tenant-admin caps. No new capability or flag.
+$plugin->version   = 2026090700;  // T-01 author-role fresh-install + upgrade parity
 $plugin->requires  = 2022041900;          // Moodle 4.5+
 $plugin->maturity  = MATURITY_ALPHA;      // MVP — prod sign-off before any flag flips
-$plugin->release   = '0.2.0-alpha';
+$plugin->release   = '0.2.1-alpha';
 $plugin->dependencies = [
     'local_sentientia_platform' => 2026051401,   // feature_flags resolver + tenant + customer scope
 ];

@@ -287,3 +287,28 @@ Phase-2 sandbox cutover (no live deploy). Follow-up to verify in the sandbox
 (real multi-org data): an org-head's learnerscript reports still scope to their
 own org. Remaining design option NOT taken (Nitin's call): a working
 return-to-normal escape hatch / replacing the fork with core role_switch().
+
+## 2026-09-07 — T-01 Course Author authoring nav group (theme v2026090701)
+
+UAT persona walk: the Course Author saw the plain LEARNER sidebar with NO
+authoring entry points, AND `sidebar_navigation` had no Authoring Studio / AI
+Quiz / Skills-AI item for ANY tier (URL-only surfaces). Fix mirrors the existing
+Live Sessions treatment (`can_create_live_session`, T-02): `role_detector` gains
+an informational, capability-based `isauthor` (holds authoring:generate |
+aiquiz:generate | skillsai:extract at system, `get_capability_info`-guarded) that
+does NOT change the learner/manager/admin tiering — so the mutually-exclusive
+tier-invariant test still holds (isauthor is orthogonal). `sidebar_navigation`
+gains `add_authoring_nav()` + `can_use_authoring_studio()` / `can_use_aiquiz()` /
+`can_use_skillsai()`, each gated on the plugin master feature flag AND the SAME
+system capability the target page enforces (Skills AI gates on :review to match
+index.php, not :extract), safe-failing — so a link appears ONLY when the flag is
+ON and the user holds the cap, and author + trainer + editingteacher all light up
+by capability (no hardcoded role id). Group rendered in the learner + manager
+branches; leading divider only when ≥1 item qualifies. 3 en+hi nav string pairs
+(parity 227/227). NEW `role_detector` isauthor tests (2), no full-array
+assertion breakage confirmed. Version 2026090400 → 2026090701. Single theme tree
+(no `moodle-enhancement/theme/sentientia`). NOT deployed.
+**Demo dependency:** the links stay hidden until the 3 master flags are flipped
+ON per-tenant — `sentientia.authoring.enabled`, `sentientia.aiquiz.enabled`,
+`sentientia.skillsai.enabled` (all default OFF) — a separate config action
+(Switchboard / feature_flags::set), by design (CLAUDE.md §13).

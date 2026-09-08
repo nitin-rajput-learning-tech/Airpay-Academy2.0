@@ -38,6 +38,16 @@ class sidebar_navigation {
     private $isldadmin;
     private $ismanager;
     /**
+     * T-01 (UAT persona walk 2026-09-07) — Course Author / creator tier.
+     * Holds an authoring/creator capability (Authoring Studio, AI Quiz or
+     * Skills AI) at system context without being admin/manager, so
+     * role_detector returns islearner. Capability-based, mirroring how the
+     * trainer surface (can_create_live_session) is detected. Used only to
+     * decide whether to attempt the AI-authoring sidebar group — each link is
+     * still individually cap + feature-flag gated (see add_authoring_nav()).
+     */
+    private $isauthor;
+    /**
      * Goal A audit Bug #11 (2026-05-22) — Compliance Officer / HR / Trainer
      * tier. Hold `moodle/site:viewreports` system cap without being a higher-
      * tier role. Joseph Mandapati (Compliance Officer) hit this — he could
@@ -274,6 +284,9 @@ class sidebar_navigation {
                 $items[] = $this->item(get_string('nav_myskills', 'theme_sentientia'), 'fa-bullseye',
                     '/local/sentientia_skills/index.php', $currenturl);
             }
+            // T-01 (UAT persona walk 2026-09-07): a manager who also authors
+            // content gets the AI-assisted authoring group (cap + flag gated).
+            $this->add_authoring_nav($items, $currenturl);
             $items[] = $this->item(get_string('nav_certificates', 'theme_sentientia'), 'fa-certificate', '/local/sentientia_pages/certificates.php', $currenturl);
             $items[] = $this->item(get_string('profile'), 'fa-user', '/local/sentientia_users/profile.php', $currenturl);
             return $items;
@@ -328,6 +341,13 @@ class sidebar_navigation {
             $items[] = $this->item(get_string('nav_myskills', 'theme_sentientia'), 'fa-bullseye',
                 '/local/sentientia_skills/index.php', $currenturl);
         }
+
+        // T-01 (UAT persona walk 2026-09-07): surface the AI-assisted authoring
+        // group (Authoring Studio / AI Quiz / Skills AI) for Course Authors and
+        // trainers who land in the Learner shell — same discoverability pattern
+        // as the Live Sessions and My Skills links above. Each link is cap +
+        // feature-flag gated inside add_authoring_nav().
+        $this->add_authoring_nav($items, $currenturl);
 
         $items[] = $this->item(get_string('nav_certificates', 'theme_sentientia'), 'fa-certificate', '/local/sentientia_pages/certificates.php', $currenturl);
         $items[] = $this->item(get_string('profile'), 'fa-user', '/local/sentientia_users/profile.php', $currenturl);
@@ -425,6 +445,119 @@ class sidebar_navigation {
     }
 
     /**
+     * Append the "AI-assisted authoring" sidebar group.
+     *
+     * T-01 persona-caps gap (UAT persona walk 2026-09-07): a Course Author
+     * (`sentientiaauthor` system role — holds the authoring / AI-quiz / Skills-AI
+     * caps but no admin/manager/reports cap) is classified by role_detector as a
+     * plain LEARNER, and the sidebar had NO entry point to ANY authoring surface
+     * for ANY tier — so the Authoring Studio, AI Quiz and Skills AI were reachable
+     * only by typing a URL. This mirrors the existing Live Sessions treatment
+     * (can_create_live_session(): surface a trainer surface for a user who lands
+     * in the Learner shell), gating each link on the SAME feature flag + system
+     * capability the target page enforces. Author, trainer and editingteacher all
+     * light up by capability — no hardcoded role id — and a link only appears once
+     * BOTH its plugin feature flag is ON and the user holds the cap, exactly like
+     * the plugins' own lib.php nav hooks. A leading divider is added only when at
+     * least one item qualifies, so a non-author sees nothing.
+     *
+     * @param array  $items      Nav item list, appended in place.
+     * @param string $currenturl Current page URL for active-state matching.
+     */
+    private function add_authoring_nav(array &$items, string $currenturl): void {
+        // Fast guard — only users holding an authoring/creator capability get
+        // this group. role_detector::detect()['isauthor'] is capability-based
+        // (mirrors the trainer/admin tier detection pattern).
+        if (!$this->isauthor) {
+            return;
+        }
+
+        $authoring = [];
+
+        // Authoring Studio — GenAI course generation (mock mode by default).
+        if ($this->can_use_authoring_studio()) {
+            $authoring[] = $this->item(get_string('nav_authoringstudio', 'theme_sentientia'), 'fa-magic',
+                '/local/sentientia_authoring/studio.php', $currenturl);
+        }
+        // AI Quiz — question generation (mock mode by default).
+        if ($this->can_use_aiquiz()) {
+            $authoring[] = $this->item(get_string('nav_aiquiz', 'theme_sentientia'), 'fa-question-circle',
+                '/local/sentientia_aiquiz/generate.php', $currenturl);
+        }
+        // Skills AI — skills extraction / taxonomy intelligence.
+        if ($this->can_use_skillsai()) {
+            $authoring[] = $this->item(get_string('nav_skillsai', 'theme_sentientia'), 'fa-sitemap',
+                '/local/sentientia_skillsai/index.php', $currenturl);
+        }
+
+        if (!empty($authoring)) {
+            $items[] = $this->divider();
+            foreach ($authoring as $navitem) {
+                $items[] = $navitem;
+            }
+        }
+    }
+
+    /**
+     * Can the current user open the GenAI Authoring Studio?
+     *
+     * Two gates, matching the plugin's own index.php/studio.php (Gate 1 flag,
+     * Gate 2 capability) and the can_create_live_session() convention in this
+     * file: the master feature flag must be ON and the user must hold the
+     * system-context :generate cap. Safe-fails to false (no link, no crash)
+     * when the plugin, its cap or the flag resolver isn't installed — e.g. a
+     * future Sentientia customer who didn't license the studio.
+     */
+    private function can_use_authoring_studio(): bool {
+        try {
+            if (!\local_sentientia_platform\feature_flags::is_enabled('sentientia.authoring.enabled')) {
+                return false;
+            }
+            return has_capability('local/sentientia_authoring:generate', \context_system::instance());
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Can the current user open the AI Quiz generator?
+     *
+     * Master flag `sentientia.aiquiz.enabled` (default OFF) + system-context
+     * :generate cap — same two-gate pattern the plugin's generate.php enforces.
+     * Safe-fails to false.
+     */
+    private function can_use_aiquiz(): bool {
+        try {
+            if (!\local_sentientia_platform\feature_flags::is_enabled('sentientia.aiquiz.enabled')) {
+                return false;
+            }
+            return has_capability('local/sentientia_aiquiz:generate', \context_system::instance());
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Can the current user open Skills AI (skills intelligence)?
+     *
+     * Master flag `sentientia.skillsai.enabled` (default OFF) + the SAME
+     * system-context cap the landing page enforces — local/sentientia_skillsai/
+     * index.php requires :review (not :extract), so gate the link on :review to
+     * guarantee link ⇔ page agreement (never surface a link that 403s). The
+     * Course Author role holds both. Safe-fails to false.
+     */
+    private function can_use_skillsai(): bool {
+        try {
+            if (!\local_sentientia_platform\feature_flags::is_enabled('sentientia.skillsai.enabled')) {
+                return false;
+            }
+            return has_capability('local/sentientia_skillsai:review', \context_system::instance());
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    /**
      * Build a single nav item.
      */
     private function item(string $label, string $icon, string $path, string $currenturl,
@@ -491,6 +624,7 @@ class sidebar_navigation {
         $this->issiteadmin = $roles['issiteadmin'];
         $this->isldadmin   = $roles['isldadmin'];
         $this->ismanager   = $roles['ismanager'];
+        $this->isauthor    = $roles['isauthor'];
 
         // Sidebar-only "Compliance officer in a Learner shell" detection:
         // any non-admin/manager user with report-view cap gets a Compliance

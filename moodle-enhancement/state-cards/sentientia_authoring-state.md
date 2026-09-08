@@ -176,3 +176,34 @@ Capability gates: moodle/course:create (category) + moodle/question:add (bank).
 (6 tests: happy path incl. gradepass 8.0@80% + bank entries + published id,
 rejected-item exclusion, quiz-less build, status gate, transactional capability
 denial, card HTML composition incl. escaping).
+
+## 2026-09-07 — T-01 author-role FRESH-INSTALL parity (v2026090700 / 0.2.1-alpha)
+
+UAT persona visual walk (2026-09-07) found the Course Author (`uat_author_airpay`
+= Sneha Kulkarni; `sentientiaauthor`@system + `coursecreator`@category:AirPay)
+landing on a plain LEARNER shell with NO authoring UI. Root cause was three
+independent layers (full write-up: `docs/cutover/T-01-AUTHOR-CAPS-FIX-2026-09-07.md`):
+the theme sidebar had no authoring nav for any tier; the AI surfaces are
+flag-gated OFF; and — the part THIS plugin owns — the `sentientiaauthor` role +
+its caps were seeded ONLY from db/upgrade.php (2026061701) + the UAT CLI, which
+never run on a FRESH install, so a brand-new Sentientia customer would come up
+with NO author role at all (masked on UAT only because the CLI seeder had run).
+
+Fix (this plugin): NEW `classes/author_role.php::ensure()` — one idempotent
+seeder that creates the archetype-less role, pins it to CONTEXT_SYSTEM, and
+grants the 7-cap author set (authoring:generate/review/managetemplates +
+skillsai:extract/review + aiquiz:generate/review), each guarded by
+capability-existence (no orphan rows). Called from BOTH db/install.php (fresh)
+AND a NEW db/upgrade.php step 2026090700 (existing installs). Historical steps
+2026061700/2026061701 left intact. Scope discipline unchanged: NO admin /
+tenant-admin / user-management / sentientia_courses:* caps — course CREATION
+for authors stays a per-deployment category `coursecreator` assignment
+(moodle/course:create). Cross-plugin install-order gap (skillsai installs
+alphabetically AFTER authoring, so its caps are skipped at authoring's install
+time) is closed by a companion `local_sentientia_skillsai/db/install.php` that
+re-runs ensure(). NEW `tests/author_role_test.php` (3 tests: scoped role +
+caps + no over-grant, reconciliation, idempotency — written, NOT executed:
+phpunit init gated on shared XAMPP DB per parallel-session coordination).
+Mirrored to top-level `local/` + `moodle-enhancement/local/`. Version 2026080501
+→ 2026090700 (0.2.0 → 0.2.1-alpha). No schema/flag change. NOT deployed (review
+diff; live flag flips + deploy stay Nitin-gated).

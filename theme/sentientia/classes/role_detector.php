@@ -74,8 +74,9 @@ class role_detector {
      *
      * @param int|null $userid Optional — defaults to $USER->id.
      * @return array Keys: issiteadmin, isldadmin, ismanager, islearner,
-     *               isadmin (= siteadmin || ldadmin),
-     *               switched_to_employee
+     *               isadmin (= siteadmin || ldadmin), isauthor (holds an
+     *               authoring/creator capability — informational, does not
+     *               change tiering), switched_to_employee
      */
     public static function detect(?int $userid = null): array {
         global $USER, $SESSION, $DB;
@@ -174,12 +175,38 @@ class role_detector {
 
         $islearner = !$isadmin && !$ismanager;
 
+        // T-01 (UAT persona walk 2026-09-07): Course Author / creator tier.
+        // A user who holds an authoring/creator capability at system context —
+        // Authoring Studio (:generate), AI Quiz (:generate) or Skills AI
+        // (:extract) — without being admin/manager, so the rules above classify
+        // them as a Learner. This flag is INFORMATIONAL and does NOT change the
+        // learner/manager/admin tiering (an author is normally also a learner);
+        // the sidebar consumes it to decide whether to render the AI-authoring
+        // nav group, where each link is then individually cap + feature-flag
+        // gated (see sidebar_navigation::add_authoring_nav()). Capability-based
+        // like every other tier — no hardcoded role id. get_capability_info()
+        // guards each probe so a customer who hasn't licensed these plugins (cap
+        // unregistered) resolves cleanly to false with no debug notice.
+        $isauthor = false;
+        foreach ([
+            'local/sentientia_authoring:generate',
+            'local/sentientia_aiquiz:generate',
+            'local/sentientia_skillsai:extract',
+        ] as $authorcap) {
+            if (get_capability_info($authorcap)
+                    && has_capability($authorcap, $systemcontext, $userid)) {
+                $isauthor = true;
+                break;
+            }
+        }
+
         return [
             'issiteadmin'           => $issiteadmin,
             'isldadmin'             => $isldadmin,
             'isadmin'               => $isadmin,
             'ismanager'             => $ismanager,
             'islearner'             => $islearner,
+            'isauthor'              => $isauthor,
             'switched_to_employee'  => $switchedtoemployee,
         ];
     }

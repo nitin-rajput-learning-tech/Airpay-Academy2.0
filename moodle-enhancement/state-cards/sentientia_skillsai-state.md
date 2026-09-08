@@ -172,3 +172,19 @@ plugin-level gates unchanged (enabled/live_api flags, per-call [CONFIRM],
 human-review gate). Purpose slug: `skill_extraction`. Standalone fallback
 kept for gateway-less deployments. Mirrored to top-level local/ (plugin was
 MISSING there — full dir seeded) + deployed to XAMPP webroot.
+
+## 2026-09-07 — T-01 author-role fresh-install parity (v2026090700 / 0.1.2-alpha)
+
+Companion to `local_sentientia_authoring`'s T-01 fix (UAT persona walk
+2026-09-07). The Sentientia Author role's canonical cap set includes this
+plugin's :extract / :review caps. On a FRESH install Moodle installs plugins
+alphabetically, so `sentientia_authoring` installs BEFORE `sentientia_skillsai`;
+authoring's install-time `author_role::ensure()` therefore runs before THIS
+plugin's caps are registered and skips them (the ensure() guard avoids orphan
+rows). NEW `db/install.php` re-runs
+`\local_sentientia_authoring\author_role::ensure()` (guarded by class_exists)
+so — because skillsai installs last of the cap owners — all author caps are
+registered and land on the `sentientiaauthor` role. No-op on existing installs
+(authoring's 2026090700 upgrade step already reconciles). No schema / flag /
+capability-definition change. Mirrored to both trees. Version 2026080500 →
+2026090700 (0.1.1 → 0.1.2-alpha). NOT deployed.

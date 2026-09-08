@@ -295,4 +295,53 @@ final class role_detector_test extends \advanced_testcase {
             'After switch, L&D Admin should appear as Learner');
         $this->assertTrue($r2['islearner']);
     }
+
+    /**
+     * T-01 (UAT persona walk 2026-09-07): Course Author is detected as
+     * `isauthor` via an authoring capability, WITHOUT being promoted out of the
+     * Learner tier (an author is normally also a learner). isauthor is
+     * informational — it must not change the mutually-exclusive tiering.
+     */
+    public function test_author_detected_via_authoring_cap(): void {
+        $this->resetAfterTest();
+        $caps = get_all_capabilities();
+        if (empty($caps['local/sentientia_authoring:generate'])) {
+            $this->markTestSkipped(
+                'local/sentientia_authoring:generate cap not available — '
+                . 'requires local_sentientia_authoring plugin');
+        }
+        $user = $this->getDataGenerator()->create_user();
+        $context = \context_system::instance();
+        // Archetype-less role holding only the authoring :generate cap —
+        // mirrors the real `sentientiaauthor` role.
+        $roleid = $this->getDataGenerator()->create_role(['shortname' => 'authortestrole']);
+        assign_capability('local/sentientia_authoring:generate', CAP_ALLOW, $roleid, $context);
+        role_assign($roleid, $user->id, $context);
+        $this->setUser($user);
+
+        $r = role_detector::detect();
+
+        $this->assertTrue($r['isauthor'],
+            'User with an authoring cap should be detected as author');
+        // Orthogonal to tiering: still a Learner, never promoted to admin/manager.
+        $this->assertFalse($r['issiteadmin']);
+        $this->assertFalse($r['isldadmin']);
+        $this->assertFalse($r['ismanager']);
+        $this->assertTrue($r['islearner'],
+            'Author is also a Learner — isauthor must not change the tier');
+    }
+
+    /**
+     * A plain user (no authoring caps) is not an author.
+     */
+    public function test_plain_user_not_author(): void {
+        $this->resetAfterTest();
+        $user = $this->getDataGenerator()->create_user();
+        $this->setUser($user);
+
+        $r = role_detector::detect();
+
+        $this->assertFalse($r['isauthor'],
+            'A user with no authoring capability should not be an author');
+    }
 }
