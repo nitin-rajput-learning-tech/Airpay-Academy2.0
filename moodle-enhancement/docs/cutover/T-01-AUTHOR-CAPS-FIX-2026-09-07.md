@@ -2,7 +2,9 @@
 
 **Date:** 2026-09-07 · **Owner:** Nitin Rajput · **Engineering:** Claude
 **Trigger:** UAT persona visual walk (`UAT-DEMO-READINESS-2026-09-04.md`, "Author persona finding")
-**Status:** working-tree diff for review — **NO commit, NO deploy, NO live flag flip** (all Nitin-gated)
+**Status (2026-09-08):** reviewed → integrated as **`1dc599466`** on `claude/gap-integration` (24 files, both trees identical) → **deployed to UAT** via `tools/uat/deploy_to_uat.sh --yes --commit 1dc599466` (13 public targets, sha256 13/13 OK, `upgrade.php` Success: theme 2026090701, authoring + skillsai 2026090700; backup `/tmp/uat-predeploy-backup-20260908-072542.tgz`) → **probe-verified on the box**: `sentientiaauthor` (id 11) holds exactly the 7 caps at system context, `creatornewroleid` = editingteacher (authors manage the courses they create).
+**Flags (Layer B):** no flip was made. The 3 master flags were found **already ON globally on UAT** (cust 0 / tenant 0, created 3 Sept 2026 12:44 by the admin account during provisioning). Nitin's decision 2026-09-08: **leave them on** for the demo (mock mode; no `*.live_api` flip, no Anthropic key).
+**Product decisions (§5):** Nitin confirmed the scope — "author should have access to create and manage content that he/she has developed" — which matches the fix as built (own-content caps + coursecreator + editingteacher on created courses); *Manage Courses* stays a tenant-admin surface.
 **Branch worked on:** `claude/t01-author-caps` (cut from `claude/gap-integration` @ `fb886fac2`)
 
 ---
