@@ -92,8 +92,11 @@ tar -czf "$TGZ" -C "$STAGE" $(printf '%s ' "${RELS[@]}")
 ( cd "$STAGE" && sha256sum "${RELS[@]}" > .manifest )
 
 TS="$(date +%Y%m%d-%H%M%S)"
-scp -o BatchMode=yes "$TGZ" "$STAGE/.manifest" "$SSH_HOST:/tmp/uat-deploy-$TS.tgz" >/dev/null 2>&1 \
-    || { scp -o BatchMode=yes "$TGZ" "$SSH_HOST:/tmp/uat-deploy-$TS.tgz"; scp -o BatchMode=yes "$STAGE/.manifest" "$SSH_HOST:/tmp/uat-deploy-$TS.manifest"; }
+# ONE source per scp call. A multi-source scp treats the destination as a DIRECTORY and
+# would create /tmp/uat-deploy-$TS.tgz/ as a folder — the 2026-09-08 first-run failure
+# ("tar: Cannot read: Is a directory"). The remote block's set -e stopped before any file
+# was touched, but the deploy did not happen.
+scp -o BatchMode=yes "$TGZ" "$SSH_HOST:/tmp/uat-deploy-$TS.tgz" >/dev/null
 scp -o BatchMode=yes "$STAGE/.manifest" "$SSH_HOST:/tmp/uat-deploy-$TS.manifest" >/dev/null
 
 # ── remote: backup existing (that exist) → extract → chown → verify ──────────
