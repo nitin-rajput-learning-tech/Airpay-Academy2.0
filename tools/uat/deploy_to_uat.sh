@@ -18,6 +18,12 @@
 #     --range A..B  derive the deployable files from a commit range.
 #     --yes         actually perform the deploy. DEFAULT IS A DRY RUN that only prints the plan.
 #     --no-upgrade  skip admin/cli/upgrade.php (use only when no version.php changed).
+#     --prefer-top | --prefer-me
+#                   when the SAME target file differs between the top-level tree and the
+#                   moodle-enhancement/ tree, take that tree's copy. Without a preference the
+#                   script ABORTS on drift (exit 3) — UAT runs the moodle-enhancement copy of
+#                   at least local_sentientia_org (1.4.x), so "first seen wins" is unsafe.
+#                   Explicit PATH arguments sidestep the question: name the tree you mean.
 #
 # Examples:
 #   tools/uat/deploy_to_uat.sh --commit 1f8dc0eaf              # dry-run: show what F-12 would deploy
@@ -33,6 +39,7 @@ DEPLOYABLE_RE='^(theme|local|blocks|mod|admin|lib)/'
 
 YES=0
 DO_UPGRADE=1
+PREFER=""
 declare -a INPUTS=()
 
 # ── parse args ───────────────────────────────────────────────────────────────
@@ -40,6 +47,8 @@ while [ $# -gt 0 ]; do
     case "$1" in
         --yes) YES=1; shift ;;
         --no-upgrade) DO_UPGRADE=0; shift ;;
+        --prefer-top) PREFER=top; shift ;;
+        --prefer-me) PREFER=me; shift ;;
         --commit) shift; mapfile -t _c < <(git -C "$REPO_ROOT" show --name-only --pretty=format: "$1"); INPUTS+=("${_c[@]}"); shift ;;
         --range)  shift; mapfile -t _c < <(git -C "$REPO_ROOT" diff --name-only "$1"); INPUTS+=("${_c[@]}"); shift ;;
         -h|--help) sed -n '2,40p' "$0"; exit 0 ;;
@@ -60,9 +69,27 @@ for p in "${INPUTS[@]}"; do
     src="$REPO_ROOT/$p"
     [ -f "$src" ] || { echo "skip (not a file in repo): $p"; continue; }
     if [ -n "${SEEN[$rel]:-}" ]; then
-        # same target from both trees — warn if the two sources differ
+        # Same target from both trees. Identical → fine. Different → the trees have
+        # drifted for this plugin and UAT may run either copy: refuse unless told.
         if ! cmp -s "$src" "$REPO_ROOT/${SEEN[$rel]}"; then
-            echo "WARN: $rel differs between $p and ${SEEN[$rel]} — using the first (${SEEN[$rel]})" >&2
+            case "$PREFER" in
+                top|me)
+                    want_me=$([ "$PREFER" = me ] && echo 1 || echo 0)
+                    is_me=$([[ "$p" == moodle-enhancement/* ]] && echo 1 || echo 0)
+                    if [ "$want_me" = "$is_me" ]; then
+                        # replace the earlier source with this tree's copy
+                        for i in "${!RELS[@]}"; do [ "${RELS[$i]}" = "$rel" ] && SRCS[$i]="$src"; done
+                        SEEN[$rel]="$p"
+                        echo "drift: $rel — using --prefer-$PREFER copy ($p)" >&2
+                    else
+                        echo "drift: $rel — keeping --prefer-$PREFER copy (${SEEN[$rel]})" >&2
+                    fi ;;
+                *)
+                    echo "ABORT: $rel differs between $p and ${SEEN[$rel]}." >&2
+                    echo "       Check which tree UAT runs (sha256sum on the box) and re-run with --prefer-top or --prefer-me," >&2
+                    echo "       or pass explicit PATHs from the right tree." >&2
+                    exit 3 ;;
+            esac
         fi
         continue
     fi

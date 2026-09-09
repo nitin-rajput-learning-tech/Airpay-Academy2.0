@@ -166,3 +166,4 @@ bumped in the top-level tree only (2026061700 → 2026090800); the
 `moodle-enhancement/` copy is still the stale 1.4.1/2026052001 tree (no hooks.php,
 compat/, hook_callbacks.php) — the deployer uses the top-level file. No schema, no
 capability, no flag.
+**Correction 2026-09-09:** UAT runs the `moodle-enhancement/` copy of this plugin (installed 1.4.1 / 2026052001; its `db/upgrade.php`, `accesslib.php` and `version.php` hash-match the ME tree, not the top-level 1.5.1 tree). So the ME `version.php` was bumped 2026052001 → **2026052002 / 1.4.2** for the cascade strings and that is what went to UAT; the top-level 2026090800 / 1.5.2 bump stays repo-only. `tools/uat/deploy_to_uat.sh` now ABORTS when the two trees differ for a target unless `--prefer-top` / `--prefer-me` (or explicit paths) say which copy is meant.
