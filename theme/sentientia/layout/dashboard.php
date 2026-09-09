@@ -376,7 +376,7 @@ if (isloggedin() && !isguestuser()) {
                         // the component; `ts` is kept for usort below.
                         'icon'    => 'check-circle',
                         'variant' => 'completion',
-                        'text'    => fullname($comp) . ' completed ' . format_string($comp->coursename),
+                        'text'    => get_string('dash_activity_user_completed', 'theme_sentientia', ['user' => fullname($comp), 'course' => format_string($comp->coursename, true, ['escape' => false])]), // escaped once by {{text}}
                         'subtext' => userdate($comp->timecompleted, '%d %b, %I:%M %p'),
                         'ts'      => $comp->timecompleted,
                     ];
@@ -395,7 +395,7 @@ if (isloggedin() && !isguestuser()) {
                     $recentactivity[] = [
                         'icon'    => 'plus-circle',
                         'variant' => 'enrolment',
-                        'text'    => fullname($enr) . ' enrolled in ' . format_string($enr->coursename),
+                        'text'    => get_string('dash_activity_user_enrolled', 'theme_sentientia', ['user' => fullname($enr), 'course' => format_string($enr->coursename, true, ['escape' => false])]), // escaped once by {{text}}
                         'subtext' => userdate($enr->timecreated, '%d %b, %I:%M %p'),
                         'ts'      => $enr->timecreated,
                     ];

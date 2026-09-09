@@ -38,7 +38,7 @@
             </div>
 
             <h1 class="airpay-login__hero-title">{{sitename}}</h1>
-            <p class="airpay-login__hero-subtitle">Upskill. Get certified. Get hired.</p>
+            <p class="airpay-login__hero-subtitle">{{#str}}login_hero_subtitle, theme_sentientia{{/str}}</p>
 
             {{!
                 Audit fix 2026-05-15 — login hero copy rewritten to target the
@@ -51,22 +51,22 @@
                 <div class="airpay-login__hero-feature">
                     <div class="airpay-login__hero-feature-icon"><i class="fa fa-rocket"></i></div>
                     <div>
-                        <strong>Upskill on demand</strong>
-                        <span>Job-ready courses in finance, payments, tech &amp; business &mdash; built by the people running real platforms.</span>
+                        <strong>{{#str}}login_feature_upskill_title, theme_sentientia{{/str}}</strong>
+                        <span>{{#str}}login_feature_upskill_desc, theme_sentientia{{/str}}</span>
                     </div>
                 </div>
                 <div class="airpay-login__hero-feature">
                     <div class="airpay-login__hero-feature-icon"><i class="fa fa-briefcase"></i></div>
                     <div>
-                        <strong>Hiring assessments</strong>
-                        <span>Take employer-graded tests. Pass once, get shortlisted by hiring partners across the industry.</span>
+                        <strong>{{#str}}login_feature_assess_title, theme_sentientia{{/str}}</strong>
+                        <span>{{#str}}login_feature_assess_desc, theme_sentientia{{/str}}</span>
                     </div>
                 </div>
                 <div class="airpay-login__hero-feature">
                     <div class="airpay-login__hero-feature-icon"><i class="fa fa-certificate"></i></div>
                     <div>
-                        <strong>Verified certificates</strong>
-                        <span>Every completion ships with a tamper-proof certificate you can share on LinkedIn or attach to a CV.</span>
+                        <strong>{{#str}}login_feature_cert_title, theme_sentientia{{/str}}</strong>
+                        <span>{{#str}}login_feature_cert_desc, theme_sentientia{{/str}}</span>
                     </div>
                 </div>
             </div>
@@ -75,15 +75,15 @@
             <div class="airpay-login__hero-stats">
                 <div class="airpay-login__hero-stat">
                     <strong>{{output.login_stat_users}}</strong>
-                    <span>Learners upskilling</span>
+                    <span>{{#str}}login_stat_learners, theme_sentientia{{/str}}</span>
                 </div>
                 <div class="airpay-login__hero-stat">
                     <strong>{{output.login_stat_courses}}</strong>
-                    <span>Courses available</span>
+                    <span>{{#str}}login_stat_courses, theme_sentientia{{/str}}</span>
                 </div>
                 <div class="airpay-login__hero-stat">
                     <strong>{{output.login_stat_certs}}</strong>
-                    <span>Certificates earned</span>
+                    <span>{{#str}}login_stat_certificates, theme_sentientia{{/str}}</span>
                 </div>
             </div>
 
@@ -108,8 +108,8 @@
             </div>
 
             {{! Form header — public-learner framing (audit fix 2026-05-15) }}
-            <h2 class="airpay-login__form-title">Welcome back</h2>
-            <p class="airpay-login__form-subtitle">Pick up your courses, take assessments, and earn your next certificate.</p>
+            <h2 class="airpay-login__form-title">{{#str}}login_form_title, theme_sentientia{{/str}}</h2>
+            <p class="airpay-login__form-subtitle">{{#str}}login_form_subtitle, theme_sentientia{{/str}}</p>
 
             {{! Error display }}
             {{#error}}
@@ -163,10 +163,10 @@
 
                 {{! Links }}
                 <div class="airpay-login__links">
-                    <a href="{{forgotpasswordurl}}">Forgot Password?</a>
+                    <a href="{{forgotpasswordurl}}">{{#str}}login_forgot, theme_sentientia{{/str}}</a>
                     {{#signupurl_custom}}
                         <span class="airpay-login__links-sep">&middot;</span>
-                        <a href="{{signupurl_custom}}">Create an Account</a>
+                        <a href="{{signupurl_custom}}">{{#str}}login_create_account, theme_sentientia{{/str}}</a>
                     {{/signupurl_custom}}
                 </div>
             </form>
@@ -211,9 +211,9 @@
 
             {{! Privacy + Terms links }}
             <div class="airpay-login__legal">
-                <a href="{{{config.wwwroot}}}/local/sentientia_pages/index.php?page=privacy">Privacy Policy</a>
+                <a href="{{{config.wwwroot}}}/local/sentientia_pages/index.php?page=privacy">{{#str}}login_privacy, theme_sentientia{{/str}}</a>
                 <span>&middot;</span>
-                <a href="{{{config.wwwroot}}}/local/sentientia_pages/index.php?page=terms">Terms of Use</a>
+                <a href="{{{config.wwwroot}}}/local/sentientia_pages/index.php?page=terms">{{#str}}login_terms, theme_sentientia{{/str}}</a>
             </div>
         </div>
     </div>
@@ -221,9 +221,9 @@
 
 {{! BizLMS Help/About/Contact popups (preserved) }}
 <div class="login_nav_btns">
-    {{#helptext}}<button onclick="loginpopup('help');" class="airpay-login__popup-btn">Help</button>{{/helptext}}
-    {{#aboutustext}}<button onclick="loginpopup('aboutus');" class="airpay-login__popup-btn">Support</button>{{/aboutustext}}
-    {{#contactustext}}<button onclick="loginpopup('contactus');" class="airpay-login__popup-btn">Contact us</button>{{/contactustext}}
+    {{#helptext}}<button onclick="loginpopup('help');" class="airpay-login__popup-btn">{{#str}}footer_help, theme_sentientia{{/str}}</button>{{/helptext}}
+    {{#aboutustext}}<button onclick="loginpopup('aboutus');" class="airpay-login__popup-btn">{{#str}}login_support, theme_sentientia{{/str}}</button>{{/aboutustext}}
+    {{#contactustext}}<button onclick="loginpopup('contactus');" class="airpay-login__popup-btn">{{#str}}login_contact, theme_sentientia{{/str}}</button>{{/contactustext}}
 </div>
 <div id="div_loginpopup_help" class="login_popup_container"><div onclick="closeonclick('help');" class="div_close">X</div><div class="login_popup_content">{{{ output.helpbtn }}}</div></div>
 <div id="div_loginpopup_aboutus" class="login_popup_container"><div onclick="closeonclick('aboutus');" class="div_close">X</div><div class="login_popup_content">{{{ output.aboutbtn }}}</div></div>

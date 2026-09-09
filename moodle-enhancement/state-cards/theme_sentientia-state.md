@@ -1,7 +1,7 @@
 # State Card — `theme_airpayux`
 
 **Component:** `theme_airpayux`
-**Version:** `2026090802` / `1.0.52-beta`
+**Version:** `2026090803` / `1.0.52-beta`
 **Maturity:** `MATURITY_BETA`
 **Status:** Live theme on airpay.academy. Standalone fork (`$THEME->parents = []`).
 **Last refreshed:** 2026-09-08 (P3 i18n parity — dashboard body strings via get_string, en+hi 281/281 — integrated onto gap-integration; stale AMD bundles rebuilt the same day)
@@ -413,3 +413,24 @@ bundle rebuilt. The same literals in `local_sentientia_users` /
 were switched to the same strings. Verified by CLI render in en + hi. Deploy
 pending. Still English: the compliance report's legacy "All Business Units /
 All Entities" filter (different widget).
+
+## 2026-09-09 — Last dashboard headings, activity lines, rec-card slots, login page copy (theme v2026090803)
+
+On-screen re-check of the deployed 2026090801/02 fixes (evidence
+`docs/visual-evidence/2026-09-09/uat-hindi-cascade-recheck/`) surfaced the final
+layer: (1) nine section headings still literal because the earlier scan skipped
+icon-prefixed `<h3>`s — System Health, User Analytics, Compliance Overview, My
+Team, Team Compliance, Continue Learning (reuses `dash_continue_learning`),
+Activity Timeline, Recent Achievements, Recommended for You → `dash_sec_*`;
+(2) the Recent Activity lines were built in `layout/dashboard.php` as
+`fullname() . ' enrolled in ' . format_string()` — English glue plus a
+pre-escaped name that `{{text}}` escaped again → `get_string()` with
+`{$a->user}`/`{$a->course}` and `format_string(..., ['escape' => false])` so the
+template escapes exactly once; (3) the recommendation card's `{{category}}` /
+`{{summary}}` slots receive `format_string()`-escaped skill names from
+`skills_manager::get_gap_courses()` → `{{{ }}}`; (4) `core/loginform.mustache`
+hero + form copy, feature blurbs, stat labels, Forgot/Create/Privacy/Terms/Help/
+Support/Contact were literal English → 19 `login_*` strings. 28 new en+hi keys,
+parity 329/329, placeholder sets verified. Known and left: `&amp;` in the
+visually-hidden aria spans of core `block_myoverview` course cards (core markup);
+chart axis months. Deploy pending.

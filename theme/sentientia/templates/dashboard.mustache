@@ -318,7 +318,7 @@
                 {{#issiteadmin}}
                 {{#hassystemhealth}}
                 <div class="airpay-dash__section">
-                    <h3 class="airpay-dash__section-title"><i class="fa fa-heartbeat"></i> System Health</h3>
+                    <h3 class="airpay-dash__section-title"><i class="fa fa-heartbeat" aria-hidden="true"></i> {{#str}}dash_sec_system_health, theme_sentientia{{/str}}</h3>
                     <div class="airpay-dash__health-list">
                         {{#systemhealth}}
                         <div class="airpay-dash__health-item">
@@ -337,7 +337,7 @@
                 {{! User Analytics — Phase B0 iter 8: migrated to stat_card partial }}
                 {{#hasuseranalytics}}
                 <div class="airpay-dash__section">
-                    <h3 class="airpay-dash__section-title"><i class="fa fa-users" aria-hidden="true"></i> User Analytics</h3>
+                    <h3 class="airpay-dash__section-title"><i class="fa fa-users" aria-hidden="true"></i> {{#str}}dash_sec_user_analytics, theme_sentientia{{/str}}</h3>
                     <div class="airpay-stat-grid">
                         {{#useranalytics}}
                         {{> theme_sentientia/components/stat_card }}
@@ -455,7 +455,7 @@
                 {{#dash_widget_mandatory_compliance}}
                 {{#hascompliance}}
                 <div class="airpay-dash__section">
-                    <h3 class="airpay-dash__section-title"><i class="fa fa-shield"></i> Compliance Overview</h3>
+                    <h3 class="airpay-dash__section-title"><i class="fa fa-shield" aria-hidden="true"></i> {{#str}}dash_sec_compliance_overview, theme_sentientia{{/str}}</h3>
                     <div class="airpay-dash__compliance-grid">
                         <div class="airpay-dash__compliance-card">
                             <div class="airpay-dash__compliance-card__count airpay-dash__compliance-card__count--mandatory">{{compliance.mandatory}}</div>
@@ -517,7 +517,7 @@
             {{! Manager KPI tiles }}
             {{#hasmanagerkpis}}
             <div class="airpay-dash__section airpay-dash__section--bottom-spacing">
-                <h3 class="airpay-dash__section-title"><i class="fa fa-users"></i> My Team</h3>
+                <h3 class="airpay-dash__section-title"><i class="fa fa-users" aria-hidden="true"></i> {{#str}}dash_sec_my_team, theme_sentientia{{/str}}</h3>
                 <div class="airpay-stat-grid">
                     {{! Manager KPI tiles — Phase B0 iter 2: migrated to stat_card partial }}
                     {{#manager_kpis}}
@@ -530,7 +530,7 @@
             {{! Team Compliance Table }}
             {{#hasteamcompliance}}
             <div class="airpay-dash__section airpay-dash__section--bottom-spacing">
-                <h3 class="airpay-dash__section-title"><i class="fa fa-shield"></i> Team Compliance</h3>
+                <h3 class="airpay-dash__section-title"><i class="fa fa-shield" aria-hidden="true"></i> {{#str}}dash_sec_team_compliance, theme_sentientia{{/str}}</h3>
                 <table class="generaltable airpay-dash__team-table">
                     <thead>
                         <tr>
@@ -696,7 +696,7 @@
             {{! Empty state — Phase B0 iter 7: migrated to empty_state partial }}
             {{^hascontinuecourses}}
             <div class="airpay-dash__section">
-                <h3 class="airpay-dash__section-title"><i class="fa fa-play-circle" aria-hidden="true"></i> Continue Learning</h3>
+                <h3 class="airpay-dash__section-title"><i class="fa fa-play-circle" aria-hidden="true"></i> {{#str}}dash_continue_learning, theme_sentientia{{/str}}</h3>
                 {{#empty_continue}}
                 {{> theme_sentientia/components/empty_state }}
                 {{/empty_continue}}
@@ -721,7 +721,7 @@
                     Each entry passes layout="timeline" via the data layer. }}
                 {{#hastimeline}}
                 <div class="airpay-dash__section airpay-dash__timeline-section">
-                    <h3 class="airpay-dash__section-title"><i class="fa fa-history" aria-hidden="true"></i> Activity Timeline</h3>
+                    <h3 class="airpay-dash__section-title"><i class="fa fa-history" aria-hidden="true"></i> {{#str}}dash_sec_activity_timeline, theme_sentientia{{/str}}</h3>
                     <ul class="airpay-activity-list">
                         {{#timeline}}
                         <li>{{> theme_sentientia/components/activity_item }}</li>
@@ -734,7 +734,7 @@
             {{! ═══ Recent Achievements ═══ }}
             {{#hasachievements}}
             <div class="airpay-dash__section">
-                <h3 class="airpay-dash__section-title"><i class="fa fa-trophy" aria-hidden="true"></i> Recent Achievements</h3>
+                <h3 class="airpay-dash__section-title"><i class="fa fa-trophy" aria-hidden="true"></i> {{#str}}dash_sec_recent_achievements, theme_sentientia{{/str}}</h3>
                 <div class="airpay-dash__achievements">
                     {{#achievements}}
                     <div class="airpay-dash__achievement">
@@ -755,16 +755,16 @@
             {{! ═══ Recommended for You ═══ }}
             {{#hasrecommendations}}
             <div class="airpay-dash__section">
-                <h3 class="airpay-dash__section-title"><i class="fa fa-star" aria-hidden="true"></i> Recommended for You</h3>
+                <h3 class="airpay-dash__section-title"><i class="fa fa-star" aria-hidden="true"></i> {{#str}}dash_sec_recommended, theme_sentientia{{/str}}</h3>
                 <div class="airpay-dash__recommendations">
                     {{#recommendations}}
                     <a href="{{viewurl}}" class="airpay-dash__rec-card">
                         <div class="airpay-dash__rec-header">
-                            <span class="airpay-dash__rec-category">{{category}}</span>
+                            <span class="airpay-dash__rec-category">{{{category}}}</span>
                         </div>
                         <div class="airpay-dash__rec-body">
                             <h4 class="airpay-dash__rec-title">{{{fullname}}}</h4>
-                            <p class="airpay-dash__rec-summary">{{summary}}</p>
+                            <p class="airpay-dash__rec-summary">{{{summary}}}</p>
                             <span class="airpay-dash__rec-action">{{#str}}dash_explore, theme_sentientia{{/str}} <i class="fa fa-arrow-right" aria-hidden="true"></i></span>
                         </div>
                     </a>
