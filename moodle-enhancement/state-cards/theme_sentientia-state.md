@@ -1,7 +1,7 @@
 # State Card — `theme_airpayux`
 
 **Component:** `theme_airpayux`
-**Version:** `2026090803` / `1.0.52-beta`
+**Version:** `2026090804` / `1.0.52-beta`
 **Maturity:** `MATURITY_BETA`
 **Status:** Live theme on airpay.academy. Standalone fork (`$THEME->parents = []`).
 **Last refreshed:** 2026-09-08 (P3 i18n parity — dashboard body strings via get_string, en+hi 281/281 — integrated onto gap-integration; stale AMD bundles rebuilt the same day)
@@ -434,3 +434,27 @@ Support/Contact were literal English → 19 `login_*` strings. 28 new en+hi keys
 parity 329/329, placeholder sets verified. Known and left: `&amp;` in the
 visually-hidden aria spans of core `block_myoverview` course cards (core markup);
 chart axis months. Deploy pending.
+
+## 2026-09-10 — Admin dashboard: every widget tenant-scoped; compliance widget resurrected; chart months localised; core card aria overrides (theme v2026090804)
+
+Root cause of the long-known "L&D admin tiles over-count by the two ZEEA users"
+and of the ZEEA admin seeing Airpay figures (UAT 2026-09-07 finding): the admin
+branch of `layout/dashboard.php` scoped only the four KPI counts, and did so
+with `open_path LIKE '/1%'` — which also matches `/177…`. Everything else
+(compliance summary, recent activity, top courses, enrolment-trend chart, course
+distribution pie, quick-nav stats, login analytics, system health) was global.
+Now a single `$tenantscope($alias, $tag)` closure yields an exact-or-child
+fragment `(open_path = :Xexact OR open_path LIKE :Xprefix)` with unique param
+names for bare `{user}`/`{course}` queries and for `JOIN {user} u` / `{course} c`
+queries; site admins get `['', []]`. Every widget query now takes it (user-side
+facts join `{user}`, course-side facts join `{course}`). System Health is site
+admins only (`hassystemhealth = !$scopedtenant`). Also: the Compliance Overview
+widget and the quick-nav compliance stats queried `local_sentientia_compl_*`
+tables that never existed (plugin tables are `local_compliance_*`) — they never
+rendered; fixed and scoped. Chart month labels via `userdate('%b')` (Hindi).
+New theme overrides `core_course/coursecard.mustache`,
+`block_myoverview/view-list.mustache`, `view-summary.mustache` (copied from
+Moodle 5.2 core; single change: visually-hidden course name `{{{fullname}}}` —
+core double-escaped it for screen readers; re-diff on every core upgrade).
+Verified by CLI-rendering the layout on the local prod import as an Airpay
+admin, a ZEEA admin and the site admin (see visual-evidence 2026-09-10). Deploy pending.

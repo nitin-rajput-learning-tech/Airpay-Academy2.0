@@ -111,3 +111,9 @@ department â€” bulk PII) is now gated on a dedicated capability
 - `compliance_engine.php:336` — fixed PHP 8 warning: `\->deadline_date` does not exist on `local_compliance_courses` rows (schema has `deadline_days`); now `!empty()`-guarded.
 - Cold-run scale finding recorded in WORKFLOW-TEST-MATRIX (WF-008): `rebuild_snapshot()` sends escalation messages inline per overdue user — thousands of `message_send()` calls on a cold clone; queue/chunk hardening is a follow-up. The 539MB blow-up root cause was the stale-capability debugging-backtrace flood (fixed via repair CLI §2d) + max_allowed_packet=1M local (now 64M).
 
+
+## 2026-09-10 — Filter-bar defaults localised (1.0.1 / 2026091000)
+
+`templates/dashboard.mustache` had literal "All Business Units / All Departments /
+All Sub-Departments / All Entities" option labels → `filter_all_*` strings (en+hi,
+both trees). Template-only + strings; both trees identical. Deploy pending.

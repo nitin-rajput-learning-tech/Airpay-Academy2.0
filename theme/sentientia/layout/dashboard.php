@@ -252,44 +252,51 @@ if (isloggedin() && !isguestuser()) {
         // Siteadmin: global data. L&D admin: scoped to their tenant.
         // ═══════════════════════════════════════════════════════════
         try {
-            // Tenant scoping: L&D admins see only their org's data
-            $tenantfilter_user = '';
-            $tenantfilter_course = '';
-            $tenantparams = [];
-            if ($isldadmin && !empty($USER->open_path)) {
+            // Tenant scoping: L&D admins see only their own tenant tree; site admins
+            // see everything. Exact-or-child match on open_path — the previous
+            // LIKE '/1%' also matched '/177…' (ZEEA), so every Airpay tile over-counted
+            // by the ZEEA users, and most widgets below had no scope at all (UAT
+            // findings 2026-09-07/10). $tenantscope($alias, $tag) returns
+            // [' AND (…)', params] with unique parameter names, so several fragments
+            // can share one query; for site admins it returns ['', []].
+            $scopedtenant = false;
+            $toporg = '';
+            if ($isldadmin && !$issiteadmin && !empty($USER->open_path)) {
                 $parts = explode('/', $USER->open_path);
                 $toporg = '/' . ($parts[1] ?? '');
-                $tenantfilter_user = " AND open_path LIKE :upath";
-                $tenantfilter_course = " AND open_path LIKE :cpath";
-                $tenantparams['upath'] = $toporg . '%';
-                $tenantparams['cpath'] = $toporg . '%';
+                $scopedtenant = ($toporg !== '/');
             }
+            $tenantscope = function (string $alias, string $tag) use ($scopedtenant, $toporg): array {
+                if (!$scopedtenant) {
+                    return ['', []];
+                }
+                $col = ($alias === '') ? 'open_path' : $alias . '.open_path';
+                return [
+                    " AND ({$col} = :{$tag}exact OR {$col} LIKE :{$tag}prefix)",
+                    ["{$tag}exact" => $toporg, "{$tag}prefix" => $toporg . '/%'],
+                ];
+            };
+            [$tenantfilter_user, $tenantparams_user]       = $tenantscope('', 'tu');  // bare {user} queries
+            [$tenantjoin_user, $tenantjoinparams_user]     = $tenantscope('u', 'ju'); // … JOIN {user} u
+            [$tenantfilter_course, $tenantparams_course]   = $tenantscope('', 'tc');  // bare {course} queries
+            [$tenantjoin_course, $tenantjoinparams_course] = $tenantscope('c', 'jc'); // … {course} c
 
             $totalusers = $DB->count_records_select('user',
-                'deleted = 0 AND suspended = 0 AND id > 1' . $tenantfilter_user,
-                array_intersect_key($tenantparams, ['upath' => 1]));
+                'deleted = 0 AND suspended = 0 AND id > 1' . $tenantfilter_user, $tenantparams_user);
             $activeusers = $DB->count_records_select('user',
                 'deleted = 0 AND suspended = 0 AND lastaccess > :cutoff' . $tenantfilter_user,
-                array_merge(['cutoff' => time() - (30 * 86400)], array_intersect_key($tenantparams, ['upath' => 1])));
+                array_merge(['cutoff' => time() - (30 * 86400)], $tenantparams_user));
             $totalcourses = $DB->count_records_select('course',
-                'visible = 1 AND id > 1' . $tenantfilter_course,
-                array_intersect_key($tenantparams, ['cpath' => 1]));
+                'visible = 1 AND id > 1' . $tenantfilter_course, $tenantparams_course);
             // Tenant-scoped enrolments and completions.
-            if (!empty($tenantfilter_user)) {
-                $totalenrolments = $DB->count_records_sql(
-                    "SELECT COUNT(ue.id) FROM {user_enrolments} ue
-                     JOIN {user} u ON u.id = ue.userid
-                     WHERE u.deleted = 0 AND u.open_path LIKE :upath",
-                    ['upath' => ($tenantparams['upath'] ?? '%')]);
-                $totalcompleted = $DB->count_records_sql(
-                    "SELECT COUNT(cc.id) FROM {course_completions} cc
-                     JOIN {user} u ON u.id = cc.userid
-                     WHERE cc.timecompleted IS NOT NULL AND u.deleted = 0 AND u.open_path LIKE :upath",
-                    ['upath' => ($tenantparams['upath'] ?? '%')]);
-            } else {
-                $totalenrolments = $DB->count_records_select('user_enrolments', '1=1');
-                $totalcompleted = $DB->count_records_select('course_completions', 'timecompleted IS NOT NULL');
-            }
+            $totalenrolments = $DB->count_records_sql(
+                "SELECT COUNT(ue.id) FROM {user_enrolments} ue
+                 JOIN {user} u ON u.id = ue.userid
+                 WHERE u.deleted = 0{$tenantjoin_user}", $tenantjoinparams_user);
+            $totalcompleted = $DB->count_records_sql(
+                "SELECT COUNT(cc.id) FROM {course_completions} cc
+                 JOIN {user} u ON u.id = cc.userid
+                 WHERE cc.timecompleted IS NOT NULL AND u.deleted = 0{$tenantjoin_user}", $tenantjoinparams_user);
             $completionrate = ($totalenrolments > 0) ? round(($totalcompleted / $totalenrolments) * 100, 1) : 0;
 
             // Month-over-month trends.
@@ -297,17 +304,12 @@ if (isloggedin() && !isguestuser()) {
             $prevmonth = time() - (60 * 86400);
             $newusersthismonth = $DB->count_records_select('user',
                 'timecreated > :since AND deleted = 0' . $tenantfilter_user,
-                array_merge(['since' => $lastmonth], array_intersect_key($tenantparams, ['upath' => 1])));
-            if (!empty($tenantfilter_user)) {
-                $newenrolmentsthisweek = $DB->count_records_sql(
-                    "SELECT COUNT(ue.id) FROM {user_enrolments} ue
-                     JOIN {user} u ON u.id = ue.userid
-                     WHERE ue.timestart > :since AND u.open_path LIKE :upath",
-                    ['since' => time() - (7 * 86400), 'upath' => ($tenantparams['upath'] ?? '%')]);
-            } else {
-                $newenrolmentsthisweek = $DB->count_records_select('user_enrolments',
-                    'timestart > :since', ['since' => time() - (7 * 86400)]);
-            }
+                array_merge(['since' => $lastmonth], $tenantparams_user));
+            $newenrolmentsthisweek = $DB->count_records_sql(
+                "SELECT COUNT(ue.id) FROM {user_enrolments} ue
+                 JOIN {user} u ON u.id = ue.userid
+                 WHERE ue.timestart > :since{$tenantjoin_user}",
+                array_merge(['since' => time() - (7 * 86400)], $tenantjoinparams_user));
 
             // Show tenant scope label for L&D admins
             if ($isldadmin && !empty($toporg)) {
@@ -327,13 +329,25 @@ if (isloggedin() && !isguestuser()) {
             // ── Compliance Summary ──
             try {
                 $dbman = $DB->get_manager();
-                if ($dbman->table_exists('local_sentientia_compl_courses')) {
-                    $mandatorycount = $DB->count_records('local_sentientia_compl_courses');
-                    $overduecount = $DB->count_records_select('local_sentientia_compl_snapshot',
-                        "status IN ('overdue','critical','escalated')");
-                    $compliantcount = $DB->count_records_select('local_sentientia_compl_snapshot',
-                        "status = 'completed'");
-                    $totalassigned = $DB->count_records('local_sentientia_compl_snapshot');
+                // The plugin's tables are local_compliance_* (db/install.xml); the old
+                // local_sentientia_compl_* names never existed, so this widget never rendered.
+                if ($dbman->table_exists('local_compliance_courses') && $dbman->table_exists('local_compliance_snapshot')) {
+                    $mandatorycount = $DB->count_records_sql(
+                        "SELECT COUNT(cc.id) FROM {local_compliance_courses} cc
+                         JOIN {course} c ON c.id = cc.courseid
+                         WHERE 1=1{$tenantjoin_course}", $tenantjoinparams_course);
+                    $overduecount = $DB->count_records_sql(
+                        "SELECT COUNT(s.id) FROM {local_compliance_snapshot} s
+                         JOIN {user} u ON u.id = s.userid
+                         WHERE s.status = 'overdue'{$tenantjoin_user}", $tenantjoinparams_user);
+                    $compliantcount = $DB->count_records_sql(
+                        "SELECT COUNT(s.id) FROM {local_compliance_snapshot} s
+                         JOIN {user} u ON u.id = s.userid
+                         WHERE s.status = 'completed'{$tenantjoin_user}", $tenantjoinparams_user);
+                    $totalassigned = $DB->count_records_sql(
+                        "SELECT COUNT(s.id) FROM {local_compliance_snapshot} s
+                         JOIN {user} u ON u.id = s.userid
+                         WHERE 1=1{$tenantjoin_user}", $tenantjoinparams_user);
                     $compliancepct = $totalassigned > 0 ? round(($compliantcount / $totalassigned) * 100) : 0;
                     $airpay_dashboard['compliance'] = [
                         'mandatory'   => $mandatorycount,
@@ -367,8 +381,8 @@ if (isloggedin() && !isguestuser()) {
                        FROM {course_completions} cc
                        JOIN {user} u ON u.id = cc.userid
                        JOIN {course} c ON c.id = cc.course
-                      WHERE cc.timecompleted IS NOT NULL AND cc.timecompleted > 0
-                   ORDER BY cc.timecompleted DESC", [], 0, 5);
+                      WHERE cc.timecompleted IS NOT NULL AND cc.timecompleted > 0{$tenantjoin_user}
+                   ORDER BY cc.timecompleted DESC", $tenantjoinparams_user, 0, 5);
                 foreach ($completions as $comp) {
                     $recentactivity[] = [
                         // Phase B0 iter 4 — fields are the activity_item partial's
@@ -389,8 +403,8 @@ if (isloggedin() && !isguestuser()) {
                        JOIN {enrol} e ON e.id = ue.enrolid
                        JOIN {user} u ON u.id = ue.userid
                        JOIN {course} c ON c.id = e.courseid
-                      WHERE ue.timecreated > 0
-                   ORDER BY ue.timecreated DESC", [], 0, 5);
+                      WHERE ue.timecreated > 0{$tenantjoin_user}
+                   ORDER BY ue.timecreated DESC", $tenantjoinparams_user, 0, 5);
                 foreach ($enrolments as $enr) {
                     $recentactivity[] = [
                         'icon'    => 'plus-circle',
@@ -418,9 +432,9 @@ if (isloggedin() && !isguestuser()) {
                        FROM {course} c
                        JOIN {enrol} e ON e.courseid = c.id
                        JOIN {user_enrolments} ue ON ue.enrolid = e.id
-                      WHERE c.visible = 1 AND c.id > 1
+                      WHERE c.visible = 1 AND c.id > 1{$tenantjoin_course}
                    GROUP BY c.id, c.fullname
-                   ORDER BY enrolcount DESC", [], 0, 5);
+                   ORDER BY enrolcount DESC", $tenantjoinparams_course, 0, 5);
                 $airpay_dashboard['topcourses'] = [];
                 foreach ($topcourses as $tc) {
                     $airpay_dashboard['topcourses'][] = [
@@ -441,10 +455,12 @@ if (isloggedin() && !isguestuser()) {
             for ($i = 5; $i >= 0; $i--) {
                 $monthstart = strtotime("-$i months", strtotime('first day of this month'));
                 $monthend = strtotime("+1 month", $monthstart);
-                $monthname = date('M', $monthstart);
-                $count = $DB->count_records_select('user_enrolments',
-                    'timestart >= :start AND timestart < :end',
-                    ['start' => $monthstart, 'end' => $monthend]);
+                $monthname = userdate($monthstart, '%b'); // localised month abbreviation
+                $count = $DB->count_records_sql(
+                    "SELECT COUNT(ue.id) FROM {user_enrolments} ue
+                     JOIN {user} u ON u.id = ue.userid
+                     WHERE ue.timestart >= :start AND ue.timestart < :end{$tenantjoin_user}",
+                    array_merge(['start' => $monthstart, 'end' => $monthend], $tenantjoinparams_user));
                 $chartlabels[] = $monthname;
                 $chartdata[] = $count;
             }
@@ -472,9 +488,9 @@ if (isloggedin() && !isguestuser()) {
                 "SELECT cc.name, COUNT(c.id) as cnt
                    FROM {course} c
                    JOIN {course_categories} cc ON cc.id = c.category
-                  WHERE c.visible = 1 AND c.id > 1
+                  WHERE c.visible = 1 AND c.id > 1{$tenantjoin_course}
                GROUP BY cc.name
-               ORDER BY cnt DESC", [], 0, 5);
+               ORDER BY cnt DESC", $tenantjoinparams_course, 0, 5);
             $pieLabels = [];
             $pieData = [];
             $pieTable = [];
@@ -500,13 +516,8 @@ if (isloggedin() && !isguestuser()) {
             $classroomcount = 0;
             $examcount = 0;
             try {
-                if (!empty($tenantfilter_course)) {
-                    $classroomcount = $DB->count_records_sql(
-                        "SELECT COUNT(*) FROM {local_classroom} WHERE open_path LIKE :p",
-                        ['p' => ($tenantparams['cpath'] ?? '%')]);
-                } else {
-                    $classroomcount = $DB->count_records_select('local_classroom', '1=1');
-                }
+                $classroomcount = $DB->count_records_select('local_classroom',
+                    '1=1' . $tenantfilter_course, $tenantparams_course);
             } catch (Exception $e) {}
             try { $examcount = $DB->count_records('local_onlineexams'); } catch (Exception $e) {}
 
@@ -530,10 +541,14 @@ if (isloggedin() && !isguestuser()) {
                     ['statval' => $classroomcount, 'statlabel' => get_string('kpi_total', 'theme_sentientia')],
                 ]],
                 ['label' => get_string('nav_compliance', 'theme_sentientia'), 'icon' => 'shield', 'url' => (new moodle_url('/local/sentientia_compliance_report/index.php'))->out(false), 'color' => '#16a34a',
-                 'hasstats' => true, 'stats' => (function() use ($DB) {
+                 'hasstats' => true, 'stats' => (function() use ($DB, $tenantjoin_course, $tenantjoinparams_course, $tenantjoin_user, $tenantjoinparams_user) {
                     try {
-                        $mandatory = $DB->count_records('local_sentientia_compl_courses');
-                        $overdue = $DB->count_records_select('local_sentientia_compl_snapshot', "status IN ('overdue','critical','escalated')");
+                        $mandatory = $DB->count_records_sql(
+                            "SELECT COUNT(cc.id) FROM {local_compliance_courses} cc
+                             JOIN {course} c ON c.id = cc.courseid WHERE 1=1{$tenantjoin_course}", $tenantjoinparams_course);
+                        $overdue = $DB->count_records_sql(
+                            "SELECT COUNT(s.id) FROM {local_compliance_snapshot} s
+                             JOIN {user} u ON u.id = s.userid WHERE s.status = 'overdue'{$tenantjoin_user}", $tenantjoinparams_user);
                         return [
                             ['statval' => $mandatory, 'statlabel' => get_string('kpi_mandatory', 'theme_sentientia')],
                             ['statval' => $overdue, 'statlabel' => get_string('kpi_overdue', 'theme_sentientia')],
@@ -541,9 +556,11 @@ if (isloggedin() && !isguestuser()) {
                     } catch (Exception $e) { return []; }
                  })()],
                 ['label' => get_string('dash_qa_privacy_dpdp', 'theme_sentientia'), 'icon' => 'lock', 'url' => (new moodle_url('/local/sentientia_privacy/index.php'))->out(false), 'color' => '#6d58a5',
-                 'hasstats' => true, 'stats' => (function() use ($DB) {
+                 'hasstats' => true, 'stats' => (function() use ($DB, $tenantjoin_user, $tenantjoinparams_user) {
                     try {
-                        $pending = $DB->count_records('local_privacy_requests', ['status' => 'pending']);
+                        $pending = $DB->count_records_sql(
+                            "SELECT COUNT(r.id) FROM {local_privacy_requests} r
+                             JOIN {user} u ON u.id = r.userid WHERE r.status = 'pending'{$tenantjoin_user}", $tenantjoinparams_user);
                         return [['statval' => $pending, 'statlabel' => get_string('kpi_pending', 'theme_sentientia')]];
                     } catch (Exception $e) { return []; }
                  })()],
@@ -569,22 +586,27 @@ if (isloggedin() && !isguestuser()) {
                 ['label' => get_string('dash_sys_php_version', 'theme_sentientia'), 'value' => phpversion(),
                  'icon' => 'code', 'status' => 'ok'],
             ];
-            $airpay_dashboard['hassystemhealth'] = true;
+            $airpay_dashboard['hassystemhealth'] = !$scopedtenant; // site-level facts: site admins only
 
             // --- User Analytics ---
-            $loginstoday = $DB->count_records_select('logstore_standard_log',
-                "eventname = '\\\\core\\\\event\\\\user_loggedin' AND timecreated > :today",
-                ['today' => strtotime('today')]);
-            $loginsweek = $DB->count_records_select('logstore_standard_log',
-                "eventname = '\\\\core\\\\event\\\\user_loggedin' AND timecreated > :week",
-                ['week' => time() - (7 * 86400)]);
+            $loginstoday = $DB->count_records_sql(
+                "SELECT COUNT(l.id) FROM {logstore_standard_log} l
+                 JOIN {user} u ON u.id = l.userid
+                 WHERE l.eventname = :evt AND l.timecreated > :today{$tenantjoin_user}",
+                array_merge(['evt' => '\\core\\event\\user_loggedin', 'today' => strtotime('today')], $tenantjoinparams_user));
+            $loginsweek = $DB->count_records_sql(
+                "SELECT COUNT(l.id) FROM {logstore_standard_log} l
+                 JOIN {user} u ON u.id = l.userid
+                 WHERE l.eventname = :evt AND l.timecreated > :week{$tenantjoin_user}",
+                array_merge(['evt' => '\\core\\event\\user_loggedin', 'week' => time() - (7 * 86400)], $tenantjoinparams_user));
             $newusersweek = $DB->count_records_select('user',
-                'timecreated > :week AND deleted = 0', ['week' => time() - (7 * 86400)]);
+                'timecreated > :week AND deleted = 0' . $tenantfilter_user,
+                array_merge(['week' => time() - (7 * 86400)], $tenantparams_user));
             $neverloggedin = $DB->count_records_select('user',
-                'lastlogin = 0 AND deleted = 0 AND suspended = 0 AND id > 1');
+                'lastlogin = 0 AND deleted = 0 AND suspended = 0 AND id > 1' . $tenantfilter_user, $tenantparams_user);
             $inactive30 = $DB->count_records_select('user',
-                'lastaccess > 0 AND lastaccess < :cutoff AND deleted = 0 AND suspended = 0',
-                ['cutoff' => time() - (30 * 86400)]);
+                'lastaccess > 0 AND lastaccess < :cutoff AND deleted = 0 AND suspended = 0' . $tenantfilter_user,
+                array_merge(['cutoff' => time() - (30 * 86400)], $tenantparams_user));
 
             // Phase B0 iter 8 — converted from hex `color` to semantic
             // `color` strings so the useranalytics tiles can use the

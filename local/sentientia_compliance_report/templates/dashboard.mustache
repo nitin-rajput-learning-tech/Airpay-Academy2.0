@@ -27,7 +27,7 @@
         <span style="font-size:13px; font-weight:600; color:#5a6070;"><i class="fa fa-filter"></i> Filter:</span>
         {{#has_bus}}
         <select onchange="applyFilter('bu', this.value)" style="padding:6px 12px; border:1px solid #e2e6ef; border-radius:8px; font-size:13px; font-family:inherit;">
-            <option value="0">All Business Units</option>
+            <option value="0">{{#str}}filter_all_business_units, local_sentientia_compliance_report{{/str}}</option>
             {{#filter_bus}}
             <option value="{{id}}" {{#selected}}selected{{/selected}}>{{name}} ({{user_count}})</option>
             {{/filter_bus}}
@@ -35,7 +35,7 @@
         {{/has_bus}}
         {{#has_depts}}
         <select onchange="applyFilter('dept', this.value)" style="padding:6px 12px; border:1px solid #e2e6ef; border-radius:8px; font-size:13px; font-family:inherit;">
-            <option value="0">All Departments</option>
+            <option value="0">{{#str}}filter_all_departments, local_sentientia_compliance_report{{/str}}</option>
             {{#filter_depts}}
             <option value="{{id}}" {{#selected}}selected{{/selected}}>{{name}} ({{user_count}})</option>
             {{/filter_depts}}
@@ -43,7 +43,7 @@
         {{/has_depts}}
         {{#has_subdepts}}
         <select onchange="applyFilter('subdept', this.value)" style="padding:6px 12px; border:1px solid #e2e6ef; border-radius:8px; font-size:13px; font-family:inherit;">
-            <option value="0">All Sub-Departments</option>
+            <option value="0">{{#str}}filter_all_subdepartments, local_sentientia_compliance_report{{/str}}</option>
             {{#filter_subdepts}}
             <option value="{{id}}" {{#selected}}selected{{/selected}}>{{name}} ({{user_count}})</option>
             {{/filter_subdepts}}
@@ -202,7 +202,7 @@
                     {{/allcourses}}
                 </select>
                 <select name="entityid" style="flex:1; padding:6px 10px; border:1px solid #e2e6ef; border-radius:6px; font-size:13px; font-family:inherit;">
-                    <option value="0">All Entities</option>
+                    <option value="0">{{#str}}filter_all_entities, local_sentientia_compliance_report{{/str}}</option>
                     {{#filter_bus}}
                     <option value="{{id}}">{{name}}</option>
                     {{/filter_bus}}

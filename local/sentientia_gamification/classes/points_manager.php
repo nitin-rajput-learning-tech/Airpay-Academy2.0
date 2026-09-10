@@ -104,11 +104,11 @@ class points_manager {
      */
     public static function get_level(int $totalpoints): array {
         $levels = [
-            ['level' => 1, 'name' => 'Beginner',    'min' => 0,     'max' => 499,   'color' => '#6b7280'],
-            ['level' => 2, 'name' => 'Learner',     'min' => 500,   'max' => 1499,  'color' => '#0066A7'],
-            ['level' => 3, 'name' => 'Achiever',    'min' => 1500,  'max' => 3999,  'color' => '#1985DD'],
-            ['level' => 4, 'name' => 'Expert',      'min' => 4000,  'max' => 9999,  'color' => '#6d58a5'],
-            ['level' => 5, 'name' => 'Master',      'min' => 10000, 'max' => 999999,'color' => '#d97706'],
+            ['level' => 1, 'name' => get_string('level_beginner', 'local_sentientia_gamification'),    'min' => 0,     'max' => 499,   'color' => '#6b7280'],
+            ['level' => 2, 'name' => get_string('level_learner', 'local_sentientia_gamification'),     'min' => 500,   'max' => 1499,  'color' => '#0066A7'],
+            ['level' => 3, 'name' => get_string('level_achiever', 'local_sentientia_gamification'),    'min' => 1500,  'max' => 3999,  'color' => '#1985DD'],
+            ['level' => 4, 'name' => get_string('level_expert', 'local_sentientia_gamification'),      'min' => 4000,  'max' => 9999,  'color' => '#6d58a5'],
+            ['level' => 5, 'name' => get_string('level_master', 'local_sentientia_gamification'),      'min' => 10000, 'max' => 999999,'color' => '#d97706'],
         ];
 
         foreach ($levels as $l) {

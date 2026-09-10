@@ -150,3 +150,12 @@ uses `#[CoversClass]` attributes and adds none.
 Initial state card. Plugin has been live for many phases; created now
 as part of the P1 state-card pass. The `leaderboard.php` class is
 legacy — new code should use `local_sentientia_leaderboard`.
+
+## 2026-09-10 — Level names via lang strings (1.0.3-beta / 2026091000)
+
+`points_manager::get_level()` returned hardcoded English level names
+("Beginner"… "Master") so the dashboard gamification card and the leaderboard
+showed English under Hindi even though `level_beginner…level_master` strings
+already existed in en + hi. The table now reads `get_string('level_*',
+'local_sentientia_gamification')`; consumers (`leaderboard::…['level_name']`,
+theme dashboard) unchanged. Both trees identical. Deploy pending.

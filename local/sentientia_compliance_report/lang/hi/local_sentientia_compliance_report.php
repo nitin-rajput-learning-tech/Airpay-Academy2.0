@@ -37,3 +37,9 @@ $string['addcourse'] = 'अनिवार्य पाठ्यक्रम ज
 $string['exemptuser'] = 'उपयोगकर्ता को छूट दें';
 $string['nodata'] = 'कोई अनुपालन डेटा उपलब्ध नहीं है। पहले स्नैपशॉट कार्य चलाएं।';
 $string['lastrefreshed'] = 'अंतिम बार ताज़ा किया गया';
+
+// 2026-09-10 — filter bar defaults (were literal English).
+$string['filter_all_business_units'] = 'सभी बिज़नेस यूनिट';
+$string['filter_all_departments'] = 'सभी विभाग';
+$string['filter_all_subdepartments'] = 'सभी उप-विभाग';
+$string['filter_all_entities'] = 'सभी एंटिटी';

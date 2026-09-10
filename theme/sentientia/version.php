@@ -412,7 +412,7 @@ defined('MOODLE_INTERNAL') || die();
 // ?lang=hi. All now route through get_string(): 54 new en+hi pairs
 // (parity 281/281), 5 quick-action tiles reuse nav_*, kpi_overdue reused.
 // No layout / markup / data-shape change. Bump refreshes the string cache.
-$plugin->version   = 2026090803;  // last dashboard headings + activity lines via get_string (unescaped course names) + rec-card slots + login page copy localised (en+hi)
+$plugin->version   = 2026090804;  // admin dashboard: exact-or-child tenant scope on EVERY widget (was LIKE /1% and several unscoped), compliance widget table names fixed, localised chart months, system health = site admins only, core card aria overrides
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_sentientia';
 $plugin->maturity  = MATURITY_BETA;

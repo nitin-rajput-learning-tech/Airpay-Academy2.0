@@ -48,3 +48,9 @@ $string['addcourse'] = 'Add Mandatory Course';
 $string['exemptuser'] = 'Exempt User';
 $string['nodata'] = 'No compliance data available. Run the snapshot task first.';
 $string['lastrefreshed'] = 'Last refreshed';
+
+// 2026-09-10 — filter bar defaults (were literal English).
+$string['filter_all_business_units'] = 'All Business Units';
+$string['filter_all_departments'] = 'All Departments';
+$string['filter_all_subdepartments'] = 'All Sub-Departments';
+$string['filter_all_entities'] = 'All Entities';
