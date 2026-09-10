@@ -140,3 +140,28 @@ content_market / learningpath). Overlay re-run from the current webroot (AMD gat
   name/size/hash (11 pp, validated). The 2026-06-19 zip is renamed `.superseded` on disk — share only
   the 2026-08-03 pair. P5 gates unchanged (no local PHP 8.3 — `.tools/php84` is a stub; prod MySQL 8.4
   + PHP 8.3 with IT).
+
+### Package refresh — 2026-09-10 (post-UAT-hardening build)
+
+Rebuilt after the 2026-09-08/10 UAT hardening run (T-01 author role, stale AMD bundles, dashboard
+Hindi parity + F-12 residue, tenant-scoped Manage Courses and admin dashboard widgets, org-cascade
+filter i18n, gamification level names, compliance filter defaults, deployer drift protection).
+Recipe now scripted in **`tools/packaging/build-5.2-standalone.sh`**: sync repo → XAMPP webroot
+(plugins from the `moodle-enhancement/` tree — the tree UAT runs; theme from the repo top level),
+`overlay-airpay-customs.ps1` XAMPP → `moodle5.2/` (65,437 files), then **bsdtar** zip with deflate.
+
+- **`dist/Sentientia-LMS-5.2-Complete-Standalone-2026-09-10.zip`** — 65,588 files · 162 MB
+  (169,961,264 bytes) · SHA-256 `775ac46550f102f4656750a7692ef26157720ca33610f470a0162412fb65f170` ·
+  from `claude/gap-integration` @ `35cd2a48b`, tag `v4.2.0-sentientia-5.2-package-2026-09-10`.
+  Layout unchanged (`DEPLOY-README.txt` + `moodle5.2/…`); `config.php` (root **and** `public/`),
+  `node_modules`, `_stale-*`, `*.log` excluded.
+- **Two packaging findings:** (1) the 2026-08-03 zip *did* contain `moodle5.2/public/config.php`
+  (dev XAMPP DB creds) and the `_stale-*` dirs despite the note above — excluded for real now;
+  (2) Git Bash's GNU `tar -a -cf x.zip` writes a plain uncompressed tar named `.zip` (519 MB) —
+  the script pins `C:/Windows/System32/tar.exe` (bsdtar) with `--options zip:compression=deflate`.
+- Layer versions inside: theme_sentientia 2026090804 / 1.0.52-beta, local_sentientia_courses
+  2026090800 (1.11.4), local_sentientia_org 2026052002 (1.4.2, ME tree), authoring/skillsai
+  2026090700, gamification 2026091000 (1.0.3-beta), compliance_report 2026091000 (1.0.1).
+- Guidebook PDF not regenerated (no generator in repo); its cover still names the 08-05 build.
+- The 2026-08-03 zip remains `.superseded` on disk; the 08-05 zip lives outside the repo (IT/OneDrive).
+

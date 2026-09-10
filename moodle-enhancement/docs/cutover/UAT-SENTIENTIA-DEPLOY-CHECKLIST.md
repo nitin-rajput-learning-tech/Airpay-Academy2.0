@@ -17,7 +17,7 @@ by Jitesh Divekar after Matt/Priyanka sign-off). This checklist binds the generi
 | PHP | 8.3.6 ✅ (meets the Moodle 5.2 hard gate) |
 | RDS | `lms-sentientia-UAT-db`, **MySQL 8.4.9 ✅** (hard gate met), encrypted, db.t3.small, 10–20 GB, autoscaling off |
 | RDS endpoint | `lms-sentientia-uat-db.crpst4qn6rtu.ap-south-1.rds.amazonaws.com` |
-| Package | `Sentientia-LMS-5.2-Complete-Standalone-2026-08-05.zip` — SHA-256 `90ff72fd14e1a990af68f343a1198ea4d7908a9f1d8ac5101c55c4295b046af1` (verify after download; printed on the guidebook cover) |
+| Package | **`Sentientia-LMS-5.2-Complete-Standalone-2026-09-10.zip`** — SHA-256 `775ac46550f102f4656750a7692ef26157720ca33610f470a0162412fb65f170` · 169,961,264 bytes · 65,588 files · built 2026-09-10 from `claude/gap-integration` @ `35cd2a48b` (tag `v4.2.0-sentientia-5.2-package-2026-09-10`) via `tools/packaging/build-5.2-standalone.sh`; verify after download. Supersedes `Sentientia-LMS-5.2-Complete-Standalone-2026-08-05.zip` (SHA-256 `90ff72fd…46af1`), which UAT was installed from on 2026-09-03 — UAT has since received every change by surgical deploy, so upgrading UAT from this zip only brings theme 2026090804 / gamification 1.0.3 / compliance_report 1.0.1 (pending). The guidebook PDF cover still shows the 08-05 name/hash. |
 
 ## 0. Blockers Cloud.in is waiting on US for
 
