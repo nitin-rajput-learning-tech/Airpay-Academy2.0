@@ -32,11 +32,14 @@
         <span class="airpay-footer__copy">{{#str}}footer_copyright, theme_sentientia{{/str}}</span>
     </div>
 
-    {{! Product attribution + GPL licence per ADR-001 §Trademark cleanup. }}
+    {{! Product attribution band. 2026-09-16 (Nitin): the "Licensed under GPL v3"
+        badge is replaced by the customer's private/confidential notice — the
+        platform is a private deployment for Airpay. The GPL notices themselves
+        stay where the licence requires them (source headers, admin release page). }}
     <div class="airpay-footer__product-attribution">
         <span class="airpay-footer__product-attribution-brand">Sentientia LMS</span>
         <span class="airpay-footer__product-attribution-sep" aria-hidden="true">·</span>
-        <span class="airpay-footer__product-attribution-licence">Licensed under GPL v3</span>
+        <span class="airpay-footer__product-attribution-licence">{{#str}}footer_private_notice, theme_sentientia{{/str}}</span>
     </div>
 
     {{! Standard footer/end-of-body output — MUST be before </body> }}

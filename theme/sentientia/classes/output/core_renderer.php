@@ -217,9 +217,11 @@ class core_renderer extends \core_renderer {
      * 2026-05-22 — added the Moodle-string scrub. Per ADR-001, the
      * product is Sentientia LMS — visible mentions of "Moodle" leak
      * the underlying engine which the customer (Airpay) hasn't asked
-     * to surface. GPL §5 attribution is satisfied by the persistent
-     * "Licensed under GPL v3" badge in the airpay-footer__product-
-     * attribution band (footer.mustache:52-59).
+     * to surface. 2026-09-16 (Nitin): the footer's "Licensed under GPL v3"
+     * badge became the customer's private/confidential notice
+     * (footer_private_notice). GPL attribution lives where the licence
+     * requires it — the source-file headers and Moodle's admin release page —
+     * not in the end-user footer.
      */
     public function standard_footer_html() {
         $tenant_footer = '';

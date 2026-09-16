@@ -101,6 +101,8 @@ Moodle is GPL v3. Sentientia LMS:
 - Must remove all "Moodle" branding per Moodle Trademark Policy
 - May call out the open-source foundation transparently in marketing (industry-standard practice)
 
+**Addendum 2026-09-16 (Nitin's call):** the end-user footer no longer shows the "Licensed under GPL v3" badge; it carries the customer's private/confidential notice (`theme_sentientia` string `footer_private_notice`, per-customer wording). This changes UI wording only — Moodle core and the Sentientia layer remain GPL v3, the licence headers stay in every source file, Moodle's own admin release notice is untouched, and the redistribution constraints above are unchanged (private/SaaS use triggers no source-distribution duty; an on-premise sale still would).
+
 ### 6. IP ownership
 
 - Primary codebase: `nitin-rajput-learning-tech/Airpay-Academy2.0` (production branch) — Airpay-owned

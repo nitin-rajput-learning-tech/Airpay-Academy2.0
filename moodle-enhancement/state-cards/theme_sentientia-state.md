@@ -458,3 +458,17 @@ Moodle 5.2 core; single change: visually-hidden course name `{{{fullname}}}` —
 core double-escaped it for screen readers; re-diff on every core upgrade).
 Verified by CLI-rendering the layout on the local prod import as an Airpay
 admin, a ZEEA admin and the site admin (see visual-evidence 2026-09-10). Deploy pending.
+
+## 2026-09-16 — Screen check PASS; footer private notice; sidebar strings; scoped subtitle (theme v2026090805)
+
+- On-screen check of 2026090803/04 on UAT: 10/10 PASS (Meera / Juma / Priya / guest login) — see
+  `docs/visual-evidence/2026-09-16/uat-screen-check-2026090804/README.md`.
+- `templates/footer.mustache`: the hardcoded "Licensed under GPL v3" badge → `{{#str}}footer_private_notice{{/str}}`
+  ("Private & confidential · For authorised users of Airpay Payment Services Pvt. Ltd. and Airpay Academy only",
+  en+hi) at Nitin's request. UI wording only — the code stays GPL v3 (source headers, Moodle admin release page);
+  `core_renderer::standard_footer_html()` docblock updated, ADR-001 §5 addendum.
+- `templates/sidebar.mustache`: "Toggle theme" / "Dark Mode" / "Profile & Settings" literals → `dash_toggle_theme`
+  (new), `dash_dark_mode_label`, `dash_profile_settings` (the compliance page showed the English literal under Hindi).
+- `templates/dashboard.mustache`: admin subtitle switches on `hassystemhealth` — tenant-scoped admins get
+  `subtitle_admin_scoped` ("Organisation overview and learning health") since System Health is site-admin-only.
+- Lang parity 332/332, placeholders match. Deploy pending (next tunnel window).

@@ -77,26 +77,26 @@ if ($action && confirm_sesskey()) {
             $days = optional_param('days', 30, PARAM_INT);
             $engine_cls::add_compliance_course($courseid, $entityid, $days);
             redirect(new moodle_url('/local/sentientia_compliance_report/index.php', ['tab' => 'config']),
-                'Course added to compliance tracking.', null, \core\output\notification::NOTIFY_SUCCESS);
+                get_string('msg_course_added', 'local_sentientia_compliance_report'), null, \core\output\notification::NOTIFY_SUCCESS);
             break;
         case 'removecourse':
             $id = required_param('id', PARAM_INT);
             $engine_cls::remove_compliance_course($id);
             redirect(new moodle_url('/local/sentientia_compliance_report/index.php', ['tab' => 'config']),
-                'Course removed from tracking.', null, \core\output\notification::NOTIFY_WARNING);
+                get_string('msg_course_removed', 'local_sentientia_compliance_report'), null, \core\output\notification::NOTIFY_WARNING);
             break;
         case 'exclude':
             $excludeid = required_param('userid', PARAM_INT);
             $reason = optional_param('reason', 'Operations exclusion', PARAM_TEXT);
             $engine_cls::exclude_user($excludeid, $reason);
             redirect(new moodle_url('/local/sentientia_compliance_report/index.php', ['tab' => 'config']),
-                'User excluded from tracking.', null, \core\output\notification::NOTIFY_SUCCESS);
+                get_string('msg_user_excluded', 'local_sentientia_compliance_report'), null, \core\output\notification::NOTIFY_SUCCESS);
             break;
         case 'include':
             $includeid = required_param('userid', PARAM_INT);
             $engine_cls::include_user($includeid);
             redirect(new moodle_url('/local/sentientia_compliance_report/index.php', ['tab' => 'config']),
-                'User re-included in tracking.', null, \core\output\notification::NOTIFY_SUCCESS);
+                get_string('msg_user_included', 'local_sentientia_compliance_report'), null, \core\output\notification::NOTIFY_SUCCESS);
             break;
     }
 }
@@ -106,6 +106,12 @@ $orgpath = '';
 if (!is_siteadmin()) {
     $orgpath = \local_sentientia_org\tenant_manager::get_tenant_path();
 }
+
+// A scoped admin may only drill down INSIDE their own tenant. The BU dropdown
+// never offers another root org, but a hand-edited ?bu= used to widen the
+// report to that tenant's people (2026-09-16 UAT finding).
+[$bu, $dept, $subdept] = \local_sentientia_compliance_report\compliance_engine::clamp_filter_to_tenant(
+    $orgpath, $bu, $dept, $subdept);
 
 // Build filter path from BU/Dept/SubDept dropdowns.
 $filterpath = $orgpath;
@@ -150,19 +156,19 @@ $is_healthy      = $compliance_rate >= 80;  // matches the legacy is_healthy gat
 $overdue_count   = (int) ($kpis['overdue'] ?? 0);
 $kpi_tiles = [
     [
-        'label' => 'Compliance Rate',
+        'label' => get_string('compliancerate', 'local_sentientia_compliance_report'),
         'value' => $compliance_rate . '%',
         'icon'  => $is_healthy ? 'check-circle' : 'exclamation-circle',
         'color' => $is_healthy ? 'success' : 'warning',
     ],
     [
-        'label' => 'Completed',
+        'label' => get_string('status_completed', 'local_sentientia_compliance_report'),
         'value' => number_format((int) ($kpis['completed'] ?? 0)),
         'icon'  => 'graduation-cap',
         'color' => 'success',
     ],
     [
-        'label' => 'Overdue',
+        'label' => get_string('overduecount', 'local_sentientia_compliance_report'),
         'value' => number_format($overdue_count),
         'icon'  => 'exclamation-triangle',
         // Overdue tile is danger when there ARE overdue items, primary
@@ -170,13 +176,13 @@ $kpi_tiles = [
         'color' => $overdue_count > 0 ? 'danger' : 'primary',
     ],
     [
-        'label' => 'Not Enrolled',
+        'label' => get_string('notenrolledcount', 'local_sentientia_compliance_report'),
         'value' => number_format((int) ($kpis['not_enrolled'] ?? 0)),
         'icon'  => 'user-times',
         'color' => 'warning',
     ],
     [
-        'label' => 'Exempted',
+        'label' => get_string('status_exempted', 'local_sentientia_compliance_report'),
         'value' => number_format((int) ($kpis['exempted'] ?? 0)),
         'icon'  => 'shield',
         'color' => 'info',

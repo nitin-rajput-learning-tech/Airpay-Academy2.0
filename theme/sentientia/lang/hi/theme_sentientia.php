@@ -185,11 +185,13 @@ $string['footer_terms']     = 'नियम और शर्तें';
 $string['footer_help']      = 'मदद';
 $string['footer_contact']   = 'संपर्क';
 $string['footer_copyright'] = '&copy; 2026 एयरपे पेमेंट सर्विसेस प्रा. लि.';
+$string['footer_private_notice'] = 'निजी और गोपनीय &middot; केवल एयरपे पेमेंट सर्विसेस प्रा. लि. और Airpay Academy के अधिकृत यूज़र्स के लिए';
 
 // F-13 (Platform Visual Audit 2026-05-24, chip-G) — डैशबोर्ड वेलकम बैनर,
 // चार्ट हेडिंग और कम्प्लायंस KPI लेबल्स। {$a} = यूज़र का फ़र्स्ट नेम।
 $string['welcome_back_admin']      = 'फिर से स्वागत है, {$a}';
 $string['subtitle_admin']          = 'प्लेटफ़ॉर्म ओवरव्यू और सिस्टम हेल्थ';
+$string['subtitle_admin_scoped']   = 'संगठन ओवरव्यू और लर्निंग हेल्थ';
 $string['welcome_manager']         = 'स्वागत है, {$a}';
 $string['subtitle_manager']        = 'टीम ओवरव्यू और कम्प्लायंस स्टेटस';
 $string['welcome_learner']         = 'फिर से स्वागत है, {$a}!';
@@ -203,6 +205,7 @@ $string['kpi_total_assigned']      = 'टोटल असाइन्ड';
 
 // B10/F-065 dash i18n (2026-05-28)
 $string['dash_dark_mode_label']    = 'डार्क मोड';
+$string['dash_toggle_theme']           = 'थीम बदलें';
 $string['dash_profile_settings']   = 'प्रोफ़ाइल और सेटिंग्स';
 $string['dash_overall_completion'] = 'कुल पूर्णता';
 $string['dash_continue_learning']  = 'सीखना जारी रखें';

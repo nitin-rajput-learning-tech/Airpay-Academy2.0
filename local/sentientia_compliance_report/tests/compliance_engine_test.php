@@ -43,7 +43,7 @@ final class compliance_engine_test extends \advanced_testcase {
     /**
      * Insert a row into local_compliance_courses (mandatory course list).
      */
-    private function add_mandatory_course(int $courseid, string $name, int $sort = 1): void {
+    private function add_mandatory_course(int $courseid, string $name, int $sort = 1, int $costcenterid = 0): void {
         global $DB;
         if (!$DB->get_manager()->table_exists('local_compliance_courses')) {
             $this->markTestSkipped('local_compliance_courses table not present.');
@@ -51,6 +51,7 @@ final class compliance_engine_test extends \advanced_testcase {
         $DB->insert_record_raw('local_compliance_courses', (object)[
             'courseid' => $courseid,
             'coursename' => $name,
+            'costcenterid' => $costcenterid,
             'is_active' => 1,
             'sort_order' => $sort,
             'timecreated' => time(),
@@ -198,5 +199,124 @@ final class compliance_engine_test extends \advanced_testcase {
         $this->assertSame('open', $course['status']);
         $this->assertNotEmpty($course['deadline'],
             'snapshot with deadline_date should render formatted date');
+    }
+
+    /**
+     * 1.0.2 (UAT 2026-09-16): course columns follow the scope's tenant —
+     * global courses (costcenterid 0) plus the tenant's own pinned courses.
+     * Another tenant's mandatory course must NOT appear as an empty
+     * "Not Enrolled" column (ZEEA's Tanzania course showed up for Airpay).
+     */
+    public function test_matrix_columns_are_tenant_scoped(): void {
+        $this->resetAfterTest();
+        $this->ensure_bizlms_schema();
+
+        $u1 = $this->user_at_path('/1', 'A1');
+        $this->add_mandatory_course(5001, 'Global policy', 1, 0);
+        $this->add_mandatory_course(5002, 'Airpay POSH', 2, 1);
+        $this->add_mandatory_course(5003, 'ZEEA conduct (TZ)', 3, 177);
+        $this->add_snapshot($u1->id, 5001, '/1', 'completed');
+
+        $scoped = compliance_engine::get_compliance_matrix('/1');
+        $this->assertSame([5001, 5002],
+            array_map('intval', array_column($scoped['courses'], 'courseid')),
+            'Airpay scope must list global + Airpay-pinned courses only');
+        $this->assertCount(2, $scoped['rows'][0]['courses']);
+
+        $zeea = compliance_engine::get_compliance_matrix('/177');
+        $this->assertSame([5001, 5003],
+            array_map('intval', array_column($zeea['courses'], 'courseid')));
+
+        $global = compliance_engine::get_compliance_matrix('');
+        $this->assertSame([5001, 5002, 5003],
+            array_map('intval', array_column($global['courses'], 'courseid')),
+            'site admins (empty scope) keep every active course');
+    }
+
+    /**
+     * 1.0.2: tenant id parsing + scope-aware course list on their own.
+     */
+    public function test_tenant_id_from_path(): void {
+        $this->assertSame(0, compliance_engine::tenant_id_from_path(''));
+        $this->assertSame(1, compliance_engine::tenant_id_from_path('/1'));
+        $this->assertSame(1, compliance_engine::tenant_id_from_path('/1/2/3'));
+        $this->assertSame(177, compliance_engine::tenant_id_from_path('/177/178'));
+    }
+
+    /**
+     * 1.0.2: a scoped admin's ?bu= drill-down is clamped to their own tenant;
+     * a foreign BU resets the whole drill-down. Site admins are untouched.
+     */
+    public function test_clamp_filter_to_tenant(): void {
+        // Own tenant — kept, including deeper levels.
+        $this->assertSame([1, 5, 9], compliance_engine::clamp_filter_to_tenant('/1', 1, 5, 9));
+        // No BU chosen — kept.
+        $this->assertSame([0, 0, 0], compliance_engine::clamp_filter_to_tenant('/1', 0, 0, 0));
+        // Foreign BU (hand-edited URL) — reset to "all of my tenant".
+        $this->assertSame([0, 0, 0], compliance_engine::clamp_filter_to_tenant('/1', 177, 178, 0));
+        // Prefix look-alike is still foreign.
+        $this->assertSame([0, 0, 0], compliance_engine::clamp_filter_to_tenant('/1', 10, 0, 0));
+        // Site admin — anything goes.
+        $this->assertSame([177, 178, 0], compliance_engine::clamp_filter_to_tenant('', 177, 178, 0));
+    }
+
+    /**
+     * 1.0.2: status labels come from the lang pack (Hindi parity), unknown
+     * statuses fall back to ucfirst.
+     */
+    public function test_status_label_is_localised(): void {
+        $this->assertSame(get_string('status_completed', 'local_sentientia_compliance_report'),
+            compliance_engine::status_label('completed'));
+        $this->assertSame(get_string('status_not_enrolled', 'local_sentientia_compliance_report'),
+            compliance_engine::status_label('not_enrolled'));
+        $this->assertSame('Open', compliance_engine::status_label('open'));
+    }
+
+    /**
+     * Insert a root org row with a fixed id (fills every NOT NULL column the
+     * schema may carry so the test survives install.xml changes).
+     */
+    private function add_root_org(int $id, string $name): void {
+        global $DB;
+        if (!$DB->get_manager()->table_exists('local_sentientia_org')) {
+            $this->markTestSkipped('local_sentientia_org table not present.');
+        }
+        $rec = ['id' => $id, 'fullname' => $name, 'shortname' => 'ORG' . $id,
+                'parentid' => 0, 'path' => '/' . $id, 'depth' => 1, 'visible' => 1];
+        foreach ($DB->get_columns('local_sentientia_org') as $col) {
+            if (isset($rec[$col->name]) || !$col->not_null || $col->has_default) {
+                continue;
+            }
+            $rec[$col->name] = ($col->meta_type === 'C' || $col->meta_type === 'X') ? '' : 0;
+        }
+        $DB->insert_record_raw('local_sentientia_org', (object) $rec, true, false, true);
+    }
+
+    /**
+     * 1.0.2 (UAT 2026-09-16): the Business Unit list for a scoped admin is
+     * /-bounded. `LIKE '/1%'` also matched /10 and /177, which is how ZEEA
+     * appeared in the Airpay admin's filter (and its people in the counts).
+     */
+    public function test_hierarchy_level_one_is_slash_bounded(): void {
+        $this->resetAfterTest();
+        $this->ensure_bizlms_schema();
+
+        $this->add_root_org(1, 'Airpay');
+        $this->add_root_org(10, 'Ten');
+        $this->add_root_org(177, 'ZEEA');
+        $this->user_at_path('/1');
+        $this->user_at_path('/1/2');
+        $this->user_at_path('/10/3');
+        $this->user_at_path('/177/178');
+
+        $scoped = compliance_engine::get_org_hierarchy_level(1, '/1');
+        $this->assertSame([1], array_column($scoped, 'id'),
+            'scope /1 must list only BU 1 (not /10 or /177)');
+        $this->assertSame(2, $scoped[0]['user_count']);
+
+        $all = compliance_engine::get_org_hierarchy_level(1, '');
+        $ids = array_column($all, 'id');
+        sort($ids);
+        $this->assertSame([1, 10, 177], $ids, 'site admins (empty scope) see every BU');
     }
 }

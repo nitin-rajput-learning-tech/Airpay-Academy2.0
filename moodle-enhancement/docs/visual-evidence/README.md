@@ -135,3 +135,6 @@ Auto-generated 2026-09-08 (`tools`-free: a one-off Python listing of every sessi
 | 2026-09-04 | `2026-09-04/` | (no README — 0 capture file(s)) |
 | 2026-09-08 | `2026-09-08/uat-author-t01/` | 2026-09-08 — UAT visual check: course author gets the authoring nav (T-01) |
 | 2026-09-08 | `2026-09-08/uat-courses-hindi-recheck/` | 2026-09-08 — UAT on-screen re-check: Manage Courses fix, ZEEA scoping, Hindi dashboard |
+| 2026-09-09 | `2026-09-09/uat-hindi-cascade-recheck/` | 2026-09-09 — UAT on-screen re-check: dashboard F-12 residue + Hindi fragments, org-cascade filter i18n incl. live rebuild |
+| 2026-09-10 | `2026-09-10/admin-dashboard-tenant-scope/` | 2026-09-10 — Admin dashboard tenant scoping: CLI render on the production import (Airpay / ZEEA / site admin) |
+| 2026-09-16 | `2026-09-16/uat-screen-check-2026090804/` | 2026-09-16 — UAT on-screen check of the 09-16 deploy (10/10 PASS) + compliance-report scoping / Hindi / footer findings |

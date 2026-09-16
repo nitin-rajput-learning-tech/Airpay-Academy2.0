@@ -400,8 +400,10 @@ class compliance_engine {
 
         $where = implode(' AND ', $conditions);
 
-        // Get mandatory courses.
-        $courses = $DB->get_records('local_compliance_courses', ['is_active' => 1], 'sort_order');
+        // Get mandatory courses — global ones plus those pinned to this scope's
+        // tenant. Listing every active course leaked other tenants' mandatory
+        // courses as empty "Not Enrolled" columns (2026-09-16 UAT finding).
+        $courses = self::get_active_courses_for_scope($orgpath);
 
         // Get distinct users in snapshot.
         $total = $DB->count_records_sql(
@@ -623,17 +625,59 @@ class compliance_engine {
             $params));
     }
 
-    /** Status label for display. */
+    /** Status label for display (localised via status_* lang strings). */
     public static function status_label(string $status): string {
-        $labels = [
-            'completed'    => 'Completed',
-            'in_progress'  => 'In Progress',
-            'overdue'      => 'Overdue',
-            'not_started'  => 'Not Started',
-            'not_enrolled' => 'Not Enrolled',
-            'exempted'     => 'Exempted',
-        ];
-        return $labels[$status] ?? ucfirst($status);
+        $known = ['completed', 'in_progress', 'overdue', 'not_started', 'not_enrolled', 'exempted'];
+        if (in_array($status, $known, true)) {
+            return get_string('status_' . $status, 'local_sentientia_compliance_report');
+        }
+        return ucfirst($status);
+    }
+
+    // ════════════════════════════════════════════════════
+    // TENANT SCOPE HELPERS
+    // ════════════════════════════════════════════════════
+
+    /**
+     * Tenant (root org) id encoded in an org path: '/1/2/3' → 1, '' → 0.
+     */
+    public static function tenant_id_from_path(string $orgpath): int {
+        $parts = explode('/', trim($orgpath, '/'));
+        return (int) ($parts[0] ?? 0);
+    }
+
+    /**
+     * Active mandatory courses visible inside an org scope: global courses
+     * (costcenterid = 0) plus the ones pinned to the scope's tenant root.
+     * An empty scope (site admin) sees every active course.
+     *
+     * @return array records from local_compliance_courses, ordered by sort_order
+     */
+    public static function get_active_courses_for_scope(string $orgpath = ''): array {
+        global $DB;
+        $tenantid = self::tenant_id_from_path($orgpath);
+        if ($tenantid <= 0) {
+            return $DB->get_records('local_compliance_courses', ['is_active' => 1], 'sort_order');
+        }
+        return $DB->get_records_select('local_compliance_courses',
+            'is_active = 1 AND (costcenterid = 0 OR costcenterid = :cc)',
+            ['cc' => $tenantid], 'sort_order');
+    }
+
+    /**
+     * Keep the BU/Dept/SubDept drill-down inside the caller's tenant.
+     *
+     * A scoped admin ($orgpath = '/N') may only pick BU N; any other BU id
+     * resets the whole drill-down to "all of my tenant". Site admins
+     * ($orgpath = '') keep whatever they asked for.
+     *
+     * @return array [$bu, $dept, $subdept]
+     */
+    public static function clamp_filter_to_tenant(string $orgpath, int $bu, int $dept, int $subdept): array {
+        if ($orgpath !== '' && $bu > 0 && ('/' . $bu) !== $orgpath) {
+            return [0, 0, 0];
+        }
+        return [$bu, $dept, $subdept];
     }
 
     /** CSS class for status badge. */
@@ -668,20 +712,29 @@ class compliance_engine {
 
         // Level 1: top-level costcenters (BU).
         if ($level === 1) {
-            $sql = "SELECT DISTINCT
-                        CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(u.open_path, '/', 2), '/', -1) AS UNSIGNED) AS id,
-                        COUNT(DISTINCT u.id) AS user_count
-                      FROM {user} u
-                     WHERE u.deleted = 0 AND u.suspended = 0
-                       AND u.open_path IS NOT NULL AND u.open_path != ''";
+            // The tenant id is derived in an inner query and grouped by name
+            // (`tenantid`): the old `GROUP BY id` resolved to u.id (MySQL looks
+            // at FROM columns before select aliases), so every BU row carried
+            // user_count = 1 and same-tenant rows collided on the record key.
+            $scope = '';
             $params = [];
-
             if (!empty($parentpath)) {
-                $sql .= " AND u.open_path LIKE :ppath";
-                $params['ppath'] = $parentpath . '%';
+                // Exact root OR /-bounded descendant. `'/1' . '%'` also matched
+                // /10 and /177, which is how ZEEA showed up in the Airpay admin's
+                // Business Unit filter (2026-09-16 UAT finding).
+                $scope = " AND (u.open_path = :pexact OR u.open_path LIKE :pprefix)";
+                $params['pexact']  = $parentpath;
+                $params['pprefix'] = $DB->sql_like_escape($parentpath) . '/%';
             }
-
-            $sql .= " GROUP BY id HAVING id > 0 ORDER BY user_count DESC";
+            $sql = "SELECT t.tenantid AS id, COUNT(DISTINCT t.userid) AS user_count
+                      FROM (SELECT u.id AS userid,
+                                   CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(u.open_path, '/', 2), '/', -1) AS UNSIGNED) AS tenantid
+                              FROM {user} u
+                             WHERE u.deleted = 0 AND u.suspended = 0
+                               AND u.open_path IS NOT NULL AND u.open_path != ''{$scope}) t
+                     WHERE t.tenantid > 0
+                  GROUP BY t.tenantid
+                  ORDER BY user_count DESC, t.tenantid ASC";
             $records = $DB->get_records_sql($sql, $params);
         } else {
             return []; // Use get_org_hierarchy_children for deeper levels.
@@ -782,9 +835,10 @@ class compliance_engine {
         $courses = $DB->get_records('local_compliance_courses', null, 'is_active DESC, sort_order');
         $result = [];
         foreach ($courses as $c) {
-            $entityname = 'All Entities';
+            $entityname = get_string('filter_all_entities', 'local_sentientia_compliance_report');
             if ($c->costcenterid > 0) {
-                $entityname = \local_sentientia_org\org_manager::get_name((int)$c->costcenterid) ?: 'Unknown';
+                $entityname = \local_sentientia_org\org_manager::get_name((int)$c->costcenterid)
+                    ?: get_string('unknown_entity', 'local_sentientia_compliance_report');
             }
             $result[] = [
                 'id'            => $c->id,

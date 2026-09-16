@@ -207,7 +207,7 @@
                 {{#isadmin}}
                 <h2 class="airpay-dash__welcome-header__title">{{# str }} welcome_back_admin, theme_sentientia, {{firstname}} {{/ str }}</h2>
                 <p class="airpay-dash__welcome-header__subtitle">
-                    {{#tenant_scope}}{{tenant_scope}} &mdash; {{/tenant_scope}}{{# str }} subtitle_admin, theme_sentientia {{/ str }}
+                    {{#tenant_scope}}{{tenant_scope}} &mdash; {{/tenant_scope}}{{#hassystemhealth}}{{# str }} subtitle_admin, theme_sentientia {{/ str }}{{/hassystemhealth}}{{^hassystemhealth}}{{# str }} subtitle_admin_scoped, theme_sentientia {{/ str }}{{/hassystemhealth}}
                 </p>
                 {{/isadmin}}
                 {{#ismanager}}{{^isadmin}}

@@ -180,3 +180,9 @@ moodle-enhancement/local/sentientia_content_market/
 5. Flip per-provider flags ON for each configured provider
 6. Manually trigger sync via index.php "Sync now" button
 7. Verify sync log in {local_sentientia_cm_sync_log}
+
+## 2026-09-16 — F-12: catalogue card title rendered once (1.0.1-beta / 2026091600)
+
+`templates/browse.mustache` rendered the `format_string()`'d `title` through `{{ }}` → "AML **&amp;** KYC Essentials"
+on the ZEEA admin's *Browse Airpay Library* (UAT screen check). Now `{{{title}}}`; no other slot affected
+(`provider`/`content_type`/`level`/`language` are `s()`'d scalars without entities). Deploy pending.

@@ -117,3 +117,31 @@ department â€” bulk PII) is now gated on a dedicated capability
 `templates/dashboard.mustache` had literal "All Business Units / All Departments /
 All Sub-Departments / All Entities" option labels → `filter_all_*` strings (en+hi,
 both trees). Template-only + strings; both trees identical. Deploy pending.
+
+## 2026-09-16 — Tenant-clamped drill-down, tenant-scoped course columns, report chrome localised (1.0.2 / 2026091600)
+
+UAT screen check (Meera = Airpay L&D admin, Juma = ZEEA admin): the Business Unit filter offered **ZEEA (1)** to
+Meera and the matrix listed **every** tenant's mandatory course as a column (Meera saw the Tanzania course, Juma the
+three Airpay courses, all as empty "Not Enrolled" cells). Rows/KPIs were scoped (snapshot `department_path`).
+
+- `compliance_engine::get_org_hierarchy_level(1, $parentpath)`: `LIKE '/1%'` (matched `/177`) → exact-or-child
+  `(open_path = :pexact OR open_path LIKE :pprefix)` with `sql_like_escape($parentpath) . '/%'`.
+  Found by the new test: its `GROUP BY id` resolved to `u.id` (MySQL prefers FROM columns over select aliases),
+  so every BU showed **(1)** user regardless of headcount and same-tenant rows collided on the record key —
+  now a derived table grouped by `tenantid` (Airpay reads (9) on UAT, not (1)).
+- New `get_active_courses_for_scope($orgpath)` (global `costcenterid = 0` + the scope's tenant) feeds
+  `get_compliance_matrix()` → the matrix AND `export.php` columns follow the tenant; site admins keep all.
+- New `clamp_filter_to_tenant($orgpath, $bu, $dept, $subdept)` — `index.php` resets a foreign `?bu=` to "all of my
+  tenant" for scoped admins. New `tenant_id_from_path()`.
+- Hindi parity on the report itself: `index.php` KPI labels + redirect messages via `get_string`; `status_label()` via
+  `status_*` strings; `templates/dashboard.mustache` — every literal (data-freshness line, filter label, tabs, table
+  headers, RAG labels, Configure tab, placeholders, confirm text) → `{{#str}}`; the inline `onclick=confirm()` became a
+  `data-confirm` attribute + one delegated handler. 49 new en+hi key pairs → 89/89.
+- F-12: `fullname` / `designation` / scorecard `department` / filter + option `name` / config `coursename` +
+  `entity_name` are `format_string()`'d and were re-escaped by `{{ }}` (Meera's designation read "Head of L&amp;D"
+  on UAT) → triple braces; raw DB slots (course headers, defaulters, manager report) keep `{{ }}`.
+- Tests: +5 in `tests/compliance_engine_test.php` (tenant-scoped columns, tenant id parsing, clamp, localised status
+  labels, slash-bounded BU list; `add_mandatory_course()` helper takes `$costcenterid`, `add_root_org()` helper).
+- Both trees patched identically (the only pre-existing divergence — `pluginname` "Airpay …" in ME vs "Sentientia …"
+  top-level, and the `!empty()` deadline guard — is untouched). UAT runs the ME copy → deploy with `--prefer-me`.
+  Deploy pending (next tunnel window).

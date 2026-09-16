@@ -64,9 +64,9 @@
     </div>
     {{/roleswitch.hasoptions}}
     <div class="ap-sidebar__footer-actions">
-        <button class="ap-sidebar__theme-btn" id="ap-dark-toggle" title="Toggle theme">
+        <button class="ap-sidebar__theme-btn" id="ap-dark-toggle" title="{{#str}}dash_toggle_theme, theme_sentientia{{/str}}">
             <i class="fa fa-moon"></i>
-            <span class="ap-sidebar__theme-label">Dark Mode</span>
+            <span class="ap-sidebar__theme-label">{{#str}}dash_dark_mode_label, theme_sentientia{{/str}}</span>
         </button>
     </div>
     <div class="ap-sidebar__user">
@@ -74,7 +74,7 @@
             <div class="ap-sidebar__user-avatar">{{{useravatar}}}</div>
             <div class="ap-sidebar__user-info">
                 <span class="ap-sidebar__user-name">{{userfullname}}</span>
-                <span class="ap-sidebar__user-action">Profile &amp; Settings</span>
+                <span class="ap-sidebar__user-action">{{#str}}dash_profile_settings, theme_sentientia{{/str}}</span>
             </div>
         </a>
         <a href="{{{logouturl}}}" class="ap-sidebar__signout" title="{{#str}}logout{{/str}}"><i class="fa fa-sign-out" aria-hidden="true"></i><span class="ap-sidebar__signout-label">{{#str}}logout{{/str}}</span></a>

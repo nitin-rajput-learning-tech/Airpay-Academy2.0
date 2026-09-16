@@ -257,9 +257,12 @@ $string['footer_terms']     = 'Terms';
 $string['footer_help']      = 'Help';
 $string['footer_contact']   = 'Contact';
 $string['footer_copyright'] = '&copy; 2026 airpay payment services pvt. ltd.';
+// 2026-09-16 (Nitin): replaces the "Licensed under GPL v3" footer badge — private deployment notice.
+$string['footer_private_notice'] = 'Private &amp; confidential &middot; For authorised users of Airpay Payment Services Pvt. Ltd. and Airpay Academy only';
 // B10/F-065 stabilization fix (2026-05-28) — i18n the 6 hardcoded English
 // secondary labels the F-13 sweep missed on dashboard.mustache.
 $string['dash_dark_mode_label']        = 'Dark Mode';
+$string['dash_toggle_theme']           = 'Toggle theme';
 $string['dash_profile_settings']       = 'Profile &amp; Settings';
 $string['dash_overall_completion']     = 'Overall Completion';
 $string['dash_continue_learning']      = 'Continue Learning';
@@ -270,6 +273,7 @@ $string['dash_explore']                = 'Explore';
 // banner, chart titles, and compliance KPI labels. {$a} = first name.
 $string['welcome_back_admin']      = 'Welcome back, {$a}';
 $string['subtitle_admin']          = 'Platform overview and system health';
+$string['subtitle_admin_scoped']   = 'Organisation overview and learning health';  // tenant-scoped admins: no System Health widget
 $string['welcome_manager']         = 'Welcome, {$a}';
 $string['subtitle_manager']        = 'Team overview and compliance status';
 $string['welcome_learner']         = 'Welcome back, {$a}!';
