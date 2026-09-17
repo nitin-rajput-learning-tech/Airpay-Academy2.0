@@ -192,4 +192,4 @@ on the ZEEA admin's *Browse Airpay Library* (UAT screen check). Now `{{{title}}}
 `featureunavailable` read "Contact your L&D administrator" — Moodle escapes exception text
 (`get_exception_info()` → `htmlspecialchars`), so the page showed "L&amp;D" on UAT (both tenants have the
 marketplace disabled, so this is the page every UAT user gets). Reworded to "Learning and Development
-administrator" (en) / "लर्निंग एंड डेवलपमेंट व्यवस्थापक" (hi). Deploy pending.
+administrator" (en) / "लर्निंग एंड डेवलपमेंट व्यवस्थापक" (hi). Deployed to UAT 2026-09-17 10:16 (8aca24621).

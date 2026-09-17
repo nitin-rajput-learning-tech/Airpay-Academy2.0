@@ -329,5 +329,5 @@ table headers, "Request access", state badges, isolation note) and the two trees
 - `browse_airpay.php`: `browse_title` / `browse_intro` / `browse_empty` / `browse_isolation_note` /
   `browse_tenant_fallback`; `self_browse_state_label()` via `browse_state_*` strings.
 - Lang: 14 new keys appended to each tree's own en + hi files (the trees' lang files still differ elsewhere —
-  pre-existing; parity 118/118 in both). Deploy pending (next tunnel window; check which tree UAT runs first —
-  `diff -rq` shows drift in tasks/lang/share_page too).
+  pre-existing; parity 118/118 in both). Deployed to UAT 2026-09-17 10:16 (8aca24621, `--prefer-me`: UAT's courses lang files matched the ME tree
+  content-wise, CRLF-insensitive; `diff -rq` still shows pre-existing drift in tasks/lang/share_page).
