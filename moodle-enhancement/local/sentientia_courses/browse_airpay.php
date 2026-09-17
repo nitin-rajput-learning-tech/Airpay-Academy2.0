@@ -101,11 +101,11 @@ foreach ($courses as $c) {
  */
 function self_browse_state_label(string $state): string {
     switch ($state) {
-        case 'none':            return 'Not requested';
-        case 'pending':         return 'Pending approval';
-        case 'approved':        return 'In your catalog';
-        case 'rejected':        return 'Rejected';
-        case 'already_shared':  return 'In your catalog';
+        case 'none':            return get_string('browse_state_none', 'local_sentientia_courses');
+        case 'pending':         return get_string('browse_state_pending', 'local_sentientia_courses');
+        case 'approved':
+        case 'already_shared':  return get_string('browse_state_in_catalog', 'local_sentientia_courses');
+        case 'rejected':        return get_string('browse_state_rejected', 'local_sentientia_courses');
         default:                return ucfirst($state);
     }
 }
@@ -125,23 +125,32 @@ function self_browse_state_class(string $state): string {
 }
 
 $known_tenants = \local_sentientia_courses\sharing_manager::known_tenants();
-$viewer_tenant_name = 'Tenant ' . $viewer_tenant;
+$viewer_tenant_name = get_string('browse_tenant_fallback', 'local_sentientia_courses', $viewer_tenant);
 foreach ($known_tenants as $t) {
     if ((int) $t->id === $viewer_tenant) {
-        $viewer_tenant_name = $t->name;
+        $viewer_tenant_name = format_string($t->name);
         break;
     }
 }
 
+// Page copy: customer name from the theme (white-label), tenant name format_string()'d above, so every
+// get_string() result below is HTML-safe once and the template renders it with triple braces (F-12).
+$customername = get_string('customername', 'theme_sentientia');
+$copyparams = (object) ['customer' => $customername, 'tenant' => $viewer_tenant_name];
+$pagetitle = get_string('browse_title', 'local_sentientia_courses', $customername);
+
 $PAGE->set_url(new moodle_url('/local/sentientia_courses/browse_airpay.php'));
-$PAGE->set_title('Browse Airpay catalogue');
-$PAGE->set_heading('Browse Airpay catalogue');
+$PAGE->set_title($pagetitle);
+$PAGE->set_heading($pagetitle);
 $PAGE->set_pagelayout('admin');
 
 $data = [
     'courses'             => $rows,
     'has_courses'         => !empty($rows),
-    'viewer_tenant_name'  => $viewer_tenant_name,
+    'title'               => $pagetitle,
+    'intro'               => get_string('browse_intro', 'local_sentientia_courses', $copyparams),
+    'empty_text'          => get_string('browse_empty', 'local_sentientia_courses', $customername),
+    'isolation_note'      => get_string('browse_isolation_note', 'local_sentientia_courses', $copyparams),
     'sesskey'             => sesskey(),
     'post_url'            => (new moodle_url('/local/sentientia_courses/browse_airpay.php'))->out(false),
 ];

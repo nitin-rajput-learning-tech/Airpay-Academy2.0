@@ -159,3 +159,19 @@ $string['overdue_body_plain']   = 'नमस्ते,
 
 — {$a->sitename}';
 $string['overdue_body_html']    = '<p>नमस्ते,</p><p>आपके टीम सदस्य <strong>{$a->learner_name}</strong> ने कोर्स <strong>{$a->course_name}</strong> की समय-सीमा चूक दी है।</p><p>समय-सीमा: <strong>{$a->deadline}</strong> ({$a->days_past} दिन पहले)।</p><ul><li><a href="{$a->course_url}">कोर्स देखें</a></li><li><a href="{$a->learner_profile_url}">सीखने वाले की प्रोफ़ाइल देखें</a></li></ul><p>कृपया उनसे फॉलो-अप करें ताकि वे जल्द से जल्द कोर्स पूरा कर सकें।</p><p style="color:#777;">— {$a->sitename}</p>';
+
+// ब्राउज़ एयरपे लाइब्रेरी पेज (1.11.5, 2026-09-17)
+$string['browse_title'] = '{$a} कैटलॉग ब्राउज़ करें';
+$string['browse_intro'] = '{$a->customer} के कोर्स ब्राउज़ करें। जिस भी कोर्स को आप अपने टेनेंट ({$a->tenant}) कैटलॉग में जोड़ना चाहें, उसके लिए एक्सेस का अनुरोध करें। {$a->customer} के व्यवस्थापक की मंज़ूरी के बाद कोर्स आपके लर्नर्स के कैटलॉग में दिखता है — पूर्णताएँ आपके टेनेंट में ही रहती हैं।';
+$string['browse_col_course'] = 'कोर्स';
+$string['browse_col_category'] = 'श्रेणी';
+$string['browse_col_status'] = 'स्थिति';
+$string['browse_col_action'] = 'कार्रवाई';
+$string['browse_request_access'] = 'एक्सेस का अनुरोध करें';
+$string['browse_empty'] = '{$a} लाइब्रेरी में अभी ब्राउज़ करने के लिए कोई प्रकाशित कोर्स नहीं है।';
+$string['browse_isolation_note'] = 'आपके टेनेंट के लर्नर्स को उधार लिए गए कोर्स <strong>"{$a->customer} द्वारा प्रदान"</strong> बैज के साथ दिखेंगे। पूर्णता डेटा आपके टेनेंट के भीतर रहता है — {$a->customer} केवल अपनी पूर्णताएँ देखता है, और आपकी रिपोर्ट केवल {$a->tenant} लर्नर्स दिखाती है।';
+$string['browse_state_none'] = 'अनुरोध नहीं किया';
+$string['browse_state_pending'] = 'मंज़ूरी बाकी';
+$string['browse_state_in_catalog'] = 'आपके कैटलॉग में';
+$string['browse_state_rejected'] = 'अस्वीकृत';
+$string['browse_tenant_fallback'] = 'टेनेंट {$a}';

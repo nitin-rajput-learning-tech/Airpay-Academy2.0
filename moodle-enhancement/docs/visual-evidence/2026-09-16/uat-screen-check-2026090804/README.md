@@ -31,6 +31,21 @@
 
 **One more F-12, located on the third pass:** the Compliance report matrix's *Department* column showed Meera's designation as "Head of **L&amp;D**" — `format_string()`'d `designation` (and `fullname`, scorecard `department`, filter/option `name`s, config `coursename`/`entity_name`) rendered through `{{ }}`. Fixed with triple braces in the same 1.0.2 release.
 
+## 2026-09-17 re-look after the c14c36e85 deploy — PASS
+
+| # | Check | Seen | Verdict |
+|---|---|---|---|
+| R1 | Meera, Compliance report — Business Unit filter | "All Business Units", **"AIRPAY PAYMENT SERVICES PRIVATE LIMITED (9)"** — no ZEEA, real headcount (was "(1)") | PASS |
+| R2 | Meera — matrix columns | Employee · Email · Department · POSH 2026 · AML & KYC Essentials · Information Security Awareness — **no Tanzania column** | PASS |
+| R3 | Meera — designation cell | "Meera Iyer → Head of **L&D**" (was L&amp;D); 0 `&amp;amp;` on the page | PASS |
+| R4 | Meera, `?lang=hi` — report chrome | KPI labels अनुपालन दर / पूर्ण / अतिदेय / नामांकित नहीं / छूट प्राप्त; tabs अनुपालन मैट्रिक्स / डिफॉल्टर्स / विभाग स्कोरकार्ड / प्रबंधक रिपोर्ट / एक्सेल में निर्यात करें; headers कर्मचारी / ईमेल / विभाग; badges पूर्ण / शुरू नहीं हुआ / प्रगति में; "फ़िल्टर:"; sidebar "प्रोफ़ाइल और सेटिंग्स"; **0 English residue** | PASS |
+| R5 | Footer on logged-in pages (en / hi) | "Sentientia LMS · Private & confidential · For authorised users of Airpay Payment Services Pvt. Ltd. and Airpay Academy only" / "Sentientia LMS · निजी और गोपनीय · केवल एयरपे पेमेंट सर्विसेस प्रा. लि. और Airpay Academy के अधिकृत यूज़र्स के लिए"; no "GPL" anywhere | PASS |
+| R6 | Juma (ZEEA admin), Compliance report | BU filter **"ZEEA (2)"** only; rows Fatma Khamis, Juma Mwakalinga; columns Employee · Email · Department · **Workplace Conduct & Harassment Prevention (Tanzania) only**; KPIs 50 % · 1 · 0 · 0 · 0; 0 `&amp;amp;` | PASS |
+
+**Two residues found on the re-look, fixed in the repo (deploy pending):**
+- The page that showed "AML **&amp;** KYC" yesterday is **Browse Airpay Library** = `local_sentientia_courses/browse_airpay.php`, not the content market (the Content Marketplace is disabled for both UAT tenants and only shows its "not enabled" error). Its template rendered `format_string()`'d fullname / shortname / summary / categoryname through `{{ }}`, and the whole page (title, intro, table headers, "Request access", state badges, isolation note) was English literals. Fixed as `local_sentientia_courses` **1.11.5** (both trees; template now identical in both, 14 new en+hi keys, 118/118 parity). The content-market `{{{title}}}` change stays (it was a real F-12 on its card template).
+- The Content Marketplace "not enabled" error read "Contact your **L&amp;D** administrator" — core escapes exception text (`get_exception_info()` → `htmlspecialchars`), so the string's `&` doubled. Reworded without an ampersand (en + hi), `local_sentientia_content_market` 1.0.2-beta.
+
 ## Reviewer notes
 
 - The subtitle line "AIRPAY PAYMENT SERVICES PRIVATE LIMITED — प्लेटफ़ॉर्म ओवरव्यू और सिस्टम हेल्थ" on Meera's dashboard is what the scoped-subtitle fix above addresses.

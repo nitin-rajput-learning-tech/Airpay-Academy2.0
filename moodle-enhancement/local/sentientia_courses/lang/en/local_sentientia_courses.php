@@ -183,3 +183,19 @@ Please follow up with them so they can complete the course as soon as possible.
 
 — Airpay Academy';
 $string['overdue_body_html']    = '<p>Hi,</p><p>Your team member <strong>{$a->learner_name}</strong> missed the deadline for the course <strong>{$a->course_name}</strong>.</p><p>Deadline: <strong>{$a->deadline}</strong> ({$a->days_past} day(s) ago).</p><ul><li><a href="{$a->course_url}">View course</a></li><li><a href="{$a->learner_profile_url}">View learner profile</a></li></ul><p>Please follow up with them so they can complete the course as soon as possible.</p><p style="color:#777;">— Airpay Academy</p>';
+
+// Browse Airpay Library page (1.11.5, 2026-09-17) — page copy via strings; {$a->customer} = theme customername.
+$string['browse_title'] = 'Browse {$a} catalogue';
+$string['browse_intro'] = 'Browse courses owned by {$a->customer}. Request access for any course you would like to add to your tenant ({$a->tenant}) catalogue. Once a {$a->customer} administrator approves, the course appears in your learners\' catalog — completions stay segregated to your tenant.';
+$string['browse_col_course'] = 'Course';
+$string['browse_col_category'] = 'Category';
+$string['browse_col_status'] = 'Status';
+$string['browse_col_action'] = 'Action';
+$string['browse_request_access'] = 'Request access';
+$string['browse_empty'] = 'The {$a} library has no published courses to browse right now.';
+$string['browse_isolation_note'] = 'Your tenant\'s learners will see borrowed courses with a <strong>"Provided by {$a->customer}"</strong> badge. Completion data stays inside your tenant — {$a->customer} sees only its own completions, and your reports show only {$a->tenant} learners.';
+$string['browse_state_none'] = 'Not requested';
+$string['browse_state_pending'] = 'Pending approval';
+$string['browse_state_in_catalog'] = 'In your catalog';
+$string['browse_state_rejected'] = 'Rejected';
+$string['browse_tenant_fallback'] = 'Tenant {$a}';

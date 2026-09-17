@@ -315,3 +315,19 @@ options, aria-labels) now uses `local_sentientia_org` `cascade_*` strings and
 carries `data-cascade-all-label` for `theme_sentientia/org_cascade` to rebuild
 child selects in the user's language. Both trees byte-identical. Template-only
 change: caches purge on deploy, so no version bump. Deploy pending.
+
+## 2026-09-17 — Browse Airpay Library: F-12 + page copy localised (1.11.5 / 2026091700)
+
+UAT re-look (Juma, ZEEA admin): `browse_airpay.php` rendered "AML **&amp;** KYC Essentials" — the template
+put `format_string()`'d `fullname` / `shortname` / `summary` (strip_tags of format_text) / `categoryname`
+through `{{ }}`. The page was also entirely English literals (title/heading "Browse Airpay catalogue", intro,
+table headers, "Request access", state badges, isolation note) and the two trees' templates had drifted
+(top-level used `{{#str}}customername{{/str}}`, ME hardcoded "Airpay Academy").
+- Template: triple braces on the four pre-escaped slots; title / intro / empty / isolation copy arrive
+  pre-built from PHP (`get_string()` with the theme `customername` + `format_string()`'d tenant name → escaped
+  exactly once); labels via `{{#str}}`. Template now identical in both trees.
+- `browse_airpay.php`: `browse_title` / `browse_intro` / `browse_empty` / `browse_isolation_note` /
+  `browse_tenant_fallback`; `self_browse_state_label()` via `browse_state_*` strings.
+- Lang: 14 new keys appended to each tree's own en + hi files (the trees' lang files still differ elsewhere —
+  pre-existing; parity 118/118 in both). Deploy pending (next tunnel window; check which tree UAT runs first —
+  `diff -rq` shows drift in tasks/lang/share_page too).

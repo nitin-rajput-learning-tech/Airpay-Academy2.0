@@ -186,3 +186,10 @@ moodle-enhancement/local/sentientia_content_market/
 `templates/browse.mustache` rendered the `format_string()`'d `title` through `{{ }}` → "AML **&amp;** KYC Essentials"
 on the ZEEA admin's *Browse Airpay Library* (UAT screen check). Now `{{{title}}}`; no other slot affected
 (`provider`/`content_type`/`level`/`language` are `s()`'d scalars without entities). Deployed to UAT 2026-09-17 08:27 (c14c36e85).
+
+## 2026-09-17 — "not enabled" error text without an ampersand (1.0.2-beta / 2026091601)
+
+`featureunavailable` read "Contact your L&D administrator" — Moodle escapes exception text
+(`get_exception_info()` → `htmlspecialchars`), so the page showed "L&amp;D" on UAT (both tenants have the
+marketplace disabled, so this is the page every UAT user gets). Reworded to "Learning and Development
+administrator" (en) / "लर्निंग एंड डेवलपमेंट व्यवस्थापक" (hi). Deploy pending.

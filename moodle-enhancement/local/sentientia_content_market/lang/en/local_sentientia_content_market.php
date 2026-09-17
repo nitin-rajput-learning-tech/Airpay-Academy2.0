@@ -54,7 +54,7 @@ $string['sync_now']               = 'Sync now';
 $string['manage_providers']       = 'Manage providers';
 
 // ─── Errors ──────────────────────────────────────────────────────
-$string['featureunavailable']     = 'The Content Marketplace is not yet enabled for your organisation. Contact your L&D administrator.';
+$string['featureunavailable']     = 'The Content Marketplace is not yet enabled for your organisation. Contact your Learning and Development administrator.';  // no ampersand: exception text is escaped by core (UAT 2026-09-17)
 $string['error_invalidtenant']    = 'Invalid tenant. You do not have access to this resource.';
 
 // ─── Settings page ───────────────────────────────────────────────
