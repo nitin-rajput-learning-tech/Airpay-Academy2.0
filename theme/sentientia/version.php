@@ -412,7 +412,8 @@ defined('MOODLE_INTERNAL') || die();
 // ?lang=hi. All now route through get_string(): 54 new en+hi pairs
 // (parity 281/281), 5 quick-action tiles reuse nav_*, kpi_overdue reused.
 // No layout / markup / data-shape change. Bump refreshes the string cache.
-$plugin->version   = 2026090805;  // footer: GPL badge -> private Airpay notice; sidebar literals localised; scoped-admin subtitle
+$plugin->version   = 2026090806;  // login/OTP placeholders + SSO title + block aria-label: {{#quote}} JSON-escaped Hindi into \uXXXX → attribute-safe cleanstr/escaped values (core 5.2 pattern)
+// 2026090805:  footer: GPL badge -> private Airpay notice; sidebar literals localised; scoped-admin subtitle
 // 2026090804:  // admin dashboard: exact-or-child tenant scope on EVERY widget (was LIKE /1% and several unscoped), compliance widget table names fixed, localised chart months, system health = site admins only, core card aria overrides
 $plugin->requires  = 2022041900;
 $plugin->component = 'theme_sentientia';
@@ -432,7 +433,7 @@ $plugin->maturity  = MATURITY_BETA;
 // (83% reduction). Section 1 wrapped under body#page-login-index for
 // ID-specificity. Bundled bugfix: dark-mode selectors used descendant
 // combinator (never fired since #page-X IS body); now chained.
-$plugin->release   = '1.0.53-beta';  // dashboard i18n complete (body + template fragments) + F-12 residue pass
+$plugin->release   = '1.0.54-beta';  // dashboard i18n complete (body + template fragments) + F-12 residue pass
 // P1 #10 chip-J (2026-05-24) — _surface-profile.scss (2,507 lines)
 // decomposed into 4 per-surface partials: _surface-user, _surface-badges,
 // _surface-grade-report, _surface-calendar. Admin fragments moved to

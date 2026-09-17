@@ -472,3 +472,14 @@ admin, a ZEEA admin and the site admin (see visual-evidence 2026-09-10). Deploy 
 - `templates/dashboard.mustache`: admin subtitle switches on `hassystemhealth` — tenant-scoped admins get
   `subtitle_admin_scoped` ("Organisation overview and learning health") since System Health is site-admin-only.
 - Lang parity 332/332, placeholders match. Deployed to UAT 2026-09-17 08:27 (c14c36e85, checksums OK, upgrade Success).
+
+## 2026-09-17 — Login/OTP placeholders rendered Hindi as \uXXXX escapes (theme v2026090806)
+
+Found while capturing the UAT login page for the executive deck: under `?lang=hi` the username and password
+inputs showed literal `\u092f\u0942…` sequences. Cause: `templates/core/loginform.mustache` (and
+`otploginform.mustache`, `core/block.mustache`) wrapped HTML attribute values in `{{#quote}}`, whose
+`json_encode()` escapes non-ASCII — fine for the JS contexts it is meant for (`module.enhance({{#quote}}…)`,
+untouched), wrong inside `placeholder=` / `title=` / `aria-label=`. Now mirrors core 5.2:
+`placeholder="{{#cleanstr}}usernameemail{{/cleanstr}}"`, `title="{{name}}"`, `aria-label="{{arialabel}}"`.
+CLI render en + hi: placeholders "यूज़रनेम / ईमेल" / "पासवर्ड" / "मोबाइल नंबर" / "OTP डालें", no `\u` escapes.
+Deploy pending (next tunnel window) — on the executive demo path (Hindi login page).

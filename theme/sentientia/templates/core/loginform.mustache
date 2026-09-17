@@ -138,7 +138,7 @@
                         <input type="text" name="username" id="username"
                             class="airpay-login__input"
                             value="{{username}}"
-                            placeholder={{#quote}}{{^canloginbyemail}}{{#str}}username{{/str}}{{/canloginbyemail}}{{#canloginbyemail}}{{#str}}usernameemail{{/str}}{{/canloginbyemail}}{{/quote}}>
+                            placeholder="{{^canloginbyemail}}{{#cleanstr}}username{{/cleanstr}}{{/canloginbyemail}}{{#canloginbyemail}}{{#cleanstr}}usernameemail{{/cleanstr}}{{/canloginbyemail}}">
                         <input type="hidden" name="hashusername" id="hashusername" value="">
                     </div>
                 </div>
@@ -150,7 +150,7 @@
                         <span class="airpay-login__input-icon"><i class="fa fa-lock"></i></span>
                         <input type="password" name="password" id="password" value=""
                             class="airpay-login__input"
-                            placeholder={{#quote}}{{#str}}password{{/str}}{{/quote}}>
+                            placeholder="{{#cleanstr}}password{{/cleanstr}}">
                         <span class="airpay-login__eye fa fa-eye" id="password-showhide"></span>
                         <input type="hidden" name="hashpassword" id="hashpassword" value="">
                     </div>
@@ -195,7 +195,7 @@
                 <div class="airpay-login__sso">
                     <div class="airpay-login__divider"><span>{{#str}}signinwithidentityprovider, theme_sentientia{{/str}}</span></div>
                     {{#identityproviders}}
-                        <a href="{{url}}" title={{#quote}}{{name}}{{/quote}} class="airpay-login__sso-btn" aria-label="{{#str}}signinwithidentityprovider, theme_sentientia{{/str}} {{name}}">
+                        <a href="{{url}}" title="{{name}}" class="airpay-login__sso-btn" aria-label="{{#str}}signinwithidentityprovider, theme_sentientia{{/str}} {{name}}">
                             {{#iconurl}}<img src="{{iconurl}}" alt="" width="20" height="20">{{/iconurl}}
                             {{name}}
                         </a>
