@@ -17,7 +17,7 @@
 | 9 | Guest, `/login/index.php?lang=hi` — login copy (2026090803) | No English fragment | Hero, three feature blurbs, stats, "फिर से स्वागत है", "यूज़रनेम / ईमेल", "पासवर्ड", "लॉग इन करें", "पासवर्ड भूल गए?", "प्राइवेसी पॉलिसी · उपयोग की शर्तें" — 0 English matches | PASS |
 | 10 | Priya (learner), `/my/?lang=hi` — gamification level name (1.0.3-beta) + recommendation heading | "शुरुआती", "आपके लिए सुझाए गए" | Both present; all other headings Hindi (लीडरबोर्ड, सीखना जारी रखें, हाल की उपलब्धियाँ); course names stay in their own language; 0 `&amp;amp;` | PASS |
 
-## New findings from the same walk (all fixed in the repo the same afternoon, deploy pending the next tunnel window)
+## New findings from the same walk (all fixed in the repo the same afternoon — commit c14c36e85, deployed to UAT 2026-09-17 08:27)
 
 | Finding | Where | Fix |
 |---|---|---|

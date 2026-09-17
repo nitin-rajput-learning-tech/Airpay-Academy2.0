@@ -471,4 +471,4 @@ admin, a ZEEA admin and the site admin (see visual-evidence 2026-09-10). Deploy 
   (new), `dash_dark_mode_label`, `dash_profile_settings` (the compliance page showed the English literal under Hindi).
 - `templates/dashboard.mustache`: admin subtitle switches on `hassystemhealth` — tenant-scoped admins get
   `subtitle_admin_scoped` ("Organisation overview and learning health") since System Health is site-admin-only.
-- Lang parity 332/332, placeholders match. Deploy pending (next tunnel window).
+- Lang parity 332/332, placeholders match. Deployed to UAT 2026-09-17 08:27 (c14c36e85, checksums OK, upgrade Success).

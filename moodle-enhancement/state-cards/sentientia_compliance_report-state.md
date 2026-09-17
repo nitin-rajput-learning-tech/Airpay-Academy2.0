@@ -144,4 +144,4 @@ three Airpay courses, all as empty "Not Enrolled" cells). Rows/KPIs were scoped 
   labels, slash-bounded BU list; `add_mandatory_course()` helper takes `$costcenterid`, `add_root_org()` helper).
 - Both trees patched identically (the only pre-existing divergence — `pluginname` "Airpay …" in ME vs "Sentientia …"
   top-level, and the `!empty()` deadline guard — is untouched). UAT runs the ME copy → deploy with `--prefer-me`.
-  Deploy pending (next tunnel window).
+  Deployed to UAT 2026-09-17 08:27 (c14c36e85, checksums OK, upgrade Success).
