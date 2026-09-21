@@ -5,6 +5,15 @@
 
 ---
 
+## ✅ 2026-09-21 — Executive showcase deck + consolidated pending-task plan (Fable 5.1)
+
+- **Deliverables for Nitin's leadership showcase (MD/Founder, CTO, CHRO):** `docs/business/AIRPAY-ACADEMY-2.0-UAT-SHOWCASE-DECK-2026-09-21.pptx` (14 slides, speaker notes, UAT screenshots captured 09-17; build script `docs/business/deck-src/`) and **`docs/cutover/PENDING-TASK-PLAN-2026-09-21.md`** — 387 swept items de-duplicated into horizons (this week → tester rollout → before go-live → roadmap), owner-grouped, plus the decisions list, done-list and standing rules.
+- **Found while capturing deck screenshots (2026-09-17):** the Hindi login page rendered username/password placeholders as literal `य…` escapes — `{{#quote}}` JSON-encodes non-ASCII inside HTML attributes. Fixed in theme **2026090806** (`5124cc605`, core 5.2 `cleanstr` pattern; CLI render en+hi clean). **Deploy pending the next tunnel window** — it is on demo-path step 7.
+- 2026-09-17 10:16 deploy (courses 1.11.5 + content_market 1.0.2-beta) still awaits its one-minute Chrome look (Browse Airpay Library as Juma).
+- Process note: the docs-sweep workflow's verification/synthesis agents hit the account usage limit twice; the plan was synthesised by hand from the eight cached sweeps.
+
+---
+
 ## ✅ 2026-09-16 — 09-16 deploy screen-checked; compliance report scoping + Hindi; footer private notice (Fable 5.1)
 
 - **Deployed 11:45** `73065151d..35cd2a48b` to UAT with `--prefer-me` (theme 2026090803/04, gamification 1.0.3-beta, compliance_report 1.0.1; 15 files, checksums OK). **Screen check PASS 10/10** as Meera / Juma / Priya / guest — tenant-only admin tiles, Compliance Overview widget back, no System Health for tenant admins, Hindi headings + PHP-built activity lines with a single "&", Hindi login page, "शुरुआती" — `docs/visual-evidence/2026-09-16/uat-screen-check-2026090804/`.
