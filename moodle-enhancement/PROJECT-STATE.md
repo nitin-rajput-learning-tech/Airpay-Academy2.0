@@ -9,7 +9,7 @@
 
 - **Deliverables for Nitin's leadership showcase (MD/Founder, CTO, CHRO):** `docs/business/AIRPAY-ACADEMY-2.0-UAT-SHOWCASE-DECK-2026-09-21.pptx` (14 slides, speaker notes, UAT screenshots captured 09-17; build script `docs/business/deck-src/`) and **`docs/cutover/PENDING-TASK-PLAN-2026-09-21.md`** — 387 swept items de-duplicated into horizons (this week → tester rollout → before go-live → roadmap), owner-grouped, plus the decisions list, done-list and standing rules.
 - **Found while capturing deck screenshots (2026-09-17):** the Hindi login page rendered username/password placeholders as literal `य…` escapes — `{{#quote}}` JSON-encodes non-ASCII inside HTML attributes. Fixed in theme **2026090806** (`5124cc605`, core 5.2 `cleanstr` pattern; CLI render en+hi clean). **Deploy pending the next tunnel window** — it is on demo-path step 7.
-- 2026-09-17 10:16 deploy (courses 1.11.5 + content_market 1.0.2-beta) still awaits its one-minute Chrome look (Browse Airpay Library as Juma).
+- 2026-09-17 10:16 deploy (courses 1.11.5 + content_market 1.0.2-beta) **confirmed on screen 2026-09-21** (Browse Airpay Library as Juma: single "&", Hindi copy; content-market error wording). Only theme 2026090806 remains to deploy.
 - Process note: the docs-sweep workflow's verification/synthesis agents hit the account usage limit twice; the plan was synthesised by hand from the eight cached sweeps.
 
 ---

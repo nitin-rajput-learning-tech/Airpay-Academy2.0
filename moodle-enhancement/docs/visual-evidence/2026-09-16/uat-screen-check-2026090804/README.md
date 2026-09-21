@@ -46,6 +46,16 @@
 - The page that showed "AML **&amp;** KYC" yesterday is **Browse Airpay Library** = `local_sentientia_courses/browse_airpay.php`, not the content market (the Content Marketplace is disabled for both UAT tenants and only shows its "not enabled" error). Its template rendered `format_string()`'d fullname / shortname / summary / categoryname through `{{ }}`, and the whole page (title, intro, table headers, "Request access", state badges, isolation note) was English literals. Fixed as `local_sentientia_courses` **1.11.5** (both trees; template now identical in both, 14 new en+hi keys, 118/118 parity). The content-market `{{{title}}}` change stays (it was a real F-12 on its card template).
 - The Content Marketplace "not enabled" error read "Contact your **L&amp;D** administrator" — core escapes exception text (`get_exception_info()` → `htmlspecialchars`), so the string's `&` doubled. Reworded without an ampersand (en + hi), `local_sentientia_content_market` 1.0.2-beta.
 
+## 2026-09-21 look after the 8aca24621 deploy (courses 1.11.5, content_market 1.0.2-beta) — PASS
+
+| # | Check | Seen | Verdict |
+|---|---|---|---|
+| L1 | Juma (ZEEA admin), *Browse Airpay Library* `/local/sentientia_courses/browse_airpay.php` | Title "Browse Airpay Academy catalogue"; course cell "AML **&** KYC Essentials" (single ampersand); badge "Not requested"; 0 `&amp;amp;` | PASS |
+| L2 | Same page, `?lang=hi` | "Airpay Academy कैटलॉग ब्राउज़ करें"; headers कोर्स · श्रेणी · स्थिति · कार्रवाई; button "एक्सेस का अनुरोध करें"; badge "अनुरोध नहीं किया"; 0 English residue; 0 `&amp;amp;` | PASS |
+| L3 | Content Marketplace (disabled for both tenants) error text | "Contact your Learning and Development administrator." — no `&amp;` | PASS |
+
+Chrome gotcha recorded: Chrome's password autofill is only a *preview* until the field receives a click — clicking "Log in" straight away submits an empty password and the page silently reloads. Click into the password box first, then the button.
+
 ## Reviewer notes
 
 - The subtitle line "AIRPAY PAYMENT SERVICES PRIVATE LIMITED — प्लेटफ़ॉर्म ओवरव्यू और सिस्टम हेल्थ" on Meera's dashboard is what the scoped-subtitle fix above addresses.
