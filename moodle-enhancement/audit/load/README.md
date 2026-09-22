@@ -69,3 +69,53 @@ bottleneck at small N, not the application code.
 
 **Cutover gate stays: k6 against staging with a prod-sized RDS clone,
 not this baseline.**
+
+
+---
+
+## REPAIRED 2026-09-22 — what the k6 script was actually measuring
+
+`load_test.k6.js` had five defects that together meant no number it produced
+could be quoted.
+
+| # | Defect | Consequence |
+|---|--------|-------------|
+| 1 | Targeted `local/airpay_catalog`, `local/airpay_cart`, `local/airpay_request` | ADR-022/025 renamed all three to `local/sentientia_*`. **None of those paths exist.** Every Catalog and Cart sample was measuring a 404. |
+| 2 | Read mix ran unauthenticated | Moodle 5.2 ships `forcelogin=1`, so `GET /` returns the **login page**. The group was labelled "Dashboard" and was timing the cheapest page on the site. |
+| 3 | Write mix gated on a hand-supplied `AUTH_COOKIE` | Nobody supplies it, so the "30% write mix" has **never run**. A single shared cookie across thousands of VUs would not be valid anyway — Moodle serialises one session file, so the VUs queue on a lock rather than on the platform. |
+| 4 | `handleSummary` printed the SLA targets without evaluating them | A passing run and a failing run ended with identical output. |
+| 5 | Nothing stopped `BASE_URL` pointing at production | A 10,000-VU run against `www.airpay.academy` is an outage, not a test. |
+
+**Now:**
+
+- Paths corrected to `local/sentientia_*`, and the read mix hits
+  `/my/dashboard.php` rather than `/`.
+- Each VU logs in as **its own account** (`LOAD_USER_PREFIX` +
+  `LOAD_USER_PASS` + `LOAD_USER_COUNT`), extracting Moodle's per-session
+  `logintoken` — the missing piece that made a naive POST fail. A VU that
+  cannot log in aborts rather than spending the run timing redirects to the
+  login page and reporting them as dashboard latency.
+- An unauthenticated run still works, but `setup()` warns and the verdict is
+  **INCONCLUSIVE**, because those numbers describe the login page.
+- The summary states **PASS / FAIL / INCONCLUSIVE**, and reports the peak VUs
+  actually reached against the tier target — the difference between "the
+  platform holds at 10,000 VUs" and "we measured 400".
+- The host guard refuses any host that is not localhost or named exactly in
+  `I_MAY_LOAD_TEST_THIS_HOST`, and refuses `airpay.academy` outright with **no
+  override**. Verified across eight cases, including that production stays
+  refused even when explicitly allowed.
+
+```powershell
+$env:BASE_URL   = "https://academy2.airpay.ninja"
+$env:LOAD_TIER  = "prod"
+$env:LOAD_USER_PREFIX = "loadtest"     # loadtest0001 .. loadtestNNNN
+$env:LOAD_USER_PASS   = "..."          # from the environment, never committed
+$env:LOAD_USER_COUNT  = "500"
+$env:I_MAY_LOAD_TEST_THIS_HOST = "academy2.airpay.ninja"
+k6 run load_test.k6.js
+```
+
+Seeding the accounts is still an open task: `tools/ci/seed_playwright_personas.php`
+creates four, and core's `tool_generator` can create a fleet. Until they exist,
+every run is INCONCLUSIVE by design — which is the honest state, and better
+than the previous behaviour of quietly measuring 404s and login forms.
