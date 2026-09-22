@@ -288,6 +288,16 @@ class anthropic_client {
      * @return array {body, tokens_in, tokens_out, mode, error}
      */
     public static function call_live(string $sourcetext, int $numrequested, string $model, ?array $promptctx = null): array {
+        // NO-SPEND GUARD. This client uses raw PHP cURL, so it bypasses Moodle's
+        // \curl phpunit host blocking as well as the gateway's own guard. Without
+        // this, a suite run on a box that has an API key configured spends real
+        // money against a live vendor. Mirrors local_sentientia_ai\gateway.
+        if ((defined('PHPUNIT_TEST') && PHPUNIT_TEST) || defined('BEHAT_SITE_RUNNING')) {
+            return [
+            'body' => '', 'tokens_in' => 0, 'tokens_out' => 0,
+            'mode' => 'failed', 'error' => 'live_blocked_in_tests',
+        ];
+        }
         $promptctx = self::normalise_promptctx($promptctx);
 
         $apikey = get_config('local_sentientia_aiquiz', 'api_key');

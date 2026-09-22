@@ -241,6 +241,16 @@ class agent_client {
      * @return array
      */
     public static function call_live(string $query, string $context, array $schemas): array {
+        // NO-SPEND GUARD. This client uses raw PHP cURL, so it bypasses Moodle's
+        // \curl phpunit host blocking as well as the gateway's own guard. Without
+        // this, a suite run on a box that has an API key configured spends real
+        // money against a live vendor. Mirrors local_sentientia_ai\gateway.
+        if ((defined('PHPUNIT_TEST') && PHPUNIT_TEST) || defined('BEHAT_SITE_RUNNING')) {
+            return [
+            'body' => '', 'tokens_in' => 0, 'tokens_out' => 0,
+            'mode' => 'failed', 'error' => 'live_blocked_in_tests',
+        ];
+        }
         $apikey = get_config('local_sentientia_assistant', 'api_key');
         if (empty($apikey) || !is_string($apikey)) {
             return ['raw' => '', 'mode' => 'failed', 'error' => 'api_key_not_set'];

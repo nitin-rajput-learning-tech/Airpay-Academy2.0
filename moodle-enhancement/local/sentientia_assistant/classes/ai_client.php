@@ -319,6 +319,16 @@ class ai_client {
      * Call Claude API.
      */
     private static function call_claude(string $api_key, string $model, string $context, string $query): array {
+        // NO-SPEND GUARD. This client uses raw PHP cURL, so it bypasses Moodle's
+        // \curl phpunit host blocking as well as the gateway's own guard. Without
+        // this, a suite run on a box that has an API key configured spends real
+        // money against a live vendor. Mirrors local_sentientia_ai\gateway.
+        if ((defined('PHPUNIT_TEST') && PHPUNIT_TEST) || defined('BEHAT_SITE_RUNNING')) {
+            return [
+            'body' => '', 'tokens_in' => 0, 'tokens_out' => 0,
+            'mode' => 'failed', 'error' => 'live_blocked_in_tests',
+        ];
+        }
         $system_prompt = self::build_system_prompt($context);
 
         $payload = [
