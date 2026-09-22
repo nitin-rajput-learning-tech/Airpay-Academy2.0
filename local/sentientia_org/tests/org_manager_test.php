@@ -20,6 +20,8 @@ defined('MOODLE_INTERNAL') || die();
  *
  * @package    local_sentientia_org
  * @category   test
+ *
+ * @group tenant_isolation
  */
 final class org_manager_test extends \advanced_testcase {
 

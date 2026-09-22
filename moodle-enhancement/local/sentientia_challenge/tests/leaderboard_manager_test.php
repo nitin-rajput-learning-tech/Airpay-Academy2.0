@@ -17,6 +17,8 @@ defined('MOODLE_INTERNAL') || die();
  *
  * @package    local_sentientia_challenge
  * @category   test
+ *
+ * @group tenant_isolation
  */
 final class leaderboard_manager_test extends \advanced_testcase {
 

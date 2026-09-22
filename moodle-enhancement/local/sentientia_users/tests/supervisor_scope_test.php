@@ -20,6 +20,8 @@ defined('MOODLE_INTERNAL') || die();
  *
  * @package    local_sentientia_users
  * @category   test
+ *
+ * @group tenant_isolation
  */
 final class supervisor_scope_test extends \advanced_testcase {
 

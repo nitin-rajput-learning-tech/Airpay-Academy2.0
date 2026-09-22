@@ -37,6 +37,9 @@ use local_sentientia_calendar\oauth\token_vault;
 
 defined('MOODLE_INTERNAL') || die();
 
+/**
+ * @group tenant_isolation
+ */
 final class token_vault_test extends \advanced_testcase {
 
     /** @var int A test user we create in setUp. */

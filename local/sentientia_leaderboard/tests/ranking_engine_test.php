@@ -20,6 +20,8 @@ defined('MOODLE_INTERNAL') || die();
  * @package    local_sentientia_leaderboard
  * @category   test
  * @covers     \local_sentientia_leaderboard\ranking_engine
+ *
+ * @group tenant_isolation
  */
 final class ranking_engine_test extends \advanced_testcase {
 

@@ -15,6 +15,8 @@ defined('MOODLE_INTERNAL') || die();
  *
  * @package    local_sentientia_translate
  * @covers     \local_sentientia_translate\translate_engine
+ *
+ * @group tenant_isolation
  */
 final class translate_engine_test extends \advanced_testcase {
 

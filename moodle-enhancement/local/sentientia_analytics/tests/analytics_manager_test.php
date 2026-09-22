@@ -19,6 +19,8 @@ defined('MOODLE_INTERNAL') || die();
  *
  * @package    local_sentientia_analytics
  * @category   test
+ *
+ * @group tenant_isolation
  */
 final class analytics_manager_test extends \advanced_testcase {
 

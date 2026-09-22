@@ -35,6 +35,8 @@ defined('MOODLE_INTERNAL') || die();
  *      line of defence — refuses a cross-tenant enrolment and still
  *      succeeds for a same-tenant one. This is the exact exploit path from
  *      the audit: a /77 user hitting a /1 course id.
+ *
+ * @group tenant_isolation
  */
 final class tenant_gate_test extends \advanced_testcase {
 

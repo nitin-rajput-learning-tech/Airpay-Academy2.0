@@ -12,6 +12,8 @@ defined('MOODLE_INTERNAL') || die();
  * @package    local_sentientia_api
  * @category   test
  * @covers     \local_sentientia_api\lti\registration
+ *
+ * @group tenant_isolation
  */
 final class lti_registration_test extends \advanced_testcase {
 

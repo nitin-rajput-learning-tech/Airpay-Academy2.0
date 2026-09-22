@@ -20,6 +20,8 @@ defined('MOODLE_INTERNAL') || die();
  *
  * @package    local_sentientia_users
  * @category   test
+ *
+ * @group tenant_isolation
  */
 final class welcome_mailer_test extends \advanced_testcase {
 

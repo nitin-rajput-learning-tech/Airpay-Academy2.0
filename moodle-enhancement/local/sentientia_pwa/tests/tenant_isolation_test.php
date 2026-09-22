@@ -35,6 +35,8 @@ defined('MOODLE_INTERNAL') || die();
  * source-level grep in audit_fixes_test.php — testing it as a unit
  * here would require either real VAPID keys or a network mock layer,
  * neither of which is in scope for this PHPUnit suite.
+ *
+ * @group tenant_isolation
  */
 class tenant_isolation_test extends \advanced_testcase {
 

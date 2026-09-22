@@ -26,6 +26,8 @@ defined('MOODLE_INTERNAL') || die();
  * @package    local_sentientia_live
  * @covers     \local_sentientia_live\question_types\word_cloud
  * @covers     \local_sentientia_live\profanity_filter
+ *
+ * @group tenant_isolation
  */
 final class word_cloud_test extends \advanced_testcase {
 

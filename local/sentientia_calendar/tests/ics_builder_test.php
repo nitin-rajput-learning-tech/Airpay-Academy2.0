@@ -22,6 +22,8 @@ defined('MOODLE_INTERNAL') || die();
  *
  * @package    local_sentientia_calendar
  * @category   test
+ *
+ * @group tenant_isolation
  */
 final class ics_builder_test extends \advanced_testcase {
 

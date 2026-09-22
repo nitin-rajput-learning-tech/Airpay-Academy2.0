@@ -24,6 +24,8 @@ defined('MOODLE_INTERNAL') || die();
  * @package    local_sentientia_assistant
  * @covers     \local_sentientia_assistant\agent\tool
  * @covers     \local_sentientia_assistant\agent\tool\enrol_course
+ *
+ * @group tenant_isolation
  */
 final class tool_authorisation_test extends \advanced_testcase {
 

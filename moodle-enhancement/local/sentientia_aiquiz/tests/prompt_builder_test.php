@@ -14,6 +14,8 @@ defined('MOODLE_INTERNAL') || die();
  *
  * @package    local_sentientia_aiquiz
  * @covers     \local_sentientia_aiquiz\prompt_builder
+ *
+ * @group tenant_isolation
  */
 final class prompt_builder_test extends \advanced_testcase {
 

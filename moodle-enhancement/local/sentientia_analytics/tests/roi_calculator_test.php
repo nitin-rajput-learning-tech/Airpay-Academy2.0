@@ -30,6 +30,8 @@ defined('MOODLE_INTERNAL') || die();
  *
  * @package    local_sentientia_analytics
  * @category   test
+ *
+ * @group tenant_isolation
  */
 final class roi_calculator_test extends \advanced_testcase {
 

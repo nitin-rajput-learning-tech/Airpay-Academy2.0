@@ -21,6 +21,8 @@ defined('MOODLE_INTERNAL') || die();
  *   - list_course_shares() returns indexed-by-tenant_id
  *   - build_catalog_filter_sql() — site admin passthrough vs scoped
  *   - known_tenants() falls back to hard-coded list when org table missing
+ *
+ * @group tenant_isolation
  */
 class sharing_manager_test extends \advanced_testcase {
 

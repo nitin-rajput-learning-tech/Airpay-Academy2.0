@@ -29,6 +29,8 @@ defined('MOODLE_INTERNAL') || die();
  *     contamination from previous tests cannot mask a real failure.
  *   - Type assertions use assertSame (===) rather than assertEquals to
  *     catch unintended string->int coercion in returned bundles.
+ *
+ * @group tenant_isolation
  */
 class customer_brand_test extends \advanced_testcase {
 

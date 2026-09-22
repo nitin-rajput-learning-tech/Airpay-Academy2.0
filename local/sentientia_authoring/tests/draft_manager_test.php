@@ -15,6 +15,8 @@ defined('MOODLE_INTERNAL') || die();
  *
  * @package    local_sentientia_authoring
  * @covers     \local_sentientia_authoring\draft_manager
+ *
+ * @group tenant_isolation
  */
 final class draft_manager_test extends \advanced_testcase {
 

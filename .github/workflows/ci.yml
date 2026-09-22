@@ -613,11 +613,21 @@ jobs:
     # "remove/reintroduce phpunit gate" commits in git history were all
     # chasing this same startup failure. Renamed `phpunit-5.2` → `phpunit-52`.
     #
-    # ADVISORY during 5.2 calibration (continue-on-error: true) — mirrors
-    # playwright-linux. Production runs Moodle 5.1, so a 5.2 PHPUnit failure
-    # is forward-looking, not production-blocking; it must not fail the run
-    # until the gate graduates to blocking per docs/ci/PHPUNIT-GATE.md.
-    continue-on-error: true
+    # PARTIALLY BLOCKING since 2026-09-22.
+    #
+    # This job used to carry `continue-on-error: true` in full, on the grounds
+    # that production runs 5.1 so a 5.2 failure was forward-looking. That
+    # reasoning has expired: UAT RUNS 5.2 and Addendum B makes 5.2 the single
+    # cutover path. Worse, it meant the ~160 tenant-isolation assertions were
+    # advisory, so a cross-tenant data leak could merge green — and that exact
+    # defect class shipped four times (see tools/check-path-boundary.php).
+    #
+    # The job is now blocking, but the HARD gate is scoped to the
+    # `tenant_isolation` group: those suites must pass for the build to pass.
+    # The full 5.2 suite still runs below as an advisory step, so we keep the
+    # broader signal without letting unrelated pre-existing failures block
+    # every push. Drain those, then make the full run blocking too and delete
+    # the `continue-on-error` on that step.
     # Cold init takes ~10-15 min; with composer cache ~5-7 min. Hard cap
     # at 40 min so a stuck PHPUnit can't burn an hour of runner time.
     timeout-minutes: 40
@@ -871,7 +881,25 @@ jobs:
           echo "::notice::Will run $(echo "$SUITES" | tr ',' '\n' | wc -l) testsuite(s)"
           echo "list=$SUITES" >> "$GITHUB_OUTPUT"
 
+      # ── HARD GATE ──────────────────────────────────────────────────
+      # One tenant must never read, count, or be notified about another
+      # tenant's data. If this step fails, the build fails. Do not add
+      # continue-on-error here.
+      - name: "Tenant isolation group (BLOCKING)"
+        working-directory: ${{ env.MOODLE_DIR }}
+        run: |
+          set -euo pipefail
+          # A silently-empty group would pass while proving nothing, which is
+          # the exact failure mode this gate exists to prevent.
+          N=$(grep -rl '@group tenant_isolation' public/local/*/tests/*.php | wc -l)
+          echo "tagged isolation suites: $N"
+          test "$N" -ge 40
+          vendor/bin/phpunit --group tenant_isolation
+
+      # ── ADVISORY ───────────────────────────────────────────────────
+      # Full 5.2 suite. Known unrelated failures; drain then make blocking.
       - name: Run PHPUnit
+        continue-on-error: true
         id: phpunit
         working-directory: ${{ env.MOODLE_DIR }}
         run: |

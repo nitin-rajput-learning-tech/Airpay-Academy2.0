@@ -18,6 +18,8 @@ defined('MOODLE_INTERNAL') || die();
  *
  * @package    local_sentientia_calendar
  * @category   test
+ *
+ * @group tenant_isolation
  */
 final class token_manager_test extends \advanced_testcase {
 

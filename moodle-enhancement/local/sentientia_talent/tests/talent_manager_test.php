@@ -23,6 +23,8 @@ use local_sentientia_platform\feature_flags;
  * @package    local_sentientia_talent
  * @category   test
  * @covers     \local_sentientia_talent\talent_manager
+ *
+ * @group tenant_isolation
  */
 final class talent_manager_test extends \advanced_testcase {
 

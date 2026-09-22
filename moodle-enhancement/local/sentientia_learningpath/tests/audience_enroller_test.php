@@ -20,6 +20,8 @@ defined('MOODLE_INTERNAL') || die();
  *
  * @package    local_sentientia_learningpath
  * @category   test
+ *
+ * @group tenant_isolation
  */
 final class audience_enroller_test extends \advanced_testcase {
 

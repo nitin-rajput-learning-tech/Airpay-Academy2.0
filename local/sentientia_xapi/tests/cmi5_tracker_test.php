@@ -23,6 +23,8 @@ use local_sentientia_xapi\model\statement;
 
 /**
  * @covers \local_sentientia_xapi\lrs\cmi5_tracker
+ *
+ * @group tenant_isolation
  */
 class cmi5_tracker_test extends \advanced_testcase {
 

@@ -23,6 +23,8 @@ defined('MOODLE_INTERNAL') || die();
  * @package    local_sentientia_courses
  * @category   test
  * @covers     \local_sentientia_courses\course_manager
+ *
+ * @group tenant_isolation
  */
 final class course_manager_scope_test extends \advanced_testcase {
 

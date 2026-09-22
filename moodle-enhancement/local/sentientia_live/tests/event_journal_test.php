@@ -11,6 +11,8 @@ defined('MOODLE_INTERNAL') || die();
  *
  * @package    local_sentientia_live
  * @covers     \local_sentientia_live\event_journal
+ *
+ * @group tenant_isolation
  */
 final class event_journal_test extends \advanced_testcase {
 

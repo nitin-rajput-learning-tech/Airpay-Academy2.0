@@ -23,6 +23,8 @@ defined('MOODLE_INTERNAL') || die();
  *     enrolled immediately via the MANUAL enrol plugin, bypassing a
  *     self-enrol enrolment key (the exact config that broke course 71 in
  *     production). Idempotent, and refuses paid courses.
+ *
+ * @group tenant_isolation
  */
 final class enrolment_test extends \advanced_testcase {
 

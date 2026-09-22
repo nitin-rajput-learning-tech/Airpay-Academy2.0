@@ -17,6 +17,8 @@ defined('MOODLE_INTERNAL') || die();
  *
  * @package    local_sentientia_skillsai
  * @covers     \local_sentientia_skillsai\gap_engine
+ *
+ * @group tenant_isolation
  */
 final class gap_engine_test extends \advanced_testcase {
 

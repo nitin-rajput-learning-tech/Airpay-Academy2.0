@@ -75,6 +75,18 @@ class airpay_gateway implements gateway_interface {
         if (empty($payload['checksum'])) {
             return false;
         }
+        // FAIL CLOSED on an unconfigured gateway. The shipped default for
+        // airpay_secret is '', and compute_checksum($payload, '') is fully
+        // computable by anyone who can read this file — so before this guard a
+        // self-registered learner could self-sign a callback and receive a free
+        // enrolment plus a genuine invoice. The IP allowlist in callback.php
+        // narrows who can reach the endpoint; it is not a signature check.
+        // Found by the 2026-09-22 confidence audit.
+        if (trim($secret) === '') {
+            debugging('local_sentientia_cart: airpay_secret is not configured; '
+                . 'refusing to verify a payment callback.', DEBUG_NORMAL);
+            return false;
+        }
         $expected = self::compute_checksum($payload, $secret);
         // Constant-time compare to defeat timing attacks.
         return hash_equals($expected, (string) $payload['checksum']);

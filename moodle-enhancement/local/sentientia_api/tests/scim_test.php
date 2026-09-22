@@ -25,6 +25,8 @@ use local_sentientia_api\scim\scim_exception;
  * @covers     \local_sentientia_api\scim\filter
  * @covers     \local_sentientia_api\scim\mapper
  * @covers     \local_sentientia_api\scim\user_resource
+ *
+ * @group tenant_isolation
  */
 final class scim_test extends \advanced_testcase {
     use \local_sentientia_org\test\bizlms_fixture;

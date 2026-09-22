@@ -26,6 +26,9 @@ defined('MOODLE_INTERNAL') || die();
 #[\PHPUnit\Framework\Attributes\CoversClass(badge_manager::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(points_manager::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(observer::class)]
+/**
+ * @group tenant_isolation
+ */
 final class badge_manager_test extends \advanced_testcase {
 
     use \local_sentientia_org\test\bizlms_fixture;
@@ -133,6 +136,9 @@ final class badge_manager_test extends \advanced_testcase {
     }
 
     public function test_tenant_scoped_criteria_still_apply_with_bizlms_schema(): void {
+        // 2026-09-22: this used to pair /1 with /77. Because '/1%' never matched
+        // '/77', the test passed while the cross-tenant leak 50 lines away in the
+        // code it covers was live. /177 is the collision that can actually see it.
         global $DB;
         $this->ensure_bizlms_schema();
 
@@ -143,7 +149,7 @@ final class badge_manager_test extends \advanced_testcase {
         $DB->set_field('course', 'open_path', '/1', ['id' => $course->id]);
         // Mandatory course in tenant 77 — must NOT count against a tenant-1 user.
         $other = $gen->create_course(['enddate' => $inayear]);
-        $DB->set_field('course', 'open_path', '/77', ['id' => $other->id]);
+        $DB->set_field('course', 'open_path', '/177', ['id' => $other->id]);
 
         $user = $gen->create_user();
         $DB->set_field('user', 'open_path', '/1/5', ['id' => $user->id]);

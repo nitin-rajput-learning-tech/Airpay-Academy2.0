@@ -13,6 +13,8 @@ defined('MOODLE_INTERNAL') || die();
  * resolver. Tests the four-step resolution order
  * (tenant-override → global-override → registered-default → false)
  * plus the override write path, audit log, and unknown-key handling.
+ *
+ * @group tenant_isolation
  */
 class feature_flags_test extends \advanced_testcase {
 

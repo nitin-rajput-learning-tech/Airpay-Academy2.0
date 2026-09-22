@@ -20,6 +20,8 @@ use local_sentientia_api\scim\response;
  * @covers     \local_sentientia_api\scim\group_resource
  * @covers     \local_sentientia_api\scim\attestation
  * @covers     \local_sentientia_api\scim\handler
+ *
+ * @group tenant_isolation
  */
 final class scim_groups_test extends \advanced_testcase {
     use \local_sentientia_org\test\bizlms_fixture;

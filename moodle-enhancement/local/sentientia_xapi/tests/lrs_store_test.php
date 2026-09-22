@@ -23,6 +23,8 @@ use local_sentientia_xapi\model\statement;
 
 /**
  * @covers \local_sentientia_xapi\lrs\store
+ *
+ * @group tenant_isolation
  */
 class lrs_store_test extends \advanced_testcase {
 

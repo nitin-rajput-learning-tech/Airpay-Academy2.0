@@ -14,6 +14,8 @@ defined('MOODLE_INTERNAL') || die();
  *
  * @package    local_sentientia_recommendations
  * @covers     \local_sentientia_recommendations\recommendation_engine
+ *
+ * @group tenant_isolation
  */
 final class recommendation_engine_test extends \advanced_testcase {
 

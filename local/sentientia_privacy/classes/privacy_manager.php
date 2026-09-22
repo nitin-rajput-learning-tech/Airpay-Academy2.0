@@ -150,42 +150,57 @@ class privacy_manager {
         ]);
 
         // Step 2: Delete personal data from extended tables.
-        // Gamification points log.
-        if ($DB->get_manager()->table_exists('local_sentientia_points_log')) {
-            $DB->delete_records('local_sentientia_points_log', ['userid' => $userid]);
-        }
-        // User badges.
-        if ($DB->get_manager()->table_exists('local_sentientia_user_badges')) {
-            $DB->delete_records('local_sentientia_user_badges', ['userid' => $userid]);
-        }
-        // Streaks.
-        if ($DB->get_manager()->table_exists('local_sentientia_streaks')) {
-            $DB->delete_records('local_sentientia_streaks', ['userid' => $userid]);
-        }
-        // Chat log.
-        if ($DB->get_manager()->table_exists('local_sentientia_chat_log')) {
-            $DB->delete_records('local_sentientia_chat_log', ['userid' => $userid]);
-        }
-        // Notification log.
-        if ($DB->get_manager()->table_exists('local_sentientia_notif_log')) {
-            $DB->delete_records('local_sentientia_notif_log', ['userid' => $userid]);
-        }
-        // Notification preferences.
-        if ($DB->get_manager()->table_exists('local_sentientia_notif_prefs')) {
-            $DB->delete_records('local_sentientia_notif_prefs', ['userid' => $userid]);
-        }
-        // User skills.
-        if ($DB->get_manager()->table_exists('local_sentientia_user_skills')) {
-            $DB->delete_records('local_sentientia_user_skills', ['userid' => $userid]);
+        //
+        // 2026-09-22: this block used to be seven copies of
+        // `if (table_exists($t)) { delete_records($t, ...); }` and the request was
+        // marked 'completed' regardless. The ME tree named `local_airpay_user_skills`,
+        // a table retired by the ADR-025 rename, so table_exists() was false, the
+        // delete was skipped, and the data subject was told their skills data had been
+        // erased while every row survived. `local_sentientia_user_skill_hist` was
+        // missed by both trees.
+        //
+        // The wrong table name was the symptom. The silent skip was the defect: a
+        // table we intend to clear but cannot find is a FAILED erasure, because the
+        // rows may still exist under a name we no longer look for. Collect the misses
+        // and refuse to report a clean completion.
+        $erasetables = [
+            'local_sentientia_points_log'       => 'gamification points log',
+            'local_sentientia_user_badges'      => 'earned badges',
+            'local_sentientia_streaks'          => 'login streaks',
+            'local_sentientia_chat_log'         => 'assistant chat log',
+            'local_sentientia_notif_log'        => 'notification log',
+            'local_sentientia_notif_prefs'      => 'notification preferences',
+            'local_sentientia_user_skills'      => 'self-assessed skills',
+            'local_sentientia_user_skill_hist'  => 'skill assessment history',
+        ];
+        $dbman = $DB->get_manager();
+        $missing = [];
+        foreach ($erasetables as $table => $label) {
+            if ($dbman->table_exists($table)) {
+                $DB->delete_records($table, ['userid' => $userid]);
+            } else {
+                $missing[] = $table;
+            }
         }
 
         // Step 3: Mark Moodle user as deleted (soft delete).
         $DB->set_field('user', 'deleted', 1, ['id' => $userid]);
 
         // Step 4: Update request.
+        // An erasure that could not reach every table it intended to is 'partial',
+        // never 'completed'. A regulator asking "was this request fulfilled?" must
+        // not be answered by a status we did not verify.
+        $status = empty($missing) ? 'completed' : 'partial';
+        if (!empty($missing)) {
+            $notes = trim($notes . "
+" . 'INCOMPLETE - these tables were not found and '
+                . 'may still hold this user\'s data: ' . implode(', ', $missing));
+            debugging('Right-to-erasure request ' . (int) $requestid . ' is INCOMPLETE; '
+                . 'tables not found: ' . implode(', ', $missing), DEBUG_DEVELOPER);
+        }
         $DB->update_record('local_privacy_requests', (object)[
             'id'            => $requestid,
-            'status'        => 'completed',
+            'status'        => $status,
             'admin_notes'   => $notes,
             'processed_by'  => $adminid,
             'timeprocessed' => time(),

@@ -15,6 +15,8 @@ namespace local_sentientia_platform;
  *
  * @package    local_sentientia_platform
  * @covers     \local_sentientia_platform\customer
+ *
+ * @group tenant_isolation
  */
 final class customer_resolution_test extends \advanced_testcase {
 

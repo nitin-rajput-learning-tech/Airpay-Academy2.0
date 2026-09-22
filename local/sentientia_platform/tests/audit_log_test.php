@@ -14,6 +14,8 @@ defined('MOODLE_INTERNAL') || die();
  * `local_costcenter` plugin in production but is NOT present on a
  * vanilla Moodle PHPUnit fixture. Tests that need the column skip
  * cleanly when it's absent (same pattern as `tenant_test.php`).
+ *
+ * @group tenant_isolation
  */
 class audit_log_test extends \advanced_testcase {
 

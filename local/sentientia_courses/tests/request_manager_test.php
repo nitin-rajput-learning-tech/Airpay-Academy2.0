@@ -27,6 +27,8 @@ defined('MOODLE_INTERNAL') || die();
  *
  * Tests touch mdl_user.open_path so they need the BizLMS column;
  * skip when it's not present (vanilla PHPUnit fixture).
+ *
+ * @group tenant_isolation
  */
 class request_manager_test extends \advanced_testcase {
 

@@ -29,6 +29,8 @@ defined('MOODLE_INTERNAL') || die();
  * The CLI verifier had 28 assertions; this suite expands to ~35 by
  * adding edge-case coverage the CLI did not exercise (idempotent wrap,
  * tamper detection, distinct ciphertext for same plaintext).
+ *
+ * @group tenant_isolation
  */
 class audit_fixes_test extends \advanced_testcase {
 

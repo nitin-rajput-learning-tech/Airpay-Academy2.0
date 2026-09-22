@@ -29,6 +29,8 @@ defined('MOODLE_INTERNAL') || die();
  *
  * @package    local_sentientia_users
  * @category   test
+ *
+ * @group tenant_isolation
  */
 final class signup_service_test extends \advanced_testcase {
 

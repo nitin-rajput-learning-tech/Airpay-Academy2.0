@@ -18,6 +18,8 @@ defined('MOODLE_INTERNAL') || die();
  *
  * @package    local_sentientia_compliance_report
  * @category   test
+ *
+ * @group tenant_isolation
  */
 final class compliance_engine_test extends \advanced_testcase {
 

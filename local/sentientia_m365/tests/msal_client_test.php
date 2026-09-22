@@ -22,6 +22,8 @@ defined('MOODLE_INTERNAL') || die();
  *
  * @package    local_sentientia_m365
  * @covers     \local_sentientia_m365\msal_client
+ *
+ * @group tenant_isolation
  */
 final class msal_client_test extends \advanced_testcase {
 

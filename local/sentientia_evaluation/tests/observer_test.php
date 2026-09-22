@@ -21,6 +21,8 @@ defined('MOODLE_INTERNAL') || die();
  *
  * @package    local_sentientia_evaluation
  * @category   test
+ *
+ * @group tenant_isolation
  */
 final class observer_test extends \advanced_testcase {
 

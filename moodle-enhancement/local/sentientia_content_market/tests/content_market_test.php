@@ -28,6 +28,8 @@ use local_sentientia_content_market\market_aggregator;
  * @covers \local_sentientia_content_market\market_aggregator
  * @covers \local_sentientia_content_market\adapter\mock_provider
  * @covers \local_sentientia_content_market\catalog_item
+ *
+ * @group tenant_isolation
  */
 class content_market_test extends advanced_testcase {
 

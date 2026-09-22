@@ -17,6 +17,8 @@ defined('MOODLE_INTERNAL') || die();
  * @covers     \local_sentientia_core\tenant_identity
  * @copyright  2026 Airpay Payment Services
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ *
+ * @group tenant_isolation
  */
 final class tenant_identity_test extends \advanced_testcase {
 

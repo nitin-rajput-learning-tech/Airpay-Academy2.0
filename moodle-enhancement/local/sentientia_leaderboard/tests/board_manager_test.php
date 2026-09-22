@@ -18,6 +18,8 @@ defined('MOODLE_INTERNAL') || die();
  * @package    local_sentientia_leaderboard
  * @category   test
  * @covers     \local_sentientia_leaderboard\board_manager
+ *
+ * @group tenant_isolation
  */
 final class board_manager_test extends \advanced_testcase {
 

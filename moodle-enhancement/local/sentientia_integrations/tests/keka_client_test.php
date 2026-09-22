@@ -25,6 +25,8 @@ defined('MOODLE_INTERNAL') || die();
  *
  * @package    local_sentientia_integrations
  * @category   test
+ *
+ * @group tenant_isolation
  */
 final class keka_client_test extends \advanced_testcase {
 

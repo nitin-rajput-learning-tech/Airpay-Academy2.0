@@ -16,6 +16,8 @@ defined('MOODLE_INTERNAL') || die();
  * disabled in our checkout). The helper class itself is correct against
  * production schema; the tests that need the column simply skip when
  * it's absent.
+ *
+ * @group tenant_isolation
  */
 class tenant_test extends \advanced_testcase {
 

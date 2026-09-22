@@ -15,6 +15,8 @@ defined('MOODLE_INTERNAL') || die();
  *
  * @package    local_sentientia_skillsai
  * @covers     \local_sentientia_skillsai\taxonomy_manager
+ *
+ * @group tenant_isolation
  */
 final class taxonomy_manager_test extends \advanced_testcase {
 

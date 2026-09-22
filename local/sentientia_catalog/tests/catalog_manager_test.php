@@ -32,6 +32,8 @@ defined('MOODLE_INTERNAL') || die();
  *   4. Withdrawn shares don't surface
  *   5. format_course() correctly tags is_borrowed/is_owned
  *   6. Cross-tenant isolation: Airpay user doesn't see Public's owned-only courses
+ *
+ * @group tenant_isolation
  */
 class catalog_manager_test extends \advanced_testcase {
 

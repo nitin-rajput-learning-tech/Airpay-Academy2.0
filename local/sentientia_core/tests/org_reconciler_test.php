@@ -18,6 +18,8 @@ defined('MOODLE_INTERNAL') || die();
  * @covers     \local_sentientia_core\org_reconciler
  * @copyright  2026 Airpay Payment Services
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ *
+ * @group tenant_isolation
  */
 final class org_reconciler_test extends \advanced_testcase {
 
