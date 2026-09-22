@@ -5,6 +5,64 @@
 
 ---
 
+## ✅ 2026-09-22 — Confidence-gap audit + Wave 1 closure: 14 live defects, 2 new build gates (Opus 5)
+
+Nitin: *"close all gaps to high confidence, build plan for it, and go ahead till done."* A seven-way
+parallel audit of the **code** (not the docs) produced `docs/cutover/GAP-CLOSURE-PLAN-2026-09-22.md`
+— 71 tasks in three waves, 58 of them closable offline. Wave 1 executed the same day.
+
+**The audit corrected several claims we had been carrying, including two of mine.**
+- `phpunit-52` carried a **job-level `continue-on-error`**, so ~160 tenant-isolation assertions were
+  advisory: a cross-tenant leak could merge green. That, not test quality, was the real isolation gap
+  — the suites themselves are genuinely adversarial across 33 plugins.
+- CI wires only `PLAYWRIGHT_ADMIN_*`, so four of five render personas `test.skip()`. **CI-proven
+  render coverage is one persona of nine, not five.** The 20 visual baselines *are* committed but are
+  stale, three are byte-identical duplicates, and `PLAYWRIGHT_VISUAL` is never set, so they have never
+  been compared.
+- AI: **13** live call sites across **8** plugins, not 9. `whatsapp` and `m365` have **no live code at
+  all** (their state cards claim live clients — corrected). The response parsers *are* well tested;
+  the untested surface is the HTTP envelope.
+- The theme dashboard's hand-rolled `$tenantscope` closure is **correct**; its gap was zero tests.
+
+**Fixed and pushed** (`86bb0c26f`, `bc6178610`, `676df829f`, `6781e5a24`):
+- **Unbounded path prefixes — 10 more live sites.** `'/1' . '%'` also matches `/177`. Beyond the three
+  already fixed, the scan found it live in the gamification leaderboard/neighbour/badge ranks, the
+  analytics mandatory-course denominator, the notifications broadcast audience, org accesslib, Manage
+  Users counts, the public homepage, three theme guest/login queries and the cart smoke CLI. New
+  primitive `tenant::path_descendant_filter()`, seven DB-level boundary tests that **execute** the
+  emitted SQL against `/1 /1/2 /1/2/3 /1/20 /10 /177 /1x` and NULL, and a new scanner
+  `tools/check-path-boundary.php` (2,655 files clean) wired into **pre-commit CHECK 18** and the
+  **`path-boundary-check`** CI job.
+- **Right to erasure reported success it had not achieved.** The ME tree — the tree UAT runs —
+  deleted from `local_airpay_user_skills`, retired by the ADR-025 rename, so `table_exists()` was
+  false, the delete was skipped, and the request was still marked `completed`. `..._user_skill_hist`
+  was missed by both trees. The wrong name was the symptom; the **silent skip** was the defect. Misses
+  are now collected and the request is marked `partial`, never `completed`.
+- **Cart payment callback failed OPEN.** `verify_callback()` never checked that `airpay_secret` was
+  non-empty, and the shipped default is `''` — so the checksum was computable and a self-registered
+  learner could self-sign a callback for a free enrolment plus a genuine invoice. Now fails closed.
+- **Tenant isolation can now fail a build.** 103 test files tagged `@group tenant_isolation`;
+  `phpunit-52` is blocking with its hard gate scoped to that group plus a non-empty assertion (a
+  silently-empty group would pass while proving nothing). The full 5.2 suite stays advisory at step
+  level until its unrelated failures are drained.
+- **The test that existed to catch leaks could not see them.** `badge_manager_test` paired `/1` with
+  `/77`; since `'/1%'` never matched `/77` it passed while the leak 50 lines away was live. Now `/177`.
+- **Seven AI clients could spend real money during a test run.** All use raw cURL, bypassing both the
+  gateway's guard and Moodle's `\curl` host blocking. Guarded, with test pairs that set a key first so
+  they cannot pass for the wrong reason.
+- **Metering was a documentation claim, not a code property.** The ledger and the Addendum-A cap live
+  in the gateway, and gateway routing defaults OFF — so enabling one feature's `live_api` without
+  routing would have spent outside the central meter. Live calls now refuse unless routing is on. The
+  executive deck's "never unlimited" wording overstated this and has been corrected and re-issued.
+
+**Still open:** Wave 1 remainder (analytics gates on the *retired* `local/courses:manage`, so its
+dashboard is accidentally siteadmin-only; `sentientia_cart` has no `tests/` directory at all; 11
+plugins declare `null_provider` while `compliance_report` alone owns four `userid` tables — a real
+DPDP gap), then Waves 2 and 3 per the plan. The three irreducible items remain irreducible: an
+independent penetration test, a real user, and certification calendar time.
+
+---
+
 ## ✅ 2026-09-21 — Executive showcase deck + consolidated pending-task plan (Fable 5.1)
 
 - **Deliverables for Nitin's leadership showcase (MD/Founder, CTO, CHRO):** `docs/business/AIRPAY-ACADEMY-2.0-UAT-SHOWCASE-DECK-2026-09-21.pptx` (14 slides, speaker notes, UAT screenshots captured 09-17; build script `docs/business/deck-src/`) and **`docs/cutover/PENDING-TASK-PLAN-2026-09-21.md`** — 387 swept items de-duplicated into horizons (this week → tester rollout → before go-live → roadmap), owner-grouped, plus the decisions list, done-list and standing rules.
