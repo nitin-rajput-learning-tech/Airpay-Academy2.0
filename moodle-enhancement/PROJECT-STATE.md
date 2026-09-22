@@ -101,10 +101,25 @@ parallel audit of the **code** (not the docs) produced `docs/cutover/GAP-CLOSURE
   reconciled, so the list can only shrink. It caught two of my own one-tree edits during this
   session.
 
-**Still open:** two Wave 1 items (`migration_parity_check` value-level checksums, k6 harness
-repair), then Waves 2 and 3 per the plan. Nothing in Wave 1 is blocked — these two are simply not
-yet done. The three irreducible items remain irreducible: an independent penetration test, a real
-user, and certification calendar time.
+- **The migration parity check proved counts, then claimed "data intact".** It is the gate for the
+  ninja-sandbox rehearsal and the live replacement, and it compared row counts across seventeen
+  metrics before printing `RESULT: 100% PARITY — data intact.` Counts cannot see a truncated
+  column, a collation change mangling non-ASCII names, or a timezone shift. Now sums a CRC over the
+  meaningful columns of nine critical tables, and **refuses to over-claim**: on a non-MySQL engine
+  or against a pre-checksum baseline it exits 2 with "Data is NOT proven intact". Proven against the
+  real 2,890-user import — one character changed in one of 3,178 user rows drifts the checksum while
+  the row count stays identical, which is exactly what the old script would have passed.
+- **The k6 load harness was measuring 404s and login forms.** It targeted three plugin paths the
+  ADR-022/025 rename deleted; its read mix ran unauthenticated against a `forcelogin=1` site, so
+  "Dashboard" was timing the login page; its 30% write mix was gated on a hand-supplied cookie
+  nobody supplies, so it has never run; and its summary printed the SLA targets without evaluating
+  them. Repaired with per-VU login (extracting Moodle's `logintoken`), a PASS/FAIL/INCONCLUSIVE
+  verdict that reports the peak VUs actually reached, and a host guard that refuses
+  `airpay.academy` outright with no override.
+
+**Wave 1 is closed.** Waves 2 and 3 are next per the plan: Wave 2 needs the tunnel or a browser,
+Wave 3 is one external input each. The three irreducible items remain irreducible: an independent
+penetration test, a real user, and certification calendar time.
 
 ---
 
