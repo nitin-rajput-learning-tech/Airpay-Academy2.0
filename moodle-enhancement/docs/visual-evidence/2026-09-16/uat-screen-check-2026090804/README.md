@@ -56,6 +56,12 @@
 
 Chrome gotcha recorded: Chrome's password autofill is only a *preview* until the field receives a click — clicking "Log in" straight away submits an empty password and the page silently reloads. Click into the password box first, then the button.
 
+## 2026-09-22 look after the theme 2026090806 deploy — PASS
+
+| # | Check | Seen | Verdict |
+|---|---|---|---|
+| P1 | Guest, `/login/index.php?lang=hi` — input placeholders (were literal `\u092f…` escapes) | `username` placeholder "यूज़रनेम / ईमेल", `password` placeholder "पासवर्ड"; 0 `\uXXXX` sequences in any `placeholder` / `title` / `aria-label` attribute on the page | PASS |
+
 ## Reviewer notes
 
 - The subtitle line "AIRPAY PAYMENT SERVICES PRIVATE LIMITED — प्लेटफ़ॉर्म ओवरव्यू और सिस्टम हेल्थ" on Meera's dashboard is what the scoped-subtitle fix above addresses.
