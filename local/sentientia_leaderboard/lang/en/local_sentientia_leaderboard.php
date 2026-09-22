@@ -133,3 +133,16 @@ $string['privacy:metadata:lb_optouts']                = 'Per-user opt-out from b
 $string['privacy:metadata:lb_optouts:userid']         = 'The user who opted out';
 $string['privacy:metadata:lb_optouts:customerid']     = 'The customer scope of the opt-out';
 $string['privacy:metadata:lb_optouts:timeoptedout']   = 'When the user opted out';
+
+// Privacy metadata for tables this plugin owned but never declared
+// (added 2026-09-22, see classes/privacy/provider.php).
+$string['privacy:metadata:lb_boards'] = 'Leaderboards, including who created each one.';
+$string['privacy:metadata:lb_boards:ownerid'] = 'The ID of the user who owns the leaderboard.';
+$string['privacy:metadata:lb_boards:name'] = 'The leaderboard\'s name.';
+$string['privacy:metadata:lb_notify_log'] = 'A record of the rank-change notifications sent to you.';
+$string['privacy:metadata:lb_notify_log:userid'] = 'The ID of the user notified.';
+$string['privacy:metadata:lb_notify_log:boardid'] = 'Which leaderboard the notification was about.';
+$string['privacy:metadata:lb_notify_log:last_sent'] = 'When the last notification was sent.';
+$string['privacy:metadata:lb_notify_log:last_old_rank'] = 'Your rank before the change.';
+$string['privacy:metadata:lb_notify_log:last_new_rank'] = 'Your rank after the change.';
+$string['privacy:metadata:lb_notify_log:last_reason'] = 'Why the notification was sent.';

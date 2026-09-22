@@ -154,3 +154,16 @@ $string['privacy:metadata:gateway']                  = 'गेटवे को �
 $string['privacy:metadata:gateway:email']            = 'भुगतान रसीदों के लिए ईमेल';
 $string['privacy:metadata:gateway:name']             = 'बिलिंग के लिए नाम';
 $string['privacy:metadata:gateway:amount']           = 'चार्ज करने के लिए राशि';
+
+// Privacy metadata for tables this plugin owned but never declared
+// (added 2026-09-22, see classes/privacy/provider.php).
+$string['privacy:metadata:local_sentientia_cart_id'] = 'आपकी खुली हुई टोकरी जिसका भुगतान अभी नहीं हुआ।';
+$string['privacy:metadata:local_sentientia_cart_id:userid'] = 'टोकरी के मालिक उपयोगकर्ता की आईडी।';
+$string['privacy:metadata:local_sentientia_cart_id:reserved'] = 'आंतरिक टोकरी स्थिति।';
+$string['privacy:metadata:local_sentientia_cart_credits'] = 'आपका प्रशिक्षण-क्रेडिट शेष और अर्जित/खर्च किया गया।';
+$string['privacy:metadata:local_sentientia_cart_credits:userid'] = 'शेष के मालिक उपयोगकर्ता की आईडी।';
+$string['privacy:metadata:local_sentientia_cart_credits:balance'] = 'वर्तमान क्रेडिट शेष।';
+$string['privacy:metadata:local_sentientia_cart_credits:currency'] = 'शेष की मुद्रा।';
+$string['privacy:metadata:local_sentientia_cart_credits:lifetime_earned'] = 'अब तक अर्जित कुल क्रेडिट।';
+$string['privacy:metadata:local_sentientia_cart_credits:lifetime_spent'] = 'अब तक खर्च किया गया कुल क्रेडिट।';
+$string['privacy:metadata:local_sentientia_cart_credits:timemodified'] = 'शेष अंतिम बार कब बदला।';

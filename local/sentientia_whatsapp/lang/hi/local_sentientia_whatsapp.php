@@ -123,3 +123,21 @@ $string['admin_index_link_analytics'] = 'चैनल एनालिटिक�
 $string['admin_index_link_analytics_desc'] = 'भेजने की मात्रा और विफलता दर।';
 $string['admin_index_link_settings'] = 'चैनल सेटिंग्स';
 $string['admin_index_link_settings_desc'] = 'प्रदाता API कुंजी।';
+
+// Privacy metadata for tables this plugin owned but never declared
+// (added 2026-09-22, see classes/privacy/provider.php).
+$string['privacy:metadata:channel_audit'] = 'आपकी संदेश प्राथमिकताओं में हुए प्रत्येक परिवर्तन का रिकॉर्ड, और किसने किया।';
+$string['privacy:metadata:channel_audit:userid'] = 'जिस उपयोगकर्ता की प्राथमिकताएँ बदलीं उसकी आईडी।';
+$string['privacy:metadata:channel_audit:changed_by'] = 'परिवर्तन करने वाले उपयोगकर्ता की आईडी।';
+$string['privacy:metadata:channel_audit:field_name'] = 'कौन सी प्राथमिकता बदली।';
+$string['privacy:metadata:channel_audit:old_value'] = 'परिवर्तन से पहले का मान।';
+$string['privacy:metadata:channel_audit:new_value'] = 'परिवर्तन के बाद का मान।';
+$string['privacy:metadata:channel_audit:reason'] = 'परिवर्तन का दर्ज कारण।';
+$string['privacy:metadata:channel_audit:ip_address'] = 'जिस IP पते से परिवर्तन किया गया।';
+$string['privacy:metadata:send_log'] = 'आपको भेजे गए संदेशों का लॉग, प्रयुक्त नंबर या पते सहित।';
+$string['privacy:metadata:send_log:userid'] = 'जिस उपयोगकर्ता को संदेश भेजा गया उसकी आईडी।';
+$string['privacy:metadata:send_log:channel'] = 'कौन सा चैनल प्रयोग हुआ (WhatsApp, SMS, ईमेल)।';
+$string['privacy:metadata:send_log:template_key'] = 'कौन सा संदेश टेम्पलेट भेजा गया।';
+$string['privacy:metadata:send_log:status'] = 'संदेश वितरित हुआ या नहीं।';
+$string['privacy:metadata:send_log:recipient'] = 'जिस मोबाइल नंबर या ईमेल पते पर संदेश भेजा गया।';
+$string['privacy:metadata:send_log:failure_reason'] = 'संदेश विफल होने का कारण।';

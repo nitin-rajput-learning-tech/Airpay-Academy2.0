@@ -307,3 +307,27 @@ them for its cohorts. `db/access.php` adds `'teacher' => CAP_ALLOW`;
 roles (overwrite=false). Verified on local prod-import: manageboard now
 grants editingteacher, manager, administrator, teacher, trainer. Deployed
 local + mirrored to top-level local/.
+
+
+## 2026-09-22 - Privacy provider did not declare every table it owns
+
+`privacy_coverage_test` (new, in `local_sentientia_platform`) walks every Sentientia plugin's
+`install.xml` and fails the build when a plugin holding a user-identifying column does not declare
+it. It found eleven such tables across six plugins on its first run. This plugin held two:
+
+- `local_sentientia_lb_boards` (`ownerid`) - who created each leaderboard
+- `local_sentientia_lb_notify_log` (`userid`) - rank-change notifications sent to a user
+
+This is the harder version of the `null_provider` bug. A provider that declares *some* of its
+tables makes the Privacy registry page read as complete, so nobody looks again. A subject-access
+request returned a partial answer and an erasure request left rows behind, in both cases reporting
+success.
+
+**Owner versus actor.** A column identifying the data subject has its rows deleted. A column where
+the subject merely acted on somebody else's record is anonymised to `0` instead, because deleting
+the row would destroy a third party's record or shared configuration. Both are exported.
+
+A leaderboard belongs to everyone on it, so erasing its creator anonymises `ownerid` rather than deleting the board.
+
+Version bumped to 2026092202 so the cached privacy registry picks up the new declarations. en + hi
+strings added at parity.

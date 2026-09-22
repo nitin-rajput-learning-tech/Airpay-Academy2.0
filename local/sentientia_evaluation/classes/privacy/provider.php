@@ -28,6 +28,34 @@ class provider implements
                 'timesubmitted' => 'privacy:metadata:responses:timesubmitted',
             ],
             'privacy:metadata:responses');
+
+        // Added 2026-09-22 -- owned but undeclared. Both record that an
+        // evaluation was aimed at a specific employee, which is personal data
+        // whether or not they ever answered it.
+        $collection->add_database_table(
+            'local_sentientia_evaluation_triggers',
+            [
+                'userid'        => 'privacy:metadata:triggers:userid',
+                'evaluationid'  => 'privacy:metadata:triggers:evaluationid',
+                'trigger_event' => 'privacy:metadata:triggers:trigger_event',
+                'status'        => 'privacy:metadata:triggers:status',
+                'timefired'     => 'privacy:metadata:triggers:timefired',
+            ],
+            'privacy:metadata:triggers');
+
+        $collection->add_database_table(
+            'local_sentientia_evaluation_assign',
+            [
+                'userid'             => 'privacy:metadata:assign:userid',
+                'evaluationid'       => 'privacy:metadata:assign:evaluationid',
+                'trigger_event'      => 'privacy:metadata:assign:trigger_event',
+                'status'             => 'privacy:metadata:assign:status',
+                'assigned_by_userid' => 'privacy:metadata:assign:assigned_by_userid',
+                'due_at'             => 'privacy:metadata:assign:due_at',
+                'responded_at'       => 'privacy:metadata:assign:responded_at',
+            ],
+            'privacy:metadata:assign');
+
         return $collection;
     }
 
@@ -78,6 +106,8 @@ class provider implements
         }
         // Only delete the response rows; keep evaluation + question metadata.
         $DB->delete_records('local_sentientia_evaluation_responses');
+        $DB->delete_records('local_sentientia_evaluation_triggers');
+        $DB->delete_records('local_sentientia_evaluation_assign');
     }
 
     public static function delete_data_for_user(approved_contextlist $contextlist) {
@@ -85,6 +115,14 @@ class provider implements
         if (!self::has_system_context($contextlist)) {
             return;
         }
+        $DB->delete_records('local_sentientia_evaluation_triggers',
+            ['userid' => $userid]);
+        $DB->delete_records('local_sentientia_evaluation_assign',
+            ['userid' => $userid]);
+        // The assigner acted on somebody else's row, so anonymise rather than
+        // delete -- the assignee's record must survive.
+        $DB->set_field('local_sentientia_evaluation_assign',
+            'assigned_by_userid', 0, ['assigned_by_userid' => $userid]);
         $DB->delete_records('local_sentientia_evaluation_responses',
             ['userid' => $contextlist->get_user()->id]);
     }
@@ -97,6 +135,16 @@ class provider implements
         $userids = $DB->get_fieldset_select(
             'local_sentientia_evaluation_responses', 'DISTINCT userid',
             'userid > 0');
+        // Added 2026-09-22: somebody assigned an evaluation but never
+        // answered it still has data here.
+        $userids = array_merge($userids,
+            $DB->get_fieldset_select('local_sentientia_evaluation_triggers',
+                'DISTINCT userid', 'userid > 0'),
+            $DB->get_fieldset_select('local_sentientia_evaluation_assign',
+                'DISTINCT userid', 'userid > 0'),
+            $DB->get_fieldset_select('local_sentientia_evaluation_assign',
+                'DISTINCT assigned_by_userid', 'assigned_by_userid > 0'));
+        $userids = array_values(array_unique($userids));
         if (!empty($userids)) {
             $userlist->add_users($userids);
         }
@@ -115,6 +163,12 @@ class provider implements
         [$insql, $inparams] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'uid');
         $DB->delete_records_select('local_sentientia_evaluation_responses',
             "userid $insql", $inparams);
+        $DB->delete_records_select('local_sentientia_evaluation_triggers',
+            "userid $insql", $inparams);
+        $DB->delete_records_select('local_sentientia_evaluation_assign',
+            "userid $insql", $inparams);
+        $DB->set_field_select('local_sentientia_evaluation_assign',
+            'assigned_by_userid', 0, "assigned_by_userid $insql", $inparams);
     }
 
     private static function has_system_context(approved_contextlist $contextlist): bool {

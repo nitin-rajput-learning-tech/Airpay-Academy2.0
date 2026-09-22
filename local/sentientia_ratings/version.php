@@ -7,7 +7,7 @@ $plugin->component = 'local_sentientia_ratings';
 // P1 #51 (2026-05-20) — Hindi pack: 12 strings (star widget + capability + errors).
 // ADR-022 batch-1 (2026-06-03) — renamed from local_airpay_ratings (component/dir/table/
 // capability/WS) via a DB hand-over; this bump rebuilds the classmap + re-registers the WS.
-$plugin->version   = 2026060302;
+$plugin->version   = 2026092201;  // real privacy provider: ratings (had NO provider file)
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.1.2';  // +ADR-022 rename to local_sentientia_ratings
+$plugin->release   = '1.1.3';  // +ADR-022 rename to local_sentientia_ratings

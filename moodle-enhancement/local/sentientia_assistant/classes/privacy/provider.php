@@ -1,34 +1,49 @@
 <?php
 // Copyright 2026 Airpay Payment Services
 // License http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
-//
-// Real privacy provider for local_sentientia_assistant.
-//
-// Replaces the former null_provider: this plugin DOES store personal data in
-// airpay-owned tables —
-//   {local_sentientia_chat_log}     — the learner's conversation with the assistant
-//   {local_sentientia_agent_audit}  — P1.3 agentic copilot: every tool the LLM
-//                                      proposed on the user's behalf + the
-//                                      authorisation outcome and arguments
-// and (when the live-API flag is ON) sends chat messages to Anthropic Claude.
-// {local_sentientia_chat_cache} holds query→response pairs keyed by a hash, with
-// no userid, so it carries no personal data and is not exported per-user.
 
 namespace local_sentientia_assistant\privacy;
 
 defined('MOODLE_INTERNAL') || die();
 
 use core_privacy\local\metadata\collection;
-use core_privacy\local\request\contextlist;
 use core_privacy\local\request\approved_contextlist;
 use core_privacy\local\request\approved_userlist;
+use core_privacy\local\request\contextlist;
 use core_privacy\local\request\userlist;
 use core_privacy\local\request\writer;
 
 /**
- * Privacy provider — P1.3 agentic copilot + chat assistant.
+ * Privacy provider - GDPR / DPDP metadata, export and erasure.
  *
- * @package local_sentientia_assistant
+ * REPLACES A null_provider (2026-09-22).
+ * -------------------------------------
+ * This plugin previously declared `\core_privacy\local\metadata\
+ * null_provider`, which is a positive assertion to Moodle's privacy registry
+ * that it stores no personal data. That was not true: it owns the tables
+ * listed below, each keyed on a user id. A subject access request returned
+ * nothing from this plugin and an erasure request deleted nothing, in both
+ * cases without any error - the registry simply reported the plugin as
+ * holding no data.
+ *
+ * Tables this plugin owns:
+ *   - local_sentientia_chat_log
+ *       subject rows deleted on erasure
+ *   - local_sentientia_agent_audit
+ *       subject rows deleted on erasure
+ *
+ * OWNER versus ACTOR columns
+ * --------------------------
+ * A column that identifies the DATA SUBJECT has its rows deleted on erasure.
+ * A column where the subject merely ACTED on someone else's record - an
+ * approver, a creator, a decider - is ANONYMISED to 0 instead, because
+ * deleting the row would destroy a third party's record or a shared
+ * configuration row. Both are exported, so the subject sees everything held
+ * about them either way.
+ *
+ * @package    local_sentientia_assistant
+ * @copyright  2026 Airpay Payment Services
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class provider implements
     \core_privacy\local\metadata\provider,
@@ -36,15 +51,16 @@ class provider implements
     \core_privacy\local\request\plugin\provider {
 
     public static function get_metadata(collection $collection): collection {
+
         $collection->add_database_table(
             'local_sentientia_chat_log',
             [
-                'userid'      => 'privacy:metadata:chat_log:userid',
-                'role'        => 'privacy:metadata:chat_log:role',
-                'message'     => 'privacy:metadata:chat_log:message',
-                'model'       => 'privacy:metadata:chat_log:model',
-                'tokens_in'   => 'privacy:metadata:chat_log:tokens_in',
-                'tokens_out'  => 'privacy:metadata:chat_log:tokens_out',
+                'userid' => 'privacy:metadata:chat_log:userid',
+                'role' => 'privacy:metadata:chat_log:role',
+                'message' => 'privacy:metadata:chat_log:message',
+                'model' => 'privacy:metadata:chat_log:model',
+                'tokens_in' => 'privacy:metadata:chat_log:tokens_in',
+                'tokens_out' => 'privacy:metadata:chat_log:tokens_out',
                 'timecreated' => 'privacy:metadata:chat_log:timecreated',
             ],
             'privacy:metadata:chat_log'
@@ -53,46 +69,39 @@ class provider implements
         $collection->add_database_table(
             'local_sentientia_agent_audit',
             [
-                'userid'          => 'privacy:metadata:agent_audit:userid',
-                'costcenterid'    => 'privacy:metadata:agent_audit:costcenterid',
-                'tool'            => 'privacy:metadata:agent_audit:tool',
-                'args_json'       => 'privacy:metadata:agent_audit:args_json',
-                'proposed_by'     => 'privacy:metadata:agent_audit:proposed_by',
-                'outcome'         => 'privacy:metadata:agent_audit:outcome',
-                'detail'          => 'privacy:metadata:agent_audit:detail',
+                'userid' => 'privacy:metadata:agent_audit:userid',
+                'costcenterid' => 'privacy:metadata:agent_audit:costcenterid',
+                'tool' => 'privacy:metadata:agent_audit:tool',
+                'args_json' => 'privacy:metadata:agent_audit:args_json',
+                'proposed_by' => 'privacy:metadata:agent_audit:proposed_by',
+                'outcome' => 'privacy:metadata:agent_audit:outcome',
+                'detail' => 'privacy:metadata:agent_audit:detail',
                 'idempotency_key' => 'privacy:metadata:agent_audit:idempotency_key',
-                'timecreated'     => 'privacy:metadata:agent_audit:timecreated',
+                'timecreated' => 'privacy:metadata:agent_audit:timecreated',
             ],
             'privacy:metadata:agent_audit'
-        );
-
-        // External subsystem — Anthropic Claude. Only sent when the live-API
-        // flag is ON; the chat message text + model id leave the platform.
-        $collection->add_external_location_link(
-            'anthropic_api',
-            [
-                'message' => 'privacy:metadata:anthropic:message',
-                'model'   => 'privacy:metadata:anthropic:model',
-            ],
-            'privacy:metadata:anthropic'
         );
 
         return $collection;
     }
 
     public static function get_contexts_for_userid(int $userid): contextlist {
-        $contextlist = new contextlist();
-        $sql = "SELECT 1
-                  FROM {local_sentientia_chat_log} cl
-                 WHERE cl.userid = :uid1
-                 UNION
-                SELECT 1
-                  FROM {local_sentientia_agent_audit} aa
-                 WHERE aa.userid = :uid2";
         global $DB;
-        if ($DB->record_exists_sql($sql, ['uid1' => $userid, 'uid2' => $userid])) {
+
+        $contextlist = new contextlist();
+
+        // All of this plugin's tables are site-level: they reference courses,
+        // exams and orgs by id rather than living in a course context. The
+        // system context is added only when the user actually appears, so a
+        // user with no rows here is not offered an empty export section.
+        $found = false;
+        $found = $found || $DB->record_exists('local_sentientia_chat_log', ['userid' => $userid]);
+        $found = $found || $DB->record_exists('local_sentientia_agent_audit', ['userid' => $userid]);
+
+        if ($found) {
             $contextlist->add_system_context();
         }
+
         return $contextlist;
     }
 
@@ -101,96 +110,124 @@ class provider implements
         if (!$context instanceof \context_system) {
             return;
         }
+
         $userlist->add_from_sql('userid',
-            "SELECT userid FROM {local_sentientia_chat_log}", []);
+            "SELECT userid FROM {local_sentientia_chat_log} WHERE userid > 0", []);
         $userlist->add_from_sql('userid',
-            "SELECT userid FROM {local_sentientia_agent_audit}", []);
+            "SELECT userid FROM {local_sentientia_agent_audit} WHERE userid > 0", []);
     }
 
     public static function export_user_data(approved_contextlist $contextlist): void {
         global $DB;
-        if (!in_array(CONTEXT_SYSTEM, array_map(static function($c) {
-            return $c->contextlevel;
-        }, $contextlist->get_contexts()), true)) {
-            return;
-        }
-        $userid = $contextlist->get_user()->id;
-        $context = \context_system::instance();
 
-        $chats = $DB->get_records('local_sentientia_chat_log', ['userid' => $userid],
-            'timecreated ASC');
-        if ($chats) {
-            $rows = [];
-            foreach ($chats as $c) {
-                $rows[] = [
-                    'role'        => $c->role,
-                    'message'     => $c->message,
-                    'model'       => $c->model,
-                    'tokens_in'   => $c->tokens_in,
-                    'tokens_out'  => $c->tokens_out,
-                    'timecreated' => \core_privacy\local\request\transform::datetime($c->timecreated),
-                ];
-            }
-            writer::with_context($context)->export_data(
-                [get_string('pluginname', 'local_sentientia_assistant'),
-                 get_string('privacy:export:chat', 'local_sentientia_assistant')],
-                (object) ['messages' => $rows]
-            );
-        }
+        $userid = (int) $contextlist->get_user()->id;
+        $root = get_string('pluginname', 'local_sentientia_assistant');
 
-        $audit = $DB->get_records('local_sentientia_agent_audit', ['userid' => $userid],
-            'timecreated ASC');
-        if ($audit) {
-            $rows = [];
-            foreach ($audit as $a) {
-                $rows[] = [
-                    'tool'        => $a->tool,
-                    'args_json'   => $a->args_json,
-                    'proposed_by' => $a->proposed_by,
-                    'outcome'     => $a->outcome,
-                    'detail'      => $a->detail,
-                    'timecreated' => \core_privacy\local\request\transform::datetime($a->timecreated),
-                ];
+        foreach ($contextlist->get_contexts() as $context) {
+            if (!$context instanceof \context_system) {
+                continue;
             }
-            writer::with_context($context)->export_data(
-                [get_string('pluginname', 'local_sentientia_assistant'),
-                 get_string('privacy:export:audit', 'local_sentientia_assistant')],
-                (object) ['actions' => $rows]
-            );
+
+            // local_sentientia_chat_log
+            $assistantchatlog = $DB->get_records_sql(
+                "SELECT id, userid, role, message, model, tokens_in, tokens_out, timecreated
+                   FROM {local_sentientia_chat_log}
+                  WHERE userid = :u0
+               ORDER BY timecreated ASC",
+                ['u0' => $userid]);
+
+            if (!empty($assistantchatlog)) {
+                $rows = [];
+                foreach ($assistantchatlog as $r) {
+                    $rows[] = [
+                        'userid' => $r->userid,
+                        'role' => $r->role,
+                        'message' => $r->message,
+                        'model' => $r->model,
+                        'tokens_in' => $r->tokens_in,
+                        'tokens_out' => $r->tokens_out,
+                        'timecreated' => empty($r->timecreated) ? null : userdate((int) $r->timecreated),
+                    ];
+                }
+                writer::with_context($context)->export_data(
+                    [$root, get_string('privacy:metadata:chat_log', 'local_sentientia_assistant')],
+                    (object) ['assistantchatlog' => $rows]
+                );
+            }
+
+            // local_sentientia_agent_audit
+            $assistantagentaudit = $DB->get_records_sql(
+                "SELECT id, userid, costcenterid, tool, args_json, proposed_by, outcome, detail, idempotency_key, timecreated
+                   FROM {local_sentientia_agent_audit}
+                  WHERE userid = :u0
+               ORDER BY timecreated ASC",
+                ['u0' => $userid]);
+
+            if (!empty($assistantagentaudit)) {
+                $rows = [];
+                foreach ($assistantagentaudit as $r) {
+                    $rows[] = [
+                        'userid' => $r->userid,
+                        'costcenterid' => $r->costcenterid,
+                        'tool' => $r->tool,
+                        'args_json' => $r->args_json,
+                        'proposed_by' => $r->proposed_by,
+                        'outcome' => $r->outcome,
+                        'detail' => $r->detail,
+                        'idempotency_key' => $r->idempotency_key,
+                        'timecreated' => empty($r->timecreated) ? null : userdate((int) $r->timecreated),
+                    ];
+                }
+                writer::with_context($context)->export_data(
+                    [$root, get_string('privacy:metadata:agent_audit', 'local_sentientia_assistant')],
+                    (object) ['assistantagentaudit' => $rows]
+                );
+            }
+
         }
     }
 
     public static function delete_data_for_all_users_in_context(\context $context): void {
+        global $DB;
+
         if (!$context instanceof \context_system) {
             return;
         }
-        global $DB;
-        $DB->delete_records('local_sentientia_chat_log');
-        $DB->delete_records('local_sentientia_agent_audit');
+
+        $DB->delete_records('local_sentientia_chat_log', []);
+        $DB->delete_records('local_sentientia_agent_audit', []);
     }
 
     public static function delete_data_for_user(approved_contextlist $contextlist): void {
         global $DB;
-        if (!in_array(CONTEXT_SYSTEM, array_map(static function($c) {
-            return $c->contextlevel;
-        }, $contextlist->get_contexts()), true)) {
-            return;
+
+        $userid = (int) $contextlist->get_user()->id;
+
+        foreach ($contextlist->get_contexts() as $context) {
+            if (!$context instanceof \context_system) {
+                continue;
+            }
+
+            $DB->delete_records('local_sentientia_chat_log', ['userid' => $userid]);
+            $DB->delete_records('local_sentientia_agent_audit', ['userid' => $userid]);
         }
-        $userid = $contextlist->get_user()->id;
-        $DB->delete_records('local_sentientia_chat_log', ['userid' => $userid]);
-        $DB->delete_records('local_sentientia_agent_audit', ['userid' => $userid]);
     }
 
     public static function delete_data_for_users(approved_userlist $userlist): void {
         global $DB;
-        if (!($userlist->get_context() instanceof \context_system)) {
+
+        $context = $userlist->get_context();
+        if (!$context instanceof \context_system) {
             return;
         }
+
         $userids = $userlist->get_userids();
         if (empty($userids)) {
             return;
         }
-        [$insql, $params] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'uid');
+
+        [$insql, $params] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
+
         $DB->delete_records_select('local_sentientia_chat_log', "userid $insql", $params);
         $DB->delete_records_select('local_sentientia_agent_audit', "userid $insql", $params);
     }

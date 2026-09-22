@@ -6,10 +6,10 @@ $plugin->component = 'local_sentientia_exams';
 //                       source). Mirrors P1 #28's sentientia_courses pattern.
 // P1 #34 (2026-05-20) — overdue manager-escalation cron.
 // P1 #36 (2026-05-20) — Hindi (hi) lang pack: ~65 strings translated.
-$plugin->version   = 2026052003;
+$plugin->version   = 2026092201;  // real privacy provider: remind_sent (was null_provider)
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.6.1'; // + P1 #36 Hindi pack
+$plugin->release   = '1.6.2'; // + P1 #36 Hindi pack
 $plugin->dependencies = [
     'local_sentientia_org' => 2026041600,
 ];

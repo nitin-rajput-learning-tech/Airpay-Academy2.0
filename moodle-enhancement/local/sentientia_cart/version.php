@@ -8,7 +8,7 @@ $plugin->component = 'local_sentientia_cart';
 // P1 #57 (2026-05-20) — Hindi pack: 117 strings covering cart UI, checkout,
 // order history, admin orders, pricing, settings (gateway/tax/email/IP),
 // notifications, errors, privacy metadata.
-$plugin->version   = 2026092200;  // smoke CLI path filter /-bounded
+$plugin->version   = 2026092202;  // privacy provider now declares every user table it owns  // smoke CLI path filter /-bounded
 // 2026052001:
 $plugin->requires  = 2024042200;  // Moodle 4.5+
 $plugin->maturity  = MATURITY_STABLE;

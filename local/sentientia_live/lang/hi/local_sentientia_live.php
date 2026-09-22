@@ -504,3 +504,11 @@ $string['th_action']       = 'Action';
 $string['action_enable']   = 'सक्षम करें';
 $string['action_disable']  = 'अक्षम करें';
 $string['invalidflag']     = 'Unknown flag.';
+
+// Privacy metadata for tables this plugin owned but never declared
+// (added 2026-09-22, see classes/privacy/provider.php).
+$string['privacy:metadata:sse'] = 'किसी लाइव सत्र से आपका खुला कनेक्शन।';
+$string['privacy:metadata:sse:userid'] = 'जुड़े उपयोगकर्ता की आईडी।';
+$string['privacy:metadata:sse:sessionid'] = 'कनेक्शन किस लाइव सत्र से है।';
+$string['privacy:metadata:sse:timecreated'] = 'कनेक्शन कब खुला।';
+$string['privacy:metadata:sse:timeheartbeat'] = 'कनेक्शन अंतिम बार कब सक्रिय दिखा।';

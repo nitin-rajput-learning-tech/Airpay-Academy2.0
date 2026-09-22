@@ -197,3 +197,12 @@ $string['privacy:metadata:anthropic:sourcetext'] = 'निष्कर्षण 
 $string['privacy:metadata:anthropic:model'] = 'प्रयुक्त Anthropic मॉडल।';
 $string['privacy:export:jobs'] = 'निष्कर्षण कार्य';
 $string['privacy:export:gaps'] = 'कौशल अंतराल';
+
+// Privacy metadata for tables this plugin owned but never declared
+// (added 2026-09-22, see classes/privacy/provider.php).
+$string['privacy:metadata:skai_taxonomy'] = 'साझा कौशल वर्गीकरण, सहित यह कि प्रत्येक प्रविष्टि को किसने अनुमोदित किया।';
+$string['privacy:metadata:skai_taxonomy:approved_by'] = 'कौशल को अनुमोदित करने वाले उपयोगकर्ता की आईडी।';
+$string['privacy:metadata:skai_taxonomy:name'] = 'कौशल का नाम।';
+$string['privacy:metadata:skai_impact'] = 'किसी कौशल से जुड़े व्यावसायिक-प्रभाव मेट्रिक्स, सहित उनके लेखक।';
+$string['privacy:metadata:skai_impact:createdby'] = 'मेट्रिक बनाने वाले उपयोगकर्ता की आईडी।';
+$string['privacy:metadata:skai_impact:metric_name'] = 'मेट्रिक का नाम।';

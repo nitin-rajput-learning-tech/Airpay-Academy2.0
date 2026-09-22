@@ -188,3 +188,27 @@ registered and land on the `sentientiaauthor` role. No-op on existing installs
 (authoring's 2026090700 upgrade step already reconciles). No schema / flag /
 capability-definition change. Mirrored to both trees. Version 2026080500 →
 2026090700 (0.1.1 → 0.1.2-alpha). NOT deployed.
+
+
+## 2026-09-22 - Privacy provider did not declare every table it owns
+
+`privacy_coverage_test` (new, in `local_sentientia_platform`) walks every Sentientia plugin's
+`install.xml` and fails the build when a plugin holding a user-identifying column does not declare
+it. It found eleven such tables across six plugins on its first run. This plugin held two:
+
+- `local_sentientia_skai_taxonomy` (`approved_by`) - who approved each skill
+- `local_sentientia_skai_impact` (`createdby`) - who authored each impact metric
+
+This is the harder version of the `null_provider` bug. A provider that declares *some* of its
+tables makes the Privacy registry page read as complete, so nobody looks again. A subject-access
+request returned a partial answer and an erasure request left rows behind, in both cases reporting
+success.
+
+**Owner versus actor.** A column identifying the data subject has its rows deleted. A column where
+the subject merely acted on somebody else's record is anonymised to `0` instead, because deleting
+the row would destroy a third party's record or shared configuration. Both are exported.
+
+Both are shared skill configuration, so both are anonymised rather than deleted - consistent with the existing decision to keep extraction jobs as an audit trail.
+
+Version bumped to 2026092202 so the cached privacy registry picks up the new declarations. en + hi
+strings added at parity.

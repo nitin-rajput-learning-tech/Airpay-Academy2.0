@@ -97,3 +97,62 @@ Smoke CLI used a literal `LIKE '/77%'`.
 Fixed via the new `\local_sentientia_platform	enant::path_descendant_filter()` (exact-or-descendant
 for an arbitrary path), locked by a DB-level boundary suite in `tenant_test.php`, and prevented from
 returning by `tools/check-path-boundary.php` - pre-commit CHECK 18 and the `path-boundary-check` CI job.
+
+
+## 2026-09-22 - First test suite (W1-04). It had none.
+
+This is the only surface in the product that moves money and grants a paid
+entitlement, and it shipped with **no `tests/` directory at all**.
+
+`tests/payment_callback_test.php` now covers the callback path. The case that
+matters:
+
+```php
+// airpay_gateway::verify_callback(), before 2026-09-22
+$secret = get_config('local_sentientia_cart', 'airpay_secret');  // ships ''
+$expected = self::compute_checksum($payload, $secret);
+return hash_equals($expected, $payload['checksum']);
+```
+
+With the shipped default secret of `''`, `compute_checksum($payload, '')` is
+fully computable by anyone who has read this open-source file. A
+self-registered learner could sign their own callback and receive a free
+enrolment plus a genuine tax invoice. The IP allowlist in `callback.php`
+narrows who can reach the endpoint; it is not a signature check, and it is
+empty by default too.
+
+`test_an_unconfigured_gateway_refuses_a_self_signed_callback()` performs that
+exact attack and asserts it now fails. The fail-closed guard landed in commit
+`bc6178610`; this suite is what stops it being refactored away.
+
+Also covered: a whitespace-only secret is still unconfigured; a correctly
+signed callback is still accepted (so the suite cannot pass with
+`verify_callback()` hardcoded to `false`); mutating `amount`, `order_id`,
+`currency_code` or the status after signing invalidates the checksum; a missing
+or empty checksum is refused; the wrong secret is refused; only an explicit
+success status enrols; the transaction reference is read from all three field
+spellings; a **replayed** callback writes no second ledger row and issues no
+second invoice; a refunded order cannot be re-marked paid; and a failed order
+can still be paid on a genuine retry.
+
+
+## 2026-09-22 - Privacy provider did not declare every table it owns
+
+`privacy_coverage_test` (new, in `local_sentientia_platform`) walks every Sentientia plugin's
+`install.xml` and fails the build when a plugin holding a user-identifying column does not declare
+it. It found eleven such tables across six plugins on its first run. This plugin held two:
+
+- `local_sentientia_cart_id` - the open shopping basket
+- `local_sentientia_cart_credits` - the training-credit balance
+
+This is the harder version of the `null_provider` bug. A provider that declares *some* of its
+tables makes the Privacy registry page read as complete, so nobody looks again. A subject-access
+request returned a partial answer and an erasure request left rows behind, in both cases reporting
+success.
+
+Neither is a tax record, so unlike the invoice and ledger rows this provider deliberately preserves, both are **deleted** on erasure rather than redacted. Keeping a redacted shopping basket serves no audit purpose and still links a row to a user id. The existing `redact_for_user()` reasoning was extended, not replaced.
+
+`get_contexts_for_userid()` and `get_users_in_context()` also only ever looked at `cart_history`, so a user who had only filled a basket, or who held a credit balance and had never ordered, was reported as having no data here at all.
+
+Version bumped to 2026092202 so the cached privacy registry picks up the new declarations. en + hi
+strings added at parity.

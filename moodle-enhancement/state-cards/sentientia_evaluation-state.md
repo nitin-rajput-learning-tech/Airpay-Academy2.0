@@ -101,3 +101,27 @@ onto the `local_sentientia_core\tenant_identity` seam (`root_for_user` /
 `path_root` / `path_for_user`). Behaviour-identical — the legacy BizLMS parse stays
 the default-ON source behind `tenant_identity_legacy`. Shipped via the
 feat/wave2-callers-* branches (merged to production 2026-05-30). DEPRECATION-SCHEDULE row 7.
+
+
+## 2026-09-22 - Privacy provider did not declare every table it owns
+
+`privacy_coverage_test` (new, in `local_sentientia_platform`) walks every Sentientia plugin's
+`install.xml` and fails the build when a plugin holding a user-identifying column does not declare
+it. It found eleven such tables across six plugins on its first run. This plugin held two:
+
+- `local_sentientia_evaluation_triggers` (`userid`) - an evaluation queued for a user
+- `local_sentientia_evaluation_assign` (`userid`, `assigned_by_userid`) - an evaluation assigned to a user, and who assigned it
+
+This is the harder version of the `null_provider` bug. A provider that declares *some* of its
+tables makes the Privacy registry page read as complete, so nobody looks again. A subject-access
+request returned a partial answer and an erasure request left rows behind, in both cases reporting
+success.
+
+**Owner versus actor.** A column identifying the data subject has its rows deleted. A column where
+the subject merely acted on somebody else's record is anonymised to `0` instead, because deleting
+the row would destroy a third party's record or shared configuration. Both are exported.
+
+Both record that an evaluation was aimed at a specific employee, which is personal data whether or not they ever answered it - and only the answers (`_responses`) were being handled. Somebody who was assigned an evaluation and never responded had data here that no request could see or remove.
+
+Version bumped to 2026092202 so the cached privacy registry picks up the new declarations. en + hi
+strings added at parity.

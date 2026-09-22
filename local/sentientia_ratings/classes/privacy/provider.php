@@ -2,7 +2,7 @@
 // Copyright 2026 Airpay Payment Services
 // License http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 
-namespace local_sentientia_exams\privacy;
+namespace local_sentientia_ratings\privacy;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -27,7 +27,7 @@ use core_privacy\local\request\writer;
  * holding no data.
  *
  * Tables this plugin owns:
- *   - local_sentientia_exams_remind_sent
+ *   - local_sentientia_ratings
  *       subject rows deleted on erasure
  *
  * OWNER versus ACTOR columns
@@ -39,7 +39,7 @@ use core_privacy\local\request\writer;
  * configuration row. Both are exported, so the subject sees everything held
  * about them either way.
  *
- * @package    local_sentientia_exams
+ * @package    local_sentientia_ratings
  * @copyright  2026 Airpay Payment Services
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -51,15 +51,16 @@ class provider implements
     public static function get_metadata(collection $collection): collection {
 
         $collection->add_database_table(
-            'local_sentientia_exams_remind_sent',
+            'local_sentientia_ratings',
             [
-                'userid' => 'privacy:metadata:exams_remind_sent:userid',
-                'examid' => 'privacy:metadata:exams_remind_sent:examid',
-                'days_before_deadline' => 'privacy:metadata:exams_remind_sent:days_before_deadline',
-                'deadline_ts' => 'privacy:metadata:exams_remind_sent:deadline_ts',
-                'timesent' => 'privacy:metadata:exams_remind_sent:timesent',
+                'userid' => 'privacy:metadata:ratings:userid',
+                'itemid' => 'privacy:metadata:ratings:itemid',
+                'ratearea' => 'privacy:metadata:ratings:ratearea',
+                'rating' => 'privacy:metadata:ratings:rating',
+                'timecreated' => 'privacy:metadata:ratings:timecreated',
+                'timemodified' => 'privacy:metadata:ratings:timemodified',
             ],
-            'privacy:metadata:exams_remind_sent'
+            'privacy:metadata:ratings'
         );
 
         return $collection;
@@ -75,7 +76,7 @@ class provider implements
         // system context is added only when the user actually appears, so a
         // user with no rows here is not offered an empty export section.
         $found = false;
-        $found = $found || $DB->record_exists('local_sentientia_exams_remind_sent', ['userid' => $userid]);
+        $found = $found || $DB->record_exists('local_sentientia_ratings', ['userid' => $userid]);
 
         if ($found) {
             $contextlist->add_system_context();
@@ -91,42 +92,43 @@ class provider implements
         }
 
         $userlist->add_from_sql('userid',
-            "SELECT userid FROM {local_sentientia_exams_remind_sent} WHERE userid > 0", []);
+            "SELECT userid FROM {local_sentientia_ratings} WHERE userid > 0", []);
     }
 
     public static function export_user_data(approved_contextlist $contextlist): void {
         global $DB;
 
         $userid = (int) $contextlist->get_user()->id;
-        $root = get_string('pluginname', 'local_sentientia_exams');
+        $root = get_string('pluginname', 'local_sentientia_ratings');
 
         foreach ($contextlist->get_contexts() as $context) {
             if (!$context instanceof \context_system) {
                 continue;
             }
 
-            // local_sentientia_exams_remind_sent
-            $examreminders = $DB->get_records_sql(
-                "SELECT id, userid, examid, days_before_deadline, deadline_ts, timesent
-                   FROM {local_sentientia_exams_remind_sent}
+            // local_sentientia_ratings
+            $ratingsgiven = $DB->get_records_sql(
+                "SELECT id, userid, itemid, ratearea, rating, timecreated, timemodified
+                   FROM {local_sentientia_ratings}
                   WHERE userid = :u0
-               ORDER BY timesent ASC",
+               ORDER BY timecreated ASC",
                 ['u0' => $userid]);
 
-            if (!empty($examreminders)) {
+            if (!empty($ratingsgiven)) {
                 $rows = [];
-                foreach ($examreminders as $r) {
+                foreach ($ratingsgiven as $r) {
                     $rows[] = [
                         'userid' => $r->userid,
-                        'examid' => $r->examid,
-                        'days_before_deadline' => $r->days_before_deadline,
-                        'deadline_ts' => empty($r->deadline_ts) ? null : userdate((int) $r->deadline_ts),
-                        'timesent' => empty($r->timesent) ? null : userdate((int) $r->timesent),
+                        'itemid' => $r->itemid,
+                        'ratearea' => $r->ratearea,
+                        'rating' => $r->rating,
+                        'timecreated' => empty($r->timecreated) ? null : userdate((int) $r->timecreated),
+                        'timemodified' => empty($r->timemodified) ? null : userdate((int) $r->timemodified),
                     ];
                 }
                 writer::with_context($context)->export_data(
-                    [$root, get_string('privacy:metadata:exams_remind_sent', 'local_sentientia_exams')],
-                    (object) ['examreminders' => $rows]
+                    [$root, get_string('privacy:metadata:ratings', 'local_sentientia_ratings')],
+                    (object) ['ratingsgiven' => $rows]
                 );
             }
 
@@ -140,7 +142,7 @@ class provider implements
             return;
         }
 
-        $DB->delete_records('local_sentientia_exams_remind_sent', []);
+        $DB->delete_records('local_sentientia_ratings', []);
     }
 
     public static function delete_data_for_user(approved_contextlist $contextlist): void {
@@ -153,7 +155,7 @@ class provider implements
                 continue;
             }
 
-            $DB->delete_records('local_sentientia_exams_remind_sent', ['userid' => $userid]);
+            $DB->delete_records('local_sentientia_ratings', ['userid' => $userid]);
         }
     }
 
@@ -172,6 +174,6 @@ class provider implements
 
         [$insql, $params] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
 
-        $DB->delete_records_select('local_sentientia_exams_remind_sent', "userid $insql", $params);
+        $DB->delete_records_select('local_sentientia_ratings', "userid $insql", $params);
     }
 }

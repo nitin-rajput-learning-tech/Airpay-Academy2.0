@@ -278,3 +278,22 @@ onto the `local_sentientia_core\tenant_identity` seam (`root_for_user` /
 `path_root` / `path_for_user`). Behaviour-identical — the legacy BizLMS parse stays
 the default-ON source behind `tenant_identity_legacy`. Shipped via the
 feat/wave2-callers-* branches (merged to production 2026-05-30). DEPRECATION-SCHEDULE row 7.
+
+
+## 2026-09-22 - Privacy provider did not declare every table it owns
+
+`privacy_coverage_test` (new, in `local_sentientia_platform`) walks every Sentientia plugin's
+`install.xml` and fails the build when a plugin holding a user-identifying column does not declare
+it. It found eleven such tables across six plugins on its first run. This plugin held one:
+
+- `local_sentientia_live_sse` (`userid`) - one row per open server-sent-events connection
+
+This is the harder version of the `null_provider` bug. A provider that declares *some* of its
+tables makes the Privacy registry page read as complete, so nobody looks again. A subject-access
+request returned a partial answer and an erasure request left rows behind, in both cases reporting
+success.
+
+Transient connection state rather than a record worth keeping, so it is deleted outright on erasure and included in `get_users_in_context()` alongside session owners and participants.
+
+Version bumped to 2026092202 so the cached privacy registry picks up the new declarations. en + hi
+strings added at parity.

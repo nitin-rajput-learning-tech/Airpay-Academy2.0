@@ -505,3 +505,11 @@ $string['qt_ranking_item_fallback']          = 'Item {$a}';
 $string['qt_ranking_borda_explainer']        = 'Borda points reward higher positions: with N items, position 1 earns N points down to position N earning 1 point. Higher total = more preferred.';
 $string['qt_ranking_a11y_item_moved']        = 'Item moved to a new position';
 $string['qt_ranking_a11y_ranking_changed']   = 'Ranking results have changed';
+
+// Privacy metadata for tables this plugin owned but never declared
+// (added 2026-09-22, see classes/privacy/provider.php).
+$string['privacy:metadata:sse'] = 'Your open connection to a live session.';
+$string['privacy:metadata:sse:userid'] = 'The ID of the connected user.';
+$string['privacy:metadata:sse:sessionid'] = 'Which live session the connection is to.';
+$string['privacy:metadata:sse:timecreated'] = 'When the connection opened.';
+$string['privacy:metadata:sse:timeheartbeat'] = 'When the connection was last seen alive.';

@@ -55,14 +55,41 @@ class provider implements
             'amount' => 'privacy:metadata:gateway:amount',
         ], 'privacy:metadata:gateway');
 
+        // Added 2026-09-22. These two were owned but undeclared, so the
+        // registry under-reported what this plugin holds. Unlike the invoice
+        // and ledger rows below, neither is a tax record: an open cart is a
+        // shopping basket and a credit balance belongs to the user, so both
+        // are DELETED on erasure rather than redacted.
+        $collection->add_database_table('local_sentientia_cart_id', [
+            'userid'   => 'privacy:metadata:local_sentientia_cart_id:userid',
+            'reserved' => 'privacy:metadata:local_sentientia_cart_id:reserved',
+        ], 'privacy:metadata:local_sentientia_cart_id');
+
+        $collection->add_database_table('local_sentientia_cart_credits', [
+            'userid'          => 'privacy:metadata:local_sentientia_cart_credits:userid',
+            'balance'         => 'privacy:metadata:local_sentientia_cart_credits:balance',
+            'currency'        => 'privacy:metadata:local_sentientia_cart_credits:currency',
+            'lifetime_earned' => 'privacy:metadata:local_sentientia_cart_credits:lifetime_earned',
+            'lifetime_spent'  => 'privacy:metadata:local_sentientia_cart_credits:lifetime_spent',
+            'timemodified'    => 'privacy:metadata:local_sentientia_cart_credits:timemodified',
+        ], 'privacy:metadata:local_sentientia_cart_credits');
+
         return $collection;
     }
 
     public static function get_contexts_for_userid(int $userid): contextlist {
         $contextlist = new contextlist();
         global $DB;
-        if ($DB->record_exists('local_sentientia_cart_history', ['userid' => $userid])) {
-            $contextlist->add_system_context();
+        // All three tables, not just history: a user who only ever filled a
+        // basket, or who holds a credit balance and has never ordered, was
+        // previously reported as having no data here.
+        foreach (['local_sentientia_cart_history',
+                  'local_sentientia_cart_id',
+                  'local_sentientia_cart_credits'] as $table) {
+            if ($DB->record_exists($table, ['userid' => $userid])) {
+                $contextlist->add_system_context();
+                break;
+            }
         }
         return $contextlist;
     }
@@ -73,9 +100,12 @@ class provider implements
             return;
         }
         global $DB;
-        $userids = $DB->get_fieldset_sql(
-            "SELECT DISTINCT userid FROM {local_sentientia_cart_history}");
-        $userlist->add_users($userids);
+        foreach (['local_sentientia_cart_history',
+                  'local_sentientia_cart_id',
+                  'local_sentientia_cart_credits'] as $table) {
+            $userlist->add_users($DB->get_fieldset_sql(
+                "SELECT DISTINCT userid FROM {" . $table . "} WHERE userid > 0"));
+        }
     }
 
     public static function export_user_data(approved_contextlist $contextlist): void {
@@ -104,6 +134,37 @@ class provider implements
         writer::with_context($context)->export_data(
             [get_string('pluginname', 'local_sentientia_cart')],
             (object) ['orders' => $exportdata]);
+
+        // Open basket and credit balance. Added 2026-09-22 with the two
+        // undeclared tables.
+        $basket = $DB->get_records('local_sentientia_cart_id', ['userid' => $userid]);
+        if (!empty($basket)) {
+            $rows = [];
+            foreach ($basket as $b) {
+                $rows[] = ['reserved' => $b->reserved];
+            }
+            writer::with_context($context)->export_data(
+                [get_string('pluginname', 'local_sentientia_cart'), 'basket'],
+                (object) ['basket' => $rows]);
+        }
+
+        $credits = $DB->get_records('local_sentientia_cart_credits', ['userid' => $userid]);
+        if (!empty($credits)) {
+            $rows = [];
+            foreach ($credits as $c) {
+                $rows[] = [
+                    'balance'         => $c->balance,
+                    'currency'        => $c->currency,
+                    'lifetime_earned' => $c->lifetime_earned,
+                    'lifetime_spent'  => $c->lifetime_spent,
+                    'last_changed'    => empty($c->timemodified)
+                        ? null : userdate((int) $c->timemodified),
+                ];
+            }
+            writer::with_context($context)->export_data(
+                [get_string('pluginname', 'local_sentientia_cart'), 'credits'],
+                (object) ['credits' => $rows]);
+        }
     }
 
     public static function delete_data_for_all_users_in_context(\context $context): void {
@@ -148,6 +209,13 @@ class provider implements
                              billing_gstn = ''
                        WHERE userid = :uid",
             ['uid' => $userid]);
+
+        // The open basket and the credit balance are NOT tax records, so they
+        // are deleted outright rather than redacted. Keeping a redacted
+        // shopping basket serves no audit purpose and still links a row to a
+        // user id. Added 2026-09-22.
+        $DB->delete_records('local_sentientia_cart_id', ['userid' => $userid]);
+        $DB->delete_records('local_sentientia_cart_credits', ['userid' => $userid]);
     }
 
     private static function redact_all(): void {
@@ -165,5 +233,10 @@ class provider implements
                              billing_phone = '',
                              billing_address = '',
                              billing_gstn = ''");
+
+        // Same reasoning as redact_for_user(): baskets and balances are not
+        // audit records.
+        $DB->delete_records('local_sentientia_cart_id', []);
+        $DB->delete_records('local_sentientia_cart_credits', []);
     }
 }

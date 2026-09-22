@@ -159,3 +159,31 @@ Department scorecard counted every sibling department whose id shared a digit pr
 Fixed via the new `\local_sentientia_platform	enant::path_descendant_filter()` (exact-or-descendant
 for an arbitrary path), locked by a DB-level boundary suite in `tenant_test.php`, and prevented from
 returning by `tools/check-path-boundary.php` - pre-commit CHECK 18 and the `path-boundary-check` CI job.
+
+
+## 2026-09-22 - Real privacy provider (was null_provider)
+
+`\core_privacy\local\metadata\null_provider` is not a neutral default. It is a positive assertion
+to Moodle's privacy registry that the plugin stores **no** personal data. This plugin owns
+four tables - `local_compliance_snapshot`, `local_compliance_exemptions`, `local_compliance_email_log` (which also stores the employee email address the reminder was sent to) and `local_compliance_courses`, each keyed on a user id, so under DPDP a subject-access
+request returned nothing from it and an erasure request deleted nothing - both reporting success, and
+the registry page confirming the plugin held nothing.
+
+Replaced with a full provider (`metadata\provider` + `request\plugin\provider` +
+`request\core_userlist_provider`) implementing export, per-user erasure, bulk erasure and
+context-wide deletion.
+
+**Owner versus actor columns.** A column identifying the *data subject* has its rows deleted on
+erasure. A column where the subject merely *acted* on someone else's record - an approver, a creator,
+a decider - is anonymised to `0` instead, because deleting the row would destroy a third party's
+record or a shared configuration row. Both are exported, so the subject still sees everything held
+about them. Erasing an approver must not delete the employees whose exemptions they signed.
+
+`tests/privacy_provider_test.php` proves the split: erasing the subject removes their snapshot, email-log and exemption rows and leaves the bystander's alone; erasing the approver leaves both exemptions standing with `approved_by` zeroed, and leaves the mandatory-course configuration intact.
+
+Version bumped to 2026092201 so the cached privacy registry picks up the new tables.
+
+Guarded platform-wide by `local_sentientia_platform\privacy_coverage_test`, which walks every
+Sentientia plugin's `install.xml` and fails the build if a plugin declaring a user-identifying column
+declares `null_provider`, ships no provider, or declares only some of the tables it owns. Structural
+rather than an allowlist, so a new plugin with a copy-pasted `null_provider` fails on its first CI run.

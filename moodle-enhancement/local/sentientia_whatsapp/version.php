@@ -17,7 +17,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_whatsapp';
-$plugin->version   = 2026052501;
+$plugin->version   = 2026092202;  // privacy provider now declares every user table it owns
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;   // mock-mode only — [CONFIRM] required before live
 $plugin->release   = '0.4.0-alpha';    // Stream F / Wave E2 P4 — content notifications

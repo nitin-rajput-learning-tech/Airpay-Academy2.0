@@ -243,3 +243,20 @@ $string['privacy:metadata:responses:evaluationid'] = 'The ID of the evaluation f
 $string['privacy:metadata:responses:userid'] = 'The ID of the user who submitted the response (0 if anonymous).';
 $string['privacy:metadata:responses:response_data'] = 'JSON-encoded answers (questionid → answer).';
 $string['privacy:metadata:responses:timesubmitted'] = 'Submission timestamp.';
+
+// Privacy metadata for tables this plugin owned but never declared
+// (added 2026-09-22, see classes/privacy/provider.php).
+$string['privacy:metadata:triggers'] = 'A record that an evaluation was queued for you.';
+$string['privacy:metadata:triggers:userid'] = 'The ID of the user the evaluation was queued for.';
+$string['privacy:metadata:triggers:evaluationid'] = 'Which evaluation was queued.';
+$string['privacy:metadata:triggers:trigger_event'] = 'What caused it to be queued.';
+$string['privacy:metadata:triggers:status'] = 'Whether it has fired yet.';
+$string['privacy:metadata:triggers:timefired'] = 'When it fired.';
+$string['privacy:metadata:assign'] = 'An evaluation assigned to you, and who assigned it.';
+$string['privacy:metadata:assign:userid'] = 'The ID of the user the evaluation was assigned to.';
+$string['privacy:metadata:assign:evaluationid'] = 'Which evaluation was assigned.';
+$string['privacy:metadata:assign:trigger_event'] = 'What caused the assignment.';
+$string['privacy:metadata:assign:status'] = 'Whether you have responded.';
+$string['privacy:metadata:assign:assigned_by_userid'] = 'The ID of the user who assigned it.';
+$string['privacy:metadata:assign:due_at'] = 'When a response is due.';
+$string['privacy:metadata:assign:responded_at'] = 'When you responded.';

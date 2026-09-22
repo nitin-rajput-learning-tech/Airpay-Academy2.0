@@ -60,7 +60,6 @@ $string['examstatuschanged']  = 'परीक्षा स्थिति अप
 $string['noexams_subtitle'] = 'टेनेंट स्कोपिंग, कस्टम उत्तीर्ण ग्रेड और डैशबोर्ड रिपोर्टिंग जोड़ने के लिए मौजूदा Sentientia LMS क्विज़ को एंटरप्राइज़ परीक्षाओं के रूप में पंजीकृत करें।';
 
 // Privacy.
-$string['privacy:metadata'] = 'एयरपे sentientia_exams प्लगइन अपनी टेबल्स में व्यक्तिगत डेटा संग्रहीत नहीं करता।';
 
 // P1 #33 — deadline-reminder cron.
 $string['task_exam_reminder']             = 'परीक्षा समय-सीमा रिमाइंडर';
@@ -126,3 +125,13 @@ $string['overdue_body_plain']   = 'नमस्ते,
 
 — {$a->sitename}';
 $string['overdue_body_html']    = '<p>नमस्ते,</p><p>आपके टीम सदस्य <strong>{$a->learner_name}</strong> ने परीक्षा <strong>{$a->exam_name}</strong> (कोर्स: {$a->coursename}) की समय-सीमा चूक दी है।</p><p>समय-सीमा: <strong>{$a->deadline}</strong> ({$a->days_past} दिन पहले)।</p><ul><li><a href="{$a->exam_url}">परीक्षा देखें</a></li><li><a href="{$a->learner_profile_url}">सीखने वाले की प्रोफ़ाइल देखें</a></li></ul><p>कृपया उनसे फॉलो-अप करें।</p><p style="color:#777;">— {$a->sitename}</p>';
+
+// Privacy metadata (classes/privacy/provider.php, added 2026-09-22).
+// Replaced a null_provider that wrongly asserted this plugin held no
+// personal data. Every table below is keyed on a user id.
+$string['privacy:metadata:exams_remind_sent'] = 'कर्मचारी को परीक्षा समय-सीमा अनुस्मारक भेजे जाने का रिकॉर्ड, ताकि वह दो बार न भेजा जाए।';
+$string['privacy:metadata:exams_remind_sent:userid'] = 'इस रिकॉर्ड से संबंधित उपयोगकर्ता की आईडी।';
+$string['privacy:metadata:exams_remind_sent:examid'] = 'अनुस्मारक से संबंधित परीक्षा की आईडी।';
+$string['privacy:metadata:exams_remind_sent:days_before_deadline'] = 'समय-सीमा से कितने दिन पहले अनुस्मारक गया।';
+$string['privacy:metadata:exams_remind_sent:deadline_ts'] = 'अनुस्मारक की समय-सीमा।';
+$string['privacy:metadata:exams_remind_sent:timesent'] = 'अनुस्मारक कब भेजा गया।';

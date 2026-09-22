@@ -2,7 +2,6 @@
 defined('MOODLE_INTERNAL') || die();
 $string['pluginname'] = 'एयरपे अनुपालन रिपोर्ट';
 $string['sentientia_compliance_report:export'] = 'अनुपालन रिपोर्ट निर्यात करें';
-$string['privacy:metadata'] = 'अनुपालन स्नैपशॉट डेटा संग्रहीत करता है जो उपयोगकर्ता आईडी से जुड़ा है।';
 $string['taskrefresh'] = 'अनुपालन स्नैपशॉट ताज़ा करें';
 $string['messageprovider:compliance_alert'] = 'अनुपालन समयसीमा अलर्ट';
 $string['settingsheading'] = 'अनुपालन रिपोर्ट सेटिंग्स';
@@ -93,3 +92,36 @@ $string['msg_course_added'] = 'कोर्स अनुपालन ट्र�
 $string['msg_course_removed'] = 'कोर्स ट्रैकिंग से हटाया गया।';
 $string['msg_user_excluded'] = 'यूज़र को ट्रैकिंग से बाहर रखा गया।';
 $string['msg_user_included'] = 'यूज़र को फिर से ट्रैकिंग में शामिल किया गया।';
+
+// Privacy metadata (classes/privacy/provider.php, added 2026-09-22).
+// Replaced a null_provider that wrongly asserted this plugin held no
+// personal data. Every table below is keyed on a user id.
+$string['privacy:metadata:compliance_snapshot'] = 'किसी एक कर्मचारी की एक अनिवार्य पाठ्यक्रम के सापेक्ष स्थिति का समय-बिंदु रिकॉर्ड।';
+$string['privacy:metadata:compliance_snapshot:userid'] = 'इस रिकॉर्ड से संबंधित उपयोगकर्ता की आईडी।';
+$string['privacy:metadata:compliance_snapshot:courseid'] = 'रिकॉर्ड से संबंधित पाठ्यक्रम की आईडी।';
+$string['privacy:metadata:compliance_snapshot:costcenterid'] = 'रिकॉर्ड का टेनेंट (लागत केंद्र)।';
+$string['privacy:metadata:compliance_snapshot:department_path'] = 'रिकॉर्ड लिखे जाने के समय उपयोगकर्ता का संगठन पथ।';
+$string['privacy:metadata:compliance_snapshot:status'] = 'उपयोगकर्ता के लिए दर्ज अनुपालन स्थिति।';
+$string['privacy:metadata:compliance_snapshot:completion_date'] = 'उपयोगकर्ता ने पाठ्यक्रम कब पूरा किया।';
+$string['privacy:metadata:compliance_snapshot:progress_percent'] = 'पाठ्यक्रम में उपयोगकर्ता की प्रगति प्रतिशत।';
+$string['privacy:metadata:compliance_snapshot:enrol_date'] = 'उपयोगकर्ता का नामांकन कब हुआ।';
+$string['privacy:metadata:compliance_snapshot:deadline_date'] = 'उपयोगकर्ता पर लागू समय-सीमा।';
+$string['privacy:metadata:compliance_snapshot:days_overdue'] = 'उपयोगकर्ता समय-सीमा से कितने दिन पीछे था।';
+$string['privacy:metadata:compliance_snapshot:matched_by'] = 'उपयोगकर्ता को अनिवार्य पाठ्यक्रम से कैसे मिलाया गया।';
+$string['privacy:metadata:compliance_snapshot:snapshot_date'] = 'यह स्नैपशॉट कब लिया गया।';
+$string['privacy:metadata:compliance_exemptions'] = 'किसी कर्मचारी को किसी अनिवार्य पाठ्यक्रम से मुक्त करने वाला अनुमोदित अपवाद, और अनुमोदक।';
+$string['privacy:metadata:compliance_exemptions:userid'] = 'इस रिकॉर्ड से संबंधित उपयोगकर्ता की आईडी।';
+$string['privacy:metadata:compliance_exemptions:courseid'] = 'रिकॉर्ड से संबंधित पाठ्यक्रम की आईडी।';
+$string['privacy:metadata:compliance_exemptions:reason'] = 'लिखित कारण।';
+$string['privacy:metadata:compliance_exemptions:approved_by'] = 'अनुमोदन करने वाले उपयोगकर्ता की आईडी।';
+$string['privacy:metadata:compliance_exemptions:expiry_date'] = 'अपवाद कब समाप्त होता है।';
+$string['privacy:metadata:compliance_exemptions:is_active'] = 'रिकॉर्ड अबी सक्रिय है या नहीं।';
+$string['privacy:metadata:compliance_exemptions:timecreated'] = 'रिकॉर्ड कब बनाया गया।';
+$string['privacy:metadata:compliance_email_log'] = 'कर्मचारी को भेजे गए अनुपालन अनुस्मारक ईमेल का लॉग, प्रयुक्त पते सहित।';
+$string['privacy:metadata:compliance_email_log:userid'] = 'इस रिकॉर्ड से संबंधित उपयोगकर्ता की आईडी।';
+$string['privacy:metadata:compliance_email_log:courseid'] = 'रिकॉर्ड से संबंधित पाठ्यक्रम की आईडी।';
+$string['privacy:metadata:compliance_email_log:email_type'] = 'कौन सा अनुस्मारक ईमेल भेजा गया।';
+$string['privacy:metadata:compliance_email_log:sent_to'] = 'जिस ईमेल पते पर संदेश भेजा गया।';
+$string['privacy:metadata:compliance_email_log:timecreated'] = 'रिकॉर्ड कब बनाया गया।';
+$string['privacy:metadata:compliance_courses'] = 'कौन से पाठ्यक्रम अनिवार्य हैं। यह साझा विन्यास है, किसी एक व्यक्ति का डेटा नहीं; इसमें केवल प्रत्येक पंक्ति के निर्माता का उल्लेख है।';
+$string['privacy:metadata:compliance_courses:createdby'] = 'रिकॉर्ड बनाने वाले उपयोगकर्ता की आईडी।';

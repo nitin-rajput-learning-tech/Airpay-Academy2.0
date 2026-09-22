@@ -145,3 +145,16 @@ $string['privacy:metadata:gateway'] = 'Payment data transmitted to gateway';
 $string['privacy:metadata:gateway:email'] = 'Email for payment receipts';
 $string['privacy:metadata:gateway:name'] = 'Name for billing';
 $string['privacy:metadata:gateway:amount'] = 'Amount to charge';
+
+// Privacy metadata for tables this plugin owned but never declared
+// (added 2026-09-22, see classes/privacy/provider.php).
+$string['privacy:metadata:local_sentientia_cart_id'] = 'The shopping basket you have open but have not yet paid for.';
+$string['privacy:metadata:local_sentientia_cart_id:userid'] = 'The ID of the user the basket belongs to.';
+$string['privacy:metadata:local_sentientia_cart_id:reserved'] = 'Internal basket state.';
+$string['privacy:metadata:local_sentientia_cart_credits'] = 'Your training-credit balance and what you have earned and spent.';
+$string['privacy:metadata:local_sentientia_cart_credits:userid'] = 'The ID of the user the balance belongs to.';
+$string['privacy:metadata:local_sentientia_cart_credits:balance'] = 'The current credit balance.';
+$string['privacy:metadata:local_sentientia_cart_credits:currency'] = 'The currency the balance is held in.';
+$string['privacy:metadata:local_sentientia_cart_credits:lifetime_earned'] = 'Total credit earned to date.';
+$string['privacy:metadata:local_sentientia_cart_credits:lifetime_spent'] = 'Total credit spent to date.';
+$string['privacy:metadata:local_sentientia_cart_credits:timemodified'] = 'When the balance last changed.';

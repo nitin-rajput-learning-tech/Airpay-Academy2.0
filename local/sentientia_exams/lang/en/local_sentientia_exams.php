@@ -56,7 +56,6 @@ $string['examstatuschanged'] = 'Exam status updated.';
 $string['noexams_subtitle'] = 'Register existing Sentientia LMS quizzes as enterprise exams to add tenant scoping, custom passing grades, and dashboard reporting.';
 
 // Privacy.
-$string['privacy:metadata'] = 'The sentientia_exams plugin does not store personal data in plugin-owned tables.';
 
 // P1 #33 (2026-05-20) — deadline-reminder cron. Closes audit item #16
 // from parity-audit-2026-05-15/sentientia_exams.md.
@@ -125,3 +124,13 @@ Please follow up with them.
 
 — {$a->sitename}';
 $string['overdue_body_html']    = '<p>Hi,</p><p>Your team member <strong>{$a->learner_name}</strong> missed the deadline for exam <strong>{$a->exam_name}</strong> (course: {$a->coursename}).</p><p>Deadline: <strong>{$a->deadline}</strong> ({$a->days_past} day(s) ago).</p><ul><li><a href="{$a->exam_url}">View exam</a></li><li><a href="{$a->learner_profile_url}">View learner profile</a></li></ul><p>Please follow up with them.</p><p style="color:#777;">— {$a->sitename}</p>';
+
+// Privacy metadata (classes/privacy/provider.php, added 2026-09-22).
+// Replaced a null_provider that wrongly asserted this plugin held no
+// personal data. Every table below is keyed on a user id.
+$string['privacy:metadata:exams_remind_sent'] = 'A record that an exam deadline reminder was sent to an employee, so it is not sent twice.';
+$string['privacy:metadata:exams_remind_sent:userid'] = 'The ID of the user this record is about.';
+$string['privacy:metadata:exams_remind_sent:examid'] = 'The ID of the exam the reminder referred to.';
+$string['privacy:metadata:exams_remind_sent:days_before_deadline'] = 'How many days before the deadline the reminder went out.';
+$string['privacy:metadata:exams_remind_sent:deadline_ts'] = 'The deadline the reminder referred to.';
+$string['privacy:metadata:exams_remind_sent:timesent'] = 'When the reminder was sent.';

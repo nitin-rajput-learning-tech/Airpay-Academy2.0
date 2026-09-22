@@ -94,6 +94,19 @@ class provider implements
             'privacy:metadata:events'
         );
 
+        // Added 2026-09-22 -- owned but undeclared. One row per open
+        // server-sent-events connection, keyed on the viewer.
+        $collection->add_database_table(
+            'local_sentientia_live_sse',
+            [
+                'userid'        => 'privacy:metadata:sse:userid',
+                'sessionid'     => 'privacy:metadata:sse:sessionid',
+                'timecreated'   => 'privacy:metadata:sse:timecreated',
+                'timeheartbeat' => 'privacy:metadata:sse:timeheartbeat',
+            ],
+            'privacy:metadata:sse'
+        );
+
         return $collection;
     }
 
@@ -136,7 +149,12 @@ class provider implements
             'local_sentientia_live_participants', 'userid',
             'userid IS NOT NULL');
 
-        $all_ids = array_unique(array_filter(array_merge($owners, $audience)));
+        // Viewers with an open stream. Added 2026-09-22.
+        $streamers = $DB->get_fieldset_select(
+            'local_sentientia_live_sse', 'userid', 'userid > 0');
+
+        $all_ids = array_unique(array_filter(
+            array_merge($owners, $audience, $streamers)));
         if (!empty($all_ids)) {
             $userlist->add_users($all_ids);
         }
@@ -218,6 +236,7 @@ class provider implements
         }
         global $DB;
         // Cascade delete — respect FK order.
+        $DB->delete_records('local_sentientia_live_sse');
         $DB->delete_records('local_sentientia_live_events');
         $DB->delete_records('local_sentientia_live_responses');
         $DB->delete_records('local_sentientia_live_participants');
@@ -242,6 +261,10 @@ class provider implements
         // Anonymise owned sessions.
         $DB->set_field('local_sentientia_live_sessions',
             'ownerid', 0, ['ownerid' => $userid]);
+
+        // Open stream rows are transient connection state, not a record worth
+        // keeping. Added 2026-09-22.
+        $DB->delete_records('local_sentientia_live_sse', ['userid' => $userid]);
 
         // Find this user's participation rows + delete their responses + rows.
         $part_ids = $DB->get_fieldset_select(

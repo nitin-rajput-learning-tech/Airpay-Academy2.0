@@ -8,10 +8,10 @@ $plugin->component = 'local_sentientia_assistant';
 // has never POSTed to a live AI provider (F-017/F-018 finding). Stamped
 // ALPHA until either (a) the assistant becomes a first-class chat surface,
 // or (b) it's archived/removed.
-$plugin->version   = 2026080500; // Sentientia AI gateway migration (opt-in).
+$plugin->version   = 2026092201;  // real privacy provider: chat_log + agent_audit (was null_provider)
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_ALPHA;
-$plugin->release   = '1.2.1-alpha';
+$plugin->release   = '1.2.2-alpha';
 // Release history
 // 1.0.0-beta  initial release — chat bubble template + WS + ai_client
 // 1.1.0-beta  Phase B0 polish:

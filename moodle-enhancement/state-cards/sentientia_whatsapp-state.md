@@ -198,3 +198,23 @@ is not kept. The ME copy was untouched. Neither tree was correct.
 
 Found by the 2026-09-22 confidence audit. Both trees now agree on this file; the reconciliation is
 recorded as two entries drained from `tools/tree-drift-baseline.txt`.
+
+
+## 2026-09-22 - Privacy provider did not declare every table it owns
+
+`privacy_coverage_test` (new, in `local_sentientia_platform`) walks every Sentientia plugin's
+`install.xml` and fails the build when a plugin holding a user-identifying column does not declare
+it. It found eleven such tables across six plugins on its first run. This plugin held two:
+
+- `local_sentientia_user_channel_audit` (`userid`, `changed_by`) - every change to a user's messaging preferences
+- `local_sentientia_send_log` (`userid`) - every message sent, including `recipient`, which is the employee's **mobile number**
+
+This is the harder version of the `null_provider` bug. A provider that declares *some* of its
+tables makes the Privacy registry page read as complete, so nobody looks again. A subject-access
+request returned a partial answer and an erasure request left rows behind, in both cases reporting
+success.
+
+The audit rows were already being deleted on erasure by `preference_manager::delete_user_data()`; the registry simply never said they existed. `send_log` was neither declared **nor** deleted, so a right-to-erasure request left behind a row-per-message carrying the mobile number the reminder went to. That is the one that mattered.
+
+Version bumped to 2026092202 so the cached privacy registry picks up the new declarations. en + hi
+strings added at parity.

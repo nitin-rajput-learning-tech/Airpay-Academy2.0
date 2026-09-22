@@ -35,7 +35,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_sentientia_live';
-$plugin->version   = 2026090302;       // YYYYMMDDNN — H4 SSE concurrency-cap remediation (UAT-SECURITY-POSTURE-2026-09-03)
+$plugin->version   = 2026092202;  // privacy provider now declares every user table it owns       // YYYYMMDDNN — H4 SSE concurrency-cap remediation (UAT-SECURITY-POSTURE-2026-09-03)
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_ALPHA;   // Phases E.4-E.9 — all 6 question types live + verified
 $plugin->release   = '0.2.3-alpha';

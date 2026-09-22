@@ -72,7 +72,6 @@ $string['coursehidden']  = 'कोर्स छिपा दिया गया�
 $string['courseshown']   = 'कोर्स दृश्य कर दिया गया।';
 
 // Privacy.
-$string['privacy:metadata'] = 'एयरपे sentientia_courses प्लगइन अपनी टेबल्स में व्यक्तिगत डेटा संग्रहीत नहीं करता; उपयोगकर्ता स्थिति कोर Sentientia LMS टेबल्स में रहती है जो अपने-अपने प्रदाताओं द्वारा एक्सपोर्ट की जाती हैं।';
 
 // Sprint C — cross-tenant sharing.
 $string['sentientia_courses:share_to_tenant'] = 'अन्य टेनेंट्स के साथ कोर्स साझा करें';
@@ -175,3 +174,22 @@ $string['browse_state_pending'] = 'मंज़ूरी बाकी';
 $string['browse_state_in_catalog'] = 'आपके कैटलॉग में';
 $string['browse_state_rejected'] = 'अस्वीकृत';
 $string['browse_tenant_fallback'] = 'टेनेंट {$a}';
+
+// Privacy metadata (classes/privacy/provider.php, added 2026-09-22).
+// Replaced a null_provider that wrongly asserted this plugin held no
+// personal data. Every table below is keyed on a user id.
+$string['privacy:metadata:courses_requests'] = 'किसी पाठ्यक्रम को दूसरे टेनेंट से साझा करने का अनुरोध, अनुरोधकर्ता और निर्णयकर्ता सहित।';
+$string['privacy:metadata:courses_requests:requester_userid'] = 'पाठ्यक्रम का अनुरोध करने वाले उपयोगकर्ता की आईडी।';
+$string['privacy:metadata:courses_requests:courseid'] = 'रिकॉर्ड से संबंधित पाठ्यक्रम की आईडी।';
+$string['privacy:metadata:courses_requests:requesting_tenant'] = 'अनुरोध करने वाला टेनेंट।';
+$string['privacy:metadata:courses_requests:status'] = 'उपयोगकर्ता के लिए दर्ज अनुपालन स्थिति।';
+$string['privacy:metadata:courses_requests:decided_by'] = 'अनुरोध पर निर्णय लेने वाले उपयोगकर्ता की आईडी।';
+$string['privacy:metadata:courses_requests:decision_reason'] = 'निर्णय का दर्ज कारण।';
+$string['privacy:metadata:courses_requests:timecreated'] = 'रिकॉर्ड कब बनाया गया।';
+$string['privacy:metadata:courses_requests:timedecided'] = 'अनुरोध पर कब निर्णय लिया गया।';
+$string['privacy:metadata:courses_remind_sent'] = 'कर्मचारी को पाठ्यक्रम समय-सीमा अनुस्मारक भेजे जाने का रिकॉर्ड, ताकि वह दो बार न भेजा जाए।';
+$string['privacy:metadata:courses_remind_sent:userid'] = 'इस रिकॉर्ड से संबंधित उपयोगकर्ता की आईडी।';
+$string['privacy:metadata:courses_remind_sent:courseid'] = 'रिकॉर्ड से संबंधित पाठ्यक्रम की आईडी।';
+$string['privacy:metadata:courses_remind_sent:days_before_deadline'] = 'समय-सीमा से कितने दिन पहले अनुस्मारक गया।';
+$string['privacy:metadata:courses_remind_sent:deadline_ts'] = 'अनुस्मारक की समय-सीमा।';
+$string['privacy:metadata:courses_remind_sent:timesent'] = 'अनुस्मारक कब भेजा गया।';

@@ -17,7 +17,7 @@ $plugin->component = 'local_sentientia_evaluation';
 // P1 #42 (2026-05-20) — auto-expire overdue assignments cron.
 // P1 #43 (2026-05-20) — Hindi pack catch-up: 56 new strings translated
 //                       for P1 #30/#37/#38/#39/#40/#41/#42 additions.
-$plugin->version   = 2026052032;
+$plugin->version   = 2026092202;  // privacy provider now declares every user table it owns
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
 $plugin->release   = '1.15.2';  // +P1 #43 Hindi top-up

@@ -252,3 +252,20 @@ $string['template_ispublic_help']        = 'जब चेक किया जा
 
 // P1 #42 (2026-05-20) — auto-expire overdue assignments cron.
 $string['task_expire_assignments'] = 'अतिदेय मूल्यांकन नियुक्तियाँ स्वत: समाप्त करें';
+
+// Privacy metadata for tables this plugin owned but never declared
+// (added 2026-09-22, see classes/privacy/provider.php).
+$string['privacy:metadata:triggers'] = 'आपके लिए कोई मूल्यांकन कतारबद्ध किए जाने का रिकॉर्ड।';
+$string['privacy:metadata:triggers:userid'] = 'जिस उपयोगकर्ता के लिए कतारबद्ध किया गया उसकी आईडी।';
+$string['privacy:metadata:triggers:evaluationid'] = 'कौन सा मूल्यांकन कतारबद्ध हुआ।';
+$string['privacy:metadata:triggers:trigger_event'] = 'इसे कतारबद्ध करने का कारण।';
+$string['privacy:metadata:triggers:status'] = 'यह अब तक चला या नहीं।';
+$string['privacy:metadata:triggers:timefired'] = 'यह कब चला।';
+$string['privacy:metadata:assign'] = 'आपको सौंपा गया मूल्यांकन, और किसने सौंपा।';
+$string['privacy:metadata:assign:userid'] = 'जिस उपयोगकर्ता को सौंपा गया उसकी आईडी।';
+$string['privacy:metadata:assign:evaluationid'] = 'कौन सा मूल्यांकन सौंपा गया।';
+$string['privacy:metadata:assign:trigger_event'] = 'सौंपे जाने का कारण।';
+$string['privacy:metadata:assign:status'] = 'आपने उत्तर दिया या नहीं।';
+$string['privacy:metadata:assign:assigned_by_userid'] = 'सौंपने वाले उपयोगकर्ता की आईडी।';
+$string['privacy:metadata:assign:due_at'] = 'उत्तर कब तक अपेक्षित है।';
+$string['privacy:metadata:assign:responded_at'] = 'आपने कब उत्तर दिया।';

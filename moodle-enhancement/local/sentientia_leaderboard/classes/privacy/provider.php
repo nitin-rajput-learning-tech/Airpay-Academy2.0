@@ -55,6 +55,29 @@ class provider implements
             'privacy:metadata:lb_optouts'
         );
 
+        // Added 2026-09-22 -- owned but undeclared.
+        $collection->add_database_table(
+            'local_sentientia_lb_boards',
+            [
+                'ownerid' => 'privacy:metadata:lb_boards:ownerid',
+                'name'    => 'privacy:metadata:lb_boards:name',
+            ],
+            'privacy:metadata:lb_boards'
+        );
+
+        $collection->add_database_table(
+            'local_sentientia_lb_notify_log',
+            [
+                'userid'        => 'privacy:metadata:lb_notify_log:userid',
+                'boardid'       => 'privacy:metadata:lb_notify_log:boardid',
+                'last_sent'     => 'privacy:metadata:lb_notify_log:last_sent',
+                'last_old_rank' => 'privacy:metadata:lb_notify_log:last_old_rank',
+                'last_new_rank' => 'privacy:metadata:lb_notify_log:last_new_rank',
+                'last_reason'   => 'privacy:metadata:lb_notify_log:last_reason',
+            ],
+            'privacy:metadata:lb_notify_log'
+        );
+
         return $collection;
     }
 
@@ -75,6 +98,10 @@ class provider implements
             "SELECT userid FROM {local_sentientia_lb_entries}", []);
         $userlist->add_from_sql('userid',
             "SELECT userid FROM {local_sentientia_lb_optouts}", []);
+        $userlist->add_from_sql('userid',
+            "SELECT userid FROM {local_sentientia_lb_notify_log} WHERE userid > 0", []);
+        $userlist->add_from_sql('ownerid',
+            "SELECT ownerid FROM {local_sentientia_lb_boards} WHERE ownerid > 0", []);
     }
 
     public static function export_user_data(approved_contextlist $contextlist): void {
@@ -132,6 +159,10 @@ class provider implements
         }
         $DB->delete_records('local_sentientia_lb_entries', []);
         $DB->delete_records('local_sentientia_lb_optouts', []);
+        $DB->delete_records('local_sentientia_lb_notify_log', []);
+        // A board is shared configuration -- other people's leaderboards --
+        // so the owner reference is anonymised rather than the board deleted.
+        $DB->set_field('local_sentientia_lb_boards', 'ownerid', 0, []);
     }
 
     public static function delete_data_for_user(approved_contextlist $contextlist): void {
@@ -145,6 +176,11 @@ class provider implements
                 ['userid' => $userid]);
             $DB->delete_records('local_sentientia_lb_optouts',
                 ['userid' => $userid]);
+            $DB->delete_records('local_sentientia_lb_notify_log',
+                ['userid' => $userid]);
+            // Anonymise, do not delete: the board belongs to everyone on it.
+            $DB->set_field('local_sentientia_lb_boards', 'ownerid', 0,
+                ['ownerid' => $userid]);
         }
     }
 
@@ -163,5 +199,9 @@ class provider implements
             "userid $insql", $params);
         $DB->delete_records_select('local_sentientia_lb_optouts',
             "userid $insql", $params);
+        $DB->delete_records_select('local_sentientia_lb_notify_log',
+            "userid $insql", $params);
+        $DB->set_field_select('local_sentientia_lb_boards', 'ownerid', 0,
+            "ownerid $insql", $params);
     }
 }

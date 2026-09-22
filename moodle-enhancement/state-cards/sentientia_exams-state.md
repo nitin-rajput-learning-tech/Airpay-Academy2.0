@@ -101,3 +101,23 @@ behaviour:
   `docs/visual-evidence/2026-06-15/` and WORKFLOW-TEST-MATRIX C6).
 
 No plugin version bump — these are test fixtures, not plugin features.
+
+
+## 2026-09-22 - Real privacy provider (was null_provider)
+
+`\core_privacy\local\metadata\null_provider` is not a neutral default. It is a positive assertion
+to Moodle's privacy registry that the plugin stores **no** personal data. This plugin owns
+`local_sentientia_exams_remind_sent`, each keyed on a user id, so under DPDP a subject-access
+request returned nothing from it and an erasure request deleted nothing - both reporting success, and
+the registry page confirming the plugin held nothing.
+
+Replaced with a full provider (`metadata\provider` + `request\plugin\provider` +
+`request\core_userlist_provider`) implementing export, per-user erasure, bulk erasure and
+context-wide deletion.
+
+Version bumped to 2026092201 so the cached privacy registry picks up the new tables.
+
+Guarded platform-wide by `local_sentientia_platform\privacy_coverage_test`, which walks every
+Sentientia plugin's `install.xml` and fails the build if a plugin declaring a user-identifying column
+declares `null_provider`, ships no provider, or declares only some of the tables it owns. Structural
+rather than an allowlist, so a new plugin with a copy-pasted `null_provider` fails on its first CI run.

@@ -48,6 +48,37 @@ class provider implements
             'privacy:metadata:local_sentientia_user_channel_prefs'
         );
 
+        // Added 2026-09-22 -- owned but undeclared. The audit rows were
+        // already being deleted on erasure; the registry simply never said
+        // they existed. send_log was neither declared NOR deleted, and its
+        // `recipient` column is the employee's mobile number.
+        $collection->add_database_table(
+            'local_sentientia_user_channel_audit',
+            [
+                'userid'     => 'privacy:metadata:channel_audit:userid',
+                'changed_by' => 'privacy:metadata:channel_audit:changed_by',
+                'field_name' => 'privacy:metadata:channel_audit:field_name',
+                'old_value'  => 'privacy:metadata:channel_audit:old_value',
+                'new_value'  => 'privacy:metadata:channel_audit:new_value',
+                'reason'     => 'privacy:metadata:channel_audit:reason',
+                'ip_address' => 'privacy:metadata:channel_audit:ip_address',
+            ],
+            'privacy:metadata:channel_audit'
+        );
+
+        $collection->add_database_table(
+            'local_sentientia_send_log',
+            [
+                'userid'         => 'privacy:metadata:send_log:userid',
+                'channel'        => 'privacy:metadata:send_log:channel',
+                'template_key'   => 'privacy:metadata:send_log:template_key',
+                'status'         => 'privacy:metadata:send_log:status',
+                'recipient'      => 'privacy:metadata:send_log:recipient',
+                'failure_reason' => 'privacy:metadata:send_log:failure_reason',
+            ],
+            'privacy:metadata:send_log'
+        );
+
         return $collection;
     }
 
@@ -71,6 +102,12 @@ class provider implements
         }
         $sql = "SELECT userid FROM {local_sentientia_user_channel_prefs}";
         $userlist->add_from_sql('userid', $sql, []);
+        $userlist->add_from_sql('userid',
+            "SELECT userid FROM {local_sentientia_user_channel_audit} WHERE userid > 0", []);
+        $userlist->add_from_sql('changed_by',
+            "SELECT changed_by FROM {local_sentientia_user_channel_audit} WHERE changed_by > 0", []);
+        $userlist->add_from_sql('userid',
+            "SELECT userid FROM {local_sentientia_send_log} WHERE userid > 0", []);
     }
 
     /**
@@ -129,13 +166,26 @@ class provider implements
      * Delete all stored data for a single user.
      */
     public static function delete_data_for_user(approved_contextlist $contextlist): void {
+        global $DB;
         $userid = $contextlist->get_user()->id;
         \local_sentientia_whatsapp\preference_manager::delete_user_data($userid);
+        // preference_manager handles prefs + audit. It does NOT know about
+        // send_log, whose `recipient` column holds the mobile number each
+        // message went to. Deleted here rather than inside preference_manager
+        // so that helper's contract is unchanged for its other callers.
+        $DB->delete_records('local_sentientia_send_log', ['userid' => $userid]);
     }
 
     public static function delete_data_for_users(approved_userlist $userlist): void {
-        foreach ($userlist->get_userids() as $userid) {
+        global $DB;
+        $userids = $userlist->get_userids();
+        foreach ($userids as $userid) {
             \local_sentientia_whatsapp\preference_manager::delete_user_data($userid);
+        }
+        if (!empty($userids)) {
+            [$insql, $params] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
+            $DB->delete_records_select('local_sentientia_send_log',
+                "userid $insql", $params);
         }
     }
 
@@ -150,5 +200,7 @@ class provider implements
         global $DB;
         $DB->delete_records('local_sentientia_user_channel_prefs');
         $DB->delete_records('local_sentientia_user_channel_audit');
+        // Added 2026-09-22. Every row carries the recipient's mobile number.
+        $DB->delete_records('local_sentientia_send_log');
     }
 }

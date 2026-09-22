@@ -121,3 +121,21 @@ $string['admin_index_link_analytics'] = 'Channel analytics';
 $string['admin_index_link_analytics_desc'] = 'Send-volume trends, failure rate, and per-template performance.';
 $string['admin_index_link_settings'] = 'Channel settings';
 $string['admin_index_link_settings_desc'] = 'Provider API keys, sandbox vs live mode, opt-out keywords.';
+
+// Privacy metadata for tables this plugin owned but never declared
+// (added 2026-09-22, see classes/privacy/provider.php).
+$string['privacy:metadata:channel_audit'] = 'A record of every change made to your messaging preferences, and who made it.';
+$string['privacy:metadata:channel_audit:userid'] = 'The ID of the user whose preferences changed.';
+$string['privacy:metadata:channel_audit:changed_by'] = 'The ID of the user who made the change.';
+$string['privacy:metadata:channel_audit:field_name'] = 'Which preference changed.';
+$string['privacy:metadata:channel_audit:old_value'] = 'The value before the change.';
+$string['privacy:metadata:channel_audit:new_value'] = 'The value after the change.';
+$string['privacy:metadata:channel_audit:reason'] = 'The reason recorded for the change.';
+$string['privacy:metadata:channel_audit:ip_address'] = 'The IP address the change was made from.';
+$string['privacy:metadata:send_log'] = 'A log of the messages sent to you, including the number or address used.';
+$string['privacy:metadata:send_log:userid'] = 'The ID of the user the message was sent to.';
+$string['privacy:metadata:send_log:channel'] = 'Which channel was used (WhatsApp, SMS, email).';
+$string['privacy:metadata:send_log:template_key'] = 'Which message template was sent.';
+$string['privacy:metadata:send_log:status'] = 'Whether the message was delivered.';
+$string['privacy:metadata:send_log:recipient'] = 'The mobile number or email address the message was sent to.';
+$string['privacy:metadata:send_log:failure_reason'] = 'Why the message failed, when it did.';

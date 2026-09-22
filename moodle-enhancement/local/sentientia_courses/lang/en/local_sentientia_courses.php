@@ -89,7 +89,6 @@ $string['coursehidden'] = 'Course hidden.';
 $string['courseshown'] = 'Course visible.';
 
 // Privacy.
-$string['privacy:metadata'] = 'The Airpay sentientia_courses plugin does not store personal data in plugin-owned tables; user state lives on core Sentientia LMS tables exported by their respective providers.';
 
 // Sprint C (2026-05-13) — cross-tenant sharing.
 $string['sentientia_courses:share_to_tenant'] = 'Share a course to other tenants';
@@ -199,3 +198,22 @@ $string['browse_state_pending'] = 'Pending approval';
 $string['browse_state_in_catalog'] = 'In your catalog';
 $string['browse_state_rejected'] = 'Rejected';
 $string['browse_tenant_fallback'] = 'Tenant {$a}';
+
+// Privacy metadata (classes/privacy/provider.php, added 2026-09-22).
+// Replaced a null_provider that wrongly asserted this plugin held no
+// personal data. Every table below is keyed on a user id.
+$string['privacy:metadata:courses_requests'] = 'A request to share a course with another tenant, who asked for it and who decided it.';
+$string['privacy:metadata:courses_requests:requester_userid'] = 'The ID of the user who requested the course.';
+$string['privacy:metadata:courses_requests:courseid'] = 'The ID of the course the record refers to.';
+$string['privacy:metadata:courses_requests:requesting_tenant'] = 'The tenant the request came from.';
+$string['privacy:metadata:courses_requests:status'] = 'The compliance status recorded for the user.';
+$string['privacy:metadata:courses_requests:decided_by'] = 'The ID of the user who decided the request.';
+$string['privacy:metadata:courses_requests:decision_reason'] = 'The reason recorded for the decision.';
+$string['privacy:metadata:courses_requests:timecreated'] = 'When the record was created.';
+$string['privacy:metadata:courses_requests:timedecided'] = 'When the request was decided.';
+$string['privacy:metadata:courses_remind_sent'] = 'A record that a course deadline reminder was sent to an employee, so it is not sent twice.';
+$string['privacy:metadata:courses_remind_sent:userid'] = 'The ID of the user this record is about.';
+$string['privacy:metadata:courses_remind_sent:courseid'] = 'The ID of the course the record refers to.';
+$string['privacy:metadata:courses_remind_sent:days_before_deadline'] = 'How many days before the deadline the reminder went out.';
+$string['privacy:metadata:courses_remind_sent:deadline_ts'] = 'The deadline the reminder referred to.';
+$string['privacy:metadata:courses_remind_sent:timesent'] = 'When the reminder was sent.';

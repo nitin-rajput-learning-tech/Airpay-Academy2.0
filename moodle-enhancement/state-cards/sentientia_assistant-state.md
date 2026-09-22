@@ -140,3 +140,23 @@ schema-portable `SELECT *` + null-safe reads — the same class as the aiquiz
 `ai_client::build_context()` carries the same coupling PLUS unguarded
 `local_costcenter` / `open_supervisorid` / `tool_certificate_issues` reads —
 no test exercises it; follow-up task spawned rather than scope-ballooned.
+
+
+## 2026-09-22 - Real privacy provider (was null_provider)
+
+`\core_privacy\local\metadata\null_provider` is not a neutral default. It is a positive assertion
+to Moodle's privacy registry that the plugin stores **no** personal data. This plugin owns
+`local_sentientia_chat_log` (every message exchanged with the AI assistant, including the message text) and `local_sentientia_agent_audit`, each keyed on a user id, so under DPDP a subject-access
+request returned nothing from it and an erasure request deleted nothing - both reporting success, and
+the registry page confirming the plugin held nothing.
+
+Replaced with a full provider (`metadata\provider` + `request\plugin\provider` +
+`request\core_userlist_provider`) implementing export, per-user erasure, bulk erasure and
+context-wide deletion.
+
+Version bumped to 2026092201 so the cached privacy registry picks up the new tables.
+
+Guarded platform-wide by `local_sentientia_platform\privacy_coverage_test`, which walks every
+Sentientia plugin's `install.xml` and fails the build if a plugin declaring a user-identifying column
+declares `null_provider`, ships no provider, or declares only some of the tables it owns. Structural
+rather than an allowlist, so a new plugin with a copy-pasted `null_provider` fails on its first CI run.

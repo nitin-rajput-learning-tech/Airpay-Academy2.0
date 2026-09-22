@@ -133,3 +133,16 @@ $string['privacy:metadata:lb_optouts']                = 'सार्वजन�
 $string['privacy:metadata:lb_optouts:userid']         = 'जिस उपयोगकर्ता ने ऑप्ट-आउट किया';
 $string['privacy:metadata:lb_optouts:customerid']     = 'ऑप्ट-आउट का ग्राहक दायरा';
 $string['privacy:metadata:lb_optouts:timeoptedout']   = 'उपयोगकर्ता ने कब ऑप्ट-आउट किया';
+
+// Privacy metadata for tables this plugin owned but never declared
+// (added 2026-09-22, see classes/privacy/provider.php).
+$string['privacy:metadata:lb_boards'] = 'लीडरबोर्ड, सहित यह कि प्रत्येक को किसने बनाया।';
+$string['privacy:metadata:lb_boards:ownerid'] = 'लीडरबोर्ड के मालिक की आईडी।';
+$string['privacy:metadata:lb_boards:name'] = 'लीडरबोर्ड का नाम।';
+$string['privacy:metadata:lb_notify_log'] = 'आपको भेजी गई रैंक-परिवर्तन सूचनाओं का रिकॉर्ड।';
+$string['privacy:metadata:lb_notify_log:userid'] = 'सूचित उपयोगकर्ता की आईडी।';
+$string['privacy:metadata:lb_notify_log:boardid'] = 'सूचना किस लीडरबोर्ड के बारे में थी।';
+$string['privacy:metadata:lb_notify_log:last_sent'] = 'अंतिम सूचना कब भेजी गई।';
+$string['privacy:metadata:lb_notify_log:last_old_rank'] = 'परिवर्तन से पहले आपकी रैंक।';
+$string['privacy:metadata:lb_notify_log:last_new_rank'] = 'परिवर्तन के बाद आपकी रैंक।';
+$string['privacy:metadata:lb_notify_log:last_reason'] = 'सूचना भेजने का कारण।';

@@ -193,3 +193,12 @@ $string['privacy:metadata:anthropic:sourcetext'] = 'The learning material text s
 $string['privacy:metadata:anthropic:model'] = 'The Anthropic model used.';
 $string['privacy:export:jobs'] = 'Extraction jobs';
 $string['privacy:export:gaps'] = 'Skills gaps';
+
+// Privacy metadata for tables this plugin owned but never declared
+// (added 2026-09-22, see classes/privacy/provider.php).
+$string['privacy:metadata:skai_taxonomy'] = 'The shared skills taxonomy, including who approved each entry.';
+$string['privacy:metadata:skai_taxonomy:approved_by'] = 'The ID of the user who approved the skill.';
+$string['privacy:metadata:skai_taxonomy:name'] = 'The skill\'s name.';
+$string['privacy:metadata:skai_impact'] = 'Business-impact metrics attached to a skill, including their author.';
+$string['privacy:metadata:skai_impact:createdby'] = 'The ID of the user who created the metric.';
+$string['privacy:metadata:skai_impact:metric_name'] = 'The metric\'s name.';

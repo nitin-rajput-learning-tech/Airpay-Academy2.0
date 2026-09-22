@@ -3,7 +3,6 @@ defined('MOODLE_INTERNAL') || die();
 
 $string['pluginname'] = 'Airpay Compliance Report';
 $string['sentientia_compliance_report:export'] = 'Export the compliance report';
-$string['privacy:metadata'] = 'Stores compliance snapshot data linked to user IDs.';
 $string['taskrefresh'] = 'Refresh compliance snapshot';
 $string['messageprovider:compliance_alert'] = 'Compliance deadline alerts';
 
@@ -105,3 +104,36 @@ $string['msg_course_added'] = 'Course added to compliance tracking.';
 $string['msg_course_removed'] = 'Course removed from tracking.';
 $string['msg_user_excluded'] = 'User excluded from tracking.';
 $string['msg_user_included'] = 'User re-included in tracking.';
+
+// Privacy metadata (classes/privacy/provider.php, added 2026-09-22).
+// Replaced a null_provider that wrongly asserted this plugin held no
+// personal data. Every table below is keyed on a user id.
+$string['privacy:metadata:compliance_snapshot'] = 'A point-in-time record of one employee\'s status against one mandatory course.';
+$string['privacy:metadata:compliance_snapshot:userid'] = 'The ID of the user this record is about.';
+$string['privacy:metadata:compliance_snapshot:courseid'] = 'The ID of the course the record refers to.';
+$string['privacy:metadata:compliance_snapshot:costcenterid'] = 'The tenant (cost centre) the record belongs to.';
+$string['privacy:metadata:compliance_snapshot:department_path'] = 'The organisation path the user sat at when the record was written.';
+$string['privacy:metadata:compliance_snapshot:status'] = 'The compliance status recorded for the user.';
+$string['privacy:metadata:compliance_snapshot:completion_date'] = 'When the user completed the course.';
+$string['privacy:metadata:compliance_snapshot:progress_percent'] = 'How far through the course the user was.';
+$string['privacy:metadata:compliance_snapshot:enrol_date'] = 'When the user was enrolled.';
+$string['privacy:metadata:compliance_snapshot:deadline_date'] = 'The deadline that applied to the user.';
+$string['privacy:metadata:compliance_snapshot:days_overdue'] = 'How many days past the deadline the user was.';
+$string['privacy:metadata:compliance_snapshot:matched_by'] = 'How the user was matched to the mandatory course.';
+$string['privacy:metadata:compliance_snapshot:snapshot_date'] = 'When this snapshot row was taken.';
+$string['privacy:metadata:compliance_exemptions'] = 'An approved exemption releasing one employee from one mandatory course, and who approved it.';
+$string['privacy:metadata:compliance_exemptions:userid'] = 'The ID of the user this record is about.';
+$string['privacy:metadata:compliance_exemptions:courseid'] = 'The ID of the course the record refers to.';
+$string['privacy:metadata:compliance_exemptions:reason'] = 'The reason recorded for the exemption.';
+$string['privacy:metadata:compliance_exemptions:approved_by'] = 'The ID of the user who approved the exemption.';
+$string['privacy:metadata:compliance_exemptions:expiry_date'] = 'When the exemption expires.';
+$string['privacy:metadata:compliance_exemptions:is_active'] = 'Whether the record is currently active.';
+$string['privacy:metadata:compliance_exemptions:timecreated'] = 'When the record was created.';
+$string['privacy:metadata:compliance_email_log'] = 'A log of the compliance reminder emails sent to an employee, including the address used.';
+$string['privacy:metadata:compliance_email_log:userid'] = 'The ID of the user this record is about.';
+$string['privacy:metadata:compliance_email_log:courseid'] = 'The ID of the course the record refers to.';
+$string['privacy:metadata:compliance_email_log:email_type'] = 'Which reminder email was sent.';
+$string['privacy:metadata:compliance_email_log:sent_to'] = 'The email address the message was sent to.';
+$string['privacy:metadata:compliance_email_log:timecreated'] = 'When the record was created.';
+$string['privacy:metadata:compliance_courses'] = 'Which courses are mandatory. This is shared configuration, not one person\'s data; it records only who created each row.';
+$string['privacy:metadata:compliance_courses:createdby'] = 'The ID of the user who created the record.';

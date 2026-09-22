@@ -71,6 +71,26 @@ class provider implements
             'privacy:metadata:anthropic'
         );
 
+        // Added 2026-09-22 -- owned but undeclared. Both are actor
+        // references on shared taxonomy rows, not per-user records.
+        $collection->add_database_table(
+            'local_sentientia_skai_taxonomy',
+            [
+                'approved_by' => 'privacy:metadata:skai_taxonomy:approved_by',
+                'name'        => 'privacy:metadata:skai_taxonomy:name',
+            ],
+            'privacy:metadata:skai_taxonomy'
+        );
+
+        $collection->add_database_table(
+            'local_sentientia_skai_impact',
+            [
+                'createdby'   => 'privacy:metadata:skai_impact:createdby',
+                'metric_name' => 'privacy:metadata:skai_impact:metric_name',
+            ],
+            'privacy:metadata:skai_impact'
+        );
+
         return $collection;
     }
 
@@ -91,6 +111,10 @@ class provider implements
             "SELECT reviewed_by FROM {local_sentientia_skai_job} WHERE reviewed_by IS NOT NULL", []);
         $userlist->add_from_sql('userid',
             "SELECT userid FROM {local_sentientia_skai_gap}", []);
+        $userlist->add_from_sql('approved_by',
+            "SELECT approved_by FROM {local_sentientia_skai_taxonomy} WHERE approved_by > 0", []);
+        $userlist->add_from_sql('createdby',
+            "SELECT createdby FROM {local_sentientia_skai_impact} WHERE createdby > 0", []);
     }
 
     public static function export_user_data(approved_contextlist $contextlist): void {
@@ -149,12 +173,22 @@ class provider implements
         // Jobs are kept (extraction audit trail), but de-associate the owner
         // is not possible without breaking the schema; the gap feed is the
         // per-user personal data and is removed.
+        //
+        // Added 2026-09-22: the taxonomy and impact rows are shared skill
+        // configuration, so the rows stay and only the actor reference goes.
+        $DB->set_field('local_sentientia_skai_taxonomy', 'approved_by', 0, []);
+        $DB->set_field('local_sentientia_skai_impact', 'createdby', 0, []);
     }
 
     public static function delete_data_for_user(approved_contextlist $contextlist): void {
         global $DB;
         $userid = $contextlist->get_user()->id;
         $DB->delete_records('local_sentientia_skai_gap', ['userid' => $userid]);
+        // Shared configuration: anonymise the approver/author, keep the row.
+        $DB->set_field('local_sentientia_skai_taxonomy', 'approved_by', 0,
+            ['approved_by' => $userid]);
+        $DB->set_field('local_sentientia_skai_impact', 'createdby', 0,
+            ['createdby' => $userid]);
     }
 
     public static function delete_data_for_users(approved_userlist $userlist): void {
@@ -168,5 +202,9 @@ class provider implements
         }
         [$insql, $params] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'uid');
         $DB->delete_records_select('local_sentientia_skai_gap', "userid $insql", $params);
+        $DB->set_field_select('local_sentientia_skai_taxonomy', 'approved_by', 0,
+            "approved_by $insql", $params);
+        $DB->set_field_select('local_sentientia_skai_impact', 'createdby', 0,
+            "createdby $insql", $params);
     }
 }
