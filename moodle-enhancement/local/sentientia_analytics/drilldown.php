@@ -14,7 +14,18 @@ require_once(__DIR__ . '/../../config.php');
 require_login();
 
 $context = context_system::instance();
-if (!is_siteadmin() && !has_capability('local/courses:manage', $context)) {
+
+// Capability layer added 2026-09-22 -- see classes/permission.php. The old
+// gate named local/courses:manage, undefined since ADR-025 renamed it, so
+// this page was reachable only by site admins and only by accident.
+if (!\local_sentientia_analytics\permission::can_view()) {
+    throw new moodle_exception('nopermission');
+}
+
+// The org subtree this viewer may see. '' means unrestricted, which only a
+// holder of :viewallorgs gets; null means no tenant could be established.
+$viewerorgpath = \local_sentientia_analytics\permission::visible_org_path();
+if ($viewerorgpath === null) {
     throw new moodle_exception('nopermission');
 }
 
@@ -30,6 +41,15 @@ if ($type === 'department') {
     $path = required_param('path', PARAM_TEXT);
     // Security: validate path format.
     $path = preg_replace('/[^0-9\/]/', '', $path);
+
+    // Clamp to the viewer's own subtree. This listing releases every matched
+    // user's name, email and last-login time, so an out-of-scope path is
+    // refused outright rather than silently redirected to another department
+    // -- a viewer must never be shown numbers labelled as one org that came
+    // from another.
+    if (\local_sentientia_analytics\permission::clamp_org_path($path) !== rtrim($path, '/')) {
+        throw new moodle_exception('nopermission');
+    }
 
     $deptname = '';
     $parts = explode('/', trim($path, '/'));
@@ -86,7 +106,10 @@ if ($type === 'department') {
     $PAGE->set_title('Course Analytics: ' . format_string($course->fullname));
     $PAGE->set_heading('Course Analytics: ' . format_string($course->fullname));
 
-    $learners = \local_sentientia_analytics\analytics_manager::get_course_learners($courseid);
+    // Pass the viewer's org scope: get_course_learners() would otherwise list
+    // every enrolled learner's name and email across all tenants.
+    $learners = \local_sentientia_analytics\analytics_manager::get_course_learners(
+        $courseid, 50, $viewerorgpath);
 
     echo $OUTPUT->header();
     echo '<div style="max-width:1200px; margin:0 auto;">';

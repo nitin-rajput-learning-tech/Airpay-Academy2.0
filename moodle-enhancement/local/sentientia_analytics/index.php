@@ -11,21 +11,21 @@ require_once(__DIR__ . '/../../config.php');
 require_login();
 
 $systemcontext = context_system::instance();
-$isadmin = is_siteadmin() || has_capability('local/courses:manage', $systemcontext);
 
-// BizLMS admin fallback.
-if (!$isadmin) {
-    $hasbizlmsadmin = $DB->record_exists_sql(
-        "SELECT 1 FROM {role_assignments} ra
-         JOIN {context} ctx ON ctx.id = ra.contextid
-         WHERE ra.userid = :uid AND ra.roleid = 9 AND ctx.contextlevel = 40",
-        ['uid' => $USER->id]);
-    $isadmin = $hasbizlmsadmin;
-}
-
-if (!$isadmin) {
+// Capability layer added 2026-09-22. This page used to gate on
+// local/courses:manage - renamed by ADR-025 and undefined since, so
+// has_capability() answered false with a debugging notice - plus a hardcoded
+// role id 9 at category context. Net effect: the manager role could not open
+// the dashboard built for it, and role id 9 names a different role on every
+// other Sentientia deployment. permission::can_view() checks a real
+// capability at system context AND at the category contexts where BizLMS
+// assigns its org-admin shell.
+if (!\local_sentientia_analytics\permission::can_view()) {
     throw new moodle_exception('nopermission');
 }
+
+$canviewall = \local_sentientia_analytics\permission::can_view_all_orgs();
+$canexport  = \local_sentientia_analytics\permission::can_export();
 
 $PAGE->set_url(new moodle_url('/local/sentientia_analytics/index.php'));
 $PAGE->set_context($systemcontext);
@@ -35,21 +35,39 @@ $PAGE->set_pagelayout('standard');
 $range = optional_param('range', '30d', PARAM_ALPHA);
 $orgid = optional_param('orgid', 0, PARAM_INT);
 
-// Determine org scope — siteadmin can pick any org via dropdown.
-$orgpath = '';
+// Determine org scope. Whatever is asked for is clamped to what this user may
+// see. Two defects lived here before 2026-09-22:
+//   - the ?orgid= branch was not gated at all, so any viewer could read
+//     another tenant's numbers by editing the query string;
+//   - the fallback was '/' . ($parts[1] ?? '1'), so a user whose open_path
+//     was missing or malformed silently got tenant 1's data.
+$org = null;
+$requestedpath = '';
 if ($orgid > 0) {
     $org = $DB->get_record('local_sentientia_org', ['id' => $orgid]);
     if ($org) {
-        $orgpath = $org->path;
+        $requestedpath = $org->path;
     }
-} else if (!is_siteadmin()) {
-    $parts = explode('/', $USER->open_path ?? '');
-    $orgpath = '/' . ($parts[1] ?? '1');
 }
 
-// Build org filter options for siteadmin.
+$orgpath = \local_sentientia_analytics\permission::clamp_org_path($requestedpath);
+if ($orgpath === null) {
+    // No tenant could be established for this user. Refuse: the only
+    // fallbacks available are tenant 1 (someone else's data) and the empty
+    // string, which analytics_manager reads as every tenant at once.
+    throw new moodle_exception('nopermission');
+}
+
+if ($org !== null && $orgpath !== rtrim($requestedpath, '/')) {
+    // Clamped away from what was requested - do not label the page with an
+    // org whose numbers are not the ones being shown.
+    $org = null;
+    $orgid = 0;
+}
+
+// The org picker is only meaningful to someone who may cross org boundaries.
 $org_options = [];
-if (is_siteadmin()) {
+if ($canviewall) {
     $orgs = $DB->get_records('local_sentientia_org', ['depth' => 1, 'visible' => 1], 'fullname ASC');
     foreach ($orgs as $o) {
         $org_options[] = [
@@ -101,7 +119,10 @@ $data = [
     'orgid'         => $orgid,
     'org_options'   => $org_options,
     'has_org_filter' => !empty($org_options),
-    'org_label'     => $orgid > 0 ? ($org->fullname ?? 'Selected') : 'All Business Units',
+    'org_label'     => ($orgid > 0 && $org !== null)
+        ? format_string($org->fullname)
+        : get_string('allbusinessunits', 'local_sentientia_analytics'),
+    'can_export'    => $canexport,
     'baseurl'       => (new moodle_url('/local/sentientia_analytics/index.php'))->out(false),
     'filterurl'     => (new moodle_url('/local/sentientia_analytics/index.php'))->out(false),
     'exporturl'     => (new moodle_url('/local/sentientia_analytics/export.php', ['range' => $range, 'format' => 'csv', 'orgid' => $orgid]))->out(false),

@@ -49,3 +49,12 @@ $string['roi_assm_penalty']              = 'Compliance penalty avoided per on-ti
 $string['roi_assm_platform_cost']        = 'Platform cost for the period';
 $string['roi_assm_hours_per_course']     = 'Average content hours per course';
 $string['roi_empty']                     = 'Insufficient data to calculate ROI for this period.';
+
+// Capabilities (db/access.php, added 2026-09-22).
+$string['sentientia_analytics:view'] = 'View the analytics dashboard';
+$string['sentientia_analytics:viewallorgs'] = 'View analytics for every organisation, not only your own';
+$string['sentientia_analytics:export'] = 'Download the analytics CSV export';
+
+// Previously hardcoded in index.php / dashboard.mustache.
+$string['allbusinessunits'] = 'All Business Units';
+$string['exportcsv'] = 'Export CSV';

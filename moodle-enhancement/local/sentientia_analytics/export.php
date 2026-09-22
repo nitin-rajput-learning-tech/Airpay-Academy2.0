@@ -12,17 +12,27 @@ require_once(__DIR__ . '/../../config.php');
 require_login();
 
 $context = context_system::instance();
-if (!is_siteadmin() && !has_capability('local/courses:manage', $context)) {
+
+// Export is its own capability. This file releases a named per-learner
+// dataset in a single download, which is a materially larger disclosure than
+// reading the dashboard, so dashboard viewers are not granted it by default.
+// The old gate named local/courses:manage, undefined since ADR-025, so in
+// practice only site admins could export -- and anyone who could view could
+// also export, because both pages asked the same dead question.
+if (!\local_sentientia_analytics\permission::can_export()) {
     throw new moodle_exception('nopermission');
 }
 
 $range = optional_param('range', '30d', PARAM_ALPHANUMEXT);
 $format = optional_param('format', 'csv', PARAM_ALPHA);
 
-// Tenant scoping.
-$orgpath = '';
-if (!is_siteadmin()) {
-    $orgpath = \local_sentientia_org\tenant_manager::get_tenant_path();
+// Tenant scoping. This used to be tenant_manager::get_tenant_path(), which
+// returns '' when the tenant is unresolvable -- and analytics_manager reads
+// '' as "no filter", i.e. every tenant. So a non-admin with a missing or
+// malformed open_path was handed a whole-site export. Refuse instead.
+$orgpath = \local_sentientia_analytics\permission::visible_org_path();
+if ($orgpath === null) {
+    throw new moodle_exception('nopermission');
 }
 
 $data = \local_sentientia_analytics\analytics_manager::get_export_data($range, $orgpath);

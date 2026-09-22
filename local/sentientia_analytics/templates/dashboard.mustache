@@ -27,9 +27,14 @@
                 <a href="{{baseurl}}?range=90d&orgid={{orgid}}" class="{{#range_90d}}active{{/range_90d}}">90 days</a>
                 <a href="{{baseurl}}?range=ytd&orgid={{orgid}}" class="{{#range_ytd}}active{{/range_ytd}}">YTD</a>
             </div>
-            <a href="{{exporturl}}" class="airpay-analytics__export" title="Download as CSV">
-                <i class="fa fa-download"></i> Export CSV
+            {{! Export is a separate capability from view: the CSV carries a
+                named per-learner dataset. Hide the button when the viewer
+                cannot use it -- export.php enforces this server-side too. }}
+            {{#can_export}}
+            <a href="{{exporturl}}" class="airpay-analytics__export" title="{{#str}}exportcsv, local_sentientia_analytics{{/str}}">
+                <i class="fa fa-download"></i> {{#str}}exportcsv, local_sentientia_analytics{{/str}}
             </a>
+            {{/can_export}}
         </div>
     </div>
 
@@ -111,4 +116,21 @@
         </table>
     </div>
     {{/has_courses}}
+
+    {{! ── P1.2 Predictive surfaces — rendered only when flag ON ─────── }}
+    {{#show_predictive}}
+    <div class="airpay-analytics__predictive-section">
+        <div class="airpay-analytics__predictive-grid">
+            {{> local_sentientia_analytics/predictive_atrisk }}
+            {{> local_sentientia_analytics/predictive_skillgap }}
+        </div>
+    </div>
+    {{/show_predictive}}
+
+    {{! ── P1.2 Training ROI — rendered only when flag ON ─────────────── }}
+    {{#show_roi}}
+    <div class="airpay-analytics__roi-section">
+        {{> local_sentientia_analytics/roi_dashboard }}
+    </div>
+    {{/show_roi}}
 </div>

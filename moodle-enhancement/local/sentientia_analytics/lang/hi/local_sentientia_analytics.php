@@ -51,3 +51,12 @@ $string['roi_assm_penalty']              = 'समय पर पूर्णत�
 $string['roi_assm_platform_cost']        = 'अवधि के लिए प्लेटफ़ॉर्म लागत';
 $string['roi_assm_hours_per_course']     = 'प्रति पाठ्यक्रम औसत सामग्री घंटे';
 $string['roi_empty']                     = 'इस अवधि के लिए ROI की गणना करने के लिए अपर्याप्त डेटा।';
+
+// Capabilities (db/access.php, added 2026-09-22).
+$string['sentientia_analytics:view'] = 'विश्लेषण डैशबोर्ड देखें';
+$string['sentientia_analytics:viewallorgs'] = 'सभी संगठनों का विश्लेषण देखें, केवल अपना नहीं';
+$string['sentientia_analytics:export'] = 'विश्लेषण CSV निर्यात डाउनलोड करें';
+
+// Previously hardcoded in index.php / dashboard.mustache.
+$string['allbusinessunits'] = 'सभी व्यावसायिक इकाइयाँ';
+$string['exportcsv'] = 'CSV निर्यात करें';

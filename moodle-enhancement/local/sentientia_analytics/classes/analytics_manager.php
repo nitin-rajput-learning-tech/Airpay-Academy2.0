@@ -403,9 +403,27 @@ class analytics_manager {
     /**
      * DRILL-DOWN: Get learners enrolled in a specific course with their status.
      */
-    public static function get_course_learners(int $courseid, int $limit = 50): array {
+    public static function get_course_learners(int $courseid, int $limit = 50,
+                                               string $orgpath = ''): array {
         global $DB;
 
+        // Tenant clamp. Callers pass the viewer's permitted org path; only a
+        // holder of local/sentientia_analytics:viewallorgs gets '' here.
+        // Without this the drill-down listed every enrolled learner's name and
+        // email across all three tenants.
+        $orgfilter = '';
+        $orgparams = [];
+        if ($orgpath !== '') {
+            [$orgfilter, $orgparams] = \local_sentientia_platform\tenant::path_descendant_filter(
+                $orgpath, 'u', 'open_path', 'clorg');
+            $orgfilter = 'AND ' . $orgfilter;
+        }
+
+        // ORDER BY: MySQL and MariaDB sort NULLs last under DESC, which is the
+        // order we want -- learners who have completed first, most recent
+        // first, then everyone still in progress. This used to read
+        // `DESC NULLS LAST`, which is PostgreSQL/Oracle syntax that both of
+        // our database targets reject, so the whole page 500'd.
         return array_values($DB->get_records_sql(
             "SELECT u.id, u.firstname, u.lastname, u.email, u.open_path,
                     ue.timecreated as enrolled_date,
@@ -419,8 +437,9 @@ class analytics_manager {
           LEFT JOIN {course_completions} cc ON cc.course = :cid2 AND cc.userid = u.id
                     AND cc.timecompleted IS NOT NULL
               WHERE u.deleted = 0 AND u.suspended = 0
-           ORDER BY cc.timecompleted DESC NULLS LAST, ue.timecreated DESC",
-            ['cid' => $courseid, 'cid2' => $courseid], 0, $limit));
+                    {$orgfilter}
+           ORDER BY cc.timecompleted DESC, ue.timecreated DESC",
+            ['cid' => $courseid, 'cid2' => $courseid] + $orgparams, 0, $limit));
     }
 
     /**
