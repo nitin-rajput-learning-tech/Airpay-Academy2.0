@@ -106,5 +106,4 @@ ONLY-TOP sentientia_catalog/cli/enable_oneclick_enrol.php
 ONLY-TOP sentientia_org/classes/compat/bizlms_lib.php
 ONLY-TOP sentientia_org/classes/hook_callbacks.php
 ONLY-TOP sentientia_org/db/hooks.php
-ONLY-TOP sentientia_platform/cli/migration_parity_check.php
 ONLY-TOP sentientia_platform/cli/repair_task_registrations.php

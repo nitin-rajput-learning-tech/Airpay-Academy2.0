@@ -75,3 +75,45 @@ only some of the tables it owns. Structural rather than an allowlist, so a new
 plugin with a copy-pasted `null_provider` fails on its first CI run. Written
 after the audit found four plugins asserting they held no personal data while
 owning nine tables keyed on a user id. See the individual plugins' state cards.
+
+
+## 2026-09-22 - The migration parity check proved counts, then claimed "data intact"
+
+`cli/migration_parity_check.php` is the gate for the ninja-sandbox rehearsal and the eventual live
+replacement. It compared row **counts** across seventeen metrics and then printed:
+
+```
+RESULT: 100% PARITY - data intact.
+```
+
+Counts cannot see a migration that preserved every row but changed what is in them: a truncated
+column, a collation change mangling non-ASCII names, timestamps shifted by a timezone, grades
+rounded differently. The sentence claimed it anyway - the same "reported success it did not achieve"
+shape as the erasure defect fixed earlier the same day, on the one script whose entire job is to
+decide whether real user data survived a migration.
+
+**Added:** `sentientia_parity_checksums()`, summing a CRC over the meaningful columns of nine
+critical tables (`user`, `course`, `course_categories`, `user_enrolments`, `course_completions`,
+`course_modules_completion`, `quiz_attempts`, `badge_issued`, `grade_grades`). Column lists are
+explicit, so adding a schema column cannot silently invalidate an old baseline. NULLs get a
+sentinel because `CONCAT_WS` skips them and `(a, NULL, b)` would otherwise collide with
+`(a, b, NULL)`. Floats are rounded before hashing, because a spurious drift would be worse than no
+check - it teaches people to ignore the output.
+
+**And it refuses to over-claim.** `CRC32` is MySQL/MariaDB-only. On any other engine, or against a
+baseline captured before checksums existed, the comparison reports SKIPPED and **exits 2** with
+"Data is NOT proven intact" rather than printing a parity it did not verify.
+
+Verified against the real 2,890-user production import on local MariaDB:
+
+| Path | Result |
+|------|--------|
+| unchanged data | `RESULT: 100% PARITY - counts AND value checksums match.` exit 0 |
+| one character changed in one of 3,178 `user` rows | `DRIFT user rows 3178->3178 crc 6799845373188->6800747854502` exit 1 |
+| baseline without checksums | `SKIPPED - the baseline predates value checksums.` exit 2 |
+
+The middle row is the point: the row count is identical and the old script would have called that
+100% parity. The mutation was reverted and parity re-confirmed green.
+
+The CLI now also exists in both plugin trees (it was top-level only), draining one entry from
+`tools/tree-drift-baseline.txt`.
