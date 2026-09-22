@@ -274,3 +274,15 @@ feat/wave2-callers-* branches (merged to production 2026-05-30). DEPRECATION-SCH
 `preview.php` tenant allow-list migrated off the hardcoded `[1,77,177]` onto
 `tenant_registry::valid_roots/is_valid`. Behaviour-identical while legacy ON.
 v1.1.3→1.1.4 (2026060100). See ADR-021.
+
+## 2026-09-22 — Cadence setting never persisted (1.1.3 / 2026092200)
+
+Every UAT upgrade run printed `New setting: local_sentientia_emails/default_cadence_days_json` and
+`cfg.php` reported "No such configuration variable" — the install default (and any admin edit) was never
+written. Cause: `admin\setting_cadence_json::validate()` returned `''` on success, but the parent contract
+is `true`; `admin_setting_configtext::write_setting()` only calls `config_write()` when
+`validate() === true`, so the save returned `''` (read as "no error") without storing anything. Runtime
+was unaffected (process_rules falls back to the baked-in `[1,3,7,14,21]`), but the admin UI silently
+discarded every change. Both trees patched identically (`return true` on both success paths; docblock);
+PHPUnit `setting_cadence_json_test` updated to the `true` contract. Deployed to UAT 2026-09-22 (see
+PROJECT-STATE).

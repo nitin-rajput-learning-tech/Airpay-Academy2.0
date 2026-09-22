@@ -34,7 +34,7 @@ class setting_cadence_json extends \admin_setting_configtext {
 
     /**
      * @param string $data Raw user input from the settings form
-     * @return string '' on success, error message on failure
+     * @return true|string true on success (parent contract), error message on failure
      */
     public function validate($data) {
         // First let the parent run its PARAM_TEXT check (which is a
@@ -45,8 +45,14 @@ class setting_cadence_json extends \admin_setting_configtext {
         }
 
         // Empty is treated as "use the baked-in default" — accept it.
+        // NOTE: the parent contract is `true` on success (not ''):
+        // admin_setting_configtext::write_setting() only calls
+        // config_write() when validate() === true, so returning '' made
+        // every save — including the install/upgrade default — silently
+        // vanish ("New setting: …default_cadence_days_json" on every
+        // upgrade run, admin edits never persisted). Fixed 2026-09-22.
         if (trim($data) === '') {
-            return '';
+            return true;
         }
 
         $decoded = json_decode($data, true);
@@ -71,6 +77,6 @@ class setting_cadence_json extends \admin_setting_configtext {
             }
         }
 
-        return '';
+        return true;
     }
 }

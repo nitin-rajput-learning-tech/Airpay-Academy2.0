@@ -61,15 +61,15 @@ class setting_cadence_json_test extends \advanced_testcase {
 
     public function test_empty_string_is_accepted(): void {
         $s = $this->make_setting();
-        $this->assertSame('', $s->validate(''));
-        $this->assertSame('', $s->validate('   '));
+        $this->assertTrue($s->validate(''));
+        $this->assertTrue($s->validate('   '));
     }
 
     public function test_valid_cadence_is_accepted(): void {
         $s = $this->make_setting();
-        $this->assertSame('', $s->validate('[1,3,7,14,21]'));
-        $this->assertSame('', $s->validate('[1]'));
-        $this->assertSame('', $s->validate('[42]'));
+        $this->assertTrue($s->validate('[1,3,7,14,21]'));
+        $this->assertTrue($s->validate('[1]'));
+        $this->assertTrue($s->validate('[42]'));
     }
 
     public function test_garbage_text_is_rejected(): void {
@@ -128,7 +128,7 @@ class setting_cadence_json_test extends \advanced_testcase {
     public function test_max_allowed_entries_is_accepted(): void {
         // Exactly 10 entries (the cap) — must pass.
         $s = $this->make_setting();
-        $this->assertSame('',
+        $this->assertTrue(
             $s->validate('[1,2,3,4,5,6,7,8,9,10]'));
     }
 }
