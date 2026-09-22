@@ -952,7 +952,11 @@ jobs:
           set -euo pipefail
           # A silently-empty group would pass while proving nothing, which is
           # the exact failure mode this gate exists to prevent.
-          N=$(grep -rl '@group tenant_isolation' public/local/*/tests/*.php | wc -l)
+          # Count local/ AND theme/: the dashboard's tenant scope lives in the
+          # theme, and a gate that cannot see it would let a tenant leak in the
+          # admin dashboard merge green. `vendor/bin/phpunit --group` already
+          # runs both; only this sanity count was narrower.
+          N=$(grep -rl '@group tenant_isolation'                 public/local/*/tests/*.php                 public/theme/*/tests/*.php 2>/dev/null | wc -l)
           echo "tagged isolation suites: $N"
           test "$N" -ge 40
           vendor/bin/phpunit --group tenant_isolation

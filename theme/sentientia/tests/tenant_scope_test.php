@@ -157,24 +157,49 @@ final class tenant_scope_test extends \advanced_testcase {
             $labels[(int) $u->id] = $label;
         }
 
-        $scope = tenant_scope::for_user($this->user_with('/1'), false);
-        [$sql, $params] = $scope->fragment('u', 'tu');
-
-        $rows = $DB->get_records_sql(
-            "SELECT u.id FROM {user} u WHERE u.deleted = 0 {$sql}", $params);
-
-        $found = [];
-        foreach ($rows as $r) {
-            if (isset($labels[(int) $r->id])) {
-                $found[] = $labels[(int) $r->id];
+        /**
+         * Run the emitted SQL and label what came back.
+         *
+         * @param string $path Scope to apply.
+         * @return string[] sorted labels
+         */
+        $matching = function (string $path) use ($DB, $labels): array {
+            $scope = tenant_scope::for_user($this->user_with($path), false);
+            [$sql, $params] = $scope->fragment('u', 'tu');
+            $rows = $DB->get_records_sql(
+                "SELECT u.id FROM {user} u WHERE u.deleted = 0 {$sql}", $params);
+            $found = [];
+            foreach ($rows as $r) {
+                if (isset($labels[(int) $r->id])) {
+                    $found[] = $labels[(int) $r->id];
+                }
             }
-        }
-        sort($found);
+            sort($found);
+            return $found;
+        };
 
-        $this->assertSame(['child', 'grandchild', 'root'], $found,
-            "scope '/1' must include itself and its descendants and nothing "
-            . "else. '/1/20', '/10', '/177' and '/1x' all start with the same "
-            . 'characters and are all different tenants or departments.');
+        // The tenant root takes its whole subtree. '/1/20' IS a department of
+        // tenant 1, so it belongs here; what must stay out are the OTHER
+        // tenants whose paths merely start with the same characters.
+        $this->assertSame(['child', 'grandchild', 'root', 'sibling_digit'],
+            $matching('/1'),
+            "scope '/1' takes its own subtree and nothing else. '/10', '/177' "
+            . "and '/1x' all start with '/1' and are different tenants.");
+
+        // A viewer sitting in a department still gets their whole TENANT.
+        // That is deliberate and matches the closure this replaced: the admin
+        // dashboard is a tenant-level view, not a department-level one.
+        // Department-level scoping is
+        // \local_sentientia_platform	enant::path_descendant_filter()'s job
+        // and is covered by its own boundary suite, where '/1/2' excluding
+        // '/1/20' is asserted directly.
+        $this->assertSame(['child', 'grandchild', 'root', 'sibling_digit'],
+            $matching('/1/2/3'),
+            'a viewer deep in the org tree is scoped to their tenant root');
+
+        // A tenant with no children still matches itself.
+        $this->assertSame(['zeea'], $matching('/177'));
+        $this->assertSame(['other_ten'], $matching('/10'));
     }
 
     public function test_a_failed_closed_scope_selects_nobody(): void {

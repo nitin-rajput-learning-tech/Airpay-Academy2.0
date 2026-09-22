@@ -154,8 +154,22 @@ final class privacy_coverage_test extends \advanced_testcase {
                 continue;
             }
 
-            $src = (string) file_get_contents($providerfile);
-            if (strpos($src, 'null_provider') !== false) {
+            // Reflection, not a string search on the source. The first draft
+            // of this test matched the literal 'null_provider' anywhere in the
+            // file, and then flagged all five providers it had just fixed --
+            // because their docblocks explain the null_provider they replaced.
+            // A guard that fires on its own documentation gets switched off.
+            $class = "\\{$component}\\privacy\\provider";
+            if (!class_exists($class)) {
+                $offenders[] = sprintf(
+                    '%s owns %s but %s does not load',
+                    $component, implode(', ', array_keys($usertables)), $class);
+                continue;
+            }
+
+            $nullprovider = 'core_privacy\local\metadata\null_provider';
+            $implements = class_implements($class) ?: [];
+            if (isset($implements[$nullprovider])) {
                 $offenders[] = sprintf(
                     '%s declares null_provider but owns %s',
                     $component, implode(', ', array_keys($usertables)));
