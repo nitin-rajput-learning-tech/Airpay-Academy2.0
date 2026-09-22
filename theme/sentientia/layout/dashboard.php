@@ -259,22 +259,22 @@ if (isloggedin() && !isguestuser()) {
             // findings 2026-09-07/10). $tenantscope($alias, $tag) returns
             // [' AND (…)', params] with unique parameter names, so several fragments
             // can share one query; for site admins it returns ['', []].
-            $scopedtenant = false;
-            $toporg = '';
-            if ($isldadmin && !$issiteadmin && !empty($USER->open_path)) {
-                $parts = explode('/', $USER->open_path);
-                $toporg = '/' . ($parts[1] ?? '');
-                $scopedtenant = ($toporg !== '/');
-            }
-            $tenantscope = function (string $alias, string $tag) use ($scopedtenant, $toporg): array {
-                if (!$scopedtenant) {
-                    return ['', []];
-                }
-                $col = ($alias === '') ? 'open_path' : $alias . '.open_path';
-                return [
-                    " AND ({$col} = :{$tag}exact OR {$col} LIKE :{$tag}prefix)",
-                    ["{$tag}exact" => $toporg, "{$tag}prefix" => $toporg . '/%'],
-                ];
+            // Extracted 2026-09-22 to theme_sentientia\local\tenant_scope so
+            // the boundary is testable; see tests/tenant_scope_test.php. The
+            // four call sites below keep their exact shape, so the ~30 widget
+            // queries that consume them are untouched.
+            //
+            // One behaviour change: the closure this replaces fell through to
+            // NO FILTER when $USER->open_path was null, empty or '/', so an
+            // L&D admin with a broken path saw every tenant's numbers as their
+            // own. tenant_scope fails CLOSED instead.
+            $scope = \theme_sentientia\local\tenant_scope::for_user(
+                $USER, $issiteadmin || !$isldadmin);
+            $scopedtenant = !$scope->is_unrestricted();
+            $toporg = $scope->root();
+            $tenantscope_unresolved = $scope->is_unresolved();
+            $tenantscope = function (string $alias, string $tag) use ($scope): array {
+                return $scope->fragment($alias, $tag);
             };
             [$tenantfilter_user, $tenantparams_user]       = $tenantscope('', 'tu');  // bare {user} queries
             [$tenantjoin_user, $tenantjoinparams_user]     = $tenantscope('u', 'ju'); // … JOIN {user} u

@@ -536,3 +536,53 @@ tracked literal, and an argv that every other process on the host can read. The 
 unanchored form also matches `https://localhost.evil.com`, which is the same unbounded-prefix
 mistake this repo has now shipped fourteen times against tenant paths. Verified against nine URLs
 including the two real deployment hostnames.
+
+
+## 2026-09-22 - Dashboard tenant scope extracted and made to fail closed (W1-12)
+
+The admin dashboard scoped ~30 widget queries - user tiles, course counts, completion rates,
+activity feed - through a closure declared inline in a 1,185-line layout file. If it is wrong,
+every number an L&D admin sees is wrong and nothing errors.
+
+Its **boundary** was already correct: `/`-terminated with an exact-root companion, unlike the
+fourteen sites the path sweep had to fix the same day. Its **fallback** was not:
+
+```php
+if ($isldadmin && !$issiteadmin && !empty($USER->open_path)) {
+    $parts  = explode('/', $USER->open_path);
+    $toporg = '/' . ($parts[1] ?? '');
+    $scopedtenant = ($toporg !== '/');
+}
+// $scopedtenant false  =>  fragment is ''  =>  NO FILTER AT ALL
+```
+
+So an L&D admin whose `open_path` was null, empty or `/` fell through to the unscoped branch and
+saw the **entire site** - every tenant's counts presented as their own, and the site-health panel
+that is meant for site admins only. On the current production import nobody is exposed by this: the
+five null-path accounts are guest, the site admin and three role-less test accounts. It was one role
+assignment away from mattering.
+
+Extracted to `theme/sentientia/classes/local/tenant_scope.php`, which delegates the boundary to
+`\local_sentientia_platform	enant::path_descendant_filter()` and returns `' AND 1 = 0'` when no
+tenant can be established. `is_unresolved()` lets a caller explain the zeros rather than render them
+silently.
+
+**Evidence the refactor is behaviour-preserving.** Rather than a screenshot, the old closure was
+reconstructed verbatim and compared against the new class across three tenant roots by four call
+sites:
+
+```
+IDENTICAL SQL and params across 3 tenant roots x 4 call sites (12 cases)
+
+unresolvable path:
+  old closure  -> no filter at all (saw every tenant)
+  tenant_scope -> AND 1 = 0
+```
+
+The four `$tenantscope('', 'tu')` / `('u', 'ju')` / `('', 'tc')` / `('c', 'jc')` call sites keep
+their exact shape, so the widget queries below them are untouched. `tests/tenant_scope_test.php`
+covers the boundary (`/1` includes `/1` and `/1/2/3`, excludes `/1/20`, `/10`, `/177`, `/1x`), the
+fail-closed fallback, parameter-name collisions between fragments sharing one query, and the site
+admin's null `open_path` not being mistaken for unresolvable.
+
+Theme version 2026092201 / 1.0.56-beta.
