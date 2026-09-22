@@ -67,3 +67,24 @@ with multi-user fixtures.
 
 Initial state card. Plugin has been live for many phases; created now
 as part of the P1 state-card pass.
+
+
+## 2026-09-22 - Real privacy provider (was no provider file at all)
+
+`\core_privacy\local\metadata\null_provider` is not a neutral default. It is a positive assertion
+to Moodle's privacy registry that the plugin stores **no** personal data. This plugin owns
+`local_sentientia_ratings`, each keyed on a user id, so under DPDP a subject-access
+request returned nothing from it and an erasure request deleted nothing - both reporting success, and
+the registry page confirming the plugin held nothing.
+
+Replaced with a full provider (`metadata\provider` + `request\plugin\provider` +
+`request\core_userlist_provider`) implementing export, per-user erasure, bulk erasure and
+context-wide deletion.
+Separately, `moodle-enhancement/local/sentientia_ratings/` was an incomplete copy of the plugin: four files, no `version.php`, no `lang/`, no `lib.php`. Every shared file was byte-identical to the complete top-level `local/` tree, so the ten missing files were copied across rather than either copy being edited. The two trees now match.
+
+Version bumped to 2026092201 so the cached privacy registry picks up the new tables.
+
+Guarded platform-wide by `local_sentientia_platform\privacy_coverage_test`, which walks every
+Sentientia plugin's `install.xml` and fails the build if a plugin declaring a user-identifying column
+declares `null_provider`, ships no provider, or declares only some of the tables it owns. Structural
+rather than an allowlist, so a new plugin with a copy-pasted `null_provider` fails on its first CI run.

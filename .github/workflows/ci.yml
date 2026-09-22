@@ -307,6 +307,25 @@ jobs:
       - name: Scan for unbounded tenant/org path prefixes
         run: php tools/check-path-boundary.php
 
+  tree-drift-check:
+    name: Cross-tree plugin drift
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+      # Every local plugin exists twice, in local/ and in
+      # moodle-enhancement/local/, and both are deployed from. An edit that
+      # lands in one tree and not the other is invisible until the wrong copy
+      # is served -- structured_logger.php carried a retired component prefix
+      # in one tree for months exactly that way. The 99 already-divergent
+      # files are baselined in tools/tree-drift-baseline.txt; this job blocks
+      # anything NEW.
+      - name: Compare local/ against moodle-enhancement/local/
+        run: php tools/check-tree-drift.php
+
   lang-parity-check:
     name: en/hi lang-pack parity
     runs-on: ubuntu-latest

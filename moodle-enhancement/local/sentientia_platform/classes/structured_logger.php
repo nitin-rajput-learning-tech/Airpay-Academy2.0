@@ -91,7 +91,7 @@ class structured_logger {
         $row = [
             'timestamp' => self::timestamp(),
             'level'     => $level,
-            'component' => 'local_airpay_' . $plugin,
+            'component' => self::qualify_component($plugin),
             'event'     => $event,
             'userid'    => isset($USER->id) ? (int) $USER->id : 0,
             'tenant'    => empty($USER->id) ? 0 : tenant::root_for_current_user(),
@@ -186,4 +186,40 @@ class structured_logger {
         }
         return $extra;
     }
+
+    /**
+     * Resolve a caller's short plugin name to a real component name.
+     *
+     * Callers pass a short name ('cart', 'proctoring', 'core'). Until
+     * 2026-09-22 this was concatenated onto 'local_airpay_', a prefix retired
+     * by ADR-022/025, so every emitted line named a component that no longer
+     * exists -- while the class docblock above documented the correct
+     * 'local_sentientia_' form. Log searches by component found nothing.
+     *
+     * An already-qualified name is passed through, so a caller that writes
+     * 'local_sentientia_cart' or 'theme_sentientia' is not double-prefixed.
+     *
+     * @param string $plugin Short plugin name, or a full component name.
+     * @return string Component name, e.g. 'local_sentientia_cart'.
+     */
+    private static function qualify_component(string $plugin): string {
+        $plugin = trim($plugin);
+
+        if ($plugin === '') {
+            return 'local_sentientia_platform';
+        }
+
+        // Already a component name: local_*, theme_*, mod_*, block_*, core.
+        if ($plugin === 'core' || strpos($plugin, '_') !== false) {
+            foreach (['local_', 'theme_', 'mod_', 'block_', 'tool_', 'auth_',
+                      'enrol_', 'report_'] as $prefix) {
+                if (strpos($plugin, $prefix) === 0) {
+                    return $plugin;
+                }
+            }
+        }
+
+        return 'local_sentientia_' . $plugin;
+    }
+
 }
