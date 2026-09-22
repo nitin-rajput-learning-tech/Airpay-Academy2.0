@@ -102,7 +102,8 @@ class course_manager {
     /**
      * Count visible courses for a tenant.
      *
-     * @param string $pathfilter  e.g. "/1/%" — empty = all
+     * @param string $pathfilter  a tenant/org PATH such as '/1' or '/1/2' (NOT a LIKE
+     *                            pattern); matched exact-or-descendant. Empty = all.
      * @return int
      */
     public static function count_visible_courses(string $pathfilter = ''): int {
@@ -112,8 +113,10 @@ class course_manager {
         $params = [];
 
         if (!empty($pathfilter)) {
-            $sql .= " AND open_path LIKE :cpath";
-            $params['cpath'] = $pathfilter;
+            [$psql, $pargs] = \local_sentientia_platform\tenant::path_descendant_filter(
+                $pathfilter, '', 'open_path', 'cvc');
+            $sql .= " AND {$psql}";
+            $params += $pargs;
         }
 
         return (int) $DB->count_records_sql($sql, $params);

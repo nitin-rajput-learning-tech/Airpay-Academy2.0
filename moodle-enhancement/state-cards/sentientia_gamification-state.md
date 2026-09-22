@@ -159,3 +159,17 @@ showed English under Hindi even though `level_beginner…level_master` strings
 already existed in en + hi. The table now reads `get_string('level_*',
 'local_sentientia_gamification')`; consumers (`leaderboard::…['level_name']`,
 theme dashboard) unchanged. Both trees identical. Deploy pending.
+
+## 2026-09-22 - Tenant path-boundary sweep (platform-wide)
+
+A repo-wide scan for unbounded tenant/org path prefixes found this plugin among them. A materialised
+path prefix must be `/`-terminated AND match the node itself; `'/1' . '%'` also matches `/177`, so an
+Airpay-scoped query silently included the ZEEA tenant. The same defect had already shipped four times
+(admin dashboard, compliance BU filter, department scorecard, org-children picker) and is invisible in
+use: nothing errors, only the numbers come out wrong.
+
+Leaderboard ranking, neighbour ranking and the top-10 badge rank all scoped with `'/1' . '%'`, mixing another tenant's learners into this tenant's board and rank denominator.
+
+Fixed via the new `\local_sentientia_platform	enant::path_descendant_filter()` (exact-or-descendant
+for an arbitrary path), locked by a DB-level boundary suite in `tenant_test.php`, and prevented from
+returning by `tools/check-path-boundary.php` - pre-commit CHECK 18 and the `path-boundary-check` CI job.

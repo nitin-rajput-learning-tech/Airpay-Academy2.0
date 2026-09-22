@@ -113,8 +113,12 @@ class hook_callbacks {
             $sql = "SELECT id, suspended, deleted
                       FROM {user}
                      WHERE (suspended = 1 OR deleted = 1)
-                       AND open_path LIKE :path";
-            $rows = $DB->get_records_sql($sql, ['path' => $tenantpath . '%']);
+                       AND (open_path = :pexact OR open_path LIKE :pprefix)";
+            // '/1' . '%' also matched '/177': a '/1' tenant also matched '/177'.
+            $rows = $DB->get_records_sql($sql, [
+                'pexact'  => $tenantpath,
+                'pprefix' => $tenantpath . '/%',
+            ]);
         } catch (\Throwable $e) {
             // PHPUnit fixture without open_path, or DB hiccup.
             return '';

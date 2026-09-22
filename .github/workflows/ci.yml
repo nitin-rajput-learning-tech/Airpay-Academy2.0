@@ -295,6 +295,18 @@ jobs:
           fi
           echo "::notice::No conflict markers found"
 
+  path-boundary-check:
+    name: Tenant path-boundary scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+      - name: Scan for unbounded tenant/org path prefixes
+        run: php tools/check-path-boundary.php
+
   lang-parity-check:
     name: en/hi lang-pack parity
     runs-on: ubuntu-latest

@@ -167,3 +167,17 @@ bumped in the top-level tree only (2026061700 → 2026090800); the
 compat/, hook_callbacks.php) — the deployer uses the top-level file. No schema, no
 capability, no flag.
 **Correction 2026-09-09:** UAT runs the `moodle-enhancement/` copy of this plugin (installed 1.4.1 / 2026052001; its `db/upgrade.php`, `accesslib.php` and `version.php` hash-match the ME tree, not the top-level 1.5.1 tree). So the ME `version.php` was bumped 2026052001 → **2026052002 / 1.4.2** for the cascade strings and that is what went to UAT; the top-level 2026090800 / 1.5.2 bump stays repo-only. `tools/uat/deploy_to_uat.sh` now ABORTS when the two trees differ for a target unless `--prefer-top` / `--prefer-me` (or explicit paths) say which copy is meant.
+
+## 2026-09-22 - Tenant path-boundary sweep (platform-wide)
+
+A repo-wide scan for unbounded tenant/org path prefixes found this plugin among them. A materialised
+path prefix must be `/`-terminated AND match the node itself; `'/1' . '%'` also matches `/177`, so an
+Airpay-scoped query silently included the ZEEA tenant. The same defect had already shipped four times
+(admin dashboard, compliance BU filter, department scorecard, org-children picker) and is invisible in
+use: nothing errors, only the numbers come out wrong.
+
+The descendants-only branch of the access filter was unbounded; the sibling exact-or-descendant branch was already correct.
+
+Fixed via the new `\local_sentientia_platform	enant::path_descendant_filter()` (exact-or-descendant
+for an arbitrary path), locked by a DB-level boundary suite in `tenant_test.php`, and prevented from
+returning by `tools/check-path-boundary.php` - pre-commit CHECK 18 and the `path-boundary-check` CI job.

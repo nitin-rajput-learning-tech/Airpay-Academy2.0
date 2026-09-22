@@ -118,3 +118,17 @@ PHPUnit suite covers the underlying queries.
 Initial state card. This plugin is unusual — no `version.php`, so it's
 deployed-but-not-installed. Created now as part of the P1 state-card
 pass to surface that ambiguity for future cleanup decisions.
+
+## 2026-09-22 - Tenant path-boundary sweep (platform-wide)
+
+A repo-wide scan for unbounded tenant/org path prefixes found this plugin among them. A materialised
+path prefix must be `/`-terminated AND match the node itself; `'/1' . '%'` also matches `/177`, so an
+Airpay-scoped query silently included the ZEEA tenant. The same defect had already shipped four times
+(admin dashboard, compliance BU filter, department scorecard, org-children picker) and is invisible in
+use: nothing errors, only the numbers come out wrong.
+
+Public homepage hero stats were unbounded and would also have dropped courses at the Public root.
+
+Fixed via the new `\local_sentientia_platform	enant::path_descendant_filter()` (exact-or-descendant
+for an arbitrary path), locked by a DB-level boundary suite in `tenant_test.php`, and prevented from
+returning by `tools/check-path-boundary.php` - pre-commit CHECK 18 and the `path-boundary-check` CI job.

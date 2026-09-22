@@ -28,23 +28,26 @@ global $DB, $CFG, $OUTPUT, $PAGE;
 // so site-wide counts ARE that tenant's counts; the fallback below is that case, not a
 // leak (security posture M2, 2026-09-04).
 $public_id = \local_sentientia_org\tenant_manager::get_public_tenant_id();
-$pubpath = '/' . $public_id . '%';
+// The PATH, plus exact-or-descendant bound params: a bare '%' would also
+// match '/770'+, and a bare '/%' would drop courses at the Public root.
+$pubpath = '/' . $public_id;
+$pubargs = ['pexact' => $pubpath, 'pprefix' => $pubpath . '/%'];
 
 // SENTIENTIA: open_path is a BizLMS-injected tenant column, ABSENT on a vanilla /
 // non-Airpay deployment. Detect it once; fall back to site-wide counts when missing
 // so the guest landing page renders on ANY Sentientia install. (Front-page 500 fix.)
 $dbman = $DB->get_manager();
 $hastenant = $dbman->field_exists('user', 'open_path') && $dbman->field_exists('course', 'open_path');
-$tenantc = $hastenant ? 'AND c.open_path LIKE :p' : '';
-$tenantp = $hastenant ? ['p' => $pubpath] : [];
+$tenantc = $hastenant ? 'AND (c.open_path = :pexact OR c.open_path LIKE :pprefix)' : '';
+$tenantp = $hastenant ? $pubargs : [];
 
 if ($hastenant) {
     $coursecount = (int)$DB->count_records_sql(
-        "SELECT COUNT(*) FROM {course} WHERE visible = 1 AND id > 1 AND open_path LIKE :p",
-        ['p' => $pubpath]);
+        "SELECT COUNT(*) FROM {course} WHERE visible = 1 AND id > 1 AND (open_path = :pexact OR open_path LIKE :pprefix)",
+        $pubargs);
     $usercount  = (int)$DB->count_records_sql(
-        "SELECT COUNT(*) FROM {user} WHERE deleted = 0 AND suspended = 0 AND id > 1 AND open_path LIKE :p",
-        ['p' => $pubpath]);
+        "SELECT COUNT(*) FROM {user} WHERE deleted = 0 AND suspended = 0 AND id > 1 AND (open_path = :pexact OR open_path LIKE :pprefix)",
+        $pubargs);
 } else {
     $coursecount = (int)$DB->count_records_select('course', 'visible = 1 AND id > 1');
     $usercount   = (int)$DB->count_records_select('user', 'deleted = 0 AND suspended = 0 AND id > 1');

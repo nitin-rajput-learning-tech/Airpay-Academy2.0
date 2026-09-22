@@ -23,7 +23,7 @@ defined('MOODLE_INTERNAL') || die();
  *   login_stat_courses():      string  — Public-tenant visible course count
  *   login_stat_certs():        string  — Public-tenant certificates issued
  *   login_stat_completion():   string  — alias of login_stat_certs() (deprecated)
- *   get_public_tenant_path():  string  — protected — Public tenant LIKE prefix
+ *   get_public_tenant_path():  string  — protected — Public tenant PATH (not a LIKE pattern)
  *
  * All methods assume `$this->page`, `$this->image_url()`, and
  * `$this->render_from_template()` are available (consuming class must
@@ -110,12 +110,25 @@ trait login_ui {
      * different tenant during a marketing campaign) without exposing
      * to the public API.
      */
+    /**
+     * Bound parameters for an exact-or-descendant match on the Public
+     * tenant. Pairs with `(col = :pexact OR col LIKE :pprefix)`.
+     *
+     * @return array
+     */
+    protected function public_tenant_params(): array {
+        $path = $this->get_public_tenant_path();
+        return ['pexact' => $path, 'pprefix' => $path . '/%'];
+    }
+
     protected function get_public_tenant_path(): string {
         $tid = (int) get_config('local_sentientia_pages', 'public_tenant_id');
         if (!$tid) {
             $tid = 77;
         }
-        return '/' . $tid . '%';
+        // Returns the PATH, not a LIKE pattern: callers build an
+        // exact-or-descendant filter so '/77' cannot match '/770'.
+        return '/' . $tid;
     }
 
     /**
@@ -131,8 +144,8 @@ trait login_ui {
                   WHERE deleted   = 0
                     AND suspended = 0
                     AND id        > 1
-                    AND open_path LIKE :p",
-                ['p' => $this->get_public_tenant_path()]);
+                    AND (open_path = :pexact OR open_path LIKE :pprefix)",
+                $this->public_tenant_params());
             return $count > 0 ? $count . '+' : '';
         } catch (\Exception $e) {
             return '';
@@ -149,8 +162,8 @@ trait login_ui {
                 "SELECT COUNT(*) FROM {course}
                   WHERE visible   = 1
                     AND id        > 1
-                    AND open_path LIKE :p",
-                ['p' => $this->get_public_tenant_path()]);
+                    AND (open_path = :pexact OR open_path LIKE :pprefix)",
+                $this->public_tenant_params());
             return $count > 0 ? $count . '+' : '';
         } catch (\Exception $e) {
             return '';
@@ -179,8 +192,9 @@ trait login_ui {
             $count = $DB->count_records_sql(
                 "SELECT COUNT(ci.id) FROM {tool_certificate_issues} ci
                    JOIN {user} u ON u.id = ci.userid
-                  WHERE u.open_path LIKE :p AND ci.archived = 0",
-                ['p' => $this->get_public_tenant_path()]);
+                  WHERE (u.open_path = :pexact OR u.open_path LIKE :pprefix)
+                        AND ci.archived = 0",
+                $this->public_tenant_params());
             return $count > 0 ? $count . '+' : '';
         } catch (\Exception $e) {
             return '';

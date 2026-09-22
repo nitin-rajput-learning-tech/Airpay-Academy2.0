@@ -26,8 +26,11 @@ class leaderboard {
             $orgpath = \local_sentientia_org\tenant_manager::get_tenant_path();
         }
         if (!empty($orgpath)) {
-            $orgfilter = "AND u.open_path LIKE :orgpath";
-            $params['orgpath'] = $orgpath . '%';
+            // '/1' . '%' also matched '/177', putting another tenant's learners on
+            // this tenant's leaderboard. Exact-or-descendant instead.
+            [$orgsql, $params] = \local_sentientia_platform\tenant::path_descendant_filter(
+                $orgpath, 'u', 'open_path', 'lborg');
+            $orgfilter = 'AND ' . $orgsql;
         }
 
         return array_values($DB->get_records_sql(
@@ -57,6 +60,9 @@ class leaderboard {
         // Extract top-level org path (e.g., /1 from /1/2/3).
         $parts = explode('/', trim($user->open_path, '/'));
         $orgpath = '/' . ($parts[0] ?? '');
+        // '/1' . '%' also matched '/177': neighbour ranking spanned tenants.
+        [$nboursql, $nbourargs] = \local_sentientia_platform\tenant::path_descendant_filter(
+            $orgpath, 'u', 'open_path', 'nbour');
 
         return array_values($DB->get_records_sql(
             "SELECT s.userid, s.total_points, s.current_streak, s.longest_streak,
@@ -64,9 +70,9 @@ class leaderboard {
                FROM {local_sentientia_streaks} s
                JOIN {user} u ON u.id = s.userid
               WHERE u.deleted = 0 AND u.suspended = 0 AND s.total_points > 0
-                AND u.open_path LIKE :pathprefix
+                AND {$nboursql}
            ORDER BY s.total_points DESC",
-            ['pathprefix' => $orgpath . '%'], 0, $limit
+            $nbourargs, 0, $limit
         ));
     }
 
@@ -89,8 +95,11 @@ class leaderboard {
             $parts = explode('/', $user->open_path);
             $org = $parts[1] ?? '';
             if (!empty($org)) {
-                $orgfilter = "AND s.userid IN (SELECT id FROM {user} WHERE open_path LIKE :orgpath AND deleted = 0)";
-                $params['orgpath'] = '/' . $org . '%';
+                // '/1' . '%' also matched '/177': the rank denominator counted another tenant's users.
+                [$ranksql, $params] = \local_sentientia_platform\tenant::path_descendant_filter(
+                    '/' . $org, '', 'open_path', 'rankorg');
+                $orgfilter = "AND s.userid IN (SELECT id FROM {user} "
+                    . "WHERE {$ranksql} AND deleted = 0)";
             }
         }
 

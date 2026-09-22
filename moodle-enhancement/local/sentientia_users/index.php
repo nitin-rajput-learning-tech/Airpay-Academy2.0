@@ -32,8 +32,12 @@ if (!is_siteadmin()) {
     $parts = explode('/', trim($USER->open_path ?? '', '/'));
     $top = $parts[0] ?? '';
     if (!empty($top)) {
-        $base_where .= ' AND open_path LIKE :userorg';
-        $base_params['userorg'] = '/' . $top . '%';
+        // '/1' . '%' also matched '/177', so an Airpay admin's user counts silently
+        // included the ZEEA tenant. Exact-or-descendant instead.
+        [$orgsql, $orgargs] = \local_sentientia_platform\tenant::path_descendant_filter(
+            '/' . $top, '', 'open_path', 'userorg');
+        $base_where .= ' AND ' . $orgsql;
+        $base_params += $orgargs;
     }
 }
 $total_count   = (int) $DB->count_records_select('user', $base_where, $base_params);

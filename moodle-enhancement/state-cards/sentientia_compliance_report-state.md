@@ -145,3 +145,17 @@ three Airpay courses, all as empty "Not Enrolled" cells). Rows/KPIs were scoped 
 - Both trees patched identically (the only pre-existing divergence — `pluginname` "Airpay …" in ME vs "Sentientia …"
   top-level, and the `!empty()` deadline guard — is untouched). UAT runs the ME copy → deploy with `--prefer-me`.
   Deployed to UAT 2026-09-17 08:27 (c14c36e85, checksums OK, upgrade Success).
+
+## 2026-09-22 - Tenant path-boundary sweep (platform-wide)
+
+A repo-wide scan for unbounded tenant/org path prefixes found this plugin among them. A materialised
+path prefix must be `/`-terminated AND match the node itself; `'/1' . '%'` also matches `/177`, so an
+Airpay-scoped query silently included the ZEEA tenant. The same defect had already shipped four times
+(admin dashboard, compliance BU filter, department scorecard, org-children picker) and is invisible in
+use: nothing errors, only the numbers come out wrong.
+
+Department scorecard counted every sibling department whose id shared a digit prefix (`$dept->path . '%'`: /1/2 swallowed /1/20). Org-children picker used `'%/id/%'`, which needs a slash on both sides and so counted every leaf-node user as zero.
+
+Fixed via the new `\local_sentientia_platform	enant::path_descendant_filter()` (exact-or-descendant
+for an arbitrary path), locked by a DB-level boundary suite in `tenant_test.php`, and prevented from
+returning by `tools/check-path-boundary.php` - pre-commit CHECK 18 and the `path-boundary-check` CI job.

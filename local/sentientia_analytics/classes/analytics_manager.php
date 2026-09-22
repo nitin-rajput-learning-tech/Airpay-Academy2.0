@@ -238,10 +238,16 @@ class analytics_manager {
             ['prefix' => $toporg . '/%']);
 
         // ── ONE QUERY: hoisted out of the loop. Same value for every dept. ──
+        // `$toporg . '/%'` excluded every course sitting at the tenant root
+        // itself ('/1'), which on this data is most of them — so this
+        // denominator was short and every department's compliance rate read
+        // high. Exact-or-descendant via the shared helper; fixed 2026-09-22.
+        [$mandsql, $mandargs] = \local_sentientia_platform\tenant::path_descendant_filter(
+            $toporg, '', 'open_path', 'mand');
         $mandatory_courses = $DB->count_records_sql(
             "SELECT COUNT(*) FROM {course}
-              WHERE enddate > 0 AND visible = 1 AND id > 1 AND open_path LIKE :mpath",
-            ['mpath' => $toporg . '/%']);
+              WHERE enddate > 0 AND visible = 1 AND id > 1 AND {$mandsql}",
+            $mandargs);
 
         if ($mandatory_courses == 0) {
             $cache->set($cachekey, []);

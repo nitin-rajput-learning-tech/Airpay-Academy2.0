@@ -331,3 +331,17 @@ table headers, "Request access", state badges, isolation note) and the two trees
 - Lang: 14 new keys appended to each tree's own en + hi files (the trees' lang files still differ elsewhere —
   pre-existing; parity 118/118 in both). Deployed to UAT 2026-09-17 10:16 (8aca24621, `--prefer-me`: UAT's courses lang files matched the ME tree
   content-wise, CRLF-insensitive; `diff -rq` still shows pre-existing drift in tasks/lang/share_page).
+
+## 2026-09-22 - Tenant path-boundary sweep (platform-wide)
+
+A repo-wide scan for unbounded tenant/org path prefixes found this plugin among them. A materialised
+path prefix must be `/`-terminated AND match the node itself; `'/1' . '%'` also matches `/177`, so an
+Airpay-scoped query silently included the ZEEA tenant. The same defect had already shipped four times
+(admin dashboard, compliance BU filter, department scorecard, org-children picker) and is invisible in
+use: nothing errors, only the numbers come out wrong.
+
+`count_visible_courses()` took a caller-built LIKE pattern. Same contract change as classroom.
+
+Fixed via the new `\local_sentientia_platform	enant::path_descendant_filter()` (exact-or-descendant
+for an arbitrary path), locked by a DB-level boundary suite in `tenant_test.php`, and prevented from
+returning by `tools/check-path-boundary.php` - pre-commit CHECK 18 and the `path-boundary-check` CI job.

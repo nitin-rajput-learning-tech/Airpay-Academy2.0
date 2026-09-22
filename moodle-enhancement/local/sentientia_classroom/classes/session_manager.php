@@ -30,7 +30,8 @@ class session_manager {
      *
      * Replaces dashboard.php lines 335-339.
      *
-     * @param string $pathfilter  e.g. "/1/%" or empty for all
+     * @param string $pathfilter  a tenant/org PATH such as '/1' or '/1/2' (NOT a LIKE
+     *                            pattern); matched exact-or-descendant. Empty = all.
      * @return int
      */
     public static function count_classrooms(string $pathfilter = ''): int {
@@ -39,7 +40,9 @@ class session_manager {
         $table = self::resolve_table();
 
         if (!empty($pathfilter)) {
-            return $DB->count_records_select($table, "open_path LIKE :p", ['p' => $pathfilter]);
+            [$psql, $pargs] = \local_sentientia_platform\tenant::path_descendant_filter(
+                $pathfilter, '', 'open_path', 'cc');
+            return $DB->count_records_select($table, $psql, $pargs);
         }
 
         return $DB->count_records($table);

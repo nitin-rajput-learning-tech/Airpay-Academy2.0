@@ -26,7 +26,7 @@ echo "=== sentientia_cart smoke test ===\n\n";
 $user = $DB->get_record_sql(
     "SELECT id, username, email, open_path FROM {user}
       WHERE deleted = 0 AND id > 2
-        AND open_path LIKE '/77%'
+        AND (open_path = '/77' OR open_path LIKE '/77/%')
       ORDER BY id ASC LIMIT 1");
 if (!$user) {
     echo "FAIL: No Public-tenant user found.\n";

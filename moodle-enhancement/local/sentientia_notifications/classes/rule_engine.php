@@ -913,12 +913,18 @@ class rule_engine {
             $parts = explode('/', trim($course->open_path, '/'));
             $orgpath = '/' . ($parts[0] ?? '');
 
+            // '/1' . '%' also matched '/177': a new Airpay course notified the ZEEA tenant too.
+
+            [$orgsql, $orgargs] = \local_sentientia_platform\tenant::path_descendant_filter(
+
+                $orgpath, '', 'open_path', 'ntf');
+
             $users = $DB->get_records_sql(
                 "SELECT id, firstname FROM {user}
                   WHERE deleted = 0 AND suspended = 0
-                    AND open_path LIKE :pathprefix
+                    AND {$orgsql}
                   LIMIT " . (int)get_config('local_sentientia_notifications', 'batch_limit') ?: 500 . "",
-                ['pathprefix' => $orgpath . '%']);
+                $orgargs);
 
             foreach ($users as $user) {
                 $sent = self::send($rule, $user->id, $course->id,

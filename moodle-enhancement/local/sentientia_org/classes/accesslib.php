@@ -288,7 +288,8 @@ class accesslib {
             ];
         } else {
             $sql = " AND {$columnname} LIKE :{$uid}_like";
-            $params = ["{$uid}_like" => $costcenterpath . '%'];
+            // '/'-bounded: the descendants-only branch must not let '/1' match '/177'.
+            $params = ["{$uid}_like" => $costcenterpath . '/%'];
         }
 
         return [$sql, $params];

@@ -50,10 +50,11 @@ $plugin->component = 'local_sentientia_users';
 // no longer surfaces an "email already registered" validation error
 // (user-enumeration oracle, CWE-203); register() against an existing
 // email now silently notifies the existing address and returns its id.
-$plugin->version   = 2026090302;
+$plugin->version   = 2026092200;  // Manage Users counts are tenant-bounded
+// 2026090302:
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '2.7.6';
+$plugin->release   = '2.7.7';
 $plugin->dependencies = [
     'local_sentientia_org' => 2026051501,
 ];

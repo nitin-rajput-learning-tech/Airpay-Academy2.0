@@ -81,8 +81,11 @@ class badge_manager {
                 $orgfilter = '';
                 $orgparams = [];
                 if ($org !== '' && self::has_tenant_column('course')) {
-                    $orgfilter = ' AND open_path LIKE :orgpath';
-                    $orgparams['orgpath'] = '/' . $org . '%';
+                    // '/1' . '%' also matched '/177' (the ZEEA tenant), so an Airpay
+                    // learner's mandatory-course count included another tenant's courses.
+                    [$orgsql, $orgparams] = \local_sentientia_platform\tenant::path_descendant_filter(
+                        '/' . $org, '', 'open_path', 'badgeorg');
+                    $orgfilter = ' AND ' . $orgsql;
                 }
                 $mandatory = $DB->count_records_sql(
                     "SELECT COUNT(*) FROM {course}
@@ -106,8 +109,12 @@ class badge_manager {
                 $tenantfilter = '';
                 $tenantparams = ['uid' => $userid];
                 if ($org !== '') {
-                    $tenantfilter = "AND s2.userid IN (SELECT id FROM {user} WHERE open_path LIKE :orgp AND deleted = 0)";
-                    $tenantparams['orgp'] = '/' . $org . '%';
+                    // '/1' . '%' also matched '/177': the top-10 rank denominator counted another tenant.
+                    [$ranksql, $rankargs] = \local_sentientia_platform\tenant::path_descendant_filter(
+                        '/' . $org, '', 'open_path', 'toporg');
+                    $tenantfilter = "AND s2.userid IN (SELECT id FROM {user} "
+                        . "WHERE {$ranksql} AND deleted = 0)";
+                    $tenantparams += $rankargs;
                 }
                 $rank = $DB->count_records_sql(
                     "SELECT COUNT(*) FROM {local_sentientia_streaks} s2

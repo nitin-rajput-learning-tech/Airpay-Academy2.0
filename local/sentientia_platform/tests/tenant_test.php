@@ -270,4 +270,167 @@ class tenant_test extends \advanced_testcase {
         $this->expectException(\moodle_exception::class);
         tenant::require_path_access('/1/100', $public->id);
     }
+
+    // ── Path-boundary regression suite (2026-09-22) ─────────────────────
+    // These execute the SQL the helpers EMIT against real rows that
+    // include every known collision, rather than asserting on the
+    // fragment string. The prefix-collision class of defect shipped
+    // twice while string-level assertions passed, so the proof has to
+    // go through the database.
+
+    /** Seed {user}.open_path with the full collision set. @return array label => userid */
+    private function seed_collision_paths(): array {
+        global $DB;
+        $paths = [
+            'root'          => '/1',        // the tenant root itself
+            'child'         => '/1/2',      // a direct child
+            'grandchild'    => '/1/2/3',    // deeper descendant
+            'sibling_digit' => '/1/20',     // path-boundary-ok: names the defect this suite locks out
+            'other_tenant'  => '/10',       // collides with /1 under `'/1' . '%'`
+            'zeea'          => '/177',      // the tenant that actually leaked, twice
+            'suffix'        => '/1x',       // non-numeric suffix collision
+        ];
+        $ids = [];
+        foreach ($paths as $label => $p) {
+            $u = $this->getDataGenerator()->create_user();
+            $DB->set_field('user', 'open_path', $p, ['id' => $u->id]);
+            $ids[$label] = (int) $u->id;
+        }
+        return $ids;
+    }
+
+    /** Run a filter fragment against {user} and return the matched labels. */
+    private function labels_matching(array $filter, array $ids): array {
+        global $DB;
+        [$sql, $params] = $filter;
+        $rows = $DB->get_records_select('user', $sql, $params, '', 'id');
+        $matched = [];
+        foreach ($ids as $label => $id) {
+            if (isset($rows[$id])) {
+                $matched[] = $label;
+            }
+        }
+        sort($matched);
+        return $matched;
+    }
+
+    /**
+     * path_descendant_filter('/1') must match /1, /1/2, /1/2/3 and NOTHING
+     * else. /1/20 is a sibling of /1/2 not a descendant of it, but it IS a
+     * descendant of /1 — so it matches here and must NOT match when the
+     * scope is /1/2 (asserted in the next test).
+     */
+    public function test_path_descendant_filter_matches_root_and_children_only(): void {
+        $this->resetAfterTest();
+        $ids = $this->seed_collision_paths();
+
+        $matched = $this->labels_matching(
+            tenant::path_descendant_filter('/1'), $ids);
+
+        $this->assertSame(['child', 'grandchild', 'root', 'sibling_digit'], $matched,
+            'scope /1 must match /1 and its /-bounded descendants, and must NOT match /10, /177 or /1x');
+    }
+
+    /**
+     * THE REGRESSION. `$path . '%'` for '/1/2' silently swallowed '/1/20'.
+     * This is the department-scorecard over-count defect.
+     */
+    public function test_path_descendant_filter_excludes_digit_prefix_sibling(): void {
+        $this->resetAfterTest();
+        $ids = $this->seed_collision_paths();
+
+        $matched = $this->labels_matching(
+            tenant::path_descendant_filter('/1/2'), $ids);
+
+        $this->assertSame(['child', 'grandchild'], $matched,
+            // path-boundary-ok: the message names the defect being asserted against
+            "scope /1/2 must match /1/2 and /1/2/3 but NEVER /1/20 (the `\$path . '%'` defect)");
+        $this->assertNotContains('sibling_digit', $matched);
+    }
+
+    /** A leaf node must match itself — the `'%/' . $id . '/%'` pattern missed it. */
+    public function test_path_descendant_filter_matches_a_leaf_node_exactly(): void {
+        $this->resetAfterTest();
+        $ids = $this->seed_collision_paths();
+
+        $matched = $this->labels_matching(
+            tenant::path_descendant_filter('/1/20'), $ids);
+
+        $this->assertSame(['sibling_digit'], $matched,
+            "a leaf path must match itself (the `'%/id/%'` pattern under-counted leaf users)");
+    }
+
+    /** Trailing slashes and surrounding whitespace must not change the result. */
+    public function test_path_descendant_filter_normalises_input(): void {
+        $this->resetAfterTest();
+        $ids = $this->seed_collision_paths();
+
+        $expected = $this->labels_matching(tenant::path_descendant_filter('/1/2'), $ids);
+        foreach (['/1/2/', '  /1/2  ', "/1/2\n"] as $variant) {
+            $this->assertSame($expected,
+                $this->labels_matching(tenant::path_descendant_filter($variant), $ids),
+                "input '{$variant}' must normalise to /1/2");
+        }
+    }
+
+    /** An empty path means "no restriction", not "match nothing". */
+    public function test_path_descendant_filter_empty_path_is_unrestricted(): void {
+        $this->assertSame(['1=1', []], tenant::path_descendant_filter(''));
+        $this->assertSame(['1=1', []], tenant::path_descendant_filter('/'));
+    }
+
+    /** Two filters in one query must not collide on parameter names. */
+    public function test_path_descendant_filter_tags_keep_params_distinct(): void {
+        [$sql1, $p1] = tenant::path_descendant_filter('/1', 'u', 'open_path', 'org');
+        [$sql2, $p2] = tenant::path_descendant_filter('/1/2', 's', 'department_path', 'dept');
+
+        $this->assertSame([], array_intersect_key($p1, $p2),
+            'tagged filters must not share parameter names');
+        $this->assertStringContainsString('u.open_path', $sql1);
+        $this->assertStringContainsString('s.department_path', $sql2);
+    }
+
+    /** allow_null tolerates legacy unscoped rows, and is off by default. */
+    public function test_path_descendant_filter_null_tolerance_is_opt_in(): void {
+        $this->resetAfterTest();
+        global $DB;
+        $ids = $this->seed_collision_paths();
+        $u = $this->getDataGenerator()->create_user();
+        $DB->set_field('user', 'open_path', null, ['id' => $u->id]);
+        $ids['nullpath'] = (int) $u->id;
+
+        $this->assertNotContains('nullpath',
+            $this->labels_matching(tenant::path_descendant_filter('/1'), $ids),
+            'NULL paths must be excluded by default');
+        $this->assertContains('nullpath',
+            $this->labels_matching(
+                tenant::path_descendant_filter('/1', '', 'open_path', 'apdesc', true), $ids),
+            'NULL paths must be included when allow_null is set');
+    }
+
+    /**
+     * The viewer-scoped path_filter() emits SQL that is never executed in
+     * the rest of the suite. Run it against the collision set as a
+     * tenant-/1 user and prove /10, /177 and /1x do not come back.
+     */
+    public function test_path_filter_sql_excludes_colliding_tenants_in_the_database(): void {
+        $this->resetAfterTest();
+        global $DB;
+        $ids = $this->seed_collision_paths();
+
+        $viewer = $this->getDataGenerator()->create_user();
+        $DB->set_field('user', 'open_path', '/1', ['id' => $viewer->id]);
+        $viewer->open_path = '/1';
+        $this->setUser($viewer);
+
+        $matched = $this->labels_matching(tenant::path_filter(), $ids);
+
+        $this->assertContains('root', $matched);
+        $this->assertContains('child', $matched);
+        $this->assertContains('grandchild', $matched);
+        foreach (['other_tenant', 'zeea', 'suffix'] as $forbidden) {
+            $this->assertNotContains($forbidden, $matched,
+                "a /1 viewer must never see rows at {$forbidden}");
+        }
+    }
 }

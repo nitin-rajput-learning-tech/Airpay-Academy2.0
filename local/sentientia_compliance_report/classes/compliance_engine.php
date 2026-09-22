@@ -493,20 +493,27 @@ class compliance_engine {
 
         $results = [];
         foreach ($departments as $dept) {
+            // `$dept->path . '%'` over-counted every sibling department whose id
+            // shares a digit prefix: scoping to /1/2 also swallowed /1/20 and
+            // /1/21. Same defect class as the admin-dashboard over-count that
+            // shipped twice; routed through the /-bounded shared helper
+            // 2026-09-22 and locked by tenant_test's boundary suite.
+            [$deptsql, $deptargs] = \local_sentientia_platform\tenant::path_descendant_filter(
+                (string) $dept->path, '', 'department_path', 'dept');
+
             $total = $DB->count_records_sql(
-                "SELECT COUNT(*) FROM {local_compliance_snapshot}
-                  WHERE department_path LIKE :path",
-                ['path' => $dept->path . '%']);
+                "SELECT COUNT(*) FROM {local_compliance_snapshot} WHERE {$deptsql}",
+                $deptargs);
 
             $completed = $DB->count_records_sql(
                 "SELECT COUNT(*) FROM {local_compliance_snapshot}
-                  WHERE department_path LIKE :path AND status = 'completed'",
-                ['path' => $dept->path . '%']);
+                  WHERE {$deptsql} AND status = 'completed'",
+                $deptargs);
 
             $overdue = $DB->count_records_sql(
                 "SELECT COUNT(*) FROM {local_compliance_snapshot}
-                  WHERE department_path LIKE :path AND status = 'overdue'",
-                ['path' => $dept->path . '%']);
+                  WHERE {$deptsql} AND status = 'overdue'",
+                $deptargs);
 
             $rate = $total > 0 ? round(($completed / $total) * 100) : 0;
             $rag = ($rate >= 90) ? 'green' : (($rate >= 70) ? 'amber' : 'red');
@@ -768,9 +775,17 @@ class compliance_engine {
         $children = \local_sentientia_org\org_manager::get_children((int)$parentid);
         $result = [];
         foreach ($children as $c) {
+            // `'%/' . $c->id . '/%'` required a slash on BOTH sides, so every
+            // user sitting at a leaf node (open_path '/1/5') counted as zero.
+            // Scope to the child's own materialised path, exact-or-descendant.
+            $childpath = (string) ($c->path ?? '');
+            if ($childpath === '') {
+                $childpath = '/' . (int) $c->id;   // org row without a materialised path
+            }
+            [$kidsql, $kidargs] = \local_sentientia_platform\tenant::path_descendant_filter(
+                $childpath, '', 'open_path', 'kid');
             $usercount = $DB->count_records_select('user',
-                "deleted = 0 AND suspended = 0 AND open_path LIKE :path",
-                ['path' => '%/' . $c->id . '/%']);
+                "deleted = 0 AND suspended = 0 AND {$kidsql}", $kidargs);
             $result[] = [
                 'id'         => (int)$c->id,
                 'name'       => format_string($c->fullname),

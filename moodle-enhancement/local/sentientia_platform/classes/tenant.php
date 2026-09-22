@@ -253,4 +253,66 @@ class tenant {
             ],
         ];
     }
+
+    /**
+     * Build a WHERE fragment matching one path EXACTLY or its `/`-bounded
+     * descendants, for an ARBITRARY path rather than the viewer's tenant.
+     *
+     * Why this exists: {@see self::path_filter()} scopes to the *viewer's*
+     * tenant root, so every call site that needed to filter by some other
+     * path (a department in a scorecard, a child org in a picker, a chosen
+     * business unit) hand-rolled its own LIKE. Two of those got it wrong in
+     * exactly the same way, twice:
+     *
+     *     $path . '%'        // '/1/2%'  ALSO matches /1/20, /1/21, /1/2x
+     *     '%/' . $id . '/%'  // '%/5/%'  MISSES the leaf '/1/5' and root '/5'
+     *
+     * The first over-counts by sibling departments whose id shares a digit
+     * prefix (the "L&D admin tiles over-count by the ZEEA users" class of
+     * defect); the second under-counts every user sitting at a leaf node.
+     * Both are silent: the numbers just come out wrong.
+     *
+     * The emitted fragment is `(col = :exact OR col LIKE :prefix)` with the
+     * prefix `like`-escaped and terminated by `/%`, so `/1` matches `/1` and
+     * `/1/2` but never `/10`, `/177` or `/1x`.
+     *
+     * Every parameter is tagged so several filters can coexist in one query:
+     *
+     *     [$dsql, $dargs] = tenant::path_descendant_filter($dept->path, '', 'department_path', 'dept');
+     *     [$usql, $uargs] = tenant::path_descendant_filter($toporg, 'u', 'open_path', 'org');
+     *     $DB->get_records_sql("... WHERE $dsql AND $usql", $dargs + $uargs);
+     *
+     * An empty $path yields ['1=1', []] — "no path restriction" — because
+     * callers use '' to mean "whole site"; pass a real path to restrict.
+     *
+     * @param string $path       Path to scope to, e.g. '/1' or '/1/2'. '' = unrestricted.
+     * @param string $alias      Table alias (default: none)
+     * @param string $column     Path column (default: 'open_path')
+     * @param string $tag        Unique parameter-name tag (default: 'apdesc')
+     * @param bool   $allow_null Also match rows whose column IS NULL (legacy rows)
+     * @return array{0: string, 1: array}
+     */
+    public static function path_descendant_filter(string $path,
+                                                   string $alias = '',
+                                                   string $column = 'open_path',
+                                                   string $tag = 'apdesc',
+                                                   bool $allow_null = false): array {
+        global $DB;
+
+        $path = rtrim(trim($path), '/');
+        if ($path === '') {
+            return ['1=1', []];
+        }
+
+        $col = $alias === '' ? $column : "{$alias}.{$column}";
+        $nullclause = $allow_null ? " OR {$col} IS NULL" : '';
+
+        return [
+            "({$col} = :{$tag}exact OR {$col} LIKE :{$tag}prefix{$nullclause})",
+            [
+                "{$tag}exact"  => $path,
+                "{$tag}prefix" => $DB->sql_like_escape($path) . '/%',
+            ],
+        ];
+    }
 }

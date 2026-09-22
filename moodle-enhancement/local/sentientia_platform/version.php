@@ -65,10 +65,10 @@ $plugin->component = 'local_sentientia_platform';
 // operator). Schema-only at this version — classification CLI runs in
 // Phase 1, providers consume in Phase 2-5. Q1 immutability ruling
 // means no UPDATE path on user_type column — append-only by design.
-$plugin->version   = 2026082000;  // Phase 2.1: customer::current() de-hardwired via tenant_registry (dormant while legacy allow-list ON)
+$plugin->version   = 2026092200;  // tenant::path_descendant_filter() + DB-level path-boundary regression suite  // Phase 2.1: customer::current() de-hardwired via tenant_registry (dormant while legacy allow-list ON)
 $plugin->requires  = 2022041900;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.7.0';  // +ADR-017 Phase 0 user_type schema (5 tables)
+$plugin->release   = '1.8.0';  // +ADR-017 Phase 0 user_type schema (5 tables)
 // Release history
 // 1.1.0  cron-health publisher + audit_log + structured_logger
 // 1.2.0  Phase A0 — feature flags + Switchboard infrastructure.

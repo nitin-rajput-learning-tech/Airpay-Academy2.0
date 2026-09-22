@@ -30,7 +30,8 @@ defined('MOODLE_INTERNAL') || die();
 $plugin->component = 'local_sentientia_org';
 // P1 #54 (2026-05-20) — Hindi pack: 55 strings covering capabilities,
 // settings, CRUD form, hierarchy, branding, errors, confirmations.
-$plugin->version   = 2026052002;
+$plugin->version   = 2026092200;  // descendants-only access filter is /-bounded
+// 2026052002:
 $plugin->requires  = 2022041900; // Moodle 4.0+
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.4.2'; // +2026-09-08 cascade_* strings (org cascade filter i18n, en+hi) — this ME tree is what UAT runs
+$plugin->release   = '1.4.3'; // +2026-09-08 cascade_* strings (org cascade filter i18n, en+hi) — this ME tree is what UAT runs
