@@ -301,7 +301,7 @@ const PNG = __dirname + '/png/';
   const risks = [
     ['Not live yet', 'Sentientia has never served a real user; all figures are from test data.', 'UAT tester cohort → Stage B rehearsal → gated cutover. The live platform keeps running untouched meanwhile.'],
     ['Payments stay dark at go-live', 'The gateway fix is unmerged and the Verify-API step unproven against the sandbox.', 'Commerce is disabled and verified disabled at cutover; enablement is a separate, later decision after C1 closes.'],
-    ['AI is mock-mode', 'No live model call has ever been made; six features wait on a budget cap and an API key.', 'Fail-closed gateway with spend ledger and hard caps is built and tested; an unset cap means AI stays off, never unlimited.'],
+    ['AI is mock-mode', 'No live model call has ever been made; six features wait on a budget cap and an API key.', 'Off by default at two independent levels. The central spend ledger and monthly cap live in the gateway, and code now refuses a live call unless gateway metering is routing - so spend cannot escape the meter by configuration mistake.'],
     ['No certifications, no pen-test yet', 'Buyers and auditors will ask early.', 'Trust track funded in principle; VAPT first, then ISO 27001 and SOC 2 - the spend annex is ready for sign-off.'],
     ['UAT sizing is smoke-only', 't3a.small / db.t3.small (2 GB each) cannot host a live-backup rehearsal.', 'Resize to medium class before Stage B; a same-day cloud operation already flagged with DevOps.'],
     ['Small team, big surface', 'The platform was built by a very small team with AI-assisted engineering.', '30 decision records, runbooks and state cards make it reconstructible; a support-engineer hire and the vendor AMC option spread the load.'],

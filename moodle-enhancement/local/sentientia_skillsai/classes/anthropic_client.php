@@ -134,6 +134,24 @@ class anthropic_client {
         }
         // ── Standalone fallback (gateway not installed) ─────────────────
 
+        // METERING INVARIANT (2026-09-22). The central spend ledger and the
+        // Addendum-A monthly cap live in the gateway, and gateway routing is
+        // opt-in via sentientia.ai.gateway.enabled which defaults OFF. So
+        // turning on THIS plugin's live_api flag without also turning on
+        // gateway routing would have spent real money outside the central
+        // meter, with only the per-plugin token caps in the way. That made
+        // "AI spend cannot escape the cap" a documentation claim rather than
+        // a property of the code.
+        //
+        // It is now a property of the code: live intent without gateway
+        // routing is refused. Enable sentientia.ai.gateway.enabled first.
+        if ($islive && !$routegateway) {
+            return [
+                'body' => '', 'tokens_in' => 0, 'tokens_out' => 0,
+                'mode' => 'failed', 'error' => 'gateway_routing_required',
+            ];
+        }
+
         if (!$islive) {
             return self::call_mock($sourcetext, $maxskills, $promptctx);
         }
