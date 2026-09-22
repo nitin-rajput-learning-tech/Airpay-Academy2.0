@@ -155,8 +155,8 @@ cli_writeln('');
 
 // ── Step 2: Temporarily flip flag ON ──
 cli_writeln('Step 2: Flip push.enabled flag ON');
-$prior_flag = \local_airpay_core\feature_flags::is_enabled('sentientia.pwa.push.enabled');
-\local_airpay_core\feature_flags::set('sentientia.pwa.push.enabled', 0, true);
+$prior_flag = \local_sentientia_platform\feature_flags::is_enabled('sentientia.pwa.push.enabled');
+\local_sentientia_platform\feature_flags::set('sentientia.pwa.push.enabled', 0, true);
 cli_writeln('  Flag was: ' . var_export($prior_flag, true)
     . ' / now: true');
 cli_writeln('');
@@ -264,7 +264,7 @@ cli_writeln('');
 // ── Step 5: Restore flag ──
 cli_writeln('Step 5: Restore push.enabled flag');
 $set_value = $prior_flag === true ? true : null;
-\local_airpay_core\feature_flags::set('sentientia.pwa.push.enabled', 0, $set_value);
+\local_sentientia_platform\feature_flags::set('sentientia.pwa.push.enabled', 0, $set_value);
 cli_writeln('  Flag restored to: ' . var_export($set_value, true));
 cli_writeln('');
 

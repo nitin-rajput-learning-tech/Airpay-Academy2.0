@@ -142,14 +142,30 @@ $DB->get_records_sql("SELECT * FROM {user} WHERE id = :id", ['id' => $id]);
 
 ### Feature flags (mandatory for every new feature)
 Every new user-visible feature ships behind a feature flag in
-`local_airpay_core\feature_flags`. Default OFF. Per-customer + per-tenant
-override supported. See `local_airpay_core\db\feature_flags.php` for
-registration pattern.
+`local_sentientia_platform\feature_flags`. Default OFF. Per-customer +
+per-tenant override supported. See
+`local/sentientia_platform/db/feature_flags.php` for the registration
+pattern -- a key absent from that registry makes `::set()` throw.
+
+**The namespace matters.** `local_airpay_core` was renamed by ADR-022/025
+and is declared nowhere in the repo. This document carried the dead name
+until 2026-09-22, and two E2E harnesses copied it from here and fatal'd on
+their first flag line. Any `local_airpay_*` you find is stale.
 
 ```php
-if (!\local_airpay_core\feature_flags::is_enabled('sentientia_live_polls', $customerid, $tenantid)) {
-    return;  // feature flag off — render nothing
+// Simple case - resolves the current user's customer + tenant for you:
+if (!\local_sentientia_platform\feature_flags::is_enabled('sentientia.live.polls')) {
+    return;  // feature flag off - render nothing
 }
+
+// Explicit scope, when rendering for somebody other than $USER:
+if (!\local_sentientia_platform\feature_flags::is_enabled_for(
+        'sentientia.live.polls', $customerid, $tenantid)) {
+    return;
+}
+
+// Writing a flag. tenant_id 0 = customer-wide; a null value unsets/inherits:
+\local_sentientia_platform\feature_flags::set('sentientia.live.polls', 0, true);
 ```
 
 ### Visual evidence (mandatory for every UI session)
@@ -216,7 +232,10 @@ Each Sentientia customer (today: just Airpay) can override:
   - Primary + accent + BG colours
   - Typography (font family)
   - Favicon
-Implemented via `local_airpay_core::get_customer_branding()` consumed by `core_renderer`.
+Implemented via `\local_sentientia_platform\customer::branding()`, consumed by
+`core_renderer`. (This document previously named
+`local_airpay_core::get_customer_branding()`, which does not exist.
+Corrected 2026-09-22.)
 
 **Key files:**
 - `templates/navbar.mustache` — navbar HTML

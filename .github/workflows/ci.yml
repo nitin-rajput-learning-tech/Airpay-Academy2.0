@@ -468,6 +468,13 @@ jobs:
     name: Playwright E2E + visual (Linux)
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      # Throwaway credential for accounts that exist only inside the
+      # container this job destroys at the end. Declared once rather than
+      # repeated as a literal on five lines, and never passed as a
+      # command-line argument -- an argv is readable by every other
+      # process on the host.
+      PERSONA_PASS: 'ci-persona-${{ github.run_id }}'
     # ADVISORY GATE during P2 cutover-prep. Failures do NOT block merge
     # while visual baselines are being calibrated. Flip this to false
     # (i.e. delete the line) once docs/ci/PLAYWRIGHT-GATE.md §4 (blocking
@@ -583,6 +590,22 @@ jobs:
             --lang=en \
             --non-interactive" || echo "::warning::Moodle install_database.php exited non-zero — gate will surface as Playwright failures (advisory)."
 
+      # Without these four accounts, learner.spec / manager.spec /
+      # compliance.spec / author.spec each hit their top-level test.skip()
+      # (see tests/playwright/persona-helpers.ts) and the job reports green
+      # having exercised ONE persona. The seeder refuses to run unless
+      # --i-am-ci is passed AND wwwroot is localhost or the site shortname is
+      # the CI one; there is no override for the second check.
+      - name: Seed Playwright persona accounts
+        run: |
+          set -e
+          docker exec -e SENTIENTIA_CI_PERSONA_PASS="$SENTIENTIA_CI_PERSONA_PASS" moodle-web \
+            sh -c "cd /var/www/html && php tools/ci/seed_playwright_personas.php \
+              --i-am-ci --tenant='/1'" \
+            || echo "::warning::persona seeding exited non-zero — those specs will skip (advisory)."
+        env:
+          SENTIENTIA_CI_PERSONA_PASS: ${{ env.PERSONA_PASS }}
+
       - name: Install Playwright dependencies
         working-directory: moodle/tests/playwright
         run: |
@@ -595,6 +618,25 @@ jobs:
           PLAYWRIGHT_BASE_URL: http://localhost:8000
           PLAYWRIGHT_ADMIN_USER: admin
           PLAYWRIGHT_ADMIN_PASS: 'AdminPass!23'
+          # Seeded by the step above. These are throwaway accounts on a
+          # container that is destroyed with the runner; the seeder refuses to
+          # create them anywhere else.
+          PLAYWRIGHT_LEARNER_USER: ci.learner
+          PLAYWRIGHT_LEARNER_PASS: ${{ env.PERSONA_PASS }}
+          PLAYWRIGHT_MANAGER_USER: ci.manager
+          PLAYWRIGHT_MANAGER_PASS: ${{ env.PERSONA_PASS }}
+          PLAYWRIGHT_COMPLIANCE_USER: ci.compliance
+          PLAYWRIGHT_COMPLIANCE_PASS: ${{ env.PERSONA_PASS }}
+          PLAYWRIGHT_AUTHOR_USER: ci.author
+          PLAYWRIGHT_AUTHOR_PASS: ${{ env.PERSONA_PASS }}
+          # The 20 committed baselines in tests/playwright/__screenshots__/
+          # have never been compared against a render, because this was never
+          # set. Turning it on here REPORTS the diff without blocking, since
+          # the job is already continue-on-error. Expect noise on the first
+          # run: the baselines are stale and three are byte-identical
+          # duplicates. Re-baseline from a green run, then graduate the job to
+          # blocking per docs/ci/PLAYWRIGHT-GATE.md.
+          PLAYWRIGHT_VISUAL: '1'
           CI: 'true'
         run: |
           npx playwright test --reporter=list,html,junit

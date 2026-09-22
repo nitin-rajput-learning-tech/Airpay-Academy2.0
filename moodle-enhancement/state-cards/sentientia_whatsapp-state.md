@@ -168,3 +168,33 @@ throttle. 4 new DLT templates seeded (install + idempotent upgrade).
 + English lang parity preserved. Version → 2026052501 / 0.4.0-alpha.
 Live WhatsApp Business API send remains `[CONFIRM]`-gated — nothing in
 this stream POSTs externally.
+
+
+## 2026-09-22 - The E2E harness called a namespace that does not exist (W1-11)
+
+`cli/run_whatsapp_e2e.php` used `\local_airpay_core\feature_flags`. That namespace was renamed by
+ADR-022/025 and is **declared nowhere in the repo**, so the harness fatal'd on its first flag line.
+The real class is `\local_sentientia_platform\feature_flags`, and its signature already matched
+every call site - this was a pure rename miss, not a design change.
+
+**Root cause: `CLAUDE.md` section 5 documented the dead namespace as the canonical feature-flag
+pattern.** Anything written from the project instructions inherited the bug. Both the harnesses and
+the doc are corrected in the same change, or it recurs on the next plugin.
+
+A second defect in the same file: the prior-state backup read
+
+```php
+$prior_flag_master = get_config(null, 'local_airpay_core_flag_engagement_whatsapp_enabled');
+```
+
+Flags live in `{local_sentientia_feature_flags}`, not in `{config}`, so that read returned false
+every time and the restore step at the end unset the flag regardless of what it had been. Replaced
+with `feature_flags::is_enabled()`, matching the pattern the PWA harness already used.
+
+Worth noting how the two trees had diverged here. The top-level `local/` copy had already had the
+namespace search-and-replaced to `local_sentientia_platform` - but the replace was blind, so it
+produced `get_config(null, 'local_sentientia_platform_flag_...')`, still reading a place the value
+is not kept. The ME copy was untouched. Neither tree was correct.
+
+Found by the 2026-09-22 confidence audit. Both trees now agree on this file; the reconciliation is
+recorded as two entries drained from `tools/tree-drift-baseline.txt`.

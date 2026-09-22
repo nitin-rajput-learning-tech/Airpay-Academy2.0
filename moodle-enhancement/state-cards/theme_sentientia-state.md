@@ -497,3 +497,42 @@ Three guest/login-path queries were unbounded: the suspended-user lookup, the lo
 Fixed via the new `\local_sentientia_platform	enant::path_descendant_filter()` (exact-or-descendant
 for an arbitrary path), locked by a DB-level boundary suite in `tenant_test.php`, and prevented from
 returning by `tools/check-path-boundary.php` - pre-commit CHECK 18 and the `path-boundary-check` CI job.
+
+
+## 2026-09-22 - Four of five Playwright personas had never run in CI
+
+`tests/playwright/persona-helpers.ts` reads `PLAYWRIGHT_<PERSONA>_USER` / `_PASS` for LEARNER,
+MANAGER, COMPLIANCE and AUTHOR, and each persona spec calls `test.skip()` when its pair is absent -
+a deliberate design so the suite stayed green before accounts existed.
+
+The CI job only ever set `PLAYWRIGHT_ADMIN_USER` and `_PASS`. So four specs skipped on every run
+and the job reported green having exercised **one** persona. Any summary claiming five-persona
+render coverage was overstating it; the CI-proven number was one.
+
+`PLAYWRIGHT_VISUAL` was never set either, so the 20 baselines committed under
+`tests/playwright/__screenshots__/` have **never once been compared** against a render. They exist,
+which is not the same as being checked.
+
+**Shipped:**
+
+- New `tools/ci/seed_playwright_personas.php`, creating `ci.learner`, `ci.manager`,
+  `ci.compliance` and `ci.author` with roles resolved by shortname and a fallback chain, so it
+  works on a vanilla CI Moodle that has none of the BizLMS roles. Idempotent.
+- A CI step that runs it after `install_database.php`, plus the eight env vars.
+- `PLAYWRIGHT_VISUAL=1`, so the baselines are finally compared. The job is already
+  `continue-on-error`, so this **reports** rather than blocks - which is what we want first,
+  because the baselines are stale and three of the twenty are byte-identical duplicates.
+
+**Safety.** The seeder creates accounts with a known password, so it refuses to run unless
+`--i-am-ci` is passed AND `$CFG->wwwroot` is localhost or the site shortname is the CI one. There is
+no override for the second check.
+
+The password itself is never a literal and never an argv. The workflow derives it per run
+(`ci-persona-${{ github.run_id }}`) into a job-level `env`, and the seeder reads
+`SENTIENTIA_CI_PERSONA_PASS` from the environment. The first draft passed `--password='...'` on the
+command line; the pre-commit credential scanner blocked the commit and was right twice over - a
+tracked literal, and an argv that every other process on the host can read. The localhost test is
+`'#^https?://(localhost|127\.0\.0\.1)(:\d+)?(/|$)#i'` - terminated on purpose, because the
+unanchored form also matches `https://localhost.evil.com`, which is the same unbounded-prefix
+mistake this repo has now shipped fourteen times against tenant paths. Verified against nine URLs
+including the two real deployment hostnames.

@@ -9,7 +9,7 @@
  *   1. Generate test user's prefs: opt-in to WhatsApp + give a mobile
  *   2. Toggle engagement.whatsapp.enabled + engagement.whatsapp.reminders ON
  *   3. Approve a deadline_3d DLT template (so the client doesn't refuse)
- *   4. Call notification_bridge::also_send (the same call airpay_courses
+ *   4. Call notification_bridge::also_send (the same call sentientia_courses
  *      cron makes)
  *   5. Verify a row landed in local_sentientia_send_log with status='mocked'
  *      (or 'sent' if engagement.whatsapp.live_mode were ON — but for
@@ -78,8 +78,15 @@ $assert = function (string $name, bool $cond, string $detail = '') use (&$failur
 cli_writeln('Backing up current state...');
 
 $prior_prefs = \local_sentientia_whatsapp\preference_manager::get($userid);
-$prior_flag_master    = get_config(null, 'local_airpay_core_flag_engagement_whatsapp_enabled');
-$prior_flag_reminders = get_config(null, 'local_airpay_core_flag_engagement_whatsapp_reminders');
+// Flags live in {local_sentientia_feature_flags}, not in {config}. These two
+// lines used to read get_config(null, 'local_airpay_core_flag_*'), which is
+// not where the value is kept and not a namespace that exists -- so they read
+// false every time and the restore step below unset the flag whatever its
+// prior state had been.
+$prior_flag_master    = \local_sentientia_platform\feature_flags::is_enabled(
+    'engagement.whatsapp.enabled');
+$prior_flag_reminders = \local_sentientia_platform\feature_flags::is_enabled(
+    'engagement.whatsapp.reminders');
 
 // The seeded deadline_3d whatsapp template — capture its prior status.
 $tpl = $DB->get_record('local_sentientia_dlt_templates', [
@@ -121,12 +128,12 @@ cli_writeln('');
 
 // ── Step 2: Toggle feature flags ON ──
 cli_writeln('Step 2: Toggle engagement.whatsapp.enabled + .reminders ON');
-\local_airpay_core\feature_flags::set('engagement.whatsapp.enabled', 0, true);
-\local_airpay_core\feature_flags::set('engagement.whatsapp.reminders', 0, true);
+\local_sentientia_platform\feature_flags::set('engagement.whatsapp.enabled', 0, true);
+\local_sentientia_platform\feature_flags::set('engagement.whatsapp.reminders', 0, true);
 $assert('master flag enabled',
-    \local_airpay_core\feature_flags::is_enabled('engagement.whatsapp.enabled'));
+    \local_sentientia_platform\feature_flags::is_enabled('engagement.whatsapp.enabled'));
 $assert('reminders sub-flag enabled',
-    \local_airpay_core\feature_flags::is_enabled('engagement.whatsapp.reminders'));
+    \local_sentientia_platform\feature_flags::is_enabled('engagement.whatsapp.reminders'));
 cli_writeln('');
 
 // ── Step 3: Approve the deadline_3d template ──
@@ -200,10 +207,10 @@ cli_writeln('Step 6: Restore prior state');
     'e2e test rollback');
 
 // Restore feature flags.
-\local_airpay_core\feature_flags::set('engagement.whatsapp.enabled', 0,
-    $prior_flag_master === '1' ? true : null);
-\local_airpay_core\feature_flags::set('engagement.whatsapp.reminders', 0,
-    $prior_flag_reminders === '1' ? true : null);
+\local_sentientia_platform\feature_flags::set('engagement.whatsapp.enabled', 0,
+    $prior_flag_master === true ? true : null);
+\local_sentientia_platform\feature_flags::set('engagement.whatsapp.reminders', 0,
+    $prior_flag_reminders === true ? true : null);
 
 // Restore user prefs (if they had a row before, restore; else delete).
 if ($prior_prefs->id !== null) {
