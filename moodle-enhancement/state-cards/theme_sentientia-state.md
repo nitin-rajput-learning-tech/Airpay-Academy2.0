@@ -482,4 +482,4 @@ inputs showed literal `\u092f\u0942…` sequences. Cause: `templates/core/loginf
 untouched), wrong inside `placeholder=` / `title=` / `aria-label=`. Now mirrors core 5.2:
 `placeholder="{{#cleanstr}}usernameemail{{/cleanstr}}"`, `title="{{name}}"`, `aria-label="{{arialabel}}"`.
 CLI render en + hi: placeholders "यूज़रनेम / ईमेल" / "पासवर्ड" / "मोबाइल नंबर" / "OTP डालें", no `\u` escapes.
-Deploy pending (next tunnel window) — on the executive demo path (Hindi login page).
+Deployed to UAT 2026-09-22 07:05 (5124cc605, 4 files, checksums OK); served Hindi login placeholders verified via curl.
