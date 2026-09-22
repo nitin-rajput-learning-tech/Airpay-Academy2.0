@@ -55,11 +55,56 @@ parallel audit of the **code** (not the docs) produced `docs/cutover/GAP-CLOSURE
   routing would have spent outside the central meter. Live calls now refuse unless routing is on. The
   executive deck's "never unlimited" wording overstated this and has been corrected and re-issued.
 
-**Still open:** Wave 1 remainder (analytics gates on the *retired* `local/courses:manage`, so its
-dashboard is accidentally siteadmin-only; `sentientia_cart` has no `tests/` directory at all; 11
-plugins declare `null_provider` while `compliance_report` alone owns four `userid` tables — a real
-DPDP gap), then Waves 2 and 3 per the plan. The three irreducible items remain irreducible: an
-independent penetration test, a real user, and certification calendar time.
+**Wave 1 continued, same day.** Everything below is committed and pushed.
+
+- **The analytics dashboard had no capability layer at all** (`b1ae4bd64`). All three entry points
+  gated on `local/courses:manage`, renamed by ADR-025 and undefined since — confirmed against
+  `{capabilities}`, which returns false for it. Moodle answers an unknown capability with a
+  `debugging()` notice and `false`, so that half of the gate was dead code and effective access was
+  site admins plus hardcoded **role id 9** at a category context. The `manager` role, the
+  dashboard's audience, got "nopermission". Opening it up surfaced four more live defects that its
+  accidental narrowness had been containing, each of which had to be fixed in the same change:
+  the `?orgid=` branch was **ungated** (any viewer could read another tenant by query string); the
+  fallback `'/' . ($parts[1] ?? '1')` silently scoped an unresolvable user to tenant 1; `export.php`
+  fell back to `''`, which `analytics_manager` reads as *no filter*, handing that user a
+  **whole-site CSV of named learners**; and `get_course_learners()` ordered by `DESC NULLS LAST`,
+  PostgreSQL syntax that MariaDB and MySQL both reject — so the Course Analytics drill-down had
+  raised `dml_read_exception` on every call since it shipped, on both of our database targets, and
+  carried no tenant filter either.
+- **Eleven plugins told Moodle they held no personal data while holding it** (`privacy` commit).
+  Five declared `null_provider` — a positive assertion to the registry — while owning nine tables
+  keyed on a user id; one had no provider file at all. Six more declared a provider that missed
+  **eleven** of their own tables, which is the harder version: a partial declaration makes the
+  registry read as complete. `whatsapp`'s `send_log` was neither declared nor deleted and its
+  `recipient` column is the employee's mobile number. New
+  `local_sentientia_platform\privacy_coverage_test` walks every plugin's `install.xml` and fails
+  the build on any of the three shapes; it found all eleven of the second group on its first run,
+  after I had found the first five by hand and thought that was the gap.
+- **The cart had no `tests/` directory at all** — the only surface that moves money. Its first
+  suite performs the self-signed-callback attack the empty shipped secret allowed, and locks
+  replay-safety, amount/currency mutation and the state machine. 11/11 green. The suite also
+  proved the guard committed earlier that day had **never been deployed to the local install**.
+- **Both E2E harnesses called a namespace that does not exist** (`37329c2f4`).
+  `\local_airpay_core\feature_flags` is declared nowhere; both fatal on their first flag line.
+  Root cause was `CLAUDE.md` §5 documenting the dead name as canonical, so anything written from
+  the project instructions inherited it — corrected in the same commit, along with a second dead
+  reference to `local_airpay_core::get_customer_branding()`.
+- **Four of five Playwright personas had never run.** CI set only the admin credentials, so
+  learner, manager, compliance and author all hit their `test.skip()` and the job reported green
+  having exercised **one** persona. `PLAYWRIGHT_VISUAL` was never set either, so the 20 committed
+  baselines have never once been compared. Both wired, with a seeder that refuses to run anywhere
+  but localhost or the CI site.
+- **A cross-tree drift gate** (`3c593f34e`). Every plugin exists twice and both trees are deployed
+  from. `structured_logger` carried a retired component prefix in one tree for months; the
+  `ratings` ME copy was a four-file truncation that could never install. 99 files already diverge,
+  so they are baselined and the gate blocks only what is new — and fails when a baselined entry is
+  reconciled, so the list can only shrink. It caught two of my own one-tree edits during this
+  session.
+
+**Still open:** two Wave 1 items (`migration_parity_check` value-level checksums, k6 harness
+repair), then Waves 2 and 3 per the plan. Nothing in Wave 1 is blocked — these two are simply not
+yet done. The three irreducible items remain irreducible: an independent penetration test, a real
+user, and certification calendar time.
 
 ---
 
