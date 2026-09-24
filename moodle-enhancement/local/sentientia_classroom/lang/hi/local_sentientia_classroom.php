@@ -155,3 +155,13 @@ $string['privacy:metadata:attendance:userid']    = 'उपयोगकर्त�
 $string['privacy:metadata:attendance:status']    = 'उपस्थिति स्थिति।';
 $string['privacy:metadata:attendance:markedat']  = 'जब उपस्थिति दर्ज की गई।';
 $string['privacy:metadata:attendance:markedby']  = 'उपस्थिति दर्ज करने वाले उपयोगकर्ता की ID।';
+// 2026-09-24 - प्रतीक्षा-सूची प्राइवेसी मेटाडेटा में नहीं थी।
+$string['privacy:metadata:waitlist']             = 'भरे हुए क्लासरूम की प्रतीक्षा-सूची: कौन किस क्लासरूम के लिए कतार में है, और उस स्थान का क्या हुआ।';
+$string['privacy:metadata:waitlist:classroomid'] = 'क्लासरूम ID।';
+$string['privacy:metadata:waitlist:userid']      = 'प्रतीक्षा-सूची में शामिल उपयोगकर्ता की ID।';
+$string['privacy:metadata:waitlist:position']    = 'कतार में स्थान (1 = अगला नामांकन)।';
+$string['privacy:metadata:waitlist:status']      = 'प्रतीक्षारत, रोस्टर में शामिल किया गया, या हटाया गया।';
+$string['privacy:metadata:waitlist:reason']      = 'स्थान हटाए जाने का कारण, जिसमें व्यवस्थापक द्वारा लिखा गया कोई भी कारण शामिल है।';
+$string['privacy:metadata:waitlist:promoted_at'] = 'जब उपयोगकर्ता को प्रतीक्षा-सूची से रोस्टर में लिया गया।';
+$string['privacy:metadata:waitlist:removed_at']  = 'जब उपयोगकर्ता ने प्रतीक्षा-सूची छोड़ी, या उसे हटाया गया।';
+$string['privacy:metadata:waitlist:timecreated'] = 'जब उपयोगकर्ता प्रतीक्षा-सूची में शामिल हुआ।';

@@ -3,8 +3,9 @@
 // License http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 //
 // Phase Z.1 (2026-05-08) — privacy provider for sentientia_classroom.
-// Metadata-only provider — declares tables that contain user data.
-// Full export/delete pathway is deferred to follow-up work.
+// Covers the roster, attendance and (since 2026-09-24) the waiting list:
+// discovery, export, core's full erasure and the Sentientia DPDP
+// anonymise_data_for_user() hook.
 
 namespace local_sentientia_classroom\privacy;
 
@@ -19,6 +20,15 @@ class provider implements
     \core_privacy\local\metadata\provider,
     \core_privacy\local\request\plugin\provider,
     \core_privacy\local\request\core_userlist_provider {
+
+    /**
+     * The waiting list. Created by upgrade step 2026051130, and only declared
+     * in db/install.xml from 2026-09-24, so a site installed fresh before
+     * then has no such table until upgrade step 2026092400 adds it. Every
+     * access below is behind waitlist_exists(): erasure must never throw on
+     * a site without it.
+     */
+    private const WAITLIST = 'local_sentientia_classroom_waitlist';
 
     public static function get_metadata(collection $collection): collection {
         $collection->add_database_table('local_sentientia_classroom_users',
@@ -37,6 +47,18 @@ class provider implements
                 'markedby'   => 'privacy:metadata:attendance:markedby',
             ],
             'privacy:metadata:attendance');
+        $collection->add_database_table(self::WAITLIST,
+            [
+                'classroomid' => 'privacy:metadata:waitlist:classroomid',
+                'userid'      => 'privacy:metadata:waitlist:userid',
+                'position'    => 'privacy:metadata:waitlist:position',
+                'status'      => 'privacy:metadata:waitlist:status',
+                'reason'      => 'privacy:metadata:waitlist:reason',
+                'promoted_at' => 'privacy:metadata:waitlist:promoted_at',
+                'removed_at'  => 'privacy:metadata:waitlist:removed_at',
+                'timecreated' => 'privacy:metadata:waitlist:timecreated',
+            ],
+            'privacy:metadata:waitlist');
         return $collection;
     }
 
@@ -44,7 +66,8 @@ class provider implements
         global $DB;
         $contextlist = new contextlist();
         if ($DB->record_exists('local_sentientia_classroom_users', ['userid' => $userid])
-            || $DB->record_exists('local_sentientia_classroom_attendance', ['userid' => $userid])) {
+            || $DB->record_exists('local_sentientia_classroom_attendance', ['userid' => $userid])
+            || (static::waitlist_exists() && $DB->record_exists(self::WAITLIST, ['userid' => $userid]))) {
             $contextlist->add_system_context();
         }
         return $contextlist;
@@ -58,6 +81,9 @@ class provider implements
             ['userid' => $userid]);
         $attendance = $DB->get_records('local_sentientia_classroom_attendance',
             ['userid' => $userid]);
+        $waitlist = static::waitlist_exists()
+            ? $DB->get_records(self::WAITLIST, ['userid' => $userid], 'id ASC')
+            : [];
         \core_privacy\local\request\writer::with_context(
             \context_system::instance())
             ->export_data(['sentientia_classroom'],
@@ -66,6 +92,8 @@ class provider implements
                     'roster'           => array_values((array) $roster),
                     'attendance_count' => count($attendance),
                     'attendance'       => array_values((array) $attendance),
+                    'waitlist_count'   => count($waitlist),
+                    'waitlist'         => array_values((array) $waitlist),
                 ]);
     }
 
@@ -74,6 +102,9 @@ class provider implements
         if ($context->contextlevel !== CONTEXT_SYSTEM) return;
         $DB->delete_records('local_sentientia_classroom_users');
         $DB->delete_records('local_sentientia_classroom_attendance');
+        if (static::waitlist_exists()) {
+            $DB->delete_records(self::WAITLIST);
+        }
     }
 
     public static function delete_data_for_user(approved_contextlist $contextlist) {
@@ -82,6 +113,7 @@ class provider implements
         $uid = $contextlist->get_user()->id;
         $DB->delete_records('local_sentientia_classroom_users', ['userid' => $uid]);
         $DB->delete_records('local_sentientia_classroom_attendance', ['userid' => $uid]);
+        self::delete_waitlist_rows([(int) $uid]);
     }
 
     /**
@@ -102,6 +134,10 @@ class provider implements
         // roster row carries no completion and goes.
         $DB->delete_records('local_sentientia_classroom_users', ['userid' => $uid]);
         $DB->set_field('local_sentientia_classroom_attendance', 'notes', null, ['userid' => $uid]);
+        // A waiting-list place is a queue entry, not a learning record, and
+        // `reason` can hold an admin's free text about this person. It goes,
+        // exactly as in the full erasure.
+        self::delete_waitlist_rows([$uid]);
     }
 
     public static function get_users_in_context(userlist $userlist) {
@@ -111,7 +147,10 @@ class provider implements
             'DISTINCT userid', 'userid > 0');
         $u2 = $DB->get_fieldset_select('local_sentientia_classroom_attendance',
             'DISTINCT userid', 'userid > 0');
-        $userids = array_unique(array_merge((array) $u1, (array) $u2));
+        $u3 = static::waitlist_exists()
+            ? $DB->get_fieldset_select(self::WAITLIST, 'DISTINCT userid', 'userid > 0')
+            : [];
+        $userids = array_unique(array_merge((array) $u1, (array) $u2, (array) $u3));
         if (!empty($userids)) {
             $userlist->add_users($userids);
         }
@@ -128,6 +167,39 @@ class provider implements
             "userid $insql", $inparams);
         $DB->delete_records_select('local_sentientia_classroom_attendance',
             "userid $insql", $inparams);
+        self::delete_waitlist_rows(array_map('intval', $userids));
+    }
+
+    /**
+     * Whether the waiting-list table is present on this site (see WAITLIST).
+     * Resolved with static:: so a test double can report it absent.
+     */
+    protected static function waitlist_exists(): bool {
+        global $DB;
+        return $DB->get_manager()->table_exists(self::WAITLIST);
+    }
+
+    /**
+     * Delete these users' waiting-list rows, every status, then renumber each
+     * queue they were still waiting in: list_waitlist shows the position, and
+     * a deleted head would otherwise leave everyone behind it one place too
+     * far back. Renumbering touches only other people's position and
+     * timemodified. No-op when the table is absent.
+     *
+     * @param int[] $userids
+     */
+    private static function delete_waitlist_rows(array $userids): void {
+        global $DB;
+        if (empty($userids) || !static::waitlist_exists()) {
+            return;
+        }
+        [$insql, $inparams] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'wluid');
+        $classroomids = $DB->get_fieldset_select(self::WAITLIST, 'DISTINCT classroomid',
+            "userid $insql AND status = :waiting", $inparams + ['waiting' => 'waiting']);
+        $DB->delete_records_select(self::WAITLIST, "userid $insql", $inparams);
+        foreach ($classroomids as $classroomid) {
+            \local_sentientia_classroom\waitlist_manager::renumber_positions((int) $classroomid);
+        }
     }
 
     private static function has_system_context(approved_contextlist $contextlist): bool {

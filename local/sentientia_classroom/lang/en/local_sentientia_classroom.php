@@ -160,3 +160,13 @@ $string['privacy:metadata:attendance:userid'] = 'Attendee user ID.';
 $string['privacy:metadata:attendance:status'] = 'Attendance status (present/absent/late).';
 $string['privacy:metadata:attendance:markedat'] = 'When the attendance was marked.';
 $string['privacy:metadata:attendance:markedby'] = 'ID of the user who marked attendance.';
+// 2026-09-24 - the waiting list was missing from the privacy metadata.
+$string['privacy:metadata:waitlist'] = 'Waiting-list places for full classrooms: who is queued for which classroom, and what happened to the place.';
+$string['privacy:metadata:waitlist:classroomid'] = 'Classroom ID.';
+$string['privacy:metadata:waitlist:userid'] = 'ID of the user on the waiting list.';
+$string['privacy:metadata:waitlist:position'] = 'Place in the queue (1 = next to be enrolled).';
+$string['privacy:metadata:waitlist:status'] = 'Waiting, promoted to the roster, or removed.';
+$string['privacy:metadata:waitlist:reason'] = 'Why the place was removed, including any free-text reason an administrator entered.';
+$string['privacy:metadata:waitlist:promoted_at'] = 'When the user was moved from the waiting list onto the roster.';
+$string['privacy:metadata:waitlist:removed_at'] = 'When the user left, or was removed from, the waiting list.';
+$string['privacy:metadata:waitlist:timecreated'] = 'When the user joined the waiting list.';

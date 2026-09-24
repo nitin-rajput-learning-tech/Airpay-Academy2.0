@@ -176,8 +176,12 @@ class waitlist_manager {
         return array_values($rows);
     }
 
-    /** Renumber waiting positions to be sequential 1..N after a removal. */
-    private static function renumber_positions(int $classroomid): void {
+    /**
+     * Renumber waiting positions to be sequential 1..N after a removal.
+     * Public since 2026-09-24: the privacy provider calls it after erasing a
+     * waiting user's row, so the people behind them move up.
+     */
+    public static function renumber_positions(int $classroomid): void {
         global $DB;
         $rows = $DB->get_records_select('local_sentientia_classroom_waitlist',
             "classroomid = :cid AND status = 'waiting'",
