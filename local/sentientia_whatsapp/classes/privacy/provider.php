@@ -89,7 +89,15 @@ class provider implements
     public static function get_contexts_for_userid(int $userid): contextlist {
         $contextlist = new contextlist();
         global $DB;
-        if ($DB->record_exists('local_sentientia_user_channel_prefs', ['userid' => $userid])) {
+        // Every table get_users_in_context() reads, not just prefs. Until
+        // 2026-09-24 a user with send-log rows (each carrying their mobile
+        // number) or channel-audit rows but no saved preference was reported as
+        // holding no data here, so no erasure - core's or Sentientia's - ever
+        // asked this provider to delete those rows.
+        if ($DB->record_exists('local_sentientia_user_channel_prefs', ['userid' => $userid])
+                || $DB->record_exists('local_sentientia_send_log', ['userid' => $userid])
+                || $DB->record_exists('local_sentientia_user_channel_audit', ['userid' => $userid])
+                || $DB->record_exists('local_sentientia_user_channel_audit', ['changed_by' => $userid])) {
             $contextlist->add_system_context();
         }
         return $contextlist;

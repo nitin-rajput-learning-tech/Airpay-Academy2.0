@@ -62,8 +62,16 @@ class provider implements
     public static function get_contexts_for_userid(int $userid): contextlist {
         global $DB;
         $contextlist = new contextlist();
-        if ($DB->record_exists('local_sentientia_evaluation_responses',
-                ['userid' => $userid])) {
+        // Every table delete_data_for_user() acts on, not just responses: an
+        // employee assigned an evaluation they never answered holds trigger and
+        // assign rows and nothing else. Until 2026-09-24 they got no context
+        // back, so core privacy never asked this provider to export or erase
+        // those rows while get_metadata() said they were handled.
+        if ($DB->record_exists('local_sentientia_evaluation_responses', ['userid' => $userid])
+                || $DB->record_exists('local_sentientia_evaluation_triggers', ['userid' => $userid])
+                || $DB->record_exists('local_sentientia_evaluation_assign', ['userid' => $userid])
+                || $DB->record_exists('local_sentientia_evaluation_assign',
+                    ['assigned_by_userid' => $userid])) {
             $contextlist->add_system_context();
         }
         return $contextlist;
@@ -82,9 +90,6 @@ class provider implements
           LEFT JOIN {local_sentientia_evaluation} e ON e.id = r.evaluationid
               WHERE r.userid = :uid",
             ['uid' => $userid]);
-        if (empty($rows)) {
-            return;
-        }
         $data = [];
         foreach ($rows as $r) {
             $data[] = (object) [
@@ -93,10 +98,43 @@ class provider implements
                 'answers'    => $r->response_data,
             ];
         }
-        \core_privacy\local\request\writer::with_context(
-            \context_system::instance())
-            ->export_data(['sentientia_evaluation_responses'],
+        $writer = \core_privacy\local\request\writer::with_context(\context_system::instance());
+        if ($data) {
+            $writer->export_data(['sentientia_evaluation_responses'],
                 (object) ['responses' => $data]);
+        }
+
+        // Added 2026-09-24: the evaluations aimed at this person, answered or
+        // not. Where the subject was the ASSIGNER, only the count is exported:
+        // those rows are about other people.
+        $assigned = [];
+        foreach ($DB->get_records('local_sentientia_evaluation_assign', ['userid' => $userid]) as $a) {
+            $assigned[] = (object) [
+                'evaluationid'  => (int) $a->evaluationid,
+                'trigger_event' => $a->trigger_event,
+                'status'        => $a->status,
+                'due'           => $a->due_at ? userdate($a->due_at) : '',
+                'responded'     => $a->responded_at ? userdate($a->responded_at) : '',
+            ];
+        }
+        $triggers = [];
+        foreach ($DB->get_records('local_sentientia_evaluation_triggers', ['userid' => $userid]) as $t) {
+            $triggers[] = (object) [
+                'evaluationid'  => (int) $t->evaluationid,
+                'trigger_event' => $t->trigger_event,
+                'status'        => $t->status,
+                'fired'         => $t->timefired ? userdate($t->timefired) : '',
+            ];
+        }
+        $assignedby = $DB->count_records('local_sentientia_evaluation_assign',
+            ['assigned_by_userid' => $userid]);
+        if ($assigned || $triggers || $assignedby) {
+            $writer->export_data(['sentientia_evaluation_assignments'], (object) [
+                'assigned_to_you'      => $assigned,
+                'triggers'             => $triggers,
+                'assignments_you_made' => $assignedby,
+            ]);
+        }
     }
 
     public static function delete_data_for_all_users_in_context(\context $context) {
@@ -115,6 +153,14 @@ class provider implements
         if (!self::has_system_context($contextlist)) {
             return;
         }
+        // Until 2026-09-24 $userid was never assigned here, so every condition
+        // below compared against NULL: the subject's trigger and assign rows
+        // were never erased, and - assigned_by_userid being nullable - the
+        // anonymise step rewrote every OTHER system-assigned row instead.
+        $userid = (int) $contextlist->get_user()->id;
+        if ($userid <= 0) {
+            return;
+        }
         $DB->delete_records('local_sentientia_evaluation_triggers',
             ['userid' => $userid]);
         $DB->delete_records('local_sentientia_evaluation_assign',
@@ -124,7 +170,7 @@ class provider implements
         $DB->set_field('local_sentientia_evaluation_assign',
             'assigned_by_userid', 0, ['assigned_by_userid' => $userid]);
         $DB->delete_records('local_sentientia_evaluation_responses',
-            ['userid' => $contextlist->get_user()->id]);
+            ['userid' => $userid]);
     }
 
     public static function get_users_in_context(userlist $userlist) {

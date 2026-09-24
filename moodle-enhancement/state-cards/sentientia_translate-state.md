@@ -190,3 +190,9 @@ Purpose slug: `content_translation`. Standalone fallback kept. Mirrored to
 top-level local/ + webroot; also closed pre-existing top-level drift on
 `translate_engine.php` (ME's ADR-018 tenant_identity seam version is
 canonical → copied over the stale open_path parse).
+
+## 2026-09-24 - Privacy provider fix (erasure audit)
+
+Erasing an author deleted their `tr_log` rows. Those are tenant-shared translations that other admins are still reviewing, and their token counts drive the daily cost cap. `ownerid` is now anonymised to 0, and `get_users_in_context()` ignores `ownerid` 0.
+
+Found by a read-only audit of all 38 Sentientia privacy providers, run because `local_sentientia_privacy\privacy_manager::process_deletion()` now calls every one of them. Class change only: no version bump. Covered by `local_sentientia_privacy\erasure_scope_test` / `privacy_manager_test`.

@@ -169,3 +169,9 @@ Requires BOTH `sentientia.xapi.enabled` AND `sentientia.xapi.lrs_endpoint_enable
 4. Configure LRS bearer token in settings
 5. (Optional) flip `sentientia.xapi.lrs_endpoint_enabled` ON for external clients
 6. (Optional) flip `sentientia.xapi.cmi5_enabled` ON for cmi5 AU tracking
+
+## 2026-09-24 - Privacy provider fix (erasure audit)
+
+**Scope bug.** The single-user erasure nulled `actorid`, then redacted the actor JSON `WHERE actorid IS NULL`. That is every statement in the LRS whose actor never resolved to a local user, across all tenants. The bulk path never redacted at all. Both now redact the subject's statements first, then unlink them. New `anonymise_data_for_user()` for the DPDP flow: it redacts the actor, keeps `actorid` and the cmi5 attempt rows, and clears their launch token and session id.
+
+Found by a read-only audit of all 38 Sentientia privacy providers, run because `local_sentientia_privacy\privacy_manager::process_deletion()` now calls every one of them. Class change only: no version bump. Covered by `local_sentientia_privacy\erasure_scope_test` / `privacy_manager_test`.

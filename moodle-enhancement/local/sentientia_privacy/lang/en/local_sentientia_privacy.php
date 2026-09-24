@@ -31,3 +31,10 @@ $string['privacy:metadata:consent_log:consented']          = 'Whether consent wa
 $string['privacy:metadata:consent_log:ip_address']         = 'The IP address the consent event came from';
 $string['privacy:metadata:consent_log:user_agent']         = 'The browser user agent of the consent event';
 $string['privacy:metadata:consent_log:timecreated']        = 'When the consent event happened';
+
+// Right-to-erasure outcomes on the admin panel (2026-09-24).
+$string['incomplete']         = 'Incomplete';
+$string['needsfollowup']      = 'Needs manual follow-up';
+$string['erasurecompleted']   = 'The account was anonymised and all of this user\'s Sentientia data was erased.';
+$string['erasurepartial']     = 'The account was anonymised, but some data could not be erased. The request is marked Incomplete; its note lists what remains.';
+$string['requestnotpending']  = 'This request has already been processed.';

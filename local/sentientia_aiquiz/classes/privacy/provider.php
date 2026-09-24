@@ -133,14 +133,12 @@ class provider implements
         global $DB;
         $userid = $contextlist->get_user()->id;
 
-        // Delete questions belonging to the user's drafts, then the drafts.
-        $draftids = $DB->get_fieldset_select('local_sentientia_aiquiz_draft',
-            'id', 'ownerid = :uid', ['uid' => $userid]);
-        if (!empty($draftids)) {
-            [$insql, $params] = $DB->get_in_or_equal($draftids, SQL_PARAMS_NAMED, 'did');
-            $DB->delete_records_select('local_sentientia_aiquiz_question', "draftid $insql", $params);
-            $DB->delete_records('local_sentientia_aiquiz_draft', ['ownerid' => $userid]);
-        }
+        // Anonymise the author, keep the drafts (2026-09-24). A draft is
+        // shared with the author's whole tenant (list_for_actor() matches on
+        // costcenterid), carries other people's review notes, and is the
+        // provenance of questions already pushed into live quizzes. Deleting
+        // it erased the tenant's work, not the author's personal data.
+        $DB->set_field('local_sentientia_aiquiz_draft', 'ownerid', 0, ['ownerid' => $userid]);
 
         // Null out reviewer references — preserve the draft, redact the reviewer ID.
         $DB->set_field('local_sentientia_aiquiz_draft', 'reviewed_by', null,
@@ -158,13 +156,7 @@ class provider implements
         }
         [$insql, $params] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'uid');
 
-        $draftids = $DB->get_fieldset_select('local_sentientia_aiquiz_draft',
-            'id', "ownerid $insql", $params);
-        if (!empty($draftids)) {
-            [$disql, $dparams] = $DB->get_in_or_equal($draftids, SQL_PARAMS_NAMED, 'did');
-            $DB->delete_records_select('local_sentientia_aiquiz_question', "draftid $disql", $dparams);
-            $DB->delete_records_select('local_sentientia_aiquiz_draft', "ownerid $insql", $params);
-        }
+        $DB->set_field_select('local_sentientia_aiquiz_draft', 'ownerid', 0, "ownerid $insql", $params);
         $DB->execute(
             "UPDATE {local_sentientia_aiquiz_draft} SET reviewed_by = NULL WHERE reviewed_by $insql",
             $params

@@ -104,10 +104,56 @@ class provider implements
         if (empty($session_ids)) return;
         [$insql, $inparams] = $DB->get_in_or_equal($session_ids, SQL_PARAMS_NAMED);
         $DB->delete_records_select('local_sentientia_proctor_events',     "sessionid $insql", $inparams);
-        $DB->delete_records_select('local_sentientia_proctor_recordings', "sessionid $insql", $inparams);
+        self::expire_recordings($insql, $inparams);
         $DB->delete_records_select('local_sentientia_proctor_identity',   "sessionid $insql", $inparams);
         $DB->delete_records_select('local_sentientia_proctor_reviews',    "sessionid $insql", $inparams);
         $DB->delete_records_select('local_sentientia_proctor_sessions',   "id $insql",        $inparams);
+    }
+
+    /**
+     * Sentientia DPDP erasure (local_sentientia_privacy\privacy_manager): erase
+     * this user's personal data but KEEP the learning/compliance records that
+     * flow promises to retain, still keyed to the user row it anonymises in
+     * place. Called instead of delete_data_for_user() when present; core's
+     * privacy API never calls it.
+     */
+    public static function anonymise_data_for_user(approved_contextlist $contextlist): void {
+        global $DB;
+        $userid = (int) $contextlist->get_user()->id;
+        $session_ids = $DB->get_fieldset_select('local_sentientia_proctor_sessions',
+            'id', 'userid = :u', ['u' => $userid]);
+        if (empty($session_ids)) {
+            return;
+        }
+        [$insql, $inparams] = $DB->get_in_or_equal($session_ids, SQL_PARAMS_NAMED);
+        // Biometric and behavioural data goes: face-match identity, the event
+        // stream, and the webcam/screen/audio recordings.
+        $DB->delete_records_select('local_sentientia_proctor_events',   "sessionid $insql", $inparams);
+        $DB->delete_records_select('local_sentientia_proctor_identity', "sessionid $insql", $inparams);
+        self::expire_recordings($insql, $inparams);
+        // The session and its review stay: they are the exam-integrity verdict
+        // on a quiz attempt this flow keeps. Only the identity link is cut.
+        $DB->execute("UPDATE {local_sentientia_proctor_sessions}
+                         SET identity_id = NULL, consent_given_at = NULL
+                       WHERE id $insql", $inparams);
+    }
+
+    /**
+     * Hand the recordings to the purge task instead of deleting their rows.
+     *
+     * A recordings row is the only pointer to its chunk in S3, and
+     * purge_old_recordings is the only code that deletes S3 objects - it
+     * selects rows by retain_until/deleted_at. Deleting the rows (as this
+     * provider did until 2026-09-24) left the video in S3 for ever with
+     * nothing pointing at it. Expiring them makes the next daily purge
+     * delete the objects and stamp deleted_at.
+     */
+    private static function expire_recordings(string $insql, array $inparams): void {
+        global $DB;
+        $DB->execute("UPDATE {local_sentientia_proctor_recordings}
+                         SET retain_until = :expired
+                       WHERE sessionid $insql AND deleted_at IS NULL",
+            ['expired' => time() - 1] + $inparams);
     }
 
     private static function delete_all(): void {

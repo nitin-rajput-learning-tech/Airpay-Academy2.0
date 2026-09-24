@@ -102,7 +102,7 @@ Equivalent to an SSL Labs A. Nothing was submitted to Qualys.
 | N4 | Medium | Analytics drill-downs refuse the admin the dashboard admits (only `index.php` had the role-id-9 fallback). | Meera opens the dashboard; `drilldown.php?type=course&courseid=3` → refused | Yes (`b1ae4bd64`) |
 | N5 | Medium | Refusals render the raw identifier **`error/nopermission`** — the key does not exist (core has only plural `nopermissions`). 11 throw sites in 7 files, including the new analytics code. | drill-down refusal page | **No** — the analytics commit reuses the broken key |
 | N6 | Low | Analytics At-Risk table header prints the raw placeholder **`{$a->firstname} {$a->lastname}`**. | analytics dashboard | No |
-| N7 | Low | Compliance Manager Report mixes units: "Team Items 3, Completed 2, Overdue 3, Rate 22%" (22% = 2 of 9 assignments; "3" is people). | Manager Report tab | No (to verify in code) |
+| N7 | Low | Compliance Manager Report mixes units: "Team Items 3, Completed 2, Overdue 3, Rate 22%" (22% = 2 of 9 assignments; "3" is people). | Manager Report tab | Fixed in code, verified on local data: 23 managers, 0 invariant violations. On-screen check in the after-pass |
 
 ## Deploy risk carried into Window A
 
@@ -126,3 +126,19 @@ verified on local data before Window A:
 
 All four are mine. None was caught by a test: each failure was swallowed by a `catch`, or was a
 policy error rather than a code error.
+
+## Found offline while the VPN was down (2026-09-24, afternoon)
+
+While finishing W2-02 I found more erasure defects, and the pre-deploy adversarial review (six
+reviewers) found one blocker. The blocker was fixed before any deploy.
+
+| # | Severity | Defect | Status |
+|---|---|---|---|
+| N8 | **High** | The right-to-erasure flow erased a hand-kept list of 8 tables and reported `completed`. Every other Sentientia table about the person survived: the WhatsApp send log (holding mobile numbers), cart credits, calendar tokens, the agent audit, evaluation assignments. | Fixed: Step 0 calls every `local_sentientia_*` privacy provider, and a provider that fails gives `partial` |
+| N9 | **High** | **Approve on the DPDP admin panel always fataled.** `process_deletion($reqid)` omitted the required `$adminid`. The signature has required it since `e02af7b2d` (2026-04-10) and the one-argument call dates from `9eef91b10` (2026-04-13), so every deployment of this code since then, **production included if it runs it**, cannot approve an erasure from the UI. | Fixed: passes `$USER->id`; only pending requests can be acted on; partial outcomes are shown |
+| N10 | Medium | Panel counted "Rejected" as total − pending − completed, so every incomplete erasure was shown to the DPO as rejected. | Fixed: explicit counts plus an "Incomplete" tile |
+| N11 | Medium | WhatsApp provider reported only users with a saved preference. A user with send-log rows alone was never erased, by core's flow or ours. | Fixed |
+| N12 | **High (blocker)** | **Evaluation provider `delete_data_for_user()` never set `$userid`**, so it deleted `WHERE userid IS NULL`. Because `assigned_by_userid` is nullable, the anonymise step would have rewritten other people's system-assigned rows, and Step 0 would have triggered that on UAT. `get_contexts_for_userid()` also ignored assign-only users. Introduced by my `951b20982`. | Fixed in both trees; `tests/privacy_provider_test.php` asserts that the other user's rows survive untouched |
+
+A read-only audit of all 38 providers that Step 0 calls is running. Its findings are the gate for
+running the W2-02 probe on UAT.

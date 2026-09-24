@@ -151,11 +151,15 @@ class provider implements
         // Delete requests where this user is the requester (their data).
         $DB->delete_records('local_sentientia_mgr_requests', ['userid' => $userid]);
         // Anonymise rows where they were manager or decider on others' requests.
+        // Each actor column with the text that actor wrote. decision_reason is
+        // written by the DECIDER, who is not always the assigned manager (a
+        // site admin can decide); keying it on managerid wiped a third
+        // party's note and left the subject's own (fixed 2026-09-24).
         $DB->execute("UPDATE {local_sentientia_mgr_requests}
-                         SET managerid = 0, decision_reason = NULL
+                         SET managerid = 0
                        WHERE managerid = :u", ['u' => $userid]);
         $DB->execute("UPDATE {local_sentientia_mgr_requests}
-                         SET decided_by = NULL
+                         SET decided_by = NULL, decision_reason = NULL
                        WHERE decided_by = :u", ['u' => $userid]);
 
         // Delete allocations where this user is the recipient.
@@ -175,10 +179,10 @@ class provider implements
         [$insql, $inparams] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
         $DB->execute("DELETE FROM {local_sentientia_mgr_requests} WHERE userid $insql", $inparams);
         $DB->execute("UPDATE {local_sentientia_mgr_requests}
-                         SET managerid = 0, decision_reason = NULL
+                         SET managerid = 0
                        WHERE managerid $insql", $inparams);
         $DB->execute("UPDATE {local_sentientia_mgr_requests}
-                         SET decided_by = NULL
+                         SET decided_by = NULL, decision_reason = NULL
                        WHERE decided_by $insql", $inparams);
         $DB->execute("DELETE FROM {local_sentientia_mgr_allocations} WHERE userid $insql", $inparams);
         $DB->execute("UPDATE {local_sentientia_mgr_allocations}

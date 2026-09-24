@@ -227,3 +227,19 @@ strings added at parity.
 agree. Lang-string change only: no version bump is needed, and the deploy's cache purge picks it up.
 Part of the 36-plugin rename that makes Site administration > Plugins show no customer brand on a
 white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after the payment company.
+
+## 2026-09-24 - Privacy provider under-reported users (no version bump; class change only)
+
+`get_contexts_for_userid()` reported the system context only for users with a saved channel
+preference. `get_users_in_context()` counted send-log and channel-audit users too. The two
+disagreed, so a user with send-log rows but no preference was told they held no WhatsApp data.
+No erasure, core's or Sentientia's, ever asked this provider to delete those rows, each of which
+holds a mobile number. It now checks all four sources. Found while wiring the right-to-erasure
+flow to every provider. Covered by `local_sentientia_privacy\privacy_manager_test`, which seeds a
+send-log row with no preference.
+
+## 2026-09-24 - Privacy provider fix (erasure audit)
+
+`preference_manager::delete_user_data()` deleted every channel-audit row where the subject was `changed_by`. Those are OTHER employees' consent-provenance records, which DPDP requires us to keep (an admin editing someone else's opt-in). The actor is now anonymised (`changed_by` and `ip_address` set to NULL) and those rows survive.
+
+Found by a read-only audit of all 38 Sentientia privacy providers, run because `local_sentientia_privacy\privacy_manager::process_deletion()` now calls every one of them. Class change only: no version bump. Covered by `local_sentientia_privacy\erasure_scope_test` / `privacy_manager_test`.

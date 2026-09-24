@@ -274,3 +274,9 @@ status gate, capability gate w/ transactional rollback, GIFT escaping).
 `sentientia.aiquiz.auto_push` stays default OFF pending ninja verification.
 NOTE: developed while parallel sessions owned the shared DB/webroot —
 phpunit run + local deploy + commit deferred to their completion.
+
+## 2026-09-24 - Privacy provider fix (erasure audit)
+
+Erasing a trainer deleted their AI quiz drafts and questions. Drafts are shared with the author's tenant, carry other people's review notes, and are the provenance of questions already pushed into live quizzes. `ownerid` is now anonymised to 0 and the drafts are kept, in both paths.
+
+Found by a read-only audit of all 38 Sentientia privacy providers, run because `local_sentientia_privacy\privacy_manager::process_deletion()` now calls every one of them. Class change only: no version bump. Covered by `local_sentientia_privacy\erasure_scope_test` / `privacy_manager_test`.

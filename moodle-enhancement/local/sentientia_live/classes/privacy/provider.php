@@ -124,6 +124,11 @@ class provider implements
         ) || $DB->record_exists_select(
             'local_sentientia_live_sessions',
             'ownerid = :ownerid', ['ownerid' => $userid]
+        ) || $DB->record_exists_select(
+            // A manage_all streamer, or a logged-in user on a join token,
+            // holds an sse row without owning or joining (2026-09-24).
+            'local_sentientia_live_sse',
+            'userid = :sseuid', ['sseuid' => $userid]
         );
 
         if ($has_data) {
@@ -298,6 +303,7 @@ class provider implements
             "UPDATE {local_sentientia_live_sessions}
                 SET ownerid = 0
               WHERE ownerid $insql", $params);
+        $DB->delete_records_select('local_sentientia_live_sse', "userid $insql", $params);
 
         // Find + delete participants + their responses.
         $part_ids = $DB->get_fieldset_select(

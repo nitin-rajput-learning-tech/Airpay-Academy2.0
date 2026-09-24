@@ -74,7 +74,7 @@ class provider implements
         if (!$context instanceof \context_system) {
             return;
         }
-        $sql = "SELECT DISTINCT ownerid AS userid FROM {local_sentientia_tr_log}";
+        $sql = "SELECT DISTINCT ownerid AS userid FROM {local_sentientia_tr_log} WHERE ownerid > 0";
         $userlist->add_from_sql('userid', $sql, []);
     }
 
@@ -119,8 +119,11 @@ class provider implements
 
     public static function delete_data_for_user(approved_contextlist $contextlist): void {
         global $DB;
-        $userid = $contextlist->get_user()->id;
-        $DB->delete_records('local_sentientia_tr_log', ['ownerid' => $userid]);
+        $userid = (int) $contextlist->get_user()->id;
+        // Anonymise the author, keep the row (2026-09-24): translations are
+        // tenant-shared course content other admins are still reviewing, and
+        // tokens_in/out drive the customer's daily cost cap.
+        $DB->set_field('local_sentientia_tr_log', 'ownerid', 0, ['ownerid' => $userid]);
     }
 
     public static function delete_data_for_users(approved_userlist $userlist): void {
@@ -133,6 +136,6 @@ class provider implements
             return;
         }
         [$insql, $params] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'uid');
-        $DB->delete_records_select('local_sentientia_tr_log', "ownerid $insql", $params);
+        $DB->set_field_select('local_sentientia_tr_log', 'ownerid', 0, "ownerid $insql", $params);
     }
 }

@@ -32,3 +32,10 @@ $string['privacy:metadata:consent_log:consented']          = 'सहमति �
 $string['privacy:metadata:consent_log:ip_address']         = 'सहमति घटना का IP पता';
 $string['privacy:metadata:consent_log:user_agent']         = 'सहमति घटना का ब्राउज़र यूज़र एजेंट';
 $string['privacy:metadata:consent_log:timecreated']        = 'सहमति घटना कब हुई';
+
+// Right-to-erasure outcomes on the admin panel (2026-09-24).
+$string['incomplete']         = 'अपूर्ण';
+$string['needsfollowup']      = 'मैन्युअल अनुवर्ती कार्रवाई आवश्यक';
+$string['erasurecompleted']   = 'खाते को गुमनाम कर दिया गया और इस उपयोगकर्ता का सारा सेंटिएंटिया डेटा मिटा दिया गया।';
+$string['erasurepartial']     = 'खाते को गुमनाम कर दिया गया, लेकिन कुछ डेटा मिटाया नहीं जा सका। अनुरोध को अपूर्ण चिह्नित किया गया है; उसके नोट में शेष डेटा की सूची है।';
+$string['requestnotpending']  = 'इस अनुरोध पर पहले ही कार्रवाई हो चुकी है।';

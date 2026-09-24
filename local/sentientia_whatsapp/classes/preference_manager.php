@@ -329,8 +329,14 @@ class preference_manager {
                 ['userid' => $userid]);
             $DB->delete_records('local_sentientia_user_channel_audit',
                 ['userid' => $userid]);
-            $DB->delete_records('local_sentientia_user_channel_audit',
-                ['changed_by' => $userid]);
+            // Rows where this user was only the ACTOR - an admin editing
+            // someone else's opt-in or number - are the OTHER person's
+            // consent provenance, which DPDP requires us to keep. Until
+            // 2026-09-24 they were deleted. Anonymise the actor instead, and
+            // drop the actor's IP address with it.
+            $DB->execute("UPDATE {local_sentientia_user_channel_audit}
+                             SET changed_by = NULL, ip_address = NULL
+                           WHERE changed_by = :u", ['u' => $userid]);
             $transaction->allow_commit();
         } catch (\Throwable $e) {
             $transaction->rollback($e);

@@ -297,3 +297,9 @@ Transient connection state rather than a record worth keeping, so it is deleted 
 
 Version bumped to 2026092202 so the cached privacy registry picks up the new declarations. en + hi
 strings added at parity.
+
+## 2026-09-24 - Privacy provider fix (erasure audit)
+
+`get_contexts_for_userid()` ignored `local_sentientia_live_sse`, so a manage_all streamer, or a logged-in user on a join token, was never erased from it. It now checks that table, and the bulk delete clears it too.
+
+Found by a read-only audit of all 38 Sentientia privacy providers, run because `local_sentientia_privacy\privacy_manager::process_deletion()` now calls every one of them. Class change only: no version bump. Covered by `local_sentientia_privacy\erasure_scope_test` / `privacy_manager_test`.

@@ -72,8 +72,10 @@ foreach ($pending as $r) {
         'courseid'        => (int) $r->courseid,
         'coursename'      => format_string($r->coursename),
         'courseshort'     => format_string($r->courseshort),
-        'requester_name'  => format_string("$r->firstname $r->lastname"),
-        'requester_email' => format_string($r->email),
+        // LEFT JOIN: an erased requester is anonymised to 0, and the
+        // tenant's request must stay in the inbox (2026-09-24).
+        'requester_name'  => format_string(trim("$r->firstname $r->lastname")) ?: '-',
+        'requester_email' => format_string($r->email ?? ''),
         'tenant_id'       => (int) $r->requesting_tenant,
         'tenant_name'     => $tenant_names[(int) $r->requesting_tenant]
             ?? ('Tenant ' . $r->requesting_tenant),

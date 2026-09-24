@@ -288,6 +288,32 @@ class provider implements
         $DB->set_field('local_compliance_courses', 'createdby', 0, []);
     }
 
+    /**
+     * Sentientia DPDP erasure (local_sentientia_privacy\privacy_manager): erase
+     * this user's personal data but KEEP the learning/compliance records that
+     * flow promises to retain, still keyed to the user row it anonymises in
+     * place. Called instead of delete_data_for_user() when present; core's
+     * privacy API never calls it.
+     */
+    public static function anonymise_data_for_user(approved_contextlist $contextlist): void {
+        global $DB;
+        $userid = (int) $contextlist->get_user()->id;
+        if (!$contextlist->get_contexts()) {
+            return;
+        }
+        // An exemption is the audit record of why this person's missing
+        // mandatory completions were excused, and by whom: keep it, keyed to
+        // the anonymised row, with its free-text reason blanked (it can name a
+        // medical or personal circumstance). reason is NOT NULL, hence ''.
+        $DB->set_field('local_compliance_exemptions', 'reason', '', ['userid' => $userid]);
+        $DB->set_field('local_compliance_exemptions', 'approved_by', 0, ['approved_by' => $userid]);
+        // The snapshot is derived (recomputed from completions) and the email
+        // log is operational: both go, as in the full erasure.
+        $DB->delete_records('local_compliance_snapshot', ['userid' => $userid]);
+        $DB->delete_records('local_compliance_email_log', ['userid' => $userid]);
+        $DB->set_field('local_compliance_courses', 'createdby', 0, ['createdby' => $userid]);
+    }
+
     public static function delete_data_for_user(approved_contextlist $contextlist): void {
         global $DB;
 

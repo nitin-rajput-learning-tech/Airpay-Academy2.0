@@ -137,7 +137,11 @@ class provider implements
         $userid = (int) $contextlist->get_user()->id;
         foreach ($contextlist->get_contexts() as $context) {
             if ($context instanceof \context_system) {
-                $DB->delete_records('local_sentientia_ai_ledger', ['userid' => $userid]);
+                // Anonymise, never delete: the ledger is the spend/quota source
+                // of truth. Deleting a learner's rows removed real spend from
+                // the customer's history and freed cap headroom mid-month.
+                // userid is the only personal data on the row.
+                $DB->set_field('local_sentientia_ai_ledger', 'userid', 0, ['userid' => $userid]);
             }
         }
     }
@@ -156,6 +160,6 @@ class provider implements
             return;
         }
         [$insql, $params] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'uid');
-        $DB->delete_records_select('local_sentientia_ai_ledger', "userid {$insql}", $params);
+        $DB->set_field_select('local_sentientia_ai_ledger', 'userid', 0, "userid {$insql}", $params);
     }
 }

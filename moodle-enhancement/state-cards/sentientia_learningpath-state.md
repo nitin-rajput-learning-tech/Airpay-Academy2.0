@@ -162,3 +162,9 @@ methods) — previously implied by file count only.
 agree. Lang-string change only: no version bump is needed, and the deploy's cache purge picks it up.
 Part of the 36-plugin rename that makes Site administration > Plugins show no customer brand on a
 white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after the payment company.
+
+## 2026-09-24 - Privacy provider fix (erasure audit)
+
+New `anonymise_data_for_user()` for the DPDP flow. It keeps `learningpath_users` (the path enrolment and completion record) and the adaptive log, keyed to the anonymised user, and clears only `decision_notes`. Core's full erasure is unchanged.
+
+Found by a read-only audit of all 38 Sentientia privacy providers, run because `local_sentientia_privacy\privacy_manager::process_deletion()` now calls every one of them. Class change only: no version bump. Covered by `local_sentientia_privacy\erasure_scope_test` / `privacy_manager_test`.

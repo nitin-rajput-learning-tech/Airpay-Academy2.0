@@ -134,3 +134,9 @@ strings added at parity.
 agree. Lang-string change only: no version bump is needed, and the deploy's cache purge picks it up.
 Part of the 36-plugin rename that makes Site administration > Plugins show no customer brand on a
 white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after the payment company.
+
+## 2026-09-24 - Privacy provider fix (erasure audit)
+
+**Pre-deploy blocker, from my own 951b20982.** `delete_data_for_user()` never assigned `$userid`, so it deleted `WHERE userid IS NULL`: the subject's trigger and assignment rows were never erased. Because `assigned_by_userid` is nullable, the anonymise step instead rewrote every other system-assigned row. `get_contexts_for_userid()` also missed people who were assigned but never answered. Fixed, and export now includes assignments and triggers. New `tests/privacy_provider_test.php` asserts that another user's rows survive untouched.
+
+Found by a read-only audit of all 38 Sentientia privacy providers, run because `local_sentientia_privacy\privacy_manager::process_deletion()` now calls every one of them. Class change only: no version bump. Covered by `local_sentientia_privacy\erasure_scope_test` / `privacy_manager_test`.

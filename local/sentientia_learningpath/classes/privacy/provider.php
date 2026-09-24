@@ -89,6 +89,31 @@ class provider implements
             "userid $insql", $inparams);
     }
 
+    /**
+     * Sentientia DPDP erasure (local_sentientia_privacy\privacy_manager): erase
+     * this user's personal data but KEEP the learning/compliance records that
+     * flow promises to retain, still keyed to the user row it anonymises in
+     * place. Called instead of delete_data_for_user() when present; core's
+     * privacy API never calls it.
+     */
+    public static function anonymise_data_for_user(approved_contextlist $contextlist) {
+        global $DB;
+        if (!self::has_system_context($contextlist)) {
+            return;
+        }
+        // Keep local_sentientia_learningpath_users: it is the path enrolment
+        // and COMPLETION record (status 2 + timecompleted), and paths carry
+        // time-bounded compliance windows. It stays keyed to the anonymised
+        // user row. The adaptive log is kept for the same reason (its quiz
+        // scores are the audit trail of each pivot), minus its free text.
+        $userid = (int) $contextlist->get_user()->id;
+        $dbman = $DB->get_manager();
+        if ($dbman->table_exists('local_sentientia_lp_adaptive_log')) {
+            $DB->set_field('local_sentientia_lp_adaptive_log', 'decision_notes', null,
+                ['userid' => $userid]);
+        }
+    }
+
     private static function has_system_context(approved_contextlist $contextlist): bool {
         foreach ($contextlist->get_contexts() as $c) {
             if ($c->contextlevel === CONTEXT_SYSTEM) return true;

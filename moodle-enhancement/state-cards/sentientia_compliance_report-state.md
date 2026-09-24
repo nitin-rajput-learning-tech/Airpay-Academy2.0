@@ -196,3 +196,9 @@ rather than an allowlist, so a new plugin with a copy-pasted `null_provider` fai
 agree. Lang-string change only: no version bump is needed, and the deploy's cache purge picks it up.
 Part of the 36-plugin rename that makes Site administration > Plugins show no customer brand on a
 white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after the payment company.
+
+## 2026-09-24 - Privacy provider fix (erasure audit)
+
+(1) New `anonymise_data_for_user()` for the DPDP flow. It keeps exemptions (the audit record of why mandatory training was excused, and by whom) with their free-text reason blanked, and deletes the derived snapshot and the email log as before. (2) N7: the Manager Report counted people under a 'Team Items' heading beside assignment counts. It now shows Team members and Assignments separately (`team_members`, `team_assignments`; en + hi strings). This was verified on local data (23 managers, 0 invariant violations) and needs an on-screen check.
+
+Found by a read-only audit of all 38 Sentientia privacy providers, run because `local_sentientia_privacy\privacy_manager::process_deletion()` now calls every one of them. Class change only: no version bump. Covered by `local_sentientia_privacy\erasure_scope_test` / `privacy_manager_test`.

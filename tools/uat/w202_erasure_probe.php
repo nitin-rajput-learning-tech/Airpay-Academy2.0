@@ -13,7 +13,9 @@
  * `local_sentientia_user_skill_hist` was missed by both trees. The plan's pass
  * criterion is: after erasure, user_skills AND user_skill_hist hold 0 rows for
  * the user AND the request reads `completed` (or `partial` with the missing
- * tables named - never a silent `completed`).
+ * tables named - never a silent `completed`). Since 2026-09-24 it also seeds
+ * tables only the new Step 0 reaches (send log, calendar token), and requires
+ * every seeded table to be empty.
  *
  * WHY IT CREATES ITS OWN ACCOUNT
  * ------------------------------
@@ -68,13 +70,22 @@ $targets = [
     'local_sentientia_user_skills', 'local_sentientia_user_skill_hist',
     'local_sentientia_points_log', 'local_sentientia_streaks',
     'local_sentientia_chat_log', 'local_sentientia_notif_prefs',
+    // Added 2026-09-24: tables OUTSIDE the old hand-kept list, reached only by
+    // the new Step 0 (each plugin's own privacy provider). A send-log row with
+    // no channel preference is the case the WhatsApp provider used to miss; a
+    // calendar token lives in the USER context and was never deleted at all.
+    'local_sentientia_send_log', 'local_sentientia_calendar_token',
+];
+// Columns that must be unique or meaningful; everything else NOT NULL is filled generically.
+$overrides = [
+    'local_sentientia_calendar_token' => ['token' => bin2hex(random_bytes(16))],
 ];
 
 /**
  * Insert one minimal row for $userid, filling NOT NULL columns that have no default.
  */
-$seed = function (string $table, int $userid) use ($DB): string {
-    $row = new stdClass();
+$seed = function (string $table, int $userid) use ($DB, $overrides): string {
+    $row = (object) ($overrides[$table] ?? []);
     foreach ($DB->get_columns($table) as $name => $col) {
         if ($name === 'id') {
             continue;
@@ -83,7 +94,7 @@ $seed = function (string $table, int $userid) use ($DB): string {
             $row->userid = $userid;
             continue;
         }
-        if (!$col->not_null || $col->has_default) {
+        if (!$col->not_null || $col->has_default || property_exists($row, $name)) {
             continue;
         }
         $row->$name = in_array($col->meta_type, ['I', 'N', 'F', 'R'], true) ? 1 : 'w202';
@@ -111,8 +122,16 @@ foreach ($targets as $t) {
 
 // ── 3. Request and process the erasure through the real code path ────────
 $adminid = (int) (get_admin()->id);
-$reqid = \local_sentientia_privacy\privacy_manager::request_account_deletion(
-    (int) $user->id, 'W2-02 on-box erasure verification (throwaway probe account)');
+// The request row is inserted directly, NOT through request_account_deletion():
+// that also messages every site admin on the box, and a probe must not send
+// anything to anyone.
+$reqid = $DB->insert_record('local_privacy_requests', (object) [
+    'userid'       => (int) $user->id,
+    'request_type' => 'account_delete',
+    'status'       => 'pending',
+    'reason'       => 'W2-02 on-box erasure verification (throwaway probe account)',
+    'timecreated'  => time(),
+]);
 $ok = \local_sentientia_privacy\privacy_manager::process_deletion($reqid, $adminid,
     'W2-02 probe');
 
@@ -126,8 +145,8 @@ $pass = true;
 foreach ($targets as $t) {
     $a = $dbman->table_exists($t) ? $DB->count_records($t, ['userid' => $user->id]) : 'absent';
     cli_writeln(sprintf('%-36s %-34s %s', $t, $before[$t], $a));
-    if (in_array($t, ['local_sentientia_user_skills', 'local_sentientia_user_skill_hist'], true)
-            && $a !== 0) {
+    // Every seeded table must be empty: since 2026-09-24 the erasure claims all of them.
+    if (strpos($before[$t], 'seeded') !== false && $a !== 0) {
         $pass = false;
     }
 }
@@ -142,6 +161,6 @@ $statusok = ($req->status === 'completed')
     || ($req->status === 'partial' && trim((string) $req->admin_notes) !== '');
 cli_writeln('');
 cli_writeln(($pass && $statusok)
-    ? 'W2-02 PASS: both skills tables emptied for the user, and the request status is honest.'
+    ? 'W2-02 PASS: every seeded table emptied for the user, and the request status is honest.'
     : 'W2-02 FAIL: see the table and status above.');
 exit(($pass && $statusok) ? 0 : 1);

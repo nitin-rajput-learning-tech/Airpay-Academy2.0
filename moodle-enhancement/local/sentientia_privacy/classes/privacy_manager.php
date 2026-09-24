@@ -106,6 +106,32 @@ class privacy_manager {
     }
 
     /**
+     * The privacy providers process_deletion() asks to erase their own data:
+     * every local_sentientia_* plugin (bar this one, whose request records are
+     * kept as the record of processing) that implements the request provider.
+     *
+     * Protected rather than private so a test can substitute a provider that
+     * fails, which is the only way to prove a failure is reported without DDL.
+     *
+     * @return array<string, string> component => provider class name
+     */
+    protected static function erasure_providers(): array {
+        $providers = [];
+        foreach (array_keys(\core_component::get_plugin_list('local')) as $name) {
+            if (strpos($name, 'sentientia_') !== 0 || $name === 'sentientia_privacy') {
+                continue;
+            }
+            $component = 'local_' . $name;
+            $class = '\\' . $component . '\\privacy\\provider';
+            if (class_exists($class) && in_array(\core_privacy\local\request\plugin\provider::class,
+                    class_implements($class) ?: [], true)) {
+                $providers[$component] = $class;
+            }
+        }
+        return $providers;
+    }
+
+    /**
      * Process an account deletion — anonymize and suspend.
      * DPDP requires data erasure, but we preserve anonymized learning records for audit.
      */
@@ -121,6 +147,60 @@ class privacy_manager {
         $user = $DB->get_record('user', ['id' => $userid]);
         if (!$user) {
             return false;
+        }
+
+        // Step 0 (2026-09-24): let every Sentientia plugin erase its own data.
+        //
+        // Step 2 below is a hand-kept list of eight tables. Every other table a
+        // Sentientia plugin keeps about a person - the WhatsApp send log with the
+        // employee's mobile number, the agent audit, cart credits, evaluation
+        // assignments, leaderboard notifications and so on - was left behind while
+        // the request still read 'completed'. That is the same defect as the one
+        // fixed on 2026-09-22 (a success the code did not achieve), merely outside
+        // the list that fix touched.
+        //
+        // Each of those plugins already knows its own tables: that is what its
+        // privacy provider's delete_data_for_user() is for, and a platform test
+        // (local_sentientia_platform\privacy_coverage_test) fails the build if a
+        // provider does not declare every user table it owns. So ask them.
+        //
+        // Deliberately ONLY local_sentientia_* providers, not core ones: this flow
+        // promises to keep anonymised learning records (grades, completions,
+        // attempts) for audit, and core providers would erase those - as would
+        // the Sentientia providers that hold such records, which is why they
+        // are asked to anonymise rather than delete (see below). (Every block
+        // and the quiz access rule Sentientia ships is a null_provider, so local
+        // plugins are the whole set.) Each provider gets exactly the contexts it
+        // reports for this user - most use the system context, but the calendar
+        // keeps its data in the user context. Runs before Step 1 so every provider
+        // sees the unmodified user record. A provider that throws is a failed
+        // erasure and is reported, never swallowed.
+        $missing = [];
+        foreach (static::erasure_providers() as $component => $class) {
+            try {
+                $contextids = array_map('intval',
+                    $class::get_contexts_for_userid((int) $userid)->get_contextids());
+                if (empty($contextids)) {
+                    continue;
+                }
+                $approved = new \core_privacy\local\request\approved_contextlist(
+                    $user, $component, $contextids);
+                // A provider that holds learning, compliance or financial
+                // records this flow promises to keep (path completions, ILT
+                // attendance, exemptions, cmi5 attempts, proctoring verdicts)
+                // offers anonymise_data_for_user(): personal data out, records
+                // kept against the row Step 1 anonymises. Its
+                // delete_data_for_user() is core's full erasure and would
+                // destroy them. Duck-typed, so no plugin depends on this one.
+                if (method_exists($class, 'anonymise_data_for_user')) {
+                    $class::anonymise_data_for_user($approved);
+                } else {
+                    $class::delete_data_for_user($approved);
+                }
+            } catch (\Throwable $e) {
+                $missing[] = $component . ' (its privacy provider failed: '
+                    . substr($e->getMessage(), 0, 120) . ')';
+            }
         }
 
         // Step 1: Anonymize personal data.
@@ -174,7 +254,9 @@ class privacy_manager {
             'local_sentientia_user_skill_hist'  => 'skill assessment history',
         ];
         $dbman = $DB->get_manager();
-        $missing = [];
+        // NOT reset here: $missing already carries any provider that failed in
+        // Step 0, and re-initialising it would erase exactly the evidence of an
+        // incomplete erasure that this method exists to report.
         foreach ($erasetables as $table => $label) {
             if ($dbman->table_exists($table)) {
                 $DB->delete_records($table, ['userid' => $userid]);
@@ -192,11 +274,10 @@ class privacy_manager {
         // not be answered by a status we did not verify.
         $status = empty($missing) ? 'completed' : 'partial';
         if (!empty($missing)) {
-            $notes = trim($notes . "
-" . 'INCOMPLETE - these tables were not found and '
-                . 'may still hold this user\'s data: ' . implode(', ', $missing));
+            $notes = trim($notes . "\n" . 'INCOMPLETE - these could not be erased and '
+                . 'may still hold this user\'s data: ' . implode('; ', $missing));
             debugging('Right-to-erasure request ' . (int) $requestid . ' is INCOMPLETE; '
-                . 'tables not found: ' . implode(', ', $missing), DEBUG_DEVELOPER);
+                . 'not erased: ' . implode('; ', $missing), DEBUG_DEVELOPER);
         }
         $DB->update_record('local_privacy_requests', (object)[
             'id'            => $requestid,

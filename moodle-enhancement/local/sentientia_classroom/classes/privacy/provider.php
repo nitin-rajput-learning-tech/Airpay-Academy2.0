@@ -84,6 +84,26 @@ class provider implements
         $DB->delete_records('local_sentientia_classroom_attendance', ['userid' => $uid]);
     }
 
+    /**
+     * Sentientia DPDP erasure (local_sentientia_privacy\privacy_manager): erase
+     * this user's personal data but KEEP the learning/compliance records that
+     * flow promises to retain, still keyed to the user row it anonymises in
+     * place. Called instead of delete_data_for_user() when present; core's
+     * privacy API never calls it.
+     */
+    public static function anonymise_data_for_user(approved_contextlist $contextlist) {
+        global $DB;
+        if (!self::has_system_context($contextlist)) return;
+        $uid = (int) $contextlist->get_user()->id;
+        // Attendance is the only record that the employee attended an ILT or
+        // compliance session - the classroom's course completion. Keep it,
+        // keyed to the anonymised row (rewriting userid to 0 would also break
+        // UNIQUE(sessionid, userid)); clear only the free-text note. The
+        // roster row carries no completion and goes.
+        $DB->delete_records('local_sentientia_classroom_users', ['userid' => $uid]);
+        $DB->set_field('local_sentientia_classroom_attendance', 'notes', null, ['userid' => $uid]);
+    }
+
     public static function get_users_in_context(userlist $userlist) {
         global $DB;
         if ($userlist->get_context()->contextlevel !== CONTEXT_SYSTEM) return;

@@ -215,7 +215,9 @@ class provider implements
 
     public static function delete_data_for_user(approved_contextlist $contextlist): void {
         global $DB;
-        $userid = $contextlist->get_user()->id;
+        // (int): get_user() is a DB record, so id is a string, and the ===
+        // below never matched - until 2026-09-24 nothing was ever deleted.
+        $userid = (int) $contextlist->get_user()->id;
         foreach ($contextlist->get_contexts() as $context) {
             if ($context->contextlevel === CONTEXT_USER && (int) $context->instanceid === $userid) {
                 $DB->delete_records('local_sentientia_calendar_token',

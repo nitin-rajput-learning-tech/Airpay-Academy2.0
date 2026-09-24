@@ -117,17 +117,51 @@ class provider implements
 
     public static function delete_data_for_user(approved_contextlist $contextlist): void {
         global $DB;
-        $userid = $contextlist->get_user()->id;
+        $userid = (int) $contextlist->get_user()->id;
+        if ($userid <= 0) {
+            return;
+        }
 
-        // Null-out the actorid but keep the statement for LRS integrity.
-        // (Deleting statements would break VoidedStatement chains.)
+        // Keep the statement for LRS integrity (deleting would break
+        // VoidedStatement chains): redact its actor, then drop the link.
+        // ORDER MATTERS. Until 2026-09-24 the link was dropped first and the
+        // redaction then ran on `actorid IS NULL` - every statement in the LRS
+        // whose actor never resolved to a local user, across all tenants.
+        self::redact_actor($userid);
         $DB->set_field('local_sentientia_xapi_stmts', 'actorid', null, ['actorid' => $userid]);
+
+        $DB->delete_records('local_sentientia_xapi_cmi5', ['userid' => $userid]);
+    }
+
+    /**
+     * Sentientia DPDP erasure (local_sentientia_privacy\privacy_manager): erase
+     * this user's personal data but KEEP the learning/compliance records that
+     * flow promises to retain, still keyed to the user row it anonymises in
+     * place. Called instead of delete_data_for_user() when present; core's
+     * privacy API never calls it.
+     */
+    public static function anonymise_data_for_user(approved_contextlist $contextlist): void {
+        global $DB;
+        $userid = (int) $contextlist->get_user()->id;
+        if ($userid <= 0) {
+            return;
+        }
+        // The actor JSON holds the learner's own identifiers (mbox, account
+        // name), which anonymising the user row does not reach. actorid stays,
+        // so the kept statements remain attributable to the anonymised row.
+        self::redact_actor($userid);
+        // A cmi5 row is an attempt record (status, score, success): keep it,
+        // drop only the launch credentials.
+        $DB->set_field('local_sentientia_xapi_cmi5', 'launchtoken', null, ['userid' => $userid]);
+        $DB->set_field('local_sentientia_xapi_cmi5', 'sessionid', null, ['userid' => $userid]);
+    }
+
+    /** Replace the actor JSON of this user's statements - and only theirs. */
+    private static function redact_actor(int $userid): void {
+        global $DB;
         $DB->set_field('local_sentientia_xapi_stmts', 'actor',
             json_encode(['objectType' => 'Agent', 'account' => ['homePage' => 'redacted', 'name' => 'redacted']]),
-            ['actorid' => null]);
-
-        // cmi5 sessions carry no learning content — safe to delete.
-        $DB->delete_records('local_sentientia_xapi_cmi5', ['userid' => $userid]);
+            ['actorid' => $userid]);
     }
 
     public static function delete_data_for_users(approved_userlist $userlist): void {
@@ -137,6 +171,10 @@ class provider implements
             return;
         }
         [$insql, $params] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'uid');
+        // Redact before unlinking; this path never redacted at all before.
+        $DB->set_field_select('local_sentientia_xapi_stmts', 'actor',
+            json_encode(['objectType' => 'Agent', 'account' => ['homePage' => 'redacted', 'name' => 'redacted']]),
+            "actorid $insql", $params);
         $DB->set_field_select('local_sentientia_xapi_stmts', 'actorid', null, "actorid $insql", $params);
         $DB->delete_records_select('local_sentientia_xapi_cmi5', "userid $insql", $params);
     }

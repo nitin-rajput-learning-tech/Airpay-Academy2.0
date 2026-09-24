@@ -80,3 +80,9 @@ All map gateway `denied` → the plugin's `failed` semantics. Key fallback via
 its gateway path. assistant's `core_ai_bridge` remains an alternative backend
 (provider toggle), untouched. Live flags remain OFF (Addendum-A cap + key
 still pending). tts_client (ElevenLabs) out of scope by design.
+
+## 2026-09-24 - Privacy provider fix (erasure audit)
+
+`delete_data_for_user()` deleted the user's rows from `local_sentientia_ai_ledger`, which is the spend and quota source of truth. Erasing a learner removed real spend from the customer's history and freed cap headroom mid-month. It now anonymises `userid` to 0 in both the single-user and bulk paths; `userid` is the only personal data on the row.
+
+Found by a read-only audit of all 38 Sentientia privacy providers, run because `local_sentientia_privacy\privacy_manager::process_deletion()` now calls every one of them. Class change only: no version bump. Covered by `local_sentientia_privacy\erasure_scope_test` / `privacy_manager_test`.

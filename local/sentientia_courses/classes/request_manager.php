@@ -255,7 +255,7 @@ class request_manager {
                     u.firstname, u.lastname, u.email,
                     c.fullname AS coursename, c.shortname AS courseshort
                FROM {local_sentientia_courses_requests} r
-               JOIN {user}   u ON u.id = r.requester_userid
+          LEFT JOIN {user}   u ON u.id = r.requester_userid
                JOIN {course} c ON c.id = r.courseid
               WHERE r.status = :status
            ORDER BY r.timecreated DESC",

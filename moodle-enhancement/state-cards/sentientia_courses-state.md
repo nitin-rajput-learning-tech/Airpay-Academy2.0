@@ -381,3 +381,9 @@ rather than an allowlist, so a new plugin with a copy-pasted `null_provider` fai
 agree. Lang-string change only: no version bump is needed, and the deploy's cache purge picks it up.
 Part of the 36-plugin rename that makes Site administration > Plugins show no customer brand on a
 white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after the payment company.
+
+## 2026-09-24 - Privacy provider fix (erasure audit)
+
+Erasing a tenant manager deleted the tenant's course-share requests, including decided ones that carry another person's decision. `requester_userid` is now anonymised to 0 instead. `list_pending_requests()` uses a LEFT JOIN on the user so these requests stay in the admin inbox, and `manage_requests.php` shows '-' for the name.
+
+Found by a read-only audit of all 38 Sentientia privacy providers, run because `local_sentientia_privacy\privacy_manager::process_deletion()` now calls every one of them. Class change only: no version bump. Covered by `local_sentientia_privacy\erasure_scope_test` / `privacy_manager_test`.

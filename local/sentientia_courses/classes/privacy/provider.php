@@ -206,7 +206,11 @@ class provider implements
                 continue;
             }
 
-            $DB->delete_records('local_sentientia_courses_requests', ['requester_userid' => $userid]);
+            // A request is the TENANT's (listed per requesting_tenant, and
+            // decided rows carry another person's decision). The requester
+            // is only the actor: anonymise, do not delete (2026-09-24).
+            $DB->set_field('local_sentientia_courses_requests', 'requester_userid', 0,
+                ['requester_userid' => $userid]);
             // Anonymise rather than delete: the row is another
             // person's record or shared configuration.
             $DB->set_field('local_sentientia_courses_requests', 'decided_by', 0, ['decided_by' => $userid]);
@@ -229,7 +233,8 @@ class provider implements
 
         [$insql, $params] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
 
-        $DB->delete_records_select('local_sentientia_courses_requests', "requester_userid $insql", $params);
+        $DB->set_field_select('local_sentientia_courses_requests', 'requester_userid', 0,
+            "requester_userid $insql", $params);
         $DB->set_field_select('local_sentientia_courses_requests', 'decided_by', 0, "decided_by $insql", $params);
         $DB->delete_records_select('local_sentientia_courses_remind_sent', "userid $insql", $params);
     }

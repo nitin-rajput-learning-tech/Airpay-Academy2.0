@@ -28,23 +28,44 @@ $manager = \local_sentientia_privacy\privacy_manager::class;
 // ════════════════════════════════════════════════════════════════
 // ADMIN VIEW — siteadmins see request management panel
 // ════════════════════════════════════════════════════════════════
+// NOT TENANT-SCOPED: the request list below is every request on the site. That is
+// right for a site admin and wrong for anyone else. local/sentientia_privacy:manage
+// is declared with no archetypes and nobody holds it; granting it to a tenant admin
+// would show them every tenant's erasure requests (names, emails, reasons). Scope
+// the query with tenant::path_descendant_filter() before granting it to anyone.
 if (is_siteadmin() || has_capability('local/sentientia_privacy:manage', context_system::instance())) {
     $PAGE->set_heading(get_string('pluginname', 'local_sentientia_privacy') . ' — Administration');
+    $panelurl = new moodle_url('/local/sentientia_privacy/index.php');
 
-    // Handle admin actions.
-    if ($action === 'approve' && confirm_sesskey()) {
-        $reqid = required_param('reqid', PARAM_INT);
-        $manager::process_deletion($reqid);
-        redirect(new moodle_url('/local/sentientia_privacy/index.php'),
-            'Request processed successfully.', null, \core\output\notification::NOTIFY_SUCCESS);
-    }
-    if ($action === 'reject' && confirm_sesskey()) {
+    // Handle admin actions. Both act only on a request that is still pending, so a
+    // replayed or stale link cannot re-run an erasure or overturn a decision.
+    if (($action === 'approve' || $action === 'reject') && confirm_sesskey()) {
         $reqid = required_param('reqid', PARAM_INT);
         global $DB;
+        $request = $DB->get_record('local_privacy_requests', ['id' => $reqid], '*', MUST_EXIST);
+        if ($request->status !== 'pending') {
+            redirect($panelurl, get_string('requestnotpending', 'local_sentientia_privacy'),
+                null, \core\output\notification::NOTIFY_WARNING);
+        }
+    }
+    if ($action === 'approve' && confirm_sesskey()) {
+        // process_deletion() requires the approving admin's id; this call used to
+        // omit it, so every Approve click died with an ArgumentCountError.
+        $manager::process_deletion($reqid, (int) $USER->id);
+        // It can finish 'partial' (some data could not be erased), and saying
+        // "processed successfully" then would be the false success it now reports.
+        $status = $DB->get_field('local_privacy_requests', 'status', ['id' => $reqid]);
+        if ($status === 'completed') {
+            redirect($panelurl, get_string('erasurecompleted', 'local_sentientia_privacy'),
+                null, \core\output\notification::NOTIFY_SUCCESS);
+        }
+        redirect($panelurl, get_string('erasurepartial', 'local_sentientia_privacy'),
+            null, \core\output\notification::NOTIFY_ERROR);
+    }
+    if ($action === 'reject' && confirm_sesskey()) {
         $DB->set_field('local_privacy_requests', 'status', 'rejected', ['id' => $reqid]);
         $DB->set_field('local_privacy_requests', 'timeprocessed', time(), ['id' => $reqid]);
-        redirect(new moodle_url('/local/sentientia_privacy/index.php'),
-            'Request rejected.', null, \core\output\notification::NOTIFY_WARNING);
+        redirect($panelurl, 'Request rejected.', null, \core\output\notification::NOTIFY_WARNING);
     }
 
     // Get all requests across all users.
@@ -56,13 +77,20 @@ if (is_siteadmin() || has_capability('local/sentientia_privacy:manage', context_
        ORDER BY pr.timecreated DESC"
     );
 
+    // Each status is counted explicitly. 'Rejected' used to be total minus the
+    // others, so every 'partial' (incomplete erasure) and 'processing' request was
+    // shown to the DPO as rejected.
     $pending = 0;
     $completed = 0;
+    $partial = 0;
+    $rejected = 0;
     $total = count($allrequests);
     $rows = [];
     foreach ($allrequests as $r) {
         if ($r->status === 'pending') { $pending++; }
         if ($r->status === 'completed') { $completed++; }
+        if ($r->status === 'partial') { $partial++; }
+        if ($r->status === 'rejected') { $rejected++; }
         $parts = explode('/', trim($r->open_path ?? '', '/'));
         $tenantid = (int)($parts[0] ?? 0);
         $rows[] = [
@@ -78,12 +106,15 @@ if (is_siteadmin() || has_capability('local/sentientia_privacy:manage', context_
             'is_pending'  => ($r->status === 'pending'),
             'is_completed' => ($r->status === 'completed'),
             'is_rejected' => ($r->status === 'rejected'),
+            'is_partial'  => ($r->status === 'partial'),
+            // The note names what could not be erased; the DPO needs it to finish
+            // the request by hand. Escaped by the template's {{admin_notes}}, not
+            // here - it quotes provider exception text, and s() twice mangles it.
+            'admin_notes' => ($r->status === 'partial') ? (string) ($r->admin_notes ?? '') : '',
             'created'     => userdate($r->timecreated, '%d %b %Y %I:%M %p'),
             'processed'   => $r->timeprocessed ? userdate($r->timeprocessed, '%d %b %Y %I:%M %p') : '-',
         ];
     }
-
-    $rejected = $total - $pending - $completed;
 
     // Phase B0+ — stat_card-compatible KPI tiles.
     $kpi_tiles = [
@@ -107,6 +138,13 @@ if (is_siteadmin() || has_capability('local/sentientia_privacy:manage', context_
             'color' => 'success',
         ],
         [
+            'label' => get_string('incomplete', 'local_sentientia_privacy'),
+            'value' => number_format($partial),
+            'icon'  => 'exclamation-triangle',
+            // Each one is a data subject told nothing yet whose data may survive.
+            'color' => $partial > 0 ? 'danger' : 'primary',
+        ],
+        [
             'label' => 'Rejected',
             'value' => number_format($rejected),
             'icon'  => 'times-circle',
@@ -120,6 +158,7 @@ if (is_siteadmin() || has_capability('local/sentientia_privacy:manage', context_
         'total'        => $total,
         'pending'      => $pending,
         'completed'    => $completed,
+        'partial'      => $partial,
         'rejected'     => $rejected,
         'kpi_tiles'    => $kpi_tiles,
         'has_kpi_tiles' => !empty($kpi_tiles),
