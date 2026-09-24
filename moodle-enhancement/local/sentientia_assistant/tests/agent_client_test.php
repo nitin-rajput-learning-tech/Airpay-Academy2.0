@@ -63,7 +63,11 @@ final class agent_client_test extends \advanced_testcase {
         set_config('api_key', '', 'local_sentientia_assistant');
         $r = agent_client::call_live('enrol me', '', $this->all_schemas());
         $this->assertSame('failed', $r['mode']);
-        $this->assertSame('api_key_not_set', $r['error']);
+        // Since 676df829f the no-spend guard answers first under PHPUnit, before
+        // the api_key check, so a test run can never reach 'api_key_not_set' --
+        // and must not: that path is one step from a paid vendor call. What a
+        // test CAN assert is that the live path fails fast without a request.
+        $this->assertSame('live_blocked_in_tests', $r['error']);
     }
 
     public function test_system_prompt_pins_proposal_contract(): void {

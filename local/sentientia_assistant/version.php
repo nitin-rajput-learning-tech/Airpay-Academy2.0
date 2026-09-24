@@ -8,7 +8,7 @@ $plugin->component = 'local_sentientia_assistant';
 // has never POSTed to a live AI provider (F-017/F-018 finding). Stamped
 // ALPHA until either (a) the assistant becomes a first-class chat surface,
 // or (b) it's archived/removed.
-$plugin->version   = 2026092201;  // no functional change vs 2026080500 -- 951b20982 wrongly replaced a real provider; restored 2026-09-24. Kept so upgraded sites do not see a downgrade.
+$plugin->version   = 2026092201;  // privacy provider restored to its 2026080500 form (951b20982 wrongly replaced it); ai_client + agent_client gained the PHPUnit no-spend guard (676df829f). Kept so upgraded sites see no downgrade.
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_ALPHA;
 $plugin->release   = '1.2.2-alpha';

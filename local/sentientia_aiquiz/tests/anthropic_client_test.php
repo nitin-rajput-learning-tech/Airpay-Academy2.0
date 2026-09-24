@@ -76,7 +76,11 @@ final class anthropic_client_test extends \advanced_testcase {
 
         $result = anthropic_client::call_live("src", 5, anthropic_client::DEFAULT_MODEL);
         $this->assertSame('failed', $result['mode']);
-        $this->assertSame('api_key_not_set', $result['error']);
+        // Since 676df829f the no-spend guard answers first under PHPUnit, before
+        // the api_key check, so a test run can never reach 'api_key_not_set' --
+        // and must not: that path is one step from a paid vendor call. What a
+        // test CAN assert is that the live path fails fast without a request.
+        $this->assertSame('live_blocked_in_tests', $result['error']);
         $this->assertSame('', $result['body']);
     }
 
@@ -162,6 +166,10 @@ final class anthropic_client_test extends \advanced_testcase {
         $promptctx = ['version' => prompt_builder::VERSION_V2_HINDI, 'template' => 'X'];
         $result = anthropic_client::call_live('src', 5, anthropic_client::DEFAULT_MODEL, $promptctx);
         $this->assertSame('failed', $result['mode']);
-        $this->assertSame('api_key_not_set', $result['error']);
+        // Since 676df829f the no-spend guard answers first under PHPUnit, before
+        // the api_key check, so a test run can never reach 'api_key_not_set' --
+        // and must not: that path is one step from a paid vendor call. What a
+        // test CAN assert is that the live path fails fast without a request.
+        $this->assertSame('live_blocked_in_tests', $result['error']);
     }
 }
