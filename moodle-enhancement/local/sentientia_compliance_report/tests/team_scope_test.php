@@ -194,6 +194,27 @@ final class team_scope_test extends \advanced_testcase {
         $this->assertFalse($scope->can_configure());
     }
 
+    public function test_a_manager_whose_direct_reports_left_still_sees_the_team_below(): void {
+        // M3's only direct report has left; someone still reports to that person.
+        $this->person('M3', '/1/5', 'CEO');
+        $this->person('Gone', '/1/5', 'M3', true);
+        $this->person('E5', '/1/5', 'Gone');
+
+        $scope = viewer_scope::for_user($this->p['M3']);
+
+        $this->assertNotNull($scope, 'Admission follows the reporting tree, not active direct reports.');
+        $this->assertSame(viewer_scope::LEVEL_TEAM, $scope->level);
+        $this->assertSame($this->ids('E5'), $this->sorted($scope->userids));
+    }
+
+    public function test_a_manager_with_nobody_below_is_refused(): void {
+        $this->person('M4', '/1/5', 'CEO');
+        $this->person('Left', '/1/5', 'M4', true);
+
+        $this->assertNull(viewer_scope::for_user($this->p['M4']));
+        $this->assertSame(viewer_scope::REFUSED_NO_ACCESS, viewer_scope::refusal_reason($this->p['M4']));
+    }
+
     public function test_a_report_viewer_keeps_tenant_scope(): void {
         $this->grant('Peer', 'moodle/site:viewreports', \context_system::instance());
 
@@ -309,7 +330,15 @@ final class team_scope_test extends \advanced_testcase {
         // 6 people, 7 assignments (E1 has two).
         $this->assertEquals(7, compliance_engine::get_summary_kpis('/1', $team)['total']);
 
-        // One row per overdue ASSIGNMENT: E1 appears twice.
+        // One row per overdue ASSIGNMENT: E1 appears twice. POSH is also listed
+        // for entity 1 now: the old JOIN on local_compliance_courses returned
+        // one row per listing, so every POSH defaulter would have doubled.
+        global $DB;
+        $DB->insert_record('local_compliance_courses', (object) [
+            'courseid' => 5001, 'coursename' => 'POSH', 'costcenterid' => 1, 'is_active' => 1,
+            'sort_order' => 5003, 'deadline_days' => 30, 'createdby' => 0,
+            'timecreated' => time(), 'timemodified' => time(),
+        ]);
         $defaulters = compliance_engine::get_defaulters('/1', 100, $team);
         $this->assertCount(7, $defaulters);
         $this->assertSame($teamids, $this->sorted(array_unique(array_column($defaulters, 'userid'))));

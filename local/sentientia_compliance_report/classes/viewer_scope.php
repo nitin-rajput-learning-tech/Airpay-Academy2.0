@@ -82,8 +82,11 @@ final class viewer_scope {
         }
 
         if ($level === self::LEVEL_TEAM) {
-            return new self(self::LEVEL_TEAM, $orgpath,
-                compliance_engine::get_reporting_tree((int) $user->id, $orgpath));
+            // Admission follows the tree, not the direct reports: a manager
+            // whose direct reports have all left, but who still has people
+            // further down, sees them. Nobody below them at all -> no access.
+            $tree = compliance_engine::get_reporting_tree((int) $user->id, $orgpath);
+            return $tree ? new self(self::LEVEL_TEAM, $orgpath, $tree) : null;
         }
         return new self(self::LEVEL_TENANT, $orgpath, null);
     }
@@ -134,6 +137,12 @@ final class viewer_scope {
         if (permission::can_export($userid)) {
             return self::LEVEL_TENANT;
         }
+        // A candidate line manager: anyone with a direct report, whatever that
+        // report's status. for_user() admits them only if their reporting tree
+        // (which walks through deleted and suspended middle managers) holds
+        // somebody. Until 2026-09-24 this needed an ACTIVE direct report, so a
+        // manager whose direct reports had all left was refused although
+        // active people still reported to them further down.
         if (self::has_direct_reports($userid)) {
             return self::LEVEL_TEAM;
         }
@@ -205,7 +214,7 @@ final class viewer_scope {
     }
 
     /**
-     * Whether anyone (active and not deleted) reports directly to this user.
+     * Whether anyone - in any status - reports directly to this user.
      */
     private static function has_direct_reports(int $userid): bool {
         global $DB;
@@ -213,7 +222,6 @@ final class viewer_scope {
         if (!$dbman->field_exists(new \xmldb_table('user'), new \xmldb_field('open_supervisorid'))) {
             return false;
         }
-        return $DB->record_exists_select('user',
-            'open_supervisorid = :uid AND deleted = 0 AND suspended = 0', ['uid' => $userid]);
+        return $DB->record_exists('user', ['open_supervisorid' => $userid]);
     }
 }

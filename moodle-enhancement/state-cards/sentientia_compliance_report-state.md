@@ -312,3 +312,10 @@ dropdowns' per-BU user counts are tenant-wide. They are aggregate counts, not pe
   - seeds a real org tree, so the scorecard and dropdown assertions run;
   - covers role 9 at a category, precedence, the tenant-level no-tenant refusal, the clamp, two-course
     defaulters and the left-manager group.
+
+**Delta review of a147145cf** (5 agents): the 16 fixes held, and all 17 tests are predicted to pass on MariaDB and PostgreSQL. Two follow-ups are now fixed:
+
+- Team admission followed ACTIVE direct reports while the tree walks through people who have left. A manager whose direct reports had all left was refused, although active people reported to them further down; 6 such users are in the imported data. Admission now follows the tree: any direct report qualifies as a candidate, and an empty tree is refused (`noaccess`).
+- The defaulters test now proves the course-name subquery stops row multiplication.
+
+Noted, not changed: the CI PostgreSQL PHPUnit job uses pre-5.1 paths (no `public/`), so it cannot run these tests yet.
