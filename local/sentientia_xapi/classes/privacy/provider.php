@@ -156,7 +156,14 @@ class provider implements
         $DB->set_field('local_sentientia_xapi_cmi5', 'sessionid', null, ['userid' => $userid]);
     }
 
-    /** Replace the actor JSON of this user's statements - and only theirs. */
+    /**
+     * Replace the actor JSON of this user's statements - and only theirs.
+     *
+     * "Theirs" is actorid = $userid, which is only as trustworthy as
+     * \local_sentientia_xapi\lrs\store::resolve_actor_userid(): since
+     * 2026-09-24 it maps an LRS-posted actor to a local user only on this
+     * site's account homePage and only inside the posting client's tenant.
+     */
     private static function redact_actor(int $userid): void {
         global $DB;
         $DB->set_field('local_sentientia_xapi_stmts', 'actor',

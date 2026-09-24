@@ -183,9 +183,10 @@ if ($method === 'POST' || $method === 'PUT') {
 
         $stmt_obj = new statement($stmt_data);
 
-        // Resolve actor to Moodle userid.
+        // Resolve actor to Moodle userid - only a user inside the posting
+        // client's tenant (costcenterid 0 = platform credential, any tenant).
         $actor_data = $stmt_data['actor'] ?? [];
-        $actorid    = $lrs->resolve_actor_userid($actor_data);
+        $actorid    = $lrs->resolve_actor_userid($actor_data, $costcenterid);
 
         // Store.
         $uuid         = $lrs->put($stmt_obj, $costcenterid, $actorid, store::SOURCE_LRS);

@@ -256,44 +256,101 @@ class store {
     /**
      * Resolve an actor to a Moodle user id.
      *
-     * Tries in order:
-     *   1. account IFI — name matches user.id (Sentientia-native pattern)
+     * Tries in order (the validator admits exactly one IFI per Agent):
+     *   1. account IFI — name matches user.id (Sentientia-native pattern),
+     *      and ONLY when account.homePage is this site: the homePage
+     *      statement::build_actor() emits, rtrim($CFG->wwwroot, '/'). An
+     *      account name is unique only within its homePage (xAPI 1.0.3
+     *      Account Object), so {homePage: https://partner-lms.example,
+     *      name: "42"} is somebody on another system, not our user 42.
      *   2. mbox IFI — strips mailto: and looks up by email
      *   3. openid IFI — looks up by idnumber
      *
-     * Returns null when no match is found (external actor).
+     * A tenant-scoped LRS client ($costcenterid > 0) can only attribute a
+     * statement to a user inside its own tenant: a candidate whose open_path
+     * is outside /<costcenterid>, or empty, does not resolve. A platform
+     * credential ($costcenterid = 0) may resolve to any user.
      *
-     * @param array $actor xAPI actor array.
+     * Returns null when no match is found (external actor), and also when
+     * an email or idnumber matches more than one live user: Moodle keeps
+     * neither unique, and picking one would file the statement under the
+     * wrong person.
+     *
+     * Why this is strict (2026-09-24): actorid is what the privacy provider
+     * exports and erases by. Before this, a client could post any account
+     * homePage, or the email of a user in another tenant, and the statement
+     * was filed under that local user, so erasing them overwrote the actor
+     * of a statement about somebody else, possibly in another tenant.
+     *
+     * @param array $actor        xAPI actor array.
+     * @param int   $costcenterid Tenant root of the posting LRS client
+     *                            (0 = platform credential, any tenant).
      * @return int|null
      */
-    public function resolve_actor_userid(array $actor): ?int {
-        global $DB;
+    public function resolve_actor_userid(array $actor, int $costcenterid): ?int {
+        global $CFG;
 
-        // Account IFI — Sentientia uses user.id as account.name.
-        if (!empty($actor['account']['name']) && ctype_digit((string) $actor['account']['name'])) {
-            $uid = (int) $actor['account']['name'];
-            if ($DB->record_exists('user', ['id' => $uid, 'deleted' => 0])) {
+        // Account IFI — Sentientia uses user.id as account.name, on this site's homePage.
+        $account = $actor['account'] ?? null;
+        if (is_array($account)
+                && isset($account['homePage'], $account['name'])
+                && is_string($account['homePage'])
+                && rtrim($account['homePage'], '/') === rtrim($CFG->wwwroot, '/')
+                && (is_string($account['name']) || is_int($account['name']))
+                && ctype_digit((string) $account['name'])) {
+            $uid = $this->find_single_user('id = :uid', ['uid' => (int) $account['name']], $costcenterid);
+            if ($uid !== null) {
                 return $uid;
             }
         }
 
         // mbox IFI.
-        if (!empty($actor['mbox']) && strpos($actor['mbox'], 'mailto:') === 0) {
+        if (!empty($actor['mbox']) && is_string($actor['mbox']) && strpos($actor['mbox'], 'mailto:') === 0) {
             $email = substr($actor['mbox'], 7);
-            $user  = $DB->get_record('user', ['email' => $email, 'deleted' => 0], 'id');
-            if ($user) {
-                return (int) $user->id;
+            if ($email !== '') {
+                $uid = $this->find_single_user('email = :email', ['email' => $email], $costcenterid);
+                if ($uid !== null) {
+                    return $uid;
+                }
             }
         }
 
         // openid IFI.
-        if (!empty($actor['openid'])) {
-            $user = $DB->get_record('user', ['idnumber' => (string) $actor['openid'], 'deleted' => 0], 'id');
-            if ($user) {
-                return (int) $user->id;
+        if (!empty($actor['openid']) && is_string($actor['openid'])) {
+            $uid = $this->find_single_user('idnumber = :idnumber', ['idnumber' => $actor['openid']], $costcenterid);
+            if ($uid !== null) {
+                return $uid;
             }
         }
 
         return null;
+    }
+
+    /**
+     * The one live user matching $where, inside tenant $costcenterid when > 0.
+     *
+     * @param string $where        SQL fragment on {user}, named params only.
+     * @param array  $params       Its parameters.
+     * @param int    $costcenterid Tenant root (0 = any tenant).
+     * @return int|null  null when nobody, or more than one user, matches.
+     */
+    private function find_single_user(string $where, array $params, int $costcenterid): ?int {
+        global $DB;
+
+        $where = "deleted = 0 AND {$where}";
+        if ($costcenterid > 0) {
+            if (!class_exists('\local_sentientia_platform\tenant')) {
+                // Tenant membership cannot be checked: resolve nobody rather than anybody.
+                return null;
+            }
+            [$tsql, $tparams] = \local_sentientia_platform\tenant::path_descendant_filter(
+                '/' . $costcenterid, '', 'open_path', 'xapiactor');
+            $where  .= " AND {$tsql}";
+            $params += $tparams;
+        }
+
+        // Two rows are enough to tell "exactly one" from "ambiguous".
+        $users = $DB->get_records_select('user', $where, $params, 'id', 'id', 0, 2);
+        return count($users) === 1 ? (int) reset($users)->id : null;
     }
 }
