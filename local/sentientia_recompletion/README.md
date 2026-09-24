@@ -81,10 +81,16 @@ php "C:/xampp/htdocs/moodle5/admin/cli/scheduled_task.php" \
 ## Privacy / GDPR
 
 `classes/privacy/provider.php`:
-- History rows store `userid` + `courseid` + `timecreated` + flags.
-- DSR `delete_data_for_user` redacts `userid → null` (the row is kept for
-  the compliance audit — legal hold — but the user reference is dropped).
+- History rows store `userid` + `courseid` + `timecreated` + flags, plus
+  `reset_by_userid` (the admin who pressed reset; NULL for cron).
+- DSR `delete_data_for_user` (core's erasure) redacts `userid → 0` (the row
+  is kept for the compliance audit — legal hold — but the user reference is
+  dropped) and anonymises `reset_by_userid → 0`.
 - DSR `delete_data_for_users` bulk variant.
+- Sentientia DPDP erasure (`local_sentientia_privacy`) calls
+  `anonymise_data_for_user` instead (2026-09-24): the history stays keyed to
+  the anonymised user row — after a reset it is the only evidence of each
+  earlier cycle's completion — and only `reset_by_userid` is anonymised.
 
 ## Idempotency
 

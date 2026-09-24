@@ -82,6 +82,39 @@ class provider implements
             "userid $insql", $inparams);
     }
 
+    /**
+     * Sentientia DPDP erasure (local_sentientia_privacy\privacy_manager): erase
+     * this user's personal data but KEEP the learning/compliance records that
+     * flow promises to retain, still keyed to the user row it anonymises in
+     * place. Called instead of delete_data_for_user() when present; core's
+     * privacy API never calls it, so delete_data_for_user() above stays the
+     * full erasure.
+     *
+     * Table-by-table (2026-09-24):
+     *   - local_sentientia_programs_users: KEEP, unchanged. It is the
+     *     certification-program enrolment AND completion record (status 2 =
+     *     completed, with timecompleted; currentlevelid is how far the person
+     *     got). A certification is exactly what an auditor asks to see after
+     *     the person has gone, and the flow keeps the core course completions
+     *     it was earned from, so deleting it here would leave those orphaned
+     *     from the certificate they add up to. Every column is record data
+     *     (ids, a status code, timestamps); there is no free text to blank.
+     *   - local_sentientia_programs, _levels, _courses: program definitions
+     *     with no user column. Nothing to erase or keep.
+     *
+     * So the body is deliberately empty: the method's existence is what stops
+     * the DPDP flow calling delete_data_for_user() and destroying the
+     * certification record.
+     */
+    public static function anonymise_data_for_user(approved_contextlist $contextlist) {
+        if (!self::has_system_context($contextlist)) {
+            return;
+        }
+        // Nothing to erase: see the table-by-table note above. If a
+        // free-text or contact column is ever added to programs_users, blank
+        // it here rather than deleting the row.
+    }
+
     private static function has_system_context(approved_contextlist $contextlist): bool {
         foreach ($contextlist->get_contexts() as $c) {
             if ($c->contextlevel === CONTEXT_SYSTEM) return true;

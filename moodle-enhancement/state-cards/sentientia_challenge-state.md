@@ -256,3 +256,29 @@ what remains.
 agree. Lang-string change only: no version bump is needed, and the deploy's cache purge picks it up.
 Part of the 36-plugin rename that makes Site administration > Plugins show no customer brand on a
 white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after the payment company.
+
+
+## 2026-09-24 - DPDP erasure audit: challenge data is erased, deliberately
+
+**Audit.** `local_sentientia_privacy\privacy_manager::process_deletion()` (the DPDP
+right-to-erasure flow) calls a Sentientia provider's `anonymise_data_for_user()` when it has
+one, to KEEP learning and compliance records, and `delete_data_for_user()` otherwise. This
+provider has no anonymise hook. Audited table by table; the conclusion is that it should not
+have one, so NO behaviour change:
+- `local_sentientia_challenge_attempts`: ERASED. Voluntary gamification opt-in, not a learning
+  or compliance record. The learner can delete their own row at any time
+  (`challenge_engine::leave()`, even after completing); `progress` is only a count derived from
+  core data (course completions, quiz attempts, course-access days) that the flow keeps in core
+  tables. The flow's Step 2 already erases the rest of gamification (points log, badges,
+  streaks). Keeping the rows would also put "Deleted User" back on the leaderboard:
+  `leaderboard_manager` rebuilds it from attempts every 15 minutes with no deleted-user filter.
+- `local_sentientia_challenge_leaderboard`: ERASED. Derived; recomputed from attempts.
+- `local_sentientia_challenge_challenges` (author): KEPT, `createdby` anonymised to 0 and
+  `open_path` cleared. Tenant scoping reads `costcenterid`, which is untouched.
+
+**Change.** The decision is documented in the provider's class comment, and pinned by
+`tests/privacy_anonymise_test.php` (no anonymise hook; only the subject's rows go; the shared
+challenge survives in the same tenant; the erased person does not return after the leaderboard
+rebuild). Written, not yet run (shared test DB being rebuilt). Comment + test only: no version
+bump. Both trees. If attempts are ever to be kept, make the leaderboard rebuild skip deleted
+users first.
