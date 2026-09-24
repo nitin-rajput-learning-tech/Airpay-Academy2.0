@@ -73,8 +73,15 @@ class provider implements
     }
 
     public static function get_contexts_for_userid(int $userid): contextlist {
+        global $DB;
         $contextlist = new contextlist();
-        $contextlist->add_system_context();
+        // Only for someone this plugin holds data about - the author or the
+        // reviewer of a draft. It used to be everyone, so every DPDP erasure
+        // ran this provider; and 0 is the anonymised author, never a person.
+        if ($userid > 0 && $DB->record_exists_select('local_sentientia_aiquiz_draft',
+                'ownerid = :owner OR reviewed_by = :reviewer', ['owner' => $userid, 'reviewer' => $userid])) {
+            $contextlist->add_system_context();
+        }
         return $contextlist;
     }
 
@@ -84,9 +91,9 @@ class provider implements
         if (!$context instanceof \context_system) {
             return;
         }
-        $sql = "SELECT DISTINCT ownerid AS userid FROM {local_sentientia_aiquiz_draft}";
+        $sql = "SELECT DISTINCT ownerid AS userid FROM {local_sentientia_aiquiz_draft} WHERE ownerid > 0";
         $userlist->add_from_sql('userid', $sql, []);
-        $sql2 = "SELECT DISTINCT reviewed_by AS userid FROM {local_sentientia_aiquiz_draft} WHERE reviewed_by IS NOT NULL";
+        $sql2 = "SELECT DISTINCT reviewed_by AS userid FROM {local_sentientia_aiquiz_draft} WHERE reviewed_by > 0";
         $userlist->add_from_sql('userid', $sql2, []);
     }
 

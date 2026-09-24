@@ -276,7 +276,10 @@ class translate_engine {
         }
         if (!$manageall) {
             $actorroot = self::tenant_root_for($actor);
-            if ((int)$row->ownerid !== (int)$actor->id
+            // ownerid 0 is an erased (anonymised) author: it must never make a
+            // caller whose id is 0 (CLI, not logged in) the owner (2026-09-24).
+            $isowner = (int)$actor->id > 0 && (int)$row->ownerid === (int)$actor->id;
+            if (!$isowner
                 && (int)$row->costcenterid !== $actorroot) {
                 return null;
             }
@@ -300,7 +303,7 @@ class translate_engine {
         $tenant = self::tenant_root_for($actor);
         return array_values($DB->get_records_sql(
             "SELECT * FROM {" . self::TABLE . "}
-              WHERE ownerid = :uid OR costcenterid = :cid
+              WHERE (ownerid = :uid AND ownerid > 0) OR costcenterid = :cid
            ORDER BY timecreated DESC",
             ['uid' => (int)$actor->id, 'cid' => $tenant],
             0, $limit

@@ -340,7 +340,10 @@ class draft_manager {
             // including the draft's own owner, was denied. Masked in QA by
             // admin accounts holding :manage_all; surfaced the first time
             // this test ran past the (also fixed) open_path fatal.
-            if ((int)$draft->ownerid !== (int)$actor->id
+            // ownerid 0 is an erased (anonymised) author: it must never make a
+            // caller whose id is 0 (CLI, not logged in) the owner (2026-09-24).
+            $isowner = (int)$actor->id > 0 && (int)$draft->ownerid === (int)$actor->id;
+            if (!$isowner
                 && (int)$draft->costcenterid !== $actorroot) {
                 return null;
             }
@@ -370,7 +373,7 @@ class draft_manager {
         $tenant = self::tenant_root_for($actor);
         return array_values($DB->get_records_sql(
             "SELECT * FROM {" . self::DRAFT_TABLE . "}
-              WHERE ownerid = :uid OR costcenterid = :cid
+              WHERE (ownerid = :uid AND ownerid > 0) OR costcenterid = :cid
            ORDER BY timecreated DESC",
             ['uid' => (int)$actor->id, 'cid' => $tenant],
             0, $limit

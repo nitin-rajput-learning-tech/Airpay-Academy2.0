@@ -196,3 +196,7 @@ canonical → copied over the stale open_path parse).
 Erasing an author deleted their `tr_log` rows. Those are tenant-shared translations that other admins are still reviewing, and their token counts drive the daily cost cap. `ownerid` is now anonymised to 0, and `get_users_in_context()` ignores `ownerid` 0.
 
 Found by a read-only audit of all 38 Sentientia privacy providers, run because `local_sentientia_privacy\privacy_manager::process_deletion()` now calls every one of them. Class change only: no version bump. Covered by `local_sentientia_privacy\erasure_scope_test` / `privacy_manager_test`.
+
+## 2026-09-24 - An anonymised author (ownerid 0) owns nothing
+
+Since this morning's erasure fix, erasing an author keeps their rows with ownerid 0. Two gaps followed from that and are now closed. (1) `load_for_actor()` / `list_for_actor()` matched `ownerid = actor id`, so a caller whose id is 0 (CLI, or not logged in) became the owner of every erased author's rows in every tenant; the owner match now requires an actor id above 0. The tenant (costcenterid) match still shows those rows to their own tenant. (2) The privacy provider reported the system context for EVERY user; it now does so only for people with rows, never for 0, and `get_users_in_context()` skips 0. Found by the authoring implementer while fixing the same pattern there. Covered by `tests/anonymised_owner_test.php`.

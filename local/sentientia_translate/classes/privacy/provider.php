@@ -64,8 +64,13 @@ class provider implements
     }
 
     public static function get_contexts_for_userid(int $userid): contextlist {
+        global $DB;
         $contextlist = new contextlist();
-        $contextlist->add_system_context();
+        // Only for an author with rows here (it used to be everyone); 0 is the
+        // anonymised author, never a person.
+        if ($userid > 0 && $DB->record_exists('local_sentientia_tr_log', ['ownerid' => $userid])) {
+            $contextlist->add_system_context();
+        }
         return $contextlist;
     }
 
