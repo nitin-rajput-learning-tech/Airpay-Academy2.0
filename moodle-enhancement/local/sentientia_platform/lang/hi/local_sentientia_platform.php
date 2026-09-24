@@ -116,3 +116,42 @@ $string['privacy:metadata:flag_audit:old_value']        = 'परिवर्त
 $string['privacy:metadata:flag_audit:new_value']        = 'परिवर्तन के बाद फ़्लैग का मान';
 $string['privacy:metadata:flag_audit:reason']           = 'परिवर्तन के लिए दर्ज कारण';
 $string['privacy:metadata:flag_audit:timecreated']      = 'परिवर्तन कब किया गया';
+
+// Privacy provider (2026-09-24) — the ADR-017 user-type tables. Erasure
+// deletes the person's own rows and clears the manager link on anyone
+// else's profile that names them.
+$string['privacy:metadata:user_type']                     = 'प्रत्येक व्यक्ति का खाता प्रकार (कर्मचारी, उपभोक्ता, साझेदार कर्मचारी या ऑपरेटर), जो खाता बनाते समय दर्ज किया जाता है';
+$string['privacy:metadata:user_type:userid']              = 'वह व्यक्ति जिसका यह खाता प्रकार है';
+$string['privacy:metadata:user_type:user_type']           = 'खाता प्रकार';
+$string['privacy:metadata:user_type:provisioning_source'] = 'खाता कैसे बनाया गया, उदाहरण के लिए सार्वजनिक साइनअप या HR सिंक';
+$string['privacy:metadata:user_type:provisioned_at']      = 'खाता कब बनाया गया';
+$string['privacy:metadata:employee_profile']                  = 'ग्राहक संगठन के कर्मचारियों की कर्मचारी प्रोफ़ाइल';
+$string['privacy:metadata:employee_profile:userid']           = 'वह कर्मचारी जिसकी यह प्रोफ़ाइल है';
+$string['privacy:metadata:employee_profile:employee_id']      = 'कर्मचारी संख्या';
+$string['privacy:metadata:employee_profile:department']       = 'विभाग';
+$string['privacy:metadata:employee_profile:job_title']        = 'पद का नाम';
+$string['privacy:metadata:employee_profile:manager_userid']   = 'वह व्यक्ति जो कर्मचारी के प्रबंधक के रूप में दर्ज है';
+$string['privacy:metadata:employee_profile:hire_date']        = 'कर्मचारी के कार्यभार ग्रहण करने की तिथि';
+$string['privacy:metadata:employee_profile:cost_center_path'] = 'खाता बनाते समय कर्मचारी जिस संगठन इकाई में था';
+$string['privacy:metadata:consumer_profile']                     = 'सार्वजनिक रूप से साइनअप करने वाले शिक्षार्थी की प्रोफ़ाइल';
+$string['privacy:metadata:consumer_profile:userid']              = 'वह शिक्षार्थी जिसकी यह प्रोफ़ाइल है';
+$string['privacy:metadata:consumer_profile:interests_json']      = 'शिक्षार्थी द्वारा चुने गए विषय';
+$string['privacy:metadata:consumer_profile:weekly_goal']         = 'शिक्षार्थी का साप्ताहिक सीखने का लक्ष्य';
+$string['privacy:metadata:consumer_profile:referral_source']     = 'शिक्षार्थी को प्लेटफ़ॉर्म के बारे में कैसे पता चला';
+$string['privacy:metadata:consumer_profile:consent_marketing']   = 'क्या शिक्षार्थी ने मार्केटिंग संदेश प्राप्त करने की सहमति दी';
+$string['privacy:metadata:consumer_profile:consent_leaderboard'] = 'क्या शिक्षार्थी ने लीडरबोर्ड पर दिखने की सहमति दी';
+$string['privacy:metadata:consumer_profile:payment_history_url'] = 'शिक्षार्थी के भुगतान इतिहास का लिंक';
+$string['privacy:metadata:partner_employee_profile']                        = 'साझेदार संगठन के कर्मचारियों की प्रोफ़ाइल';
+$string['privacy:metadata:partner_employee_profile:userid']                 = 'वह व्यक्ति जिसकी यह प्रोफ़ाइल है';
+$string['privacy:metadata:partner_employee_profile:customer_id']            = 'वह साझेदार संगठन जिसके लिए व्यक्ति काम करता है';
+$string['privacy:metadata:partner_employee_profile:partner_employee_id']    = 'साझेदार संगठन में व्यक्ति की कर्मचारी संख्या';
+$string['privacy:metadata:partner_employee_profile:partner_department']     = 'साझेदार संगठन में व्यक्ति का विभाग';
+$string['privacy:metadata:partner_employee_profile:partner_job_title']      = 'साझेदार संगठन में व्यक्ति का पद का नाम';
+$string['privacy:metadata:partner_employee_profile:partner_manager_userid'] = 'वह व्यक्ति जो साझेदार संगठन में उनके प्रबंधक के रूप में दर्ज है';
+$string['privacy:metadata:partner_employee_profile:partner_hire_date']      = 'व्यक्ति के साझेदार संगठन में कार्यभार ग्रहण करने की तिथि';
+$string['privacy:metadata:partner_employee_profile:cost_center_path']       = 'खाता बनाते समय व्यक्ति जिस संगठन इकाई में था';
+$string['privacy:metadata:operator_profile']                        = 'साइट व्यवस्थापकों और सहायता कर्मचारियों जैसे प्लेटफ़ॉर्म ऑपरेटरों की प्रोफ़ाइल';
+$string['privacy:metadata:operator_profile:userid']                 = 'वह ऑपरेटर जिसकी यह प्रोफ़ाइल है';
+$string['privacy:metadata:operator_profile:operator_role']          = 'ऑपरेटर की भूमिका';
+$string['privacy:metadata:operator_profile:contact_phone']          = 'ऑपरेटर का संपर्क फ़ोन नंबर';
+$string['privacy:metadata:operator_profile:oncall_for_customer_id'] = 'वह ग्राहक संगठन जिसके लिए ऑपरेटर ऑन-कॉल है';

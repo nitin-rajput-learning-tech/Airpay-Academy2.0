@@ -27,6 +27,8 @@ use core_privacy\local\metadata\collection;
  * reviewing the five is not a fix. This test walks the install.xml of every
  * Sentientia plugin on disk and fails the build if a plugin that declares a
  * user-identifying column also declares null_provider or declares no provider.
+ * Since 2026-09-24 it also reads tables a plugin creates at runtime and lists
+ * in a classes/schema/*::TABLES constant (see runtime_user_tables()).
  *
  * It is intentionally structural rather than a fixed allowlist: a NEW plugin
  * that ships a userid table and a copy-pasted null_provider fails here on its
@@ -55,6 +57,9 @@ final class privacy_coverage_test extends \advanced_testcase {
         // than guessing the names. Every one of these turned out to be a real
         // actor reference on a live table.
         'changed_by', 'assigned_by_userid', 'reviewed_by',
+        // 2026-09-24: the ADR-017 employee / partner-employee profiles name
+        // the person's manager. Only local_sentientia_platform uses them.
+        'manager_userid', 'partner_manager_userid',
     ];
 
     /**
@@ -125,6 +130,75 @@ final class privacy_coverage_test extends \advanced_testcase {
         return $found;
     }
 
+    /**
+     * Tables a plugin creates from PHP rather than install.xml, with their
+     * user columns.
+     *
+     * Added 2026-09-24. local_sentientia_platform's five ADR-017 user-type
+     * tables are created by classes/schema/user_type_tables.php (called from
+     * db/install.php and an upgrade step). The moodle-enhancement tree's
+     * install.xml does not list them, so the install.xml scan could not see
+     * them, and a public-signup learner's consumer profile survived a DPDP
+     * erasure reported as 'completed'.
+     *
+     * Convention: a plugin that creates tables at runtime lists them in a
+     * public TABLES constant on a class under classes/schema/. Only tables
+     * listed that way are considered - nothing is guessed from PHP source,
+     * which is what keeps this free of false positives - and their columns
+     * are read from the live schema, so a listed table with no user column
+     * requires nothing. A listed table absent from this database is skipped
+     * because its columns are unknown; the owning plugin's own test covers it
+     * (local_sentientia_platform\privacy_provider_test creates the user-type
+     * tables through the same ensure() the installer uses).
+     *
+     * @param string $plugindir
+     * @param string $component
+     * @return array<string,string[]> table => user columns
+     */
+    private function runtime_user_tables(string $plugindir, string $component): array {
+        global $DB;
+        $dbman = $DB->get_manager();
+        $found = [];
+
+        foreach (glob($plugindir . '/classes/schema/*.php') ?: [] as $file) {
+            $class = '\\' . $component . '\\schema\\' . basename($file, '.php');
+            if (!class_exists($class)) {
+                continue;
+            }
+            $reflection = new \ReflectionClass($class);
+            if (!$reflection->hasConstant('TABLES')) {
+                continue;
+            }
+            foreach ((array) $reflection->getConstant('TABLES') as $table) {
+                if (!is_string($table) || !$dbman->table_exists($table)) {
+                    continue;
+                }
+                $cols = array_values(array_intersect(
+                    array_keys($DB->get_columns($table)), self::USER_COLUMNS));
+                if (!empty($cols)) {
+                    $found[$table] = $cols;
+                }
+            }
+        }
+
+        return $found;
+    }
+
+    /**
+     * Every table with a user column that a plugin owns: its install.xml
+     * tables plus its runtime-created ones. Where both list a table (the
+     * top-level local/ tree's platform install.xml also carries the user-type
+     * tables) the install.xml entry is kept; it names the same columns.
+     *
+     * @param string $plugindir
+     * @param string $component
+     * @return array<string,string[]> table => user columns
+     */
+    private function all_user_tables(string $plugindir, string $component): array {
+        return $this->user_tables($plugindir)
+            + $this->runtime_user_tables($plugindir, $component);
+    }
+
     public function test_no_plugin_holding_user_data_declares_null_provider(): void {
         $root = $this->local_root();
         $this->assertDirectoryExists($root);
@@ -140,7 +214,7 @@ final class privacy_coverage_test extends \advanced_testcase {
                 continue;
             }
 
-            $usertables = $this->user_tables($plugindir);
+            $usertables = $this->all_user_tables($plugindir, $component);
             if (empty($usertables)) {
                 continue;
             }
@@ -198,7 +272,7 @@ final class privacy_coverage_test extends \advanced_testcase {
                 continue;
             }
 
-            $usertables = $this->user_tables($plugindir);
+            $usertables = $this->all_user_tables($plugindir, $component);
             if (empty($usertables)) {
                 continue;
             }
