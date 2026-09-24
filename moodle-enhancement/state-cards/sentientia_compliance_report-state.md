@@ -209,13 +209,35 @@ bare identifier `error/nopermission`.
 - `index.php`: no single capability decides this gate - it mixes site admin, the retired
   `local/courses:manage`, role id 9 at category context, `moodle/site:viewreports` and the
   supervisor relationship - so naming one capability would be false. It now throws the new plugin
-  string `error_noaccess` (en + hi, both trees).
+  string `error_noaccess` (en + hi, both trees): "You do not have access to the compliance report.
+  It is open to compliance administrators, people who can view site reports, and managers with
+  people reporting to them." (Review pass: the first wording, "Only compliance administrators, and
+  managers ...", left out the `moodle/site:viewreports` way in that the gate honours.)
 
 Still open, not changed here (an access decision, not a message fix): `index.php` still asks
-`has_capability('local/courses:manage')`, which no shipped plugin declares, so that clause is dead
+`has_capability('local/courses:manage')`. BizLMS declares it (`local_courses/db/access.php`), so on a site that also runs BizLMS, as
+the current airpay.academy stack does, it grants to whoever holds it. Sentientia does not
+ship `local_courses`, so on UAT and on a fresh Sentientia install that clause is dead
 code that answers false with a debugging notice. The same retired name is what
 `permission::grant_export_to_default_roles()` step 1 keys on (see the analytics state card,
 2026-09-22).
 
 Version 2026092400. Guarded platform-wide by
 `local_sentientia_platform/tests/exception_strings_test.php`.
+
+**Found by the N5 review, pre-existing, NOT fixed here (each is an access decision):**
+
+- **High.** `index.php` runs the admin actions (`addcourse`, `removecourse`, `exclude`, `include`)
+  for every user who passes the view gate - any line manager with one direct report, any holder of
+  `moodle/site:viewreports`. Only `confirm_sesskey()` protects them, and that passes for the user's
+  own session. `compliance_engine::exclude_user()` / `include_user()` / `add_compliance_course()` /
+  `remove_compliance_course()` check nothing themselves and are not tenant-scoped, so a line manager
+  can POST `action=exclude&userid=<anyone, any tenant>` or deactivate a mandatory course site-wide.
+  Needs its own change: gate the actions on `is_siteadmin()` or a new manage capability, and clamp
+  to the tenant.
+- **Medium.** `index.php` and `export.php` scope with `tenant_manager::get_tenant_path()`, which
+  returns `''` for a non-admin whose `open_path` is empty or malformed, and
+  `get_compliance_matrix('')` reads that as the whole site (`clamp_filter_to_tenant('')` also
+  accepts any `?bu=`). Such a user sees or exports every tenant's matrix. Same defect analytics fixed
+  on 2026-09-22 (`visible_org_path()` returning null and the page refusing). Line managers are also
+  shown their whole tenant rather than their team.

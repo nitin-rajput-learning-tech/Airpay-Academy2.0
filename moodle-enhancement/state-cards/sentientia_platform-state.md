@@ -156,3 +156,28 @@ under a stub harness against both trees - both tests pass - and two mutants (a b
 deleted; a count raised) each failed with the intended message.
 
 Version 2026092400 (test-only change; no upgrade step).
+
+**Review pass (same day).**
+
+- The scanner now also reads `new required_capability_exception($context, $cap, '<key>', '<file>')`
+  - the form the test itself recommends - and checks `<key>` whenever `<file>` resolves to core.
+  Its constructor passes that pair to `moodle_exception` unchanged, so a singular `'nopermission'`
+  there renders `error/nopermission` exactly like N5 (core itself has that typo in places). The
+  first two arguments are arbitrary expressions, so arguments are split at depth zero rather than
+  read at fixed offsets. 7 such sites per tree today, all `'nopermissions'`: 53 checked sites in
+  each tree.
+- Fixture: fifteen shapes it must find, fourteen it must skip (added: three
+  `required_capability_exception` forms incl. nested calls, an interpolated capability and a
+  trailing comma; skipped: plugin file, dynamic key, dynamic file, too few arguments).
+- Verified under the stub harness against both trees: both tests pass. A planted
+  `required_capability_exception(..., 'nopermission', '')` fails the new scanner with the intended
+  message and passes the old one - the blind spot, demonstrated.
+- The docblock no longer calls the gate "BLOCKING": in CI the full PHPUnit run is still
+  `continue-on-error` and only `--group tenant_isolation` blocks, and no pre-commit check runs this.
+  Promoting it (a blocking group, or a standalone `tools/` gate that reads core `lang/en/error.php`)
+  is left until it has passed under real PHPUnit once - making a never-run test blocking could turn
+  CI red for the wrong reason.
+- Baseline unchanged (12 sites). Three of them show users the same `error/nopermission` as N5:
+  `local_sentientia_manager/member.php`, `local_sentientia_skills/index.php` and
+  `theme_sentientia/classes/output/core_renderer.php`. `theme_airpayux`'s `core_renderer.php` has the
+  same bug and is outside the scan (not a `sentientia*` component), so nothing flags it.

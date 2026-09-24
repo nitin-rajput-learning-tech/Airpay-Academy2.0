@@ -45,15 +45,19 @@ global $DB, $OUTPUT;
 
 if ($type === 'department') {
     $path = required_param('path', PARAM_TEXT);
-    // Security: validate path format.
-    $path = preg_replace('/[^0-9\/]/', '', $path);
+    // Security: validate path format. The trailing slash is dropped here, once.
+    // clamp_org_path() hands an unrestricted viewer's path back untrimmed, so
+    // comparing it with a trimmed copy refused '/1/15/' as "outside your
+    // access"; and get_department_users() matches open_path exactly, so an
+    // untrimmed path listed nobody.
+    $path = rtrim(preg_replace('/[^0-9\/]/', '', $path), '/');
 
     // Clamp to the viewer's own subtree. This listing releases every matched
     // user's name, email and last-login time, so an out-of-scope path is
     // refused outright rather than silently redirected to another department
     // -- a viewer must never be shown numbers labelled as one org that came
     // from another.
-    if (\local_sentientia_analytics\permission::clamp_org_path($path) !== rtrim($path, '/')) {
+    if (\local_sentientia_analytics\permission::clamp_org_path($path) !== $path) {
         throw new moodle_exception('error_outofscope', 'local_sentientia_analytics');
     }
 
@@ -61,8 +65,13 @@ if ($type === 'department') {
     $parts = explode('/', trim($path, '/'));
     $deptid = (int)end($parts);
     if ($deptid) {
-        $dept = $DB->get_record('local_sentientia_org', ['id' => $deptid], 'fullname');
-        $deptname = $dept ? format_string($dept->fullname) : 'Department #' . $deptid;
+        // Name the org only if it is the one AT this path. Org ids are global,
+        // so '/1/<an org of another tenant>' passes the clamp above (it is under
+        // '/1') and used to print that other tenant's department name in the
+        // heading, although the user list was empty.
+        $dept = $DB->get_record('local_sentientia_org', ['id' => $deptid], 'fullname, path');
+        $deptname = ($dept && rtrim((string) $dept->path, '/') === $path)
+            ? format_string($dept->fullname) : 'Department #' . $deptid;
     }
 
     $PAGE->set_title('Department Analytics: ' . $deptname);

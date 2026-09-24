@@ -211,3 +211,23 @@ strings). Guarded platform-wide by
 Not done here, noted for whoever next touches the predictive surfaces: the per-row name in the at-risk table
 is `format_string()`-ed in `predictive_engine` and then escaped again by `{{firstname}}`, so a name
 containing `&` shows as `&amp;`. Pre-existing, unrelated to N6.
+
+**Review pass (same day), two pre-existing `drilldown.php` defects fixed while the file was open:**
+
+- `?path=` is now `rtrim`-ed once, right after it is sanitised. `clamp_org_path()` returns an
+  unrestricted (`:viewallorgs`) viewer's path untrimmed, and the page compared that with a trimmed
+  copy, so `/1/15/` told a site-wide viewer the org was "outside your access" - which the new N5
+  message made actively misleading. `get_department_users()` matches `open_path` exactly, so an
+  untrimmed path also listed nobody.
+- The department heading names an org only if that org's own `path` is the requested path. Org
+  ids are global, so `?path=/1/<an org of another tenant>` passed the clamp (it is under `/1`) and
+  printed the other tenant's department name; the user list was already empty. An org whose `path`
+  is not populated now shows as "Department #id".
+
+Still open (pre-existing, not changed): with `type=course` the page prints any course's full name
+across tenants, and `MUST_EXIST` tells an existing course id from a missing one. The top-level tree's
+`templates/dashboard.mustache` includes `predictive_atrisk`, which exists only in the ME tree
+(baselined drift), so N6 takes effect only where the ME analytics tree is deployed, as on UAT.
+
+Covered by version 2026092401 (unreleased). Visual evidence for the "Learner" header and the four
+refusal messages is still owed from the UAT browser pass.

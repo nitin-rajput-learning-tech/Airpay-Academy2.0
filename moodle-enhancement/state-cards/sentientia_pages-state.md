@@ -166,12 +166,17 @@ white-label product. `paygw_airpay` keeps "Airpay", correctly: it is named after
 - `index.php` unknown `?page=` threw `moodle_exception('invalidpage', 'error')` - also not a core
   key, shown as `error/invalidpage`. Now core `invalidaccess`.
 
-**Open - capability undeclared.** `qr_attendance.php` gates on
-`local/classroom:takesessionattendance`, the pre-ADR-025 name. No shipped plugin declares it, so
-`has_capability()` answers false with a debugging notice and in practice **only site admins can
-display the attendance QR** - trainers cannot. The likely successor is
+**Open - capability undeclared where BizLMS is absent.** `qr_attendance.php` gates on
+`local/classroom:takesessionattendance`, the pre-ADR-025 BizLMS name. BizLMS `local_classroom`
+declares it (`db/access.php`, `CONTEXT_COURSECAT`, no archetype defaults), so on a site that also
+runs BizLMS, as the current airpay.academy stack does, it passes for whoever was explicitly granted
+it at system context. Sentientia does not ship `local_classroom`, so on UAT and on a fresh
+Sentientia install it is undeclared: `has_capability()` answers false with a debugging notice and
+**only site admins can display the attendance QR** - trainers cannot. The likely successor is
 `local/sentientia_classroom:attendance` (archetypes manager + editingteacher). Choosing it is an
-access decision for its own change; recorded in the code at the check.
+access decision for its own change; recorded in the code at the check. (The first version of this
+note said "no shipped plugin declares it"; corrected in the review pass, because the decision
+should not be made on that premise.)
 
 Version 2026092400. Guarded platform-wide by
 `local_sentientia_platform/tests/exception_strings_test.php`.

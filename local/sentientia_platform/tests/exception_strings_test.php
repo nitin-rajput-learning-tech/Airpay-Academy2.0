@@ -35,9 +35,15 @@ defined('MOODLE_INTERNAL') || die();
  *
  *     new moodle_exception('<literal key>'[, '' | 'error' | 'moodle' | 'core' | null ...])
  *     print_error('<literal key>'[, same])
+ *     new required_capability_exception($context, $capability, '<literal key>', <same>)
  *
  * - i.e. every call that resolves to core's error.php - and asserts the key
  * exists there, using the real string manager rather than a copy of the file.
+ *
+ * required_capability_exception is included because it is the form this test
+ * tells you to use, and it hands its errormessage/stringfile pair straight to
+ * moodle_exception: a singular 'nopermission' there renders
+ * "error/nopermission" exactly as N5 did (core itself has made that typo).
  *
  * HOW TO FIX A FAILURE
  * --------------------
@@ -58,10 +64,19 @@ defined('MOODLE_INTERNAL') || die();
  * --------
  * The sites below were found by this test on its first run and are outside
  * the change that introduced it (they belong to plugins other work is in
- * flight on). They are listed so the gate can be BLOCKING for anything new
- * from day one. The list may only shrink: fix a site and the test fails until
- * its entry is lowered or removed, so the baseline cannot rot into a
- * permanent allowlist.
+ * flight on). They are listed so the test fails on anything new from day
+ * one. The list may only shrink: fix a site and the test fails until its
+ * entry is lowered or removed, so the baseline cannot rot into a permanent
+ * allowlist.
+ *
+ * WHERE IT RUNS
+ * -------------
+ * Only in the full PHPUnit run. In .github/workflows/ci.yml that step is
+ * still continue-on-error; the one blocking PHPUnit step runs only
+ * --group tenant_isolation, and no pre-commit check covers this. So today a
+ * failure here is visible in CI but does NOT block a merge. Promote it (a
+ * blocking group, or a standalone tools/ gate like check-path-boundary.php)
+ * once it has passed under real PHPUnit at least once.
  *
  * @package    local_sentientia_platform
  * @category   test
@@ -93,7 +108,9 @@ final class exception_strings_test extends \advanced_testcase {
 
     /**
      * Fewer checked call sites than this means the scan is broken, not clean.
-     * 46 sites resolved to core's error.php when the test was written.
+     * When written: 46 moodle_exception/print_error sites in the top-level
+     * plugin tree and 45 in the moodle-enhancement tree (which has no theme);
+     * required_capability_exception adds 7 more in each.
      *
      * @var int
      */
@@ -145,12 +162,18 @@ print_error('i_printerror');
 throw new moodle_exception ( 'j_spaced' /* odd but legal */ );
 throw new moodle_exception('k_it\'s_escaped');
 \print_error('l_fqprinterror', 'error');
+throw new required_capability_exception($context, 'm/cap:view', 'm_rce_empty', '');
+throw new \required_capability_exception(\context_course::instance($id, MUST_EXIST), $caps['view'], 'n_rce_nested', 'error');
+throw new \core\exception\required_capability_exception($ctx, "o/cap:{$x}", 'o_rce_namespaced', null,);
 
 throw new moodle_exception('x_plugincomponent', 'local_foo');
 throw new moodle_exception($dynamickey);
 throw new moodle_exception('x_concatenated' . $suffix);
 throw new moodle_exception('x_dynamiccomponent', $component);
-throw new required_capability_exception($context, 'x/cap:view', 'nopermissions', '');
+throw new required_capability_exception($context, 'x/cap:view', 'x_rce_plugin', 'local_foo');
+throw new required_capability_exception($context, 'x/cap:view', $dynamickey, '');
+throw new required_capability_exception($context, 'x/cap:view', 'x_rce_dynamiccomponent', $component);
+throw new required_capability_exception($context, 'x/cap:view', 'x_rce_toofewargs');
 // throw new moodle_exception('x_linecomment');
 /* throw new moodle_exception('x_blockcomment'); */
 $s = "throw new moodle_exception('x_insidestring')";
@@ -166,10 +189,13 @@ PHP;
             'a_bare', 'b_fullyqualified', 'c_error', 'd_doublequoted', 'e_core',
             'f_emptycomponent', 'g_nullcomponent', 'h_namespaced', 'i_printerror',
             'j_spaced', "k_it's_escaped", 'l_fqprinterror',
+            'm_rce_empty', 'n_rce_nested', 'o_rce_namespaced',
         ], $keys);
 
         $this->assertSame(2, $calls[0]['line'], 'line numbers must point at the call');
         $this->assertSame('print_error', $calls[8]['call']);
+        $this->assertSame('required_capability_exception', $calls[13]['call']);
+        $this->assertSame(15, $calls[13]['line'], 'the line of the key, which is what a reader looks for');
     }
 
     /**
@@ -293,8 +319,9 @@ PHP;
     }
 
     /**
-     * Find moodle_exception / print_error calls whose key is a literal and
-     * whose component resolves to core's error.php.
+     * Find moodle_exception / print_error / required_capability_exception
+     * calls whose key is a literal and whose component resolves to core's
+     * error.php.
      *
      * Uses the PHP tokenizer, not a regex, so comments and string contents
      * cannot produce matches: a guard that fires on its own documentation
@@ -327,6 +354,13 @@ PHP;
                     if ($class === 'moodle_exception' || $class === 'core\\exception\\moodle_exception') {
                         $call = 'moodle_exception';
                         $open = $i + 2;
+                    } else if ($class === 'required_capability_exception'
+                            || $class === 'core\\exception\\required_capability_exception') {
+                        $found = $this->required_capability_call($tokens, $i + 2);
+                        if ($found !== null) {
+                            $calls[] = $found;
+                        }
+                        continue;
                     }
                 }
             } else if (in_array($token[0], [T_STRING, T_NAME_FULLY_QUALIFIED], true)
@@ -384,6 +418,82 @@ PHP;
         }
 
         return $calls;
+    }
+
+    /**
+     * The errormessage key of a `new required_capability_exception(...)` whose
+     * stringfile resolves to core's error.php.
+     *
+     * The constructor is ($context, $capability, $errormessage, $stringfile)
+     * and passes the last two to moodle_exception unchanged. The first two are
+     * arbitrary expressions (context_course::instance($id), a class constant),
+     * so the arguments are split at depth zero instead of read at fixed token
+     * offsets.
+     *
+     * @param array $tokens Tokens with whitespace and comments removed.
+     * @param int $open Index of the expected '('.
+     * @return array{call:string,key:string,line:int}|null
+     */
+    private function required_capability_call(array $tokens, int $open): ?array {
+        if (($tokens[$open] ?? null) !== '(') {
+            return null;
+        }
+
+        $args = [];
+        $current = [];
+        $depth = 0;
+        $closed = false;
+        $count = count($tokens);
+        for ($j = $open + 1; $j < $count; $j++) {
+            $t = $tokens[$j];
+            if ($t === '(' || $t === '[' || $t === '{'
+                    || (is_array($t) && in_array($t[0], [T_CURLY_OPEN, T_DOLLAR_OPEN_CURLY_BRACES], true))) {
+                $depth++;
+            } else if ($t === ')' || $t === ']' || $t === '}') {
+                if ($depth === 0) {
+                    $closed = true;
+                    break;
+                }
+                $depth--;
+            } else if ($t === ',' && $depth === 0) {
+                $args[] = $current;
+                $current = [];
+                continue;
+            }
+            $current[] = $t;
+        }
+        if ($current) {
+            // The last argument; a trailing comma leaves this empty.
+            $args[] = $current;
+        }
+
+        if (!$closed || count($args) !== 4) {
+            return null;
+        }
+        [, , $keyarg, $filearg] = $args;
+
+        if (count($keyarg) !== 1 || !is_array($keyarg[0]) || $keyarg[0][0] !== T_CONSTANT_ENCAPSED_STRING) {
+            return null;
+        }
+        if (count($filearg) !== 1 || !is_array($filearg[0])) {
+            return null;
+        }
+        if ($filearg[0][0] === T_CONSTANT_ENCAPSED_STRING) {
+            $component = $this->literal_value($filearg[0][1]);
+        } else if ($filearg[0][0] === T_STRING && strtolower($filearg[0][1]) === 'null') {
+            $component = '';
+        } else {
+            return null;
+        }
+        if (!in_array($component, self::CORE_COMPONENTS, true)) {
+            return null;
+        }
+
+        return [
+            'call' => 'required_capability_exception',
+            'key'  => $this->literal_value($keyarg[0][1]),
+            'line' => (int) $keyarg[0][2],
+        ];
     }
 
     /**

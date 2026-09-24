@@ -140,4 +140,4 @@ $string['privacy:metadata:compliance_courses:createdby'] = 'The ID of the user w
 
 // Refusal on index.php (N5, 2026-09-24). Replaces moodle_exception('nopermission'),
 // which named a core key that does not exist and rendered as "error/nopermission".
-$string['error_noaccess'] = 'Only compliance administrators, and managers with people reporting to them, can open the compliance report.';
+$string['error_noaccess'] = 'You do not have access to the compliance report. It is open to compliance administrators, people who can view site reports, and managers with people reporting to them.';

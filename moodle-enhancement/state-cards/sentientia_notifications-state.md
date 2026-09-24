@@ -153,8 +153,11 @@ it now throws the new plugin string `error_nudge_notyourreport` ("You can only s
 people who report to you.", en + hi, both trees) rather than `required_capability_exception`.
 
 Still open, not changed here: the gate's middle clause asks
-`has_capability('local/courses:manage')`, a pre-ADR-025 name no shipped plugin declares, so it is
-dead code (false plus a debugging notice). Effective access is site admins and direct supervisors.
+`has_capability('local/courses:manage')`, a pre-ADR-025 name. BizLMS declares it (`local_courses/db/access.php`), so on a site that also runs BizLMS, as
+the current airpay.academy stack does, it grants to whoever holds it. Sentientia does not
+ship `local_courses`, so on UAT and on a fresh Sentientia install it is
+dead code (false plus a debugging notice), and effective access is site admins and direct
+supervisors. (Review pass: the first version of this note said no shipped plugin declares it.)
 
 Version 2026092400. Guarded platform-wide by
 `local_sentientia_platform/tests/exception_strings_test.php`.
