@@ -602,6 +602,13 @@ class compliance_engine {
 
     /**
      * Get manager compliance report — per manager with team stats.
+     *
+     * Two units, kept apart (N7, 2026-09-24): team_members counts PEOPLE;
+     * team_assignments, team_completed and team_overdue count ASSIGNMENTS (one
+     * snapshot row per person per compliance item), and team_rate is completed
+     * assignments over all assignments. The page used to print people under a
+     * "Team Items" heading beside assignment counts, so a row could read
+     * "3 items, 2 completed, 3 overdue, 22%" - true, and unreadable.
      */
     public static function get_manager_report(string $orgpath = ''): array {
         global $DB;
@@ -617,7 +624,8 @@ class compliance_engine {
         return array_values($DB->get_records_sql(
             "SELECT u.open_supervisorid as managerid,
                     mgr.firstname as mgr_firstname, mgr.lastname as mgr_lastname,
-                    COUNT(DISTINCT s.userid) as team_items,
+                    COUNT(DISTINCT s.userid) as team_members,
+                    COUNT(*) as team_assignments,
                     SUM(CASE WHEN s.status = 'completed' THEN 1 ELSE 0 END) as team_completed,
                     SUM(CASE WHEN s.status = 'overdue' THEN 1 ELSE 0 END) as team_overdue,
                     ROUND(SUM(CASE WHEN s.status = 'completed' THEN 1 ELSE 0 END) * 100.0 /
@@ -627,7 +635,7 @@ class compliance_engine {
                JOIN {user} mgr ON mgr.id = u.open_supervisorid
               WHERE u.open_supervisorid > 0 AND mgr.deleted = 0 $orgfilter
            GROUP BY u.open_supervisorid, mgr.firstname, mgr.lastname
-             HAVING team_items > 0
+             HAVING team_members > 0
            ORDER BY team_overdue DESC, team_rate ASC",
             $params));
     }

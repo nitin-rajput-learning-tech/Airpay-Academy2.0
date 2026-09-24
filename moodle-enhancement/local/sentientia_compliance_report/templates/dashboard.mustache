@@ -173,12 +173,13 @@
     {{#tab_manager}}
     {{#has_manager_report}}
     <table class="airpay-compliance-rpt__table">
-        <thead><tr><th>{{#str}}col_manager, local_sentientia_compliance_report{{/str}}</th><th>{{#str}}col_team_items, local_sentientia_compliance_report{{/str}}</th><th>{{#str}}col_completed, local_sentientia_compliance_report{{/str}}</th><th>{{#str}}col_overdue, local_sentientia_compliance_report{{/str}}</th><th>{{#str}}col_rate, local_sentientia_compliance_report{{/str}}</th></tr></thead>
+        <thead><tr><th>{{#str}}col_manager, local_sentientia_compliance_report{{/str}}</th><th>{{#str}}col_team_members, local_sentientia_compliance_report{{/str}}</th><th>{{#str}}col_assignments, local_sentientia_compliance_report{{/str}}</th><th>{{#str}}col_completed, local_sentientia_compliance_report{{/str}}</th><th>{{#str}}col_overdue, local_sentientia_compliance_report{{/str}}</th><th>{{#str}}col_rate, local_sentientia_compliance_report{{/str}}</th></tr></thead>
         <tbody>
             {{#manager_report}}
             <tr>
                 <td><strong>{{mgr_firstname}} {{mgr_lastname}}</strong></td>
-                <td>{{team_items}}</td>
+                <td>{{team_members}}</td>
+                <td>{{team_assignments}}</td>
                 <td>{{team_completed}}</td>
                 <td class="{{#team_overdue}}text-danger font-weight-bold{{/team_overdue}}">{{team_overdue}}</td>
                 <td>{{team_rate}}%</td>
