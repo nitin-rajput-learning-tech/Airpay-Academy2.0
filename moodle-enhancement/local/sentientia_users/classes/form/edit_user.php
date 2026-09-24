@@ -260,7 +260,7 @@ class edit_user extends \core_form\dynamic_form {
      * Pre-fill form with existing user data.
      */
     public function set_data_for_dynamic_submission(): void {
-        global $DB;
+        global $DB, $USER;
         $userid = (int) ($this->optional_param('userid', 0, PARAM_INT));
 
         if ($userid === 0) {
@@ -268,7 +268,11 @@ class edit_user extends \core_form\dynamic_form {
             return;
         }
 
-        $user = $DB->get_record('user', ['id' => $userid, 'deleted' => 0], '*', MUST_EXIST);
+        // N1: same rule as check_access_for_dynamic_submission(), repeated
+        // here because this is the method that actually reads the record,
+        // and it must not depend on the constructor having run the check.
+        $user = \local_sentientia_users\profile_access::get_viewable_user(
+            (int) $USER->id, $userid);
 
         // Resolve org id from open_path (open_costcenterid column does not
         // exist on production — open_path is canonical).
@@ -309,8 +313,16 @@ class edit_user extends \core_form\dynamic_form {
 
     /**
      * Capability check — must have edit (for update) or create (for create).
+     *
+     * N1 (UAT 2026-09-24): editing also requires the target to be inside the
+     * editor's tenant. This form pre-fills email, employee id, phone and dates
+     * of birth/joining for whatever userid the AJAX call names, and :edit is a
+     * system-context capability, so without this a Public-tenant editor could
+     * load (and save over) an Airpay user by id. A missing id and an
+     * out-of-tenant id raise the same exception.
      */
     protected function check_access_for_dynamic_submission(): void {
+        global $USER;
         $context = $this->get_context_for_dynamic_submission();
         $userid = (int) ($this->optional_param('userid', 0, PARAM_INT));
 
@@ -318,6 +330,7 @@ class edit_user extends \core_form\dynamic_form {
             require_capability('local/sentientia_users:create', $context);
         } else {
             require_capability('local/sentientia_users:edit', $context);
+            \local_sentientia_users\profile_access::require_can_view((int) $USER->id, $userid);
         }
     }
 

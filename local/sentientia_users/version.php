@@ -50,11 +50,17 @@ $plugin->component = 'local_sentientia_users';
 // no longer surfaces an "email already registered" validation error
 // (user-enumeration oracle, CWE-203); register() against an existing
 // email now silently notifies the existing address and returns its id.
-$plugin->version   = 2026092200;  // Manage Users counts are tenant-bounded
-// 2026090302:
+// 2026-09-24 — N1 fix (UAT Wave 2): profile_access::can_view() is the one
+// tenant rule for reading another user's profile by id (profile.php,
+// skillprofile.php, photo.php, the edit-user dynamic form). Own profile and
+// site admin always; otherwise same open_path tenant root; an unresolvable
+// viewer or target is refused. Refusal is error_profilenotavailable, the
+// same for a missing id as for an out-of-tenant one.
+$plugin->version   = 2026092400;  // Profile reads are tenant-bounded (N1)
+// 2026092200: Manage Users counts are tenant-bounded.
 $plugin->requires  = 2024100700;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '2.7.7';
+$plugin->release   = '2.7.8';
 $plugin->dependencies = [
     'local_sentientia_org' => 2026051501,
 ];

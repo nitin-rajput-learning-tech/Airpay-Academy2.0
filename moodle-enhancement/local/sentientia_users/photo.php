@@ -15,8 +15,13 @@ require_once($CFG->libdir . '/gdlib.php');
 require_login();
 
 $userid = optional_param('id', $USER->id, PARAM_INT);
-$user = $DB->get_record('user', ['id' => $userid, 'deleted' => 0],
-    '*', MUST_EXIST);
+
+// N1 (UAT 2026-09-24): tenant boundary first, before the record is loaded.
+// The old MUST_EXIST load ran ahead of the auth check, so a missing id and a
+// refused id gave different errors. Both now raise the same exception; the
+// edit-cap check below still applies on top, within the tenant.
+$user = \local_sentientia_users\profile_access::get_viewable_user(
+    (int) $USER->id, (int) $userid);
 
 // Auth: self OR has edit cap.
 $context_sys = context_system::instance();

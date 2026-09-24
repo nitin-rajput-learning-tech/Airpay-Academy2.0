@@ -1,10 +1,10 @@
 # State Card — local_airpay_users
 **Component:** `local_airpay_users`
-**Version:** 2.7.5 (2026082900)  — `user_manager::suspend()` uses `destroy_user_sessions()` (4.5 deprecation of `kill_user_sessions` surfaced once the ADR-030 SCIM endpoint became a regular caller); 2.7.1 = signup UX fixes (honeypot + success page)
+**Version:** 2.7.8 (2026092400)  — N1: profile reads are tenant-bounded via `profile_access` (see 2026-09-24 below); 2.7.5 = `user_manager::suspend()` uses `destroy_user_sessions()`; 2.7.1 = signup UX fixes (honeypot + success page)
 **Status:** STABLE — installed + live; HRMS importer + bulk + signup + welcome shipped
 **Depends on:** local_airpay_org (Phase 1)
 **Purpose:** Replaces BizLMS `local_users` — Airpay-owned user management, profile rendering, open_* field ownership, signup, HRMS sync
-**Last refreshed:** 2026-05-29 (signup-flow UI fixes — owner-reported)
+**Last refreshed:** 2026-09-24 (N1 cross-tenant profile read fix — Wave 2 UAT)
 
 > **2026-05-29 signup UX fixes (2.7.0→2.7.1):** (A) honeypot field was
 > rendering visible — the hide CSS targeted `.fitem_id_honeypot_url`
@@ -95,8 +95,9 @@ read-only.
 `bulk_csv_processor.php`, `bulk_import_processor.php`, `hrms_importer.php`,
 `welcome_mailer.php`, `external/`, `form/`, `task/`, `privacy/`.
 
-## PHPUnit (8 classes, 70 methods)
+## PHPUnit (9 classes, 84 methods)
 
+- `profile_access_test.php` — 14 methods (N1, 2026-09-24, `@group tenant_isolation`)
 - `user_manager_test.php` — 14 methods
 - `signup_service_test.php` — 13 methods
 - `hrms_importer_test.php` — 9 methods
@@ -158,3 +159,53 @@ Manage Users total/active/suspended counts were unbounded, so an Airpay admin's 
 Fixed via the new `\local_sentientia_platform	enant::path_descendant_filter()` (exact-or-descendant
 for an arbitrary path), locked by a DB-level boundary suite in `tenant_test.php`, and prevented from
 returning by `tools/check-path-boundary.php` - pre-commit CHECK 18 and the `path-boundary-check` CI job.
+
+## 2026-09-24 - N1: cross-tenant profile reads closed (2.7.7 -> 2.7.8, 2026092400)
+
+**Defect (High, proven on UAT 2026-09-24).** `profile.php` checked only `require_login()` and then
+built the full profile context for any `?id=`; core `/user/profile.php` redirects to it. As an
+ordinary Airpay learner (/1), ZEEA (/177) and Public (/77) profiles rendered in full: email, job
+title, employee id, points, rank, badges, skills, manager.
+
+**Fix.** One rule in one place: `classes/profile_access.php`.
+
+| # | Viewer / target | Result |
+|---|-----------------|--------|
+| 1 | own profile | allow |
+| 2 | site admin | allow |
+| 3 | same tenant root (leading numeric `open_path` segment, compared as ints) | allow (today's behaviour: leaderboard / manager colleague links keep working) |
+| 3 | different root, incl. `/1` vs `/10` | deny |
+| 4 | viewer root unresolvable (null, '', '/', non-numeric, `/0`) | deny all but own profile |
+| 5 | target root unresolvable, deleted, or id missing | deny |
+
+`can_view()` is the pure decision; `require_can_view()` throws; `get_viewable_user()` checks FIRST
+and loads SECOND. The refusal is `moodle_exception('error_profilenotavailable',
+'local_sentientia_users')` with no `$a`, link or debuginfo, so a missing id, an out-of-tenant id, an
+unresolvable target and a deleted colleague are byte-identical (no existence oracle). Tenant roots
+come from `\local_sentientia_platform\tenant::root_for_user()`.
+
+**Call sites** (every entry point in this plugin that returns another user's profile data by id):
+
+- `profile.php` - `get_viewable_user(..., includedeleted: true)` replaces the unchecked `MUST_EXIST` load.
+- `skillprofile.php`, `photo.php` - boundary check replaces the `MUST_EXIST` load that ran ahead of
+  the auth check; the existing `:view` / `:edit` capability checks still apply on top.
+- `classes/form/edit_user.php` - `check_access_for_dynamic_submission()` adds the rule after
+  `require_capability(:edit)`, and `set_data_for_dynamic_submission()` loads through
+  `get_viewable_user()`. The form pre-fills email, employee id, phone, DOB/DOJ by id.
+
+Not changed, reviewed: `list_users` / `list_filter_options` (list surfaces, already path-scoped),
+`search_supervisors` (non-admins are scoped to their own tenant; the subject id is only used to
+narrow an admin's search), `bulk_action` (already path-scoped). The CLI `smoke_profile_skills.php`
+calls `build_profile_context()` directly and is CLI-only.
+
+**Strings.** `error_profilenotavailable` added to `lang/en` and `lang/hi`. Not `nopermission`,
+which core does not define (N5).
+
+**Tests.** `tests/profile_access_test.php` (14 methods, `@group tenant_isolation`): own; site admin
+(with and without an `open_path`); same tenant `/1` and `/1/2/3`; cross tenant `/1` vs `/177` and `/77`;
+the `/1` vs `/10` prefix trap; unresolvable viewer; unresolvable and deleted target; identical
+refusal for missing vs cross-tenant vs look-alike vs unresolvable vs deleted; edit-user form refuses
+out-of-tenant and missing ids identically and still opens for a same-tenant colleague. Written, not
+run (shared PHPUnit DB). PHPUnit total now 9 classes, 84 methods.
+
+Both trees byte-identical. Deploy pending.

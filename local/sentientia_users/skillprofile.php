@@ -19,7 +19,12 @@ require_login();
 global $DB, $USER, $OUTPUT, $PAGE;
 
 $userid = optional_param('id', $USER->id, PARAM_INT);
-$user = $DB->get_record('user', ['id' => $userid, 'deleted' => 0], '*', MUST_EXIST);
+
+// N1 (UAT 2026-09-24): tenant boundary first, before the record is loaded, so
+// a refused id and a non-existent id raise the same exception. The :view
+// capability check below still applies on top, within the tenant.
+$user = \local_sentientia_users\profile_access::get_viewable_user(
+    (int) $USER->id, (int) $userid);
 
 $is_self = ((int) $userid === (int) $USER->id);
 $ctx = context_system::instance();

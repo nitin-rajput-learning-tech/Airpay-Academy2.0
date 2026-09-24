@@ -37,7 +37,12 @@ $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/local/sentientia_users/profile.php', ['id' => $id]));
 $PAGE->set_pagelayout('standard');
 
-$user = $DB->get_record('user', ['id' => $id], '*', MUST_EXIST);
+// N1 (UAT 2026-09-24): this page used to check only require_login(), so any
+// learner could read any tenant's profiles by id. Access is decided BEFORE the
+// record is loaded, and a refused id and a non-existent id raise the same
+// exception, so the refusal cannot be used to enumerate other tenants' ids.
+// Deleted accounts stay loadable here, but only a site admin gets that far.
+$user = \local_sentientia_users\profile_access::get_viewable_user((int) $USER->id, (int) $id, true);
 $PAGE->set_title(fullname($user) . ' - ' . get_string('profile', 'local_sentientia_users'));
 $PAGE->set_heading(fullname($user));
 
